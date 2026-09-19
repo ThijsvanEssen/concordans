@@ -1,0 +1,121 @@
+<script lang="ts">
+</script>
+
+<svelte:head>
+	<title>Gebruiksvoorwaarden. Concordans.</title>
+</svelte:head>
+
+<div class="page-wrap">
+	<div class="container">
+		<div class="stub-eyebrow">JURIDISCH</div>
+		<h1 class="stub-title">Gebruiksvoorwaarden</h1>
+		<p class="stub-lede">
+			Gebruik van Concordans impliceert instemming met onderstaande voorwaarden.
+		</p>
+
+		<div class="section">
+			<h2 class="section-title">Geen juridisch advies</h2>
+			<p>
+				De informatie op Concordans is bedoeld ter ondersteuning van juridisch onderzoek.
+				Concordans biedt geen juridisch advies. Verbindingen worden machinaal geëxtraheerd en
+				kunnen onjuistheden bevatten. Raadpleeg voor juridische beslissingen altijd de officiële
+				bronnen en een bevoegde jurist.
+			</p>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">Gebruik van de inhoud</h2>
+			<p>
+				De wetteksten en rechterlijke uitspraken zijn afkomstig van openbare overheidsbronnen en
+				vallen onder het publieke domein. De structuur, visualisaties en afgeleide gegevens van
+				Concordans mogen worden gebruikt voor onderzoek en educatieve doeleinden, mits de bron
+				wordt vermeld.
+			</p>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">Beschikbaarheid</h2>
+			<p>
+				Concordans wordt aangeboden zonder garantie van ononderbroken beschikbaarheid. De
+				werkomgeving kan worden gewijzigd, opgeschort of beëindigd zonder voorafgaande
+				kennisgeving.
+			</p>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">Aansprakelijkheidsbeperking</h2>
+			<p>
+				De maker van Concordans aanvaardt geen aansprakelijkheid voor schade die voortvloeit uit
+				het gebruik van de applicatie of de daarin opgenomen informatie.
+			</p>
+		</div>
+
+		<div class="updated">Laatste wijziging: mei 2026</div>
+	</div>
+</div>
+
+
+<style>
+	.page-wrap {
+		padding: 80px 0 120px;
+	}
+
+	.container {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 0 24px;
+	}
+
+	.stub-eyebrow {
+		font-family: var(--font-sans);
+		font-size: 11px;
+		letter-spacing: 0.1em;
+		color: var(--fg-3);
+		margin-bottom: 16px;
+	}
+
+	.stub-title {
+		font-family: var(--font-serif);
+		font-size: clamp(28px, 5vw, 40px);
+		font-weight: 500;
+		color: var(--ink);
+		margin: 0 0 16px;
+	}
+
+	.stub-lede {
+		font-family: var(--font-sans);
+		font-size: 15px;
+		line-height: 1.65;
+		color: var(--fg-2);
+		margin-bottom: 48px;
+	}
+
+	.section {
+		margin-bottom: 36px;
+	}
+
+	.section-title {
+		font-family: var(--font-serif);
+		font-size: 18px;
+		font-weight: 500;
+		color: var(--ink);
+		margin: 0 0 12px;
+	}
+
+	p {
+		font-family: var(--font-sans);
+		font-size: 14px;
+		line-height: 1.7;
+		color: var(--fg-1);
+		margin: 0;
+	}
+
+	.updated {
+		margin-top: 48px;
+		padding-top: 24px;
+		border-top: 1px solid var(--rule);
+		font-family: var(--font-sans);
+		font-size: 12px;
+		color: var(--fg-3);
+	}
+</style>

@@ -1,0 +1,46 @@
+{
+	"name": "concordans",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"format": "prettier --write .",
+		"lint": "prettier --check . && eslint .",
+		"sync:api": "curl -sf \"${PUBLIC_CONCORDANS_API_BASE_URL:-${PUBLIC_LAWGRAPH_API_BASE_URL:-http://localhost:8000}}/openapi.json\" -o openapi.json && npx openapi-typescript openapi.json -o src/lib/api/generated/openapi-types.ts && echo 'openapi.json + types synced'"
+	},
+	"dependencies": {
+		"@sigma/node-border": "^3.0.0",
+		"@sigma/node-image": "^3.0.0",
+		"@sigma/node-square": "^3.0.0",
+		"graphology": "^0.26.0",
+		"graphology-layout-forceatlas2": "^0.10.1",
+		"posthog-js": "^1.373.4",
+		"sigma": "^3.0.2"
+	},
+	"devDependencies": {
+		"@eslint/compat": "^1.4.0",
+		"@eslint/js": "^9.39.1",
+		"@sveltejs/adapter-auto": "^7.0.0",
+		"@sveltejs/kit": "^2.48.5",
+		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@types/node": "^24",
+		"eslint": "^9.39.1",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.13.0",
+		"globals": "^16.5.0",
+		"openapi-typescript": "^7.8.0",
+		"prettier": "^3.6.2",
+		"prettier-plugin-svelte": "^3.4.0",
+		"svelte": "^5.43.8",
+		"svelte-check": "^4.3.4",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.47.0",
+		"vite": "^7.2.2"
+	}
+}
