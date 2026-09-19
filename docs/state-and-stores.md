@@ -221,5 +221,5 @@ Don't add a new store when:
 | Domain profile | `src/lib/stores/profile.ts` |
 | Reader/rail bridge | `src/lib/stores/reader.ts` |
 | Search opener context | `src/lib/stores/search-trigger.ts` |
-| Graph data | `src/lib/graph/graph-store.ts` |
+| Graph data | `src/lib/graph/graph-store.ts`, `src/lib/graph/store/` |
 | Instrument metadata cache | `src/lib/api/instrument-cache.ts` (also a writable) |

@@ -209,5 +209,5 @@ The backend rate-limits aggressively (we hit `429` during dev investigation runs
 | Domain helpers | `src/lib/api/parliamentary-client.ts`, `search.ts`, `articles.ts`, `nodes.ts`, `judgments.ts`, `mvt.ts`, `stats.ts` |
 | Type aliases | `src/lib/api/types.ts`, `parliamentary.ts` |
 | Generated types | `src/lib/api/generated/openapi-types.ts` (do not edit) |
-| Caches | `src/lib/api/instrument-cache.ts`, `src/lib/graph/graph-store.ts` (`cache` field) |
+| Caches | `src/lib/api/instrument-cache.ts`, `src/lib/graph/store/context.ts` (`cache` field) |
 | Contract | `openapi.json` (repo root) |

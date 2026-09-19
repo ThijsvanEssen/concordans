@@ -41,7 +41,8 @@ src/
 │   │   └── generated/openapi-types.ts (codegen — do not edit)
 │   │
 │   ├── graph/                         Graph data layer (no UI)
-│   │   ├── graph-store.ts             The GraphStore: graphology + history + filters
+│   │   ├── graph-store.ts             createGraphStore(): assembles the store from store/*
+│   │   ├── store/                     GraphStore implementation (context, expansion, loaders)
 │   │   ├── types.ts                   GraphNode / GraphEdge + helpers (kind, tier)
 │   │   └── profile-seeds.ts           Profile-driven graph bootstrap
 │   │

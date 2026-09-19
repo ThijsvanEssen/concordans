@@ -75,7 +75,24 @@ The categoriser is `classifyEdgeKind(relation, label)`. Filter toggles in `Graph
 
 ## GraphStore — `src/lib/graph/graph-store.ts`
 
-The single source of truth for what's "on the canvas". Wraps a graphology instance plus history, pinning, filters, and an LRU.
+The single source of truth for what's "on the canvas". Holds the node and edge maps plus history, pinning, filters, and an LRU.
+
+`graph-store.ts` only assembles the store (`createGraphStore`) and re-exports its types. The implementation lives in `src/lib/graph/store/`:
+
+| File | Contents |
+|---|---|
+| `types.ts` | `GraphStore`, `GraphFilters`, `GraphExpansionOptions`, `LoadingState`, `GraphMode`, plus `DEFAULT_FILTERS`, `SOFT_NODE_CAP`, `DEFAULT_EXPANSION` |
+| `context.ts` | `createGraphContext()`: the node/edge maps, the writable stores, history, LRU trim, synthetic instrument proxies and edges, `mergeResponse`. Everything else builds on it |
+| `expansion.ts` | `expandNode`, `expandNeighborhood` |
+| `wet-loaders.ts` | `loadInstrument`, `prefetchInstrumentLayerCounts`, and the wet-scoped judgment, dossier and related-instrument layers |
+| `wet-citations.ts` | `loadInstrumentCitations` |
+| `global-loaders.ts` | `loadGlobalGraph`, `loadInstrumentLayerGraph`, `loadJudgmentLayerGraph` |
+| `parliamentary-loaders.ts` | Lid, fractie, commissie, leden, fracties and recent-dossier loads |
+| `view-actions.ts` | Selection, focus, history, pinning, filters, pruning, `seedGraph`, `reset`, `setCollapseToLaws` |
+
+Each module exports a factory that takes the context (`createExpansion(ctx)`, `createWetLoaders(ctx)`, ...) and returns a slice of the `GraphStore` API; `createGraphStore` spreads them together. A new loader belongs in the module that matches its scope, and needs an entry in the `GraphStore` type.
+
+Scalars that several modules mutate (`seq`, `historyIndex`, `proxiesEnabled`, `additiveLayerIndex`) live on `ctx.state`. Do not destructure them: a destructured copy would freeze the value.
 
 ### Surface
 
@@ -250,7 +267,7 @@ That's a lot of touchpoints — by design. Adding a kind is a real feature, not 
 | Concern | File |
 |---|---|
 | Type system | `src/lib/graph/types.ts` |
-| Store | `src/lib/graph/graph-store.ts` |
+| Store | `src/lib/graph/graph-store.ts` (assembly), `src/lib/graph/store/*.ts` (implementation) |
 | Sidebar | `src/lib/components/graph/GraphSidebar.svelte` |
 | Orchestrator | `src/lib/components/graph/GraphView.svelte` |
 | Canvas | `src/lib/components/graph/GraphCanvas.svelte` |
