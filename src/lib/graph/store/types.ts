@@ -109,11 +109,12 @@ export type GraphStore = {
 	/**
 	 * Every edge that touches an article of the wet, with the nodes at the other end.
 	 * `relations` narrows the request; `collections` keeps other nodes off the canvas
-	 * (REFERS_TO reaches thousands of judgments that a layer of articles does not want).
+	 * (REFERS_TO reaches thousands of judgments that a layer of articles does not want);
+	 * `maxEdges` caps the answer, which lists structural edges first and citations last.
 	 */
 	loadInstrumentCitations: (
 		bwbId: string,
-		opts?: { relations?: Relation[]; collections?: Collection[] }
+		opts?: { relations?: Relation[]; collections?: Collection[]; maxEdges?: number }
 	) => Loaded;
 	/** Writes the totals of the layers of the wet into `potentialCounts`. */
 	prefetchInstrumentLayerCounts: (bwbId: string) => Promise<void>;

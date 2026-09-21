@@ -66,7 +66,7 @@ export function createWetCitations(ctx: GraphContext): Pick<GraphStore, 'loadIns
 					api.GET('/api/instruments/{bwb_id}/citations', {
 						params: {
 							path: { bwb_id: bwbId },
-							query: { relations: opts?.relations?.join(',') }
+							query: { relations: opts?.relations?.join(','), max_edges: opts?.maxEdges }
 						},
 						signal: requestSignal
 					})

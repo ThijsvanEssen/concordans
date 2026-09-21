@@ -3,7 +3,7 @@
 // `instrumentMetaStore` or `getInstrumentMeta`.
 
 import { writable, type Readable } from 'svelte/store';
-import { getNodeGraph } from './nodes';
+import { api, unwrap } from './client';
 
 export type InstrumentMeta = {
 	/** BWB id, or the key of an instrument without one (EU). */
@@ -67,26 +67,17 @@ export const instrumentMetaStore: Readable<Map<string, InstrumentMeta>> = {
 	subscribe: store.subscribe
 };
 
-// One request per instrument and session, also when it fails: an instrument
-// that is missing would otherwise be asked for again at every appearance.
-const asked = new Set<string>();
+let primed = false;
 
-/** Fetches the short title of an instrument the first time it is asked for. */
-export function ensureInstrumentMeta(bwbId: string | null | undefined): void {
-	if (!bwbId) return;
-	const id = bwbId.toUpperCase();
-	if (asked.has(id) || getInstrumentMeta(id)?.shortTitle) return;
-	asked.add(id);
-	getNodeGraph('instruments', id, { neighborLimit: 1 })
-		.then(({ node }) => {
-			const { title, citation_title, short_title } = node.props ?? {};
-			recordInstrument({
-				bwb_id: id,
-				display_name: node.display_name,
-				title,
-				citation_title,
-				short_title
-			});
-		})
+/**
+ * Loads the names of the 200 largest laws, once per session. They are the laws that
+ * articles refer to most; one request replaces one request per law met on the canvas.
+ * A law outside them keeps the name its own response carried.
+ */
+export function primeInstrumentNames(): void {
+	if (primed) return;
+	primed = true;
+	unwrap(api.GET('/api/instruments', { params: { query: { sort: 'article_count', limit: 200 } } }))
+		.then(({ items }) => items.forEach(recordInstrument))
 		.catch(() => {});
 }

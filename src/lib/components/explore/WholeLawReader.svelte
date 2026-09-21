@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { api, unwrap } from '$lib/api/client';
-	import { ensureInstrumentMeta, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { instrumentMetaStore, primeInstrumentNames } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
 
 	let {
@@ -45,7 +45,7 @@
 			status = 'idle';
 			return;
 		}
-		ensureInstrumentMeta(bwbId);
+		primeInstrumentNames();
 		const controller = new AbortController();
 		status = 'loading';
 		load(bwbId, 0, controller.signal)

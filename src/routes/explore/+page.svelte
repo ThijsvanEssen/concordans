@@ -485,7 +485,12 @@
 	const additive = { additive: true };
 	const LAYERS: Partial<Record<GraphNodeKind, LayerLoader>> = {
 		instrument: {
-			instrument: (bwb) => store.loadInstrumentCitations(bwb, { relations: ['REFERS_TO'] }),
+			instrument: (bwb) =>
+				store.loadInstrumentCitations(bwb, {
+					relations: ['REFERS_TO'],
+					collections: ['articles'],
+					maxEdges: 1000
+				}),
 			whole: () => store.loadInstrumentLayerGraph(additive)
 		},
 		judgment: {

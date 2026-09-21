@@ -1,4 +1,4 @@
-import { ensureInstrumentMeta, recordInstrument } from '$lib/api/instrument-cache';
+import { primeInstrumentNames, recordInstrument } from '$lib/api/instrument-cache';
 import type { Schema } from '$lib/api/types';
 import { getLawIdFromProps } from '$lib/util/law-id';
 import { isCollection, nodeId, type Relation } from '$lib/vocabulary';
@@ -369,7 +369,7 @@ export function createGraphContext() {
 		const law = graphNode?.kind === 'article' ? getLawIdFromProps(p, node.key) : null;
 		if (law) {
 			recordInstrument({ bwb_id: law, citation_title: p.instrument_citation_title });
-			ensureInstrumentMeta(law);
+			primeInstrumentNames();
 		}
 		return graphNode;
 	};

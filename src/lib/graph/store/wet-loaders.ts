@@ -1,5 +1,5 @@
 import { api, unwrap } from '$lib/api/client';
-import { ensureInstrumentMeta, getInstrumentMeta } from '$lib/api/instrument-cache';
+import { getInstrumentMeta, primeInstrumentNames } from '$lib/api/instrument-cache';
 import { nodeId } from '$lib/vocabulary';
 import { syntheticNode } from '../types';
 import type { GraphContext } from './context';
@@ -77,7 +77,7 @@ export function createWetLoaders(
 					}
 
 					// The short title ("Sr") is on the instrument only.
-					ensureInstrumentMeta(bwbId);
+					primeInstrumentNames();
 					finishBulk(false, 0);
 					return { count: nodes.size };
 				},
