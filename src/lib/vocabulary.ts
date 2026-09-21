@@ -65,3 +65,37 @@ export function parseNodeId(id: string): { collection: Collection; key: string }
 	const key = id.slice(slash + 1);
 	return slash > 0 && key && isCollection(collection) ? { collection, key } : null;
 }
+
+/** What a bron of each collection is called, singular and plural. The one list of labels. */
+export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: string]> = {
+	instruments: ['Wet', 'Wetten'],
+	instrument_versions: ['Versie', 'Versies'],
+	articles: ['Artikel', 'Artikelen'],
+	article_versions: ['Artikelversie', 'Artikelversies'],
+	annexes: ['Bijlage', 'Bijlagen'],
+	judgments: ['Uitspraak', 'Uitspraken'],
+	dossiers: ['Dossier', 'Dossiers'],
+	cases: ['Zaak', 'Zaken'],
+	documents: ['Stuk', 'Stukken'],
+	activities: ['Activiteit', 'Activiteiten'],
+	decisions: ['Stemming', 'Stemmingen'],
+	commitments: ['Toezegging', 'Toezeggingen'],
+	members: ['Kamerlid', 'Kamerleden'],
+	factions: ['Fractie', 'Fracties'],
+	committees: ['Commissie', 'Commissies']
+};
+
+export const bronLabel = (collection: Collection) => BRON_LABEL[collection][0];
+export const bronPlural = (collection: Collection) => BRON_LABEL[collection][1];
+
+/** The three ways to look at the material, in the order of the keys 1, 2 and 3. */
+export const MODES = [
+	{ id: 'read', label: 'Lezen' },
+	{ id: 'graph', label: 'Netwerk' },
+	{ id: 'index', label: 'Bladeren' }
+] as const;
+
+export type Mode = (typeof MODES)[number]['id'];
+
+export const isMode = (value: string | null | undefined): value is Mode =>
+	MODES.some((m) => m.id === value);

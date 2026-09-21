@@ -1,0 +1,29 @@
+[
+	{
+		"id": "committees/e6291928_7ea0_46f9_aa6a_58b11ee069f2",
+		"key": "e6291928_7ea0_46f9_aa6a_58b11ee069f2",
+		"name": "Algemene commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+		"abbreviation": "BuHaOS",
+		"slug": "buhaos",
+		"kind": null,
+		"active_dossier_count": 73
+	},
+	{
+		"id": "committees/a0ceb8f9_5c8e_43c8_b591_584061753ab1",
+		"key": "a0ceb8f9_5c8e_43c8_b591_584061753ab1",
+		"name": "Vaste commissie voor Buitenlandse Handel en Ontwikkelingssamenwerking",
+		"abbreviation": "BuHaOS",
+		"slug": "buhaos",
+		"kind": null,
+		"active_dossier_count": 44
+	},
+	{
+		"id": "committees/14cac666_51cb_4154_80da_9b0e2eeb5014",
+		"key": "14cac666_51cb_4154_80da_9b0e2eeb5014",
+		"name": "Vaste commissie voor Justitie en Veiligheid",
+		"abbreviation": "J&V",
+		"slug": "j_v",
+		"kind": null,
+		"active_dossier_count": 560
+	}
+]

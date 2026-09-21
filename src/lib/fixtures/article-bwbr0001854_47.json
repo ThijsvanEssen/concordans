@@ -1,0 +1,30 @@
+{
+	"article": {
+		"key": "bwbr0001854_47",
+		"bwb_id": "BWBR0001854",
+		"article_number": "47",
+		"display_name": "Artikel 47 Wetboek van Strafrecht",
+		"text": "1. Als daders van een strafbaar feit worden gestraft:\n1°. zij die het feit plegen, doen plegen of medeplegen;\n2°. zij die door giften, beloften, misbruik van gezag, geweld, bedreiging, of misleiding of door het verschaffen van gelegenheid, middelen of inlichtingen het feit opzettelijk uitlokken.\n2. Ten aanzien van de laatsten komen alleen die handelingen in aanmerking die zij opzettelijk hebben uitgelokt, benevens hun gevolgen."
+	},
+	"citations": [],
+	"judgments": [
+		{
+			"id": "judgments/ecli_nl_ghams_2024_2331",
+			"key": "ecli_nl_ghams_2024_2331",
+			"display_name": "Gerechtshof Amsterdam 2024-08-22 / 23-002858-20",
+			"ecli": "ECLI:NL:GHAMS:2024:2331"
+		},
+		{
+			"id": "judgments/ecli_nl_gharl_2024_5446",
+			"key": "ecli_nl_gharl_2024_5446",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-08-27 / 21-001229-24",
+			"ecli": "ECLI:NL:GHARL:2024:5446"
+		},
+		{
+			"id": "judgments/ecli_nl_gharl_2024_5697",
+			"key": "ecli_nl_gharl_2024_5697",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-09-09 / 21-000548-24",
+			"ecli": "ECLI:NL:GHARL:2024:5697"
+		}
+	]
+}

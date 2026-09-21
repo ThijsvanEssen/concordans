@@ -1,0 +1,517 @@
+{
+	"node": {
+		"id": "dossiers/36327",
+		"key": "36327",
+		"collection": "dossiers",
+		"type": "dossier",
+		"display_name": "Kamerstukdossier 36327: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+		"labels": ["TK"],
+		"props": {
+			"case_kinds": [
+				"Amendement",
+				"Brief Kamer",
+				"Brief regering",
+				"Brief van lid/fractie/commissie",
+				"Initiatiefnota",
+				"Initiatiefwetgeving",
+				"Motie",
+				"Nota n.a.v. het (nader/tweede nader/enz.) verslag",
+				"Nota van wijziging",
+				"Overig",
+				"Position paper",
+				"Rapport/brief Algemene Rekenkamer",
+				"Rondvraagpunt procedurevergadering",
+				"Verdrag",
+				"Verzoek bij commissie-regeling van werkzaamheden",
+				"Verzoek bij regeling van werkzaamheden",
+				"Wetgeving"
+			],
+			"closed": false,
+			"closed_on": null,
+			"current_stage": "amendementen",
+			"display_name": "Kamerstukdossier 36327: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+			"external_id": "021a6108-69a0-4da1-b199-a2851e61d637",
+			"number": "36327",
+			"opened_on": null,
+			"stages_present": [
+				"wetsvoorstel",
+				"mvt",
+				"advies_rvs",
+				"verslag",
+				"nota",
+				"amendementen",
+				"stemming"
+			],
+			"suffix": "",
+			"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+			"title_source": "dossier",
+			"track_kind": null
+		}
+	},
+	"neighbors": {
+		"all": [
+			{
+				"id": "activities/c6d15994_20fb_4216_bc1a_0690aaf38df3",
+				"key": "c6d15994_20fb_4216_bc1a_0690aaf38df3",
+				"collection": "activities",
+				"type": "activity",
+				"display_name": "2025-01-27 — Wetgevingsoverleg",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Wetgevingsoverleg",
+					"date": "2025-01-27",
+					"number": "2024A01328",
+					"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014"
+				}
+			},
+			{
+				"id": "activities/d216a91f_6dd4_4d47_9951_18a7643b23b7",
+				"key": "d216a91f_6dd4_4d47_9951_18a7643b23b7",
+				"collection": "activities",
+				"type": "activity",
+				"display_name": "2024-07-04 — Procedurevergadering",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Procedurevergadering",
+					"date": "2024-07-04",
+					"number": "2023A03879",
+					"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014"
+				}
+			},
+			{
+				"id": "activities/7202ecd2_d4a7_42cc_a6e7_22124d01d4db",
+				"key": "7202ecd2_d4a7_42cc_a6e7_22124d01d4db",
+				"collection": "activities",
+				"type": "activity",
+				"display_name": "2025-04-01 — Stemmingen",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Stemmingen",
+					"date": "2025-04-01",
+					"number": "2025A02635",
+					"committee_id": "38aacfcd-2cfa-4727-949d-e4270237dbbe"
+				}
+			},
+			{
+				"id": "activities/a083543a_ed74_4527_a95d_39ab65157267",
+				"key": "a083543a_ed74_4527_a95d_39ab65157267",
+				"collection": "activities",
+				"type": "activity",
+				"display_name": "2024-12-19 — Regeling van werkzaamheden",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Regeling van werkzaamheden",
+					"date": "2024-12-19",
+					"number": "2024A09113",
+					"committee_id": "38aacfcd-2cfa-4727-949d-e4270237dbbe"
+				}
+			},
+			{
+				"id": "activities/75b7ff01_4218_4c21_8682_3a63936907b8",
+				"key": "75b7ff01_4218_4c21_8682_3a63936907b8",
+				"collection": "activities",
+				"type": "activity",
+				"display_name": "2025-02-10 — Wetgevingsoverleg",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Wetgevingsoverleg",
+					"date": "2025-02-10",
+					"number": "2025A01011",
+					"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014"
+				}
+			},
+			{
+				"id": "activities/068ad150_d538_42fd_a0be_45d687b58214",
+				"key": "068ad150_d538_42fd_a0be_45d687b58214",
+				"collection": "activities",
+				"type": "activity",
+				"display_name": "2023-09-28 — Inbreng verslag (wetsvoorstel)",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Inbreng verslag (wetsvoorstel)",
+					"date": "2023-09-28",
+					"number": "2023A02302",
+					"committee_id": "14cac666-51cb-4154-80da-9b0e2eeb5014"
+				}
+			},
+			{
+				"id": "commitments/fc597ea0_3bd4_4de1_9dca_0d8a2f1cad6f",
+				"key": "fc597ea0_3bd4_4de1_9dca_0d8a2f1cad6f",
+				"collection": "commitments",
+				"type": "commitment",
+				"display_name": "De staatssecretaris Rechtsbescherming zegt de Kamer toe vóór de plenaire behande…",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {}
+			},
+			{
+				"id": "commitments/dfb6e835_1355_4429_9db6_201aa1c41c30",
+				"key": "dfb6e835_1355_4429_9db6_201aa1c41c30",
+				"collection": "commitments",
+				"type": "commitment",
+				"display_name": "De minister van Justitie en Veiligheid zegt de Kamer toe een brief toe te zenden…",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {}
+			},
+			{
+				"id": "commitments/a12b6a2a_513e_4da6_9561_3e26104ba49f",
+				"key": "a12b6a2a_513e_4da6_9561_3e26104ba49f",
+				"collection": "commitments",
+				"type": "commitment",
+				"display_name": "De minister van Justitie en Veiligheid zegt de Kamer toe vóór de zomer 2025 een …",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {}
+			},
+			{
+				"id": "commitments/633e1f30_64e7_4ed7_981c_53837a8ce37a",
+				"key": "633e1f30_64e7_4ed7_981c_53837a8ce37a",
+				"collection": "commitments",
+				"type": "commitment",
+				"display_name": "De minister van Justitie en Veiligheid zegt de Kamer, mede namens de staatssecre…",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {}
+			},
+			{
+				"id": "commitments/585b34d9_2259_4726_9eed_5c494f00d81f",
+				"key": "585b34d9_2259_4726_9eed_5c494f00d81f",
+				"collection": "commitments",
+				"type": "commitment",
+				"display_name": "De minister van Justitie en Veiligheid zegt de Kamer toe de resultaten van de pi…",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {}
+			},
+			{
+				"id": "commitments/d8cec36e_4f85_43df_ad1d_5f4163f42fe5",
+				"key": "d8cec36e_4f85_43df_ad1d_5f4163f42fe5",
+				"collection": "commitments",
+				"type": "commitment",
+				"display_name": "De minister van Justitie en Veiligheid zegt de Kamer toe begin 2026 de Kamer te …",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {}
+			},
+			{
+				"id": "decisions/decision_a492f01d_ae50_44c2_ae02_312ce803b980",
+				"key": "decision_a492f01d_ae50_44c2_ae02_312ce803b980",
+				"collection": "decisions",
+				"type": "decision",
+				"display_name": "Amendement 2025Z03941 — Gewijzigd amendement van het lid Ellian ter vervanging van nr. 20 over een algemene onderzoeksbevoegdheid voor de rechter-commissaris",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"date": "2025-03-26",
+					"passed": false,
+					"subject": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 20 over een algemene onderzoeksbevoegdheid voor de rechter-commissaris"
+				}
+			},
+			{
+				"id": "decisions/decision_b0036de1_2350_489c_9ff8_5fcd37e1a454",
+				"key": "decision_b0036de1_2350_489c_9ff8_5fcd37e1a454",
+				"collection": "decisions",
+				"type": "decision",
+				"display_name": "Amendement 2025Z05011 — Amendement van het lid Ellian over termijnoverschrijding bij onderzoekswensen",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"date": "2025-03-26",
+					"passed": false,
+					"subject": "Amendement van het lid Ellian over termijnoverschrijding bij onderzoekswensen"
+				}
+			},
+			{
+				"id": "decisions/decision_5ac3b781_ec0d_4039_84eb_252d912514e7",
+				"key": "decision_5ac3b781_ec0d_4039_84eb_252d912514e7",
+				"collection": "decisions",
+				"type": "decision",
+				"display_name": "Motie 2025Z05155 — Motie van het lid Ellian over effectieve remedies of rechtsmiddelen voor slachtoffers in de tweede aanvullingswet ",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"date": "2025-03-26",
+					"passed": true,
+					"subject": "Motie van het lid Ellian over effectieve remedies of rechtsmiddelen voor slachtoffers in de tweede aanvullingswet "
+				}
+			},
+			{
+				"id": "decisions/decision_b118b626_9f81_4bd5_abdd_76bc07e788bb",
+				"key": "decision_b118b626_9f81_4bd5_abdd_76bc07e788bb",
+				"collection": "decisions",
+				"type": "decision",
+				"display_name": "Motie 2025Z05163 — Motie van het lid El Abassi over alle adviezen van de Autoriteit Persoonsgegevens overnemen",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"date": "2025-03-26",
+					"passed": true,
+					"subject": "Motie van het lid El Abassi over alle adviezen van de Autoriteit Persoonsgegevens overnemen"
+				}
+			},
+			{
+				"id": "decisions/decision_5f5ba637_3502_4b76_82ff_9c61be074054",
+				"key": "decision_5f5ba637_3502_4b76_82ff_9c61be074054",
+				"collection": "decisions",
+				"type": "decision",
+				"display_name": "Amendement 2025Z05018 — Amendement van het lid Emiel van Dijk over het verlagen van de grens voor strafbeschikkingen naar maximaal drie jaar",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"date": "2025-03-26",
+					"passed": true,
+					"subject": "Amendement van het lid Emiel van Dijk over het verlagen van de grens voor strafbeschikkingen naar maximaal drie jaar"
+				}
+			},
+			{
+				"id": "decisions/decision_5c923780_6177_4c36_99ed_0ec524000266",
+				"key": "decision_5c923780_6177_4c36_99ed_0ec524000266",
+				"collection": "decisions",
+				"type": "decision",
+				"display_name": "Amendement 2025Z03732 — Gewijzigd amendement van het lid Sneller ter vervanging van nr. 14 over een inspanningsverplichting voor de officier van justitie voor het realiseren van alternatieven voor voorlopige hechtenis",
+				"labels": ["TK"],
+				"relation": "ABOUT",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"date": "2025-03-26",
+					"passed": false,
+					"subject": "Gewijzigd amendement van het lid Sneller ter vervanging van nr. 14 over een inspanningsverplichting voor de officier van justitie voor het realiseren van alternatieven voor voorlopige hechtenis"
+				}
+			},
+			{
+				"id": "cases/6a8a38aa_2cfa_45fb_82bf_09d21b0ce6ae",
+				"key": "6a8a38aa_2cfa_45fb_82bf_09d21b0ce6ae",
+				"collection": "cases",
+				"type": "case",
+				"display_name": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"number": "2025Z05550",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)"
+				}
+			},
+			{
+				"id": "cases/9e8d2f39_80ae_4565_a9fe_0a7954c6ee3b",
+				"key": "9e8d2f39_80ae_4565_a9fe_0a7954c6ee3b",
+				"collection": "cases",
+				"type": "case",
+				"display_name": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"number": "2025Z03942",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)"
+				}
+			},
+			{
+				"id": "cases/1a9fb6e2_3b11_430d_9827_10fb763e50d7",
+				"key": "1a9fb6e2_3b11_430d_9827_10fb763e50d7",
+				"collection": "cases",
+				"type": "case",
+				"display_name": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"number": "2025Z05156",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)"
+				}
+			},
+			{
+				"id": "cases/111cd407_5949_4639_a4c3_1186437618a7",
+				"key": "111cd407_5949_4639_a4c3_1186437618a7",
+				"collection": "cases",
+				"type": "case",
+				"display_name": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"number": "2025Z00537",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)"
+				}
+			},
+			{
+				"id": "cases/1ac4a6a9_c362_4341_9fca_15042de1f575",
+				"key": "1ac4a6a9_c362_4341_9fca_15042de1f575",
+				"collection": "cases",
+				"type": "case",
+				"display_name": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"number": "2024Z21735",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)"
+				}
+			},
+			{
+				"id": "cases/0fb2e0db_f031_4fc9_90d5_1ea2b2acab41",
+				"key": "0fb2e0db_f031_4fc9_90d5_1ea2b2acab41",
+				"collection": "cases",
+				"type": "case",
+				"display_name": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"number": "2025Z01104",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)"
+				}
+			},
+			{
+				"id": "documents/12297518_a4f4_4c52_b549_01a556949587",
+				"key": "12297518_a4f4_4c52_b549_01a556949587",
+				"collection": "documents",
+				"type": "document",
+				"display_name": "Kamerstuk 36327, nr. 65 — Motie: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK", "Kamerstuk"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Motie",
+					"date": "2025-03-19",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+					"subject": "Motie van het lid Ellian over effectieve remedies of rechtsmiddelen voor slachtoffers in de tweede aanvullingswet "
+				}
+			},
+			{
+				"id": "documents/428526b0_3888_46ed_8ed7_09bba8a6532e",
+				"key": "428526b0_3888_46ed_8ed7_09bba8a6532e",
+				"collection": "documents",
+				"type": "document",
+				"display_name": "Kamerstuk 36327, nr. 39 — Amendement (gewijzigd/nader/vervangend): Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK", "Kamerstuk"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Amendement (gewijzigd/nader/vervangend)",
+					"date": "2025-03-03",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+					"subject": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 28 over het gebruik van videoconferentie als hoofdregel bij verdachten in EBI's en AIT's"
+				}
+			},
+			{
+				"id": "documents/7364ff6d_5343_4511_b852_0ac53f8ef3f1",
+				"key": "7364ff6d_5343_4511_b852_0ac53f8ef3f1",
+				"collection": "documents",
+				"type": "document",
+				"display_name": "Kamerstuk 36327, nr. 14 — Amendement: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK", "Kamerstuk"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Amendement",
+					"date": "2024-12-19",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+					"subject": "Amendement van het lid Sneller over een inspanningsverplichting voor de officier van justitie voor het realiseren van alternatieven voor voorlopige hechtenis"
+				}
+			},
+			{
+				"id": "documents/a85ab347_b03f_4bab_8042_0b6a8a3637db",
+				"key": "a85ab347_b03f_4bab_8042_0b6a8a3637db",
+				"collection": "documents",
+				"type": "document",
+				"display_name": "Kamerstuk 36327, nr. 43 — Amendement (gewijzigd/nader/vervangend): Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK", "Kamerstuk"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Amendement (gewijzigd/nader/vervangend)",
+					"date": "2025-03-03",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+					"subject": "Gewijzigd amendement van het lid Ellian ter vervanging van nr. 23 over schorsing van het onderzoek bij niet-verschijnen van de ouder"
+				}
+			},
+			{
+				"id": "documents/5817d753_c684_4eec_9ca9_0bd5feebfdad",
+				"key": "5817d753_c684_4eec_9ca9_0bd5feebfdad",
+				"collection": "documents",
+				"type": "document",
+				"display_name": "Kamerstuk 36327, nr. 23 — Amendement: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK", "Kamerstuk"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Amendement",
+					"date": "2025-01-23",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+					"subject": "Amendement van het lid Ellian over de noodzaak van een deugdelijke motivering als de rechter geen medebrenging van de ouder beveelt"
+				}
+			},
+			{
+				"id": "documents/c5fc1fdd_d3a8_4801_8c2d_0c91c97fd3d6",
+				"key": "c5fc1fdd_d3a8_4801_8c2d_0c91c97fd3d6",
+				"collection": "documents",
+				"type": "document",
+				"display_name": "Kamerstuk 36327, nr. 34 — Amendement: Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+				"labels": ["TK", "Kamerstuk"],
+				"relation": "PART_OF",
+				"direction": "inbound",
+				"confidence": null,
+				"props": {
+					"kind": "Amendement",
+					"date": "2025-01-30",
+					"title": "Vaststelling van het nieuwe Wetboek van Strafvordering (Wetboek van Strafvordering)",
+					"subject": "Amendement van het lid Helder over de aanhouding van de verdachte"
+				}
+			}
+		]
+	}
+}
