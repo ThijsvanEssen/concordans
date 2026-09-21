@@ -36,17 +36,16 @@
 			<h2 class="section-title">Cookies</h2>
 			<p>
 				Concordans gebruikt uitsluitend functionele cookies die noodzakelijk zijn voor de werking
-				van de applicatie, zoals de weergavevoorkeur. Er worden geen analytische of
-				marketingcookies gebruikt.
+				van de applicatie, zoals de weergavevoorkeur. Er worden geen analytische of marketingcookies
+				gebruikt.
 			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Contact</h2>
 			<p>
-				Vragen over de verwerking van persoonsgegevens gaan via het <a
-					href="/contact"
-					class="cite">contactformulier</a
+				Vragen over de verwerking van persoonsgegevens gaan via het <a href="/contact" class="cite"
+					>contactformulier</a
 				>.
 			</p>
 		</div>
@@ -54,7 +53,6 @@
 		<div class="updated">Laatste wijziging: mei 2026</div>
 	</div>
 </div>
-
 
 <style>
 	.page-wrap {

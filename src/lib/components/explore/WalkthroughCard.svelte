@@ -20,13 +20,21 @@
 			if (localStorage.getItem(STORAGE_KEY) === '1') return;
 			// Vertraag iets zodat de canvas eerst rendert; we vragen geen
 			// aandacht van iemand die nog naar de focus aan het kijken is.
-			setTimeout(() => { visible = true; }, 900);
-		} catch { /* ignore */ }
+			setTimeout(() => {
+				visible = true;
+			}, 900);
+		} catch {
+			/* ignore */
+		}
 	});
 
 	function dismiss() {
 		visible = false;
-		try { localStorage.setItem(STORAGE_KEY, '1'); } catch { /* ignore */ }
+		try {
+			localStorage.setItem(STORAGE_KEY, '1');
+		} catch {
+			/* ignore */
+		}
 	}
 </script>
 
@@ -43,15 +51,22 @@
 			</li>
 			<li>
 				<span class="walkthrough__num">2</span>
-				<span><strong>Verdiepen.</strong> Netwerk naast de leestekst, met citaten in de rechterkolom.</span>
+				<span
+					><strong>Verdiepen.</strong> Netwerk naast de leestekst, met citaten in de rechterkolom.</span
+				>
 			</li>
 			<li>
 				<span class="walkthrough__num">3</span>
-				<span><strong>Lezen.</strong> Volledige tekst met inhoudsopgave en citaten in de marge.</span>
+				<span
+					><strong>Lezen.</strong> Volledige tekst met inhoudsopgave en citaten in de marge.</span
+				>
 			</li>
 			<li>
 				<span class="walkthrough__num">4</span>
-				<span><strong>Index.</strong> Blader door één categorie: wetten, arresten, dossiers, commissies, kamerleden, fracties of stemmingen.</span>
+				<span
+					><strong>Index.</strong> Blader door één categorie: wetten, arresten, dossiers, commissies,
+					kamerleden, fracties of stemmingen.</span
+				>
 			</li>
 		</ol>
 		<p class="walkthrough__hint">
@@ -82,8 +97,14 @@
 	}
 
 	@keyframes walkthrough-in {
-		from { opacity: 0; transform: translateY(8px); }
-		to   { opacity: 1; transform: translateY(0); }
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 
 	.walkthrough__head {
@@ -110,9 +131,14 @@
 		color: var(--fg-3);
 		padding: 2px 6px;
 		border-radius: 2px;
-		transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+		transition:
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease);
 	}
-	.walkthrough__close:hover { color: var(--ink); background: var(--paper-2); }
+	.walkthrough__close:hover {
+		color: var(--ink);
+		background: var(--paper-2);
+	}
 
 	.walkthrough__steps {
 		list-style: none;
@@ -169,9 +195,14 @@
 		text-decoration: none;
 		border-bottom: 1px solid var(--rule);
 		padding-bottom: 1px;
-		transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+		transition:
+			color var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
 	}
-	.walkthrough__more:hover { color: var(--ink); border-bottom-color: var(--ink); }
+	.walkthrough__more:hover {
+		color: var(--ink);
+		border-bottom-color: var(--ink);
+	}
 
 	.walkthrough__got-it {
 		background: var(--ink);
@@ -184,7 +215,9 @@
 		cursor: pointer;
 		transition: background var(--dur-1) var(--ease);
 	}
-	.walkthrough__got-it:hover { background: var(--accent); }
+	.walkthrough__got-it:hover {
+		background: var(--accent);
+	}
 
 	@media (max-width: 640px) {
 		.walkthrough {

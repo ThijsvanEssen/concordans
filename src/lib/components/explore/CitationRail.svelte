@@ -75,7 +75,7 @@
 								bwb_id: data.instrument.bwb_id,
 								key: data.instrument.key,
 								citation_title: data.instrument.citation_title,
-								title: data.instrument.title,
+								title: data.instrument.title
 							});
 						}
 						view = { kind: 'article', data };
@@ -100,7 +100,7 @@
 								bwb_id: a.instrument.bwb_id ?? a.bwb_id,
 								key: a.instrument.key,
 								citation_title: a.instrument.citation_title,
-								title: a.instrument.title,
+								title: a.instrument.title
 							});
 						} else if (a.bwb_id) {
 							recordInstrument({ bwb_id: a.bwb_id });
@@ -204,7 +204,9 @@
 			d.citations && d.citations.length > 0 ? groupCitationTargets(d.citations) : []}
 		{@const hasJudgments = d.judgments && d.judgments.length > 0}
 
-		<p class="rail-lede">Verbindingen tonen welke artikelen naar dit artikel verwijzen en welke uitspraken het citeren.</p>
+		<p class="rail-lede">
+			Verbindingen tonen welke artikelen naar dit artikel verwijzen en welke uitspraken het citeren.
+		</p>
 
 		{#if citationGroups.length > 0}
 			<section class="rail-section">
@@ -266,8 +268,8 @@
 				<h3 class="rail-section-title rail-section-title--incoming">Aangehaald door</h3>
 				<ul class="rail-list">
 					{#each d.judgments as j, i (i)}
-						{@const jMeta = (j as Record<string, unknown>)['judgment_metadata'] as Record<string, string> | undefined}
-						{@const jStub = Boolean((j as Record<string, unknown>)['stub'])}
+						{@const jMeta = (j as Record)['judgment_metadata'] as Record | undefined}
+						{@const jStub = Boolean((j as Record)['stub'])}
 						<li class="rail-item" class:rail-item--stub={jStub}>
 							<button
 								type="button"
@@ -283,7 +285,9 @@
 									{#if jMeta?.['court'] || j.ecli}
 										<span class="rail-cite">
 											{#if jMeta?.['court']}
-												{jMeta['court']}{jMeta['date'] ? ` · ${new Date(jMeta['date']).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}
+												{jMeta['court']}{jMeta['date']
+													? ` · ${new Date(jMeta['date']).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}`
+													: ''}
 											{:else if j.ecli}
 												{@const m = j.ecli.match(/(?:ECLI:)?(?:NL:)?([^:]+):(\d{4})/)}
 												{#if m}{m[1]} · {m[2]}{/if}
@@ -307,24 +311,22 @@
 			d.articles && d.articles.length > 0 ? groupArticleRelations(d.articles) : []}
 		{@const citedJudgments = d.cited_judgments ?? []}
 		{@const instNames = (() => {
-			const m = new Map<string, string>();
+			const m = new Map();
 			for (const a of d.articles) {
 				const bwb = getLawIdFromRecord(a);
 				if (!m.has(bwb)) {
 					const inst = a.instrument;
 					const name =
-						inst?.citation_title ??
-						inst?.title ??
-						inst?.shorthand ??
-						inst?.display_name ??
-						null;
+						inst?.citation_title ?? inst?.title ?? inst?.shorthand ?? inst?.display_name ?? null;
 					if (name) m.set(bwb, name);
 				}
 			}
 			return m;
 		})()}
 
-		<p class="rail-lede">Verbindingen tonen welke artikelen dit arrest aanhaalt en welke andere uitspraken het citeren.</p>
+		<p class="rail-lede">
+			Verbindingen tonen welke artikelen dit arrest aanhaalt en welke andere uitspraken het citeren.
+		</p>
 
 		{#if articleGroups.length > 0}
 			<section class="rail-section">
@@ -339,7 +341,9 @@
 							aria-expanded={!collapsed.has(bwb)}
 						>
 							<span class="law-chevron" class:law-chevron--closed={collapsed.has(bwb)}>›</span>
-							<span class="law-heading-name">{shortLawName(instNames.get(bwb) ?? lawName(bwb))}</span>
+							<span class="law-heading-name"
+								>{shortLawName(instNames.get(bwb) ?? lawName(bwb))}</span
+							>
 							<span class="law-count">{articles.length}</span>
 						</button>
 
@@ -376,8 +380,17 @@
 				<h3 class="rail-section-title">Citeert uitspraken</h3>
 				<ul class="rail-list">
 					{#each citedJudgments as cj, idx (idx)}
-						{@const cjLabel = cj.shorthand ?? (cj.ecli ? formatEcliLabel(cj.ecli) : null) ?? cj.display_name ?? 'Uitspraak'}
-						{@const cjEcliShort = cj.ecli ? (() => { const m = cj.ecli.replace(/^ECLI:/i,'').match(/^NL:([^:]+):(\d{4})/); return m ? `${m[1]} ${m[2]}` : null; })() : null}
+						{@const cjLabel =
+							cj.shorthand ??
+							(cj.ecli ? formatEcliLabel(cj.ecli) : null) ??
+							cj.display_name ??
+							'Uitspraak'}
+						{@const cjEcliShort = cj.ecli
+							? (() => {
+									const m = cj.ecli.replace(/^ECLI:/i, '').match(/^NL:([^:]+):(\d{4})/);
+									return m ? `${m[1]} ${m[2]}` : null;
+								})()
+							: null}
 						<li class="rail-item">
 							<button
 								type="button"
@@ -488,12 +501,7 @@
 		height: 10px;
 		width: 55%;
 		border-radius: var(--r-1);
-		background: linear-gradient(
-			90deg,
-			var(--paper-3) 25%,
-			var(--paper-4) 50%,
-			var(--paper-3) 75%
-		);
+		background: linear-gradient(90deg, var(--paper-3) 25%, var(--paper-4) 50%, var(--paper-3) 75%);
 		background-size: 200% 100%;
 		animation: shimmer 1.4s infinite;
 	}
@@ -501,12 +509,7 @@
 	.skeleton-name {
 		height: 13px;
 		border-radius: var(--r-1);
-		background: linear-gradient(
-			90deg,
-			var(--paper-3) 25%,
-			var(--paper-4) 50%,
-			var(--paper-3) 75%
-		);
+		background: linear-gradient(90deg, var(--paper-3) 25%, var(--paper-4) 50%, var(--paper-3) 75%);
 		background-size: 200% 100%;
 		animation: shimmer 1.4s infinite;
 	}
@@ -710,7 +713,9 @@
 		list-style: none;
 		user-select: none;
 	}
-	.rail-legend__toggle::-webkit-details-marker { display: none; }
+	.rail-legend__toggle::-webkit-details-marker {
+		display: none;
+	}
 	.rail-legend__toggle::before {
 		content: '?  ';
 		color: var(--fg-4);

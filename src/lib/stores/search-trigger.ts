@@ -6,9 +6,9 @@ import { getContext, setContext } from 'svelte';
 const KEY = Symbol('search-opener');
 
 export function provideSearchOpener(open: () => void): void {
-  setContext(KEY, open);
+	setContext(KEY, open);
 }
 
 export function useSearchOpener(): () => void {
-  return getContext<() => void>(KEY) ?? (() => {});
+	return getContext<() => void>(KEY) ?? (() => {});
 }

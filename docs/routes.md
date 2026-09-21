@@ -4,38 +4,38 @@ Every URL the app responds to, what it does, and what query params it honours. T
 
 ## Map
 
-| URL | Purpose |
-|---|---|
-| `/` | Landing page with hero, search prompt, recent activity |
-| `/explore` | The verkenner — graph + readers (the main app surface) |
-| `/search` | Full search results page (target of cmd-K "+ meer →" deep links) |
-| `/docs` | End-user documentation (Dutch, in-app) |
-| `/docs/methode` | Methodology and architectural decisions |
-| `/docs/sneltoetsen` | Keyboard shortcut reference |
-| `/api` | Public API documentation |
-| `/nodes/[collection]/[key]` | Canonical permalink for any node |
-| `/publications` | Publication index (filterable list) |
-| `/publications/[key]` | Single publication reader |
-| `/alpha` | Status of the alpha release |
-| `/colofon` | Imprint |
-| `/contact` | Contact info |
-| `/privacy` | Privacy notice |
-| `/voorwaarden` | Terms of use |
+| URL                         | Purpose                                                          |
+| --------------------------- | ---------------------------------------------------------------- |
+| `/`                         | Landing page with hero, search prompt, recent activity           |
+| `/explore`                  | The verkenner — graph + readers (the main app surface)           |
+| `/search`                   | Full search results page (target of cmd-K "+ meer →" deep links) |
+| `/docs`                     | End-user documentation (Dutch, in-app)                           |
+| `/docs/methode`             | Methodology and architectural decisions                          |
+| `/docs/sneltoetsen`         | Keyboard shortcut reference                                      |
+| `/api`                      | Public API documentation                                         |
+| `/nodes/[collection]/[key]` | Canonical permalink for any node                                 |
+| `/publications`             | Publication index (filterable list)                              |
+| `/publications/[key]`       | Single publication reader                                        |
+| `/alpha`                    | Status of the alpha release                                      |
+| `/colofon`                  | Imprint                                                          |
+| `/contact`                  | Contact info                                                     |
+| `/privacy`                  | Privacy notice                                                   |
+| `/voorwaarden`              | Terms of use                                                     |
 
 ## `/explore` — query contract
 
 The richest route. All state that isn't kept in the in-memory `GraphStore` rides on query params.
 
-| Param | Values | Default | Effect |
-|---|---|---|---|
-| `mode` | `graph`, `split`, `read`, `index` | `graph` | Which surface to show. See "Modes" below. |
-| `focus` | `{collection}/{key}` (e.g. `instrument_articles/bwbr0001854_140`) | — | Node to focus. Triggers `store.expandNode` on mount/change. |
-| `overlay` | `heat:N`, `open`, `dossier:X` | — | Activates an overlay. See [`overlays.md`](overlays.md). |
-| `seed` | `dossier:X`, `commissie:slug`, `lid:key`, `fractie:key` | — | One-shot graph bootstrap. Consumed and stripped from URL on success. |
-| `wet` | `BWBR...` | — | Read mode: which law to load whole-text. Inferred from `focus` if absent. |
-| `all` | `1`, `unbound` | — | "Show all neighbours" toggle; `unbound` removes the convergence prune cap. |
-| `kind` | `wetten`, `arresten`, `dossiers`, `commissies`, `leden`, `fracties`, `stemmingen` | `dossiers` | Index-mode category. |
-| `q`, `fase`, `has_stage`, `traject_kind`, `aangenomen`, `from`, `to`, `dossier`, `partij` | filter values | — | Index-mode filters. Which apply depends on `kind`. |
+| Param                                                                                     | Values                                                                            | Default    | Effect                                                                     |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
+| `mode`                                                                                    | `graph`, `split`, `read`, `index`                                                 | `graph`    | Which surface to show. See "Modes" below.                                  |
+| `focus`                                                                                   | `{collection}/{key}` (e.g. `instrument_articles/bwbr0001854_140`)                 | —          | Node to focus. Triggers `store.expandNode` on mount/change.                |
+| `overlay`                                                                                 | `heat:N`, `open`, `dossier:X`                                                     | —          | Activates an overlay. See [`overlays.md`](overlays.md).                    |
+| `seed`                                                                                    | `dossier:X`, `commissie:slug`, `lid:key`, `fractie:key`                           | —          | One-shot graph bootstrap. Consumed and stripped from URL on success.       |
+| `wet`                                                                                     | `BWBR...`                                                                         | —          | Read mode: which law to load whole-text. Inferred from `focus` if absent.  |
+| `all`                                                                                     | `1`, `unbound`                                                                    | —          | "Show all neighbours" toggle; `unbound` removes the convergence prune cap. |
+| `kind`                                                                                    | `wetten`, `arresten`, `dossiers`, `commissies`, `leden`, `fracties`, `stemmingen` | `dossiers` | Index-mode category.                                                       |
+| `q`, `fase`, `has_stage`, `traject_kind`, `aangenomen`, `from`, `to`, `dossier`, `partij` | filter values                                                                     | —          | Index-mode filters. Which apply depends on `kind`.                         |
 
 ### Modes
 
@@ -55,11 +55,11 @@ Mode switches don't unmount the `GraphStore` — the graph data and camera state
 3. Call the appropriate loader (`store.loadDossierGraph`, `loadCommissieGraph`, etc.).
 4. `goto` with `replaceState: true` to commit the URL change.
 
-The result is a deep link that produces a *graph* in the user's session but doesn't persist as part of the durable URL.
+The result is a deep link that produces a _graph_ in the user's session but doesn't persist as part of the durable URL.
 
 ### Focus lifecycle
 
-`?focus=` is *not* one-shot — it stays in the URL. The handler:
+`?focus=` is _not_ one-shot — it stays in the URL. The handler:
 
 1. On mount, parse `focus` → `{ collection, key }`.
 2. Call `store.expandNode(collection, key)`, which fetches `/api/nodes/expand` (or the focus' canonical detail endpoint) and adds nodes/edges.
@@ -73,9 +73,9 @@ Subsequent in-app navigation (clicking a node) calls `store.focusNode(id)` with 
 
 ## `/search` — query contract
 
-| Param | Effect |
-|---|---|
-| `q` | The search string. Empty → empty page. |
+| Param | Effect                                 |
+| ----- | -------------------------------------- |
+| `q`   | The search string. Empty → empty page. |
 
 Plus hash anchors for direct linking to a subgroup: `#articles`, `#instruments`, `#judgments`, `#dossiers`, `#commissies`, `#fracties`, `#leden`, `#publications`. The cmd-K overlay's "+ N meer →" rows use these.
 
@@ -91,10 +91,10 @@ If you add a new node-kind, the permalink is automatically supported as long as 
 
 Two views in one route:
 
-| URL | Effect |
-|---|---|
-| `/publications` | Filterable index of all publications |
-| `/publications/[key]` | Single publication reader |
+| URL                   | Effect                               |
+| --------------------- | ------------------------------------ |
+| `/publications`       | Filterable index of all publications |
+| `/publications/[key]` | Single publication reader            |
 
 The index supports filtering by `soort` (kind of publication: Voorstel van wet, Memorie van toelichting, …) using the `SoortChipFilter` component. Filter state is component-local — not in the URL. (If we ever need shareable filter state, move it to `?soort=`.)
 

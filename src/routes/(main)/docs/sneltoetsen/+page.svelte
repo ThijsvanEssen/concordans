@@ -95,7 +95,6 @@
 	</div>
 </div>
 
-
 <style>
 	.page-wrap {
 		padding: 80px 0 120px;

@@ -8,12 +8,12 @@ Things that are wrong or surprising but aren't bugs to fix on the frontend. Docu
 
 **Root cause:** Backend endpoint disagreement.
 
-| Endpoint | Drives | For art. 140 Sv reports |
-|---|---|---|
-| `GET /api/nodes/in-flux` | Mutatie badges | `count: 2` |
-| `GET /api/articles/{bwb}/{n}/in-flux` | Reader badge | `open_dossier_count: 0` |
-| `GET /api/articles/{bwb}/{n}/legislative-history` | Reader chips | `entries: []` |
-| Sum of `/api/dossiers/{X}/mutations.edges[].to_id` over first 50 open dossiers | Dossier-scoped overlay | `0 hits` |
+| Endpoint                                                                       | Drives                 | For art. 140 Sv reports |
+| ------------------------------------------------------------------------------ | ---------------------- | ----------------------- |
+| `GET /api/nodes/in-flux`                                                       | Mutatie badges         | `count: 2`              |
+| `GET /api/articles/{bwb}/{n}/in-flux`                                          | Reader badge           | `open_dossier_count: 0` |
+| `GET /api/articles/{bwb}/{n}/legislative-history`                              | Reader chips           | `entries: []`           |
+| Sum of `/api/dossiers/{X}/mutations.edges[].to_id` over first 50 open dossiers | Dossier-scoped overlay | `0 hits`                |
 
 Multiple BWBR0001854 (Wetboek van Strafvordering) articles show the same pattern. The bulk endpoint over-reports.
 
@@ -29,13 +29,13 @@ Multiple BWBR0001854 (Wetboek van Strafvordering) articles show the same pattern
 
 **What does work:**
 
-| Query | Hits |
-|---|---|
-| `36881` (kamerstuknummer) | 1 |
-| `Huisvestingswet 2014` | 4 |
-| `Woningwet` | 4 |
-| `volkshuisvesting` | 0 |
-| `versterking regie volkshuisvesting` | 0 |
+| Query                                | Hits |
+| ------------------------------------ | ---- |
+| `36881` (kamerstuknummer)            | 1    |
+| `Huisvestingswet 2014`               | 4    |
+| `Woningwet`                          | 4    |
+| `volkshuisvesting`                   | 0    |
+| `versterking regie volkshuisvesting` | 0    |
 
 **Frontend behaviour:** none. The cmd-K and `/search` page both pass the user's literal query through to `/api/search`. The fix is backend (extend the index to include `titel`, ideally with stemming/tokenisation).
 
@@ -63,13 +63,13 @@ This is by design — if URL state implied "restore the graph", we'd have to ser
 
 They share data but have different policies. Easy to wander into one expecting the other:
 
-|  | cmd-K (`SearchOverlay.svelte`) | `/search` page |
-|---|---|---|
-| `limit` param to `/api/search` | `FETCH_LIMIT = 25` (per type) | `50` (per type) |
-| Rendering | sliced to `RENDER_CAP` per type | renders everything fetched |
-| Truncation hint | `+ N meer →` row per group | none — page shows all |
-| Anchor support | links to `/search?q=…#articles` etc. | hosts the `id="articles"` anchors |
-| Keyboard nav | yes (ArrowDown/Up/Enter on rows) | no |
+|                                | cmd-K (`SearchOverlay.svelte`)       | `/search` page                    |
+| ------------------------------ | ------------------------------------ | --------------------------------- |
+| `limit` param to `/api/search` | `FETCH_LIMIT = 25` (per type)        | `50` (per type)                   |
+| Rendering                      | sliced to `RENDER_CAP` per type      | renders everything fetched        |
+| Truncation hint                | `+ N meer →` row per group           | none — page shows all             |
+| Anchor support                 | links to `/search?q=…#articles` etc. | hosts the `id="articles"` anchors |
+| Keyboard nav                   | yes (ArrowDown/Up/Enter on rows)     | no                                |
 
 If you raise one limit, consider whether the other should follow.
 
@@ -87,7 +87,7 @@ Workaround when you'd want a per-group const: inline the call twice in the `{#if
 
 ```svelte
 {#if moreOf('articles') !== 0}
-  <a ...>{moreLabel(moreOf('articles'))} wetsartikelen →</a>
+	<a ...>{moreLabel(moreOf('articles'))} wetsartikelen →</a>
 {/if}
 ```
 

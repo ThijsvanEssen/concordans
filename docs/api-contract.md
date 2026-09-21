@@ -1,7 +1,7 @@
 # API Contract
 
 - The canonical API contract lives at the repository root in `openapi.json`.
-- Frontend types derive directly (manually in `src/lib/api/generated/openapi-types.ts`) from that schema, and consumers use the 
+- Frontend types derive directly (manually in `src/lib/api/generated/openapi-types.ts`) from that schema, and consumers use the
   simpler aliases in `src/lib/api/types.ts`.
 - Client helpers (`src/lib/api/*`) rely on those typed DTOs and call the documented paths with the same query parameters.
 

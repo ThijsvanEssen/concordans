@@ -50,11 +50,11 @@ Gebruik deze zinnen, constructies en woorden nooit:
 
 ### Vaste terminologie
 
-| Vermijd | Gebruik |
-|---|---|
-| knoop / node | bron |
-| relatie / edge / link | verbinding |
-| graaf | netwerk (of: het geheel van bronnen en verbindingen) |
+| Vermijd               | Gebruik                                              |
+| --------------------- | ---------------------------------------------------- |
+| knoop / node          | bron                                                 |
+| relatie / edge / link | verbinding                                           |
+| graaf                 | netwerk (of: het geheel van bronnen en verbindingen) |
 
 ## Structuur
 

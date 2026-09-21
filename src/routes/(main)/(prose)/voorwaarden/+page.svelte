@@ -16,10 +16,10 @@
 		<div class="section">
 			<h2 class="section-title">Geen juridisch advies</h2>
 			<p>
-				De informatie op Concordans is bedoeld ter ondersteuning van juridisch onderzoek.
-				Concordans biedt geen juridisch advies. Verbindingen worden machinaal geëxtraheerd en
-				kunnen onjuistheden bevatten. Raadpleeg voor juridische beslissingen altijd de officiële
-				bronnen en een bevoegde jurist.
+				De informatie op Concordans is bedoeld ter ondersteuning van juridisch onderzoek. Concordans
+				biedt geen juridisch advies. Verbindingen worden machinaal geëxtraheerd en kunnen
+				onjuistheden bevatten. Raadpleeg voor juridische beslissingen altijd de officiële bronnen en
+				een bevoegde jurist.
 			</p>
 		</div>
 
@@ -28,8 +28,8 @@
 			<p>
 				De wetteksten en rechterlijke uitspraken zijn afkomstig van openbare overheidsbronnen en
 				vallen onder het publieke domein. De structuur, visualisaties en afgeleide gegevens van
-				Concordans mogen worden gebruikt voor onderzoek en educatieve doeleinden, mits de bron
-				wordt vermeld.
+				Concordans mogen worden gebruikt voor onderzoek en educatieve doeleinden, mits de bron wordt
+				vermeld.
 			</p>
 		</div>
 
@@ -37,23 +37,21 @@
 			<h2 class="section-title">Beschikbaarheid</h2>
 			<p>
 				Concordans wordt aangeboden zonder garantie van ononderbroken beschikbaarheid. De
-				werkomgeving kan worden gewijzigd, opgeschort of beëindigd zonder voorafgaande
-				kennisgeving.
+				werkomgeving kan worden gewijzigd, opgeschort of beëindigd zonder voorafgaande kennisgeving.
 			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Aansprakelijkheidsbeperking</h2>
 			<p>
-				De maker van Concordans aanvaardt geen aansprakelijkheid voor schade die voortvloeit uit
-				het gebruik van de applicatie of de daarin opgenomen informatie.
+				De maker van Concordans aanvaardt geen aansprakelijkheid voor schade die voortvloeit uit het
+				gebruik van de applicatie of de daarin opgenomen informatie.
 			</p>
 		</div>
 
 		<div class="updated">Laatste wijziging: mei 2026</div>
 	</div>
 </div>
-
 
 <style>
 	.page-wrap {

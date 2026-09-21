@@ -10,19 +10,19 @@ import type { NodeDisplayData, EdgeDisplayData } from 'sigma/types';
 // Mirrors sigma's internal floatColor helper.
 // sigma exports it through @sigma/utils but it's simpler to inline.
 function floatColor(color: string): number {
-  let c = color.replace('#', '');
-  if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
-  const r = parseInt(c.slice(0, 2), 16);
-  const g = parseInt(c.slice(2, 4), 16);
-  const b = parseInt(c.slice(4, 6), 16);
-  const a = c.length >= 8 ? parseInt(c.slice(6, 8), 16) : 255;
-  return (a << 24 | b << 16 | g << 8 | r) >>> 0;
+	let c = color.replace('#', '');
+	if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+	const r = parseInt(c.slice(0, 2), 16);
+	const g = parseInt(c.slice(2, 4), 16);
+	const b = parseInt(c.slice(4, 6), 16);
+	const a = c.length >= 8 ? parseInt(c.slice(6, 8), 16) : 255;
+	return ((a << 24) | (b << 16) | (g << 8) | r) >>> 0;
 }
 
 // ── Shaders ───────────────────────────────────────────────────────────────────
 // Identical to sigma's EdgeClampedProgram vertex shader but adds the
 // `v_positionCoef` varying so the fragment shader can implement dashing.
-const VERTEX = /* glsl */`
+const VERTEX = /* glsl */ `
 attribute vec4 a_id;
 attribute vec4 a_color;
 attribute vec2 a_normal;
@@ -97,7 +97,7 @@ void main() {
 // colour on screen is exactly the colour we pass in, regardless of zoom or
 // line thickness. Trade-off: 1-pixel-stair edges when the camera moves, but
 // colour fidelity beats edge smoothness for the legend-matching requirement.
-const FRAGMENT = /* glsl */`
+const FRAGMENT = /* glsl */ `
 precision mediump float;
 
 varying vec4 v_color;
@@ -120,92 +120,108 @@ void main(void) {
 `;
 
 const UNIFORMS = [
-  'u_matrix', 'u_zoomRatio', 'u_sizeRatio', 'u_correctionRatio',
-  'u_pixelRatio', 'u_feather', 'u_minEdgeThickness', 'u_lengthToThicknessRatio',
+	'u_matrix',
+	'u_zoomRatio',
+	'u_sizeRatio',
+	'u_correctionRatio',
+	'u_pixelRatio',
+	'u_feather',
+	'u_minEdgeThickness',
+	'u_lengthToThicknessRatio'
 ] as const;
 
-type Uniform = typeof UNIFORMS[number];
+type Uniform = (typeof UNIFORMS)[number];
 
 // ── Program class ─────────────────────────────────────────────────────────────
 class DashedEdgeBodyProgram extends EdgeProgram<Uniform> {
-  getDefinition() {
-    return {
-      VERTICES: 6,
-      VERTEX_SHADER_SOURCE: VERTEX,
-      FRAGMENT_SHADER_SOURCE: FRAGMENT,
-      METHOD: WebGLRenderingContext.TRIANGLES,
-      UNIFORMS,
-      ATTRIBUTES: [
-        { name: 'a_positionStart', size: 2, type: WebGLRenderingContext.FLOAT },
-        { name: 'a_positionEnd',   size: 2, type: WebGLRenderingContext.FLOAT },
-        { name: 'a_normal',        size: 2, type: WebGLRenderingContext.FLOAT },
-        { name: 'a_color',  size: 4, type: WebGLRenderingContext.UNSIGNED_BYTE, normalized: true },
-        { name: 'a_id',     size: 4, type: WebGLRenderingContext.UNSIGNED_BYTE, normalized: true },
-        { name: 'a_radius', size: 1, type: WebGLRenderingContext.FLOAT },
-      ],
-      CONSTANT_ATTRIBUTES: [
-        { name: 'a_positionCoef', size: 1, type: WebGLRenderingContext.FLOAT },
-        { name: 'a_normalCoef',   size: 1, type: WebGLRenderingContext.FLOAT },
-        { name: 'a_radiusCoef',   size: 1, type: WebGLRenderingContext.FLOAT },
-      ],
-      CONSTANT_DATA: [
-        [0,  1,  0],
-        [0, -1,  0],
-        [1,  1,  1],
-        [1,  1,  1],
-        [0, -1,  0],
-        [1, -1, -1],
-      ],
-    };
-  }
+	getDefinition() {
+		return {
+			VERTICES: 6,
+			VERTEX_SHADER_SOURCE: VERTEX,
+			FRAGMENT_SHADER_SOURCE: FRAGMENT,
+			METHOD: WebGLRenderingContext.TRIANGLES,
+			UNIFORMS,
+			ATTRIBUTES: [
+				{ name: 'a_positionStart', size: 2, type: WebGLRenderingContext.FLOAT },
+				{ name: 'a_positionEnd', size: 2, type: WebGLRenderingContext.FLOAT },
+				{ name: 'a_normal', size: 2, type: WebGLRenderingContext.FLOAT },
+				{ name: 'a_color', size: 4, type: WebGLRenderingContext.UNSIGNED_BYTE, normalized: true },
+				{ name: 'a_id', size: 4, type: WebGLRenderingContext.UNSIGNED_BYTE, normalized: true },
+				{ name: 'a_radius', size: 1, type: WebGLRenderingContext.FLOAT }
+			],
+			CONSTANT_ATTRIBUTES: [
+				{ name: 'a_positionCoef', size: 1, type: WebGLRenderingContext.FLOAT },
+				{ name: 'a_normalCoef', size: 1, type: WebGLRenderingContext.FLOAT },
+				{ name: 'a_radiusCoef', size: 1, type: WebGLRenderingContext.FLOAT }
+			],
+			CONSTANT_DATA: [
+				[0, 1, 0],
+				[0, -1, 0],
+				[1, 1, 1],
+				[1, 1, 1],
+				[0, -1, 0],
+				[1, -1, -1]
+			]
+		};
+	}
 
-  processVisibleItem(
-    edgeIndex: number,
-    startIndex: number,
-    sourceData: NodeDisplayData,
-    targetData: NodeDisplayData,
-    data: EdgeDisplayData,
-  ): void {
-    const thickness = (data.size as number) || 1;
-    const x1 = sourceData.x, y1 = sourceData.y;
-    const x2 = targetData.x, y2 = targetData.y;
-    const color = floatColor((data.color as string) || '#000000');
+	processVisibleItem(
+		edgeIndex: number,
+		startIndex: number,
+		sourceData: NodeDisplayData,
+		targetData: NodeDisplayData,
+		data: EdgeDisplayData
+	): void {
+		const thickness = (data.size as number) || 1;
+		const x1 = sourceData.x,
+			y1 = sourceData.y;
+		const x2 = targetData.x,
+			y2 = targetData.y;
+		const color = floatColor((data.color as string) || '#000000');
 
-    const dx = x2 - x1, dy = y2 - y1;
-    const radius = (targetData.size as number) || 1;
-    let len = dx * dx + dy * dy;
-    let n1 = 0, n2 = 0;
-    if (len) {
-      len = 1 / Math.sqrt(len);
-      n1 = -dy * len * thickness;
-      n2 =  dx * len * thickness;
-    }
+		const dx = x2 - x1,
+			dy = y2 - y1;
+		const radius = (targetData.size as number) || 1;
+		let len = dx * dx + dy * dy;
+		let n1 = 0,
+			n2 = 0;
+		if (len) {
+			len = 1 / Math.sqrt(len);
+			n1 = -dy * len * thickness;
+			n2 = dx * len * thickness;
+		}
 
-    const arr = this.array;
-    arr[startIndex++] = x1;
-    arr[startIndex++] = y1;
-    arr[startIndex++] = x2;
-    arr[startIndex++] = y2;
-    arr[startIndex++] = n1;
-    arr[startIndex++] = n2;
-    arr[startIndex++] = color;
-    arr[startIndex++] = edgeIndex;
-    arr[startIndex++] = radius;
-  }
+		const arr = this.array;
+		arr[startIndex++] = x1;
+		arr[startIndex++] = y1;
+		arr[startIndex++] = x2;
+		arr[startIndex++] = y2;
+		arr[startIndex++] = n1;
+		arr[startIndex++] = n2;
+		arr[startIndex++] = color;
+		arr[startIndex++] = edgeIndex;
+		arr[startIndex++] = radius;
+	}
 
-  setUniforms(params: RenderParams, { gl, uniformLocations }: { gl: WebGLRenderingContext; uniformLocations: Record<string, WebGLUniformLocation> }): void {
-    gl.uniformMatrix3fv(uniformLocations['u_matrix'], false, params.matrix);
-    gl.uniform1f(uniformLocations['u_zoomRatio'],          params.zoomRatio);
-    gl.uniform1f(uniformLocations['u_sizeRatio'],          params.sizeRatio);
-    gl.uniform1f(uniformLocations['u_correctionRatio'],    params.correctionRatio);
-    gl.uniform1f(uniformLocations['u_pixelRatio'],         params.pixelRatio);
-    gl.uniform1f(uniformLocations['u_feather'],            params.antiAliasingFeather);
-    gl.uniform1f(uniformLocations['u_minEdgeThickness'],   params.minEdgeThickness);
-    gl.uniform1f(uniformLocations['u_lengthToThicknessRatio'], 2.5);
-  }
+	setUniforms(
+		params: RenderParams,
+		{
+			gl,
+			uniformLocations
+		}: { gl: WebGLRenderingContext; uniformLocations: Record<string, WebGLUniformLocation> }
+	): void {
+		gl.uniformMatrix3fv(uniformLocations['u_matrix'], false, params.matrix);
+		gl.uniform1f(uniformLocations['u_zoomRatio'], params.zoomRatio);
+		gl.uniform1f(uniformLocations['u_sizeRatio'], params.sizeRatio);
+		gl.uniform1f(uniformLocations['u_correctionRatio'], params.correctionRatio);
+		gl.uniform1f(uniformLocations['u_pixelRatio'], params.pixelRatio);
+		gl.uniform1f(uniformLocations['u_feather'], params.antiAliasingFeather);
+		gl.uniform1f(uniformLocations['u_minEdgeThickness'], params.minEdgeThickness);
+		gl.uniform1f(uniformLocations['u_lengthToThicknessRatio'], 2.5);
+	}
 }
 
 export const DashedEdgeArrowProgram = createEdgeCompoundProgram([
-  DashedEdgeBodyProgram as never,
-  EdgeArrowHeadProgram,
+	DashedEdgeBodyProgram as never,
+	EdgeArrowHeadProgram
 ]);

@@ -14,40 +14,39 @@
 		<div class="alpha-eyebrow">Status</div>
 		<h1 class="alpha-title">Concordans is in alpha</h1>
 		<p class="alpha-lede">
-			Werkomgeving in opbouw. Functies, weergaven en URL-structuur kunnen wijzigen
-			zonder aankondiging. De onderliggende bronnen blijven de officiële.
+			Werkomgeving in opbouw. Functies, weergaven en URL-structuur kunnen wijzigen zonder
+			aankondiging. De onderliggende bronnen blijven de officiële.
 		</p>
 
 		<div class="alpha-badge-row">
 			<span class="alpha-badge">alpha</span>
-			<span class="alpha-badge-note">Concordans toont dit label rechtsboven naast het woordmerk.</span>
+			<span class="alpha-badge-note"
+				>Concordans toont dit label rechtsboven naast het woordmerk.</span
+			>
 		</div>
 
 		<section class="alpha-section">
 			<h2>Wat alpha hier betekent</h2>
-			<p>
-				Concordans is gebruiksklaar maar nog niet stabiel. Drie dingen volgen daaruit.
-			</p>
+			<p>Concordans is gebruiksklaar maar nog niet stabiel. Drie dingen volgen daaruit.</p>
 			<dl class="alpha-list">
 				<dt>Functies kunnen wijzigen.</dt>
 				<dd>
-					Weergaven, sneltoetsen, filters en URL-parameters kunnen tussen versies
-					veranderen. Bewaarde links blijven werken zolang de onderliggende bron
-					(BWB-id, ECLI, dossiernummer) bestaat.
+					Weergaven, sneltoetsen, filters en URL-parameters kunnen tussen versies veranderen.
+					Bewaarde links blijven werken zolang de onderliggende bron (BWB-id, ECLI, dossiernummer)
+					bestaat.
 				</dd>
 				<dt>De dekking is niet volledig.</dt>
 				<dd>
-					Het netwerk groeit met de officiële bronnen mee, maar niet elke regeling,
-					uitspraak of dossier zit er al in. Wat ontbreekt, is geen uitspraak van
-					Concordans over relevantie, alleen een gevolg van de huidige
-					synchronisatiestand. De laatste sync-datum staat onder
+					Het netwerk groeit met de officiële bronnen mee, maar niet elke regeling, uitspraak of
+					dossier zit er al in. Wat ontbreekt, is geen uitspraak van Concordans over relevantie,
+					alleen een gevolg van de huidige synchronisatiestand. De laatste sync-datum staat onder
 					<a href="/#cijfers">Concordans in cijfers</a>.
 				</dd>
 				<dt>Verbanden zijn machinaal afgeleid.</dt>
 				<dd>
-					Citaties, interpretaties en wijzigingsrelaties komen uit een
-					reproduceerbare extractie op de bronteksten. Geen verband wordt
-					geïnterpreteerd of geparafraseerd. De heuristieken staan in de
+					Citaties, interpretaties en wijzigingsrelaties komen uit een reproduceerbare extractie op
+					de bronteksten. Geen verband wordt geïnterpreteerd of geparafraseerd. De heuristieken
+					staan in de
 					<a href="/docs/methode">methode-bijlage</a>.
 				</dd>
 			</dl>
@@ -56,36 +55,31 @@
 		<section class="alpha-section">
 			<h2>Wat alpha niet betekent</h2>
 			<p>
-				Concordans is geen losse demo en geen voorpublicatie. De getallen
-				op deze pagina komen uit het levende netwerk; de Verkenner werkt op dezelfde
-				gegevens als de officiële bronnen.
+				Concordans is geen losse demo en geen voorpublicatie. De getallen op deze pagina komen uit
+				het levende netwerk; de Verkenner werkt op dezelfde gegevens als de officiële bronnen.
 			</p>
 			<ul class="alpha-bullets">
 				<li>
-					Een ontbrekend artikel of arrest betekent niet dat het juridisch
-					irrelevant is. Het betekent dat Concordans het nog niet binnenhaalt.
+					Een ontbrekend artikel of arrest betekent niet dat het juridisch irrelevant is. Het
+					betekent dat Concordans het nog niet binnenhaalt.
 				</li>
 				<li>
-					Een aanwezig verband betekent niet dat het juridisch geldig is. Het
-					betekent dat de bron zelf de verwijzing maakt. Concordans laat zien wat
-					er staat, niet wat het juridisch waard is.
+					Een aanwezig verband betekent niet dat het juridisch geldig is. Het betekent dat de bron
+					zelf de verwijzing maakt. Concordans laat zien wat er staat, niet wat het juridisch waard
+					is.
 				</li>
-				<li>
-					Concordans vervangt geen juridische analyse en geeft geen advies.
-				</li>
+				<li>Concordans vervangt geen juridische analyse en geeft geen advies.</li>
 			</ul>
 		</section>
 
 		<section class="alpha-section">
 			<h2>Toegang en stabiliteit</h2>
 			<p>
-				Alpha-toegang is open. Voor wie wil meelezen of voor wie iets niet klopt:
-				meld het kort via
+				Alpha-toegang is open. Voor wie wil meelezen of voor wie iets niet klopt: meld het kort via
 				<a href="mailto:concordans@tmve.nl">concordans@tmve.nl</a>
 				of via het
-				<a href="/contact">contactformulier</a>.
-				Reproduceerbare voorbeelden (URL + verwachte uitkomst) hebben de hoogste
-				kans op een snelle reactie.
+				<a href="/contact">contactformulier</a>. Reproduceerbare voorbeelden (URL + verwachte
+				uitkomst) hebben de hoogste kans op een snelle reactie.
 			</p>
 		</section>
 
@@ -265,7 +259,9 @@
 		padding: 10px 16px;
 		border-radius: var(--r-1, 2px);
 		text-decoration: none;
-		transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+		transition:
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease);
 	}
 
 	.alpha-foot-cta:hover {

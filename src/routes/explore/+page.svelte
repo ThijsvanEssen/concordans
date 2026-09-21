@@ -11,7 +11,7 @@
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import EmptyCanvas from '$lib/components/explore/EmptyCanvas.svelte';
 	import WalkthroughCard from '$lib/components/explore/WalkthroughCard.svelte';
-		import WholeLawReader from '$lib/components/explore/WholeLawReader.svelte';
+	import WholeLawReader from '$lib/components/explore/WholeLawReader.svelte';
 	import IndexView from '$lib/components/explore/IndexView.svelte';
 	import { get } from 'svelte/store';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -22,7 +22,7 @@
 	import {
 		fetchInFluxMap,
 		fetchHeatMap,
-		fetchDossierInFluxMap,
+		fetchDossierInFluxMap
 	} from '$lib/api/parliamentary-client';
 	import type { InFluxMap, HeatMap } from '$lib/api/parliamentary';
 
@@ -48,7 +48,6 @@
 			track('first_node', { kind });
 		}
 	});
-
 
 	let focusError = $state<string | null>(null);
 	let loadingGlobal = $state(false);
@@ -127,7 +126,6 @@
 		await handleRailNavigate('instrument_articles', key);
 	}
 
-
 	// ── Convergence-path expansion ───────────────────────────────────────────
 	// Strategy: BFS *bidirectionally* from the focused node, then prune to:
 	//   • the focused node
@@ -167,7 +165,7 @@
 		if (!focal || focal.id.startsWith('synth:')) return;
 		await store.expandNeighborhood(focal.collection, focal.key, {
 			depth: MAX_DEPTH,
-			cap: 200,
+			cap: 200
 		});
 	}
 
@@ -610,7 +608,10 @@
 		const patch = { ...cur.nodeTypeToggles };
 		let changed = false;
 		for (const k of keys) {
-			if (!patch[k]) { patch[k] = true; changed = true; }
+			if (!patch[k]) {
+				patch[k] = true;
+				changed = true;
+			}
 		}
 		if (changed) store.setFilters({ nodeTypeToggles: patch });
 	}
@@ -636,9 +637,7 @@
 	) {
 		const all = get(store.nodes);
 		const beforeIds = new Set(all.map((n) => n.id));
-		const toExpand = all
-			.filter((n) => !n.id.startsWith('synth:'))
-			.slice(0, ATTACHED_EXPAND_CAP);
+		const toExpand = all.filter((n) => !n.id.startsWith('synth:')).slice(0, ATTACHED_EXPAND_CAP);
 		await Promise.all(
 			toExpand.map((n) =>
 				store.expandNode(n.collection, n.key, { neighborLimit: 50 }).catch(() => null)
@@ -666,7 +665,12 @@
 		loadingGlobal = true;
 		activatedLayers.add('instrument');
 		try {
-			console.log('[lagen] handleLoadGlobal — currentInstrumentBwb=', currentInstrumentBwb, 'selectedNode=', selectedNode?.id ?? null);
+			console.log(
+				'[lagen] handleLoadGlobal — currentInstrumentBwb=',
+				currentInstrumentBwb,
+				'selectedNode=',
+				selectedNode?.id ?? null
+			);
 			ensureNodeTypesVisible('instrument', 'article');
 			// Wet view + Artikelen mode (the default for a wet view): surface
 			// cross-wet *article-level* references — foreign articles + the
@@ -702,7 +706,12 @@
 		loadingJudgments = true;
 		activatedLayers.add('judgment');
 		try {
-			console.log('[lagen] handleLoadJudgments — currentInstrumentBwb=', currentInstrumentBwb, 'selectedNode=', selectedNode?.id ?? null);
+			console.log(
+				'[lagen] handleLoadJudgments — currentInstrumentBwb=',
+				currentInstrumentBwb,
+				'selectedNode=',
+				selectedNode?.id ?? null
+			);
 			ensureNodeTypesVisible('judgment');
 			// Wet view: scope to judgments that cite this wet's articles.
 			if (currentInstrumentBwb && !selectedNode) {
@@ -842,7 +851,12 @@
 		loadingDossiers = true;
 		activatedLayers.add('dossier');
 		try {
-			console.log('[lagen] handleLoadDossiers — currentInstrumentBwb=', currentInstrumentBwb, 'selectedNode=', selectedNode?.id ?? null);
+			console.log(
+				'[lagen] handleLoadDossiers — currentInstrumentBwb=',
+				currentInstrumentBwb,
+				'selectedNode=',
+				selectedNode?.id ?? null
+			);
 			ensureNodeTypesVisible('dossier', 'tkstuk');
 			// Wet view: fire both endpoints in parallel.
 			//   /dossiers           → dossier nodes + dossier→article (raakt) edges.
@@ -857,11 +871,13 @@
 				const [dossiersResult, citationsResult] = await Promise.all([
 					store.loadInstrumentDossiersLayer(bwb),
 					store.loadInstrumentCitations(bwb, {
-						relations: ['WIJZIGT', 'INTRODUCEERT', 'TREKT_IN'],
-					}),
+						relations: ['WIJZIGT', 'INTRODUCEERT', 'TREKT_IN']
+					})
 				]);
-				if ((!dossiersResult || dossiersResult.count === 0) &&
-				    (!citationsResult || citationsResult.count === 0)) {
+				if (
+					(!dossiersResult || dossiersResult.count === 0) &&
+					(!citationsResult || citationsResult.count === 0)
+				) {
 					console.warn('[explore] dossiers + publication citations both returned no nodes');
 				}
 				return;
@@ -940,26 +956,34 @@
 			heatMap = new Map();
 			inFluxMap = new Map();
 			fetchHeatMap(o.months)
-				.then((m) => { if (!cancelled) heatMap = m; })
+				.then((m) => {
+					if (!cancelled) heatMap = m;
+				})
 				.catch(() => {});
 		} else if (o.kind === 'open') {
 			heatMap = new Map();
 			inFluxMap = new Map();
 			fetchInFluxMap()
-				.then((m) => { if (!cancelled) inFluxMap = m; })
+				.then((m) => {
+					if (!cancelled) inFluxMap = m;
+				})
 				.catch(() => {});
 		} else if (o.kind === 'dossier') {
 			heatMap = new Map();
 			inFluxMap = new Map();
 			fetchDossierInFluxMap(o.id)
-				.then((m) => { if (!cancelled) inFluxMap = m; })
+				.then((m) => {
+					if (!cancelled) inFluxMap = m;
+				})
 				.catch(() => {});
 		} else {
 			heatMap = new Map();
 			inFluxMap = new Map();
 		}
 
-		return () => { cancelled = true; };
+		return () => {
+			cancelled = true;
+		};
 	});
 
 	function setOverlayParam(value: string | null) {
@@ -983,7 +1007,6 @@
 		// toggle while in dossier scope clears the overlay entirely.
 		setOverlayParam(overlay.kind === 'open' || overlay.kind === 'dossier' ? null : 'open');
 	}
-
 
 	// ── Share view (Phase 7 §27) ─────────────────────────────────────────────
 	// Direct copy-to-clipboard on ↗ Deel — no preview modal. The button surface
@@ -1027,7 +1050,11 @@
 	let showMobileNotice = $state(false);
 	function dismissMobileNotice() {
 		showMobileNotice = false;
-		try { sessionStorage.setItem('concordans:mobile-notice-dismissed', '1'); } catch { /* ignore */ }
+		try {
+			sessionStorage.setItem('concordans:mobile-notice-dismissed', '1');
+		} catch {
+			/* ignore */
+		}
 	}
 
 	// ── Resizable panels ─────────────────────────────────────────────────────
@@ -1058,7 +1085,9 @@
 				if (!sessionStorage.getItem('concordans:mobile-notice-dismissed')) {
 					showMobileNotice = true;
 				}
-			} catch { /* ignore */ }
+			} catch {
+				/* ignore */
+			}
 		}
 	});
 
@@ -1124,9 +1153,7 @@
 		)
 			return;
 		e.preventDefault();
-		const targetMode =
-			e.key === '1' ? 'graph' :
-			e.key === '2' ? 'split' : 'read';
+		const targetMode = e.key === '1' ? 'graph' : e.key === '2' ? 'split' : 'read';
 		// split/read need a node; graph is altijd bereikbaar.
 		if ((targetMode === 'split' || targetMode === 'read') && !selectedNode) return;
 		if (targetMode !== mode) setUrl({ mode: targetMode });
@@ -1136,19 +1163,32 @@
 	// ?kind=… picks the active category in IndexView. Defaults to 'dossiers'
 	// since that's the largest live dataset.
 	type IndexCategory =
-		| 'wetten' | 'arresten' | 'dossiers' | 'commissies'
-		| 'leden' | 'fracties' | 'stemmingen';
+		| 'wetten'
+		| 'arresten'
+		| 'dossiers'
+		| 'commissies'
+		| 'leden'
+		| 'fracties'
+		| 'stemmingen';
 	const INDEX_CATEGORIES: ReadonlySet<IndexCategory> = new Set([
-		'wetten', 'arresten', 'dossiers', 'commissies', 'leden', 'fracties', 'stemmingen'
+		'wetten',
+		'arresten',
+		'dossiers',
+		'commissies',
+		'leden',
+		'fracties',
+		'stemmingen'
 	]);
 	// Onbekende of stale ?kind=-waardes (typo's, dode links) vallen terug op
 	// 'dossiers' in plaats van een lege pagina te tonen.
-	const indexCategory = $derived<IndexCategory>((() => {
-		const raw = $page.url.searchParams.get('kind');
-		return raw && INDEX_CATEGORIES.has(raw as IndexCategory)
-			? (raw as IndexCategory)
-			: 'dossiers';
-	})());
+	const indexCategory = $derived<IndexCategory>(
+		(() => {
+			const raw = $page.url.searchParams.get('kind');
+			return raw && INDEX_CATEGORIES.has(raw as IndexCategory)
+				? (raw as IndexCategory)
+				: 'dossiers';
+		})()
+	);
 	function handleIndexCategory(k: IndexCategory) {
 		setUrl({ mode: 'index', kind: k });
 	}
@@ -1166,11 +1206,18 @@
 	}
 	// Aantal getoonde resultaten in Index, gespiegeld in de StatusBar-breadcrumb.
 	let indexResultCount = $state<{ filtered: number; total: number } | null>(null);
-	function handleIndexResultCount(info: { filtered: number; total: number; category: IndexCategory }) {
+	function handleIndexResultCount(info: {
+		filtered: number;
+		total: number;
+		category: IndexCategory;
+	}) {
 		indexResultCount = { filtered: info.filtered, total: info.total };
 	}
 	// Bij categorie-wissel reset zodat geen stale count blijft hangen.
-	$effect(() => { void indexCategory; indexResultCount = null; });
+	$effect(() => {
+		void indexCategory;
+		indexResultCount = null;
+	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -1234,7 +1281,10 @@
 					onLoadLeden={handleLoadLeden}
 					onLoadFracties={handleLoadFracties}
 					onDeloadLayer={handleDeloadLayer}
-					onResetGraph={() => { store.reset(); activatedLayers.clear(); }}
+					onResetGraph={() => {
+						store.reset();
+						activatedLayers.clear();
+					}}
 					onRevealHidden={handleRevealHidden}
 					{loadingGlobal}
 					{loadingJudgments}
@@ -1298,8 +1348,11 @@
 						onLoadLeden={handleLoadLeden}
 						onLoadFracties={handleLoadFracties}
 						onDeloadLayer={handleDeloadLayer}
-					onResetGraph={() => { store.reset(); activatedLayers.clear(); }}
-					onRevealHidden={handleRevealHidden}
+						onResetGraph={() => {
+							store.reset();
+							activatedLayers.clear();
+						}}
+						onRevealHidden={handleRevealHidden}
 						{loadingGlobal}
 						{loadingJudgments}
 						{loadingCommissies}
@@ -1345,9 +1398,7 @@
 		{:else if mode === 'read'}
 			{#if !selectedNode && !currentInstrumentBwb && !wholeLawBwb}
 				<div class="explore-read-empty">
-					<p class="explore-read-empty__text">
-						Zoek een artikel of arrest via de zoekbalk.
-					</p>
+					<p class="explore-read-empty__text">Zoek een artikel of arrest via de zoekbalk.</p>
 					<button class="explore-read-empty__btn" onclick={() => setUrl({ mode: 'graph' })}>
 						Ga naar netwerk →
 					</button>
@@ -1400,7 +1451,6 @@
 			{/if}
 		{/if}
 	</div>
-
 </div>
 
 <!-- Eerste-keer-tip rechtsonder. Verbergt zichzelf na dismiss en blijft
@@ -1412,9 +1462,21 @@
 
 {#if showMobileNotice}
 	<div class="mobile-notice" role="alert">
-		<span class="mobile-notice__text">Het netwerk werkt het best op een groter scherm. Op mobiel kun je wel lezen en de Index gebruiken.</span>
-		<a href="/explore?mode=index&kind=dossiers" class="mobile-notice__link" onclick={dismissMobileNotice}>Open Index →</a>
-		<button type="button" class="mobile-notice__close" onclick={dismissMobileNotice} aria-label="Sluiten">×</button>
+		<span class="mobile-notice__text"
+			>Het netwerk werkt het best op een groter scherm. Op mobiel kun je wel lezen en de Index
+			gebruiken.</span
+		>
+		<a
+			href="/explore?mode=index&kind=dossiers"
+			class="mobile-notice__link"
+			onclick={dismissMobileNotice}>Open Index →</a
+		>
+		<button
+			type="button"
+			class="mobile-notice__close"
+			onclick={dismissMobileNotice}
+			aria-label="Sluiten">×</button
+		>
 	</div>
 {/if}
 
@@ -1490,7 +1552,9 @@
 		font-size: 14px;
 		text-align: center;
 	}
-	.reader-empty p { margin: 0; }
+	.reader-empty p {
+		margin: 0;
+	}
 
 	/* Drag handle shared styles */
 	.panel-resize-handle {
@@ -1687,13 +1751,15 @@
 
 	.mobile-notice__link {
 		color: var(--paper);
-		border-bottom: 1px solid rgba(255,255,255,0.4);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 		text-decoration: none;
 		white-space: nowrap;
 		font-size: 13px;
 		transition: border-color var(--dur-1) var(--ease);
 	}
-	.mobile-notice__link:hover { border-color: var(--paper); }
+	.mobile-notice__link:hover {
+		border-color: var(--paper);
+	}
 
 	.mobile-notice__close {
 		background: none;
@@ -1706,5 +1772,7 @@
 		padding: 0 4px;
 		flex-shrink: 0;
 	}
-	.mobile-notice__close:hover { opacity: 1; }
+	.mobile-notice__close:hover {
+		opacity: 1;
+	}
 </style>

@@ -89,8 +89,16 @@
 		hr92: { kind: 'Arrest · Hoge Raad', title: 'Kelderluik-criteria', sub: 'ECLI:NL:HR:1992:5' },
 		bw6_101: { kind: 'Artikel · Burgerlijk Wetboek', title: 'Eigen schuld', sub: 'BW 6:101' },
 		bw6_106: { kind: 'Artikel · Burgerlijk Wetboek', title: 'Smartengeld', sub: 'BW 6:106' },
-		dos1: { kind: 'Wetgevingsdossier · Tweede Kamer', title: 'Aanpassing aansprakelijkheidsrecht', sub: 'Dossier 36586' },
-		dos2: { kind: 'Wetgevingsdossier · Tweede Kamer', title: 'Belastingmaatregelen 2025', sub: 'Dossier 36600' }
+		dos1: {
+			kind: 'Wetgevingsdossier · Tweede Kamer',
+			title: 'Aanpassing aansprakelijkheidsrecht',
+			sub: 'Dossier 36586'
+		},
+		dos2: {
+			kind: 'Wetgevingsdossier · Tweede Kamer',
+			title: 'Belastingmaatregelen 2025',
+			sub: 'Dossier 36600'
+		}
 	};
 
 	// ── Hemicycle blok in de Ontdekken-tegel: dezelfde 150-zetel layout
@@ -149,10 +157,11 @@
 	let hoveredId: string | null = null;
 	let currentPositions: Record<string, { x: number; y: number }> = {};
 
-
 	// Floating cite card — only shown when hovering a labelled node
 	const focusedCite = $derived(focusedId ? (CITE_DETAILS[focusedId] ?? null) : null);
-	const focusedNode = $derived(focusedId ? (HERO_NODES.find((n) => n.id === focusedId) ?? null) : null);
+	const focusedNode = $derived(
+		focusedId ? (HERO_NODES.find((n) => n.id === focusedId) ?? null) : null
+	);
 	const cardOnLeft = $derived(focusedNode ? focusedNode.x > 0.5 : false);
 	const cardLeft = $derived(
 		focusedNode
@@ -182,7 +191,9 @@
 			num: liveStats ? fmtNum(liveStats.connection_count) : '—',
 			label: STATS_FALLBACK[2].label,
 			note: STATS_FALLBACK[2].note,
-			meter: liveStats ? Math.min(1, liveStats.connection_count / 2_300_000) : STATS_FALLBACK[2].meter
+			meter: liveStats
+				? Math.min(1, liveStats.connection_count / 2_300_000)
+				: STATS_FALLBACK[2].meter
 		},
 		{
 			num: liveStats ? String(liveStats.source_count) : '—',
@@ -193,9 +204,7 @@
 	]);
 
 	const lastUpdatedLabel = $derived(
-		liveStats?.last_updated
-			? `Laatst bijgewerkt ${fmtDate(liveStats.last_updated)}.`
-			: ''
+		liveStats?.last_updated ? `Laatst bijgewerkt ${fmtDate(liveStats.last_updated)}.` : ''
 	);
 
 	function fmtNum(n: number): string {
@@ -224,7 +233,9 @@
 
 	onMount(() => {
 		// ── Fetch live corpus stats ──────────────────────────────
-		const statsTimeoutId = setTimeout(() => { if (!liveStats) statsTimedOut = true; }, 4000);
+		const statsTimeoutId = setTimeout(() => {
+			if (!liveStats) statsTimedOut = true;
+		}, 4000);
 		getCorpusStats().then((data) => {
 			clearTimeout(statsTimeoutId);
 			if (!data) return;
@@ -285,7 +296,10 @@
 			for (const id in currentPositions) {
 				const p = currentPositions[id];
 				const d = Math.hypot(p.x - mx, p.y - my);
-				if (d < bestDist) { bestDist = d; best = id; }
+				if (d < bestDist) {
+					bestDist = d;
+					best = id;
+				}
 			}
 			return best;
 		}
@@ -367,7 +381,8 @@
 			// Edges
 			ctx.save();
 			HERO_EDGES.forEach(([a, b, kind]) => {
-				const pa = currentPositions[a], pb = currentPositions[b];
+				const pa = currentPositions[a],
+					pb = currentPositions[b];
 				if (!pa || !pb) return;
 				const isFocused = focId && (a === focId || b === focId);
 				const isDimmed = hasHover && !isFocused;
@@ -377,7 +392,11 @@
 				ctx.lineTo(pb.x, pb.y);
 				ctx.strokeStyle = isFocused && kind === 'interpret' ? C.accent : es.stroke;
 				ctx.lineWidth = isFocused ? es.width + 0.4 : es.width;
-				ctx.globalAlpha = isDimmed ? es.opacity * 0.2 : (isFocused ? Math.min(1, es.opacity + 0.3) : es.opacity);
+				ctx.globalAlpha = isDimmed
+					? es.opacity * 0.2
+					: isFocused
+						? Math.min(1, es.opacity + 0.3)
+						: es.opacity;
 				ctx.setLineDash(es.dash);
 				ctx.stroke();
 			});
@@ -398,15 +417,16 @@
 				const isJudgment = n.kind === 'judgment';
 				const isDossier = n.kind === 'dossier';
 				const isBw6162 = n.id === 'bw6_162';
-				const pulseExtra = (isBw6162 && introPulsing)
-					? Math.max(0, Math.sin(t * Math.PI * 2.5)) * 3
-					: 0;
+				const pulseExtra =
+					isBw6162 && introPulsing ? Math.max(0, Math.sin(t * Math.PI * 2.5)) * 3 : 0;
 				const r = n.size + (isFocused ? 2.5 : 0) + pulseExtra;
 
 				// Glow ring during intro pulse
 				if (isBw6162 && introPulsing && pulseExtra > 0.5) {
 					const glowA = Math.max(0, Math.sin(t * Math.PI * 2.5)) * 0.35 * (1 - t / 2.5);
-					const hex2 = Math.round(glowA * 255).toString(16).padStart(2, '0');
+					const hex2 = Math.round(glowA * 255)
+						.toString(16)
+						.padStart(2, '0');
 					const glow = ctx.createRadialGradient(p.x, p.y, r, p.x, p.y, r + 40);
 					glow.addColorStop(0, C.accent + hex2);
 					glow.addColorStop(1, C.accent + '00');
@@ -444,7 +464,7 @@
 				if (n.label && n.size >= 4) {
 					ctx.font = `9.5px "iA Writer Mono", "SF Mono", monospace`;
 					ctx.fillStyle = isFocused ? C.accent : isDossier ? C.accent : C.ink3;
-					ctx.globalAlpha = isDimmed ? 0.1 : (isFocused ? 1 : (isDossier ? 0.75 : 0.85));
+					ctx.globalAlpha = isDimmed ? 0.1 : isFocused ? 1 : isDossier ? 0.75 : 0.85;
 					ctx.fillText(n.label, p.x + r + 6, p.y + 3.5);
 				}
 			});
@@ -463,7 +483,6 @@
 			ro.disconnect();
 		};
 	});
-
 </script>
 
 <svelte:head>
@@ -480,12 +499,12 @@
 				</h1>
 				<p class="hero-lede">
 					Een werkomgeving die wetsartikelen, arresten, wetgevingsdossiers en parlementaire
-					documenten als één netwerk toont. Gebouwd op de officiële bronnen, met de verbindingen
-					die in een document-per-pagina onzichtbaar blijven.
+					documenten als één netwerk toont. Gebouwd op de officiële bronnen, met de verbindingen die
+					in een document-per-pagina onzichtbaar blijven.
 				</p>
 				<p class="hero-promise">
-					Geen verband wordt geïnterpreteerd of geparafraseerd. Concordans toont alleen wat de
-					bron zelf zegt.
+					Geen verband wordt geïnterpreteerd of geparafraseerd. Concordans toont alleen wat de bron
+					zelf zegt.
 				</p>
 
 				<div class="hero-cta">
@@ -497,12 +516,8 @@
 						Open de Verkenner
 						<span class="hero-cta__arrow" aria-hidden="true">→</span>
 					</a>
-					<a class="hero-cta__secondary no-underline" href="/docs/methode">
-						Lees de methode
-					</a>
-					<a class="hero-cta__feedback no-underline" href="/contact">
-						Geef feedback
-					</a>
+					<a class="hero-cta__secondary no-underline" href="/docs/methode"> Lees de methode </a>
+					<a class="hero-cta__feedback no-underline" href="/contact"> Geef feedback </a>
 				</div>
 			</div>
 
@@ -530,9 +545,12 @@
 				{/if}
 
 				<div class="graph-legend">
-					<span class="legend-row"><span class="legend-dot legend-dot--article"></span>Artikel</span>
-					<span class="legend-row"><span class="legend-dot legend-dot--judgment"></span>Arrest</span>
-					<span class="legend-row"><span class="legend-dot legend-dot--dossier"></span>Dossier</span>
+					<span class="legend-row"><span class="legend-dot legend-dot--article"></span>Artikel</span
+					>
+					<span class="legend-row"><span class="legend-dot legend-dot--judgment"></span>Arrest</span
+					>
+					<span class="legend-row"><span class="legend-dot legend-dot--dossier"></span>Dossier</span
+					>
 				</div>
 				<p class="graph-click-hint" aria-hidden="true">Klik op een bron</p>
 			</div>
@@ -554,352 +572,930 @@
 			</div>
 
 			<div class="modes">
-				<a class="mode-col no-underline" href="/explore?focus=instrument_articles%2Fbwbr0005289_162">
-				<div class="mode">
-					<div class="mode-head">
-						<span class="mode-kind">Verkennen</span>
-						<h3 class="mode-name">Ontdekken</h3>
-					</div>
-					<p class="mode-desc">
-						Alle bronnen als één netwerk. Klik op een bron als beginpunt. Verbindingen
-						tonen citaten, interpretatie en wijziging.
-					</p>
-					<div class="mode-canvas">
-						<svg
-							viewBox="0 0 760 420"
-							width="100%"
-							height="100%"
-							preserveAspectRatio="xMidYMid meet"
-							role="img"
-							aria-label="Schermafbeelding van Ontdekken-modus: zijbalk met lagen, canvas met netwerk en focus op één bron."
-						>
-							<rect x="0" y="0" width="760" height="420" fill="var(--paper-2)" stroke="var(--rule)" />
+				<a
+					class="mode-col no-underline"
+					href="/explore?focus=instrument_articles%2Fbwbr0005289_162"
+				>
+					<div class="mode">
+						<div class="mode-head">
+							<span class="mode-kind">Verkennen</span>
+							<h3 class="mode-name">Ontdekken</h3>
+						</div>
+						<p class="mode-desc">
+							Alle bronnen als één netwerk. Klik op een bron als beginpunt. Verbindingen tonen
+							citaten, interpretatie en wijziging.
+						</p>
+						<div class="mode-canvas">
+							<svg
+								viewBox="0 0 760 420"
+								width="100%"
+								height="100%"
+								preserveAspectRatio="xMidYMid meet"
+								role="img"
+								aria-label="Schermafbeelding van Ontdekken-modus: zijbalk met lagen, canvas met netwerk en focus op één bron."
+							>
+								<rect
+									x="0"
+									y="0"
+									width="760"
+									height="420"
+									fill="var(--paper-2)"
+									stroke="var(--rule)"
+								/>
 
-							<!-- SIDEBAR -->
-							<rect x="0" y="0" width="170" height="420" fill="var(--paper)" stroke="var(--rule)" />
-							<text x="14" y="22" font-family="var(--font-sans)" font-size="10" font-weight="600" letter-spacing="0.12em" fill="var(--ink-3)">LAGEN</text>
-							<g font-family="var(--font-sans)" font-size="10.5">
-								<rect x="14" y="30" width="142" height="20" rx="2" fill="var(--ink)" />
-								<text x="22" y="44" fill="var(--paper)">§ Wetten</text>
-								<text x="150" y="44" fill="var(--paper-3)" text-anchor="end">1067</text>
-								<rect x="14" y="52" width="142" height="20" rx="2" fill="var(--ink)" />
-								<text x="22" y="66" fill="var(--paper)">ℐ Arresten</text>
-								<text x="150" y="66" fill="var(--paper-3)" text-anchor="end">1059</text>
-								<rect x="14" y="74" width="142" height="20" rx="2" fill="var(--ink)" />
-								<text x="22" y="88" fill="var(--paper)">ƒ Dossiers</text>
-								<text x="150" y="88" fill="var(--paper-3)" text-anchor="end">10</text>
-								<rect x="14" y="96" width="142" height="20" rx="2" fill="var(--paper)" stroke="var(--rule)" />
-								<text x="22" y="110" fill="var(--ink-3)">‡ Commissies</text>
-								<text x="150" y="110" fill="var(--ink-4)" text-anchor="end">0</text>
-							</g>
-							<text x="14" y="142" font-family="var(--font-sans)" font-size="10" font-weight="600" letter-spacing="0.12em" fill="var(--ink-3)">RELATIES</text>
-							<rect x="14" y="150" width="142" height="34" fill="var(--paper-2)" stroke="var(--rule)" stroke-dasharray="2 2" />
-							<text x="14" y="206" font-family="var(--font-sans)" font-size="10" font-weight="600" letter-spacing="0.12em" fill="var(--ink-3)">OVERLAYS</text>
-							<g font-family="var(--font-sans)" font-size="10">
-								<rect x="14" y="214" width="44" height="20" rx="2" fill="var(--ink)" />
-								<text x="36" y="228" fill="var(--paper)" text-anchor="middle">Geen</text>
-								<rect x="60" y="214" width="46" height="20" rx="2" fill="var(--paper)" stroke="var(--rule)" />
-								<text x="83" y="228" fill="var(--ink-2)" text-anchor="middle">Mutatie</text>
-							</g>
-							<text x="14" y="262" font-family="var(--font-sans)" font-size="10" font-weight="600" letter-spacing="0.12em" fill="var(--ink-3)">PARLEMENT</text>
-							<g transform="translate(0 270)">
-								{#each PARL_SEATS_MODE_SM as s (s.x + ':' + s.y)}
-									<circle cx={s.x} cy={s.y} r="1.6" fill={s.band === 'l' ? 'var(--moss, #5b7f4a)' : s.band === 'r' ? 'var(--spine, #7a1f1a)' : 'var(--indigo)'} />
-								{/each}
-							</g>
-							<text x="85" y="346" font-family="var(--font-sans)" font-size="9" fill="var(--ink-4)" text-anchor="middle">150 zetels</text>
-							<g font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-2)">
-								<text x="14" y="368">→ Dossiers</text>
-								<text x="14" y="384">→ Kamerleden</text>
-								<text x="14" y="400">→ Stemmingen</text>
-							</g>
+								<!-- SIDEBAR -->
+								<rect
+									x="0"
+									y="0"
+									width="170"
+									height="420"
+									fill="var(--paper)"
+									stroke="var(--rule)"
+								/>
+								<text
+									x="14"
+									y="22"
+									font-family="var(--font-sans)"
+									font-size="10"
+									font-weight="600"
+									letter-spacing="0.12em"
+									fill="var(--ink-3)">LAGEN</text
+								>
+								<g font-family="var(--font-sans)" font-size="10.5">
+									<rect x="14" y="30" width="142" height="20" rx="2" fill="var(--ink)" />
+									<text x="22" y="44" fill="var(--paper)">§ Wetten</text>
+									<text x="150" y="44" fill="var(--paper-3)" text-anchor="end">1067</text>
+									<rect x="14" y="52" width="142" height="20" rx="2" fill="var(--ink)" />
+									<text x="22" y="66" fill="var(--paper)">ℐ Arresten</text>
+									<text x="150" y="66" fill="var(--paper-3)" text-anchor="end">1059</text>
+									<rect x="14" y="74" width="142" height="20" rx="2" fill="var(--ink)" />
+									<text x="22" y="88" fill="var(--paper)">ƒ Dossiers</text>
+									<text x="150" y="88" fill="var(--paper-3)" text-anchor="end">10</text>
+									<rect
+										x="14"
+										y="96"
+										width="142"
+										height="20"
+										rx="2"
+										fill="var(--paper)"
+										stroke="var(--rule)"
+									/>
+									<text x="22" y="110" fill="var(--ink-3)">‡ Commissies</text>
+									<text x="150" y="110" fill="var(--ink-4)" text-anchor="end">0</text>
+								</g>
+								<text
+									x="14"
+									y="142"
+									font-family="var(--font-sans)"
+									font-size="10"
+									font-weight="600"
+									letter-spacing="0.12em"
+									fill="var(--ink-3)">RELATIES</text
+								>
+								<rect
+									x="14"
+									y="150"
+									width="142"
+									height="34"
+									fill="var(--paper-2)"
+									stroke="var(--rule)"
+									stroke-dasharray="2 2"
+								/>
+								<text
+									x="14"
+									y="206"
+									font-family="var(--font-sans)"
+									font-size="10"
+									font-weight="600"
+									letter-spacing="0.12em"
+									fill="var(--ink-3)">OVERLAYS</text
+								>
+								<g font-family="var(--font-sans)" font-size="10">
+									<rect x="14" y="214" width="44" height="20" rx="2" fill="var(--ink)" />
+									<text x="36" y="228" fill="var(--paper)" text-anchor="middle">Geen</text>
+									<rect
+										x="60"
+										y="214"
+										width="46"
+										height="20"
+										rx="2"
+										fill="var(--paper)"
+										stroke="var(--rule)"
+									/>
+									<text x="83" y="228" fill="var(--ink-2)" text-anchor="middle">Mutatie</text>
+								</g>
+								<text
+									x="14"
+									y="262"
+									font-family="var(--font-sans)"
+									font-size="10"
+									font-weight="600"
+									letter-spacing="0.12em"
+									fill="var(--ink-3)">PARLEMENT</text
+								>
+								<g transform="translate(0 270)">
+									{#each PARL_SEATS_MODE_SM as s (s.x + ':' + s.y)}
+										<circle
+											cx={s.x}
+											cy={s.y}
+											r="1.6"
+											fill={s.band === 'l'
+												? 'var(--moss, #5b7f4a)'
+												: s.band === 'r'
+													? 'var(--spine, #7a1f1a)'
+													: 'var(--indigo)'}
+										/>
+									{/each}
+								</g>
+								<text
+									x="85"
+									y="346"
+									font-family="var(--font-sans)"
+									font-size="9"
+									fill="var(--ink-4)"
+									text-anchor="middle">150 zetels</text
+								>
+								<g font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-2)">
+									<text x="14" y="368">→ Dossiers</text>
+									<text x="14" y="384">→ Kamerleden</text>
+									<text x="14" y="400">→ Stemmingen</text>
+								</g>
 
-							<!-- CANVAS -->
-							<g transform="translate(170 0)">
-								<g stroke="var(--ink-4)" stroke-width="0.7" opacity="0.55">
-									<line x1="120" y1="100" x2="290" y2="220" />
-									<line x1="200" y1="60" x2="290" y2="220" />
-									<line x1="80" y1="180" x2="290" y2="220" />
-									<line x1="290" y1="220" x2="160" y2="320" />
-									<line x1="290" y1="220" x2="260" y2="370" />
-									<line x1="290" y1="220" x2="440" y2="340" />
-									<line x1="290" y1="220" x2="500" y2="280" />
-									<line x1="290" y1="220" x2="520" y2="160" />
-									<line x1="80" y1="180" x2="160" y2="320" />
+								<!-- CANVAS -->
+								<g transform="translate(170 0)">
+									<g stroke="var(--ink-4)" stroke-width="0.7" opacity="0.55">
+										<line x1="120" y1="100" x2="290" y2="220" />
+										<line x1="200" y1="60" x2="290" y2="220" />
+										<line x1="80" y1="180" x2="290" y2="220" />
+										<line x1="290" y1="220" x2="160" y2="320" />
+										<line x1="290" y1="220" x2="260" y2="370" />
+										<line x1="290" y1="220" x2="440" y2="340" />
+										<line x1="290" y1="220" x2="500" y2="280" />
+										<line x1="290" y1="220" x2="520" y2="160" />
+										<line x1="80" y1="180" x2="160" y2="320" />
+									</g>
+									<line
+										x1="290"
+										y1="220"
+										x2="120"
+										y2="100"
+										stroke="var(--accent)"
+										stroke-width="1.2"
+									/>
+									<line
+										x1="290"
+										y1="220"
+										x2="260"
+										y2="370"
+										stroke="var(--accent)"
+										stroke-width="1.1"
+										stroke-dasharray="4 3"
+									/>
+									<g fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.2">
+										<circle cx="120" cy="100" r="7" />
+										<circle cx="200" cy="60" r="5" />
+										<circle cx="80" cy="180" r="5" />
+										<circle cx="160" cy="320" r="6" />
+										<circle cx="260" cy="370" r="6" />
+										<circle cx="440" cy="340" r="6" />
+										<circle cx="500" cy="280" r="6" />
+										<circle cx="520" cy="160" r="6" />
+									</g>
+									<!-- Indigo arresten -->
+									<circle cx="120" cy="100" r="7" fill="var(--indigo)" stroke="var(--indigo)" />
+									<circle cx="520" cy="160" r="6" fill="var(--indigo)" stroke="var(--indigo)" />
+									<!-- Focused central node with halo -->
+									<circle
+										cx="290"
+										cy="220"
+										r="28"
+										fill="none"
+										stroke="var(--ink)"
+										stroke-width="1.4"
+										opacity="0.22"
+									/>
+									<circle
+										cx="290"
+										cy="220"
+										r="16"
+										fill="none"
+										stroke="var(--ink)"
+										stroke-width="1.6"
+										opacity="0.4"
+									/>
+									<circle cx="290" cy="220" r="13" fill="var(--ink)" />
+									<text
+										x="312"
+										y="226"
+										font-family="var(--font-mono)"
+										font-size="11"
+										fill="var(--ink-2)">BW 6:162</text
+									>
 								</g>
-								<line x1="290" y1="220" x2="120" y2="100" stroke="var(--accent)" stroke-width="1.2" />
-								<line x1="290" y1="220" x2="260" y2="370" stroke="var(--accent)" stroke-width="1.1" stroke-dasharray="4 3" />
-								<g fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.2">
-									<circle cx="120" cy="100" r="7" />
-									<circle cx="200" cy="60" r="5" />
-									<circle cx="80" cy="180" r="5" />
-									<circle cx="160" cy="320" r="6" />
-									<circle cx="260" cy="370" r="6" />
-									<circle cx="440" cy="340" r="6" />
-									<circle cx="500" cy="280" r="6" />
-									<circle cx="520" cy="160" r="6" />
-								</g>
-								<!-- Indigo arresten -->
-								<circle cx="120" cy="100" r="7" fill="var(--indigo)" stroke="var(--indigo)" />
-								<circle cx="520" cy="160" r="6" fill="var(--indigo)" stroke="var(--indigo)" />
-								<!-- Focused central node with halo -->
-								<circle cx="290" cy="220" r="28" fill="none" stroke="var(--ink)" stroke-width="1.4" opacity="0.22" />
-								<circle cx="290" cy="220" r="16" fill="none" stroke="var(--ink)" stroke-width="1.6" opacity="0.4" />
-								<circle cx="290" cy="220" r="13" fill="var(--ink)" />
-								<text x="312" y="226" font-family="var(--font-mono)" font-size="11" fill="var(--ink-2)">BW 6:162</text>
-							</g>
-						</svg>
+							</svg>
+						</div>
 					</div>
-				</div>
-				<span class="mode-cta">Probeer <span class="mode-cta__arrow" aria-hidden="true">→</span></span>
+					<span class="mode-cta"
+						>Probeer <span class="mode-cta__arrow" aria-hidden="true">→</span></span
+					>
 				</a>
 
 				<a class="mode-col no-underline" href="/explore?mode=split&focus=instruments%2FBWBR0001854">
-				<div class="mode">
-					<div class="mode-head">
-						<span class="mode-kind">Verkennen + lezen</span>
-						<h3 class="mode-name">Verdiepen</h3>
+					<div class="mode">
+						<div class="mode-head">
+							<span class="mode-kind">Verkennen + lezen</span>
+							<h3 class="mode-name">Verdiepen</h3>
+						</div>
+						<p class="mode-desc">
+							Netwerk naast de leestekst. De gefocuste bron in het netwerk verschijnt als volledig
+							document ernaast.
+						</p>
+						<div class="mode-canvas">
+							<svg
+								viewBox="0 0 760 420"
+								width="100%"
+								height="100%"
+								preserveAspectRatio="xMidYMid meet"
+								role="img"
+								aria-label="Schermafbeelding van Verdiepen-modus: compact netwerk links, leespaneel in het midden, citeer-rail rechts."
+							>
+								<rect
+									x="0"
+									y="0"
+									width="760"
+									height="420"
+									fill="var(--paper-2)"
+									stroke="var(--rule)"
+								/>
+
+								<!-- LEFT: compact canvas -->
+								<rect
+									x="0"
+									y="0"
+									width="170"
+									height="420"
+									fill="var(--paper-2)"
+									stroke="var(--rule)"
+								/>
+								<rect
+									x="10"
+									y="10"
+									width="56"
+									height="18"
+									rx="2"
+									fill="var(--paper)"
+									stroke="var(--rule)"
+								/>
+								<text
+									x="38"
+									y="22"
+									font-family="var(--font-sans)"
+									font-size="10"
+									fill="var(--ink-3)"
+									text-anchor="middle">⊟ Filters</text
+								>
+								<g stroke="var(--ink-4)" stroke-width="0.7" opacity="0.55">
+									<line x1="50" y1="160" x2="95" y2="240" />
+									<line x1="70" y1="110" x2="95" y2="240" />
+									<line x1="35" y1="210" x2="95" y2="240" />
+									<line x1="95" y1="240" x2="55" y2="340" />
+									<line x1="95" y1="240" x2="140" y2="330" />
+									<line x1="95" y1="240" x2="150" y2="200" />
+									<line x1="95" y1="240" x2="155" y2="140" />
+								</g>
+								<line x1="95" y1="240" x2="50" y2="160" stroke="var(--accent)" stroke-width="1.2" />
+								<line
+									x1="95"
+									y1="240"
+									x2="140"
+									y2="330"
+									stroke="var(--accent)"
+									stroke-width="1.1"
+									stroke-dasharray="4 3"
+								/>
+								<g fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.2">
+									<circle cx="50" cy="160" r="5" />
+									<circle cx="70" cy="110" r="4" />
+									<circle cx="35" cy="210" r="4" />
+									<circle cx="55" cy="340" r="5" />
+									<circle cx="140" cy="330" r="5" />
+									<circle cx="150" cy="200" r="5" />
+									<circle cx="155" cy="140" r="4" />
+								</g>
+								<circle cx="50" cy="160" r="5" fill="var(--indigo)" stroke="var(--indigo)" />
+								<circle cx="155" cy="140" r="4" fill="var(--indigo)" stroke="var(--indigo)" />
+								<circle
+									cx="95"
+									cy="240"
+									r="20"
+									fill="none"
+									stroke="var(--ink)"
+									stroke-width="1.3"
+									opacity="0.25"
+								/>
+								<circle
+									cx="95"
+									cy="240"
+									r="11"
+									fill="none"
+									stroke="var(--ink)"
+									stroke-width="1.5"
+									opacity="0.4"
+								/>
+								<circle cx="95" cy="240" r="9" fill="var(--ink)" />
+
+								<!-- MIDDLE: reader -->
+								<rect
+									x="170"
+									y="0"
+									width="420"
+									height="420"
+									fill="var(--paper)"
+									stroke="var(--rule)"
+								/>
+								<text
+									x="194"
+									y="30"
+									font-family="var(--font-sans)"
+									font-size="9"
+									letter-spacing="0.16em"
+									fill="var(--ink-3)">§ ARTIKEL · BURGERLIJK WETBOEK</text
+								>
+								<rect
+									x="540"
+									y="18"
+									width="18"
+									height="18"
+									rx="2"
+									fill="var(--paper-2)"
+									stroke="var(--rule)"
+								/>
+								<text
+									x="549"
+									y="31"
+									font-family="var(--font-sans)"
+									font-size="10"
+									fill="var(--ink-3)"
+									text-anchor="middle">★</text
+								>
+								<text
+									x="194"
+									y="68"
+									font-family="var(--font-serif)"
+									font-size="22"
+									font-weight="500"
+									fill="var(--ink)">Onrechtmatige daad</text
+								>
+								<text
+									x="194"
+									y="88"
+									font-family="var(--font-mono)"
+									font-size="11"
+									fill="var(--ink-3)">BW 6:162</text
+								>
+								<line
+									x1="194"
+									y1="104"
+									x2="566"
+									y2="104"
+									stroke="var(--rule-strong)"
+									stroke-width="0.7"
+								/>
+								<g stroke="var(--ink-3)" stroke-width="0.6">
+									{#each [120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252, 264, 276, 288] as y, i (i)}
+										<line
+											x1="194"
+											y1={y}
+											x2={i === 4 ? 500 : i === 9 ? 470 : i === 14 ? 530 : 566}
+											y2={y}
+										/>
+									{/each}
+								</g>
+								<rect
+									x="194"
+									y="306"
+									width="372"
+									height="24"
+									fill="var(--paper-2)"
+									stroke="var(--rule)"
+								/>
+								<text
+									x="204"
+									y="322"
+									font-family="var(--font-sans)"
+									font-size="11"
+									fill="var(--ink-2)">Toelichting (MvT)</text
+								>
+								<text
+									x="558"
+									y="322"
+									font-family="var(--font-sans)"
+									font-size="12"
+									fill="var(--ink-3)"
+									text-anchor="end">›</text
+								>
+								<rect
+									x="194"
+									y="334"
+									width="372"
+									height="24"
+									fill="var(--paper-2)"
+									stroke="var(--rule)"
+								/>
+								<text
+									x="204"
+									y="350"
+									font-family="var(--font-sans)"
+									font-size="9"
+									letter-spacing="0.14em"
+									fill="var(--ink-3)">WETGEVINGSGESCHIEDENIS</text
+								>
+								<text
+									x="558"
+									y="350"
+									font-family="var(--font-sans)"
+									font-size="12"
+									fill="var(--ink-3)"
+									text-anchor="end">›</text
+								>
+
+								<!-- RIGHT: citation rail -->
+								<rect
+									x="590"
+									y="0"
+									width="170"
+									height="420"
+									fill="var(--paper)"
+									stroke="var(--rule)"
+								/>
+								<text
+									x="604"
+									y="30"
+									font-family="var(--font-sans)"
+									font-size="10"
+									letter-spacing="0.14em"
+									fill="var(--ink-3)">VERWIJST NAAR</text
+								>
+								<text
+									x="746"
+									y="30"
+									font-family="var(--font-sans)"
+									font-size="10"
+									fill="var(--ink-2)"
+									text-anchor="end">12</text
+								>
+								<g font-family="var(--font-serif)" font-size="11" fill="var(--ink-2)">
+									<text x="608" y="56">§ Art. 6:74</text>
+									<text x="608" y="74">§ Art. 6:98</text>
+									<text x="608" y="92">§ Art. 6:101</text>
+									<text x="608" y="110">§ Art. 6:163</text>
+								</g>
+								<line x1="604" y1="128" x2="746" y2="128" stroke="var(--rule)" />
+								<text
+									x="604"
+									y="148"
+									font-family="var(--font-sans)"
+									font-size="10"
+									letter-spacing="0.14em"
+									fill="var(--ink-3)">UITGELEGD DOOR</text
+								>
+								<text
+									x="746"
+									y="148"
+									font-family="var(--font-sans)"
+									font-size="10"
+									fill="var(--ink-2)"
+									text-anchor="end">5</text
+								>
+								<g font-family="var(--font-serif)" font-size="11" fill="var(--indigo)">
+									<text x="608" y="172">ℐ HR 2019:1234</text>
+									<text x="608" y="190">ℐ HR 2016:743</text>
+									<text x="608" y="208">ℐ HR 2005:881</text>
+								</g>
+								<line x1="604" y1="232" x2="746" y2="232" stroke="var(--rule)" />
+								<text
+									x="604"
+									y="252"
+									font-family="var(--font-sans)"
+									font-size="10"
+									letter-spacing="0.14em"
+									fill="var(--ink-3)">CITEER DIT</text
+								>
+								<g font-family="var(--font-sans)" font-size="10" fill="var(--ink-2)">
+									<rect
+										x="604"
+										y="262"
+										width="142"
+										height="22"
+										fill="var(--paper-2)"
+										stroke="var(--rule)"
+									/>
+									<text x="612" y="276">verkort</text>
+									<rect
+										x="604"
+										y="286"
+										width="142"
+										height="22"
+										fill="var(--paper-2)"
+										stroke="var(--rule)"
+									/>
+									<text x="612" y="300">volledig</text>
+									<rect
+										x="604"
+										y="310"
+										width="142"
+										height="22"
+										fill="var(--paper-2)"
+										stroke="var(--rule)"
+									/>
+									<text x="612" y="324">vindplaats</text>
+									<rect
+										x="604"
+										y="334"
+										width="142"
+										height="22"
+										fill="var(--paper-2)"
+										stroke="var(--rule)"
+									/>
+									<text x="612" y="348">bibtex</text>
+								</g>
+							</svg>
+						</div>
 					</div>
-					<p class="mode-desc">
-						Netwerk naast de leestekst. De gefocuste bron in het netwerk verschijnt als volledig
-						document ernaast.
-					</p>
-					<div class="mode-canvas">
-						<svg
-							viewBox="0 0 760 420"
-							width="100%"
-							height="100%"
-							preserveAspectRatio="xMidYMid meet"
-							role="img"
-							aria-label="Schermafbeelding van Verdiepen-modus: compact netwerk links, leespaneel in het midden, citeer-rail rechts."
-						>
-							<rect x="0" y="0" width="760" height="420" fill="var(--paper-2)" stroke="var(--rule)" />
-
-							<!-- LEFT: compact canvas -->
-							<rect x="0" y="0" width="170" height="420" fill="var(--paper-2)" stroke="var(--rule)" />
-							<rect x="10" y="10" width="56" height="18" rx="2" fill="var(--paper)" stroke="var(--rule)" />
-							<text x="38" y="22" font-family="var(--font-sans)" font-size="10" fill="var(--ink-3)" text-anchor="middle">⊟ Filters</text>
-							<g stroke="var(--ink-4)" stroke-width="0.7" opacity="0.55">
-								<line x1="50" y1="160" x2="95" y2="240" />
-								<line x1="70" y1="110" x2="95" y2="240" />
-								<line x1="35" y1="210" x2="95" y2="240" />
-								<line x1="95" y1="240" x2="55" y2="340" />
-								<line x1="95" y1="240" x2="140" y2="330" />
-								<line x1="95" y1="240" x2="150" y2="200" />
-								<line x1="95" y1="240" x2="155" y2="140" />
-							</g>
-							<line x1="95" y1="240" x2="50" y2="160" stroke="var(--accent)" stroke-width="1.2" />
-							<line x1="95" y1="240" x2="140" y2="330" stroke="var(--accent)" stroke-width="1.1" stroke-dasharray="4 3" />
-							<g fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.2">
-								<circle cx="50" cy="160" r="5" />
-								<circle cx="70" cy="110" r="4" />
-								<circle cx="35" cy="210" r="4" />
-								<circle cx="55" cy="340" r="5" />
-								<circle cx="140" cy="330" r="5" />
-								<circle cx="150" cy="200" r="5" />
-								<circle cx="155" cy="140" r="4" />
-							</g>
-							<circle cx="50" cy="160" r="5" fill="var(--indigo)" stroke="var(--indigo)" />
-							<circle cx="155" cy="140" r="4" fill="var(--indigo)" stroke="var(--indigo)" />
-							<circle cx="95" cy="240" r="20" fill="none" stroke="var(--ink)" stroke-width="1.3" opacity="0.25" />
-							<circle cx="95" cy="240" r="11" fill="none" stroke="var(--ink)" stroke-width="1.5" opacity="0.4" />
-							<circle cx="95" cy="240" r="9" fill="var(--ink)" />
-
-							<!-- MIDDLE: reader -->
-							<rect x="170" y="0" width="420" height="420" fill="var(--paper)" stroke="var(--rule)" />
-							<text x="194" y="30" font-family="var(--font-sans)" font-size="9" letter-spacing="0.16em" fill="var(--ink-3)">§ ARTIKEL · BURGERLIJK WETBOEK</text>
-							<rect x="540" y="18" width="18" height="18" rx="2" fill="var(--paper-2)" stroke="var(--rule)" />
-							<text x="549" y="31" font-family="var(--font-sans)" font-size="10" fill="var(--ink-3)" text-anchor="middle">★</text>
-							<text x="194" y="68" font-family="var(--font-serif)" font-size="22" font-weight="500" fill="var(--ink)">Onrechtmatige daad</text>
-							<text x="194" y="88" font-family="var(--font-mono)" font-size="11" fill="var(--ink-3)">BW 6:162</text>
-							<line x1="194" y1="104" x2="566" y2="104" stroke="var(--rule-strong)" stroke-width="0.7" />
-							<g stroke="var(--ink-3)" stroke-width="0.6">
-								{#each [120, 132, 144, 156, 168, 180, 192, 204, 216, 228, 240, 252, 264, 276, 288] as y, i (i)}
-									<line x1="194" y1={y} x2={i === 4 ? 500 : i === 9 ? 470 : i === 14 ? 530 : 566} y2={y} />
-								{/each}
-							</g>
-							<rect x="194" y="306" width="372" height="24" fill="var(--paper-2)" stroke="var(--rule)" />
-							<text x="204" y="322" font-family="var(--font-sans)" font-size="11" fill="var(--ink-2)">Toelichting (MvT)</text>
-							<text x="558" y="322" font-family="var(--font-sans)" font-size="12" fill="var(--ink-3)" text-anchor="end">›</text>
-							<rect x="194" y="334" width="372" height="24" fill="var(--paper-2)" stroke="var(--rule)" />
-							<text x="204" y="350" font-family="var(--font-sans)" font-size="9" letter-spacing="0.14em" fill="var(--ink-3)">WETGEVINGSGESCHIEDENIS</text>
-							<text x="558" y="350" font-family="var(--font-sans)" font-size="12" fill="var(--ink-3)" text-anchor="end">›</text>
-
-							<!-- RIGHT: citation rail -->
-							<rect x="590" y="0" width="170" height="420" fill="var(--paper)" stroke="var(--rule)" />
-							<text x="604" y="30" font-family="var(--font-sans)" font-size="10" letter-spacing="0.14em" fill="var(--ink-3)">VERWIJST NAAR</text>
-							<text x="746" y="30" font-family="var(--font-sans)" font-size="10" fill="var(--ink-2)" text-anchor="end">12</text>
-							<g font-family="var(--font-serif)" font-size="11" fill="var(--ink-2)">
-								<text x="608" y="56">§ Art. 6:74</text>
-								<text x="608" y="74">§ Art. 6:98</text>
-								<text x="608" y="92">§ Art. 6:101</text>
-								<text x="608" y="110">§ Art. 6:163</text>
-							</g>
-							<line x1="604" y1="128" x2="746" y2="128" stroke="var(--rule)" />
-							<text x="604" y="148" font-family="var(--font-sans)" font-size="10" letter-spacing="0.14em" fill="var(--ink-3)">UITGELEGD DOOR</text>
-							<text x="746" y="148" font-family="var(--font-sans)" font-size="10" fill="var(--ink-2)" text-anchor="end">5</text>
-							<g font-family="var(--font-serif)" font-size="11" fill="var(--indigo)">
-								<text x="608" y="172">ℐ HR 2019:1234</text>
-								<text x="608" y="190">ℐ HR 2016:743</text>
-								<text x="608" y="208">ℐ HR 2005:881</text>
-							</g>
-							<line x1="604" y1="232" x2="746" y2="232" stroke="var(--rule)" />
-							<text x="604" y="252" font-family="var(--font-sans)" font-size="10" letter-spacing="0.14em" fill="var(--ink-3)">CITEER DIT</text>
-							<g font-family="var(--font-sans)" font-size="10" fill="var(--ink-2)">
-								<rect x="604" y="262" width="142" height="22" fill="var(--paper-2)" stroke="var(--rule)" />
-								<text x="612" y="276">verkort</text>
-								<rect x="604" y="286" width="142" height="22" fill="var(--paper-2)" stroke="var(--rule)" />
-								<text x="612" y="300">volledig</text>
-								<rect x="604" y="310" width="142" height="22" fill="var(--paper-2)" stroke="var(--rule)" />
-								<text x="612" y="324">vindplaats</text>
-								<rect x="604" y="334" width="142" height="22" fill="var(--paper-2)" stroke="var(--rule)" />
-								<text x="612" y="348">bibtex</text>
-							</g>
-						</svg>
-					</div>
-				</div>
-				<span class="mode-cta">Probeer <span class="mode-cta__arrow" aria-hidden="true">→</span></span>
+					<span class="mode-cta"
+						>Probeer <span class="mode-cta__arrow" aria-hidden="true">→</span></span
+					>
 				</a>
 
 				<a class="mode-col no-underline" href="/explore?mode=read&focus=instruments%2FBWBR0001840">
-				<div class="mode">
-					<div class="mode-head">
-						<span class="mode-kind">Lezen</span>
-						<h3 class="mode-name">Lezen</h3>
+					<div class="mode">
+						<div class="mode-head">
+							<span class="mode-kind">Lezen</span>
+							<h3 class="mode-name">Lezen</h3>
+						</div>
+						<p class="mode-desc">
+							Eén document, gezet in EB Garamond op zesenzestig tekens, met citaten in de marge.
+						</p>
+						<div class="mode-canvas">
+							<svg
+								viewBox="0 0 760 420"
+								width="100%"
+								height="100%"
+								preserveAspectRatio="xMidYMid meet"
+								role="img"
+								aria-label="Schermafbeelding van Lezen-modus: één wettekst in EB Garamond, met citaten in de rechtermarge."
+							>
+								<rect x="0" y="0" width="760" height="420" fill="var(--paper)" />
+
+								<!-- Lid markers in left margin -->
+								<text
+									x="120"
+									y="120"
+									font-family="var(--font-sans)"
+									font-size="9"
+									letter-spacing="0.18em"
+									fill="var(--ink-4)"
+									text-anchor="end">LID 1</text
+								>
+								<text
+									x="120"
+									y="232"
+									font-family="var(--font-sans)"
+									font-size="9"
+									letter-spacing="0.18em"
+									fill="var(--ink-4)"
+									text-anchor="end">LID 2</text
+								>
+								<text
+									x="120"
+									y="320"
+									font-family="var(--font-sans)"
+									font-size="9"
+									letter-spacing="0.18em"
+									fill="var(--ink-4)"
+									text-anchor="end">LID 3</text
+								>
+
+								<!-- Article header -->
+								<text
+									x="150"
+									y="50"
+									font-family="var(--font-serif)"
+									font-size="14"
+									font-style="italic"
+									fill="var(--accent)">§</text
+								>
+								<text
+									x="172"
+									y="48"
+									font-family="var(--font-sans)"
+									font-size="10"
+									letter-spacing="0.16em"
+									fill="var(--ink-3)">ARTIKEL · BURGERLIJK WETBOEK</text
+								>
+								<text
+									x="150"
+									y="84"
+									font-family="var(--font-serif)"
+									font-size="26"
+									font-weight="500"
+									fill="var(--ink)">Onrechtmatige daad</text
+								>
+								<text
+									x="150"
+									y="104"
+									font-family="var(--font-mono)"
+									font-size="11"
+									fill="var(--ink-3)">BW 6:162 · geldig 1 jan 2026</text
+								>
+								<line
+									x1="150"
+									y1="118"
+									x2="540"
+									y2="118"
+									stroke="var(--rule-strong)"
+									stroke-width="0.8"
+								/>
+
+								<!-- Body lines (66ch column at ~410px wide) -->
+								<g stroke="var(--ink-3)" stroke-width="3" opacity="0.18">
+									<line x1="150" y1="138" x2="540" y2="138" />
+									<line x1="150" y1="152" x2="528" y2="152" />
+									<line x1="150" y1="166" x2="540" y2="166" />
+									<line x1="150" y1="180" x2="490" y2="180" />
+
+									<line x1="150" y1="208" x2="540" y2="208" />
+									<line x1="150" y1="222" x2="540" y2="222" />
+									<line x1="150" y1="236" x2="510" y2="236" />
+									<line x1="150" y1="250" x2="540" y2="250" />
+									<line x1="150" y1="264" x2="450" y2="264" />
+
+									<line x1="150" y1="292" x2="540" y2="292" />
+									<line x1="150" y1="306" x2="540" y2="306" />
+									<line x1="150" y1="320" x2="520" y2="320" />
+									<line x1="150" y1="334" x2="540" y2="334" />
+									<line x1="150" y1="348" x2="480" y2="348" />
+								</g>
+
+								<!-- Margin citation markers (right rail) -->
+								<g>
+									<circle cx="580" cy="152" r="3.2" fill="var(--accent)" />
+									<text
+										x="592"
+										y="155"
+										font-family="var(--font-sans)"
+										font-size="9"
+										fill="var(--ink-3)">HR 2019:1234</text
+									>
+									<text
+										x="592"
+										y="167"
+										font-family="var(--font-sans)"
+										font-size="9"
+										fill="var(--ink-4)">aansprakelijkheid</text
+									>
+
+									<circle cx="580" cy="222" r="3.2" fill="var(--indigo)" />
+									<text
+										x="592"
+										y="225"
+										font-family="var(--font-sans)"
+										font-size="9"
+										fill="var(--ink-3)">HR 2016:743</text
+									>
+									<text
+										x="592"
+										y="237"
+										font-family="var(--font-sans)"
+										font-size="9"
+										fill="var(--ink-4)">bewijslast</text
+									>
+
+									<circle cx="580" cy="306" r="3.2" fill="var(--ink-3)" />
+									<text
+										x="592"
+										y="309"
+										font-family="var(--font-sans)"
+										font-size="9"
+										fill="var(--ink-3)">§ Art. 6:163</text
+									>
+									<text
+										x="592"
+										y="321"
+										font-family="var(--font-sans)"
+										font-size="9"
+										fill="var(--ink-4)">relativiteit</text
+									>
+								</g>
+
+								<!-- Bottom: page status -->
+								<line x1="150" y1="380" x2="540" y2="380" stroke="var(--rule)" />
+								<text
+									x="150"
+									y="398"
+									font-family="var(--font-sans)"
+									font-size="9.5"
+									fill="var(--ink-3)">↶ Vorig artikel</text
+								>
+								<text
+									x="540"
+									y="398"
+									font-family="var(--font-sans)"
+									font-size="9.5"
+									fill="var(--ink-3)"
+									text-anchor="end">Volgend artikel ↷</text
+								>
+							</svg>
+						</div>
 					</div>
-					<p class="mode-desc">
-						Eén document, gezet in EB Garamond op zesenzestig tekens, met citaten in de marge.
-					</p>
-					<div class="mode-canvas">
-						<svg
-							viewBox="0 0 760 420"
-							width="100%"
-							height="100%"
-							preserveAspectRatio="xMidYMid meet"
-							role="img"
-							aria-label="Schermafbeelding van Lezen-modus: één wettekst in EB Garamond, met citaten in de rechtermarge."
-						>
-							<rect x="0" y="0" width="760" height="420" fill="var(--paper)" />
-
-							<!-- Lid markers in left margin -->
-							<text x="120" y="120" font-family="var(--font-sans)" font-size="9" letter-spacing="0.18em" fill="var(--ink-4)" text-anchor="end">LID 1</text>
-							<text x="120" y="232" font-family="var(--font-sans)" font-size="9" letter-spacing="0.18em" fill="var(--ink-4)" text-anchor="end">LID 2</text>
-							<text x="120" y="320" font-family="var(--font-sans)" font-size="9" letter-spacing="0.18em" fill="var(--ink-4)" text-anchor="end">LID 3</text>
-
-							<!-- Article header -->
-							<text x="150" y="50" font-family="var(--font-serif)" font-size="14" font-style="italic" fill="var(--accent)">§</text>
-							<text x="172" y="48" font-family="var(--font-sans)" font-size="10" letter-spacing="0.16em" fill="var(--ink-3)">ARTIKEL · BURGERLIJK WETBOEK</text>
-							<text x="150" y="84" font-family="var(--font-serif)" font-size="26" font-weight="500" fill="var(--ink)">Onrechtmatige daad</text>
-							<text x="150" y="104" font-family="var(--font-mono)" font-size="11" fill="var(--ink-3)">BW 6:162 · geldig 1 jan 2026</text>
-							<line x1="150" y1="118" x2="540" y2="118" stroke="var(--rule-strong)" stroke-width="0.8" />
-
-							<!-- Body lines (66ch column at ~410px wide) -->
-							<g stroke="var(--ink-3)" stroke-width="3" opacity="0.18">
-								<line x1="150" y1="138" x2="540" y2="138" />
-								<line x1="150" y1="152" x2="528" y2="152" />
-								<line x1="150" y1="166" x2="540" y2="166" />
-								<line x1="150" y1="180" x2="490" y2="180" />
-
-								<line x1="150" y1="208" x2="540" y2="208" />
-								<line x1="150" y1="222" x2="540" y2="222" />
-								<line x1="150" y1="236" x2="510" y2="236" />
-								<line x1="150" y1="250" x2="540" y2="250" />
-								<line x1="150" y1="264" x2="450" y2="264" />
-
-								<line x1="150" y1="292" x2="540" y2="292" />
-								<line x1="150" y1="306" x2="540" y2="306" />
-								<line x1="150" y1="320" x2="520" y2="320" />
-								<line x1="150" y1="334" x2="540" y2="334" />
-								<line x1="150" y1="348" x2="480" y2="348" />
-							</g>
-
-							<!-- Margin citation markers (right rail) -->
-							<g>
-								<circle cx="580" cy="152" r="3.2" fill="var(--accent)" />
-								<text x="592" y="155" font-family="var(--font-sans)" font-size="9" fill="var(--ink-3)">HR 2019:1234</text>
-								<text x="592" y="167" font-family="var(--font-sans)" font-size="9" fill="var(--ink-4)">aansprakelijkheid</text>
-
-								<circle cx="580" cy="222" r="3.2" fill="var(--indigo)" />
-								<text x="592" y="225" font-family="var(--font-sans)" font-size="9" fill="var(--ink-3)">HR 2016:743</text>
-								<text x="592" y="237" font-family="var(--font-sans)" font-size="9" fill="var(--ink-4)">bewijslast</text>
-
-								<circle cx="580" cy="306" r="3.2" fill="var(--ink-3)" />
-								<text x="592" y="309" font-family="var(--font-sans)" font-size="9" fill="var(--ink-3)">§ Art. 6:163</text>
-								<text x="592" y="321" font-family="var(--font-sans)" font-size="9" fill="var(--ink-4)">relativiteit</text>
-							</g>
-
-							<!-- Bottom: page status -->
-							<line x1="150" y1="380" x2="540" y2="380" stroke="var(--rule)" />
-							<text x="150" y="398" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-3)">↶ Vorig artikel</text>
-							<text x="540" y="398" font-family="var(--font-sans)" font-size="9.5" fill="var(--ink-3)" text-anchor="end">Volgend artikel ↷</text>
-
-						</svg>
-					</div>
-				</div>
-				<span class="mode-cta">Probeer <span class="mode-cta__arrow" aria-hidden="true">→</span></span>
+					<span class="mode-cta"
+						>Probeer <span class="mode-cta__arrow" aria-hidden="true">→</span></span
+					>
 				</a>
 
 				<a class="mode-col no-underline" href="/explore?mode=index&kind=dossiers">
-				<div class="mode">
-					<div class="mode-head">
-						<span class="mode-kind">Bladeren</span>
-						<h3 class="mode-name">Index</h3>
-					</div>
-					<p class="mode-desc">
-						Tabellarisch overzicht van een categorie: dossiers, commissies, kamerleden of
-						stemmingen. Filteren en sorteren zonder het netwerk.
-					</p>
-					<div class="mode-canvas">
-						<svg
-							viewBox="0 0 760 420"
-							width="100%"
-							height="100%"
-							preserveAspectRatio="xMidYMid meet"
-							role="img"
-							aria-label="Schermafbeelding van Index-modus: tabellarisch overzicht van wetgevingsdossiers met filters."
-						>
-							<rect x="0" y="0" width="760" height="420" fill="var(--paper)" />
+					<div class="mode">
+						<div class="mode-head">
+							<span class="mode-kind">Bladeren</span>
+							<h3 class="mode-name">Index</h3>
+						</div>
+						<p class="mode-desc">
+							Tabellarisch overzicht van een categorie: dossiers, commissies, kamerleden of
+							stemmingen. Filteren en sorteren zonder het netwerk.
+						</p>
+						<div class="mode-canvas">
+							<svg
+								viewBox="0 0 760 420"
+								width="100%"
+								height="100%"
+								preserveAspectRatio="xMidYMid meet"
+								role="img"
+								aria-label="Schermafbeelding van Index-modus: tabellarisch overzicht van wetgevingsdossiers met filters."
+							>
+								<rect x="0" y="0" width="760" height="420" fill="var(--paper)" />
 
-							<!-- Toolbar with category chips + sort -->
-							<rect x="0" y="0" width="760" height="46" fill="var(--paper-2)" stroke="var(--rule)" />
-							<g font-family="var(--font-sans)" font-size="11">
-								<rect x="20" y="13" width="80" height="22" rx="2" fill="var(--ink)" />
-								<text x="60" y="28" fill="var(--paper)" text-anchor="middle">Dossiers</text>
-								<rect x="106" y="13" width="86" height="22" rx="2" fill="var(--paper)" stroke="var(--rule)" />
-								<text x="149" y="28" fill="var(--ink-2)" text-anchor="middle">Commissies</text>
-								<rect x="198" y="13" width="80" height="22" rx="2" fill="var(--paper)" stroke="var(--rule)" />
-								<text x="238" y="28" fill="var(--ink-2)" text-anchor="middle">Kamerleden</text>
-								<rect x="284" y="13" width="84" height="22" rx="2" fill="var(--paper)" stroke="var(--rule)" />
-								<text x="326" y="28" fill="var(--ink-2)" text-anchor="middle">Stemmingen</text>
-							</g>
-							<text x="724" y="28" font-family="var(--font-sans)" font-size="11" fill="var(--ink-3)" text-anchor="end">8 van 247 ↓</text>
-
-							<!-- Column headers -->
-							<text x="32" y="74" font-family="var(--font-sans)" font-size="10" letter-spacing="0.16em" fill="var(--ink-3)">DOSSIER</text>
-							<text x="316" y="74" font-family="var(--font-sans)" font-size="10" letter-spacing="0.16em" fill="var(--ink-3)">FASE</text>
-							<text x="500" y="74" font-family="var(--font-sans)" font-size="10" letter-spacing="0.16em" fill="var(--ink-3)">ARTIKELEN</text>
-							<text x="640" y="74" font-family="var(--font-sans)" font-size="10" letter-spacing="0.16em" fill="var(--ink-3)">LAATSTE WIJZIGING</text>
-							<line x1="20" y1="84" x2="740" y2="84" stroke="var(--rule-strong)" stroke-width="0.8" />
-
-							{#each [{ nr: '36 586', label: 'Aanpassing aansprakelijkheidsrecht', fase: 'behandeling', art: 12, date: '2026-04-12' }, { nr: '36 612', label: 'Wijziging Wet open overheid', fase: 'behandeling', art: 7, date: '2026-04-08' }, { nr: '36 503', label: 'Modernisering BW boek 6', fase: 'aangenomen', art: 21, date: '2026-03-29', highlight: true }, { nr: '36 644', label: 'Tweede Kamerwet aanpassing', fase: 'ingediend', art: 3, date: '2026-03-15' }, { nr: '36 422', label: 'Strafrecht digitale opsporing', fase: 'aangenomen', art: 9, date: '2026-03-04' }, { nr: '36 679', label: 'Belastingplan 2026', fase: 'ingediend', art: 14, date: '2026-02-22' }, { nr: '36 488', label: 'Wijziging Awb hoofdstuk 8', fase: 'behandeling', art: 5, date: '2026-02-14' }, { nr: '36 391', label: 'Implementatie EU verordening 2024/918', fase: 'aangenomen', art: 18, date: '2026-01-30' }] as row, i (row.nr)}
-								{@const y = 110 + i * 36}
-								{#if row.highlight}
-									<rect x="20" y={y - 18} width="720" height="32" fill="var(--paper-2)" />
-								{/if}
-								<text x="32" y={y} font-family="var(--font-mono)" font-size="11" fill="var(--ink-2)">{row.nr}</text>
-								<text x="100" y={y} font-family="var(--font-serif)" font-size="12.5" fill="var(--ink)">{row.label}</text>
-								<g transform={`translate(316 ${y - 12})`}>
-									<rect x="0" y="0" width="92" height="20" rx="10" fill={row.fase === 'aangenomen' ? 'var(--accent)' : row.fase === 'behandeling' ? 'var(--paper-2)' : 'var(--paper)'} stroke={row.fase === 'aangenomen' ? 'var(--accent)' : 'var(--rule)'} />
-									<text x="46" y="14" font-family="var(--font-sans)" font-size="10" fill={row.fase === 'aangenomen' ? 'var(--paper)' : 'var(--ink-2)'} text-anchor="middle">{row.fase}</text>
+								<!-- Toolbar with category chips + sort -->
+								<rect
+									x="0"
+									y="0"
+									width="760"
+									height="46"
+									fill="var(--paper-2)"
+									stroke="var(--rule)"
+								/>
+								<g font-family="var(--font-sans)" font-size="11">
+									<rect x="20" y="13" width="80" height="22" rx="2" fill="var(--ink)" />
+									<text x="60" y="28" fill="var(--paper)" text-anchor="middle">Dossiers</text>
+									<rect
+										x="106"
+										y="13"
+										width="86"
+										height="22"
+										rx="2"
+										fill="var(--paper)"
+										stroke="var(--rule)"
+									/>
+									<text x="149" y="28" fill="var(--ink-2)" text-anchor="middle">Commissies</text>
+									<rect
+										x="198"
+										y="13"
+										width="80"
+										height="22"
+										rx="2"
+										fill="var(--paper)"
+										stroke="var(--rule)"
+									/>
+									<text x="238" y="28" fill="var(--ink-2)" text-anchor="middle">Kamerleden</text>
+									<rect
+										x="284"
+										y="13"
+										width="84"
+										height="22"
+										rx="2"
+										fill="var(--paper)"
+										stroke="var(--rule)"
+									/>
+									<text x="326" y="28" fill="var(--ink-2)" text-anchor="middle">Stemmingen</text>
 								</g>
-								<text x="540" y={y} font-family="var(--font-mono)" font-size="11" fill="var(--ink-2)" text-anchor="end">{row.art}</text>
-								<text x="640" y={y} font-family="var(--font-mono)" font-size="11" fill="var(--ink-3)">{row.date}</text>
-								<line x1="20" y1={y + 14} x2="740" y2={y + 14} stroke="var(--rule)" stroke-width="0.5" />
-							{/each}
-						</svg>
+								<text
+									x="724"
+									y="28"
+									font-family="var(--font-sans)"
+									font-size="11"
+									fill="var(--ink-3)"
+									text-anchor="end">8 van 247 ↓</text
+								>
+
+								<!-- Column headers -->
+								<text
+									x="32"
+									y="74"
+									font-family="var(--font-sans)"
+									font-size="10"
+									letter-spacing="0.16em"
+									fill="var(--ink-3)">DOSSIER</text
+								>
+								<text
+									x="316"
+									y="74"
+									font-family="var(--font-sans)"
+									font-size="10"
+									letter-spacing="0.16em"
+									fill="var(--ink-3)">FASE</text
+								>
+								<text
+									x="500"
+									y="74"
+									font-family="var(--font-sans)"
+									font-size="10"
+									letter-spacing="0.16em"
+									fill="var(--ink-3)">ARTIKELEN</text
+								>
+								<text
+									x="640"
+									y="74"
+									font-family="var(--font-sans)"
+									font-size="10"
+									letter-spacing="0.16em"
+									fill="var(--ink-3)">LAATSTE WIJZIGING</text
+								>
+								<line
+									x1="20"
+									y1="84"
+									x2="740"
+									y2="84"
+									stroke="var(--rule-strong)"
+									stroke-width="0.8"
+								/>
+
+								{#each [{ nr: '36 586', label: 'Aanpassing aansprakelijkheidsrecht', fase: 'behandeling', art: 12, date: '2026-04-12' }, { nr: '36 612', label: 'Wijziging Wet open overheid', fase: 'behandeling', art: 7, date: '2026-04-08' }, { nr: '36 503', label: 'Modernisering BW boek 6', fase: 'aangenomen', art: 21, date: '2026-03-29', highlight: true }, { nr: '36 644', label: 'Tweede Kamerwet aanpassing', fase: 'ingediend', art: 3, date: '2026-03-15' }, { nr: '36 422', label: 'Strafrecht digitale opsporing', fase: 'aangenomen', art: 9, date: '2026-03-04' }, { nr: '36 679', label: 'Belastingplan 2026', fase: 'ingediend', art: 14, date: '2026-02-22' }, { nr: '36 488', label: 'Wijziging Awb hoofdstuk 8', fase: 'behandeling', art: 5, date: '2026-02-14' }, { nr: '36 391', label: 'Implementatie EU verordening 2024/918', fase: 'aangenomen', art: 18, date: '2026-01-30' }] as row, i (row.nr)}
+									{@const y = 110 + i * 36}
+									{#if row.highlight}
+										<rect x="20" y={y - 18} width="720" height="32" fill="var(--paper-2)" />
+									{/if}
+									<text x="32" {y} font-family="var(--font-mono)" font-size="11" fill="var(--ink-2)"
+										>{row.nr}</text
+									>
+									<text
+										x="100"
+										{y}
+										font-family="var(--font-serif)"
+										font-size="12.5"
+										fill="var(--ink)">{row.label}</text
+									>
+									<g transform={`translate(316 ${y - 12})`}>
+										<rect
+											x="0"
+											y="0"
+											width="92"
+											height="20"
+											rx="10"
+											fill={row.fase === 'aangenomen'
+												? 'var(--accent)'
+												: row.fase === 'behandeling'
+													? 'var(--paper-2)'
+													: 'var(--paper)'}
+											stroke={row.fase === 'aangenomen' ? 'var(--accent)' : 'var(--rule)'}
+										/>
+										<text
+											x="46"
+											y="14"
+											font-family="var(--font-sans)"
+											font-size="10"
+											fill={row.fase === 'aangenomen' ? 'var(--paper)' : 'var(--ink-2)'}
+											text-anchor="middle">{row.fase}</text
+										>
+									</g>
+									<text
+										x="540"
+										{y}
+										font-family="var(--font-mono)"
+										font-size="11"
+										fill="var(--ink-2)"
+										text-anchor="end">{row.art}</text
+									>
+									<text
+										x="640"
+										{y}
+										font-family="var(--font-mono)"
+										font-size="11"
+										fill="var(--ink-3)">{row.date}</text
+									>
+									<line
+										x1="20"
+										y1={y + 14}
+										x2="740"
+										y2={y + 14}
+										stroke="var(--rule)"
+										stroke-width="0.5"
+									/>
+								{/each}
+							</svg>
+						</div>
 					</div>
-				</div>
-				<span class="mode-cta">Probeer <span class="mode-cta__arrow" aria-hidden="true">→</span></span>
+					<span class="mode-cta"
+						>Probeer <span class="mode-cta__arrow" aria-hidden="true">→</span></span
+					>
 				</a>
 			</div>
 		</div>
@@ -922,9 +1518,9 @@
 					</div>
 					<p class="trio-source">wetten.overheid.nl</p>
 					<p class="trio-body">
-						Wetsartikelen als verbindingspunten. Elk artikel toont de arresten die
-						het uitleggen, de dossiers die het wijzigen en de andere artikelen die het aanhaalt.
-						Historische toestanden en wijzigingen zichtbaar als verbinding.
+						Wetsartikelen als verbindingspunten. Elk artikel toont de arresten die het uitleggen, de
+						dossiers die het wijzigen en de andere artikelen die het aanhaalt. Historische
+						toestanden en wijzigingen zichtbaar als verbinding.
 					</p>
 				</div>
 				<div class="trio-card">
@@ -934,9 +1530,8 @@
 					</div>
 					<p class="trio-source">rechtspraak.nl</p>
 					<p class="trio-body">
-						Uitspraken van rechtbanken, hoven en de Hoge Raad, verbonden aan de
-						wetsartikelen die worden uitgelegd of toegepast.
-						Van Hoge Raad tot rechtbank, geïndexeerd per ECLI.
+						Uitspraken van rechtbanken, hoven en de Hoge Raad, verbonden aan de wetsartikelen die
+						worden uitgelegd of toegepast. Van Hoge Raad tot rechtbank, geïndexeerd per ECLI.
 					</p>
 				</div>
 				<div class="trio-card">
@@ -946,9 +1541,9 @@
 					</div>
 					<p class="trio-source">tweedekamer.nl</p>
 					<p class="trio-body">
-						Wetgevingsdossiers, commissies, kamerleden en stemmingen verbonden
-						aan de artikelen die ze betreffen. Parlementaire geschiedenis
-						direct bij de wettekst, niet als zoekresultaat maar als verbinding.
+						Wetgevingsdossiers, commissies, kamerleden en stemmingen verbonden aan de artikelen die
+						ze betreffen. Parlementaire geschiedenis direct bij de wettekst, niet als zoekresultaat
+						maar als verbinding.
 					</p>
 				</div>
 				<div class="trio-card">
@@ -958,9 +1553,9 @@
 					</div>
 					<p class="trio-source">eur-lex.europa.eu</p>
 					<p class="trio-body">
-						Europese richtlijnen en verordeningen, geïndexeerd per CELEX. Aangehaakt
-						aan de Nederlandse implementatie via expliciete implementatierelaties,
-						zodat omzetting traceerbaar is.
+						Europese richtlijnen en verordeningen, geïndexeerd per CELEX. Aangehaakt aan de
+						Nederlandse implementatie via expliciete implementatierelaties, zodat omzetting
+						traceerbaar is.
 					</p>
 				</div>
 			</div>
@@ -981,8 +1576,8 @@
 				<div>
 					<h2 class="section-title">Het cijfer dat nergens anders bestaat</h2>
 					<p class="section-lede">
-						Wetsartikelen en arresten worden ook door de officiële databases
-						geteld. Het aantal verbindingen ertussen alleen hier.
+						Wetsartikelen en arresten worden ook door de officiële databases geteld. Het aantal
+						verbindingen ertussen alleen hier.
 					</p>
 				</div>
 			</div>
@@ -1036,8 +1631,8 @@
 						<p class="source-url">BWB · XML</p>
 						<p class="source-desc">
 							De volledige tekst van Nederlandse wet- en regelgeving, opgesplitst per artikel,
-							inclusief historische toestanden. Concordans neemt de XML-publicatie
-							ongewijzigd over en bouwt daarop het citatennetwerk.
+							inclusief historische toestanden. Concordans neemt de XML-publicatie ongewijzigd over
+							en bouwt daarop het citatennetwerk.
 						</p>
 					</div>
 					<div class="source">
@@ -1045,32 +1640,31 @@
 						<p class="source-url">uitspraken.rechtspraak.nl · ECLI · XML</p>
 						<p class="source-desc">
 							Uitspraken van rechtbanken, gerechtshoven en de Hoge Raad: volledige tekst,
-							samenvatting en metadata. Citaties naar wetsartikelen worden machinaal
-							geëxtraheerd.
+							samenvatting en metadata. Citaties naar wetsartikelen worden machinaal geëxtraheerd.
 						</p>
 					</div>
 					<div class="source">
 						<h3 class="source-name">tweedekamer.nl</h3>
 						<p class="source-url">gegevensmagazijn · JSON OData</p>
 						<p class="source-desc">
-							Dossiers, documenten, debatten, stemmingen, toezeggingen, commissies en
-							Kamerleden. Aangehaakt aan het artikel waarop ze betrekking hebben, niet als
-							zoekresultaat maar als verbinding.
+							Dossiers, documenten, debatten, stemmingen, toezeggingen, commissies en Kamerleden.
+							Aangehaakt aan het artikel waarop ze betrekking hebben, niet als zoekresultaat maar
+							als verbinding.
 						</p>
 					</div>
 					<div class="source">
 						<h3 class="source-name">eur-lex.europa.eu</h3>
 						<p class="source-url">Europees publicatieblad · CELEX · HTML</p>
 						<p class="source-desc">
-							Europese richtlijnen en verordeningen die voor de Nederlandse rechtsorde
-							relevant zijn, inclusief de implementatierelaties naar de nationale wetgeving.
+							Europese richtlijnen en verordeningen die voor de Nederlandse rechtsorde relevant
+							zijn, inclusief de implementatierelaties naar de nationale wetgeving.
 						</p>
 					</div>
 					<div class="method-note">
 						<p>
-							De citatenextractie is open en reproduceerbaar. Geen enkel verband
-							tussen documenten wordt geïnterpreteerd of geparafraseerd. Concordans toont
-							alleen wat de bron zelf zegt.
+							De citatenextractie is open en reproduceerbaar. Geen enkel verband tussen documenten
+							wordt geïnterpreteerd of geparafraseerd. Concordans toont alleen wat de bron zelf
+							zegt.
 						</p>
 						<a href="/docs/methode" class="method-cta no-underline">
 							Lees de methode-bijlage <span aria-hidden="true">→</span>
@@ -1216,7 +1810,9 @@
 		letter-spacing: 0.01em;
 		padding: 12px 20px;
 		border-radius: var(--r-1, 2px);
-		transition: background var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+		transition:
+			background var(--dur-1) var(--ease),
+			transform var(--dur-1) var(--ease);
 	}
 
 	.hero-cta__primary:hover {
@@ -1239,7 +1835,9 @@
 		color: var(--ink-2);
 		border-bottom: 1px solid var(--rule-strong);
 		padding-bottom: 1px;
-		transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+		transition:
+			color var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
 	}
 
 	.hero-cta__secondary:hover {
@@ -1258,7 +1856,9 @@
 		border: 1px solid var(--ochre);
 		padding: 10px 14px;
 		border-radius: var(--r-1, 2px);
-		transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+		transition:
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease);
 	}
 
 	.hero-cta__feedback:hover {
@@ -1366,8 +1966,14 @@
 	}
 
 	@keyframes hint-fade-in {
-		from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-		to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+		from {
+			opacity: 0;
+			transform: translateX(-50%) translateY(4px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
 	}
 
 	.legend-row {
@@ -1718,8 +2324,13 @@
 		animation: stat-pulse 1.6s ease-in-out infinite;
 	}
 	@keyframes stat-pulse {
-		0%, 100% { opacity: 1; }
-		50%       { opacity: 0.4; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
 	}
 
 	.stat-note {
@@ -1936,7 +2547,9 @@
 		border-bottom: 1px solid var(--rule);
 		text-decoration: none;
 		color: inherit;
-		transition: background var(--dur-1) var(--ease), padding-left var(--dur-1) var(--ease);
+		transition:
+			background var(--dur-1) var(--ease),
+			padding-left var(--dur-1) var(--ease);
 	}
 
 	.parl-tile:hover {
@@ -1972,7 +2585,9 @@
 	.parl-tile__arrow {
 		font-size: 13px;
 		color: var(--fg-3);
-		transition: color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+		transition:
+			color var(--dur-1) var(--ease),
+			transform var(--dur-1) var(--ease);
 		display: inline-block;
 		flex-shrink: 0;
 	}
@@ -2058,14 +2673,15 @@
 		padding: 10px 16px;
 		border-radius: var(--r-1, 2px);
 		flex-shrink: 0;
-		transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+		transition:
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease);
 	}
 
 	.method-cta:hover {
 		background: var(--ink);
 		color: var(--paper);
 	}
-
 
 	/* ── Footer ─────────────────────────────────────────────────── */
 	/* ── Responsive ─────────────────────────────────────────────── */

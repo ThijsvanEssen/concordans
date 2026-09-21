@@ -4,15 +4,15 @@ High-level shape of the codebase, the data flow, and the lifecycle of a typical 
 
 ## Stack
 
-| Layer | Choice | Why |
-|---|---|---|
-| Framework | SvelteKit 2 | Routing + client-side hydration. Most rendering is client-side. |
-| Reactivity | Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`) | Newer, no `<script>`-level reactive statements. Compatible with `writable` stores for cross-component data. |
-| Graph data | graphology | Mutable in-memory graph. Source of truth for nodes/edges on screen. |
-| Graph rendering | Sigma 3 (WebGL) | Fast at 1k+ nodes. Custom node programs (`node-border`, `node-square`) and a dashed-edge program. |
-| Overlays | Plain HTML positioned over the canvas | Halos, badges, cluster labels — projected from graph coords via `renderer.graphToViewport()`. |
-| Backend client | `fetch` wrapped in `apiGet`/`Post`/`Delete` | Single timeout policy, single error shape, signal threading. |
-| API types | OpenAPI codegen → `openapi-types.ts` → aliases in `types.ts` | One source of truth. See [`api-contract.md`](api-contract.md). |
+| Layer           | Choice                                                       | Why                                                                                                         |
+| --------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Framework       | SvelteKit 2                                                  | Routing + client-side hydration. Most rendering is client-side.                                             |
+| Reactivity      | Svelte 5 runes (`$state`, `$derived`, `$effect`, `$props`)   | Newer, no `<script>`-level reactive statements. Compatible with `writable` stores for cross-component data. |
+| Graph data      | graphology                                                   | Mutable in-memory graph. Source of truth for nodes/edges on screen.                                         |
+| Graph rendering | Sigma 3 (WebGL)                                              | Fast at 1k+ nodes. Custom node programs (`node-border`, `node-square`) and a dashed-edge program.           |
+| Overlays        | Plain HTML positioned over the canvas                        | Halos, badges, cluster labels — projected from graph coords via `renderer.graphToViewport()`.               |
+| Backend client  | `fetch` wrapped in `apiGet`/`Post`/`Delete`                  | Single timeout policy, single error shape, signal threading.                                                |
+| API types       | OpenAPI codegen → `openapi-types.ts` → aliases in `types.ts` | One source of truth. See [`api-contract.md`](api-contract.md).                                              |
 
 ## Directory map
 
@@ -129,15 +129,15 @@ The user opens `/explore?focus=instrument_articles/bwbr0001854_140&overlay=open&
 
 ## Where state lives
 
-| Kind of state | Lives in | Survives across |
-|---|---|---|
-| Selected node, hover, history | `GraphStore` (subscriptions) | mode switches; lost on reload |
-| Nodes/edges on the canvas | `GraphStore` (graphology) | mode switches; lost on reload |
-| Filters, neighbour limit, hide-edges | `$state` in `GraphView` | nothing (resets on page mount) |
-| Overlay choice | URL `?overlay=` | reloads, deep links |
-| Selected focus | URL `?focus=` | reloads, deep links |
-| Watches, profile | `localStorage` via `stores/watches.ts` etc. | reloads, browser sessions |
-| Active search query | local `$state` in overlay; URL `?q=` on `/search` | overlay closes → lost; `/search` survives reload |
+| Kind of state                        | Lives in                                          | Survives across                                  |
+| ------------------------------------ | ------------------------------------------------- | ------------------------------------------------ |
+| Selected node, hover, history        | `GraphStore` (subscriptions)                      | mode switches; lost on reload                    |
+| Nodes/edges on the canvas            | `GraphStore` (graphology)                         | mode switches; lost on reload                    |
+| Filters, neighbour limit, hide-edges | `$state` in `GraphView`                           | nothing (resets on page mount)                   |
+| Overlay choice                       | URL `?overlay=`                                   | reloads, deep links                              |
+| Selected focus                       | URL `?focus=`                                     | reloads, deep links                              |
+| Watches, profile                     | `localStorage` via `stores/watches.ts` etc.       | reloads, browser sessions                        |
+| Active search query                  | local `$state` in overlay; URL `?q=` on `/search` | overlay closes → lost; `/search` survives reload |
 
 If you find yourself wanting "global state for X", first check whether X belongs in the URL or in the store you already have.
 
@@ -153,7 +153,7 @@ npm run lint     # prettier + eslint
 
 Backend defaults to `http://localhost:8000`. Override with `PUBLIC_CONCORDANS_API_BASE_URL` (the older `PUBLIC_LAWGRAPH_API_BASE_URL` is still read as a fallback). See [`api-client.md`](api-client.md) for details.
 
-## What this codebase does *not* do
+## What this codebase does _not_ do
 
 - **No server-side rendering of dynamic data.** SvelteKit's SSR is used only for the shell. All API calls happen client-side. There's no `+page.server.ts`.
 - **No authentication state.** All API calls are public. Watches and profile are purely client-side (`localStorage`).

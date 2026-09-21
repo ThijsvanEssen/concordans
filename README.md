@@ -10,11 +10,11 @@ cp .env.example .env    # set PUBLIC_CONCORDANS_API_BASE_URL if the backend is n
 npm run dev             # http://localhost:5173
 ```
 
-| Command | Purpose |
-|---|---|
-| `npm run check` | Type check (`svelte-check`) |
-| `npm run lint` | Prettier and ESLint |
-| `npm run build` | Production build |
+| Command            | Purpose                                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| `npm run check`    | Type check (`svelte-check`)                                                                           |
+| `npm run lint`     | Prettier and ESLint                                                                                   |
+| `npm run build`    | Production build                                                                                      |
 | `npm run sync:api` | Fetch `openapi.json` from the running backend and regenerate `src/lib/api/generated/openapi-types.ts` |
 
 There is no test suite.

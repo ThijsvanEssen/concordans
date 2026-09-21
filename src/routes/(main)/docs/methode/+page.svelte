@@ -54,42 +54,40 @@
 					Van vier bronnen, via drie&nbsp;fasen, naar één&nbsp;<em>netwerk</em>.
 				</h1>
 				<div class="pg-title-rest">
-				<p class="pg-lede">
-					Concordans haalt vier officiële bronnen op, normaliseert ze tot één datamodel
-					en legt de verbindingen die in de tekst verscholen liggen expliciet bloot.
-					Ophalen, normaliseren, verbinden. Dit document beschrijft de werkwijze.
-				</p>
-				<p class="pg-lede pg-lede--sub">
-					Aanleiding was onderzoek voor een bachelorscriptie naar artikel 126ffa Sv:
-					een artikel dat naar drie andere verwijst, die op hun beurt heen en weer
-					verwijzen. Zonder geheugenwerk of eindeloos kopiëren van teksten was die
-					structuur niet te overzien, terwijl het recht zelf juist gestructureerd is.
-				</p>
-				<dl class="pg-notes">
-					<div class="pg-note">
-						<dt>Naam</dt>
-						<dd>
-							Naar de bijbelconcordantie, niet om religieuze redenen maar om de
-							betekenis: een volledig register van alle vindplaatsen.
-						</dd>
-					</div>
-					<div class="pg-note">
-						<dt>Filosofie</dt>
-						<dd>
-							Onderzoeksinstrument voor wie de structuur van het recht wil
-							doorgronden. Geen antwoordmachine die conclusies levert zonder de
-							wet zelf.
-						</dd>
-					</div>
-					<div class="pg-note">
-						<dt>Openheid</dt>
-						<dd>
-							Uitsluitend open data. De pijplijnen die data ophalen en verwerken
-							zijn integraal gedocumenteerd: hier ontstaat de waarde, en hier moet
-							kritiek mogelijk zijn.
-						</dd>
-					</div>
-				</dl>
+					<p class="pg-lede">
+						Concordans haalt vier officiële bronnen op, normaliseert ze tot één datamodel en legt de
+						verbindingen die in de tekst verscholen liggen expliciet bloot. Ophalen, normaliseren,
+						verbinden. Dit document beschrijft de werkwijze.
+					</p>
+					<p class="pg-lede pg-lede--sub">
+						Aanleiding was onderzoek voor een bachelorscriptie naar artikel 126ffa Sv: een artikel
+						dat naar drie andere verwijst, die op hun beurt heen en weer verwijzen. Zonder
+						geheugenwerk of eindeloos kopiëren van teksten was die structuur niet te overzien,
+						terwijl het recht zelf juist gestructureerd is.
+					</p>
+					<dl class="pg-notes">
+						<div class="pg-note">
+							<dt>Naam</dt>
+							<dd>
+								Naar de bijbelconcordantie, niet om religieuze redenen maar om de betekenis: een
+								volledig register van alle vindplaatsen.
+							</dd>
+						</div>
+						<div class="pg-note">
+							<dt>Filosofie</dt>
+							<dd>
+								Onderzoeksinstrument voor wie de structuur van het recht wil doorgronden. Geen
+								antwoordmachine die conclusies levert zonder de wet zelf.
+							</dd>
+						</div>
+						<div class="pg-note">
+							<dt>Openheid</dt>
+							<dd>
+								Uitsluitend open data. De pijplijnen die data ophalen en verwerken zijn integraal
+								gedocumenteerd: hier ontstaat de waarde, en hier moet kritiek mogelijk zijn.
+							</dd>
+						</div>
+					</dl>
 				</div>
 			</div>
 
@@ -263,13 +261,7 @@
 							stroke-width="0.9"
 							stroke-dasharray="3 2"
 						/>
-						<text
-							x="148"
-							y="486"
-							font-style="italic"
-							font-size="8"
-							fill="#6B6558">noemt</text
-						>
+						<text x="148" y="486" font-style="italic" font-size="8" fill="#6B6558">noemt</text>
 
 						<!-- Wetboek Sr (left) -->
 						<text x="38" y="510" font-style="italic" font-size="14" text-anchor="middle">§</text>
@@ -358,21 +350,8 @@
 							text-anchor="middle">amendement 36558/7</text
 						>
 						<!-- red: Amendement wijzigt art. 47 -->
-						<line
-							x1="140"
-							y1="522"
-							x2="140"
-							y2="548"
-							stroke="#7A1F1A"
-							stroke-width="1.1"
-						/>
-						<text
-							x="148"
-							y="538"
-							font-style="italic"
-							font-size="8"
-							fill="#7A1F1A">wijzigt</text
-						>
+						<line x1="140" y1="522" x2="140" y2="548" stroke="#7A1F1A" stroke-width="1.1" />
+						<text x="148" y="538" font-style="italic" font-size="8" fill="#7A1F1A">wijzigt</text>
 					</g>
 				</svg>
 			</figure>
@@ -414,8 +393,8 @@
 					<div class="src-domain">Wet- en regelgeving · NL</div>
 					<h3 class="src-name">wetten.overheid.nl<span class="url">wetten.nl</span></h3>
 					<p class="src-desc">
-						De volledige tekst van Nederlandse wetten, opgesplitst per artikel,
-						inclusief historische toestanden.
+						De volledige tekst van Nederlandse wetten, opgesplitst per artikel, inclusief
+						historische toestanden.
 					</p>
 					<div class="src-id">
 						<span class="src-id-label">Identifier · Formaat</span>
@@ -428,8 +407,8 @@
 					<div class="src-domain">Rechtspraak · NL</div>
 					<h3 class="src-name">rechtspraak.nl<span class="url">uitspraken.rechtspraak.nl</span></h3>
 					<p class="src-desc">
-						Uitspraken van rechtbanken, gerechtshoven en de Hoge Raad: volledige tekst,
-						samenvatting en metadata.
+						Uitspraken van rechtbanken, gerechtshoven en de Hoge Raad: volledige tekst, samenvatting
+						en metadata.
 					</p>
 					<div class="src-id">
 						<span class="src-id-label">Identifier · Formaat</span>
@@ -442,8 +421,8 @@
 					<div class="src-domain">Parlementair · NL</div>
 					<h3 class="src-name">tweedekamer.nl<span class="url">gegevensmagazijn</span></h3>
 					<p class="src-desc">
-						Dossiers, documenten, debatten, stemmingen, toezeggingen, commissies en Kamerleden,
-						in een rijk gestructureerd geheel.
+						Dossiers, documenten, debatten, stemmingen, toezeggingen, commissies en Kamerleden, in
+						een rijk gestructureerd geheel.
 					</p>
 					<div class="src-id">
 						<span class="src-id-label">Identifier · Formaat</span>
@@ -478,9 +457,9 @@
 				<div>
 					<h2 class="sec-title">Pijplijn &amp; model</h2>
 					<p class="sec-deck">
-						Drie fasen waarmee ruwe overheidsbestanden tot een netwerk worden, gevolgd
-						door het uniforme model dat daaruit volgt: brontypen en de drie soorten
-						verbindingen die ze dragen.
+						Drie fasen waarmee ruwe overheidsbestanden tot een netwerk worden, gevolgd door het
+						uniforme model dat daaruit volgt: brontypen en de drie soorten verbindingen die ze
+						dragen.
 					</p>
 				</div>
 			</div>
@@ -507,47 +486,217 @@
 					</defs>
 
 					<!-- input: bronnen -->
-					<text x="0" y="76" font-family="EB Garamond, serif" font-size="13" font-style="italic" fill="#6B6558">bronnen</text>
-					<line x1="60" y1="72" x2="100" y2="72" stroke="#1A1814" stroke-width="1.2" marker-end="url(#ph-arr)" />
+					<text
+						x="0"
+						y="76"
+						font-family="EB Garamond, serif"
+						font-size="13"
+						font-style="italic"
+						fill="#6B6558">bronnen</text
+					>
+					<line
+						x1="60"
+						y1="72"
+						x2="100"
+						y2="72"
+						stroke="#1A1814"
+						stroke-width="1.2"
+						marker-end="url(#ph-arr)"
+					/>
 
 					<!-- Fase I -->
 					<a href="#bronnen" class="phase-link" aria-label="Naar §i Bronnen">
-						<rect x="106" y="50" width="150" height="44" fill="#FFFDF4" stroke="#1A1814" stroke-width="1" />
-						<text x="116" y="65" font-family="IBM Plex Sans, sans-serif" font-size="9" letter-spacing="1.4" fill="#9A9485">FASE I</text>
-						<text x="116" y="84" font-family="EB Garamond, serif" font-size="15" fill="#1A1814">Ophalen</text>
-						<text x="248" y="65" font-family="EB Garamond, serif" font-style="italic" font-size="11" fill="#9A9485" text-anchor="end" class="phase-link-cue">§i ↗</text>
-						<text x="181" y="113" font-family="iA Writer Mono, monospace" font-size="9" fill="#9A9485" text-anchor="middle">raw_sources</text>
-						<text x="181" y="128" font-family="EB Garamond, serif" font-size="11" font-style="italic" fill="#6B6558" text-anchor="middle">fotokopie van de bron</text>
+						<rect
+							x="106"
+							y="50"
+							width="150"
+							height="44"
+							fill="#FFFDF4"
+							stroke="#1A1814"
+							stroke-width="1"
+						/>
+						<text
+							x="116"
+							y="65"
+							font-family="IBM Plex Sans, sans-serif"
+							font-size="9"
+							letter-spacing="1.4"
+							fill="#9A9485">FASE I</text
+						>
+						<text x="116" y="84" font-family="EB Garamond, serif" font-size="15" fill="#1A1814"
+							>Ophalen</text
+						>
+						<text
+							x="248"
+							y="65"
+							font-family="EB Garamond, serif"
+							font-style="italic"
+							font-size="11"
+							fill="#9A9485"
+							text-anchor="end"
+							class="phase-link-cue">§i ↗</text
+						>
+						<text
+							x="181"
+							y="113"
+							font-family="iA Writer Mono, monospace"
+							font-size="9"
+							fill="#9A9485"
+							text-anchor="middle">raw_sources</text
+						>
+						<text
+							x="181"
+							y="128"
+							font-family="EB Garamond, serif"
+							font-size="11"
+							font-style="italic"
+							fill="#6B6558"
+							text-anchor="middle">fotokopie van de bron</text
+						>
 					</a>
 
-					<line x1="256" y1="72" x2="290" y2="72" stroke="#1A1814" stroke-width="1.2" marker-end="url(#ph-arr)" />
+					<line
+						x1="256"
+						y1="72"
+						x2="290"
+						y2="72"
+						stroke="#1A1814"
+						stroke-width="1.2"
+						marker-end="url(#ph-arr)"
+					/>
 
 					<!-- Fase II -->
 					<a href="#praktijk" class="phase-link" aria-label="Naar §iii Per bron, in praktijk">
-						<rect x="296" y="50" width="150" height="44" fill="#FFFDF4" stroke="#1A1814" stroke-width="1" />
-						<text x="306" y="65" font-family="IBM Plex Sans, sans-serif" font-size="9" letter-spacing="1.4" fill="#9A9485">FASE II</text>
-						<text x="306" y="84" font-family="EB Garamond, serif" font-size="15" fill="#1A1814">Normaliseren</text>
-						<text x="438" y="65" font-family="EB Garamond, serif" font-style="italic" font-size="11" fill="#9A9485" text-anchor="end" class="phase-link-cue">§iii ↗</text>
-						<text x="371" y="113" font-family="iA Writer Mono, monospace" font-size="9" fill="#9A9485" text-anchor="middle">bronnen + structuur</text>
-						<text x="371" y="128" font-family="EB Garamond, serif" font-size="11" font-style="italic" fill="#6B6558" text-anchor="middle">vaste adressen, verbindingen uit nesting</text>
+						<rect
+							x="296"
+							y="50"
+							width="150"
+							height="44"
+							fill="#FFFDF4"
+							stroke="#1A1814"
+							stroke-width="1"
+						/>
+						<text
+							x="306"
+							y="65"
+							font-family="IBM Plex Sans, sans-serif"
+							font-size="9"
+							letter-spacing="1.4"
+							fill="#9A9485">FASE II</text
+						>
+						<text x="306" y="84" font-family="EB Garamond, serif" font-size="15" fill="#1A1814"
+							>Normaliseren</text
+						>
+						<text
+							x="438"
+							y="65"
+							font-family="EB Garamond, serif"
+							font-style="italic"
+							font-size="11"
+							fill="#9A9485"
+							text-anchor="end"
+							class="phase-link-cue">§iii ↗</text
+						>
+						<text
+							x="371"
+							y="113"
+							font-family="iA Writer Mono, monospace"
+							font-size="9"
+							fill="#9A9485"
+							text-anchor="middle">bronnen + structuur</text
+						>
+						<text
+							x="371"
+							y="128"
+							font-family="EB Garamond, serif"
+							font-size="11"
+							font-style="italic"
+							fill="#6B6558"
+							text-anchor="middle">vaste adressen, verbindingen uit nesting</text
+						>
 					</a>
 
-					<line x1="446" y1="72" x2="480" y2="72" stroke="#1A1814" stroke-width="1.2" marker-end="url(#ph-arr)" />
+					<line
+						x1="446"
+						y1="72"
+						x2="480"
+						y2="72"
+						stroke="#1A1814"
+						stroke-width="1.2"
+						marker-end="url(#ph-arr)"
+					/>
 
 					<!-- Fase III -->
 					<a href="#detectoren" class="phase-link" aria-label="Naar §iv Detectoren">
-						<rect x="486" y="50" width="150" height="44" fill="#FFFDF4" stroke="#1A1814" stroke-width="1" />
-						<text x="496" y="65" font-family="IBM Plex Sans, sans-serif" font-size="9" letter-spacing="1.4" fill="#9A9485">FASE III</text>
-						<text x="496" y="84" font-family="EB Garamond, serif" font-size="15" fill="#1A1814">Verbinden</text>
-						<text x="628" y="65" font-family="EB Garamond, serif" font-style="italic" font-size="11" fill="#9A9485" text-anchor="end" class="phase-link-cue">§iv ↗</text>
-						<text x="561" y="113" font-family="iA Writer Mono, monospace" font-size="9" fill="#9A9485" text-anchor="middle">semantische verbindingen</text>
-						<text x="561" y="128" font-family="EB Garamond, serif" font-size="11" font-style="italic" fill="#6B6558" text-anchor="middle">patroonherkenning in tekst</text>
+						<rect
+							x="486"
+							y="50"
+							width="150"
+							height="44"
+							fill="#FFFDF4"
+							stroke="#1A1814"
+							stroke-width="1"
+						/>
+						<text
+							x="496"
+							y="65"
+							font-family="IBM Plex Sans, sans-serif"
+							font-size="9"
+							letter-spacing="1.4"
+							fill="#9A9485">FASE III</text
+						>
+						<text x="496" y="84" font-family="EB Garamond, serif" font-size="15" fill="#1A1814"
+							>Verbinden</text
+						>
+						<text
+							x="628"
+							y="65"
+							font-family="EB Garamond, serif"
+							font-style="italic"
+							font-size="11"
+							fill="#9A9485"
+							text-anchor="end"
+							class="phase-link-cue">§iv ↗</text
+						>
+						<text
+							x="561"
+							y="113"
+							font-family="iA Writer Mono, monospace"
+							font-size="9"
+							fill="#9A9485"
+							text-anchor="middle">semantische verbindingen</text
+						>
+						<text
+							x="561"
+							y="128"
+							font-family="EB Garamond, serif"
+							font-size="11"
+							font-style="italic"
+							fill="#6B6558"
+							text-anchor="middle">patroonherkenning in tekst</text
+						>
 					</a>
 
-					<line x1="636" y1="72" x2="676" y2="72" stroke="#1A1814" stroke-width="1.2" marker-end="url(#ph-arr)" />
+					<line
+						x1="636"
+						y1="72"
+						x2="676"
+						y2="72"
+						stroke="#1A1814"
+						stroke-width="1.2"
+						marker-end="url(#ph-arr)"
+					/>
 
 					<!-- output: netwerk -->
-					<text x="720" y="76" font-family="EB Garamond, serif" font-size="13" font-style="italic" fill="#6B6558" text-anchor="end">netwerk</text>
+					<text
+						x="720"
+						y="76"
+						font-family="EB Garamond, serif"
+						font-size="13"
+						font-style="italic"
+						fill="#6B6558"
+						text-anchor="end">netwerk</text
+					>
 				</svg>
 			</figure>
 
@@ -603,14 +752,21 @@
 						</p>
 					</div>
 					<div class="edge-row edge-row--legend">
-						<div class="edge-from"><span class="g-glyph g-wet">❡</span><span class="edge-noun">Artikel</span></div>
+						<div class="edge-from">
+							<span class="g-glyph g-wet">❡</span><span class="edge-noun">Artikel</span>
+						</div>
 						<div class="edge-rel">
 							<svg class="edge-rel-svg" viewBox="0 0 100 14" preserveAspectRatio="none"
-								><line x1="0" y1="7" x2="92" y2="7" stroke="#3A362E" stroke-width="1.5" /><polygon points="92,3 100,7 92,11" fill="#3A362E" /></svg
+								><line x1="0" y1="7" x2="92" y2="7" stroke="#3A362E" stroke-width="1.5" /><polygon
+									points="92,3 100,7 92,11"
+									fill="#3A362E"
+								/></svg
 							>
 							<span class="edge-rel-name">deel_van</span>
 						</div>
-						<div class="edge-to"><span class="g-glyph g-wet">§</span><span class="edge-noun">Instrument</span></div>
+						<div class="edge-to">
+							<span class="g-glyph g-wet">§</span><span class="edge-noun">Instrument</span>
+						</div>
 					</div>
 				</article>
 
@@ -620,19 +776,26 @@
 						<p class="edge-legend-desc">
 							Subcategorie van structureel: een parlementair document stelt een wijziging voor.
 							Status loopt van <em>voorgesteld</em> (bij indiening) via <em>canoniek</em> of
-							<em>verworpen</em> (na stemming) naar <em>verlopen</em> (later weer ingetrokken).
-							Elke overgang gelogd.
+							<em>verworpen</em> (na stemming) naar <em>verlopen</em> (later weer ingetrokken). Elke overgang
+							gelogd.
 						</p>
 					</div>
 					<div class="edge-row edge-row--legend">
-						<div class="edge-from"><span class="g-glyph g-tk">▤</span><span class="edge-noun">Publicatie</span></div>
+						<div class="edge-from">
+							<span class="g-glyph g-tk">▤</span><span class="edge-noun">Publicatie</span>
+						</div>
 						<div class="edge-rel">
 							<svg class="edge-rel-svg" viewBox="0 0 100 14" preserveAspectRatio="none"
-								><line x1="0" y1="7" x2="92" y2="7" stroke="#7A1F1A" stroke-width="1.5" /><polygon points="92,3 100,7 92,11" fill="#7A1F1A" /></svg
+								><line x1="0" y1="7" x2="92" y2="7" stroke="#7A1F1A" stroke-width="1.5" /><polygon
+									points="92,3 100,7 92,11"
+									fill="#7A1F1A"
+								/></svg
 							>
 							<span class="edge-rel-name">wijzigt</span>
 						</div>
-						<div class="edge-to"><span class="g-glyph g-wet">❡</span><span class="edge-noun">Artikel</span></div>
+						<div class="edge-to">
+							<span class="g-glyph g-wet">❡</span><span class="edge-noun">Artikel</span>
+						</div>
 					</div>
 				</article>
 
@@ -645,14 +808,26 @@
 						</p>
 					</div>
 					<div class="edge-row edge-row--legend">
-						<div class="edge-from"><span class="g-glyph g-recht">¶</span><span class="edge-noun">Uitspraak</span></div>
+						<div class="edge-from">
+							<span class="g-glyph g-recht">¶</span><span class="edge-noun">Uitspraak</span>
+						</div>
 						<div class="edge-rel">
 							<svg class="edge-rel-svg" viewBox="0 0 100 14" preserveAspectRatio="none"
-								><line x1="0" y1="7" x2="92" y2="7" stroke="#3A362E" stroke-width="1.5" stroke-dasharray="4 3" /><polygon points="92,3 100,7 92,11" fill="#3A362E" /></svg
+								><line
+									x1="0"
+									y1="7"
+									x2="92"
+									y2="7"
+									stroke="#3A362E"
+									stroke-width="1.5"
+									stroke-dasharray="4 3"
+								/><polygon points="92,3 100,7 92,11" fill="#3A362E" /></svg
 							>
 							<span class="edge-rel-name">noemt_artikel</span>
 						</div>
-						<div class="edge-to"><span class="g-glyph g-wet">❡</span><span class="edge-noun">Artikel</span></div>
+						<div class="edge-to">
+							<span class="g-glyph g-wet">❡</span><span class="edge-noun">Artikel</span>
+						</div>
 					</div>
 				</article>
 			</div>
@@ -666,8 +841,8 @@
 				<div>
 					<h2 class="sec-title">Per bron, in praktijk</h2>
 					<p class="sec-deck">
-						Per bron: wat erin gaat, en welke bronnen en structurele verbindingen
-						eruit komen. Detail per bron staat in de bijlage onderaan.
+						Per bron: wat erin gaat, en welke bronnen en structurele verbindingen eruit komen.
+						Detail per bron staat in de bijlage onderaan.
 					</p>
 				</div>
 			</div>
@@ -684,8 +859,16 @@
 				<tbody>
 					<tr>
 						<td class="bron"><span class="bron-stripe is-wet"></span>BWB &middot; wetten</td>
-						<td>XML-toestand per BWBR, geneste <span class="mono">&lt;artikel&gt;</span>/<span class="mono">&lt;lid&gt;</span></td>
-						<td>Genest XML doorlopen; tekst uit <span class="mono">&lt;lid&gt;</span>+<span class="mono">&lt;al&gt;</span>, titel uit <span class="mono">citeertitel</span></td>
+						<td
+							>XML-toestand per BWBR, geneste <span class="mono">&lt;artikel&gt;</span>/<span
+								class="mono">&lt;lid&gt;</span
+							></td
+						>
+						<td
+							>Genest XML doorlopen; tekst uit <span class="mono">&lt;lid&gt;</span>+<span
+								class="mono">&lt;al&gt;</span
+							>, titel uit <span class="mono">citeertitel</span></td
+						>
 						<td>
 							<span class="g-glyph g-wet">&sect;</span> Instrument
 							<span class="bron-sep">&middot;</span>
@@ -696,7 +879,9 @@
 					<tr>
 						<td class="bron"><span class="bron-stripe is-recht"></span>Rechtspraak</td>
 						<td>RDF-record + uitspraak-XML, &eacute;&eacute;n per ECLI</td>
-						<td>RDF levert metadata, <span class="mono">&lt;inhoudsindicatie&gt;</span> de samenvatting</td>
+						<td
+							>RDF levert metadata, <span class="mono">&lt;inhoudsindicatie&gt;</span> de samenvatting</td
+						>
 						<td>
 							<span class="g-glyph g-recht">&para;</span> Uitspraak
 						</td>
@@ -733,9 +918,8 @@
 				<div>
 					<h2 class="sec-title">Detectoren</h2>
 					<p class="sec-deck">
-						Tekstscans die de semantische verbindingen leggen waar de bronstructuur ze
-						niet geeft. Wat een detector doet, hoe ze samen werken, en wat de zeven
-						families bestrijken.
+						Tekstscans die de semantische verbindingen leggen waar de bronstructuur ze niet geeft.
+						Wat een detector doet, hoe ze samen werken, en wat de zeven families bestrijken.
 					</p>
 				</div>
 			</div>
@@ -743,8 +927,9 @@
 			<div class="tot-block">
 				<h3 class="block-h">Hoe een detector werkt</h3>
 				<p class="block-deck">
-					Een detector leest een tekstveld en markeert verwijzingen in vaste
-					vorm: <em>art. 47 Sr</em>, <em>ECLI:NL:HR:2023:1234</em>,
+					Een detector leest een tekstveld en markeert verwijzingen in vaste vorm: <em
+						>art. 47 Sr</em
+					>, <em>ECLI:NL:HR:2023:1234</em>,
 					<em>Richtlijn 2010/64</em>. Geen taalmodel, alleen vormherkenning.
 				</p>
 
@@ -770,41 +955,155 @@
 						</defs>
 
 						<!-- ─── Top: voorbeeld-zin met highlight ─── -->
-						<text x="0" y="22" font-family="IBM Plex Sans, sans-serif" font-size="9" letter-spacing="1.4" fill="#9A9485">VOORBEELD</text>
-						<text x="0" y="46" font-family="EB Garamond, serif" font-style="italic" font-size="14" fill="#6B6558">“… onverminderd </text>
+						<text
+							x="0"
+							y="22"
+							font-family="IBM Plex Sans, sans-serif"
+							font-size="9"
+							letter-spacing="1.4"
+							fill="#9A9485">VOORBEELD</text
+						>
+						<text
+							x="0"
+							y="46"
+							font-family="EB Garamond, serif"
+							font-style="italic"
+							font-size="14"
+							fill="#6B6558"
+							>“… onverminderd
+						</text>
 						<rect x="146" y="32" width="66" height="20" fill="#E9DEC4" />
-						<text x="153" y="46" font-family="EB Garamond, serif" font-size="14" fill="#1A1814">artikel 51</text>
-						<text x="216" y="46" font-family="EB Garamond, serif" font-style="italic" font-size="14" fill="#6B6558"> wordt als dader gestraft …”</text>
+						<text x="153" y="46" font-family="EB Garamond, serif" font-size="14" fill="#1A1814"
+							>artikel 51</text
+						>
+						<text
+							x="216"
+							y="46"
+							font-family="EB Garamond, serif"
+							font-style="italic"
+							font-size="14"
+							fill="#6B6558"
+						>
+							wordt als dader gestraft …”</text
+						>
 
 						<!-- separator -->
 						<line x1="0" y1="66" x2="720" y2="66" stroke="#E2DBCC" />
 
 						<!-- ─── Drie fasen, gelijke dozen ─── -->
 						<rect x="30" y="92" width="180" height="44" fill="#FFFDF4" stroke="#1A1814" />
-						<text x="40" y="108" font-family="IBM Plex Sans, sans-serif" font-size="9" letter-spacing="1.4" fill="#9A9485">INVOER</text>
-						<text x="40" y="126" font-family="EB Garamond, serif" font-size="15" fill="#1A1814">Tekstveld</text>
+						<text
+							x="40"
+							y="108"
+							font-family="IBM Plex Sans, sans-serif"
+							font-size="9"
+							letter-spacing="1.4"
+							fill="#9A9485">INVOER</text
+						>
+						<text x="40" y="126" font-family="EB Garamond, serif" font-size="15" fill="#1A1814"
+							>Tekstveld</text
+						>
 
-						<line x1="210" y1="114" x2="268" y2="114" stroke="#1A1814" stroke-width="1.2" marker-end="url(#det-arr)" />
+						<line
+							x1="210"
+							y1="114"
+							x2="268"
+							y2="114"
+							stroke="#1A1814"
+							stroke-width="1.2"
+							marker-end="url(#det-arr)"
+						/>
 
 						<rect x="270" y="92" width="180" height="44" fill="#FFFDF4" stroke="#1A1814" />
-						<text x="280" y="108" font-family="IBM Plex Sans, sans-serif" font-size="9" letter-spacing="1.4" fill="#9A9485">REGEL</text>
-						<text x="280" y="126" font-family="EB Garamond, serif" font-size="15" fill="#1A1814">Patroon</text>
+						<text
+							x="280"
+							y="108"
+							font-family="IBM Plex Sans, sans-serif"
+							font-size="9"
+							letter-spacing="1.4"
+							fill="#9A9485">REGEL</text
+						>
+						<text x="280" y="126" font-family="EB Garamond, serif" font-size="15" fill="#1A1814"
+							>Patroon</text
+						>
 
-						<line x1="450" y1="114" x2="508" y2="114" stroke="#1A1814" stroke-width="1.2" marker-end="url(#det-arr)" />
+						<line
+							x1="450"
+							y1="114"
+							x2="508"
+							y2="114"
+							stroke="#1A1814"
+							stroke-width="1.2"
+							marker-end="url(#det-arr)"
+						/>
 
 						<rect x="510" y="92" width="180" height="44" fill="#FFFDF4" stroke="#1A1814" />
-						<text x="520" y="108" font-family="IBM Plex Sans, sans-serif" font-size="9" letter-spacing="1.4" fill="#9A9485">UITVOER</text>
-						<text x="520" y="126" font-family="EB Garamond, serif" font-size="15" fill="#1A1814">Verbinding</text>
+						<text
+							x="520"
+							y="108"
+							font-family="IBM Plex Sans, sans-serif"
+							font-size="9"
+							letter-spacing="1.4"
+							fill="#9A9485">UITVOER</text
+						>
+						<text x="520" y="126" font-family="EB Garamond, serif" font-size="15" fill="#1A1814"
+							>Verbinding</text
+						>
 
 						<!-- ─── Captions onder de dozen ─── -->
-						<text x="120" y="158" font-family="iA Writer Mono, monospace" font-size="10" fill="#9A9485" text-anchor="middle">❡ art. 47 Sr · veld:tekst</text>
-						<text x="120" y="176" font-family="EB Garamond, serif" font-style="italic" font-size="11" fill="#6B6558" text-anchor="middle">wettekst die wordt gescand</text>
+						<text
+							x="120"
+							y="158"
+							font-family="iA Writer Mono, monospace"
+							font-size="10"
+							fill="#9A9485"
+							text-anchor="middle">❡ art. 47 Sr · veld:tekst</text
+						>
+						<text
+							x="120"
+							y="176"
+							font-family="EB Garamond, serif"
+							font-style="italic"
+							font-size="11"
+							fill="#6B6558"
+							text-anchor="middle">wettekst die wordt gescand</text
+						>
 
-						<text x="360" y="158" font-family="iA Writer Mono, monospace" font-size="10" fill="#9A9485" text-anchor="middle">art. \d+ \w+</text>
-						<text x="360" y="176" font-family="EB Garamond, serif" font-style="italic" font-size="11" fill="#6B6558" text-anchor="middle">binnen-wet verwijzing</text>
+						<text
+							x="360"
+							y="158"
+							font-family="iA Writer Mono, monospace"
+							font-size="10"
+							fill="#9A9485"
+							text-anchor="middle">art. \d+ \w+</text
+						>
+						<text
+							x="360"
+							y="176"
+							font-family="EB Garamond, serif"
+							font-style="italic"
+							font-size="11"
+							fill="#6B6558"
+							text-anchor="middle">binnen-wet verwijzing</text
+						>
 
-						<text x="600" y="158" font-family="iA Writer Mono, monospace" font-size="10" fill="#9A9485" text-anchor="middle">❡art.47 → ❡art.51 · 0.95</text>
-						<text x="600" y="176" font-family="EB Garamond, serif" font-style="italic" font-size="11" fill="#6B6558" text-anchor="middle">verwijst_naar</text>
+						<text
+							x="600"
+							y="158"
+							font-family="iA Writer Mono, monospace"
+							font-size="10"
+							fill="#9A9485"
+							text-anchor="middle">❡art.47 → ❡art.51 · 0.95</text
+						>
+						<text
+							x="600"
+							y="176"
+							font-family="EB Garamond, serif"
+							font-style="italic"
+							font-size="11"
+							fill="#6B6558"
+							text-anchor="middle">verwijst_naar</text
+						>
 					</svg>
 				</figure>
 			</div>
@@ -812,9 +1111,8 @@
 			<div class="tot-block">
 				<h3 class="block-h">Wat de detectoren bestrijken</h3>
 				<p class="block-deck">
-					Zeven families, elk gericht op één type verwijzing tussen één paar
-					brontypen. Samen vullen ze de semantische lijnen in die uit de
-					brondata zelf niet zijn af te leiden.
+					Zeven families, elk gericht op één type verwijzing tussen één paar brontypen. Samen vullen
+					ze de semantische lijnen in die uit de brondata zelf niet zijn af te leiden.
 				</p>
 				<table class="det-overview">
 					<thead>
@@ -873,24 +1171,21 @@
 				<div class="appendix-body">
 					<p class="method-prose">
 						Op elk tekstveld draaien meerdere patronen, in volgorde van specificiteit.
-						<em>Art. 47 Sr</em> (artikel mét wetscode) wordt eerder herkend dan een
-						losse <em>artikel 47</em>. Een tekstpositie die door een sterker patroon is
-						geclaimd, telt voor zwakkere patronen niet meer mee: geen dubbele
-						verbindingen op dezelfde plek, geen verwarring over welk patroon de
-						match leverde.
+						<em>Art. 47 Sr</em> (artikel mét wetscode) wordt eerder herkend dan een losse
+						<em>artikel 47</em>. Een tekstpositie die door een sterker patroon is geclaimd, telt
+						voor zwakkere patronen niet meer mee: geen dubbele verbindingen op dezelfde plek, geen
+						verwarring over welk patroon de match leverde.
 					</p>
 					<p class="method-prose">
-						Elke match krijgt een score die de specificiteit van het patroon
-						weergeeft. Onder een drempel wordt geen verbinding bewaard. Tussen midden
-						en hoog ontstaat een verbinding. Pas boven een hoge drempel mag een
-						detector een nieuwe bron aanmaken voor een verwijzing waarvan het doel
-						nog niet in het netwerk zit. Een onzekere match kan dus geen
+						Elke match krijgt een score die de specificiteit van het patroon weergeeft. Onder een
+						drempel wordt geen verbinding bewaard. Tussen midden en hoog ontstaat een verbinding.
+						Pas boven een hoge drempel mag een detector een nieuwe bron aanmaken voor een verwijzing
+						waarvan het doel nog niet in het netwerk zit. Een onzekere match kan dus geen
 						fantoom-artikel oproepen.
 					</p>
 					<p class="method-prose">
-						Bij elke verbinding worden het tekstfragment, de patroonnaam en de
-						exacte positie bewaard. Elke verbinding in het netwerk is herleidbaar
-						tot de zin waaruit ze voortkwam.
+						Bij elke verbinding worden het tekstfragment, de patroonnaam en de exacte positie
+						bewaard. Elke verbinding in het netwerk is herleidbaar tot de zin waaruit ze voortkwam.
 					</p>
 				</div>
 			</details>
@@ -903,9 +1198,8 @@
 				</summary>
 				<div class="appendix-body">
 					<p class="block-deck">
-						TK breekt het strip-patroon: één OData-payload produceert meerdere
-						brontypen met onderlinge structurele verbindingen. Hieronder de
-						fan-out vanaf een publicatie-record.
+						TK breekt het strip-patroon: één OData-payload produceert meerdere brontypen met
+						onderlinge structurele verbindingen. Hieronder de fan-out vanaf een publicatie-record.
 					</p>
 					<div class="tk-fanout">
 						<div class="tk-fanout-source">
@@ -929,14 +1223,37 @@
 						<div class="tk-fanout-nodes">
 							<div class="tk-fanout-h">Bronnen &amp; structurele verbindingen</div>
 							<ul class="tk-fanout-list">
-								<li><span class="g-glyph g-tk">&#8750;</span><span class="tk-name">Dossier</span> <span class="tk-id">36558</span></li>
-								<li><span class="g-glyph g-tk">&#9636;</span><span class="tk-name">Publicatie</span> <span class="tk-id">nr. 7</span> <em>· deel_van Dossier</em></li>
-								<li><span class="g-glyph g-tk">&#9671;</span><span class="tk-name">Activiteit</span> <em>· behandeld_door Commissie</em></li>
-								<li><span class="g-glyph g-tk">&#8862;</span><span class="tk-name">Stemming</span> <em>· deel_van Dossier; gegroepeerd op Besluit_Id</em></li>
-								<li><span class="g-glyph g-tk">&#8857;</span><span class="tk-name">Toezegging</span> <em>· gedaan_in Activiteit</em></li>
-								<li><span class="g-glyph g-tk">&Dagger;</span><span class="tk-name">Commissie</span></li>
-								<li><span class="g-glyph g-tk">&middot;</span><span class="tk-name">Lid</span> <em>· lid_van Commissie, lid_van_fractie</em></li>
-								<li><span class="g-glyph g-tk">&loz;</span><span class="tk-name">Fractie</span> <em>· afgeleid uit unieke ActorFractie-namen op stemmingen</em></li>
+								<li>
+									<span class="g-glyph g-tk">&#8750;</span><span class="tk-name">Dossier</span>
+									<span class="tk-id">36558</span>
+								</li>
+								<li>
+									<span class="g-glyph g-tk">&#9636;</span><span class="tk-name">Publicatie</span>
+									<span class="tk-id">nr. 7</span> <em>· deel_van Dossier</em>
+								</li>
+								<li>
+									<span class="g-glyph g-tk">&#9671;</span><span class="tk-name">Activiteit</span>
+									<em>· behandeld_door Commissie</em>
+								</li>
+								<li>
+									<span class="g-glyph g-tk">&#8862;</span><span class="tk-name">Stemming</span>
+									<em>· deel_van Dossier; gegroepeerd op Besluit_Id</em>
+								</li>
+								<li>
+									<span class="g-glyph g-tk">&#8857;</span><span class="tk-name">Toezegging</span>
+									<em>· gedaan_in Activiteit</em>
+								</li>
+								<li>
+									<span class="g-glyph g-tk">&Dagger;</span><span class="tk-name">Commissie</span>
+								</li>
+								<li>
+									<span class="g-glyph g-tk">&middot;</span><span class="tk-name">Lid</span>
+									<em>· lid_van Commissie, lid_van_fractie</em>
+								</li>
+								<li>
+									<span class="g-glyph g-tk">&loz;</span><span class="tk-name">Fractie</span>
+									<em>· afgeleid uit unieke ActorFractie-namen op stemmingen</em>
+								</li>
 							</ul>
 						</div>
 					</div>
@@ -963,7 +1280,6 @@
 		</section>
 	</div>
 </div>
-
 
 <style>
 	/* ── Verder lezen ──────────────────────────────────────────────────── */
@@ -997,7 +1313,9 @@
 		border: 1px solid var(--rule);
 		border-radius: var(--r-2);
 		background: var(--paper);
-		transition: border-color 80ms, background 80ms;
+		transition:
+			border-color 80ms,
+			background 80ms;
 	}
 	.method-further__link:hover {
 		border-color: var(--rule-strong);
@@ -1015,7 +1333,9 @@
 		line-height: 1.5;
 	}
 	@media (max-width: 720px) {
-		.method-further__links { grid-template-columns: 1fr; }
+		.method-further__links {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	/* ── Page frame ─────────────────────────────────────────────────── */
@@ -1414,7 +1734,7 @@
 		border-top: 3px solid var(--accent);
 	}
 	.src.is-eu {
-		border-top: 3px solid var(--teal, #1F5A56);
+		border-top: 3px solid var(--teal, #1f5a56);
 	}
 
 	/* ── Pipeline ─────────────────────────────────────────────────────── */
@@ -2713,7 +3033,6 @@
 		border-radius: 999px;
 	}
 
-
 	/* ── New: revised structure helpers ─────────────────────────────── */
 
 	/* TOC header (replaces gloss marginalia) */
@@ -2786,12 +3105,14 @@
 		cursor: pointer;
 	}
 	.phase-link rect {
-		transition: stroke 120ms, fill 120ms;
+		transition:
+			stroke 120ms,
+			fill 120ms;
 	}
 	.phase-link:hover rect,
 	.phase-link:focus-visible rect {
 		stroke: var(--accent);
-		fill: var(--paper-2, #FAF5E5);
+		fill: var(--paper-2, #faf5e5);
 	}
 	.phase-link:hover .phase-link-cue,
 	.phase-link:focus-visible .phase-link-cue {

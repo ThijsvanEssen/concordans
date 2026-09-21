@@ -42,7 +42,12 @@
 		}
 		if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey) {
 			const tag = (document.activeElement as HTMLElement | null)?.tagName;
-			if (tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
+			if (
+				tag === 'INPUT' ||
+				tag === 'TEXTAREA' ||
+				(document.activeElement as HTMLElement | null)?.isContentEditable
+			)
+				return;
 			e.preventDefault();
 			goto('/docs/sneltoetsen');
 		}
@@ -76,8 +81,8 @@
 	<a
 		href="/alpha"
 		class="alpha-tag no-underline"
-		title="Concordans is in vroege ontwikkeling. Klik voor wat alpha hier betekent."
-	>alpha</a>
+		title="Concordans is in vroege ontwikkeling. Klik voor wat alpha hier betekent.">alpha</a
+	>
 
 	<nav class="topbar-nav" aria-label="Hoofdnavigatie">
 		<a href="/explore" class="nav-link" class:is-active={isExplore && !isHome}>Verkenner</a>
@@ -92,27 +97,85 @@
 		aria-label="Menu"
 		aria-expanded={mobileMenuOpen}
 		aria-controls="mobile-nav"
-		onclick={() => mobileMenuOpen ? closeMobileMenu() : openMobileMenu()}
+		onclick={() => (mobileMenuOpen ? closeMobileMenu() : openMobileMenu())}
 	>
 		{#if mobileMenuOpen}
-			<svg class="mobile-menu-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-				<line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-				<line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+			<svg
+				class="mobile-menu-icon"
+				width="14"
+				height="14"
+				viewBox="0 0 14 14"
+				fill="none"
+				aria-hidden="true"
+			>
+				<line
+					x1="2"
+					y1="2"
+					x2="12"
+					y2="12"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+				/>
+				<line
+					x1="12"
+					y1="2"
+					x2="2"
+					y2="12"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+				/>
 			</svg>
 		{:else}
-			<svg class="mobile-menu-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-				<line x1="2" y1="4" x2="12" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-				<line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-				<line x1="2" y1="10" x2="12" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+			<svg
+				class="mobile-menu-icon"
+				width="14"
+				height="14"
+				viewBox="0 0 14 14"
+				fill="none"
+				aria-hidden="true"
+			>
+				<line
+					x1="2"
+					y1="4"
+					x2="12"
+					y2="4"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+				/>
+				<line
+					x1="2"
+					y1="7"
+					x2="12"
+					y2="7"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+				/>
+				<line
+					x1="2"
+					y1="10"
+					x2="12"
+					y2="10"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+				/>
 			</svg>
 		{/if}
 	</button>
 
 	{#if mobileMenuOpen}
 		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-		<div id="mobile-nav" bind:this={mobileNavEl} class="mobile-nav" onclick={() => closeMobileMenu()}>
-			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore && !isHome}
-				>Verkenner</a
+		<div
+			id="mobile-nav"
+			bind:this={mobileNavEl}
+			class="mobile-nav"
+			onclick={() => closeMobileMenu()}
+		>
+			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore && !isHome}>Verkenner</a
 			>
 			<a href="/explore?mode=index&kind=dossiers" class="mobile-nav-link" class:is-active={isIndex}
 				>Index</a
@@ -122,7 +185,11 @@
 	{/if}
 
 	<div class="topbar-right">
-		<button class="search-trigger" onclick={() => onSearchOpen?.()} aria-label={`Zoeken (${modKey}K)`}>
+		<button
+			class="search-trigger"
+			onclick={() => onSearchOpen?.()}
+			aria-label={`Zoeken (${modKey}K)`}
+		>
 			<svg
 				width="14"
 				height="14"

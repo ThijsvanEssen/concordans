@@ -10,15 +10,14 @@
 		<div class="stub-eyebrow">OVER CONCORDANS</div>
 		<h1 class="stub-title">Colofon</h1>
 		<p class="stub-lede">
-			Concordans is een onafhankelijk onderzoeksproject naar de structuur van het Nederlandse
-			recht.
+			Concordans is een onafhankelijk onderzoeksproject naar de structuur van het Nederlandse recht.
 		</p>
 
 		<div class="section">
 			<h2 class="section-title">Maker</h2>
 			<p>
-				Concordans is ontwikkeld als persoonlijk onderzoeksproject. Het project is niet gelieerd
-				aan enige juridische instelling, rechtbank of overheidsorgaan.
+				Concordans is ontwikkeld als persoonlijk onderzoeksproject. Het project is niet gelieerd aan
+				enige juridische instelling, rechtbank of overheidsorgaan.
 			</p>
 		</div>
 
@@ -28,7 +27,8 @@
 				De weergegeven wetteksten zijn afkomstig van <a
 					href="https://wetten.overheid.nl"
 					class="cite">wetten.overheid.nl</a
-				> en vallen onder de
+				>
+				en vallen onder de
 				<a href="https://creativecommons.org/publicdomain/zero/1.0/" class="cite">CC0-licentie</a>
 				van de Nederlandse overheid. Rechterlijke uitspraken zijn afkomstig van
 				<a href="https://www.rechtspraak.nl/uitspraken" class="cite">uitspraken.rechtspraak.nl</a>.
@@ -38,16 +38,16 @@
 		<div class="section">
 			<h2 class="section-title">Technologie</h2>
 			<p>
-				De applicatie is gebouwd met SvelteKit, een grafendatabase in Rust en standaardwebtechnologie.
-				Geen commerciële tracking, geen advertentiediensten.
+				De applicatie is gebouwd met SvelteKit, een grafendatabase in Rust en
+				standaardwebtechnologie. Geen commerciële tracking, geen advertentiediensten.
 			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Aansprakelijkheid</h2>
 			<p>
-				Concordans is bedoeld als hulpmiddel bij juridisch onderzoek, niet als juridisch advies.
-				Aan de weergaven en verbindingen kunnen geen rechten worden ontleend. Zie ook de <a
+				Concordans is bedoeld als hulpmiddel bij juridisch onderzoek, niet als juridisch advies. Aan
+				de weergaven en verbindingen kunnen geen rechten worden ontleend. Zie ook de <a
 					href="/voorwaarden"
 					class="cite">gebruiksvoorwaarden</a
 				>.
@@ -61,7 +61,6 @@
 		</div>
 	</div>
 </div>
-
 
 <style>
 	.page-wrap {

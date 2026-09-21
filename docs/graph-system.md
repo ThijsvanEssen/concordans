@@ -31,25 +31,33 @@ Each layer's responsibilities are non-overlapping. `GraphStore` knows nothing ab
 
 ```ts
 type GraphNodeKind =
-  | 'article' | 'judgment' | 'tkstuk' | 'activity'
-  | 'instrument' | 'dossier' | 'commissie' | 'lid' | 'fractie' | 'other';
+	| 'article'
+	| 'judgment'
+	| 'tkstuk'
+	| 'activity'
+	| 'instrument'
+	| 'dossier'
+	| 'commissie'
+	| 'lid'
+	| 'fractie'
+	| 'other';
 
 interface GraphNode {
-  id: string;            // canonical "{collection}/{key}"
-  key: string;
-  collection: string;
-  kind: GraphNodeKind;
-  label: string;         // human display
-  raw: BaseNode;         // backend payload (props, labels, etc.)
+	id: string; // canonical "{collection}/{key}"
+	key: string;
+	collection: string;
+	kind: GraphNodeKind;
+	label: string; // human display
+	raw: BaseNode; // backend payload (props, labels, etc.)
 }
 
 interface GraphEdge {
-  id: string;
-  source: string;        // node id
-  target: string;
-  relation: string;      // "wijzigt", "verwijst_naar", "deel_van", ...
-  category: 'structural' | 'mutation' | 'semantic';
-  weight?: number;
+	id: string;
+	source: string; // node id
+	target: string;
+	relation: string; // "wijzigt", "verwijst_naar", "deel_van", ...
+	category: 'structural' | 'mutation' | 'semantic';
+	weight?: number;
 }
 ```
 
@@ -57,17 +65,17 @@ interface GraphEdge {
 
 Every relation is bucketed into one of three categories. This matches Methode §iiib:
 
-| Category | Relations | Example |
-|---|---|---|
-| `structural` | `deel_van`, `behandeld_door`, `raakt`, ... | Article ↔ Instrument |
-| `mutation` | `wijzigt`, `introduceert`, `trekt_in`, `licht_toe` | Dossier → Article |
-| `semantic` | `verwijst_naar`, `citeert`, `noemt_artikel` | Judgment → Article |
+| Category     | Relations                                          | Example              |
+| ------------ | -------------------------------------------------- | -------------------- |
+| `structural` | `deel_van`, `behandeld_door`, `raakt`, ...         | Article ↔ Instrument |
+| `mutation`   | `wijzigt`, `introduceert`, `trekt_in`, `licht_toe` | Dossier → Article    |
+| `semantic`   | `verwijst_naar`, `citeert`, `noemt_artikel`        | Judgment → Article   |
 
 The categoriser is `classifyEdgeKind(relation, label)`. Filter toggles in `GraphFilters` (`structuralEnabled`, `mutationEnabled`, `semanticEnabled`) gate edges by category at render time — the edges remain in the graphology graph, sigma's reducer just paints them as `hidden: true`.
 
 ### Anchor kinds
 
-`isAnchorKind(kind)` returns true for `instrument`, `dossier`, `commissie`, `lid`, `fractie`. Anchors are nodes that *organise* other nodes — they don't represent a single text. Used in expansion policies and orphan sweeps (we treat anchors as "always keep" candidates).
+`isAnchorKind(kind)` returns true for `instrument`, `dossier`, `commissie`, `lid`, `fractie`. Anchors are nodes that _organise_ other nodes — they don't represent a single text. Used in expansion policies and orphan sweeps (we treat anchors as "always keep" candidates).
 
 ### Scaffolding relations
 
@@ -79,16 +87,16 @@ The single source of truth for what's "on the canvas". Holds the node and edge m
 
 `graph-store.ts` only assembles the store (`createGraphStore`) and re-exports its types. The implementation lives in `src/lib/graph/store/`:
 
-| File | Contents |
-|---|---|
-| `types.ts` | `GraphStore`, `GraphFilters`, `GraphExpansionOptions`, `LoadingState`, `GraphMode`, plus `DEFAULT_FILTERS`, `SOFT_NODE_CAP`, `DEFAULT_EXPANSION` |
-| `context.ts` | `createGraphContext()`: the node/edge maps, the writable stores, history, LRU trim, synthetic instrument proxies and edges, `mergeResponse`. Everything else builds on it |
-| `expansion.ts` | `expandNode`, `expandNeighborhood` |
-| `wet-loaders.ts` | `loadInstrument`, `prefetchInstrumentLayerCounts`, and the wet-scoped judgment, dossier and related-instrument layers |
-| `wet-citations.ts` | `loadInstrumentCitations` |
-| `global-loaders.ts` | `loadGlobalGraph`, `loadInstrumentLayerGraph`, `loadJudgmentLayerGraph` |
-| `parliamentary-loaders.ts` | Lid, fractie, commissie, leden, fracties and recent-dossier loads |
-| `view-actions.ts` | Selection, focus, history, pinning, filters, pruning, `seedGraph`, `reset`, `setCollapseToLaws` |
+| File                       | Contents                                                                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `types.ts`                 | `GraphStore`, `GraphFilters`, `GraphExpansionOptions`, `LoadingState`, `GraphMode`, plus `DEFAULT_FILTERS`, `SOFT_NODE_CAP`, `DEFAULT_EXPANSION`                          |
+| `context.ts`               | `createGraphContext()`: the node/edge maps, the writable stores, history, LRU trim, synthetic instrument proxies and edges, `mergeResponse`. Everything else builds on it |
+| `expansion.ts`             | `expandNode`, `expandNeighborhood`                                                                                                                                        |
+| `wet-loaders.ts`           | `loadInstrument`, `prefetchInstrumentLayerCounts`, and the wet-scoped judgment, dossier and related-instrument layers                                                     |
+| `wet-citations.ts`         | `loadInstrumentCitations`                                                                                                                                                 |
+| `global-loaders.ts`        | `loadGlobalGraph`, `loadInstrumentLayerGraph`, `loadJudgmentLayerGraph`                                                                                                   |
+| `parliamentary-loaders.ts` | Lid, fractie, commissie, leden, fracties and recent-dossier loads                                                                                                         |
+| `view-actions.ts`          | Selection, focus, history, pinning, filters, pruning, `seedGraph`, `reset`, `setCollapseToLaws`                                                                           |
 
 Each module exports a factory that takes the context (`createExpansion(ctx)`, `createWetLoaders(ctx)`, ...) and returns a slice of the `GraphStore` API; `createGraphStore` spreads them together. A new loader belongs in the module that matches its scope, and needs an entry in the `GraphStore` type.
 
@@ -98,17 +106,17 @@ Scalars that several modules mutate (`seq`, `historyIndex`, `proxiesEnabled`, `a
 
 Stores expose data:
 
-| Store | Type |
-|---|---|
-| `nodes`, `edges` | `Readable<GraphNode[]>` / `Readable<GraphEdge[]>` |
-| `selection` | `Readable<GraphNode \| null>` — current focus |
-| `pinned` | `Readable<Set<string>>` — pinned node ids |
-| `breadcrumbs` | `Readable<GraphNode[]>` — focus history |
-| `canGoBack` / `canGoForward` | `Readable<boolean>` |
-| `filters` | `Readable<GraphFilters>` |
-| `loading` | `Readable<LoadingState>` — discriminated union per load kind |
-| `graphMode` | `Readable<'expansion' \| 'bulk'>` |
-| `potentialCounts` | `Readable<Record<string, number>>` — cached-but-not-merged neighbour counts per kind |
+| Store                        | Type                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| `nodes`, `edges`             | `Readable<GraphNode[]>` / `Readable<GraphEdge[]>`                                    |
+| `selection`                  | `Readable<GraphNode \| null>` — current focus                                        |
+| `pinned`                     | `Readable<Set<string>>` — pinned node ids                                            |
+| `breadcrumbs`                | `Readable<GraphNode[]>` — focus history                                              |
+| `canGoBack` / `canGoForward` | `Readable<boolean>`                                                                  |
+| `filters`                    | `Readable<GraphFilters>`                                                             |
+| `loading`                    | `Readable<LoadingState>` — discriminated union per load kind                         |
+| `graphMode`                  | `Readable<'expansion' \| 'bulk'>`                                                    |
+| `potentialCounts`            | `Readable<Record<string, number>>` — cached-but-not-merged neighbour counts per kind |
 
 Plus methods:
 
@@ -152,7 +160,7 @@ Returns the focal `GraphNode` (or null if fetch failed).
 
 ### History semantics
 
-Focus changes record onto `history` *unless* called with `recordHistory: false`. The initial URL-driven `focusNode` call uses `recordHistory: false` so reload doesn't immediately have an empty back stack. Browser back/forward and the in-app `←`/`→` are wired to `goBack()` / `goForward()`.
+Focus changes record onto `history` _unless_ called with `recordHistory: false`. The initial URL-driven `focusNode` call uses `recordHistory: false` so reload doesn't immediately have an empty back stack. Browser back/forward and the in-app `←`/`→` are wired to `goBack()` / `goForward()`.
 
 ### graphMode: expansion vs bulk
 
@@ -222,18 +230,18 @@ The cost is bounded by `activityHalos + mutatieBadges + clusterLabels` count. Fo
 
 `GraphSidebar.svelte` is a passive component — it reads `filters` and emits patches via `onFilterChange(patch)`. The store's `setFilters(patch)` does the merge.
 
-| Sidebar section | Drives |
-|---|---|
-| Lagen (layers) | Bulk loaders + node-type toggles. "Active" = there are nodes of that kind on canvas; "potential" count = how many would arrive from cache if you clicked. |
-| Filters → Verbindingen | `structuralEnabled` / `mutationEnabled` / `semanticEnabled` — edge category gates. |
-| Filters → Toon scaffolding-kanten | Bypass `SCAFFOLDING_RELATIONS`. |
-| Overlays | Activates Activiteit or Mutatie. Mutually exclusive. See [`overlays.md`](overlays.md). |
-| Wetten (active instruments) | Multi-select of `activeInstruments: Set<string>`. Filters edges/nodes to those touching at least one active law. |
-| Detail-niveau | Toggles `collapseToLaws` — synthesises instrument "proxy" nodes that stand in for groups of articles. |
+| Sidebar section                   | Drives                                                                                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lagen (layers)                    | Bulk loaders + node-type toggles. "Active" = there are nodes of that kind on canvas; "potential" count = how many would arrive from cache if you clicked. |
+| Filters → Verbindingen            | `structuralEnabled` / `mutationEnabled` / `semanticEnabled` — edge category gates.                                                                        |
+| Filters → Toon scaffolding-kanten | Bypass `SCAFFOLDING_RELATIONS`.                                                                                                                           |
+| Overlays                          | Activates Activiteit or Mutatie. Mutually exclusive. See [`overlays.md`](overlays.md).                                                                    |
+| Wetten (active instruments)       | Multi-select of `activeInstruments: Set<string>`. Filters edges/nodes to those touching at least one active law.                                          |
+| Detail-niveau                     | Toggles `collapseToLaws` — synthesises instrument "proxy" nodes that stand in for groups of articles.                                                     |
 
 ## Convergence prune
 
-The default expansion mode is *not* "all direct neighbours" — it's "neighbours reachable via at least two paths from any existing canvas node, plus the focus' direct neighbours". This keeps dense citation hubs (e.g. AWB art. 8:1) from carpet-bombing the canvas.
+The default expansion mode is _not_ "all direct neighbours" — it's "neighbours reachable via at least two paths from any existing canvas node, plus the focus' direct neighbours". This keeps dense citation hubs (e.g. AWB art. 8:1) from carpet-bombing the canvas.
 
 Implementation: `expandToDepth` in `GraphView.svelte` runs a BFS, then marks nodes reachable through only one path as candidates for removal. The store's prune retains the focus, its level-1, pinned nodes, and nodes reachable via multiple paths.
 
@@ -264,13 +272,13 @@ That's a lot of touchpoints — by design. Adding a kind is a real feature, not 
 
 ## Related files
 
-| Concern | File |
-|---|---|
-| Type system | `src/lib/graph/types.ts` |
-| Store | `src/lib/graph/graph-store.ts` (assembly), `src/lib/graph/store/*.ts` (implementation) |
-| Sidebar | `src/lib/components/graph/GraphSidebar.svelte` |
-| Orchestrator | `src/lib/components/graph/GraphView.svelte` |
-| Canvas | `src/lib/components/graph/GraphCanvas.svelte` |
-| Edge program (dashed) | `src/lib/components/graph/DashedEdgeProgram.ts` |
-| Hover / cite panels | `src/lib/components/graph/GraphNodePanel.svelte`, `GraphCitePanel.svelte` |
-| Breadcrumb | `src/lib/components/graph/GraphBreadcrumb.svelte` |
+| Concern               | File                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| Type system           | `src/lib/graph/types.ts`                                                               |
+| Store                 | `src/lib/graph/graph-store.ts` (assembly), `src/lib/graph/store/*.ts` (implementation) |
+| Sidebar               | `src/lib/components/graph/GraphSidebar.svelte`                                         |
+| Orchestrator          | `src/lib/components/graph/GraphView.svelte`                                            |
+| Canvas                | `src/lib/components/graph/GraphCanvas.svelte`                                          |
+| Edge program (dashed) | `src/lib/components/graph/DashedEdgeProgram.ts`                                        |
+| Hover / cite panels   | `src/lib/components/graph/GraphNodePanel.svelte`, `GraphCitePanel.svelte`              |
+| Breadcrumb            | `src/lib/components/graph/GraphBreadcrumb.svelte`                                      |

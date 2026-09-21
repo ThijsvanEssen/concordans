@@ -4,12 +4,12 @@ Where state lives, how it flows, and the patterns we lean on. If you're not sure
 
 ## The four state surfaces
 
-| Surface | Examples | Survives |
-|---|---|---|
-| **URL query params** | `mode`, `focus`, `overlay`, `seed`, `wet`, `q`, `all` | Reload, deep links, browser back/forward |
-| **Stores (`lib/stores/*`)** | Watches, profile, overlay parser, reader cache, search opener | Page session (some persist to localStorage) |
-| **GraphStore** | Nodes, edges, selection, history, filters | Page session (in-memory only) |
-| **Local component state (`$state`)** | UI toggles, hover state, ephemeral fetch results, scroll positions | Component lifecycle |
+| Surface                              | Examples                                                           | Survives                                    |
+| ------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------- |
+| **URL query params**                 | `mode`, `focus`, `overlay`, `seed`, `wet`, `q`, `all`              | Reload, deep links, browser back/forward    |
+| **Stores (`lib/stores/*`)**          | Watches, profile, overlay parser, reader cache, search opener      | Page session (some persist to localStorage) |
+| **GraphStore**                       | Nodes, edges, selection, history, filters                          | Page session (in-memory only)               |
+| **Local component state (`$state`)** | UI toggles, hover state, ephemeral fetch results, scroll positions | Component lifecycle                         |
 
 Decision rule when adding new state:
 
@@ -27,14 +27,14 @@ When in doubt, prefer URL params for anything deep-linkable, local `$state` for 
 
 This codebase is Svelte 5 throughout. The relevant runes:
 
-| Rune | Use |
-|---|---|
-| `$state(initial)` | Reactive local state inside a `<script>`. Replaces `let`-with-reactivity. |
-| `$state<T>(initial)` | Typed version. Common for discriminated unions. |
-| `$derived(expr)` | Computed reactive value — cheap, runs on every dependency change. |
-| `$derived.by(fn)` | Computed via a function body — use when the computation needs intermediate variables. |
-| `$effect(fn)` | Side effects (fetches, subscriptions, timers). Cleanup via returned function. |
-| `$props()` | Component props. Destructured with defaults. |
+| Rune                 | Use                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| `$state(initial)`    | Reactive local state inside a `<script>`. Replaces `let`-with-reactivity.             |
+| `$state<T>(initial)` | Typed version. Common for discriminated unions.                                       |
+| `$derived(expr)`     | Computed reactive value — cheap, runs on every dependency change.                     |
+| `$derived.by(fn)`    | Computed via a function body — use when the computation needs intermediate variables. |
+| `$effect(fn)`        | Side effects (fetches, subscriptions, timers). Cleanup via returned function.         |
+| `$props()`           | Component props. Destructured with defaults.                                          |
 
 ### Patterns we use
 
@@ -42,11 +42,11 @@ This codebase is Svelte 5 throughout. The relevant runes:
 
 ```ts
 let state = $state<
-  | { kind: 'idle' }
-  | { kind: 'loading' }
-  | { kind: 'loaded', d: DossierDetailResponse }
-  | { kind: 'error', message: string }
-  | { kind: 'empty' }
+	| { kind: 'idle' }
+	| { kind: 'loading' }
+	| { kind: 'loaded'; d: DossierDetailResponse }
+	| { kind: 'error'; message: string }
+	| { kind: 'empty' }
 >({ kind: 'idle' });
 ```
 
@@ -56,7 +56,7 @@ Template:
 {#if state.kind === 'loading'}<Skeleton />
 {:else if state.kind === 'error'}<p>{state.message}</p>
 {:else if state.kind === 'loaded'}{@const d = state.d}
-  <!-- render d -->
+	<!-- render d -->
 {/if}
 ```
 
@@ -66,21 +66,28 @@ Always include `kind: 'empty'` and `kind: 'idle'` if those are distinguishable u
 
 ```ts
 $effect(() => {
-  const q = query;
-  if (!q) { results = []; return; }
-  let cancelled = false;
-  const ctrl = new AbortController();
-  fetchSomething(q, { signal: ctrl.signal })
-    .then((r) => { if (!cancelled) results = r; })
-    .catch(() => { /* swallow on abort */ });
-  return () => {
-    cancelled = true;
-    ctrl.abort();
-  };
+	const q = query;
+	if (!q) {
+		results = [];
+		return;
+	}
+	let cancelled = false;
+	const ctrl = new AbortController();
+	fetchSomething(q, { signal: ctrl.signal })
+		.then((r) => {
+			if (!cancelled) results = r;
+		})
+		.catch(() => {
+			/* swallow on abort */
+		});
+	return () => {
+		cancelled = true;
+		ctrl.abort();
+	};
 });
 ```
 
-The `cancelled` flag handles the race where the fetch resolves *after* the effect cleanup ran but *before* the next effect started. `ctrl.abort()` cancels the in-flight HTTP request. Use both — the flag protects assignment, the abort saves bandwidth.
+The `cancelled` flag handles the race where the fetch resolves _after_ the effect cleanup ran but _before_ the next effect started. `ctrl.abort()` cancels the in-flight HTTP request. Use both — the flag protects assignment, the abort saves bandwidth.
 
 **Debounced reactive search:**
 
@@ -88,21 +95,26 @@ The `cancelled` flag handles the race where the fetch resolves *after* the effec
 let debounceTimer: ReturnType<typeof setTimeout>;
 let inflightAbort: AbortController | null = null;
 $effect(() => {
-  const q = query;
-  clearTimeout(debounceTimer);
-  inflightAbort?.abort();
-  if (!q.trim()) { results = empty; return; }
-  debounceTimer = setTimeout(async () => {
-    const ctrl = new AbortController();
-    inflightAbort = ctrl;
-    try { /* fetch */ } finally {
-      if (inflightAbort === ctrl) inflightAbort = null;
-    }
-  }, 60);
-  return () => {
-    clearTimeout(debounceTimer);
-    inflightAbort?.abort();
-  };
+	const q = query;
+	clearTimeout(debounceTimer);
+	inflightAbort?.abort();
+	if (!q.trim()) {
+		results = empty;
+		return;
+	}
+	debounceTimer = setTimeout(async () => {
+		const ctrl = new AbortController();
+		inflightAbort = ctrl;
+		try {
+			/* fetch */
+		} finally {
+			if (inflightAbort === ctrl) inflightAbort = null;
+		}
+	}, 60);
+	return () => {
+		clearTimeout(debounceTimer);
+		inflightAbort?.abort();
+	};
 });
 ```
 
@@ -121,7 +133,9 @@ Then an `$effect` keyed on `overlay` does the fetching. The parser lives in a st
 
 ```ts
 let selectedNode = $state<GraphNode | null>(null);
-store.selection.subscribe((n) => { selectedNode = n; });
+store.selection.subscribe((n) => {
+	selectedNode = n;
+});
 ```
 
 Bridging legacy `Readable<T>` stores into `$state` lets template code use plain reactivity instead of `$store` syntax everywhere. Done at the top of route components.
@@ -182,13 +196,13 @@ A different beast entirely. See [`graph-system.md`](graph-system.md#graphstore) 
 
 ### Don't sync URL and store
 
-Pick one. The overlay state is a clean example: parsed from the URL on read, written to the URL on change. We *don't* have an `overlayStore = writable(initialFromUrl)` that also writes back to the URL — that's a recipe for double sources of truth.
+Pick one. The overlay state is a clean example: parsed from the URL on read, written to the URL on change. We _don't_ have an `overlayStore = writable(initialFromUrl)` that also writes back to the URL — that's a recipe for double sources of truth.
 
 If you need a derived view of URL state that's expensive to recompute, use `$derived` not a store.
 
 ### Don't use stores for component-local UI state
 
-`writable<boolean>` for "is this panel open?" is wrong. Use `$state(false)` in the component. The threshold for a store is: *more than one branch of the tree needs to mutate this*.
+`writable<boolean>` for "is this panel open?" is wrong. Use `$state(false)` in the component. The threshold for a store is: _more than one branch of the tree needs to mutate this_.
 
 ### Don't subscribe outside a component
 
@@ -214,12 +228,12 @@ Don't add a new store when:
 
 ## Related files
 
-| Concern | File |
-|---|---|
-| URL contract (overlays) | `src/lib/stores/overlay.ts` |
-| Server watches | `src/lib/stores/watches.ts` |
-| Domain profile | `src/lib/stores/profile.ts` |
-| Reader/rail bridge | `src/lib/stores/reader.ts` |
-| Search opener context | `src/lib/stores/search-trigger.ts` |
-| Graph data | `src/lib/graph/graph-store.ts`, `src/lib/graph/store/` |
-| Instrument metadata cache | `src/lib/api/instrument-cache.ts` (also a writable) |
+| Concern                   | File                                                   |
+| ------------------------- | ------------------------------------------------------ |
+| URL contract (overlays)   | `src/lib/stores/overlay.ts`                            |
+| Server watches            | `src/lib/stores/watches.ts`                            |
+| Domain profile            | `src/lib/stores/profile.ts`                            |
+| Reader/rail bridge        | `src/lib/stores/reader.ts`                             |
+| Search opener context     | `src/lib/stores/search-trigger.ts`                     |
+| Graph data                | `src/lib/graph/graph-store.ts`, `src/lib/graph/store/` |
+| Instrument metadata cache | `src/lib/api/instrument-cache.ts` (also a writable)    |

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { getInstrumentArticles } from '$lib/api/nodes';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
-		import type { GraphNode } from '$lib/graph/types';
-		import DossierNav from './readers/nav/DossierNav.svelte';
+	import type { GraphNode } from '$lib/graph/types';
+	import DossierNav from './readers/nav/DossierNav.svelte';
 	import CommissieNav from './readers/nav/CommissieNav.svelte';
 	import LidNav from './readers/nav/LidNav.svelte';
 	import FractieNav from './readers/nav/FractieNav.svelte';
@@ -11,7 +11,7 @@
 		selection,
 		bwb: bwbProp = null,
 		onNavigate,
-		onitems,
+		onitems
 	}: {
 		selection: GraphNode | null;
 		/**
@@ -80,9 +80,15 @@
 	const instrumentTypeLabel = $derived.by(() => {
 		if (!currentBwb) return 'WETGEVING';
 		if (currentBwb.toUpperCase().startsWith('BWBV')) return 'VERDRAG';
-		if (/^[0-9]{5}[a-zA-Z]/.test(currentBwb) || currentBwb.length === 9 && /^\d/.test(currentBwb)) return 'EU REGELGEVING';
+		if (/^[0-9]{5}[a-zA-Z]/.test(currentBwb) || (currentBwb.length === 9 && /^\d/.test(currentBwb)))
+			return 'EU REGELGEVING';
 		// CELEX numbers: 3 digits year + L/R/D indicator
-		if (/^\d{4}[LRD]\d/.test(currentBwb) || currentBwb.startsWith('32') || currentBwb.startsWith('31')) return 'EU REGELGEVING';
+		if (
+			/^\d{4}[LRD]\d/.test(currentBwb) ||
+			currentBwb.startsWith('32') ||
+			currentBwb.startsWith('31')
+		)
+			return 'EU REGELGEVING';
 		return 'WETGEVING';
 	});
 

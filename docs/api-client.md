@@ -33,16 +33,16 @@ Never. Components must not call `fetch` directly. If you need a non-JSON respons
 
 The next layer down wraps `apiGet`/`Post` with typed signatures, default params, and the right path construction. There's one file per loose domain:
 
-| File | Domain |
-|---|---|
+| File                      | Domain                                                                                                                 |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `parliamentary-client.ts` | Dossiers, mutations, articles, in-flux, heat, commissies, leden, fracties, stemmingen, instruments, judgments, watches |
-| `search.ts` | `/api/search` — both shapes (`searchSimple` and `unifiedSearch`) |
-| `articles.ts` | Article detail + helpers |
-| `nodes.ts` | `/api/nodes/expand`, `/api/nodes/{collection}/{key}` |
-| `judgments.ts` | Judgment detail + citations |
-| `mvt.ts` | Memorie van toelichting passage lookup |
-| `stats.ts` | Corpus stats for the landing page |
-| `instrument-cache.ts` | BWB → law metadata in-memory cache (writable store) |
+| `search.ts`               | `/api/search` — both shapes (`searchSimple` and `unifiedSearch`)                                                       |
+| `articles.ts`             | Article detail + helpers                                                                                               |
+| `nodes.ts`                | `/api/nodes/expand`, `/api/nodes/{collection}/{key}`                                                                   |
+| `judgments.ts`            | Judgment detail + citations                                                                                            |
+| `mvt.ts`                  | Memorie van toelichting passage lookup                                                                                 |
+| `stats.ts`                | Corpus stats for the landing page                                                                                      |
+| `instrument-cache.ts`     | BWB → law metadata in-memory cache (writable store)                                                                    |
 
 `parliamentary-client.ts` is the largest — most domain calls live there because parliamentary data dominates the corpus. Don't worry about splitting it further unless one domain genuinely becomes its own bounded context.
 
@@ -55,8 +55,8 @@ The next layer down wraps `apiGet`/`Post` with typed signatures, default params,
 
 ```ts
 export async function fetchInFluxMap(signal?: AbortSignal): Promise<InFluxMap> {
-  const raw = await apiGet<Record<string, number>>('/api/nodes/in-flux', { signal });
-  return new Map(Object.entries(raw));
+	const raw = await apiGet<Record<string, number>>('/api/nodes/in-flux', { signal });
+	return new Map(Object.entries(raw));
 }
 ```
 
@@ -79,6 +79,7 @@ See [`api-contract.md`](api-contract.md) for the regeneration steps.
 ### Why this pipeline
 
 OpenAPI codegen gives us:
+
 - Compile-time guarantees that the backend and frontend agree on shapes.
 - Free updates when the backend changes — bumping `openapi.json` reveals every drift in `svelte-check`.
 - No manual maintenance of DTOs.
@@ -91,57 +92,57 @@ A non-exhaustive map, grouped by purpose. See `openapi.json` for the full contra
 
 ### Graph data
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/nodes/expand` | Expand a node's neighbourhood (the workhorse for click-to-expand) |
-| `GET /api/nodes/{collection}/{key}` | Single node detail |
-| `GET /api/nodes/in-flux` | Bulk in-flux counts per node |
-| `GET /api/nodes/heat?months=N` | Bulk citation counts per node over N-month window |
+| Endpoint                            | Purpose                                                           |
+| ----------------------------------- | ----------------------------------------------------------------- |
+| `GET /api/nodes/expand`             | Expand a node's neighbourhood (the workhorse for click-to-expand) |
+| `GET /api/nodes/{collection}/{key}` | Single node detail                                                |
+| `GET /api/nodes/in-flux`            | Bulk in-flux counts per node                                      |
+| `GET /api/nodes/heat?months=N`      | Bulk citation counts per node over N-month window                 |
 
 ### Articles & instruments
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/articles/{bwb}/{n}` | Article detail (text, leden, citaties) |
+| Endpoint                                          | Purpose                                            |
+| ------------------------------------------------- | -------------------------------------------------- |
+| `GET /api/articles/{bwb}/{n}`                     | Article detail (text, leden, citaties)             |
 | `GET /api/articles/{bwb}/{n}/legislative-history` | Article's mutation history including open dossiers |
-| `GET /api/articles/{bwb}/{n}/in-flux` | Cheap in-flux check for one article |
-| `GET /api/instruments` | Paginated instrument list |
-| `GET /api/instruments/{bwb}` | Instrument detail |
-| `GET /api/instruments/{bwb}/articles` | All articles in one law |
+| `GET /api/articles/{bwb}/{n}/in-flux`             | Cheap in-flux check for one article                |
+| `GET /api/instruments`                            | Paginated instrument list                          |
+| `GET /api/instruments/{bwb}`                      | Instrument detail                                  |
+| `GET /api/instruments/{bwb}/articles`             | All articles in one law                            |
 
 ### Dossiers
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/dossiers/{kamerstuknummer}` | Detail |
-| `GET /api/dossiers/{kamerstuknummer}/timeline` | Activity timeline |
-| `GET /api/dossiers/{kamerstuknummer}/documents` | Attached kamerstukken |
+| Endpoint                                        | Purpose                   |
+| ----------------------------------------------- | ------------------------- |
+| `GET /api/dossiers/{kamerstuknummer}`           | Detail                    |
+| `GET /api/dossiers/{kamerstuknummer}/timeline`  | Activity timeline         |
+| `GET /api/dossiers/{kamerstuknummer}/documents` | Attached kamerstukken     |
 | `GET /api/dossiers/{kamerstuknummer}/mutations` | Pending-mutation subgraph |
-| `GET /api/dossiers/open` | All open dossiers |
-| `GET /api/dossiers/recent` | Recently active |
+| `GET /api/dossiers/open`                        | All open dossiers         |
+| `GET /api/dossiers/recent`                      | Recently active           |
 
 ### Search
 
-| Endpoint | Purpose |
-|---|---|
+| Endpoint                           | Purpose                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------ |
 | `GET /api/search?q=&types=&limit=` | Grouped multi-type search. `types` is a comma-list; `limit` is per-type. |
 
 ### Parliament
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /api/commissies`, `/api/commissies/{slug}` | Commissions |
-| `GET /api/leden`, `/api/leden/{key}` | Kamer members |
-| `GET /api/leden/{key}/votes`, `/touched-instruments` | Member-scoped data |
-| `GET /api/fracties`, `/api/fracties/{key}` | Parties |
-| `GET /api/stemmingen`, `/api/stemmingen/{key}` | Votes |
-| `GET /api/partijen/kleuren` | Party colour palette |
-| `GET /api/parlement/zetels` | Seat distribution |
+| Endpoint                                             | Purpose              |
+| ---------------------------------------------------- | -------------------- |
+| `GET /api/commissies`, `/api/commissies/{slug}`      | Commissions          |
+| `GET /api/leden`, `/api/leden/{key}`                 | Kamer members        |
+| `GET /api/leden/{key}/votes`, `/touched-instruments` | Member-scoped data   |
+| `GET /api/fracties`, `/api/fracties/{key}`           | Parties              |
+| `GET /api/stemmingen`, `/api/stemmingen/{key}`       | Votes                |
+| `GET /api/partijen/kleuren`                          | Party colour palette |
+| `GET /api/parlement/zetels`                          | Seat distribution    |
 
 ### Watches (server-backed)
 
-| Endpoint | Purpose |
-|---|---|
+| Endpoint                                        | Purpose                           |
+| ----------------------------------------------- | --------------------------------- |
 | `POST /api/watches`, `DELETE /api/watches/{id}` | Server-stored watches (when used) |
 
 Note: the watch endpoints exist and `stores/watches.ts` wraps them, but `WatchControl.svelte` is not mounted anywhere, so no UI creates watches today.
@@ -162,10 +163,10 @@ The default policy is **let the helper throw, handle close to the user**:
 
 ```ts
 try {
-  const data = await fetchDossier(nummer);
-  state = { kind: 'loaded', d: data };
+	const data = await fetchDossier(nummer);
+	state = { kind: 'loaded', d: data };
 } catch {
-  state = { kind: 'error', message: 'Dossier kon niet geladen worden.' };
+	state = { kind: 'error', message: 'Dossier kon niet geladen worden.' };
 }
 ```
 
@@ -173,19 +174,23 @@ For overlay/sidekick data where empty-is-fine, the convention is silent best-eff
 
 ```ts
 fetchInFluxMap()
-  .then((m) => { inFluxMap = m; })
-  .catch(() => { /* best-effort — no visual if unavailable */ });
+	.then((m) => {
+		inFluxMap = m;
+	})
+	.catch(() => {
+		/* best-effort — no visual if unavailable */
+	});
 ```
 
 Aborts are not errors. Always check `(err as { name?: string })?.name === 'AbortError'` before showing a failure state, or scope the try/catch carefully so abort propagates up:
 
 ```ts
 try {
-  const r = await unifiedSearch(q, { signal: ctrl.signal });
-  if (!ctrl.signal.aborted) results = r;
+	const r = await unifiedSearch(q, { signal: ctrl.signal });
+	if (!ctrl.signal.aborted) results = r;
 } catch (err) {
-  if ((err as { name?: string })?.name === 'AbortError') return;
-  // real error
+	if ((err as { name?: string })?.name === 'AbortError') return;
+	// real error
 }
 ```
 
@@ -203,11 +208,11 @@ The backend rate-limits aggressively (we hit `429` during dev investigation runs
 
 ## Related files
 
-| Concern | File |
-|---|---|
-| Primitives | `src/lib/api/client.ts` |
-| Domain helpers | `src/lib/api/parliamentary-client.ts`, `search.ts`, `articles.ts`, `nodes.ts`, `judgments.ts`, `mvt.ts`, `stats.ts` |
-| Type aliases | `src/lib/api/types.ts`, `parliamentary.ts` |
-| Generated types | `src/lib/api/generated/openapi-types.ts` (do not edit) |
-| Caches | `src/lib/api/instrument-cache.ts`, `src/lib/graph/store/context.ts` (`cache` field) |
-| Contract | `openapi.json` (repo root) |
+| Concern         | File                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Primitives      | `src/lib/api/client.ts`                                                                                             |
+| Domain helpers  | `src/lib/api/parliamentary-client.ts`, `search.ts`, `articles.ts`, `nodes.ts`, `judgments.ts`, `mvt.ts`, `stats.ts` |
+| Type aliases    | `src/lib/api/types.ts`, `parliamentary.ts`                                                                          |
+| Generated types | `src/lib/api/generated/openapi-types.ts` (do not edit)                                                              |
+| Caches          | `src/lib/api/instrument-cache.ts`, `src/lib/graph/store/context.ts` (`cache` field)                                 |
+| Contract        | `openapi.json` (repo root)                                                                                          |

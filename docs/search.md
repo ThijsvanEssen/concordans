@@ -4,10 +4,10 @@ Two UI surfaces share one backend endpoint with different policies. This documen
 
 ## Surfaces
 
-| Surface | File | Purpose |
-|---|---|---|
-| cmd-K overlay | `src/lib/components/layout/SearchOverlay.svelte` | Fast typeahead from anywhere in the app |
-| `/search` page | `src/routes/(main)/search/+page.svelte` | Full results, hash-anchored subgroups |
+| Surface        | File                                             | Purpose                                 |
+| -------------- | ------------------------------------------------ | --------------------------------------- |
+| cmd-K overlay  | `src/lib/components/layout/SearchOverlay.svelte` | Fast typeahead from anywhere in the app |
+| `/search` page | `src/routes/(main)/search/+page.svelte`          | Full results, hash-anchored subgroups   |
 
 Both call `unifiedSearch(query, opts)` from `src/lib/api/search.ts`, which posts to `/api/search`.
 
@@ -15,19 +15,19 @@ Both call `unifiedSearch(query, opts)` from `src/lib/api/search.ts`, which posts
 
 ```ts
 type UnifiedResults = {
-  articles: SearchResultItem[];
-  judgments: SearchResultItem[];
-  instruments: SearchResultItem[];
-  dossiers: SearchResultItem[];
-  publications: SearchResultItem[];
-  commissies: SearchResultItem[];
-  leden: SearchResultItem[];
-  fracties: SearchResultItem[];
+	articles: SearchResultItem[];
+	judgments: SearchResultItem[];
+	instruments: SearchResultItem[];
+	dossiers: SearchResultItem[];
+	publications: SearchResultItem[];
+	commissies: SearchResultItem[];
+	leden: SearchResultItem[];
+	fracties: SearchResultItem[];
 };
 
 async function unifiedSearch(
-  query: string,
-  opts: { types?: string; limit?: number; signal?: AbortSignal } = {}
+	query: string,
+	opts: { types?: string; limit?: number; signal?: AbortSignal } = {}
 ): Promise<UnifiedResults>;
 ```
 
@@ -58,14 +58,14 @@ Response shape:
 
 The backend ranks each bucket independently. The frontend doesn't see the ranking logic. What we know from probing:
 
-| Behaviour | Observed |
-|---|---|
-| Case sensitivity | Insensitive (`Huisvestingswet` ≡ `huisvestingswet`) |
-| Token splitting | Yes — space-separated, AND-combined |
-| Substring matching | No — `huisvesting` does not match `Huisvestingswet` |
-| Whole-word matching | Partial — works for some fields, not all |
-| Stemming | No |
-| Verbose dossier `titel` indexed | No — only `kamerstuknummer` and short titles |
+| Behaviour                       | Observed                                            |
+| ------------------------------- | --------------------------------------------------- |
+| Case sensitivity                | Insensitive (`Huisvestingswet` ≡ `huisvestingswet`) |
+| Token splitting                 | Yes — space-separated, AND-combined                 |
+| Substring matching              | No — `huisvesting` does not match `Huisvestingswet` |
+| Whole-word matching             | Partial — works for some fields, not all            |
+| Stemming                        | No                                                  |
+| Verbose dossier `titel` indexed | No — only `kamerstuknummer` and short titles        |
 
 See [`gotchas.md`](gotchas.md#search-index-is-title-narrow) for the implications. The TL;DR is: pasting a long verbatim dossier title into search will not find it. Frontend can't fix this.
 
@@ -76,14 +76,14 @@ See [`gotchas.md`](gotchas.md#search-index-is-title-narrow) for the implications
 ```ts
 const FETCH_LIMIT = 25;
 const RENDER_CAP: Record<keyof UnifiedResults, number> = {
-  articles: 10,
-  instruments: 6,
-  judgments: 8,
-  dossiers: 8,
-  commissies: 6,
-  fracties: 6,
-  leden: 6,
-  publications: 8,
+	articles: 10,
+	instruments: 6,
+	judgments: 8,
+	dossiers: 8,
+	commissies: 6,
+	fracties: 6,
+	leden: 6,
+	publications: 8
 };
 ```
 
@@ -93,10 +93,10 @@ const RENDER_CAP: Record<keyof UnifiedResults, number> = {
 
 ```ts
 function moreOf(key: keyof UnifiedResults): number {
-  const total = (results[key] ?? []).length;
-  const shown = (vis[key] ?? []).length;
-  if (total > shown) return total - shown;
-  return total >= FETCH_LIMIT ? -1 : 0;   // -1 = "more exists, count unknown"
+	const total = (results[key] ?? []).length;
+	const shown = (vis[key] ?? []).length;
+	if (total > shown) return total - shown;
+	return total >= FETCH_LIMIT ? -1 : 0; // -1 = "more exists, count unknown"
 }
 ```
 
@@ -113,7 +113,7 @@ The `+ N meer →` rows link to `/search?q=...#dossiers` (or whichever subgroup)
 
 ### Keyboard navigation
 
-`flatItems` is the ordered list of *visible* results across all enabled domains, in the same order they appear on screen. Arrow keys move `focusedIndex` along this list. The `offsetX()` helpers compute where each subgroup starts in the flat index so the `class:result-row--focused={idx === focusedIndex}` highlighting matches.
+`flatItems` is the ordered list of _visible_ results across all enabled domains, in the same order they appear on screen. Arrow keys move `focusedIndex` along this list. The `offsetX()` helpers compute where each subgroup starts in the flat index so the `class:result-row--focused={idx === focusedIndex}` highlighting matches.
 
 Domain visibility chips (`showWet`, `showRecht`, `showTk`) filter what enters `flatItems`. Clicking a chip narrows both rendering and keyboard nav coherently.
 
@@ -137,16 +137,16 @@ See `state-and-stores.md` for the canonical debounce-with-abort pattern.
 
 Every subgroup has an HTML `id`:
 
-| id | Section |
-|---|---|
-| `instruments` | Wetgeving → Instrumenten |
-| `articles` | Wetgeving → Artikelen |
-| `judgments` | Rechtspraak (first tier — others have no id) |
-| `dossiers` | Parlementair → Wetgevingsdossiers |
-| `commissies` | Parlementair → Commissies |
-| `fracties` | Parlementair → Fracties |
-| `leden` | Parlementair → Kamerleden |
-| `publications` | Parlementair → Publicaties |
+| id             | Section                                      |
+| -------------- | -------------------------------------------- |
+| `instruments`  | Wetgeving → Instrumenten                     |
+| `articles`     | Wetgeving → Artikelen                        |
+| `judgments`    | Rechtspraak (first tier — others have no id) |
+| `dossiers`     | Parlementair → Wetgevingsdossiers            |
+| `commissies`   | Parlementair → Commissies                    |
+| `fracties`     | Parlementair → Fracties                      |
+| `leden`        | Parlementair → Kamerleden                    |
+| `publications` | Parlementair → Publicaties                   |
 
 These exist for the cmd-K "+ meer →" deep links. If you add a new bucket, add its anchor.
 
@@ -163,13 +163,13 @@ When a search query underperforms, the cause is almost always one of:
 3. **No fuzzy matching** — typos return zero. We don't apply Levenshtein client-side.
 4. **No partial-word matching** — `huisvest` won't match `huisvesting`. Substrings don't fire.
 
-Frontend mitigations that *aren't* warranted:
+Frontend mitigations that _aren't_ warranted:
 
 - **Don't add client-side fuzzy matching** over the returned results — the results don't include enough text to fuzz against.
 - **Don't synthesise queries** by splitting the input and OR-ing variants. The backend rate-limits, and we'd hammer it.
 - **Don't add "did you mean" suggestions** without backend support — we don't have the data to compute them.
 
-What *is* fair game:
+What _is_ fair game:
 
 - A "Try this in full search →" hint when the query is long and returns zero results, since the `/search` page is no worse.
 - A "Search by Kamerstuknummer" prompt when input looks like `\d{5,6}`.
@@ -185,23 +185,24 @@ If we ever need cross-bucket re-ranking — e.g. "show the highest-scoring resul
 
 ```ts
 interface SearchResultItem {
-  id: string;            // canonical "{collection}/{key}"
-  key: string;
-  collection: string;
-  type: string;          // alias for collection-derived display type
-  display_name: string | null;
-  snippet?: string | null;
-  score: number;
-  extra?: {              // type-specific fields
-    bwb_id?: string;
-    article_number?: string;
-    ecli?: string;
-    kamerstuknummer?: string;
-    partij?: string;
-    afkorting?: string;
-    citation_title?: string;
-    [k: string]: unknown;
-  };
+	id: string; // canonical "{collection}/{key}"
+	key: string;
+	collection: string;
+	type: string; // alias for collection-derived display type
+	display_name: string | null;
+	snippet?: string | null;
+	score: number;
+	extra?: {
+		// type-specific fields
+		bwb_id?: string;
+		article_number?: string;
+		ecli?: string;
+		kamerstuknummer?: string;
+		partij?: string;
+		afkorting?: string;
+		citation_title?: string;
+		[k: string]: unknown;
+	};
 }
 ```
 
@@ -221,11 +222,11 @@ That's ~7 touchpoints. The plumbing isn't elegant — there's no register-once A
 
 ## Related files
 
-| Concern | File |
-|---|---|
-| API wrapper | `src/lib/api/search.ts` |
-| cmd-K overlay | `src/lib/components/layout/SearchOverlay.svelte` |
-| `/search` page | `src/routes/(main)/search/+page.svelte` |
-| Opener context | `src/lib/stores/search-trigger.ts` |
-| Glossary tooltips | `src/lib/glossary.ts` |
+| Concern            | File                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| API wrapper        | `src/lib/api/search.ts`                                      |
+| cmd-K overlay      | `src/lib/components/layout/SearchOverlay.svelte`             |
+| `/search` page     | `src/routes/(main)/search/+page.svelte`                      |
+| Opener context     | `src/lib/stores/search-trigger.ts`                           |
+| Glossary tooltips  | `src/lib/glossary.ts`                                        |
 | Court tier helpers | `src/lib/graph/types.ts` (`judgmentTier`, `formatEcliLabel`) |

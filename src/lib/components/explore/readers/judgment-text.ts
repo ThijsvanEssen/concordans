@@ -25,7 +25,10 @@ export function parseSubjects(subjects: string[]): Map<string, string[]> {
 		const parts = s.split(/\s*;\s*/);
 		const top = parts[0].trim();
 		if (!result.has(top)) result.set(top, []);
-		for (const sub of parts.slice(1).map((p) => p.trim()).filter(Boolean)) {
+		for (const sub of parts
+			.slice(1)
+			.map((p) => p.trim())
+			.filter(Boolean)) {
 			if (!result.get(top)!.includes(sub)) result.get(top)!.push(sub);
 		}
 	}
@@ -51,9 +54,7 @@ export function extractPartyInfo(text: string): string[] | null {
 	// Find the "in de strafzaak tegen" / "...strafzaak tegen" / standalone "tegen" marker
 	const markerIdx = lines.findLastIndex(
 		(l) =>
-			/strafzaak\s+.*\stegen\s*$/.test(l) ||
-			/strafzaak\s+tegen\s*$/.test(l) ||
-			/^tegen\s*$/.test(l)
+			/strafzaak\s+.*\stegen\s*$/.test(l) || /strafzaak\s+tegen\s*$/.test(l) || /^tegen\s*$/.test(l)
 	);
 	if (markerIdx === -1) return null;
 
@@ -219,9 +220,7 @@ export function extractParticipants(
 		}
 
 		// Officier van Justitie (only when named: "officier van justitie mr. X")
-		for (const m of t.matchAll(
-			/officier van justitie\s+(mr\.\s+[A-Z][^,\n]{1,50}?)(?=[,\n])/g
-		)) {
+		for (const m of t.matchAll(/officier van justitie\s+(mr\.\s+[A-Z][^,\n]{1,50}?)(?=[,\n])/g)) {
 			const n = m[1].trim().replace(/[,.]$/, '');
 			if (n.length > 1 && !participants.some((p) => p.name === n)) {
 				participants.push({ role: 'OvJ', name: n });

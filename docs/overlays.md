@@ -30,12 +30,12 @@ serializeOverlay(o: Overlay): string | null
 
 The toggles in the sidebar are **radio behaviour**: activating one clears the other. Deep links from the empty state, ArticleReader, and DossierReader use these patterns:
 
-| Source | Deep link |
-|---|---|
-| Empty-state example CTA (`GraphView.svelte`) | `?overlay=open` |
-| ArticleReader in-flux chip | `?focus=kamerstukdossiers/{nummer}&overlay=dossier:{nummer}` |
-| DossierReader "Toon op grafiek" | `?seed=dossier:X&overlay=dossier:X` |
-| Reader in-flux chip | `?seed=dossier:X&overlay=dossier:X` |
+| Source                                       | Deep link                                                    |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| Empty-state example CTA (`GraphView.svelte`) | `?overlay=open`                                              |
+| ArticleReader in-flux chip                   | `?focus=kamerstukdossiers/{nummer}&overlay=dossier:{nummer}` |
+| DossierReader "Toon op grafiek"              | `?seed=dossier:X&overlay=dossier:X`                          |
+| Reader in-flux chip                          | `?seed=dossier:X&overlay=dossier:X`                          |
 
 ## Data flow
 
@@ -82,16 +82,16 @@ Citation density per node, over a sliding window. Bigger halo = more citations p
 The halo radius is computed in `GraphCanvas.updateViewportLabels()`:
 
 ```ts
-const rate    = activity / months                    // citations per month
-const t       = Math.min(rate / HEAT_SATURATION_RATE, 1)   // [0..1]; saturates at 5/mo
-const baseR   = (attrs.size / sizeDivisor)           // effective pixel radius
-const ringPx  = baseR + 4 + t * 16                   // 4..20 px beyond the node edge
-const opacity = 0.35 + 0.55 * t                      // pale → solid
+const rate = activity / months; // citations per month
+const t = Math.min(rate / HEAT_SATURATION_RATE, 1); // [0..1]; saturates at 5/mo
+const baseR = attrs.size / sizeDivisor; // effective pixel radius
+const ringPx = baseR + 4 + t * 16; // 4..20 px beyond the node edge
+const opacity = 0.35 + 0.55 * t; // pale → solid
 ```
 
 Two design decisions are worth keeping intact:
 
-1. **Per-month rate, not absolute count.** Switching the window from 3 to 24 months on the same node yields a *different* halo even if total citations rise proportionally — because we divide by `months`. The earlier version normalised against the bulk max, which made periods look identical. Don't revert.
+1. **Per-month rate, not absolute count.** Switching the window from 3 to 24 months on the same node yields a _different_ halo even if total citations rise proportionally — because we divide by `months`. The earlier version normalised against the bulk max, which made periods look identical. Don't revert.
 2. **`HEAT_SATURATION_RATE = 5`.** A node cited five or more times per month saturates the halo. The number is empirical — tune it if the cohort of "hot" nodes is wrong, but be aware of the legend (`0/mnd → 5+/mnd`) in the sidebar which must move with it.
 
 ### Period selector
@@ -116,11 +116,11 @@ The styling lives in `GraphCanvas.svelte` (`.mutatie-badge`, `.mutatie-badge--mu
 The badge is corner-anchored, so it must line up with where edges actually terminate — otherwise it floats away from the rendered node edge:
 
 ```ts
-const sizeDivisor = Math.min(Math.sqrt(cameraRatio), 1.5)   // same as sigma's zoomToSizeRatioFunction
-const baseR      = (attrs.size / sizeDivisor)
-const offset     = baseR * 0.707                            // cos 45°
-const vp         = renderer.graphToViewport({ x, y })
-const badgeCentre = { x: vp.x + offset, y: vp.y - offset }
+const sizeDivisor = Math.min(Math.sqrt(cameraRatio), 1.5); // same as sigma's zoomToSizeRatioFunction
+const baseR = attrs.size / sizeDivisor;
+const offset = baseR * 0.707; // cos 45°
+const vp = renderer.graphToViewport({ x, y });
+const badgeCentre = { x: vp.x + offset, y: vp.y - offset };
 ```
 
 `sizeDivisor` mirrors the `zoomToSizeRatioFunction` setting on the sigma renderer (configured at instantiation). Don't change one without the other — the badge will drift on zoom.
@@ -133,9 +133,12 @@ Both halos and badges live in their own HTML overlay layers, drawn above the sig
 
 ```html
 <div class="canvas-wrap">
-  <!-- sigma canvas (z 0) -->
-  {#if activityHalos.length > 0}<div class="activity-overlay" />  <!-- z 5 -->{/if}
-  {#if mutatieBadges.length > 0}<div class="mutatie-overlay" />   <!-- z 6 -->{/if}
+	<!-- sigma canvas (z 0) -->
+	{#if activityHalos.length > 0}
+	<div class="activity-overlay" />
+	<!-- z 5 -->{/if} {#if mutatieBadges.length > 0}
+	<div class="mutatie-overlay" />
+	<!-- z 6 -->{/if}
 </div>
 ```
 
@@ -164,11 +167,11 @@ If you add a third overlay variant:
 
 ## Related files
 
-| Concern | File |
-|---|---|
-| URL parser/serializer + Overlay type | `src/lib/stores/overlay.ts` |
-| Per-route fetch orchestration | `src/routes/explore/+page.svelte` (effect on `overlay`) |
-| Sidebar UI for both toggles | `src/lib/components/graph/GraphSidebar.svelte` |
-| Halo + badge rendering | `src/lib/components/graph/GraphCanvas.svelte` |
-| Bulk fetchers | `src/lib/api/parliamentary-client.ts` (`fetchHeatMap`, `fetchInFluxMap`, `fetchDossierInFluxMap`) |
-| End-user description | `src/routes/(main)/docs/+page.svelte` (section V — parl-card--overlay) |
+| Concern                              | File                                                                                              |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| URL parser/serializer + Overlay type | `src/lib/stores/overlay.ts`                                                                       |
+| Per-route fetch orchestration        | `src/routes/explore/+page.svelte` (effect on `overlay`)                                           |
+| Sidebar UI for both toggles          | `src/lib/components/graph/GraphSidebar.svelte`                                                    |
+| Halo + badge rendering               | `src/lib/components/graph/GraphCanvas.svelte`                                                     |
+| Bulk fetchers                        | `src/lib/api/parliamentary-client.ts` (`fetchHeatMap`, `fetchInFluxMap`, `fetchDossierInFluxMap`) |
+| End-user description                 | `src/routes/(main)/docs/+page.svelte` (section V — parl-card--overlay)                            |

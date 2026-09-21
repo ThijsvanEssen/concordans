@@ -7,18 +7,25 @@ The right-hand panel in `mode=split` and `mode=read`. Dispatched per node-kind, 
 A single switch on `selection.kind` (or `selection.collection` for `stemmingen`):
 
 ```svelte
-{#if !selection}              <ArticleReader {selection} />          <!-- empty state -->
-{:else if kind === 'article'} <ArticleReader ... />
+{#if !selection}
+	<ArticleReader {selection} /> <!-- empty state -->
+{:else if kind === 'article'}
+	<ArticleReader ... />
 {:else if kind === 'judgment'}<JudgmentReader ... />
-{:else if kind === 'tkstuk'}  <TkstukReader ... />
-{:else if kind === 'dossier'} <DossierReader ... />
+{:else if kind === 'tkstuk'}
+	<TkstukReader ... />
+{:else if kind === 'dossier'}
+	<DossierReader ... />
 {:else if kind === 'commissie'}<CommissieReader ... />
-{:else if kind === 'lid'}     <LidReader ... />
-{:else if kind === 'fractie'} <FractieReader ... />
+{:else if kind === 'lid'}
+	<LidReader ... />
+{:else if kind === 'fractie'}
+	<FractieReader ... />
 {:else if kind === 'activity'}<ActivityReader ... />
 {:else if kind === 'instrument'}<InstrumentReader ... />
 {:else if collection === 'stemmingen'}<StemmingReader ... />
-{:else}                       <FallbackReader ... />
+{:else}
+	<FallbackReader ... />
 {/if}
 ```
 
@@ -40,12 +47,12 @@ The first branch (`!selection`) renders `ArticleReader` with a null selection so
 
 Each reader owns a `view` state (`empty | loading | error | loaded`) and a `token` counter that discards responses from a superseded selection.
 
-| File | Contents |
-|---|---|
-| `ArticleReader.svelte` | Article body or leden, in-flux dossier chips, prev/next footer, `ArticleLegislativeHistory` |
-| `ArticleMvtPanel.svelte` | Collapsible "Toelichting (MvT)" panel: passages, per-passage full text |
-| `JudgmentReader.svelte` | Summary, subjects, participants table, numbered body |
-| `judgment-text.ts` | Pure parsing helpers for judgment text (party block, participants, sub-numbering, embedded headings) |
+| File                     | Contents                                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `ArticleReader.svelte`   | Article body or leden, in-flux dossier chips, prev/next footer, `ArticleLegislativeHistory`          |
+| `ArticleMvtPanel.svelte` | Collapsible "Toelichting (MvT)" panel: passages, per-passage full text                               |
+| `JudgmentReader.svelte`  | Summary, subjects, participants table, numbered body                                                 |
+| `judgment-text.ts`       | Pure parsing helpers for judgment text (party block, participants, sub-numbering, embedded headings) |
 
 Do not name a state variable `state` or `props` in a Svelte 5 component: the compiler then reads `$state` / `$props` as a store subscription. See [`gotchas.md`](gotchas.md#variables-named-state-or-props).
 
@@ -132,19 +139,19 @@ The rail uses `setActiveArticle` and `setFocusedCitation` on `stores/reader.ts` 
 
 ## Per-kind reader inventory
 
-| Reader | Kind | Backend calls | Notable features |
-|---|---|---|---|
-| `ArticleReader` | `article` | `getArticleDetail`, `fetchArticleLegislativeHistory`, `getMvtContext`, `getPublicationText` | In-flux chips, MvT panel, legislative history |
-| `JudgmentReader` | `judgment` | `getJudgmentDetail` | Participants table, numbered paragraphs, subjects |
-| `TkstukReader` | `tkstuk` | `getPublicationText` | Publication text, link to tweedekamer.nl |
-| `DossierReader` | `dossier` | `fetchDossier`, `fetchDossierTimeline`, `fetchDossierMutations` | Stepper, timeline, betrokken artikelen, "Toon op grafiek" |
-| `CommissieReader` | `commissie` | `fetchCommissie` | Members + dossiers |
-| `LidReader` | `lid` | `fetchLid`, `fetchLidVotes`, `fetchLidTouchedInstruments` | Voting record, touched laws |
-| `FractieReader` | `fractie` | `fetchFractie`, `fetchFractieTouchedInstruments` | Party profile (note: backend returns raw graph-node shape — normalised in helper) |
-| `StemmingReader` | (collection-keyed) | `fetchStemming` | Per-fractie outcomes |
-| `ActivityReader` | `activity` | parliamentary-client | Vergadering metadata |
-| `InstrumentReader` | `instrument` | `fetchInstrument`, structure fetch | Article-tree navigator |
-| `FallbackReader` | unknown | none | Renders raw props |
+| Reader             | Kind               | Backend calls                                                                               | Notable features                                                                  |
+| ------------------ | ------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `ArticleReader`    | `article`          | `getArticleDetail`, `fetchArticleLegislativeHistory`, `getMvtContext`, `getPublicationText` | In-flux chips, MvT panel, legislative history                                     |
+| `JudgmentReader`   | `judgment`         | `getJudgmentDetail`                                                                         | Participants table, numbered paragraphs, subjects                                 |
+| `TkstukReader`     | `tkstuk`           | `getPublicationText`                                                                        | Publication text, link to tweedekamer.nl                                          |
+| `DossierReader`    | `dossier`          | `fetchDossier`, `fetchDossierTimeline`, `fetchDossierMutations`                             | Stepper, timeline, betrokken artikelen, "Toon op grafiek"                         |
+| `CommissieReader`  | `commissie`        | `fetchCommissie`                                                                            | Members + dossiers                                                                |
+| `LidReader`        | `lid`              | `fetchLid`, `fetchLidVotes`, `fetchLidTouchedInstruments`                                   | Voting record, touched laws                                                       |
+| `FractieReader`    | `fractie`          | `fetchFractie`, `fetchFractieTouchedInstruments`                                            | Party profile (note: backend returns raw graph-node shape — normalised in helper) |
+| `StemmingReader`   | (collection-keyed) | `fetchStemming`                                                                             | Per-fractie outcomes                                                              |
+| `ActivityReader`   | `activity`         | parliamentary-client                                                                        | Vergadering metadata                                                              |
+| `InstrumentReader` | `instrument`       | `fetchInstrument`, structure fetch                                                          | Article-tree navigator                                                            |
+| `FallbackReader`   | unknown            | none                                                                                        | Renders raw props                                                                 |
 
 ## Adding a new reader
 
@@ -159,14 +166,14 @@ If you've added a new node-kind (see [`graph-system.md`](graph-system.md#adding-
 
 ## Related files
 
-| Concern | File |
-|---|---|
-| Dispatcher | `src/lib/components/explore/KindReader.svelte` |
-| Text readers | `src/lib/components/explore/readers/ArticleReader.svelte`, `JudgmentReader.svelte`, `ReaderFrame.svelte`, `ReaderHead.svelte` |
-| Judgment text parsing | `src/lib/components/explore/readers/judgment-text.ts` |
-| Per-kind readers | `src/lib/components/explore/readers/*.svelte` |
-| Whole-law reader (`mode=read`) | `src/lib/components/explore/WholeLawReader.svelte` |
-| Reader navigation | `src/lib/components/explore/LezenNav.svelte` |
-| Citation rail | `src/lib/components/explore/CitationRail.svelte` |
-| Reader/rail bridge state | `src/lib/stores/reader.ts` |
-| Status bar (top of reader) | `src/lib/components/explore/StatusBar.svelte` |
+| Concern                        | File                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Dispatcher                     | `src/lib/components/explore/KindReader.svelte`                                                                                |
+| Text readers                   | `src/lib/components/explore/readers/ArticleReader.svelte`, `JudgmentReader.svelte`, `ReaderFrame.svelte`, `ReaderHead.svelte` |
+| Judgment text parsing          | `src/lib/components/explore/readers/judgment-text.ts`                                                                         |
+| Per-kind readers               | `src/lib/components/explore/readers/*.svelte`                                                                                 |
+| Whole-law reader (`mode=read`) | `src/lib/components/explore/WholeLawReader.svelte`                                                                            |
+| Reader navigation              | `src/lib/components/explore/LezenNav.svelte`                                                                                  |
+| Citation rail                  | `src/lib/components/explore/CitationRail.svelte`                                                                              |
+| Reader/rail bridge state       | `src/lib/stores/reader.ts`                                                                                                    |
+| Status bar (top of reader)     | `src/lib/components/explore/StatusBar.svelte`                                                                                 |

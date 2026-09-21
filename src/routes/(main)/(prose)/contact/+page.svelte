@@ -15,7 +15,6 @@
 	</div>
 </div>
 
-
 <style>
 	.page-wrap {
 		padding: 80px 0 120px;
@@ -50,6 +49,4 @@
 		color: var(--fg-2);
 		margin-bottom: 40px;
 	}
-
-
 </style>
