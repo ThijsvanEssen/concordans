@@ -1,124 +1,39 @@
 # Routes
 
-Every URL the app responds to, what it does, and what query params it honours. The URL is the durable state surface — anything that should survive a reload or be deep-linkable lives here.
+Every URL, and the query parameters it reads. The URL holds anything that can be linked to.
 
-## Map
+| URL                                                          | Purpose                                                                                                 |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `/`                                                          | Start page                                                                                              |
+| `/explore`                                                   | Network, readers and index                                                                              |
+| `/search`                                                    | Search results (`q`)                                                                                    |
+| `/publications`                                              | Parliamentary documents: index, filtered by title and kind                                              |
+| `/publications/[key]`                                        | One document (`/api/documents/{key}`)                                                                   |
+| `/nodes/[collection]/[key]`                                  | Permalink of a source; redirects to `/explore?mode=split&focus=...`. An unknown collection answers 404. |
+| `/docs`, `/docs/methode`, `/docs/sneltoetsen`                | In-app documentation for users                                                                          |
+| `/api`                                                       | API reference rendered from `src/lib/api/openapi.json`                                                  |
+| `/alpha`, `/colofon`, `/contact`, `/privacy`, `/voorwaarden` | Prose pages                                                                                             |
+| `/proxy/api/watches`                                         | Write proxy (server route); see [`api-client.md`](api-client.md#writes)                                 |
 
-| URL                         | Purpose                                                          |
-| --------------------------- | ---------------------------------------------------------------- |
-| `/`                         | Landing page with hero, search prompt, recent activity           |
-| `/explore`                  | The verkenner — graph + readers (the main app surface)           |
-| `/search`                   | Full search results page (target of cmd-K "+ meer →" deep links) |
-| `/docs`                     | End-user documentation (Dutch, in-app)                           |
-| `/docs/methode`             | Methodology and architectural decisions                          |
-| `/docs/sneltoetsen`         | Keyboard shortcut reference                                      |
-| `/api`                      | Public API documentation                                         |
-| `/nodes/[collection]/[key]` | Canonical permalink for any node                                 |
-| `/publications`             | Publication index (filterable list)                              |
-| `/publications/[key]`       | Single publication reader                                        |
-| `/alpha`                    | Status of the alpha release                                      |
-| `/colofon`                  | Imprint                                                          |
-| `/contact`                  | Contact info                                                     |
-| `/privacy`                  | Privacy notice                                                   |
-| `/voorwaarden`              | Terms of use                                                     |
+## `/explore` query
 
-## `/explore` — query contract
+| Param         | Values                                                                                                                  | Effect                                                                  |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `mode`        | `graph` (default), `split`, `read`, `index`                                                                             | Which surface. The store persists across modes.                         |
+| `focus`       | `{collection}/{key}`, e.g. `articles/bwbr0001854_287`                                                                   | Source to focus and expand. Stays in the URL.                           |
+| `seed`        | `dossier:{number}`, `committee:{slug}`, `member:{key}`, `faction:{key}`                                                 | One-shot start of a network; removed from the URL once used.            |
+| `overlay`     | `heat:{months}`, `open`, `dossier:{number}`                                                                             | See [`overlays.md`](overlays.md).                                       |
+| `wet`         | BWB id                                                                                                                  | Read mode: the law to show. Taken from `focus` when absent.             |
+| `kind`        | `instruments`, `judgments`, `dossiers`, `committees`, `members`, `factions`, `decisions`                                | Index category (default `dossiers`).                                    |
+| index filters | `q`, `stage`, `has_stage`, `track`, `passed`, `from`, `to`, `dossier`, `party`, `court`, `tier`, `jurisdiction`, `sort` | Which apply depends on `kind`. Those the API filters on are sent to it. |
 
-The richest route. All state that isn't kept in the in-memory `GraphStore` rides on query params.
+Modes: `graph` is the network with its sidebar; `split` adds the reader and the citation rail; `read` shows the reader only (whole law); `index` lists one category.
+Keys: `1` network, `2` split, `3` read. Split and read need a selected source.
 
-| Param                                                                                     | Values                                                                            | Default    | Effect                                                                     |
-| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------- |
-| `mode`                                                                                    | `graph`, `split`, `read`, `index`                                                 | `graph`    | Which surface to show. See "Modes" below.                                  |
-| `focus`                                                                                   | `{collection}/{key}` (e.g. `instrument_articles/bwbr0001854_140`)                 | —          | Node to focus. Triggers `store.expandNode` on mount/change.                |
-| `overlay`                                                                                 | `heat:N`, `open`, `dossier:X`                                                     | —          | Activates an overlay. See [`overlays.md`](overlays.md).                    |
-| `seed`                                                                                    | `dossier:X`, `commissie:slug`, `lid:key`, `fractie:key`                           | —          | One-shot graph bootstrap. Consumed and stripped from URL on success.       |
-| `wet`                                                                                     | `BWBR...`                                                                         | —          | Read mode: which law to load whole-text. Inferred from `focus` if absent.  |
-| `all`                                                                                     | `1`, `unbound`                                                                    | —          | "Show all neighbours" toggle; `unbound` removes the convergence prune cap. |
-| `kind`                                                                                    | `wetten`, `arresten`, `dossiers`, `commissies`, `leden`, `fracties`, `stemmingen` | `dossiers` | Index-mode category.                                                       |
-| `q`, `fase`, `has_stage`, `traject_kind`, `aangenomen`, `from`, `to`, `dossier`, `partij` | filter values                                                                     | —          | Index-mode filters. Which apply depends on `kind`.                         |
+## `/search`
 
-### Modes
+`q` is the query. The page asks `/api/search` for 50 hits per type; the overlay (cmd-K) asks for one more than it shows. Anchors `#articles`, `#instruments`, `#judgments`, `#dossiers`, `#committees`, `#factions`, `#members`, `#documents` link to a group.
 
-- **`graph`** (default) — full-bleed canvas + left sidebar (filters, layers, overlays, instruments). Use for free exploration.
-- **`split`** — canvas + reader + citation rail, all three resizable. Use when reading a specific node with graph context.
-- **`read`** — reader only, whole-law view. The graph still mounts behind the scenes (state preserved) but isn't visible.
-- **`index`** — typed list view for one category at a time (dossiers, leden, etc.). Use for browsing rather than path-finding.
+## Adding a query parameter to `/explore`
 
-Mode switches don't unmount the `GraphStore` — the graph data and camera state persist across `mode=graph` ↔ `mode=split`. See `_cam` in `GraphView.svelte` for camera persistence across the unmount/remount cycle that the `{#if mode === ...}` blocks cause.
-
-### Seed lifecycle
-
-`?seed=X` is a one-shot. The handler in `explore/+page.svelte` is:
-
-1. Detect `seed` ≠ previous seed.
-2. Strip `seed` from the URL (so reload doesn't re-trigger).
-3. Call the appropriate loader (`store.loadDossierGraph`, `loadCommissieGraph`, etc.).
-4. `goto` with `replaceState: true` to commit the URL change.
-
-The result is a deep link that produces a _graph_ in the user's session but doesn't persist as part of the durable URL.
-
-### Focus lifecycle
-
-`?focus=` is _not_ one-shot — it stays in the URL. The handler:
-
-1. On mount, parse `focus` → `{ collection, key }`.
-2. Call `store.expandNode(collection, key)`, which fetches `/api/nodes/expand` (or the focus' canonical detail endpoint) and adds nodes/edges.
-3. Call `store.focusNode(id, { recordHistory: false })` to set the selection without pushing onto the back/forward history stack.
-
-Subsequent in-app navigation (clicking a node) calls `store.focusNode(id)` with history enabled, which also updates the URL. Browser back/forward and the in-app `←`/`→` buttons both work via this stack.
-
-### Showing all neighbours
-
-`?all=1` toggles "load every direct neighbour on expand", overriding the default `neighborLimit`. `?all=unbound` further disables the convergence-based prune, so even nodes only reachable through a single path stay on the canvas. Use `unbound` sparingly — on dense nodes (heavily-cited articles) the canvas can balloon to thousands of nodes.
-
-## `/search` — query contract
-
-| Param | Effect                                 |
-| ----- | -------------------------------------- |
-| `q`   | The search string. Empty → empty page. |
-
-Plus hash anchors for direct linking to a subgroup: `#articles`, `#instruments`, `#judgments`, `#dossiers`, `#commissies`, `#fracties`, `#leden`, `#publications`. The cmd-K overlay's "+ N meer →" rows use these.
-
-The page fetches with `limit=50` per type (vs cmd-K's `FETCH_LIMIT=25`). See [`search.md`](search.md).
-
-## `/nodes/[collection]/[key]`
-
-Canonical permalink for any node. Currently a thin page that redirects (or re-routes) into `/explore?mode=split&focus={collection}/{key}` — useful when external sites link to a node and we want to give them a stable URL that doesn't bake the explore-page query contract in.
-
-If you add a new node-kind, the permalink is automatically supported as long as the kind has a route in `KindReader.svelte`.
-
-## `/publications`
-
-Two views in one route:
-
-| URL                   | Effect                               |
-| --------------------- | ------------------------------------ |
-| `/publications`       | Filterable index of all publications |
-| `/publications/[key]` | Single publication reader            |
-
-The index supports filtering by `soort` (kind of publication: Voorstel van wet, Memorie van toelichting, …) using the `SoortChipFilter` component. Filter state is component-local — not in the URL. (If we ever need shareable filter state, move it to `?soort=`.)
-
-## `/docs` and friends
-
-Three Svelte pages, no API calls:
-
-- `/docs` — long sectioned page (Corpus, Verkenner, Zoeken, Verbindingen, Dossiers & Parlement, API, Verder lezen).
-- `/docs/methode` — methodology and design decisions.
-- `/docs/sneltoetsen` — keyboard shortcuts reference.
-
-Content lives directly in `+page.svelte` files (no markdown content store). If you make substantial changes, prefer extending the existing section structure rather than introducing a new top-level section unless a topic genuinely doesn't fit.
-
-## Adding a new route
-
-1. Create `src/routes/{path}/+page.svelte`. SvelteKit picks it up.
-2. If the route needs URL-driven state, use `$derived($page.url.searchParams.get('foo'))` and `goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true })` for writes. Don't reach for stores unless multiple components on the page need the same state.
-3. If the route needs a SvelteKit data load (very rare here — most fetches are client-side), add `+page.ts`. Avoid `+page.server.ts` unless you genuinely need server-side rendering with data.
-4. If the route is internal-only or temporary, prefix with `/_` and add to the sitemap exclusion. There's no convention for this yet — add one if you find yourself wanting it.
-
-## Adding a new query param to `/explore`
-
-The page is already heavy. Before you add a param:
-
-1. Can the state live in the `GraphStore` instead? Use that if the state is graph-scoped and doesn't need to be deep-linkable.
-2. Can it live in local `$state`? Use that for ephemeral UI state (collapsed panels, filter chips, etc.).
-3. If it must be URL-bound, document the contract here and add a parser in `lib/stores/{name}.ts` (mirror the pattern in `stores/overlay.ts` — parser + serializer + discriminated union for non-trivial shapes).
+Read it in `routes/explore/+page.svelte` in a `$derived`, write it with `goto(url, { replaceState: true, noScroll: true, keepFocus: true })`, and add it to the table above.

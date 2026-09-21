@@ -14,8 +14,6 @@ export type GraphFilters = {
 	activeInstruments: Set<string>;
 	/** Neighbours requested per expanded node. */
 	neighborLimit: number;
-	/** Re-enable the level-1 + convergence prune. */
-	convergenceMode: boolean;
 	/** The canvas fades nodes outside the focus and its neighbours. */
 	dimStaleContext: boolean;
 };
@@ -46,7 +44,6 @@ export const DEFAULT_FILTERS: GraphFilters = {
 	minDegree: 0,
 	activeInstruments: new Set<string>(),
 	neighborLimit: 30,
-	convergenceMode: false,
 	dimStaleContext: false
 };
 

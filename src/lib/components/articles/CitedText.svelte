@@ -1,6 +1,5 @@
 <script lang="ts">
 	// Inline text in which the spans the API found are links to the cited source.
-	import { setFocusedCitation } from '$lib/stores/reader';
 	import type { Schema } from '$lib/api/types';
 
 	type Span = Schema<'ArticleCitationSpan'>;
@@ -35,7 +34,6 @@
 	});
 
 	function open(target: Span['target'], event: MouseEvent) {
-		setFocusedCitation(target.key);
 		if (!onNavigate) return;
 		event.preventDefault();
 		onNavigate(target.collection, target.key);
@@ -46,11 +44,7 @@
 			class="cite"
 			href="/explore?focus={encodeURIComponent(`${target.collection}/${target.key}`)}"
 			title={target.display_name}
-			onclick={(e) => open(target, e)}
-			onfocus={() => setFocusedCitation(target.key)}
-			onblur={() => setFocusedCitation(null)}
-			onmouseenter={() => setFocusedCitation(target.key)}
-			onmouseleave={() => setFocusedCitation(null)}>{seg.content}</a
+			onclick={(e) => open(target, e)}>{seg.content}</a
 		>{:else}{seg.content}{/if}{/each}
 
 <style>
