@@ -1,11 +1,10 @@
 <script lang="ts">
-	// Reader for activiteit nodes — commissiedebatten, plenaire debatten,
-	// procedurevergaderingen. Backend has no /activiteiten/{key} endpoint, so
-	// we render from the node's own props (already loaded as raw on click)
-	// plus a graph fetch for related dossier / commissie / publication links.
+	// Reader for an activity: a committee debate, plenary debate or procedural
+	// meeting. There is no endpoint for one activity, so the node's own props
+	// are shown, plus its committee and dossiers from the neighbours.
 	import type { GraphNode } from '$lib/graph/types';
 	import { getNodeGraph } from '$lib/api/nodes';
-	import type { Neighbor } from '$lib/api/types';
+	import type { Schema } from '$lib/api/types';
 	import { formatLongDate } from './_shared';
 
 	let {
@@ -16,40 +15,40 @@
 		onNavigate?: (collection: string, key: string) => void;
 	} = $props();
 
-	let neighbors = $state<Neighbor[]>([]);
+	let neighbors = $state<Schema<'NeighborDTO'>[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
-	let token = 0;
 
 	$effect(() => {
-		const n = node;
-		const t = ++token;
+		const ac = new AbortController();
 		loading = true;
 		error = null;
-		getNodeGraph(n.collection, n.key)
+		getNodeGraph(node.collection, node.key, { signal: ac.signal })
 			.then((r) => {
-				if (t === token) neighbors = r.neighbors?.all ?? [];
+				neighbors = r.neighbors.all ?? [];
 			})
 			.catch(() => {
-				if (t === token) error = 'Kon gerelateerde informatie niet laden.';
+				if (!ac.signal.aborted) error = 'Kon gerelateerde informatie niet laden.';
 			})
 			.finally(() => {
-				if (t === token) loading = false;
+				if (!ac.signal.aborted) loading = false;
 			});
+		return () => ac.abort();
 	});
 
-	const nodeProps = $derived((node.raw?.props ?? {}) as Record<string, unknown>);
-	const datum = $derived((nodeProps['datum'] as string | null) ?? null);
-	const soort = $derived((nodeProps['soort'] as string | null) ?? null);
-	const agenda = $derived((nodeProps['agenda_titel'] as string | null) ?? null);
-	const tkUrl = $derived((nodeProps['tk_url'] as string | null) ?? null);
-	const dossierNummers = $derived((nodeProps['dossier_nummers'] as string[] | null) ?? []);
-
-	const dossiers = $derived(
-		neighbors.filter((nb) => nb.collection === 'kamerstukdossiers' || nb.collection === 'dossiers')
+	// The schema leaves node props untyped.
+	const attrs = $derived(
+		(node.raw?.props ?? {}) as {
+			kind?: string;
+			date?: string;
+			agenda_title?: string;
+			tk_url?: string;
+			dossier_numbers?: string[];
+		}
 	);
-	const commissies = $derived(neighbors.filter((nb) => nb.collection === 'commissies'));
-	const publications = $derived(neighbors.filter((nb) => nb.collection === 'publications'));
+	const committees = $derived(neighbors.filter((n) => n.relation === 'LED_BY'));
+	// The neighbours cap the dossiers of a plenary debate; the prop lists them all.
+	const dossierNumbers = $derived(attrs.dossier_numbers ?? []);
 </script>
 
 <div class="r-activity">
@@ -60,17 +59,17 @@
 	{/if}
 	<header class="head">
 		<span class="kicker">
-			{soort ?? 'Activiteit'}
-			{#if datum}<span class="dot">·</span>{formatLongDate(datum)}{/if}
+			{attrs.kind ?? 'Activiteit'}
+			{#if attrs.date}<span class="dot">·</span>{formatLongDate(attrs.date)}{/if}
 		</span>
-		<h2 class="title">{agenda || node.label}</h2>
+		<h2 class="title">{attrs.agenda_title || node.label}</h2>
 	</header>
 
-	{#if commissies.length > 0}
+	{#if committees.length > 0}
 		<section class="sec">
 			<h3 class="sec-title">Commissie</h3>
 			<ul class="ref-list">
-				{#each commissies as c (c.id)}
+				{#each committees as c (c.id)}
 					<li>
 						<button type="button" class="ref-row" onclick={() => onNavigate?.(c.collection, c.key)}>
 							<span class="ref-name">{c.display_name ?? c.key}</span>
@@ -81,49 +80,14 @@
 		</section>
 	{/if}
 
-	{#if dossiers.length > 0 || dossierNummers.length > 0}
+	{#if dossierNumbers.length > 0}
 		<section class="sec">
 			<h3 class="sec-title">Behandelde dossiers</h3>
 			<ul class="ref-list">
-				{#if dossiers.length > 0}
-					{#each dossiers as d (d.id)}
-						<li>
-							<button
-								type="button"
-								class="ref-row"
-								onclick={() => onNavigate?.(d.collection, d.key)}
-							>
-								<span class="ref-name">{d.display_name ?? d.key}</span>
-							</button>
-						</li>
-					{/each}
-				{:else}
-					{#each dossierNummers as nr, i (i)}
-						<li>
-							<button
-								type="button"
-								class="ref-row"
-								onclick={() => onNavigate?.('kamerstukdossiers', nr)}
-							>
-								<span class="ref-name">Kamerstuk {nr}</span>
-							</button>
-						</li>
-					{/each}
-				{/if}
-			</ul>
-		</section>
-	{/if}
-
-	{#if publications.length > 0}
-		<section class="sec">
-			<h3 class="sec-title">Bijbehorende publicaties ({publications.length})</h3>
-			<ul class="ref-list">
-				{#each publications as p (p.id)}
-					{@const psoort = (p.props as Record | null)?.['soort'] as string | null}
+				{#each dossierNumbers as number (number)}
 					<li>
-						<button type="button" class="ref-row" onclick={() => onNavigate?.(p.collection, p.key)}>
-							{#if psoort}<span class="ref-soort">{psoort}</span>{/if}
-							<span class="ref-name">{p.display_name ?? p.key}</span>
+						<button type="button" class="ref-row" onclick={() => onNavigate?.('dossiers', number)}>
+							<span class="ref-name">Kamerstuk {number}</span>
 						</button>
 					</li>
 				{/each}
@@ -131,9 +95,9 @@
 		</section>
 	{/if}
 
-	{#if tkUrl}
+	{#if attrs.tk_url}
 		<footer class="foot">
-			<a href={tkUrl} target="_blank" rel="noopener noreferrer" class="full-link">
+			<a href={attrs.tk_url} target="_blank" rel="noopener noreferrer" class="full-link">
 				Open op tweedekamer.nl →
 			</a>
 		</footer>
@@ -223,13 +187,6 @@
 	}
 	.ref-row:hover {
 		background: var(--paper-2);
-	}
-	.ref-soort {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		color: var(--ink-4);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
 	}
 	.ref-name {
 		flex: 1;

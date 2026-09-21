@@ -17,9 +17,9 @@
 		<div class="section">
 			<h2 class="section-title">Wat wordt verwerkt</h2>
 			<p>
-				Concordans verwerkt geen persoonsgegevens van bezoekers, tenzij langs het contactformulier
-				gegevens worden achtergelaten. Er zijn geen gebruikersaccounts en geen inlogfunctie. Er
-				worden geen tracking- of advertentiecookies geplaatst.
+				Concordans verwerkt geen persoonsgegevens van bezoekers, tenzij per e-mail via de
+				contactpagina gegevens worden achtergelaten. Er zijn geen gebruikersaccounts en geen
+				inlogfunctie. Er worden geen tracking- of advertentiecookies geplaatst.
 			</p>
 		</div>
 
@@ -44,8 +44,8 @@
 		<div class="section">
 			<h2 class="section-title">Contact</h2>
 			<p>
-				Vragen over de verwerking van persoonsgegevens gaan via het <a href="/contact" class="cite"
-					>contactformulier</a
+				Vragen over de verwerking van persoonsgegevens gaan via de <a href="/contact" class="cite"
+					>contactpagina</a
 				>.
 			</p>
 		</div>

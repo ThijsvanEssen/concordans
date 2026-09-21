@@ -2,8 +2,12 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { get } from 'svelte/store';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { track } from '$lib/analytics';
-	import { createGraphStore, type GraphFilters } from '$lib/graph/graph-store';
+	import { api, unwrap } from '$lib/api/client';
+	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
+	import { createGraphStore } from '$lib/graph/graph-store';
 	import GraphView from '$lib/components/graph/GraphView.svelte';
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import CitationRail from '$lib/components/explore/CitationRail.svelte';
@@ -13,64 +17,54 @@
 	import WalkthroughCard from '$lib/components/explore/WalkthroughCard.svelte';
 	import WholeLawReader from '$lib/components/explore/WholeLawReader.svelte';
 	import IndexView from '$lib/components/explore/IndexView.svelte';
-	import { get } from 'svelte/store';
-	import { SvelteSet } from 'svelte/reactivity';
 	import { perfStart } from '$lib/util/perf';
-	import type { GraphNode } from '$lib/graph/types';
-	import { kindsForLayer } from '$lib/graph/types';
+	import { getLawIdFromProps } from '$lib/util/law-id';
+	import { kindsForLayer, type GraphNode, type GraphNodeKind } from '$lib/graph/types';
 	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
-	import {
-		fetchInFluxMap,
-		fetchHeatMap,
-		fetchDossierInFluxMap
-	} from '$lib/api/parliamentary-client';
-	import type { InFluxMap, HeatMap } from '$lib/api/parliamentary';
+	import { isCollection, nodeId, parseNodeId } from '$lib/vocabulary';
 
-	// One store for the lifetime of this page — survives mode switches.
+	// One store for the lifetime of this page, so it survives mode switches.
 	const store = createGraphStore();
 
-	// Single source of truth for "currently selected node": the store. We
-	// mirror it via a Svelte store subscription so the rest of the page (status
-	// bar, reader, citation rail) stays declarative.
 	let selectedNode = $state<GraphNode | null>(null);
 	store.selection.subscribe((n) => {
 		selectedNode = n;
 	});
 
-	// Empty-graph signal drives the launch pad in graph mode.
+	// An empty network shows the launch pad in graph mode.
 	let nodeCount = $state(0);
 	let firstNodeTracked = false;
 	store.nodes.subscribe((ns) => {
 		nodeCount = ns.length;
 		if (ns.length > 0 && !firstNodeTracked) {
 			firstNodeTracked = true;
-			const kind = ns[0]?.kind ?? 'unknown';
-			track('first_node', { kind });
+			track('first_node', { kind: ns[0]?.kind ?? 'unknown' });
 		}
 	});
 
 	let focusError = $state<string | null>(null);
-	let loadingGlobal = $state(false);
-	let loadingJudgments = $state(false);
-	let loadingCommissies = $state(false);
-	let loadingDossiers = $state(false);
 	let canGoBack = $state(false);
 	let canGoForward = $state(false);
 	store.canGoBack.subscribe((v) => {
 		canGoBack = v;
 	});
-	// Track whether the canvas is showing a single wet's article set (set by
-	// loadInstrument). Lagen handlers route to wet-scoped endpoints when this
-	// is non-null instead of dumping the global layer onto the canvas.
+	store.canGoForward.subscribe((v) => {
+		canGoForward = v;
+	});
+	// Set while the network shows one instrument's articles (loadInstrument).
+	// Layer loads then use the instrument endpoints instead of the global layer.
 	let currentInstrumentBwb = $state<string | null>(null);
 	store.currentInstrumentBwb.subscribe((v) => {
 		currentInstrumentBwb = v;
 	});
-	store.canGoForward.subscribe((v) => {
-		canGoForward = v;
-	});
 
-	const mode = $derived($page.url.searchParams.get('mode') ?? 'graph');
+	const MODES = ['graph', 'split', 'read', 'index'];
+	const mode = $derived.by(() => {
+		const m = $page.url.searchParams.get('mode');
+		return m && MODES.includes(m) ? m : 'graph';
+	});
+	const showsGraph = (m: string) => m === 'graph' || m === 'split';
+
 	const trackedModes = new Set<string>();
 	$effect(() => {
 		if ((mode === 'split' || mode === 'read') && !trackedModes.has(mode)) {
@@ -78,27 +72,17 @@
 			track('mode_used', { mode });
 		}
 	});
-	// For Lezen mode: prefer ?wet=BWBR... in the URL, otherwise infer from the
-	// currently selected article so reading mode can show the whole law. Als
-	// laatste fallback gebruiken we de instrument-focus van de graph-store
-	// (entry via /explore?focus=instruments/BWBR…), zodat Lezen ook werkt
-	// wanneer alleen een wet is gefocust zonder dat een specifiek artikel
-	// is geselecteerd.
+
+	// Read mode: ?wet= wins, then the law of the selected article, then the
+	// instrument shown in the network. Without a selected article the whole law is shown.
 	const wholeLawBwb = $derived.by(() => {
-		const w = $page.url.searchParams.get('wet');
-		if (w) return w;
-		if (selectedNode?.collection === 'instrument_articles') {
-			const p = selectedNode.raw?.props as Record<string, unknown> | undefined;
-			const bwb = (p?.['bwb_id'] as string | null) ?? (p?.['celex'] as string | null) ?? null;
-			if (bwb) return bwb;
-			const artNum = (p?.['article_number'] as string | null) ?? null;
-			if (artNum && selectedNode.key.endsWith('_' + artNum)) {
-				return selectedNode.key.slice(0, -(artNum.length + 1)) || null;
-			}
+		const wet = $page.url.searchParams.get('wet');
+		if (wet) return wet;
+		if (selectedNode?.collection === 'articles') {
+			const id = getLawIdFromProps(selectedNode.raw?.props ?? undefined, selectedNode.key);
+			if (id) return id;
 		}
-		// Wet-focus zonder geselecteerd artikel — Lezen toont dan de hele wet.
-		if (currentInstrumentBwb) return currentInstrumentBwb;
-		return null;
+		return currentInstrumentBwb;
 	});
 	const showWholeLaw = $derived(
 		!$page.url.searchParams.get('focus') ||
@@ -106,7 +90,7 @@
 			(currentInstrumentBwb !== null && !selectedNode)
 	);
 
-	// Article list from LezenNav — used to compute prev/next article navigation.
+	// Article list from LezenNav, for previous/next navigation.
 	let navItems = $state<{ key: string; label: string }[]>([]);
 	const selectedArticleIndex = $derived(
 		selectedNode ? navItems.findIndex((it) => it.key === selectedNode!.key) : -1
@@ -120,115 +104,78 @@
 			: null
 	);
 
-	async function navigateToArticle(key: string) {
-		// handleRailNavigate already updates ?focus= via setUrl, so refreshing
-		// Lezen mode after a prev/next click preserves the current article.
-		await handleRailNavigate('instrument_articles', key);
-	}
-
-	// ── Convergence-path expansion ───────────────────────────────────────────
-	// Strategy: BFS *bidirectionally* from the focused node, then prune to:
-	//   • the focused node
-	//   • its direct neighbours (level-1) — both inbound and outbound
-	//   • convergence nodes — reachable from 2+ distinct level-1 nodes
-	//   • intermediate nodes on the shortest path between l1 and convergence
-	//
-	// Treating edges as undirected here matters: a citation graph has many
-	// articles that cite the focused article (inbound) — those must be visible
-	// as neighbours, not just the articles the focused one cites.
+	// ── Expansion around a focus ─────────────────────────────────────────────
+	// One neighbourhood request (depth 3), then a prune to: the focus, its direct
+	// neighbours, and the sources reachable from two or more of those neighbours
+	// (convergence) with the shortest paths that connect them. Edges are read as
+	// undirected: articles citing the focus are as relevant as those it cites.
 
 	const MAX_DEPTH = 3;
 	const MAX_CONVERGENCE_HOPS = 2;
 
-	// Soft cap on visible nodes when "Toon ook indirecte buren" is active.
-	// Prevents canvas overload; user can override with "Laad alles".
-
-	// Show-all state — drives whether convergence pruning runs.
-	let showAllNeighbours = $state(false);
-	let unboundedShowAll = $state(false); // user clicked "Laad alles"
 	let totalLoaded = $state(0);
 	let visibleCount = $state(0);
-	// §22 — counts for the visibility badge:
-	//   level1Count  = focused node's direct neighbours that are currently visible
-	//   hiddenCount  = totalLoaded − visibleCount
 
-	// Race-safe expansion: every focus operation increments this counter; late
-	// callbacks that don't match the current epoch are dropped.
+	// Every expansion takes a new epoch; a late result of an older one is dropped.
 	let focusEpoch = 0;
 
-	// BFS outward from focusedId, following edges in both directions.
 	async function expandToDepth(focusedId: string) {
-		// One backend traversal replaces the N-fetch BFS waterfall. Synth
-		// proxies have no real DB identity — skip; their article→instrument
-		// synth edge already surfaces the wet for traversal purposes.
+		// Synthetic proxies have no identity in the API.
 		const focal = store.getNodeById(focusedId);
 		if (!focal || focal.id.startsWith('synth:')) return;
-		await store.expandNeighborhood(focal.collection, focal.key, {
-			depth: MAX_DEPTH,
-			cap: 200
-		});
+		await store.expandNeighborhood(focal.collection, focal.key, { depth: MAX_DEPTH, cap: 200 });
 	}
 
-	// Shortest path between `from` and `to` over an *undirected* view of the
-	// adjacency map (uses both forward and reverse adjacency).
-	function bfsPath(
-		adj: Map<string, string[]>,
-		radj: Map<string, string[]>,
-		from: string,
-		to: string
-	): string[] | null {
-		if (from === to) return [from];
-		const parent = new Map<string, string | null>([[from, null]]);
-		const queue = [from];
-		while (queue.length > 0) {
-			const cur = queue.shift()!;
-			const neighbours = [...(adj.get(cur) ?? []), ...(radj.get(cur) ?? [])];
-			for (const next of neighbours) {
-				if (!parent.has(next)) {
-					parent.set(next, cur);
-					if (next === to) {
-						const path: string[] = [];
-						let c: string | null = to;
-						while (c !== null) {
-							path.unshift(c);
-							c = parent.get(c) ?? null;
-						}
-						return path;
-					}
-					queue.push(next);
-				}
-			}
-		}
-		return null;
-	}
+	type Adjacency = { adj: Map<string, string[]>; radj: Map<string, string[]> };
 
-	// Compute the set of node IDs to keep: focused + level-1 + convergence paths.
-	function computeConvergencePaths(focusedId: string): Set<string> {
-		const allEdges = get(store.edges);
+	// Synthetic edges are cosmetic. Walking them turns a shared proxy into a
+	// convergence source that survives every prune.
+	function buildAdjacency(): Adjacency {
 		const adj = new Map<string, string[]>();
-		const radj = new Map<string, string[]>(); // reverse: target → [sources]
-		for (const e of allEdges) {
-			// Synth edges are cosmetic — they exist to surface derived
-			// relationships (article→wet, dossier→wet, …). Letting the
-			// convergence walk traverse them turns shared synth hubs (a wet
-			// proxy reachable from N cross-ref articles) into "convergence
-			// nodes" that get preserved through every prune. Walk only real
-			// backend edges so convergence reflects actual citations and
-			// parliamentary links.
+		const radj = new Map<string, string[]>();
+		for (const e of get(store.edges)) {
 			if (e.id.startsWith('synth:')) continue;
 			if (!adj.has(e.source)) adj.set(e.source, []);
 			adj.get(e.source)!.push(e.target);
 			if (!radj.has(e.target)) radj.set(e.target, []);
 			radj.get(e.target)!.push(e.source);
 		}
+		return { adj, radj };
+	}
 
-		// Direct neighbours = union of outbound + inbound (undirected adjacency).
-		const level1 = new Set<string>([...(adj.get(focusedId) ?? []), ...(radj.get(focusedId) ?? [])]);
+	const neighboursOf = ({ adj, radj }: Adjacency, id: string) => [
+		...(adj.get(id) ?? []),
+		...(radj.get(id) ?? [])
+	];
+
+	// Shortest path between two sources over the undirected adjacency.
+	function bfsPath(g: Adjacency, from: string, to: string): string[] | null {
+		if (from === to) return [from];
+		const parent = new Map<string, string | null>([[from, null]]);
+		const queue = [from];
+		while (queue.length > 0) {
+			const cur = queue.shift()!;
+			for (const next of neighboursOf(g, cur)) {
+				if (parent.has(next)) continue;
+				parent.set(next, cur);
+				if (next === to) {
+					const path: string[] = [];
+					for (let c: string | null = to; c !== null; c = parent.get(c) ?? null) path.unshift(c);
+					return path;
+				}
+				queue.push(next);
+			}
+		}
+		return null;
+	}
+
+	// Ids to keep: the focus, its direct neighbours and the convergence paths.
+	function computeConvergencePaths(g: Adjacency, focusedId: string): Set<string> {
+		const level1 = new Set(neighboursOf(g, focusedId));
 		const keep = new Set<string>([focusedId, ...level1]);
 		if (level1.size < 2) return keep;
 
-		// Undirected BFS from each level-1 node up to MAX_CONVERGENCE_HOPS, tracking
-		// which level-1 sources can reach each visited node.
+		// Undirected BFS from each level-1 source, remembering which of them reach what.
 		const reachableFrom = new Map<string, Set<string>>();
 		for (const l1 of level1) {
 			const dist = new Map<string, number>([[l1, 0]]);
@@ -238,323 +185,206 @@
 				const d = dist.get(cur)!;
 				if (!reachableFrom.has(cur)) reachableFrom.set(cur, new Set());
 				reachableFrom.get(cur)!.add(l1);
-				if (d < MAX_CONVERGENCE_HOPS) {
-					const neighbours = [...(adj.get(cur) ?? []), ...(radj.get(cur) ?? [])];
-					for (const next of neighbours) {
-						if (next === focusedId) continue; // don't route through the focal node
-						if (!dist.has(next)) {
-							dist.set(next, d + 1);
-							queue.push(next);
-						}
-					}
+				if (d >= MAX_CONVERGENCE_HOPS) continue;
+				for (const next of neighboursOf(g, cur)) {
+					if (next === focusedId || dist.has(next)) continue;
+					dist.set(next, d + 1);
+					queue.push(next);
 				}
 			}
 		}
 
-		// Convergence nodes: reachable from 2+ distinct level-1 nodes.
-		const convergenceNodes = new Set<string>();
+		// Convergence sources, with the shortest path from each level-1 source so
+		// they stay connected and survive the isolation prune below.
 		for (const [id, sources] of reachableFrom) {
-			if (sources.size >= 2) {
-				convergenceNodes.add(id);
-				keep.add(id);
-			}
+			if (sources.size < 2) continue;
+			keep.add(id);
+			for (const l1 of sources) for (const step of bfsPath(g, l1, id) ?? []) keep.add(step);
 		}
 
-		// Add intermediate nodes on the shortest l1 ↔ convergence path so the
-		// convergence node is graph-connected and survives the isolation prune.
-		for (const conv of convergenceNodes) {
-			const sources = reachableFrom.get(conv) ?? new Set<string>();
-			for (const l1 of sources) {
-				const path = bfsPath(adj, radj, l1, conv);
-				if (path) {
-					for (const nodeId of path) keep.add(nodeId);
-				}
-			}
-		}
-
-		// Drop nodes isolated within the kept subgraph (no edge to/from any other
-		// kept node) so we don't render floating dots.
 		for (const id of [...keep]) {
 			if (id === focusedId || level1.has(id)) continue;
-			const connected =
-				(adj.get(id) ?? []).some((t) => keep.has(t)) ||
-				(radj.get(id) ?? []).some((s) => keep.has(s));
-			if (!connected) keep.delete(id);
+			if (!neighboursOf(g, id).some((n) => keep.has(n))) keep.delete(id);
 		}
-
 		return keep;
 	}
 
-	// Node expansion: BFS depth-3 around the focal node, then prune to a
-	// convergence keep-set (focal + level-1 + nodes reachable from ≥2
-	// distinct level-1 sources).
-	//
-	// Loading semantics:
-	//   • No pre-clear. The user's prior canvas stays put while the
-	//     expansion fetches in the background — no jarring "canvas blanks
-	//     then re-pops" flash.
-	//   • The final prune collapses the canvas to the new focal's
-	//     neighbourhood. Pinned nodes (the user's explicit "keep this
-	//     around" gesture) survive, and so does the shortest path from
-	//     focal to each pinned node so they stay graph-connected.
-	//   • Run via Lagen handlers (additive layer loads) — that's deliberate.
+	// Expand around `node`, then prune to the convergence keep-set. The canvas
+	// is not cleared first, so the prior network stays until the result arrives.
+	// Pinned sources survive with their shortest path to the focus.
 	async function expandWithConvergencePaths(node: GraphNode, epoch: number) {
 		await expandToDepth(node.id);
-		if (epoch !== focusEpoch) return; // stale
+		if (epoch !== focusEpoch) return;
 
-		const props = node.raw?.props as Record<string, unknown> | undefined;
-		const isEuArticle = node.collection === 'instrument_articles' && !props?.['bwb_id'];
+		totalLoaded = get(store.nodes).length;
 
-		const allNodes = get(store.nodes);
-		totalLoaded = allNodes.length;
-
-		const allEdges = get(store.edges);
-		const l1 = new Set<string>();
-		for (const e of allEdges) {
-			if (e.source === node.id) l1.add(e.target);
-			if (e.target === node.id) l1.add(e.source);
-		}
-		l1.delete(node.id);
-
+		// An EU article has no bwb_id and no useful neighbourhood to prune.
+		const isEuArticle = node.collection === 'articles' && !node.raw?.props?.['bwb_id'];
 		if (isEuArticle) {
 			visibleCount = totalLoaded;
 			return;
 		}
 
-		// Convergence keep-set around the new focus.
-		const keep = computeConvergencePaths(node.id);
-
-		// Pinned nodes always survive, and so does the shortest path from
-		// focal to each pinned node — otherwise the pinned node would float
-		// disconnected and the relationship the user pinned for is lost.
-		const pinnedIds = get(store.pinned);
-		if (pinnedIds.size > 0) {
-			const adj = new Map<string, string[]>();
-			const radj = new Map<string, string[]>();
-			for (const e of allEdges) {
-				if (e.id.startsWith('synth:')) continue;
-				if (!adj.has(e.source)) adj.set(e.source, []);
-				adj.get(e.source)!.push(e.target);
-				if (!radj.has(e.target)) radj.set(e.target, []);
-				radj.get(e.target)!.push(e.source);
-			}
-			for (const pinId of pinnedIds) {
-				if (!store.getNodeById(pinId)) continue; // pinned but no longer in graph
-				keep.add(pinId);
-				const path = bfsPath(adj, radj, node.id, pinId);
-				if (path) for (const id of path) keep.add(id);
-			}
+		const g = buildAdjacency();
+		const keep = computeConvergencePaths(g, node.id);
+		for (const pinId of get(store.pinned)) {
+			if (!store.getNodeById(pinId)) continue;
+			keep.add(pinId);
+			for (const step of bfsPath(g, node.id, pinId) ?? []) keep.add(step);
 		}
 
 		store.pruneNodes(keep);
-		// Drop nodes that survived the prune but have zero remaining edges.
-		// Otherwise FA2's repulsion flings them far and the camera fit zooms
-		// out to include them.
+		// Without edges a source is thrown far away by the layout and the camera fit zooms out.
 		store.sweepOrphans();
 		visibleCount = keep.size;
 	}
 
-	// Capped variant: keep focal node + BFS-ordered neighbours up to `cap`.
-
-	// Cross-references between articles in a freshly-bulk-loaded wet only
-	// appear after each article's neighbourhood is fetched. We used to do that
-	// eagerly for every article — 200+ parallel /api/nodes calls. Now expansion
-	// happens lazily on click, so the canvas appears instantly and the user
-	// pulls in cross-references as they explore.
-
-	// Load the focused node whenever the ?focus= URL param changes — covers both
-	// initial mount and same-page navigations from search results / external links.
-	let lastLoadedFocus = '';
-	// Set to true by handleGoBack/handleGoForward so the $effect skips pushing
-	// the re-expanded node back onto history (it's already at the right position).
+	// ── Focus ────────────────────────────────────────────────────────────────
+	// ?focus={collection}/{key} is loaded when it changes. The node is fetched in
+	// every mode but index; the expansion around it only where the network is
+	// shown, and later when the mode switches to one that shows it.
+	let loadedFocus = ''; // focus param whose node is in the store
+	let focusedNodeId: string | null = null;
+	let deepenedId = ''; // node whose surroundings are expanded
+	// Set by back/forward so the re-expanded node is not pushed onto the history again.
 	let isHistoryNav = false;
+
 	$effect(() => {
-		const raw = $page.url.searchParams.get('focus') ?? '';
-		const focusParam = raw;
+		const focus = $page.url.searchParams.get('focus') ?? '';
+		if (!focus) {
+			focusError = null;
+			return;
+		}
+		if (mode === 'index') return;
+		if (focus !== loadedFocus) {
+			loadedFocus = focus;
+			void loadFocus(focus);
+		} else if (showsGraph(mode) && focusedNodeId) {
+			const node = store.getNodeById(focusedNodeId);
+			if (node) void deepen(node, true);
+		}
+	});
+
+	async function loadFocus(focus: string) {
 		focusError = null;
-		if (!focusParam) return; // no focus → stay on launch pad
-		if (focusParam === lastLoadedFocus) return;
-		lastLoadedFocus = focusParam;
+		const target = parseNodeId(focus);
+		if (!target) {
+			focusError = `Bron '${focus}' kon niet worden gevonden.`;
+			return;
+		}
 
-		const i = focusParam.indexOf('/');
-		const collection = i >= 0 ? focusParam.slice(0, i) : 'instrument_articles';
-		const key = i >= 0 ? focusParam.slice(i + 1) : focusParam;
-
-		// Search hits carry ?from=search. Search is an explicit jump (the user
-		// picked a target), not an accumulation of context — wipe the canvas
-		// before expanding so the result lands clean. In-graph navigation
-		// (clicks, rail) does not carry this marker and keeps accumulating.
-		const fromSearch = $page.url.searchParams.get('from') === 'search';
-		if (fromSearch) {
+		// A search hit is an explicit jump, not accumulated context: start clean.
+		// The marker is stripped so a reload does not wipe again.
+		if ($page.url.searchParams.get('from') === 'search') {
 			store.reset();
-			// Strip the marker so a refresh doesn't re-trigger the wipe and so
-			// the param doesn't pollute the URL bar.
+			activatedLayers.clear();
+			deepenedId = '';
 			const url = new URL($page.url.toString());
 			url.searchParams.delete('from');
 			goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
-		}
-
-		// Skip loading in bulk mode — the node is already in the graph.
-		// (Skipped when fromSearch: the reset above flipped us out of bulk.)
-		if (!fromSearch && get(store.graphMode) === 'bulk') {
-			const nodeId = `${collection}/${key}`;
-			const existing = store.getNodeById(nodeId);
+		} else if (get(store.graphMode) === 'bulk') {
+			const existing = store.getNodeById(focus);
 			if (existing) {
+				focusedNodeId = existing.id;
 				store.focusNode(existing.id, { recordHistory: false });
 				return;
 			}
 		}
 
-		focusError = null;
-		store
-			.expandNode(collection, key, { neighborLimit: 30 })
-			.then(async (node) => {
-				if (!node) {
-					focusError = `Bron '${key}' kon niet worden gevonden.`;
-					return;
-				}
-				const addToHistory = !isHistoryNav;
-				isHistoryNav = false;
-				store.focusNode(node.id, { recordHistory: addToHistory });
-
-				if (get(store.graphMode) !== 'bulk') {
-					graphView?.suppressFit();
-					const epoch = ++focusEpoch;
-					expandWithConvergencePaths(node, epoch).then(() => {
-						if (epoch !== focusEpoch) return;
-						store.focusNode(node.id, { recordHistory: false });
-						graphView?.reseatAround(node.id);
-						graphView?.fitWhenSettled();
-
-						// D2 — laad arresten en dossiers attached aan het focuspunt
-						// zodat de Verkenner niet opent met "X bronnen niet zichtbaar".
-						// De handlers checken zelf of de laag al actief is en doen
-						// attached-only fetch wanneer er een focal node is. Niet voor
-						// arresten/dossiers/commissies zelf: die hebben al genoeg
-						// connecties uit de BFS en triggeren anders een dubbele fetch.
-						if (node.kind === 'article' || node.kind === 'instrument') {
-							if (!activatedLayers.has('judgment')) void handleLoadJudgments();
-							if (!activatedLayers.has('dossier')) void handleLoadDossiers();
-						}
-					});
-				}
-			})
-			.catch((err) => {
-				console.warn('[explore] focus load failed:', err);
-				focusError = `Kon '${key}' niet laden. Controleer of het adres klopt.`;
-			});
-	});
-
-	async function handleNodeClick(node: GraphNode) {
-		const end = perfStart(`click ${node.id}`);
-		if (!node.id.startsWith('synth:')) {
-			track('network_expanded', { kind: node.kind });
-		}
-
-		// Synth proxy click. Proxies are visual stand-ins (Wetten view) with
-		// no real backend identity beyond their bwb. Hitting expandNode here
-		// would fetch the wet's full article list from /api/nodes/instruments/
-		// — the same flood we already guard against in BFS. Just focus the
-		// proxy so the FAB can offer "Open hele wet" if the user wants the
-		// real instrument loaded. No expansion.
-		if (node.id.startsWith('synth:')) {
-			store.focusNode(node.id, { recordHistory: true });
-			lastLoadedFocus = node.id;
-			end();
-			return;
-		}
-
-		store.focusNode(node.id, { recordHistory: true });
-		lastLoadedFocus = node.id; // guard: prevent $effect from pushing a 2nd history entry
-
-		// In a bulk overview, anchor clicks just focus the node so the
-		// "Open volledig overzicht" FAB can take it from there (drilling deeper
-		// into a wet/dossier/etc.). Non-anchor clicks swap to split view so the
-		// user can read the article/arrest they tapped.
-		//
-		// Exception: a wet view (loadInstrument → graphMode='bulk' AND
-		// currentInstrumentBwb set) is not a Lagen overview, it's a single
-		// wet's article structure. Article clicks there should expand to
-		// reveal neighbours, not jump to split-view reader. Let the
-		// expansion path below handle them.
-		if (get(store.graphMode) === 'bulk' && !currentInstrumentBwb) {
-			if (!['instrument', 'dossier', 'commissie', 'lid', 'fractie'].includes(node.kind)) {
-				setUrl({ mode: 'split', focus: node.id });
-			} else {
-				setUrl({ focus: node.id });
+		try {
+			const node = await store.expandNode(target.collection, target.key, { neighborLimit: 30 });
+			if (focus !== loadedFocus) return; // superseded while loading
+			if (!node) {
+				focusError = `Bron '${target.key}' kon niet worden gevonden.`;
+				return;
 			}
-			end();
-			return;
+			focusedNodeId = node.id;
+			store.focusNode(node.id, { recordHistory: !isHistoryNav });
+			isHistoryNav = false;
+			if (showsGraph(mode)) await deepen(node, true);
+		} catch (err) {
+			console.warn('[explore] focus load failed:', err);
+			focusError = `Kon '${target.key}' niet laden. Controleer of het adres klopt.`;
 		}
+	}
 
-		// Instrument click → drill into the wet's full article set via the
-		// dedicated /api/instruments/{bwb}/articles endpoint. The generic BFS
-		// below caps at 30 articles via /api/nodes/{collection}/{key} and that
-		// endpoint doesn't even surface PART_OF_INSTRUMENT children — so the
-		// drill-in path is the only way to get a wet's actual articles on
-		// canvas. loadInstrument wipes and rebuilds with the breadcrumb-cluster
-		// structural layout (graphMode → 'bulk').
-		if (node.kind === 'instrument') {
-			const props = node.raw?.props as Record<string, unknown> | undefined;
-			const bwbId = ((props?.['bwb_id'] as string | null) ?? node.key) || '';
-			if (bwbId) {
-				const result = await store.loadInstrument(bwbId);
-				if (result && result.count > 0) {
-					// Fire-and-forget: pre-fetch the Lagen counts so the
-					// sidebar's "+N" badge surfaces availability before the
-					// user clicks. Doesn't block the wet-view render.
-					void store.prefetchInstrumentLayerCounts(bwbId);
-					// Auto-load cross-wet article references on wet entry.
-					// The Knooppunten "Wetgeving" toggle is already implicitly
-					// on (the 810 article nodes count toward it), so making
-					// the user click Lagen Wetten just to surface
-					// REFERS_TO_ARTICLE neighbours reads as redundant. Lazy
-					// stays for Arresten + Dossiers, which are heavier and
-					// more situational. Mark the layer as activated so the
-					// sidebar button reads "on" while the fetch runs.
-					activatedLayers.add('instrument');
-					void store.loadInstrumentCitations(bwbId, {
-						relations: ['REFERS_TO_ARTICLE']
-					});
-					// D2 — open een wet met alle lagen tegelijk in plaats van lazy.
-					// Arresten + dossiers worden meegeladen zodat de Verkenner direct
-					// het netwerk toont waar de homepage-tegel om belooft.
-					activatedLayers.add('judgment');
-					ensureNodeTypesVisible('judgment');
-					void store.loadInstrumentJudgmentsLayer(bwbId);
-					activatedLayers.add('dossier');
-					ensureNodeTypesVisible('dossier');
-					void store.loadInstrumentDossiersLayer(bwbId);
-					// loadInstrument clears selection + flips to bulk; the
-					// instrument node itself is no longer on the canvas, so
-					// drop the focus param rather than pointing at a stale id.
-					const url = new URL($page.url.toString());
-					url.searchParams.delete('focus');
-					url.searchParams.set('mode', 'graph');
-					goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
-					graphView?.fitWhenSettled();
-					end();
-					return;
-				}
-				// loadInstrument failed/empty → fall through to generic expansion.
-			}
-		}
-
-		// Additive expansion for every kind — Article, Judgment, MvT, Dossier,
-		// Fractie, Lid, Commissie, Instrument. /api/nodes/{collection}/{key}
-		// returns the immediate neighbour set; mergeResponse adds them to the
-		// current graph without wiping. Bulk loaders stay opt-in.
-		setUrl({ focus: node.id });
+	// Expand around `node` once. `withLayers` also fetches the judgments and
+	// dossiers attached to an article or instrument, so the network does not
+	// open with sources that are not visible.
+	async function deepen(node: GraphNode, withLayers = false) {
+		if (deepenedId === node.id) return;
+		deepenedId = node.id;
+		if (get(store.graphMode) === 'bulk') return;
 		graphView?.suppressFit();
 		const epoch = ++focusEpoch;
 		await expandWithConvergencePaths(node, epoch);
-		if (epoch !== focusEpoch) {
-			end();
-			return;
-		}
+		if (epoch !== focusEpoch) return;
 		store.focusNode(node.id, { recordHistory: false });
 		graphView?.reseatAround(node.id);
 		graphView?.fitWhenSettled();
+		if (withLayers && (node.kind === 'article' || node.kind === 'instrument')) {
+			const missing = (['judgment', 'dossier'] as const).filter((l) => !activatedLayers.has(l));
+			if (missing.length > 0) void loadAttachedLayers(missing);
+		}
+	}
+
+	// Clicking one of these in a bulk overview only takes focus.
+	const ANCHOR_KINDS = new Set<GraphNodeKind>([
+		'instrument',
+		'dossier',
+		'committee',
+		'member',
+		'faction'
+	]);
+
+	async function handleNodeClick(node: GraphNode) {
+		const end = perfStart(`click ${node.id}`);
+		const synthetic = node.id.startsWith('synth:');
+		if (!synthetic) track('network_expanded', { kind: node.kind });
+
+		store.focusNode(node.id, { recordHistory: true });
+		focusedNodeId = node.id;
+		loadedFocus = node.id; // the focus effect must not push a second history entry
+
+		// A synthetic proxy only gets focus: it has no identity in the API to expand.
+		if (synthetic) {
+			end();
+			return;
+		}
+
+		// In a bulk overview, anchors only take focus (the "Open volledig overzicht"
+		// button drills deeper) and other sources open in split mode. A single
+		// instrument's view is bulk too, but there a click expands the neighbours.
+		if (get(store.graphMode) === 'bulk' && !currentInstrumentBwb) {
+			setUrl(ANCHOR_KINDS.has(node.kind) ? { focus: node.id } : { mode: 'split', focus: node.id });
+			end();
+			return;
+		}
+
+		// An instrument opens with all its articles: /api/nodes lists only some of them.
+		if (node.kind === 'instrument') {
+			const props = node.raw?.props;
+			const bwbId = ((props?.['bwb_id'] as string | null) ?? node.key) || '';
+			const result = bwbId ? await store.loadInstrument(bwbId) : null;
+			if (result && result.count > 0) {
+				// Every layer is loaded on entry, so the layer buttons read as on.
+				void handleLoadLayer('instrument');
+				void handleLoadLayer('judgment');
+				void handleLoadLayer('dossier');
+				// loadInstrument clears the selection, so the focus param would point at a stale id.
+				const url = new URL($page.url.toString());
+				url.searchParams.delete('focus');
+				url.searchParams.set('mode', 'graph');
+				goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
+				graphView?.fitWhenSettled();
+				end();
+				return;
+			}
+			// Nothing loaded: fall through to the generic expansion.
+		}
+
+		setUrl({ focus: node.id });
+		await deepen(node);
 		end();
 	}
 
@@ -563,254 +393,146 @@
 	}
 
 	async function handleRailNavigate(collection: string, key: string) {
+		if (!isCollection(collection)) return;
 		const node = await store.expandNode(collection, key, { neighborLimit: 30 });
-		if (node) {
-			store.focusNode(node.id, { recordHistory: true });
-			// Set lastLoadedFocus before setUrl so the ?focus= $effect sees this
-			// navigation as already handled and doesn't re-run expandWithConvergencePaths.
-			lastLoadedFocus = node.id;
-			setUrl({ focus: node.id });
-			const epoch = ++focusEpoch;
-			await expandWithConvergencePaths(node, epoch);
-			if (epoch !== focusEpoch) return;
-			store.focusNode(node.id, { recordHistory: false });
-			graphView?.reseatAround(node.id);
-		}
+		if (!node) return;
+		store.focusNode(node.id, { recordHistory: true });
+		focusedNodeId = node.id;
+		loadedFocus = node.id; // the focus effect must not load it again
+		setUrl({ focus: node.id });
+		if (showsGraph(mode)) await deepen(node);
 	}
 
 	function handleGoBack() {
-		const nodeId = store.goBack();
-		if (nodeId) {
-			isHistoryNav = true;
-			lastLoadedFocus = ''; // force $effect to re-expand the node
-			setUrl({ focus: nodeId });
-		}
+		const id = store.goBack();
+		if (id) navigateHistory(id);
 	}
 
 	function handleGoForward() {
-		const nodeId = store.goForward();
-		if (nodeId) {
-			isHistoryNav = true;
-			lastLoadedFocus = '';
-			setUrl({ focus: nodeId });
-		}
+		const id = store.goForward();
+		if (id) navigateHistory(id);
 	}
 
-	// Lagen handlers have two flavours:
-	//   - Empty graph → load the full layer (the legacy "show me everything"
-	//     entry point).
-	//   - Non-empty graph → re-expand the existing nodes and keep ONLY new
-	//     nodes of the target kind. So clicking "Arresten" on an article view
-	//     where no judgments are related stays at 0 — instead of dumping all
-	//     ~1000 judgments onto the canvas.
-	function ensureNodeTypesVisible(...keys: Array<keyof GraphFilters['nodeTypeToggles']>) {
-		const cur = get(store.filters);
-		const patch = { ...cur.nodeTypeToggles };
-		let changed = false;
-		for (const k of keys) {
-			if (!patch[k]) {
-				patch[k] = true;
-				changed = true;
-			}
-		}
-		if (changed) store.setFilters({ nodeTypeToggles: patch });
+	// The focus effect reloads the node from the store cache and expands it again.
+	function navigateHistory(id: string) {
+		isHistoryNav = true;
+		loadedFocus = '';
+		deepenedId = '';
+		setUrl({ focus: id });
 	}
 
-	// Cap re-expansion to keep API spike bounded. 30 covers a typical focused
-	// view (article + its level-1 neighbours).
+	// ── Layers ───────────────────────────────────────────────────────────────
+	// A layer button loads one kind of source into the network:
+	//   - a source is selected: only what is attached to the network already,
+	//     so Judgments on a focused article does not add every judgment;
+	//   - an instrument is shown: the instrument's own endpoint;
+	//   - otherwise: the whole layer.
+	// Activated layers read as pressed even when nothing new arrived.
+	const activatedLayers = new SvelteSet<GraphNodeKind>();
+	const loadingLayers = new SvelteSet<GraphNodeKind>();
+
+	function ensureNodeTypesVisible(...kinds: GraphNodeKind[]) {
+		const toggles = get(store.filters).nodeTypeToggles;
+		if (kinds.every((k) => toggles[k])) return;
+		store.setFilters({
+			nodeTypeToggles: { ...toggles, ...Object.fromEntries(kinds.map((k) => [k, true])) }
+		});
+	}
+
+	// Attached-only loads expand this many sources of the network, one request each.
 	const ATTACHED_EXPAND_CAP = 30;
 
-	// Layers the user has activated via the Lagen buttons. Drives the
-	// "pressed" state on those buttons regardless of how many nodes of the
-	// kind made it onto the canvas — so when an attached-only load produces
-	// zero newcomers, the user can still see that the layer is active.
-	const activatedLayers = new SvelteSet<import('$lib/graph/types').GraphNodeKind>();
-
-	// Re-expand the existing nodes and prune the result to keep
-	//   (everything that was already on canvas) ∪ (target-kinds newcomers).
-	// Anchor proxies (synth: instruments) are skipped — they have no real
-	// API endpoint to expand against. Accepts a set of kinds so a layer like
-	// Dossier can pull in both dossier hubs *and* their tkstuk publications
-	// in one pass.
-	async function loadAttachedOnly(
-		targetKinds: ReadonlySet<import('$lib/graph/types').GraphNodeKind>
-	) {
-		const all = get(store.nodes);
-		const beforeIds = new Set(all.map((n) => n.id));
-		const toExpand = all.filter((n) => !n.id.startsWith('synth:')).slice(0, ATTACHED_EXPAND_CAP);
+	// Expand the sources on the canvas and keep what was there plus the new
+	// sources of the target kinds.
+	async function loadAttachedOnly(targetKinds: ReadonlySet<GraphNodeKind>) {
+		const before = get(store.nodes);
+		const beforeIds = new Set(before.map((n) => n.id));
+		const toExpand = before.filter((n) => !n.id.startsWith('synth:')).slice(0, ATTACHED_EXPAND_CAP);
 		await Promise.all(
 			toExpand.map((n) =>
 				store.expandNode(n.collection, n.key, { neighborLimit: 50 }).catch(() => null)
 			)
 		);
-		const afterAll = get(store.nodes);
-		const keep = new Set<string>(beforeIds);
-		for (const n of afterAll) {
-			if (beforeIds.has(n.id)) continue;
-			if (targetKinds.has(n.kind)) keep.add(n.id);
-		}
+		const keep = new Set(beforeIds);
+		for (const n of get(store.nodes)) if (targetKinds.has(n.kind)) keep.add(n.id);
 		store.pruneNodes(keep);
 		store.sweepOrphans();
 	}
 
-	// Lagen click policy:
-	//   - No focal node selected   → load the full layer (disjoint subgraph
-	//     allowed; this is how the user assembles a multi-layer view).
-	//   - A focal node is selected → attached-only (the original behaviour,
-	//     so clicking Arresten on a focused article doesn't dump ~1000 nodes).
-	// Either way, we mark the layer as activated so the Lagen button reads
-	// as "pressed" even when the attached pass produces zero newcomers.
-
-	async function handleLoadGlobal() {
-		loadingGlobal = true;
-		activatedLayers.add('instrument');
+	// One pass for several layers: separate passes would request the same sources twice.
+	async function loadAttachedLayers(layers: GraphNodeKind[]) {
+		const kinds = layers.flatMap(kindsForLayer);
+		for (const l of layers) {
+			activatedLayers.add(l);
+			loadingLayers.add(l);
+		}
+		ensureNodeTypesVisible(...kinds);
 		try {
-			console.log(
-				'[lagen] handleLoadGlobal — currentInstrumentBwb=',
-				currentInstrumentBwb,
-				'selectedNode=',
-				selectedNode?.id ?? null
-			);
-			ensureNodeTypesVisible('instrument', 'article');
-			// Wet view + Artikelen mode (the default for a wet view): surface
-			// cross-wet *article-level* references — foreign articles + the
-			// REFERS_TO_ARTICLE edges that connect them to Sv articles. The
-			// /related-instruments aggregate (wet hubs with count-only
-			// metadata) doesn't carry per-article edges, so its nodes would
-			// just float; not useful here.
-			if (currentInstrumentBwb && !selectedNode) {
-				const result = await store.loadInstrumentCitations(currentInstrumentBwb, {
-					relations: ['REFERS_TO_ARTICLE']
-				});
-				if (!result || result.count === 0) {
-					console.warn('[explore] loadInstrumentCitations(REFERS_TO_ARTICLE) returned no nodes');
-				}
-				return;
-			}
-			if (selectedNode) {
-				await loadAttachedOnly(new Set(['instrument', 'article']));
-				return;
-			}
-			const result = await store.loadInstrumentLayerGraph({ additive: true });
-			if (!result || result.count === 0) {
-				console.warn('[explore] loadInstrumentLayerGraph returned no nodes');
-				return;
-			}
-			setUrl({ mode: 'graph' });
+			await loadAttachedOnly(new Set(kinds));
 		} finally {
-			loadingGlobal = false;
+			for (const l of layers) loadingLayers.delete(l);
 		}
 	}
 
-	async function handleLoadJudgments() {
-		loadingJudgments = true;
-		activatedLayers.add('judgment');
+	type LayerLoader = {
+		/** Also made visible when the whole layer is loaded. */
+		extra?: GraphNodeKind[];
+		/** The layer for the instrument in view. */
+		instrument?: (bwb: string) => Promise<unknown>;
+		whole: () => Promise<{ count: number } | null>;
+	};
+
+	const additive = { additive: true };
+	const LAYERS: Partial<Record<GraphNodeKind, LayerLoader>> = {
+		instrument: {
+			instrument: (bwb) => store.loadInstrumentCitations(bwb, { relations: ['REFERS_TO'] }),
+			whole: () => store.loadInstrumentLayerGraph(additive)
+		},
+		judgment: {
+			extra: ['instrument'],
+			instrument: (bwb) => store.loadInstrumentJudgmentsLayer(bwb),
+			whole: () => store.loadJudgmentLayerGraph(additive)
+		},
+		// The dossiers of an instrument come with the documents that change its
+		// articles, so the chain dossier, document, article is complete.
+		dossier: {
+			instrument: (bwb) =>
+				Promise.all([
+					store.loadInstrumentDossiersLayer(bwb),
+					store.loadInstrumentCitations(bwb, { relations: ['AMENDS', 'INTRODUCES', 'REPEALS'] })
+				]),
+			whole: () => store.loadRecentDossiersGraph(additive)
+		},
+		committee: {
+			extra: ['member'],
+			whole: () => store.loadCommitteesLayerGraph(additive)
+		},
+		member: { whole: () => store.loadMembersLayerGraph(additive) },
+		faction: { whole: () => store.loadFactionsLayerGraph(additive) }
+	};
+
+	async function handleLoadLayer(layer: GraphNodeKind) {
+		const loader = LAYERS[layer];
+		if (!loader) return;
+		if (selectedNode) return loadAttachedLayers([layer]);
+
+		loadingLayers.add(layer);
+		activatedLayers.add(layer);
 		try {
-			console.log(
-				'[lagen] handleLoadJudgments — currentInstrumentBwb=',
-				currentInstrumentBwb,
-				'selectedNode=',
-				selectedNode?.id ?? null
-			);
-			ensureNodeTypesVisible('judgment');
-			// Wet view: scope to judgments that cite this wet's articles.
-			if (currentInstrumentBwb && !selectedNode) {
-				const result = await store.loadInstrumentJudgmentsLayer(currentInstrumentBwb);
-				if (!result || result.count === 0) {
-					console.warn('[explore] loadInstrumentJudgmentsLayer returned no nodes');
-				}
+			ensureNodeTypesVisible(...kindsForLayer(layer));
+			if (currentInstrumentBwb && loader.instrument) {
+				await loader.instrument(currentInstrumentBwb);
 				return;
 			}
-			if (selectedNode) {
-				await loadAttachedOnly(new Set(['judgment']));
-				return;
-			}
-			ensureNodeTypesVisible('judgment', 'instrument');
-			const result = await store.loadJudgmentLayerGraph({ additive: true });
-			if (!result || result.count === 0) {
-				console.warn('[explore] loadJudgmentLayerGraph returned no nodes');
-				return;
-			}
-			setUrl({ mode: 'graph' });
+			ensureNodeTypesVisible(...(loader.extra ?? []));
+			const result = await loader.whole();
+			if (result && result.count > 0) setUrl({ mode: 'graph' });
 		} finally {
-			loadingJudgments = false;
+			loadingLayers.delete(layer);
 		}
 	}
 
-	async function handleLoadCommissies() {
-		loadingCommissies = true;
-		activatedLayers.add('commissie');
-		try {
-			ensureNodeTypesVisible('commissie', 'activity');
-			if (selectedNode) {
-				await loadAttachedOnly(new Set(['commissie', 'activity']));
-				return;
-			}
-			ensureNodeTypesVisible('commissie', 'activity', 'lid');
-			const result = await store.loadCommissiesLayerGraph({ additive: true });
-			if (!result || result.count === 0) {
-				console.warn('[explore] loadCommissiesLayerGraph returned no nodes');
-				return;
-			}
-			setUrl({ mode: 'graph' });
-		} finally {
-			loadingCommissies = false;
-		}
-	}
-
-	let loadingLeden = $state(false);
-	async function handleLoadLeden() {
-		loadingLeden = true;
-		activatedLayers.add('lid');
-		try {
-			ensureNodeTypesVisible('lid');
-			if (selectedNode) {
-				await loadAttachedOnly(new Set(['lid']));
-				return;
-			}
-			const result = await store.loadLedenLayerGraph({ additive: true });
-			if (!result || result.count === 0) {
-				console.warn('[explore] loadLedenLayerGraph returned no nodes');
-				return;
-			}
-			setUrl({ mode: 'graph' });
-		} finally {
-			loadingLeden = false;
-		}
-	}
-
-	let loadingFracties = $state(false);
-	async function handleLoadFracties() {
-		loadingFracties = true;
-		activatedLayers.add('fractie');
-		try {
-			ensureNodeTypesVisible('fractie', 'lid');
-			if (selectedNode) {
-				await loadAttachedOnly(new Set(['fractie', 'lid']));
-				return;
-			}
-			ensureNodeTypesVisible('fractie', 'lid');
-			const result = await store.loadFractiesLayerGraph({ additive: true });
-			if (!result || result.count === 0) {
-				console.warn('[explore] loadFractiesLayerGraph returned no nodes');
-				return;
-			}
-			setUrl({ mode: 'graph' });
-		} finally {
-			loadingFracties = false;
-		}
-	}
-
-	// Load a curated example that exercises all legend items.
-	// 126ffa Sv is the literal motivating example from the methode: it has 3 outbound
-	// cross-references to 126nba/126uba/126zpa which in turn cite each other and have
-	// judicial citations — convergence shows those shared targets.
-	// Loading the sub-articles bidirectionally pulls in their judgment neighbors.
-
-	// "Maak ze zichtbaar" — re-expand the current focus but skip the
-	// convergence prune so every BFS-fetched node lands on the canvas.
-	// Snapshots the prior state, runs expandToDepth, then preserves the
-	// entire post-expansion node set (just sweeps strict orphans).
+	// Re-expand the focus without the convergence prune, so every fetched source is shown.
 	async function handleRevealHidden() {
 		const sel = get(store.selection);
 		if (!sel) return;
@@ -818,84 +540,31 @@
 		const epoch = ++focusEpoch;
 		await expandToDepth(sel.id);
 		if (epoch !== focusEpoch) return;
-		// No prune — everything fetched stays. Just clean up strict orphans
-		// (nodes with zero incident edges) so isolated junk doesn't drag the
-		// camera. Counts get recomputed reactively.
 		store.sweepOrphans();
-		const allNodes = get(store.nodes);
-		totalLoaded = allNodes.length;
-		visibleCount = allNodes.length;
+		totalLoaded = visibleCount = get(store.nodes).length;
 		graphView?.fitWhenSettled();
 	}
 
-	// Remove every node of the given kind from the canvas (and incident edges).
-	// The orphan sweep that follows drops anything left disconnected — e.g. the
-	// stemmingen/activiteiten halo around a deloaded fractie/dossier evaporates
-	// instead of lingering as ghost dots.
-	function handleDeloadLayer(kind: import('$lib/graph/types').GraphNodeKind) {
-		// Deload the union of the layer (primary + sub-kinds). The Lagen
-		// buttons treat e.g. Dossier as {dossier, tkstuk} for counts and
-		// activation, so deload has to remove both to match.
+	// Remove every source of a layer (its sub-kinds included) and what the
+	// orphan sweep leaves disconnected.
+	function handleDeloadLayer(kind: GraphNodeKind) {
 		const drop = new Set(kindsForLayer(kind));
-		const all = get(store.nodes);
-		const keep = new Set<string>();
-		for (const n of all) {
-			if (!drop.has(n.kind)) keep.add(n.id);
-		}
-		store.pruneNodes(keep);
+		store.pruneNodes(
+			new Set(
+				get(store.nodes)
+					.filter((n) => !drop.has(n.kind))
+					.map((n) => n.id)
+			)
+		);
 		store.sweepOrphans();
 		activatedLayers.delete(kind);
 	}
 
-	async function handleLoadDossiers() {
-		loadingDossiers = true;
-		activatedLayers.add('dossier');
-		try {
-			console.log(
-				'[lagen] handleLoadDossiers — currentInstrumentBwb=',
-				currentInstrumentBwb,
-				'selectedNode=',
-				selectedNode?.id ?? null
-			);
-			ensureNodeTypesVisible('dossier', 'tkstuk');
-			// Wet view: fire both endpoints in parallel.
-			//   /dossiers           → dossier nodes + dossier→article (raakt) edges.
-			//   /citations filtered → publication nodes + publication→article
-			//                         (WIJZIGT/INTRODUCEERT/TREKT_IN) edges so
-			//                         the user actually sees the dossier ↔
-			//                         publication ↔ article chain rather than
-			//                         floating dossier nodes with only their
-			//                         derived raakt edges.
-			if (currentInstrumentBwb && !selectedNode) {
-				const bwb = currentInstrumentBwb;
-				const [dossiersResult, citationsResult] = await Promise.all([
-					store.loadInstrumentDossiersLayer(bwb),
-					store.loadInstrumentCitations(bwb, {
-						relations: ['WIJZIGT', 'INTRODUCEERT', 'TREKT_IN']
-					})
-				]);
-				if (
-					(!dossiersResult || dossiersResult.count === 0) &&
-					(!citationsResult || citationsResult.count === 0)
-				) {
-					console.warn('[explore] dossiers + publication citations both returned no nodes');
-				}
-				return;
-			}
-			if (selectedNode) {
-				await loadAttachedOnly(new Set(['dossier', 'tkstuk']));
-				return;
-			}
-			ensureNodeTypesVisible('dossier', 'tkstuk');
-			const result = await store.loadRecentDossiersGraph({ additive: true });
-			if (!result || result.count === 0) {
-				console.warn('[explore] loadRecentDossiersGraph returned no nodes');
-				return;
-			}
-			setUrl({ mode: 'graph' });
-		} finally {
-			loadingDossiers = false;
-		}
+	function handleResetGraph() {
+		store.reset();
+		activatedLayers.clear();
+		loadedFocus = '';
+		deepenedId = '';
 	}
 
 	function setUrl(params: Record<string, string>) {
@@ -904,86 +573,80 @@
 		goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
 	}
 
-	function setMode(newMode: string) {
+	const setMode = (newMode: string) => setUrl({ mode: newMode });
+
+	// ── Seed ─────────────────────────────────────────────────────────────────
+	// ?seed=member:{key} | faction:{key} loads that network; dossier:{number} and
+	// committee:{slug} become ?focus=. The parameter is one-shot: it is stripped
+	// afterwards so a reload does not repeat it.
+	let lastSeed = '';
+	$effect(() => {
+		const seed = $page.url.searchParams.get('seed') ?? '';
+		if (!seed || seed === lastSeed) return;
+		lastSeed = seed;
+		void applySeed(seed);
+	});
+
+	async function applySeed(seed: string) {
+		const colon = seed.indexOf(':');
+		const type = seed.slice(0, colon);
+		const value = seed.slice(colon + 1);
+		let focus: string | null = null;
+		try {
+			if (type === 'member') await store.loadMemberGraph(value);
+			else if (type === 'faction') await store.loadFactionGraph(value);
+			else if (type === 'dossier') focus = nodeId('dossiers', value);
+			else if (type === 'committee') {
+				// The node key of a committee is a GUID; the seed carries the slug.
+				const committees = await unwrap(api.GET('/api/committees'));
+				const committee = committees.find((c) => c.slug === value);
+				if (committee) focus = nodeId('committees', committee.key);
+			}
+		} catch (err) {
+			console.warn('[explore] seed failed:', err);
+		}
 		const url = new URL($page.url.toString());
-		url.searchParams.set('mode', newMode);
+		url.searchParams.delete('seed');
+		if (focus) url.searchParams.set('focus', focus);
 		goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
 	}
 
-	// ── Parliamentary graph seeding ───────────────────────────────────────────
-	// ?seed=lid:abc        → loadLidGraph, then strip the param
-	// ?seed=fractie:abc    → loadFractieGraph, then strip the param
-	// (dossier and commissie deep-link views removed — the wet-view Lagen
-	// workflow covers those use cases now.)
-	let lastSeedParam = '';
-	$effect(() => {
-		const seedParam = $page.url.searchParams.get('seed') ?? '';
-		if (!seedParam || seedParam === lastSeedParam) return;
-		lastSeedParam = seedParam;
-
-		const url = new URL($page.url.toString());
-		url.searchParams.delete('seed');
-
-		if (seedParam.startsWith('lid:')) {
-			const key = seedParam.slice('lid:'.length);
-			store.loadLidGraph(key).then(() => {
-				goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
-			});
-		} else if (seedParam.startsWith('fractie:')) {
-			const key = seedParam.slice('fractie:'.length);
-			store.loadFractieGraph(key).then(() => {
-				goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
-			});
-		}
-	});
-
-	// ── Graph overlay (mutually exclusive: Activiteit OR Mutatie) ────────────
+	// ── Overlay (Activiteit or Mutatie, never both) ──────────────────────────
+	// Two steps: `$page` changes on every navigation, the parameter string only when
+	// the overlay does. The overlay object is what the effect below depends on.
 	const overlayParam = $derived($page.url.searchParams.get('overlay'));
 	const overlay = $derived<Overlay>(parseOverlay(overlayParam));
 
-	// Bound to <GraphView> so we can request a fit-to-screen after expansion.
+	// Bound to <GraphView> to request a fit after an expansion.
 	let graphView = $state<GraphView | null>(null);
-	// Data maps are populated only for the currently active overlay; the other
-	// stays empty so the canvas doesn't render stale signal.
-	let inFluxMap = $state<InFluxMap>(new Map());
-	let heatMap = $state<HeatMap>(new Map());
+	// Only the active overlay is fetched, once per change of the parameter, and a
+	// request the user has moved on from is aborted. Heat is a large answer.
+	let inFluxMap = $state<NodeCounts>(new Map());
+	let heatMap = $state<NodeCounts>(new Map());
 
 	$effect(() => {
 		const o = overlay;
-		let cancelled = false;
+		inFluxMap = new Map();
+		heatMap = new Map();
+		if (o.kind === 'none') return;
 
-		if (o.kind === 'heat') {
-			heatMap = new Map();
-			inFluxMap = new Map();
-			fetchHeatMap(o.months)
-				.then((m) => {
-					if (!cancelled) heatMap = m;
-				})
-				.catch(() => {});
-		} else if (o.kind === 'open') {
-			heatMap = new Map();
-			inFluxMap = new Map();
-			fetchInFluxMap()
-				.then((m) => {
-					if (!cancelled) inFluxMap = m;
-				})
-				.catch(() => {});
-		} else if (o.kind === 'dossier') {
-			heatMap = new Map();
-			inFluxMap = new Map();
-			fetchDossierInFluxMap(o.id)
-				.then((m) => {
-					if (!cancelled) inFluxMap = m;
-				})
-				.catch(() => {});
-		} else {
-			heatMap = new Map();
-			inFluxMap = new Map();
-		}
-
-		return () => {
-			cancelled = true;
-		};
+		const ctrl = new AbortController();
+		const request =
+			o.kind === 'heat'
+				? getHeat(o.months, ctrl.signal)
+				: o.kind === 'open'
+					? getInFlux(ctrl.signal)
+					: getDossierInFlux(o.id, ctrl.signal);
+		request
+			.then((counts) => {
+				if (ctrl.signal.aborted) return;
+				if (o.kind === 'heat') heatMap = counts;
+				else inFluxMap = counts;
+			})
+			.catch((err) => {
+				if (!ctrl.signal.aborted) console.warn('[explore] overlay load failed:', err);
+			});
+		return () => ctrl.abort();
 	});
 
 	function setOverlayParam(value: string | null) {
@@ -993,60 +656,33 @@
 		goto(url.toString(), { replaceState: true, noScroll: true, keepFocus: true });
 	}
 
-	function toggleHeat() {
+	const toggleHeat = () =>
 		setOverlayParam(overlay.kind === 'heat' ? null : `heat:${DEFAULT_HEAT_MONTHS}`);
-	}
-
-	function setHeatPeriod(months: number) {
-		setOverlayParam(`heat:${months}`);
-	}
-
-	function toggleMutatie() {
-		// Toggles the broad "all open dossiers" scope. A dossier-scoped overlay
-		// is only entered via deep link (?overlay=dossier:X) — clicking the
-		// toggle while in dossier scope clears the overlay entirely.
+	const setHeatPeriod = (months: number) => setOverlayParam(`heat:${months}`);
+	// The toggle covers all open dossiers. A dossier overlay is entered by link
+	// only; the toggle clears it.
+	const toggleMutatie = () =>
 		setOverlayParam(overlay.kind === 'open' || overlay.kind === 'dossier' ? null : 'open');
-	}
 
-	// ── Share view (Phase 7 §27) ─────────────────────────────────────────────
-	// Direct copy-to-clipboard on ↗ Deel — no preview modal. The button surface
-	// flips to "✓ Gekopieerd" for ~1.8s as the affordance.
+	// ── Share ────────────────────────────────────────────────────────────────
 	let shareCopied = $state(false);
-	const shareUrl = $derived.by(() => {
-		const url = new URL($page.url.toString());
-		if (showAllNeighbours) url.searchParams.set('all', unboundedShowAll ? 'unbound' : '1');
-		else url.searchParams.delete('all');
-		return url.toString();
-	});
 
 	async function handleShareView() {
 		try {
-			await navigator.clipboard.writeText(shareUrl);
+			await navigator.clipboard.writeText($page.url.toString());
 			shareCopied = true;
 			setTimeout(() => {
 				shareCopied = false;
 			}, 1800);
 		} catch {
-			/* clipboard blocked — silently no-op */
+			/* clipboard blocked */
 		}
 	}
-
-	// Read ?all= on mount.
-	$effect(() => {
-		const v = $page.url.searchParams.get('all');
-		if (v === '1') {
-			showAllNeighbours = true;
-			unboundedShowAll = false;
-		} else if (v === 'unbound') {
-			showAllNeighbours = true;
-			unboundedShowAll = true;
-		}
-	});
 
 	// Mobile panel tab for split mode
 	let mobilePanel = $state<'reader' | 'graph' | 'citations'>('reader');
 
-	// Mobile degradation notice — shown once per session on narrow viewports.
+	// Notice on narrow viewports, shown once per session.
 	let showMobileNotice = $state(false);
 	function dismissMobileNotice() {
 		showMobileNotice = false;
@@ -1078,8 +714,6 @@
 			/* ignore */
 		}
 
-		// Autoload removed in Phase 2 — cold visit is the empty graph canvas.
-
 		if (window.innerWidth < 768) {
 			try {
 				if (!sessionStorage.getItem('concordans:mobile-notice-dismissed')) {
@@ -1103,7 +737,7 @@
 	}
 
 	type DragHandle = 'split-graph' | 'split-rail' | 'read-nav' | 'read-rail';
-	let activeDrag: { handle: DragHandle; startX: number; startW: number } | null = null;
+	let activeDrag = $state<{ handle: DragHandle; startX: number; startW: number } | null>(null);
 
 	function startResize(e: PointerEvent, handle: DragHandle) {
 		e.preventDefault();
@@ -1140,8 +774,7 @@
 	}
 
 	// ── Keyboard shortcuts ────────────────────────────────────────────────────
-	// Plain 1 / 2 / 3 (no modifier) — ⌘1-9 conflicts with browser tab-switching.
-	// Guarded against firing while the user is typing in an input/textarea.
+	// Plain 1, 2 and 3: with a modifier they switch browser tabs. Ignored while typing.
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
 		if (e.key !== '1' && e.key !== '2' && e.key !== '3') return;
@@ -1154,68 +787,41 @@
 			return;
 		e.preventDefault();
 		const targetMode = e.key === '1' ? 'graph' : e.key === '2' ? 'split' : 'read';
-		// split/read need a node; graph is altijd bereikbaar.
+		// Split and read need a selected source.
 		if ((targetMode === 'split' || targetMode === 'read') && !selectedNode) return;
 		if (targetMode !== mode) setUrl({ mode: targetMode });
 	}
 
-	// ── Index mode (catalogus / lijst-launchpad) ─────────────────────────────
-	// ?kind=… picks the active category in IndexView. Defaults to 'dossiers'
-	// since that's the largest live dataset.
-	type IndexCategory =
-		| 'wetten'
-		| 'arresten'
-		| 'dossiers'
-		| 'commissies'
-		| 'leden'
-		| 'fracties'
-		| 'stemmingen';
-	const INDEX_CATEGORIES: ReadonlySet<IndexCategory> = new Set([
-		'wetten',
-		'arresten',
+	// ── Index ────────────────────────────────────────────────────────────────
+	// ?kind= picks the category in IndexView; an unknown value falls back to dossiers.
+	const INDEX_KINDS = [
+		'instruments',
+		'judgments',
 		'dossiers',
-		'commissies',
-		'leden',
-		'fracties',
-		'stemmingen'
-	]);
-	// Onbekende of stale ?kind=-waardes (typo's, dode links) vallen terug op
-	// 'dossiers' in plaats van een lege pagina te tonen.
-	const indexCategory = $derived<IndexCategory>(
-		(() => {
-			const raw = $page.url.searchParams.get('kind');
-			return raw && INDEX_CATEGORIES.has(raw as IndexCategory)
-				? (raw as IndexCategory)
-				: 'dossiers';
-		})()
+		'committees',
+		'members',
+		'factions',
+		'decisions'
+	] as const;
+	type IndexKind = (typeof INDEX_KINDS)[number];
+	const indexKind = $derived<IndexKind>(
+		INDEX_KINDS.find((k) => k === $page.url.searchParams.get('kind')) ?? 'dossiers'
 	);
-	function handleIndexCategory(k: IndexCategory) {
-		setUrl({ mode: 'index', kind: k });
-	}
-	// "Verdiepen" — split-modus met netwerk + leespanel.
-	function handleIndexSelect(collection: string, key: string) {
+	const handleIndexKind = (kind: IndexKind) => setUrl({ mode: 'index', kind });
+	// Verdiepen: split mode, network next to the reader.
+	const handleIndexSelect = (collection: string, key: string) =>
 		setUrl({ mode: 'split', focus: `${collection}/${key}` });
-	}
-	// "Ontdekken" — graph-modus met focus op de bron.
-	function handleIndexDiscover(collection: string, key: string) {
+	// Ontdekken: graph mode focused on the source.
+	const handleIndexDiscover = (collection: string, key: string) =>
 		setUrl({ mode: 'graph', focus: `${collection}/${key}` });
-	}
-	// "Lezen" — volledige tekst zonder netwerk.
-	function handleIndexRead(collection: string, key: string) {
+	// Lezen: full text without the network.
+	const handleIndexRead = (collection: string, key: string) =>
 		setUrl({ mode: 'read', focus: `${collection}/${key}` });
-	}
-	// Aantal getoonde resultaten in Index, gespiegeld in de StatusBar-breadcrumb.
+
+	// Result count of the index, shown in the status bar.
 	let indexResultCount = $state<{ filtered: number; total: number } | null>(null);
-	function handleIndexResultCount(info: {
-		filtered: number;
-		total: number;
-		category: IndexCategory;
-	}) {
-		indexResultCount = { filtered: info.filtered, total: info.total };
-	}
-	// Bij categorie-wissel reset zodat geen stale count blijft hangen.
 	$effect(() => {
-		void indexCategory;
+		void indexKind;
 		indexResultCount = null;
 	});
 </script>
@@ -1223,77 +829,72 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
-	<title>Verkenner — Concordans</title>
+	<title>Verkenner · Concordans</title>
 </svelte:head>
+
+{#snippet network(compact: boolean)}
+	<GraphView
+		bind:this={graphView}
+		{store}
+		{compact}
+		{inFluxMap}
+		{heatMap}
+		{overlay}
+		{visibleCount}
+		{totalLoaded}
+		onNodeClick={(n) => {
+			handleNodeClick(n);
+			if (compact) mobilePanel = 'reader';
+		}}
+		onOpenSplit={handleOpenSplit}
+		onGoBack={handleGoBack}
+		onGoForward={handleGoForward}
+		onToggleHeat={toggleHeat}
+		onHeatPeriodChange={setHeatPeriod}
+		onToggleMutatie={toggleMutatie}
+		onLoadLayer={handleLoadLayer}
+		onDeloadLayer={handleDeloadLayer}
+		onResetGraph={handleResetGraph}
+		onRevealHidden={handleRevealHidden}
+		{loadingLayers}
+		{activatedLayers}
+	/>
+{/snippet}
 
 <div class="explore-shell">
 	<StatusBar
 		node={selectedNode}
 		{focusError}
-		{loadingCommissies}
+		loadingCommittees={loadingLayers.has('committee')}
 		{canGoBack}
 		{canGoForward}
 		{mode}
-		indexCategory={mode === 'index' ? indexCategory : null}
+		indexCategory={mode === 'index' ? indexKind : null}
 		indexResultCount={mode === 'index' ? indexResultCount : null}
 		{shareCopied}
 		onShareView={handleShareView}
 		onGoBack={handleGoBack}
 		onGoForward={handleGoForward}
-		onLoadCommissies={handleLoadCommissies}
+		onLoadCommittees={() => handleLoadLayer('committee')}
 		onModeChange={setMode}
 	/>
 
 	<div class="explore-content">
 		{#if mode === 'index'}
 			<IndexView
-				category={indexCategory}
-				onSelectCategory={handleIndexCategory}
+				category={indexKind}
+				onSelectCategory={handleIndexKind}
 				onSelectItem={handleIndexSelect}
 				onDiscoverItem={handleIndexDiscover}
 				onReadItem={handleIndexRead}
-				onResultCountChange={handleIndexResultCount}
+				onResultCountChange={({ filtered, total }) => (indexResultCount = { filtered, total })}
 			/>
 		{:else if mode === 'graph'}
 			<div class="explore-graph">
 				{#if nodeCount === 0}
 					<EmptyCanvas />
 				{/if}
-				<GraphView
-					bind:this={graphView}
-					{store}
-					{inFluxMap}
-					{heatMap}
-					{overlay}
-					{visibleCount}
-					{totalLoaded}
-					onNodeClick={handleNodeClick}
-					onOpenSplit={handleOpenSplit}
-					onGoBack={handleGoBack}
-					onGoForward={handleGoForward}
-					onToggleHeat={toggleHeat}
-					onHeatPeriodChange={setHeatPeriod}
-					onToggleMutatie={toggleMutatie}
-					onLoadGlobal={handleLoadGlobal}
-					onLoadJudgments={handleLoadJudgments}
-					onLoadCommissies={handleLoadCommissies}
-					onLoadDossiers={handleLoadDossiers}
-					onLoadLeden={handleLoadLeden}
-					onLoadFracties={handleLoadFracties}
-					onDeloadLayer={handleDeloadLayer}
-					onResetGraph={() => {
-						store.reset();
-						activatedLayers.clear();
-					}}
-					onRevealHidden={handleRevealHidden}
-					{loadingGlobal}
-					{loadingJudgments}
-					{loadingCommissies}
-					{loadingDossiers}
-					{loadingLeden}
-					{loadingFracties}
-					{activatedLayers}
-				/>
+				{@render network(false)}
 			</div>
 		{:else if mode === 'split'}
 			<div
@@ -1323,44 +924,7 @@
 					>
 				</nav>
 				<div class="split-graph" class:mobile-hidden={mobilePanel !== 'graph'}>
-					<GraphView
-						bind:this={graphView}
-						{store}
-						compact
-						{inFluxMap}
-						{heatMap}
-						{overlay}
-						{visibleCount}
-						{totalLoaded}
-						onNodeClick={(n) => {
-							handleNodeClick(n);
-							mobilePanel = 'reader';
-						}}
-						onGoBack={handleGoBack}
-						onGoForward={handleGoForward}
-						onToggleHeat={toggleHeat}
-						onHeatPeriodChange={setHeatPeriod}
-						onToggleMutatie={toggleMutatie}
-						onLoadGlobal={handleLoadGlobal}
-						onLoadJudgments={handleLoadJudgments}
-						onLoadCommissies={handleLoadCommissies}
-						onLoadDossiers={handleLoadDossiers}
-						onLoadLeden={handleLoadLeden}
-						onLoadFracties={handleLoadFracties}
-						onDeloadLayer={handleDeloadLayer}
-						onResetGraph={() => {
-							store.reset();
-							activatedLayers.clear();
-						}}
-						onRevealHidden={handleRevealHidden}
-						{loadingGlobal}
-						{loadingJudgments}
-						{loadingCommissies}
-						{loadingDossiers}
-						{loadingLeden}
-						{loadingFracties}
-						{activatedLayers}
-					/>
+					{@render network(true)}
 				</div>
 				<div
 					class="panel-resize-handle"
@@ -1432,8 +996,12 @@
 							<KindReader
 								selection={selectedNode}
 								onNavigate={handleRailNavigate}
-								onPrev={prevArticleKey ? () => navigateToArticle(prevArticleKey!) : undefined}
-								onNext={nextArticleKey ? () => navigateToArticle(nextArticleKey!) : undefined}
+								onPrev={prevArticleKey
+									? () => handleRailNavigate('articles', prevArticleKey!)
+									: undefined}
+								onNext={nextArticleKey
+									? () => handleRailNavigate('articles', nextArticleKey!)
+									: undefined}
 							/>
 						{/if}
 					</div>
@@ -1453,9 +1021,8 @@
 	</div>
 </div>
 
-<!-- Eerste-keer-tip rechtsonder. Verbergt zichzelf na dismiss en blijft
-     dan weg dankzij localStorage. Niet getoond op mobiel — daar zit de
-     mobile-notice al een banner-positie in. -->
+<!-- Tip voor eerste gebruik, rechtsonder. Blijft weg na sluiten (localStorage).
+     Niet op mobiel: daar staat al de mobile-notice. -->
 {#if !showMobileNotice}
 	<WalkthroughCard />
 {/if}
@@ -1463,8 +1030,8 @@
 {#if showMobileNotice}
 	<div class="mobile-notice" role="alert">
 		<span class="mobile-notice__text"
-			>Het netwerk werkt het best op een groter scherm. Op mobiel kun je wel lezen en de Index
-			gebruiken.</span
+			>Het netwerk werkt het best op een groter scherm. Op mobiel zijn lezen en de Index
+			beschikbaar.</span
 		>
 		<a
 			href="/explore?mode=index&kind=dossiers"
@@ -1632,9 +1199,6 @@
 
 	/* Tighter body font in the narrow split column */
 	.split-reader :global(.reader-body) {
-		font-size: 16px;
-	}
-	.split-reader :global(.lid-text) {
 		font-size: 16px;
 	}
 

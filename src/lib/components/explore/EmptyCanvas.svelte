@@ -4,41 +4,39 @@
 
 	const openSearch = useSearchOpener();
 
-	// Elke tegel opent de volledige wet (instrument-focus). Verkenner laadt
-	// alle artikelen + aangehaakte arresten/dossiers tegelijk.
+	// Elke tegel opent de volledige wet (focus op het instrument). De Verkenner
+	// laadt alle artikelen met de aangehaakte arresten en dossiers.
 	const ENTRY_LAWS = [
 		{
 			mono: 'BW',
 			name: 'Burgerlijk Wetboek',
-			href: '/explore?focus=instruments%2FBWBR0005289&from=search'
+			href: '/explore?focus=instruments%2Fbwbr0005289&from=search'
 		},
 		{
 			mono: 'Sr',
 			name: 'Wetboek van Strafrecht',
-			href: '/explore?focus=instruments%2FBWBR0001854&from=search'
+			href: '/explore?focus=instruments%2Fbwbr0001854&from=search'
 		},
 		{
 			mono: 'Sv',
 			name: 'Wetboek van Strafvordering',
-			href: '/explore?focus=instruments%2FBWBR0001903&from=search'
+			href: '/explore?focus=instruments%2Fbwbr0001903&from=search'
 		},
 		{
 			mono: 'Awb',
 			name: 'Algemene wet bestuursrecht',
-			href: '/explore?focus=instruments%2FBWBR0005537&from=search'
+			href: '/explore?focus=instruments%2Fbwbr0005537&from=search'
 		},
-		{ mono: 'Gw', name: 'Grondwet', href: '/explore?focus=instruments%2FBWBR0001840&from=search' }
+		{ mono: 'Gw', name: 'Grondwet', href: '/explore?focus=instruments%2Fbwbr0001840&from=search' }
 	];
 </script>
 
-<div class="empty-canvas" role="status" aria-label="Leeg canvas — begin bij een bron">
+<div class="empty-canvas" role="status" aria-label="Leeg netwerk: begin bij een bron">
 	<div class="empty-inner">
 		<h2 class="empty-title">Begin bij een bron</h2>
 		<p class="empty-sub">
-			Zoek een artikel, arrest, wet of dossier om het netwerk op te bouwen. Nieuw hier? <a
-				href="/docs#aan-de-slag"
-				class="empty-sub-link">Lees eerst hoe de Verkenner werkt</a
-			>.
+			Zoek een artikel, arrest, wet of dossier om het netwerk op te bouwen. De werking van de
+			Verkenner staat onder <a href="/docs#aan-de-slag" class="empty-sub-link">Aan de slag</a>.
 		</p>
 
 		<button type="button" class="empty-search" onclick={openSearch}>

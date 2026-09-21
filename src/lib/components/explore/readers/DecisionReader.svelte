@@ -1,0 +1,313 @@
+<script lang="ts">
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
+	import type { GraphNode } from '$lib/graph/types';
+	import { formatLongDate } from './_shared';
+
+	let { node }: { node: GraphNode } = $props();
+
+	type State =
+		| { kind: 'loading' }
+		| { kind: 'error'; message: string }
+		| {
+				kind: 'loaded';
+				decision: Schema<'DecisionDTO'>;
+				// The motion, amendment or bill that was voted on.
+				document: Schema<'DocumentTextResponse'> | null;
+		  };
+
+	let view = $state<State>({ kind: 'loading' });
+
+	$effect(() => {
+		const key = node.key;
+		const ac = new AbortController();
+		view = { kind: 'loading' };
+		Promise.all([
+			unwrap(api.GET('/api/decisions/{key}', { params: { path: { key } }, signal: ac.signal })),
+			unwrap(
+				api.GET('/api/decisions/{key}/document', { params: { path: { key } }, signal: ac.signal })
+			).catch(() => null)
+		])
+			.then(([decision, document]) => {
+				if (!ac.signal.aborted) view = { kind: 'loaded', decision, document };
+			})
+			.catch(() => {
+				if (!ac.signal.aborted)
+					view = { kind: 'error', message: 'Stemming kon niet geladen worden.' };
+			});
+		return () => ac.abort();
+	});
+
+	const side = (choice: string) =>
+		choice === 'Voor' ? 'for' : choice === 'Tegen' ? 'against' : 'other';
+</script>
+
+<div class="r-decision">
+	{#if view.kind === 'loading'}
+		<p class="loading">Laden…</p>
+	{:else if view.kind === 'error'}
+		<p class="error">{view.message}</p>
+	{:else}
+		{@const d = view.decision}
+		{@const doc = view.document}
+		{@const tally = d.tally ?? {}}
+		{@const inFavour = tally['Voor'] ?? 0}
+		{@const against = tally['Tegen'] ?? 0}
+		{@const inFavourPct =
+			inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
+		{@const others = Object.entries(tally).filter(
+			([choice]) => choice !== 'Voor' && choice !== 'Tegen'
+		)}
+		{@const dossierNumbers = (node.raw?.props?.dossier_numbers ?? []) as string[]}
+		{@const voters = [...(d.votes ?? [])].sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0))}
+
+		<header class="head">
+			<span class="kicker">Stemming · {formatLongDate(d.date ?? null)}</span>
+			<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet beschikbaar'}</h2>
+			<div class="chips">
+				<span
+					class="result-chip"
+					class:result-chip--passed={d.passed}
+					class:result-chip--failed={!d.passed}
+				>
+					{d.passed ? 'Aangenomen' : 'Verworpen'}
+				</span>
+				{#each dossierNumbers.slice(0, 3) as number (number)}
+					<a href="/explore?focus=dossiers/{number}" class="dossier-chip">{number}</a>
+				{/each}
+			</div>
+		</header>
+
+		{#if doc?.text}
+			<section class="sec">
+				<h3 class="sec-title">{doc.kind ?? 'Document'}</h3>
+				<p class="document-text">{doc.text}</p>
+			</section>
+		{:else}
+			<p class="document-unavailable">Tekst niet beschikbaar.</p>
+		{/if}
+
+		<div class="vote-summary">
+			<div class="vote-bar" title="Voor: {inFavour} · Tegen: {against}">
+				<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
+			</div>
+			<div class="vote-totals">
+				<span class="vote-total vote-total--for">{inFavour} voor</span>
+				<span class="vote-total-sep">·</span>
+				<span class="vote-total vote-total--against">{against} tegen</span>
+				{#each others as [choice, seats] (choice)}
+					<span class="vote-total-sep">·</span>
+					<span class="vote-total vote-total--other">{seats} {choice.toLowerCase()}</span>
+				{/each}
+			</div>
+		</div>
+
+		{#if voters.length > 0}
+			<section class="sec">
+				<h3 class="sec-title">
+					{d.vote_kind === 'member' ? 'Stemverdeling per lid' : 'Stemverdeling per fractie'}
+				</h3>
+				<ul class="voter-list">
+					{#each voters as v (v.voter_id)}
+						<li class="voter-row voter-row--{side(v.choice)}">
+							<span class="voter-choice">{v.choice}</span>
+							<span class="voter-name">{v.name ?? v.voter_key}</span>
+							<span class="voter-seats">{v.seats}</span>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
+	{/if}
+</div>
+
+<style>
+	.r-decision {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-4);
+		padding: var(--s-5) var(--s-5) var(--s-6);
+		color: var(--ink-2);
+		height: 100%;
+		overflow-y: auto;
+	}
+	.loading,
+	.error {
+		font-family: var(--font-serif);
+		font-style: italic;
+		color: var(--ink-4);
+		margin: 0;
+	}
+
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.kicker {
+		font-family: var(--font-sans);
+		font-size: 10px;
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink-4);
+	}
+	.title {
+		font-family: var(--font-serif);
+		font-size: 19px;
+		font-weight: 400;
+		color: var(--ink);
+		margin: 0;
+		line-height: 1.25;
+	}
+	.chips {
+		display: flex;
+		gap: 4px;
+		flex-wrap: wrap;
+	}
+
+	.result-chip,
+	.dossier-chip {
+		display: inline-flex;
+		align-items: center;
+		height: 18px;
+		padding: 0 7px;
+		border-radius: var(--r-1);
+		font-family: var(--font-sans);
+		font-size: 9px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		border: 1px solid var(--rule);
+		text-decoration: none;
+	}
+	.result-chip--passed {
+		color: var(--moss);
+		border-color: color-mix(in srgb, var(--moss) 25%, transparent);
+		background: color-mix(in srgb, var(--moss) 10%, var(--paper));
+	}
+	.result-chip--failed {
+		color: var(--red, #dc2626);
+		border-color: color-mix(in srgb, var(--red, #dc2626) 25%, transparent);
+		background: color-mix(in srgb, var(--red, #dc2626) 10%, var(--paper));
+	}
+	.dossier-chip {
+		font-family: var(--font-mono);
+		text-transform: none;
+		letter-spacing: 0;
+		color: var(--ink-3);
+		background: var(--paper-2);
+	}
+	.dossier-chip:hover {
+		color: var(--spine);
+		border-color: var(--spine);
+	}
+
+	.sec {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.sec-title {
+		font-family: var(--font-sans);
+		font-size: 10px;
+		font-weight: 500;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--ink-4);
+		margin: 0;
+	}
+	.document-text {
+		font-family: var(--font-serif);
+		font-size: 14px;
+		line-height: 1.65;
+		color: var(--ink-2);
+		white-space: pre-wrap;
+		margin: 0;
+	}
+	.document-unavailable {
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-size: 13px;
+		color: var(--ink-4);
+		margin: 0;
+	}
+
+	.vote-summary {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.vote-bar {
+		height: 14px;
+		background: color-mix(in srgb, var(--spine) 18%, var(--paper-3));
+		border-radius: 4px;
+		overflow: hidden;
+	}
+	.vote-bar-for {
+		height: 100%;
+		background: var(--moss);
+		transition: width 200ms ease;
+	}
+	.vote-totals {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		font-family: var(--font-sans);
+		font-size: 11px;
+	}
+	.vote-total--for {
+		color: var(--moss);
+		font-weight: 600;
+	}
+	.vote-total--against {
+		color: var(--red, #dc2626);
+		font-weight: 600;
+	}
+	.vote-total--other {
+		color: var(--ink-3);
+	}
+	.vote-total-sep {
+		color: var(--ink-4);
+	}
+
+	.voter-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.voter-row {
+		display: grid;
+		grid-template-columns: 50px 1fr auto;
+		gap: 8px;
+		padding: 3px 0;
+		align-items: baseline;
+		border-bottom: 1px dotted var(--rule);
+		font-size: 12px;
+	}
+	.voter-choice {
+		font-family: var(--font-sans);
+		font-size: 9px;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+	.voter-row--for .voter-choice {
+		color: var(--moss);
+	}
+	.voter-row--against .voter-choice {
+		color: var(--red, #dc2626);
+	}
+	.voter-row--other .voter-choice {
+		color: var(--ink-4);
+	}
+	.voter-name {
+		font-family: var(--font-serif);
+		color: var(--ink-2);
+	}
+	.voter-seats {
+		font-family: var(--font-mono);
+		font-size: 11px;
+		color: var(--ink-3);
+	}
+</style>

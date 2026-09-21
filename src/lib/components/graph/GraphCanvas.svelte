@@ -3,9 +3,10 @@
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
 	import type { GraphFilters } from '$lib/graph/graph-store';
-	import type { InFluxMap, HeatMap } from '$lib/api/parliamentary';
-	import type { GraphNodeKind } from '$lib/graph/types';
-	import { spriteFor, shapeFor, badgeAxisOffset } from './nodeSprites';
+	import type { NodeCounts } from '$lib/api/overlays';
+	import { edgeCategory, EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
+	import type { Relation } from '$lib/vocabulary';
+	import { spriteFor, shapeFor, badgeAxisOffset, EDGE_COLOR } from './nodeSprites';
 
 	export type GraphCanvasApi = {
 		refresh: () => void;
@@ -13,84 +14,35 @@
 		restoreCamera: (state: { x: number; y: number; ratio: number }) => void;
 	};
 
-	// Visual style per relation_type.
-	// Four semantic groups from the data model:
-	//   structural  — skeleton of the law (thin neutral)
-	//   judicial    — court citations (prominent red)
-	//   legislative — parliamentary process (olive/indigo, lighter)
-	//   weak        — editorial mentions (muted, dashed handled in edgeReducer)
-	// All keys lowercase — syncEdges normalises relation to lowercase before
-	// Edge palette mirrors /docs/methode §iiib: three categories.
-	//   Structureel — ink-2 #3A362E solid (rgb 58,54,46), the brondata skeleton
-	//   Mutatie     — spine  #7A1F1A solid (rgb 122,31,26), with status (§05)
-	//   Semantisch  — ink-2 #3A362E dashed, derived from text + confidence score
-	// Mutation edges are drawn slightly heavier — they're the load-bearing change.
-	const EDGE_CAT: Record<string, { cat: 'structural' | 'mutation' | 'semantic'; sz: number }> = {
-		// ── Structureel — vast, uit brondata ──────────────────────────────────
-		// Article→article cross-references and instrument→directive implementations
-		// are XML-tagged in the BWB source itself: not derived, not interpreted.
-		// They are the *skeleton* of inter-law linkage and belong here, not in
-		// semantic. (types.ts STRUCTURAL_RELATIONS treats them this way too.)
-		verwijst_naar: { cat: 'structural', sz: 0.7 },
-		refers_to_article: { cat: 'structural', sz: 0.7 },
-		implementeert: { cat: 'structural', sz: 0.8 },
-		implements_directive: { cat: 'structural', sz: 0.8 },
-		deel_van: { cat: 'structural', sz: 0.7 },
-		behandeld_door: { cat: 'structural', sz: 0.7 },
-		behandelt: { cat: 'structural', sz: 0.7 },
-		gedaan_in: { cat: 'structural', sz: 0.7 },
-		lid_van: { cat: 'structural', sz: 0.6 },
-		lid_van_fractie: { cat: 'structural', sz: 0.6 },
-		raakt: { cat: 'structural', sz: 0.7 },
-		// wet ↔ article containment — traversable since the SCAFFOLDING/STRUCTURAL
-		// split moved PART_OF_INSTRUMENT to structural; render in the moss palette.
-		part_of_instrument: { cat: 'structural', sz: 0.6 },
-		// Frontend-synthesized — see graph-store.synthesizeDerivedEdges.
-		raakt_wet: { cat: 'structural', sz: 0.7 },
-		// ── Mutatie — verandert de wet, met status ────────────────────────────
-		wijzigt: { cat: 'mutation', sz: 1.0 },
-		// Synthesized: tkstuk → wet, lifted from tkstuk → article(bwb_id).
-		wijzigt_wet: { cat: 'mutation', sz: 0.9 },
-		wijzigt_artikel: { cat: 'mutation', sz: 1.0 },
-		voegt_toe: { cat: 'mutation', sz: 1.0 },
-		introduceert: { cat: 'mutation', sz: 1.0 },
-		introduceert_artikel: { cat: 'mutation', sz: 1.0 },
-		trekt_in: { cat: 'mutation', sz: 1.0 },
-		licht_toe: { cat: 'mutation', sz: 0.8 },
-		explains_article: { cat: 'mutation', sz: 0.8 },
-		amends_instrument: { cat: 'mutation', sz: 0.9 },
-		behandelt_artikel: { cat: 'mutation', sz: 0.7 },
-		// lid|fractie → publication: indiener / mede-ondertekenaar
-		auteur_van: { cat: 'mutation', sz: 0.8 },
-		// fractie → stemming: vote, coloured by meta.stem (see edgeReducer)
-		stemt: { cat: 'semantic', sz: 0.6 },
-		// ── Semantisch — afgeleid uit tekst, met score ────────────────────────
-		// Thin solid lines in --ink-3. Distinct from structural via colour + width;
-		// no dash pattern means perfect colour fidelity.
-		cites_article: { cat: 'semantic', sz: 0.6 },
-		cites_judgment: { cat: 'semantic', sz: 0.6 },
-		citeert: { cat: 'semantic', sz: 0.6 },
-		citeert_wet: { cat: 'semantic', sz: 0.5 },
-		interpreteert: { cat: 'semantic', sz: 0.6 },
-		noemt_artikel: { cat: 'semantic', sz: 0.5 },
-		mentions_article: { cat: 'semantic', sz: 0.5 },
-		mentions_instrument: { cat: 'semantic', sz: 0.5 },
-		discusses: { cat: 'semantic', sz: 0.5 },
-		'': { cat: 'semantic', sz: 0.5 }
+	// Shown on the edges of the hovered node.
+	const RELATION_LABEL: Record<Relation, string> = {
+		PART_OF: 'onderdeel van',
+		VERSION_OF: 'versie van',
+		AMENDS: 'wijzigt',
+		INTRODUCES: 'voegt toe',
+		REPEALS: 'trekt in',
+		BASED_ON: 'gebaseerd op',
+		IMPLEMENTS: 'implementeert',
+		LEGISLATED_IN: 'vastgesteld in',
+		REFERS_TO: 'verwijst naar',
+		EXPLAINS: 'licht toe',
+		APPEAL_OF: 'hoger beroep van',
+		SCOPED_BY: 'begrensd door',
+		ABOUT: 'over',
+		LED_BY: 'geleid door',
+		MADE_IN: 'gedaan in',
+		MEMBER_OF: 'lid van',
+		AUTHORED: 'ondertekend',
+		VOTED: 'stemde'
 	};
-	// Three solid edge styles. We dropped dashes — the dashed program's color
-	// fidelity at thin widths was unreliable, so we distinguish categories via
-	// colour shade + thickness instead. All edges render with the standard arrow
-	// program now. Each category maps to a named methode-palette token whose
-	// semantics match the edge meaning:
-	//   Structureel — moss   #3D5C3A,  medium  (in force / vast — the wet itself)
-	//   Mutatie     — spine  #7A1F1A,  heavy   (changes the wet — selection-red)
-	//   Semantisch  — slate  #44505E,  thin    (derived metadata / cross-ref)
-	const CAT_HEX: Record<'structural' | 'mutation' | 'semantic', string> = {
-		structural: '#3D5C3A', // --moss
-		mutation: '#7A1F1A', // --spine
-		semantic: '#44505E' // --slate
+
+	// Vote colour of a VOTED edge: meta.choice is "Voor" or "Tegen"; any other
+	// choice (abstention, absence) stays grey.
+	const VOTE_COLOR: Record<string, string> = {
+		voor: '#16a34a',
+		tegen: '#dc2626'
 	};
+	const VOTE_OTHER = '#9A9485';
 
 	let {
 		graph,
@@ -100,8 +52,8 @@
 		hideArticleEdges = false,
 		collapseToLaws = false,
 		graphMode = 'expansion' as 'bulk' | 'expansion',
-		inFluxMap = new Map() as InFluxMap,
-		heatMap = new Map() as HeatMap,
+		inFluxMap = new Map() as NodeCounts,
+		heatMap = new Map() as NodeCounts,
 		heatActive = false,
 		heatPeriodMonths = 12,
 		mutatieActive = false,
@@ -122,9 +74,9 @@
 		collapseToLaws?: boolean;
 		graphMode?: 'bulk' | 'expansion';
 		/** In-flux counts (open mutaties) — empty unless Mutatie overlay is active. */
-		inFluxMap?: InFluxMap;
+		inFluxMap?: NodeCounts;
 		/** Heat counts (citations in window) — empty unless Activiteit is active. */
-		heatMap?: HeatMap;
+		heatMap?: NodeCounts;
 		heatActive?: boolean;
 		/** Window length backing the heat map. Drives per-month normalisation so
 		 *  switching 3m → 24m visibly grows halos instead of just rescaling. */
@@ -156,8 +108,8 @@
 	let latestHideArticleEdges = false;
 	let latestCollapseToLaws = false;
 	let latestGraphMode: 'bulk' | 'expansion' = 'expansion';
-	let latestInFluxMap: InFluxMap = new Map();
-	let latestHeatMap: HeatMap = new Map();
+	let latestInFluxMap: NodeCounts = new Map();
+	let latestHeatMap: NodeCounts = new Map();
 	let latestHeatActive = false;
 	let latestHeatPeriodMonths = 12;
 	let latestMutatieActive = false;
@@ -230,9 +182,8 @@
 
 	// Sync filter props into mutable refs and trigger a sigma refresh.
 	// When collapse mode changes, also adjust sigma's label-density settings:
-	//   collapsed  → show every cluster node label (grid cell = 1 px)
+	//   collapsed  → show every label (grid cell = 1 px)
 	//   expanded   → sparse labels to avoid clutter (grid cell = 60 px)
-	// The HTML overlay is disabled when collapsed because sigma handles labels.
 	$effect(() => {
 		latestFilters = filters;
 		latestPinnedIds = pinnedIds;
@@ -260,10 +211,6 @@
 
 		renderer?.refresh();
 	});
-
-	// Viewport-space positions for the cluster labels — updated every render frame
-	// so they track zoom and pan correctly.
-	// Whether cluster overlay labels should be shown (hidden when zoomed in)
 
 	// Activity halos — true overlay rendered as HTML rings above the canvas.
 	// The base node visual (paper / ink / spine) is never touched: the halo is
@@ -308,9 +255,8 @@
 			// the cumulative count grows but is then divided by the new window.
 			const months = Math.max(1, latestHeatPeriodMonths);
 			graph.forEachNode((id, attrs) => {
-				if (attrs.isCluster || attrs.hidden) return;
-				const lookupId = (attrs.arangoId as string | undefined) ?? id;
-				const activity = latestHeatMap.get(lookupId) ?? latestHeatMap.get(id) ?? 0;
+				if (attrs.hidden) return;
+				const activity = latestHeatMap.get(id) ?? 0;
 				if (activity <= 0) return;
 				const rate = activity / months;
 				const t = Math.min(rate / HEAT_SATURATION_RATE, 1);
@@ -331,9 +277,8 @@
 		if (renderer && latestMutatieActive && latestInFluxMap.size > 0) {
 			const badges: MutatieBadge[] = [];
 			graph.forEachNode((id, attrs) => {
-				if (attrs.isCluster || attrs.hidden) return;
-				const lookupId = (attrs.arangoId as string | undefined) ?? id;
-				const count = latestInFluxMap.get(lookupId) ?? latestInFluxMap.get(id) ?? 0;
+				if (attrs.hidden) return;
+				const count = latestInFluxMap.get(id) ?? 0;
 				if (count <= 0) return;
 				// Effective rendered radius in viewport pixels — must match what sigma
 				// actually paints so the badge sits flush against the node edge,
@@ -366,11 +311,9 @@
 	function fit() {
 		if (!renderer) return;
 
-		// animatedReset fits ALL graphology nodes — including cluster proxy nodes
-		// that are hidden when not zoomed out (ratio < 1.5). Those outlier positions
-		// widen the bounding box and cause visible nodes to appear in a small corner.
-		// Fix: tell sigma to normalise only the nodes that will actually be visible
-		// at rest (ratio=1), then animatedReset fits exactly that area.
+		// animatedReset fits every graphology node, filtered-out ones included.
+		// Their positions would widen the bounding box and push the visible
+		// nodes into a corner, so normalise over the visible nodes only.
 		const f = latestFilters;
 		let minX = Infinity,
 			maxX = -Infinity,
@@ -378,14 +321,11 @@
 			maxY = -Infinity;
 		let count = 0;
 		graph.forEachNode((id, attrs) => {
-			if (attrs.isCluster) return; // cluster proxies hidden at ratio=1
 			if (f) {
-				const kind = attrs.kind as string;
-				if (kind && (f.nodeTypeToggles as Record<string, boolean>)[kind] === false) return;
+				if (f.nodeTypeToggles[attrs.kind as GraphNodeKind] === false) return;
 				if (f.minDegree > 0 && graph.degree(id) < f.minDegree) return;
-				if (kind === 'article' && f.activeInstruments.size > 0) {
-					const cg = attrs.clusterGroup as string | undefined;
-					if (!cg || !f.activeInstruments.has(cg)) return;
+				if (attrs.kind === 'article' && f.activeInstruments.size > 0) {
+					if (!f.activeInstruments.has(attrs.bwb as string)) return;
 				}
 			}
 			const x = (attrs.x as number) ?? 0;
@@ -501,29 +441,17 @@
 				// node is fully out of hit-testing.
 				if (data.suppressedByLevel) return { ...data, hidden: true };
 
-				// Clustering is now opt-in only — the user explicitly toggles the
-				// Artikelen/Wetten switch in the sidebar. Zoom-based auto-collapse made
-				// the canvas swap nodes whenever you panned, which fought every zoom.
-
-				// Cluster proxies were removed in favour of real instrument nodes
-				// plus mutual exclusion (computeLevelSuppression). If a stale
-				// `isCluster` ever leaks through, just hide it.
-				if (data.isCluster) return { ...data, hidden: true };
-				// Article visibility is now driven entirely by `suppressedByLevel`
-				// (computed in GraphView): hidden iff the wet's instrument is loaded.
 				if (!latestPinnedIds.has(id)) {
 					const f = latestFilters;
 					if (f) {
-						const kind = data.kind as string;
-						if (kind && (f.nodeTypeToggles as Record<string, boolean>)[kind] === false) {
+						if (f.nodeTypeToggles[data.kind as GraphNodeKind] === false) {
 							return { ...data, hidden: true };
 						}
 						if (f.minDegree > 0 && graph.degree(id) < f.minDegree) {
 							return { ...data, hidden: true };
 						}
-						if (kind === 'article' && f.activeInstruments.size > 0) {
-							const cg = data.clusterGroup as string | undefined;
-							if (!cg || !f.activeInstruments.has(cg)) return { ...data, hidden: true };
+						if (data.kind === 'article' && f.activeInstruments.size > 0) {
+							if (!f.activeInstruments.has(data.bwb as string)) return { ...data, hidden: true };
 						}
 					}
 				}
@@ -628,81 +556,48 @@
 					return { ...data, hidden: true };
 				}
 
-				// Clustering is now opt-in only — the user explicitly toggles the
-				// Artikelen/Wetten switch in the sidebar. Zoom-based auto-collapse made
-				// the canvas swap nodes whenever you panned, which fought every zoom.
-				const clustered = latestCollapseToLaws;
-
-				// ── Cluster edges ────────────────────────────────────────────────────
-				if (data.isClusterEdge) {
-					if (!clustered) return { ...data, hidden: true };
-					return { ...data, hidden: false, color: '#7A1F1A' };
-				}
-				// In Wetten mode hide edges *incident to a hidden article*. Edges
-				// between non-article nodes (instrument↔judgment, fractie↔lid, …)
-				// stay visible because their endpoints are still on the canvas.
-				// Same rule as zoom-based clustering: if both endpoints carry a
-				// clusterGroup attribute, they're rolled into a cluster edge.
-				if (latestCollapseToLaws) {
-					const srcKind = graph.getNodeAttribute(graph.source(edge), 'kind');
-					const tgtKind = graph.getNodeAttribute(graph.target(edge), 'kind');
-					if (srcKind === 'article' || tgtKind === 'article') {
-						return { ...data, hidden: true };
-					}
-				}
-				if (latestCollapseToLaws) {
-					const srcCG = graph.getNodeAttribute(graph.source(edge), 'clusterGroup');
-					const tgtCG = graph.getNodeAttribute(graph.target(edge), 'clusterGroup');
-					if (srcCG && tgtCG) return { ...data, hidden: true };
+				// In Wetten mode articles are not drawn, so neither are their edges.
+				// Edges between other kinds (instrument to judgment, faction to
+				// member, ...) stay because their endpoints are still on the canvas.
+				if (
+					latestCollapseToLaws &&
+					(graph.getNodeAttribute(src, 'kind') === 'article' ||
+						graph.getNodeAttribute(tgt, 'kind') === 'article')
+				) {
+					return { ...data, hidden: true };
 				}
 
-				// ── Edge category filter (methode §iiib) ──────────────────────────────
+				// ── Edge category filter ──────────────────────────────────────────────
 				const f = latestFilters;
-				const rel = (data.relation as string | null) ?? '';
-				const { cat: edgeCat, sz: baseSize } = EDGE_CAT[rel] ?? EDGE_CAT[''];
-				if (f) {
-					if (edgeCat === 'structural' && !f.structuralEnabled) return { ...data, hidden: true };
-					if (edgeCat === 'mutation' && !f.mutationEnabled) return { ...data, hidden: true };
-					if (edgeCat === 'semantic' && !f.semanticEnabled) return { ...data, hidden: true };
+				const relation = data.relation as Relation;
+				const category = edgeCategory(
+					relation,
+					graph.getNodeAttribute(src, 'kind') as GraphNodeKind
+				);
+				const baseSize = EDGE_WEIGHT[relation];
+				if (f && !f[`${category}Enabled`]) return { ...data, hidden: true };
+
+				if (
+					latestHideArticleEdges &&
+					graph.getNodeAttribute(src, 'kind') === 'article' &&
+					graph.getNodeAttribute(tgt, 'kind') === 'article'
+				) {
+					return { ...data, hidden: true };
 				}
 
-				// ── Hide article↔article edges ───────────────────────────────────────
-				if (latestHideArticleEdges) {
-					const src = graph.source(edge),
-						tgt = graph.target(edge);
-					if (
-						graph.getNodeAttribute(src, 'kind') === 'article' &&
-						graph.getNodeAttribute(tgt, 'kind') === 'article'
-					) {
-						return { ...data, hidden: true };
-					}
-				}
-
-				// ── Style basis (methode §iiib) ──────────────────────────────────────
-				// All categories use the standard solid arrow program. Distinction is
-				// colour + line weight only:
-				//   structural — moss   medium
-				//   mutation   — spine  heavy
-				//   semantic   — slate  thin
-				let renderColor = CAT_HEX[edgeCat];
+				// ── Style ─────────────────────────────────────────────────────────────
+				// Solid arrows; the category shows in colour and weight (structural
+				// moss, mutation spine and heavier, semantic slate and thin).
+				let renderColor = EDGE_COLOR[category];
 				let edgeType: 'arrow' | 'dashed' = 'arrow';
 				let restSize = baseSize;
 
-				// STEMT override: dashed, vote-coloured. Backend ships
-				//   meta.stem ∈ {'Voor','Tegen','Onthouden'}
-				//   meta.aantal_zetels: number
-				// We map stem → green/red/grey and dash the line so a fractie's vote
-				// pattern reads at a glance (cluster of green vs red around a stemming).
-				if (rel === 'stemt') {
-					const meta = (data.meta as Record<string, unknown> | null | undefined) ?? null;
-					const stem = String((meta?.['stem'] as string | undefined) ?? '').toLowerCase();
-					if (stem === 'voor')
-						renderColor = '#16a34a'; // --green
-					else if (stem === 'tegen')
-						renderColor = '#dc2626'; // --red
-					else if (stem === 'onthouden') renderColor = '#9A9485'; // muted grey
+				// VOTED: dashed and coloured by meta.choice, so the votes on a
+				// decision read at a glance. meta.seats is not drawn.
+				if (relation === 'VOTED') {
+					const choice = (data.meta as Record<string, unknown> | null | undefined)?.choice;
+					renderColor = VOTE_COLOR[String(choice).toLowerCase()] ?? VOTE_OTHER;
 					edgeType = 'dashed';
-					// Slightly thicker so the dashes read at typical zoom.
 					restSize = Math.max(baseSize, 0.7);
 				}
 
@@ -711,24 +606,17 @@
 				// confidence) as a label; non-incident edges dim to paper-3 grey.
 				// Outside hover we don't render edge labels.
 				if (hoveredId !== null) {
-					const src = graph.source(edge),
-						tgt = graph.target(edge);
 					const incident = src === hoveredId || tgt === hoveredId;
 					if (incident) {
-						const rel = (data.relation as string | null) ?? '';
 						const conf = data.confidence as number | null | undefined;
-						const label = rel
-							? conf != null
-								? `${rel.replace(/_/g, ' ')} · ${conf.toFixed(2)}`
-								: rel.replace(/_/g, ' ')
-							: '';
+						const label = RELATION_LABEL[relation];
 						return {
 							...data,
 							hidden: false,
 							type: edgeType,
 							color: renderColor,
 							size: restSize * 1.3,
-							label,
+							label: conf != null ? `${label} · ${conf.toFixed(2)}` : label,
 							forceLabel: true,
 							zIndex: 2
 						};
@@ -761,7 +649,7 @@
 			}
 		});
 
-		// Track zoom ratio for adaptive label rendering and cluster visibility.
+		// Report the zoom ratio.
 		// Debounce the onCameraChange callback so we only save state after the
 		// user has stopped panning/zooming, not on every animation frame.
 		let cameraChangeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -777,7 +665,7 @@
 			}
 		});
 
-		// Update cluster label positions on every render (camera move, zoom, etc.)
+		// Halos and badges follow the camera.
 		renderer.on('afterRender', updateViewportLabels);
 
 		renderer.on('clickNode', ({ node }) => onNodeClick?.(node));
@@ -878,14 +766,6 @@
 		display: block;
 	}
 
-	.cluster-overlay {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-		overflow: hidden;
-		z-index: 10;
-	}
-
 	/* Activity overlay — true halo ring on top of the canvas. The base node
      visual is untouched; only the ring conveys "this is being cited a lot".
      Ring diameter scales with citation density (set inline). */
@@ -894,7 +774,7 @@
 		inset: 0;
 		pointer-events: none;
 		overflow: hidden;
-		z-index: 5; /* above sigma canvas (default z-index 0), below cluster labels */
+		z-index: 5; /* above the sigma canvas (default z-index 0) */
 	}
 	.activity-ring {
 		position: absolute;
@@ -936,18 +816,5 @@
 	}
 	.mutatie-badge--multi {
 		background: var(--spine-2, var(--spine));
-	}
-
-	.cluster-lbl {
-		position: absolute;
-		transform: translate(-50%, -50%);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--ink-3);
-		white-space: nowrap;
-		opacity: 0.7;
 	}
 </style>

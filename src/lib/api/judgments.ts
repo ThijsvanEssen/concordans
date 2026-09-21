@@ -1,6 +1,4 @@
-import { apiGet } from './client';
-import type { JudgmentDetailResponse } from './types';
+import { api, unwrap } from './client';
 
-export function getJudgmentDetail(ecli: string) {
-	return apiGet<JudgmentDetailResponse>(`/api/judgments/${encodeURIComponent(ecli)}`);
-}
+export const getJudgmentDetail = (ecli: string) =>
+	unwrap(api.GET('/api/judgments/{ecli}', { params: { path: { ecli } } }));

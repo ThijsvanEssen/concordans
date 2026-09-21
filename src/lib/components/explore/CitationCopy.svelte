@@ -1,104 +1,56 @@
 <script lang="ts">
-	import type { GraphNode } from '$lib/graph/types';
-	import { getArticleDetail } from '$lib/api/articles';
-	import { recordInstrument } from '$lib/api/instrument-cache';
+	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { formatEcliLabel, type GraphNode } from '$lib/graph/types';
+	import { textProp } from './readers/_shared';
 
 	let { node }: { node: GraphNode | null } = $props();
 
-	type Format = 'verkort' | 'volledig' | 'vindplaats' | 'bibtex';
-	let active = $state<Format>('verkort');
-	let copiedFormat = $state<Format | null>(null);
+	let active = $state('verkort');
+	let copied = $state<string | null>(null);
 
-	const nodeProps = $derived((node?.raw?.props ?? {}) as Record<string, unknown>);
+	// Only what the node itself says: the API supplies no ready-made citations.
+	const formats = $derived.by<Record<string, string> | null>(() => {
+		const props = node?.raw?.props;
+		if (!node || !props) return null;
 
-	// Backend ships authoritative citation formats per article. Fetch and cache.
-	const fmtCache = new Map<string, Partial<Record<Format, string>>>();
-	let backendFormats = $state<Partial<Record<Format, string>> | null>(null);
-
-	$effect(() => {
-		backendFormats = null;
-		if (!node || node.collection !== 'instrument_articles') return;
-		const bwb = String(nodeProps['bwb_id'] ?? '');
-		const art = String(nodeProps['article_number'] ?? '');
-		if (!bwb || !art) return;
-		const key = `${bwb}/${art}`;
-		const cached = fmtCache.get(key);
-		if (cached) {
-			backendFormats = cached;
-			return;
-		}
-		getArticleDetail(bwb, art)
-			.then((d) => {
-				const f = d.citation_formats ?? null;
-				if (f) {
-					fmtCache.set(key, f);
-					// Sniff the short title out of the BibTeX entry so the breadcrumb
-					// and other consumers can display "Sr" without an extra request.
-					// (Backend doesn't expose it as a discrete field today.)
-					const shortMatch = (f.bibtex ?? '').match(/shorttitle\s*=\s*\{([^}]+)\}/);
-					const lawMatch = (f.bibtex ?? '').match(/\blaw\s*=\s*\{([^}]+)\}/);
-					recordInstrument({
-						bwb_id: bwb,
-						short_title: shortMatch?.[1] ?? null,
-						citation_title: lawMatch?.[1] ?? null,
-						title: lawMatch?.[1] ?? null
-					});
-					if (String(nodeProps['bwb_id']) === bwb && String(nodeProps['article_number']) === art) {
-						backendFormats = f;
-					}
-				}
-			})
-			.catch(() => {
-				/* silent — fall back to client-side construction */
-			});
-	});
-
-	const formats = $derived.by<Record<Format, string> | null>(() => {
-		if (!node) return null;
-
-		if (node.collection === 'instrument_articles') {
-			const bwb = String(nodeProps['bwb_id'] ?? '');
-			const art = String(nodeProps['article_number'] ?? '');
-			const fb = backendFormats ?? {};
-			const verkort = fb.verkort ?? `Art. ${art}`;
-			const volledig = fb.volledig ?? `Art. ${art}`;
-			const vindplaats =
-				fb.vindplaats ?? (bwb ? `wetten.overheid.nl/${bwb}/Artikel${art}` : `Art. ${art}`);
-			const bibtex =
-				fb.bibtex ??
-				`@legislation{${(bwb || 'art').toLowerCase()}_${art.toLowerCase()},\n  title = {Art. ${art}},\n  bwbid = {${bwb}},\n}`;
-			return { verkort, volledig, vindplaats, bibtex };
+		const number = textProp(props.article_number);
+		if (node.collection === 'articles' && number) {
+			const meta = $instrumentMetaStore.get(String(props.bwb_id));
+			const law = meta?.shortTitle ?? meta?.citationTitle ?? meta?.title;
+			return {
+				verkort: `Art. ${number}${law ? ` ${law}` : ''}`,
+				volledig: textProp(props.display_name) ?? node.label
+			};
 		}
 
-		if (node.collection === 'judgments') {
-			const ecli = String(nodeProps['ecli'] ?? node.key ?? '');
-			const fullEcli = ecli.startsWith('ECLI:') ? ecli : ecli ? `ECLI:${ecli}` : '';
-			const m = fullEcli.match(/ECLI:NL:([^:]+):(\d{4}):(\d+)/);
-			const court = m?.[1] ?? '';
-			const year = m?.[2] ?? '';
-			const num = m?.[3] ?? '';
-
-			const verkort = court && year ? `${court} ${year}/${num}` : fullEcli;
-			const volledig = fullEcli;
-			const vindplaats = fullEcli ? `deeplink.rechtspraak.nl/uitspraak?id=${fullEcli}` : '';
-			const bibtex = `@misc{${(court || 'uitspraak').toLowerCase()}_${year}_${num},\n  title = {${node.label}},\n  howpublished = {ECLI: ${fullEcli}},\n  year = {${year || ''}}\n}`;
-			return { verkort, volledig, vindplaats, bibtex };
+		const ecli = textProp(props.ecli);
+		if (node.collection === 'judgments' && ecli) {
+			return {
+				verkort: formatEcliLabel(ecli),
+				volledig: ecli,
+				...(props.source === 'rechtspraak' && {
+					vindplaats: `https://deeplink.rechtspraak.nl/uitspraak?id=${ecli}`
+				})
+			};
 		}
 
 		return null;
 	});
 
+	// A judgment has a format that an article lacks.
+	const shown = $derived(formats ? (formats[active] ? active : 'verkort') : null);
+
 	async function handleCopy() {
-		if (!formats) return;
-		const text = formats[active];
+		if (!formats || !shown) return;
+		const format = shown;
 		try {
-			await navigator.clipboard.writeText(text);
-			copiedFormat = active;
+			await navigator.clipboard.writeText(formats[format]);
+			copied = format;
 			setTimeout(() => {
-				if (copiedFormat === active) copiedFormat = null;
+				if (copied === format) copied = null;
 			}, 1600);
 		} catch {
-			// Clipboard may be unavailable in some contexts; do nothing.
+			// The clipboard is unavailable in some contexts.
 		}
 	}
 </script>
@@ -108,22 +60,22 @@
 		<h3 class="cite-h">Citeer dit</h3>
 
 		<div class="cite-tabs" role="tablist">
-			{#each ['verkort', 'volledig', 'vindplaats', 'bibtex'] as const as f, i (i)}
+			{#each Object.keys(formats) as f (f)}
 				<button
 					type="button"
 					role="tab"
 					class="cite-tab"
-					class:on={active === f}
-					aria-selected={active === f}
+					class:on={shown === f}
+					aria-selected={shown === f}
 					onclick={() => (active = f)}>{f.toUpperCase()}</button
 				>
 			{/each}
 		</div>
 
-		<pre class="cite-text">{formats[active]}</pre>
+		<pre class="cite-text">{formats[shown!]}</pre>
 
 		<button type="button" class="cite-copy-btn" onclick={handleCopy}>
-			{copiedFormat === active ? 'Gekopieerd' : 'Kopieer'}
+			{copied === shown ? 'Gekopieerd' : 'Kopieer'}
 		</button>
 	</section>
 {/if}

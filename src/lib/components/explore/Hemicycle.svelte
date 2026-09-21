@@ -1,11 +1,14 @@
 <script lang="ts">
-	import type { ZetelsResponse, ZetelFractie } from '$lib/api/parliamentary';
+	import type { Schema } from '$lib/api/types';
+
+	type Seats = Schema<'ParliamentSeatsResponse'>;
+	type SeatFaction = Seats['factions'][number];
 
 	let {
 		data,
 		onSelect
 	}: {
-		data: ZetelsResponse;
+		data: Seats;
 		onSelect?: (key: string) => void;
 	} = $props();
 
@@ -30,11 +33,10 @@
 		x: number;
 		y: number;
 		angle: number;
-		fractie: ZetelFractie;
+		faction: SeatFaction;
 	};
 
 	const seats = $derived.by<Seat[]>(() => {
-		const totalCap = ROW_CAPS.reduce((s, c) => s + c, 0);
 		// Build raw positions, ordered left→right across all rows.
 		const raw: { x: number; y: number; angle: number }[] = [];
 		for (let i = 0; i < ROW_CAPS.length; i++) {
@@ -50,29 +52,27 @@
 				});
 			}
 		}
-		// Sort all seats by angle descending so leftmost first.
+		// Leftmost first.
 		raw.sort((a, b) => b.angle - a.angle);
 
-		// Assign fracties in order.
+		// Assign factions in order.
 		const out: Seat[] = [];
 		let idx = 0;
-		for (const f of data.fracties) {
-			for (let k = 0; k < f.aantal_zetels && idx < raw.length; k++, idx++) {
-				out.push({ ...raw[idx], fractie: f });
+		for (const f of data.factions) {
+			for (let k = 0; k < f.seats && idx < raw.length; k++, idx++) {
+				out.push({ ...raw[idx], faction: f });
 			}
 		}
-		// Truncate if backend total > totalCap (shouldn't happen for 150).
-		void totalCap;
 		return out;
 	});
 
 	// Eén taartpunt per fractie: omsluit alle stoelen van die fractie en
 	// werkt als gemeenschappelijke hitbox voor hover/click/focus.
-	type Sector = { fractie: ZetelFractie; path: string };
+	type Sector = { faction: SeatFaction; path: string };
 	const sectors = $derived.by<Sector[]>(() => {
 		const byKey = new Map<string, Seat[]>();
 		for (const s of seats) {
-			const k = s.fractie.key ?? String(s.fractie.id);
+			const k = s.faction.key;
 			if (!byKey.has(k)) byKey.set(k, []);
 			byKey.get(k)!.push(s);
 		}
@@ -83,8 +83,8 @@
 			CX + r * Math.cos(a),
 			CY - r * Math.sin(a)
 		];
-		for (const f of data.fracties) {
-			const key = f.key ?? String(f.id);
+		for (const f of data.factions) {
+			const key = f.key;
 			const seatsF = byKey.get(key);
 			if (!seatsF || seatsF.length === 0) continue;
 			const angles = seatsF.map((s) => s.angle);
@@ -112,22 +112,22 @@
 				`A ${rIn} ${rIn} 0 0 0 ${x1} ${y1}`,
 				'Z'
 			].join(' ');
-			out.push({ fractie: f, path });
+			out.push({ faction: f, path });
 		}
 		// Render largest fracties first, smallest last. Door HIT_ANGLE_PAD
 		// overlappen aangrenzende sectoren met ~5°; zonder deze sortering zou
 		// een grote fractie de hover-zone van een eenmans-fractie ernaast
 		// kunnen overschrijven. Klein bovenop = klein blijft selecteerbaar.
-		out.sort((a, b) => b.fractie.aantal_zetels - a.fractie.aantal_zetels);
+		out.sort((a, b) => b.faction.seats - a.faction.seats);
 		return out;
 	});
 
-	let hovered = $state<ZetelFractie | null>(null);
+	let hovered = $state<SeatFaction | null>(null);
 
-	function handleClick(f: ZetelFractie) {
+	function handleClick(f: SeatFaction) {
 		onSelect?.(f.key);
 	}
-	function handleKey(e: KeyboardEvent, f: ZetelFractie) {
+	function handleKey(e: KeyboardEvent, f: SeatFaction) {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
 			onSelect?.(f.key);
@@ -139,30 +139,30 @@
 	<svg viewBox="0 0 {VIEW_W} {VIEW_H}" aria-hidden="true">
 		<!-- Sectoren eerst (onder de stoelen) zodat ze de pointer-events
          opvangen zonder over de stoelen te tekenen. -->
-		{#each sectors as sec (sec.fractie.id)}
+		{#each sectors as sec (sec.faction.id)}
 			<path
 				d={sec.path}
 				class="sector"
 				role="button"
 				tabindex="0"
-				aria-label={`${sec.fractie.afkorting ?? sec.fractie.key} — ${sec.fractie.naam ?? ''} — ${sec.fractie.aantal_zetels} zetels`}
-				onmouseenter={() => (hovered = sec.fractie)}
+				aria-label={`${sec.faction.abbreviation ?? sec.faction.key}, ${sec.faction.name ?? ''}, ${sec.faction.seats} zetels`}
+				onmouseenter={() => (hovered = sec.faction)}
 				onmouseleave={() => (hovered = null)}
-				onfocus={() => (hovered = sec.fractie)}
+				onfocus={() => (hovered = sec.faction)}
 				onblur={() => (hovered = null)}
-				onclick={() => handleClick(sec.fractie)}
-				onkeydown={(e) => handleKey(e, sec.fractie)}
+				onclick={() => handleClick(sec.faction)}
+				onkeydown={(e) => handleKey(e, sec.faction)}
 			/>
 		{/each}
-		{#each seats as s (s.fractie.id + ':' + s.x + ':' + s.y)}
+		{#each seats as s (s.faction.id + ':' + s.x + ':' + s.y)}
 			<circle
 				cx={s.x}
 				cy={s.y}
 				r={SEAT_R}
-				fill={s.fractie.color}
+				fill={s.faction.color}
 				class="seat"
-				class:seat--dim={hovered !== null && hovered.id !== s.fractie.id}
-				class:seat--hi={hovered?.id === s.fractie.id}
+				class:seat--dim={hovered !== null && hovered.id !== s.faction.id}
+				class:seat--hi={hovered?.id === s.faction.id}
 			/>
 		{/each}
 		{#if hovered}
@@ -174,10 +174,10 @@
 				style:fill={hovered.color}
 				aria-live="polite"
 			>
-				{hovered.afkorting ?? hovered.key}
+				{hovered.abbreviation ?? hovered.key}
 			</text>
 			<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
-				{hovered.aantal_zetels} zetels
+				{hovered.seats} zetels
 			</text>
 		{:else}
 			<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">
@@ -195,8 +195,8 @@
        de seat-circles geen ruis maken; deze lijst geeft het volledige
        overzicht in stemvolgorde. -->
 	<ul class="hemicycle-sr-list">
-		{#each data.fracties as f (f.id)}
-			<li>{f.afkorting ?? f.key} — {f.naam ?? ''} — {f.aantal_zetels} zetels</li>
+		{#each data.factions as f (f.id)}
+			<li>{f.abbreviation ?? f.key}, {f.name ?? ''}, {f.seats} zetels</li>
 		{/each}
 	</ul>
 </figure>

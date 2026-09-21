@@ -1,38 +1,12 @@
 <script lang="ts">
-	// Rich inline-detail voor een geopende rij. Per categorie een eigen
-	// render-pad: header met kind/identifier/titel/chips, een rij stat-tiles,
-	// optioneel een fase-tijdlijn (alleen dossier) en een twee-kolommen-body.
-	//
-	// Toont uitsluitend wat de DTO levert. Geen verzonnen metadata; CLAUDE.md
-	// verbiedt elke vorm van geparafraseerde aanvulling.
-	import type {
-		CommissieDTO,
-		DossierSummaryDTO,
-		FractieDTO,
-		InstrumentSummaryDTO,
-		JudgmentSummaryDTO,
-		LidDTO,
-		StemmingSummaryDTO
-	} from '$lib/api/parliamentary';
+	// Inline detail of an opened row: header, stat tiles, a stage path for
+	// dossiers and the three ways of opening the source. Shows only what the
+	// list item carries.
+	import type { Schema } from '$lib/api/types';
+	import { STAGES, STAGE_LABEL, TRACK_LABEL } from '$lib/components/parliamentary/stages';
+	import { dossierNumber } from '$lib/components/parliamentary/data';
 	import { partyColor } from '$lib/utils/party-color';
-
-	type CategoryKey =
-		| 'wetten'
-		| 'arresten'
-		| 'dossiers'
-		| 'commissies'
-		| 'leden'
-		| 'fracties'
-		| 'stemmingen';
-
-	type AnyRecord =
-		| InstrumentSummaryDTO
-		| JudgmentSummaryDTO
-		| DossierSummaryDTO
-		| CommissieDTO
-		| LidDTO
-		| FractieDTO
-		| StemmingSummaryDTO;
+	import type { IndexCategory } from './categories';
 
 	let {
 		category,
@@ -41,79 +15,65 @@
 		onSplit,
 		onRead
 	}: {
-		category: CategoryKey;
-		record: AnyRecord;
+		category: IndexCategory;
+		record:
+			| Schema<'InstrumentListItemDTO'>
+			| Schema<'JudgmentListItemDTO'>
+			| Schema<'DossierSummaryDTO'>
+			| Schema<'CommitteeDTO'>
+			| Schema<'MemberDTO'>
+			| Schema<'FactionDTO'>
+			| Schema<'DecisionSummaryDTO'>;
 		onDiscover: () => void;
 		onSplit: () => void;
 		onRead?: () => void;
 	} = $props();
 
-	// ── Helpers ────────────────────────────────────────────────────────────
 	function fmtDate(iso: string | null | undefined): string {
 		if (!iso) return '—';
-		try {
-			return new Intl.DateTimeFormat('nl-NL', {
-				day: 'numeric',
-				month: 'short',
-				year: 'numeric'
-			}).format(new Date(iso));
-		} catch {
-			return iso;
-		}
+		return new Intl.DateTimeFormat('nl-NL', {
+			day: 'numeric',
+			month: 'short',
+			year: 'numeric'
+		}).format(new Date(iso));
 	}
 
-	const KIND_LABEL: Record<CategoryKey, string> = {
-		wetten: 'Wet · regelgeving',
-		arresten: 'Arrest · jurisprudentie',
+	const KIND_LABEL: Record<IndexCategory, string> = {
+		instruments: 'Wet · regelgeving',
+		judgments: 'Arrest · jurisprudentie',
 		dossiers: 'Dossier · kamerstukken',
-		commissies: 'Commissie · Tweede Kamer',
-		leden: 'Kamerlid · Tweede Kamer',
-		fracties: 'Fractie · Tweede Kamer',
-		stemmingen: 'Stemming · plenaire vergadering'
+		committees: 'Commissie · Tweede Kamer',
+		members: 'Kamerlid · Tweede Kamer',
+		factions: 'Fractie · Tweede Kamer',
+		decisions: 'Stemming · plenaire vergadering'
 	};
 
-	// Welke categorieën hebben een Lezen-modus (volledige tekst).
-	const HAS_READER = new Set<CategoryKey>(['wetten', 'arresten']);
+	// Only laws and judgments have a full text to read.
+	const HAS_READER = new Set<IndexCategory>(['instruments', 'judgments']);
 
-	// ── Fase timeline (dossiers) ───────────────────────────────────────────
-	// Zelfde fase-set als de Toolbar; de huidige fase wordt op de tijdlijn
-	// gemarkeerd als 'current', alle eerdere fases als 'past', latere als
-	// 'future'. Een tijdlijn-stap matcht een fase wanneer het label van de
-	// huidige_fase ermee overeenkomt (case-insensitive).
-	const STAGE_PATH: Array<{ id: string; label: string; tone: 'slate' | 'ochre' | 'olive' }> = [
-		{ id: 'wetsvoorstel', label: 'Wetsvoorstel', tone: 'slate' },
-		{ id: 'mvt', label: 'MvT', tone: 'slate' },
-		{ id: 'advies_rvs', label: 'Advies RvS', tone: 'slate' },
-		{ id: 'nota', label: 'Nota', tone: 'ochre' },
-		{ id: 'verslag', label: 'Verslag', tone: 'ochre' },
-		{ id: 'amendementen', label: 'Amendementen', tone: 'ochre' },
-		{ id: 'stemming', label: 'Stemming', tone: 'ochre' },
-		{ id: 'afgehandeld', label: 'Afgehandeld', tone: 'olive' }
-	];
+	// The category says which record it is; the parent passes matching pairs.
+	const w = $derived(
+		category === 'instruments' ? (record as Schema<'InstrumentListItemDTO'>) : null
+	);
+	const j = $derived(category === 'judgments' ? (record as Schema<'JudgmentListItemDTO'>) : null);
+	const d = $derived(category === 'dossiers' ? (record as Schema<'DossierSummaryDTO'>) : null);
+	const c = $derived(category === 'committees' ? (record as Schema<'CommitteeDTO'>) : null);
+	const m = $derived(category === 'members' ? (record as Schema<'MemberDTO'>) : null);
+	const f = $derived(category === 'factions' ? (record as Schema<'FactionDTO'>) : null);
+	const s = $derived(category === 'decisions' ? (record as Schema<'DecisionSummaryDTO'>) : null);
 
-	function stageIndexFor(fase: string | null | undefined): number {
-		if (!fase) return -1;
-		const n = fase.toLowerCase();
-		return STAGE_PATH.findIndex((s) => s.id === n || s.label.toLowerCase() === n);
-	}
+	const stageIdx = $derived(d ? STAGES.findIndex((step) => step.id === d.current_stage) : -1);
 
-	// Derived per-categorie payload. Casten via `as` is veilig: het component
-	// wordt alleen aangeroepen met records van de bijbehorende categorie.
-	const w = $derived(category === 'wetten' ? (record as InstrumentSummaryDTO) : null);
-	const j = $derived(category === 'arresten' ? (record as JudgmentSummaryDTO) : null);
-	const d = $derived(category === 'dossiers' ? (record as DossierSummaryDTO) : null);
-	const c = $derived(category === 'commissies' ? (record as CommissieDTO) : null);
-	const l = $derived(category === 'leden' ? (record as LidDTO) : null);
-	const f = $derived(category === 'fracties' ? (record as FractieDTO) : null);
-	const s = $derived(category === 'stemmingen' ? (record as StemmingSummaryDTO) : null);
-
-	const stageIdx = $derived(d ? stageIndexFor(d.huidige_fase) : -1);
-
-	// Voor/tegen-percentage voor de stemming-bar in detail (totaal exclusief
-	// onthoudingen, want die nemen geen positie in). We tonen zetels — de
-	// werkelijke meerderheidsmaat, totaal ~150.
-	const stemTotal = $derived(s ? s.voor_zetels + s.tegen_zetels : 0);
-	const voorPct = $derived(stemTotal > 0 ? (s!.voor_zetels / stemTotal) * 100 : 0);
+	// Seats for and against; abstentions take no side. Any other choice gets its own tile.
+	const inFavour = $derived(s?.tally?.['Voor'] ?? 0);
+	const against = $derived(s?.tally?.['Tegen'] ?? 0);
+	const inFavourPct = $derived(
+		inFavour + against > 0 ? (inFavour / (inFavour + against)) * 100 : 0
+	);
+	const otherChoices = $derived(
+		Object.entries(s?.tally ?? {}).filter(([choice]) => choice !== 'Voor' && choice !== 'Tegen')
+	);
+	const voterUnit = $derived(s?.vote_kind === 'member' ? 'leden' : 'fracties');
 </script>
 
 <div class="detail-inner">
@@ -129,17 +89,17 @@
 					<span class="detail-mono">{j.ecli ?? j.key}</span>
 				{:else if d}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">Kamerstuk {d.kamerstuknummer}</span>
+					<span class="detail-mono">Kamerstuk {dossierNumber(d.key)}</span>
 				{:else if c}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">{c.afkorting ?? c.slug}</span>
+					<span class="detail-mono">{c.abbreviation ?? c.slug}</span>
 				{:else if f}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">{f.afkorting}</span>
+					<span class="detail-mono">{f.abbreviation}</span>
 				{:else if s}
 					<span class="detail-sep" aria-hidden="true">·</span>
 					<span class="detail-mono"
-						>{fmtDate(s.datum)}{s.dossier_nummers[0] ? ` · ${s.dossier_nummers[0]}` : ''}</span
+						>{fmtDate(s.date)}{s.dossier_numbers?.[0] ? ` · ${s.dossier_numbers[0]}` : ''}</span
 					>
 				{/if}
 			</div>
@@ -150,15 +110,15 @@
 				{:else if j}
 					{j.display_name ?? j.ecli ?? j.key}
 				{:else if d}
-					{d.titel ?? d.kamerstuknummer}
+					{d.title ?? d.number}
 				{:else if c}
-					{c.naam ?? c.key}
-				{:else if l}
-					{l.naam ?? l.key}
+					{c.name ?? c.key}
+				{:else if m}
+					{m.name ?? m.key}
 				{:else if f}
-					{f.naam ?? f.afkorting}
+					{f.name ?? f.abbreviation}
 				{:else if s}
-					{s.onderwerp ?? '—'}
+					{s.subject ?? '—'}
 				{/if}
 			</h3>
 
@@ -172,11 +132,13 @@
 					<span class="tag tag--outline">{j.court ?? 'Onbekende instantie'}</span>
 					<span class="tag tag--indigo"><span class="tag-dot"></span>Uitspraak</span>
 				{:else if d}
-					{#if d.traject_kind}
-						<span class="tag tag--outline">{d.traject_kind}</span>
+					{#if d.track}
+						<span class="tag tag--outline">{TRACK_LABEL[d.track]}</span>
 					{/if}
-					{#if d.huidige_fase && d.huidige_fase.toLowerCase() !== 'onbekend'}
-						<span class="tag tag--ochre"><span class="tag-dot"></span>nu: {d.huidige_fase}</span>
+					{#if d.current_stage}
+						<span class="tag tag--ochre"
+							><span class="tag-dot"></span>nu: {STAGE_LABEL[d.current_stage]}</span
+						>
 					{/if}
 				{:else if c}
 					{#if (c.active_dossier_count ?? 0) > 0}
@@ -184,28 +146,28 @@
 					{:else}
 						<span class="tag tag--outline">Geen lopende dossiers</span>
 					{/if}
-				{:else if l && l.partij}
+				{:else if m && m.party}
 					<span class="tag tag--outline">
-						<span class="party-dot" style:background={partyColor(l.partij)}></span>{l.partij}
+						<span class="party-dot" style:background={partyColor(m.party)}></span>{m.party}
 					</span>
 				{:else if f}
 					<span class="tag tag--outline">
-						<span class="party-dot" style:background={partyColor(f.afkorting ?? '')}></span>
-						{f.afkorting}{f.aantal_zetels != null ? ` · ${f.aantal_zetels} zetels` : ''}
+						<span class="party-dot" style:background={partyColor(f.abbreviation ?? '')}></span>
+						{f.abbreviation}{f.seats != null ? ` · ${f.seats} zetels` : ''}
 					</span>
-				{:else if s}
-					<span class="tag" class:tag--moss={s.aangenomen} class:tag--spine={!s.aangenomen}>
-						<span class="tag-dot"></span>{s.aangenomen ? 'Aangenomen' : 'Verworpen'}
+				{:else if s && s.passed != null}
+					<span class="tag" class:tag--moss={s.passed} class:tag--spine={!s.passed}>
+						<span class="tag-dot"></span>{s.passed ? 'Aangenomen' : 'Verworpen'}
 					</span>
 				{/if}
 			</div>
 		</div>
 	</div>
 
-	<!-- Dossier: granulaire fase-tijdlijn -->
+	<!-- Dossier: the stages passed so far -->
 	{#if d && stageIdx >= 0}
-		<div class="stage-tl" aria-label="Fase-tijdlijn">
-			{#each STAGE_PATH as step, i (step.id)}
+		<div class="stage-tl" aria-label="Fasen">
+			{#each STAGES as step, i (step.id)}
 				{@const past = i < stageIdx}
 				{@const current = i === stageIdx}
 				<div
@@ -233,7 +195,7 @@
 		</div>
 	{/if}
 
-	<!-- Stat-tiles: alleen wat in de DTO staat. Lege velden → '—' -->
+	<!-- Stat tiles: only what the item carries; an empty field shows '—' -->
 	<div class="tiles">
 		{#if w}
 			<div class="tile">
@@ -269,7 +231,7 @@
 			</div>
 			<div class="tile">
 				<div class="tile-num">
-					{j.inbound_citation_count > 0 ? j.inbound_citation_count.toLocaleString('nl-NL') : '—'}
+					{j.inbound_citation_count ? j.inbound_citation_count.toLocaleString('nl-NL') : '—'}
 				</div>
 				<div class="tile-lbl">Citaties naar</div>
 			</div>
@@ -279,15 +241,15 @@
 			</div>
 		{:else if d}
 			<div class="tile">
-				<div class="tile-mono">{d.kamerstuknummer}</div>
+				<div class="tile-mono">{dossierNumber(d.key)}</div>
 				<div class="tile-lbl">Kamerstuk</div>
 			</div>
 			<div class="tile">
-				<div class="tile-num">{d.huidige_fase ?? '—'}</div>
+				<div class="tile-num">{d.current_stage ? STAGE_LABEL[d.current_stage] : '—'}</div>
 				<div class="tile-lbl">Huidige fase</div>
 			</div>
 			<div class="tile">
-				<div class="tile-num">{d.traject_kind ?? 'overig'}</div>
+				<div class="tile-num">{TRACK_LABEL[d.track ?? 'overig']}</div>
 				<div class="tile-lbl">Type traject</div>
 			</div>
 		{:else if c}
@@ -296,60 +258,68 @@
 				<div class="tile-lbl">Actieve dossiers</div>
 			</div>
 			<div class="tile">
-				<div class="tile-mono">{c.afkorting ?? '—'}</div>
+				<div class="tile-mono">{c.abbreviation ?? '—'}</div>
 				<div class="tile-lbl">Afkorting</div>
 			</div>
-		{:else if l}
+		{:else if m}
 			<div class="tile">
-				<div class="tile-num">{l.partij ?? '—'}</div>
+				<div class="tile-num">{m.party ?? '—'}</div>
 				<div class="tile-lbl">Fractie</div>
 			</div>
 		{:else if f}
 			<div class="tile">
-				<div class="tile-num">{f.aantal_zetels ?? '—'}</div>
+				<div class="tile-num">{f.seats ?? '—'}</div>
 				<div class="tile-lbl">Zetels</div>
 			</div>
 			<div class="tile">
-				<div class="tile-mono">{f.afkorting ?? '—'}</div>
+				<div class="tile-mono">{f.abbreviation ?? '—'}</div>
 				<div class="tile-lbl">Afkorting</div>
+			</div>
+			<div class="tile">
+				<div class="tile-num">{f.member_count ?? '—'}</div>
+				<div class="tile-lbl">Leden</div>
 			</div>
 		{:else if s}
 			<div class="tile">
-				<div class="tile-num">{s.voor_zetels.toLocaleString('nl-NL')}</div>
+				<div class="tile-num">{inFavour.toLocaleString('nl-NL')}</div>
 				<div class="tile-lbl">Voor</div>
-				<div class="tile-sub">zetels · {s.voor_fracties} fracties</div>
+				<div class="tile-sub">zetels · {s.voters?.['Voor'] ?? 0} {voterUnit}</div>
 			</div>
 			<div class="tile">
-				<div class="tile-num">{s.tegen_zetels.toLocaleString('nl-NL')}</div>
+				<div class="tile-num">{against.toLocaleString('nl-NL')}</div>
 				<div class="tile-lbl">Tegen</div>
-				<div class="tile-sub">zetels · {s.tegen_fracties} fracties</div>
+				<div class="tile-sub">zetels · {s.voters?.['Tegen'] ?? 0} {voterUnit}</div>
 			</div>
-			<div class="tile">
-				<div class="tile-num">{s.onthouding_zetels.toLocaleString('nl-NL')}</div>
-				<div class="tile-lbl">Onthouding</div>
-				<div class="tile-sub">zetels · {s.onthouding_fracties} fracties</div>
-			</div>
-			<div class="tile">
-				<div class="tile-num">{s.aangenomen ? '✓' : '✗'}</div>
-				<div class="tile-lbl">Uitslag</div>
-				<div class="tile-sub">{s.aangenomen ? 'meerderheid' : 'geen meerderheid'}</div>
-			</div>
+			{#each otherChoices as [choice, seats] (choice)}
+				<div class="tile">
+					<div class="tile-num">{seats.toLocaleString('nl-NL')}</div>
+					<div class="tile-lbl">{choice}</div>
+					<div class="tile-sub">zetels · {s.voters?.[choice] ?? 0} {voterUnit}</div>
+				</div>
+			{/each}
+			{#if s.passed != null}
+				<div class="tile">
+					<div class="tile-num">{s.passed ? '✓' : '✗'}</div>
+					<div class="tile-lbl">Uitslag</div>
+					<div class="tile-sub">{s.passed ? 'meerderheid' : 'geen meerderheid'}</div>
+				</div>
+			{/if}
 		{/if}
 	</div>
 
-	<!-- Stemming-specifiek: voor/tegen-balk over de volle breedte van het detail. -->
-	{#if s && stemTotal > 0}
+	<!-- Decisions: bar of seats for and against over the full width -->
+	{#if s && inFavour + against > 0}
 		<div class="vote-bar-wrap">
-			<span class="vote-side vote-side--v">{s.voor_zetels}</span>
+			<span class="vote-side vote-side--v">{inFavour}</span>
 			<span class="vote-bar">
-				<span class="vote-bar-v" style:width="{voorPct}%"></span>
-				<span class="vote-bar-t" style:width="{100 - voorPct}%"></span>
+				<span class="vote-bar-v" style:width="{inFavourPct}%"></span>
+				<span class="vote-bar-t" style:width="{100 - inFavourPct}%"></span>
 			</span>
-			<span class="vote-side vote-side--t">{s.tegen_zetels}</span>
+			<span class="vote-side vote-side--t">{against}</span>
 		</div>
 	{/if}
 
-	<!-- Actions: terug naar de drie weergavemodi -->
+	<!-- The three ways of opening the source -->
 	<div class="detail-acts">
 		<button type="button" class="detail-act detail-act--primary" onclick={onDiscover}>
 			Ontdekken <span class="arrow" aria-hidden="true">→</span>

@@ -1,11 +1,7 @@
-// Plain-Dutch glossary for the Verkenner readers. Each entry maps a short
-// term (acronym / jargon as it appears in the corpus) to a long form and a
-// one-liner that a non-specialist can read. GlossaryPill.svelte wraps any
-// occurrence of a term with a popover that surfaces both.
-//
-// Add entries here as new abbreviations appear in dossier/commissie/lid/
-// fractie readers. Keep the plain-Dutch line under 140 chars; this is read
-// in a popover, not a textbook.
+// Plain-Dutch glossary for the readers. Each entry maps a short term (acronym
+// or jargon as it appears in the corpus) to a long form and a one-line
+// explanation. GlossaryPill.svelte wraps a term with a popover that shows both.
+// Keep the explanation under 140 characters.
 
 export interface GlossaryEntry {
 	/** Full expansion of the term. */
@@ -55,7 +51,7 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	BWB: {
 		full: 'Basis Wetten Bestand',
 		plain:
-			'Identifier van de Nederlandse overheid voor wetten en regelingen — bv. BWBR0001854 = Wetboek van Strafrecht.'
+			'Identifier van de Nederlandse overheid voor wetten en regelingen, bijvoorbeeld BWBR0001854 voor het Wetboek van Strafrecht.'
 	},
 	ECLI: {
 		full: 'European Case Law Identifier',

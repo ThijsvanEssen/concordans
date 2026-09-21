@@ -17,7 +17,7 @@
 			| 'node-article'
 			| 'node-judgment'
 			| 'node-instrument'
-			| 'node-tkstuk';
+			| 'node-document';
 		dot?: boolean;
 	} = $props();
 </script>
@@ -104,9 +104,9 @@
 		border-color: var(--teal-faint);
 	}
 
-	.badge--node-tkstuk {
+	.badge--node-document {
 		background: var(--plum-faint);
-		color: var(--node-tkstuk);
+		color: var(--node-document);
 		border-color: var(--plum-faint);
 	}
 </style>

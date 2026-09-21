@@ -1,10 +1,7 @@
 <script lang="ts">
-	// Uniforme toolbar voor elke categorie in Index-modus.
-	// Boven: zoekveld links, sort-keuze + richtingsknop rechts.
-	// Onder: ofwel een rij filter-pills, ofwel een custom filter-snippet
-	//        (bv. de fase-timeline voor Dossiers). Per-categorie verschillen
-	//        zitten in de waarden die binnenkomen via props; het patroon is
-	//        identiek.
+	// Toolbar shared by every category of the index: search and sort on top,
+	// below either filter pills or a custom filter snippet (the stage
+	// filter of dossiers).
 
 	export type Facet =
 		| { sep: true }
@@ -40,8 +37,9 @@
 		sortOptions?: SortOption[];
 		sort: string;
 		onSortChange: (v: string) => void;
-		dir: 'asc' | 'desc';
-		onDirToggle: () => void;
+		/** Only for a sort the client does; the server fixes the direction of its own. */
+		dir?: 'asc' | 'desc';
+		onDirToggle?: () => void;
 	} = $props();
 </script>
 
@@ -83,14 +81,16 @@
 						<option value={opt.id}>{opt.label}</option>
 					{/each}
 				</select>
-				<button
-					type="button"
-					class="dir"
-					onclick={onDirToggle}
-					title={dir === 'asc' ? 'Oplopend' : 'Aflopend'}
-					aria-label={dir === 'asc' ? 'Sorteer aflopend' : 'Sorteer oplopend'}
-					>{dir === 'asc' ? '↑' : '↓'}</button
-				>
+				{#if dir && onDirToggle}
+					<button
+						type="button"
+						class="dir"
+						onclick={onDirToggle}
+						title={dir === 'asc' ? 'Oplopend' : 'Aflopend'}
+						aria-label={dir === 'asc' ? 'Sorteer aflopend' : 'Sorteer oplopend'}
+						>{dir === 'asc' ? '↑' : '↓'}</button
+					>
+				{/if}
 			</span>
 		{/if}
 	</div>

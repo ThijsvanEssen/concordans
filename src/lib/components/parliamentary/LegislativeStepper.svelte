@@ -1,51 +1,18 @@
 <script lang="ts">
-	import type { LegislativeStage } from '$lib/api/parliamentary';
+	import { STAGES, type Stage } from './stages';
 
-	// Two ways to drive the stepper:
-	//   1. `stage` (legacy) — single stage, lights up that step + everything before.
-	//      Loses information when a dossier has looped (e.g. amendementen after
-	//      verslag, then nota again).
-	//   2. `stages` + `current` (preferred) — explicit set of stages that have
-	//      fired, plus the current one for the "you are here" marker. Honest
-	//      about loops; unlit steps clearly haven't fired.
-	// Both forms are accepted so existing callers don't break.
-	let {
-		stage,
-		stages,
-		current
-	}: {
-		stage?: LegislativeStage;
-		stages?: LegislativeStage[];
-		current?: LegislativeStage | null;
-	} = $props();
+	// `stages` are the stages the dossier has passed, `current` the latest one.
+	// A dossier can loop (amendments after a report, then a nota again), so
+	// the steps are lit by membership, not by position.
+	let { stages, current }: { stages: Stage[]; current: Stage | null } = $props();
 
-	const STEPS: { id: LegislativeStage; label: string }[] = [
-		{ id: 'wetsvoorstel', label: 'Wetsvoorstel' },
-		{ id: 'mvt', label: 'MvT' },
-		{ id: 'advies_rvs', label: 'Advies RvS' },
-		{ id: 'nota', label: "Nota's" },
-		{ id: 'verslag', label: 'Verslag' },
-		{ id: 'amendementen', label: 'Amendementen' },
-		{ id: 'stemming', label: 'Stemming' },
-		{ id: 'afgehandeld', label: 'Afgehandeld' }
-	];
-
-	// Resolve the active stage in either input form.
-	const activeStage = $derived<LegislativeStage | null>(current ?? stage ?? null);
-	const stageSet = $derived(new Set<string>(stages ?? []));
-	const useExplicitSet = $derived(Array.isArray(stages));
-
-	// Legacy fallback: when only `stage` is provided, light up that step + all
-	// earlier ones. With explicit `stages`, only stages in the set are lit.
-	const currentIndex = $derived(activeStage ? STEPS.findIndex((s) => s.id === activeStage) : -1);
+	const passed = $derived(new Set<Stage>(stages));
 </script>
 
 <ol class="stepper" aria-label="Wetgevingsstatus">
-	{#each STEPS as step, i (step.id)}
-		{@const done = useExplicitSet
-			? stageSet.has(step.id) && step.id !== activeStage
-			: i < currentIndex}
-		{@const active = step.id === activeStage}
+	{#each STAGES as step, i (step.id)}
+		{@const done = passed.has(step.id) && step.id !== current}
+		{@const active = step.id === current}
 		<li
 			class="step"
 			class:step--done={done}
@@ -66,13 +33,11 @@
 				{/if}
 			</span>
 			<span class="step-label">{step.label}</span>
-			{#if i < STEPS.length - 1}
+			{#if i < STAGES.length - 1}
 				<span
 					class="step-connector"
 					aria-hidden="true"
-					class:step-connector--done={useExplicitSet
-						? stageSet.has(step.id) && stageSet.has(STEPS[i + 1]?.id)
-						: i < currentIndex}
+					class:step-connector--done={passed.has(step.id) && passed.has(STAGES[i + 1].id)}
 				></span>
 			{/if}
 		</li>

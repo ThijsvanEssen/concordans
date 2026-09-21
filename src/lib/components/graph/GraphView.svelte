@@ -3,21 +3,17 @@
 	import { get } from 'svelte/store';
 	import Graph from 'graphology';
 	import type FA2LayoutType from 'graphology-layout-forceatlas2/worker';
-	import fa2Pkg from 'graphology-layout-forceatlas2';
-	const fa2Assign: (graph: unknown, opts: unknown) => void = ((
-		fa2Pkg as unknown as { assign?: unknown }
-	).assign ?? fa2Pkg) as never;
 	import GraphCanvas from './GraphCanvas.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import GraphCitePanel from './GraphCitePanel.svelte';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import type { Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
-	import { type GraphEdge, type GraphNode, type GraphNodeKind } from '$lib/graph/types';
+	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { spriteFor, shapeFor, IMAGE_SIZE_BUMP } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { getLawIdFromProps } from '$lib/util/law-id';
-	import type { InFluxMap, HeatMap } from '$lib/api/parliamentary';
+	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/stores/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/stores/overlay';
 
@@ -35,8 +31,8 @@
 	let {
 		store,
 		compact = false,
-		inFluxMap = new Map() as InFluxMap,
-		heatMap = new Map() as HeatMap,
+		inFluxMap = new Map() as NodeCounts,
+		heatMap = new Map() as NodeCounts,
 		overlay = { kind: 'none' } as Overlay,
 		visibleCount: visibleCountProp = 0,
 		totalLoaded = 0,
@@ -47,33 +43,21 @@
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
-		onLoadGlobal,
-		onLoadJudgments,
-		onLoadCommissies,
-		onLoadDossiers,
-		onLoadLeden,
-		onLoadFracties,
+		onLoadLayer,
 		onDeloadLayer,
 		onResetGraph,
 		onRevealHidden,
-		loadingGlobal = false,
-		loadingJudgments = false,
-		loadingCommissies = false,
-		loadingDossiers = false,
-		loadingLeden = false,
-		loadingFracties = false,
+		loadingLayers,
 		activatedLayers,
 		canvasOverlay
 	}: {
 		store: GraphStore;
 		compact?: boolean;
-		inFluxMap?: InFluxMap;
-		heatMap?: HeatMap;
+		inFluxMap?: NodeCounts;
+		heatMap?: NodeCounts;
 		overlay?: Overlay;
 		visibleCount?: number;
 		totalLoaded?: number;
-		/** §22 — direct neighbours of the focal node (visible or hidden). */
-		/** §22 — convergence (shared-by-multiple-paths) nodes currently visible. */
 		onNodeClick?: (node: GraphNode) => void;
 		onOpenSplit?: (node: GraphNode) => void;
 		onGoBack?: () => void;
@@ -81,29 +65,16 @@
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
-		onLoadGlobal?: () => void;
-		onLoadJudgments?: () => void;
-		onLoadCommissies?: () => void;
-		onLoadDossiers?: () => void;
-		onLoadLeden?: () => void;
-		onLoadFracties?: () => void;
-		/** Remove every node of the given kind (and their incident edges).
-		 *  Powers the Lagen "deload" action — clicking an active layer button. */
-		onDeloadLayer?: (kind: GraphNodeKind) => void;
-		/** Clear the entire graph — the "Wis grafiek" affordance. */
+		/** Load the layer of a kind (the layer buttons in the sidebar). */
+		onLoadLayer?: (layer: GraphNodeKind) => void;
+		/** Remove every source of the layer, with its incident verbindingen. */
+		onDeloadLayer?: (layer: GraphNodeKind) => void;
 		onResetGraph?: () => void;
-		/** Re-expand current focus and skip the convergence prune so weggeknipt
-		 *  nodes come back. Wired to the "Rond focus" panel in the sidebar. */
+		/** Expand the focus again without the convergence prune. */
 		onRevealHidden?: () => void;
-		loadingGlobal?: boolean;
-		loadingJudgments?: boolean;
-		loadingCommissies?: boolean;
-		loadingDossiers?: boolean;
-		loadingLeden?: boolean;
-		loadingFracties?: boolean;
-		/** Layers the user has explicitly activated via Lagen clicks. Keeps the
-		 *  Lagen button visually pressed even when an attached-only load
-		 *  produced zero newcomers — so "0" doesn't read as "didn't work". */
+		loadingLayers?: ReadonlySet<GraphNodeKind>;
+		/** Layers activated by the user. Keeps a layer button pressed when
+		 *  loading it added nothing. */
 		activatedLayers?: ReadonlySet<GraphNodeKind>;
 		canvasOverlay?: Snippet;
 	} = $props();
@@ -116,33 +87,7 @@
 	// ── reactive state ────────────────────────────────────────────────────────
 	let selection = $state<GraphNode | null>(null);
 	let pinnedIds = $state<Set<string>>(new Set());
-	let filters = $state<GraphFilters>({
-		structuralEnabled: true,
-		mutationEnabled: true,
-		semanticEnabled: true,
-		citationEnabled: true,
-		legislativeEnabled: true,
-		weakEnabled: true,
-		semanticThreshold: 0.6,
-		nodeTypeToggles: {
-			article: true,
-			judgment: true,
-			tkstuk: true,
-			activity: true,
-			instrument: true,
-			dossier: true,
-			commissie: true,
-			lid: true,
-			fractie: true,
-			other: true
-		},
-		minDegree: 0,
-		activeInstruments: new Set<string>(),
-		neighborLimit: 30,
-		showScaffolding: false,
-		convergenceMode: false,
-		dimStaleContext: false
-	});
+	let filters = $state<GraphFilters>(get(store.filters));
 	// Per-kind counts drive the Lagen "active" indicator in the sidebar.
 	let kindCounts = $state<Record<string, number>>({});
 	// What would arrive if the user clicked an inactive Lagen button —
@@ -159,17 +104,10 @@
 	// explicitly fetched via Lagen Wetten.
 	let currentInstrumentBwb = $state<string | null>(null);
 
-	// Dev toggle — hide every edge whose source AND target are articles. Useful
-	// for inspecting just the judgment-to-article links in a dense law graph.
-	let hideArticleEdges = $state(false);
-
-	// When true: individual article nodes are hidden and replaced by per-law
-	// cluster nodes, regardless of zoom level. Useful when the graph has many
-	// laws and individual articles add too much visual noise.
-	// Detail-niveau (Artikelen vs Wetten) is a deliberate user action. Adding
-	// the Wetten layer should enrich the article view, not collapse it — the
-	// user can still toggle Wetten explicitly when they want the one-node-
-	// per-wet representation.
+	// Wetten view (true): articles are hidden and each law is one instrument.
+	// Artikelen view (false): instruments are hidden for laws whose articles are
+	// on the canvas. A deliberate choice of the user: loading instruments must
+	// not collapse the article view.
 	let collapseToLaws = $state(false);
 
 	// Instrument filter panel data
@@ -191,119 +129,16 @@
 	// Mobile sheet (full graph mode, narrow viewports)
 	let mobileSidebarOpen = $state(false);
 
-	// ── Wetten layout ─────────────────────────────────────────────────────────
-	// When the user switches to "Wetten" view, run a quick synchronous FA2 on a
-	// sub-graph of just the cluster nodes so they arrange organically instead of
-	// inheriting the article-centroid ring positions.
+	// The synthetic instrument proxies exist only in Wetten view, where they are visible.
 	$effect(() => {
-		// Re-run cluster centroid computation whenever collapseToLaws toggles so
-		// the MIN_CLUSTER_SIZE switch (15 → 1 in explicit mode) takes effect
-		// without waiting for the next syncNodes.
-		void collapseToLaws;
-		// Tell the store whether synth instrument proxies should be materialised.
-		// Only relevant in Wetten view — Artikelen view doesn't need them and
-		// having them around inflates the layout / camera bounding box.
 		store.setCollapseToLaws(collapseToLaws);
-		computeClusterCentroids();
 		computeLevelSuppression();
 		canvas?.refresh();
-		if (collapseToLaws) {
-			// Brief delay so syncClusterNodes has finished adding nodes before we
-			// read them.
-			setTimeout(layoutClusterNodes, 80);
-		}
 	});
 
-	function layoutClusterNodes() {
-		const clusterIds: string[] = [];
-		g.forEachNode((id) => {
-			if (id.startsWith('cluster:')) clusterIds.push(id);
-		});
-		if (clusterIds.length < 2) return;
-
-		// Build a minimal undirected subgraph of just cluster nodes + their edges.
-		const sub = new Graph({ type: 'undirected', multi: false });
-
-		// Grid initial layout — spread nodes so FA2 refines positions rather than
-		// fighting gravity from a single point.
-		const cols = Math.ceil(Math.sqrt(clusterIds.length));
-		const spacing = 40;
-		clusterIds.forEach((id, i) => {
-			sub.addNode(id, {
-				x: ((i % cols) - cols / 2) * spacing + (Math.random() - 0.5) * 8,
-				y: (Math.floor(i / cols) - cols / 2) * spacing + (Math.random() - 0.5) * 8
-			});
-		});
-
-		g.forEachEdge((id, _a, src, tgt) => {
-			if (!id.startsWith('cluster-edge:')) return;
-			if (sub.hasNode(src) && sub.hasNode(tgt)) {
-				try {
-					sub.addEdge(src, tgt);
-				} catch {
-					/* parallel guard */
-				}
-			}
-		});
-
-		// gravity: 0 → pure repulsion + edge attraction, no center pull.
-		// Isolated nodes spread to the periphery (only repulsion); connected laws
-		// cluster together (edge attraction keeps them close). Produces a natural
-		// core-periphery topology without collapsing into a ball.
-		fa2Assign(sub, {
-			iterations: 400,
-			settings: {
-				gravity: 0,
-				scalingRatio: 10,
-				slowDown: 5,
-				linLogMode: false,
-				barnesHutOptimize: true,
-				barnesHutTheta: 0.8,
-				adjustSizes: false,
-				strongGravityMode: false
-			}
-		});
-
-		sub.forEachNode((id, { x, y }) => {
-			if (g.hasNode(id)) {
-				g.setNodeAttribute(id, 'x', x as number);
-				g.setNodeAttribute(id, 'y', y as number);
-			}
-		});
-
-		// Three animation frames: refresh → sigma picks up positions → bounding
-		// box is recomputed → fit targets the correct viewport extent.
-		requestAnimationFrame(() => {
-			canvas?.refresh();
-			requestAnimationFrame(() => requestAnimationFrame(() => canvas?.fit()));
-		});
-	}
-
-	// ── cluster labels ────────────────────────────────────────────────────────
-	// Graph-space centroid per law cluster, recomputed after each sync.
-	// Always computed (not just in bulk mode) so the collapseToLaws toggle works
-	// in expansion mode too. Labels update reactively when the cache resolves a
-	// friendly short title (e.g. "Sr" from a background bibtex fetch).
-
-	// Resolve a bwbId to a canonical group key. When the instrument cache has a
-	// shortTitle (e.g. "Sv"), all bwbIds that map to the same shortTitle collapse
-	// into one cluster — this prevents duplicate "Sv" labels for different
-	// versions or parts of the same law.
+	// Sidebar filter list: articles per law. Laws with a short title share one entry.
 	function lawGroupKey(bwbId: string): string {
 		return $instrumentMetaStore.get(bwbId)?.shortTitle ?? bwbId;
-	}
-
-	function computeClusterCentroids() {
-		// Cluster proxies and cluster edges were a legacy roll-up that turned into
-		// a parallel, disconnected "wet-to-wet" graph after the mutual-exclusion
-		// work. Killed entirely — Wetten view now relies on real instrument nodes
-		// (load Wetten from Lagen) plus the mutual-exclusion suppression.
-		for (const id of g.nodes()) {
-			if (id.startsWith('cluster:')) g.dropNode(id);
-		}
-		for (const id of g.edges()) {
-			if (id.startsWith('cluster-edge:')) g.dropEdge(id);
-		}
 	}
 
 	function computeInstruments() {
@@ -378,13 +213,11 @@
 
 		// Three buckets: focal, level-1 (movable, on inner ring), other movable
 		// (convergence + path nodes, on outer ring). Pinned nodes are left in
-		// place — the user explicitly anchored them. Cluster-proxy nodes are
-		// ignored.
+		// place — the user explicitly anchored them.
 		const l1List: string[] = [];
 		const outerList: string[] = [];
 		g.forEachNode((id) => {
 			if (id === focalId) return;
-			if (id.startsWith('cluster:')) return;
 			if (pinnedSet.has(id)) return;
 			if (l1.has(id)) l1List.push(id);
 			else outerList.push(id);
@@ -416,7 +249,7 @@
 		});
 
 		// FA2 burst. Pass the movable set as `addedThisSync` so runLayout pins
-		// the focal (and pinned, and cluster proxies) and only relaxes the
+		// the focal (and pinned) and only relaxes the
 		// ring-seeded movables.
 		const movable = new Set<string>([...l1List, ...outerList]);
 		void runLayout(movable);
@@ -451,117 +284,46 @@
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
 	let showTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// ── node cite (mono label for graph rendering) ────────────────────────────
-	// Show only human-readable info: court+year for judgments, nothing extra for
-	// articles (the serif label "Art. N" is enough — internal BWB id is hidden).
-
-	function makeCite(n: GraphNode): string {
-		if (n.collection === 'judgments') {
-			const p = n.raw?.props as Record<string, unknown> | undefined;
-			// Prefer court name + date from structured metadata
-			const meta = p?.['judgment_metadata'] as Record<string, string> | undefined;
-			if (meta?.['court'] && meta?.['date']) {
-				const year = meta['date'].slice(0, 4);
-				return `${meta['court']} ${year}`;
-			}
-			const ecli = String(p?.['ecli'] ?? n.key);
-			const raw = ecli.replace(/^ECLI:/i, '');
-			const parts = raw.split(':');
-			if (parts.length >= 4 && parts[0] === 'NL') {
-				return `${parts[1]} ${parts[2]}`;
-			}
-			return parts.slice(0, 2).join(' ');
-		}
-		return '';
-	}
-
-	// ── edge dash pattern ─────────────────────────────────────────────────────
-	function edgeDash(edge: GraphEdge): 'solid' | 'dashed' | 'dotted' {
-		const rel = (edge.relation ?? edge.label ?? '').toLowerCase();
-		// judgment→judgment: rectangle program (no arrowhead), visually "dashed"
-		if (rel === 'citeert' || rel === 'cites_judgment') return 'dashed';
-		if (rel.includes('amend') || rel.includes('wijzig')) return 'dotted';
-		return 'solid';
-	}
-
-	// ── node colors — methode-page palette ───────────────────────────────────
-	// Three domains. Inside parlementair, we now split into three visual
-	// sub-families so the six parlementaire kinds read at a glance:
-	//
-	//   Wetgeving (--ink #1A1814)
-	//     instrument, artikel : paper fill + ink ring
-	//   Rechtspraak (--indigo #2B3A5C)
-	//     uitspraak           : SOLID indigo
-	//   Parlementair sub-families:
-	//     ◾ Dossier-family (spine #7A1F1A) — legislative artefact + its docs
-	//          dossier (solid)   · tkstuk (paper + spine ring)
-	//     ◾ Commissie-family (ochre #8A6A1F) — institutional hub + its events
-	//          commissie (solid) · activity (paper + ochre ring)
-	//     ◾ Fractie-family (slate #44505E) — political body + its members
-	//          fractie (solid)   · lid (paper + slate ring)
-	//
-	// Sub-family pairing is intentional: each leaf inherits its hub's hue, so
-	// "person belongs to fractie" and "publication belongs to dossier" read
-	// visually before you've identified the kind.
-	const NODE_FILL: Record<GraphNodeKind, string> = {
-		article: '#1A1814', // solid ink — matches the other anchor kinds
-		instrument: '#1A1814',
-		judgment: '#2B3A5C',
-		dossier: '#7A1F1A', // solid spine
-		commissie: '#8A6A1F', // solid ochre
-		fractie: '#44505E', // solid slate
-		// Parlementair leaves — solid kind colour so they read at a glance on the
-		// canvas (the paper fill made them blend into the background and look
-		// like blank dots, especially when zoomed out).
-		lid: '#44505E',
-		tkstuk: '#7A1F1A',
-		activity: '#8A6A1F',
-		other: '#FFFDF4'
-	};
-	const NODE_STROKE: Record<GraphNodeKind, string> = {
+	// ── node colors ───────────────────────────────────────────────────────────
+	// Three domains: wetgeving (ink), rechtspraak (indigo) and parlement. Parlement
+	// has three families in which a leaf takes the hue of its hub, so that
+	// "document belongs to dossier" reads before the kind is identified:
+	//   dossier (spine)   : dossier solid, document
+	//   committee (ochre) : committee solid, activity
+	//   faction (slate)   : faction solid, member
+	const NODE_COLOR: Record<GraphNodeKind, string> = {
 		article: '#1A1814',
 		instrument: '#1A1814',
 		judgment: '#2B3A5C',
 		dossier: '#7A1F1A',
-		commissie: '#8A6A1F',
-		fractie: '#44505E',
-		lid: '#44505E', // ring inherits fractie hue
-		tkstuk: '#7A1F1A', // ring inherits dossier hue
-		activity: '#8A6A1F', // ring inherits commissie hue
+		committee: '#8A6A1F',
+		faction: '#44505E',
+		member: '#44505E',
+		document: '#7A1F1A',
+		activity: '#8A6A1F',
 		other: '#9A9485'
 	};
+	const PAPER = '#FFFDF4';
 
-	// Stub nodes (referenced but not yet loaded) appear muted — paper fill +
-	// a soft grey ring. Same paper as a domain node, no domain hue.
-	const STUB_FILL = '#FFFDF4';
-	const STUB_STROKE = '#B8B0A4';
-
+	// A stub (referenced, not loaded yet) has a paper fill and keeps the ring of
+	// its kind, so it stays recognisable when zoomed out.
 	function nodeColors(n: GraphNode): { color: string; borderColor: string } {
-		if (n.stub) {
-			// Stub-rendering: paper-vulling als "nog niet ingeladen"-signaal, maar
-			// de border krijgt de kind-eigen kleur zodat een stub-Artikel of
-			// stub-Publicatie nog steeds als zodanig herkenbaar is bij uitzoom.
-			// (Voorheen vervaagden alle stubs tot een naamloze witte cirkel.)
-			return { color: STUB_FILL, borderColor: NODE_STROKE[n.kind] ?? STUB_STROKE };
-		}
-		return { color: NODE_FILL[n.kind], borderColor: NODE_STROKE[n.kind] };
+		const borderColor = NODE_COLOR[n.kind];
+		return { color: n.stub || n.kind === 'other' ? PAPER : borderColor, borderColor };
 	}
 
-	// ── graphology helpers ────────────────────────────────────────────────────
-	// Sizes within a domain encode hub-vs-leaf weight: dossier ≈ commissie are
-	// the parlementaire anchors, instrument > article in wetgeving, publication
-	// > activity. Cross-domain sizes stay close so no domain dominates layouts.
+	// Size encodes hub versus leaf within a domain; sizes across domains stay close
+	// so no domain dominates the layout.
 	const NODE_SIZE: Record<GraphNodeKind, number> = {
 		article: 7,
 		instrument: 9,
 		judgment: 8,
-		// Parlementair hubs — solid, larger.
+		// Parliamentary hubs are larger than their leaves.
 		dossier: 11,
-		commissie: 10,
-		fractie: 10,
-		// Parlementair leaves — paper fill, smaller.
-		lid: 6.5,
-		tkstuk: 6,
+		committee: 10,
+		faction: 10,
+		member: 6.5,
+		document: 6,
 		activity: 5,
 		other: 7
 	};
@@ -574,50 +336,9 @@
 		return NODE_SIZE[n.kind];
 	}
 
-	// Mutual exclusion between an instrument node and its article children.
-	// When both are present, the Detail-niveau toggle decides which one shows:
-	//   • Wetten (collapseToLaws=true):  articles hide; instrument (or cluster
-	//                                    proxy, if no instrument node loaded)
-	//                                    represents the wet.
-	//   • Artikelen (collapseToLaws=false): instruments hide for any wet whose
-	//                                       articles are on canvas. The
-	//                                       articles themselves take over.
-	// Implemented as a `suppressedByLevel` attribute the reducer respects, so
-	// sigma doesn't have to re-derive the sets every frame.
-	// Tally neighbours per kind: direct (1-hop) plus 2-hop hops through an
-	// anchor middle. The article→wet→dossier chain is canonical — without the
-	// 2-hop pass, an article on a Sv view shows "Dossiers 0" even when Sv-
-	// touching dossiers are loaded on the canvas. Cheap (O(degree * avg-mid-
-	// degree), bounded by the typical handful of incident anchors).
-	const BRIDGE_KINDS_2HOP = new Set(['instrument', 'dossier', 'commissie', 'fractie', 'lid']);
-	function recomputeAttachedCounts() {
-		const sel = selection;
-		if (!sel || !g.hasNode(sel.id)) {
-			return;
-		}
-		const counts: Record<string, number> = {};
-		const counted = new Set<string>([sel.id]);
-		const tally = (id: string, kind: string | undefined) => {
-			if (counted.has(id)) return;
-			counted.add(id);
-			if (kind) counts[kind] = (counts[kind] ?? 0) + 1;
-		};
-		// Strict 1-hop set — drives the "directe buren" badge.
-		const direct = new Set<string>();
-		g.forEachNeighbor(sel.id, (id, attrs) => {
-			direct.add(id);
-			const k = attrs.kind as string;
-			tally(id, k);
-			// Walk one more hop, but only through anchor middles so we don't
-			// pull in arbitrary 2-hop citation chains.
-			if (BRIDGE_KINDS_2HOP.has(k)) {
-				g.forEachNeighbor(id, (id2, attrs2) => {
-					tally(id2, attrs2.kind as string);
-				});
-			}
-		});
-	}
-
+	// Mutual exclusion between an instrument and its articles: the Detail-niveau
+	// toggle decides which one shows (see computeLevelSuppression). Stored as a
+	// `suppressedByLevel` attribute that the canvas reducers respect.
 	function computeLevelSuppression() {
 		if (g.order === 0) return;
 		// Strict mode: Wetten view shows only instruments (real + synth proxies);
@@ -741,20 +462,13 @@
 		});
 	}
 
-	// Lean: handles node-type filters + the "hide article→article edges" dev
-	// toggle. Focus styling (node fill, edge dimming) lives in sigma's reducers
-	// so a selection change re-runs them once per render frame instead of
-	// rewriting attributes on hundreds of nodes/edges.
+	// Focus styling (node fill, edge dimming) lives in sigma's reducers, so a
+	// selection change re-runs them once per frame instead of rewriting
+	// attributes on hundreds of nodes and edges.
 	function applyFilters() {
 		computeLevelSuppression();
 		canvas?.refresh();
 	}
-
-	// Re-apply whenever the dev toggle flips.
-	$effect(() => {
-		void hideArticleEdges;
-		applyFilters();
-	});
 
 	// When the instrument cache updates (e.g. shortTitle "Sr" arrives in the
 	// background), refresh node labels so existing graphology nodes pick it
@@ -825,7 +539,6 @@
 		const pinnedDuringBurst: string[] = [];
 		if (pinExisting) {
 			g.forEachNode((id) => {
-				if (id.startsWith('cluster:')) return;
 				if (addedThisSync!.has(id)) return;
 				if (!g.getNodeAttribute(id, 'fixed')) {
 					g.setNodeAttribute(id, 'fixed', true);
@@ -871,17 +584,13 @@
 		}, burst);
 	}
 
-	// Build the node label. For articles, append the law's short title when
-	// we know it (e.g. "Art. 287 Sr"). For instrument nodes (real or synth
-	// proxies), resolve a human-readable name from the instrument cache —
-	// shortTitle or citationTitle — falling back to whatever raw label the
-	// backend gave us. Both reads go through the cache so the label refreshes
-	// as soon as the meta lookup resolves.
+	// Node label. An article gets the short title of its law when known ("Art. 287 Sr");
+	// an instrument the best name the cache or its props offer. Both read the
+	// instrument cache, so labels refresh when it resolves.
 	function nodeLabel(n: GraphNode): string {
+		const p = n.raw?.props ?? undefined;
 		if (n.kind === 'instrument') {
-			const p = n.raw?.props as Record<string, unknown> | undefined;
-			const bwb = String(p?.['bwb_id'] ?? n.key ?? '');
-			const meta = bwb ? $instrumentMetaStore.get(bwb) : null;
+			const meta = $instrumentMetaStore.get(getLawIdFromProps(p, n.key) ?? n.key);
 			return (
 				meta?.shortTitle ??
 				meta?.citationTitle ??
@@ -891,11 +600,9 @@
 			);
 		}
 		if (n.kind !== 'article') return n.label;
-		const p = n.raw?.props as Record<string, unknown> | undefined;
-		const bwb = String(p?.['bwb_id'] ?? p?.['celex'] ?? '');
-		if (!bwb) return n.label;
-		const meta = $instrumentMetaStore.get(bwb);
-		return meta?.shortTitle ? `${n.label} ${meta.shortTitle}` : n.label;
+		const bwb = getLawIdFromProps(p, n.key);
+		const shortTitle = bwb ? $instrumentMetaStore.get(bwb)?.shortTitle : null;
+		return shortTitle ? `${n.label} ${shortTitle}` : n.label;
 	}
 
 	function syncNodes(nodes: GraphNode[]) {
@@ -924,7 +631,7 @@
 		let changed = false;
 		const addedThisSync = new Set<string>();
 		const keep = newIds;
-		const toDrop = g.nodes().filter((id) => !keep.has(id) && !id.startsWith('cluster:'));
+		const toDrop = g.nodes().filter((id) => !keep.has(id));
 
 		// Only use the atomic g.clear() shortcut for wholesale replacements — i.e.
 		// when *nothing* from the previous graph survives. A partial prune (e.g.
@@ -969,18 +676,15 @@
 
 		for (const n of nodes) {
 			lookup.set(n.id, n);
-			const cite = makeCite(n);
 			const { color, borderColor } = nodeColors(n);
-			// bwb attr — lets the mutual-exclusion pass match an article to its
-			// instrument (and vice versa). Cluster proxies already carry clusterBwb.
-			let bwb: string | undefined;
-			if (n.kind === 'article' || n.kind === 'instrument') {
-				const p = n.raw?.props as Record<string, unknown> | undefined;
-				const raw = String(
-					p?.['bwb_id'] ?? p?.['celex'] ?? (n.kind === 'instrument' ? n.key : '')
-				).toLowerCase();
-				if (raw) bwb = raw;
-			}
+			// bwb attribute: lets the mutual-exclusion pass match an article to its instrument.
+			const bwb =
+				n.kind === 'article' || n.kind === 'instrument'
+					? (
+							getLawIdFromProps(n.raw?.props ?? undefined, n.key) ??
+							(n.kind === 'instrument' ? n.key : '')
+						).toLowerCase() || undefined
+					: undefined;
 			// Shape per kind (see nodeSprites.KIND_SHAPE). Circles use sigma's
 			// border program — its two-ring composition gives the cleanest selection
 			// ring for the densest node class. Everything else renders as an SVG
@@ -994,7 +698,6 @@
 			const rawSize = nodeSize(n.id);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
-				cite,
 				color: useImage ? 'rgba(0,0,0,0)' : color,
 				borderColor,
 				kind: n.kind,
@@ -1004,7 +707,6 @@
 				// circles at the same nominal size (see IMAGE_SIZE_BUMP in
 				// nodeSprites.ts). Bump so the visual weight matches.
 				size: useImage ? rawSize * IMAGE_SIZE_BUMP : rawSize,
-				arangoId: n.raw?.id,
 				type: useImage ? 'image' : 'border'
 			};
 			if (useImage) attrs.image = spriteFor(n.kind, stub, false);
@@ -1044,13 +746,9 @@
 			for (const n of lookup.values()) counts[n.kind] = (counts[n.kind] ?? 0) + 1;
 			kindCounts = counts;
 		}
-		recomputeAttachedCounts();
 		applyFilters();
 		if (changed) scheduleFit();
 		runLayout(addedThisSync);
-		// Cluster centroids are only needed when the law-collapse view is active
-		// or when we have enough articles to roll up. Skip in the common case.
-		if (collapseToLaws || g.order > 40) computeClusterCentroids();
 		computeInstruments();
 	}
 
@@ -1058,20 +756,19 @@
 		let changed = false;
 		const keep = new Set(es.map((e) => e.id));
 		g.edges()
-			.filter((id) => !keep.has(id) && !id.startsWith('cluster-edge:'))
+			.filter((id) => !keep.has(id))
 			.forEach((id) => {
 				g.dropEdge(id);
 				changed = true;
 			});
 		for (const e of es) {
-			const dash = edgeDash(e);
-			// 'dashed' → DashedEdgeArrowProgram (j→j, dashed with arrowhead); others → solid arrow
-			const type = dash === 'dashed' ? 'dashed' : 'arrow';
-			// Normalise to lowercase so EDGE_STYLE lookup in the edgeReducer is
-			// case-insensitive and consistent with edgeDash(). Fall back to label
-			// if relation is absent (some API responses only populate label).
-			const relation = (e.relation ?? e.label ?? '').toLowerCase();
-			const attrs = { label: e.label, kind: e.kind, dash, relation, type, meta: e.meta ?? null };
+			// The canvas reducer chooses the drawing type (arrow, or dashed for votes).
+			const attrs = {
+				relation: e.relation,
+				confidence: e.confidence ?? null,
+				meta: e.meta ?? null,
+				type: 'arrow'
+			};
 			if (g.hasEdge(e.id)) {
 				g.mergeEdgeAttributes(e.id, attrs);
 			} else if (g.hasNode(e.source) && g.hasNode(e.target)) {
@@ -1086,18 +783,12 @@
 			}
 		}
 		applyFilters();
-		if (changed) {
-			scheduleFit();
-			// Recompute cluster edges only when the cluster view is active or large
-			// enough to need rollup. Avoids burning cycles after every expansion.
-			if (collapseToLaws || g.order > 40) computeClusterCentroids();
-		}
+		if (changed) scheduleFit();
 	}
 
 	// ── canvas event handlers ─────────────────────────────────────────────────
-	// Show panel only after the mouse has settled on a node for ~250ms.
-	// Without this delay, sweeping the mouse across a dense graph fired
-	// /api/articles fetches per node — that's what felt like a freeze.
+	// The panel opens only after the pointer rests on a node for 400 ms.
+	// Sweeping across a dense network would otherwise request an article per source.
 	function handleNodeHover(nodeId: string, _vx: number, _vy: number) {
 		if (compact) return;
 		if (hideTimer) {
@@ -1161,7 +852,6 @@
 				// No camera move — sigma's nodeReducer paints the focus ring and the
 				// user keeps their current viewport. They can use "passend" to refit.
 				selection = n;
-				recomputeAttachedCounts();
 				// Focus scope in Artikelen view depends on the selection, so re-run
 				// suppression whenever the focal changes.
 				applyFilters();
@@ -1214,6 +904,53 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
+{#snippet sidebar()}
+	<GraphSidebar
+		{filters}
+		{instruments}
+		{overlay}
+		inFluxCount={inFluxMap.size}
+		{pinnedNodes}
+		onFilterChange={(patch) => store.setFilters(patch)}
+		onInstrumentToggle={(bwbId) => {
+			const next = new Set(filters.activeInstruments);
+			if (!next.delete(bwbId)) next.add(bwbId);
+			store.setFilters({ activeInstruments: next });
+		}}
+		{collapseToLaws}
+		onCollapseToLawsChange={(v) => {
+			collapseToLaws = v;
+		}}
+		{onToggleHeat}
+		{onHeatPeriodChange}
+		{onToggleMutatie}
+		onLoadGlobal={() => onLoadLayer?.('instrument')}
+		onLoadJudgments={() => onLoadLayer?.('judgment')}
+		onLoadDossiers={() => onLoadLayer?.('dossier')}
+		onLoadCommittees={() => onLoadLayer?.('committee')}
+		onLoadMembers={() => onLoadLayer?.('member')}
+		onLoadFactions={() => onLoadLayer?.('faction')}
+		{onDeloadLayer}
+		{onResetGraph}
+		{kindCounts}
+		{potentialCounts}
+		hasSelection={selection != null}
+		hiddenCount={Math.max(0, totalLoaded - visibleCountProp)}
+		{onRevealHidden}
+		loadingGlobal={loadingLayers?.has('instrument')}
+		loadingJudgments={loadingLayers?.has('judgment')}
+		loadingDossiers={loadingLayers?.has('dossier')}
+		loadingCommittees={loadingLayers?.has('committee')}
+		loadingMembers={loadingLayers?.has('member')}
+		loadingFactions={loadingLayers?.has('faction')}
+		{activatedLayers}
+		onUnpin={(id) => store.unpinNode(id)}
+		onClearPins={() => {
+			for (const id of pinnedIds) store.unpinNode(id);
+		}}
+	/>
+{/snippet}
+
 <div class="graph-view">
 	<!-- Sidebar (legend + filters, non-compact only) -->
 	{#if !compact}
@@ -1236,58 +973,14 @@
 			Filters
 		</button>
 		<div class="graph-sidebar-wrap" class:graph-sidebar-wrap--open={mobileSidebarOpen}>
-			<GraphSidebar
-				{filters}
-				{instruments}
-				{overlay}
-				inFluxCount={inFluxMap.size}
-				{pinnedNodes}
-				onFilterChange={(patch) => store.setFilters(patch)}
-				onInstrumentToggle={(bwbId) => {
-					const next = new Set(filters.activeInstruments);
-					if (next.has(bwbId)) {
-						next.delete(bwbId);
-					} else {
-						next.add(bwbId);
-					}
-					store.setFilters({ activeInstruments: next });
-				}}
-				{collapseToLaws}
-				onCollapseToLawsChange={(v) => {
-					collapseToLaws = v;
-				}}
-				{onToggleHeat}
-				{onHeatPeriodChange}
-				{onToggleMutatie}
-				{onLoadGlobal}
-				{onLoadJudgments}
-				{onLoadDossiers}
-				{onLoadCommissies}
-				{onLoadFracties}
-				{onLoadLeden}
-				{onDeloadLayer}
-				{onResetGraph}
-				{kindCounts}
-				{potentialCounts}
-				hasSelection={selection != null}
-				hiddenCount={Math.max(0, totalLoaded - visibleCountProp)}
-				{onRevealHidden}
-				{loadingGlobal}
-				{loadingJudgments}
-				{loadingDossiers}
-				{loadingCommissies}
-				{loadingFracties}
-				{loadingLeden}
-				{activatedLayers}
-				onUnpin={(id) => store.unpinNode(id)}
-				onClearPins={() => {
-					for (const id of pinnedIds) store.unpinNode(id);
-				}}
-			/>
+			{@render sidebar()}
 		</div>
 		{#if mobileSidebarOpen}
-			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-			<div class="mobile-sidebar-backdrop" onclick={() => (mobileSidebarOpen = false)}></div>
+			<div
+				class="mobile-sidebar-backdrop"
+				role="presentation"
+				onclick={() => (mobileSidebarOpen = false)}
+			></div>
 		{/if}
 	{/if}
 
@@ -1302,7 +995,6 @@
 				focusedId={selection?.id ?? null}
 				{filters}
 				{pinnedIds}
-				{hideArticleEdges}
 				{collapseToLaws}
 				{graphMode}
 				{inFluxMap}
@@ -1359,60 +1051,18 @@
 						Filters
 					</button>
 					{#if compactFiltersOpen}
-						<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-						<div class="compact-filter-backdrop" onclick={() => (compactFiltersOpen = false)}></div>
+						<div
+							class="compact-filter-backdrop"
+							role="presentation"
+							onclick={() => (compactFiltersOpen = false)}
+						></div>
 						<div class="compact-filter-panel">
-							<GraphSidebar
-								{filters}
-								{instruments}
-								{overlay}
-								inFluxCount={inFluxMap.size}
-								{pinnedNodes}
-								onFilterChange={(patch) => store.setFilters(patch)}
-								onInstrumentToggle={(bwbId) => {
-									const next = new Set(filters.activeInstruments);
-									if (next.has(bwbId)) {
-										next.delete(bwbId);
-									} else {
-										next.add(bwbId);
-									}
-									store.setFilters({ activeInstruments: next });
-								}}
-								{collapseToLaws}
-								onCollapseToLawsChange={(v) => {
-									collapseToLaws = v;
-								}}
-								{onToggleHeat}
-								{onHeatPeriodChange}
-								{onToggleMutatie}
-								{onLoadGlobal}
-								{onLoadJudgments}
-								{onLoadDossiers}
-								{onLoadCommissies}
-								{onLoadFracties}
-								{onLoadLeden}
-								{onDeloadLayer}
-								{onResetGraph}
-								{kindCounts}
-								{loadingGlobal}
-								{loadingJudgments}
-								{loadingDossiers}
-								{loadingCommissies}
-								{loadingFracties}
-								{loadingLeden}
-								{activatedLayers}
-								onUnpin={(id) => store.unpinNode(id)}
-								onClearPins={() => {
-									for (const id of pinnedIds) store.unpinNode(id);
-								}}
-							/>
+							{@render sidebar()}
 						</div>
 					{/if}
 				</div>
 			{/if}
 
-			<!-- Non-blocking loading banner — pinned to top of the canvas. The
-           graph stays interactive (pan/zoom/click) while data streams in. -->
 			{#if loadingMsg}
 				<div class="graph-loading-banner" role="status" aria-live="polite">
 					<span class="graph-loading-banner__dot" aria-hidden="true"></span>
@@ -1424,7 +1074,7 @@
 			{#if trimmedCount > 0 && !trimmedDismissed}
 				<div class="trimmed-notice" role="status">
 					<span class="trimmed-notice__text"
-						>{trimmedCount} oudste {trimmedCount === 1 ? 'bron' : 'bronnen'} verwijderd — netwerk telt
+						>{trimmedCount} oudste {trimmedCount === 1 ? 'bron' : 'bronnen'} verwijderd. Het netwerk telt
 						meer dan 400 bronnen.</span
 					>
 					<button
@@ -1482,8 +1132,6 @@
 			{/if}
 		</div>
 	</div>
-
-	<!-- Right panel removed in graph-only mode; switch to Split for node detail. -->
 </div>
 
 <style>
@@ -1551,26 +1199,6 @@
 		color: var(--ink);
 	}
 
-	.spinner {
-		width: 28px;
-		height: 28px;
-		border: 2px solid var(--rule);
-		border-top-color: var(--accent);
-		border-radius: 50%;
-		animation: spin 0.9s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-
-	/* ── Legend (removed — now in GraphSidebar) ─────────────────────────── */
-	.graph-legend-placeholder {
-		display: none;
-	}
-
 	/* ── Compact filter button (split mode) ─────────────────────────────── */
 	.compact-filter-wrap {
 		position: absolute;
@@ -1624,9 +1252,7 @@
 		z-index: var(--z-float);
 	}
 
-	/* Mode banner — overlays the canvas top-left when viewing a dossier or
-     commissie overview. Methode-coloured (spine for both, since both are
-     parlementair). Click ✕ to pop the previous focus off the history. */
+	/* Loading banner at the top of the canvas; the network stays interactive. */
 	.graph-loading-banner {
 		position: absolute;
 		top: var(--s-3);

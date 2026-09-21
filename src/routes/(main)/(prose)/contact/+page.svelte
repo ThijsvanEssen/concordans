@@ -9,7 +9,7 @@
 	<div class="container">
 		<div class="stub-eyebrow">CONTACT</div>
 		<h1 class="stub-title">Contact</h1>
-		<p class="stub-lede">Voor vragen, feedback en aanvragen voor API-toegang.</p>
+		<p class="stub-lede">Voor vragen, feedback en aanvragen voor grootschalig API-gebruik.</p>
 
 		<p>Neem contact op via <a href="mailto:concordans@tmve.nl">concordans@tmve.nl</a>.</p>
 	</div>

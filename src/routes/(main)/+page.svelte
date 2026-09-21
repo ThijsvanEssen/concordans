@@ -2,7 +2,8 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { track } from '$lib/analytics';
-	import { getCorpusStats } from '$lib/api/stats';
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
 	import VerkenNetwerk from '$lib/components/home/VerkenNetwerk.svelte';
 
 	// ── Graph data ───────────────────────────────────────────────
@@ -124,29 +125,12 @@
 	}
 	const PARL_SEATS_MODE_SM = buildParlSeats(85, 60, 18, 60);
 
-	// ── Mode card mini-graph data ─────────────────────────────────
-
-	// ── Fallback stats (shown until /api/stats is available) ─────
-	const STATS_FALLBACK = [
-		{ label: 'Wetsartikelen', note: "Wetten, AMvB's, EU-regelgeving en verdragen", meter: 0.84 },
-		{ label: 'Arresten', note: 'Hoge Raad, gerechtshoven, rechtbanken', meter: 0.96 },
-		{ label: 'Verbindingen', note: 'Citaat, interpretatie, wijziging, vermelding', meter: 0.78 },
-		{ label: 'Bronnen', note: 'Officiële Nederlandse rechtsbronnen', meter: 0.42 }
-	];
-
-	// ── Component state ──────────────────────────────────────────
-	// Wetboek-tiles en hemicycle leven nu in <VerkenNetwerk />; daarom
-	// zit hier alleen nog state voor de stats-sectie en de hero-canvas.
+	// Wetboek-tiles en hemicycle leven in <VerkenNetwerk />; hier alleen de stats en de hero-canvas.
 	let graphCanvas: HTMLCanvasElement | null = $state(null);
 
-	// Stats from API — null means not yet loaded or endpoint unavailable
-	let liveStats = $state<{
-		article_count: number;
-		judgment_count: number;
-		connection_count: number;
-		source_count: number;
-		last_updated: string | null;
-	} | null>(null);
+	// null until /api/stats has answered
+	let stats = $state<Schema<'StatsResponse'> | null>(null);
+	let statsFailed = $state(false);
 
 	// Hero graph hover state — updated by mouse events, drives floating cite card.
 	// Initialise to the central node so the cite card is visible on first paint;
@@ -173,75 +157,40 @@
 	const cardTop = $derived(focusedNode ? `${focusedNode.y * 100}%` : '50%');
 	const cardTransform = $derived(cardOnLeft ? 'translate(-100%, -50%)' : 'translate(0, -50%)');
 
-	// Stats display values — live API data or fallback placeholders
+	const fmtNum = (n: number) =>
+		n >= 1_000_000
+			? `${(n / 1_000_000).toFixed(1).replace('.', ',')} mln`
+			: new Intl.NumberFormat('nl-NL').format(n);
+
 	const statsRows = $derived([
 		{
-			num: liveStats ? fmtNum(liveStats.article_count) : '—',
-			label: STATS_FALLBACK[0].label,
-			note: STATS_FALLBACK[0].note,
-			meter: liveStats ? Math.min(1, liveStats.article_count / 175_000) : STATS_FALLBACK[0].meter
+			num: stats ? fmtNum(stats.nodes.articles) : '—',
+			label: 'Wetsartikelen',
+			note: "Wetten, AMvB's, EU-regelgeving en verdragen"
 		},
 		{
-			num: liveStats ? fmtNum(liveStats.judgment_count) : '—',
-			label: STATS_FALLBACK[1].label,
-			note: STATS_FALLBACK[1].note,
-			meter: liveStats ? Math.min(1, liveStats.judgment_count / 430_000) : STATS_FALLBACK[1].meter
+			num: stats ? fmtNum(stats.nodes.judgments) : '—',
+			label: 'Arresten',
+			note: 'Hoge Raad, gerechtshoven, rechtbanken'
 		},
 		{
-			num: liveStats ? fmtNum(liveStats.connection_count) : '—',
-			label: STATS_FALLBACK[2].label,
-			note: STATS_FALLBACK[2].note,
-			meter: liveStats
-				? Math.min(1, liveStats.connection_count / 2_300_000)
-				: STATS_FALLBACK[2].meter
-		},
-		{
-			num: liveStats ? String(liveStats.source_count) : '—',
-			label: STATS_FALLBACK[3].label,
-			note: STATS_FALLBACK[3].note,
-			meter: liveStats ? Math.min(1, liveStats.source_count / 55) : STATS_FALLBACK[3].meter
+			num: stats ? fmtNum(stats.edges.total) : '—',
+			label: 'Verbindingen',
+			note: 'Citaat, interpretatie, wijziging, vermelding'
 		}
 	]);
 
-	const lastUpdatedLabel = $derived(
-		liveStats?.last_updated ? `Laatst bijgewerkt ${fmtDate(liveStats.last_updated)}.` : ''
-	);
-
-	function fmtNum(n: number): string {
-		if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.', ',')} mln`;
-		return new Intl.NumberFormat('nl-NL').format(n);
-	}
-
-	function fmtDate(iso: string): string {
-		try {
-			return (
-				new Intl.DateTimeFormat('nl-NL', {
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric',
-					hour: '2-digit',
-					minute: '2-digit',
-					timeZone: 'Europe/Amsterdam'
-				}).format(new Date(iso)) + ' CET'
-			);
-		} catch {
-			return iso;
-		}
-	}
-
-	let statsTimedOut = $state(false);
+	$effect(() => {
+		const controller = new AbortController();
+		unwrap(api.GET('/api/stats', { signal: controller.signal }))
+			.then((s) => (stats = s))
+			.catch(() => {
+				if (!controller.signal.aborted) statsFailed = true;
+			});
+		return () => controller.abort();
+	});
 
 	onMount(() => {
-		// ── Fetch live corpus stats ──────────────────────────────
-		const statsTimeoutId = setTimeout(() => {
-			if (!liveStats) statsTimedOut = true;
-		}, 4000);
-		getCorpusStats().then((data) => {
-			clearTimeout(statsTimeoutId);
-			if (!data) return;
-			liveStats = data.corpus;
-		});
-
 		// ── Canvas hero graph ────────────────────────────────────
 		if (!graphCanvas) return;
 
@@ -308,7 +257,7 @@
 		// floating-cite kaart blijven illustreren welke verbinding waarheen
 		// loopt; de canvas zelf is geen navigatie maar een uitnodiging tot
 		// het openen van de Verkenner.
-		const HERO_DEMO_FOCUS = 'instrument_articles/bwbr0005289_162';
+		const HERO_DEMO_FOCUS = 'articles/bwbr0005289_162';
 
 		function onMouseMove(e: MouseEvent) {
 			const rect = canvas.getBoundingClientRect();
@@ -510,7 +459,7 @@
 				<div class="hero-cta">
 					<a
 						class="hero-cta__primary no-underline"
-						href="/explore?focus=instruments%2FBWBR0005289&from=hero"
+						href="/explore?focus=instruments%2Fbwbr0005289&from=hero"
 						onclick={() => track('enter_explorer', { path: 'hero_primary' })}
 					>
 						Open de Verkenner
@@ -572,10 +521,7 @@
 			</div>
 
 			<div class="modes">
-				<a
-					class="mode-col no-underline"
-					href="/explore?focus=instrument_articles%2Fbwbr0005289_162"
-				>
+				<a class="mode-col no-underline" href="/explore?focus=articles%2Fbwbr0005289_162">
 					<div class="mode">
 						<div class="mode-head">
 							<span class="mode-kind">Verkennen</span>
@@ -650,7 +596,7 @@
 									font-size="10"
 									font-weight="600"
 									letter-spacing="0.12em"
-									fill="var(--ink-3)">RELATIES</text
+									fill="var(--ink-3)">VERBINDINGEN</text
 								>
 								<rect
 									x="14"
@@ -800,7 +746,7 @@
 					>
 				</a>
 
-				<a class="mode-col no-underline" href="/explore?mode=split&focus=instruments%2FBWBR0001854">
+				<a class="mode-col no-underline" href="/explore?mode=split&focus=instruments%2Fbwbr0001854">
 					<div class="mode">
 						<div class="mode-head">
 							<span class="mode-kind">Verkennen + lezen</span>
@@ -1127,7 +1073,7 @@
 					>
 				</a>
 
-				<a class="mode-col no-underline" href="/explore?mode=read&focus=instruments%2FBWBR0001840">
+				<a class="mode-col no-underline" href="/explore?mode=read&focus=instruments%2Fbwbr0001840">
 					<div class="mode">
 						<div class="mode-head">
 							<span class="mode-kind">Lezen</span>
@@ -1554,8 +1500,7 @@
 					<p class="trio-source">eur-lex.europa.eu</p>
 					<p class="trio-body">
 						Europese richtlijnen en verordeningen, geïndexeerd per CELEX. Aangehaakt aan de
-						Nederlandse implementatie via expliciete implementatierelaties, zodat omzetting
-						traceerbaar is.
+						Nederlandse implementatie via expliciete verbindingen, zodat omzetting traceerbaar is.
 					</p>
 				</div>
 			</div>
@@ -1574,7 +1519,7 @@
 			<div class="section-head">
 				<div class="section-eyebrow">In cijfers</div>
 				<div>
-					<h2 class="section-title">Het cijfer dat nergens anders bestaat</h2>
+					<h2 class="section-title">Omvang van het netwerk</h2>
 					<p class="section-lede">
 						Wetsartikelen en arresten worden ook door de officiële databases geteld. Het aantal
 						verbindingen ertussen alleen hier.
@@ -1590,7 +1535,7 @@
 				{#each [statsRows[0], statsRows[1]] as s, i (i)}
 					<div class="stat">
 						<div class="stat-label">{s.label}</div>
-						<div class="stat-num" class:stat-num--loading={!liveStats}>{s.num}</div>
+						<div class="stat-num" class:stat-num--loading={!stats}>{s.num}</div>
 						<div class="stat-note">{s.note}</div>
 					</div>
 				{/each}
@@ -1599,20 +1544,17 @@
 			<div class="stat stat--primary stat--feature">
 				<div class="stat-flag">Alleen in Concordans</div>
 				<div class="stat-label">{statsRows[2].label}</div>
-				<div class="stat-num" class:stat-num--loading={!liveStats}>{statsRows[2].num}</div>
+				<div class="stat-num" class:stat-num--loading={!stats}>{statsRows[2].num}</div>
 				<div class="stat-note">{statsRows[2].note}</div>
 			</div>
 
 			<p class="stats-foot">
-				{#if liveStats}
-					{#if lastUpdatedLabel}
-						<span class="stats-foot__sync">{lastUpdatedLabel}</span>
-					{/if}
+				{#if stats}
 					Bronnen: <span class="cite-mono">wetten.overheid.nl</span>,
 					<span class="cite-mono">rechtspraak.nl</span>,
 					<span class="cite-mono">tweedekamer.nl</span> en
 					<span class="cite-mono">eur-lex.europa.eu</span>.
-				{:else if statsTimedOut}
+				{:else if statsFailed}
 					<span class="stats-unavail">Statistieken tijdelijk niet beschikbaar.</span>
 				{/if}
 			</p>
@@ -1742,15 +1684,6 @@
 		grid-template-columns: minmax(380px, 1fr) minmax(500px, 1.2fr);
 		gap: 56px;
 		align-items: center;
-	}
-
-	.hero-eyebrow {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--fg-3);
-		margin-bottom: 20px;
 	}
 
 	.hero-title {
@@ -2003,7 +1936,6 @@
 		transform: rotate(45deg);
 	}
 
-	/* ── About ─────────────────────────────────────────────────── */
 	/* ── Drie domeinen ─────────────────────────────────────────── */
 	.trio {
 		display: grid;
@@ -2075,37 +2007,6 @@
 		color: var(--ink-2);
 	}
 
-	.about-grid {
-		display: grid;
-		grid-template-columns: 220px 1fr;
-		gap: 56px;
-		align-items: start;
-	}
-
-	.body-col p {
-		margin: 0 0 18px;
-		font-family: var(--font-serif);
-		font-size: 19px;
-		line-height: 1.6;
-		color: var(--ink);
-		max-width: 68ch;
-	}
-
-	.body-col p:last-child {
-		margin-bottom: 0;
-	}
-	.body-col em {
-		font-style: italic;
-		color: var(--ink-2);
-	}
-
-	.cite {
-		font-family: var(--font-mono);
-		font-size: 14px;
-		color: var(--ink-2);
-		border-bottom-color: var(--rule-strong);
-	}
-
 	/* ── Modes ─────────────────────────────────────────────────── */
 	.modes {
 		display: grid;
@@ -2149,17 +2050,6 @@
 		content: ' ·';
 		color: var(--accent);
 		margin-left: 2px;
-	}
-
-	.domain:visited .domain-arrow {
-		color: var(--accent);
-	}
-	.domain:visited .domain-name {
-		color: var(--ink-2);
-	}
-
-	.parl-tile:visited .parl-tile__arrow {
-		color: var(--accent);
 	}
 
 	.mode {
@@ -2351,250 +2241,10 @@
 		color: var(--fg-3);
 	}
 
-	.stats-foot__sync {
-		display: inline-block;
-		margin-right: 10px;
-		padding: 2px 8px;
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		color: var(--ink-2);
-		font-variant-numeric: tabular-nums;
-	}
-
 	.cite-mono {
 		font-family: var(--font-mono);
 		font-size: 11px;
 		color: var(--fg-3);
-	}
-
-	/* ── Verken combined ───────────────────────────────────────── */
-	.verken-col-label {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		font-weight: 400;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--fg-3);
-		margin-bottom: 12px;
-	}
-
-	.verken-layout {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 56px;
-		border-top: 1px solid var(--rule);
-		padding-top: 24px;
-		align-items: stretch;
-	}
-
-	/* Stretch beide kolommen tot dezelfde hoogte; de "Alle wetboeken"
-	   en "Parlement in het corpus" links worden naar onder geduwd zodat
-	   de korte kolom mee strekt en beide afsluiten op gelijke lijn. */
-	.verken-wet,
-	.verken-parl {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.verken-wet .domains-more,
-	.verken-parl .domains-more {
-		margin-top: auto;
-		padding-top: 20px;
-	}
-
-	/* ── Domains ───────────────────────────────────────────────── */
-	.domains {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		border-top: 1px solid var(--rule);
-	}
-
-	.domains--2 {
-		grid-template-columns: repeat(2, 1fr);
-		border-top: none;
-	}
-
-	/* Override nth-child border rules for 2-col variant */
-	.domains--2 .domain:nth-child(3n) {
-		border-right: 1px solid var(--rule);
-	}
-
-	.domains--2 .domain:nth-child(2n) {
-		border-right: none;
-	}
-
-	.domain {
-		border-right: 1px solid var(--rule);
-		border-bottom: 1px solid var(--rule);
-		padding: 24px 22px 22px;
-		min-height: 152px;
-		display: flex;
-		flex-direction: column;
-		cursor: pointer;
-		transition: background var(--dur-1) var(--ease);
-		text-decoration: none;
-		color: inherit;
-	}
-
-	.domain:nth-child(3n) {
-		border-right: none;
-	}
-	.domain:hover {
-		background: var(--paper-3);
-	}
-
-	.domain-head {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: 8px;
-		margin-bottom: 8px;
-	}
-
-	.domain-mono {
-		font-family: var(--font-mono);
-		font-size: 12px;
-		color: var(--fg-3);
-		letter-spacing: 0.02em;
-	}
-
-	.domain-count {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--fg-3);
-		white-space: nowrap;
-	}
-
-	.domain-count--empty {
-		min-width: 60px;
-		height: 11px;
-	}
-
-	.domain-name {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: 19px;
-		font-weight: 500;
-		color: var(--ink);
-		line-height: 1.25;
-		flex: 1;
-	}
-
-	.domain-foot {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-top: 12px;
-	}
-
-	.domain-juris {
-		font-family: var(--font-sans);
-		font-size: 10.5px;
-		font-weight: 500;
-		color: var(--fg-2);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		padding: 3px 8px;
-		background: var(--paper-3, var(--paper));
-		border: 1px solid var(--rule);
-	}
-
-	.domain-arrow {
-		font-size: 14px;
-		color: var(--fg-3);
-		transition:
-			color var(--dur-1) var(--ease),
-			transform var(--dur-1) var(--ease);
-		display: inline-block;
-	}
-
-	.domain:hover .domain-arrow {
-		color: var(--accent);
-		transform: translateX(2px);
-	}
-
-	.domains-more {
-		display: inline-block;
-		margin-top: 20px;
-		font-family: var(--font-sans);
-		font-size: 13px;
-		color: var(--fg-2);
-		transition: color var(--dur-1) var(--ease);
-	}
-
-	.domains-more:hover {
-		color: var(--ink);
-	}
-
-	/* ── Parlement (hemicycle + tiles) ─────────────────────────── */
-	.verken-parl :global(.hemicycle) {
-		margin: 0 0 24px;
-		background: var(--paper-2);
-	}
-
-	.parl-tiles {
-		display: flex;
-		flex-direction: column;
-		border-top: 1px solid var(--rule);
-		margin-top: 16px;
-	}
-
-	.parl-tile {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		padding: 16px 4px;
-		border-bottom: 1px solid var(--rule);
-		text-decoration: none;
-		color: inherit;
-		transition:
-			background var(--dur-1) var(--ease),
-			padding-left var(--dur-1) var(--ease);
-	}
-
-	.parl-tile:hover {
-		background: var(--paper-2);
-		padding-left: 8px;
-	}
-
-	.parl-tile__body {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		align-items: baseline;
-		gap: 10px;
-	}
-
-	.parl-tile__name {
-		font-family: var(--font-serif);
-		font-size: 15px;
-		font-weight: 400;
-		color: var(--ink);
-		white-space: nowrap;
-	}
-
-	.parl-tile__sub {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--fg-3);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.parl-tile__arrow {
-		font-size: 13px;
-		color: var(--fg-3);
-		transition:
-			color var(--dur-1) var(--ease),
-			transform var(--dur-1) var(--ease);
-		display: inline-block;
-		flex-shrink: 0;
-	}
-
-	.parl-tile:hover .parl-tile__arrow {
-		color: var(--accent);
-		transform: translateX(2px);
 	}
 
 	/* ── Sources ───────────────────────────────────────────────── */
@@ -2683,7 +2333,6 @@
 		color: var(--paper);
 	}
 
-	/* ── Footer ─────────────────────────────────────────────────── */
 	/* ── Responsive ─────────────────────────────────────────────── */
 	@media (prefers-reduced-motion: reduce) {
 		.graph-click-hint {
@@ -2720,7 +2369,6 @@
 		}
 
 		.section-head,
-		.about-grid,
 		.sources-grid {
 			grid-template-columns: 1fr;
 			gap: 24px;
@@ -2745,11 +2393,6 @@
 
 		.stats {
 			grid-template-columns: repeat(2, 1fr);
-		}
-
-		.verken-layout {
-			grid-template-columns: 1fr;
-			gap: 40px;
 		}
 	}
 
@@ -2784,12 +2427,6 @@
 		}
 		.stat-num {
 			font-size: 40px;
-		}
-		.domains--2 {
-			grid-template-columns: 1fr;
-		}
-		.domains--2 .domain:nth-child(2n) {
-			border-right: 1px solid var(--rule);
 		}
 		.sources-list {
 			grid-template-columns: 1fr;

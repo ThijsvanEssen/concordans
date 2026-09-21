@@ -1,40 +1,33 @@
 <script lang="ts">
-	import { fetchArticleLegislativeHistory } from '$lib/api/parliamentary-client';
-	import type { LegislativeHistoryEntry } from '$lib/api/parliamentary';
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
 
-	let {
-		bwbId,
-		articleNumber
-	}: {
-		bwbId: string;
-		articleNumber: string;
-	} = $props();
+	let { bwbId, articleNumber }: { bwbId: string; articleNumber: string } = $props();
 
+	type Entry = Schema<'LegislativeHistoryEntry'>;
 	type LoadState =
 		| { kind: 'idle' }
 		| { kind: 'loading' }
-		| { kind: 'loaded'; entries: LegislativeHistoryEntry[] }
+		| { kind: 'loaded'; entries: Entry[] }
 		| { kind: 'error' }
 		| { kind: 'empty' };
 
 	let loadState = $state<LoadState>({ kind: 'idle' });
 	let open = $state(false);
 
-	function formatDate(iso: string): string {
-		return new Date(iso).toLocaleDateString('nl-NL', {
-			day: 'numeric',
-			month: 'short',
-			year: 'numeric'
-		});
-	}
+	const formatDate = (iso: string) =>
+		new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
 
+	// Fetched on first opening: the answer can run to hundreds of kilobytes.
 	async function load() {
-		if (loadState.kind === 'loaded' || loadState.kind === 'loading') return;
 		loadState = { kind: 'loading' };
 		try {
-			const res = await fetchArticleLegislativeHistory(bwbId, articleNumber);
-			loadState =
-				res.entries.length > 0 ? { kind: 'loaded', entries: res.entries } : { kind: 'empty' };
+			const { entries } = await unwrap(
+				api.GET('/api/articles/{bwb_id}/{article_number}/legislative-history', {
+					params: { path: { bwb_id: bwbId, article_number: articleNumber } }
+				})
+			);
+			loadState = entries.length > 0 ? { kind: 'loaded', entries } : { kind: 'empty' };
 		} catch {
 			loadState = { kind: 'error' };
 		}
@@ -89,23 +82,23 @@
 					{#each loadState.entries as entry, i (entry.document_id ?? entry.dossier_id ?? i)}
 						<li class="lh-item">
 							<div class="lh-item-main">
-								{#if entry.dossier_nummer}
-									<a href="/explore?focus=kamerstukdossiers/{entry.dossier_nummer}" class="lh-link">
-										<span class="lh-num">{entry.dossier_nummer}</span>
+								{#if entry.dossier_number}
+									<a href="/explore?focus=dossiers/{entry.dossier_number}" class="lh-link">
+										<span class="lh-num">{entry.dossier_number}</span>
 										<span class="lh-title"
-											>{entry.dossier_titel ?? entry.samenvatting ?? entry.dossier_nummer}</span
+											>{entry.dossier_title ?? entry.summary ?? entry.dossier_number}</span
 										>
 									</a>
-								{:else if entry.samenvatting}
-									<span class="lh-title lh-title--plain">{entry.samenvatting}</span>
+								{:else if entry.summary}
+									<span class="lh-title lh-title--plain">{entry.summary}</span>
 								{/if}
 							</div>
 							<div class="lh-item-meta">
-								{#if entry.datum}
-									<span class="lh-date">{formatDate(entry.datum)}</span>
+								{#if entry.date}
+									<span class="lh-date">{formatDate(entry.date)}</span>
 								{/if}
-								{#if entry.soort}
-									<span class="lh-soort">{entry.soort}</span>
+								{#if entry.kind}
+									<span class="lh-kind">{entry.kind}</span>
 								{/if}
 								{#if entry.status === 'voorgesteld'}
 									<span class="lh-badge lh-badge--voorgesteld">Voorgesteld</span>
@@ -242,7 +235,7 @@
 		color: var(--ink-4);
 	}
 
-	.lh-soort {
+	.lh-kind {
 		font-family: var(--font-sans);
 		font-size: 10px;
 		color: var(--ink-4);

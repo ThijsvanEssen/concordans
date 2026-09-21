@@ -1,51 +1,24 @@
 <script lang="ts">
-	// Index — bladeren door één categorie tegelijk, met filters en sortering.
-	// Geen netwerk, geen artikeltekst. Layout zonder linker zijbalk; in plaats
-	// daarvan een horizontale categorie-strook bovenaan en een uniforme
-	// toolbar daaronder. Een rij klapt inline uit met rijke metadata en de
-	// drie weergavemodi (Ontdekken / Verdiepen / Lezen) als acties.
+	// Index: browse one category at a time with filters and sorting. A row
+	// expands inline with its metadata and the three ways of opening it
+	// (Ontdekken, Verdiepen, Lezen).
 	//
-	// URL-state houdt elke filter- en sortkeuze vast zodat een gefilterde
-	// weergave gedeeld kan worden via een link.
+	// Every filter and sort is in the URL, so a filtered view can be shared.
+	// What the API can filter or sort is passed on as a query; the rest is done
+	// on the rows loaded so far.
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import {
-		fetchCommissies,
-		fetchCommissiesWithLeden,
-		fetchFracties,
-		fetchInstruments,
-		fetchJudgments,
-		fetchLeden,
-		fetchOpenDossiers,
-		fetchStemmingen,
-		fetchZetels
-	} from '$lib/api/parliamentary-client';
-	import type {
-		CommissieDTO,
-		DossierSummaryDTO,
-		FractieDTO,
-		InstrumentJurisdiction,
-		InstrumentSummaryDTO,
-		JudgmentSummaryDTO,
-		JudgmentTier,
-		LidDTO,
-		StemmingSummaryDTO,
-		ZetelsResponse
-	} from '$lib/api/parliamentary';
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
+	import type { Collection } from '$lib/vocabulary';
+	import { dossierNumber } from '$lib/components/parliamentary/data';
+	import { STAGES, STAGE_LABEL, TRACK_LABEL, isStage } from '$lib/components/parliamentary/stages';
 	import { partyColor } from '$lib/utils/party-color';
 	import Hemicycle from './Hemicycle.svelte';
-	import IndexToolbar, { type Facet, type SortOption } from './index/IndexToolbar.svelte';
-	import IndexFaseFilter, { type FaseDef } from './index/IndexFaseFilter.svelte';
+	import IndexToolbar, { type Facet } from './index/IndexToolbar.svelte';
+	import IndexStageFilter from './index/IndexStageFilter.svelte';
 	import IndexDetail from './index/IndexDetail.svelte';
-
-	type CategoryKey =
-		| 'wetten'
-		| 'arresten'
-		| 'dossiers'
-		| 'commissies'
-		| 'leden'
-		| 'fracties'
-		| 'stemmingen';
+	import { INDEX_CATEGORIES, type IndexCategory } from './index/categories';
 
 	let {
 		category,
@@ -55,58 +28,71 @@
 		onReadItem,
 		onResultCountChange
 	}: {
-		category: CategoryKey;
-		onSelectCategory: (k: CategoryKey) => void;
-		/** Verdiepen — split mode met netwerk + leespanel. */
-		onSelectItem: (collection: string, key: string) => void;
-		/** Ontdekken — graph mode met focus op de bron. */
-		onDiscoverItem?: (collection: string, key: string) => void;
-		/** Lezen — volledige tekst. Alleen relevant voor wetten en arresten. */
-		onReadItem?: (collection: string, key: string) => void;
-		/** Stuurt {filtered, total, category} terug zodat de chrome het kan tonen. */
+		category: IndexCategory;
+		onSelectCategory: (k: IndexCategory) => void;
+		/** Verdiepen: split mode with network and reading pane. */
+		onSelectItem: (collection: Collection, key: string) => void;
+		/** Ontdekken: graph mode focused on the source. */
+		onDiscoverItem?: (collection: Collection, key: string) => void;
+		/** Lezen: the full text. Only for laws and judgments. */
+		onReadItem?: (collection: Collection, key: string) => void;
+		/** Reports what is shown and how many there are, for the status bar. */
 		onResultCountChange?: (info: {
 			filtered: number;
 			total: number;
-			category: CategoryKey;
+			category: IndexCategory;
 		}) => void;
 	} = $props();
 
-	type CategoryDef = { key: CategoryKey; label: string; collection: string };
-	const CATEGORIES: CategoryDef[] = [
-		{ key: 'wetten', label: 'Wetten', collection: 'instruments' },
-		{ key: 'arresten', label: 'Arresten', collection: 'judgments' },
-		{ key: 'dossiers', label: 'Dossiers', collection: 'kamerstukdossiers' },
-		{ key: 'commissies', label: 'Commissies', collection: 'commissies' },
-		{ key: 'leden', label: 'Kamerleden', collection: 'leden' },
-		{ key: 'fracties', label: 'Fracties', collection: 'fracties' },
-		{ key: 'stemmingen', label: 'Stemmingen', collection: 'stemmingen' }
-	];
+	const oneOf = <T extends string>(value: string | null, allowed: readonly T[]): T | undefined =>
+		allowed.find((a) => a === value);
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
-	const q = $derived($page.url.searchParams.get('q') ?? '');
-	const fasesParam = $derived($page.url.searchParams.get('fases') ?? '');
-	const fases = $derived(fasesParam ? fasesParam.split(',').filter(Boolean) : []);
-	const trajectKind = $derived($page.url.searchParams.get('traject_kind') ?? '');
-	const aangenomen = $derived($page.url.searchParams.get('aangenomen') ?? '');
-	const dateFrom = $derived($page.url.searchParams.get('from') ?? '');
-	const dateTo = $derived($page.url.searchParams.get('to') ?? '');
-	const dossierNr = $derived($page.url.searchParams.get('dossier') ?? '');
-	const partijFilt = $derived($page.url.searchParams.get('partij') ?? '');
-	const jurisdiction = $derived(
-		($page.url.searchParams.get('jurisdiction') ?? '') as InstrumentJurisdiction | ''
+	const params = $derived($page.url.searchParams);
+	const q = $derived(params.get('q') ?? '');
+	const stage = $derived(
+		oneOf(
+			params.get('stage'),
+			STAGES.map((s) => s.id)
+		)
 	);
-	const court = $derived($page.url.searchParams.get('court') ?? '');
-	const tier = $derived(($page.url.searchParams.get('tier') ?? '') as JudgmentTier | '');
-	const sort = $derived($page.url.searchParams.get('sort') ?? '');
-	// Richting heeft een per-categorie default (zie SORT_DEFAULT_DIR) wanneer
-	// er geen ?dir= in de URL staat. Numerieke sortering wil meestal aflopend
-	// (meeste eerst), alfabetisch wil oplopend.
-	const dirRaw = $derived($page.url.searchParams.get('dir'));
-	const onlyActive = $derived($page.url.searchParams.get('only_active') === '1');
-	const alleenGeldig = $derived($page.url.searchParams.get('alleen_geldig') === '1');
-	// Voor Kamerleden en Fracties laden we standaard alleen huidige
-	// (zittende) records. ?include_inactive=1 trekt ook historische erbij.
-	const includeInactive = $derived($page.url.searchParams.get('include_inactive') === '1');
+	// Stages a dossier must all have passed, comma-separated.
+	const hasStage = $derived((params.get('has_stage') ?? '').split(',').filter(isStage).join(','));
+	const track = $derived(params.get('track') ?? '');
+	const passed = $derived(oneOf(params.get('passed'), ['true', 'false'] as const));
+	const dateFrom = $derived(params.get('from') ?? '');
+	const dateTo = $derived(params.get('to') ?? '');
+	const dossierFilter = $derived(params.get('dossier') ?? '');
+	const party = $derived(params.get('party') ?? '');
+	const jurisdiction = $derived(oneOf(params.get('jurisdiction'), ['nl', 'eu'] as const));
+	const court = $derived(params.get('court') ?? '');
+	const tier = $derived(
+		oneOf(params.get('tier'), ['hoge_raad', 'gerechtshof', 'rechtbank', 'bijzonder'] as const)
+	);
+	const sort = $derived(params.get('sort'));
+	const dirParam = $derived(oneOf(params.get('dir'), ['asc', 'desc'] as const));
+	const onlyActive = $derived(params.get('only_active') === '1');
+	// Members and factions are the sitting ones unless historical ones are asked for.
+	const includeInactive = $derived(params.get('include_inactive') === '1');
+
+	const FILTER_PARAMS = [
+		'q',
+		'stage',
+		'has_stage',
+		'track',
+		'passed',
+		'from',
+		'to',
+		'dossier',
+		'party',
+		'jurisdiction',
+		'court',
+		'tier',
+		'sort',
+		'dir',
+		'only_active',
+		'include_inactive'
+	];
 
 	function patchUrl(patch: Record<string, string | null>) {
 		const url = new URL($page.url.toString());
@@ -117,849 +103,480 @@
 		goto(url.toString(), { replaceState: false, keepFocus: true, noScroll: true });
 	}
 
-	function toggleArrParam(name: string, current: string[], v: string) {
-		const next = current.includes(v) ? current.filter((x) => x !== v) : [...current, v];
-		patchUrl({ [name]: next.length ? next.join(',') : null });
-	}
+	const toggleParam = (name: string, current: string | undefined, value: string) =>
+		patchUrl({ [name]: current === value ? null : value });
 
-	// Categorie wisselen: filters resetten zodat ?fase= uit een Dossiers-bezoek
-	// niet lekt naar een Stemmingen-bezoek.
-	function switchCategory(k: CategoryKey) {
+	// Switching category drops the filters, so a stage filter of dossiers does not leak into decisions.
+	async function switchCategory(k: IndexCategory) {
 		const url = new URL($page.url.toString());
-		for (const p of [
-			'q',
-			'fases',
-			'traject_kind',
-			'aangenomen',
-			'from',
-			'to',
-			'dossier',
-			'partij',
-			'jurisdiction',
-			'court',
-			'tier',
-			'sort',
-			'dir',
-			'only_active',
-			'alleen_geldig',
-			'include_inactive'
-		]) {
-			url.searchParams.delete(p);
-		}
+		for (const p of FILTER_PARAMS) url.searchParams.delete(p);
 		url.searchParams.set('kind', k);
-		goto(url.toString(), { replaceState: false, keepFocus: true, noScroll: true });
+		// The parent sets `kind` on the URL it then holds, so it must see the cleared filters.
+		await goto(url.toString(), { replaceState: false, keepFocus: true, noScroll: true });
 		onSelectCategory(k);
 	}
 
-	// ── Data loaders per category ───────────────────────────────────────────
-	let dossiers = $state<DossierSummaryDTO[] | null>(null);
-	let commissies = $state<CommissieDTO[] | null>(null);
-	let leden = $state<LidDTO[] | null>(null);
-	let fracties = $state<FractieDTO[] | null>(null);
-	let zetels = $state<ZetelsResponse | null>(null);
-	let stemmingen = $state<StemmingSummaryDTO[] | null>(null);
-	let instruments = $state<InstrumentSummaryDTO[] | null>(null);
-	let instrumentsTotal = $state(0);
-	let judgments = $state<JudgmentSummaryDTO[] | null>(null);
-	let judgmentsTotal = $state(0);
-	let dossiersTotal = $state(0);
-	// Paginering is beschikbaar waar de endpoint `offset` ondersteunt.
-	// `/api/fracties` retourneert in één keer alles; geen Load More daar.
-	let instrumentsHasMore = $state(false);
-	let judgmentsHasMore = $state(false);
-	let dossiersHasMore = $state(false);
-	let ledenHasMore = $state(false);
-	let stemmingenHasMore = $state(false);
+	// ── Sorting ─────────────────────────────────────────────────────────────
+	// The first option is the default. An option with `dir` is sorted here, with
+	// that direction unless the URL says otherwise; the others are sorted by the API.
+	type SortDef = { id: string; label: string; dir?: 'asc' | 'desc' };
+	const SORTS: Record<IndexCategory, SortDef[]> = {
+		instruments: [
+			{ id: 'title', label: 'Citatietitel' },
+			{ id: 'article_count', label: 'Aantal artikelen' }
+		],
+		judgments: [
+			{ id: 'date_desc', label: 'Datum (nieuw → oud)' },
+			{ id: 'date_asc', label: 'Datum (oud → nieuw)' },
+			{ id: 'citation_count', label: 'Meest geciteerd' }
+		],
+		dossiers: [
+			{ id: 'number', label: 'Kamerstuknummer', dir: 'desc' },
+			{ id: 'title', label: 'Titel', dir: 'asc' },
+			{ id: 'stage', label: 'Fase', dir: 'asc' }
+		],
+		committees: [
+			{ id: 'dossiers', label: 'Actieve dossiers', dir: 'desc' },
+			{ id: 'abbreviation', label: 'Afkorting', dir: 'asc' },
+			{ id: 'name', label: 'Naam', dir: 'asc' }
+		],
+		members: [
+			{ id: 'name', label: 'Naam', dir: 'asc' },
+			{ id: 'party', label: 'Fractie', dir: 'asc' }
+		],
+		factions: [
+			{ id: 'seats', label: 'Zetels', dir: 'desc' },
+			{ id: 'abbreviation', label: 'Afkorting', dir: 'asc' },
+			{ id: 'name', label: 'Naam', dir: 'asc' }
+		],
+		decisions: [
+			{ id: 'date', label: 'Datum', dir: 'desc' },
+			{ id: 'result', label: 'Uitslag', dir: 'asc' },
+			{ id: 'subject', label: 'Onderwerp', dir: 'asc' }
+		]
+	};
+	const sortDef = $derived(SORTS[category].find((s) => s.id === sort) ?? SORTS[category][0]);
+	const dir = $derived(sortDef.dir && (dirParam ?? sortDef.dir));
+
+	type Keys<T> = Record<string, (row: T) => string | number>;
+	function sorted<T>(rows: T[], keys: Keys<T>): T[] {
+		const key = keys[sortDef.id];
+		const sign = dir === 'asc' ? 1 : -1;
+		return [...rows].sort((a, b) => {
+			const [x, y] = [key(a), key(b)];
+			return (
+				(typeof x === 'number' ? x - (y as number) : x.localeCompare(y as string, 'nl')) * sign
+			);
+		});
+	}
+
+	// ── Data ────────────────────────────────────────────────────────────────
+	type Page<T> = { items: T[]; total: number; more: boolean };
+	type AnyPage = Page<unknown>;
+	type Pages = {
+		instruments?: Page<Schema<'InstrumentListItemDTO'>>;
+		judgments?: Page<Schema<'JudgmentListItemDTO'>>;
+		dossiers?: Page<Schema<'DossierSummaryDTO'>>;
+		committees?: Page<Schema<'CommitteeDTO'>>;
+		members?: Page<Schema<'MemberDTO'>>;
+		factions?: Page<Schema<'FactionDTO'>>;
+		decisions?: Page<Schema<'DecisionSummaryDTO'>>;
+	};
+
+	const PAGE = 100;
+
+	// A list without `total` (members) is over when a slice comes back short.
+	function toPage<T>(
+		previous: Page<T> | undefined,
+		items: T[],
+		offset: number,
+		total?: number
+	): Page<T> {
+		const all = offset && previous ? [...previous.items, ...items] : items;
+		return {
+			items: all,
+			total: total ?? all.length,
+			more: total === undefined ? items.length === PAGE : all.length < total
+		};
+	}
+
+	let pages = $state<Pages>({});
+	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
+	let parties = $state<string[]>([]);
 	let loading = $state(false);
 	let loadingMore = $state(false);
 	let error = $state<string | null>(null);
 
-	const PAGE_SIZE = 100;
-	const PAGE_SIZE_LARGE = 200;
-
-	function evalHasMore(returned: number, requested: number, total?: number): boolean {
-		if (typeof total === 'number' && total > 0) return total > returned;
-		return returned >= requested;
-	}
-
-	async function loadMoreInstruments() {
-		if (loadingMore || !instruments || !instrumentsHasMore) return;
-		loadingMore = true;
-		try {
-			const r = await fetchInstruments({
-				limit: PAGE_SIZE,
-				offset: instruments.length,
-				q: q || undefined,
-				jurisdiction: (jurisdiction as InstrumentJurisdiction) || undefined,
-				sort: (sort as 'title' | 'article_count' | 'recent_mutation') || undefined
-			});
-			const seen = new Set(instruments.map((w) => w.id));
-			const fresh = r.items.filter((w) => !seen.has(w.id));
-			instruments = [...instruments, ...fresh];
-			instrumentsTotal = r.total;
-			instrumentsHasMore =
-				fresh.length > 0 &&
-				evalHasMore(instruments.length, instruments.length + 1, r.total) &&
-				r.items.length >= PAGE_SIZE;
-		} catch {
-			/* keep partial */
-		} finally {
-			loadingMore = false;
-		}
-	}
-
-	async function loadMoreJudgments() {
-		if (loadingMore || !judgments || !judgmentsHasMore) return;
-		loadingMore = true;
-		try {
-			const r = await fetchJudgments({
-				limit: PAGE_SIZE,
-				offset: judgments.length,
-				q: q || undefined,
-				court: court || undefined,
-				tier: (tier as JudgmentTier) || undefined,
-				from: dateFrom || undefined,
-				to: dateTo || undefined,
-				sort: (sort as 'date_desc' | 'date_asc' | 'citation_count') || undefined
-			});
-			const seen = new Set(judgments.map((j) => j.id));
-			const fresh = r.items.filter((j) => !seen.has(j.id));
-			judgments = [...judgments, ...fresh];
-			judgmentsTotal = r.total;
-			judgmentsHasMore =
-				fresh.length > 0 &&
-				r.items.length >= PAGE_SIZE &&
-				(r.total === 0 || judgments.length < r.total);
-		} catch {
-			/* keep partial */
-		} finally {
-			loadingMore = false;
-		}
-	}
-
-	async function loadMoreLeden() {
-		if (loadingMore || !leden || !ledenHasMore) return;
-		loadingMore = true;
-		try {
-			const r = await fetchLeden({ limit: PAGE_SIZE_LARGE, offset: leden.length });
-			const seen = new Set(leden.map((l) => l.id));
-			const fresh = r.filter((l) => !seen.has(l.id));
-			leden = [...leden, ...fresh];
-			ledenHasMore = fresh.length > 0 && r.length >= PAGE_SIZE_LARGE;
-		} catch {
-			/* keep partial */
-		} finally {
-			loadingMore = false;
-		}
-	}
-
-	// `/api/fracties` retourneert in één keer alles; geen paginering.
-
-	// `/api/dossiers/open` ondersteunt sinds de backend-bugfix `offset` en
-	// retourneert `{total, items}`. Meer laden voegt de volgende slice
-	// achteraan toe, ontdubbeld op id voor de zekerheid.
-	async function loadMoreDossiers() {
-		if (loadingMore || !dossiers || !dossiersHasMore) return;
-		loadingMore = true;
-		try {
-			const r = await fetchOpenDossiers({
-				fase: fases.length === 1 ? fases[0] : undefined,
-				limit: PAGE_SIZE_LARGE,
-				offset: dossiers.length
-			});
-			const seen = new Set(dossiers.map((d) => d.id));
-			const fresh = r.items.filter((d) => !seen.has(d.id));
-			dossiers = [...dossiers, ...fresh];
-			dossiersTotal = r.total;
-			dossiersHasMore = dossiers.length < r.total && fresh.length > 0;
-		} catch {
-			/* keep partial */
-		} finally {
-			loadingMore = false;
-		}
-	}
-
-	async function loadMoreStemmingen() {
-		if (loadingMore || !stemmingen || !stemmingenHasMore) return;
-		loadingMore = true;
-		try {
-			const r = await fetchStemmingen({ limit: PAGE_SIZE_LARGE, offset: stemmingen.length });
-			const seen = new Set(stemmingen.map((s) => s.id));
-			const fresh = r.items.filter((s) => !seen.has(s.id));
-			stemmingen = [...stemmingen, ...fresh];
-			stemmingenHasMore =
-				fresh.length > 0 && r.items.length >= PAGE_SIZE_LARGE && stemmingen.length < r.total;
-		} catch {
-			/* keep partial */
-		} finally {
-			loadingMore = false;
-		}
-	}
-
-	// Dossiers — re-fetch wanneer de server-side fase-filter wijzigt.
-	// We zetten `fase=` alleen door wanneer er precies één fase geselecteerd
-	// is; bij multi-select valt het filter terug naar client-side (de
-	// server-kant `has_stage` is AND, wij willen OR voor de pijl-multi-select).
-	// Sentinel-waarde voor de eerste run zodat het effect ook bij een lege
-	// key (geen filter) triggert.
-	let lastDossierFetchKey: string | null = null;
-	$effect(() => {
-		if (category !== 'dossiers') return;
-		const fase = fases.length === 1 ? fases[0] : '';
-		const key = `${fase}`;
-		if (key === lastDossierFetchKey) return;
-		lastDossierFetchKey = key;
-		loading = true;
-		error = null;
-		const ac = new AbortController();
-		fetchOpenDossiers({ fase: fase || undefined, limit: PAGE_SIZE_LARGE, signal: ac.signal })
-			.then((r) => {
-				dossiers = r.items;
-				dossiersTotal = r.total;
-				dossiersHasMore = r.items.length < r.total;
-			})
-			.catch((e) => {
-				if ((e as Error)?.name !== 'AbortError') error = 'Dossiers konden niet worden geladen.';
-			})
-			.finally(() => {
-				loading = false;
-			});
-		return () => ac.abort();
-	});
-
-	let lastWettenKey: string | null = null;
-	$effect(() => {
-		if (category !== 'wetten') return;
-		const key = `${q}|${jurisdiction}|${sort}`;
-		if (key === lastWettenKey) return;
-		lastWettenKey = key;
-		loading = true;
-		error = null;
-		const ac = new AbortController();
-		fetchInstruments({
-			limit: 100,
-			q: q || undefined,
-			jurisdiction: (jurisdiction as InstrumentJurisdiction) || undefined,
-			sort: (sort as 'title' | 'article_count' | 'recent_mutation') || undefined,
-			signal: ac.signal
-		})
-			.then((r) => {
-				instruments = r.items;
-				instrumentsTotal = r.total;
-				instrumentsHasMore = evalHasMore(r.items.length, 100, r.total);
-			})
-			.catch((e) => {
-				if ((e as Error)?.name !== 'AbortError') error = 'Wetten konden niet worden geladen.';
-			})
-			.finally(() => {
-				loading = false;
-			});
-		return () => ac.abort();
-	});
-
-	let lastArrestenKey: string | null = null;
-	$effect(() => {
-		if (category !== 'arresten') return;
-		const key = `${q}|${court}|${tier}|${dateFrom}|${dateTo}|${sort}`;
-		if (key === lastArrestenKey) return;
-		lastArrestenKey = key;
-		loading = true;
-		error = null;
-		const ac = new AbortController();
-		fetchJudgments({
-			limit: 100,
-			q: q || undefined,
-			court: court || undefined,
-			tier: (tier as JudgmentTier) || undefined,
-			from: dateFrom || undefined,
-			to: dateTo || undefined,
-			sort: (sort as 'date_desc' | 'date_asc' | 'citation_count') || undefined,
-			signal: ac.signal
-		})
-			.then((r) => {
-				judgments = r.items;
-				judgmentsTotal = r.total;
-				judgmentsHasMore = evalHasMore(r.items.length, 100, r.total);
-			})
-			.catch((e) => {
-				if ((e as Error)?.name === 'AbortError') return;
-				const msg = (e as Error)?.message ?? '';
-				error = msg.includes('500')
-					? 'Arresten-lijst is tijdelijk niet beschikbaar (backend-fout). Probeer later opnieuw.'
-					: 'Arresten konden niet worden geladen.';
-			})
-			.finally(() => {
-				loading = false;
-			});
-		return () => ac.abort();
-	});
-
-	// One-shot loaders voor categorieën zonder afhankelijke filters
-	// (commissies, stemmingen). Leden en fracties hebben hun eigen effect
-	// hieronder omdat ze met `actief`-filter heen-en-weer kunnen.
-	$effect(() => {
-		const c = category;
-		if (c !== 'commissies' && c !== 'stemmingen') return;
-		if (c === 'commissies' && commissies !== null) return;
-		if (c === 'stemmingen' && stemmingen !== null) return;
-
-		loading = true;
-		error = null;
-		const ac = new AbortController();
-		(async () => {
-			try {
-				if (c === 'commissies') {
-					commissies = await fetchCommissies(ac.signal);
-				} else if (c === 'stemmingen') {
-					const r = await fetchStemmingen({ limit: 200, offset: 0, signal: ac.signal });
-					stemmingen = r.items;
-					stemmingenHasMore =
-						stemmingen.length >= 200 && (r.total === 0 || stemmingen.length < r.total);
-				}
-			} catch (e) {
-				if ((e as Error)?.name !== 'AbortError') error = 'Laden mislukt';
-			} finally {
-				loading = false;
-			}
-		})();
-		return () => ac.abort();
-	});
-
-	// Leden — server-side `actief`-filter werkt sinds backend-bugfix.
-	// Default toont alleen zittende Kamerleden; ?include_inactive=1 trekt
-	// ook historische erbij via `include_all=true`.
-	let lastLedenKey: string | null = null;
-	$effect(() => {
-		if (category !== 'leden') return;
-		const key = `${includeInactive ? '1' : '0'}`;
-		if (key === lastLedenKey) return;
-		lastLedenKey = key;
-		loading = true;
-		error = null;
-		const ac = new AbortController();
-		fetchLeden({
-			limit: 1000,
-			actief: includeInactive ? undefined : true,
-			include_all: includeInactive ? true : undefined,
-			signal: ac.signal
-		})
-			.then((r) => {
-				leden = r;
-				ledenHasMore = false;
-			})
-			.catch((e) => {
-				if ((e as Error)?.name !== 'AbortError') error = 'Kamerleden konden niet worden geladen.';
-			})
-			.finally(() => {
-				loading = false;
-			});
-		return () => ac.abort();
-	});
-
-	// Fracties — server-side `actief`-filter. Default toont alleen
-	// zittende fracties. Bij API-fout (fracties-endpoint is flaky) valt het
-	// terug op een afleiding via commissies-met-leden in één bulkcall.
-	let lastFractiesKey: string | null = null;
-	$effect(() => {
-		if (category !== 'fracties') return;
-		const key = `${includeInactive ? '1' : '0'}`;
-		if (key === lastFractiesKey) return;
-		lastFractiesKey = key;
-		loading = true;
-		error = null;
-		const ac = new AbortController();
-		(async () => {
-			try {
-				try {
-					fracties = await fetchFracties({
-						actief: includeInactive ? undefined : true,
-						signal: ac.signal
-					});
-				} catch {
-					const withLeden = await fetchCommissiesWithLeden(ac.signal);
-					const seen = new Map<string, FractieDTO>();
-					for (const cc of withLeden) {
-						for (const lid of cc.leden ?? []) {
-							const p = lid.partij;
-							if (!p || seen.has(p)) continue;
-							seen.set(p, { id: `fractie:${p}`, key: p, naam: p, afkorting: p });
-						}
-					}
-					fracties = [...seen.values()].sort((a, b) =>
-						(a.afkorting ?? '').localeCompare(b.afkorting ?? '')
+	// The request for the current category and filters. It is rebuilt only when
+	// one of the values it reads changes, and that is what triggers a new load.
+	type Fetcher = (offset: number, signal: AbortSignal) => Promise<void>;
+	const fetchPage = $derived.by<Fetcher>(() => {
+		const limit = PAGE;
+		switch (category) {
+			case 'instruments': {
+				const query = {
+					q: q || undefined,
+					jurisdiction,
+					sort: oneOf(sortDef.id, ['title', 'article_count'] as const),
+					limit
+				};
+				return async (offset, signal) => {
+					const r = await unwrap(
+						api.GET('/api/instruments', { params: { query: { ...query, offset } }, signal })
 					);
-				}
-			} catch (e) {
-				if ((e as Error)?.name !== 'AbortError') error = 'Fracties konden niet worden geladen.';
-			} finally {
-				loading = false;
+					pages.instruments = toPage(pages.instruments, r.items, offset, r.total);
+				};
 			}
-		})();
-		return () => ac.abort();
+			case 'judgments': {
+				const query = {
+					q: q || undefined,
+					court: court || undefined,
+					tier,
+					from: dateFrom || undefined,
+					to: dateTo || undefined,
+					sort: oneOf(sortDef.id, ['date_desc', 'date_asc', 'citation_count'] as const),
+					limit
+				};
+				return async (offset, signal) => {
+					const r = await unwrap(
+						api.GET('/api/judgments', { params: { query: { ...query, offset } }, signal })
+					);
+					pages.judgments = toPage(pages.judgments, r.items, offset, r.total);
+				};
+			}
+			case 'dossiers': {
+				const query = {
+					subject: q || undefined,
+					stage,
+					has_stage: hasStage || undefined,
+					limit
+				};
+				return async (offset, signal) => {
+					const r = await unwrap(
+						api.GET('/api/dossiers/open', { params: { query: { ...query, offset } }, signal })
+					);
+					pages.dossiers = toPage(pages.dossiers, r.items, offset, r.total);
+				};
+			}
+			case 'committees':
+				return async (_offset, signal) => {
+					const items = await unwrap(api.GET('/api/committees', { signal }));
+					pages.committees = toPage(undefined, items, 0, items.length);
+				};
+			case 'members': {
+				const query = {
+					q: q || undefined,
+					party: party || undefined,
+					active: includeInactive ? undefined : true,
+					include_all: includeInactive,
+					limit
+				};
+				return async (offset, signal) => {
+					const items = await unwrap(
+						api.GET('/api/members', { params: { query: { ...query, offset } }, signal })
+					);
+					pages.members = toPage(pages.members, items, offset);
+				};
+			}
+			case 'factions': {
+				const query = { q: q || undefined, active: includeInactive ? undefined : true };
+				return async (_offset, signal) => {
+					const items = await unwrap(api.GET('/api/factions', { params: { query }, signal }));
+					pages.factions = toPage(undefined, items, 0, items.length);
+				};
+			}
+			case 'decisions': {
+				const query = {
+					passed: passed === undefined ? undefined : passed === 'true',
+					party: party || undefined,
+					limit
+				};
+				return async (offset, signal) => {
+					const r = await unwrap(
+						api.GET('/api/decisions', { params: { query: { ...query, offset } }, signal })
+					);
+					pages.decisions = toPage(pages.decisions, r.items, offset, r.total);
+				};
+			}
+		}
 	});
 
-	// Hemicycle-data — eenmalig bij activatie van Fracties.
+	let loadMoreAbort: AbortController | null = null;
+
 	$effect(() => {
-		if (category !== 'fracties' || zetels !== null) return;
+		const load = fetchPage;
 		const ac = new AbortController();
-		fetchZetels(ac.signal)
-			.then((r) => {
-				zetels = r;
-			})
+		loading = true;
+		error = null;
+		load(0, ac.signal)
 			.catch(() => {
-				/* optional — silent fail */
+				if (!ac.signal.aborted) error = `${labelOf(category)} konden niet worden geladen.`;
+			})
+			.finally(() => {
+				if (!ac.signal.aborted) loading = false;
 			});
-		return () => ac.abort();
+		return () => {
+			ac.abort();
+			loadMoreAbort?.abort();
+		};
 	});
 
-	// ── Client-side filter en sortering ─────────────────────────────────────
-	function norm(s: string | null | undefined): string {
-		return (s ?? '').toLowerCase();
+	async function loadMore() {
+		const offset = pages[category]?.items.length;
+		if (loadingMore || !offset) return;
+		loadingMore = true;
+		loadMoreAbort = new AbortController();
+		try {
+			await fetchPage(offset, loadMoreAbort.signal);
+		} catch {
+			/* the rows loaded so far stay */
+		} finally {
+			loadingMore = false;
+		}
 	}
 
-	const instrumentsFiltered = $derived.by(() => {
-		if (!instruments) return null;
-		let out = instruments;
-		if (alleenGeldig) {
-			out = out.filter((w) => !/vervallen/i.test(w.title ?? w.short_title ?? ''));
-		}
-		return out;
+	// Seats for the hemicycle, once, when the factions are opened.
+	$effect(() => {
+		if (category !== 'factions' || seats) return;
+		const ac = new AbortController();
+		unwrap(api.GET('/api/parliament/seats', { signal: ac.signal }))
+			.then((r) => (seats = r))
+			.catch(() => {});
+		return () => ac.abort();
 	});
 
-	const judgmentsFiltered = $derived.by(() => judgments);
-
-	const dossiersFiltered = $derived.by(() => {
-		if (!dossiers) return null;
-		let out = dossiers;
-		if (fases.length > 0) {
-			out = out.filter((d) => {
-				const cur = (d.huidige_fase ?? '').toLowerCase();
-				return fases.some((f) => cur === f.toLowerCase());
-			});
-		}
-		if (trajectKind) {
-			out = out.filter((d) => (d.traject_kind ?? 'overig') === trajectKind);
-		}
-		if (q) {
-			const n = norm(q);
-			out = out.filter((d) => norm(d.titel).includes(n) || norm(d.kamerstuknummer).includes(n));
-		}
-		const nrOf = (s: string | undefined | null) => {
-			const m = String(s ?? '').match(/(\d+)/);
-			return m ? parseInt(m[1], 10) : 0;
-		};
-		const s = sort || 'nummer';
-		const sign = dir === 'asc' ? 1 : -1;
-		if (s === 'nummer')
-			out = [...out].sort((a, b) => (nrOf(a.kamerstuknummer) - nrOf(b.kamerstuknummer)) * sign);
-		if (s === 'title')
-			out = [...out].sort((a, b) => (a.titel ?? '').localeCompare(b.titel ?? '', 'nl') * sign);
-		if (s === 'fase')
-			out = [...out].sort(
-				(a, b) => (a.huidige_fase ?? '').localeCompare(b.huidige_fase ?? '', 'nl') * sign
-			);
-		return out;
+	// The factions to filter members by; the member list itself is filtered by the API.
+	$effect(() => {
+		if (category !== 'members' || parties.length) return;
+		const ac = new AbortController();
+		unwrap(api.GET('/api/factions', { params: { query: { active: true } }, signal: ac.signal }))
+			.then((r) => (parties = r.flatMap((f) => f.abbreviation ?? []).sort()))
+			.catch(() => {});
+		return () => ac.abort();
 	});
 
-	const commissiesFiltered = $derived.by(() => {
-		if (!commissies) return null;
-		let out = commissies;
-		if (onlyActive) out = out.filter((c) => (c.active_dossier_count ?? 0) > 0);
-		if (q) {
-			const n = norm(q);
-			out = out.filter(
-				(c) => norm(c.naam).includes(n) || norm(c.afkorting).includes(n) || norm(c.slug).includes(n)
-			);
-		}
-		const s = sort || 'dossiers';
-		const sign = dir === 'asc' ? 1 : -1;
-		if (s === 'dossiers') {
-			// sign=1 (asc) → minst eerst; sign=-1 (desc, default) → meest eerst.
-			out = [...out].sort(
-				(a, b) =>
-					((a.active_dossier_count ?? 0) - (b.active_dossier_count ?? 0)) * sign ||
-					(a.naam ?? '').localeCompare(b.naam ?? '', 'nl')
-			);
-		} else if (s === 'naam') {
-			out = [...out].sort((a, b) => (a.naam ?? '').localeCompare(b.naam ?? '', 'nl') * sign);
-		} else if (s === 'afkorting') {
-			out = [...out].sort(
-				(a, b) => (a.afkorting ?? '').localeCompare(b.afkorting ?? '', 'nl') * sign
-			);
-		}
-		return out;
+	// ── What the API cannot filter or sort ──────────────────────────────────
+	const includes = (text: string | null | undefined) =>
+		(text ?? '').toLowerCase().includes(q.toLowerCase());
+
+	const dossiersShown = $derived.by(() => {
+		const rows = pages.dossiers?.items.filter((d) => !track || (d.track ?? 'overig') === track);
+		return (
+			rows &&
+			sorted(rows, {
+				number: (d) => Number.parseInt(d.number),
+				title: (d) => d.title ?? '',
+				stage: (d) => STAGES.findIndex((s) => s.id === d.current_stage)
+			})
+		);
 	});
 
-	// De server-fetch past de actief-/include_all-filter al toe; client-side
-	// hoeven we alleen partij- en zoekfilter + sortering te doen.
-	const ledenParties = $derived.by(() => {
-		if (!leden) return [];
-		const set = new Set<string>();
-		for (const l of leden) if (l.partij) set.add(l.partij);
-		return [...set].sort((a, b) => a.localeCompare(b, 'nl'));
+	const committeesShown = $derived.by(() => {
+		const rows = pages.committees?.items.filter(
+			(c) =>
+				(!onlyActive || (c.active_dossier_count ?? 0) > 0) &&
+				(!q || includes(c.name) || includes(c.abbreviation) || includes(c.slug))
+		);
+		return (
+			rows &&
+			sorted(rows, {
+				dossiers: (c) => c.active_dossier_count ?? 0,
+				abbreviation: (c) => c.abbreviation ?? '',
+				name: (c) => c.name ?? ''
+			})
+		);
 	});
 
-	const ledenFiltered = $derived.by(() => {
-		if (!leden) return null;
-		let out = leden;
-		if (partijFilt) out = out.filter((l) => l.partij === partijFilt);
-		if (q) {
-			const n = norm(q);
-			out = out.filter((l) => norm(l.naam).includes(n) || norm(l.partij).includes(n));
-		}
-		const s = sort || 'naam';
-		const sign = dir === 'asc' ? 1 : -1;
-		if (s === 'naam')
-			out = [...out].sort((a, b) => (a.naam ?? '').localeCompare(b.naam ?? '', 'nl') * sign);
-		if (s === 'partij')
-			out = [...out].sort((a, b) => (a.partij ?? '').localeCompare(b.partij ?? '', 'nl') * sign);
-		return out;
-	});
-
-	const fractiesFiltered = $derived.by(() => {
-		if (!fracties) return null;
-		let out = fracties;
-		if (q) {
-			const n = norm(q);
-			out = out.filter((f) => norm(f.naam).includes(n) || norm(f.afkorting).includes(n));
-		}
-		const s = sort || 'zetels';
-		const sign = dir === 'asc' ? 1 : -1;
-		if (s === 'zetels')
-			out = [...out].sort((a, b) => ((a.aantal_zetels ?? 0) - (b.aantal_zetels ?? 0)) * sign);
-		if (s === 'afkorting')
-			out = [...out].sort(
-				(a, b) => (a.afkorting ?? '').localeCompare(b.afkorting ?? '', 'nl') * sign
-			);
-		if (s === 'naam')
-			out = [...out].sort((a, b) => (a.naam ?? '').localeCompare(b.naam ?? '', 'nl') * sign);
-		return out;
-	});
-
-	const stemmingenFiltered = $derived.by(() => {
-		if (!stemmingen) return null;
-		let out = stemmingen;
-		if (aangenomen === 'true') out = out.filter((s) => s.aangenomen === true);
-		if (aangenomen === 'false') out = out.filter((s) => s.aangenomen === false);
-		if (dossierNr) out = out.filter((s) => s.dossier_nummers.includes(dossierNr));
-		if (dateFrom) out = out.filter((s) => !!s.datum && s.datum >= dateFrom);
-		if (dateTo) out = out.filter((s) => !!s.datum && s.datum <= dateTo);
-		if (q) {
-			const n = norm(q);
-			out = out.filter((s) => norm(s.onderwerp).includes(n));
-		}
-		const s = sort || 'datum';
-		const sign = dir === 'asc' ? 1 : -1;
-		if (s === 'datum')
-			out = [...out].sort((a, b) => (a.datum ?? '').localeCompare(b.datum ?? '') * sign);
-		if (s === 'onderwerp')
-			out = [...out].sort(
-				(a, b) => (a.onderwerp ?? '').localeCompare(b.onderwerp ?? '', 'nl') * sign
-			);
-		if (s === 'uitslag')
-			out = [...out].sort((a, b) => (Number(a.aangenomen) - Number(b.aangenomen)) * sign);
-		return out;
-	});
-
-	// ── Fase-tijdlijn definitions ──────────────────────────────────────────
-	const FASES: FaseDef[] = [
-		{ id: 'wetsvoorstel', label: 'Wetsvoorstel', tone: 'slate' },
-		{ id: 'mvt', label: 'MvT', tone: 'slate' },
-		{ id: 'advies_rvs', label: 'Advies RvS', tone: 'slate' },
-		{ id: 'nota', label: 'Nota', tone: 'ochre' },
-		{ id: 'verslag', label: 'Verslag', tone: 'ochre' },
-		{ id: 'amendementen', label: 'Amendementen', tone: 'ochre' },
-		{ id: 'stemming', label: 'Stemming', tone: 'ochre' },
-		{ id: 'afgehandeld', label: 'Afgehandeld', tone: 'olive' }
-	];
-	const faseCounts = $derived.by<Record<string, number>>(() => {
-		const out: Record<string, number> = {};
-		if (!dossiers) return out;
-		for (const d of dossiers) {
-			const f = (d.huidige_fase ?? '').toLowerCase();
-			out[f] = (out[f] ?? 0) + 1;
-		}
-		return out;
-	});
-
-	// ── Sort defaults & toolbar-config per category ────────────────────────
-	const SORT_DEFAULTS: Record<CategoryKey, string> = {
-		wetten: 'title',
-		arresten: 'date_desc',
-		dossiers: 'nummer',
-		commissies: 'dossiers',
-		leden: 'naam',
-		fracties: 'zetels',
-		stemmingen: 'datum'
-	};
-	// Default-richting per (categorie, sort-id). Numerieke en datum-sleutels
-	// willen meestal aflopend; tekst- en label-sleutels oplopend.
-	const SORT_DEFAULT_DIR: Record<string, 'asc' | 'desc'> = {
-		'commissies:dossiers': 'desc',
-		'fracties:zetels': 'desc',
-		'wetten:article_count': 'desc',
-		'wetten:recent_mutation': 'desc',
-		'arresten:citation_count': 'desc',
-		'dossiers:nummer': 'desc',
-		'stemmingen:datum': 'desc'
-	};
-	const sortValue = $derived(sort || SORT_DEFAULTS[category]);
-	const dir = $derived<'asc' | 'desc'>(
-		dirRaw === 'asc' || dirRaw === 'desc'
-			? dirRaw
-			: (SORT_DEFAULT_DIR[`${category}:${sortValue}`] ?? 'asc')
+	const membersShown = $derived(
+		pages.members &&
+			sorted(pages.members.items, { name: (m) => m.name ?? '', party: (m) => m.party ?? '' })
 	);
 
-	const wettenSortOptions: SortOption[] = [
-		{ id: 'title', label: 'Citatietitel' },
-		{ id: 'article_count', label: 'Aantal artikelen' },
-		{ id: 'recent_mutation', label: 'Laatste mutatie' }
-	];
-	const arrestenSortOptions: SortOption[] = [
-		{ id: 'date_desc', label: 'Datum (nieuw → oud)' },
-		{ id: 'date_asc', label: 'Datum (oud → nieuw)' },
-		{ id: 'citation_count', label: 'Meest geciteerd' }
-	];
-	const dossiersSortOptions: SortOption[] = [
-		{ id: 'nummer', label: 'Kamerstuknummer' },
-		{ id: 'title', label: 'Titel' },
-		{ id: 'fase', label: 'Fase' }
-	];
-	const commissiesSortOptions: SortOption[] = [
-		{ id: 'dossiers', label: 'Actieve dossiers' },
-		{ id: 'afkorting', label: 'Afkorting' },
-		{ id: 'naam', label: 'Naam' }
-	];
-	const ledenSortOptions: SortOption[] = [
-		{ id: 'naam', label: 'Naam' },
-		{ id: 'partij', label: 'Fractie' }
-	];
-	const fractiesSortOptions: SortOption[] = [
-		{ id: 'zetels', label: 'Zetels' },
-		{ id: 'afkorting', label: 'Afkorting' },
-		{ id: 'naam', label: 'Naam' }
-	];
-	const stemmingenSortOptions: SortOption[] = [
-		{ id: 'datum', label: 'Datum' },
-		{ id: 'uitslag', label: 'Uitslag' },
-		{ id: 'onderwerp', label: 'Onderwerp' }
-	];
+	const factionsShown = $derived(
+		pages.factions &&
+			sorted(pages.factions.items, {
+				seats: (f) => f.seats ?? 0,
+				abbreviation: (f) => f.abbreviation ?? '',
+				name: (f) => f.name ?? ''
+			})
+	);
 
-	function countWhere<T>(rows: T[] | null, pred: (r: T) => boolean): number {
-		return rows ? rows.filter(pred).length : 0;
-	}
-
-	// Pills voor de toolbar; voor Dossiers gebruiken we een custom snippet (timeline).
-	const wettenFacets = $derived.by<Facet[]>(() => {
-		const rows = instruments ?? [];
-		return [
-			{
-				id: 'nl',
-				label: 'Nederland',
-				on: jurisdiction === 'nl',
-				count: countWhere(rows, (r) => r.jurisdiction === 'nl'),
-				onClick: () => patchUrl({ jurisdiction: jurisdiction === 'nl' ? null : 'nl' })
-			},
-			{
-				id: 'eu',
-				label: 'Europese Unie',
-				on: jurisdiction === 'eu',
-				count: countWhere(rows, (r) => r.jurisdiction === 'eu'),
-				onClick: () => patchUrl({ jurisdiction: jurisdiction === 'eu' ? null : 'eu' })
-			},
-			{ sep: true },
-			{
-				id: 'geldig',
-				label: 'Alleen geldend recht',
-				on: alleenGeldig,
-				onClick: () => patchUrl({ alleen_geldig: alleenGeldig ? null : '1' })
-			}
-		];
+	const decisionsShown = $derived.by(() => {
+		const rows = pages.decisions?.items.filter(
+			(s) =>
+				(!dossierFilter || s.dossier_numbers?.includes(dossierFilter)) &&
+				(!dateFrom || (s.date ?? '') >= dateFrom) &&
+				(!dateTo || (s.date ?? '') <= dateTo) &&
+				(!q || includes(s.subject))
+		);
+		return (
+			rows &&
+			sorted(rows, {
+				date: (s) => s.date ?? '',
+				result: (s) => Number(s.passed),
+				subject: (s) => s.subject ?? ''
+			})
+		);
 	});
 
-	const arrestenFacets = $derived.by<Facet[]>(() => {
-		const opts: Array<[JudgmentTier, string]> = [
-			['hoge_raad', 'Hoge Raad'],
-			['gerechtshof', 'Gerechtshof'],
-			['rechtbank', 'Rechtbank'],
-			['bijzonder', 'Bijzonder']
-		];
-		return opts.map(([v, l]) => ({
-			id: v,
-			label: l,
-			on: tier === v,
-			onClick: () => patchUrl({ tier: tier === v ? null : v })
-		}));
-	});
+	const totalSeats = $derived(factionsShown?.reduce((sum, f) => sum + (f.seats ?? 0), 0) ?? 0);
 
-	const commissiesFacets = $derived.by<Facet[]>(() => [
-		{
-			id: 'hide',
-			label: 'Verberg commissies zonder dossiers',
-			on: onlyActive,
-			count: countWhere(commissies, (r) => (r.active_dossier_count ?? 0) === 0),
-			onClick: () => patchUrl({ only_active: onlyActive ? null : '1' })
-		}
-	]);
+	// ── Toolbar ─────────────────────────────────────────────────────────────
+	const TIERS = [
+		['hoge_raad', 'Hoge Raad'],
+		['gerechtshof', 'Gerechtshof'],
+		['rechtbank', 'Rechtbank'],
+		['bijzonder', 'Bijzonder']
+	] as const;
 
-	const ledenFacets = $derived.by<Facet[]>(() => {
-		const parties: Facet[] = ledenParties.map((p) => ({
-			id: p,
-			label: p,
-			on: partijFilt === p,
-			swatch: partyColor(p),
-			count: countWhere(leden, (r) => r.partij === p),
-			onClick: () => patchUrl({ partij: partijFilt === p ? null : p })
-		}));
-		return [
-			...parties,
-			{ sep: true },
-			{
-				id: 'incl_inactive',
-				label: 'Toon ook historische leden',
-				on: includeInactive,
-				onClick: () => patchUrl({ include_inactive: includeInactive ? null : '1' })
-			}
-		];
-	});
-
-	const fractiesFacets = $derived.by<Facet[]>(() => [
-		{
-			id: 'incl_inactive',
-			label: 'Toon ook inactieve fracties',
-			on: includeInactive,
-			onClick: () => patchUrl({ include_inactive: includeInactive ? null : '1' })
-		}
-	]);
-
-	const stemmingenFacets = $derived.by<Facet[]>(() => [
-		{
-			id: 'aan',
-			label: 'Aangenomen',
-			on: aangenomen === 'true',
-			count: countWhere(stemmingen, (s) => s.aangenomen === true),
-			onClick: () => patchUrl({ aangenomen: aangenomen === 'true' ? null : 'true' })
-		},
-		{
-			id: 'ver',
-			label: 'Verworpen',
-			on: aangenomen === 'false',
-			count: countWhere(stemmingen, (s) => s.aangenomen === false),
-			onClick: () => patchUrl({ aangenomen: aangenomen === 'false' ? null : 'false' })
-		}
-	]);
-
-	const searchPlaceholders: Record<CategoryKey, string> = {
-		wetten: 'Zoek in titel, BWB of citatie',
-		arresten: 'Zoek in zaaknaam of ECLI',
-		dossiers: 'Zoek in titel of kamerstuknummer',
-		commissies: 'Zoek op afkorting of naam',
-		leden: 'Zoek op naam of partij',
-		fracties: 'Zoek op naam of afkorting',
-		stemmingen: 'Zoek in onderwerp'
+	const PLACEHOLDER: Record<IndexCategory, string> = {
+		instruments: 'Zoek in titel, BWB of citatie',
+		judgments: 'Zoek in zaaknaam of ECLI',
+		dossiers: 'Zoek in titel',
+		committees: 'Zoek op afkorting of naam',
+		members: 'Zoek op naam',
+		factions: 'Zoek op naam of afkorting',
+		decisions: 'Zoek in onderwerp'
 	};
 
-	// ── Open-state (inline detail) + Esc-handler ──────────────────────────
+	const labelOf = (c: IndexCategory) =>
+		INDEX_CATEGORIES.find((cat) => cat.key === c)!.label.toLowerCase();
+
+	// Dossiers have the stage filter instead (see the snippet at the end).
+	const facets = $derived.by<Facet[] | null>(() => {
+		switch (category) {
+			case 'instruments':
+				return [
+					{
+						id: 'nl',
+						label: 'Nederland',
+						on: jurisdiction === 'nl',
+						onClick: () => toggleParam('jurisdiction', jurisdiction, 'nl')
+					},
+					{
+						id: 'eu',
+						label: 'Europese Unie',
+						on: jurisdiction === 'eu',
+						onClick: () => toggleParam('jurisdiction', jurisdiction, 'eu')
+					}
+				];
+			case 'judgments':
+				return TIERS.map(([value, label]) => ({
+					id: value,
+					label,
+					on: tier === value,
+					onClick: () => toggleParam('tier', tier, value)
+				}));
+			case 'committees':
+				return [
+					{
+						id: 'hide',
+						label: 'Verberg commissies zonder dossiers',
+						on: onlyActive,
+						onClick: () => patchUrl({ only_active: onlyActive ? null : '1' })
+					}
+				];
+			case 'members':
+				return [
+					...parties.map((p) => ({
+						id: p,
+						label: p,
+						on: party === p,
+						swatch: partyColor(p),
+						onClick: () => toggleParam('party', party, p)
+					})),
+					{ sep: true },
+					{
+						id: 'include_inactive',
+						label: 'Toon ook historische leden',
+						on: includeInactive,
+						onClick: () => patchUrl({ include_inactive: includeInactive ? null : '1' })
+					}
+				];
+			case 'factions':
+				return [
+					{
+						id: 'include_inactive',
+						label: 'Toon ook inactieve fracties',
+						on: includeInactive,
+						onClick: () => patchUrl({ include_inactive: includeInactive ? null : '1' })
+					}
+				];
+			case 'decisions':
+				return [
+					{
+						id: 'passed',
+						label: 'Aangenomen',
+						on: passed === 'true',
+						onClick: () => toggleParam('passed', passed, 'true')
+					},
+					{
+						id: 'failed',
+						label: 'Verworpen',
+						on: passed === 'false',
+						onClick: () => toggleParam('passed', passed, 'false')
+					}
+				];
+			default:
+				return null;
+		}
+	});
+
+	// ── Open row, Esc ───────────────────────────────────────────────────────
 	let openId = $state<string | null>(null);
-	function toggleOpen(id: string) {
-		openId = openId === id ? null : id;
-	}
+	const toggleOpen = (id: string) => (openId = openId === id ? null : id);
 	$effect(() => {
 		void category;
 		openId = null;
-	}); // bij categorie-wissel sluiten
+	});
 
 	function handleKey(e: KeyboardEvent) {
-		if (e.key === 'Escape' && openId) {
-			openId = null;
-		}
+		if (e.key === 'Escape' && openId) openId = null;
 	}
 
-	// ── Result-count meldingen aan de chrome ──────────────────────────────
-	const totals: Record<CategoryKey, number> = $derived({
-		wetten: instrumentsTotal || (instruments?.length ?? 0),
-		arresten: judgmentsTotal || (judgments?.length ?? 0),
-		dossiers: dossiersTotal || (dossiers?.length ?? 0),
-		commissies: commissies?.length ?? 0,
-		leden: leden?.length ?? 0,
-		fracties: fracties?.length ?? 0,
-		stemmingen: stemmingen?.length ?? 0
-	});
-	const visible = $derived<{ rows: unknown[] | null; total: number }>({
-		rows:
-			category === 'wetten'
-				? instrumentsFiltered
-				: category === 'arresten'
-					? judgmentsFiltered
-					: category === 'dossiers'
-						? dossiersFiltered
-						: category === 'commissies'
-							? commissiesFiltered
-							: category === 'leden'
-								? ledenFiltered
-								: category === 'fracties'
-									? fractiesFiltered
-									: stemmingenFiltered,
-		total: totals[category]
-	});
+	// ── Result count for the status bar ─────────────────────────────────────
 	$effect(() => {
-		if (!onResultCountChange || !visible.rows) return;
-		onResultCountChange({
-			filtered: visible.rows.length,
-			total: visible.total,
+		const rows = {
+			instruments: pages.instruments?.items,
+			judgments: pages.judgments?.items,
+			dossiers: dossiersShown,
+			committees: committeesShown,
+			members: membersShown,
+			factions: factionsShown,
+			decisions: decisionsShown
+		}[category];
+		if (!rows) return;
+		onResultCountChange?.({
+			filtered: rows.length,
+			total: pages[category]?.total ?? rows.length,
 			category
 		});
 	});
 
-	// ── Action handlers ────────────────────────────────────────────────────
-	function discover(collection: string, key: string) {
-		if (onDiscoverItem) onDiscoverItem(collection, key);
-		else onSelectItem(collection, key);
-	}
-	function deepen(collection: string, key: string) {
-		onSelectItem(collection, key);
-	}
-	function read(collection: string, key: string) {
-		if (onReadItem) onReadItem(collection, key);
-		else onSelectItem(collection, key);
-	}
+	// ── Opening a source ────────────────────────────────────────────────────
+	const discover = (collection: Collection, key: string) =>
+		(onDiscoverItem ?? onSelectItem)(collection, key);
+	const read = (collection: Collection, key: string) =>
+		(onReadItem ?? onSelectItem)(collection, key);
 
-	// Fase-toon voor de huidige_fase-tag op een rij.
-	function faseTone(fase: string | null | undefined): 'slate' | 'ochre' | 'olive' | 'spine' {
-		if (!fase) return 'slate';
-		const f = fase.toLowerCase();
-		if (f.includes('verworpen')) return 'spine';
-		if (f.includes('afgehandeld') || f.includes('aangenomen') || f.includes('in werking'))
-			return 'olive';
-		if (['nota', 'verslag', 'amendementen', 'stemming', 'plenair'].some((x) => f.includes(x)))
-			return 'ochre';
-		return 'slate';
-	}
+	const stageTone = (id: string | null | undefined) =>
+		STAGES.find((s) => s.id === id)?.tone ?? 'slate';
 
-	function fmtDateShort(iso: string | null | undefined): string {
-		if (!iso) return '—';
-		try {
-			return new Intl.DateTimeFormat('nl-NL', {
-				day: 'numeric',
-				month: 'short',
-				year: 'numeric'
-			}).format(new Date(iso));
-		} catch {
-			return iso;
-		}
-	}
-
-	function pageClass(): string {
-		return category === 'fracties' || category === 'stemmingen' ? 'page page--wide' : 'page';
-	}
+	const fmtDateShort = (iso: string | null | undefined) =>
+		iso
+			? new Intl.DateTimeFormat('nl-NL', {
+					day: 'numeric',
+					month: 'short',
+					year: 'numeric'
+				}).format(new Date(iso))
+			: '—';
 </script>
 
 <svelte:window onkeydown={handleKey} />
 
 <div class="index-view">
-	<!-- Horizontale categorie-strip — vervangt de linker zijbalk. -->
 	<nav class="catbar" aria-label="Categorieën">
-		{#each CATEGORIES as cat (cat.key)}
+		{#each INDEX_CATEGORIES as cat (cat.key)}
 			<button
 				type="button"
 				class="cat"
@@ -973,67 +590,41 @@
 
 	<div class="stage">
 		<div class="stage-scroll">
-			<div class={pageClass()}>
-				<!-- Hemicycle alleen op Fracties -->
-				{#if category === 'fracties' && zetels}
+			<div class={category === 'factions' || category === 'decisions' ? 'page page--wide' : 'page'}>
+				{#if category === 'factions' && seats}
 					<div class="hemi-card">
 						<div class="hemi-svg-wrap">
-							<Hemicycle data={zetels} onSelect={(k) => deepen('fracties', k)} />
+							<Hemicycle data={seats} onSelect={(k) => onSelectItem('factions', k)} />
 						</div>
 					</div>
 				{/if}
 
-				<!-- Toolbar — zelfde patroon voor elke categorie -->
 				<IndexToolbar
 					query={q}
 					onQueryChange={(v) => {
 						patchUrl({ q: v || null });
 						openId = null;
 					}}
-					searchPlaceholder={searchPlaceholders[category]}
-					sortOptions={category === 'wetten'
-						? wettenSortOptions
-						: category === 'arresten'
-							? arrestenSortOptions
-							: category === 'dossiers'
-								? dossiersSortOptions
-								: category === 'commissies'
-									? commissiesSortOptions
-									: category === 'leden'
-										? ledenSortOptions
-										: category === 'fracties'
-											? fractiesSortOptions
-											: stemmingenSortOptions}
-					sort={sortValue}
+					searchPlaceholder={PLACEHOLDER[category]}
+					sortOptions={SORTS[category]}
+					sort={sortDef.id}
 					onSortChange={(v) => patchUrl({ sort: v || null })}
 					{dir}
 					onDirToggle={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-					facets={category === 'wetten'
-						? wettenFacets
-						: category === 'arresten'
-							? arrestenFacets
-							: category === 'commissies'
-								? commissiesFacets
-								: category === 'leden'
-									? ledenFacets
-									: category === 'stemmingen'
-										? stemmingenFacets
-										: category === 'fracties'
-											? fractiesFacets
-											: null}
-					customFilter={category === 'dossiers' ? dossiersTimeline : null}
+					{facets}
+					customFilter={category === 'dossiers' ? stageFilter : null}
 				/>
 
 				{#if loading}
 					<p class="status-line">Laden…</p>
 				{:else if error}
 					<p class="status-line status-line--error">{error}</p>
-				{:else if category === 'wetten' && instrumentsFiltered}
-					{#if instrumentsFiltered.length === 0}
+				{:else if category === 'instruments' && pages.instruments}
+					{#if pages.instruments.items.length === 0}
 						<div class="empty">Geen wetten met deze filters.</div>
 					{:else}
 						<ul class="list">
-							{#each instrumentsFiltered as w (w.id)}
+							{#each pages.instruments.items as w (w.id)}
 								{@const isOpen = openId === w.id}
 								<li class="row-wrap">
 									<button
@@ -1067,10 +658,10 @@
 									{#if isOpen}
 										<div class="detail">
 											<IndexDetail
-												category="wetten"
+												category="instruments"
 												record={w}
 												onDiscover={() => discover('instruments', w.key)}
-												onSplit={() => deepen('instruments', w.key)}
+												onSplit={() => onSelectItem('instruments', w.key)}
 												onRead={() => read('instruments', w.key)}
 											/>
 										</div>
@@ -1078,29 +669,14 @@
 								</li>
 							{/each}
 						</ul>
-						{#if instrumentsHasMore}
-							<div class="load-more">
-								<button
-									type="button"
-									class="load-more-btn"
-									onclick={loadMoreInstruments}
-									disabled={loadingMore}
-								>
-									{loadingMore
-										? 'Laden…'
-										: instrumentsTotal > instrumentsFiltered.length
-											? `Meer laden (${(instrumentsTotal - instrumentsFiltered.length).toLocaleString('nl-NL')} resterend)`
-											: 'Meer laden'}
-								</button>
-							</div>
-						{/if}
+						{@render loadMoreButton(pages.instruments, 'wetten')}
 					{/if}
-				{:else if category === 'arresten' && judgmentsFiltered}
-					{#if judgmentsFiltered.length === 0}
+				{:else if category === 'judgments' && pages.judgments}
+					{#if pages.judgments.items.length === 0}
 						<div class="empty">Geen arresten met deze filters.</div>
 					{:else}
 						<ul class="list">
-							{#each judgmentsFiltered as j (j.id)}
+							{#each pages.judgments.items as j (j.id)}
 								{@const isOpen = openId === j.id}
 								<li class="row-wrap">
 									<button
@@ -1120,7 +696,7 @@
 											<span class="row-sub row-sub--mono">{j.ecli ?? ''}</span>
 										</div>
 										<div class="row-aside">
-											{#if j.inbound_citation_count > 0}
+											{#if j.inbound_citation_count}
 												<span class="num-strong"
 													>{j.inbound_citation_count}<span class="num-lbl">citaties</span></span
 												>
@@ -1130,10 +706,10 @@
 									{#if isOpen}
 										<div class="detail">
 											<IndexDetail
-												category="arresten"
+												category="judgments"
 												record={j}
 												onDiscover={() => discover('judgments', j.key)}
-												onSplit={() => deepen('judgments', j.key)}
+												onSplit={() => onSelectItem('judgments', j.key)}
 												onRead={() => read('judgments', j.key)}
 											/>
 										</div>
@@ -1141,29 +717,14 @@
 								</li>
 							{/each}
 						</ul>
-						{#if judgmentsHasMore}
-							<div class="load-more">
-								<button
-									type="button"
-									class="load-more-btn"
-									onclick={loadMoreJudgments}
-									disabled={loadingMore}
-								>
-									{loadingMore
-										? 'Laden…'
-										: judgmentsTotal > judgmentsFiltered.length
-											? `Meer laden (${(judgmentsTotal - judgmentsFiltered.length).toLocaleString('nl-NL')} resterend)`
-											: 'Meer laden'}
-								</button>
-							</div>
-						{/if}
+						{@render loadMoreButton(pages.judgments, 'arresten')}
 					{/if}
-				{:else if category === 'dossiers' && dossiersFiltered}
-					{#if dossiersFiltered.length === 0}
+				{:else if category === 'dossiers' && dossiersShown}
+					{#if dossiersShown.length === 0}
 						<div class="empty">Geen dossiers met deze filters.</div>
 					{:else}
 						<ul class="list">
-							{#each dossiersFiltered as d (d.id)}
+							{#each dossiersShown as d (d.id)}
 								{@const isOpen = openId === d.id}
 								<li class="row-wrap">
 									<button
@@ -1173,18 +734,20 @@
 										onclick={() => toggleOpen(d.id)}
 									>
 										<div class="row-id">
-											<span class="row-id-main">{d.kamerstuknummer}</span>
-											{#if d.traject_kind}
-												<span class="row-id-sub">{d.traject_kind}</span>
+											<span class="row-id-main">{dossierNumber(d.key)}</span>
+											{#if d.track}
+												<span class="row-id-sub">{TRACK_LABEL[d.track]}</span>
 											{/if}
 										</div>
 										<div class="row-body">
-											<div class="row-title">{d.titel ?? '—'}</div>
+											<div class="row-title">{d.title ?? '—'}</div>
 										</div>
 										<div class="row-aside">
-											{#if d.huidige_fase && d.huidige_fase.toLowerCase() !== 'onbekend'}
-												<span class="tag tag--{faseTone(d.huidige_fase)}">
-													<span class="tag-dot" aria-hidden="true"></span>{d.huidige_fase}
+											{#if d.current_stage}
+												<span class="tag tag--{stageTone(d.current_stage)}">
+													<span class="tag-dot" aria-hidden="true"></span>{STAGE_LABEL[
+														d.current_stage
+													]}
 												</span>
 											{/if}
 										</div>
@@ -1194,42 +757,26 @@
 											<IndexDetail
 												category="dossiers"
 												record={d}
-												onDiscover={() => discover('kamerstukdossiers', d.key)}
-												onSplit={() => deepen('kamerstukdossiers', d.key)}
+												onDiscover={() => discover('dossiers', d.key)}
+												onSplit={() => onSelectItem('dossiers', d.key)}
 											/>
 										</div>
 									{/if}
 								</li>
 							{/each}
 						</ul>
-						{#if dossiersHasMore}
-							<div class="load-more">
-								<button
-									type="button"
-									class="load-more-btn"
-									onclick={loadMoreDossiers}
-									disabled={loadingMore}
-								>
-									{loadingMore
-										? 'Laden…'
-										: `Meer dossiers laden (${(dossiersTotal - (dossiers?.length ?? 0)).toLocaleString('nl-NL')} resterend)`}
-								</button>
-							</div>
-						{/if}
+						{@render loadMoreButton(pages.dossiers, 'dossiers')}
 					{/if}
-				{:else if category === 'commissies' && commissiesFiltered}
-					{#if commissiesFiltered.length === 0}
+				{:else if category === 'committees' && committeesShown}
+					{#if committeesShown.length === 0}
 						<div class="empty">Geen commissies met deze filters.</div>
 					{:else}
 						<ul class="list">
-							{#each commissiesFiltered as c, i (c.id)}
+							{#each committeesShown as c, i (c.id)}
 								{@const isOpen = openId === c.id}
-								{@const prev = i > 0 ? commissiesFiltered[i - 1] : null}
-								{@const hereLeeg = (c.active_dossier_count ?? 0) === 0}
-								{@const prevActief = prev ? (prev.active_dossier_count ?? 0) > 0 : false}
-								{@const dividerHere =
-									!onlyActive && (sort === '' || sort === 'dossiers') && hereLeeg && prevActief}
-								{#if dividerHere}
+								{@const count = c.active_dossier_count ?? 0}
+								<!-- Under the default sort, a divider where the committees without dossiers begin. -->
+								{#if !onlyActive && sortDef.id === 'dossiers' && dir === 'desc' && count === 0 && i > 0 && (committeesShown[i - 1].active_dossier_count ?? 0) > 0}
 									<li class="group-divider" aria-hidden="true">
 										<span>Zonder lopende dossiers</span>
 									</li>
@@ -1242,19 +789,19 @@
 										onclick={() => toggleOpen(c.id)}
 									>
 										<div class="row-id">
-											<span class="row-id-main">{c.afkorting ?? ''}</span>
+											<span class="row-id-main">{c.abbreviation ?? ''}</span>
 										</div>
 										<div class="row-body">
-											<div class="row-title">{c.naam ?? c.key}</div>
+											<div class="row-title">{c.name ?? c.key}</div>
 											<span class="row-sub">
-												{c.active_dossier_count > 0
-													? `${c.active_dossier_count} actief ${c.active_dossier_count === 1 ? 'dossier' : 'dossiers'}`
+												{count > 0
+													? `${count} actief ${count === 1 ? 'dossier' : 'dossiers'}`
 													: 'Geen actieve dossiers'}
 											</span>
 										</div>
 										<div class="row-aside">
-											{#if (c.active_dossier_count ?? 0) > 0}
-												<span class="num-strong">{c.active_dossier_count}</span>
+											{#if count > 0}
+												<span class="num-strong">{count}</span>
 											{:else}
 												<span class="tag tag--outline" style="color: var(--fg-4);">—</span>
 											{/if}
@@ -1263,10 +810,10 @@
 									{#if isOpen}
 										<div class="detail">
 											<IndexDetail
-												category="commissies"
+												category="committees"
 												record={c}
-												onDiscover={() => discover('commissies', c.slug ?? c.key)}
-												onSplit={() => deepen('commissies', c.slug ?? c.key)}
+												onDiscover={() => discover('committees', c.key)}
+												onSplit={() => onSelectItem('committees', c.key)}
 											/>
 										</div>
 									{/if}
@@ -1274,69 +821,53 @@
 							{/each}
 						</ul>
 					{/if}
-				{:else if category === 'leden' && ledenFiltered}
-					{#if ledenFiltered.length === 0}
+				{:else if category === 'members' && membersShown}
+					{#if membersShown.length === 0}
 						<div class="empty">Geen kamerleden met deze filters.</div>
 					{:else}
 						<ul class="list">
-							{#each ledenFiltered as l (l.id)}
-								{@const isOpen = openId === l.id}
+							{#each membersShown as m (m.id)}
+								{@const isOpen = openId === m.id}
 								<li class="row-wrap">
 									<button
 										type="button"
 										class="row"
 										class:row--on={isOpen}
-										onclick={() => toggleOpen(l.id)}
+										onclick={() => toggleOpen(m.id)}
 									>
 										<div class="row-id">
 											<span class="row-id-main row-id-main--inline">
-												<span class="party-dot" style:background={partyColor(l.partij ?? '')}
-												></span>
-												{l.partij ?? ''}
+												<span class="party-dot" style:background={partyColor(m.party ?? '')}></span>
+												{m.party ?? ''}
 											</span>
 										</div>
 										<div class="row-body">
-											<div class="row-title">{l.naam ?? l.key}</div>
+											<div class="row-title">{m.name ?? m.key}</div>
 										</div>
 										<div class="row-aside"></div>
 									</button>
 									{#if isOpen}
 										<div class="detail">
 											<IndexDetail
-												category="leden"
-												record={l}
-												onDiscover={() => discover('leden', l.key)}
-												onSplit={() => deepen('leden', l.key)}
+												category="members"
+												record={m}
+												onDiscover={() => discover('members', m.key)}
+												onSplit={() => onSelectItem('members', m.key)}
 											/>
 										</div>
 									{/if}
 								</li>
 							{/each}
 						</ul>
-						{#if ledenHasMore}
-							<div class="load-more">
-								<button
-									type="button"
-									class="load-more-btn"
-									onclick={loadMoreLeden}
-									disabled={loadingMore}
-								>
-									{loadingMore ? 'Laden…' : 'Meer kamerleden laden'}
-								</button>
-							</div>
-						{/if}
+						{@render loadMoreButton(pages.members, 'kamerleden')}
 					{/if}
-				{:else if category === 'fracties' && fractiesFiltered}
-					{#if fractiesFiltered.length === 0}
+				{:else if category === 'factions' && factionsShown}
+					{#if factionsShown.length === 0}
 						<div class="empty">Geen fracties met deze filters.</div>
 					{:else}
 						<ul class="list">
-							{#each fractiesFiltered as f (f.id)}
+							{#each factionsShown as f (f.id)}
 								{@const isOpen = openId === f.id}
-								{@const totalSeats = fractiesFiltered.reduce(
-									(a, x) => a + (x.aantal_zetels ?? 0),
-									0
-								)}
 								<li class="row-wrap">
 									<button
 										type="button"
@@ -1346,34 +877,32 @@
 									>
 										<div class="row-id">
 											<span class="row-id-main row-id-main--inline">
-												<span class="party-dot" style:background={partyColor(f.afkorting ?? '')}
+												<span class="party-dot" style:background={partyColor(f.abbreviation ?? '')}
 												></span>
-												{f.afkorting ?? ''}
+												{f.abbreviation ?? ''}
 											</span>
 										</div>
 										<div class="row-body">
-											<div class="row-title">{f.naam ?? f.key}</div>
-											{#if f.aantal_zetels != null && totalSeats > 0}
+											<div class="row-title">{f.name ?? f.key}</div>
+											{#if f.seats != null && totalSeats > 0}
 												<span class="row-sub"
-													>{((f.aantal_zetels / totalSeats) * 100).toFixed(1)}% van de zetels</span
+													>{((f.seats / totalSeats) * 100).toFixed(1)}% van de zetels</span
 												>
 											{/if}
 										</div>
 										<div class="row-aside">
-											{#if f.aantal_zetels != null}
-												<span class="num-strong"
-													>{f.aantal_zetels}<span class="num-lbl">zetels</span></span
-												>
+											{#if f.seats != null}
+												<span class="num-strong">{f.seats}<span class="num-lbl">zetels</span></span>
 											{/if}
 										</div>
 									</button>
 									{#if isOpen}
 										<div class="detail">
 											<IndexDetail
-												category="fracties"
+												category="factions"
 												record={f}
-												onDiscover={() => discover('fracties', f.key)}
-												onSplit={() => deepen('fracties', f.key)}
+												onDiscover={() => discover('factions', f.key)}
+												onSplit={() => onSelectItem('factions', f.key)}
 											/>
 										</div>
 									{/if}
@@ -1381,15 +910,16 @@
 							{/each}
 						</ul>
 					{/if}
-				{:else if category === 'stemmingen' && stemmingenFiltered}
-					{#if stemmingenFiltered.length === 0}
+				{:else if category === 'decisions' && decisionsShown}
+					{#if decisionsShown.length === 0}
 						<div class="empty">Geen stemmingen met deze filters.</div>
 					{:else}
 						<ul class="list">
-							{#each stemmingenFiltered as s (s.id)}
+							{#each decisionsShown as s (s.id)}
 								{@const isOpen = openId === s.id}
-								{@const total = s.voor_zetels + s.tegen_zetels}
-								{@const vPct = total > 0 ? (s.voor_zetels / total) * 100 : 0}
+								{@const inFavour = s.tally?.['Voor'] ?? 0}
+								{@const against = s.tally?.['Tegen'] ?? 0}
+								{@const inFavourPct = (inFavour / (inFavour + against)) * 100}
 								<li class="row-wrap">
 									<button
 										type="button"
@@ -1398,64 +928,54 @@
 										onclick={() => toggleOpen(s.id)}
 									>
 										<div class="row-id">
-											<span class="row-id-main">{fmtDateShort(s.datum)}</span>
-											{#if s.dossier_nummers[0]}
-												<span class="row-id-sub">{s.dossier_nummers[0]}</span>
+											<span class="row-id-main">{fmtDateShort(s.date)}</span>
+											{#if s.dossier_numbers?.[0]}
+												<span class="row-id-sub">{s.dossier_numbers[0]}</span>
 											{/if}
 										</div>
 										<div class="row-body">
-											<div class="row-title">{s.onderwerp ?? '—'}</div>
-											{#if total > 0}
+											<div class="row-title">{s.subject ?? '—'}</div>
+											{#if inFavour + against > 0}
 												<span
 													class="stem-mini"
-													title="Zetelverdeling — {s.voor_fracties} vs {s.tegen_fracties} fracties"
+													title="Zetelverdeling: {s.voters?.['Voor'] ?? 0} voor, {s.voters?.[
+														'Tegen'
+													] ?? 0} tegen ({s.vote_kind === 'member' ? 'leden' : 'fracties'})"
 												>
-													<span class="stem-mini__v">{s.voor_zetels}</span>
+													<span class="stem-mini__v">{inFavour}</span>
 													<span class="stem-mini__bar">
-														<span class="stem-mini__bar-v" style:width="{vPct}%"></span>
-														<span class="stem-mini__bar-t" style:width="{100 - vPct}%"></span>
+														<span class="stem-mini__bar-v" style:width="{inFavourPct}%"></span>
+														<span class="stem-mini__bar-t" style:width="{100 - inFavourPct}%"
+														></span>
 													</span>
-													<span class="stem-mini__t">{s.tegen_zetels}</span>
+													<span class="stem-mini__t">{against}</span>
 													<span class="stem-mini__unit">zetels</span>
 												</span>
 											{/if}
 										</div>
 										<div class="row-aside">
-											<span
-												class="tag"
-												class:tag--moss={s.aangenomen}
-												class:tag--spine={!s.aangenomen}
-											>
-												<span class="tag-dot" aria-hidden="true"></span>
-												{s.aangenomen ? 'Aangenomen' : 'Verworpen'}
-											</span>
+											{#if s.passed != null}
+												<span class="tag" class:tag--moss={s.passed} class:tag--spine={!s.passed}>
+													<span class="tag-dot" aria-hidden="true"></span>
+													{s.passed ? 'Aangenomen' : 'Verworpen'}
+												</span>
+											{/if}
 										</div>
 									</button>
 									{#if isOpen}
 										<div class="detail">
 											<IndexDetail
-												category="stemmingen"
+												category="decisions"
 												record={s}
-												onDiscover={() => discover('stemmingen', s.key)}
-												onSplit={() => deepen('stemmingen', s.key)}
+												onDiscover={() => discover('decisions', s.key)}
+												onSplit={() => onSelectItem('decisions', s.key)}
 											/>
 										</div>
 									{/if}
 								</li>
 							{/each}
 						</ul>
-						{#if stemmingenHasMore}
-							<div class="load-more">
-								<button
-									type="button"
-									class="load-more-btn"
-									onclick={loadMoreStemmingen}
-									disabled={loadingMore}
-								>
-									{loadingMore ? 'Laden…' : 'Meer stemmingen laden'}
-								</button>
-							</div>
-						{/if}
+						{@render loadMoreButton(pages.decisions, 'stemmingen')}
 					{/if}
 				{/if}
 			</div>
@@ -1463,14 +983,21 @@
 	</div>
 </div>
 
-<!-- Snippet voor de Dossiers fase-tijdlijn (passes als customFilter naar Toolbar). -->
-{#snippet dossiersTimeline()}
-	<IndexFaseFilter
-		phases={FASES}
-		selected={fases}
-		counts={faseCounts}
-		onToggle={(p) => toggleArrParam('fases', fases, p)}
-	/>
+{#snippet stageFilter()}
+	<IndexStageFilter selected={stage ?? null} onSelect={(s) => toggleParam('stage', stage, s)} />
+{/snippet}
+
+{#snippet loadMoreButton(loaded: AnyPage | undefined, noun: string)}
+	{#if loaded?.more}
+		{@const remaining = loaded.total - loaded.items.length}
+		<div class="load-more">
+			<button type="button" class="load-more-btn" onclick={loadMore} disabled={loadingMore}>
+				{loadingMore
+					? 'Laden…'
+					: `Meer ${noun} laden${remaining > 0 ? ` (${remaining.toLocaleString('nl-NL')} resterend)` : ''}`}
+			</button>
+		</div>
+	{/if}
 {/snippet}
 
 <style>

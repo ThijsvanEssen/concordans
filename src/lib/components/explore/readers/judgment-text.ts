@@ -2,6 +2,11 @@
 // party block, table of contents and sub-numbering embedded in flat text, so
 // the reader restructures them here. Pure functions, no Svelte.
 
+import type { Schema } from '$lib/api/types';
+import { citationsWithin } from '$lib/components/articles/citations';
+
+type Span = Schema<'ArticleCitationSpan'>;
+
 // The first `subheading` paragraph always contains: court header, duplicate
 // metadata KV pairs, a status word (ARREST/VONNIS/TEGENSPRAAK), the defendant
 // identity block, and sometimes a full table of contents. We skip it in the
@@ -14,26 +19,6 @@ const META_KV_RE =
 	/^(parketnummer|datum uitspraak|datum|nummer|zaaknummer|rolnummer|locatie)\s*[:-]/i;
 const TOC_LINE_RE = /^\d[\d.]*\s+\S.{2,40}\s+\d+$/; // "1.2 Opbouw arrest 3"
 const TOC_START_RE = /^inhoudsopgave/i;
-
-/**
- * Parse subjects like "Strafrecht; Materieel strafrecht" into a grouped
- * Map of top-level category → sub-categories[], deduplicating across entries.
- */
-export function parseSubjects(subjects: string[]): Map<string, string[]> {
-	const result = new Map<string, string[]>();
-	for (const s of subjects) {
-		const parts = s.split(/\s*;\s*/);
-		const top = parts[0].trim();
-		if (!result.has(top)) result.set(top, []);
-		for (const sub of parts
-			.slice(1)
-			.map((p) => p.trim())
-			.filter(Boolean)) {
-			if (!result.get(top)!.includes(sub)) result.get(top)!.push(sub);
-		}
-	}
-	return result;
-}
 
 /** Split summary prose on double-newlines, normalising internal whitespace. */
 export function splitSummary(text: string): string[] {
@@ -70,14 +55,35 @@ export function extractPartyInfo(text: string): string[] | null {
 	return party.length > 0 ? party : null;
 }
 
-/** Normalize paragraph text: collapse horizontal whitespace and XML-artifact
- *  blank lines (sequences like \n \n become \n\n). */
-export function normalizeParagraphText(text: string): string {
-	return text
-		.replace(/[ \t]+/g, ' ') // collapse runs of spaces/tabs
-		.replace(/(\n[ \t]*){2,}/g, '\n\n') // \n \n → \n\n
-		.replace(/^\s+|\s+$/g, ''); // trim
+const WHITESPACE = /[ \t]*(?:\n[ \t]*)+|[ \t]+/g;
+
+/**
+ * Collapse runs of spaces to one, runs of line breaks to a line break or a blank
+ * line, and trim. `at[i]` is where character `i` of `raw` ends up in the result,
+ * so citation offsets (which count in the raw text) can follow.
+ */
+function normalize(raw: string): { text: string; at: number[] } {
+	const at: number[] = new Array(raw.length + 1);
+	let text = '';
+	let last = 0;
+	const copy = (to: number) => {
+		for (let i = last; i < to; i++) at[i] = text.length + i - last;
+		text += raw.slice(last, to);
+	};
+	for (const m of raw.matchAll(WHITESPACE)) {
+		copy(m.index);
+		at.fill(text.length, m.index, m.index + m[0].length);
+		const breaks = m[0].split('\n').length - 1;
+		text += breaks > 1 ? '\n\n' : breaks ? '\n' : ' ';
+		last = m.index + m[0].length;
+	}
+	copy(raw.length);
+	at[raw.length] = text.length;
+	const lead = text.length - text.trimStart().length;
+	return { text: text.trim(), at: at.map((p) => Math.max(0, p - lead)) };
 }
+
+export const normalizeParagraphText = (text: string): string => normalize(text).text;
 
 export type ParsedBodyPara = {
 	kind: 'body';
@@ -86,17 +92,25 @@ export type ParsedBodyPara = {
 	depth: number;
 	subTitle: string | null;
 	body: string;
+	/** Where `body` starts in the normalized paragraph text. */
+	offset: number;
+	/** Citations inside `body`, with offsets relative to it. */
+	citations?: Span[];
 };
 export type ParsedHeading = { kind: 'heading'; text: string };
 export type ParsedSegment = ParsedBodyPara | ParsedHeading;
 
 /** Parse a single (already-normalized) text chunk into a body paragraph. */
-export function parseOnePara(text: string): ParsedBodyPara {
-	const clean = text.replace(/^\s+|\s+$/g, '');
+function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
+	const clean = text.trim();
+	// The body is always the tail of the trimmed chunk.
+	const at = (body: string) =>
+		chunkOffset + text.length - text.trimStart().length + clean.length - body.length;
 
 	// Match leading decimal number, e.g. "2.1" or "2.2.1"
 	const numMatch = clean.match(/^(\d+(?:\.\d+)*\.?)\s*\n([\s\S]*)/);
-	if (!numMatch) return { kind: 'body', num: null, depth: 0, subTitle: null, body: clean };
+	if (!numMatch)
+		return { kind: 'body', num: null, depth: 0, subTitle: null, body: clean, offset: at(clean) };
 
 	const num = numMatch[1].replace(/\.$/, ''); // strip trailing dot for display
 	const depth = (num.match(/\./g) ?? []).length - 1; // "2.1" → 0 dots-after-first → depth 0; "2.2.1" → 1
@@ -113,11 +127,12 @@ export function parseOnePara(text: string): ParsedBodyPara {
 			!candidate.endsWith(',') &&
 			body.length > 30
 		) {
-			return { kind: 'body', num, depth, subTitle: candidate, body };
+			return { kind: 'body', num, depth, subTitle: candidate, body, offset: at(body) };
 		}
 	}
 
-	return { kind: 'body', num, depth, subTitle: null, body: rest.trim() };
+	const body = rest.trim();
+	return { kind: 'body', num, depth, subTitle: null, body, offset: at(body) };
 }
 
 // ── Participant extraction ────────────────────────────────────────────────
@@ -233,8 +248,11 @@ export function extractParticipants(
 
 /** Split a body paragraph that may contain multiple sub-paragraphs or a
  *  trailing embedded section heading into an array of render segments. */
-export function splitBodyParagraph(text: string): ParsedSegment[] {
-	const normalized = normalizeParagraphText(text);
+export function splitBodyParagraph(text: string, citations: Span[] = []): ParsedSegment[] {
+	const { text: normalized, at } = normalize(text);
+	const spans = citations
+		.filter((c) => c.start != null && c.end != null)
+		.map((c) => ({ ...c, start: at[c.start!], end: at[c.end!] }));
 
 	// Early-out: backend sometimes emits section titles as kind=body.
 	// Detect: single line (no \n), starts with a decimal number + space, short
@@ -274,10 +292,15 @@ export function splitBodyParagraph(text: string): ParsedSegment[] {
 	const subParaSplitRe = /(?=\n\n\d+(?:\.\d+){1,}\.?\s*\n)/g;
 	const chunks = mainText.split(subParaSplitRe);
 
-	const result: ParsedSegment[] = chunks
-		.map((c) => c.trim())
-		.filter(Boolean)
-		.map((c) => parseOnePara(c));
+	let chunkOffset = 0;
+	const result: ParsedSegment[] = [];
+	for (const chunk of chunks) {
+		if (chunk.trim()) {
+			const para = parseOnePara(chunk, chunkOffset);
+			result.push({ ...para, citations: citationsWithin(spans, para.offset, para.body.length) });
+		}
+		chunkOffset += chunk.length;
+	}
 
 	return [...result, ...trailingHeadings];
 }

@@ -1,37 +1,41 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
 	import type { GraphFilters } from '$lib/graph/graph-store';
-	import type { GraphNode, GraphNodeKind } from '$lib/graph/types';
-	import { LAYER_SUB_KINDS } from '$lib/graph/types';
+	import {
+		kindsForLayer,
+		LAYER_SUB_KINDS,
+		type EdgeCategory,
+		type GraphNode,
+		type GraphNodeKind
+	} from '$lib/graph/types';
 	import type { Overlay } from '$lib/stores/overlay';
 	import { HEAT_PERIODS } from '$lib/stores/overlay';
-	import { shapeFor, type NodeShape } from './nodeSprites';
+	import { nodeId } from '$lib/vocabulary';
+	import { EDGE_COLOR, shapeFor, strokeFor, type NodeShape } from './nodeSprites';
 	import Hemicycle from '$lib/components/explore/Hemicycle.svelte';
-	import { fetchZetels } from '$lib/api/parliamentary-client';
-	import type { ZetelsResponse } from '$lib/api/parliamentary';
 
-	// Experimenteel: mini-Hemicycle onderaan de zijbalk. Lazy fetch zodat de
-	// primaire grafiek-flow geen onnodige API-call krijgt; faalt stil als de
-	// endpoint niet bereikbaar is.
-	let sbZetels = $state<ZetelsResponse | null>(null);
+	type KindCounts = Partial<Record<GraphNodeKind, number>>;
+
+	// Mini-Hemicycle at the bottom of the sidebar. The section stays empty
+	// when the request fails.
+	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
 	onMount(() => {
-		fetchZetels()
-			.then((r) => {
-				sbZetels = r;
-			})
-			.catch(() => {
-				/* keep null */
-			});
+		const controller = new AbortController();
+		unwrap(api.GET('/api/parliament/seats', { signal: controller.signal }))
+			.then((response) => (seats = response))
+			.catch(() => {});
+		return () => controller.abort();
 	});
-	function openSidebarFractie(key: string) {
-		goto(`/explore?mode=split&focus=${encodeURIComponent(`fracties/${key}`)}`);
+	function openFaction(key: string) {
+		goto(`/explore?mode=split&focus=${encodeURIComponent(nodeId('factions', key))}`);
 	}
 
-	// Inline shape primitive for legend glyphs. The legend mirrors the
-	// canvas: same shape per kind, same fill/stroke logic as before. `r` is
-	// the inscribed radius so parent (r=5) and sub (r=3.5) keep their size
-	// hierarchy across shapes.
+	// Legend glyph outline for the non-circular shapes, in a 12x12 box. `r` is
+	// the inscribed radius, so a parent (r=5) and a sub kind (r=3.5) keep their
+	// size relation across shapes.
 	function legendPoints(shape: NodeShape, r: number): string {
 		if (shape === 'diamond') return `6,${6 - r} ${6 + r},6 6,${6 + r} ${6 - r},6`;
 		if (shape === 'hexagon') {
@@ -39,8 +43,40 @@
 			const hx = r * 0.5;
 			return `${6 + r},6 ${6 + hx},${6 - dy} ${6 - hx},${6 - dy} ${6 - r},6 ${6 - hx},${6 + dy} ${6 + hx},${6 + dy}`;
 		}
-		return '';
+		return `${6 - r},${6 - r} ${6 + r},${6 - r} ${6 + r},${6 + r} ${6 - r},${6 + r}`;
 	}
+
+	// Name of every kind in the toggles.
+	const KIND_LABEL: Record<GraphNodeKind, string> = {
+		instrument: 'Wetgeving',
+		article: 'Artikel',
+		judgment: 'Rechterlijk',
+		dossier: 'Dossier',
+		document: 'Publicatie',
+		activity: 'Activiteit',
+		committee: 'Commissie',
+		member: 'Kamerlid',
+		faction: 'Fractie',
+		other: 'Overig'
+	};
+	// Toggle rows: a layer kind next to its sub kind ([instrument, article], ...).
+	const TOGGLE_ROWS = (Object.keys(LAYER_SUB_KINDS) as GraphNodeKind[]).map(kindsForLayer);
+
+	const EDGE_LEGEND: Record<EdgeCategory, { label: string; title: string }> = {
+		structural: {
+			label: 'Vaste verwijzing',
+			title: 'Structurele verwijzingen: artikelen die formeel worden aangehaald in de wettekst.'
+		},
+		mutation: {
+			label: 'Wijziging via Kamer',
+			title: 'Wijzigingen via parlementaire behandeling: de wetsgeschiedenis van dit artikel.'
+		},
+		semantic: {
+			label: 'Inhoudelijk verband',
+			title: 'Semantische verbanden: thematische of inhoudelijke overlap, niet formeel geciteerd.'
+		}
+	};
+	const EDGE_CATEGORIES = Object.keys(EDGE_LEGEND) as EdgeCategory[];
 
 	let {
 		filters,
@@ -60,31 +96,29 @@
 		onLoadGlobal,
 		onLoadJudgments,
 		onLoadDossiers,
-		onLoadCommissies,
-		onLoadFracties,
-		onLoadLeden,
+		onLoadCommittees,
+		onLoadFactions,
+		onLoadMembers,
 		onDeloadLayer,
 		onResetGraph,
-		kindCounts = {} as Record<string, number>,
-		potentialCounts = {} as Record<string, number>,
+		kindCounts = {} as KindCounts,
+		potentialCounts = {} as KindCounts,
 		hasSelection = false,
 		hiddenCount = 0,
 		onRevealHidden,
 		loadingGlobal = false,
 		loadingJudgments = false,
 		loadingDossiers = false,
-		loadingCommissies = false,
-		loadingFracties = false,
-		loadingLeden = false,
+		loadingCommittees = false,
+		loadingFactions = false,
+		loadingMembers = false,
 		activatedLayers
 	}: {
 		filters: GraphFilters;
 		instruments?: { bwbId: string; label: string; count: number }[];
 		collapseToLaws: boolean;
 		overlay?: Overlay;
-		/** Count of in-flux nodes (size of the inFluxMap) shown in the Mutatie
-		 *  block when the overlay is active. Provided by the parent so the sidebar
-		 *  doesn't need to hold the full map. */
+		/** Number of in-flux nodes, shown in the Mutatie block while that overlay is active. */
 		inFluxCount?: number;
 		pinnedNodes?: GraphNode[];
 		onFilterChange: (patch: Partial<GraphFilters>) => void;
@@ -98,52 +132,78 @@
 		onLoadGlobal?: () => void;
 		onLoadJudgments?: () => void;
 		onLoadDossiers?: () => void;
-		onLoadCommissies?: () => void;
-		onLoadFracties?: () => void;
-		onLoadLeden?: () => void;
+		onLoadCommittees?: () => void;
+		onLoadFactions?: () => void;
+		onLoadMembers?: () => void;
 		/** Remove every node of the given kind from the canvas. */
-		onDeloadLayer?: (kind: import('$lib/graph/types').GraphNodeKind) => void;
-		/** Clear all nodes/edges so the user can start clean. */
+		onDeloadLayer?: (kind: GraphNodeKind) => void;
+		/** Remove all nodes and edges. */
 		onResetGraph?: () => void;
-		/** Live count of nodes per kind. Drives the active state on Lagen buttons. */
-		kindCounts?: Record<string, number>;
-		/** Direct-neighbour count per kind for the focused selection. When a
-		 *  selection is active, Lagen counts shift to "attached to selection"
-		 *  semantics — the user sees what's already linked. */
-		/** Per-kind count of cached-but-not-on-canvas neighbours. Shown on
-		 *  inactive Lagen buttons as a "+N" preview of what a click would add. */
-		potentialCounts?: Record<string, number>;
+		/** Nodes per kind on the canvas. Drives the active state of the layer buttons. */
+		kindCounts?: KindCounts;
+		/** Known neighbours per kind that are not on the canvas yet. Shown on an
+		 *  inactive layer button as "+N", what a click would add. */
+		potentialCounts?: KindCounts;
 		hasSelection?: boolean;
-		/** Direct neighbours of the focused node still on canvas. */
-		/** Convergence neighbours (multi-source-reachable) still on canvas. */
-		/** Nodes the BFS fetched but the convergence prune removed. When > 0,
-		 *  the Rond-focus section renders and offers "Maak ze zichtbaar". */
+		/** Nodes the neighbourhood fetch returned that the convergence prune removed. */
 		hiddenCount?: number;
-		/** Re-fetch the focal node's full neighbourhood without the convergence
-		 *  prune. Surfaces every weggeknipt node. */
+		/** Fetch the focal node's neighbourhood again without the convergence prune. */
 		onRevealHidden?: () => void;
 		loadingGlobal?: boolean;
 		loadingJudgments?: boolean;
 		loadingDossiers?: boolean;
-		loadingCommissies?: boolean;
-		loadingFracties?: boolean;
-		loadingLeden?: boolean;
-		/** Set of layers the user has explicitly activated. Lagen buttons read
-		 *  as "active" when their kind is in here, even if zero nodes of that
-		 *  kind are currently on canvas — so a layer that returned 0 attached
-		 *  newcomers still reads as on. */
-		activatedLayers?: ReadonlySet<import('$lib/graph/types').GraphNodeKind>;
+		loadingCommittees?: boolean;
+		loadingFactions?: boolean;
+		loadingMembers?: boolean;
+		/** Layers the user activated. A layer button reads as active when its kind
+		 *  is in here, even when the layer added no nodes. */
+		activatedLayers?: ReadonlySet<GraphNodeKind>;
 	} = $props();
 
-	// Open by default — Knooppunten daarin is de gezaghebbende legenda voor
-	// de node-shapes/kleuren. Verbergen achter een collapsible was de reden
-	// dat we per ongeluk een tweede legenda op de canvas zetten; nu zit de
-	// echte legenda altijd in zicht en hoeft de gebruiker niets uit te
-	// klappen voor de essentiële vorm/kleur-info.
+	const layers: {
+		kind: GraphNodeKind;
+		label: string;
+		glyph: string;
+		load?: () => void;
+		loading: boolean;
+	}[] = $derived([
+		{ kind: 'instrument', label: 'Wetten', glyph: '§', load: onLoadGlobal, loading: loadingGlobal },
+		{
+			kind: 'judgment',
+			label: 'Arresten',
+			glyph: '¶',
+			load: onLoadJudgments,
+			loading: loadingJudgments
+		},
+		{
+			kind: 'dossier',
+			label: 'Dossiers',
+			glyph: '∮',
+			load: onLoadDossiers,
+			loading: loadingDossiers
+		},
+		{
+			kind: 'committee',
+			label: 'Commissies',
+			glyph: '‡',
+			load: onLoadCommittees,
+			loading: loadingCommittees
+		},
+		{
+			kind: 'faction',
+			label: 'Fracties',
+			glyph: '※',
+			load: onLoadFactions,
+			loading: loadingFactions
+		},
+		{ kind: 'member', label: 'Leden', glyph: '◉', load: onLoadMembers, loading: loadingMembers }
+	]);
+
+	// Open by default: the toggles are the legend of the node shapes and colours.
 	let advancedOpen = $state(true);
 	let confirmClear = $state(false);
 	let clearTimer: ReturnType<typeof setTimeout> | null = null;
-	let pendingDeload = $state<string | null>(null);
+	let pendingDeload = $state<GraphNodeKind | null>(null);
 
 	function requestClear() {
 		confirmClear = true;
@@ -166,74 +226,50 @@
 		pendingDeload = null;
 	}
 
-	type NodeKey = keyof GraphFilters['nodeTypeToggles'];
-	function toggleNode(key: NodeKey) {
+	function toggleNode(kind: GraphNodeKind) {
 		onFilterChange({
-			nodeTypeToggles: { ...filters.nodeTypeToggles, [key]: !filters.nodeTypeToggles[key] }
+			nodeTypeToggles: { ...filters.nodeTypeToggles, [kind]: !filters.nodeTypeToggles[kind] }
 		});
 	}
-
-	// Overlay state shortcuts — {@const} can't be a direct child of <section>,
-	// so derive these here and reference them in the template.
-	const mutOn = $derived(overlay.kind === 'open' || overlay.kind === 'dossier');
-	const heatOn = $derived(overlay.kind === 'heat');
-	function toggleEdge(cat: 'structural' | 'mutation' | 'semantic') {
-		if (cat === 'structural') onFilterChange({ structuralEnabled: !filters.structuralEnabled });
-		if (cat === 'mutation') onFilterChange({ mutationEnabled: !filters.mutationEnabled });
-		if (cat === 'semantic') onFilterChange({ semanticEnabled: !filters.semanticEnabled });
+	function toggleEdge(category: EdgeCategory) {
+		const key = `${category}Enabled` as const;
+		onFilterChange({ [key]: !filters[key] });
 	}
 
-	// Three-category edge palette — mirrors /docs/methode §iiib and GraphCanvas
-	// CAT_RGB. Mutation lines are heavier and spine-coloured because they carry
-	// the load (changing the law). Structural and semantic share ink-2 — the
-	// semantic line is rendered dashed to signal "afgeleid uit tekst".
+	// {@const} can't be a direct child of <section>, so derive these here.
+	const mutOn = $derived(overlay.kind === 'open' || overlay.kind === 'dossier');
+	const heatOn = $derived(overlay.kind === 'heat');
 </script>
 
+<!-- One toggle: legend glyph (shape and colour as on the canvas) and name. -->
+{#snippet kindToggle(kind: GraphNodeKind, r: number, cls: string)}
+	{@const on = filters.nodeTypeToggles[kind]}
+	{@const shape = shapeFor(kind)}
+	{@const fill = on ? strokeFor(kind) : '#FFFDF4'}
+	{@const stroke = on ? strokeFor(kind) : '#C8C0B4'}
+	<button
+		type="button"
+		class="sb-tog {cls}"
+		class:sb-tog--off={!on}
+		aria-pressed={on}
+		onclick={() => toggleNode(kind)}
+		title={KIND_LABEL[kind]}
+	>
+		<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" class="sb-node-icon">
+			{#if shape === 'circle'}
+				<circle cx="6" cy="6" {r} {fill} {stroke} stroke-width="1.5" />
+			{:else}
+				<polygon points={legendPoints(shape, r)} {fill} {stroke} stroke-width="1.5" />
+			{/if}
+		</svg>
+		<span class="sb-tog-label">{KIND_LABEL[kind]}</span>
+	</button>
+{/snippet}
+
 <aside class="graph-sidebar">
-	<!-- ── Lagen ──────────────────────────────────────────────────────────────
-       Top-of-sidebar shortcuts to bulk overviews. Always accessible — not
-       only when the canvas is empty, so the user can pivot to any layer
-       (Wetten, Arresten, Dossiers, Commissies, Fracties, Leden) at any time. -->
-	{#if onLoadGlobal || onLoadJudgments || onLoadDossiers || onLoadCommissies || onLoadFracties || onLoadLeden}
-		{@const lagen = [
-			{
-				kind: 'instrument' as const,
-				label: 'Wetten',
-				glyph: '§',
-				on: onLoadGlobal,
-				loading: loadingGlobal
-			},
-			{
-				kind: 'judgment' as const,
-				label: 'Arresten',
-				glyph: '¶',
-				on: onLoadJudgments,
-				loading: loadingJudgments
-			},
-			{
-				kind: 'dossier' as const,
-				label: 'Dossiers',
-				glyph: '∮',
-				on: onLoadDossiers,
-				loading: loadingDossiers
-			},
-			{
-				kind: 'commissie' as const,
-				label: 'Commissies',
-				glyph: '‡',
-				on: onLoadCommissies,
-				loading: loadingCommissies
-			},
-			{
-				kind: 'fractie' as const,
-				label: 'Fracties',
-				glyph: '※',
-				on: onLoadFracties,
-				loading: loadingFracties
-			},
-			{ kind: 'lid' as const, label: 'Leden', glyph: '◉', on: onLoadLeden, loading: loadingLeden }
-		]}
-		{@const anyLoaded = lagen.some((l) => (kindCounts[l.kind] ?? 0) > 0)}
+	<!-- Layers: bulk overviews, reachable at any time, not only on an empty canvas. -->
+	{#if layers.some((l) => l.load)}
+		{@const anyLoaded = layers.some((l) => (kindCounts[l.kind] ?? 0) > 0)}
 		<section class="sb-section sb-section--lagen">
 			<div class="sb-head sb-head--with-action">
 				<span>Inhoud laden</span>
@@ -260,12 +296,10 @@
 				{/if}
 			</div>
 			<div class="sb-lagen-grid">
-				{#each lagen as l (l.kind)}
-					{#if l.on}
-						<!-- Count = nodes of this layer currently on the graph. Layers
-                 group a primary kind with its sub-kinds (Dossier+Publicatie,
-                 Commissie+Activiteit, Fractie+Lid, Wet+Artikel) — see
-                 LAYER_SUB_KINDS in $lib/graph/types. -->
+				{#each layers as l (l.kind)}
+					{#if l.load}
+						<!-- Count = nodes of this layer on the canvas, sub kinds included
+                 (LAYER_SUB_KINDS in $lib/graph/types). -->
 						{@const directCount = kindCounts[l.kind] ?? 0}
 						{@const subKinds = LAYER_SUB_KINDS[l.kind] ?? []}
 						{@const implicitCount = subKinds.reduce((s, k) => s + (kindCounts[k] ?? 0), 0)}
@@ -309,7 +343,7 @@
 									const shouldDeload = isInstrumentLayer ? directCount > 0 : totalCount > 0;
 									if (shouldDeload && onDeloadLayer) {
 										pendingDeload = l.kind;
-									} else l.on?.();
+									} else l.load?.();
 								}}
 								disabled={l.loading}
 								aria-pressed={active}
@@ -392,155 +426,45 @@
 	</button>
 
 	{#if advancedOpen}
-		<!-- ── Knooppunten ──────────────────────────────────────────────────────── -->
+		<!-- ── Bronnen ───────────────────────────────────────────────────────────── -->
 		<section class="sb-section">
-			<div class="sb-head">Knooppunten</div>
+			<div class="sb-head">Bronnen</div>
 			<div class="sb-tog-grid">
-				{#each [{ parent: { key: 'instrument' as NodeKey, label: 'Wetgeving', color: '#1A1814', r: 5 }, sub: { key: 'article' as NodeKey, label: 'Artikel', color: '#1A1814', r: 3.5 } }, { parent: { key: 'dossier' as NodeKey, label: 'Dossier', color: '#7A1F1A', r: 5 }, sub: { key: 'tkstuk' as NodeKey, label: 'Publicatie', color: '#7A1F1A', r: 3.5 } }, { parent: { key: 'commissie' as NodeKey, label: 'Commissie', color: '#8A6B3A', r: 5 }, sub: { key: 'activity' as NodeKey, label: 'Activiteit', color: '#8A6B3A', r: 3 } }, { parent: { key: 'fractie' as NodeKey, label: 'Fractie', color: '#44505E', r: 5 }, sub: { key: 'lid' as NodeKey, label: 'Kamerlid', color: '#44505E', r: 3.5 } }] as pair, i (i)}
-					{@const pOn = filters.nodeTypeToggles[pair.parent.key]}
-					{@const sOn = filters.nodeTypeToggles[pair.sub.key]}
-					{@const pShape = shapeFor(pair.parent.key as GraphNodeKind)}
-					{@const sShape = shapeFor(pair.sub.key as GraphNodeKind)}
-					<button
-						type="button"
-						class="sb-tog sb-tog--parent"
-						class:sb-tog--off={!pOn}
-						aria-pressed={pOn}
-						onclick={() => toggleNode(pair.parent.key)}
-						title={pair.parent.label}
-					>
-						<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" class="sb-node-icon">
-							{#if pShape === 'circle'}
-								<circle
-									cx="6"
-									cy="6"
-									r={pair.parent.r}
-									fill={pOn ? pair.parent.color : '#FFFDF4'}
-									stroke={pOn ? pair.parent.color : '#C8C0B4'}
-									stroke-width="1.5"
-								/>
-							{:else if pShape === 'roundedRect'}
-								<rect
-									x={6 - pair.parent.r}
-									y={6 - pair.parent.r}
-									width={2 * pair.parent.r}
-									height={2 * pair.parent.r}
-									rx={pair.parent.r * 0.4}
-									ry={pair.parent.r * 0.4}
-									fill={pOn ? pair.parent.color : '#FFFDF4'}
-									stroke={pOn ? pair.parent.color : '#C8C0B4'}
-									stroke-width="1.5"
-								/>
-							{:else}
-								<polygon
-									points={legendPoints(pShape, pair.parent.r)}
-									fill={pOn ? pair.parent.color : '#FFFDF4'}
-									stroke={pOn ? pair.parent.color : '#C8C0B4'}
-									stroke-width="1.5"
-								/>
-							{/if}
-						</svg>
-						<span class="sb-tog-label">{pair.parent.label}</span>
-					</button>
-					<button
-						type="button"
-						class="sb-tog sb-tog--sub"
-						class:sb-tog--off={!sOn}
-						aria-pressed={sOn}
-						onclick={() => toggleNode(pair.sub.key)}
-						title={pair.sub.label}
-					>
-						<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" class="sb-node-icon">
-							{#if sShape === 'circle'}
-								<circle
-									cx="6"
-									cy="6"
-									r={pair.sub.r}
-									fill={sOn ? pair.sub.color : '#FFFDF4'}
-									stroke={sOn ? pair.sub.color : '#C8C0B4'}
-									stroke-width="1.5"
-								/>
-							{:else if sShape === 'roundedRect'}
-								<rect
-									x={6 - pair.sub.r}
-									y={6 - pair.sub.r}
-									width={2 * pair.sub.r}
-									height={2 * pair.sub.r}
-									rx={pair.sub.r * 0.4}
-									ry={pair.sub.r * 0.4}
-									fill={sOn ? pair.sub.color : '#FFFDF4'}
-									stroke={sOn ? pair.sub.color : '#C8C0B4'}
-									stroke-width="1.5"
-								/>
-							{:else}
-								<polygon
-									points={legendPoints(sShape, pair.sub.r)}
-									fill={sOn ? pair.sub.color : '#FFFDF4'}
-									stroke={sOn ? pair.sub.color : '#C8C0B4'}
-									stroke-width="1.5"
-								/>
-							{/if}
-						</svg>
-						<span class="sb-tog-label">{pair.sub.label}</span>
-					</button>
+				{#each TOGGLE_ROWS as [parent, sub] (parent)}
+					{@render kindToggle(parent, 5, 'sb-tog--parent')}
+					{@render kindToggle(sub, 3.5, 'sb-tog--sub')}
 				{/each}
-				<!-- Rechterlijk: leaf with no sub, spans both columns. -->
-				<button
-					type="button"
-					class="sb-tog sb-tog--parent sb-tog--full"
-					class:sb-tog--off={!filters.nodeTypeToggles['judgment']}
-					aria-pressed={filters.nodeTypeToggles['judgment']}
-					onclick={() => toggleNode('judgment')}
-					title="Rechterlijk"
-				>
-					<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" class="sb-node-icon">
-						<rect
-							x="1.5"
-							y="1.5"
-							width="9"
-							height="9"
-							rx="2"
-							ry="2"
-							fill={filters.nodeTypeToggles['judgment'] ? '#2B3A5C' : '#FFFDF4'}
-							stroke={filters.nodeTypeToggles['judgment'] ? '#2B3A5C' : '#C8C0B4'}
-							stroke-width="1.5"
-						/>
-					</svg>
-					<span class="sb-tog-label">Rechterlijk</span>
-				</button>
+				<!-- Judgment has no sub kind and spans both columns. -->
+				{@render kindToggle('judgment', 5, 'sb-tog--parent sb-tog--full')}
 			</div>
 		</section>
 
-		<!-- ── Relaties — drie categorieën, methode §iiib — toggleable filters ── -->
+		<!-- ── Verbindingen: one toggle per edge category ─────────────────────────── -->
 		<section class="sb-section">
-			<div class="sb-head">Relaties</div>
+			<div class="sb-head">Verbindingen</div>
 
-			{#each [{ cat: 'structural' as const, label: 'Vaste verwijzing', color: '#3D5C3A', title: 'Structurele verwijzingen: artikelen die formeel worden aangehaald in de wettekst.' }, { cat: 'mutation' as const, label: 'Wijziging via Kamer', color: '#7A1F1A', title: 'Wijzigingen via parlementaire behandeling: de wetsgeschiedenis van dit artikel.' }, { cat: 'semantic' as const, label: 'Inhoudelijk verband', color: '#44505E', title: 'Semantische verbanden: thematische of inhoudelijke overlap, niet formeel geciteerd.' }] as r, i (i)}
-				{@const on =
-					r.cat === 'structural'
-						? filters.structuralEnabled
-						: r.cat === 'mutation'
-							? filters.mutationEnabled
-							: filters.semanticEnabled}
+			{#each EDGE_CATEGORIES as category (category)}
+				{@const on = filters[`${category}Enabled`]}
+				{@const color = on ? EDGE_COLOR[category] : '#C8C0B4'}
 				<button
 					type="button"
 					class="sb-leg-row sb-leg-row--btn"
 					class:sb-leg-row--off={!on}
 					aria-pressed={on}
-					title={r.title}
-					onclick={() => toggleEdge(r.cat)}
+					title={EDGE_LEGEND[category].title}
+					onclick={() => toggleEdge(category)}
 				>
 					<svg width="44" height="12" aria-hidden="true" class="sb-edge-icon">
 						<defs>
 							<marker
-								id="sb-leg-m-{r.cat}"
+								id="sb-leg-m-{category}"
 								markerWidth="3"
 								markerHeight="3"
 								refX="2"
 								refY="1.5"
 								orient="auto"
 							>
-								<path d="M0,0 L0,3 L3,1.5 z" fill={on ? r.color : '#C8C0B4'} />
+								<path d="M0,0 L0,3 L3,1.5 z" fill={color} />
 							</marker>
 						</defs>
 						<line
@@ -548,13 +472,13 @@
 							y1="6"
 							x2="38"
 							y2="6"
-							stroke={on ? r.color : '#C8C0B4'}
+							stroke={color}
 							stroke-width="2"
 							stroke-linecap="round"
-							marker-end="url(#sb-leg-m-{r.cat})"
+							marker-end="url(#sb-leg-m-{category})"
 						/>
 					</svg>
-					<span class="sb-leg-label">{r.label}</span>
+					<span class="sb-leg-label">{EDGE_LEGEND[category].label}</span>
 				</button>
 			{/each}
 		</section>
@@ -590,7 +514,7 @@
 					}}
 					title={overlay.kind === 'dossier'
 						? `Open mutaties binnen dossier ${overlay.id}`
-						: 'Open wetsvoorstellen die deze knooppunten willen wijzigen'}
+						: 'Open wetsvoorstellen die deze bronnen willen wijzigen'}
 				>
 					Mutatie{#if mutOn && inFluxCount > 0}<span class="sb-seg-count">{inFluxCount}</span>{/if}
 				</button>
@@ -667,23 +591,22 @@
 		</section>
 	{/if}
 
-	<!-- ── Parlement (experimenteel) ─────────────────────────────────────────
-       Mini-Hemicycle als persistente navigatie naar fracties. Klik op een
-       stoel of chip opent die fractie in Gesplitst. Lazy-loaded; verschijnt
-       pas als de zetels-endpoint resultaat geeft. Geplaatst boven Wetten
-       zodat de flex-grow van die sectie deze niet onder de vouw drukt. -->
-	{#if sbZetels}
+	<!-- ── Parlement ─────────────────────────────────────────────────────────
+       Zetelverdeling als navigatie naar fracties: een stoel of chip opent die
+       fractie in Gesplitst. Boven Wetten, zodat de flex-grow van die sectie
+       deze niet onder de vouw drukt. -->
+	{#if seats}
 		<section class="sb-section sb-section--parl">
 			<div class="sb-head">
 				<span>Parlement</span>
 			</div>
 			<div class="sb-parl-hemicycle">
-				<Hemicycle data={sbZetels} onSelect={openSidebarFractie} />
+				<Hemicycle data={seats} onSelect={openFaction} />
 			</div>
 			<div class="sb-parl-links">
 				<a class="sb-parl-link" href="/explore?mode=index&kind=dossiers">Dossiers</a>
-				<a class="sb-parl-link" href="/explore?mode=index&kind=leden">Kamerleden</a>
-				<a class="sb-parl-link" href="/explore?mode=index&kind=stemmingen">Stemmingen</a>
+				<a class="sb-parl-link" href="/explore?mode=index&kind=members">Kamerleden</a>
+				<a class="sb-parl-link" href="/explore?mode=index&kind=decisions">Stemmingen</a>
 			</div>
 		</section>
 	{/if}
@@ -751,114 +674,14 @@
 		padding: 0 var(--s-4) var(--s-2);
 	}
 
-	/* ── Rows ────────────────────────────────────────────────────────────── */
-	.sb-row {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		width: 100%;
-		padding: 4px var(--s-4);
-		background: none;
-		border: none;
-		cursor: pointer;
-		text-align: left;
-		transition: background var(--dur-1) var(--ease);
-	}
-
-	.sb-row:hover {
-		background: var(--paper-3);
-	}
-
-	.sb-row--static {
-		cursor: default;
-		opacity: 0.75;
-	}
-	.sb-row--static:hover {
-		background: none;
-	}
-
 	.sb-node-icon,
 	.sb-edge-icon {
 		flex-shrink: 0;
 		overflow: visible;
 	}
 
-	/* Legend rows — read-only listing of node + edge types. */
-	.sb-domain {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 11px;
-		color: var(--ink-3);
-		padding: 6px var(--s-4) 2px;
-	}
-	.sb-domain:first-child {
-		padding-top: 0;
-	}
-	.sb-cluster-row {
-		display: flex;
-		align-items: center;
-	}
-	.sb-cluster-row .sb-leg-row--master {
-		flex: 1;
-	}
-
-	.sb-leg-row--master {
-		font-weight: 500;
-		padding-right: 4px;
-	}
-	.sb-leg-row--master .sb-leg-label {
-		font-weight: 500;
-	}
-	.sb-leg-row--mixed .sb-leg-label::after {
-		content: ' · gemengd';
-		font-size: 10px;
-		font-style: italic;
-		color: var(--ink-4);
-		font-weight: 400;
-	}
-	.sb-cluster-expand {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		background: none;
-		border: 0;
-		color: var(--ink-3);
-		cursor: pointer;
-		padding: 2px 8px;
-		margin-right: var(--s-3);
-		line-height: 1;
-		transition: color 80ms;
-	}
-	.sb-cluster-expand:hover {
-		color: var(--ink);
-	}
-	.sb-cluster-expand-chev {
-		display: inline-block;
-		font-size: 14px;
-		line-height: 1;
-		transition: transform 120ms;
-	}
-	.sb-cluster-expand-chev--open {
-		transform: rotate(90deg);
-	}
-	.sb-cluster-children {
-		padding: 4px 0 6px;
-		margin: 2px var(--s-4) 4px calc(var(--s-4) + 14px);
-		border-left: 2px solid var(--spine-faint, var(--rule-strong));
-		background: color-mix(in srgb, var(--paper-2) 60%, transparent);
-		border-radius: 0 var(--r-1) var(--r-1) 0;
-	}
-	.sb-leg-row--child {
-		padding-left: 10px;
-		font-size: 12px;
-	}
-	.sb-leg-row--child .sb-leg-label {
-		font-size: 12px;
-	}
-
-	/* Shared 2-col toggle grid used by Knooppunten and Overlays. Equal cells
-     give a uniform reading rhythm; the same .sb-tog button drives both
-     sections so they look and behave identically. */
+	/* 2-column grid of the kind toggles. Equal cells
+     give a uniform reading rhythm. */
 	.sb-tog-grid {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -901,16 +724,6 @@
 		text-decoration: line-through;
 		text-decoration-color: var(--ink-4);
 	}
-	.sb-tog--mixed .sb-tog-label::after {
-		content: ' ·';
-		color: var(--ink-4);
-	}
-	.sb-tog--active {
-		background: color-mix(in srgb, var(--ink) 8%, transparent);
-	}
-	.sb-tog--active:hover {
-		background: color-mix(in srgb, var(--ink) 14%, transparent);
-	}
 	/* Parent stays at the standard weight. Sub is muted (smaller font, thinner
      label colour, indented icon) so the hierarchy reads without a header
      row. A faint left border tethers the sub visually to its parent. */
@@ -929,16 +742,9 @@
 	.sb-tog--sub.sb-tog--off .sb-tog-label {
 		color: var(--ink-4);
 	}
-	/* Full-width row (Rechterlijk — no sub). */
+	/* Full-width row (judgment has no sub kind). */
 	.sb-tog--full {
 		grid-column: 1 / -1;
-	}
-	.sb-tog-count {
-		font-family: var(--font-mono);
-		font-variant-numeric: tabular-nums;
-		font-size: 10px;
-		color: var(--ink-3);
-		flex-shrink: 0;
 	}
 
 	.sb-leg-row {
@@ -964,33 +770,11 @@
 		text-decoration: line-through;
 		text-decoration-color: var(--ink-4);
 	}
-	.sb-leg-glyph {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 13px;
-		line-height: 1;
-		width: 12px;
-		text-align: center;
-		flex-shrink: 0;
-	}
 	.sb-leg-label {
 		font-family: var(--font-serif);
 		font-size: 13px;
 		color: var(--ink-2);
 		line-height: 1.2;
-	}
-
-	.sb-label {
-		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--ink-2);
-		line-height: 1;
-	}
-
-	.sb-label--dim {
-		font-size: 11.5px;
-		color: var(--fg-2);
-		font-family: var(--font-sans);
 	}
 
 	/* ── Instrument list ─────────────────────────────────────────────────── */
@@ -1053,50 +837,16 @@
 		color: var(--accent);
 	}
 
-	/* ── Zicht (visible / total) ─────────────────────────────────────────── */
-	.sb-section--zicht {
-		padding-top: var(--s-3);
-	}
-
-	.sb-zicht-row {
-		display: flex;
-		align-items: baseline;
-		gap: 4px;
-		padding: 0 var(--s-4) 4px;
-		font-family: var(--font-sans);
-	}
-	.sb-zicht-num {
-		font-family: var(--font-mono);
-		font-size: 16px;
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.sb-zicht-sep {
-		color: var(--ink-4);
-	}
-	.sb-zicht-total {
-		font-family: var(--font-mono);
-		font-size: 13px;
-		color: var(--ink-3);
-	}
-	.sb-zicht-label {
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
-		margin-left: 4px;
-	}
-
-	/* ── Geavanceerd toggle ─────────────────────────────────────────────── */
+	/* ── Filters and overlays toggle ────────────────────────────────────── */
 	.sb-adv-toggle {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		gap: 6px;
 		width: 100%;
-		padding: var(--s-2) var(--s-4);
+		padding: 4px var(--s-4);
 		background: none;
 		border: none;
-		border-bottom: 1px solid var(--rule);
 		cursor: pointer;
 		font-family: var(--font-sans);
 		font-size: 10px;
@@ -1104,6 +854,7 @@
 		letter-spacing: 0.09em;
 		text-transform: uppercase;
 		color: var(--fg-3);
+		text-align: left;
 		transition:
 			background var(--dur-1) var(--ease),
 			color var(--dur-1) var(--ease);
@@ -1111,65 +862,20 @@
 	}
 	.sb-adv-toggle:hover {
 		background: var(--paper-3);
-		color: var(--ink-2);
+		color: var(--ink);
 	}
 	.sb-adv-chev {
+		display: inline-block;
 		font-size: 14px;
 		line-height: 1;
-		transition: transform 150ms var(--ease);
-		display: inline-block;
+		transition: transform var(--dur-1) var(--ease);
+		color: var(--ink-4);
 	}
 	.sb-adv-chev--open {
 		transform: rotate(90deg);
 	}
 
-	.sb-stepper {
-		display: grid;
-		grid-auto-columns: 1fr;
-		grid-auto-flow: column;
-		gap: 0;
-		margin: 0 var(--s-4);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		overflow: hidden;
-	}
-	.sb-stepper-btn {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		padding: 4px 6px;
-		background: var(--paper);
-		color: var(--ink-3);
-		border: none;
-		border-right: 1px solid var(--rule-strong);
-		cursor: pointer;
-		line-height: 1.3;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
-	}
-	.sb-stepper-btn:last-child {
-		border-right: none;
-	}
-	.sb-stepper-btn:hover:not(.is-active) {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-	.sb-stepper-btn.is-active {
-		background: var(--ink);
-		color: var(--paper);
-		font-weight: 500;
-	}
-
-	.sb-zicht-hint {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 11px;
-		line-height: 1.45;
-		color: var(--ink-4);
-		margin: 4px var(--s-4) 0;
-	}
-
-	/* Section heading with a trailing action (e.g. "Wis grafiek"). */
+	/* Section heading with a trailing action (e.g. "Wis netwerk"). */
 	.sb-head--with-action {
 		display: flex;
 		justify-content: space-between;
@@ -1235,78 +941,12 @@
 		color: var(--spine);
 	}
 
-	/* ── Geavanceerd (removed) ──────────────────────────────────────────── */
-	.sb-adv-toggle {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		width: 100%;
-		background: none;
-		border: none;
-		padding: 4px var(--s-4);
-		cursor: pointer;
-		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 500;
-		letter-spacing: 0.09em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		text-align: left;
-	}
-	.sb-adv-toggle:hover {
-		color: var(--ink);
-	}
-	.sb-adv-chev {
-		display: inline-block;
-		transition: transform var(--dur-1) var(--ease);
-		color: var(--ink-4);
-	}
-	.sb-adv-chev--open {
-		transform: rotate(90deg);
-	}
-
-	.sb-adv-body {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		padding: 4px var(--s-4) var(--s-2);
-	}
-	.sb-adv-row {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.sb-adv-row--col {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 4px;
-		cursor: default;
-	}
-	.sb-adv-label {
-		font-size: 11px;
-		color: var(--ink-3);
-	}
-	.sb-adv-select {
-		height: 24px;
-		padding: 0 6px;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink);
-	}
-
-	/* ── Lagen grid ─────────────────────────────────────────────────────── */
+	/* ── Layers grid ────────────────────────────────────────────────────── */
 	.sb-section--lagen {
 		padding-top: var(--s-3);
 	}
 
-	/* ── Rond focus section ─────────────────────────────────────────────── */
+	/* ── Hidden sources section ─────────────────────────────────────────────── */
 	.sb-section--focus {
 		padding-bottom: var(--s-3);
 	}
@@ -1556,55 +1196,6 @@
 		border-bottom-right-radius: 0;
 	}
 
-	/* ── Detail-niveau toggle (Artikel ↔ Wet) ───────────────────────────── */
-	.sb-level-toggle {
-		display: flex;
-		margin: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		overflow: hidden;
-		background: var(--paper);
-	}
-	.sb-level-btn {
-		flex: 1;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 6px;
-		padding: 6px 8px;
-		background: var(--paper);
-		border: 0;
-		border-right: 1px solid var(--rule-strong);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-		cursor: pointer;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
-	}
-	.sb-level-btn:last-child {
-		border-right: 0;
-	}
-	.sb-level-btn:hover {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-	.sb-level-btn--active {
-		background: var(--ink);
-		color: var(--paper);
-		font-weight: 500;
-	}
-	.sb-level-btn--active:hover {
-		background: var(--ink-2);
-	}
-	.sb-level-glyph {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 13px;
-		line-height: 1;
-	}
-
 	/* ── Overlay segmented control ───────────────────────────────────────── */
 	.sb-seg {
 		display: grid;
@@ -1704,15 +1295,6 @@
      de readout-regel die wel verschijnt. */
 	.sb-section--parl {
 		padding: var(--s-4) var(--s-3) var(--s-3);
-	}
-	.sb-parl-flag {
-		font-family: var(--font-sans);
-		font-size: 9px;
-		font-weight: 400;
-		letter-spacing: 0.05em;
-		text-transform: uppercase;
-		color: var(--ink-4);
-		font-style: italic;
 	}
 	.sb-parl-hemicycle :global(.hemicycle) {
 		margin: 0;

@@ -174,7 +174,7 @@
 		--node-article: var(--ink);
 		--node-judgment: var(--indigo);
 		--node-instrument: var(--ink-3);
-		--node-tkstuk: var(--ink-3);
+		--node-document: var(--ink-3);
 		--node-other: var(--ink-4);
 
 		/* Graph edge colours */

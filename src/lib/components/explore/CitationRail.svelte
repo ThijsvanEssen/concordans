@@ -1,18 +1,13 @@
 <script lang="ts">
 	import { getArticleDetail } from '$lib/api/articles';
 	import { getJudgmentDetail } from '$lib/api/judgments';
-	import type {
-		ArticleDetailResponse,
-		JudgmentDetailResponse,
-		ArticleCitationTarget,
-		ArticleRelation
-	} from '$lib/api/types';
+	import type { Schema } from '$lib/api/types';
 	import { formatEcliLabel } from '$lib/graph/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import DossierRail from './readers/rail/DossierRail.svelte';
-	import CommissieRail from './readers/rail/CommissieRail.svelte';
-	import LidRail from './readers/rail/LidRail.svelte';
-	import FractieRail from './readers/rail/FractieRail.svelte';
+	import CommitteeRail from './readers/rail/CommitteeRail.svelte';
+	import MemberRail from './readers/rail/MemberRail.svelte';
+	import FactionRail from './readers/rail/FactionRail.svelte';
 	import CitationCopy from './CitationCopy.svelte';
 	import { instrumentMetaStore, recordInstrument } from '$lib/api/instrument-cache';
 	import { compareArticleNumbers } from '$lib/util/sort';
@@ -26,17 +21,20 @@
 		onNavigate?: (collection: string, key: string) => void;
 	} = $props();
 
-	const currentBwb = $derived.by(() => {
-		if (!selection || selection.collection !== 'instrument_articles') return null;
-		const p = selection.raw?.props as Record<string, unknown> | undefined;
-		return getLawIdFromProps(p, selection.key);
-	});
+	type CitationTarget = Schema<'ArticleCitationTarget'>;
+	type ArticleRelation = Schema<'ArticleRelationDTO'>;
+
+	const currentBwb = $derived(
+		selection?.collection === 'articles'
+			? getLawIdFromProps(selection.raw?.props ?? undefined, selection.key)
+			: null
+	);
 
 	type State =
 		| { kind: 'empty' }
 		| { kind: 'loading' }
-		| { kind: 'article'; data: ArticleDetailResponse }
-		| { kind: 'judgment'; data: JudgmentDetailResponse }
+		| { kind: 'article'; data: Schema<'ArticleDetailResponse'> }
+		| { kind: 'judgment'; data: Schema<'JudgmentDetailResponse'> }
 		| { kind: 'none' };
 
 	let view = $state<State>({ kind: 'empty' });
@@ -60,22 +58,20 @@
 		}
 
 		view = { kind: 'loading' };
-		const props = node.raw?.props as Record<string, unknown> | undefined;
+		const props = node.raw?.props ?? {};
 
-		if (node.collection === 'instrument_articles') {
+		if (node.collection === 'articles') {
 			const bwb = getLawIdFromProps(props, node.key) ?? '';
-			const art = String(props?.['article_number'] ?? '');
+			const art = String(props.article_number ?? '');
 			if (bwb && art) {
 				getArticleDetail(bwb, art)
 					.then((data) => {
-						// Seed the store with the current article's instrument so
-						// the law group header renders the friendly name immediately.
+						// Seed the store so the law group header shows the name at once.
 						if (data.instrument) {
 							recordInstrument({
-								bwb_id: data.instrument.bwb_id,
+								bwb_id: bwb,
 								key: data.instrument.key,
-								citation_title: data.instrument.citation_title,
-								title: data.instrument.title
+								display_name: data.instrument.display_name
 							});
 						}
 						view = { kind: 'article', data };
@@ -88,22 +84,18 @@
 		}
 
 		if (node.collection === 'judgments') {
-			const ecli = String(props?.['ecli'] ?? node.key);
+			const ecli = String(props.ecli ?? node.key);
 			const fullEcli = ecli.startsWith('ECLI:') ? ecli : `ECLI:${ecli}`;
 			getJudgmentDetail(fullEcli)
 				.then((data) => {
-					// Seed the instrument store for every cited law so law group
-					// headings show friendly names without needing ArticleReader loaded first.
+					// Seed the store for every cited law so the group headings show names.
 					for (const a of data.articles) {
-						if (a.instrument) {
+						if (a.bwb_id) {
 							recordInstrument({
-								bwb_id: a.instrument.bwb_id ?? a.bwb_id,
-								key: a.instrument.key,
-								citation_title: a.instrument.citation_title,
-								title: a.instrument.title
+								bwb_id: a.bwb_id,
+								key: a.instrument?.key,
+								display_name: a.instrument?.display_name
 							});
-						} else if (a.bwb_id) {
-							recordInstrument({ bwb_id: a.bwb_id });
 						}
 					}
 					view = { kind: 'judgment', data };
@@ -134,53 +126,36 @@
 		return m ? m[1] : name;
 	}
 
-	// Group and deduplicate citation targets by bwb_id, sorted within each group.
-	// Returns [bwb_id, instrument_citation_title_or_null, targets[]]
+	// Citation targets once each, grouped by law and sorted within a group.
 	function groupCitationTargets(
-		citations: { target: ArticleCitationTarget }[]
-	): [string, string | null, ArticleCitationTarget[]][] {
-		const seen = new Set<string>();
-		const groups = new Map<string, { name: string | null; targets: ArticleCitationTarget[] }>();
-		for (const span of citations) {
-			const t = span.target;
-			if (seen.has(t.key)) continue;
-			seen.add(t.key);
-			const bwb = getLawIdFromRecord(t);
-			if (!groups.has(bwb)) {
-				groups.set(bwb, { name: t.instrument_citation_title ?? null, targets: [] });
-			}
-			groups.get(bwb)!.targets.push(t);
-		}
-		for (const g of groups.values()) {
-			g.targets.sort((a, b) => compareArticleNumbers(a.article_number, b.article_number));
-		}
-		return [...groups.entries()].map(([bwb, g]) => [bwb, g.name, g.targets]);
+		citations: { target: CitationTarget }[]
+	): [string, CitationTarget[]][] {
+		const targets = new Map(citations.map(({ target }) => [target.key, target]));
+		const groups = Map.groupBy(targets.values(), getLawIdFromRecord);
+		return [...groups].map(([bwb, rows]) => [
+			bwb,
+			rows.sort((a, b) => compareArticleNumbers(a.article_number, b.article_number))
+		]);
 	}
 
 	// Group article relations by bwb_id, sorted within each group.
 	function groupArticleRelations(articles: ArticleRelation[]): [string, ArticleRelation[]][] {
-		const groups = new Map<string, ArticleRelation[]>();
-		for (const a of articles) {
-			const bwb = getLawIdFromRecord(a);
-			if (!groups.has(bwb)) groups.set(bwb, []);
-			groups.get(bwb)!.push(a);
-		}
-		for (const arr of groups.values()) {
-			arr.sort((a, b) => compareArticleNumbers(a.article_number, b.article_number));
-		}
-		return [...groups.entries()];
+		return [...Map.groupBy(articles, getLawIdFromRecord)].map(([bwb, rows]) => [
+			bwb,
+			rows.sort((a, b) => compareArticleNumbers(a.article_number, b.article_number))
+		]);
 	}
 </script>
 
 <aside class="citation-rail">
 	{#if selection?.kind === 'dossier'}
 		<DossierRail node={selection} {onNavigate} />
-	{:else if selection?.kind === 'commissie'}
-		<CommissieRail node={selection} {onNavigate} />
-	{:else if selection?.kind === 'lid'}
-		<LidRail node={selection} {onNavigate} />
-	{:else if selection?.kind === 'fractie'}
-		<FractieRail node={selection} {onNavigate} />
+	{:else if selection?.kind === 'committee'}
+		<CommitteeRail node={selection} {onNavigate} />
+	{:else if selection?.kind === 'member'}
+		<MemberRail node={selection} {onNavigate} />
+	{:else if selection?.kind === 'faction'}
+		<FactionRail node={selection} {onNavigate} />
 	{:else if view.kind === 'empty'}
 		<div class="rail-empty">
 			<p>Selecteer een artikel of arrest om verwijzingen te zien.</p>
@@ -212,9 +187,9 @@
 			<section class="rail-section">
 				<h3 class="rail-section-title rail-section-title--outgoing">Verwijst naar</h3>
 
-				{#each citationGroups as [bwb, instName, targets], i (i)}
-					{@const isCurrentLaw = bwb === (currentBwb ?? '__never__')}
-					{@const displayName = isCurrentLaw ? 'Deze wet' : shortLawName(instName ?? lawName(bwb))}
+				{#each citationGroups as [bwb, targets] (bwb)}
+					{@const isCurrentLaw = bwb === currentBwb}
+					{@const displayName = isCurrentLaw ? 'Deze wet' : shortLawName(lawName(bwb))}
 					<div class="law-group">
 						{#if !isCurrentLaw}
 							<button
@@ -237,7 +212,7 @@
 
 						{#if !collapsed.has(bwb)}
 							<ul class="rail-list">
-								{#each targets as t, i (i)}
+								{#each targets as t (t.key)}
 									<li class="rail-item">
 										<button
 											type="button"
@@ -267,10 +242,8 @@
 			<section class="rail-section">
 				<h3 class="rail-section-title rail-section-title--incoming">Aangehaald door</h3>
 				<ul class="rail-list">
-					{#each d.judgments as j, i (i)}
-						{@const jMeta = (j as Record)['judgment_metadata'] as Record | undefined}
-						{@const jStub = Boolean((j as Record)['stub'])}
-						<li class="rail-item" class:rail-item--stub={jStub}>
+					{#each d.judgments as j (j.key)}
+						<li class="rail-item">
 							<button
 								type="button"
 								class="rail-row"
@@ -278,22 +251,8 @@
 							>
 								<span class="rail-sigil rail-sigil--judgment" aria-hidden="true">¶</span>
 								<span class="rail-content">
-									<span class="rail-name">
-										{j.shorthand ?? j.display_name ?? 'Uitspraak'}
-										{#if jStub}<span class="rail-stub-tag">niet geladen</span>{/if}
-									</span>
-									{#if jMeta?.['court'] || j.ecli}
-										<span class="rail-cite">
-											{#if jMeta?.['court']}
-												{jMeta['court']}{jMeta['date']
-													? ` · ${new Date(jMeta['date']).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}`
-													: ''}
-											{:else if j.ecli}
-												{@const m = j.ecli.match(/(?:ECLI:)?(?:NL:)?([^:]+):(\d{4})/)}
-												{#if m}{m[1]} · {m[2]}{/if}
-											{/if}
-										</span>
-									{/if}
+									<span class="rail-name">{j.display_name ?? 'Uitspraak'}</span>
+									{#if j.ecli}<span class="rail-cite">{formatEcliLabel(j.ecli)}</span>{/if}
 								</span>
 							</button>
 						</li>
@@ -310,19 +269,6 @@
 		{@const articleGroups =
 			d.articles && d.articles.length > 0 ? groupArticleRelations(d.articles) : []}
 		{@const citedJudgments = d.cited_judgments ?? []}
-		{@const instNames = (() => {
-			const m = new Map();
-			for (const a of d.articles) {
-				const bwb = getLawIdFromRecord(a);
-				if (!m.has(bwb)) {
-					const inst = a.instrument;
-					const name =
-						inst?.citation_title ?? inst?.title ?? inst?.shorthand ?? inst?.display_name ?? null;
-					if (name) m.set(bwb, name);
-				}
-			}
-			return m;
-		})()}
 
 		<p class="rail-lede">
 			Verbindingen tonen welke artikelen dit arrest aanhaalt en welke andere uitspraken het citeren.
@@ -332,7 +278,7 @@
 			<section class="rail-section">
 				<h3 class="rail-section-title">Geciteerde artikelen</h3>
 
-				{#each articleGroups as [bwb, articles], i (i)}
+				{#each articleGroups as [bwb, articles] (bwb)}
 					<div class="law-group">
 						<button
 							type="button"
@@ -341,20 +287,18 @@
 							aria-expanded={!collapsed.has(bwb)}
 						>
 							<span class="law-chevron" class:law-chevron--closed={collapsed.has(bwb)}>›</span>
-							<span class="law-heading-name"
-								>{shortLawName(instNames.get(bwb) ?? lawName(bwb))}</span
-							>
+							<span class="law-heading-name">{shortLawName(lawName(bwb))}</span>
 							<span class="law-count">{articles.length}</span>
 						</button>
 
 						{#if !collapsed.has(bwb)}
 							<ul class="rail-list">
-								{#each articles as a, i (i)}
+								{#each articles as a (a.key)}
 									<li class="rail-item">
 										<button
 											type="button"
 											class="rail-row"
-											onclick={() => onNavigate?.('instrument_articles', a.key)}
+											onclick={() => onNavigate?.('articles', a.key)}
 										>
 											<span class="rail-sigil" aria-hidden="true">§</span>
 											<span class="rail-content">
@@ -379,18 +323,7 @@
 			<section class="rail-section">
 				<h3 class="rail-section-title">Citeert uitspraken</h3>
 				<ul class="rail-list">
-					{#each citedJudgments as cj, idx (idx)}
-						{@const cjLabel =
-							cj.shorthand ??
-							(cj.ecli ? formatEcliLabel(cj.ecli) : null) ??
-							cj.display_name ??
-							'Uitspraak'}
-						{@const cjEcliShort = cj.ecli
-							? (() => {
-									const m = cj.ecli.replace(/^ECLI:/i, '').match(/^NL:([^:]+):(\d{4})/);
-									return m ? `${m[1]} ${m[2]}` : null;
-								})()
-							: null}
+					{#each citedJudgments as cj (cj.key)}
 						<li class="rail-item">
 							<button
 								type="button"
@@ -399,10 +332,9 @@
 							>
 								<span class="rail-sigil rail-sigil--judgment" aria-hidden="true">¶</span>
 								<span class="rail-content">
-									<span class="rail-name">{cjLabel}</span>
-									{#if cjEcliShort && cjEcliShort !== cjLabel}
-										<span class="rail-cite">{cjEcliShort}</span>
-									{/if}
+									<span class="rail-name"
+										>{cj.ecli ? formatEcliLabel(cj.ecli) : (cj.display_name ?? 'Uitspraak')}</span
+									>
 								</span>
 							</button>
 						</li>
@@ -419,28 +351,6 @@
 	{#if selection}
 		<CitationCopy node={selection} />
 	{/if}
-
-	<details class="rail-legend">
-		<summary class="rail-legend__toggle">Verbindingstypen</summary>
-		<dl class="rail-legend__list">
-			<div class="rail-legend__row">
-				<dt>Citaat</dt>
-				<dd>de bron haalt de andere letterlijk aan</dd>
-			</div>
-			<div class="rail-legend__row">
-				<dt>Interpretatie</dt>
-				<dd>een arrest legt een artikel uit</dd>
-			</div>
-			<div class="rail-legend__row">
-				<dt>Wijziging</dt>
-				<dd>de bron heeft de tekst gewijzigd</dd>
-			</div>
-			<div class="rail-legend__row">
-				<dt>Vermelding</dt>
-				<dd>een zwakke verwijzing zonder citaat</dd>
-			</div>
-		</dl>
-	</details>
 </aside>
 
 <style>
@@ -654,25 +564,6 @@
 		color: var(--indigo);
 	}
 
-	.rail-item--stub .rail-sigil--judgment {
-		opacity: 0.45;
-	}
-
-	.rail-item--stub .rail-name {
-		color: var(--fg-3);
-	}
-
-	.rail-stub-tag {
-		display: inline-block;
-		margin-left: 5px;
-		font-family: var(--font-sans);
-		font-size: 9px;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--fg-4);
-		vertical-align: middle;
-	}
-
 	.rail-content {
 		display: flex;
 		flex-direction: column;
@@ -694,59 +585,6 @@
 	.rail-cite {
 		font-family: var(--font-mono);
 		font-size: 10px;
-		color: var(--fg-3);
-	}
-
-	.rail-legend {
-		margin-top: auto;
-		border-top: 1px solid var(--rule);
-		padding: 10px 14px 12px;
-	}
-
-	.rail-legend__toggle {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		text-transform: uppercase;
-		letter-spacing: 0.07em;
-		color: var(--fg-3);
-		cursor: pointer;
-		list-style: none;
-		user-select: none;
-	}
-	.rail-legend__toggle::-webkit-details-marker {
-		display: none;
-	}
-	.rail-legend__toggle::before {
-		content: '?  ';
-		color: var(--fg-4);
-	}
-
-	.rail-legend__list {
-		margin: 8px 0 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 5px;
-	}
-
-	.rail-legend__row {
-		display: grid;
-		grid-template-columns: 80px 1fr;
-		gap: 6px;
-		align-items: baseline;
-	}
-
-	.rail-legend__row dt {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-2);
-		font-weight: 500;
-	}
-
-	.rail-legend__row dd {
-		margin: 0;
-		font-family: var(--font-sans);
-		font-size: 11px;
 		color: var(--fg-3);
 	}
 </style>

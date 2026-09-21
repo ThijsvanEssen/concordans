@@ -1,14 +1,15 @@
 import type { PageLoad } from './$types';
-import { getPublicationText } from '$lib/api/mvt';
+import { api, unwrap } from '$lib/api/client';
 import { error } from '@sveltejs/kit';
 
 export const load: PageLoad = async ({ params }) => {
-	const { key } = params;
-
 	try {
-		const publication = await getPublicationText(key);
-		return { publication };
+		return {
+			document: await unwrap(
+				api.GET('/api/documents/{key}', { params: { path: { key: params.key } } })
+			)
+		};
 	} catch {
-		error(404, `Publicatie '${key}' niet gevonden.`);
+		error(404, `Document '${params.key}' niet gevonden.`);
 	}
 };

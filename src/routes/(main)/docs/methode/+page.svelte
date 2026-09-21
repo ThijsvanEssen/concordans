@@ -51,13 +51,13 @@
 			<div class="pg-title-block">
 				<div class="pg-kicker"><span class="dot"></span>Hoe Concordans werkt</div>
 				<h1 class="pg-title">
-					Van vier bronnen, via drie&nbsp;fasen, naar één&nbsp;<em>netwerk</em>.
+					Van officiële&nbsp;bronnen, via drie&nbsp;fasen, naar één&nbsp;<em>netwerk</em>.
 				</h1>
 				<div class="pg-title-rest">
 					<p class="pg-lede">
-						Concordans haalt vier officiële bronnen op, normaliseert ze tot één datamodel en legt de
-						verbindingen die in de tekst verscholen liggen expliciet bloot. Ophalen, normaliseren,
-						verbinden. Dit document beschrijft de werkwijze.
+						Concordans haalt officiële bronnen uit vier domeinen op, normaliseert ze tot één
+						datamodel en legt de verbindingen die in de tekst verscholen liggen expliciet bloot.
+						Ophalen, normaliseren, verbinden. Dit document beschrijft de werkwijze.
 					</p>
 					<p class="pg-lede pg-lede--sub">
 						Aanleiding was onderzoek voor een bachelorscriptie naar artikel 126ffa Sv: een artikel
@@ -217,7 +217,7 @@
 						marker-end="url(#ov-v-arr)"
 					/>
 
-					<!-- ─────── iii · GRAAF — concrete snapshot ─────── -->
+					<!-- ─────── iii · NETWERK, concrete momentopname ─────── -->
 					<g
 						font-family="IBM Plex Sans, sans-serif"
 						font-size="9"
@@ -251,7 +251,7 @@
 							fill="#6B6558"
 							text-anchor="middle">HR:2023:1234</text
 						>
-						<!-- dashed: HR noemt art. 47 -->
+						<!-- dashed: HR REFERS_TO art. 47 -->
 						<line
 							x1="140"
 							y1="472"
@@ -261,7 +261,7 @@
 							stroke-width="0.9"
 							stroke-dasharray="3 2"
 						/>
-						<text x="148" y="486" font-style="italic" font-size="8" fill="#6B6558">noemt</text>
+						<text x="148" y="486" font-style="italic" font-size="8" fill="#6B6558">REFERS_TO</text>
 
 						<!-- Wetboek Sr (left) -->
 						<text x="38" y="510" font-style="italic" font-size="14" text-anchor="middle">§</text>
@@ -273,7 +273,7 @@
 							fill="#6B6558"
 							text-anchor="middle">Wetboek Sr</text
 						>
-						<!-- solid: Wetboek deel_van art. 47 -->
+						<!-- solid: art. 47 PART_OF Wetboek -->
 						<line x1="52" y1="508" x2="124" y2="508" stroke="#1A1814" stroke-width="0.9" />
 						<text
 							x="88"
@@ -281,7 +281,7 @@
 							font-style="italic"
 							font-size="8"
 							fill="#6B6558"
-							text-anchor="middle">deel_van</text
+							text-anchor="middle">PART_OF</text
 						>
 
 						<!-- art. 47 Sr (center, emphasized) -->
@@ -313,7 +313,7 @@
 							fill="#6B6558"
 							text-anchor="middle">art. 51 Sr</text
 						>
-						<!-- dashed: art. 47 verwijst art. 51 -->
+						<!-- dashed: art. 47 REFERS_TO art. 51 -->
 						<line
 							x1="156"
 							y1="508"
@@ -329,7 +329,7 @@
 							font-style="italic"
 							font-size="8"
 							fill="#6B6558"
-							text-anchor="middle">verwijst</text
+							text-anchor="middle">REFERS_TO</text
 						>
 
 						<!-- Amendement (bottom) -->
@@ -349,9 +349,9 @@
 							fill="#6B6558"
 							text-anchor="middle">amendement 36558/7</text
 						>
-						<!-- red: Amendement wijzigt art. 47 -->
+						<!-- red: Amendement AMENDS art. 47 -->
 						<line x1="140" y1="522" x2="140" y2="548" stroke="#7A1F1A" stroke-width="1.1" />
-						<text x="148" y="538" font-style="italic" font-size="8" fill="#7A1F1A">wijzigt</text>
+						<text x="148" y="538" font-style="italic" font-size="8" fill="#7A1F1A">AMENDS</text>
 					</g>
 				</svg>
 			</figure>
@@ -379,9 +379,9 @@
 			<div class="sec-head">
 				<div class="sec-num"><strong>i</strong></div>
 				<div>
-					<h2 class="sec-title">De vier databronnen</h2>
+					<h2 class="sec-title">De databronnen</h2>
 					<p class="sec-deck">
-						Vier officiële overheidsbronnen, elk met een eigen domein, dataformaat en
+						Officiële overheidsbronnen in vier domeinen, elk met een eigen dataformaat en
 						identificatiestelsel. De ruwe bouwstenen waaruit alles volgt.
 					</p>
 				</div>
@@ -394,7 +394,8 @@
 					<h3 class="src-name">wetten.overheid.nl<span class="url">wetten.nl</span></h3>
 					<p class="src-desc">
 						De volledige tekst van Nederlandse wetten, opgesplitst per artikel, inclusief
-						historische toestanden.
+						historische toestanden. Staatsblad, Staatscourant en Verdragenbank vullen aan met
+						wijzigende publicaties, ministeriële regelingen en verdragen.
 					</p>
 					<div class="src-id">
 						<span class="src-id-label">Identifier · Formaat</span>
@@ -407,8 +408,8 @@
 					<div class="src-domain">Rechtspraak · NL</div>
 					<h3 class="src-name">rechtspraak.nl<span class="url">uitspraken.rechtspraak.nl</span></h3>
 					<p class="src-desc">
-						Uitspraken van rechtbanken, gerechtshoven en de Hoge Raad: volledige tekst, samenvatting
-						en metadata.
+						Uitspraken van rechtbanken, gerechtshoven, de Raad van State en de Hoge Raad: volledige
+						tekst, samenvatting en metadata. Uitspraken van het EHRM komen uit HUDOC.
 					</p>
 					<div class="src-id">
 						<span class="src-id-label">Identifier · Formaat</span>
@@ -422,7 +423,8 @@
 					<h3 class="src-name">tweedekamer.nl<span class="url">gegevensmagazijn</span></h3>
 					<p class="src-desc">
 						Dossiers, documenten, debatten, stemmingen, toezeggingen, commissies en Kamerleden, in
-						een rijk gestructureerd geheel.
+						een rijk gestructureerd geheel. Kamerstukken van de Eerste Kamer komen uit de
+						KOOP-repository.
 					</p>
 					<div class="src-id">
 						<span class="src-id-label">Identifier · Formaat</span>
@@ -437,8 +439,8 @@
 						eur-lex.europa.eu<span class="url">europese publicatieblad</span>
 					</h3>
 					<p class="src-desc">
-						Europese richtlijnen en verordeningen die voor de Nederlandse rechtsorde relevant zijn,
-						inclusief implementatierelaties.
+						Europese richtlijnen en verordeningen waarnaar Nederlandse regelingen verwijzen,
+						inclusief de verbinding met de regeling die ze implementeert.
 					</p>
 					<div class="src-id">
 						<span class="src-id-label">Identifier · Formaat</span>
@@ -458,8 +460,7 @@
 					<h2 class="sec-title">Pijplijn &amp; model</h2>
 					<p class="sec-deck">
 						Drie fasen waarmee ruwe overheidsbestanden tot een netwerk worden, gevolgd door het
-						uniforme model dat daaruit volgt: brontypen en de drie soorten verbindingen die ze
-						dragen.
+						uniforme model dat daaruit volgt: brontypen en de verbindingen die ze dragen.
 					</p>
 				</div>
 			</div>
@@ -664,7 +665,7 @@
 							font-family="iA Writer Mono, monospace"
 							font-size="9"
 							fill="#9A9485"
-							text-anchor="middle">semantische verbindingen</text
+							text-anchor="middle">verbindingen tussen bronnen</text
 						>
 						<text
 							x="561"
@@ -673,7 +674,7 @@
 							font-size="11"
 							font-style="italic"
 							fill="#6B6558"
-							text-anchor="middle">patroonherkenning in tekst</text
+							text-anchor="middle">verwijzingen uit tekst en bron</text
 						>
 					</a>
 
@@ -700,7 +701,7 @@
 				</svg>
 			</figure>
 
-			<h3 class="block-h">Bronnen: elf typen, drie domeinen</h3>
+			<h3 class="block-h">Bronnen: vijftien typen, drie domeinen</h3>
 
 			<dl class="knoop-inventory">
 				<div class="knoop-domain is-wet">
@@ -708,6 +709,9 @@
 					<dd class="knoop-domain-list">
 						<span class="knoop-item"><span class="g-glyph g-wet">§</span>Instrument</span>
 						<span class="knoop-item"><span class="g-glyph g-wet">❡</span>Artikel</span>
+						<span class="knoop-item"><span class="g-glyph g-wet">§</span>Instrumentversie</span>
+						<span class="knoop-item"><span class="g-glyph g-wet">❡</span>Artikelversie</span>
+						<span class="knoop-item"><span class="g-glyph g-wet">▪</span>Bijlage</span>
 					</dd>
 				</div>
 				<div class="knoop-domain is-recht">
@@ -720,27 +724,28 @@
 					<dt class="knoop-domain-h">Parlementair</dt>
 					<dd class="knoop-domain-list">
 						<span class="knoop-item"><span class="g-glyph g-tk">∮</span>Dossier</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">▤</span>Publicatie</span>
+						<span class="knoop-item"><span class="g-glyph g-tk">▤</span>Document</span>
+						<span class="knoop-item"><span class="g-glyph g-tk">□</span>Zaak</span>
 						<span class="knoop-item"><span class="g-glyph g-tk">◇</span>Activiteit</span>
 						<span class="knoop-item"><span class="g-glyph g-tk">⊞</span>Stemming</span>
 						<span class="knoop-item"><span class="g-glyph g-tk">⊙</span>Toezegging</span>
 						<span class="knoop-item"><span class="g-glyph g-tk">‡</span>Commissie</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">·</span>Lid</span>
+						<span class="knoop-item"><span class="g-glyph g-tk">·</span>Kamerlid</span>
 						<span class="knoop-item"><span class="g-glyph g-tk">◊</span>Fractie</span>
 					</dd>
 				</div>
 			</dl>
 
 			<p class="block-note">
-				Elk type wordt geadresseerd via een eigen stelsel: BWB-IDs voor wetgeving, ECLI voor
-				rechtspraak, dossier- en interne IDs voor het parlementaire deel.
+				Elk type wordt geadresseerd via een eigen stelsel: BWB-id of CELEX voor instrumenten, ECLI
+				voor uitspraken, dossiernummer en GUID voor het parlementaire deel. Elke bron heeft een
+				adres van de vorm collectie/sleutel, bijvoorbeeld <span class="mono">dossiers/36558</span>.
 			</p>
 
 			<h3 class="block-h">Verbindingen: drie categorieën</h3>
 			<p class="block-deck">
-				Eén canoniek voorbeeld per categorie, met de lijnstijl die je elders in de tool ziet. De
-				volle inventaris ontstaat uit de bron; zie §iii voor wat elke pijplijn-stap daadwerkelijk
-				oplevert.
+				Eén voorbeeld per categorie, met de lijnstijl uit de verkenner. De volledige inventaris telt
+				achttien verbindingstypen; zie §iii en §iv voor wat elke pijplijnstap oplevert.
 			</p>
 
 			<div class="edge-legend">
@@ -762,7 +767,7 @@
 									fill="#3A362E"
 								/></svg
 							>
-							<span class="edge-rel-name">deel_van</span>
+							<span class="edge-rel-name">PART_OF</span>
 						</div>
 						<div class="edge-to">
 							<span class="g-glyph g-wet">§</span><span class="edge-noun">Instrument</span>
@@ -774,15 +779,14 @@
 					<div class="edge-legend-cat">
 						<div class="edge-legend-name">Mutatie</div>
 						<p class="edge-legend-desc">
-							Subcategorie van structureel: een parlementair document stelt een wijziging voor.
-							Status loopt van <em>voorgesteld</em> (bij indiening) via <em>canoniek</em> of
-							<em>verworpen</em> (na stemming) naar <em>verlopen</em> (later weer ingetrokken). Elke overgang
-							gelogd.
+							Een instrument voert een wijziging door (status <em>canoniek</em>). Een wetsvoorstel
+							stelt dezelfde wijziging voor (status <em>voorgesteld</em>). Beide dragen
+							<em>AMENDS</em>, <em>INTRODUCES</em> of <em>REPEALS</em>.
 						</p>
 					</div>
 					<div class="edge-row edge-row--legend">
 						<div class="edge-from">
-							<span class="g-glyph g-tk">▤</span><span class="edge-noun">Publicatie</span>
+							<span class="g-glyph g-tk">▤</span><span class="edge-noun">Document</span>
 						</div>
 						<div class="edge-rel">
 							<svg class="edge-rel-svg" viewBox="0 0 100 14" preserveAspectRatio="none"
@@ -791,7 +795,7 @@
 									fill="#7A1F1A"
 								/></svg
 							>
-							<span class="edge-rel-name">wijzigt</span>
+							<span class="edge-rel-name">AMENDS</span>
 						</div>
 						<div class="edge-to">
 							<span class="g-glyph g-wet">❡</span><span class="edge-noun">Artikel</span>
@@ -823,7 +827,7 @@
 									stroke-dasharray="4 3"
 								/><polygon points="92,3 100,7 92,11" fill="#3A362E" /></svg
 							>
-							<span class="edge-rel-name">noemt_artikel</span>
+							<span class="edge-rel-name">REFERS_TO</span>
 						</div>
 						<div class="edge-to">
 							<span class="g-glyph g-wet">❡</span><span class="edge-noun">Artikel</span>
@@ -867,20 +871,28 @@
 						<td
 							>Genest XML doorlopen; tekst uit <span class="mono">&lt;lid&gt;</span>+<span
 								class="mono">&lt;al&gt;</span
-							>, titel uit <span class="mono">citeertitel</span></td
+							>, titel uit <span class="mono">citeertitel</span>; een artikel houdt zijn
+							<span class="mono">stam-id</span> over versies en hernummering heen</td
 						>
 						<td>
 							<span class="g-glyph g-wet">&sect;</span> Instrument
 							<span class="bron-sep">&middot;</span>
 							<span class="g-glyph g-wet">&#10081;</span> Artikel
-							<div class="bron-edge"><em>deel_van</em></div>
+							<span class="bron-sep">&middot;</span>
+							<span class="g-glyph g-wet">&#9642;</span> Bijlage
+							<div class="bron-edge"><em>PART_OF</em>, <em>VERSION_OF</em></div>
 						</td>
 					</tr>
 					<tr>
 						<td class="bron"><span class="bron-stripe is-recht"></span>Rechtspraak</td>
-						<td>RDF-record + uitspraak-XML, &eacute;&eacute;n per ECLI</td>
 						<td
-							>RDF levert metadata, <span class="mono">&lt;inhoudsindicatie&gt;</span> de samenvatting</td
+							>RDF-record + uitspraak-XML, &eacute;&eacute;n per ECLI; voor het EHRM een
+							HUDOC-record</td
+						>
+						<td
+							>RDF levert metadata, <span class="mono">&lt;inhoudsindicatie&gt;</span> de
+							samenvatting,
+							<span class="mono">&lt;uitspraak&gt;</span> de alinea&rsquo;s</td
 						>
 						<td>
 							<span class="g-glyph g-recht">&para;</span> Uitspraak
@@ -894,15 +906,46 @@
 							<span class="g-glyph g-eu">&sect;</span> Instrument
 							<span class="bron-sep">&middot;</span>
 							<span class="g-glyph g-eu">&#10081;</span> Artikel
-							<div class="bron-edge"><em>deel_van</em></div>
+							<div class="bron-edge"><em>PART_OF</em></div>
 						</td>
 					</tr>
 					<tr>
 						<td class="bron"><span class="bron-stripe is-tk"></span>Parlementair</td>
 						<td>OData JSON, geneste payloads</td>
-						<td>Geneste relaties uitvouwen; stemmingen groeperen; fracties afleiden</td>
+						<td>Geneste verbindingen uitvouwen; stemmingen groeperen; fracties afleiden</td>
 						<td>
-							Acht typen; <span class="bron-bijlage">fan-out in bijlage</span>
+							Negen typen; <span class="bron-bijlage">fan-out in bijlage</span>
+						</td>
+					</tr>
+					<tr>
+						<td class="bron"
+							><span class="bron-stripe is-wet"></span>Staatsblad &middot; Staatscourant</td
+						>
+						<td>XML uit de KOOP-repository, opgehaald via SRU</td>
+						<td>Toelichting of regeling als tekst; het BWB-id staat in de XML</td>
+						<td>
+							<span class="g-glyph g-tk">&#9636;</span> Document
+							<div class="bron-edge"><em>EXPLAINS</em></div>
+						</td>
+					</tr>
+					<tr>
+						<td class="bron"><span class="bron-stripe is-tk"></span>Eerste Kamer</td>
+						<td>SRU-records van Kamerstukken: metadata, geen tekst en geen stemmingen</td>
+						<td
+							>Dossiernummer en toevoeging staan gescheiden; eigen dossiers dragen een Romeins
+							cijfer</td
+						>
+						<td>
+							<span class="g-glyph g-tk">&#9636;</span> Document
+							<div class="bron-edge"><em>PART_OF</em> het dossier van de Tweede Kamer</div>
+						</td>
+					</tr>
+					<tr>
+						<td class="bron"><span class="bron-stripe is-wet"></span>Verdragenbank</td>
+						<td>JSON per verdrag</td>
+						<td>Verdragen zijn instrumenten, net als in de BWB</td>
+						<td>
+							<span class="g-glyph g-wet">&sect;</span> Instrument
 						</td>
 					</tr>
 				</tbody>
@@ -918,8 +961,8 @@
 				<div>
 					<h2 class="sec-title">Detectoren</h2>
 					<p class="sec-deck">
-						Tekstscans die de semantische verbindingen leggen waar de bronstructuur ze niet geeft.
-						Wat een detector doet, hoe ze samen werken, en wat de zeven families bestrijken.
+						Detectoren leggen de verbindingen die de bronstructuur niet zelf geeft. Wat een detector
+						doet, hoe ze samen werken en welke verbindingen ze opleveren.
 					</p>
 				</div>
 			</div>
@@ -927,10 +970,11 @@
 			<div class="tot-block">
 				<h3 class="block-h">Hoe een detector werkt</h3>
 				<p class="block-deck">
-					Een detector leest een tekstveld en markeert verwijzingen in vaste vorm: <em
+					Een tekstdetector leest een tekstveld en markeert verwijzingen in vaste vorm: <em
 						>art. 47 Sr</em
 					>, <em>ECLI:NL:HR:2023:1234</em>,
-					<em>Richtlijn 2010/64</em>. Geen taalmodel, alleen vormherkenning.
+					<em>Richtlijn 2010/64</em>. Geen taalmodel, alleen vormherkenning. Andere detectoren lezen
+					de verwijzingen in de bron-XML of lopen langs bestaande verbindingen.
 				</p>
 
 				<figure class="detector-fig">
@@ -1102,7 +1146,7 @@
 							font-style="italic"
 							font-size="11"
 							fill="#6B6558"
-							text-anchor="middle">verwijst_naar</text
+							text-anchor="middle">REFERS_TO</text
 						>
 					</svg>
 				</figure>
@@ -1111,8 +1155,8 @@
 			<div class="tot-block">
 				<h3 class="block-h">Wat de detectoren bestrijken</h3>
 				<p class="block-deck">
-					Zeven families, elk gericht op één type verwijzing tussen één paar brontypen. Samen vullen
-					ze de semantische lijnen in die uit de brondata zelf niet zijn af te leiden.
+					Elke detector richt zich op één type verwijzing tussen één paar brontypen. Samen leggen ze
+					de verbindingen die uit de brondata zelf niet zijn af te leiden.
 				</p>
 				<table class="det-overview">
 					<thead>
@@ -1124,39 +1168,91 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td><span class="g-glyph g-wet">❡</span> Wet → wet</td>
-							<td>Verwijzingen tussen wetsartikelen</td>
-							<td><em>verwijst_naar</em></td>
+							<td><span class="g-glyph g-wet">❡</span> Artikel → artikel</td>
+							<td
+								>Verwijzingen in de bron-XML (<span class="mono">extref</span>,
+								<span class="mono">intref</span>)</td
+							>
+							<td><em>REFERS_TO</em></td>
 						</tr>
 						<tr>
-							<td><span class="g-glyph g-recht">¶</span> Uitspraak → wet</td>
+							<td><span class="g-glyph g-wet">❡</span> Artikel → artikel (type)</td>
+							<td
+								>Aard van de verwijzing: voorwaarde, uitzondering, definitie, procedure, reikwijdte,
+								delegatie</td
+							>
+							<td><em>REFERS_TO</em> met <span class="mono">semantic_type</span></td>
+						</tr>
+						<tr>
+							<td><span class="g-glyph g-wet">§</span> Instrument → artikel</td>
+							<td>Het artikel in de aanhef &ldquo;Gelet op&rdquo;</td>
+							<td><em>BASED_ON</em></td>
+						</tr>
+						<tr>
+							<td><span class="g-glyph g-wet">❡</span> Artikel → bijlage</td>
+							<td>Artikelen waarvan een bijlage de reikwijdte bepaalt</td>
+							<td><em>SCOPED_BY</em></td>
+						</tr>
+						<tr>
+							<td><span class="g-glyph g-wet">§</span> Publicatie → artikel</td>
+							<td
+								>Door een publicatie in het Staatsblad ingevoerde, gewijzigde of vervallen artikelen</td
+							>
+							<td><em>INTRODUCES</em>, <em>AMENDS</em>, <em>REPEALS</em></td>
+						</tr>
+						<tr>
+							<td><span class="g-glyph g-wet">§</span> Instrument → dossier</td>
+							<td>Het dossier waarin een regeling of publicatie tot stand kwam</td>
+							<td><em>LEGISLATED_IN</em></td>
+						</tr>
+						<tr>
+							<td><span class="g-glyph g-wet">§</span> Instrument → instrument</td>
+							<td>Nationale regeling die een EU-richtlijn implementeert</td>
+							<td><em>IMPLEMENTS</em></td>
+						</tr>
+						<tr>
+							<td><span class="g-glyph g-recht">¶</span> Uitspraak → artikel</td>
 							<td>Artikelen genoemd in de motivering</td>
-							<td><em>noemt_artikel</em></td>
+							<td><em>REFERS_TO</em></td>
 						</tr>
 						<tr>
 							<td><span class="g-glyph g-recht">¶</span> Uitspraak → uitspraak</td>
-							<td>Geciteerde eerdere uitspraken (ECLI's)</td>
-							<td><em>citeert_uitspraak</em></td>
+							<td
+								>Geciteerde uitspraken (ECLI&rsquo;s); bij hoger beroep of cassatie de bestreden
+								uitspraak</td
+							>
+							<td><em>REFERS_TO</em>, <em>APPEAL_OF</em></td>
 						</tr>
 						<tr>
-							<td><span class="g-glyph g-tk">▤</span> Kamerstuk → wet</td>
-							<td>Artikelen die in de toelichting figureren</td>
-							<td><em>licht_toe</em></td>
+							<td><span class="g-glyph g-tk">▤</span> Document → artikel</td>
+							<td>Artikelen en instrumenten die in een Kamerstuk figureren</td>
+							<td><em>REFERS_TO</em></td>
 						</tr>
 						<tr class="is-mut">
-							<td><span class="g-glyph g-tk">▤</span> Wetsvoorstel → wet</td>
-							<td>Voorgestelde wijzigingen aan artikelen</td>
-							<td><em>wijzigt</em></td>
+							<td><span class="g-glyph g-tk">▤</span> Wetsvoorstel → artikel</td>
+							<td>Voorgestelde wijzigingen, uit de titel en de tekst van Kamerstukken</td>
+							<td
+								><em>AMENDS</em>, <em>INTRODUCES</em>, <em>REPEALS</em> met status
+								<em>voorgesteld</em></td
+							>
 						</tr>
 						<tr>
-							<td><span class="g-glyph g-eu">❡</span> EU → wet</td>
+							<td><span class="g-glyph g-tk">▤</span> Toelichting → artikel of instrument</td>
+							<td
+								>De toelichting bij het artikel dat een wijziging invoerde (langs bestaande
+								verbindingen, zonder tekstherkenning)</td
+							>
+							<td><em>EXPLAINS</em></td>
+						</tr>
+						<tr>
+							<td><span class="g-glyph g-eu">❡</span> EU-artikel → artikel</td>
 							<td>Verwijzingen vanuit EU-instrumenten</td>
-							<td><em>noemt_artikel</em></td>
+							<td><em>REFERS_TO</em></td>
 						</tr>
 						<tr>
-							<td><span class="g-glyph g-wet">§</span> Wet → wet (instrument)</td>
-							<td>Implementatie- en aanverwantschapsrelaties</td>
-							<td><em>implementeert</em></td>
+							<td><span class="g-glyph g-tk">▤</span> Eerste Kamer → dossier</td>
+							<td>Het dossier van de Tweede Kamer met hetzelfde nummer</td>
+							<td><em>PART_OF</em></td>
 						</tr>
 					</tbody>
 				</table>
@@ -1199,7 +1295,7 @@
 				<div class="appendix-body">
 					<p class="block-deck">
 						TK breekt het strip-patroon: één OData-payload produceert meerdere brontypen met
-						onderlinge structurele verbindingen. Hieronder de fan-out vanaf een publicatie-record.
+						onderlinge structurele verbindingen. Hieronder de fan-out vanaf een document-record.
 					</p>
 					<div class="tk-fanout">
 						<div class="tk-fanout-source">
@@ -1228,31 +1324,39 @@
 									<span class="tk-id">36558</span>
 								</li>
 								<li>
-									<span class="g-glyph g-tk">&#9636;</span><span class="tk-name">Publicatie</span>
-									<span class="tk-id">nr. 7</span> <em>· deel_van Dossier</em>
+									<span class="g-glyph g-tk">&#9636;</span><span class="tk-name">Document</span>
+									<span class="tk-id">nr. 7</span>
+									<em>· PART_OF Zaak en Dossier; AUTHORED door Kamerlid</em>
+								</li>
+								<li>
+									<span class="g-glyph g-tk">&#9633;</span><span class="tk-name">Zaak</span>
+									<em>· PART_OF Dossier</em>
 								</li>
 								<li>
 									<span class="g-glyph g-tk">&#9671;</span><span class="tk-name">Activiteit</span>
-									<em>· behandeld_door Commissie</em>
+									<em>· ABOUT Zaak; LED_BY Commissie</em>
 								</li>
 								<li>
 									<span class="g-glyph g-tk">&#8862;</span><span class="tk-name">Stemming</span>
-									<em>· deel_van Dossier; gegroepeerd op Besluit_Id</em>
+									<em>· ABOUT Zaak; gegroepeerd op Besluit_Id; VOTED per Kamerlid of Fractie</em>
 								</li>
 								<li>
 									<span class="g-glyph g-tk">&#8857;</span><span class="tk-name">Toezegging</span>
-									<em>· gedaan_in Activiteit</em>
+									<em>· MADE_IN Activiteit; ABOUT Dossier</em>
 								</li>
 								<li>
 									<span class="g-glyph g-tk">&Dagger;</span><span class="tk-name">Commissie</span>
 								</li>
 								<li>
-									<span class="g-glyph g-tk">&middot;</span><span class="tk-name">Lid</span>
-									<em>· lid_van Commissie, lid_van_fractie</em>
+									<span class="g-glyph g-tk">&middot;</span><span class="tk-name">Kamerlid</span>
+									<em>· MEMBER_OF Commissie en Fractie</em>
 								</li>
 								<li>
 									<span class="g-glyph g-tk">&loz;</span><span class="tk-name">Fractie</span>
-									<em>· afgeleid uit unieke ActorFractie-namen op stemmingen</em>
+									<em
+										>· uit het Fractie-endpoint; anders afgeleid uit ActorFractie-namen op
+										stemmingen</em
+									>
 								</li>
 							</ul>
 						</div>
@@ -1266,7 +1370,7 @@
 			<div class="method-further__links">
 				<a href="/docs" class="method-further__link">
 					<span class="method-further__name">Documentatie</span>
-					<span class="method-further__desc">Producttoer: corpus, verkenner, dossiers, zoeken</span>
+					<span class="method-further__desc">Corpus, verkenner, dossiers en zoeken</span>
 				</a>
 				<a href="/api" class="method-further__link">
 					<span class="method-further__name">API-referentie</span>
@@ -1274,7 +1378,7 @@
 				</a>
 				<a href="/explore" class="method-further__link">
 					<span class="method-further__name">Verkenner</span>
-					<span class="method-further__desc">Open het netwerk en pas de methode toe</span>
+					<span class="method-further__desc">Het netwerk openen</span>
 				</a>
 			</div>
 		</section>

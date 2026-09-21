@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Running head of the text readers: sigil + kind label, then the title.
-	// Reader-specific rows (citation, meta, in-flux chips) go in the snippet.
+	// Reader-specific rows (citation, meta, in-flux count) go in the snippet.
 	import type { Snippet } from 'svelte';
 
 	let {

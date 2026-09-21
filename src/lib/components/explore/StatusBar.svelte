@@ -1,11 +1,12 @@
 <script lang="ts">
 	import type { GraphNode } from '$lib/graph/types';
-	import { instrumentMetaStore, type InstrumentMeta } from '$lib/api/instrument-cache';
+	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { formatDate, textProp } from './readers/_shared';
 
 	let {
 		node,
 		focusError = null,
-		loadingCommissies = false,
+		loadingCommittees = false,
 		canGoBack = false,
 		canGoForward = false,
 		mode = 'graph',
@@ -14,42 +15,48 @@
 		shareCopied = false,
 		onGoBack,
 		onGoForward,
-		onLoadCommissies,
+		onLoadCommittees,
 		onModeChange,
 		onShareView
 	}: {
 		node: GraphNode | null;
 		focusError?: string | null;
-		loadingCommissies?: boolean;
+		loadingCommittees?: boolean;
 		canGoBack?: boolean;
 		canGoForward?: boolean;
 		mode?: string;
-		/** When mode === 'index', the active category key (dossiers, wetten, …).
-		 *  Used to drive the breadcrumb tail. */
+		/** When mode === 'index', the active category (instruments, dossiers, ...). */
 		indexCategory?: string | null;
-		/** When mode === 'index', the filtered count / total. Rendered as
-		 *  "100 van 448" in the breadcrumb area. */
+		/** When mode === 'index', the filtered count / total, e.g. "100 van 448". */
 		indexResultCount?: { filtered: number; total: number } | null;
 		shareCopied?: boolean;
 		onGoBack?: () => void;
 		onGoForward?: () => void;
-		onLoadCommissies?: () => void;
+		onLoadCommittees?: () => void;
 		onModeChange?: (mode: string) => void;
 		onShareView?: () => void;
 	} = $props();
 
 	const INDEX_CAT_LABEL: Record<string, string> = {
-		wetten: 'Wetten',
-		arresten: 'Arresten',
+		instruments: 'Wetten',
+		judgments: 'Arresten',
 		dossiers: 'Dossiers',
-		commissies: 'Commissies',
-		leden: 'Kamerleden',
-		fracties: 'Fracties',
-		stemmingen: 'Stemmingen'
+		committees: 'Commissies',
+		members: 'Kamerleden',
+		factions: 'Fracties',
+		decisions: 'Stemmingen'
 	};
 
-	// §28 — overflow menu state. Closes on Escape and on outside-click via the
-	// window listeners below.
+	// Label of the kind of source on the right of the bar, when there is no date to show.
+	const KIND_LABEL: Record<string, string> = {
+		articles: 'Artikel',
+		judgments: 'Arrest',
+		dossiers: 'Dossier',
+		committees: 'Commissie',
+		members: 'Kamerlid',
+		factions: 'Fractie'
+	};
+
 	let overflowOpen = $state(false);
 	function handleWindowClick(e: MouseEvent) {
 		if (!overflowOpen) return;
@@ -61,136 +68,43 @@
 		if (overflowOpen && e.key === 'Escape') overflowOpen = false;
 	}
 
-	// Citation copy: build a Dutch-style citation string for the current node.
-	let citeCopied = $state(false);
-	async function copyCitation() {
-		if (!node) return;
-		const segs = breadcrumbSegs.map((s) => s.text);
-		let text = segs.join(' › ');
-		if (node.collection === 'judgments') {
-			const ecli = String(
-				(node.raw?.props as Record<string, unknown> | undefined)?.['ecli'] ?? node.key
-			);
-			text = `${segs.join(', ')} (${ecli})`;
-		} else if (node.collection === 'instrument_articles') {
-			// "Artikel N <Wet>" — flip last seg first.
-			if (segs.length >= 2) {
-				const art = segs[segs.length - 1];
-				const wet = segs.slice(0, -1).join(' › ');
-				text = `${art} ${wet}`;
-			}
-		}
-		try {
-			await navigator.clipboard.writeText(text);
-			citeCopied = true;
-			setTimeout(() => {
-				citeCopied = false;
-			}, 1600);
-		} catch {
-			/* ignore */
-		}
-	}
+	const nodeProps = $derived(node?.raw?.props ?? {});
 
-	const nodeProps = $derived((node?.raw?.props ?? {}) as Record<string, unknown>);
-
-	const bwbId = $derived(
-		node?.collection === 'instrument_articles' ? String(nodeProps['bwb_id'] ?? '') || null : null
-	);
-
-	// Full path breadcrumb: {Citation title} > Boek > Titeldeel > ... > Art. N.
-	// Reads the friendly law name from the shared instrument cache (filled
-	// anywhere we touch /api/instruments/.../graph or .../reader). Falls back
-	// gracefully when the cache hasn't seen the law yet.
-	type BreadcrumbSeg = { type?: string; label?: string };
-	const meta = $derived<InstrumentMeta | null>(
-		bwbId ? ($instrumentMetaStore.get(bwbId) ?? null) : null
-	);
+	// {Law} > Art. N, {court} > date, or {kind} > name.
 	const breadcrumbSegs = $derived.by<{ kind: 'meta' | 'art'; text: string }[]>(() => {
 		if (!node) return [];
-
+		const p = nodeProps;
 		const segs: { kind: 'meta' | 'art'; text: string }[] = [];
-		if (node.collection === 'instrument_articles') {
-			const lawName =
+		const add = (kind: 'meta' | 'art', text: string | null) => text && segs.push({ kind, text });
+
+		if (node.collection === 'articles') {
+			const meta = $instrumentMetaStore.get(String(p.bwb_id));
+			add(
+				'meta',
 				meta?.citationTitle ??
-				meta?.title ??
-				meta?.shortTitle ??
-				(typeof nodeProps['instrument_citation_title'] === 'string'
-					? (nodeProps['instrument_citation_title'] as string)
-					: null) ??
-				(typeof nodeProps['instrument_title'] === 'string'
-					? (nodeProps['instrument_title'] as string)
-					: null) ??
-				bwbId;
-			if (lawName) segs.push({ kind: 'meta', text: lawName });
-
-			const bc = (nodeProps['breadcrumb'] as BreadcrumbSeg[] | undefined) ?? [];
-			for (const seg of bc) {
-				if (seg?.label) segs.push({ kind: 'meta', text: seg.label });
-			}
-
-			const art = String(nodeProps['article_number'] ?? '');
-			if (art) segs.push({ kind: 'art', text: `Art. ${art}` });
-			return segs;
+					meta?.title ??
+					meta?.shortTitle ??
+					textProp(p.instrument_citation_title)
+			);
+			add('art', textProp(p.article_number) && `Art. ${p.article_number}`);
+		} else if (node.collection === 'judgments') {
+			add('meta', textProp(p.court) ?? textProp(p.court_code));
+			add('art', formatDate(textProp(p.date)));
+		} else if (node.collection === 'dossiers') {
+			add('meta', KIND_LABEL.dossiers);
+			add('art', String(p.number ?? node.key));
+		} else if (node.collection === 'committees') {
+			add('meta', KIND_LABEL.committees);
+			add('art', textProp(p.name) ?? textProp(p.abbreviation) ?? node.label);
+		} else if (node.collection === 'members') {
+			const party = textProp(p.party);
+			add('meta', party ? `${KIND_LABEL.members} · ${party}` : KIND_LABEL.members);
+			add('art', textProp(p.name) ?? node.label);
+		} else if (node.collection === 'factions') {
+			add('meta', KIND_LABEL.factions);
+			add('art', textProp(p.abbreviation) ?? textProp(p.name) ?? node.label);
 		}
-
-		if (node.collection === 'judgments') {
-			const meta = nodeProps['judgment_metadata'] as Record<string, string> | undefined;
-			const court = meta?.['court'] ?? null;
-			const dateRaw = meta?.['date'] ?? null;
-
-			if (court) {
-				segs.push({ kind: 'meta', text: court });
-			} else {
-				// Fall back to court code extracted from ECLI
-				const ecli = String(nodeProps['ecli'] ?? node.key ?? '');
-				const m = ecli.match(/(?:ECLI:)?(?:NL:)?([^:]+):(\d{4})/);
-				if (m) segs.push({ kind: 'meta', text: m[1] });
-			}
-
-			if (dateRaw) {
-				// Format "2014-09-09" → "9 sep 2014"
-				const d = new Date(dateRaw);
-				const formatted = d.toLocaleDateString('nl-NL', {
-					day: 'numeric',
-					month: 'short',
-					year: 'numeric'
-				});
-				segs.push({ kind: 'art', text: formatted });
-			}
-
-			return segs;
-		}
-
-		if (node.collection === 'dossiers') {
-			segs.push({ kind: 'meta', text: 'Dossier' });
-			const nummer = String(nodeProps['kamerstuknummer'] ?? node.key);
-			segs.push({ kind: 'art', text: nummer });
-			return segs;
-		}
-
-		if (node.collection === 'commissies') {
-			segs.push({ kind: 'meta', text: 'Commissie' });
-			const naam = String(nodeProps['naam'] ?? nodeProps['afkorting'] ?? node.label ?? node.key);
-			segs.push({ kind: 'art', text: naam });
-			return segs;
-		}
-
-		if (node.collection === 'leden' || node.collection === 'kamerleden') {
-			const partij = nodeProps['partij'] as string | null | undefined;
-			segs.push({ kind: 'meta', text: partij ? `Kamerlid · ${partij}` : 'Kamerlid' });
-			const naam = String(nodeProps['naam'] ?? node.label ?? node.key);
-			segs.push({ kind: 'art', text: naam });
-			return segs;
-		}
-
-		if (node.collection === 'fracties') {
-			segs.push({ kind: 'meta', text: 'Fractie' });
-			const label = String(nodeProps['afkorting'] ?? nodeProps['naam'] ?? node.label ?? node.key);
-			segs.push({ kind: 'art', text: label });
-			return segs;
-		}
-
-		return [];
+		return segs;
 	});
 
 	// Title only when it adds something the breadcrumb path doesn't already say.
@@ -202,18 +116,27 @@
 		return t;
 	});
 
-	const validFrom = $derived.by(() => {
-		const v =
-			nodeProps['valid_from'] ??
-			nodeProps['geldig_vanaf'] ??
-			nodeProps['date'] ??
-			nodeProps['datum'];
-		if (!v) return null;
-		const s = String(v);
-		if (!s.match(/^\d{4}-\d{2}-\d{2}/)) return s;
-		const d = new Date(s.slice(0, 10));
-		return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' });
-	});
+	const validFrom = $derived(formatDate(textProp(nodeProps.valid_from)));
+
+	let citeCopied = $state(false);
+	async function copyCitation() {
+		const segs = breadcrumbSegs.map((s) => s.text);
+		let text = segs.join(' › ');
+		if (node?.collection === 'judgments') {
+			text = `${segs.join(', ')} (${textProp(nodeProps.ecli) ?? node.key})`;
+		} else if (node?.collection === 'articles' && segs.length === 2) {
+			text = `${segs[1]} ${segs[0]}`;
+		}
+		try {
+			await navigator.clipboard.writeText(text);
+			citeCopied = true;
+			setTimeout(() => {
+				citeCopied = false;
+			}, 1600);
+		} catch {
+			// The clipboard is unavailable in some contexts.
+		}
+	}
 </script>
 
 <svelte:window onclick={handleWindowClick} onkeydown={handleWindowKey} />
@@ -297,15 +220,15 @@
 		</div>
 
 		<div class="status-right">
-			{#if node.collection === 'commissies' && onLoadCommissies}
+			{#if node.collection === 'committees' && onLoadCommittees}
 				<button
 					type="button"
 					class="status-action"
-					class:status-action--loading={loadingCommissies}
-					disabled={loadingCommissies}
-					onclick={onLoadCommissies}
+					class:status-action--loading={loadingCommittees}
+					disabled={loadingCommittees}
+					onclick={onLoadCommittees}
 					title="Terug naar overzicht alle commissies"
-					>{loadingCommissies ? 'Laden…' : '← Alle commissies'}</button
+					>{loadingCommittees ? 'Laden…' : '← Alle commissies'}</button
 				>
 			{/if}
 			{#if validFrom}
@@ -313,18 +236,8 @@
 					<span class="status-valid-bar" aria-hidden="true"></span>
 					Geldig {validFrom}
 				</span>
-			{:else if node.collection === 'instrument_articles'}
-				<span class="status-kind">Artikel</span>
-			{:else if node.collection === 'judgments'}
-				<span class="status-kind">Arrest</span>
-			{:else if node.collection === 'dossiers'}
-				<span class="status-kind">Dossier</span>
-			{:else if node.collection === 'commissies'}
-				<span class="status-kind">Commissie</span>
-			{:else if node.collection === 'leden' || node.collection === 'kamerleden'}
-				<span class="status-kind">Kamerlid</span>
-			{:else if node.collection === 'fracties'}
-				<span class="status-kind">Fractie</span>
+			{:else if KIND_LABEL[node.collection]}
+				<span class="status-kind">{KIND_LABEL[node.collection]}</span>
 			{/if}
 		</div>
 	{:else if focusError}
@@ -334,7 +247,7 @@
 		</div>
 	{/if}
 
-	<!-- §28 — Share: always visible. Citation: in … overflow. -->
+	<!-- Share is always visible; the citation is in the overflow menu. -->
 	{#if onShareView}
 		<button
 			type="button"
@@ -351,7 +264,7 @@
 				aria-haspopup="menu"
 				aria-expanded={overflowOpen}
 				aria-label="Meer acties"
-				title="Meer acties (kopieer citatie, …)"
+				title="Meer acties"
 				onclick={() => (overflowOpen = !overflowOpen)}>⋯</button
 			>
 			{#if overflowOpen}
@@ -378,7 +291,7 @@
 				class="mode-btn"
 				class:active={mode === 'graph'}
 				onclick={() => onModeChange?.('graph')}
-				title="Ontdekken (toets 1) — verken verbindingen in het netwerk"
+				title="Ontdekken (toets 1): verbindingen in het netwerk"
 				>Ontdekken<kbd class="mode-kbd">1</kbd></button
 			>
 			{#if node}
@@ -387,7 +300,7 @@
 					aria-selected={mode === 'split'}
 					class="mode-btn"
 					class:active={mode === 'split'}
-					title="Verdiepen (toets 2) — netwerk naast de volledige tekst"
+					title="Verdiepen (toets 2): netwerk naast de volledige tekst"
 					onclick={() => onModeChange?.('split')}>Verdiepen<kbd class="mode-kbd">2</kbd></button
 				>
 				<button
@@ -395,7 +308,7 @@
 					aria-selected={mode === 'read'}
 					class="mode-btn"
 					class:active={mode === 'read'}
-					title="Lezen (toets 3) — volledig document met citaat-rail"
+					title="Lezen (toets 3): volledig document met citaties"
 					onclick={() => onModeChange?.('read')}>Lezen<kbd class="mode-kbd">3</kbd></button
 				>
 			{/if}

@@ -1,10 +1,8 @@
 <script lang="ts">
-	// Lezen-nav for dossier kind: chronological list of publications in the
-	// dossier (MvT, Verslag, Nota, Amendementen, Stemmingen). Mirrors the
-	// article-TOC role for a dossier.
+	// Lezen navigation for a dossier: its documents, newest first (the API's order).
 	import type { GraphNode } from '$lib/graph/types';
-	import { fetchDossierDocuments } from '$lib/api/parliamentary-client';
-	import type { DossierDocumentDTO } from '$lib/api/parliamentary';
+	import type { Schema } from '$lib/api/types';
+	import { dossierNumber, getDossierDocuments } from '$lib/components/parliamentary/data';
 	import { formatDate } from '../_shared';
 
 	let {
@@ -15,33 +13,33 @@
 		onNavigate?: (collection: string, key: string) => void;
 	} = $props();
 
-	let items = $state<DossierDocumentDTO[]>([]);
+	let items = $state<Schema<'DossierDocumentDTO'>[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
-	let token = 0;
 
 	$effect(() => {
-		const t = ++token;
+		const number = dossierNumber(node.key);
+		let stale = false;
 		loading = true;
 		error = null;
-		fetchDossierDocuments(node.key)
+		getDossierDocuments(number)
 			.then((r) => {
-				if (t !== token) return;
-				items = [...r.items].sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? ''));
+				if (!stale) items = r.items;
 			})
 			.catch(() => {
-				if (t === token) error = 'Documenten kunnen niet geladen worden.';
+				if (!stale) error = 'Documenten kunnen niet geladen worden.';
 			})
 			.finally(() => {
-				if (t === token) loading = false;
+				if (!stale) loading = false;
 			});
+		return () => (stale = true);
 	});
 </script>
 
 <header class="nav-head">
 	<span class="nav-kind">DOSSIER</span>
 	<h3 class="nav-title">{node.label}</h3>
-	{#if items.length > 0}<span class="nav-count">{items.length} publicaties</span>{/if}
+	{#if items.length > 0}<span class="nav-count">{items.length} documenten</span>{/if}
 </header>
 
 {#if loading && items.length === 0}
@@ -49,15 +47,15 @@
 {:else if error}
 	<p class="nav-error">{error}</p>
 {:else if items.length === 0}
-	<p class="nav-empty">Geen publicaties in dit dossier.</p>
+	<p class="nav-empty">Geen documenten in dit dossier.</p>
 {:else}
 	<ol class="nav-list">
 		{#each items as it (it.key)}
 			<li>
-				<button type="button" class="nav-row" onclick={() => onNavigate?.('publications', it.key)}>
-					{#if it.soort}<span class="nav-soort">{it.soort}</span>{/if}
-					<span class="nav-titel">{it.display_name ?? it.titel ?? it.key}</span>
-					{#if it.datum}<span class="nav-date">{formatDate(it.datum)}</span>{/if}
+				<button type="button" class="nav-row" onclick={() => onNavigate?.('documents', it.key)}>
+					{#if it.kind}<span class="nav-doc-kind">{it.kind}</span>{/if}
+					<span class="nav-doc-title">{it.display_name ?? it.title ?? it.key}</span>
+					{#if it.date}<span class="nav-date">{formatDate(it.date)}</span>{/if}
 				</button>
 			</li>
 		{/each}
@@ -121,7 +119,7 @@
 	.nav-row:hover {
 		background: var(--paper-2);
 	}
-	.nav-soort {
+	.nav-doc-kind {
 		grid-column: 1;
 		grid-row: 1;
 		font-family: var(--font-sans);
@@ -131,7 +129,7 @@
 		text-transform: uppercase;
 		color: var(--ink-4);
 	}
-	.nav-titel {
+	.nav-doc-title {
 		grid-column: 1 / -1;
 		grid-row: 2;
 		font-size: 12px;

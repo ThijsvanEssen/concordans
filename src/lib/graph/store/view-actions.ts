@@ -1,4 +1,3 @@
-import { graphNodeId } from '../types';
 import { get } from 'svelte/store';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
@@ -8,10 +7,8 @@ export function createViewActions(
 ): Pick<
 	GraphStore,
 	| 'setGraphMode'
-	| 'seedGraph'
 	| 'setSelection'
 	| 'togglePin'
-	| 'pinNode'
 	| 'unpinNode'
 	| 'focusNode'
 	| 'goBack'
@@ -19,7 +16,6 @@ export function createViewActions(
 	| 'reset'
 	| 'setFilters'
 	| 'getNodeById'
-	| 'getNeighborsOf'
 	| 'pruneNodes'
 	| 'setCollapseToLaws'
 	| 'sweepOrphans'
@@ -34,149 +30,87 @@ export function createViewActions(
 		pinnedStore,
 		filtersStore,
 		graphModeStore,
-		updateNodes,
-		updateEdges,
-		updateBreadcrumbs,
-		clearGraph,
+		emit,
+		updateHistoryFlags,
 		focusInternal,
+		reset,
 		state
 	} = ctx;
 
-	return {
-		setGraphMode: (mode) => {
-			graphModeStore.set(mode);
-		},
+	// Moves along the history without adding to it.
+	const step = (delta: number) => {
+		const index = state.historyIndex + delta;
+		if (index < 0 || index >= history.length) return null;
+		state.historyIndex = index;
+		focusInternal(history[index], { recordHistory: false });
+		updateHistoryFlags();
+		return history[index];
+	};
 
-		seedGraph: (seed) => {
-			clearGraph();
-			for (const node of seed.nodes) {
-				nodes.set(node.id, node);
-			}
-			for (const edge of seed.edges ?? []) {
-				edges.set(edge.id, edge);
-			}
-			updateNodes();
-			updateEdges();
-			if (seed.focus) {
-				focusInternal(graphNodeId(seed.focus.collection, seed.focus.key));
-			}
-		},
+	const publishPinned = () => pinnedStore.set(new Set(pinned));
+
+	return {
+		setGraphMode: (mode) => graphModeStore.set(mode),
+
 		setSelection: (nodeId, opts) => {
-			if (!nodeId) {
-				selectionStore.set(null);
-				return;
-			}
-			focusInternal(nodeId, opts);
+			if (nodeId) focusInternal(nodeId, opts);
+			else selectionStore.set(null);
 		},
+		focusNode: (nodeId, opts) => focusInternal(nodeId, opts),
+		goBack: () => step(-1),
+		goForward: () => step(1),
+
 		togglePin: (nodeId) => {
-			if (pinned.has(nodeId)) {
-				pinned.delete(nodeId);
-			} else {
-				pinned.add(nodeId);
-			}
-			pinnedStore.set(new Set(pinned));
-		},
-		pinNode: (nodeId) => {
-			pinned.add(nodeId);
-			pinnedStore.set(new Set(pinned));
+			if (!pinned.delete(nodeId)) pinned.add(nodeId);
+			publishPinned();
 		},
 		unpinNode: (nodeId) => {
 			pinned.delete(nodeId);
-			pinnedStore.set(new Set(pinned));
+			publishPinned();
 		},
-		focusNode: (nodeId, opts) => focusInternal(nodeId, opts),
-		goBack: () => {
-			if (state.historyIndex <= 0) return null;
-			state.historyIndex -= 1;
-			const nodeId = history[state.historyIndex];
-			if (nodeId) {
-				focusInternal(nodeId, { recordHistory: false });
-				updateBreadcrumbs();
-			}
-			return nodeId ?? null;
-		},
-		goForward: () => {
-			if (state.historyIndex >= history.length - 1) return null;
-			state.historyIndex += 1;
-			const nodeId = history[state.historyIndex];
-			if (nodeId) {
-				focusInternal(nodeId, { recordHistory: false });
-				updateBreadcrumbs();
-			}
-			return nodeId ?? null;
-		},
-		reset: () => {
-			clearGraph();
-			pinned.clear();
-			pinnedStore.set(new Set());
-		},
+
+		reset,
+
 		setFilters: (updater) => {
 			const current = get(filtersStore);
 			filtersStore.set({
 				...current,
 				...updater,
-				nodeTypeToggles: {
-					...current.nodeTypeToggles,
-					...(updater.nodeTypeToggles ?? {})
-				},
-				activeInstruments: updater.activeInstruments ?? current.activeInstruments
+				nodeTypeToggles: { ...current.nodeTypeToggles, ...updater.nodeTypeToggles }
 			});
 		},
+
 		getNodeById: (nodeId) => nodes.get(nodeId),
-		getNeighborsOf: (nodeId) => {
-			const neighbors = new Set<string>();
-			edges.forEach((edge) => {
-				if (edge.source === nodeId) {
-					neighbors.add(edge.target);
-				}
-				if (edge.target === nodeId) {
-					neighbors.add(edge.source);
-				}
-			});
-			return [...neighbors];
-		},
+
 		pruneNodes: (keepIds) => {
-			for (const id of [...nodes.keys()]) {
-				if (!keepIds.has(id)) nodes.delete(id);
+			for (const id of [...nodes.keys()]) if (!keepIds.has(id)) nodes.delete(id);
+			for (const [id, e] of [...edges]) {
+				if (!keepIds.has(e.source) || !keepIds.has(e.target)) edges.delete(id);
 			}
-			for (const [id, edge] of [...edges.entries()]) {
-				if (!keepIds.has(edge.source) || !keepIds.has(edge.target)) {
-					edges.delete(id);
-				}
-			}
-			updateNodes();
-			updateEdges();
+			emit();
 		},
+
 		setCollapseToLaws: (collapse) => {
 			if (state.proxiesEnabled === collapse) return;
 			state.proxiesEnabled = collapse;
-			// Re-fire emits so synthesizeDerivedNodes runs with the new flag —
-			// adds proxies when collapsing, drops them when expanding back to
-			// Artikelen view.
-			updateNodes();
-			updateEdges();
+			emit();
 		},
+
 		sweepOrphans: () => {
-			// Build a set of node ids that still have at least one incident edge.
 			const connected = new Set<string>();
 			for (const e of edges.values()) {
 				connected.add(e.source);
 				connected.add(e.target);
 			}
-			const sel = get(selectionStore);
-			let dropped = 0;
+			const selectedId = get(selectionStore)?.id;
+			let dropped = false;
 			for (const id of [...nodes.keys()]) {
-				if (connected.has(id)) continue;
-				if (pinned.has(id)) continue;
-				if (sel && sel.id === id) continue; // focal stays even if alone
+				if (connected.has(id) || pinned.has(id) || id === selectedId) continue;
 				nodes.delete(id);
 				insertedAt.delete(id);
-				dropped += 1;
+				dropped = true;
 			}
-			if (dropped > 0) {
-				updateNodes();
-				updateEdges();
-			}
+			if (dropped) emit();
 		}
 	};
 }

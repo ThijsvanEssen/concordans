@@ -1,50 +1,10 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import type { EndpointDoc } from './+page';
 
 	let { data }: { data: PageData } = $props();
 
-	// Friendly Dutch tag labels — shown in section headers and TOC.
-	const TAG_LABEL: Record<string, string> = {
-		articles: 'Wetsartikelen',
-		judgments: 'Uitspraken',
-		dossiers: 'Wetgevingsdossiers',
-		commissies: 'Commissies',
-		leden: 'Kamerleden',
-		partijen: 'Partijen',
-		publications: 'Parlementaire publicaties',
-		stemmingen: 'Stemmingen',
-		instruments: 'Wetten',
-		fracties: 'Fracties',
-		parlement: 'Parlement',
-		nodes: 'Bronnen (generiek)',
-		graph: 'Netwerk-queries',
-		search: 'Zoeken',
-		stats: 'Statistieken',
-		watches: 'Watch-abonnementen',
-		root: 'Root',
-		overig: 'Overig'
-	};
-
-	const TAG_DESC: Record<string, string> = {
-		articles: 'Endpoints voor BWB-artikelen, hun parent-instrument en wetgevingsgeschiedenis.',
-		judgments: 'Endpoints voor rechterlijke uitspraken op ECLI-basis.',
-		dossiers: 'Wetgevingstrajecten met tijdlijn, fases, mutaties en gerelateerde publicaties.',
-		commissies: 'Vaste en tijdelijke commissies van de Tweede Kamer.',
-		leden: 'Kamerleden, hun fractie en activiteit.',
-		partijen: 'Politieke partijen en hun visuele kleurcodes.',
-		publications: 'Memories van toelichting, voorstellen, amendementen, moties.',
-		stemmingen: 'Plenaire stemmingen: uitslag, deelnemers en referentiedossiers.',
-		instruments: 'Wettelijke regelingen op BWB-basis.',
-		fracties: 'Fracties in de Tweede Kamer en hun activiteit per wet.',
-		parlement: 'Actuele zetelverdeling van de Tweede Kamer.',
-		nodes: 'Generieke bronnen en hun verbindingen, voor de netwerkverkenning.',
-		graph: 'Subgraph-queries op dossier-, commissie- of artikelniveau.',
-		search: 'Volledig-tekst-zoek over alle bronnen.',
-		stats: 'Algemene statistieken en synchronisatiestatus.',
-		watches: 'Bookmark- en notificatie-abonnementen.'
-	};
-
-	// Per-endpoint open/close — preserve user choice while scrolling.
+	// Per-endpoint open/close, kept while scrolling.
 	let openOps = $state<Record<string, boolean>>({});
 
 	function toggleOp(opId: string) {
@@ -55,13 +15,12 @@
 		return `method-${method.toLowerCase()}`;
 	}
 
-	function paramTypeLabel(p: {
-		schema?: { type?: string; anyOf?: Array<{ type?: string }> };
-	}): string {
-		if (p.schema?.type) return p.schema.type;
-		const types = p.schema?.anyOf?.map((a) => a.type).filter(Boolean) ?? [];
-		if (types.length > 0) return types.join(' | ');
-		return 'any';
+	function paramTypeLabel(p: EndpointDoc['parameters'][number]): string {
+		const schema = p.schema;
+		if (schema?.type === 'array') return `${schema.items?.type ?? 'any'}[]`;
+		if (schema?.type) return schema.type;
+		const types = schema?.anyOf?.map((a) => a.type).filter((t) => t && t !== 'null') ?? [];
+		return types.join(' | ') || 'any';
 	}
 </script>
 
@@ -74,12 +33,23 @@
 		<header class="page-header">
 			<div class="eyebrow">DEVELOPER · OPENAPI v{data.version}</div>
 			<h1 class="page-title">API-referentie</h1>
-			<p class="page-lede">{data.description}</p>
+			<p class="page-lede">
+				Referentie van de LawGraph-API, gegenereerd uit het OpenAPI-schema. Lezen vraagt geen
+				sleutel. Een route met een sleutel schrijft en vraagt een header die alleen de server kent:
+				een browser kan geen sleutel bewaren.
+			</p>
 			<div class="meta-strip">
 				<span class="meta-pill">{data.totalEndpoints} endpoints</span>
+				<span class="meta-pill">{data.keyedEndpoints} met sleutel</span>
 				<span class="meta-pill">{data.tags.length} groepen</span>
-				<span class="meta-note">Gegenereerd uit OpenAPI v{data.version}</span>
+				<span class="meta-pill">200 verzoeken per minuut</span>
 			</div>
+			<p class="meta-note">
+				Zonder of met een onjuiste sleutel antwoordt een route met 401, zonder ingestelde sleutel
+				met 503. Boven de limiet volgt 429 met Retry-After; herkomsten op de toegestane lijst vallen
+				erbuiten. Artikelen worden 30 minuten gecachet, uitspraken een uur en statistieken vijf
+				minuten.
+			</p>
 		</header>
 
 		<aside class="toc" aria-label="Inhoudsopgave">
@@ -88,7 +58,7 @@
 				{#each data.tags as t, i (i)}
 					<li>
 						<a href="#{t.tag}">
-							<span class="toc-name">{TAG_LABEL[t.tag] ?? t.tag}</span>
+							<span class="toc-name">{t.label}</span>
 							<span class="toc-count">{t.endpoints.length}</span>
 						</a>
 					</li>
@@ -100,13 +70,13 @@
 			{#each data.tags as t, i (i)}
 				<section id={t.tag} class="api-tag">
 					<header class="api-tag-head">
-						<h2 class="api-tag-title">{TAG_LABEL[t.tag] ?? t.tag}</h2>
+						<h2 class="api-tag-title">{t.label}</h2>
 						<span class="api-tag-count"
 							>{t.endpoints.length} endpoint{t.endpoints.length === 1 ? '' : 's'}</span
 						>
 					</header>
-					{#if TAG_DESC[t.tag]}
-						<p class="api-tag-desc">{TAG_DESC[t.tag]}</p>
+					{#if t.description}
+						<p class="api-tag-desc">{t.description}</p>
 					{/if}
 
 					<ul class="api-endpoints">
@@ -124,6 +94,11 @@
 									{#if ep.summary}
 										<span class="api-summary">{ep.summary}</span>
 									{/if}
+									{#if ep.keys.length > 0}
+										<span class="api-key" title="Vraagt de header {ep.keys.join(', ')}"
+											>sleutel</span
+										>
+									{/if}
 									<span class="api-chev" aria-hidden="true" class:open={opOpen}>▸</span>
 								</button>
 
@@ -131,6 +106,15 @@
 									<div class="api-endpoint-body">
 										{#if ep.description}
 											<p class="api-desc">{ep.description}</p>
+										{/if}
+
+										{#if ep.keys.length > 0}
+											<div class="api-block">
+												<div class="api-block-head">Sleutel</div>
+												<p class="api-desc">
+													Header <code>{ep.keys.join(', ')}</code>. De server stuurt de sleutel mee.
+												</p>
+											</div>
 										{/if}
 
 										{#if ep.parameters.length > 0}
@@ -153,11 +137,25 @@
 																<td><span class="api-in">{p.in}</span></td>
 																<td><code>{paramTypeLabel(p)}</code></td>
 																<td>{p.required ? 'ja' : 'nee'}</td>
-																<td>{p.description ?? p.schema?.description ?? ''}</td>
+																<td>
+																	{p.description ?? p.schema?.description ?? ''}
+																	{#if p.schema?.default !== undefined}
+																		<span class="api-default"
+																			>standaard <code>{String(p.schema.default)}</code></span
+																		>
+																	{/if}
+																</td>
 															</tr>
 														{/each}
 													</tbody>
 												</table>
+											</div>
+										{/if}
+
+										{#if ep.requestSchema}
+											<div class="api-block">
+												<div class="api-block-head">Body</div>
+												<p class="api-desc"><code>{ep.requestSchema}</code> als JSON.</p>
 											</div>
 										{/if}
 
@@ -177,7 +175,7 @@
 																	></td
 																>
 																<td
-																	>{#if r.schemaRef}<code>{r.schemaRef}</code>{:else}—{/if}</td
+																	>{#if r.schema}<code>{r.schema}</code>{:else}-{/if}</td
 																>
 																<td>{r.description}</td>
 															</tr>
@@ -268,9 +266,11 @@
 	}
 	.meta-note {
 		font-family: var(--font-sans);
-		font-size: 11px;
+		font-size: 12px;
+		line-height: 1.6;
 		color: var(--ink-4);
-		font-style: italic;
+		margin: 0;
+		max-width: 72ch;
 	}
 
 	/* ── TOC ──────────────────────────────────────────────────────────────── */
@@ -434,6 +434,20 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+	.api-key {
+		font-family: var(--font-mono);
+		font-size: 10px;
+		color: var(--spine);
+		border: 1px solid var(--spine);
+		border-radius: var(--r-1);
+		padding: 1px 6px;
+		flex-shrink: 0;
+	}
+	.api-default {
+		display: block;
+		color: var(--ink-4);
+		font-size: 11px;
 	}
 	.api-chev {
 		color: var(--ink-4);

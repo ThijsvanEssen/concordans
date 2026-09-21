@@ -1,16 +1,14 @@
 <script lang="ts">
 	import { addWatch, removeWatch, hasWatch } from '$lib/stores/watches';
-	import type { WatchEntityType } from '$lib/api/parliamentary';
+	import type { NodeId } from '$lib/vocabulary';
 
 	let {
 		id,
-		entityType,
 		label,
 		href,
 		overdueAt = null
 	}: {
-		id: string;
-		entityType: WatchEntityType;
+		id: NodeId;
 		label: string;
 		href: string;
 		/** ISO date of a statutory deadline — shows overdue badge when past */
@@ -24,7 +22,7 @@
 			removeWatch(id);
 			watching = false;
 		} else {
-			addWatch({ id, entityType, label, href });
+			addWatch({ id, label, href });
 			watching = true;
 		}
 	}

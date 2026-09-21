@@ -31,15 +31,20 @@
 				en vallen onder de
 				<a href="https://creativecommons.org/publicdomain/zero/1.0/" class="cite">CC0-licentie</a>
 				van de Nederlandse overheid. Rechterlijke uitspraken zijn afkomstig van
-				<a href="https://www.rechtspraak.nl/uitspraken" class="cite">uitspraken.rechtspraak.nl</a>.
+				<a href="https://www.rechtspraak.nl/uitspraken" class="cite">uitspraken.rechtspraak.nl</a>
+				en, voor het EHRM, van HUDOC. Parlementaire gegevens komen uit het gegevensmagazijn van de Tweede
+				Kamer. Kamerstukken van de Eerste Kamer, het Staatsblad en de Staatscourant komen uit de repository
+				van KOOP (repository.overheid.nl). Europese regelgeving komt uit EUR-Lex en verdragen komen uit
+				de Verdragenbank.
 			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Technologie</h2>
 			<p>
-				De applicatie is gebouwd met SvelteKit, een grafendatabase in Rust en
-				standaardwebtechnologie. Geen commerciële tracking, geen advertentiediensten.
+				De applicatie is gebouwd met SvelteKit. Het netwerk staat in een ArangoDB-database achter
+				een FastAPI-service (LawGraph). Die service leest, behalve voor het volgen van bronnen en
+				het beoordelen van verbindingen. Geen commerciële tracking, geen advertentiediensten.
 			</p>
 		</div>
 

@@ -34,7 +34,7 @@
 			id: 'verkenner',
 			sigil: 'III',
 			title: 'De verkenner',
-			blurb: 'De vier modi (Ontdekken, Verdiepen, Lezen, Index), lagen, overlays en filters.'
+			blurb: 'De vier modi (Ontdekken, Verdiepen, Lezen, Index), inhoud laden, overlays en filters.'
 		},
 		{
 			id: 'zoeken',
@@ -46,7 +46,7 @@
 			id: 'verbindingen',
 			sigil: 'V',
 			title: 'Verbindingen',
-			blurb: 'De drie typen verbindingen tussen bronnen en hun weergave.'
+			blurb: 'De drie categorieën verbindingen, de achttien verbindingstypen en hun weergave.'
 		},
 		{
 			id: 'dossiers-parlement',
@@ -268,7 +268,9 @@
 							<span class="overzicht-sigil">III</span>
 							<span class="overzicht-text">
 								<span class="overzicht-title">De verkenner</span>
-								<span class="overzicht-blurb">Modi, lagen, overlays en filters in detail.</span>
+								<span class="overzicht-blurb"
+									>Modi, inhoud laden, overlays en filters in detail.</span
+								>
 							</span>
 						</button>
 					</li>
@@ -286,8 +288,7 @@
 							<span class="overzicht-sigil">V</span>
 							<span class="overzicht-text">
 								<span class="overzicht-title">Verbindingen</span>
-								<span class="overzicht-blurb"
-									>Drie typen relaties tussen bronnen en hun weergave.</span
+								<span class="overzicht-blurb">Categorieën, typen en weergave van verbindingen.</span
 								>
 							</span>
 						</button>
@@ -322,7 +323,7 @@
 							<span class="overzicht-text">
 								<span class="overzicht-title">Bekende beperkingen</span>
 								<span class="overzicht-blurb"
-									>Wat ontbreekt: Eerste Kamer, EU-recht, actualisering, seeding.</span
+									>Wat ontbreekt: Eerste Kamer, EU-recht, actualisering, dekking.</span
 								>
 							</span>
 						</button>
@@ -369,8 +370,8 @@
 					<h2 class="section-title">Eerste gebruik</h2>
 				</div>
 				<p class="section-summary">
-					<strong>In deze sectie</strong>Basisnavigatie van de verkenner: focus, lagen, overlays,
-					modi en deelbare URL's.
+					<strong>In deze sectie</strong>Basisnavigatie van de verkenner: focus, inhoud laden,
+					overlays, modi en deelbare URL's.
 				</p>
 				<p class="section-intro">
 					Basisnavigatie van de verkenner. De rest van deze pagina is naslag.
@@ -378,10 +379,10 @@
 
 				<h3 class="sub-title">De topbar</h3>
 				<p class="section-body">
-					Bovenaan staat een navigatiebalk met logo, hoofdmenu en globale zoek (<kbd>{modKey}K</kbd
-					>). De sub-balk eronder toont het kruimelpad door het netwerk, de geldigheidsdatum en de
-					vier weergaven Ontdekken, Verdiepen, Lezen en Index op de toetsen <kbd>1</kbd> tot
-					<kbd>4</kbd>.
+					Bovenaan staat een navigatiebalk met logo, hoofdmenu (Verkenner, Index en Docs) en het
+					zoekvenster (<kbd>{modKey}K</kbd>). De sub-balk eronder toont het kruimelpad door het
+					netwerk, de geldigheidsdatum en de weergaven Ontdekken, Verdiepen en Lezen op de toetsen
+					<kbd>1</kbd> tot <kbd>3</kbd>.
 				</p>
 				<div class="panel-figs">
 					<figure class="panel-fig panel-fig--topbar" data-fig="FIG. 01">
@@ -544,6 +545,13 @@
 									y="21"
 									font-family="var(--font-sans, sans-serif)"
 									font-size="10"
+									fill="var(--ink-2)">Index</text
+								>
+								<text
+									x="292"
+									y="21"
+									font-family="var(--font-sans, sans-serif)"
+									font-size="10"
 									fill="var(--ink-2)">Docs</text
 								>
 								<!-- search -->
@@ -632,7 +640,7 @@
 									font-size="10"
 									fill="var(--ink-3)">…</text
 								>
-								<!-- weergaven chips (Grafiek active) -->
+								<!-- weergaven chips (Ontdekken active) -->
 								<g font-family="var(--font-sans, sans-serif)" font-size="9">
 									<rect
 										x="530"
@@ -670,18 +678,6 @@
 									<text x="629" y="49" fill="var(--ink-2)">Lezen</text>
 									<rect x="648" y="42" width="8" height="10" rx="1.5" fill="var(--paper-3)" />
 									<text x="652" y="49" fill="var(--ink-3)" text-anchor="middle">3</text>
-									<rect
-										x="662"
-										y="40"
-										width="34"
-										height="14"
-										rx="2"
-										fill="var(--paper)"
-										stroke="var(--rule)"
-									/>
-									<text x="671" y="49" fill="var(--ink-2)">Index</text>
-									<rect x="690" y="42" width="8" height="10" rx="1.5" fill="var(--paper-3)" />
-									<text x="694" y="49" fill="var(--ink-3)" text-anchor="middle">4</text>
 								</g>
 							</g>
 
@@ -746,7 +742,7 @@
 									fill="var(--ink)">Weergaven</text
 								>
 								<text x="615" y="204" text-anchor="middle" font-size="9.5" fill="var(--ink-3)"
-									>Ontdekken, Verdiepen, Lezen, Index (1–4).</text
+									>Ontdekken, Verdiepen, Lezen (1–3).</text
 								>
 							</g>
 						</svg>
@@ -755,10 +751,10 @@
 
 				<h3 class="sub-title">De Ontdekken-modus</h3>
 				<p class="section-body">
-					In de Ontdekken-modus vult het netwerk de werkruimte. Links de zijbalk met lagen,
+					In de Ontdekken-modus vult het netwerk de werkruimte. Links de zijbalk met inhoud laden,
 					legenda's en het parlement-blok; rechts het canvas met bronnen en hun verbindingen.
-					Klikken op een bron verplaatst de focus en opent een hover-kaart met type, vindplaats en
-					de eerste regels.
+					Klikken op een bron verplaatst de focus. Hover over een bron toont een kaart met type,
+					vindplaats en de eerste regels.
 				</p>
 				<div class="panel-figs">
 					<figure class="panel-fig panel-fig--graph" data-fig="FIG. 02">
@@ -785,10 +781,10 @@
 									text-anchor="end">Zijbalk</text
 								>
 								<text x="100" y="312" font-size="10" fill="var(--ink-3)" text-anchor="end"
-									>Lagen, bronnen,</text
+									>Inhoud laden,</text
 								>
 								<text x="100" y="326" font-size="10" fill="var(--ink-3)" text-anchor="end"
-									>relaties, overlays en</text
+									>legenda's, overlays en</text
 								>
 								<text x="100" y="340" font-size="10" fill="var(--ink-3)" text-anchor="end"
 									>het parlement-blok.</text
@@ -894,7 +890,7 @@
 									font-size="10"
 									font-weight="600"
 									letter-spacing="0.12em"
-									fill="var(--ink-3)">LAGEN</text
+									fill="var(--ink-3)">INHOUD LADEN</text
 								>
 								<g font-family="var(--font-sans, sans-serif)" font-size="10.5">
 									<rect x="14" y="32" width="122" height="18" rx="2" fill="var(--ink)" />
@@ -947,7 +943,7 @@
 									font-size="10"
 									font-weight="600"
 									letter-spacing="0.12em"
-									fill="var(--ink-3)">KNOOPPUNTEN</text
+									fill="var(--ink-3)">BRONNEN</text
 								>
 								<rect
 									x="14"
@@ -973,7 +969,7 @@
 									font-size="10"
 									font-weight="600"
 									letter-spacing="0.12em"
-									fill="var(--ink-3)">RELATIES</text
+									fill="var(--ink-3)">VERBINDINGEN</text
 								>
 								<rect
 									x="14"
@@ -1169,12 +1165,12 @@
 
 				<h3 class="sub-title">De zijbalk in detail</h3>
 				<p class="section-body">
-					De zijbalk groepeert per functie. Lagen voegt of verwijdert hele klassen bronnen tegelijk;
-					bij Wetten kiest een sub-knop tussen artikel- en wet-niveau. Bronnen en Verbindingen zijn
-					legenda's: vorm en kleur per type bron, lijnkleur per type verbinding. Overlays kleurt het
-					hele netwerk op één dimensie (mutaties of activiteit). Onderin staat Parlement, met de
-					zetelverdeling van de Tweede Kamer en snelkoppelingen naar dossiers, kamerleden en
-					stemmingen.
+					De zijbalk groepeert per functie. Inhoud laden voegt of verwijdert hele klassen bronnen
+					tegelijk; bij Wetten kiest een sub-knop tussen artikel- en wetniveau. De legenda's tonen
+					vorm en kleur per type bron en lijnkleur per categorie verbinding; de categorieën zijn ook
+					in of uit te schakelen. Overlays kleurt het hele netwerk op één dimensie (mutaties of
+					activiteit). Onderin staat Parlement, met de zetelverdeling van de Tweede Kamer en
+					snelkoppelingen naar dossiers, kamerleden en stemmingen.
 				</p>
 				<div class="panel-figs">
 					<figure class="panel-fig panel-fig--sidebar" data-fig="FIG. 03">
@@ -1236,7 +1232,7 @@
 								font-size="10"
 								font-weight="600"
 								letter-spacing="0.14em"
-								fill="var(--ink-3)">LAGEN</text
+								fill="var(--ink-3)">INHOUD LADEN</text
 							>
 							<g font-family="var(--font-sans, sans-serif)" font-size="11">
 								<rect x="28" y="44" width="162" height="22" rx="3" fill="var(--ink)" />
@@ -1315,7 +1311,7 @@
 								stroke="var(--rule)"
 							/>
 
-							<!-- KNOOPPUNTEN -->
+							<!-- BRONNEN -->
 							<text
 								x="560"
 								y="36"
@@ -1323,7 +1319,7 @@
 								font-size="10"
 								font-weight="600"
 								letter-spacing="0.14em"
-								fill="var(--ink-3)">KNOOPPUNTEN</text
+								fill="var(--ink-3)">BRONNEN</text
 							>
 							<g font-family="var(--font-sans, sans-serif)" font-size="10" fill="var(--ink-2)">
 								<!-- col 1 (x=560..645) -->
@@ -1364,7 +1360,7 @@
 								>
 							</g>
 
-							<!-- RELATIES -->
+							<!-- VERBINDINGEN -->
 							<text
 								x="560"
 								y="148"
@@ -1372,7 +1368,7 @@
 								font-size="10"
 								font-weight="600"
 								letter-spacing="0.14em"
-								fill="var(--ink-3)">RELATIES</text
+								fill="var(--ink-3)">VERBINDINGEN</text
 							>
 							<g font-family="var(--font-sans, sans-serif)" font-size="10" fill="var(--ink-2)">
 								<line
@@ -1512,7 +1508,7 @@
 									text-anchor="middle">a</text
 								>
 								<text x="240" y="50" font-size="10.5" font-weight="600" fill="var(--ink)"
-									>Lagen aanzetten</text
+									>Inhoud laden</text
 								>
 								<text x="240" y="64" font-size="9.5" fill="var(--ink-3)"
 									>Donker = actief. Telling toont aantal in het netwerk.</text
@@ -1679,9 +1675,9 @@
 				<h3 class="sub-title">Verdiepen-modus: netwerk en tekst tegelijk</h3>
 				<p class="section-body">
 					In de Verdiepen-modus staan netwerk, wettekst en citatie-rail naast elkaar. Links een
-					compact canvas met het gekozen artikel in focus; in het midden de wettekst met inklapbare
-					toelichting (MvT) en wetgevingsgeschiedenis; rechts een rail met bronnen die naar het
-					artikel verwijzen en het citatie-blok in vier formaten.
+					compact canvas met het gekozen artikel in focus; in het midden de wettekst met de
+					wetgevingsgeschiedenis; rechts een rail met bronnen die naar het artikel verwijzen en het
+					citatie-blok (verkort en volledig; bij uitspraken ook vindplaats).
 				</p>
 				<div class="panel-figs">
 					<figure class="panel-fig panel-fig--focus" data-fig="FIG. 04">
@@ -1746,10 +1742,10 @@
 									text-anchor="middle">Leespaneel</text
 								>
 								<text x="500" y="30" font-size="10" fill="var(--ink-3)" text-anchor="middle"
-									>Wettekst met inklapbare toelichting (MvT)</text
+									>Wettekst en</text
 								>
 								<text x="500" y="44" font-size="10" fill="var(--ink-3)" text-anchor="middle"
-									>en wetgevingsgeschiedenis.</text
+									>wetgevingsgeschiedenis.</text
 								>
 								<line
 									x1="500"
@@ -1803,10 +1799,10 @@
 									>Citeer dit</text
 								>
 								<text x="920" y="442" font-size="10" fill="var(--ink-3)"
-									>Vier formaten: verkort,</text
+									>Verkort en volledig; bij</text
 								>
 								<text x="920" y="456" font-size="10" fill="var(--ink-3)"
-									>volledig, vindplaats, bibtex.</text
+									>uitspraken ook vindplaats.</text
 								>
 								<line
 									x1="890"
@@ -2025,36 +2021,13 @@
 									x="210"
 									y="320"
 									font-family="var(--font-sans, sans-serif)"
-									font-size="10"
-									fill="var(--ink-2)">Toelichting (MvT)</text
-								>
-								<text
-									x="536"
-									y="320"
-									font-family="var(--font-sans, sans-serif)"
-									font-size="10"
-									fill="var(--ink-3)"
-									text-anchor="end">›</text
-								>
-								<rect
-									x="200"
-									y="330"
-									width="344"
-									height="20"
-									fill="var(--paper-2)"
-									stroke="var(--rule)"
-								/>
-								<text
-									x="210"
-									y="344"
-									font-family="var(--font-sans, sans-serif)"
 									font-size="9"
 									letter-spacing="0.14em"
 									fill="var(--ink-3)">WETGEVINGSGESCHIEDENIS</text
 								>
 								<text
 									x="536"
-									y="344"
+									y="320"
 									font-family="var(--font-sans, sans-serif)"
 									font-size="10"
 									fill="var(--ink-3)"
@@ -2137,24 +2110,6 @@
 										stroke="var(--rule)"
 									/>
 									<text x="640" y="267" fill="var(--ink-3)" text-anchor="middle">VOLLEDIG</text>
-									<rect
-										x="574"
-										y="274"
-										width="42"
-										height="16"
-										fill="var(--paper)"
-										stroke="var(--rule)"
-									/>
-									<text x="595" y="285" fill="var(--ink-3)" text-anchor="middle">VINDPL.</text>
-									<rect
-										x="618"
-										y="274"
-										width="44"
-										height="16"
-										fill="var(--paper)"
-										stroke="var(--rule)"
-									/>
-									<text x="640" y="285" fill="var(--ink-3)" text-anchor="middle">BIBTEX</text>
 								</g>
 								<rect
 									x="574"
@@ -2196,22 +2151,21 @@
 				<ol class="tour-steps">
 					<li>
 						<strong>Begin.</strong> Open <a href="/explore">de verkenner</a>. Het netwerk is bij
-						eerste opening leeg. Klik het voorbeeld
-						<em>art. 126ffa Sv</em> of typ <kbd>{modKey}K</kbd> en kies een artikel als
-						<em>BW 6:162</em>.
+						eerste opening leeg. Kies een wetboek, zoals <em>Sr</em> of <em>Awb</em>, of typ
+						<kbd>{modKey}K</kbd> en kies een wet, artikel, uitspraak of dossier.
 					</li>
 					<li>
-						<strong>Verschuif de focus.</strong> Dubbelklik een buur om het netwerk rondom dat punt uit
-						te klappen. Eén klik selecteert zonder de focus te verleggen.
+						<strong>Verschuif de focus.</strong> Klik een bron om de focus te verleggen en het netwerk
+						rondom die bron uit te breiden.
 					</li>
 					<li>
 						<strong>Wissel weergave.</strong> Toetsen <kbd>1</kbd> tot
-						<kbd>4</kbd> schakelen tussen Ontdekken, Verdiepen, Lezen en Index. Verdiepen toont netwerk
-						en wettekst tegelijk.
+						<kbd>3</kbd> schakelen tussen Ontdekken, Verdiepen en Lezen. Verdiepen toont netwerk en wettekst
+						tegelijk. Index staat in het hoofdmenu.
 					</li>
 					<li>
-						<strong>Deel de weergave.</strong> Weergave, focus, overlay en actieve lagen staan in de URL.
-						Kopiëren is voldoende om hetzelfde beeld door te geven.
+						<strong>Deel de weergave.</strong> Weergave, focus en overlay staan in de URL. Kopieer de
+						link om een weergave te delen.
 					</li>
 				</ol>
 				<h3 class="sub-title">Sneltoetsen</h3>
@@ -2224,8 +2178,8 @@
 						<dd>Open het zoekvenster</dd>
 					</div>
 					<div class="keys__row">
-						<dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></dt>
-						<dd>Wissel tussen Ontdekken, Verdiepen, Lezen en Index</dd>
+						<dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt>
+						<dd>Wissel tussen Ontdekken, Verdiepen en Lezen</dd>
 					</div>
 					<div class="keys__row">
 						<dt><kbd>←</kbd> <kbd>→</kbd></dt>
@@ -2274,8 +2228,7 @@
 				</p>
 				<p class="section-intro">
 					Het netwerk bestaat uit drie domeinen, dezelfde drie waarop het zoekvenster groepeert.
-					Alle inhoud is afkomstig uit officiële overheidsbronnen en wordt dagelijks
-					gesynchroniseerd.
+					Alle inhoud is afkomstig uit officiële overheidsbronnen.
 				</p>
 				<div class="corpus-grid">
 					<div class="corpus-item">
@@ -2283,13 +2236,14 @@
 						<div class="corpus-item__body">
 							<div class="corpus-item__name">Wetgeving</div>
 							<div class="corpus-item__desc">
-								Wetten, AMvB's en ministeriële regelingen uit wetten.overheid.nl, op twee niveaus
-								opgenomen: het <em>instrument</em> als geheel (citeertitel, BWB-id,
-								inwerkingtredingsstatus) en de
-								<em>artikelen</em> daarbinnen (volledige tekst, leden, onderdelen). In het netwerk
-								zijn dit twee aparte brontypen, verbonden door
-								<em>deel_van</em>-verbindingen. Op <em>Detail-niveau: Wetten</em>
-								worden ze samengevouwen tot één cluster per wet.
+								Wetten, AMvB's, ministeriële regelingen en verdragen uit wetten.overheid.nl en de
+								Verdragenbank, op twee niveaus opgenomen: het <em>instrument</em> als geheel
+								(citeertitel, BWB-id) en de <em>artikelen</em> daarbinnen (volledige tekst),
+								verbonden door <em>PART_OF</em>. Eerdere versies zijn eigen bronnen (<em
+									>VERSION_OF</em
+								>). Publicaties uit het Staatsblad wijzigen instrumenten (<em>AMENDS</em>,
+								<em>INTRODUCES</em>, <em>REPEALS</em>). Op <em>Detail-niveau: Wetten</em> worden artikelen
+								samengevouwen tot één cluster per wet.
 							</div>
 						</div>
 					</div>
@@ -2298,10 +2252,14 @@
 						<div class="corpus-item__body">
 							<div class="corpus-item__name">Rechterlijke uitspraken</div>
 							<div class="corpus-item__desc">
-								Uitspraken van alle rechterlijke instanties gepubliceerd op
-								uitspraken.rechtspraak.nl, geïdentificeerd via ECLI. Gegroepeerd per instantie (Hoge
-								Raad · Hoven &amp; RvS · Rechtbanken), zodat het gewicht van een uitspraak direct
-								afleesbaar is.
+								Uitspraken gepubliceerd op uitspraken.rechtspraak.nl, geïdentificeerd via ECLI, en
+								uitspraken van het EHRM uit HUDOC. Gegroepeerd per instantie (Hoge Raad · Hoven
+								&amp; RvS · Rechtbanken), zodat het gewicht van een uitspraak direct afleesbaar is.
+								Een uitspraak verwijst naar artikelen, instrumenten en andere uitspraken (<em
+									>REFERS_TO</em
+								>); een uitspraak in hoger beroep of cassatie verwijst naar de bestreden uitspraak (<em
+									>APPEAL_OF</em
+								>).
 							</div>
 						</div>
 					</div>
@@ -2310,8 +2268,9 @@
 						<div class="corpus-item__body">
 							<div class="corpus-item__name">Parlementaire documenten</div>
 							<div class="corpus-item__desc">
-								Memories van toelichting, voorstellen van wet, amendementen, moties en brieven uit
-								het Tweede Kamer-archief, gekoppeld aan wetgevingsdossiers.
+								Kamerstukken van de Tweede en Eerste Kamer (memories van toelichting, voorstellen
+								van wet, amendementen, moties, brieven), gekoppeld aan wetgevingsdossiers. Daarnaast
+								zaken, activiteiten, stemmingen, toezeggingen, commissies, Kamerleden en fracties.
 							</div>
 						</div>
 					</div>
@@ -2380,13 +2339,13 @@
 							font-family="var(--font-serif, Georgia, serif)"
 							font-size="11"
 							font-style="italic"
-							fill="var(--ink-3)">deel_van</text
+							fill="var(--ink-3)">PART_OF</text
 						>
 						<line
-							x1="178"
-							y1="140"
-							x2="332"
-							y2="204"
+							x1="332"
+							y1="204"
+							x2="178"
+							y2="140"
 							stroke="var(--indigo)"
 							stroke-width="1.4"
 							marker-end="url(#arrow-cite)"
@@ -2397,24 +2356,24 @@
 							font-family="var(--font-serif, Georgia, serif)"
 							font-size="11"
 							font-style="italic"
-							fill="var(--indigo)">verwijst_naar</text
+							fill="var(--indigo)">REFERS_TO</text
 						>
 						<line
-							x1="488"
-							y1="140"
-							x2="332"
-							y2="76"
+							x1="332"
+							y1="76"
+							x2="488"
+							y2="140"
 							stroke="var(--ink-3)"
 							stroke-width="1.4"
 							marker-end="url(#arrow-corpus)"
 						/>
 						<text
-							x="402"
-							y="100"
+							x="384"
+							y="94"
 							font-family="var(--font-serif, Georgia, serif)"
 							font-size="11"
 							font-style="italic"
-							fill="var(--ink-3)">deel_van</text
+							fill="var(--ink-3)">LEGISLATED_IN</text
 						>
 						<line
 							x1="488"
@@ -2432,24 +2391,7 @@
 							font-family="var(--font-serif, Georgia, serif)"
 							font-size="11"
 							font-style="italic"
-							fill="var(--spine)">wijzigt</text
-						>
-						<line
-							x1="488"
-							y1="140"
-							x2="332"
-							y2="204"
-							stroke="var(--ink-3)"
-							stroke-width="1.2"
-							stroke-dasharray="2 4"
-						/>
-						<text
-							x="404"
-							y="184"
-							font-family="var(--font-serif, Georgia, serif)"
-							font-size="11"
-							font-style="italic"
-							fill="var(--ink-4)">noemt_artikel</text
+							fill="var(--spine)">AMENDS</text
 						>
 						<!-- nodes -->
 						<!-- artikel (center-left): circle -->
@@ -2561,15 +2503,15 @@
 						>
 						<span class="cap-key"><span class="cap-line cap-line--mutation"></span>Wijziging</span>
 						<span class="cap-key"><span class="cap-line cap-line--cite"></span>Citatie</span>
-						<span class="cap-key"><span class="cap-line cap-line--mention"></span>Vermelding</span>
 					</figcaption>
 				</figure>
 
 				<div class="scope-note">
-					<strong>Reikwijdte:</strong> het netwerk omvat uitsluitend Nederlands nationaal recht.
-					Gemeentelijke verordeningen, Europese regelgeving en niet-gepubliceerde uitspraken vallen
-					buiten scope. Zie de <a href="/docs/methode">methode-bijlage</a> voor een volledige verantwoording
-					van inclusie- en exclusiekeuzes.
+					<strong>Reikwijdte:</strong> het netwerk is gericht op Nederlands recht. Gemeentelijke
+					verordeningen en niet-gepubliceerde uitspraken vallen buiten scope. Europese regelgeving
+					is opgenomen voor zover Nederlandse regelingen ernaar verwijzen. Zie de
+					<a href="/docs/methode">methode-bijlage</a> voor een volledige verantwoording van inclusie-
+					en exclusiekeuzes.
 				</div>
 				<nav class="section-nav" aria-label="Sectie-navigatie">
 					<button type="button" class="section-nav__link" onclick={() => setSection('aan-de-slag')}>
@@ -2640,22 +2582,21 @@
 							<span class="mode-card__url">?mode=graph</span>
 						</div>
 						<p class="mode-card__desc">
-							Vertrekpunt voor verkenning zonder concreet zoekdoel. Bronnen (wetsartikelen,
-							uitspraken, dossiers, commissies, leden, fracties) staan in een krachtgerichte layout;
-							verbindingen zijn lijnen ertussen. Geen tekst, alleen structuur. Klik een bron voor
-							zijbalk-detail, dubbelklik om de focus te verplaatsen, gebruik
-							<em>+1 hop</em> / <em>+2 hops</em> om iteratief uit te breiden.
+							Vertrekpunt voor verkenning zonder concreet zoekdoel. Bronnen (artikelen, uitspraken,
+							dossiers, commissies, kamerleden, fracties) staan in een krachtgerichte layout;
+							verbindingen zijn lijnen ertussen. Geen tekst, alleen structuur. Klik een bron om de
+							focus te verplaatsen en het netwerk daaromheen uit te breiden. Hover toont een kaart
+							met <em>Openen</em>, <em>Selecteren</em> en <em>Pin</em>.
 						</p>
 						<ul class="mode-card__tips">
 							<li>
 								Hover over een bron en klik <em>☆ Pin</em> om haar te verankeren; vastgehouden bronnen
 								worden niet verdrongen
 							</li>
-							<li><kbd>F</kbd> centreert het netwerk op de geselecteerde bron</li>
-							<li>Scroll of <kbd>+</kbd> / <kbd>−</kbd> voor in- en uitzoomen</li>
+							<li>Scroll om in en uit te zoomen</li>
 							<li>
-								Filters in de zijbalk: brontypen (Wetgeving · Rechterlijk · Parlementair) en
-								verbindingstypen (Vaste verwijzing · Wijziging via Kamer · Inhoudelijk verband)
+								Filters in de zijbalk: brontypen en de drie categorieën verbindingen (Vaste
+								verwijzing · Wijziging via Kamer · Inhoudelijk verband)
 							</li>
 						</ul>
 					</div>
@@ -2711,12 +2652,13 @@
 						</p>
 						<ul class="mode-card__tips">
 							<li>
-								Categorieën via <code>?kind=</code>: <em>dossiers</em>, <em>commissies</em>,
-								<em>leden</em>, <em>fracties</em>, <em>wetten</em>, <em>arresten</em>.
+								Categorieën via <code>?kind=</code>: <em>instruments</em>, <em>judgments</em>,
+								<em>dossiers</em>, <em>committees</em>, <em>members</em>, <em>factions</em>,
+								<em>decisions</em>.
 							</li>
 							<li>
-								Klik een rij om die entiteit in <em>Verdiepen</em> te openen; het netwerk bouwt zich op
-								rondom dat punt.
+								Klik een rij om die bron in <em>Verdiepen</em> te openen; het netwerk bouwt zich op rondom
+								die bron.
 							</li>
 							<li>Altijd bereikbaar, ook zonder geselecteerde bron.</li>
 						</ul>
@@ -2726,12 +2668,11 @@
 				<h3 class="sub-title">Inhoud laden: brontypen aan- of uitzetten</h3>
 				<p class="section-body">
 					De linker zijbalk toont onder <em>Inhoud laden</em> één knop per brontype:
-					<em>Artikelen</em>, <em>Rechtspraak</em>, <em>Wetten</em>, <em>Dossiers</em>,
-					<em>Commissies</em>, <em>Leden</em>, <em>Fracties</em>. Een actieve knop toont het aantal
-					bronnen van dat type dat op dit moment in het netwerk staat. Een inactieve knop toont een
-					<em>+N</em>-preview: zoveel bronnen komen erbij na klikken. Een actieve knop toont het
-					aantal geladen bronnen. Klikken op een actieve knop vraagt om bevestiging voor
-					verwijdering; bronnen zonder verbindingen worden automatisch opgeruimd.
+					<em>Wetten</em>, <em>Arresten</em>, <em>Dossiers</em>, <em>Commissies</em>,
+					<em>Fracties</em>, <em>Leden</em>. Een actieve knop toont het aantal bronnen van dat type
+					dat op dit moment in het netwerk staat. Een inactieve knop toont een <em>+N</em>-preview:
+					zoveel bronnen komen erbij na klikken. Klikken op een actieve knop vraagt om bevestiging
+					voor verwijdering; bronnen zonder verbindingen worden automatisch opgeruimd.
 				</p>
 
 				<h3 class="sub-title">Pinnen: een bron verankeren</h3>
@@ -2750,16 +2691,17 @@
 					<div class="overlay-card overlay-card--heat">
 						<div class="overlay-card__name">Activiteit</div>
 						<p class="overlay-card__desc">
-							Hitte-halo rondom bronnen op basis van het aantal citaties per maand in een glijdend
-							venster (3, 6, 12 of 24 maanden). Een zwakke halo duidt op incidentele citatie, een
-							duidelijke halo op actuele belangstelling. URL: <code>?overlay=heat:12</code>.
+							Hitte-halo rondom bronnen op basis van het aantal verbindingen dat in de afgelopen 3,
+							6, 12 of 24 maanden is toegevoegd. Een bron met minder dan twee nieuwe verbindingen
+							krijgt geen halo. Een zwakke halo duidt op weinig nieuwe verwijzingen, een duidelijke
+							halo op actuele belangstelling. URL: <code>?overlay=heat:12</code>.
 						</p>
 					</div>
 					<div class="overlay-card overlay-card--mutatie">
 						<div class="overlay-card__name">Mutatie</div>
 						<p class="overlay-card__desc">
 							Klein gekleurd badge boven bronnen waarvoor een wetsvoorstel aanhangig is. Het cijfer
-							toont hoeveel dossiers de bron beogen te wijzigen. URL: <code>?overlay=open</code>
+							toont het aantal voorgestelde wijzigingen. URL: <code>?overlay=open</code>
 							voor alle lopende dossiers, of <code>?overlay=dossier:36410</code> voor één dossier.
 						</p>
 					</div>
@@ -2891,7 +2833,7 @@
 							y="206"
 							font-family="var(--font-sans, sans-serif)"
 							font-size="9"
-							fill="var(--ink-3)">0/mnd</text
+							fill="var(--ink-3)">0</text
 						>
 						<rect x="90" y="200" width="140" height="6" rx="3" fill="url(#heat-gradient)" />
 						<text
@@ -2899,7 +2841,7 @@
 							y="206"
 							font-family="var(--font-sans, sans-serif)"
 							font-size="9"
-							fill="var(--ink-3)">5+/mnd</text
+							fill="var(--ink-3)">5+</text
 						>
 						<defs>
 							<linearGradient id="heat-gradient" x1="0" y1="0" x2="1" y2="0">
@@ -3008,7 +2950,7 @@
 								y="7"
 								font-family="var(--font-sans, sans-serif)"
 								font-size="9"
-								fill="var(--ink-3)">1 dossier</text
+								fill="var(--ink-3)">1 wijziging</text
 							>
 							<rect
 								x="80"
@@ -3034,13 +2976,13 @@
 								y="7"
 								font-family="var(--font-sans, sans-serif)"
 								font-size="9"
-								fill="var(--ink-3)">meerdere dossiers</text
+								fill="var(--ink-3)">meerdere wijzigingen</text
 							>
 						</g>
 					</svg>
 					<figcaption>
 						<span class="cap-key"
-							>Activiteit toont citatie-dichtheid als hitte-halo rondom de bron.</span
+							>Activiteit toont recent toegevoegde verbindingen als hitte-halo rondom de bron.</span
 						>
 						<span class="cap-key"
 							>Mutatie toont open wetsvoorstellen als badge rechtsboven de bron.</span
@@ -3050,30 +2992,27 @@
 
 				<h3 class="sub-title">Filters: wat is zichtbaar</h3>
 				<p class="section-body">
-					Onder <em>Filters</em> staan de drie verbindingscategorieën:
-					<em>Structureel</em> (hiërarchie binnen een wet), <em>Wijziging</em>
-					(dossier → artikel), <em>Inhoudelijk</em> (citaties en verwijzingen). De bronnen blijven
-					staan; alleen de getekende lijnen veranderen.
-					<em>Toon scaffolding-verbindingen</em> maakt fijnmazige structurele verbindingen (afdelingen,
-					paragrafen) zichtbaar die anders verborgen blijven.
+					Onder <em>Filters</em> staan de drie verbindingscategorieën als schakelaar:
+					<em>Vaste verwijzing</em> (structureel), <em>Wijziging via Kamer</em> (wijziging) en
+					<em>Inhoudelijk verband</em> (citatie). De bronnen blijven staan; alleen de getekende lijnen
+					veranderen.
 				</p>
 
 				<h3 class="sub-title">Detail-niveau: Wetten of Artikelen</h3>
 				<p class="section-body">
-					Boven de zijbalk staat een tweestandige schakelaar: <em>Wetten</em> /
-					<em>Artikelen</em>. In <em>Artikelen</em> verschijnt elk wetsartikel als eigen bron
-					(standaardweergave). In <em>Wetten</em> worden artikelen samengevouwen tot één bron per wet.
-					Bruikbaar voor vogelvlucht over verbanden tussen wetten zonder dat afzonderlijke artikelen worden
-					onderscheiden. De labels boven elk wet-cluster blijven zichtbaar zolang het beeld niet sterk
-					is ingezoomd.
+					Bij <em>Wetten</em> onder <em>Inhoud laden</em> staat een tweestandige schakelaar:
+					<em>Artikelen</em> / <em>Wetten</em>. In <em>Artikelen</em> verschijnt elk wetsartikel als
+					eigen bron (standaardweergave). In <em>Wetten</em> worden artikelen samengevouwen tot één bron
+					per wet. Geschikt voor een overzicht van de verbindingen tussen wetten. De labels boven elk
+					wet-cluster blijven zichtbaar zolang het beeld niet sterk is ingezoomd.
 				</p>
 
 				<h3 class="sub-title">Citatiespoor: wie verwijst naar wat</h3>
 				<p class="section-body">
-					In <em>Gesplitst</em>-modus verschijnt rechts naast de wettekst een derde kolom: het
-					citatiespoor. Het toont per geselecteerde bron welke bronnen ernaar verwijzen (<em
-						>inkomend</em
-					>) en waar de bron zelf naar verwijst (<em>uitgaand</em>), in chronologische groepen. Klik
+					In <em>Verdiepen</em>-modus verschijnt rechts naast de wettekst een derde kolom: het
+					citatiespoor. Het toont per geselecteerde bron waar de bron naar verwijst (<em
+						>Verwijst naar</em
+					>) en welke bronnen ernaar verwijzen (<em>Aangehaald door</em>), gegroepeerd per wet. Klik
 					op een rij om die bron te focussen; netwerk en wettekst springen mee.
 				</p>
 
@@ -3082,15 +3021,10 @@
 					Het leespaneel toont per brontype een eigen weergave. Voor wetsartikelen:
 				</p>
 				<ul class="reader-list">
-					<li>De volledige wettekst, met genummerde leden en onderdelen.</li>
+					<li>De volledige wettekst.</li>
 					<li>
-						Een <em>In behandeling · N</em>-badge bij aanhangige wetsvoorstellen die dit artikel
-						beogen te wijzigen. Onder de titel staan klikbare chips per open dossier. Elke chip
-						linkt rechtstreeks naar het netwerk met dat dossier als overlay-scope.
-					</li>
-					<li>
-						Inklapbare <em>memorie van toelichting</em> (MvT) per artikel, paragrafen worden op aanvraag
-						geladen.
+						Een <em>In behandeling</em>-label met het aantal open dossiers, bij aanhangige
+						wetsvoorstellen die dit artikel beogen te wijzigen.
 					</li>
 					<li>
 						Een wetgevingsgeschiedenis-kaart onderaan: alle dossiers die dit artikel hebben
@@ -3103,65 +3037,65 @@
 					Naast Ontdekken / Verdiepen / Lezen kent de verkenner een vierde weergave:
 					<em>Index</em> (URL: <code>?mode=index&amp;kind=dossiers</code>). Geen netwerk, maar een
 					filterbare lijst per brontype. Geschikt voor verkenning zonder vertrekpunt en voor zoeken
-					naar een entiteit zonder bekende naam. Een klik op een rij opent die bron in
+					naar een bron zonder bekende naam. Een klik op een rij opent die bron in
 					<em>Verdiepen</em>.
 				</p>
 				<p class="section-body">De index telt zeven categorieën, elk met eigen filters:</p>
 				<ul class="reader-list">
 					<li>
-						<a href="/explore?mode=index&amp;kind=wetten"><code>?kind=wetten</code></a> &mdash; wet- en
-						regelgeving (BWB). Filter op jurisdictie en domein.
+						<a href="/explore?mode=index&amp;kind=instruments"><code>?kind=instruments</code></a>:
+						wet- en regelgeving (BWB). Filter op jurisdictie en soort regeling.
 					</li>
 					<li>
-						<a href="/explore?mode=index&amp;kind=arresten"><code>?kind=arresten</code></a> &mdash; jurisprudentie.
-						Filter op instantie (cassatie, hof, rechtbank) en periode.
+						<a href="/explore?mode=index&amp;kind=judgments"><code>?kind=judgments</code></a>:
+						jurisprudentie. Filter op instantie (cassatie, hof, rechtbank) en periode.
 					</li>
 					<li>
-						<a href="/explore?mode=index&amp;kind=dossiers"><code>?kind=dossiers</code></a> &mdash;
-						kamerstukdossiers. Filter op huidige fase, op fase ooit doorlopen (<code
-							>?has_stage=</code
-						>) of op trajecttype.
+						<a href="/explore?mode=index&amp;kind=dossiers"><code>?kind=dossiers</code></a>:
+						kamerstukdossiers. Filter op huidige fase (<code>?stage=</code>), op fase ooit doorlopen
+						(<code>?has_stage=</code>) of op trajecttype (<code>?track=</code>).
 					</li>
 					<li>
-						<a href="/explore?mode=index&amp;kind=commissies"><code>?kind=commissies</code></a> &mdash;
+						<a href="/explore?mode=index&amp;kind=committees"><code>?kind=committees</code></a>:
 						vaste en tijdelijke commissies, met telling van lopende dossiers.
 					</li>
 					<li>
-						<a href="/explore?mode=index&amp;kind=leden"><code>?kind=leden</code></a> &mdash; leden van
-						de Tweede Kamer. Filter op partij.
+						<a href="/explore?mode=index&amp;kind=members"><code>?kind=members</code></a>: leden van
+						de Tweede Kamer. Filter op partij (<code>?party=</code>).
 					</li>
 					<li>
-						<a href="/explore?mode=index&amp;kind=fracties"><code>?kind=fracties</code></a> &mdash; fracties,
-						met zetelaantallen en partijkleur.
+						<a href="/explore?mode=index&amp;kind=factions"><code>?kind=factions</code></a>:
+						fracties, met zetelaantallen en partijkleur.
 					</li>
 					<li>
-						<a href="/explore?mode=index&amp;kind=stemmingen"><code>?kind=stemmingen</code></a> &mdash;
-						plenaire stemmingen. Filter op uitslag (aangenomen / verworpen) en periode.
+						<a href="/explore?mode=index&amp;kind=decisions"><code>?kind=decisions</code></a>:
+						plenaire stemmingen. Filter op uitslag (<code>?passed=</code>), partij en periode (<code
+							>?from=</code
+						>, <code>?to=</code>).
 					</li>
 				</ul>
 
 				<h3 class="sub-title">Deelbare URL</h3>
 				<p class="section-body">
-					Een netwerk delen gebeurt via de URL. Modus, focus, overlay en "toon meer verbanden" zijn
-					erin opgenomen; de ontvanger ziet exact hetzelfde beeld. Voorbeelden:
+					Een weergave delen gebeurt via de URL. Modus, focus, overlay en de keuze om alle bronnen
+					van een uitbreiding te tonen (<code>all</code>) zijn erin opgenomen. Het netwerk wordt bij
+					de ontvanger opnieuw opgebouwd rond de focus. Voorbeelden:
 				</p>
 				<ul class="reader-list">
 					<li>
-						<code>/explore?focus=instrument_articles/bwbr0001854_140&amp;mode=split</code>
-						(art. 140 Sv geopend in Verdiepen-modus).
+						<code>/explore?focus=articles/bwbr0001854_140&amp;mode=split</code>
+						(art. 140 Sr geopend in Verdiepen-modus).
 					</li>
 					<li>
-						<code>/explore?focus=kamerstukdossiers/36281&amp;overlay=dossier:36281</code>
-						(dossier 36281 op de grafiek, met Mutatie-overlay aan).
+						<code>/explore?focus=dossiers/36281&amp;overlay=dossier:36281</code>
+						(dossier 36281 in het netwerk, met Mutatie-overlay aan).
 					</li>
-					<li><code>/explore?mode=index&amp;kind=leden</code> (index van alle kamerleden).</li>
+					<li><code>/explore?mode=index&amp;kind=members</code> (index van kamerleden).</li>
 				</ul>
 
 				<div class="scope-note scope-note--tip">
-					<strong>Deelbare URL:</strong> de toestand van de verkenner (modus, geselecteerde bron,
-					actieve wet, overlays, "toon meer verbanden") is in de URL gecodeerd. De
-					<em>Deel</em>-knop in de statusbalk toont een preview van het beeld dat de ontvanger
-					krijgt.
+					<strong>Deelbare URL:</strong> modus, geselecteerde bron, actieve wet en overlay staan in
+					de URL. De <em>Deel</em>-knop in de statusbalk kopieert de link.
 				</div>
 				<nav class="section-nav" aria-label="Sectie-navigatie">
 					<button type="button" class="section-nav__link" onclick={() => setSection('corpus')}>
@@ -3192,8 +3126,8 @@
 					patronen die de zoekindex herkent.
 				</p>
 				<p class="section-intro">
-					Vanaf elke pagina opent <kbd>{modKey}K</kbd> het zoekvenster. Het doorzoekt artikelen, uitspraken
-					en dossiers via een volledige-tekstindex.
+					Vanaf elke pagina opent <kbd>{modKey}K</kbd> het zoekvenster. Het doorzoekt instrumenten, artikelen,
+					uitspraken, dossiers, documenten, commissies, kamerleden en fracties via een volledige-tekstindex.
 				</p>
 				<div class="search-grid">
 					<div class="search-item">
@@ -3205,12 +3139,12 @@
 						<div class="search-item__ex">"ECLI:NL:HR:2024:1"</div>
 					</div>
 					<div class="search-item">
-						<div class="search-item__label">Op citeertitel of afkorting</div>
-						<div class="search-item__ex">"Awb art. 3:4", "BW 6:162"</div>
+						<div class="search-item__label">Op citeertitel</div>
+						<div class="search-item__ex">"Huisvestingswet 2014"</div>
 					</div>
 					<div class="search-item">
 						<div class="search-item__label">Op dossiernummer of titel</div>
-						<div class="search-item__ex">"36410", "Klimaatwet"</div>
+						<div class="search-item__ex">"36831", "Klimaatwet"</div>
 					</div>
 				</div>
 
@@ -3308,11 +3242,11 @@
 				<p class="section-body">
 					Resultaten worden gegroepeerd per type: Wetgeving (instrumenten en artikelen), Rechtspraak
 					(per rechterlijke laag), Parlementair (dossiers, commissies, kamerleden, fracties,
-					publicaties). <kbd>↓</kbd> /
+					documenten). <kbd>↓</kbd> /
 					<kbd>↑</kbd> en <kbd>Enter</kbd> navigeren de lijst.
 				</p>
 				<p class="section-body">
-					Per type worden maximaal acht tot tien resultaten getoond. Bij meer treffers verschijnt
+					Per type worden maximaal zes tot tien resultaten getoond. Bij meer treffers verschijnt
 					onderaan de groep <em>+ N meer →</em>, dat naar de volledige
 					<a href="/search">zoekpagina</a>
 					leidt met tot vijftig resultaten per type. De zoekpagina kent diepe links naar afzonderlijke
@@ -3322,10 +3256,10 @@
 
 				<h3 class="sub-title">Wat de zoekindex wel en niet ziet</h3>
 				<p class="section-body">
-					De zoekindex werkt het beste op herkenbare kernwoorden: wetnamen, citaties, ECLI-nummers
-					en kamerstuknummers. Verbose dossiertitels worden niet integraal geïndexeerd: een lange
-					titel levert vaak geen treffer, terwijl het kamerstuknummer of de citeertitel wel
-					resultaat geeft. Zoek bij twijfel op het nummer of de korte naam van de wet.
+					De zoekindex zoekt op tekstdelen: <em>vordering</em> vindt ook <em>Strafvordering</em>.
+					Resultaten zijn niet op relevantie gerangschikt. Een artikelnotatie als <em>BW 6:162</em> wordt
+					niet omgezet naar het artikel; zoek in dat geval op de naam van de wet of op de wettekst. Een
+					net toegevoegde bron kan kort ontbreken.
 				</p>
 				<p class="section-body">
 					Een klik op een resultaat opent de verkenner op die bron. Het omliggende netwerk wordt
@@ -3375,8 +3309,9 @@
 						<div class="edge-body">
 							<span class="edge-label">Structureel</span>
 							<span class="edge-desc"
-								>Hiërarchische positie in de wet: hoofdstuk, afdeling of paragraaf boven een
-								artikel.</span
+								>Plaats van een bron in een geheel en de vaste verwijzingen in de wettekst: een
+								artikel is onderdeel van een instrument (<em>PART_OF</em>), artikelen verwijzen naar
+								elkaar (<em>REFERS_TO</em>).</span
 							>
 						</div>
 					</div>
@@ -3396,8 +3331,11 @@
 						<div class="edge-body">
 							<span class="edge-label">Citatie</span>
 							<span class="edge-desc"
-								>Een uitspraak of artikel verwijst expliciet naar een ander artikel met een formele
-								artikelnotatie.</span
+								>Een uitspraak of document verwijst naar een artikel, instrument of uitspraak (<em
+									>REFERS_TO</em
+								>). Een uitspraak in hoger beroep verwijst naar de bestreden uitspraak (<em
+									>APPEAL_OF</em
+								>).</span
 							>
 						</div>
 					</div>
@@ -3418,18 +3356,21 @@
 						<div class="edge-body">
 							<span class="edge-label">Wijziging</span>
 							<span class="edge-desc"
-								>Een wet of amendement wijzigt, vervangt of intrekt een eerder artikel. Gebaseerd op
-								de officiële BWBR-wijzigingsverbindingen.</span
+								>Een instrument of wetsvoorstel wijzigt (<em>AMENDS</em>), voegt toe (<em
+									>INTRODUCES</em
+								>) of trekt in (<em>REPEALS</em>) een artikel of instrument. Een vastgestelde
+								wijziging heeft de status <em>canoniek</em>, een voorstel de status
+								<em>voorgesteld</em>.</span
 							>
 						</div>
 					</div>
 				</div>
 				<p class="section-body">
-					Verbindingstellingen per bron staan in het zijpaneel: inkomend structureel, uitgaand
-					structureel, inkomende citaten, uitgaande citaten. Een hoog aantal inkomende citaten duidt
-					doorgaans op een juridisch actief of omstreden artikel. In de zijbalk onder
-					<em>Verbindingen</em> is elke categorie afzonderlijk in- of uit te schakelen; de bronnen blijven
-					staan, alleen de getekende lijnen veranderen.
+					Het citatiespoor toont per bron de inkomende en uitgaande verwijzingen. Een hoog aantal
+					inkomende verwijzingen duidt doorgaans op een juridisch actief of omstreden artikel. De
+					categorie van een verbinding volgt uit het type en de bron: <em>REFERS_TO</em> tussen twee artikelen
+					is structureel, vanuit een uitspraak of document een citatie. In de zijbalk is elke categorie
+					afzonderlijk in- of uit te schakelen; de bronnen blijven staan, alleen de getekende lijnen veranderen.
 				</p>
 				<figure class="diagram diagram--graph-types">
 					<svg
@@ -3451,7 +3392,7 @@
 							font-family="var(--font-serif, Georgia, serif)"
 							font-size="12"
 							font-style="italic"
-							fill="var(--ink-3)">deel_van</text
+							fill="var(--ink-3)">PART_OF</text
 						>
 						<text
 							x="166"
@@ -3468,7 +3409,7 @@
 							font-family="var(--font-serif, Georgia, serif)"
 							font-size="12"
 							font-style="italic"
-							fill="var(--indigo)">verwijst_naar</text
+							fill="var(--indigo)">REFERS_TO</text
 						>
 						<text
 							x="220"
@@ -3493,7 +3434,7 @@
 							font-family="var(--font-serif, Georgia, serif)"
 							font-size="12"
 							font-style="italic"
-							fill="var(--spine)">wijzigt</text
+							fill="var(--spine)">AMENDS</text
 						>
 						<text
 							x="318"
@@ -3629,6 +3570,84 @@
 					</figcaption>
 				</figure>
 
+				<h3 class="sub-title">Achttien verbindingstypen</h3>
+				<p class="section-body">
+					Elke verbinding heeft een van achttien typen. Er is één <em>PART_OF</em> en één
+					<em>REFERS_TO</em> voor alle brontypen; de brontypen aan beide uiteinden bepalen om welke soort
+					het gaat.
+				</p>
+				<ul class="reader-list">
+					<li>
+						<code>PART_OF</code> artikel, bijlage, document of zaak → instrument, zaak of dossier. Onderdeel
+						van een geheel.
+					</li>
+					<li>
+						<code>VERSION_OF</code> versie → instrument of artikel. Een gedateerde toestand met een begin-
+						en einddatum.
+					</li>
+					<li>
+						<code>AMENDS</code> instrument of document → instrument of artikel. Wijzigt bestaande
+						tekst; bij een wetsvoorstel met de status <em>voorgesteld</em>.
+					</li>
+					<li>
+						<code>INTRODUCES</code> instrument of document → instrument of artikel. Voegt een artikel
+						of instrument toe.
+					</li>
+					<li>
+						<code>REPEALS</code> instrument of document → instrument of artikel. Trekt een artikel of
+						instrument in.
+					</li>
+					<li>
+						<code>BASED_ON</code> instrument → artikel. De rechtsgrond uit de aanhef &ldquo;Gelet op&rdquo;.
+					</li>
+					<li>
+						<code>IMPLEMENTS</code> instrument → instrument. Een nationale regeling die een EU-richtlijn
+						implementeert.
+					</li>
+					<li>
+						<code>LEGISLATED_IN</code> instrument → dossier. Het dossier waarin een instrument tot stand
+						kwam.
+					</li>
+					<li>
+						<code>REFERS_TO</code> artikel, document of uitspraak → artikel, instrument of uitspraak.
+						Een verwijzing; tussen artikelen met een semantisch type.
+					</li>
+					<li>
+						<code>EXPLAINS</code> document → artikel of instrument. De toelichting bij een invoering of
+						wijziging.
+					</li>
+					<li>
+						<code>APPEAL_OF</code> uitspraak → uitspraak. Hoger beroep of cassatie tegen de bestreden
+						uitspraak.
+					</li>
+					<li>
+						<code>SCOPED_BY</code> artikel → bijlage. De reikwijdte van het artikel volgt uit de bijlage.
+					</li>
+					<li>
+						<code>ABOUT</code> activiteit, stemming of toezegging → zaak of dossier. Het onderwerp.
+					</li>
+					<li><code>LED_BY</code> activiteit → commissie. De voortouwcommissie.</li>
+					<li>
+						<code>MADE_IN</code> toezegging → activiteit. De activiteit waarin de toezegging is gedaan.
+					</li>
+					<li>
+						<code>MEMBER_OF</code> kamerlid → commissie of fractie. Lidmaatschap met periode en rol.
+					</li>
+					<li>
+						<code>AUTHORED</code> kamerlid → document of zaak. Ondertekenaar of indiener, met rol.
+					</li>
+					<li>
+						<code>VOTED</code> kamerlid of fractie → stemming. Bij een hoofdelijke stemming per kamerlid,
+						anders per fractie.
+					</li>
+				</ul>
+				<p class="section-body">
+					Een verwijzing tussen twee artikelen kan een semantisch type dragen: voorwaarde,
+					reikwijdtebeperking, procedure, definitie, uitzondering, delegatie of een verwijzing
+					zonder nadere aard. Elke verbinding heeft een status en, waar ze is afgeleid, een
+					betrouwbaarheid tussen 0 en 1.
+				</p>
+
 				<nav class="section-nav" aria-label="Sectie-navigatie">
 					<button type="button" class="section-nav__link" onclick={() => setSection('zoeken')}>
 						<span class="section-nav__dir">← Vorige</span>
@@ -3666,7 +3685,7 @@
 					Concordans bevat de parlementaire context van wetgeving. Elk dossier kent een fase-cyclus
 					die de huidige stand beschrijft. Aan de artikelkant is per artikel zichtbaar welke
 					dossiers het hebben gewijzigd. Twee overlays tonen welke artikelen in beweging zijn of
-					veel worden aangehaald.
+					recent veel verbindingen kregen.
 				</p>
 				<figure class="diagram diagram--lifecycle">
 					<svg
@@ -3923,21 +3942,21 @@
 						<a href="/explore?mode=index&kind=dossiers" class="parl-card__link">
 							<div class="parl-card__title">Wetgevingsdossiers</div>
 							<div class="parl-card__desc">
-								Elk wetgevingsdossier heeft een tijdlijn van activiteiten: debatten, stemmingen,
-								toezeggingen en ingediende amendementen. De tijdlijn is gesorteerd op datum en te
-								filteren op activiteitstype. Vanaf de dossierpagina is direct doorklikken naar de
-								bijbehorende bronnen in het netwerk mogelijk.
+								Elk wetgevingsdossier heeft een tijdlijn van documenten, activiteiten, stemmingen en
+								toezeggingen. De tijdlijn is gesorteerd op datum en te filteren op type. Vanaf de
+								dossierpagina is direct doorklikken naar de bijbehorende bronnen in het netwerk
+								mogelijk.
 							</div>
 							<span class="parl-card__arrow">→</span>
 						</a>
 					</div>
 					<div class="parl-card">
-						<a href="/explore?mode=index&kind=commissies" class="parl-card__link">
+						<a href="/explore?mode=index&kind=committees" class="parl-card__link">
 							<div class="parl-card__title">Commissies</div>
 							<div class="parl-card__desc">
 								Overzicht van parlementaire commissies met hun actieve dossiertellingen. De
-								commissiepagina leidt naar alle lopende wetgevingstrajecten die door die commissie
-								worden behandeld.
+								commissiepagina toont de huidige leden en de dossiers waarvoor de commissie de
+								voortouwcommissie is.
 							</div>
 							<span class="parl-card__arrow">→</span>
 						</a>
@@ -3946,26 +3965,26 @@
 						<a href="/publications" class="parl-card__link">
 							<div class="parl-card__title">Parlementaire documenten</div>
 							<div class="parl-card__desc">
-								Doorzoekbaar archief van memories van toelichting, voorstellen van wet, nota's van
-								wijziging, amendementen, moties en brieven, met filter op documenttype en koppeling
-								naar gerelateerde wetsartikelen.
+								Doorzoekbaar archief van Kamerstukken van de Tweede en Eerste Kamer (memories van
+								toelichting, voorstellen van wet, nota's van wijziging, amendementen, moties en
+								brieven), met filter op soort en Kamer en het aantal gekoppelde artikelen.
 							</div>
 							<span class="parl-card__arrow">→</span>
 						</a>
 					</div>
 					<div class="parl-card">
-						<a href="/explore?mode=index&kind=leden" class="parl-card__link">
+						<a href="/explore?mode=index&kind=members" class="parl-card__link">
 							<div class="parl-card__title">Kamerleden</div>
 							<div class="parl-card__desc">
-								De zittende Tweede Kamer, gefilterd op partij. Een ledenpagina toont
-								fractielidmaatschap, commissieposten en de wetgevings- en stemmingsactiviteit van
-								het lid.
+								De leden van de Tweede Kamer, gefilterd op partij. Een ledenpagina toont
+								fractielidmaatschap, commissiezetels, stemmen en de instrumenten waarvoor het lid
+								wijzigingen heeft voorgesteld.
 							</div>
 							<span class="parl-card__arrow">→</span>
 						</a>
 					</div>
 					<div class="parl-card">
-						<a href="/explore?mode=index&kind=fracties" class="parl-card__link">
+						<a href="/explore?mode=index&kind=factions" class="parl-card__link">
 							<div class="parl-card__title">Fracties &amp; zetelverdeling</div>
 							<div class="parl-card__desc">
 								De huidige fracties met hun zetelaantal en partijkleur. De indexweergave bevat een
@@ -3976,12 +3995,12 @@
 						</a>
 					</div>
 					<div class="parl-card">
-						<a href="/explore?mode=index&kind=stemmingen" class="parl-card__link">
+						<a href="/explore?mode=index&kind=decisions" class="parl-card__link">
 							<div class="parl-card__title">Stemmingen</div>
 							<div class="parl-card__desc">
 								Plenaire stemmingen met uitslag, datum en het dossier waarop ze betrekking hebben.
 								Filter op aangenomen of verworpen, en op periode. Een stemmingspagina toont de
-								stemming per fractie.
+								stemming per fractie, bij een hoofdelijke stemming per lid.
 							</div>
 							<span class="parl-card__arrow">→</span>
 						</a>
@@ -3989,17 +4008,16 @@
 					<div class="parl-card parl-card--overlay">
 						<div class="parl-card__title">Wetgevingsgeschiedenis</div>
 						<div class="parl-card__desc">
-							Een artikel toont in de leesweergave de dossiers die het aangelegd, gewijzigd of
-							ingetrokken hebben, met de fase per dossier en een directe link naar het netwerk van
-							dat dossier.
+							Een artikel toont in de leesweergave de dossiers die het hebben ingevoerd, gewijzigd
+							of ingetrokken, of voorstellen dat te doen, met de fase per dossier en een directe
+							link naar het netwerk van dat dossier.
 						</div>
 					</div>
 					<div class="parl-card parl-card--overlay">
 						<div class="parl-card__title">Mutatie-overlay</div>
 						<div class="parl-card__desc">
 							Markeert in de netwerkweergave bronnen waarvoor een wetsvoorstel aanhangig is. Een
-							klein gekleurd badge boven de bron toont het aantal dossiers dat de bron beoogt te
-							wijzigen.
+							klein gekleurd badge boven de bron toont het aantal voorgestelde wijzigingen.
 							<code>?overlay=open</code> voor alle lopende dossiers,
 							<code>?overlay=dossier:36410</code> voor één dossier.
 						</div>
@@ -4007,9 +4025,9 @@
 					<div class="parl-card parl-card--overlay">
 						<div class="parl-card__title">Activiteit-overlay</div>
 						<div class="parl-card__desc">
-							Hitte-halo rond bronnen op basis van het aantal citaties per maand in een glijdend
-							venster (3, 6, 12 of 24 maanden). Langere vensters laten halo's groeien naarmate
-							citaties zich opstapelen.
+							Hitte-halo rond bronnen op basis van het aantal verbindingen dat in de afgelopen 3, 6,
+							12 of 24 maanden is toegevoegd. Langere vensters laten halo's groeien naarmate
+							verbindingen zich opstapelen.
 							<code>?overlay=heat:12</code> activeert de overlay direct. Activiteit en Mutatie sluiten
 							elkaar uit.
 						</div>
@@ -4051,8 +4069,9 @@
 				</p>
 				<p class="section-intro">
 					De data in Concordans is beschikbaar via een REST-API, te gebruiken voor eigen analyses,
-					integraties in juridische tools of academisch onderzoek. De endpoints zijn vrij
-					toegankelijk zonder registratie of sleutel, maar wel rate-limited.
+					integraties in juridische tools of academisch onderzoek. Lezen vraagt geen registratie of
+					sleutel. De limiet is 200 verzoeken per minuut per IP-adres; herkomsten op de toegestane
+					lijst vallen erbuiten. Bij overschrijding volgt 429 met een Retry-After-header.
 				</p>
 				<a class="api-cta" href="/api">
 					<div class="api-cta__head">
@@ -4061,9 +4080,9 @@
 					</div>
 					<div class="api-cta__url"><code>concordans.nl/api</code></div>
 					<div class="api-cta__desc">
-						Interactieve referentie van alle endpoints, parameters en responses, gegenereerd uit de
-						OpenAPI-spec van de backend. Gegroepeerd per domein (Wetsartikelen, Uitspraken,
-						Dossiers, Commissies, …), met voorbeelden per endpoint.
+						Referentie van alle endpoints, parameters en responses, gegenereerd uit de OpenAPI-spec
+						van de backend. Gegroepeerd per domein (Instrumenten, Artikelen, Uitspraken, Dossiers,
+						…), met het schema van elk antwoord en de sleutel die een route vraagt.
 					</div>
 				</a>
 				<p class="section-body">Enkele oriëntatiepunten:</p>
@@ -4076,24 +4095,34 @@
 					</li>
 					<li>
 						<strong>Zoeken.</strong> <code>/api/search?q=…&amp;types=…&amp;limit=…</code>
-						geeft gegroepeerde resultaten per type. Het <code>limit</code>
+						geeft gegroepeerde resultaten per type. Herhaal <code>types</code> voor meer dan één
+						type (<code>types=articles&amp;types=dossiers</code>). Het <code>limit</code>
 						is per type, niet totaal.
 					</li>
 					<li>
-						<strong>Netwerk-queries.</strong> <code>/api/nodes/expand</code>
-						geeft de directe omgeving van een bron;
-						<code>/api/dossiers/&#123;kamerstuknummer&#125;/mutations</code> het wijzigingsnetwerk van
-						een dossier.
+						<strong>Netwerk-queries.</strong>
+						<code>/api/nodes/&#123;collection&#125;/&#123;key&#125;</code> geeft een bron met al
+						haar buren; <code>…/neighborhood</code> de omgeving binnen <code>depth</code> stappen;
+						<code>/api/dossiers/&#123;number&#125;/mutations</code> het wijzigingsnetwerk van een dossier.
 					</li>
 					<li>
-						<strong>Synchronisatie.</strong> <code>/api/stats</code>
-						toont netwerkomvang en de timestamp van de laatste sync per bron.
+						<strong>Omvang.</strong> <code>/api/stats</code> toont het aantal bronnen per collectie en
+						het aantal verbindingen per type.
+					</li>
+					<li>
+						<strong>Sleutels.</strong> Routes die schrijven (volgen, stemmen op een verband, taggen
+						van verbanden) vragen de header <code>X-Write-Key</code> of
+						<code>X-Curation-Key</code>. De sleutel staat op een server; een browser kan er geen
+						bewaren.
+					</li>
+					<li>
+						<strong>Cache.</strong> Artikelen worden 30 minuten gecachet, uitspraken 1 uur, statistieken
+						5 minuten en overige antwoorden 60 seconden.
 					</li>
 				</ul>
 				<div class="scope-note">
 					Voor grootschalig gebruik of integratievragen graag
-					<a href="/contact">contact</a> opnemen. Hogere limieten en een eigen sleutel zijn dan in te
-					richten.
+					<a href="/contact">contact</a> opnemen. Hogere limieten zijn dan in te richten.
 				</div>
 				<nav class="section-nav" aria-label="Sectie-navigatie">
 					<button
@@ -4137,10 +4166,11 @@
 				<div class="limit-grid">
 					<article class="limit-card">
 						<div class="limit-card__kicker">a · institutioneel</div>
-						<h3 class="limit-card__title">Eerste Kamer ontbreekt</h3>
+						<h3 class="limit-card__title">Eerste Kamer is beperkt gedekt</h3>
 						<p class="limit-card__body">
-							De parlementaire laag dekt uitsluitend de Tweede Kamer: dossiers, kamerleden,
-							fracties, stemmingen en commissies. Behandelingen, stemmingen en moties van de Eerste
+							Van de Eerste Kamer zijn de Kamerstukken opgenomen, gekoppeld aan het dossier van de
+							Tweede Kamer met hetzelfde nummer. Kamerleden, fracties, commissies en stemmingen
+							dekken uitsluitend de Tweede Kamer. Behandelingen, stemmingen en moties van de Eerste
 							Kamer ontbreken, evenals de doorwerking van senaatsamendementen in de
 							wetgevingsgeschiedenis. Voor controle op senaatsbehandeling verwijst <a
 								href="https://www.eerstekamer.nl">eerstekamer.nl</a
@@ -4152,10 +4182,11 @@
 						<div class="limit-card__kicker">b · supranationaal</div>
 						<h3 class="limit-card__title">EU- en verdragsrecht is dun</h3>
 						<p class="limit-card__body">
-							De dekking van EUR-Lex en internationaal verdragsrecht is niet betrouwbaar.
-							Verbindingen tussen Nederlandse en Unierechtelijke instrumenten zijn fragmentarisch;
-							van internationale verdragen ontbreken bepalingen en uitspraken van het EHRM en het
-							Hof van Justitie. Voor onderzoek met een EU- of EVRM-component blijven
+							Europese richtlijnen en verordeningen zijn opgenomen voor zover Nederlandse regelingen
+							ernaar verwijzen; de dekking is niet volledig. Verbindingen tussen Nederlandse en
+							Unierechtelijke instrumenten zijn fragmentarisch. Verdragen zijn opgenomen als
+							instrument. Van het EHRM zijn uitspraken opgenomen; de dekking van het Hof van
+							Justitie is niet betrouwbaar. Voor onderzoek met een EU- of EVRM-component blijven
 							<a href="https://eur-lex.europa.eu">eur-lex.europa.eu</a>
 							en <a href="https://hudoc.echr.coe.int">hudoc.echr.coe.int</a>
 							de primaire bronnen.
@@ -4164,26 +4195,22 @@
 
 					<article class="limit-card">
 						<div class="limit-card__kicker">c · actualisering</div>
-						<h3 class="limit-card__title">Geen geautomatiseerde pijplijn</h3>
+						<h3 class="limit-card__title">Geen doorlopende actualisering</h3>
 						<p class="limit-card__body">
-							Actualisering verloopt handmatig op vaste momenten. Een geplande pijplijn met
-							cron-taken, observatie en een status-dashboard per bron is in ontwikkeling. Tussen
-							actualiseringen loopt het netwerk achter op de officiële bronnen; de geldigheidsdatum
-							in de werkbalk markeert de laatste sync. Zie de <a href="/api">API-statusendpoint</a>
-							voor de actuele tijdstempels per bron.
+							Actualisering verloopt in runs per bron, niet doorlopend. Tussen twee runs loopt het
+							netwerk achter op de officiële bronnen. De geldigheidsdatum in de werkbalk is de
+							inwerkingtredingsdatum van de getoonde bron, geen synchronisatiedatum. Een tijdstempel
+							van de laatste run is niet beschikbaar.
 						</p>
 					</article>
 
 					<article class="limit-card">
 						<div class="limit-card__kicker">d · dekking</div>
-						<h3 class="limit-card__title">Onvolledige seeding</h3>
+						<h3 class="limit-card__title">Onvolledige belading</h3>
 						<p class="limit-card__body">
-							De initiële belading is thematisch: het zwaartepunt ligt op strafrecht en
-							strafprocesrecht. Niet alle BWB-instrumenten, niet de volledige
-							Rechtspraak.nl-collectie en niet het volledige TK-archief zijn opgenomen. Een
-							volledige geautomatiseerde seed van alle relevante bronnen wordt voorbereid; tot die
-							tijd is afwezigheid van een resultaat geen bewijs van afwezigheid in de officiële
-							bronnen.
+							De belading is een selectie. Niet alle BWB-instrumenten, niet de volledige
+							Rechtspraak.nl-collectie en niet het volledige TK-archief zijn opgenomen. Afwezigheid
+							van een resultaat is geen bewijs van afwezigheid in de officiële bronnen.
 						</p>
 					</article>
 				</div>

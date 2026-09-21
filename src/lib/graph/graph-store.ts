@@ -23,7 +23,6 @@ export function createGraphStore(): GraphStore {
 		edges: ctx.edgesStore,
 		selection: ctx.selectionStore,
 		pinned: ctx.pinnedStore,
-		breadcrumbs: ctx.breadcrumbsStore,
 		canGoBack: ctx.canGoBackStore,
 		canGoForward: ctx.canGoForwardStore,
 		filters: ctx.filtersStore,

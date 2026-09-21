@@ -1,15 +1,14 @@
 <script lang="ts">
-	// Reader for instrument_articles: article text (or leden), open dossiers
-	// that target the article, prev/next navigation, MvT and legislative history.
+	// Reader for articles: text with links to the articles it cites, the number of
+	// open dossiers that target the article, prev/next navigation and, on request,
+	// the legislative history.
+	import { api, unwrap } from '$lib/api/client';
 	import { getArticleDetail } from '$lib/api/articles';
 	import { recordInstrument } from '$lib/api/instrument-cache';
-	import { fetchArticleLegislativeHistory } from '$lib/api/parliamentary-client';
-	import type { ArticleDetailResponse } from '$lib/api/types';
+	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import LidText from '$lib/components/articles/LidText.svelte';
 	import ArticleLegislativeHistory from '$lib/components/parliamentary/ArticleLegislativeHistory.svelte';
-	import ArticleMvtPanel from './ArticleMvtPanel.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 
@@ -25,84 +24,60 @@
 		onNext?: () => void;
 	} = $props();
 
-	// The generated schema predates citation_formats; the backend still sends it.
-	type ArticleDetail = ArticleDetailResponse & {
-		citation_formats?: { bibtex?: string | null } | null;
-	};
-
 	type View =
 		| { kind: 'empty' }
 		| { kind: 'loading' }
 		| { kind: 'error'; message: string }
-		| { kind: 'loaded'; data: ArticleDetail };
-
-	// Open dossiers (status 'voorgesteld') targeting this article, deduped by
-	// kamerstuknummer.
-	type InFluxDossier = { nummer: string; titel: string | null };
+		| { kind: 'loaded'; data: Schema<'ArticleDetailResponse'> };
 
 	let view = $state<View>({ kind: 'empty' });
-	let inFluxDossiers = $state<InFluxDossier[]>([]);
-	let token = 0;
+	let openDossiers = $state(0);
 
-	/** Feed the law name to the instrument cache so the status bar and the
-	 *  citation panel show it without loading the instrument separately. */
-	function recordLawName(bwb: string, data: ArticleDetail) {
-		const bibtex = data.citation_formats?.bibtex;
-		if (!bibtex) return;
-		const shortTitle = bibtex.match(/shorttitle\s*=\s*\{([^}]+)\}/)?.[1] ?? null;
-		const law = bibtex.match(/\blaw\s*=\s*\{([^}]+)\}/)?.[1] ?? null;
-		recordInstrument({ bwb_id: bwb, short_title: shortTitle, citation_title: law, title: law });
-	}
-
-	function loadInFlux(bwb: string, art: string, t: number) {
-		fetchArticleLegislativeHistory(bwb, art)
-			.then((r) => {
-				if (t !== token) return;
-				const seen = new Set<string>();
-				const open: InFluxDossier[] = [];
-				for (const e of r.entries) {
-					const nummer = e.dossier_nummer;
-					if (e.status !== 'voorgesteld' || !nummer || seen.has(nummer)) continue;
-					seen.add(nummer);
-					open.push({ nummer, titel: e.dossier_titel });
-				}
-				inFluxDossiers = open;
-			})
-			.catch(() => {
-				// Best-effort: without the list the reader simply shows no chips.
-			});
-	}
+	// Primitives, so that a new selection object for the same article does not reload it.
+	const selected = $derived(selection !== null);
+	const bwbId = $derived(String(selection?.raw?.props?.bwb_id ?? ''));
+	const articleNumber = $derived(String(selection?.raw?.props?.article_number ?? ''));
 
 	$effect(() => {
-		const node = selection;
-		const t = ++token;
-		inFluxDossiers = [];
-		if (!node) {
+		openDossiers = 0;
+		if (!selected) {
 			view = { kind: 'empty' };
 			return;
 		}
-
-		const props = node.raw?.props as Record<string, unknown> | undefined;
-		// EU articles have no bwb_id; the celex stands in. The backend validates
-		// ^BWB[RrVv]\d{7}$, so the original casing must be kept.
-		const bwb = String(props?.['bwb_id'] ?? props?.['celex'] ?? '');
-		const art = String(props?.['article_number'] ?? '');
-		if (!bwb || !art) {
+		if (!bwbId || !articleNumber) {
 			view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
 			return;
 		}
 
+		let stale = false;
+		const controller = new AbortController();
 		view = { kind: 'loading' };
-		getArticleDetail(bwb, art)
+		getArticleDetail(bwbId, articleNumber)
 			.then((data) => {
-				if (t !== token) return;
-				recordLawName(bwb, data);
+				if (stale) return;
+				// The status bar and the citation panel read the law name from this cache.
+				if (data.instrument) {
+					recordInstrument({ bwb_id: bwbId, display_name: data.instrument.display_name });
+				}
 				view = { kind: 'loaded', data };
-				loadInFlux(bwb, art, t);
 			})
 			.catch(() => {
-				if (t === token) view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
+				if (!stale) view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
 			});
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}/in-flux', {
+				params: { path: { bwb_id: bwbId, article_number: articleNumber } },
+				signal: controller.signal
+			})
+		)
+			.then((r) => (openDossiers = r.open_dossier_count))
+			.catch(() => {
+				// The count is supplementary; without it the head simply shows nothing.
+			});
+		return () => {
+			stale = true;
+			controller.abort();
+		};
 	});
 </script>
 
@@ -118,50 +93,27 @@
 			tone="article"
 			kind="Artikel"
 			juris={d.instrument?.display_name}
-			title={a.display_name ?? `Art. ${a.article_number ?? '—'}`}
+			title={a.display_name ?? 'Artikel'}
 		>
-			{#if a.article_number && a.display_name && a.display_name !== `Art. ${a.article_number}`}
+			{#if a.article_number}
 				<div class="reader-cite">Art. {a.article_number}</div>
 			{/if}
-			{#if inFluxDossiers.length > 0}
+			{#if openDossiers > 0}
 				<div class="reader-influx-wrap">
 					<span class="reader-influx-label">
 						<span class="reader-influx-dot" aria-hidden="true"></span>
 						In behandeling
 					</span>
-					<ul class="reader-influx-list" aria-label="Open wetsvoorstellen">
-						{#each inFluxDossiers as dossier (dossier.nummer)}
-							<li>
-								<a
-									class="reader-influx-chip"
-									href="/explore?focus=kamerstukdossiers/{dossier.nummer}&overlay=dossier:{dossier.nummer}"
-									title={dossier.titel ?? `Dossier ${dossier.nummer}`}
-								>
-									<span class="reader-influx-chip__num">{dossier.nummer}</span>
-									<span class="reader-influx-chip__titel">{dossier.titel ?? 'Dossier'}</span>
-								</a>
-							</li>
-						{/each}
-					</ul>
+					<span class="reader-influx-count">
+						{openDossiers}
+						{openDossiers === 1 ? 'open dossier' : 'open dossiers'}
+					</span>
 				</div>
 			{/if}
 		</ReaderHead>
 
 		<div class="reader-body">
-			{#if d.leden && d.leden.length > 0}
-				<ol class="leden">
-					{#each d.leden as lid, i (i)}
-						<li class="lid">
-							<span class="lid-num" aria-hidden="true">{lid.number}</span>
-							<p class="lid-text">
-								<LidText text={lid.text} citaties={lid.citaties} {onNavigate} />
-							</p>
-						</li>
-					{/each}
-				</ol>
-			{:else}
-				<ArticleText text={a.text} citations={d.citations ?? []} {onNavigate} />
-			{/if}
+			<ArticleText text={a.text} citations={d.citations} {onNavigate} />
 		</div>
 
 		{#if onPrev || onNext}
@@ -183,11 +135,8 @@
 			</div>
 		{/if}
 
-		{#if a.bwb_id}
-			<ArticleMvtPanel bwbId={a.bwb_id} articleNumber={a.article_number} />
-			{#if a.article_number}
-				<ArticleLegislativeHistory bwbId={a.bwb_id} articleNumber={a.article_number} />
-			{/if}
+		{#if a.bwb_id && a.article_number}
+			<ArticleLegislativeHistory bwbId={a.bwb_id} articleNumber={a.article_number} />
 		{/if}
 	{/if}
 </ReaderFrame>
@@ -201,6 +150,9 @@
 	}
 
 	.reader-influx-wrap {
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
 		margin-bottom: 12px;
 	}
 
@@ -214,7 +166,12 @@
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		color: var(--ochre);
-		margin-bottom: 5px;
+	}
+
+	.reader-influx-count {
+		font-family: var(--font-sans);
+		font-size: 12px;
+		color: var(--ink-2);
 	}
 
 	.reader-influx-dot {
@@ -225,91 +182,10 @@
 		flex-shrink: 0;
 	}
 
-	.reader-influx-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px 6px;
-	}
-
-	.reader-influx-chip {
-		display: inline-flex;
-		align-items: baseline;
-		gap: 6px;
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--sepia);
-		background: var(--ochre-faint);
-		border: 1px solid var(--ochre-faint);
-		border-radius: var(--r-1);
-		padding: 2px 7px;
-		text-decoration: none;
-		max-width: 100%;
-		transition: background 80ms;
-	}
-
-	.reader-influx-chip:hover {
-		background: color-mix(in srgb, var(--ochre-faint) 70%, var(--paper-3));
-	}
-
-	.reader-influx-chip__num {
-		font-weight: 600;
-		letter-spacing: 0.02em;
-		flex-shrink: 0;
-	}
-
-	.reader-influx-chip__titel {
-		font-family: var(--font-serif);
-		font-style: italic;
-		color: var(--ink-2);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		max-width: 22ch;
-	}
-
 	.reader-body {
 		font-family: var(--font-serif);
 		font-size: 17px;
 		line-height: 1.68;
-		color: var(--ink);
-	}
-
-	.leden {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		counter-reset: lid;
-		max-width: calc(68ch + 32px + var(--s-3));
-	}
-
-	.lid {
-		display: grid;
-		grid-template-columns: 32px 1fr;
-		gap: var(--s-3);
-		margin-bottom: var(--s-5);
-	}
-
-	.lid:last-child {
-		margin-bottom: 0;
-	}
-
-	.lid-num {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-4);
-		line-height: 1.62;
-		padding-top: 4px;
-		text-align: right;
-	}
-
-	.lid-text {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: 18px;
-		line-height: 1.62;
 		color: var(--ink);
 	}
 

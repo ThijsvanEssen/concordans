@@ -1,73 +1,59 @@
 <script lang="ts">
-	import type { TimelineEntryDTO } from '$lib/api/parliamentary';
-	import SoortChipFilter from './SoortChipFilter.svelte';
-	import { partyColor } from '$lib/utils/party-color';
+	import type { Schema } from '$lib/api/types';
+	import { parseNodeId } from '$lib/vocabulary';
+	import KindChipFilter from './KindChipFilter.svelte';
 
-	let {
-		entries,
-		initialSoortFilter = new Set<string>(),
-		onSoortFilterChange,
-		partyColors = {}
-	}: {
-		entries: TimelineEntryDTO[];
-		initialSoortFilter?: Set<string>;
-		onSoortFilterChange?: (next: Set<string>) => void;
-		partyColors?: Record<string, string>;
-	} = $props();
+	type Entry = Schema<'TimelineEntryDTO'>;
+	type Tally = Record<string, number>;
 
-	function resolvePartyColor(abbr: string): string {
-		return partyColors[abbr] ?? partyColors[abbr.toUpperCase()] ?? partyColor(abbr);
-	}
+	// The schema leaves `body` untyped; these are the props the entries below read.
+	type Body = {
+		tally?: Tally;
+		passed?: boolean;
+		agenda_title?: string;
+		minister_name?: string;
+		text?: string;
+		status?: string;
+		url?: string;
+	};
+	const bodyOf = (entry: Entry) => (entry.body ?? {}) as Body;
+	const otherChoices = (tally: Tally) =>
+		Object.entries(tally).filter(([choice]) => choice !== 'Voor' && choice !== 'Tegen');
 
-	let soortFilter = $state<Set<string>>(initialSoortFilter);
+	// `entries` arrive newest first, as the API orders them by default.
+	let { entries }: { entries: Entry[] } = $props();
+
+	let kindFilter = $state(new Set<string>());
 	let newestFirst = $state(true);
 
-	// Derive ordered unique soort values by frequency (most common first)
-	const soorten = $derived.by(() => {
+	// Kinds by frequency, most common first.
+	const kinds = $derived.by(() => {
 		const freq = new Map<string, number>();
-		for (const e of entries) freq.set(e.soort, (freq.get(e.soort) ?? 0) + 1);
-		return [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([s]) => s);
+		for (const e of entries) freq.set(e.kind, (freq.get(e.kind) ?? 0) + 1);
+		return [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([kind]) => kind);
 	});
 
-	// entries arrive oldest-first (order=asc from backend); reverse for newest-first view
-	const filtered = $derived.by(() => {
-		let result = entries;
-		if (soortFilter.size > 0) {
-			result = result.filter((e) => soortFilter.has(e.soort));
-		}
-		return newestFirst ? [...result].reverse() : [...result];
+	const shown = $derived.by(() => {
+		const rows = kindFilter.size > 0 ? entries.filter((e) => kindFilter.has(e.kind)) : entries;
+		return newestFirst ? rows : [...rows].reverse();
 	});
 
-	function handleSoortChange(next: Set<string>) {
-		soortFilter = next;
-		onSoortFilterChange?.(next);
-	}
+	const formatDate = (iso: string) =>
+		new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
 
-	function formatDate(iso: string): string {
-		return new Date(iso).toLocaleDateString('nl-NL', {
-			day: 'numeric',
-			month: 'long',
-			year: 'numeric'
-		});
-	}
+	const COMMITMENT_STATUS: Record<string, string> = {
+		open: 'Open',
+		done: 'Nagekomen',
+		vervallen: 'Vervallen'
+	};
 
-	function bodyStr(entry: TimelineEntryDTO, key: string): string {
-		return String(entry.body[key] ?? '');
-	}
-
-	function bodyArr(entry: TimelineEntryDTO, key: string): Record<string, unknown>[] {
-		const v = entry.body[key];
-		return Array.isArray(v) ? (v as Record<string, unknown>[]) : [];
-	}
-
-	function seatTotal(rows: Record<string, unknown>[]): number {
-		return rows.reduce((s, r) => s + (Number(r['aantal_zetels']) || 0), 0);
-	}
+	/** The agenda title starts with the date, which is shown above it already. */
+	const withoutDate = (title: string) => title.replace(/^\d{4}-\d{2}-\d{2}\s*[–—-]+\s*/, '');
 </script>
 
 <div class="timeline">
 	<div class="timeline-toolbar">
-		<SoortChipFilter {soorten} selected={soortFilter} onChange={handleSoortChange} />
+		<KindChipFilter {kinds} selected={kindFilter} onChange={(next) => (kindFilter = next)} />
 		<button
 			type="button"
 			class="order-btn"
@@ -95,184 +81,82 @@
 		</button>
 	</div>
 
-	{#if filtered.length === 0}
+	{#if shown.length === 0}
 		<p class="timeline-empty">Geen items voor deze selectie.</p>
 	{:else}
 		<ol class="timeline-list">
-			{#each filtered as entry (entry.node_id)}
+			{#each shown as entry (entry.node_id)}
+				{@const body = bodyOf(entry)}
 				<li class="entry" data-kind={entry.node_type}>
 					<div class="entry-meta">
-						{#if entry.datum}
-							<time class="entry-date" datetime={entry.datum}>{formatDate(entry.datum)}</time>
+						{#if entry.date}
+							<time class="entry-date" datetime={entry.date}>{formatDate(entry.date)}</time>
 						{/if}
-						<span class="entry-soort">{entry.soort}</span>
+						<span class="entry-kind">{entry.kind}</span>
 					</div>
 
-					{#if entry.node_type === 'stemming'}
-						{@const voor = bodyArr(entry, 'voor')}
-						{@const tegen = bodyArr(entry, 'tegen')}
-						{@const onthouding = bodyArr(entry, 'onthouding')}
-						{@const aangenomen = !!entry.body['aangenomen']}
-						{@const voorTotal = seatTotal(voor)}
-						{@const tegenTotal = seatTotal(tegen)}
-						{@const onthoudingTotal = seatTotal(onthouding)}
-						{@const totalCast = voorTotal + tegenTotal}
-						{@const voorPct = totalCast > 0 ? Math.round((voorTotal / totalCast) * 100) : 50}
-						{@const stemmingKey = (entry.body['key'] as string | undefined) ?? null}
+					{#if entry.node_type === 'decision'}
+						{@const tally = body.tally ?? {}}
+						{@const inFavour = tally['Voor'] ?? 0}
+						{@const against = tally['Tegen'] ?? 0}
+						{@const passed = !!body.passed}
+						{@const inFavourPct =
+							inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
+						{@const decisionKey = parseNodeId(entry.node_id)?.key}
 						<div class="entry-body">
-							{#if entry.titel}<p class="entry-title">{entry.titel}</p>{/if}
+							{#if entry.title}<p class="entry-title">{entry.title}</p>{/if}
 
-							<!-- Vote bar: same layout as the StemmingReader detail view. -->
-							<div class="stemming-bar" title="Voor: {voorTotal} · Tegen: {tegenTotal}">
-								<div class="stemming-bar-voor" style="width: {voorPct}%"></div>
+							<div class="decision-bar" title="Voor: {inFavour} · Tegen: {against}">
+								<div class="decision-bar-for" style="width: {inFavourPct}%"></div>
 							</div>
-							<div class="stemming-totals">
-								<span class="stemming-total stemming-total--voor">{voorTotal} voor</span>
-								<span class="stemming-total-sep">·</span>
-								<span class="stemming-total stemming-total--tegen">{tegenTotal} tegen</span>
-								{#if onthoudingTotal > 0}
-									<span class="stemming-total-sep">·</span>
-									<span class="stemming-total stemming-total--onthouding"
-										>{onthoudingTotal} onthouding</span
-									>
-								{/if}
+							<div class="decision-totals">
+								<span class="decision-total--for">{inFavour} voor</span>
+								<span class="decision-total-sep">·</span>
+								<span class="decision-total--against">{against} tegen</span>
+								{#each otherChoices(tally) as [choice, seats] (choice)}
+									<span class="decision-total-sep">·</span>
+									<span class="decision-total--other">{seats} {choice.toLowerCase()}</span>
+								{/each}
 								<span
-									class="stemming-outcome"
-									class:outcome--aangenomen={aangenomen}
-									class:outcome--verworpen={!aangenomen}
+									class="decision-outcome"
+									class:outcome--passed={passed}
+									class:outcome--failed={!passed}
 								>
-									{aangenomen ? 'Aangenomen' : 'Verworpen'}
+									{passed ? 'Aangenomen' : 'Verworpen'}
 								</span>
 							</div>
 
-							<!-- Per-fractie breakdown — same columnar layout as the detail page -->
-							<div class="stemming-cols">
-								{#if voor.length > 0}
-									<div class="stemming-col">
-										<div class="stemming-col-head stemming-col-head--voor">Voor</div>
-										<ul class="stemming-col-list">
-											{#each [...voor].sort((a, b) => Number(b['aantal_zetels'] ?? 0) - Number(a['aantal_zetels'] ?? 0)) as p (p['partij'])}
-												<li class="stemming-col-row">
-													<span
-														class="party-dot"
-														style="background:{resolvePartyColor(String(p['partij'] ?? ''))}"
-														aria-hidden="true"
-													></span>
-													<span class="party-name">{p['partij']}</span>
-													<span class="party-zetels">{p['aantal_zetels']}</span>
-												</li>
-											{/each}
-										</ul>
-									</div>
-								{/if}
-								{#if tegen.length > 0}
-									<div class="stemming-col">
-										<div class="stemming-col-head stemming-col-head--tegen">Tegen</div>
-										<ul class="stemming-col-list">
-											{#each [...tegen].sort((a, b) => Number(b['aantal_zetels'] ?? 0) - Number(a['aantal_zetels'] ?? 0)) as p (p['partij'])}
-												<li class="stemming-col-row">
-													<span
-														class="party-dot"
-														style="background:{resolvePartyColor(String(p['partij'] ?? ''))}"
-														aria-hidden="true"
-													></span>
-													<span class="party-name">{p['partij']}</span>
-													<span class="party-zetels">{p['aantal_zetels']}</span>
-												</li>
-											{/each}
-										</ul>
-									</div>
-								{/if}
-								{#if onthouding.length > 0}
-									<div class="stemming-col">
-										<div class="stemming-col-head">Onthouding</div>
-										<ul class="stemming-col-list">
-											{#each [...onthouding].sort((a, b) => Number(b['aantal_zetels'] ?? 0) - Number(a['aantal_zetels'] ?? 0)) as p (p['partij'])}
-												<li class="stemming-col-row">
-													<span
-														class="party-dot"
-														style="background:{resolvePartyColor(String(p['partij'] ?? ''))}"
-														aria-hidden="true"
-													></span>
-													<span class="party-name">{p['partij']}</span>
-													<span class="party-zetels">{p['aantal_zetels']}</span>
-												</li>
-											{/each}
-										</ul>
-									</div>
-								{/if}
-							</div>
-
-							{#if stemmingKey}
-								<a
-									class="stemming-detail-link"
-									href="/explore?mode=split&focus=stemmingen/{stemmingKey}">Open stemming →</a
+							{#if decisionKey}
+								<a class="decision-link" href="/explore?mode=split&focus=decisions/{decisionKey}"
+									>Open stemming →</a
 								>
 							{/if}
 						</div>
-					{:else if entry.node_type === 'activiteit'}
-						{@const videoUrl = bodyStr(entry, 'video_url')}
-						{@const externalId = bodyStr(entry, 'external_id')}
-						{@const rawTitel = bodyStr(entry, 'agenda_titel') || entry.titel || ''}
-						<!-- Strip leading "YYYY-MM-DD — " date prefix — the date is already shown above -->
-						{@const agendaTitel = rawTitel.replace(/^\d{4}-\d{2}-\d{2}\s*[–—-]+\s*/, '')}
+					{:else if entry.node_type === 'activity'}
+						{@const title = withoutDate(body.agenda_title || entry.title || '')}
 						<div class="entry-body">
-							{#if agendaTitel}<p class="entry-title">{agendaTitel}</p>{/if}
-							{#if externalId && externalId.length > 0}
-								<a
-									href="https://gegevens.tweedekamer.nl/Activiteit?$filter=Id%20eq%20%27{externalId}%27"
-									class="entry-link"
-									target="_blank"
-									rel="noopener noreferrer">Bekijk op tweedekamer.nl ↗</a
+							{#if title}<p class="entry-title">{title}</p>{/if}
+							{#if entry.tk_url}
+								<a href={entry.tk_url} class="entry-link" target="_blank" rel="noopener noreferrer"
+									>Bekijk op tweedekamer.nl ↗</a
 								>
 							{/if}
-							{#if videoUrl}
-								<div class="video-wrap">
-									<button
-										type="button"
-										class="video-placeholder"
-										onclick={(e) => {
-											const btn = e.currentTarget as HTMLButtonElement;
-											const iframe = document.createElement('iframe');
-											iframe.src = videoUrl;
-											iframe.allow = 'autoplay; fullscreen';
-											iframe.allowFullscreen = true;
-											iframe.className = 'video-iframe';
-											btn.replaceWith(iframe);
-										}}
-										aria-label="Debat afspelen"
-									>
-										<svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-											<circle cx="16" cy="16" r="15" stroke="currentColor" stroke-width="1.5" />
-											<path d="M13 11l10 5-10 5V11z" fill="currentColor" />
-										</svg>
-										<span>Debat bekijken</span>
-									</button>
-								</div>
-							{/if}
 						</div>
-					{:else if entry.node_type === 'toezegging'}
-						{@const minister = bodyStr(entry, 'minister_naam')}
-						{@const tekst = bodyStr(entry, 'tekst')}
-						{@const status = bodyStr(entry, 'status') || 'open'}
+					{:else if entry.node_type === 'commitment'}
+						{@const status = body.status ?? 'open'}
 						<div class="entry-body">
-							{#if minister}<p class="entry-minister">{minister}</p>{/if}
-							{#if tekst}<p class="entry-commitment">{tekst}</p>{/if}
-							<span class="toezegging-status status--{status}">
-								{status === 'open' ? 'Open' : status === 'nagekomen' ? 'Nagekomen' : 'Verlopen'}
+							{#if body.minister_name}<p class="entry-minister">{body.minister_name}</p>{/if}
+							{#if body.text}<p class="entry-commitment">{body.text}</p>{/if}
+							<span class="commitment-status status--{status}">
+								{COMMITMENT_STATUS[status] ?? 'Onbekend'}
 							</span>
 						</div>
 					{:else}
-						{@const externalId = bodyStr(entry, 'external_id')}
+						{@const url = entry.tk_url ?? body.url}
 						<div class="entry-body">
-							{#if entry.titel}<p class="entry-title">{entry.titel}</p>{/if}
-							{#if externalId && externalId.length > 0}
-								<a
-									href="https://zoek.officielebekendmakingen.nl/{externalId}"
-									class="entry-link"
-									target="_blank"
-									rel="noopener noreferrer"
-								>
+							{#if entry.title}<p class="entry-title">{entry.title}</p>{/if}
+							{#if url}
+								<a href={url} class="entry-link" target="_blank" rel="noopener noreferrer">
 									Document openen →
 								</a>
 							{/if}
@@ -366,13 +250,13 @@
 		border: 1.5px solid var(--paper);
 	}
 
-	.entry[data-kind='stemming']::before {
+	.entry[data-kind='decision']::before {
 		background: var(--spine);
 	}
-	.entry[data-kind='toezegging']::before {
+	.entry[data-kind='commitment']::before {
 		background: var(--warn);
 	}
-	.entry[data-kind='activiteit']::before {
+	.entry[data-kind='activity']::before {
 		background: var(--indigo);
 	}
 
@@ -391,7 +275,7 @@
 		flex-shrink: 0;
 	}
 
-	.entry-soort {
+	.entry-kind {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		letter-spacing: var(--track-caps);
@@ -479,23 +363,23 @@
 		border-bottom-color: var(--spine);
 	}
 
-	/* ── Stemming ─────────────────────────────────────────────────────────── */
-	/* Mirrors StemmingReader: bar + totals + per-fractie columns. */
-	.stemming-bar {
+	/* ── Decision ─────────────────────────────────────────────────────────── */
+	/* Bar and totals as in DecisionReader. */
+	.decision-bar {
 		height: 6px;
 		background: color-mix(in srgb, var(--red, #dc2626) 18%, var(--paper-3));
 		border-radius: 3px;
 		overflow: hidden;
 		margin-top: var(--s-2);
 	}
-	.stemming-bar-voor {
+	.decision-bar-for {
 		height: 100%;
 		background: var(--green, #16a34a);
 		border-radius: 3px 0 0 3px;
 		transition: width 200ms ease;
 	}
 
-	.stemming-totals {
+	.decision-totals {
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
@@ -504,22 +388,22 @@
 		font-family: var(--font-sans);
 		font-size: 12px;
 	}
-	.stemming-total--voor {
+	.decision-total--for {
 		color: var(--green, #16a34a);
 		font-weight: 600;
 	}
-	.stemming-total--tegen {
+	.decision-total--against {
 		color: var(--red, #dc2626);
 		font-weight: 600;
 	}
-	.stemming-total--onthouding {
+	.decision-total--other {
 		color: var(--ink-3);
 	}
-	.stemming-total-sep {
+	.decision-total-sep {
 		color: var(--ink-4);
 	}
 
-	.stemming-outcome {
+	.decision-outcome {
 		margin-left: auto;
 		padding: 2px 8px;
 		border-radius: var(--r-1);
@@ -530,81 +414,18 @@
 		text-transform: uppercase;
 		border: 1px solid var(--rule);
 	}
-	.outcome--aangenomen {
+	.outcome--passed {
 		background: color-mix(in srgb, var(--green, #16a34a) 8%, var(--paper));
 		color: var(--green, #16a34a);
 		border-color: color-mix(in srgb, var(--green, #16a34a) 22%, transparent);
 	}
-	.outcome--verworpen {
+	.outcome--failed {
 		background: color-mix(in srgb, var(--red, #dc2626) 8%, var(--paper));
 		color: var(--red, #dc2626);
 		border-color: color-mix(in srgb, var(--red, #dc2626) 22%, transparent);
 	}
 
-	.stemming-cols {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-		gap: var(--s-4);
-		margin-top: var(--s-3);
-	}
-	.stemming-col-head {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 600;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-3);
-		padding-bottom: 4px;
-		border-bottom: 2px solid var(--rule);
-		margin-bottom: 4px;
-	}
-	.stemming-col-head--voor {
-		border-bottom-color: var(--green, #16a34a);
-		color: var(--green, #16a34a);
-	}
-	.stemming-col-head--tegen {
-		border-bottom-color: var(--red, #dc2626);
-		color: var(--red, #dc2626);
-	}
-
-	.stemming-col-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-	.stemming-col-row {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		padding: 3px 0;
-		border-bottom: 1px dotted var(--rule);
-	}
-	.stemming-col-row:last-child {
-		border-bottom: none;
-	}
-	.party-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		flex-shrink: 0;
-	}
-	.party-name {
-		flex: 1;
-		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--ink);
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.party-zetels {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-3);
-		flex-shrink: 0;
-	}
-
-	.stemming-detail-link {
+	.decision-link {
 		font-family: var(--font-sans);
 		font-size: 11px;
 		color: var(--spine);
@@ -613,47 +434,11 @@
 		align-self: flex-start;
 		margin-top: var(--s-2);
 	}
-	.stemming-detail-link:hover {
+	.decision-link:hover {
 		border-bottom-color: var(--spine);
 	}
 
-	/* Activiteit */
-	.video-wrap {
-		margin-top: var(--s-2);
-	}
-
-	.video-placeholder {
-		display: flex;
-		align-items: center;
-		gap: var(--s-3);
-		width: 100%;
-		max-width: 360px;
-		padding: var(--s-3) var(--s-4);
-		background: var(--paper-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		color: var(--indigo);
-		cursor: pointer;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		font-weight: 500;
-		transition: background 80ms;
-	}
-
-	.video-placeholder:hover {
-		background: var(--indigo-faint);
-	}
-
-	:global(.video-iframe) {
-		width: 100%;
-		max-width: 360px;
-		aspect-ratio: 16 / 9;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		display: block;
-	}
-
-	/* Toezegging */
+	/* Commitment */
 	.entry-minister {
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
@@ -670,7 +455,7 @@
 		line-height: var(--lh-body);
 	}
 
-	.toezegging-status {
+	.commitment-status {
 		align-self: flex-start;
 		padding: 2px 8px;
 		border-radius: var(--r-1);
@@ -681,7 +466,8 @@
 		text-transform: uppercase;
 	}
 
-	.status--open {
+	.status--open,
+	.status--unknown {
 		background: var(--paper-3);
 		color: var(--ink-3);
 	}
@@ -691,7 +477,7 @@
 		color: var(--positive);
 	}
 
-	.status--overdue {
+	.status--vervallen {
 		background: var(--warn-faint);
 		color: var(--warn);
 	}

@@ -3,9 +3,8 @@
 	// Wetgeving (wetboek-tiles), Rechtspraak (instantie-pyramide),
 	// Parlement (hemicycle). Drie panels delen dezelfde header-grammar
 	// (kicker · titel · sub) en sluiten af met een "Alle X →"-rij.
-	import { onMount } from 'svelte';
-	import { fetchZetels } from '$lib/api/parliamentary-client';
-	import type { ZetelsResponse } from '$lib/api/parliamentary';
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
 	import { goto } from '$app/navigation';
 	import Hemicycle from '$lib/components/explore/Hemicycle.svelte';
 	import InstantiePyramide from './InstantiePyramide.svelte';
@@ -60,20 +59,18 @@
 		}
 	];
 
-	// ── Hemicycle-data — Tweede Kamer-zetels, live via /api/parlement/zetels.
-	let zetels = $state<ZetelsResponse | null>(null);
-	onMount(() => {
-		fetchZetels()
-			.then((r) => {
-				zetels = r;
-			})
-			.catch(() => {
-				/* silent — sectie blijft bruikbaar zonder hemicycle */
-			});
+	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
+	$effect(() => {
+		const controller = new AbortController();
+		unwrap(api.GET('/api/parliament/seats', { signal: controller.signal }))
+			.then((r) => (seats = r))
+			// The section stays usable without the hemicycle.
+			.catch(() => {});
+		return () => controller.abort();
 	});
 
-	function openFractie(key: string) {
-		goto(`/explore?mode=split&focus=${encodeURIComponent(`fracties/${key}`)}`);
+	function openFaction(key: string) {
+		goto(`/explore?mode=split&focus=${encodeURIComponent(`factions/${key}`)}`);
 	}
 </script>
 
@@ -103,7 +100,7 @@
 							<a
 								class="vn-tile"
 								data-spine={w.spine}
-								href={`/explore?focus=instruments%2F${w.bwb}`}
+								href={`/explore?focus=instruments%2F${w.bwb.toLowerCase()}`}
 							>
 								<div class="vn-tile-code">{w.code}</div>
 								<div class="vn-tile-name">{w.naam}</div>
@@ -141,8 +138,8 @@
 					<h3 class="vn-panel-title">Klik op een fractie</h3>
 				</div>
 				<div class="vn-panel-visual">
-					{#if zetels}
-						<Hemicycle data={zetels} onSelect={openFractie} />
+					{#if seats}
+						<Hemicycle data={seats} onSelect={openFaction} />
 					{:else}
 						<div class="vn-hemicycle-placeholder" aria-hidden="true"></div>
 					{/if}
@@ -367,7 +364,7 @@
 	}
 
 	.vn-hemicycle-placeholder {
-		/* Lege staat zolang /api/parlement/zetels nog niet geladen is —
+		/* Lege staat zolang /api/parliament/seats nog niet geladen is —
        behoudt de visuele ruimte zodat de layout niet hapert. */
 		min-height: 240px;
 		flex: 1;

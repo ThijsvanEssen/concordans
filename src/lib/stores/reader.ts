@@ -1,23 +1,6 @@
 import { writable } from 'svelte/store';
 
-export type ReaderState = {
-	activeArticleId: string | null;
-	focusedCitationKey: string | null;
-};
+/** Key of the citation the pointer or focus is on, so the text and the rail can highlight it together. */
+export const focusedCitationKey = writable<string | null>(null);
 
-export const readerStore = writable<ReaderState>({
-	activeArticleId: null,
-	focusedCitationKey: null
-});
-
-export function setActiveArticle(articleId: string) {
-	readerStore.update((s) => ({ ...s, activeArticleId: articleId }));
-}
-
-export function setFocusedCitation(citationKey: string | null) {
-	readerStore.update((s) => ({ ...s, focusedCitationKey: citationKey }));
-}
-
-export function clearReader() {
-	readerStore.set({ activeArticleId: null, focusedCitationKey: null });
-}
+export const setFocusedCitation = (key: string | null) => focusedCitationKey.set(key);

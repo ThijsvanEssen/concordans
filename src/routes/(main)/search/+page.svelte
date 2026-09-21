@@ -1,21 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
-	import { unifiedSearch, type SearchResultItem, type UnifiedResults } from '$lib/api/search';
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
 	import { judgmentTier, formatEcliLabel } from '$lib/graph/types';
-	import { getInstrumentMeta } from '$lib/api/instrument-cache';
+
+	type Hit = Schema<'SearchResultItem'>;
 
 	const query = $derived($page.url.searchParams.get('q') ?? '');
-	let results = $state<UnifiedResults>({
-		articles: [],
-		judgments: [],
-		instruments: [],
-		dossiers: [],
-		publications: [],
-		commissies: [],
-		leden: [],
-		fracties: []
-	});
+	let results = $state<Record<string, Hit[]>>({});
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 	let searchInput = $state('');
@@ -29,32 +22,26 @@
 	$effect(() => {
 		const q = query;
 		searchInput = q;
+		error = null;
 		if (!q) {
-			results = {
-				articles: [],
-				judgments: [],
-				instruments: [],
-				dossiers: [],
-				publications: [],
-				commissies: [],
-				leden: [],
-				fracties: []
-			};
-			error = null;
+			results = {};
 			return;
 		}
+		const controller = new AbortController();
 		loading = true;
-		error = null;
-		unifiedSearch(q, { limit: 50 })
+		unwrap(
+			api.GET('/api/search', { params: { query: { q, limit: 50 } }, signal: controller.signal })
+		)
 			.then((r) => {
-				results = r;
+				results = r.results;
+				loading = false;
 			})
 			.catch(() => {
+				if (controller.signal.aborted) return;
 				error = 'Zoeken mislukt. Controleer de verbinding.';
-			})
-			.finally(() => {
 				loading = false;
 			});
+		return () => controller.abort();
 	});
 
 	function handleSearch(e: Event) {
@@ -67,29 +54,22 @@
 		});
 	}
 
-	// ── Grouping ────────────────────────────────────────────────────────────
-	// Wetgeving: instruments + articles (articles sub-grouped by their bwb_id)
-	// Rechtspraak: judgments (sub-grouped by court tier)
-	// Parlementair: dossiers + publications + commissies
+	// Wetgeving: instruments and articles (articles grouped by law).
+	// Rechtspraak: judgments (grouped by court tier).
+	// Parlementair: dossiers, committees, factions, members and documents.
 
-	type ArticleGroup = { bwbId: string; lawName: string; items: SearchResultItem[] };
+	const hits = (group: string): Hit[] => results[group] ?? [];
+	const extra = (item: Hit, name: string): string => String(item.extra?.[name] ?? '');
+
+	type ArticleGroup = { bwbId: string; lawName: string; items: Hit[] };
 	const articleGroups = $derived.by<ArticleGroup[]>(() => {
 		const groups = new Map<string, ArticleGroup>();
-		for (const a of results.articles) {
-			const bwb = String(
-				(a.extra?.['bwb_id'] as string | undefined) ??
-					a.key.match(/^([a-z]+\d+)/i)?.[1] ??
-					'unknown'
-			).toUpperCase();
-			let g = groups.get(bwb);
+		for (const a of hits('articles')) {
+			const bwbId = extra(a, 'bwb_id');
+			let g = groups.get(bwbId);
 			if (!g) {
-				const meta = getInstrumentMeta(bwb);
-				g = {
-					bwbId: bwb,
-					lawName: meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwb,
-					items: []
-				};
-				groups.set(bwb, g);
+				g = { bwbId, lawName: extra(a, 'citation_title') || bwbId, items: [] };
+				groups.set(bwbId, g);
 			}
 			g.items.push(a);
 		}
@@ -102,53 +82,40 @@
 		first: 'Rechtbanken',
 		unknown: 'Overig'
 	};
-	type JudgmentGroup = { tier: string; label: string; items: SearchResultItem[] };
+	type JudgmentGroup = { tier: string; label: string; items: Hit[] };
 	const judgmentGroups = $derived.by<JudgmentGroup[]>(() => {
-		const buckets: Record<string, SearchResultItem[]> = {
-			cassation: [],
-			appeal: [],
-			first: [],
-			unknown: []
-		};
-		for (const j of results.judgments) {
-			const ecli = (j.extra?.['ecli'] as string | undefined) ?? j.key;
-			const t = judgmentTier(ecli);
-			buckets[t].push(j);
-		}
+		const buckets: Record<string, Hit[]> = { cassation: [], appeal: [], first: [], unknown: [] };
+		for (const j of hits('judgments')) buckets[judgmentTier(extra(j, 'ecli'))].push(j);
 		return Object.entries(buckets)
 			.filter(([, items]) => items.length > 0)
 			.map(([tier, items]) => ({ tier, label: TIER_LABEL[tier], items }));
 	});
 
-	const wetCount = $derived(results.articles.length + results.instruments.length);
-	const rechtCount = $derived(results.judgments.length);
-	const tkCount = $derived(
-		results.dossiers.length +
-			results.publications.length +
-			(results.commissies?.length ?? 0) +
-			(results.leden?.length ?? 0) +
-			(results.fracties?.length ?? 0)
-	);
+	// Sub-groups of the parliamentary domain, in display order.
+	const TK_GROUPS: { name: string; title: string; glyph: string; cite: (item: Hit) => string }[] = [
+		{ name: 'dossiers', title: 'Wetgevingsdossiers', glyph: '∮', cite: (i) => extra(i, 'number') },
+		{ name: 'committees', title: 'Commissies', glyph: '‡', cite: (i) => extra(i, 'abbreviation') },
+		{ name: 'factions', title: 'Fracties', glyph: '※', cite: (i) => extra(i, 'abbreviation') },
+		{ name: 'members', title: 'Kamerleden', glyph: '◉', cite: (i) => extra(i, 'party') },
+		{ name: 'documents', title: 'Documenten', glyph: '▤', cite: (i) => extra(i, 'kind') }
+	];
+
+	const wetCount = $derived(hits('articles').length + hits('instruments').length);
+	const rechtCount = $derived(hits('judgments').length);
+	const tkCount = $derived(TK_GROUPS.reduce((n, g) => n + hits(g.name).length, 0));
 	const totalCount = $derived(wetCount + rechtCount + tkCount);
 
-	function exploreHref(item: SearchResultItem): string {
-		return `/explore?mode=split&focus=${encodeURIComponent(`${item.collection}/${item.key}`)}`;
+	function exploreHref(item: Hit): string {
+		return `/explore?mode=split&focus=${encodeURIComponent(item.id)}`;
 	}
-	function dossierNum(item: SearchResultItem): string {
-		return (item.extra?.['kamerstuknummer'] as string | undefined) ?? item.key;
-	}
-	function ecliLabel(item: SearchResultItem): string {
-		const ecli = (item.extra?.['ecli'] as string | undefined) ?? item.display_name ?? item.key;
-		try {
-			return formatEcliLabel(ecli);
-		} catch {
-			return ecli;
-		}
+	function ecliLabel(item: Hit): string {
+		const ecli = extra(item, 'ecli');
+		return ecli ? formatEcliLabel(ecli) : (item.display_name ?? item.key);
 	}
 </script>
 
 <svelte:head>
-	<title>{query ? `"${query}" — Zoekresultaten` : 'Zoeken'} — Concordans</title>
+	<title>{query ? `"${query}", zoekresultaten` : 'Zoeken'}. Concordans</title>
 </svelte:head>
 
 <div class="search-page">
@@ -157,7 +124,7 @@
 			<input
 				type="search"
 				bind:value={searchInput}
-				placeholder="Zoek op artikel, ECLI, kamerstuk of begrip…"
+				placeholder="Zoek op artikel, ECLI, kamerstuk of begrip"
 				class="search-form__input"
 				aria-label="Zoeken"
 				autofocus
@@ -230,13 +197,13 @@
 						<span class="domain__count">{wetCount}</span>
 					</header>
 
-					{#if results.instruments.length > 0}
+					{#if hits('instruments').length > 0}
 						<div class="subgroup" id="instruments">
 							<h3 class="subgroup__title">
-								Instrumenten <span>{results.instruments.length}</span>
+								Instrumenten <span>{hits('instruments').length}</span>
 							</h3>
 							<ul class="result-list">
-								{#each results.instruments as item (item.id)}
+								{#each hits('instruments') as item (item.id)}
 									<li class="result-item">
 										<a href={exploreHref(item)} class="result-item__link">
 											<span class="leg-glyph leg-glyph--wet" aria-hidden="true">§</span>
@@ -244,9 +211,7 @@
 												<span class="result-item__title">{item.display_name ?? item.key}</span>
 												{#if item.snippet}<p class="result-item__snippet">{item.snippet}</p>{/if}
 											</span>
-											<span class="result-item__cite mono"
-												>{(item.extra?.['bwb_id'] as string | undefined) ?? item.key}</span
-											>
+											<span class="result-item__cite mono">{extra(item, 'bwb_id')}</span>
 										</a>
 									</li>
 								{/each}
@@ -256,7 +221,7 @@
 
 					{#if articleGroups.length > 0}
 						<div class="subgroup" id="articles">
-							<h3 class="subgroup__title">Artikelen <span>{results.articles.length}</span></h3>
+							<h3 class="subgroup__title">Artikelen <span>{hits('articles').length}</span></h3>
 							{#each articleGroups as g (g.bwbId)}
 								<div class="article-group">
 									<h4 class="article-group__law">
@@ -274,8 +239,7 @@
 																{item.snippet}
 															</p>{/if}
 													</span>
-													<span class="result-item__cite mono"
-														>{(item.extra?.['article_number'] as string | undefined) ?? ''}</span
+													<span class="result-item__cite mono">{extra(item, 'article_number')}</span
 													>
 												</a>
 											</li>
@@ -309,11 +273,7 @@
 												<span class="result-item__title">{ecliLabel(item)}</span>
 												{#if item.snippet}<p class="result-item__snippet">{item.snippet}</p>{/if}
 											</span>
-											<span class="result-item__cite mono"
-												>{(item.extra?.['ecli'] as string | undefined) ??
-													item.display_name ??
-													''}</span
-											>
+											<span class="result-item__cite mono">{extra(item, 'ecli')}</span>
 										</a>
 									</li>
 								{/each}
@@ -332,114 +292,27 @@
 						<span class="domain__count">{tkCount}</span>
 					</header>
 
-					{#if results.dossiers.length > 0}
-						<div class="subgroup" id="dossiers">
-							<h3 class="subgroup__title">
-								Wetgevingsdossiers <span>{results.dossiers.length}</span>
-							</h3>
-							<ul class="result-list">
-								{#each results.dossiers as item (item.id)}
-									{@const num = dossierNum(item)}
-									<li class="result-item">
-										<a href={exploreHref(item)} class="result-item__link">
-											<span class="leg-glyph leg-glyph--tk" aria-hidden="true">∮</span>
-											<span class="result-item__body">
-												<span class="result-item__title">{item.display_name ?? item.key}</span>
-												{#if item.snippet}<p class="result-item__snippet">{item.snippet}</p>{/if}
-											</span>
-											<span class="result-item__cite mono">{num}</span>
-										</a>
-									</li>
-								{/each}
-							</ul>
-						</div>
-					{/if}
-
-					{#if (results.commissies?.length ?? 0) > 0}
-						<div class="subgroup" id="commissies">
-							<h3 class="subgroup__title">
-								Commissies <span>{results.commissies?.length ?? 0}</span>
-							</h3>
-							<ul class="result-list">
-								{#each results.commissies ?? [] as item (item.id)}
-									<li class="result-item">
-										<a href={exploreHref(item)} class="result-item__link">
-											<span class="leg-glyph leg-glyph--tk" aria-hidden="true">‡</span>
-											<span class="result-item__body">
-												<span class="result-item__title">{item.display_name ?? item.key}</span>
-												{#if item.snippet}<p class="result-item__snippet">{item.snippet}</p>{/if}
-											</span>
-										</a>
-									</li>
-								{/each}
-							</ul>
-						</div>
-					{/if}
-
-					{#if (results.fracties?.length ?? 0) > 0}
-						<div class="subgroup" id="fracties">
-							<h3 class="subgroup__title">Fracties <span>{results.fracties?.length ?? 0}</span></h3>
-							<ul class="result-list">
-								{#each results.fracties ?? [] as item (item.id)}
-									<li class="result-item">
-										<a href={exploreHref(item)} class="result-item__link">
-											<span class="leg-glyph leg-glyph--tk" aria-hidden="true">※</span>
-											<span class="result-item__body">
-												<span class="result-item__title">{item.display_name ?? item.key}</span>
-												{#if item.snippet}<p class="result-item__snippet">{item.snippet}</p>{/if}
-											</span>
-											<span class="result-item__cite mono"
-												>{(item.extra?.['afkorting'] as string | undefined) ?? ''}</span
-											>
-										</a>
-									</li>
-								{/each}
-							</ul>
-						</div>
-					{/if}
-
-					{#if (results.leden?.length ?? 0) > 0}
-						<div class="subgroup" id="leden">
-							<h3 class="subgroup__title">Kamerleden <span>{results.leden?.length ?? 0}</span></h3>
-							<ul class="result-list">
-								{#each results.leden ?? [] as item (item.id)}
-									<li class="result-item">
-										<a href={exploreHref(item)} class="result-item__link">
-											<span class="leg-glyph leg-glyph--tk" aria-hidden="true">◉</span>
-											<span class="result-item__body">
-												<span class="result-item__title">{item.display_name ?? item.key}</span>
-												{#if item.snippet}<p class="result-item__snippet">{item.snippet}</p>{/if}
-											</span>
-											<span class="result-item__cite mono"
-												>{(item.extra?.['partij'] as string | undefined) ?? ''}</span
-											>
-										</a>
-									</li>
-								{/each}
-							</ul>
-						</div>
-					{/if}
-
-					{#if results.publications.length > 0}
-						<div class="subgroup" id="publications">
-							<h3 class="subgroup__title">
-								Publicaties <span>{results.publications.length}</span>
-							</h3>
-							<ul class="result-list">
-								{#each results.publications as item (item.id)}
-									<li class="result-item">
-										<a href={exploreHref(item)} class="result-item__link">
-											<span class="leg-glyph leg-glyph--tk" aria-hidden="true">▤</span>
-											<span class="result-item__body">
-												<span class="result-item__title">{item.display_name ?? item.key}</span>
-												{#if item.snippet}<p class="result-item__snippet">{item.snippet}</p>{/if}
-											</span>
-										</a>
-									</li>
-								{/each}
-							</ul>
-						</div>
-					{/if}
+					{#each TK_GROUPS as g (g.name)}
+						{#if hits(g.name).length > 0}
+							<div class="subgroup" id={g.name}>
+								<h3 class="subgroup__title">{g.title} <span>{hits(g.name).length}</span></h3>
+								<ul class="result-list">
+									{#each hits(g.name) as item (item.id)}
+										<li class="result-item">
+											<a href={exploreHref(item)} class="result-item__link">
+												<span class="leg-glyph leg-glyph--tk" aria-hidden="true">{g.glyph}</span>
+												<span class="result-item__body">
+													<span class="result-item__title">{item.display_name ?? item.key}</span>
+													{#if item.snippet}<p class="result-item__snippet">{item.snippet}</p>{/if}
+												</span>
+												<span class="result-item__cite mono">{g.cite(item)}</span>
+											</a>
+										</li>
+									{/each}
+								</ul>
+							</div>
+						{/if}
+					{/each}
 				</section>
 			{/if}
 		{/if}
@@ -753,6 +626,7 @@
 		overflow: hidden;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
+		line-clamp: 2;
 		-webkit-box-orient: vertical;
 	}
 	.result-item__cite {

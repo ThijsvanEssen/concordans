@@ -3,15 +3,15 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const pub = $derived(data.publication);
+	const doc = $derived(data.document);
 
 	const paragraphs = $derived(
-		pub.text ? pub.text.split(/\r?\n\s*\r?\n+/).filter((p: string) => p.trim().length > 0) : []
+		doc.text ? doc.text.split(/\r?\n\s*\r?\n+/).filter((p: string) => p.trim().length > 0) : []
 	);
 </script>
 
 <svelte:head>
-	<title>{pub.title ?? pub.soort ?? 'Publicatie'} — Concordans</title>
+	<title>{doc.title ?? doc.kind ?? 'Document'}. Concordans</title>
 </svelte:head>
 
 <div class="pub-shell">
@@ -19,13 +19,13 @@
 		<a href="/publications" class="pub-back">← Terug</a>
 		<div class="pub-nav-right">
 			<a
-				href="/explore?mode=split&focus={encodeURIComponent(`tkstukken/${pub.key}`)}"
+				href="/explore?mode=split&focus={encodeURIComponent(`documents/${doc.key}`)}"
 				class="pub-explore-link"
-				title="Bekijk dit document in de kennisgraaf">Verken in grafiek →</a
+				title="Bekijk dit document in het netwerk">Verken in netwerk →</a
 			>
-			{#if pub.external_id}
+			{#if doc.external_id}
 				<a
-					href="https://zoek.officielebekendmakingen.nl/{pub.external_id}"
+					href="https://zoek.officielebekendmakingen.nl/{doc.external_id}"
 					target="_blank"
 					rel="noopener noreferrer"
 					class="pub-source-link">Bekijk origineel →</a
@@ -38,12 +38,12 @@
 		<header class="pub-header">
 			<div class="pub-kind">
 				<span class="pub-sigil" aria-hidden="true">‡</span>
-				<span>{pub.soort ?? 'Parlementair document'}</span>
-				{#if pub.datum}
-					<span class="pub-datum">· {pub.datum}</span>
+				<span>{doc.kind ?? 'Parlementair document'}</span>
+				{#if doc.date}
+					<span class="pub-datum">· {doc.date}</span>
 				{/if}
 			</div>
-			<h1 class="pub-title">{pub.title ?? pub.soort ?? 'Document'}</h1>
+			<h1 class="pub-title">{doc.title ?? doc.kind ?? 'Document'}</h1>
 		</header>
 
 		<div class="pub-body">
@@ -56,20 +56,20 @@
 					<p class="pub-empty-text">De volledige tekst is nog niet beschikbaar in Concordans.</p>
 					<div class="pub-empty-actions">
 						<a
-							href="/explore?mode=split&focus={encodeURIComponent(`tkstukken/${pub.key}`)}"
-							class="pub-empty-action pub-empty-action--primary">Verken in kennisgraaf →</a
+							href="/explore?mode=split&focus={encodeURIComponent(`documents/${doc.key}`)}"
+							class="pub-empty-action pub-empty-action--primary">Verken in netwerk →</a
 						>
-						{#if pub.tk_url}
+						{#if doc.tk_url}
 							<a
-								href={pub.tk_url}
+								href={doc.tk_url}
 								target="_blank"
 								rel="noopener noreferrer"
 								class="pub-empty-action">Download bronbestand ↗</a
 							>
 						{/if}
-						{#if pub.external_id}
+						{#if doc.external_id}
 							<a
-								href="https://zoek.officielebekendmakingen.nl/{pub.external_id}"
+								href="https://zoek.officielebekendmakingen.nl/{doc.external_id}"
 								target="_blank"
 								rel="noopener noreferrer"
 								class="pub-empty-action">Officiëlebekendmakingen.nl ↗</a

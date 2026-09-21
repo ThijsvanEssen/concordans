@@ -39,14 +39,14 @@
 				<dd>
 					Het netwerk groeit met de officiële bronnen mee, maar niet elke regeling, uitspraak of
 					dossier zit er al in. Wat ontbreekt, is geen uitspraak van Concordans over relevantie,
-					alleen een gevolg van de huidige synchronisatiestand. De laatste sync-datum staat onder
+					alleen een gevolg van de huidige belading. Het aantal bronnen en verbindingen staat onder
 					<a href="/#cijfers">Concordans in cijfers</a>.
 				</dd>
 				<dt>Verbanden zijn machinaal afgeleid.</dt>
 				<dd>
-					Citaties, interpretaties en wijzigingsrelaties komen uit een reproduceerbare extractie op
-					de bronteksten. Geen verband wordt geïnterpreteerd of geparafraseerd. De heuristieken
-					staan in de
+					Citaties en wijzigingen komen uit een reproduceerbare extractie op de bronteksten en de
+					structuur van de bronnen. Elke verbinding draagt haar herkomst, betrouwbaarheid en het
+					tekstfragment waaruit ze volgt. De heuristieken staan in de
 					<a href="/docs/methode">methode-bijlage</a>.
 				</dd>
 			</dl>
@@ -77,9 +77,9 @@
 			<p>
 				Alpha-toegang is open. Voor wie wil meelezen of voor wie iets niet klopt: meld het kort via
 				<a href="mailto:concordans@tmve.nl">concordans@tmve.nl</a>
-				of via het
-				<a href="/contact">contactformulier</a>. Reproduceerbare voorbeelden (URL + verwachte
-				uitkomst) hebben de hoogste kans op een snelle reactie.
+				of via de
+				<a href="/contact">contactpagina</a>. Reproduceerbare voorbeelden (URL + verwachte uitkomst)
+				hebben de hoogste kans op een snelle reactie.
 			</p>
 		</section>
 

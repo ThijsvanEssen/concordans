@@ -1,28 +1,18 @@
 <script lang="ts">
-	// Phase 4: standalone dossier reader. Loads dossier detail, documents, and
-	// mutated articles. Mirrors routes/dossier/[nummer]/+page.svelte but
-	// adapted for the Lezen measure column — no page chrome, more compact.
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import {
-		fetchDossier,
-		fetchDossierDocuments,
-		fetchDossierMutations,
-		fetchDossierTimeline
-	} from '$lib/api/parliamentary-client';
-	import type {
-		DossierDetailResponse,
-		DossierDocumentsResponse,
-		DossierMutationsResponse,
-		DossierTimelineResponse,
-		TimelineEntryDTO,
-		LegislativeStage
-	} from '$lib/api/parliamentary';
+		dossierNumber,
+		getDossierDocuments,
+		getDossierMutations,
+		mutatedArticles
+	} from '$lib/components/parliamentary/data';
+	import { STAGE_LABEL, TRACK_LABEL } from '$lib/components/parliamentary/stages';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
-	import { fetchPartyColors } from '$lib/api/parliamentary-client';
-	import type { PartyColorsResponse } from '$lib/api/parliamentary';
 	import GlossaryPill from './GlossaryPill.svelte';
-	import { FASE_LABELS, KIND_SHORT, formatDate } from './_shared';
+	import { formatDate } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -31,76 +21,51 @@
 		| { kind: 'error'; message: string }
 		| {
 				kind: 'loaded';
-				d: DossierDetailResponse;
-				docs: DossierDocumentsResponse | null;
-				mutations: DossierMutationsResponse | null;
-				timeline: DossierTimelineResponse | null;
+				dossier: Schema<'DossierDetailResponse'>;
+				documents: Schema<'DossierDocumentsResponse'> | null;
+				mutations: Schema<'DossierMutationsResponse'> | null;
+				timeline: Schema<'DossierTimelineResponse'> | null;
 		  };
 
-	let view = $state<State>({ kind: 'loading' });
-	let partyColors = $state<Record<string, string>>({});
-	let showAllArticles = $state(false);
-	let showAllStemmingen = $state(false);
-	let token = 0;
+	// The schema leaves a timeline entry's `body` untyped.
+	type DecisionBody = { passed?: boolean; subject?: string };
+	const decisionOf = (entry: Schema<'TimelineEntryDTO'>) => (entry.body ?? {}) as DecisionBody;
 
-	// Party colours are dossier-independent; fetch once.
-	fetchPartyColors()
-		.then((r: PartyColorsResponse) => {
-			partyColors = r.colors ?? {};
-		})
-		.catch(() => {});
+	const TIMELINE_LIMIT = 200;
+	const PREVIEW = 8;
+
+	let view = $state<State>({ kind: 'loading' });
+	let showAllArticles = $state(false);
+	let showAllDecisions = $state(false);
 
 	$effect(() => {
-		const n = node;
-		const t = ++token;
+		const number = dossierNumber(node.key);
+		const ac = new AbortController();
 		view = { kind: 'loading' };
+		showAllArticles = showAllDecisions = false;
+		// Everything but the header is optional: a failed part leaves its section out.
 		Promise.all([
-			fetchDossier(n.key),
-			fetchDossierDocuments(n.key).catch(() => null),
-			fetchDossierMutations(n.key).catch(() => null),
-			// Full timeline drives both the LegislativeTimeline component and the
-			// stemmingen list (we filter Stemming entries client-side since the
-			// backend's soort= filter rejects this value).
-			fetchDossierTimeline(n.key, { order: 'asc', limit: 500 }).catch(() => null)
+			unwrap(
+				api.GET('/api/dossiers/{number}', { params: { path: { number } }, signal: ac.signal })
+			),
+			getDossierDocuments(number).catch(() => null),
+			getDossierMutations(number).catch(() => null),
+			unwrap(
+				api.GET('/api/dossiers/{number}/timeline', {
+					params: { path: { number }, query: { limit: TIMELINE_LIMIT } },
+					signal: ac.signal
+				})
+			).catch(() => null)
 		])
-			.then(([d, docs, mutations, timeline]) => {
-				if (t !== token) return;
-				view = { kind: 'loaded', d, docs, mutations, timeline };
+			.then(([dossier, documents, mutations, timeline]) => {
+				if (!ac.signal.aborted) view = { kind: 'loaded', dossier, documents, mutations, timeline };
 			})
 			.catch(() => {
-				if (t === token) view = { kind: 'error', message: 'Dossier kon niet geladen worden.' };
+				if (!ac.signal.aborted)
+					view = { kind: 'error', message: 'Dossier kon niet geladen worden.' };
 			});
+		return () => ac.abort();
 	});
-
-	// Pull stemming entries out of the timeline. The body holds aangenomen
-	// + agendapunt_onderwerp, which is the only readable summary we have.
-	function stemmingEntries(t: DossierTimelineResponse | null): TimelineEntryDTO[] {
-		if (!t) return [];
-		return t.entries.filter((e) => (e.soort ?? '').toLowerCase().includes('stemming'));
-	}
-
-	// Pluck article-typed mutation targets so we can list "betrokken artikelen".
-	function articleTargets(m: DossierMutationsResponse | null) {
-		if (!m)
-			return [] as { key: string; label: string; collection: string; relation: string | null }[];
-		const articles = new Map<
-			string,
-			{ key: string; label: string; collection: string; relation: string | null }
-		>();
-		for (const e of m.edges) {
-			if (!e.to_id) continue;
-			const target = m.nodes.find((n) => n.id === e.to_id);
-			if (!target || target.collection !== 'instrument_articles') continue;
-			if (articles.has(target.id)) continue;
-			articles.set(target.id, {
-				key: target.key,
-				label: target.display_name ?? target.key,
-				collection: target.collection,
-				relation: e.relation
-			});
-		}
-		return [...articles.values()];
-	}
 </script>
 
 <div class="r-dossier">
@@ -109,48 +74,35 @@
 	{:else if view.kind === 'error'}
 		<p class="error">{view.message}</p>
 	{:else}
-		{@const d = view.d}
-		{@const stages = (d.stages_present ?? []).filter(
-			(s: string) => s !== 'onbekend'
-		) as LegislativeStage[]}
-		{@const currentStage = (
-			d.huidige_fase && d.huidige_fase !== 'onbekend' ? d.huidige_fase : null
-		) as LegislativeStage | null}
-		{@const trajectKind = d.traject_kind ?? 'overig'}
-		{@const articles = articleTargets(view.mutations)}
-		{@const stemmingen = stemmingEntries(view.timeline)}
+		{@const d = view.dossier}
+		{@const track = d.track ?? 'overig'}
+		{@const articles = view.mutations ? mutatedArticles(view.mutations) : []}
+		{@const decisions = view.timeline?.entries.filter((e) => e.node_type === 'decision') ?? []}
 
 		<header class="head">
 			<div class="kicker-row">
 				<span class="kicker"
-					>Dossier · <GlossaryPill
-						term="Kamerstuk"
-						label={`Kamerstuk ${d.kamerstuknummer}`}
-					/></span
+					>Dossier · <GlossaryPill term="Kamerstuk" label={`Kamerstuk ${d.number}`} /></span
 				>
 				<a
 					class="graph-link"
-					href="/explore?focus=kamerstukdossiers/{d.kamerstuknummer}&overlay=dossier:{d.kamerstuknummer}"
-					>Toon op grafiek →</a
+					href="/explore?focus=dossiers/{d.key}&overlay=dossier:{dossierNumber(d.key)}"
+					>Toon in netwerk →</a
 				>
 			</div>
-			<h2 class="title">{d.titel ?? d.kamerstuknummer}</h2>
+			<h2 class="title">{d.title ?? d.number}</h2>
 			<div class="chips">
-				<span
-					class="kind-chip kind-chip--{trajectKind}"
-					title={KIND_SHORT[trajectKind] ?? trajectKind}
-					>{KIND_SHORT[trajectKind] ?? trajectKind}</span
-				>
-				{#if d.huidige_fase}
-					<span class="fase-chip">Nu: {FASE_LABELS[d.huidige_fase] ?? d.huidige_fase}</span>
+				<span class="track-chip track-chip--{track}">{TRACK_LABEL[track]}</span>
+				{#if d.current_stage}
+					<span class="stage-chip">Nu: {STAGE_LABEL[d.current_stage]}</span>
 				{/if}
-				{#if d.afgedaan}<span class="closed-chip">Afgehandeld</span>{/if}
+				{#if d.closed}<span class="closed-chip">Afgehandeld</span>{/if}
 			</div>
 		</header>
 
-		{#if stages.length > 0}
+		{#if d.stages?.length}
 			<div class="stepper-wrap">
-				<LegislativeStepper {stages} current={currentStage} />
+				<LegislativeStepper stages={d.stages} current={d.current_stage ?? null} />
 			</div>
 		{/if}
 
@@ -159,12 +111,10 @@
 				<span class="stat-num">{d.document_count}</span><span class="stat-label">Documenten</span>
 			</li>
 			<li>
-				<span class="stat-num">{d.stemming_count}</span><span class="stat-label">Stemmingen</span>
+				<span class="stat-num">{d.decision_count}</span><span class="stat-label">Stemmingen</span>
 			</li>
 			<li>
-				<span class="stat-num">{d.activiteit_count}</span><span class="stat-label"
-					>Activiteiten</span
-				>
+				<span class="stat-num">{d.activity_count}</span><span class="stat-label">Activiteiten</span>
 			</li>
 		</ul>
 
@@ -172,76 +122,70 @@
 			<section class="sec">
 				<h3 class="sec-title">Betrokken artikelen</h3>
 				<ul class="art-list">
-					{#each showAllArticles ? articles : articles.slice(0, 8) as a (a.key)}
+					{#each showAllArticles ? articles : articles.slice(0, PREVIEW) as a (a.key)}
 						<li class="art-item">
-							<a class="art-name" href="/explore?focus=instrument_articles/{a.key}">{a.label}</a>
-							{#if a.relation}
-								<span class="art-rel">{a.relation.toLowerCase()}</span>
-							{/if}
+							<a class="art-name" href="/explore?focus=articles/{a.key}">{a.label}</a>
+							{#if a.relation}<span class="art-rel">{a.relation}</span>{/if}
 						</li>
 					{/each}
 				</ul>
-				{#if articles.length > 8 && !showAllArticles}
+				{#if articles.length > PREVIEW && !showAllArticles}
 					<button type="button" class="more-btn" onclick={() => (showAllArticles = true)}>
-						+{articles.length - 8} meer
+						+{articles.length - PREVIEW} meer
 					</button>
 				{/if}
 			</section>
 		{/if}
 
-		{#if view.docs && view.docs.items.length > 0}
+		{#if view.documents && view.documents.items.length > 0}
 			<section class="sec">
-				<h3 class="sec-title">Documenten ({view.docs.total})</h3>
+				<h3 class="sec-title">Documenten ({view.documents.total})</h3>
 				<ul class="doc-list doc-list--full">
-					{#each view.docs.items as doc (doc.key)}
+					{#each view.documents.items as doc (doc.key)}
 						<li class="doc-item">
-							<span class="doc-soort">{doc.soort ?? '—'}</span>
+							<span class="doc-kind">{doc.kind ?? '—'}</span>
 							{#if doc.tk_url}
 								<a
-									class="doc-titel doc-titel--link"
+									class="doc-title doc-title--link"
 									href={doc.tk_url}
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									{doc.display_name ?? doc.titel ?? doc.key}
+									{doc.display_name ?? doc.title ?? doc.key}
 								</a>
 							{:else}
-								<span class="doc-titel">{doc.display_name ?? doc.titel ?? doc.key}</span>
+								<span class="doc-title">{doc.display_name ?? doc.title ?? doc.key}</span>
 							{/if}
-							{#if doc.datum}<span class="doc-date">{formatDate(doc.datum)}</span>{/if}
+							{#if doc.date}<span class="doc-date">{formatDate(doc.date)}</span>{/if}
 						</li>
 					{/each}
 				</ul>
 			</section>
 		{/if}
 
-		{#if stemmingen.length > 0}
+		{#if decisions.length > 0}
 			<section class="sec">
-				<h3 class="sec-title">Stemmingen ({d.stemming_count})</h3>
-				<ul class="stem-list">
-					{#each showAllStemmingen ? stemmingen : stemmingen.slice(0, 8) as e (e.node_id)}
-						{@const aangenomen = (e.body as Record | null)?.['aangenomen'] === true}
-						{@const verworpen = (e.body as Record | null)?.['aangenomen'] === false}
-						{@const onderwerp =
-							((e.body as Record | null)?.['agendapunt_onderwerp'] as string | null) ??
-							e.titel ??
-							'—'}
-						<li class="stem-item">
+				<h3 class="sec-title">Stemmingen ({d.decision_count})</h3>
+				<ul class="decision-list">
+					{#each showAllDecisions ? decisions : decisions.slice(0, PREVIEW) as e (e.node_id)}
+						{@const decision = decisionOf(e)}
+						{@const passed = decision.passed}
+						<li class="decision-item">
 							<span
-								class="stem-result"
-								class:stem-result--ja={aangenomen}
-								class:stem-result--nee={verworpen}
+								class="decision-result"
+								class:decision-result--passed={passed === true}
+								class:decision-result--failed={passed === false}
 							>
-								{aangenomen ? 'Aangenomen' : verworpen ? 'Verworpen' : '—'}
+								{passed ? 'Aangenomen' : passed === false ? 'Verworpen' : '—'}
 							</span>
-							<span class="stem-onderwerp">{onderwerp}</span>
-							{#if e.datum}<span class="stem-date">{formatDate(e.datum)}</span>{/if}
+							<span class="decision-subject">{decision.subject ?? e.title ?? '—'}</span>
+							{#if e.date}<span class="decision-date">{formatDate(e.date)}</span>{/if}
 						</li>
 					{/each}
 				</ul>
-				{#if stemmingen.length > 8 && !showAllStemmingen}
-					<button type="button" class="more-btn" onclick={() => (showAllStemmingen = true)}>
-						+{stemmingen.length - 8} eerdere stemmingen
+				{#if decisions.length > PREVIEW && !showAllDecisions}
+					<button type="button" class="more-btn" onclick={() => (showAllDecisions = true)}>
+						+{decisions.length - PREVIEW} eerdere stemmingen
 					</button>
 				{/if}
 			</section>
@@ -250,7 +194,12 @@
 		{#if view.timeline && view.timeline.entries.length > 0}
 			<section class="sec sec--timeline">
 				<h3 class="sec-title">Tijdlijn</h3>
-				<LegislativeTimeline entries={view.timeline.entries} {partyColors} />
+				{#if view.timeline.total > view.timeline.entries.length}
+					<p class="timeline-note">
+						De {view.timeline.entries.length} meest recente van {view.timeline.total} items.
+					</p>
+				{/if}
+				<LegislativeTimeline entries={view.timeline.entries} />
 			</section>
 		{/if}
 	{/if}
@@ -322,8 +271,8 @@
 		align-items: center;
 	}
 
-	.kind-chip,
-	.fase-chip,
+	.track-chip,
+	.stage-chip,
 	.closed-chip {
 		display: inline-flex;
 		align-items: center;
@@ -339,32 +288,32 @@
 		background: var(--paper-3);
 		color: var(--ink-3);
 	}
-	.kind-chip--wetsvoorstel {
+	.track-chip--wetsvoorstel {
 		background: color-mix(in srgb, #7a1f1a 10%, var(--paper));
 		color: #7a1f1a;
 		border-color: color-mix(in srgb, #7a1f1a 25%, transparent);
 	}
-	.kind-chip--initiatiefwetsvoorstel {
+	.track-chip--initiatiefwetsvoorstel {
 		background: color-mix(in srgb, #4f46e5 10%, var(--paper));
 		color: #4f46e5;
 		border-color: color-mix(in srgb, #4f46e5 25%, transparent);
 	}
-	.kind-chip--begroting {
+	.track-chip--begroting {
 		background: color-mix(in srgb, #d97706 10%, var(--paper));
 		color: #d97706;
 		border-color: color-mix(in srgb, #d97706 25%, transparent);
 	}
-	.kind-chip--motie {
+	.track-chip--motie {
 		background: color-mix(in srgb, #16a34a 10%, var(--paper));
 		color: #16a34a;
 		border-color: color-mix(in srgb, #16a34a 25%, transparent);
 	}
-	.kind-chip--overig {
+	.track-chip--overig {
 		background: var(--paper-3);
 		color: var(--ink-4);
 		border-style: dashed;
 	}
-	.fase-chip {
+	.stage-chip {
 		color: var(--spine);
 		border-color: var(--spine-faint);
 		background: var(--spine-faint);
@@ -462,13 +411,13 @@
 	.doc-item {
 		grid-template-columns: minmax(70px, auto) 1fr auto;
 	}
-	.stem-item {
+	.decision-item {
 		align-items: start;
 		padding: 6px 0;
 	}
 
 	.art-name,
-	.doc-titel {
+	.doc-title {
 		font-family: var(--font-serif);
 		color: var(--ink-2);
 		text-decoration: none;
@@ -478,8 +427,14 @@
 	.art-name:hover {
 		color: var(--spine);
 	}
-	.doc-titel--link:hover {
+	.doc-title--link:hover {
 		color: var(--spine);
+	}
+	.timeline-note {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: 11px;
+		color: var(--ink-4);
 	}
 	.sec--timeline {
 		gap: 0;
@@ -489,7 +444,7 @@
 		font-size: 10px;
 		color: var(--ink-4);
 	}
-	.doc-soort {
+	.doc-kind {
 		font-family: var(--font-sans);
 		font-size: 10px;
 		color: var(--ink-4);
@@ -503,12 +458,12 @@
 	}
 
 	/* Stemmingen list — recent votes for this dossier */
-	.stem-list {
+	.decision-list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
-	.stem-item {
+	.decision-item {
 		display: grid;
 		grid-template-columns: minmax(80px, auto) 1fr auto;
 		gap: 8px;
@@ -517,7 +472,7 @@
 		border-bottom: 1px dotted var(--rule);
 		font-size: 12px;
 	}
-	.stem-result {
+	.decision-result {
 		font-family: var(--font-sans);
 		font-size: 9px;
 		font-weight: 600;
@@ -530,42 +485,26 @@
 		background: var(--paper-3);
 		text-align: center;
 	}
-	.stem-result--ja {
+	.decision-result--passed {
 		color: var(--green, #16a34a);
 		border-color: color-mix(in srgb, var(--green, #16a34a) 25%, transparent);
 		background: color-mix(in srgb, var(--green, #16a34a) 8%, var(--paper));
 	}
-	.stem-result--nee {
+	.decision-result--failed {
 		color: var(--red, #dc2626);
 		border-color: color-mix(in srgb, var(--red, #dc2626) 25%, transparent);
 		background: color-mix(in srgb, var(--red, #dc2626) 8%, var(--paper));
 	}
-	.stem-onderwerp {
+	.decision-subject {
 		font-family: var(--font-serif);
 		color: var(--ink-2);
 		overflow-wrap: anywhere;
 		min-width: 0;
 		line-height: 1.4;
 	}
-	.stem-date {
+	.decision-date {
 		font-family: var(--font-mono);
 		font-size: 10px;
 		color: var(--ink-4);
-	}
-
-	.foot {
-		border-top: 1px solid var(--rule);
-		padding-top: var(--s-3);
-		display: flex;
-	}
-	.full-link {
-		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--spine);
-		text-decoration: none;
-		border-bottom: 1px solid var(--spine-faint);
-	}
-	.full-link:hover {
-		border-bottom-color: var(--spine);
 	}
 </style>

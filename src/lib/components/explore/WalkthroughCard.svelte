@@ -1,8 +1,7 @@
 <!--
-	Eerste-keer-tipkaart die rechtsonder verschijnt bij de eerste keer dat
-	een gebruiker /explore opent. Geeft in vier korte zinnen de mentale map
-	van de weergavemodi (Ontdekken, Verdiepen, Lezen, Index). Eénmalig per
-	browser; daarna verbergt localStorage hem permanent.
+	Kaart voor eerste gebruik, rechtsonder op /explore. Beschrijft de vier
+	weergavemodi (Ontdekken, Verdiepen, Lezen, Index). Eén keer per browser;
+	daarna verbergt localStorage hem.
 
 	De volgorde volgt de leesrichting van het product: eerst het netwerk
 	verkennen, dan tekst erbij, dan alleen tekst, en als alternatief een
@@ -39,15 +38,17 @@
 </script>
 
 {#if visible}
-	<div class="walkthrough" role="dialog" aria-label="Eerste keer hier?">
+	<div class="walkthrough" role="dialog" aria-label="Eerste gebruik">
 		<div class="walkthrough__head">
-			<span class="walkthrough__eyebrow">Eerste keer hier?</span>
+			<span class="walkthrough__eyebrow">Eerste gebruik</span>
 			<button class="walkthrough__close" onclick={dismiss} aria-label="Sluiten">×</button>
 		</div>
 		<ol class="walkthrough__steps">
 			<li>
 				<span class="walkthrough__num">1</span>
-				<span><strong>Ontdekken.</strong> Klik op een bron in het netwerk om hem te focussen.</span>
+				<span
+					><strong>Ontdekken.</strong> Klik op een bron in het netwerk om de bron te selecteren.</span
+				>
 			</li>
 			<li>
 				<span class="walkthrough__num">2</span>

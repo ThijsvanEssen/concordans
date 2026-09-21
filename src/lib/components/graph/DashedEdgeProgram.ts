@@ -87,10 +87,9 @@ void main() {
 `;
 
 // Fragment shader with a 6-dash pattern (75% on, 25% off).
-// Voorheen 55/45 — bij dunne stemt-edges leverde dat een afwisseling waar
-// per dash nog maar 1–2 pixels overbleven, en het paper-achtergrond
-// doorscheen tot een visueel "witte" stem. 75/25 houdt de kleurfidelity
-// en behoudt voldoende lege ruimte om de stem als gestippeld te lezen.
+// A 55/45 split left only 1-2 pixels per dash on thin VOTED edges and the paper
+// background showed through as a "white" vote. 75/25 keeps the colour and
+// still reads as dashed.
 //
 // HARD-EDGE rendering: every fragment inside the line draws v_color at full
 // opacity; outside fragments are discarded. No anti-alias mix → the dash

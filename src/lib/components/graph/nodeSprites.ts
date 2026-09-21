@@ -1,35 +1,31 @@
 // Per-kind shape sprites for sigma's NodeImageProgram.
 //
-// We keep solid kind colours (NODE_FILL / NODE_STROKE in GraphView.svelte) and
-// vary only the silhouette. Sprites are generated once at module init as
-// data: URLs so there are no asset files to manage and colours stay sourced
-// from a single table here.
+// Solid kind colours plus a silhouette per kind. Sprites are generated once
+// as data: URLs, so there are no asset files. This module is the one place
+// that defines kind colours; the legend and the canvas read them through
+// fillFor and strokeFor.
 //
 // Selection: when a node is the current focus, swap to the `focused` sprite
 // variant, which redraws the same shape with a crimson outer stroke. The
 // `border` program retains its own selection ring for circle kinds — only the
 // shapes rendered via NodeImageProgram need this swap.
 
-import type { GraphNodeKind } from '$lib/graph/types';
+import type { EdgeCategory, GraphNodeKind } from '$lib/graph/types';
 
 export type NodeShape = 'circle' | 'diamond' | 'roundedRect' | 'hexagon';
 
-// Live-canvas palette aligned met de homepage-legenda (Hero-grafiek + Drie
-// domeinen-tegels): artikel = open ring (paper-vulling, ink stroke); arrest
-// = vol indigo; dossier = open accent-diamant. Instrument blijft het
-// donkere "drager"-symbool. Kept duplicated here on purpose: sprites need
-// the colour at module-init time, and re-importing the Svelte file would
-// pull in the whole graph view.
+// Open shapes (paper fill, coloured stroke): article, dossier. Filled
+// shapes: instrument, judgment, and the parliamentary kinds.
 const PAPER = '#FFFDF4';
 const FILL: Record<GraphNodeKind, string> = {
 	article: PAPER,
 	instrument: '#1A1814',
 	judgment: '#2B3A5C',
 	dossier: PAPER,
-	commissie: '#8A6B3A',
-	fractie: '#44505E',
-	lid: '#44505E',
-	tkstuk: '#7A1F1A',
+	committee: '#8A6B3A',
+	faction: '#44505E',
+	member: '#44505E',
+	document: '#7A1F1A',
 	activity: '#8A6B3A',
 	other: PAPER
 };
@@ -38,15 +34,24 @@ const STROKE: Record<GraphNodeKind, string> = {
 	instrument: '#1A1814',
 	judgment: '#2B3A5C',
 	dossier: '#7A1F1A',
-	commissie: '#8A6B3A',
-	fractie: '#44505E',
-	lid: '#44505E',
-	tkstuk: '#7A1F1A',
+	committee: '#8A6B3A',
+	faction: '#44505E',
+	member: '#44505E',
+	document: '#7A1F1A',
 	activity: '#8A6B3A',
 	other: '#9A9485'
 };
+
+export const fillFor = (kind: GraphNodeKind): string => FILL[kind];
+export const strokeFor = (kind: GraphNodeKind): string => STROKE[kind];
+
+/** Edge colour by category; a VOTED edge takes the colour of its choice instead. */
+export const EDGE_COLOR: Record<EdgeCategory, string> = {
+	structural: '#3D5C3A', // moss
+	mutation: '#7A1F1A', // spine
+	semantic: '#44505E' // slate
+};
 const STUB_FILL = '#FFFDF4';
-const STUB_STROKE = '#B8B0A4';
 const FOCUS_STROKE = '#7A1F1A'; // crimson — matches the existing selectionColor
 
 export const KIND_SHAPE: Record<GraphNodeKind, NodeShape> = {
@@ -54,17 +59,15 @@ export const KIND_SHAPE: Record<GraphNodeKind, NodeShape> = {
 	instrument: 'diamond', // filled dark diamond — top-level wet
 	judgment: 'circle', // solid indigo dot — homepage legend
 	dossier: 'diamond', // open accent diamond — homepage legend
-	tkstuk: 'hexagon',
-	commissie: 'hexagon',
+	document: 'hexagon',
+	committee: 'hexagon',
 	activity: 'hexagon',
-	fractie: 'hexagon',
-	lid: 'hexagon',
+	faction: 'hexagon',
+	member: 'hexagon',
 	other: 'circle'
 };
 
-export function shapeFor(kind: GraphNodeKind): NodeShape {
-	return KIND_SHAPE[kind] ?? 'circle';
-}
+export const shapeFor = (kind: GraphNodeKind): NodeShape => KIND_SHAPE[kind];
 
 // Sprite viewBox is 32×32 with shapes centred at (16,16) and "radius" 14.
 // Sigma renders the image into a square of side 2*size centred on the node;
@@ -138,7 +141,7 @@ function buildSprite(kind: GraphNodeKind, variant: Variant): string {
 		// grijs. Anders zien een stub-Publicatie (hexagon), stub-Artikel
 		// (cirkel) en stub-Dossier (ruit) er bij ver uitzoomen alle drie
 		// uit als een naamloos wit puntje.
-		return svgFor(shape, STUB_FILL, STROKE[kind] ?? STUB_STROKE, 1.5);
+		return svgFor(shape, STUB_FILL, STROKE[kind], 1.5);
 	}
 	if (variant === 'focused') return svgFor(shape, FILL[kind], FOCUS_STROKE, 2.8);
 	// Open silhouetten (artikel-ring, dossier-diamant) hebben extra stroke

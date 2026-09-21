@@ -1,17 +1,16 @@
 <script lang="ts">
-	// Kind-keyed reader dispatcher. Each node kind gets its own reader
-	// component; Article and Judgment own their text rendering, the
-	// parlementair kinds (Tkstuk/Dossier/Commissie/Lid/Fractie/Stemming) are
-	// standalone readers built on lib/api/parliamentary-client.
+	// Reader dispatcher. Article and judgment readers own their text; the
+	// parliamentary readers load their own data. A decision is a `GraphNodeKind`
+	// of 'activity' like a case or a commitment, so those are told apart by collection.
 	import type { GraphNode } from '$lib/graph/types';
 	import ArticleReader from './readers/ArticleReader.svelte';
 	import JudgmentReader from './readers/JudgmentReader.svelte';
-	import TkstukReader from './readers/TkstukReader.svelte';
+	import DocumentReader from './readers/DocumentReader.svelte';
 	import DossierReader from './readers/DossierReader.svelte';
-	import CommissieReader from './readers/CommissieReader.svelte';
-	import LidReader from './readers/LidReader.svelte';
-	import FractieReader from './readers/FractieReader.svelte';
-	import StemmingReader from './readers/StemmingReader.svelte';
+	import CommitteeReader from './readers/CommitteeReader.svelte';
+	import MemberReader from './readers/MemberReader.svelte';
+	import FactionReader from './readers/FactionReader.svelte';
+	import DecisionReader from './readers/DecisionReader.svelte';
 	import ActivityReader from './readers/ActivityReader.svelte';
 	import InstrumentReader from './readers/InstrumentReader.svelte';
 	import FallbackReader from './readers/FallbackReader.svelte';
@@ -31,26 +30,26 @@
 
 {#if !selection}
 	<ArticleReader {selection} {onNavigate} />
+{:else if selection.collection === 'decisions'}
+	<DecisionReader node={selection} />
 {:else if selection.kind === 'article'}
 	<ArticleReader {selection} {onNavigate} {onPrev} {onNext} />
 {:else if selection.kind === 'judgment'}
 	<JudgmentReader {selection} {onNavigate} />
-{:else if selection.kind === 'tkstuk'}
-	<TkstukReader node={selection} />
+{:else if selection.kind === 'document'}
+	<DocumentReader node={selection} />
 {:else if selection.kind === 'dossier'}
 	<DossierReader node={selection} />
-{:else if selection.kind === 'commissie'}
-	<CommissieReader node={selection} />
-{:else if selection.kind === 'lid'}
-	<LidReader node={selection} {onNavigate} />
-{:else if selection.kind === 'fractie'}
-	<FractieReader node={selection} {onNavigate} />
-{:else if selection.kind === 'activity'}
+{:else if selection.kind === 'committee'}
+	<CommitteeReader node={selection} />
+{:else if selection.kind === 'member'}
+	<MemberReader node={selection} {onNavigate} />
+{:else if selection.kind === 'faction'}
+	<FactionReader node={selection} {onNavigate} />
+{:else if selection.collection === 'activities'}
 	<ActivityReader node={selection} {onNavigate} />
 {:else if selection.kind === 'instrument'}
 	<InstrumentReader node={selection} {onNavigate} />
-{:else if selection.collection === 'stemmingen'}
-	<StemmingReader node={selection} />
 {:else}
 	<FallbackReader node={selection} />
 {/if}

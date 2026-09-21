@@ -1,23 +1,35 @@
 import type { PageLoad } from './$types';
-import { listPublications } from '$lib/api/mvt';
+import { api, unwrap } from '$lib/api/client';
 
-const INITIAL_LIMIT = 1000;
+// The maximum the API returns; it has no offset, so narrowing by filter is the only way to see more.
+const LIMIT = 1000;
 
-export const load: PageLoad = async () => {
+export const load: PageLoad = async ({ url }) => {
+	const q = url.searchParams.get('q') ?? '';
+	const kind = url.searchParams.get('kind') ?? '';
+	const chamber = url.searchParams.get('chamber') ?? '';
 	try {
-		const data = await listPublications({ limit: INITIAL_LIMIT });
-		return {
-			publications: data.items,
-			total: data.total,
-			initialLimit: INITIAL_LIMIT,
-			error: null
-		};
+		const { items } = await unwrap(
+			api.GET('/api/documents', {
+				params: {
+					query: {
+						q: q || undefined,
+						kind: kind || undefined,
+						chamber: chamber || undefined,
+						limit: LIMIT
+					}
+				}
+			})
+		);
+		return { documents: items, q, kind, chamber, limit: LIMIT, error: null };
 	} catch {
 		return {
-			publications: [],
-			total: 0,
-			initialLimit: INITIAL_LIMIT,
-			error: 'Publicaties konden niet worden geladen.'
+			documents: [],
+			q,
+			kind,
+			chamber,
+			limit: LIMIT,
+			error: 'Documenten konden niet worden geladen.'
 		};
 	}
 };

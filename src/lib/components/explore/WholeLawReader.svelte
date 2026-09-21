@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { getInstrumentReader, type ReaderArticle } from '$lib/api/nodes';
-	import { recordInstrument, instrumentMetaStore } from '$lib/api/instrument-cache';
-	import { compareArticleNumbers } from '$lib/util/sort';
-	import LidText from '$lib/components/articles/LidText.svelte';
+	import { api, unwrap } from '$lib/api/client';
+	import { ensureInstrumentMeta, instrumentMetaStore } from '$lib/api/instrument-cache';
+	import type { Schema } from '$lib/api/types';
 
 	let {
 		bwbId,
@@ -12,90 +11,95 @@
 		onNavigate?: (collection: string, key: string) => void;
 	} = $props();
 
-	type State =
-		| { kind: 'idle' }
-		| { kind: 'loading' }
-		| { kind: 'ready'; articles: ReaderArticle[] }
-		| { kind: 'error'; message: string };
+	// The API inlines at most this many characters of an article. An article that
+	// fills them is shown with an ellipsis; the full text is one click away.
+	const PREVIEW_CHARS = 600;
+	const PAGE_SIZE = 100;
 
-	let view = $state<State>({ kind: 'idle' });
-	let loadedBwb: string | null = null;
+	type Article = Schema<'InstrumentArticleNodeDTO'>;
 
-	// Friendly law name from the shared cache (filled by every endpoint that
-	// returns instrument metadata). Avoid pinning this into the State so the
-	// header updates live as the cache learns the real name.
-	const prettyLawName = $derived.by(() => {
-		if (!bwbId) return null;
-		const meta = $instrumentMetaStore.get(bwbId);
+	let articles = $state<Article[]>([]);
+	let total = $state(0);
+	let status = $state<'idle' | 'loading' | 'loading-more' | 'ready' | 'error'>('idle');
+
+	const lawName = $derived.by(() => {
+		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
 		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwbId;
 	});
 
+	function load(bwb: string, offset: number, signal?: AbortSignal) {
+		return unwrap(
+			api.GET('/api/instruments/{bwb_id}/articles', {
+				params: {
+					path: { bwb_id: bwb },
+					query: { text_preview_chars: PREVIEW_CHARS, limit: PAGE_SIZE, offset }
+				},
+				signal
+			})
+		);
+	}
+
 	$effect(() => {
-		const bwb = bwbId;
-		if (!bwb) {
-			view = { kind: 'idle' };
+		articles = [];
+		if (!bwbId) {
+			status = 'idle';
 			return;
 		}
-		if (bwb === loadedBwb) return;
-
-		view = { kind: 'loading' };
-		getInstrumentReader(bwb)
-			.then((resp) => {
-				recordInstrument({
-					...resp.instrument,
-					citation_title: resp.citation_title ?? resp.instrument.citation_title ?? null
-				});
-
-				const byId = new Map<string, ReaderArticle>();
-				for (const a of resp.articles) {
-					if (a.id && !byId.has(a.id)) byId.set(a.id, a);
-				}
-				const articles = [...byId.values()].sort((a, b) =>
-					compareArticleNumbers(a.article_number, b.article_number)
-				);
-				view = { kind: 'ready', articles };
-				loadedBwb = bwb;
+		ensureInstrumentMeta(bwbId);
+		const controller = new AbortController();
+		status = 'loading';
+		load(bwbId, 0, controller.signal)
+			.then((page) => {
+				articles = page.items;
+				total = page.total;
+				status = 'ready';
 			})
-			.catch((err) => {
-				console.warn('[whole-law] failed to load', bwb, err);
-				view = { kind: 'error', message: 'Volledige wet kon niet geladen worden.' };
+			.catch(() => {
+				if (!controller.signal.aborted) status = 'error';
 			});
+		return () => controller.abort();
 	});
 
-	function diffHeaders(prev: ReaderArticle | null, cur: ReaderArticle) {
-		const prevBc = prev?.breadcrumb ?? [];
-		const curBc = cur.breadcrumb ?? [];
-		const out: { type: string; label: string; depth: number }[] = [];
-		for (let i = 0; i < curBc.length; i++) {
-			const cur = curBc[i];
-			const prevCrumb = i < prevBc.length ? prevBc[i] : null;
-			const same = prevCrumb && prevCrumb.label === cur.label && prevCrumb.type === cur.type;
-			if (!same) out.push({ type: cur.type ?? '', label: cur.label ?? '', depth: i });
+	async function loadMore() {
+		if (!bwbId || status !== 'ready') return;
+		const bwb = bwbId;
+		status = 'loading-more';
+		try {
+			const page = await load(bwb, articles.length);
+			if (bwb === bwbId) articles.push(...page.items);
+		} catch {
+			// The articles already shown stay; the button remains for another attempt.
 		}
-		return out;
+		status = 'ready';
+	}
+
+	function newSections(prev: Article | undefined, cur: Article) {
+		const before = prev?.breadcrumb ?? [];
+		return (cur.breadcrumb ?? [])
+			.map((crumb, depth) => ({ ...crumb, depth }))
+			.filter((crumb, i) => before[i]?.label !== crumb.label || before[i]?.type !== crumb.type);
 	}
 </script>
 
-{#if view.kind === 'idle'}
+{#if status === 'idle'}
 	<div class="whole-empty">Selecteer een artikel om de wet te openen.</div>
-{:else if view.kind === 'loading'}
+{:else if status === 'loading'}
 	<div class="whole-loading">
 		<div class="spinner" aria-hidden="true"></div>
 		<span>Wet ophalen…</span>
 	</div>
-{:else if view.kind === 'error'}
-	<div class="whole-error">{view.message}</div>
+{:else if status === 'error'}
+	<div class="whole-error">Volledige wet kon niet geladen worden.</div>
 {:else}
 	<article class="whole-law">
 		<header class="whole-head">
-			<span class="whole-kind">WETBOEK</span>
-			<h1 class="whole-title">{prettyLawName ?? bwbId}</h1>
-			<p class="whole-count">{view.articles.length} artikelen</p>
+			<span class="whole-kind">Regeling</span>
+			<h1 class="whole-title">{lawName}</h1>
+			<p class="whole-count">{total} artikelen</p>
 		</header>
 
-		{#each view.articles as a, i (a.id)}
-			{@const headers = diffHeaders(view.articles[i - 1] ?? null, a)}
-			{#each headers as section, i (i)}
+		{#each articles as a, i (a.id)}
+			{#each newSections(articles[i - 1], a) as section, j (j)}
 				<h2 class="whole-section whole-section--depth-{Math.min(section.depth, 3)}">
 					<span class="whole-section-kind">{section.type}</span>
 					<span class="whole-section-label">{section.label}</span>
@@ -107,36 +111,35 @@
 					<button
 						type="button"
 						class="whole-article-jump"
-						onclick={() => onNavigate?.('instrument_articles', a.key)}
+						onclick={() => onNavigate?.('articles', a.key)}
 						title="Open in detail"
 					>
 						<span class="whole-art-num">Art. {a.article_number}</span>
-						{#if a.display_name && a.display_name !== `Art. ${a.article_number}`}
-							<span class="whole-art-name">{a.display_name}</span>
-						{/if}
 					</button>
 				</div>
 
-				<div class="whole-article-body">
-					{#if a.leden && a.leden.length > 0}
-						<ol class="whole-leden">
-							{#each a.leden as lid, i (i)}
-								<li class="whole-lid">
-									<span class="whole-lid-num">{lid.number}</span>
-									<p class="whole-lid-text">
-										<LidText text={lid.text} citaties={lid.citaties ?? []} {onNavigate} />
-									</p>
-								</li>
-							{/each}
-						</ol>
-					{:else if a.text}
-						<p class="whole-flat">{a.text}</p>
+				<p class="whole-text">
+					{#if a.text_preview}
+						{a.text_preview}{a.text_preview.length >= PREVIEW_CHARS ? '…' : ''}
 					{:else}
-						<p class="whole-empty-text">Geen tekst beschikbaar.</p>
+						<span class="whole-empty-text">Geen tekst beschikbaar.</span>
 					{/if}
-				</div>
+				</p>
 			</section>
 		{/each}
+
+		{#if articles.length < total}
+			<button
+				type="button"
+				class="whole-more"
+				disabled={status === 'loading-more'}
+				onclick={loadMore}
+			>
+				{status === 'loading-more'
+					? 'Laden…'
+					: `Volgende artikelen (${total - articles.length} resterend)`}
+			</button>
+		{/if}
 	</article>
 {/if}
 
@@ -289,49 +292,40 @@
 		font-weight: 500;
 	}
 
-	.whole-art-name {
-		font-family: var(--font-serif);
-		font-size: 14px;
-		color: var(--ink-3);
-	}
-
 	.whole-article-jump:hover .whole-art-num {
 		text-decoration: underline;
 	}
 
-	.whole-leden {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-
-	.whole-lid {
-		display: grid;
-		grid-template-columns: 28px 1fr;
-		gap: var(--s-3);
-		margin-bottom: var(--s-3);
-	}
-
-	.whole-lid:last-child {
-		margin-bottom: 0;
-	}
-
-	.whole-lid-num {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-4);
-		line-height: 1.62;
-		padding-top: 3px;
-		text-align: right;
-	}
-
-	.whole-lid-text,
-	.whole-flat {
+	.whole-text {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: 17px;
 		line-height: 1.62;
 		color: var(--ink);
+		white-space: pre-line;
+	}
+
+	.whole-more {
+		display: block;
+		margin: var(--s-6) auto 0;
+		font-family: var(--font-sans);
+		font-size: 12px;
+		color: var(--ink-3);
+		background: none;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		padding: 6px 14px;
+		cursor: pointer;
+	}
+
+	.whole-more:hover:not(:disabled) {
+		background: var(--paper-3);
+		color: var(--ink);
+	}
+
+	.whole-more:disabled {
+		opacity: 0.5;
+		cursor: default;
 	}
 
 	.whole-empty-text {

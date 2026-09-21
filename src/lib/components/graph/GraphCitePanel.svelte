@@ -1,14 +1,7 @@
-<script lang="ts" module>
-	// Persistent across all panel instances — once we've fetched a node's
-	// snippet, we never fetch it again for the lifetime of the page.
-	const snippetCache = new Map<string, string>();
-</script>
-
 <script lang="ts">
-	import type { GraphNode } from '$lib/graph/types';
-	import { getArticleDetail } from '$lib/api/articles';
-	import { getJudgmentDetail } from '$lib/api/judgments';
-	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import type { GraphNode, GraphNodeKind } from '$lib/graph/types';
+	import { formatEcliLabel } from '$lib/graph/types';
+	import { api, unwrap } from '$lib/api/client';
 	import { getLawIdFromProps } from '$lib/util/law-id';
 
 	let {
@@ -31,150 +24,107 @@
 
 	const W = 360;
 
-	const kindLabel = $derived(
-		node.kind === 'judgment'
-			? 'Arrest'
-			: node.kind === 'article'
-				? 'Artikel'
-				: node.kind === 'dossier'
-					? 'Dossier'
-					: node.kind === 'commissie'
-						? 'Commissie'
-						: node.kind === 'lid'
-							? 'Kamerlid'
-							: node.kind === 'fractie'
-								? 'Fractie'
-								: 'Overig'
-	);
-	const kindClass = $derived(
-		node.kind === 'judgment'
-			? 'dot--judgment'
-			: node.kind === 'dossier'
-				? 'dot--dossier'
-				: node.kind === 'commissie'
-					? 'dot--commissie'
-					: node.kind === 'fractie'
-						? 'dot--fractie'
-						: node.kind === 'lid'
-							? 'dot--lid'
-							: node.kind === 'tkstuk'
-								? 'dot--tkstuk'
-								: node.kind === 'activity'
-									? 'dot--activity'
-									: 'dot--article'
+	const KIND_LABEL: Record<GraphNodeKind, string> = {
+		instrument: 'Wet',
+		article: 'Artikel',
+		judgment: 'Arrest',
+		dossier: 'Dossier',
+		document: 'Document',
+		activity: 'Activiteit',
+		committee: 'Commissie',
+		member: 'Kamerlid',
+		faction: 'Fractie',
+		other: 'Overig'
+	};
+
+	// The dot uses the style of the article for kinds without a colour of their own.
+	const dotKind = $derived(
+		node.kind === 'instrument' || node.kind === 'other' ? 'article' : node.kind
 	);
 
-	// Show the full law name (from the cache) for articles, ECLI for judgments,
-	// partij for leden. The line under the title tells the reader *which*
-	// institutional context the node belongs to.
+	const nodeProps = $derived(node.raw?.props ?? undefined);
+	const text = (value: unknown): string | null =>
+		typeof value === 'string' && value ? value : null;
+
+	// The line next to the kind: the context the source belongs to.
 	const cite = $derived.by(() => {
-		const p = node.raw?.props as Record<string, unknown> | undefined;
-		if (node.collection === 'judgments') {
-			const ecli = String(p?.['ecli'] ?? node.key);
-			const m = ecli.match(/(?:ECLI:)?(?:NL:)?([^:]+):(\d{4}):(\d+)/);
-			return m ? `${m[1]} ${m[2]}/${m[3]}` : ecli.replace(/^ECLI:/, '');
+		switch (node.kind) {
+			case 'judgment':
+				return formatEcliLabel(text(nodeProps?.['ecli']) ?? node.label);
+			case 'article':
+				return (
+					text(nodeProps?.['instrument_citation_title']) ?? getLawIdFromProps(nodeProps, node.key)
+				);
+			case 'member':
+				return text(nodeProps?.['party']);
+			case 'dossier':
+				return text(nodeProps?.['number']) ?? node.key;
+			case 'committee':
+			case 'faction':
+				return text(nodeProps?.['abbreviation']);
+			default:
+				return null;
 		}
-		if (node.collection === 'instrument_articles') {
-			const bwb = getLawIdFromProps(p, node.key) ?? '';
-			const meta = bwb ? $instrumentMetaStore.get(bwb) : null;
-			return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwb;
-		}
-		if (node.kind === 'lid') {
-			const partij = p?.['partij'];
-			return typeof partij === 'string' && partij.length > 0 ? partij : node.key;
-		}
-		return node.key;
 	});
 
-	// Module-level snippet cache — avoids re-fetching when the user re-hovers
-	// a node they've already previewed. Without this every wave of the mouse
-	// across a dense graph fires fresh /api/articles requests.
-	let snippet = $state<string | null>(null);
+	const preview = (value: string | null) =>
+		value && value.length > 220 ? value.slice(0, 220) + '…' : value;
+
+	// Text the node already carries, so hovering costs no request.
+	const nodeText = $derived.by(() => {
+		switch (node.kind) {
+			case 'judgment':
+				return text(nodeProps?.['summary']);
+			case 'dossier':
+			case 'document':
+				return text(nodeProps?.['title']) ?? text(nodeProps?.['subject']);
+			case 'committee':
+			case 'faction':
+				return text(nodeProps?.['name']);
+			default:
+				return null;
+		}
+	});
+
+	// The text of an article is not on the node; it is fetched, and the request is
+	// aborted when the pointer moves on.
+	let articleText = $state<string | null>(null);
 	let loading = $state(false);
 
 	$effect(() => {
-		const n = node;
+		articleText = null;
+		loading = false;
+		const number = text(nodeProps?.['article_number']);
+		const bwb = getLawIdFromProps(nodeProps, node.key);
+		if (node.stub || node.kind !== 'article' || !number || !bwb) return;
 
-		// Stub nodes have no content to fetch.
-		if (n.stub) {
-			snippet = null;
-			loading = false;
-			return;
-		}
-
-		const cached = snippetCache.get(n.id);
-		if (cached !== undefined) {
-			snippet = cached;
-			loading = false;
-			return;
-		}
-		snippet = null;
+		const ctrl = new AbortController();
 		loading = true;
-		const p = n.raw?.props as Record<string, unknown> | undefined;
-
-		if (n.collection === 'instrument_articles') {
-			const bwb = getLawIdFromProps(p, n.key) ?? '';
-			const art = String(p?.['article_number'] ?? '');
-			if (bwb && art) {
-				getArticleDetail(bwb, art)
-					.then((res) => {
-						const txt = res.article.text ?? '';
-						const trimmed = txt.length > 220 ? txt.slice(0, 220) + '…' : txt;
-						snippetCache.set(n.id, trimmed);
-						if (node.id === n.id) {
-							snippet = trimmed;
-							loading = false;
-						}
-					})
-					.catch(() => {
-						snippetCache.set(n.id, '');
-						if (node.id === n.id) loading = false;
-					});
-			} else {
-				loading = false;
-			}
-		} else if (n.kind === 'lid') {
-			// Lid hover: no remote fetch — partij + actief is already in props.
-			const partij = (p?.['partij'] as string | null) ?? null;
-			const actief = (p?.['actief'] as boolean | null) ?? null;
-			const summary = [partij, actief === false ? 'inactief' : null].filter(Boolean).join(' · ');
-			snippetCache.set(n.id, summary);
-			snippet = summary;
-			loading = false;
-		} else if (n.kind === 'fractie') {
-			const naam = (p?.['naam'] as string | null) ?? null;
-			snippetCache.set(n.id, naam ?? '');
-			snippet = naam;
-			loading = false;
-		} else if (n.collection === 'judgments') {
-			const ecli = String(p?.['ecli'] ?? n.key);
-			const full = ecli.startsWith('ECLI:') ? ecli : `ECLI:${ecli}`;
-			getJudgmentDetail(full)
-				.then((res) => {
-					const txt = res.judgment.summary ?? '';
-					const trimmed = txt.length > 220 ? txt.slice(0, 220) + '…' : txt;
-					snippetCache.set(n.id, trimmed);
-					if (node.id === n.id) {
-						snippet = trimmed;
-						loading = false;
-					}
-				})
-				.catch(() => {
-					snippetCache.set(n.id, '');
-					if (node.id === n.id) loading = false;
-				});
-		} else {
-			loading = false;
-		}
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}', {
+				params: { path: { bwb_id: bwb, article_number: number } },
+				signal: ctrl.signal
+			})
+		)
+			.then((res) => {
+				articleText = preview(res.article.text);
+			})
+			.catch(() => {})
+			.finally(() => {
+				if (!ctrl.signal.aborted) loading = false;
+			});
+		return () => ctrl.abort();
 	});
+
+	const snippet = $derived(articleText ?? preview(nodeText));
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="citepanel" style="width:{W}px" onmouseenter={onMouseEnter} onmouseleave={onMouseLeave}>
 	<div class="head">
-		<span class="dot {kindClass}" aria-hidden="true"></span>
-		<span class="kind caps">{kindLabel}</span>
-		<span class="cite mono">{cite}</span>
+		<span class="dot dot--{dotKind}" aria-hidden="true"></span>
+		<span class="kind caps">{KIND_LABEL[node.kind]}</span>
+		{#if cite}<span class="cite mono">{cite}</span>{/if}
 	</div>
 
 	<h4 class="title {node.stub ? 'title--stub' : ''}">{node.label}</h4>
@@ -200,7 +150,7 @@
 		<button
 			class="act"
 			onclick={() => onFocus(node)}
-			title="Centreert dit knooppunt in het netwerk en laadt de aangrenzende bronnen."
+			title="Centreert deze bron in het netwerk en laadt de aangrenzende bronnen."
 			>→ Selecteren</button
 		>
 		{#if onTogglePin && !node.stub}
@@ -208,7 +158,7 @@
 				class="act act--pin"
 				class:act--pinned={isPinned}
 				onclick={() => onTogglePin(node)}
-				title={isPinned ? 'Losmaken' : 'Vastpinnen — blijft zichtbaar bij volgende uitklap'}
+				title={isPinned ? 'Losmaken' : 'Vastpinnen: blijft zichtbaar bij volgende uitklap'}
 				>{isPinned ? '★ Vast' : '☆ Pin'}</button
 			>
 		{/if}
@@ -254,13 +204,13 @@
 	.dot--dossier {
 		background: #7a1f1a;
 	}
-	.dot--commissie {
+	.dot--committee {
 		background: #8a6a1f;
 	}
-	.dot--fractie {
+	.dot--faction {
 		background: #44505e;
 	}
-	.dot--tkstuk {
+	.dot--document {
 		background: #fffdf4;
 		border: 1.5px solid #7a1f1a;
 	}
@@ -268,7 +218,7 @@
 		background: #fffdf4;
 		border: 1.5px solid #8a6a1f;
 	}
-	.dot--lid {
+	.dot--member {
 		background: #fffdf4;
 		border: 1.5px solid #44505e;
 	}

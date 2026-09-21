@@ -1,0 +1,39 @@
+import { describe, expect, it } from 'vitest';
+import { NODE_TYPES, RELATIONS, isCollection, isRelation, nodeId, parseNodeId } from './vocabulary';
+
+describe('node ids', () => {
+	it('builds and parses collection/key', () => {
+		expect(nodeId('articles', 'bwbr0001854_287')).toBe('articles/bwbr0001854_287');
+		expect(parseNodeId('dossiers/29684_i')).toEqual({ collection: 'dossiers', key: '29684_i' });
+	});
+
+	it('keeps a slash inside the key', () => {
+		expect(parseNodeId('documents/a/b')).toEqual({ collection: 'documents', key: 'a/b' });
+	});
+
+	it.each(['articles', 'articles/', '/x', 'kamerstukdossiers/29684', 'instrument_articles/x', ''])(
+		'refuses %j',
+		(id) => expect(parseNodeId(id)).toBeNull()
+	);
+});
+
+describe('vocabulary', () => {
+	it('knows the 15 collections and 18 relations of the API', () => {
+		expect(Object.keys(NODE_TYPES)).toHaveLength(15);
+		expect(RELATIONS).toHaveLength(18);
+		expect(new Set(RELATIONS).size).toBe(18);
+	});
+
+	it('refuses names of the old API', () => {
+		expect(isCollection('commissies')).toBe(false);
+		expect(isCollection('committees')).toBe(true);
+		expect(isRelation('REFERS_TO_ARTICLE')).toBe(false);
+		expect(isRelation('MEMBER_OF')).toBe(true);
+		expect(isRelation(null)).toBe(false);
+	});
+
+	it('is not fooled by properties of Object', () => {
+		expect(isCollection('toString')).toBe(false);
+		expect(isCollection('constructor')).toBe(false);
+	});
+});

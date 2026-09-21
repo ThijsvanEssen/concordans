@@ -1,149 +1,24 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
-	import { listPublications, type PublicationSummary } from '$lib/api/mvt';
 
 	let { data }: { data: PageData } = $props();
 
-	// Mutable local copy so "Meer laden" can extend the list without a full reload.
-	let items = $state<PublicationSummary[]>(data.publications);
-	let total = $state<number>(data.total);
-	let loadingMore = $state(false);
-
+	// The kind list comes from the unfiltered result; a filtered result would offer one kind only.
+	let kinds = $state<string[]>([]);
 	$effect(() => {
-		items = data.publications;
-		total = data.total;
-	});
-
-	async function loadMore() {
-		if (loadingMore) return;
-		loadingMore = true;
-		try {
-			const next = await listPublications({ limit: 1000, offset: items.length });
-			// Backend may not implement offset; if it returns duplicates, dedupe by key.
-			const seen = new Set(items.map((p) => p.key));
-			const fresh = next.items.filter((p) => !seen.has(p.key));
-			items = [...items, ...fresh];
-			total = next.total;
-		} catch {
-			/* surface silently for now */
-		} finally {
-			loadingMore = false;
-		}
-	}
-
-	let query = $state('');
-	let activeSoort = $state<string | null>(null);
-	let onlyLinked = $state(false);
-	let hideTitleless = $state(true);
-	let sortCol = $state<'datum' | 'soort' | 'title' | 'links'>('datum');
-	let sortDir = $state<'asc' | 'desc'>('desc');
-
-	// Canonical soort groups — keeps the filter surface manageable.
-	const SOORT_GROUPS: Record<string, string[]> = {
-		'Memorie van toelichting': [
-			'Memorie van toelichting',
-			'Memorie van toelichting (initiatiefvoorstel)'
-		],
-		'Voorstel van wet': ['Voorstel van wet', 'Voorstel van wet (initiatiefvoorstel)'],
-		'Nota / verslag': [
-			'Nota n.a.v. het (nader/tweede nader/enz.) verslag',
-			'Nota van wijziging',
-			'Nota van wijziging (initiatiefvoorstel)',
-			'Verslag (initiatief)wetsvoorstel (nader)',
-			'Verslag van een commissiedebat'
-		],
-		Amendementen: ['Amendement', 'Amendement (gewijzigd/nader/vervangend)'],
-		Moties: ['Motie', 'Motie (gewijzigd/nader)'],
-		'Advies RvS': [
-			'Advies Afdeling advisering Raad van State',
-			'Advies Afdeling advisering Raad van State en Nader rapport',
-			'Advies Afdeling advisering Raad van State en Reactie van de initiatiefnemer(s)'
-		],
-		'Brief / overig': [
-			'Brief regering',
-			'Brief lid / fractie',
-			'Brief Eerste Kamer',
-			'Brief commissie',
-			'Brief commissie aan bewindspersoon',
-			'Geleidende brief',
-			'Koninklijke boodschap',
-			'Antwoord schriftelijke vragen',
-			'Schriftelijke vragen',
-			'Mededeling (uitstel antwoord)',
-			'Bijlage',
-			'Bijgewerkte tekst',
-			'Eindtekst',
-			'Stenogram',
-			'Convocatie commissieactiviteit',
-			'Position paper',
-			'Wetenschapstoets',
-			'Overig (openbaar)'
-		]
-	};
-
-	// Reverse map: soort → group label
-	const soortToGroup = new Map<string, string>();
-	for (const [group, soorten] of Object.entries(SOORT_GROUPS)) {
-		for (const s of soorten) soortToGroup.set(s, group);
-	}
-
-	// Count items per group (only non-zero groups)
-	const groupCounts = $derived((): [string, number][] => {
+		if (data.kind) return;
 		const counts = new Map<string, number>();
-		for (const p of items) {
-			const g = (p.soort ? soortToGroup.get(p.soort) : null) ?? 'Brief / overig';
-			counts.set(g, (counts.get(g) ?? 0) + 1);
-		}
-		// Keep defined order
-		return Object.keys(SOORT_GROUPS)
-			.filter((g) => (counts.get(g) ?? 0) > 0)
-			.map((g) => [g, counts.get(g)!]);
+		for (const d of data.documents) if (d.kind) counts.set(d.kind, (counts.get(d.kind) ?? 0) + 1);
+		kinds = [...counts].sort((a, b) => b[1] - a[1]).map(([kind]) => kind);
 	});
 
-	function toggleSort(col: typeof sortCol) {
-		if (sortCol === col) {
-			sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-		} else {
-			sortCol = col;
-			sortDir = col === 'links' ? 'desc' : 'asc';
-		}
+	let form: HTMLFormElement;
+	function submit() {
+		const params = new URLSearchParams();
+		for (const [name, value] of new FormData(form)) if (value) params.set(name, String(value));
+		goto(`?${params}`, { keepFocus: true });
 	}
-
-	const filtered = $derived((): PublicationSummary[] => {
-		const q = query.trim().toLowerCase();
-		const rows = items.filter((p) => {
-			if (hideTitleless && !p.title) return false;
-			if (onlyLinked && p.linked_articles === 0) return false;
-			if (activeSoort) {
-				const g = (p.soort ? soortToGroup.get(p.soort) : null) ?? 'Brief / overig';
-				if (g !== activeSoort) return false;
-			}
-			if (!q) return true;
-			return (p.title ?? '').toLowerCase().includes(q) || (p.soort ?? '').toLowerCase().includes(q);
-		});
-
-		const dir = sortDir === 'asc' ? 1 : -1;
-		return [...rows].sort((a, b) => {
-			if (sortCol === 'datum') return dir * (a.datum ?? '').localeCompare(b.datum ?? '');
-			if (sortCol === 'soort') return dir * (a.soort ?? '').localeCompare(b.soort ?? '');
-			if (sortCol === 'title') return dir * (a.title ?? '').localeCompare(b.title ?? '');
-			if (sortCol === 'links') return dir * ((a.linked_articles ?? 0) - (b.linked_articles ?? 0));
-			return 0;
-		});
-	});
-
-	const titledCount = $derived(items.filter((p) => !!p.title).length);
-
-	function clearFilters() {
-		query = '';
-		activeSoort = null;
-		onlyLinked = false;
-		hideTitleless = true;
-	}
-
-	const hasFilter = $derived(
-		query.trim() !== '' || activeSoort !== null || onlyLinked || !hideTitleless
-	);
 </script>
 
 <svelte:head>
@@ -166,122 +41,67 @@
 					<span class="pubs-sigil" aria-hidden="true">‡</span>
 					Parlementaire documenten
 				</h1>
-				<p class="pubs-subtitle">
-					{#if total > items.length}
-						{items.length.toLocaleString('nl-NL')} van {total.toLocaleString('nl-NL')} documenten geladen
-						· Tweede Kamer
-					{:else}
-						{items.length.toLocaleString('nl-NL')} documenten · Tweede Kamer
-					{/if}
-				</p>
 			</div>
 		</div>
 
-		<div class="pubs-controls">
+		<form
+			class="pubs-controls"
+			bind:this={form}
+			onsubmit={(e) => {
+				e.preventDefault();
+				submit();
+			}}
+		>
 			<input
 				type="search"
+				name="q"
 				class="pubs-search"
-				placeholder="Zoek op titel…"
-				bind:value={query}
+				placeholder="Zoek op titel of soort"
+				value={data.q}
 				autocomplete="off"
 				spellcheck="false"
 			/>
-
-			<label class="pubs-toggle">
-				<input type="checkbox" bind:checked={hideTitleless} />
-				<span>Alleen met titel <span class="pubs-toggle-count">({titledCount})</span></span>
-			</label>
-
-			<label class="pubs-toggle">
-				<input type="checkbox" bind:checked={onlyLinked} />
-				<span>Gekoppeld aan artikelen</span>
-			</label>
-		</div>
-
-		<nav class="pubs-tabs" aria-label="Documenttype">
-			<button
-				type="button"
-				class="pubs-tab"
-				class:active={activeSoort === null}
-				onclick={() => (activeSoort = null)}>Alle</button
-			>
-			{#each groupCounts() as [group, count], i (i)}
-				<button
-					type="button"
-					class="pubs-tab"
-					class:active={activeSoort === group}
-					onclick={() => (activeSoort = activeSoort === group ? null : group)}
-					>{group} <span class="pubs-tab-count">{count}</span></button
-				>
-			{/each}
-		</nav>
+			<select name="kind" class="pubs-select" aria-label="Soort" onchange={submit}>
+				<option value="">Alle soorten</option>
+				{#each kinds as kind (kind)}
+					<option value={kind} selected={kind === data.kind}>{kind}</option>
+				{/each}
+			</select>
+			<select name="chamber" class="pubs-select" aria-label="Kamer" onchange={submit}>
+				<option value="">Beide kamers</option>
+				<option value="TK" selected={data.chamber === 'TK'}>Tweede Kamer</option>
+				<option value="EK" selected={data.chamber === 'EK'}>Eerste Kamer</option>
+			</select>
+		</form>
 	</header>
 
-	<!-- Results -->
 	<div class="pubs-table-wrap">
-		{#if hasFilter || items.length - filtered().length > 0}
-			{@const hiddenByFilter = items.length - filtered().length}
-			<div class="pubs-result-bar">
-				<span>
-					{filtered().length.toLocaleString('nl-NL')} van {items.length.toLocaleString('nl-NL')}
-					getoond{#if hiddenByFilter > 0}
-						· {hiddenByFilter.toLocaleString('nl-NL')} verborgen door filter{/if}
-				</span>
-				<div class="pubs-result-actions">
-					{#if hideTitleless && hiddenByFilter > 0}
-						<button
-							type="button"
-							class="pubs-inline-action"
-							onclick={() => (hideTitleless = false)}
-						>
-							Toon ook documenten zonder titel
-						</button>
-					{/if}
-					{#if hasFilter}
-						<button type="button" class="pubs-clear" onclick={clearFilters}>Wis filters ×</button>
-					{/if}
-				</div>
-			</div>
-		{/if}
-
 		<table class="pubs-table">
 			<thead>
 				<tr>
-					<th class="col-datum col-sortable" onclick={() => toggleSort('datum')}>
-						Datum{sortCol === 'datum' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-					</th>
-					<th class="col-soort col-sortable" onclick={() => toggleSort('soort')}>
-						Soort{sortCol === 'soort' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-					</th>
-					<th class="col-title col-sortable" onclick={() => toggleSort('title')}>
-						Titel{sortCol === 'title' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-					</th>
-					<th
-						class="col-links col-sortable"
-						title="Gekoppelde artikelen in het netwerk"
-						onclick={() => toggleSort('links')}
-					>
-						Art.{sortCol === 'links' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-					</th>
+					<th class="col-datum">Datum</th>
+					<th class="col-soort">Soort</th>
+					<th class="col-title">Titel</th>
+					<th class="col-links" title="Gekoppelde artikelen in het netwerk">Art.</th>
 				</tr>
 			</thead>
 			<tbody>
-				{#each filtered() as pub (pub.key)}
-					<tr class="pubs-row" class:has-text={pub.has_text}>
+				{#each data.documents as doc (doc.key)}
+					<tr class="pubs-row" class:has-text={doc.has_text}>
 						<td class="col-datum">
-							<span class="datum-val">{pub.datum ?? '—'}</span>
+							<span class="datum-val">{doc.date ?? '—'}</span>
 						</td>
 						<td class="col-soort">
-							<span class="soort-label">{pub.soort ?? '—'}</span>
+							<span class="soort-label">{doc.kind ?? '—'}</span>
 						</td>
 						<td class="col-title">
-							<a href="/publications/{pub.key}" class="pub-title-link">
-								{pub.title || '(zonder titel)'}
+							<a href="/publications/{doc.key}" class="pub-title-link">
+								{doc.title || '(zonder titel)'}
 							</a>
 						</td>
 						<td class="col-links">
-							{#if pub.linked_articles > 0}
-								<span class="linked-count">{pub.linked_articles}</span>
+							{#if doc.linked_articles}
+								<span class="linked-count">{doc.linked_articles}</span>
 							{:else}
 								<span class="linked-none">—</span>
 							{/if}
@@ -295,14 +115,11 @@
 			</tbody>
 		</table>
 
-		{#if total > items.length}
-			<div class="pubs-loadmore">
-				<button type="button" class="pubs-loadmore-btn" onclick={loadMore} disabled={loadingMore}>
-					{loadingMore
-						? 'Laden…'
-						: `Meer laden (${(total - items.length).toLocaleString('nl-NL')} resterend)`}
-				</button>
-			</div>
+		{#if data.documents.length === data.limit}
+			<p class="pubs-note">
+				De eerste {data.limit.toLocaleString('nl-NL')} documenten, nieuwste eerst. Zoeken of filteren
+				beperkt de selectie.
+			</p>
 		{/if}
 	</div>
 </div>
@@ -389,13 +206,6 @@
 		color: var(--ink-3);
 	}
 
-	.pubs-subtitle {
-		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--fg-3);
-		margin: 0;
-	}
-
 	/* Controls */
 	.pubs-controls {
 		display: flex;
@@ -423,158 +233,24 @@
 		background: var(--paper);
 	}
 
-	.pubs-toggle {
-		display: flex;
-		align-items: center;
-		gap: 6px;
+	.pubs-select {
+		padding: 8px var(--s-3);
 		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--ink-3);
-		cursor: pointer;
-		user-select: none;
-		white-space: nowrap;
-	}
-
-	.pubs-toggle input {
-		cursor: pointer;
-		accent-color: var(--ink);
-	}
-
-	.pubs-toggle-count {
-		opacity: 0.55;
-	}
-
-	/* Tabs */
-	.pubs-tabs {
-		display: flex;
-		flex-wrap: nowrap;
-		gap: 2px;
-		border-bottom: 1px solid var(--rule);
-		padding-bottom: 0;
-		overflow-x: auto;
-		scrollbar-width: none;
-	}
-
-	.pubs-tabs::-webkit-scrollbar {
-		display: none;
-	}
-
-	.pubs-tab {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-		background: none;
-		border: 0;
-		border-bottom: 2px solid transparent;
-		padding: 6px 12px 8px;
-		cursor: pointer;
-		white-space: nowrap;
-		display: flex;
-		align-items: center;
-		gap: 5px;
-		margin-bottom: -1px;
-		transition: color var(--dur-1) var(--ease);
-	}
-
-	.pubs-tab:hover {
+		font-size: 13px;
 		color: var(--ink);
+		background: var(--paper-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		max-width: 260px;
 	}
 
-	.pubs-tab.active {
-		color: var(--ink);
-		border-bottom-color: var(--ink);
-		font-weight: 500;
-	}
-
-	.pubs-tab-count {
-		font-size: 10px;
-		opacity: 0.55;
-	}
-
-	.pubs-tab.active .pubs-tab-count {
-		opacity: 0.65;
-	}
-
-	/* Result bar */
-	.pubs-result-bar {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--s-3);
-		flex-wrap: wrap;
+	.pubs-note {
 		font-family: var(--font-sans);
 		font-size: 12px;
 		color: var(--fg-3);
 		padding: var(--s-2) 0 var(--s-3);
 	}
-	.pubs-result-actions {
-		display: flex;
-		align-items: center;
-		gap: var(--s-3);
-		flex-wrap: wrap;
-	}
-	.pubs-inline-action {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-2);
-		background: none;
-		border: 0;
-		cursor: pointer;
-		padding: 0;
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.pubs-inline-action:hover {
-		color: var(--accent, var(--spine));
-		border-bottom-color: var(--accent, var(--spine));
-	}
 
-	.pubs-loadmore {
-		display: flex;
-		justify-content: center;
-		padding: var(--s-5) 0 var(--s-3);
-	}
-	.pubs-loadmore-btn {
-		height: 36px;
-		padding: 0 18px;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--ink-2);
-		cursor: pointer;
-		transition:
-			background 80ms,
-			color 80ms,
-			border-color 80ms;
-	}
-	.pubs-loadmore-btn:hover:not(:disabled) {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
-	}
-	.pubs-loadmore-btn:disabled {
-		opacity: 0.6;
-		cursor: wait;
-	}
-
-	.pubs-clear {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-		background: none;
-		border: 0;
-		cursor: pointer;
-		padding: 0;
-		border-bottom: 1px solid var(--rule-strong);
-	}
-
-	.pubs-clear:hover {
-		color: var(--accent);
-		border-bottom-color: var(--accent);
-	}
-
-	/* Table */
 	.pubs-table-wrap {
 		overflow-x: auto;
 	}
@@ -596,15 +272,6 @@
 		padding: var(--s-2) var(--s-3) var(--s-2) 0;
 		border-bottom: 1px solid var(--rule-strong);
 		white-space: nowrap;
-	}
-
-	.col-sortable {
-		cursor: pointer;
-		user-select: none;
-	}
-
-	.col-sortable:hover {
-		color: var(--ink-2);
 	}
 
 	.col-datum {

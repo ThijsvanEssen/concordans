@@ -31,7 +31,7 @@ export function getLawIdFromProps(
 
 /**
  * Extract the instrument id from an API record that has `bwb_id` and `key`
- * fields (ArticleCitationTarget, ArticleRelationDTO, etc.).
+ * fields (ArticleCitationTarget, ArticleSummaryDTO, ...).
  * Falls back to `__unknown__` so grouping functions still work.
  */
 export function getLawIdFromRecord(record: {

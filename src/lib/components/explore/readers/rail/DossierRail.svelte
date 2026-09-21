@@ -1,15 +1,17 @@
 <script lang="ts">
-	// CitationRail for dossier kind:
-	//   • Wijzigt artikelen   — from DossierMutations (article-typed targets)
-	//   • Behandeld door commissie — derived from activiteit.commissie_id on the
-	//     dossier's activiteit-neighbours, resolved against /api/commissies.
-	//     No direct commissie → dossier edge exists in the graph.
-	// The previous "Indieners" section was removed: lid → dossier edges aren't
-	// modelled, so the section was always empty.
+	// CitationRail for a dossier:
+	//   - Wijzigt artikelen: the articles the dossier's documents point at.
+	//   - Behandeld door commissie: the committees of the dossier's activities
+	//     (no edge runs from a committee to a dossier; an activity is LED_BY one).
 	import type { GraphNode } from '$lib/graph/types';
-	import { fetchDossierMutations, fetchCommissies } from '$lib/api/parliamentary-client';
-	import { getNodeGraph } from '$lib/api/nodes';
-	import type { CommissieDTO, DossierMutationsResponse } from '$lib/api/parliamentary';
+	import { api, unwrap } from '$lib/api/client';
+	import {
+		dossierNumber,
+		getDossierMutations,
+		getNeighbors,
+		mutatedArticles,
+		type MutatedArticle
+	} from '$lib/components/parliamentary/data';
 
 	let {
 		node,
@@ -19,89 +21,53 @@
 		onNavigate?: (collection: string, key: string) => void;
 	} = $props();
 
-	type CommissieRow = { key: string; slug: string | null; label: string };
+	type CommitteeRow = { key: string; label: string };
 
-	let mutations = $state<DossierMutationsResponse | null>(null);
-	let commissies = $state<CommissieRow[]>([]);
+	let articles = $state<MutatedArticle[]>([]);
+	let committees = $state<CommitteeRow[]>([]);
 	let loading = $state(false);
-	let showAllCommissies = $state(false);
-	let token = 0;
+	let showAllCommittees = $state(false);
 
 	$effect(() => {
-		const t = ++token;
+		const ac = new AbortController();
 		loading = true;
+		showAllCommittees = false;
 		Promise.all([
-			fetchDossierMutations(node.key).catch(() => null),
-			getNodeGraph(node.collection, node.key, { neighborLimit: 100 }).catch(() => null),
-			fetchCommissies().catch(() => [] as CommissieDTO[])
-		]).then(([m, g, all]) => {
-			if (t !== token) return;
-			mutations = m;
+			getDossierMutations(dossierNumber(node.key)).catch(() => null),
+			getNeighbors(node.collection, node.key, 100).catch(() => []),
+			unwrap(api.GET('/api/committees', { signal: ac.signal })).catch(() => [])
+		]).then(([mutations, neighbors, all]) => {
+			if (ac.signal.aborted) return;
+			articles = mutations ? mutatedArticles(mutations) : [];
 
+			// An activity names its committee by GUID with hyphens, a committee node key uses underscores.
 			const ids = new Set<string>();
-			for (const n of g?.neighbors?.all ?? []) {
-				if (n.collection !== 'activiteiten') continue;
-				const cid = (n.props as Record<string, unknown> | null)?.['commissie_id'];
-				if (typeof cid === 'string' && cid) ids.add(cid);
+			for (const n of neighbors) {
+				const id = n.collection === 'activities' ? n.props?.committee_id : null;
+				if (typeof id === 'string' && id) ids.add(id.replaceAll('-', '_'));
 			}
-
-			// Commissie node keys are uuid-with-underscores; activity commissie_id is uuid-with-hyphens.
-			const byKey = new Map(all.map((c) => [c.key, c]));
-			const resolved: CommissieRow[] = [];
-			for (const cid of ids) {
-				const key = cid.replace(/-/g, '_');
-				const c = byKey.get(key);
-				if (!c) continue;
-				resolved.push({
-					key: c.slug ?? c.key,
-					slug: c.slug ?? null,
-					label: c.naam ?? c.afkorting ?? c.key
-				});
-			}
-			resolved.sort((a, b) => a.label.localeCompare(b.label));
-			commissies = resolved;
-
+			committees = all
+				.filter((c) => ids.has(c.key))
+				.map((c) => ({ key: c.key, label: c.name ?? c.abbreviation ?? c.key }))
+				.sort((a, b) => a.label.localeCompare(b.label));
 			loading = false;
 		});
-	});
-
-	const articleTargets = $derived.by(() => {
-		const m = mutations;
-		if (!m)
-			return [] as { key: string; collection: string; label: string; relation: string | null }[];
-		const seen = new Map<
-			string,
-			{ key: string; collection: string; label: string; relation: string | null }
-		>();
-		for (const e of m.edges) {
-			if (!e.to_id) continue;
-			const t = m.nodes.find((n) => n.id === e.to_id);
-			if (!t || t.collection !== 'instrument_articles') continue;
-			if (seen.has(t.id)) continue;
-			seen.set(t.id, {
-				key: t.key,
-				collection: t.collection,
-				label: t.display_name ?? t.key,
-				relation: e.relation
-			});
-		}
-		return [...seen.values()];
 	});
 </script>
 
 <section class="rail-section">
 	<h3 class="rail-section-title">Wijzigt artikelen</h3>
-	{#if loading && articleTargets.length === 0}
+	{#if loading && articles.length === 0}
 		<p class="rail-meta">Laden…</p>
-	{:else if articleTargets.length === 0}
+	{:else if articles.length === 0}
 		<p class="rail-meta">Geen artikelen.</p>
 	{:else}
 		<ul class="rail-list">
-			{#each articleTargets.slice(0, 10) as a (a.key)}
+			{#each articles.slice(0, 10) as a (a.key)}
 				<li>
-					<button type="button" class="rail-row" onclick={() => onNavigate?.(a.collection, a.key)}>
+					<button type="button" class="rail-row" onclick={() => onNavigate?.('articles', a.key)}>
 						<span class="rail-name">{a.label}</span>
-						{#if a.relation}<span class="rail-rel">{a.relation.toLowerCase()}</span>{/if}
+						{#if a.relation}<span class="rail-rel">{a.relation}</span>{/if}
 					</button>
 				</li>
 			{/each}
@@ -111,23 +77,23 @@
 
 <section class="rail-section">
 	<h3 class="rail-section-title">Behandeld door commissie</h3>
-	{#if loading && commissies.length === 0}
+	{#if loading && committees.length === 0}
 		<p class="rail-meta">Laden…</p>
-	{:else if commissies.length === 0}
+	{:else if committees.length === 0}
 		<p class="rail-meta">Geen commissie gevonden.</p>
 	{:else}
 		<ul class="rail-list">
-			{#each showAllCommissies ? commissies : commissies.slice(0, 8) as c (c.key)}
+			{#each showAllCommittees ? committees : committees.slice(0, 8) as c (c.key)}
 				<li>
-					<button type="button" class="rail-row" onclick={() => onNavigate?.('commissies', c.key)}>
+					<button type="button" class="rail-row" onclick={() => onNavigate?.('committees', c.key)}>
 						<span class="rail-name">{c.label}</span>
 					</button>
 				</li>
 			{/each}
 		</ul>
-		{#if commissies.length > 8 && !showAllCommissies}
-			<button type="button" class="rail-more" onclick={() => (showAllCommissies = true)}>
-				+{commissies.length - 8} meer
+		{#if committees.length > 8 && !showAllCommittees}
+			<button type="button" class="rail-more" onclick={() => (showAllCommittees = true)}>
+				+{committees.length - 8} meer
 			</button>
 		{/if}
 	{/if}

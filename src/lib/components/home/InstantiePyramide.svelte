@@ -20,32 +20,32 @@
 		afk: 'HR',
 		naam: 'Hoge Raad der Nederlanden',
 		plaats: 'Den Haag',
-		href: '/explore?mode=index&kind=arresten&tier=hoge_raad'
+		href: '/explore?mode=index&kind=judgments&tier=hoge_raad'
 	};
 	const HOVEN: Instantie[] = [
 		{
 			afk: 'GHAMS',
 			naam: 'Gerechtshof Amsterdam',
 			plaats: 'Amsterdam',
-			href: '/explore?mode=index&kind=arresten&court=GHAMS'
+			href: '/explore?mode=index&kind=judgments&court=GHAMS'
 		},
 		{
 			afk: 'GHARL',
 			naam: 'Gerechtshof Arnhem-Leeuwarden',
 			plaats: 'Arnhem',
-			href: '/explore?mode=index&kind=arresten&court=GHARL'
+			href: '/explore?mode=index&kind=judgments&court=GHARL'
 		},
 		{
 			afk: 'GHDHA',
 			naam: 'Gerechtshof Den Haag',
 			plaats: 'Den Haag',
-			href: '/explore?mode=index&kind=arresten&court=GHDHA'
+			href: '/explore?mode=index&kind=judgments&court=GHDHA'
 		},
 		{
 			afk: 'GHSHE',
 			naam: "Gerechtshof 's-Hertogenbosch",
 			plaats: "'s-Hertogenbosch",
-			href: '/explore?mode=index&kind=arresten&court=GHSHE'
+			href: '/explore?mode=index&kind=judgments&court=GHSHE'
 		}
 	];
 	const RECHTBANKEN: Instantie[] = [
@@ -53,67 +53,67 @@
 			afk: 'RBAMS',
 			naam: 'Rechtbank Amsterdam',
 			plaats: 'Amsterdam',
-			href: '/explore?mode=index&kind=arresten&court=RBAMS'
+			href: '/explore?mode=index&kind=judgments&court=RBAMS'
 		},
 		{
 			afk: 'RBDHA',
 			naam: 'Rechtbank Den Haag',
 			plaats: 'Den Haag',
-			href: '/explore?mode=index&kind=arresten&court=RBDHA'
+			href: '/explore?mode=index&kind=judgments&court=RBDHA'
 		},
 		{
 			afk: 'RBGEL',
 			naam: 'Rechtbank Gelderland',
 			plaats: 'Arnhem',
-			href: '/explore?mode=index&kind=arresten&court=RBGEL'
+			href: '/explore?mode=index&kind=judgments&court=RBGEL'
 		},
 		{
 			afk: 'RBLIM',
 			naam: 'Rechtbank Limburg',
 			plaats: 'Maastricht',
-			href: '/explore?mode=index&kind=arresten&court=RBLIM'
+			href: '/explore?mode=index&kind=judgments&court=RBLIM'
 		},
 		{
 			afk: 'RBMNE',
 			naam: 'Rechtbank Midden-Nederland',
 			plaats: 'Utrecht',
-			href: '/explore?mode=index&kind=arresten&court=RBMNE'
+			href: '/explore?mode=index&kind=judgments&court=RBMNE'
 		},
 		{
 			afk: 'RBNHO',
 			naam: 'Rechtbank Noord-Holland',
 			plaats: 'Haarlem',
-			href: '/explore?mode=index&kind=arresten&court=RBNHO'
+			href: '/explore?mode=index&kind=judgments&court=RBNHO'
 		},
 		{
 			afk: 'RBNNE',
 			naam: 'Rechtbank Noord-Nederland',
 			plaats: 'Groningen',
-			href: '/explore?mode=index&kind=arresten&court=RBNNE'
+			href: '/explore?mode=index&kind=judgments&court=RBNNE'
 		},
 		{
 			afk: 'RBOBR',
 			naam: 'Rechtbank Oost-Brabant',
 			plaats: "'s-Hertogenbosch",
-			href: '/explore?mode=index&kind=arresten&court=RBOBR'
+			href: '/explore?mode=index&kind=judgments&court=RBOBR'
 		},
 		{
 			afk: 'RBOVE',
 			naam: 'Rechtbank Overijssel',
 			plaats: 'Zwolle',
-			href: '/explore?mode=index&kind=arresten&court=RBOVE'
+			href: '/explore?mode=index&kind=judgments&court=RBOVE'
 		},
 		{
 			afk: 'RBROT',
 			naam: 'Rechtbank Rotterdam',
 			plaats: 'Rotterdam',
-			href: '/explore?mode=index&kind=arresten&court=RBROT'
+			href: '/explore?mode=index&kind=judgments&court=RBROT'
 		},
 		{
 			afk: 'RBZWB',
 			naam: 'Rechtbank Zeeland-West-Brabant',
 			plaats: 'Breda',
-			href: '/explore?mode=index&kind=arresten&court=RBZWB'
+			href: '/explore?mode=index&kind=judgments&court=RBZWB'
 		}
 	];
 	const BESTUURSRECHTELIJKE_TOP: Instantie[] = [
@@ -121,19 +121,19 @@
 			afk: 'ABRvS',
 			naam: 'Afdeling bestuursrechtspraak Raad van State',
 			plaats: 'Den Haag',
-			href: '/explore?mode=index&kind=arresten&court=RVS'
+			href: '/explore?mode=index&kind=judgments&court=RVS'
 		},
 		{
 			afk: 'CRvB',
 			naam: 'Centrale Raad van Beroep',
 			plaats: 'Utrecht',
-			href: '/explore?mode=index&kind=arresten&court=CRVB'
+			href: '/explore?mode=index&kind=judgments&court=CRVB'
 		},
 		{
 			afk: 'CBb',
 			naam: 'College van Beroep voor het bedrijfsleven',
 			plaats: 'Den Haag',
-			href: '/explore?mode=index&kind=arresten&court=CBB'
+			href: '/explore?mode=index&kind=judgments&court=CBB'
 		}
 	];
 
@@ -187,7 +187,7 @@
 					onmouseleave={() => (focused = null)}
 					onfocus={() => (focused = h.afk)}
 					onblur={() => (focused = null)}
-					title="{h.naam} — {h.plaats}"
+					title="{h.naam}, {h.plaats}"
 				>
 					<span class="pyr-hof-dot" aria-hidden="true"></span>
 					<span class="pyr-hof-name">{h.naam.replace('Gerechtshof ', '')}</span>
@@ -213,7 +213,7 @@
 					onmouseleave={() => (focused = null)}
 					onfocus={() => (focused = r.afk)}
 					onblur={() => (focused = null)}
-					title="{r.naam} — {r.plaats}"
+					title="{r.naam}, {r.plaats}"
 				>
 					<span class="pyr-rb-dot" aria-hidden="true"></span>
 					<span class="pyr-rb-name">{r.naam.replace('Rechtbank ', '')}</span>
@@ -239,7 +239,7 @@
 					onmouseleave={() => (focused = null)}
 					onfocus={() => (focused = b.afk)}
 					onblur={() => (focused = null)}
-					title="{b.naam} — {b.plaats}">{b.afk}</a
+					title="{b.naam}, {b.plaats}">{b.afk}</a
 				>
 			{/each}
 		</span>

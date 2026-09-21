@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { getInstrumentArticles } from '$lib/api/nodes';
+	import { api, unwrap } from '$lib/api/client';
+	import type { Schema } from '$lib/api/types';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import type { GraphNode } from '$lib/graph/types';
+	import { getLawIdFromProps } from '$lib/util/law-id';
 	import DossierNav from './readers/nav/DossierNav.svelte';
-	import CommissieNav from './readers/nav/CommissieNav.svelte';
-	import LidNav from './readers/nav/LidNav.svelte';
-	import FractieNav from './readers/nav/FractieNav.svelte';
+	import CommitteeNav from './readers/nav/CommitteeNav.svelte';
+	import MemberNav from './readers/nav/MemberNav.svelte';
+	import FactionNav from './readers/nav/FactionNav.svelte';
 
 	let {
 		selection,
@@ -15,9 +17,8 @@
 	}: {
 		selection: GraphNode | null;
 		/**
-		 * Expliciete wet-id voor Lezen wanneer er geen artikel is geselecteerd
-		 * (bijv. /explore?focus=instruments/BWBR…&mode=read). Overruled door
-		 * de selection-afgeleide bwb zodra de gebruiker een artikel kiest.
+		 * Law id for Lezen when no article is selected (`focus=instruments/BWBR…&mode=read`).
+		 * The law of the selection takes precedence once an article is chosen.
 		 */
 		bwb?: string | null;
 		onNavigate?: (collection: string, key: string) => void;
@@ -25,14 +26,9 @@
 	} = $props();
 
 	type Item = {
-		bwbId: string;
 		articleNumber: string;
-		label: string;
 		key: string;
-		// Mirror the openapi-generated breadcrumb shape: both fields optional
-		// since the backend declares them `anyOf [string, null]` with no
-		// "required". Avoids a Type-narrowing fight with the API response.
-		breadcrumb?: { type?: string | null; label?: string | null }[] | null;
+		breadcrumb: Schema<'InstrumentArticleBreadcrumbDTO'>[];
 	};
 
 	// Hierarchical group used for rendering when breadcrumbs are present.
@@ -40,36 +36,18 @@
 
 	let items = $state<Item[]>([]);
 	let groups = $state<Group[] | null>(null);
-	let loadedBwb = $state<string | null>(null);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
 	const currentBwb = $derived.by(() => {
-		if (selection) {
-			const p = selection.raw?.props as Record<string, unknown> | undefined;
-			if (selection.collection === 'instrument_articles') {
-				const bwb = String(p?.['bwb_id'] ?? p?.['celex'] ?? '') || null;
-				if (bwb) return bwb;
-				const artNum = String(p?.['article_number'] ?? '') || null;
-				if (artNum && selection.key.endsWith('_' + artNum)) {
-					return selection.key.slice(0, -(artNum.length + 1)) || null;
-				}
-			}
-			if (selection.collection === 'instruments') {
-				const bwb = String(p?.['bwb_id'] ?? p?.['celex'] ?? '') || null;
-				if (bwb) return bwb;
-				if (selection.key.startsWith('bwb:')) return selection.key.slice(4) || null;
-				if (selection.key.startsWith('celex:')) return selection.key.slice(6) || null;
-				return selection.key || null;
-			}
-		}
-		// Wet-focus zonder geselecteerd artikel: gebruik de fallback-prop.
+		if (selection?.collection === 'articles')
+			return getLawIdFromProps(selection.raw?.props ?? undefined, selection.key);
+		if (selection?.collection === 'instruments')
+			return getLawIdFromProps(selection.raw?.props ?? undefined) ?? selection.key.toUpperCase();
 		return bwbProp || null;
 	});
 
-	// Friendly name comes from the shared cache (filled by /api/instruments and
-	// /api/articles bibtex sniffing). Strict precedence: full citation title >
-	// title > short title > BWB id (last-ditch placeholder).
+	// The name comes from the shared cache: citation title, else title, else the id.
 	const prettyLawName = $derived.by(() => {
 		if (!currentBwb) return null;
 		const meta = $instrumentMetaStore.get(currentBwb);
@@ -80,58 +58,46 @@
 	const instrumentTypeLabel = $derived.by(() => {
 		if (!currentBwb) return 'WETGEVING';
 		if (currentBwb.toUpperCase().startsWith('BWBV')) return 'VERDRAG';
-		if (/^[0-9]{5}[a-zA-Z]/.test(currentBwb) || (currentBwb.length === 9 && /^\d/.test(currentBwb)))
-			return 'EU REGELGEVING';
-		// CELEX numbers: 3 digits year + L/R/D indicator
-		if (
-			/^\d{4}[LRD]\d/.test(currentBwb) ||
-			currentBwb.startsWith('32') ||
-			currentBwb.startsWith('31')
-		)
-			return 'EU REGELGEVING';
+		if (/^\d{5}[a-z]/i.test(currentBwb)) return 'EU REGELGEVING';
 		return 'WETGEVING';
 	});
 
-	// De Lezen-TOC is altijd de volledige wet, onafhankelijk van wat er
-	// in de graph staat. De graph-store kan een subset aan articles bevatten
-	// (Ontdekken/Verdiepen), maar in Lezen wil je *alle* artikelen kunnen
-	// aanwijzen — anders blijft de TOC vermomd als grafiek-uitsnit. We
-	// vertrouwen daarom de instrument-articles API als single source.
+	// The Lezen table of contents is always the whole law, whatever the graph holds.
 	$effect(() => {
 		const bwb = currentBwb;
-		if (!bwb || bwb === loadedBwb) return;
+		if (!bwb) return;
+		const ac = new AbortController();
 		loading = true;
 		error = null;
-		getInstrumentArticles(bwb, { textPreviewChars: 0, limit: 2000 })
+		unwrap(
+			api.GET('/api/instruments/{bwb_id}/articles', {
+				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: 2000 } },
+				signal: ac.signal
+			})
+		)
 			.then((resp) => {
-				const flat: Item[] = resp.items
+				items = resp.items
 					.filter((a) => !a.stub && a.article_number)
 					.map((a) => ({
-						bwbId: a.bwb_id ?? bwb,
 						articleNumber: a.article_number!,
-						label: a.display_name ?? `Art. ${a.article_number}`,
 						key: a.key,
-						breadcrumb: a.breadcrumb ?? null
+						breadcrumb: a.breadcrumb ?? []
 					}));
-				items = flat;
-				groups = buildGroups(flat);
-				loadedBwb = bwb;
-				onitems?.(flat);
+				groups = buildGroups(items);
+				onitems?.(items.map((it) => ({ key: it.key, label: `Art. ${it.articleNumber}` })));
 			})
-			.catch((err) => {
-				console.warn('[lezen-nav] failed to load instrument', bwb, err);
-				error = 'Kon overzicht niet laden';
+			.catch(() => {
+				if (!ac.signal.aborted) error = 'Kon overzicht niet laden';
 			})
 			.finally(() => {
-				loading = false;
+				if (!ac.signal.aborted) loading = false;
 			});
+		return () => ac.abort();
 	});
 
-	// Build a tree of groups based on each article's breadcrumb. Articles that
-	// have no breadcrumb at all collapse into a single trailing "Overig" group
-	// so the nav still works during partial backend rollouts.
+	// A tree of groups from each article's breadcrumb; articles without one go into "Overig".
 	function buildGroups(flat: Item[]): Group[] | null {
-		const anyHasBc = flat.some((it) => (it.breadcrumb?.length ?? 0) > 0);
+		const anyHasBc = flat.some((it) => it.breadcrumb.length > 0);
 		if (!anyHasBc) return null;
 
 		const root: Group = { label: '', type: 'root', items: [], children: [] };
@@ -145,7 +111,7 @@
 		};
 
 		for (const it of flat) {
-			const bc = it.breadcrumb ?? [];
+			const bc = it.breadcrumb;
 			if (bc.length === 0) {
 				findOrAdd(root, 'overig', 'Overig').items.push(it);
 				continue;
@@ -184,19 +150,14 @@
 </script>
 
 {#snippet itemRow(item: Item)}
-	{@const hasTitle = item.label && item.label !== `Art. ${item.articleNumber}`}
 	<li>
 		<button
 			type="button"
 			class="nav-row"
 			class:is-active={item.key === selectedKey}
-			onclick={() => onNavigate?.('instrument_articles', item.key)}
-			title={item.label}
+			onclick={() => onNavigate?.('articles', item.key)}
 		>
 			<span class="nav-num">Art. {item.articleNumber}</span>
-			{#if hasTitle}
-				<span class="nav-label">{item.label.replace(/^Art\.\s*\S+\s*/, '')}</span>
-			{/if}
 		</button>
 	</li>
 {/snippet}
@@ -232,12 +193,12 @@
 <aside class="lezen-nav" aria-label="Overzicht" bind:this={navEl}>
 	{#if selection?.kind === 'dossier'}
 		<DossierNav node={selection} {onNavigate} />
-	{:else if selection?.kind === 'commissie'}
-		<CommissieNav node={selection} {onNavigate} />
-	{:else if selection?.kind === 'lid'}
-		<LidNav node={selection} {onNavigate} />
-	{:else if selection?.kind === 'fractie'}
-		<FractieNav node={selection} {onNavigate} />
+	{:else if selection?.kind === 'committee'}
+		<CommitteeNav node={selection} {onNavigate} />
+	{:else if selection?.kind === 'member'}
+		<MemberNav node={selection} {onNavigate} />
+	{:else if selection?.kind === 'faction'}
+		<FactionNav node={selection} {onNavigate} />
 	{:else if !currentBwb}
 		<p class="nav-empty">Selecteer een artikel om het overzicht te zien.</p>
 	{:else}
@@ -455,17 +416,5 @@
 	.nav-row.is-active .nav-num {
 		color: var(--accent);
 		font-weight: 500;
-	}
-
-	.nav-label {
-		font-family: var(--font-serif);
-		font-size: 11px;
-		color: var(--ink-3);
-		line-height: 1.3;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
 	}
 </style>

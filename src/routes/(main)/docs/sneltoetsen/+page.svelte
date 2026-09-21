@@ -33,20 +33,16 @@
 			<div class="shortcut-group__title">Weergavemodi in de verkenner</div>
 			<div class="shortcut-table">
 				<div class="shortcut-row">
-					<span class="shortcut-desc">Netwerk</span>
+					<span class="shortcut-desc">Ontdekken</span>
 					<span class="shortcut-keys"><kbd>1</kbd></span>
 				</div>
 				<div class="shortcut-row">
-					<span class="shortcut-desc">Gesplitst</span>
+					<span class="shortcut-desc">Verdiepen (vraagt een geselecteerde bron)</span>
 					<span class="shortcut-keys"><kbd>2</kbd></span>
 				</div>
 				<div class="shortcut-row">
-					<span class="shortcut-desc">Lezen</span>
+					<span class="shortcut-desc">Lezen (vraagt een geselecteerde bron)</span>
 					<span class="shortcut-keys"><kbd>3</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Index</span>
-					<span class="shortcut-keys"><kbd>4</kbd></span>
 				</div>
 			</div>
 		</div>
@@ -91,7 +87,10 @@
 			</div>
 		</div>
 
-		<p class="stub-note">Op Windows en Linux vervangt <kbd>Ctrl</kbd> de <kbd>⌘</kbd>-toets.</p>
+		<p class="stub-note">
+			Op Windows en Linux vervangt <kbd>Ctrl</kbd> de <kbd>⌘</kbd>-toets. Index heeft geen sneltoets
+			en staat in het hoofdmenu.
+		</p>
 	</div>
 </div>
 
