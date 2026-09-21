@@ -46,3 +46,9 @@ export function getLawIdFromRecord(record: {
 	}
 	return '__unknown__';
 }
+
+/** The instrument id an article key starts with: `bwbr0001854_287`, `32004l0017_6`. */
+export function lawIdOfArticleKey(key: string): string | null {
+	const m = /^(bwb[rvw]\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4})_/i.exec(key);
+	return m ? m[1].toUpperCase() : null;
+}
