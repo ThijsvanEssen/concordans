@@ -1,6 +1,3 @@
-<script lang="ts">
-</script>
-
 <svelte:head>
 	<title>Sneltoetsen · Concordans</title>
 </svelte:head>
@@ -9,88 +6,28 @@
 	<div class="container">
 		<div class="stub-eyebrow"><a href="/docs">Documentatie</a> · SNELTOETSEN</div>
 		<h1 class="stub-title">Sneltoetsen</h1>
-		<p class="stub-lede">Sneltoetsen zijn actief zodra een invoerveld geen focus heeft.</p>
-
-		<div class="shortcut-group">
-			<div class="shortcut-group__title">Algemeen</div>
-			<div class="shortcut-table">
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Zoekvenster openen</span>
-					<span class="shortcut-keys"><kbd>⌘</kbd><kbd>K</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Sneltoetsen-overzicht</span>
-					<span class="shortcut-keys"><kbd>?</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Sluit overlay / paneel / selectie</span>
-					<span class="shortcut-keys"><kbd>Esc</kbd></span>
-				</div>
+		<div class="shortcut-table">
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Zoeken</span>
+				<span class="shortcut-keys"><kbd>⌘</kbd><kbd>K</kbd> of <kbd>Ctrl</kbd><kbd>K</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Zoeken sluiten</span>
+				<span class="shortcut-keys"><kbd>Esc</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Modus Lezen</span>
+				<span class="shortcut-keys"><kbd>1</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Modus Netwerk</span>
+				<span class="shortcut-keys"><kbd>2</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Modus Bladeren</span>
+				<span class="shortcut-keys"><kbd>3</kbd></span>
 			</div>
 		</div>
-
-		<div class="shortcut-group">
-			<div class="shortcut-group__title">Weergavemodi in de verkenner</div>
-			<div class="shortcut-table">
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Ontdekken</span>
-					<span class="shortcut-keys"><kbd>1</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Verdiepen (vraagt een geselecteerde bron)</span>
-					<span class="shortcut-keys"><kbd>2</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Lezen (vraagt een geselecteerde bron)</span>
-					<span class="shortcut-keys"><kbd>3</kbd></span>
-				</div>
-			</div>
-		</div>
-
-		<div class="shortcut-group">
-			<div class="shortcut-group__title">Netwerk</div>
-			<div class="shortcut-table">
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Vorige focus in geschiedenis</span>
-					<span class="shortcut-keys"><kbd>←</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Volgende focus in geschiedenis</span>
-					<span class="shortcut-keys"><kbd>→</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">In- of uitzoomen</span>
-					<span class="shortcut-keys">scroll</span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Deselecteer huidige bron</span>
-					<span class="shortcut-keys"><kbd>Esc</kbd></span>
-				</div>
-			</div>
-		</div>
-
-		<div class="shortcut-group">
-			<div class="shortcut-group__title">Zoekvenster</div>
-			<div class="shortcut-table">
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Volgend resultaat</span>
-					<span class="shortcut-keys"><kbd>↓</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Vorig resultaat</span>
-					<span class="shortcut-keys"><kbd>↑</kbd></span>
-				</div>
-				<div class="shortcut-row">
-					<span class="shortcut-desc">Open geselecteerd resultaat</span>
-					<span class="shortcut-keys"><kbd>Enter</kbd></span>
-				</div>
-			</div>
-		</div>
-
-		<p class="stub-note">
-			Op Windows en Linux vervangt <kbd>Ctrl</kbd> de <kbd>⌘</kbd>-toets. Index heeft geen sneltoets
-			en staat in het hoofdmenu.
-		</p>
 	</div>
 </div>
 
@@ -129,28 +66,7 @@
 		font-size: clamp(28px, 5vw, 40px);
 		font-weight: 500;
 		color: var(--ink);
-		margin: 0 0 16px;
-	}
-
-	.stub-lede {
-		font-family: var(--font-sans);
-		font-size: 15px;
-		line-height: 1.65;
-		color: var(--fg-2);
-		margin-bottom: 48px;
-	}
-
-	.shortcut-group {
-		margin-bottom: 40px;
-	}
-
-	.shortcut-group__title {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.08em;
-		color: var(--fg-3);
-		text-transform: uppercase;
-		margin-bottom: 12px;
+		margin: 0 0 32px;
 	}
 
 	.shortcut-table {
@@ -195,12 +111,5 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: 4px;
 		padding: 2px 7px;
-	}
-
-	.stub-note {
-		font-family: var(--font-sans);
-		font-size: 13px;
-		color: var(--fg-3);
-		font-style: italic;
 	}
 </style>

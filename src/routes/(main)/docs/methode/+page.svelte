@@ -50,14 +50,12 @@
 		<div class="pg-intro">
 			<div class="pg-title-block">
 				<div class="pg-kicker"><span class="dot"></span>Hoe Concordans werkt</div>
-				<h1 class="pg-title">
-					Van officiële&nbsp;bronnen, via drie&nbsp;fasen, naar één&nbsp;<em>netwerk</em>.
-				</h1>
+				<h1 class="pg-title">Methode &amp; ontwerp</h1>
 				<div class="pg-title-rest">
 					<p class="pg-lede">
 						Concordans haalt officiële bronnen uit vier domeinen op, normaliseert ze tot één
-						datamodel en legt de verbindingen die in de tekst verscholen liggen expliciet bloot.
-						Ophalen, normaliseren, verbinden. Dit document beschrijft de werkwijze.
+						datamodel en legt de verbindingen vast die in de tekst besloten liggen. Ophalen,
+						normaliseren, verbinden.
 					</p>
 					<p class="pg-lede pg-lede--sub">
 						Aanleiding was onderzoek voor een bachelorscriptie naar artikel 126ffa Sv: een artikel
@@ -703,35 +701,35 @@
 
 			<h3 class="block-h">Bronnen: vijftien typen, drie domeinen</h3>
 
-			<dl class="knoop-inventory">
-				<div class="knoop-domain is-wet">
-					<dt class="knoop-domain-h">Wetgeving</dt>
-					<dd class="knoop-domain-list">
-						<span class="knoop-item"><span class="g-glyph g-wet">§</span>Instrument</span>
-						<span class="knoop-item"><span class="g-glyph g-wet">❡</span>Artikel</span>
-						<span class="knoop-item"><span class="g-glyph g-wet">§</span>Instrumentversie</span>
-						<span class="knoop-item"><span class="g-glyph g-wet">❡</span>Artikelversie</span>
-						<span class="knoop-item"><span class="g-glyph g-wet">▪</span>Bijlage</span>
+			<dl class="brontype-inventory">
+				<div class="brontype-domain is-wet">
+					<dt class="brontype-domain-h">Wetgeving</dt>
+					<dd class="brontype-domain-list">
+						<span class="brontype-item"><span class="g-glyph g-wet">§</span>Instrument</span>
+						<span class="brontype-item"><span class="g-glyph g-wet">❡</span>Artikel</span>
+						<span class="brontype-item"><span class="g-glyph g-wet">§</span>Instrumentversie</span>
+						<span class="brontype-item"><span class="g-glyph g-wet">❡</span>Artikelversie</span>
+						<span class="brontype-item"><span class="g-glyph g-wet">▪</span>Bijlage</span>
 					</dd>
 				</div>
-				<div class="knoop-domain is-recht">
-					<dt class="knoop-domain-h">Rechtspraak</dt>
-					<dd class="knoop-domain-list">
-						<span class="knoop-item"><span class="g-glyph g-recht">¶</span>Uitspraak</span>
+				<div class="brontype-domain is-recht">
+					<dt class="brontype-domain-h">Rechtspraak</dt>
+					<dd class="brontype-domain-list">
+						<span class="brontype-item"><span class="g-glyph g-recht">¶</span>Uitspraak</span>
 					</dd>
 				</div>
-				<div class="knoop-domain is-tk">
-					<dt class="knoop-domain-h">Parlementair</dt>
-					<dd class="knoop-domain-list">
-						<span class="knoop-item"><span class="g-glyph g-tk">∮</span>Dossier</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">▤</span>Document</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">□</span>Zaak</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">◇</span>Activiteit</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">⊞</span>Stemming</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">⊙</span>Toezegging</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">‡</span>Commissie</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">·</span>Kamerlid</span>
-						<span class="knoop-item"><span class="g-glyph g-tk">◊</span>Fractie</span>
+				<div class="brontype-domain is-tk">
+					<dt class="brontype-domain-h">Parlementair</dt>
+					<dd class="brontype-domain-list">
+						<span class="brontype-item"><span class="g-glyph g-tk">∮</span>Dossier</span>
+						<span class="brontype-item"><span class="g-glyph g-tk">▤</span>Document</span>
+						<span class="brontype-item"><span class="g-glyph g-tk">□</span>Zaak</span>
+						<span class="brontype-item"><span class="g-glyph g-tk">◇</span>Activiteit</span>
+						<span class="brontype-item"><span class="g-glyph g-tk">⊞</span>Stemming</span>
+						<span class="brontype-item"><span class="g-glyph g-tk">⊙</span>Toezegging</span>
+						<span class="brontype-item"><span class="g-glyph g-tk">‡</span>Commissie</span>
+						<span class="brontype-item"><span class="g-glyph g-tk">·</span>Kamerlid</span>
+						<span class="brontype-item"><span class="g-glyph g-tk">◊</span>Fractie</span>
 					</dd>
 				</div>
 			</dl>
@@ -742,10 +740,10 @@
 				adres van de vorm collectie/sleutel, bijvoorbeeld <span class="mono">dossiers/36558</span>.
 			</p>
 
-			<h3 class="block-h">Verbindingen: drie categorieën</h3>
+			<h3 class="block-h">Verbindingen: drie herkomsten</h3>
 			<p class="block-deck">
-				Eén voorbeeld per categorie, met de lijnstijl uit de verkenner. De volledige inventaris telt
-				achttien verbindingstypen; zie §iii en §iv voor wat elke pijplijnstap oplevert.
+				Eén voorbeeld per herkomst. De volledige inventaris telt achttien verbindingstypen; zie §iii
+				en §iv voor wat elke pijplijnstap oplevert.
 			</p>
 
 			<div class="edge-legend">
@@ -753,7 +751,7 @@
 					<div class="edge-legend-cat">
 						<div class="edge-legend-name">Structureel</div>
 						<p class="edge-legend-desc">
-							Zeker, volledig bepaald door de brondata. Doorlopende lijn.
+							Volledig bepaald door de structuur van de brondata. Draagt geen betrouwbaarheid.
 						</p>
 					</div>
 					<div class="edge-row edge-row--legend">
@@ -805,10 +803,10 @@
 
 				<article class="edge-legend-row">
 					<div class="edge-legend-cat">
-						<div class="edge-legend-name">Semantisch</div>
+						<div class="edge-legend-name">Verwijzing</div>
 						<p class="edge-legend-desc">
-							Afgeleid uit de tekst. Draagt een betrouwbaarheidsscore tussen 0 en 1. Gestreepte
-							lijn.
+							Gelezen uit de bron-XML (betrouwbaarheid 1) of herkend in de tekst (betrouwbaarheid
+							tussen 0 en 1).
 						</p>
 					</div>
 					<div class="edge-row edge-row--legend">
@@ -1258,6 +1256,40 @@
 				</table>
 			</div>
 
+			<div class="tot-block" id="afgeleid">
+				<h3 class="block-h">Afgeleide gegevens</h3>
+				<p class="block-deck">
+					Een klein merkteken bij een gegeven betekent: afgeleid, niet gelezen uit de bron. De
+					betrouwbaarheid ligt dan onder 1. Op dit moment zijn afgeleid:
+				</p>
+				<table class="det-overview">
+					<thead>
+						<tr>
+							<th>Gegeven</th>
+							<th>Afgeleid uit</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Het lid van een verwijzing</td>
+							<td>De tekst van de verwijzing</td>
+						</tr>
+						<tr>
+							<td>De passage van een memorie van toelichting bij een artikel</td>
+							<td>Tekstovereenkomst op &ldquo;Artikel N&rdquo;</td>
+						</tr>
+						<tr>
+							<td>De Kamer van een document</td>
+							<td>Het voorvoegsel van de sleutel</td>
+						</tr>
+						<tr>
+							<td>De implementatie van een EU-richtlijn (<em>IMPLEMENTS</em>)</td>
+							<td>CELEX-nummers die in de tekst van een regeling staan; betrouwbaarheid 0,75</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
 			<details class="appendix-details">
 				<summary class="appendix-summary">
 					<span class="appendix-kicker">Bijlage</span>
@@ -1370,15 +1402,11 @@
 			<div class="method-further__links">
 				<a href="/docs" class="method-further__link">
 					<span class="method-further__name">Documentatie</span>
-					<span class="method-further__desc">Corpus, verkenner, dossiers en zoeken</span>
+					<span class="method-further__desc">Bronnen, dekking, verbindingen, beperkingen</span>
 				</a>
 				<a href="/api" class="method-further__link">
 					<span class="method-further__name">API-referentie</span>
 					<span class="method-further__desc">Alle endpoints uit de OpenAPI-spec</span>
-				</a>
-				<a href="/explore" class="method-further__link">
-					<span class="method-further__name">Verkenner</span>
-					<span class="method-further__desc">Het netwerk openen</span>
 				</a>
 			</div>
 		</section>
@@ -1557,12 +1585,6 @@
 		color: var(--ink);
 	}
 
-	.pg-title em {
-		font-style: italic;
-		color: var(--accent);
-		font-weight: 400;
-	}
-
 	.pg-lede {
 		font-family: var(--font-serif);
 		font-size: 18px;
@@ -1728,23 +1750,6 @@
 		margin: 6px 0 0;
 	}
 
-	/* ── Gloss column ─────────────────────────────────────────────────── */
-	.gloss {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		line-height: 1.5;
-	}
-
-	.gloss-bar {
-		width: 24px;
-		height: 1px;
-		background: var(--ink-3);
-		margin: 4px 0 10px;
-	}
-
 	/* ── Source cards ─────────────────────────────────────────────────── */
 	.sources {
 		display: grid;
@@ -1841,312 +1846,7 @@
 		border-top: 3px solid var(--teal, #1f5a56);
 	}
 
-	/* ── Pipeline ─────────────────────────────────────────────────────── */
-	.pipeline {
-		display: grid;
-		grid-template-columns: 96px 1fr;
-		gap: 32px;
-	}
-
-	.phase {
-		padding: 24px 0;
-		border-top: 1px solid var(--rule);
-	}
-
-	.phase:last-of-type {
-		border-bottom: 1px solid var(--rule);
-	}
-
-	.phase-head {
-		display: flex;
-		align-items: baseline;
-		gap: 14px;
-		margin-bottom: 16px;
-	}
-
-	.phase-no {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 28px;
-		color: var(--accent);
-		line-height: 1;
-	}
-
-	.phase-name {
-		font-family: var(--font-serif);
-		font-weight: 500;
-		font-size: 22px;
-		letter-spacing: -0.005em;
-		color: var(--ink);
-		margin: 0;
-	}
-
-	.phase-tag {
-		margin-left: auto;
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-	}
-
-	.phase-body p {
-		font-family: var(--font-serif);
-		font-size: 17px;
-		line-height: 1.6;
-		color: var(--ink-2);
-		margin: 0 0 12px;
-	}
-
-	.phase-body p:last-child {
-		margin-bottom: 0;
-	}
-	.phase-body em {
-		font-style: italic;
-	}
-
-	.io {
-		display: flex;
-		flex-direction: column;
-		gap: 14px;
-		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--ink-2);
-	}
-
-	.io-row {
-		display: grid;
-		grid-template-columns: 28px 1fr;
-		gap: 10px;
-		align-items: baseline;
-	}
-
-	.io-label {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-	}
-
-	.io-val {
-		font-family: var(--font-serif);
-		font-size: 14px;
-		line-height: 1.4;
-		color: var(--ink-2);
-	}
-
-	.io-val em {
-		font-style: italic;
-	}
-
-	/* ── Pipeline note ───────────────────────────────────────────────── */
-	.pipeline-note {
-		margin-top: 32px;
-		padding: 16px 20px;
-		border-left: 3px solid var(--accent);
-		font-family: var(--font-serif);
-		font-size: 15px;
-		line-height: 1.65;
-		color: var(--fg-2);
-	}
-
-	.pipeline-note em {
-		font-style: italic;
-		color: var(--ink);
-	}
-
-	/* ── Two-column ───────────────────────────────────────────────────── */
-	.two-col {
-		display: grid;
-		grid-template-columns: 96px 1fr;
-		gap: 32px;
-	}
-
-	/* ── Node clusters ────────────────────────────────────────────────── */
-	.clusters {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
-		gap: 32px;
-		margin-top: 12px;
-	}
-
-	.cluster {
-		border-top: 3px solid var(--ink);
-		padding-top: 18px;
-	}
-
-	.cluster.is-recht {
-		border-top-color: var(--indigo);
-	}
-	.cluster.is-tk {
-		border-top-color: var(--accent);
-	}
-
-	.cluster-h {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		margin-bottom: 18px;
-	}
-
-	.cluster-name {
-		font-family: var(--font-serif);
-		font-weight: 500;
-		font-size: 18px;
-		letter-spacing: -0.005em;
-		color: var(--ink);
-		margin: 0;
-	}
-
-	.cluster-tag {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-	}
-
-	.cluster-deck {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 14px;
-		color: var(--fg-3);
-		margin: -10px 0 18px;
-	}
-
-	.nodes {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-
-	.node {
-		display: grid;
-		grid-template-columns: 22px 1fr;
-		gap: 10px;
-		padding: 12px 14px 12px 12px;
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		border-radius: 2px;
-		align-items: baseline;
-	}
-
-	.node.is-child {
-		margin-left: 24px;
-		background: transparent;
-		border: 0;
-		border-left: 1px dotted var(--rule);
-		padding: 6px 0 6px 14px;
-		border-radius: 0;
-		grid-template-columns: 1fr;
-	}
-
-	.node-glyph {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 18px;
-		line-height: 1;
-		color: var(--accent);
-		text-align: center;
-		margin-top: 1px;
-	}
-
-	.cluster.is-wet .node-glyph {
-		color: var(--ink);
-	}
-	.cluster.is-recht .node-glyph {
-		color: var(--indigo);
-	}
-	.cluster.is-tk .node-glyph {
-		color: var(--accent);
-	}
-
-	.node-body {
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-		min-width: 0;
-	}
-
-	.node-name {
-		font-family: var(--font-serif);
-		font-size: 16px;
-		font-weight: 500;
-		color: var(--ink);
-		line-height: 1.2;
-	}
-
-	.node-id {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--fg-3);
-		letter-spacing: 0;
-	}
-
-	.node-desc {
-		font-family: var(--font-serif);
-		font-size: 13px;
-		line-height: 1.45;
-		color: var(--ink-2);
-		margin-top: 2px;
-	}
-
-	.node.is-child .node-name {
-		font-size: 14px;
-	}
-	.node.is-child .node-desc {
-		font-size: 13px;
-		color: var(--fg-3);
-		font-style: italic;
-	}
-
 	/* ── Edge tables ──────────────────────────────────────────────────── */
-	.edges {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: 36px;
-	}
-
-	.edge-group {
-		border-top: 1px solid var(--rule);
-		padding-top: 22px;
-	}
-
-	.edge-group-h {
-		display: grid;
-		grid-template-columns: 96px 1fr;
-		gap: 32px;
-		margin-bottom: 18px;
-	}
-
-	.edge-kind-name {
-		font-family: var(--font-serif);
-		font-weight: 500;
-		font-size: 22px;
-		letter-spacing: -0.005em;
-		margin: 0 0 4px;
-		color: var(--ink);
-	}
-
-	.edge-kind-deck {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 14px;
-		color: var(--fg-3);
-		margin: 0;
-	}
-
-	.edge-kind-deck em {
-		font-style: normal;
-	}
-
-	.edge-table {
-		margin-left: 128px;
-		display: grid;
-		gap: 0;
-		border-top: 1px dotted var(--rule);
-	}
 
 	.edge-row {
 		display: grid;
@@ -2173,13 +1873,6 @@
 		color: var(--fg-3);
 	}
 
-	.edge-ex {
-		font-family: var(--font-serif);
-		font-size: 14px;
-		color: var(--ink-2);
-		line-height: 1.3;
-	}
-
 	.edge-rel {
 		display: flex;
 		flex-direction: column;
@@ -2202,321 +1895,6 @@
 		font-weight: 500;
 	}
 
-	.edge-note {
-		margin: 16px 0 0;
-		margin-left: 128px;
-		font-family: var(--font-sans);
-		font-size: 12px;
-		line-height: 1.65;
-		color: var(--fg-3);
-	}
-
-	@media (max-width: 880px) {
-		.edge-note {
-			margin-left: 0;
-		}
-	}
-
-	.edge-conf {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--fg-3);
-		text-align: right;
-	}
-
-	.conf-num {
-		color: var(--ink);
-	}
-
-	/* ── Lifecycle ────────────────────────────────────────────────────── */
-	.lifecycle {
-		margin-left: 128px;
-		margin-top: 18px;
-	}
-
-	.lc-svg {
-		width: 100%;
-		max-width: 760px;
-		height: auto;
-		display: block;
-	}
-
-	.lc-states {
-		margin-top: 32px;
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 24px;
-		border-top: 1px solid var(--rule);
-		padding-top: 22px;
-	}
-
-	.lc-state-name {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-bottom: 6px;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.lc-dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		display: inline-block;
-		flex-shrink: 0;
-	}
-
-	.lc-dot.is-prop {
-		background: var(--warn);
-	}
-	.lc-dot.is-canon {
-		background: var(--positive);
-	}
-	.lc-dot.is-rej {
-		background: var(--accent);
-	}
-	.lc-dot.is-stale {
-		background: var(--fg-4);
-	}
-
-	.lc-state-body {
-		font-family: var(--font-serif);
-		font-size: 14px;
-		line-height: 1.5;
-		color: var(--ink-2);
-		margin: 0;
-	}
-
-	.lc-note {
-		margin: 28px 0 0;
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 14px;
-		color: var(--fg-3);
-		line-height: 1.55;
-	}
-
-	/* ── Confidence ───────────────────────────────────────────────────── */
-	.conf {
-		margin-top: 18px;
-	}
-
-	.conf-svg {
-		width: 100%;
-		max-width: 760px;
-		display: block;
-	}
-
-	.conf-grid {
-		margin-top: 32px;
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 18px;
-		border-top: 1px solid var(--rule);
-		padding-top: 22px;
-	}
-
-	.conf-card {
-		border-left: 3px solid var(--rule);
-		padding: 0 0 0 16px;
-	}
-
-	.conf-card.is-low {
-		border-left-color: var(--ink-4);
-	}
-	.conf-card.is-mid {
-		border-left-color: var(--warn);
-	}
-	.conf-card.is-high {
-		border-left-color: var(--positive);
-	}
-
-	.conf-score {
-		font-family: var(--font-mono);
-		font-size: 13px;
-		color: var(--fg-3);
-		margin-bottom: 6px;
-	}
-
-	.conf-cite {
-		font-family: var(--font-mono);
-		font-size: 14px;
-		color: var(--ink);
-		margin-bottom: 6px;
-	}
-
-	.conf-note {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 13px;
-		color: var(--fg-3);
-		line-height: 1.5;
-	}
-
-	.conf-detail {
-		margin-top: 32px;
-		padding-top: 22px;
-		border-top: 1px solid var(--rule);
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 24px;
-	}
-
-	.conf-detail-head {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-bottom: 10px;
-	}
-
-	.conf-props {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		font-family: var(--font-serif);
-		font-size: 14px;
-		line-height: 1.7;
-		color: var(--ink-2);
-	}
-
-	.conf-props li strong {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		font-weight: 400;
-		display: inline-block;
-		min-width: 88px;
-	}
-
-	.conf-patterns {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		font-family: var(--font-serif);
-		font-size: 14px;
-		line-height: 1.65;
-		color: var(--ink-2);
-	}
-
-	.conf-patterns li {
-		padding: 8px 0;
-		border-bottom: 1px dotted var(--rule);
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.conf-patterns li:last-child {
-		border-bottom: none;
-	}
-
-	.conf-patterns em {
-		font-style: italic;
-		color: var(--fg-3);
-		font-size: 13px;
-	}
-
-	/* ── Citation network ─────────────────────────────────────────────── */
-	.net-block {
-		margin: 96px 0 0;
-		border-top: 1px solid var(--rule);
-		padding: 36px 0 0;
-	}
-
-	.net-cap {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		margin-bottom: 22px;
-	}
-
-	.net-inner {
-		display: grid;
-		grid-template-columns: 1fr 280px;
-		gap: 56px;
-		align-items: center;
-	}
-
-	.net-legend {
-		font-family: var(--font-serif);
-		font-size: 14px;
-		line-height: 1.6;
-		color: var(--ink-2);
-	}
-
-	.net-legend-head {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-bottom: 14px;
-	}
-
-	.net-legend-row {
-		display: grid;
-		grid-template-columns: 22px 1fr;
-		gap: 10px;
-		align-items: center;
-		margin-bottom: 10px;
-	}
-
-	.legend-row--last {
-		margin-bottom: 18px;
-	}
-
-	.legend-dot {
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		display: inline-block;
-	}
-
-	.legend-dot--outline {
-		border: 2px solid var(--ink);
-	}
-	.legend-dot--indigo {
-		background: var(--indigo);
-	}
-	.legend-dot--accent {
-		background: var(--accent);
-	}
-
-	.italic {
-		font-style: italic;
-		color: var(--fg-3);
-	}
-
-	/* ── Footer ───────────────────────────────────────────────────────── */
-	.pg-foot {
-		margin-top: 96px;
-		padding-top: 28px;
-		border-top: 1px solid var(--rule);
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.08em;
-		color: var(--fg-3);
-	}
-
-	.pg-foot em {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 13px;
-		color: var(--fg-3);
-		letter-spacing: 0;
-	}
-
 	/* ── Shared utility ───────────────────────────────────────────────── */
 	.mono {
 		font-family: var(--font-mono);
@@ -2528,140 +1906,6 @@
 		font-style: italic;
 	}
 
-	/* ── Node extra (sleutel & opslag) ───────────────────────────────── */
-	.node-extra {
-		margin-top: 14px;
-		border-top: 1px dotted var(--rule);
-		padding-top: 10px;
-	}
-
-	.node-extra-h {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-bottom: 6px;
-	}
-
-	.node-extra p {
-		font-family: var(--font-serif);
-		font-size: 12px;
-		line-height: 1.5;
-		color: var(--fg-2);
-		margin: 0;
-	}
-
-	/* ── Normalisation detail blocks ─────────────────────────────────── */
-	.norm-detail {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 20px;
-		margin-top: 20px;
-	}
-
-	.norm-src {
-		border-top: 2px solid var(--ink);
-		padding-top: 12px;
-	}
-
-	.norm-src.is-wet {
-		border-top-color: var(--ink);
-	}
-	.norm-src.is-recht {
-		border-top-color: var(--indigo);
-	}
-
-	.norm-src-h {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-bottom: 8px;
-	}
-
-	.norm-src p {
-		font-family: var(--font-serif);
-		font-size: 13px;
-		line-height: 1.55;
-		color: var(--fg-2);
-		margin: 0;
-		max-width: none;
-	}
-
-	/* ── Detector steps ───────────────────────────────────────────────── */
-	.conf-stub-note {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 13px;
-		color: var(--fg-3);
-		line-height: 1.5;
-		margin: 14px 0 0;
-		border-top: 1px dotted var(--rule);
-		padding-top: 10px;
-	}
-
-	.det-block {
-		margin-bottom: 18px;
-	}
-
-	.det-name {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-2);
-		margin-bottom: 6px;
-	}
-
-	.det-steps {
-		list-style: none;
-		margin: 0;
-		padding: 0 0 0 12px;
-		border-left: 1px solid var(--rule);
-	}
-
-	.det-steps li {
-		display: grid;
-		grid-template-columns: 52px 130px 1fr;
-		gap: 8px;
-		padding: 6px 0;
-		border-bottom: 1px dotted var(--rule);
-		align-items: baseline;
-	}
-
-	.det-steps li:last-child {
-		border-bottom: none;
-	}
-
-	.det-step-score {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-2);
-	}
-
-	.det-step-pat {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-	}
-
-	.det-steps em {
-		font-style: italic;
-		color: var(--fg-3);
-		font-size: 12px;
-	}
-
-	.det-note {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 13px;
-		color: var(--fg-3);
-		line-height: 1.5;
-		margin: 4px 0 0;
-	}
-
 	/* ── Responsive ───────────────────────────────────────────────────── */
 	@media (max-width: 1020px) {
 		.pg {
@@ -2669,21 +1913,6 @@
 		}
 		.sources {
 			grid-template-columns: 1fr 1fr;
-		}
-		.clusters {
-			grid-template-columns: 1fr;
-		}
-		.phase {
-			grid-template-columns: 1fr;
-		}
-		.phase-divider {
-			display: none;
-		}
-		.norm-detail {
-			grid-template-columns: 1fr;
-		}
-		.det-steps li {
-			grid-template-columns: 44px 110px 1fr;
 		}
 	}
 
@@ -2695,36 +1924,18 @@
 			font-size: 40px;
 		}
 		.sec-head,
-		.pipeline,
-		.two-col,
-		.pg-toc,
-		.edge-group-h {
+		.pg-toc {
 			grid-template-columns: 1fr;
 			gap: 14px;
 		}
-		.edge-table,
-		.lifecycle,
-		.conf {
-			margin-left: 0;
-		}
-		.lc-states,
-		.conf-grid,
-		.conf-detail {
-			grid-template-columns: 1fr;
-		}
+
 		.edge-row {
 			grid-template-columns: 1fr;
 			gap: 8px;
 		}
-		.net-inner {
-			grid-template-columns: 1fr;
-		}
+
 		.pg-toc-list {
 			grid-template-columns: 1fr;
-		}
-		.det-steps li {
-			grid-template-columns: 1fr;
-			gap: 2px;
 		}
 	}
 
@@ -2762,21 +1973,6 @@
 		color: var(--teal, #1f5a56);
 	}
 
-	/* g-pair · houdt glyph + naam altijd inline op één regel */
-	.g-pair {
-		display: inline-flex;
-		align-items: baseline;
-		gap: 0.35em;
-		white-space: nowrap;
-	}
-	.g-pair .g-glyph {
-		margin-right: 0;
-	}
-	.g-pair-name {
-		font-family: var(--font-serif);
-		color: inherit;
-	}
-
 	/* Edge-table: glyph zit naast noun, niet rechts uitlijnen */
 	.edge-from,
 	.edge-to {
@@ -2790,354 +1986,10 @@
 		flex: 0 0 auto;
 	}
 
-	/* Subsec-head — gemeenschappelijke header voor §3a/§3b en §4a/§4b */
-	.subsec-head {
-		display: grid;
-		grid-template-columns: 96px 1fr;
-		gap: 32px;
-		align-items: baseline;
-		margin: 56px 0 24px;
-		padding-top: 18px;
-		border-top: 1px solid var(--rule);
-	}
-	.subsec-num {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-	}
-	.subsec-title {
-		font-family: var(--font-serif);
-		font-weight: 500;
-		font-size: 22px;
-		letter-spacing: -0.005em;
-		color: var(--ink);
-		margin: 0 0 6px;
-	}
-	.subsec-deck {
-		font-family: var(--font-serif);
-		font-size: 15px;
-		line-height: 1.6;
-		color: var(--fg-2);
-		margin: 0;
-	}
-
 	/* §4 totstandkoming ─ tot-card grid */
 	.tot-block {
 		margin-bottom: 24px;
 	}
-	.tot-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 12px;
-		margin-bottom: 10px;
-	}
-	.tot-card {
-		padding: 14px 16px;
-		background: var(--paper-1, #fef8eb);
-		border: 1px solid var(--rule);
-		border-top: 2px solid var(--ink);
-	}
-	.tot-card-h {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		margin-bottom: 10px;
-	}
-	.tot-card-tag {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-	}
-	.tot-card-name {
-		font-family: var(--font-serif);
-		font-weight: 500;
-		font-size: 14px;
-		letter-spacing: -0.005em;
-		color: var(--ink);
-		margin: 0;
-	}
-	.tot-card p {
-		font-family: var(--font-serif);
-		font-size: 12px;
-		line-height: 1.5;
-		color: var(--fg-2);
-		margin: 0 0 6px;
-	}
-	.tot-card .edge-note {
-		margin: 6px 0 8px;
-		padding: 8px 10px;
-		background: rgba(255, 255, 255, 0.5);
-		border-left: 2px solid var(--accent);
-		font-size: 12px;
-	}
-	.tot-edge {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.08em;
-		color: var(--fg-2);
-		padding-top: 8px;
-		border-top: 1px dotted var(--rule);
-	}
-	.tot-aside {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 13px;
-		line-height: 1.55;
-		color: var(--fg-3);
-		padding: 14px 18px;
-		border-left: 2px solid var(--accent);
-		background: rgba(255, 253, 244, 0.6);
-		margin: 0 0 8px;
-	}
-
-	/* §4 detector cards */
-	.det-grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 12px;
-		margin-bottom: 14px;
-	}
-	.det-card {
-		padding: 14px 16px;
-		background: #fffdf4;
-		border: 1px solid var(--rule);
-		border-left: 3px solid var(--ink);
-	}
-	.det-card .det-name {
-		font-family: var(--font-mono, 'iA Writer Mono', monospace);
-		font-size: 12px;
-		color: var(--ink);
-		margin-bottom: 6px;
-	}
-	.det-card-desc {
-		font-family: var(--font-serif);
-		font-size: 13px;
-		line-height: 1.5;
-		color: var(--fg-2);
-		margin: 0 0 10px;
-	}
-	.det-card .det-steps {
-		margin: 0 0 10px;
-		padding: 0;
-		list-style: none;
-	}
-	.det-card .det-steps li {
-		display: grid;
-		grid-template-columns: 56px 96px 1fr;
-		gap: 6px;
-		font-family: var(--font-serif);
-		font-size: 12px;
-		line-height: 1.45;
-		color: var(--fg-2);
-		padding: 4px 0;
-		border-bottom: 1px dotted var(--rule);
-	}
-	.det-card .det-steps li:last-child {
-		border-bottom: 0;
-	}
-	.det-step-score {
-		font-family: var(--font-mono, 'iA Writer Mono', monospace);
-		font-size: 11px;
-		color: var(--ink);
-	}
-	.det-step-pat {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-	}
-	.det-card em {
-		font-style: italic;
-		color: var(--fg-2);
-	}
-	.det-edge {
-		margin: 6px 0 0;
-		padding-top: 8px;
-		border-top: 1px dotted var(--rule);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.08em;
-		color: var(--fg-2);
-	}
-
-	/* Card flow ─ kleine glyph-keten als visuele "from → to" boven elke card */
-	.card-flow {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 6px;
-		margin-top: 8px;
-		padding: 6px 0 0;
-		border-top: 1px dotted var(--rule);
-	}
-	.card-flow .g-glyph {
-		font-size: 16px;
-		margin-right: 0;
-	}
-	.card-flow-arr {
-		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--fg-3);
-	}
-	.card-flow-lbl {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		padding: 2px 6px;
-		border: 1px solid var(--rule);
-	}
-	.card-flow--det {
-		margin: 4px 0 8px;
-		padding: 0 0 6px;
-		border-top: 0;
-		border-bottom: 1px dotted var(--rule);
-	}
-
-	/* ── §iv a · Normalisatie-strips ─────────────────────────────────── */
-	.norm-strip {
-		margin-bottom: 28px;
-		background: var(--paper);
-	}
-	.norm-strip-h {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		padding: 10px 0 8px;
-	}
-	.norm-strip-tag {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--ink);
-	}
-	.norm-strip-fmt {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--fg-3);
-	}
-	.norm-row {
-		display: grid;
-		grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) minmax(0, 1.2fr);
-		gap: 22px;
-		align-items: stretch;
-	}
-	.norm-cell {
-		padding: 8px 0;
-		min-width: 0;
-	}
-	.norm-row > .norm-cell:not(:first-child) {
-		border-left: 1px dotted var(--rule);
-		padding-left: 22px;
-	}
-	.norm-cell-h {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-bottom: 8px;
-	}
-	.norm-arr {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-family: var(--font-serif);
-		font-size: 18px;
-		color: var(--fg-4, #9a9485);
-	}
-	.norm-input {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		line-height: 1.5;
-		color: var(--ink);
-		margin: 0;
-		padding: 8px 10px;
-		background: var(--paper-2);
-		white-space: pre;
-		overflow-x: auto;
-		max-width: 100%;
-	}
-	.norm-steps {
-		margin: 0;
-		padding-left: 18px;
-		font-family: var(--font-serif);
-		font-size: 12px;
-		line-height: 1.55;
-		color: var(--fg-2);
-	}
-	.norm-steps li {
-		margin-bottom: 4px;
-	}
-	.norm-out {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--ink);
-	}
-	.norm-out-row {
-		display: flex;
-		align-items: baseline;
-		gap: 4px;
-		flex-wrap: wrap;
-	}
-	.norm-out-id {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--fg-3);
-		margin-left: 4px;
-	}
-	.norm-out-meta {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--fg-3);
-		margin-top: 6px;
-	}
-	.norm-out-edge {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		margin-top: 4px;
-	}
-	.norm-edge-line {
-		flex: 0 1 16px;
-		height: 0;
-		border-top: 1.4px solid var(--ink-2);
-	}
-	.norm-edge-rel {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 11px;
-		color: var(--fg-2);
-	}
-	.norm-out-edges {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px;
-		padding-top: 6px;
-		margin-top: 4px;
-		border-top: 1px dotted var(--rule);
-	}
-	.norm-edge-pill {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 11px;
-		color: var(--fg-2);
-		padding: 2px 8px;
-		border: 1px solid var(--rule);
-		border-radius: 999px;
-	}
-
-	/* ── New: revised structure helpers ─────────────────────────────── */
 
 	/* TOC header (replaces gloss marginalia) */
 	.pg-toc-h {
@@ -3148,7 +2000,7 @@
 		color: var(--fg-3);
 	}
 
-	/* Phases — flat, no marginalia column */
+	/* Phases: flat, no marginalia column */
 	.phase-fig {
 		margin: 4px 0 28px;
 		padding: 24px 28px 28px;
@@ -3177,7 +2029,7 @@
 		max-height: 200px;
 	}
 
-	/* Detector figure — same wrapper language as .phase-fig, FIG. 02 */
+	/* Detector figure: same wrapper language as .phase-fig, FIG. 02 */
 	.detector-fig {
 		margin: 8px 0 0;
 		padding: 24px 28px 28px;
@@ -3244,12 +2096,7 @@
 		padding-top: 0;
 		border-top: 0;
 	}
-	.block-h--sub {
-		font-size: 18px;
-		margin-top: 40px;
-		padding-top: 0;
-		border-top: 0;
-	}
+
 	.block-deck {
 		font-family: var(--font-serif);
 		font-size: 16px;
@@ -3264,35 +2111,6 @@
 		line-height: 1.6;
 		color: var(--fg-3);
 		margin: 16px 0 0;
-	}
-
-	/* Node single-line entries (replaces card-style nodes) */
-	.node-line {
-		display: grid;
-		grid-template-columns: 22px auto 1fr;
-		gap: 8px;
-		padding: 5px 0;
-		align-items: baseline;
-		border-bottom: 1px dotted var(--rule);
-	}
-	.node-line:last-child {
-		border-bottom: 0;
-	}
-	.node-line .g-glyph {
-		font-size: 16px;
-		margin-right: 0;
-	}
-	.node-line .node-name {
-		font-family: var(--font-serif);
-		font-size: 14px;
-		font-weight: 500;
-		color: var(--ink);
-	}
-	.node-line .node-desc {
-		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--fg-3);
-		line-height: 1.45;
 	}
 
 	/* Verbindingen legend (one canonical example per category) */
@@ -3342,13 +2160,6 @@
 		align-items: baseline;
 	}
 
-	/* Norm-strips wrapper (replaces two-col with gloss) */
-	.norm-strips {
-		display: flex;
-		flex-direction: column;
-		gap: 28px;
-	}
-
 	/* Detector index table (compact alternative to chain rows) */
 	.method-prose {
 		font-family: var(--font-serif);
@@ -3383,9 +2194,7 @@
 		padding: 8px 12px 8px 0;
 		border-bottom: 1px solid var(--rule);
 	}
-	.det-overview th.num {
-		text-align: right;
-	}
+
 	.det-overview td {
 		padding: 10px 12px 10px 0;
 		border-bottom: 1px dotted var(--rule);
@@ -3393,19 +2202,7 @@
 		vertical-align: baseline;
 		line-height: 1.4;
 	}
-	.det-overview td.num {
-		font-family: var(--font-mono);
-		font-size: 12px;
-		text-align: right;
-		color: var(--ink);
-		white-space: nowrap;
-	}
-	.det-overview tr.is-mut td.num {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 12px;
-		color: var(--accent);
-	}
+
 	.det-overview td em {
 		font-style: italic;
 		color: var(--fg-2);
@@ -3416,10 +2213,7 @@
 	}
 
 	/* Appendix (collapsed reference) */
-	.appendix {
-		margin-top: 96px;
-		margin-bottom: 0;
-	}
+
 	.appendix-details {
 		border-top: 1px solid var(--rule);
 	}
@@ -3469,35 +2263,14 @@
 	}
 
 	@media (max-width: 1020px) {
-		.clusters {
-			grid-template-columns: 1fr;
-		}
 		.edge-legend-row {
 			grid-template-columns: 1fr;
 			gap: 12px;
 		}
 	}
 
-	/* ── Structurele edge note in BWB "uit" cell ──────────────────── */
-	.norm-out-edge-note {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 12px;
-		line-height: 1.5;
-		color: var(--fg-3);
-		margin: 14px 0 0;
-		padding-top: 10px;
-		border-top: 1px dotted var(--rule);
-	}
-	.norm-out-edge-note em {
-		font-style: italic;
-		color: var(--ink-2);
-	}
-
 	/* ── Bron-compare table ───────────────────────────────────────── */
-	.bron-compare-wrap {
-		margin: 8px 0 0;
-	}
+
 	.bron-compare {
 		width: 100%;
 		border-collapse: collapse;
@@ -3683,58 +2456,25 @@
 		}
 	}
 
-	/* ── Detector intro (register shift — quieter than .block-h) ──── */
-	.detector-intro {
-		margin: 56px 0 8px;
-		padding-top: 24px;
-		border-top: 1px solid var(--rule);
-		display: flex;
-		align-items: baseline;
-		gap: 14px;
-	}
-	.detector-kicker {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-	}
-	.detector-h {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-weight: 400;
-		font-size: 18px;
-		letter-spacing: 0;
-		color: var(--ink-2);
-		margin: 0;
-	}
-	.detector-deck {
-		font-family: var(--font-serif);
-		font-size: 16px;
-		line-height: 1.6;
-		color: var(--fg-3);
-		margin: 0 0 24px;
-	}
-
-	/* ── Streamlined knooppunt inventory ──────────────────────────── */
-	.knoop-inventory {
+	/* ── Brontype inventory    ──────────────────────────── */
+	.brontype-inventory {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 		gap: 0;
 		margin: 4px 0 0;
 		padding: 0;
 	}
-	.knoop-domain {
+	.brontype-domain {
 		display: grid;
 		grid-template-columns: 140px 1fr;
 		gap: 24px;
 		align-items: baseline;
 		padding: 12px 0;
 	}
-	.knoop-domain + .knoop-domain {
+	.brontype-domain + .brontype-domain {
 		border-top: 1px dotted var(--rule);
 	}
-	.knoop-domain-h {
+	.brontype-domain-h {
 		font-family: var(--font-serif);
 		font-weight: 500;
 		font-size: 14px;
@@ -3743,7 +2483,7 @@
 		position: relative;
 		padding-left: 14px;
 	}
-	.knoop-domain-h::before {
+	.brontype-domain-h::before {
 		content: '';
 		position: absolute;
 		left: 0;
@@ -3752,19 +2492,19 @@
 		width: 3px;
 		background: var(--ink);
 	}
-	.knoop-domain.is-recht .knoop-domain-h::before {
+	.brontype-domain.is-recht .brontype-domain-h::before {
 		background: var(--indigo);
 	}
-	.knoop-domain.is-tk .knoop-domain-h::before {
+	.brontype-domain.is-tk .brontype-domain-h::before {
 		background: var(--accent);
 	}
-	.knoop-domain-list {
+	.brontype-domain-list {
 		margin: 0;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 6px 20px;
 	}
-	.knoop-item {
+	.brontype-item {
 		font-family: var(--font-serif);
 		font-size: 14px;
 		color: var(--ink-2);
@@ -3773,52 +2513,15 @@
 		gap: 6px;
 		white-space: nowrap;
 	}
-	.knoop-item .g-glyph {
+	.brontype-item .g-glyph {
 		font-size: 14px;
 		margin-right: 0;
 	}
 
 	@media (max-width: 720px) {
-		.knoop-domain {
+		.brontype-domain {
 			grid-template-columns: 1fr;
 			gap: 6px;
 		}
-	}
-
-	/* ── TK collapsible deep-dive ─────────────────────────────────── */
-	.tk-details {
-		margin: 36px 0 0;
-	}
-	.tk-details-summary {
-		display: flex;
-		align-items: baseline;
-		gap: 14px;
-		cursor: pointer;
-		list-style: none;
-		padding: 0;
-	}
-	.tk-details-summary::-webkit-details-marker {
-		display: none;
-	}
-	.tk-details-h {
-		flex: 1;
-		margin: 36px 0 0 !important;
-		padding-top: 18px !important;
-		border-top: 1px dotted var(--rule) !important;
-	}
-	.tk-details-hint {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-top: 36px;
-		padding-top: 22px;
-	}
-	.tk-details[open] .tk-details-hint::before {
-		content: '−  ';
-	}
-	.tk-details:not([open]) .tk-details-hint::before {
-		content: '+  ';
 	}
 </style>
