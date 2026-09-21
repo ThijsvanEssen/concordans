@@ -13,7 +13,7 @@
 		"test": "vitest run",
 		"format": "prettier --write .",
 		"lint": "prettier --check . && eslint .",
-		"sync:api": "curl -sf \"${PUBLIC_CONCORDANS_API_BASE_URL:-http://localhost:8000}/openapi.json\" -o src/lib/api/openapi.json && openapi-typescript src/lib/api/openapi.json -o src/lib/api/generated/openapi-types.ts",
+		"sync:api": "curl -sf \"${PUBLIC_CONCORDANS_API_BASE_URL:-http://localhost:8000}/openapi.json\" -o src/lib/api/openapi.json && prettier --ignore-path /dev/null --write src/lib/api/openapi.json && openapi-typescript src/lib/api/openapi.json -o src/lib/api/generated/openapi-types.ts",
 		"check:api": "npm run sync:api && git diff --exit-code -- src/lib/api/openapi.json src/lib/api/generated"
 	},
 	"dependencies": {
