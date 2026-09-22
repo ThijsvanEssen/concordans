@@ -10,7 +10,7 @@ import { explanatoryDocuments } from './explanatory-documents';
 import { buildGroups, isInternational, type Loader } from './groups';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
-import { neighborsOf } from '$lib/api/nodes';
+import { bucketKey, neighborsOf } from '$lib/api/nodes';
 import { lawIdOfArticleKey } from '$lib/util/law-id';
 import { get } from 'svelte/store';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
@@ -19,6 +19,8 @@ import { describe, rowOfNeighbor, type Neighbor, type Row } from './rows';
 export type LoaderContext = {
 	node: Schema<'BaseNodeDTO'>;
 	neighbors: Neighbor[];
+	/** What the database holds per bucket; see `bucketTotals`. */
+	totals: Map<string, number>;
 	/** The store's cached node response, so a bron is asked for once. */
 	nodeResponse: (collection: Collection, key: string) => Promise<Schema<'NodeGraphResponse'>>;
 	signal: AbortSignal;
@@ -98,7 +100,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// The judgments that cite an article, each at the overweging that does (API 0.5,
 	// `cited-by`). Before that: the citing judgments from the node, without a position.
 	// TODO(backend B8): the fallback goes when every article answers on `cited-by`.
-	'article-judgments': async ({ node, neighbors, signal }) => {
+	'article-judgments': async ({ node, neighbors, totals, signal }) => {
 		const bwb = bwbOf(node);
 		const number =
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
@@ -135,6 +137,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			}
 		}
 		return {
+			total: totals.get(bucketKey('REFERS_TO', 'judgments', 'inbound')),
 			rows: neighbors
 				.filter(
 					(n) =>

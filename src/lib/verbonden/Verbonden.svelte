@@ -53,6 +53,7 @@
 				const ctx = {
 					node: response.node,
 					neighbors,
+					totals: bucketTotals(response),
 					nodeResponse: store.nodeResponse,
 					signal: ac.signal
 				};
