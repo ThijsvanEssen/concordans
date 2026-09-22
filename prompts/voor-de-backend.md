@@ -2,7 +2,8 @@
 
 What the Concordans front end needs from the LawGraph API and does not find in it. Checked
 against `docs/api.md`, `docs/data-model.md`, the route, schema and query modules, and the
-front end's snapshot (`src/lib/api/openapi.json`, identical to `app.openapi()` at version 0.4.0).
+front end's snapshot (`src/lib/api/openapi.json`, written against `app.openapi()` at version 0.4.0;
+now 0.5.0, see "Added during implementation").
 Ordered by how much of the user experience depends on the item. The front end has a stopgap or
 leaves the element out until the item is delivered; each stopgap is marked `TODO(backend Bn)`.
 

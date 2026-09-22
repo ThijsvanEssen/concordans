@@ -17,11 +17,10 @@
 	import type { Overlay } from '$lib/stores/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/stores/overlay';
 
-	// ── Camera persistence across tab switches ────────────────────────────────
-	// GraphView is unmounted/remounted whenever the user switches between Grafiek
-	// and Gesplitst tabs (both use {#if}). Module-level state persists in the
-	// same page session so we can restore the camera instead of re-fitting.
-	// Keyed by compact so the full graph and the sidebar mini-graph don't share.
+	// ── Camera persistence across mounts ──────────────────────────────────────
+	// GraphView is unmounted when the mode leaves Netwerk and mounted again on
+	// return; the camera is kept here so the view does not re-fit. The canvas is
+	// narrower beside a reader (`compact`), so each width keeps its own camera.
 	const _cam: Record<string, { x: number; y: number; ratio: number } | null> = {
 		full: null,
 		compact: null

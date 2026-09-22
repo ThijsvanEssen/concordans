@@ -1,11 +1,8 @@
-// Graph overlay URL contract. A single `?overlay=` query param drives both
-// Activiteit (heat) and Mutatie (in-flux) overlays — they are mutually
-// exclusive so only one can be active at a time.
+// The `?overlay=` parameter of the network: one overlay at a time.
 //
-// Shapes:
-//   heat:12       → Activiteit, last 12 months
-//   open          → Mutatie, all open dossiers
-//   dossier:36410 → Mutatie, scoped to a single dossier
+//   heat:12       Citaties per maand, the last 12 months
+//   open          In behandeling, every open dossier
+//   dossier:36410 In behandeling, one dossier
 
 export type Overlay =
 	| { kind: 'none' }

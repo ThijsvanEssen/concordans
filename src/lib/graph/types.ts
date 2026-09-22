@@ -128,21 +128,6 @@ export function edgeCategory(relation: Relation, sourceKind: GraphNodeKind): Edg
 		: CATEGORY_OF_RELATION[relation];
 }
 
-// Each layer (the Lagen buttons in the sidebar) owns a primary kind plus the
-// sub-kinds the interface groups under it. Counters, activation and (de)load
-// operate on the union.
-export const LAYER_SUB_KINDS: Partial<Record<GraphNodeKind, readonly GraphNodeKind[]>> = {
-	instrument: ['article'],
-	dossier: ['document'],
-	committee: ['activity'],
-	faction: ['member']
-};
-
-/** All node kinds that belong to the given layer (primary + sub-kinds). */
-export function kindsForLayer(layer: GraphNodeKind): GraphNodeKind[] {
-	return [layer, ...(LAYER_SUB_KINDS[layer] ?? [])];
-}
-
 // ── Judgment court-tier helpers ───────────────────────────────────────────────
 // Cassation  — Hoge Raad (HR) and its Parket (PHR): most authoritative
 // Appeal     — Gerechtshoven (GH*), Raad van State (RVS), Centrale Raad van Beroep (CRVB),

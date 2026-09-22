@@ -1,12 +1,12 @@
 <script lang="ts">
 	// Index: browse one category at a time with filters and sorting. A row
 	// expands inline with its metadata and the three ways of opening it
-	// (Ontdekken, Verdiepen, Lezen).
+	// (Lezen, Netwerk).
 	//
 	// Every filter and sort is in the URL, so a filtered view can be shared.
 	// What the API can filter or sort is passed on as a query; the rest is done
 	// on the rows loaded so far.
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
@@ -30,9 +30,9 @@
 	}: {
 		category: IndexCategory;
 		onSelectCategory: (k: IndexCategory) => void;
-		/** Verdiepen: split mode with network and reading pane. */
+		/** Opens the bron in Lezen. */
 		onSelectItem: (collection: Collection, key: string) => void;
-		/** Ontdekken: graph mode focused on the source. */
+		/** Opens the bron in Netwerk. */
 		onDiscoverItem?: (collection: Collection, key: string) => void;
 		/** Lezen: the full text. Only for laws and judgments. */
 		onReadItem?: (collection: Collection, key: string) => void;
@@ -48,7 +48,7 @@
 		allowed.find((a) => a === value);
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
-	const params = $derived($page.url.searchParams);
+	const params = $derived(page.url.searchParams);
 	const q = $derived(params.get('q') ?? '');
 	const stage = $derived(
 		oneOf(
@@ -95,7 +95,7 @@
 	];
 
 	function patchUrl(patch: Record<string, string | null>) {
-		const url = new URL($page.url.toString());
+		const url = new URL(page.url);
 		for (const [k, v] of Object.entries(patch)) {
 			if (v === null || v === '') url.searchParams.delete(k);
 			else url.searchParams.set(k, v);
@@ -108,7 +108,7 @@
 
 	// Switching category drops the filters, so a stage filter of dossiers does not leak into decisions.
 	async function switchCategory(k: IndexCategory) {
-		const url = new URL($page.url.toString());
+		const url = new URL(page.url);
 		for (const p of FILTER_PARAMS) url.searchParams.delete(p);
 		url.searchParams.set('kind', k);
 		// The parent sets `kind` on the URL it then holds, so it must see the cleared filters.
