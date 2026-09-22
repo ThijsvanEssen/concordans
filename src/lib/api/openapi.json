@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.4.0"
+		"version": "0.5.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -86,6 +86,101 @@
 				}
 			}
 		},
+		"/api/articles/{bwb_id}/{article_number}/cited-by": {
+			"get": {
+				"tags": ["articles", "articles"],
+				"summary": "Passages of judgments that cite an article",
+				"description": "One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` and `lid` (a lid number the passage names) filter; `total` counts all passages that match. 404 when the article is unknown.",
+				"operationId": "get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get",
+				"parameters": [
+					{
+						"name": "bwb_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Bwb Id" }
+					},
+					{
+						"name": "article_number",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Article Number" }
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 200,
+							"minimum": 1,
+							"default": 50,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					},
+					{
+						"name": "court",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "ECLI court code, e.g. 'HR', 'RBAMS'",
+							"title": "Court"
+						},
+						"description": "ECLI court code, e.g. 'HR', 'RBAMS'"
+					},
+					{
+						"name": "tier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"enum": ["hoge_raad", "gerechtshof", "rechtbank", "bijzonder"],
+									"type": "string"
+								},
+								{ "type": "null" }
+							],
+							"title": "Tier"
+						}
+					},
+					{
+						"name": "lid",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "pattern": "^\\d+[A-Za-z]{0,3}$" }, { "type": "null" }],
+							"description": "A lid number the passage names: '3', '2a'",
+							"title": "Lid"
+						},
+						"description": "A lid number the passage names: '3', '2a'"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ArticleCitedByResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/articles/{bwb_id}/{article_number}/history": {
 			"get": {
 				"tags": ["articles", "articles"],
@@ -130,7 +225,7 @@
 			"get": {
 				"tags": ["articles", "articles"],
 				"summary": "Legislative history of an article",
-				"description": "Every dossier and document that introduced, changed or proposes to change this article, covering both enacted (`canoniek`) and proposed (`voorgesteld`) changes. Returns an empty list when there is no history — never a 404.",
+				"description": "Every dossier and document that introduced, changed or proposes to change this article, covering both enacted (`canoniek`) and proposed (`voorgesteld`) changes, and what refers to it. The explanatory documents are at `explained-by`. Returns an empty list when there is no history — never a 404.",
 				"operationId": "get_legislative_history_api_articles__bwb_id___article_number__legislative_history_get",
 				"parameters": [
 					{
@@ -152,6 +247,64 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/ArticleLegislativeHistoryResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/articles/{bwb_id}/{article_number}/explained-by": {
+			"get": {
+				"tags": ["articles", "articles"],
+				"summary": "Explanatory documents of an article",
+				"description": "The documents that explain this article: every EXPLAINS edge that points at the article, at one of its versions or at its instrument. Newest first, the article-level explanations (`target` `article` and `article_version`) before those of the instrument. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). An `instrument` explanation exists only for a dossier whose law changed no articles, so it is no evidence about this article; filter on `target`. One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article — never a 404.",
+				"operationId": "get_explained_by_api_articles__bwb_id___article_number__explained_by_get",
+				"parameters": [
+					{
+						"name": "bwb_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Bwb Id" }
+					},
+					{
+						"name": "article_number",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Article Number" }
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 500,
+							"minimum": 1,
+							"default": 100,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ArticleExplanationsResponse" }
 							}
 						}
 					},
@@ -468,11 +621,91 @@
 				}
 			}
 		},
+		"/api/instruments/{identifier}": {
+			"get": {
+				"tags": ["instruments", "instruments"],
+				"summary": "One instrument",
+				"description": "The instrument named by its BWB id (`BWBR0001854`), its CELEX number (`32016L0680`) or its node key (`echr_convention`, `verdrag_012345`): identifiers, names, jurisdiction, kind, dates and article count. 404 for an unknown instrument.",
+				"operationId": "get_instrument_api_instruments__identifier__get",
+				"parameters": [
+					{
+						"name": "identifier",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Identifier" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/InstrumentDetailDTO" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/instruments/{identifier}/eu-links": {
+			"get": {
+				"tags": ["instruments", "instruments"],
+				"summary": "EU and international links of an instrument",
+				"description": "`implements`: EU acts whose CELEX number the text of this instrument names. `implemented_by`: national regulations that name the CELEX number of this EU act. Both are `IMPLEMENTS` edges between instruments, written from a CELEX number named in the text (`basis`): not a transposition relation, not per article. `international`: treaties (BWB treaties) that articles of this instrument refer to, and ECHR judgments that refer to it or to its articles, each with the evidence of its edge; the graph holds no other links to treaties or to the articles of the ECHR Convention from Dutch text. The instrument is named by BWB id, CELEX number or node key; 404 when unknown. `limit` bounds each list; the `*_total` fields are absolute.",
+				"operationId": "get_instrument_eu_links_api_instruments__identifier__eu_links_get",
+				"parameters": [
+					{
+						"name": "identifier",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Identifier" }
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 2000,
+							"minimum": 1,
+							"default": 500,
+							"title": "Limit"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/InstrumentEuLinksResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/instruments/{bwb_id}/articles": {
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "All articles of an instrument",
-				"description": "The articles belonging to this BWB instrument, in natural article order (9 before 10, '24c' between '24' and '25'). Meant for graph loaders: the text is a short preview, use /api/articles/{bwb_id}/{article_number} for the full content.",
+				"description": "The articles belonging to this instrument (BWB id or CELEX number), in natural article order (9 before 10, '24c' between '24' and '25'). Meant for graph loaders: the text is a short preview, use /api/articles/{bwb_id}/{article_number} for the full content.",
 				"operationId": "list_articles_api_instruments__bwb_id__articles_get",
 				"parameters": [
 					{
@@ -550,7 +783,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Every edge incident to this instrument (bulk)",
-				"description": "One round-trip with every edge touching an article of this law: REFERS_TO (within and across laws), AMENDS / INTRODUCES / REPEALS and EXPLAINS (legislative history), and so on. PART_OF is excluded by default — it is the structural backbone, not a reference. Beside `edges` the endpoint returns a `nodes` side-payload with the outside endpoints, grouped per collection.",
+				"description": "One round-trip with every edge touching an article of this instrument: REFERS_TO (within and across laws), AMENDS / INTRODUCES / REPEALS and EXPLAINS (legislative history), and so on. PART_OF is excluded by default — it is the structural backbone, not a reference. Beside `edges` the endpoint returns a `nodes` side-payload with the outside endpoints, grouped per collection.",
 				"operationId": "get_instrument_citations_api_instruments__bwb_id__citations_get",
 				"parameters": [
 					{
@@ -1043,7 +1276,7 @@
 			"get": {
 				"tags": ["nodes", "nodes"],
 				"summary": "Explore a node and its neighbors",
-				"description": "Fetches a node from the given collection and returns all its neighbors from the unified edge collection, with direction and confidence.",
+				"description": "Fetches a node from the given collection and returns its neighbors from the unified edge collection in buckets, one per relation, direction and neighbor collection. Each neighbor carries the edge that leads to it: `edge_id`, `status`, `confidence` and `meta`. A bucket holds one page (`limit` neighbors from `offset`, in the same order on every request), its `total`, and the `next_offset` of the following page (null on the last). `relations`, `node_types`, `direction` and `status` narrow the edges; the totals count what remains.",
 				"operationId": "get_node_graph_api_nodes__collection___key__get",
 				"parameters": [
 					{
@@ -1059,18 +1292,75 @@
 						"schema": { "type": "string", "title": "Key" }
 					},
 					{
-						"name": "neighbor_limit",
+						"name": "limit",
 						"in": "query",
 						"required": false,
 						"schema": {
 							"type": "integer",
-							"maximum": 5000,
+							"maximum": 200,
 							"minimum": 1,
-							"description": "Overall cap on neighbors returned. Per-(relation, neighbor collection) caps are applied first (e.g. factions cap VOTED at 20 per destination collection); the result is then capped to this overall limit.",
-							"default": 100,
-							"title": "Neighbor Limit"
+							"description": "Neighbors per bucket, not per response.",
+							"default": 30,
+							"title": "Limit"
 						},
-						"description": "Overall cap on neighbors returned. Per-(relation, neighbor collection) caps are applied first (e.g. factions cap VOTED at 20 per destination collection); the result is then capped to this overall limit."
+						"description": "Neighbors per bucket, not per response."
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"minimum": 0,
+							"description": "Neighbors to skip in every bucket.",
+							"default": 0,
+							"title": "Offset"
+						},
+						"description": "Neighbors to skip in every bucket."
+					},
+					{
+						"name": "relations",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated relations to keep (`REFERS_TO,PART_OF`).",
+							"title": "Relations"
+						},
+						"description": "Comma-separated relations to keep (`REFERS_TO,PART_OF`)."
+					},
+					{
+						"name": "node_types",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated node types to keep (`article,judgment`).",
+							"title": "Node Types"
+						},
+						"description": "Comma-separated node types to keep (`article,judgment`)."
+					},
+					{
+						"name": "direction",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["outbound", "inbound"], "type": "string" }, { "type": "null" }],
+							"description": "Keep the edges that leave (`outbound`) or reach the node.",
+							"title": "Direction"
+						},
+						"description": "Keep the edges that leave (`outbound`) or reach the node."
+					},
+					{
+						"name": "status",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Keep the edges of this status (`canoniek`, `voorgesteld`).",
+							"title": "Status"
+						},
+						"description": "Keep the edges of this status (`canoniek`, `voorgesteld`)."
 					}
 				],
 				"responses": {
@@ -1091,11 +1381,95 @@
 				}
 			}
 		},
+		"/api/nodes/{collection}/{key}/facets": {
+			"get": {
+				"tags": ["nodes", "nodes"],
+				"summary": "Count a node's neighbors per relation, direction and collection",
+				"description": "How many edges the node has per relation, direction and neighbor collection (with the node type of that collection), counted in the database without reading the neighbors. `total` is the number of edges over all facets. `relations`, `node_types`, `direction` and `status` narrow the edges.",
+				"operationId": "get_node_facets_route_api_nodes__collection___key__facets_get",
+				"parameters": [
+					{
+						"name": "collection",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Collection" }
+					},
+					{
+						"name": "key",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Key" }
+					},
+					{
+						"name": "relations",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated relations to keep (`REFERS_TO,PART_OF`).",
+							"title": "Relations"
+						},
+						"description": "Comma-separated relations to keep (`REFERS_TO,PART_OF`)."
+					},
+					{
+						"name": "node_types",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated node types to keep (`article,judgment`).",
+							"title": "Node Types"
+						},
+						"description": "Comma-separated node types to keep (`article,judgment`)."
+					},
+					{
+						"name": "direction",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["outbound", "inbound"], "type": "string" }, { "type": "null" }],
+							"description": "Keep the edges that leave (`outbound`) or reach the node.",
+							"title": "Direction"
+						},
+						"description": "Keep the edges that leave (`outbound`) or reach the node."
+					},
+					{
+						"name": "status",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Keep the edges of this status (`canoniek`, `voorgesteld`).",
+							"title": "Status"
+						},
+						"description": "Keep the edges of this status (`canoniek`, `voorgesteld`)."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/NodeFacetsResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/nodes/{collection}/{key}/neighborhood": {
 			"get": {
 				"tags": ["nodes", "nodes"],
 				"summary": "BFS neighborhood around a node",
-				"description": "Returns every node and edge within `depth` hops of the focal node in a single traversal query.",
+				"description": "Returns every node and edge within `depth` hops of the focal node in a single traversal query. `relations` and `status` restrict the edges the traversal follows, `direction` restricts it to edges leaving (`outbound`) or reaching (`inbound`) each node on the way, and `node_types` to paths through nodes of those types (the focal node is always included).",
 				"operationId": "get_node_neighborhood_route_api_nodes__collection___key__neighborhood_get",
 				"parameters": [
 					{
@@ -1133,6 +1507,50 @@
 							"default": 200,
 							"title": "Cap"
 						}
+					},
+					{
+						"name": "relations",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated relations to keep (`REFERS_TO,PART_OF`).",
+							"title": "Relations"
+						},
+						"description": "Comma-separated relations to keep (`REFERS_TO,PART_OF`)."
+					},
+					{
+						"name": "node_types",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated node types to keep (`article,judgment`).",
+							"title": "Node Types"
+						},
+						"description": "Comma-separated node types to keep (`article,judgment`)."
+					},
+					{
+						"name": "direction",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["outbound", "inbound"], "type": "string" }, { "type": "null" }],
+							"description": "Keep the edges that leave (`outbound`) or reach the node.",
+							"title": "Direction"
+						},
+						"description": "Keep the edges that leave (`outbound`) or reach the node."
+					},
+					{
+						"name": "status",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Keep the edges of this status (`canoniek`, `voorgesteld`).",
+							"title": "Status"
+						},
+						"description": "Keep the edges of this status (`canoniek`, `voorgesteld`)."
 					}
 				],
 				"responses": {
@@ -1359,7 +1777,7 @@
 			"get": {
 				"tags": ["dossiers", "dossiers"],
 				"summary": "Dossier detail",
-				"description": "One dossier: its title, stage, and how many documents, activities, decisions and commitments it holds.",
+				"description": "One dossier: its title, stage, how many documents, activities, decisions and commitments it holds, and what it links to: the instruments it legislated, amends, introduces or repeals (one item per instrument, relation and status), the committees that lead its activities, its documents per kind and its Eerste Kamer papers.",
 				"operationId": "get_dossier_api_dossiers__number__get",
 				"parameters": [
 					{
@@ -1617,7 +2035,7 @@
 			"get": {
 				"tags": ["committees", "committees"],
 				"summary": "Committee detail",
-				"description": "One committee with its members and the dossiers it leads. By default only current members are returned — a seat with no end date, or an end date still ahead. Pass ``?current_only=false`` for every member the committee ever had.",
+				"description": "One committee with its members and a page of the dossiers it leads, newest first; ``dossier_total`` is the absolute count. By default only current members are returned — a seat with no end date, or an end date still ahead. Pass ``?current_only=false`` for every member the committee ever had. ``limit``, ``offset`` and ``status`` page and filter the dossiers.",
 				"operationId": "get_committee_api_committees__slug__get",
 				"parameters": [
 					{
@@ -1637,6 +2055,44 @@
 							"title": "Current Only"
 						},
 						"description": "Only members currently seated on this committee."
+					},
+					{
+						"name": "status",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["open", "closed"], "type": "string" }, { "type": "null" }],
+							"description": "Only the open or only the closed dossiers.",
+							"title": "Status"
+						},
+						"description": "Only the open or only the closed dossiers."
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 500,
+							"minimum": 1,
+							"description": "Dossiers per page.",
+							"default": 100,
+							"title": "Limit"
+						},
+						"description": "Dossiers per page."
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"minimum": 0,
+							"description": "Dossiers to skip.",
+							"default": 0,
+							"title": "Offset"
+						},
+						"description": "Dossiers to skip."
 					}
 				],
 				"responses": {
@@ -1645,6 +2101,58 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/CommitteeDetailDTO" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/committees/{slug}/activities": {
+			"get": {
+				"tags": ["committees", "committees"],
+				"summary": "Committee activities",
+				"description": "The activities (debates, hearings) a committee leads, newest first, with the dossiers on their agenda. ``total`` is the absolute count.",
+				"operationId": "list_committee_activities_api_committees__slug__activities_get",
+				"parameters": [
+					{
+						"name": "slug",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Slug" }
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 500,
+							"minimum": 1,
+							"default": 100,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/CommitteeActivitiesResponse" }
 							}
 						}
 					},
@@ -1826,6 +2334,58 @@
 				}
 			}
 		},
+		"/api/members/{key}/dossiers": {
+			"get": {
+				"tags": ["members", "members"],
+				"summary": "Dossiers a member authored in",
+				"description": "The dossiers in which this member signed or submitted documents (``AUTHORED``), newest opened first. Each dossier carries the roles the member had there and the number of documents. ``total`` is the absolute count.",
+				"operationId": "list_member_dossiers_api_members__key__dossiers_get",
+				"parameters": [
+					{
+						"name": "key",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Key" }
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 500,
+							"minimum": 1,
+							"default": 100,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ActorDossiersResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/members/{key}/touched-instruments": {
 			"get": {
 				"tags": ["members", "members"],
@@ -1958,6 +2518,58 @@
 				}
 			}
 		},
+		"/api/factions/{key}/dossiers": {
+			"get": {
+				"tags": ["factions", "factions"],
+				"summary": "Dossiers a faction authored in",
+				"description": "The dossiers in which members of this faction signed or submitted documents while they belonged to it, newest opened first. Same shape as the member variant; ``roles`` and ``document_count`` cover all those members.",
+				"operationId": "list_faction_dossiers_api_factions__key__dossiers_get",
+				"parameters": [
+					{
+						"name": "key",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Key" }
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 500,
+							"minimum": 1,
+							"default": 100,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ActorDossiersResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/factions/{key}/touched-instruments": {
 			"get": {
 				"tags": ["factions", "factions"],
@@ -2026,20 +2638,30 @@
 			"get": {
 				"tags": ["graph", "graph"],
 				"summary": "Whole graph — every node and edge, no instrument filter",
-				"description": "Every instrument, article, judgment and edge, including nodes that hang off no instrument. Pass `include_judgments=false` to leave the judgments out.",
+				"description": "Every instrument, article, judgment and edge, including nodes that hang off no instrument. `node_types` (`instrument`, `article`, `judgment`; default all three) says which nodes to load and `relations` (`REFERS_TO`, `EXPLAINS`, `PART_OF`, `IMPLEMENTS`, `AMENDS`; default all five) which edges to keep between them.",
 				"operationId": "get_global_graph_route_api_graph_global_get",
 				"parameters": [
 					{
-						"name": "include_judgments",
+						"name": "node_types",
 						"in": "query",
 						"required": false,
 						"schema": {
-							"type": "boolean",
-							"description": "Include judgments in the graph",
-							"default": true,
-							"title": "Include Judgments"
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated node types to load.",
+							"title": "Node Types"
 						},
-						"description": "Include judgments in the graph"
+						"description": "Comma-separated node types to load."
+					},
+					{
+						"name": "relations",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated relations to keep.",
+							"title": "Relations"
+						},
+						"description": "Comma-separated relations to keep."
 					},
 					{
 						"name": "max_judgments",
@@ -2080,14 +2702,35 @@
 			"get": {
 				"tags": ["graph", "graph"],
 				"summary": "Instrument-level graph — instruments as nodes with aggregated edges",
-				"description": "Every instrument (NL and EU) as a node, with edges between instruments aggregated from article-level references (REFERS_TO, weighted) plus the direct IMPLEMENTS and AMENDS edges. Use this for the layer view, where each node stands for a whole law.",
+				"description": "Every instrument (NL and EU) as a node, with edges between instruments aggregated from article-level references (REFERS_TO, weighted) plus the direct IMPLEMENTS and AMENDS edges. Use this for the layer view, where each node stands for a whole law. `relations` (`REFERS_TO`, `IMPLEMENTS`, `AMENDS`; default all three) says which edges to return.",
 				"operationId": "get_instrument_layer_graph_route_api_graph_instruments_get",
+				"parameters": [
+					{
+						"name": "relations",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated relations to keep.",
+							"title": "Relations"
+						},
+						"description": "Comma-separated relations to keep."
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "Successful Response",
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/InstrumentLayerGraphResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
 							}
 						}
 					}
@@ -2436,7 +3079,7 @@
 			"get": {
 				"tags": ["documents", "documents"],
 				"summary": "Document index",
-				"description": "Documents across every source, with metadata only — no text. Backs the document index page.",
+				"description": "Documents across every source, with metadata only — no text. Backs the document index page. ``total`` is the absolute number of matches, independent of ``limit`` and ``offset``. ``dossier`` keeps the documents of one dossier, linked directly or through a case; an unknown dossier matches nothing.",
 				"operationId": "list_documents_api_documents_get",
 				"parameters": [
 					{
@@ -2484,6 +3127,17 @@
 						"description": "Source, e.g. 'tk', 'eerstekamer', 'staatscourant'."
 					},
 					{
+						"name": "dossier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "pattern": "^\\d+(-[A-Za-z]+)?$" }, { "type": "null" }],
+							"description": "Dossier number, e.g. 29684.",
+							"title": "Dossier"
+						},
+						"description": "Dossier number, e.g. 29684."
+					},
+					{
 						"name": "limit",
 						"in": "query",
 						"required": false,
@@ -2494,6 +3148,12 @@
 							"default": 100,
 							"title": "Limit"
 						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
 					}
 				],
 				"responses": {
@@ -2520,7 +3180,7 @@
 			"get": {
 				"tags": ["documents", "documents"],
 				"summary": "Document text",
-				"description": "One document with the plain text extracted from its source PDF. ``text`` is null when the hydration pipeline has not reached it.",
+				"description": "One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains. `text` is null when `normalize tk-content` has not reached it.",
 				"operationId": "get_document_text_api_documents__key__get",
 				"parameters": [
 					{
@@ -2550,11 +3210,110 @@
 				}
 			}
 		},
+		"/api/documents/{key}/passages": {
+			"get": {
+				"tags": ["documents", "documents"],
+				"summary": "Passages of a memorandum that explain an article",
+				"description": "The sections of a memorandum (MvT, NvT) that `semantic tk-mvt-articles` linked to the article (or to one of its versions) with `EXPLAINS`, in document order: each with its `text` (a slice of the document text), `confidence` and `match_type`. Empty when the document has no text or no section explains the article; 404 when the document is unknown.",
+				"operationId": "get_document_article_passages_api_documents__key__passages_get",
+				"parameters": [
+					{
+						"name": "key",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Key" }
+					},
+					{
+						"name": "bwb_id",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 64,
+							"description": "BWB id of the law.",
+							"title": "Bwb Id"
+						},
+						"description": "BWB id of the law."
+					},
+					{
+						"name": "article",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 64,
+							"description": "Article number, e.g. `5`, `1a`.",
+							"title": "Article"
+						},
+						"description": "Article number, e.g. `5`, `1a`."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/DocumentPassagesResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/resolve": {
+			"get": {
+				"tags": ["resolve", "resolve"],
+				"summary": "Resolve a citation, identifier or law name to one node",
+				"description": "Reads `q` as a citation (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`), an identifier (ECLI, BWB id, CELEX id), a Kamerstuk (`36327`, `36327-3`, `Kamerstukken II 2020/21, 36327, nr. 3`) or the name of a law, and answers with the one best match (`id`, `key`, `collection`) and up to five alternatives. `confidence` says how sure the match is. Nothing that fits answers 200 with kind `none` and no match: the query is then words for `/api/search`.",
+				"operationId": "resolve_api_resolve_get",
+				"parameters": [
+					{
+						"name": "q",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 200,
+							"description": "Citation or name",
+							"title": "Q"
+						},
+						"description": "Citation or name"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ResolveResponse" } }
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/search": {
 			"get": {
 				"tags": ["search", "search"],
 				"summary": "Search across several entity types",
-				"description": "Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds.",
+				"description": "Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first.",
 				"operationId": "search_api_search_get",
 				"parameters": [
 					{
@@ -2732,7 +3491,7 @@
 			"get": {
 				"tags": ["decisions", "decisions"],
 				"summary": "Decision browser",
-				"description": "A page of decisions — one per Besluit — newest first, optionally filtered by outcome, party or chamber. ``total`` is the absolute count, independent of ``limit``.",
+				"description": "A page of decisions — one per Besluit — newest first, optionally filtered by outcome, party, chamber or dossier. ``total`` is the absolute count, independent of ``limit``.",
 				"operationId": "list_decisions_api_decisions_get",
 				"parameters": [
 					{
@@ -2767,6 +3526,17 @@
 							"title": "Chamber"
 						},
 						"description": "'TK' or 'EK'."
+					},
+					{
+						"name": "dossier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "pattern": "^\\d+(-[A-Za-z]+)?$" }, { "type": "null" }],
+							"description": "Only decisions on this dossier number, e.g. 29684.",
+							"title": "Dossier"
+						},
+						"description": "Only decisions on this dossier number, e.g. 29684."
 					},
 					{
 						"name": "limit",
@@ -2938,9 +3708,118 @@
 	},
 	"components": {
 		"schemas": {
+			"ActorDossierDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"number": {
+						"type": "string",
+						"title": "Number",
+						"description": "Kamerstuknummer, e.g. 36558."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"title_source": {
+						"anyOf": [
+							{ "type": "string", "enum": ["dossier", "document", "activiteit"] },
+							{ "type": "null" }
+						],
+						"title": "Title Source"
+					},
+					"track": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": ["wetsvoorstel", "initiatiefwetsvoorstel", "begroting", "motie", "overig"]
+							},
+							{ "type": "null" }
+						],
+						"title": "Track"
+					},
+					"current_stage": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"wetsvoorstel",
+									"mvt",
+									"advies_rvs",
+									"nota",
+									"verslag",
+									"amendementen",
+									"stemming",
+									"afgehandeld"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Current Stage"
+					},
+					"stages": {
+						"items": {
+							"type": "string",
+							"enum": [
+								"wetsvoorstel",
+								"mvt",
+								"advies_rvs",
+								"nota",
+								"verslag",
+								"amendementen",
+								"stemming",
+								"afgehandeld"
+							]
+						},
+						"type": "array",
+						"title": "Stages"
+					},
+					"closed": { "type": "boolean", "title": "Closed", "default": false },
+					"opened_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Opened On"
+					},
+					"closed_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Closed On"
+					},
+					"roles": { "items": { "type": "string" }, "type": "array", "title": "Roles" },
+					"document_count": { "type": "integer", "title": "Document Count", "default": 0 }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "number"],
+				"title": "ActorDossierDTO",
+				"description": "A dossier a member or faction authored documents in.\n\n``roles`` are the distinct ``AUTHORED`` roles as the source wrote them\n(``Eerste ondertekenaar``, ``Mede ondertekenaar``, ...); ``document_count`` the distinct\ndocuments authored in the dossier."
+			},
+			"ActorDossiersResponse": {
+				"properties": {
+					"actor_id": {
+						"type": "string",
+						"title": "Actor Id",
+						"description": "Arango _id of the member or faction."
+					},
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Dossiers, independent of limit and offset."
+					},
+					"items": {
+						"items": { "$ref": "#/components/schemas/ActorDossierDTO" },
+						"type": "array",
+						"title": "Items"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["actor_id", "total", "items"],
+				"title": "ActorDossiersResponse",
+				"description": "A page of the dossiers a member or faction authored documents in."
+			},
 			"AmendedByResponse": {
 				"properties": {
-					"bwb_id": { "type": "string", "title": "Bwb Id" },
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
 					"total": {
 						"type": "integer",
 						"title": "Total",
@@ -3129,11 +4008,34 @@
 			},
 			"ArticleCitationSpan": {
 				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
 					"start": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Start" },
 					"end": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "End" },
 					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
 					"target": { "$ref": "#/components/schemas/ArticleCitationTarget" },
 					"kind": { "type": "string", "title": "Kind", "default": "article" },
+					"reference_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Reference Kind",
+						"description": "`intref` or `extref`: how the regulation's XML wrote a reference from one article to another; null for other citations."
+					},
 					"confidence": {
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
 						"title": "Confidence"
@@ -3166,6 +4068,96 @@
 				"title": "ArticleCitationTarget",
 				"description": "Minimal metadata describing the referenced article."
 			},
+			"ArticleCitedByItem": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"judgment": { "$ref": "#/components/schemas/CitedByJudgment" },
+					"paragraph_id": {
+						"type": "string",
+						"title": "Paragraph Id",
+						"description": "The paragraph, as `paragraph_id` of `/api/judgments/{ecli}`."
+					},
+					"paragraph_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Paragraph Number",
+						"description": "Its printed number (`5.3`), null when it has none."
+					},
+					"qualifier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Qualifier",
+						"description": "The qualifier as the judgment wrote it, `derde lid`."
+					},
+					"start": {
+						"type": "integer",
+						"title": "Start",
+						"description": "Offset of the citation in the text of the paragraph."
+					},
+					"end": { "type": "integer", "title": "End" },
+					"text": {
+						"type": "string",
+						"title": "Text",
+						"description": "The citation as written: `text[start:end]`."
+					},
+					"snippet": {
+						"type": "string",
+						"title": "Snippet",
+						"description": "The text of the paragraph around the citation."
+					},
+					"confidence": { "type": "number", "title": "Confidence" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": [
+					"judgment",
+					"paragraph_id",
+					"paragraph_number",
+					"qualifier",
+					"start",
+					"end",
+					"text",
+					"snippet",
+					"confidence"
+				],
+				"title": "ArticleCitedByItem",
+				"description": "One passage of a judgment that cites the article. `leden`, `onderdelen` and\n`aanhef` say what the passage names of it."
+			},
+			"ArticleCitedByResponse": {
+				"properties": {
+					"article_id": { "type": "string", "title": "Article Id" },
+					"items": {
+						"items": { "$ref": "#/components/schemas/ArticleCitedByItem" },
+						"type": "array",
+						"title": "Items"
+					},
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Every passage that matches the filters, independent of `limit`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["article_id", "items", "total"],
+				"title": "ArticleCitedByResponse",
+				"description": "Response for GET /api/articles/{bwb_id}/{article_number}/cited-by."
+			},
 			"ArticleDetailResponse": {
 				"properties": {
 					"article": { "$ref": "#/components/schemas/ArticleSummaryDTO" },
@@ -3181,6 +4173,12 @@
 						"items": { "$ref": "#/components/schemas/ArticleCitationSpan" },
 						"type": "array",
 						"title": "Citations"
+					},
+					"references": {
+						"items": { "$ref": "#/components/schemas/ArticleReferenceDTO" },
+						"type": "array",
+						"title": "References",
+						"description": "Every reference the text of the article makes, as stored on it, whether or not the target is in the graph. `citations` holds the resolved ones, one per target."
 					},
 					"metadata": {
 						"anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
@@ -3207,6 +4205,67 @@
 				"required": ["article", "instrument", "judgments", "metadata"],
 				"title": "ArticleDetailResponse",
 				"description": "Response for GET /api/articles/{bwb_id}/{article_number}."
+			},
+			"ArticleExplanationDTO": {
+				"properties": {
+					"document": { "$ref": "#/components/schemas/ExplainingDocumentDTO" },
+					"target": {
+						"type": "string",
+						"enum": ["article", "article_version", "instrument"],
+						"title": "Target",
+						"description": "What the edge points at: the 'article', one of its versions ('article_version') or its 'instrument'. An 'instrument' explanation is written only when the dossier's law changed no articles at all, so it says nothing about this article in particular."
+					},
+					"target_id": {
+						"type": "string",
+						"title": "Target Id",
+						"description": "Arango _id of the node the edge points at."
+					},
+					"article_version_key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article Version Key",
+						"description": "Key of the article version; null unless target is 'article_version'."
+					},
+					"confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Confidence"
+					},
+					"scope": {
+						"type": "string",
+						"enum": ["dossier", "article"],
+						"title": "Scope",
+						"description": "'dossier': the document explains the changes of a whole dossier, not this article in particular (the memorandum is not tied to a passage). 'article': the edge names the section that explains the article, in ``section_anchor``."
+					},
+					"section_anchor": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Section Anchor",
+						"description": "`id` of the section in `sections` of the document; set when scope is 'article'."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["document", "target", "target_id", "scope"],
+				"title": "ArticleExplanationDTO",
+				"description": "One document that explains an article, and the node its EXPLAINS edge points at."
+			},
+			"ArticleExplanationsResponse": {
+				"properties": {
+					"article_id": { "type": "string", "title": "Article Id" },
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "All explanations, independent of ``limit`` and ``offset``."
+					},
+					"items": {
+						"items": { "$ref": "#/components/schemas/ArticleExplanationDTO" },
+						"type": "array",
+						"title": "Items"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["article_id", "total", "items"],
+				"title": "ArticleExplanationsResponse",
+				"description": "Response for GET /api/articles/{bwb_id}/{article_number}/explained-by."
 			},
 			"ArticleGraphNodeDTO": {
 				"properties": {
@@ -3278,6 +4337,110 @@
 				"title": "ArticleLegislativeHistoryResponse",
 				"description": "Legislative history for an article."
 			},
+			"ArticlePartDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel). Unique within the article."
+					},
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "`aanhef`, `lid` or `onderdeel`."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "The number as printed: `2`, `2a`, `a`, `1°`; null for an aanhef or an item without one."
+					},
+					"text": {
+						"type": "string",
+						"title": "Text",
+						"description": "The content without its number: `text[start:end]` of the article. A part with onderdelen spans them too."
+					},
+					"start": {
+						"type": "integer",
+						"title": "Start",
+						"description": "Offset of the part in the `text` of the article."
+					},
+					"end": { "type": "integer", "title": "End" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "kind", "number", "text", "start", "end"],
+				"title": "ArticlePartDTO",
+				"description": "A lid, an onderdeel or an aanhef of an article, as a span of its `text`."
+			},
+			"ArticleRefDTO": {
+				"properties": {
+					"number": {
+						"type": "string",
+						"title": "Number",
+						"description": "The number as printed: `3`, `1a`, `3:159n`, `II`."
+					},
+					"of": {
+						"type": "string",
+						"title": "Of",
+						"description": "Whose article it is: `self` (of the bill the paper accompanies), `named_law` (of the law the section's `law` names) or `unknown` (of a law the heading implies and does not name)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["number", "of"],
+				"title": "ArticleRefDTO",
+				"description": "An article number a heading names."
+			},
+			"ArticleReferenceDTO": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "`intref` (a link inside the regulation) or `extref` (to another)."
+					},
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"article": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article",
+						"description": "Number of the article referred to; null for a reference to a chapter or a title."
+					},
+					"doc": {
+						"type": "string",
+						"title": "Doc",
+						"description": "The JCI string of the link, as the XML has it."
+					},
+					"text": { "type": "string", "title": "Text" },
+					"start": {
+						"type": "integer",
+						"title": "Start",
+						"description": "Offset of `text` in the text of the article."
+					},
+					"end": { "type": "integer", "title": "End" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["kind", "bwb_id", "article", "doc", "text", "start", "end"],
+				"title": "ArticleReferenceDTO",
+				"description": "A reference the text of an article makes to an article of a regulation."
+			},
 			"ArticleRelationDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -3287,6 +4450,7 @@
 						"title": "Display Name"
 					},
 					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"celex": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Celex" },
 					"article_number": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Article Number"
@@ -3303,6 +4467,24 @@
 			},
 			"ArticleRelationshipWithType": {
 				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
 					"edge_id": { "type": "string", "title": "Edge Id" },
 					"relation": { "type": "string", "title": "Relation" },
 					"target_article": { "$ref": "#/components/schemas/ArticleRelationDTO" },
@@ -3323,7 +4505,23 @@
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
 						"title": "Confidence"
 					},
-					"community_votes": { "$ref": "#/components/schemas/CommunityVotes" }
+					"community_votes": { "$ref": "#/components/schemas/CommunityVotes" },
+					"start": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Start",
+						"description": "Offset of the reference in the text of the referring article."
+					},
+					"end": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "End" },
+					"text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Text",
+						"description": "The text of the reference."
+					},
+					"reference_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Reference Kind",
+						"description": "`intref` or `extref`, as on the reference itself."
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -3369,7 +4567,13 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
 					},
-					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" }
+					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
+					"parts": {
+						"items": { "$ref": "#/components/schemas/ArticlePartDTO" },
+						"type": "array",
+						"title": "Parts",
+						"description": "Aanhef, leden and onderdelen as spans of `text`; empty when the article has no structure or was normalized before parts existed."
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -3394,6 +4598,12 @@
 					},
 					"current": { "type": "boolean", "title": "Current", "default": false },
 					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
+					"parts": {
+						"items": { "$ref": "#/components/schemas/ArticlePartDTO" },
+						"type": "array",
+						"title": "Parts",
+						"description": "As on the article: spans of `text`."
+					},
 					"effect": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Effect",
@@ -3468,6 +4678,87 @@
 				"title": "CitedArticleRef",
 				"description": "Reference to one cited article inside a judgment-citation list."
 			},
+			"CitedByJudgment": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"ecli": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ecli" },
+					"court": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Court",
+						"description": "ECLI court code, `HR`, `RBAMS`."
+					},
+					"tier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Tier",
+						"description": "`hoge_raad`, `gerechtshof`, `rechtbank` or `bijzonder`."
+					},
+					"date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date",
+						"description": "Date of the judgment, YYYY-MM-DD."
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "ecli", "court", "tier", "date", "display_name"],
+				"title": "CitedByJudgment",
+				"description": "The judgment of a passage that cites an article."
+			},
+			"CommitteeActivitiesResponse": {
+				"properties": {
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Activities of the committee, independent of limit and offset."
+					},
+					"items": {
+						"items": { "$ref": "#/components/schemas/CommitteeActivityDTO" },
+						"type": "array",
+						"title": "Items"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["total", "items"],
+				"title": "CommitteeActivitiesResponse",
+				"description": "A page of a committee's activities, newest first."
+			},
+			"CommitteeActivityDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date",
+						"description": "YYYY-MM-DD."
+					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "The source's ``Soort``, e.g. Commissiedebat."
+					},
+					"agenda_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Agenda Title"
+					},
+					"dossier_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Dossier Numbers",
+						"description": "Dossiers on the agenda of the activity."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key"],
+				"title": "CommitteeActivityDTO",
+				"description": "One activity (debate, hearing) a committee leads."
+			},
 			"CommitteeDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -3518,13 +4809,19 @@
 						"type": "array",
 						"title": "Dossiers",
 						"default": []
+					},
+					"dossier_total": {
+						"type": "integer",
+						"title": "Dossier Total",
+						"description": "Dossiers matching ``status``, independent of limit and offset.",
+						"default": 0
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["id", "key"],
 				"title": "CommitteeDetailDTO",
-				"description": "A committee with its members and the dossiers it leads."
+				"description": "A committee with its members and a page of the dossiers it leads.\n\n``dossiers`` is one page; ``dossier_total`` counts every dossier that matches the\n``status`` filter, and ``active_dossier_count`` the open ones whatever the filter."
 			},
 			"CommitteeWithMembersDTO": {
 				"properties": {
@@ -3567,7 +4864,11 @@
 			},
 			"CrossLawDependenciesResponse": {
 				"properties": {
-					"bwb_id": { "type": "string", "title": "Bwb Id" },
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
 					"dependencies": {
 						"items": { "$ref": "#/components/schemas/CrossLawDependencyItem" },
 						"type": "array",
@@ -3698,7 +4999,11 @@
 			},
 			"DocumentListResponse": {
 				"properties": {
-					"total": { "type": "integer", "title": "Total" },
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Matching documents, independent of ``limit`` and ``offset``."
+					},
 					"items": {
 						"items": { "$ref": "#/components/schemas/DocumentSummaryDTO" },
 						"type": "array",
@@ -3711,8 +5016,39 @@
 				"title": "DocumentListResponse",
 				"description": "A page of document summaries."
 			},
+			"DocumentPassagesResponse": {
+				"properties": {
+					"total": { "type": "integer", "title": "Total" },
+					"items": {
+						"items": { "$ref": "#/components/schemas/PassageDTO" },
+						"type": "array",
+						"title": "Items"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["total", "items"],
+				"title": "DocumentPassagesResponse",
+				"description": "The passages of one document that explain one article, in document order."
+			},
 			"DocumentSummaryDTO": {
 				"properties": {
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "Source, e.g. 'tk', 'eerstekamer', 'staatsblad'."
+					},
+					"is_explanatory": {
+						"type": "boolean",
+						"title": "Is Explanatory",
+						"description": "An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.",
+						"default": false
+					},
 					"key": { "type": "string", "title": "Key" },
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
 					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
@@ -3721,7 +5057,6 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "External Id"
 					},
-					"source": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Source" },
 					"has_text": { "type": "boolean", "title": "Has Text", "default": false },
 					"linked_articles": { "type": "integer", "title": "Linked Articles", "default": 0 }
 				},
@@ -3733,6 +5068,22 @@
 			},
 			"DocumentTextResponse": {
 				"properties": {
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "Source, e.g. 'tk', 'eerstekamer', 'staatsblad'."
+					},
+					"is_explanatory": {
+						"type": "boolean",
+						"title": "Is Explanatory",
+						"description": "An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.",
+						"default": false
+					},
 					"key": { "type": "string", "title": "Key" },
 					"document_id": { "type": "string", "title": "Document Id" },
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
@@ -3747,13 +5098,46 @@
 						"title": "Tk Url",
 						"description": "The document on tweedekamer.nl."
 					},
-					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" }
+					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
+					"dossier_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Dossier Numbers"
+					},
+					"explains": {
+						"items": { "$ref": "#/components/schemas/ExplainedTargetDTO" },
+						"type": "array",
+						"title": "Explains"
+					},
+					"sections": {
+						"items": { "$ref": "#/components/schemas/SectionDTO" },
+						"type": "array",
+						"title": "Sections"
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["key", "document_id"],
 				"title": "DocumentTextResponse",
-				"description": "One document with its text.\n\n``text`` is null until the hydration pipeline has run for it — a scanned\nPDF without a text layer never gets one."
+				"description": "One document with its text.\n\n``text`` is null until ``normalize tk-content`` has run for it: a paper\nfrom before December 1994 has no XML and never gets one. ``sections`` are\nthe headings of the paper in document order, empty when there is no text or\nthe structure of the paper could not be read; their offsets are into\n``text``. ``dossier_numbers`` are the dossiers the document is PART_OF, in\neither chamber; ``explains`` are the articles and instruments it explains,\nwithout duplicates."
+			},
+			"DossierCommitteeDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" },
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"id": { "type": "string", "title": "Id" },
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation"
+					},
+					"role": { "type": "string", "const": "lead", "title": "Role", "default": "lead" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "id"],
+				"title": "DossierCommitteeDTO",
+				"description": "A committee that leads an activity about a dossier."
 			},
 			"DossierDetailResponse": {
 				"properties": {
@@ -3830,16 +5214,51 @@
 					"document_count": { "type": "integer", "title": "Document Count", "default": 0 },
 					"activity_count": { "type": "integer", "title": "Activity Count", "default": 0 },
 					"decision_count": { "type": "integer", "title": "Decision Count", "default": 0 },
-					"commitment_count": { "type": "integer", "title": "Commitment Count", "default": 0 }
+					"commitment_count": { "type": "integer", "title": "Commitment Count", "default": 0 },
+					"instruments": {
+						"items": { "$ref": "#/components/schemas/DossierInstrumentDTO" },
+						"type": "array",
+						"title": "Instruments",
+						"description": "Instruments legislated in, amended, introduced or repealed by the dossier, one item per instrument, relation and status."
+					},
+					"committees": {
+						"items": { "$ref": "#/components/schemas/DossierCommitteeDTO" },
+						"type": "array",
+						"title": "Committees",
+						"description": "Committees leading an activity about the dossier."
+					},
+					"documents_by_kind": {
+						"additionalProperties": { "type": "integer" },
+						"type": "object",
+						"title": "Documents By Kind",
+						"description": "Documents per kind (``Motie``, ``Amendement``, ...); a document without a kind is not counted."
+					},
+					"senate": { "$ref": "#/components/schemas/DossierSenateDTO" }
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["id", "key", "number"],
 				"title": "DossierDetailResponse",
-				"description": "A dossier with the size of everything attached to it."
+				"description": "A dossier with the size of everything attached to it, and what it links to."
 			},
 			"DossierDocumentDTO": {
 				"properties": {
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "Source, e.g. 'tk', 'eerstekamer', 'staatsblad'."
+					},
+					"is_explanatory": {
+						"type": "boolean",
+						"title": "Is Explanatory",
+						"description": "An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.",
+						"default": false
+					},
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
 					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
@@ -3903,6 +5322,38 @@
 				"required": ["total", "items"],
 				"title": "DossierDocumentsResponse",
 				"description": "Response for GET /api/dossiers/{number}/documents."
+			},
+			"DossierInstrumentDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"celex": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Celex",
+						"description": "Set on EU instruments."
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"jurisdiction": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Jurisdiction",
+						"description": "``nl`` or ``eu``."
+					},
+					"relation": {
+						"type": "string",
+						"enum": ["legislated_in", "amends", "introduces", "repeals"],
+						"title": "Relation"
+					},
+					"status": { "type": "string", "enum": ["canoniek", "voorgesteld"], "title": "Status" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "relation", "status"],
+				"title": "DossierInstrumentDTO",
+				"description": "An instrument a dossier is tied to, and how.\n\n``relation`` is ``legislated_in`` (the instrument came out of this dossier) or\n``amends``, ``introduces``, ``repeals`` (the dossier changes it, resolved from the\narticle or instrument that is changed to the parent instrument). ``status`` is\n``canoniek`` for what an amending publication enacted and ``voorgesteld`` for what a\nbill of the dossier proposes. An instrument with several relations or statuses\nappears once per combination."
 			},
 			"DossierListResponse": {
 				"properties": {
@@ -3992,6 +5443,20 @@
 				"title": "DossierRefDTO",
 				"description": "Reference to a Kamerstukdossier by number; ``title`` is null when unknown."
 			},
+			"DossierSenateDTO": {
+				"properties": {
+					"document_count": { "type": "integer", "title": "Document Count", "default": 0 },
+					"first_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "First Date",
+						"description": "Date of the earliest paper (YYYY-MM-DD)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "DossierSenateDTO",
+				"description": "The Eerste Kamer papers among a dossier's documents."
+			},
 			"DossierSummaryDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -4074,7 +5539,23 @@
 					"total": { "type": "integer", "title": "Total" },
 					"order": { "type": "string", "title": "Order" },
 					"entries": {
-						"items": { "$ref": "#/components/schemas/TimelineEntryDTO" },
+						"items": {
+							"oneOf": [
+								{ "$ref": "#/components/schemas/TimelineDocumentEntry" },
+								{ "$ref": "#/components/schemas/TimelineActivityEntry" },
+								{ "$ref": "#/components/schemas/TimelineDecisionEntry" },
+								{ "$ref": "#/components/schemas/TimelineCommitmentEntry" }
+							],
+							"discriminator": {
+								"propertyName": "node_type",
+								"mapping": {
+									"activity": "#/components/schemas/TimelineActivityEntry",
+									"commitment": "#/components/schemas/TimelineCommitmentEntry",
+									"decision": "#/components/schemas/TimelineDecisionEntry",
+									"document": "#/components/schemas/TimelineDocumentEntry"
+								}
+							}
+						},
 						"type": "array",
 						"title": "Entries"
 					}
@@ -4099,6 +5580,100 @@
 				"required": ["total", "by_relation"],
 				"title": "EdgeStatsDTO",
 				"description": "Edge counts: total and per relation type."
+			},
+			"EuLinkDTO": {
+				"properties": {
+					"instrument": {
+						"$ref": "#/components/schemas/LinkedInstrumentDTO",
+						"description": "The other end: the EU act for `implements`, the national regulation for `implemented_by`."
+					},
+					"relation": { "type": "string", "title": "Relation", "default": "IMPLEMENTS" },
+					"confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Confidence"
+					},
+					"basis": {
+						"anyOf": [{ "type": "string", "const": "celex_named_in_text" }, { "type": "null" }],
+						"title": "Basis",
+						"description": "What the edge rests on: `celex_named_in_text`, the text of the regulation names the CELEX number of the act. Not a transposition signal."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "The pipeline that wrote the edge (`bwb-implements-directive`)."
+					},
+					"meta": {
+						"additionalProperties": true,
+						"type": "object",
+						"title": "Meta",
+						"description": "Edge evidence as stored (`celex`)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["instrument"],
+				"title": "EuLinkDTO",
+				"description": "An `IMPLEMENTS` edge between a national regulation and an EU act.\n\nThe edge means that the text of the regulation names the CELEX number of the EU act\n(`basis`). It does not say that the regulation transposes the act, nor which articles\ndo: it links instruments, not articles, and its `confidence` is that of a text match."
+			},
+			"ExplainedTargetDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "Arango _id of the article or instrument."
+					},
+					"key": { "type": "string", "title": "Key" },
+					"collection": {
+						"type": "string",
+						"enum": ["articles", "instruments"],
+						"title": "Collection"
+					},
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"article_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article Number"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "collection"],
+				"title": "ExplainedTargetDTO",
+				"description": "What an explanatory document explains: an article, or a law as a whole.\n\nA version of an article resolves to the article itself; a law the document\nexplains without naming articles is an instrument with ``article_number`` null."
+			},
+			"ExplainingDocumentDTO": {
+				"properties": {
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "Source, e.g. 'tk', 'eerstekamer', 'staatsblad'."
+					},
+					"is_explanatory": {
+						"type": "boolean",
+						"title": "Is Explanatory",
+						"description": "An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.",
+						"default": false
+					},
+					"id": { "type": "string", "title": "Id", "description": "Arango _id of the document." },
+					"key": { "type": "string", "title": "Key" },
+					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number",
+						"description": "The dossier the document is PART_OF (the lowest, if several)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key"],
+				"title": "ExplainingDocumentDTO",
+				"description": "The explanatory document of an explanation."
 			},
 			"FactionDTO": {
 				"properties": {
@@ -4302,6 +5877,7 @@
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
 					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"celex": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Celex" },
 					"article_number": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Article Number"
@@ -4369,7 +5945,11 @@
 			},
 			"InstrumentArticlesResponse": {
 				"properties": {
-					"bwb_id": { "type": "string", "title": "Bwb Id" },
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
 					"total": {
 						"type": "integer",
 						"title": "Total",
@@ -4416,7 +5996,11 @@
 			},
 			"InstrumentCitationsResponse": {
 				"properties": {
-					"bwb_id": { "type": "string", "title": "Bwb Id" },
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
 					"article_count": {
 						"type": "integer",
 						"title": "Article Count",
@@ -4447,6 +6031,99 @@
 				"required": ["bwb_id", "article_count", "total_edges", "edges", "nodes"],
 				"title": "InstrumentCitationsResponse",
 				"description": "Response for GET /api/instruments/{bwb_id}/citations.\n\nOne-shot bundle of every edge incident to the instrument's articles plus\nthe foreign endpoints those edges point at, grouped by collection."
+			},
+			"InstrumentDetailDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"collection": { "type": "string", "title": "Collection", "default": "instruments" },
+					"bwb_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Bwb Id",
+						"description": "BWB id of a Dutch regulation or treaty; `ECHR-CONVENTION` for the Convention of the ECHR."
+					},
+					"celex": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Celex",
+						"description": "CELEX number of an EU act."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"official_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Official Title"
+					},
+					"citation_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Citation Title"
+					},
+					"short_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short Title"
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"jurisdiction": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Jurisdiction",
+						"description": "`nl`, `eu` or `int` (Verdragenbank treaties)."
+					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "BWB type (`wet`, `AMvB`, `verdrag`, ...), treaty kind or publication kind."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "The source that created the node (`bwb`, `eurlex`, ...)."
+					},
+					"labels": { "items": { "type": "string" }, "type": "array", "title": "Labels" },
+					"lang": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Lang" },
+					"stub": { "type": "boolean", "title": "Stub", "default": false },
+					"article_count": { "type": "integer", "title": "Article Count", "default": 0 },
+					"inbound_citation_count": {
+						"type": "integer",
+						"title": "Inbound Citation Count",
+						"default": 0
+					},
+					"date_signed": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date Signed"
+					},
+					"date_published": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date Published"
+					},
+					"date_in_force": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date In Force"
+					},
+					"treaty_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Treaty Number"
+					},
+					"in_force": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "In Force" },
+					"dossier_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Dossier Numbers"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": [
+					"id",
+					"key",
+					"title",
+					"official_title",
+					"citation_title",
+					"short_title",
+					"display_name"
+				],
+				"title": "InstrumentDetailDTO",
+				"description": "One instrument: its identifiers, names, classification and dates."
 			},
 			"InstrumentDossierItem": {
 				"properties": {
@@ -4488,7 +6165,11 @@
 			},
 			"InstrumentDossiersResponse": {
 				"properties": {
-					"bwb_id": { "type": "string", "title": "Bwb Id" },
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
 					"total": {
 						"type": "integer",
 						"title": "Total",
@@ -4523,6 +6204,54 @@
 				"title": "InstrumentEdgeDTO",
 				"description": "Aggregated instrument-layer edge with weight."
 			},
+			"InstrumentEuLinksResponse": {
+				"properties": {
+					"instrument": { "$ref": "#/components/schemas/LinkedInstrumentDTO" },
+					"implements": {
+						"items": { "$ref": "#/components/schemas/EuLinkDTO" },
+						"type": "array",
+						"title": "Implements",
+						"description": "EU acts whose CELEX number the text of this instrument names."
+					},
+					"implements_total": {
+						"type": "integer",
+						"title": "Implements Total",
+						"description": "Absolute number of `implements`, independent of `limit`."
+					},
+					"implemented_by": {
+						"items": { "$ref": "#/components/schemas/EuLinkDTO" },
+						"type": "array",
+						"title": "Implemented By",
+						"description": "National regulations whose text names the CELEX number of this act."
+					},
+					"implemented_by_total": {
+						"type": "integer",
+						"title": "Implemented By Total",
+						"description": "Absolute number of `implemented_by`, independent of `limit`."
+					},
+					"international": {
+						"items": { "$ref": "#/components/schemas/InternationalLinkDTO" },
+						"type": "array",
+						"title": "International",
+						"description": "Treaties that articles of this instrument refer to and ECHR judgments that refer to it, at most `limit`, treaties first."
+					},
+					"international_total": {
+						"type": "integer",
+						"title": "International Total",
+						"description": "Absolute number of `international`, independent of `limit`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": [
+					"instrument",
+					"implements_total",
+					"implemented_by_total",
+					"international_total"
+				],
+				"title": "InstrumentEuLinksResponse",
+				"description": "Response for GET /api/instruments/{identifier}/eu-links."
+			},
 			"InstrumentJudgmentItem": {
 				"properties": {
 					"id": {
@@ -4551,7 +6280,11 @@
 			},
 			"InstrumentJudgmentsResponse": {
 				"properties": {
-					"bwb_id": { "type": "string", "title": "Bwb Id" },
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
 					"total": {
 						"type": "integer",
 						"title": "Total",
@@ -4683,6 +6416,7 @@
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
 					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"celex": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Celex" },
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
@@ -4710,7 +6444,11 @@
 			},
 			"InstrumentRelatedResponse": {
 				"properties": {
-					"bwb_id": { "type": "string", "title": "Bwb Id" },
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
 					"total": {
 						"type": "integer",
 						"title": "Total",
@@ -4818,6 +6556,109 @@
 				"title": "InstrumentVersionsResponse",
 				"description": "Paginated list of historical versions for one instrument."
 			},
+			"InternationalLinkDTO": {
+				"properties": {
+					"kind": { "type": "string", "enum": ["treaty", "echr_judgment"], "title": "Kind" },
+					"instrument": {
+						"anyOf": [{ "$ref": "#/components/schemas/LinkedInstrumentDTO" }, { "type": "null" }],
+						"description": "The treaty; set for `treaty`."
+					},
+					"judgment": {
+						"anyOf": [{ "$ref": "#/components/schemas/JudgmentSummaryDTO" }, { "type": "null" }],
+						"description": "The ECHR judgment; set for `echr_judgment`."
+					},
+					"own_article": {
+						"anyOf": [{ "$ref": "#/components/schemas/CitedArticleRef" }, { "type": "null" }],
+						"description": "The article of this instrument at the edge, when it has one."
+					},
+					"counterpart_article": {
+						"anyOf": [{ "$ref": "#/components/schemas/CitedArticleRef" }, { "type": "null" }],
+						"description": "The article of the treaty the reference names."
+					},
+					"relation": { "type": "string", "title": "Relation", "default": "REFERS_TO" },
+					"confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Confidence"
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "The pipeline that wrote the edge."
+					},
+					"meta": {
+						"additionalProperties": true,
+						"type": "object",
+						"title": "Meta",
+						"description": "Edge evidence as stored (`raw_match`, `snippet`, `qualifier`, ...)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["kind"],
+				"title": "InternationalLinkDTO",
+				"description": "A `REFERS_TO` edge between this instrument and an international counterpart.\n\n`treaty`: an article of this instrument (`own_article`) refers to a treaty\n(`instrument`), and to a treaty article (`counterpart_article`) when the reference names\none. `echr_judgment`: an ECHR judgment (`judgment`) refers to an article of this\ninstrument (`own_article`) or, without an article, to the instrument as a whole."
+			},
+			"JudgmentCitedArticle": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"article": { "$ref": "#/components/schemas/ArticleRelationDTO" },
+					"qualifier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Qualifier",
+						"description": "The qualifier as the judgment wrote it, `derde lid`, of the strongest mention. `leden`, `onderdelen` and `aanhef` (this class) are what it names."
+					},
+					"paragraph_ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Paragraph Ids",
+						"description": "The paragraphs that cite the article, in reading order."
+					},
+					"paragraph_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Paragraph Numbers",
+						"description": "Their printed numbers (`5.3`), those that have one."
+					},
+					"snippet": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Snippet",
+						"description": "The text around the strongest mention."
+					},
+					"confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Confidence",
+						"description": "The confidence of the strongest mention."
+					},
+					"mention_count": {
+						"type": "integer",
+						"title": "Mention Count",
+						"description": "How often the judgment cites the article. The paragraphs cover the first 100; a judgment that cites an article more often is counted in full.",
+						"default": 0
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["article"],
+				"title": "JudgmentCitedArticle",
+				"description": "An article a judgment cites, with where and how: the strongest of its mentions."
+			},
 			"JudgmentDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -4865,6 +6706,12 @@
 						"items": { "$ref": "#/components/schemas/ArticleRelationDTO" },
 						"type": "array",
 						"title": "Articles"
+					},
+					"cited_articles": {
+						"items": { "$ref": "#/components/schemas/JudgmentCitedArticle" },
+						"type": "array",
+						"title": "Cited Articles",
+						"description": "The same articles, each with the passages of the judgment that cite it: paragraphs, the lid or onderdeel named, a snippet."
 					},
 					"cited_judgments": {
 						"items": { "$ref": "#/components/schemas/JudgmentSummaryDTO" },
@@ -4988,20 +6835,34 @@
 			},
 			"JudgmentParagraph": {
 				"properties": {
-					"number": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Number" },
-					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"paragraph_id": {
+						"type": "string",
+						"title": "Paragraph Id",
+						"description": "Names the paragraph in the judgment, for a deep link: `rov-5.3` for the numbered consideration 5.3, `kop-5` for a numbered heading, `p-12` (its position) for a paragraph without a number. Unique in the judgment."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "The number as printed, without its closing dot (`5.3`); not part of `text`. Null for a paragraph without one."
+					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "`heading`, `subheading` or `body`."
+					},
 					"text": { "type": "string", "title": "Text" },
 					"citations": {
 						"items": { "$ref": "#/components/schemas/ArticleCitationSpan" },
 						"type": "array",
-						"title": "Citations"
+						"title": "Citations",
+						"description": "Every citation of an article in `text`, one per occurrence, with its span (`text[start:end]`)."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["text"],
+				"required": ["paragraph_id", "text"],
 				"title": "JudgmentParagraph",
-				"description": "A single paragraph from a judgment, optionally with inline article citations."
+				"description": "A single paragraph from a judgment, with the article citations in it."
 			},
 			"JudgmentSummaryDTO": {
 				"properties": {
@@ -5046,6 +6907,38 @@
 				"type": "object",
 				"title": "LegislativeHistoryEntry",
 				"description": "One entry in the legislative history of an article."
+			},
+			"LinkedInstrumentDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"celex": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Celex" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"citation_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Citation Title"
+					},
+					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"jurisdiction": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Jurisdiction"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": [
+					"id",
+					"key",
+					"bwb_id",
+					"celex",
+					"title",
+					"citation_title",
+					"kind",
+					"jurisdiction"
+				],
+				"title": "LinkedInstrumentDTO",
+				"description": "The instrument at the other end of a link."
 			},
 			"MemberDTO": {
 				"properties": {
@@ -5138,6 +7031,37 @@
 				"title": "MemberVotesResponse",
 				"description": "Response for GET /api/members/{key}/votes."
 			},
+			"NeighborBucketDTO": {
+				"properties": {
+					"relation": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Relation" },
+					"direction": { "type": "string", "enum": ["outbound", "inbound"], "title": "Direction" },
+					"collection": { "type": "string", "title": "Collection" },
+					"type": { "type": "string", "title": "Type" },
+					"total": { "type": "integer", "title": "Total" },
+					"next_offset": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Next Offset"
+					},
+					"items": {
+						"items": { "$ref": "#/components/schemas/NeighborDTO" },
+						"type": "array",
+						"title": "Items"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": [
+					"relation",
+					"direction",
+					"collection",
+					"type",
+					"total",
+					"next_offset",
+					"items"
+				],
+				"title": "NeighborBucketDTO",
+				"description": "The neighbours that share a relation, a direction and a collection: one page of them."
+			},
 			"NeighborDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -5153,11 +7077,17 @@
 						"anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
 						"title": "Props"
 					},
+					"edge_id": { "type": "string", "title": "Edge Id" },
 					"relation": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Relation" },
 					"direction": { "type": "string", "enum": ["outbound", "inbound"], "title": "Direction" },
 					"confidence": {
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
 						"title": "Confidence"
+					},
+					"status": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Status" },
+					"meta": {
+						"anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+						"title": "Meta"
 					}
 				},
 				"additionalProperties": false,
@@ -5170,12 +7100,44 @@
 					"display_name",
 					"labels",
 					"props",
+					"edge_id",
 					"relation",
 					"direction",
-					"confidence"
+					"confidence",
+					"status",
+					"meta"
 				],
 				"title": "NeighborDTO",
-				"description": "Neighbor view used by the generic node explorer."
+				"description": "A neighbour with the edge that leads to it, used by the generic node explorer."
+			},
+			"NodeFacetDTO": {
+				"properties": {
+					"relation": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Relation" },
+					"direction": { "type": "string", "enum": ["outbound", "inbound"], "title": "Direction" },
+					"collection": { "type": "string", "title": "Collection" },
+					"type": { "type": "string", "title": "Type" },
+					"count": { "type": "integer", "title": "Count" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["relation", "direction", "collection", "type", "count"],
+				"title": "NodeFacetDTO",
+				"description": "How many edges of a node share a relation, a direction and a neighbour collection."
+			},
+			"NodeFacetsResponse": {
+				"properties": {
+					"items": {
+						"items": { "$ref": "#/components/schemas/NodeFacetDTO" },
+						"type": "array",
+						"title": "Items"
+					},
+					"total": { "type": "integer", "title": "Total" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["items", "total"],
+				"title": "NodeFacetsResponse",
+				"description": "Response for GET /api/nodes/{collection}/{key}/facets."
 			},
 			"NodeGraphResponse": {
 				"properties": {
@@ -5228,14 +7190,16 @@
 			},
 			"NodeNeighborsDTO": {
 				"properties": {
-					"all": {
-						"items": { "$ref": "#/components/schemas/NeighborDTO" },
+					"total": { "type": "integer", "title": "Total" },
+					"buckets": {
+						"items": { "$ref": "#/components/schemas/NeighborBucketDTO" },
 						"type": "array",
-						"title": "All"
+						"title": "Buckets"
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
+				"required": ["total"],
 				"title": "NodeNeighborsDTO",
 				"description": "Neighbors returned by /api/nodes/{collection}/{key}."
 			},
@@ -5269,6 +7233,47 @@
 				"required": ["colors"],
 				"title": "PartyColorsResponse",
 				"description": "Party abbreviation to hex colour."
+			},
+			"PassageDTO": {
+				"properties": {
+					"section_id": {
+						"type": "string",
+						"title": "Section Id",
+						"description": "`id` of the section in `sections` of the document."
+					},
+					"heading": { "type": "string", "title": "Heading" },
+					"level": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Level" },
+					"char_start": { "type": "integer", "title": "Char Start" },
+					"char_end": { "type": "integer", "title": "Char End" },
+					"text": {
+						"type": "string",
+						"title": "Text",
+						"description": "`text[char_start:char_end]` of the document."
+					},
+					"confidence": {
+						"type": "number",
+						"title": "Confidence",
+						"description": "Uncalibrated: 0.7 to 0.9, see `match_type`."
+					},
+					"match_type": {
+						"type": "string",
+						"title": "Match Type",
+						"description": "How the section names the article: `heading_target`, `body_named_law`, `own_number` or `inferred_law`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": [
+					"section_id",
+					"heading",
+					"char_start",
+					"char_end",
+					"text",
+					"confidence",
+					"match_type"
+				],
+				"title": "PassageDTO",
+				"description": "The passage of a memorandum that explains an article."
 			},
 			"PublicationDTO": {
 				"properties": {
@@ -5387,6 +7392,74 @@
 				"title": "RelationshipVoteResponse",
 				"description": "Updated vote counters after a community vote."
 			},
+			"ResolveMatch": {
+				"properties": {
+					"id": { "type": "string", "title": "Id", "description": "`collection/key`" },
+					"key": { "type": "string", "title": "Key" },
+					"collection": { "type": "string", "title": "Collection" },
+					"kind": {
+						"type": "string",
+						"enum": ["article", "instrument", "judgment", "dossier", "document"],
+						"title": "Kind"
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"confidence": {
+						"type": "number",
+						"maximum": 1.0,
+						"minimum": 0.0,
+						"title": "Confidence",
+						"description": "1: an identifier (ECLI, BWB id, CELEX); 0.95: a citation read whole; 0.9: a law by exact abbreviation or name; lower for partial names, an article without a law, or several equally good nodes (at most 0.5)"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "collection", "kind", "display_name", "confidence"],
+				"title": "ResolveMatch",
+				"description": "One node a query may mean, with a target a client can navigate to."
+			},
+			"ResolveResponse": {
+				"properties": {
+					"q": { "type": "string", "title": "Q" },
+					"kind": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": ["article", "instrument", "judgment", "dossier", "document"]
+							},
+							{ "type": "string", "const": "none" }
+						],
+						"title": "Kind"
+					},
+					"confidence": {
+						"type": "number",
+						"maximum": 1.0,
+						"minimum": 0.0,
+						"title": "Confidence",
+						"description": "Confidence of `match`; 0 for `none`"
+					},
+					"match": {
+						"anyOf": [{ "$ref": "#/components/schemas/ResolveMatch" }, { "type": "null" }]
+					},
+					"alternatives": {
+						"items": { "$ref": "#/components/schemas/ResolveMatch" },
+						"type": "array",
+						"title": "Alternatives"
+					},
+					"qualifier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Qualifier",
+						"description": "The lid or onder of an article citation (`derde lid`)"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["q", "kind", "confidence", "match", "alternatives"],
+				"title": "ResolveResponse",
+				"description": "The best match for a query and the others that fit; ``kind`` ``none`` when nothing does."
+			},
 			"ScopeArticleReference": {
 				"properties": {
 					"annex_id": { "type": "string", "title": "Annex Id" },
@@ -5447,14 +7520,73 @@
 						"title": "Display Name"
 					},
 					"snippet": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Snippet" },
-					"score": { "type": "number", "title": "Score", "default": 1.0 },
+					"score": {
+						"type": "number",
+						"maximum": 1.0,
+						"minimum": 0.0,
+						"title": "Score",
+						"description": "Rank tier of the hit for the query: 1, 0.75, 0.5, 0.25 or 0.1"
+					},
 					"extra": { "additionalProperties": true, "type": "object", "title": "Extra" }
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["id", "key", "collection", "type", "display_name"],
+				"required": ["id", "key", "collection", "type", "display_name", "score"],
 				"title": "SearchResultItem",
 				"description": "One search hit, typed by collection."
+			},
+			"SectionDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "`s-<ordinal>` in document order."
+					},
+					"heading": { "type": "string", "title": "Heading" },
+					"level": {
+						"type": "integer",
+						"title": "Level",
+						"description": "1 for a section without parent, else its parent's + 1."
+					},
+					"parent": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Parent",
+						"description": "Id of the enclosing section."
+					},
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "`algemeen`, `artikelsgewijs`, `article`, `onderdeel`, `lid`, `chapter` or `other`."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "The number as printed in the heading."
+					},
+					"number_scheme": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number Scheme",
+						"description": "`arabic`, `roman`, `book_article` or `letter`."
+					},
+					"article_refs": {
+						"items": { "$ref": "#/components/schemas/ArticleRefDTO" },
+						"type": "array",
+						"title": "Article Refs",
+						"description": "Every article number the heading names."
+					},
+					"law": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Law",
+						"description": "Another law the heading names."
+					},
+					"char_start": { "type": "integer", "title": "Char Start" },
+					"char_end": { "type": "integer", "title": "Char End" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "heading", "level", "kind", "char_start", "char_end"],
+				"title": "SectionDTO",
+				"description": "One heading of a paper with the text under it: `text[char_start:char_end]`."
 			},
 			"SharedAnnexesResponse": {
 				"properties": {
@@ -5499,21 +7631,283 @@
 				"title": "StatsResponse",
 				"description": "Database statistics: document counts per collection and edge counts."
 			},
-			"TimelineEntryDTO": {
+			"TimelineActivityBody": {
+				"properties": {
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "E.g. 'Commissiedebat'."
+					},
+					"agenda_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Agenda Title",
+						"description": "The agenda item; starts with the date."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "The activity number."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "TimelineActivityBody",
+				"description": "An activity entry: a debate, hearing or other agenda item."
+			},
+			"TimelineActivityEntry": {
 				"properties": {
 					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
 					"kind": { "type": "string", "title": "Kind" },
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
 					"node_id": { "type": "string", "title": "Node Id" },
-					"node_type": { "type": "string", "title": "Node Type" },
 					"tk_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Tk Url" },
-					"body": { "additionalProperties": true, "type": "object", "title": "Body" }
+					"node_type": { "type": "string", "const": "activity", "title": "Node Type" },
+					"body": { "$ref": "#/components/schemas/TimelineActivityBody" },
+					"committee": {
+						"anyOf": [{ "$ref": "#/components/schemas/TimelineCommitteeDTO" }, { "type": "null" }]
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["date", "kind", "title", "node_id", "node_type"],
-				"title": "TimelineEntryDTO",
-				"description": "One entry in a dossier timeline; ``body`` depends on ``kind``."
+				"required": ["date", "kind", "title", "node_id", "node_type", "body"],
+				"title": "TimelineActivityEntry",
+				"description": "An activity ABOUT the dossier; ``committee`` is null for a plenary one."
+			},
+			"TimelineCommitmentBody": {
+				"properties": {
+					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
+					"minister_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Minister Name"
+					},
+					"minister_role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Minister Role"
+					},
+					"status": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Status",
+						"description": "'open', 'done' or 'vervallen'."
+					},
+					"expected_resolution": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Expected Resolution"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "TimelineCommitmentBody",
+				"description": "A commitment (toezegging) entry."
+			},
+			"TimelineCommitmentEntry": {
+				"properties": {
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"kind": { "type": "string", "title": "Kind" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"node_id": { "type": "string", "title": "Node Id" },
+					"tk_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Tk Url" },
+					"node_type": { "type": "string", "const": "commitment", "title": "Node Type" },
+					"body": { "$ref": "#/components/schemas/TimelineCommitmentBody" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["date", "kind", "title", "node_id", "node_type", "body"],
+				"title": "TimelineCommitmentEntry",
+				"description": "A commitment ABOUT the dossier."
+			},
+			"TimelineCommitteeDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" },
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key"],
+				"title": "TimelineCommitteeDTO",
+				"description": "The committee that leads an activity."
+			},
+			"TimelineDecisionBody": {
+				"properties": {
+					"subject": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Subject" },
+					"passed": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Passed" },
+					"vote_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Vote Kind"
+					},
+					"tally": {
+						"additionalProperties": { "type": "integer" },
+						"type": "object",
+						"title": "Tally"
+					},
+					"voters": {
+						"additionalProperties": { "type": "integer" },
+						"type": "object",
+						"title": "Voters"
+					},
+					"external_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "External Id",
+						"description": "TK Besluit identifier."
+					},
+					"document": {
+						"anyOf": [
+							{ "$ref": "#/components/schemas/TimelineDocumentSummaryDTO" },
+							{ "type": "null" }
+						]
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "TimelineDecisionBody",
+				"description": "A decision entry: the vote, and the document it was taken on.\n\n``tally`` is seats per choice and ``voters`` how many factions (or members)\ncast each. ``document`` is the motion or amendment decided on, when it can be\nresolved."
+			},
+			"TimelineDecisionEntry": {
+				"properties": {
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"kind": { "type": "string", "title": "Kind" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"node_id": { "type": "string", "title": "Node Id" },
+					"tk_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Tk Url" },
+					"node_type": { "type": "string", "const": "decision", "title": "Node Type" },
+					"body": { "$ref": "#/components/schemas/TimelineDecisionBody" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["date", "kind", "title", "node_id", "node_type", "body"],
+				"title": "TimelineDecisionEntry",
+				"description": "A decision ABOUT the dossier."
+			},
+			"TimelineDocumentBody": {
+				"properties": {
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "Source, e.g. 'tk', 'eerstekamer', 'staatsblad'."
+					},
+					"is_explanatory": {
+						"type": "boolean",
+						"title": "Is Explanatory",
+						"description": "An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.",
+						"default": false
+					},
+					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"sequence": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Sequence",
+						"description": "Document number within the dossier."
+					},
+					"session_year": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Session Year",
+						"description": "Parliamentary year."
+					},
+					"tk_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Tk Url" },
+					"url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Url" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "TimelineDocumentBody",
+				"description": "A document entry: what identifies the document, never its text.\n\nFetch ``/api/documents/{key}`` for the text. ``url`` is the page of an Eerste\nKamer paper on officielebekendmakingen.nl; ``tk_url`` the paper on tweedekamer.nl."
+			},
+			"TimelineDocumentEntry": {
+				"properties": {
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"kind": { "type": "string", "title": "Kind" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"node_id": { "type": "string", "title": "Node Id" },
+					"tk_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Tk Url" },
+					"node_type": { "type": "string", "const": "document", "title": "Node Type" },
+					"body": { "$ref": "#/components/schemas/TimelineDocumentBody" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["date", "kind", "title", "node_id", "node_type", "body"],
+				"title": "TimelineDocumentEntry",
+				"description": "A document that is PART_OF the dossier."
+			},
+			"TimelineDocumentSummaryDTO": {
+				"properties": {
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "Source, e.g. 'tk', 'eerstekamer', 'staatsblad'."
+					},
+					"is_explanatory": {
+						"type": "boolean",
+						"title": "Is Explanatory",
+						"description": "An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.",
+						"default": false
+					},
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"sequence": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Sequence",
+						"description": "Document number within the dossier."
+					},
+					"session_year": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Session Year",
+						"description": "Parliamentary year."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"tk_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Tk Url" },
+					"dictum_excerpt": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dictum Excerpt",
+						"description": "The first 280 characters of the document's text."
+					},
+					"signatories": {
+						"items": { "$ref": "#/components/schemas/TimelineSignatoryDTO" },
+						"type": "array",
+						"title": "Signatories"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key"],
+				"title": "TimelineDocumentSummaryDTO",
+				"description": "The document a decision was taken on: what it says and who signed it."
+			},
+			"TimelineSignatoryDTO": {
+				"properties": {
+					"member_key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Member Key"
+					},
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"party": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Party" },
+					"role": {
+						"type": "string",
+						"title": "Role",
+						"description": "'indiener' or 'mede-indiener'."
+					},
+					"source_role": {
+						"type": "string",
+						"title": "Source Role",
+						"description": "The role as the source wrote it.",
+						"default": ""
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["role"],
+				"title": "TimelineSignatoryDTO",
+				"description": "Who signed the document a decision was taken on."
 			},
 			"TouchedInstrumentDTO": {
 				"properties": {
