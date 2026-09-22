@@ -50,7 +50,7 @@ describe('buildDossierHub', () => {
 
 	it('splits the documents by chamber, the memorie van toelichting first', () => {
 		const hub = buildDossierHub([], documents, null, []);
-		expect(hub.tweedeKamer[0].context).toMatch(/^Memorie van toelichting/);
+		expect(hub.tweedeKamer[0].title).toMatch(/^Memorie van toelichting/);
 		expect(hub.eersteKamer.length).toBeGreaterThan(0);
 		expect(hub.eersteKamer.every((r) => r.ref.key.startsWith('ek_'))).toBe(true);
 		expect(hub.tweedeKamer.some((r) => r.ref.key.startsWith('ek_'))).toBe(false);

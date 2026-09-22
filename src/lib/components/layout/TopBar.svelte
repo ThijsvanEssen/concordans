@@ -303,9 +303,16 @@
 	/* Right side */
 	.topbar-right {
 		margin-left: auto;
+		min-width: 0;
 		display: flex;
 		gap: 14px;
 		align-items: center;
+	}
+
+	@media (max-width: 1000px) {
+		.search-trigger {
+			width: 200px;
+		}
 	}
 
 	/* Search trigger */
@@ -316,6 +323,8 @@
 		height: 30px;
 		padding: 0 12px;
 		width: 280px;
+		max-width: 100%;
+		min-width: 0;
 		background: var(--paper-2);
 		border: 1px solid var(--rule);
 		border-radius: var(--r-1);

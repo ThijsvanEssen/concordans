@@ -49,11 +49,15 @@ export function describe(
 		}
 		case 'dossiers':
 			return { title: text(props.title) ?? name, context: join(text(props.number) ?? key) };
-		case 'documents':
+		case 'documents': {
+			// The title of a document is its dossier's; the document itself is its kind and number.
+			const number = text(props.sequence != null ? String(props.sequence) : null);
+			const kind = text(props.kind);
 			return {
-				title: text(props.title) ?? name,
-				context: join(text(props.kind), shortDate(text(props.date)))
+				title: kind ? (number ? `${kind}, nr. ${number}` : kind) : name,
+				context: join(shortDate(text(props.date)), kind ? null : text(props.title))
 			};
+		}
 		case 'decisions':
 			return {
 				title: text(props.subject) ?? text(props.title) ?? name,
