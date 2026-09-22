@@ -183,3 +183,10 @@ and `cap`. `/api/graph/*` has no relation or type filter. The bucketing exists i
 - **B1.** `GET /api/instruments/{bwb_id}/dossiers` returns `total: 0` for BWBR0001854 (Sr) and
   BWBR0001903 (Sv), although `amended-by` lists dossiers for both. The Dossiers group of a law is
   empty for the two main codes.
+- **0.5.0 (series-integration).** `GET /api/judgments/{ecli}` answers 500 for every ECLI tried
+  (`ECLI:NL:HR:2024:1769`, encoded or not); 0.4.0 answers 200. `GET /api/nodes/{c}/{k}` caps
+  `limit` at 200 per bucket (the snapshot says so; the front end asks for 200). `explained-by`,
+  `cited-by`, `eu-links`, `passages`, `parts` and `paragraph_id` answer empty until the pipeline
+  has run on the data; the front end falls back to its stopgaps on an empty answer.
+  `GET /api/dossiers/36327` lists a committee whose `slug` is a GUID
+  (`38aacfcd_2cfa_4727_949d_e4270237dbbe`) next to `j_v`.
