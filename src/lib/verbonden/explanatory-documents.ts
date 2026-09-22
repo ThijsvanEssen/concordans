@@ -10,7 +10,10 @@ import { describe, type Neighbor, type Row } from './rows';
 
 type BulkDocuments = Schema<'DossierDocumentsBulkResponse'>;
 
-/** The relations by which a document is tied to the article's text, not only names it. */
+/**
+ * The relations by which a document is tied to the article's text. A toelichting that
+ * only names the article (REFERS_TO) explains another law and is left out.
+ */
 const BINDING = new Set(['EXPLAINS', 'AMENDS', 'INTRODUCES']);
 
 type Found = { row: Row; date: string; binding: boolean };
@@ -28,17 +31,14 @@ export function mergeExplanatory(neighbors: Neighbor[], bulk: BulkDocuments | nu
 			})
 		)
 			continue;
-		const binding = BINDING.has(n.relation ?? '');
-		const known = found.get(n.key);
-		if (known && (known.binding || !binding)) continue;
+		if (!BINDING.has(n.relation ?? '') || found.has(n.key)) continue;
 		found.set(n.key, {
-			binding,
+			binding: true,
 			date: typeof props.date === 'string' ? props.date : '',
 			row: {
 				ref: { collection: 'documents', key: n.key },
 				...describe('documents', n.key, n.display_name, props),
-				// A document that only names the article may explain another one.
-				derived: !binding || (n.confidence != null && n.confidence < 1),
+				derived: n.confidence != null && n.confidence < 1,
 				relation: 'EXPLAINS',
 				direction: 'inbound'
 			}

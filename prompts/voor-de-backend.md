@@ -190,5 +190,7 @@ and `cap`. `/api/graph/*` has no relation or type filter. The bucketing exists i
   `limit` at 200 per bucket (the snapshot says so; the front end asks for 200). `explained-by`,
   `cited-by`, `eu-links`, `passages`, `parts` and `paragraph_id` answer empty until the pipeline
   has run on the data; the front end falls back to its stopgaps on an empty answer.
-  `GET /api/dossiers/36327` lists a committee whose `slug` is a GUID
-  (`38aacfcd_2cfa_4727_949d_e4270237dbbe`) next to `j_v`.
+  `GET /api/dossiers/36327` (and other dossiers) lists a committee record
+  `38aacfcd_2cfa_4727_949d_e4270237dbbe` without name, slug or abbreviation; the row prints the GUID.
+  `GET /api/search?q=nieuw wetboek van strafvordering` answers 500 at times (ConnectionAbortedError
+  in `_search_instruments`) and 20 s when it answers.

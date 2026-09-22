@@ -82,7 +82,7 @@ describe('mergeExplanatory', () => {
 			props: { kind, date }
 		}) as unknown as Neighbor;
 
-	it('puts a document bound to the article before one that only names it, then the newest', () => {
+	it('lists the documents bound to the article, then those of its dossiers; a document that only names it is left out', () => {
 		const rows = mergeExplanatory(
 			[
 				doc('names-2025', 'REFERS_TO', '2025-03-07'),
@@ -93,10 +93,9 @@ describe('mergeExplanatory', () => {
 		);
 		expect(rows.map((r) => r.ref.key)).toEqual([
 			'amends-2019',
-			'names-2025',
 			'a572870e_709d_484c_872d_5d84d0829030'
 		]);
-		expect(rows.map((r) => r.derived)).toEqual([false, true, true]);
+		expect(rows.map((r) => r.derived)).toEqual([false, true]);
 	});
 });
 
