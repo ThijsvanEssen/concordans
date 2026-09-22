@@ -141,7 +141,7 @@
 			</div>
 			{#if open}
 				<ul class="group__rows">
-					{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (refId(row.ref))}
+					{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (`${refId(row.ref)}#${row.at ?? ''}`)}
 						<li>
 							<a
 								class="row"
