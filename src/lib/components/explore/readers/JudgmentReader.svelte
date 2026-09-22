@@ -43,9 +43,9 @@
 		);
 	}
 
-	// TODO(backend B7): a paragraph has no stable id. The anchor of an overweging is its
-	// number: `paragraphs[].number` where the API gives it, else the number the text opens with.
-	const rov = (number: string) => `rov-${number}`;
+	// The anchor of an overweging: `paragraph_id` (API 0.5), else built from its number.
+	// TODO(backend B7): the fallback goes when every paragraph carries the id.
+	const rov = (number: string, id?: string | null) => id || `rov-${number}`;
 	const copy = (id: string) => navigator.clipboard?.writeText(permalink(page.url, id));
 
 	let root = $state<HTMLElement | null>(null);
@@ -152,16 +152,16 @@
 						{:else if seg.num || (i === 0 && para.number)}
 							{@const num = String(seg.num ?? para.number)}
 							<div
-								id={rov(num)}
+								id={rov(num, i === 0 ? para.paragraph_id : null)}
 								class="reader-para-block"
 								class:reader-para-block--sub={seg.depth > 0}
 								style={seg.depth > 1 ? `padding-left:${(seg.depth - 1) * 1.2}em` : ''}
 							>
 								<a
 									class="reader-para-num"
-									href="#{rov(num)}"
+									href="#{rov(num, i === 0 ? para.paragraph_id : null)}"
 									aria-label="Kopieer link naar overweging {num}"
-									onclick={() => copy(rov(num))}>{num}</a
+									onclick={() => copy(rov(num, i === 0 ? para.paragraph_id : null))}>{num}</a
 								>
 								<div class="reader-para-inner">
 									{#if seg.subTitle}

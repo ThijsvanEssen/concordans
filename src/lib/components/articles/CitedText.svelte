@@ -6,7 +6,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import { parseArticleParts, partText } from '$lib/text/article-parts';
-	import { anchorOf, parseQualifier } from '$lib/text/qualifier';
+	import { anchorOf, parseQualifier, qualifierOfSpan } from '$lib/text/qualifier';
 	import { isCollection } from '$lib/vocabulary';
 
 	type Span = Schema<'ArticleCitationSpan'>;
@@ -35,9 +35,13 @@
 			if (span.start! < cursor) continue;
 			if (span.start! > cursor) out.push({ content: text.slice(cursor, span.start!) });
 			const content = text.slice(span.start!, span.end!);
+			// The API names the lid on the span (0.5); before that it is read from the text.
 			const at =
 				span.target.collection === 'articles'
-					? anchorOf(parseQualifier(content, text.slice(span.end!, span.end! + FOLLOWING)))
+					? anchorOf(
+							qualifierOfSpan(span) ??
+								parseQualifier(content, text.slice(span.end!, span.end! + FOLLOWING))
+						)
 					: null;
 			out.push({ content, span, at });
 			cursor = span.end!;

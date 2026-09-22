@@ -64,38 +64,14 @@ export const DEFAULT_FILTERS: GraphFilters = {
 // next to the selection. Bulk loaders bypass it.
 export const SOFT_NODE_CAP = 400;
 
-/** Neighbours requested when a loader opens a hub (member, faction). */
-export const HUB_NEIGHBOR_LIMIT = 50;
-
-export type LoadingState =
-	| { kind: 'idle' }
-	| { kind: 'instrument'; bwbId: string; phase: 'fetching' | 'building' }
-	| { kind: 'global'; phase: 'fetching' | 'building' }
-	| { kind: 'parliamentary'; phase: 'fetching' | 'building' };
-
-/**
- * `bulk`: a loader filled the canvas and every node has its neighbourhood, so a
- * click selects. `expansion`: the canvas grows one request per click.
- */
-export type GraphMode = 'expansion' | 'bulk';
-
-type Loaded = Promise<{ count: number } | null>;
-type LayerOptions = { additive?: boolean };
-
 export type GraphStore = {
 	nodes: Readable<GraphNode[]>;
 	edges: Readable<GraphEdge[]>;
 	selection: Readable<GraphNode | null>;
 	pinned: Readable<Set<string>>;
 	filters: Readable<GraphFilters>;
-	loading: Readable<LoadingState>;
-	graphMode: Readable<GraphMode>;
-	/** Per kind: neighbours known from cached expansions or layer totals that are not on the canvas. */
-	potentialCounts: Readable<Record<string, number>>;
 	/** Nodes removed by the soft cap since the last reset. */
 	trimmedCount: Readable<number>;
-	/** bwb_id of the wet the canvas shows in full; null in every other mode. */
-	currentInstrumentBwb: Readable<string | null>;
 	/** The node response of a bron, from the cache or the API. Nothing is drawn. */
 	nodeResponse: (
 		collection: Collection,
@@ -113,33 +89,6 @@ export type GraphStore = {
 		key: string,
 		opts?: { depth?: number; cap?: number }
 	) => Promise<GraphNode | null>;
-	/** Replaces the canvas with the articles of one wet. Null leaves the canvas as it is. */
-	loadInstrument: (bwbId: string) => Loaded;
-	/** Judgments that cite the wet, with an edge to each cited article on the canvas. */
-	loadInstrumentJudgmentsLayer: (bwbId: string) => Loaded;
-	/** Dossiers that legislated the wet, connected to it. */
-	loadInstrumentDossiersLayer: (bwbId: string) => Loaded;
-	/**
-	 * Every edge that touches an article of the wet, with the nodes at the other end.
-	 * `relations` narrows the request; `collections` keeps other nodes off the canvas
-	 * (REFERS_TO reaches thousands of judgments that a layer of articles does not want);
-	 * `maxEdges` caps the answer, which lists structural edges first and citations last.
-	 */
-	loadInstrumentCitations: (
-		bwbId: string,
-		opts?: { relations?: Relation[]; collections?: Collection[]; maxEdges?: number }
-	) => Loaded;
-	/** Writes the totals of the layers of the wet into `potentialCounts`. */
-	prefetchInstrumentLayerCounts: (bwbId: string) => Promise<void>;
-	loadInstrumentLayerGraph: (opts?: LayerOptions) => Loaded;
-	loadJudgmentLayerGraph: (opts?: LayerOptions) => Loaded;
-	loadMemberGraph: (key: string) => Loaded;
-	loadFactionGraph: (key: string) => Loaded;
-	loadCommitteesLayerGraph: (opts?: LayerOptions) => Loaded;
-	loadMembersLayerGraph: (opts?: LayerOptions) => Loaded;
-	loadFactionsLayerGraph: (opts?: LayerOptions) => Loaded;
-	loadRecentDossiersGraph: (opts?: LayerOptions & { days?: number }) => Loaded;
-	setGraphMode: (mode: GraphMode) => void;
 	setSelection: (nodeId: string | null) => void;
 	togglePin: (nodeId: string) => void;
 	unpinNode: (nodeId: string) => void;

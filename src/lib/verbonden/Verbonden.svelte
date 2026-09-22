@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import { bronHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { bucketTotals, neighborsOf } from '$lib/api/nodes';
 	import type { GraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -47,8 +48,8 @@
 			.nodeResponse(collection, key)
 			.then((response) => {
 				if (ac.signal.aborted) return;
-				const neighbors = response.neighbors.all ?? [];
-				groups = buildGroups(collection, neighbors);
+				const neighbors = neighborsOf(response);
+				groups = buildGroups(collection, neighbors, bucketTotals(response));
 				const ctx = {
 					node: response.node,
 					neighbors,

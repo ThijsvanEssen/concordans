@@ -71,6 +71,22 @@ export function parseQualifier(spanText: string, following = ''): Qualifier | nu
 	return q.lid || q.onderdeel || q.aanhef ? q : null;
 }
 
+/**
+ * The qualifier a citation span carries (API 0.5: `leden`, `onderdelen`, `aanhef`), or
+ * null when the span has none, so that the text is read instead.
+ */
+export function qualifierOfSpan(span: {
+	leden?: string[] | null;
+	onderdelen?: string[] | null;
+	aanhef?: boolean | null;
+}): Qualifier | null {
+	const q: Qualifier = {};
+	if (span.leden?.[0]) q.lid = span.leden[0].toLowerCase();
+	if (span.onderdelen?.[0]) q.onderdeel = span.onderdelen[0].toLowerCase();
+	if (span.aanhef) q.aanhef = true;
+	return q.lid || q.onderdeel || q.aanhef ? q : null;
+}
+
 /** The fragment of the part a qualifier names: `lid-2`, `lid-2-onder-a`, `onder-a`, `aanhef`. */
 export function anchorOf(q: Qualifier | null): string | null {
 	if (!q) return null;

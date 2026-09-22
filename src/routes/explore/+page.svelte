@@ -295,7 +295,9 @@
 			if (v === null) url.searchParams.delete(k);
 			else url.searchParams.set(k, v);
 		}
-		void goto(url.pathname + url.search + url.hash, {
+		// A node id reads better with its slash.
+		const search = url.search.replaceAll('%2F', '/');
+		void goto(url.pathname + search + url.hash, {
 			replaceState: true,
 			noScroll: true,
 			keepFocus: true
@@ -454,7 +456,7 @@
 
 	const besideArticle = $derived(
 		selectedNode?.collection === 'articles'
-			? articleIdentity(selectedNode.raw?.props ?? undefined, selectedNode.key)?.articleNumber
+			? articleIdentity(selectedNode.raw?.props ?? undefined, selectedNode.key)
 			: null
 	);
 	const closeBesideHref = $derived.by(() => {
@@ -488,7 +490,7 @@
 						data-sveltekit-noscroll
 						aria-label="Sluiten">×</a
 					>
-					<DocumentReader node={beside} articleNumber={besideArticle} />
+					<DocumentReader node={beside} article={besideArticle} />
 				</div>
 			{/if}
 		</div>

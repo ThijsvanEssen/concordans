@@ -3,6 +3,7 @@
 //
 // A group is filled from the node response of the selected bron (`match`: relation,
 // direction, collection) or, where no edge says it, by a named loader (`load`).
+import { bucketKey } from '$lib/api/nodes';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
 
@@ -20,6 +21,8 @@ export type Loader =
 	| 'dossier-documents-ek'
 	| 'dossier-international'
 	| 'article-explanatory'
+	| 'article-judgments'
+	| 'instrument-international'
 	| 'judgment-articles'
 	| 'instrument-dossiers'
 	| 'instrument-amended-by'
@@ -110,13 +113,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Geïmplementeerd door',
 			match: [{ relation: 'IMPLEMENTS', direction: 'inbound', collection: 'instruments' }]
 		},
-		{
-			...EUROPEAN,
-			match: [
-				{ relation: 'IMPLEMENTS', direction: 'outbound', collection: 'instruments' },
-				...EUROPEAN.match!.slice(1)
-			]
-		},
+		{ ...EUROPEAN, match: undefined, load: 'instrument-international' },
 		{ id: 'amended-by', label: 'Wijzigingen', load: 'instrument-amended-by' },
 		{
 			id: 'judgments',
@@ -128,15 +125,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 	],
 	articles: [
 		{ id: 'explanatory', label: 'Toelichting', load: 'article-explanatory', inPlace: true },
-		// TODO(backend B8): the API names the judgments that cite an article, not the
-		// overweging that does. A row has room for it (`at`, `context`); none is set.
-		{
-			id: 'judgments',
-			label: 'Uitspraken',
-			match: [
-				{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments', where: national }
-			]
-		},
+		{ id: 'judgments', label: 'Uitspraken', load: 'article-judgments' },
 		{
 			id: 'refers-to',
 			label: 'Verwijst naar',
@@ -357,25 +346,42 @@ const matches = (m: Match, n: Neighbor) =>
  * with a loader come back empty, for the caller to fill. A neighbour lands in the first
  * group that matches it.
  */
-export function buildGroups(collection: Collection, neighbors: Neighbor[]): Group[] {
+export function buildGroups(
+	collection: Collection,
+	neighbors: Neighbor[],
+	/** Per bucket (`relation/collection/direction`), what the database holds; see `bucketTotals`. */
+	totals: Map<string, number> = new Map()
+): Group[] {
 	const defs = GROUPS[collection] ?? [];
 	const groups = defs.map<Group>((def) => ({ ...def, rows: [], capped: false }));
-	const buckets = new Map<string, number>();
+	const counted = new Map<string, number>();
 	for (const n of neighbors) {
-		const bucket = `${n.relation}/${n.collection}`;
-		buckets.set(bucket, (buckets.get(bucket) ?? 0) + 1);
+		const bucket = bucketKey(n.relation, n.collection, n.direction);
+		counted.set(bucket, (counted.get(bucket) ?? 0) + 1);
 	}
 	const seen = new Set<string>();
+	const summed = new Set<string>();
 	for (const n of neighbors) {
 		const group = groups.find((g) => g.match?.some((m) => matches(m, n)));
 		const row = group && !seen.has(n.id) ? rowOfNeighbor(n) : null;
 		if (!group || !row) continue;
 		seen.add(n.id);
 		group.rows.push(row);
-		// TODO(backend B12): the node route caps a bucket and gives no total.
-		const cap = CAPS[collection]?.[n.relation as Relation] ?? BUCKET_CAP;
-		if ((buckets.get(`${n.relation}/${n.collection}`) ?? 0) >= cap) group.capped = true;
+		const bucket = bucketKey(n.relation, n.collection, n.direction);
+		const total = totals.get(bucket);
+		if (total != null) {
+			// A bucket counts for its group once; a `where` may leave some of it out.
+			if (!summed.has(`${group.id}:${bucket}`)) {
+				summed.add(`${group.id}:${bucket}`);
+				group.total = (group.total ?? 0) + total;
+			}
+		} else {
+			// TODO(backend B12): an API before 0.5 caps a bucket without a total.
+			const cap = CAPS[collection]?.[n.relation as Relation] ?? BUCKET_CAP;
+			if ((counted.get(bucket) ?? 0) >= cap) group.capped = true;
+		}
 	}
+	for (const g of groups) if (g.total != null && g.total < g.rows.length) g.total = g.rows.length;
 	return groups;
 }
 

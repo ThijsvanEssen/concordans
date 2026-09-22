@@ -161,4 +161,25 @@ and `cap`. `/api/graph/*` has no relation or type filter. The bucketing exists i
 
 ## Added during implementation
 
-(empty)
+- **B7.** The citation pipeline writes stub article nodes keyed `{law}_{article}_{lid}` (for
+  example `articles/bwbr0001903_27c_2` for "art. 27c lid 2 Sv") with `props.stub = true` and no
+  text, next to the real `articles/bwbr0001903_27c`. A judgment's `REFERS_TO` then points at the
+  stub. The lid is in the key only. Resolve these to the real article with `lid` on the edge, or
+  document the key scheme. Front-end stopgap: `loaders.ts` folds `{key}_{n}` into `{key}` at `lid-n`.
+- **B3.** `GET /api/dossiers/{n}/timeline?kind=activities` (and `kind=activity`) returns
+  `total: 0` for dossier 36327, which has 16 activities. `kind` filters on document kind only.
+  The committee of a dossier is therefore read from `/api/nodes/dossiers/{n}` (activities carry
+  `committee_id`).
+- **B10.** `GET /api/committees/j_v` answers 500 (an AQL syntax error in the log: "at position
+  29:13"). The committee reader shows the node's name and no counts until this works.
+- **B4.** `GET /api/dossiers/documents/bulk` has no `kind` filter and caps at 50 per dossier;
+  the memorie van toelichting of a long dossier (36327 has 100+ documents) falls outside the
+  newest 50. Add `kind=` or an `explanatory=true` filter.
+- **B9.** The database has no `IMPLEMENTS` edges (`/api/stats`: absent from `by_relation`) and
+  `GET /api/instruments?jurisdiction=eu` returns the ECHR convention only. The group
+  "Europees en internationaal" is therefore empty for every national law today.
+- **B11.** `GET /api/search?q=nieuw wetboek van strafvordering` takes 12 to 17 s (the
+  `instruments` type alone 7 s); without the stop words 0.6 s. The client times out at 10 s.
+- **B1.** `GET /api/instruments/{bwb_id}/dossiers` returns `total: 0` for BWBR0001854 (Sr) and
+  BWBR0001903 (Sv), although `amended-by` lists dossiers for both. The Dossiers group of a law is
+  empty for the two main codes.

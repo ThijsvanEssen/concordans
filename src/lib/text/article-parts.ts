@@ -1,6 +1,8 @@
-// TODO(backend B6): the API gives an article as flat text in which a lid is a line
-// that starts with `1. ` and an onderdeel a line that starts with `a. ` or `1°. `.
-// When `ArticleSummaryDTO.parts` exists, `parseArticleParts` returns it as it is.
+// An article's aanhef, leden and onderdelen. API 0.5 delivers them as `parts`
+// (`partsFromApi` nests them by id); before that they are read from the flat text,
+// in which a lid is a line that starts with `1. ` and an onderdeel one that starts
+// with `a. ` or `1°. `.
+// TODO(backend B6): `parseArticleParts` goes when every article carries `parts`.
 
 export type ArticlePartKind = 'aanhef' | 'lid' | 'onderdeel' | 'tekst';
 
@@ -138,6 +140,46 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 		}
 	}
 	return parts;
+}
+
+type ApiPart = {
+	id: string;
+	kind: string;
+	number?: string | null;
+	start: number;
+	end: number;
+};
+
+const KINDS: ReadonlySet<string> = new Set(['aanhef', 'lid', 'onderdeel', 'tekst']);
+
+/** The parts the API delivers, nested: `lid-2-onder-a` is a child of `lid-2`. */
+export function partsFromApi(parts: ApiPart[]): ArticlePart[] {
+	const roots: ArticlePart[] = [];
+	const byId = new Map<string, ArticlePart>();
+	for (const p of [...parts].sort((a, b) => a.start - b.start)) {
+		const part: ArticlePart = {
+			id: p.id,
+			kind: KINDS.has(p.kind) ? (p.kind as ArticlePartKind) : 'tekst',
+			number: p.number ?? null,
+			start: p.start,
+			end: p.end,
+			textStart: p.start,
+			textEnd: p.end,
+			children: []
+		};
+		byId.set(p.id, part);
+		const parentId = p.id.replace(/-onder-[^-]+$/, '');
+		const parent = parentId !== p.id ? byId.get(parentId) : undefined;
+		if (parent) {
+			if (parent.children.length === 0) parent.textEnd = p.start;
+			parent.children.push(part);
+		} else roots.push(part);
+	}
+	// The number is part of the text of the API; the reader prints it once.
+	for (const part of byId.values()) {
+		if (part.number) part.textStart += part.number.length + 2;
+	}
+	return roots;
 }
 
 /** Every part, depth first. */

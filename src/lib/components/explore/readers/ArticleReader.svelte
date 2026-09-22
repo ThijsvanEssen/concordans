@@ -123,7 +123,7 @@
 		</ReaderHead>
 
 		<div class="reader-body" bind:this={root}>
-			<ArticleText text={a.text} citations={d.citations} />
+			<ArticleText text={a.text} parts={a.parts} citations={d.citations} />
 		</div>
 
 		{#if prevHref || nextHref}

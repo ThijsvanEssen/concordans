@@ -1,10 +1,10 @@
 // A row of the panel Verbonden: one bron, a title and one line of context.
-import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
 import { formatEcliLabel } from '$lib/graph/types';
 import { isCollection, type Relation } from '$lib/vocabulary';
 
-export type Neighbor = Schema<'NeighborDTO'>;
+export type { Neighbor } from '$lib/api/nodes';
+import type { Neighbor } from '$lib/api/nodes';
 
 export type Row = {
 	ref: BronRef;
@@ -89,6 +89,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		ref: { collection: n.collection, key: n.key },
 		...describe(n.collection, n.key, n.display_name, n.props ?? {}),
 		derived: n.confidence != null && n.confidence < 1,
+		proposed: n.status === 'voorgesteld' || undefined,
 		relation: (n.relation as Relation | null) ?? undefined,
 		direction: n.direction === 'inbound' ? 'inbound' : 'outbound'
 	};

@@ -3,13 +3,18 @@
 	import type { Schema } from '$lib/api/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
-	import { committeeSlug, getCommittee } from '$lib/components/parliamentary/data';
+	import { committeeSlug, getCommittee, str } from '$lib/components/parliamentary/data';
 
 	let { node }: { node: GraphNode } = $props();
 
+	const p = $derived(node.raw?.props ?? {});
+	const name = $derived(str(p.name) ?? node.raw?.display_name ?? node.label);
+	const abbreviation = $derived(str(p.abbreviation));
+	const kind = $derived(str(p.kind));
+
 	type State =
 		| { kind: 'loading' }
-		| { kind: 'error'; message: string }
+		| { kind: 'error' }
 		| { kind: 'loaded'; committee: Schema<'CommitteeDetailDTO'> };
 
 	let view = $state<State>({ kind: 'loading' });
@@ -19,7 +24,7 @@
 		let stale = false;
 		view = { kind: 'loading' };
 		if (!slug) {
-			view = { kind: 'error', message: 'Commissie kon niet geladen worden.' };
+			view = { kind: 'error' };
 			return;
 		}
 		getCommittee(slug)
@@ -27,33 +32,32 @@
 				if (!stale) view = { kind: 'loaded', committee };
 			})
 			.catch(() => {
-				if (!stale) view = { kind: 'error', message: 'Commissie kon niet geladen worden.' };
+				if (!stale) view = { kind: 'error' };
 			});
 		return () => (stale = true);
 	});
 </script>
 
 <div class="r-committee">
+	<!-- The header comes from the node, so a failed detail request costs the counts only. -->
+	<header class="head">
+		<span class="kicker">
+			<KindGlyph collection="committees" />
+			{bronLabel('committees')}
+			{#if kind}<span class="dot">·</span>{kind}{/if}
+		</span>
+		<h2 class="title">{name}</h2>
+		{#if abbreviation && abbreviation !== name}
+			<div class="chips"><span class="afk-chip">{abbreviation}</span></div>
+		{/if}
+	</header>
+
 	{#if view.kind === 'loading'}
 		<p class="loading">Laden…</p>
-	{:else if view.kind === 'error'}
-		<p class="error">{view.message}</p>
-	{:else}
+	{:else if view.kind === 'loaded'}
 		{@const c = view.committee}
 		{@const dossiers = c.dossiers ?? []}
 		{@const openDossiers = dossiers.filter((d) => !d.closed)}
-
-		<header class="head">
-			<span class="kicker">
-				<KindGlyph collection="committees" />
-				{bronLabel('committees')}
-				{#if c.kind}<span class="dot">·</span>{c.kind}{/if}
-			</span>
-			<h2 class="title">{c.name ?? c.abbreviation ?? c.key}</h2>
-			{#if c.abbreviation && c.name}
-				<div class="chips"><span class="afk-chip">{c.abbreviation}</span></div>
-			{/if}
-		</header>
 
 		<ul class="stats">
 			<li>
@@ -85,13 +89,6 @@
 		overflow-y: auto;
 	}
 	.loading,
-	.error {
-		font-family: var(--font-serif);
-		font-style: italic;
-		color: var(--ink-4);
-		margin: 0;
-	}
-
 	.head {
 		display: flex;
 		flex-direction: column;

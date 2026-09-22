@@ -8,7 +8,6 @@ export function createViewActions(
 	ctx: GraphContext
 ): Pick<
 	GraphStore,
-	| 'setGraphMode'
 	| 'setSelection'
 	| 'togglePin'
 	| 'unpinNode'
@@ -30,7 +29,6 @@ export function createViewActions(
 		selectionStore,
 		pinnedStore,
 		filtersStore,
-		graphModeStore,
 		addEdge,
 		emit,
 		focusInternal,
@@ -41,8 +39,6 @@ export function createViewActions(
 	const publishPinned = () => pinnedStore.set(new Set(pinned));
 
 	return {
-		setGraphMode: (mode) => graphModeStore.set(mode),
-
 		setSelection: (nodeId) => {
 			if (nodeId) focusInternal(nodeId);
 			else selectionStore.set(null);

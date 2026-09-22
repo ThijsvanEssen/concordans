@@ -12,7 +12,7 @@ import type { Neighbor } from './rows';
 
 const neighbors = (fixture: { neighbors: { all: unknown[] } }) =>
 	fixture.neighbors.all as Neighbor[];
-const documents = documents36327 as Schema<'DossierDocumentsResponse'>;
+const documents = documents36327 as unknown as Schema<'DossierDocumentsResponse'>;
 
 describe('chamberOf', () => {
 	it('reads the chamber from the key', () => {
@@ -21,11 +21,13 @@ describe('chamberOf', () => {
 	});
 
 	it('knows the explanatory kinds as the source writes them', () => {
-		expect(isExplanatory('Memorie van toelichting')).toBe(true);
-		expect(isExplanatory('Memorie van toelichting (initiatiefvoorstel)')).toBe(true);
-		expect(isExplanatory('Nota van toelichting')).toBe(true);
-		expect(isExplanatory('Nota naar aanleiding van het verslag')).toBe(false);
-		expect(isExplanatory(null)).toBe(false);
+		expect(isExplanatory({ kind: 'Memorie van toelichting' })).toBe(true);
+		expect(isExplanatory({ kind: 'Memorie van toelichting (initiatiefvoorstel)' })).toBe(true);
+		expect(isExplanatory({ kind: 'Nota van toelichting' })).toBe(true);
+		expect(isExplanatory({ kind: 'Nota naar aanleiding van het verslag' })).toBe(false);
+		expect(isExplanatory({ kind: null })).toBe(false);
+		expect(isExplanatory({ kind: 'Brief', is_explanatory: true })).toBe(true);
+		expect(chamberOf({ key: 'x', chamber: 'EK' })).toBe('EK');
 	});
 });
 
@@ -106,18 +108,22 @@ describe('buildGroups', () => {
 		expect(groups.find((g) => g.id === 'laws')!.rows).toEqual([]);
 	});
 
-	it('marks a bucket at the cap of the API', () => {
+	it('marks a bucket at the cap of an API without totals, and prints the total of one with', () => {
 		const many = Array.from({ length: 30 }, (_, i) => ({
-			id: `judgments/j${i}`,
-			key: `j${i}`,
-			collection: 'judgments',
+			id: `articles/a${i}`,
+			key: `a${i}`,
+			collection: 'articles',
 			relation: 'REFERS_TO',
 			direction: 'inbound',
 			props: {}
 		})) as unknown as Neighbor[];
-		const group = buildGroups('articles', many).find((g) => g.id === 'judgments')!;
+		const group = buildGroups('articles', many).find((g) => g.id === 'cited-by')!;
 		expect(countLabel(group)).toBe('30+');
 		expect(countLabel({ rows: group.rows.slice(0, 4), capped: false })).toBe('4');
+		const totals = new Map([['REFERS_TO/articles/inbound', 412]]);
+		const counted = buildGroups('articles', many, totals).find((g) => g.id === 'cited-by')!;
+		expect(counted.capped).toBe(false);
+		expect(countLabel(counted)).toBe('412');
 	});
 
 	it('sends a treaty article to Europees en internationaal, not to Verwijst naar', () => {

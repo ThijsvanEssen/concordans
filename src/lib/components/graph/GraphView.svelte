@@ -77,14 +77,6 @@
 	let hasNodes = $state(false);
 	let trimmedCount = $state(0);
 	let trimmedDismissed = $state(false);
-	let loadingMsg = $state<string | null>(null);
-	let graphMode = $state<'expansion' | 'bulk'>('expansion');
-	// Mirror of store.currentInstrumentBwb — non-null while the canvas is a
-	// single-wet view (set by loadInstrument). Used by computeLevelSuppression
-	// to relax the strict-Artikelen rule that would otherwise hide every
-	// instrument node on the canvas, including the related-wet nodes the user
-	// explicitly fetched via Lagen Wetten.
-	let currentInstrumentBwb = $state<string | null>(null);
 
 	// Wetten view (true): articles are hidden and each law is one instrument.
 	// Artikelen view (false): instruments are hidden for laws whose articles are
@@ -181,7 +173,6 @@
 	 *  burst with the focal pinned so the new positions settle naturally. */
 	export function reseatAround(focalId: string) {
 		if (!g.hasNode(focalId)) return;
-		if (graphMode === 'bulk') return; // bulk has its own structural layout
 
 		const pinnedSet = get(store.pinned);
 
@@ -414,15 +405,6 @@
 			}
 		}
 
-		// Wet view exception: in a single-wet bulk view (loadInstrument →
-		// currentInstrumentBwb set), the user is looking at "this wet's articles
-		// + whatever extra context the Lagen handlers add". The Artikelen-mode
-		// rule that hides every instrument is wrong here — related-wet
-		// instruments added via Lagen Wetten are exactly what the user asked
-		// for. Skip the kind-based suppression and let articles + instruments
-		// coexist. Focus scope still applies if a focal is selected.
-		const inWetView = currentInstrumentBwb !== null;
-
 		g.forEachNode((id, attrs) => {
 			if (id === focalId) {
 				g.setNodeAttribute(id, 'suppressedByLevel', false);
@@ -431,10 +413,6 @@
 			let suppress = false;
 			if (scope) {
 				if (!scope.has(id)) suppress = true;
-			} else if (inWetView) {
-				// Wet view: only suppress 'other' (unclassified) noise. Articles
-				// and instruments both visible.
-				if (attrs.kind === 'other') suppress = true;
 			} else if (effectiveCollapse) {
 				if (attrs.kind === 'article' || attrs.kind === 'other') suppress = true;
 			} else {
@@ -509,7 +487,6 @@
 		// Bulk graphs use the pre-computed structural ring positions — no force
 		// layout needed. Camera fit is triggered by syncNodes/syncEdges via
 		// scheduleFit, so we don't need to touch it here.
-		if (graphMode === 'bulk') return;
 
 		// Pin every existing node whenever ANY new node arrives. FA2 only moves
 		// the newcomers; established context stays put regardless of batch size.
@@ -807,16 +784,6 @@
 
 	onMount(() => {
 		const unsub = [
-			// graphMode must be set before nodes/edges so runLayout() sees the
-			// correct mode when syncNodes fires on mount (bulk → skip FA2).
-			store.graphMode.subscribe((m) => {
-				graphMode = m;
-			}),
-			store.currentInstrumentBwb.subscribe((b) => {
-				currentInstrumentBwb = b;
-				// Suppression rules depend on wet-view state, so refresh whenever it changes.
-				applyFilters();
-			}),
 			store.trimmedCount.subscribe((n) => {
 				trimmedCount = n;
 			}),
@@ -829,17 +796,6 @@
 				// Focus scope in Artikelen view depends on the selection, so re-run
 				// suppression whenever the focal changes.
 				applyFilters();
-			}),
-			store.loading.subscribe((s) => {
-				if (s.kind === 'idle') {
-					loadingMsg = null;
-					return;
-				}
-				if (s.kind === 'parliamentary') {
-					loadingMsg = s.phase === 'fetching' ? 'Parlementaire data ophalen…' : 'Netwerk opbouwen…';
-				} else {
-					loadingMsg = s.phase === 'fetching' ? 'Wet ophalen…' : 'Netwerk opbouwen…';
-				}
 			}),
 			store.pinned.subscribe((s) => {
 				pinnedIds = new Set(s);
@@ -952,7 +908,6 @@
 				{filters}
 				{pinnedIds}
 				{collapseToLaws}
-				{graphMode}
 				{inFluxMap}
 				{heatMap}
 				heatActive={overlay.kind === 'heat'}
@@ -994,7 +949,6 @@
 						onclick={() => (compactFiltersOpen = !compactFiltersOpen)}
 						aria-label="Filters"
 						aria-expanded={compactFiltersOpen}
-						title="Filters"
 					>
 						<svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
 							<path
@@ -1016,13 +970,6 @@
 							{@render sidebar()}
 						</div>
 					{/if}
-				</div>
-			{/if}
-
-			{#if loadingMsg}
-				<div class="graph-loading-banner" role="status" aria-live="polite">
-					<span class="graph-loading-banner__dot" aria-hidden="true"></span>
-					<span>{loadingMsg}</span>
 				</div>
 			{/if}
 
@@ -1204,44 +1151,6 @@
 	}
 
 	/* Loading banner at the top of the canvas; the network stays interactive. */
-	.graph-loading-banner {
-		position: absolute;
-		top: var(--s-3);
-		left: 50%;
-		transform: translateX(-50%);
-		z-index: var(--z-float);
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		height: 26px;
-		padding: 0 12px;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: 999px;
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-		box-shadow: var(--shadow-sm);
-		pointer-events: none;
-	}
-	.graph-loading-banner__dot {
-		width: 8px;
-		height: 8px;
-		background: var(--spine);
-		border-radius: 50%;
-		animation: graph-loading-pulse 1.1s ease-in-out infinite;
-	}
-	@keyframes graph-loading-pulse {
-		0%,
-		100% {
-			opacity: 0.3;
-			transform: scale(0.7);
-		}
-		50% {
-			opacity: 1;
-			transform: scale(1.1);
-		}
-	}
 
 	/* Mobile filter sheet (full graph mode only) */
 	.mobile-filter-toggle {

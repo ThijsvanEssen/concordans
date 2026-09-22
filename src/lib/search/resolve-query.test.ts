@@ -37,6 +37,7 @@ describe('parseCitation', () => {
 
 describe('resolveQuery', () => {
 	const deps = (over: Partial<ResolveDeps> = {}): ResolveDeps => ({
+		resolve: vi.fn(async () => null),
 		lawId: vi.fn(async () => 'BWBR0001854'),
 		articleKey: vi.fn(async (bwb, n) => `${bwb.toLowerCase()}_${n.replace(':', '_')}`),
 		documentKey: vi.fn(async () => 'a572870e'),
@@ -78,6 +79,20 @@ describe('resolveQuery', () => {
 			collection: 'dossiers',
 			key: '36327'
 		});
+	});
+
+	it('takes what /api/resolve answers before parsing itself', async () => {
+		const d = deps({
+			resolve: async () => ({
+				ref: { collection: 'articles', key: 'bwbr0001854_287' },
+				at: 'lid-2'
+			})
+		});
+		expect(await resolveQuery('artikel 287, tweede lid, Sr', d)).toEqual({
+			ref: { collection: 'articles', key: 'bwbr0001854_287' },
+			at: 'lid-2'
+		});
+		expect(d.articleKey).not.toHaveBeenCalled();
 	});
 
 	it('gives nothing when the API does not know the target', async () => {

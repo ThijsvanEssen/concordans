@@ -1,14 +1,14 @@
-// TODO(backend B1, B3): no endpoint joins a dossier to its laws, its committees and its
-// chambers. This module makes the join from what the API has: the dossier's node (its
-// laws through LEGISLATED_IN, its activities with a raw `committee_id`), its mutations
-// (the articles its documents change, which name their law), its documents and the list
-// of committees. When `GET /api/dossiers/{n}` carries `instruments[]`, `committees[]` and
-// documents a `chamber`, `buildDossierHub` reads those and the rest of the file goes.
+// The laws, committees and documents per chamber of a dossier. API 0.5 delivers the
+// laws and committees on `GET /api/dossiers/{n}` (`instruments[]`, `committees[]`);
+// before that they are joined here from the dossier's node (LEGISLATED_IN, the
+// activities' raw `committee_id`), its mutations and the list of committees.
+// TODO(backend B1, B3): the join goes when every dossier carries the fields.
 import { api, unwrap } from '$lib/api/client';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
 import type { Schema } from '$lib/api/types';
 import {
 	dossierNumber,
+	getDossier,
 	getDossierDocuments,
 	getDossierMutations
 } from '$lib/components/parliamentary/data';
@@ -31,15 +31,35 @@ type Mutations = Schema<'DossierMutationsResponse'>;
 
 const CHANGES = new Set(['AMENDS', 'INTRODUCES', 'REPEALS']);
 
+type Detail = Schema<'DossierDetailResponse'>;
+
+const RELATION_OF: Record<string, Row['relation']> = {
+	legislated_in: 'LEGISLATED_IN',
+	amends: 'AMENDS',
+	introduces: 'INTRODUCES',
+	repeals: 'REPEALS'
+};
+
 export function buildDossierHub(
 	neighbors: Neighbor[],
 	documents: Documents | null,
 	mutations: Mutations | null,
 	committees: Committees,
-	lawName: (bwbId: string) => string | null = () => null
+	lawName: (bwbId: string) => string | null = () => null,
+	detail: Partial<Pick<Detail, 'instruments' | 'committees'>> | null = null
 ): DossierHub {
 	const laws = new Map<string, Row>();
-	for (const n of neighbors) {
+	for (const i of detail?.instruments ?? []) {
+		laws.set(i.key, {
+			ref: { collection: 'instruments', key: i.key },
+			title: i.display_name ?? i.bwb_id ?? i.celex ?? i.key,
+			context: null,
+			proposed: i.status === 'voorgesteld' || undefined,
+			relation: RELATION_OF[i.relation] ?? 'LEGISLATED_IN',
+			direction: i.relation === 'legislated_in' ? 'inbound' : 'outbound'
+		});
+	}
+	for (const n of detail?.instruments ? [] : neighbors) {
 		if (n.relation !== 'LEGISLATED_IN' || n.collection !== 'instruments') continue;
 		laws.set(n.key, {
 			ref: { collection: 'instruments', key: n.key },
@@ -51,7 +71,7 @@ export function buildDossierHub(
 	// A changed article names its law; the law is the row. Proposed wins only when
 	// no enacted change of the same law is known.
 	const nodes = new Map((mutations?.nodes ?? []).map((n) => [n.id, n]));
-	for (const e of mutations?.edges ?? []) {
+	for (const e of detail?.instruments ? [] : (mutations?.edges ?? [])) {
 		if (!CHANGES.has(e.relation ?? '')) continue;
 		const target = e.to_id ? nodes.get(e.to_id) : undefined;
 		const bwb = target?.collection === 'articles' ? lawIdOfArticleKey(target.key) : null;
@@ -79,8 +99,9 @@ export function buildDossierHub(
 		const id = n.collection === 'activities' ? n.props?.committee_id : null;
 		if (typeof id === 'string' && id) led.add(id.replaceAll('-', '_').toLowerCase());
 	}
-	const committeeRows = committees
-		.filter((c) => led.has(c.key))
+	const committeeRows = (
+		detail?.committees ? detail.committees : committees.filter((c) => led.has(c.key))
+	)
 		.map<Row>((c) => ({
 			ref: { collection: 'committees', key: c.key },
 			title: c.name ?? c.abbreviation ?? c.key,
@@ -92,7 +113,7 @@ export function buildDossierHub(
 
 	const rows = (documents?.items ?? []).map((d) => ({
 		chamber: chamberOf(d),
-		explanatory: isExplanatory(d.kind),
+		explanatory: isExplanatory(d),
 		date: d.date ?? '',
 		row: {
 			ref: { collection: 'documents', key: d.key },
@@ -124,14 +145,23 @@ export const getCommittees = () =>
 /** `neighbors` is the dossier's node response, which the caller has already. */
 export async function loadDossierHub(key: string, neighbors: Neighbor[]): Promise<DossierHub> {
 	const number = dossierNumber(key);
+	const detail = await getDossier(number).catch(() => null);
+	const joined = !detail?.instruments;
 	const [documents, mutations, committees] = await Promise.all([
 		getDossierDocuments(number).catch(() => null),
-		getDossierMutations(number).catch(() => null),
-		getCommittees().catch(() => [])
+		joined ? getDossierMutations(number).catch(() => null) : null,
+		joined ? getCommittees().catch(() => []) : []
 	]);
 	const names = get(instrumentMetaStore);
-	return buildDossierHub(neighbors, documents, mutations, committees, (bwb) => {
-		const meta = names.get(bwb);
-		return meta?.citationTitle ?? meta?.title ?? null;
-	});
+	return buildDossierHub(
+		neighbors,
+		documents,
+		mutations,
+		committees,
+		(bwb) => {
+			const meta = names.get(bwb);
+			return meta?.citationTitle ?? meta?.title ?? null;
+		},
+		detail
+	);
 }

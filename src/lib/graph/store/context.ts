@@ -1,11 +1,11 @@
 import { primeInstrumentNames, recordInstrument } from '$lib/api/instrument-cache';
+import { neighborsOf } from '$lib/api/nodes';
 import type { Schema } from '$lib/api/types';
 import { getLawIdFromProps } from '$lib/util/law-id';
-import { isCollection, nodeId, type Relation } from '$lib/vocabulary';
+import { nodeId, type Relation } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
 import {
 	edgeCategory,
-	kindOfCollection,
 	nodeToGraphNode,
 	relationOf,
 	syntheticNode,
@@ -14,13 +14,7 @@ import {
 	type GraphNode,
 	type GraphNodeKind
 } from '../types';
-import {
-	DEFAULT_FILTERS,
-	SOFT_NODE_CAP,
-	type GraphFilters,
-	type GraphMode,
-	type LoadingState
-} from './types';
+import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
 
 const SYNTH = 'synth:';
 const SYNTH_INSTRUMENT = 'synth:instrument:';
@@ -49,7 +43,7 @@ export function createGraphContext() {
 	const cache = new Map<string, Schema<'NodeGraphResponse'>>();
 	const pinned = new Set<string>();
 	// On one object because a destructured `let` would freeze its value.
-	const state = { seq: 0, proxiesEnabled: false, additiveLayerIndex: 0 };
+	const state = { seq: 0, proxiesEnabled: false };
 	// Insertion sequence per node: the order in which the soft cap trims.
 	const insertedAt = new Map<string, number>();
 
@@ -62,11 +56,7 @@ export function createGraphContext() {
 		nodeTypeToggles: { ...DEFAULT_FILTERS.nodeTypeToggles },
 		activeInstruments: new Set<string>()
 	});
-	const loadingStore = writable<LoadingState>({ kind: 'idle' });
-	const graphModeStore = writable<GraphMode>('expansion');
-	const potentialCountsStore = writable<Record<string, number>>({});
 	const trimmedCountStore = writable(0);
-	const currentInstrumentBwbStore = writable<string | null>(null);
 
 	// ── Requests in flight ────────────────────────────────────────────────────
 	// A load that replaces the canvas cancels every request that would still
@@ -78,26 +68,6 @@ export function createGraphContext() {
 		controller = new AbortController();
 		return controller.signal;
 	};
-
-	/**
-	 * Runs a loader, optionally under a loading state. Null when it failed or was
-	 * superseded.
-	 */
-	async function run<T>(
-		requestSignal: AbortSignal,
-		load: () => Promise<T>,
-		loading?: LoadingState
-	) {
-		if (loading) loadingStore.set(loading);
-		try {
-			return await load();
-		} catch (err) {
-			if (!requestSignal.aborted) console.warn('[graph-store] load failed', err);
-			return null;
-		} finally {
-			if (loading && !requestSignal.aborted) loadingStore.set({ kind: 'idle' });
-		}
-	}
 
 	// ── Derived nodes ─────────────────────────────────────────────────────────
 	// In the collapsed view every law with articles on the canvas needs an
@@ -126,27 +96,6 @@ export function createGraphContext() {
 			});
 			insertedAt.set(id, ++state.seq);
 		}
-	};
-
-	// Layer totals from the wet endpoints. They replace the per-kind tallies of
-	// cached neighbours, being the authoritative count.
-	const wetLayerTotals: Record<string, number> = {};
-
-	// What arrives when a Lagen button is pressed: per kind, the neighbours in
-	// cached expansions that are not on the canvas.
-	const recomputePotentialCounts = () => {
-		const perKind = new Map<GraphNodeKind, Set<string>>();
-		for (const [id, response] of cache) {
-			if (!nodes.has(id)) continue;
-			for (const n of response.neighbors.all ?? []) {
-				if (nodes.has(n.id) || !relationOf(n.relation)) continue;
-				const kind = isCollection(n.collection) ? kindOfCollection(n.collection) : 'other';
-				perKind.set(kind, (perKind.get(kind) ?? new Set()).add(n.id));
-			}
-		}
-		const counts: Record<string, number> = {};
-		for (const [kind, ids] of perKind) counts[kind] = ids.size;
-		potentialCountsStore.set({ ...counts, ...wetLayerTotals });
 	};
 
 	// ── Derived edges ─────────────────────────────────────────────────────────
@@ -218,7 +167,6 @@ export function createGraphContext() {
 	const emit = () => {
 		synthesizeDerivedNodes();
 		nodesStore.set([...nodes.values()]);
-		recomputePotentialCounts();
 		synthesizeDerivedEdges();
 		edgesStore.set([...edges.values()]);
 	};
@@ -237,9 +185,7 @@ export function createGraphContext() {
 		cache.clear();
 		insertedAt.clear();
 		state.seq = 0;
-		currentInstrumentBwbStore.set(null);
 		trimmedCountStore.set(0);
-		for (const k of Object.keys(wetLayerTotals)) delete wetLayerTotals[k];
 	};
 
 	const reset = () => {
@@ -248,49 +194,6 @@ export function createGraphContext() {
 		pinned.clear();
 		pinnedStore.set(new Set());
 		selectionStore.set(null);
-		graphModeStore.set('expansion');
-		emit();
-	};
-
-	/** Start of a bulk loader: a replacing load empties the canvas, an additive one keeps it. */
-	const prepareBulkLoad = (additive: boolean) => {
-		if (!additive) clearCanvas();
-	};
-
-	// Each additive layer lands in its own sector around what is there,
-	// 60 degrees after the previous one, and the force layout settles it.
-	const placeAdditiveLayer = (seqBefore: number) => {
-		const added = [...insertedAt].filter(([, seq]) => seq > seqBefore).map(([id]) => id);
-		if (added.length === 0) return;
-		let maxR = 0;
-		for (const [id, n] of nodes) {
-			if ((insertedAt.get(id) ?? 0) > seqBefore) continue;
-			maxR = Math.max(maxR, Math.hypot(n.x ?? 0, n.y ?? 0));
-		}
-		if (maxR < 1) return; // empty canvas: the layout starts from the origin
-
-		const angle = state.additiveLayerIndex++ * (Math.PI / 3) + Math.PI / 4;
-		const cx = Math.cos(angle) * (maxR + 180);
-		const cy = Math.sin(angle) * (maxR + 180);
-		const scatter = Math.max(40, Math.sqrt(added.length) * 12);
-		added.forEach((id, i) => {
-			const n = nodes.get(id);
-			if (!n) return;
-			const a = (i / added.length) * Math.PI * 2;
-			const r = scatter * (0.4 + 0.6 * Math.random());
-			n.x = cx + Math.cos(a) * r;
-			n.y = cy + Math.sin(a) * r;
-		});
-	};
-
-	/** End of a bulk loader. A replacing load also selects `select` and switches to bulk mode. */
-	const finishBulk = (additive: boolean, seqBefore: number, select?: GraphNode) => {
-		if (additive) {
-			placeAdditiveLayer(seqBefore);
-		} else {
-			selectionStore.set(select ?? null);
-			graphModeStore.set('bulk');
-		}
 		emit();
 	};
 
@@ -373,7 +276,7 @@ export function createGraphContext() {
 		if (!center) return null;
 		touchNode(center.id, center);
 
-		for (const neighbor of (response.neighbors.all ?? []).slice(0, draw)) {
+		for (const neighbor of neighborsOf(response).slice(0, draw)) {
 			const relation = relationOf(neighbor.relation);
 			const other = relation && drawable(neighbor);
 			if (!relation || !other) continue;
@@ -381,7 +284,10 @@ export function createGraphContext() {
 				neighbor.direction === 'outbound' ? [center, other] : [other, center];
 			if (!passesThreshold(relation, source.kind, neighbor.confidence)) continue;
 			touchNode(other.id, other);
-			addEdge(source.id, target.id, relation, { confidence: neighbor.confidence });
+			addEdge(source.id, target.id, relation, {
+				confidence: neighbor.confidence,
+				status: neighbor.status
+			});
 		}
 
 		trimToCap();
@@ -400,26 +306,17 @@ export function createGraphContext() {
 		selectionStore,
 		pinnedStore,
 		filtersStore,
-		loadingStore,
-		graphModeStore,
-		potentialCountsStore,
 		trimmedCountStore,
-		currentInstrumentBwbStore,
-		wetLayerTotals,
 		state,
 		signal,
 		supersede,
-		run,
 		emit,
 		addEdge,
 		drawable,
 		passesThreshold,
 		mergeResponse,
 		touchNode,
-		prepareBulkLoad,
-		finishBulk,
 		reset,
-		recomputePotentialCounts,
 		focusInternal
 	};
 }

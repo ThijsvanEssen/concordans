@@ -12,11 +12,11 @@
 
 	let {
 		node,
-		articleNumber = null
+		article = null
 	}: {
 		node: Pick<GraphNode, 'key'>;
 		/** The article whose toelichting is wanted; the reader opens at its passage. */
-		articleNumber?: string | null;
+		article?: { lawId: string; articleNumber: string } | null;
 	} = $props();
 
 	type State =
@@ -53,10 +53,38 @@
 		return out;
 	});
 
+	// The passage for the article: from `/passages` (API 0.5), else a text match.
+	// TODO(backend B5): `findPassage` goes when every document answers on `passages`.
+	let apiPassage = $state<{ start: number; end: number; derived: boolean } | null | undefined>();
+	$effect(() => {
+		const key = node.key;
+		const wanted = article;
+		apiPassage = undefined;
+		if (!wanted) return;
+		const ac = new AbortController();
+		api
+			.GET('/api/documents/{key}/passages', {
+				params: { path: { key }, query: { bwb_id: wanted.lawId, article: wanted.articleNumber } },
+				signal: ac.signal
+			})
+			.then(({ data, response }) => {
+				if (ac.signal.aborted) return;
+				const first = response.ok ? data?.items[0] : undefined;
+				apiPassage = first
+					? { start: first.char_start, end: first.char_end, derived: first.confidence < 1 }
+					: null;
+			})
+			.catch(() => {
+				if (!ac.signal.aborted) apiPassage = null;
+			});
+		return () => ac.abort();
+	});
 	const passage = $derived(
-		view.kind === 'loaded' && articleNumber
-			? findPassage(view.document.text ?? '', articleNumber)
-			: null
+		view.kind !== 'loaded' || !article
+			? null
+			: apiPassage === undefined
+				? null
+				: (apiPassage ?? findPassage(view.document.text ?? '', article.articleNumber))
 	);
 	const passageIndex = $derived(
 		passage ? paragraphs.findLastIndex((p) => p.start <= passage.start) : -1
@@ -107,7 +135,11 @@
 				{#each paragraphs as para, i (para.start)}
 					{#if i === passageIndex}
 						<p class="body-para body-para--passage" id="passage">
-							{para.text}<span class="derived" role="img" aria-label="afgeleid">≈</span>
+							{para.text}{#if passage?.derived}<span
+									class="derived"
+									role="img"
+									aria-label="afgeleid">≈</span
+								>{/if}
 						</p>
 					{:else}
 						<p class="body-para">{para.text}</p>

@@ -23,8 +23,8 @@ export function createExpansion(
 	} = ctx;
 
 	// One request per bron serves the canvas and the panel Verbonden. The API applies
-	// `neighbor_limit` after its cap per relation and collection, so a low limit cuts
-	// whole groups off; this one lets every bucket through.
+	// `limit` after its cap per relation and collection, so a low limit cuts whole
+	// groups off; this one lets every bucket through.
 	const ALL_BUCKETS = 1000;
 	const inflight = new Map<string, Promise<Schema<'NodeGraphResponse'>>>();
 
@@ -34,7 +34,7 @@ export function createExpansion(
 		if (cached) return Promise.resolve(cached);
 		let request = inflight.get(id);
 		if (!request) {
-			request = getNodeGraph(collection, key, { neighborLimit: ALL_BUCKETS, signal: signal() })
+			request = getNodeGraph(collection, key, { limit: ALL_BUCKETS, signal: signal() })
 				.then((response) => {
 					cache.set(id, response);
 					return response;

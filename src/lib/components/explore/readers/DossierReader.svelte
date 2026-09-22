@@ -4,7 +4,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel, bronPlural } from '$lib/vocabulary';
-	import { dossierNumber } from '$lib/components/parliamentary/data';
+	import { dossierNumber, getDossier } from '$lib/components/parliamentary/data';
 	import { STAGE_LABEL, TRACK_LABEL } from '$lib/components/parliamentary/stages';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
@@ -31,9 +31,7 @@
 		view = { kind: 'loading' };
 		// The timeline is optional: when it fails its section is left out.
 		Promise.all([
-			unwrap(
-				api.GET('/api/dossiers/{number}', { params: { path: { number } }, signal: ac.signal })
-			),
+			getDossier(number),
 			unwrap(
 				api.GET('/api/dossiers/{number}/timeline', {
 					params: { path: { number }, query: { limit: TIMELINE_LIMIT } },

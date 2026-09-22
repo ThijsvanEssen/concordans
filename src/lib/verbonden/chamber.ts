@@ -1,11 +1,21 @@
-// TODO(backend B2): a document carries no chamber. The Eerste Kamer documents are
-// recognisable by their key only. When `chamber` is a field, this reads it.
+// API 0.5 gives a document its `chamber` and `is_explanatory`. Before that, the Eerste
+// Kamer documents are recognisable by their key only and the kind is read.
+// TODO(backend B2): the fallbacks go when every document carries the fields.
 
 export type Chamber = 'TK' | 'EK';
 
-export const chamberOf = (document: { key: string }): Chamber =>
-	document.key.toLowerCase().startsWith('ek_') ? 'EK' : 'TK';
+export const chamberOf = (document: { key: string; chamber?: string | null }): Chamber =>
+	document.chamber === 'EK' || document.chamber === 'TK'
+		? document.chamber
+		: document.key.toLowerCase().startsWith('ek_')
+			? 'EK'
+			: 'TK';
 
 /** Kind values are the source's Dutch strings: "Memorie van toelichting", "Nota van toelichting". */
-export const isExplanatory = (kind: string | null | undefined): boolean =>
-	/\b(memorie|nota) van toelichting\b/i.test(kind ?? '');
+export const isExplanatory = (document: {
+	kind?: string | null;
+	is_explanatory?: boolean | null;
+}): boolean =>
+	typeof document.is_explanatory === 'boolean'
+		? document.is_explanatory
+		: /\b(memorie|nota) van toelichting\b/i.test(document.kind ?? '');

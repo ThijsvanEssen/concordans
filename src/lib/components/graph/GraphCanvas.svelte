@@ -51,7 +51,6 @@
 		pinnedIds = new Set<string>() as Set<string>,
 		hideArticleEdges = false,
 		collapseToLaws = false,
-		graphMode = 'expansion' as 'bulk' | 'expansion',
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
 		heatActive = false,
@@ -72,7 +71,6 @@
 		pinnedIds?: Set<string>;
 		hideArticleEdges?: boolean;
 		collapseToLaws?: boolean;
-		graphMode?: 'bulk' | 'expansion';
 		/** In-flux counts (open mutaties) — empty unless Mutatie overlay is active. */
 		inFluxMap?: NodeCounts;
 		/** Heat counts (citations in window) — empty unless Activiteit is active. */
@@ -107,7 +105,6 @@
 	let latestPinnedIds = new Set<string>();
 	let latestHideArticleEdges = false;
 	let latestCollapseToLaws = false;
-	let latestGraphMode: 'bulk' | 'expansion' = 'expansion';
 	let latestInFluxMap: NodeCounts = new Map();
 	let latestHeatMap: NodeCounts = new Map();
 	let latestHeatActive = false;
@@ -188,8 +185,6 @@
 		latestFilters = filters;
 		latestPinnedIds = pinnedIds;
 		latestHideArticleEdges = hideArticleEdges;
-		const prevMode = latestGraphMode;
-		latestGraphMode = graphMode;
 		const prev = latestCollapseToLaws;
 		latestCollapseToLaws = collapseToLaws;
 
@@ -201,12 +196,6 @@
 				renderer.setSetting('labelGridCellSize', 60);
 				renderer.setSetting('labelDensity', 1.4);
 			}
-		}
-
-		// Restore default label settings when leaving bulk mode
-		if (renderer && prevMode !== graphMode && graphMode !== 'bulk') {
-			renderer.setSetting('labelGridCellSize', 60);
-			renderer.setSetting('labelDensity', 1.4);
 		}
 
 		renderer?.refresh();

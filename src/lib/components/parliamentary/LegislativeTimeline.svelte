@@ -3,10 +3,10 @@
 	import { bronHref } from '$lib/bron/href';
 	import KindChipFilter from './KindChipFilter.svelte';
 
-	type Entry = Schema<'TimelineEntryDTO'>;
+	type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
 	type Tally = Record<string, number>;
 
-	// The schema leaves `body` untyped; these are the props the entries below read.
+	// The body differs per kind of entry; these are the props the entries below read.
 	type Body = {
 		tally?: Tally;
 		passed?: boolean;
@@ -16,7 +16,7 @@
 		status?: string;
 		url?: string;
 	};
-	const bodyOf = (entry: Entry) => (entry.body ?? {}) as Body;
+	const bodyOf = (entry: Entry) => (entry.body ?? {}) as unknown as Body;
 	const otherChoices = (tally: Tally) =>
 		Object.entries(tally).filter(([choice]) => choice !== 'Voor' && choice !== 'Tegen');
 

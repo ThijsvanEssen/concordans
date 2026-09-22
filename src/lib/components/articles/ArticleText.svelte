@@ -4,20 +4,23 @@
 	import { page } from '$app/state';
 	import type { Schema } from '$lib/api/types';
 	import { permalink } from '$lib/bron/anchor';
-	import { parseArticleParts, type ArticlePart } from '$lib/text/article-parts';
+	import { parseArticleParts, partsFromApi, type ArticlePart } from '$lib/text/article-parts';
 	import CitedText from './CitedText.svelte';
 	import { citationsWithin } from './citations';
 
 	let {
 		text,
+		parts: apiParts = null,
 		citations = []
 	}: {
 		text: string | null | undefined;
+		/** The parts the API delivers (0.5); without them they are read from the text. */
+		parts?: Schema<'ArticlePartDTO'>[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
 	} = $props();
 
 	const source = $derived(text ?? '');
-	const parts = $derived(parseArticleParts(source));
+	const parts = $derived(apiParts?.length ? partsFromApi(apiParts) : parseArticleParts(source));
 
 	const own = (part: ArticlePart) => {
 		const raw = source.slice(part.textStart, part.textEnd);

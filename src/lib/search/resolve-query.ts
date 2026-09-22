@@ -1,8 +1,9 @@
-// TODO(backend B11): `/api/search` recognises a full ECLI and `art. N law` only, and
-// returns lists. Until `GET /api/resolve` exists, the notations are parsed here and
-// resolved with the requests the API has. `resolveQuery` is the one entry point.
+// `GET /api/resolve` (API 0.5) turns a citation into one bron. `resolveQuery` asks it
+// first and, where it is absent or finds nothing, parses the notation itself.
+// TODO(backend B11): the parser and the lookups below go when every notation resolves.
 import { api, unwrap } from '$lib/api/client';
 import type { BronRef } from '$lib/bron/href';
+import type { Collection } from '$lib/vocabulary';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 
 export type Citation =
@@ -74,6 +75,8 @@ export function parseCitation(query: string): Citation | null {
 }
 
 export type ResolveDeps = {
+	/** `GET /api/resolve`; null when the API has no such route or no match. */
+	resolve: (query: string) => Promise<Resolved | null>;
 	/** bwb_id of the law an abbreviation or name stands for, as the API's search reads it. */
 	lawId: (law: string, articleNumber: string) => Promise<string | null>;
 	/** Node key of an article, or null when the law has no such article. */
@@ -83,7 +86,25 @@ export type ResolveDeps = {
 	exists: (ref: BronRef) => Promise<boolean>;
 };
 
+const RESOLVE_KINDS: Record<string, Collection> = {
+	article: 'articles',
+	instrument: 'instruments',
+	judgment: 'judgments',
+	dossier: 'dossiers',
+	document: 'documents'
+};
+
 const apiDeps: ResolveDeps = {
+	resolve: async (q) => {
+		const { data, response } = await api.GET('/api/resolve', { params: { query: { q } } });
+		const match = response.ok ? data?.match : null;
+		const collection = match && (RESOLVE_KINDS[match.kind] ?? null);
+		if (!match || !collection) return null;
+		return {
+			ref: { collection, key: match.key },
+			at: anchorOf(parseQualifier(data?.qualifier ?? ''))
+		};
+	},
 	lawId: async (law, articleNumber) => {
 		// The API's parser stops at a colon, so it is asked for the part before it.
 		const q = `art. ${articleNumber.split(':')[0]} ${law}`;
@@ -111,7 +132,7 @@ const apiDeps: ResolveDeps = {
 	},
 	exists: async ({ collection, key }) => {
 		const { response } = await api.GET('/api/nodes/{collection}/{key}', {
-			params: { path: { collection, key }, query: { neighbor_limit: 1 } }
+			params: { path: { collection, key }, query: { limit: 1 } }
 		});
 		return response.ok;
 	}
@@ -130,6 +151,8 @@ export async function resolveQuery(
 	const c = parseCitation(query);
 	if (!c) return null;
 	try {
+		const resolved = await deps.resolve(query).catch(() => null);
+		if (resolved) return resolved;
 		if (c.kind === 'article') {
 			const bwb = c.book ? BW_BOOKS[c.book] : await deps.lawId(c.law, c.number);
 			const key = bwb ? await deps.articleKey(bwb, c.number) : null;

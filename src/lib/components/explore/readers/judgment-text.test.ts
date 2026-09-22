@@ -19,6 +19,7 @@ test('a citation keeps pointing at its words after the paragraph is restructured
 		end: start + 'artikel 8:73 Awb'.length,
 		text: 'artikel 8:73 Awb',
 		kind: 'REFERS_TO',
+		aanhef: false,
 		target
 	};
 

@@ -321,15 +321,3 @@ export function factionToGraphNode(f: Schema<'FactionDTO'>): GraphNode {
 export function memberToGraphNode(m: Schema<'MemberDTO'>): GraphNode {
 	return syntheticNode('members', m.key, m.name, { ...m });
 }
-
-/** A dossier-timeline entry that is a document or an activity. */
-export function timelineEntryToGraphNode(entry: Schema<'TimelineEntryDTO'>): GraphNode | null {
-	const [collection, key] = entry.node_id.split('/');
-	if (collection !== 'documents' && collection !== 'activities') return null;
-	return syntheticNode(collection, key, entry.title ?? entry.kind, {
-		kind: entry.kind,
-		date: entry.date,
-		title: entry.title,
-		...entry.body
-	});
-}

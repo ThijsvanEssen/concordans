@@ -1,9 +1,8 @@
-// TODO(backend B4): nothing lists the explanatory documents of an article. EXPLAINS often
-// points at an article version or at the instrument, which the article's routes do not
-// follow. This module merges the two things the API does have: the documents that point
-// at the article itself (its node response), and the toelichtingen in the dossiers of its
-// law. When `GET /api/articles/{bwb_id}/{n}/explained-by` exists, `explanatoryDocuments`
-// is that one request and the merge goes.
+// The explanatory documents of an article. API 0.5 lists them on
+// `GET /api/articles/{bwb_id}/{n}/explained-by`. Before that they are merged here from
+// the documents that point at the article (its node response) and the toelichtingen in
+// the dossiers of its law.
+// TODO(backend B4): the merge goes when every article answers on `explained-by`.
 import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
 import { isExplanatory } from './chamber';
@@ -22,7 +21,13 @@ export function mergeExplanatory(neighbors: Neighbor[], bulk: BulkDocuments | nu
 	for (const n of neighbors) {
 		const props = n.props ?? {};
 		if (n.collection !== 'documents' || n.direction !== 'inbound') continue;
-		if (!isExplanatory(props.kind as string | null)) continue;
+		if (
+			!isExplanatory({
+				kind: props.kind as string | null,
+				is_explanatory: props.is_explanatory as boolean | null
+			})
+		)
+			continue;
 		const binding = BINDING.has(n.relation ?? '');
 		const known = found.get(n.key);
 		if (known && (known.binding || !binding)) continue;
@@ -44,7 +49,7 @@ export function mergeExplanatory(neighbors: Neighbor[], bulk: BulkDocuments | nu
 	// true at the level of the dossier, a guess at the level of the article.
 	for (const documents of Object.values(bulk?.items ?? {})) {
 		for (const d of documents) {
-			if (found.has(d.key) || !isExplanatory(d.kind)) continue;
+			if (found.has(d.key) || !isExplanatory(d)) continue;
 			found.set(d.key, {
 				binding: false,
 				date: d.date ?? '',
@@ -69,11 +74,40 @@ export function mergeExplanatory(neighbors: Neighbor[], bulk: BulkDocuments | nu
 /** The most dossiers of a law whose documents are asked for, in one bulk request. */
 const MAX_DOSSIERS = 12;
 
+/** The rows of `explained-by`: bound to the article, or to its law at dossier level. */
+export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Row[] {
+	const rows = new Map<string, Row>();
+	for (const item of items) {
+		const d = item.document;
+		if (rows.has(d.key)) continue;
+		rows.set(d.key, {
+			ref: { collection: 'documents', key: d.key },
+			...describe('documents', d.key, d.title, { ...d }),
+			derived: item.scope !== 'article' || (item.confidence != null && item.confidence < 1),
+			relation: 'EXPLAINS',
+			direction: 'inbound'
+		});
+	}
+	return [...rows.values()];
+}
+
 export async function explanatoryDocuments(
-	article: { bwbId: string | null },
+	article: { bwbId: string | null; number: string | null },
 	neighbors: Neighbor[],
 	signal?: AbortSignal
 ): Promise<Row[]> {
+	if (article.bwbId && article.number) {
+		const { data, response } = await api
+			.GET('/api/articles/{bwb_id}/{article_number}/explained-by', {
+				params: {
+					path: { bwb_id: article.bwbId, article_number: article.number },
+					query: { limit: 50 }
+				},
+				signal
+			})
+			.catch(() => ({ data: undefined, response: null }));
+		if (response?.ok && data) return rowsOfExplanations(data.items);
+	}
 	let bulk: BulkDocuments | null = null;
 	if (article.bwbId) {
 		try {
