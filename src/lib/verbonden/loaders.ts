@@ -109,7 +109,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					signal
 				})
 				.catch(() => ({ data: undefined, response: null }));
-			if (response?.ok && data) {
+			if (response?.ok && data && data.items.length > 0) {
 				const rows = new Map<string, Row>();
 				for (const item of data.items) {
 					const j = item.judgment;
@@ -158,7 +158,11 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				signal
 			})
 			.catch(() => ({ data: undefined, response: null }));
-		if (response?.ok && data) {
+		const linked =
+			(data?.implements?.length ?? 0) +
+			(data?.implemented_by?.length ?? 0) +
+			(data?.international?.length ?? 0);
+		if (response?.ok && data && linked > 0) {
 			const rows = new Map<string, Row>();
 			const add = (row: Row) => {
 				if (!rows.has(row.ref.key)) rows.set(row.ref.key, row);

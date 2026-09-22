@@ -106,7 +106,8 @@ export async function explanatoryDocuments(
 				signal
 			})
 			.catch(() => ({ data: undefined, response: null }));
-		if (response?.ok && data) return rowsOfExplanations(data.items);
+		// An empty answer means the pipeline has not reached this article: the merge still applies.
+		if (response?.ok && data && data.items.length > 0) return rowsOfExplanations(data.items);
 	}
 	let bulk: BulkDocuments | null = null;
 	if (article.bwbId) {

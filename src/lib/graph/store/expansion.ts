@@ -22,10 +22,10 @@ export function createExpansion(
 		signal
 	} = ctx;
 
-	// One request per bron serves the canvas and the panel Verbonden. The API applies
-	// `limit` after its cap per relation and collection, so a low limit cuts whole
-	// groups off; this one lets every bucket through.
-	const ALL_BUCKETS = 1000;
+	// One request per bron serves the canvas and the panel Verbonden. API 0.5 applies
+	// `limit` per bucket (relation, collection, direction) and allows at most 200; every
+	// bucket then comes with its total.
+	const ALL_BUCKETS = 200;
 	const inflight = new Map<string, Promise<Schema<'NodeGraphResponse'>>>();
 
 	const nodeResponse: GraphStore['nodeResponse'] = (collection, key, opts = {}) => {
