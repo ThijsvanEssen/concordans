@@ -1,6 +1,17 @@
 import type { Readable } from 'svelte/store';
+import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import type { GraphNode, GraphEdge, GraphNodeKind } from '../types';
+
+/** A bron a group of the panel Verbonden puts on the canvas. */
+export type CanvasRow = {
+	ref: { collection: Collection; key: string };
+	title: string;
+	relation: Relation;
+	direction: 'inbound' | 'outbound';
+	proposed?: boolean;
+	props?: Record<string, unknown>;
+};
 
 export type GraphFilters = {
 	/** One switch per edge category (see `edgeCategory`). */
@@ -19,6 +30,7 @@ export type GraphFilters = {
 };
 
 export type GraphExpansionOptions = {
+	/** Neighbours of the response that are drawn; the response itself is always whole. */
 	neighborLimit?: number;
 	/** Fetch again although the neighbours of the node are cached. */
 	force?: boolean;
@@ -75,8 +87,6 @@ export type GraphStore = {
 	edges: Readable<GraphEdge[]>;
 	selection: Readable<GraphNode | null>;
 	pinned: Readable<Set<string>>;
-	canGoBack: Readable<boolean>;
-	canGoForward: Readable<boolean>;
 	filters: Readable<GraphFilters>;
 	loading: Readable<LoadingState>;
 	graphMode: Readable<GraphMode>;
@@ -86,6 +96,12 @@ export type GraphStore = {
 	trimmedCount: Readable<number>;
 	/** bwb_id of the wet the canvas shows in full; null in every other mode. */
 	currentInstrumentBwb: Readable<string | null>;
+	/** The node response of a bron, from the cache or the API. Nothing is drawn. */
+	nodeResponse: (
+		collection: Collection,
+		key: string,
+		opts?: GraphExpansionOptions
+	) => Promise<Schema<'NodeGraphResponse'>>;
 	expandNode: (
 		collection: Collection,
 		key: string,
@@ -124,12 +140,14 @@ export type GraphStore = {
 	loadFactionsLayerGraph: (opts?: LayerOptions) => Loaded;
 	loadRecentDossiersGraph: (opts?: LayerOptions & { days?: number }) => Loaded;
 	setGraphMode: (mode: GraphMode) => void;
-	setSelection: (nodeId: string | null, opts?: { recordHistory?: boolean }) => void;
+	setSelection: (nodeId: string | null) => void;
 	togglePin: (nodeId: string) => void;
 	unpinNode: (nodeId: string) => void;
-	focusNode: (nodeId: string, opts?: { recordHistory?: boolean }) => GraphNode | null;
-	goBack: () => string | null;
-	goForward: () => string | null;
+	focusNode: (nodeId: string) => GraphNode | null;
+	/** Draws bronnen next to `focusId`, each with the verbinding that ties it to the focus. */
+	showRows: (focusId: string, rows: CanvasRow[]) => void;
+	/** Takes bronnen off the canvas; the selected and the pinned ones stay. */
+	hideRows: (ids: string[]) => void;
 	reset: () => void;
 	setFilters: (updater: Partial<GraphFilters>) => void;
 	getNodeById: (nodeId: string) => GraphNode | undefined;

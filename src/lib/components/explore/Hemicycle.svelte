@@ -187,10 +187,6 @@
 		{/if}
 	</svg>
 
-	<figcaption class="hemicycle-caption">
-		Tweede Kamer · {data.assigned_seats} van {data.total_seats} zetels · per {data.as_of}
-	</figcaption>
-
 	<!-- Tekstfallback voor schermlezers: de SVG zelf is aria-hidden zodat
        de seat-circles geen ruis maken; deze lijst geeft het volledige
        overzicht in stemvolgorde. -->
@@ -199,6 +195,9 @@
 			<li>{f.abbreviation ?? f.key}, {f.name ?? ''}, {f.seats} zetels</li>
 		{/each}
 	</ul>
+	<figcaption class="hemicycle-caption">
+		Tweede Kamer · {data.assigned_seats} van {data.total_seats} zetels · per {data.as_of}
+	</figcaption>
 </figure>
 
 <style>

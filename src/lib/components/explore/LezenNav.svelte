@@ -3,25 +3,14 @@
 	import type { Schema } from '$lib/api/types';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import type { GraphNode } from '$lib/graph/types';
+	import { bronHref } from '$lib/bron/href';
 	import { getLawIdFromProps } from '$lib/util/law-id';
-	import DossierNav from './readers/nav/DossierNav.svelte';
-	import CommitteeNav from './readers/nav/CommitteeNav.svelte';
-	import MemberNav from './readers/nav/MemberNav.svelte';
-	import FactionNav from './readers/nav/FactionNav.svelte';
 
 	let {
 		selection,
-		bwb: bwbProp = null,
-		onNavigate,
 		onitems
 	}: {
 		selection: GraphNode | null;
-		/**
-		 * Law id for Lezen when no article is selected (`focus=instruments/BWBR…&mode=read`).
-		 * The law of the selection takes precedence once an article is chosen.
-		 */
-		bwb?: string | null;
-		onNavigate?: (collection: string, key: string) => void;
 		onitems?: (items: { key: string; label: string }[]) => void;
 	} = $props();
 
@@ -44,7 +33,7 @@
 			return getLawIdFromProps(selection.raw?.props ?? undefined, selection.key);
 		if (selection?.collection === 'instruments')
 			return getLawIdFromProps(selection.raw?.props ?? undefined) ?? selection.key.toUpperCase();
-		return bwbProp || null;
+		return null;
 	});
 
 	// The name comes from the shared cache: citation title, else title, else the id.
@@ -151,14 +140,14 @@
 
 {#snippet itemRow(item: Item)}
 	<li>
-		<button
-			type="button"
+		<a
 			class="nav-row"
 			class:is-active={item.key === selectedKey}
-			onclick={() => onNavigate?.('articles', item.key)}
+			href={bronHref({ collection: 'articles', key: item.key })}
+			data-sveltekit-noscroll
 		>
 			<span class="nav-num">Art. {item.articleNumber}</span>
-		</button>
+		</a>
 	</li>
 {/snippet}
 
@@ -191,17 +180,7 @@
 {/snippet}
 
 <aside class="lezen-nav" aria-label="Overzicht" bind:this={navEl}>
-	{#if selection?.kind === 'dossier'}
-		<DossierNav node={selection} {onNavigate} />
-	{:else if selection?.kind === 'committee'}
-		<CommitteeNav node={selection} {onNavigate} />
-	{:else if selection?.kind === 'member'}
-		<MemberNav node={selection} {onNavigate} />
-	{:else if selection?.kind === 'faction'}
-		<FactionNav node={selection} {onNavigate} />
-	{:else if !currentBwb}
-		<p class="nav-empty">Selecteer een artikel om het overzicht te zien.</p>
-	{:else}
+	{#if currentBwb}
 		<header class="nav-head">
 			<span class="nav-kind">{instrumentTypeLabel}</span>
 			<h3 class="nav-title">{prettyLawName}</h3>

@@ -1,6 +1,6 @@
 import { api, unwrap } from './client';
 
-// ArticleReader, CitationRail and CitationCopy mount together and want the same article.
+// The reader, the panel and a hover preview may ask for the same article at once.
 const inflight = new Map<string, ReturnType<typeof fetchArticle>>();
 
 const fetchArticle = (bwbId: string, articleNumber: string) =>

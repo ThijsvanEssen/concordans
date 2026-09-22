@@ -6,16 +6,11 @@
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
 	const isHome = $derived($page.url.pathname === '/');
-	// "Verkenner" dekt /explore zonder mode=index en /nodes; "Index" dekt
-	//  /explore?mode=index. Beide leven onder dezelfde route, maar zijn voor de
-	//  navigatie aparte bestemmingen.
+	// Verkenner and Bladeren share the route /explore; `mode=index` tells them apart.
 	const isIndex = $derived(
 		$page.url.pathname.startsWith('/explore') && $page.url.searchParams.get('mode') === 'index'
 	);
-	const isExplore = $derived(
-		($page.url.pathname.startsWith('/explore') && !isIndex) ||
-			$page.url.pathname.startsWith('/nodes')
-	);
+	const isExplore = $derived($page.url.pathname.startsWith('/explore') && !isIndex);
 	const isDocs = $derived($page.url.pathname.startsWith('/docs'));
 
 	let mobileMenuOpen = $state(false);
@@ -85,8 +80,10 @@
 	>
 
 	<nav class="topbar-nav" aria-label="Hoofdnavigatie">
-		<a href="/explore" class="nav-link" class:is-active={isExplore && !isHome}>Verkenner</a>
-		<a href="/explore?mode=index&kind=dossiers" class="nav-link" class:is-active={isIndex}>Index</a>
+		<a href="/explore" class="nav-link" class:is-active={isExplore}>Verkenner</a>
+		<a href="/explore?mode=index&kind=dossiers" class="nav-link" class:is-active={isIndex}
+			>Bladeren</a
+		>
 		<a href="/docs" class="nav-link" class:is-active={isDocs}>Docs</a>
 	</nav>
 
@@ -168,45 +165,47 @@
 	</button>
 
 	{#if mobileMenuOpen}
-		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+		<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 		<div
 			id="mobile-nav"
 			bind:this={mobileNavEl}
 			class="mobile-nav"
 			onclick={() => closeMobileMenu()}
 		>
-			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore && !isHome}>Verkenner</a
-			>
+			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Verkenner</a>
 			<a href="/explore?mode=index&kind=dossiers" class="mobile-nav-link" class:is-active={isIndex}
-				>Index</a
+				>Bladeren</a
 			>
 			<a href="/docs" class="mobile-nav-link" class:is-active={isDocs}>Docs</a>
 		</div>
 	{/if}
 
-	<div class="topbar-right">
-		<button
-			class="search-trigger"
-			onclick={() => onSearchOpen?.()}
-			aria-label={`Zoeken (${modKey}K)`}
-		>
-			<svg
-				width="14"
-				height="14"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="1.5"
-				stroke-linecap="round"
-				aria-hidden="true"
+	<!-- The start page shows the search field itself. -->
+	{#if !isHome}
+		<div class="topbar-right">
+			<button
+				class="search-trigger"
+				onclick={() => onSearchOpen?.()}
+				aria-label={`Zoeken (${modKey}K)`}
 			>
-				<circle cx="11" cy="11" r="7" />
-				<path d="m20 20-3.5-3.5" />
-			</svg>
-			<span class="search-trigger-label">Zoek een artikel, arrest of wet</span>
-			<span class="kbd">{modKey} K</span>
-		</button>
-	</div>
+				<svg
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					aria-hidden="true"
+				>
+					<circle cx="11" cy="11" r="7" />
+					<path d="m20 20-3.5-3.5" />
+				</svg>
+				<span class="search-trigger-label">Zoeken</span>
+				<span class="kbd">{modKey} K</span>
+			</button>
+		</div>
+	{/if}
 </header>
 
 <style>

@@ -52,3 +52,22 @@ export function lawIdOfArticleKey(key: string): string | null {
 	const m = /^(bwb[rvw]\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4})_/i.exec(key);
 	return m ? m[1].toUpperCase() : null;
 }
+
+/**
+ * What `/api/articles/{law}/{number}` wants for an article node. The law is a BWB id
+ * for a Dutch article and a CELEX number for a European one; every reader goes through here.
+ */
+export function articleIdentity(
+	props: Record<string, unknown> | undefined,
+	nodeKey: string
+): { lawId: string; articleNumber: string } | null {
+	const lawId = getLawIdFromProps(props, nodeKey) ?? lawIdOfArticleKey(nodeKey);
+	const stated = props?.['article_number'];
+	const articleNumber =
+		typeof stated === 'string' && stated
+			? stated
+			: lawId && nodeKey.toLowerCase().startsWith(`${lawId.toLowerCase()}_`)
+				? nodeKey.slice(lawId.length + 1)
+				: '';
+	return lawId && articleNumber ? { lawId, articleNumber } : null;
+}

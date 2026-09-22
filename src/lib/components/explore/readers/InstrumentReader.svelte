@@ -3,19 +3,15 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import WholeLawReader from '../WholeLawReader.svelte';
 
-	let {
-		node,
-		onNavigate
-	}: {
-		node: GraphNode;
-		onNavigate?: (collection: string, key: string) => void;
-	} = $props();
+	import { getLawIdFromProps } from '$lib/util/law-id';
 
-	const bwbId = $derived(String(node.raw?.props?.bwb_id ?? '') || null);
+	let { node }: { node: GraphNode } = $props();
+
+	const bwbId = $derived(getLawIdFromProps(node.raw?.props ?? undefined) ?? node.key.toUpperCase());
 </script>
 
 <div class="r-instrument">
-	<WholeLawReader {bwbId} {onNavigate} />
+	<WholeLawReader {bwbId} />
 </div>
 
 <style>

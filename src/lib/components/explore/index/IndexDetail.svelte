@@ -454,9 +454,6 @@
 		color: var(--teal);
 		background: var(--teal-faint);
 	}
-	.tag--teal .tag-dot {
-		background: var(--teal);
-	}
 	.tag--outline {
 		color: var(--ink-3);
 		background: transparent;

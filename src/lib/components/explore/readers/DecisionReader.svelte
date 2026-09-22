@@ -2,6 +2,9 @@
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { bronHref } from '$lib/bron/href';
+	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
@@ -40,6 +43,13 @@
 
 	const side = (choice: string) =>
 		choice === 'Voor' ? 'for' : choice === 'Tegen' ? 'against' : 'other';
+
+	/** The inverse of `dossierNumber`: `36600-VIII` is the node key `36600_viii`. */
+	const dossierKey = (number: string) => number.replace('-', '_').toLowerCase();
+
+	/** A voter id is `factions/vvd` or `members/…`; the key alone does not say which. */
+	const voterHref = (v: Schema<'VoteDTO'>) =>
+		v.voter_id.includes('/') ? bronHref(v.voter_id) : null;
 </script>
 
 <div class="r-decision">
@@ -62,7 +72,11 @@
 		{@const voters = [...(d.votes ?? [])].sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0))}
 
 		<header class="head">
-			<span class="kicker">Stemming · {formatLongDate(d.date ?? null)}</span>
+			<span class="kicker">
+				<KindGlyph collection="decisions" />
+				{bronLabel('decisions')}
+				{#if d.date}<span class="dot">·</span>{formatLongDate(d.date)}{/if}
+			</span>
 			<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet beschikbaar'}</h2>
 			<div class="chips">
 				<span
@@ -73,7 +87,11 @@
 					{d.passed ? 'Aangenomen' : 'Verworpen'}
 				</span>
 				{#each dossierNumbers.slice(0, 3) as number (number)}
-					<a href="/explore?focus=dossiers/{number}" class="dossier-chip">{number}</a>
+					<a
+						href={bronHref({ collection: 'dossiers', key: dossierKey(number) })}
+						class="dossier-chip"
+						data-sveltekit-noscroll>{number}</a
+					>
 				{/each}
 			</div>
 		</header>
@@ -88,7 +106,7 @@
 		{/if}
 
 		<div class="vote-summary">
-			<div class="vote-bar" title="Voor: {inFavour} · Tegen: {against}">
+			<div class="vote-bar">
 				<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
 			</div>
 			<div class="vote-totals">
@@ -109,9 +127,14 @@
 				</h3>
 				<ul class="voter-list">
 					{#each voters as v (v.voter_id)}
+						{@const href = voterHref(v)}
 						<li class="voter-row voter-row--{side(v.choice)}">
 							<span class="voter-choice">{v.choice}</span>
-							<span class="voter-name">{v.name ?? v.voter_key}</span>
+							{#if href}
+								<a class="voter-name" {href} data-sveltekit-noscroll>{v.name ?? v.voter_key}</a>
+							{:else}
+								<span class="voter-name">{v.name ?? v.voter_key}</span>
+							{/if}
 							<span class="voter-seats">{v.seats}</span>
 						</li>
 					{/each}
@@ -151,6 +174,12 @@
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 		color: var(--ink-4);
+		display: flex;
+		align-items: baseline;
+		gap: 6px;
+	}
+	.dot {
+		opacity: 0.6;
 	}
 	.title {
 		font-family: var(--font-serif);
@@ -304,6 +333,10 @@
 	.voter-name {
 		font-family: var(--font-serif);
 		color: var(--ink-2);
+		text-decoration: none;
+	}
+	a.voter-name:hover {
+		color: var(--spine);
 	}
 	.voter-seats {
 		font-family: var(--font-mono);

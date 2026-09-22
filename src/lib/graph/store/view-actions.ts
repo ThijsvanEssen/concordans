@@ -1,4 +1,6 @@
+import { nodeId } from '$lib/vocabulary';
 import { get } from 'svelte/store';
+import { syntheticNode } from '../types';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
 
@@ -11,8 +13,8 @@ export function createViewActions(
 	| 'togglePin'
 	| 'unpinNode'
 	| 'focusNode'
-	| 'goBack'
-	| 'goForward'
+	| 'showRows'
+	| 'hideRows'
 	| 'reset'
 	| 'setFilters'
 	| 'getNodeById'
@@ -23,42 +25,56 @@ export function createViewActions(
 	const {
 		nodes,
 		edges,
-		history,
 		pinned,
 		insertedAt,
 		selectionStore,
 		pinnedStore,
 		filtersStore,
 		graphModeStore,
+		addEdge,
 		emit,
-		updateHistoryFlags,
 		focusInternal,
 		reset,
 		state
 	} = ctx;
-
-	// Moves along the history without adding to it.
-	const step = (delta: number) => {
-		const index = state.historyIndex + delta;
-		if (index < 0 || index >= history.length) return null;
-		state.historyIndex = index;
-		focusInternal(history[index], { recordHistory: false });
-		updateHistoryFlags();
-		return history[index];
-	};
 
 	const publishPinned = () => pinnedStore.set(new Set(pinned));
 
 	return {
 		setGraphMode: (mode) => graphModeStore.set(mode),
 
-		setSelection: (nodeId, opts) => {
-			if (nodeId) focusInternal(nodeId, opts);
+		setSelection: (nodeId) => {
+			if (nodeId) focusInternal(nodeId);
 			else selectionStore.set(null);
 		},
-		focusNode: (nodeId, opts) => focusInternal(nodeId, opts),
-		goBack: () => step(-1),
-		goForward: () => step(1),
+		focusNode: (nodeId) => focusInternal(nodeId),
+
+		showRows: (focusId, rows) => {
+			if (!nodes.has(focusId)) return;
+			for (const row of rows) {
+				const id = nodeId(row.ref.collection, row.ref.key);
+				if (!nodes.has(id)) {
+					const node = syntheticNode(row.ref.collection, row.ref.key, row.title, row.props ?? {});
+					insertedAt.set(id, ++state.seq);
+					nodes.set(id, node);
+				}
+				const [source, target] = row.direction === 'inbound' ? [id, focusId] : [focusId, id];
+				addEdge(source, target, row.relation, { status: row.proposed ? 'voorgesteld' : null });
+			}
+			emit();
+		},
+		hideRows: (ids) => {
+			const selectedId = get(selectionStore)?.id;
+			const drop = new Set(ids.filter((id) => id !== selectedId && !pinned.has(id)));
+			for (const id of drop) {
+				nodes.delete(id);
+				insertedAt.delete(id);
+			}
+			for (const [id, e] of [...edges]) {
+				if (drop.has(e.source) || drop.has(e.target)) edges.delete(id);
+			}
+			emit();
+		},
 
 		togglePin: (nodeId) => {
 			if (!pinned.delete(nodeId)) pinned.add(nodeId);

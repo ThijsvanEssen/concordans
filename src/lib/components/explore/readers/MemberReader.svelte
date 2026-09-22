@@ -2,17 +2,14 @@
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { bronHref } from '$lib/bron/href';
+	import { bronLabel } from '$lib/vocabulary';
 	import { getMemberVotes } from '$lib/components/parliamentary/data';
 	import { initials } from '$lib/util/initials';
 	import { formatDate } from './_shared';
 
-	let {
-		node,
-		onNavigate
-	}: {
-		node: GraphNode;
-		onNavigate?: (collection: string, key: string) => void;
-	} = $props();
+	let { node }: { node: GraphNode } = $props();
 
 	type Vote = Schema<'MemberVoteDTO'>;
 
@@ -23,11 +20,9 @@
 				kind: 'loaded';
 				member: Schema<'MemberDTO'>;
 				votes: Schema<'MemberVotesResponse'> | null;
-				touched: Schema<'TouchedInstrumentsResponse'> | null;
 		  };
 
 	const VOTES_PREVIEW = 20;
-	const TOUCHED_LIMIT = 20;
 	const CHOICE_ORDER = ['Voor', 'Tegen'];
 
 	let view = $state<State>({ kind: 'loading' });
@@ -40,16 +35,10 @@
 		showAllVotes = false;
 		Promise.all([
 			unwrap(api.GET('/api/members/{key}', { params: { path: { key } }, signal: ac.signal })),
-			getMemberVotes(key).catch(() => null),
-			unwrap(
-				api.GET('/api/members/{key}/touched-instruments', {
-					params: { path: { key }, query: { limit: TOUCHED_LIMIT } },
-					signal: ac.signal
-				})
-			).catch(() => null)
+			getMemberVotes(key).catch(() => null)
 		])
-			.then(([member, votes, touched]) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', member, votes, touched };
+			.then(([member, votes]) => {
+				if (!ac.signal.aborted) view = { kind: 'loaded', member, votes };
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
@@ -99,10 +88,7 @@
 			)}
 
 		<header class="head">
-			<div class="kicker-row">
-				<span class="kicker">Kamerlid</span>
-				<a class="graph-link" href="/explore?focus=members/{m.key}">Toon in netwerk →</a>
-			</div>
+			<span class="kicker"><KindGlyph collection="members" />{bronLabel('members')}</span>
 			<div class="member-head-row">
 				<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
 				<div class="member-meta">
@@ -127,7 +113,11 @@
 					<ul class="faction-list">
 						{#each current as f (f.faction_id + (f.from_date ?? ''))}
 							<li class="faction-row">
-								<a class="faction-name" href="/explore?focus=factions/{f.faction_key}">
+								<a
+									class="faction-name"
+									href={bronHref({ collection: 'factions', key: f.faction_key })}
+									data-sveltekit-noscroll
+								>
 									{f.name ?? f.abbreviation ?? f.faction_key}
 								</a>
 								<span class="faction-range">
@@ -145,7 +135,11 @@
 					<ul class="faction-list faction-list--former">
 						{#each former as f (f.faction_id + (f.from_date ?? ''))}
 							<li class="faction-row">
-								<a class="faction-name" href="/explore?focus=factions/{f.faction_key}">
+								<a
+									class="faction-name"
+									href={bronHref({ collection: 'factions', key: f.faction_key })}
+									data-sveltekit-noscroll
+								>
 									{f.name ?? f.abbreviation ?? f.faction_key}
 								</a>
 								<span class="faction-range"
@@ -180,10 +174,10 @@
 							<ul class="vote-list">
 								{#each rows as v (v.decision_id)}
 									<li class="vote-row">
-										<button
-											type="button"
-											class="vote-btn"
-											onclick={() => onNavigate?.('decisions', v.decision_key)}
+										<a
+											class="vote-link"
+											href={bronHref({ collection: 'decisions', key: v.decision_key })}
+											data-sveltekit-noscroll
 										>
 											<span class="vote-subject">{v.subject ?? '—'}</span>
 											<span class="vote-meta">
@@ -200,7 +194,7 @@
 												{/if}
 												{#if v.date}<span class="vote-date">{formatDate(v.date)}</span>{/if}
 											</span>
-										</button>
+										</a>
 									</li>
 								{/each}
 							</ul>
@@ -212,27 +206,6 @@
 						+{votes.length - VOTES_PREVIEW} meer stemmen
 					</button>
 				{/if}
-			</section>
-		{/if}
-
-		{#if view.touched && view.touched.items.length > 0}
-			<section class="sec">
-				<h3 class="sec-title">
-					Bijgedragen aan ({view.touched.items.length}{view.touched.count >
-					view.touched.items.length
-						? ` van ${view.touched.count}`
-						: ''})
-				</h3>
-				<ul class="touched-list">
-					{#each view.touched.items as inst (inst.id)}
-						<li class="touched-item">
-							<a class="touched-name" href="/explore?focus=instruments/{inst.key}">
-								{inst.display_name ?? inst.title ?? inst.bwb_id ?? inst.key}
-							</a>
-							<span class="touched-count">{inst.count} doc.</span>
-						</li>
-					{/each}
-				</ul>
 			</section>
 		{/if}
 	{/if}
@@ -256,17 +229,10 @@
 		margin: 0;
 	}
 
-	/* ── Header — avatar + name + chips, all on same baseline column ── */
 	.head {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-	}
-	.kicker-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--s-3);
 	}
 	.kicker {
 		font-family: var(--font-sans);
@@ -275,21 +241,6 @@
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 		color: var(--ink-4);
-	}
-	.graph-link {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		font-weight: 500;
-		color: var(--ink-3);
-		text-decoration: none;
-		white-space: nowrap;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		padding: 2px 8px;
-	}
-	.graph-link:hover {
-		color: var(--ink);
-		border-color: var(--ink-3);
 	}
 	.member-head-row {
 		display: flex;
@@ -390,13 +341,6 @@
 		margin-left: 5px;
 		vertical-align: middle;
 	}
-	.empty-note {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 12px;
-		color: var(--ink-4);
-		margin: 0;
-	}
 
 	/* ── Fractielidmaatschappen ── */
 	.faction-list {
@@ -446,39 +390,6 @@
 		background: var(--paper-2);
 	}
 
-	/* ── Touched instruments ── */
-	.touched-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-	.touched-item {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		padding: 4px 0;
-		border-bottom: 1px dotted var(--rule);
-	}
-	.touched-name {
-		flex: 1;
-		min-width: 0;
-		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--ink-2);
-		text-decoration: none;
-		overflow-wrap: anywhere;
-	}
-	.touched-name:hover {
-		color: var(--spine);
-	}
-	.touched-count {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		font-weight: 600;
-		color: var(--spine);
-		flex-shrink: 0;
-	}
-
 	/* ── Votes ── */
 	.vote-choice {
 		font-family: var(--font-sans);
@@ -515,19 +426,15 @@
 		padding: 0;
 		border-bottom: 1px dotted var(--rule);
 	}
-	.vote-btn {
+	.vote-link {
 		display: flex;
 		flex-direction: column;
 		gap: 3px;
 		padding: 5px 0;
-		width: 100%;
-		background: none;
-		border: none;
-		cursor: pointer;
-		text-align: left;
+		text-decoration: none;
 	}
-	.vote-btn:hover {
-		background: var(--paper-2);
+	.vote-link:hover .vote-subject {
+		color: var(--spine);
 	}
 	.vote-subject {
 		font-family: var(--font-serif);

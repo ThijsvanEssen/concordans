@@ -9,9 +9,14 @@
 	let { children }: { children?: Snippet } = $props();
 
 	let searchOpen = $state(false);
-	provideSearchOpener(() => {
-		searchOpen = true;
-	});
+
+	// A page that shows the search field itself gets the focus there; elsewhere the overlay opens.
+	function openSearch() {
+		const field = document.querySelector<HTMLInputElement>('main [data-search-field]');
+		if (field) field.focus();
+		else searchOpen = true;
+	}
+	provideSearchOpener(openSearch);
 
 	onMount(() => {
 		initAnalytics();
@@ -20,7 +25,7 @@
 
 <div class="app-shell">
 	<a href="#main-content" class="skip-link">Naar inhoud</a>
-	<TopBar onSearchOpen={() => (searchOpen = true)} />
+	<TopBar onSearchOpen={openSearch} />
 	<main id="main-content" tabindex="-1" class="app-shell__content">
 		{@render children?.()}
 	</main>

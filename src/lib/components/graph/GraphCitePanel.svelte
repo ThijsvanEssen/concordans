@@ -1,14 +1,16 @@
 <script lang="ts">
-	import type { GraphNode, GraphNodeKind } from '$lib/graph/types';
+	// The hover panel of the canvas: what the bron is, a preview, one action: open.
+	import type { GraphNode } from '$lib/graph/types';
 	import { formatEcliLabel } from '$lib/graph/types';
-	import { api, unwrap } from '$lib/api/client';
-	import { getLawIdFromProps } from '$lib/util/law-id';
+	import { getArticleDetail } from '$lib/api/articles';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { articleIdentity, getLawIdFromProps } from '$lib/util/law-id';
+	import { bronLabel } from '$lib/vocabulary';
 
 	let {
 		node,
 		isPinned = false,
 		onOpen,
-		onFocus,
 		onTogglePin,
 		onMouseEnter,
 		onMouseLeave
@@ -16,31 +18,12 @@
 		node: GraphNode;
 		isPinned?: boolean;
 		onOpen: (node: GraphNode) => void;
-		onFocus: (node: GraphNode) => void;
 		onTogglePin?: (node: GraphNode) => void;
 		onMouseEnter?: () => void;
 		onMouseLeave?: () => void;
 	} = $props();
 
 	const W = 360;
-
-	const KIND_LABEL: Record<GraphNodeKind, string> = {
-		instrument: 'Wet',
-		article: 'Artikel',
-		judgment: 'Arrest',
-		dossier: 'Dossier',
-		document: 'Document',
-		activity: 'Activiteit',
-		committee: 'Commissie',
-		member: 'Kamerlid',
-		faction: 'Fractie',
-		other: 'Overig'
-	};
-
-	// The dot uses the style of the article for kinds without a colour of their own.
-	const dotKind = $derived(
-		node.kind === 'instrument' || node.kind === 'other' ? 'article' : node.kind
-	);
 
 	const nodeProps = $derived(node.raw?.props ?? undefined);
 	const text = (value: unknown): string | null =>
@@ -94,26 +77,21 @@
 	$effect(() => {
 		articleText = null;
 		loading = false;
-		const number = text(nodeProps?.['article_number']);
-		const bwb = getLawIdFromProps(nodeProps, node.key);
-		if (node.stub || node.kind !== 'article' || !number || !bwb) return;
-
-		const ctrl = new AbortController();
+		const identity = articleIdentity(nodeProps, node.key);
+		if (node.stub || node.kind !== 'article' || !identity) return;
+		let stale = false;
 		loading = true;
-		unwrap(
-			api.GET('/api/articles/{bwb_id}/{article_number}', {
-				params: { path: { bwb_id: bwb, article_number: number } },
-				signal: ctrl.signal
-			})
-		)
+		getArticleDetail(identity.lawId, identity.articleNumber)
 			.then((res) => {
-				articleText = preview(res.article.text);
+				if (!stale) articleText = preview(res.article.text);
 			})
 			.catch(() => {})
 			.finally(() => {
-				if (!ctrl.signal.aborted) loading = false;
+				if (!stale) loading = false;
 			});
-		return () => ctrl.abort();
+		return () => {
+			stale = true;
+		};
 	});
 
 	const snippet = $derived(articleText ?? preview(nodeText));
@@ -122,15 +100,15 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="citepanel" style="width:{W}px" onmouseenter={onMouseEnter} onmouseleave={onMouseLeave}>
 	<div class="head">
-		<span class="dot dot--{dotKind}" aria-hidden="true"></span>
-		<span class="kind caps">{KIND_LABEL[node.kind]}</span>
+		<KindGlyph collection={node.collection} />
+		<span class="kind caps">{bronLabel(node.collection)}</span>
 		{#if cite}<span class="cite mono">{cite}</span>{/if}
 	</div>
 
 	<h4 class="title {node.stub ? 'title--stub' : ''}">{node.label}</h4>
 
 	{#if node.stub}
-		<p class="snippet stub-note">Nog niet geladen in de database.</p>
+		<p class="snippet stub-note">Niet in de database.</p>
 	{:else if loading}
 		<span class="cite-loading">Laden…</span>
 	{:else if snippet}
@@ -139,27 +117,14 @@
 
 	<div class="foot">
 		{#if !node.stub}
-			<button
-				class="act act--primary"
-				onclick={() => onOpen(node)}
-				title="Toont de volledige tekst van deze bron in het leesvenster."
-			>
-				{node.collection === 'judgments' ? '↪ Arrest openen' : '↪ Openen'}
-			</button>
+			<button class="act act--primary" onclick={() => onOpen(node)}>Openen</button>
 		{/if}
-		<button
-			class="act"
-			onclick={() => onFocus(node)}
-			title="Centreert deze bron in het netwerk en laadt de aangrenzende bronnen."
-			>→ Selecteren</button
-		>
 		{#if onTogglePin && !node.stub}
 			<button
 				class="act act--pin"
 				class:act--pinned={isPinned}
-				onclick={() => onTogglePin(node)}
-				title={isPinned ? 'Losmaken' : 'Vastpinnen: blijft zichtbaar bij volgende uitklap'}
-				>{isPinned ? '★ Vast' : '☆ Pin'}</button
+				aria-pressed={isPinned}
+				onclick={() => onTogglePin(node)}>{isPinned ? '★ Vast' : '☆ Vastpinnen'}</button
 			>
 		{/if}
 	</div>
@@ -186,41 +151,6 @@
 		display: flex;
 		align-items: center;
 		gap: 7px;
-	}
-
-	.dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		flex-shrink: 0;
-	}
-	.dot--article {
-		background: #fffdf4;
-		border: 1.5px solid #1a1814;
-	}
-	.dot--judgment {
-		background: #2b3a5c;
-	}
-	.dot--dossier {
-		background: #7a1f1a;
-	}
-	.dot--committee {
-		background: #8a6a1f;
-	}
-	.dot--faction {
-		background: #44505e;
-	}
-	.dot--document {
-		background: #fffdf4;
-		border: 1.5px solid #7a1f1a;
-	}
-	.dot--activity {
-		background: #fffdf4;
-		border: 1.5px solid #8a6a1f;
-	}
-	.dot--member {
-		background: #fffdf4;
-		border: 1.5px solid #44505e;
 	}
 
 	.title--stub {

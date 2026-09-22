@@ -1,27 +1,27 @@
 <script lang="ts">
-	// Reader for articles: text with links to the articles it cites, the number of
-	// open dossiers that target the article, prev/next navigation and, on request,
-	// the legislative history.
+	// Reader for articles: the text in its parts, with links to what it cites, the
+	// number of open dossiers that target the article and the previous and next article.
 	import { api, unwrap } from '$lib/api/client';
 	import { getArticleDetail } from '$lib/api/articles';
 	import { recordInstrument } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import ArticleLegislativeHistory from '$lib/components/parliamentary/ArticleLegislativeHistory.svelte';
+	import { page } from '$app/state';
+	import { anchorOfHash, landOn } from '$lib/bron/anchor';
+	import { articleIdentity } from '$lib/util/law-id';
+	import { tick } from 'svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 
 	let {
 		selection,
-		onNavigate,
-		onPrev,
-		onNext
+		prevHref,
+		nextHref
 	}: {
 		selection: GraphNode | null;
-		onNavigate?: (collection: string, key: string) => void;
-		onPrev?: () => void;
-		onNext?: () => void;
+		prevHref?: string;
+		nextHref?: string;
 	} = $props();
 
 	type View =
@@ -35,8 +35,20 @@
 
 	// Primitives, so that a new selection object for the same article does not reload it.
 	const selected = $derived(selection !== null);
-	const bwbId = $derived(String(selection?.raw?.props?.bwb_id ?? ''));
-	const articleNumber = $derived(String(selection?.raw?.props?.article_number ?? ''));
+	const identity = $derived(
+		selection ? articleIdentity(selection.raw?.props ?? undefined, selection.key) : null
+	);
+	const bwbId = $derived(identity?.lawId ?? '');
+	const articleNumber = $derived(identity?.articleNumber ?? '');
+
+	// The position in the URL, once the text is on the page and again when it changes.
+	let root = $state<HTMLElement | null>(null);
+	const anchor = $derived(anchorOfHash(page.url.hash));
+	$effect(() => {
+		if (view.kind !== 'loaded' || !anchor || !root) return;
+		const container = root;
+		void tick().then(() => landOn(container, anchor));
+	});
 
 	$effect(() => {
 		openDossiers = 0;
@@ -89,9 +101,7 @@
 		{@const d = view.data}
 		{@const a = d.article}
 		<ReaderHead
-			sigil="§"
-			tone="article"
-			kind="Artikel"
+			collection="articles"
 			juris={d.instrument?.display_name}
 			title={a.display_name ?? 'Artikel'}
 		>
@@ -112,31 +122,21 @@
 			{/if}
 		</ReaderHead>
 
-		<div class="reader-body">
-			<ArticleText text={a.text} citations={d.citations} {onNavigate} />
+		<div class="reader-body" bind:this={root}>
+			<ArticleText text={a.text} citations={d.citations} />
 		</div>
 
-		{#if onPrev || onNext}
-			<div class="reader-nav-footer">
-				<button
-					type="button"
-					class="reader-nav-btn"
-					disabled={!onPrev}
-					onclick={onPrev}
-					aria-label="Vorig artikel">← Vorig</button
-				>
-				<button
-					type="button"
-					class="reader-nav-btn reader-nav-btn--next"
-					disabled={!onNext}
-					onclick={onNext}
-					aria-label="Volgend artikel">Volgend →</button
-				>
-			</div>
-		{/if}
-
-		{#if a.bwb_id && a.article_number}
-			<ArticleLegislativeHistory bwbId={a.bwb_id} articleNumber={a.article_number} />
+		{#if prevHref || nextHref}
+			<nav class="reader-nav-footer" aria-label="Artikelen">
+				{#if prevHref}
+					<a class="reader-nav-btn" href={prevHref} data-sveltekit-noscroll>← Vorig</a>
+				{/if}
+				{#if nextHref}
+					<a class="reader-nav-btn reader-nav-btn--next" href={nextHref} data-sveltekit-noscroll
+						>Volgend →</a
+					>
+				{/if}
+			</nav>
 		{/if}
 	{/if}
 </ReaderFrame>
@@ -213,15 +213,10 @@
 			border-color var(--dur-1) var(--ease);
 	}
 
-	.reader-nav-btn:hover:not(:disabled) {
+	.reader-nav-btn:hover {
 		background: var(--paper-3);
 		color: var(--ink);
 		border-color: var(--ink-3);
-	}
-
-	.reader-nav-btn:disabled {
-		opacity: 0.35;
-		cursor: default;
 	}
 
 	.reader-nav-btn--next {

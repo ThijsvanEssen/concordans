@@ -1,7 +1,7 @@
 <script lang="ts">
-	// Reader dispatcher. Article and judgment readers own their text; the
-	// parliamentary readers load their own data. A decision is a `GraphNodeKind`
-	// of 'activity' like a case or a commitment, so those are told apart by collection.
+	// Reader dispatcher, by collection. Article and judgment readers own their text; the
+	// parliamentary readers load their own data. A toezegging and a zaak have no text of
+	// their own and get the plain reader.
 	import type { GraphNode } from '$lib/graph/types';
 	import ArticleReader from './readers/ArticleReader.svelte';
 	import JudgmentReader from './readers/JudgmentReader.svelte';
@@ -17,39 +17,36 @@
 
 	let {
 		selection,
-		onNavigate,
-		onPrev,
-		onNext
+		prevHref,
+		nextHref
 	}: {
-		selection: GraphNode | null;
-		onNavigate?: (collection: string, key: string) => void;
-		onPrev?: () => void;
-		onNext?: () => void;
+		selection: GraphNode;
+		/** The article before and after the selected one, in Lezen. */
+		prevHref?: string;
+		nextHref?: string;
 	} = $props();
 </script>
 
-{#if !selection}
-	<ArticleReader {selection} {onNavigate} />
+{#if selection.collection === 'articles'}
+	<ArticleReader {selection} {prevHref} {nextHref} />
+{:else if selection.collection === 'judgments'}
+	<JudgmentReader {selection} />
+{:else if selection.collection === 'documents'}
+	<DocumentReader node={selection} />
+{:else if selection.collection === 'dossiers'}
+	<DossierReader node={selection} />
+{:else if selection.collection === 'committees'}
+	<CommitteeReader node={selection} />
+{:else if selection.collection === 'members'}
+	<MemberReader node={selection} />
+{:else if selection.collection === 'factions'}
+	<FactionReader node={selection} />
 {:else if selection.collection === 'decisions'}
 	<DecisionReader node={selection} />
-{:else if selection.kind === 'article'}
-	<ArticleReader {selection} {onNavigate} {onPrev} {onNext} />
-{:else if selection.kind === 'judgment'}
-	<JudgmentReader {selection} {onNavigate} />
-{:else if selection.kind === 'document'}
-	<DocumentReader node={selection} />
-{:else if selection.kind === 'dossier'}
-	<DossierReader node={selection} />
-{:else if selection.kind === 'committee'}
-	<CommitteeReader node={selection} />
-{:else if selection.kind === 'member'}
-	<MemberReader node={selection} {onNavigate} />
-{:else if selection.kind === 'faction'}
-	<FactionReader node={selection} {onNavigate} />
 {:else if selection.collection === 'activities'}
-	<ActivityReader node={selection} {onNavigate} />
-{:else if selection.kind === 'instrument'}
-	<InstrumentReader node={selection} {onNavigate} />
+	<ActivityReader node={selection} />
+{:else if selection.collection === 'instruments'}
+	<InstrumentReader node={selection} />
 {:else}
 	<FallbackReader node={selection} />
 {/if}

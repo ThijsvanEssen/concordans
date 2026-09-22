@@ -78,3 +78,11 @@ export function anchorOf(q: Qualifier | null): string | null {
 	if (q.lid) return onder ? `lid-${q.lid}-${onder}` : `lid-${q.lid}`;
 	return onder ?? (q.aanhef ? 'aanhef' : null);
 }
+
+/** A fragment as the reader prints it: `lid-2-onder-a` is "lid 2, onder a". */
+export const anchorLabel = (anchor: string): string =>
+	anchor
+		.replace(/^rov-/, 'r.o. ')
+		.replace(/^lid-(\w+)/, 'lid $1')
+		.replace(/-?onder-(\w+)/, (_, o, i) => `${i > 0 ? ', ' : ''}onder ${o}`)
+		.replace(/-(\w+)$/, ' $1');

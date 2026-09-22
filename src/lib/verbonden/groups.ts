@@ -20,9 +20,12 @@ export type Loader =
 	| 'dossier-documents-ek'
 	| 'dossier-international'
 	| 'article-explanatory'
+	| 'judgment-articles'
 	| 'instrument-dossiers'
 	| 'instrument-amended-by'
-	| 'committee-dossiers';
+	| 'committee-dossiers'
+	| 'member-instruments'
+	| 'faction-instruments';
 
 export type GroupDef = {
 	id: string;
@@ -37,6 +40,8 @@ export type GroupDef = {
 
 export type Group = GroupDef & {
 	rows: Row[];
+	/** The number of bronnen where the API states it; `rows` may hold fewer. */
+	total?: number;
 	/** The API caps a bucket without saying how many there are: shown as `30+`. */
 	capped: boolean;
 };
@@ -123,6 +128,8 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 	],
 	articles: [
 		{ id: 'explanatory', label: 'Toelichting', load: 'article-explanatory', inPlace: true },
+		// TODO(backend B8): the API names the judgments that cite an article, not the
+		// overweging that does. A row has room for it (`at`, `context`); none is set.
 		{
 			id: 'judgments',
 			label: 'Uitspraken',
@@ -160,11 +167,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		EUROPEAN
 	],
 	judgments: [
-		{
-			id: 'articles',
-			label: 'Aangehaalde artikelen',
-			match: [{ relation: 'REFERS_TO', direction: 'outbound', collection: 'articles' }]
-		},
+		{ id: 'articles', label: 'Aangehaalde artikelen', load: 'judgment-articles' },
 		{
 			id: 'appeal',
 			label: 'Hoger beroep',
@@ -241,11 +244,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Ingediend',
 			match: [{ relation: 'AUTHORED', direction: 'outbound', collection: 'documents' }]
 		},
-		{
-			id: 'votes',
-			label: 'Stemmingen',
-			match: [{ relation: 'VOTED', direction: 'outbound', collection: 'decisions' }]
-		}
+		{ id: 'instruments', label: 'Wetten', load: 'member-instruments' }
 	],
 	factions: [
 		{
@@ -258,11 +257,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Ingediend',
 			match: [{ relation: 'AUTHORED', direction: 'outbound', collection: 'documents' }]
 		},
-		{
-			id: 'votes',
-			label: 'Stemmingen',
-			match: [{ relation: 'VOTED', direction: 'outbound', collection: 'decisions' }]
-		}
+		{ id: 'instruments', label: 'Wetten', load: 'faction-instruments' }
 	],
 	decisions: [
 		{
@@ -385,5 +380,7 @@ export function buildGroups(collection: Collection, neighbors: Neighbor[]): Grou
 }
 
 /** `12`, or `30+` for a group the API cut off. */
-export const countLabel = (group: Pick<Group, 'rows' | 'capped'>) =>
-	`${group.rows.length}${group.capped ? '+' : ''}`;
+export const countLabel = (group: Pick<Group, 'rows' | 'capped' | 'total'>) =>
+	group.total != null && group.total >= group.rows.length
+		? String(group.total)
+		: `${group.rows.length}${group.capped ? '+' : ''}`;

@@ -6,6 +6,9 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { formatEcliLabel } from '$lib/graph/types';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
+	import { page } from '$app/state';
+	import { anchorOfHash, landOn, permalink } from '$lib/bron/anchor';
+	import { tick } from 'svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import {
@@ -17,13 +20,7 @@
 	} from './judgment-text';
 	import { formatDate, textProp } from './_shared';
 
-	let {
-		selection,
-		onNavigate
-	}: {
-		selection: GraphNode | null;
-		onNavigate?: (collection: string, key: string) => void;
-	} = $props();
+	let { selection }: { selection: GraphNode | null } = $props();
 
 	type View =
 		| { kind: 'empty' }
@@ -45,6 +42,19 @@
 				.slice(0, 40)
 		);
 	}
+
+	// TODO(backend B7): a paragraph has no stable id. The anchor of an overweging is its
+	// number: `paragraphs[].number` where the API gives it, else the number the text opens with.
+	const rov = (number: string) => `rov-${number}`;
+	const copy = (id: string) => navigator.clipboard?.writeText(permalink(page.url, id));
+
+	let root = $state<HTMLElement | null>(null);
+	const anchor = $derived(anchorOfHash(page.url.hash));
+	$effect(() => {
+		if (view.kind !== 'loaded' || !anchor || !root) return;
+		const container = root;
+		void tick().then(() => landOn(container, anchor));
+	});
 
 	$effect(() => {
 		if (!ecli) {
@@ -82,9 +92,7 @@
 		{@const participants = extractParticipants(paragraphs, partyLines)}
 		{@const hasSummary = !!j.summary?.trim()}
 		<ReaderHead
-			sigil="¶"
-			tone="judgment"
-			kind="Uitspraak"
+			collection="judgments"
 			juris={textProp(j.props?.court)}
 			title={j.ecli ? formatEcliLabel(j.ecli) : (j.display_name ?? 'Uitspraak')}
 		>
@@ -127,7 +135,7 @@
 			</table>
 		{/if}
 
-		<div class="reader-body">
+		<div class="reader-body" bind:this={root}>
 			{#each paragraphs as para, paraIdx (paraIdx)}
 				{#if para.kind === 'subheading'}
 					<!-- The first subheading is replaced by the participants table above. -->
@@ -141,38 +149,39 @@
 					{#each splitBodyParagraph(para.text, para.citations) as seg, i (i)}
 						{#if seg.kind === 'heading'}
 							<h3 class="reader-heading" id={headingId(seg.text)}>{seg.text}</h3>
-						{:else if seg.num}
+						{:else if seg.num || (i === 0 && para.number)}
+							{@const num = String(seg.num ?? para.number)}
 							<div
+								id={rov(num)}
 								class="reader-para-block"
 								class:reader-para-block--sub={seg.depth > 0}
 								style={seg.depth > 1 ? `padding-left:${(seg.depth - 1) * 1.2}em` : ''}
 							>
-								<span class="reader-para-num">{seg.num}</span>
+								<a
+									class="reader-para-num"
+									href="#{rov(num)}"
+									aria-label="Kopieer link naar overweging {num}"
+									onclick={() => copy(rov(num))}>{num}</a
+								>
 								<div class="reader-para-inner">
 									{#if seg.subTitle}
 										<p class="reader-para-subtitle">{seg.subTitle}</p>
 									{/if}
 									<p class="reader-para">
-										<CitedText text={seg.body} citations={seg.citations} {onNavigate} />
+										<CitedText text={seg.body} citations={seg.citations} />
 									</p>
 								</div>
 							</div>
 						{:else}
 							<p class="reader-para reader-para--prose">
-								<CitedText text={seg.body} citations={seg.citations} {onNavigate} />
+								<CitedText text={seg.body} citations={seg.citations} />
 							</p>
 						{/if}
 					{/each}
 				{/if}
 			{/each}
 			{#if paragraphs.length === 0 && !hasSummary}
-				<p class="reader-empty-text">
-					Voor deze uitspraak is geen tekst beschikbaar.
-					{#if deeplink}
-						Het origineel staat op
-						<a href={deeplink} target="_blank" rel="noopener noreferrer">rechtspraak.nl</a>.
-					{/if}
-				</p>
+				<p class="reader-empty-text">Geen tekst beschikbaar.</p>
 			{/if}
 		</div>
 	{/if}
@@ -347,6 +356,26 @@
 		gap: 0 var(--s-3);
 		margin-bottom: 1.4em;
 		max-width: calc(68ch + 2.8em + var(--s-3));
+	}
+
+	.reader-para-block {
+		scroll-margin: 20vh;
+		border-radius: 2px;
+	}
+
+	.reader-para-block:global(.is-landed) {
+		background: var(--accent-soft);
+		box-shadow:
+			-6px 0 0 var(--accent-soft),
+			6px 0 0 var(--accent-soft);
+	}
+
+	a.reader-para-num {
+		text-decoration: none;
+	}
+
+	a.reader-para-num:hover {
+		color: var(--accent);
 	}
 
 	.reader-para-block--sub {

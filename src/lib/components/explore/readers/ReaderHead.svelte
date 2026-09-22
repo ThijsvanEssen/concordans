@@ -1,19 +1,17 @@
 <script lang="ts">
-	// Running head of the text readers: sigil + kind label, then the title.
+	// Running head of the text readers: the glyph and name of the kind, then the title.
 	// Reader-specific rows (citation, meta, in-flux count) go in the snippet.
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import type { Snippet } from 'svelte';
 
 	let {
-		sigil,
-		tone,
-		kind,
+		collection,
 		juris,
 		title,
 		children
 	}: {
-		sigil: string;
-		tone: 'article' | 'judgment';
-		kind: string;
+		collection: Collection;
 		juris?: string | null;
 		title: string;
 		children?: Snippet;
@@ -22,10 +20,8 @@
 
 <div class="reader-head">
 	<div class="reader-kind">
-		<span class="reader-sigil" class:reader-sigil--judgment={tone === 'judgment'} aria-hidden="true"
-			>{sigil}</span
-		>
-		<span>{kind}</span>
+		<KindGlyph {collection} />
+		<span>{bronLabel(collection)}</span>
 		{#if juris}<span class="reader-juris">· {juris}</span>{/if}
 	</div>
 	<h2 class="reader-title">{title}</h2>
@@ -47,19 +43,6 @@
 		text-transform: uppercase;
 		color: var(--fg-3);
 		margin-bottom: 18px;
-	}
-
-	.reader-sigil {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 18px;
-		color: var(--accent);
-		letter-spacing: 0;
-		text-transform: none;
-	}
-
-	.reader-sigil--judgment {
-		color: var(--indigo);
 	}
 
 	.reader-juris {

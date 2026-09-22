@@ -1,4 +1,5 @@
 import { getNodeGraph, getNodeNeighborhood } from '$lib/api/nodes';
+import type { Schema } from '$lib/api/types';
 import { nodeId } from '$lib/vocabulary';
 import { get } from 'svelte/store';
 import { relationOf } from '../types';
@@ -7,7 +8,7 @@ import type { GraphStore } from './types';
 
 export function createExpansion(
 	ctx: GraphContext
-): Pick<GraphStore, 'expandNode' | 'expandNeighborhood'> {
+): Pick<GraphStore, 'expandNode' | 'expandNeighborhood' | 'nodeResponse'> {
 	const {
 		nodes,
 		cache,
@@ -21,16 +22,37 @@ export function createExpansion(
 		signal
 	} = ctx;
 
+	// One request per bron serves the canvas and the panel Verbonden. The API applies
+	// `neighbor_limit` after its cap per relation and collection, so a low limit cuts
+	// whole groups off; this one lets every bucket through.
+	const ALL_BUCKETS = 1000;
+	const inflight = new Map<string, Promise<Schema<'NodeGraphResponse'>>>();
+
+	const nodeResponse: GraphStore['nodeResponse'] = (collection, key, opts = {}) => {
+		const id = nodeId(collection, key.toLowerCase());
+		const cached = opts.force ? undefined : cache.get(id);
+		if (cached) return Promise.resolve(cached);
+		let request = inflight.get(id);
+		if (!request) {
+			request = getNodeGraph(collection, key, { neighborLimit: ALL_BUCKETS, signal: signal() })
+				.then((response) => {
+					cache.set(id, response);
+					return response;
+				})
+				.finally(() => inflight.delete(id));
+			inflight.set(id, request);
+		}
+		return request;
+	};
+
 	return {
+		nodeResponse,
+
 		expandNode: async (collection, key, opts = {}) => {
 			const id = nodeId(collection, key.toLowerCase());
-			let response = opts.force ? undefined : cache.get(id);
-			if (!response) {
-				const neighborLimit = opts.neighborLimit ?? get(filtersStore).neighborLimit;
-				response = await getNodeGraph(collection, key, { neighborLimit, signal: signal() });
-				cache.set(id, response);
-			}
-			return nodes.get(mergeResponse(response) ?? id) ?? null;
+			const response = await nodeResponse(collection, key, opts);
+			const draw = opts.neighborLimit ?? get(filtersStore).neighborLimit;
+			return nodes.get(mergeResponse(response, draw) ?? id) ?? null;
 		},
 
 		expandNeighborhood: async (collection, key, opts = {}) => {

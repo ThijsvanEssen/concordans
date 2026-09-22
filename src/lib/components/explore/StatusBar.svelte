@@ -1,30 +1,24 @@
 <script lang="ts">
 	import type { GraphNode } from '$lib/graph/types';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { bronLabel, bronPlural, isCollection, MODES, type Mode } from '$lib/vocabulary';
 	import { formatDate, textProp } from './readers/_shared';
 
 	let {
 		node,
 		focusError = null,
-		loadingCommittees = false,
-		canGoBack = false,
-		canGoForward = false,
 		mode = 'graph',
 		indexCategory = null,
 		indexResultCount = null,
 		shareCopied = false,
 		onGoBack,
 		onGoForward,
-		onLoadCommittees,
 		onModeChange,
 		onShareView
 	}: {
 		node: GraphNode | null;
 		focusError?: string | null;
-		loadingCommittees?: boolean;
-		canGoBack?: boolean;
-		canGoForward?: boolean;
-		mode?: string;
+		mode?: Mode;
 		/** When mode === 'index', the active category (instruments, dossiers, ...). */
 		indexCategory?: string | null;
 		/** When mode === 'index', the filtered count / total, e.g. "100 van 448". */
@@ -32,30 +26,9 @@
 		shareCopied?: boolean;
 		onGoBack?: () => void;
 		onGoForward?: () => void;
-		onLoadCommittees?: () => void;
-		onModeChange?: (mode: string) => void;
+		onModeChange?: (mode: Mode) => void;
 		onShareView?: () => void;
 	} = $props();
-
-	const INDEX_CAT_LABEL: Record<string, string> = {
-		instruments: 'Wetten',
-		judgments: 'Arresten',
-		dossiers: 'Dossiers',
-		committees: 'Commissies',
-		members: 'Kamerleden',
-		factions: 'Fracties',
-		decisions: 'Stemmingen'
-	};
-
-	// Label of the kind of source on the right of the bar, when there is no date to show.
-	const KIND_LABEL: Record<string, string> = {
-		articles: 'Artikel',
-		judgments: 'Arrest',
-		dossiers: 'Dossier',
-		committees: 'Commissie',
-		members: 'Kamerlid',
-		factions: 'Fractie'
-	};
 
 	let overflowOpen = $state(false);
 	function handleWindowClick(e: MouseEvent) {
@@ -91,17 +64,17 @@
 			add('meta', textProp(p.court) ?? textProp(p.court_code));
 			add('art', formatDate(textProp(p.date)));
 		} else if (node.collection === 'dossiers') {
-			add('meta', KIND_LABEL.dossiers);
+			add('meta', bronLabel('dossiers'));
 			add('art', String(p.number ?? node.key));
 		} else if (node.collection === 'committees') {
-			add('meta', KIND_LABEL.committees);
+			add('meta', bronLabel('committees'));
 			add('art', textProp(p.name) ?? textProp(p.abbreviation) ?? node.label);
 		} else if (node.collection === 'members') {
 			const party = textProp(p.party);
-			add('meta', party ? `${KIND_LABEL.members} · ${party}` : KIND_LABEL.members);
+			add('meta', party ? `${bronLabel('members')} · ${party}` : bronLabel('members'));
 			add('art', textProp(p.name) ?? node.label);
 		} else if (node.collection === 'factions') {
-			add('meta', KIND_LABEL.factions);
+			add('meta', bronLabel('factions'));
 			add('art', textProp(p.abbreviation) ?? textProp(p.name) ?? node.label);
 		}
 		return segs;
@@ -143,14 +116,7 @@
 
 <div class="status-bar" class:has-node={!!node}>
 	<div class="status-history">
-		<button
-			type="button"
-			class="status-hist-btn"
-			disabled={!canGoBack}
-			onclick={onGoBack}
-			title="Vorige bron (←)"
-			aria-label="Vorige bron"
-		>
+		<button type="button" class="status-hist-btn" onclick={onGoBack} aria-label="Vorige bron">
 			<svg
 				width="12"
 				height="12"
@@ -165,14 +131,7 @@
 				<path d="M7.5 2L3.5 6l4 4" />
 			</svg>
 		</button>
-		<button
-			type="button"
-			class="status-hist-btn"
-			disabled={!canGoForward}
-			onclick={onGoForward}
-			title="Volgende bron (→)"
-			aria-label="Volgende bron"
-		>
+		<button type="button" class="status-hist-btn" onclick={onGoForward} aria-label="Volgende bron">
 			<svg
 				width="12"
 				height="12"
@@ -191,10 +150,10 @@
 
 	{#if mode === 'index'}
 		<div class="status-path">
-			<span class="status-meta">Index</span>
-			{#if indexCategory && INDEX_CAT_LABEL[indexCategory]}
+			<span class="status-meta">Bladeren</span>
+			{#if isCollection(indexCategory)}
 				<span class="status-sep" aria-hidden="true">›</span>
-				<span class="status-art">{INDEX_CAT_LABEL[indexCategory]}</span>
+				<span class="status-art">{bronPlural(indexCategory)}</span>
 			{/if}
 		</div>
 		{#if indexResultCount}
@@ -220,24 +179,13 @@
 		</div>
 
 		<div class="status-right">
-			{#if node.collection === 'committees' && onLoadCommittees}
-				<button
-					type="button"
-					class="status-action"
-					class:status-action--loading={loadingCommittees}
-					disabled={loadingCommittees}
-					onclick={onLoadCommittees}
-					title="Terug naar overzicht alle commissies"
-					>{loadingCommittees ? 'Laden…' : '← Alle commissies'}</button
-				>
-			{/if}
 			{#if validFrom}
 				<span class="status-valid">
 					<span class="status-valid-bar" aria-hidden="true"></span>
 					Geldig {validFrom}
 				</span>
-			{:else if KIND_LABEL[node.collection]}
-				<span class="status-kind">{KIND_LABEL[node.collection]}</span>
+			{:else}
+				<span class="status-kind">{bronLabel(node.collection)}</span>
 			{/if}
 		</div>
 	{:else if focusError}
@@ -249,11 +197,8 @@
 
 	<!-- Share is always visible; the citation is in the overflow menu. -->
 	{#if onShareView}
-		<button
-			type="button"
-			class="status-share-btn"
-			onclick={onShareView}
-			title="Kopieer link naar deze weergave">{shareCopied ? '✓ Link gekopieerd' : '↗ Deel'}</button
+		<button type="button" class="status-share-btn" onclick={onShareView}
+			>{shareCopied ? '✓ Link gekopieerd' : '↗ Deel'}</button
 		>
 	{/if}
 	{#if node}
@@ -264,7 +209,6 @@
 				aria-haspopup="menu"
 				aria-expanded={overflowOpen}
 				aria-label="Meer acties"
-				title="Meer acties"
 				onclick={() => (overflowOpen = !overflowOpen)}>⋯</button
 			>
 			{#if overflowOpen}
@@ -283,37 +227,17 @@
 		</div>
 	{/if}
 
-	{#if mode !== 'index'}
-		<div class="mode-toggle" role="tablist" aria-label="Weergavemodus">
+	<div class="mode-toggle" role="tablist" aria-label="Weergave">
+		{#each MODES as m, i (m.id)}
 			<button
 				role="tab"
-				aria-selected={mode === 'graph'}
+				aria-selected={mode === m.id}
 				class="mode-btn"
-				class:active={mode === 'graph'}
-				onclick={() => onModeChange?.('graph')}
-				title="Ontdekken (toets 1): verbindingen in het netwerk"
-				>Ontdekken<kbd class="mode-kbd">1</kbd></button
+				class:active={mode === m.id}
+				onclick={() => onModeChange?.(m.id)}>{m.label}<kbd class="mode-kbd">{i + 1}</kbd></button
 			>
-			{#if node}
-				<button
-					role="tab"
-					aria-selected={mode === 'split'}
-					class="mode-btn"
-					class:active={mode === 'split'}
-					title="Verdiepen (toets 2): netwerk naast de volledige tekst"
-					onclick={() => onModeChange?.('split')}>Verdiepen<kbd class="mode-kbd">2</kbd></button
-				>
-				<button
-					role="tab"
-					aria-selected={mode === 'read'}
-					class="mode-btn"
-					class:active={mode === 'read'}
-					title="Lezen (toets 3): volledig document met citaties"
-					onclick={() => onModeChange?.('read')}>Lezen<kbd class="mode-kbd">3</kbd></button
-				>
-			{/if}
-		</div>
-	{/if}
+		{/each}
+	</div>
 </div>
 
 <style>
@@ -357,15 +281,10 @@
 			border-color var(--dur-1) var(--ease);
 	}
 
-	.status-hist-btn:hover:not(:disabled) {
+	.status-hist-btn:hover {
 		background: var(--paper-3);
 		color: var(--ink);
 		border-color: var(--ink-3);
-	}
-
-	.status-hist-btn:disabled {
-		opacity: 0.35;
-		cursor: default;
 	}
 
 	.status-share-btn {
@@ -451,27 +370,6 @@
 		color: var(--fg-4);
 	}
 
-	.status-action {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.04em;
-		padding: 3px 10px;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		color: var(--ink-2);
-		cursor: pointer;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
-	}
-
-	.status-action:hover {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
-	}
-
 	.status-valid {
 		display: flex;
 		align-items: center;
@@ -495,11 +393,6 @@
 		font-size: 11px;
 		color: var(--ink-4);
 		white-space: nowrap;
-	}
-
-	.status-action--loading {
-		opacity: 0.7;
-		cursor: wait;
 	}
 
 	.status-overflow {

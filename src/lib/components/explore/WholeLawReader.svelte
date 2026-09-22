@@ -3,13 +3,9 @@
 	import { instrumentMetaStore, primeInstrumentNames } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
 
-	let {
-		bwbId,
-		onNavigate
-	}: {
-		bwbId: string | null;
-		onNavigate?: (collection: string, key: string) => void;
-	} = $props();
+	import { bronHref } from '$lib/bron/href';
+
+	let { bwbId }: { bwbId: string | null } = $props();
 
 	// The API inlines at most this many characters of an article. An article that
 	// fills them is shown with an ellipsis; the full text is one click away.
@@ -82,14 +78,14 @@
 </script>
 
 {#if status === 'idle'}
-	<div class="whole-empty">Selecteer een artikel om de wet te openen.</div>
+	<div class="whole-empty"></div>
 {:else if status === 'loading'}
 	<div class="whole-loading">
 		<div class="spinner" aria-hidden="true"></div>
-		<span>Wet ophalen…</span>
+		<span>Laden…</span>
 	</div>
 {:else if status === 'error'}
-	<div class="whole-error">Volledige wet kon niet geladen worden.</div>
+	<div class="whole-error">Wet niet geladen.</div>
 {:else}
 	<article class="whole-law">
 		<header class="whole-head">
@@ -108,14 +104,13 @@
 
 			<section class="whole-article" id="article-{a.article_number}">
 				<div class="whole-article-head">
-					<button
-						type="button"
+					<a
 						class="whole-article-jump"
-						onclick={() => onNavigate?.('articles', a.key)}
-						title="Open in detail"
+						href={bronHref({ collection: 'articles', key: a.key })}
+						data-sveltekit-noscroll
 					>
 						<span class="whole-art-num">Art. {a.article_number}</span>
-					</button>
+					</a>
 				</div>
 
 				<p class="whole-text">

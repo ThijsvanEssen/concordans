@@ -1,13 +1,23 @@
 <script lang="ts">
-	// Reader for a document (memorie van toelichting, verslag, nota, amendement,
-	// motie, ...). The text can be long, so it is capped with a scroll and links to the source.
+	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
+	// its text. Opened as the toelichting of an article, it lands on the passage for it.
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import GlossaryPill from './GlossaryPill.svelte';
+	import { landOn } from '$lib/bron/anchor';
+	import { findPassage } from '$lib/text/find-passage';
+	import { tick } from 'svelte';
 	import { formatDate } from './_shared';
 
-	let { node }: { node: GraphNode } = $props();
+	let {
+		node,
+		articleNumber = null
+	}: {
+		node: Pick<GraphNode, 'key'>;
+		/** The article whose toelichting is wanted; the reader opens at its passage. */
+		articleNumber?: string | null;
+	} = $props();
 
 	type State =
 		| { kind: 'loading' }
@@ -29,6 +39,34 @@
 					view = { kind: 'error', message: 'Document kon niet geladen worden.' };
 			});
 		return () => ac.abort();
+	});
+
+	// The source gives a paragraph per line. Each keeps its place in the text, so that
+	// a passage can be found back.
+	const paragraphs = $derived.by(() => {
+		if (view.kind !== 'loaded' || !view.document.text) return [];
+		const text = view.document.text;
+		const out: { start: number; text: string }[] = [];
+		for (const m of text.matchAll(/[^\n]+/g)) {
+			if (m[0].trim()) out.push({ start: m.index, text: m[0].trim() });
+		}
+		return out;
+	});
+
+	const passage = $derived(
+		view.kind === 'loaded' && articleNumber
+			? findPassage(view.document.text ?? '', articleNumber)
+			: null
+	);
+	const passageIndex = $derived(
+		passage ? paragraphs.findLastIndex((p) => p.start <= passage.start) : -1
+	);
+
+	let root = $state<HTMLElement | null>(null);
+	$effect(() => {
+		if (passageIndex < 0 || !root) return;
+		const container = root;
+		void tick().then(() => landOn(container, 'passage'));
 	});
 
 	// The kind is the source's own wording; where a glossary term exists the kicker links to it.
@@ -65,19 +103,25 @@
 		</header>
 
 		{#if doc.text}
-			<div class="body">
-				{#each doc.text.split(/\n\n+/) as para, i (i)}
-					{#if para.trim()}<p class="body-para">{para.trim()}</p>{/if}
+			<div class="body" bind:this={root}>
+				{#each paragraphs as para, i (para.start)}
+					{#if i === passageIndex}
+						<p class="body-para body-para--passage" id="passage">
+							{para.text}<span class="derived" role="img" aria-label="afgeleid">≈</span>
+						</p>
+					{:else}
+						<p class="body-para">{para.text}</p>
+					{/if}
 				{/each}
 			</div>
 		{:else}
-			<p class="empty">Tekst nog niet beschikbaar.</p>
+			<p class="empty">Geen tekst beschikbaar.</p>
 		{/if}
 
 		{#if doc.tk_url}
 			<footer class="foot">
 				<a href={doc.tk_url} target="_blank" rel="noopener noreferrer" class="full-link">
-					Open op tweedekamer.nl →
+					tweedekamer.nl ↗
 				</a>
 			</footer>
 		{/if}
@@ -85,6 +129,20 @@
 </div>
 
 <style>
+	.body-para--passage {
+		scroll-margin: 20vh;
+		font-weight: 600;
+	}
+	.body-para--passage:global(.is-landed) {
+		background: var(--accent-soft);
+	}
+	.derived {
+		margin-left: 6px;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		font-weight: 400;
+		color: var(--ink-4);
+	}
 	.r-document {
 		display: flex;
 		flex-direction: column;

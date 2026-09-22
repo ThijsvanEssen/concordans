@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Schema } from '$lib/api/types';
-	import { parseNodeId } from '$lib/vocabulary';
+	import { bronHref } from '$lib/bron/href';
 	import KindChipFilter from './KindChipFilter.svelte';
 
 	type Entry = Schema<'TimelineEntryDTO'>;
@@ -59,7 +59,6 @@
 			class="order-btn"
 			onclick={() => (newestFirst = !newestFirst)}
 			aria-label={newestFirst ? 'Sorteer oud naar nieuw' : 'Sorteer nieuw naar oud'}
-			title={newestFirst ? 'Sorteer oud naar nieuw' : 'Sorteer nieuw naar oud'}
 		>
 			<svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
 				{#if newestFirst}
@@ -102,11 +101,16 @@
 						{@const passed = !!body.passed}
 						{@const inFavourPct =
 							inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
-						{@const decisionKey = parseNodeId(entry.node_id)?.key}
 						<div class="entry-body">
-							{#if entry.title}<p class="entry-title">{entry.title}</p>{/if}
+							{#if entry.title}
+								<a
+									class="entry-title entry-title--link"
+									href={bronHref(entry.node_id)}
+									data-sveltekit-noscroll>{entry.title}</a
+								>
+							{/if}
 
-							<div class="decision-bar" title="Voor: {inFavour} · Tegen: {against}">
+							<div class="decision-bar">
 								<div class="decision-bar-for" style="width: {inFavourPct}%"></div>
 							</div>
 							<div class="decision-totals">
@@ -125,17 +129,17 @@
 									{passed ? 'Aangenomen' : 'Verworpen'}
 								</span>
 							</div>
-
-							{#if decisionKey}
-								<a class="decision-link" href="/explore?mode=split&focus=decisions/{decisionKey}"
-									>Open stemming →</a
-								>
-							{/if}
 						</div>
 					{:else if entry.node_type === 'activity'}
 						{@const title = withoutDate(body.agenda_title || entry.title || '')}
 						<div class="entry-body">
-							{#if title}<p class="entry-title">{title}</p>{/if}
+							{#if title}
+								<a
+									class="entry-title entry-title--link"
+									href={bronHref(entry.node_id)}
+									data-sveltekit-noscroll>{title}</a
+								>
+							{/if}
 							{#if entry.tk_url}
 								<a href={entry.tk_url} class="entry-link" target="_blank" rel="noopener noreferrer"
 									>Bekijk op tweedekamer.nl ↗</a
@@ -154,7 +158,13 @@
 					{:else}
 						{@const url = entry.tk_url ?? body.url}
 						<div class="entry-body">
-							{#if entry.title}<p class="entry-title">{entry.title}</p>{/if}
+							{#if entry.title}
+								<a
+									class="entry-title entry-title--link"
+									href={bronHref(entry.node_id)}
+									data-sveltekit-noscroll>{entry.title}</a
+								>
+							{/if}
 							{#if url}
 								<a href={url} class="entry-link" target="_blank" rel="noopener noreferrer">
 									Document openen →
@@ -297,56 +307,11 @@
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
-
-	.entry-author {
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-		margin: 0;
-	}
-
-	.entry-summary {
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-		margin: 0;
-		line-height: var(--lh-body);
-	}
-
-	.entry-targets {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		flex-wrap: wrap;
-	}
-
-	.entry-targets-label {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		text-transform: uppercase;
-		letter-spacing: var(--track-caps);
-		color: var(--ink-4);
-	}
-
-	.article-chip {
-		display: inline-flex;
-		align-items: center;
-		height: 20px;
-		padding: 0 8px;
-		background: var(--paper-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--ink-2);
+	.entry-title--link {
 		text-decoration: none;
-		transition:
-			background 80ms,
-			color 80ms;
+		align-self: flex-start;
 	}
-
-	.article-chip:hover {
-		background: var(--spine-faint);
+	.entry-title--link:hover {
 		color: var(--spine);
 	}
 
@@ -423,19 +388,6 @@
 		background: color-mix(in srgb, var(--red, #dc2626) 8%, var(--paper));
 		color: var(--red, #dc2626);
 		border-color: color-mix(in srgb, var(--red, #dc2626) 22%, transparent);
-	}
-
-	.decision-link {
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--spine);
-		text-decoration: none;
-		border-bottom: 1px solid var(--spine-faint);
-		align-self: flex-start;
-		margin-top: var(--s-2);
-	}
-	.decision-link:hover {
-		border-bottom-color: var(--spine);
 	}
 
 	/* Commitment */

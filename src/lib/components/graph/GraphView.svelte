@@ -37,18 +37,13 @@
 		visibleCount: visibleCountProp = 0,
 		totalLoaded = 0,
 		onNodeClick,
-		onOpenSplit,
 		onGoBack,
 		onGoForward,
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
-		onLoadLayer,
-		onDeloadLayer,
 		onResetGraph,
 		onRevealHidden,
-		loadingLayers,
-		activatedLayers,
 		canvasOverlay
 	}: {
 		store: GraphStore;
@@ -59,23 +54,14 @@
 		visibleCount?: number;
 		totalLoaded?: number;
 		onNodeClick?: (node: GraphNode) => void;
-		onOpenSplit?: (node: GraphNode) => void;
 		onGoBack?: () => void;
 		onGoForward?: () => void;
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
-		/** Load the layer of a kind (the layer buttons in the sidebar). */
-		onLoadLayer?: (layer: GraphNodeKind) => void;
-		/** Remove every source of the layer, with its incident verbindingen. */
-		onDeloadLayer?: (layer: GraphNodeKind) => void;
 		onResetGraph?: () => void;
 		/** Expand the focus again without the convergence prune. */
 		onRevealHidden?: () => void;
-		loadingLayers?: ReadonlySet<GraphNodeKind>;
-		/** Layers activated by the user. Keeps a layer button pressed when
-		 *  loading it added nothing. */
-		activatedLayers?: ReadonlySet<GraphNodeKind>;
 		canvasOverlay?: Snippet;
 	} = $props();
 
@@ -88,11 +74,7 @@
 	let selection = $state<GraphNode | null>(null);
 	let pinnedIds = $state<Set<string>>(new Set());
 	let filters = $state<GraphFilters>(get(store.filters));
-	// Per-kind counts drive the Lagen "active" indicator in the sidebar.
-	let kindCounts = $state<Record<string, number>>({});
-	// What would arrive if the user clicked an inactive Lagen button —
-	// derived from cached /api/nodes responses across loaded nodes.
-	let potentialCounts = $state<Record<string, number>>({});
+	let hasNodes = $state(false);
 	let trimmedCount = $state(0);
 	let trimmedDismissed = $state(false);
 	let loadingMsg = $state<string | null>(null);
@@ -740,12 +722,7 @@
 				changed = true;
 			}
 		}
-		// Recompute kind counts so the sidebar's Lagen indicators stay in sync.
-		{
-			const counts: Record<string, number> = {};
-			for (const n of lookup.values()) counts[n.kind] = (counts[n.kind] ?? 0) + 1;
-			kindCounts = counts;
-		}
+		hasNodes = lookup.size > 0;
 		applyFilters();
 		if (changed) scheduleFit();
 		runLayout(addedThisSync);
@@ -840,9 +817,6 @@
 				// Suppression rules depend on wet-view state, so refresh whenever it changes.
 				applyFilters();
 			}),
-			store.potentialCounts.subscribe((c) => {
-				potentialCounts = c;
-			}),
 			store.trimmedCount.subscribe((n) => {
 				trimmedCount = n;
 			}),
@@ -888,15 +862,13 @@
 	// ── keyboard shortcuts ────────────────────────────────────────────────────
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
-		if (e.key === 'ArrowLeft') {
+		if (e.key === 'ArrowLeft' && onGoBack) {
 			e.preventDefault();
-			if (onGoBack) onGoBack();
-			else store.goBack();
+			onGoBack();
 		}
-		if (e.key === 'ArrowRight') {
+		if (e.key === 'ArrowRight' && onGoForward) {
 			e.preventDefault();
-			if (onGoForward) onGoForward();
-			else store.goForward();
+			onGoForward();
 		}
 		if (e.key === 'Escape') store.setSelection(null);
 	}
@@ -911,7 +883,6 @@
 		{overlay}
 		inFluxCount={inFluxMap.size}
 		{pinnedNodes}
-		onFilterChange={(patch) => store.setFilters(patch)}
 		onInstrumentToggle={(bwbId) => {
 			const next = new Set(filters.activeInstruments);
 			if (!next.delete(bwbId)) next.add(bwbId);
@@ -924,26 +895,11 @@
 		{onToggleHeat}
 		{onHeatPeriodChange}
 		{onToggleMutatie}
-		onLoadGlobal={() => onLoadLayer?.('instrument')}
-		onLoadJudgments={() => onLoadLayer?.('judgment')}
-		onLoadDossiers={() => onLoadLayer?.('dossier')}
-		onLoadCommittees={() => onLoadLayer?.('committee')}
-		onLoadMembers={() => onLoadLayer?.('member')}
-		onLoadFactions={() => onLoadLayer?.('faction')}
-		{onDeloadLayer}
 		{onResetGraph}
-		{kindCounts}
-		{potentialCounts}
+		{hasNodes}
 		hasSelection={selection != null}
 		hiddenCount={Math.max(0, totalLoaded - visibleCountProp)}
 		{onRevealHidden}
-		loadingGlobal={loadingLayers?.has('instrument')}
-		loadingJudgments={loadingLayers?.has('judgment')}
-		loadingDossiers={loadingLayers?.has('dossier')}
-		loadingCommittees={loadingLayers?.has('committee')}
-		loadingMembers={loadingLayers?.has('member')}
-		loadingFactions={loadingLayers?.has('faction')}
-		{activatedLayers}
 		onUnpin={(id) => store.unpinNode(id)}
 		onClearPins={() => {
 			for (const id of pinnedIds) store.unpinNode(id);
@@ -1115,11 +1071,6 @@
 					onOpen={(n) => {
 						hoverNode = null;
 						onNodeClick?.(n);
-						onOpenSplit?.(n);
-					}}
-					onFocus={(n) => {
-						hoverNode = null;
-						store.setSelection(n.id, { recordHistory: false });
 					}}
 					onTogglePin={(n) => {
 						store.togglePin(n.id);

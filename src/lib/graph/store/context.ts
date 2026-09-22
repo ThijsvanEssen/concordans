@@ -38,7 +38,7 @@ function lawIdOf(node: GraphNode): string | null {
 
 /**
  * Shared mutable state and the primitives every loader builds on: node and
- * edge maps, the writable stores that mirror them, history, trimming and the
+ * edge maps, the writable stores that mirror them, trimming and the
  * derived nodes and edges. Loader modules receive this object and never
  * create their own copies.
  */
@@ -47,10 +47,9 @@ export function createGraphContext() {
 	const edges = new Map<string, GraphEdge>();
 	/** Expansion responses by node id. */
 	const cache = new Map<string, Schema<'NodeGraphResponse'>>();
-	const history: string[] = [];
 	const pinned = new Set<string>();
 	// On one object because a destructured `let` would freeze its value.
-	const state = { seq: 0, historyIndex: -1, proxiesEnabled: false, additiveLayerIndex: 0 };
+	const state = { seq: 0, proxiesEnabled: false, additiveLayerIndex: 0 };
 	// Insertion sequence per node: the order in which the soft cap trims.
 	const insertedAt = new Map<string, number>();
 
@@ -58,8 +57,6 @@ export function createGraphContext() {
 	const edgesStore = writable<GraphEdge[]>([]);
 	const selectionStore = writable<GraphNode | null>(null);
 	const pinnedStore = writable<Set<string>>(new Set());
-	const canGoBackStore = writable(false);
-	const canGoForwardStore = writable(false);
 	const filtersStore = writable<GraphFilters>({
 		...DEFAULT_FILTERS,
 		nodeTypeToggles: { ...DEFAULT_FILTERS.nodeTypeToggles },
@@ -226,24 +223,10 @@ export function createGraphContext() {
 		edgesStore.set([...edges.values()]);
 	};
 
-	// ── History ───────────────────────────────────────────────────────────────
-	const updateHistoryFlags = () => {
-		canGoBackStore.set(state.historyIndex > 0);
-		canGoForwardStore.set(state.historyIndex < history.length - 1);
-	};
-
-	const recordHistory = (id: string) => {
-		history.splice(state.historyIndex + 1);
-		history.push(id);
-		state.historyIndex = history.length - 1;
-		updateHistoryFlags();
-	};
-
-	const focusInternal = (id: string, opts?: { recordHistory?: boolean }) => {
+	const focusInternal = (id: string) => {
 		const target = nodes.get(id);
 		if (!target) return null;
 		selectionStore.set(target);
-		if (opts?.recordHistory ?? true) recordHistory(id);
 		return target;
 	};
 
@@ -253,13 +236,10 @@ export function createGraphContext() {
 		edges.clear();
 		cache.clear();
 		insertedAt.clear();
-		history.length = 0;
 		state.seq = 0;
-		state.historyIndex = -1;
 		currentInstrumentBwbStore.set(null);
 		trimmedCountStore.set(0);
 		for (const k of Object.keys(wetLayerTotals)) delete wetLayerTotals[k];
-		updateHistoryFlags();
 	};
 
 	const reset = () => {
@@ -385,12 +365,15 @@ export function createGraphContext() {
 		confidence >= get(filtersStore).semanticThreshold;
 
 	/** Puts a node and its neighbours on the canvas. Returns the id of the node. */
-	const mergeResponse = (response: Schema<'NodeGraphResponse'>): string | null => {
+	const mergeResponse = (
+		response: Schema<'NodeGraphResponse'>,
+		draw = Number.POSITIVE_INFINITY
+	): string | null => {
 		const center = nodeToGraphNode(response.node);
 		if (!center) return null;
 		touchNode(center.id, center);
 
-		for (const neighbor of response.neighbors.all ?? []) {
+		for (const neighbor of (response.neighbors.all ?? []).slice(0, draw)) {
 			const relation = relationOf(neighbor.relation);
 			const other = relation && drawable(neighbor);
 			if (!relation || !other) continue;
@@ -410,15 +393,12 @@ export function createGraphContext() {
 		nodes,
 		edges,
 		cache,
-		history,
 		pinned,
 		insertedAt,
 		nodesStore,
 		edgesStore,
 		selectionStore,
 		pinnedStore,
-		canGoBackStore,
-		canGoForwardStore,
 		filtersStore,
 		loadingStore,
 		graphModeStore,
@@ -440,7 +420,6 @@ export function createGraphContext() {
 		finishBulk,
 		reset,
 		recomputePotentialCounts,
-		updateHistoryFlags,
 		focusInternal
 	};
 }
