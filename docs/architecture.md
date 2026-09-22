@@ -15,37 +15,51 @@ Only one server route exists: the write proxy under `src/routes/proxy`.
 
 ```
 src/routes/
-  explore/+page.svelte        network, readers and index (one page, modes in the URL)
-  (main)/                     pages with the site chrome: start page, search, publications,
-                              nodes/[collection]/[key] (redirects to explore), docs, api, prose pages
+  explore/+page.svelte        the explorer: Lezen, Netwerk, Bladeren (one page, the mode in the URL)
+  (main)/                     pages with the site chrome: start page, docs, api, prose pages
   proxy/[...path]/+server.ts  write proxy
 src/lib/
-  vocabulary.ts               collections, node types, relations, node ids
-  api/                        client, generated types, small helpers
+  vocabulary.ts               collections, node types, relations, node ids, BRON_LABEL, MODES
+  bron/                       bronHref (every link to a bron), anchor (landing on a position), KindGlyph
+  api/                        client, generated types, helpers
   graph/                      GraphNode/GraphEdge types and GraphStore (store/*)
-  components/{graph,explore,parliamentary,articles,layout,home,ui}
-  stores/                     overlay (URL parser), reader, search-trigger, watches
+  verbonden/                  the panel Verbonden: groups, loaders, rows
+  text/                       article parts, qualifiers (lid, onderdeel), passages
+  search/                     the search component and citation resolving
+  components/{graph,explore,articles,parliamentary,layout}
+  stores/                     overlay (URL parser), search-trigger
   server/                     write proxy rules
 ```
 
 ## Names
 
 The API's names are the code's names: collections, relations, fields. Dutch appears in user-facing text and in values a source owns (document kinds, stage names, edge status `voorgesteld`).
-`src/lib/vocabulary.ts` lists the collections and relations once. `src/lib/graph/types.ts` maps them to what the interface shows: node kind, edge category and line weight, node label. A table typed `Record<Relation, ...>` or `Record<Collection, ...>` fails the check when the API gains a name and the table does not.
+`src/lib/vocabulary.ts` lists the collections and relations once, with `BRON_LABEL` (the one list of what each kind is called) and `MODES`. `src/lib/graph/types.ts` maps them to what the interface shows: node kind, edge category and line weight, node label. A table typed `Record<Relation, ...>` or `Record<Collection, ...>` fails the check when the API gains a name and the table does not. `src/lib/bron/KindGlyph.svelte` is the one glyph per kind: the shape and colour the kind has on the canvas.
+
+## Modes
+
+| Mode     | `mode`  | Shows                                                                                                                |
+| -------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
+| Lezen    | `read`  | The reader at full width; for an article or a law `LezenNav` (table of contents) on the left; Verbonden on the right |
+| Netwerk  | `graph` | The canvas; with a selection the canvas, the reader and Verbonden side by side                                       |
+| Bladeren | `index` | `IndexView`: one category with filters and sorting                                                                   |
+
+The panel Verbonden lists the verbindingen of the selected bron in groups; in Netwerk the same groups are the layers of the canvas. Column widths are resizable and kept in `localStorage`; narrow viewports show one column at a time.
 
 ## State
 
-| State                              | Lives in                                 | Survives        |
-| ---------------------------------- | ---------------------------------------- | --------------- |
-| Mode, focus, overlay, index filter | URL query (see [`routes.md`](routes.md)) | reload, sharing |
-| Nodes, edges, selection, history   | `GraphStore`                             | mode switches   |
-| Anything else in one view          | component `$state`                       | the component   |
+| State                                                         | Lives in                                 | Survives        |
+| ------------------------------------------------------------- | ---------------------------------------- | --------------- |
+| Mode, focus, naast, overlay, index category and filters       | URL query (see [`routes.md`](routes.md)) | reload, sharing |
+| Nodes, edges, selection, pinned, filters, node response cache | `GraphStore`                             | mode switches   |
+| The sequence of bronnen                                       | browser history                          | reload          |
+| Anything else in one view                                     | component `$state`                       | the component   |
 
 See [`state-and-stores.md`](state-and-stores.md).
 
 ## Data flow of `/explore`
 
-The URL is parsed in `routes/explore/+page.svelte`. Effects keyed on `focus`, `seed` and `overlay` call the store (`expandNode`, `expandNeighborhood`, `load*`) or the overlay helpers; results land in the store or in page state. `GraphView` renders the store through `GraphCanvas`; `KindReader` picks the reader for the selected source by collection.
+The URL is parsed in `routes/explore/+page.svelte`. The effect on `focus` fetches the bron through `store.expandNode` and selects it; in Netwerk `deepen` then expands the neighbourhood around it and prunes (see [`graph-system.md`](graph-system.md#expansion-around-a-focus)). The effect on `overlay` fetches the active overlay. `GraphView` renders the store through `GraphCanvas`; `KindReader` picks the reader for the selected bron by collection; `Verbonden` reads the same cached node response as the canvas. Every link to a bron is `bronHref`, and a click on the canvas is a navigation to one.
 
 ## Commands
 

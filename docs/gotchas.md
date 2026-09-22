@@ -6,12 +6,15 @@ Sigma draws a node with radius `size / zoomToSizeRatioFunction(cameraRatio)`, no
 
 ## URL state and store state
 
-The URL holds `mode`, `focus`, `overlay`, `seed`, `wet` and the index filters. The `GraphStore` lives in memory. After a reload the page loads the focus and expands it; it does not restore the previous canvas. A feature that depends on particular sources being on the canvas must load them itself.
+The URL holds `mode`, `focus`, `naast`, `overlay`, `kind`, the index filters and the fragment. The `GraphStore` lives in memory. After a reload the page loads the focus and expands around it; it does not restore the previous canvas. A feature that depends on particular bronnen being on the canvas must load them itself.
+
+`bronHref` reads `page.url`, so a link is reactive only where it is read in a template or a `$derived`.
 
 ## Identifiers
 
-- Node keys are lower case in the API and its routes are case-sensitive. `getNodeGraph` and `expandNode` lower-case the key. `nodeId()` does not: lower-case an ECLI or BWB id before building an id from it.
-- The key of a committee is a GUID. The `slug` only addresses `/api/committees/{slug}`. Never build a node id from a slug; `?seed=committee:{slug}` looks the key up in `/api/committees`.
+- Node keys are lower case in the API and its routes are case-sensitive. `nodes.ts` and `nodeResponse` lower-case the key. `nodeId()` does not: lower-case an ECLI or BWB id before building an id from it.
+- The key of a committee is a GUID. The `slug` (a prop) only addresses `/api/committees/{slug}`. Never build a node id from a slug.
+- The API addresses a dossier as `29684-I`; its node key is `29684_i` (`dossierNumber` in `parliamentary/data.ts`).
 - A `decisions` node has `GraphNodeKind` `activity`, like activities, cases and commitments. Code that must tell them apart checks `node.collection`, as `KindReader.svelte` does.
 - Node `props` are `{ [key: string]: any }` in the schema. Check a real response before reading a prop.
 
