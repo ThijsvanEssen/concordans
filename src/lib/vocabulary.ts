@@ -88,6 +88,42 @@ export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: 
 export const bronLabel = (collection: Collection) => BRON_LABEL[collection][0];
 export const bronPlural = (collection: Collection) => BRON_LABEL[collection][1];
 
+/** What a verbinding is called, as a verb in the third person, read from its source. */
+export const RELATION_LABEL: Record<Relation, string> = {
+	PART_OF: 'onderdeel van',
+	VERSION_OF: 'versie van',
+	AMENDS: 'wijzigt',
+	INTRODUCES: 'voegt toe',
+	REPEALS: 'trekt in',
+	BASED_ON: 'gebaseerd op',
+	IMPLEMENTS: 'implementeert',
+	LEGISLATED_IN: 'vastgesteld in',
+	REFERS_TO: 'verwijst naar',
+	EXPLAINS: 'licht toe',
+	APPEAL_OF: 'hoger beroep van',
+	SCOPED_BY: 'begrensd door',
+	ABOUT: 'over',
+	LED_BY: 'geleid door',
+	MADE_IN: 'gedaan in',
+	MEMBER_OF: 'lid van',
+	AUTHORED: 'ingediend door',
+	VOTED: 'stemde over'
+};
+
+/**
+ * The label of a verbinding. A reference from a judgment or a parliamentary document
+ * is a citation ("haalt aan"); between two articles it is a reference in the text of
+ * the law ("verwijst naar").
+ */
+export const relationLabel = (relation: Relation, sourceCollection?: Collection | null) =>
+	relation === 'REFERS_TO' && sourceCollection && sourceCollection !== 'articles'
+		? 'haalt aan'
+		: RELATION_LABEL[relation];
+
+/** The status of a verbinding as the API writes it, and as the screen prints it. */
+export const statusLabel = (status: string | null | undefined) =>
+	status === 'voorgesteld' ? 'voorgesteld' : 'vastgesteld';
+
 /** The three ways to look at the material, in the order of the keys 1, 2 and 3. */
 export const MODES = [
 	{ id: 'read', label: 'Lezen' },

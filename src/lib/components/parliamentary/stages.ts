@@ -5,7 +5,11 @@ type Dossier = Schema<'DossierSummaryDTO'>;
 export type Stage = NonNullable<Dossier['current_stage']>;
 export type Track = NonNullable<Dossier['track']>;
 
-/** The stages of a bill in the order they are passed; `tone` colours them in lists. */
+/**
+ * The stages of a bill in the order they are passed. Stages are shown in shades of ink
+ * (current, passed, future); `tone` no longer colours anything and stays for the shape
+ * of the export.
+ */
 export const STAGES: { id: Stage; label: string; tone: 'slate' | 'ochre' | 'olive' }[] = [
 	{ id: 'wetsvoorstel', label: 'Wetsvoorstel', tone: 'slate' },
 	{ id: 'mvt', label: 'MvT', tone: 'slate' },

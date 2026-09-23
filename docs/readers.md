@@ -5,11 +5,12 @@ The reading surfaces of `/explore` for the selected bron:
 | Place                    | Modes                           | Component                                                                                                         |
 | ------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | Reader                   | Lezen; Netwerk with a selection | `KindReader.svelte`, which picks one reader per collection                                                        |
+| Table                    | Lezen with `?tabel=1`           | `src/lib/verbonden/VerbondenTabel.svelte`: every verbinding of the bron, sortable, fifty per page, CSV export     |
 | Beside the reader        | both, with `?naast=`            | `DocumentReader` with the article as `article`: a toelichting next to the article it explains                     |
 | Table of contents (left) | Lezen, for an article or a law  | `LezenNav.svelte`: the articles of the whole law from `/api/instruments/{bwb_id}/articles`, grouped by breadcrumb |
 | Verbonden (right)        | both                            | `src/lib/verbonden/Verbonden.svelte`: the verbindingen of the bron in groups                                      |
 
-`explore/+page.svelte` places them. `LezenNav` reports its items through `onitems`; the page derives `prevHref` and `nextHref` for `ArticleReader` from them.
+`explore/+page.svelte` places them. `LezenNav` reports its items through `onitems`, each with the labels of its place in the law; the page derives `prevHref`, `nextHref` and `place` for `ArticleReader` from them. The page also loads the verbindingen of the bron once (`createVerbondenSource` in `src/lib/verbonden/source.ts`) and hands the same state to the panel, the table, the legend and the reader (the counts per lid, the number of wetsvoorstellen).
 
 ## Dispatch
 
@@ -37,7 +38,7 @@ A reader that loads data holds its state as `view` (`loading`, `error`, `loaded`
 
 `ArticleReader` and `JudgmentReader` use `ReaderFrame` (scroll container, empty, loading and error states) and `ReaderHead` (glyph, kind label, title, and a snippet for extra rows). The frame is sized per mode by `explore/+page.svelte` (`.reader-frame`). `judgment-text.ts` holds the pure helpers that structure judgment text. `_shared.ts` holds date formatting and `textProp`, which reads an untyped prop. The parliamentary readers share request helpers in `src/lib/components/parliamentary/data.ts` and the labels for stages and tracks in `stages.ts`.
 
-`ArticleReader` records the law name with `recordInstrument`, so the status bar and the hover panel can show it.
+`ArticleReader` records the law name with `recordInstrument`, so the status bar and the hover panel can show it. Its head is one grey line with the place of the article, the title, and one line with the version picker (`/history`; `Geldend recht, tekst sinds …`), the wetsvoorstellen that touch the article (a link that filters Verbonden to them) and `Citeer artikel`. The leden are a grid (`ArticleText`): the number in the margin, the text, and at the right the number of verbindingen of that lid (a link to `?lid=`) with `Citeer` and `Deel` on hover. `Citeer` offers the four forms of `citeArticle` (`src/lib/text/cite.ts`): kort, voluit, met datum, link; the short and long forms are built from the instrument's short title and citation title, the lid and onderdeel appended. A wetsvoorstel row of the panel can show its proposed wording next to the current lid (`proposed-text.ts`, from the mutations of its dossier).
 
 ## Text and anchors
 

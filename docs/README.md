@@ -11,7 +11,7 @@ The API is documented in the back end repository (`docs/api.md`, `docs/data-mode
 | [`routes.md`](routes.md)                     | URLs, the `/explore` query, links to a bron                     |
 | [`state-and-stores.md`](state-and-stores.md) | Where state lives                                               |
 | [`graph-system.md`](graph-system.md)         | GraphStore, the groups of Verbonden as layers, rendering        |
-| [`overlays.md`](overlays.md)                 | The overlays In behandeling and Citaties per maand              |
+| [`overlays.md`](overlays.md)                 | The overlays Open dossiers and Citaties per maand               |
 | [`readers.md`](readers.md)                   | Readers per kind of bron, text anchors, the panel Verbonden     |
 | [`search.md`](search.md)                     | The search component and citation resolving                     |
 | [`gotchas.md`](gotchas.md)                   | Things that look wrong and are not                              |

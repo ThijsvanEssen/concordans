@@ -23,7 +23,9 @@ src/lib/
   bron/                       bronHref (every link to a bron), anchor (landing on a position), KindGlyph
   api/                        client, generated types, helpers
   graph/                      GraphNode/GraphEdge types and GraphStore (store/*)
-  verbonden/                  the panel Verbonden: groups, loaders, rows
+  verbonden/                  the panel Verbonden: groups, loaders, rows, the bronfilter (filter.ts),
+                              the shared load (source.ts), the derived views (view.ts), the filter sheet,
+                              the card Verbinding, the table
   text/                       article parts, qualifiers (lid, onderdeel), passages
   search/                     the search component and citation resolving
   components/{graph,explore,articles,parliamentary,layout}

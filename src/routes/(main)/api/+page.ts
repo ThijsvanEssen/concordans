@@ -186,6 +186,7 @@ export const load: PageLoad = () => {
 		version: spec.info.version,
 		tags,
 		totalEndpoints: tags.reduce((sum, t) => sum + t.endpoints.length, 0),
+		keyHeaders: [...new Set(tags.flatMap((t) => t.endpoints.flatMap((e) => e.keys)))].sort(),
 		keyedEndpoints: tags.reduce(
 			(sum, t) => sum + t.endpoints.filter((e) => e.keys.length).length,
 			0

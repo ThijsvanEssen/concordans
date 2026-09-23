@@ -52,66 +52,66 @@
 		align-items: center;
 	}
 
+	/* Filter buttons; the active one is ink on paper. */
 	.chip {
 		display: inline-flex;
 		align-items: center;
-		height: 24px;
-		padding: 0 10px;
-		background: var(--paper-2);
+		padding: 4px 8px;
+		background: transparent;
 		border: 1px solid var(--rule-strong);
-		border-radius: var(--radius-pill);
+		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 11px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: var(--track-caps);
-		text-transform: uppercase;
-		color: var(--ink-3);
+		line-height: 16px;
+		color: var(--ink-2);
 		cursor: pointer;
 		transition:
-			background 80ms,
-			color 80ms,
-			border-color 80ms;
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
 		white-space: nowrap;
 	}
 
 	.chip:hover {
-		background: var(--paper-3);
-		color: var(--ink-2);
-		border-color: var(--rule-strong);
+		background: var(--paper-2);
+		color: var(--ink);
 	}
 
 	.chip--active {
-		background: var(--spine);
+		background: var(--ink);
 		color: var(--paper);
-		border-color: var(--spine);
+		border-color: var(--ink);
 	}
 
 	.chip--active:hover {
-		background: var(--spine-2);
-		border-color: var(--spine-2);
+		background: var(--ink-2);
+		border-color: var(--ink-2);
 		color: var(--paper);
 	}
 
+	/* A text button: no border, the hover as a paper-2 field. */
 	.chip-clear {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 22px;
-		height: 22px;
+		width: 24px;
+		height: 24px;
 		padding: 0;
 		background: none;
-		border: 1px solid var(--rule);
-		border-radius: 50%;
-		font-size: 10px;
-		color: var(--ink-4);
+		border: 0;
+		border-radius: var(--r-1);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		cursor: pointer;
 		transition:
-			color 80ms,
-			border-color 80ms;
+			color var(--dur-1) var(--ease),
+			background var(--dur-1) var(--ease);
 	}
 
 	.chip-clear:hover {
-		color: var(--spine);
-		border-color: var(--spine-faint);
+		color: var(--ink);
+		background: var(--paper-2);
 	}
 </style>

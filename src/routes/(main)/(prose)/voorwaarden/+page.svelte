@@ -7,7 +7,7 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow">JURIDISCH</div>
+		<div class="stub-eyebrow">Juridisch</div>
 		<h1 class="stub-title">Gebruiksvoorwaarden</h1>
 		<p class="stub-lede">
 			Gebruik van Concordans impliceert instemming met onderstaande voorwaarden.
@@ -66,25 +66,26 @@
 
 	.stub-eyebrow {
 		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.1em;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		margin-bottom: 16px;
 	}
 
 	.stub-title {
 		font-family: var(--font-serif);
-		font-size: clamp(28px, 5vw, 40px);
+		font-size: var(--t-h1);
 		font-weight: 500;
+		line-height: var(--lh-tight);
 		color: var(--ink);
 		margin: 0 0 16px;
 	}
 
 	.stub-lede {
-		font-family: var(--font-sans);
-		font-size: 15px;
-		line-height: 1.65;
-		color: var(--fg-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink-2);
 		margin-bottom: 48px;
 	}
 
@@ -94,17 +95,17 @@
 
 	.section-title {
 		font-family: var(--font-serif);
-		font-size: 18px;
+		font-size: var(--t-h3);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0 0 12px;
 	}
 
 	p {
-		font-family: var(--font-sans);
-		font-size: 14px;
-		line-height: 1.7;
-		color: var(--fg-1);
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
 		margin: 0;
 	}
 
@@ -113,7 +114,7 @@
 		padding-top: 24px;
 		border-top: 1px solid var(--rule);
 		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 </style>

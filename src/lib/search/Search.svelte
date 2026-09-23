@@ -262,7 +262,7 @@
 			aria-controls="{uid}-list"
 			aria-autocomplete="list"
 			aria-activedescendant={rowCount > 0 ? `${uid}-row-${active}` : undefined}
-			placeholder="Woorden, artikel, ECLI of dossiernummer"
+			placeholder="Zoek een artikel, uitspraak of dossier"
 			autocomplete="off"
 			spellcheck="false"
 		/>
@@ -350,7 +350,7 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		background: var(--paper);
-		color: var(--fg-3);
+		color: var(--ink-3);
 		flex-shrink: 0;
 	}
 	.field:focus-within {
@@ -374,14 +374,15 @@
 		color: var(--ink);
 	}
 	input::placeholder {
-		color: var(--fg-4);
+		color: var(--ink-3);
 		font-style: italic;
 	}
 
 	.kbd {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--fg-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		border: 1px solid var(--rule);
 		padding: 1px 6px;
 		border-radius: var(--r-1);
@@ -419,9 +420,7 @@
 
 	.group + .group,
 	.row--citation + .group {
-		border-top: 1px solid var(--rule);
-		margin-top: 6px;
-		padding-top: 6px;
+		margin-top: 8px;
 	}
 
 	.group-label {
@@ -430,10 +429,9 @@
 		gap: 8px;
 		padding: 8px 18px 4px;
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 	}
 
 	.row {
@@ -459,10 +457,9 @@
 		gap: 8px;
 		flex-shrink: 0;
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 	}
 
 	.row-title {
@@ -480,16 +477,16 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
 	.state {
 		margin: 0;
 		padding: 12px 18px;
 		font-family: var(--font-sans);
-		font-size: 13px;
-		color: var(--fg-3);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
 	}
 
 	@media (max-width: 640px) {

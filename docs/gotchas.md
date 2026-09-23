@@ -18,6 +18,10 @@ The URL holds `mode`, `focus`, `naast`, `overlay`, `kind`, the index filters and
 - A `decisions` node has `GraphNodeKind` `activity`, like activities, cases and commitments. Code that must tell them apart checks `node.collection`, as `KindReader.svelte` does.
 - Node `props` are `{ [key: string]: any }` in the schema. Check a real response before reading a prop.
 
+## Backend data gaps
+
+- `InstrumentArticleNodeDTO.breadcrumb` (the chapter/section path of an article, from `/api/instruments/{bwb_id}/articles`) is a real field in the contract but currently always `[]` — checked against BWBR0001903 (Sv), BWBR0001854 (Sr) and others on the 0.5 API at `:8001`. `LezenNav.svelte`'s `buildGroups()` already groups by it and falls back to a flat list when every article's breadcrumb is empty, so the grouping is dormant rather than broken: it activates the moment the field is populated, for any depth and any type names (boek/titel/afdeling/hoofdstuk/paragraaf), nothing to change on this side. The BWB toestand XML the ingest pipeline reads already carries this structure as nested `<boek>`/`<titeldeel>`/`<afdeling>`/`<hoofdstuk>`/`<paragraaf>` elements around each `<artikel>`; populating `breadcrumb` is a matter of walking that nesting during ingest, not new source data.
+
 ## Svelte 5
 
 - `{@const}` must be the direct child of `{#if}`, `{#each}`, `{:else}`, `{#snippet}`, `<svelte:fragment>` or a component. Inside a plain element it does not compile.

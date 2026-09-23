@@ -14,8 +14,22 @@ export type BronHrefOptions = {
 	mode?: Mode;
 };
 
-/** View state that belongs to the view, not to the bron, and travels along. */
-const KEPT_PARAMS = ['overlay'];
+/**
+ * View state that belongs to the view, not to the bron, and travels along: the
+ * overlay, the bronfilter and the depth of the network. What names a place in one
+ * bron (`lid`, `jaar`, `zoek`, `tabel`) stays behind.
+ */
+const KEPT_PARAMS = [
+	'overlay',
+	'bronnen',
+	'rechter',
+	'van',
+	'tot',
+	'geldend',
+	'betrouwbaarheid',
+	'status',
+	'diepte'
+];
 
 export const toRef = (ref: BronRef | string): BronRef | null =>
 	typeof ref === 'string' ? parseNodeId(ref) : ref;
@@ -44,7 +58,7 @@ export function buildBronHref(
 		}
 	}
 	// A node id is safe in a query string as it is; the escaped slash only hurts legibility.
-	const query = params.toString().replaceAll('%2F', '/');
+	const query = params.toString().replaceAll('%2F', '/').replaceAll('%2C', ',');
 	return `/explore?${query}${at ? `#${encodeURIComponent(at)}` : ''}`;
 }
 

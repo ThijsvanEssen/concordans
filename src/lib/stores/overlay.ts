@@ -1,8 +1,8 @@
 // The `?overlay=` parameter of the network: one overlay at a time.
 //
 //   heat:12       Citaties per maand, the last 12 months
-//   open          In behandeling, every open dossier
-//   dossier:36410 In behandeling, one dossier
+//   open          Open dossiers, every open dossier
+//   dossier:36410 Open dossiers, one dossier
 
 export type Overlay =
 	| { kind: 'none' }

@@ -23,7 +23,7 @@
 						cy="18"
 						r="3.6"
 						fill="var(--paper)"
-						stroke="var(--accent)"
+						stroke="var(--ink)"
 						stroke-width="1.6"
 					/>
 				</svg>
@@ -144,20 +144,18 @@
 	.foot-blurb p {
 		margin: 0;
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		line-height: 1.55;
-		color: var(--fg-3);
+		color: var(--ink-3);
 		max-width: 30ch;
 	}
 
 	.foot-col h4 {
 		margin: 0 0 14px;
 		font-family: var(--font-sans);
-		font-size: 11px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--fg-3);
+		color: var(--ink-3);
 	}
 
 	.foot-col ul {
@@ -171,8 +169,8 @@
 
 	.foot-col a {
 		font-family: var(--font-sans);
-		font-size: 13px;
-		color: var(--fg-2);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 		transition: color var(--dur-1) var(--ease);
 	}
 
@@ -186,8 +184,8 @@
 		align-items: center;
 		padding: 20px 32px;
 		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--fg-4);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
 	@media (max-width: 1024px) {

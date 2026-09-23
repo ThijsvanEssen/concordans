@@ -31,25 +31,29 @@
 <div class="page-wrap">
 	<div class="container">
 		<header class="page-header">
-			<div class="eyebrow">DEVELOPER · OPENAPI v{data.version}</div>
+			<div class="eyebrow">OpenAPI {data.version} · {data.totalEndpoints} endpoints</div>
 			<h1 class="page-title">API-referentie</h1>
 			<p class="page-lede">
-				Referentie van de LawGraph-API, gegenereerd uit het OpenAPI-schema. Lezen vraagt geen
-				sleutel. Een route met een sleutel schrijft en vraagt een header die alleen de server kent:
-				een browser kan geen sleutel bewaren.
+				De endpoints van de LawGraph-API, zoals het OpenAPI-schema ze beschrijft. Lezen is openbaar.
+				Schrijven vraagt een sleutel in een header.
 			</p>
-			<div class="meta-strip">
-				<span class="meta-pill">{data.totalEndpoints} endpoints</span>
-				<span class="meta-pill">{data.keyedEndpoints} met sleutel</span>
-				<span class="meta-pill">{data.tags.length} groepen</span>
-				<span class="meta-pill">200 verzoeken per minuut</span>
-			</div>
-			<p class="meta-note">
-				Zonder of met een onjuiste sleutel antwoordt een route met 401, zonder ingestelde sleutel
-				met 503. Boven de limiet volgt 429 met Retry-After; herkomsten op de toegestane lijst vallen
-				erbuiten. Artikelen worden 30 minuten gecachet, uitspraken een uur en statistieken vijf
-				minuten.
-			</p>
+			<dl class="api-terms">
+				<dt>Sleutel</dt>
+				<dd>
+					{data.keyedEndpoints} endpoints vragen {#each data.keyHeaders as h, i (h)}{i > 0
+							? ' of '
+							: ''}<code>{h}</code>{/each}. De sleutel staat op de server, niet in de browser.
+				</dd>
+				<dt>Foutcodes</dt>
+				<dd>401 bij een ontbrekende of onjuiste sleutel. 503 als de server geen sleutel heeft.</dd>
+				<dt>Limiet</dt>
+				<dd>
+					200 verzoeken per minuut. Daarboven volgt 429 met <code>Retry-After</code>. Herkomsten op
+					de toegestane lijst zijn vrijgesteld.
+				</dd>
+				<dt>Cache</dt>
+				<dd>Artikelen 30 minuten, uitspraken een uur, statistieken vijf minuten.</dd>
+			</dl>
 		</header>
 
 		<aside class="toc" aria-label="Inhoudsopgave">
@@ -71,9 +75,6 @@
 				<section id={t.tag} class="api-tag">
 					<header class="api-tag-head">
 						<h2 class="api-tag-title">{t.label}</h2>
-						<span class="api-tag-count"
-							>{t.endpoints.length} endpoint{t.endpoints.length === 1 ? '' : 's'}</span
-						>
 					</header>
 					{#if t.description}
 						<p class="api-tag-desc">{t.description}</p>
@@ -124,7 +125,7 @@
 													<thead>
 														<tr>
 															<th>Naam</th>
-															<th>In</th>
+															<th>Plaats</th>
 															<th>Type</th>
 															<th>Vereist</th>
 															<th>Beschrijving</th>
@@ -161,7 +162,7 @@
 
 										{#if ep.responses.length > 0}
 											<div class="api-block">
-												<div class="api-block-head">Responses</div>
+												<div class="api-block-head">Antwoorden</div>
 												<table class="api-responses">
 													<thead>
 														<tr><th>Status</th><th>Schema</th><th>Beschrijving</th></tr>
@@ -195,9 +196,9 @@
 
 		<div class="api-footer">
 			<p>
-				Voor uitleg over de werkomgeving: zie de <a href="/docs">documentatie</a>. Voor de
-				inhoudelijke verantwoording: <a href="/docs/methode">methode-bijlage</a>. Toegang voor
-				grootschalig gebruik loopt via <a href="/contact">contact</a>.
+				De werkomgeving staat in de <a href="/docs">documentatie</a>, de herkomst van de gegevens in
+				de <a href="/docs/methode">methode-bijlage</a>. Voor grootschalig gebruik:
+				<a href="/contact">contact</a>.
 			</p>
 		</div>
 	</div>
@@ -227,50 +228,52 @@
 	}
 	.eyebrow {
 		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.1em;
-		color: var(--ink-4);
-		text-transform: uppercase;
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--ink-3);
 	}
 	.page-title {
 		font-family: var(--font-serif);
-		font-size: clamp(30px, 5vw, 44px);
+		font-size: var(--t-h1);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
-		line-height: 1.15;
+		line-height: var(--lh-tight);
 	}
 	.page-lede {
-		font-family: var(--font-sans);
-		font-size: 15px;
-		line-height: 1.65;
-		color: var(--ink-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
 		margin: 0;
-		max-width: 64ch;
+		max-width: var(--measure);
 	}
-	.meta-strip {
-		display: flex;
-		gap: 12px;
-		align-items: center;
-		margin-top: 6px;
-		flex-wrap: wrap;
+	.api-terms {
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		column-gap: var(--s-4);
+		row-gap: 4px;
+		margin: 6px 0 0;
+		max-width: 72ch;
+		font-family: var(--font-sans);
+		font-size: 13px;
+		line-height: 1.55;
 	}
-	.meta-pill {
-		font-family: var(--font-mono);
-		font-size: 11px;
+	.api-terms dt {
+		font-weight: 500;
 		color: var(--ink-3);
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-1);
-		padding: 3px 9px;
 	}
-	.meta-note {
+	.api-terms dd {
+		margin: 0;
+		color: var(--ink-2);
+	}
+	.api-terms code {
 		font-family: var(--font-sans);
 		font-size: 12px;
-		line-height: 1.6;
-		color: var(--ink-4);
-		margin: 0;
-		max-width: 72ch;
+		color: var(--ink);
+		background: var(--paper-2);
+		padding: 1px 5px;
+		border-radius: var(--r-1);
 	}
 
 	/* ── TOC ──────────────────────────────────────────────────────────────── */
@@ -283,10 +286,9 @@
 	}
 	.toc-title {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--ink-4);
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--ink-3);
 		margin-bottom: 8px;
 	}
 	.toc-list {
@@ -308,16 +310,17 @@
 		border-bottom: 1px dotted transparent;
 	}
 	.toc-list a:hover {
-		color: var(--spine);
+		color: var(--accent);
 		border-bottom-color: var(--rule);
 	}
 	.toc-name {
 		flex: 1;
 	}
 	.toc-count {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--ink-4);
+		font-family: var(--font-sans);
+		font-variant-numeric: tabular-nums;
+		font-size: 12px;
+		color: var(--ink-3);
 		margin-left: 8px;
 	}
 
@@ -350,11 +353,6 @@
 		color: var(--ink);
 		margin: 0;
 	}
-	.api-tag-count {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-4);
-	}
 	.api-tag-desc {
 		font-family: var(--font-sans);
 		font-size: 13px;
@@ -370,10 +368,6 @@
 		margin: 0;
 		display: flex;
 		flex-direction: column;
-		border-top: 1px solid var(--rule);
-	}
-	.api-endpoint {
-		border-bottom: 1px solid var(--rule);
 	}
 	.api-endpoint-head {
 		width: 100%;
@@ -383,45 +377,28 @@
 		padding: 10px 0;
 		background: none;
 		border: 0;
+		border-radius: var(--r-1);
 		cursor: pointer;
 		text-align: left;
-		transition: background 80ms;
+		transition: background var(--dur-1) var(--ease);
 	}
 	.api-endpoint-head:hover {
 		background: var(--paper-2);
 	}
 
 	.api-method {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		padding: 2px 7px;
-		border-radius: var(--r-1);
-		color: var(--paper);
+		font-family: var(--font-sans);
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--ink-2);
 		flex-shrink: 0;
 		min-width: 48px;
-		text-align: center;
-	}
-	.method-get {
-		background: var(--indigo, #2b3a5c);
-	}
-	.method-post {
-		background: #16a34a;
-	}
-	.method-put {
-		background: #d97706;
-	}
-	.method-delete {
-		background: var(--spine, #7a1f1a);
-	}
-	.method-patch {
-		background: #6b21a8;
 	}
 
 	.api-path {
-		font-family: var(--font-mono);
-		font-size: 12.5px;
+		font-family: var(--font-sans);
+		font-variant-numeric: tabular-nums;
+		font-size: 13px;
 		color: var(--ink);
 		flex-shrink: 0;
 	}
@@ -436,21 +413,18 @@
 		white-space: nowrap;
 	}
 	.api-key {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--spine);
-		border: 1px solid var(--spine);
-		border-radius: var(--r-1);
-		padding: 1px 6px;
+		font-family: var(--font-sans);
+		font-size: 12px;
+		color: var(--ink-3);
 		flex-shrink: 0;
 	}
 	.api-default {
 		display: block;
-		color: var(--ink-4);
-		font-size: 11px;
+		color: var(--ink-3);
+		font-size: 12px;
 	}
 	.api-chev {
-		color: var(--ink-4);
+		color: var(--ink-3);
 		font-size: 12px;
 		transition: transform 120ms;
 		margin-right: 4px;
@@ -480,10 +454,8 @@
 	}
 	.api-block-head {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--ink-4);
+		font-size: 12px;
+		color: var(--ink-3);
 		font-weight: 500;
 	}
 
@@ -506,39 +478,26 @@
 	.api-params th,
 	.api-responses th {
 		font-weight: 500;
-		color: var(--ink-4);
-		font-size: 10px;
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
+		color: var(--ink-3);
+		font-size: 12px;
 	}
 	.api-params code,
 	.api-responses code {
-		font-family: var(--font-mono);
-		font-size: 11px;
+		font-family: var(--font-sans);
+		font-variant-numeric: tabular-nums;
+		font-size: 12px;
 		color: var(--ink);
 		background: var(--paper-2);
 		padding: 1px 5px;
-		border-radius: 2px;
+		border-radius: var(--r-1);
 	}
 	.api-in {
-		font-family: var(--font-mono);
-		font-size: 10px;
+		font-family: var(--font-sans);
+		font-size: 12px;
 		color: var(--ink-3);
-		background: var(--paper-3);
-		padding: 1px 6px;
-		border-radius: 2px;
 	}
-	.api-status-2xx {
-		color: #16a34a;
-	}
-	.api-status-3xx {
-		color: #d97706;
-	}
-	.api-status-4xx {
-		color: var(--spine);
-	}
-	.api-status-5xx {
-		color: #dc2626;
+	.api-status {
+		color: var(--ink);
 	}
 
 	.api-footer {
@@ -557,8 +516,8 @@
 		text-decoration: none;
 	}
 	.api-footer a:hover {
-		color: var(--spine);
-		border-bottom-color: var(--spine);
+		color: var(--accent);
+		border-bottom-color: var(--accent);
 	}
 
 	@media (max-width: 820px) {

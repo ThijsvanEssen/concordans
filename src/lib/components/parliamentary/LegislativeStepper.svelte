@@ -70,6 +70,7 @@
 		position: relative;
 	}
 
+	/* The current stage in ink, passed stages in ink-2, the rest outlined. */
 	.step-dot {
 		width: 18px;
 		height: 18px;
@@ -84,37 +85,36 @@
 		position: relative;
 		z-index: 1;
 		transition:
-			background 120ms,
-			border-color 120ms;
+			background var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
 	}
 
 	.step--done .step-dot {
-		background: var(--ink-3);
-		border-color: var(--ink-3);
+		background: var(--ink-2);
+		border-color: var(--ink-2);
 	}
 
 	.step--active .step-dot {
-		background: var(--spine);
-		border-color: var(--spine);
-		box-shadow: 0 0 0 3px var(--spine-faint);
+		background: var(--ink);
+		border-color: var(--ink);
+		box-shadow: 0 0 0 3px var(--paper-2);
 	}
 
 	.step-label {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.02em;
-		color: var(--ink-4);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		text-align: center;
 		line-height: 1.2;
 		white-space: nowrap;
 	}
 
 	.step--done .step-label {
-		color: var(--ink-3);
+		color: var(--ink-2);
 	}
 	.step--active .step-label {
-		color: var(--spine);
-		font-weight: 600;
+		color: var(--ink);
+		font-weight: 500;
 	}
 
 	.step-connector {
@@ -129,6 +129,6 @@
 
 	.step--done .step-connector,
 	.step-connector--done {
-		background: var(--ink-3);
+		background: var(--ink-2);
 	}
 </style>

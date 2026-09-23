@@ -105,28 +105,25 @@
 
 	.alpha-eyebrow {
 		font-family: var(--font-sans);
-		font-size: 11px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		color: var(--fg-3);
+		color: var(--ink-3);
 		margin-bottom: 16px;
 	}
 
 	.alpha-title {
 		font-family: var(--font-serif);
-		font-size: clamp(36px, 5.5vw, 48px);
+		font-size: var(--t-h1);
 		font-weight: 500;
-		line-height: 1.08;
-		letter-spacing: -0.012em;
+		line-height: var(--lh-tight);
 		color: var(--ink);
 		margin: 0 0 20px;
 	}
 
 	.alpha-lede {
 		font-family: var(--font-serif);
-		font-size: 19px;
-		line-height: 1.55;
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink-2);
 		margin: 0 0 36px;
 		max-width: 56ch;
@@ -136,30 +133,23 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 12px 18px;
-		align-items: center;
+		align-items: baseline;
 		padding: 14px 16px;
 		background: var(--paper-2);
-		border: 1px solid var(--rule);
 		margin: 0 0 40px;
 	}
 
 	.alpha-badge {
-		display: inline-block;
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.04em;
-		color: var(--ochre);
-		background: var(--ochre-faint);
-		border: 1px solid var(--ochre);
-		padding: 2px 7px;
-		border-radius: var(--r-1, 2px);
+		color: var(--ink-3);
 	}
 
 	.alpha-badge-note {
 		font-family: var(--font-sans);
-		font-size: 13px;
-		color: var(--fg-2);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 		line-height: 1.4;
 	}
 
@@ -169,7 +159,7 @@
 
 	.alpha-section h2 {
 		font-family: var(--font-serif);
-		font-size: 24px;
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0 0 12px;
@@ -179,11 +169,16 @@
 
 	.alpha-section p {
 		font-family: var(--font-serif);
-		font-size: 17px;
-		line-height: 1.6;
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink-2);
 		margin: 0 0 16px;
 		max-width: 56ch;
+	}
+
+	.alpha-section a {
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
 	}
 
 	.alpha-list {
@@ -194,7 +189,7 @@
 
 	.alpha-list dt {
 		font-family: var(--font-serif);
-		font-size: 16px;
+		font-size: var(--t-body);
 		font-weight: 500;
 		color: var(--ink);
 		margin-bottom: 4px;
@@ -203,8 +198,8 @@
 	.alpha-list dd {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 16px;
-		line-height: 1.6;
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink-2);
 		max-width: 60ch;
 	}
@@ -215,8 +210,8 @@
 		display: grid;
 		gap: 10px;
 		font-family: var(--font-serif);
-		font-size: 16px;
-		line-height: 1.6;
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink-2);
 	}
 
@@ -237,8 +232,8 @@
 
 	.alpha-foot-link {
 		font-family: var(--font-sans);
-		font-size: 13px;
-		color: var(--fg-2);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 		text-decoration: none;
 		transition: color var(--dur-1) var(--ease);
 	}
@@ -252,12 +247,12 @@
 		align-items: center;
 		gap: 8px;
 		font-family: var(--font-sans);
-		font-size: 13px;
-		color: var(--ink);
-		background: var(--paper-2);
-		border: 1px solid var(--ink);
-		padding: 10px 16px;
-		border-radius: var(--r-1, 2px);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-2);
+		border: 1px solid var(--rule-strong);
+		padding: 6px 12px;
+		border-radius: var(--r-1);
 		text-decoration: none;
 		transition:
 			background var(--dur-1) var(--ease),
@@ -265,7 +260,7 @@
 	}
 
 	.alpha-foot-cta:hover {
-		background: var(--ink);
-		color: var(--paper);
+		background: var(--paper-2);
+		color: var(--ink);
 	}
 </style>

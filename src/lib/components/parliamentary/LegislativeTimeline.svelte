@@ -203,18 +203,18 @@
 		justify-content: center;
 		width: 28px;
 		height: 28px;
-		background: var(--paper-2);
+		background: transparent;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		color: var(--ink-3);
+		color: var(--ink-2);
 		cursor: pointer;
 		transition:
-			background 80ms,
-			color 80ms;
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease);
 	}
 
 	.order-btn:hover {
-		background: var(--paper-3);
+		background: var(--paper-2);
 		color: var(--ink);
 	}
 
@@ -222,7 +222,7 @@
 		font-family: var(--font-serif);
 		font-style: italic;
 		font-size: var(--t-body-2);
-		color: var(--ink-4);
+		color: var(--ink-3);
 		padding: var(--s-5) 0;
 	}
 
@@ -237,21 +237,23 @@
 		padding-left: var(--s-5);
 	}
 
+	/* Entries keep apart by padding and the hover field; no rule between them. */
 	.entry {
 		position: relative;
-		padding: var(--s-4) 0 var(--s-5);
-		border-bottom: 1px solid var(--rule);
+		padding: var(--s-4) var(--s-2) var(--s-5);
+		margin: 0 calc(-1 * var(--s-2));
+		border-radius: var(--r-1);
 	}
 
-	.entry:last-child {
-		border-bottom: none;
+	.entry:hover {
+		background: var(--paper-2);
 	}
 
-	/* timeline dot */
+	/* The dot on the rail; the kind is told by the word next to the date. */
 	.entry::before {
 		content: '';
 		position: absolute;
-		left: calc(-1 * var(--s-5) - 4px);
+		left: calc(-1 * var(--s-5) - 4px - var(--s-2));
 		top: calc(var(--s-4) + 5px);
 		width: 7px;
 		height: 7px;
@@ -261,13 +263,11 @@
 	}
 
 	.entry[data-kind='decision']::before {
-		background: var(--spine);
+		background: var(--ink);
 	}
-	.entry[data-kind='commitment']::before {
-		background: var(--warn);
-	}
+	.entry[data-kind='commitment']::before,
 	.entry[data-kind='activity']::before {
-		background: var(--indigo);
+		background: var(--ink-2);
 	}
 
 	.entry-meta {
@@ -280,17 +280,14 @@
 	.entry-date {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		color: var(--ink-4);
-		letter-spacing: 0.02em;
+		color: var(--ink-3);
 		flex-shrink: 0;
 	}
 
 	.entry-kind {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		letter-spacing: var(--track-caps);
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		font-weight: 500;
 	}
 
@@ -312,36 +309,35 @@
 		align-self: flex-start;
 	}
 	.entry-title--link:hover {
-		color: var(--spine);
+		color: var(--accent);
 	}
 
 	.entry-link {
 		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--spine);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
 		text-decoration: none;
-		border-bottom: 1px solid var(--spine-faint);
 		align-self: flex-start;
 	}
 
 	.entry-link:hover {
-		border-bottom-color: var(--spine);
+		color: var(--accent);
 	}
 
 	/* ── Decision ─────────────────────────────────────────────────────────── */
-	/* Bar and totals as in DecisionReader. */
+	/* Bar and totals as in DecisionReader; for and against are told apart by the word. */
 	.decision-bar {
 		height: 6px;
-		background: color-mix(in srgb, var(--red, #dc2626) 18%, var(--paper-3));
-		border-radius: 3px;
+		background: var(--rule);
+		border-radius: var(--r-1);
 		overflow: hidden;
 		margin-top: var(--s-2);
 	}
 	.decision-bar-for {
 		height: 100%;
-		background: var(--green, #16a34a);
-		border-radius: 3px 0 0 3px;
-		transition: width 200ms ease;
+		background: var(--ink-2);
+		border-radius: var(--r-1) 0 0 var(--r-1);
+		transition: width var(--dur-2) var(--ease);
 	}
 
 	.decision-totals {
@@ -351,50 +347,38 @@
 		gap: 6px;
 		margin-top: 4px;
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
 	}
-	.decision-total--for {
-		color: var(--green, #16a34a);
-		font-weight: 600;
-	}
+	.decision-total--for,
 	.decision-total--against {
-		color: var(--red, #dc2626);
-		font-weight: 600;
+		color: var(--ink-2);
+		font-weight: 500;
 	}
 	.decision-total--other {
 		color: var(--ink-3);
 	}
 	.decision-total-sep {
-		color: var(--ink-4);
+		color: var(--ink-3);
 	}
 
+	/* The outcome is a word, not a tag. */
 	.decision-outcome {
 		margin-left: auto;
-		padding: 2px 8px;
-		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 600;
-		letter-spacing: var(--track-caps);
-		text-transform: uppercase;
-		border: 1px solid var(--rule);
+		font-size: var(--t-micro);
+		font-weight: 500;
 	}
-	.outcome--passed {
-		background: color-mix(in srgb, var(--green, #16a34a) 8%, var(--paper));
-		color: var(--green, #16a34a);
-		border-color: color-mix(in srgb, var(--green, #16a34a) 22%, transparent);
-	}
+	.outcome--passed,
 	.outcome--failed {
-		background: color-mix(in srgb, var(--red, #dc2626) 8%, var(--paper));
-		color: var(--red, #dc2626);
-		border-color: color-mix(in srgb, var(--red, #dc2626) 22%, transparent);
+		color: var(--ink-2);
 	}
 
 	/* Commitment */
 	.entry-minister {
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
-		font-weight: 600;
+		font-weight: 500;
 		color: var(--ink-2);
 		margin: 0;
 	}
@@ -407,30 +391,19 @@
 		line-height: var(--lh-body);
 	}
 
+	/* The status is a word, not a tag. */
 	.commitment-status {
 		align-self: flex-start;
-		padding: 2px 8px;
-		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: var(--track-caps);
-		text-transform: uppercase;
-	}
-
-	.status--open,
-	.status--unknown {
-		background: var(--paper-3);
 		color: var(--ink-3);
 	}
 
-	.status--done {
-		background: #e5efe4;
-		color: var(--positive);
-	}
-
+	.status--open,
+	.status--unknown,
+	.status--done,
 	.status--vervallen {
-		background: var(--warn-faint);
-		color: var(--warn);
+		color: var(--ink-3);
 	}
 </style>

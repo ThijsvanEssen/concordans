@@ -4,7 +4,7 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow"><a href="/docs">Documentatie</a> · SNELTOETSEN</div>
+		<div class="stub-eyebrow"><a href="/docs">Documentatie</a> · Sneltoetsen</div>
 		<h1 class="stub-title">Sneltoetsen</h1>
 		<div class="shortcut-table">
 			<div class="shortcut-row">
@@ -23,10 +23,6 @@
 				<span class="shortcut-desc">Modus Netwerk</span>
 				<span class="shortcut-keys"><kbd>2</kbd></span>
 			</div>
-			<div class="shortcut-row">
-				<span class="shortcut-desc">Modus Bladeren</span>
-				<span class="shortcut-keys"><kbd>3</kbd></span>
-			</div>
 		</div>
 	</div>
 </div>
@@ -44,9 +40,9 @@
 
 	.stub-eyebrow {
 		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.1em;
-		color: var(--fg-3);
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--ink-3);
 		margin-bottom: 16px;
 	}
 
@@ -63,8 +59,9 @@
 
 	.stub-title {
 		font-family: var(--font-serif);
-		font-size: clamp(28px, 5vw, 40px);
+		font-size: var(--t-h1);
 		font-weight: 500;
+		line-height: var(--lh-tight);
 		color: var(--ink);
 		margin: 0 0 32px;
 	}
@@ -80,12 +77,11 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 12px 20px;
-		border-bottom: 1px solid var(--rule);
 		background: var(--paper);
 	}
 
-	.shortcut-row:last-child {
-		border-bottom: none;
+	.shortcut-row:hover {
+		background: var(--paper-2);
 	}
 
 	.shortcut-desc {
@@ -100,16 +96,16 @@
 		align-items: center;
 		font-family: var(--font-sans);
 		font-size: 12px;
-		color: var(--fg-3);
+		color: var(--ink-3);
 	}
 
 	kbd {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--fg-2);
+		font-family: var(--font-sans);
+		font-size: 12px;
+		color: var(--ink-2);
 		background: var(--paper-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: 4px;
+		border: 1px solid var(--rule);
+		border-radius: var(--r-1);
 		padding: 2px 7px;
 	}
 </style>

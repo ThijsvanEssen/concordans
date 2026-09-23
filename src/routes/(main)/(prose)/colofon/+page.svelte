@@ -7,7 +7,7 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow">OVER CONCORDANS</div>
+		<div class="stub-eyebrow">Over Concordans</div>
 		<h1 class="stub-title">Colofon</h1>
 		<p class="stub-lede">
 			Concordans is een onafhankelijk onderzoeksproject naar de structuur van het Nederlandse recht.
@@ -80,25 +80,26 @@
 
 	.stub-eyebrow {
 		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.1em;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		margin-bottom: 16px;
 	}
 
 	.stub-title {
 		font-family: var(--font-serif);
-		font-size: clamp(28px, 5vw, 40px);
+		font-size: var(--t-h1);
 		font-weight: 500;
+		line-height: var(--lh-tight);
 		color: var(--ink);
 		margin: 0 0 16px;
 	}
 
 	.stub-lede {
-		font-family: var(--font-sans);
-		font-size: 15px;
-		line-height: 1.65;
-		color: var(--fg-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink-2);
 		margin-bottom: 48px;
 	}
 
@@ -108,28 +109,23 @@
 
 	.section-title {
 		font-family: var(--font-serif);
-		font-size: 18px;
+		font-size: var(--t-h3);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0 0 12px;
 	}
 
 	p {
-		font-family: var(--font-sans);
-		font-size: 14px;
-		line-height: 1.7;
-		color: var(--fg-1);
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
 		margin: 0;
 	}
 
 	.cite {
-		color: var(--accent);
-		text-decoration: none;
-		border-bottom: 1px solid var(--accent);
-	}
-
-	.cite:hover {
-		opacity: 0.8;
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
 	}
 
 	.meta-row {
@@ -143,14 +139,12 @@
 
 	.meta-link {
 		font-family: var(--font-sans);
-		font-size: 13px;
-		color: var(--fg-3);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
 		text-decoration: none;
-		border-bottom: none;
 	}
 
 	.meta-link:hover {
 		color: var(--ink);
-		border-bottom: none;
 	}
 </style>
