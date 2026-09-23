@@ -216,7 +216,7 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 	const props = node.props ?? {};
 	switch (kind) {
 		case 'dossier': {
-			const number = text(props.number) ?? node.key;
+			const number = text(props.label) ?? node.key;
 			const title = shortDossierTitle(text(props.title));
 			return title ? `${number} · ${title}` : number;
 		}

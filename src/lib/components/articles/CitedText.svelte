@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 	import { getArticleDetail } from '$lib/api/articles';
 	import type { Schema } from '$lib/api/types';
-	import { bronHref } from '$lib/bron/href';
+	import { bronHref, refOf } from '$lib/bron/href';
 	import { parseArticleParts, partText } from '$lib/text/article-parts';
 	import { anchorOf, parseQualifier, qualifierOfSpan } from '$lib/text/qualifier';
 	import { isCollection } from '$lib/vocabulary';
@@ -52,7 +52,7 @@
 
 	const href = (seg: Segment) => {
 		const { collection, key } = seg.span!.target;
-		return isCollection(collection) ? bronHref({ collection, key }, { at: seg.at }) : undefined;
+		return isCollection(collection) ? bronHref(refOf(collection, key), { at: seg.at }) : undefined;
 	};
 
 	// ── The cited text, on hover ──────────────────────────────────────────────

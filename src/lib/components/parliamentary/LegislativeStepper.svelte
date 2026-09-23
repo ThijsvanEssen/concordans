@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { STAGES, type Stage } from './stages';
+	import { STAGES, STAGE_LABEL, type Stage } from './stages';
 
 	// `stages` are the stages the dossier has passed, `current` the latest one.
 	// A dossier can loop (amendments after a report, then a nota again), so
@@ -10,9 +10,9 @@
 </script>
 
 <ol class="stepper" aria-label="Wetgevingsstatus">
-	{#each STAGES as step, i (step.id)}
-		{@const done = passed.has(step.id) && step.id !== current}
-		{@const active = step.id === current}
+	{#each STAGES as step, i (step)}
+		{@const done = passed.has(step) && step !== current}
+		{@const active = step === current}
 		<li
 			class="step"
 			class:step--done={done}
@@ -32,12 +32,12 @@
 					</svg>
 				{/if}
 			</span>
-			<span class="step-label">{step.label}</span>
+			<span class="step-label">{STAGE_LABEL[step]}</span>
 			{#if i < STAGES.length - 1}
 				<span
 					class="step-connector"
 					aria-hidden="true"
-					class:step-connector--done={passed.has(step.id) && passed.has(STAGES[i + 1].id)}
+					class:step-connector--done={passed.has(step) && passed.has(STAGES[i + 1])}
 				></span>
 			{/if}
 		</li>
@@ -66,7 +66,7 @@
 		align-items: center;
 		gap: var(--s-1);
 		flex: 1;
-		min-width: 56px;
+		min-width: 64px;
 		position: relative;
 	}
 
@@ -106,7 +106,10 @@
 		color: var(--ink-3);
 		text-align: center;
 		line-height: 1.2;
-		white-space: nowrap;
+		/* A label wraps inside its step rather than run into the next one. */
+		max-width: 100%;
+		padding: 0 2px;
+		hyphens: auto;
 	}
 
 	.step--done .step-label {

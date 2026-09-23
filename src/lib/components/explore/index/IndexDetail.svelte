@@ -3,8 +3,13 @@
 	// dossiers and the three ways of opening the source. Shows only what the
 	// list item carries.
 	import type { Schema } from '$lib/api/types';
-	import { STAGES, STAGE_LABEL, TRACK_LABEL } from '$lib/components/parliamentary/stages';
-	import { dossierNumber } from '$lib/components/parliamentary/data';
+	import {
+		OUTCOME_LABEL,
+		STAGE_LABEL,
+		TRACK_LABEL,
+		isBill
+	} from '$lib/components/parliamentary/stages';
+	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import { partyColor } from '$lib/utils/party-color';
 	import type { IndexCategory } from './categories';
 
@@ -62,8 +67,6 @@
 	const f = $derived(category === 'factions' ? (record as Schema<'FactionDTO'>) : null);
 	const s = $derived(category === 'decisions' ? (record as Schema<'DecisionSummaryDTO'>) : null);
 
-	const stageIdx = $derived(d ? STAGES.findIndex((step) => step.id === d.current_stage) : -1);
-
 	// Seats for and against; abstentions take no side. Any other choice gets its own tile.
 	const inFavour = $derived(s?.tally?.['Voor'] ?? 0);
 	const against = $derived(s?.tally?.['Tegen'] ?? 0);
@@ -89,7 +92,7 @@
 					<span class="detail-mono">{j.ecli ?? j.key}</span>
 				{:else if d}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">Kamerstuk {dossierNumber(d.key)}</span>
+					<span class="detail-mono">Kamerstuk {d.number}</span>
 				{:else if c}
 					<span class="detail-sep" aria-hidden="true">·</span>
 					<span class="detail-mono">{c.abbreviation ?? c.slug}</span>
@@ -135,7 +138,15 @@
 					{#if d.track}
 						<span class="tag tag--outline">{TRACK_LABEL[d.track]}</span>
 					{/if}
-					{#if d.current_stage}
+					{#if d.outcome}
+						<span
+							class="tag"
+							class:tag--passed={d.outcome === 'aangenomen'}
+							class:tag--rejected={d.outcome === 'verworpen'}
+							class:tag--outline={d.outcome === 'ingetrokken'}
+							><span class="tag-dot"></span>{OUTCOME_LABEL[d.outcome]}</span
+						>
+					{:else if d.current_stage}
 						<span class="tag tag--pending"
 							><span class="tag-dot"></span>nu: {STAGE_LABEL[d.current_stage]}</span
 						>
@@ -164,35 +175,9 @@
 		</div>
 	</div>
 
-	<!-- Dossier: the stages passed so far -->
-	{#if d && stageIdx >= 0}
-		<div class="stage-tl" aria-label="Fasen">
-			{#each STAGES as step, i (step.id)}
-				{@const past = i < stageIdx}
-				{@const current = i === stageIdx}
-				<div
-					class="stage-tl-step"
-					class:is-past={past}
-					class:is-current={current}
-					class:is-future={!past && !current}
-				>
-					<span class="stage-tl-mark">
-						{#if past}
-							<svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-								<polyline
-									points="2,6 5,9 10,3"
-									stroke="currentColor"
-									stroke-width="1.8"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								/>
-							</svg>
-						{/if}
-					</span>
-					<span class="stage-tl-lbl">{step.label}</span>
-				</div>
-			{/each}
-		</div>
+	<!-- Dossier: the stages of a bill -->
+	{#if d && isBill(d.track) && d.stages?.length}
+		<LegislativeStepper stages={d.stages} current={d.current_stage ?? null} />
 	{/if}
 
 	<!-- Stat tiles: only what the item carries; an empty field shows '—' -->
@@ -241,13 +226,20 @@
 			</div>
 		{:else if d}
 			<div class="tile">
-				<div class="tile-mono">{dossierNumber(d.key)}</div>
+				<div class="tile-mono">{d.number}</div>
 				<div class="tile-lbl">Kamerstuk</div>
 			</div>
-			<div class="tile">
-				<div class="tile-num">{d.current_stage ? STAGE_LABEL[d.current_stage] : '—'}</div>
-				<div class="tile-lbl">Huidige fase</div>
-			</div>
+			{#if d.outcome}
+				<div class="tile">
+					<div class="tile-num">{OUTCOME_LABEL[d.outcome]}</div>
+					<div class="tile-lbl">{fmtDate(d.closed_on)}</div>
+				</div>
+			{:else}
+				<div class="tile">
+					<div class="tile-num">{d.current_stage ? STAGE_LABEL[d.current_stage] : '—'}</div>
+					<div class="tile-lbl">Huidige fase</div>
+				</div>
+			{/if}
 			<div class="tile">
 				<div class="tile-num">{TRACK_LABEL[d.track ?? 'overig']}</div>
 				<div class="tile-lbl">Type traject</div>
@@ -417,66 +409,6 @@
 		height: 8px;
 		border-radius: 50%;
 		vertical-align: middle;
-	}
-
-	/* Stage timeline: the current stage in ink, passed stages in ink-2, the rest in ink-3. */
-	.stage-tl {
-		position: relative;
-		display: grid;
-		grid-template-columns: repeat(8, 1fr);
-		padding: 8px 0 0;
-	}
-	.stage-tl::before {
-		content: '';
-		position: absolute;
-		left: 6%;
-		right: 6%;
-		top: 19px;
-		height: 1px;
-		background: var(--rule-strong);
-		z-index: 0;
-	}
-	.stage-tl-step {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 6px;
-		z-index: 1;
-	}
-	.stage-tl-mark {
-		width: 22px;
-		height: 22px;
-		border-radius: 50%;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--paper);
-		border: 1.5px solid var(--rule-strong);
-	}
-	.is-past .stage-tl-mark {
-		background: var(--ink-2);
-		border-color: var(--ink-2);
-		color: var(--paper);
-	}
-	.is-current .stage-tl-mark {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
-		box-shadow: 0 0 0 4px var(--paper-2);
-	}
-	.stage-tl-lbl {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		text-align: center;
-		line-height: 1.25;
-	}
-	.is-current .stage-tl-lbl {
-		color: var(--ink);
-		font-weight: 500;
-	}
-	.is-past .stage-tl-lbl {
-		color: var(--ink-2);
 	}
 
 	/* Tiles */

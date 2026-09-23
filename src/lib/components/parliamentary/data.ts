@@ -13,9 +13,6 @@ function shared<T>(id: string, load: () => Promise<T>): Promise<T> {
 	return request;
 }
 
-/** The API addresses a dossier as `29684` or `29684-I`; a node key is `29684_i`. */
-export const dossierNumber = (key: string) => key.replace('_', '-').toUpperCase();
-
 export const getDossier = (number: string) =>
 	shared(`dossier/${number}`, () =>
 		unwrap(api.GET('/api/dossiers/{number}', { params: { path: { number } } }))

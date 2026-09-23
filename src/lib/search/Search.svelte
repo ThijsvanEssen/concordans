@@ -67,6 +67,10 @@
 		return typeof value === 'string' ? value : '';
 	};
 
+	/** What a link to the hit names: its node id, and a dossier's number (`37020-XV`). */
+	const hitName = (hit: Hit) =>
+		hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
+
 	function titleOf(hit: Hit): string {
 		if (hit.collection === 'articles' && extra(hit, 'article_number')) {
 			return `Artikel ${extra(hit, 'article_number')}`;
@@ -196,7 +200,7 @@
 
 	function openHit(hit: Hit) {
 		track('search_resolved', { type: hit.collection });
-		open(hit.id);
+		open(hitName(hit));
 	}
 
 	function onkeydown(e: KeyboardEvent) {
@@ -312,7 +316,7 @@
 						role="option"
 						tabindex="-1"
 						aria-selected={active === i}
-						href={bronHref(hit.id)}
+						href={bronHref(hitName(hit))}
 						onclick={() => {
 							track('search_resolved', { type: hit.collection });
 							onOpen?.();

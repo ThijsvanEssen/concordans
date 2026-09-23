@@ -57,7 +57,7 @@
 					<span class="list-k">artikelcitaat</span><span>artikel 287 Sr, art. 6:162 BW</span>
 				</div>
 				<div class="list-row">
-					<span class="list-k">dossiernummer</span><span>36327, 36327-3</span>
+					<span class="list-k">dossiernummer</span><span>36327, 37020-XV, 36327-3</span>
 				</div>
 				<div class="list-row">
 					<span class="list-k">BWB-id of CELEX</span><span>BWBR0001854, 32016L0680</span>
@@ -114,10 +114,20 @@
 		<div class="section">
 			<h2 class="section-title">Dossiers en Parlement</h2>
 			<p>
-				Een dossier doorloopt acht fasen: wetsvoorstel, memorie van toelichting, advies Raad van
-				State, nota, verslag, amendementen, stemming, afgehandeld. Het traject (wetsvoorstel,
-				initiatiefwetsvoorstel, begroting, motie, overig) en de uitslag (aangenomen, verworpen,
-				ingetrokken) staan bij het dossier.
+				Een dossier heeft een nummer, bij een begrotingshoofdstuk met toevoeging: 37020-XV is een
+				ander dossier dan 37020. Het traject is wetsvoorstel, initiatiefwetsvoorstel, begroting,
+				verdrag, initiatiefnota, motie of overig.
+			</p>
+			<p>
+				Alleen een wetsvoorstel, initiatiefwetsvoorstel, begroting of verdrag doorloopt fasen:
+				wetsvoorstel, memorie van toelichting, advies Raad van State, verslag, nota naar aanleiding
+				van het verslag, amendementen, behandeling, stemming, afgehandeld. Een ander dossier heeft
+				geen fase tot het is afgehandeld.
+			</p>
+			<p>
+				Een afgehandeld dossier heeft een uitkomst en een datum. Aangenomen: de wet is in het
+				Staatsblad gepubliceerd. Verworpen: de Tweede Kamer stemde tegen het wetsvoorstel.
+				Ingetrokken: het wetsvoorstel is bij brief ingetrokken.
 			</p>
 			<p>
 				Een stemming staat per fractie geregistreerd, of per lid bij een hoofdelijke stemming.

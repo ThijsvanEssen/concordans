@@ -178,7 +178,10 @@
 						<ul class="feed-list">
 							{#each dossiers as d (d.id)}
 								<li class="feed-row">
-									<a class="feed-row-link" href={bronHref({ collection: 'dossiers', key: d.key })}>
+									<a
+										class="feed-row-link"
+										href={bronHref({ collection: 'dossiers', key: d.key, number: d.number })}
+									>
 										<div class="feed-row-meta">
 											<KindGlyph collection="dossiers" />
 											<span>{d.number}</span>

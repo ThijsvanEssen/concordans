@@ -2,7 +2,7 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and `afgeleid` when the confidence is below 1. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
-import type { BronRef } from '$lib/bron/href';
+import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { bronKindOf, type BronKind } from './filter';
@@ -141,7 +141,7 @@ export function describe(
 			return {
 				title: text(props.title) ?? name,
 				context: null,
-				identifier: text(props.number) ?? key,
+				identifier: text(props.label),
 				date
 			};
 		case 'documents':
@@ -227,7 +227,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		text(meta.lid) ||
 		(n.direction === 'inbound' ? lidOfMatch(match) : null);
 	return {
-		ref: { collection: n.collection, key: n.key },
+		ref: refOf(n.collection, n.key, props),
 		...describe(n.collection, n.key, n.display_name, props),
 		kind: bronKindOf(n.collection, n.key, props, n.relation),
 		lid,

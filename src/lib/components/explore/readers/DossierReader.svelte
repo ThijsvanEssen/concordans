@@ -4,8 +4,14 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel, bronPlural } from '$lib/vocabulary';
-	import { dossierNumber, getDossier } from '$lib/components/parliamentary/data';
-	import { STAGE_LABEL, TRACK_LABEL } from '$lib/components/parliamentary/stages';
+	import { getDossier, str } from '$lib/components/parliamentary/data';
+	import {
+		OUTCOME_LABEL,
+		STAGE_LABEL,
+		TRACK_LABEL,
+		isBill
+	} from '$lib/components/parliamentary/stages';
+	import { formatLongDate } from './_shared';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
 	import GlossaryPill from './GlossaryPill.svelte';
@@ -26,7 +32,12 @@
 	let view = $state<State>({ kind: 'loading' });
 
 	$effect(() => {
-		const number = dossierNumber(node.key);
+		// The API addresses a dossier by its number (`37020-XV`), the node's `label`.
+		const number = str(node.raw?.props?.label);
+		if (!number) {
+			view = { kind: 'error', message: 'Dossier kon niet geladen worden.' };
+			return;
+		}
 		const ac = new AbortController();
 		view = { kind: 'loading' };
 		// The timeline is optional: when it fails its section is left out.
@@ -67,14 +78,17 @@
 			<h2 class="title">{d.title ?? d.number}</h2>
 			<div class="chips">
 				<span class="track-chip track-chip--{track}">{TRACK_LABEL[track]}</span>
-				{#if d.current_stage}
+				{#if d.outcome}
+					<span class="stage-chip"
+						>{OUTCOME_LABEL[d.outcome]}{d.closed_on ? `, ${formatLongDate(d.closed_on)}` : ''}</span
+					>
+				{:else if d.current_stage}
 					<span class="stage-chip">Nu: {STAGE_LABEL[d.current_stage]}</span>
 				{/if}
-				{#if d.closed}<span class="closed-chip">Afgehandeld</span>{/if}
 			</div>
 		</header>
 
-		{#if d.stages?.length}
+		{#if isBill(d.track) && d.stages?.length}
 			<div class="stepper-wrap">
 				<LegislativeStepper stages={d.stages} current={d.current_stage ?? null} />
 			</div>
@@ -158,10 +172,9 @@
 		align-items: baseline;
 	}
 
-	/* The track, the current stage and the closed state are words, not tags. */
+	/* The track, the current stage and the outcome are words, not tags. */
 	.track-chip,
-	.stage-chip,
-	.closed-chip {
+	.stage-chip {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;

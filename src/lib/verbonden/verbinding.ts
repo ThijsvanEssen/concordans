@@ -1,7 +1,7 @@
 // One verbinding as an object: the two bronnen with the relation between them, the
 // passage with the citation, betrouwbaarheid as a word with its reason, the status and
 // the source of the edge. Built from a row of the panel or from an edge of the canvas.
-import type { BronRef } from '$lib/bron/href';
+import { refOf, type BronRef } from '$lib/bron/href';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { relationLabel, statusLabel, type Relation } from '$lib/vocabulary';
 import { describe, type Row } from './rows';
@@ -86,7 +86,7 @@ export function betrouwbaarheid(
 const endOfNode = (node: GraphNode): End => {
 	const d = describe(node.collection, node.key, node.label, node.raw?.props ?? {});
 	return {
-		ref: { collection: node.collection, key: node.key },
+		ref: refOf(node.collection, node.key, node.raw?.props),
 		title: node.raw?.display_name ?? d.title,
 		sub: d.identifier ?? d.context
 	};

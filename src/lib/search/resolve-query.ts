@@ -18,8 +18,9 @@ export type Resolved = { ref: BronRef; at: string | null };
 const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const BWB = /^BWB[RVW]\d{7}$/i;
 const CELEX = /^[0-9CE]\d{4}[A-Z]{1,2}\d{4}(?:R\(\d+\))?$/i;
+// A dossier number is what the API takes (`^\d+(-[A-Za-z]+)?$`): `36327`, `37020-XV`, `37020-J`.
 const DOSSIER =
-	/^(?:kamerstuk(?:ken)?\s+(?:I{1,2}\s+)?)?(\d{5}(?:-[IVXLC]+|-\(R\d+\))?)(?:\s*(?:-|,?\s*nr\.?)\s*(\d+|[A-Z]{1,2}))?$/i;
+	/^(?:kamerstuk(?:ken)?\s+(?:I{1,2}\s+)?)?(\d{5}(?:-[A-Z]+)?)(?:\s*-\s*(\d+)|,?\s*nr\.?\s*(\d+|[A-Z]{1,2}))?$/i;
 // "artikel 287 Sr", "art. 6:162 BW", "art. 359a lid 1 onder b Sv", "artikel 3:4, tweede lid, Awb".
 const ARTICLE = /^art(?:ikel|\.)?\s*(?:(\d+[a-z]?):)?(\d+[a-z]*(?:\.\d+[a-z]*)*)(?![\w:])(.*)$/i;
 // What stands between the article number and the law: ", tweede lid,", "lid 1 onder b".
@@ -50,7 +51,11 @@ export function parseCitation(query: string): Citation | null {
 	if (CELEX.test(q)) return { kind: 'celex', id: q.toUpperCase() };
 	const dossier = DOSSIER.exec(q);
 	if (dossier) {
-		return { kind: 'dossier', number: dossier[1].toUpperCase(), document: dossier[2] ?? null };
+		return {
+			kind: 'dossier',
+			number: dossier[1].toUpperCase(),
+			document: dossier[2] ?? dossier[3] ?? null
+		};
 	}
 	const article = ARTICLE.exec(q);
 	if (article) {
@@ -83,6 +88,8 @@ export type ResolveDeps = {
 	articleKey: (bwbId: string, articleNumber: string) => Promise<string | null>;
 	/** Node key of document `nr` of a dossier. */
 	documentKey: (dossier: string, nr: string) => Promise<string | null>;
+	/** Node key and label of the dossier a number names, or null when there is none. */
+	dossier: (number: string) => Promise<{ key: string; number: string } | null>;
 	exists: (ref: BronRef) => Promise<boolean>;
 };
 
@@ -90,7 +97,6 @@ const RESOLVE_KINDS: Record<string, Collection> = {
 	article: 'articles',
 	instrument: 'instruments',
 	judgment: 'judgments',
-	dossier: 'dossiers',
 	document: 'documents'
 };
 
@@ -98,8 +104,9 @@ const apiDeps: ResolveDeps = {
 	resolve: async (q) => {
 		const { data, response } = await api.GET('/api/resolve', { params: { query: { q } } });
 		const match = response.ok ? data?.match : null;
+		// A dossier match carries no label; a dossier is looked up by its number instead.
 		const collection = match && (RESOLVE_KINDS[match.kind] ?? null);
-		if (!match || !collection) return null;
+		if (!match || !collection || collection === 'dossiers') return null;
 		return {
 			ref: { collection, key: match.key },
 			at: anchorOf(parseQualifier(data?.qualifier ?? ''))
@@ -130,6 +137,10 @@ const apiDeps: ResolveDeps = {
 		);
 		return hit?.key ?? null;
 	},
+	dossier: async (number) => {
+		const { data } = await api.GET('/api/dossiers/{number}', { params: { path: { number } } });
+		return data ? { key: data.key, number: data.number } : null;
+	},
 	exists: async ({ collection, key }) => {
 		const { response } = await api.GET('/api/nodes/{collection}/{key}', {
 			params: { path: { collection, key }, query: { limit: 1 } }
@@ -158,16 +169,18 @@ export async function resolveQuery(
 			const key = bwb ? await deps.articleKey(bwb, c.number) : null;
 			return key ? { ref: { collection: 'articles', key }, at: c.at } : null;
 		}
-		if (c.kind === 'dossier' && c.document) {
-			const key = await deps.documentKey(c.number, c.document);
+		if (c.kind === 'dossier') {
+			const key = c.document && (await deps.documentKey(c.number, c.document));
 			if (key) return { ref: { collection: 'documents', key }, at: null };
+			const dossier = await deps.dossier(c.number);
+			return dossier
+				? { ref: { collection: 'dossiers', key: dossier.key, number: dossier.number }, at: null }
+				: null;
 		}
 		const ref: BronRef =
 			c.kind === 'ecli'
 				? { collection: 'judgments', key: nodeKey(c.ecli) }
-				: c.kind === 'dossier'
-					? { collection: 'dossiers', key: nodeKey(c.number) }
-					: { collection: 'instruments', key: nodeKey(c.id) };
+				: { collection: 'instruments', key: nodeKey(c.id) };
 		return (await deps.exists(ref)) ? { ref, at: null } : null;
 	} catch {
 		return null;

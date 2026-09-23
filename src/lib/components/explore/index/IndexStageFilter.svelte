@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { STAGES, type Stage } from '$lib/components/parliamentary/stages';
+	import { STAGES, STAGE_LABEL, type Stage } from '$lib/components/parliamentary/stages';
 
 	// The stages of a bill as a row of buttons; the selected one is the
 	// dossier's current stage (`stage` in the API and the URL).
@@ -8,18 +8,18 @@
 </script>
 
 <div class="stage-filter" role="group" aria-label="Filter op fase">
-	{#each STAGES as s (s.id)}
-		{@const on = selected === s.id}
+	{#each STAGES as s (s)}
+		{@const on = selected === s}
 		<button
 			type="button"
-			class="stage-step tone-{s.tone}"
+			class="stage-step"
 			class:stage-step--on={on}
-			onclick={() => onSelect(s.id)}
-			title={s.label}
+			onclick={() => onSelect(s)}
+			title={STAGE_LABEL[s]}
 			aria-pressed={on}
 		>
 			<span class="stage-dot" aria-hidden="true"></span>
-			<span class="stage-lbl">{s.label}</span>
+			<span class="stage-lbl">{STAGE_LABEL[s]}</span>
 		</button>
 	{/each}
 </div>

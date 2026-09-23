@@ -11,8 +11,13 @@
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { Collection } from '$lib/vocabulary';
-	import { dossierNumber } from '$lib/components/parliamentary/data';
-	import { STAGES, STAGE_LABEL, TRACK_LABEL, isStage } from '$lib/components/parliamentary/stages';
+	import {
+		OUTCOME_LABEL,
+		STAGES,
+		STAGE_LABEL,
+		TRACK_LABEL,
+		isStage
+	} from '$lib/components/parliamentary/stages';
 	import { partyColor } from '$lib/utils/party-color';
 	import Hemicycle from './Hemicycle.svelte';
 	import IndexToolbar, { type Facet } from './index/IndexToolbar.svelte';
@@ -30,12 +35,12 @@
 	}: {
 		category: IndexCategory;
 		onSelectCategory: (k: IndexCategory) => void;
-		/** Opens the bron in Lezen. */
-		onSelectItem: (collection: Collection, key: string) => void;
+		/** Opens the bron in Lezen. `name` is its key, and a dossier's number (`37020-XV`). */
+		onSelectItem: (collection: Collection, name: string) => void;
 		/** Opens the bron in Netwerk. */
-		onDiscoverItem?: (collection: Collection, key: string) => void;
+		onDiscoverItem?: (collection: Collection, name: string) => void;
 		/** Lezen: the full text. Only for laws and judgments. */
-		onReadItem?: (collection: Collection, key: string) => void;
+		onReadItem?: (collection: Collection, name: string) => void;
 		/** Reports what is shown and how many there are, for the status bar. */
 		onResultCountChange?: (info: {
 			filtered: number;
@@ -50,12 +55,7 @@
 	// ── URL-driven filter state ─────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
 	const q = $derived(params.get('q') ?? '');
-	const stage = $derived(
-		oneOf(
-			params.get('stage'),
-			STAGES.map((s) => s.id)
-		)
-	);
+	const stage = $derived(oneOf(params.get('stage'), STAGES));
 	// Stages a dossier must all have passed, comma-separated.
 	const hasStage = $derived((params.get('has_stage') ?? '').split(',').filter(isStage).join(','));
 	const track = $derived(params.get('track') ?? '');
@@ -366,7 +366,7 @@
 			sorted(rows, {
 				number: (d) => Number.parseInt(d.number),
 				title: (d) => d.title ?? '',
-				stage: (d) => STAGES.findIndex((s) => s.id === d.current_stage)
+				stage: (d) => (d.current_stage ? STAGES.indexOf(d.current_stage) : -1)
 			})
 		);
 	});
@@ -559,9 +559,6 @@
 	const read = (collection: Collection, key: string) =>
 		(onReadItem ?? onSelectItem)(collection, key);
 
-	const stageTone = (id: string | null | undefined) =>
-		STAGES.find((s) => s.id === id)?.tone ?? 'slate';
-
 	const fmtDateShort = (iso: string | null | undefined) =>
 		iso
 			? new Intl.DateTimeFormat('nl-NL', {
@@ -734,7 +731,7 @@
 										onclick={() => toggleOpen(d.id)}
 									>
 										<div class="row-id">
-											<span class="row-id-main">{dossierNumber(d.key)}</span>
+											<span class="row-id-main">{d.number}</span>
 											{#if d.track}
 												<span class="row-id-sub">{TRACK_LABEL[d.track]}</span>
 											{/if}
@@ -743,8 +740,12 @@
 											<div class="row-title">{d.title ?? '—'}</div>
 										</div>
 										<div class="row-aside">
-											{#if d.current_stage}
-												<span class="tag tag--{stageTone(d.current_stage)}">
+											{#if d.outcome}
+												<span class="tag">
+													<span class="tag-dot" aria-hidden="true"></span>{OUTCOME_LABEL[d.outcome]}
+												</span>
+											{:else if d.current_stage}
+												<span class="tag">
 													<span class="tag-dot" aria-hidden="true"></span>{STAGE_LABEL[
 														d.current_stage
 													]}
@@ -757,8 +758,8 @@
 											<IndexDetail
 												category="dossiers"
 												record={d}
-												onDiscover={() => discover('dossiers', d.key)}
-												onSplit={() => onSelectItem('dossiers', d.key)}
+												onDiscover={() => discover('dossiers', d.number)}
+												onSplit={() => onSelectItem('dossiers', d.number)}
 											/>
 										</div>
 									{/if}

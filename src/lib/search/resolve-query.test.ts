@@ -23,6 +23,12 @@ describe('parseCitation', () => {
 		['Kamerstuk 36327, nr. 3', { kind: 'dossier', number: '36327', document: '3' }],
 		['Kamerstukken II 36327', { kind: 'dossier', number: '36327', document: null }],
 		['29684-I', { kind: 'dossier', number: '29684-I', document: null }],
+		['37020-XV', { kind: 'dossier', number: '37020-XV', document: null }],
+		['37020-J', { kind: 'dossier', number: '37020-J', document: null }],
+		['Kamerstuk 36327 nr. 3', { kind: 'dossier', number: '36327', document: '3' }],
+		['37020-j', { kind: 'dossier', number: '37020-J', document: null }],
+		['37020-XV-3', { kind: 'dossier', number: '37020-XV', document: '3' }],
+		['Kamerstuk 36327 nr. A', { kind: 'dossier', number: '36327', document: 'A' }],
 		['BWBR0001854', { kind: 'bwb', id: 'BWBR0001854' }],
 		['32004L0017', { kind: 'celex', id: '32004L0017' }]
 	])('%s', (query, expected) => {
@@ -41,6 +47,7 @@ describe('resolveQuery', () => {
 		lawId: vi.fn(async () => 'BWBR0001854'),
 		articleKey: vi.fn(async (bwb, n) => `${bwb.toLowerCase()}_${n.replace(':', '_')}`),
 		documentKey: vi.fn(async () => 'a572870e'),
+		dossier: vi.fn(async (number) => ({ key: number.toLowerCase().replace('-', '_'), number })),
 		exists: vi.fn(async () => true),
 		...over
 	});
@@ -61,23 +68,36 @@ describe('resolveQuery', () => {
 		});
 	});
 
-	it('builds the node key of a judgment, a dossier and a law', async () => {
+	it('builds the node key of a judgment and a law', async () => {
 		expect((await resolveQuery('ECLI:NL:HR:2024:1769', deps()))?.ref.key).toBe(
 			'ecli_nl_hr_2024_1769'
 		);
-		expect((await resolveQuery('29684-I', deps()))?.ref.key).toBe('29684_i');
 		expect((await resolveQuery('BWBR0001854', deps()))?.ref).toEqual({
 			collection: 'instruments',
 			key: 'bwbr0001854'
 		});
 	});
 
+	it('takes the node key and label of a dossier from the API', async () => {
+		const d = deps({ dossier: async () => ({ key: '37020_xv', number: '37020-XV' }) });
+		expect((await resolveQuery('37020-XV', d))?.ref).toEqual({
+			collection: 'dossiers',
+			key: '37020_xv',
+			number: '37020-XV'
+		});
+		expect(await resolveQuery('37020-Q', deps({ dossier: async () => null }))).toBeNull();
+	});
+
 	it('opens the document of a dossier, and the dossier when it has no such document', async () => {
 		expect((await resolveQuery('36327-3', deps()))?.ref.collection).toBe('documents');
-		const none = deps({ documentKey: async () => null });
+		const none = deps({
+			documentKey: async () => null,
+			dossier: async () => ({ key: '36327', number: '36327' })
+		});
 		expect((await resolveQuery('36327-999', none))?.ref).toEqual({
 			collection: 'dossiers',
-			key: '36327'
+			key: '36327',
+			number: '36327'
 		});
 	});
 

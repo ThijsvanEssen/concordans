@@ -3,7 +3,7 @@
 // the API gives one.
 import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
-import { getCommittee } from '$lib/components/parliamentary/data';
+import { getCommittee, str } from '$lib/components/parliamentary/data';
 import type { Collection } from '$lib/vocabulary';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
@@ -33,7 +33,8 @@ export type Loaded = { rows: Row[]; total?: number };
 // The four dossier groups read one hub.
 let hub: { key: string; request: Promise<DossierHub> } | null = null;
 const hubOf = ({ node, neighbors }: LoaderContext) => {
-	if (hub?.key !== node.key) hub = { key: node.key, request: loadDossierHub(node.key, neighbors) };
+	if (hub?.key !== node.key)
+		hub = { key: node.key, request: loadDossierHub(str(node.props?.label) ?? '', neighbors) };
 	return hub.request;
 };
 
@@ -327,10 +328,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		return {
 			total: found.total,
 			rows: found.items.map((d) => ({
-				ref: { collection: 'dossiers', key: d.key },
+				ref: { collection: 'dossiers', key: d.key, number: d.dossier_number ?? '' },
 				...describe('dossiers', d.key, d.display_name, {
 					title: d.title,
-					number: d.dossier_number
+					label: d.dossier_number
 				}),
 				kind: 'dossiers' as const,
 				relation: 'LEGISLATED_IN',
@@ -373,8 +374,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		return {
 			total: committee.active_dossier_count,
 			rows: (committee.dossiers ?? []).map((d) => ({
-				ref: { collection: 'dossiers', key: d.key },
-				...describe('dossiers', d.key, d.title, { ...d }),
+				ref: { collection: 'dossiers', key: d.key, number: d.number },
+				...describe('dossiers', d.key, d.title, { title: d.title, label: d.number }),
 				kind: 'dossiers' as const
 			}))
 		};

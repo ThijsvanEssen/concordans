@@ -56,7 +56,7 @@
 			add(formatDate(textProp(p.date)));
 		} else if (node.collection === 'dossiers') {
 			add(bronLabel('dossiers'));
-			add(String(p.number ?? node.key));
+			add(textProp(p.label));
 		} else if (node.collection === 'committees') {
 			add(bronLabel('committees'));
 			add(textProp(p.name) ?? textProp(p.abbreviation) ?? node.label);

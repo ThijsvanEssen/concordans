@@ -4,6 +4,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { committeeSlug, getCommittee, str } from '$lib/components/parliamentary/data';
+	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -58,6 +59,7 @@
 		{@const c = view.committee}
 		{@const dossiers = c.dossiers ?? []}
 		{@const openDossiers = dossiers.filter((d) => !d.closed)}
+		{@const outcomes = Object.keys(OUTCOME_LABEL) as Outcome[]}
 
 		<ul class="stats">
 			<li>
@@ -69,11 +71,16 @@
 					>Open dossiers</span
 				>
 			</li>
-			<li>
-				<span class="stat-num">{dossiers.length - openDossiers.length}</span><span
-					class="stat-label">Afgedaan</span
-				>
-			</li>
+			{#each outcomes as outcome (outcome)}
+				{@const count = dossiers.filter((d) => d.outcome === outcome).length}
+				{#if count > 0}
+					<li>
+						<span class="stat-num">{count}</span><span class="stat-label"
+							>{OUTCOME_LABEL[outcome]}</span
+						>
+					</li>
+				{/if}
+			{/each}
 		</ul>
 	{/if}
 </div>

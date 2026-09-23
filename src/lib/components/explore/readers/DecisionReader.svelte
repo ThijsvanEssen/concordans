@@ -44,9 +44,6 @@
 	const side = (choice: string) =>
 		choice === 'Voor' ? 'for' : choice === 'Tegen' ? 'against' : 'other';
 
-	/** The inverse of `dossierNumber`: `36600-VIII` is the node key `36600_viii`. */
-	const dossierKey = (number: string) => number.replace('-', '_').toLowerCase();
-
 	/** A voter id is `factions/vvd` or `members/…`; the key alone does not say which. */
 	const voterHref = (v: Schema<'VoteDTO'>) =>
 		v.voter_id.includes('/') ? bronHref(v.voter_id) : null;
@@ -87,10 +84,8 @@
 					{d.passed ? 'Aangenomen' : 'Verworpen'}
 				</span>
 				{#each dossierNumbers.slice(0, 3) as number (number)}
-					<a
-						href={bronHref({ collection: 'dossiers', key: dossierKey(number) })}
-						class="dossier-chip"
-						data-sveltekit-noscroll>{number}</a
+					<a href={bronHref(`dossiers/${number}`)} class="dossier-chip" data-sveltekit-noscroll
+						>{number}</a
 					>
 				{/each}
 			</div>

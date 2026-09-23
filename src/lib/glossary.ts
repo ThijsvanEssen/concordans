@@ -17,13 +17,18 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 		plain:
 			'Toelichtende tekst die de regering bij een wetsvoorstel meestuurt om de bedoeling en achtergrond uit te leggen.'
 	},
+	Verslag: {
+		full: 'Verslag van een Kamercommissie',
+		plain: 'Schriftelijke vragen en commentaar van de Kamer op een wetsvoorstel.'
+	},
 	Nota: {
 		full: 'Nota naar aanleiding van het verslag',
 		plain: 'Antwoord van de regering op vragen die de Tweede Kamer in een verslag stelde.'
 	},
-	Verslag: {
-		full: 'Verslag van een Kamercommissie',
-		plain: 'Schriftelijke vragen en commentaar van de Kamer op een wetsvoorstel.'
+	Behandeling: {
+		full: 'Mondelinge behandeling',
+		plain:
+			'Wetgevingsoverleg of plenair debat over het wetsvoorstel, waarin ook moties worden ingediend.'
 	},
 	Amendement: {
 		full: 'Amendement',
@@ -63,7 +68,7 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	Kamerstuk: {
 		full: 'Kamerstuk',
 		plain:
-			'Officieel parlementair document; per dossier doorgenummerd (bv. 36500-7 = 7e stuk in dossier 36500).'
+			'Parlementair document, per dossier doorgenummerd. Een begrotingshoofdstuk is een eigen dossier: 37020-XV.'
 	},
 	Stemming: {
 		full: 'Stemming',
@@ -86,6 +91,15 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 		full: 'Begroting',
 		plain:
 			'Jaarlijks wetsvoorstel waarin de regering vastlegt hoeveel geld een ministerie het komende jaar mag uitgeven.'
+	},
+	Verdrag: {
+		full: 'Goedkeuringswet van een verdrag',
+		plain: 'Wetsvoorstel waarmee het parlement een verdrag goedkeurt.'
+	},
+	Initiatiefnota: {
+		full: 'Initiatiefnota',
+		plain:
+			'Beleidsvoorstel van een of meer Kamerleden, zonder wetsvoorstel. Doorloopt geen wetgevingsfasen.'
 	}
 };
 

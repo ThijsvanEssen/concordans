@@ -11,7 +11,8 @@
 	import { goto } from '$app/navigation';
 	import { track } from '$lib/analytics';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
-	import { bronHref, refId } from '$lib/bron/href';
+	import { bronHref, refId, refOf } from '$lib/bron/href';
+	import { getDossier } from '$lib/components/parliamentary/data';
 	import { createGraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import GraphView from '$lib/components/graph/GraphView.svelte';
@@ -199,6 +200,9 @@
 			return;
 		}
 		try {
+			// A link names a dossier by its number (`37020-XV`); the API gives its node key.
+			if (target.collection === 'dossiers') target.key = (await getDossier(target.key)).key;
+			if (id !== loadedFocus) return;
 			// A wet, fractie, commissie or dossier is a hull, not a scattered handful of
 			// dots: its own children are its point, so they are not capped like an
 			// ordinary bron's neighbours are.
@@ -236,7 +240,10 @@
 		const end = perfStart(`click ${node.id}`);
 		if (!node.id.startsWith('synth:')) {
 			track('network_expanded', { kind: node.kind });
-			void goto(bronHref(node), { noScroll: true, keepFocus: true });
+			void goto(bronHref(refOf(node.collection, node.key, node.raw?.props)), {
+				noScroll: true,
+				keepFocus: true
+			});
 		}
 		end();
 	}
@@ -431,8 +438,8 @@
 	] as const;
 	type IndexKind = (typeof INDEX_KINDS)[number];
 	const indexKind = $derived<IndexKind>(INDEX_KINDS.find((k) => k === param('kind')) ?? 'dossiers');
-	const openInMode = (m: Mode) => (collection: string, key: string) =>
-		goto(bronHref(`${collection}/${key}`, { keepMode: false, mode: m }));
+	const openInMode = (m: Mode) => (collection: string, name: string) =>
+		goto(bronHref(`${collection}/${name}`, { keepMode: false, mode: m }));
 
 	let indexResultCount = $state<{ filtered: number; total: number } | null>(null);
 	$effect(() => {

@@ -354,7 +354,7 @@
 				{#each versionDossiers as dossier (dossier.key)}
 					<span class="line__sep" aria-hidden="true">·</span>
 					<a
-						href={bronHref({ collection: 'dossiers', key: dossier.key })}
+						href={bronHref({ collection: 'dossiers', key: dossier.key, number: dossier.number })}
 						data-sveltekit-noscroll
 						title={dossier.title ?? undefined}>Kamerstuk {dossier.number}</a
 					>
