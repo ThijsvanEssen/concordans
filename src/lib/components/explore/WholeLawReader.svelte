@@ -23,9 +23,10 @@
 	let articles = $state<Article[]>([]);
 	let total = $state(0);
 	let status = $state<'idle' | 'loading' | 'loading-more' | 'ready' | 'error'>('idle');
-	// A plain `$state(new Map())` proxies the variable, not `.set()`/`.get()` calls on
-	// it, so a mutation here would never re-render the article that just loaded.
-	let detailByNumber = $state(new SvelteMap<string, Detail>());
+	// A plain `Map` (even inside `$state()`) does not give `.set()`/`.get()` reactivity
+	// in Svelte 5, so a mutation here would never re-render the article that just
+	// loaded — SvelteMap is reactive on its own and is cleared in place, never reassigned.
+	const detailByNumber = new SvelteMap<string, Detail>();
 	const pending = new Set<string>();
 
 	async function ensureDetail(bwb: string, articleNumber: string) {
@@ -77,7 +78,7 @@
 
 	$effect(() => {
 		articles = [];
-		detailByNumber = new SvelteMap();
+		detailByNumber.clear();
 		pending.clear();
 		if (!bwbId) {
 			status = 'idle';
