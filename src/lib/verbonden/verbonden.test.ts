@@ -82,20 +82,14 @@ describe('mergeExplanatory', () => {
 			props: { kind, date }
 		}) as unknown as Neighbor;
 
-	it('lists the documents bound to the article, then those of its dossiers; a document that only names it is left out', () => {
-		const rows = mergeExplanatory(
-			[
-				doc('names-2025', 'REFERS_TO', '2025-03-07'),
-				doc('amends-2019', 'AMENDS', '2019-01-01'),
-				doc('brief', 'REFERS_TO', '2026-01-01', 'Brief regering')
-			],
-			{ items: { '36327': documents.items } } as Schema<'DossierDocumentsBulkResponse'>
-		);
-		expect(rows.map((r) => r.ref.key)).toEqual([
-			'amends-2019',
-			'a572870e_709d_484c_872d_5d84d0829030'
+	it('lists only the documents bound to the article; one that merely names it, or names its dossier without an edge to it, is left out', () => {
+		const rows = mergeExplanatory([
+			doc('names-2025', 'REFERS_TO', '2025-03-07'),
+			doc('amends-2019', 'AMENDS', '2019-01-01'),
+			doc('brief', 'REFERS_TO', '2026-01-01', 'Brief regering')
 		]);
-		expect(rows.map((r) => r.derived)).toEqual([false, true]);
+		expect(rows.map((r) => r.ref.key)).toEqual(['amends-2019']);
+		expect(rows.map((r) => r.derived)).toEqual([false]);
 	});
 });
 
@@ -113,16 +107,16 @@ describe('buildGroups', () => {
 			key: `a${i}`,
 			collection: 'articles',
 			relation: 'REFERS_TO',
-			direction: 'inbound',
+			direction: 'outbound',
 			props: {}
 		})) as unknown as Neighbor[];
-		const group = buildGroups('articles', many).find((g) => g.id === 'cited-by')!;
+		const group = buildGroups('articles', many).find((g) => g.id === 'refers-to')!;
 		expect(countLabel(group)).toBe('30+');
 		expect(countLabel({ rows: group.rows.slice(0, 4), capped: false })).toBe('4');
-		const totals = new Map([['REFERS_TO/articles/inbound', 412]]);
-		const counted = buildGroups('articles', many, totals).find((g) => g.id === 'cited-by')!;
+		const totals = new Map([['REFERS_TO/articles/outbound', 1412]]);
+		const counted = buildGroups('articles', many, totals).find((g) => g.id === 'refers-to')!;
 		expect(counted.capped).toBe(false);
-		expect(countLabel(counted)).toBe('412');
+		expect(countLabel(counted)).toBe('1.412');
 	});
 
 	it('sends a treaty article to Europees en internationaal, not to Verwijst naar', () => {
@@ -137,7 +131,35 @@ describe('buildGroups', () => {
 		expect(isInternational(evrm)).toBe(true);
 		const groups = buildGroups('articles', [evrm]);
 		expect(groups.find((g) => g.id === 'international')!.rows).toHaveLength(1);
+		expect(groups.find((g) => g.id === 'international')!.rows[0].kind).toBe('internationaal');
 		expect(groups.find((g) => g.id === 'refers-to')!.rows).toHaveLength(0);
+	});
+
+	it('reads the lid a citing Kamerstuk names from the phrase of the edge', () => {
+		const mvt = {
+			id: 'documents/d1',
+			key: 'd1',
+			collection: 'documents',
+			relation: 'REFERS_TO',
+			direction: 'inbound',
+			display_name: 'Kamerstuk 36693, nr. 3',
+			props: { kind: 'Memorie van toelichting', sequence: '3', dossier_numbers: ['36693'] },
+			edge_id: 'e1',
+			confidence: 0.95,
+			status: 'canoniek',
+			meta: {
+				raw_match: 'artikel 300, tweede lid, Sr',
+				snippet: 'zoals artikel 300, tweede lid, Sr bepaalt'
+			}
+		} as unknown as Neighbor;
+		const groups = buildGroups('articles', [mvt]);
+		const row = groups.find((g) => g.id === 'documents')!.rows[0];
+		expect(row.kind).toBe('toelichtingen');
+		expect(row.lid).toBe('2');
+		expect(row.title).toBe('Memorie van toelichting, Kamerstuk 36693, nr. 3');
+		expect(row.match).toBe('artikel 300, tweede lid, Sr');
+		expect(row.derived).toBe(true);
+		expect(row.proposed).toBeUndefined();
 	});
 
 	it('gives every group a source and a unique id per kind', () => {

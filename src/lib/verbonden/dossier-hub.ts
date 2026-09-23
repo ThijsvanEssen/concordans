@@ -15,6 +15,7 @@ import {
 import { lawIdOfArticleKey } from '$lib/util/law-id';
 import { get } from 'svelte/store';
 import { chamberOf, isExplanatory } from './chamber';
+import { bronKindOf } from './filter';
 import { describe, type Neighbor, type Row } from './rows';
 
 export type DossierHub = {
@@ -54,6 +55,8 @@ export function buildDossierHub(
 			ref: { collection: 'instruments', key: i.key },
 			title: i.display_name ?? i.bwb_id ?? i.celex ?? i.key,
 			context: null,
+			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id, celex: i.celex }),
+			identifier: i.bwb_id ?? i.celex ?? null,
 			proposed: i.status === 'voorgesteld' || undefined,
 			relation: RELATION_OF[i.relation] ?? 'LEGISLATED_IN',
 			direction: i.relation === 'legislated_in' ? 'inbound' : 'outbound'
@@ -64,6 +67,7 @@ export function buildDossierHub(
 		laws.set(n.key, {
 			ref: { collection: 'instruments', key: n.key },
 			...describe('instruments', n.key, n.display_name, n.props ?? {}),
+			kind: bronKindOf('instruments', n.key, n.props),
 			relation: 'LEGISLATED_IN',
 			direction: 'inbound'
 		});
@@ -87,6 +91,8 @@ export function buildDossierHub(
 			ref: { collection: 'instruments', key },
 			title: lawName(bwb) ?? bwb,
 			context: null,
+			kind: bronKindOf('instruments', key, { bwb_id: bwb }),
+			identifier: bwb,
 			proposed,
 			relation: e.relation as Row['relation'],
 			direction: 'outbound'
@@ -106,6 +112,7 @@ export function buildDossierHub(
 			ref: { collection: 'committees', key: c.key },
 			title: c.name ?? c.abbreviation ?? c.key,
 			context: c.abbreviation ?? null,
+			kind: 'dossiers',
 			relation: 'LED_BY',
 			direction: 'outbound'
 		}))
@@ -118,8 +125,10 @@ export function buildDossierHub(
 		row: {
 			ref: { collection: 'documents', key: d.key },
 			...describe('documents', d.key, d.display_name, { ...d }),
+			kind: bronKindOf('documents', d.key, { ...d }),
 			relation: 'PART_OF',
-			direction: 'inbound'
+			direction: 'inbound',
+			props: { ...d }
 		} satisfies Row
 	}));
 	rows.sort(

@@ -7,14 +7,16 @@ import { getCommittee } from '$lib/components/parliamentary/data';
 import type { Collection } from '$lib/vocabulary';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
-import { buildGroups, isInternational, type Loader } from './groups';
+import { getArticleDetail } from '$lib/api/articles';
+import { buildGroups, type Loader } from './groups';
+import { bronKindOf, isInternational } from './filter';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
 import { bucketKey, neighborsOf } from '$lib/api/nodes';
 import { lawIdOfArticleKey } from '$lib/util/law-id';
 import { get } from 'svelte/store';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
-import { describe, rowOfNeighbor, type Neighbor, type Row } from './rows';
+import { aardLabel, describe, lidOfMatch, rowOfNeighbor, type Neighbor, type Row } from './rows';
 
 export type LoaderContext = {
 	node: Schema<'BaseNodeDTO'>;
@@ -56,7 +58,8 @@ async function touched(
 		rows: found.items.map((i) => ({
 			ref: { collection: 'instruments', key: i.key },
 			title: i.citation_title ?? i.title ?? i.display_name ?? i.key,
-			context: String(i.count)
+			context: `${i.count} stukken`,
+			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id })
 		}))
 	};
 }
@@ -107,7 +110,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (bwb && number) {
 			const { data, response } = await api
 				.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
-					params: { path: { bwb_id: bwb, article_number: number }, query: { limit: 50 } },
+					params: { path: { bwb_id: bwb, article_number: number }, query: { limit: 200 } },
 					signal
 				})
 				.catch(() => ({ data: undefined, response: null }));
@@ -120,17 +123,20 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						item.paragraph_id || (item.paragraph_number ? `rov-${item.paragraph_number}` : null);
 					const id = `${j.key}#${at ?? ''}`;
 					if (rows.has(id)) continue;
-					const { title, context } = describe('judgments', j.key, j.display_name, { ...j });
 					rows.set(id, {
 						ref: { collection: 'judgments', key: j.key },
-						title,
-						context: [context, item.paragraph_number ? `r.o. ${item.paragraph_number}` : null]
-							.filter(Boolean)
-							.join(' · '),
+						...describe('judgments', j.key, j.display_name, { ...j }),
+						kind: 'uitspraken',
 						at,
+						lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
+						position: item.paragraph_number ? `r.o. ${item.paragraph_number}` : null,
 						derived: item.confidence < 1,
+						confidence: item.confidence,
+						snippet: item.snippet || null,
+						match: item.text || null,
 						relation: 'REFERS_TO',
-						direction: 'inbound'
+						direction: 'inbound',
+						props: { ...j }
 					});
 				}
 				return { rows: [...rows.values()], total: data.total };
@@ -149,6 +155,52 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.map(rowOfNeighbor)
 				.filter((r) => r !== null)
 		};
+	},
+
+	// The articles that refer to this one, with the lid they name and the aard of the
+	// reference, from the article's own detail (`downstream_implications`). Without
+	// it: the citing articles from the node, the lid read from the phrase.
+	// TODO(backend B6): the aard and the lid belong on the edge of the node response.
+	'article-cited-by': async ({ node, neighbors, totals }) => {
+		const bwb = bwbOf(node);
+		const number =
+			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
+		const fromNode = neighbors
+			.filter(
+				(n) =>
+					(n.relation === 'REFERS_TO' || n.relation === 'BASED_ON') &&
+					n.direction === 'inbound' &&
+					n.collection === 'articles'
+			)
+			.map(rowOfNeighbor)
+			.filter((r) => r !== null);
+		const total =
+			(totals.get(bucketKey('REFERS_TO', 'articles', 'inbound')) ?? 0) +
+				(totals.get(bucketKey('BASED_ON', 'articles', 'inbound')) ?? 0) || undefined;
+		const detail = bwb && number ? await getArticleDetail(bwb, number).catch(() => null) : null;
+		const byKey = new Map(fromNode.map((r) => [r.ref.key, r]));
+		for (const rel of detail?.downstream_implications ?? []) {
+			const t = rel.target_article;
+			const row = byKey.get(t.key) ?? {
+				ref: { collection: 'articles' as const, key: t.key },
+				title: t.display_name ?? t.key,
+				context: null,
+				kind: bronKindOf('articles', t.key, { bwb_id: t.bwb_id, celex: t.celex }),
+				relation: 'REFERS_TO' as const,
+				direction: 'inbound' as const,
+				props: { ...t }
+			};
+			byKey.set(t.key, {
+				...row,
+				lid: rel.leden?.[0] ?? row.lid ?? lidOfMatch(rel.text),
+				aard: aardLabel(rel.semantic_type) ?? row.aard ?? null,
+				match: rel.text ?? row.match ?? null,
+				edgeId: rel.edge_id ?? row.edgeId ?? null,
+				confidence: rel.confidence ?? row.confidence ?? null,
+				derived: rel.confidence != null ? rel.confidence < 1 : row.derived
+			});
+		}
+		return { rows: [...byKey.values()], total };
 	},
 
 	// The European and international instruments of a law (API 0.5, `eu-links`). Before
@@ -177,6 +229,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					ref: { collection: 'instruments', key: i.key },
 					title: i.citation_title ?? i.title ?? i.key,
 					context: link.basis ?? null,
+					kind: 'internationaal',
 					derived: link.confidence != null && link.confidence < 1,
 					relation: 'IMPLEMENTS',
 					direction: implemented.includes(link) ? 'outbound' : 'inbound'
@@ -188,6 +241,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						ref: { collection: 'instruments', key: link.instrument.key },
 						title: link.instrument.citation_title ?? link.instrument.title ?? link.instrument.key,
 						context: null,
+						kind: 'internationaal',
 						derived: link.confidence != null && link.confidence < 1
 					});
 				} else if (link.judgment) {
@@ -195,6 +249,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					add({
 						ref: { collection: 'judgments', key: j.key },
 						...describe('judgments', j.key, j.display_name, { ...j }),
+						kind: 'internationaal',
 						derived: link.confidence != null && link.confidence < 1
 					});
 				}
@@ -250,7 +305,11 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			}
 			if (at) {
 				row.at = at;
-				row.context = anchorLabel(at);
+				row.position = anchorLabel(at);
+				// rowOfNeighbor only reads the lid for an inbound relation; this one is
+				// outbound (judgment → article), so the anchor is the only source of it.
+				const lid = /^lid-(\w+)/.exec(at);
+				if (lid) row.lid = lid[1];
 				if (!stub) row.derived = true;
 			}
 			const id = `${key}#${at ?? ''}`;
@@ -273,6 +332,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					title: d.title,
 					number: d.dossier_number
 				}),
+				kind: 'dossiers' as const,
 				relation: 'LEGISLATED_IN',
 				direction: 'outbound'
 			}))
@@ -293,7 +353,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			rows: found.items.map((d) => ({
 				ref: { collection: 'documents', key: d.key },
 				title: d.display_name ?? d.identifier ?? d.key,
-				context: d.first_effective_date ?? null,
+				context: null,
+				kind: 'wetsvoorstellen' as const,
+				identifier: d.identifier ?? null,
+				date: d.first_effective_date ?? null,
 				relation: 'AMENDS',
 				direction: 'inbound'
 			}))
@@ -311,7 +374,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total: committee.active_dossier_count,
 			rows: (committee.dossiers ?? []).map((d) => ({
 				ref: { collection: 'dossiers', key: d.key },
-				...describe('dossiers', d.key, d.title, { ...d })
+				...describe('dossiers', d.key, d.title, { ...d }),
+				kind: 'dossiers' as const
 			}))
 		};
 	}

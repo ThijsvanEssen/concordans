@@ -1,11 +1,15 @@
 // The groups of the panel Verbonden, per kind of bron. This table is the one definition:
-// the panel renders it, and the same groups are the layers of the network.
+// the panel renders it, the table lists it, and the legend of the network counts it.
+// The name of a group states the direction: "Uitspraken die dit artikel aanhalen".
 //
 // A group is filled from the node response of the selected bron (`match`: relation,
 // direction, collection) or, where no edge says it, by a named loader (`load`).
 import { bucketKey } from '$lib/api/nodes';
 import type { Collection, Relation } from '$lib/vocabulary';
+import { formatCount, isInternational } from './filter';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
+
+export { isInternational };
 
 export type Match = {
 	relation: Relation | Relation[];
@@ -22,6 +26,7 @@ export type Loader =
 	| 'dossier-international'
 	| 'article-explanatory'
 	| 'article-judgments'
+	| 'article-cited-by'
 	| 'instrument-international'
 	| 'judgment-articles'
 	| 'instrument-dossiers'
@@ -33,6 +38,8 @@ export type Loader =
 export type GroupDef = {
 	id: string;
 	label: string;
+	/** The bronnen of the group in the plural, for "Alle 1.064 uitspraken". */
+	noun?: string;
 	/** Printed above the first group that carries it: "Tweede Kamer", "Eerste Kamer". */
 	section?: string;
 	match?: Match[];
@@ -49,15 +56,6 @@ export type Group = GroupDef & {
 	capped: boolean;
 };
 
-// TODO(backend B9): nothing marks a bron as European or international. Until an
-// `eu-links` route exists, the jurisdiction is read from the id: a CELEX number, a
-// BWBV (verdrag) id, the ECHR collection.
-const INTERNATIONAL_KEY = /^(bwbv\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4}|echr_)/i;
-export const isInternational = (n: Pick<Neighbor, 'key' | 'props'>): boolean =>
-	INTERNATIONAL_KEY.test(n.key) ||
-	n.props?.source === 'echr' ||
-	n.props?.jurisdiction === 'eu' ||
-	n.props?.jurisdiction === 'int';
 const national = (n: Neighbor) => !isInternational(n);
 
 const CHANGES: Relation[] = ['AMENDS', 'INTRODUCES', 'REPEALS'];
@@ -65,6 +63,7 @@ const CHANGES: Relation[] = ['AMENDS', 'INTRODUCES', 'REPEALS'];
 const EUROPEAN: GroupDef = {
 	id: 'international',
 	label: 'Europees en internationaal',
+	noun: 'Europese en internationale bronnen',
 	match: [
 		{ relation: 'IMPLEMENTS', collection: 'instruments' },
 		{
@@ -78,57 +77,108 @@ const EUROPEAN: GroupDef = {
 
 export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 	dossiers: [
-		{ id: 'laws', label: 'Wetten', load: 'dossier-laws' },
-		{ id: 'committees', label: 'Commissie', section: 'Tweede Kamer', load: 'dossier-committees' },
+		{ id: 'laws', label: 'Wetten die dit dossier raakt', noun: 'wetten', load: 'dossier-laws' },
+		{
+			id: 'committees',
+			label: 'Commissie',
+			section: 'Tweede Kamer',
+			load: 'dossier-committees'
+		},
 		{
 			id: 'documents-tk',
 			label: 'Memorie van toelichting en andere stukken',
+			noun: 'stukken',
 			section: 'Tweede Kamer',
 			load: 'dossier-documents-tk'
 		},
 		{
 			id: 'decisions',
-			label: 'Stemmingen',
+			label: 'Stemmingen over dit dossier',
+			noun: 'stemmingen',
 			section: 'Tweede Kamer',
 			match: [{ relation: 'ABOUT', direction: 'inbound', collection: 'decisions' }]
 		},
 		{
 			id: 'commitments',
-			label: 'Toezeggingen',
+			label: 'Toezeggingen over dit dossier',
+			noun: 'toezeggingen',
 			section: 'Tweede Kamer',
 			match: [{ relation: 'ABOUT', direction: 'inbound', collection: 'commitments' }]
 		},
-		{ id: 'documents-ek', label: 'Stukken', section: 'Eerste Kamer', load: 'dossier-documents-ek' },
+		{
+			id: 'documents-ek',
+			label: 'Stukken',
+			noun: 'stukken',
+			section: 'Eerste Kamer',
+			load: 'dossier-documents-ek'
+		},
 		{ ...EUROPEAN, match: undefined, load: 'dossier-international' }
 	],
 	instruments: [
-		{ id: 'dossiers', label: 'Dossiers', load: 'instrument-dossiers' },
+		{
+			id: 'dossiers',
+			label: 'Dossiers die deze wet raken',
+			noun: 'dossiers',
+			load: 'instrument-dossiers'
+		},
 		{
 			id: 'articles',
-			label: 'Artikelen',
+			label: 'Artikelen van deze wet',
+			noun: 'artikelen',
 			match: [{ relation: 'PART_OF', direction: 'inbound', collection: 'articles' }]
 		},
 		{
 			id: 'implemented-by',
-			label: 'Geïmplementeerd door',
+			label: 'Regelingen die deze wet implementeren',
+			noun: 'regelingen',
 			match: [{ relation: 'IMPLEMENTS', direction: 'inbound', collection: 'instruments' }]
 		},
 		{ ...EUROPEAN, match: undefined, load: 'instrument-international' },
-		{ id: 'amended-by', label: 'Wijzigingen', load: 'instrument-amended-by' },
+		{
+			id: 'amended-by',
+			label: 'Wetsvoorstellen die deze wet wijzigen',
+			noun: 'wetsvoorstellen',
+			load: 'instrument-amended-by'
+		},
 		{
 			id: 'judgments',
-			label: 'Uitspraken',
+			label: 'Uitspraken die deze wet aanhalen',
+			noun: 'uitspraken',
 			match: [
 				{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments', where: national }
 			]
 		}
 	],
 	articles: [
-		{ id: 'explanatory', label: 'Toelichting', load: 'article-explanatory', inPlace: true },
-		{ id: 'judgments', label: 'Uitspraken', load: 'article-judgments' },
+		{
+			id: 'judgments',
+			label: 'Uitspraken die dit artikel aanhalen',
+			noun: 'uitspraken',
+			load: 'article-judgments'
+		},
+		{
+			id: 'cited-by',
+			label: 'Artikelen die naar dit artikel verwijzen',
+			noun: 'artikelen',
+			load: 'article-cited-by'
+		},
+		{
+			id: 'explanatory',
+			label: 'Toelichting',
+			noun: 'toelichtingen',
+			load: 'article-explanatory',
+			inPlace: true
+		},
+		{
+			id: 'changes',
+			label: 'Wetsvoorstellen die dit artikel wijzigen',
+			noun: 'wetsvoorstellen',
+			match: [{ relation: CHANGES, direction: 'inbound', collection: 'documents' }]
+		},
 		{
 			id: 'refers-to',
-			label: 'Verwijst naar',
+			label: 'Artikelen waarnaar dit artikel verwijst',
+			noun: 'artikelen',
 			match: [
 				{
 					relation: ['REFERS_TO', 'BASED_ON'],
@@ -139,14 +189,17 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			]
 		},
 		{
-			id: 'cited-by',
-			label: 'Aangehaald door',
-			match: [{ relation: ['REFERS_TO', 'BASED_ON'], direction: 'inbound', collection: 'articles' }]
-		},
-		{
-			id: 'changes',
-			label: 'Wijzigingen',
-			match: [{ relation: CHANGES, direction: 'inbound', collection: 'documents' }]
+			id: 'documents',
+			label: 'Kamerstukken die dit artikel aanhalen',
+			noun: 'Kamerstukken',
+			match: [
+				{
+					relation: 'REFERS_TO',
+					direction: 'inbound',
+					collection: 'documents',
+					where: (n) => !CHANGES.includes(n.relation as Relation)
+				}
+			]
 		},
 		{
 			id: 'law',
@@ -156,7 +209,12 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		EUROPEAN
 	],
 	judgments: [
-		{ id: 'articles', label: 'Aangehaalde artikelen', load: 'judgment-articles' },
+		{
+			id: 'articles',
+			label: 'Artikelen die deze uitspraak aanhaalt',
+			noun: 'artikelen',
+			load: 'judgment-articles'
+		},
 		{
 			id: 'appeal',
 			label: 'Hoger beroep',
@@ -164,12 +222,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'judgments',
-			label: 'Aangehaalde uitspraken',
+			label: 'Uitspraken die deze uitspraak aanhaalt',
+			noun: 'uitspraken',
 			match: [{ relation: 'REFERS_TO', direction: 'outbound', collection: 'judgments' }]
 		},
 		{
 			id: 'cited-by',
-			label: 'Aangehaald door',
+			label: 'Uitspraken die deze uitspraak aanhalen',
+			noun: 'uitspraken',
 			match: [{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }]
 		}
 	],
@@ -181,19 +241,22 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'explains',
-			label: 'Toelichting bij',
+			label: 'Artikelen die dit stuk toelicht',
+			noun: 'artikelen',
 			match: [
 				{ relation: 'EXPLAINS', direction: 'outbound', collection: ['articles', 'instruments'] }
 			]
 		},
 		{
 			id: 'changes',
-			label: 'Wijzigt',
+			label: 'Artikelen die dit stuk wijzigt',
+			noun: 'artikelen',
 			match: [{ relation: CHANGES, direction: 'outbound', collection: ['articles', 'instruments'] }]
 		},
 		{
 			id: 'refers-to',
-			label: 'Verwijst naar',
+			label: 'Artikelen die dit stuk aanhaalt',
+			noun: 'artikelen',
 			match: [
 				{ relation: 'REFERS_TO', direction: 'outbound', collection: ['articles', 'instruments'] }
 			]
@@ -201,19 +264,27 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		{
 			id: 'authors',
 			label: 'Indieners',
+			noun: 'indieners',
 			match: [{ relation: 'AUTHORED', direction: 'inbound', collection: ['members', 'factions'] }]
 		}
 	],
 	committees: [
 		{
 			id: 'members',
-			label: 'Leden',
+			label: 'Leden van deze commissie',
+			noun: 'leden',
 			match: [{ relation: 'MEMBER_OF', direction: 'inbound', collection: 'members' }]
 		},
-		{ id: 'dossiers', label: 'Dossiers', load: 'committee-dossiers' },
+		{
+			id: 'dossiers',
+			label: 'Dossiers van deze commissie',
+			noun: 'dossiers',
+			load: 'committee-dossiers'
+		},
 		{
 			id: 'activities',
-			label: 'Activiteiten',
+			label: 'Activiteiten van deze commissie',
+			noun: 'activiteiten',
 			match: [{ relation: 'LED_BY', direction: 'inbound', collection: 'activities' }]
 		}
 	],
@@ -225,28 +296,42 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'committees',
-			label: 'Commissies',
+			label: 'Commissies waarvan dit lid deel uitmaakt',
+			noun: 'commissies',
 			match: [{ relation: 'MEMBER_OF', direction: 'outbound', collection: 'committees' }]
 		},
 		{
 			id: 'authored',
-			label: 'Ingediend',
+			label: 'Stukken die dit lid indiende',
+			noun: 'stukken',
 			match: [{ relation: 'AUTHORED', direction: 'outbound', collection: 'documents' }]
 		},
-		{ id: 'instruments', label: 'Wetten', load: 'member-instruments' }
+		{
+			id: 'instruments',
+			label: 'Wetten waaraan dit lid werkte',
+			noun: 'wetten',
+			load: 'member-instruments'
+		}
 	],
 	factions: [
 		{
 			id: 'members',
-			label: 'Leden',
+			label: 'Leden van deze fractie',
+			noun: 'leden',
 			match: [{ relation: 'MEMBER_OF', direction: 'inbound', collection: 'members' }]
 		},
 		{
 			id: 'authored',
-			label: 'Ingediend',
+			label: 'Stukken die deze fractie indiende',
+			noun: 'stukken',
 			match: [{ relation: 'AUTHORED', direction: 'outbound', collection: 'documents' }]
 		},
-		{ id: 'instruments', label: 'Wetten', load: 'faction-instruments' }
+		{
+			id: 'instruments',
+			label: 'Wetten waaraan deze fractie werkte',
+			noun: 'wetten',
+			load: 'faction-instruments'
+		}
 	],
 	decisions: [
 		{
@@ -256,7 +341,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'subject',
-			label: 'Stuk',
+			label: 'Stuk waarover is gestemd',
 			match: [
 				{
 					relation: ['ABOUT', 'MADE_IN'],
@@ -267,7 +352,8 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'votes',
-			label: 'Fracties',
+			label: 'Fracties die stemden',
+			noun: 'fracties',
 			match: [{ relation: 'VOTED', direction: 'inbound', collection: 'factions' }]
 		}
 	],
@@ -284,12 +370,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'decisions',
-			label: 'Stemmingen',
+			label: 'Stemmingen in deze activiteit',
+			noun: 'stemmingen',
 			match: [{ relation: 'MADE_IN', direction: 'inbound', collection: 'decisions' }]
 		},
 		{
 			id: 'cases',
 			label: 'Zaken',
+			noun: 'zaken',
 			match: [{ relation: 'ABOUT', direction: 'outbound', collection: 'cases' }]
 		}
 	],
@@ -301,7 +389,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'activity',
-			label: 'Gedaan in',
+			label: 'Activiteit waarin de toezegging is gedaan',
 			match: [{ relation: 'MADE_IN', direction: 'outbound', collection: 'activities' }]
 		}
 	],
@@ -313,12 +401,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'documents',
-			label: 'Stukken',
+			label: 'Stukken van deze zaak',
+			noun: 'stukken',
 			match: [{ relation: 'PART_OF', direction: 'inbound', collection: 'documents' }]
 		},
 		{
 			id: 'decisions',
-			label: 'Stemmingen',
+			label: 'Stemmingen over deze zaak',
+			noun: 'stemmingen',
 			match: [{ relation: 'ABOUT', direction: 'inbound', collection: 'decisions' }]
 		}
 	]
@@ -385,8 +475,12 @@ export function buildGroups(
 	return groups;
 }
 
-/** `12`, or `30+` for a group the API cut off. */
+/** The number of bronnen of a group: what the API states, else what is loaded. */
+export const groupCount = (group: Pick<Group, 'rows' | 'total'>) =>
+	group.total != null && group.total >= group.rows.length ? group.total : group.rows.length;
+
+/** `12`, `1.064`, or `30+` for a group the API cut off. */
 export const countLabel = (group: Pick<Group, 'rows' | 'capped' | 'total'>) =>
 	group.total != null && group.total >= group.rows.length
-		? String(group.total)
-		: `${group.rows.length}${group.capped ? '+' : ''}`;
+		? formatCount(group.total)
+		: `${formatCount(group.rows.length)}${group.capped ? '+' : ''}`;

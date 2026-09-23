@@ -1,0 +1,187 @@
+import { describe, expect, it } from 'vitest';
+import {
+	EMPTY_FILTER,
+	PRESETS,
+	activePreset,
+	bronKindOf,
+	bronnenLabel,
+	filterParams,
+	hiddenByKind,
+	parseFilter,
+	rechterOf,
+	rowPasses,
+	toggleKind,
+	withPreset,
+	type VerbondenFilter
+} from './filter';
+import type { Row } from './rows';
+import { countLine, filterGroups, regroup, yearHistogram } from './view';
+import type { Group } from './groups';
+
+const row = (over: Partial<Row>): Row => ({
+	ref: { collection: 'judgments', key: 'j' },
+	title: 'Hof Amsterdam',
+	context: null,
+	kind: 'uitspraken',
+	...over
+});
+
+describe('parseFilter', () => {
+	it('reads the bronnen and the other filters from the URL, and writes them back', () => {
+		const f = parseFilter(
+			new URLSearchParams(
+				'bronnen=artikelen,wetten,toelichtingen&lid=2&rechter=hof&van=2015&tot=2026'
+			)
+		);
+		expect([...f.bronnen!]).toEqual(['artikelen', 'wetten', 'toelichtingen']);
+		expect(f.lid).toBe('2');
+		expect(f.rechter).toBe('hof');
+		expect(f.van).toBe(2015);
+		expect(f.tot).toBe(2026);
+		expect(filterParams(f)).toMatchObject({
+			bronnen: 'artikelen,wetten,toelichtingen',
+			lid: '2',
+			rechter: 'hof',
+			van: '2015',
+			tot: '2026',
+			betrouwbaarheid: null
+		});
+	});
+
+	it('means all bronnen when the parameter is absent or holds no known kind', () => {
+		expect(parseFilter(new URLSearchParams('')).bronnen).toBeNull();
+		expect(parseFilter(new URLSearchParams('bronnen=x')).bronnen).toBeNull();
+		expect(filterParams(EMPTY_FILTER).bronnen).toBeNull();
+	});
+});
+
+describe('presets', () => {
+	it('names the active preset in the head of the panel', () => {
+		expect(bronnenLabel(EMPTY_FILTER)).toBe('Alle bronnen');
+		const f = withPreset(EMPTY_FILTER, PRESETS[2]);
+		expect(activePreset(f)?.id).toBe('wetteksten');
+		expect(bronnenLabel(f)).toBe('Wetteksten en toelichting');
+		expect(activePreset(withPreset(EMPTY_FILTER, PRESETS[4]))?.id).toBe('hoge-raad');
+	});
+
+	it('toggles one kind and returns to all when every kind is on', () => {
+		const one = toggleKind(EMPTY_FILTER, 'uitspraken');
+		expect(one.bronnen!.has('uitspraken')).toBe(false);
+		expect(one.bronnen!.size).toBe(7);
+		expect(toggleKind(one, 'uitspraken').bronnen).toBeNull();
+	});
+});
+
+describe('bronKindOf', () => {
+	it('splits documents by kind and relation', () => {
+		expect(bronKindOf('documents', 'd', { kind: 'Memorie van toelichting' })).toBe('toelichtingen');
+		expect(bronKindOf('documents', 'd', { kind: 'Voorstel van wet' })).toBe('wetsvoorstellen');
+		expect(bronKindOf('documents', 'd', { kind: 'Brief regering' }, 'AMENDS')).toBe(
+			'wetsvoorstellen'
+		);
+		expect(bronKindOf('documents', 'd', { kind: 'Brief regering' })).toBe('dossiers');
+		expect(bronKindOf('articles', 'bwbv0001000_6', {})).toBe('internationaal');
+		expect(bronKindOf('judgments', 'echr_1', {})).toBe('internationaal');
+		expect(bronKindOf('instruments', 'bwbr0001854', {})).toBe('wetten');
+	});
+
+	it('groups kamerleden, fracties and commissies as leden, not dossiers', () => {
+		expect(bronKindOf('members', 'm1', {})).toBe('leden');
+		expect(bronKindOf('factions', 'f1', {})).toBe('leden');
+		expect(bronKindOf('committees', 'c1', {})).toBe('leden');
+		expect(bronKindOf('activities', 'a1', {})).toBe('dossiers');
+		expect(bronKindOf('decisions', 'b1', {})).toBe('dossiers');
+	});
+});
+
+describe('rowPasses', () => {
+	const hr = row({ identifier: 'ECLI:NL:HR:2024:1769', date: '2024-12-03', lid: '2' });
+	const hof = row({ identifier: 'ECLI:NL:GHAMS:2024:2920', date: '2019-09-10', derived: true });
+	const art = row({ ref: { collection: 'articles', key: 'a' }, kind: 'artikelen', lid: null });
+
+	it('applies the bronnen, the lid, the rechter, the period and the betrouwbaarheid', () => {
+		const only = (f: Partial<VerbondenFilter>) => ({ ...EMPTY_FILTER, ...f });
+		expect(rowPasses(hr, only({ bronnen: new Set(['artikelen']) }))).toBe(false);
+		expect(rowPasses(art, only({ bronnen: new Set(['artikelen']) }))).toBe(true);
+		expect(rowPasses(hr, only({ lid: '2' }))).toBe(true);
+		expect(rowPasses(hof, only({ lid: '2' }))).toBe(false);
+		expect(rowPasses(art, only({ lid: 'geen' }))).toBe(true);
+		expect(rowPasses(hr, only({ rechter: 'hr' }))).toBe(true);
+		expect(rowPasses(hof, only({ rechter: 'hr' }))).toBe(false);
+		expect(rowPasses(hof, only({ van: 2020 }))).toBe(false);
+		expect(rowPasses(hr, only({ van: 2020, tot: 2026 }))).toBe(true);
+		expect(rowPasses(hof, only({ betrouwbaarheid: 'bron' }))).toBe(false);
+		expect(rowPasses(hof, only({ betrouwbaarheid: 'afgeleid' }))).toBe(true);
+		expect(rowPasses(hr, only({ jaar: 2024 }))).toBe(true);
+		expect(rowPasses(hr, only({ zoek: 'hr:2024' }))).toBe(true);
+	});
+
+	it('tells the rechter from the ECLI and the court name', () => {
+		expect(rechterOf(hr)).toBe('hr');
+		expect(rechterOf(hof)).toBe('hof');
+		expect(rechterOf(row({ court: 'Rechtbank Amsterdam' }))).toBe('rechtbank');
+		expect(rechterOf(row({ court: 'Raad van State' }))).toBe('rvs');
+	});
+});
+
+describe('the panel under the filter', () => {
+	const groups: Group[] = [
+		{
+			id: 'judgments',
+			label: 'Uitspraken die dit artikel aanhalen',
+			rows: [
+				row({ date: '2024-01-01', lid: '2' }),
+				row({ ref: { collection: 'judgments', key: 'k' }, date: '2023-01-01', lid: '1' })
+			],
+			total: 1064,
+			capped: false
+		},
+		{
+			id: 'cited-by',
+			label: 'Artikelen die naar dit artikel verwijzen',
+			rows: [row({ ref: { collection: 'articles', key: 'a' }, kind: 'artikelen', lid: '2' })],
+			total: 34,
+			capped: false
+		}
+	];
+
+	it('counts what is shown and what is hidden, and never leaves an empty panel silent', () => {
+		expect(countLine(groups, EMPTY_FILTER)).toBe('1.098 verbindingen');
+		const f = { ...EMPTY_FILTER, bronnen: new Set(['artikelen'] as const) };
+		expect(countLine(groups, f)).toBe('34 van 1.098 verbindingen');
+		expect(filterGroups(groups, f).map((g) => g.id)).toEqual(['cited-by']);
+		expect(
+			hiddenByKind(
+				groups.flatMap((g) => g.rows),
+				{ uitspraken: 1064 },
+				f
+			)
+		).toEqual([{ kind: 'uitspraken', count: 1064 }]);
+		const none = { ...EMPTY_FILTER, bronnen: new Set(['dossiers'] as const) };
+		expect(filterGroups(groups, none)).toEqual([]);
+	});
+
+	it('regroups per lid, the rest under Hele artikel', () => {
+		const perLid = regroup(
+			[
+				...groups,
+				{
+					id: 'law',
+					label: 'Wet',
+					rows: [row({ ref: { collection: 'instruments', key: 'w' }, kind: 'wetten' })],
+					capped: false
+				}
+			],
+			'lid',
+			'articles'
+		);
+		expect(perLid.map((g) => g.label)).toEqual(['Lid 1', 'Lid 2', 'Hele artikel']);
+		expect(perLid[1].rows).toHaveLength(2);
+	});
+
+	it('counts judgments per year for the bar chart', () => {
+		const bars = yearHistogram(groups[0].rows, 3);
+		expect(bars.map((b) => b.year)).toEqual([2022, 2023, 2024]);
+		expect(bars.map((b) => b.count)).toEqual([0, 1, 1]);
+	});
+});
