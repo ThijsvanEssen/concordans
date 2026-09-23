@@ -18,9 +18,10 @@ export type Resolved = { ref: BronRef; at: string | null };
 const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const BWB = /^BWB[RVW]\d{7}$/i;
 const CELEX = /^[0-9CE]\d{4}[A-Z]{1,2}\d{4}(?:R\(\d+\))?$/i;
-// A dossier number is what the API takes (`^\d+(-[A-Za-z]+)?$`): `36327`, `37020-XV`, `37020-J`.
+// A dossier number with its suffix: `36327`, `37020-XV`, `23908-(R1519)`. A digit suffix
+// (`21501-31`) reads as a paper number; `resolveQuery` asks the API which it is.
 const DOSSIER =
-	/^(?:kamerstuk(?:ken)?\s+(?:I{1,2}\s+)?)?(\d{5}(?:-[A-Z]+)?)(?:\s*-\s*(\d+)|,?\s*nr\.?\s*(\d+|[A-Z]{1,2}))?$/i;
+	/^(?:kamerstuk(?:ken)?\s+(?:I{1,2}\s+)?)?(\d{5}(?:-(?:[A-Z]+|\([A-Z0-9]+\)))?)(?:\s*-\s*(\d+)|,?\s*nr\.?\s*(\d+|[A-Z]{1,2}))?$/i;
 // "artikel 287 Sr", "art. 6:162 BW", "art. 359a lid 1 onder b Sv", "artikel 3:4, tweede lid, Awb".
 const ARTICLE = /^art(?:ikel|\.)?\s*(?:(\d+[a-z]?):)?(\d+[a-z]*(?:\.\d+[a-z]*)*)(?![\w:])(.*)$/i;
 // What stands between the article number and the law: ", tweede lid,", "lid 1 onder b".
@@ -170,6 +171,14 @@ export async function resolveQuery(
 			return key ? { ref: { collection: 'articles', key }, at: c.at } : null;
 		}
 		if (c.kind === 'dossier') {
+			// `21501-31` is a dossier of its own; `36327-3` is paper 3 of dossier 36327.
+			const labelled = c.document && (await deps.dossier(`${c.number}-${c.document}`));
+			if (labelled) {
+				return {
+					ref: { collection: 'dossiers', key: labelled.key, number: labelled.number },
+					at: null
+				};
+			}
 			const key = c.document && (await deps.documentKey(c.number, c.document));
 			if (key) return { ref: { collection: 'documents', key }, at: null };
 			const dossier = await deps.dossier(c.number);

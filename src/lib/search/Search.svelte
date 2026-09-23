@@ -7,7 +7,7 @@
 	import { bronHref, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { formatDate } from '$lib/components/explore/readers/_shared';
-	import { STAGE_LABEL, isStage } from '$lib/components/parliamentary/stages';
+	import { dossierStatus, isOutcome, isStage } from '$lib/components/parliamentary/stages';
 	import { bronLabel, bronPlural, type Collection } from '$lib/vocabulary';
 	import { parseCitation, resolveQuery, type Citation } from './resolve-query';
 
@@ -95,13 +95,12 @@
 			case 'judgments':
 				return judgmentContext(hit.display_name ?? '');
 			case 'dossiers': {
-				const stage = hit.extra?.current_stage;
-				return [
-					extra(hit, 'number'),
-					typeof stage === 'string' && isStage(stage) ? STAGE_LABEL[stage] : ''
-				]
-					.filter(Boolean)
-					.join(' · ');
+				const { outcome, current_stage } = hit.extra ?? {};
+				const status = dossierStatus({
+					outcome: isOutcome(outcome) ? outcome : null,
+					current_stage: isStage(current_stage) ? current_stage : null
+				});
+				return [extra(hit, 'number'), status].filter(Boolean).join(' · ');
 			}
 			case 'documents':
 				return extra(hit, 'kind');

@@ -27,6 +27,8 @@ describe('parseCitation', () => {
 		['37020-J', { kind: 'dossier', number: '37020-J', document: null }],
 		['Kamerstuk 36327 nr. 3', { kind: 'dossier', number: '36327', document: '3' }],
 		['37020-j', { kind: 'dossier', number: '37020-J', document: null }],
+		['23908-(R1519)', { kind: 'dossier', number: '23908-(R1519)', document: null }],
+		['21501-31', { kind: 'dossier', number: '21501', document: '31' }],
 		['37020-XV-3', { kind: 'dossier', number: '37020-XV', document: '3' }],
 		['Kamerstuk 36327 nr. A', { kind: 'dossier', number: '36327', document: 'A' }],
 		['BWBR0001854', { kind: 'bwb', id: 'BWBR0001854' }],
@@ -88,11 +90,26 @@ describe('resolveQuery', () => {
 		expect(await resolveQuery('37020-Q', deps({ dossier: async () => null }))).toBeNull();
 	});
 
+	it('opens a dossier whose suffix is a number before a paper of that number', async () => {
+		const d = deps({
+			dossier: async (n) => (n === '21501-31' ? { key: '21501_31', number: '21501-31' } : null)
+		});
+		expect((await resolveQuery('21501-31', d))?.ref).toEqual({
+			collection: 'dossiers',
+			key: '21501_31',
+			number: '21501-31'
+		});
+		expect(d.documentKey).not.toHaveBeenCalled();
+	});
+
 	it('opens the document of a dossier, and the dossier when it has no such document', async () => {
-		expect((await resolveQuery('36327-3', deps()))?.ref.collection).toBe('documents');
+		const paper = deps({
+			dossier: async (n) => (n === '36327' ? { key: '36327', number: '36327' } : null)
+		});
+		expect((await resolveQuery('36327-3', paper))?.ref.collection).toBe('documents');
 		const none = deps({
 			documentKey: async () => null,
-			dossier: async () => ({ key: '36327', number: '36327' })
+			dossier: async (n) => (n === '36327' ? { key: '36327', number: '36327' } : null)
 		});
 		expect((await resolveQuery('36327-999', none))?.ref).toEqual({
 			collection: 'dossiers',

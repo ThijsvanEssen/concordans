@@ -6,7 +6,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import { bronPlural, type Collection } from '$lib/vocabulary';
-	import { STAGE_LABEL } from '$lib/components/parliamentary/stages';
+	import { dossierStatus } from '$lib/components/parliamentary/stages';
 
 	/** The ways into the material by kind; each opens Bladeren on that kind. */
 	const KINDS: Collection[] = ['instruments', 'dossiers', 'judgments', 'committees'];
@@ -185,8 +185,8 @@
 										<div class="feed-row-meta">
 											<KindGlyph collection="dossiers" />
 											<span>{d.number}</span>
-											{#if d.current_stage}
-												<span class="dot">·</span><span>{STAGE_LABEL[d.current_stage]}</span>
+											{#if dossierStatus(d)}
+												<span class="dot">·</span><span>{dossierStatus(d)}</span>
 											{/if}
 										</div>
 										<p class="feed-row-title">{d.title ?? d.number}</p>

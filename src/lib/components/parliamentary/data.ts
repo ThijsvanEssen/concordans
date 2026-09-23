@@ -37,10 +37,6 @@ export const getMemberVotes = (key: string) =>
 /** Node props are untyped in the schema; this is a string prop, or null. */
 export const str = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
-/** A list-of-strings prop, such as `case_kinds`; empty when absent. */
-export const strings = (value: unknown): string[] =>
-	Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
-
 /** A committee is addressed by slug in `/api/committees/{slug}`; the node key is a GUID. */
 export const committeeSlug = (node: GraphNode): string | null => {
 	return str(node.raw?.props?.slug) || null;

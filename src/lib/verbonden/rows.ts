@@ -61,18 +61,10 @@ export const longDate = (iso: string | null) =>
 		? new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 		: null;
 
-/**
- * The dossier numbers of a document. The API writes them as a list, or as the text
- * of a Python list (`"['36693']"`).
- */
+/** The dossier numbers of a node (`37020-XV`), in either chamber. */
 export function dossierNumbersOf(props: Record<string, unknown> | null | undefined): string[] {
-	const raw = props?.dossier_numbers ?? props?.dossier_number;
-	if (Array.isArray(raw)) return raw.filter((n): n is string => typeof n === 'string' && !!n);
-	if (typeof raw === 'string') {
-		const found = raw.match(/\d{5}(?:-[A-Za-z0-9]+)?/g);
-		return found ?? (raw.trim() ? [raw.trim()] : []);
-	}
-	return [];
+	const raw = props?.dossier_numbers;
+	return Array.isArray(raw) ? raw.filter((n): n is string => typeof n === 'string' && !!n) : [];
 }
 
 /** The name of a court the API gives as a code (`GHAMS`). */

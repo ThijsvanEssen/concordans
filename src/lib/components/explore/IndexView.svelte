@@ -12,9 +12,8 @@
 	import type { Schema } from '$lib/api/types';
 	import type { Collection } from '$lib/vocabulary';
 	import {
-		OUTCOME_LABEL,
 		STAGES,
-		STAGE_LABEL,
+		dossierStatus,
 		TRACK_LABEL,
 		isStage
 	} from '$lib/components/parliamentary/stages';
@@ -740,15 +739,9 @@
 											<div class="row-title">{d.title ?? '—'}</div>
 										</div>
 										<div class="row-aside">
-											{#if d.outcome}
+											{#if dossierStatus(d)}
 												<span class="tag">
-													<span class="tag-dot" aria-hidden="true"></span>{OUTCOME_LABEL[d.outcome]}
-												</span>
-											{:else if d.current_stage}
-												<span class="tag">
-													<span class="tag-dot" aria-hidden="true"></span>{STAGE_LABEL[
-														d.current_stage
-													]}
+													<span class="tag-dot" aria-hidden="true"></span>{dossierStatus(d)}
 												</span>
 											{/if}
 										</div>

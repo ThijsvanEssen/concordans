@@ -10,6 +10,7 @@
 	type Body = {
 		tally?: Tally;
 		passed?: boolean;
+		primary_case_kind?: string | null;
 		agenda_title?: string;
 		minister_name?: string;
 		text?: string;
@@ -121,12 +122,14 @@
 									<span class="decision-total-sep">·</span>
 									<span class="decision-total--other">{seats} {choice.toLowerCase()}</span>
 								{/each}
-								<span
-									class="decision-outcome"
-									class:outcome--passed={passed}
-									class:outcome--failed={!passed}
-								>
-									{passed ? 'Aangenomen' : 'Verworpen'}
+								<!-- What was voted on (Wetgeving, Amendement, Motie), then the result. -->
+								<span class="decision-outcome">
+									{#if body.primary_case_kind}<span class="decision-kind"
+											>{body.primary_case_kind}</span
+										>{/if}
+									<span class:outcome--passed={passed} class:outcome--failed={!passed}
+										>{passed ? 'Aangenomen' : 'Verworpen'}</span
+									>
 								</span>
 							</div>
 						</div>
@@ -368,6 +371,11 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
+	}
+	.decision-kind {
+		color: var(--ink-3);
+		font-weight: 400;
+		margin-right: 6px;
 	}
 	.outcome--passed,
 	.outcome--failed {

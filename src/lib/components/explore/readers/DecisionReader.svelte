@@ -6,7 +6,6 @@
 	import { bronHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate } from './_shared';
-	import { str } from '$lib/components/parliamentary/data';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -67,8 +66,6 @@
 			([choice]) => choice !== 'Voor' && choice !== 'Tegen'
 		)}
 		{@const dossierNumbers = (node.raw?.props?.dossier_numbers ?? []) as string[]}
-		<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
-		{@const caseKind = str(node.raw?.props?.primary_case_kind)}
 		{@const voters = [...(d.votes ?? [])].sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0))}
 
 		<header class="head">
@@ -86,7 +83,8 @@
 				>
 					{d.passed ? 'Aangenomen' : 'Verworpen'}
 				</span>
-				{#if caseKind}<span class="case-chip">{caseKind}</span>{/if}
+				<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
+				{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
 				{#each dossierNumbers.slice(0, 3) as number (number)}
 					<a href={bronHref(`dossiers/${number}`)} class="dossier-chip" data-sveltekit-noscroll
 						>{number}</a

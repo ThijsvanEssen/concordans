@@ -51,5 +51,15 @@ export const OUTCOME_LABEL: Record<Outcome, string> = {
 	ingetrokken: 'Ingetrokken'
 };
 
-export const isStage = (value: string | null | undefined): value is Stage =>
-	value != null && Object.hasOwn(STAGE_LABEL, value);
+export const isStage = (value: unknown): value is Stage =>
+	typeof value === 'string' && Object.hasOwn(STAGE_LABEL, value);
+
+export const isOutcome = (value: unknown): value is Outcome =>
+	typeof value === 'string' && Object.hasOwn(OUTCOME_LABEL, value);
+
+/** Where a dossier stands, as a word: its outcome once closed, else its current stage. */
+export const dossierStatus = (d: {
+	outcome?: Outcome | null;
+	current_stage?: Stage | null;
+}): string | null =>
+	d.outcome ? OUTCOME_LABEL[d.outcome] : d.current_stage ? STAGE_LABEL[d.current_stage] : null;

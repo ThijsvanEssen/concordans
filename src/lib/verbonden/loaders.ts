@@ -328,7 +328,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		return {
 			total: found.total,
 			rows: found.items.map((d) => ({
-				ref: { collection: 'dossiers', key: d.key, number: d.dossier_number ?? '' },
+				ref: { collection: 'dossiers', key: d.key, number: d.dossier_number },
 				...describe('dossiers', d.key, d.display_name, {
 					title: d.title,
 					label: d.dossier_number
