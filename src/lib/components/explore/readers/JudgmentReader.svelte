@@ -33,8 +33,9 @@
 
 	const ecli = $derived(selection ? String(selection.raw?.props?.ecli ?? selection.key) : null);
 
-	// The anchor of an overweging: `paragraph_id` (API 0.5), else built from its number.
-	// TODO(backend B7): the fallback goes when every paragraph carries the id.
+	// The anchor of an overweging: `paragraph_id` for the first sub-paragraph split out of
+	// an API paragraph, else built from its number — a later split shares one `paragraph_id`
+	// with the first and needs its own anchor.
 	const rov = (number: string, id?: string | null) => id || `rov-${number}`;
 	const copyLink = (id: string) => navigator.clipboard?.writeText(permalink(page.url, id));
 
