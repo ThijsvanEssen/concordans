@@ -35,7 +35,6 @@ interface OpenApiOperation {
 		string,
 		{ description?: string; content?: Record<string, { schema?: SchemaNode }> }
 	>;
-	security?: Array<Record<string, string[]>>;
 }
 
 export interface EndpointDoc {
@@ -44,8 +43,6 @@ export interface EndpointDoc {
 	summary: string;
 	description: string;
 	parameters: OpenApiParam[];
-	/** Headers a route asks for, from its `security` requirement. Empty for a public route. */
-	keys: string[];
 	requestSchema: string | null;
 	responses: Array<{ status: string; description: string; schema: string | null }>;
 	operationId: string;
@@ -102,7 +99,7 @@ const TAGS: Record<string, { label: string; description: string }> = {
 	},
 	relationships: {
 		label: 'Semantische verbindingen',
-		description: 'Geclassificeerde verwijzingen tussen artikelen: typen, zoeken, taggen en stemmen.'
+		description: 'Geclassificeerde verwijzingen tussen artikelen: de typen, en erop zoeken.'
 	},
 	nodes: {
 		label: 'Bronnen',
@@ -117,10 +114,6 @@ const TAGS: Record<string, { label: string; description: string }> = {
 	stats: {
 		label: 'Statistieken',
 		description: 'Aantal bronnen per collectie en aantal verbindingen per type.'
-	},
-	watches: {
-		label: 'Volgen',
-		description: 'Gevolgde bronnen: lijst, toevoegen en verwijderen.'
 	},
 	root: { label: 'Service', description: 'Naam, versie en bereikbaarheid van de database.' }
 };
@@ -137,14 +130,12 @@ export const load: PageLoad = () => {
 	const spec = openapi as unknown as {
 		info: { version: string };
 		paths: Record<string, Record<string, OpenApiOperation>>;
-		components: { securitySchemes: Record<string, { name: string }> };
 	};
-	const httpMethods = new Set(['get', 'post', 'put', 'delete', 'patch']);
 	const byTag = new Map<string, EndpointDoc[]>();
 
 	for (const [path, ops] of Object.entries(spec.paths)) {
 		for (const [method, op] of Object.entries(ops)) {
-			if (!httpMethods.has(method)) continue;
+			if (method !== 'get') continue;
 			const tag = op.tags?.[0] ?? 'root';
 			const doc: EndpointDoc = {
 				method: method.toUpperCase(),
@@ -152,9 +143,6 @@ export const load: PageLoad = () => {
 				summary: op.summary ?? '',
 				description: op.description ?? '',
 				parameters: op.parameters ?? [],
-				keys: (op.security ?? [])
-					.flatMap((requirement) => Object.keys(requirement))
-					.map((scheme) => spec.components.securitySchemes[scheme].name),
 				requestSchema: schemaName(op.requestBody?.content?.['application/json']?.schema),
 				responses: Object.entries(op.responses ?? {}).map(([status, r]) => ({
 					status,
@@ -185,11 +173,6 @@ export const load: PageLoad = () => {
 	return {
 		version: spec.info.version,
 		tags,
-		totalEndpoints: tags.reduce((sum, t) => sum + t.endpoints.length, 0),
-		keyHeaders: [...new Set(tags.flatMap((t) => t.endpoints.flatMap((e) => e.keys)))].sort(),
-		keyedEndpoints: tags.reduce(
-			(sum, t) => sum + t.endpoints.filter((e) => e.keys.length).length,
-			0
-		)
+		totalEndpoints: tags.reduce((sum, t) => sum + t.endpoints.length, 0)
 	};
 };

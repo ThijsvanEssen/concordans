@@ -58,7 +58,9 @@
 	// artikel, ... Rendered as the same anchored, leden-like structure ArticleText gives
 	// an article, instead of one long run of paragraphs.
 	type Section = Schema<'SectionDTO'>;
-	const sections = $derived<Section[]>(view.kind === 'loaded' ? (view.document.sections ?? []) : []);
+	const sections = $derived<Section[]>(
+		view.kind === 'loaded' ? (view.document.sections ?? []) : []
+	);
 	const headingTexts = $derived(new Set(sections.map((s) => s.heading.trim().toLowerCase())));
 
 	type Entry =

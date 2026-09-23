@@ -1035,7 +1035,7 @@ export interface paths {
         };
         /**
          * Available semantic relationship types
-         * @description The supported semantic relationship types and source values.
+         * @description The supported semantic relationship types.
          */
         get: operations["get_relationship_types_api_relationships_types_get"];
         put?: never;
@@ -1060,46 +1060,6 @@ export interface paths {
         get: operations["search_api_relationships_search_get"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/relationships/tag": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Tag an article relationship with a semantic type
-         * @description Curation endpoint: creates or updates a REFERS_TO relationship with semantic metadata. Requires the X-Curation-Key header.
-         */
-        post: operations["tag_api_relationships_tag_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/relationships/{edge_id}/vote": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Vote on a semantic relationship
-         * @description Community endpoint: increments a relationship's upvote or downvote count. Requires the X-Write-Key header.
-         */
-        post: operations["vote_api_relationships__edge_id__vote_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1281,50 +1241,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/watches": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List all watches
-         * @description Return all saved watches, newest first.
-         */
-        get: operations["get_watches_api_watches_get"];
-        put?: never;
-        /**
-         * Add a node to the watchlist
-         * @description Requires the X-Write-Key header.
-         */
-        post: operations["add_watch_api_watches_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/watches/{watch_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Remove a watch
-         * @description Removes a watch by its ``_key``. Returns HTTP 204 with no body on success, 404 when the watch does not exist. Requires the X-Write-Key header.
-         */
-        delete: operations["remove_watch_api_watches__watch_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2094,16 +2010,8 @@ export interface components {
             semantic_type?: string | null;
             /** Explanation */
             explanation?: string | null;
-            /**
-             * Expert Badge
-             * @default false
-             */
-            expert_badge: boolean;
-            /** Semantic Source */
-            semantic_source?: string | null;
             /** Confidence */
             confidence?: number | null;
-            community_votes?: components["schemas"]["CommunityVotes"];
             /**
              * Start
              * @description Offset of the reference in the text of the referring article.
@@ -2407,22 +2315,6 @@ export interface components {
              * @default []
              */
             members: components["schemas"]["MemberDTO"][];
-        };
-        /**
-         * CommunityVotes
-         * @description Community vote counters on a semantic relationship.
-         */
-        CommunityVotes: {
-            /**
-             * Upvotes
-             * @default 0
-             */
-            upvotes: number;
-            /**
-             * Downvotes
-             * @default 0
-             */
-            downvotes: number;
         };
         /**
          * CrossLawDependenciesResponse
@@ -3279,13 +3171,8 @@ export interface components {
             confidence?: number | null;
             /** Semantic Type */
             semantic_type?: string | null;
-            /** Expert Badge */
-            expert_badge?: boolean | null;
             /** Explanation */
             explanation?: string | null;
-            /** Semantic Source */
-            semantic_source?: string | null;
-            community_votes?: components["schemas"]["CommunityVotes"] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -4537,7 +4424,7 @@ export interface components {
         };
         /**
          * RelationshipDTO
-         * @description A single semantic relationship row (tag response and search results).
+         * @description A single semantic relationship row of the search results.
          */
         RelationshipDTO: {
             /** Edge Id */
@@ -4552,16 +4439,8 @@ export interface components {
             semantic_type?: string | null;
             /** Explanation */
             explanation?: string | null;
-            /**
-             * Expert Badge
-             * @default false
-             */
-            expert_badge: boolean;
-            /** Semantic Source */
-            semantic_source?: string | null;
             /** Confidence */
             confidence?: number | null;
-            community_votes?: components["schemas"]["CommunityVotes"];
             source_article?: components["schemas"]["ArticleRelationDTO"] | null;
             target_article?: components["schemas"]["ArticleRelationDTO"] | null;
         };
@@ -4578,51 +4457,6 @@ export interface components {
             limit: number;
             /** Offset */
             offset: number;
-        };
-        /**
-         * RelationshipTagRequest
-         * @description Request body for POST /api/relationships/tag.
-         *
-         *     Article references use the 'BWBR0001854/287' (bwb_id/article_number) form.
-         */
-        RelationshipTagRequest: {
-            /** Source Article */
-            source_article: string;
-            /** Target Article */
-            target_article: string;
-            /** Semantic Type */
-            semantic_type: string;
-            /** Explanation */
-            explanation?: string | null;
-            /**
-             * Semantic Source
-             * @default expert
-             */
-            semantic_source: string;
-            /**
-             * Expert Badge
-             * @default false
-             */
-            expert_badge: boolean;
-            /** Created By */
-            created_by?: string | null;
-        };
-        /**
-         * RelationshipVoteRequest
-         * @description Request body for POST /api/relationships/{edge_id}/vote.
-         */
-        RelationshipVoteRequest: {
-            /** Vote */
-            vote: string;
-        };
-        /**
-         * RelationshipVoteResponse
-         * @description Updated vote counters after a community vote.
-         */
-        RelationshipVoteResponse: {
-            /** Edge Id */
-            edge_id: string;
-            community_votes: components["schemas"]["CommunityVotes"];
         };
         /**
          * ResolveMatch
@@ -5202,34 +5036,6 @@ export interface components {
              * @default 0
              */
             seats: number;
-        };
-        /**
-         * WatchIn
-         * @description Body for POST /api/watches.
-         */
-        WatchIn: {
-            /** Node Id */
-            node_id: string;
-            /** Label */
-            label?: string | null;
-            /** Collection */
-            collection?: string | null;
-        };
-        /**
-         * WatchOut
-         * @description A persisted watch record.
-         */
-        WatchOut: {
-            /** Id */
-            id: string;
-            /** Node Id */
-            node_id: string;
-            /** Label */
-            label: string | null;
-            /** Collection */
-            collection: string | null;
-            /** Created At */
-            created_at: string;
         };
     };
     responses: never;
@@ -7012,74 +6818,6 @@ export interface operations {
             };
         };
     };
-    tag_api_relationships_tag_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RelationshipTagRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RelationshipDTO"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    vote_api_relationships__edge_id__vote_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                edge_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RelationshipVoteRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RelationshipVoteResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_annexes_api_annexes_get: {
         parameters: {
             query?: {
@@ -7370,88 +7108,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatsResponse"];
-                };
-            };
-        };
-    };
-    get_watches_api_watches_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WatchOut"][];
-                };
-            };
-        };
-    };
-    add_watch_api_watches_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WatchIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WatchOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_watch_api_watches__watch_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                watch_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

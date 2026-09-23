@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.5.0"
+		"version": "0.6.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -2795,7 +2795,7 @@
 			"get": {
 				"tags": ["relationships", "relationships"],
 				"summary": "Available semantic relationship types",
-				"description": "The supported semantic relationship types and source values.",
+				"description": "The supported semantic relationship types.",
 				"operationId": "get_relationship_types_api_relationships_types_get",
 				"responses": {
 					"200": {
@@ -2857,82 +2857,6 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/RelationshipSearchResponse" }
-							}
-						}
-					},
-					"422": {
-						"description": "Validation Error",
-						"content": {
-							"application/json": {
-								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-							}
-						}
-					}
-				}
-			}
-		},
-		"/api/relationships/tag": {
-			"post": {
-				"tags": ["relationships", "relationships"],
-				"summary": "Tag an article relationship with a semantic type",
-				"description": "Curation endpoint: creates or updates a REFERS_TO relationship with semantic metadata. Requires the X-Curation-Key header.",
-				"operationId": "tag_api_relationships_tag_post",
-				"requestBody": {
-					"content": {
-						"application/json": {
-							"schema": { "$ref": "#/components/schemas/RelationshipTagRequest" }
-						}
-					},
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"description": "Successful Response",
-						"content": {
-							"application/json": { "schema": { "$ref": "#/components/schemas/RelationshipDTO" } }
-						}
-					},
-					"422": {
-						"description": "Validation Error",
-						"content": {
-							"application/json": {
-								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-							}
-						}
-					}
-				},
-				"security": [{ "CurationKey": [] }]
-			}
-		},
-		"/api/relationships/{edge_id}/vote": {
-			"post": {
-				"tags": ["relationships", "relationships"],
-				"summary": "Vote on a semantic relationship",
-				"description": "Community endpoint: increments a relationship's upvote or downvote count. Requires the X-Write-Key header.",
-				"operationId": "vote_api_relationships__edge_id__vote_post",
-				"security": [{ "WriteKey": [] }],
-				"parameters": [
-					{
-						"name": "edge_id",
-						"in": "path",
-						"required": true,
-						"schema": { "type": "string", "title": "Edge Id" }
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": { "$ref": "#/components/schemas/RelationshipVoteRequest" }
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "Successful Response",
-						"content": {
-							"application/json": {
-								"schema": { "$ref": "#/components/schemas/RelationshipVoteResponse" }
 							}
 						}
 					},
@@ -3403,85 +3327,6 @@
 						"description": "Successful Response",
 						"content": {
 							"application/json": { "schema": { "$ref": "#/components/schemas/StatsResponse" } }
-						}
-					}
-				}
-			}
-		},
-		"/api/watches": {
-			"get": {
-				"tags": ["watches", "watches"],
-				"summary": "List all watches",
-				"description": "Return all saved watches, newest first.",
-				"operationId": "get_watches_api_watches_get",
-				"responses": {
-					"200": {
-						"description": "Successful Response",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": { "$ref": "#/components/schemas/WatchOut" },
-									"type": "array",
-									"title": "Response Get Watches Api Watches Get"
-								}
-							}
-						}
-					}
-				}
-			},
-			"post": {
-				"tags": ["watches", "watches"],
-				"summary": "Add a node to the watchlist",
-				"description": "Requires the X-Write-Key header.",
-				"operationId": "add_watch_api_watches_post",
-				"requestBody": {
-					"content": {
-						"application/json": { "schema": { "$ref": "#/components/schemas/WatchIn" } }
-					},
-					"required": true
-				},
-				"responses": {
-					"201": {
-						"description": "Successful Response",
-						"content": {
-							"application/json": { "schema": { "$ref": "#/components/schemas/WatchOut" } }
-						}
-					},
-					"422": {
-						"description": "Validation Error",
-						"content": {
-							"application/json": {
-								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-							}
-						}
-					}
-				},
-				"security": [{ "WriteKey": [] }]
-			}
-		},
-		"/api/watches/{watch_id}": {
-			"delete": {
-				"tags": ["watches", "watches"],
-				"summary": "Remove a watch",
-				"description": "Removes a watch by its ``_key``. Returns HTTP 204 with no body on success, 404 when the watch does not exist. Requires the X-Write-Key header.",
-				"operationId": "remove_watch_api_watches__watch_id__delete",
-				"security": [{ "WriteKey": [] }],
-				"parameters": [
-					{
-						"name": "watch_id",
-						"in": "path",
-						"required": true,
-						"schema": { "type": "string", "title": "Watch Id" }
-					}
-				],
-				"responses": {
-					"204": { "description": "Successful Response" },
-					"422": {
-						"description": "Validation Error",
-						"content": {
-							"application/json": {
-								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-							}
 						}
 					}
 				}
@@ -4496,16 +4341,10 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Explanation"
 					},
-					"expert_badge": { "type": "boolean", "title": "Expert Badge", "default": false },
-					"semantic_source": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Semantic Source"
-					},
 					"confidence": {
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
 						"title": "Confidence"
 					},
-					"community_votes": { "$ref": "#/components/schemas/CommunityVotes" },
 					"start": {
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
 						"title": "Start",
@@ -4851,16 +4690,6 @@
 				"required": ["id", "key"],
 				"title": "CommitteeWithMembersDTO",
 				"description": "A committee and its members, without the dossiers payload."
-			},
-			"CommunityVotes": {
-				"properties": {
-					"upvotes": { "type": "integer", "title": "Upvotes", "default": 0 },
-					"downvotes": { "type": "integer", "title": "Downvotes", "default": 0 }
-				},
-				"additionalProperties": false,
-				"type": "object",
-				"title": "CommunityVotes",
-				"description": "Community vote counters on a semantic relationship."
 			},
 			"CrossLawDependenciesResponse": {
 				"properties": {
@@ -5829,20 +5658,9 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Semantic Type"
 					},
-					"expert_badge": {
-						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
-						"title": "Expert Badge"
-					},
 					"explanation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Explanation"
-					},
-					"semantic_source": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Semantic Source"
-					},
-					"community_votes": {
-						"anyOf": [{ "$ref": "#/components/schemas/CommunityVotes" }, { "type": "null" }]
 					}
 				},
 				"additionalProperties": false,
@@ -7311,16 +7129,10 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Explanation"
 					},
-					"expert_badge": { "type": "boolean", "title": "Expert Badge", "default": false },
-					"semantic_source": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Semantic Source"
-					},
 					"confidence": {
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
 						"title": "Confidence"
 					},
-					"community_votes": { "$ref": "#/components/schemas/CommunityVotes" },
 					"source_article": {
 						"anyOf": [{ "$ref": "#/components/schemas/ArticleRelationDTO" }, { "type": "null" }]
 					},
@@ -7332,7 +7144,7 @@
 				"type": "object",
 				"required": ["edge_id", "from_id", "to_id", "relation"],
 				"title": "RelationshipDTO",
-				"description": "A single semantic relationship row (tag response and search results)."
+				"description": "A single semantic relationship row of the search results."
 			},
 			"RelationshipSearchResponse": {
 				"properties": {
@@ -7350,47 +7162,6 @@
 				"required": ["relationships", "total", "limit", "offset"],
 				"title": "RelationshipSearchResponse",
 				"description": "Paginated semantic relationship search results."
-			},
-			"RelationshipTagRequest": {
-				"properties": {
-					"source_article": { "type": "string", "title": "Source Article" },
-					"target_article": { "type": "string", "title": "Target Article" },
-					"semantic_type": { "type": "string", "title": "Semantic Type" },
-					"explanation": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Explanation"
-					},
-					"semantic_source": { "type": "string", "title": "Semantic Source", "default": "expert" },
-					"expert_badge": { "type": "boolean", "title": "Expert Badge", "default": false },
-					"created_by": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Created By"
-					}
-				},
-				"additionalProperties": false,
-				"type": "object",
-				"required": ["source_article", "target_article", "semantic_type"],
-				"title": "RelationshipTagRequest",
-				"description": "Request body for POST /api/relationships/tag.\n\nArticle references use the 'BWBR0001854/287' (bwb_id/article_number) form."
-			},
-			"RelationshipVoteRequest": {
-				"properties": { "vote": { "type": "string", "title": "Vote" } },
-				"additionalProperties": false,
-				"type": "object",
-				"required": ["vote"],
-				"title": "RelationshipVoteRequest",
-				"description": "Request body for POST /api/relationships/{edge_id}/vote."
-			},
-			"RelationshipVoteResponse": {
-				"properties": {
-					"edge_id": { "type": "string", "title": "Edge Id" },
-					"community_votes": { "$ref": "#/components/schemas/CommunityVotes" }
-				},
-				"additionalProperties": false,
-				"type": "object",
-				"required": ["edge_id", "community_votes"],
-				"title": "RelationshipVoteResponse",
-				"description": "Updated vote counters after a community vote."
 			},
 			"ResolveMatch": {
 				"properties": {
@@ -8001,52 +7772,6 @@
 				"required": ["voter_id", "voter_key", "choice"],
 				"title": "VoteDTO",
 				"description": "One vote cast on a decision, by a faction or — on a roll-call — a member."
-			},
-			"WatchIn": {
-				"properties": {
-					"node_id": { "type": "string", "title": "Node Id" },
-					"label": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Label" },
-					"collection": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Collection"
-					}
-				},
-				"additionalProperties": false,
-				"type": "object",
-				"required": ["node_id"],
-				"title": "WatchIn",
-				"description": "Body for POST /api/watches."
-			},
-			"WatchOut": {
-				"properties": {
-					"id": { "type": "string", "title": "Id" },
-					"node_id": { "type": "string", "title": "Node Id" },
-					"label": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Label" },
-					"collection": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Collection"
-					},
-					"created_at": { "type": "string", "title": "Created At" }
-				},
-				"additionalProperties": false,
-				"type": "object",
-				"required": ["id", "node_id", "label", "collection", "created_at"],
-				"title": "WatchOut",
-				"description": "A persisted watch record."
-			}
-		},
-		"securitySchemes": {
-			"CurationKey": {
-				"type": "apiKey",
-				"description": "Shared key for tagging relationships (`LAWGRAPH_CURATION_API_KEY`).",
-				"in": "header",
-				"name": "X-Curation-Key"
-			},
-			"WriteKey": {
-				"type": "apiKey",
-				"description": "Shared key for watches and votes (`LAWGRAPH_WRITE_API_KEY`).",
-				"in": "header",
-				"name": "X-Write-Key"
 			}
 		}
 	}

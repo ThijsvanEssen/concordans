@@ -11,14 +11,8 @@ const withTimeout = (request: Request) =>
 		})
 	);
 
-/** Reads: straight to the API, which answers them without a key. */
+/** The API is read-only: every route is a GET, answered without a key. */
 export const api = createClient<paths>({ baseUrl: API_BASE_URL, fetch: withTimeout });
-
-/**
- * Writes: to this app's own server, which holds the API key (routes/proxy).
- * Typed by the same schema, so the paths are the API's paths.
- */
-export const writes = createClient<paths>({ baseUrl: '/proxy', fetch: withTimeout });
 
 export class ApiError extends Error {
 	constructor(

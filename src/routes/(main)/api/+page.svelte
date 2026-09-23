@@ -34,18 +34,10 @@
 			<div class="eyebrow">OpenAPI {data.version} · {data.totalEndpoints} endpoints</div>
 			<h1 class="page-title">API-referentie</h1>
 			<p class="page-lede">
-				De endpoints van de LawGraph-API, zoals het OpenAPI-schema ze beschrijft. Lezen is openbaar.
-				Schrijven vraagt een sleutel in een header.
+				De endpoints van de LawGraph-API, zoals het OpenAPI-schema ze beschrijft. Elke route leest;
+				geen ervan vraagt een sleutel.
 			</p>
 			<dl class="api-terms">
-				<dt>Sleutel</dt>
-				<dd>
-					{data.keyedEndpoints} endpoints vragen {#each data.keyHeaders as h, i (h)}{i > 0
-							? ' of '
-							: ''}<code>{h}</code>{/each}. De sleutel staat op de server, niet in de browser.
-				</dd>
-				<dt>Foutcodes</dt>
-				<dd>401 bij een ontbrekende of onjuiste sleutel. 503 als de server geen sleutel heeft.</dd>
 				<dt>Limiet</dt>
 				<dd>
 					200 verzoeken per minuut. Daarboven volgt 429 met <code>Retry-After</code>. Herkomsten op
@@ -95,11 +87,6 @@
 									{#if ep.summary}
 										<span class="api-summary">{ep.summary}</span>
 									{/if}
-									{#if ep.keys.length > 0}
-										<span class="api-key" title="Vraagt de header {ep.keys.join(', ')}"
-											>sleutel</span
-										>
-									{/if}
 									<span class="api-chev" aria-hidden="true" class:open={opOpen}>▸</span>
 								</button>
 
@@ -107,15 +94,6 @@
 									<div class="api-endpoint-body">
 										{#if ep.description}
 											<p class="api-desc">{ep.description}</p>
-										{/if}
-
-										{#if ep.keys.length > 0}
-											<div class="api-block">
-												<div class="api-block-head">Sleutel</div>
-												<p class="api-desc">
-													Header <code>{ep.keys.join(', ')}</code>. De server stuurt de sleutel mee.
-												</p>
-											</div>
 										{/if}
 
 										{#if ep.parameters.length > 0}
@@ -411,12 +389,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-	.api-key {
-		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--ink-3);
-		flex-shrink: 0;
 	}
 	.api-default {
 		display: block;

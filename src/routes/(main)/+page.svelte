@@ -37,9 +37,7 @@
 		unwrap(api.GET('/api/decisions', { params: { query: { limit: FEED_LIMIT } }, signal }))
 			.then((r) => (decisions = r.items))
 			.catch(() => {});
-		unwrap(
-			api.GET('/api/dossiers/recent', { params: { query: { days: 90, limit: 20 } }, signal })
-		)
+		unwrap(api.GET('/api/dossiers/recent', { params: { query: { days: 90, limit: 20 } }, signal }))
 			.then(
 				(r) =>
 					(dossiers = r
@@ -88,7 +86,9 @@
 	});
 
 	const fmtDateShort = (iso: string | null | undefined) =>
-		iso ? new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short' }).format(new Date(iso)) : '';
+		iso
+			? new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'short' }).format(new Date(iso))
+			: '';
 
 	function voteSplit(d: Decision) {
 		const voor = d.tally?.['Voor'] ?? 0;
@@ -200,7 +200,10 @@
 						<ul class="feed-list">
 							{#each instruments as i (i.id)}
 								<li class="feed-row">
-									<a class="feed-row-link" href={bronHref({ collection: 'instruments', key: i.key })}>
+									<a
+										class="feed-row-link"
+										href={bronHref({ collection: 'instruments', key: i.key })}
+									>
 										<div class="feed-row-meta">
 											<KindGlyph collection="instruments" />
 											<span>{i.article_count} artikelen</span>

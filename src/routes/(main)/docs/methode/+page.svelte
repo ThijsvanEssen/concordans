@@ -82,8 +82,8 @@
 			<p>
 				Een memorie of nota van toelichting staat alleen bij een artikel als de API bevestigt dat de
 				toelichting dat artikel zelf noemt, of het een directe verbinding met het artikel draagt
-				(licht toe, wijzigt, voegt toe). Een toelichting bij het dossier zonder die bevestiging staat
-				niet bij het artikel.
+				(licht toe, wijzigt, voegt toe). Een toelichting bij het dossier zonder die bevestiging
+				staat niet bij het artikel.
 			</p>
 		</div>
 

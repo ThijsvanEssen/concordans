@@ -33,9 +33,11 @@
 			</p>
 			<p>
 				Het netwerk is gericht op Nederlands recht. Gemeentelijke verordeningen en
-				niet-gepubliceerde uitspraken vallen buiten de dekking. Europese regelgeving staat erin
-				voor zover een Nederlandse regeling ernaar verwijst. Waar de gegevens vandaan komen staat in
-				het <a href="/colofon" class="cite">colofon</a>; hoe een verbinding ontstaat in de
+				niet-gepubliceerde uitspraken vallen buiten de dekking. Europese regelgeving staat erin voor
+				zover een Nederlandse regeling ernaar verwijst. Waar de gegevens vandaan komen staat in het <a
+					href="/colofon"
+					class="cite">colofon</a
+				>; hoe een verbinding ontstaat in de
 				<a href="/docs/methode" class="cite">methode</a>.
 			</p>
 		</div>
@@ -43,12 +45,14 @@
 		<div class="section">
 			<h2 class="section-title">Zoeken</h2>
 			<p>
-				Het zoekveld (startpagina, <kbd>{modKey} K</kbd>) doorzoekt instrumenten, artikelen, uitspraken,
-				dossiers, documenten, commissies, kamerleden en fracties op tekst. Vier notaties openen een
-				bron direct:
+				Het zoekveld (startpagina, <kbd>{modKey} K</kbd>) doorzoekt instrumenten, artikelen,
+				uitspraken, dossiers, documenten, commissies, kamerleden en fracties op tekst. Vier notaties
+				openen een bron direct:
 			</p>
 			<div class="list">
-				<div class="list-row"><span class="list-k">ECLI</span><span>ECLI:NL:HR:2024:1493</span></div>
+				<div class="list-row">
+					<span class="list-k">ECLI</span><span>ECLI:NL:HR:2024:1493</span>
+				</div>
 				<div class="list-row">
 					<span class="list-k">artikelcitaat</span><span>artikel 287 Sr, art. 6:162 BW</span>
 				</div>
@@ -73,8 +77,8 @@
 			<p>
 				Elke verbinding draagt een van achttien types, een status (vastgesteld of voorgesteld) en,
 				waar ze niet structureel is, een betrouwbaarheidsscore tussen 0 en 1: een score van 1 is
-				rechtstreeks uit de brontekst gelezen, lager is afgeleid. Een verwijzing tussen artikelen kan
-				daarnaast een aard dragen: voorwaarde, uitzondering, definitie, procedure,
+				rechtstreeks uit de brontekst gelezen, lager is afgeleid. Een verwijzing tussen artikelen
+				kan daarnaast een aard dragen: voorwaarde, uitzondering, definitie, procedure,
 				reikwijdtebeperking of delegatie.
 			</p>
 			<div class="list list--two-col">
@@ -116,9 +120,9 @@
 				ingetrokken) staan bij het dossier.
 			</p>
 			<p>
-				Een stemming staat per fractie geregistreerd, of per lid bij een hoofdelijke stemming. Zonder
-				hoofdelijke stemming volgt de stem van een lid uit de fractie waarbij het op dat moment
-				hoorde.
+				Een stemming staat per fractie geregistreerd, of per lid bij een hoofdelijke stemming.
+				Zonder hoofdelijke stemming volgt de stem van een lid uit de fractie waarbij het op dat
+				moment hoorde.
 			</p>
 			<p>
 				De wetgevingsgeschiedenis van een artikel is de reeks dossiers die het invoerden, wijzigden
@@ -129,19 +133,16 @@
 		<div class="section" id="beperkingen">
 			<h2 class="section-title">Bekende beperkingen</h2>
 			<p>
-				<strong>Eerste Kamer.</strong> Alleen kamerstukken van de Eerste Kamer zijn opgenomen, gekoppeld
-				aan het dossiernummer van de Tweede Kamer. Leden, fracties, commissies en stemmingen van de
-				Eerste Kamer ontbreken; zie <a href="https://www.eerstekamer.nl" class="cite"
-					>eerstekamer.nl</a
-				>.
+				<strong>Eerste Kamer.</strong> Alleen kamerstukken van de Eerste Kamer zijn opgenomen,
+				gekoppeld aan het dossiernummer van de Tweede Kamer. Leden, fracties, commissies en
+				stemmingen van de Eerste Kamer ontbreken; zie
+				<a href="https://www.eerstekamer.nl" class="cite">eerstekamer.nl</a>.
 			</p>
 			<p>
-				<strong>Europees en verdragsrecht.</strong> Een Europese richtlijn of verordening staat in het
-				netwerk voor zover een Nederlandse regeling ernaar verwijst, niet volledig. Uitspraken van het
-				EHRM zijn opgenomen; dekking van het Hof van Justitie is niet betrouwbaar. Zie <a
-					href="https://eur-lex.europa.eu"
-					class="cite">eur-lex.europa.eu</a
-				>
+				<strong>Europees en verdragsrecht.</strong> Een Europese richtlijn of verordening staat in
+				het netwerk voor zover een Nederlandse regeling ernaar verwijst, niet volledig. Uitspraken
+				van het EHRM zijn opgenomen; dekking van het Hof van Justitie is niet betrouwbaar. Zie
+				<a href="https://eur-lex.europa.eu" class="cite">eur-lex.europa.eu</a>
 				en
 				<a href="https://hudoc.echr.coe.int" class="cite">hudoc.echr.coe.int</a>.
 			</p>
