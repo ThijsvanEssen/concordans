@@ -270,7 +270,11 @@
 								</div>
 							</div>
 						{:else}
-							<p class="reader-para reader-para--prose">
+							<!-- An unnumbered paragraph is still a target: its positional id (`p-21`). -->
+							<p
+								class="reader-para reader-para--prose"
+								id={i === 0 ? para.paragraph_id : undefined}
+							>
 								<CitedText text={seg.body} citations={seg.citations} />
 							</p>
 						{/if}
