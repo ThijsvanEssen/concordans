@@ -263,7 +263,21 @@
 				<div class="group__head">
 					<h3 class="group__label">{g.label}</h3>
 					<span class="group__count">{countLabel(g)}</span>
-					{#if bars.length > 0}
+					{#if network && drawable(g.rows).length > 0}
+						<button
+							type="button"
+							class="layer"
+							class:is-on={isLayerOn(g)}
+							role="checkbox"
+							aria-checked={isLayerOn(g)}
+							aria-label="{g.label} op het doek"
+							onclick={() => toggleLayer(g)}>{isLayerOn(g) ? '✓' : ''}</button
+						>
+					{/if}
+				</div>
+				{#if bars.length > 0}
+					<div class="group__years">
+						<span class="group__years-edge">{bars[0].year}</span>
 						<svg
 							class="years"
 							width={bars.length * 8}
@@ -294,34 +308,23 @@
 								>
 							{/each}
 						</svg>
-					{/if}
-					{#if network && drawable(g.rows).length > 0}
-						<button
-							type="button"
-							class="layer"
-							class:is-on={isLayerOn(g)}
-							role="checkbox"
-							aria-checked={isLayerOn(g)}
-							aria-label="{g.label} op het doek"
-							onclick={() => toggleLayer(g)}>{isLayerOn(g) ? '✓' : ''}</button
-						>
-					{/if}
-				</div>
-				{#if bars.length > 0}
-					<p class="group__caption">
-						{bars[0].year} tot {bars.at(-1)?.year}
-						{#if filter.jaar}
-							· <button type="button" class="link" onclick={() => chooseYear(filter.jaar!)}
+						<span class="group__years-edge">{bars.at(-1)?.year}</span>
+					</div>
+					{#if filter.jaar}
+						<p class="group__caption">
+							<button type="button" class="link" onclick={() => chooseYear(filter.jaar!)}
 								>Alle jaren</button
 							>
-						{:else if !filter.rechter}
-							· <button
+						</p>
+					{:else if !filter.rechter}
+						<p class="group__caption">
+							<button
 								type="button"
 								class="link"
 								onclick={() => onFilter(withPreset(filter, PRESETS[4]))}>Alleen Hoge Raad</button
 							>
-						{/if}
-					</p>
+						</p>
+					{/if}
 				{/if}
 				<ul class="rows">
 					{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
@@ -564,21 +567,6 @@
 	.group__count {
 		color: var(--ink-3);
 	}
-	.years {
-		margin-left: auto;
-		align-self: center;
-		flex: none;
-	}
-	.years rect {
-		fill: var(--rule-strong);
-		cursor: pointer;
-	}
-	.years rect:hover {
-		fill: var(--ink-3);
-	}
-	.years rect.is-active {
-		fill: var(--accent);
-	}
 	.layer {
 		width: 14px;
 		height: 14px;
@@ -596,12 +584,35 @@
 		cursor: pointer;
 		flex: none;
 	}
-	.years + .layer {
-		margin-left: 8px;
-	}
 	.layer.is-on {
 		background: var(--ink);
 		border-color: var(--ink);
+	}
+	.group__years {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 0 var(--s-4) 2px;
+		overflow-x: auto;
+	}
+	.group__years-edge {
+		flex: none;
+		font-size: 10.5px;
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
+	}
+	.years {
+		flex: none;
+	}
+	.years rect {
+		fill: var(--rule-strong);
+		cursor: pointer;
+	}
+	.years rect:hover {
+		fill: var(--ink-3);
+	}
+	.years rect.is-active {
+		fill: var(--accent);
 	}
 	.group__caption {
 		margin: 0;
