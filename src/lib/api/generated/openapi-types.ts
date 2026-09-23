@@ -33,7 +33,7 @@ export interface paths {
         };
         /**
          * Semantic relationships of an article
-         * @description Upstream dependencies (outgoing references), downstream implications (incoming references) and annex scopes, each with its semantic type, explanation, expert badge and community votes.
+         * @description Upstream dependencies (outgoing references), downstream implications (incoming references) and annex scopes, each with its semantic type and explanation.
          */
         get: operations["get_article_relationships_api_articles__bwb_id___article_number__relationships_get"];
         put?: never;
@@ -573,7 +573,7 @@ export interface paths {
         };
         /**
          * Recently active dossiers
-         * @description Dossiers with an activity in the given period.
+         * @description Dossiers with an activity, a vote, a document or their closing in the given period, the most recent first.
          */
         get: operations["list_recent_dossiers_api_dossiers_recent_get"];
         put?: never;
@@ -2370,6 +2370,11 @@ export interface components {
             external_id?: string | null;
             /** Passed */
             passed: boolean;
+            /**
+             * Primary Case Kind
+             * @description The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others.
+             */
+            primary_case_kind?: string | null;
             /** Chamber */
             chamber?: string | null;
             /**
@@ -2463,7 +2468,8 @@ export interface components {
         };
         /**
          * DocumentSummaryDTO
-         * @description One row in the document index.
+         * @description One row in the document index. ``dossier_numbers`` are the labels of the dossiers
+         *     it names (``37020-XV``), in either chamber.
          */
         DocumentSummaryDTO: {
             /**
@@ -2492,6 +2498,8 @@ export interface components {
             date?: string | null;
             /** External Id */
             external_id?: string | null;
+            /** Dossier Numbers */
+            dossier_numbers?: string[];
             /**
              * Has Text
              * @default false
@@ -2512,7 +2520,8 @@ export interface components {
          *     the headings of the paper in document order, empty when there is no text or
          *     the structure of the paper could not be read; their offsets are into
          *     ``text``. ``dossier_numbers`` are the dossiers the document is PART_OF, in
-         *     either chamber; ``explains`` are the articles and instruments it explains,
+         *     either chamber; ``case_kinds`` the ``Zaak.Soort`` of the cases it belongs to
+         *     (Tweede Kamer only); ``explains`` are the articles and instruments it explains,
          *     without duplicates.
          */
         DocumentTextResponse: {
@@ -2553,6 +2562,8 @@ export interface components {
             text?: string | null;
             /** Dossier Numbers */
             dossier_numbers?: string[];
+            /** Case Kinds */
+            case_kinds?: string[];
             /** Explains */
             explains?: components["schemas"]["ExplainedTargetDTO"][];
             /** Sections */
@@ -3457,8 +3468,11 @@ export interface components {
             id: string;
             /** Key */
             key: string;
-            /** Dossier Number */
-            dossier_number?: string | null;
+            /**
+             * Dossier Number
+             * @description The dossier's label, e.g. 37020-XV.
+             */
+            dossier_number: string;
             /** Title */
             title?: string | null;
             /** Display Name */
@@ -4802,6 +4816,11 @@ export interface components {
              * @description TK Besluit identifier.
              */
             external_id?: string | null;
+            /**
+             * Primary Case Kind
+             * @description The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others.
+             */
+            primary_case_kind?: string | null;
             document?: components["schemas"]["TimelineDocumentSummaryDTO"] | null;
         };
         /**
@@ -6106,7 +6125,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Dossier number, e.g. 29684 or 29684-I. */
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
                 number: string;
             };
             cookie?: never;
@@ -6141,7 +6160,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                /** @description Dossier number, e.g. 29684 or 29684-I. */
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
                 number: string;
             };
             cookie?: never;
@@ -6179,7 +6198,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                /** @description Dossier number, e.g. 29684 or 29684-I. */
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
                 number: string;
             };
             cookie?: never;
@@ -6211,7 +6230,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Dossier number, e.g. 29684 or 29684-I. */
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
                 number: string;
             };
             cookie?: never;

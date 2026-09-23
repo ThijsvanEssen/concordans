@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.7.0"
+		"version": "0.7.1"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -50,7 +50,7 @@
 			"get": {
 				"tags": ["articles", "articles"],
 				"summary": "Semantic relationships of an article",
-				"description": "Upstream dependencies (outgoing references), downstream implications (incoming references) and annex scopes, each with its semantic type, explanation, expert badge and community votes.",
+				"description": "Upstream dependencies (outgoing references), downstream implications (incoming references) and annex scopes, each with its semantic type and explanation.",
 				"operationId": "get_article_relationships_api_articles__bwb_id___article_number__relationships_get",
 				"parameters": [
 					{
@@ -1667,7 +1667,7 @@
 			"get": {
 				"tags": ["dossiers", "dossiers"],
 				"summary": "Recently active dossiers",
-				"description": "Dossiers with an activity in the given period.",
+				"description": "Dossiers with an activity, a vote, a document or their closing in the given period, the most recent first.",
 				"operationId": "list_recent_dossiers_api_dossiers_recent_get",
 				"parameters": [
 					{
@@ -1786,11 +1786,11 @@
 						"required": true,
 						"schema": {
 							"type": "string",
-							"pattern": "^\\d+(-[A-Za-z]+)?$",
-							"description": "Dossier number, e.g. 29684 or 29684-I.",
+							"pattern": "^\\d+(-[A-Za-z0-9()]+)?$",
+							"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220).",
 							"title": "Number"
 						},
-						"description": "Dossier number, e.g. 29684 or 29684-I."
+						"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220)."
 					}
 				],
 				"responses": {
@@ -1826,11 +1826,11 @@
 						"required": true,
 						"schema": {
 							"type": "string",
-							"pattern": "^\\d+(-[A-Za-z]+)?$",
-							"description": "Dossier number, e.g. 29684 or 29684-I.",
+							"pattern": "^\\d+(-[A-Za-z0-9()]+)?$",
+							"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220).",
 							"title": "Number"
 						},
-						"description": "Dossier number, e.g. 29684 or 29684-I."
+						"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220)."
 					},
 					{
 						"name": "limit",
@@ -1884,11 +1884,11 @@
 						"required": true,
 						"schema": {
 							"type": "string",
-							"pattern": "^\\d+(-[A-Za-z]+)?$",
-							"description": "Dossier number, e.g. 29684 or 29684-I.",
+							"pattern": "^\\d+(-[A-Za-z0-9()]+)?$",
+							"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220).",
 							"title": "Number"
 						},
-						"description": "Dossier number, e.g. 29684 or 29684-I."
+						"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220)."
 					},
 					{
 						"name": "order",
@@ -1960,11 +1960,11 @@
 						"required": true,
 						"schema": {
 							"type": "string",
-							"pattern": "^\\d+(-[A-Za-z]+)?$",
-							"description": "Dossier number, e.g. 29684 or 29684-I.",
+							"pattern": "^\\d+(-[A-Za-z0-9()]+)?$",
+							"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220).",
 							"title": "Number"
 						},
-						"description": "Dossier number, e.g. 29684 or 29684-I."
+						"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220)."
 					}
 				],
 				"responses": {
@@ -3055,7 +3055,10 @@
 						"in": "query",
 						"required": false,
 						"schema": {
-							"anyOf": [{ "type": "string", "pattern": "^\\d+(-[A-Za-z]+)?$" }, { "type": "null" }],
+							"anyOf": [
+								{ "type": "string", "pattern": "^\\d+(-[A-Za-z0-9()]+)?$" },
+								{ "type": "null" }
+							],
 							"description": "Dossier number, e.g. 29684.",
 							"title": "Dossier"
 						},
@@ -3377,7 +3380,10 @@
 						"in": "query",
 						"required": false,
 						"schema": {
-							"anyOf": [{ "type": "string", "pattern": "^\\d+(-[A-Za-z]+)?$" }, { "type": "null" }],
+							"anyOf": [
+								{ "type": "string", "pattern": "^\\d+(-[A-Za-z0-9()]+)?$" },
+								{ "type": "null" }
+							],
 							"description": "Only decisions on this dossier number, e.g. 29684.",
 							"title": "Dossier"
 						},
@@ -4762,6 +4768,11 @@
 						"description": "TK Besluit identifier."
 					},
 					"passed": { "type": "boolean", "title": "Passed" },
+					"primary_case_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Primary Case Kind",
+						"description": "The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others."
+					},
 					"chamber": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Chamber" },
 					"vote_kind": { "type": "string", "title": "Vote Kind", "default": "faction" },
 					"tally": {
@@ -4903,6 +4914,11 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "External Id"
 					},
+					"dossier_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Dossier Numbers"
+					},
 					"has_text": { "type": "boolean", "title": "Has Text", "default": false },
 					"linked_articles": { "type": "integer", "title": "Linked Articles", "default": 0 }
 				},
@@ -4910,7 +4926,7 @@
 				"type": "object",
 				"required": ["key"],
 				"title": "DocumentSummaryDTO",
-				"description": "One row in the document index."
+				"description": "One row in the document index. ``dossier_numbers`` are the labels of the dossiers\nit names (``37020-XV``), in either chamber."
 			},
 			"DocumentTextResponse": {
 				"properties": {
@@ -4950,6 +4966,7 @@
 						"type": "array",
 						"title": "Dossier Numbers"
 					},
+					"case_kinds": { "items": { "type": "string" }, "type": "array", "title": "Case Kinds" },
 					"explains": {
 						"items": { "$ref": "#/components/schemas/ExplainedTargetDTO" },
 						"type": "array",
@@ -4965,7 +4982,7 @@
 				"type": "object",
 				"required": ["key", "document_id"],
 				"title": "DocumentTextResponse",
-				"description": "One document with its text.\n\n``text`` is null until ``normalize tk-content`` has run for it: a paper\nfrom before December 1994 has no XML and never gets one. ``sections`` are\nthe headings of the paper in document order, empty when there is no text or\nthe structure of the paper could not be read; their offsets are into\n``text``. ``dossier_numbers`` are the dossiers the document is PART_OF, in\neither chamber; ``explains`` are the articles and instruments it explains,\nwithout duplicates."
+				"description": "One document with its text.\n\n``text`` is null until ``normalize tk-content`` has run for it: a paper\nfrom before December 1994 has no XML and never gets one. ``sections`` are\nthe headings of the paper in document order, empty when there is no text or\nthe structure of the paper could not be read; their offsets are into\n``text``. ``dossier_numbers`` are the dossiers the document is PART_OF, in\neither chamber; ``case_kinds`` the ``Zaak.Soort`` of the cases it belongs to\n(Tweede Kamer only); ``explains`` are the articles and instruments it explains,\nwithout duplicates."
 			},
 			"DossierCommitteeDTO": {
 				"properties": {
@@ -6000,8 +6017,9 @@
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
 					"dossier_number": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Dossier Number"
+						"type": "string",
+						"title": "Dossier Number",
+						"description": "The dossier's label, e.g. 37020-XV."
 					},
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
 					"display_name": {
@@ -6029,7 +6047,7 @@
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["id", "key"],
+				"required": ["id", "key", "dossier_number"],
 				"title": "InstrumentDossierItem",
 				"description": "One parliamentary dossier touching this instrument."
 			},
@@ -7572,6 +7590,11 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "External Id",
 						"description": "TK Besluit identifier."
+					},
+					"primary_case_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Primary Case Kind",
+						"description": "The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others."
 					},
 					"document": {
 						"anyOf": [
