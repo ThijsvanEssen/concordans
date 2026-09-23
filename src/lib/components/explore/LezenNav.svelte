@@ -23,7 +23,13 @@
 		breadcrumb: Schema<'InstrumentArticleBreadcrumbDTO'>[];
 	};
 
-	type Group = { label: string; type: string; items: Item[]; children: Group[] };
+	type Group = {
+		label: string;
+		title: string | null;
+		type: string;
+		items: Item[];
+		children: Group[];
+	};
 
 	let items = $state<Item[]>([]);
 	let groups = $state<Group[] | null>(null);
@@ -45,12 +51,17 @@
 		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? currentBwb;
 	});
 
-	const crumbLabel = (seg: Schema<'InstrumentArticleBreadcrumbDTO'>) =>
-		[seg.type && seg.type !== 'sectie' ? capitalise(seg.type) : null, seg.label]
-			.filter(Boolean)
-			.join(' ')
-			.trim();
+	// `label` is already the whole of what the law prints ("Eerste Boek", "Hoofdstuk 1"),
+	// so it stands alone; `title` is the heading's own text and reads as a suffix.
+	const crumbLabel = (seg: Schema<'InstrumentArticleBreadcrumbDTO'>) => {
+		const label = seg.label?.trim() || (seg.type ? capitalise(seg.type) : '');
+		return seg.title ? `${label} — ${seg.title}` : label;
+	};
 	const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+	const groupLabel = (g: Group) => {
+		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalise(g.type) : '');
+		return g.title ? `${label} — ${g.title}` : label;
+	};
 
 	// The Lezen table of contents is always the whole law, whatever the graph holds.
 	$effect(() => {
@@ -96,11 +107,11 @@
 		const anyHasBc = flat.some((it) => it.breadcrumb.length > 0);
 		if (!anyHasBc) return null;
 
-		const root: Group = { label: '', type: 'root', items: [], children: [] };
-		const findOrAdd = (parent: Group, type: string, label: string): Group => {
+		const root: Group = { label: '', title: null, type: 'root', items: [], children: [] };
+		const findOrAdd = (parent: Group, type: string, label: string, title: string | null): Group => {
 			let g = parent.children.find((c) => c.type === type && c.label === label);
 			if (!g) {
-				g = { label, type, items: [], children: [] };
+				g = { label, title, type, items: [], children: [] };
 				parent.children.push(g);
 			}
 			return g;
@@ -109,12 +120,12 @@
 		for (const it of flat) {
 			const bc = it.breadcrumb;
 			if (bc.length === 0) {
-				findOrAdd(root, 'overig', 'Overig').items.push(it);
+				findOrAdd(root, 'overig', 'Overig', null).items.push(it);
 				continue;
 			}
 			let parent = root;
 			for (const seg of bc) {
-				parent = findOrAdd(parent, seg.type ?? 'sectie', seg.label ?? '');
+				parent = findOrAdd(parent, seg.type ?? 'sectie', seg.label ?? '', seg.title ?? null);
 			}
 			parent.items.push(it);
 		}
@@ -164,11 +175,7 @@
 	<details class="group depth-{level}" open={shouldOpen}>
 		<summary class="group__head">
 			<span class="chev" aria-hidden="true">▸</span>
-			<span class="group__label"
-				>{g.type && g.type !== 'sectie' && g.type !== 'overig'
-					? `${capitalise(g.type)} `
-					: ''}{g.label}</span
-			>
+			<span class="group__label">{groupLabel(g)}</span>
 		</summary>
 		{#if g.items.length > 0}
 			<ol class="list">

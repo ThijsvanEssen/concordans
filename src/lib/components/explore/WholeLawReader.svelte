@@ -149,7 +149,11 @@
 			{#each newSections(articles[i - 1], a) as section, j (j)}
 				<h2 class="whole-section whole-section--depth-{Math.min(section.depth, 3)}">
 					<span class="whole-section-kind">{section.type}</span>
-					<span class="whole-section-label">{section.label}</span>
+					<span class="whole-section-label"
+						>{section.label}{#if section.title}<span class="whole-section-title">
+								— {section.title}</span
+							>{/if}</span
+					>
 				</h2>
 			{/each}
 
@@ -309,6 +313,12 @@
 		color: var(--ink);
 		font-size: 17px;
 		line-height: var(--lh-snug);
+	}
+
+	.whole-section-title {
+		font-weight: 400;
+		font-style: italic;
+		color: var(--ink-2);
 	}
 
 	.whole-section--depth-0 .whole-section-label {

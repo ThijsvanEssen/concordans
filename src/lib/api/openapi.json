@@ -5683,12 +5683,13 @@
 			"InstrumentArticleBreadcrumbDTO": {
 				"properties": {
 					"type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Type" },
-					"label": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Label" }
+					"label": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Label" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" }
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"title": "InstrumentArticleBreadcrumbDTO",
-				"description": "One step in an article's chapter/section path."
+				"description": "One division an article stands in, outermost first: ``type`` is the element of the\nBWB XML (``boek``, ``titeldeel``, ``hoofdstuk``, ``afdeling``, ``paragraaf``, ...),\n``label`` as printed (\"Hoofdstuk 1\"), ``title`` its heading."
 			},
 			"InstrumentArticleNodeDTO": {
 				"properties": {

@@ -3181,13 +3181,17 @@ export interface components {
         };
         /**
          * InstrumentArticleBreadcrumbDTO
-         * @description One step in an article's chapter/section path.
+         * @description One division an article stands in, outermost first: ``type`` is the element of the
+         *     BWB XML (``boek``, ``titeldeel``, ``hoofdstuk``, ``afdeling``, ``paragraaf``, ...),
+         *     ``label`` as printed ("Hoofdstuk 1"), ``title`` its heading.
          */
         InstrumentArticleBreadcrumbDTO: {
             /** Type */
             type?: string | null;
             /** Label */
             label?: string | null;
+            /** Title */
+            title?: string | null;
         };
         /**
          * InstrumentArticleNodeDTO
