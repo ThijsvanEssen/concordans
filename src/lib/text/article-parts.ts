@@ -169,7 +169,8 @@ export function partsFromApi(parts: ApiPart[]): ArticlePart[] {
 			children: []
 		};
 		byId.set(p.id, part);
-		const parentId = p.id.replace(/-onder-[^-]+$/, '');
+		// `lid-3-onder-a` and `lid-3-aanhef` belong to `lid-3`.
+		const parentId = p.id.replace(/-(?:onder-[^-]+|aanhef)$/, '');
 		const parent = parentId !== p.id ? byId.get(parentId) : undefined;
 		if (parent) {
 			if (parent.children.length === 0) parent.textEnd = p.start;

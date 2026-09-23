@@ -7,7 +7,7 @@ import sv359a from '$lib/fixtures/article-bwbr0001903_359a.json';
 import sv67 from '$lib/fixtures/article-bwbr0001903_67.json';
 import gw10 from '$lib/fixtures/article-bwbr0001840_10.json';
 import hr1769 from '$lib/fixtures/judgment-hr-2024-1769.json';
-import { parseArticleParts, partText, walkParts } from './article-parts';
+import { parseArticleParts, partsFromApi, partText, walkParts } from './article-parts';
 import { anchorOf, parseQualifier } from './qualifier';
 import { findPassage } from './find-passage';
 
@@ -60,6 +60,31 @@ describe('parseArticleParts', () => {
 
 	it('returns nothing for an article without text', () => {
 		expect(parseArticleParts(null)).toEqual([]);
+	});
+});
+
+describe('partsFromApi', () => {
+	// BW 7:3 lid 3: the lid and its aanhef start at the same offset.
+	const part = (id: string, kind: string, number: string | null, start: number, end: number) => ({
+		id,
+		kind,
+		number,
+		text: '',
+		start,
+		end
+	});
+
+	it('nests the aanhef of a lid under that lid', () => {
+		const roots = partsFromApi([
+			part('lid-2', 'lid', '2', 633, 816),
+			part('lid-3', 'lid', '3', 820, 2277),
+			part('lid-3-aanhef', 'aanhef', null, 820, 892),
+			part('lid-3-onder-a', 'onderdeel', 'a', 896, 1376),
+			part('lid-4', 'lid', '4', 2281, 2566)
+		]);
+		expect(roots.map((p) => p.id)).toEqual(['lid-2', 'lid-3', 'lid-4']);
+		expect(roots[1].children.map((p) => p.id)).toEqual(['lid-3-aanhef', 'lid-3-onder-a']);
+		expect(new Set(roots.map((p) => p.start)).size).toBe(roots.length);
 	});
 });
 
