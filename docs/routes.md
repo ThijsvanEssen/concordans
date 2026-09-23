@@ -15,7 +15,7 @@ Every URL and the query parameters it reads. The URL holds anything that can be 
 | Param             | Values                                                                                                                                                            | Effect                                                                                                        |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `mode`            | `read` (Lezen), `graph` (Netwerk, default), `index` (Bladeren)                                                                                                    | Which surface. The store persists across modes.                                                               |
-| `focus`           | `{collection}/{key}`, e.g. `articles/bwbr0001854_287`                                                                                                             | The selected bron: read, and in Netwerk expanded around.                                                      |
+| `focus`           | `{collection}/{key}`, e.g. `articles/bwbr0001854_287`; a dossier by number, `dossiers/37020-XV`                                                                   | The selected bron: read, and in Netwerk expanded around.                                                      |
 | `naast`           | `{collection}/{key}` of a document                                                                                                                                | A toelichting opened beside the article; the article stays the selected bron. A mode switch clears it.        |
 | `overlay`         | `open`, `dossier:{number}`, `heat:{months}`                                                                                                                       | See [`overlays.md`](overlays.md).                                                                             |
 | `kind`            | `instruments`, `judgments`, `dossiers`, `committees`, `members`, `factions`, `decisions`                                                                          | Bladeren category (default `dossiers`).                                                                       |
@@ -42,7 +42,9 @@ Keys `1`, `2` switch to Lezen and Netwerk, the two views of a selected bron. Bla
 
 The filter is parsed once, in `explore/+page.svelte` (`parseFilter` in `src/lib/verbonden/filter.ts`), into one object that the panel, the reader, the canvas, the legend and the table read. It is never kept in a store. From Bladeren, or with `keepMode: false`, it opens in `mode` (default `read`). `at` becomes the fragment.
 
-Every link is a navigation, so the browser history is the history of bronnen. The back and forward buttons of the status bar and the arrow keys of the canvas call `history.back()` and `history.forward()`. A click on the canvas is `goto(bronHref(node))`.
+A dossier is linked by its number: a `BronRef` of a dossier carries `number` next to its node key (`refOf` reads it from `props.label`), and a string ref is already the name a link carries (`dossiers/37020-XV`). `explore/+page.svelte` turns that number into the node through `GET /api/dossiers/{number}`.
+
+Every link is a navigation, so the browser history is the history of bronnen. The back and forward buttons of the status bar and the arrow keys of the canvas call `history.back()` and `history.forward()`. A click on the canvas is `goto(bronHref(refOf(...)))`.
 
 ## Adding a query parameter
 
