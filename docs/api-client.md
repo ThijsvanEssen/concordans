@@ -20,13 +20,13 @@ Array parameters are sent repeated (`types=a&types=b`).
 
 Call `unwrap(api.GET(...))` where the data is used. A helper is worth having only when it adds logic:
 
-| Module                | Adds                                                                                                                                       |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `articles.ts`         | joins concurrent requests for the same article (reader, panel and hover preview ask at once)                                               |
-| `judgments.ts`        | joins concurrent requests for the same judgment (reader and panel)                                                                         |
+| Module                | Adds                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `articles.ts`         | joins concurrent requests for the same article (reader, panel and hover preview ask at once)                                    |
+| `judgments.ts`        | joins concurrent requests for the same judgment (reader and panel)                                                              |
 | `nodes.ts`            | lower-cases the key (the node routes are case-sensitive); `neighborsOf` and `bucketTotals` read the bucketed neighbour response |
-| `overlays.ts`         | turns the `in-flux` and `heat` maps into `Map` and reduces a dossier's mutations to counts                                                 |
-| `instrument-cache.ts` | keeps the names of laws (title, short title such as `Sr`) that labels and citations print; primes the 200 largest laws once                |
+| `overlays.ts`         | turns the `in-flux` and `heat` maps into `Map` and reduces a dossier's mutations to counts                                      |
+| `instrument-cache.ts` | keeps the names of laws (title, short title such as `Sr`) that labels and citations print; primes the 200 largest laws once     |
 
 `src/lib/components/parliamentary/data.ts` joins the dossier, document and committee requests the reader and the panel Verbonden share.
 

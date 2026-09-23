@@ -2,13 +2,13 @@
 
 Every URL and the query parameters it reads. The URL holds anything that can be linked to.
 
-| URL                                                          | Purpose                                                                 |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| `/`                                                          | Start page: the search field and links into Bladeren by kind            |
-| `/explore`                                                   | The explorer: Lezen, Netwerk and Bladeren                               |
-| `/docs`, `/docs/methode`, `/docs/sneltoetsen`                | Documentation for users                                                 |
-| `/api`                                                       | API reference rendered from `src/lib/api/openapi.json`                  |
-| `/alpha`, `/colofon`, `/contact`, `/privacy`, `/voorwaarden` | Prose pages                                                             |
+| URL                                                          | Purpose                                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `/`                                                          | Start page: the search field and links into Bladeren by kind |
+| `/explore`                                                   | The explorer: Lezen, Netwerk and Bladeren                    |
+| `/docs`, `/docs/methode`, `/docs/sneltoetsen`                | Documentation for users                                      |
+| `/api`                                                       | API reference rendered from `src/lib/api/openapi.json`       |
+| `/alpha`, `/colofon`, `/contact`, `/privacy`, `/voorwaarden` | Prose pages                                                  |
 
 ## `/explore` query
 
