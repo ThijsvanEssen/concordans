@@ -88,7 +88,7 @@
 			<p class="note">{error}</p>
 		{:else if items.length > 0}
 			<ol class="list">
-				{#each items as it (it.id)}
+				{#each items as it, i (i)}
 					<li>
 						<button type="button" class="row row--{it.kind}" onclick={() => jump(it.id)}
 							>{it.label}</button
