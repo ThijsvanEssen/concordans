@@ -336,6 +336,19 @@
 
 	// Narrow viewports show one column at a time.
 	let mobilePanel = $state<'reader' | 'graph' | 'verbonden'>('reader');
+	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
+	// instead of taking a permanent column.
+	let tocOpen = $state(false);
+	$effect(() => {
+		void selectedNode?.id;
+		tocOpen = false;
+	});
+	// Picking a bron closes the sheet; opening or closing a Boek/Titel group (a
+	// <summary>) must not, or the tree could never be opened inside it.
+	function onTocBodyClick(e: MouseEvent) {
+		if ((e.target as HTMLElement).closest('summary')) return;
+		tocOpen = false;
+	}
 
 	// ── Resizable columns ────────────────────────────────────────────────────
 	const WIDTHS_KEY = 'concordans:panel-widths';
@@ -392,6 +405,10 @@
 	// ── Keys ─────────────────────────────────────────────────────────────────
 	// 1, 2, 3 switch mode; ignored while typing or with a modifier.
 	function handleKeydown(e: KeyboardEvent) {
+		if (tocOpen && e.key === 'Escape') {
+			tocOpen = false;
+			return;
+		}
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
 		const index = ['1', '2'].indexOf(e.key);
 		if (index < 0) return;
@@ -469,6 +486,18 @@
 				</div>
 			{/if}
 		</div>
+	{/if}
+{/snippet}
+
+{#snippet toc()}
+	{#if selectedNode}
+		{#if selectedNode.collection === 'documents'}
+			<DocumentToc selection={selectedNode} />
+		{:else if selectedNode.collection === 'judgments'}
+			<JudgmentToc selection={selectedNode} />
+		{:else}
+			<LezenNav selection={selectedNode} onitems={(it) => (navItems = it)} />
+		{/if}
 	{/if}
 {/snippet}
 
@@ -647,16 +676,19 @@
 							onclick={() => (mobilePanel = id as typeof mobilePanel)}>{label}</button
 						>
 					{/each}
+					{#if withNav}
+						<button
+							type="button"
+							class="mobile-tab mobile-tab--toc"
+							aria-haspopup="dialog"
+							aria-expanded={tocOpen}
+							onclick={() => (tocOpen = true)}>Inhoud</button
+						>
+					{/if}
 				</nav>
 				{#if withNav}
-					<div class="col col--nav mobile-hidden">
-						{#if selectedNode.collection === 'documents'}
-							<DocumentToc selection={selectedNode} />
-						{:else if selectedNode.collection === 'judgments'}
-							<JudgmentToc selection={selectedNode} />
-						{:else}
-							<LezenNav selection={selectedNode} onitems={(it) => (navItems = it)} />
-						{/if}
+					<div class="col col--nav toc-column">
+						{@render toc()}
 					</div>
 					{@render handle('nav')}
 				{/if}
@@ -668,6 +700,33 @@
 					{@render panel(false)}
 				</div>
 			</div>
+			{#if withNav && tocOpen}
+				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+				<div class="toc-sheet-backdrop" onclick={() => (tocOpen = false)}>
+					<div
+						class="toc-sheet"
+						role="dialog"
+						aria-modal="true"
+						aria-label="Inhoud"
+						tabindex="-1"
+						onclick={(e) => e.stopPropagation()}
+					>
+						<div class="toc-sheet__head">
+							<span class="toc-sheet__title">Inhoud</span>
+							<button
+								type="button"
+								class="toc-sheet__close"
+								aria-label="Sluiten"
+								onclick={() => (tocOpen = false)}>×</button
+							>
+						</div>
+						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+						<div class="toc-sheet__body" onclick={onTocBodyClick}>
+							{@render toc()}
+						</div>
+					</div>
+				</div>
+			{/if}
 		{:else if focusError}
 			<p class="explore-empty">{focusError}</p>
 		{/if}
@@ -851,10 +910,115 @@
 		display: none;
 	}
 
-	@media (max-width: 1100px) and (min-width: 769px) {
+	.mobile-tab--toc {
+		flex: none;
+		margin-left: auto;
+		color: var(--ink-2);
+	}
+
+	/* The nav column (LezenNav/DocumentToc/JudgmentToc) is a permanent column above
+	   1100px; below it, Inhoud opens the same content as a sheet instead — three
+	   columns plus a panel do not fit a narrower reader the way two do. */
+	.toc-sheet-backdrop {
+		display: none;
+	}
+
+	@media (max-width: 1100px) {
+		.explore-read,
 		.explore-read--with-nav {
-			grid-template-columns: var(--nav-w) 5px minmax(0, 1fr) 5px var(--panel-w);
+			grid-template-columns: 1fr;
+			grid-template-rows: auto 1fr;
 		}
+		.explore-read .mobile-tabs {
+			display: flex;
+			grid-column: 1;
+			grid-row: 1;
+			border-bottom: 1px solid var(--rule);
+			background: var(--paper-2);
+		}
+		.explore-read .mobile-tab {
+			flex: 1;
+			font-family: var(--font-sans);
+			font-size: 12.5px;
+			color: var(--ink-3);
+			background: none;
+			border: 0;
+			border-bottom: 2px solid transparent;
+			padding: 8px 4px 9px;
+			cursor: pointer;
+			margin-bottom: -1px;
+		}
+		.explore-read .mobile-tab.active {
+			color: var(--ink);
+			border-bottom-color: var(--ink);
+			font-weight: 500;
+		}
+		.explore-read .col {
+			grid-row: 2;
+			grid-column: 1;
+		}
+		.explore-read .col--panel {
+			border-left: 0;
+		}
+		.explore-read .toc-column,
+		.explore-read .resize-handle,
+		.explore-read .mobile-hidden {
+			display: none;
+		}
+		.toc-sheet-backdrop {
+			display: flex;
+			position: fixed;
+			inset: 0;
+			z-index: var(--z-modal);
+			align-items: flex-end;
+			justify-content: center;
+			background: rgba(28, 27, 25, 0.32);
+		}
+		.toc-sheet {
+			display: flex;
+			flex-direction: column;
+			width: 100%;
+			max-width: 480px;
+			max-height: 75vh;
+			background: var(--paper);
+			border-radius: var(--r-2) var(--r-2) 0 0;
+			box-shadow: var(--shadow-modal);
+			overflow: hidden;
+		}
+		.toc-sheet__head {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 14px 18px;
+			border-bottom: 1px solid var(--rule);
+			flex-shrink: 0;
+		}
+		.toc-sheet__title {
+			font-family: var(--font-serif);
+			font-size: 16px;
+			font-weight: 500;
+			color: var(--ink);
+		}
+		.toc-sheet__close {
+			padding: 0 4px;
+			border: 0;
+			background: none;
+			font-size: 20px;
+			line-height: 1;
+			color: var(--ink-3);
+			cursor: pointer;
+		}
+		.toc-sheet__close:hover {
+			color: var(--ink);
+		}
+		.toc-sheet__body {
+			flex: 1;
+			min-height: 0;
+			overflow-y: auto;
+		}
+	}
+
+	@media (max-width: 1100px) and (min-width: 769px) {
 		/* Too narrow for graph, reader and Verbonden side by side; too wide to hide
 		   two of the three behind tabs. The network keeps the full width up top,
 		   Tekst and Verbonden split the row below it. */
