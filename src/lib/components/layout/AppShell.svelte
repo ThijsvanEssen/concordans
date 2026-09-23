@@ -35,206 +35,131 @@
 
 <style>
 	/* ─── Fonts ──────────────────────────────────────────────────────────────── */
+	/* Newsreader, variable (opsz 6..72, wght 400..600), roman and italic; Schibsted
+	   Grotesk, variable (wght 400..600). Both under the SIL Open Font License. The
+	   latin subset covers Dutch; latin-ext loads only for a page that needs it. */
 	@font-face {
-		font-family: 'EB Garamond';
-		src: url('/fonts/EBGaramond-Variable.woff2') format('woff2-variations');
-		font-weight: 400 800;
+		font-family: 'Newsreader';
+		src: url('/fonts/Newsreader-Variable.woff2') format('woff2');
+		font-weight: 400 600;
 		font-style: normal;
 		font-display: swap;
+		unicode-range:
+			U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+			U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 	}
 	@font-face {
-		font-family: 'EB Garamond';
-		src: url('/fonts/EBGaramond-VariableItalic.woff2') format('woff2-variations');
-		font-weight: 400 800;
+		font-family: 'Newsreader';
+		src: url('/fonts/Newsreader-Variable-latin-ext.woff2') format('woff2');
+		font-weight: 400 600;
+		font-style: normal;
+		font-display: swap;
+		unicode-range:
+			U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+			U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+			U+A720-A7FF;
+	}
+	@font-face {
+		font-family: 'Newsreader';
+		src: url('/fonts/Newsreader-VariableItalic.woff2') format('woff2');
+		font-weight: 400 600;
 		font-style: italic;
 		font-display: swap;
+		unicode-range:
+			U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+			U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 	}
 	@font-face {
-		font-family: 'IBM Plex Sans';
-		src: url('/fonts/IBMPlexSans-400.woff2') format('woff2');
-		font-weight: 400;
-		font-style: normal;
+		font-family: 'Newsreader';
+		src: url('/fonts/Newsreader-VariableItalic-latin-ext.woff2') format('woff2');
+		font-weight: 400 600;
+		font-style: italic;
 		font-display: swap;
+		unicode-range:
+			U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+			U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+			U+A720-A7FF;
 	}
 	@font-face {
-		font-family: 'IBM Plex Sans';
-		src: url('/fonts/IBMPlexSans-500.woff2') format('woff2');
-		font-weight: 500;
+		font-family: 'Schibsted Grotesk';
+		src: url('/fonts/SchibstedGrotesk-Variable.woff2') format('woff2');
+		font-weight: 400 600;
 		font-style: normal;
 		font-display: swap;
+		unicode-range:
+			U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+			U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 	}
 	@font-face {
-		font-family: 'IBM Plex Sans';
-		src: url('/fonts/IBMPlexSans-600.woff2') format('woff2');
-		font-weight: 600;
+		font-family: 'Schibsted Grotesk';
+		src: url('/fonts/SchibstedGrotesk-Variable-latin-ext.woff2') format('woff2');
+		font-weight: 400 600;
 		font-style: normal;
 		font-display: swap;
+		unicode-range:
+			U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+			U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+			U+A720-A7FF;
 	}
+	/* The wordmark's paragraafteken (§) only: Newsreader's own contrast is too even to
+	   read as a mark at 22px, so the glyph alone borrows a high-contrast Didone italic
+	   — the rest of the type system stays on Newsreader/Schibsted Grotesk. */
 	@font-face {
-		font-family: 'iA Writer Mono';
-		src: url('/fonts/iAWriterMono-400.woff2') format('woff2');
-		font-weight: 400;
-		font-style: normal;
+		font-family: 'Playfair Display';
+		src: url('/fonts/PlayfairDisplay-Italic-800.woff2') format('woff2');
+		font-weight: 800;
+		font-style: italic;
 		font-display: swap;
+		unicode-range: U+00A7;
 	}
 
 	/* ─── Design tokens ──────────────────────────────────────────────────────── */
+	/* Every component reads these. The canvas reads them too, once, through
+	   nodeSprites.ts (readTokens), so a change here reaches the network after a reload. */
 	:global(:root) {
-		/* Paper & ink — warm, not neutral */
-		--paper: #fffdf4;
-		--paper-2: #fef8eb;
-		--paper-3: #f4ecdd;
-		--paper-4: #ede8dc;
-		--paper-edge: #e2dbcc;
+		/* Paper and rules */
+		--paper: #f8f6f1;
+		--paper-2: #f1eee7; /* hover, selected row, sheets */
+		--rule: #e3dfd6;
+		--rule-strong: #c9c4b8;
 
-		--ink: #1a1814;
-		--ink-2: #3a362e;
-		--ink-3: #6b6558;
-		--ink-4: #9a9485;
+		/* Ink */
+		--ink: #1c1b19;
+		--ink-2: #4a4742;
+		--ink-3: #77736b; /* captions; 4.6:1 on paper, the lowest contrast allowed */
 
-		/* ── Accent families — 10 spines × 3 tokens ─────────────────────────────
-       Each family: base / -2 (hover) / -faint (tinted surface).
-       Hardcoded for Sigma — CSS vars can't reach into WebGL shaders.      */
+		/* The accent has one meaning: a link on hover, the selected or focused bron,
+		   and the status voorgesteld. Nothing else is red. */
+		--accent: #8c2f28;
+		--accent-soft: #f3e4e2;
 
-		/* SPINE — oxblood · selection / focus / "you are here" */
-		--spine: #7a1f1a;
-		--spine-2: #9c2e26;
-		--spine-faint: #e8d5d0;
+		/* The four colours of the material */
+		--indigo: #2f3e5e; /* judgments */
+		--moss: #456247; /* structural edges, references between articles */
+		--plum: #5e3a55; /* toelichting */
+		--slate: #4b5563; /* citations by judgments */
 
-		/* BRICK — terracotta · repealed / withdrawn / no longer in force */
-		--brick: #8a3e22;
-		--brick-2: #aa5232;
-		--brick-faint: #ecdad0;
+		/* Typography: one text face, one interface face. Identifiers are set in the sans. */
+		--font-serif: 'Newsreader', Georgia, serif;
+		--font-sans: 'Schibsted Grotesk', system-ui, sans-serif;
 
-		/* OCHRE — foxed paper · amended / broken citation · aliased as --warn */
-		--ochre: #8a6a1f;
-		--ochre-2: #a8822e;
-		--ochre-faint: #e9dec4;
-
-		/* OLIVE — aged linen · draft / pending / not yet in force */
-		--olive: #5c5a1f;
-		--olive-2: #74722b;
-		--olive-faint: #ddddc2;
-
-		/* MOSS — verdigris · in force / currently valid · aliased as --positive */
-		--moss: #3d5c3a;
-		--moss-2: #4f7349;
-		--moss-faint: #d6e0cf;
-
-		/* TEAL — oxidised copper · international / EU / supranational */
-		--teal: #1f5a56;
-		--teal-2: #2d7672;
-		--teal-faint: #cfe0de;
-
-		/* INDIGO — archivist's ink · judgments / rechtspraak */
-		--indigo: #2b3a5c;
-		--indigo-2: #3d4f77;
-		--indigo-faint: #d5dce8;
-
-		/* PLUM — marbled endpaper · commentary / annotation / doctrinal */
-		--plum: #5a2d4a;
-		--plum-2: #74416b;
-		--plum-faint: #e0d2dc;
-
-		/* SLATE — graphite · neutral metadata / generic cross-reference */
-		--slate: #44505e;
-		--slate-2: #586677;
-		--slate-faint: #d8dde3;
-
-		/* SEPIA — old leather · historical / archived / superseded */
-		--sepia: #5c4426;
-		--sepia-2: #785b36;
-		--sepia-faint: #e5daca;
-
-		/* Semantic aliases */
-		--warn: var(--ochre);
-		--warn-faint: var(--ochre-faint);
-		--positive: var(--moss);
-
-		/* Semantic aliases used across components */
-		--bg: var(--paper);
-		--bg-2: var(--paper-2);
-		--bg-3: var(--paper-3);
-		--surface: var(--paper);
-		--fg-1: var(--ink);
-		--fg-2: var(--ink-2);
-		--fg-3: var(--ink-3);
-		--fg-4: var(--ink-4);
-		--muted: var(--ink-3);
-		--rule: var(--paper-edge);
-		--rule-strong: #b8b0a0;
-		--border: var(--paper-edge);
-		--border-strong: var(--rule-strong);
-
-		--accent: var(--spine);
-		--accent-hover: var(--spine-2);
-		--accent-soft: var(--spine-faint);
-		--accent-tint: var(--spine-faint);
-
-		/* Legacy citation tokens mapped to spine */
-		--citation-fg: var(--spine);
-		--citation-bg: var(--spine-faint);
-
-		/* Graph node colours */
-		--node-article: var(--ink);
-		--node-judgment: var(--indigo);
-		--node-instrument: var(--ink-3);
-		--node-document: var(--ink-3);
-		--node-other: var(--ink-4);
-
-		/* Graph edge colours */
-		--edge-strict: var(--spine);
-		--edge-semantic: var(--spine);
-
-		/* Error */
-		--error-fg: var(--spine);
-		--error-bg: var(--spine-faint);
-		--error-border: color-mix(in srgb, var(--spine) 40%, transparent);
-
-		/* Semantic aliases */
-		--ink-secondary: var(--ink-3);
-		--citation-border: color-mix(in srgb, var(--spine) 30%, transparent);
-
-		/* Typography */
-		--font-serif: 'EB Garamond', 'Iowan Old Style', Georgia, serif;
-		--font-sans: 'IBM Plex Sans', -apple-system, 'Segoe UI', system-ui, sans-serif;
-		--font-mono: 'iA Writer Mono', 'iA Writer Duospace', 'SF Mono', Menlo, monospace;
-
-		/* Type scale — Garamond runs small; body bumps to 19px */
-		--t-display: 52px;
-		--t-h1: 36px;
-		--t-h2: 26px;
-		--t-h3: 21px;
-		--t-body: 19px;
-		--t-body-2: 17px;
-		--t-meta: 13px;
-		--t-micro: 11px;
-
-		/* Legacy scale aliases */
-		--text-xs: var(--t-micro);
-		--text-sm: var(--t-meta);
-		--text-base: var(--t-body-2);
-		--text-lg: var(--t-h3);
-		--text-xl: 22px;
-		--text-2xl: var(--t-h2);
-		--text-3xl: 30px;
-		--text-4xl: 40px;
-		--text-5xl: 52px;
+		/* Type scale */
+		--t-display: 44px;
+		--t-h1: 30px; /* page titles, weight 500 */
+		--t-h2: 24px;
+		--t-h3: 20px;
+		--t-body: 17.5px; /* reading text, line-height 1.6 */
+		--t-body-2: 15px; /* titles of bronnen in lists and rows */
+		--t-meta: 13px; /* interface text: 12.5 to 13px */
+		--t-micro: 12px; /* captions and counts, in --ink-3 */
 
 		/* Line heights */
 		--lh-tight: 1.15;
 		--lh-snug: 1.35;
-		--lh-body: 1.55;
+		--lh-body: 1.6;
 		--lh-loose: 1.7;
-		--leading-tight: var(--lh-tight);
-		--leading-snug: var(--lh-snug);
-		--leading-body: var(--lh-body);
 
-		/* Tracking */
-		--track-meta: 0.04em;
-		--track-caps: 0.08em;
-
-		/* Spacing — 4px grid */
+		/* Spacing: 4px grid */
 		--s-1: 4px;
 		--s-2: 8px;
 		--s-3: 12px;
@@ -243,43 +168,25 @@
 		--s-6: 32px;
 		--s-7: 48px;
 		--s-8: 64px;
-		--space-0: var(--s-1);
-		--space-1: var(--s-2);
-		--space-2: var(--s-4);
-		--space-3: var(--s-6);
-		--space-4: var(--s-7);
-		--space-5: 80px;
-		--space-6: 96px;
 
 		/* Layout */
 		--measure: 66ch;
 		--gutter: var(--s-7);
 
-		/* Radii — rectilinear. Almost flat. */
+		/* Radii */
 		--r-0: 0px;
-		--r-1: 2px; /* buttons, chips, inputs */
-		--r-2: 4px; /* menus, popovers */
-		--r-3: 8px; /* cards, tiles */
-		--radius-sm: var(--r-1);
-		--radius-md: var(--r-2);
-		--radius-card: var(--r-3);
-		--radius-pill: 999px;
+		--r-1: 3px; /* buttons, inputs */
+		--r-2: 4px; /* menus, cards */
+		--r-3: 8px;
 
-		/* Borders */
-		--border-hair: 1px solid var(--rule);
-		--border-strong-line: 1px solid var(--rule-strong);
-
-		/* Shadows — almost none */
-		--shadow-pop: 0 1px 0 rgba(26, 24, 20, 0.04), 0 8px 24px -12px rgba(26, 24, 20, 0.18);
+		/* Shadows, almost none */
+		--shadow-pop: 0 1px 0 rgba(28, 27, 25, 0.04), 0 8px 24px -12px rgba(28, 27, 25, 0.18);
 		--shadow-raise:
-			0 1px 0 rgba(26, 24, 20, 0.05), 0 4px 12px -4px rgba(26, 24, 20, 0.12),
-			0 16px 32px -16px rgba(26, 24, 20, 0.16);
-		--shadow-modal: 0 1px 0 rgba(26, 24, 20, 0.04), 0 24px 48px -16px rgba(26, 24, 20, 0.25);
-		--shadow-sm: var(--shadow-pop);
-		--shadow-md: var(--shadow-raise);
-		--shadow-float: var(--shadow-pop);
+			0 1px 0 rgba(28, 27, 25, 0.05), 0 4px 12px -4px rgba(28, 27, 25, 0.12),
+			0 16px 32px -16px rgba(28, 27, 25, 0.16);
+		--shadow-modal: 0 6px 24px rgba(28, 27, 25, 0.1);
 
-		/* Motion — slow and certain */
+		/* Motion */
 		--ease: cubic-bezier(0.2, 0.6, 0.2, 1);
 		--ease-in: cubic-bezier(0.4, 0, 0.6, 0.2);
 		--dur-1: 120ms;
@@ -304,6 +211,7 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
+		font-optical-sizing: auto;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
 		text-rendering: optimizeLegibility;
@@ -317,28 +225,72 @@
 		min-height: 100vh;
 	}
 
-	/* Links — underline always present; turns spine on hover */
+	/* Links: ink at rest, the accent on hover. */
 	:global(a) {
 		color: inherit;
 		text-decoration: none;
-		border-bottom: 1px solid var(--rule-strong);
-		transition:
-			border-color var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
+		transition: color var(--dur-1) var(--ease);
 	}
 	:global(a:hover) {
-		border-bottom-color: var(--accent);
 		color: var(--accent);
-		text-decoration: none;
 	}
-	/* Utility class for links that should never have underline (nav, logo) */
-	:global(a.no-underline),
-	:global(a.no-underline:hover) {
-		border-bottom: none;
+
+	/* Buttons: 1px rule-strong border, 3px radius, no fill. `is-primary` is ink on paper;
+	   `is-text` has no border. */
+	:global(.btn) {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 4px 8px;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: transparent;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		line-height: 16px;
+		color: var(--ink-2);
+		cursor: pointer;
+		white-space: nowrap;
+		text-decoration: none;
+		transition:
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
+	}
+	:global(.btn:hover) {
+		color: var(--ink);
+		background: var(--paper-2);
+	}
+	:global(.btn.is-primary) {
+		background: var(--ink);
+		color: var(--paper);
+		border-color: var(--ink);
+	}
+	:global(.btn.is-primary:hover) {
+		background: var(--ink-2);
+		border-color: var(--ink-2);
+		color: var(--paper);
+	}
+	:global(.btn.is-text) {
+		border-color: transparent;
+		padding: 4px;
+	}
+	:global(.btn.is-text:hover) {
+		background: transparent;
+		color: var(--accent);
+	}
+	:global(.btn:disabled) {
+		opacity: 0.45;
+		cursor: default;
+	}
+	:global(.btn .caret) {
+		font-size: 9px;
+		opacity: 0.7;
 	}
 
 	:global(::selection) {
-		background: var(--accent-tint);
+		background: var(--accent-soft);
 		color: var(--ink);
 	}
 
