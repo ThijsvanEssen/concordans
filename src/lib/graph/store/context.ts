@@ -1,14 +1,26 @@
 import { primeInstrumentNames, recordInstrument } from '$lib/api/instrument-cache';
 import { neighborsOf } from '$lib/api/nodes';
 import type { Schema } from '$lib/api/types';
+import {
+	containerIdFor,
+	containerKindOf,
+	getContainerGroup,
+	isContainerMembership,
+	pruneContainerMembers,
+	recordContainerMember,
+	recordContainerMeta,
+	type ContainerKind
+} from '../container-membership';
 import { getLawIdFromProps } from '$lib/util/law-id';
-import { nodeId, type Relation } from '$lib/vocabulary';
+import type { Collection, Relation } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
 import {
+	buildNodeLabel,
 	edgeCategory,
+	isVersionCollection,
+	kindOfCollection,
 	nodeToGraphNode,
 	relationOf,
-	syntheticNode,
 	type BaseNode,
 	type GraphEdge,
 	type GraphNode,
@@ -16,19 +28,8 @@ import {
 } from '../types';
 import { DEFAULT_FILTERS, SOFT_NODE_CAP, type GraphFilters } from './types';
 
-const SYNTH = 'synth:';
-const SYNTH_INSTRUMENT = 'synth:instrument:';
-
 const edgeId = (source: string, target: string, relation: Relation) =>
 	`${source}->${target}:${relation}`;
-
-/** Lower-case id of the law a node belongs to: its own for an instrument, its instrument's for an article. */
-function lawIdOf(node: GraphNode): string | null {
-	const id =
-		getLawIdFromProps(node.raw?.props ?? undefined, node.key) ??
-		(node.kind === 'instrument' ? node.key : null);
-	return id?.toLowerCase() ?? null;
-}
 
 /**
  * Shared mutable state and the primitives every loader builds on: node and
@@ -43,7 +44,7 @@ export function createGraphContext() {
 	const cache = new Map<string, Schema<'NodeGraphResponse'>>();
 	const pinned = new Set<string>();
 	// On one object because a destructured `let` would freeze its value.
-	const state = { seq: 0, proxiesEnabled: false };
+	const state = { seq: 0 };
 	// Insertion sequence per node: the order in which the soft cap trims.
 	const insertedAt = new Map<string, number>();
 
@@ -53,8 +54,7 @@ export function createGraphContext() {
 	const pinnedStore = writable<Set<string>>(new Set());
 	const filtersStore = writable<GraphFilters>({
 		...DEFAULT_FILTERS,
-		nodeTypeToggles: { ...DEFAULT_FILTERS.nodeTypeToggles },
-		activeInstruments: new Set<string>()
+		hiddenRelations: new Set(DEFAULT_FILTERS.hiddenRelations)
 	});
 	const trimmedCountStore = writable(0);
 
@@ -69,35 +69,6 @@ export function createGraphContext() {
 		return controller.signal;
 	};
 
-	// ── Derived nodes ─────────────────────────────────────────────────────────
-	// In the collapsed view every law with articles on the canvas needs an
-	// instrument node to collapse into. Proxies stand in for laws that have no
-	// real instrument node. They only exist in that view: elsewhere they are
-	// invisible and still pull on the layout and the camera bounds.
-	const synthesizeDerivedNodes = () => {
-		for (const id of [...nodes.keys()]) {
-			if (id.startsWith(SYNTH_INSTRUMENT)) {
-				nodes.delete(id);
-				insertedAt.delete(id);
-			}
-		}
-		if (!state.proxiesEnabled) return;
-
-		const known = new Set<string>();
-		for (const n of nodes.values()) if (n.kind === 'instrument') known.add(lawIdOf(n) ?? '');
-		for (const n of [...nodes.values()]) {
-			const law = n.kind === 'article' ? lawIdOf(n) : null;
-			if (!law || known.has(law)) continue;
-			known.add(law);
-			const id = SYNTH_INSTRUMENT + law;
-			nodes.set(id, {
-				...syntheticNode('instruments', law, law, { bwb_id: law, synth: true }),
-				id
-			});
-			insertedAt.set(id, ++state.seq);
-		}
-	};
-
 	// ── Derived edges ─────────────────────────────────────────────────────────
 	// Rebuilt from scratch on every emit, so prunes and deloads stay consistent.
 	// Each one stands for an API relation the loaded nodes imply but the loaded
@@ -106,69 +77,16 @@ export function createGraphContext() {
 		source: string,
 		target: string,
 		relation: Relation,
-		extra: Partial<Pick<GraphEdge, 'label' | 'confidence' | 'status' | 'meta'>> = {},
-		prefix = ''
+		extra: Partial<Pick<GraphEdge, 'label' | 'confidence' | 'status' | 'meta'>> = {}
 	) => {
-		const id = prefix + edgeId(source, target, relation);
+		const id = edgeId(source, target, relation);
 		edges.set(id, { id, source, target, relation, label: '', directed: true, ...extra });
 	};
 
-	const synthesizeDerivedEdges = () => {
-		for (const id of [...edges.keys()]) if (id.startsWith(SYNTH)) edges.delete(id);
-
-		const instrumentOfLaw = new Map<string, string>();
-		for (const n of nodes.values()) {
-			const law = n.kind === 'instrument' ? lawIdOf(n) : null;
-			if (law) instrumentOfLaw.set(law, n.id);
-		}
-
-		// The instrument nodes are hidden in the article view and hold the
-		// articles together in the collapsed view. A document or judgment that
-		// relates to an article relates to its law: AMENDS, REFERS_TO, ...
-		if (instrumentOfLaw.size > 0) {
-			for (const e of [...edges.values()]) {
-				const from = nodes.get(e.source);
-				const article = nodes.get(e.target);
-				if (!from || (from.kind !== 'document' && from.kind !== 'judgment')) continue;
-				if (article?.kind !== 'article') continue;
-				const law = lawIdOf(article);
-				const instrument = law && instrumentOfLaw.get(law);
-				if (!instrument) continue;
-				addEdge(
-					e.source,
-					instrument,
-					e.relation,
-					{ label: 'via artikel', status: e.status, confidence: e.confidence },
-					SYNTH
-				);
-			}
-			// The API gives this edge only as a neighbour of the instrument, so an
-			// article loaded on its own does not carry it.
-			for (const n of nodes.values()) {
-				const law = n.kind === 'article' ? lawIdOf(n) : null;
-				const instrument = law && instrumentOfLaw.get(law);
-				if (instrument) addEdge(n.id, instrument, 'PART_OF', {}, SYNTH);
-			}
-		}
-
-		// Members and factions loaded by separate layers carry the link in the
-		// member's dated faction memberships.
-		for (const n of nodes.values()) {
-			if (n.kind !== 'member') continue;
-			const memberships = (n.raw?.props?.faction_memberships ??
-				[]) as Schema<'FactionMembershipDTO'>[];
-			for (const m of memberships) {
-				const faction = nodeId('factions', m.faction_key);
-				if (nodes.has(faction)) addEdge(n.id, faction, 'MEMBER_OF', {}, SYNTH);
-			}
-		}
-	};
-
 	const emit = () => {
-		synthesizeDerivedNodes();
 		nodesStore.set([...nodes.values()]);
-		synthesizeDerivedEdges();
 		edgesStore.set([...edges.values()]);
+		pruneContainerMembers(new Set(nodes.keys()));
 	};
 
 	const focusInternal = (id: string) => {
@@ -209,6 +127,13 @@ export function createGraphContext() {
 		const protect = new Set(pinned);
 		if (selected) {
 			protect.add(selected.id);
+			// A selected container has no edges of its own to protect its children by
+			// (they are containment, not peer edges): protect its current hull instead.
+			const selectedContainerKind = selected.raw && containerKindOf(selected.raw.collection);
+			const selectedContainerId =
+				selected.raw && selectedContainerKind && containerIdFor(selected.raw);
+			const group = selectedContainerId ? getContainerGroup(selectedContainerId) : undefined;
+			if (group) for (const id of group.members) protect.add(id);
 			for (const e of edges.values()) {
 				if (e.source === selected.id) protect.add(e.target);
 				if (e.target === selected.id) protect.add(e.source);
@@ -231,13 +156,13 @@ export function createGraphContext() {
 
 	// ── Nodes and edges from API responses ────────────────────────────────────
 	/**
-	 * The node to draw for an API node. Instruments are drawn as clusters, so
-	 * they are only recorded; null for them and for collections this app does
-	 * not know.
+	 * Records a container's own name (an instrument's through `instrumentMetaStore`,
+	 * the rest through `recordContainerMeta`) so the hull around its children has a
+	 * label, whether the container is a neighbour or the bron navigated to.
 	 */
-	const drawable = (node: BaseNode): GraphNode | null => {
+	const recordContainerFor = (node: BaseNode, containerKind: ContainerKind) => {
 		const p = node.props ?? {};
-		if (node.collection === 'instruments') {
+		if (containerKind === 'instrument') {
 			recordInstrument({
 				key: node.key,
 				bwb_id: p.bwb_id,
@@ -246,6 +171,26 @@ export function createGraphContext() {
 				citation_title: p.citation_title,
 				short_title: p.short_title
 			});
+		} else {
+			recordContainerMeta(
+				containerKind,
+				containerIdFor(node),
+				buildNodeLabel(node, kindOfCollection(node.collection as Collection))
+			);
+		}
+	};
+
+	/**
+	 * The node to draw for an API node. A container (a wet, fractie, commissie or
+	 * dossier) is drawn as a hull around its children instead of as a bron, so it
+	 * is only recorded; null for it and for collections this app does not know.
+	 */
+	const drawable = (node: BaseNode): GraphNode | null => {
+		if (isVersionCollection(node.collection)) return null;
+		const p = node.props ?? {};
+		const containerKind = containerKindOf(node.collection);
+		if (containerKind) {
+			recordContainerFor(node, containerKind);
 			return null;
 		}
 		const graphNode = nodeToGraphNode(node);
@@ -253,6 +198,7 @@ export function createGraphContext() {
 		if (law) {
 			recordInstrument({ bwb_id: law, citation_title: p.instrument_citation_title });
 			primeInstrumentNames();
+			recordContainerMember('instrument', law, graphNode!.id);
 		}
 		return graphNode;
 	};
@@ -267,7 +213,14 @@ export function createGraphContext() {
 		edgeCategory(relation, sourceKind) !== 'semantic' ||
 		confidence >= get(filtersStore).semanticThreshold;
 
-	/** Puts a node and its neighbours on the canvas. Returns the id of the node. */
+	/**
+	 * Puts a node and its neighbours on the canvas. Returns the id of the node.
+	 *
+	 * The centre is always recorded, even when it is itself a container (a wet,
+	 * fractie, commissie or dossier navigated to directly): the bron stays
+	 * selectable for the reader and the Verbonden panel, but `GraphView` never
+	 * draws a container as a canvas node, so its children are what a hull groups.
+	 */
 	const mergeResponse = (
 		response: Schema<'NodeGraphResponse'>,
 		draw = Number.POSITIVE_INFINITY
@@ -275,10 +228,33 @@ export function createGraphContext() {
 		const center = nodeToGraphNode(response.node);
 		if (!center) return null;
 		touchNode(center.id, center);
+		const centerContainerKind = containerKindOf(response.node.collection);
+		if (centerContainerKind) recordContainerFor(response.node, centerContainerKind);
 
 		for (const neighbor of neighborsOf(response).slice(0, draw)) {
 			const relation = relationOf(neighbor.relation);
 			const other = relation && drawable(neighbor);
+
+			const neighborContainerKind = relation && containerKindOf(neighbor.collection);
+			if (
+				relation &&
+				neighborContainerKind &&
+				isContainerMembership(neighborContainerKind, relation)
+			) {
+				recordContainerMember(neighborContainerKind, containerIdFor(neighbor), center.id);
+				continue;
+			}
+			if (
+				relation &&
+				other &&
+				centerContainerKind &&
+				isContainerMembership(centerContainerKind, relation)
+			) {
+				touchNode(other.id, other);
+				recordContainerMember(centerContainerKind, containerIdFor(response.node), other.id);
+				continue;
+			}
+
 			if (!relation || !other) continue;
 			const [source, target] =
 				neighbor.direction === 'outbound' ? [center, other] : [other, center];
@@ -293,6 +269,18 @@ export function createGraphContext() {
 		trimToCap();
 		emit();
 		return center.id;
+	};
+
+	/** Drops every node not in `keepIds`, and the edges that touched it. Does not emit. */
+	const pruneToIds = (keepIds: Set<string>) => {
+		for (const id of [...nodes.keys()]) {
+			if (keepIds.has(id)) continue;
+			nodes.delete(id);
+			insertedAt.delete(id);
+		}
+		for (const [id, e] of [...edges]) {
+			if (!keepIds.has(e.source) || !keepIds.has(e.target)) edges.delete(id);
+		}
 	};
 
 	return {
@@ -313,8 +301,10 @@ export function createGraphContext() {
 		emit,
 		addEdge,
 		drawable,
+		recordContainerFor,
 		passesThreshold,
 		mergeResponse,
+		pruneToIds,
 		touchNode,
 		reset,
 		focusInternal

@@ -18,6 +18,11 @@ export type InstrumentMeta = {
 // Node props are untyped, so the fields may be anything.
 const clean = (value: unknown) => (typeof value === 'string' && value.trim()) || null;
 
+/** The id a law is grouped under: its BWB id, or its own key when it has none (EU). */
+export function instrumentContainerId(input: { bwb_id?: unknown; key?: unknown }): string | null {
+	return clean(input.bwb_id) ?? clean(input.key);
+}
+
 const cache = new Map<string, InstrumentMeta>();
 const store = writable(cache);
 
@@ -43,7 +48,7 @@ export function recordInstrument(input: {
 	citation_title?: unknown;
 	short_title?: unknown;
 }): void {
-	const bwbId = clean(input.bwb_id) ?? clean(input.key);
+	const bwbId = instrumentContainerId(input);
 	if (!bwbId) return;
 
 	const existing = cache.get(bwbId);

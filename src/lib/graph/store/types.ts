@@ -1,7 +1,7 @@
 import type { Readable } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
-import type { GraphNode, GraphEdge, GraphNodeKind } from '../types';
+import type { GraphNode, GraphEdge } from '../types';
 
 /** A bron a group of the panel Verbonden puts on the canvas. */
 export type CanvasRow = {
@@ -14,15 +14,10 @@ export type CanvasRow = {
 };
 
 export type GraphFilters = {
-	/** One switch per edge category (see `edgeCategory`). */
-	structuralEnabled: boolean;
-	mutationEnabled: boolean;
-	semanticEnabled: boolean;
+	/** Relations the legend switched off; their edges are not drawn. */
+	hiddenRelations: Set<Relation>;
 	/** Semantic edges with a lower confidence are left out. */
 	semanticThreshold: number;
-	nodeTypeToggles: Record<GraphNodeKind, boolean>;
-	minDegree: number;
-	activeInstruments: Set<string>;
 	/** Neighbours requested per expanded node. */
 	neighborLimit: number;
 	/** The canvas fades nodes outside the focus and its neighbours. */
@@ -37,31 +32,15 @@ export type GraphExpansionOptions = {
 };
 
 export const DEFAULT_FILTERS: GraphFilters = {
-	structuralEnabled: true,
-	mutationEnabled: true,
-	semanticEnabled: true,
+	hiddenRelations: new Set<Relation>(),
 	semanticThreshold: 0.6,
-	nodeTypeToggles: {
-		instrument: true,
-		article: true,
-		judgment: true,
-		dossier: true,
-		document: true,
-		activity: true,
-		committee: true,
-		member: true,
-		faction: true,
-		other: true
-	},
-	minDegree: 0,
-	activeInstruments: new Set<string>(),
 	neighborLimit: 30,
 	dimStaleContext: false
 };
 
 // Soft cap to keep the canvas responsive during additive exploration. A merge
 // that would pass it drops the oldest nodes that are not pinned, selected or
-// next to the selection. Bulk loaders bypass it.
+// next to the selection.
 export const SOFT_NODE_CAP = 400;
 
 export type GraphStore = {
@@ -100,11 +79,10 @@ export type GraphStore = {
 	reset: () => void;
 	setFilters: (updater: Partial<GraphFilters>) => void;
 	getNodeById: (nodeId: string) => GraphNode | undefined;
+	getEdgeById: (edgeId: string) => GraphEdge | undefined;
 	/** Removes every node not in `keepIds` and the edges that touch them. */
 	pruneNodes: (keepIds: Set<string>) => void;
 	/** Drops every node without an edge that is neither selected nor pinned. Force-directed
 	 *  layout throws such orphans far from the rest and the camera then zooms out to fit them. */
 	sweepOrphans: () => void;
-	/** Instrument proxies exist only in the collapsed (wetten) view, where they are drawn. */
-	setCollapseToLaws: (collapse: boolean) => void;
 };

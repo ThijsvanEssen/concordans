@@ -10,12 +10,27 @@
 	import type { Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
-	import { spriteFor, shapeFor, IMAGE_SIZE_BUMP } from './nodeSprites';
+	import { isVersionCollection } from '$lib/graph/types';
+	import { spriteFor, shapeFor, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import {
+		containerIdFor,
+		containerMembershipStore,
+		isContainerKind,
+		type ContainerGroup
+	} from '$lib/graph/container-membership';
 	import { getLawIdFromProps } from '$lib/util/law-id';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/stores/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/stores/overlay';
+	import type { Relation } from '$lib/vocabulary';
+	import {
+		BRON_KINDS,
+		bronKindOf,
+		type BronKind,
+		type VerbondenFilter
+	} from '$lib/verbonden/filter';
+	import type { VerbondenState } from '$lib/verbonden/source';
 
 	// ── Camera persistence across mounts ──────────────────────────────────────
 	// GraphView is unmounted when the mode leaves Netwerk and mounted again on
@@ -30,37 +45,49 @@
 	let {
 		store,
 		compact = false,
+		filter,
+		verbonden,
+		depth = 2,
+		selectedEdgeId = null,
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
 		overlay = { kind: 'none' } as Overlay,
-		visibleCount: visibleCountProp = 0,
-		totalLoaded = 0,
 		onNodeClick,
+		onEdgeClick,
+		onClear,
 		onGoBack,
 		onGoForward,
+		onFilter,
+		onOpenFilter,
+		onDepth,
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
 		onResetGraph,
-		onRevealHidden,
 		canvasOverlay
 	}: {
 		store: GraphStore;
 		compact?: boolean;
+		filter: VerbondenFilter;
+		verbonden: VerbondenState;
+		depth?: number;
+		selectedEdgeId?: string | null;
 		inFluxMap?: NodeCounts;
 		heatMap?: NodeCounts;
 		overlay?: Overlay;
-		visibleCount?: number;
-		totalLoaded?: number;
 		onNodeClick?: (node: GraphNode) => void;
+		onEdgeClick?: (edge: GraphEdge) => void;
+		/** A click on the stage or Escape: the card Verbinding closes; the selection stays. */
+		onClear?: () => void;
 		onGoBack?: () => void;
 		onGoForward?: () => void;
+		onFilter: (f: VerbondenFilter) => void;
+		onOpenFilter: () => void;
+		onDepth: (d: number) => void;
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
 		onResetGraph?: () => void;
-		/** Expand the focus again without the convergence prune. */
-		onRevealHidden?: () => void;
 		canvasOverlay?: Snippet;
 	} = $props();
 
@@ -69,24 +96,24 @@
 	const lookup = new Map<string, GraphNode>();
 	let canvas: GraphCanvasApi | null = null;
 
-	// ── reactive state ────────────────────────────────────────────────────────
 	let selection = $state<GraphNode | null>(null);
 	let pinnedIds = $state<Set<string>>(new Set());
 	let filters = $state<GraphFilters>(get(store.filters));
 	let hasNodes = $state(false);
-	let trimmedCount = $state(0);
-	let trimmedDismissed = $state(false);
+	let canvasCounts = $state({ nodes: 0, edges: 0 });
+	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
+	// When the selection is a container, there is no canvas node to focus around: its
+	// own children take that role in the dim/highlight pass instead (GraphCanvas).
+	const focusContainerId = $derived(
+		selection && isContainerKind(selection.kind) && selection.raw
+			? containerIdFor(selection.raw)
+			: null
+	);
 
-	// Wetten view (true): articles are hidden and each law is one instrument.
-	// Artikelen view (false): instruments are hidden for laws whose articles are
-	// on the canvas. A deliberate choice of the user: loading instruments must
-	// not collapse the article view.
-	let collapseToLaws = $state(false);
+	const hiddenKinds = $derived<ReadonlySet<BronKind>>(
+		filter.bronnen ? new Set(BRON_KINDS.filter((k) => !filter.bronnen!.has(k))) : new Set()
+	);
 
-	// Instrument filter panel data
-	let instruments = $state<{ bwbId: string; label: string; count: number }[]>([]);
-
-	// Resolve pinned IDs to GraphNode objects for the sidebar list.
 	const pinnedNodes = $derived.by<GraphNode[]>(() => {
 		const list: GraphNode[] = [];
 		for (const id of pinnedIds) {
@@ -96,57 +123,38 @@
 		return list;
 	});
 
-	// Compact-mode filter panel
 	let compactFiltersOpen = $state(false);
-
-	// Mobile sheet (full graph mode, narrow viewports)
 	let mobileSidebarOpen = $state(false);
 
-	// The synthetic instrument proxies exist only in Wetten view, where they are visible.
+	// What the filter leaves on the canvas.
+	function countCanvas() {
+		let nodes = 0;
+		let edges = 0;
+		const visible = new Set<string>();
+		g.forEachNode((id, attrs) => {
+			if (id !== selection?.id && hiddenKinds.has(attrs.bronKind as BronKind)) return;
+			visible.add(id);
+			nodes++;
+		});
+		g.forEachEdge((_id, attrs, src, tgt) => {
+			if (attrs.layoutOnly) return;
+			if (!visible.has(src) || !visible.has(tgt)) return;
+			if (filters.hiddenRelations.has(attrs.relation as Relation)) return;
+			edges++;
+		});
+		canvasCounts = { nodes, edges };
+	}
+
 	$effect(() => {
-		store.setCollapseToLaws(collapseToLaws);
-		computeLevelSuppression();
+		void hiddenKinds;
+		void filters;
+		countCanvas();
 		canvas?.refresh();
 	});
 
-	// Sidebar filter list: articles per law. Laws with a short title share one entry.
-	function lawGroupKey(bwbId: string): string {
-		return $instrumentMetaStore.get(bwbId)?.shortTitle ?? bwbId;
-	}
-
-	function computeInstruments() {
-		const counts = new Map<string, number>();
-		lookup.forEach((node) => {
-			if (node.kind !== 'article') return;
-			const p = node.raw?.props as Record<string, unknown> | undefined;
-			const bwbId = getLawIdFromProps(p, node.key);
-			if (bwbId) {
-				const groupKey = lawGroupKey(bwbId);
-				counts.set(groupKey, (counts.get(groupKey) ?? 0) + 1);
-			}
-		});
-		instruments = [...counts.entries()]
-			.map(([groupKey, count]) => {
-				// groupKey is already the best human-readable key (shortTitle or bwbId)
-				const instMeta = $instrumentMetaStore.get(groupKey);
-				const label = instMeta?.citationTitle ?? instMeta?.title ?? groupKey;
-				return { bwbId: groupKey, label, count };
-			})
-			.sort((a, b) => b.count - a.count);
-	}
-
 	// ── camera ────────────────────────────────────────────────────────────────
-	// One rule: refit whenever the topology actually changes (nodes or edges
-	// added/removed). Selection, hover, filter toggles do NOT touch the camera.
-	// Calls coalesce within a frame so a node-add + edge-add only fits once.
-	// skipNextFit is set when remounting with unchanged graph data — the camera
-	// will be restored instead, so we must not overwrite it with a fit-all.
 	let fitScheduled = false;
 	let skipNextFit = false;
-	// While `fitSuppressed` is true, syncNodes/syncEdges and runLayout's
-	// settle-timer don't trigger a fit. The caller (explore page) raises this
-	// before a load operation and lowers it via `fitWhenSettled` so we get one
-	// clean fit at the end instead of a chain of jerky intermediate ones.
 	let fitSuppressed = false;
 	function scheduleFit() {
 		if (skipNextFit || fitSuppressed) return;
@@ -163,29 +171,16 @@
 		fitSuppressed = true;
 	}
 
-	/** Re-centre the layout on `focalId` after a prune-only update. The store
-	 *  delivered the post-prune node set via syncNodes, but every surviving
-	 *  node kept its old position — so the new focal isn't visually central
-	 *  and FA2 doesn't restart (no nodes added). This snaps the focal to the
-	 *  origin, drops its level-1 onto a ring around it, places everything
-	 *  else further out, leaves pinned nodes alone, and triggers a short FA2
-	 *  burst with the focal pinned so the new positions settle naturally. */
+	/** Re-centre the layout on `focalId` after an update that kept old positions. */
 	export function reseatAround(focalId: string) {
 		if (!g.hasNode(focalId)) return;
-
 		const pinnedSet = get(store.pinned);
-
-		// Direct neighbours of the focal.
 		const l1 = new Set<string>();
 		g.forEachEdge((_id, _attrs, src, tgt) => {
 			if (src === focalId) l1.add(tgt);
 			else if (tgt === focalId) l1.add(src);
 		});
 		l1.delete(focalId);
-
-		// Three buckets: focal, level-1 (movable, on inner ring), other movable
-		// (convergence + path nodes, on outer ring). Pinned nodes are left in
-		// place — the user explicitly anchored them.
 		const l1List: string[] = [];
 		const outerList: string[] = [];
 		g.forEachNode((id) => {
@@ -194,22 +189,14 @@
 			if (l1.has(id)) l1List.push(id);
 			else outerList.push(id);
 		});
-
-		// Focal at origin.
 		g.setNodeAttribute(focalId, 'x', 0);
 		g.setNodeAttribute(focalId, 'y', 0);
-
-		// Level-1 on inner ring. Radius grows with √N so dense neighbourhoods
-		// don't pack on top of each other.
 		const innerR = Math.max(120, 60 + Math.sqrt(l1List.length) * 30);
 		l1List.forEach((id, i) => {
 			const ang = (i / Math.max(l1List.length, 1)) * Math.PI * 2 - Math.PI / 2;
 			g.setNodeAttribute(id, 'x', Math.cos(ang) * innerR);
 			g.setNodeAttribute(id, 'y', Math.sin(ang) * innerR);
 		});
-
-		// Outer ring for convergence + path nodes. Half-step offset so they
-		// don't sit radially behind the l1 nodes.
 		const outerR = innerR + Math.max(140, Math.sqrt(outerList.length) * 30);
 		outerList.forEach((id, i) => {
 			const ang =
@@ -219,23 +206,15 @@
 			g.setNodeAttribute(id, 'x', Math.cos(ang) * outerR);
 			g.setNodeAttribute(id, 'y', Math.sin(ang) * outerR);
 		});
-
-		// FA2 burst. Pass the movable set as `addedThisSync` so runLayout pins
-		// the focal (and pinned) and only relaxes the
-		// ring-seeded movables.
 		const movable = new Set<string>([...l1List, ...outerList]);
 		void runLayout(movable);
 	}
-	/** Lift the suppression and fire one final fit *after* FA2 has actually
-	 *  stopped — not on a fixed timeout. Polls the layout's running flag every
-	 *  100 ms until it settles (or a hard ceiling of 6 s for runaway graphs).
-	 *  Ensures the camera fits the final positions, not an intermediate frame. */
+
+	/** Lift the suppression and fit once the layout has stopped. */
 	export function fitWhenSettled() {
 		fitSuppressed = false;
 		const FIT_MAX_WAIT_MS = 6000;
 		const POLL_MS = 100;
-		// Tiny grace period so any pending syncNodes/runLayout calls (queued by
-		// the await chain that just resolved) get a chance to kick FA2 off again.
 		setTimeout(() => {
 			const start = Date.now();
 			const tick = () => {
@@ -251,46 +230,21 @@
 		}, 50);
 	}
 
-	// Hover CitationPanel state (only in graph/full mode)
+	// Hover panel state (only in the full canvas)
 	let hoverNode = $state<GraphNode | null>(null);
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
 	let showTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// ── node colors ───────────────────────────────────────────────────────────
-	// Three domains: wetgeving (ink), rechtspraak (indigo) and parlement. Parlement
-	// has three families in which a leaf takes the hue of its hub, so that
-	// "document belongs to dossier" reads before the kind is identified:
-	//   dossier (spine)   : dossier solid, document
-	//   committee (ochre) : committee solid, activity
-	//   faction (slate)   : faction solid, member
-	const NODE_COLOR: Record<GraphNodeKind, string> = {
-		article: '#1A1814',
-		instrument: '#1A1814',
-		judgment: '#2B3A5C',
-		dossier: '#7A1F1A',
-		committee: '#8A6A1F',
-		faction: '#44505E',
-		member: '#44505E',
-		document: '#7A1F1A',
-		activity: '#8A6A1F',
-		other: '#9A9485'
-	};
-	const PAPER = '#FFFDF4';
-
-	// A stub (referenced, not loaded yet) has a paper fill and keeps the ring of
-	// its kind, so it stays recognisable when zoomed out.
+	// A stub (referenced, not loaded yet) has a paper fill and keeps the ring of its kind.
 	function nodeColors(n: GraphNode): { color: string; borderColor: string } {
-		const borderColor = NODE_COLOR[n.kind];
-		return { color: n.stub || n.kind === 'other' ? PAPER : borderColor, borderColor };
+		const borderColor = strokeFor(n.kind);
+		return { color: n.stub || n.kind === 'other' ? tokens().paper : fillFor(n.kind), borderColor };
 	}
 
-	// Size encodes hub versus leaf within a domain; sizes across domains stay close
-	// so no domain dominates the layout.
 	const NODE_SIZE: Record<GraphNodeKind, number> = {
 		article: 7,
 		instrument: 9,
 		judgment: 8,
-		// Parliamentary hubs are larger than their leaves.
 		dossier: 11,
 		committee: 10,
 		faction: 10,
@@ -302,136 +256,16 @@
 	function nodeSize(id: string): number {
 		const n = lookup.get(id);
 		if (!n) return 4;
-		// Bulk-loaded nodes (e.g. instrument-layer/judgment-layer) carry degree-scaled size.
 		const seeded = (n as GraphNode & { size?: number }).size;
 		if (typeof seeded === 'number') return seeded;
 		return NODE_SIZE[n.kind];
 	}
 
-	// Mutual exclusion between an instrument and its articles: the Detail-niveau
-	// toggle decides which one shows (see computeLevelSuppression). Stored as a
-	// `suppressedByLevel` attribute that the canvas reducers respect.
-	function computeLevelSuppression() {
-		if (g.order === 0) return;
-		// Strict mode: Wetten view shows only instruments (real + synth proxies);
-		// Artikelen view shows only articles. The synth-proxy machinery in the
-		// store materialises an instrument stand-in for every orphan article-bwb
-		// when collapseToLaws is true, so hiding every article in that mode still
-		// leaves each wet represented. In Artikelen mode the store drops those
-		// proxies and we hide every real instrument.
-		//
-		// 'other' (unclassified) nodes are hidden in both strict modes — they
-		// belong to no layer, the sidebar can't toggle them, and leaving them
-		// visible only adds noise. The focal node is never suppressed regardless
-		// of kind, so the user always sees what they selected.
-		//
-		// Effective mode: a strict toggle wipes the canvas if the user's chosen
-		// mode has nothing to render (e.g. Artikelen view on a fresh Wetten layer
-		// — zero articles to show). Mirror the Sidebar's Detail-niveau control,
-		// which already disables the Artikelen tab when no articles are loaded:
-		// flip the mode to match what's actually on canvas so the bulk overview
-		// is visible instead of empty.
-		//
-		// Focus scope: when an instrument is the focal node in Artikelen view,
-		// restrict the canvas to the focal + its own articles (same bwb) + the
-		// articles those articles reference directly. Everything else hides for
-		// the duration of that selection so the user gets a clean "this law's
-		// articles and where they point" picture without unrelated traffic.
-		let hasArticles = false;
-		let hasInstruments = false;
-		g.forEachNode((_id, attrs) => {
-			if (attrs.kind === 'article') hasArticles = true;
-			else if (attrs.kind === 'instrument') hasInstruments = true;
-		});
-		let effectiveCollapse = collapseToLaws;
-		if (!effectiveCollapse && !hasArticles) effectiveCollapse = true;
-		if (effectiveCollapse && !hasInstruments) effectiveCollapse = false;
-
-		const focalId = selection?.id ?? null;
-		const focalAttrs =
-			focalId && g.hasNode(focalId)
-				? {
-						kind: g.getNodeAttribute(focalId, 'kind') as string | undefined,
-						bwb: g.getNodeAttribute(focalId, 'bwb') as string | undefined
-					}
-				: null;
-
-		let scope: Set<string> | null = null;
-		if (!effectiveCollapse && focalId && focalAttrs?.kind === 'instrument' && focalAttrs.bwb) {
-			const focalBwb = focalAttrs.bwb;
-			// Bulk-overview safety belt: if the canvas carries 3+ other instruments
-			// whose own articles aren't on canvas, we're sitting in a Wetten Lagen
-			// overview. Scoping there would wipe the whole overview to just the
-			// focal — the opposite of what the user wants. Skip scope and let the
-			// standard strict rules apply (which here means effective Wetten when
-			// few articles are present, otherwise normal Artikelen).
-			const articleBwbs = new Set<string>();
-			g.forEachNode((_id, attrs) => {
-				if (attrs.kind === 'article') {
-					const b = attrs.bwb as string | undefined;
-					if (b) articleBwbs.add(b);
-				}
-			});
-			let orphanInstrumentCount = 0;
-			g.forEachNode((id, attrs) => {
-				if (id === focalId) return;
-				if (attrs.kind !== 'instrument') return;
-				const b = attrs.bwb as string | undefined;
-				if (!b || !articleBwbs.has(b)) orphanInstrumentCount++;
-			});
-
-			if (orphanInstrumentCount < 3) {
-				scope = new Set<string>([focalId]);
-				// Step 1: articles belonging to the focal law.
-				g.forEachNode((id, attrs) => {
-					if (attrs.kind === 'article' && (attrs.bwb as string | undefined) === focalBwb) {
-						scope!.add(id);
-					}
-				});
-				// Step 2: articles referenced by those — one hop, article→article only.
-				// Walk both directions so inbound citations from other wets land too.
-				const lawArticles = [...scope];
-				for (const aid of lawArticles) {
-					if (aid === focalId) continue;
-					g.forEachNeighbor(aid, (nid, nattrs) => {
-						if (nattrs.kind === 'article') scope!.add(nid);
-					});
-				}
-				// No articles of this law on canvas yet → don't scope to {focal}
-				// alone; fall through to the normal strict rules so the user sees
-				// surrounding context instead of a single floating instrument.
-				if (scope.size <= 1) scope = null;
-			}
-		}
-
-		g.forEachNode((id, attrs) => {
-			if (id === focalId) {
-				g.setNodeAttribute(id, 'suppressedByLevel', false);
-				return;
-			}
-			let suppress = false;
-			if (scope) {
-				if (!scope.has(id)) suppress = true;
-			} else if (effectiveCollapse) {
-				if (attrs.kind === 'article' || attrs.kind === 'other') suppress = true;
-			} else {
-				if (attrs.kind === 'instrument' || attrs.kind === 'other') suppress = true;
-			}
-			g.setNodeAttribute(id, 'suppressedByLevel', suppress);
-		});
-	}
-
-	// Focus styling (node fill, edge dimming) lives in sigma's reducers, so a
-	// selection change re-runs them once per frame instead of rewriting
-	// attributes on hundreds of nodes and edges.
 	function applyFilters() {
-		computeLevelSuppression();
+		countCanvas();
 		canvas?.refresh();
 	}
 
-	// When the instrument cache updates (e.g. shortTitle "Sr" arrives in the
-	// background), refresh node labels so existing graphology nodes pick it
-	// up. Cheap: only writes the label attribute, no topology change.
 	$effect(() => {
 		void $instrumentMetaStore;
 		if (g.order === 0) return;
@@ -440,12 +274,8 @@
 			if (n) g.setNodeAttribute(id, 'label', nodeLabel(n));
 		});
 		canvas?.refresh();
-		computeInstruments();
 	});
 
-	// Worker-based forceAtlas2 layout — runs continuously off the main thread
-	// and animates positions until we stop it. Sigma re-renders automatically
-	// when graphology emits node-attribute updates.
 	let layout: FA2LayoutType | null = null;
 	let layoutStopTimer: ReturnType<typeof setTimeout> | null = null;
 	let layoutPromise: Promise<void> | null = null;
@@ -455,18 +285,9 @@
 		if (!layoutPromise) {
 			layoutPromise = (async () => {
 				const { default: FA2Layout } = await import('graphology-layout-forceatlas2/worker');
-				// Force-layout is only used for small expansion graphs; bulk loads
-				// are positioned structurally and skip fa2 entirely.
-				// Spread the graph wider to use the available canvas space.
-				// scalingRatio is the dominant spread knob — higher = stronger
-				// repulsion between nodes. gravity stays low so the layout doesn't
-				// collapse to a single dense ball when the graph grows large.
 				layout = new FA2Layout(g, {
 					settings: {
 						gravity: 0.25,
-						// Heavier repulsion so nodes have breathing room — at the previous
-						// 12, dense clusters became unreadable. 30 keeps labels legible
-						// even when several layers are stacked.
 						scalingRatio: 30,
 						strongGravityMode: false,
 						slowDown: 8,
@@ -482,17 +303,6 @@
 
 	async function runLayout(addedThisSync?: Set<string>) {
 		if (g.order < 2) return;
-
-		// Bulk graphs use the pre-computed structural ring positions — no force
-		// layout needed. Camera fit is triggered by syncNodes/syncEdges via
-		// scheduleFit, so we don't need to touch it here.
-
-		// Pin every existing node whenever ANY new node arrives. FA2 only moves
-		// the newcomers; established context stays put regardless of batch size.
-		// Combined with the ring-seeded initial positions in syncNodes, this
-		// eliminates the "everything wobbles when new stuff arrives" feel.
-		// graphology-layout-forceatlas2 honours the `fixed` attribute. We unpin
-		// after the burst so big-bulk loads can later relax the whole layout.
 		const pinExisting = !!addedThisSync && addedThisSync.size > 0;
 		const pinnedDuringBurst: string[] = [];
 		if (pinExisting) {
@@ -504,10 +314,8 @@
 				}
 			});
 		}
-
 		await ensureLayout();
 		if (!layout) {
-			// Unpin if we bailed before starting
 			for (const id of pinnedDuringBurst) {
 				try {
 					g.removeNodeAttribute(id, 'fixed');
@@ -518,18 +326,12 @@
 			return;
 		}
 		if (!layout.isRunning()) layout.start();
-
 		if (layoutStopTimer) clearTimeout(layoutStopTimer);
-		// Burst length:
-		//  - Pinning + ring-seeded newcomers: FA2 only nudges newcomers into the
-		//    gaps. ~500 ms is plenty.
-		//  - No prior nodes / no pinning (first load): full burst.
 		const burst = pinExisting
 			? Math.min(800, 350 + (addedThisSync?.size ?? 0) * 18)
 			: Math.min(2500, 600 + g.order * 6);
 		layoutStopTimer = setTimeout(() => {
 			layout?.stop();
-			// Release the pin so subsequent big additions can relax everything again.
 			for (const id of pinnedDuringBurst) {
 				try {
 					g.removeNodeAttribute(id, 'fixed');
@@ -537,14 +339,12 @@
 					/* gone */
 				}
 			}
-			// Layout finished moving nodes around — fit once at rest.
+			separateContainerGroups();
 			scheduleFit();
 		}, burst);
 	}
 
-	// Node label. An article gets the short title of its law when known ("Art. 287 Sr");
-	// an instrument the best name the cache or its props offer. Both read the
-	// instrument cache, so labels refresh when it resolves.
+	// Node label: an article gets the short title of its law ("Art. 287 Sr").
 	function nodeLabel(n: GraphNode): string {
 		const p = n.raw?.props ?? undefined;
 		if (n.kind === 'instrument') {
@@ -563,24 +363,27 @@
 		return shortTitle ? `${n.label} ${shortTitle}` : n.label;
 	}
 
+	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
+	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
+	// is a version, current-focus reader page or not: the network is about the
+	// current text, and the reader reads a version's own data directly, not this
+	// canvas.
+	const isCanvasNode = (n: GraphNode) =>
+		!isContainerKind(n.kind) && !isVersionCollection(n.collection);
+
 	function syncNodes(nodes: GraphNode[]) {
 		const camKey = compact ? 'compact' : 'full';
 		const newIds = new Set(nodes.map((n) => n.id));
 		const prev = _camNodeIds[camKey];
 		const sameGraph =
 			prev.size > 0 && newIds.size === prev.size && [...newIds].every((id) => prev.has(id));
-		// Additive expansion: every previous node still present (superset). Keep
-		// the user's viewport; new nodes settle into existing context. Only refit
-		// when the topology actually changes (drops or wholesale replacement).
 		const additive =
 			prev.size > 0 && newIds.size >= prev.size && [...prev].every((id) => newIds.has(id));
 		if (sameGraph && _cam[camKey]) {
-			// Remount with identical graph data — restore camera, suppress fit-all.
 			skipNextFit = true;
 		} else if (additive) {
 			skipNextFit = true;
 		} else {
-			// New data: clear any saved camera so we don't restore a stale position.
 			_cam[camKey] = null;
 			skipNextFit = false;
 		}
@@ -591,12 +394,6 @@
 		const keep = newIds;
 		const toDrop = g.nodes().filter((id) => !keep.has(id));
 
-		// Only use the atomic g.clear() shortcut for wholesale replacements — i.e.
-		// when *nothing* from the previous graph survives. A partial prune (e.g.
-		// the convergence prune at the end of node expansion) drops some nodes
-		// but keeps others; clearing + re-adding loses every kept node's position
-		// and kills the FA2 worker mid-burst, snapping the whole layout. Use
-		// individual drops there so kept nodes retain their settled coordinates.
 		const wholesaleReplace =
 			toDrop.length > 0 && toDrop.length === g.order && [...keep].every((id) => !g.hasNode(id));
 		if (wholesaleReplace && toDrop.length > 50) {
@@ -604,7 +401,6 @@
 			layout?.kill();
 			layout = null;
 			layoutPromise = null;
-
 			toDrop.forEach((id) => lookup.delete(id));
 			g.clear();
 			changed = true;
@@ -615,41 +411,22 @@
 				changed = true;
 			});
 		}
-		// Pre-pass: count newcomers that need a seeded position so we can lay
-		// them out on a ring instead of all piling at the focal node. FA2 then
-		// only refines, no big explosion.
 		let unseededCount = 0;
 		for (const n of nodes) {
-			if (g.hasNode(n.id)) continue;
+			if (!isCanvasNode(n) || g.hasNode(n.id)) continue;
 			const seed = n as GraphNode & { x?: number; y?: number };
 			if (typeof seed.x !== 'number' || typeof seed.y !== 'number') unseededCount++;
 		}
 		const focalIdForSeed = selection && g.hasNode(selection.id) ? selection.id : null;
 		const fxSeed = focalIdForSeed ? ((g.getNodeAttribute(focalIdForSeed, 'x') as number) ?? 0) : 0;
 		const fySeed = focalIdForSeed ? ((g.getNodeAttribute(focalIdForSeed, 'y') as number) ?? 0) : 0;
-		// Ring radius scales with incoming count so dense expansions don't
-		// overlap. The √N factor matches typical FA2 settling extents.
 		const seedRingR = Math.max(18, 8 + Math.sqrt(Math.max(unseededCount, 1)) * 7);
 		let seededIdx = 0;
 
 		for (const n of nodes) {
 			lookup.set(n.id, n);
+			if (!isCanvasNode(n)) continue;
 			const { color, borderColor } = nodeColors(n);
-			// bwb attribute: lets the mutual-exclusion pass match an article to its instrument.
-			const bwb =
-				n.kind === 'article' || n.kind === 'instrument'
-					? (
-							getLawIdFromProps(n.raw?.props ?? undefined, n.key) ??
-							(n.kind === 'instrument' ? n.key : '')
-						).toLowerCase() || undefined
-					: undefined;
-			// Shape per kind (see nodeSprites.KIND_SHAPE). Circles use sigma's
-			// border program — its two-ring composition gives the cleanest selection
-			// ring for the densest node class. Everything else renders as an SVG
-			// sprite via NodeImageProgram, with the kind colour baked into the
-			// sprite. For sprite nodes we zero the node-level `color` so the
-			// background-mode shader doesn't paint a coloured square behind the
-			// shape (the SVG already contains all the colour we need).
 			const shape = shapeFor(n.kind);
 			const useImage = shape !== 'circle';
 			const stub = !!n.stub;
@@ -659,11 +436,9 @@
 				color: useImage ? 'rgba(0,0,0,0)' : color,
 				borderColor,
 				kind: n.kind,
+				collection: n.collection,
+				bronKind: bronKindOf(n.collection, n.key, n.raw?.props ?? null),
 				stub,
-				bwb,
-				// Sprite-rendered nodes are visually smaller than border-rendered
-				// circles at the same nominal size (see IMAGE_SIZE_BUMP in
-				// nodeSprites.ts). Bump so the visual weight matches.
 				size: useImage ? rawSize * IMAGE_SIZE_BUMP : rawSize,
 				type: useImage ? 'image' : 'border'
 			};
@@ -671,22 +446,15 @@
 			const seed = n as GraphNode & { x?: number; y?: number };
 			const seedHasPos = typeof seed.x === 'number' && typeof seed.y === 'number';
 			if (g.hasNode(n.id)) {
-				// If the new payload carries a seed position (e.g. bulk load with the
-				// structural ring) overwrite x/y; otherwise keep the existing layout.
 				const merged = seedHasPos ? { ...attrs, x: seed.x, y: seed.y } : attrs;
 				g.mergeNodeAttributes(n.id, merged);
 			} else {
-				// Place newcomers on a ring around the focal node — spread out by
-				// construction, so FA2's job shrinks to local refinement and the
-				// "explode from a tight pile" wobble is gone.
 				let x: number, y: number;
 				if (seedHasPos) {
 					x = seed.x!;
 					y = seed.y!;
 				} else {
 					const angle = (seededIdx / Math.max(unseededCount, 1)) * Math.PI * 2;
-					// Tiny per-node jitter to break perfect symmetry — FA2 settles
-					// faster when nodes aren't exactly equidistant.
 					const rJitter = (Math.random() - 0.5) * 4;
 					const aJitter = (Math.random() - 0.5) * 0.15;
 					x = fxSeed + Math.cos(angle + aJitter) * (seedRingR + rJitter);
@@ -698,14 +466,154 @@
 				changed = true;
 			}
 		}
-		hasNodes = lookup.size > 0;
+		hasNodes = g.order > 0;
 		applyFilters();
 		if (changed) scheduleFit();
 		runLayout(addedThisSync);
-		computeInstruments();
+		syncContainerAnchors();
 	}
 
-	function syncEdges(es: GraphEdge[]) {
+	// Invisible edges that pull a container's children (a wet's artikelen, a
+	// fractie's or commissie's leden, ...) toward each other in the layout, so the
+	// hull GraphCanvas draws around them is a compact shape instead of a straggle
+	// across the canvas. Never rendered, never clickable: GraphCanvas hides any
+	// edge marked `layoutOnly`.
+	let anchorEdgeIds = new Set<string>();
+	// A star from one member pulls every other member toward that one point, which
+	// still leaves the group loose (nothing pulls member 12 toward member 47) and,
+	// for a lid on several commissies, stacks every one of its groups on the same
+	// anchor. A ring plus a chord to the opposite member pulls the whole group into
+	// one another instead, so it settles as a small, round cluster: the padded hull
+	// GraphCanvas draws around it stays close to the group and does not reach out
+	// to unrelated bronnen sitting nearby on canvas.
+	function syncContainerAnchors() {
+		const next = new Set<string>();
+		const link = (groupId: string, a: string, b: string) => {
+			if (a === b) return;
+			const edgeId = `anchor:${groupId}:${a < b ? a : b}~${a < b ? b : a}`;
+			next.add(edgeId);
+			if (!g.hasEdge(edgeId)) {
+				try {
+					g.addUndirectedEdgeWithKey(edgeId, a, b, { layoutOnly: true });
+				} catch {
+					/* a parallel edge already links these two */
+				}
+			}
+		};
+		for (const group of containerGroups.values()) {
+			const present = [...group.members].filter((id) => g.hasNode(id));
+			const n = present.length;
+			if (n < 2) continue;
+			for (let i = 0; i < n; i++) {
+				link(group.id, present[i], present[(i + 1) % n]);
+				if (n > 3) link(group.id, present[i], present[(i + Math.floor(n / 2)) % n]);
+			}
+		}
+		for (const id of anchorEdgeIds) {
+			if (!next.has(id) && g.hasEdge(id)) g.dropEdge(id);
+		}
+		anchorEdgeIds = next;
+	}
+
+	// A ring settles as a loop under FA2, not a knot — pulling an outlying member
+	// straight toward the centroid only shrinks the loop, it does not fill it in.
+	// And a ring does nothing about a SECOND group: two wetten never share an
+	// artikel, a wet and a dossier never share a bron either, yet nothing stops FA2
+	// from settling their two clusters on top of each other. After every burst:
+	// each group's members are packed into a small, filled disk around their own
+	// centroid, in a fixed sunflower spiral (a golden-angle turn and a growing
+	// radius per member) rather than wherever FA2 happened to leave them, so the
+	// group reads as one round cluster at any size; then any two groups' disks that
+	// still overlap are pushed apart along the line between their centres — Venn
+	// diagram, not physics: disjoint groups get disjoint ground, whatever kinds
+	// they are.
+	const CLUSTER_GAP = 36;
+	const GOLDEN_ANGLE = 2.399963229728653;
+	const groupRadius = (memberCount: number) => Math.max(26, 14 + Math.sqrt(memberCount) * 10);
+
+	function separateContainerGroups() {
+		type Disk = { cx: number; cy: number; r: number; ids: string[] };
+		// A bron can genuinely belong to two groups at once (a stuk that both PART_OF
+		// a dossier and AMENDS a wet directly): packing it into each in turn leaves
+		// it wherever the last group put it, which then reads as that bron's OWN
+		// group reaching out to the other — the very overlap this whole pass exists
+		// to remove. Each bron is packed by its largest group only; a smaller group
+		// it also belongs to draws its hull around wherever that leaves it, same as
+		// any other bron on canvas.
+		const eligible = [...containerGroups.values()]
+			.filter((group) => group.members.size >= 2)
+			.sort((a, b) => b.members.size - a.members.size);
+		const primaryGroupId = new Map<string, string>();
+		for (const group of eligible) {
+			for (const id of group.members) {
+				if (g.hasNode(id) && !primaryGroupId.has(id)) primaryGroupId.set(id, group.id);
+			}
+		}
+		const disks: Disk[] = [];
+		for (const group of eligible) {
+			const ids = [...group.members].filter(
+				(id) => g.hasNode(id) && primaryGroupId.get(id) === group.id
+			);
+			const n = ids.length;
+			if (n < 2) continue;
+			let cx = 0;
+			let cy = 0;
+			for (const id of ids) {
+				cx += g.getNodeAttribute(id, 'x') as number;
+				cy += g.getNodeAttribute(id, 'y') as number;
+			}
+			cx /= n;
+			cy /= n;
+			const r = groupRadius(n);
+			ids.forEach((id, i) => {
+				const angle = i * GOLDEN_ANGLE;
+				const radius = r * Math.sqrt((i + 0.5) / n);
+				g.setNodeAttribute(id, 'x', cx + radius * Math.cos(angle));
+				g.setNodeAttribute(id, 'y', cy + radius * Math.sin(angle));
+			});
+			disks.push({ cx, cy, r, ids });
+		}
+		if (disks.length < 2) {
+			if (disks.length > 0) canvas?.refresh();
+			return;
+		}
+		for (let pass = 0; pass < 6; pass++) {
+			for (let i = 0; i < disks.length; i++) {
+				for (let j = i + 1; j < disks.length; j++) {
+					const a = disks[i];
+					const b = disks[j];
+					const dx = b.cx - a.cx;
+					const dy = b.cy - a.cy;
+					const dist = Math.hypot(dx, dy) || 0.01;
+					const minDist = a.r + b.r + CLUSTER_GAP;
+					if (dist >= minDist) continue;
+					const overlap = minDist - dist;
+					const ux = dx / dist;
+					const uy = dy / dist;
+					const move = overlap / 2;
+					for (const id of a.ids) {
+						g.setNodeAttribute(id, 'x', (g.getNodeAttribute(id, 'x') as number) - ux * move);
+						g.setNodeAttribute(id, 'y', (g.getNodeAttribute(id, 'y') as number) - uy * move);
+					}
+					for (const id of b.ids) {
+						g.setNodeAttribute(id, 'x', (g.getNodeAttribute(id, 'x') as number) + ux * move);
+						g.setNodeAttribute(id, 'y', (g.getNodeAttribute(id, 'y') as number) + uy * move);
+					}
+					a.cx -= ux * move;
+					a.cy -= uy * move;
+					b.cx += ux * move;
+					b.cy += uy * move;
+				}
+			}
+		}
+		canvas?.refresh();
+	}
+
+	function syncEdges(allEdges: GraphEdge[]) {
+		// VERSION_OF links an article's own versions across time: real, but not a
+		// network relation — the reader's own version nav uses it directly, not this
+		// canvas, so it never becomes an edge here.
+		const es = allEdges.filter((e) => e.relation !== 'VERSION_OF');
 		let changed = false;
 		const keep = new Set(es.map((e) => e.id));
 		g.edges()
@@ -715,10 +623,10 @@
 				changed = true;
 			});
 		for (const e of es) {
-			// The canvas reducer chooses the drawing type (arrow, or dashed for votes).
 			const attrs = {
 				relation: e.relation,
 				confidence: e.confidence ?? null,
+				status: e.status ?? null,
 				meta: e.meta ?? null,
 				type: 'arrow'
 			};
@@ -729,9 +637,7 @@
 					g.addDirectedEdgeWithKey(e.id, e.source, e.target, attrs);
 					changed = true;
 				} catch {
-					// A parallel edge between this source/target already exists with a
-					// different key (e.g. strict + semantic). Graphology's simple graph
-					// forbids duplicates; silently skip the redundant edge.
+					// A parallel edge between this source and target exists with another key.
 				}
 			}
 		}
@@ -739,10 +645,8 @@
 		if (changed) scheduleFit();
 	}
 
-	// ── canvas event handlers ─────────────────────────────────────────────────
-	// The panel opens only after the pointer rests on a node for 400 ms.
-	// Sweeping across a dense network would otherwise request an article per source.
-	function handleNodeHover(nodeId: string, _vx: number, _vy: number) {
+	// The hover panel opens only after the pointer rests on a node for 400 ms.
+	function handleNodeHover(nodeId: string) {
 		if (compact) return;
 		if (hideTimer) {
 			clearTimeout(hideTimer);
@@ -779,21 +683,12 @@
 		}
 	}
 
-	// ── mount: wire up store subscriptions ───────────────────────────────────
-
 	onMount(() => {
 		const unsub = [
-			store.trimmedCount.subscribe((n) => {
-				trimmedCount = n;
-			}),
 			store.nodes.subscribe(syncNodes),
 			store.edges.subscribe(syncEdges),
 			store.selection.subscribe((n) => {
-				// No camera move — sigma's nodeReducer paints the focus ring and the
-				// user keeps their current viewport. They can use "passend" to refit.
 				selection = n;
-				// Focus scope in Artikelen view depends on the selection, so re-run
-				// suppression whenever the focal changes.
 				applyFilters();
 			}),
 			store.pinned.subscribe((s) => {
@@ -803,6 +698,10 @@
 			store.filters.subscribe((f) => {
 				filters = f;
 				applyFilters();
+			}),
+			containerMembershipStore.subscribe((groups) => {
+				containerGroups = groups;
+				syncContainerAnchors();
 			})
 		];
 		return () => unsub.forEach((u) => u());
@@ -814,7 +713,6 @@
 		layout = null;
 	});
 
-	// ── keyboard shortcuts ────────────────────────────────────────────────────
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
 		if (e.key === 'ArrowLeft' && onGoBack) {
@@ -825,7 +723,13 @@
 			e.preventDefault();
 			onGoForward();
 		}
-		if (e.key === 'Escape') store.setSelection(null);
+		if (e.key === 'Escape') onClear?.();
+	}
+
+	function toggleRelation(r: Relation) {
+		const next = new Set(filters.hiddenRelations);
+		if (!next.delete(r)) next.add(r);
+		store.setFilters({ hiddenRelations: next });
 	}
 </script>
 
@@ -833,28 +737,24 @@
 
 {#snippet sidebar()}
 	<GraphSidebar
-		{filters}
-		{instruments}
+		{verbonden}
+		{filter}
+		selectionCollection={selection?.collection ?? null}
+		{onFilter}
+		{onOpenFilter}
+		{depth}
+		{onDepth}
+		hiddenRelations={filters.hiddenRelations}
+		onToggleRelation={toggleRelation}
+		{canvasCounts}
 		{overlay}
 		inFluxCount={inFluxMap.size}
 		{pinnedNodes}
-		onInstrumentToggle={(bwbId) => {
-			const next = new Set(filters.activeInstruments);
-			if (!next.delete(bwbId)) next.add(bwbId);
-			store.setFilters({ activeInstruments: next });
-		}}
-		{collapseToLaws}
-		onCollapseToLawsChange={(v) => {
-			collapseToLaws = v;
-		}}
 		{onToggleHeat}
 		{onHeatPeriodChange}
 		{onToggleMutatie}
 		{onResetGraph}
 		{hasNodes}
-		hasSelection={selection != null}
-		hiddenCount={Math.max(0, totalLoaded - visibleCountProp)}
-		{onRevealHidden}
 		onUnpin={(id) => store.unpinNode(id)}
 		onClearPins={() => {
 			for (const id of pinnedIds) store.unpinNode(id);
@@ -863,26 +763,13 @@
 {/snippet}
 
 <div class="graph-view">
-	<!-- Sidebar (legend + filters, non-compact only) -->
 	{#if !compact}
 		<button
 			type="button"
-			class="mobile-filter-toggle"
-			class:mobile-filter-toggle--open={mobileSidebarOpen}
+			class="btn mobile-legend-toggle"
 			onclick={() => (mobileSidebarOpen = !mobileSidebarOpen)}
-			aria-expanded={mobileSidebarOpen}
-			aria-label="Filters"
+			aria-expanded={mobileSidebarOpen}>Legenda</button
 		>
-			<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-				<path
-					d="M2 4h12M4 8h8M6 12h4"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-				/>
-			</svg>
-			Filters
-		</button>
 		<div class="graph-sidebar-wrap" class:graph-sidebar-wrap--open={mobileSidebarOpen}>
 			{@render sidebar()}
 		</div>
@@ -895,18 +782,20 @@
 		{/if}
 	{/if}
 
-	<!-- Canvas column -->
-	<div class="graph-main" class:graph-main--with-panel={!compact && selection != null}>
+	<div class="graph-main">
 		<div class="graph-canvas-wrap">
 			{#if canvasOverlay}
 				{@render canvasOverlay()}
 			{/if}
 			<GraphCanvas
 				graph={g}
-				focusedId={selection?.id ?? null}
+				focusedId={selection && !isContainerKind(selection.kind) ? selection.id : null}
 				{filters}
+				{hiddenKinds}
 				{pinnedIds}
-				{collapseToLaws}
+				{containerGroups}
+				{focusContainerId}
+				{selectedEdgeId}
 				{inFluxMap}
 				{heatMap}
 				heatActive={overlay.kind === 'heat'}
@@ -917,20 +806,21 @@
 					const n = lookup.get(id);
 					if (n) onNodeClick?.(n);
 				}}
+				onEdgeClick={(id) => {
+					const e = store.getEdgeById(id);
+					if (e) onEdgeClick?.(e);
+				}}
 				onNodeHover={handleNodeHover}
 				onNodeLeave={handleNodeLeave}
-				onStageClick={() => store.setSelection(null)}
+				onStageClick={() => onClear?.()}
 				onReady={(api) => {
 					canvas = api;
 					canvas.refresh();
 					const camKey = compact ? 'compact' : 'full';
 					if (skipNextFit && _cam[camKey]) {
-						// Tab switch with same graph data — restore previous viewport.
 						canvas.restoreCamera(_cam[camKey]!);
 						skipNextFit = false;
 					} else {
-						// First mount or new data: fit now. syncNodes fired before sigma
-						// was ready so its scheduleFit RAF was a no-op (canvas was null).
 						canvas.fit();
 					}
 				}}
@@ -940,76 +830,27 @@
 			/>
 
 			{#if compact}
-				<div class="compact-filter-wrap">
+				<div class="compact-legend-wrap">
 					<button
 						type="button"
-						class="compact-filter-btn"
-						class:compact-filter-btn--active={compactFiltersOpen}
+						class="btn compact-legend-btn"
+						class:is-primary={compactFiltersOpen}
 						onclick={() => (compactFiltersOpen = !compactFiltersOpen)}
-						aria-label="Filters"
-						aria-expanded={compactFiltersOpen}
+						aria-expanded={compactFiltersOpen}>Legenda</button
 					>
-						<svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-							<path
-								d="M2 4h12M4 8h8M6 12h4"
-								stroke="currentColor"
-								stroke-width="1.5"
-								stroke-linecap="round"
-							/>
-						</svg>
-						Filters
-					</button>
 					{#if compactFiltersOpen}
 						<div
-							class="compact-filter-backdrop"
+							class="compact-legend-backdrop"
 							role="presentation"
 							onclick={() => (compactFiltersOpen = false)}
 						></div>
-						<div class="compact-filter-panel">
+						<div class="compact-legend-panel">
 							{@render sidebar()}
 						</div>
 					{/if}
 				</div>
 			{/if}
 
-			<!-- Node cap notification -->
-			{#if trimmedCount > 0 && !trimmedDismissed}
-				<div class="trimmed-notice" role="status">
-					<span class="trimmed-notice__text"
-						>{trimmedCount} oudste {trimmedCount === 1 ? 'bron' : 'bronnen'} verwijderd. Het netwerk telt
-						meer dan 400 bronnen.</span
-					>
-					<button
-						type="button"
-						class="trimmed-notice__close"
-						onclick={() => (trimmedDismissed = true)}
-						aria-label="Melding sluiten"
-					>
-						<svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
-							<line
-								x1="1.5"
-								y1="1.5"
-								x2="8.5"
-								y2="8.5"
-								stroke="currentColor"
-								stroke-width="1.4"
-								stroke-linecap="round"
-							/>
-							<line
-								x1="8.5"
-								y1="1.5"
-								x2="1.5"
-								y2="8.5"
-								stroke="currentColor"
-								stroke-width="1.4"
-								stroke-linecap="round"
-							/>
-						</svg>
-					</button>
-				</div>
-			{/if}
-
-			<!-- Hover citation panel -->
 			{#if !compact && hoverNode}
 				<GraphCitePanel
 					node={hoverNode}
@@ -1047,156 +888,78 @@
 		overflow: hidden;
 	}
 
-	/* ── Canvas wrap ─────────────────────────────────────────────────────── */
 	.graph-canvas-wrap {
 		flex: 1;
 		position: relative;
 		overflow: hidden;
 	}
 
-	.trimmed-notice {
-		position: absolute;
-		bottom: var(--s-3);
-		left: 50%;
-		transform: translateX(-50%);
-		z-index: 5;
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		padding: 5px 8px 5px 12px;
-		background: var(--paper);
-		border: 1px solid var(--ochre-faint, #f5e8c0);
-		border-radius: 999px;
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-		box-shadow: 0 2px 8px rgba(20, 18, 14, 0.06);
-		white-space: nowrap;
-		pointer-events: auto;
-	}
-	.trimmed-notice__text {
-		flex: 1;
-	}
-	.trimmed-notice__close {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 18px;
-		height: 18px;
-		background: none;
-		border: none;
-		border-radius: 50%;
-		cursor: pointer;
-		color: var(--ink-4);
-		padding: 0;
-		flex-shrink: 0;
-	}
-	.trimmed-notice__close:hover {
-		background: var(--paper-3);
-		color: var(--ink);
-	}
-
-	/* ── Compact filter button (split mode) ─────────────────────────────── */
-	.compact-filter-wrap {
+	.compact-legend-wrap {
 		position: absolute;
 		top: var(--s-3);
 		left: var(--s-3);
 		z-index: var(--z-float);
 	}
 
-	.compact-filter-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		height: 26px;
-		padding: 0 10px;
+	.compact-legend-btn {
 		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-		cursor: pointer;
-		box-shadow: var(--shadow-sm);
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
+	}
+	.compact-legend-btn:global(.is-primary) {
+		background: var(--ink);
+		color: var(--paper);
 	}
 
-	.compact-filter-btn:hover,
-	.compact-filter-btn--active {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-
-	.compact-filter-backdrop {
+	.compact-legend-backdrop {
 		position: fixed;
 		inset: 0;
 		z-index: calc(var(--z-float) - 1);
 	}
 
-	.compact-filter-panel {
+	.compact-legend-panel {
 		position: absolute;
 		top: calc(100% + 6px);
 		left: 0;
-		width: 220px;
-		max-height: calc(100vh - 140px);
+		max-height: calc(100vh - 160px);
 		overflow-y: auto;
 		background: var(--paper);
-		border: 1px solid var(--rule);
+		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		box-shadow: var(--shadow-modal);
 		z-index: var(--z-float);
 	}
+	.compact-legend-panel :global(.legend) {
+		height: auto;
+		border-right: 0;
+	}
 
-	/* Loading banner at the top of the canvas; the network stays interactive. */
-
-	/* Mobile filter sheet (full graph mode only) */
-	.mobile-filter-toggle {
+	.mobile-legend-toggle {
 		display: none;
 		position: absolute;
 		top: var(--s-3);
 		left: var(--s-3);
 		z-index: var(--z-float);
-		align-items: center;
-		gap: 5px;
-		height: 28px;
-		padding: 0 10px;
 		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-		cursor: pointer;
-		box-shadow: var(--shadow-sm);
-	}
-	.mobile-filter-toggle:hover {
-		background: var(--paper-2);
-		color: var(--ink);
 	}
 
 	.mobile-sidebar-backdrop {
 		display: none;
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.2);
+		background: rgba(28, 27, 25, 0.2);
 		z-index: calc(var(--z-float) - 1);
 	}
 
 	@media (max-width: 768px) {
-		.mobile-filter-toggle {
+		.mobile-legend-toggle {
 			display: inline-flex;
 		}
 		.graph-sidebar-wrap {
 			position: fixed;
-			top: 64px;
+			top: 60px;
 			left: 0;
 			bottom: 0;
-			width: 240px;
 			z-index: var(--z-float);
 			background: var(--paper);
-			border-right: 1px solid var(--rule);
 			transform: translateX(-100%);
 			transition: transform var(--dur-1) var(--ease);
 		}

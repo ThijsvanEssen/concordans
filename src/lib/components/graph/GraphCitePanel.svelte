@@ -158,21 +158,21 @@
 	}
 	.stub-note {
 		font-style: italic;
-		color: var(--ink-4);
+		color: var(--ink-3);
 	}
 
 	.kind {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
+		font-size: var(--t-micro);
+		font-weight: 500;
 		color: var(--ink-3);
 	}
 
 	.cite {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--accent);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 		margin-left: auto;
 	}
 
@@ -180,22 +180,21 @@
 		font-family: var(--font-serif);
 		font-size: 17px;
 		font-weight: 500;
-		line-height: 1.2;
+		line-height: var(--lh-snug);
 		color: var(--ink);
 		margin: 0;
-		letter-spacing: -0.01em;
 	}
 
 	.snippet {
 		font-family: var(--font-serif);
-		font-size: 14px;
-		line-height: 1.55;
-		color: var(--ink-3);
+		font-size: var(--t-body-2);
+		line-height: var(--lh-body);
+		color: var(--ink-2);
 		margin: 0;
 	}
 
 	.cite-loading {
-		font-size: 11px;
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 		font-family: var(--font-sans);
 		padding: var(--s-2) var(--s-3);
@@ -210,13 +209,13 @@
 		margin-top: var(--s-1);
 	}
 
+	/* Text buttons: no border, the hover as a paper-2 field. */
 	.act {
 		background: none;
 		border: none;
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.03em;
 		color: var(--ink-2);
 		cursor: pointer;
 		padding: 3px 8px;
@@ -226,29 +225,21 @@
 			background var(--dur-1) var(--ease);
 	}
 
-	.act:first-child {
-		color: var(--accent);
-	}
-
 	.act--primary {
-		color: var(--accent);
+		color: var(--ink);
 		text-decoration: none;
 	}
 
 	.act:hover {
 		background: var(--paper-2);
-		color: var(--accent);
+		color: var(--ink);
 	}
 
 	.act--pin {
 		color: var(--ink-3);
 		margin-left: auto;
 	}
-	.act--pin:hover {
-		color: var(--spine);
-	}
 	.act--pinned {
-		color: var(--spine);
-		font-weight: 600;
+		color: var(--ink);
 	}
 </style>

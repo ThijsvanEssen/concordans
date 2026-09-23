@@ -1,532 +1,610 @@
 <script lang="ts">
-	// Sidebar of the canvas: overlays, pinned bronnen, hidden bronnen, and the laws on the
-	// canvas as a filter. The layers and the legend are the groups of the panel Verbonden.
-	import type { GraphFilters } from '$lib/graph/graph-store';
+	// The legend of the network, which is also its filter: the bronnen that take part
+	// (with counts and the preset), the verbindingen per relation with a line sample,
+	// the depth from the focus, the lid, and one line with what is on the canvas and
+	// what the filter hides. The overlays and the pinned bronnen are under Meer.
 	import type { GraphNode } from '$lib/graph/types';
 	import { HEAT_PERIODS, type Overlay } from '$lib/stores/overlay';
+	import type { Collection, Relation } from '$lib/vocabulary';
+	import {
+		BRON_KINDS,
+		BRON_KIND_LABEL,
+		PRESETS,
+		activePreset,
+		bronnenLabel,
+		formatCount,
+		toggleKind,
+		withPreset,
+		type VerbondenFilter
+	} from '$lib/verbonden/filter';
+	import type { VerbondenState } from '$lib/verbonden/source';
+	import { allRows, hiddenLine, kindTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
+	import { edgeColorFor, edgeStyleFor, hullColorFor } from './nodeSprites';
+	import { kindOfCollection } from '$lib/graph/types';
+	import type { ContainerKind } from '$lib/graph/container-membership';
 
 	let {
-		filters,
-		instruments = [] as { bwbId: string; label: string; count: number }[],
-		collapseToLaws,
+		verbonden,
+		filter,
+		selectionCollection,
+		onFilter,
+		onOpenFilter,
+		depth,
+		onDepth,
+		hiddenRelations,
+		onToggleRelation,
+		canvasCounts,
 		overlay = { kind: 'none' } as Overlay,
 		inFluxCount = 0,
-		pinnedNodes = [] as GraphNode[],
-		onInstrumentToggle,
-		onCollapseToLawsChange,
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
+		pinnedNodes = [] as GraphNode[],
 		onUnpin,
 		onClearPins,
-		onResetGraph,
 		hasNodes = false,
-		hasSelection = false,
-		hiddenCount = 0,
-		onRevealHidden
+		onResetGraph
 	}: {
-		filters: GraphFilters;
-		instruments?: { bwbId: string; label: string; count: number }[];
-		collapseToLaws: boolean;
+		verbonden: VerbondenState;
+		filter: VerbondenFilter;
+		selectionCollection: Collection | null;
+		onFilter: (f: VerbondenFilter) => void;
+		onOpenFilter: () => void;
+		depth: number;
+		onDepth: (d: number) => void;
+		hiddenRelations: Set<Relation>;
+		onToggleRelation: (r: Relation) => void;
+		canvasCounts: { nodes: number; edges: number };
 		overlay?: Overlay;
-		/** Bronnen in behandeling, shown while that overlay is active. */
 		inFluxCount?: number;
-		pinnedNodes?: GraphNode[];
-		onInstrumentToggle?: (bwbId: string) => void;
-		onCollapseToLawsChange: (v: boolean) => void;
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
+		pinnedNodes?: GraphNode[];
 		onUnpin?: (nodeId: string) => void;
 		onClearPins?: () => void;
-		onResetGraph?: () => void;
 		hasNodes?: boolean;
-		hasSelection?: boolean;
-		/** Bronnen the neighbourhood fetch returned that the convergence prune removed. */
-		hiddenCount?: number;
-		onRevealHidden?: () => void;
+		onResetGraph?: () => void;
 	} = $props();
 
+	let presetMenu = $state(false);
+	let lidMenu = $state(false);
 	let confirmClear = $state(false);
-	let clearTimer: ReturnType<typeof setTimeout> | null = null;
-	function requestClear() {
-		confirmClear = true;
-		clearTimer = setTimeout(() => (confirmClear = false), 4000);
-	}
-	function executeClear() {
-		confirmClear = false;
-		if (clearTimer) clearTimeout(clearTimer);
-		onResetGraph?.();
-	}
+
+	const totals = $derived(kindTotals(verbonden.groups));
+	// Never drawn as an edge on the canvas, so not a togglable line here either.
+	// PART_OF, MEMBER_OF and LED_BY always point at a container (a wet, fractie,
+	// commissie or dossier) — a hull groups them now, not a line. VERSION_OF links
+	// an article's own versions across time; the reader's version nav uses it
+	// directly, never the canvas. ABOUT, AMENDS and REPEALS only sometimes point at
+	// a container (a document can amend an article, not just a wet) and stay
+	// listed, even though the canvas silently folds the container case of those
+	// into a hull rather than drawing it — an open gap, not a fix.
+	const NEVER_DRAWN_RELATIONS = new Set<Relation>(['PART_OF', 'MEMBER_OF', 'LED_BY', 'VERSION_OF']);
+	const relations = $derived(
+		selectionCollection
+			? relationCounts(verbonden.groups, selectionCollection).filter(
+					(r) => !NEVER_DRAWN_RELATIONS.has(r.relation as Relation)
+				)
+			: []
+	);
+	const CONTAINER_KIND_LABEL: Record<ContainerKind, string> = {
+		instrument: 'Wet',
+		faction: 'Fractie',
+		committee: 'Commissie',
+		dossier: 'Dossier'
+	};
+	const CONTAINER_KIND_HINT: Record<ContainerKind, string> = {
+		instrument: 'artikelen',
+		faction: 'leden',
+		committee: 'leden',
+		dossier: 'stukken, zaken'
+	};
+	const hidden = $derived(hiddenLine(verbonden.groups, filter));
+	const lids = $derived(
+		[...lidCounts(allRows(verbonden.groups)).keys()]
+			.filter((k) => k !== '')
+			.sort((a, b) => a.localeCompare(b, 'nl', { numeric: true }))
+	);
+	const isOn = (k: (typeof BRON_KINDS)[number]) => filter.bronnen === null || filter.bronnen.has(k);
 
 	const mutOn = $derived(overlay.kind === 'open' || overlay.kind === 'dossier');
 	const heatOn = $derived(overlay.kind === 'heat');
+
+	// The line sample of a relation, in the colour of the edge from this bron.
+	const sourceKind = (relation: Relation) =>
+		kindOfCollection(
+			// A citation of the selected bron comes from the other end.
+			relation === 'REFERS_TO' && selectionCollection === 'articles'
+				? 'judgments'
+				: (selectionCollection ?? 'articles')
+		);
+	const dash = (relation: Relation) => {
+		const style = edgeStyleFor(relation, null);
+		return style === 'dotted' ? '1 3' : style === 'dashed' ? '4 3' : undefined;
+	};
 </script>
 
-<aside class="graph-sidebar">
-	<section class="sb-section">
-		<div class="sb-head">Overlay</div>
-		<div class="sb-seg" role="radiogroup" aria-label="Overlay">
-			<button
-				type="button"
-				class="sb-seg-btn"
-				class:sb-seg-btn--active={!mutOn && !heatOn}
-				role="radio"
-				aria-checked={!mutOn && !heatOn}
-				onclick={() => {
-					if (mutOn) onToggleMutatie?.();
-					else if (heatOn) onToggleHeat?.();
-				}}>Geen</button
-			>
-			<button
-				type="button"
-				class="sb-seg-btn sb-seg-btn--mutatie"
-				class:sb-seg-btn--active={mutOn}
-				role="radio"
-				aria-checked={mutOn}
-				disabled={!onToggleMutatie}
-				onclick={() => {
-					if (!mutOn) onToggleMutatie?.();
-				}}
-			>
-				In behandeling{#if mutOn && inFluxCount > 0}<span class="sb-seg-count">{inFluxCount}</span
-					>{/if}
-			</button>
-			<button
-				type="button"
-				class="sb-seg-btn sb-seg-btn--heat"
-				class:sb-seg-btn--active={heatOn}
-				role="radio"
-				aria-checked={heatOn}
-				disabled={!onToggleHeat}
-				onclick={() => {
-					if (!heatOn) onToggleHeat?.();
-				}}>Citaties per maand</button
-			>
-		</div>
-		{#if heatOn}
-			<div class="sb-heat-period" role="group" aria-label="Periode">
-				{#each HEAT_PERIODS as m, i (i)}
-					<button
-						type="button"
-						class="sb-heat-period-btn"
-						class:sb-heat-period-btn--active={overlay.kind === 'heat' && overlay.months === m}
-						onclick={() => onHeatPeriodChange?.(m)}
-						disabled={!onHeatPeriodChange}>{m}m</button
-					>
-				{/each}
-			</div>
-		{/if}
-	</section>
+<svelte:window
+	onclick={() => {
+		presetMenu = false;
+		lidMenu = false;
+	}}
+/>
 
-	{#if pinnedNodes.length > 0}
-		<section class="sb-section">
-			<div class="sb-head sb-head--pin">
-				<span>Vastgepind ({pinnedNodes.length})</span>
-				{#if onClearPins}
-					<button type="button" class="sb-head-action" onclick={onClearPins}>Wissen</button>
-				{/if}
-			</div>
-			<ul class="sb-pin-list">
-				{#each pinnedNodes as p (p.id)}
-					<li class="sb-pin-item">
-						<span class="sb-pin-label">{p.label}</span>
-						{#if onUnpin}
+<aside class="legend">
+	<section class="block">
+		<div class="block__head">
+			<h3 class="block__title">Bronnen</h3>
+			<div class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+				<button
+					type="button"
+					class="btn is-text preset"
+					aria-haspopup="menu"
+					aria-expanded={presetMenu}
+					onclick={() => (presetMenu = !presetMenu)}
+					>{bronnenLabel(filter)} <span class="caret" aria-hidden="true">▾</span></button
+				>
+				{#if presetMenu}
+					<div class="menu__list" role="menu">
+						{#each PRESETS as p (p.id)}
 							<button
 								type="button"
-								class="sb-pin-x"
-								onclick={() => onUnpin?.(p.id)}
-								aria-label="Losmaken">✕</button
+								role="menuitemradio"
+								aria-checked={activePreset(filter)?.id === p.id}
+								class="menu__item"
+								class:is-active={activePreset(filter)?.id === p.id}
+								onclick={() => {
+									onFilter(withPreset(filter, p));
+									presetMenu = false;
+								}}>{p.label}</button
 							>
-						{/if}
-					</li>
-				{/each}
-			</ul>
+						{/each}
+						<button
+							type="button"
+							role="menuitem"
+							class="menu__item menu__item--more"
+							onclick={() => {
+								presetMenu = false;
+								onOpenFilter();
+							}}>Kies bronnen en verbindingen</button
+						>
+					</div>
+				{/if}
+			</div>
+		</div>
+		{#each BRON_KINDS as k (k)}
+			{@const n = totals[k] ?? 0}
+			<label class="row" class:is-empty={n === 0}>
+				<input type="checkbox" checked={isOn(k)} onchange={() => onFilter(toggleKind(filter, k))} />
+				<span class="box" aria-hidden="true">{isOn(k) ? '✓' : ''}</span>
+				<span class="row__name">{BRON_KIND_LABEL[k]}</span>
+				<span class="row__count">{formatCount(n)}</span>
+			</label>
+		{/each}
+	</section>
+
+	<section class="block">
+		<h3 class="block__title">Groepering</h3>
+		{#each Object.keys(CONTAINER_KIND_LABEL) as ck (ck)}
+			{@const kind = ck as ContainerKind}
+			<div class="row row--static">
+				<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+					<circle
+						cx="7"
+						cy="7"
+						r="6"
+						fill={hullColorFor(kind)}
+						fill-opacity="0.18"
+						stroke={hullColorFor(kind)}
+					/>
+				</svg>
+				<span class="row__name">{CONTAINER_KIND_LABEL[kind]}</span>
+				<span class="row__count">{CONTAINER_KIND_HINT[kind]}</span>
+			</div>
+		{/each}
+	</section>
+
+	{#if relations.length > 0}
+		<section class="block">
+			<h3 class="block__title">Verbindingen</h3>
+			{#each relations as r (r.relation)}
+				{@const rel = r.relation as Relation}
+				{@const on = !hiddenRelations.has(rel)}
+				<label class="row">
+					<input type="checkbox" checked={on} onchange={() => onToggleRelation(rel)} />
+					<span class="box" aria-hidden="true">{on ? '✓' : ''}</span>
+					<svg width="26" height="8" viewBox="0 0 26 8" aria-hidden="true"
+						><line
+							x1="1"
+							y1="4"
+							x2="25"
+							y2="4"
+							stroke={edgeColorFor(rel, sourceKind(rel))}
+							stroke-width="1.6"
+							stroke-dasharray={dash(rel)}
+						/></svg
+					>
+					<span class="row__name">{r.label}</span>
+					<span class="row__count">{formatCount(r.count)}</span>
+				</label>
+			{/each}
 		</section>
 	{/if}
 
-	{#if hasSelection && hiddenCount > 0}
-		<section class="sb-section sb-section--focus">
-			<div class="sb-focus-row">
-				<span class="sb-focus-num">{hiddenCount}</span>
-				<span class="sb-focus-label">niet zichtbaar</span>
-				{#if onRevealHidden}
-					<button type="button" class="sb-focus-action" onclick={() => onRevealHidden?.()}>
-						Toon alle
-					</button>
+	<section class="block">
+		<div class="block__label">Diepte</div>
+		<div class="chips">
+			{#each [1, 2, 3] as d (d)}
+				<button type="button" class="btn" class:is-primary={depth === d} onclick={() => onDepth(d)}
+					>{d}</button
+				>
+			{/each}
+			<span class="muted">stappen vanaf de bron</span>
+		</div>
+	</section>
+
+	{#if lids.length > 0}
+		<section class="block">
+			<div class="block__label">Lid van het artikel</div>
+			<div class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+				<button
+					type="button"
+					class="btn"
+					aria-haspopup="menu"
+					aria-expanded={lidMenu}
+					onclick={() => (lidMenu = !lidMenu)}
+					>{filter.lid === null
+						? 'Alle leden'
+						: filter.lid === 'geen'
+							? 'Lid niet genoemd'
+							: `Lid ${filter.lid}`} <span class="caret" aria-hidden="true">▾</span></button
+				>
+				{#if lidMenu}
+					<div class="menu__list menu__list--left" role="menu">
+						<button
+							type="button"
+							role="menuitemradio"
+							aria-checked={filter.lid === null}
+							class="menu__item"
+							onclick={() => {
+								onFilter({ ...filter, lid: null });
+								lidMenu = false;
+							}}>Alle leden</button
+						>
+						{#each lids as lid (lid)}
+							<button
+								type="button"
+								role="menuitemradio"
+								aria-checked={filter.lid === lid}
+								class="menu__item"
+								onclick={() => {
+									onFilter({ ...filter, lid });
+									lidMenu = false;
+								}}>Lid {lid}</button
+							>
+						{/each}
+						<button
+							type="button"
+							role="menuitemradio"
+							aria-checked={filter.lid === 'geen'}
+							class="menu__item"
+							onclick={() => {
+								onFilter({ ...filter, lid: 'geen' });
+								lidMenu = false;
+							}}>Lid niet genoemd</button
+						>
+					</div>
 				{/if}
 			</div>
 		</section>
 	{/if}
 
-	{#if instruments.length > 1}
-		<section class="sb-section sb-section--grow">
-			<div class="sb-head sb-head--pin">
-				<span>Wetten</span>
-				<div class="sb-seg sb-seg--small" role="radiogroup" aria-label="Detail">
-					<button
-						type="button"
-						class="sb-seg-btn"
-						class:sb-seg-btn--active={!collapseToLaws}
-						role="radio"
-						aria-checked={!collapseToLaws}
-						onclick={() => onCollapseToLawsChange(false)}>Artikelen</button
-					>
-					<button
-						type="button"
-						class="sb-seg-btn"
-						class:sb-seg-btn--active={collapseToLaws}
-						role="radio"
-						aria-checked={collapseToLaws}
-						onclick={() => onCollapseToLawsChange(true)}>Wetten</button
-					>
-				</div>
-			</div>
-			<div class="sb-inst-list">
-				{#each instruments as inst (inst.bwbId)}
-					{@const isActive =
-						filters.activeInstruments.size > 0 && filters.activeInstruments.has(inst.bwbId)}
-					<button
-						type="button"
-						class="sb-inst-row"
-						class:sb-inst-row--active={isActive}
-						onclick={() => onInstrumentToggle?.(inst.bwbId)}
-						aria-pressed={isActive}
-					>
-						<span class="sb-inst-label">{inst.label}</span>
-						<span class="sb-inst-count">{inst.count}</span>
-					</button>
-				{/each}
-			</div>
-		</section>
-	{/if}
+	<p class="status">
+		{formatCount(canvasCounts.nodes)}
+		{canvasCounts.nodes === 1 ? 'bron' : 'bronnen'}, {formatCount(canvasCounts.edges)}
+		{canvasCounts.edges === 1 ? 'verbinding' : 'verbindingen'} op het doek.
+		{#if hidden.length > 0}
+			{hidden
+				.map((h) => `${formatCount(h.count)} ${BRON_KIND_LABEL[h.kind].toLowerCase()}`)
+				.join(', ')} verborgen door het bronfilter.
+		{/if}
+	</p>
 
-	{#if hasNodes && onResetGraph}
-		<section class="sb-section">
-			{#if confirmClear}
-				<button type="button" class="sb-head-action sb-head-action--danger" onclick={executeClear}
-					>Ja, wis het netwerk</button
+	<details class="more">
+		<summary>Meer</summary>
+		<div class="block">
+			<div class="block__label">Overlay</div>
+			<div class="chips">
+				<button
+					type="button"
+					class="btn"
+					class:is-primary={!mutOn && !heatOn}
+					onclick={() => {
+						if (mutOn) onToggleMutatie?.();
+						else if (heatOn) onToggleHeat?.();
+					}}>Geen</button
 				>
-			{:else}
-				<button type="button" class="sb-head-action" onclick={requestClear}>Wis netwerk</button>
+				<button
+					type="button"
+					class="btn"
+					class:is-primary={mutOn}
+					disabled={!onToggleMutatie}
+					onclick={() => {
+						if (!mutOn) onToggleMutatie?.();
+					}}
+					>Open dossiers{#if mutOn && inFluxCount > 0}
+						({inFluxCount}){/if}</button
+				>
+				<button
+					type="button"
+					class="btn"
+					class:is-primary={heatOn}
+					disabled={!onToggleHeat}
+					onclick={() => {
+						if (!heatOn) onToggleHeat?.();
+					}}>Citaties per maand</button
+				>
+			</div>
+			{#if heatOn}
+				<div class="chips chips--sub" role="group" aria-label="Periode">
+					{#each HEAT_PERIODS as m (m)}
+						<button
+							type="button"
+							class="btn"
+							class:is-primary={overlay.kind === 'heat' && overlay.months === m}
+							onclick={() => onHeatPeriodChange?.(m)}
+							disabled={!onHeatPeriodChange}>{m} maanden</button
+						>
+					{/each}
+				</div>
 			{/if}
-		</section>
-	{/if}
+		</div>
+		{#if pinnedNodes.length > 0}
+			<div class="block">
+				<div class="block__label">
+					Vastgepind ({pinnedNodes.length})
+					{#if onClearPins}
+						<button type="button" class="link" onclick={onClearPins}>Wissen</button>
+					{/if}
+				</div>
+				<ul class="pins">
+					{#each pinnedNodes as p (p.id)}
+						<li class="pin">
+							<span class="pin__label">{p.label}</span>
+							{#if onUnpin}
+								<button
+									type="button"
+									class="link"
+									onclick={() => onUnpin?.(p.id)}
+									aria-label="Losmaken">×</button
+								>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
+		{#if hasNodes && onResetGraph}
+			<div class="block">
+				{#if confirmClear}
+					<button
+						type="button"
+						class="btn"
+						onclick={() => {
+							confirmClear = false;
+							onResetGraph?.();
+						}}>Ja, wis het netwerk</button
+					>
+				{:else}
+					<button
+						type="button"
+						class="btn"
+						onclick={() => {
+							confirmClear = true;
+							setTimeout(() => (confirmClear = false), 4000);
+						}}>Wis netwerk</button
+					>
+				{/if}
+			</div>
+		{/if}
+	</details>
 </aside>
 
 <style>
-	.graph-sidebar {
-		width: 200px;
+	.legend {
+		width: 250px;
 		flex-shrink: 0;
 		height: 100%;
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
+		gap: 18px;
+		padding: 20px 18px;
 		border-right: 1px solid var(--rule);
-		background: var(--paper-2);
-		scrollbar-width: thin;
-		scrollbar-color: var(--rule) transparent;
-	}
-
-	.sb-section {
-		padding: var(--s-4) 0 var(--s-3);
-		border-bottom: 1px solid var(--rule);
-		flex-shrink: 0;
-	}
-
-	.sb-section--grow {
-		flex: 1;
-		min-height: 0;
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-	}
-
-	.sb-head {
+		background: var(--paper);
 		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 500;
-		letter-spacing: 0.09em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		padding: 0 var(--s-4) var(--s-2);
-	}
-
-	.sb-inst-list {
-		flex: 1;
-		min-height: 0;
-		overflow-y: auto;
+		font-size: 12.5px;
+		color: var(--ink-2);
 		scrollbar-width: thin;
 		scrollbar-color: var(--rule) transparent;
 	}
-
-	.sb-inst-row {
+	.block__head {
 		display: flex;
-		align-items: center;
-		width: 100%;
-		padding: 5px var(--s-4);
-		background: none;
-		border: none;
-		cursor: pointer;
-		text-align: left;
-		gap: var(--s-2);
-		transition: background var(--dur-1) var(--ease);
+		align-items: baseline;
+		gap: 6px;
+		margin-bottom: 4px;
 	}
-
-	.sb-inst-row:hover {
-		background: var(--paper-3);
-	}
-
-	.sb-inst-row--active {
-		background: color-mix(in srgb, var(--accent) 8%, transparent);
-	}
-
-	.sb-inst-row--active:hover {
-		background: color-mix(in srgb, var(--accent) 14%, transparent);
-	}
-
-	.sb-inst-label {
-		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--ink-2);
+	.block__title {
 		flex: 1;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		margin: 0 0 4px;
+		font-family: var(--font-serif);
+		font-size: 16px;
+		font-weight: 500;
+		color: var(--ink);
 	}
-
-	.sb-inst-row--active .sb-inst-label {
-		color: var(--accent);
+	.block__head .block__title {
+		margin: 0;
 	}
-
-	.sb-inst-count {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--fg-3);
-		flex-shrink: 0;
-	}
-
-	.sb-inst-row--active .sb-inst-count {
-		color: var(--accent);
-	}
-
-	.sb-head--pin {
+	.block__label {
 		display: flex;
 		justify-content: space-between;
-		align-items: center;
+		margin-bottom: 6px;
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 	}
-
-	.sb-head-action {
+	.preset {
+		font-size: 11.5px;
+	}
+	.menu {
+		position: relative;
+	}
+	.menu__list {
+		position: absolute;
+		top: calc(100% + 4px);
+		right: 0;
+		z-index: var(--z-float);
+		min-width: 200px;
+		padding: 6px 0;
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-modal);
+	}
+	.menu__list--left {
+		right: auto;
+		left: 0;
+	}
+	.menu__item {
+		display: block;
+		width: 100%;
+		padding: 6px 12px;
+		border: 0;
 		background: none;
-		border: none;
-		font-family: var(--font-sans);
-		font-size: 10px;
-		text-transform: none;
-		letter-spacing: normal;
-		color: var(--ink-4);
+		font: inherit;
+		color: var(--ink);
+		text-align: left;
 		cursor: pointer;
+	}
+	.menu__item:hover {
+		background: var(--paper-2);
+	}
+	.menu__item.is-active {
+		font-weight: 600;
+	}
+	.menu__item--more {
+		margin-top: 4px;
+		padding-top: 8px;
+		border-top: 1px solid var(--rule);
+		color: var(--ink-2);
+	}
+	.row {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 6px 0;
+		cursor: pointer;
+	}
+	.row.is-empty {
+		color: var(--ink-3);
+	}
+	.row--static {
+		cursor: default;
+	}
+	.row input {
+		position: absolute;
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+	.box {
+		width: 14px;
+		height: 14px;
+		display: grid;
+		place-items: center;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		font-size: 10px;
+		line-height: 1;
+		color: var(--paper);
+		flex: none;
+	}
+	.row input:checked + .box {
+		background: var(--ink);
+		border-color: var(--ink);
+	}
+	.row input:focus-visible + .box {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+	.row__name {
+		flex: 1;
+	}
+	.row__count {
+		color: var(--ink-3);
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 5px;
+	}
+	.chips--sub {
+		margin-top: 6px;
+	}
+	.muted {
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.status {
+		margin: auto 0 0;
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+		line-height: 1.4;
+	}
+	.more {
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.more summary {
+		cursor: pointer;
+		font-weight: 500;
+	}
+	.more .block {
+		margin-top: 12px;
+	}
+	.link {
 		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+		cursor: pointer;
 	}
-
-	.sb-head-action:hover {
-		color: var(--spine);
+	.link:hover {
+		color: var(--accent);
 	}
-
-	.sb-pin-list {
+	.pins {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 	}
-
-	.sb-pin-item {
+	.pin {
 		display: flex;
 		align-items: center;
 		gap: 6px;
-		padding: 3px var(--s-4);
+		padding: 3px 0;
 	}
-
-	.sb-pin-label {
+	.pin__label {
 		flex: 1;
 		min-width: 0;
 		font-family: var(--font-serif);
-		font-size: 12px;
+		font-size: 13px;
 		color: var(--ink-2);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-	}
-
-	.sb-pin-x {
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: var(--ink-4);
-		font-size: 11px;
-		padding: 0 4px;
-	}
-
-	.sb-pin-x:hover {
-		color: var(--spine);
-	}
-
-	.sb-section--focus {
-		padding-bottom: var(--s-3);
-	}
-
-	.sb-focus-row {
-		display: flex;
-		align-items: baseline;
-		gap: 8px;
-		padding: 0 var(--s-3);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-	}
-
-	.sb-focus-num {
-		font-family: var(--font-mono);
-		font-size: 12px;
-		font-weight: 600;
-		color: var(--ink);
-		min-width: 26px;
-		text-align: right;
-	}
-
-	.sb-focus-label {
-		color: var(--ink-4);
-		letter-spacing: 0.02em;
-	}
-
-	.sb-focus-action {
-		width: calc(100% - 2 * var(--s-3));
-		margin: 8px var(--s-3) 0;
-		padding: 6px 10px;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-2);
-		cursor: pointer;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
-	}
-
-	.sb-focus-action:hover {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
-	}
-
-	.sb-head-action--danger {
-		color: var(--spine);
-	}
-
-	.sb-head-action--danger:hover {
-		color: var(--spine);
-		opacity: 0.75;
-	}
-
-	.sb-seg {
-		display: grid;
-		grid-template-columns: 1fr 1fr 1fr;
-		margin: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		overflow: hidden;
-		background: var(--paper);
-	}
-
-	.sb-seg-btn {
-		position: relative;
-		padding: 5px 6px;
-		background: var(--paper);
-		border: 0;
-		border-right: 1px solid var(--rule-strong);
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-3);
-		cursor: pointer;
-		text-align: center;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
-	}
-
-	.sb-seg-btn:last-child {
-		border-right: 0;
-	}
-
-	.sb-seg-btn:hover:not(.sb-seg-btn--active):not(:disabled) {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-
-	.sb-seg-btn:disabled {
-		opacity: 0.4;
-		cursor: default;
-	}
-
-	.sb-seg-btn--active {
-		background: var(--ink);
-		color: var(--paper);
-		font-weight: 500;
-	}
-
-	.sb-seg-btn--mutatie.sb-seg-btn--active {
-		background: var(--spine, #7a1f1a);
-		border-color: var(--spine, #7a1f1a);
-	}
-
-	.sb-seg-btn--heat.sb-seg-btn--active {
-		background: var(--teal, #1f5a56);
-		border-color: var(--teal, #1f5a56);
-	}
-
-	.sb-seg-count {
-		margin-left: 4px;
-		padding: 0 4px;
-		border-radius: 7px;
-		background: color-mix(in srgb, currentColor 22%, transparent);
-		font-family: var(--font-mono);
-		font-variant-numeric: tabular-nums;
-		font-size: 9px;
-		line-height: 1.4;
-	}
-
-	.sb-heat-period {
-		display: flex;
-		gap: 4px;
-		margin: 6px 2px 4px;
-	}
-
-	.sb-heat-period-btn {
-		flex: 1;
-		height: 22px;
-		padding: 0 6px;
-		background: var(--paper);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-1);
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-
-	.sb-heat-period-btn:hover {
-		background: var(--paper-3);
-		color: var(--ink);
-	}
-
-	.sb-heat-period-btn--active {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
-	}
-
-	.sb-seg--small {
-		margin: 0;
 	}
 </style>

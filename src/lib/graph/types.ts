@@ -44,6 +44,14 @@ const KIND_OF_COLLECTION: Record<Collection, GraphNodeKind> = {
 export const kindOfCollection = (collection: Collection): GraphNodeKind =>
 	KIND_OF_COLLECTION[collection];
 
+// A version is kept so an article or instrument can be read as it stood at a past
+// moment, referring to the matching past version of whatever it cites (VERSION_OF).
+// That is a reader concern: the network is about the current text, so a version is
+// never drawn as a bron in it, current-focus reader page or not.
+const VERSION_COLLECTIONS = new Set<string>(['article_versions', 'instrument_versions']);
+export const isVersionCollection = (collection: string): boolean =>
+	VERSION_COLLECTIONS.has(collection);
+
 export interface GraphNode {
 	id: string;
 	collection: Collection;

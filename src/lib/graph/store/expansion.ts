@@ -1,8 +1,15 @@
 import { getNodeGraph, getNodeNeighborhood } from '$lib/api/nodes';
 import type { Schema } from '$lib/api/types';
+import {
+	containerIdFor,
+	containerKindOf,
+	getContainerGroup,
+	isContainerMembership,
+	recordContainerMember
+} from '../container-membership';
 import { nodeId } from '$lib/vocabulary';
 import { get } from 'svelte/store';
-import { relationOf } from '../types';
+import { nodeToGraphNode, relationOf } from '../types';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
 
@@ -12,13 +19,17 @@ export function createExpansion(
 	const {
 		nodes,
 		cache,
+		pinned,
+		selectionStore,
 		filtersStore,
 		emit,
 		touchNode,
 		addEdge,
 		drawable,
+		recordContainerFor,
 		passesThreshold,
 		mergeResponse,
+		pruneToIds,
 		signal
 	} = ctx;
 
@@ -58,21 +69,69 @@ export function createExpansion(
 		expandNeighborhood: async (collection, key, opts = {}) => {
 			const response = await getNodeNeighborhood(collection, key, { ...opts, signal: signal() });
 
+			const byId = new Map(response.nodes.map((n) => [`${n.collection}/${n.key}`, n]));
 			const drawn = new Set<string>();
 			for (const node of response.nodes) {
-				const graphNode = drawable(node);
+				// The requested bron itself is drawn even when it is a container: it stays
+				// selectable for the reader, though `GraphView` never draws it as a canvas
+				// node. A container met only as a neighbour is folded into a hull instead.
+				const isFocal = `${node.collection}/${node.key}` === response.focal_id;
+				if (isFocal) {
+					const containerKind = containerKindOf(node.collection);
+					if (containerKind) recordContainerFor(node, containerKind);
+				}
+				const graphNode = isFocal ? nodeToGraphNode(node) : drawable(node);
 				if (!graphNode) continue;
 				touchNode(graphNode.id, graphNode);
 				drawn.add(graphNode.id);
 			}
 
-			// An edge to an instrument is left out: instruments are drawn as clusters.
+			// An edge to a container is recorded rather than drawn, whether the container
+			// is a neighbour left out above or the bron this neighbourhood is centred on
+			// (`isContainerMembership`: any relation, except a wet, where only PART_OF —
+			// an article — counts; a stuk that merely AMENDS or REFERS_TO the wet is not
+			// one of its articles and stays a dropped edge, not a member of its hull).
 			for (const e of response.edges) {
 				const relation = relationOf(e.relation);
-				const source = drawn.has(e.source) && drawn.has(e.target) ? nodes.get(e.source) : null;
-				if (!relation || !source || !passesThreshold(relation, source.kind, e.confidence)) continue;
+				if (!relation) continue;
+				const targetNode = byId.get(e.target);
+				const targetKind = targetNode && containerKindOf(targetNode.collection);
+				if (targetKind && isContainerMembership(targetKind, relation) && drawn.has(e.source)) {
+					recordContainerMember(targetKind, containerIdFor(targetNode!), e.source);
+					continue;
+				}
+				const sourceNode = byId.get(e.source);
+				const sourceKind = sourceNode && containerKindOf(sourceNode.collection);
+				if (sourceKind && isContainerMembership(sourceKind, relation) && drawn.has(e.target)) {
+					recordContainerMember(sourceKind, containerIdFor(sourceNode!), e.target);
+					continue;
+				}
+				if (!drawn.has(e.source) || !drawn.has(e.target)) continue;
+				const source = nodes.get(e.source);
+				if (!source || !passesThreshold(relation, source.kind, e.confidence)) continue;
 				addEdge(e.source, e.target, relation, { confidence: e.confidence, status: e.status });
 			}
+
+			// A neighbourhood request replaces the canvas's exploratory context: without
+			// this, a bron revisited after browsing elsewhere keeps edges from every stop
+			// along the way, so it looks more cited than its own neighbourhood shows. Pinned
+			// bronnen and the selection are the only things that survive a refocus.
+			const keep = new Set(drawn);
+			keep.add(response.focal_id);
+			for (const id of pinned) keep.add(id);
+			const selectedId = get(selectionStore)?.id;
+			if (selectedId) keep.add(selectedId);
+			// This request's own edges share one cap across every relation, so a focal
+			// commissie or fractie with hundreds of activiteiten can crowd its own leden
+			// out entirely. The earlier, per-bucket bron response has no such ceiling;
+			// keep what it already recorded as this container's members.
+			const focalNode = byId.get(response.focal_id);
+			const focalContainerKind = focalNode && containerKindOf(focalNode.collection);
+			if (focalContainerKind) {
+				const group = getContainerGroup(containerIdFor(focalNode!) ?? '');
+				if (group) for (const id of group.members) keep.add(id);
+			}
+			pruneToIds(keep);
 
 			emit();
 			return nodes.get(response.focal_id) ?? null;

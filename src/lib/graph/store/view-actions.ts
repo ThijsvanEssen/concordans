@@ -1,5 +1,6 @@
 import { nodeId } from '$lib/vocabulary';
 import { get } from 'svelte/store';
+import { isContainerMember } from '../container-membership';
 import { syntheticNode } from '../types';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
@@ -17,8 +18,8 @@ export function createViewActions(
 	| 'reset'
 	| 'setFilters'
 	| 'getNodeById'
+	| 'getEdgeById'
 	| 'pruneNodes'
-	| 'setCollapseToLaws'
 	| 'sweepOrphans'
 > {
 	const {
@@ -32,6 +33,7 @@ export function createViewActions(
 		addEdge,
 		emit,
 		focusInternal,
+		pruneToIds,
 		reset,
 		state
 	} = ctx;
@@ -85,26 +87,14 @@ export function createViewActions(
 
 		setFilters: (updater) => {
 			const current = get(filtersStore);
-			filtersStore.set({
-				...current,
-				...updater,
-				nodeTypeToggles: { ...current.nodeTypeToggles, ...updater.nodeTypeToggles }
-			});
+			filtersStore.set({ ...current, ...updater });
 		},
 
 		getNodeById: (nodeId) => nodes.get(nodeId),
+		getEdgeById: (edgeId) => edges.get(edgeId),
 
 		pruneNodes: (keepIds) => {
-			for (const id of [...nodes.keys()]) if (!keepIds.has(id)) nodes.delete(id);
-			for (const [id, e] of [...edges]) {
-				if (!keepIds.has(e.source) || !keepIds.has(e.target)) edges.delete(id);
-			}
-			emit();
-		},
-
-		setCollapseToLaws: (collapse) => {
-			if (state.proxiesEnabled === collapse) return;
-			state.proxiesEnabled = collapse;
+			pruneToIds(keepIds);
 			emit();
 		},
 
@@ -117,7 +107,8 @@ export function createViewActions(
 			const selectedId = get(selectionStore)?.id;
 			let dropped = false;
 			for (const id of [...nodes.keys()]) {
-				if (connected.has(id) || pinned.has(id) || id === selectedId) continue;
+				if (connected.has(id) || pinned.has(id) || id === selectedId || isContainerMember(id))
+					continue;
 				nodes.delete(id);
 				insertedAt.delete(id);
 				dropped = true;
