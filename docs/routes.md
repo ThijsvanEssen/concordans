@@ -9,7 +9,6 @@ Every URL and the query parameters it reads. The URL holds anything that can be 
 | `/docs`, `/docs/methode`, `/docs/sneltoetsen`                | Documentation for users                                                 |
 | `/api`                                                       | API reference rendered from `src/lib/api/openapi.json`                  |
 | `/alpha`, `/colofon`, `/contact`, `/privacy`, `/voorwaarden` | Prose pages                                                             |
-| `/proxy/[...path]`                                           | Write proxy (server route); see [`api-client.md`](api-client.md#writes) |
 
 ## `/explore` query
 

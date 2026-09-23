@@ -9,7 +9,7 @@
 | API          | The LawGraph API. Types come from its schema; see [`api-client.md`](api-client.md). |
 | Tests        | Vitest for pure logic (`npm test`); `npm run check` for the rest.                   |
 
-Only one server route exists: the write proxy under `src/routes/proxy`.
+The API is read-only, so the app has no server route of its own: everything is fetched in the browser.
 
 ## Layout
 
@@ -17,7 +17,6 @@ Only one server route exists: the write proxy under `src/routes/proxy`.
 src/routes/
   explore/+page.svelte        the explorer: Lezen, Netwerk, Bladeren (one page, the mode in the URL)
   (main)/                     pages with the site chrome: start page, docs, api, prose pages
-  proxy/[...path]/+server.ts  write proxy
 src/lib/
   vocabulary.ts               collections, node types, relations, node ids, BRON_LABEL, MODES
   bron/                       bronHref (every link to a bron), anchor (landing on a position), KindGlyph
@@ -30,7 +29,6 @@ src/lib/
   search/                     the search component and citation resolving
   components/{graph,explore,articles,parliamentary,layout}
   stores/                     overlay (URL parser), search-trigger
-  server/                     write proxy rules
 ```
 
 ## Names

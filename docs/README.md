@@ -7,7 +7,7 @@ The API is documented in the back end repository (`docs/api.md`, `docs/data-mode
 | -------------------------------------------- | --------------------------------------------------------------- |
 | [`architecture.md`](architecture.md)         | Stack, layout, names, modes, data flow, commands                |
 | [`api-contract.md`](api-contract.md)         | The schema snapshot and how it is kept current                  |
-| [`api-client.md`](api-client.md)             | Calling the API, caching, stopgaps for API 0.5, the write proxy |
+| [`api-client.md`](api-client.md)             | Calling the API, caching, the stopgaps still open                |
 | [`routes.md`](routes.md)                     | URLs, the `/explore` query, links to a bron                     |
 | [`state-and-stores.md`](state-and-stores.md) | Where state lives                                               |
 | [`graph-system.md`](graph-system.md)         | GraphStore, the groups of Verbonden as layers, rendering        |

@@ -2,9 +2,8 @@
 
 `src/lib/api/client.ts` exports:
 
-- `api`: an [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) client typed by the schema. Reads go straight to the API (`PUBLIC_CONCORDANS_API_BASE_URL`, default `http://localhost:8000`). Every request times out after 10 s.
+- `api`: an [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) client typed by the schema. The API is read-only, so every call goes straight to it (`PUBLIC_CONCORDANS_API_BASE_URL`, default `http://localhost:8000`), no key involved. Every request times out after 10 s.
 - `unwrap(call)`: the body of a successful call. Any other status throws an `ApiError` with the status.
-- `writes`: the same client with `/proxy` as base, for the server route that writes (see below). Nothing in the app calls it.
 
 `src/lib/api/types.ts` exports `Schema<'Name'>`, the generated type of a request or response body.
 
@@ -25,7 +24,7 @@ Call `unwrap(api.GET(...))` where the data is used. A helper is worth having onl
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `articles.ts`         | joins concurrent requests for the same article (reader, panel and hover preview ask at once)                                               |
 | `judgments.ts`        | joins concurrent requests for the same judgment (reader and panel)                                                                         |
-| `nodes.ts`            | lower-cases the key (the node routes are case-sensitive); `neighborsOf` and `bucketTotals` read the bucketed neighbour response of API 0.5 |
+| `nodes.ts`            | lower-cases the key (the node routes are case-sensitive); `neighborsOf` and `bucketTotals` read the bucketed neighbour response |
 | `overlays.ts`         | turns the `in-flux` and `heat` maps into `Map` and reduces a dossier's mutations to counts                                                 |
 | `instrument-cache.ts` | keeps the names of laws (title, short title such as `Sr`) that labels and citations print; primes the 200 largest laws once                |
 
@@ -33,19 +32,11 @@ Call `unwrap(api.GET(...))` where the data is used. A helper is worth having onl
 
 ## Stopgaps
 
-The snapshot is API 0.5.0. Where the front end needs a field or route the API delivers from 0.5 on, the code reads it when present and falls back to what older responses carry: `neighborsOf` reads buckets or the flat list, `chamberOf` reads `chamber` or the key prefix, the explanatory documents read `explained-by` or merge the node's neighbours with the dossiers of the law. Each fallback is marked `TODO(backend Bn)` and listed in `prompts/voor-de-backend.md`; the fallback goes when every response carries the field.
+The snapshot is API 0.6.0. Where a field or route does not yet carry data for every bron (the ingest pipeline has not reached it), the front end falls back to deriving the same thing itself: `chamberOf` reads `chamber` or the key prefix, `explanatoryDocuments` reads `explained-by` or merges the node's neighbours with the dossiers of the law, `LezenNav` groups by `breadcrumb` or shows a flat list when every article's is empty. Each fallback is marked `TODO(backend Bn)` in the code (`git grep "TODO(backend"`); it goes once the pipeline covers every bron, not on an API version alone.
 
 ## Caching
 
 The API sets `Cache-Control` (articles 30 min, judgments 1 h, stats 5 min, the rest 60 s private); the browser applies it. The client keeps no cache of its own except the in-flight joins above and the law names. `GraphStore` caches one node response per bron (`nodeResponse`), which the canvas and the panel Verbonden share; see [`graph-system.md`](graph-system.md).
-
-## Writes
-
-The write routes need `X-Write-Key`, which a browser cannot hold. `src/routes/proxy/[...path]/+server.ts` receives `POST /proxy/api/watches` and `DELETE /proxy/api/watches/{id}`, adds the key from `LAWGRAPH_WRITE_API_KEY` (server environment, never `PUBLIC_`), calls the API and returns its status and body. Any other method or path is refused with 404, and without a key the route answers 503. The rules are in `src/lib/server/write-proxy.ts` and covered by its test.
-
-The route runs on the server, so a deployment needs an adapter that runs server code (Node, Vercel, Cloudflare); a static adapter cannot serve it. `adapter-auto` picks one from the environment it builds in.
-
-Curation (`POST /api/relationships/tag`) is not exposed.
 
 ## Errors
 

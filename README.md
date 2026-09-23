@@ -19,7 +19,12 @@ npm run dev             # http://localhost:5173
 | `npm run sync:api`  | Fetch the schema from the running API and regenerate `src/lib/api/generated/openapi-types.ts` |
 | `npm run check:api` | `sync:api`, then fail when the committed schema or types differ                               |
 
-Writes (watches) need the API's key on the server: set `LAWGRAPH_WRITE_API_KEY` in `.env`. It is read by `src/routes/proxy` only and never reaches the browser. Deployment needs an adapter that runs server code.
+The API is read-only, so the app has no server routes of its own. To see every feature (every relation of the model occurs in it), run the API on the test database and point `PUBLIC_CONCORDANS_API_BASE_URL` at it:
+
+```sh
+# in ~/Development/lawgraph
+ARANGO_DB_NAME=lawgraph_small LAWGRAPH_API_PORT=8001 .venv/bin/lawgraph-api
+```
 
 ## Documentation
 
