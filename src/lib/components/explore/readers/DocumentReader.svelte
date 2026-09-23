@@ -10,12 +10,14 @@
 	import { findPassage } from '$lib/text/find-passage';
 	import { tick } from 'svelte';
 	import { formatDate } from './_shared';
+	import { strings } from '$lib/components/parliamentary/data';
 
 	let {
 		node,
 		article = null
 	}: {
-		node: Pick<GraphNode, 'key'>;
+		/** Beside an article only the key is known; the kinds of its cases then stay out. */
+		node: Pick<GraphNode, 'key' | 'raw'>;
 		/** The article whose toelichting is wanted; the reader opens at its passage. */
 		article?: { lawId: string; articleNumber: string } | null;
 	} = $props();
@@ -168,11 +170,13 @@
 	{:else}
 		{@const doc = view.document}
 		{@const term = glossaryTerm(doc.kind)}
+		{@const caseKinds = strings(node.raw?.props?.case_kinds)}
 		<header class="head">
 			<span class="kicker">
 				{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
 						'Document'}{/if}
 				{#if doc.date}<span class="dot">·</span>{formatDate(doc.date)}{/if}
+				{#if caseKinds.length}<span class="dot">·</span>{caseKinds.join(', ')}{/if}
 			</span>
 			<h2 class="title">{doc.title ?? doc.key}</h2>
 			{#if doc.external_id}
