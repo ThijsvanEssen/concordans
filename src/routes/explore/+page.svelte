@@ -809,8 +809,19 @@
 		position: relative;
 	}
 
+	/* Reader is the page; nav and panel are its margins — a shade darker, the way a
+	   margin note sits apart from the text without a hard rule doing all the work. */
+	.col--nav,
 	.col--panel {
-		border-left: 1px solid var(--rule);
+		background: var(--paper-2);
+	}
+
+	.col--panel {
+		box-shadow: inset 1px 0 0 var(--rule);
+	}
+
+	.col--nav {
+		box-shadow: inset -1px 0 0 var(--rule);
 	}
 
 	.panel {
@@ -890,19 +901,36 @@
 		color: var(--ink-3);
 	}
 
+	/* A hairline until touched, not a constant grey bar: the 5px track is the hit
+	   area, drawn as a thin centred line that only widens under the pointer. */
 	.resize-handle {
 		height: 100%;
 		width: 5px;
 		cursor: col-resize;
-		background: var(--rule);
-		transition: background var(--dur-1) var(--ease);
+		background: transparent;
 		flex-shrink: 0;
 		position: relative;
 		z-index: 5;
 	}
 
-	.resize-handle:hover,
-	.is-resizing .resize-handle {
+	.resize-handle::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 2px;
+		width: 1px;
+		background: var(--rule);
+		transition:
+			left var(--dur-1) var(--ease),
+			width var(--dur-1) var(--ease),
+			background var(--dur-1) var(--ease);
+	}
+
+	.resize-handle:hover::before,
+	.is-resizing .resize-handle::before {
+		left: 1px;
+		width: 3px;
 		background: var(--rule-strong);
 	}
 

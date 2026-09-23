@@ -230,8 +230,7 @@
 		height: 100%;
 		overflow-y: auto;
 		padding-top: 22px;
-		border-right: 1px solid var(--rule);
-		background: var(--paper);
+		background: var(--paper-2);
 		font-family: var(--font-sans);
 		font-size: 12.5px;
 	}
@@ -290,7 +289,7 @@
 		color: var(--ink-3);
 	}
 	.group__head:hover {
-		background: var(--paper-2);
+		background: var(--paper);
 	}
 
 	/* Depth carries the hierarchy: a boek reads as a heading, a paragraaf as a
@@ -354,14 +353,15 @@
 	}
 
 	.row:hover {
-		background: var(--paper-2);
+		background: var(--paper);
 		color: var(--ink);
 	}
 
 	.row.is-active {
+		background: var(--paper);
 		color: var(--ink);
 		font-weight: 600;
-		border-left-color: var(--ink);
+		border-left-color: var(--accent);
 		padding-left: 16px;
 	}
 </style>

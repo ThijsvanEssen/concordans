@@ -107,8 +107,7 @@
 		height: 100%;
 		overflow-y: auto;
 		padding-top: 22px;
-		border-right: 1px solid var(--rule);
-		background: var(--paper);
+		background: var(--paper-2);
 		font-family: var(--font-sans);
 		font-size: 12.5px;
 	}
@@ -151,7 +150,7 @@
 	}
 
 	.row:hover {
-		background: var(--paper-2);
+		background: var(--paper);
 		color: var(--ink);
 	}
 
