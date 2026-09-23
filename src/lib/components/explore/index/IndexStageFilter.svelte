@@ -25,100 +25,58 @@
 </div>
 
 <style>
+	/* The stages as a row of buttons; the selected one is ink on paper. */
 	.stage-filter {
 		flex: 1;
 		min-width: 0;
-		position: relative;
-		display: grid;
-		grid-auto-columns: minmax(0, 1fr);
-		grid-auto-flow: column;
-		padding: 14px 8px 4px;
-	}
-	.stage-filter::before {
-		content: '';
-		position: absolute;
-		left: 8%;
-		right: 8%;
-		top: 22px;
-		height: 1px;
-		background: var(--rule-strong);
-		z-index: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		padding: 6px 0 2px;
 	}
 	.stage-step {
-		display: flex;
-		flex-direction: column;
+		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		border: 0;
+		padding: 4px 8px;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
 		background: transparent;
 		cursor: pointer;
-		padding: 0 4px;
-		z-index: 1;
 		min-width: 0;
+		transition:
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
 	}
 	.stage-dot {
-		width: 14px;
-		height: 14px;
-		border-radius: 50%;
-		background: var(--paper);
-		border: 1.5px solid var(--rule-strong);
-		transition:
-			background 120ms,
-			border-color 120ms;
+		display: none;
 	}
 	.stage-lbl {
 		font-family: var(--font-sans);
-		font-size: 10.5px;
-		color: var(--fg-3);
-		text-align: center;
-		line-height: 1.25;
-		max-width: 100px;
-		transition: color 120ms;
+		font-size: var(--t-micro);
+		font-weight: 500;
+		line-height: 16px;
+		color: var(--ink-2);
+		white-space: nowrap;
+		transition: color var(--dur-1) var(--ease);
 	}
-	.stage-step:hover .stage-dot {
-		border-color: var(--ink);
+	.stage-step:hover {
+		background: var(--paper-2);
 	}
 	.stage-step:hover .stage-lbl {
-		color: var(--ink-2);
+		color: var(--ink);
 	}
 
-	/* Tone-aware rims voor unselected status */
-	.tone-spine .stage-dot {
-		border-color: var(--spine);
-	}
-	.tone-moss .stage-dot {
-		border-color: var(--moss);
-	}
-	.tone-olive .stage-dot {
-		border-color: var(--olive);
-	}
-	.tone-ochre .stage-dot {
-		border-color: var(--ochre);
-	}
-
-	/* Selected: vul met dezelfde toon */
-	.stage-step--on .stage-dot {
+	.stage-step--on {
 		background: var(--ink);
 		border-color: var(--ink);
 	}
-	.stage-step--on.tone-spine .stage-dot {
-		background: var(--spine);
-		border-color: var(--spine);
-	}
-	.stage-step--on.tone-moss .stage-dot {
-		background: var(--moss);
-		border-color: var(--moss);
-	}
-	.stage-step--on.tone-olive .stage-dot {
-		background: var(--olive);
-		border-color: var(--olive);
-	}
-	.stage-step--on.tone-ochre .stage-dot {
-		background: var(--ochre);
-		border-color: var(--ochre);
+	.stage-step--on:hover {
+		background: var(--ink-2);
+		border-color: var(--ink-2);
 	}
 	.stage-step--on .stage-lbl {
-		color: var(--ink);
-		font-weight: 500;
+		color: var(--paper);
 	}
 </style>

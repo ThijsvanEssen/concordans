@@ -6,11 +6,26 @@
 
 	let {
 		data,
-		onSelect
+		onSelect,
+		voteHighlight = null
 	}: {
 		data: Seats;
 		onSelect?: (key: string) => void;
+		/** Faction key → side on one stemming. Set to light up the seats by vote instead
+		 * of by party; a faction with no entry did not take part. */
+		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 	} = $props();
+
+	const voteTotals = $derived.by(() => {
+		if (!voteHighlight) return null;
+		let voor = 0;
+		let tegen = 0;
+		for (const f of data.factions) {
+			if (voteHighlight[f.key] === 'voor') voor += f.seats;
+			else if (voteHighlight[f.key] === 'tegen') tegen += f.seats;
+		}
+		return { voor, tegen };
+	});
 
 	// Fixed row capacities, sum = 150. Radii scale linearly inner→outer.
 	const ROW_CAPS = [14, 17, 19, 21, 24, 26, 29];
@@ -155,14 +170,18 @@
 			/>
 		{/each}
 		{#each seats as s (s.faction.id + ':' + s.x + ':' + s.y)}
+			{@const side = voteHighlight?.[s.faction.key]}
 			<circle
 				cx={s.x}
 				cy={s.y}
 				r={SEAT_R}
-				fill={s.faction.color}
+				fill={voteHighlight ? undefined : s.faction.color}
 				class="seat"
 				class:seat--dim={hovered !== null && hovered.id !== s.faction.id}
 				class:seat--hi={hovered?.id === s.faction.id}
+				class:seat--vote-voor={side === 'voor'}
+				class:seat--vote-tegen={side === 'tegen'}
+				class:seat--vote-other={voteHighlight != null && side == null}
 			/>
 		{/each}
 		{#if hovered}
@@ -178,6 +197,13 @@
 			</text>
 			<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
 				{hovered.seats} zetels
+			</text>
+		{:else if voteTotals}
+			<text x={CX} y={CY - 6} text-anchor="middle" class="center-num" aria-live="polite">
+				{voteTotals.voor}
+			</text>
+			<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
+				voor · {voteTotals.tegen} tegen
 			</text>
 		{:else}
 			<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">
@@ -202,9 +228,7 @@
 
 <style>
 	.hemicycle {
-		/* `flex: 1` heeft alleen effect als de Hemicycle in een flex-parent
-       staat (zoals VerkenNetwerk's panel-visual); in andere contexten
-       gedraagt hij zich als een normaal blok. */
+		/* `flex: 1` only has effect inside a flex parent; elsewhere the figure is a block. */
 		flex: 1;
 		margin: 0;
 		padding: 16px 16px 12px;
@@ -221,15 +245,16 @@
 		height: auto;
 		max-height: 320px;
 	}
-	/* Zichtbare stoel: puur decoratief, geen pointer-events (die zitten op
-     de sector eronder). Geen contour — de fractie-kleur leest tegen het
-     paper-2 background contrasterend genoeg, en bij r=7 vormen de
-     stoelen visueel groepen. Op hover dimmen de andere fracties zodat
-     focus duidelijk blijft zonder extra stroke. */
+	/* A seat is decorative; the pointer events are on the sector beneath it. The party
+	   colour reads against paper-2 without a contour, and at r=7 the seats form groups.
+	   On hover the other factions dim. */
 	.seat {
 		pointer-events: none;
 		stroke: none;
-		transition: opacity 120ms;
+		transition:
+			opacity var(--dur-1) var(--ease),
+			fill var(--dur-2) var(--ease),
+			stroke var(--dur-2) var(--ease);
 	}
 	.seat--dim {
 		opacity: 0.22;
@@ -237,43 +262,53 @@
 	.seat--hi {
 		stroke: none;
 	}
-	/* Sectorhitbox: transparante taartpunt rond een hele fractie. */
+	/* Voor/tegen are told apart by fill, not by a second colour: solid ink is voor,
+	   a hollow ring is tegen, a faint dot is a faction that did not vote. */
+	.seat--vote-voor {
+		fill: var(--ink);
+	}
+	.seat--vote-tegen {
+		fill: var(--paper);
+		stroke: var(--ink-3);
+		stroke-width: 1.5;
+	}
+	.seat--vote-other {
+		fill: var(--rule-strong);
+	}
+	/* Sector hitbox: a transparent wedge around a whole faction. */
 	.sector {
 		fill: transparent;
 		cursor: pointer;
 		outline: none;
 	}
 	.sector:focus-visible {
-		fill: rgba(122, 31, 26, 0.06);
-		stroke: var(--accent, #7a1f1a);
+		fill: var(--accent-soft);
+		stroke: var(--accent);
 		stroke-width: 0.8;
 		stroke-dasharray: 3 2;
 	}
 	.center-num {
-		font-family: var(--font-serif, 'EB Garamond', serif);
+		font-family: var(--font-serif);
 		font-size: 32px;
-		fill: var(--ink, #1a1814);
+		fill: var(--ink);
 	}
-	/* Bij hover toont de center-tekst de afkorting van de fractie. Iets
-     compacter dan het standaard zetels-getal, en in de kleur van de
-     fractie via de inline style. */
+	/* On hover the centre shows the faction's abbreviation, in its own colour via the
+	   inline style. */
 	.center-num--party {
-		font-size: 20px;
+		font-size: var(--t-h3);
 		font-weight: 500;
 	}
 	.center-lbl {
-		font-family: var(--font-sans, system-ui);
-		font-size: 11px;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		fill: var(--fg-3, #6b6558);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		fill: var(--ink-3);
 	}
 	.hemicycle-caption {
 		margin: 0;
 		padding-top: 4px;
-		font-family: var(--font-sans, system-ui);
-		font-size: 12px;
-		color: var(--fg-3, #6b6558);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		text-align: center;
 	}
 

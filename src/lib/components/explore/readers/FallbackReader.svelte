@@ -49,39 +49,41 @@
 	}
 	.kicker {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 	}
 	.title {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 22px;
+		font-size: var(--t-h3);
 		font-weight: 500;
-		line-height: 1.25;
+		line-height: var(--lh-snug);
 		color: var(--ink);
 	}
 	.facts {
 		margin: 0;
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.text {
 		margin: var(--s-3) 0 0;
 		font-family: var(--font-serif);
-		font-size: 17px;
-		line-height: 1.6;
-		max-width: 60ch;
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
+		max-width: var(--measure);
 		white-space: pre-line;
 	}
 	.source {
 		align-self: flex-start;
 		margin-top: var(--s-3);
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink-2);
+	}
+	.source:hover {
+		color: var(--accent);
 	}
 </style>

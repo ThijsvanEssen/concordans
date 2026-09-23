@@ -146,6 +146,7 @@ type ApiPart = {
 	id: string;
 	kind: string;
 	number?: string | null;
+	text?: string | null;
 	start: number;
 	end: number;
 };
@@ -175,9 +176,12 @@ export function partsFromApi(parts: ApiPart[]): ArticlePart[] {
 			parent.children.push(part);
 		} else roots.push(part);
 	}
-	// The number is part of the text of the API; the reader prints it once.
-	for (const part of byId.values()) {
-		if (part.number) part.textStart += part.number.length + 2;
+	// Where the part's text still starts with its number ("2. "), the reader prints
+	// the number once; API 0.5 starts the text after it.
+	for (const p of parts) {
+		const part = byId.get(p.id);
+		if (!part?.number || !p.text?.startsWith(`${part.number}.`)) continue;
+		part.textStart += part.number.length + 2;
 	}
 	return roots;
 }

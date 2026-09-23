@@ -1,22 +1,41 @@
 <script lang="ts">
 	// The text of an article as its aanhef, leden and onderdelen. Every part has an
-	// anchor, so a reference can point at it and the address can be shared.
+	// anchor, so a reference can point at it and the address can be shared. A lid is a
+	// row of a grid: the number, the text, and a column at the right with the number of
+	// verbindingen of that lid and, on hover, Citeer and Deel.
 	import { page } from '$app/state';
 	import type { Schema } from '$lib/api/types';
 	import { permalink } from '$lib/bron/anchor';
 	import { parseArticleParts, partsFromApi, type ArticlePart } from '$lib/text/article-parts';
+	import { citeArticle, partOfAnchor, type Citation } from '$lib/text/cite';
+	import { formatCount } from '$lib/verbonden/filter';
+	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
 	import { citationsWithin } from './citations';
 
 	let {
 		text,
 		parts: apiParts = null,
-		citations = []
+		citations = [],
+		counts = new Map(),
+		lidHref,
+		citation = null,
+		proposed = null,
+		onCloseProposed
 	}: {
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
 		parts?: Schema<'ArticlePartDTO'>[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
+		/** Verbindingen per lid; a lid without an entry shows no count. */
+		counts?: Map<string, number>;
+		/** The address that filters the panel Verbonden to a lid. */
+		lidHref?: (lid: string) => string;
+		/** What is needed to cite the article; without it Citeer is not offered. */
+		citation?: Omit<Citation, 'lid' | 'onderdeel' | 'date'> | null;
+		/** The wording a wetsvoorstel proposes for one lid, shown next to the current one. */
+		proposed?: ProposedText | null;
+		onCloseProposed?: () => void;
 	} = $props();
 
 	const source = $derived(text ?? '');
@@ -32,27 +51,156 @@
 		};
 	};
 
-	const copy = (id: string) => navigator.clipboard?.writeText(permalink(page.url, id));
+	let menuFor = $state<string | null>(null);
+	let copied = $state<string | null>(null);
+
+	async function copy(what: string, key: string) {
+		try {
+			await navigator.clipboard.writeText(what);
+			copied = key;
+			setTimeout(() => (copied = null), 1000);
+		} catch {
+			// The clipboard is unavailable in some contexts.
+		}
+		menuFor = null;
+	}
+
+	const formsOf = (part: ArticlePart) => {
+		if (!citation || !part.id) return null;
+		const { lid, onderdeel } = partOfAnchor(part.id);
+		return citeArticle({ ...citation, lid, onderdeel });
+	};
+
+	const link = (id: string) => permalink(page.url, id);
 </script>
 
-{#snippet render(part: ArticlePart)}
-	{@const { body, citations: spans } = own(part)}
-	<div class="part part--{part.kind}" id={part.id}>
-		{#if part.number && part.id}
-			<a
-				class="part__number"
-				href="#{part.id}"
-				aria-label="Kopieer link naar {part.kind} {part.number}"
-				onclick={() => copy(part.id!)}>{part.number}{part.kind === 'lid' ? '.' : ''}</a
+<svelte:window onclick={() => (menuFor = null)} />
+
+{#snippet aside(part: ArticlePart)}
+	{@const lid = part.kind === 'lid' ? part.number : null}
+	{@const count = lid ? counts.get(lid) : undefined}
+	{@const forms = formsOf(part)}
+	<div class="lid__side">
+		{#if lid && count != null && lidHref}
+			<a class="lid__count" href={lidHref(lid)} data-sveltekit-noscroll
+				>{formatCount(count)} {count === 1 ? 'verbinding' : 'verbindingen'}</a
 			>
 		{/if}
-		<div class="part__body">
-			{#if body}<p><CitedText text={body} citations={spans} /></p>{/if}
-			{#each part.children as child (child.start)}
-				{@render render(child)}
-			{/each}
-		</div>
+		<span class="lid__actions">
+			{#if forms}
+				<span class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+					<button
+						type="button"
+						class="btn lid__btn"
+						aria-haspopup="menu"
+						aria-expanded={menuFor === part.id}
+						onclick={() => (menuFor = menuFor === part.id ? null : part.id)}
+						>{copied === `cite:${part.id}` ? 'Gekopieerd' : 'Citeer'}</button
+					>
+					{#if menuFor === part.id}
+						<div class="pop" role="menu" aria-label="Citeer {part.kind} {part.number}">
+							<div class="pop__label">Kopieer als</div>
+							<button
+								type="button"
+								role="menuitem"
+								class="pop__item"
+								onclick={() => copy(forms.kort, `cite:${part.id}`)}
+								><span>{forms.kort}</span><span class="pop__k">kort</span></button
+							>
+							<button
+								type="button"
+								role="menuitem"
+								class="pop__item"
+								onclick={() => copy(forms.voluit, `cite:${part.id}`)}
+								><span>{forms.voluit}</span><span class="pop__k">voluit</span></button
+							>
+							<button
+								type="button"
+								role="menuitem"
+								class="pop__item"
+								onclick={() => copy(forms.metDatum, `cite:${part.id}`)}
+								><span>{forms.metDatum}</span><span class="pop__k">met datum</span></button
+							>
+							<button
+								type="button"
+								role="menuitem"
+								class="pop__item"
+								onclick={() => copy(link(part.id!), `cite:${part.id}`)}
+								><span class="pop__link">{link(part.id!)}</span><span class="pop__k">link</span
+								></button
+							>
+						</div>
+					{/if}
+				</span>
+			{/if}
+			{#if part.id}
+				<button
+					type="button"
+					class="btn lid__btn"
+					onclick={() => copy(link(part.id!), `share:${part.id}`)}
+					>{copied === `share:${part.id}` ? 'Gekopieerd' : 'Deel'}</button
+				>
+			{/if}
+		</span>
 	</div>
+{/snippet}
+
+{#snippet render(part: ArticlePart, top: boolean)}
+	{@const { body, citations: spans } = own(part)}
+	{@const showProposed = proposed && part.kind === 'lid' && proposed.lid === part.number}
+	{#if top}
+		<div
+			class="lid lid--{part.kind}"
+			id={part.id}
+			class:is-open={part.id !== null && menuFor === part.id}
+		>
+			<span class="lid__no"
+				>{part.kind === 'lid' ? part.number : part.number ? `${part.number}.` : ''}</span
+			>
+			<div class="lid__body" class:lid__body--pair={showProposed}>
+				<div class="lid__text">
+					{#if body}<p><CitedText text={body} citations={spans} /></p>{/if}
+					{#each part.children as child (child.start)}
+						{@render render(child, false)}
+					{/each}
+				</div>
+				{#if showProposed && proposed}
+					<div class="lid__proposed">
+						<div class="lid__proposed-head">
+							<span class="proposed">voorgesteld</span>
+							<span class="lid__proposed-source">{proposed.source}</span>
+							{#if onCloseProposed}
+								<button
+									type="button"
+									class="lid__proposed-close"
+									aria-label="Sluiten"
+									onclick={onCloseProposed}>×</button
+								>
+							{/if}
+						</div>
+						<p>{proposed.text}</p>
+					</div>
+				{/if}
+			</div>
+			{@render aside(part)}
+		</div>
+	{:else}
+		<div class="part part--{part.kind}" id={part.id}>
+			{#if part.number && part.id}
+				<a
+					class="part__number"
+					href="#{part.id}"
+					onclick={() => copy(link(part.id!), `share:${part.id}`)}>{part.number}.</a
+				>
+			{/if}
+			<div class="part__body">
+				{#if body}<p><CitedText text={body} citations={spans} /></p>{/if}
+				{#each part.children as child (child.start)}
+					{@render render(child, false)}
+				{/each}
+			</div>
+		</div>
+	{/if}
 {/snippet}
 
 {#if parts.length === 0}
@@ -60,74 +208,246 @@
 {:else}
 	<div class="article-text">
 		{#each parts as part (part.start)}
-			{@render render(part)}
+			{@render render(part, true)}
 		{/each}
+		{#if proposed && !parts.some((p) => p.kind === 'lid' && p.number === proposed!.lid)}
+			<div class="lid lid--proposed-only">
+				<span class="lid__no"></span>
+				<div class="lid__body">
+					<div class="lid__proposed">
+						<div class="lid__proposed-head">
+							<span class="proposed">voorgesteld</span>
+							<span class="lid__proposed-source"
+								>{proposed.source}{proposed.lid ? `, lid ${proposed.lid}` : ''}</span
+							>
+							{#if onCloseProposed}
+								<button
+									type="button"
+									class="lid__proposed-close"
+									aria-label="Sluiten"
+									onclick={onCloseProposed}>×</button
+								>
+							{/if}
+						</div>
+						<p>{proposed.text}</p>
+					</div>
+				</div>
+			</div>
+		{/if}
 	</div>
 {/if}
 
 <style>
 	.article-text {
 		font-family: var(--font-serif);
-		font-size: 18px;
-		line-height: 1.62;
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink);
-		max-width: 60ch;
+		margin-left: -46px;
 	}
 
+	/* A lid: 36px for the number, the text, 150px at the right. */
+	.lid {
+		position: relative;
+		display: grid;
+		grid-template-columns: 36px 1fr 150px;
+		gap: 0 12px;
+		align-items: start;
+		padding: 6px 10px 6px 0;
+		border-radius: var(--r-1);
+		scroll-margin: 20vh;
+		transition: background var(--dur-2) var(--ease);
+	}
+	.lid:hover,
+	.lid:focus-within,
+	.lid.is-open {
+		background: var(--paper-2);
+	}
+	.lid:global(.is-landed) {
+		background: var(--accent-soft);
+	}
+	.lid__no {
+		padding-top: 7px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
+		text-align: right;
+	}
+	.lid__body {
+		min-width: 0;
+	}
+	.lid__body--pair {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+	}
+	.lid__body p {
+		margin: 0;
+	}
+	.lid__proposed {
+		padding-left: 12px;
+		border-left: 2px solid var(--accent-soft);
+	}
+	.lid__proposed-head {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		margin-bottom: 4px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.proposed {
+		color: var(--accent);
+	}
+	.lid__proposed-source {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.lid__proposed-close {
+		padding: 0 4px;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: 14px;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+	.lid__side {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 2px;
+		padding-top: 6px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.lid__count {
+		color: var(--ink-3);
+		white-space: nowrap;
+	}
+	.lid__count:hover {
+		color: var(--accent);
+	}
+	.lid__actions {
+		visibility: hidden;
+		display: flex;
+		gap: 4px;
+	}
+	.lid:hover .lid__actions,
+	.lid:focus-within .lid__actions,
+	.lid.is-open .lid__actions {
+		visibility: visible;
+	}
+	.lid__btn {
+		padding: 2px 8px;
+		font-size: 11.5px;
+	}
+	.menu {
+		position: relative;
+	}
+	.pop {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 6px);
+		z-index: var(--z-float);
+		width: 320px;
+		padding: 8px 0;
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-modal);
+		font-family: var(--font-sans);
+		font-size: 12.5px;
+		text-align: left;
+	}
+	.pop__label {
+		padding: 2px 12px 6px;
+		font-size: 11.5px;
+		color: var(--ink-3);
+	}
+	.pop__item {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		width: 100%;
+		padding: 6px 12px;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink);
+		text-align: left;
+		cursor: pointer;
+	}
+	.pop__item:hover {
+		background: var(--paper-2);
+	}
+	.pop__k {
+		flex: none;
+		font-size: 11.5px;
+		color: var(--ink-3);
+	}
+	.pop__link {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	/* Onderdelen inside a lid keep their number in the text. */
 	.part {
 		display: flex;
 		gap: 0.6em;
-		margin: 0 0 0.9em;
-		border-radius: 2px;
+		margin: 0.4em 0 0;
 		scroll-margin: 20vh;
-		transition: background var(--dur-2, 300ms) var(--ease);
 	}
-
-	.part--onderdeel,
-	.part--tekst {
-		margin-bottom: 0.4em;
+	.part:global(.is-landed) {
+		background: var(--accent-soft);
 	}
-
-	.part:last-child {
-		margin-bottom: 0;
-	}
-
-	.part :global(.part) {
-		margin-top: 0.4em;
-	}
-
 	.part__number {
 		flex: none;
 		min-width: 1.6em;
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
-		text-decoration: none;
 	}
-
 	.part__number:hover {
 		color: var(--accent);
 	}
-
 	.part__body {
 		flex: 1;
 		min-width: 0;
 	}
-
 	.part__body p {
 		margin: 0;
 	}
 
-	.part:global(.is-landed) {
-		background: var(--accent-soft);
-		box-shadow:
-			-6px 0 0 var(--accent-soft),
-			6px 0 0 var(--accent-soft);
-	}
-
 	.article-text__empty {
 		font-style: italic;
-		color: var(--muted);
+		color: var(--ink-3);
 		font-family: var(--font-serif);
-		font-size: var(--text-lg);
+		font-size: var(--t-body);
+	}
+
+	@media (max-width: 900px) {
+		.article-text {
+			margin-left: 0;
+		}
+		.lid {
+			grid-template-columns: 28px 1fr;
+		}
+		.lid__side {
+			grid-column: 2;
+			flex-direction: row;
+			gap: 10px;
+			padding-top: 2px;
+		}
+		.lid__body--pair {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

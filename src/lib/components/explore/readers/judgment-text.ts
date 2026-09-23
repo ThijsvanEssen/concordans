@@ -20,6 +20,18 @@ const META_KV_RE =
 const TOC_LINE_RE = /^\d[\d.]*\s+\S.{2,40}\s+\d+$/; // "1.2 Opbouw arrest 3"
 const TOC_START_RE = /^inhoudsopgave/i;
 
+/** The anchor id a rendered heading gets, from its (already normalized) text. */
+export function headingId(text: string): string {
+	return (
+		'h-' +
+		text
+			.toLowerCase()
+			.replace(/\s+/g, '-')
+			.replace(/[^a-z0-9-]/g, '')
+			.slice(0, 40)
+	);
+}
+
 /** Split summary prose on double-newlines, normalising internal whitespace. */
 export function splitSummary(text: string): string[] {
 	return text

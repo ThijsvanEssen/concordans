@@ -3,6 +3,8 @@
 	// parliamentary readers load their own data. A toezegging and a zaak have no text of
 	// their own and get the plain reader.
 	import type { GraphNode } from '$lib/graph/types';
+	import type { VerbondenFilter } from '$lib/verbonden/filter';
+	import type { Row } from '$lib/verbonden/rows';
 	import ArticleReader from './readers/ArticleReader.svelte';
 	import JudgmentReader from './readers/JudgmentReader.svelte';
 	import DocumentReader from './readers/DocumentReader.svelte';
@@ -18,17 +20,42 @@
 	let {
 		selection,
 		prevHref,
-		nextHref
+		nextHref,
+		place = [],
+		lidCounts = new Map(),
+		billCount = 0,
+		filter,
+		proposedRow = null,
+		onCloseProposed
 	}: {
 		selection: GraphNode;
 		/** The article before and after the selected one, in Lezen. */
 		prevHref?: string;
 		nextHref?: string;
+		/** The place of an article in its law: book, title. */
+		place?: string[];
+		/** Verbindingen per lid of the article, under the bronfilter. */
+		lidCounts?: Map<string, number>;
+		billCount?: number;
+		filter?: VerbondenFilter;
+		/** A wetsvoorstel whose proposed text is shown next to the current one. */
+		proposedRow?: Row | null;
+		onCloseProposed?: () => void;
 	} = $props();
 </script>
 
 {#if selection.collection === 'articles'}
-	<ArticleReader {selection} {prevHref} {nextHref} />
+	<ArticleReader
+		{selection}
+		{prevHref}
+		{nextHref}
+		{place}
+		{lidCounts}
+		{billCount}
+		{filter}
+		{proposedRow}
+		{onCloseProposed}
+	/>
 {:else if selection.collection === 'judgments'}
 	<JudgmentReader {selection} />
 {:else if selection.collection === 'documents'}

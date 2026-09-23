@@ -17,7 +17,7 @@
 <div class="reader-frame">
 	{#if status === 'empty'}
 		<div class="reader-empty">
-			<p>Selecteer een artikel, arrest of parlementaire bron om de inhoud hier te lezen.</p>
+			<p>Selecteer een artikel, uitspraak of parlementaire bron om de inhoud hier te lezen.</p>
 		</div>
 	{:else if status === 'loading'}
 		<div class="reader-loading">
@@ -47,8 +47,8 @@
 		height: 100%;
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 17px;
-		color: var(--fg-3);
+		font-size: var(--t-body);
+		color: var(--ink-3);
 		text-align: center;
 		padding: var(--s-6);
 	}
@@ -57,7 +57,7 @@
 		padding: var(--s-5);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
-		color: var(--accent);
+		color: var(--ink-2);
 	}
 
 	.reader-loading {
@@ -70,7 +70,7 @@
 	.skeleton-h,
 	.skeleton-body {
 		border-radius: var(--r-1);
-		background: linear-gradient(90deg, var(--paper-2) 25%, var(--paper-3) 50%, var(--paper-2) 75%);
+		background: linear-gradient(90deg, var(--paper-2) 25%, var(--rule) 50%, var(--paper-2) 75%);
 		background-size: 200% 100%;
 		animation: shimmer 1.4s infinite;
 	}

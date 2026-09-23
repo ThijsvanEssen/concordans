@@ -1,8 +1,7 @@
 <script lang="ts">
-	// Inline term wrapper that shows a popover with full name + plain-Dutch
-	// explanation on hover/focus. Used throughout the parl readers around
-	// acronyms (MvT, RvS, ECLI, BWB) and procedural jargon (Toezegging, Motie).
-	// Renders as a thin underline so the surrounding prose stays calm.
+	// Inline term that shows a popover with the full name and a plain explanation on
+	// hover or focus. Used in the parliamentary readers around acronyms (MvT, RvS, ECLI,
+	// BWB) and procedural terms (Toezegging, Motie). A dotted underline marks the term.
 	import { lookupGlossary } from '$lib/glossary';
 
 	let { term, label }: { term: string; label?: string } = $props();
@@ -54,24 +53,24 @@
 		text-underline-offset: 3px;
 		text-decoration-color: var(--rule-strong);
 		cursor: help;
-		color: inherit;
+		color: var(--ink-3);
 	}
 
 	.glossary-pop {
 		position: absolute;
-		z-index: 50;
+		z-index: var(--z-float);
 		bottom: calc(100% + 4px);
 		left: 0;
 		width: max-content;
 		max-width: 280px;
 		padding: 8px 10px;
-		background: var(--ink, #1a1814);
-		color: var(--paper, #fffdf4);
+		background: var(--ink);
+		color: var(--paper);
 		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 11px;
+		font-size: var(--t-micro);
 		line-height: 1.4;
-		box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+		box-shadow: var(--shadow-pop);
 		opacity: 0;
 		transform: translateY(2px);
 		pointer-events: none;
@@ -90,7 +89,7 @@
 	}
 	.glossary-pop__full {
 		font-weight: 500;
-		font-size: 11px;
+		font-size: var(--t-micro);
 	}
 	.glossary-pop__plain {
 		color: color-mix(in srgb, var(--paper) 80%, transparent);

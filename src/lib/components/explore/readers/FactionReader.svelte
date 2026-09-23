@@ -70,7 +70,7 @@
 	.error {
 		font-family: var(--font-serif);
 		font-style: italic;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin: 0;
 	}
 
@@ -81,26 +81,24 @@
 	}
 	.kicker {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
 		gap: 6px;
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: 19px;
-		font-weight: 400;
+		font-size: var(--t-h3);
+		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
-		line-height: 1.25;
+		line-height: var(--lh-snug);
 	}
 	.sub {
 		font-family: var(--font-serif);
-		font-size: 13px;
+		font-size: var(--t-body-2);
 		color: var(--ink-3);
 		margin: 0;
 	}
@@ -108,16 +106,11 @@
 		display: flex;
 		gap: 4px;
 	}
+	/* The seat count is a word, not a tag. */
 	.seats-chip {
-		display: inline-flex;
-		align-items: center;
-		height: 18px;
-		padding: 0 7px;
-		border-radius: var(--r-1);
-		font-family: var(--font-mono);
-		font-size: 10px;
-		border: 1px solid var(--rule);
-		background: var(--paper-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
 		color: var(--ink-2);
 	}
 </style>

@@ -3,25 +3,38 @@
 	// its verbindingen alongside; Netwerk shows the canvas and, once a bron is selected,
 	// the same reader beside it; Bladeren lists bronnen. The URL holds the state:
 	// ?mode, ?focus (the bron), ?naast (a toelichting opened beside an article),
-	// ?overlay, ?kind (Bladeren) and the position inside the text as the fragment.
-	import { onMount } from 'svelte';
+	// ?overlay, ?kind (Bladeren), the bronfilter (?bronnen, ?lid, ?rechter, ?van, ?tot,
+	// ?geldend, ?betrouwbaarheid, ?status, ?jaar, ?zoek), ?tabel, ?diepte, and the
+	// position inside the text as the fragment.
+	import { onDestroy, onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { get } from 'svelte/store';
 	import { track } from '$lib/analytics';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
-	import { bronHref } from '$lib/bron/href';
+	import { bronHref, refId } from '$lib/bron/href';
 	import { createGraphStore } from '$lib/graph/graph-store';
+	import type { CanvasRow } from '$lib/graph/store/types';
 	import GraphView from '$lib/components/graph/GraphView.svelte';
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import StatusBar from '$lib/components/explore/StatusBar.svelte';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
+	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
+	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
 	import IndexView from '$lib/components/explore/IndexView.svelte';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
+	import FilterSheet from '$lib/verbonden/FilterSheet.svelte';
+	import VerbindingCard from '$lib/verbonden/VerbindingCard.svelte';
+	import VerbondenTabel from '$lib/verbonden/VerbondenTabel.svelte';
+	import { filterParams, parseFilter, type VerbondenFilter } from '$lib/verbonden/filter';
+	import type { Row } from '$lib/verbonden/rows';
+	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/source';
+	import { verbindingOfEdge, verbindingOfRow, type Verbinding } from '$lib/verbonden/verbinding';
+	import { allRows, filterGroups, lidCounts } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/util/perf';
 	import { articleIdentity } from '$lib/util/law-id';
-	import type { GraphNode } from '$lib/graph/types';
+	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
+	import { containerKindOf, isContainerKind } from '$lib/graph/container-membership';
 	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
 	import { isMode, parseNodeId, type Mode } from '$lib/vocabulary';
 
@@ -48,6 +61,80 @@
 	const focus = $derived(param('focus') ?? '');
 	// A toelichting opened beside the article: the article stays the selected bron.
 	const beside = $derived(parseNodeId(param('naast') ?? ''));
+	// All verbindingen as a table, in Lezen.
+	const tableMode = $derived(param('tabel') === '1');
+	// Steps from the focus that the canvas shows. Unset, this defaults to 1 for a wet,
+	// fractie, commissie or dossier: its own children are already plenty (a fractie's
+	// members alone can be dozens), and each one's own further connections are a step
+	// away via Diepte; every other bron still defaults to 2.
+	const depthParam = $derived(param('diepte'));
+	const explicitDepth = $derived(
+		depthParam ? Math.min(3, Math.max(1, Number(depthParam) || 2)) : null
+	);
+	const depthFor = (kind: GraphNodeKind) => explicitDepth ?? (isContainerKind(kind) ? 1 : 2);
+	const depth = $derived(depthFor(selectedNode?.kind ?? 'other'));
+
+	// ── The bronfilter ───────────────────────────────────────────────────────
+	// One filter object, parsed from the URL, for the panel, the margin of the reader,
+	// the canvas, the legend and the table.
+	const filter = $derived<VerbondenFilter>(parseFilter(page.url.searchParams));
+	let filterOpen = $state(false);
+	const applyFilter = (f: VerbondenFilter) => setUrl(filterParams(f));
+
+	// ── The verbindingen of the selected bron, loaded once ───────────────────
+	const source = createVerbondenSource(store);
+	let verbonden = $state<VerbondenState>({ id: null, groups: [], loading: false, failed: false });
+	source.subscribe((s) => (verbonden = s));
+	$effect(() => source.load(mode === 'index' ? null : selectedNode));
+	onDestroy(() => source.destroy());
+
+	// The counts in the margin of the reader hold under every filter but the lid, so a
+	// lid keeps its count when another lid is chosen.
+	const lidCountsOfArticle = $derived(
+		lidCounts(allRows(filterGroups(verbonden.groups, { ...filter, lid: null })))
+	);
+	const billCount = $derived(
+		allRows(verbonden.groups).filter((r) => r.kind === 'wetsvoorstellen').length
+	);
+
+	// ── The card Verbinding ──────────────────────────────────────────────────
+	let card = $state<{ verbinding: Verbinding; edgeId: string | null; row: Row | null } | null>(
+		null
+	);
+	$effect(() => {
+		void selectedNode?.id;
+		card = null;
+	});
+	function openRowCard(row: Row) {
+		if (!selectedNode) return;
+		const v = verbindingOfRow(row, selectedNode);
+		if (v) card = { verbinding: v, edgeId: null, row };
+	}
+	function openEdgeCard(edge: GraphEdge) {
+		const from = store.getNodeById(edge.source);
+		const to = store.getNodeById(edge.target);
+		if (!from || !to) return;
+		card = { verbinding: verbindingOfEdge(edge, from, to), edgeId: edge.id, row: null };
+	}
+	function showInNetwork(row: Row) {
+		if (selectedNode && row.relation && row.direction)
+			store.showRows(selectedNode.id, [row as CanvasRow]);
+		if (mode !== 'graph') setMode('graph');
+	}
+	const besideHrefOf = (row: Row | null) => {
+		if (!row) return null;
+		const url = new URL(page.url);
+		url.searchParams.set('naast', refId(row.ref));
+		url.hash = row.at ?? '';
+		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
+	};
+
+	// A wetsvoorstel row whose proposed text the reader shows beside the current one.
+	let proposedRow = $state<Row | null>(null);
+	$effect(() => {
+		void selectedNode?.id;
+		proposedRow = null;
+	});
 
 	const trackedModes = new Set<string>();
 	$effect(() => {
@@ -57,8 +144,9 @@
 		}
 	});
 
-	// Previous and next article in Lezen, from the table of contents of the law.
-	let navItems = $state<{ key: string; label: string }[]>([]);
+	// Previous and next article in Lezen, and the place of the article in its law,
+	// from the table of contents of the law.
+	let navItems = $state<{ key: string; label: string; breadcrumb: string[] }[]>([]);
 	const articleIndex = $derived(
 		selectedNode ? navItems.findIndex((it) => it.key === selectedNode!.key) : -1
 	);
@@ -66,149 +154,27 @@
 		i >= 0 && i < navItems.length
 			? bronHref({ collection: 'articles', key: navItems[i].key })
 			: undefined;
+	const place = $derived(articleIndex >= 0 ? navItems[articleIndex].breadcrumb : []);
 
 	// ── Expansion around a focus ─────────────────────────────────────────────
-	// One neighbourhood request (depth 3), then a prune to: the focus, its direct
-	// neighbours, and the sources reachable from two or more of those neighbours
-	// (convergence) with the shortest paths that connect them. Edges are read as
-	// undirected: articles citing the focus are as relevant as those it cites.
-
-	const MAX_DEPTH = 3;
-	const MAX_CONVERGENCE_HOPS = 2;
-
-	let totalLoaded = $state(0);
-	let visibleCount = $state(0);
-
-	// Every expansion takes a new epoch; a late result of an older one is dropped.
+	// One neighbourhood request of `depthFor(node)` steps; the bronfilter decides what
+	// is drawn.
 	let focusEpoch = 0;
 
-	async function expandToDepth(focusedId: string) {
-		// Synthetic proxies have no identity in the API.
-		const focal = store.getNodeById(focusedId);
-		if (!focal || focal.id.startsWith('synth:')) return;
-		await store.expandNeighborhood(focal.collection, focal.key, { depth: MAX_DEPTH, cap: 200 });
-	}
-
-	type Adjacency = { adj: Map<string, string[]>; radj: Map<string, string[]> };
-
-	// Synthetic edges are cosmetic. Walking them turns a shared proxy into a
-	// convergence source that survives every prune.
-	function buildAdjacency(): Adjacency {
-		const adj = new Map<string, string[]>();
-		const radj = new Map<string, string[]>();
-		for (const e of get(store.edges)) {
-			if (e.id.startsWith('synth:')) continue;
-			if (!adj.has(e.source)) adj.set(e.source, []);
-			adj.get(e.source)!.push(e.target);
-			if (!radj.has(e.target)) radj.set(e.target, []);
-			radj.get(e.target)!.push(e.source);
-		}
-		return { adj, radj };
-	}
-
-	const neighboursOf = ({ adj, radj }: Adjacency, id: string) => [
-		...(adj.get(id) ?? []),
-		...(radj.get(id) ?? [])
-	];
-
-	// Shortest path between two sources over the undirected adjacency.
-	function bfsPath(g: Adjacency, from: string, to: string): string[] | null {
-		if (from === to) return [from];
-		const parent = new Map<string, string | null>([[from, null]]);
-		const queue = [from];
-		while (queue.length > 0) {
-			const cur = queue.shift()!;
-			for (const next of neighboursOf(g, cur)) {
-				if (parent.has(next)) continue;
-				parent.set(next, cur);
-				if (next === to) {
-					const path: string[] = [];
-					for (let c: string | null = to; c !== null; c = parent.get(c) ?? null) path.unshift(c);
-					return path;
-				}
-				queue.push(next);
-			}
-		}
-		return null;
-	}
-
-	// Ids to keep: the focus, its direct neighbours and the convergence paths.
-	function computeConvergencePaths(g: Adjacency, focusedId: string): Set<string> {
-		const level1 = new Set(neighboursOf(g, focusedId));
-		const keep = new Set<string>([focusedId, ...level1]);
-		if (level1.size < 2) return keep;
-
-		// Undirected BFS from each level-1 source, remembering which of them reach what.
-		const reachableFrom = new Map<string, Set<string>>();
-		for (const l1 of level1) {
-			const dist = new Map<string, number>([[l1, 0]]);
-			const queue = [l1];
-			while (queue.length > 0) {
-				const cur = queue.shift()!;
-				const d = dist.get(cur)!;
-				if (!reachableFrom.has(cur)) reachableFrom.set(cur, new Set());
-				reachableFrom.get(cur)!.add(l1);
-				if (d >= MAX_CONVERGENCE_HOPS) continue;
-				for (const next of neighboursOf(g, cur)) {
-					if (next === focusedId || dist.has(next)) continue;
-					dist.set(next, d + 1);
-					queue.push(next);
-				}
-			}
-		}
-
-		// Convergence sources, with the shortest path from each level-1 source so
-		// they stay connected and survive the isolation prune below.
-		for (const [id, sources] of reachableFrom) {
-			if (sources.size < 2) continue;
-			keep.add(id);
-			for (const l1 of sources) for (const step of bfsPath(g, l1, id) ?? []) keep.add(step);
-		}
-
-		for (const id of [...keep]) {
-			if (id === focusedId || level1.has(id)) continue;
-			if (!neighboursOf(g, id).some((n) => keep.has(n))) keep.delete(id);
-		}
-		return keep;
-	}
-
-	// Expand around `node`, then prune to the convergence keep-set. The canvas
-	// is not cleared first, so the prior network stays until the result arrives.
-	// Pinned sources survive with their shortest path to the focus.
-	async function expandWithConvergencePaths(node: GraphNode, epoch: number) {
-		await expandToDepth(node.id);
+	async function expandAround(node: GraphNode, epoch: number) {
+		if (node.id.startsWith('synth:')) return;
+		await store.expandNeighborhood(node.collection, node.key, {
+			depth: depthFor(node.kind),
+			cap: 200
+		});
 		if (epoch !== focusEpoch) return;
-
-		totalLoaded = get(store.nodes).length;
-
-		// An EU article has no bwb_id and no useful neighbourhood to prune.
-		const isEuArticle = node.collection === 'articles' && !node.raw?.props?.['bwb_id'];
-		if (isEuArticle) {
-			visibleCount = totalLoaded;
-			return;
-		}
-
-		const g = buildAdjacency();
-		const keep = computeConvergencePaths(g, node.id);
-		for (const pinId of get(store.pinned)) {
-			if (!store.getNodeById(pinId)) continue;
-			keep.add(pinId);
-			for (const step of bfsPath(g, node.id, pinId) ?? []) keep.add(step);
-		}
-
-		store.pruneNodes(keep);
-		// Without edges a source is thrown far away by the layout and the camera fit zooms out.
 		store.sweepOrphans();
-		visibleCount = keep.size;
 	}
 
 	// ── Focus ────────────────────────────────────────────────────────────────
-	// ?focus={collection}/{key} is loaded when it changes. The node is fetched in
-	// every mode but Bladeren; the expansion around it only where the canvas is
-	// shown, and later when the mode switches to it. The browser keeps the history:
-	// every link to a bron is a navigation.
-	let loadedFocus = ''; // focus param whose node is in the store
-	let deepenedId = ''; // node whose surroundings are expanded
+	let loadedFocus = '';
+	let deepenedId = '';
+	let deepenedDepth = 0;
 
 	$effect(() => {
 		if (!focus) {
@@ -233,8 +199,12 @@
 			return;
 		}
 		try {
-			const node = await store.expandNode(target.collection, target.key, { neighborLimit: 30 });
-			if (id !== loadedFocus) return; // superseded while loading
+			// A wet, fractie, commissie or dossier is a hull, not a scattered handful of
+			// dots: its own children are its point, so they are not capped like an
+			// ordinary bron's neighbours are.
+			const neighborLimit = containerKindOf(target.collection) ? Number.POSITIVE_INFINITY : 30;
+			const node = await store.expandNode(target.collection, target.key, { neighborLimit });
+			if (id !== loadedFocus) return;
 			if (!node) {
 				focusError = `Bron '${target.key}' niet gevonden.`;
 				return;
@@ -247,20 +217,21 @@
 		}
 	}
 
-	// Expand around `node` once.
+	// Expand around `node` once per depth.
 	async function deepen(node: GraphNode) {
-		if (deepenedId === node.id) return;
+		const d = depthFor(node.kind);
+		if (deepenedId === node.id && deepenedDepth === d) return;
 		deepenedId = node.id;
+		deepenedDepth = d;
 		graphView?.suppressFit();
 		const epoch = ++focusEpoch;
-		await expandWithConvergencePaths(node, epoch);
+		await expandAround(node, epoch);
 		if (epoch !== focusEpoch) return;
 		store.focusNode(node.id);
 		graphView?.reseatAround(node.id);
 		graphView?.fitWhenSettled();
 	}
 
-	// Selecting a bron on the canvas is opening it.
 	function handleNodeClick(node: GraphNode) {
 		const end = perfStart(`click ${node.id}`);
 		if (!node.id.startsWith('synth:')) {
@@ -268,19 +239,6 @@
 			void goto(bronHref(node), { noScroll: true, keepFocus: true });
 		}
 		end();
-	}
-
-	// Re-expand the focus without the convergence prune, so every fetched source is shown.
-	async function handleRevealHidden() {
-		const sel = get(store.selection);
-		if (!sel) return;
-		graphView?.suppressFit();
-		const epoch = ++focusEpoch;
-		await expandToDepth(sel.id);
-		if (epoch !== focusEpoch) return;
-		store.sweepOrphans();
-		totalLoaded = visibleCount = get(store.nodes).length;
-		graphView?.fitWhenSettled();
 	}
 
 	function handleResetGraph() {
@@ -295,8 +253,7 @@
 			if (v === null) url.searchParams.delete(k);
 			else url.searchParams.set(k, v);
 		}
-		// A node id reads better with its slash.
-		const search = url.search.replaceAll('%2F', '/');
+		const search = url.search.replaceAll('%2F', '/').replaceAll('%2C', ',');
 		void goto(url.pathname + search + url.hash, {
 			replaceState: true,
 			noScroll: true,
@@ -304,16 +261,30 @@
 		});
 	}
 
-	const setMode = (m: Mode) => setUrl({ mode: m, naast: null });
+	const setMode = (m: Mode) => setUrl({ mode: m, naast: null, tabel: null });
+	// Always explicit: unlike before, an unset diepte no longer means "2" for every
+	// bron, so removing the param on a plain "2" click would silently change meaning
+	// for a container (default 1).
+	const setDepth = (d: number) => setUrl({ diepte: String(d) });
+
+	const tableHref = $derived.by(() => {
+		const url = new URL(page.url);
+		url.searchParams.set('mode', 'read');
+		url.searchParams.set('tabel', '1');
+		url.searchParams.delete('naast');
+		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
+	});
+	const readHref = $derived.by(() => {
+		const url = new URL(page.url);
+		url.searchParams.delete('tabel');
+		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
+	});
 
 	// ── Overlay (open dossiers or citations per month, never both) ────────────
 	const overlayParam = $derived(param('overlay'));
 	const overlay = $derived<Overlay>(parseOverlay(overlayParam));
 
-	// Bound to <GraphView> to request a fit after an expansion.
 	let graphView = $state<GraphView | null>(null);
-	// Only the active overlay is fetched, once per change of the parameter, and a
-	// request the user has moved on from is aborted.
 	let inFluxMap = $state<NodeCounts>(new Map());
 	let heatMap = $state<NodeCounts>(new Map());
 
@@ -345,8 +316,6 @@
 	const toggleHeat = () =>
 		setUrl({ overlay: overlay.kind === 'heat' ? null : `heat:${DEFAULT_HEAT_MONTHS}` });
 	const setHeatPeriod = (months: number) => setUrl({ overlay: `heat:${months}` });
-	// The toggle covers all open dossiers. A dossier overlay is entered by link
-	// only; the toggle clears it.
 	const toggleMutatie = () =>
 		setUrl({ overlay: overlay.kind === 'open' || overlay.kind === 'dossier' ? null : 'open' });
 
@@ -370,8 +339,8 @@
 
 	// ── Resizable columns ────────────────────────────────────────────────────
 	const WIDTHS_KEY = 'concordans:panel-widths';
-	let navW = $state(200);
-	let panelW = $state(260);
+	let navW = $state(220);
+	let panelW = $state(400);
 	let graphW = $state(360);
 
 	onMount(() => {
@@ -411,7 +380,7 @@
 		const delta = e.clientX - drag.startX;
 		if (drag.handle === 'nav') navW = Math.max(140, Math.min(320, drag.startW + delta));
 		else if (drag.handle === 'graph') graphW = Math.max(200, Math.min(640, drag.startW + delta));
-		else panelW = Math.max(180, Math.min(420, drag.startW - delta));
+		else panelW = Math.max(240, Math.min(520, drag.startW - delta));
 	}
 
 	function onResizeEnd() {
@@ -421,15 +390,15 @@
 	}
 
 	// ── Keys ─────────────────────────────────────────────────────────────────
-	// 1, 2, 3 switch mode. With a modifier they switch browser tabs; ignored while typing.
+	// 1, 2, 3 switch mode; ignored while typing or with a modifier.
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
-		const index = ['1', '2', '3'].indexOf(e.key);
+		const index = ['1', '2'].indexOf(e.key);
 		if (index < 0) return;
 		const el = document.activeElement as HTMLElement | null;
 		if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return;
 		e.preventDefault();
-		const target = (['read', 'graph', 'index'] as const)[index];
+		const target = (['read', 'graph'] as const)[index];
 		if (target !== mode) setMode(target);
 	}
 
@@ -480,6 +449,12 @@
 					selection={selectedNode}
 					prevHref={articleHref(articleIndex - 1)}
 					nextHref={articleIndex >= 0 ? articleHref(articleIndex + 1) : undefined}
+					{place}
+					lidCounts={lidCountsOfArticle}
+					{billCount}
+					{filter}
+					{proposedRow}
+					onCloseProposed={() => (proposedRow = null)}
 				/>
 			</div>
 			{#if beside}
@@ -491,6 +466,36 @@
 						aria-label="Sluiten">×</a
 					>
 					<DocumentReader node={beside} article={besideArticle} />
+				</div>
+			{/if}
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet panel(network: boolean)}
+	{#if selectedNode}
+		<div class="panel">
+			<Verbonden
+				{verbonden}
+				selection={selectedNode}
+				{filter}
+				{store}
+				{network}
+				onFilter={applyFilter}
+				onOpenFilter={() => (filterOpen = true)}
+				onVerbinding={openRowCard}
+				onShowInNetwork={showInNetwork}
+				onProposedText={(row) => (proposedRow = row)}
+				{tableHref}
+			/>
+			{#if card && !network}
+				<div class="panel__card">
+					<VerbindingCard
+						verbinding={card.verbinding}
+						besideHref={card.verbinding.relation === 'EXPLAINS' ? besideHrefOf(card.row) : null}
+						onClose={() => (card = null)}
+						onShowInNetwork={card.row ? () => showInNetwork(card!.row!) : undefined}
+					/>
 				</div>
 			{/if}
 		</div>
@@ -512,12 +517,12 @@
 		node={selectedNode}
 		{focusError}
 		{mode}
+		{tableMode}
 		indexCategory={mode === 'index' ? indexKind : null}
 		indexResultCount={mode === 'index' ? indexResultCount : null}
 		{shareCopied}
 		onShareView={handleShareView}
 		onGoBack={() => history.back()}
-		onGoForward={() => history.forward()}
 		onModeChange={setMode}
 	/>
 
@@ -556,23 +561,37 @@
 						bind:this={graphView}
 						{store}
 						compact={!!selectedNode}
+						{filter}
+						{verbonden}
+						{depth}
+						selectedEdgeId={card?.edgeId ?? null}
 						{inFluxMap}
 						{heatMap}
 						{overlay}
-						{visibleCount}
-						{totalLoaded}
 						onNodeClick={(n) => {
 							handleNodeClick(n);
 							mobilePanel = 'reader';
 						}}
+						onEdgeClick={openEdgeCard}
+						onClear={() => (card = null)}
 						onGoBack={() => history.back()}
 						onGoForward={() => history.forward()}
+						onFilter={applyFilter}
+						onOpenFilter={() => (filterOpen = true)}
+						onDepth={setDepth}
 						onToggleHeat={toggleHeat}
 						onHeatPeriodChange={setHeatPeriod}
 						onToggleMutatie={toggleMutatie}
 						onResetGraph={handleResetGraph}
-						onRevealHidden={handleRevealHidden}
 					/>
+					{#if card}
+						<VerbindingCard
+							verbinding={card.verbinding}
+							docked
+							besideHref={card.verbinding.relation === 'EXPLAINS' ? besideHrefOf(card.row) : null}
+							onClose={() => (card = null)}
+						/>
+					{/if}
 				</div>
 				{#if selectedNode}
 					{@render handle('graph')}
@@ -581,13 +600,37 @@
 					</div>
 					{@render handle('panel')}
 					<div class="col col--panel" class:mobile-hidden={mobilePanel !== 'verbonden'}>
-						<Verbonden {store} selection={selectedNode} network />
+						{@render panel(true)}
+					</div>
+				{/if}
+			</div>
+		{:else if selectedNode && tableMode}
+			<div class="explore-table">
+				<VerbondenTabel
+					{verbonden}
+					selection={selectedNode}
+					{filter}
+					onOpenFilter={() => (filterOpen = true)}
+					onRow={openRowCard}
+					backHref={readHref}
+				/>
+				{#if card}
+					<div class="explore-table__card">
+						<VerbindingCard
+							verbinding={card.verbinding}
+							besideHref={card.verbinding.relation === 'EXPLAINS' ? besideHrefOf(card.row) : null}
+							onClose={() => (card = null)}
+							onShowInNetwork={card.row ? () => showInNetwork(card!.row!) : undefined}
+						/>
 					</div>
 				{/if}
 			</div>
 		{:else if selectedNode}
 			{@const withNav =
-				selectedNode.collection === 'articles' || selectedNode.collection === 'instruments'}
+				selectedNode.collection === 'articles' ||
+				selectedNode.collection === 'instruments' ||
+				selectedNode.collection === 'documents' ||
+				selectedNode.collection === 'judgments'}
 			<div
 				class="explore-read"
 				class:explore-read--with-nav={withNav}
@@ -607,7 +650,13 @@
 				</nav>
 				{#if withNav}
 					<div class="col col--nav mobile-hidden">
-						<LezenNav selection={selectedNode} onitems={(it) => (navItems = it)} />
+						{#if selectedNode.collection === 'documents'}
+							<DocumentToc selection={selectedNode} />
+						{:else if selectedNode.collection === 'judgments'}
+							<JudgmentToc selection={selectedNode} />
+						{:else}
+							<LezenNav selection={selectedNode} onitems={(it) => (navItems = it)} />
+						{/if}
 					</div>
 					{@render handle('nav')}
 				{/if}
@@ -616,7 +665,7 @@
 				</div>
 				{@render handle('panel')}
 				<div class="col col--panel" class:mobile-hidden={mobilePanel !== 'verbonden'}>
-					<Verbonden {store} selection={selectedNode} />
+					{@render panel(false)}
 				</div>
 			</div>
 		{:else if focusError}
@@ -625,11 +674,22 @@
 	</div>
 </div>
 
+{#if selectedNode}
+	<FilterSheet
+		open={filterOpen}
+		{filter}
+		groups={verbonden.groups}
+		selection={selectedNode.collection}
+		onApply={applyFilter}
+		onClose={() => (filterOpen = false)}
+	/>
+{/if}
+
 <style>
 	.explore-shell {
 		display: flex;
 		flex-direction: column;
-		height: calc(100vh - 64px);
+		height: calc(100vh - 60px);
 		overflow: hidden;
 	}
 
@@ -646,6 +706,21 @@
 		display: grid;
 		grid-template-rows: 1fr;
 		overflow: hidden;
+	}
+
+	.explore-table {
+		flex: 1;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.explore-table__card {
+		position: absolute;
+		right: var(--s-5);
+		bottom: var(--s-5);
+		width: 420px;
+		max-width: calc(100% - 2 * var(--s-5));
+		z-index: var(--z-float);
 	}
 
 	.explore-graph {
@@ -679,6 +754,19 @@
 		border-left: 1px solid var(--rule);
 	}
 
+	.panel {
+		position: relative;
+		height: 100%;
+	}
+
+	.panel__card {
+		position: absolute;
+		left: var(--s-3);
+		right: var(--s-3);
+		bottom: var(--s-3);
+		z-index: var(--z-float);
+	}
+
 	.reader {
 		display: flex;
 		height: 100%;
@@ -693,9 +781,15 @@
 		overflow: hidden;
 	}
 
+	/* The toelichting reads alongside the article, not the other way around: below it,
+	   full width, rather than squeezed into a narrow side column. */
+	.reader--pair {
+		flex-direction: column;
+	}
+
 	.reader__beside {
 		position: relative;
-		border-left: 1px solid var(--rule);
+		border-top: 1px solid var(--rule);
 		background: var(--paper-2);
 	}
 
@@ -707,7 +801,7 @@
 		font-family: var(--font-sans);
 		font-size: 18px;
 		line-height: 1;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		text-decoration: none;
 	}
 
@@ -716,13 +810,13 @@
 	}
 
 	.col--reader :global(.reader-frame) {
-		max-width: 700px;
+		max-width: 760px;
 		width: 100%;
 	}
 
 	.col--measure :global(.reader-frame) {
 		max-width: 900px;
-		padding: var(--s-7) var(--s-7) var(--s-8);
+		padding: 40px 48px 40px 64px;
 	}
 
 	.reader--pair :global(.reader-frame) {
@@ -750,7 +844,7 @@
 
 	.resize-handle:hover,
 	.is-resizing .resize-handle {
-		background: var(--spine-faint);
+		background: var(--rule-strong);
 	}
 
 	.mobile-tabs {
@@ -761,8 +855,28 @@
 		.explore-read--with-nav {
 			grid-template-columns: var(--nav-w) 5px minmax(0, 1fr) 5px var(--panel-w);
 		}
+		/* Too narrow for graph, reader and Verbonden side by side; too wide to hide
+		   two of the three behind tabs. The network keeps the full width up top,
+		   Tekst and Verbonden split the row below it. */
 		.explore-graph--with-reader {
-			grid-template-columns: 280px 5px minmax(0, 1fr) 5px var(--panel-w);
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			grid-template-rows: minmax(220px, 38vh) minmax(0, 1fr);
+		}
+		.explore-graph--with-reader .col--graph {
+			grid-column: 1 / -1;
+			grid-row: 1;
+			border-bottom: 1px solid var(--rule);
+		}
+		.explore-graph--with-reader .col--reader {
+			grid-column: 1;
+			grid-row: 2;
+		}
+		.explore-graph--with-reader .col--panel {
+			grid-column: 2;
+			grid-row: 2;
+		}
+		.explore-graph--with-reader .resize-handle {
+			display: none;
 		}
 	}
 
@@ -784,7 +898,7 @@
 		.mobile-tab {
 			flex: 1;
 			font-family: var(--font-sans);
-			font-size: 11px;
+			font-size: 12.5px;
 			color: var(--ink-3);
 			background: none;
 			border: 0;
@@ -792,8 +906,6 @@
 			padding: 8px 4px 9px;
 			cursor: pointer;
 			margin-bottom: -1px;
-			letter-spacing: 0.04em;
-			text-transform: uppercase;
 		}
 		.mobile-tab.active {
 			color: var(--ink);
@@ -810,13 +922,6 @@
 		.resize-handle,
 		.mobile-hidden {
 			display: none;
-		}
-		.reader--pair {
-			flex-direction: column;
-		}
-		.reader__beside {
-			border-left: 0;
-			border-top: 1px solid var(--rule);
 		}
 	}
 </style>

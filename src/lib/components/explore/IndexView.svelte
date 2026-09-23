@@ -650,7 +650,7 @@
 											>
 										</div>
 										<div class="row-aside">
-											<span class="tag tag--outline" class:tag--teal={w.jurisdiction === 'eu'}>
+											<span class="tag tag--outline" class:tag--eu={w.jurisdiction === 'eu'}>
 												{w.jurisdiction === 'eu' ? 'EU' : 'NL'}
 											</span>
 										</div>
@@ -803,7 +803,7 @@
 											{#if count > 0}
 												<span class="num-strong">{count}</span>
 											{:else}
-												<span class="tag tag--outline" style="color: var(--fg-4);">—</span>
+												<span class="tag tag--outline">—</span>
 											{/if}
 										</div>
 									</button>
@@ -955,7 +955,11 @@
 										</div>
 										<div class="row-aside">
 											{#if s.passed != null}
-												<span class="tag" class:tag--moss={s.passed} class:tag--spine={!s.passed}>
+												<span
+													class="tag"
+													class:tag--passed={s.passed}
+													class:tag--rejected={!s.passed}
+												>
 													<span class="tag-dot" aria-hidden="true"></span>
 													{s.passed ? 'Aangenomen' : 'Verworpen'}
 												</span>
@@ -1009,7 +1013,7 @@
 		overflow: hidden;
 	}
 
-	/* ── Horizontale categorie-strook ─────────────────────────────────── */
+	/* ── Category bar ─────────────────────────────────────────────────── */
 	.catbar {
 		display: flex;
 		align-items: stretch;
@@ -1034,9 +1038,9 @@
 	.cat-name {
 		font-family: var(--font-serif);
 		font-size: 17px;
-		color: var(--fg-3);
+		color: var(--ink-3);
 		line-height: 1;
-		transition: color 120ms;
+		transition: color var(--dur-1) var(--ease);
 	}
 	.cat:hover .cat-name {
 		color: var(--ink-2);
@@ -1070,28 +1074,28 @@
 		max-width: 1480px;
 	}
 
-	/* ── Hemicycle-card (alleen Fracties) ────────────────────────────── */
+	/* ── Hemicycle card (factions only) ──────────────────────────────── */
 	.hemi-card {
 		margin-bottom: 28px;
 		padding: 22px 28px;
 		background: var(--paper-2);
 		border: 1px solid var(--rule);
-		border-radius: 2px;
+		border-radius: var(--r-2);
 	}
 	.hemi-svg-wrap :global(.hemicycle) {
 		background: transparent;
 	}
 
-	/* ── Status & lege staten ────────────────────────────────────────── */
+	/* ── Status and empty states ─────────────────────────────────────── */
 	.status-line {
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 14px;
-		color: var(--fg-3);
+		font-size: var(--t-body-2);
+		color: var(--ink-3);
 		margin: 12px 0;
 	}
 	.status-line--error {
-		color: var(--spine);
+		color: var(--ink-2);
 	}
 	.empty {
 		padding: 80px 40px;
@@ -1099,10 +1103,10 @@
 		font-family: var(--font-serif);
 		font-style: italic;
 		font-size: 16px;
-		color: var(--fg-3);
+		color: var(--ink-3);
 	}
 
-	/* ── Lijst & editorial rij ───────────────────────────────────────── */
+	/* ── List and row ────────────────────────────────────────────────── */
 	.list {
 		list-style: none;
 		padding: 0;
@@ -1112,19 +1116,20 @@
 		display: flex;
 		flex-direction: column;
 	}
+	/* Rows keep apart by padding and the hover field; no rule between them. */
 	.row {
 		display: grid;
 		grid-template-columns: 200px minmax(0, 1fr) 200px;
 		gap: 28px;
 		width: 100%;
-		padding: 18px 4px;
+		padding: 16px 8px;
 		border: 0;
-		border-bottom: 1px solid var(--rule);
+		border-radius: var(--r-1);
 		cursor: pointer;
 		background: transparent;
 		text-align: left;
 		align-items: baseline;
-		transition: background 120ms;
+		transition: background var(--dur-1) var(--ease);
 		color: inherit;
 		font: inherit;
 	}
@@ -1143,8 +1148,9 @@
 	}
 
 	.row-id {
-		font-family: var(--font-mono);
-		font-size: 12px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 		line-height: 1.4;
 		padding-top: 3px;
@@ -1160,10 +1166,8 @@
 	.row-id-sub {
 		display: block;
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--fg-4);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		margin-top: 2px;
 	}
 
@@ -1172,13 +1176,12 @@
 	}
 	.row-title {
 		font-family: var(--font-serif);
-		font-size: 19px;
+		font-size: var(--t-body-2);
 		color: var(--ink);
-		line-height: 1.28;
-		letter-spacing: -0.002em;
+		line-height: var(--lh-snug);
 		text-wrap: pretty;
-		transition: color 120ms;
-		/* Twee regels max — volledige titel beschikbaar via inline detail */
+		transition: color var(--dur-1) var(--ease);
+		/* Two lines at most; the full title is in the inline detail. */
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: 2;
@@ -1189,13 +1192,11 @@
 		display: block;
 		margin-top: 5px;
 		font-family: var(--font-sans);
-		font-size: 11.5px;
-		color: var(--fg-3);
-		letter-spacing: 0.01em;
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.row-sub--mono {
-		font-family: var(--font-mono);
-		font-size: 11px;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.row-aside {
@@ -1208,78 +1209,24 @@
 		padding-top: 2px;
 	}
 
-	/* Status-tags op rij-niveau */
+	/* Qualities on a row are words: the outcome of a vote in ink-2, the rest in ink-3. */
 	.tag {
 		display: inline-flex;
 		align-items: baseline;
 		gap: 5px;
-		height: 22px;
-		padding: 0 9px;
 		font-family: var(--font-sans);
-		font-size: 10.5px;
-		letter-spacing: 0.04em;
-		border-radius: 2px;
-		border: 1px solid transparent;
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		white-space: nowrap;
 		line-height: 22px;
 	}
 	.tag-dot {
-		width: 5px;
-		height: 5px;
-		border-radius: 50%;
-		align-self: center;
-		flex-shrink: 0;
+		display: none;
 	}
-	.tag--moss {
-		color: var(--moss);
-		background: var(--moss-faint);
-	}
-	.tag--moss .tag-dot {
-		background: var(--moss);
-	}
-	.tag--spine {
-		color: var(--spine);
-		background: var(--spine-faint);
-	}
-	.tag--spine .tag-dot {
-		background: var(--spine);
-	}
-	.tag--ochre {
-		color: var(--ochre);
-		background: var(--ochre-faint);
-	}
-	.tag--ochre .tag-dot {
-		background: var(--ochre);
-	}
-	.tag--olive {
-		color: var(--olive);
-		background: var(--olive-faint);
-	}
-	.tag--olive .tag-dot {
-		background: var(--olive);
-	}
-	.tag--teal {
-		color: var(--teal);
-		background: var(--teal-faint);
-	}
-	.tag--teal .tag-dot {
-		background: var(--teal);
-	}
-	.tag--slate {
-		color: var(--slate);
-		background: var(--slate-faint);
-	}
-	.tag--slate .tag-dot {
-		background: var(--slate);
-	}
-	.tag--outline {
-		color: var(--ink-3);
-		background: transparent;
-		border-color: var(--rule);
-	}
-	.tag--outline.tag--teal {
-		color: var(--teal);
-		border-color: var(--teal-faint);
+	.tag--passed,
+	.tag--rejected {
+		color: var(--ink-2);
+		font-weight: 500;
 	}
 
 	.num-strong {
@@ -1291,10 +1238,8 @@
 	}
 	.num-lbl {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		margin-left: 4px;
 	}
 
@@ -1307,67 +1252,65 @@
 		vertical-align: middle;
 	}
 
-	/* Mini voor/tegen-bar in de stemmingen-rij */
+	/* Seats for and against on a decision row; the numbers say which is which. */
 	.stem-mini {
 		display: inline-grid;
 		grid-template-columns: 32px 140px 32px auto;
 		gap: 8px;
 		align-items: center;
-		font-family: var(--font-mono);
-		font-size: 12px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
 		margin-top: 6px;
 	}
 	.stem-mini__v {
-		color: var(--moss-2);
+		color: var(--ink-2);
 		text-align: right;
 		font-weight: 500;
 	}
 	.stem-mini__t {
-		color: var(--spine-2);
+		color: var(--ink-2);
 		text-align: left;
 		font-weight: 500;
 	}
 	.stem-mini__unit {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--fg-4);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.stem-mini__bar {
 		height: 8px;
-		background: var(--paper-3);
-		border-radius: 2px;
+		background: var(--paper-2);
+		border-radius: var(--r-1);
 		overflow: hidden;
 		display: flex;
 	}
 	.stem-mini__bar-v {
-		background: var(--moss-2);
+		background: var(--ink-2);
 	}
 	.stem-mini__bar-t {
-		background: var(--spine-2);
+		background: var(--rule-strong);
 	}
 
-	/* Inline detail-paneel */
+	/* Inline detail */
 	.detail {
 		background: var(--paper-2);
-		border-bottom: 1px solid var(--rule);
-		padding: 0 4px 0 200px;
+		border-radius: 0 0 var(--r-1) var(--r-1);
+		padding: 0 8px 0 200px;
 	}
 
-	/* Commissies: visuele scheiding tussen actief en leeg */
+	/* Committees: where the ones without dossiers begin */
 	.group-divider {
 		list-style: none;
-		padding: 18px 4px 10px;
+		padding: 18px 8px 10px;
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-4);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		border-bottom: 1px solid var(--rule);
 	}
 
-	/* Meer-laden knop */
+	/* Load more */
 	.load-more {
 		display: flex;
 		justify-content: center;
@@ -1376,34 +1319,34 @@
 	.load-more-btn {
 		height: 32px;
 		padding: 0 16px;
-		background: var(--paper);
+		background: transparent;
 		border: 1px solid var(--rule-strong);
-		border-radius: 2px;
+		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
+		font-weight: 500;
 		color: var(--ink-2);
 		cursor: pointer;
 		transition:
-			background 80ms,
-			color 80ms,
-			border-color 80ms;
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
 	}
 	.load-more-btn:hover:not(:disabled) {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
+		background: var(--paper-2);
+		color: var(--ink);
 	}
 	.load-more-btn:disabled {
 		opacity: 0.6;
 		cursor: wait;
 	}
 
-	/* Smaller viewports — stapel kolommen */
+	/* Narrow viewports: the columns stack. */
 	@media (max-width: 768px) {
 		.row {
 			grid-template-columns: 1fr;
 			gap: 4px;
-			padding: 14px 4px;
+			padding: 14px 8px;
 		}
 		.row-aside {
 			justify-content: flex-start;

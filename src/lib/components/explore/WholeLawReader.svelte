@@ -1,22 +1,62 @@
 <script lang="ts">
 	import { api, unwrap } from '$lib/api/client';
+	import { getArticleDetail } from '$lib/api/articles';
 	import { instrumentMetaStore, primeInstrumentNames } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
+	import ArticleText from '$lib/components/articles/ArticleText.svelte';
+	import { SvelteMap } from 'svelte/reactivity';
 
 	import { bronHref } from '$lib/bron/href';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
-	// The API inlines at most this many characters of an article. An article that
-	// fills them is shown with an ellipsis; the full text is one click away.
+	// The overview lists every article of the law with a preview only: at full text and
+	// parts per article, 810 articles would balloon the payload. The full, leden-structured
+	// text of an article is fetched only once it scrolls into view (`lazyLoad` below),
+	// through the same per-article endpoint the article reader already uses.
 	const PREVIEW_CHARS = 600;
 	const PAGE_SIZE = 100;
 
 	type Article = Schema<'InstrumentArticleNodeDTO'>;
+	type Detail = Schema<'ArticleDetailResponse'>;
 
 	let articles = $state<Article[]>([]);
 	let total = $state(0);
 	let status = $state<'idle' | 'loading' | 'loading-more' | 'ready' | 'error'>('idle');
+	// A plain `$state(new Map())` proxies the variable, not `.set()`/`.get()` calls on
+	// it, so a mutation here would never re-render the article that just loaded.
+	let detailByNumber = $state(new SvelteMap<string, Detail>());
+	const pending = new Set<string>();
+
+	async function ensureDetail(bwb: string, articleNumber: string) {
+		if (detailByNumber.has(articleNumber) || pending.has(articleNumber)) return;
+		pending.add(articleNumber);
+		try {
+			const detail = await getArticleDetail(bwb, articleNumber);
+			if (bwb === bwbId) detailByNumber.set(articleNumber, detail);
+		} catch {
+			// The preview stays; scrolling back into view retries.
+		} finally {
+			pending.delete(articleNumber);
+		}
+	}
+
+	/** Fetches an article's full text once its preview scrolls near the viewport. */
+	function lazyLoad(el: HTMLElement, articleNumber: string | null) {
+		const bwb = bwbId;
+		if (!bwb || !articleNumber) return {};
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((e) => e.isIntersecting)) {
+					observer.disconnect();
+					void ensureDetail(bwb, articleNumber);
+				}
+			},
+			{ rootMargin: '600px 0px' }
+		);
+		observer.observe(el);
+		return { destroy: () => observer.disconnect() };
+	}
 
 	const lawName = $derived.by(() => {
 		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
@@ -37,6 +77,8 @@
 
 	$effect(() => {
 		articles = [];
+		detailByNumber = new SvelteMap();
+		pending.clear();
 		if (!bwbId) {
 			status = 'idle';
 			return;
@@ -102,7 +144,12 @@
 				</h2>
 			{/each}
 
-			<section class="whole-article" id="article-{a.article_number}">
+			{@const detail = a.article_number ? detailByNumber.get(a.article_number) : undefined}
+			<section
+				class="whole-article"
+				id="article-{a.article_number}"
+				use:lazyLoad={a.article_number}
+			>
 				<div class="whole-article-head">
 					<a
 						class="whole-article-jump"
@@ -113,13 +160,15 @@
 					</a>
 				</div>
 
-				<p class="whole-text">
-					{#if a.text_preview}
+				{#if detail}
+					<ArticleText text={detail.article.text} parts={detail.article.parts} />
+				{:else if a.text_preview}
+					<p class="whole-text">
 						{a.text_preview}{a.text_preview.length >= PREVIEW_CHARS ? '…' : ''}
-					{:else}
-						<span class="whole-empty-text">Geen tekst beschikbaar.</span>
-					{/if}
-				</p>
+					</p>
+				{:else}
+					<p class="whole-text"><span class="whole-empty-text">Geen tekst beschikbaar.</span></p>
+				{/if}
 			</section>
 		{/each}
 
@@ -145,12 +194,12 @@
 		font-family: var(--font-serif);
 		font-style: italic;
 		font-size: 16px;
-		color: var(--fg-3);
+		color: var(--ink-3);
 		text-align: center;
 	}
 
 	.whole-error {
-		color: var(--accent);
+		color: var(--ink-2);
 		font-style: normal;
 	}
 
@@ -160,17 +209,17 @@
 		flex-direction: column;
 		gap: var(--s-3);
 		align-items: center;
-		color: var(--fg-3);
+		color: var(--ink-3);
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 14px;
+		font-size: var(--t-body-2);
 	}
 
 	.spinner {
 		width: 26px;
 		height: 26px;
 		border: 2px solid var(--rule);
-		border-top-color: var(--accent);
+		border-top-color: var(--ink-2);
 		border-radius: 50%;
 		animation: spin 0.9s linear infinite;
 	}
@@ -198,11 +247,9 @@
 	.whole-kind {
 		display: block;
 		font-family: var(--font-sans);
-		font-size: 11px;
-		font-weight: 600;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		margin-bottom: 8px;
 	}
 
@@ -210,16 +257,17 @@
 		margin: 0 0 6px;
 		font-family: var(--font-serif);
 		font-weight: 500;
-		font-size: 36px;
-		line-height: 1.1;
+		font-size: var(--t-h1);
+		line-height: var(--lh-tight);
 		color: var(--ink);
 	}
 
 	.whole-count {
 		margin: 0;
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--fg-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 	}
 
 	.whole-section {
@@ -237,27 +285,25 @@
 
 	.whole-section-kind {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 600;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: var(--fg-4);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 	}
 
 	.whole-section-label {
 		font-family: var(--font-serif);
 		font-weight: 500;
 		color: var(--ink);
-		font-size: 18px;
-		line-height: 1.25;
+		font-size: 17px;
+		line-height: var(--lh-snug);
 	}
 
 	.whole-section--depth-0 .whole-section-label {
-		font-size: 22px;
+		font-size: var(--t-h3);
 	}
 	.whole-section--depth-2 .whole-section-label,
 	.whole-section--depth-3 .whole-section-label {
-		font-size: 15px;
+		font-size: var(--t-body-2);
 		color: var(--ink-2);
 	}
 
@@ -281,21 +327,23 @@
 	}
 
 	.whole-art-num {
-		font-family: var(--font-mono);
-		font-size: 12px;
-		color: var(--accent);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-2);
 		font-weight: 500;
 	}
 
 	.whole-article-jump:hover .whole-art-num {
+		color: var(--accent);
 		text-decoration: underline;
 	}
 
 	.whole-text {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 17px;
-		line-height: 1.62;
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink);
 		white-space: pre-line;
 	}
@@ -304,8 +352,9 @@
 		display: block;
 		margin: var(--s-6) auto 0;
 		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--ink-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-2);
 		background: none;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
@@ -314,7 +363,7 @@
 	}
 
 	.whole-more:hover:not(:disabled) {
-		background: var(--paper-3);
+		background: var(--paper-2);
 		color: var(--ink);
 	}
 
@@ -327,6 +376,6 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-style: italic;
-		color: var(--fg-3);
+		color: var(--ink-3);
 	}
 </style>

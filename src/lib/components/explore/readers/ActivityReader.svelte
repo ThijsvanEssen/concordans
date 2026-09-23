@@ -55,11 +55,9 @@
 	}
 	.kicker {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		display: flex;
 		gap: 5px;
 		align-items: baseline;
@@ -69,11 +67,11 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: 19px;
-		font-weight: 400;
+		font-size: var(--t-h3);
+		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
-		line-height: 1.3;
+		line-height: var(--lh-snug);
 	}
 
 	.foot {
@@ -81,12 +79,11 @@
 	}
 	.full-link {
 		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--spine);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
 		text-decoration: none;
-		border-bottom: 1px solid var(--spine-faint);
 	}
 	.full-link:hover {
-		border-bottom-color: var(--spine);
+		color: var(--accent);
 	}
 </style>

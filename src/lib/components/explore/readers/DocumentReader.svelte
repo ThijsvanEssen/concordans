@@ -5,7 +5,8 @@
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import GlossaryPill from './GlossaryPill.svelte';
-	import { landOn } from '$lib/bron/anchor';
+	import { page } from '$app/state';
+	import { landOn, permalink } from '$lib/bron/anchor';
 	import { findPassage } from '$lib/text/find-passage';
 	import { tick } from 'svelte';
 	import { formatDate } from './_shared';
@@ -53,6 +54,30 @@
 		return out;
 	});
 
+	// The headings of the paper (API 0.5): algemeen deel, artikelsgewijze toelichting per
+	// artikel, ... Rendered as the same anchored, leden-like structure ArticleText gives
+	// an article, instead of one long run of paragraphs.
+	type Section = Schema<'SectionDTO'>;
+	const sections = $derived<Section[]>(view.kind === 'loaded' ? (view.document.sections ?? []) : []);
+	const headingTexts = $derived(new Set(sections.map((s) => s.heading.trim().toLowerCase())));
+
+	type Entry =
+		| { type: 'heading'; start: number; section: Section }
+		| { type: 'para'; start: number; para: { start: number; text: string } };
+	const entries = $derived.by<Entry[]>(() => {
+		const out: Entry[] = sections.map((section) => ({
+			type: 'heading',
+			start: section.char_start,
+			section
+		}));
+		for (const para of paragraphs) {
+			// The heading's own line is already drawn as the heading; skip its duplicate.
+			if (headingTexts.has(para.text.trim().toLowerCase())) continue;
+			out.push({ type: 'para', start: para.start, para });
+		}
+		return out.sort((a, b) => a.start - b.start || (a.type === 'heading' ? -1 : 1));
+	});
+
 	// The passage for the article: from `/passages` (API 0.5), else a text match.
 	// TODO(backend B5): `findPassage` goes when every document answers on `passages`.
 	let apiPassage = $state<{ start: number; end: number; derived: boolean } | null | undefined>();
@@ -86,16 +111,39 @@
 				? null
 				: (apiPassage ?? findPassage(view.document.text ?? '', article.articleNumber))
 	);
-	const passageIndex = $derived(
-		passage ? paragraphs.findLastIndex((p) => p.start <= passage.start) : -1
+	const passageEntryIndex = $derived(
+		passage ? entries.findLastIndex((e) => e.type === 'para' && e.start <= passage.start) : -1
 	);
+	// The heading the passage falls under: the section with the latest start at or
+	// before it, the way ArticleText marks the lid a citation lands in.
+	const activeSectionId = $derived.by(() => {
+		if (!passage) return null;
+		let best: Section | null = null;
+		for (const s of sections) {
+			if (s.char_start <= passage.start && passage.start < s.char_end) {
+				if (!best || s.char_start > best.char_start) best = s;
+			}
+		}
+		return best?.id ?? null;
+	});
 
 	let root = $state<HTMLElement | null>(null);
 	$effect(() => {
-		if (passageIndex < 0 || !root) return;
+		if (passageEntryIndex < 0 || !root) return;
 		const container = root;
 		void tick().then(() => landOn(container, 'passage'));
 	});
+
+	let copiedSection = $state<string | null>(null);
+	async function copyLink(id: string) {
+		try {
+			await navigator.clipboard.writeText(permalink(page.url, id));
+			copiedSection = id;
+			setTimeout(() => (copiedSection = null), 1000);
+		} catch {
+			// The clipboard is unavailable in some contexts.
+		}
+	}
 
 	// The kind is the source's own wording; where a glossary term exists the kicker links to it.
 	function glossaryTerm(kind: string | null | undefined): string | null {
@@ -132,17 +180,38 @@
 
 		{#if doc.text}
 			<div class="body" bind:this={root}>
-				{#each paragraphs as para, i (para.start)}
-					{#if i === passageIndex}
+				{#each entries as entry, i (entry.type === 'heading' ? entry.section.id : `p${entry.para.start}`)}
+					{#if entry.type === 'heading'}
+						{@const s = entry.section}
+						<div
+							class="heading heading--lvl{Math.min(s.level, 3)}"
+							class:heading--active={s.id === activeSectionId}
+							id={s.id}
+						>
+							<span class="heading__text"
+								>{s.heading}{#if s.kind === 'article' && s.article_refs?.length}
+									<span class="heading__badge"
+										>{s.article_refs.map((r) => r.number).join(', ')}</span
+									>{/if}</span
+							>
+							<button
+								type="button"
+								class="heading__link"
+								onclick={() => copyLink(s.id)}
+								aria-label="Kopieer link naar {s.heading}"
+								>{copiedSection === s.id ? 'Gekopieerd' : 'Deel'}</button
+							>
+						</div>
+					{:else if i === passageEntryIndex}
 						<p class="body-para body-para--passage" id="passage">
-							{para.text}{#if passage?.derived}<span
+							{entry.para.text}{#if passage?.derived}<span
 									class="derived"
 									role="img"
 									aria-label="afgeleid">≈</span
 								>{/if}
 						</p>
 					{:else}
-						<p class="body-para">{para.text}</p>
+						<p class="body-para">{entry.para.text}</p>
 					{/if}
 				{/each}
 			</div>
@@ -170,10 +239,76 @@
 	}
 	.derived {
 		margin-left: 6px;
-		font-family: var(--font-mono);
-		font-size: 11px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
 		font-weight: 400;
-		color: var(--ink-4);
+		color: var(--ink-3);
+	}
+
+	/* A heading of the paper: algemeen deel, artikelsgewijze toelichting, per artikel. */
+	.heading {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		scroll-margin: 20vh;
+		border-radius: var(--r-1);
+		margin: var(--s-4) -8px 2px;
+		padding: 3px 8px;
+	}
+	.heading:global(.is-landed),
+	.heading--active {
+		background: var(--accent-soft);
+	}
+	.heading__text {
+		flex: 1;
+		min-width: 0;
+	}
+	.heading--lvl1 .heading__text {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		color: var(--ink-3);
+	}
+	.heading--lvl2 .heading__text {
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.heading--lvl3 .heading__text {
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		font-weight: 600;
+		font-style: italic;
+		color: var(--ink-2);
+	}
+	.heading__badge {
+		margin-left: 8px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
+	}
+	.heading__link {
+		flex: none;
+		visibility: hidden;
+		padding: 2px 8px;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: 11.5px;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+	.heading__link:hover {
+		color: var(--accent);
+	}
+	.heading:hover .heading__link,
+	.heading:focus-within .heading__link {
+		visibility: visible;
 	}
 	.r-document {
 		display: flex;
@@ -189,7 +324,7 @@
 	.empty {
 		font-family: var(--font-serif);
 		font-style: italic;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin: 0;
 	}
 	.head {
@@ -199,8 +334,9 @@
 	}
 	.kicker {
 		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--ink-4);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		display: flex;
 		gap: 5px;
 		align-items: baseline;
@@ -210,23 +346,24 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: 19px;
-		font-weight: 400;
+		font-size: var(--t-h3);
+		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
-		line-height: 1.3;
+		line-height: var(--lh-snug);
 	}
 	.ext-id {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--ink-4);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 	}
 
 	.body {
 		font-family: var(--font-serif);
-		font-size: 14px;
-		line-height: 1.65;
-		color: var(--ink-2);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
 		border-top: 1px solid var(--rule);
 		border-bottom: 1px solid var(--rule);
 		padding: var(--s-3) 0;
@@ -243,12 +380,11 @@
 	}
 	.full-link {
 		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--spine);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
 		text-decoration: none;
-		border-bottom: 1px solid var(--spine-faint);
 	}
 	.full-link:hover {
-		border-bottom-color: var(--spine);
+		color: var(--accent);
 	}
 </style>

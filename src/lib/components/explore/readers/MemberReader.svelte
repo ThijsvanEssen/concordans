@@ -225,7 +225,7 @@
 	.error {
 		font-family: var(--font-serif);
 		font-style: italic;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin: 0;
 	}
 
@@ -236,11 +236,9 @@
 	}
 	.kicker {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 	}
 	.member-head-row {
 		display: flex;
@@ -251,7 +249,7 @@
 		width: 44px;
 		height: 44px;
 		border-radius: 50%;
-		background: var(--paper-3);
+		background: var(--paper-2);
 		border: 1px solid var(--rule);
 		display: flex;
 		align-items: center;
@@ -271,46 +269,33 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: 18px;
-		font-weight: 400;
+		font-size: var(--t-h3);
+		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
-		line-height: 1.25;
+		line-height: var(--lh-snug);
 		overflow-wrap: anywhere;
 	}
 	.chips {
 		display: flex;
-		gap: 4px;
+		gap: var(--s-3);
 		flex-wrap: wrap;
+		align-items: baseline;
 	}
 
+	/* The faction and the status are words, not tags. */
 	.party-chip,
 	.status-chip {
-		display: inline-flex;
-		align-items: center;
-		height: 18px;
-		padding: 0 7px;
-		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 9px;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		border: 1px solid var(--rule);
+		font-size: var(--t-micro);
+		font-weight: 500;
 	}
 	.party-chip {
-		background: var(--paper-2);
 		color: var(--ink-2);
 	}
-	.status-chip {
-		color: var(--moss);
-		border-color: color-mix(in srgb, var(--moss) 25%, transparent);
-		background: color-mix(in srgb, var(--moss) 10%, var(--paper));
-	}
+	.status-chip,
 	.status-chip--inactive {
-		color: var(--ink-4);
-		border-color: var(--rule);
-		background: var(--paper-3);
+		color: var(--ink-3);
 	}
 
 	/* ── Sections ── */
@@ -321,15 +306,13 @@
 	}
 	.sec-title {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin: 0;
 	}
 	.sec-title--former {
-		color: var(--ink-4);
+		color: var(--ink-3);
 		opacity: 0.7;
 	}
 	.faction-active-dot {
@@ -337,7 +320,7 @@
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: var(--moss);
+		background: var(--ink-2);
 		margin-left: 5px;
 		vertical-align: middle;
 	}
@@ -355,63 +338,50 @@
 		display: flex;
 		align-items: baseline;
 		gap: 8px;
-		padding: 4px 0;
-		border-bottom: 1px dotted var(--rule);
+		padding: 5px var(--s-1);
+		margin: 0 calc(-1 * var(--s-1));
+		border-radius: var(--r-1);
 		flex-wrap: wrap;
+	}
+	.faction-row:hover {
+		background: var(--paper-2);
 	}
 	.faction-name {
 		flex: 1;
 		min-width: 0;
 		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--ink-2);
+		font-size: var(--t-body-2);
+		color: var(--ink);
 		text-decoration: none;
 		overflow-wrap: anywhere;
 	}
 	.faction-name:hover {
-		color: var(--spine);
+		color: var(--accent);
 	}
 	.faction-range {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-4);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 		flex-shrink: 0;
 	}
 	.faction-role {
 		font-family: var(--font-sans);
-		font-size: 9px;
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
+		font-size: var(--t-micro);
+		font-weight: 500;
 		color: var(--ink-3);
-		padding: 0 6px;
-		border: 1px solid var(--rule);
-		border-radius: var(--r-1);
-		background: var(--paper-2);
 	}
 
 	/* ── Votes ── */
 	.vote-choice {
 		font-family: var(--font-sans);
-		font-size: 9px;
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		padding: 1px 5px;
-		border-radius: var(--r-1);
-		border: 1px solid var(--rule);
+		font-size: var(--t-micro);
+		font-weight: 500;
 		color: var(--ink-3);
-		background: var(--paper-3);
 	}
-	.vote-choice--voor {
-		color: var(--moss);
-		border-color: color-mix(in srgb, var(--moss) 25%, transparent);
-		background: color-mix(in srgb, var(--moss) 8%, var(--paper));
-	}
+	.vote-choice--voor,
 	.vote-choice--tegen {
-		color: var(--spine);
-		border-color: color-mix(in srgb, var(--spine) 25%, transparent);
-		background: color-mix(in srgb, var(--spine) 8%, var(--paper));
+		color: var(--ink-2);
 	}
 	.vote-choice--onthouden {
 		color: var(--ink-3);
@@ -424,23 +394,27 @@
 	}
 	.vote-row {
 		padding: 0;
-		border-bottom: 1px dotted var(--rule);
 	}
 	.vote-link {
 		display: flex;
 		flex-direction: column;
 		gap: 3px;
-		padding: 5px 0;
+		padding: 6px var(--s-1);
+		margin: 0 calc(-1 * var(--s-1));
+		border-radius: var(--r-1);
 		text-decoration: none;
 	}
+	.vote-link:hover {
+		background: var(--paper-2);
+	}
 	.vote-link:hover .vote-subject {
-		color: var(--spine);
+		color: var(--accent);
 	}
 	.vote-subject {
 		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--ink-2);
-		line-height: 1.4;
+		font-size: var(--t-body-2);
+		color: var(--ink);
+		line-height: var(--lh-snug);
 		overflow-wrap: anywhere;
 	}
 	.vote-meta {
@@ -449,25 +423,21 @@
 		align-items: baseline;
 		gap: 8px;
 		font-family: var(--font-sans);
-		font-size: 10px;
-		color: var(--ink-4);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.vote-seats {
-		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
 	}
 	.vote-outcome {
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		font-weight: 600;
+		font-weight: 500;
 	}
-	.vote-outcome--passed {
-		color: var(--moss);
-	}
+	.vote-outcome--passed,
 	.vote-outcome--failed {
-		color: var(--spine);
+		color: var(--ink-2);
 	}
 	.vote-date {
-		font-family: var(--font-mono);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.vote-group {
@@ -483,9 +453,10 @@
 		padding: 2px 0;
 	}
 	.vote-group-count {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-4);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 	}
 
 	.party-head {
@@ -498,29 +469,37 @@
 	}
 	.party-name {
 		font-family: var(--font-sans);
-		font-size: 11px;
-		font-weight: 600;
+		font-size: var(--t-meta);
+		font-weight: 500;
 		color: var(--ink-2);
-		letter-spacing: 0.02em;
 	}
 	.party-total {
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--ink-4);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 	}
 
+	/* A text button: no border, the hover as a paper-2 field. */
 	.more-btn {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 11px;
-		color: var(--spine);
+		align-self: flex-start;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-2);
 		background: none;
 		border: none;
-		padding: 3px 0;
+		border-radius: var(--r-1);
+		padding: 4px;
+		margin-left: -4px;
 		cursor: pointer;
 		text-align: left;
+		transition:
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease);
 	}
 	.more-btn:hover {
+		background: var(--paper-2);
 		color: var(--ink);
 	}
 </style>

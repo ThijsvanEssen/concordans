@@ -14,6 +14,7 @@
 	import {
 		extractParticipants,
 		extractPartyInfo,
+		headingId,
 		normalizeParagraphText,
 		splitBodyParagraph,
 		splitSummary
@@ -32,21 +33,40 @@
 
 	const ecli = $derived(selection ? String(selection.raw?.props?.ecli ?? selection.key) : null);
 
-	function headingId(text: string): string {
-		return (
-			'h-' +
-			text
-				.toLowerCase()
-				.replace(/\s+/g, '-')
-				.replace(/[^a-z0-9-]/g, '')
-				.slice(0, 40)
-		);
-	}
-
 	// The anchor of an overweging: `paragraph_id` (API 0.5), else built from its number.
 	// TODO(backend B7): the fallback goes when every paragraph carries the id.
 	const rov = (number: string, id?: string | null) => id || `rov-${number}`;
-	const copy = (id: string) => navigator.clipboard?.writeText(permalink(page.url, id));
+	const copyLink = (id: string) => navigator.clipboard?.writeText(permalink(page.url, id));
+
+	// Citeren van een overweging, parallel aan `citeArticle` voor een lid.
+	function citeOverweging(
+		num: string,
+		ecliStr: string | null,
+		dateLabel: string | null,
+		id: string
+	) {
+		if (!ecliStr) return null;
+		const short = formatEcliLabel(ecliStr);
+		return {
+			kort: `${short}, r.o. ${num}`,
+			voluit: `${ecliStr}, r.o. ${num}`,
+			metDatum: `${short}, r.o. ${num}${dateLabel ? ` (${dateLabel})` : ''}`,
+			link: permalink(page.url, id)
+		};
+	}
+
+	let menuFor = $state<string | null>(null);
+	let copied = $state<string | null>(null);
+	async function copyText(text: string, key: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copied = key;
+			setTimeout(() => (copied = null), 1000);
+		} catch {
+			// The clipboard is unavailable in some contexts.
+		}
+		menuFor = null;
+	}
 
 	let root = $state<HTMLElement | null>(null);
 	const anchor = $derived(anchorOfHash(page.url.hash));
@@ -73,6 +93,8 @@
 		return () => (stale = true);
 	});
 </script>
+
+<svelte:window onclick={() => (menuFor = null)} />
 
 <ReaderFrame
 	status={view.kind === 'loaded' ? 'ready' : view.kind}
@@ -110,7 +132,7 @@
 		</ReaderHead>
 
 		{#if hasSummary}
-			<div class="reader-summary-block">
+			<div class="reader-summary-block" id="summary">
 				{#each splitSummary(j.summary!) as para, i (i)}
 					<p class="reader-summary-para">{para}</p>
 				{/each}
@@ -118,7 +140,7 @@
 		{/if}
 
 		{#if participants.length > 0}
-			<table class="reader-parties">
+			<table class="reader-parties" id="parties">
 				<tbody>
 					{#each participants as p, i (i)}
 						<tr>
@@ -144,25 +166,41 @@
 					{/if}
 				{:else if para.kind === 'heading'}
 					{@const clean = normalizeParagraphText(para.text)}
-					<h3 class="reader-heading" id={headingId(clean)}>{clean}</h3>
+					{@const hid = headingId(clean)}
+					<h3 class="reader-heading" id={hid}>
+						<span class="reader-heading__text">{clean}</span>
+						<button
+							type="button"
+							class="reader-heading__link"
+							onclick={() => copyLink(hid)}
+							aria-label="Kopieer link naar {clean}">Deel</button
+						>
+					</h3>
 				{:else}
 					{#each splitBodyParagraph(para.text, para.citations) as seg, i (i)}
 						{#if seg.kind === 'heading'}
-							<h3 class="reader-heading" id={headingId(seg.text)}>{seg.text}</h3>
+							{@const hid = headingId(seg.text)}
+							<h3 class="reader-heading" id={hid}>
+								<span class="reader-heading__text">{seg.text}</span>
+								<button
+									type="button"
+									class="reader-heading__link"
+									onclick={() => copyLink(hid)}
+									aria-label="Kopieer link naar {seg.text}">Deel</button
+								>
+							</h3>
 						{:else if seg.num || (i === 0 && para.number)}
 							{@const num = String(seg.num ?? para.number)}
+							{@const rovId = rov(num, i === 0 ? para.paragraph_id : null)}
+							{@const forms = citeOverweging(num, j.ecli ?? null, judgmentDate, rovId)}
 							<div
-								id={rov(num, i === 0 ? para.paragraph_id : null)}
+								id={rovId}
 								class="reader-para-block"
 								class:reader-para-block--sub={seg.depth > 0}
+								class:is-open={menuFor === rovId}
 								style={seg.depth > 1 ? `padding-left:${(seg.depth - 1) * 1.2}em` : ''}
 							>
-								<a
-									class="reader-para-num"
-									href="#{rov(num, i === 0 ? para.paragraph_id : null)}"
-									aria-label="Kopieer link naar overweging {num}"
-									onclick={() => copy(rov(num, i === 0 ? para.paragraph_id : null))}>{num}</a
-								>
+								<span class="reader-para-num">{num}</span>
 								<div class="reader-para-inner">
 									{#if seg.subTitle}
 										<p class="reader-para-subtitle">{seg.subTitle}</p>
@@ -170,6 +208,64 @@
 									<p class="reader-para">
 										<CitedText text={seg.body} citations={seg.citations} />
 									</p>
+								</div>
+								<div class="reader-para-side">
+									<span class="reader-para-actions">
+										{#if forms}
+											<span class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+												<button
+													type="button"
+													class="btn reader-para-btn"
+													aria-haspopup="menu"
+													aria-expanded={menuFor === rovId}
+													onclick={() => (menuFor = menuFor === rovId ? null : rovId)}
+													>{copied === `cite:${rovId}` ? 'Gekopieerd' : 'Citeer'}</button
+												>
+												{#if menuFor === rovId}
+													<div class="pop" role="menu" aria-label="Citeer overweging {num}">
+														<div class="pop__label">Kopieer als</div>
+														<button
+															type="button"
+															role="menuitem"
+															class="pop__item"
+															onclick={() => copyText(forms.kort, `cite:${rovId}`)}
+															><span>{forms.kort}</span><span class="pop__k">kort</span></button
+														>
+														<button
+															type="button"
+															role="menuitem"
+															class="pop__item"
+															onclick={() => copyText(forms.voluit, `cite:${rovId}`)}
+															><span>{forms.voluit}</span><span class="pop__k">voluit</span></button
+														>
+														<button
+															type="button"
+															role="menuitem"
+															class="pop__item"
+															onclick={() => copyText(forms.metDatum, `cite:${rovId}`)}
+															><span>{forms.metDatum}</span><span class="pop__k">met datum</span
+															></button
+														>
+														<button
+															type="button"
+															role="menuitem"
+															class="pop__item"
+															onclick={() => copyText(forms.link, `cite:${rovId}`)}
+															><span class="pop__link">{forms.link}</span><span class="pop__k"
+																>link</span
+															></button
+														>
+													</div>
+												{/if}
+											</span>
+										{/if}
+										<button
+											type="button"
+											class="btn reader-para-btn"
+											onclick={() => copyText(permalink(page.url, rovId), `share:${rovId}`)}
+											>{copied === `share:${rovId}` ? 'Gekopieerd' : 'Deel'}</button
+										>
+									</span>
 								</div>
 							</div>
 						{:else}
@@ -198,18 +294,17 @@
 
 	.reader-meta-item {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 
 	.reader-meta-item--mono {
-		font-family: var(--font-mono);
-		font-size: 11px;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.reader-source-link {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-2);
 		text-decoration: none;
@@ -224,25 +319,24 @@
 	}
 
 	.reader-source-link:hover {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
+		background: var(--paper-2);
+		color: var(--ink);
 	}
 
 	/* Summary */
 	.reader-summary-block {
 		margin: 0 0 var(--s-5);
 		padding: var(--s-4) var(--s-5);
-		background: color-mix(in srgb, var(--indigo) 3%, var(--paper));
-		border-left: 3px solid color-mix(in srgb, var(--indigo) 35%, transparent);
-		max-width: 68ch;
+		background: var(--paper-2);
+		border-left: 3px solid var(--indigo);
+		max-width: var(--measure);
 	}
 
 	.reader-summary-para {
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 15px;
-		line-height: 1.58;
+		font-size: var(--t-body-2);
+		line-height: var(--lh-body);
 		color: var(--ink-2);
 		margin: 0 0 0.7em;
 	}
@@ -254,7 +348,7 @@
 	/* Participants table */
 	.reader-parties {
 		width: 100%;
-		max-width: 68ch;
+		max-width: var(--measure);
 		border-collapse: collapse;
 		margin: 0 0 var(--s-6);
 		border: 1px solid var(--rule);
@@ -267,11 +361,9 @@
 
 	.reader-parties-role {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 600;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		text-align: left;
 		white-space: nowrap;
 		padding: 6px 12px 6px var(--s-4);
@@ -281,7 +373,7 @@
 
 	.reader-parties-name {
 		font-family: var(--font-serif);
-		font-size: 14px;
+		font-size: var(--t-body-2);
 		color: var(--ink);
 		padding: 6px var(--s-4) 6px 0;
 		vertical-align: top;
@@ -289,43 +381,78 @@
 
 	.reader-parties-party {
 		display: block;
-		font-size: 9px;
+		font-size: var(--t-micro);
 		font-weight: 400;
-		letter-spacing: 0.04em;
-		text-transform: none;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin-top: 1px;
 	}
 
 	/* Body */
 	.reader-body {
 		font-family: var(--font-serif);
-		font-size: 17px;
-		line-height: 1.68;
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink);
 	}
 
 	.reader-heading,
 	.reader-subheading {
-		max-width: 68ch;
+		max-width: var(--measure);
 	}
 
 	.reader-heading {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
 		font-family: var(--font-serif);
 		font-size: 1em;
 		font-weight: 600;
-		letter-spacing: 0.01em;
-		line-height: 1.35;
+		line-height: var(--lh-snug);
 		color: var(--ink);
 		margin: 2.2em 0 0.5em;
-		padding-top: 1.4em;
+		padding: 1.4em 8px 3px;
+		margin-left: -8px;
+		margin-right: -8px;
 		border-top: 1px solid var(--rule);
+		border-radius: var(--r-1);
+		scroll-margin: 20vh;
 	}
 
 	.reader-heading:first-child {
 		margin-top: 0;
-		padding-top: 0;
+		padding-top: 3px;
 		border-top: 0;
+	}
+
+	.reader-heading:global(.is-landed) {
+		background: var(--accent-soft);
+	}
+
+	.reader-heading__text {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.reader-heading__link {
+		flex: none;
+		visibility: hidden;
+		padding: 2px 8px;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: 11.5px;
+		font-weight: 400;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+
+	.reader-heading__link:hover {
+		color: var(--accent);
+	}
+
+	.reader-heading:hover .reader-heading__link,
+	.reader-heading:focus-within .reader-heading__link {
+		visibility: visible;
 	}
 
 	.reader-subheading {
@@ -343,7 +470,7 @@
 	}
 
 	.reader-para--prose {
-		max-width: 68ch;
+		max-width: var(--measure);
 	}
 
 	.reader-para:last-child {
@@ -352,15 +479,23 @@
 
 	.reader-para-block {
 		display: grid;
-		grid-template-columns: 2.8em 1fr;
+		grid-template-columns: 2.8em 1fr 130px;
 		gap: 0 var(--s-3);
 		margin-bottom: 1.4em;
-		max-width: calc(68ch + 2.8em + var(--s-3));
+		padding: 2px 6px 2px 0;
+		margin-left: -6px;
+		max-width: calc(var(--measure) + 2.8em + 130px + 2 * var(--s-3));
 	}
 
 	.reader-para-block {
 		scroll-margin: 20vh;
-		border-radius: 2px;
+		border-radius: var(--r-1);
+	}
+
+	.reader-para-block:hover,
+	.reader-para-block:focus-within,
+	.reader-para-block.is-open {
+		background: var(--paper-2);
 	}
 
 	.reader-para-block:global(.is-landed) {
@@ -370,31 +505,23 @@
 			6px 0 0 var(--accent-soft);
 	}
 
-	a.reader-para-num {
-		text-decoration: none;
-	}
-
-	a.reader-para-num:hover {
-		color: var(--accent);
-	}
-
 	.reader-para-block--sub {
 		margin-bottom: 1em;
 	}
 
 	.reader-para-num {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-4);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 		padding-top: 0.25em;
 		text-align: right;
-		line-height: 1.68;
+		line-height: var(--lh-body);
 		user-select: none;
 		flex-shrink: 0;
 	}
 
 	.reader-para-block--sub .reader-para-num {
-		font-size: 10px;
 		opacity: 0.7;
 	}
 
@@ -402,11 +529,92 @@
 		min-width: 0;
 	}
 
+	.reader-para-side {
+		display: flex;
+		align-items: flex-start;
+		padding-top: 0.2em;
+	}
+
+	.reader-para-actions {
+		visibility: hidden;
+		display: flex;
+		gap: 4px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+	}
+
+	.reader-para-block:hover .reader-para-actions,
+	.reader-para-block:focus-within .reader-para-actions,
+	.reader-para-block.is-open .reader-para-actions {
+		visibility: visible;
+	}
+
+	.reader-para-btn {
+		padding: 2px 8px;
+		font-size: 11.5px;
+	}
+
+	.menu {
+		position: relative;
+	}
+
+	.pop {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 6px);
+		z-index: var(--z-float);
+		width: 320px;
+		padding: 8px 0;
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-modal);
+		font-family: var(--font-sans);
+		font-size: 12.5px;
+		text-align: left;
+	}
+
+	.pop__label {
+		padding: 2px 12px 6px;
+		font-size: 11.5px;
+		color: var(--ink-3);
+	}
+
+	.pop__item {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		width: 100%;
+		padding: 6px 12px;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink);
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.pop__item:hover {
+		background: var(--paper-2);
+	}
+
+	.pop__k {
+		flex: none;
+		font-size: 11.5px;
+		color: var(--ink-3);
+	}
+
+	.pop__link {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
 	.reader-para-subtitle {
 		font-family: var(--font-serif);
 		font-weight: 600;
 		font-size: 0.88em;
-		letter-spacing: 0.01em;
 		color: var(--ink-2);
 		margin: 0 0 0.5em;
 	}
@@ -417,7 +625,7 @@
 
 	.reader-empty-text {
 		font-style: italic;
-		color: var(--fg-3);
+		color: var(--ink-3);
 		margin: 0;
 	}
 </style>

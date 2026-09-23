@@ -1,4 +1,6 @@
 <script lang="ts">
+	// The table of contents of the law in Lezen: the name of the law, the title of the
+	// current section under it, and the articles, the active one marked.
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -11,7 +13,8 @@
 		onitems
 	}: {
 		selection: GraphNode | null;
-		onitems?: (items: { key: string; label: string }[]) => void;
+		/** The articles of the law in order, each with the labels of its place (book, title). */
+		onitems?: (items: { key: string; label: string; breadcrumb: string[] }[]) => void;
 	} = $props();
 
 	type Item = {
@@ -20,7 +23,6 @@
 		breadcrumb: Schema<'InstrumentArticleBreadcrumbDTO'>[];
 	};
 
-	// Hierarchical group used for rendering when breadcrumbs are present.
 	type Group = { label: string; type: string; items: Item[]; children: Group[] };
 
 	let items = $state<Item[]>([]);
@@ -37,19 +39,18 @@
 	});
 
 	// The name comes from the shared cache: citation title, else title, else the id.
-	const prettyLawName = $derived.by(() => {
+	const lawName = $derived.by(() => {
 		if (!currentBwb) return null;
 		const meta = $instrumentMetaStore.get(currentBwb);
 		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? currentBwb;
 	});
 
-	// Instrument type label derived from the identifier pattern.
-	const instrumentTypeLabel = $derived.by(() => {
-		if (!currentBwb) return 'WETGEVING';
-		if (currentBwb.toUpperCase().startsWith('BWBV')) return 'VERDRAG';
-		if (/^\d{5}[a-z]/i.test(currentBwb)) return 'EU REGELGEVING';
-		return 'WETGEVING';
-	});
+	const crumbLabel = (seg: Schema<'InstrumentArticleBreadcrumbDTO'>) =>
+		[seg.type && seg.type !== 'sectie' ? capitalise(seg.type) : null, seg.label]
+			.filter(Boolean)
+			.join(' ')
+			.trim();
+	const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 	// The Lezen table of contents is always the whole law, whatever the graph holds.
 	$effect(() => {
@@ -73,10 +74,16 @@
 						breadcrumb: a.breadcrumb ?? []
 					}));
 				groups = buildGroups(items);
-				onitems?.(items.map((it) => ({ key: it.key, label: `Art. ${it.articleNumber}` })));
+				onitems?.(
+					items.map((it) => ({
+						key: it.key,
+						label: `Artikel ${it.articleNumber}`,
+						breadcrumb: it.breadcrumb.map(crumbLabel).filter(Boolean)
+					}))
+				);
 			})
 			.catch(() => {
-				if (!ac.signal.aborted) error = 'Kon overzicht niet laden';
+				if (!ac.signal.aborted) error = 'Overzicht niet geladen.';
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
@@ -115,22 +122,23 @@
 	}
 
 	const selectedKey = $derived(selection?.key ?? null);
+	const currentSection = $derived.by(() => {
+		const it = items.find((i) => i.key === selectedKey);
+		const last = it?.breadcrumb.at(-1);
+		return last ? crumbLabel(last) : null;
+	});
 
 	let navEl = $state<HTMLElement | null>(null);
 
 	$effect(() => {
 		void selectedKey;
 		if (!navEl) return;
-		// Defer one tick so the DOM has rendered the new active state.
 		requestAnimationFrame(() => {
-			const active = navEl?.querySelector('.nav-row.is-active');
+			const active = navEl?.querySelector('.row.is-active');
 			active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 		});
 	});
 
-	// Recursive: does this group (or any descendant) contain the selected
-	// article? Drives the default-open state of collapsed sections so the
-	// user lands inside the right boek/titeldeel.
 	function containsSelected(g: Group): boolean {
 		if (!selectedKey) return false;
 		if (g.items.some((it) => it.key === selectedKey)) return true;
@@ -141,36 +149,36 @@
 {#snippet itemRow(item: Item)}
 	<li>
 		<a
-			class="nav-row"
+			class="row"
 			class:is-active={item.key === selectedKey}
 			href={bronHref({ collection: 'articles', key: item.key })}
-			data-sveltekit-noscroll
+			data-sveltekit-noscroll>Artikel {item.articleNumber}</a
 		>
-			<span class="nav-num">Art. {item.articleNumber}</span>
-		</a>
 	</li>
 {/snippet}
 
 {#snippet groupBlock(g: Group, depth: number)}
 	{@const selected = containsSelected(g)}
 	{@const shouldOpen = selectedKey ? selected : depth > 0}
-	<details class="nav-group nav-group--depth-{Math.min(depth, 3)}" open={shouldOpen}>
-		<summary class="nav-group-h">
-			<span class="nav-chev" aria-hidden="true">▸</span>
-			<span class="nav-group-h-text">
-				<span class="nav-group-kind">{g.type}</span>
-				<span class="nav-group-label">{g.label}</span>
-			</span>
+	{@const level = Math.min(depth, 3)}
+	<details class="group depth-{level}" open={shouldOpen}>
+		<summary class="group__head">
+			<span class="chev" aria-hidden="true">▸</span>
+			<span class="group__label"
+				>{g.type && g.type !== 'sectie' && g.type !== 'overig'
+					? `${capitalise(g.type)} `
+					: ''}{g.label}</span
+			>
 		</summary>
 		{#if g.items.length > 0}
-			<ol class="nav-list">
+			<ol class="list">
 				{#each g.items as item, i (i)}
 					{@render itemRow(item)}
 				{/each}
 			</ol>
 		{/if}
 		{#if g.children.length > 0}
-			<div class="nav-children">
+			<div class="children">
 				{#each g.children as child, i (i)}
 					{@render groupBlock(child, depth + 1)}
 				{/each}
@@ -181,26 +189,27 @@
 
 <aside class="lezen-nav" aria-label="Overzicht" bind:this={navEl}>
 	{#if currentBwb}
-		<header class="nav-head">
-			<span class="nav-kind">{instrumentTypeLabel}</span>
-			<h3 class="nav-title">{prettyLawName}</h3>
-			{#if items.length > 0}
-				<span class="nav-count">{items.length} artikelen</span>
+		<header class="head">
+			<h3 class="head__title">{lawName}</h3>
+			{#if currentSection}
+				<div class="head__section">{currentSection}</div>
+			{:else if items.length > 0}
+				<div class="head__section">{items.length} artikelen</div>
 			{/if}
 		</header>
 
 		{#if loading && items.length === 0}
-			<p class="nav-empty">Laden…</p>
+			<p class="note">Laden</p>
 		{:else if error}
-			<p class="nav-error">{error}</p>
+			<p class="note">{error}</p>
 		{:else if groups}
-			<div class="nav-tree">
+			<div class="tree">
 				{#each groups as g, i (i)}
 					{@render groupBlock(g, 0)}
 				{/each}
 			</div>
 		{:else}
-			<ol class="nav-list">
+			<ol class="list">
 				{#each items as item, i (i)}
 					{@render itemRow(item)}
 				{/each}
@@ -213,187 +222,139 @@
 	.lezen-nav {
 		height: 100%;
 		overflow-y: auto;
-		background: var(--paper-2);
+		padding-top: 22px;
 		border-right: 1px solid var(--rule);
-		display: flex;
-		flex-direction: column;
-	}
-
-	.nav-empty,
-	.nav-error {
-		padding: var(--s-5);
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 13px;
-		color: var(--fg-3);
-		margin: 0;
-	}
-
-	.nav-error {
-		color: var(--accent);
-		font-style: normal;
-	}
-
-	.nav-head {
-		padding: var(--s-5) var(--s-4) var(--s-3);
-		border-bottom: 1px solid var(--rule);
-	}
-
-	.nav-kind {
-		display: block;
+		background: var(--paper);
 		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 600;
-		letter-spacing: 0.09em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-bottom: 4px;
+		font-size: 12.5px;
 	}
 
-	.nav-title {
+	.note {
+		margin: 0;
+		padding: var(--s-4) 18px;
+		color: var(--ink-3);
+	}
+
+	.head {
+		padding: 0 18px 12px;
+	}
+
+	.head__title {
+		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 17px;
-		line-height: 1.25;
+		font-size: 16px;
 		font-weight: 500;
+		line-height: 1.2;
 		color: var(--ink);
-		margin: 0;
 	}
 
-	.nav-count {
-		display: block;
-		font-family: var(--font-mono);
-		font-size: 10px;
-		color: var(--fg-3);
-		margin-top: 6px;
+	.head__section {
+		margin-top: 3px;
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
-	.nav-list {
+	.list {
 		list-style: none;
 		margin: 0;
-		padding: var(--s-2) 0 var(--s-3);
+		padding: 0 0 var(--s-3);
 	}
 
-	.nav-tree {
-		padding: var(--s-3) 0 var(--s-5);
+	.tree {
+		padding-bottom: var(--s-5);
 	}
 
-	.nav-group {
-		padding-left: var(--s-3);
-	}
-
-	.nav-group--depth-0 {
-		padding-left: 0;
-		margin-top: var(--s-4);
-	}
-
-	.nav-group--depth-0:first-child {
-		margin-top: var(--s-2);
-	}
-
-	/* Each section is a <details>; the <summary> is the clickable header. */
-	.nav-group {
+	.group {
 		list-style: none;
 	}
-	.nav-group > summary {
+	.group > summary {
 		list-style: none;
 		cursor: pointer;
 	}
-	.nav-group > summary::-webkit-details-marker {
+	.group > summary::-webkit-details-marker {
 		display: none;
 	}
 
-	.nav-group-h {
-		margin: 0;
-		padding: 4px var(--s-4);
+	.group__head {
 		display: flex;
 		align-items: flex-start;
 		gap: 6px;
-		border-radius: var(--r-1);
+		padding: 5px 18px;
+		color: var(--ink-3);
 	}
-	.nav-group-h:hover {
-		background: var(--paper-3);
+	.group__head:hover {
+		background: var(--paper-2);
 	}
 
-	.nav-chev {
+	/* Depth carries the hierarchy: a boek reads as a heading, a paragraaf as a
+	   quiet sub-label — indentation alone (10px/level) is too faint a signal
+	   in a column this narrow. */
+	.group.depth-0 + .group.depth-0 {
+		margin-top: var(--s-3);
+		border-top: 1px solid var(--rule);
+		padding-top: var(--s-2);
+	}
+	.group.depth-0 > .group__head {
+		font-family: var(--font-serif);
+		font-size: 13.5px;
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.group.depth-1 > .group__head {
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--ink-2);
+	}
+	.group.depth-2 > .group__head {
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--ink-3);
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
+	}
+	.group.depth-3 > .group__head {
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--ink-3);
+		font-style: italic;
+	}
+
+	.chev {
 		flex: 0 0 10px;
-		color: var(--ink-4);
 		font-size: 10px;
-		line-height: 1.3;
+		line-height: 1.5;
 		transition: transform 120ms ease;
 		user-select: none;
-		margin-top: 3px;
 	}
-	details[open] > summary .nav-chev {
+	details[open] > summary .chev {
 		transform: rotate(90deg);
 	}
 
-	.nav-group-h-text {
-		display: flex;
-		flex-direction: column;
-		gap: 1px;
-		min-width: 0;
+	.group__label {
+		line-height: 1.3;
 	}
 
-	.nav-group-kind {
-		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 600;
-		letter-spacing: 0.07em;
-		text-transform: uppercase;
-		color: var(--fg-3);
+	.children {
+		padding-left: 10px;
 	}
 
-	.nav-group-label {
-		font-family: var(--font-serif);
-		font-size: 13px;
-		font-weight: 500;
+	.row {
+		display: block;
+		padding: 4px 18px;
 		color: var(--ink-2);
-		line-height: 1.25;
+		line-height: 1.3;
+		border-left: 2px solid transparent;
 	}
 
-	.nav-group--depth-0 > .nav-group-h .nav-group-label {
-		font-size: 14px;
+	.row:hover {
+		background: var(--paper-2);
 		color: var(--ink);
 	}
 
-	.nav-children {
-		border-left: 1px solid var(--rule);
-		margin-left: var(--s-4);
-	}
-
-	.nav-row {
-		width: 100%;
-		text-align: left;
-		background: none;
-		border: 0;
-		padding: 6px var(--s-4);
-		cursor: pointer;
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		border-left: 2px solid transparent;
-		transition:
-			background var(--dur-1) var(--ease),
-			border-color var(--dur-1) var(--ease);
-	}
-
-	.nav-row:hover {
-		background: var(--paper-3);
-	}
-
-	.nav-row.is-active {
-		background: var(--paper-3);
-		border-left-color: var(--accent);
-	}
-
-	.nav-num {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-2);
-	}
-
-	.nav-row.is-active .nav-num {
-		color: var(--accent);
-		font-weight: 500;
+	.row.is-active {
+		color: var(--ink);
+		font-weight: 600;
+		border-left-color: var(--ink);
+		padding-left: 16px;
 	}
 </style>

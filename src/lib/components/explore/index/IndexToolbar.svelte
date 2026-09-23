@@ -128,7 +128,7 @@
 		margin-bottom: 18px;
 		border: 1px solid var(--rule);
 		background: var(--paper);
-		border-radius: 2px;
+		border-radius: var(--r-2);
 	}
 	.toolbar-top {
 		display: flex;
@@ -142,7 +142,7 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		color: var(--fg-3);
+		color: var(--ink-3);
 		min-width: 0;
 	}
 	.toolbar-search input {
@@ -157,18 +157,19 @@
 		min-width: 0;
 	}
 	.toolbar-search input::placeholder {
-		color: var(--fg-4);
+		color: var(--ink-3);
 		font-style: italic;
 	}
 	.toolbar-search .clear {
 		border: 0;
 		background: transparent;
 		cursor: pointer;
-		color: var(--fg-4);
+		color: var(--ink-3);
 		font-family: var(--font-sans);
-		font-size: 11px;
+		font-size: var(--t-micro);
+		font-weight: 500;
 		padding: 2px 6px;
-		border-radius: 2px;
+		border-radius: var(--r-1);
 	}
 	.toolbar-search .clear:hover {
 		color: var(--ink);
@@ -180,16 +181,15 @@
 		align-items: baseline;
 		gap: 8px;
 		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.04em;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.sort-lbl {
-		text-transform: uppercase;
+		font-weight: 500;
 	}
 	.toolbar-sort select {
 		font-family: var(--font-serif);
-		font-size: 14px;
+		font-size: var(--t-body-2);
 		color: var(--ink);
 		font-style: italic;
 		background: transparent;
@@ -199,8 +199,8 @@
 		outline: none;
 		appearance: none;
 		background-image:
-			linear-gradient(45deg, transparent 50%, var(--fg-3) 50%),
-			linear-gradient(135deg, var(--fg-3) 50%, transparent 50%);
+			linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
+			linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
 		background-position:
 			calc(100% - 8px) 9px,
 			calc(100% - 4px) 9px;
@@ -213,11 +213,11 @@
 		border: 0;
 		background: transparent;
 		cursor: pointer;
-		color: var(--fg-3);
-		font-family: var(--font-mono);
-		font-size: 13px;
+		color: var(--ink-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
 		padding: 2px 4px;
-		border-radius: 2px;
+		border-radius: var(--r-1);
 	}
 	.toolbar-sort .dir:hover {
 		color: var(--ink);
@@ -237,10 +237,9 @@
 
 	.filter-lbl {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 	}
 
 	.pills {
@@ -249,38 +248,44 @@
 		flex-wrap: wrap;
 		align-items: center;
 	}
+	/* Filter buttons; the active one is ink on paper. */
 	.pill-btn {
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		height: 26px;
-		padding: 0 12px;
+		padding: 4px 8px;
 		border: 1px solid var(--rule-strong);
-		border-radius: 999px;
-		background: var(--paper);
+		border-radius: var(--r-1);
+		background: transparent;
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
+		font-weight: 500;
+		line-height: 16px;
 		color: var(--ink-2);
 		cursor: pointer;
-		line-height: 1;
 		transition:
-			background 120ms,
-			color 120ms,
-			border-color 120ms;
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
 	}
 	.pill-btn:hover {
 		background: var(--paper-2);
-		border-color: var(--ink-3);
+		color: var(--ink);
 	}
 	.pill-btn--on {
 		background: var(--ink);
 		color: var(--paper);
 		border-color: var(--ink);
 	}
+	.pill-btn--on:hover {
+		background: var(--ink-2);
+		border-color: var(--ink-2);
+		color: var(--paper);
+	}
 	.pill-count {
-		font-family: var(--font-mono);
-		font-size: 10.5px;
-		color: var(--fg-4);
+		font-variant-numeric: tabular-nums;
+		font-weight: 400;
+		color: var(--ink-3);
 		line-height: 1;
 	}
 	.pill-btn--on .pill-count {

@@ -158,7 +158,7 @@
 	.error {
 		font-family: var(--font-serif);
 		font-style: italic;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin: 0;
 	}
 
@@ -169,11 +169,9 @@
 	}
 	.kicker {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
 		gap: 6px;
@@ -183,53 +181,37 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: 19px;
-		font-weight: 400;
+		font-size: var(--t-h3);
+		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
-		line-height: 1.25;
+		line-height: var(--lh-snug);
 	}
 	.chips {
 		display: flex;
-		gap: 4px;
+		gap: var(--s-3);
 		flex-wrap: wrap;
+		align-items: baseline;
 	}
 
+	/* The outcome and the dossier numbers are words, not tags. */
 	.result-chip,
 	.dossier-chip {
-		display: inline-flex;
-		align-items: center;
-		height: 18px;
-		padding: 0 7px;
-		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 9px;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		border: 1px solid var(--rule);
+		font-size: var(--t-micro);
+		font-weight: 500;
 		text-decoration: none;
 	}
-	.result-chip--passed {
-		color: var(--moss);
-		border-color: color-mix(in srgb, var(--moss) 25%, transparent);
-		background: color-mix(in srgb, var(--moss) 10%, var(--paper));
-	}
+	.result-chip--passed,
 	.result-chip--failed {
-		color: var(--red, #dc2626);
-		border-color: color-mix(in srgb, var(--red, #dc2626) 25%, transparent);
-		background: color-mix(in srgb, var(--red, #dc2626) 10%, var(--paper));
+		color: var(--ink-2);
 	}
 	.dossier-chip {
-		font-family: var(--font-mono);
-		text-transform: none;
-		letter-spacing: 0;
+		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
-		background: var(--paper-2);
 	}
 	.dossier-chip:hover {
-		color: var(--spine);
-		border-color: var(--spine);
+		color: var(--accent);
 	}
 
 	.sec {
@@ -239,26 +221,24 @@
 	}
 	.sec-title {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin: 0;
 	}
 	.document-text {
 		font-family: var(--font-serif);
-		font-size: 14px;
-		line-height: 1.65;
-		color: var(--ink-2);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
 		white-space: pre-wrap;
 		margin: 0;
 	}
 	.document-unavailable {
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 13px;
-		color: var(--ink-4);
+		font-size: var(--t-body-2);
+		color: var(--ink-3);
 		margin: 0;
 	}
 
@@ -267,37 +247,36 @@
 		flex-direction: column;
 		gap: 4px;
 	}
+	/* Seats for and against are told apart by the word; the bar shows the share only. */
 	.vote-bar {
 		height: 14px;
-		background: color-mix(in srgb, var(--spine) 18%, var(--paper-3));
-		border-radius: 4px;
+		background: var(--rule);
+		border-radius: var(--r-2);
 		overflow: hidden;
 	}
 	.vote-bar-for {
 		height: 100%;
-		background: var(--moss);
-		transition: width 200ms ease;
+		background: var(--ink-2);
+		transition: width var(--dur-2) var(--ease);
 	}
 	.vote-totals {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 6px;
 		font-family: var(--font-sans);
-		font-size: 11px;
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
 	}
-	.vote-total--for {
-		color: var(--moss);
-		font-weight: 600;
-	}
+	.vote-total--for,
 	.vote-total--against {
-		color: var(--red, #dc2626);
-		font-weight: 600;
+		color: var(--ink-2);
+		font-weight: 500;
 	}
 	.vote-total--other {
 		color: var(--ink-3);
 	}
 	.vote-total-sep {
-		color: var(--ink-4);
+		color: var(--ink-3);
 	}
 
 	.voter-list {
@@ -309,38 +288,40 @@
 		display: grid;
 		grid-template-columns: 50px 1fr auto;
 		gap: 8px;
-		padding: 3px 0;
+		padding: 4px var(--s-1);
+		margin: 0 calc(-1 * var(--s-1));
 		align-items: baseline;
-		border-bottom: 1px dotted var(--rule);
-		font-size: 12px;
+		border-radius: var(--r-1);
+		font-size: var(--t-meta);
+	}
+	.voter-row:hover {
+		background: var(--paper-2);
 	}
 	.voter-choice {
 		font-family: var(--font-sans);
-		font-size: 9px;
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
+		font-size: var(--t-micro);
+		font-weight: 500;
 	}
-	.voter-row--for .voter-choice {
-		color: var(--moss);
-	}
+	.voter-row--for .voter-choice,
 	.voter-row--against .voter-choice {
-		color: var(--red, #dc2626);
+		color: var(--ink-2);
 	}
 	.voter-row--other .voter-choice {
-		color: var(--ink-4);
+		color: var(--ink-3);
 	}
 	.voter-name {
 		font-family: var(--font-serif);
-		color: var(--ink-2);
+		font-size: var(--t-body-2);
+		color: var(--ink);
 		text-decoration: none;
 	}
 	a.voter-name:hover {
-		color: var(--spine);
+		color: var(--accent);
 	}
 	.voter-seats {
-		font-family: var(--font-mono);
-		font-size: 11px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
 </style>

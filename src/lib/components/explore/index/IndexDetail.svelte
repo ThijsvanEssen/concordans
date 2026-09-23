@@ -125,7 +125,7 @@
 			<!-- Chips: per-categorie eigen status-indicatoren -->
 			<div class="detail-chips">
 				{#if w}
-					<span class="tag tag--outline" class:tag--teal={w.jurisdiction === 'eu'}>
+					<span class="tag tag--outline" class:tag--eu={w.jurisdiction === 'eu'}>
 						{w.jurisdiction === 'eu' ? 'Europese Unie' : 'Nederlands recht'}
 					</span>
 				{:else if j}
@@ -136,13 +136,13 @@
 						<span class="tag tag--outline">{TRACK_LABEL[d.track]}</span>
 					{/if}
 					{#if d.current_stage}
-						<span class="tag tag--ochre"
+						<span class="tag tag--pending"
 							><span class="tag-dot"></span>nu: {STAGE_LABEL[d.current_stage]}</span
 						>
 					{/if}
 				{:else if c}
 					{#if (c.active_dossier_count ?? 0) > 0}
-						<span class="tag tag--olive"><span class="tag-dot"></span>Actief</span>
+						<span class="tag tag--active"><span class="tag-dot"></span>Actief</span>
 					{:else}
 						<span class="tag tag--outline">Geen lopende dossiers</span>
 					{/if}
@@ -156,7 +156,7 @@
 						{f.abbreviation}{f.seats != null ? ` · ${f.seats} zetels` : ''}
 					</span>
 				{:else if s && s.passed != null}
-					<span class="tag" class:tag--moss={s.passed} class:tag--spine={!s.passed}>
+					<span class="tag" class:tag--passed={s.passed} class:tag--rejected={!s.passed}>
 						<span class="tag-dot"></span>{s.passed ? 'Aangenomen' : 'Verworpen'}
 					</span>
 				{/if}
@@ -338,7 +338,7 @@
 <style>
 	.detail-inner {
 		padding: 22px 28px 26px;
-		border-left: 2px solid var(--spine);
+		border-left: 2px solid var(--ink-2);
 		display: flex;
 		flex-direction: column;
 		gap: 22px;
@@ -357,111 +357,58 @@
 	}
 	.detail-kind {
 		font-family: var(--font-sans);
-		font-size: 10px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		display: inline-flex;
 		align-items: baseline;
 		gap: 8px;
 		flex-wrap: wrap;
 	}
 	.detail-sep {
-		color: var(--fg-4);
+		color: var(--ink-3);
 	}
 	.detail-mono {
-		font-family: var(--font-mono);
-		font-size: 11px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 400;
+		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
-		letter-spacing: 0;
-		text-transform: none;
 	}
 	.detail-title {
 		font-family: var(--font-serif);
 		font-weight: 500;
-		font-size: 22px;
-		line-height: 1.25;
-		letter-spacing: -0.005em;
+		font-size: var(--t-h3);
+		line-height: var(--lh-snug);
 		color: var(--ink);
 		margin: 0;
 		text-wrap: pretty;
 	}
 	.detail-chips {
 		display: inline-flex;
-		gap: 6px;
+		gap: var(--s-3);
 		margin-top: 6px;
 		flex-wrap: wrap;
 	}
 
-	/* Tags: vlakke gekleurde labels in de spine-faint/moss-faint familie */
+	/* Qualities are words: the outcome of a vote in ink-2, the rest in ink-3. */
 	.tag {
 		display: inline-flex;
 		align-items: baseline;
 		gap: 5px;
-		height: 22px;
-		padding: 0 9px;
 		font-family: var(--font-sans);
-		font-size: 10.5px;
-		letter-spacing: 0.04em;
-		border-radius: 2px;
-		border: 1px solid transparent;
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		white-space: nowrap;
 		line-height: 22px;
 	}
 	.tag-dot {
-		width: 5px;
-		height: 5px;
-		border-radius: 50%;
-		align-self: center;
-		flex-shrink: 0;
+		display: none;
 	}
-	.tag--moss {
-		color: var(--moss);
-		background: var(--moss-faint);
-	}
-	.tag--moss .tag-dot {
-		background: var(--moss);
-	}
-	.tag--spine {
-		color: var(--spine);
-		background: var(--spine-faint);
-	}
-	.tag--spine .tag-dot {
-		background: var(--spine);
-	}
-	.tag--ochre {
-		color: var(--ochre);
-		background: var(--ochre-faint);
-	}
-	.tag--ochre .tag-dot {
-		background: var(--ochre);
-	}
-	.tag--olive {
-		color: var(--olive);
-		background: var(--olive-faint);
-	}
-	.tag--olive .tag-dot {
-		background: var(--olive);
-	}
-	.tag--indigo {
-		color: var(--indigo);
-		background: var(--indigo-faint);
-	}
-	.tag--indigo .tag-dot {
-		background: var(--indigo);
-	}
-	.tag--teal {
-		color: var(--teal);
-		background: var(--teal-faint);
-	}
-	.tag--outline {
-		color: var(--ink-3);
-		background: transparent;
-		border-color: var(--rule);
-	}
-	.tag--outline.tag--teal {
-		color: var(--teal);
-		border-color: var(--teal-faint);
+	.tag--passed,
+	.tag--rejected {
+		color: var(--ink-2);
+		font-weight: 500;
 	}
 
 	.party-dot {
@@ -472,7 +419,7 @@
 		vertical-align: middle;
 	}
 
-	/* Stage timeline */
+	/* Stage timeline: the current stage in ink, passed stages in ink-2, the rest in ink-3. */
 	.stage-tl {
 		position: relative;
 		display: grid;
@@ -507,25 +454,25 @@
 		border: 1.5px solid var(--rule-strong);
 	}
 	.is-past .stage-tl-mark {
-		background: var(--olive);
-		border-color: var(--olive);
+		background: var(--ink-2);
+		border-color: var(--ink-2);
 		color: var(--paper);
 	}
 	.is-current .stage-tl-mark {
-		background: var(--spine);
-		border-color: var(--spine);
+		background: var(--ink);
+		border-color: var(--ink);
 		color: var(--paper);
-		box-shadow: 0 0 0 4px var(--spine-faint);
+		box-shadow: 0 0 0 4px var(--paper-2);
 	}
 	.stage-tl-lbl {
 		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		text-align: center;
 		line-height: 1.25;
 	}
 	.is-current .stage-tl-lbl {
-		color: var(--spine);
+		color: var(--ink);
 		font-weight: 500;
 	}
 	.is-past .stage-tl-lbl {
@@ -548,35 +495,34 @@
 	}
 	.tile-num {
 		font-family: var(--font-serif);
-		font-size: 26px;
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 		line-height: 1;
 		font-feature-settings: 'lnum';
 	}
 	.tile-mono {
-		font-family: var(--font-mono);
-		font-size: 14px;
+		font-family: var(--font-sans);
+		font-size: var(--t-body-2);
+		font-variant-numeric: tabular-nums;
 		color: var(--ink-2);
 		line-height: 1;
 		word-break: break-all;
 	}
 	.tile-lbl {
 		font-family: var(--font-sans);
-		font-size: 10.5px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.tile-sub {
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 12.5px;
-		color: var(--fg-3);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
 		margin-top: 2px;
 	}
 
-	/* Vote bar (stemmingen) — moss-2/spine-2 voor hoger contrast op paper-2 */
+	/* Vote bar: seats for in ink-2, seats against in rule-strong; the numbers say which is which. */
 	.vote-bar-wrap {
 		display: grid;
 		grid-template-columns: 60px 1fr 60px;
@@ -584,33 +530,33 @@
 		align-items: center;
 	}
 	.vote-side {
-		font-family: var(--font-mono);
-		font-size: 14px;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
 		font-weight: 500;
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-2);
 	}
 	.vote-side--v {
-		color: var(--moss-2);
 		text-align: right;
 	}
 	.vote-side--t {
-		color: var(--spine-2);
 		text-align: left;
 	}
 	.vote-bar {
 		height: 10px;
-		background: var(--paper-3);
-		border-radius: 2px;
+		background: var(--paper-2);
+		border-radius: var(--r-1);
 		overflow: hidden;
 		display: flex;
 	}
 	.vote-bar-v {
-		background: var(--moss-2);
+		background: var(--ink-2);
 	}
 	.vote-bar-t {
-		background: var(--spine-2);
+		background: var(--rule-strong);
 	}
 
-	/* Action bar onderaan: terug naar de drie weergavemodi */
+	/* The three ways of opening the source. */
 	.detail-acts {
 		display: flex;
 		gap: 8px;
@@ -625,23 +571,23 @@
 		gap: 6px;
 		height: 30px;
 		padding: 0 12px;
-		background: var(--paper);
+		background: transparent;
 		border: 1px solid var(--rule-strong);
-		border-radius: 2px;
+		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
+		font-weight: 500;
 		color: var(--ink-2);
 		cursor: pointer;
 		transition:
-			background 120ms,
-			color 120ms,
-			border-color 120ms;
+			background var(--dur-1) var(--ease),
+			color var(--dur-1) var(--ease),
+			border-color var(--dur-1) var(--ease);
 		white-space: nowrap;
 	}
 	.detail-act:hover {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
+		background: var(--paper-2);
+		color: var(--ink);
 	}
 	.detail-act .arrow {
 		font-family: var(--font-serif);
@@ -655,5 +601,6 @@
 	.detail-act--primary:hover {
 		background: var(--ink-2);
 		border-color: var(--ink-2);
+		color: var(--paper);
 	}
 </style>

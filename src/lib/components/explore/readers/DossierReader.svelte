@@ -126,7 +126,7 @@
 	.error {
 		font-family: var(--font-serif);
 		font-style: italic;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin: 0;
 	}
 	.head {
@@ -136,76 +136,39 @@
 	}
 	.kicker {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
 		gap: 6px;
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: 19px;
-		font-weight: 400;
+		font-size: var(--t-h3);
+		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
-		line-height: 1.25;
+		line-height: var(--lh-snug);
 	}
 	.chips {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 4px;
-		align-items: center;
+		gap: var(--s-3);
+		align-items: baseline;
 	}
 
+	/* The track, the current stage and the closed state are words, not tags. */
 	.track-chip,
 	.stage-chip,
 	.closed-chip {
-		display: inline-flex;
-		align-items: center;
-		height: 18px;
-		padding: 0 7px;
-		border-radius: var(--r-1);
 		font-family: var(--font-sans);
-		font-size: 9px;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		border: 1px solid var(--rule);
-		background: var(--paper-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
 		color: var(--ink-3);
 	}
-	.track-chip--wetsvoorstel {
-		background: color-mix(in srgb, #7a1f1a 10%, var(--paper));
-		color: #7a1f1a;
-		border-color: color-mix(in srgb, #7a1f1a 25%, transparent);
-	}
-	.track-chip--initiatiefwetsvoorstel {
-		background: color-mix(in srgb, #4f46e5 10%, var(--paper));
-		color: #4f46e5;
-		border-color: color-mix(in srgb, #4f46e5 25%, transparent);
-	}
-	.track-chip--begroting {
-		background: color-mix(in srgb, #d97706 10%, var(--paper));
-		color: #d97706;
-		border-color: color-mix(in srgb, #d97706 25%, transparent);
-	}
-	.track-chip--motie {
-		background: color-mix(in srgb, #16a34a 10%, var(--paper));
-		color: #16a34a;
-		border-color: color-mix(in srgb, #16a34a 25%, transparent);
-	}
-	.track-chip--overig {
-		background: var(--paper-3);
-		color: var(--ink-4);
-		border-style: dashed;
-	}
 	.stage-chip {
-		color: var(--spine);
-		border-color: var(--spine-faint);
-		background: var(--spine-faint);
+		color: var(--ink-2);
 	}
 
 	.stepper-wrap {
@@ -236,17 +199,16 @@
 		border-radius: var(--r-1);
 	}
 	.stat-num {
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: 17px;
-		font-weight: 600;
+		font-weight: 500;
+		font-variant-numeric: tabular-nums;
 		color: var(--ink);
 	}
 	.stat-label {
 		font-family: var(--font-sans);
-		font-size: 9px;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
 	.sec {
@@ -256,17 +218,16 @@
 	}
 	.sec-title {
 		font-family: var(--font-sans);
-		font-size: 10px;
+		font-size: var(--t-micro);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--ink-4);
+		color: var(--ink-3);
 		margin: 0;
 	}
 
 	.sec-count {
-		font-family: var(--font-mono);
-		letter-spacing: 0;
+		font-family: var(--font-sans);
+		font-variant-numeric: tabular-nums;
+		font-weight: 400;
 		margin-left: 6px;
 	}
 	.sec--timeline {
