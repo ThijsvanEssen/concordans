@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.6.0"
+		"version": "0.7.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -3560,7 +3560,7 @@
 					"number": {
 						"type": "string",
 						"title": "Number",
-						"description": "Kamerstuknummer, e.g. 36558."
+						"description": "Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter."
 					},
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
 					"title_source": {
@@ -3574,7 +3574,15 @@
 						"anyOf": [
 							{
 								"type": "string",
-								"enum": ["wetsvoorstel", "initiatiefwetsvoorstel", "begroting", "motie", "overig"]
+								"enum": [
+									"wetsvoorstel",
+									"initiatiefwetsvoorstel",
+									"begroting",
+									"verdrag",
+									"initiatiefnota",
+									"motie",
+									"overig"
+								]
 							},
 							{ "type": "null" }
 						],
@@ -3588,9 +3596,10 @@
 									"wetsvoorstel",
 									"mvt",
 									"advies_rvs",
-									"nota",
 									"verslag",
+									"nota_naar_aanleiding_van_verslag",
 									"amendementen",
+									"behandeling",
 									"stemming",
 									"afgehandeld"
 								]
@@ -3606,9 +3615,10 @@
 								"wetsvoorstel",
 								"mvt",
 								"advies_rvs",
-								"nota",
 								"verslag",
+								"nota_naar_aanleiding_van_verslag",
 								"amendementen",
+								"behandeling",
 								"stemming",
 								"afgehandeld"
 							]
@@ -3617,6 +3627,13 @@
 						"title": "Stages"
 					},
 					"closed": { "type": "boolean", "title": "Closed", "default": false },
+					"outcome": {
+						"anyOf": [
+							{ "type": "string", "enum": ["aangenomen", "verworpen", "ingetrokken"] },
+							{ "type": "null" }
+						],
+						"title": "Outcome"
+					},
 					"opened_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Opened On"
@@ -4975,7 +4992,7 @@
 					"number": {
 						"type": "string",
 						"title": "Number",
-						"description": "Kamerstuknummer, e.g. 36558."
+						"description": "Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter."
 					},
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
 					"title_source": {
@@ -4989,7 +5006,15 @@
 						"anyOf": [
 							{
 								"type": "string",
-								"enum": ["wetsvoorstel", "initiatiefwetsvoorstel", "begroting", "motie", "overig"]
+								"enum": [
+									"wetsvoorstel",
+									"initiatiefwetsvoorstel",
+									"begroting",
+									"verdrag",
+									"initiatiefnota",
+									"motie",
+									"overig"
+								]
 							},
 							{ "type": "null" }
 						],
@@ -5003,9 +5028,10 @@
 									"wetsvoorstel",
 									"mvt",
 									"advies_rvs",
-									"nota",
 									"verslag",
+									"nota_naar_aanleiding_van_verslag",
 									"amendementen",
+									"behandeling",
 									"stemming",
 									"afgehandeld"
 								]
@@ -5021,9 +5047,10 @@
 								"wetsvoorstel",
 								"mvt",
 								"advies_rvs",
-								"nota",
 								"verslag",
+								"nota_naar_aanleiding_van_verslag",
 								"amendementen",
+								"behandeling",
 								"stemming",
 								"afgehandeld"
 							]
@@ -5032,6 +5059,13 @@
 						"title": "Stages"
 					},
 					"closed": { "type": "boolean", "title": "Closed", "default": false },
+					"outcome": {
+						"anyOf": [
+							{ "type": "string", "enum": ["aangenomen", "verworpen", "ingetrokken"] },
+							{ "type": "null" }
+						],
+						"title": "Outcome"
+					},
 					"opened_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Opened On"
@@ -5293,7 +5327,7 @@
 					"number": {
 						"type": "string",
 						"title": "Number",
-						"description": "Kamerstuknummer, e.g. 36558."
+						"description": "Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter."
 					},
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
 					"title_source": {
@@ -5307,7 +5341,15 @@
 						"anyOf": [
 							{
 								"type": "string",
-								"enum": ["wetsvoorstel", "initiatiefwetsvoorstel", "begroting", "motie", "overig"]
+								"enum": [
+									"wetsvoorstel",
+									"initiatiefwetsvoorstel",
+									"begroting",
+									"verdrag",
+									"initiatiefnota",
+									"motie",
+									"overig"
+								]
 							},
 							{ "type": "null" }
 						],
@@ -5321,9 +5363,10 @@
 									"wetsvoorstel",
 									"mvt",
 									"advies_rvs",
-									"nota",
 									"verslag",
+									"nota_naar_aanleiding_van_verslag",
 									"amendementen",
+									"behandeling",
 									"stemming",
 									"afgehandeld"
 								]
@@ -5339,9 +5382,10 @@
 								"wetsvoorstel",
 								"mvt",
 								"advies_rvs",
-								"nota",
 								"verslag",
+								"nota_naar_aanleiding_van_verslag",
 								"amendementen",
+								"behandeling",
 								"stemming",
 								"afgehandeld"
 							]
@@ -5350,6 +5394,13 @@
 						"title": "Stages"
 					},
 					"closed": { "type": "boolean", "title": "Closed", "default": false },
+					"outcome": {
+						"anyOf": [
+							{ "type": "string", "enum": ["aangenomen", "verworpen", "ingetrokken"] },
+							{ "type": "null" }
+						],
+						"title": "Outcome"
+					},
 					"opened_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Opened On"
@@ -5360,7 +5411,7 @@
 				"type": "object",
 				"required": ["id", "key", "number"],
 				"title": "DossierSummaryDTO",
-				"description": "A dossier in a list.\n\n``track`` is what kind of dossier this is — wetsvoorstel, begroting,\nmotie — and does not change as it progresses. ``current_stage`` is the\nlatest stage seen on its documents and activities; ``stages`` lists every\nstage with at least one signal, in chronological order."
+				"description": "A dossier in a list.\n\n``track`` is what kind of dossier this is — wetsvoorstel, begroting,\nmotie — and does not change as it progresses. ``current_stage`` is the\nlatest stage seen on its documents and activities; ``stages`` lists every\nstage with at least one signal, in chronological order. Only a bill (a\nwetsvoorstel, initiatiefwetsvoorstel, begroting or verdrag) passes stages;\nany other dossier has none until it is ``afgehandeld``. A closed dossier has\nan ``outcome``: ``aangenomen`` (its law was published), ``ingetrokken`` (its\nbill was withdrawn) or ``verworpen`` (the Tweede Kamer voted the bill down)."
 			},
 			"DossierTimelineResponse": {
 				"properties": {

@@ -1385,7 +1385,7 @@ export interface components {
             key: string;
             /**
              * Number
-             * @description Kamerstuknummer, e.g. 36558.
+             * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
              */
             number: string;
             /** Title */
@@ -1393,16 +1393,18 @@ export interface components {
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
             /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "motie" | "overig") | null;
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "motie" | "overig") | null;
             /** Current Stage */
-            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld") | null;
+            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
             /** Stages */
-            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld")[];
+            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
              * Closed
              * @default false
              */
             closed: boolean;
+            /** Outcome */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
@@ -2589,7 +2591,7 @@ export interface components {
             key: string;
             /**
              * Number
-             * @description Kamerstuknummer, e.g. 36558.
+             * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
              */
             number: string;
             /** Title */
@@ -2597,16 +2599,18 @@ export interface components {
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
             /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "motie" | "overig") | null;
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "motie" | "overig") | null;
             /** Current Stage */
-            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld") | null;
+            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
             /** Stages */
-            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld")[];
+            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
              * Closed
              * @default false
              */
             closed: boolean;
+            /** Outcome */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
@@ -2869,7 +2873,11 @@ export interface components {
          *     ``track`` is what kind of dossier this is — wetsvoorstel, begroting,
          *     motie — and does not change as it progresses. ``current_stage`` is the
          *     latest stage seen on its documents and activities; ``stages`` lists every
-         *     stage with at least one signal, in chronological order.
+         *     stage with at least one signal, in chronological order. Only a bill (a
+         *     wetsvoorstel, initiatiefwetsvoorstel, begroting or verdrag) passes stages;
+         *     any other dossier has none until it is ``afgehandeld``. A closed dossier has
+         *     an ``outcome``: ``aangenomen`` (its law was published), ``ingetrokken`` (its
+         *     bill was withdrawn) or ``verworpen`` (the Tweede Kamer voted the bill down).
          */
         DossierSummaryDTO: {
             /** Id */
@@ -2878,7 +2886,7 @@ export interface components {
             key: string;
             /**
              * Number
-             * @description Kamerstuknummer, e.g. 36558.
+             * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
              */
             number: string;
             /** Title */
@@ -2886,16 +2894,18 @@ export interface components {
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
             /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "motie" | "overig") | null;
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "motie" | "overig") | null;
             /** Current Stage */
-            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld") | null;
+            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
             /** Stages */
-            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld")[];
+            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
              * Closed
              * @default false
              */
             closed: boolean;
+            /** Outcome */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
