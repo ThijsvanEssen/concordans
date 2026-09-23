@@ -2,10 +2,9 @@
 	// The text of an article as its aanhef, leden and onderdelen. Every part has an
 	// anchor, so a reference can point at it and the address can be shared. A lid is a
 	// row of a grid: the number, the text, and a column at the right with the number of
-	// verbindingen of that lid and, on hover, Citeer and Deel.
-	import { page } from '$app/state';
+	// verbindingen of that lid and, on hover, Citeer and Kopieer tekst. An onderdeel, at
+	// any depth, shows the same two actions in that column, level with its own text.
 	import type { Schema } from '$lib/api/types';
-	import { permalink } from '$lib/bron/anchor';
 	import { parseArticleParts, partsFromApi, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, partOfAnchor, type Citation } from '$lib/text/cite';
 	import { formatCount } from '$lib/verbonden/filter';
@@ -32,7 +31,7 @@
 		/** The address that filters the panel Verbonden to a lid. */
 		lidHref?: (lid: string) => string;
 		/** What is needed to cite the article; without it Citeer is not offered. */
-		citation?: Omit<Citation, 'lid' | 'onderdeel' | 'date'> | null;
+		citation?: Omit<Citation, 'lid' | 'onderdelen' | 'aanhef' | 'date'> | null;
 		/** The wording a wetsvoorstel proposes for one lid, shown next to the current one. */
 		proposed?: ProposedText | null;
 		onCloseProposed?: () => void;
@@ -51,6 +50,12 @@
 		};
 	};
 
+	/** The part's text with its onderdelen, as Kopieer tekst puts it on the clipboard. */
+	const fullText = (part: ArticlePart) => source.slice(part.textStart, part.end).trim();
+
+	/** A part without an anchor (an article without leden) is keyed by its offset. */
+	const keyOf = (part: ArticlePart) => part.id ?? `tekst-${part.start}`;
+
 	let menuFor = $state<string | null>(null);
 	let copied = $state<string | null>(null);
 
@@ -67,81 +72,70 @@
 
 	const formsOf = (part: ArticlePart) => {
 		if (!citation || !part.id) return null;
-		const { lid, onderdeel } = partOfAnchor(part.id);
-		return citeArticle({ ...citation, lid, onderdeel });
+		return citeArticle({ ...citation, ...partOfAnchor(part.id) });
 	};
-
-	const link = (id: string) => permalink(page.url, id);
 </script>
 
 <svelte:window onclick={() => (menuFor = null)} />
 
+{#snippet actions(part: ArticlePart, className: string)}
+	{@const key = keyOf(part)}
+	{@const forms = formsOf(part)}
+	<span class={className}>
+		{#if forms}
+			<span class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+				<button
+					type="button"
+					class="btn act__btn"
+					aria-haspopup="menu"
+					aria-expanded={menuFor === key}
+					onclick={() => (menuFor = menuFor === key ? null : key)}
+					>{copied === `cite:${key}` ? 'Gekopieerd' : 'Citeer'}</button
+				>
+				{#if menuFor === key}
+					<div class="pop" role="menu" aria-label="Citeer {forms.kort}">
+						<div class="pop__label">Kopieer als</div>
+						<button
+							type="button"
+							role="menuitem"
+							class="pop__item"
+							onclick={() => copy(forms.kort, `cite:${key}`)}
+							><span>{forms.kort}</span><span class="pop__k">kort</span></button
+						>
+						<button
+							type="button"
+							role="menuitem"
+							class="pop__item"
+							onclick={() => copy(forms.voluit, `cite:${key}`)}
+							><span>{forms.voluit}</span><span class="pop__k">voluit</span></button
+						>
+						<button
+							type="button"
+							role="menuitem"
+							class="pop__item"
+							onclick={() => copy(forms.metDatum, `cite:${key}`)}
+							><span>{forms.metDatum}</span><span class="pop__k">met datum</span></button
+						>
+					</div>
+				{/if}
+			</span>
+		{/if}
+		<button type="button" class="btn act__btn" onclick={() => copy(fullText(part), `text:${key}`)}
+			>{copied === `text:${key}` ? 'Gekopieerd' : 'Kopieer tekst'}</button
+		>
+	</span>
+{/snippet}
+
 {#snippet aside(part: ArticlePart)}
 	{@const lid = part.kind === 'lid' ? part.number : null}
 	{@const count = lid ? counts.get(lid) : undefined}
-	{@const forms = formsOf(part)}
 	<div class="lid__side">
 		{#if lid && count != null && lidHref}
 			<a class="lid__count" href={lidHref(lid)} data-sveltekit-noscroll
 				>{formatCount(count)} {count === 1 ? 'verbinding' : 'verbindingen'}</a
 			>
 		{/if}
-		<span class="lid__actions">
-			{#if forms}
-				<span class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
-					<button
-						type="button"
-						class="btn lid__btn"
-						aria-haspopup="menu"
-						aria-expanded={menuFor === part.id}
-						onclick={() => (menuFor = menuFor === part.id ? null : part.id)}
-						>{copied === `cite:${part.id}` ? 'Gekopieerd' : 'Citeer'}</button
-					>
-					{#if menuFor === part.id}
-						<div class="pop" role="menu" aria-label="Citeer {part.kind} {part.number}">
-							<div class="pop__label">Kopieer als</div>
-							<button
-								type="button"
-								role="menuitem"
-								class="pop__item"
-								onclick={() => copy(forms.kort, `cite:${part.id}`)}
-								><span>{forms.kort}</span><span class="pop__k">kort</span></button
-							>
-							<button
-								type="button"
-								role="menuitem"
-								class="pop__item"
-								onclick={() => copy(forms.voluit, `cite:${part.id}`)}
-								><span>{forms.voluit}</span><span class="pop__k">voluit</span></button
-							>
-							<button
-								type="button"
-								role="menuitem"
-								class="pop__item"
-								onclick={() => copy(forms.metDatum, `cite:${part.id}`)}
-								><span>{forms.metDatum}</span><span class="pop__k">met datum</span></button
-							>
-							<button
-								type="button"
-								role="menuitem"
-								class="pop__item"
-								onclick={() => copy(link(part.id!), `cite:${part.id}`)}
-								><span class="pop__link">{link(part.id!)}</span><span class="pop__k">link</span
-								></button
-							>
-						</div>
-					{/if}
-				</span>
-			{/if}
-			{#if part.id}
-				<button
-					type="button"
-					class="btn lid__btn"
-					onclick={() => copy(link(part.id!), `share:${part.id}`)}
-					>{copied === `share:${part.id}` ? 'Gekopieerd' : 'Deel'}</button
-				>
-			{/if}
-		</span>
+		{@render actions(part, 'lid__actions')}
 	</div>
 {/snippet}
 
@@ -149,11 +143,7 @@
 	{@const { body, citations: spans } = own(part)}
 	{@const showProposed = proposed && part.kind === 'lid' && proposed.lid === part.number}
 	{#if top}
-		<div
-			class="lid lid--{part.kind}"
-			id={part.id}
-			class:is-open={part.id !== null && menuFor === part.id}
-		>
+		<div class="lid lid--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
 			<span class="lid__no"
 				>{part.kind === 'lid' ? part.number : part.number ? `${part.number}.` : ''}</span
 			>
@@ -185,13 +175,9 @@
 			{@render aside(part)}
 		</div>
 	{:else}
-		<div class="part part--{part.kind}" id={part.id}>
+		<div class="part part--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
 			{#if part.number && part.id}
-				<a
-					class="part__number"
-					href="#{part.id}"
-					onclick={() => copy(link(part.id!), `share:${part.id}`)}>{part.number}.</a
-				>
+				<a class="part__number" href="#{part.id}">{part.number}.</a>
 			{/if}
 			<div class="part__body">
 				{#if body}<p><CitedText text={body} citations={spans} /></p>{/if}
@@ -199,6 +185,7 @@
 					{@render render(child, false)}
 				{/each}
 			</div>
+			{#if part.id && part.kind !== 'aanhef'}{@render actions(part, 'part__actions')}{/if}
 		</div>
 	{/if}
 {/snippet}
@@ -317,7 +304,10 @@
 		color: var(--ink-3);
 		cursor: pointer;
 	}
+	/* Above the onderdelen's hover area (`.part::before`), so the count stays a link. */
 	.lid__side {
+		position: relative;
+		z-index: 2;
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
@@ -339,14 +329,20 @@
 		display: flex;
 		gap: 4px;
 	}
-	.lid:hover .lid__actions,
-	.lid:focus-within .lid__actions,
-	.lid.is-open .lid__actions {
+	/* The lid's actions, unless the pointer is on one of its onderdelen. A lid's aanhef
+	   counts as the lid's own text: it is cited with the lid. */
+	.lid:hover:not(:has(.part--onderdeel:hover)) .lid__actions,
+	.lid__side:focus-within .lid__actions,
+	.lid.is-open > .lid__side .lid__actions {
 		visibility: visible;
 	}
-	.lid__btn {
+	.lid.is-open > .lid__side {
+		z-index: var(--z-float);
+	}
+	.act__btn {
 		padding: 2px 8px;
 		font-size: 11.5px;
+		white-space: nowrap;
 	}
 	.menu {
 		position: relative;
@@ -401,13 +397,63 @@
 
 	/* Onderdelen inside a lid keep their number in the text. */
 	.part {
+		position: relative;
 		display: flex;
 		gap: 0.6em;
 		margin: 0.4em 0 0;
 		scroll-margin: 20vh;
+		border-radius: var(--r-1);
 	}
 	.part:global(.is-landed) {
 		background: var(--accent-soft);
+	}
+	/* The onderdeel the pointer is on, and not one inside it. */
+	/* A tinted block with a bar at the left, a few pixels beyond the text on every side. */
+	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)),
+	.part.is-open {
+		background: var(--accent-soft);
+		box-shadow:
+			0 0 0 4px var(--accent-soft),
+			-3px 0 0 3px var(--accent);
+	}
+	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number,
+	.part.is-open > .part__number {
+		color: var(--accent);
+	}
+	/*
+	 * The onderdeel's hover area runs on through the gap into the lid's right column, over
+	 * the onderdeel's full height, so the pointer reaches its actions without leaving it.
+	 * A deeper onderdeel's area comes later in the page and so lies on top.
+	 */
+	.part--onderdeel::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 100%;
+		width: 162px;
+	}
+	/* In the lid's right column, level with the onderdeel's first line. */
+	.part__actions {
+		position: absolute;
+		top: 0;
+		left: calc(100% + 12px);
+		z-index: 3;
+		width: 150px;
+		display: flex;
+		visibility: hidden;
+		justify-content: flex-end;
+		gap: 4px;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+	}
+	.part:hover:not(:has(.part--onderdeel:hover)) > .part__actions,
+	.part__actions:focus-within,
+	.part.is-open > .part__actions {
+		visibility: visible;
+	}
+	.part.is-open > .part__actions {
+		z-index: var(--z-float);
 	}
 	.part__number {
 		flex: none;
@@ -448,6 +494,23 @@
 		}
 		.lid__body--pair {
 			grid-template-columns: 1fr;
+		}
+		/* No right column: the actions follow the onderdeel's text while it is touched. */
+		.part {
+			flex-wrap: wrap;
+		}
+		.part--onderdeel::before {
+			content: none;
+		}
+		.part__actions {
+			position: static;
+			display: none;
+			width: 100%;
+		}
+		.part:hover:not(:has(.part--onderdeel:hover)) > .part__actions,
+		.part__actions:focus-within,
+		.part.is-open > .part__actions {
+			display: flex;
 		}
 	}
 </style>

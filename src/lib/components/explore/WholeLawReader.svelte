@@ -59,6 +59,14 @@
 		return { destroy: () => observer.disconnect() };
 	}
 
+	// The law's names for Citeer, as the article reader builds them.
+	const citationOf = (articleNumber: string | null) => {
+		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
+		const title = meta?.citationTitle ?? meta?.title ?? null;
+		if (!articleNumber || !title) return null;
+		return { articleNumber, shortTitle: meta?.shortTitle ?? null, citationTitle: title };
+	};
+
 	const lawName = $derived.by(() => {
 		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
 		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwbId;
@@ -162,7 +170,11 @@
 				</div>
 
 				{#if detail}
-					<ArticleText text={detail.article.text} parts={detail.article.parts} />
+					<ArticleText
+						text={detail.article.text}
+						parts={detail.article.parts}
+						citation={citationOf(a.article_number)}
+					/>
 				{:else if a.text_preview}
 					<p class="whole-text">
 						{a.text_preview}{a.text_preview.length >= PREVIEW_CHARS ? '…' : ''}

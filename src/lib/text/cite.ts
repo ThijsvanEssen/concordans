@@ -1,4 +1,4 @@
-// The four forms in which an article, a lid or an onderdeel is cited.
+// The three forms in which an article, a lid or an onderdeel is cited.
 // TODO(backend): the API gives no citation formats per article; the short and long
 // forms are built from the instrument's `short_title` and `citation_title`, the lid
 // and the onderdeel appended here.
@@ -39,7 +39,10 @@ export type Citation = {
 	/** `Wetboek van Strafrecht` */
 	citationTitle: string;
 	lid?: string | null;
-	onderdeel?: string | null;
+	/** The onderdelen from the outside in: `['d', 'i']` is onderdeel d, onder i. */
+	onderdelen?: string[];
+	/** The aanhef of the lid, or of the article when there is no lid. */
+	aanhef?: boolean;
 	/** The date the citation is dated on. */
 	date?: Date;
 };
@@ -49,33 +52,58 @@ export type CitationForms = { kort: string; voluit: string; metDatum: string };
 const longDate = (d: Date) =>
 	d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
 
-/** `art. 300 lid 2 Sr`, `artikel 300, tweede lid, Wetboek van Strafrecht`, and the dated form. */
+/** A book of the Burgerlijk Wetboek is cited as the code with the book before the article: `art. 7:3 BW`. */
+function bookOf(c: Citation): { articleNumber: string; citationTitle: string } {
+	const book = /^Burgerlijk Wetboek Boek (\d+)$/i.exec(c.citationTitle)?.[1];
+	if (!book) return c;
+	const articleNumber = c.articleNumber.includes(':')
+		? c.articleNumber
+		: `${book}:${c.articleNumber}`;
+	return { articleNumber, citationTitle: 'Burgerlijk Wetboek' };
+}
+
+/**
+ * `art. 5 lid 1 onder d sub i Sr`, `artikel 5, eerste lid, onderdeel d, onder i, Wetboek
+ * van Strafrecht` (Aanwijzingen voor de regelgeving), and the dated short form.
+ */
 export function citeArticle(c: Citation): CitationForms {
-	const law = c.shortTitle ?? c.citationTitle;
-	const onder = c.onderdeel ? `onder ${c.onderdeel}` : null;
-	const kort = c.lid
-		? onder
-			? `art. ${c.articleNumber} lid ${c.lid}, ${onder}, ${law}`
-			: `art. ${c.articleNumber} lid ${c.lid} ${law}`
-		: onder
-			? `art. ${c.articleNumber}, ${onder}, ${law}`
-			: `art. ${c.articleNumber} ${law}`;
+	const { articleNumber, citationTitle } = bookOf(c);
+	const law = c.shortTitle ?? citationTitle;
+	const onderdelen = c.onderdelen ?? [];
+
+	const kort = [
+		`art. ${articleNumber}`,
+		c.lid ? `lid ${c.lid}` : null,
+		c.aanhef ? 'aanhef' : null,
+		...onderdelen.map((o, i) => (i === 0 ? `onder ${o}` : `sub ${o}`)),
+		law
+	]
+		.filter(Boolean)
+		.join(' ');
+
 	const ordinal = c.lid ? ordinalWord(c.lid) : null;
-	const lidWords = c.lid ? (ordinal ? `${ordinal} lid` : `lid ${c.lid}`) : null;
-	const voluit = [`artikel ${c.articleNumber}`, lidWords, onder, c.citationTitle]
+	const voluit = [
+		`artikel ${articleNumber}`,
+		c.lid ? (ordinal ? `${ordinal} lid` : `lid ${c.lid}`) : null,
+		c.aanhef ? 'aanhef' : null,
+		...onderdelen.map((o, i) => (i === 0 ? `onderdeel ${o}` : `onder ${o}`)),
+		citationTitle
+	]
 		.filter(Boolean)
 		.join(', ');
+
 	const dated = `${kort.charAt(0).toUpperCase()}${kort.slice(1)} (geldend op ${longDate(c.date ?? new Date())})`;
 	return { kort, voluit, metDatum: dated };
 }
 
-/** The lid and onderdeel an anchor names: `lid-2-onder-a`. */
+/** The lid, onderdelen and aanhef an anchor names: `lid-1-onder-d-onder-i`, `lid-3-aanhef`. */
 export function partOfAnchor(anchor: string | null): {
 	lid: string | null;
-	onderdeel: string | null;
+	onderdelen: string[];
+	aanhef: boolean;
 } {
-	if (!anchor) return { lid: null, onderdeel: null };
+	if (!anchor) return { lid: null, onderdelen: [], aanhef: false };
 	const lid = /^lid-([^-]+)/.exec(anchor)?.[1] ?? null;
-	const onderdeel = /onder-([^-]+)$/.exec(anchor)?.[1] ?? null;
-	return { lid, onderdeel };
+	const onderdelen = [...anchor.matchAll(/onder-([^-]+)/g)].map((m) => m[1]);
+	return { lid, onderdelen, aanhef: /(^|-)aanhef$/.test(anchor) };
 }
