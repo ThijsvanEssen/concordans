@@ -236,6 +236,10 @@
 	let hulls = $state<Hull[]>([]);
 
 	const HULL_MARGIN = 16;
+	// Around the nodes on a fit: the hull margin and a little air. Above them, the
+	// label pill of a hull (8 px gap, ~20 px pill) on top of that.
+	const STAGE_PADDING = HULL_MARGIN + 6;
+	const LABEL_ROOM = 28;
 
 	function computeHulls() {
 		if (!renderer || latestContainerGroups.size === 0) {
@@ -355,14 +359,23 @@
 			count++;
 		});
 		if (count > 0) {
-			// Roomier than the nodes strictly need: a hull's label pill sits above its
-			// own shape, and a tight fit clips it against the edge of the canvas.
-			const padX = (maxX - minX) * 0.22 || 1;
-			const padY = (maxY - minY) * 0.24 || 1;
-			renderer.setCustomBBox({ x: [minX - padX, maxX + padX], y: [minY - padY, maxY + padY] });
+			// The nodes fill the canvas up to STAGE_PADDING px, which holds a hull's own
+			// margin. Above, a hull's label pill needs LABEL_ROOM px more: the box grows
+			// upward (graph y points up) by the share of the height those pixels take.
+			const height = maxY - minY || 1;
+			const usable = renderer.getDimensions().height - 2 * STAGE_PADDING;
+			const top = usable > LABEL_ROOM * 2 ? (height * LABEL_ROOM) / (usable - LABEL_ROOM) : 0;
+			renderer.setCustomBBox({
+				x: [minX, maxX > minX ? maxX : minX + 1],
+				y: [minY, minY + height + top]
+			});
 		} else {
 			renderer.setCustomBBox(null);
 		}
+		// setCustomBBox only schedules a render; sigma reads the box into its
+		// normalization in `process`, which runs on refresh. Without it the canvas keeps
+		// the previous fit's scale until something else refreshes (a hover).
+		renderer.refresh();
 		renderer.getCamera().animatedReset({ duration: 300 });
 	}
 
@@ -468,6 +481,7 @@
 			enableEdgeEvents: true,
 			allowInvalidContainer: true,
 
+			stagePadding: STAGE_PADDING,
 			zoomToSizeRatioFunction: (ratio: number) => Math.min(Math.sqrt(ratio), 1.5),
 
 			nodeReducer: (id, data) => {
