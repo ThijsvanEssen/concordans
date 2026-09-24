@@ -16,6 +16,7 @@
 	import {
 		containerIdFor,
 		containerMembershipStore,
+		isDrawnGroup,
 		isContainerKind,
 		type ContainerGroup
 	} from '$lib/graph/container-membership';
@@ -557,7 +558,7 @@
 		// it also belongs to draws its hull around wherever that leaves it, same as
 		// any other bron on canvas.
 		const eligible = [...containerGroups.values()]
-			.filter((group) => group.members.size >= 2)
+			.filter((group) => group.members.size >= 2 && isDrawnGroup(group, focusContainerId))
 			.sort((a, b) => b.members.size - a.members.size);
 		const primaryGroupId = new Map<string, string>();
 		for (const group of eligible) {

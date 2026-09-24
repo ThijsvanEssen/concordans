@@ -99,7 +99,7 @@ export function createExpansion(
 				const targetNode = byId.get(e.target);
 				const targetKind = targetNode && containerKindOf(targetNode.collection);
 				if (targetKind && isContainerMembership(targetKind, relation) && drawn.has(e.source)) {
-					recordContainerMember(targetKind, containerIdFor(targetNode!), e.source);
+					recordContainerMember(targetKind, containerIdFor(targetNode!), e.source, relation);
 					continue;
 				}
 				// A wet a drawn stuk changes is drawn as its anchor (`lawAnchor`).
@@ -112,7 +112,7 @@ export function createExpansion(
 				const sourceNode = byId.get(e.source);
 				const sourceKind = sourceNode && containerKindOf(sourceNode.collection);
 				if (sourceKind && isContainerMembership(sourceKind, relation) && drawn.has(e.target)) {
-					recordContainerMember(sourceKind, containerIdFor(sourceNode!), e.target);
+					recordContainerMember(sourceKind, containerIdFor(sourceNode!), e.target, relation);
 					continue;
 				}
 				if (!drawn.has(e.source) || !drawn.has(e.target)) continue;

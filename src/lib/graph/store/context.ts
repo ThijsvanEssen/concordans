@@ -261,7 +261,7 @@ export function createGraphContext() {
 				neighborContainerKind &&
 				isContainerMembership(neighborContainerKind, relation)
 			) {
-				recordContainerMember(neighborContainerKind, containerIdFor(neighbor), center.id);
+				recordContainerMember(neighborContainerKind, containerIdFor(neighbor), center.id, relation);
 				continue;
 			}
 			if (
@@ -271,7 +271,12 @@ export function createGraphContext() {
 				isContainerMembership(centerContainerKind, relation)
 			) {
 				touchNode(other.id, other);
-				recordContainerMember(centerContainerKind, containerIdFor(response.node), other.id);
+				recordContainerMember(
+					centerContainerKind,
+					containerIdFor(response.node),
+					other.id,
+					relation
+				);
 				continue;
 			}
 

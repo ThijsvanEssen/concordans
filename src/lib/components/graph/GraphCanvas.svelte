@@ -8,7 +8,7 @@
 	import { relationLabel, type Collection, type Relation } from '$lib/vocabulary';
 	import type { BronKind } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
-	import type { ContainerGroup } from '$lib/graph/container-membership';
+	import { isDrawnGroup, type ContainerGroup } from '$lib/graph/container-membership';
 	import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 	import {
 		spriteFor,
@@ -260,9 +260,10 @@
 	function hullLinkOf(src: string, tgt: string): { from: string; to: string } | null {
 		if (!graph.hasNode(tgt) || !graph.getNodeAttribute(tgt, 'anchor')) return null;
 		const to = [...(nodeGroupIds.get(tgt) ?? [])][0];
-		const from = [...(nodeGroupIds.get(src) ?? [])].find(
-			(id) => latestContainerGroups.get(id)?.kind !== 'instrument'
-		);
+		const from = [...(nodeGroupIds.get(src) ?? [])].find((id) => {
+			const group = latestContainerGroups.get(id);
+			return group && group.kind !== 'instrument' && isDrawnGroup(group, focusContainerId);
+		});
 		return to && from ? { from, to } : null;
 	}
 
@@ -320,6 +321,7 @@
 		type Drawn = Hull & { polygon: Point[]; center: Point; members: Set<string> };
 		const drawn = new Map<string, Drawn>();
 		for (const group of latestContainerGroups.values()) {
+			if (!isDrawnGroup(group, focusContainerId)) continue;
 			const points: { x: number; y: number }[] = [];
 			for (const id of group.members) {
 				if (!graph.hasNode(id)) continue;

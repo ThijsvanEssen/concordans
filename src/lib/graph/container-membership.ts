@@ -57,7 +57,17 @@ export type ContainerGroup = {
 	/** Empty for an instrument: its name comes from `instrumentMetaStore` instead. */
 	label: string;
 	members: Set<string>;
+	/** The members that are PART_OF the container (a dossier's stukken and zaken), not merely about it. */
+	parts: Set<string>;
 };
+
+/**
+ * Whether a group is drawn as a hull. A dossier is, when it holds a stuk or zaak of its
+ * own or is the focus: an activity about forty dossiers (a regeling van werkzaamheden)
+ * would otherwise draw forty hulls around that one activity.
+ */
+export const isDrawnGroup = (group: ContainerGroup, focusId: string | null): boolean =>
+	group.kind !== 'dossier' || group.parts.size > 0 || group.id === focusId;
 
 /** The id a container is grouped under: an instrument by law id, the rest by node id. */
 export function containerIdFor(node: {
@@ -85,7 +95,7 @@ function flush() {
 function ensureGroup(kind: ContainerKind, id: string): ContainerGroup {
 	let group = groups.get(id);
 	if (!group) {
-		group = { kind, id, label: '', members: new Set() };
+		group = { kind, id, label: '', members: new Set(), parts: new Set() };
 		groups.set(id, group);
 	}
 	return group;
@@ -99,16 +109,19 @@ export function recordContainerMeta(kind: ContainerKind, id: string | null, labe
 	flush();
 }
 
-/** Registers that `childId` (a bron on canvas) belongs to the container `id`. */
+/** Registers that `childId` (a bron on canvas) belongs to the container `id`, by `relation`. */
 export function recordContainerMember(
 	kind: ContainerKind,
 	id: string | null,
-	childId: string
+	childId: string,
+	relation: Relation = 'PART_OF'
 ): void {
 	if (!id) return;
 	const group = ensureGroup(kind, id);
-	if (group.members.has(childId)) return;
+	const part = relation === 'PART_OF';
+	if (group.members.has(childId) && (!part || group.parts.has(childId))) return;
 	group.members.add(childId);
+	if (part) group.parts.add(childId);
 	flush();
 }
 
@@ -131,6 +144,7 @@ export function pruneContainerMembers(keepIds: ReadonlySet<string>): void {
 		for (const id of group.members) {
 			if (!keepIds.has(id)) {
 				group.members.delete(id);
+				group.parts.delete(id);
 				changed = true;
 			}
 		}
