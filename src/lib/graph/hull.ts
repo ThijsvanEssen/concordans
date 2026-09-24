@@ -44,12 +44,24 @@ export function convexHull(points: Point[]): Point[] {
  * edge. `outline` holds the points the path passes through, so the label can anchor
  * to this hull's own top.
  */
-export function hullOutline(points: Point[], margin: number): { outline: Point[]; path: string } {
-	if (points.length === 0) return { outline: [], path: '' };
+export type HullShape = {
+	/** The points the path passes through, and each point's top: where a label anchors. */
+	outline: Point[];
+	/** The outline as a closed polygon, in order: what a line between hulls is cut at. */
+	polygon: Point[];
+	path: string;
+};
+
+export function hullOutline(points: Point[], margin: number): HullShape {
+	if (points.length === 0) return { outline: [], polygon: [], path: '' };
 	if (points.length === 1) {
 		const { x, y } = points[0];
 		const path = `M ${x - margin} ${y} A ${margin} ${margin} 0 1 0 ${x + margin} ${y} A ${margin} ${margin} 0 1 0 ${x - margin} ${y} Z`;
-		return { outline: [{ x, y: y - margin }], path };
+		const polygon = Array.from({ length: 24 }, (_, i) => ({
+			x: x + Math.cos((i / 24) * Math.PI * 2) * margin,
+			y: y + Math.sin((i / 24) * Math.PI * 2) * margin
+		}));
+		return { outline: [{ x, y: y - margin }], polygon, path };
 	}
 
 	const hull = convexHull(points);
@@ -63,6 +75,7 @@ export function hullOutline(points: Point[], margin: number): { outline: Point[]
 		return { x: (dy / len) * margin, y: (-dx / len) * margin };
 	};
 	const outline: Point[] = [];
+	const polygon: Point[] = [];
 	let path = '';
 	for (let i = 0; i < n; i++) {
 		const p = hull[i];
@@ -71,7 +84,37 @@ export function hullOutline(points: Point[], margin: number): { outline: Point[]
 		const from = { x: p.x + before.x, y: p.y + before.y };
 		const to = { x: p.x + after.x, y: p.y + after.y };
 		outline.push(from, to, { x: p.x, y: p.y - margin });
+		polygon.push(from, to);
 		path += `${i === 0 ? 'M' : 'L'} ${from.x} ${from.y} A ${margin} ${margin} 0 0 1 ${to.x} ${to.y} `;
 	}
-	return { outline, path: path + 'Z' };
+	return { outline, polygon, path: path + 'Z' };
+}
+
+/** The mean of some points: where a line between two hulls starts from. */
+export const centroid = (points: Point[]): Point => ({
+	x: points.reduce((sum, p) => sum + p.x, 0) / (points.length || 1),
+	y: points.reduce((sum, p) => sum + p.y, 0) / (points.length || 1)
+});
+
+/**
+ * Where the segment from `inside` toward `outside` leaves the convex `polygon`
+ * that holds `inside`; `inside` itself when it does not leave it.
+ */
+export function exitPoint(inside: Point, outside: Point, polygon: Point[]): Point {
+	const dx = outside.x - inside.x;
+	const dy = outside.y - inside.y;
+	let best = Infinity;
+	for (let i = 0; i < polygon.length; i++) {
+		const a = polygon[i];
+		const b = polygon[(i + 1) % polygon.length];
+		const ex = b.x - a.x;
+		const ey = b.y - a.y;
+		const denominator = dx * ey - dy * ex;
+		if (Math.abs(denominator) < 1e-9) continue;
+		// Solve inside + t * (dx, dy) = a + u * (ex, ey).
+		const t = ((a.x - inside.x) * ey - (a.y - inside.y) * ex) / denominator;
+		const u = ((a.x - inside.x) * dy - (a.y - inside.y) * dx) / denominator;
+		if (t > 0 && u >= 0 && u <= 1 && t < best) best = t;
+	}
+	return best === Infinity ? inside : { x: inside.x + dx * best, y: inside.y + dy * best };
 }

@@ -9,7 +9,7 @@
 	import type { BronKind } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
 	import type { ContainerGroup } from '$lib/graph/container-membership';
-	import { hullOutline } from '$lib/graph/hull';
+	import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 	import {
 		spriteFor,
 		shapeFor,
@@ -232,8 +232,65 @@
 		labelX: number;
 		labelY: number;
 		label: string;
+		/** Out of the hover: the hovered bron is not in it and not tied to it. */
+		dim: boolean;
 	};
 	let hulls = $state<Hull[]>([]);
+
+	// A line from a bron in a hull to a wet's anchor (the change a dossier proposes)
+	// is drawn once, hull to hull, instead of once per stuk.
+	type HullLink = {
+		id: string;
+		d: string;
+		arrow: string;
+		color: string;
+		dashed: boolean;
+		dim: boolean;
+		/** The relation in words, shown while one of its hulls is in the hover. */
+		label: string | null;
+		labelX: number;
+		labelY: number;
+	};
+	let hullLinks = $state<HullLink[]>([]);
+
+	// The hull under the pointer (its shape or its label), found in `onpointermove`.
+	let hoveredHullId: string | null = null;
+	let hullHitAreas: { id: string; polygon: Point[]; label: DOMRect }[] = [];
+
+	function hullLinkOf(src: string, tgt: string): { from: string; to: string } | null {
+		if (!graph.hasNode(tgt) || !graph.getNodeAttribute(tgt, 'anchor')) return null;
+		const to = [...(nodeGroupIds.get(tgt) ?? [])][0];
+		const from = [...(nodeGroupIds.get(src) ?? [])].find(
+			(id) => latestContainerGroups.get(id)?.kind !== 'instrument'
+		);
+		return to && from ? { from, to } : null;
+	}
+
+	const inside = (p: Point, polygon: Point[]) => {
+		let hit = false;
+		for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+			const a = polygon[i];
+			const b = polygon[j];
+			if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x)
+				hit = !hit;
+		}
+		return hit;
+	};
+
+	function onHullPointer(event: PointerEvent) {
+		const box = wrap.getBoundingClientRect();
+		const p = { x: event.clientX - box.left, y: event.clientY - box.top };
+		// The last hull drawn is the one on top; a label counts as its hull.
+		let hit: string | null = null;
+		for (const area of hullHitAreas) {
+			const r = area.label;
+			const onLabel = p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
+			if (onLabel || inside(p, area.polygon)) hit = area.id;
+		}
+		if (hit === hoveredHullId) return;
+		hoveredHullId = hit;
+		computeHulls();
+	}
 
 	const HULL_MARGIN = 16;
 	// Around the nodes on a fit: the hull margin and a little air. Above them, the
@@ -260,7 +317,8 @@
 			if (hulls.length) hulls = [];
 			return;
 		}
-		const next: Hull[] = [];
+		type Drawn = Hull & { polygon: Point[]; center: Point; members: Set<string> };
+		const drawn = new Map<string, Drawn>();
 		for (const group of latestContainerGroups.values()) {
 			const points: { x: number; y: number }[] = [];
 			for (const id of group.members) {
@@ -274,31 +332,118 @@
 				(id) => graph.hasNode(id) && !!graph.getNodeAttribute(id, 'anchor')
 			);
 			if (points.length < (anchored ? 1 : 2)) continue;
-			const label =
-				group.kind === 'instrument' ? (getInstrumentMeta(group.id)?.shortTitle ?? '') : group.label;
+			const meta = group.kind === 'instrument' ? getInstrumentMeta(group.id) : null;
+			const label = meta ? (meta.shortTitle ?? meta.citationTitle ?? '') : group.label;
 			if (!label) continue;
+			// The full name while the hull, or a bron in it, is under the pointer.
+			const inHover =
+				hoveredHullId === group.id || (hoveredId !== null && group.members.has(hoveredId));
+			const shown = inHover && meta ? (meta.citationTitle ?? meta.title ?? label) : label;
 			// The label anchors to this hull's own outline, not a raw member point: a
 			// bron in several groups at once (a lid on many commissies) would otherwise
 			// put every one of its hulls' labels on that one shared point.
-			const { outline, path } = hullOutline(points, HULL_MARGIN);
+			const { outline, polygon, path } = hullOutline(points, HULL_MARGIN);
 			const top = outline.reduce((a, b) => (b.y < a.y ? b : a));
 			// Above the hull's top, but never past the edge of the canvas: a hull at the
 			// border (or a fit that leaves little room) would cut its label in half.
-			const half = labelWidth(label) / 2;
+			const half = labelWidth(shown) / 2;
 			const { width } = renderer.getDimensions();
-			next.push({
+			drawn.set(group.id, {
 				id: group.id,
 				path,
 				color: hullColorFor(group.kind),
-				label,
+				label: shown,
 				labelX: Math.min(
 					Math.max(top.x, half + EDGE_GAP),
 					Math.max(half + EDGE_GAP, width - half - EDGE_GAP)
 				),
-				labelY: Math.max(top.y - LABEL_GAP, LABEL_HEIGHT + EDGE_GAP)
+				labelY: Math.max(top.y - LABEL_GAP, LABEL_HEIGHT + EDGE_GAP),
+				dim: false,
+				polygon,
+				center: centroid(points),
+				members: group.members
 			});
 		}
-		hulls = next;
+
+		// One line per pair of hulls, from where it leaves the one to where it enters the other.
+		const links = new Map<
+			string,
+			{ from: Drawn; to: Drawn; relation: Relation; status: unknown }
+		>();
+		graph.forEachEdge((_e, attrs, src, tgt) => {
+			const pair = !attrs.layoutOnly && hullLinkOf(src, tgt);
+			const from = pair && drawn.get(pair.from);
+			const to = pair && drawn.get(pair.to);
+			if (!from || !to) return;
+			const id = `${from.id}->${to.id}`;
+			if (!links.has(id))
+				links.set(id, { from, to, relation: attrs.relation as Relation, status: attrs.status });
+		});
+
+		// In the hover: the hulls that hold the hovered bron or one tied to it, or the
+		// hovered hull, and every hull a line joins to those. The rest steps back.
+		let active: Set<string> | null = null;
+		if (hoveredHullId && drawn.has(hoveredHullId)) active = new Set([hoveredHullId]);
+		else if (hoveredId !== null) {
+			active = new Set();
+			for (const h of drawn.values()) {
+				if (h.members.has(hoveredId) || [...h.members].some((m) => hoveredNeighbours.has(m)))
+					active.add(h.id);
+			}
+		}
+		if (active) {
+			for (const { from, to } of links.values()) {
+				if (active.has(from.id) || active.has(to.id)) {
+					active.add(from.id);
+					active.add(to.id);
+				}
+			}
+			for (const h of drawn.values()) h.dim = !active.has(h.id);
+		}
+
+		const nextLinks: HullLink[] = [];
+		for (const [id, { from, to, relation, status }] of links) {
+			const start = exitPoint(from.center, to.center, from.polygon);
+			const end = exitPoint(to.center, from.center, to.polygon);
+			const dx = end.x - start.x;
+			const dy = end.y - start.y;
+			const len = Math.hypot(dx, dy) || 1;
+			const ux = dx / len;
+			const uy = dy / len;
+			// A small arrowhead at the wet, 7 px long.
+			const back = { x: end.x - ux * 7, y: end.y - uy * 7 };
+			const arrow = `M ${end.x} ${end.y} L ${back.x - uy * 3.5} ${back.y + ux * 3.5} L ${back.x + uy * 3.5} ${back.y - ux * 3.5} Z`;
+			const lit = active !== null && active.has(from.id) && active.has(to.id);
+			const words = [
+				relationLabel(relation, 'documents'),
+				status === 'voorgesteld' ? 'voorgesteld' : null
+			]
+				.filter(Boolean)
+				.join(', ');
+			nextLinks.push({
+				id,
+				d: `M ${start.x} ${start.y} L ${back.x} ${back.y}`,
+				arrow,
+				color: edgeColorFor(relation, 'document'),
+				dashed: status === 'voorgesteld',
+				dim: active !== null && !lit,
+				label: lit ? words : null,
+				labelX: (start.x + end.x) / 2,
+				labelY: (start.y + end.y) / 2
+			});
+		}
+
+		const next = [...drawn.values()];
+		hullHitAreas = next.map((h) => {
+			const w = labelWidth(h.label);
+			return {
+				id: h.id,
+				polygon: h.polygon,
+				label: new DOMRect(h.labelX - w / 2, h.labelY - LABEL_HEIGHT, w, LABEL_HEIGHT)
+			};
+		});
+		hulls = next.map(({ polygon: _p, center: _c, members: _m, ...hull }) => hull);
+		hullLinks = nextLinks;
 	}
 
 	const HEAT_SATURATION_RATE = 5;
@@ -440,7 +585,7 @@
 
 		const [
 			{ default: Sigma },
-			{ EdgeArrowProgram },
+			{ EdgeArrowProgram, drawDiscNodeHover },
 			{ createNodeBorderProgram },
 			{ NodeSquareProgram },
 			{ createNodeImageProgram },
@@ -508,9 +653,14 @@
 
 			stagePadding: STAGE_PADDING,
 			zoomToSizeRatioFunction: (ratio: number) => Math.min(Math.sqrt(ratio), 1.5),
+			// A wet's anchor is a point, not a bron: its hull shows the name on hover.
+			defaultDrawNodeHover: (context, data, settings) => {
+				if (!data.anchor) drawDiscNodeHover(context, data, settings);
+			},
 
 			nodeReducer: (id, data) => {
 				if (isHiddenNode(id, data)) return { ...data, hidden: true };
+				if (data.anchor) return { ...data, label: '', forceLabel: false };
 
 				const f0 = latestFilters;
 				// No single node to focus around when the selection is a container (a wet,
@@ -590,6 +740,7 @@
 
 				const relation = data.relation as Relation;
 				if (latestFilters?.hiddenRelations.has(relation)) return { ...data, hidden: true };
+				if (hullLinkOf(src, tgt)) return { ...data, hidden: true };
 
 				const sourceKind = srcAttrs.kind as GraphNodeKind;
 				const style = edgeStyleFor(relation, data.status as string | null);
@@ -768,7 +919,12 @@
 <div
 	bind:this={wrap}
 	class="canvas-wrap"
+	onpointermove={onHullPointer}
 	onpointerleave={() => {
+		if (hoveredHullId !== null) {
+			hoveredHullId = null;
+			computeHulls();
+		}
 		if (sigmaHoveredId !== null) {
 			sigmaHoveredId = null;
 			setHoveredId(externalHoveredId ?? null);
@@ -778,14 +934,41 @@
 	{#if hulls.length > 0}
 		<svg class="hull-overlay" aria-hidden="true">
 			{#each hulls as h (h.id)}
-				<path d={h.path} fill={withAlpha(h.color, 0.08)} stroke={withAlpha(h.color, 0.35)} />
+				<path
+					class="hull"
+					class:is-dim={h.dim}
+					d={h.path}
+					fill={withAlpha(h.color, 0.08)}
+					stroke={withAlpha(h.color, 0.35)}
+				/>
+			{/each}
+			{#each hullLinks as l (l.id)}
+				<g class="hull-link" class:is-dim={l.dim}>
+					<path
+						d={l.d}
+						stroke={l.color}
+						stroke-dasharray={l.dashed ? '3 3' : undefined}
+						fill="none"
+					/>
+					<path d={l.arrow} fill={l.color} />
+				</g>
 			{/each}
 		</svg>
 		<div class="hull-label-overlay" aria-hidden="true">
 			{#each hulls as h (h.id)}
-				<span class="hull-label" style="left:{h.labelX}px; top:{h.labelY}px; --hull-color:{h.color}"
-					>{h.label}</span
+				<span
+					class="hull-label"
+					class:is-dim={h.dim}
+					style="left:{h.labelX}px; top:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
 				>
+			{/each}
+			{#each hullLinks as l (l.id)}
+				{#if l.label}
+					<span
+						class="hull-link-label"
+						style="left:{l.labelX}px; top:{l.labelY}px; --link-color:{l.color}">{l.label}</span
+					>
+				{/if}
 			{/each}
 		</div>
 	{/if}
@@ -835,8 +1018,34 @@
 		overflow: visible;
 		pointer-events: none;
 	}
-	.hull-overlay path {
+	.hull-overlay .hull {
 		stroke-width: 1.5;
+		transition: opacity var(--dur-1) var(--ease);
+	}
+	/* A line between hulls: thin and fine-dashed, so it reads as a relation, not a road. */
+	.hull-link path:first-child {
+		stroke-width: 1.2;
+		stroke-linecap: round;
+	}
+	.hull-link {
+		opacity: 0.8;
+		transition: opacity var(--dur-1) var(--ease);
+	}
+	.hull.is-dim,
+	.hull-link.is-dim,
+	.hull-label.is-dim {
+		opacity: 0.3;
+	}
+	.hull-link-label {
+		position: absolute;
+		transform: translate(-50%, -50%);
+		padding: 1px 6px;
+		border-radius: 999px;
+		background: var(--paper);
+		font-family: var(--font-sans);
+		font-size: 11px;
+		color: var(--link-color);
+		white-space: nowrap;
 	}
 
 	/* Above sigma's canvases, unlike the hull fill: a label buried under a dense

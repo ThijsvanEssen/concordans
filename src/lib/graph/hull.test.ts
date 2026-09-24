@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hullOutline, type Point } from './hull';
+import { exitPoint, hullOutline, type Point } from './hull';
 
 const nearest = (p: Point, points: Point[]) =>
 	Math.min(...points.map((q) => Math.hypot(p.x - q.x, p.y - q.y)));
@@ -42,5 +42,12 @@ describe('hullOutline', () => {
 			16
 		);
 		expect(Math.min(...outline.map((p) => p.y))).toBeCloseTo(-6, 6);
+	});
+
+	it('cuts a line between hulls at the outline it leaves', () => {
+		const { polygon } = hullOutline([{ x: 0, y: 0 }], 16);
+		const exit = exitPoint({ x: 0, y: 0 }, { x: 100, y: 0 }, polygon);
+		expect(exit.x).toBeCloseTo(16, 6);
+		expect(exit.y).toBeCloseTo(0, 6);
 	});
 });
