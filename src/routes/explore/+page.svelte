@@ -178,6 +178,9 @@
 	let deepenedDepth = 0;
 
 	$effect(() => {
+		// Read here, not only inside `deepen`: that branch does not run on the first pass,
+		// so a change of ?diepte would otherwise not rerun the effect until a reload.
+		void explicitDepth;
 		if (!focus) {
 			focusError = null;
 			if (selectedNode) store.setSelection(null);
