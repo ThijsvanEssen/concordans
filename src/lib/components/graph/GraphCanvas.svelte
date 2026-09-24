@@ -18,6 +18,7 @@
 		edgeStyleFor,
 		hullColorFor,
 		dimColor,
+		towardPaper,
 		withAlpha,
 		tokens
 	} from './nodeSprites';
@@ -601,10 +602,39 @@
 						...data,
 						hidden: false,
 						type: edgeType,
-						color: dimColor(0.6),
+						color: dimColor(0.14),
 						size: restSize,
 						label: '',
 						zIndex: 0
+					};
+				}
+
+				if (focusedId !== null) {
+					// The focus's own verbindingen carry the view: in full when they are few,
+					// as a fan in their own colour when there are hundreds, so the fan reads as
+					// one shape and a single line still shows on hover.
+					if (src === focusedId || tgt === focusedId) {
+						const alpha = Math.min(1, Math.max(0.35, 3 / Math.sqrt(focusLevel1.size || 1)));
+						return {
+							...data,
+							hidden: false,
+							type: edgeType,
+							color: towardPaper(renderColor, alpha),
+							size: restSize,
+							label: ''
+						};
+					}
+					// A line between two other bronnen is context. Into a hull it repeats what
+					// the hull says (a judgment citing more articles of the same law), so it
+					// waits for a hover; elsewhere it is a trace in its own colour.
+					if (nodeGroupIds.has(src) || nodeGroupIds.has(tgt)) return { ...data, hidden: true };
+					return {
+						...data,
+						hidden: false,
+						type: edgeType,
+						color: towardPaper(renderColor, 0.25),
+						size: restSize * 0.7,
+						label: ''
 					};
 				}
 

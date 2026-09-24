@@ -174,12 +174,26 @@ export function withAlpha(color: string, alpha: number): string {
 }
 
 /**
+ * `color` mixed toward `--paper`, opaque: `strength` 1 is the colour itself, 0 the paper.
+ * Sigma draws on a transparent WebGL canvas, where a line with a low alpha blends toward
+ * white rather than toward the paper behind it; an opaque mix keeps its hue.
+ */
+export function towardPaper(color: string, strength: number): string {
+	const c = HEX.exec(color.trim());
+	const p = HEX.exec(tokens().paper.trim());
+	if (!c || !p) return color;
+	const mix = (i: number) =>
+		Math.round(parseInt(c[i], 16) * strength + parseInt(p[i], 16) * (1 - strength));
+	return `rgb(${mix(1)}, ${mix(2)}, ${mix(3)})`;
+}
+
+/**
  * The colour of an edge or a node border pushed out of focus (hover, stale context):
  * `--rule-strong` alone is close enough to `--paper` to read as a blank line, so
- * de-emphasis dims `--ink-3` toward the paper instead of picking a paler grey.
+ * de-emphasis mixes `--ink-3` toward the paper instead of picking a paler grey.
  */
-export function dimColor(alpha = 0.4): string {
-	return withAlpha(tokens().ink3, alpha);
+export function dimColor(strength = 0.4): string {
+	return towardPaper(tokens().ink3, strength);
 }
 
 /** The hull colour of a container: the same family as its `PART_OF`/`MEMBER_OF` edges would be. */

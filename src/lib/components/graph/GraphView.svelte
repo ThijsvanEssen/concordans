@@ -156,8 +156,12 @@
 	let fitScheduled = false;
 	let skipNextFit = false;
 	let fitSuppressed = false;
+	// After `fitWhenSettled` the fit follows every burst that comes after it (the layers of
+	// a new focus settle in several), which would otherwise keep the first viewport, until
+	// the pointer is on the canvas: the camera never moves under the reader's hand.
+	let fitFollows = false;
 	function scheduleFit() {
-		if (skipNextFit || fitSuppressed) return;
+		if (fitSuppressed || (skipNextFit && !fitFollows)) return;
 		if (fitScheduled) return;
 		fitScheduled = true;
 		requestAnimationFrame(() => {
@@ -212,7 +216,10 @@
 
 	/** Lift the suppression and fit once the layout has stopped. */
 	export function fitWhenSettled() {
+		// An explicit request: it overrides the viewport an additive sync kept.
 		fitSuppressed = false;
+		skipNextFit = false;
+		fitFollows = true;
 		const FIT_MAX_WAIT_MS = 6000;
 		const POLL_MS = 100;
 		setTimeout(() => {
@@ -573,11 +580,7 @@
 			});
 			disks.push({ cx, cy, r, ids });
 		}
-		if (disks.length < 2) {
-			if (disks.length > 0) canvas?.refresh();
-			return;
-		}
-		for (let pass = 0; pass < 6; pass++) {
+		for (let pass = 0; pass < 6 && disks.length > 1; pass++) {
 			for (let i = 0; i < disks.length; i++) {
 				for (let j = i + 1; j < disks.length; j++) {
 					const a = disks[i];
@@ -606,7 +609,31 @@
 				}
 			}
 		}
-		canvas?.refresh();
+		// A bron that is not packed into a disk (a judgment citing one of a law's
+		// articles) would otherwise sit inside that law's hull and read as part of it.
+		// It moves out of every disk it landed in, in its own direction from the disk's
+		// centre, into a band around the disk as wide as those bronnen need: a
+		// low-discrepancy step spreads them across the band, so bronnen in one direction
+		// do not stack on one ring.
+		const packed = new Set(disks.flatMap((disk) => disk.ids));
+		for (const disk of disks) {
+			const inside: { id: string; angle: number }[] = [];
+			g.forEachNode((id, attrs) => {
+				if (packed.has(id)) return;
+				const dx = (attrs.x as number) - disk.cx;
+				const dy = (attrs.y as number) - disk.cy;
+				if (Math.hypot(dx, dy) >= disk.r + CLUSTER_GAP) return;
+				const angle = dx || dy ? Math.atan2(dy, dx) : inside.length * GOLDEN_ANGLE;
+				inside.push({ id, angle });
+			});
+			const band = groupRadius(inside.length);
+			inside.forEach(({ id, angle }, i) => {
+				const radius = disk.r + CLUSTER_GAP + band * ((i * 0.618034) % 1);
+				g.setNodeAttribute(id, 'x', disk.cx + Math.cos(angle) * radius);
+				g.setNodeAttribute(id, 'y', disk.cy + Math.sin(angle) * radius);
+			});
+		}
+		if (disks.length > 0) canvas?.refresh();
 	}
 
 	function syncEdges(allEdges: GraphEdge[]) {
@@ -783,7 +810,11 @@
 	{/if}
 
 	<div class="graph-main">
-		<div class="graph-canvas-wrap">
+		<div
+			class="graph-canvas-wrap"
+			onpointerenter={() => (fitFollows = false)}
+			onwheel={() => (fitFollows = false)}
+		>
 			{#if canvasOverlay}
 				{@render canvasOverlay()}
 			{/if}
