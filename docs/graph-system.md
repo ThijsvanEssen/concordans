@@ -69,6 +69,10 @@ The legend states what is on the canvas and what the bronfilter hides, with the 
 
 **Layout.** ForceAtlas2 runs in a worker (`graphology-layout-forceatlas2/worker`), created on demand in `ensureLayout` and killed on destroy. Existing nodes are fixed while newcomers settle. After a load, call `suppressFit()` first and `fitWhenSettled()` last: the fit then waits until the worker has stopped. After each burst `separateContainerGroups` packs each hull's members into a disk, pushes overlapping disks apart, and moves any other bron that landed in a disk to a band around it, so a judgment never reads as part of a law.
 
+**Sprites.** A kind that is not a circle is an image: `spriteFor` draws its shape on a canvas and hands it over as a PNG. Not as an SVG: sigma's image program draws its atlas once, as soon as an image has loaded, and Chrome may not have rasterized an SVG by then, which left documents and activities invisible.
+
+**Hulls.** `hullOutline` (`src/lib/graph/hull.ts`) grows the convex hull of a group's points by `HULL_MARGIN`: each side moved out, each corner an arc around its point, so every member lies inside however few there are.
+
 **Colours.** `nodeSprites.ts` is the one place that defines colour and shape per kind and colour and line style per relation, and it reads every colour from the design tokens of `AppShell.svelte` once (`tokens()`, through `getComputedStyle`), so the canvas follows a token change after a reload. `KindGlyph`, the legend and the canvas read it. Edges: references between articles and the structure of the law in moss, citations by judgments in slate, EXPLAINS in plum, AMENDS, INTRODUCES and REPEALS in the accent (dashed when `voorgesteld`), PART_OF dotted. `DashedEdgeProgram.ts` holds the dashed and the dotted edge programs.
 
 **Edges are selectable.** Sigma runs with `enableEdgeEvents`; a click on an edge (`onEdgeClick`) opens the card Verbinding (`src/lib/verbonden/VerbindingCard.svelte`, built by `verbindingOfEdge`) docked at the bottom left of the canvas, and the edge reducer widens the selected edge. On hover or selection the edge shows its label: `haalt aan, lid 2, r.o. 5.1`.

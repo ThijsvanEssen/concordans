@@ -240,50 +240,60 @@ export const KIND_SHAPE: Record<GraphNodeKind, NodeShape> = {
 
 export const shapeFor = (kind: GraphNodeKind): NodeShape => KIND_SHAPE[kind];
 
-// Sprite viewBox is 32×32 with shapes centred at (16,16) and "radius" 14.
+// A sprite is drawn in a 32×32 box, the shape centred at (16,16) with "radius" 14,
+// onto a canvas of SPRITE_PX and handed over as a PNG. Not as an SVG: sigma's image
+// program draws its atlas once, as soon as an image has loaded, and Chrome may not
+// have rasterized an SVG by then, so the atlas holds a blank and the bron never shows.
 const VB = 32;
 const C = 16;
 const R = 14;
+const SPRITE_PX = 128;
 
-function pathFor(shape: NodeShape): string {
+function tracePath(ctx: CanvasRenderingContext2D, shape: NodeShape): void {
+	ctx.beginPath();
 	switch (shape) {
 		case 'circle':
-			return `<circle cx="${C}" cy="${C}" r="${R}" />`;
+			ctx.arc(C, C, R, 0, Math.PI * 2);
+			break;
 		case 'diamond':
-			return `<polygon points="${C},${C - R} ${C + R},${C} ${C},${C + R} ${C - R},${C}" />`;
+			ctx.moveTo(C, C - R);
+			ctx.lineTo(C + R, C);
+			ctx.lineTo(C, C + R);
+			ctx.lineTo(C - R, C);
+			break;
 		case 'hexagon': {
-			const dx = R;
 			const dy = R * 0.866;
 			const hx = R * 0.5;
-			const pts = [
-				[C - dx, C],
-				[C - hx, C - dy],
-				[C + hx, C - dy],
-				[C + dx, C],
-				[C + hx, C + dy],
-				[C - hx, C + dy]
-			];
-			return `<polygon points="${pts.map((p) => p.join(',')).join(' ')}" />`;
+			ctx.moveTo(C - R, C);
+			ctx.lineTo(C - hx, C - dy);
+			ctx.lineTo(C + hx, C - dy);
+			ctx.lineTo(C + R, C);
+			ctx.lineTo(C + hx, C + dy);
+			ctx.lineTo(C - hx, C + dy);
+			break;
 		}
 		case 'roundedRect': {
-			const s = R * 1.7;
-			const x = C - s / 2;
-			const rr = s * 0.22;
-			return `<rect x="${x}" y="${x}" width="${s}" height="${s}" rx="${rr}" ry="${rr}" />`;
+			const size = R * 1.7;
+			ctx.roundRect(C - size / 2, C - size / 2, size, size, size * 0.22);
+			break;
 		}
 	}
+	ctx.closePath();
 }
 
-function svgFor(shape: NodeShape, fill: string, stroke: string, strokeWidth: number): string {
-	const raw = pathFor(shape);
-	const attrs = `fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"`;
-	const withAttrs = raw.replace(/^<(\w+)\s/, `<$1 ${attrs} `);
-	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VB} ${VB}">${withAttrs}</svg>`;
-}
-
-function toDataUrl(svg: string): string {
-	if (typeof btoa === 'function') return `data:image/svg+xml;base64,${btoa(svg)}`;
-	return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+function drawSprite(shape: NodeShape, fill: string, stroke: string, strokeWidth: number): string {
+	const canvas = document.createElement('canvas');
+	canvas.width = canvas.height = SPRITE_PX;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return '';
+	ctx.scale(SPRITE_PX / VB, SPRITE_PX / VB);
+	tracePath(ctx, shape);
+	ctx.fillStyle = fill;
+	ctx.fill();
+	ctx.strokeStyle = stroke;
+	ctx.lineWidth = strokeWidth;
+	ctx.stroke();
+	return canvas.toDataURL('image/png');
 }
 
 type Variant = 'normal' | 'focused' | 'stub';
@@ -293,11 +303,11 @@ function buildSprite(kind: GraphNodeKind, variant: Variant): string {
 	const shape = shapeFor(kind);
 	const t = tokens();
 	// A stub (referenced, not loaded yet) keeps a paper fill and the stroke of its kind.
-	if (variant === 'stub') return svgFor(shape, t.paper, strokeFor(kind), 1.5);
+	if (variant === 'stub') return drawSprite(shape, t.paper, strokeFor(kind), 1.5);
 	// The focused bron takes the accent as an outer stroke.
-	if (variant === 'focused') return svgFor(shape, fillFor(kind), t.accent, 2.8);
+	if (variant === 'focused') return drawSprite(shape, fillFor(kind), t.accent, 2.8);
 	const isOpen = fillFor(kind) === t.paper;
-	return svgFor(shape, fillFor(kind), strokeFor(kind), isOpen ? 2.4 : 1);
+	return drawSprite(shape, fillFor(kind), strokeFor(kind), isOpen ? 2.4 : 1);
 }
 
 export function spriteFor(kind: GraphNodeKind, stub: boolean, focused: boolean): string {
@@ -305,7 +315,7 @@ export function spriteFor(kind: GraphNodeKind, stub: boolean, focused: boolean):
 	const k = `${kind}:${variant}`;
 	let url = cache.get(k);
 	if (!url) {
-		url = toDataUrl(buildSprite(kind, variant));
+		url = buildSprite(kind, variant);
 		cache.set(k, url);
 	}
 	return url;

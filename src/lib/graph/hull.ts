@@ -36,10 +36,13 @@ export function convexHull(points: Point[]): Point[] {
 }
 
 /**
- * A padded, rounded outline `margin` px outside the hull of `points`, and the
- * closed SVG path that draws it. Kept apart from the path string because the
- * label anchors to this outline's own top, not to a raw point two hulls with
- * an overlapping member could otherwise share.
+ * The outline `margin` px outside the hull of `points`, and the closed SVG path that
+ * draws it: every side of the hull moved out by `margin`, every corner an arc of
+ * radius `margin` around its point (the hull grown by a disk). Every point lies at
+ * least `margin` inside it, however few points there are; a curve through the
+ * midpoints of the padded corners would cut those corners and leave a point on the
+ * edge. `outline` holds the points the path passes through, so the label can anchor
+ * to this hull's own top.
  */
 export function hullOutline(points: Point[], margin: number): { outline: Point[]; path: string } {
 	if (points.length === 0) return { outline: [], path: '' };
@@ -49,43 +52,26 @@ export function hullOutline(points: Point[], margin: number): { outline: Point[]
 		return { outline: [{ x, y: y - margin }], path };
 	}
 
-	let outline = convexHull(points);
-	if (outline.length === 2) {
-		// Two points have no area: a stadium around the segment instead.
-		const [a, b] = outline;
+	const hull = convexHull(points);
+	const n = hull.length;
+	// The monotone chain winds counter-clockwise in its own coordinates, so (dy, -dx)
+	// points out of every side; for two points the two sides face opposite ways.
+	const outward = (a: Point, b: Point): Point => {
 		const dx = b.x - a.x;
 		const dy = b.y - a.y;
 		const len = Math.hypot(dx, dy) || 1;
-		const nx = (-dy / len) * margin;
-		const ny = (dx / len) * margin;
-		outline = [
-			{ x: a.x + nx, y: a.y + ny },
-			{ x: b.x + nx, y: b.y + ny },
-			{ x: b.x - nx, y: b.y - ny },
-			{ x: a.x - nx, y: a.y - ny }
-		];
-	}
-
-	const cx = outline.reduce((s, p) => s + p.x, 0) / outline.length;
-	const cy = outline.reduce((s, p) => s + p.y, 0) / outline.length;
-	const padded = outline.map((p) => {
-		const dx = p.x - cx;
-		const dy = p.y - cy;
-		const len = Math.hypot(dx, dy) || 1;
-		return { x: p.x + (dx / len) * margin, y: p.y + (dy / len) * margin };
-	});
-
-	// A smooth closed path through the padded points: quadratic curves through
-	// the midpoint of each pair, so the hull reads as a soft blob, not a polygon.
-	const mid = (p: Point, q: Point) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
-	const n = padded.length;
-	const start = mid(padded[n - 1], padded[0]);
-	let d = `M ${start.x} ${start.y}`;
+		return { x: (dy / len) * margin, y: (-dx / len) * margin };
+	};
+	const outline: Point[] = [];
+	let path = '';
 	for (let i = 0; i < n; i++) {
-		const p = padded[i];
-		const next = padded[(i + 1) % n];
-		const m = mid(p, next);
-		d += ` Q ${p.x} ${p.y} ${m.x} ${m.y}`;
+		const p = hull[i];
+		const before = outward(hull[(i - 1 + n) % n], p);
+		const after = outward(p, hull[(i + 1) % n]);
+		const from = { x: p.x + before.x, y: p.y + before.y };
+		const to = { x: p.x + after.x, y: p.y + after.y };
+		outline.push(from, to, { x: p.x, y: p.y - margin });
+		path += `${i === 0 ? 'M' : 'L'} ${from.x} ${from.y} A ${margin} ${margin} 0 0 1 ${to.x} ${to.y} `;
 	}
-	return { outline: padded, path: d + ' Z' };
+	return { outline, path: path + 'Z' };
 }
