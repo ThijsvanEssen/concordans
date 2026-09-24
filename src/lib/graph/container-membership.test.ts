@@ -7,6 +7,7 @@ const group = (id: string, from: string | null, to: string | null): ContainerGro
 	kind: 'committee',
 	id,
 	label: '',
+	fullLabel: '',
 	members: new Set([lid]),
 	parts: new Set(),
 	periods: new Map([[lid, { from, to }]])

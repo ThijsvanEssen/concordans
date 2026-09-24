@@ -56,6 +56,8 @@ export type ContainerGroup = {
 	id: string;
 	/** Empty for an instrument: its name comes from `instrumentMetaStore` instead. */
 	label: string;
+	/** The name in full, shown on hover: a commissie's name, a dossier's number and title. */
+	fullLabel: string;
 	members: Set<string>;
 	/** The members that are PART_OF the container (a dossier's stukken and zaken), not merely about it. */
 	parts: Set<string>;
@@ -135,17 +137,31 @@ function flush() {
 function ensureGroup(kind: ContainerKind, id: string): ContainerGroup {
 	let group = groups.get(id);
 	if (!group) {
-		group = { kind, id, label: '', members: new Set(), parts: new Set(), periods: new Map() };
+		group = {
+			kind,
+			id,
+			label: '',
+			fullLabel: '',
+			members: new Set(),
+			parts: new Set(),
+			periods: new Map()
+		};
 		groups.set(id, group);
 	}
 	return group;
 }
 
-/** Registers the name of a suppressed container bron. Keeps the existing name if `label` is empty. */
-export function recordContainerMeta(kind: ContainerKind, id: string | null, label: string): void {
+/** Registers the names of a suppressed container bron. Keeps an existing name where one is empty. */
+export function recordContainerMeta(
+	kind: ContainerKind,
+	id: string | null,
+	label: string,
+	fullLabel = ''
+): void {
 	if (!id) return;
 	const group = ensureGroup(kind, id);
-	if (label && label !== group.label) group.label = label;
+	if (label) group.label = label;
+	if (fullLabel) group.fullLabel = fullLabel;
 	flush();
 }
 

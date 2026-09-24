@@ -350,7 +350,8 @@
 			// The full name while the hull, or a bron in it, is under the pointer.
 			const inHover =
 				hoveredHullId === group.id || (hoveredId !== null && group.members.has(hoveredId));
-			const shown = inHover && meta ? (meta.citationTitle ?? meta.title ?? label) : label;
+			const full = meta ? (meta.citationTitle ?? meta.title) : group.fullLabel;
+			const shown = inHover && full ? full : label;
 			// The label anchors to this hull's own outline, not a raw member point: a
 			// bron in several groups at once (a lid on many commissies) would otherwise
 			// put every one of its hulls' labels on that one shared point.
@@ -358,8 +359,8 @@
 			const top = outline.reduce((a, b) => (b.y < a.y ? b : a));
 			// Above the hull's top, but never past the edge of the canvas: a hull at the
 			// border (or a fit that leaves little room) would cut its label in half.
-			const half = labelWidth(shown) / 2;
 			const { width } = renderer.getDimensions();
+			const half = Math.min(labelWidth(shown), width - 2 * EDGE_GAP) / 2;
 			drawn.set(group.id, {
 				id: group.id,
 				path,
@@ -1115,6 +1116,10 @@
 		font-weight: 600;
 		color: var(--hull-color);
 		white-space: nowrap;
+		/* A dossier's title in full can be wider than the canvas. */
+		max-width: calc(100% - 20px);
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.activity-overlay {

@@ -173,11 +173,18 @@ export function createGraphContext() {
 				short_title: p.short_title
 			});
 		} else {
-			recordContainerMeta(
-				containerKind,
-				containerIdFor(node),
-				buildNodeLabel(node, kindOfCollection(node.collection as Collection))
-			);
+			// Short on the hull, in full on hover: a dossier by its number, a commissie or
+			// fractie by its abbreviation.
+			const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+			const name = text(p.name) ?? text(node.display_name);
+			const short =
+				containerKind === 'dossier'
+					? text(p.label)
+					: (text(p.abbreviation) ??
+						buildNodeLabel(node, kindOfCollection(node.collection as Collection)));
+			const full =
+				containerKind === 'dossier' ? [short, text(p.title)].filter(Boolean).join(' · ') : name;
+			recordContainerMeta(containerKind, containerIdFor(node), short ?? '', full ?? '');
 		}
 	};
 
