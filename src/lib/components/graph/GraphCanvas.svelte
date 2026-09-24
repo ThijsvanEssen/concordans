@@ -604,7 +604,15 @@
 	function edgeLabel(data: Record<string, unknown>, sourceCollection: Collection): string {
 		const relation = data.relation as Relation;
 		const meta = (data.meta ?? {}) as Record<string, unknown>;
-		const parts = [relationLabel(relation, sourceCollection)];
+		// A signature says what it was signed as: "ondertekend als minister-president".
+		const signedAs =
+			relation === 'AUTHORED' &&
+			typeof meta.function === 'string' &&
+			meta.function &&
+			meta.capacity !== 'kamerlid'
+				? `ondertekend als ${meta.function}`
+				: null;
+		const parts = [signedAs ?? relationLabel(relation, sourceCollection)];
 		const lid =
 			(Array.isArray(meta.leden) && typeof meta.leden[0] === 'string' && meta.leden[0]) ||
 			(typeof meta.lid === 'string' && meta.lid) ||

@@ -81,7 +81,9 @@ export function createGraphContext() {
 		extra: Partial<Pick<GraphEdge, 'label' | 'confidence' | 'status' | 'meta'>> = {}
 	) => {
 		const id = edgeId(source, target, relation);
-		edges.set(id, { id, source, target, relation, label: '', directed: true, ...extra });
+		// A neighbourhood edge carries no meta; it does not wipe what a node response said.
+		const meta = extra.meta ?? edges.get(id)?.meta;
+		edges.set(id, { id, source, target, relation, label: '', directed: true, ...extra, meta });
 	};
 
 	const emit = () => {
@@ -319,7 +321,8 @@ export function createGraphContext() {
 			touchNode(other.id, other);
 			addEdge(source.id, target.id, relation, {
 				confidence: neighbor.confidence,
-				status: neighbor.status
+				status: neighbor.status,
+				meta: neighbor.meta
 			});
 		}
 
