@@ -14,7 +14,6 @@
 	import { formatLongDate } from './_shared';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
-	import GlossaryPill from './GlossaryPill.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -73,7 +72,7 @@
 		<header class="head">
 			<span class="kicker">
 				<KindGlyph collection="dossiers" />
-				{bronLabel('dossiers')} · <GlossaryPill term="Kamerstuk" label={`Kamerstuk ${d.number}`} />
+				{bronLabel('dossiers')} · Kamerstuk {d.number}
 			</span>
 			<h2 class="title">{d.title ?? d.number}</h2>
 			<div class="chips">

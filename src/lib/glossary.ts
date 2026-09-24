@@ -65,11 +65,6 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	},
 
 	// Kamer / Procedure
-	Kamerstuk: {
-		full: 'Kamerstuk',
-		plain:
-			'Parlementair document, per dossier doorgenummerd. Een begrotingshoofdstuk is een eigen dossier: 37020-XV.'
-	},
 	Stemming: {
 		full: 'Stemming',
 		plain:
