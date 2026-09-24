@@ -187,6 +187,11 @@ export function createGraphContext() {
 	 */
 	const drawable = (node: BaseNode): GraphNode | null => {
 		if (isVersionCollection(node.collection)) return null;
+		// A Zaak is the procedure its stukken, activities and decisions belong to, and
+		// they are tied to the dossier themselves: as a neighbour it would only repeat
+		// the dossier's hull (37014's one Zaak is the bill itself). Opened as the focus,
+		// or put on the canvas from a panel, it is still drawn.
+		if (node.collection === 'cases') return null;
 		const p = node.props ?? {};
 		const containerKind = containerKindOf(node.collection);
 		if (containerKind) {
