@@ -283,7 +283,13 @@ export function rechterOf(row: Pick<Row, 'identifier' | 'court' | 'ref'>): Recht
 	return null;
 }
 
-const yearOf = (row: Row) => (row.date ? Number(row.date.slice(0, 4)) : null);
+const yearOfDate = (date: string | null | undefined) => (date ? Number(date.slice(0, 4)) : null);
+const yearOf = (row: Row) => yearOfDate(row.date);
+
+/** Whether the years first..last (open where null) meet van..tot (open where null). */
+const spans = (first: number | null, last: number | null, van: number | null, tot: number | null) =>
+	(van === null || last === null || last >= van) &&
+	(tot === null || first === null || first <= tot);
 
 /** Whether a row passes the filter. */
 export function rowPasses(row: Row, f: VerbondenFilter): boolean {
@@ -294,10 +300,12 @@ export function rowPasses(row: Row, f: VerbondenFilter): boolean {
 	if (f.rechter !== null && row.kind === 'uitspraken' && rechterOf(row) !== f.rechter) return false;
 	if (f.rechter !== null && row.kind !== 'uitspraken' && row.kind !== 'internationaal')
 		return false;
-	const y = yearOf(row);
-	if (f.jaar !== null && y !== f.jaar) return false;
-	if (f.van !== null && y !== null && y < f.van) return false;
-	if (f.tot !== null && y !== null && y > f.tot) return false;
+	// A seat counts for every year it lasted; any other row for the year of its date.
+	const first = row.period ? yearOfDate(row.period.from) : yearOf(row);
+	const last = row.period ? yearOfDate(row.period.to) : yearOf(row);
+	const undated = first === null && last === null;
+	if (f.jaar !== null && (undated || !spans(first, last, f.jaar, f.jaar))) return false;
+	if (!spans(first, last, f.van, f.tot)) return false;
 	if (f.geldendOp !== null && row.date && row.date.slice(0, 10) > f.geldendOp) return false;
 	if (f.betrouwbaarheid === 'bron' && row.derived) return false;
 	if (f.betrouwbaarheid === 'afgeleid' && !row.derived) return false;

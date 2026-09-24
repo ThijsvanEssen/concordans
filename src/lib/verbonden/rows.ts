@@ -26,6 +26,8 @@ export type Row = {
 	identifier?: string | null;
 	/** ISO date of the source. */
 	date?: string | null;
+	/** A seat on a commissie or in a fractie: when it began and ended (open when null), and its role. */
+	period?: { from: string | null; to: string | null; role: string | null } | null;
 	/** The aard of a reference: `strafverzwaring`, `definitie`. */
 	aard?: string | null;
 	/** Derived, not read from the source: a heuristic match or a confidence below 1. */
@@ -231,8 +233,25 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		confidence: n.confidence ?? null,
 		snippet: text(meta.snippet),
 		match,
+		period: periodOf(meta),
 		props
 	};
+}
+
+/** The seat a MEMBER_OF edge records, from its meta. */
+function periodOf(meta: Record<string, unknown>): Row['period'] {
+	const from = text(meta.from_date)?.slice(0, 10) ?? null;
+	const to = text(meta.to_date)?.slice(0, 10) ?? null;
+	return from || to ? { from, to, role: text(meta.role) } : null;
+}
+
+/** `2017–2021`, `sinds 2025`, with a role other than plain membership in front. */
+export function periodLabel(period: NonNullable<Row['period']>): string {
+	const from = period.from?.slice(0, 4);
+	const to = period.to?.slice(0, 4);
+	const span =
+		from && to ? (from === to ? from : `${from}–${to}`) : from ? `sinds ${from}` : `tot ${to}`;
+	return period.role && period.role !== 'Lid' ? `${period.role.toLowerCase()}, ${span}` : span;
 }
 
 /** The meta line of a row, as separate words; the panel joins them. */
@@ -245,6 +264,7 @@ export function metaParts(
 	if (row.aard) parts.push({ text: row.aard, kind: 'plain' });
 	if (row.position) parts.push({ text: row.position, kind: 'plain' });
 	if (row.context) parts.push({ text: row.context, kind: 'plain' });
+	if (row.period) parts.push({ text: periodLabel(row.period), kind: 'plain' });
 	const when = row.identifier ?? (row.kind === 'uitspraken' ? null : shortDate(row.date ?? null));
 	if (when) parts.push({ text: when, kind: 'plain' });
 	if (row.derived) parts.push({ text: 'afgeleid', kind: 'derived' });

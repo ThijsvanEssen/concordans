@@ -17,6 +17,8 @@
 		containerIdFor,
 		containerMembershipStore,
 		isDrawnGroup,
+		momentOf,
+		type Period,
 		isContainerKind,
 		type ContainerGroup
 	} from '$lib/graph/container-membership';
@@ -109,6 +111,22 @@
 		selection && isContainerKind(selection.kind) && selection.raw
 			? containerIdFor(selection.raw)
 			: null
+	);
+	const focusNodeId = $derived(selection && !isContainerKind(selection.kind) ? selection.id : null);
+	// The time a lid's commissies and fracties are drawn for: the years of the bronfilter,
+	// else the lid's own moment (today, or the end of their last seat).
+	// The years of the bronfilter as dates; the canvas hides a dated bron outside them.
+	const yearPeriod = $derived<Period | null>(
+		filter.van !== null || filter.tot !== null
+			? {
+					from: filter.van !== null ? `${filter.van}-01-01` : null,
+					to: filter.tot !== null ? `${filter.tot}-12-31` : null
+				}
+			: null
+	);
+	const groupPeriod = $derived<Period | null>(
+		yearPeriod ??
+			momentOf(focusNodeId, containerGroups.values(), new Date().toISOString().slice(0, 10))
 	);
 
 	const hiddenKinds = $derived<ReadonlySet<BronKind>>(
@@ -447,6 +465,7 @@
 				collection: n.collection,
 				bronKind: bronKindOf(n.collection, n.key, n.raw?.props ?? null),
 				stub,
+				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
 				size: useImage ? rawSize * IMAGE_SIZE_BUMP : rawSize,
 				type: useImage ? 'image' : 'border'
 			};
@@ -558,7 +577,10 @@
 		// it also belongs to draws its hull around wherever that leaves it, same as
 		// any other bron on canvas.
 		const eligible = [...containerGroups.values()]
-			.filter((group) => group.members.size >= 2 && isDrawnGroup(group, focusContainerId))
+			.filter(
+				(group) =>
+					group.members.size >= 2 && isDrawnGroup(group, focusContainerId, focusNodeId, groupPeriod)
+			)
 			.sort((a, b) => b.members.size - a.members.size);
 		const primaryGroupId = new Map<string, string>();
 		for (const group of eligible) {
@@ -836,6 +858,8 @@
 				{pinnedIds}
 				{containerGroups}
 				{focusContainerId}
+				{groupPeriod}
+				{yearPeriod}
 				{selectedEdgeId}
 				{inFluxMap}
 				{heatMap}

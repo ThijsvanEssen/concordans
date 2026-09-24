@@ -9,7 +9,8 @@ import {
 	pruneContainerMembers,
 	recordContainerMember,
 	recordContainerMeta,
-	type ContainerKind
+	type ContainerKind,
+	type Period
 } from '../container-membership';
 import { getLawIdFromProps } from '$lib/util/law-id';
 import type { Collection, Relation } from '$lib/vocabulary';
@@ -208,6 +209,15 @@ export function createGraphContext() {
 		return graphNode;
 	};
 
+	/** The seat an edge records (`meta.from_date`, `meta.to_date`), or null when it records none. */
+	const periodOf = (meta: unknown): Period | null => {
+		const m = (meta ?? {}) as Record<string, unknown>;
+		const date = (v: unknown) => (typeof v === 'string' && v ? v.slice(0, 10) : null);
+		const from = date(m.from_date);
+		const to = date(m.to_date);
+		return from || to ? { from, to } : null;
+	};
+
 	/** The relations by which a stuk changes a wet; the wet is then drawn as an anchor. */
 	const CHANGES = new Set<Relation>(['AMENDS', 'INTRODUCES', 'REPEALS']);
 
@@ -261,7 +271,13 @@ export function createGraphContext() {
 				neighborContainerKind &&
 				isContainerMembership(neighborContainerKind, relation)
 			) {
-				recordContainerMember(neighborContainerKind, containerIdFor(neighbor), center.id, relation);
+				recordContainerMember(
+					neighborContainerKind,
+					containerIdFor(neighbor),
+					center.id,
+					relation,
+					periodOf(neighbor.meta)
+				);
 				continue;
 			}
 			if (
@@ -275,7 +291,8 @@ export function createGraphContext() {
 					centerContainerKind,
 					containerIdFor(response.node),
 					other.id,
-					relation
+					relation,
+					periodOf(neighbor.meta)
 				);
 				continue;
 			}

@@ -8,7 +8,7 @@
 	import { relationLabel, type Collection, type Relation } from '$lib/vocabulary';
 	import type { BronKind } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
-	import { isDrawnGroup, type ContainerGroup } from '$lib/graph/container-membership';
+	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
 	import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 	import {
 		spriteFor,
@@ -37,6 +37,8 @@
 		pinnedIds = new Set<string>() as Set<string>,
 		containerGroups = new Map<string, ContainerGroup>() as Map<string, ContainerGroup>,
 		focusContainerId = null as string | null,
+		groupPeriod = null as Period | null,
+		yearPeriod = null as Period | null,
 		selectedEdgeId = null as string | null,
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
@@ -67,6 +69,10 @@
 		 * own children (not the noise a step further out) count as in focus instead.
 		 */
 		focusContainerId?: string | null;
+		/** The time a lid's commissies and fracties are drawn for (`isDrawnGroup`). */
+		groupPeriod?: Period | null;
+		/** The years of the bronfilter: a dated bron outside them is hidden, as in the panel. */
+		yearPeriod?: Period | null;
 		/** The edge whose card is open: drawn wider. */
 		selectedEdgeId?: string | null;
 		inFluxMap?: NodeCounts;
@@ -172,7 +178,11 @@
 			}
 		}
 		nodeGroupIds = byNode;
+		void groupPeriod;
+		void focusedId;
+		recomputeStrays();
 		computeHulls();
+		renderer?.refresh();
 	});
 
 	/** Whether `a` and `b` both belong to the same hull: an edge between them adds
@@ -262,7 +272,7 @@
 		const to = [...(nodeGroupIds.get(tgt) ?? [])][0];
 		const from = [...(nodeGroupIds.get(src) ?? [])].find((id) => {
 			const group = latestContainerGroups.get(id);
-			return group && group.kind !== 'instrument' && isDrawnGroup(group, focusContainerId);
+			return group && group.kind !== 'instrument' && drawnGroup(group);
 		});
 		return to && from ? { from, to } : null;
 	}
@@ -321,7 +331,7 @@
 		type Drawn = Hull & { polygon: Point[]; center: Point; members: Set<string> };
 		const drawn = new Map<string, Drawn>();
 		for (const group of latestContainerGroups.values()) {
-			if (!isDrawnGroup(group, focusContainerId)) continue;
+			if (!drawnGroup(group)) continue;
 			const points: { x: number; y: number }[] = [];
 			for (const id of group.members) {
 				if (!graph.hasNode(id)) continue;
@@ -499,11 +509,45 @@
 	});
 
 	// A hidden kind is not drawn; the focus is always drawn.
+	const drawnGroup = (group: ContainerGroup) =>
+		isDrawnGroup(group, focusContainerId, focusedId, groupPeriod);
+
+	// A bron that is left with nothing to show it by is not shown: not in a hull that is
+	// drawn (the activities of a commissie the lid left years ago), and every line of it
+	// to a bron that is hidden (the co-signers of a stuk outside the chosen years).
+	let strays = new Set<string>();
+	function recomputeStrays() {
+		const next = new Set<string>();
+		const hiddenEnd = (id: string) =>
+			id !== focusedId && hiddenByFilter(graph.getNodeAttributes(id));
+		graph.forEachNode((id, attrs) => {
+			if (id === focusedId || hiddenByFilter(attrs)) return;
+			const groups = [...(nodeGroupIds.get(id) ?? [])].map((g) => latestContainerGroups.get(g));
+			if (groups.some((g) => g && drawnGroup(g))) return;
+			const shown = graph.someEdge(
+				id,
+				(_e, a, src, tgt) => !a.layoutOnly && !hiddenEnd(src === id ? tgt : src)
+			);
+			if (!shown) next.add(id);
+		});
+		strays = next;
+	}
+
+	const outsideYears = (date: unknown) =>
+		typeof date === 'string' &&
+		yearPeriod !== null &&
+		((yearPeriod.from !== null && date < yearPeriod.from) ||
+			(yearPeriod.to !== null && date > yearPeriod.to));
+
+	const hiddenByFilter = (attrs: Record<string, unknown>) =>
+		latestHiddenKinds.has(attrs.bronKind as BronKind) || outsideYears(attrs.date);
+
 	const isHiddenNode = (id: string, attrs: Record<string, unknown>) =>
-		id !== focusedId && latestHiddenKinds.has(attrs.bronKind as BronKind);
+		id !== focusedId && (hiddenByFilter(attrs) || strays.has(id));
 
 	function refresh() {
 		recomputeFocusLevel1();
+		recomputeStrays();
 		renderer?.refresh();
 	}
 

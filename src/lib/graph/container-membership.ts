@@ -59,15 +59,55 @@ export type ContainerGroup = {
 	members: Set<string>;
 	/** The members that are PART_OF the container (a dossier's stukken and zaken), not merely about it. */
 	parts: Set<string>;
+	/** When a member belonged to it (a lid's seat on a commissie or in a fractie), where the edge says. */
+	periods: Map<string, Period>;
 };
 
+/** A stretch of time as ISO dates, open where null. */
+export type Period = { from: string | null; to: string | null };
+
+const overlaps = (a: Period, b: Period) =>
+	(a.from === null || b.to === null || a.from <= b.to) &&
+	(a.to === null || b.from === null || b.from <= a.to);
+
 /**
- * Whether a group is drawn as a hull. A dossier is, when it holds a stuk or zaak of its
- * own or is the focus: an activity about forty dossiers (a regeling van werkzaamheden)
- * would otherwise draw forty hulls around that one activity.
+ * The moment a lid's hulls stand for when no period is chosen: today, or, for someone
+ * no longer on a commissie or in a fractie, the day their last seat ended.
  */
-export const isDrawnGroup = (group: ContainerGroup, focusId: string | null): boolean =>
-	group.kind !== 'dossier' || group.parts.size > 0 || group.id === focusId;
+export function momentOf(
+	memberId: string | null,
+	groups: Iterable<ContainerGroup>,
+	today: string
+): Period | null {
+	if (!memberId) return null;
+	let last: string | null = null;
+	for (const group of groups) {
+		const period = group.periods.get(memberId);
+		if (!period) continue;
+		if (period.to === null || period.to >= today) return { from: today, to: today };
+		if (last === null || period.to > last) last = period.to;
+	}
+	return last ? { from: last, to: last } : null;
+}
+
+/**
+ * Whether a group is drawn as a hull.
+ * - A dossier is, when it holds a stuk or zaak of its own or is the focus: an activity
+ *   about forty dossiers (a regeling van werkzaamheden) would otherwise draw forty hulls
+ *   around that one activity.
+ * - A commissie or fractie the focused lid sat in is, when that seat overlaps `period`:
+ *   thirteen commissies over nine years would otherwise stack around one person.
+ */
+export function isDrawnGroup(
+	group: ContainerGroup,
+	focusId: string | null,
+	focusNodeId: string | null = null,
+	period: Period | null = null
+): boolean {
+	if (group.kind === 'dossier') return group.parts.size > 0 || group.id === focusId;
+	const seat = focusNodeId ? group.periods.get(focusNodeId) : undefined;
+	return !seat || !period || overlaps(seat, period);
+}
 
 /** The id a container is grouped under: an instrument by law id, the rest by node id. */
 export function containerIdFor(node: {
@@ -95,7 +135,7 @@ function flush() {
 function ensureGroup(kind: ContainerKind, id: string): ContainerGroup {
 	let group = groups.get(id);
 	if (!group) {
-		group = { kind, id, label: '', members: new Set(), parts: new Set() };
+		group = { kind, id, label: '', members: new Set(), parts: new Set(), periods: new Map() };
 		groups.set(id, group);
 	}
 	return group;
@@ -114,14 +154,17 @@ export function recordContainerMember(
 	kind: ContainerKind,
 	id: string | null,
 	childId: string,
-	relation: Relation = 'PART_OF'
+	relation: Relation = 'PART_OF',
+	period: Period | null = null
 ): void {
 	if (!id) return;
 	const group = ensureGroup(kind, id);
 	const part = relation === 'PART_OF';
-	if (group.members.has(childId) && (!part || group.parts.has(childId))) return;
+	const known = group.members.has(childId) && (!part || group.parts.has(childId));
+	if (known && (!period || group.periods.has(childId))) return;
 	group.members.add(childId);
 	if (part) group.parts.add(childId);
+	if (period) group.periods.set(childId, period);
 	flush();
 }
 
@@ -145,6 +188,7 @@ export function pruneContainerMembers(keepIds: ReadonlySet<string>): void {
 			if (!keepIds.has(id)) {
 				group.members.delete(id);
 				group.parts.delete(id);
+				group.periods.delete(id);
 				changed = true;
 			}
 		}

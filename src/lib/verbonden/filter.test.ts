@@ -116,6 +116,25 @@ describe('rowPasses', () => {
 		expect(rowPasses(hr, only({ zoek: 'hr:2024' }))).toBe(true);
 	});
 
+	it('counts a seat for every year it lasted', () => {
+		const only = (f: Partial<VerbondenFilter>) => ({ ...EMPTY_FILTER, ...f });
+		const lnv = row({
+			ref: { collection: 'committees', key: 'lnv' },
+			kind: 'leden',
+			period: { from: '2017-11-14', to: '2021-04-06', role: null }
+		});
+		const now = row({
+			ref: { collection: 'committees', key: 'iv' },
+			kind: 'leden',
+			period: { from: '2025-11-12', to: null, role: null }
+		});
+		expect(rowPasses(lnv, only({ van: 2019, tot: 2019 }))).toBe(true);
+		expect(rowPasses(lnv, only({ van: 2022 }))).toBe(false);
+		expect(rowPasses(lnv, only({ jaar: 2020 }))).toBe(true);
+		expect(rowPasses(now, only({ van: 2030 }))).toBe(true);
+		expect(rowPasses(now, only({ tot: 2024 }))).toBe(false);
+	});
+
 	it('tells the rechter from the ECLI and the court name', () => {
 		expect(rechterOf(hr)).toBe('hr');
 		expect(rechterOf(hof)).toBe('hof');
