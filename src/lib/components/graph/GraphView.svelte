@@ -376,7 +376,7 @@
 	// current text, and the reader reads a version's own data directly, not this
 	// canvas.
 	const isCanvasNode = (n: GraphNode) =>
-		!isContainerKind(n.kind) && !isVersionCollection(n.collection);
+		(n.anchor || !isContainerKind(n.kind)) && !isVersionCollection(n.collection);
 
 	function syncNodes(nodes: GraphNode[]) {
 		const camKey = compact ? 'compact' : 'full';
@@ -450,6 +450,15 @@
 				type: useImage ? 'image' : 'border'
 			};
 			if (useImage) attrs.image = spriteFor(n.kind, stub, false);
+			// A wet's anchor is a point its hull and the lines of a change end at, not a dot.
+			if (n.anchor)
+				Object.assign(attrs, {
+					anchor: true,
+					type: 'circle',
+					color: 'rgba(0,0,0,0)',
+					size: 2,
+					label: ''
+				});
 			const seed = n as GraphNode & { x?: number; y?: number };
 			const seedHasPos = typeof seed.x === 'number' && typeof seed.y === 'number';
 			if (g.hasNode(n.id)) {

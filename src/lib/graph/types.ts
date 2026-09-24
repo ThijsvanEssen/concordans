@@ -59,6 +59,12 @@ export interface GraphNode {
 	kind: GraphNodeKind;
 	label: string;
 	stub?: boolean;
+	/**
+	 * A wet drawn only as the end of a change a stuk proposes or makes (AMENDS,
+	 * INTRODUCES, REPEALS): its hull with its name around an invisible point, while
+	 * none of its articles is on the canvas. A wet is otherwise never a canvas node.
+	 */
+	anchor?: boolean;
 	raw?: BaseNode;
 	/** Set by a loader that lays out its nodes; Sigma starts from these. */
 	x?: number;

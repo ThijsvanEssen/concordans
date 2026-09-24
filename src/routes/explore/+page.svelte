@@ -169,6 +169,17 @@
 			cap: 200
 		});
 		if (epoch !== focusEpoch) return;
+		// A dossier's stukken change wetten two steps away (dossier, stuk, wet): the one
+		// step of a container leaves those changes out, so they are asked for on their own.
+		if (node.collection === 'dossiers') {
+			await store.expandNeighborhood(node.collection, node.key, {
+				depth: 2,
+				cap: 200,
+				relations: ['PART_OF', 'AMENDS', 'INTRODUCES', 'REPEALS'],
+				nodeTypes: ['document', 'instrument', 'dossier']
+			});
+			if (epoch !== focusEpoch) return;
+		}
 		store.sweepOrphans();
 	}
 

@@ -26,6 +26,7 @@ export function createExpansion(
 		touchNode,
 		addEdge,
 		drawable,
+		lawAnchor,
 		recordContainerFor,
 		passesThreshold,
 		mergeResponse,
@@ -68,6 +69,7 @@ export function createExpansion(
 
 		expandNeighborhood: async (collection, key, opts = {}) => {
 			const response = await getNodeNeighborhood(collection, key, { ...opts, signal: signal() });
+			const additive = !!opts.relations;
 
 			const byId = new Map(response.nodes.map((n) => [`${n.collection}/${n.key}`, n]));
 			const drawn = new Set<string>();
@@ -100,6 +102,13 @@ export function createExpansion(
 					recordContainerMember(targetKind, containerIdFor(targetNode!), e.source);
 					continue;
 				}
+				// A wet a drawn stuk changes is drawn as its anchor (`lawAnchor`).
+				const changed = targetNode && drawn.has(e.source) && lawAnchor(targetNode, relation);
+				if (changed) {
+					drawn.add(changed.id);
+					addEdge(e.source, changed.id, relation, { confidence: e.confidence, status: e.status });
+					continue;
+				}
 				const sourceNode = byId.get(e.source);
 				const sourceKind = sourceNode && containerKindOf(sourceNode.collection);
 				if (sourceKind && isContainerMembership(sourceKind, relation) && drawn.has(e.target)) {
@@ -116,6 +125,11 @@ export function createExpansion(
 			// this, a bron revisited after browsing elsewhere keeps edges from every stop
 			// along the way, so it looks more cited than its own neighbourhood shows. Pinned
 			// bronnen and the selection are the only things that survive a refocus.
+			// A request narrowed to some relations adds to the canvas; it replaces nothing.
+			if (additive) {
+				emit();
+				return nodes.get(response.focal_id) ?? null;
+			}
 			const keep = new Set(drawn);
 			keep.add(response.focal_id);
 			for (const id of pinned) keep.add(id);

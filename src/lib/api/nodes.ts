@@ -42,13 +42,24 @@ export function bucketTotals(response: NodeGraph): Map<string, number> {
 export const getNodeNeighborhood = (
 	collection: Collection,
 	key: string,
-	opts: { depth?: number; cap?: number; signal?: AbortSignal } = {}
+	opts: {
+		depth?: number;
+		cap?: number;
+		relations?: string[];
+		nodeTypes?: string[];
+		signal?: AbortSignal;
+	} = {}
 ) =>
 	unwrap(
 		api.GET('/api/nodes/{collection}/{key}/neighborhood', {
 			params: {
 				path: path(collection, key),
-				query: { depth: opts.depth ?? 3, cap: opts.cap ?? 200 }
+				query: {
+					depth: opts.depth ?? 3,
+					cap: opts.cap ?? 200,
+					relations: opts.relations?.join(','),
+					node_types: opts.nodeTypes?.join(',')
+				}
 			},
 			signal: opts.signal
 		})

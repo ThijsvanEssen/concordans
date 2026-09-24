@@ -62,11 +62,14 @@ export type GraphStore = {
 		key: string,
 		opts?: GraphExpansionOptions
 	) => Promise<GraphNode | null>;
-	/** Every node and edge within `depth` hops of a node, in one request. */
+	/**
+	 * Every node and edge within `depth` hops of a node, in one request; it replaces the
+	 * canvas's context. Narrowed to `relations` (and `nodeTypes`), it only adds.
+	 */
 	expandNeighborhood: (
 		collection: Collection,
 		key: string,
-		opts?: { depth?: number; cap?: number }
+		opts?: { depth?: number; cap?: number; relations?: Relation[]; nodeTypes?: string[] }
 	) => Promise<GraphNode | null>;
 	setSelection: (nodeId: string | null) => void;
 	togglePin: (nodeId: string) => void;

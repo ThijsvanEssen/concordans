@@ -208,6 +208,21 @@ export function createGraphContext() {
 		return graphNode;
 	};
 
+	/** The relations by which a stuk changes a wet; the wet is then drawn as an anchor. */
+	const CHANGES = new Set<Relation>(['AMENDS', 'INTRODUCES', 'REPEALS']);
+
+	/** The anchor of a wet that a drawn bron changes: a member of the wet's own hull. */
+	const lawAnchor = (node: BaseNode, relation: Relation): GraphNode | null => {
+		if (node.collection !== 'instruments' || !CHANGES.has(relation)) return null;
+		const anchor = nodeToGraphNode(node);
+		if (!anchor) return null;
+		anchor.anchor = true;
+		recordContainerFor(node, 'instrument');
+		recordContainerMember('instrument', containerIdFor(node), anchor.id);
+		touchNode(anchor.id, anchor);
+		return anchor;
+	};
+
 	/** Whether an edge passes the semantic threshold; only semantic edges carry a confidence worth checking. */
 	const passesThreshold = (
 		relation: Relation,
@@ -260,6 +275,14 @@ export function createGraphContext() {
 				continue;
 			}
 
+			const changed = relation && !other && lawAnchor(neighbor, relation);
+			if (relation && changed && neighbor.direction === 'outbound') {
+				addEdge(center.id, changed.id, relation, {
+					confidence: neighbor.confidence,
+					status: neighbor.status
+				});
+				continue;
+			}
 			if (!relation || !other) continue;
 			const [source, target] =
 				neighbor.direction === 'outbound' ? [center, other] : [other, center];
@@ -306,6 +329,7 @@ export function createGraphContext() {
 		emit,
 		addEdge,
 		drawable,
+		lawAnchor,
 		recordContainerFor,
 		passesThreshold,
 		mergeResponse,
