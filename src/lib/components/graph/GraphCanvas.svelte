@@ -237,9 +237,23 @@
 
 	const HULL_MARGIN = 16;
 	// Around the nodes on a fit: the hull margin and a little air. Above them, the
-	// label pill of a hull (8 px gap, ~20 px pill) on top of that.
+	// label pill of a hull (8 px gap, 22 px pill) and the edge gap on top of that.
 	const STAGE_PADDING = HULL_MARGIN + 6;
-	const LABEL_ROOM = 28;
+	const LABEL_GAP = 8;
+	const LABEL_HEIGHT = 22;
+	const EDGE_GAP = 10;
+	// STAGE_PADDING already holds the hull margin and 6 px of it.
+	const LABEL_ROOM = LABEL_GAP + LABEL_HEIGHT + EDGE_GAP - 6;
+
+	// The width of a hull label, to keep it on the canvas: its text in the pill's face
+	// (.hull-label), plus the padding and border.
+	let labelMeasure: CanvasRenderingContext2D | null = null;
+	function labelWidth(text: string): number {
+		labelMeasure ??= document.createElement('canvas').getContext('2d');
+		if (!labelMeasure) return 0;
+		labelMeasure.font = `600 11.5px ${tokens().fontSans}`;
+		return labelMeasure.measureText(text).width + 18;
+	}
 
 	function computeHulls() {
 		if (!renderer || latestContainerGroups.size === 0) {
@@ -264,13 +278,20 @@
 			// put every one of its hulls' labels on that one shared point.
 			const { outline, path } = hullOutline(points, HULL_MARGIN);
 			const top = outline.reduce((a, b) => (b.y < a.y ? b : a));
+			// Above the hull's top, but never past the edge of the canvas: a hull at the
+			// border (or a fit that leaves little room) would cut its label in half.
+			const half = labelWidth(label) / 2;
+			const { width } = renderer.getDimensions();
 			next.push({
 				id: group.id,
 				path,
 				color: hullColorFor(group.kind),
 				label,
-				labelX: top.x,
-				labelY: top.y - 8
+				labelX: Math.min(
+					Math.max(top.x, half + EDGE_GAP),
+					Math.max(half + EDGE_GAP, width - half - EDGE_GAP)
+				),
+				labelY: Math.max(top.y - LABEL_GAP, LABEL_HEIGHT + EDGE_GAP)
 			});
 		}
 		hulls = next;
