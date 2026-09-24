@@ -16,6 +16,8 @@ export type Match = {
 	direction?: 'inbound' | 'outbound';
 	collection: Collection | Collection[];
 	where?: (n: Neighbor) => boolean;
+	/** The bucket is divided over several groups by `where`: none of them takes its total. */
+	split?: boolean;
 };
 
 export type Loader =
@@ -46,6 +48,8 @@ export type GroupDef = {
 	load?: Loader;
 	/** A row opens beside the selected bron instead of replacing it. */
 	inPlace?: boolean;
+	/** A name that follows the rows shown: the functions a lid signed in. */
+	labelOf?: (rows: Row[]) => string;
 };
 
 export type Group = GroupDef & {
@@ -57,6 +61,44 @@ export type Group = GroupDef & {
 };
 
 const national = (n: Neighbor) => !isInternational(n);
+
+// What a lid signed a stuk as (`meta.capacity` of AUTHORED): as Kamerlid, as
+// bewindspersoon, or in another function (vicepresident van de Raad van State).
+type Capacity = 'kamerlid' | 'bewindspersoon' | 'overig';
+const signedAs = (capacity: Capacity) => (n: Neighbor) =>
+	(n.meta as Record<string, unknown> | null)?.capacity === capacity;
+
+/** `a`, `a en b`, `a, b en c`; beyond three, `a, b en 2 andere functies`. */
+function functionList(rows: Row[]): string {
+	const counts = new Map<string, number>();
+	for (const r of rows) if (r.function) counts.set(r.function, (counts.get(r.function) ?? 0) + 1);
+	const names = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name);
+	if (names.length > 3)
+		return `${names.slice(0, 2).join(', ')} en ${names.length - 2} andere functies`;
+	return names.length > 1
+		? `${names.slice(0, -1).join(', ')} en ${names.at(-1)}`
+		: (names[0] ?? '');
+}
+
+const authored = (
+	capacity: Capacity,
+	label: string,
+	labelOf?: (rows: Row[]) => string
+): GroupDef => ({
+	id: `authored-${capacity}`,
+	label,
+	noun: 'stukken',
+	match: [
+		{
+			relation: 'AUTHORED',
+			direction: 'outbound',
+			collection: 'documents',
+			where: signedAs(capacity),
+			split: true
+		}
+	],
+	labelOf
+});
 
 const CHANGES: Relation[] = ['AMENDS', 'INTRODUCES', 'REPEALS'];
 
@@ -296,16 +338,23 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'committees',
-			label: 'Commissies waarvan dit lid deel uitmaakt',
+			label: 'Commissies van dit lid',
 			noun: 'commissies',
 			match: [{ relation: 'MEMBER_OF', direction: 'outbound', collection: 'committees' }]
 		},
-		{
-			id: 'authored',
-			label: 'Stukken die dit lid indiende',
-			noun: 'stukken',
-			match: [{ relation: 'AUTHORED', direction: 'outbound', collection: 'documents' }]
-		},
+		// A person signs as what they are at that moment: Kamerlid, bewindspersoon, or
+		// in another function. The name follows the functions of the rows shown.
+		authored('kamerlid', 'Stukken die dit lid als Kamerlid indiende'),
+		authored('bewindspersoon', 'Stukken ondertekend als bewindspersoon', (rows) =>
+			rows.length
+				? `Stukken ondertekend als ${functionList(rows)}`
+				: 'Stukken ondertekend als bewindspersoon'
+		),
+		authored('overig', 'Stukken ondertekend in een andere functie', (rows) =>
+			rows.length
+				? `Stukken ondertekend als ${functionList(rows)}`
+				: 'Stukken ondertekend in een andere functie'
+		),
 		{
 			id: 'instruments',
 			label: 'Wetten waaraan dit lid werkte',
@@ -459,7 +508,11 @@ export function buildGroups(
 		group.rows.push(row);
 		const bucket = bucketKey(n.relation, n.collection, n.direction);
 		const total = totals.get(bucket);
-		if (total != null) {
+		// A bucket split over several groups states no total for any one of them: each
+		// counts its rows, capped while the bucket holds more than was loaded.
+		if (total != null && group.match?.some((m) => m.split && matches(m, n))) {
+			if ((counted.get(bucket) ?? 0) < total) group.capped = true;
+		} else if (total != null) {
 			// A bucket counts for its group once; a `where` may leave some of it out.
 			if (!summed.has(`${group.id}:${bucket}`)) {
 				summed.add(`${group.id}:${bucket}`);
@@ -471,7 +524,10 @@ export function buildGroups(
 			if ((counted.get(bucket) ?? 0) >= cap) group.capped = true;
 		}
 	}
-	for (const g of groups) if (g.total != null && g.total < g.rows.length) g.total = g.rows.length;
+	for (const g of groups) {
+		if (g.total != null && g.total < g.rows.length) g.total = g.rows.length;
+		if (g.labelOf) g.label = g.labelOf(g.rows);
+	}
 	return groups;
 }
 

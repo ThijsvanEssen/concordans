@@ -1,11 +1,20 @@
 <script lang="ts">
 	import { api, unwrap } from '$lib/api/client';
+	import { neighborsOf, type Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronHref } from '$lib/bron/href';
-	import { bronLabel } from '$lib/vocabulary';
 	import { getMemberVotes } from '$lib/components/parliamentary/data';
+	import {
+		careerOf,
+		currentTitle,
+		inYears,
+		yearsOf,
+		type Signature
+	} from '$lib/components/parliamentary/career';
+	import { parseFilter } from '$lib/verbonden/filter';
+	import { page } from '$app/state';
 	import { initials } from '$lib/util/initials';
 	import { formatDate } from './_shared';
 
@@ -20,6 +29,8 @@
 				kind: 'loaded';
 				member: Schema<'MemberDTO'>;
 				votes: Schema<'MemberVotesResponse'> | null;
+				/** What the person signed stukken as, and when (AUTHORED meta). */
+				signatures: Signature[];
 		  };
 
 	const VOTES_PREVIEW = 20;
@@ -35,10 +46,21 @@
 		showAllVotes = false;
 		Promise.all([
 			unwrap(api.GET('/api/members/{key}', { params: { path: { key } }, signal: ac.signal })),
-			getMemberVotes(key).catch(() => null)
+			getMemberVotes(key).catch(() => null),
+			unwrap(
+				api.GET('/api/nodes/{collection}/{key}', {
+					params: {
+						path: { collection: 'members', key },
+						query: { relations: 'AUTHORED', limit: 200 }
+					},
+					signal: ac.signal
+				})
+			)
+				.then((r) => neighborsOf(r).map(signatureOf))
+				.catch(() => [])
 		])
-			.then(([member, votes]) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', member, votes };
+			.then(([member, votes, signatures]) => {
+				if (!ac.signal.aborted) view = { kind: 'loaded', member, votes, signatures };
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
@@ -67,7 +89,18 @@
 			.sort((a, b) => b.total - a.total);
 	}
 
-	const formatYear = (d: string | null | undefined) => (d ? d.slice(0, 4) : '?');
+	const signatureOf = (n: Neighbor): Signature => {
+		const meta = (n.meta ?? {}) as Record<string, unknown>;
+		const text = (v: unknown) => (typeof v === 'string' && v ? v : null);
+		return {
+			function: text(meta.function),
+			capacity: text(meta.capacity),
+			date: text(n.props?.date)
+		};
+	};
+
+	// The years of the bronfilter: a step of the career outside them steps back.
+	const years = $derived(parseFilter(page.url.searchParams));
 </script>
 
 <div class="r-member">
@@ -77,80 +110,56 @@
 		<p class="error">{view.message}</p>
 	{:else}
 		{@const m = view.member}
-		{@const memberships = m.faction_memberships ?? []}
-		{@const current = memberships.filter((f) => !f.to_date)}
-		{@const former = memberships
-			.filter((f) => f.to_date)
-			.sort(
-				(a, b) =>
-					(b.to_date ?? '').localeCompare(a.to_date ?? '') ||
-					(b.from_date ?? '').localeCompare(a.from_date ?? '')
-			)}
+		{@const career = careerOf(m.faction_memberships ?? [], view.signatures)}
+		{@const sitting = (m.faction_memberships ?? []).some((f) => !f.to_date)}
 
 		<header class="head">
-			<span class="kicker"><KindGlyph collection="members" />{bronLabel('members')}</span>
+			<span class="kicker"><KindGlyph collection="members" />{currentTitle(career, sitting)}</span>
 			<div class="member-head-row">
 				<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
 				<div class="member-meta">
 					<h2 class="title">{m.name ?? m.key}</h2>
-					<div class="chips">
-						{#if m.party}<span class="party-chip">{m.party}</span>{/if}
-						<span class="status-chip" class:status-chip--inactive={!m.active}>
-							{m.active ? 'Actief' : 'Inactief'}
-						</span>
-					</div>
+					{#if m.party}
+						<div class="chips"><span class="party-chip">{m.party}</span></div>
+					{/if}
 				</div>
 			</div>
 		</header>
 
-		{#if memberships.length > 0}
-			{#if current.length > 0}
-				<section class="sec">
-					<h3 class="sec-title">
-						Huidige fractie
-						<span class="faction-active-dot" aria-hidden="true"></span>
-					</h3>
-					<ul class="faction-list">
-						{#each current as f (f.faction_id + (f.from_date ?? ''))}
-							<li class="faction-row">
-								<a
-									class="faction-name"
-									href={bronHref({ collection: 'factions', key: f.faction_key })}
-									data-sveltekit-noscroll
-								>
-									{f.name ?? f.abbreviation ?? f.faction_key}
-								</a>
-								<span class="faction-range">
-									{#if f.from_date}Lid sinds {formatYear(f.from_date)}{:else}Huidig lid{/if}
+		{#if career.length > 0}
+			<section class="sec">
+				<h3 class="sec-title">Loopbaan</h3>
+				<ul class="career">
+					{#each career as step (step.kind + (step.kind === 'seat' ? step.factionKey : step.function) + step.from)}
+						<li
+							class="career-step"
+							class:is-out={!inYears(step.from, step.to, years.van, years.tot)}
+						>
+							<span class="career-years">{yearsOf(step.from, step.to)}</span>
+							{#if step.kind === 'seat'}
+								<span class="career-what">
+									Kamerlid,
+									<a
+										href={bronHref({ collection: 'factions', key: step.factionKey })}
+										data-sveltekit-noscroll>{step.faction}</a
+									>
+									{#each step.roles as r (r.role + r.from)}
+										<span class="career-role">{r.role.toLowerCase()} {yearsOf(r.from, r.to)}</span>
+									{/each}
 								</span>
-								{#if f.role && f.role !== 'Lid'}<span class="faction-role">{f.role}</span>{/if}
-							</li>
-						{/each}
-					</ul>
-				</section>
-			{/if}
-			{#if former.length > 0}
-				<section class="sec">
-					<h3 class="sec-title sec-title--former">Vorige fracties ({former.length})</h3>
-					<ul class="faction-list faction-list--former">
-						{#each former as f (f.faction_id + (f.from_date ?? ''))}
-							<li class="faction-row">
-								<a
-									class="faction-name"
-									href={bronHref({ collection: 'factions', key: f.faction_key })}
-									data-sveltekit-noscroll
-								>
-									{f.name ?? f.abbreviation ?? f.faction_key}
-								</a>
-								<span class="faction-range"
-									>{formatYear(f.from_date)} – {formatYear(f.to_date)}</span
-								>
-								{#if f.role && f.role !== 'Lid'}<span class="faction-role">{f.role}</span>{/if}
-							</li>
-						{/each}
-					</ul>
-				</section>
-			{/if}
+							{:else}
+								<span class="career-what">
+									{step.function.charAt(0).toUpperCase() + step.function.slice(1)}
+									<span class="career-role"
+										>{step.count}
+										{step.count === 1 ? 'stuk' : 'stukken'} ondertekend</span
+									>
+								</span>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</section>
 		{/if}
 
 		{#if view.votes && view.votes.votes.length > 0}
@@ -283,19 +292,12 @@
 		align-items: baseline;
 	}
 
-	/* The faction and the status are words, not tags. */
-	.party-chip,
-	.status-chip {
+	/* The faction is a word, not a tag. */
+	.party-chip {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
-	}
-	.party-chip {
 		color: var(--ink-2);
-	}
-	.status-chip,
-	.status-chip--inactive {
-		color: var(--ink-3);
 	}
 
 	/* ── Sections ── */
@@ -311,64 +313,47 @@
 		color: var(--ink-3);
 		margin: 0;
 	}
-	.sec-title--former {
-		color: var(--ink-3);
-		opacity: 0.7;
-	}
-	.faction-active-dot {
-		display: inline-block;
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--ink-2);
-		margin-left: 5px;
-		vertical-align: middle;
-	}
-
-	/* ── Fractielidmaatschappen ── */
-	.faction-list {
+	/* ── Loopbaan: newest first, the years in the margin ── */
+	.career {
 		list-style: none;
 		margin: 0;
 		padding: 0;
-	}
-	.faction-list--former {
-		opacity: 0.6;
-	}
-	.faction-row {
 		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.career-step {
+		display: grid;
+		grid-template-columns: 5.5em 1fr;
+		gap: var(--s-2);
 		align-items: baseline;
-		gap: 8px;
-		padding: 5px var(--s-1);
-		margin: 0 calc(-1 * var(--s-1));
-		border-radius: var(--r-1);
-		flex-wrap: wrap;
+		transition: opacity var(--dur-1) var(--ease);
 	}
-	.faction-row:hover {
-		background: var(--paper-2);
+	.career-step.is-out {
+		opacity: 0.4;
 	}
-	.faction-name {
-		flex: 1;
-		min-width: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
-		text-decoration: none;
-		overflow-wrap: anywhere;
-	}
-	.faction-name:hover {
-		color: var(--accent);
-	}
-	.faction-range {
+	.career-years {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
-		flex-shrink: 0;
 	}
-	.faction-role {
+	.career-what {
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		color: var(--ink);
+		overflow-wrap: anywhere;
+	}
+	.career-what a {
+		color: inherit;
+	}
+	.career-what a:hover {
+		color: var(--accent);
+	}
+	.career-role {
+		display: block;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-weight: 500;
 		color: var(--ink-3);
 	}
 

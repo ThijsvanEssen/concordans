@@ -26,6 +26,8 @@ export type Row = {
 	identifier?: string | null;
 	/** ISO date of the source. */
 	date?: string | null;
+	/** The function a lid signed a stuk in, as the source writes it (`minister-president`). */
+	function?: string | null;
 	/** A seat on a commissie or in a fractie: when it began and ended (open when null), and its role. */
 	period?: { from: string | null; to: string | null; role: string | null } | null;
 	/** The aard of a reference: `strafverzwaring`, `definitie`. */
@@ -234,6 +236,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		snippet: text(meta.snippet),
 		match,
 		period: periodOf(meta),
+		function: text(meta.function),
 		props
 	};
 }
@@ -265,6 +268,9 @@ export function metaParts(
 	if (row.position) parts.push({ text: row.position, kind: 'plain' });
 	if (row.context) parts.push({ text: row.context, kind: 'plain' });
 	if (row.period) parts.push({ text: periodLabel(row.period), kind: 'plain' });
+	// Who signed, as what: the function unless it is the plain seat.
+	if (row.function && row.function !== 'Tweede Kamerlid')
+		parts.push({ text: `als ${row.function}`, kind: 'plain' });
 	const when = row.identifier ?? (row.kind === 'uitspraken' ? null : shortDate(row.date ?? null));
 	if (when) parts.push({ text: when, kind: 'plain' });
 	if (row.derived) parts.push({ text: 'afgeleid', kind: 'derived' });

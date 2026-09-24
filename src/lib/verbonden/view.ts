@@ -33,7 +33,15 @@ export function filterGroups(groups: Group[], f: VerbondenFilter): Group[] {
 	return groups
 		.map((g) => {
 			const rows = g.rows.filter((r) => rowPasses(r, f));
-			return { ...g, rows, total: cut ? undefined : g.total, capped: cut ? false : g.capped };
+			// A name that follows its rows follows the rows the filter leaves.
+			const label = g.labelOf ? g.labelOf(rows) : g.label;
+			return {
+				...g,
+				label,
+				rows,
+				total: cut ? undefined : g.total,
+				capped: cut ? false : g.capped
+			};
 		})
 		.filter((g) => g.rows.length > 0);
 }
