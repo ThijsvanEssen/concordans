@@ -18,22 +18,22 @@
 import { browser } from '$app/environment';
 
 function detectIsMac(): boolean {
-  if (!browser) return true; // SSR-default: tonen Mac-symbool
+	if (!browser) return true; // SSR-default: tonen Mac-symbool
 
-  // Voorkeur: User-Agent Client Hints API (moderne browsers, accurater
-  // dan UA-string sniffing). Voor Firefox/Safari die hem niet
-  // ondersteunen valt het terug op userAgent.
-  const navAny = navigator as Navigator & {
-    userAgentData?: { platform?: string };
-  };
-  const hint = navAny.userAgentData?.platform;
-  if (typeof hint === 'string' && hint.length > 0) {
-    return /mac/i.test(hint);
-  }
-  // navigator.platform is deprecated maar nog wel breed ondersteund;
-  // userAgent als laatste vangnet voor oude Safari/iOS.
-  const ua = `${navigator.platform ?? ''} ${navigator.userAgent ?? ''}`;
-  return /Mac|iPhone|iPad|iPod/.test(ua);
+	// Voorkeur: User-Agent Client Hints API (moderne browsers, accurater
+	// dan UA-string sniffing). Voor Firefox/Safari die hem niet
+	// ondersteunen valt het terug op userAgent.
+	const navAny = navigator as Navigator & {
+		userAgentData?: { platform?: string };
+	};
+	const hint = navAny.userAgentData?.platform;
+	if (typeof hint === 'string' && hint.length > 0) {
+		return /mac/i.test(hint);
+	}
+	// navigator.platform is deprecated maar nog wel breed ondersteund;
+	// userAgent als laatste vangnet voor oude Safari/iOS.
+	const ua = `${navigator.platform ?? ''} ${navigator.userAgent ?? ''}`;
+	return /Mac|iPhone|iPad|iPod/.test(ua);
 }
 
 /** True op macOS / iOS / iPadOS, anders false. */

@@ -7,14 +7,13 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow">CONTACT</div>
+		<div class="stub-eyebrow">Contact</div>
 		<h1 class="stub-title">Contact</h1>
-		<p class="stub-lede">Voor vragen, feedback en aanvragen voor API-toegang.</p>
+		<p class="stub-lede">Voor vragen, feedback en aanvragen voor grootschalig API-gebruik.</p>
 
 		<p>Neem contact op via <a href="mailto:concordans@tmve.nl">concordans@tmve.nl</a>.</p>
 	</div>
 </div>
-
 
 <style>
 	.page-wrap {
@@ -29,27 +28,39 @@
 
 	.stub-eyebrow {
 		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.1em;
-		color: var(--fg-3);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
 		margin-bottom: 16px;
 	}
 
 	.stub-title {
 		font-family: var(--font-serif);
-		font-size: clamp(28px, 5vw, 40px);
+		font-size: var(--t-h1);
 		font-weight: 500;
+		line-height: var(--lh-tight);
 		color: var(--ink);
 		margin: 0 0 16px;
 	}
 
 	.stub-lede {
-		font-family: var(--font-sans);
-		font-size: 15px;
-		line-height: 1.65;
-		color: var(--fg-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink-2);
 		margin-bottom: 40px;
 	}
 
+	p {
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
+		margin: 0;
+	}
 
+	p a {
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+	}
 </style>

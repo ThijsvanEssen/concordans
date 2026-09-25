@@ -1,32 +1,43 @@
 <script lang="ts">
-	// Running head of the text readers: sigil + kind label, then the title.
-	// Reader-specific rows (citation, meta, in-flux chips) go in the snippet.
+	// Running head of the text readers: one grey line with the place of the bron (for an
+	// article: law, book, title; otherwise the kind), then the title. Reader-specific
+	// rows go in the snippet. `nav` sits at the end of the first line, whose place does
+	// not move from one bron to the next, so stepping through them keeps the pointer still.
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import type { Snippet } from 'svelte';
 
 	let {
-		sigil,
-		tone,
-		kind,
+		collection,
 		juris,
 		title,
+		place = [],
+		nav,
 		children
 	}: {
-		sigil: string;
-		tone: 'article' | 'judgment';
-		kind: string;
+		collection: Collection;
 		juris?: string | null;
 		title: string;
+		/** The place of the bron, printed above the title: `Wetboek van Strafrecht · Tweede Boek · Titel XX`. */
+		place?: string[];
+		/** Links to the previous and next bron, at the end of the first line. */
+		nav?: Snippet;
 		children?: Snippet;
 	} = $props();
 </script>
 
 <div class="reader-head">
-	<div class="reader-kind">
-		<span class="reader-sigil" class:reader-sigil--judgment={tone === 'judgment'} aria-hidden="true"
-			>{sigil}</span
-		>
-		<span>{kind}</span>
-		{#if juris}<span class="reader-juris">· {juris}</span>{/if}
+	<div class="reader-line">
+		{#if place.length > 0}
+			<div class="reader-place">{place.join(' · ')}</div>
+		{:else}
+			<div class="reader-kind">
+				<KindGlyph {collection} />
+				<span>{bronLabel(collection)}</span>
+				{#if juris}<span class="reader-juris">· {juris}</span>{/if}
+			</div>
+		{/if}
+		{@render nav?.()}
 	</div>
 	<h2 class="reader-title">{title}</h2>
 	{@render children?.()}
@@ -37,44 +48,31 @@
 		margin-bottom: var(--s-6);
 	}
 
+	.reader-line {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-4);
+		margin-bottom: 10px;
+	}
+
+	.reader-place,
 	.reader-kind {
+		flex: 1;
+		min-width: 0;
 		display: flex;
 		align-items: baseline;
 		gap: 8px;
 		font-family: var(--font-sans);
-		font-size: 11px;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--fg-3);
-		margin-bottom: 18px;
-	}
-
-	.reader-sigil {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: 18px;
-		color: var(--accent);
-		letter-spacing: 0;
-		text-transform: none;
-	}
-
-	.reader-sigil--judgment {
-		color: var(--indigo);
-	}
-
-	.reader-juris {
-		color: var(--fg-4);
-		text-transform: none;
-		letter-spacing: 0;
+		font-size: 12.5px;
+		color: var(--ink-3);
 	}
 
 	.reader-title {
+		margin: 0 0 8px;
 		font-family: var(--font-serif);
 		font-weight: 500;
-		font-size: 26px;
-		line-height: 1.2;
-		letter-spacing: -0.01em;
-		margin: 0 0 8px;
+		font-size: var(--t-h1);
+		line-height: 1.15;
 		color: var(--ink);
 		text-wrap: pretty;
 	}

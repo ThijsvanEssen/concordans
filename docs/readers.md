@@ -1,172 +1,67 @@
 # Readers
 
-The right-hand panel in `mode=split` and `mode=read`. Dispatched per node-kind, with one reader component per kind.
+The reading surfaces of `/explore` for the selected bron:
 
-## The dispatcher — `KindReader.svelte`
+| Place                    | Modes                           | Component                                                                                                         |
+| ------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Reader                   | Lezen; Netwerk with a selection | `KindReader.svelte`, which picks one reader per collection                                                        |
+| Table                    | Lezen with `?tabel=1`           | `src/lib/verbonden/VerbondenTabel.svelte`: every verbinding of the bron, sortable, fifty per page, CSV export     |
+| Beside the reader        | both, with `?naast=`            | `DocumentReader` with the article as `article`: a toelichting next to the article it explains                     |
+| Table of contents (left) | Lezen, for an article or a law  | `LezenNav.svelte`: the articles of the whole law from `/api/instruments/{bwb_id}/articles`, grouped by breadcrumb |
+| Verbonden (right)        | both                            | `src/lib/verbonden/Verbonden.svelte`: the verbindingen of the bron in groups                                      |
 
-A single switch on `selection.kind` (or `selection.collection` for `stemmingen`):
+`explore/+page.svelte` places them. `LezenNav` reports its items through `onitems`, each with the labels of its place in the law; the page derives `prevHref`, `nextHref` and `place` for `ArticleReader` from them. The page also loads the verbindingen of the bron once (`createVerbondenSource` in `src/lib/verbonden/source.ts`) and hands the same state to the panel, the table, the legend and the reader (the counts per lid, the number of wetsvoorstellen).
 
-```svelte
-{#if !selection}              <ArticleReader {selection} />          <!-- empty state -->
-{:else if kind === 'article'} <ArticleReader ... />
-{:else if kind === 'judgment'}<JudgmentReader ... />
-{:else if kind === 'tkstuk'}  <TkstukReader ... />
-{:else if kind === 'dossier'} <DossierReader ... />
-{:else if kind === 'commissie'}<CommissieReader ... />
-{:else if kind === 'lid'}     <LidReader ... />
-{:else if kind === 'fractie'} <FractieReader ... />
-{:else if kind === 'activity'}<ActivityReader ... />
-{:else if kind === 'instrument'}<InstrumentReader ... />
-{:else if collection === 'stemmingen'}<StemmingReader ... />
-{:else}                       <FallbackReader ... />
-{/if}
-```
+## Dispatch
 
-Two reasons the switch is intentionally flat:
+`KindReader.svelte` is one flat `{#if}` chain on `selection.collection`. A collection without a branch gets `FallbackReader`.
 
-1. **Cheap to read.** Adding a kind is one new branch.
-2. **No virtual indirection.** No reader registry, no dynamic component lookup — `svelte-check` and grep both find every reader trivially.
+| Collection    | Reader             | Reads                                                                   |
+| ------------- | ------------------ | ----------------------------------------------------------------------- |
+| `articles`    | `ArticleReader`    | `getArticleDetail`, `/api/articles/{bwb_id}/{n}/in-flux`                |
+| `judgments`   | `JudgmentReader`   | `getJudgmentDetail`                                                     |
+| `documents`   | `DocumentReader`   | `/api/documents/{key}`, with an article `/api/documents/{key}/passages` |
+| `dossiers`    | `DossierReader`    | `getDossier`, `/api/dossiers/{number}/timeline`                         |
+| `committees`  | `CommitteeReader`  | `getCommittee(slug)`                                                    |
+| `members`     | `MemberReader`     | `/api/members/{key}`, `getMemberVotes`                                  |
+| `factions`    | `FactionReader`    | `/api/factions/{key}`                                                   |
+| `decisions`   | `DecisionReader`   | `/api/decisions/{key}`, `/api/decisions/{key}/document`                 |
+| `activities`  | `ActivityReader`   | Nothing: the node's own props                                           |
+| `instruments` | `InstrumentReader` | Renders `WholeLawReader`: `/api/instruments/{bwb_id}/articles`, paged   |
+| anything else | `FallbackReader`   | Nothing: kind, title, date, status and the source's URL from the props  |
 
-The first branch (`!selection`) renders `ArticleReader` with a null selection so the empty-state copy (which lives in `ReaderFrame`) shows by default. If you reshape the empty state, change the no-selection target accordingly.
+The endpoints are described in the API's `api.md`. Calls go through `$lib/api/client` (see [`api-client.md`](api-client.md)).
 
-## The reader families
+## Structure of a reader
 
-### Text readers (article / judgment)
+A reader that loads data holds its state as `view` (`loading`, `error`, `loaded`; the text readers add `empty`) and loads in an `$effect` that aborts its request, or ignores a late answer, when the selection changes. A reader depends on primitives such as the key or `bwb_id`, so a new selection object for the same bron does not reload it.
 
-`ArticleReader.svelte` and `JudgmentReader.svelte` fetch a text-bearing node and render it in the reading typography. Both sit on two shared pieces:
+`ArticleReader` and `JudgmentReader` use `ReaderFrame` (scroll container, empty, loading and error states) and `ReaderHead` (glyph, kind label, title, and a snippet for extra rows). The frame is sized per mode by `explore/+page.svelte` (`.reader-frame`). `judgment-text.ts` holds the pure helpers that structure judgment text. `_shared.ts` holds date formatting and `textProp`, which reads an untyped prop. `MemberReader` shows a person's career (`careerOf` in `src/lib/components/parliamentary/career.ts`): their seats in a fractie, joined where they run on, with the roles in them, and the functions they signed stukken in (AUTHORED `meta.function` and `meta.capacity`), with the years of those stukken. Its kicker is what the person is now (`currentTitle`): Kamerlid, the function of the latest signature, or Oud-Kamerlid. A step outside the years of the bronfilter steps back. In the panel a person's stukken are grouped by what they signed as, named after the functions of the rows shown.
 
-- **`ReaderFrame.svelte`**: the scroll container plus the empty, loading and error states. `explore/+page.svelte` sizes its `.reader-frame` class per mode (max-width in `split`, wider measure in `read`).
-- **`ReaderHead.svelte`**: sigil (`§` article, `¶` judgment), kind label and title. Reader-specific rows (citation, meta, in-flux chips) go in its snippet.
+The parliamentary readers share request helpers in `src/lib/components/parliamentary/data.ts` and the labels for stages, tracks and outcomes in `stages.ts`. Only a bill passes stages (`isBill`), so only a bill shows `LegislativeStepper`; a closed dossier shows its outcome and `closed_on`.
 
-Each reader owns a `view` state (`empty | loading | error | loaded`) and a `token` counter that discards responses from a superseded selection.
+`ArticleReader` records the law name with `recordInstrument`, so the status bar and the hover panel can show it. Its head is one grey line with the place of the article, the title, and one line with the version picker (`/history`; `Geldend recht, tekst sinds …`), the wetsvoorstellen that touch the article (a link that filters Verbonden to them) and `Citeer artikel`. The leden are a grid (`ArticleText`): the number in the margin, the text, and at the right the number of verbindingen of that lid (a link to `?lid=`) with `Citeer` and `Kopieer tekst` on hover. Every onderdeel, at any depth, shows the same two actions in that column, level with its own text. `Citeer` offers the three forms of `citeArticle` (`src/lib/text/cite.ts`): kort (`art. 5 lid 1 onder d sub i Sr`), voluit (`artikel 5, eerste lid, onderdeel d, onder i, Wetboek van Strafrecht`, after the Aanwijzingen voor de regelgeving) and met datum; the short and long forms are built from the instrument's short title and citation title, a book of the BW cited as `art. 7:3 BW`. `Kopieer tekst` copies the part's text with its onderdelen. The whole-law reader offers the same actions. A wetsvoorstel row of the panel can show its proposed wording next to the current lid (`proposed-text.ts`, from the mutations of its dossier).
 
-| File | Contents |
-|---|---|
-| `ArticleReader.svelte` | Article body or leden, in-flux dossier chips, prev/next footer, `ArticleLegislativeHistory` |
-| `ArticleMvtPanel.svelte` | Collapsible "Toelichting (MvT)" panel: passages, per-passage full text |
-| `JudgmentReader.svelte` | Summary, subjects, participants table, numbered body |
-| `judgment-text.ts` | Pure parsing helpers for judgment text (party block, participants, sub-numbering, embedded headings) |
+## Text and anchors
 
-Do not name a state variable `state` or `props` in a Svelte 5 component: the compiler then reads `$state` / `$props` as a store subscription. See [`gotchas.md`](gotchas.md#variables-named-state-or-props).
+**Parts.** `ArticleText` (`src/lib/components/articles`) renders an article as aanhef, leden and onderdelen, each with an anchor id (`aanhef`, `lid-2`, `lid-2-onder-a`) and a permalink. The parts come from the API (`partsFromApi`) or are read from the text (`parseArticleParts` in `src/lib/text/article-parts.ts`).
 
-### Parliamentary readers (tkstuk / dossier / commissie / lid / fractie / stemming / activity)
+**Citations.** `CitedText` turns the citation spans of an article or judgment into links, at the lid or onderdeel the source names: the qualifier comes from the span (`qualifierOfSpan`) or from the text around it (`parseQualifier` in `src/lib/text/qualifier.ts`). A link to the article on screen is a jump within the page. Hovering shows the cited part.
 
-These build on `lib/api/parliamentary-client.ts` (and `mvt.ts` for tkstuk) and are standalone components:
+**Overwegingen.** `JudgmentReader` gives each numbered paragraph the id `paragraph_id` from the API or `rov-{number}`, with a permalink. An unnumbered paragraph keeps its `paragraph_id` (positional, `p-21`), so a citation of it lands.
 
-- **`TkstukReader.svelte`**: parliamentary publication (MvT, verslag, nota, amendement) as plain text with a link to the source.
-- **`DossierReader.svelte`**: dossier detail + stepper + timeline + recent stemmingen + betrokken artikelen + "Toon op grafiek" link.
-- **`CommissieReader.svelte`**: commission overview, members, dossiers.
-- **`LidReader.svelte`**: member profile, votes, touched instruments.
-- **`FractieReader.svelte`**: party profile, members, touched instruments, vote summary.
-- **`StemmingReader.svelte`**: single vote outcome with per-fractie breakdown.
-- **`ActivityReader.svelte`**: committee activity (vergadering, behandeling), usually a thin meta-card.
+**Passages.** `DocumentReader` opened beside an article lands on the passage for it: from `/api/documents/{key}/passages`, or a heading found in the text (`findPassage` in `src/lib/text/find-passage.ts`, marked as derived).
 
-These readers tend to be section-rich rather than text-rich. The pattern is: fetch a detail DTO + a small set of related queries (e.g. dossier + timeline + mutations), then lay out as `<section class="sec">` blocks.
+**Landing.** `src/lib/bron/anchor.ts`: `anchorOfHash` reads the fragment, `landOn` scrolls the element into view and marks it until the next click, `permalink` builds the address of a position.
 
-### Special cases
+## Navigation
 
-- **`InstrumentReader.svelte`**: whole-law overview. Not text-heavy, more like a navigator: shows article structure (hoofdstukken, afdelingen, paragrafen) as a collapsible tree. Clicks navigate into individual articles.
-- **`FallbackReader.svelte`**: last-resort for unknown kinds. Renders `node.label` and `node.collection` + a dump of `raw.props`. If you see it in the wild, you've added a node kind without a reader.
+Links inside a reader are `bronHref` (see [`routes.md`](routes.md#links-to-a-bron)); a reader has no navigation callback. `StatusBar.svelte` (the bar above the panels: breadcrumb, history, mode, copy citation, share) reads the selection's props and needs no change for a new reader.
 
-## Article reader internals
+## Adding a reader
 
-### Side-fetches
-
-When an article loads, the reader also runs:
-
-- `fetchArticleLegislativeHistory(bwb, art)`: fills the in-flux dossier chip list (entries with `status === 'voorgesteld'`, deduped by `dossier_nummer`).
-- `recordInstrument({...})`: seeds the instrument-meta cache from `citation_formats.bibtex`, so the status bar and the citation panel show the law name.
-
-Both are best-effort. The chip fetch has an empty failure handler; the reader shows what it has.
-
-### Collapsible passages
-
-`ArticleMvtPanel` keeps a `Map<string, 'idle' | 'loading' | 'error' | string>` per passage key, where a string other than the three markers is the loaded text. The panel fetches passages on first open and the full text on request (`getPublicationText`). Keeping the load state next to the data keeps the template short; follow the same pattern for a further collapsible group.
-
-The panel remounts on every selection change because the reader passes through `loading`, so no reset logic is needed.
-
-### In-flux chip list
-
-A row of chips below the article title when `inFluxDossiers.length > 0`. Each chip links to a dossier-scoped graph:
-
-```svelte
-<a href="/explore?focus=kamerstukdossiers/{d.nummer}&overlay=dossier:{d.nummer}"
-   title={d.titel}>
-```
-
-`focus` selects the dossier, `overlay=dossier:X` paints Mutatie badges for that dossier.
-
-See [`overlays.md`](overlays.md) for the overlay side; [`gotchas.md`](gotchas.md#in-flux-mismatch) for why the chip list and Mutatie badge can disagree.
-
-## Reader navigation
-
-Three callback props show up across readers:
-
-```ts
-onNavigate?: (collection: string, key: string) => void;
-onPrev?: () => void;
-onNext?: () => void;
-```
-
-`onNavigate` is fired when the user clicks a citation chip or in-reader link. The route component (`/explore/+page.svelte`) wires it to `store.focusNode(graphNodeId(collection, key))`, which updates the URL and graph selection.
-
-`onPrev`/`onNext` are wired to the article reader specifically, supporting `[` and `]` keyboard navigation through the article's siblings (next/previous article in the same instrument).
-
-Not all readers expose all three. Add as needed when the kind has a natural prev/next ordering.
-
-## Reader layout
-
-The reader column lives in `routes/explore/+page.svelte` under `.explore-split .split-reader`. Width is user-resizable via the `panel-resize-handle` (drag).
-
-The reader is wrapped in `LezenNav` only when in `mode=read` (a different surface entirely — `WholeLawReader`). In `mode=split` the `KindReader` is the direct child and renders selection-driven.
-
-## CitationRail integration
-
-The right-most column in `mode=split`. It listens for selection changes via `store.selection.subscribe(...)` and renders citation chips. Clicking a chip:
-
-1. Fires the `onNavigate` callback up to the route.
-2. Route calls `store.focusNode(...)` which updates URL + graph selection.
-3. Reader re-renders via `$effect(() => { void selection })` and refetches.
-
-The rail uses `setActiveArticle` and `setFocusedCitation` on `stores/reader.ts` so the reader can scroll-into-view the cited paragraph when the rail signals which citation was clicked. This is the one bit of cross-component state that genuinely needs a store (the reader and rail are siblings under the route, but the data flow is reader → rail → reader scroll, which doesn't lift cleanly).
-
-## Per-kind reader inventory
-
-| Reader | Kind | Backend calls | Notable features |
-|---|---|---|---|
-| `ArticleReader` | `article` | `getArticleDetail`, `fetchArticleLegislativeHistory`, `getMvtContext`, `getPublicationText` | In-flux chips, MvT panel, legislative history |
-| `JudgmentReader` | `judgment` | `getJudgmentDetail` | Participants table, numbered paragraphs, subjects |
-| `TkstukReader` | `tkstuk` | `getPublicationText` | Publication text, link to tweedekamer.nl |
-| `DossierReader` | `dossier` | `fetchDossier`, `fetchDossierTimeline`, `fetchDossierMutations` | Stepper, timeline, betrokken artikelen, "Toon op grafiek" |
-| `CommissieReader` | `commissie` | `fetchCommissie` | Members + dossiers |
-| `LidReader` | `lid` | `fetchLid`, `fetchLidVotes`, `fetchLidTouchedInstruments` | Voting record, touched laws |
-| `FractieReader` | `fractie` | `fetchFractie`, `fetchFractieTouchedInstruments` | Party profile (note: backend returns raw graph-node shape — normalised in helper) |
-| `StemmingReader` | (collection-keyed) | `fetchStemming` | Per-fractie outcomes |
-| `ActivityReader` | `activity` | parliamentary-client | Vergadering metadata |
-| `InstrumentReader` | `instrument` | `fetchInstrument`, structure fetch | Article-tree navigator |
-| `FallbackReader` | unknown | none | Renders raw props |
-
-## Adding a new reader
-
-If you've added a new node-kind (see [`graph-system.md`](graph-system.md#adding-a-new-node-kind)):
-
-1. Create `src/lib/components/explore/readers/MyKindReader.svelte`.
-2. Mirror an existing reader's shape (state machine, error/empty branches, section layout).
-3. Register in `KindReader.svelte` by adding a `{:else if selection.kind === 'mykind'}` branch.
-4. If the reader is text-heavy like article/judgment, wrap it in `ReaderFrame` and `ReaderHead`. If it's section-heavy like dossier, use `<section class="sec">` blocks.
-5. Wire `onNavigate` if the reader exposes intra-graph navigation.
-6. Add an entry to the inventory table above when you commit.
-
-## Related files
-
-| Concern | File |
-|---|---|
-| Dispatcher | `src/lib/components/explore/KindReader.svelte` |
-| Text readers | `src/lib/components/explore/readers/ArticleReader.svelte`, `JudgmentReader.svelte`, `ReaderFrame.svelte`, `ReaderHead.svelte` |
-| Judgment text parsing | `src/lib/components/explore/readers/judgment-text.ts` |
-| Per-kind readers | `src/lib/components/explore/readers/*.svelte` |
-| Whole-law reader (`mode=read`) | `src/lib/components/explore/WholeLawReader.svelte` |
-| Reader navigation | `src/lib/components/explore/LezenNav.svelte` |
-| Citation rail | `src/lib/components/explore/CitationRail.svelte` |
-| Reader/rail bridge state | `src/lib/stores/reader.ts` |
-| Status bar (top of reader) | `src/lib/components/explore/StatusBar.svelte` |
+1. Create `explore/readers/{Kind}Reader.svelte` with `node: GraphNode` (or `selection`) as prop and a `view` state.
+2. Add a branch to `KindReader.svelte`.
+3. For a text source, use `ReaderFrame` and `ReaderHead`, and give the parts a reference can point at an id.
+4. Add the groups of its verbindingen to `GROUPS` in `src/lib/verbonden/groups.ts`.
+5. The kind itself is added as described in [`graph-system.md`](graph-system.md#adding-a-node-kind).

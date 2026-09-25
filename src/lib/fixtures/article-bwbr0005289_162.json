@@ -1,0 +1,30 @@
+{
+	"article": {
+		"key": "bwbr0005289_162",
+		"bwb_id": "BWBR0005289",
+		"article_number": "162",
+		"display_name": "Artikel 162 Burgerlijk Wetboek Boek 6",
+		"text": "1. Hij die jegens een ander een onrechtmatige daad pleegt, welke hem kan worden toegerekend, is verplicht de schade die de ander dientengevolge lijdt, te vergoeden.\n2. Als onrechtmatige daad worden aangemerkt een inbreuk op een recht en een doen of nalaten in strijd met een wettelijke plicht of met hetgeen volgens ongeschreven recht in het maatschappelijk verkeer betaamt, een en ander behoudens de aanwezigheid van een rechtvaardigingsgrond.\n3. Een onrechtmatige daad kan aan de dader worden toegerekend, indien zij te wijten is aan zijn schuld of aan een oorzaak welke krachtens de wet of de in het verkeer geldende opvattingen voor zijn rekening komt."
+	},
+	"citations": [],
+	"judgments": [
+		{
+			"id": "judgments/ecli_nl_rvs_2024_3593",
+			"key": "ecli_nl_rvs_2024_3593",
+			"display_name": "Raad van State 2024-09-04 / 202306309/1/A2",
+			"ecli": "ECLI:NL:RVS:2024:3593"
+		},
+		{
+			"id": "judgments/ecli_nl_gharl_2024_5962",
+			"key": "ecli_nl_gharl_2024_5962",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-09-17 / 21-005221-22",
+			"ecli": "ECLI:NL:GHARL:2024:5962"
+		},
+		{
+			"id": "judgments/ecli_nl_gharl_2024_5950",
+			"key": "ecli_nl_gharl_2024_5950",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-09-17 / 21-005127-22",
+			"ecli": "ECLI:NL:GHARL:2024:5950"
+		}
+	]
+}

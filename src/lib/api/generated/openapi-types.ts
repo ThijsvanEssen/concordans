@@ -12,10 +12,70 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Haal een BWB-artikel plus interne verwijzingen op
-         * @description Zoekt een `instrument_article` op basis van `bwb_id` en `article_number`, voegt het parent-instrument toe, levert alle uitspraken die het artikel noemen via semantische edges en voegt extra artikelverwijzingen uit de tekst toe.
+         * One article with its references
+         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument and every judgment that cites it, plus the article references recorded on the article itself.
          */
         get: operations["get_article_detail_api_articles__bwb_id___article_number__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/articles/{bwb_id}/{article_number}/relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Semantic relationships of an article
+         * @description Upstream dependencies (outgoing references), downstream implications (incoming references) and annex scopes, each with its semantic type and explanation.
+         */
+        get: operations["get_article_relationships_api_articles__bwb_id___article_number__relationships_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/articles/{bwb_id}/{article_number}/cited-by": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Passages of judgments that cite an article
+         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` and `lid` (a lid number the passage names) filter; `total` counts all passages that match. 404 when the article is unknown.
+         */
+        get: operations["get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/articles/{bwb_id}/{article_number}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Version history of an article
+         * @description Every version of one article, identified by the stable BWB `stam_id` so renumbering does not break the chain, oldest first. Each version carries its validity period, text, the kind of change (`change`: introduces / amends / repeals), the amending publication (`amended_by`) and the commencement publication (`commencement`) with their dossiers. 404 when the article is unknown.
+         */
+        get: operations["get_article_version_history_api_articles__bwb_id___article_number__history_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -32,10 +92,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Wetgevingsgeschiedenis van een artikel
-         * @description Geeft alle dossiers en documenten terug die dit artikel hebben ingevoerd, gewijzigd of voortaan willen wijzigen. Bevat zowel canonieke als voorgestelde wijzigingen (status='voorgesteld'). Retourneert een lege lijst als er geen geschiedenis is — nooit een 404.
+         * Legislative history of an article
+         * @description The dossiers that introduced, amended or repealed this article, or propose to: one entry per change and dossier, with the amending publication (enacted, `canoniek`) or the bill (proposed, `voorgesteld`) that carries it; proposed first, then newest first. What only cites the article (a judgment, another article) is not history. The explanatory documents are at `explained-by`. Returns an empty list when there is no history — never a 404.
          */
         get: operations["get_legislative_history_api_articles__bwb_id___article_number__legislative_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/articles/{bwb_id}/{article_number}/explained-by": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Explanatory documents of an article
+         * @description The documents that explain this article: every EXPLAINS edge that points at the article, at one of its versions or at its instrument. Newest first, the article-level explanations (`target` `article` and `article_version`) before those of the instrument. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). An `instrument` explanation exists only for a dossier whose law changed no articles, so it is no evidence about this article; filter on `target`. One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article — never a 404.
+         */
+        get: operations["get_explained_by_api_articles__bwb_id___article_number__explained_by_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -52,8 +132,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * In-flux status van een artikel
-         * @description Goedkope check of dit artikel momenteel doelwit is van een of meer open wetsvoorstellen. Retourneert een boolean en het aantal open dossiers. Agressief gecached — altijd 200, nooit 404.
+         * In-flux status of an article
+         * @description A cheap check whether one or more open bills currently target this article. Returns a flag and the number of open dossiers. Aggressively cached — always 200, never 404.
          */
         get: operations["get_in_flux_api_articles__bwb_id___article_number__in_flux_get"];
         put?: never;
@@ -72,8 +152,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Gepagineerde lijst van uitspraken
-         * @description Gepagineerde lijst van uitspraken (arresten) met filters op court (ECLI-code), tier (hoge_raad/gerechtshof/rechtbank/bijzonder), datumbereik en citatiedrempel.
+         * Paginated list of judgments
+         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the college: hoge_raad, raad_van_state, centrale_raad_van_beroep, parket, gerechtshof, rechtbank, tuchtcollege, …), area of law (`subject`), date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier filter) and per year of `date` (without `from` and `to`).
          */
         get: operations["list_judgments_api_judgments_get"];
         put?: never;
@@ -92,8 +172,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Haal een uitspraak met gelinkte artikelen
-         * @description Zoekt een uitspraak op via ECLI, leest de semantische `MENTIONS_ARTICLE`-edges en voegt elke gevonden artikel-/instrumentcombinatie toe.
+         * One judgment with the articles it cites
+         * @description Looks a judgment up by ECLI, follows its REFERS_TO edges to articles and adds each article with its parent instrument.
          */
         get: operations["get_judgment_detail_api_judgments__ecli__get"];
         put?: never;
@@ -112,10 +192,50 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Gepagineerde lijst van instrumenten
-         * @description Geeft een gepagineerde lijst van wetten, regelingen en EU-instrumenten. Ondersteunt vrije-tekstzoek (`q`), jurisdictie-filter (`nl`/`eu`), kind-filter en een minimum-artikelcount filter.
+         * Paginated list of instruments
+         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter and a minimum article count.
          */
         get: operations["list_instruments_api_instruments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/instruments/{identifier}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One instrument
+         * @description The instrument named by its BWB id (`BWBR0001854`), its CELEX number (`32016L0680`) or its node key (`echr_convention`, `verdrag_012345`): identifiers, names, jurisdiction, kind, dates and article count. 404 for an unknown instrument.
+         */
+        get: operations["get_instrument_api_instruments__identifier__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/instruments/{identifier}/eu-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * EU and international links of an instrument
+         * @description `implements`: EU acts whose CELEX number the text of this instrument names. `implemented_by`: national regulations that name the CELEX number of this EU act. Both are `IMPLEMENTS` edges between instruments, written from a CELEX number named in the text (`basis`): not a transposition relation, not per article. `international`: treaties (BWB treaties) that articles of this instrument refer to, and ECHR judgments that refer to it or to its articles, each with the evidence of its edge; the graph holds no other links to treaties or to the articles of the ECHR Convention from Dutch text. The instrument is named by BWB id, CELEX number or node key; 404 when unknown. `limit` bounds each list; the `*_total` fields are absolute.
+         */
+        get: operations["get_instrument_eu_links_api_instruments__identifier__eu_links_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -132,10 +252,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle artikelen van een instrument
-         * @description Lijst van artikelen die bij dit BWB-instrument horen, gesorteerd op natuurlijke artikelnummering (Artikel 9 vóór Artikel 10, '24c' tussen '24' en '25'). Bedoeld voor graph-loaders; tekst is een korte preview, gebruik /api/articles/{bwb_id}/{article_number} voor de volledige inhoud.
+         * All articles of an instrument
+         * @description The articles in force of this instrument (BWB id or CELEX number), in the order of the document: an article with only a heading (the Algemene bepaling of the Grondwet) where it stands, an annex after the regulation. `include_repealed` adds the repealed identities (last). The text is a short preview; /api/articles/{bwb_id}/{address} has the full content.
          */
-        get: operations["list_instrument_articles_api_instruments__bwb_id__articles_get"];
+        get: operations["list_articles_api_instruments__bwb_id__articles_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -152,8 +272,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle edges incident op dit instrument (bulk)
-         * @description Eén round-trip met alle edges die raken aan een artikel van deze wet: REFERS_TO_ARTICLE (intra + cross-wet), CITES_ARTICLE (jurisprudentie), WIJZIGT/INTRODUCEERT/TREKT_IN/LICHT_TOE (wetshistorie), enz. PART_OF_INSTRUMENT is standaard uitgesloten — dat is de structurele backbone, geen citatie. Naast `edges` levert dit endpoint ook een `nodes` side-payload met de buitenliggende eindpunten, gegroepeerd per collection.
+         * Every edge incident to this instrument (bulk)
+         * @description One round-trip with every edge touching an article of this instrument: REFERS_TO (within and across laws), AMENDS / INTRODUCES / REPEALS and EXPLAINS (legislative history), and so on. PART_OF is excluded by default — it is the structural backbone, not a reference. Beside `edges` the endpoint returns a `nodes` side-payload with the outside endpoints, grouped per collection.
          */
         get: operations["get_instrument_citations_api_instruments__bwb_id__citations_get"];
         put?: never;
@@ -172,8 +292,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle uitspraken die dit instrument citeren
-         * @description Per uitspraak: light metadata + de specifieke artikelen waarnaar verwezen wordt. Bedoeld voor de jurisprudentie-laag in de graph. ``total`` is het absolute aantal (onafhankelijk van ``limit``).
+         * Every judgment citing this instrument
+         * @description Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``.
          */
         get: operations["get_instrument_judgments_route_api_instruments__bwb_id__judgments_get"];
         put?: never;
@@ -192,10 +312,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Kamerstukdossiers die deze wet raken
-         * @description Combineert direct (dossier -RAAKT-> instrument) en afgeleid (kamerstuk wijzigt/introduceert/etc. een artikel). ``total`` is het absolute aantal (onafhankelijk van ``limit``).
+         * Parliamentary dossiers touching this law
+         * @description Dossiers reached through LEGISLATED_IN from (a) the regulation itself and (b) the amending publications (Stb/Trb) that change, introduce or repeal one of its articles. ``via`` says how the dossier is linked (``instrument`` or ``amending_publication``; in the latter case ``publication`` names the newest publication). ``total`` is the absolute count, independent of ``limit``.
          */
         get: operations["get_instrument_dossiers_route_api_instruments__bwb_id__dossiers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/instruments/{bwb_id}/amended-by": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Amending publications of a regulation
+         * @description The amending instruments (Staatsblad, Tractatenblad, ...) that change, introduce or repeal articles of this regulation (AMENDS / INTRODUCES / REPEALS), newest first. Per publication: the edge count per kind, the number of articles affected, the first effective date and the dossiers. ``total`` is the absolute count, independent of ``limit`` and ``offset``.
+         */
+        get: operations["get_instrument_amended_by_route_api_instruments__bwb_id__amended_by_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -212,8 +352,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Andere instrumenten die hieraan refereren (of waarvan dit refereert)
-         * @description Aggregatie van REFERS_TO_ARTICLE edges tussen artikelen van deze wet en artikelen van andere wetten. Per gerelateerd instrument staat `outbound_count` (refs vanuit deze wet naar de andere) en `inbound_count` (refs vanuit de andere wet naar deze). ``total`` is het absolute aantal (onafhankelijk van ``limit``).
+         * Instruments referring to this one, or referred to by it
+         * @description An aggregation of the REFERS_TO edges between articles of this law and articles of other laws. Each related instrument carries `outbound_count` (references from this law to the other) and `inbound_count` (references from the other law to this one). ``total`` is the absolute count, independent of ``limit``.
          */
         get: operations["get_instrument_related_route_api_instruments__bwb_id__related_instruments_get"];
         put?: never;
@@ -232,8 +372,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Historische versies van een instrument
-         * @description Alle historische toestanden (versies) van een BWB-wet, gesorteerd van nieuwste naar oudste. Elke versie heeft een geldigheidsperiode (valid_from, valid_until). De huidige versie heeft ``current=true``.
+         * Historical versions of an instrument
+         * @description Every historical toestand (version) of a BWB law, newest first. Each version carries a validity period (valid_from, valid_until); the current one has ``current=true``.
          */
         get: operations["list_instrument_versions_api_instruments__bwb_id__versions_get"];
         put?: never;
@@ -252,10 +392,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Artikelen op een specifieke datum
-         * @description Geeft alle artikelen van een BWB-instrument zoals ze golden op ``at_date`` (formaat YYYY-MM-DD). Gebruikt de historische versie-tabel; valt terug op lege lijst als er geen historische data beschikbaar is.
+         * Articles as they stood on a given date
+         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions. Empty when no version covers that date.
          */
-        get: operations["list_instrument_articles_at_api_instruments__bwb_id__articles_at__at_date__get"];
+        get: operations["list_articles_at_api_instruments__bwb_id__articles_at__at_date__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -264,7 +404,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/instruments/{bwb_id}/articles/{article_number}/history": {
+    "/api/instruments/{bwb_id}/cross-law-dependencies": {
         parameters: {
             query?: never;
             header?: never;
@@ -272,10 +412,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Historische versies van één artikel
-         * @description Volledige versiegeschiedenis van één artikel, nieuwste versie eerst. Elk item bevat de artikeltekst en een ``diff`` ten opzichte van de vorige versie (unified diff formaat).
+         * References to articles of other laws
+         * @description Article references from this law into articles of other laws, with the semantic type where one has been classified.
          */
-        get: operations["get_article_version_history_api_instruments__bwb_id__articles__article_number__history_get"];
+        get: operations["get_cross_law_dependencies_route_api_instruments__bwb_id__cross_law_dependencies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/instruments/{bwb_id}/shared-annexes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Annexes shared with other laws
+         * @description The annexes connecting this law to others: its own annexes that other laws refer to, and annexes of other laws that articles of this law refer to.
+         */
+        get: operations["get_shared_annexes_route_api_instruments__bwb_id__shared_annexes_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -292,8 +452,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Bulk in-flux teller per node
-         * @description Geeft een map van node-ID → aantal open voorgestelde mutaties. Alleen nodes met ≥1 open mutatie zijn opgenomen. Gebruik dit om de in-flux ring op graafnodes te renderen.
+         * Bulk in-flux count per node
+         * @description A map of node id → number of open proposed changes. Only nodes with at least one open change are included. Use it to render the in-flux ring on graph nodes.
          */
         get: operations["bulk_in_flux_api_nodes_in_flux_get"];
         put?: never;
@@ -312,8 +472,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Bulk activiteitsscore per node (heat layer)
-         * @description Geeft een map van node-ID → activiteitscount over de afgelopen N maanden. Activiteit = aantal inkomende edges aangemaakt in de periode. Gebruik months=3 voor een 90-dagenvenster.
+         * Bulk activity score per node (heat layer)
+         * @description A map of node id → activity count over the past N months, where activity is the number of incoming edges created in that window. Pass months=3 for a 90-day window.
          */
         get: operations["bulk_heat_api_nodes_heat_get"];
         put?: never;
@@ -332,10 +492,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Verken een node en zijn buren
-         * @description Haalt een node uit de opgegeven collectie op en levert alle buren via de gecombineerde edges-collectie, inclusief richting en confidence.
+         * Explore a node and its neighbors
+         * @description Fetches a node from the given collection and returns its neighbors from the unified edge collection in buckets, one per relation, direction and neighbor collection. Each neighbor carries the edge that leads to it: `edge_id`, `status`, `confidence` and `meta`. A bucket holds one page (`limit` neighbors from `offset`, in the same order on every request), its `total`, and the `next_offset` of the following page (null on the last). `relations`, `node_types`, `direction` and `status` narrow the edges; the totals count what remains.
          */
         get: operations["get_node_graph_api_nodes__collection___key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/nodes/{collection}/{key}/facets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Count a node's neighbors per relation, direction and collection
+         * @description How many edges the node has per relation, direction and neighbor collection (with the node type of that collection), counted in the database without reading the neighbors. `total` is the number of edges over all facets. `relations`, `node_types`, `direction` and `status` narrow the edges.
+         */
+        get: operations["get_node_facets_route_api_nodes__collection___key__facets_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -352,10 +532,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * BFS-buurt rond een node
-         * @description Levert in één query alle nodes en edges binnen `depth` hops rondom de focal node. Vervangt N sequentiële `/api/nodes/{coll}/{key}` calls met één traversal-query.
+         * BFS neighborhood around a node
+         * @description Returns every node and edge within `depth` hops of the focal node in a single traversal query. `relations` and `status` restrict the edges the traversal follows, `direction` restricts it to edges leaving (`outbound`) or reaching (`inbound`) each node on the way, and `node_types` to paths through nodes of those types (the focal node is always included).
          */
         get: operations["get_node_neighborhood_route_api_nodes__collection___key__neighborhood_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dossiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dossiers
+         * @description Every dossier, open and closed, filtered by status, outcome, track, the start of its number, committee, subject (a number, a dossier, or words of the title, such as its short title), stage, ministry, initiative and the day it opened. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter.
+         */
+        get: operations["list_dossiers_api_dossiers_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -372,8 +572,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle open kamerstukdossiers
-         * @description Geeft alle dossiers terug die nog niet zijn afgehandeld. ``total`` is het absolute aantal (onafhankelijk van ``limit``). Ondersteunt filters op commissie-slug, onderwerp-tekst en parlementaire fase.
+         * Open dossiers
+         * @description ``GET /api/dossiers`` with ``status=open``: the dossiers not closed yet. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter.
          */
         get: operations["list_open_dossiers_api_dossiers_open_get"];
         put?: never;
@@ -392,50 +592,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Recent actieve kamerstukdossiers
-         * @description Dossiers die activiteiten hadden in de opgegeven periode (standaard 30 dagen).
+         * Recently active dossiers
+         * @description Dossiers with an activity, a vote, a document or their closing in the given period, the most recent first. ``subject`` narrows them to a number, a dossier or title text.
          */
         get: operations["list_recent_dossiers_api_dossiers_recent_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/dossiers/{kamerstuknummer}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Dossier detail
-         * @description Volledige dossierweergave: koptekst, fase, gerelateerde dossiers en samenvattende tellingen van documenten, activiteiten, stemmingen en toezeggingen.
-         */
-        get: operations["get_dossier_detail_api_dossiers__kamerstuknummer__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/dossiers/{kamerstuknummer}/timeline": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Dossier tijdlijn
-         * @description Chronologische lijst van tijdlijn-items (documenten, activiteiten, stemmingen, toezeggingen). Standaard nieuwste-eerst; gebruik `?order=asc` voor chronologisch. Filter op `?soort=motie,amendement` (komma-gescheiden).
-         */
-        get: operations["get_timeline_api_dossiers__kamerstuknummer__timeline_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -452,10 +612,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Documenten voor meerdere dossiers in één call
-         * @description Bulk-variant van /api/dossiers/{kamerstuknummer}/documents: geeft de top-N publicaties per dossier voor een lijst van kamerstuknummers. Vervangt N parallelle calls tijdens de Lagen-load. ``items`` is een map ``{kamerstuknummer: [docs]}``.
+         * Documents for several dossiers
+         * @description The top documents per dossier for a list of dossier numbers, in one call rather than one per dossier.
          */
-        get: operations["get_documents_for_dossiers_route_api_dossiers_documents_bulk_get"];
+        get: operations["list_documents_for_dossiers_api_dossiers_documents_bulk_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -464,7 +624,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/dossiers/{kamerstuknummer}/documents": {
+    "/api/dossiers/{number}": {
         parameters: {
             query?: never;
             header?: never;
@@ -472,10 +632,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Dossier documenten
-         * @description Geeft de Kamerstuk-documenten (publicaties) die aan dit dossier zijn gekoppeld via DEEL_VAN_DOSSIER-edges, gepagineerd op datum aflopend. ``total`` is het absolute aantal documenten (onafhankelijk van ``limit``).
+         * Dossier detail
+         * @description One dossier: its title, stage, how many documents, activities, decisions and commitments it holds, and what it links to: the instruments it legislated, amends, introduces or repeals (one item per instrument, relation and status), the committees that lead its activities, its documents per kind, its Eerste Kamer papers, and the dossiers it revises, accompanies or is related to (and those that revise, accompany or relate to it).
          */
-        get: operations["get_dossier_documents_route_api_dossiers__kamerstuknummer__documents_get"];
+        get: operations["get_dossier_api_dossiers__number__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -484,7 +644,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/dossiers/{kamerstuknummer}/mutations": {
+    "/api/dossiers/{number}/documents": {
         parameters: {
             query?: never;
             header?: never;
@@ -492,10 +652,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Dossier mutatiegraph
-         * @description Geeft de subgraph van dit dossier terug: knooppunten en edges met status='voorgesteld'. Dezelfde shape als het bestaande graph-endpoint zodat de frontend dit direct kan renderen.
+         * Dossier documents
+         * @description The documents in this dossier — linked directly or through a case — newest first. ``total`` is the absolute count.
          */
-        get: operations["get_mutations_api_dossiers__kamerstuknummer__mutations_get"];
+        get: operations["list_dossier_documents_api_dossiers__number__documents_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -504,7 +664,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/commissies": {
+    "/api/dossiers/{number}/timeline": {
         parameters: {
             query?: never;
             header?: never;
@@ -512,10 +672,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle commissies
-         * @description Geeft alle parlementaire commissies met het aantal actieve dossiers.
+         * Dossier timeline
+         * @description Documents, activities, decisions and commitments in date order, newest first by default. Filter with ``?kind=motie,amendement``.
          */
-        get: operations["list_commissies_api_commissies_get"];
+        get: operations["get_timeline_api_dossiers__number__timeline_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -524,7 +684,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/commissies/with-leden": {
+    "/api/dossiers/{number}/mutations": {
         parameters: {
             query?: never;
             header?: never;
@@ -532,10 +692,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle commissies met hun leden
-         * @description Bulk-variant van /api/commissies: één query levert elke commissie met de bijbehorende leden. Bedoeld voor de parlementaire Lagen-load die anders 130+ losse /api/commissies/{slug} calls zou doen.
+         * Dossier mutation graph
+         * @description The nodes and edges by which this dossier proposes to change the law, shaped like the graph endpoint so the frontend can render it directly.
          */
-        get: operations["list_commissies_with_leden_api_commissies_with_leden_get"];
+        get: operations["get_mutations_api_dossiers__number__mutations_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -544,7 +704,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/commissies/{slug}": {
+    "/api/committees": {
         parameters: {
             query?: never;
             header?: never;
@@ -552,10 +712,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Commissie detail
-         * @description Detail van één commissie, inclusief leden en recente behandelde dossiers. Standaard worden alleen **huidige** leden getoond (``current_only=true``): LID_VAN-kanten zonder ``geldig_tot`` of met een toekomstige ``geldig_tot``. Gebruik ``?current_only=false`` voor alle historische leden.
+         * All committees
+         * @description Every parliamentary committee with its number of open dossiers.
          */
-        get: operations["get_commissie_api_commissies__slug__get"];
+        get: operations["list_committees_api_committees_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -564,7 +724,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/leden": {
+    "/api/committees/with-members": {
         parameters: {
             query?: never;
             header?: never;
@@ -572,10 +732,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle Kamerleden
-         * @description Lijst van Kamerleden, optioneel gefilterd op partij of naam. Standaard alleen leden met een fractielidmaatschap (de ~800 ooit-MP's); pas ?include_all=true toe om ook ministers en niet-MP-personen te tonen.
+         * All committees with their members
+         * @description One query returns every committee with its current members. The alternative is a separate call per committee, 130 times over.
          */
-        get: operations["list_leden_api_leden_get"];
+        get: operations["list_committees_with_members_api_committees_with_members_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -584,7 +744,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/leden/{key}": {
+    "/api/committees/{slug}": {
         parameters: {
             query?: never;
             header?: never;
@@ -592,10 +752,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Lid detail
-         * @description Geeft de basisgegevens van een Kamerlid of minister.
+         * Committee detail
+         * @description One committee with its members and a page of the dossiers it leads, newest first; ``dossier_total`` is the absolute count. By default only current members are returned — a seat with no end date, or an end date still ahead. Pass ``?current_only=false`` for every member the committee ever had. ``limit``, ``offset`` and ``status`` page and filter the dossiers.
          */
-        get: operations["get_lid_api_leden__key__get"];
+        get: operations["get_committee_api_committees__slug__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -604,7 +764,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/leden/{key}/votes": {
+    "/api/committees/{slug}/activities": {
         parameters: {
             query?: never;
             header?: never;
@@ -612,10 +772,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Stemmingsgeschiedenis van een lid
-         * @description Gepagineerd stemoverzicht van een Kamerlid. Per stemming wordt de partij van dat lid op het moment van stemmen geresolveerd via ``fractielidmaatschappen``, zodat historische stemmen correct worden toegeschreven aan de toenmalige partij.
+         * Committee activities
+         * @description The activities (debates, hearings) a committee leads, newest first, with the dossiers on their agenda. ``total`` is the absolute count.
          */
-        get: operations["get_lid_voting_record_api_leden__key__votes_get"];
+        get: operations["list_committee_activities_api_committees__slug__activities_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -624,7 +784,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/leden/{key}/touched-instruments": {
+    "/api/members": {
         parameters: {
             query?: never;
             header?: never;
@@ -632,10 +792,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Top wetten die dit lid het vaakst raakt
-         * @description Top-N wetten waar dit lid via wetsvoorstellen, amendementen of moties wijzigingen op heeft ingediend, gerangschikt op aantal kamerstukken. ``actor_id`` is het Arango _id van het lid; ``items`` zijn de betreffende wetten met een tellertje per wet.
+         * Members of parliament
+         * @description Members of parliament, optionally filtered by party or name, each with the posts they held in a cabinet (``government_functions``). By default only people who ever held a seat; ``?include_all=true`` includes ministers and other non-members, ``capacity=bewindspersoon`` keeps everyone who held a post in a cabinet and ``cabinet`` those who held one in that cabinet. A record without a name is never listed.
          */
-        get: operations["get_lid_touched_instruments_route_api_leden__key__touched_instruments_get"];
+        get: operations["list_members_api_members_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -644,7 +804,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/fracties": {
+    "/api/members/{key}": {
         parameters: {
             query?: never;
             header?: never;
@@ -652,10 +812,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle fracties
-         * @description Lijst van Tweede Kamer-fracties (politieke partijen), met het aantal gekoppelde leden. Standaard actieve fracties eerst; optionele filters op `actief` en vrije-tekstzoek (`q`) op naam/afkorting.
+         * Member detail
+         * @description One member of parliament or minister, with the posts they held in a cabinet (`government_functions`, from Wikidata).
          */
-        get: operations["list_fracties_api_fracties_get"];
+        get: operations["get_member_api_members__key__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -664,7 +824,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/fracties/{key}": {
+    "/api/members/{key}/votes": {
         parameters: {
             query?: never;
             header?: never;
@@ -672,10 +832,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Fractie detail
-         * @description Geeft één fractie-node terug met identifier, labels en de raw ``props`` zoals opgeslagen in de graph. Voor gestructureerde fractie-metadata zie ``/api/fracties`` (lijst-endpoint) — dit detail-endpoint is bewust een doorgeefluik.
+         * How a member voted
+         * @description A member's voting record, newest first. A roll-call names the member directly; any other vote is their faction's, counted only for the period they belonged to it, so historic votes keep the party they were cast under.
          */
-        get: operations["get_fractie_api_fracties__key__get"];
+        get: operations["list_member_votes_api_members__key__votes_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -684,7 +844,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/fracties/{key}/touched-instruments": {
+    "/api/members/{key}/dossiers": {
         parameters: {
             query?: never;
             header?: never;
@@ -692,10 +852,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Top wetten die deze fractie het vaakst raakt
-         * @description Top-N wetten waar deze fractie via wetsvoorstellen, amendementen of moties wijzigingen op heeft ingediend. Zelfde response-shape als de leden-variant; ``actor_id`` is het Arango _id van de fractie.
+         * Dossiers a member authored in
+         * @description The dossiers in which this member signed or submitted documents (``AUTHORED``), newest opened first. Each dossier carries the roles the member had there, the functions and capacities they signed in (``kamerlid``, ``bewindspersoon``, ``overig``) and the number of documents. ``total`` is the absolute count.
          */
-        get: operations["get_fractie_touched_instruments_route_api_fracties__key__touched_instruments_get"];
+        get: operations["list_member_dossiers_api_members__key__dossiers_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -704,7 +864,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/partijen/kleuren": {
+    "/api/members/{key}/touched-instruments": {
         parameters: {
             query?: never;
             header?: never;
@@ -712,10 +872,207 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Partijkleuren
-         * @description Vaste kleurenmap (partij-afkorting → hex-kleur) voor het renderen van stemming-chips in de frontend. Gebaseerd op officiele partijhuisstijlen.
+         * The laws this member changes most
+         * @description The laws this member proposed changes to through bills, amendments or motions, ranked by how many documents did so.
          */
-        get: operations["get_party_colors_api_partijen_kleuren_get"];
+        get: operations["list_member_touched_instruments_api_members__key__touched_instruments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/factions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * All factions
+         * @description The parliamentary parties with their member counts, seated ones first. Filter on ``active`` or search names and abbreviations with ``q``.
+         */
+        get: operations["list_factions_api_factions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/factions/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Faction detail
+         * @description One faction node with its identifiers and raw props. For structured faction metadata use the list endpoint.
+         */
+        get: operations["get_faction_api_factions__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/factions/{key}/dossiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dossiers a faction authored in
+         * @description The dossiers in which members of this faction signed or submitted documents while they belonged to it, newest opened first. Same shape as the member variant; ``roles`` and ``document_count`` cover all those members.
+         */
+        get: operations["list_faction_dossiers_api_factions__key__dossiers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/factions/{key}/touched-instruments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The laws this faction changes most
+         * @description The laws this faction proposed changes to through bills, amendments or motions. Same shape as the member variant.
+         */
+        get: operations["list_faction_touched_instruments_api_factions__key__touched_instruments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ministries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ministries
+         * @description Every ministry a post, a dossier or a commitment can name, in protocol order; a former ministry (``Verkeer en Waterstaat``) follows its successor and names it.
+         */
+        get: operations["list_ministries_api_ministries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cabinets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cabinets
+         * @description Every Dutch cabinet Wikidata knows, newest first, with its prime minister, parties and counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.
+         */
+        get: operations["list_cabinets_api_cabinets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cabinets/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cabinet detail
+         * @description One cabinet with its bewindspersonen grouped by ministry (protocol order, the minister-president first), each post with the person's counts within the cabinet: ``dossiers`` and ``bills`` they signed as bewindspersoon, and ``open_commitments``.
+         */
+        get: operations["get_cabinet_detail_api_cabinets__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/commitments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Commitments
+         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``overdue`` keeps the open ones whose expected date has passed.
+         */
+        get: operations["list_commitments_api_commitments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/commitments/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Commitment detail */
+        get: operations["get_commitment_detail_api_commitments__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/parties/colors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Party colours
+         * @description Party abbreviation to hex colour, from the parties' own house styles, for rendering vote chips.
+         */
+        get: operations["get_party_colors_api_parties_colors_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -732,8 +1089,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Volledig globaal graph — alle nodes en edges zonder instrumentfilter
-         * @description Geeft alle instrumenten, artikelen, uitspraken en edges terug, inclusief nodes die niet aan een instrument zijn gekoppeld. Gebruik `include_judgments=false` om uitspraken weg te laten.
+         * Whole graph — every node and edge, no instrument filter
+         * @description Every instrument, article, judgment and edge, including nodes that hang off no instrument. `node_types` (`instrument`, `article`, `judgment`; default all three) says which nodes to load and `relations` (`REFERS_TO`, `EXPLAINS`, `PART_OF`, `IMPLEMENTS`, `AMENDS`; default all five) which edges to keep between them.
          */
         get: operations["get_global_graph_route_api_graph_global_get"];
         put?: never;
@@ -752,8 +1109,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Wet-niveau graph — instrumenten als knopen met geaggregeerde citatie-edges
-         * @description Geeft alle instrumenten (NL en EU) terug als knopen, met edges tussen instrumenten die gebaseerd zijn op geaggregeerde artikel-niveau citaties (`verwijst_naar`, gewogen) en directe `implementeert`-edges (IMPLEMENTS_DIRECTIVE). Gebruik dit voor de 'layer view' waarbij elke knoop een volledige wet vertegenwoordigt.
+         * Instrument-level graph — instruments as nodes with aggregated edges
+         * @description Every instrument (NL and EU) as a node, with edges between instruments aggregated from article-level references (REFERS_TO, weighted) plus the direct IMPLEMENTS and AMENDS edges. Use this for the layer view, where each node stands for a whole law. `relations` (`REFERS_TO`, `IMPLEMENTS`, `AMENDS`; default all three) says which edges to return.
          */
         get: operations["get_instrument_layer_graph_route_api_graph_instruments_get"];
         put?: never;
@@ -772,13 +1129,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Uitspraak-niveau graph — uitspraken als knopen met citatie-edges
-         * @description Geeft alle geladen uitspraken terug als knopen, met twee soorten edges:
+         * Judgment-level graph — judgments as nodes with citation edges
+         * @description Every loaded judgment as a node, with REFERS_TO edges to the instruments it cites, aggregated from the article-level references (weight = number of distinct articles cited in that instrument).
          *
-         *     - **`citeert`** — uitspraak → uitspraak (CITES_JUDGMENT, weight=1)
-         *     - **`citeert_wet`** — uitspraak → instrument, geaggregeerd vanuit CITES_ARTICLE (weight = aantal unieke geciteerde artikelen in dat instrument)
-         *
-         *     De wetnodes zijn de instrumenten die door de uitspraken worden geciteerd — handig als ankerpunten in de visualisatie. Gebruik `max_judgments` om de omvang te beperken; standaard 1000.
+         *     The instrument nodes are the instruments the judgments cite — useful as anchor points in the visualisation. Use `max_judgments` to bound the size; the default is 1000.
          */
         get: operations["get_judgment_graph_route_api_graph_judgments_get"];
         put?: never;
@@ -789,7 +1143,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/publications": {
+    "/api/relationships/types": {
         parameters: {
             query?: never;
             header?: never;
@@ -797,13 +1151,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Publications
-         * @description Return a paginated list of publications across all sources.
-         *
-         *     Intended for the publications index page; only lightweight metadata is
-         *     returned (no full text).
+         * Available semantic relationship types
+         * @description The supported semantic relationship types.
          */
-        get: operations["list_publications_api_publications_get"];
+        get: operations["get_relationship_types_api_relationships_types_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -812,7 +1163,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/publications/{key}": {
+    "/api/relationships/search": {
         parameters: {
             query?: never;
             header?: never;
@@ -820,17 +1171,150 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get Publication Text
-         * @description Return the full-text content of a TK publication.
-         *
-         *     *key* is the ArangoDB document key (UUID with underscores, e.g.
-         *     ``cd4beed6_f8c4_45ad_a2d3_2d638c08b96a``).
-         *
-         *     The ``text`` field contains the plain text extracted from the source PDF.
-         *     It is ``null`` when the hydration pipeline has not yet run for this
-         *     document (e.g. scanned PDFs without a text layer).
+         * Search semantic relationships
+         * @description Searches the classified article relationships, optionally filtered by semantic type and/or law (the bwb_id of the source article).
          */
-        get: operations["get_publication_text_api_publications__key__get"];
+        get: operations["search_api_relationships_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/annexes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List annexes
+         * @description Annexes, optionally filtered to one law (bwb_id) or limited to the annexes used by articles of more than one law (shared_across_laws=true).
+         */
+        get: operations["get_annexes_api_annexes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/annexes/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Annex detail
+         * @description One annex with its entries and every article referring to it.
+         */
+        get: operations["get_annex_detail_api_annexes__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/annexes/{key}/referenced-by": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Articles referring to this annex
+         * @description Every article, across all laws, that uses this annex as its scope.
+         */
+        get: operations["get_referenced_by_api_annexes__key__referenced_by_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Document index
+         * @description Documents across every source, with metadata only — no text. Backs the document index page. ``total`` is the absolute number of matches, independent of ``limit`` and ``offset``. ``dossier`` keeps the documents of one dossier, linked directly or through a case; an unknown dossier matches nothing.
+         */
+        get: operations["list_documents_api_documents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Document text
+         * @description One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains. `text` is null when `normalize tk-content` has not reached it.
+         */
+        get: operations["get_document_text_api_documents__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents/{key}/passages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Passages of a memorandum that explain an article
+         * @description The sections of a memorandum (MvT, NvT) that `semantic tk-mvt-articles` linked to the article (or to one of its versions) with `EXPLAINS`, in document order: each with its `text` (a slice of the document text), `confidence` and `match_type`. Empty when the document has no text or no section explains the article; 404 when the document is unknown.
+         */
+        get: operations["get_document_article_passages_api_documents__key__passages_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resolve a citation, identifier or law name to one node
+         * @description Reads `q` as a citation (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`), an identifier (ECLI, BWB id, CELEX id), a Kamerstuk (`36327`, `36327-3`, `Kamerstukken II 2020/21, 36327, nr. 3`) or the name of a law, and answers with the one best match (`id`, `key`, `collection`) and up to five alternatives. `confidence` says how sure the match is. Nothing that fits answers 200 with kind `none` and no match: the query is then words for `/api/search`.
+         */
+        get: operations["resolve_api_resolve_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -847,8 +1331,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Zoek over meerdere entiteiten
-         * @description Zoekt over artikelen, uitspraken, kamerstukdossiers en publicaties. Gebruik `types` om te beperken tot specifieke verzamelingen. Gebruik `soort` om te facetten op publicatie- of dossiertypes.
+         * Search across several entity types
+         * @description Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first.
          */
         get: operations["search_api_search_get"];
         put?: never;
@@ -867,8 +1351,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Database statistieken
-         * @description Geeft het aantal documenten per collectie en het aantal edges per relatietype.
+         * Database statistics
+         * @description Document counts per collection without stubs, the stubs per collection (nodes known only because something refers to them) and edge counts per relation type.
          */
         get: operations["get_stats_api_stats_get"];
         put?: never;
@@ -879,7 +1363,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/watches": {
+    "/api/stats/coverage": {
         parameters: {
             query?: never;
             header?: never;
@@ -887,54 +1371,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Alle watches ophalen
-         * @description Return all saved watches, newest first.
+         * Which judgments the graph holds
+         * @description The judgments whose text is loaded, per court tier and per court, with the date of the oldest and the newest of each; and how many judgments are known only because a loaded one cites them (`stubs`). A count of judgments anywhere in the API (the judgments that cite an article, for one) is a count of this selection, not of the case law.
          */
-        get: operations["get_watches_api_watches_get"];
-        put?: never;
-        /**
-         * Node toevoegen aan watchlist
-         * @description Create a new watch for a node.
-         */
-        post: operations["add_watch_api_watches_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/watches/{watch_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Watch verwijderen
-         * @description Verwijdert een watch op zijn ``_key``. Returns HTTP 204 zonder body bij succes, 404 als de watch niet bestaat.
-         */
-        delete: operations["remove_watch_api_watches__watch_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/stemmingen": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Stemmingen browser
-         * @description Geeft een gepagineerde lijst van stemmingen (één per Besluit), optioneel gefilterd op aangenomen-status of partij. Sorteert op datum aflopend. ``total`` is het absolute aantal (onafhankelijk van ``limit``).
-         */
-        get: operations["list_stemmingen_api_stemmingen_get"];
+        get: operations["get_coverage_api_stats_coverage_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -943,7 +1383,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/stemmingen/{key}": {
+    "/api/decisions": {
         parameters: {
             query?: never;
             header?: never;
@@ -951,10 +1391,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Stemming detail
-         * @description Haalt één stemming op met volledige voor/tegen/onthouding breakdown per fractie.
+         * Decision browser
+         * @description A page of decisions — one per Besluit — newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter), per outcome ``passed`` (without the passed filter) and per day (under all filters).
          */
-        get: operations["get_stemming_api_stemmingen__key__get"];
+        get: operations["list_decisions_api_decisions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -963,7 +1403,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/stemmingen/{key}/publication": {
+    "/api/decisions/{key}": {
         parameters: {
             query?: never;
             header?: never;
@@ -971,10 +1411,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Publicatie achter een stemming
-         * @description Resolveert het kamerstuk (motie, amendement of wetsvoorstel) waar deze stemming over ging, inclusief volledige tekst.
+         * Decision detail
+         * @description One decision with every vote cast on it — per member on a roll-call, per faction otherwise.
          */
-        get: operations["get_stemming_publication_route_api_stemmingen__key__publication_get"];
+        get: operations["get_decision_api_decisions__key__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -983,7 +1423,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/parlement/zetels": {
+    "/api/decisions/{key}/document": {
         parameters: {
             query?: never;
             header?: never;
@@ -991,10 +1431,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Huidige zetelverdeling van de Tweede Kamer
-         * @description Geeft de actieve fracties met hun huidige zetelaantal terug, gesorteerd naar de conventionele links-rechts opstelling in de plenaire zaal. Bedoeld voor het renderen van een hemicycle/half-cirkel weergave.
+         * The document behind a decision
+         * @description The motion, amendment or bill this decision was about, with its full text.
          */
-        get: operations["get_zetels_api_parlement_zetels_get"];
+        get: operations["get_decision_document_route_api_decisions__key__document_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/parliament/seats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current seat composition of the Tweede Kamer
+         * @description The seated parties with their seat counts, ordered left to right as they sit in the chamber — enough to render a hemicycle.
+         */
+        get: operations["get_seats_api_parliament_seats_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1048,10 +1508,307 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * ActorDossierDTO
+         * @description A dossier a member or faction authored documents in.
+         *
+         *     ``roles`` are the distinct ``AUTHORED`` roles as the source wrote them
+         *     (``Eerste ondertekenaar``, ``Mede ondertekenaar``, ...); ``functions`` and ``capacities``
+         *     what they signed as, which changes over time (a Kamerlid who became minister-president);
+         *     ``document_count`` the distinct documents authored in the dossier.
+         */
+        ActorDossierDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Number
+             * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
+             */
+            number: string;
+            /**
+             * Suffix
+             * @description The addition to the number (``Toevoeging``): ``XV`` of 37020-XV, ``31`` of 21501-31; null for a dossier without one.
+             */
+            suffix?: string | null;
+            /**
+             * Same Number Count
+             * @description How many other dossiers share the number: 24 for each dossier of a budget of 25. ``GET /api/dossiers?number=`` lists them.
+             * @default 0
+             */
+            same_number_count: number;
+            /** Title */
+            title?: string | null;
+            /**
+             * Short Title
+             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             */
+            short_title?: string | null;
+            /** Title Source */
+            title_source?: ("dossier" | "document" | "activiteit") | null;
+            /** Track */
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
+            /** Current Stage */
+            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
+            /** Stages */
+            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Stages Complete
+             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
+             * @default true
+             */
+            stages_complete: boolean;
+            /**
+             * Stages Missing
+             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             */
+            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Closed
+             * @default false
+             */
+            closed: boolean;
+            /** Outcome */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            /** Opened On */
+            opened_on?: string | null;
+            /** Closed On */
+            closed_on?: string | null;
+            /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Initiative
+             * @description True when a Kamerlid signed the earliest signed document first, false when a bewindspersoon did, null when neither did.
+             */
+            initiative?: boolean | null;
+            /**
+             * Cabinet
+             * @description The key of the cabinet in office when that document was signed.
+             */
+            cabinet?: string | null;
+            /** Roles */
+            roles?: string[];
+            /**
+             * Functions
+             * @description The distinct functions signed in, as the source writes them ('Tweede Kamerlid', 'minister-president').
+             */
+            functions?: string[];
+            /**
+             * Capacities
+             * @description The distinct capacities signed in: 'kamerlid', 'bewindspersoon', 'overig'.
+             */
+            capacities?: ("kamerlid" | "bewindspersoon" | "overig")[];
+            /**
+             * Document Count
+             * @default 0
+             */
+            document_count: number;
+        };
+        /**
+         * ActorDossiersResponse
+         * @description A page of the dossiers a member or faction authored documents in.
+         */
+        ActorDossiersResponse: {
+            /**
+             * Actor Id
+             * @description Arango _id of the member or faction.
+             */
+            actor_id: string;
+            /**
+             * Total
+             * @description Dossiers, independent of limit and offset.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["ActorDossierDTO"][];
+        };
+        /**
+         * AmendedByResponse
+         * @description Response for GET /api/instruments/{bwb_id}/amended-by.
+         */
+        AmendedByResponse: {
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
+            bwb_id: string;
+            /**
+             * Total
+             * @description Absolute number of amending instruments (independent of ``limit``/``offset``).
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["AmendingInstrumentDTO"][];
+        };
+        /**
+         * AmendingInstrumentDTO
+         * @description An amending publication (Stb, Trb, ...) and what it did to a regulation.
+         */
+        AmendingInstrumentDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Identifier
+             * @description Publication id, e.g. ``stb-2019-33``.
+             */
+            identifier: string;
+            /** Display Name */
+            display_name?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Year */
+            year?: number | null;
+            /** Number */
+            number?: string | null;
+            /** Date Signed */
+            date_signed?: string | null;
+            /** Date Published */
+            date_published?: string | null;
+            /**
+             * Official Url
+             * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
+             */
+            official_url?: string | null;
+            /** Dossiers */
+            dossiers?: components["schemas"]["DossierRefDTO"][];
+            /**
+             * Amends
+             * @description Number of AMENDS edges into the regulation.
+             * @default 0
+             */
+            amends: number;
+            /**
+             * Introduces
+             * @description Number of INTRODUCES edges into the regulation.
+             * @default 0
+             */
+            introduces: number;
+            /**
+             * Repeals
+             * @description Number of REPEALS edges into the regulation.
+             * @default 0
+             */
+            repeals: number;
+            /**
+             * Articles Affected
+             * @description Distinct articles of the regulation touched.
+             * @default 0
+             */
+            articles_affected: number;
+            /**
+             * First Effective Date
+             * @description Earliest effective date over the edges.
+             */
+            first_effective_date?: string | null;
+        };
+        /**
+         * AnnexDTO
+         * @description Annex metadata plus structured entries.
+         */
+        AnnexDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Bwb Id */
+            bwb_id?: string | null;
+            /** Label */
+            label?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Entries */
+            entries?: components["schemas"]["AnnexEntryDTO"][];
+            /**
+             * Stub
+             * @default false
+             */
+            stub: boolean;
+        };
+        /**
+         * AnnexDetailResponse
+         * @description Response for GET /api/annexes/{key}.
+         */
+        AnnexDetailResponse: {
+            annex: components["schemas"]["AnnexDTO"];
+            /** Referenced By */
+            referenced_by?: components["schemas"]["AnnexReferencedByItem"][];
+        };
+        /**
+         * AnnexEntryDTO
+         * @description One entry (list item) inside an annex.
+         */
+        AnnexEntryDTO: {
+            /** Index */
+            index?: number | null;
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+        };
+        /**
+         * AnnexListItem
+         * @description Annex plus the laws whose articles reference it.
+         */
+        AnnexListItem: {
+            annex: components["schemas"]["AnnexDTO"];
+            /** Referencing Laws */
+            referencing_laws?: string[];
+        };
+        /**
+         * AnnexListResponse
+         * @description Paginated annex list (optionally restricted to cross-law shared ones).
+         */
+        AnnexListResponse: {
+            /** Annexes */
+            annexes: components["schemas"]["AnnexListItem"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /**
+         * AnnexReferencedByItem
+         * @description An article that references an annex, with scope metadata.
+         */
+        AnnexReferencedByItem: {
+            article: components["schemas"]["ArticleRelationDTO"];
+            /**
+             * Scope Type
+             * @default fixed
+             */
+            scope_type: string;
+            /** Explanation */
+            explanation?: string | null;
+        };
+        /**
          * ArticleCitationSpan
          * @description Character span for an internal citation inside the source article.
          */
         ArticleCitationSpan: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
             /** Start */
             start: number | null;
             /** End */
@@ -1064,6 +1821,11 @@ export interface components {
              * @default article
              */
             kind: string;
+            /**
+             * Reference Kind
+             * @description `intref` or `extref`: how the regulation's XML wrote a reference from one article to another; null for other citations.
+             */
+            reference_kind?: string | null;
             /** Confidence */
             confidence?: number | null;
         };
@@ -1086,6 +1848,79 @@ export interface components {
             display_name: string | null;
         };
         /**
+         * ArticleCitedByItem
+         * @description One passage of a judgment that cites the article. `leden`, `onderdelen` and
+         *     `aanhef` say what the passage names of it.
+         */
+        ArticleCitedByItem: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            judgment: components["schemas"]["CitedByJudgment"];
+            /**
+             * Paragraph Id
+             * @description The paragraph, as `paragraph_id` of `/api/judgments/{ecli}`.
+             */
+            paragraph_id: string;
+            /**
+             * Paragraph Number
+             * @description Its printed number (`5.3`), null when it has none.
+             */
+            paragraph_number: string | null;
+            /**
+             * Qualifier
+             * @description The qualifier as the judgment wrote it, `derde lid`.
+             */
+            qualifier: string | null;
+            /**
+             * Start
+             * @description Offset of the citation in the text of the paragraph.
+             */
+            start: number;
+            /** End */
+            end: number;
+            /**
+             * Text
+             * @description The citation as written: `text[start:end]`.
+             */
+            text: string;
+            /**
+             * Snippet
+             * @description The text of the paragraph around the citation.
+             */
+            snippet: string;
+            /** Confidence */
+            confidence: number;
+        };
+        /**
+         * ArticleCitedByResponse
+         * @description Response for GET /api/articles/{bwb_id}/{article_number}/cited-by.
+         */
+        ArticleCitedByResponse: {
+            /** Article Id */
+            article_id: string;
+            /** Items */
+            items: components["schemas"]["ArticleCitedByItem"][];
+            /**
+             * Total
+             * @description Every passage that matches the filters, independent of `limit`.
+             */
+            total: number;
+        };
+        /**
          * ArticleDetailResponse
          * @description Response for GET /api/articles/{bwb_id}/{article_number}.
          */
@@ -1096,10 +1931,72 @@ export interface components {
             judgments: components["schemas"]["JudgmentSummaryDTO"][];
             /** Citations */
             citations?: components["schemas"]["ArticleCitationSpan"][];
+            /**
+             * References
+             * @description Every reference the text of the article makes, as stored on it, whether or not the target is in the graph. `citations` holds the resolved ones, one per target.
+             */
+            references?: components["schemas"]["ArticleReferenceDTO"][];
             /** Metadata */
             metadata: {
                 [key: string]: unknown;
             } | null;
+            /** Upstream Dependencies */
+            upstream_dependencies?: components["schemas"]["ArticleRelationshipWithType"][];
+            /** Downstream Implications */
+            downstream_implications?: components["schemas"]["ArticleRelationshipWithType"][];
+            /** Scope Articles */
+            scope_articles?: components["schemas"]["ScopeArticleReference"][];
+        };
+        /**
+         * ArticleExplanationDTO
+         * @description One document that explains an article, and the node its EXPLAINS edge points at.
+         */
+        ArticleExplanationDTO: {
+            document: components["schemas"]["ExplainingDocumentDTO"];
+            /**
+             * Target
+             * @description What the edge points at: the 'article', one of its versions ('article_version') or its 'instrument'. An 'instrument' explanation is written only when the dossier's law changed no articles at all, so it says nothing about this article in particular.
+             * @enum {string}
+             */
+            target: "article" | "article_version" | "instrument";
+            /**
+             * Target Id
+             * @description Arango _id of the node the edge points at.
+             */
+            target_id: string;
+            /**
+             * Article Version Key
+             * @description Key of the article version; null unless target is 'article_version'.
+             */
+            article_version_key?: string | null;
+            /** Confidence */
+            confidence?: number | null;
+            /**
+             * Scope
+             * @description 'dossier': the document explains the changes of a whole dossier, not this article in particular (the memorandum is not tied to a passage). 'article': the edge names the section that explains the article, in ``section_anchor``.
+             * @enum {string}
+             */
+            scope: "dossier" | "article";
+            /**
+             * Section Anchor
+             * @description `id` of the section in `sections` of the document; set when scope is 'article'.
+             */
+            section_anchor?: string | null;
+        };
+        /**
+         * ArticleExplanationsResponse
+         * @description Response for GET /api/articles/{bwb_id}/{article_number}/explained-by.
+         */
+        ArticleExplanationsResponse: {
+            /** Article Id */
+            article_id: string;
+            /**
+             * Total
+             * @description All explanations, independent of ``limit`` and ``offset``.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["ArticleExplanationDTO"][];
         };
         /**
          * ArticleGraphNodeDTO
@@ -1116,6 +2013,26 @@ export interface components {
             article_number?: string | null;
             /** Display Name */
             display_name?: string | null;
+        };
+        /**
+         * ArticleHistoryResponse
+         * @description Response for GET /api/articles/{bwb_id}/{article_number}/history.
+         */
+        ArticleHistoryResponse: {
+            /** Bwb Id */
+            bwb_id: string;
+            /** Article Number */
+            article_number: string;
+            /**
+             * Stam Id
+             * @description Stable BWB identity of the article across versions.
+             */
+            stam_id?: string | null;
+            /**
+             * Versions
+             * @description All versions, oldest first.
+             */
+            versions?: components["schemas"]["ArticleVersionDTO"][];
         };
         /**
          * ArticleInFluxResponse
@@ -1142,6 +2059,103 @@ export interface components {
             total: number;
         };
         /**
+         * ArticlePartDTO
+         * @description A lid, an onderdeel or an aanhef of an article, as a span of its `text`.
+         */
+        ArticlePartDTO: {
+            /**
+             * Id
+             * @description Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel). Unique within the article.
+             */
+            id: string;
+            /**
+             * Kind
+             * @description `aanhef`, `lid` or `onderdeel`.
+             */
+            kind: string;
+            /**
+             * Number
+             * @description The number as printed: `2`, `2a`, `a`, `1°`; null for an aanhef or an item without one.
+             */
+            number: string | null;
+            /**
+             * Text
+             * @description The content without its number: `text[start:end]` of the article. A part with onderdelen spans them too.
+             */
+            text: string;
+            /**
+             * Start
+             * @description Offset of the part in the `text` of the article.
+             */
+            start: number;
+            /** End */
+            end: number;
+        };
+        /**
+         * ArticleRefDTO
+         * @description An article number a heading names.
+         */
+        ArticleRefDTO: {
+            /**
+             * Number
+             * @description The number as printed: `3`, `1a`, `3:159n`, `II`.
+             */
+            number: string;
+            /**
+             * Of
+             * @description Whose article it is: `self` (of the bill the paper accompanies), `named_law` (of the law the section's `law` names) or `unknown` (of a law the heading implies and does not name).
+             */
+            of: string;
+        };
+        /**
+         * ArticleReferenceDTO
+         * @description A reference the text of an article makes to an article of a regulation.
+         */
+        ArticleReferenceDTO: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /**
+             * Kind
+             * @description `intref` (a link inside the regulation) or `extref` (to another).
+             */
+            kind: string;
+            /** Bwb Id */
+            bwb_id: string | null;
+            /**
+             * Article
+             * @description Number of the article referred to; null for a reference to a chapter or a title.
+             */
+            article: string | null;
+            /**
+             * Doc
+             * @description The JCI string of the link, as the XML has it.
+             */
+            doc: string;
+            /** Text */
+            text: string;
+            /**
+             * Start
+             * @description Offset of `text` in the text of the article.
+             */
+            start: number;
+            /** End */
+            end: number;
+        };
+        /**
          * ArticleRelationDTO
          * @description Article reference plus optional parent instrument used in judgment responses.
          */
@@ -1154,13 +2168,79 @@ export interface components {
             display_name: string | null;
             /** Bwb Id */
             bwb_id: string | null;
+            /** Celex */
+            celex?: string | null;
             /** Article Number */
             article_number: string | null;
             instrument: components["schemas"]["InstrumentSummaryDTO"] | null;
         };
         /**
+         * ArticleRelationshipWithType
+         * @description An article-to-article relationship enriched with its semantic layer.
+         */
+        ArticleRelationshipWithType: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /** Edge Id */
+            edge_id: string;
+            /** Relation */
+            relation: string;
+            target_article: components["schemas"]["ArticleRelationDTO"];
+            /** Semantic Type */
+            semantic_type?: string | null;
+            /** Explanation */
+            explanation?: string | null;
+            /** Confidence */
+            confidence?: number | null;
+            /**
+             * Start
+             * @description Offset of the reference in the text of the referring article.
+             */
+            start?: number | null;
+            /** End */
+            end?: number | null;
+            /**
+             * Text
+             * @description The text of the reference.
+             */
+            text?: string | null;
+            /**
+             * Reference Kind
+             * @description `intref` or `extref`, as on the reference itself.
+             */
+            reference_kind?: string | null;
+        };
+        /**
+         * ArticleRelationshipsResponse
+         * @description Response for GET /api/articles/{bwb_id}/{article_number}/relationships.
+         */
+        ArticleRelationshipsResponse: {
+            /** Article Id */
+            article_id: string;
+            /** Upstream Dependencies */
+            upstream_dependencies?: components["schemas"]["ArticleRelationshipWithType"][];
+            /** Downstream Implications */
+            downstream_implications?: components["schemas"]["ArticleRelationshipWithType"][];
+            /** Scope Articles */
+            scope_articles?: components["schemas"]["ScopeArticleReference"][];
+        };
+        /**
          * ArticleSummaryDTO
-         * @description Samenvatting van een artikel met identificatie en tekst.
+         * @description Summary of an article: its identifiers and text.
          */
         ArticleSummaryDTO: {
             /** Id */
@@ -1169,12 +2249,97 @@ export interface components {
             key: string;
             /** Bwb Id */
             bwb_id: string | null;
-            /** Article Number */
-            article_number: string | null;
+            /**
+             * Article Number
+             * @description Null for an article with only a heading, and for a repealed one.
+             */
+            article_number?: string | null;
+            /**
+             * Label
+             * @description `Artikel 287`, or the heading of an article without a number (`Algemene bepaling`).
+             */
+            label?: string | null;
+            /**
+             * Heading
+             * @description The title of its kop (`Definities`); most articles have none.
+             */
+            heading?: string | null;
+            /**
+             * Address
+             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             */
+            address: string;
+            /**
+             * Repealed
+             * @default false
+             */
+            repealed: boolean;
             /** Display Name */
             display_name: string | null;
+            /**
+             * Official Url
+             * @description The article in force on wetten.overheid.nl (its JCI); the regulation for an article without a number the JCI can address.
+             */
+            official_url?: string | null;
             /** Text */
             text: string | null;
+            /**
+             * Parts
+             * @description Aanhef, leden and onderdelen as spans of `text`; empty when the article has no structure or was normalized before parts existed.
+             */
+            parts?: components["schemas"]["ArticlePartDTO"][];
+        };
+        /**
+         * ArticleVersionDTO
+         * @description One dated version of an article, with the publication that produced it.
+         */
+        ArticleVersionDTO: {
+            /** Key */
+            key: string;
+            /** Article Number */
+            article_number?: string | null;
+            /**
+             * Label
+             * @description `Artikel 287`, or the heading of an article without a number.
+             */
+            label?: string | null;
+            /** Valid From */
+            valid_from?: string | null;
+            /** Valid Until */
+            valid_until?: string | null;
+            /**
+             * Current
+             * @default false
+             */
+            current: boolean;
+            /**
+             * Official Url
+             * @description This version on wetten.overheid.nl: the JCI with ``g`` its ``valid_from``.
+             */
+            official_url?: string | null;
+            /** Text */
+            text?: string | null;
+            /**
+             * Parts
+             * @description As on the article: spans of `text`.
+             */
+            parts?: components["schemas"]["ArticlePartDTO"][];
+            /**
+             * Effect
+             * @description Raw BWB effect of this version.
+             */
+            effect?: string | null;
+            /**
+             * Change
+             * @description Normalised effect: 'introduces', 'amends', 'repeals' or null.
+             */
+            change?: string | null;
+            /** Source Publication */
+            source_publication?: string | null;
+            /** @description Publication that created this version. */
+            amended_by?: components["schemas"]["PublicationDTO"] | null;
+            /** @description Publication that brought this version into force. */
+            commencement?: components["schemas"]["PublicationDTO"] | null;
         };
         /**
          * BaseNodeDTO
@@ -1199,13 +2364,206 @@ export interface components {
             } | null;
         };
         /**
+         * CabinetDetailDTO
+         * @description A cabinet with its bewindspersonen grouped by ministry: ministries in protocol
+         *     order (Algemene Zaken, with the minister-president, first), within a ministry the
+         *     posts in order (minister-president, minister, minister without portfolio,
+         *     staatssecretaris), then by start. A person with two posts is listed under each.
+         */
+        CabinetDetailDTO: {
+            /**
+             * Key
+             * @description ``rutte_iv``, ``den_uyl``.
+             */
+            key: string;
+            /**
+             * Name
+             * @description ``kabinet-Rutte IV``.
+             */
+            name: string;
+            /** From Date */
+            from_date?: string | null;
+            /**
+             * To Date
+             * @description Null while in office.
+             */
+            to_date?: string | null;
+            /**
+             * From Date Precision
+             * @description How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January.
+             */
+            from_date_precision?: ("day" | "month" | "year") | null;
+            /** To Date Precision */
+            to_date_precision?: ("day" | "month" | "year") | null;
+            /**
+             * Previous
+             * @description The key of the cabinet before it.
+             */
+            previous?: string | null;
+            prime_minister?: components["schemas"]["PersonRefDTO"] | null;
+            /** Parties */
+            parties?: components["schemas"]["CabinetPartyDTO"][];
+            /**
+             * Factions
+             * @description The faction keys of its parties.
+             */
+            factions?: string[];
+            /** Wikidata Id */
+            wikidata_id?: string | null;
+            /**
+             * Members
+             * @description The people who held a post in it.
+             * @default 0
+             */
+            members: number;
+            /**
+             * Bills
+             * @description Dossiers of track ``wetsvoorstel`` a bewindspersoon brought in while it was in office (``initiative`` false, ``cabinet`` this one).
+             * @default 0
+             */
+            bills: number;
+            /**
+             * Commitments
+             * @description Commitments made while it was in office.
+             * @default 0
+             */
+            commitments: number;
+            /** Ministries */
+            ministries?: components["schemas"]["CabinetMinistryDTO"][];
+        };
+        /**
+         * CabinetMinistryDTO
+         * @description The posts under one ministry; ``ministry`` null for a post that names none (the
+         *     viceminister-president, a minister without a named portfolio).
+         */
+        CabinetMinistryDTO: {
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /** Name */
+            name?: string | null;
+            /** Posts */
+            posts: components["schemas"]["CabinetPostDTO"][];
+        };
+        /**
+         * CabinetPartyDTO
+         * @description A party at least two members of the cabinet belonged to when their post began.
+         */
+        CabinetPartyDTO: {
+            /** Name */
+            name?: string | null;
+            /** Short */
+            short?: string | null;
+            /**
+             * Faction
+             * @description The faction key; null for a party from before the TK data.
+             */
+            faction?: string | null;
+        };
+        /**
+         * CabinetPostDTO
+         * @description One post a person held in the cabinet, with their counts within it.
+         */
+        CabinetPostDTO: {
+            member: components["schemas"]["PersonRefDTO"];
+            post?: components["schemas"]["Post"] | null;
+            /**
+             * Function
+             * @description As Wikidata names the post.
+             */
+            function?: string | null;
+            /** From Date */
+            from_date?: string | null;
+            /** To Date */
+            to_date?: string | null;
+            /**
+             * Dossiers
+             * @description Dossiers with a paper the person signed as bewindspersoon within the cabinet's period (counted per person, the same on each of their posts).
+             * @default 0
+             */
+            dossiers: number;
+            /**
+             * Bills
+             * @description Of those, dossiers of track ``wetsvoorstel``.
+             * @default 0
+             */
+            bills: number;
+            /**
+             * Open Commitments
+             * @description Their commitments made under this cabinet and still open.
+             * @default 0
+             */
+            open_commitments: number;
+        };
+        /**
+         * CabinetSummaryDTO
+         * @description A cabinet in the list, with its counts.
+         */
+        CabinetSummaryDTO: {
+            /**
+             * Key
+             * @description ``rutte_iv``, ``den_uyl``.
+             */
+            key: string;
+            /**
+             * Name
+             * @description ``kabinet-Rutte IV``.
+             */
+            name: string;
+            /** From Date */
+            from_date?: string | null;
+            /**
+             * To Date
+             * @description Null while in office.
+             */
+            to_date?: string | null;
+            /**
+             * From Date Precision
+             * @description How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January.
+             */
+            from_date_precision?: ("day" | "month" | "year") | null;
+            /** To Date Precision */
+            to_date_precision?: ("day" | "month" | "year") | null;
+            /**
+             * Previous
+             * @description The key of the cabinet before it.
+             */
+            previous?: string | null;
+            prime_minister?: components["schemas"]["PersonRefDTO"] | null;
+            /** Parties */
+            parties?: components["schemas"]["CabinetPartyDTO"][];
+            /**
+             * Factions
+             * @description The faction keys of its parties.
+             */
+            factions?: string[];
+            /** Wikidata Id */
+            wikidata_id?: string | null;
+            /**
+             * Members
+             * @description The people who held a post in it.
+             * @default 0
+             */
+            members: number;
+            /**
+             * Bills
+             * @description Dossiers of track ``wetsvoorstel`` a bewindspersoon brought in while it was in office (``initiative`` false, ``cabinet`` this one).
+             * @default 0
+             */
+            bills: number;
+            /**
+             * Commitments
+             * @description Commitments made while it was in office.
+             * @default 0
+             */
+            commitments: number;
+        };
+        /**
          * CitedArticleRef
          * @description Reference to one cited article inside a judgment-citation list.
          */
         CitedArticleRef: {
             /**
              * Id
-             * @description ArangoDB document _id, e.g. ``instrument_articles/bwbr0001854_287``.
+             * @description ArangoDB document _id, e.g. ``articles/bwbr0001854_287``.
              */
             id: string;
             /**
@@ -1219,27 +2577,181 @@ export interface components {
             display_name?: string | null;
         };
         /**
-         * CommissieDTO
-         * @description Parliamentary committee.
-         *
-         *     ``type`` distinguishes standing committees ('vast'), temporary committees
-         *     ('tijdelijk'), special committees ('bijzonder'), and parliamentary inquiry
-         *     committees ('parlementaire_enquete'). Null when the source data doesn't
-         *     carry a type signal — treat as 'onbekend'.
+         * CitedByJudgment
+         * @description The judgment of a passage that cites an article.
          */
-        CommissieDTO: {
+        CitedByJudgment: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Naam */
-            naam?: string | null;
-            /** Afkorting */
-            afkorting?: string | null;
+            /** Ecli */
+            ecli: string | null;
+            /**
+             * Court
+             * @description ECLI court code, `HR`, `RBAMS`.
+             */
+            court: string | null;
+            /**
+             * Tier
+             * @description The college: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket`, `gerechtshof`, `rechtbank`, … (`/api/stats/coverage` lists those present).
+             */
+            tier: string | null;
+            /**
+             * Date
+             * @description Date of the judgment, YYYY-MM-DD.
+             */
+            date: string | null;
+            /** Display Name */
+            display_name: string | null;
+        };
+        /** CommitmentActivityDTO */
+        CommitmentActivityDTO: {
+            /** Key */
+            key: string;
+            /** Date */
+            date?: string | null;
+            /** Number */
+            number?: string | null;
+        };
+        /**
+         * CommitmentDTO
+         * @description A commitment (toezegging) of a bewindspersoon to the Tweede Kamer.
+         */
+        CommitmentDTO: {
+            /** Key */
+            key: string;
+            /** Text */
+            text?: string | null;
+            /** Status */
+            status?: ("open" | "done" | "partly_done" | "unfulfilled" | "lapsed") | null;
+            /**
+             * Date
+             * @description The day it was made.
+             */
+            date?: string | null;
+            /**
+             * Expected Resolution
+             * @description The day it is due; null when the Kamer names none.
+             */
+            expected_resolution?: string | null;
+            /**
+             * Minister Name
+             * @description As the source writes it.
+             */
+            minister_name?: string | null;
+            /** @description The member who made it; null when no member fits the name. */
+            member?: components["schemas"]["CommitmentMemberDTO"] | null;
+            post?: components["schemas"]["Post"] | null;
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Cabinet
+             * @description The cabinet in office that day.
+             */
+            cabinet?: string | null;
+            /** Dossiers */
+            dossiers?: components["schemas"]["CommitmentDossierDTO"][];
+            activity?: components["schemas"]["CommitmentActivityDTO"] | null;
+        };
+        /** CommitmentDossierDTO */
+        CommitmentDossierDTO: {
+            /** Key */
+            key: string;
+            /** Number */
+            number?: string | null;
+            /** Title */
+            title?: string | null;
+        };
+        /** CommitmentListResponse */
+        CommitmentListResponse: {
+            /**
+             * Total
+             * @description Matching commitments, whatever the page.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["CommitmentDTO"][];
+        };
+        /**
+         * CommitmentMemberDTO
+         * @description Who made the commitment, and the role they made it in as the source writes it.
+         */
+        CommitmentMemberDTO: {
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+            /** Function */
+            function?: string | null;
+        };
+        /**
+         * CommitteeActivitiesResponse
+         * @description A page of a committee's activities, newest first.
+         */
+        CommitteeActivitiesResponse: {
+            /**
+             * Total
+             * @description Activities of the committee, independent of limit and offset.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["CommitteeActivityDTO"][];
+        };
+        /**
+         * CommitteeActivityDTO
+         * @description One activity (debate, hearing) a committee leads.
+         */
+        CommitteeActivityDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Date
+             * @description YYYY-MM-DD.
+             */
+            date?: string | null;
+            /**
+             * Kind
+             * @description The source's ``Soort``, e.g. Commissiedebat.
+             */
+            kind?: string | null;
+            /**
+             * Agenda Title
+             * @description The subject of the activity (``Activiteit.Onderwerp``).
+             */
+            agenda_title?: string | null;
+            /**
+             * Status
+             * @description ``Activiteit.Status``: ``Gepland``, ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``.
+             */
+            status?: string | null;
+            /**
+             * Dossier Numbers
+             * @description Dossiers on the agenda of the activity.
+             */
+            dossier_numbers?: string[];
+        };
+        /**
+         * CommitteeDTO
+         * @description A parliamentary committee.
+         *
+         *     ``kind`` distinguishes standing ('vast'), temporary ('tijdelijk'),
+         *     special ('bijzonder') and inquiry ('parlementaire_enquete') committees.
+         */
+        CommitteeDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
             /** Slug */
             slug?: string | null;
-            /** Type */
-            type?: string | null;
+            /** Kind */
+            kind?: string | null;
             /**
              * Active Dossier Count
              * @default 0
@@ -1247,144 +2759,627 @@ export interface components {
             active_dossier_count: number;
         };
         /**
-         * CommissieDetailDTO
-         * @description Committee detail. Served by GET /api/commissies/{slug}.
+         * CommitteeDetailDTO
+         * @description A committee with its members and a page of the dossiers it leads.
+         *
+         *     ``dossiers`` is one page; ``dossier_total`` counts every dossier that matches the
+         *     ``status`` filter, and ``active_dossier_count`` the open ones whatever the filter.
          */
-        CommissieDetailDTO: {
+        CommitteeDetailDTO: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Naam */
-            naam?: string | null;
-            /** Afkorting */
-            afkorting?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
             /** Slug */
             slug?: string | null;
-            /** Type */
-            type?: string | null;
+            /** Kind */
+            kind?: string | null;
             /**
              * Active Dossier Count
              * @default 0
              */
             active_dossier_count: number;
             /**
-             * Leden
+             * Members
              * @default []
              */
-            leden: components["schemas"]["LidDTO"][];
+            members: components["schemas"]["MemberDTO"][];
             /**
              * Dossiers
              * @default []
              */
             dossiers: components["schemas"]["DossierSummaryDTO"][];
+            /**
+             * Dossier Total
+             * @description Dossiers matching ``status``, independent of limit and offset.
+             * @default 0
+             */
+            dossier_total: number;
         };
         /**
-         * CommissieWithLedenDTO
-         * @description Commissie + its members. Served by GET /api/commissies/with-leden.
-         *
-         *     Lean variant of CommissieDetailDTO: no dossiers payload, since the
-         *     Lagen view only needs the leden halo around each committee.
+         * CommitteeWithMembersDTO
+         * @description A committee and its members, without the dossiers payload.
          */
-        CommissieWithLedenDTO: {
+        CommitteeWithMembersDTO: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Naam */
-            naam?: string | null;
-            /** Afkorting */
-            afkorting?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
             /** Slug */
             slug?: string | null;
-            /** Type */
-            type?: string | null;
+            /** Kind */
+            kind?: string | null;
             /**
              * Active Dossier Count
              * @default 0
              */
             active_dossier_count: number;
             /**
-             * Leden
+             * Members
              * @default []
              */
-            leden: components["schemas"]["LidDTO"][];
+            members: components["schemas"]["MemberDTO"][];
+        };
+        /**
+         * CoverageCourtDTO
+         * @description The judgments of one court in the graph.
+         */
+        CoverageCourtDTO: {
+            /**
+             * Source
+             * @description `rechtspraak` or `echr`.
+             */
+            source?: string | null;
+            /**
+             * Tier
+             * @description `hoge_raad`, `parket` (the conclusions of the Parket bij de Hoge Raad), `raad_van_state`, `centrale_raad_van_beroep`, `gerechtshof`, `rechtbank`, … one per college (``core.judgments.TIERS``).
+             */
+            tier?: string | null;
+            /**
+             * Court Code
+             * @description The court in the ECLI: `GHAMS`.
+             */
+            court_code?: string | null;
+            /**
+             * Court
+             * @description Its name: Gerechtshof Amsterdam.
+             */
+            court?: string | null;
+            /** Count */
+            count: number;
+            /**
+             * First Date
+             * @description Date of its oldest judgment.
+             */
+            first_date?: string | null;
+            /**
+             * Last Date
+             * @description Date of its newest judgment.
+             */
+            last_date?: string | null;
+        };
+        /**
+         * CoverageTierDTO
+         * @description The judgments of one court tier in the graph.
+         */
+        CoverageTierDTO: {
+            /** Tier */
+            tier?: string | null;
+            /** Count */
+            count: number;
+            /** First Date */
+            first_date?: string | null;
+            /** Last Date */
+            last_date?: string | null;
+        };
+        /**
+         * CrossLawDependenciesResponse
+         * @description Response for GET /api/instruments/{bwb_id}/cross-law-dependencies.
+         */
+        CrossLawDependenciesResponse: {
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
+            bwb_id: string;
+            /** Dependencies */
+            dependencies?: components["schemas"]["CrossLawDependencyItem"][];
+        };
+        /**
+         * CrossLawDependencyItem
+         * @description An article reference crossing a law boundary.
+         */
+        CrossLawDependencyItem: {
+            source_article: components["schemas"]["ArticleRelationDTO"];
+            target_article: components["schemas"]["ArticleRelationDTO"];
+            /** Semantic Type */
+            semantic_type?: string | null;
+            /** Explanation */
+            explanation?: string | null;
+            /** Confidence */
+            confidence?: number | null;
+        };
+        /**
+         * DecisionDTO
+         * @description One decision with every vote cast on it.
+         *
+         *     ``vote_kind`` says who the votes come from: ``member`` for a roll-call
+         *     (``hoofdelijke stemming``), ``faction`` otherwise. ``tally`` is seats per
+         *     choice — members per choice on a roll-call — and ``voters`` is how many
+         *     cast each choice.
+         */
+        DecisionDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Date */
+            date?: string | null;
+            /** Subject */
+            subject?: string | null;
+            /**
+             * External Id
+             * @description TK Besluit identifier.
+             */
+            external_id?: string | null;
+            /** Passed */
+            passed: boolean;
+            /**
+             * Primary Case Kind
+             * @description The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others.
+             */
+            primary_case_kind?: string | null;
+            /** Chamber */
+            chamber?: string | null;
+            /**
+             * Vote Kind
+             * @default faction
+             */
+            vote_kind: string;
+            /** Tally */
+            tally?: {
+                [key: string]: number;
+            };
+            /** Voters */
+            voters?: {
+                [key: string]: number;
+            };
+            /** Votes */
+            votes?: components["schemas"]["VoteDTO"][];
+        };
+        /**
+         * DecisionDayCount
+         * @description The decisions of one day: how many, and how many of them carried.
+         */
+        DecisionDayCount: {
+            /** Date */
+            date: string | null;
+            /** Count */
+            count: number;
+            /** Passed */
+            passed: number;
+        };
+        /**
+         * DecisionFacets
+         * @description The decisions under the filters, counted.
+         *
+         *     ``kind`` is counted without the ``kind`` filter and ``passed`` without the ``passed``
+         *     filter, so each shows what choosing another value would give; ``days`` is counted
+         *     under every filter.
+         */
+        DecisionFacets: {
+            /**
+             * Kind
+             * @description Per kind, most first.
+             */
+            kind?: components["schemas"]["DecisionKindCount"][];
+            /**
+             * Passed
+             * @description Per outcome, most first.
+             */
+            passed?: components["schemas"]["DecisionOutcomeCount"][];
+            /**
+             * Days
+             * @description Per date of the vote, oldest first.
+             */
+            days?: components["schemas"]["DecisionDayCount"][];
+        };
+        /**
+         * DecisionKindCount
+         * @description How many of the decisions are of one kind.
+         */
+        DecisionKindCount: {
+            /** Value */
+            value: ("motie" | "amendement" | "wetsvoorstel" | "overig") | null;
+            /** Count */
+            count: number;
+        };
+        /**
+         * DecisionListResponse
+         * @description A page of decisions.
+         */
+        DecisionListResponse: {
+            /**
+             * Total
+             * @description Matching decisions, independent of ``limit``.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["DecisionSummaryDTO"][];
+            facets?: components["schemas"]["DecisionFacets"];
+        };
+        /**
+         * DecisionOutcomeCount
+         * @description How many of the decisions carried (``true``), did not, or have no outcome (null).
+         */
+        DecisionOutcomeCount: {
+            /** Value */
+            value: boolean | null;
+            /** Count */
+            count: number;
+        };
+        /**
+         * DecisionSummaryDTO
+         * @description One row in the decision browser.
+         *
+         *     ``tally`` sums the seats behind each choice — the number to show for a
+         *     result — and ``voters`` counts how many factions (or members) made it.
+         *     ``external_id`` identifies the motion within a debate; use it rather than
+         *     ``subject``, which is shared by every motion on the same agenda item.
+         */
+        DecisionSummaryDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Date */
+            date?: string | null;
+            /** Subject */
+            subject?: string | null;
+            /** External Id */
+            external_id?: string | null;
+            /** Dossier Numbers */
+            dossier_numbers?: string[];
+            /**
+             * Kind
+             * @description What was voted on, from the ``Zaak.Soort`` of the case it decided (``primary_case_kind``): ``motie``, ``amendement``, ``wetsvoorstel`` (a bill, also an initiative bill or a budget) or ``overig``. Null for a decision normalized before the kind was stored.
+             */
+            kind?: ("motie" | "amendement" | "wetsvoorstel" | "overig") | null;
+            /** Passed */
+            passed?: boolean | null;
+            /** Chamber */
+            chamber?: string | null;
+            /** Vote Kind */
+            vote_kind?: string | null;
+            /** Tally */
+            tally?: {
+                [key: string]: number;
+            };
+            /** Voters */
+            voters?: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * DocumentListResponse
+         * @description A page of document summaries.
+         */
+        DocumentListResponse: {
+            /**
+             * Total
+             * @description Matching documents, independent of ``limit`` and ``offset``.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["DocumentSummaryDTO"][];
+        };
+        /**
+         * DocumentPassagesResponse
+         * @description The passages of one document that explain one article, in document order.
+         */
+        DocumentPassagesResponse: {
+            /** Total */
+            total: number;
+            /** Items */
+            items: components["schemas"]["PassageDTO"][];
+        };
+        /**
+         * DocumentSummaryDTO
+         * @description One row in the document index. ``dossier_numbers`` are the labels of the dossiers
+         *     it names (``37020-XV``), in either chamber.
+         */
+        DocumentSummaryDTO: {
+            /**
+             * Chamber
+             * @description 'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication.
+             */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Source
+             * @description Source, e.g. 'tk', 'eerstekamer', 'staatsblad'.
+             */
+            source?: string | null;
+            /**
+             * Is Explanatory
+             * @description An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.
+             * @default false
+             */
+            is_explanatory: boolean;
+            /** Key */
+            key: string;
+            /** Title */
+            title?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Date */
+            date?: string | null;
+            /** External Id */
+            external_id?: string | null;
+            /** Dossier Numbers */
+            dossier_numbers?: string[];
+            /**
+             * Has Text
+             * @default false
+             */
+            has_text: boolean;
+            /**
+             * Linked Articles
+             * @default 0
+             */
+            linked_articles: number;
+        };
+        /**
+         * DocumentTextResponse
+         * @description One document with its text.
+         *
+         *     ``text`` is null until ``normalize tk-content`` has run for it: a paper
+         *     from before December 1994 has no XML and never gets one. ``sections`` are
+         *     the headings of the paper in document order, empty when there is no text or
+         *     the structure of the paper could not be read; their offsets are into
+         *     ``text``. ``dossier_numbers`` are the dossiers the document is PART_OF, in
+         *     either chamber; ``case_kinds`` the ``Zaak.Soort`` of the cases it belongs to
+         *     (Tweede Kamer only); ``explains`` are the articles and instruments it explains,
+         *     without duplicates.
+         */
+        DocumentTextResponse: {
+            /**
+             * Chamber
+             * @description 'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication.
+             */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Source
+             * @description Source, e.g. 'tk', 'eerstekamer', 'staatsblad'.
+             */
+            source?: string | null;
+            /**
+             * Is Explanatory
+             * @description An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.
+             * @default false
+             */
+            is_explanatory: boolean;
+            /** Key */
+            key: string;
+            /** Document Id */
+            document_id: string;
+            /** Title */
+            title?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Date */
+            date?: string | null;
+            /** External Id */
+            external_id?: string | null;
+            /**
+             * Tk Url
+             * @description The document on tweedekamer.nl.
+             */
+            tk_url?: string | null;
+            /**
+             * File Url
+             * @description The original file of a Tweede Kamer document (Word or PDF), from the Gegevensmagazijn.
+             */
+            file_url?: string | null;
+            /** Text */
+            text?: string | null;
+            /** Dossier Numbers */
+            dossier_numbers?: string[];
+            /** Case Kinds */
+            case_kinds?: string[];
+            /** Explains */
+            explains?: components["schemas"]["ExplainedTargetDTO"][];
+            /** Sections */
+            sections?: components["schemas"]["SectionDTO"][];
+        };
+        /**
+         * DossierCommitteeDTO
+         * @description A committee that leads an activity about a dossier.
+         */
+        DossierCommitteeDTO: {
+            /** Key */
+            key: string;
+            /** Slug */
+            slug?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Id */
+            id: string;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /**
+             * Role
+             * @default lead
+             * @constant
+             */
+            role: "lead";
         };
         /**
          * DossierDetailResponse
-         * @description Full dossier detail response.
-         *
-         *     See `DossierSummaryDTO` for the semantics of `huidige_fase`,
-         *     `stages_present`, and `titel_source`.
+         * @description A dossier with the size of everything attached to it, and what it links to.
          */
         DossierDetailResponse: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Kamerstuknummer */
-            kamerstuknummer: string;
-            /** Titel */
-            titel?: string | null;
-            /** Titel Source */
-            titel_source?: ("dossier" | "document" | "activiteit") | null;
-            /** Traject Kind */
-            traject_kind?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "motie" | "overig") | null;
-            /** Huidige Fase */
-            huidige_fase?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld") | null;
-            /** Stages Present */
-            stages_present?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld")[];
             /**
-             * Afgedaan
+             * Number
+             * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
+             */
+            number: string;
+            /**
+             * Suffix
+             * @description The addition to the number (``Toevoeging``): ``XV`` of 37020-XV, ``31`` of 21501-31; null for a dossier without one.
+             */
+            suffix?: string | null;
+            /**
+             * Same Number Count
+             * @description How many other dossiers share the number: 24 for each dossier of a budget of 25. ``GET /api/dossiers?number=`` lists them.
+             * @default 0
+             */
+            same_number_count: number;
+            /** Title */
+            title?: string | null;
+            /**
+             * Short Title
+             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             */
+            short_title?: string | null;
+            /** Title Source */
+            title_source?: ("dossier" | "document" | "activiteit") | null;
+            /** Track */
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
+            /** Current Stage */
+            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
+            /** Stages */
+            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Stages Complete
+             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
+             * @default true
+             */
+            stages_complete: boolean;
+            /**
+             * Stages Missing
+             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             */
+            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Closed
              * @default false
              */
-            afgedaan: boolean;
-            /** Geopend Op */
-            geopend_op?: string | null;
-            /** Gesloten Op */
-            gesloten_op?: string | null;
+            closed: boolean;
+            /** Outcome */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            /** Opened On */
+            opened_on?: string | null;
+            /** Closed On */
+            closed_on?: string | null;
+            /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Initiative
+             * @description True when a Kamerlid signed the earliest signed document first, false when a bewindspersoon did, null when neither did.
+             */
+            initiative?: boolean | null;
+            /**
+             * Cabinet
+             * @description The key of the cabinet in office when that document was signed.
+             */
+            cabinet?: string | null;
             /**
              * Document Count
              * @default 0
              */
             document_count: number;
             /**
-             * Activiteit Count
+             * Activity Count
              * @default 0
              */
-            activiteit_count: number;
+            activity_count: number;
             /**
-             * Stemming Count
+             * Decision Count
              * @default 0
              */
-            stemming_count: number;
+            decision_count: number;
             /**
-             * Toezegging Count
+             * Commitment Count
              * @default 0
              */
-            toezegging_count: number;
+            commitment_count: number;
+            /**
+             * Instruments
+             * @description Instruments legislated in, amended, introduced or repealed by the dossier, one item per instrument, relation and status.
+             */
+            instruments?: components["schemas"]["DossierInstrumentDTO"][];
+            /**
+             * Committees
+             * @description Committees leading an activity about the dossier.
+             */
+            committees?: components["schemas"]["DossierCommitteeDTO"][];
+            /**
+             * Documents By Kind
+             * @description Documents per kind (``Motie``, ``Amendement``, ...); a document without a kind is not counted.
+             */
+            documents_by_kind?: {
+                [key: string]: number;
+            };
+            senate?: components["schemas"]["DossierSenateDTO"];
+            /**
+             * Relations
+             * @description The dossiers this one revises, accompanies or is related to, and those that revise, accompany or relate to it: by relation, then outgoing before incoming, then in the order of their numbers. All dossiers of its own number are ``GET /api/dossiers?number=``.
+             */
+            relations?: components["schemas"]["DossierRelationDTO"][];
         };
         /**
          * DossierDocumentDTO
-         * @description One TK publication linked to a dossier.
+         * @description One document linked to a dossier.
          */
         DossierDocumentDTO: {
+            /**
+             * Chamber
+             * @description 'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication.
+             */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Source
+             * @description Source, e.g. 'tk', 'eerstekamer', 'staatsblad'.
+             */
+            source?: string | null;
+            /**
+             * Is Explanatory
+             * @description An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.
+             * @default false
+             */
+            is_explanatory: boolean;
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Soort */
-            soort?: string | null;
-            /** Titel */
-            titel?: string | null;
-            /** Volgnummer */
-            volgnummer?: number | null;
-            /** Dossier Nummer */
-            dossier_nummer?: string | null;
-            /** Vergaderjaar */
-            vergaderjaar?: string | null;
-            /** Datum */
-            datum?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Sequence
+             * @description Document number within the dossier.
+             */
+            sequence?: number | null;
+            /**
+             * Session Year
+             * @description Parliamentary year.
+             */
+            session_year?: string | null;
+            /** Date */
+            date?: string | null;
             /** Tk Url */
             tk_url?: string | null;
             /** Display Name */
@@ -1393,14 +3388,11 @@ export interface components {
         /**
          * DossierDocumentsBulkResponse
          * @description Response for GET /api/dossiers/documents/bulk.
-         *
-         *     Wrapper around a ``{kamerstuknummer: [docs...]}`` map so the response
-         *     can carry a typed schema and the response_model validates each entry.
          */
         DossierDocumentsBulkResponse: {
             /**
              * Items
-             * @description Map keyed by kamerstuknummer. Each value is the per-dossier list of documents (capped at ``per_dossier_limit``), most recent first.
+             * @description Map keyed by dossier number; each value is that dossier's documents, most recent first.
              */
             items: {
                 [key: string]: components["schemas"]["DossierDocumentDTO"][];
@@ -1408,33 +3400,93 @@ export interface components {
         };
         /**
          * DossierDocumentsResponse
-         * @description Response for GET /api/dossiers/{kamerstuknummer}/documents.
+         * @description Response for GET /api/dossiers/{number}/documents.
          */
         DossierDocumentsResponse: {
             /**
              * Total
-             * @description Absolute number of documents in the dossier (independent of ``limit``).
+             * @description Documents in the dossier, independent of ``limit``.
              */
             total: number;
             /** Items */
             items: components["schemas"]["DossierDocumentDTO"][];
         };
         /**
+         * DossierFacetsDTO
+         * @description Per dimension the number of dossiers per value under the current filters, each
+         *     dimension counted without its own filter (so the other values of a chosen dimension
+         *     keep their counts), the largest first.
+         */
+        DossierFacetsDTO: {
+            /** Status */
+            status?: components["schemas"]["FacetCountDTO"][];
+            /** Outcome */
+            outcome?: components["schemas"]["FacetCountDTO"][];
+            /** Track */
+            track?: components["schemas"]["FacetCountDTO"][];
+            /** Stage */
+            stage?: components["schemas"]["FacetCountDTO"][];
+            /** Ministry */
+            ministry?: components["schemas"]["FacetCountDTO"][];
+        };
+        /**
+         * DossierInstrumentDTO
+         * @description An instrument a dossier is tied to, and how.
+         *
+         *     ``relation`` is ``legislated_in`` (the instrument came out of this dossier) or
+         *     ``amends``, ``introduces``, ``repeals`` (the dossier changes it, resolved from the
+         *     article or instrument that is changed to the parent instrument). ``status`` is
+         *     ``canoniek`` for what an amending publication enacted and ``voorgesteld`` for what a
+         *     bill of the dossier proposes. An instrument with several relations or statuses
+         *     appears once per combination.
+         */
+        DossierInstrumentDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Bwb Id */
+            bwb_id?: string | null;
+            /**
+             * Celex
+             * @description Set on EU instruments.
+             */
+            celex?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /**
+             * Jurisdiction
+             * @description ``nl`` or ``eu``.
+             */
+            jurisdiction?: string | null;
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "legislated_in" | "amends" | "introduces" | "repeals";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "canoniek" | "voorgesteld";
+        };
+        /**
          * DossierListResponse
-         * @description Paginated list response for GET /api/dossiers/open and similar list endpoints.
+         * @description A page of dossiers.
          */
         DossierListResponse: {
             /**
              * Total
-             * @description Absolute count of matching dossiers (independent of limit/offset).
+             * @description Matching dossiers, independent of limit and offset.
              */
             total: number;
             /** Items */
             items: components["schemas"]["DossierSummaryDTO"][];
+            facets: components["schemas"]["DossierFacetsDTO"];
         };
         /**
          * DossierMutationEdge
-         * @description An edge in the pending-mutation subgraph.
+         * @description An edge in the pending-change subgraph.
          */
         DossierMutationEdge: {
             /** From Id */
@@ -1457,7 +3509,7 @@ export interface components {
         };
         /**
          * DossierMutationNode
-         * @description A node in the pending-mutation subgraph.
+         * @description A node in the pending-change subgraph.
          */
         DossierMutationNode: {
             /** Id */
@@ -1480,74 +3532,188 @@ export interface components {
         };
         /**
          * DossierMutationsResponse
-         * @description Pending-mutation subgraph for a dossier.
-         *
-         *     Shape is compatible with the existing graph endpoint so the frontend can
-         *     render it directly.
+         * @description The pending-change subgraph of a dossier, shaped like the graph endpoint.
          */
         DossierMutationsResponse: {
-            /** Kamerstuknummer */
-            kamerstuknummer: string;
+            /** Number */
+            number: string;
             /** Nodes */
             nodes: components["schemas"]["DossierMutationNode"][];
             /** Edges */
             edges: components["schemas"]["DossierMutationEdge"][];
         };
         /**
+         * DossierRefDTO
+         * @description Reference to a Kamerstukdossier by number; ``title`` is null when unknown.
+         */
+        DossierRefDTO: {
+            /** Number */
+            number: string;
+            /** Key */
+            key: string;
+            /** Title */
+            title?: string | null;
+        };
+        /**
+         * DossierRelationDTO
+         * @description A relation between this dossier and another, and which way it points.
+         *
+         *     * ``revises``: a supplementary budget or a slotwet revises the budget of its chapter
+         *       and year; ``rule`` says which (``begrotingswijziging`` or ``slotwet``).
+         *     * ``accompanies``: a budget change is submitted with the ``nota`` its title names
+         *       (``voorjaarsnota``, ``najaarsnota``, ``miljoenennota``).
+         *     * ``related_to``: the Kamer relates a case of the one dossier to a case of the other
+         *       (``Zaak.GerelateerdNaar``), mostly a letter of the government to the motion it
+         *       answers. ``cases`` counts the pairs of cases, ``case_kinds`` names their kinds
+         *       (``Brief regering → Motie``).
+         *     * ``second_reading_of``: a change in the Grondwet in its second reading and the dossier of
+         *       its first reading, whose papers explain it: the memorandum of 35785 only refers to those
+         *       of 35418 and 35419.
+         *
+         *     ``outgoing`` means this dossier is the subject: 37035-XXII revises 36800-XXII and
+         *     accompanies 37020. On 36800-XXII the same ``revises`` is ``incoming``.
+         */
+        DossierRelationDTO: {
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "revises" | "accompanies" | "related_to" | "second_reading_of";
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "outgoing" | "incoming";
+            dossier: components["schemas"]["DossierSummaryDTO"];
+            /** Cases */
+            cases?: number | null;
+            /** Case Kinds */
+            case_kinds?: string[];
+            /** Rule */
+            rule?: ("begrotingswijziging" | "slotwet") | null;
+            /** Nota */
+            nota?: ("voorjaarsnota" | "najaarsnota" | "miljoenennota") | null;
+        };
+        /**
+         * DossierSenateDTO
+         * @description The Eerste Kamer papers among a dossier's documents.
+         */
+        DossierSenateDTO: {
+            /**
+             * Document Count
+             * @default 0
+             */
+            document_count: number;
+            /**
+             * First Date
+             * @description Date of the earliest paper (YYYY-MM-DD).
+             */
+            first_date?: string | null;
+        };
+        /**
          * DossierSummaryDTO
-         * @description Short representation of a Kamerstukdossier for list views.
+         * @description A dossier in a list.
          *
-         *     `traject_kind` is the canonical *kind* of dossier — wetsvoorstel /
-         *     initiatiefwetsvoorstel / begroting / motie / overig — derived from the
-         *     Zaak.Soort chain. It does *not* change as the dossier progresses; use
-         *     this for "is this a wetsvoorstel?" bucketing.
-         *
-         *     `huidige_fase` is the *latest recognised* legislative stage seen on the
-         *     dossier's documents/activiteiten (or `'afgehandeld'` for closed dossiers,
-         *     `null` for dossiers with no classifiable signals). `stages_present` lists
-         *     every stage with at least one matching signal, in chronological order —
-         *     use this for any "which stages are present?" UI rather than `huidige_fase`.
+         *     ``track`` is what kind of dossier this is — a bill (wetsvoorstel,
+         *     initiatiefwetsvoorstel, begroting, verdrag), an initiatiefnota, a ``nota`` of the
+         *     government (the Miljoenennota, the Voorjaars- and Najaarsnota, the Financieel
+         *     Jaarverslag van het Rijk), a ``structuurvisie``, ``verantwoording`` (a
+         *     beleidsdoorlichting, the reports on a big project), ``eu`` (an EU Council, the fiches on
+         *     Commission proposals), ``interparlementair`` (an assembly the Kamer sends a delegation
+         *     to), ``kamer`` (the Kamer's own: a committee report, its code of conduct) or ``beleid``
+         *     (the letters and motions on a subject) — and does not change as it progresses. It
+         *     comes from what the dossier is, never from what is filed under it. ``current_stage`` is the
+         *     latest stage seen on its documents and activities; ``stages`` lists every
+         *     stage with at least one signal, in chronological order. Only a bill (a
+         *     wetsvoorstel, initiatiefwetsvoorstel, begroting or verdrag) passes stages;
+         *     any other dossier has none until it is ``afgehandeld``. A closed dossier has
+         *     an ``outcome``: ``aangenomen`` (its law was published), ``ingetrokken`` (its
+         *     bill was withdrawn) or ``verworpen`` (the Tweede Kamer voted the bill down).
          */
         DossierSummaryDTO: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Kamerstuknummer */
-            kamerstuknummer: string;
-            /** Titel */
-            titel?: string | null;
-            /** Titel Source */
-            titel_source?: ("dossier" | "document" | "activiteit") | null;
-            /** Traject Kind */
-            traject_kind?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "motie" | "overig") | null;
-            /** Huidige Fase */
-            huidige_fase?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld") | null;
-            /** Stages Present */
-            stages_present?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "nota" | "verslag" | "amendementen" | "stemming" | "afgehandeld")[];
             /**
-             * Afgedaan
+             * Number
+             * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
+             */
+            number: string;
+            /**
+             * Suffix
+             * @description The addition to the number (``Toevoeging``): ``XV`` of 37020-XV, ``31`` of 21501-31; null for a dossier without one.
+             */
+            suffix?: string | null;
+            /**
+             * Same Number Count
+             * @description How many other dossiers share the number: 24 for each dossier of a budget of 25. ``GET /api/dossiers?number=`` lists them.
+             * @default 0
+             */
+            same_number_count: number;
+            /** Title */
+            title?: string | null;
+            /**
+             * Short Title
+             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             */
+            short_title?: string | null;
+            /** Title Source */
+            title_source?: ("dossier" | "document" | "activiteit") | null;
+            /** Track */
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
+            /** Current Stage */
+            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
+            /** Stages */
+            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Stages Complete
+             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
+             * @default true
+             */
+            stages_complete: boolean;
+            /**
+             * Stages Missing
+             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             */
+            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Closed
              * @default false
              */
-            afgedaan: boolean;
-            /** Geopend Op */
-            geopend_op?: string | null;
-            /** Gesloten Op */
-            gesloten_op?: string | null;
+            closed: boolean;
+            /** Outcome */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            /** Opened On */
+            opened_on?: string | null;
+            /** Closed On */
+            closed_on?: string | null;
+            /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Initiative
+             * @description True when a Kamerlid signed the earliest signed document first, false when a bewindspersoon did, null when neither did.
+             */
+            initiative?: boolean | null;
+            /**
+             * Cabinet
+             * @description The key of the cabinet in office when that document was signed.
+             */
+            cabinet?: string | null;
         };
         /**
          * DossierTimelineResponse
-         * @description Dossier timeline — ordered list of documents, activiteiten, stemmingen, toezeggingen.
+         * @description Everything that happened in a dossier, in date order.
          */
         DossierTimelineResponse: {
-            /** Kamerstuknummer */
-            kamerstuknummer: string;
+            /** Number */
+            number: string;
             /** Total */
             total: number;
             /** Order */
             order: string;
             /** Entries */
-            entries: components["schemas"]["TimelineEntryDTO"][];
+            entries: (components["schemas"]["TimelineDocumentEntry"] | components["schemas"]["TimelineActivityEntry"] | components["schemas"]["TimelineDecisionEntry"] | components["schemas"]["TimelineCommitmentEntry"])[];
         };
         /**
          * EdgeStatsDTO
@@ -1562,34 +3728,148 @@ export interface components {
             };
         };
         /**
-         * FractieDTO
-         * @description Parliamentary party (fractie) summary.
+         * EuLinkDTO
+         * @description An `IMPLEMENTS` edge between a national regulation and an EU act.
+         *
+         *     The edge means that the text of the regulation names the CELEX number of the EU act
+         *     (`basis`). It does not say that the regulation transposes the act, nor which articles
+         *     do: it links instruments, not articles, and its `confidence` is that of a text match.
          */
-        FractieDTO: {
+        EuLinkDTO: {
+            /** @description The other end: the EU act for `implements`, the national regulation for `implemented_by`. */
+            instrument: components["schemas"]["LinkedInstrumentDTO"];
+            /**
+             * Relation
+             * @default IMPLEMENTS
+             */
+            relation: string;
+            /** Confidence */
+            confidence?: number | null;
+            /**
+             * Basis
+             * @description What the edge rests on: `celex_named_in_text`, the text of the regulation names the CELEX number of the act. Not a transposition signal.
+             */
+            basis?: "celex_named_in_text" | null;
+            /**
+             * Source
+             * @description The pipeline that wrote the edge (`bwb-implements-directive`).
+             */
+            source?: string | null;
+            /**
+             * Meta
+             * @description Edge evidence as stored (`celex`).
+             */
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * ExplainedTargetDTO
+         * @description What an explanatory document explains: an article, or a law as a whole.
+         *
+         *     A version of an article resolves to the article itself; a law the document
+         *     explains without naming articles is an instrument with ``article_number`` null.
+         */
+        ExplainedTargetDTO: {
+            /**
+             * Id
+             * @description Arango _id of the article or instrument.
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Collection
+             * @enum {string}
+             */
+            collection: "articles" | "instruments";
+            /** Bwb Id */
+            bwb_id?: string | null;
+            /** Article Number */
+            article_number?: string | null;
+        };
+        /**
+         * ExplainingDocumentDTO
+         * @description The explanatory document of an explanation.
+         */
+        ExplainingDocumentDTO: {
+            /**
+             * Chamber
+             * @description 'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication.
+             */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Source
+             * @description Source, e.g. 'tk', 'eerstekamer', 'staatsblad'.
+             */
+            source?: string | null;
+            /**
+             * Is Explanatory
+             * @description An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.
+             * @default false
+             */
+            is_explanatory: boolean;
+            /**
+             * Id
+             * @description Arango _id of the document.
+             */
+            id: string;
+            /** Key */
+            key: string;
+            /** Kind */
+            kind?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Date */
+            date?: string | null;
+            /**
+             * Dossier Number
+             * @description The dossier the document is PART_OF (the lowest, if several).
+             */
+            dossier_number?: string | null;
+        };
+        /**
+         * FacetCountDTO
+         * @description One value of a facet and how many items have it under the current filters.
+         */
+        FacetCountDTO: {
+            /**
+             * Value
+             * @description Null counts the items without one.
+             */
+            value?: string | null;
+            /** Count */
+            count: number;
+        };
+        /**
+         * FactionDTO
+         * @description A parliamentary party.
+         */
+        FactionDTO: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Naam */
-            naam?: string | null;
-            /** Afkorting */
-            afkorting?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
             /**
              * Aliases
              * @default []
              */
             aliases: string[];
             /**
-             * Actief
+             * Active
              * @default true
              */
-            actief: boolean;
-            /** Aantal Zetels */
-            aantal_zetels?: number | null;
-            /** Datum Actief */
-            datum_actief?: string | null;
-            /** Datum Inactief */
-            datum_inactief?: string | null;
+            active: boolean;
+            /** Seats */
+            seats?: number | null;
+            /** Active From */
+            active_from?: string | null;
+            /** Active Until */
+            active_until?: string | null;
             /**
              * Member Count
              * @default 0
@@ -1597,75 +3877,78 @@ export interface components {
             member_count: number;
         };
         /**
-         * FractieDetailDTO
-         * @description Response for GET /api/fracties/{key}.
+         * FactionDetailDTO
+         * @description Response for GET /api/factions/{key} — the node as stored.
          */
-        FractieDetailDTO: {
+        FactionDetailDTO: {
             /** Id */
             id: string;
             /** Key */
             key: string;
             /**
              * Type
-             * @description Node type label (e.g. ``fractie``).
+             * @description Node type, e.g. ``faction``.
              */
             type: string;
             /** Labels */
             labels: string[];
-            /**
-             * Props
-             * @description Raw fractie props as stored on the node.
-             */
+            /** Props */
             props?: {
                 [key: string]: unknown;
             } | null;
         };
         /**
-         * FractieMembershipDTO
-         * @description One [van, tot_en_met] interval of a Lid's membership of a Fractie.
+         * FactionMembershipDTO
+         * @description One stretch of a member's membership of a faction.
          */
-        FractieMembershipDTO: {
-            /** Fractie Id */
-            fractie_id: string;
-            /** Fractie Key */
-            fractie_key: string;
-            /** Naam */
-            naam?: string | null;
-            /** Afkorting */
-            afkorting?: string | null;
+        FactionMembershipDTO: {
+            /** Faction Id */
+            faction_id: string;
+            /** Faction Key */
+            faction_key: string;
+            /** Name */
+            name?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
             /**
              * Aliases
              * @default []
              */
             aliases: string[];
-            /** Van */
-            van?: string | null;
-            /** Tot En Met */
-            tot_en_met?: string | null;
-            /** Functie */
-            functie?: string | null;
+            /** From Date */
+            from_date?: string | null;
+            /** To Date */
+            to_date?: string | null;
+            /** Role */
+            role?: string | null;
         };
         /**
-         * FractieZetelDTO
-         * @description A fractie's current seat allocation, for the hemicycle view.
+         * FactionSeatsDTO
+         * @description A party's seats, and where it sits in the hemicycle.
          */
-        FractieZetelDTO: {
+        FactionSeatsDTO: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Afkorting */
-            afkorting: string | null;
-            /** Naam */
-            naam: string | null;
-            /** Aantal Zetels */
-            aantal_zetels: number;
+            /** Abbreviation */
+            abbreviation: string | null;
+            /** Name */
+            name: string | null;
+            /** Seats */
+            seats: number;
             /** Color */
             color: string | null;
-            /** Order */
+            /**
+             * Order
+             * @description Left-to-right position in the chamber.
+             */
             order: number;
         };
-        /** GlobalGraphResponse */
+        /**
+         * GlobalGraphResponse
+         * @description Response for GET /api/graph/global.
+         */
         GlobalGraphResponse: {
             /** Instruments */
             instruments: components["schemas"]["InstrumentLayerInstrumentDTO"][];
@@ -1679,6 +3962,37 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /**
+         * GovernmentFunctionDTO
+         * @description A post held in a cabinet: as Wikidata names it, and normalised.
+         */
+        GovernmentFunctionDTO: {
+            /**
+             * Function
+             * @description The post as Wikidata names it: Minister voor Klimaat en Energie.
+             */
+            function?: string | null;
+            /**
+             * Cabinet
+             * @description The cabinet: kabinet-Rutte IV.
+             */
+            cabinet?: string | null;
+            /**
+             * Cabinet Key
+             * @description The cabinet node (``GET /api/cabinets/{key}``).
+             */
+            cabinet_key?: string | null;
+            post?: components["schemas"]["Post"] | null;
+            /** @description The ministry the post falls under (``GET /api/ministries``); a minister without portfolio under the ministry the post is placed under. */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /** From Date */
+            from_date?: string | null;
+            /**
+             * To Date
+             * @description Null while the post is held.
+             */
+            to_date?: string | null;
         };
         /**
          * GraphEdgeDTO
@@ -1699,6 +4013,10 @@ export interface components {
             text?: string | null;
             /** Confidence */
             confidence?: number | null;
+            /** Semantic Type */
+            semantic_type?: string | null;
+            /** Explanation */
+            explanation?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1707,13 +4025,17 @@ export interface components {
         };
         /**
          * InstrumentArticleBreadcrumbDTO
-         * @description One step in an article's chapter/section path.
+         * @description One division an article stands in, outermost first: ``type`` is the element of the
+         *     BWB XML (``boek``, ``titeldeel``, ``hoofdstuk``, ``afdeling``, ``paragraaf``, ...),
+         *     ``label`` as printed ("Hoofdstuk 1"), ``title`` its heading.
          */
         InstrumentArticleBreadcrumbDTO: {
             /** Type */
             type?: string | null;
             /** Label */
             label?: string | null;
+            /** Title */
+            title?: string | null;
         };
         /**
          * InstrumentArticleNodeDTO
@@ -1731,10 +4053,35 @@ export interface components {
             key: string;
             /** Bwb Id */
             bwb_id: string | null;
-            /** Article Number */
-            article_number: string | null;
+            /** Celex */
+            celex?: string | null;
+            /**
+             * Article Number
+             * @description Null for an article with only a heading, and for a repealed one.
+             */
+            article_number?: string | null;
+            /**
+             * Label
+             * @description `Artikel 287`, or the heading of an article without a number (`Algemene bepaling`).
+             */
+            label?: string | null;
+            /**
+             * Heading
+             * @description The title of its kop (`Definities`); most articles have none.
+             */
+            heading?: string | null;
+            /**
+             * Address
+             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             */
+            address: string;
             /** Display Name */
             display_name: string | null;
+            /**
+             * Official Url
+             * @description The article in force on wetten.overheid.nl (its JCI).
+             */
+            official_url?: string | null;
             /**
              * Breadcrumb
              * @default []
@@ -1745,6 +4092,17 @@ export interface components {
              * @default false
              */
             stub: boolean;
+            /**
+             * Repealed
+             * @description The article is no longer in force: an identity whose number another article has now, or one its current version repeals.
+             * @default false
+             */
+            repealed: boolean;
+            /**
+             * Last Article Number
+             * @description The number a repealed identity last had.
+             */
+            last_article_number?: string | null;
             /** Text Preview */
             text_preview?: string | null;
         };
@@ -1768,22 +4126,13 @@ export interface components {
              * @default false
              */
             current: boolean;
+            /**
+             * Official Url
+             * @description This version on wetten.overheid.nl (JCI with ``g``).
+             */
+            official_url?: string | null;
             /** Text */
             text?: string | null;
-            /** Diff */
-            diff?: string | null;
-        };
-        /**
-         * InstrumentArticleVersionsResponse
-         * @description All historical versions of one article, newest first.
-         */
-        InstrumentArticleVersionsResponse: {
-            /** Bwb Id */
-            bwb_id: string;
-            /** Article Number */
-            article_number: string;
-            /** Items */
-            items: components["schemas"]["InstrumentArticleVersionDTO"][];
         };
         /**
          * InstrumentArticlesAtResponse
@@ -1804,7 +4153,10 @@ export interface components {
          * @description Response for GET /api/instruments/{bwb_id}/articles.
          */
         InstrumentArticlesResponse: {
-            /** Bwb Id */
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
             bwb_id: string;
             /**
              * Total
@@ -1836,12 +4188,12 @@ export interface components {
             to: string;
             /**
              * Relation
-             * @description Edge relation type, e.g. CITES_ARTICLE
+             * @description Edge relation type, e.g. REFERS_TO
              */
             relation: string;
             /**
              * Direction
-             * @description Relative to the focal instrument: ``out`` = source is in this wet, ``in`` = target is in this wet, ``intra`` = both sides.
+             * @description Relative to the focal instrument: ``out`` = source is in this instrument, ``in`` = target is in it, ``intra`` = both sides.
              * @enum {string}
              */
             direction: "in" | "out" | "intra";
@@ -1861,7 +4213,10 @@ export interface components {
          *     the foreign endpoints those edges point at, grouped by collection.
          */
         InstrumentCitationsResponse: {
-            /** Bwb Id */
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
             bwb_id: string;
             /**
              * Article Count
@@ -1877,7 +4232,7 @@ export interface components {
             edges: components["schemas"]["InstrumentCitationEdge"][];
             /**
              * Nodes
-             * @description Foreign endpoints grouped by collection name (e.g. ``{'judgments': [...], 'instrument_articles': [...]}``).
+             * @description Foreign endpoints grouped by collection name (e.g. ``{'judgments': [...], 'articles': [...]}``).
              */
             nodes: {
                 [key: string]: {
@@ -1886,33 +4241,142 @@ export interface components {
             };
         };
         /**
+         * InstrumentDetailDTO
+         * @description One instrument: its identifiers, names, classification and dates.
+         */
+        InstrumentDetailDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Collection
+             * @default instruments
+             */
+            collection: string;
+            /**
+             * Bwb Id
+             * @description BWB id of a Dutch regulation or treaty; `ECHR-CONVENTION` for the Convention of the ECHR.
+             */
+            bwb_id?: string | null;
+            /**
+             * Celex
+             * @description CELEX number of an EU act.
+             */
+            celex?: string | null;
+            /** Title */
+            title: string | null;
+            /** Official Title */
+            official_title: string | null;
+            /** Citation Title */
+            citation_title: string | null;
+            /** Short Title */
+            short_title: string | null;
+            /**
+             * Aliases
+             * @description Every name it is cited by: the official abbreviations and, for a book of a code, `Boek 6 BW`, `6 BW`, `BW 6`, `BW6`, `BW`.
+             */
+            aliases?: string[];
+            /** Display Name */
+            display_name: string | null;
+            /**
+             * Jurisdiction
+             * @description `nl`, `eu` or `int` (Verdragenbank treaties).
+             */
+            jurisdiction?: string | null;
+            /**
+             * Kind
+             * @description BWB type (`wet`, `AMvB`, `verdrag`, ...), treaty kind or publication kind.
+             */
+            kind?: string | null;
+            /**
+             * Source
+             * @description The source that created the node (`bwb`, `eurlex`, ...).
+             */
+            source?: string | null;
+            /** Labels */
+            labels?: string[];
+            /** Lang */
+            lang?: string | null;
+            /**
+             * Stub
+             * @default false
+             */
+            stub: boolean;
+            /**
+             * Article Count
+             * @default 0
+             */
+            article_count: number;
+            /**
+             * Inbound Citation Count
+             * @default 0
+             */
+            inbound_citation_count: number;
+            /** Date Signed */
+            date_signed?: string | null;
+            /** Date Published */
+            date_published?: string | null;
+            /** Date In Force */
+            date_in_force?: string | null;
+            /** Treaty Number */
+            treaty_number?: string | null;
+            /** In Force */
+            in_force?: boolean | null;
+            /** Dossier Numbers */
+            dossier_numbers?: string[];
+            /**
+             * Official Url
+             * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
+             */
+            official_url?: string | null;
+        };
+        /**
          * InstrumentDossierItem
-         * @description One Kamerstukdossier touching this instrument.
+         * @description One parliamentary dossier touching this instrument.
          */
         InstrumentDossierItem: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Kamerstuknummer */
-            kamerstuknummer?: string | null;
-            /** Titel */
-            titel?: string | null;
+            /**
+             * Dossier Number
+             * @description The dossier's label, e.g. 37020-XV.
+             */
+            dossier_number: string;
+            /** Title */
+            title?: string | null;
             /** Display Name */
             display_name?: string | null;
-            /** Huidige Fase */
-            huidige_fase?: string | null;
-            /** Geopend Op */
-            geopend_op?: string | null;
-            /** Afgedaan */
-            afgedaan?: boolean | null;
+            /** Stage */
+            stage?: string | null;
+            /** Opened On */
+            opened_on?: string | null;
+            /** Closed */
+            closed?: boolean | null;
+            /**
+             * Via
+             * @description How the dossier is linked: ``instrument`` = LEGISLATED_IN from the regulation itself, ``amending_publication`` = LEGISLATED_IN from a publication that amends, introduces or repeals one of its articles.
+             * @default instrument
+             * @enum {string}
+             */
+            via: "instrument" | "amending_publication";
+            /**
+             * Publication
+             * @description Identifier (e.g. ``stb-2019-33``) of the newest amending publication linking the dossier; only set when ``via`` is ``amending_publication``.
+             */
+            publication?: string | null;
         };
         /**
          * InstrumentDossiersResponse
          * @description Response for GET /api/instruments/{bwb_id}/dossiers.
          */
         InstrumentDossiersResponse: {
-            /** Bwb Id */
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
             bwb_id: string;
             /**
              * Total
@@ -1937,6 +4401,43 @@ export interface components {
             weight?: number | null;
             /** Confidence */
             confidence?: number | null;
+        };
+        /**
+         * InstrumentEuLinksResponse
+         * @description Response for GET /api/instruments/{identifier}/eu-links.
+         */
+        InstrumentEuLinksResponse: {
+            instrument: components["schemas"]["LinkedInstrumentDTO"];
+            /**
+             * Implements
+             * @description EU acts whose CELEX number the text of this instrument names.
+             */
+            implements?: components["schemas"]["EuLinkDTO"][];
+            /**
+             * Implements Total
+             * @description Absolute number of `implements`, independent of `limit`.
+             */
+            implements_total: number;
+            /**
+             * Implemented By
+             * @description National regulations whose text names the CELEX number of this act.
+             */
+            implemented_by?: components["schemas"]["EuLinkDTO"][];
+            /**
+             * Implemented By Total
+             * @description Absolute number of `implemented_by`, independent of `limit`.
+             */
+            implemented_by_total: number;
+            /**
+             * International
+             * @description Treaties that articles of this instrument refer to and ECHR judgments that refer to it, at most `limit`, treaties first.
+             */
+            international?: components["schemas"]["InternationalLinkDTO"][];
+            /**
+             * International Total
+             * @description Absolute number of `international`, independent of `limit`.
+             */
+            international_total: number;
         };
         /**
          * InstrumentJudgmentItem
@@ -1965,7 +4466,10 @@ export interface components {
          * @description Response for GET /api/instruments/{bwb_id}/judgments.
          */
         InstrumentJudgmentsResponse: {
-            /** Bwb Id */
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
             bwb_id: string;
             /**
              * Total
@@ -2051,10 +4555,11 @@ export interface components {
             kind: string | null;
             /** Article Count */
             article_count: number;
-            /** Judgment Citation Count */
-            judgment_citation_count?: number | null;
-            /** Last Article Mutation */
-            last_article_mutation?: string | null;
+            /**
+             * Official Url
+             * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
+             */
+            official_url?: string | null;
         };
         /**
          * InstrumentListResponse
@@ -2068,7 +4573,7 @@ export interface components {
         };
         /**
          * InstrumentRelatedItem
-         * @description One other instrument linked via cross-article REFERS_TO_ARTICLE.
+         * @description One other instrument linked via cross-article REFERS_TO edges.
          */
         InstrumentRelatedItem: {
             /** Id */
@@ -2077,13 +4582,15 @@ export interface components {
             key: string;
             /** Bwb Id */
             bwb_id?: string | null;
+            /** Celex */
+            celex?: string | null;
             /** Display Name */
             display_name?: string | null;
             /** Citation Title */
             citation_title?: string | null;
             /**
              * Outbound Count
-             * @description Number of REFERS_TO_ARTICLE edges from articles of the focal instrument to articles of this related instrument.
+             * @description Number of REFERS_TO edges from articles of the focal instrument to articles of this related instrument.
              */
             outbound_count: number;
             /**
@@ -2097,7 +4604,10 @@ export interface components {
          * @description Response for GET /api/instruments/{bwb_id}/related-instruments.
          */
         InstrumentRelatedResponse: {
-            /** Bwb Id */
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
             bwb_id: string;
             /**
              * Total
@@ -2126,7 +4636,7 @@ export interface components {
         };
         /**
          * InstrumentSummaryDTO
-         * @description Korte representatie van een instrument voor respondenten.
+         * @description Short representation of an instrument.
          */
         InstrumentSummaryDTO: {
             /** Id */
@@ -2135,6 +4645,11 @@ export interface components {
             key: string;
             /** Display Name */
             display_name: string | null;
+            /**
+             * Official Url
+             * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
+             */
+            official_url?: string | null;
             /**
              * Article Count
              * @default 0
@@ -2174,8 +4689,13 @@ export interface components {
              * @default false
              */
             current: boolean;
-            /** Toestand Url */
-            toestand_url?: string | null;
+            /** State Url */
+            state_url?: string | null;
+            /**
+             * Official Url
+             * @description This version on wetten.overheid.nl (``/{BWB}/{valid_from}``).
+             */
+            official_url?: string | null;
             /** Article Count */
             article_count?: number | null;
         };
@@ -2190,6 +4710,133 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["InstrumentVersionDTO"][];
+        };
+        /**
+         * InternationalLinkDTO
+         * @description A `REFERS_TO` edge between this instrument and an international counterpart.
+         *
+         *     `treaty`: an article of this instrument (`own_article`) refers to a treaty
+         *     (`instrument`), and to a treaty article (`counterpart_article`) when the reference names
+         *     one. `echr_judgment`: an ECHR judgment (`judgment`) refers to an article of this
+         *     instrument (`own_article`) or, without an article, to the instrument as a whole.
+         */
+        InternationalLinkDTO: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "treaty" | "echr_judgment";
+            /** @description The treaty; set for `treaty`. */
+            instrument?: components["schemas"]["LinkedInstrumentDTO"] | null;
+            /** @description The ECHR judgment; set for `echr_judgment`. */
+            judgment?: components["schemas"]["JudgmentSummaryDTO"] | null;
+            /** @description The article of this instrument at the edge, when it has one. */
+            own_article?: components["schemas"]["CitedArticleRef"] | null;
+            /** @description The article of the treaty the reference names. */
+            counterpart_article?: components["schemas"]["CitedArticleRef"] | null;
+            /**
+             * Relation
+             * @default REFERS_TO
+             */
+            relation: string;
+            /** Confidence */
+            confidence?: number | null;
+            /**
+             * Source
+             * @description The pipeline that wrote the edge.
+             */
+            source?: string | null;
+            /**
+             * Meta
+             * @description Edge evidence as stored (`raw_match`, `snippet`, `qualifier`, ...).
+             */
+            meta?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * JudgmentCitedArticle
+         * @description An article a judgment cites, with where and how: the strongest of its mentions.
+         */
+        JudgmentCitedArticle: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            article: components["schemas"]["ArticleRelationDTO"];
+            /**
+             * Qualifier
+             * @description The qualifier as the judgment wrote it, `derde lid`, of the strongest mention. `leden`, `onderdelen` and `aanhef` (this class) are what it names.
+             */
+            qualifier?: string | null;
+            /**
+             * Paragraph Ids
+             * @description The paragraphs that cite the article, in reading order.
+             */
+            paragraph_ids?: string[];
+            /**
+             * Paragraph Numbers
+             * @description Their printed numbers (`5.3`), those that have one.
+             */
+            paragraph_numbers?: string[];
+            /**
+             * Snippet
+             * @description The text around the strongest mention.
+             */
+            snippet?: string | null;
+            /**
+             * Confidence
+             * @description The confidence of the strongest mention.
+             */
+            confidence?: number | null;
+            /**
+             * Mention Count
+             * @description How often the judgment cites the article. The paragraphs cover the first 100; a judgment that cites an article more often is counted in full.
+             * @default 0
+             */
+            mention_count: number;
+        };
+        /**
+         * JudgmentCoverageResponse
+         * @description Which judgments the graph holds: a count of case law is a count of this selection.
+         *
+         *     ``total`` counts the judgments whose text is loaded; ``stubs`` the judgments known only
+         *     because a loaded text cites them (they cite nothing themselves).
+         */
+        JudgmentCoverageResponse: {
+            /** Total */
+            total: number;
+            /** First Date */
+            first_date?: string | null;
+            /** Last Date */
+            last_date?: string | null;
+            /**
+             * Stubs
+             * @description Cited judgments whose text is not loaded.
+             */
+            stubs: number;
+            /**
+             * Tiers
+             * @description Per tier: the highest courts first, the parket, the courts of first instance and appeal, the other colleges, the EHRM last.
+             */
+            tiers: components["schemas"]["CoverageTierDTO"][];
+            /**
+             * Courts
+             * @description Per court, most first.
+             */
+            courts: components["schemas"]["CoverageCourtDTO"][];
         };
         /**
          * JudgmentDTO
@@ -2216,10 +4863,48 @@ export interface components {
             ecli: string | null;
             /** Source */
             source?: string | null;
-            /** Summary */
+            /**
+             * Summary
+             * @description The inhoudsindicatie, in Dutch. For an English translation the inhoudsindicatie of the judgment it translates; null while that is not loaded.
+             */
             summary: string | null;
+            /**
+             * Summary En
+             * @description An English inhoudsindicatie: that of the judgment itself when it is an English translation, else that of its translation. Null when there is none.
+             */
+            summary_en?: string | null;
+            /**
+             * Translation Of
+             * @description For an English translation, the ECLI of the Dutch judgment it translates (the authentic text); null otherwise.
+             */
+            translation_of?: string | null;
+            /**
+             * Names
+             * @description What lawyers call the judgment: `Haviltex`, `Urgenda`, `Lindenbaum/Cohen`. From a curated list of landmark cases; empty for most.
+             */
+            names?: string[];
+            /**
+             * Decision Kind
+             * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
+             */
+            decision_kind?: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "conclusie" | "prejudiciële beslissing") | null;
+            /**
+             * Series Id
+             * @description The series of parallel cases the judgment is one of (the same court, day and, nearly, text): the lowest ECLI in it. Null outside a series.
+             */
+            series_id?: string | null;
+            /**
+             * Series Size
+             * @description How many judgments the series has.
+             */
+            series_size?: number | null;
             /** Paragraphs */
             paragraphs?: components["schemas"]["JudgmentParagraph"][];
+            /**
+             * Parties
+             * @description The parties the kop of the judgment names, in its order. Null when the judgment was normalized before parties were read; empty when the kop names none.
+             */
+            parties?: components["schemas"]["JudgmentParty"][] | null;
         };
         /**
          * JudgmentDetailResponse
@@ -2229,12 +4914,48 @@ export interface components {
             judgment: components["schemas"]["JudgmentDTO"];
             /** Articles */
             articles: components["schemas"]["ArticleRelationDTO"][];
+            /**
+             * Cited Articles
+             * @description The same articles, each with the passages of the judgment that cite it: paragraphs, the lid or onderdeel named, a snippet.
+             */
+            cited_articles?: components["schemas"]["JudgmentCitedArticle"][];
             /** Cited Judgments */
             cited_judgments?: components["schemas"]["JudgmentSummaryDTO"][];
+            /**
+             * Series
+             * @description The other judgments of its series (`judgment.series_id`), in the order of their ECLI numbers; empty outside a series.
+             */
+            series?: components["schemas"]["JudgmentSummaryDTO"][];
             /** Metadata */
             metadata: {
                 [key: string]: unknown;
             } | null;
+        };
+        /**
+         * JudgmentFacetCount
+         * @description How many of the judgments have one value.
+         */
+        JudgmentFacetCount: {
+            /** Value */
+            value: string | null;
+            /** Count */
+            count: number;
+        };
+        /**
+         * JudgmentFacets
+         * @description The judgments under the filters, counted; each without its own filter.
+         */
+        JudgmentFacets: {
+            /**
+             * Tier
+             * @description Per tier, most first; counted without the `tier` filter.
+             */
+            tier?: components["schemas"]["JudgmentFacetCount"][];
+            /**
+             * Year
+             * @description Per year of `date` (`2024`), oldest first after null (no date); counted without `from` and `to`.
+             */
+            year?: components["schemas"]["JudgmentFacetCount"][];
         };
         /**
          * JudgmentGraphNodeDTO
@@ -2299,12 +5020,31 @@ export interface components {
             date: string | null;
             /** Summary */
             summary: string | null;
+            /**
+             * Names
+             * @description What lawyers call the judgment: `Haviltex`, `Urgenda`, `Lindenbaum/Cohen`. From a curated list of landmark cases; empty for most.
+             */
+            names?: string[];
+            /**
+             * Decision Kind
+             * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
+             */
+            decision_kind?: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "conclusie" | "prejudiciële beslissing") | null;
             /** Source */
             source?: string | null;
+            /**
+             * Subjects
+             * @description The areas of law the source gives it (Rechtspraak `dcterms:subject`), as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`. Empty when it gives none.
+             */
+            subjects?: string[];
             /** Inbound Citation Count */
             inbound_citation_count: number | null;
             /** Outbound Citation Count */
             outbound_citation_count?: number | null;
+            /** Series Id */
+            series_id?: string | null;
+            /** Series Size */
+            series_size?: number | null;
         };
         /**
          * JudgmentListResponse
@@ -2315,20 +5055,85 @@ export interface components {
             items: components["schemas"]["JudgmentListItemDTO"][];
             /** Total */
             total: number;
+            facets?: components["schemas"]["JudgmentFacets"];
         };
         /**
          * JudgmentParagraph
-         * @description A single paragraph from a judgment, optionally with inline article citations.
+         * @description A single paragraph from a judgment, with the article citations in it.
          */
         JudgmentParagraph: {
-            /** Number */
-            number?: number | null;
-            /** Kind */
+            /**
+             * Paragraph Id
+             * @description Names the paragraph in the judgment, for a deep link: `rov-5.3` for the numbered consideration 5.3, `kop-5` for a numbered heading, `p-12` (its position) for a paragraph without a number. Unique in the judgment.
+             */
+            paragraph_id: string;
+            /**
+             * Number
+             * @description The number as printed, without its closing dot (`5.3`); not part of `text`. Null for a paragraph without one.
+             */
+            number?: string | null;
+            /**
+             * Kind
+             * @description `heading`, `subheading` or `body`.
+             */
             kind?: string | null;
             /** Text */
             text: string;
-            /** Citaties */
-            citaties?: components["schemas"]["ArticleCitationSpan"][];
+            /**
+             * Citations
+             * @description Every citation of an article in `text`, one per occurrence, with its span (`text[start:end]`).
+             */
+            citations?: components["schemas"]["ArticleCitationSpan"][];
+        };
+        /**
+         * JudgmentParty
+         * @description A party of a judgment, read from its kop.
+         */
+        JudgmentParty: {
+            /**
+             * Name
+             * @description As the judgment writes it, anonymised where the source is: `[eiser]`, `MAATSCHAP GRONINGEN`. Without its legal form, place or role.
+             */
+            name: string;
+            /**
+             * Role
+             * @description `Verdachte`, `Betrokkene`, `Klager`, `Veroordeelde`, `Eiser`, `Gedaagde`, `Verzoeker`, `Verweerder`, `Appellant`, `Geïntimeerde`, `Belanghebbende`, `Opposant`, `Wederpartij`; `Partij` when none applies.
+             */
+            role: string;
+            /**
+             * Role Stated
+             * @description True when the judgment names the role (a role line, a role behind the name, an anonymised name that is a role: `[verdachte]`); false when it is derived from the area of law and the side.
+             */
+            role_stated: boolean;
+            /**
+             * Side
+             * @description The side of the case: `first` before `tegen` or `en`, `second` after it, `other` for an interested party (belanghebbende).
+             * @enum {string}
+             */
+            side: "first" | "second" | "other";
+            /**
+             * Alias
+             * @description What the judgment calls the party: `EBN` for "hierna: EBN".
+             */
+            alias?: string | null;
+            /** Representatives */
+            representatives?: components["schemas"]["JudgmentRepresentative"][];
+        };
+        /**
+         * JudgmentRepresentative
+         * @description Who acts for a party, as the kop names them ("advocaat: mr. X").
+         */
+        JudgmentRepresentative: {
+            /**
+             * Name
+             * @description As written: `mr. H.J.W. Alt`.
+             */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "advocaat" | "gemachtigde";
         };
         /**
          * JudgmentSummaryDTO
@@ -2346,131 +5151,257 @@ export interface components {
         };
         /**
          * LegislativeHistoryEntry
-         * @description One entry in the legislative history of an article.
+         * @description One change of an article in one dossier: the dossier, and the amending publication
+         *     (enacted) or the bill (proposed) that made or proposes the change.
          */
         LegislativeHistoryEntry: {
-            /** Dossier Id */
+            /**
+             * Dossier Id
+             * @description Arango _id of the dossier; null when the publication names a dossier that is not in the graph.
+             */
             dossier_id?: string | null;
-            /** Dossier Nummer */
-            dossier_nummer?: string | null;
-            /** Dossier Titel */
-            dossier_titel?: string | null;
-            /** Datum */
-            datum?: string | null;
-            /** Soort */
-            soort?: string | null;
-            /** Status */
+            /** Dossier Number */
+            dossier_number: string;
+            /** Dossier Title */
+            dossier_title?: string | null;
+            /**
+             * Date
+             * @description Of the bill, or the publication date of the publication.
+             */
+            date?: string | null;
+            /**
+             * Kind
+             * @description Document kind of a bill, publication kind (`Stb`) of a publication.
+             */
+            kind?: string | null;
+            /**
+             * Change
+             * @enum {string}
+             */
+            change: "amends" | "introduces" | "repeals";
+            /**
+             * Status
+             * @description `canoniek` (enacted) or `voorgesteld` (proposed).
+             */
             status?: string | null;
-            /** Samenvatting */
-            samenvatting?: string | null;
-            /** Document Id */
-            document_id?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /**
+             * Document Id
+             * @description Arango _id of the publication or the bill.
+             */
+            document_id: string;
         };
         /**
-         * LidDTO
-         * @description Parliamentary member or minister.
-         *
-         *     ``actief`` is true when the lid has at least one open fractielidmaatschap
-         *     (``tot_en_met`` is null) — i.e. currently seated. ~150 of ~800 ever-MPs
-         *     qualify. ``partij`` is derived from the most recent (or currently open)
-         *     fractielidmaatschap afkorting, so it is consistent with the
-         *     ``fractielidmaatschappen`` list.
-         *
-         *     ``geldig_van`` / ``geldig_tot`` are only populated when the lid is
-         *     returned as part of a commissie query (GET /api/commissies/{slug} or
-         *     /api/commissies/with-leden); they carry the LID_VAN edge metadata for
-         *     that commissie. They are always null from GET /api/leden.
+         * LinkedInstrumentDTO
+         * @description The instrument at the other end of a link.
          */
-        LidDTO: {
+        LinkedInstrumentDTO: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Naam */
-            naam?: string | null;
-            /** Partij */
-            partij?: string | null;
+            /** Bwb Id */
+            bwb_id: string | null;
+            /** Celex */
+            celex: string | null;
+            /** Title */
+            title: string | null;
+            /** Citation Title */
+            citation_title: string | null;
+            /** Kind */
+            kind: string | null;
+            /** Jurisdiction */
+            jurisdiction: string | null;
+        };
+        /**
+         * MemberDTO
+         * @description A member of parliament or a minister.
+         *
+         *     ``active`` means they hold an open faction membership — currently seated.
+         *     ``party`` comes from that same membership, so the two always agree.
+         *
+         *     ``from_date`` / ``to_date`` are only filled when the member is returned
+         *     as part of a committee, where they carry that committee seat's period.
+         */
+        MemberDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+            /** Party */
+            party?: string | null;
             /**
-             * Actief
+             * Active
              * @default false
              */
-            actief: boolean;
+            active: boolean;
             /**
-             * Fractielidmaatschappen
+             * Faction Memberships
              * @default []
              */
-            fractielidmaatschappen: components["schemas"]["FractieMembershipDTO"][];
-            /** Geldig Van */
-            geldig_van?: string | null;
-            /** Geldig Tot */
-            geldig_tot?: string | null;
+            faction_memberships: components["schemas"]["FactionMembershipDTO"][];
+            /**
+             * Government Functions
+             * @description The posts held in a cabinet (from Wikidata), oldest first.
+             */
+            government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
+            /** From Date */
+            from_date?: string | null;
+            /** To Date */
+            to_date?: string | null;
         };
         /**
-         * LidVoteEntryDTO
-         * @description One historical vote cast by a parliamentary member.
+         * MemberDetailDTO
+         * @description A member with the posts they held in government.
          *
-         *     The member's party at the time of the vote is preserved on
-         *     ``partij_at_time`` (their party may have changed after the vote).
+         *     ``government_functions`` come from Wikidata (every post in a Dutch cabinet, complete
+         *     from the 1970s), oldest first; empty for a member Wikidata has no person for.
+         *     ``wikidata_id`` names that person: a member of parliament by date of birth and surname,
+         *     a minister who never sat in parliament by the papers they signed. A cabinet member the
+         *     Tweede Kamer has no person for is a member of their own (key ``wikidata_q<number>``).
          */
-        LidVoteEntryDTO: {
+        MemberDetailDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+            /** Party */
+            party?: string | null;
             /**
-             * Stemming Id
-             * @description Arango _id of the stemming.
+             * Active
+             * @default false
              */
-            stemming_id: string;
-            /** Stemming Key */
-            stemming_key: string;
-            /** Besluit Id */
-            besluit_id?: string | null;
+            active: boolean;
             /**
-             * Datum
+             * Faction Memberships
+             * @default []
+             */
+            faction_memberships: components["schemas"]["FactionMembershipDTO"][];
+            /**
+             * Government Functions
+             * @description The posts held in a cabinet (from Wikidata), oldest first.
+             */
+            government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
+            /** From Date */
+            from_date?: string | null;
+            /** To Date */
+            to_date?: string | null;
+            /** Birth Date */
+            birth_date?: string | null;
+            /** Wikidata Id */
+            wikidata_id?: string | null;
+        };
+        /**
+         * MemberVoteDTO
+         * @description One vote a member took part in.
+         *
+         *     ``party`` is the party they sat for on ``date``, which may differ from
+         *     the party they sit for now.
+         */
+        MemberVoteDTO: {
+            /**
+             * Decision Id
+             * @description Arango _id of the decision.
+             */
+            decision_id: string;
+            /** Decision Key */
+            decision_key: string;
+            /**
+             * External Id
+             * @description TK Besluit identifier of the decision.
+             */
+            external_id?: string | null;
+            /**
+             * Date
              * @description Date of the vote (YYYY-MM-DD).
              */
-            datum?: string | null;
-            /** Onderwerp */
-            onderwerp?: string | null;
-            /** Aangenomen */
-            aangenomen?: boolean | null;
+            date?: string | null;
+            /** Subject */
+            subject?: string | null;
+            /** Passed */
+            passed?: boolean | null;
             /**
-             * Soort
-             * @description How the member's party voted.
-             * @enum {string}
+             * Choice
+             * @description The vote as the source wrote it: Voor, Tegen, Onthouden, …
              */
-            soort: "Voor" | "Tegen" | "Onthouden";
+            choice: string;
             /**
-             * Aantal Zetels
-             * @description Seats the member's party brought to the vote.
+             * Seats
+             * @description Seats behind this vote; 1 on a roll-call.
              */
-            aantal_zetels?: number | null;
-            /**
-             * Partij At Time
-             * @description Short label of the member's party as of ``datum``. May differ from the member's current party.
-             */
-            partij_at_time?: string | null;
-            /** Fractie Key */
-            fractie_key?: string | null;
+            seats?: number | null;
+            /** Party */
+            party?: string | null;
+            /** Faction Key */
+            faction_key?: string | null;
         };
         /**
-         * LidVotesResponse
-         * @description Response for GET /api/leden/{key}/votes.
+         * MemberVotesResponse
+         * @description Response for GET /api/members/{key}/votes.
          */
-        LidVotesResponse: {
+        MemberVotesResponse: {
             /**
-             * Lid Id
-             * @description Arango _id of the lid; null when the lid is unknown.
+             * Member Id
+             * @description Arango _id of the member.
              */
-            lid_id?: string | null;
+            member_id: string;
             /**
-             * Total
-             * @description Number of votes returned. The underlying query is capped by ``limit``; this matches that count, not the absolute history.
+             * Count
+             * @description Votes returned; may be fewer than the total.
              */
-            total: number;
+            count: number;
             /** Votes */
-            votes: components["schemas"]["LidVoteEntryDTO"][];
+            votes: components["schemas"]["MemberVoteDTO"][];
+        };
+        /**
+         * MinistryDTO
+         * @description A ministry of ``core.ministries``; a former one names its successor and the last
+         *     day it had its name.
+         */
+        MinistryDTO: {
+            key: components["schemas"]["MinistryKey"];
+            /** Name */
+            name: string;
+            successor?: components["schemas"]["MinistryKey"] | null;
+            /** Until */
+            until?: string | null;
+        };
+        /**
+         * MinistryKey
+         * @enum {string}
+         */
+        MinistryKey: "az" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ez" | "ezk" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "szw" | "sz" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "vro" | "vrom" | "aenm";
+        /**
+         * NeighborBucketDTO
+         * @description The neighbours that share a relation, a direction and a collection: one page of them.
+         */
+        NeighborBucketDTO: {
+            /** Relation */
+            relation: string | null;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "outbound" | "inbound";
+            /** Collection */
+            collection: string;
+            /** Type */
+            type: string;
+            /** Total */
+            total: number;
+            /** Next Offset */
+            next_offset: number | null;
+            /** Items */
+            items: components["schemas"]["NeighborDTO"][];
         };
         /**
          * NeighborDTO
-         * @description Neighbor view used by the generic node explorer.
+         * @description A neighbour with the edge that leads to it, used by the generic node explorer.
          */
         NeighborDTO: {
             /** Id */
@@ -2489,6 +5420,8 @@ export interface components {
             props: {
                 [key: string]: unknown;
             } | null;
+            /** Edge Id */
+            edge_id: string;
             /** Relation */
             relation: string | null;
             /**
@@ -2498,6 +5431,41 @@ export interface components {
             direction: "outbound" | "inbound";
             /** Confidence */
             confidence: number | null;
+            /** Status */
+            status: string | null;
+            /** Meta */
+            meta: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * NodeFacetDTO
+         * @description How many edges of a node share a relation, a direction and a neighbour collection.
+         */
+        NodeFacetDTO: {
+            /** Relation */
+            relation: string | null;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "outbound" | "inbound";
+            /** Collection */
+            collection: string;
+            /** Type */
+            type: string;
+            /** Count */
+            count: number;
+        };
+        /**
+         * NodeFacetsResponse
+         * @description Response for GET /api/nodes/{collection}/{key}/facets.
+         */
+        NodeFacetsResponse: {
+            /** Items */
+            items: components["schemas"]["NodeFacetDTO"][];
+            /** Total */
+            total: number;
         };
         /**
          * NodeGraphResponse
@@ -2539,46 +5507,31 @@ export interface components {
         };
         /**
          * NodeNeighborsDTO
-         * @description Neighbor sets returned by /api/nodes/{collection}/{key}.
-         *
-         *     ``all`` is authoritative. ``strict``/``semantic`` are deprecated
-         *     back-compat aliases that mirror ``all``; new consumers should ignore them.
+         * @description Neighbors returned by /api/nodes/{collection}/{key}.
          */
         NodeNeighborsDTO: {
-            /** All */
-            all?: components["schemas"]["NeighborDTO"][];
-            /** Strict */
-            strict?: components["schemas"]["NeighborDTO"][];
-            /** Semantic */
-            semantic?: components["schemas"]["NeighborDTO"][];
+            /** Total */
+            total: number;
+            /** Buckets */
+            buckets?: components["schemas"]["NeighborBucketDTO"][];
         };
         /**
-         * ParlementZetelsResponse
-         * @description Current seat composition of the Tweede Kamer.
+         * ParliamentSeatsResponse
+         * @description The current seat composition of the Tweede Kamer.
          */
-        ParlementZetelsResponse: {
+        ParliamentSeatsResponse: {
             /** Total Seats */
             total_seats: number;
             /** Assigned Seats */
             assigned_seats: number;
             /** As Of */
             as_of: string;
-            /** Fracties */
-            fracties: components["schemas"]["FractieZetelDTO"][];
-        };
-        /**
-         * PartijStemDTO
-         * @description One party's contribution to a vote.
-         */
-        PartijStemDTO: {
-            /** Partij */
-            partij: string;
-            /** Aantal Zetels */
-            aantal_zetels: number;
+            /** Factions */
+            factions: components["schemas"]["FactionSeatsDTO"][];
         };
         /**
          * PartyColorsResponse
-         * @description Party abbreviation → hex color map for the frontend.
+         * @description Party abbreviation to hex colour.
          */
         PartyColorsResponse: {
             /** Colors */
@@ -2587,64 +5540,187 @@ export interface components {
             };
         };
         /**
-         * PublicationListResponse
-         * @description Paginated list of TK publication summaries.
+         * PassageDTO
+         * @description The passage of a memorandum that explains an article.
          */
-        PublicationListResponse: {
+        PassageDTO: {
+            /**
+             * Section Id
+             * @description `id` of the section in `sections` of the document.
+             */
+            section_id: string;
+            /** Heading */
+            heading: string;
+            /** Level */
+            level?: number | null;
+            /** Char Start */
+            char_start: number;
+            /** Char End */
+            char_end: number;
+            /**
+             * Text
+             * @description `text[char_start:char_end]` of the document.
+             */
+            text: string;
+            /**
+             * Confidence
+             * @description Uncalibrated: 0.7 to 0.9, see `match_type`.
+             */
+            confidence: number;
+            /**
+             * Match Type
+             * @description How the section names the article: `heading_target`, `body_named_law`, `own_number` or `inferred_law`.
+             */
+            match_type: string;
+        };
+        /**
+         * PersonRefDTO
+         * @description A member named from another node.
+         */
+        PersonRefDTO: {
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+        };
+        /**
+         * Post
+         * @enum {string}
+         */
+        Post: "minister-president" | "viceminister-president" | "minister" | "minister_zonder_portefeuille" | "staatssecretaris";
+        /**
+         * PublicationDTO
+         * @description An amending publication (Staatsblad, Tractatenblad, ...) as recorded on a version.
+         */
+        PublicationDTO: {
+            /** Id */
+            id?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Year */
+            year?: number | null;
+            /** Number */
+            number?: string | null;
+            /** Signed */
+            signed?: string | null;
+            /** Published */
+            published?: string | null;
+            /**
+             * Official Url
+             * @description The publication on zoek.officielebekendmakingen.nl; null before 1995.
+             */
+            official_url?: string | null;
+            /** Dossiers */
+            dossiers?: components["schemas"]["DossierRefDTO"][];
+        };
+        /**
+         * RelationshipDTO
+         * @description A single semantic relationship row of the search results.
+         */
+        RelationshipDTO: {
+            /** Edge Id */
+            edge_id: string;
+            /** From Id */
+            from_id: string;
+            /** To Id */
+            to_id: string;
+            /** Relation */
+            relation: string;
+            /** Semantic Type */
+            semantic_type?: string | null;
+            /** Explanation */
+            explanation?: string | null;
+            /** Confidence */
+            confidence?: number | null;
+            source_article?: components["schemas"]["ArticleRelationDTO"] | null;
+            target_article?: components["schemas"]["ArticleRelationDTO"] | null;
+        };
+        /**
+         * RelationshipSearchResponse
+         * @description Paginated semantic relationship search results.
+         */
+        RelationshipSearchResponse: {
+            /** Relationships */
+            relationships: components["schemas"]["RelationshipDTO"][];
             /** Total */
             total: number;
-            /** Items */
-            items: components["schemas"]["PublicationSummary"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
         };
         /**
-         * PublicationSummary
-         * @description Lightweight publication row for the publications index page.
+         * ResolveMatch
+         * @description One node a query may mean, with a target a client can navigate to.
          */
-        PublicationSummary: {
+        ResolveMatch: {
+            /**
+             * Id
+             * @description `collection/key`
+             */
+            id: string;
             /** Key */
             key: string;
-            /** Title */
-            title?: string | null;
-            /** Soort */
-            soort?: string | null;
-            /** Datum */
-            datum?: string | null;
-            /** External Id */
-            external_id?: string | null;
-            /** Source */
-            source?: string | null;
+            /** Collection */
+            collection: string;
             /**
-             * Has Text
-             * @default false
+             * Kind
+             * @enum {string}
              */
-            has_text: boolean;
+            kind: "article" | "instrument" | "judgment" | "dossier" | "document";
+            /** Display Name */
+            display_name: string | null;
             /**
-             * Linked Articles
-             * @default 0
+             * Confidence
+             * @description 1: an identifier (ECLI, BWB id, CELEX); 0.95: a citation read whole; 0.9: a law by exact abbreviation or name; lower for partial names, an article without a law, or several equally good nodes (at most 0.5)
              */
-            linked_articles: number;
+            confidence: number;
         };
         /**
-         * PublicationTextResponse
-         * @description Full TK publication with text content.
+         * ResolveResponse
+         * @description The best match for a query and the others that fit; ``kind`` ``none`` when nothing does.
          */
-        PublicationTextResponse: {
-            /** Key */
-            key: string;
-            /** Publication Id */
-            publication_id: string;
-            /** Title */
-            title?: string | null;
-            /** Soort */
-            soort?: string | null;
-            /** Datum */
-            datum?: string | null;
-            /** External Id */
-            external_id?: string | null;
-            /** Tk Url */
-            tk_url?: string | null;
-            /** Text */
-            text?: string | null;
+        ResolveResponse: {
+            /** Q */
+            q: string;
+            /** Kind */
+            kind: ("article" | "instrument" | "judgment" | "dossier" | "document") | "none";
+            /**
+             * Confidence
+             * @description Confidence of `match`; 0 for `none`
+             */
+            confidence: number;
+            match: components["schemas"]["ResolveMatch"] | null;
+            /** Alternatives */
+            alternatives: components["schemas"]["ResolveMatch"][];
+            /**
+             * Qualifier
+             * @description The lid or onder of an article citation (`derde lid`)
+             */
+            qualifier?: string | null;
+        };
+        /**
+         * ScopeArticleReference
+         * @description Annex that scopes the applicability of an article.
+         */
+        ScopeArticleReference: {
+            /** Annex Id */
+            annex_id: string;
+            /** Annex Key */
+            annex_key: string;
+            /** Display Name */
+            display_name?: string | null;
+            /** Annex Entries */
+            annex_entries?: string[];
+            /**
+             * Scope Type
+             * @default fixed
+             */
+            scope_type: string;
+            /** Discretionary Authority Article */
+            discretionary_authority_article?: string | null;
+            /** Explanation */
+            explanation?: string | null;
         };
         /**
          * SearchResponse
@@ -2681,7 +5757,7 @@ export interface components {
             snippet?: string | null;
             /**
              * Score
-             * @default 1
+             * @description Rank tier of the hit for the query: 1, 0.75, 0.5, 0.25 or 0.1
              */
             score: number;
             /** Extra */
@@ -2690,12 +5766,84 @@ export interface components {
             };
         };
         /**
+         * SectionDTO
+         * @description One heading of a paper with the text under it: `text[char_start:char_end]`.
+         */
+        SectionDTO: {
+            /**
+             * Id
+             * @description `s-<ordinal>` in document order.
+             */
+            id: string;
+            /** Heading */
+            heading: string;
+            /**
+             * Level
+             * @description 1 for a section without parent, else its parent's + 1.
+             */
+            level: number;
+            /**
+             * Parent
+             * @description Id of the enclosing section.
+             */
+            parent?: string | null;
+            /**
+             * Kind
+             * @description `algemeen`, `artikelsgewijs`, `article`, `onderdeel`, `lid`, `chapter` or `other`.
+             */
+            kind: string;
+            /**
+             * Number
+             * @description The number as printed in the heading.
+             */
+            number?: string | null;
+            /**
+             * Number Scheme
+             * @description `arabic`, `roman`, `book_article` or `letter`.
+             */
+            number_scheme?: string | null;
+            /**
+             * Article Refs
+             * @description Every article number the heading names.
+             */
+            article_refs?: components["schemas"]["ArticleRefDTO"][];
+            /**
+             * Law
+             * @description Another law the heading names.
+             */
+            law?: string | null;
+            /** Char Start */
+            char_start: number;
+            /** Char End */
+            char_end: number;
+        };
+        /**
+         * SharedAnnexesResponse
+         * @description Response for GET /api/instruments/{bwb_id}/shared-annexes.
+         */
+        SharedAnnexesResponse: {
+            /** Bwb Id */
+            bwb_id: string;
+            /** Annexes */
+            annexes?: components["schemas"]["AnnexListItem"][];
+        };
+        /**
          * StatsResponse
          * @description Database statistics: document counts per collection and edge counts.
          */
         StatsResponse: {
-            /** Nodes */
+            /**
+             * Nodes
+             * @description Documents per collection, without stubs.
+             */
             nodes: {
+                [key: string]: number;
+            };
+            /**
+             * Stubs
+             * @description Per collection that has them (instruments, articles, judgments): the nodes known only because something refers to them, without a text of their own.
+             */
+            stubs?: {
                 [key: string]: number;
             };
             edges: components["schemas"]["EdgeStatsDTO"];
@@ -2717,140 +5865,369 @@ export interface components {
             instruments: components["schemas"]["InstrumentStatsDTO"];
         };
         /**
-         * StemmingDTO
-         * @description Aggregated vote result for one motion/wetsvoorstel.
+         * Tier
+         * @enum {string}
          */
-        StemmingDTO: {
-            /** Id */
-            id: string;
-            /** Key */
-            key: string;
-            /** Datum */
-            datum?: string | null;
-            /** Onderwerp */
-            onderwerp?: string | null;
-            /** Besluit Id */
-            besluit_id?: string | null;
-            /** Aangenomen */
-            aangenomen: boolean;
-            /** Chamber */
-            chamber?: string | null;
+        Tier: "hoge_raad" | "raad_van_state" | "centrale_raad_van_beroep" | "college_van_beroep_bedrijfsleven" | "parket" | "gerechtshof" | "rechtbank" | "kantongerecht" | "tuchtcollege" | "ambtenarengerecht" | "college_van_beroep_hoger_onderwijs" | "college_van_beroep_studiefinanciering" | "constitutioneel_hof" | "gemeenschappelijk_hof" | "gerecht_in_ambtenarenzaken" | "gerecht_in_eerste_aanleg" | "raad_van_arbitrage_in_bouwgeschillen" | "raad_van_beroep" | "raad_van_beroep_in_ambtenarenzaken" | "raad_van_beroep_voor_belastingzaken" | "raad_voor_strafrechtstoepassing_en_jeugdbescherming" | "tariefcommissie" | "kroon" | "buitenlandse_instantie" | "hvj_eu" | "ehrm";
+        /**
+         * TimelineActivityBody
+         * @description An activity entry: a debate, hearing or other agenda item.
+         */
+        TimelineActivityBody: {
             /**
-             * Stemwijze
-             * @default fractie
+             * Kind
+             * @description E.g. 'Commissiedebat'.
              */
-            stemwijze: string;
-            /** Voor */
-            voor?: components["schemas"]["PartijStemDTO"][];
-            /** Tegen */
-            tegen?: components["schemas"]["PartijStemDTO"][];
-            /** Onthouding */
-            onthouding?: components["schemas"]["PartijStemDTO"][];
+            kind?: string | null;
+            /**
+             * Agenda Title
+             * @description The subject of the activity (``Activiteit.Onderwerp``).
+             */
+            agenda_title?: string | null;
+            /**
+             * Number
+             * @description The activity number.
+             */
+            number?: string | null;
+            /**
+             * Status
+             * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none.
+             */
+            status?: string | null;
         };
         /**
-         * StemmingListResponse
-         * @description Response for GET /api/stemmingen.
+         * TimelineActivityEntry
+         * @description An activity ABOUT the dossier; ``committee`` is null for a plenary one.
          */
-        StemmingListResponse: {
-            /**
-             * Total
-             * @description Absolute number of stemmingen matching the filters (independent of ``limit``).
-             */
-            total: number;
-            /** Items */
-            items: components["schemas"]["StemmingSummaryItemDTO"][];
-        };
-        /**
-         * StemmingSummaryItemDTO
-         * @description One row in the /api/stemmingen browser list.
-         *
-         *     ``voor_fracties`` / ``tegen_fracties`` / ``onthouding_fracties`` count the
-         *     number of *fracties* (parties) in each camp — typically 10–17.
-         *     ``voor_zetels`` / ``tegen_zetels`` / ``onthouding_zetels`` sum the
-         *     *seats* each camp brings, which is the number to display for a vote result.
-         *     ``besluit_id`` uniquely identifies the motion within a debate; use it to
-         *     link to the motie-tekst rather than ``onderwerp`` which is debate-level.
-         */
-        StemmingSummaryItemDTO: {
-            /** Id */
-            id: string;
-            /** Key */
-            key: string;
-            /** Datum */
-            datum?: string | null;
-            /** Onderwerp */
-            onderwerp?: string | null;
-            /** Besluit Id */
-            besluit_id?: string | null;
-            /** Dossier Nummers */
-            dossier_nummers?: string[];
-            /** Aangenomen */
-            aangenomen?: boolean | null;
-            /**
-             * Voor Fracties
-             * @default 0
-             */
-            voor_fracties: number;
-            /**
-             * Voor Zetels
-             * @default 0
-             */
-            voor_zetels: number;
-            /**
-             * Tegen Fracties
-             * @default 0
-             */
-            tegen_fracties: number;
-            /**
-             * Tegen Zetels
-             * @default 0
-             */
-            tegen_zetels: number;
-            /**
-             * Onthouding Fracties
-             * @default 0
-             */
-            onthouding_fracties: number;
-            /**
-             * Onthouding Zetels
-             * @default 0
-             */
-            onthouding_zetels: number;
-            /** Chamber */
-            chamber?: string | null;
-        };
-        /**
-         * TimelineEntryDTO
-         * @description One entry in a dossier timeline.
-         *
-         *     The `body` field is a discriminated union: its contents depend on `soort`.
-         */
-        TimelineEntryDTO: {
-            /** Datum */
-            datum: string | null;
-            /** Soort */
-            soort: string;
-            /** Titel */
-            titel: string | null;
+        TimelineActivityEntry: {
+            /** Date */
+            date: string | null;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string | null;
             /** Node Id */
             node_id: string;
-            /** Node Type */
-            node_type: string;
             /** Tk Url */
             tk_url?: string | null;
-            /** Body */
-            body?: {
-                [key: string]: unknown;
+            /**
+             * After Closure
+             * @description Dated after the dossier's ``closed_on``: a follow-up letter, a debate or procedure meeting after the law was published. False for an open dossier.
+             * @default false
+             */
+            after_closure: boolean;
+            /**
+             * Planned
+             * @description An activity with ``status`` ``Gepland``: announced, not (yet) held.
+             * @default false
+             */
+            planned: boolean;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            node_type: "activity";
+            body: components["schemas"]["TimelineActivityBody"];
+            committee?: components["schemas"]["TimelineCommitteeDTO"] | null;
+        };
+        /**
+         * TimelineCommitmentBody
+         * @description A commitment (toezegging) entry.
+         */
+        TimelineCommitmentBody: {
+            /** Text */
+            text?: string | null;
+            /** Minister Name */
+            minister_name?: string | null;
+            /** Minister Role */
+            minister_role?: string | null;
+            /**
+             * Status
+             * @description 'open', 'done' or 'vervallen'.
+             */
+            status?: string | null;
+            /** Expected Resolution */
+            expected_resolution?: string | null;
+        };
+        /**
+         * TimelineCommitmentEntry
+         * @description A commitment ABOUT the dossier.
+         */
+        TimelineCommitmentEntry: {
+            /** Date */
+            date: string | null;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string | null;
+            /** Node Id */
+            node_id: string;
+            /** Tk Url */
+            tk_url?: string | null;
+            /**
+             * After Closure
+             * @description Dated after the dossier's ``closed_on``: a follow-up letter, a debate or procedure meeting after the law was published. False for an open dossier.
+             * @default false
+             */
+            after_closure: boolean;
+            /**
+             * Planned
+             * @description An activity with ``status`` ``Gepland``: announced, not (yet) held.
+             * @default false
+             */
+            planned: boolean;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            node_type: "commitment";
+            body: components["schemas"]["TimelineCommitmentBody"];
+        };
+        /**
+         * TimelineCommitteeDTO
+         * @description The committee that leads an activity.
+         */
+        TimelineCommitteeDTO: {
+            /** Key */
+            key: string;
+            /** Slug */
+            slug?: string | null;
+            /** Name */
+            name?: string | null;
+        };
+        /**
+         * TimelineDecisionBody
+         * @description A decision entry: the vote, and the document it was taken on.
+         *
+         *     ``tally`` is seats per choice and ``voters`` how many factions (or members)
+         *     cast each. ``document`` is the motion or amendment decided on, when it can be
+         *     resolved.
+         */
+        TimelineDecisionBody: {
+            /** Subject */
+            subject?: string | null;
+            /** Passed */
+            passed?: boolean | null;
+            /** Vote Kind */
+            vote_kind?: string | null;
+            /** Tally */
+            tally?: {
+                [key: string]: number;
             };
+            /** Voters */
+            voters?: {
+                [key: string]: number;
+            };
+            /**
+             * External Id
+             * @description TK Besluit identifier.
+             */
+            external_id?: string | null;
+            /**
+             * Primary Case Kind
+             * @description The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others.
+             */
+            primary_case_kind?: string | null;
+            document?: components["schemas"]["TimelineDocumentSummaryDTO"] | null;
+        };
+        /**
+         * TimelineDecisionEntry
+         * @description A decision ABOUT the dossier.
+         */
+        TimelineDecisionEntry: {
+            /** Date */
+            date: string | null;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string | null;
+            /** Node Id */
+            node_id: string;
+            /** Tk Url */
+            tk_url?: string | null;
+            /**
+             * After Closure
+             * @description Dated after the dossier's ``closed_on``: a follow-up letter, a debate or procedure meeting after the law was published. False for an open dossier.
+             * @default false
+             */
+            after_closure: boolean;
+            /**
+             * Planned
+             * @description An activity with ``status`` ``Gepland``: announced, not (yet) held.
+             * @default false
+             */
+            planned: boolean;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            node_type: "decision";
+            body: components["schemas"]["TimelineDecisionBody"];
+        };
+        /**
+         * TimelineDocumentBody
+         * @description A document entry: what identifies the document, never its text.
+         *
+         *     Fetch ``/api/documents/{key}`` for the text. ``url`` is the page of an Eerste
+         *     Kamer paper on officielebekendmakingen.nl; ``tk_url`` the paper on tweedekamer.nl.
+         */
+        TimelineDocumentBody: {
+            /**
+             * Chamber
+             * @description 'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication.
+             */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Source
+             * @description Source, e.g. 'tk', 'eerstekamer', 'staatsblad'.
+             */
+            source?: string | null;
+            /**
+             * Is Explanatory
+             * @description An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.
+             * @default false
+             */
+            is_explanatory: boolean;
+            /** Kind */
+            kind?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Sequence
+             * @description Document number within the dossier.
+             */
+            sequence?: number | null;
+            /**
+             * Session Year
+             * @description Parliamentary year.
+             */
+            session_year?: string | null;
+            /** Tk Url */
+            tk_url?: string | null;
+            /** Url */
+            url?: string | null;
+        };
+        /**
+         * TimelineDocumentEntry
+         * @description A document that is PART_OF the dossier.
+         */
+        TimelineDocumentEntry: {
+            /** Date */
+            date: string | null;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string | null;
+            /** Node Id */
+            node_id: string;
+            /** Tk Url */
+            tk_url?: string | null;
+            /**
+             * After Closure
+             * @description Dated after the dossier's ``closed_on``: a follow-up letter, a debate or procedure meeting after the law was published. False for an open dossier.
+             * @default false
+             */
+            after_closure: boolean;
+            /**
+             * Planned
+             * @description An activity with ``status`` ``Gepland``: announced, not (yet) held.
+             * @default false
+             */
+            planned: boolean;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            node_type: "document";
+            body: components["schemas"]["TimelineDocumentBody"];
+        };
+        /**
+         * TimelineDocumentSummaryDTO
+         * @description The document a decision was taken on: what it says and who signed it.
+         */
+        TimelineDocumentSummaryDTO: {
+            /**
+             * Chamber
+             * @description 'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication.
+             */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Source
+             * @description Source, e.g. 'tk', 'eerstekamer', 'staatsblad'.
+             */
+            source?: string | null;
+            /**
+             * Is Explanatory
+             * @description An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.
+             * @default false
+             */
+            is_explanatory: boolean;
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Kind */
+            kind?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Sequence
+             * @description Document number within the dossier.
+             */
+            sequence?: number | null;
+            /**
+             * Session Year
+             * @description Parliamentary year.
+             */
+            session_year?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Tk Url */
+            tk_url?: string | null;
+            /**
+             * Dictum Excerpt
+             * @description The first 280 characters of the document's text.
+             */
+            dictum_excerpt?: string | null;
+            /** Signatories */
+            signatories?: components["schemas"]["TimelineSignatoryDTO"][];
+        };
+        /**
+         * TimelineSignatoryDTO
+         * @description Who signed the document a decision was taken on.
+         */
+        TimelineSignatoryDTO: {
+            /** Member Key */
+            member_key?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Party */
+            party?: string | null;
+            /**
+             * Role
+             * @description 'indiener' or 'mede-indiener'.
+             */
+            role: string;
+            /**
+             * Source Role
+             * @description The role as the source wrote it.
+             * @default
+             */
+            source_role: string;
+            /**
+             * Function
+             * @description The function they signed in, as the source writes it: 'Tweede Kamerlid', 'minister-president', 'vicepresident van de Raad van State'.
+             */
+            function?: string | null;
+            /**
+             * Capacity
+             * @description 'bewindspersoon' (a minister or staatssecretaris), 'kamerlid' (signed for a faction) or 'overig' (the griffier, the Raad van State, ...).
+             */
+            capacity?: ("kamerlid" | "bewindspersoon" | "overig") | null;
         };
         /**
          * TouchedInstrumentDTO
-         * @description One law that an actor (lid or fractie) has touched.
-         *
-         *     Returned by ``/api/leden/{key}/touched-instruments`` and
-         *     ``/api/fracties/{key}/touched-instruments``. ``count`` is the number
-         *     of distinct publications by the actor that wijzigen / introduceren /
-         *     trekken in articles of this instrument.
+         * @description One law an actor proposes changes to, with how often they do.
          */
         TouchedInstrumentDTO: {
             /**
@@ -2874,25 +6251,25 @@ export interface components {
             celex?: string | null;
             /**
              * Count
-             * @description Distinct publications by the actor that touch this wet.
+             * @description Distinct documents by this actor that change the law.
              */
             count: number;
         };
         /**
          * TouchedInstrumentsResponse
-         * @description Wrapper for actor → touched-instruments lists.
+         * @description Wrapper for an actor's touched-instruments list.
          */
         TouchedInstrumentsResponse: {
             /**
              * Actor Id
-             * @description Arango _id of the actor (``leden/...`` or ``fracties/...``). Unified field name so the same response model serves both endpoints.
+             * @description Arango _id of the member or faction.
              */
             actor_id: string;
             /**
-             * Total
-             * @description Number of instruments returned (capped by ``limit``).
+             * Count
+             * @description Instruments returned; may be fewer than the total.
              */
-            total: number;
+            count: number;
             /** Items */
             items: components["schemas"]["TouchedInstrumentDTO"][];
         };
@@ -2910,32 +6287,29 @@ export interface components {
             ctx?: Record<string, never>;
         };
         /**
-         * WatchIn
-         * @description Body for POST /api/watches.
+         * VoteDTO
+         * @description One vote cast on a decision, by a faction or — on a roll-call — a member.
          */
-        WatchIn: {
-            /** Node Id */
-            node_id: string;
-            /** Label */
-            label?: string | null;
-            /** Collection */
-            collection?: string | null;
-        };
-        /**
-         * WatchOut
-         * @description A persisted watch record.
-         */
-        WatchOut: {
-            /** Id */
-            id: string;
-            /** Node Id */
-            node_id: string;
-            /** Label */
-            label: string | null;
-            /** Collection */
-            collection: string | null;
-            /** Created At */
-            created_at: string;
+        VoteDTO: {
+            /**
+             * Voter Id
+             * @description Arango _id of the member or faction.
+             */
+            voter_id: string;
+            /** Voter Key */
+            voter_key: string;
+            /** Name */
+            name?: string | null;
+            /**
+             * Choice
+             * @description The vote as the source wrote it: Voor, Tegen, Onthouden, …
+             */
+            choice: string;
+            /**
+             * Seats
+             * @default 0
+             */
+            seats: number;
         };
     };
     responses: never;
@@ -2978,6 +6352,111 @@ export interface operations {
             };
         };
     };
+    get_article_relationships_api_articles__bwb_id___article_number__relationships_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleRelationshipsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description ECLI court code, e.g. 'HR', 'RBAMS' */
+                court?: string | null;
+                /** @description The college: `hoge_raad`, `raad_van_state`, `gerechtshof`, … */
+                tier?: components["schemas"]["Tier"] | null;
+                /** @description A lid number the passage names: '3', '2a' */
+                lid?: string | null;
+            };
+            header?: never;
+            path: {
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleCitedByResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_article_version_history_api_articles__bwb_id___article_number__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_legislative_history_api_articles__bwb_id___article_number__legislative_history_get: {
         parameters: {
             query?: never;
@@ -2997,6 +6476,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArticleLegislativeHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_explained_by_api_articles__bwb_id___article_number__explained_by_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleExplanationsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3051,13 +6565,16 @@ export interface operations {
                 q?: string | null;
                 /** @description ECLI court code, e.g. 'HR', 'RBAMS', 'GHARL' */
                 court?: string | null;
-                tier?: ("hoge_raad" | "gerechtshof" | "rechtbank" | "bijzonder") | null;
+                /** @description The college: `hoge_raad`, `raad_van_state`, `gerechtshof`, … */
+                tier?: components["schemas"]["Tier"] | null;
                 /** @description Filter op bron, e.g. 'rechtspraak', 'echr', 'cjeu' */
                 source?: string | null;
                 /** @description Lower bound on judgment date, YYYY-MM-DD */
                 from?: string | null;
                 /** @description Upper bound on judgment date, YYYY-MM-DD */
                 to?: string | null;
+                /** @description An area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`. */
+                subject?: string | null;
                 cited_by_min?: number | null;
                 sort?: "date_desc" | "date_asc" | "citation_count";
             };
@@ -3128,7 +6645,7 @@ export interface operations {
                 jurisdiction?: ("nl" | "eu") | null;
                 kind?: string | null;
                 article_count_min?: number | null;
-                sort?: "title" | "article_count" | "recent_mutation";
+                sort?: "title" | "article_count";
             };
             header?: never;
             path?: never;
@@ -3156,11 +6673,77 @@ export interface operations {
             };
         };
     };
-    list_instrument_articles_api_instruments__bwb_id__articles_get: {
+    get_instrument_api_instruments__identifier__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentDetailDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_instrument_eu_links_api_instruments__identifier__eu_links_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentEuLinksResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_articles_api_instruments__bwb_id__articles_get: {
         parameters: {
             query?: {
                 /** @description Include placeholder/stub articles (default: false) */
                 include_stubs?: boolean;
+                /** @description Include the articles no longer in force: identities whose number another article has now, and articles their current version repeals. */
+                include_repealed?: boolean;
                 /** @description Chars of text to inline as preview */
                 text_preview_chars?: number;
                 limit?: number;
@@ -3197,10 +6780,10 @@ export interface operations {
     get_instrument_citations_api_instruments__bwb_id__citations_get: {
         parameters: {
             query?: {
-                /** @description Comma-separated whitelist van relaties. Default = alle, behalve PART_OF_INSTRUMENT. */
+                /** @description Comma-separated whitelist of relations. Default: every relation except PART_OF. */
                 relations?: string | null;
-                /** @description Voeg de structurele article→instrument edges toe. */
-                include_part_of_instrument?: boolean;
+                /** @description Include the structural article-to-instrument edges. */
+                include_part_of?: boolean;
                 max_edges?: number;
             };
             header?: never;
@@ -3297,6 +6880,40 @@ export interface operations {
             };
         };
     };
+    get_instrument_amended_by_route_api_instruments__bwb_id__amended_by_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                bwb_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AmendedByResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_instrument_related_route_api_instruments__bwb_id__related_instruments_get: {
         parameters: {
             query?: {
@@ -3361,7 +6978,7 @@ export interface operations {
             };
         };
     };
-    list_instrument_articles_at_api_instruments__bwb_id__articles_at__at_date__get: {
+    list_articles_at_api_instruments__bwb_id__articles_at__at_date__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3393,13 +7010,14 @@ export interface operations {
             };
         };
     };
-    get_article_version_history_api_instruments__bwb_id__articles__article_number__history_get: {
+    get_cross_law_dependencies_route_api_instruments__bwb_id__cross_law_dependencies_get: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+            };
             header?: never;
             path: {
                 bwb_id: string;
-                article_number: string;
             };
             cookie?: never;
         };
@@ -3411,7 +7029,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["InstrumentArticleVersionsResponse"];
+                    "application/json": components["schemas"]["CrossLawDependenciesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_shared_annexes_route_api_instruments__bwb_id__shared_annexes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedAnnexesResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3434,13 +7083,15 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description Node id (`collection/key`) to count. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": {
+                        [key: string]: number;
+                    };
                 };
             };
         };
@@ -3459,13 +7110,15 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description Node id (`collection/key`) to count. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": {
+                        [key: string]: number;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -3482,8 +7135,18 @@ export interface operations {
     get_node_graph_api_nodes__collection___key__get: {
         parameters: {
             query?: {
-                /** @description Overall cap on neighbors returned. Per-(relation, neighbor collection) caps are applied first (e.g. fracties cap STEMT at 20 per destination collection); the result is then capped to this overall limit. */
-                neighbor_limit?: number;
+                /** @description Neighbors per bucket, not per response. */
+                limit?: number;
+                /** @description Neighbors to skip in every bucket. */
+                offset?: number;
+                /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
+                relations?: string | null;
+                /** @description Comma-separated node types to keep (`article,judgment`). */
+                node_types?: string | null;
+                /** @description Keep the edges that leave (`outbound`) or reach the node. */
+                direction?: ("outbound" | "inbound") | null;
+                /** @description Keep the edges of this status (`canoniek`, `voorgesteld`). */
+                status?: string | null;
             };
             header?: never;
             path: {
@@ -3514,11 +7177,60 @@ export interface operations {
             };
         };
     };
+    get_node_facets_route_api_nodes__collection___key__facets_get: {
+        parameters: {
+            query?: {
+                /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
+                relations?: string | null;
+                /** @description Comma-separated node types to keep (`article,judgment`). */
+                node_types?: string | null;
+                /** @description Keep the edges that leave (`outbound`) or reach the node. */
+                direction?: ("outbound" | "inbound") | null;
+                /** @description Keep the edges of this status (`canoniek`, `voorgesteld`). */
+                status?: string | null;
+            };
+            header?: never;
+            path: {
+                collection: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NodeFacetsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_node_neighborhood_route_api_nodes__collection___key__neighborhood_get: {
         parameters: {
             query?: {
                 depth?: number;
                 cap?: number;
+                /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
+                relations?: string | null;
+                /** @description Comma-separated node types to keep (`article,judgment`). */
+                node_types?: string | null;
+                /** @description Keep the edges that leave (`outbound`) or reach the node. */
+                direction?: ("outbound" | "inbound") | null;
+                /** @description Keep the edges of this status (`canoniek`, `voorgesteld`). */
+                status?: string | null;
             };
             header?: never;
             path: {
@@ -3549,17 +7261,91 @@ export interface operations {
             };
         };
     };
+    list_dossiers_api_dossiers_get: {
+        parameters: {
+            query?: {
+                /** @description Open dossiers, closed ones (with an outcome) or both. */
+                status?: "open" | "closed" | "all";
+                outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+                /** @description Comma-separated tracks, e.g. ``wetsvoorstel,begroting``. */
+                track?: string | null;
+                /** @description The start of the number: ``36264`` (that number and its chapters), ``37020-`` (the chapters of 37020). */
+                number?: string | null;
+                /** @description Committee slug. */
+                committee?: string | null;
+                /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
+                subject?: string | null;
+                /** @description The dossier's latest recognised stage. To filter on a stage being present at all, use ``has_stage``. */
+                stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
+                /** @description Comma-separated stages; only dossiers that have all of them, e.g. ``mvt,advies_rvs``. */
+                has_stage?: string | null;
+                /** @description The ministry that brought it in. */
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description True: brought in by a Kamerlid; false: by the government. */
+                initiative?: boolean | null;
+                /** @description Opened on or after this day. */
+                opened_from?: string | null;
+                /** @description Opened on or before this day. */
+                opened_to?: string | null;
+                /** @description ``number`` in the order of the Kamer, ``opened_on`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``. */
+                sort?: ("number" | "opened_on" | "closed_on" | "title") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DossierListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_open_dossiers_api_dossiers_open_get: {
         parameters: {
             query?: {
-                /** @description Filter op commissie-slug. */
-                commissie?: string | null;
-                /** @description Vrije-tekst filter op dossier-titel. */
-                onderwerp?: string | null;
-                /** @description Filter op huidige_fase: de meest recente herkende stage van het dossier (bijv. 'wetsvoorstel', 'mvt', 'amendementen'). Voor filters op aanwezigheid van een stage, gebruik `has_stage`. */
-                fase?: string | null;
-                /** @description Komma-gescheiden lijst van stages; geeft alleen dossiers terug die *alle* genoemde stages bevatten (bijv. `mvt,advies_rvs`). */
+                /** @description Open dossiers, closed ones (with an outcome) or both. */
+                status?: "open" | "closed" | "all";
+                outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+                /** @description Comma-separated tracks, e.g. ``wetsvoorstel,begroting``. */
+                track?: string | null;
+                /** @description The start of the number: ``36264`` (that number and its chapters), ``37020-`` (the chapters of 37020). */
+                number?: string | null;
+                /** @description Committee slug. */
+                committee?: string | null;
+                /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
+                subject?: string | null;
+                /** @description The dossier's latest recognised stage. To filter on a stage being present at all, use ``has_stage``. */
+                stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
+                /** @description Comma-separated stages; only dossiers that have all of them, e.g. ``mvt,advies_rvs``. */
                 has_stage?: string | null;
+                /** @description The ministry that brought it in. */
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description True: brought in by a Kamerlid; false: by the government. */
+                initiative?: boolean | null;
+                /** @description Opened on or after this day. */
+                opened_from?: string | null;
+                /** @description Opened on or before this day. */
+                opened_to?: string | null;
+                /** @description ``number`` in the order of the Kamer, ``opened_on`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``. */
+                sort?: ("number" | "opened_on" | "closed_on" | "title") | null;
                 limit?: number;
                 offset?: number;
             };
@@ -3592,9 +7378,11 @@ export interface operations {
     list_recent_dossiers_api_dossiers_recent_get: {
         parameters: {
             query?: {
-                /** @description Terugkijkperiode in dagen. */
+                /** @description Look-back in days. */
                 days?: number;
                 limit?: number;
+                /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
+                subject?: string | null;
             };
             header?: never;
             path?: never;
@@ -3622,81 +7410,11 @@ export interface operations {
             };
         };
     };
-    get_dossier_detail_api_dossiers__kamerstuknummer__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Parliamentary dossier number, e.g. 29684 or 29684-I */
-                kamerstuknummer: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DossierDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_timeline_api_dossiers__kamerstuknummer__timeline_get: {
-        parameters: {
-            query?: {
-                /** @description Sorteervolgorde: 'desc' (nieuwste eerst) of 'asc'. */
-                order?: "asc" | "desc";
-                /** @description Komma-gescheiden lijst van documenttypes. */
-                soort?: string | null;
-                limit?: number;
-            };
-            header?: never;
-            path: {
-                /** @description Parliamentary dossier number, e.g. 29684 or 29684-I */
-                kamerstuknummer: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DossierTimelineResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_documents_for_dossiers_route_api_dossiers_documents_bulk_get: {
+    list_documents_for_dossiers_api_dossiers_documents_bulk_get: {
         parameters: {
             query: {
-                /** @description Comma-separated kamerstuknummers, e.g. '29684,29515-Z'. */
-                nummers: string;
+                /** @description Comma-separated dossier numbers, e.g. '29684,29515-Z'. */
+                numbers: string;
                 per_dossier_limit?: number;
             };
             header?: never;
@@ -3725,7 +7443,39 @@ export interface operations {
             };
         };
     };
-    get_dossier_documents_route_api_dossiers__kamerstuknummer__documents_get: {
+    get_dossier_api_dossiers__number__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DossierDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_dossier_documents_api_dossiers__number__documents_get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -3733,8 +7483,8 @@ export interface operations {
             };
             header?: never;
             path: {
-                /** @description Parliamentary dossier number, e.g. 29684 or 29684-I */
-                kamerstuknummer: string;
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
+                number: string;
             };
             cookie?: never;
         };
@@ -3760,13 +7510,53 @@ export interface operations {
             };
         };
     };
-    get_mutations_api_dossiers__kamerstuknummer__mutations_get: {
+    get_timeline_api_dossiers__number__timeline_get: {
+        parameters: {
+            query?: {
+                /** @description Date order. */
+                order?: "asc" | "desc";
+                /** @description Comma-separated document kinds. */
+                kind?: string | null;
+                /** @description False leaves out the activities with status ``Gepland``. */
+                include_planned?: boolean;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DossierTimelineResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_mutations_api_dossiers__number__mutations_get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Parliamentary dossier number, e.g. 29684 or 29684-I */
-                kamerstuknummer: string;
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
+                number: string;
             };
             cookie?: never;
         };
@@ -3792,7 +7582,7 @@ export interface operations {
             };
         };
     };
-    list_commissies_api_commissies_get: {
+    list_committees_api_committees_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3807,12 +7597,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CommissieDTO"][];
+                    "application/json": components["schemas"]["CommitteeDTO"][];
                 };
             };
         };
     };
-    list_commissies_with_leden_api_commissies_with_leden_get: {
+    list_committees_with_members_api_committees_with_members_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3827,16 +7617,22 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CommissieWithLedenDTO"][];
+                    "application/json": components["schemas"]["CommitteeWithMembersDTO"][];
                 };
             };
         };
     };
-    get_commissie_api_commissies__slug__get: {
+    get_committee_api_committees__slug__get: {
         parameters: {
             query?: {
-                /** @description Alleen huidige commissieleden (geldig_tot ontbreekt of in de toekomst) */
+                /** @description Only members currently seated on this committee. */
                 current_only?: boolean;
+                /** @description Only the open or only the closed dossiers. */
+                status?: ("open" | "closed") | null;
+                /** @description Dossiers per page. */
+                limit?: number;
+                /** @description Dossiers to skip. */
+                offset?: number;
             };
             header?: never;
             path: {
@@ -3852,7 +7648,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CommissieDetailDTO"];
+                    "application/json": components["schemas"]["CommitteeDetailDTO"];
                 };
             };
             /** @description Validation Error */
@@ -3866,16 +7662,54 @@ export interface operations {
             };
         };
     };
-    list_leden_api_leden_get: {
+    list_committee_activities_api_committees__slug__activities_get: {
         parameters: {
             query?: {
-                /** @description Partij (afkorting of naam) */
-                partij?: string | null;
-                /** @description Alleen actieve leden */
-                actief?: boolean | null;
-                /** @description Naam-substring (case-insensitive) */
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitteeActivitiesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_members_api_members_get: {
+        parameters: {
+            query?: {
+                /** @description Party abbreviation or name. */
+                party?: string | null;
+                /** @description Only members currently seated. */
+                active?: boolean | null;
+                /** @description Name substring. */
                 q?: string | null;
                 include_all?: boolean;
+                /** @description ``bewindspersoon``: only those who held a post in a cabinet. */
+                capacity?: "bewindspersoon" | null;
+                /** @description Only those who held a post in this cabinet (key). */
+                cabinet?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -3891,7 +7725,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LidDTO"][];
+                    "application/json": components["schemas"]["MemberDTO"][];
                 };
             };
             /** @description Validation Error */
@@ -3905,7 +7739,7 @@ export interface operations {
             };
         };
     };
-    get_lid_api_leden__key__get: {
+    get_member_api_members__key__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3922,7 +7756,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LidDTO"];
+                    "application/json": components["schemas"]["MemberDetailDTO"];
                 };
             };
             /** @description Validation Error */
@@ -3936,7 +7770,7 @@ export interface operations {
             };
         };
     };
-    get_lid_voting_record_api_leden__key__votes_get: {
+    list_member_votes_api_members__key__votes_get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -3955,7 +7789,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["LidVotesResponse"];
+                    "application/json": components["schemas"]["MemberVotesResponse"];
                 };
             };
             /** @description Validation Error */
@@ -3969,7 +7803,41 @@ export interface operations {
             };
         };
     };
-    get_lid_touched_instruments_route_api_leden__key__touched_instruments_get: {
+    list_member_dossiers_api_members__key__dossiers_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActorDossiersResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_member_touched_instruments_api_members__key__touched_instruments_get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -4002,12 +7870,12 @@ export interface operations {
             };
         };
     };
-    list_fracties_api_fracties_get: {
+    list_factions_api_factions_get: {
         parameters: {
             query?: {
-                /** @description Alleen (in)actieve fracties */
-                actief?: boolean | null;
-                /** @description Naam/afkorting (case-insensitive) */
+                /** @description Only (in)active parties. */
+                active?: boolean | null;
+                /** @description Name or abbreviation. */
                 q?: string | null;
             };
             header?: never;
@@ -4022,7 +7890,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FractieDTO"][];
+                    "application/json": components["schemas"]["FactionDTO"][];
                 };
             };
             /** @description Validation Error */
@@ -4036,7 +7904,7 @@ export interface operations {
             };
         };
     };
-    get_fractie_api_fracties__key__get: {
+    get_faction_api_factions__key__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4053,7 +7921,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FractieDetailDTO"];
+                    "application/json": components["schemas"]["FactionDetailDTO"];
                 };
             };
             /** @description Validation Error */
@@ -4067,7 +7935,41 @@ export interface operations {
             };
         };
     };
-    get_fractie_touched_instruments_route_api_fracties__key__touched_instruments_get: {
+    list_faction_dossiers_api_factions__key__dossiers_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActorDossiersResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_faction_touched_instruments_api_factions__key__touched_instruments_get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -4100,7 +8002,156 @@ export interface operations {
             };
         };
     };
-    get_party_colors_api_partijen_kleuren_get: {
+    list_ministries_api_ministries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MinistryDTO"][];
+                };
+            };
+        };
+    };
+    list_cabinets_api_cabinets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CabinetSummaryDTO"][];
+                };
+            };
+        };
+    };
+    get_cabinet_detail_api_cabinets__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CabinetDetailDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_commitments_api_commitments_get: {
+        parameters: {
+            query?: {
+                status?: ("open" | "done" | "partly_done" | "unfulfilled" | "lapsed") | null;
+                /** @description Member key. */
+                member?: string | null;
+                /** @description Cabinet key. */
+                cabinet?: string | null;
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description A dossier number or label: 36600, 36600-VII. */
+                dossier?: string | null;
+                /** @description Expected before this day. */
+                due_before?: string | null;
+                overdue?: boolean;
+                /** @description Words of the text. */
+                q?: string | null;
+                /** @description Newest made first, or soonest due first. */
+                sort?: "date" | "expected_resolution";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_commitment_detail_api_commitments__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_party_colors_api_parties_colors_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4123,9 +8174,11 @@ export interface operations {
     get_global_graph_route_api_graph_global_get: {
         parameters: {
             query?: {
-                /** @description Voeg uitspraken toe aan het graph */
-                include_judgments?: boolean;
-                /** @description Maximaal aantal uitspraken */
+                /** @description Comma-separated node types to load. */
+                node_types?: string | null;
+                /** @description Comma-separated relations to keep. */
+                relations?: string | null;
+                /** @description Maximum number of judgments */
                 max_judgments?: number;
             };
             header?: never;
@@ -4156,7 +8209,10 @@ export interface operations {
     };
     get_instrument_layer_graph_route_api_graph_instruments_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Comma-separated relations to keep. */
+                relations?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -4172,14 +8228,23 @@ export interface operations {
                     "application/json": components["schemas"]["InstrumentLayerGraphResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     get_judgment_graph_route_api_graph_judgments_get: {
         parameters: {
             query?: {
-                /** @description Maximaal aantal uitspraken */
+                /** @description Maximum number of judgments */
                 max_judgments?: number;
-                /** @description Voeg stub-uitspraken toe (nog niet geladen) */
+                /** @description Include stub judgments (not yet loaded) */
                 include_stubs?: boolean;
             };
             header?: never;
@@ -4208,17 +8273,35 @@ export interface operations {
             };
         };
     };
-    list_publications_api_publications_get: {
+    get_relationship_types_api_relationships_types_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string[];
+                    };
+                };
+            };
+        };
+    };
+    search_api_relationships_search_get: {
         parameters: {
             query?: {
-                /** @description Full-text filter op titel en soort. */
-                q?: string | null;
-                /** @description Filter op documentsoort (exact match). */
-                soort?: string | null;
-                /** @description Filter op kamer: 'TK' voor Tweede Kamer, 'EK' voor Eerste Kamer. */
-                chamber?: string | null;
-                /** @description Filter op bron (props.source), e.g. 'eerstekamer', 'staatscourant'. */
-                source?: string | null;
+                type?: string | null;
+                law?: string | null;
+                limit?: number;
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -4232,7 +8315,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PublicationListResponse"];
+                    "application/json": components["schemas"]["RelationshipSearchResponse"];
                 };
             };
             /** @description Validation Error */
@@ -4246,7 +8329,41 @@ export interface operations {
             };
         };
     };
-    get_publication_text_api_publications__key__get: {
+    get_annexes_api_annexes_get: {
+        parameters: {
+            query?: {
+                bwb_id?: string | null;
+                shared_across_laws?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnexListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_annex_detail_api_annexes__key__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4263,7 +8380,179 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PublicationTextResponse"];
+                    "application/json": components["schemas"]["AnnexDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_referenced_by_api_annexes__key__referenced_by_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnexReferencedByItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_documents_api_documents_get: {
+        parameters: {
+            query?: {
+                /** @description Filter on title and kind. */
+                q?: string | null;
+                /** @description Document kind, exact match. */
+                kind?: string | null;
+                /** @description 'TK' or 'EK'. */
+                chamber?: string | null;
+                /** @description Source, e.g. 'tk', 'eerstekamer', 'staatscourant'. */
+                source?: string | null;
+                /** @description Dossier number, e.g. 29684. */
+                dossier?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_text_api_documents__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentTextResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_article_passages_api_documents__key__passages_get: {
+        parameters: {
+            query: {
+                /** @description BWB id of the law. */
+                bwb_id: string;
+                /** @description Article number, e.g. `5`, `1a`. */
+                article: string;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentPassagesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_api_resolve_get: {
+        parameters: {
+            query: {
+                /** @description Citation or name */
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolveResponse"];
                 };
             };
             /** @description Validation Error */
@@ -4280,12 +8569,12 @@ export interface operations {
     search_api_search_get: {
         parameters: {
             query: {
-                /** @description Zoekterm */
+                /** @description Search term */
                 q: string;
-                /** @description Kommagescheiden typen: articles,commissies,dossiers,fracties,instruments,judgments,leden,publications */
-                types?: string;
-                /** @description Kommagescheiden soort-filter (op publicaties en dossiers) */
-                soort?: string | null;
+                /** @description Entity types to search */
+                types?: string[];
+                /** @description Comma-separated kind filter (documents and dossiers) */
+                kind?: string | null;
                 limit?: number;
             };
             header?: never;
@@ -4334,7 +8623,7 @@ export interface operations {
             };
         };
     };
-    get_watches_api_watches_get: {
+    get_coverage_api_stats_coverage_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4349,82 +8638,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WatchOut"][];
+                    "application/json": components["schemas"]["JudgmentCoverageResponse"];
                 };
             };
         };
     };
-    add_watch_api_watches_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["WatchIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WatchOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_watch_api_watches__watch_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                watch_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_stemmingen_api_stemmingen_get: {
+    list_decisions_api_decisions_get: {
         parameters: {
             query?: {
-                /** @description Filter op aangenomen (true/false) */
-                aangenomen?: boolean | null;
-                /** @description Filter op partijnaam (voor of tegen) */
-                partij?: string | null;
-                /** @description Filter op kamer: 'TK' of 'EK' */
+                /** @description Comma-separated: `motie`, `amendement`, `wetsvoorstel`, `overig`. */
+                kind?: string | null;
+                /** @description Only decisions that carried, or did not. */
+                passed?: boolean | null;
+                /** @description Only decisions this party voted on. */
+                party?: string | null;
+                /** @description With `party`: only decisions it voted for, or against. */
+                vote?: ("voor" | "tegen") | null;
+                /** @description 'TK' or 'EK'. */
                 chamber?: string | null;
+                /** @description Only decisions on this dossier number, e.g. 29684. */
+                dossier?: string | null;
+                /** @description Voted on or after this date, YYYY-MM-DD. */
+                from?: string | null;
+                /** @description Voted on or before this date, YYYY-MM-DD. */
+                to?: string | null;
+                /** @description A part of the subject, in any case. */
+                q?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -4440,7 +8679,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StemmingListResponse"];
+                    "application/json": components["schemas"]["DecisionListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -4454,7 +8693,7 @@ export interface operations {
             };
         };
     };
-    get_stemming_api_stemmingen__key__get: {
+    get_decision_api_decisions__key__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4471,7 +8710,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StemmingDTO"];
+                    "application/json": components["schemas"]["DecisionDTO"];
                 };
             };
             /** @description Validation Error */
@@ -4485,7 +8724,7 @@ export interface operations {
             };
         };
     };
-    get_stemming_publication_route_api_stemmingen__key__publication_get: {
+    get_decision_document_route_api_decisions__key__document_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4502,7 +8741,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PublicationTextResponse"];
+                    "application/json": components["schemas"]["DocumentTextResponse"];
                 };
             };
             /** @description Validation Error */
@@ -4516,7 +8755,7 @@ export interface operations {
             };
         };
     };
-    get_zetels_api_parlement_zetels_get: {
+    get_seats_api_parliament_seats_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4531,7 +8770,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ParlementZetelsResponse"];
+                    "application/json": components["schemas"]["ParliamentSeatsResponse"];
                 };
             };
         };
@@ -4574,7 +8813,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: unknown;
+                        [key: string]: string;
                     };
                 };
             };

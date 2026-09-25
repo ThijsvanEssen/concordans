@@ -1,0 +1,30 @@
+{
+	"article": {
+		"key": "bwbr0001854_287",
+		"bwb_id": "BWBR0001854",
+		"article_number": "287",
+		"display_name": "Artikel 287 Wetboek van Strafrecht",
+		"text": "Hij die opzettelijk een ander van het leven berooft, wordt, als schuldig aan doodslag, gestraft met gevangenisstraf van ten hoogste vijfentwintig jaren of geldboete van de vijfde categorie."
+	},
+	"citations": [],
+	"judgments": [
+		{
+			"id": "judgments/ecli_nl_gharl_2024_5792",
+			"key": "ecli_nl_gharl_2024_5792",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-09-05 / 21-005252-19",
+			"ecli": "ECLI:NL:GHARL:2024:5792"
+		},
+		{
+			"id": "judgments/ecli_nl_ghams_2024_2705",
+			"key": "ecli_nl_ghams_2024_2705",
+			"display_name": "Gerechtshof Amsterdam 2024-09-25 / 23-002975-23",
+			"ecli": "ECLI:NL:GHAMS:2024:2705"
+		},
+		{
+			"id": "judgments/ecli_nl_gharl_2024_5698",
+			"key": "ecli_nl_gharl_2024_5698",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-09-09 / 21-005226-23",
+			"ecli": "ECLI:NL:GHARL:2024:5698"
+		}
+	]
+}

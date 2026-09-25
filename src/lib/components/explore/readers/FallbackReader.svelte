@@ -1,64 +1,90 @@
 <script lang="ts">
-  // Last-resort reader for kinds the dispatcher doesn't recognise.
-  // Surfaces enough metadata that the user can still see what they clicked.
-  import type { GraphNode } from '$lib/graph/types';
+	// Reader for the kinds without a text of their own (toezegging, zaak, ...): what the
+	// bron is, when, and where the source keeps it. Its verbindingen are in the panel.
+	import ReaderFrame from './ReaderFrame.svelte';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import type { GraphNode } from '$lib/graph/types';
+	import { bronLabel } from '$lib/vocabulary';
+	import { formatLongDate, textProp } from './_shared';
 
-  let { node }: { node: GraphNode } = $props();
+	let { node }: { node: GraphNode } = $props();
 
-  const propEntries = $derived(
-    Object.entries((node.raw?.props ?? {}) as Record<string, unknown>)
-      .filter(([, v]) => v !== null && v !== undefined && v !== '')
-      .slice(0, 12),
-  );
+	const p = $derived(node.raw?.props ?? {});
+	const title = $derived(textProp(p.title) ?? node.raw?.display_name ?? node.label);
+	const facts = $derived(
+		[
+			textProp(p.kind),
+			textProp(p.number) ?? textProp(p.activity_number),
+			formatLongDate(textProp(p.date) ?? textProp(p.made_on)),
+			textProp(p.minister_role),
+			textProp(p.status)
+		].filter(Boolean)
+	);
+	const source = $derived(textProp(p.tk_url));
 </script>
 
-<div class="fallback">
-  <header class="fallback__head">
-    <span class="fallback__kind">{node.collection}</span>
-    <h2 class="fallback__title">{node.label}</h2>
-    <p class="fallback__notice">Geen leesweergave beschikbaar voor dit type bron.</p>
-  </header>
-
-  {#if propEntries.length > 0}
-    <dl class="fallback__props">
-      {#each propEntries as [k, v], i (i)}
-        <dt>{k}</dt>
-        <dd>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</dd>
-      {/each}
-    </dl>
-  {:else}
-    <p class="fallback__empty">Geen aanvullende metadata beschikbaar.</p>
-  {/if}
-</div>
+<ReaderFrame>
+	<article class="r-simple">
+		<span class="kicker"
+			><KindGlyph collection={node.collection} /> {bronLabel(node.collection)}</span
+		>
+		<h2 class="title">{title}</h2>
+		{#if facts.length > 0}
+			<p class="facts">{facts.join(' · ')}</p>
+		{/if}
+		{#if textProp(p.text)}
+			<p class="text">{textProp(p.text)}</p>
+		{/if}
+		{#if source}
+			<a class="source" href={source} target="_blank" rel="noopener noreferrer">tweedekamer.nl ↗</a>
+		{/if}
+	</article>
+</ReaderFrame>
 
 <style>
-  .fallback {
-    padding: var(--s-4);
-    font-family: var(--font-serif);
-    color: var(--ink-2);
-  }
-  .fallback__head { margin-bottom: var(--s-3); }
-  .fallback__kind {
-    font-family: var(--font-sans);
-    font-size: 10px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-4);
-  }
-  .fallback__title { font-size: 18px; margin: 4px 0 6px; font-weight: 400; }
-  .fallback__notice {
-    font-family: var(--font-serif); font-style: italic; font-size: 13px;
-    color: var(--ink-4); margin: 0;
-  }
-  .fallback__props {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 4px 14px;
-    font-size: 13px;
-    margin: 0;
-  }
-  .fallback__props dt { font-family: var(--font-sans); font-size: 11px; color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.04em; }
-  .fallback__props dd { margin: 0; word-break: break-word; }
-  .fallback__empty { color: var(--ink-4); font-style: italic; font-size: 13px; }
+	.r-simple {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+		color: var(--ink-2);
+	}
+	.kicker {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-3);
+	}
+	.title {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-h3);
+		font-weight: 500;
+		line-height: var(--lh-snug);
+		color: var(--ink);
+	}
+	.facts {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.text {
+		margin: var(--s-3) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink);
+		max-width: var(--measure);
+		white-space: pre-line;
+	}
+	.source {
+		align-self: flex-start;
+		margin-top: var(--s-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+	}
+	.source:hover {
+		color: var(--accent);
+	}
 </style>

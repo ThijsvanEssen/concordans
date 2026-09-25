@@ -1,0 +1,54 @@
+import { api, unwrap } from '$lib/api/client';
+import type { Schema } from '$lib/api/types';
+
+// The words for the government's side of the index: the posts in a cabinet, the state of a
+// commitment, and the cabinets and ministries, each asked for once per page load.
+
+export type Cabinet = Schema<'CabinetSummaryDTO'>;
+export type Ministry = Schema<'MinistryDTO'>;
+export type Post = NonNullable<Schema<'CabinetPostDTO'>['post']>;
+export type CommitmentStatus = NonNullable<Schema<'CommitmentDTO'>['status']>;
+
+export const POST_LABEL: Record<Post, string> = {
+	'minister-president': 'Minister-president',
+	'viceminister-president': 'Viceminister-president',
+	minister: 'Minister',
+	minister_zonder_portefeuille: 'Minister zonder portefeuille',
+	staatssecretaris: 'Staatssecretaris'
+};
+export const POSTS = Object.keys(POST_LABEL) as Post[];
+
+export const COMMITMENT_STATUS_LABEL: Record<CommitmentStatus, string> = {
+	open: 'Open',
+	done: 'Voldaan',
+	partly_done: 'Deels voldaan',
+	unfulfilled: 'Niet voldaan',
+	lapsed: 'Vervallen'
+};
+export const COMMITMENT_STATUSES = Object.keys(COMMITMENT_STATUS_LABEL) as CommitmentStatus[];
+
+function once<T>(load: () => Promise<T>): () => Promise<T> {
+	let request: Promise<T> | null = null;
+	return () =>
+		(request ??= load().catch((err) => {
+			request = null;
+			throw err;
+		}));
+}
+
+/** Every cabinet, newest first. */
+export const getCabinets = once(() => unwrap(api.GET('/api/cabinets')));
+
+/** Every ministry, in protocol order, the ones under an earlier name included. */
+export const getMinistries = once(() => unwrap(api.GET('/api/ministries')));
+
+/** The cabinet in office: the newest one without an end. */
+export const currentCabinet = (cabinets: Cabinet[]): Cabinet | undefined =>
+	cabinets.find((c) => !c.to_date) ?? cabinets[0];
+
+/** `2024–2026`, or `sinds 2026` while in office. */
+export function period(from: string | null | undefined, to: string | null | undefined): string {
+	const y = (iso: string | null | undefined) => iso?.slice(0, 4) ?? '?';
+	if (!to) return `sinds ${y(from)}`;
+	return y(from) === y(to) ? y(from) : `${y(from)}–${y(to)}`;
+}

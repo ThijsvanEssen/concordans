@@ -1,0 +1,135 @@
+import type { Schema } from '$lib/api/types';
+import { neighborsOf } from '$lib/api/nodes';
+import { instrumentContainerId } from '$lib/api/instrument-cache';
+import { between, type Between } from '$lib/netwerk/netwerk';
+import { get, writable } from 'svelte/store';
+import type { GraphContext } from './context';
+import type { GraphStore } from './types';
+import { lawIdOf } from '../types';
+
+/**
+ * The canvas of a netwerk: the chosen bronnen that are on, what ties them, and
+ * whatever context the reader added around them (a group of Verbonden, a depth
+ * around the selection). What only a bron switched off or removed brought in goes.
+ */
+export function createCompose(
+	ctx: GraphContext
+): Pick<GraphStore, 'compose' | 'clearContext' | 'releaseNetwerk' | 'core'> {
+	const {
+		nodes,
+		edges,
+		pinned,
+		pinnedStore,
+		insertedAt,
+		selectionStore,
+		mergeInto,
+		anchorContainer,
+		trimToCap,
+		pruneToIds,
+		emit
+	} = ctx;
+
+	/** The chosen bronnen and what ties them; null while no netwerk is composed. */
+	const coreStore = writable<ReadonlySet<string> | null>(null);
+
+	const drop = (ids: Iterable<string>) => {
+		for (const id of ids) {
+			nodes.delete(id);
+			insertedAt.delete(id);
+		}
+		for (const [id, e] of [...edges]) {
+			if (!nodes.has(e.source) || !nodes.has(e.target)) edges.delete(id);
+		}
+	};
+
+	/** Every bron an edge path reaches from `start`. */
+	const reachable = (start: Iterable<string>) => {
+		const adjacent = new Map<string, string[]>();
+		for (const e of edges.values()) {
+			(adjacent.get(e.source) ?? adjacent.set(e.source, []).get(e.source)!).push(e.target);
+			(adjacent.get(e.target) ?? adjacent.set(e.target, []).get(e.target)!).push(e.source);
+		}
+		const seen = new Set<string>();
+		const queue = [...start].filter((id) => nodes.has(id));
+		for (const id of queue) seen.add(id);
+		while (queue.length) {
+			for (const next of adjacent.get(queue.pop()!) ?? []) {
+				if (seen.has(next)) continue;
+				seen.add(next);
+				queue.push(next);
+			}
+		}
+		return seen;
+	};
+
+	const compose: GraphStore['compose'] = ({ participants, withJoining, fresh }) => {
+		const selectedId = get(selectionStore)?.id ?? null;
+		const on = participants.map((p) => nodeIdOf(p.response));
+		const result: Between = between(
+			participants.map((p, i) => ({
+				id: on[i],
+				lawId:
+					p.response.node.collection === 'instruments'
+						? instrumentContainerId({ ...p.response.node.props, key: p.response.node.key })
+						: null,
+				neighbors: neighborsOf(p.response)
+			})),
+			(n) => (n.collection === 'articles' ? lawIdOf(n.props) : null),
+			withJoining
+		);
+
+		const wanted = new Set(on);
+		for (const kept of result.keep.values()) for (const id of kept) wanted.add(id);
+
+		// What the last composition drew and this one does not: a bron switched off or
+		// removed, and what only tied it.
+		const before = get(coreStore) ?? new Set<string>();
+		drop([...before].filter((id) => !wanted.has(id) && id !== selectedId));
+
+		participants.forEach((p, i) => {
+			const kept = result.keep.get(on[i])!;
+			mergeInto(
+				p.response,
+				Number.POSITIVE_INFINITY,
+				(id) => kept.has(id),
+				(id) => result.joining.has(id)
+			);
+			anchorContainer(p.response.node);
+		});
+
+		const core = new Set([...wanted].filter((id) => nodes.has(id)));
+		const keep = fresh ? new Set(core) : reachable(selectedId ? [...core, selectedId] : core);
+		if (selectedId) keep.add(selectedId);
+		pruneToIds(keep);
+
+		pinned.clear();
+		for (const id of on) pinned.add(id);
+		pinnedStore.set(new Set(pinned));
+		trimToCap();
+		coreStore.set(core);
+		emit();
+		return { alone: result.alone, joining: [...result.joining].filter((id) => nodes.has(id)) };
+	};
+
+	return {
+		compose,
+		core: { subscribe: coreStore.subscribe },
+		clearContext: () => {
+			const core = get(coreStore);
+			if (!core) return;
+			const keep = new Set(core);
+			const selectedId = get(selectionStore)?.id;
+			if (selectedId) keep.add(selectedId);
+			pruneToIds(keep);
+			emit();
+		},
+		releaseNetwerk: () => {
+			pinned.clear();
+			pinnedStore.set(new Set());
+			coreStore.set(null);
+		}
+	};
+}
+
+const nodeIdOf = (response: Schema<'NodeGraphResponse'>) =>
+	`${response.node.collection}/${response.node.key}`;

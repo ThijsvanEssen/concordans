@@ -1,0 +1,30 @@
+{
+	"article": {
+		"key": "bwbr0001840_10",
+		"bwb_id": "BWBR0001840",
+		"article_number": "10",
+		"display_name": "Artikel 10 Grondwet",
+		"text": "1. Ieder heeft, behoudens bij of krachtens de wet te stellen beperkingen, recht op eerbiediging van zijn persoonlijke levenssfeer.\n2. De wet stelt regels ter bescherming van de persoonlijke levenssfeer in verband met het vastleggen en verstrekken van persoonsgegevens.\n3. De wet stelt regels inzake de aanspraken van personen op kennisneming van over hen vastgelegde gegevens en van het gebruik dat daarvan wordt gemaakt, alsmede op verbetering van zodanige gegevens."
+	},
+	"citations": [],
+	"judgments": [
+		{
+			"id": "judgments/ecli_nl_gharl_2024_7015",
+			"key": "ecli_nl_gharl_2024_7015",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-11-19 / 200.328.526/01",
+			"ecli": "ECLI:NL:GHARL:2024:7015"
+		},
+		{
+			"id": "judgments/ecli_nl_gharl_2024_7455",
+			"key": "ecli_nl_gharl_2024_7455",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-12-03 / 200.331.716",
+			"ecli": "ECLI:NL:GHARL:2024:7455"
+		},
+		{
+			"id": "judgments/ecli_nl_gharl_2024_7611",
+			"key": "ecli_nl_gharl_2024_7611",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-12-10 / 200.332.484/01",
+			"ecli": "ECLI:NL:GHARL:2024:7611"
+		}
+	]
+}

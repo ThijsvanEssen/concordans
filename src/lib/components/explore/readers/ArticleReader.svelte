@@ -1,110 +1,440 @@
 <script lang="ts">
-	// Reader for instrument_articles: article text (or leden), open dossiers
-	// that target the article, prev/next navigation, MvT and legislative history.
+	// Reader for articles: the place of the article, its title, one line with the version
+	// picker, the wetsvoorstellen that touch it and Citeer, then the leden with the number
+	// of verbindingen of each, and the previous and next article. The picker lists the
+	// tekstversies: the BWB versions with one wording, folded together. With ?versies
+	// (two tekstversies, `van..tot`, or one lid, `lid-4`) the text gives way to the
+	// comparison; a lid changed since the oldest tekstversie says so in the margin.
+	import { menu } from '$lib/actions/menu';
+	import { api, unwrap } from '$lib/api/client';
 	import { getArticleDetail } from '$lib/api/articles';
-	import { recordInstrument } from '$lib/api/instrument-cache';
-	import { fetchArticleLegislativeHistory } from '$lib/api/parliamentary-client';
-	import type { ArticleDetailResponse } from '$lib/api/types';
-	import type { GraphNode } from '$lib/graph/types';
+	import { instrumentMetaStore, recordInstrument } from '$lib/api/instrument-cache';
+	import type { Schema } from '$lib/api/types';
+	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import LidText from '$lib/components/articles/LidText.svelte';
-	import ArticleLegislativeHistory from '$lib/components/parliamentary/ArticleLegislativeHistory.svelte';
-	import ArticleMvtPanel from './ArticleMvtPanel.svelte';
+	import VersionCompare from '$lib/components/articles/VersionCompare.svelte';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import { anchorOfHash, landOn } from '$lib/bron/anchor';
+	import { bronHref, refId } from '$lib/bron/href';
+	import { citeArticle } from '$lib/text/cite';
+	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
+	import Caret from '$lib/components/ui/Caret.svelte';
+	import { filterParams, formatCount, type VerbondenFilter } from '$lib/verbonden/filter';
+	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
+	import type { Row } from '$lib/verbonden/rows';
+	import { longDate } from '$lib/verbonden/rows';
+	import { tick } from 'svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 
 	let {
 		selection,
-		onNavigate,
-		onPrev,
-		onNext
+		prevHref,
+		nextHref,
+		place = [],
+		lidCounts = new Map(),
+		billCount = 0,
+		filter,
+		proposedRow = null,
+		onCloseProposed
 	}: {
 		selection: GraphNode | null;
-		onNavigate?: (collection: string, key: string) => void;
-		onPrev?: () => void;
-		onNext?: () => void;
+		prevHref?: string;
+		nextHref?: string;
+		place?: string[];
+		lidCounts?: Map<string, number>;
+		billCount?: number;
+		filter?: VerbondenFilter;
+		proposedRow?: Row | null;
+		onCloseProposed?: () => void;
 	} = $props();
-
-	// The generated schema predates citation_formats; the backend still sends it.
-	type ArticleDetail = ArticleDetailResponse & {
-		citation_formats?: { bibtex?: string | null } | null;
-	};
 
 	type View =
 		| { kind: 'empty' }
 		| { kind: 'loading' }
 		| { kind: 'error'; message: string }
-		| { kind: 'loaded'; data: ArticleDetail };
-
-	// Open dossiers (status 'voorgesteld') targeting this article, deduped by
-	// kamerstuknummer.
-	type InFluxDossier = { nummer: string; titel: string | null };
+		| { kind: 'loaded'; data: Schema<'ArticleDetailResponse'> };
 
 	let view = $state<View>({ kind: 'empty' });
-	let inFluxDossiers = $state<InFluxDossier[]>([]);
-	let token = 0;
+	let versions = $state<Schema<'ArticleVersionDTO'>[]>([]);
+	/** The tekstversie on screen, when it is not geldend recht. */
+	let shownIndex = $state<number | null>(null);
+	let versionMenu = $state(false);
+	/** Dossiers the API does not know: named, but not linked. */
+	let missingDossiers = $state<ReadonlySet<string>>(new Set());
+	let citeMenu = $state(false);
+	let copied = $state(false);
 
-	/** Feed the law name to the instrument cache so the status bar and the
-	 *  citation panel show it without loading the instrument separately. */
-	function recordLawName(bwb: string, data: ArticleDetail) {
-		const bibtex = data.citation_formats?.bibtex;
-		if (!bibtex) return;
-		const shortTitle = bibtex.match(/shorttitle\s*=\s*\{([^}]+)\}/)?.[1] ?? null;
-		const law = bibtex.match(/\blaw\s*=\s*\{([^}]+)\}/)?.[1] ?? null;
-		recordInstrument({ bwb_id: bwb, short_title: shortTitle, citation_title: law, title: law });
-	}
+	// The toelichting (MvT) that explains this article, if any: a quick popup here, so
+	// the panel on the right can stay reserved for verwijzingen (Verbonden). Its own
+	// full reading view is still the existing "open naast het artikel" (`?naast=`).
+	// `artikel`: the API links the document to this article. `wijziging`: the memorie
+	// van toelichting of the wet that made the tekstversie on screen.
+	type Explanatory = {
+		key: string;
+		title: string | null;
+		kind: string | null;
+		at: string | null;
+		basis: 'artikel' | 'wijziging';
+		dossier: string | null;
+		since: string | null;
+		/** The memorie of the verklaringswet: the first reading of a change in the Grondwet. */
+		firstReading: boolean;
+	};
+	let explanatory = $state<Explanatory | null>(null);
+	// The title every verklaringswet (art. 137 lid 1 Gw) opens with.
+	const FIRST_READING = /^(wijziging van de wet houdende )?verklaring dat er grond bestaat/i;
 
-	function loadInFlux(bwb: string, art: string, t: number) {
-		fetchArticleLegislativeHistory(bwb, art)
-			.then((r) => {
-				if (t !== token) return;
-				const seen = new Set<string>();
-				const open: InFluxDossier[] = [];
-				for (const e of r.entries) {
-					const nummer = e.dossier_nummer;
-					if (e.status !== 'voorgesteld' || !nummer || seen.has(nummer)) continue;
-					seen.add(nummer);
-					open.push({ nummer, titel: e.dossier_titel });
-				}
-				inFluxDossiers = open;
-			})
-			.catch(() => {
-				// Best-effort: without the list the reader simply shows no chips.
-			});
-	}
+	// Primitives, so that a new selection object for the same article does not reload it.
+	const selected = $derived(selection !== null);
+	const identity = $derived(selection ? articleOf(selection.raw?.props) : null);
+	const bwbId = $derived(identity?.lawId ?? '');
+	const articleNumber = $derived(identity?.articleNumber ?? '');
+
+	// The position in the URL, once the text is on the page and again when it changes.
+	let root = $state<HTMLElement | null>(null);
+	const anchor = $derived(anchorOfHash(page.url.hash));
+	$effect(() => {
+		if (view.kind !== 'loaded' || !anchor || !root) return;
+		const container = root;
+		void tick().then(() => landOn(container, anchor));
+	});
 
 	$effect(() => {
-		const node = selection;
-		const t = ++token;
-		inFluxDossiers = [];
-		if (!node) {
+		versions = [];
+		shownIndex = null;
+		if (!selected) {
 			view = { kind: 'empty' };
 			return;
 		}
-
-		const props = node.raw?.props as Record<string, unknown> | undefined;
-		// EU articles have no bwb_id; the celex stands in. The backend validates
-		// ^BWB[RrVv]\d{7}$, so the original casing must be kept.
-		const bwb = String(props?.['bwb_id'] ?? props?.['celex'] ?? '');
-		const art = String(props?.['article_number'] ?? '');
-		if (!bwb || !art) {
+		if (!bwbId || !articleNumber) {
 			view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
 			return;
 		}
 
+		let stale = false;
+		const controller = new AbortController();
 		view = { kind: 'loading' };
-		getArticleDetail(bwb, art)
+		getArticleDetail(bwbId, articleNumber)
 			.then((data) => {
-				if (t !== token) return;
-				recordLawName(bwb, data);
+				if (stale) return;
+				// The status bar and the citation panel read the law name from this cache.
+				if (data.instrument) {
+					recordInstrument({ bwb_id: bwbId, display_name: data.instrument.display_name });
+				}
 				view = { kind: 'loaded', data };
-				loadInFlux(bwb, art, t);
 			})
 			.catch(() => {
-				if (t === token) view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
+				if (!stale) view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
 			});
+		// The versions of the text, for the picker. Empty until the pipeline has run.
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}/history', {
+				params: { path: { bwb_id: bwbId, article_number: articleNumber } },
+				signal: controller.signal
+			})
+		)
+			.then((r) => {
+				if (!stale) versions = r.versions ?? [];
+			})
+			.catch(() => {
+				// Without versions the picker shows the current text alone.
+			});
+		return () => {
+			stale = true;
+			controller.abort();
+		};
 	});
+
+	// Whether a toelichting explains this article, for the header. Only the existence
+	// and identity; its text loads when the popup opens.
+	// TODO(backend B4, B5): EXPLAINS edges at article level are rare, and most memories
+	// van toelichting of amending wetten are missing or hold only their opening.
+	$effect(() => {
+		explanatory = null;
+		const bwb = bwbId;
+		const num = articleNumber;
+		const dossier = wordingDossier?.number ?? null;
+		const since = onScreen?.from ?? null;
+		const versionKeys = onScreen?.versions.map((v) => v.key) ?? [];
+		if (!bwb || !num) return;
+		const ac = new AbortController();
+		const find = async () => {
+			const { data } = await api.GET('/api/articles/{bwb_id}/{article_number}/explained-by', {
+				params: { path: { bwb_id: bwb, article_number: num }, query: { limit: 10 } },
+				signal: ac.signal
+			});
+			// An explanation of the instrument is no evidence about this article (API docs).
+			// Of the rest, the one that explains the tekstversie on screen comes first, and of
+			// those the one that names a passage about this article. A change in the Grondwet
+			// has its memorie in the first reading; the second's is `dossier` scope.
+			const items = (data?.items ?? []).filter((i) => i.target !== 'instrument');
+			const onScreenItems = items.filter(
+				(i) => i.article_version_key && versionKeys.includes(i.article_version_key)
+			);
+			const own =
+				onScreenItems.find((i) => i.scope === 'article') ??
+				onScreenItems[0] ??
+				items.find((i) => i.target === 'article');
+			if (own) {
+				// `dossier` scope: the memorie explains every change of its wet, not this article.
+				const perDossier = own.scope === 'dossier';
+				explanatory = {
+					key: own.document.key,
+					title: own.document.title ?? null,
+					kind: own.document.kind ?? null,
+					at: own.section_anchor ?? null,
+					basis: perDossier ? 'wijziging' : 'artikel',
+					dossier: own.document.dossier_number ?? null,
+					since: perDossier ? since : null,
+					firstReading: FIRST_READING.test(own.document.title ?? '')
+				};
+				return;
+			}
+			if (!dossier) return;
+			const r = await api.GET('/api/dossiers/{number}/documents', {
+				params: { path: { number: dossier }, query: { limit: 100 } },
+				signal: ac.signal
+			});
+			if (r.response.status === 404) {
+				missingDossiers = new Set([...missingDossiers, dossier]);
+				return;
+			}
+			const mvt = r.data?.items.find((d) => /memorie van toelichting/i.test(d.kind ?? ''));
+			if (!mvt || ac.signal.aborted) return;
+			explanatory = {
+				key: mvt.key,
+				title: mvt.title ?? null,
+				kind: mvt.kind ?? null,
+				at: null,
+				basis: 'wijziging',
+				dossier,
+				since,
+				firstReading: FIRST_READING.test(mvt.title ?? '')
+			};
+		};
+		find().catch(() => {
+			// No button without a confirmed toelichting.
+		});
+		return () => ac.abort();
+	});
+
+	// The toelichting opens under the article (`?naast=`), at its passage for the article
+	// when the document reader finds one; the same link closes it again.
+	const explanatoryOpen = $derived(
+		!!explanatory &&
+			page.url.searchParams.get('naast') ===
+				refId({ collection: 'documents', key: explanatory.key })
+	);
+	const explanatoryHref = $derived.by(() => {
+		if (!explanatory) return null;
+		const url = new URL(page.url);
+		if (explanatoryOpen) {
+			url.searchParams.delete('naast');
+			url.hash = '';
+			return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
+		}
+		url.searchParams.set('naast', refId({ collection: 'documents', key: explanatory.key }));
+		url.hash = explanatory.at ?? '';
+		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
+	});
+
+	const wordings = $derived(wordingsOf(versions));
+	const current = $derived(wordings.at(-1)?.until === null ? wordings.at(-1)! : null);
+	const shown = $derived(shownIndex !== null ? (wordings[shownIndex] ?? null) : null);
+	const shownVersion = $derived(shown?.first ?? null);
+	/** The tekstversie whose text is on screen, and the dossier of the wet that made it. */
+	const onScreen = $derived(shown ?? current);
+	const wordingDossier = $derived(onScreen?.first.amended_by?.dossiers?.[0] ?? null);
+	const validFrom = $derived(
+		shown?.from ??
+			current?.from ??
+			(typeof selection?.raw?.props?.valid_from === 'string'
+				? selection.raw.props.valid_from
+				: null)
+	);
+	// A stub is known only from what cites it: no text, no law. Claiming it as geldend
+	// recht would state what the dataset does not hold.
+	const stubLabel = $derived.by(() => {
+		if (view.kind !== 'loaded') return null;
+		const d = view.data;
+		const stub = selection?.raw?.props?.stub === true;
+		const empty = !d.instrument && !d.article.text && (d.article.parts?.length ?? 0) === 0;
+		if (!stub && !empty) return null;
+		const cited = Number(d.metadata?.judgment_count ?? 0);
+		return cited > 0
+			? `Niet in de dataset. Bekend uit ${formatCount(cited)} ${cited === 1 ? 'uitspraak' : 'uitspraken'}.`
+			: 'Niet in de dataset.';
+	});
+
+	const versionLabel = $derived.by(() => {
+		if (stubLabel) return stubLabel;
+		if (shown) {
+			const from = longDate(shown.from);
+			const until = longDate(shown.until);
+			return `Eerdere tekst, ${from ?? '?'}${until ? ` tot ${until}` : ''}`;
+		}
+		const from = longDate(validFrom);
+		return from ? `Geldend recht, tekst sinds ${from}` : 'Geldend recht';
+	});
+
+	// The dossier(s) whose wetgeving the version on screen made: the fastest way to its
+	// memorie van toelichting and to the behandeling it was in.
+	// TODO(backend B13): a version from before the dossier collection's coverage names a
+	// dossier the API 404s on (e.g. a pre-1990s Kamerstuknummer); the link still renders.
+	const versionDossiers = $derived(onScreen?.first.amended_by?.dossiers ?? []);
+	/** How the wet named under the text relates to it. */
+	const originVerb = $derived(
+		!onScreen
+			? ''
+			: onScreen.index > 0
+				? 'Gewijzigd bij'
+				: onScreen.first.change === 'introduces'
+					? 'Ingevoerd bij'
+					: 'Tekst uit'
+	);
+
+	// The law's names for the citation forms.
+	const law = $derived($instrumentMetaStore.get(bwbId) ?? null);
+	const citation = $derived.by(() => {
+		if (view.kind !== 'loaded') return null;
+		const a = view.data.article;
+		const address = a.article_number ?? a.address;
+		if (!address) return null;
+		const title = law?.citationTitle ?? law?.title ?? view.data.instrument?.display_name ?? null;
+		if (!title) return null;
+		return {
+			articleNumber: address,
+			// An article without a number is cited by its heading: "Algemene bepaling Gw".
+			heading: a.article_number ? null : (a.label ?? null),
+			shortTitle: law?.shortTitle ?? null,
+			citationTitle: title
+		};
+	});
+	// The link opens the text, not the network: a reader who follows it wants to read.
+	const readLink = $derived.by(() => {
+		const url = new URL(page.url);
+		url.searchParams.set('lezen', '1');
+		return url.toString().replaceAll('%2F', '/');
+	});
+
+	// The official text of the version on screen: wetten.overheid.nl, EUR-Lex or the
+	// Verdragenbank, as the API names it.
+	const officialUrl = $derived(
+		view.kind === 'loaded'
+			? (shownVersion?.official_url ?? view.data.article.official_url ?? null)
+			: null
+	);
+	const officialName = $derived(
+		officialUrl ? new URL(officialUrl).hostname.replace(/^www\./, '') : null
+	);
+
+	// An earlier text is cited as geldend on the day it took effect.
+	const forms = $derived(
+		citation
+			? citeArticle({ ...citation, date: shown?.from ? new Date(shown.from) : undefined })
+			: null
+	);
+
+	async function copy(text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copied = true;
+			setTimeout(() => (copied = false), 1000);
+		} catch {
+			// The clipboard is unavailable in some contexts.
+		}
+		citeMenu = false;
+	}
+
+	const withParams = (params: Record<string, string | null>) => {
+		const url = new URL(page.url);
+		for (const [k, v] of Object.entries(params)) {
+			if (v === null) url.searchParams.delete(k);
+			else url.searchParams.set(k, v);
+		}
+		url.hash = '';
+		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
+	};
+	const billsHref = $derived(
+		withParams({
+			...filterParams(filter ?? ({} as VerbondenFilter)),
+			bronnen: 'wetsvoorstellen',
+			lid: null
+		})
+	);
+	const lidHref = (lid: string) => withParams({ lid: filter?.lid === lid ? null : lid });
+
+	// A comparison of two tekstversies, named in the URL by the dates they took effect,
+	// so a comparison can be cited and shared.
+	const compareParam = $derived(page.url.searchParams.get('versies'));
+	const comparing = $derived(compareParam !== null && wordings.length > 1);
+	const layout = $derived(page.url.searchParams.get('weergave') === 'naast' ? 'naast' : 'een');
+	const compareHref = (from: number, to: number) =>
+		withParams({ versies: `${wordings[from].from ?? ''}..${wordings[to].from ?? ''}` });
+	const closeCompareHref = $derived(withParams({ versies: null, weergave: null }));
+	const go = (params: Record<string, string | null>) =>
+		goto(withParams(params), { replaceState: true, noScroll: true, keepFocus: true });
+
+	// In the margin of the geldende tekst: when a lid got its present wording, if that was
+	// after the oldest tekstversie, leading to that lid's history.
+	const lidNotes = $derived.by(() => {
+		const notes = new Map<string, { label: string; href: string }>();
+		if (comparing || shown || !current || wordings.length < 2) return notes;
+		for (const unit of unitsOf(current.first.text, current.first.parts)) {
+			if (!unit.number) continue;
+			const latest = lidHistory(wordings, unit.number)?.formulations.at(-1);
+			if (!latest || latest.since.index === 0) continue;
+			notes.set(unit.number, {
+				label: `${latest.kind === 'added' ? 'ingevoegd' : 'gewijzigd'} ${latest.since.from?.slice(0, 4) ?? ''}`,
+				href: withParams({ versies: `lid-${unit.number}` })
+			});
+		}
+		return notes;
+	});
+
+	// The proposed wording of a lid, from the mutations of the dossier of the wetsvoorstel.
+	let proposed = $state<ProposedText | null>(null);
+	let proposedMissing = $state(false);
+	$effect(() => {
+		proposed = null;
+		proposedMissing = false;
+		const row = proposedRow;
+		if (!row || view.kind !== 'loaded') return;
+		const ac = new AbortController();
+		proposedTextOf(row, view.data.article.id, ac.signal)
+			.then((p) => {
+				if (ac.signal.aborted) return;
+				proposed = p;
+				proposedMissing = p === null;
+			})
+			.catch(() => {
+				if (!ac.signal.aborted) proposedMissing = true;
+			});
+		return () => ac.abort();
+	});
+
+	// The article with its heading where the law gives one: "Artikel 22. Verwerking van
+	// persoonsgegevens".
+	const title = (a: Schema<'ArticleSummaryDTO'>) => {
+		const name =
+			a.label ?? (a.article_number ? `Artikel ${a.article_number}` : (a.display_name ?? 'Artikel'));
+		return a.heading && a.article_number ? `${name}. ${a.heading}` : name;
+	};
 </script>
+
+<!-- Vorig and Volgend, above the article and again under it. -->
+{#snippet steps(noun: string)}
+	{#if prevHref}
+		<a class="reader-nav-link" href={prevHref} data-sveltekit-noscroll>← Vorig{noun}</a>
+	{/if}
+	{#if nextHref}
+		<a class="reader-nav-link reader-nav-link--next" href={nextHref} data-sveltekit-noscroll
+			>Volgend{noun} →</a
+		>
+	{/if}
+{/snippet}
 
 <ReaderFrame
 	status={view.kind === 'loaded' ? 'ready' : view.kind}
@@ -114,241 +444,500 @@
 		{@const d = view.data}
 		{@const a = d.article}
 		<ReaderHead
-			sigil="§"
-			tone="article"
-			kind="Artikel"
+			collection="articles"
 			juris={d.instrument?.display_name}
-			title={a.display_name ?? `Art. ${a.article_number ?? '—'}`}
+			title={title(a)}
+			place={[d.instrument?.display_name ?? law?.citationTitle ?? '', ...place].filter(Boolean)}
 		>
-			{#if a.article_number && a.display_name && a.display_name !== `Art. ${a.article_number}`}
-				<div class="reader-cite">Art. {a.article_number}</div>
-			{/if}
-			{#if inFluxDossiers.length > 0}
-				<div class="reader-influx-wrap">
-					<span class="reader-influx-label">
-						<span class="reader-influx-dot" aria-hidden="true"></span>
-						In behandeling
+			{#snippet nav()}
+				{#if prevHref || nextHref}
+					<nav class="reader-nav" aria-label="Artikelen">{@render steps('')}</nav>
+				{/if}
+			{/snippet}
+			<div class="head">
+				<!-- What is on screen, and what to do with it. The head stays the same while
+				     comparing: Vergelijken unfolds the choice under it and closes it again. -->
+				<div class="head__status">
+					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
+						<button
+							type="button"
+							class="head__version"
+							class:is-old={!!shown}
+							aria-haspopup={wordings.length > 1 ? 'menu' : undefined}
+							aria-expanded={wordings.length > 1 ? versionMenu : undefined}
+							disabled={wordings.length <= 1}
+							onclick={() => (versionMenu = !versionMenu)}
+							>{versionLabel}{#if wordings.length > 1}<span class="head__count"
+									>{wordings.length} tekstversies</span
+								><Caret open={versionMenu} />{/if}</button
+						>
+						{#if versionMenu}
+							<!-- One place for the versions: a row reads that text, its change
+								     opens the comparison with the text before it. -->
+							<div class="pop pop--versions" role="menu" aria-label="Tekstversies">
+								<div class="pop__cols" aria-hidden="true">
+									<span>Lezen</span><span>Wat veranderde</span>
+								</div>
+								{#each [...wordings].reverse() as w (w.index)}
+									<div class="pop__row">
+										<button
+											type="button"
+											role="menuitemradio"
+											aria-checked={(shownIndex ?? current?.index) === w.index}
+											class="pop__item"
+											onclick={() => {
+												shownIndex = w === current ? null : w.index;
+												versionMenu = false;
+												// Reading one text folds the comparison away.
+												if (comparing) go({ versies: null, weergave: null });
+											}}
+											>{w === current ? 'Geldend, sinds ' : ''}{longDate(w.from)}{w.until
+												? ` tot ${longDate(w.until)}`
+												: ''}</button
+										>
+										{#if w.index > 0}
+											<a
+												class="pop__change"
+												role="menuitem"
+												href={compareHref(w.index - 1, w.index)}
+												data-sveltekit-noscroll
+												title="Vergelijk met de tekst ervoor"
+												onclick={() => (versionMenu = false)}>{w.summary} →</a
+											>
+										{:else}
+											<span class="pop__change pop__change--none">oudste tekst</span>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{/if}
 					</span>
-					<ul class="reader-influx-list" aria-label="Open wetsvoorstellen">
-						{#each inFluxDossiers as dossier (dossier.nummer)}
-							<li>
-								<a
-									class="reader-influx-chip"
-									href="/explore?focus=kamerstukdossiers/{dossier.nummer}&overlay=dossier:{dossier.nummer}"
-									title={dossier.titel ?? `Dossier ${dossier.nummer}`}
-								>
-									<span class="reader-influx-chip__num">{dossier.nummer}</span>
-									<span class="reader-influx-chip__titel">{dossier.titel ?? 'Dossier'}</span>
-								</a>
-							</li>
-						{/each}
-					</ul>
+					{#if wordings.length > 1}
+						<a
+							class="btn head__compare"
+							class:is-on={comparing}
+							aria-expanded={comparing}
+							href={comparing
+								? closeCompareHref
+								: compareHref(Math.max(0, wordings.length - 2), wordings.length - 1)}
+							data-sveltekit-noscroll>Vergelijken<Caret open={comparing} /></a
+						>
+					{/if}
+					{#if officialUrl}
+						<a class="btn" href={officialUrl} target="_blank" rel="noopener">{officialName} ↗</a>
+					{/if}
+					{#if forms}
+						<span
+							class="menu head__acts"
+							use:menu={{ open: citeMenu, close: () => (citeMenu = false) }}
+						>
+							<button
+								type="button"
+								class="btn"
+								aria-haspopup="menu"
+								aria-expanded={citeMenu}
+								onclick={() => (citeMenu = !citeMenu)}
+								>{copied ? 'Gekopieerd' : 'Citeer'}<Caret open={citeMenu} /></button
+							>
+							{#if citeMenu}
+								<div class="pop pop--right" role="menu" aria-label="Citeer artikel">
+									<div class="pop__label">Kopieer als</div>
+									<button
+										type="button"
+										role="menuitem"
+										class="pop__item"
+										onclick={() => copy(forms.kort)}
+										><span>{forms.kort}</span><span class="pop__k">kort</span></button
+									>
+									<button
+										type="button"
+										role="menuitem"
+										class="pop__item"
+										onclick={() => copy(forms.voluit)}
+										><span>{forms.voluit}</span><span class="pop__k">voluit</span></button
+									>
+									<button
+										type="button"
+										role="menuitem"
+										class="pop__item"
+										onclick={() => copy(forms.metDatum)}
+										><span>{forms.metDatum}</span><span class="pop__k">met datum</span></button
+									>
+									<button
+										type="button"
+										role="menuitem"
+										class="pop__item"
+										onclick={() => copy(readLink)}
+										><span class="pop__link">{readLink}</span><span class="pop__k">link</span
+										></button
+									>
+								</div>
+							{/if}
+						</span>
+					{/if}
 				</div>
-			{/if}
+
+				<!-- Where the text came from: the wet that made it, its toelichting, the
+					     earlier texts. -->
+				{#if versionDossiers.length > 0 || explanatory}
+					<div class="head__origin">
+						{#if versionDossiers.length > 0}
+							<span class="head__item"
+								>{originVerb}
+								{#each versionDossiers as dossier, i (dossier.key)}{#if i > 0},
+									{/if}{#if missingDossiers.has(dossier.number)}<span
+											title="Dit dossier staat niet in de dataset">Kamerstuk {dossier.number}</span
+										>{:else}<a
+											href={bronHref({
+												collection: 'dossiers',
+												key: dossier.key,
+												number: dossier.number
+											})}
+											data-sveltekit-noscroll
+											title={dossier.title ?? undefined}>Kamerstuk {dossier.number}</a
+										>{/if}{/each}</span
+							>
+						{/if}
+						{#if explanatory && explanatoryHref}
+							<a
+								class="head__item head__mvt"
+								class:is-open={explanatoryOpen}
+								href={explanatoryHref}
+								data-sveltekit-noscroll
+								aria-expanded={explanatoryOpen}
+								title={explanatoryOpen
+									? 'Sluiten'
+									: `${explanatory.title ?? explanatory.kind ?? 'Toelichting'}: onder het artikel lezen`}
+								>{explanatory.basis === 'wijziging'
+									? 'Memorie van toelichting'
+									: (explanatory.kind ?? 'Toelichting')}{explanatory.firstReading
+									? ', eerste lezing'
+									: ''}<span class="head__mvt-mark" aria-hidden="true"
+									>{explanatoryOpen ? '×' : '↓'}</span
+								></a
+							>
+						{/if}
+					</div>
+				{/if}
+
+				<!-- What is coming: wetsvoorstellen that would change the text. -->
+				{#if billCount > 0}
+					<div class="head__pending">
+						<a href={billsHref} data-sveltekit-noscroll
+							><span class="head__dot" aria-hidden="true"></span>{billCount}
+							{billCount === 1 ? 'wetsvoorstel raakt' : 'wetsvoorstellen raken'} dit artikel</a
+						>
+					</div>
+				{/if}
+			</div>
 		</ReaderHead>
 
-		<div class="reader-body">
-			{#if d.leden && d.leden.length > 0}
-				<ol class="leden">
-					{#each d.leden as lid, i (i)}
-						<li class="lid">
-							<span class="lid-num" aria-hidden="true">{lid.number}</span>
-							<p class="lid-text">
-								<LidText text={lid.text} citaties={lid.citaties} {onNavigate} />
-							</p>
-						</li>
-					{/each}
-				</ol>
+		{#if proposedMissing && proposedRow}
+			<p class="note">
+				De voorgestelde tekst van {proposedRow.title} is niet in de gegevens opgenomen.
+				{#if onCloseProposed}<button type="button" class="note__close" onclick={onCloseProposed}
+						>Sluiten</button
+					>{/if}
+			</p>
+		{/if}
+
+		{#if shown && !comparing}
+			<p class="note note--old">
+				Niet de geldende tekst. Deze tekst gold {shown.until
+					? `van ${longDate(shown.from)} tot ${longDate(shown.until)}`
+					: `sinds ${longDate(shown.from)}`}.
+				{#if current}
+					<a class="link" href={compareHref(shown.index, current.index)} data-sveltekit-noscroll
+						>Vergelijk met de geldende tekst</a
+					>
+					<button type="button" class="note__close" onclick={() => (shownIndex = null)}
+						>Geldend recht lezen</button
+					>
+				{/if}
+			</p>
+		{/if}
+
+		<div class="reader-body" class:reader-body--compare={comparing} bind:this={root}>
+			{#if comparing}
+				<VersionCompare
+					{versions}
+					param={compareParam ?? ''}
+					{layout}
+					{citation}
+					link={withParams}
+					{go}
+				/>
 			{:else}
-				<ArticleText text={a.text} citations={d.citations ?? []} {onNavigate} />
+				<ArticleText
+					text={shownVersion?.text ?? a.text}
+					parts={shownVersion?.parts ?? a.parts}
+					citations={shownVersion ? [] : d.citations}
+					counts={shown ? new Map() : lidCounts}
+					{lidHref}
+					{citation}
+					{proposed}
+					{onCloseProposed}
+					{lidNotes}
+				/>
 			{/if}
 		</div>
 
-		{#if onPrev || onNext}
-			<div class="reader-nav-footer">
-				<button
-					type="button"
-					class="reader-nav-btn"
-					disabled={!onPrev}
-					onclick={onPrev}
-					aria-label="Vorig artikel">← Vorig</button
-				>
-				<button
-					type="button"
-					class="reader-nav-btn reader-nav-btn--next"
-					disabled={!onNext}
-					onclick={onNext}
-					aria-label="Volgend artikel">Volgend →</button
-				>
-			</div>
-		{/if}
-
-		{#if a.bwb_id}
-			<ArticleMvtPanel bwbId={a.bwb_id} articleNumber={a.article_number} />
-			{#if a.article_number}
-				<ArticleLegislativeHistory bwbId={a.bwb_id} articleNumber={a.article_number} />
-			{/if}
+		{#if prevHref || nextHref}
+			<nav class="reader-nav-footer" aria-label="Artikelen">{@render steps(' artikel')}</nav>
 		{/if}
 	{/if}
 </ReaderFrame>
 
 <style>
-	.reader-cite {
-		font-family: var(--font-mono);
-		font-size: 12px;
+	/* Three layers under the title: the text on screen and Citeer; where it came from;
+	   what is coming. Each quieter than the one before. */
+	.head {
+		display: grid;
+		gap: 6px;
+		margin-bottom: 4px;
+		font-family: var(--font-sans);
+		font-size: 12.5px;
+		color: var(--ink-3);
+	}
+	.head__status,
+	.head__origin {
+		position: relative;
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 4px 16px;
+	}
+	.head__status {
+		justify-content: flex-start;
+		min-height: 26px;
+	}
+	.head__version {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.head__version.is-old {
 		color: var(--ink-2);
-		margin-bottom: 10px;
 	}
-
-	.reader-influx-wrap {
-		margin-bottom: 12px;
+	.head__version:hover:not(:disabled) {
+		color: var(--accent);
 	}
-
-	.reader-influx-label {
+	.head__version:disabled {
+		cursor: default;
+	}
+	.head__compare {
+		text-decoration: none;
+	}
+	/* Pressed while the comparison is unfolded. */
+	.head__compare.is-on {
+		background: var(--paper-2);
+		border-color: var(--ink-3);
+		color: var(--ink);
+	}
+	.head__acts {
+		margin-left: auto;
+	}
+	.head__origin a {
+		color: var(--ink-2);
+	}
+	.head__mvt-mark {
+		margin-left: 4px;
+		color: var(--ink-3);
+	}
+	.head__mvt.is-open {
+		color: var(--ink);
+		font-weight: 500;
+	}
+	.head__origin a:hover {
+		color: var(--accent);
+	}
+	/* The status voorgesteld is the one use of the accent outside links. */
+	.head__pending a {
 		display: inline-flex;
 		align-items: center;
-		gap: 5px;
-		font-family: var(--font-sans);
-		font-size: 10px;
-		font-weight: 500;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--ochre);
-		margin-bottom: 5px;
+		gap: 7px;
+		color: var(--accent);
 	}
-
-	.reader-influx-dot {
+	.head__dot {
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: var(--ochre-2);
-		flex-shrink: 0;
+		background: var(--accent);
 	}
-
-	.reader-influx-list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px 6px;
+	.head__count {
+		margin-left: 10px;
+		font-weight: 400;
+		color: var(--ink-3);
 	}
-
-	.reader-influx-chip {
-		display: inline-flex;
-		align-items: baseline;
-		gap: 6px;
-		font-family: var(--font-sans);
-		font-size: 11px;
-		color: var(--sepia);
-		background: var(--ochre-faint);
-		border: 1px solid var(--ochre-faint);
-		border-radius: var(--r-1);
-		padding: 2px 7px;
-		text-decoration: none;
+	/* A popup hangs under its row, from the row's start, so it never runs off the reader. */
+	.head .menu {
+		position: static;
+	}
+	.pop {
+		position: absolute;
+		left: 0;
 		max-width: 100%;
-		transition: background 80ms;
+		top: calc(100% + 6px);
+		z-index: var(--z-float);
+		width: 340px;
+		padding: 8px 0;
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-modal);
+		font-size: 12.5px;
 	}
-
-	.reader-influx-chip:hover {
-		background: color-mix(in srgb, var(--ochre-faint) 70%, var(--paper-3));
+	.pop__label {
+		padding: 2px 12px 6px;
+		font-size: 11.5px;
+		color: var(--ink-3);
 	}
-
-	.reader-influx-chip__num {
-		font-weight: 600;
-		letter-spacing: 0.02em;
-		flex-shrink: 0;
+	.pop__item {
+		display: flex;
+		justify-content: space-between;
+		gap: 12px;
+		width: 100%;
+		padding: 6px 12px;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink);
+		text-align: left;
+		cursor: pointer;
 	}
-
-	.reader-influx-chip__titel {
-		font-family: var(--font-serif);
-		font-style: italic;
-		color: var(--ink-2);
+	.pop__item:hover {
+		background: var(--paper-2);
+	}
+	.pop__k {
+		flex: none;
+		font-size: 11.5px;
+		color: var(--ink-3);
+	}
+	.pop__link {
+		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		max-width: 22ch;
+	}
+
+	.pop--versions {
+		width: 440px;
+	}
+	.pop__cols {
+		display: flex;
+		justify-content: space-between;
+		padding: 2px 12px 6px;
+		font-size: 11.5px;
+		color: var(--ink-3);
+	}
+	.pop__row {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 12px;
+	}
+	.pop__row .pop__item {
+		flex: 1;
+		min-width: 0;
+	}
+	.pop__row .pop__item[aria-checked='true'] {
+		font-weight: 500;
+	}
+	.pop__change {
+		flex: none;
+		max-width: 50%;
+		padding: 6px 12px 6px 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: 11.5px;
+		color: var(--ink-2);
+	}
+	.pop__change:hover {
+		color: var(--accent);
+	}
+	.pop__change--none {
+		color: var(--ink-3);
+	}
+	.pop--right {
+		left: auto;
+		right: 0;
+	}
+
+	.note {
+		margin: 0 0 var(--s-4);
+		font-family: var(--font-sans);
+		font-size: 12.5px;
+		color: var(--ink-3);
+	}
+	/* An earlier text is not the law: said where the text starts, not in a caption. */
+	.note--old {
+		padding: var(--s-2) var(--s-3);
+		border-left: 3px solid var(--ink-3);
+		background: var(--paper-2);
+		color: var(--ink-2);
+	}
+	.note--old .link {
+		margin-left: 6px;
+	}
+	.note__close {
+		margin-left: 8px;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-2);
+		cursor: pointer;
 	}
 
 	.reader-body {
-		font-family: var(--font-serif);
-		font-size: 17px;
-		line-height: 1.68;
-		color: var(--ink);
+		margin-left: 46px;
+	}
+	/* The comparison starts at the edge of the head; its leden keep the article's
+	   columns, the number included. */
+	.reader-body--compare {
+		margin-left: 0;
 	}
 
-	.leden {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		counter-reset: lid;
-		max-width: calc(68ch + 32px + var(--s-3));
-	}
-
-	.lid {
-		display: grid;
-		grid-template-columns: 32px 1fr;
+	/* At the end of the place line; Volgend keeps the right edge, also where Vorig is missing. */
+	.reader-nav {
+		flex: none;
+		display: flex;
 		gap: var(--s-3);
-		margin-bottom: var(--s-5);
-	}
-
-	.lid:last-child {
-		margin-bottom: 0;
-	}
-
-	.lid-num {
-		font-family: var(--font-mono);
-		font-size: 11px;
-		color: var(--ink-4);
-		line-height: 1.62;
-		padding-top: 4px;
-		text-align: right;
-	}
-
-	.lid-text {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: 18px;
-		line-height: 1.62;
-		color: var(--ink);
+		margin-left: auto;
+		font-family: var(--font-sans);
+		font-size: 12.5px;
+		white-space: nowrap;
 	}
 
 	.reader-nav-footer {
 		display: flex;
-		justify-content: space-between;
 		gap: var(--s-3);
-		margin-top: var(--s-6);
-		padding-top: var(--s-5);
+		margin-top: 40px;
+		padding-top: 18px;
 		border-top: 1px solid var(--rule);
-	}
-
-	.reader-nav-btn {
 		font-family: var(--font-sans);
-		font-size: 12px;
-		color: var(--ink-3);
-		background: none;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		padding: 6px 14px;
-		cursor: pointer;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease),
-			border-color var(--dur-1) var(--ease);
+		font-size: 12.5px;
 	}
-
-	.reader-nav-btn:hover:not(:disabled) {
-		background: var(--paper-3);
-		color: var(--ink);
-		border-color: var(--ink-3);
-	}
-
-	.reader-nav-btn:disabled {
-		opacity: 0.35;
-		cursor: default;
-	}
-
-	.reader-nav-btn--next {
+	.reader-nav-footer .reader-nav-link--next {
 		margin-left: auto;
+	}
+
+	.reader-nav-link {
+		color: var(--ink-3);
+	}
+	.reader-nav-link:hover {
+		color: var(--ink);
+	}
+
+	@media (max-width: 900px) {
+		.reader-body {
+			margin-left: 0;
+		}
 	}
 </style>

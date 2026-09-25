@@ -1,0 +1,30 @@
+{
+	"article": {
+		"key": "bwbr0001903_359a",
+		"bwb_id": "BWBR0001903",
+		"article_number": "359a",
+		"display_name": "Artikel 359a Wetboek van Strafvordering",
+		"text": "1. De rechtbank kan, indien blijkt dat bij het voorbereidend onderzoek vormen zijn verzuimd die niet meer kunnen worden hersteld en de rechtsgevolgen hiervan niet uit de wet blijken, bepalen dat:\na. de hoogte van de straf in verhouding tot de ernst van het verzuim, zal worden verlaagd, indien het door het verzuim veroorzaakte nadeel langs deze weg kan worden gecompenseerd;\nb. de resultaten van het onderzoek die door het verzuim zijn verkregen, niet mogen bijdragen aan het bewijs van het telastegelegde feit;\nc. het openbaar ministerie niet ontvankelijk is, indien door het verzuim geen sprake kan zijn van een behandeling van de zaak die aan de beginselen van een behoorlijke procesorde voldoet.\n2. Bij de toepassing van het eerste lid, houdt de rechtbank rekening met het belang dat het geschonden voorschrift dient, de ernst van het verzuim en het nadeel dat daardoor wordt veroorzaakt.\n3. Het vonnis bevat de beslissingen vermeld in het eerste lid. Deze zijn met redenen omkleed."
+	},
+	"citations": [],
+	"judgments": [
+		{
+			"id": "judgments/ecli_nl_ghams_2024_2593",
+			"key": "ecli_nl_ghams_2024_2593",
+			"display_name": "Gerechtshof Amsterdam 2024-09-12 / 23-001185-22",
+			"ecli": "ECLI:NL:GHAMS:2024:2593"
+		},
+		{
+			"id": "judgments/ecli_nl_ghshe_2024_3041",
+			"key": "ecli_nl_ghshe_2024_3041",
+			"display_name": "Gerechtshof 's-Hertogenbosch 2024-09-26 / 20-002858-22",
+			"ecli": "ECLI:NL:GHSHE:2024:3041"
+		},
+		{
+			"id": "judgments/ecli_nl_ghdha_2024_1716",
+			"key": "ecli_nl_ghdha_2024_1716",
+			"display_name": "Gerechtshof Den Haag 2024-09-30 / 2200292922",
+			"ecli": "ECLI:NL:GHDHA:2024:1716"
+		}
+	]
+}

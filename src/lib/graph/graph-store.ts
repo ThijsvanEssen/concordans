@@ -1,42 +1,29 @@
 import type { GraphStore } from './store/types';
 import { createGraphContext } from './store/context';
+import { createCompose } from './store/compose';
 import { createExpansion } from './store/expansion';
-import { createWetLoaders } from './store/wet-loaders';
-import { createWetCitations } from './store/wet-citations';
-import { createGlobalLoaders } from './store/global-loaders';
-import { createParliamentaryLoaders } from './store/parliamentary-loaders';
 import { createViewActions } from './store/view-actions';
 
-export type {
-  GraphExpansionOptions,
-  GraphFilters,
-  GraphMode,
-  GraphStore,
-  LoadingState
-} from './store/types';
+export type { GraphExpansionOptions, GraphFilters, GraphStore } from './store/types';
 
 export function createGraphStore(): GraphStore {
-  const ctx = createGraphContext();
+	const ctx = createGraphContext();
+	const netwerk = createCompose(ctx);
+	const view = createViewActions(ctx);
 
-  return {
-    nodes: ctx.nodesStore,
-    edges: ctx.edgesStore,
-    selection: ctx.selectionStore,
-    pinned: ctx.pinnedStore,
-    breadcrumbs: ctx.breadcrumbsStore,
-    canGoBack: ctx.canGoBackStore,
-    canGoForward: ctx.canGoForwardStore,
-    filters: ctx.filtersStore,
-    loading: ctx.loadingStore,
-    graphMode: ctx.graphModeStore,
-    potentialCounts: ctx.potentialCountsStore,
-    trimmedCount: ctx.trimmedCountStore,
-    currentInstrumentBwb: ctx.currentInstrumentBwbStore,
-    ...createExpansion(ctx),
-    ...createWetLoaders(ctx),
-    ...createWetCitations(ctx),
-    ...createGlobalLoaders(ctx),
-    ...createParliamentaryLoaders(ctx),
-    ...createViewActions(ctx),
-  };
+	return {
+		nodes: ctx.nodesStore,
+		edges: ctx.edgesStore,
+		selection: ctx.selectionStore,
+		pinned: ctx.pinnedStore,
+		filters: ctx.filtersStore,
+		trimmedCount: ctx.trimmedCountStore,
+		...createExpansion(ctx),
+		...view,
+		...netwerk,
+		reset: () => {
+			view.reset();
+			netwerk.releaseNetwerk();
+		}
+	};
 }

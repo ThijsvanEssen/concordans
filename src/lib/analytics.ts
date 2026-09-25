@@ -11,7 +11,7 @@ export function initAnalytics() {
 		api_host: 'https://eu.i.posthog.com',
 		person_profiles: 'identified_only',
 		capture_pageview: true,
-		capture_pageleave: true,
+		capture_pageleave: true
 	});
 	ready = true;
 }

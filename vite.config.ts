@@ -1,5 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	plugins: [sveltekit()],
@@ -7,22 +7,9 @@ export default defineConfig({
 	server: {
 		headers: {
 			'Cache-Control': 'no-store'
-		},
-		proxy: {
-			'/api': {
-				target: 'http://localhost:8000',
-				changeOrigin: true,
-				// The SvelteKit /api docs page lives at the bare /api path. Vite's
-				// proxy otherwise gobbles every /api* URL and forwards it to the
-				// FastAPI backend, which 404s on the empty path. Returning the URL
-				// from bypass tells Vite to skip the proxy and serve the page.
-				bypass(req) {
-					const url = req.url ?? '';
-					// Strip query string for the comparison.
-					const path = url.split('?')[0];
-					if (path === '/api' || path === '/api/') return url;
-				}
-			}
 		}
+	},
+	test: {
+		include: ['src/**/*.test.ts']
 	}
 });

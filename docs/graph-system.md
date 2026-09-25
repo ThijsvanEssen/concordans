@@ -1,276 +1,91 @@
 # Graph system
 
-The graph is the central feature. This document covers the four layers that produce it: the type system, the in-memory data store, the sigma renderer, and the surrounding UI scaffolding (filters, layers, overlays).
+The network view is built in four layers. Each knows only the one below it.
 
-If you're touching anything in `src/lib/graph/` or `src/lib/components/graph/`, read this first.
+| Layer  | File                                                    | Responsibility                                                                                                                                                          |
+| ------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Legend | `src/lib/components/graph/GraphSidebar.svelte`          | The bronfilter (bronnen with counts, the preset), the relations with a line sample, depth, lid, what the canvas shows and hides; overlays and pinned bronnen under Meer |
+| View   | `src/lib/components/graph/GraphView.svelte`             | Connects store, canvas, sidebar and hover panel; runs the layout and the camera fit                                                                                     |
+| Canvas | `src/lib/components/graph/GraphCanvas.svelte`           | Sigma renderer plus the HTML layers (halos, badges)                                                                                                                     |
+| Store  | `src/lib/graph/graph-store.ts`, `src/lib/graph/store/*` | The nodes and edges on the canvas. Knows nothing of Sigma                                                                                                               |
+
+The layers of the network are the groups of the panel Verbonden (`src/lib/verbonden/`), not a control of the sidebar; see [Layers](#layers). The API is reached through `$lib/api/client` (see [`api-client.md`](api-client.md)). Collection and relation names come from `src/lib/vocabulary.ts`; their meaning is in the API's `data-model.md`.
+
+## Types
+
+`src/lib/graph/types.ts` converts API nodes and edges to `GraphNode` and `GraphEdge`.
+
+`GraphNodeKind` is what the canvas draws a node as. Several collections share a kind (`KIND_OF_COLLECTION`): `decisions`, `commitments`, `cases` and `activities` are all `activity`; version and annex collections are `other`. Because the map is a `Record<Collection, GraphNodeKind>`, a new collection in `vocabulary.ts` does not compile until it has a kind.
+
+`GraphEdge` carries the API relation, a `label`, `confidence`, `status` and `meta`. Its category (`structural`, `mutation`, `semantic`) is computed by `edgeCategory(relation, sourceKind)`; `REFERS_TO` is structural between two articles and semantic from any other bron (a citation). The category decides which edges pass the semantic threshold. What is drawn is decided by the bronfilter (`hiddenKinds`, a kind that is not drawn and not laid out) and by `GraphFilters.hiddenRelations` (a relation the legend switched off); the canvas hides both in its reducers, the store keeps them.
+
+`nodeToGraphNode` returns null for a collection the app does not know. `syntheticNode` builds a node from a list or detail response, without a request. Node `props` are untyped in the schema; read them defensively.
+
+## Store
+
+`createGraphStore()` in `graph-store.ts` spreads the slices of `store/` into one `GraphStore` (typed in `store/types.ts`, which is the reference for the methods).
+
+| File              | Contents                                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `context.ts`      | Node and edge maps, writable stores, the response cache, soft cap, derived nodes and edges, `mergeResponse` |
+| `expansion.ts`    | `nodeResponse`, `expandNode`, `expandNeighborhood`                                                          |
+| `view-actions.ts` | Selection, pinning, `showRows`/`hideRows`, filters, pruning, `sweepOrphans`, `reset`, `getEdgeById`         |
+| `types.ts`        | `GraphStore`, `GraphFilters`, `CanvasRow`, `DEFAULT_FILTERS`, `SOFT_NODE_CAP`                               |
+
+Each module is a factory that receives the context and returns part of the `GraphStore`. Scalars that several modules change (`seq`, `proxiesEnabled`) live on `ctx.state`; destructuring them would freeze a copy.
+
+**One request per bron.** `nodeResponse(collection, key)` fetches `/api/nodes/{collection}/{key}` with `limit` 200, the most the API allows per bucket, caches the response by node id and joins concurrent callers. The canvas draws from it and the panel Verbonden reads it, so a bron is asked for once. `expandNode` merges the response and draws at most `neighborLimit` neighbours (30 by default); `expandNeighborhood` fetches every node and edge within `depth` hops in one request. Instruments are recorded in the instrument cache and not drawn as neighbours. Edges below `semanticThreshold` are dropped when merged.
+
+**Soft cap.** `SOFT_NODE_CAP` is 400. A merge that passes it removes the oldest nodes that are not pinned, selected or next to the selection; `trimmedCount` counts them.
+
+**Cancellation.** Requests carry the context's signal; `reset()` calls `supersede()`, which aborts every request still writing into the old canvas.
+
+**Derived edges.** `emit()` rebuilds them on every change; their ids start with `synth:`.
+
+- A document or judgment that relates to an article gets an edge to the instrument of that law, with the same relation and the label `via artikel`.
+- Articles get a `PART_OF` edge to their instrument node; members get `MEMBER_OF` edges to factions from `faction_memberships`.
 
 ## Layers
 
-```
-┌────────────────────────────────────────────────────────┐
-│  GraphSidebar (filters, layers, overlays, instruments) │
-├────────────────────────────────────────────────────────┤
-│  GraphView (orchestrator — store ⇄ canvas ⇄ panels)    │
-├────────────────────────────────────────────────────────┤
-│  GraphCanvas (sigma + HTML overlays + hover + camera)  │
-├────────────────────────────────────────────────────────┤
-│  sigma + graphology  ──┐                               │
-│                        │  reads from                   │
-│                        ▼                               │
-│  GraphStore (graph-store.ts) — graphology + history    │
-├────────────────────────────────────────────────────────┤
-│  api client (parliamentary-client.ts, etc.)            │
-└────────────────────────────────────────────────────────┘
-```
-
-Each layer's responsibilities are non-overlapping. `GraphStore` knows nothing about sigma. `GraphCanvas` knows nothing about how data got into graphology — only how to render whatever is there. `GraphView` is the glue.
-
-## Types — `src/lib/graph/types.ts`
-
-`GraphNode` and `GraphEdge` are the in-memory representations. They're not the same as backend DTOs; the conversion (`nodeToGraphNode`, `dossierToGraphNode`, etc.) happens in `types.ts` and is exported for use by store loaders.
-
-```ts
-type GraphNodeKind =
-  | 'article' | 'judgment' | 'tkstuk' | 'activity'
-  | 'instrument' | 'dossier' | 'commissie' | 'lid' | 'fractie' | 'other';
-
-interface GraphNode {
-  id: string;            // canonical "{collection}/{key}"
-  key: string;
-  collection: string;
-  kind: GraphNodeKind;
-  label: string;         // human display
-  raw: BaseNode;         // backend payload (props, labels, etc.)
-}
-
-interface GraphEdge {
-  id: string;
-  source: string;        // node id
-  target: string;
-  relation: string;      // "wijzigt", "verwijst_naar", "deel_van", ...
-  category: 'structural' | 'mutation' | 'semantic';
-  weight?: number;
-}
-```
-
-### Edge categories
+`src/lib/verbonden/groups.ts` is the table kind of bron → groups, the one definition the panel renders. In Netwerk each group with drawable rows (a `relation` and a `direction`) carries a layer button: `store.showRows(focusId, rows)` puts the rows on the canvas, each with the verbinding that ties it to the focus (a `CanvasRow`; a row not on the canvas becomes a `syntheticNode`), and `store.hideRows(ids)` takes them off, sparing the selected and the pinned. A layer is "on" when every drawable row is on the canvas.
 
-Every relation is bucketed into one of three categories. This matches Methode §iiib:
+Groups are filled from the node response (`match`: relation, direction, collection, an optional `where`) or, where no edge says it, by a named loader in `loaders.ts` (the laws and committees of a dossier, the toelichting and citing judgments of an article, the international instruments of a law, ...). `bucketTotals` gives a group its total where the API states one; otherwise a bucket at the cap shows as `30+`.
 
-| Category | Relations | Example |
-|---|---|---|
-| `structural` | `deel_van`, `behandeld_door`, `raakt`, ... | Article ↔ Instrument |
-| `mutation` | `wijzigt`, `introduceert`, `trekt_in`, `licht_toe` | Dossier → Article |
-| `semantic` | `verwijst_naar`, `citeert`, `noemt_artikel` | Judgment → Article |
+## Expansion around a focus
 
-The categoriser is `classifyEdgeKind(relation, label)`. Filter toggles in `GraphFilters` (`structuralEnabled`, `mutationEnabled`, `semanticEnabled`) gate edges by category at render time — the edges remain in the graphology graph, sigma's reducer just paints them as `hidden: true`.
+The explore page (`src/routes/explore/+page.svelte`) expands a focus with one `expandNeighborhood` request of `?diepte` steps (1, 2 or 3; default 2; `cap` 200). The bronfilter decides what of it is drawn: a hidden kind is not drawn, not laid out, and its edges are not drawn. `sweepOrphans` then removes bronnen without an edge, because the force layout throws them far out and the camera fit zooms out to include them. `reseatAround` places the focus at the origin with its neighbours on a ring, and `fitWhenSettled` fits once the layout stops. The expansion runs once per focus and depth, in Netwerk, or when the mode switches to Netwerk with a focus loaded in Lezen.
 
-### Anchor kinds
+The legend states what is on the canvas and what the bronfilter hides, with the counts of the panel Verbonden (`src/lib/verbonden/view.ts`), so both name the same numbers.
 
-`isAnchorKind(kind)` returns true for `instrument`, `dossier`, `commissie`, `lid`, `fractie`. Anchors are nodes that *organise* other nodes — they don't represent a single text. Used in expansion policies and orphan sweeps (we treat anchors as "always keep" candidates).
+## Rendering
 
-### Scaffolding relations
+**Reducers.** Sigma calls `nodeReducer` and `edgeReducer` for every node and edge on each render. They read `latest*` variables that mirror the props, so a change of props is a variable update plus `renderer.refresh()`. Reducers return display data and never change the graphology graph.
 
-`SCAFFOLDING_RELATIONS` is a set of structural relations that the renderer hides by default — `deel_van`, `volgt_op`, etc. They exist to make the graph queryable but rarely add visual signal. Show them via the "Toon scaffolding-kanten" toggle.
+**Camera.** `GraphView` is mounted in Netwerk only and is `compact` when a bron is selected. Module-level `_cam` keeps the camera per placement (`full`, `compact`), and `_camNodeIds` decides whether the graph is unchanged so the camera is restored instead of fitted. An additive change keeps the viewport, except after `fitWhenSettled`: then the fit follows every burst of the new focus until the pointer enters the canvas, so the camera never moves under the reader's hand. `fit()` sets the box of the visible nodes and refreshes: sigma reads a custom box only when it processes the graph, so without the refresh the canvas kept the previous fit's scale until a hover. The nodes fill the canvas up to `STAGE_PADDING` (the hull margin), with `LABEL_ROOM` above for a hull's label.
 
-## GraphStore — `src/lib/graph/graph-store.ts`
+**Hover.** In the full canvas a pointer that rests 400 ms on a node opens `GraphCitePanel`: the kind, a preview (an article's text is fetched) and one action, Openen, which is the same navigation as a click. The effective hover is `externalHoveredId ?? sigmaHoveredId`; the prop keeps the hover alive while the panel is open. Sigma orders edges by the `zIndex` attribute on the graphology edge, not by the reducer result, so the edges of the hovered node get the attribute set and reset.
 
-The single source of truth for what's "on the canvas". Holds the node and edge maps plus history, pinning, filters, and an LRU.
+**Edges at rest.** With a focus, its own verbindingen are drawn in their colour, mixed toward the paper as their number grows (`towardPaper`: opaque, because a low alpha on Sigma's transparent WebGL canvas blends toward white). A line between two other bronnen that touches a hull is left out until a hover; other such lines are a light trace in their own colour.
 
-`graph-store.ts` only assembles the store (`createGraphStore`) and re-exports its types. The implementation lives in `src/lib/graph/store/`:
+**Layout.** ForceAtlas2 runs in a worker (`graphology-layout-forceatlas2/worker`), created on demand in `ensureLayout` and killed on destroy. Existing nodes are fixed while newcomers settle. After a load, call `suppressFit()` first and `fitWhenSettled()` last: the fit then waits until the worker has stopped. After each burst `separateContainerGroups` packs each hull's members into a disk, pushes overlapping disks apart, and moves any other bron that landed in a disk to a band around it, so a judgment never reads as part of a law.
 
-| File | Contents |
-|---|---|
-| `types.ts` | `GraphStore`, `GraphFilters`, `GraphExpansionOptions`, `LoadingState`, `GraphMode`, plus `DEFAULT_FILTERS`, `SOFT_NODE_CAP`, `DEFAULT_EXPANSION` |
-| `context.ts` | `createGraphContext()`: the node/edge maps, the writable stores, history, LRU trim, synthetic instrument proxies and edges, `mergeResponse`. Everything else builds on it |
-| `expansion.ts` | `expandNode`, `expandNeighborhood` |
-| `wet-loaders.ts` | `loadInstrument`, `prefetchInstrumentLayerCounts`, and the wet-scoped judgment, dossier and related-instrument layers |
-| `wet-citations.ts` | `loadInstrumentCitations` |
-| `global-loaders.ts` | `loadGlobalGraph`, `loadInstrumentLayerGraph`, `loadJudgmentLayerGraph` |
-| `parliamentary-loaders.ts` | Lid, fractie, commissie, leden, fracties and recent-dossier loads |
-| `view-actions.ts` | Selection, focus, history, pinning, filters, pruning, `seedGraph`, `reset`, `setCollapseToLaws` |
-
-Each module exports a factory that takes the context (`createExpansion(ctx)`, `createWetLoaders(ctx)`, ...) and returns a slice of the `GraphStore` API; `createGraphStore` spreads them together. A new loader belongs in the module that matches its scope, and needs an entry in the `GraphStore` type.
-
-Scalars that several modules mutate (`seq`, `historyIndex`, `proxiesEnabled`, `additiveLayerIndex`) live on `ctx.state`. Do not destructure them: a destructured copy would freeze the value.
-
-### Surface
-
-Stores expose data:
+**Sprites.** A kind that is not a circle is an image: `spriteFor` draws its shape on a canvas and hands it over as a PNG. Not as an SVG: sigma's image program draws its atlas once, as soon as an image has loaded, and Chrome may not have rasterized an SVG by then, which left documents and activities invisible.
 
-| Store | Type |
-|---|---|
-| `nodes`, `edges` | `Readable<GraphNode[]>` / `Readable<GraphEdge[]>` |
-| `selection` | `Readable<GraphNode \| null>` — current focus |
-| `pinned` | `Readable<Set<string>>` — pinned node ids |
-| `breadcrumbs` | `Readable<GraphNode[]>` — focus history |
-| `canGoBack` / `canGoForward` | `Readable<boolean>` |
-| `filters` | `Readable<GraphFilters>` |
-| `loading` | `Readable<LoadingState>` — discriminated union per load kind |
-| `graphMode` | `Readable<'expansion' \| 'bulk'>` |
-| `potentialCounts` | `Readable<Record<string, number>>` — cached-but-not-merged neighbour counts per kind |
+**A wet that is changed.** A wet is never a canvas node, only the hull of its articles. A stuk that AMENDS, INTRODUCES or REPEALS a wet whose articles are not on the canvas would lose that line, so the store draws the wet as an anchor (`GraphNode.anchor`, `lawAnchor` in `store/context.ts`): an invisible point that is a member of the wet's own hull, which then shows as a small bubble with the wet's name, and the change is drawn once, hull to hull: `GraphCanvas` hides the edges from a hull's members to an anchor and draws one thin, fine-dashed line with an arrowhead between the two outlines (`hullLinks`, cut with `exitPoint`), labelled with its relation while one of its hulls is in the hover. A dossier's changes lie two steps away (dossier, stuk, wet), so for a dossier focus the explore page asks for them in one extra neighbourhood request narrowed to those relations, which adds to the canvas instead of replacing it.
 
-Plus methods:
+**Which hulls are drawn.** `isDrawnGroup` (`container-membership.ts`): a dossier's hull is drawn when it holds a stuk or zaak of its own (PART_OF, kept in `parts`) or is the focus. An activity about forty dossiers (a regeling van werkzaamheden) is a member of each of them, and would otherwise draw forty hulls around that one activity; it stays inside the dossier hulls that are drawn. Only drawn groups are packed in the layout. A commissie or fractie that the focused lid sat in is drawn when the seat (`periods`, from the edge's `meta.from_date` and `meta.to_date`) overlaps the years of the bronfilter, or, without them, the lid's moment (`momentOf`: today, or the day their last seat ended). The canvas hides a dated bron outside those years, as the panel does, and a bron left with nothing to show it by: in no drawn hull, and every line of it to a hidden bron.
 
-- `expandNode(collection, key, opts?)` — central expansion path. Fetches `/api/nodes/expand` and merges results respecting `convergenceMode`, `neighborLimit`, soft caps.
-- `loadInstrument(bwbId)` — bulk-load a single law's full graph; switches to `graphMode: 'bulk'`.
-- `loadGlobalGraph()` — bulk-load every instrument anchor.
-- `loadInstrumentLayerGraph`, `loadJudgmentLayerGraph`, `loadCommissiesLayerGraph`, `loadLedenLayerGraph`, `loadFractiesLayerGraph`, `loadRecentDossiersGraph` — layer loaders (drive the sidebar "Lagen" buttons).
-- `loadDossierGraph(nummer)`, `loadCommissieGraph(slug)`, `loadLidGraph(key)`, `loadFractieGraph(key)` — entity-rooted bulk loads.
-- `focusNode(id, opts?)`, `setSelection(id, opts?)` — focus and selection with optional history.
-- `togglePin(id)`, `pinNode(id)`, `unpinNode(id)`.
-- `goBack()`, `goForward()` — history navigation.
-- `pruneNodes(keepIds)`, `sweepOrphans()` — surgical removal.
-- `setFilters(patch)`, `reset()`, `seedGraph(seed)`.
+**Hull hover.** A hull under the pointer (its shape or its label) shows a wet's full name instead of its abbreviation, as it does while a bron in it is hovered. While a bron or a hull is hovered, a hull that holds neither it nor a bron tied to it, and is not joined to one by a line, steps back.
 
-### Internal state (not exposed)
+**Hulls.** `hullOutline` (`src/lib/graph/hull.ts`) grows the convex hull of a group's points by `HULL_MARGIN`: each side moved out, each corner an arc around its point, so every member lies inside however few there are.
 
-- `nodes: Map<string, GraphNode>` — id → node
-- `edges: Map<string, GraphEdge>` — id → edge
-- `cache: Map<string, NodeGraphResponse>` — keyed by `{collection}/{key}`, holds the raw API response so `potentialCounts` can be computed without refetching
-- `history: string[]` + `historyIndex` — focus stack for ←/→
-- `seq` + `insertedAt: Map<string, number>` — monotonic counter for LRU trim
+**Colours.** `nodeSprites.ts` is the one place that defines colour and shape per kind and colour and line style per relation, and it reads every colour from the design tokens of `AppShell.svelte` once (`tokens()`, through `getComputedStyle`), so the canvas follows a token change after a reload. `KindGlyph`, the legend and the canvas read it. Edges: references between articles and the structure of the law in moss, citations by judgments in slate, EXPLAINS in plum, AMENDS, INTRODUCES and REPEALS in the accent (dashed when `voorgesteld`), PART_OF dotted. `DashedEdgeProgram.ts` holds the dashed and the dotted edge programs.
 
-### Soft cap and LRU trim
+**Edges are selectable.** Sigma runs with `enableEdgeEvents`; a click on an edge (`onEdgeClick`) opens the card Verbinding (`src/lib/verbonden/VerbindingCard.svelte`, built by `verbindingOfEdge`) docked at the bottom left of the canvas, and the edge reducer widens the selected edge. On hover or selection the edge shows its label: `haalt aan, lid 2, r.o. 5.1`.
 
-`SOFT_NODE_CAP = 400`. When a merge would push the count over, the store drops the oldest non-pinned, non-focused, non-level-1 nodes first. Bulk loaders (e.g. `loadInstrument`) bypass the cap — they bring their own budget.
+## Adding a node kind
 
-The "level-1" check is computed against the current `selection` — direct neighbours of the focus are protected.
-
-### Expansion model
-
-`expandNode(collection, key, opts?)`:
-
-1. **Cache check.** If the response is in `cache` and `force` is false, replay from cache. Otherwise fetch `/api/nodes/expand?id={collection}/{key}` with `outboundOnly`, `neighborLimit`, etc. as params.
-2. **Filter incoming nodes/edges.** Apply `includeStrict` / `includeSemantic` / `semanticConfidenceThreshold` gates.
-3. **Convergence prune (optional).** If `convergenceMode` is on, drop neighbours only reachable via a single path through the focus. Keeps the canvas to nodes that are "structurally close" to multiple paths.
-4. **Merge into graphology.** Upsert nodes/edges. Trigger orphan sweep if needed.
-5. **Recompute layout incrementally** via the FA2 worker (kicked off in `GraphView.svelte`).
-6. **Emit** to subscribed `nodesStore` / `edgesStore`.
-
-Returns the focal `GraphNode` (or null if fetch failed).
-
-### History semantics
-
-Focus changes record onto `history` *unless* called with `recordHistory: false`. The initial URL-driven `focusNode` call uses `recordHistory: false` so reload doesn't immediately have an empty back stack. Browser back/forward and the in-app `←`/`→` are wired to `goBack()` / `goForward()`.
-
-### graphMode: expansion vs bulk
-
-- **`expansion`** (default): clicks expand. Each click fetches a new node's neighbours. Soft cap and LRU active.
-- **`bulk`**: clicks select-only. The graph is assumed already-complete (e.g. all of one law's articles + their links). Loaders that pre-fetch the full neighbourhood switch to `bulk` to disable per-click expansion.
-
-`graphMode` is observable; consumers (the empty-state hints, the "load all" button) read it to adjust their copy.
-
-## Rendering — `GraphCanvas.svelte`
-
-Sigma 3 + a thin HTML overlay layer. Sigma renders nodes (`@sigma/node-border`, `@sigma/node-square`) and edges (`arrow`, custom `dashed`) on a WebGL canvas. Cluster labels, activity halos, and mutatie badges are HTML absolutely-positioned over the canvas, kept in sync via `renderer.graphToViewport()`.
-
-### Reducer pattern
-
-Sigma's `nodeReducer` / `edgeReducer` are called once per node/edge per render. They read mutable refs that mirror props:
-
-```ts
-let latestFilters: GraphFilters | null = null;
-let latestPinnedIds = new Set<string>();
-let latestHeatMap: HeatMap = new Map();
-let latestMutatieActive = false;
-// ... etc.
-
-renderer = new Sigma(graph, container, {
-  nodeReducer: (id, data) => {
-    if (suppressed(latestFilters, id)) return { ...data, hidden: true };
-    if (id === focusedId) return { ...data, highlighted: true };
-    if (latestPinnedIds.has(id)) return { ...data, borderColor: '...' };
-    return data;
-  },
-  edgeReducer: (id, data) => {
-    const cat = classifyEdgeKind(data.relation, ...);
-    if (!filterEnabledFor(cat, latestFilters)) return { ...data, hidden: true };
-    return data;
-  },
-  zoomToSizeRatioFunction: (ratio) => Math.min(Math.sqrt(ratio), 1.5),
-  // ...
-});
-```
-
-Mutating a ref + calling `renderer.refresh()` re-runs the reducers. Reducers never mutate the underlying graphology graph — they only return display data.
-
-### Camera persistence
-
-`GraphView` is unmounted/remounted when `mode` switches between `graph` and `split` (the `{#if mode === ...}` blocks). To preserve camera state across that cycle, module-level `_cam` records hold the last camera state, keyed by `'full'` vs `'compact'`. On remount, the camera restores from `_cam` instead of refitting.
-
-### Hover state
-
-Two sources feed the hover indicator:
-
-- Sigma's `enterNode` / `leaveNode` (live mouse position over a node)
-- `externalHoveredId` prop (kept alive while the hover popup is open over the canvas)
-
-The effective hover is `externalHoveredId ?? sigmaHoveredId`. When hover changes, edges incident to the hovered node are promoted (`zIndex = 2`) so they paint on top of dimmed edges.
-
-### Edge zIndex
-
-Sigma sorts edges by their graphology `zIndex` attribute during indexation. The reducer's `zIndex` is ignored for ordering. To raise a specific edge, we mutate the graph attribute directly (`graph.setEdgeAttribute(e, 'zIndex', 2)`), and revert on hover-end.
-
-### afterRender
-
-`renderer.on('afterRender', updateViewportLabels)` runs every frame. `updateViewportLabels()` projects cluster labels, activity halos, and mutatie badges into viewport space — this is where overlays stay in sync with pan/zoom.
-
-The cost is bounded by `activityHalos + mutatieBadges + clusterLabels` count. For 1000+ visible nodes with an active overlay, the per-frame cost is still milliseconds — projection is just a matrix multiply per node.
-
-## Filters, layers, and the sidebar
-
-`GraphSidebar.svelte` is a passive component — it reads `filters` and emits patches via `onFilterChange(patch)`. The store's `setFilters(patch)` does the merge.
-
-| Sidebar section | Drives |
-|---|---|
-| Lagen (layers) | Bulk loaders + node-type toggles. "Active" = there are nodes of that kind on canvas; "potential" count = how many would arrive from cache if you clicked. |
-| Filters → Verbindingen | `structuralEnabled` / `mutationEnabled` / `semanticEnabled` — edge category gates. |
-| Filters → Toon scaffolding-kanten | Bypass `SCAFFOLDING_RELATIONS`. |
-| Overlays | Activates Activiteit or Mutatie. Mutually exclusive. See [`overlays.md`](overlays.md). |
-| Wetten (active instruments) | Multi-select of `activeInstruments: Set<string>`. Filters edges/nodes to those touching at least one active law. |
-| Detail-niveau | Toggles `collapseToLaws` — synthesises instrument "proxy" nodes that stand in for groups of articles. |
-
-## Convergence prune
-
-The default expansion mode is *not* "all direct neighbours" — it's "neighbours reachable via at least two paths from any existing canvas node, plus the focus' direct neighbours". This keeps dense citation hubs (e.g. AWB art. 8:1) from carpet-bombing the canvas.
-
-Implementation: `expandToDepth` in `GraphView.svelte` runs a BFS, then marks nodes reachable through only one path as candidates for removal. The store's prune retains the focus, its level-1, pinned nodes, and nodes reachable via multiple paths.
-
-`?all=unbound` disables the prune entirely; `?all=1` keeps the prune but raises `neighborLimit`. The "Maak ze zichtbaar" button on the sidebar fires `onRevealHidden` which re-expands without pruning, then `sweepOrphans` is called to cull strict orphans only.
-
-## Layout
-
-graphology-layout-forceatlas2 (FA2) runs in a worker via `graphology-layout-forceatlas2/worker`. The worker is started in `GraphView.onMount` and killed in `onDestroy`.
-
-Adding nodes: the FA2 worker continues spinning, so new nodes drift into stable positions over a few frames. After a focus change or a bulk load, `fitWhenSettled` waits for FA2 convergence (a few hundred ms) then fits the camera. `suppressFit()` blocks the fit when the caller already knows the camera shouldn't move (e.g. reveal-hidden, which preserves user context).
-
-If you're adding a new loader, follow the pattern: call the loader, await its `count`, then call `fitWhenSettled` unless you have a reason not to.
-
-## Adding a new node-kind
-
-If the backend gains a new entity type (e.g. `motie`):
-
-1. Add to `GraphNodeKind` union in `types.ts`.
-2. Add a `motieToGraphNode(dto)` converter in `types.ts`.
-3. Extend `detectNodeKind` to recognise the collection.
-4. Add the kind to `GraphFilters.nodeTypeToggles` and `DEFAULT_FILTERS`.
-5. Add a sidebar entry under Lagen.
-6. Add a reader: `src/lib/components/explore/readers/MotieReader.svelte` + register in `KindReader.svelte`.
-7. Add to `SearchOverlay` and `/search` page if the kind is searchable.
-8. If the kind should be loadable as a layer, add `loadMotieLayerGraph` to the store and wire a sidebar button.
-
-That's a lot of touchpoints — by design. Adding a kind is a real feature, not a tweak.
-
-## Related files
-
-| Concern | File |
-|---|---|
-| Type system | `src/lib/graph/types.ts` |
-| Store | `src/lib/graph/graph-store.ts` (assembly), `src/lib/graph/store/*.ts` (implementation) |
-| Sidebar | `src/lib/components/graph/GraphSidebar.svelte` |
-| Orchestrator | `src/lib/components/graph/GraphView.svelte` |
-| Canvas | `src/lib/components/graph/GraphCanvas.svelte` |
-| Edge program (dashed) | `src/lib/components/graph/DashedEdgeProgram.ts` |
-| Hover / cite panels | `src/lib/components/graph/GraphNodePanel.svelte`, `GraphCitePanel.svelte` |
-| Breadcrumb | `src/lib/components/graph/GraphBreadcrumb.svelte` |
+1. Add the collection to `NODE_TYPES` and `BRON_LABEL` in `vocabulary.ts` if the API introduces one.
+2. Give it a kind in `KIND_OF_COLLECTION`, or add a `GraphNodeKind`. The compiler then flags every `Record<GraphNodeKind, ...>` and switch that lacks an entry: `fillFor`, `strokeFor` and `KIND_SHAPE` in `nodeSprites.ts`, `NODE_SIZE` in `GraphView.svelte`. Give it a kind of bron for the filter in `bronKindOf` (`src/lib/verbonden/filter.ts`).
+3. Extend `buildNodeLabel` if the label is not `display_name`.
+4. Add its groups to `GROUPS` in `verbonden/groups.ts` and a reader in `KindReader.svelte` (see [`readers.md`](readers.md)).

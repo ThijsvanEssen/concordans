@@ -1,50 +1,29 @@
-import { apiGet } from './client';
+import { api, unwrap } from './client';
+import type { Schema } from './types';
 
-export type CorpusStats = {
-  article_count: number;
-  judgment_count: number;
-  connection_count: number;
-  source_count: number;
-  last_updated: string | null;
-};
+export type Stats = Schema<'StatsResponse'>;
 
-export type InstrumentStats = {
-  bwb_id: string;
-  shorthand: string;
-  article_count: number;
-};
+// The dataset changes by the day at most: one request per page load is enough.
+let request: Promise<Stats> | null = null;
 
-export type FullCorpusStats = {
-  corpus: CorpusStats;
-  instruments?: InstrumentStats[];
-};
+/** The number of bronnen per collection and of verbindingen per relation. */
+export function getStats(): Promise<Stats> {
+	request ??= unwrap(api.GET('/api/stats')).catch((err) => {
+		request = null;
+		throw err;
+	});
+	return request;
+}
 
-type RawStatsResponse = {
-  nodes: {
-    instruments: number;
-    instrument_articles: number;
-    judgments: number;
-    [key: string]: number;
-  };
-  edges: {
-    total: number;
-    by_relation?: Record<string, number>;
-  };
-};
+export type Coverage = Schema<'JudgmentCoverageResponse'>;
 
-export async function getCorpusStats(): Promise<FullCorpusStats | null> {
-  try {
-    const raw = await apiGet<RawStatsResponse>('/api/stats');
-    return {
-      corpus: {
-        article_count: raw.nodes.instrument_articles,
-        judgment_count: raw.nodes.judgments,
-        connection_count: raw.edges.total,
-        source_count: raw.nodes.instruments,
-        last_updated: null,
-      },
-    };
-  } catch {
-    return null;
-  }
+let coverageRequest: Promise<Coverage> | null = null;
+
+/** The judgments whose text is loaded, per court tier and per court, with their dates. */
+export function getCoverage(): Promise<Coverage> {
+	coverageRequest ??= unwrap(api.GET('/api/stats/coverage')).catch((err) => {
+		coverageRequest = null;
+		throw err;
+	});
+	return coverageRequest;
 }

@@ -1,36 +1,46 @@
 <script lang="ts">
-  // Reader for instrument (wet) nodes. Delegates to WholeLawReader which
-  // already knows how to load and render an entire law with article TOC,
-  // breadcrumbs, and click-through. The bwbId/celex comes from the node key
-  // (instrument nodes use `bwb:BWBR…` or `celex:32010L0064` patterns).
-  import type { GraphNode } from '$lib/graph/types';
-  import WholeLawReader from '../WholeLawReader.svelte';
+	// Reader for instruments: the articles of the whole regulation in natural order. A
+	// publication in the Staatsblad or Staatscourant has no articles of its own: it is
+	// shown by its dates, and the articles it changes are in the panel Verbonden.
+	import ReaderFrame from './ReaderFrame.svelte';
+	import ReaderHead from './ReaderHead.svelte';
+	import { lawIdOf, type GraphNode } from '$lib/graph/types';
+	import WholeLawReader from '../WholeLawReader.svelte';
+	import { formatLongDate, textProp } from './_shared';
 
-  let { node, onNavigate }: {
-    node: GraphNode;
-    onNavigate?: (collection: string, key: string) => void;
-  } = $props();
+	let { node }: { node: GraphNode } = $props();
 
-  // Extract the BWB id from the instrument node. Different ingestion paths
-  // store it in different fields; try the props first, fall back to the key.
-  const bwbId = $derived.by(() => {
-    const p = (node.raw?.props ?? {}) as Record<string, unknown>;
-    const fromProps = (p['bwb_id'] as string | null) ?? (p['celex'] as string | null);
-    if (fromProps) return fromProps;
-    // Keys like "bwb:BWBR0001854" or just "BWBR0001854".
-    if (node.key.startsWith('bwb:')) return node.key.slice(4);
-    if (node.key.startsWith('celex:')) return node.key.slice(6);
-    return node.key;
-  });
+	const p = $derived(node.raw?.props ?? {});
+	const bwbId = $derived(lawIdOf(p) ?? node.key.toUpperCase());
+	const publication = $derived(textProp(p.publication_kind));
+	const PUBLICATION: Record<string, string> = { Stb: 'Staatsblad', Stcrt: 'Staatscourant' };
 </script>
 
-<div class="r-instrument">
-  <WholeLawReader {bwbId} {onNavigate} />
-</div>
+<ReaderFrame>
+	{#if publication}
+		<ReaderHead
+			collection="instruments"
+			title={textProp(p.display_name) ?? node.label}
+			place={[PUBLICATION[publication] ?? publication]}
+		>
+			<p class="publication">
+				{#if textProp(p.date_signed)}Ondertekend {formatLongDate(textProp(p.date_signed))}.{/if}
+				{#if textProp(p.date_published)}Gepubliceerd {formatLongDate(
+						textProp(p.date_published)
+					)}.{/if}
+			</p>
+			<p class="publication">De artikelen die deze publicatie wijzigt, staan in Verbonden.</p>
+		</ReaderHead>
+	{:else}
+		<WholeLawReader {bwbId} />
+	{/if}
+</ReaderFrame>
 
 <style>
-  .r-instrument {
-    height: 100%;
-    overflow-y: auto;
-  }
+	.publication {
+		margin: 0 0 var(--s-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
 </style>

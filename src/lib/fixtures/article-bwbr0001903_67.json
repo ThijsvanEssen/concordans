@@ -1,0 +1,241 @@
+{
+	"article": {
+		"key": "bwbr0001903_67",
+		"bwb_id": "BWBR0001903",
+		"article_number": "67",
+		"display_name": "Artikel 67 Wetboek van Strafvordering",
+		"text": "1. Een bevel tot voorlopige hechtenis kan worden gegeven in geval van verdenking van:\na. een misdrijf waarop naar de wettelijke omschrijving een gevangenisstraf van vier jaren of meer is gesteld;\nb. een der misdrijven omschreven in de artikelen 132, 138a, 138aa, 138ab, 138b, 138c, 139c, 139d, eerste en tweede lid, 139g, 140, tweede lid, 141a, 137c, derde lid, 137d, eerste lid, 137e, tweede lid, 137g, tweede lid, 151, 184a, 189a, eerste en derde lid, 251, 254b, 254ba, 254c, 272, 284, eerste lid, 285, eerste lid, 285b, 285c, 285d, 300, eerste lid, 321, 326c, tweede lid, 326d, 340, 342, 344a, 344b, 347, eerste lid, 350, 350a, 350c, 350d351, 372, 395, 417bis, 420bis.1, 420quater en 420quater.1 van het Wetboek van Strafrecht;\nc. een der misdrijven omschreven in: artikel 2.66 van de Energiewet; artikel 8.12, eerste en tweede lid, van de Wet dieren; de artikelen 175, eerste lid, 176, eerste lid, en 176, tweede lid, voor zover dit betreft artikel 7, eerste lid, onderdelen a en c, van de Wegenverkeerswet 1994; artikel 30, tweede lid, van de Wet buitengewone bevoegdheden burgerlijk gezag; de artikelen 52, 53, eerste lid en 54 van de Wet gewetensbezwaren militaire dienst; artikel 36 van de Wet op de kansspelen; de artikelen 10c, 11, tweede lid, en 11a van de Opiumwet; artikel 55, tweede lid, van de Wet wapens en munitie; artikel 11 van de Wet tijdelijk huisverbod; artikel 8 van de Tijdelijke wet bestuurlijke maatregelen terrorismebestrijding.\n2. Het bevel kan voorts worden gegeven indien geen vaste woon- of verblijfplaats in Nederland van de verdachte kan worden vastgesteld en hij verdacht wordt van een misdrijf waarvan de rechtbanken kennis nemen en waarop, naar de wettelijke omschrijving gevangenisstraf is gesteld.\n3. De voorgaande leden van dit artikel vinden alleen toepassing wanneer uit feiten of omstandigheden blijkt van ernstige bezwaren tegen de verdachte.\n4. In afwijking van het derde lid zijn bij verdenking van een terroristisch misdrijf ernstige bezwaren niet vereist voor een bevel tot bewaring. Bij verdenking van een van de misdrijven omschreven in de artikelen 114b, 120b, 140a, 176b, 289a, 304b en 415b, van het Wetboek van Strafrecht kan tevens een bevel tot gevangenhouding van de verdachte worden gegeven voor een duur van telkens ten hoogste tien dagen zonder dat ten aanzien van de verdachte ernstige bezwaren bestaan, waarbij de duur van de bevelen tot gevangenhouding zonder ernstige bezwaren tezamen een periode van dertig dagen niet te boven gaat."
+	},
+	"citations": [
+		{
+			"start": 235,
+			"end": 248,
+			"text": "artikelen 132",
+			"target": {
+				"id": "articles/bwbr0001854_132",
+				"key": "bwbr0001854_132",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "132",
+				"display_name": "Artikel 132 Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 250,
+			"end": 254,
+			"text": "138a",
+			"target": {
+				"id": "articles/bwbr0001854_138a",
+				"key": "bwbr0001854_138a",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "138a",
+				"display_name": "Artikel 138a Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 256,
+			"end": 261,
+			"text": "138aa",
+			"target": {
+				"id": "articles/bwbr0001854_138aa",
+				"key": "bwbr0001854_138aa",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "138aa",
+				"display_name": "Artikel 138aa Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 263,
+			"end": 268,
+			"text": "138ab",
+			"target": {
+				"id": "articles/bwbr0001854_138ab",
+				"key": "bwbr0001854_138ab",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "138ab",
+				"display_name": "Artikel 138ab Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 270,
+			"end": 274,
+			"text": "138b",
+			"target": {
+				"id": "articles/bwbr0001854_138b",
+				"key": "bwbr0001854_138b",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "138b",
+				"display_name": "Artikel 138b Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 276,
+			"end": 280,
+			"text": "138c",
+			"target": {
+				"id": "articles/bwbr0001854_138c",
+				"key": "bwbr0001854_138c",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "138c",
+				"display_name": "Artikel 138c Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 282,
+			"end": 286,
+			"text": "139c",
+			"target": {
+				"id": "articles/bwbr0001854_139c",
+				"key": "bwbr0001854_139c",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "139c",
+				"display_name": "Artikel 139c Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 288,
+			"end": 314,
+			"text": "139d, eerste en tweede lid",
+			"target": {
+				"id": "articles/bwbr0001854_139d",
+				"key": "bwbr0001854_139d",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "139d",
+				"display_name": "Artikel 139d Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 316,
+			"end": 320,
+			"text": "139g",
+			"target": {
+				"id": "articles/bwbr0001854_139g",
+				"key": "bwbr0001854_139g",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "139g",
+				"display_name": "Artikel 139g Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 322,
+			"end": 337,
+			"text": "140, tweede lid",
+			"target": {
+				"id": "articles/bwbr0001854_140",
+				"key": "bwbr0001854_140",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "140",
+				"display_name": "Artikel 140 Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 339,
+			"end": 343,
+			"text": "141a",
+			"target": {
+				"id": "articles/bwbr0001854_141a",
+				"key": "bwbr0001854_141a",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "141a",
+				"display_name": "Artikel 141a Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 345,
+			"end": 360,
+			"text": "137c, derde lid",
+			"target": {
+				"id": "articles/bwbr0001854_137c",
+				"key": "bwbr0001854_137c",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "137c",
+				"display_name": "Artikel 137c Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 362,
+			"end": 378,
+			"text": "137d, eerste lid",
+			"target": {
+				"id": "articles/bwbr0001854_137d",
+				"key": "bwbr0001854_137d",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "137d",
+				"display_name": "Artikel 137d Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		},
+		{
+			"start": 380,
+			"end": 396,
+			"text": "137e, tweede lid",
+			"target": {
+				"id": "articles/bwbr0001854_137e",
+				"key": "bwbr0001854_137e",
+				"collection": "articles",
+				"bwb_id": "BWBR0001854",
+				"article_number": "137e",
+				"display_name": "Artikel 137e Wetboek van Strafrecht"
+			},
+			"kind": "article",
+			"confidence": 1.0
+		}
+	],
+	"judgments": [
+		{
+			"id": "judgments/ecli_nl_gharl_2024_7016",
+			"key": "ecli_nl_gharl_2024_7016",
+			"display_name": "Gerechtshof Arnhem-Leeuwarden 2024-10-23 / 21-001347-24",
+			"ecli": "ECLI:NL:GHARL:2024:7016"
+		},
+		{
+			"id": "judgments/ecli_nl_ghams_2024_3325",
+			"key": "ecli_nl_ghams_2024_3325",
+			"display_name": "Gerechtshof Amsterdam 2024-12-04 / 23-000782-24",
+			"ecli": "ECLI:NL:GHAMS:2024:3325"
+		},
+		{
+			"id": "judgments/ecli_nl_ghams_2024_3411",
+			"key": "ecli_nl_ghams_2024_3411",
+			"display_name": "Gerechtshof Amsterdam 2024-12-11 / 23-002258-22",
+			"ecli": "ECLI:NL:GHAMS:2024:3411"
+		}
+	]
+}

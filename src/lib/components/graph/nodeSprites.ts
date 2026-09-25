@@ -1,186 +1,337 @@
-// Per-kind shape sprites for sigma's NodeImageProgram.
+// The colours and shapes of the canvas, read from the design tokens.
 //
-// We keep solid kind colours (NODE_FILL / NODE_STROKE in GraphView.svelte) and
-// vary only the silhouette. Sprites are generated once at module init as
-// data: URLs so there are no asset files to manage and colours stay sourced
-// from a single table here.
-//
-// Selection: when a node is the current focus, swap to the `focused` sprite
-// variant, which redraws the same shape with a crimson outer stroke. The
-// `border` program retains its own selection ring for circle kinds — only the
-// shapes rendered via NodeImageProgram need this swap.
+// Sigma draws in WebGL and cannot read CSS variables, so the tokens are read once
+// from `getComputedStyle` (`tokens()`) and every colour on the canvas comes from
+// them: change a token in AppShell.svelte and the canvas follows after a reload.
+// Shapes are generated once as SVG sprites (data URLs) for sigma's NodeImageProgram.
+// This module is the one place that defines colour and shape per kind and colour
+// and line style per relation; the legend and KindGlyph read it too.
 
+import type { ContainerKind } from '$lib/graph/container-membership';
 import type { GraphNodeKind } from '$lib/graph/types';
+import type { Relation } from '$lib/vocabulary';
+
+export type Tokens = {
+	paper: string;
+	paper2: string;
+	rule: string;
+	ruleStrong: string;
+	ink: string;
+	ink2: string;
+	ink3: string;
+	accent: string;
+	accentSoft: string;
+	indigo: string;
+	moss: string;
+	plum: string;
+	slate: string;
+	fontSerif: string;
+	fontSans: string;
+};
+
+// The values of AppShell.svelte, for the server and for a page without the tokens.
+const FALLBACK: Tokens = {
+	paper: '#f8f6f1',
+	paper2: '#f1eee7',
+	rule: '#e3dfd6',
+	ruleStrong: '#c9c4b8',
+	ink: '#1c1b19',
+	ink2: '#4a4742',
+	ink3: '#77736b',
+	accent: '#8c2f28',
+	accentSoft: '#f3e4e2',
+	indigo: '#2f3e5e',
+	moss: '#456247',
+	plum: '#5e3a55',
+	slate: '#4b5563',
+	fontSerif: "'Newsreader', Georgia, serif",
+	fontSans: "'Schibsted Grotesk', system-ui, sans-serif"
+};
+
+const NAMES: Record<keyof Tokens, string> = {
+	paper: '--paper',
+	paper2: '--paper-2',
+	rule: '--rule',
+	ruleStrong: '--rule-strong',
+	ink: '--ink',
+	ink2: '--ink-2',
+	ink3: '--ink-3',
+	accent: '--accent',
+	accentSoft: '--accent-soft',
+	indigo: '--indigo',
+	moss: '--moss',
+	plum: '--plum',
+	slate: '--slate',
+	fontSerif: '--font-serif',
+	fontSans: '--font-sans'
+};
+
+let cached: Tokens | null = null;
+
+/** The design tokens, read once from the document. */
+export function tokens(): Tokens {
+	if (cached) return cached;
+	if (typeof document === 'undefined') return FALLBACK;
+	const style = getComputedStyle(document.documentElement);
+	const read = (name: string, fallback: string) => style.getPropertyValue(name).trim() || fallback;
+	const t = {} as Tokens;
+	for (const key of Object.keys(NAMES) as (keyof Tokens)[])
+		t[key] = read(NAMES[key], FALLBACK[key]);
+	// A page still without the stylesheet keeps the fallback and reads again later.
+	if (!style.getPropertyValue('--paper').trim()) return FALLBACK;
+	cached = t;
+	return t;
+}
 
 export type NodeShape = 'circle' | 'diamond' | 'roundedRect' | 'hexagon';
 
-// Live-canvas palette aligned met de homepage-legenda (Hero-grafiek + Drie
-// domeinen-tegels): artikel = open ring (paper-vulling, ink stroke); arrest
-// = vol indigo; dossier = open accent-diamant. Instrument blijft het
-// donkere "drager"-symbool. Kept duplicated here on purpose: sprites need
-// the colour at module-init time, and re-importing the Svelte file would
-// pull in the whole graph view.
-const PAPER = '#FFFDF4';
-const FILL: Record<GraphNodeKind, string> = {
-  article:    PAPER,
-  instrument: '#1A1814',
-  judgment:   '#2B3A5C',
-  dossier:    PAPER,
-  commissie:  '#8A6B3A',
-  fractie:    '#44505E',
-  lid:        '#44505E',
-  tkstuk:     '#7A1F1A',
-  activity:   '#8A6B3A',
-  other:      PAPER,
-};
-const STROKE: Record<GraphNodeKind, string> = {
-  article:    '#1A1814',
-  instrument: '#1A1814',
-  judgment:   '#2B3A5C',
-  dossier:    '#7A1F1A',
-  commissie:  '#8A6B3A',
-  fractie:    '#44505E',
-  lid:        '#44505E',
-  tkstuk:     '#7A1F1A',
-  activity:   '#8A6B3A',
-  other:      '#9A9485',
-};
-const STUB_FILL = '#FFFDF4';
-const STUB_STROKE = '#B8B0A4';
-const FOCUS_STROKE = '#7A1F1A'; // crimson — matches the existing selectionColor
-
-export const KIND_SHAPE: Record<GraphNodeKind, NodeShape> = {
-  article:    'circle',     // open ring (paper fill, ink stroke) — homepage legend
-  instrument: 'diamond',    // filled dark diamond — top-level wet
-  judgment:   'circle',     // solid indigo dot — homepage legend
-  dossier:    'diamond',    // open accent diamond — homepage legend
-  tkstuk:     'hexagon',
-  commissie:  'hexagon',
-  activity:   'hexagon',
-  fractie:    'hexagon',
-  lid:        'hexagon',
-  other:      'circle',
-};
-
-export function shapeFor(kind: GraphNodeKind): NodeShape {
-  return KIND_SHAPE[kind] ?? 'circle';
+// Articles: open ink circle. Judgments: indigo disc. Documents: accent hexagon.
+// Instruments: ink diamond. Dossiers: open accent diamond. Committees and
+// activities: grey. Factions and members: plum, in a badge shape for members.
+export function fillFor(kind: GraphNodeKind): string {
+	const t = tokens();
+	switch (kind) {
+		case 'article':
+		case 'dossier':
+		case 'other':
+			return t.paper;
+		case 'instrument':
+			return t.ink;
+		case 'judgment':
+			return t.indigo;
+		case 'document':
+			return t.accent;
+		case 'committee':
+		case 'activity':
+			return t.ink3;
+		case 'faction':
+		case 'member':
+			return t.plum;
+	}
 }
 
-// Sprite viewBox is 32×32 with shapes centred at (16,16) and "radius" 14.
-// Sigma renders the image into a square of side 2*size centred on the node;
-// the shape's bounding box matches that square so visual weight tracks
-// `size` the same way circles do.
+export function strokeFor(kind: GraphNodeKind): string {
+	const t = tokens();
+	switch (kind) {
+		case 'article':
+		case 'instrument':
+			return t.ink;
+		case 'judgment':
+			return t.indigo;
+		case 'dossier':
+		case 'document':
+			return t.accent;
+		case 'committee':
+		case 'activity':
+		case 'other':
+			return t.ink3;
+		case 'faction':
+		case 'member':
+			return t.plum;
+	}
+}
+
+/**
+ * Edge colours by relation: references between articles and the structure of the
+ * law in moss, appeals and gedaan-in in slate, toelichting and ingediend-door
+ * in plum, changes in the accent, the rest (gaat over, geleid door) in grey.
+ */
+export function edgeColorFor(relation: Relation, sourceKind: GraphNodeKind): string {
+	const t = tokens();
+	switch (relation) {
+		case 'REFERS_TO':
+			return sourceKind === 'article' ? t.moss : t.slate;
+		case 'PART_OF':
+		case 'BASED_ON':
+		case 'IMPLEMENTS':
+		case 'LEGISLATED_IN':
+		case 'VERSION_OF':
+		case 'SCOPED_BY':
+			return t.moss;
+		case 'EXPLAINS':
+		case 'AUTHORED':
+			return t.plum;
+		case 'AMENDS':
+		case 'INTRODUCES':
+		case 'REPEALS':
+			return t.accent;
+		case 'APPEAL_OF':
+		case 'ADVISES_ON':
+		case 'MADE_IN':
+			return t.slate;
+		default:
+			return t.ink3;
+	}
+}
+
+const HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
+
+/** `color` at `alpha` opacity, as `rgba()`; falls back to `color` unchanged if it is not `#rrggbb`. */
+export function withAlpha(color: string, alpha: number): string {
+	const m = HEX.exec(color.trim());
+	if (!m) return color;
+	const [r, g, b] = m.slice(1).map((h) => parseInt(h, 16));
+	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * `color` mixed toward `--paper`, opaque: `strength` 1 is the colour itself, 0 the paper.
+ * Sigma draws on a transparent WebGL canvas, where a line with a low alpha blends toward
+ * white rather than toward the paper behind it; an opaque mix keeps its hue.
+ */
+export function towardPaper(color: string, strength: number): string {
+	const c = HEX.exec(color.trim());
+	const p = HEX.exec(tokens().paper.trim());
+	if (!c || !p) return color;
+	const mix = (i: number) =>
+		Math.round(parseInt(c[i], 16) * strength + parseInt(p[i], 16) * (1 - strength));
+	return `rgb(${mix(1)}, ${mix(2)}, ${mix(3)})`;
+}
+
+/**
+ * The colour of an edge or a node border pushed out of focus (hover, stale context):
+ * `--rule-strong` alone is close enough to `--paper` to read as a blank line, so
+ * de-emphasis mixes `--ink-3` toward the paper instead of picking a paler grey.
+ */
+export function dimColor(strength = 0.4): string {
+	return towardPaper(tokens().ink3, strength);
+}
+
+/** The hull colour of a container: the same family as its `PART_OF`/`MEMBER_OF` edges would be. */
+export function hullColorFor(kind: ContainerKind): string {
+	const t = tokens();
+	switch (kind) {
+		case 'instrument':
+			return t.moss;
+		case 'faction':
+			return t.plum;
+		case 'committee':
+			return t.ink3;
+		case 'dossier':
+			return t.accent;
+	}
+}
+
+export type EdgeStyle = 'solid' | 'dashed' | 'dotted';
+
+/** PART_OF and LED_BY are dotted; a change that is proposed, and a vote, are dashed. */
+export function edgeStyleFor(relation: Relation, status: string | null | undefined): EdgeStyle {
+	if (relation === 'PART_OF' || relation === 'LED_BY') return 'dotted';
+	if (relation === 'VOTED') return 'dashed';
+	if (
+		(relation === 'AMENDS' || relation === 'INTRODUCES' || relation === 'REPEALS') &&
+		status === 'voorgesteld'
+	)
+		return 'dashed';
+	return 'solid';
+}
+
+export const KIND_SHAPE: Record<GraphNodeKind, NodeShape> = {
+	article: 'circle',
+	instrument: 'diamond',
+	judgment: 'circle',
+	dossier: 'diamond',
+	document: 'hexagon',
+	committee: 'hexagon',
+	activity: 'diamond',
+	faction: 'hexagon',
+	member: 'roundedRect',
+	other: 'circle'
+};
+
+export const shapeFor = (kind: GraphNodeKind): NodeShape => KIND_SHAPE[kind];
+
+// A sprite is drawn in a 32×32 box, the shape centred at (16,16) with "radius" 14,
+// onto a canvas of SPRITE_PX and handed over as a PNG. Not as an SVG: sigma's image
+// program draws its atlas once, as soon as an image has loaded, and Chrome may not
+// have rasterized an SVG by then, so the atlas holds a blank and the bron never shows.
 const VB = 32;
 const C = 16;
 const R = 14;
+const SPRITE_PX = 128;
 
-function pathFor(shape: NodeShape): string {
-  switch (shape) {
-    case 'circle':
-      return `<circle cx="${C}" cy="${C}" r="${R}" />`;
-    case 'diamond':
-      return `<polygon points="${C},${C - R} ${C + R},${C} ${C},${C + R} ${C - R},${C}" />`;
-    case 'hexagon': {
-      // Flat-top hexagon — wider than tall feels more "card-like" for hubs.
-      const dx = R;
-      const dy = R * 0.866; // sin(60°)
-      const hx = R * 0.5;   // cos(60°)
-      const pts = [
-        [C - dx, C],
-        [C - hx, C - dy],
-        [C + hx, C - dy],
-        [C + dx, C],
-        [C + hx, C + dy],
-        [C - hx, C + dy],
-      ];
-      return `<polygon points="${pts.map((p) => p.join(',')).join(' ')}" />`;
-    }
-    case 'roundedRect': {
-      const s = R * 1.7; // side length — area parity with the circle
-      const x = C - s / 2;
-      const rr = s * 0.22;
-      return `<rect x="${x}" y="${x}" width="${s}" height="${s}" rx="${rr}" ry="${rr}" />`;
-    }
-  }
+function tracePath(ctx: CanvasRenderingContext2D, shape: NodeShape): void {
+	ctx.beginPath();
+	switch (shape) {
+		case 'circle':
+			ctx.arc(C, C, R, 0, Math.PI * 2);
+			break;
+		case 'diamond':
+			ctx.moveTo(C, C - R);
+			ctx.lineTo(C + R, C);
+			ctx.lineTo(C, C + R);
+			ctx.lineTo(C - R, C);
+			break;
+		case 'hexagon': {
+			const dy = R * 0.866;
+			const hx = R * 0.5;
+			ctx.moveTo(C - R, C);
+			ctx.lineTo(C - hx, C - dy);
+			ctx.lineTo(C + hx, C - dy);
+			ctx.lineTo(C + R, C);
+			ctx.lineTo(C + hx, C + dy);
+			ctx.lineTo(C - hx, C + dy);
+			break;
+		}
+		case 'roundedRect': {
+			const size = R * 1.7;
+			ctx.roundRect(C - size / 2, C - size / 2, size, size, size * 0.22);
+			break;
+		}
+	}
+	ctx.closePath();
 }
 
-function svgFor(shape: NodeShape, fill: string, stroke: string, strokeWidth: number): string {
-  // The path string starts with the tag name (circle/polygon/rect); inject
-  // fill/stroke as attributes by string-splicing — cheaper than building a
-  // DOM and serialising it.
-  const raw = pathFor(shape);
-  const attrs = `fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}"`;
-  const withAttrs = raw.replace(/^<(\w+)\s/, `<$1 ${attrs} `);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VB} ${VB}">${withAttrs}</svg>`;
-}
-
-function toDataUrl(svg: string): string {
-  // SVG data URLs don't strictly need base64, but base64 avoids any % / # /
-  // quote escaping bugs across browsers and keeps the URL stable.
-  if (typeof btoa === 'function') return `data:image/svg+xml;base64,${btoa(svg)}`;
-  // SSR fallback — node-image only runs in the browser anyway, but the
-  // module gets imported during SSR so we must not throw at import time.
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+function drawSprite(shape: NodeShape, fill: string, stroke: string, strokeWidth: number): string {
+	const canvas = document.createElement('canvas');
+	canvas.width = canvas.height = SPRITE_PX;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return '';
+	ctx.scale(SPRITE_PX / VB, SPRITE_PX / VB);
+	tracePath(ctx, shape);
+	ctx.fillStyle = fill;
+	ctx.fill();
+	ctx.strokeStyle = stroke;
+	ctx.lineWidth = strokeWidth;
+	ctx.stroke();
+	return canvas.toDataURL('image/png');
 }
 
 type Variant = 'normal' | 'focused' | 'stub';
 const cache: Map<string, string> = new Map();
 
-function key(kind: GraphNodeKind, variant: Variant): string {
-  return `${kind}:${variant}`;
-}
-
 function buildSprite(kind: GraphNodeKind, variant: Variant): string {
-  const shape = shapeFor(kind);
-  if (variant === 'stub') {
-    // Stubs houden hun paper-vulling (signaleert "nog niet ingeladen"),
-    // maar krijgen de kind-eigen stroke-kleur in plaats van neutraal
-    // grijs. Anders zien een stub-Publicatie (hexagon), stub-Artikel
-    // (cirkel) en stub-Dossier (ruit) er bij ver uitzoomen alle drie
-    // uit als een naamloos wit puntje.
-    return svgFor(shape, STUB_FILL, STROKE[kind] ?? STUB_STROKE, 1.5);
-  }
-  if (variant === 'focused') return svgFor(shape, FILL[kind], FOCUS_STROKE, 2.8);
-  // Open silhouetten (artikel-ring, dossier-diamant) hebben extra stroke
-  // nodig anders verdwijnt het paper-vlak in de papier-achtergrond bij
-  // uitgezoomd kijken. Gevulde vormen (arrest, instrument) zijn al
-  // contrastrijk genoeg met de minimale stroke.
-  const isOpen = FILL[kind] === PAPER;
-  return svgFor(shape, FILL[kind], STROKE[kind], isOpen ? 2.4 : 1);
+	const shape = shapeFor(kind);
+	const t = tokens();
+	// A stub (referenced, not loaded yet) keeps a paper fill and the stroke of its kind.
+	if (variant === 'stub') return drawSprite(shape, t.paper, strokeFor(kind), 1.5);
+	// The focused bron takes the accent as an outer stroke.
+	if (variant === 'focused') return drawSprite(shape, fillFor(kind), t.accent, 2.8);
+	const isOpen = fillFor(kind) === t.paper;
+	return drawSprite(shape, fillFor(kind), strokeFor(kind), isOpen ? 2.4 : 1);
 }
 
 export function spriteFor(kind: GraphNodeKind, stub: boolean, focused: boolean): string {
-  const variant: Variant = stub ? 'stub' : focused ? 'focused' : 'normal';
-  const k = key(kind, variant);
-  let url = cache.get(k);
-  if (!url) {
-    url = toDataUrl(buildSprite(kind, variant));
-    cache.set(k, url);
-  }
-  return url;
+	const variant: Variant = stub ? 'stub' : focused ? 'focused' : 'normal';
+	const k = `${kind}:${variant}`;
+	let url = cache.get(k);
+	if (!url) {
+		url = buildSprite(kind, variant);
+		cache.set(k, url);
+	}
+	return url;
 }
 
-// With keepWithinCircle:true the sprite is clipped to the inscribed circle
-// of the node's nominal radius, and the shape (drawn at 14/16 of the sprite
-// viewBox) ends up at ~0.875 × node_radius on screen. That's close enough to
-// the border program's circles that no size bump is needed — kept as a
-// constant for future tuning rather than baking the literal 1.0 into the
-// call site.
 export const IMAGE_SIZE_BUMP = 1.0;
 
-// Per-axis badge offset at 45° (top-right), in units of node radius. The
-// reference is the border-program circle, where the badge sits on the
-// silhouette at cos(45°) = 0.707. Non-circle silhouettes at 45° sit inside
-// that circle: a diamond's 45° edge is at half the vertex radius, a hexagon
-// is between vertex and flat, and a rounded square's near-corner is just
-// inside the inscribed circle.
+// Per-axis badge offset at 45° (top-right), in units of node radius.
 const BADGE_AXIS_OFFSET: Record<NodeShape, number> = {
-  circle:      0.707,
-  diamond:     0.44,
-  hexagon:     0.55,
-  roundedRect: 0.62,
+	circle: 0.707,
+	diamond: 0.44,
+	hexagon: 0.55,
+	roundedRect: 0.62
 };
 
 export function badgeAxisOffset(kind: GraphNodeKind): number {
-  return BADGE_AXIS_OFFSET[shapeFor(kind)];
+	return BADGE_AXIS_OFFSET[shapeFor(kind)];
 }

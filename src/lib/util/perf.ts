@@ -13,46 +13,46 @@
 // silence everything for production / clean console.
 
 let enabled =
-  typeof import.meta !== 'undefined'
-    ? (import.meta.env?.PUBLIC_PERF as string | undefined) !== '0'
-    : true;
+	typeof import.meta !== 'undefined'
+		? (import.meta.env?.PUBLIC_PERF as string | undefined) !== '0'
+		: true;
 
 export function setPerfEnabled(v: boolean) {
-  enabled = v;
+	enabled = v;
 }
 
 function fmt(ms: number) {
-  if (ms < 1) return `${ms.toFixed(2)}ms`;
-  if (ms < 100) return `${ms.toFixed(1)}ms`;
-  return `${Math.round(ms)}ms`;
+	if (ms < 1) return `${ms.toFixed(2)}ms`;
+	if (ms < 100) return `${ms.toFixed(1)}ms`;
+	return `${Math.round(ms)}ms`;
 }
 
 export function perfStart(label: string) {
-  if (!enabled) return () => {};
-  const t0 = performance.now();
-  return (extra?: string) => {
-    const ms = performance.now() - t0;
-    const tag = ms > 200 ? '[perf!]' : '[perf]';
-    console.log(`${tag} ${label} — ${fmt(ms)}${extra ? ` (${extra})` : ''}`);
-  };
+	if (!enabled) return () => {};
+	const t0 = performance.now();
+	return (extra?: string) => {
+		const ms = performance.now() - t0;
+		const tag = ms > 200 ? '[perf!]' : '[perf]';
+		console.log(`${tag} ${label} — ${fmt(ms)}${extra ? ` (${extra})` : ''}`);
+	};
 }
 
 export async function perfAwait<T>(label: string, p: Promise<T>): Promise<T> {
-  if (!enabled) return p;
-  const end = perfStart(label);
-  try {
-    return await p;
-  } finally {
-    end();
-  }
+	if (!enabled) return p;
+	const end = perfStart(label);
+	try {
+		return await p;
+	} finally {
+		end();
+	}
 }
 
 export function perfRun<T>(label: string, fn: () => T): T {
-  if (!enabled) return fn();
-  const end = perfStart(label);
-  try {
-    return fn();
-  } finally {
-    end();
-  }
+	if (!enabled) return fn();
+	const end = perfStart(label);
+	try {
+		return fn();
+	} finally {
+		end();
+	}
 }

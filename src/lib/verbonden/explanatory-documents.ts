@@ -1,0 +1,109 @@
+// The explanatory documents of an article: only those that actually name it, not every
+// toelichting of a dossier that also touched its law. API 0.5 lists them on
+// `GET /api/articles/{bwb_id}/{n}/explained-by`. Before that they are read here from the
+// documents that point at the article in its own node response.
+// TODO(backend B4): the fallback goes when every article answers on `explained-by`.
+import { api } from '$lib/api/client';
+import type { Schema } from '$lib/api/types';
+import { isExplanatory } from './chamber';
+import { describe, lidOfMatch, type Neighbor, type Row } from './rows';
+
+/**
+ * The relations by which a document is tied to the article's text. A toelichting that
+ * only names the article (REFERS_TO) explains another law and is left out.
+ */
+const BINDING = new Set(['EXPLAINS', 'AMENDS', 'INTRODUCES']);
+
+type Found = { row: Row; date: string; binding: boolean };
+
+export function mergeExplanatory(neighbors: Neighbor[]): Row[] {
+	const found = new Map<string, Found>();
+
+	for (const n of neighbors) {
+		const props = n.props ?? {};
+		if (n.collection !== 'documents' || n.direction !== 'inbound') continue;
+		if (
+			!isExplanatory({
+				kind: props.kind as string | null,
+				is_explanatory: props.is_explanatory as boolean | null
+			})
+		)
+			continue;
+		if (!BINDING.has(n.relation ?? '') || found.has(n.key)) continue;
+		found.set(n.key, {
+			binding: true,
+			date: typeof props.date === 'string' ? props.date : '',
+			row: {
+				ref: { collection: 'documents', key: n.key },
+				...describe('documents', n.key, n.display_name, props),
+				kind: 'toelichtingen',
+				lid: lidOfMatch(
+					typeof n.meta?.raw_match === 'string' ? (n.meta.raw_match as string) : null
+				),
+				derived: n.confidence != null && n.confidence < 1,
+				confidence: n.confidence ?? null,
+				edgeId: n.edge_id ?? null,
+				snippet: typeof n.meta?.snippet === 'string' ? (n.meta.snippet as string) : null,
+				match: typeof n.meta?.raw_match === 'string' ? (n.meta.raw_match as string) : null,
+				relation: 'EXPLAINS',
+				direction: 'inbound',
+				props
+			}
+		});
+	}
+
+	// Documents bound to the article, newest first. A dossier's other toelichting is not
+	// read at all: without a confirmed edge to this article it would only ever be a
+	// guess that it was named, and the panel shows it named or not at all.
+	return [...found.values()]
+		.filter((f) => f.binding)
+		.sort((a, b) => b.date.localeCompare(a.date))
+		.map((f) => f.row);
+}
+
+/** The rows of `explained-by` that name the article itself, not its law at dossier level. */
+export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Row[] {
+	const rows = new Map<string, Row>();
+	for (const item of items) {
+		if (item.scope !== 'article') continue;
+		const d = item.document;
+		if (rows.has(d.key)) continue;
+		// `s-40` is the id of a section, not its number: it names no paragraph.
+		const anchor = item.section_anchor;
+		const section = anchor && !/^s-\d+$/.test(anchor) ? /(\d+(?:\.\d+)*)/.exec(anchor) : null;
+		rows.set(d.key, {
+			ref: { collection: 'documents', key: d.key },
+			...describe('documents', d.key, d.title, { ...d }),
+			kind: 'toelichtingen',
+			at: item.section_anchor ?? null,
+			position: section ? `§ ${section[1]}` : null,
+			derived: item.confidence != null && item.confidence < 1,
+			confidence: item.confidence ?? null,
+			relation: 'EXPLAINS',
+			direction: 'inbound',
+			props: { ...d }
+		});
+	}
+	return [...rows.values()];
+}
+
+export async function explanatoryDocuments(
+	article: { bwbId: string | null; number: string | null },
+	neighbors: Neighbor[],
+	signal?: AbortSignal
+): Promise<Row[]> {
+	if (article.bwbId && article.number) {
+		const { data, response } = await api
+			.GET('/api/articles/{bwb_id}/{article_number}/explained-by', {
+				params: {
+					path: { bwb_id: article.bwbId, article_number: article.number },
+					query: { limit: 50 }
+				},
+				signal
+			})
+			.catch(() => ({ data: undefined, response: null }));
+		// An empty answer means the pipeline has not reached this article: the fallback still applies.
+		if (response?.ok && data && data.items.length > 0) return rowsOfExplanations(data.items);
+	}
+	return mergeExplanatory(neighbors);
+}

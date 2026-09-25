@@ -1,43 +1,55 @@
 <script lang="ts">
-	// Scroll container and load/empty/error states shared by the text readers
-	// (Article, Judgment). explore/+page.svelte sizes `.reader-frame` per mode.
+	// The one frame of every reader: the scroll container, the margins, the width of the
+	// column and the load, empty and error states. A reader never sets its own padding,
+	// width or scroll; the column it stands in sets them for all readers alike, through
+	// --reader-pad-top, --reader-pad-left, --reader-pad-right and --reader-max
+	// (explore/+page.svelte). So the text keeps its place and width whatever opens
+	// beside it, and the scrollbar keeps its gutter whether or not the text scrolls.
 	import type { Snippet } from 'svelte';
 
 	let {
-		status,
+		status = 'ready',
 		message = '',
 		children
 	}: {
-		status: 'empty' | 'loading' | 'error' | 'ready';
+		status?: 'empty' | 'loading' | 'error' | 'ready';
 		message?: string;
 		children?: Snippet;
 	} = $props();
 </script>
 
 <div class="reader-frame">
-	{#if status === 'empty'}
-		<div class="reader-empty">
-			<p>Selecteer een artikel, arrest of parlementaire bron om de inhoud hier te lezen.</p>
-		</div>
-	{:else if status === 'loading'}
-		<div class="reader-loading">
-			<div class="skeleton-h"></div>
-			<div class="skeleton-body"></div>
-			<div class="skeleton-body skeleton-body--short"></div>
-		</div>
-	{:else if status === 'error'}
-		<div class="reader-error">{message}</div>
-	{:else}
-		{@render children?.()}
-	{/if}
+	<div class="reader-frame__col">
+		{#if status === 'empty'}
+			<div class="reader-empty">
+				<p>Selecteer een artikel, uitspraak of parlementaire bron om de inhoud hier te lezen.</p>
+			</div>
+		{:else if status === 'loading'}
+			<div class="reader-loading">
+				<div class="skeleton-h"></div>
+				<div class="skeleton-body"></div>
+				<div class="skeleton-body skeleton-body--short"></div>
+			</div>
+		{:else if status === 'error'}
+			<div class="reader-error">{message}</div>
+		{:else}
+			{@render children?.()}
+		{/if}
+	</div>
 </div>
 
 <style>
 	.reader-frame {
 		height: 100%;
 		overflow-y: auto;
-		padding: var(--s-6) var(--s-6) var(--s-8);
+		scrollbar-gutter: stable;
+		padding: var(--reader-pad-top, var(--s-6)) var(--reader-pad-right, var(--s-6)) var(--s-8)
+			var(--reader-pad-left, var(--s-6));
 		box-sizing: border-box;
+	}
+	.reader-frame__col {
+		max-width: var(--reader-max, 760px);
+		min-height: 100%;
 	}
 
 	.reader-empty {
@@ -47,8 +59,8 @@
 		height: 100%;
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 17px;
-		color: var(--fg-3);
+		font-size: var(--t-body);
+		color: var(--ink-3);
 		text-align: center;
 		padding: var(--s-6);
 	}
@@ -57,7 +69,7 @@
 		padding: var(--s-5);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
-		color: var(--accent);
+		color: var(--ink-2);
 	}
 
 	.reader-loading {
@@ -70,7 +82,7 @@
 	.skeleton-h,
 	.skeleton-body {
 		border-radius: var(--r-1);
-		background: linear-gradient(90deg, var(--paper-2) 25%, var(--paper-3) 50%, var(--paper-2) 75%);
+		background: linear-gradient(90deg, var(--paper-2) 25%, var(--rule) 50%, var(--paper-2) 75%);
 		background-size: 200% 100%;
 		animation: shimmer 1.4s infinite;
 	}
