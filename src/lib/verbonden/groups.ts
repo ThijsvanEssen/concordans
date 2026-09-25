@@ -22,6 +22,7 @@ export type Match = {
 
 export type Loader =
 	| 'dossier-laws'
+	| 'dossier-same-number'
 	| 'dossier-committees'
 	| 'dossier-documents-tk'
 	| 'dossier-documents-ek'
@@ -32,6 +33,8 @@ export type Loader =
 	| 'instrument-international'
 	| 'judgment-articles'
 	| 'instrument-dossiers'
+	| 'instrument-related'
+	| 'instrument-aard'
 	| 'instrument-amended-by'
 	| 'committee-dossiers'
 	| 'member-instruments'
@@ -56,6 +59,8 @@ export type Group = GroupDef & {
 	rows: Row[];
 	/** The number of bronnen where the API states it; `rows` may hold fewer. */
 	total?: number;
+	/** The places these bronnen name the selected one, where a row bundles several. */
+	mentions?: number;
 	/** The API caps a bucket without saying how many there are: shown as `30+`. */
 	capped: boolean;
 };
@@ -121,6 +126,56 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 	dossiers: [
 		{ id: 'laws', label: 'Wetten die dit dossier raakt', noun: 'wetten', load: 'dossier-laws' },
 		{
+			id: 'same-number',
+			label: 'Dossiers onder hetzelfde nummer',
+			noun: 'dossiers',
+			load: 'dossier-same-number'
+		},
+		// A change in the Grondwet is read twice; the memorie van toelichting is in the
+		// dossier of the first reading, the second only refers to it.
+		{
+			id: 'first-reading',
+			label: 'Eerste lezing van deze grondwetsherziening',
+			noun: 'dossiers',
+			match: [{ relation: 'SECOND_READING_OF', direction: 'outbound', collection: 'dossiers' }]
+		},
+		{
+			id: 'second-reading',
+			label: 'Tweede lezing van deze grondwetsherziening',
+			noun: 'dossiers',
+			match: [{ relation: 'SECOND_READING_OF', direction: 'inbound', collection: 'dossiers' }]
+		},
+		{
+			id: 'revises',
+			label: 'Begrotingen die dit dossier wijzigt',
+			noun: 'dossiers',
+			match: [{ relation: 'REVISES', direction: 'outbound', collection: 'dossiers' }]
+		},
+		{
+			id: 'revised-by',
+			label: 'Dossiers die deze begroting wijzigen',
+			noun: 'dossiers',
+			match: [{ relation: 'REVISES', direction: 'inbound', collection: 'dossiers' }]
+		},
+		{
+			id: 'accompanies',
+			label: 'Nota waarmee dit dossier is ingediend',
+			noun: 'dossiers',
+			match: [{ relation: 'ACCOMPANIES', direction: 'outbound', collection: 'dossiers' }]
+		},
+		{
+			id: 'accompanied-by',
+			label: 'Dossiers ingediend met deze nota',
+			noun: 'dossiers',
+			match: [{ relation: 'ACCOMPANIES', direction: 'inbound', collection: 'dossiers' }]
+		},
+		{
+			id: 'related',
+			label: 'Dossiers die de Kamer met dit dossier verbindt',
+			noun: 'dossiers',
+			match: [{ relation: 'RELATED_TO', collection: 'dossiers' }]
+		},
+		{
 			id: 'committees',
 			label: 'Commissie',
 			section: 'Tweede Kamer',
@@ -158,6 +213,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 	],
 	instruments: [
 		{
+			// A publication in the Staatsblad or Staatscourant is an instrument that changes
+			// articles; a law has no such edges, so the group shows for publications only.
+			id: 'changes',
+			label: 'Artikelen die deze publicatie wijzigt',
+			noun: 'artikelen',
+			match: [{ relation: CHANGES, direction: 'outbound', collection: ['articles', 'instruments'] }]
+		},
+		{
 			id: 'dossiers',
 			label: 'Dossiers die deze wet raken',
 			noun: 'dossiers',
@@ -181,6 +244,18 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Wetsvoorstellen die deze wet wijzigen',
 			noun: 'wetsvoorstellen',
 			load: 'instrument-amended-by'
+		},
+		{
+			id: 'aard',
+			label: 'Verwijzingen vanuit deze wet, naar aard',
+			noun: 'verwijzingen',
+			load: 'instrument-aard'
+		},
+		{
+			id: 'related',
+			label: 'Wetten die met deze wet verbonden zijn',
+			noun: 'wetten',
+			load: 'instrument-related'
 		},
 		{
 			id: 'judgments',
@@ -256,6 +331,16 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Artikelen die deze uitspraak aanhaalt',
 			noun: 'artikelen',
 			load: 'judgment-articles'
+		},
+		{
+			id: 'conclusion',
+			label: 'Conclusie in dezelfde zaak',
+			match: [{ relation: 'ADVISES_ON', direction: 'inbound', collection: 'judgments' }]
+		},
+		{
+			id: 'advised',
+			label: 'Uitspraak in dezelfde zaak',
+			match: [{ relation: 'ADVISES_ON', direction: 'outbound', collection: 'judgments' }]
 		},
 		{
 			id: 'appeal',
@@ -483,7 +568,9 @@ const matches = (m: Match, n: Neighbor) =>
 /**
  * The groups of a bron that its node response fills, in the order of the table. Groups
  * with a loader come back empty, for the caller to fill. A neighbour lands in the first
- * group that matches it.
+ * group that matches it, also when several relations bring it: the conclusion of the
+ * Advocaat-Generaal is an ADVISES_ON and a REFERS_TO neighbour of the judgment, and
+ * shows once, as the conclusion.
  */
 export function buildGroups(
 	collection: Collection,
@@ -500,18 +587,32 @@ export function buildGroups(
 	}
 	const seen = new Set<string>();
 	const summed = new Set<string>();
-	for (const n of neighbors) {
-		const group = groups.find((g) => g.match?.some((m) => matches(m, n)));
-		const row = group && !seen.has(n.id) ? rowOfNeighbor(n) : null;
-		if (!group || !row) continue;
+	// Rows a split group took from a bucket that another group takes the total of.
+	const claimed = new Map<string, number>();
+	// Per group and bucket, the neighbours it counts that an earlier group shows.
+	const shownElsewhere = new Map<string, number>();
+	const placed = neighbors
+		.map((n) => ({ n, at: groups.findIndex((g) => g.match?.some((m) => matches(m, n))) }))
+		.filter((p) => p.at >= 0)
+		.sort((a, b) => a.at - b.at);
+	for (const { n, at } of placed) {
+		const group = groups[at];
+		const bucket = bucketKey(n.relation, n.collection, n.direction);
+		if (seen.has(n.id)) {
+			const key = `${group.id}:${bucket}`;
+			shownElsewhere.set(key, (shownElsewhere.get(key) ?? 0) + 1);
+			continue;
+		}
+		const row = rowOfNeighbor(n);
+		if (!row) continue;
 		seen.add(n.id);
 		group.rows.push(row);
-		const bucket = bucketKey(n.relation, n.collection, n.direction);
 		const total = totals.get(bucket);
 		// A bucket split over several groups states no total for any one of them: each
 		// counts its rows, capped while the bucket holds more than was loaded.
 		if (total != null && group.match?.some((m) => m.split && matches(m, n))) {
 			if ((counted.get(bucket) ?? 0) < total) group.capped = true;
+			claimed.set(bucket, (claimed.get(bucket) ?? 0) + 1);
 		} else if (total != null) {
 			// A bucket counts for its group once; a `where` may leave some of it out.
 			if (!summed.has(`${group.id}:${bucket}`)) {
@@ -523,6 +624,11 @@ export function buildGroups(
 			const cap = CAPS[collection]?.[n.relation as Relation] ?? BUCKET_CAP;
 			if ((counted.get(bucket) ?? 0) >= cap) group.capped = true;
 		}
+	}
+	for (const key of summed) {
+		const [id, bucket] = [key.slice(0, key.indexOf(':')), key.slice(key.indexOf(':') + 1)];
+		const g = groups.find((x) => x.id === id);
+		if (g?.total != null) g.total -= (claimed.get(bucket) ?? 0) + (shownElsewhere.get(key) ?? 0);
 	}
 	for (const g of groups) {
 		if (g.total != null && g.total < g.rows.length) g.total = g.rows.length;

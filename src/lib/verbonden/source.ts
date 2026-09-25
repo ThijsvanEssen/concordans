@@ -19,6 +19,8 @@ export type VerbondenState = {
 
 export type VerbondenSource = Readable<VerbondenState> & {
 	load: (selection: GraphNode | null) => void;
+	/** Load the same bron again, after a failed request. */
+	reload: () => void;
 	destroy: () => void;
 };
 
@@ -28,9 +30,11 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	const state = writable<VerbondenState>(EMPTY);
 	let controller: AbortController | null = null;
 	let current: string | null = null;
+	let last: GraphNode | null = null;
 
 	const load = (selection: GraphNode | null) => {
 		if (selection?.id === current) return;
+		last = selection;
 		controller?.abort();
 		current = selection?.id ?? null;
 		if (!selection) {
@@ -60,9 +64,9 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				for (const def of groups) {
 					if (!def.load) continue;
 					LOADERS[def.load](ctx)
-						.then(({ rows, total }) => {
+						.then(({ rows, total, mentions }) => {
 							if (ac.signal.aborted) return;
-							groups = groups.map((g) => (g.id === def.id ? { ...g, rows, total } : g));
+							groups = groups.map((g) => (g.id === def.id ? { ...g, rows, total, mentions } : g));
 						})
 						.catch(() => {
 							// A group that cannot be filled is left out, like an empty one.
@@ -83,6 +87,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	return {
 		subscribe: state.subscribe,
 		load,
+		reload: () => {
+			current = null;
+			load(last);
+		},
 		destroy: () => controller?.abort()
 	};
 }

@@ -2,17 +2,20 @@
 	// All verbindingen of the selected bron as a table, under the same bronfilter:
 	// bron, verbinding, plaats in de bron, plaats in dit artikel, aard, status,
 	// betrouwbaarheid, datum. Fifty rows per page.
+	import { menu } from '$lib/actions/menu';
+	import { onControl } from '$lib/actions/outside';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import { page } from '$app/state';
 	import { bronHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { relationLabel } from '$lib/vocabulary';
-	import { download, rowsToCsv } from './export';
+	import { csvName, download, rowsToCsv } from './export';
 	import { formatCount, type VerbondenFilter } from './filter';
-	import { shortDate, type Row } from './rows';
+	import { mentionRows, shortDate, type Row } from './rows';
 	import type { VerbondenState } from './source';
 	import { betrouwbaarheid } from './verbinding';
-	import { allRows, countLine, filterGroups } from './view';
+	import { allRows, countLine, filterGroups, mentionLine } from './view';
 
 	let {
 		verbonden,
@@ -20,7 +23,8 @@
 		filter,
 		onOpenFilter,
 		onRow,
-		backHref
+		backHref,
+		onRetry
 	}: {
 		verbonden: VerbondenState;
 		selection: GraphNode;
@@ -29,6 +33,8 @@
 		/** A row opens the card Verbinding. */
 		onRow: (row: Row) => void;
 		backHref: string;
+		/** Loads the verbindingen again after a failed load; without it no Opnieuw is offered. */
+		onRetry?: () => void;
 	} = $props();
 
 	type Column = {
@@ -90,7 +96,8 @@
 	let columnsOpen = $state(false);
 	let sortOpen = $state(false);
 
-	const rows = $derived(allRows(filterGroups(verbonden.groups, filter)));
+	const rows = $derived(mentionRows(allRows(filterGroups(verbonden.groups, filter))));
+	const mentions = $derived(mentionLine(filterGroups(verbonden.groups, filter)));
 	const sorted = $derived.by(() => {
 		const col = COLUMNS.find((c) => c.id === sortBy);
 		const key = col?.sort ?? col?.value;
@@ -142,40 +149,36 @@
 
 	function exportCsv() {
 		download(
-			`verbindingen-${selection.key}.csv`,
+			csvName(selection.label, selection.key),
 			rowsToCsv(sorted, selection.collection, page.url.origin)
 		);
 	}
 </script>
 
-<svelte:window
-	onclick={() => {
-		columnsOpen = false;
-		sortOpen = false;
-	}}
-/>
-
 <div class="tabel">
 	<div class="toolbar">
 		<h2 class="toolbar__title">{title}</h2>
-		<span class="toolbar__count">{countLine(verbonden.groups, filter)}</span>
+		<span class="toolbar__count"
+			>{countLine(verbonden.groups, filter)}{#if mentions}; {mentions}{/if}</span
+		>
 		<span class="toolbar__space"></span>
 		<a href={backHref} class="toolbar__back" data-sveltekit-noscroll>← Terug naar de tekst</a>
 		<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
-		<div class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+		<div class="menu" use:menu={{ open: sortOpen, close: () => (sortOpen = false) }}>
 			<button
 				type="button"
 				class="btn"
 				aria-haspopup="menu"
 				aria-expanded={sortOpen}
-				onclick={() => (sortOpen = !sortOpen)}>{sortLabel} <span class="caret">▾</span></button
+				onclick={() => (sortOpen = !sortOpen)}>{sortLabel}<Caret open={sortOpen} /></button
 			>
 			{#if sortOpen}
 				<div class="menu__list" role="menu">
 					{#each COLUMNS as c (c.id)}
 						<button
 							type="button"
-							role="menuitem"
+							role="menuitemradio"
+							aria-checked={sortBy === c.id}
 							class="menu__item"
 							class:is-active={sortBy === c.id}
 							onclick={() => {
@@ -187,25 +190,26 @@
 				</div>
 			{/if}
 		</div>
-		<div class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+		<div class="menu" use:menu={{ open: columnsOpen, close: () => (columnsOpen = false) }}>
 			<button
 				type="button"
 				class="btn"
 				aria-haspopup="menu"
 				aria-expanded={columnsOpen}
-				onclick={() => (columnsOpen = !columnsOpen)}>Kolommen <span class="caret">▾</span></button
+				onclick={() => (columnsOpen = !columnsOpen)}>Kolommen<Caret open={columnsOpen} /></button
 			>
 			{#if columnsOpen}
 				<div class="menu__list" role="menu">
 					{#each COLUMNS as c (c.id)}
-						<label class="menu__item menu__check">
-							<input
-								type="checkbox"
-								checked={!hiddenColumns.has(c.id)}
-								onchange={() => toggleColumn(c.id)}
-							/>
-							{c.label}
-						</label>
+						{@const on = !hiddenColumns.has(c.id)}
+						<button
+							type="button"
+							role="menuitemcheckbox"
+							aria-checked={on}
+							class="menu__item"
+							onclick={() => toggleColumn(c.id)}
+							><span class="menu__box" aria-hidden="true">{on ? '✓' : ''}</span>{c.label}</button
+						>
 					{/each}
 				</div>
 			{/if}
@@ -213,12 +217,17 @@
 		<button type="button" class="btn" onclick={exportCsv}>Exporteer</button>
 	</div>
 
-	<div class="scroll">
+	<div class="scroll" aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
-			<p class="note">Verbindingen niet geladen.</p>
+			<p class="note">
+				Verbindingen niet geladen.
+				{#if onRetry}
+					<button type="button" class="btn is-text" onclick={onRetry}>Opnieuw</button>
+				{/if}
+			</p>
 		{:else if sorted.length === 0}
 			<p class="note">
-				{verbonden.loading ? 'Laden' : 'Geen verbindingen binnen de gekozen bronnen en filters.'}
+				{verbonden.loading ? 'Laden…' : 'Geen verbindingen binnen de gekozen bronnen en filters.'}
 			</p>
 		{:else}
 			<table>
@@ -243,22 +252,21 @@
 				</thead>
 				<tbody>
 					{#each sorted.slice(0, shown) as r (`${r.ref.collection}/${r.ref.key}#${r.at ?? ''}#${r.edgeId ?? ''}`)}
+						<!-- A click on the row opens the card Verbinding, for the mouse; the
+						     keyboard has the button under the title. -->
 						<tr
-							onclick={() => onRow(r)}
-							onkeydown={(e) => {
-								if (e.key === 'Enter') onRow(r);
+							onclick={(e) => {
+								if (!onControl(e)) onRow(r);
 							}}
-							tabindex="0"
 						>
 							{#each visibleColumns as c (c.id)}
 								{#if c.id === 'bron'}
 									<td class="cell-bron">
 										<span class="bron">
 											<KindGlyph collection={r.ref.collection} size={11} />
-											<a
-												href={bronHref(r.ref, { at: r.at })}
-												data-sveltekit-noscroll
-												onclick={(e) => e.stopPropagation()}>{r.title}</a
+											<a href={bronHref(r.ref, { at: r.at })} data-sveltekit-noscroll>{r.title}</a>
+											<button type="button" class="bron__card" onclick={() => onRow(r)}
+												>Over deze verbinding</button
 											>
 										</span>
 										{#if r.identifier || r.context}
@@ -358,6 +366,22 @@
 	.menu__item.is-active {
 		font-weight: 600;
 	}
+	.menu__box {
+		width: 14px;
+		height: 14px;
+		display: grid;
+		place-items: center;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		font-size: 10px;
+		line-height: 1;
+		color: var(--paper);
+		flex: none;
+	}
+	.menu__item[aria-checked='true'] .menu__box {
+		background: var(--ink);
+		border-color: var(--ink);
+	}
 	.scroll {
 		flex: 1;
 		overflow: auto;
@@ -418,6 +442,30 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	/* The card of the row, for the keyboard and touch: shown on hover and focus. */
+	.bron__card {
+		flex: none;
+		padding: 2px 4px;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+		cursor: pointer;
+		opacity: 0;
+	}
+	.bron__card:hover {
+		color: var(--accent);
+	}
+	tr:hover .bron__card,
+	tr:focus-within .bron__card {
+		opacity: 1;
+	}
+	@media (hover: none) {
+		.bron__card {
+			opacity: 1;
+		}
 	}
 	td.is-proposed {
 		color: var(--accent);

@@ -11,7 +11,6 @@ import {
 	getDossierDocuments,
 	getDossierMutations
 } from '$lib/components/parliamentary/data';
-import { lawIdOfArticleKey } from '$lib/util/law-id';
 import { get } from 'svelte/store';
 import { chamberOf, isExplanatory } from './chamber';
 import { bronKindOf } from './filter';
@@ -30,6 +29,11 @@ type Documents = Schema<'DossierDocumentsResponse'>;
 type Mutations = Schema<'DossierMutationsResponse'>;
 
 const CHANGES = new Set(['AMENDS', 'INTRODUCES', 'REPEALS']);
+
+// A mutation node carries no props: the law is read from the article key
+// (`bwbr0001854_287`, `32004l0017_6`).
+const lawOfArticleKey = (key: string): string | null =>
+	/^(bwb[rvw]\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4})_/i.exec(key)?.[1].toUpperCase() ?? null;
 
 type Detail = Schema<'DossierDetailResponse'>;
 
@@ -77,7 +81,7 @@ export function buildDossierHub(
 	for (const e of detail?.instruments ? [] : (mutations?.edges ?? [])) {
 		if (!CHANGES.has(e.relation ?? '')) continue;
 		const target = e.to_id ? nodes.get(e.to_id) : undefined;
-		const bwb = target?.collection === 'articles' ? lawIdOfArticleKey(target.key) : null;
+		const bwb = target?.collection === 'articles' ? lawOfArticleKey(target.key) : null;
 		if (!bwb) continue;
 		const key = bwb.toLowerCase();
 		const proposed = e.status === 'voorgesteld';
@@ -110,7 +114,7 @@ export function buildDossierHub(
 		.map<Row>((c) => ({
 			ref: { collection: 'committees', key: c.key },
 			title: c.name ?? c.abbreviation ?? c.key,
-			context: c.abbreviation ?? null,
+			context: c.abbreviation || null,
 			kind: 'dossiers',
 			relation: 'LED_BY',
 			direction: 'outbound'

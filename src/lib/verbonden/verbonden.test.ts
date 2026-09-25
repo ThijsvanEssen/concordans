@@ -8,7 +8,14 @@ import { chamberOf, isExplanatory } from './chamber';
 import { buildDossierHub } from './dossier-hub';
 import { mergeExplanatory } from './explanatory-documents';
 import { buildGroups, countLabel, GROUPS, isInternational } from './groups';
-import type { Neighbor } from './rows';
+import {
+	bundleMentions,
+	mentionRows,
+	metaParts,
+	positionsLabel,
+	type Neighbor,
+	type Row
+} from './rows';
 
 const neighbors = (fixture: { neighbors: { all: unknown[] } }) =>
 	fixture.neighbors.all as Neighbor[];
@@ -167,5 +174,107 @@ describe('buildGroups', () => {
 			expect(new Set(defs.map((d) => d.id)).size).toBe(defs.length);
 			for (const d of defs) expect(Boolean(d.match) !== Boolean(d.load)).toBe(true);
 		}
+	});
+});
+
+describe('bundleMentions', () => {
+	const mention = (position: string, confidence: number, lid: string | null = null): Row => ({
+		ref: { collection: 'judgments', key: 'ecli_nl_hr_2019_1278' },
+		title: 'Hoge Raad, 19 juli 2019',
+		context: null,
+		kind: 'uitspraken',
+		position,
+		confidence,
+		lid,
+		derived: confidence < 1
+	});
+
+	it('makes one row of the mentions of one bron, keeping each mention', () => {
+		const row = bundleMentions([
+			mention('r.o. 2.2.2', 0.8),
+			mention('r.o. 2.4.1', 0.95, '1'),
+			mention('r.o. 2.7.3', 0.9)
+		]);
+		expect(row.position).toBe('r.o. 2.2.2, 2.4.1 en 1 meer');
+		expect(row.confidence).toBe(0.95);
+		expect(row.lid).toBe('1');
+		expect(row.mentions).toHaveLength(3);
+		expect(mentionRows([row])).toHaveLength(3);
+	});
+
+	it('leaves a single mention as it is', () => {
+		const one = mention('r.o. 3.1', 1);
+		expect(bundleMentions([one])).toBe(one);
+		expect(positionsLabel(['r.o. 3.1', 'r.o. 3.2'])).toBe('r.o. 3.1 en 3.2');
+	});
+});
+
+describe('metaParts', () => {
+	it('names the betrouwbaarheid only when it is not hoog', () => {
+		const base: Row = {
+			ref: { collection: 'judgments', key: 'j' },
+			title: 't',
+			context: null,
+			kind: 'uitspraken'
+		};
+		expect(metaParts({ ...base, confidence: 0.95, derived: true }).map((p) => p.text)).toEqual([]);
+		expect(metaParts({ ...base, confidence: 0.7 }).map((p) => p.text)).toEqual([
+			'betrouwbaarheid matig'
+		]);
+	});
+});
+
+describe('conclusion in the same case', () => {
+	const judgment = (ecli: string, relation = 'REFERS_TO', direction = 'inbound') =>
+		({
+			id: `judgments/${ecli.toLowerCase().replaceAll(':', '_')}`,
+			key: ecli.toLowerCase().replaceAll(':', '_'),
+			collection: 'judgments',
+			relation,
+			direction,
+			props: { ecli }
+		}) as unknown as Neighbor;
+
+	it('puts the conclusion that advises on the judgment in a group of its own', () => {
+		const groups = buildGroups('judgments', [
+			judgment('ECLI:NL:PHR:2019:496'),
+			judgment('ECLI:NL:PHR:2020:10'),
+			judgment('ECLI:NL:RBNNE:2024:1'),
+			judgment('ECLI:NL:PHR:2019:496', 'ADVISES_ON')
+		]);
+		expect(groups.find((g) => g.id === 'conclusion')!.rows.map((r) => r.identifier)).toEqual([
+			'ECLI:NL:PHR:2019:496'
+		]);
+		expect(groups.find((g) => g.id === 'cited-by')!.rows).toHaveLength(2);
+	});
+
+	it('leaves the conclusion out of the totals of the citing and cited judgments', () => {
+		const groups = buildGroups(
+			'judgments',
+			[
+				judgment('ECLI:NL:PHR:2019:496'),
+				judgment('ECLI:NL:PHR:2019:496', 'REFERS_TO', 'outbound'),
+				judgment('ECLI:NL:RBNNE:2024:1'),
+				judgment('ECLI:NL:HR:2018:1', 'REFERS_TO', 'outbound'),
+				judgment('ECLI:NL:PHR:2019:496', 'ADVISES_ON')
+			],
+			new Map([
+				['REFERS_TO/judgments/inbound', 28],
+				['REFERS_TO/judgments/outbound', 5],
+				['ADVISES_ON/judgments/inbound', 1]
+			])
+		);
+		expect(groups.find((g) => g.id === 'conclusion')!.total).toBe(1);
+		expect(groups.find((g) => g.id === 'cited-by')!.total).toBe(27);
+		expect(groups.find((g) => g.id === 'judgments')!.total).toBe(4);
+	});
+
+	it('names the judgment a conclusion advises on', () => {
+		const groups = buildGroups('judgments', [
+			judgment('ECLI:NL:HR:2019:1278', 'ADVISES_ON', 'outbound'),
+			judgment('ECLI:NL:HR:2019:1278', 'REFERS_TO', 'inbound')
+		]);
+		expect(groups.find((g) => g.id === 'advised')!.rows).toHaveLength(1);
+		expect(groups.find((g) => g.id === 'cited-by')!.rows).toHaveLength(0);
 	});
 });

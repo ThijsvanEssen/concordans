@@ -68,7 +68,9 @@ export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Ro
 		if (item.scope !== 'article') continue;
 		const d = item.document;
 		if (rows.has(d.key)) continue;
-		const section = item.section_anchor ? /(\d+(?:\.\d+)*)/.exec(item.section_anchor) : null;
+		// `s-40` is the id of a section, not its number: it names no paragraph.
+		const anchor = item.section_anchor;
+		const section = anchor && !/^s-\d+$/.test(anchor) ? /(\d+(?:\.\d+)*)/.exec(anchor) : null;
 		rows.set(d.key, {
 			ref: { collection: 'documents', key: d.key },
 			...describe('documents', d.key, d.title, { ...d }),

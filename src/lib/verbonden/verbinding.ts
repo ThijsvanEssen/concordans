@@ -4,6 +4,7 @@
 import { refOf, type BronRef } from '$lib/bron/href';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { relationLabel, statusLabel, type Relation } from '$lib/vocabulary';
+import { confidenceWord } from './filter';
 import { describe, type Row } from './rows';
 
 export type End = {
@@ -45,7 +46,12 @@ const KIND_OF_RELATION: Partial<Record<Relation, string>> = {
 	BASED_ON: 'grondslag',
 	IMPLEMENTS: 'implementatie',
 	LEGISLATED_IN: 'behandeling',
-	APPEAL_OF: 'hoger beroep'
+	APPEAL_OF: 'hoger beroep',
+	ADVISES_ON: 'conclusie',
+	REVISES: 'begrotingswijziging',
+	ACCOMPANIES: 'indiening met een nota',
+	RELATED_TO: 'verband tussen zaken',
+	SECOND_READING_OF: 'tweede lezing'
 };
 
 const IN_A: Partial<Record<string, string>> = {
@@ -77,10 +83,7 @@ export function betrouwbaarheid(
 				: derived
 					? 'afgeleid uit het dossier of uit de tekst, niet uit een verwijzing'
 					: 'gelezen uit de bron';
-	if (confidence == null) return { word: derived ? 'matig' : 'hoog', why };
-	if (confidence >= 0.9) return { word: 'hoog', why };
-	if (confidence >= 0.6) return { word: 'matig', why };
-	return { word: 'laag', why };
+	return { word: confidenceWord(confidence, derived), why };
 }
 
 const endOfNode = (node: GraphNode): End => {

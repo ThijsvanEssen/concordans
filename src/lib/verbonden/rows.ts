@@ -1,11 +1,11 @@
 // A row of the panel Verbonden: one verbinding with one bron. A row is a glyph, a
 // title and one meta line: the lid it names, the position in the source, the
-// identifier or the date, and `afgeleid` when the confidence is below 1. The passage
+// identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { isCollection, type Relation } from '$lib/vocabulary';
-import { bronKindOf, type BronKind } from './filter';
+import { bronKindOf, confidenceWord, type BronKind } from './filter';
 
 export type { Neighbor } from '$lib/api/nodes';
 import type { Neighbor } from '$lib/api/nodes';
@@ -48,6 +48,8 @@ export type Row = {
 	court?: string | null;
 	/** Props the canvas needs to draw a bron not on it yet. */
 	props?: Record<string, unknown>;
+	/** One row per place the bron names the selected one, when there are several. */
+	mentions?: Row[];
 };
 
 const text = (value: unknown): string | null =>
@@ -125,8 +127,13 @@ export function describe(
 		case 'judgments': {
 			const ecli = text(props.ecli);
 			const court = courtName(text(props.court) ?? text(props.court_code));
+			// The name a judgment is known by: "Hoge Raad, 20 december 2019 (Urgenda)".
+			const names = Array.isArray(props.names)
+				? props.names.filter((n): n is string => typeof n === 'string')
+				: [];
+			const known = names.length ? ` (${names.join(', ')})` : '';
 			return {
-				title: court ? (join(court, longDate(date)) ?? court) : name,
+				title: (court ? (join(court, longDate(date)) ?? court) : name) + known,
 				context: null,
 				identifier: ecli ?? (court ? null : name),
 				date,
@@ -207,7 +214,14 @@ const AARD: Record<string, string> = {
 	jurisdiction: 'rechtsmacht',
 	limitation: 'verjaring',
 	amendment: 'wijziging',
-	basis: 'grondslag'
+	basis: 'grondslag',
+	// The codes of `/api/relationships/types`.
+	conditional_requirement: 'voorwaarde',
+	definitional_reference: 'definitie',
+	delegated_discretion: 'delegatie',
+	limiting_exception: 'uitzondering',
+	prerequisite_procedure: 'procedure'
+	// cross_reference and scope_limitation are named above.
 };
 
 export const aardLabel = (code: string | null | undefined): string | null =>
@@ -257,6 +271,39 @@ export function periodLabel(period: NonNullable<Row['period']>): string {
 	return period.role && period.role !== 'Lid' ? `${period.role.toLowerCase()}, ${span}` : span;
 }
 
+/** `r.o. 2.2.2`, `r.o. 2.2.2 en 2.4.1`, `r.o. 2.2.2, 2.4.1 en 19 meer`. */
+export function positionsLabel(positions: string[]): string | null {
+	const numbers = positions.map((p) => p.replace(/^r\.o\.\s*/, ''));
+	if (numbers.length === 0) return null;
+	const prefix = positions[0].startsWith('r.o.') ? 'r.o. ' : '';
+	if (numbers.length === 1) return prefix + numbers[0];
+	if (numbers.length === 2) return `${prefix}${numbers[0]} en ${numbers[1]}`;
+	return `${prefix}${numbers[0]}, ${numbers[1]} en ${numbers.length - 2} meer`;
+}
+
+/**
+ * The mentions of one bron as one row: the first place it names the selected bron,
+ * every place in the meta line, the highest confidence.
+ */
+export function bundleMentions(mentions: Row[]): Row {
+	const [first] = mentions;
+	if (mentions.length === 1) return first;
+	const positions = [...new Set(mentions.map((m) => m.position).filter((p): p is string => !!p))];
+	const confidences = mentions.map((m) => m.confidence).filter((c): c is number => c != null);
+	const confidence = confidences.length > 0 ? Math.max(...confidences) : (first.confidence ?? null);
+	return {
+		...first,
+		lid: mentions.find((m) => m.lid)?.lid ?? null,
+		position: positionsLabel(positions),
+		confidence,
+		derived: confidence != null ? confidence < 1 : first.derived,
+		mentions
+	};
+}
+
+/** The rows with every mention as a row of its own, as the table and the export list them. */
+export const mentionRows = (rows: Row[]): Row[] => rows.flatMap((r) => r.mentions ?? [r]);
+
 /** The meta line of a row, as separate words; the panel joins them. */
 export function metaParts(
 	row: Row
@@ -265,7 +312,9 @@ export function metaParts(
 	if (row.lid) parts.push({ text: `lid ${row.lid}`, kind: 'lid' });
 	if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });
 	if (row.aard) parts.push({ text: row.aard, kind: 'plain' });
-	if (row.position) parts.push({ text: row.position, kind: 'plain' });
+	// A position that only names the lid (`lid 2`) is said once.
+	if (row.position && row.position !== `lid ${row.lid}`)
+		parts.push({ text: row.position, kind: 'plain' });
 	if (row.context) parts.push({ text: row.context, kind: 'plain' });
 	if (row.period) parts.push({ text: periodLabel(row.period), kind: 'plain' });
 	// Who signed, as what: the function unless it is the plain seat.
@@ -273,6 +322,7 @@ export function metaParts(
 		parts.push({ text: `als ${row.function}`, kind: 'plain' });
 	const when = row.identifier ?? (row.kind === 'uitspraken' ? null : shortDate(row.date ?? null));
 	if (when) parts.push({ text: when, kind: 'plain' });
-	if (row.derived) parts.push({ text: 'afgeleid', kind: 'derived' });
+	const word = confidenceWord(row.confidence, !!row.derived);
+	if (word !== 'hoog') parts.push({ text: `betrouwbaarheid ${word}`, kind: 'derived' });
 	return parts;
 }

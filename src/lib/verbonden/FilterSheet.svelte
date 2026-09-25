@@ -1,7 +1,9 @@
 <script lang="ts">
 	// The filter sheet: bronnen, verbindingen, lid, rechter, periode, betrouwbaarheid and
 	// status, applied with one button. The same sheet opens from the panel and from
-	// the legend of the network.
+	// the legend of the network. A modal dialog: the focus goes to the search field on
+	// open, stays inside while it is open, and returns to where it was on close.
+	import { tick } from 'svelte';
 	import type { Collection } from '$lib/vocabulary';
 	import {
 		BRON_KINDS,
@@ -36,11 +38,50 @@
 		onClose: () => void;
 	} = $props();
 
+	const uid = $props.id();
+
 	// The sheet edits a draft; the button applies it.
 	let draft = $state<VerbondenFilter>(filter);
 	$effect(() => {
 		if (open) draft = filter;
 	});
+
+	let sheet = $state<HTMLElement | null>(null);
+	let opener: HTMLElement | null = null;
+	$effect(() => {
+		if (!open) return;
+		void tick().then(() => {
+			const at = document.activeElement;
+			opener =
+				at instanceof HTMLElement && at !== document.body && !sheet?.contains(at) ? at : null;
+			sheet?.querySelector<HTMLElement>('.search')?.focus();
+		});
+		return () => {
+			const back = opener;
+			opener = null;
+			if (back?.isConnected) back.focus();
+		};
+	});
+
+	const FOCUSABLE =
+		'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
+
+	/** Tab and Shift+Tab go round inside the sheet. */
+	function trap(e: KeyboardEvent) {
+		if (e.key !== 'Tab' || !sheet) return;
+		const els = [...sheet.querySelectorAll<HTMLElement>(FOCUSABLE)];
+		const first = els[0];
+		const last = els.at(-1);
+		if (!first || !last) return;
+		const at = document.activeElement;
+		if (e.shiftKey && (at === first || !sheet.contains(at))) {
+			e.preventDefault();
+			last.focus();
+		} else if (!e.shiftKey && (at === last || !sheet.contains(at))) {
+			e.preventDefault();
+			first.focus();
+		}
+	}
 
 	const totals = $derived(kindTotals(groups));
 	const relations = $derived(relationCounts(groups, selection));
@@ -60,9 +101,25 @@
 	const setStatus = (s: Status | null) =>
 		(draft = { ...draft, status: draft.status === s ? null : s });
 
+	/** The year field that holds no year, until it does. */
+	let badYear = $state<'van' | 'tot' | null>(null);
+	$effect(() => {
+		if (open) badYear = null;
+	});
+
 	function yearInput(e: Event, key: 'van' | 'tot') {
-		const v = (e.target as HTMLInputElement).value;
-		draft = { ...draft, [key]: /^\d{4}$/.test(v) ? Number(v) : null, geldendOp: null };
+		const v = (e.target as HTMLInputElement).value.trim();
+		if (v !== '' && !/^\d{4}$/.test(v)) {
+			badYear = key;
+			return;
+		}
+		if (badYear === key) badYear = null;
+		const next = { ...draft, [key]: v ? Number(v) : null, geldendOp: null };
+		// A period given the wrong way round is read the right way round.
+		draft =
+			next.van !== null && next.tot !== null && next.van > next.tot
+				? { ...next, van: next.tot, tot: next.van }
+				: next;
 	}
 
 	let dateMode = $state(false);
@@ -71,7 +128,11 @@
 	});
 
 	function onKey(e: KeyboardEvent) {
-		if (e.key === 'Escape' && open) onClose();
+		if (e.key !== 'Escape' || !open || e.defaultPrevented) return;
+		// Stopped, so that Escape does not also clear the selection of the network.
+		e.preventDefault();
+		e.stopPropagation();
+		onClose();
 	}
 </script>
 
@@ -79,9 +140,20 @@
 
 {#if open}
 	<div class="scrim" role="presentation" onclick={onClose}></div>
-	<aside class="sheet" aria-label="Filter">
+	<div
+		class="sheet"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="{uid}-title"
+		tabindex="-1"
+		bind:this={sheet}
+		onkeydown={(e) => {
+			onKey(e);
+			trap(e);
+		}}
+	>
 		<div class="sheet__head">
-			<h2 class="sheet__title">Filter</h2>
+			<h2 class="sheet__title" id="{uid}-title">Filter</h2>
 			<span class="sheet__count">{formatCount(count)} van {formatCount(total)}</span>
 			<span class="sheet__space"></span>
 			<button type="button" class="link" onclick={() => (draft = EMPTY_FILTER)}>Wis alles</button>
@@ -109,6 +181,7 @@
 							type="button"
 							class="btn"
 							class:is-primary={activePreset(draft)?.id === p.id}
+							aria-pressed={activePreset(draft)?.id === p.id}
 							onclick={() => (draft = withPreset(draft, p))}>{p.label}</button
 						>
 					{/each}
@@ -135,13 +208,14 @@
 			{#if relations.length > 0}
 				<div class="block">
 					<div class="block__label">Verbindingen</div>
-					{#each relations as r (r.relation)}
-						<div class="check">
-							<span class="check__box is-static" aria-hidden="true">✓</span>
-							<span class="check__name">{r.label}</span>
-							<span class="check__count">{formatCount(r.count)}</span>
-						</div>
-					{/each}
+					<ul class="list">
+						{#each relations as r (r.relation)}
+							<li class="list__row">
+								<span class="check__name">{r.label}</span>
+								<span class="check__count">{formatCount(r.count)}</span>
+							</li>
+						{/each}
+					</ul>
 				</div>
 			{/if}
 
@@ -153,6 +227,7 @@
 							type="button"
 							class="btn"
 							class:is-primary={draft.lid === null}
+							aria-pressed={draft.lid === null}
 							onclick={() => (draft = { ...draft, lid: null })}>Alle</button
 						>
 						{#each lids as [lid, n] (lid)}
@@ -160,6 +235,7 @@
 								type="button"
 								class="btn"
 								class:is-primary={draft.lid === lid}
+								aria-pressed={draft.lid === lid}
 								title="{n} verbindingen"
 								onclick={() => (draft = { ...draft, lid: draft.lid === lid ? null : lid })}
 								>{lid}</button
@@ -170,6 +246,7 @@
 								type="button"
 								class="btn"
 								class:is-primary={draft.lid === 'geen'}
+								aria-pressed={draft.lid === 'geen'}
 								onclick={() => (draft = { ...draft, lid: draft.lid === 'geen' ? null : 'geen' })}
 								>niet genoemd</button
 							>
@@ -186,6 +263,7 @@
 							type="button"
 							class="btn"
 							class:is-primary={draft.rechter === r.id}
+							aria-pressed={draft.rechter === r.id}
 							onclick={() => (draft = { ...draft, rechter: draft.rechter === r.id ? null : r.id })}
 							>{r.label}</button
 						>
@@ -197,7 +275,7 @@
 				<div class="block__label">Periode</div>
 				{#if dateMode}
 					<div class="period">
-						<span class="muted">geldend op</span>
+						<span class="muted">tot en met</span>
 						<input
 							class="year"
 							type="date"
@@ -230,6 +308,8 @@
 							value={draft.van ?? ''}
 							onchange={(e) => yearInput(e, 'van')}
 							aria-label="Van"
+							aria-invalid={badYear === 'van'}
+							aria-describedby={badYear ? `${uid}-year` : undefined}
 						/>
 						<span class="muted">tot</span>
 						<input
@@ -240,12 +320,17 @@
 							value={draft.tot ?? ''}
 							onchange={(e) => yearInput(e, 'tot')}
 							aria-label="Tot"
+							aria-invalid={badYear === 'tot'}
+							aria-describedby={badYear ? `${uid}-year` : undefined}
 						/>
 						<span class="muted">of</span>
 						<button type="button" class="link" onclick={() => (dateMode = true)}
-							>geldend op een datum</button
+							>tot een datum</button
 						>
 					</div>
+					<p class="error" id="{uid}-year" aria-live="polite">
+						{#if badYear}<span>Vul een jaartal in, bijvoorbeeld 2015.</span>{/if}
+					</p>
 				{/if}
 			</div>
 
@@ -256,19 +341,22 @@
 						type="button"
 						class="btn"
 						class:is-primary={draft.betrouwbaarheid === null}
+						aria-pressed={draft.betrouwbaarheid === null}
 						onclick={() => setBetrouwbaarheid(null)}>Alles</button
 					>
 					<button
 						type="button"
 						class="btn"
 						class:is-primary={draft.betrouwbaarheid === 'bron'}
-						onclick={() => setBetrouwbaarheid('bron')}>Alleen uit de bron gelezen</button
+						aria-pressed={draft.betrouwbaarheid === 'bron'}
+						onclick={() => setBetrouwbaarheid('bron')}>Alleen hoog</button
 					>
 					<button
 						type="button"
 						class="btn"
 						class:is-primary={draft.betrouwbaarheid === 'afgeleid'}
-						onclick={() => setBetrouwbaarheid('afgeleid')}>Alleen afgeleid</button
+						aria-pressed={draft.betrouwbaarheid === 'afgeleid'}
+						onclick={() => setBetrouwbaarheid('afgeleid')}>Alleen matig of laag</button
 					>
 				</div>
 			</div>
@@ -280,12 +368,14 @@
 						type="button"
 						class="btn"
 						class:is-primary={draft.status === null || draft.status === 'vastgesteld'}
+						aria-pressed={draft.status === null || draft.status === 'vastgesteld'}
 						onclick={() => setStatus('vastgesteld')}>Vastgesteld</button
 					>
 					<button
 						type="button"
 						class="btn"
 						class:is-primary={draft.status === null || draft.status === 'voorgesteld'}
+						aria-pressed={draft.status === null || draft.status === 'voorgesteld'}
 						onclick={() => setStatus('voorgesteld')}>Voorgesteld</button
 					>
 				</div>
@@ -305,7 +395,7 @@
 				>De keuze staat in de link en geldt voor het paneel, de kantlijn, het netwerk en de tabel.</span
 			>
 		</div>
-	</aside>
+	</div>
 {/if}
 
 <style>
@@ -421,8 +511,7 @@
 		color: var(--paper);
 		flex: none;
 	}
-	.check input:checked + .check__box,
-	.check__box.is-static {
+	.check input:checked + .check__box {
 		background: var(--ink);
 		border-color: var(--ink);
 	}
@@ -435,6 +524,17 @@
 	}
 	.check__count {
 		color: var(--ink-3);
+	}
+	.list {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.list__row {
+		display: flex;
+		gap: 10px;
+		padding: 4px 0;
+		color: var(--ink-2);
 	}
 	.period {
 		display: flex;
@@ -455,6 +555,17 @@
 	}
 	.year[type='date'] {
 		width: auto;
+	}
+	.year[aria-invalid='true'] {
+		border-color: var(--accent);
+	}
+	.error {
+		margin: 0;
+		color: var(--accent);
+	}
+	.error span {
+		display: block;
+		margin-top: 6px;
 	}
 	.muted {
 		color: var(--ink-3);

@@ -1,4 +1,6 @@
-// The verbindingen as a CSV, with the columns of the table.
+// The verbindingen as a CSV, with the columns of the table. Separated by semicolons and
+// preceded by a byte order mark, as Excel with Dutch settings reads a CSV.
+import { buildBronHref } from '$lib/bron/href';
 import { relationLabel, type Collection } from '$lib/vocabulary';
 import { BRON_KIND_LABEL } from './filter';
 import type { Row } from './rows';
@@ -18,13 +20,16 @@ export const COLUMNS = [
 	'link'
 ] as const;
 
+const SEP = ';';
+const BOM = '\uFEFF';
+
 const cell = (v: string | null | undefined) => {
 	const s = v ?? '';
-	return /[",\n;]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
+	return /[";,\r\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
 };
 
 export function rowsToCsv(rows: Row[], selection: Collection, origin: string): string {
-	const lines = [COLUMNS.join(',')];
+	const lines = [COLUMNS.join(SEP)];
 	for (const r of rows) {
 		const source = r.direction === 'inbound' ? r.ref.collection : selection;
 		const b = betrouwbaarheid(r.confidence, !!r.derived, null);
@@ -40,13 +45,27 @@ export function rowsToCsv(rows: Row[], selection: Collection, origin: string): s
 				b.word,
 				r.date ?? '',
 				r.identifier ?? '',
-				`${origin}/explore?mode=read&focus=${r.ref.collection}/${r.ref.key}${r.at ? `#${r.at}` : ''}`
+				`${origin}${buildBronHref(null, r.ref, { at: r.at })}`
 			]
 				.map(cell)
-				.join(',')
+				.join(SEP)
 		);
 	}
-	return lines.join('\n');
+	return BOM + lines.join('\r\n');
+}
+
+/** The name of the file: the verbindingen of the bron by its title, in characters every
+ *  file system accepts; the key when the title leaves nothing. */
+export function csvName(title: string | null | undefined, key: string): string {
+	const safe = (s: string) =>
+		s
+			// eslint-disable-next-line no-control-regex
+			.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ')
+			.replace(/\s+/g, ' ')
+			.replace(/^[.\s]+|[.\s]+$/g, '')
+			.slice(0, 120)
+			.trim();
+	return `Verbindingen van ${safe(title ?? '') || safe(key) || 'bron'}.csv`;
 }
 
 /** Hands the browser a file to save. */

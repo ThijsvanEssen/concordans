@@ -7,6 +7,8 @@ import {
 	bronnenLabel,
 	filterParams,
 	hiddenByKind,
+	kindCount,
+	seatCount,
 	parseFilter,
 	rechterOf,
 	rowPasses,
@@ -108,10 +110,16 @@ describe('rowPasses', () => {
 		expect(rowPasses(art, only({ lid: 'geen' }))).toBe(true);
 		expect(rowPasses(hr, only({ rechter: 'hr' }))).toBe(true);
 		expect(rowPasses(hof, only({ rechter: 'hr' }))).toBe(false);
+		// A rechter narrows the judgments only.
+		expect(rowPasses(art, only({ rechter: 'hr' }))).toBe(true);
 		expect(rowPasses(hof, only({ van: 2020 }))).toBe(false);
 		expect(rowPasses(hr, only({ van: 2020, tot: 2026 }))).toBe(true);
 		expect(rowPasses(hof, only({ betrouwbaarheid: 'bron' }))).toBe(false);
 		expect(rowPasses(hof, only({ betrouwbaarheid: 'afgeleid' }))).toBe(true);
+		// A confidence of 0.95 counts as hoog, whatever `derived` says.
+		const sure = row({ confidence: 0.95, derived: true });
+		expect(rowPasses(sure, only({ betrouwbaarheid: 'bron' }))).toBe(true);
+		expect(rowPasses(sure, only({ betrouwbaarheid: 'afgeleid' }))).toBe(false);
 		expect(rowPasses(hr, only({ jaar: 2024 }))).toBe(true);
 		expect(rowPasses(hr, only({ zoek: 'hr:2024' }))).toBe(true);
 	});
@@ -202,5 +210,15 @@ describe('the panel under the filter', () => {
 		const bars = yearHistogram(groups[0].rows, 3);
 		expect(bars.map((b) => b.year)).toEqual([2022, 2023, 2024]);
 		expect(bars.map((b) => b.count)).toEqual([0, 1, 1]);
+	});
+});
+
+describe('kindCount and seatCount', () => {
+	it('put the noun in the number of the count', () => {
+		expect(kindCount(1, 'wetten')).toBe('1 wet');
+		expect(kindCount(3, 'artikelen')).toBe('3 artikelen');
+		expect(kindCount(1_064, 'uitspraken')).toBe('1.064 uitspraken');
+		expect(seatCount(1)).toBe('1 zetel');
+		expect(seatCount(22)).toBe('22 zetels');
 	});
 });

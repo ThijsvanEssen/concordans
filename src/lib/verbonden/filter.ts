@@ -7,6 +7,15 @@
 import { isExplanatory } from './chamber';
 import type { Row } from './rows';
 
+/** Betrouwbaarheid as a word: hoog from 0.9, matig from 0.6, else laag. */
+export function confidenceWord(
+	confidence: number | null | undefined,
+	derived: boolean
+): 'hoog' | 'matig' | 'laag' {
+	if (confidence == null) return derived ? 'matig' : 'hoog';
+	return confidence >= 0.9 ? 'hoog' : confidence >= 0.6 ? 'matig' : 'laag';
+}
+
 export const BRON_KINDS = [
 	'artikelen',
 	'wetten',
@@ -43,10 +52,29 @@ export const BRON_KIND_NOUN: Record<BronKind, string> = {
 	internationaal: 'Europese en internationale bronnen'
 };
 
+/** One bron of a kind, for counts of one: `1 wet`, `2 wetten`. */
+const BRON_KIND_ONE: Record<BronKind, string> = {
+	artikelen: 'artikel',
+	wetten: 'wet',
+	uitspraken: 'uitspraak',
+	toelichtingen: 'toelichting',
+	wetsvoorstellen: 'wetsvoorstel',
+	dossiers: 'dossier',
+	leden: 'lid of fractie',
+	internationaal: 'Europese of internationale bron'
+};
+
+/** `1 wet`, `3 wetten`: a count with the kind's noun in the right number. */
+export const kindCount = (n: number, kind: BronKind) =>
+	`${formatCount(n)} ${n === 1 ? BRON_KIND_ONE[kind] : BRON_KIND_LABEL[kind].toLowerCase()}`;
+
+/** `1 zetel`, `22 zetels`. */
+export const seatCount = (n: number) => `${n} ${n === 1 ? 'zetel' : 'zetels'}`;
+
 export const RECHTERS = [
 	{ id: 'hr', label: 'Hoge Raad' },
-	{ id: 'hof', label: 'gerechtshoven' },
-	{ id: 'rechtbank', label: 'rechtbanken' },
+	{ id: 'hof', label: 'Gerechtshoven' },
+	{ id: 'rechtbank', label: 'Rechtbanken' },
 	{ id: 'rvs', label: 'Raad van State' },
 	{ id: 'ehrm', label: 'EHRM' }
 ] as const;
@@ -297,9 +325,12 @@ export function rowPasses(row: Row, f: VerbondenFilter): boolean {
 	if (f.lid !== null) {
 		if (f.lid === 'geen' ? row.lid != null : row.lid !== f.lid) return false;
 	}
-	if (f.rechter !== null && row.kind === 'uitspraken' && rechterOf(row) !== f.rechter) return false;
-	if (f.rechter !== null && row.kind !== 'uitspraken' && row.kind !== 'internationaal')
-		return false;
+	const judgment =
+		row.kind === 'uitspraken' ||
+		(row.kind === 'internationaal' && row.ref.collection === 'judgments');
+	if (f.rechter !== null && judgment && rechterOf(row) !== f.rechter) return false;
+	// A rechter narrows the judgments only; the articles and laws they cite stay, so that
+	// the filter carried to the next bron does not hide what the reader came from.
 	// A seat counts for every year it lasted; any other row for the year of its date.
 	const first = row.period ? yearOfDate(row.period.from) : yearOf(row);
 	const last = row.period ? yearOfDate(row.period.to) : yearOf(row);
@@ -307,8 +338,10 @@ export function rowPasses(row: Row, f: VerbondenFilter): boolean {
 	if (f.jaar !== null && (undated || !spans(first, last, f.jaar, f.jaar))) return false;
 	if (!spans(first, last, f.van, f.tot)) return false;
 	if (f.geldendOp !== null && row.date && row.date.slice(0, 10) > f.geldendOp) return false;
-	if (f.betrouwbaarheid === 'bron' && row.derived) return false;
-	if (f.betrouwbaarheid === 'afgeleid' && !row.derived) return false;
+	// `bron`: betrouwbaarheid hoog; `afgeleid`: matig or laag.
+	const high = confidenceWord(row.confidence, !!row.derived) === 'hoog';
+	if (f.betrouwbaarheid === 'bron' && !high) return false;
+	if (f.betrouwbaarheid === 'afgeleid' && high) return false;
 	if (f.status === 'voorgesteld' && !row.proposed) return false;
 	if (f.status === 'vastgesteld' && row.proposed) return false;
 	if (f.zoek) {

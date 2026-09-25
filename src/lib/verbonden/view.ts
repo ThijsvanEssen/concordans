@@ -48,6 +48,22 @@ export function filterGroups(groups: Group[], f: VerbondenFilter): Group[] {
 
 export const allRows = (groups: Group[]): Row[] => groups.flatMap((g) => g.rows);
 
+/**
+ * `324 vermeldingen in 170 uitspraken` for the groups whose rows bundle several places
+ * in one bron; null when no group does.
+ */
+export function mentionLine(groups: Group[]): string | null {
+	const bundled = groups.filter((g) => g.mentions != null || g.rows.some((r) => r.mentions));
+	if (bundled.length === 0) return null;
+	const mentions = bundled.reduce(
+		(sum, g) => sum + (g.mentions ?? g.rows.reduce((n, r) => n + (r.mentions?.length ?? 1), 0)),
+		0
+	);
+	const bronnen = bundled.reduce((sum, g) => sum + groupCount(g), 0);
+	const noun = bundled.every((g) => g.noun === bundled[0].noun) ? bundled[0].noun : null;
+	return `${formatCount(mentions)} vermeldingen in ${formatCount(bronnen)} ${noun ?? 'bronnen'}`;
+}
+
 /** The number of verbindingen of a bron, the API's totals where it states them. */
 export const totalCount = (groups: Group[]) => groups.reduce((sum, g) => sum + groupCount(g), 0);
 
@@ -120,12 +136,13 @@ export function lidCounts(rows: Row[]): Map<string, number> {
 	return counts;
 }
 
-export type Grouping = 'soort' | 'lid' | 'verbinding' | 'datum';
+export type Grouping = 'soort' | 'lid' | 'verbinding' | 'aard' | 'datum';
 
 export const GROUPINGS: { id: Grouping; label: string }[] = [
 	{ id: 'soort', label: 'Per soort' },
 	{ id: 'lid', label: 'Per lid' },
 	{ id: 'verbinding', label: 'Per verbinding' },
+	{ id: 'aard', label: 'Per aard' },
 	{ id: 'datum', label: 'Op datum' }
 ];
 
@@ -142,6 +159,7 @@ export function regroup(groups: Group[], by: Grouping, selection: Collection): G
 	const buckets = new Map<string, Row[]>();
 	const keyOf = (r: Row): string => {
 		if (by === 'lid') return r.lid ?? '';
+		if (by === 'aard') return r.aard ?? '';
 		if (by === 'verbinding')
 			return r.relation
 				? relationLabel(r.relation, r.direction === 'inbound' ? r.ref.collection : selection)
@@ -173,7 +191,11 @@ export function regroup(groups: Group[], by: Grouping, selection: Collection): G
 					: 'Hele artikel'
 				: by === 'datum'
 					? k || 'Zonder datum'
-					: k || 'Overige verbindingen',
+					: by === 'aard'
+						? k
+							? k.charAt(0).toUpperCase() + k.slice(1)
+							: 'Zonder aard'
+						: k || 'Overige verbindingen',
 		rows: buckets
 			.get(k)!
 			.slice()

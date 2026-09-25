@@ -2,7 +2,13 @@
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
 	// bronnen on the canvas or take them off.
+	import { menu } from '$lib/actions/menu';
+	import { onControl } from '$lib/actions/outside';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { getCoverage, type Coverage } from '$lib/api/stats';
+	import { coverageFor } from './coverage';
 	import { bronHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphStore } from '$lib/graph/graph-store';
@@ -10,7 +16,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { anchorLabel } from '$lib/text/qualifier';
 	import {
-		BRON_KIND_LABEL,
+		kindCount,
 		BRON_KIND_NOUN,
 		PRESETS,
 		activePreset,
@@ -21,8 +27,8 @@
 		type VerbondenFilter
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
-	import { download, rowsToCsv, rowsToText } from './export';
-	import { metaParts, type Row } from './rows';
+	import { csvName, download, rowsToCsv, rowsToText } from './export';
+	import { longDate, mentionRows, metaParts, type Row } from './rows';
 	import type { VerbondenState } from './source';
 	import {
 		GROUPINGS,
@@ -47,7 +53,8 @@
 		onVerbinding,
 		onShowInNetwork,
 		onProposedText,
-		tableHref
+		tableHref,
+		onRetry
 	}: {
 		verbonden: VerbondenState;
 		selection: GraphNode;
@@ -63,6 +70,8 @@
 		/** A wetsvoorstel row: show the proposed wording next to the current text. */
 		onProposedText?: (row: Row) => void;
 		tableHref: string;
+		/** Loads the verbindingen again after a failed load; without it no Opnieuw is offered. */
+		onRetry?: () => void;
 	} = $props();
 
 	const PREVIEW = 3;
@@ -70,8 +79,9 @@
 	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
 	let openRow = $state<string | null>(null);
-	let menu = $state<'bronnen' | 'grouping' | null>(null);
-	let copied = $state(false);
+	let openMenu = $state<'bronnen' | 'grouping' | null>(null);
+	/** What Verzamel did, for the button and the live region. */
+	let copyStatus = $state<'Gekopieerd' | 'Kopiëren mislukt' | null>(null);
 
 	let onCanvas = $state(new Set<string>());
 	$effect(() => store.nodes.subscribe((ns) => (onCanvas = new Set(ns.map((n) => n.id)))));
@@ -149,27 +159,43 @@
 		onFilter({ ...filter, jaar: filter.jaar === year ? null : year });
 	}
 
+	let copyTimer: ReturnType<typeof setTimeout> | undefined;
 	async function copyAll() {
 		try {
 			await navigator.clipboard.writeText(rowsToText(allRows(shown)));
-			copied = true;
-			setTimeout(() => (copied = false), 1000);
+			copyStatus = 'Gekopieerd';
 		} catch {
 			// The clipboard is unavailable in some contexts.
+			copyStatus = 'Kopiëren mislukt';
 		}
+		clearTimeout(copyTimer);
+		copyTimer = setTimeout(() => (copyStatus = null), 2000);
 	}
 
 	function exportCsv() {
 		download(
-			`verbindingen-${selection.key}.csv`,
-			rowsToCsv(allRows(shown), selection.collection, page.url.origin)
+			csvName(selection.label, selection.key),
+			rowsToCsv(mentionRows(allRows(shown)), selection.collection, page.url.origin)
 		);
 	}
 
 	const inNetworkHref = (row: Row) => bronHref(row.ref, { keepMode: false, mode: 'graph' });
-</script>
 
-<svelte:window onclick={() => (menu = null)} />
+	// Under a short list of judgments: how many the network holds of the rechter the
+	// filter names, and since when, so that a small number reads as a property of the
+	// selection, not of the case law. Only the first such list carries the line.
+	const FEW = 50;
+	const coverageGroup = $derived(
+		shown.find((g) => g.noun === 'uitspraken' && groupCount(g) < FEW)?.id ?? null
+	);
+	let coverage = $state<Coverage | null>(null);
+	onMount(() => {
+		getCoverage()
+			.then((c) => (coverage = c))
+			.catch(() => {});
+	});
+	const span = $derived(coverage ? coverageFor(coverage, filter.rechter) : null);
+</script>
 
 <aside class="verbonden" aria-label="Verbonden">
 	<div class="head">
@@ -178,16 +204,16 @@
 			<span class="head__count">{countLine(verbonden.groups, filter)}</span>
 		{/if}
 		<span class="head__space"></span>
-		<div class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+		<div class="menu" use:menu={{ open: openMenu === 'bronnen', close: () => (openMenu = null) }}>
 			<button
 				type="button"
 				class="btn is-text"
 				aria-haspopup="menu"
-				aria-expanded={menu === 'bronnen'}
-				onclick={() => (menu = menu === 'bronnen' ? null : 'bronnen')}
-				>{bronnenLabel(filter)} <span class="caret" aria-hidden="true">▾</span></button
+				aria-expanded={openMenu === 'bronnen'}
+				onclick={() => (openMenu = openMenu === 'bronnen' ? null : 'bronnen')}
+				>{bronnenLabel(filter)}<Caret open={openMenu === 'bronnen'} /></button
 			>
-			{#if menu === 'bronnen'}
+			{#if openMenu === 'bronnen'}
 				<div class="menu__list" role="menu">
 					{#each PRESETS as p (p.id)}
 						<button
@@ -198,7 +224,7 @@
 							class:is-active={activePreset(filter)?.id === p.id}
 							onclick={() => {
 								onFilter(withPreset(filter, p));
-								menu = null;
+								openMenu = null;
 							}}>{p.label}</button
 						>
 					{/each}
@@ -207,24 +233,25 @@
 						role="menuitem"
 						class="menu__item menu__item--more"
 						onclick={() => {
-							menu = null;
+							openMenu = null;
 							onOpenFilter();
 						}}>Kies bronnen en verbindingen</button
 					>
 				</div>
 			{/if}
 		</div>
-		<div class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+		<div class="menu" use:menu={{ open: openMenu === 'grouping', close: () => (openMenu = null) }}>
 			<button
 				type="button"
 				class="btn is-text"
 				aria-haspopup="menu"
-				aria-expanded={menu === 'grouping'}
-				onclick={() => (menu = menu === 'grouping' ? null : 'grouping')}
-				>{GROUPINGS.find((g) => g.id === grouping)?.label}
-				<span class="caret" aria-hidden="true">▾</span></button
+				aria-expanded={openMenu === 'grouping'}
+				onclick={() => (openMenu = openMenu === 'grouping' ? null : 'grouping')}
+				>{GROUPINGS.find((g) => g.id === grouping)?.label}<Caret
+					open={openMenu === 'grouping'}
+				/></button
 			>
-			{#if menu === 'grouping'}
+			{#if openMenu === 'grouping'}
 				<div class="menu__list" role="menu">
 					{#each GROUPINGS as g (g.id)}
 						<button
@@ -235,7 +262,7 @@
 							class:is-active={grouping === g.id}
 							onclick={() => {
 								grouping = g.id;
-								menu = null;
+								openMenu = null;
 							}}>{g.label}</button
 						>
 					{/each}
@@ -245,11 +272,16 @@
 		<button type="button" class="btn is-text" onclick={onOpenFilter}>Filter</button>
 	</div>
 
-	<div class="body">
+	<div class="body" aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
-			<p class="note">Verbindingen niet geladen.</p>
+			<p class="note">
+				Verbindingen niet geladen.
+				{#if onRetry}
+					<button type="button" class="link is-accent" onclick={onRetry}>Opnieuw</button>
+				{/if}
+			</p>
 		{:else if verbonden.loading && verbonden.groups.length === 0}
-			<p class="note">Laden</p>
+			<p class="note">Laden…</p>
 		{/if}
 
 		{#each shown as g, i (g.id)}
@@ -278,22 +310,21 @@
 				{#if bars.length > 0}
 					<div class="group__years">
 						<span class="group__years-edge">{bars[0].year}</span>
+						<!-- The bars are 16 high; each year takes the full 24 of the drawing and its
+						     8 of width as its target, so the pointer need not hit the bar. -->
 						<svg
 							class="years"
 							width={bars.length * 8}
-							height="16"
-							viewBox="0 0 {bars.length * 8} 16"
-							role="img"
+							height="24"
+							viewBox="0 0 {bars.length * 8} 24"
+							role="group"
 							aria-label="Uitspraken per jaar, {bars[0].year} tot {bars.at(-1)?.year}"
 						>
 							{#each bars as b, j (b.year)}
 								{@const max = Math.max(...bars.map((x) => x.count), 1)}
 								{@const h = b.count ? Math.max(2, Math.round((b.count / max) * 16)) : 0}
-								<rect
-									x={j * 8}
-									y={16 - h}
-									width="6"
-									height={h}
+								<g
+									class="year"
 									class:is-active={filter.jaar === b.year}
 									onclick={() => chooseYear(b.year)}
 									onkeydown={(e) => {
@@ -304,7 +335,15 @@
 									}}
 									role="button"
 									tabindex="0"
-									aria-label="{b.year}: {b.count}"><title>{b.year}: {b.count}</title></rect
+									aria-pressed={filter.jaar === b.year}
+									aria-label="{b.year}: {b.count}"
+									><title>{b.year}: {b.count}</title><rect
+										class="year__hit"
+										x={j * 8}
+										y="0"
+										width="8"
+										height="24"
+									/><rect class="year__bar" x={j * 8} y={20 - h} width="6" height={h} /></g
 								>
 							{/each}
 						</svg>
@@ -321,7 +360,7 @@
 							<button
 								type="button"
 								class="link"
-								onclick={() => onFilter(withPreset(filter, PRESETS[4]))}>Alleen Hoge Raad</button
+								onclick={() => onFilter({ ...filter, rechter: 'hr' })}>Alleen Hoge Raad</button
 							>
 						</p>
 					{/if}
@@ -332,26 +371,19 @@
 						{@const open = openRow === id}
 						{@const p = open ? passage(row) : null}
 						<li class="row" class:is-open={open}>
+							<!-- A click beside the title opens the row too, for the mouse; the
+							     keyboard has the toggle at the end of the row. -->
+							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 							<div
 								class="row__main"
-								role="button"
-								tabindex="0"
-								aria-expanded={open}
-								onclick={() => (openRow = open ? null : id)}
-								onkeydown={(e) => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										e.preventDefault();
-										openRow = open ? null : id;
-									}
+								onclick={(e) => {
+									if (!onControl(e)) openRow = open ? null : id;
 								}}
 							>
 								<KindGlyph collection={row.ref.collection} size={11} />
 								<span class="row__text">
-									<a
-										class="row__title"
-										href={openHref(g, row)}
-										data-sveltekit-noscroll
-										onclick={(e) => e.stopPropagation()}>{row.title}</a
+									<a class="row__title" href={openHref(g, row)} data-sveltekit-noscroll
+										>{row.title}</a
 									>
 									<span class="row__meta">
 										{#each metaParts(row) as part, k (k)}
@@ -360,20 +392,23 @@
 										{/each}
 										{#if row.proposed && onProposedText}
 											<span class="row__sep" aria-hidden="true"> · </span>
-											<button
-												type="button"
-												class="link"
-												onclick={(e) => {
-													e.stopPropagation();
-													onProposedText(row);
-												}}>toon voorgestelde tekst</button
+											<button type="button" class="link" onclick={() => onProposedText(row)}
+												>toon voorgestelde tekst</button
 											>
 										{/if}
 									</span>
 								</span>
+								<button
+									type="button"
+									class="row__toggle"
+									aria-expanded={open}
+									aria-controls="open-{id}"
+									aria-label={open ? 'Verberg passage' : 'Toon passage'}
+									onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
+								>
 							</div>
 							{#if open}
-								<div class="row__open">
+								<div class="row__open" id="open-{id}">
 									{#if p}
 										{#if row.position}<p class="row__where">{row.position}</p>{/if}
 										<p class="row__passage">
@@ -417,6 +452,15 @@
 						<a href={tableHref} class="link">Alle in een tabel</a>
 					</p>
 				{/if}
+				{#if span && g.id === coverageGroup}
+					<p class="group__caption">
+						Het netwerk bevat {formatCount(span.count)}
+						{span.of}{#if span.first && span.last}, van {span.first.slice(0, 4)} tot {longDate(
+								span.last
+							)}{/if}.
+						<a href="/docs#dekking" class="link">Dekking</a>
+					</p>
+				{/if}
 			</section>
 		{/each}
 
@@ -429,9 +473,7 @@
 
 		{#if hidden.length > 0}
 			<p class="hidden">
-				{hidden
-					.map((h) => `${formatCount(h.count)} ${BRON_KIND_LABEL[h.kind].toLowerCase()}`)
-					.join(', ')} verborgen.
+				{hidden.map((h) => kindCount(h.count, h.kind)).join(', ')} verborgen.
 				{#each hidden as h, k (h.kind)}
 					{#if k > 0}<span aria-hidden="true"> · </span>{/if}
 					<button
@@ -449,12 +491,11 @@
 				<a href={tableHref} class="link is-accent" data-sveltekit-noscroll
 					>Alle {formatCount(total)} in een tabel</a
 				>
-				<button type="button" class="link" onclick={copyAll}
-					>{copied ? 'Gekopieerd' : 'Verzamel'}</button
-				>
+				<button type="button" class="link" onclick={copyAll}>{copyStatus ?? 'Verzamel'}</button>
 				<button type="button" class="link" onclick={exportCsv}>Exporteer</button>
 			</div>
 		{/if}
+		<p class="visually-hidden" aria-live="polite">{copyStatus ?? ''}</p>
 	</div>
 </aside>
 
@@ -568,6 +609,7 @@
 		color: var(--ink-3);
 	}
 	.layer {
+		position: relative;
 		width: 14px;
 		height: 14px;
 		margin-left: auto;
@@ -583,6 +625,12 @@
 		color: var(--paper);
 		cursor: pointer;
 		flex: none;
+	}
+	/* The box is drawn 14 wide; the target is 24. */
+	.layer::before {
+		content: '';
+		position: absolute;
+		inset: -5px;
 	}
 	.layer.is-on {
 		background: var(--ink);
@@ -603,15 +651,25 @@
 	}
 	.years {
 		flex: none;
+		margin: -4px 0;
 	}
-	.years rect {
-		fill: var(--rule-strong);
+	.year {
 		cursor: pointer;
+		outline: none;
 	}
-	.years rect:hover {
+	.year__hit {
+		fill: transparent;
+	}
+	.year__bar {
+		fill: var(--rule-strong);
+	}
+	.year:hover .year__bar {
 		fill: var(--ink-3);
 	}
-	.years rect.is-active {
+	.year:focus-visible .year__hit {
+		fill: var(--accent-soft);
+	}
+	.year.is-active .year__bar {
 		fill: var(--accent);
 	}
 	.group__caption {
@@ -636,12 +694,31 @@
 		margin-top: 4px;
 	}
 	.row__main:hover,
-	.row__main:focus-visible {
+	.row__main:focus-within {
 		background: var(--paper-2);
-		outline: none;
 	}
 	.row.is-open .row__main {
 		background: var(--accent-soft);
+	}
+	.row__toggle {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 24px;
+		height: 24px;
+		margin: -2px -6px 0 0;
+		padding: 0;
+		border: 0;
+		border-radius: var(--r-1);
+		background: none;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+	.row__toggle :global(.caret) {
+		margin-left: 0;
+	}
+	.row__toggle:hover {
+		color: var(--ink);
 	}
 	.row__text {
 		flex: 1;
@@ -727,5 +804,13 @@
 		gap: 16px;
 		padding: 18px var(--s-4) 20px;
 		font-size: 12.5px;
+	}
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
 	}
 </style>
