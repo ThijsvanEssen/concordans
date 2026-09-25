@@ -2579,7 +2579,9 @@
 		top: 0;
 		max-height: 100vh;
 		overflow-y: auto;
-		padding-bottom: 24px;
+		/* Room for the focus ring: the column scrolls, so it clips what reaches its edge. */
+		margin: 0 -6px;
+		padding: 4px 6px 24px;
 	}
 	.results {
 		min-width: 0;
