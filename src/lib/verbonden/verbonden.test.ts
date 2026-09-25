@@ -14,7 +14,9 @@ import {
 	metaParts,
 	positionsLabel,
 	type Neighbor,
-	type Row
+	type Row,
+	describe as describeBron,
+	UNNAMED
 } from './rows';
 
 const neighbors = (fixture: { neighbors: { all: unknown[] } }) =>
@@ -276,5 +278,16 @@ describe('conclusion in the same case', () => {
 		]);
 		expect(groups.find((g) => g.id === 'advised')!.rows).toHaveLength(1);
 		expect(groups.find((g) => g.id === 'cited-by')!.rows).toHaveLength(0);
+	});
+});
+
+describe('describe, a bron without a name', () => {
+	it('says the name is unknown instead of showing the database key', () => {
+		expect(
+			describeBron('members', '71868ebc_5700_4a64_9d6e_0110f2148b38', '', { name: '' }).title
+		).toBe(UNNAMED);
+		expect(describeBron('members', 'k', null, { name: 'Claudia van Bruggen' }).title).toBe(
+			'Claudia van Bruggen'
+		);
 	});
 });

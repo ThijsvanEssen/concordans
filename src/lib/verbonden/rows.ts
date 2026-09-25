@@ -112,6 +112,9 @@ function documentTitle(props: Record<string, unknown>, name: string): string {
 	return stuk ? `${shortKind}, ${stuk}` : number ? `${shortKind}, nr. ${number}` : shortKind;
 }
 
+/** A bron the data gives no name: said so, never shown by its database key. */
+export const UNNAMED = 'Naam onbekend';
+
 /**
  * Title, context, identifier, date and court of a bron, from what a list or node
  * response says about it.
@@ -170,7 +173,10 @@ export function describe(
 				date
 			};
 		case 'members':
-			return { title: text(props.name) ?? name, context: text(props.party) };
+			return {
+				title: text(props.name) ?? text(displayName) ?? UNNAMED,
+				context: text(props.party)
+			};
 		case 'committees':
 		case 'factions':
 			return { title: text(props.name) ?? name, context: text(props.abbreviation) };
@@ -184,7 +190,7 @@ export function describe(
 		case 'articles':
 			return { title: withBook(name), context: null };
 		default:
-			return { title: name, context: null };
+			return { title: text(displayName) ?? UNNAMED, context: null };
 	}
 }
 
