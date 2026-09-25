@@ -101,6 +101,14 @@
 			});
 		return () => (stale = true);
 	});
+
+	// The participants table shows this many rows before "Alle N partijen tonen".
+	const PARTIES_PREVIEW = 6;
+	let showAllParties = $state(false);
+	$effect(() => {
+		void selection?.key;
+		showAllParties = false;
+	});
 </script>
 
 <ReaderFrame
@@ -164,9 +172,14 @@
 		{/if}
 
 		{#if participants.length > 0}
+			<!-- A mass appeal names a hundred appellants: the first few, the rest on request. -->
+			{@const shownParties =
+				showAllParties || participants.length <= PARTIES_PREVIEW + 2
+					? participants
+					: participants.slice(0, PARTIES_PREVIEW)}
 			<table class="reader-parties" id="parties">
 				<tbody>
-					{#each participants as p, i (i)}
+					{#each shownParties as p, i (i)}
 						<tr>
 							<th class="reader-parties-role">
 								{p.role}
@@ -186,6 +199,11 @@
 					{/each}
 				</tbody>
 			</table>
+			{#if shownParties.length < participants.length}
+				<button type="button" class="reader-parties-more" onclick={() => (showAllParties = true)}
+					>Alle {participants.length} partijen tonen</button
+				>
+			{/if}
 		{/if}
 
 		<div class="reader-body" bind:this={root}>
@@ -700,5 +718,15 @@
 		font-weight: 400;
 		font-style: italic;
 		color: var(--ink-3);
+	}
+	.reader-parties-more {
+		margin: var(--s-1) 0 var(--s-3);
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--accent);
+		cursor: pointer;
 	}
 </style>
