@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import type { Schema } from '$lib/api/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -39,61 +40,61 @@
 	});
 </script>
 
-<div class="r-committee">
-	<!-- The header comes from the node, so a failed detail request costs the counts only. -->
-	<header class="head">
-		<span class="kicker">
-			<KindGlyph collection="committees" />
-			{bronLabel('committees')}
-			{#if kind}<span class="dot">·</span>{kind}{/if}
-		</span>
-		<h2 class="title">{name}</h2>
-		{#if abbreviation && abbreviation !== name}
-			<div class="chips"><span class="afk-chip">{abbreviation}</span></div>
+<ReaderFrame>
+	<div class="r-committee">
+		<!-- The header comes from the node, so a failed detail request costs the counts only. -->
+		<header class="head">
+			<span class="kicker">
+				<KindGlyph collection="committees" />
+				{bronLabel('committees')}
+				{#if kind}<span class="dot">·</span>{kind}{/if}
+			</span>
+			<h2 class="title">{name}</h2>
+			{#if abbreviation && abbreviation !== name}
+				<div class="chips"><span class="afk-chip">{abbreviation}</span></div>
+			{/if}
+		</header>
+
+		{#if view.kind === 'loading'}
+			<p class="loading">Laden…</p>
+		{:else if view.kind === 'loaded'}
+			{@const c = view.committee}
+			{@const dossiers = c.dossiers ?? []}
+			{@const openDossiers = dossiers.filter((d) => !d.closed)}
+			{@const outcomes = Object.keys(OUTCOME_LABEL) as Outcome[]}
+
+			<ul class="stats">
+				<li>
+					<span class="stat-num">{(c.members ?? []).length}</span><span class="stat-label"
+						>Leden</span
+					>
+				</li>
+				<li>
+					<span class="stat-num">{openDossiers.length}</span><span class="stat-label"
+						>Open dossiers</span
+					>
+				</li>
+				{#each outcomes as outcome (outcome)}
+					{@const count = dossiers.filter((d) => d.outcome === outcome).length}
+					{#if count > 0}
+						<li>
+							<span class="stat-num">{count}</span><span class="stat-label"
+								>{OUTCOME_LABEL[outcome]}</span
+							>
+						</li>
+					{/if}
+				{/each}
+			</ul>
 		{/if}
-	</header>
-
-	{#if view.kind === 'loading'}
-		<p class="loading">Laden…</p>
-	{:else if view.kind === 'loaded'}
-		{@const c = view.committee}
-		{@const dossiers = c.dossiers ?? []}
-		{@const openDossiers = dossiers.filter((d) => !d.closed)}
-		{@const outcomes = Object.keys(OUTCOME_LABEL) as Outcome[]}
-
-		<ul class="stats">
-			<li>
-				<span class="stat-num">{(c.members ?? []).length}</span><span class="stat-label">Leden</span
-				>
-			</li>
-			<li>
-				<span class="stat-num">{openDossiers.length}</span><span class="stat-label"
-					>Open dossiers</span
-				>
-			</li>
-			{#each outcomes as outcome (outcome)}
-				{@const count = dossiers.filter((d) => d.outcome === outcome).length}
-				{#if count > 0}
-					<li>
-						<span class="stat-num">{count}</span><span class="stat-label"
-							>{OUTCOME_LABEL[outcome]}</span
-						>
-					</li>
-				{/if}
-			{/each}
-		</ul>
-	{/if}
-</div>
+	</div>
+</ReaderFrame>
 
 <style>
 	.r-committee {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-4);
-		padding: var(--s-5) var(--s-5) var(--s-6);
 		color: var(--ink-2);
-		height: 100%;
-		overflow-y: auto;
 	}
 	.loading,
 	.head {

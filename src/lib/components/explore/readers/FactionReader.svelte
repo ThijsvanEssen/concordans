@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -31,40 +32,39 @@
 	});
 </script>
 
-<div class="r-faction">
-	{#if view.kind === 'loading'}
-		<p class="loading">Laden…</p>
-	{:else if view.kind === 'error'}
-		<p class="error">{view.message}</p>
-	{:else}
-		{@const f = view.faction}
-		{@const name = str(f.props?.name)}
-		{@const abbreviation = str(f.props?.abbreviation)}
-		{@const seats = f.props?.seats}
-		<header class="head">
-			<span class="kicker"><KindGlyph collection="factions" />{bronLabel('factions')}</span>
-			<h2 class="title">{abbreviation ?? name ?? f.key}</h2>
-			{#if name && abbreviation && name !== abbreviation}
-				<p class="sub">{name}</p>
-			{/if}
-			{#if typeof seats === 'number'}
-				<div class="chips">
-					<span class="seats-chip">{seats} zetels</span>
-				</div>
-			{/if}
-		</header>
-	{/if}
-</div>
+<ReaderFrame>
+	<div class="r-faction">
+		{#if view.kind === 'loading'}
+			<p class="loading">Laden…</p>
+		{:else if view.kind === 'error'}
+			<p class="error">{view.message}</p>
+		{:else}
+			{@const f = view.faction}
+			{@const name = str(f.props?.name)}
+			{@const abbreviation = str(f.props?.abbreviation)}
+			{@const seats = f.props?.seats}
+			<header class="head">
+				<span class="kicker"><KindGlyph collection="factions" />{bronLabel('factions')}</span>
+				<h2 class="title">{abbreviation ?? name ?? f.key}</h2>
+				{#if name && abbreviation && name !== abbreviation}
+					<p class="sub">{name}</p>
+				{/if}
+				{#if typeof seats === 'number'}
+					<div class="chips">
+						<span class="seats-chip">{seats} zetels</span>
+					</div>
+				{/if}
+			</header>
+		{/if}
+	</div>
+</ReaderFrame>
 
 <style>
 	.r-faction {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-4);
-		padding: var(--s-5) var(--s-5) var(--s-6);
 		color: var(--ink-2);
-		height: 100%;
-		overflow-y: auto;
 	}
 	.loading,
 	.error {

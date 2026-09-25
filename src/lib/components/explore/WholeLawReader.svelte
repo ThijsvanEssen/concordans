@@ -60,12 +60,17 @@
 	}
 
 	// The law's names for Citeer, as the article reader builds them.
-	const citationOf = (articleNumber: string | null) => {
+	const citationOf = (articleNumber: string | null, heading: string | null = null) => {
 		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
 		const title = meta?.citationTitle ?? meta?.title ?? null;
 		if (!articleNumber || !title) return null;
-		return { articleNumber, shortTitle: meta?.shortTitle ?? null, citationTitle: title };
+		return { articleNumber, heading, shortTitle: meta?.shortTitle ?? null, citationTitle: title };
 	};
+
+	// An article without a number (the Algemene bepaling) is fetched by its address and
+	// headed by its label.
+	const addressOf = (a: { article_number?: string | null; address?: string | null }) =>
+		a.article_number ?? a.address ?? null;
 
 	const lawName = $derived.by(() => {
 		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
@@ -157,19 +162,18 @@
 				</h2>
 			{/each}
 
-			{@const detail = a.article_number ? detailByNumber.get(a.article_number) : undefined}
-			<section
-				class="whole-article"
-				id="article-{a.article_number}"
-				use:lazyLoad={a.article_number}
-			>
+			{@const address = addressOf(a)}
+			{@const detail = address ? detailByNumber.get(address) : undefined}
+			<section class="whole-article" id="article-{address}" use:lazyLoad={address}>
 				<div class="whole-article-head">
 					<a
 						class="whole-article-jump"
 						href={bronHref({ collection: 'articles', key: a.key })}
 						data-sveltekit-noscroll
 					>
-						<span class="whole-art-num">Art. {a.article_number}</span>
+						<span class="whole-art-num"
+							>{a.article_number ? `Art. ${a.article_number}` : (a.label ?? a.key)}</span
+						>
 					</a>
 				</div>
 
@@ -177,7 +181,7 @@
 					<ArticleText
 						text={detail.article.text}
 						parts={detail.article.parts}
-						citation={citationOf(a.article_number)}
+						citation={citationOf(address, a.article_number ? null : (a.label ?? null))}
 					/>
 				{:else if a.text_preview}
 					<p class="whole-text">
@@ -247,12 +251,9 @@
 		}
 	}
 
+	/* The reader frame sets the margins and the width, as for every reader. */
 	.whole-law {
-		max-width: 900px;
 		width: 100%;
-		margin: 0 auto;
-		padding: var(--s-7) var(--s-7) var(--s-8);
-		box-sizing: border-box;
 	}
 
 	.whole-head {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -49,107 +50,106 @@
 		v.voter_id.includes('/') ? bronHref(v.voter_id) : null;
 </script>
 
-<div class="r-decision">
-	{#if view.kind === 'loading'}
-		<p class="loading">Laden…</p>
-	{:else if view.kind === 'error'}
-		<p class="error">{view.message}</p>
-	{:else}
-		{@const d = view.decision}
-		{@const doc = view.document}
-		{@const tally = d.tally ?? {}}
-		{@const inFavour = tally['Voor'] ?? 0}
-		{@const against = tally['Tegen'] ?? 0}
-		{@const inFavourPct =
-			inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
-		{@const others = Object.entries(tally).filter(
-			([choice]) => choice !== 'Voor' && choice !== 'Tegen'
-		)}
-		{@const dossierNumbers = (node.raw?.props?.dossier_numbers ?? []) as string[]}
-		{@const voters = [...(d.votes ?? [])].sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0))}
-
-		<header class="head">
-			<span class="kicker">
-				<KindGlyph collection="decisions" />
-				{bronLabel('decisions')}
-				{#if d.date}<span class="dot">·</span>{formatLongDate(d.date)}{/if}
-			</span>
-			<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet beschikbaar'}</h2>
-			<div class="chips">
-				<span
-					class="result-chip"
-					class:result-chip--passed={d.passed}
-					class:result-chip--failed={!d.passed}
-				>
-					{d.passed ? 'Aangenomen' : 'Verworpen'}
-				</span>
-				<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
-				{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
-				{#each dossierNumbers.slice(0, 3) as number (number)}
-					<a href={bronHref(`dossiers/${number}`)} class="dossier-chip" data-sveltekit-noscroll
-						>{number}</a
-					>
-				{/each}
-			</div>
-		</header>
-
-		{#if doc?.text}
-			<section class="sec">
-				<h3 class="sec-title">{doc.kind ?? 'Document'}</h3>
-				<p class="document-text">{doc.text}</p>
-			</section>
+<ReaderFrame>
+	<div class="r-decision">
+		{#if view.kind === 'loading'}
+			<p class="loading">Laden…</p>
+		{:else if view.kind === 'error'}
+			<p class="error">{view.message}</p>
 		{:else}
-			<p class="document-unavailable">Tekst niet beschikbaar.</p>
-		{/if}
+			{@const d = view.decision}
+			{@const doc = view.document}
+			{@const tally = d.tally ?? {}}
+			{@const inFavour = tally['Voor'] ?? 0}
+			{@const against = tally['Tegen'] ?? 0}
+			{@const inFavourPct =
+				inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
+			{@const others = Object.entries(tally).filter(
+				([choice]) => choice !== 'Voor' && choice !== 'Tegen'
+			)}
+			{@const dossierNumbers = (node.raw?.props?.dossier_numbers ?? []) as string[]}
+			{@const voters = [...(d.votes ?? [])].sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0))}
 
-		<div class="vote-summary">
-			<div class="vote-bar">
-				<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
-			</div>
-			<div class="vote-totals">
-				<span class="vote-total vote-total--for">{inFavour} voor</span>
-				<span class="vote-total-sep">·</span>
-				<span class="vote-total vote-total--against">{against} tegen</span>
-				{#each others as [choice, seats] (choice)}
-					<span class="vote-total-sep">·</span>
-					<span class="vote-total vote-total--other">{seats} {choice.toLowerCase()}</span>
-				{/each}
-			</div>
-		</div>
-
-		{#if voters.length > 0}
-			<section class="sec">
-				<h3 class="sec-title">
-					{d.vote_kind === 'member' ? 'Stemverdeling per lid' : 'Stemverdeling per fractie'}
-				</h3>
-				<ul class="voter-list">
-					{#each voters as v (v.voter_id)}
-						{@const href = voterHref(v)}
-						<li class="voter-row voter-row--{side(v.choice)}">
-							<span class="voter-choice">{v.choice}</span>
-							{#if href}
-								<a class="voter-name" {href} data-sveltekit-noscroll>{v.name ?? v.voter_key}</a>
-							{:else}
-								<span class="voter-name">{v.name ?? v.voter_key}</span>
-							{/if}
-							<span class="voter-seats">{v.seats}</span>
-						</li>
+			<header class="head">
+				<span class="kicker">
+					<KindGlyph collection="decisions" />
+					{bronLabel('decisions')}
+					{#if d.date}<span class="dot">·</span>{formatLongDate(d.date)}{/if}
+				</span>
+				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet beschikbaar'}</h2>
+				<div class="chips">
+					<span
+						class="result-chip"
+						class:result-chip--passed={d.passed}
+						class:result-chip--failed={!d.passed}
+					>
+						{d.passed ? 'Aangenomen' : 'Verworpen'}
+					</span>
+					<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
+					{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
+					{#each dossierNumbers.slice(0, 3) as number (number)}
+						<a href={bronHref(`dossiers/${number}`)} class="dossier-chip" data-sveltekit-noscroll
+							>{number}</a
+						>
 					{/each}
-				</ul>
-			</section>
+				</div>
+			</header>
+
+			{#if doc?.text}
+				<section class="sec">
+					<h3 class="sec-title">{doc.kind ?? 'Document'}</h3>
+					<p class="document-text">{doc.text}</p>
+				</section>
+			{:else}
+				<p class="document-unavailable">Tekst niet beschikbaar.</p>
+			{/if}
+
+			<div class="vote-summary">
+				<div class="vote-bar">
+					<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
+				</div>
+				<div class="vote-totals">
+					<span class="vote-total vote-total--for">{inFavour} voor</span>
+					<span class="vote-total-sep">·</span>
+					<span class="vote-total vote-total--against">{against} tegen</span>
+					{#each others as [choice, seats] (choice)}
+						<span class="vote-total-sep">·</span>
+						<span class="vote-total vote-total--other">{seats} {choice.toLowerCase()}</span>
+					{/each}
+				</div>
+			</div>
+
+			{#if voters.length > 0}
+				<section class="sec">
+					<h3 class="sec-title">
+						{d.vote_kind === 'member' ? 'Stemverdeling per lid' : 'Stemverdeling per fractie'}
+					</h3>
+					<ul class="voter-list">
+						{#each voters as v (v.voter_id)}
+							{@const href = voterHref(v)}
+							<li class="voter-row voter-row--{side(v.choice)}">
+								<span class="voter-choice">{v.choice}</span>
+								{#if href}
+									<a class="voter-name" {href} data-sveltekit-noscroll>{v.name ?? v.voter_key}</a>
+								{:else}
+									<span class="voter-name">{v.name ?? v.voter_key}</span>
+								{/if}
+								<span class="voter-seats">{v.seats}</span>
+							</li>
+						{/each}
+					</ul>
+				</section>
+			{/if}
 		{/if}
-	{/if}
-</div>
+	</div>
+</ReaderFrame>
 
 <style>
 	.r-decision {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-4);
-		padding: var(--s-5) var(--s-5) var(--s-6);
 		color: var(--ink-2);
-		height: 100%;
-		overflow-y: auto;
 	}
 	.loading,
 	.error {

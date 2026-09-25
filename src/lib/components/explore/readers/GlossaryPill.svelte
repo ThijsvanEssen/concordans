@@ -10,6 +10,35 @@
 
 	let open = $state(false);
 	let pillEl: HTMLSpanElement | null = $state(null);
+	let popEl: HTMLSpanElement | null = $state(null);
+
+	// The readers scroll inside containers that clip their overflow, so the popover is
+	// placed against the viewport: above the term, or below it when there is no room.
+	const GAP = 4;
+	const MARGIN = 8;
+	let pos = $state({ top: 0, left: 0 });
+	function place() {
+		if (!pillEl || !popEl) return;
+		const r = pillEl.getBoundingClientRect();
+		const h = popEl.offsetHeight;
+		const w = popEl.offsetWidth;
+		const above = r.top - GAP - h;
+		const top = above >= MARGIN ? above : r.bottom + GAP;
+		const left = Math.max(MARGIN, Math.min(r.left, window.innerWidth - w - MARGIN));
+		pos = { top, left };
+	}
+	$effect(() => {
+		if (!open) return;
+		place();
+		// A fixed popover does not follow the term; scrolling closes it.
+		const close = () => (open = false);
+		window.addEventListener('scroll', close, { capture: true, passive: true });
+		window.addEventListener('resize', close);
+		return () => {
+			window.removeEventListener('scroll', close, { capture: true });
+			window.removeEventListener('resize', close);
+		};
+	});
 
 	// Set after mount so the random suffix never differs between SSR and hydration.
 	// eslint-disable-next-line svelte/prefer-writable-derived
@@ -37,7 +66,15 @@
 		role="button"
 		tabindex="0"
 		aria-describedby={uid}
-		>{display}<span id={uid} class="glossary-pop" class:is-open={open} role="tooltip">
+		>{display}<span
+			id={uid}
+			class="glossary-pop"
+			class:is-open={open}
+			role="tooltip"
+			bind:this={popEl}
+			style:top="{pos.top}px"
+			style:left="{pos.left}px"
+		>
 			<span class="glossary-pop__full">{entry.full}</span>
 			<span class="glossary-pop__plain">{entry.plain}</span>
 		</span>
@@ -57,10 +94,8 @@
 	}
 
 	.glossary-pop {
-		position: absolute;
+		position: fixed;
 		z-index: var(--z-float);
-		bottom: calc(100% + 4px);
-		left: 0;
 		width: max-content;
 		max-width: 280px;
 		padding: 8px 10px;

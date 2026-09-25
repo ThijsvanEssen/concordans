@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
 	// its text. Opened as the toelichting of an article, it lands on the passage for it.
+	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -26,8 +27,11 @@
 		| { kind: 'loaded'; document: Schema<'DocumentTextResponse'> };
 
 	let view = $state<State>({ kind: 'loading' });
+	/** Raised by Opnieuw: the load runs again. */
+	let attempt = $state(0);
 
 	$effect(() => {
+		void attempt;
 		const key = node.key;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
@@ -113,9 +117,37 @@
 				? null
 				: (apiPassage ?? findPassage(view.document.text ?? '', article.articleNumber))
 	);
-	const passageEntryIndex = $derived(
-		passage ? entries.findLastIndex((e) => e.type === 'para' && e.start <= passage.start) : -1
-	);
+	// The paragraph the passage starts in; when it starts on a heading (a section of the
+	// API), the first paragraph under it.
+	const passageEntryIndex = $derived.by(() => {
+		if (!passage) return -1;
+		const containing = entries.findLastIndex(
+			(e) =>
+				e.type === 'para' &&
+				e.start <= passage.start &&
+				passage.start < e.start + e.para.text.length
+		);
+		if (containing >= 0) return containing;
+		const inside = entries.findIndex(
+			(e) => e.type === 'para' && e.start >= passage.start && e.start < passage.end
+		);
+		return inside >= 0
+			? inside
+			: entries.findLastIndex((e) => e.type === 'para' && e.start <= passage.start);
+	});
+	// Every entry of the passage: the one it lands on and all that start within it. A
+	// section of the API spans all its leden and their headings; a text match ends in its
+	// own line, so it stays one paragraph.
+	const passageEntries = $derived.by(() => {
+		const inPassage = new Set<number>();
+		if (!passage || passageEntryIndex < 0) return inPassage;
+		inPassage.add(passageEntryIndex);
+		entries.forEach((e, i) => {
+			if (e.start >= passage.start && e.start < passage.end) inPassage.add(i);
+		});
+		return inPassage;
+	});
+	const passageFirst = $derived(Math.min(...passageEntries));
 	// The heading the passage falls under: the section with the latest start at or
 	// before it, the way ArticleText marks the lid a citation lands in.
 	const activeSectionId = $derived.by(() => {
@@ -136,15 +168,20 @@
 		void tick().then(() => landOn(container, 'passage'));
 	});
 
-	let copiedSection = $state<string | null>(null);
+	/** What the last copy did, on the button that did it and in the live region. */
+	let copied = $state<{ id: string; ok: boolean } | null>(null);
+	let copyTimer: ReturnType<typeof setTimeout> | undefined;
 	async function copyLink(id: string) {
+		let ok = true;
 		try {
 			await navigator.clipboard.writeText(permalink(page.url, id));
-			copiedSection = id;
-			setTimeout(() => (copiedSection = null), 1000);
 		} catch {
 			// The clipboard is unavailable in some contexts.
+			ok = false;
 		}
+		copied = { id, ok };
+		clearTimeout(copyTimer);
+		copyTimer = setTimeout(() => (copied = null), 2000);
 	}
 
 	// The kind is the source's own wording; where a glossary term exists the kicker links to it.
@@ -160,86 +197,133 @@
 	}
 </script>
 
-<div class="r-document">
-	{#if view.kind === 'loading'}
-		<p class="loading">Laden…</p>
-	{:else if view.kind === 'error'}
-		<p class="error">{view.message}</p>
-	{:else}
-		{@const doc = view.document}
-		{@const term = glossaryTerm(doc.kind)}
-		{@const caseKinds = doc.case_kinds ?? []}
-		<header class="head">
-			<span class="kicker">
-				{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
-						'Document'}{/if}
-				{#if doc.date}<span class="dot">·</span>{formatDate(doc.date)}{/if}
-				{#if caseKinds.length}<span class="dot">·</span>{caseKinds.join(', ')}{/if}
-			</span>
-			<h2 class="title">{doc.title ?? doc.key}</h2>
-			{#if doc.external_id}
-				<code class="ext-id">{doc.external_id}</code>
-			{/if}
-		</header>
-
-		{#if doc.text}
-			<div class="body" bind:this={root}>
-				{#each entries as entry, i (entry.type === 'heading' ? entry.section.id : `p${entry.para.start}`)}
-					{#if entry.type === 'heading'}
-						{@const s = entry.section}
-						<div
-							class="heading heading--lvl{Math.min(s.level, 3)}"
-							class:heading--active={s.id === activeSectionId}
-							id={s.id}
-						>
-							<span class="heading__text"
-								>{s.heading}{#if s.kind === 'article' && s.article_refs?.length}
-									<span class="heading__badge"
-										>{s.article_refs.map((r) => r.number).join(', ')}</span
-									>{/if}</span
-							>
-							<button
-								type="button"
-								class="heading__link"
-								onclick={() => copyLink(s.id)}
-								aria-label="Kopieer link naar {s.heading}"
-								>{copiedSection === s.id ? 'Gekopieerd' : 'Deel'}</button
-							>
-						</div>
-					{:else if i === passageEntryIndex}
-						<p class="body-para body-para--passage" id="passage">
-							{entry.para.text}{#if passage?.derived}<span
-									class="derived"
-									role="img"
-									aria-label="afgeleid">≈</span
-								>{/if}
-						</p>
-					{:else}
-						<p class="body-para">{entry.para.text}</p>
-					{/if}
-				{/each}
-			</div>
+<ReaderFrame>
+	<div class="r-document" aria-busy={view.kind === 'loading'}>
+		{#if view.kind === 'loading'}
+			<p class="loading">Laden…</p>
+		{:else if view.kind === 'error'}
+			<p class="error">
+				{view.message}
+				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
+			</p>
 		{:else}
-			<p class="empty">Geen tekst beschikbaar.</p>
-		{/if}
+			{@const doc = view.document}
+			{@const term = glossaryTerm(doc.kind)}
+			{@const caseKinds = doc.case_kinds ?? []}
+			<header class="head">
+				<span class="kicker">
+					{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
+							'Document'}{/if}
+					{#if doc.date}<span class="dot">·</span>{formatDate(doc.date)}{/if}
+					{#if caseKinds.length}<span class="dot">·</span>{caseKinds.join(', ')}{/if}
+				</span>
+				<h2 class="title">{doc.title ?? doc.key}</h2>
+			</header>
 
-		{#if doc.tk_url}
-			<footer class="foot">
-				<a href={doc.tk_url} target="_blank" rel="noopener noreferrer" class="full-link">
-					tweedekamer.nl ↗
-				</a>
-			</footer>
+			{#if doc.text}
+				<div class="body" bind:this={root}>
+					{#each entries as entry, i (entry.type === 'heading' ? entry.section.id : `p${entry.para.start}`)}
+						{#if entry.type === 'heading'}
+							{@const s = entry.section}
+							<div
+								class="heading heading--lvl{Math.min(s.level, 3)}"
+								class:heading--active={s.id === activeSectionId}
+								class:in-passage={passageEntries.has(i)}
+								class:in-passage--cont={passageEntries.has(i) && i > passageFirst}
+								id={s.id}
+							>
+								<span class="heading__text"
+									>{s.heading}{#if s.kind === 'article' && s.article_refs?.length}
+										<span class="heading__badge"
+											>{s.article_refs.map((r) => r.number).join(', ')}</span
+										>{/if}</span
+								>
+								<button
+									type="button"
+									class="heading__link"
+									onclick={() => copyLink(s.id)}
+									aria-label="Kopieer link naar {s.heading}"
+									>{copied?.id === s.id
+										? copied.ok
+											? 'Gekopieerd'
+											: 'Kopiëren mislukt'
+										: 'Deel'}</button
+								>
+							</div>
+						{:else if passageEntries.has(i)}
+							<p
+								class="body-para body-para--passage in-passage"
+								class:in-passage--cont={i > passageFirst}
+								id={i === passageEntryIndex ? 'passage' : undefined}
+							>
+								{entry.para.text}{#if i === passageEntryIndex && passage?.derived}<span
+										class="derived"
+										role="img"
+										aria-label="afgeleid">≈</span
+									>{/if}
+							</p>
+						{:else}
+							<p class="body-para">{entry.para.text}</p>
+						{/if}
+					{/each}
+				</div>
+			{:else}
+				<p class="empty">Geen tekst beschikbaar.</p>
+			{/if}
+
+			{#if doc.tk_url || doc.file_url}
+				<footer class="foot">
+					{#if doc.tk_url}
+						<a href={doc.tk_url} target="_blank" rel="noopener noreferrer" class="full-link">
+							tweedekamer.nl ↗
+						</a>
+					{/if}
+					{#if doc.file_url}
+						<a href={doc.file_url} target="_blank" rel="noopener noreferrer" class="full-link">
+							Origineel bestand ↗
+						</a>
+					{/if}
+				</footer>
+			{/if}
 		{/if}
-	{/if}
-</div>
+	</div>
+</ReaderFrame>
+<p class="visually-hidden" aria-live="polite">
+	{copied ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : ''}
+</p>
 
 <style>
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
 	.body-para--passage {
 		scroll-margin: 20vh;
-		font-weight: 600;
 	}
-	.body-para--passage:global(.is-landed) {
-		background: var(--accent-soft);
+	/* The passage about the article: one rule in the margin along its paragraphs and
+	   headings, carried through the space between them. */
+	.in-passage {
+		position: relative;
+	}
+	.in-passage::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: -14px;
+		width: 2px;
+		background: var(--accent);
+	}
+	.in-passage--cont::before {
+		top: calc(-1 * var(--s-4));
+	}
+	/* A heading already stands 8px out into the margin. */
+	.heading.in-passage::before {
+		left: -6px;
 	}
 	.derived {
 		margin-left: 6px;
@@ -296,9 +380,10 @@
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
+	/* Hidden by opacity, not visibility: Tab still reaches the link, and shows it. */
 	.heading__link {
 		flex: none;
-		visibility: hidden;
+		opacity: 0;
 		padding: 2px 8px;
 		border: 0;
 		background: none;
@@ -312,16 +397,18 @@
 	}
 	.heading:hover .heading__link,
 	.heading:focus-within .heading__link {
-		visibility: visible;
+		opacity: 1;
+	}
+	@media (hover: none) {
+		.heading__link {
+			opacity: 1;
+		}
 	}
 	.r-document {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-3);
-		padding: var(--s-5) var(--s-5) var(--s-6);
 		color: var(--ink-2);
-		height: 100%;
-		overflow-y: auto;
 	}
 	.loading,
 	.error,
@@ -356,13 +443,6 @@
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
-	.ext-id {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
-		color: var(--ink-3);
-	}
-
 	.body {
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
@@ -381,6 +461,7 @@
 	}
 	.foot {
 		display: flex;
+		gap: var(--s-4);
 	}
 	.full-link {
 		font-family: var(--font-sans);

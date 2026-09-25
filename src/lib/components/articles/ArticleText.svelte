@@ -4,6 +4,7 @@
 	// row of a grid: the number, the text, and a column at the right with the number of
 	// verbindingen of that lid and, on hover, Citeer and Kopieer tekst. An onderdeel, at
 	// any depth, shows the same two actions in that column, level with its own text.
+	import { menu } from '$lib/actions/menu';
 	import type { Schema } from '$lib/api/types';
 	import { parseArticleParts, partsFromApi, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, partOfAnchor, type Citation } from '$lib/text/cite';
@@ -20,7 +21,8 @@
 		lidHref,
 		citation = null,
 		proposed = null,
-		onCloseProposed
+		onCloseProposed,
+		lidNotes = new Map()
 	}: {
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
@@ -35,6 +37,8 @@
 		/** The wording a wetsvoorstel proposes for one lid, shown next to the current one. */
 		proposed?: ProposedText | null;
 		onCloseProposed?: () => void;
+		/** Per lid, when it got its present wording, and the link to its history. */
+		lidNotes?: Map<string, { label: string; href: string }>;
 	} = $props();
 
 	const source = $derived(text ?? '');
@@ -57,18 +61,26 @@
 	const keyOf = (part: ArticlePart) => part.id ?? `tekst-${part.start}`;
 
 	let menuFor = $state<string | null>(null);
-	let copied = $state<string | null>(null);
+	/** What the last copy did, on the button that did it and in the live region. */
+	let copied = $state<{ key: string; ok: boolean } | null>(null);
+	let copyTimer: ReturnType<typeof setTimeout> | undefined;
 
 	async function copy(what: string, key: string) {
+		let ok = true;
 		try {
 			await navigator.clipboard.writeText(what);
-			copied = key;
-			setTimeout(() => (copied = null), 1000);
 		} catch {
 			// The clipboard is unavailable in some contexts.
+			ok = false;
 		}
+		copied = { key, ok };
+		clearTimeout(copyTimer);
+		copyTimer = setTimeout(() => (copied = null), 2000);
 		menuFor = null;
 	}
+
+	const copyLabel = (key: string, idle: string) =>
+		copied?.key === key ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : idle;
 
 	const formsOf = (part: ArticlePart) => {
 		if (!citation || !part.id) return null;
@@ -76,21 +88,19 @@
 	};
 </script>
 
-<svelte:window onclick={() => (menuFor = null)} />
-
 {#snippet actions(part: ArticlePart, className: string)}
 	{@const key = keyOf(part)}
 	{@const forms = formsOf(part)}
 	<span class={className}>
 		{#if forms}
-			<span class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+			<span class="menu" use:menu={{ open: menuFor === key, close: () => (menuFor = null) }}>
 				<button
 					type="button"
 					class="btn act__btn"
 					aria-haspopup="menu"
 					aria-expanded={menuFor === key}
 					onclick={() => (menuFor = menuFor === key ? null : key)}
-					>{copied === `cite:${key}` ? 'Gekopieerd' : 'Citeer'}</button
+					>{copyLabel(`cite:${key}`, 'Citeer')}</button
 				>
 				{#if menuFor === key}
 					<div class="pop" role="menu" aria-label="Citeer {forms.kort}">
@@ -121,7 +131,7 @@
 			</span>
 		{/if}
 		<button type="button" class="btn act__btn" onclick={() => copy(fullText(part), `text:${key}`)}
-			>{copied === `text:${key}` ? 'Gekopieerd' : 'Kopieer tekst'}</button
+			>{copyLabel(`text:${key}`, 'Kopieer tekst')}</button
 		>
 	</span>
 {/snippet}
@@ -129,10 +139,19 @@
 {#snippet aside(part: ArticlePart)}
 	{@const lid = part.kind === 'lid' ? part.number : null}
 	{@const count = lid ? counts.get(lid) : undefined}
+	{@const note = lid ? lidNotes.get(lid) : undefined}
 	<div class="lid__side">
 		{#if lid && count != null && lidHref}
 			<a class="lid__count" href={lidHref(lid)} data-sveltekit-noscroll
 				>{formatCount(count)} {count === 1 ? 'verbinding' : 'verbindingen'}</a
+			>
+		{/if}
+		{#if note}
+			<a
+				class="lid__count"
+				href={note.href}
+				data-sveltekit-noscroll
+				title="Geschiedenis van lid {lid}">{note.label}</a
 			>
 		{/if}
 		{@render actions(part, 'lid__actions')}
@@ -223,8 +242,19 @@
 		{/if}
 	</div>
 {/if}
+<p class="visually-hidden" aria-live="polite">
+	{copied ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : ''}
+</p>
 
 <style>
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
 	.article-text {
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
@@ -324,8 +354,9 @@
 	.lid__count:hover {
 		color: var(--accent);
 	}
+	/* Hidden by opacity, not visibility: Tab still reaches the actions, and shows them. */
 	.lid__actions {
-		visibility: hidden;
+		opacity: 0;
 		display: flex;
 		gap: 4px;
 	}
@@ -334,7 +365,7 @@
 	.lid:hover:not(:has(.part--onderdeel:hover)) .lid__actions,
 	.lid__side:focus-within .lid__actions,
 	.lid.is-open > .lid__side .lid__actions {
-		visibility: visible;
+		opacity: 1;
 	}
 	.lid.is-open > .lid__side {
 		z-index: var(--z-float);
@@ -441,7 +472,7 @@
 		z-index: 3;
 		width: 150px;
 		display: flex;
-		visibility: hidden;
+		opacity: 0;
 		justify-content: flex-end;
 		gap: 4px;
 		font-family: var(--font-sans);
@@ -450,7 +481,14 @@
 	.part:hover:not(:has(.part--onderdeel:hover)) > .part__actions,
 	.part__actions:focus-within,
 	.part.is-open > .part__actions {
-		visibility: visible;
+		opacity: 1;
+	}
+	/* Without hover, as on a touch screen, the actions are always there. */
+	@media (hover: none) {
+		.lid__actions,
+		.part__actions {
+			opacity: 1;
+		}
 	}
 	.part.is-open > .part__actions {
 		z-index: var(--z-float);

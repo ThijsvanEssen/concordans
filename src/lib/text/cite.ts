@@ -34,6 +34,8 @@ export const ordinalWord = (lid: string): string | null => {
 
 export type Citation = {
 	articleNumber: string;
+	/** The heading of an article without a number ("Algemene bepaling"), cited in its place. */
+	heading?: string | null;
 	/** `Sr`; null when the law has no short title. */
 	shortTitle: string | null;
 	/** `Wetboek van Strafrecht` */
@@ -62,6 +64,15 @@ function bookOf(c: Citation): { articleNumber: string; citationTitle: string } {
 	return { articleNumber, citationTitle: 'Burgerlijk Wetboek' };
 }
 
+/** The name of a law with its article: `het Wetboek van Strafrecht`, `de Algemene wet
+ * bestuursrecht`; an EU act or a treaty title keeps its own form (`Richtlijn 2013/36/EU`). */
+function lawWithArticle(title: string): string {
+	if (/^(Richtlijn|Verordening|Uitvoeringsverordening|Gedelegeerde)\b/i.test(title)) return title;
+	if (/^(Burgerlijk Wetboek|Wetboek|Verdrag|Reglement|Statuut|Besluit)\b/i.test(title))
+		return `het ${title}`;
+	return `de ${title}`;
+}
+
 /**
  * `art. 5 lid 1 onder d sub i Sr`, `artikel 5, eerste lid, onderdeel d, onder i, Wetboek
  * van Strafrecht` (Aanwijzingen voor de regelgeving), and the dated short form.
@@ -72,7 +83,7 @@ export function citeArticle(c: Citation): CitationForms {
 	const onderdelen = c.onderdelen ?? [];
 
 	const kort = [
-		`art. ${articleNumber}`,
+		c.heading ?? `art. ${articleNumber}`,
 		c.lid ? `lid ${c.lid}` : null,
 		c.aanhef ? 'aanhef' : null,
 		...onderdelen.map((o, i) => (i === 0 ? `onder ${o}` : `sub ${o}`)),
@@ -82,17 +93,19 @@ export function citeArticle(c: Citation): CitationForms {
 		.join(' ');
 
 	const ordinal = c.lid ? ordinalWord(c.lid) : null;
-	const voluit = [
-		`artikel ${articleNumber}`,
+	const parts = [
+		c.heading ?? `artikel ${articleNumber}`,
 		c.lid ? (ordinal ? `${ordinal} lid` : `lid ${c.lid}`) : null,
 		c.aanhef ? 'aanhef' : null,
-		...onderdelen.map((o, i) => (i === 0 ? `onderdeel ${o}` : `onder ${o}`)),
-		citationTitle
-	]
-		.filter(Boolean)
-		.join(', ');
+		...onderdelen.map((o, i) => (i === 0 ? `onderdeel ${o}` : `onder ${o}`))
+	].filter(Boolean);
+	// Aanwijzing 3.29: "artikel 5, eerste lid, onderdeel d, van de Wet …"; with the article
+	// alone, "artikel 5 van de Wet …".
+	const of = `van ${lawWithArticle(citationTitle)}`;
+	const voluit = parts.length > 1 ? `${parts.join(', ')}, ${of}` : `${parts[0]} ${of}`;
 
-	const dated = `${kort.charAt(0).toUpperCase()}${kort.slice(1)} (geldend op ${longDate(c.date ?? new Date())})`;
+	// Lower case like the short form: a citation is pasted into a sentence.
+	const dated = `${kort} (tekst geldend op ${longDate(c.date ?? new Date())})`;
 	return { kort, voluit, metDatum: dated };
 }
 

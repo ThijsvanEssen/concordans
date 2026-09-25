@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Reader for the kinds without a text of their own (toezegging, zaak, ...): what the
 	// bron is, when, and where the source keeps it. Its verbindingen are in the panel.
+	import ReaderFrame from './ReaderFrame.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
@@ -22,29 +23,29 @@
 	const source = $derived(textProp(p.tk_url));
 </script>
 
-<article class="r-simple">
-	<span class="kicker"><KindGlyph collection={node.collection} /> {bronLabel(node.collection)}</span
-	>
-	<h2 class="title">{title}</h2>
-	{#if facts.length > 0}
-		<p class="facts">{facts.join(' · ')}</p>
-	{/if}
-	{#if textProp(p.text)}
-		<p class="text">{textProp(p.text)}</p>
-	{/if}
-	{#if source}
-		<a class="source" href={source} target="_blank" rel="noopener noreferrer">tweedekamer.nl ↗</a>
-	{/if}
-</article>
+<ReaderFrame>
+	<article class="r-simple">
+		<span class="kicker"
+			><KindGlyph collection={node.collection} /> {bronLabel(node.collection)}</span
+		>
+		<h2 class="title">{title}</h2>
+		{#if facts.length > 0}
+			<p class="facts">{facts.join(' · ')}</p>
+		{/if}
+		{#if textProp(p.text)}
+			<p class="text">{textProp(p.text)}</p>
+		{/if}
+		{#if source}
+			<a class="source" href={source} target="_blank" rel="noopener noreferrer">tweedekamer.nl ↗</a>
+		{/if}
+	</article>
+</ReaderFrame>
 
 <style>
 	.r-simple {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-		padding: var(--s-5) var(--s-5) var(--s-6);
-		height: 100%;
-		overflow-y: auto;
 		color: var(--ink-2);
 	}
 	.kicker {

@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { bronHref } from '$lib/bron/href';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
+	import { menu } from '$lib/actions/menu';
 	import { getJudgmentDetail } from '$lib/api/judgments';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -37,7 +39,6 @@
 	// an API paragraph, else built from its number — a later split shares one `paragraph_id`
 	// with the first and needs its own anchor.
 	const rov = (number: string, id?: string | null) => id || `rov-${number}`;
-	const copyLink = (id: string) => navigator.clipboard?.writeText(permalink(page.url, id));
 
 	// Citeren van een overweging, parallel aan `citeArticle` voor een lid.
 	function citeOverweging(
@@ -57,17 +58,25 @@
 	}
 
 	let menuFor = $state<string | null>(null);
-	let copied = $state<string | null>(null);
+	/** What the last copy did, on the button that did it and in the live region. */
+	let copied = $state<{ key: string; ok: boolean } | null>(null);
+	let copyTimer: ReturnType<typeof setTimeout> | undefined;
 	async function copyText(text: string, key: string) {
+		let ok = true;
 		try {
 			await navigator.clipboard.writeText(text);
-			copied = key;
-			setTimeout(() => (copied = null), 1000);
 		} catch {
 			// The clipboard is unavailable in some contexts.
+			ok = false;
 		}
+		copied = { key, ok };
+		clearTimeout(copyTimer);
+		copyTimer = setTimeout(() => (copied = null), 2000);
 		menuFor = null;
 	}
+	const copyLabel = (key: string, idle: string) =>
+		copied?.key === key ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : idle;
+	const copyLink = (id: string) => copyText(permalink(page.url, id), `share:${id}`);
 
 	let root = $state<HTMLElement | null>(null);
 	const anchor = $derived(anchorOfHash(page.url.hash));
@@ -95,8 +104,6 @@
 	});
 </script>
 
-<svelte:window onclick={() => (menuFor = null)} />
-
 <ReaderFrame
 	status={view.kind === 'loaded' ? 'ready' : view.kind}
 	message={view.kind === 'error' ? view.message : ''}
@@ -117,9 +124,15 @@
 		<ReaderHead
 			collection="judgments"
 			juris={textProp(j.props?.court)}
-			title={j.ecli ? formatEcliLabel(j.ecli) : (j.display_name ?? 'Uitspraak')}
+			title={(j.ecli ? formatEcliLabel(j.ecli) : (j.display_name ?? 'Uitspraak')) +
+				(j.names?.length ? ` (${j.names.join(', ')})` : '')}
 		>
 			<div class="reader-meta-row">
+				{#if j.decision_kind}
+					<span class="reader-meta-item"
+						>{j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)}</span
+					>
+				{/if}
 				{#if judgmentDate}<span class="reader-meta-item">{judgmentDate}</span>{/if}
 				{#if caseNumber}
 					<span class="reader-meta-item reader-meta-item--mono">{caseNumber}</span>
@@ -130,6 +143,18 @@
 					>
 				{/if}
 			</div>
+			{#if j.translation_of}
+				<p class="reader-translation">
+					Vertaling van
+					<a
+						href={bronHref({
+							collection: 'judgments',
+							key: j.translation_of.toLowerCase().replaceAll(':', '_')
+						})}
+						data-sveltekit-noscroll>{j.translation_of}</a
+					>. De samenvatting hieronder is die van het origineel.
+				</p>
+			{/if}
 		</ReaderHead>
 
 		{#if hasSummary}
@@ -174,7 +199,7 @@
 							type="button"
 							class="reader-heading__link"
 							onclick={() => copyLink(hid)}
-							aria-label="Kopieer link naar {clean}">Deel</button
+							aria-label="Kopieer link naar {clean}">{copyLabel(`share:${hid}`, 'Deel')}</button
 						>
 					</h3>
 				{:else}
@@ -187,7 +212,8 @@
 									type="button"
 									class="reader-heading__link"
 									onclick={() => copyLink(hid)}
-									aria-label="Kopieer link naar {seg.text}">Deel</button
+									aria-label="Kopieer link naar {seg.text}"
+									>{copyLabel(`share:${hid}`, 'Deel')}</button
 								>
 							</h3>
 						{:else if seg.num || (i === 0 && para.number)}
@@ -213,14 +239,17 @@
 								<div class="reader-para-side">
 									<span class="reader-para-actions">
 										{#if forms}
-											<span class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+											<span
+												class="menu"
+												use:menu={{ open: menuFor === rovId, close: () => (menuFor = null) }}
+											>
 												<button
 													type="button"
 													class="btn reader-para-btn"
 													aria-haspopup="menu"
 													aria-expanded={menuFor === rovId}
 													onclick={() => (menuFor = menuFor === rovId ? null : rovId)}
-													>{copied === `cite:${rovId}` ? 'Gekopieerd' : 'Citeer'}</button
+													>{copyLabel(`cite:${rovId}`, 'Citeer')}</button
 												>
 												{#if menuFor === rovId}
 													<div class="pop" role="menu" aria-label="Citeer overweging {num}">
@@ -263,8 +292,7 @@
 										<button
 											type="button"
 											class="btn reader-para-btn"
-											onclick={() => copyText(permalink(page.url, rovId), `share:${rovId}`)}
-											>{copied === `share:${rovId}` ? 'Gekopieerd' : 'Deel'}</button
+											onclick={() => copyLink(rovId)}>{copyLabel(`share:${rovId}`, 'Deel')}</button
 										>
 									</span>
 								</div>
@@ -287,8 +315,20 @@
 		</div>
 	{/if}
 </ReaderFrame>
+<p class="visually-hidden" aria-live="polite">
+	{copied ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : ''}
+</p>
 
 <style>
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
+
 	.reader-meta-row {
 		display: flex;
 		flex-wrap: wrap;
@@ -438,9 +478,10 @@
 		min-width: 0;
 	}
 
+	/* Hidden by opacity, not visibility: Tab still reaches the link, and shows it. */
 	.reader-heading__link {
 		flex: none;
-		visibility: hidden;
+		opacity: 0;
 		padding: 2px 8px;
 		border: 0;
 		background: none;
@@ -457,7 +498,7 @@
 
 	.reader-heading:hover .reader-heading__link,
 	.reader-heading:focus-within .reader-heading__link {
-		visibility: visible;
+		opacity: 1;
 	}
 
 	.reader-subheading {
@@ -541,7 +582,7 @@
 	}
 
 	.reader-para-actions {
-		visibility: hidden;
+		opacity: 0;
 		display: flex;
 		gap: 4px;
 		font-family: var(--font-sans);
@@ -551,7 +592,15 @@
 	.reader-para-block:hover .reader-para-actions,
 	.reader-para-block:focus-within .reader-para-actions,
 	.reader-para-block.is-open .reader-para-actions {
-		visibility: visible;
+		opacity: 1;
+	}
+
+	/* Without hover, as on a touch screen, the actions are always there. */
+	@media (hover: none) {
+		.reader-heading__link,
+		.reader-para-actions {
+			opacity: 1;
+		}
 	}
 
 	.reader-para-btn {
@@ -632,5 +681,12 @@
 		font-style: italic;
 		color: var(--ink-3);
 		margin: 0;
+	}
+
+	.reader-translation {
+		margin: var(--s-2) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 </style>

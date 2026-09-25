@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import { neighborsOf, type Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
@@ -27,7 +28,7 @@
 		| { kind: 'error'; message: string }
 		| {
 				kind: 'loaded';
-				member: Schema<'MemberDTO'>;
+				member: Schema<'MemberDetailDTO'>;
 				votes: Schema<'MemberVotesResponse'> | null;
 				/** What the person signed stukken as, and when (AUTHORED meta). */
 				signatures: Signature[];
@@ -103,132 +104,147 @@
 	const years = $derived(parseFilter(page.url.searchParams));
 </script>
 
-<div class="r-member">
-	{#if view.kind === 'loading'}
-		<p class="loading">Laden…</p>
-	{:else if view.kind === 'error'}
-		<p class="error">{view.message}</p>
-	{:else}
-		{@const m = view.member}
-		{@const career = careerOf(m.faction_memberships ?? [], view.signatures)}
-		{@const sitting = (m.faction_memberships ?? []).some((f) => !f.to_date)}
+<ReaderFrame>
+	<div class="r-member">
+		{#if view.kind === 'loading'}
+			<p class="loading">Laden…</p>
+		{:else if view.kind === 'error'}
+			<p class="error">{view.message}</p>
+		{:else}
+			{@const m = view.member}
+			{@const career = careerOf(
+				m.faction_memberships ?? [],
+				view.signatures,
+				m.government_functions ?? []
+			)}
+			{@const sitting = (m.faction_memberships ?? []).some((f) => !f.to_date)}
 
-		<header class="head">
-			<span class="kicker"><KindGlyph collection="members" />{currentTitle(career, sitting)}</span>
-			<div class="member-head-row">
-				<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
-				<div class="member-meta">
-					<h2 class="title">{m.name ?? m.key}</h2>
-					{#if m.party}
-						<div class="chips"><span class="party-chip">{m.party}</span></div>
-					{/if}
+			<header class="head">
+				<span class="kicker"><KindGlyph collection="members" />{currentTitle(career, sitting)}</span
+				>
+				<div class="member-head-row">
+					<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
+					<div class="member-meta">
+						<h2 class="title">{m.name ?? m.key}</h2>
+						{#if m.party}
+							<div class="chips"><span class="party-chip">{m.party}</span></div>
+						{/if}
+					</div>
 				</div>
-			</div>
-		</header>
+			</header>
 
-		{#if career.length > 0}
-			<section class="sec">
-				<h3 class="sec-title">Loopbaan</h3>
-				<ul class="career">
-					{#each career as step (step.kind + (step.kind === 'seat' ? step.factionKey : step.function) + step.from)}
-						<li
-							class="career-step"
-							class:is-out={!inYears(step.from, step.to, years.van, years.tot)}
-						>
-							<span class="career-years">{yearsOf(step.from, step.to)}</span>
-							{#if step.kind === 'seat'}
-								<span class="career-what">
-									Kamerlid,
-									<a
-										href={bronHref({ collection: 'factions', key: step.factionKey })}
-										data-sveltekit-noscroll>{step.faction}</a
-									>
-									{#each step.roles as r (r.role + r.from)}
-										<span class="career-role">{r.role.toLowerCase()} {yearsOf(r.from, r.to)}</span>
-									{/each}
-								</span>
-							{:else}
-								<span class="career-what">
-									{step.function.charAt(0).toUpperCase() + step.function.slice(1)}
-									<span class="career-role"
-										>{step.count}
-										{step.count === 1 ? 'stuk' : 'stukken'} ondertekend</span
-									>
-								</span>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-			</section>
-		{/if}
-
-		{#if view.votes && view.votes.votes.length > 0}
-			{@const votes = view.votes.votes}
-			{@const groups = groupVotes(showAllVotes ? votes : votes.slice(0, VOTES_PREVIEW))}
-			<section class="sec">
-				<h3 class="sec-title">Stemgeschiedenis ({view.votes.count})</h3>
-				{#each groups as group (group.party)}
-					{#if groups.length > 1}
-						<div class="party-head">
-							<span class="party-name">{group.party}</span>
-							<span class="party-total">{group.total} stemmen</span>
-						</div>
-					{/if}
-					{#each group.byChoice as [choice, rows] (choice)}
-						<div class="vote-group">
-							<div class="vote-group-head">
-								<span class="vote-choice vote-choice--{choice.toLowerCase()}">{choice}</span>
-								<span class="vote-group-count">{rows.length}</span>
-							</div>
-							<ul class="vote-list">
-								{#each rows as v (v.decision_id)}
-									<li class="vote-row">
+			{#if career.length > 0}
+				<section class="sec">
+					<h3 class="sec-title">Loopbaan</h3>
+					<ul class="career">
+						{#each career as step (step.kind + (step.kind === 'seat' ? step.factionKey : step.function) + step.from)}
+							<li
+								class="career-step"
+								class:is-out={!inYears(step.from, step.to, years.van, years.tot)}
+							>
+								<span class="career-years">{yearsOf(step.from, step.to)}</span>
+								{#if step.kind === 'seat'}
+									<span class="career-what">
+										Kamerlid,
 										<a
-											class="vote-link"
-											href={bronHref({ collection: 'decisions', key: v.decision_key })}
-											data-sveltekit-noscroll
+											href={bronHref({ collection: 'factions', key: step.factionKey })}
+											data-sveltekit-noscroll>{step.faction}</a
 										>
-											<span class="vote-subject">{v.subject ?? '—'}</span>
-											<span class="vote-meta">
-												{#if (v.seats ?? 0) > 1}<span class="vote-seats">{v.seats} zetels</span
-													>{/if}
-												{#if v.passed != null}
-													<span
-														class="vote-outcome"
-														class:vote-outcome--passed={v.passed}
-														class:vote-outcome--failed={!v.passed}
-													>
-														{v.passed ? 'Aangenomen' : 'Verworpen'}
-													</span>
-												{/if}
-												{#if v.date}<span class="vote-date">{formatDate(v.date)}</span>{/if}
-											</span>
-										</a>
-									</li>
-								{/each}
-							</ul>
-						</div>
+										{#each step.roles as r (r.role + r.from)}
+											<span class="career-role">{r.role.toLowerCase()} {yearsOf(r.from, r.to)}</span
+											>
+										{/each}
+									</span>
+								{:else}
+									<span class="career-what">
+										{step.function.charAt(0).toUpperCase() + step.function.slice(1)}
+										{#if step.cabinet}<span class="career-role">{step.cabinet}</span>{/if}
+										{#if step.count > 0}
+											<span class="career-role"
+												>{step.count}
+												{step.count === 1 ? 'stuk' : 'stukken'} ondertekend</span
+											>
+										{/if}
+									</span>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+					{#if career.some((step) => step.kind === 'function' && !step.cabinet)}
+						<p class="career-note">
+							Een functie zonder kabinet is alleen bekend uit ondertekende stukken. De jaren zijn
+							die van de stukken, niet de ambtstermijn.
+						</p>
+					{/if}
+				</section>
+			{/if}
+
+			{#if view.votes && view.votes.votes.length > 0}
+				{@const votes = view.votes.votes}
+				{@const groups = groupVotes(showAllVotes ? votes : votes.slice(0, VOTES_PREVIEW))}
+				<section class="sec">
+					<h3 class="sec-title">Stemgeschiedenis ({view.votes.count})</h3>
+					{#each groups as group (group.party)}
+						{#if groups.length > 1}
+							<div class="party-head">
+								<span class="party-name">{group.party}</span>
+								<span class="party-total">{group.total} stemmen</span>
+							</div>
+						{/if}
+						{#each group.byChoice as [choice, rows] (choice)}
+							<div class="vote-group">
+								<div class="vote-group-head">
+									<span class="vote-choice vote-choice--{choice.toLowerCase()}">{choice}</span>
+									<span class="vote-group-count">{rows.length}</span>
+								</div>
+								<ul class="vote-list">
+									{#each rows as v (v.decision_id)}
+										<li class="vote-row">
+											<a
+												class="vote-link"
+												href={bronHref({ collection: 'decisions', key: v.decision_key })}
+												data-sveltekit-noscroll
+											>
+												<span class="vote-subject">{v.subject ?? '—'}</span>
+												<span class="vote-meta">
+													{#if (v.seats ?? 0) > 1}<span class="vote-seats"
+															>stem van de fractie, {v.seats} zetels</span
+														>{/if}
+													{#if v.passed != null}
+														<span
+															class="vote-outcome"
+															class:vote-outcome--passed={v.passed}
+															class:vote-outcome--failed={!v.passed}
+														>
+															{v.passed ? 'Aangenomen' : 'Verworpen'}
+														</span>
+													{/if}
+													{#if v.date}<span class="vote-date">{formatDate(v.date)}</span>{/if}
+												</span>
+											</a>
+										</li>
+									{/each}
+								</ul>
+							</div>
+						{/each}
 					{/each}
-				{/each}
-				{#if votes.length > VOTES_PREVIEW && !showAllVotes}
-					<button type="button" class="more-btn" onclick={() => (showAllVotes = true)}>
-						+{votes.length - VOTES_PREVIEW} meer stemmen
-					</button>
-				{/if}
-			</section>
+					{#if votes.length > VOTES_PREVIEW && !showAllVotes}
+						<button type="button" class="more-btn" onclick={() => (showAllVotes = true)}>
+							+{votes.length - VOTES_PREVIEW} meer stemmen
+						</button>
+					{/if}
+				</section>
+			{/if}
 		{/if}
-	{/if}
-</div>
+	</div>
+</ReaderFrame>
 
 <style>
 	.r-member {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-4);
-		padding: var(--s-5) var(--s-5) var(--s-6);
 		color: var(--ink-2);
-		height: 100%;
-		overflow-y: auto;
 	}
 	.loading,
 	.error {
@@ -486,5 +502,12 @@
 	.more-btn:hover {
 		background: var(--paper-2);
 		color: var(--ink);
+	}
+
+	.career-note {
+		margin: var(--s-2) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 </style>

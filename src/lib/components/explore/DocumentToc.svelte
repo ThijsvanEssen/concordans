@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { replaceState } from '$app/navigation';
+	import { page } from '$app/state';
 	// The table of contents of a document (memorie, verslag, nota, ...) in Lezen: its
 	// headings, the same nav-column slot LezenNav fills for a wet. Fetches its own copy
 	// of the document, the way LezenNav fetches its own copy of the law's articles.
@@ -39,8 +41,13 @@
 		return () => ac.abort();
 	});
 
-	function jump(id: string) {
+	// A link to the passage, so that it can be copied and opened elsewhere; a plain click
+	// scrolls smoothly and puts the passage in the address without a history entry.
+	function jump(e: MouseEvent, id: string) {
+		if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+		e.preventDefault();
 		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		replaceState(`#${id}`, page.state);
 	}
 </script>
 
@@ -52,17 +59,17 @@
 		</header>
 
 		{#if loading && sections.length === 0}
-			<p class="note">Laden</p>
+			<p class="note">Laden…</p>
 		{:else if error}
 			<p class="note">{error}</p>
 		{:else if sections.length > 0}
 			<ol class="list">
 				{#each sections as s (s.id)}
 					<li>
-						<button
-							type="button"
+						<a
 							class="row level-{Math.min(s.level, 3)}"
-							onclick={() => jump(s.id)}>{s.heading}</button
+							href="#{s.id}"
+							onclick={(e) => jump(e, s.id)}>{s.heading}</a
 						>
 					</li>
 				{/each}
@@ -125,6 +132,7 @@
 		color: var(--ink-2);
 		line-height: 1.3;
 		cursor: pointer;
+		text-decoration: none;
 	}
 
 	.row:hover {

@@ -4,9 +4,9 @@
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
-	import type { GraphNode } from '$lib/graph/types';
+	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
-	import { getLawIdFromProps } from '$lib/util/law-id';
+	import Caret from '$lib/components/ui/Caret.svelte';
 
 	let {
 		selection,
@@ -18,7 +18,10 @@
 	} = $props();
 
 	type Item = {
+		/** The number, or the address of an article without one (`stam_16464063`). */
 		articleNumber: string;
+		/** "Artikel 1", or the heading of an article without a number. */
+		label: string;
 		key: string;
 		breadcrumb: Schema<'InstrumentArticleBreadcrumbDTO'>[];
 	};
@@ -37,10 +40,9 @@
 	let error = $state<string | null>(null);
 
 	const currentBwb = $derived.by(() => {
-		if (selection?.collection === 'articles')
-			return getLawIdFromProps(selection.raw?.props ?? undefined, selection.key);
+		if (selection?.collection === 'articles') return lawIdOf(selection.raw?.props);
 		if (selection?.collection === 'instruments')
-			return getLawIdFromProps(selection.raw?.props ?? undefined) ?? selection.key.toUpperCase();
+			return lawIdOf(selection.raw?.props) ?? selection.key.toUpperCase();
 		return null;
 	});
 
@@ -77,10 +79,12 @@
 			})
 		)
 			.then((resp) => {
+				// An article without a number (the Algemene bepaling) is listed by its heading.
 				items = resp.items
-					.filter((a) => !a.stub && a.article_number)
+					.filter((a) => !a.stub && (a.article_number || a.label))
 					.map((a) => ({
-						articleNumber: a.article_number!,
+						articleNumber: a.article_number ?? a.address ?? a.key,
+						label: a.label ?? `Artikel ${a.article_number}`,
 						key: a.key,
 						breadcrumb: a.breadcrumb ?? []
 					}));
@@ -88,7 +92,7 @@
 				onitems?.(
 					items.map((it) => ({
 						key: it.key,
-						label: `Artikel ${it.articleNumber}`,
+						label: it.label,
 						breadcrumb: it.breadcrumb.map(crumbLabel).filter(Boolean)
 					}))
 				);
@@ -163,7 +167,7 @@
 			class="row"
 			class:is-active={item.key === selectedKey}
 			href={bronHref({ collection: 'articles', key: item.key })}
-			data-sveltekit-noscroll>Artikel {item.articleNumber}</a
+			data-sveltekit-noscroll>{item.label}</a
 		>
 	</li>
 {/snippet}
@@ -174,7 +178,7 @@
 	{@const level = Math.min(depth, 3)}
 	<details class="group depth-{level}" open={shouldOpen}>
 		<summary class="group__head">
-			<span class="chev" aria-hidden="true">▸</span>
+			<Caret side />
 			<span class="group__label">{groupLabel(g)}</span>
 		</summary>
 		{#if g.items.length > 0}
@@ -325,15 +329,13 @@
 		font-style: italic;
 	}
 
-	.chev {
-		flex: 0 0 10px;
-		font-size: 10px;
-		line-height: 1.5;
-		transition: transform 120ms ease;
-		user-select: none;
+	/* The first line of the label is 1.3 high; the caret sits on its middle. */
+	.group__head :global(.caret) {
+		margin: calc((1.3em - 10px) / 2) 0 0;
 	}
-	details[open] > summary .chev {
-		transform: rotate(90deg);
+	/* A <details> keeps its own open state; the caret follows it. */
+	details[open] > summary :global(.caret) {
+		transform: rotate(0deg);
 	}
 
 	.group__label {

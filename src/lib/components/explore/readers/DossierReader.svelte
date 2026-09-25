@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -12,6 +13,7 @@
 		isBill
 	} from '$lib/components/parliamentary/stages';
 	import { formatLongDate } from './_shared';
+	import { bronHref } from '$lib/bron/href';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
 
@@ -29,6 +31,20 @@
 	const TIMELINE_LIMIT = 200;
 
 	let view = $state<State>({ kind: 'loading' });
+
+	type Reading = Schema<'DossierRelationDTO'>['dossier'];
+	/**
+	 * A change in the Grondwet passes two readings, each its own dossier. The memorie van
+	 * toelichting is in the dossier of the first reading; the second only refers to it.
+	 */
+	const readings = $derived.by(() => {
+		const relations = view.kind === 'loaded' ? (view.dossier.relations ?? []) : [];
+		const of = (direction: 'outgoing' | 'incoming'): Reading[] =>
+			relations
+				.filter((r) => r.relation === 'second_reading_of' && r.direction === direction)
+				.map((r) => r.dossier);
+		return { first: of('outgoing'), second: of('incoming') };
+	});
 
 	$effect(() => {
 		// The API addresses a dossier by its number (`37020-XV`), the node's `label`.
@@ -60,80 +76,104 @@
 	});
 </script>
 
-<div class="r-dossier">
-	{#if view.kind === 'loading'}
-		<p class="loading">Laden…</p>
-	{:else if view.kind === 'error'}
-		<p class="error">{view.message}</p>
-	{:else}
-		{@const d = view.dossier}
-		{@const track = d.track ?? 'overig'}
+{#snippet dossierLinks(dossiers: Reading[])}
+	{dossiers.length === 1 ? 'Kamerstuk' : 'Kamerstukken'}
+	{#each dossiers as r, i (r.key)}{#if i > 0}{i === dossiers.length - 1 ? ' en ' : ', '}{/if}<a
+			href={bronHref({ collection: 'dossiers', key: r.key, number: r.number })}
+			data-sveltekit-noscroll
+			title={r.title ?? undefined}>{r.number}</a
+		>{/each}
+{/snippet}
 
-		<header class="head">
-			<span class="kicker">
-				<KindGlyph collection="dossiers" />
-				{bronLabel('dossiers')} · Kamerstuk {d.number}
-			</span>
-			<h2 class="title">{d.title ?? d.number}</h2>
-			<div class="chips">
-				<span class="track-chip track-chip--{track}">{TRACK_LABEL[track]}</span>
-				{#if d.outcome}
-					<span class="stage-chip"
-						>{OUTCOME_LABEL[d.outcome]}{d.closed_on ? `, ${formatLongDate(d.closed_on)}` : ''}</span
-					>
-				{:else if d.current_stage}
-					<span class="stage-chip">Nu: {STAGE_LABEL[d.current_stage]}</span>
-				{/if}
-			</div>
-		</header>
+<ReaderFrame>
+	<div class="r-dossier">
+		{#if view.kind === 'loading'}
+			<p class="loading">Laden…</p>
+		{:else if view.kind === 'error'}
+			<p class="error">{view.message}</p>
+		{:else}
+			{@const d = view.dossier}
+			{@const track = d.track ?? 'overig'}
 
-		{#if isBill(d.track) && d.stages?.length}
-			<div class="stepper-wrap">
-				<LegislativeStepper stages={d.stages} current={d.current_stage ?? null} />
-			</div>
-		{/if}
-
-		<ul class="stats">
-			<li>
-				<span class="stat-num">{d.document_count}</span><span class="stat-label"
-					>{bronPlural('documents')}</span
-				>
-			</li>
-			<li>
-				<span class="stat-num">{d.decision_count}</span><span class="stat-label"
-					>{bronPlural('decisions')}</span
-				>
-			</li>
-			<li>
-				<span class="stat-num">{d.activity_count}</span><span class="stat-label"
-					>{bronPlural('activities')}</span
-				>
-			</li>
-		</ul>
-
-		{#if view.timeline && view.timeline.entries.length > 0}
-			<section class="sec sec--timeline">
-				<h3 class="sec-title">
-					Tijdlijn
-					{#if view.timeline.total > view.timeline.entries.length}
-						<span class="sec-count">{view.timeline.entries.length} / {view.timeline.total}</span>
+			<header class="head">
+				<span class="kicker">
+					<KindGlyph collection="dossiers" />
+					{bronLabel('dossiers')} · Kamerstuk {d.number}
+				</span>
+				<h2 class="title">{d.title ?? d.number}</h2>
+				<div class="chips">
+					<span class="track-chip track-chip--{track}">{TRACK_LABEL[track]}</span>
+					{#if d.outcome}
+						<span class="stage-chip"
+							>{OUTCOME_LABEL[d.outcome]}{d.closed_on
+								? `, ${formatLongDate(d.closed_on)}`
+								: ''}</span
+						>
+					{:else if d.current_stage}
+						<span class="stage-chip">Nu: {STAGE_LABEL[d.current_stage]}</span>
 					{/if}
-				</h3>
-				<LegislativeTimeline entries={view.timeline.entries} />
-			</section>
+				</div>
+				{#if readings.first.length > 0}
+					<p class="reading">
+						Tweede lezing van {@render dossierLinks(readings.first)}
+					</p>
+				{/if}
+				{#if readings.second.length > 0}
+					<p class="reading">
+						Eerste lezing. Tweede lezing in {@render dossierLinks(readings.second)}
+					</p>
+				{/if}
+			</header>
+
+			{#if isBill(d.track) && d.stages?.length}
+				<div class="stepper-wrap">
+					<LegislativeStepper
+						stages={d.stages}
+						current={d.current_stage ?? null}
+						complete={d.stages_complete}
+					/>
+				</div>
+			{/if}
+
+			<ul class="stats">
+				<li>
+					<span class="stat-num">{d.document_count}</span><span class="stat-label"
+						>{bronPlural('documents')}</span
+					>
+				</li>
+				<li>
+					<span class="stat-num">{d.decision_count}</span><span class="stat-label"
+						>{bronPlural('decisions')}</span
+					>
+				</li>
+				<li>
+					<span class="stat-num">{d.activity_count}</span><span class="stat-label"
+						>{bronPlural('activities')}</span
+					>
+				</li>
+			</ul>
+
+			{#if view.timeline && view.timeline.entries.length > 0}
+				<section class="sec sec--timeline">
+					<h3 class="sec-title">
+						Tijdlijn
+						{#if view.timeline.total > view.timeline.entries.length}
+							<span class="sec-count">{view.timeline.entries.length} / {view.timeline.total}</span>
+						{/if}
+					</h3>
+					<LegislativeTimeline entries={view.timeline.entries} />
+				</section>
+			{/if}
 		{/if}
-	{/if}
-</div>
+	</div>
+</ReaderFrame>
 
 <style>
 	.r-dossier {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-4);
-		padding: var(--s-5) var(--s-5) var(--s-6);
 		color: var(--ink-2);
-		height: 100%;
-		overflow-y: auto;
 	}
 	.loading,
 	.error {
@@ -181,6 +221,22 @@
 	}
 	.stage-chip {
 		color: var(--ink-2);
+	}
+
+	.reading {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+		margin: 0;
+	}
+	.reading a {
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-color: var(--rule);
+		text-underline-offset: 2px;
+	}
+	.reading a:hover {
+		text-decoration-color: currentColor;
 	}
 
 	.stepper-wrap {
