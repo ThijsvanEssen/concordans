@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
 	import type { GraphFilters } from '$lib/graph/graph-store';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
 	import { relationLabel, type Collection, type Relation } from '$lib/vocabulary';
-	import type { BronKind } from '$lib/verbonden/filter';
+	import type { BronKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
 	import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
@@ -26,6 +26,8 @@
 	export type GraphCanvasApi = {
 		refresh: () => void;
 		fit: () => void;
+		/** Zoom in (factor > 1) or out (< 1) around the centre. */
+		zoom: (factor: number) => void;
 		restoreCamera: (state: { x: number; y: number; ratio: number }) => void;
 	};
 
@@ -35,10 +37,12 @@
 		filters = null as GraphFilters | null,
 		hiddenKinds = new Set<BronKind>() as ReadonlySet<BronKind>,
 		pinnedIds = new Set<string>() as Set<string>,
+		coreIds = null as ReadonlySet<string> | null,
 		containerGroups = new Map<string, ContainerGroup>() as Map<string, ContainerGroup>,
 		focusContainerId = null as string | null,
 		groupPeriod = null as Period | null,
 		yearPeriod = null as Period | null,
+		rechter = null as Rechter | null,
 		selectedEdgeId = null as string | null,
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
@@ -46,6 +50,7 @@
 		heatPeriodMonths = 12,
 		mutatieActive = false,
 		onNodeClick,
+		onNodeDoubleClick,
 		onNodeHover,
 		onNodeLeave,
 		onEdgeClick,
@@ -53,14 +58,18 @@
 		onReady,
 		onZoomChange,
 		onCameraChange,
-		externalHoveredId = null as string | null
+		externalHoveredId = null as string | null,
+		avoid = null as Rect | null
 	}: {
 		graph: Graph;
 		focusedId?: string | null;
 		filters?: GraphFilters | null;
 		/** Kinds of bron the bronfilter hides: not drawn, and their edges not drawn. */
 		hiddenKinds?: ReadonlySet<BronKind>;
+		/** The chosen bronnen of a netwerk: always named, a little larger. */
 		pinnedIds?: Set<string>;
+		/** While a netwerk is drawn, its chosen bronnen and what ties them; the rest is context and steps back. */
+		coreIds?: ReadonlySet<string> | null;
 		/** A container's children currently on canvas: drawn as a hull, not a bron. */
 		containerGroups?: Map<string, ContainerGroup>;
 		/**
@@ -73,6 +82,8 @@
 		groupPeriod?: Period | null;
 		/** The years of the bronfilter: a dated bron outside them is hidden, as in the panel. */
 		yearPeriod?: Period | null;
+		/** The rechter of the bronfilter: a judgment of another court is hidden, as in the panel. */
+		rechter?: Rechter | null;
 		/** The edge whose card is open: drawn wider. */
 		selectedEdgeId?: string | null;
 		inFluxMap?: NodeCounts;
@@ -81,6 +92,7 @@
 		heatPeriodMonths?: number;
 		mutatieActive?: boolean;
 		onNodeClick?: (id: string) => void;
+		onNodeDoubleClick?: (id: string) => void;
 		onNodeHover?: (id: string, vx: number, vy: number) => void;
 		onNodeLeave?: () => void;
 		onEdgeClick?: (id: string) => void;
@@ -90,7 +102,31 @@
 		onCameraChange?: (state: { x: number; y: number; ratio: number }) => void;
 		/** Keeps the dim/highlight pass alive while the hover panel is open. */
 		externalHoveredId?: string | null;
+		/** A panel floating over the canvas, in canvas pixels: hull labels keep clear of it. */
+		avoid?: Rect | null;
 	} = $props();
+
+	type Rect = { x: number; y: number; width: number; height: number };
+
+	/**
+	 * A label pill (centred on x, its bottom at y) moved clear of the floating panel: to
+	 * the panel's left where it fits, else below it.
+	 */
+	function clearOfPanel(x: number, y: number, half: number): { x: number; y: number } {
+		const r = avoid;
+		if (!r) return { x, y };
+		const hits =
+			x + half > r.x && x - half < r.x + r.width && y > r.y && y - LABEL_HEIGHT < r.y + r.height;
+		if (!hits) return { x, y };
+		const left = r.x - half - EDGE_GAP;
+		if (left >= half + EDGE_GAP) return { x: left, y };
+		return { x, y: r.y + r.height + LABEL_HEIGHT + EDGE_GAP };
+	}
+
+	$effect(() => {
+		void avoid;
+		untrack(() => computeHulls());
+	});
 
 	let wrap: HTMLDivElement;
 	let renderer: SigmaType | null = null;
@@ -104,6 +140,7 @@
 	let latestFilters: GraphFilters | null = null;
 	let latestHiddenKinds: ReadonlySet<BronKind> = new Set();
 	let latestPinnedIds = new Set<string>();
+	let latestCoreIds: ReadonlySet<string> | null = null;
 	let latestSelectedEdge: string | null = null;
 	let latestInFluxMap: NodeCounts = new Map();
 	let latestHeatMap: NodeCounts = new Map();
@@ -185,6 +222,10 @@
 		renderer?.refresh();
 	});
 
+	/** Context of a netwerk: on the canvas, but not chosen nor tying chosen bronnen. */
+	const isContext = (id: string) =>
+		latestCoreIds !== null && !latestCoreIds.has(id) && id !== focusedId;
+
 	/** Whether `a` and `b` both belong to the same hull: an edge between them adds
 	 *  nothing a hull did not already say, so it stays out of the way at rest. */
 	function inSameGroup(a: string, b: string): boolean {
@@ -209,7 +250,10 @@
 	$effect(() => {
 		latestFilters = filters;
 		latestHiddenKinds = hiddenKinds;
+		void rechter;
 		latestPinnedIds = pinnedIds;
+		latestCoreIds = coreIds;
+		recomputeStrays();
 		latestSelectedEdge = selectedEdgeId;
 		renderer?.refresh();
 	});
@@ -361,16 +405,21 @@
 			// border (or a fit that leaves little room) would cut its label in half.
 			const { width } = renderer.getDimensions();
 			const half = Math.min(labelWidth(shown), width - 2 * EDGE_GAP) / 2;
+			const at = clearOfPanel(
+				Math.min(
+					Math.max(top.x, half + EDGE_GAP),
+					Math.max(half + EDGE_GAP, width - half - EDGE_GAP)
+				),
+				Math.max(top.y - LABEL_GAP, LABEL_HEIGHT + EDGE_GAP),
+				half
+			);
 			drawn.set(group.id, {
 				id: group.id,
 				path,
 				color: hullColorFor(group.kind),
 				label: shown,
-				labelX: Math.min(
-					Math.max(top.x, half + EDGE_GAP),
-					Math.max(half + EDGE_GAP, width - half - EDGE_GAP)
-				),
-				labelY: Math.max(top.y - LABEL_GAP, LABEL_HEIGHT + EDGE_GAP),
+				labelX: at.x,
+				labelY: at.y,
 				dim: false,
 				polygon,
 				center: centroid(points),
@@ -522,7 +571,8 @@
 		const hiddenEnd = (id: string) =>
 			id !== focusedId && hiddenByFilter(graph.getNodeAttributes(id));
 		graph.forEachNode((id, attrs) => {
-			if (id === focusedId || hiddenByFilter(attrs)) return;
+			// A chosen bron of a netwerk is drawn whether or not anything ties it.
+			if (id === focusedId || latestPinnedIds.has(id) || hiddenByFilter(attrs)) return;
 			const groups = [...(nodeGroupIds.get(id) ?? [])].map((g) => latestContainerGroups.get(g));
 			if (groups.some((g) => g && drawnGroup(g))) return;
 			const shown = graph.someEdge(
@@ -540,8 +590,13 @@
 		((yearPeriod.from !== null && date < yearPeriod.from) ||
 			(yearPeriod.to !== null && date > yearPeriod.to));
 
+	const otherCourt = (attrs: Record<string, unknown>) =>
+		rechter !== null && attrs.collection === 'judgments' && attrs.rechter !== rechter;
+
 	const hiddenByFilter = (attrs: Record<string, unknown>) =>
-		latestHiddenKinds.has(attrs.bronKind as BronKind) || outsideYears(attrs.date);
+		latestHiddenKinds.has(attrs.bronKind as BronKind) ||
+		outsideYears(attrs.date) ||
+		otherCourt(attrs);
 
 	const isHiddenNode = (id: string, attrs: Record<string, unknown>) =>
 		id !== focusedId && (hiddenByFilter(attrs) || strays.has(id));
@@ -550,6 +605,12 @@
 		recomputeFocusLevel1();
 		recomputeStrays();
 		renderer?.refresh();
+	}
+
+	function zoom(factor: number) {
+		const camera = renderer?.getCamera();
+		if (!camera) return;
+		camera.animate({ ratio: camera.ratio / factor }, { duration: 200 });
 	}
 
 	function fit() {
@@ -576,14 +637,32 @@
 			count++;
 		});
 		if (count > 0) {
+			// One bron (the first of a netwerk) spans no box: centre it in one.
+			if (maxX - minX < 1) [minX, maxX] = [minX - 50, maxX + 50];
+			if (maxY - minY < 1) [minY, maxY] = [minY - 50, maxY + 50];
 			// The nodes fill the canvas up to STAGE_PADDING px, which holds a hull's own
 			// margin. Above, a hull's label pill needs LABEL_ROOM px more: the box grows
 			// upward (graph y points up) by the share of the height those pixels take.
 			const height = maxY - minY || 1;
-			const usable = renderer.getDimensions().height - 2 * STAGE_PADDING;
-			const top = usable > LABEL_ROOM * 2 ? (height * LABEL_ROOM) / (usable - LABEL_ROOM) : 0;
+			const dims = renderer.getDimensions();
+			const usable = dims.height - 2 * STAGE_PADDING;
+			let top = usable > LABEL_ROOM * 2 ? (height * LABEL_ROOM) / (usable - LABEL_ROOM) : 0;
+			// A panel floating in a corner of the canvas takes room the nodes must leave:
+			// the box grows right or up, whichever costs the drawing less of its size.
+			const span = maxX - minX || 1;
+			let right = 0;
+			const panel = avoid;
+			if (panel && panel.width > 0 && panel.height > 0) {
+				const usableW = dims.width - 2 * STAGE_PADDING;
+				const fromRight = dims.width - panel.x + EDGE_GAP;
+				const fromTop = panel.y + panel.height + EDGE_GAP;
+				const shareW = fromRight / usableW;
+				const shareH = fromTop / usable;
+				if (shareW < shareH && shareW < 0.6) right = (span * shareW) / (1 - shareW);
+				else if (shareH < 0.6) top = Math.max(top, ((height + top) * shareH) / (1 - shareH));
+			}
 			renderer.setCustomBBox({
-				x: [minX, maxX > minX ? maxX : minX + 1],
+				x: [minX, (maxX > minX ? maxX : minX + 1) + right],
 				y: [minY, minY + height + top]
 			});
 		} else {
@@ -722,11 +801,12 @@
 				// fractie, commissie or dossier draws no node of its own): its own children
 				// count as in focus instead, so the rest of a busy view still dims.
 				const dimStale =
-					f0?.dimStaleContext !== false &&
-					!latestPinnedIds.has(id) &&
-					(focusedId !== null
-						? id !== focusedId && !focusLevel1.has(id)
-						: latestFocusMembers.size > 0 && !latestFocusMembers.has(id));
+					isContext(id) ||
+					(f0?.dimStaleContext !== false &&
+						!latestPinnedIds.has(id) &&
+						(focusedId !== null
+							? id !== focusedId && !focusLevel1.has(id)
+							: latestFocusMembers.size > 0 && !latestFocusMembers.has(id)));
 
 				const inHover = hoveredId !== null;
 				const inFocusGroup = !inHover || id === hoveredId || hoveredNeighbours.has(id);
@@ -748,18 +828,33 @@
 						label: '',
 						color: t.paper2,
 						borderColor: dimColor(0.38),
+						// A shape is a sprite, which the colours above do not reach: its outline instead.
+						image:
+							data.type === 'image'
+								? spriteFor(data.kind as GraphNodeKind, true, false)
+								: data.image,
 						selectionColor: 'rgba(0,0,0,0)'
 					};
 				}
 
-				// Labels only on hover and on the focus.
+				// Labels only on hover, on the focus and on the chosen bronnen of a netwerk.
 				let label = '';
 				let forceLabel = false;
-				if ((inHover && inFocusGroup) || id === focusedId) {
+				const chosen = latestPinnedIds.has(id);
+				if ((inHover && inFocusGroup) || id === focusedId || chosen) {
 					label = data.label as string;
 					forceLabel = true;
 				}
 
+				if (id !== focusedId && chosen)
+					return {
+						...data,
+						hidden: false,
+						label,
+						forceLabel,
+						size: ((data.size as number) ?? 4) * 1.3,
+						zIndex: 1
+					};
 				if (id !== focusedId) return { ...data, hidden: false, label, forceLabel };
 				const focusKind = data.kind as GraphNodeKind;
 				const focusBoost = ((data.size as number) ?? 4) * 1.6;
@@ -854,6 +949,18 @@
 					};
 				}
 
+				// A line to context steps back behind what ties the netwerk together.
+				if ((isContext(src) || isContext(tgt)) && src !== focusedId && tgt !== focusedId) {
+					return {
+						...data,
+						hidden: false,
+						type: edgeType,
+						color: dimColor(0.2),
+						size: restSize * 0.7,
+						label: ''
+					};
+				}
+
 				if (focusedId !== null) {
 					// The focus's own verbindingen carry the view: in full when they are few,
 					// as a fan in their own colour when there are hundreds, so the fan reads as
@@ -922,6 +1029,10 @@
 		renderer.on('afterRender', updateViewportLabels);
 
 		renderer.on('clickNode', ({ node }) => onNodeClick?.(node));
+		renderer.on('doubleClickNode', ({ node, event }) => {
+			event.preventSigmaDefault();
+			onNodeDoubleClick?.(node);
+		});
 		renderer.on('clickEdge', ({ edge }) => onEdgeClick?.(edge));
 		renderer.on('clickStage', () => onStageClick?.());
 		renderer.on('enterNode', ({ node, event }) => {
@@ -945,7 +1056,7 @@
 			renderer?.refresh();
 		});
 
-		onReady?.({ refresh, fit, restoreCamera });
+		onReady?.({ refresh, fit, restoreCamera, zoom });
 	});
 
 	let focusLevel1 = new Set<string>();

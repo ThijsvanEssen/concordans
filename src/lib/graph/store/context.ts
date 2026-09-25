@@ -12,7 +12,6 @@ import {
 	type ContainerKind,
 	type Period
 } from '../container-membership';
-import { getLawIdFromProps } from '$lib/util/law-id';
 import type { Collection, Relation } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
 import {
@@ -20,6 +19,7 @@ import {
 	edgeCategory,
 	isVersionCollection,
 	kindOfCollection,
+	lawIdOf,
 	nodeToGraphNode,
 	relationOf,
 	type BaseNode,
@@ -209,7 +209,7 @@ export function createGraphContext() {
 			return null;
 		}
 		const graphNode = nodeToGraphNode(node);
-		const law = graphNode?.kind === 'article' ? getLawIdFromProps(p, node.key) : null;
+		const law = graphNode?.kind === 'article' ? lawIdOf(p) : null;
 		if (law) {
 			recordInstrument({ bwb_id: law, citation_title: p.instrument_citation_title });
 			primeInstrumentNames();
@@ -264,6 +264,26 @@ export function createGraphContext() {
 		response: Schema<'NodeGraphResponse'>,
 		draw = Number.POSITIVE_INFINITY
 	): string | null => {
+		const id = mergeInto(response, draw);
+		if (!id) return null;
+		trimToCap();
+		emit();
+		return id;
+	};
+
+	/**
+	 * `mergeResponse` without the trim and the emit, and limited to the neighbours
+	 * `keep` accepts by node id: a composed netwerk draws only what ties its bronnen.
+	 * A container `joins` accepts is drawn as a point with a verbinding to the centre,
+	 * not as a hull around it: a commissie two chosen bronnen share ties them, and a
+	 * hull around both would pull them onto each other.
+	 */
+	const mergeInto = (
+		response: Schema<'NodeGraphResponse'>,
+		draw = Number.POSITIVE_INFINITY,
+		keep?: (id: string) => boolean,
+		joins?: (id: string) => boolean
+	): string | null => {
 		const center = nodeToGraphNode(response.node);
 		if (!center) return null;
 		touchNode(center.id, center);
@@ -271,10 +291,24 @@ export function createGraphContext() {
 		if (centerContainerKind) recordContainerFor(response.node, centerContainerKind);
 
 		for (const neighbor of neighborsOf(response).slice(0, draw)) {
+			if (keep && !keep(`${neighbor.collection}/${neighbor.key}`)) continue;
 			const relation = relationOf(neighbor.relation);
 			const other = relation && drawable(neighbor);
 
 			const neighborContainerKind = relation && containerKindOf(neighbor.collection);
+			if (relation && neighborContainerKind && joins?.(`${neighbor.collection}/${neighbor.key}`)) {
+				const point = anchorContainer(neighbor);
+				if (point) {
+					const [source, target] =
+						neighbor.direction === 'outbound' ? [center.id, point.id] : [point.id, center.id];
+					addEdge(source, target, relation, {
+						confidence: neighbor.confidence,
+						status: neighbor.status,
+						meta: neighbor.meta
+					});
+				}
+				continue;
+			}
 			if (
 				relation &&
 				neighborContainerKind &&
@@ -325,10 +359,23 @@ export function createGraphContext() {
 				meta: neighbor.meta
 			});
 		}
-
-		trimToCap();
-		emit();
 		return center.id;
+	};
+
+	/**
+	 * Draws a container (a wet, fractie, commissie or dossier) as the point its hull is
+	 * drawn around, as `lawAnchor` does for a wet a stuk changes: a chosen container
+	 * stays on the canvas with nothing of its own drawn around it yet.
+	 */
+	const anchorContainer = (node: BaseNode): GraphNode | null => {
+		const kind = containerKindOf(node.collection);
+		const anchor = kind && nodeToGraphNode(node);
+		if (!kind || !anchor) return null;
+		anchor.anchor = true;
+		recordContainerFor(node, kind);
+		recordContainerMember(kind, containerIdFor(node), anchor.id);
+		touchNode(anchor.id, anchor);
+		return anchor;
 	};
 
 	/** Drops every node not in `keepIds`, and the edges that touched it. Does not emit. */
@@ -365,6 +412,9 @@ export function createGraphContext() {
 		recordContainerFor,
 		passesThreshold,
 		mergeResponse,
+		mergeInto,
+		anchorContainer,
+		trimToCap,
 		pruneToIds,
 		touchNode,
 		reset,

@@ -10,8 +10,6 @@ export function createViewActions(
 ): Pick<
 	GraphStore,
 	| 'setSelection'
-	| 'togglePin'
-	| 'unpinNode'
 	| 'focusNode'
 	| 'showRows'
 	| 'hideRows'
@@ -28,7 +26,6 @@ export function createViewActions(
 		pinned,
 		insertedAt,
 		selectionStore,
-		pinnedStore,
 		filtersStore,
 		addEdge,
 		emit,
@@ -37,8 +34,6 @@ export function createViewActions(
 		reset,
 		state
 	} = ctx;
-
-	const publishPinned = () => pinnedStore.set(new Set(pinned));
 
 	return {
 		setSelection: (nodeId) => {
@@ -72,15 +67,6 @@ export function createViewActions(
 				if (drop.has(e.source) || drop.has(e.target)) edges.delete(id);
 			}
 			emit();
-		},
-
-		togglePin: (nodeId) => {
-			if (!pinned.delete(nodeId)) pinned.add(nodeId);
-			publishPinned();
-		},
-		unpinNode: (nodeId) => {
-			pinned.delete(nodeId);
-			publishPinned();
 		},
 
 		reset,

@@ -69,7 +69,7 @@ export function createExpansion(
 
 		expandNeighborhood: async (collection, key, opts = {}) => {
 			const response = await getNodeNeighborhood(collection, key, { ...opts, signal: signal() });
-			const additive = !!opts.relations;
+			const additive = !!opts.relations || !!opts.additive;
 
 			const byId = new Map(response.nodes.map((n) => [`${n.collection}/${n.key}`, n]));
 			const drawn = new Set<string>();
@@ -125,7 +125,7 @@ export function createExpansion(
 			// this, a bron revisited after browsing elsewhere keeps edges from every stop
 			// along the way, so it looks more cited than its own neighbourhood shows. Pinned
 			// bronnen and the selection are the only things that survive a refocus.
-			// A request narrowed to some relations adds to the canvas; it replaces nothing.
+			// A request narrowed to some relations, or asked to add, replaces nothing.
 			if (additive) {
 				emit();
 				return nodes.get(response.focal_id) ?? null;

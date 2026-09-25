@@ -3,6 +3,9 @@ import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import type { GraphNode, GraphEdge } from '../types';
 
+/** A chosen bron of a netwerk that is on, with its node response. */
+export type NetwerkParticipant = { response: Schema<'NodeGraphResponse'> };
+
 /** A bron a group of the panel Verbonden puts on the canvas. */
 export type CanvasRow = {
 	ref: { collection: Collection; key: string };
@@ -69,11 +72,32 @@ export type GraphStore = {
 	expandNeighborhood: (
 		collection: Collection,
 		key: string,
-		opts?: { depth?: number; cap?: number; relations?: Relation[]; nodeTypes?: string[] }
+		opts?: {
+			depth?: number;
+			cap?: number;
+			relations?: Relation[];
+			nodeTypes?: string[];
+			/** Adds to the canvas instead of replacing its context. */
+			additive?: boolean;
+		}
 	) => Promise<GraphNode | null>;
+	/**
+	 * Draws a netwerk: its chosen bronnen, what ties them, and the context still tied to
+	 * them. `fresh` drops every other bron. Returns the bronnen tied to no other one, and
+	 * the joining bronnen drawn.
+	 */
+	compose: (input: {
+		participants: NetwerkParticipant[];
+		withJoining: boolean;
+		fresh: boolean;
+	}) => { alone: ReadonlySet<string>; joining: string[] };
+	/** The chosen bronnen and what ties them, while a netwerk is drawn; null otherwise. */
+	core: Readable<ReadonlySet<string> | null>;
+	/** Leaves only the chosen bronnen, what ties them and the selection. */
+	clearContext: () => void;
+	/** Ends the netwerk: nothing is chosen any more, the canvas stays as it is. */
+	releaseNetwerk: () => void;
 	setSelection: (nodeId: string | null) => void;
-	togglePin: (nodeId: string) => void;
-	unpinNode: (nodeId: string) => void;
 	focusNode: (nodeId: string) => GraphNode | null;
 	/** Draws bronnen next to `focusId`, each with the verbinding that ties it to the focus. */
 	showRows: (focusId: string, rows: CanvasRow[]) => void;

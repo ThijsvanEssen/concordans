@@ -1,5 +1,6 @@
 import type { GraphStore } from './store/types';
 import { createGraphContext } from './store/context';
+import { createCompose } from './store/compose';
 import { createExpansion } from './store/expansion';
 import { createViewActions } from './store/view-actions';
 
@@ -7,6 +8,8 @@ export type { GraphExpansionOptions, GraphFilters, GraphStore } from './store/ty
 
 export function createGraphStore(): GraphStore {
 	const ctx = createGraphContext();
+	const netwerk = createCompose(ctx);
+	const view = createViewActions(ctx);
 
 	return {
 		nodes: ctx.nodesStore,
@@ -16,6 +19,11 @@ export function createGraphStore(): GraphStore {
 		filters: ctx.filtersStore,
 		trimmedCount: ctx.trimmedCountStore,
 		...createExpansion(ctx),
-		...createViewActions(ctx)
+		...view,
+		...netwerk,
+		reset: () => {
+			view.reset();
+			netwerk.releaseNetwerk();
+		}
 	};
 }

@@ -10,7 +10,7 @@
 	import type { Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
-	import { isVersionCollection } from '$lib/graph/types';
+	import { isVersionCollection, lawIdOf } from '$lib/graph/types';
 	import { spriteFor, shapeFor, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import {
@@ -22,7 +22,6 @@
 		isContainerKind,
 		type ContainerGroup
 	} from '$lib/graph/container-membership';
-	import { getLawIdFromProps } from '$lib/util/law-id';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/stores/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/stores/overlay';
@@ -30,6 +29,7 @@
 	import {
 		BRON_KINDS,
 		bronKindOf,
+		rechterOf,
 		type BronKind,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
@@ -56,6 +56,9 @@
 		heatMap = new Map() as NodeCounts,
 		overlay = { kind: 'none' } as Overlay,
 		onNodeClick,
+		onNodeDoubleClick,
+		onToggleChosen,
+		netwerkActive = false,
 		onEdgeClick,
 		onClear,
 		onGoBack,
@@ -79,6 +82,11 @@
 		heatMap?: NodeCounts;
 		overlay?: Overlay;
 		onNodeClick?: (node: GraphNode) => void;
+		/** Replaces the canvas with the bron's own neighbourhood; a click only selects. */
+		onNodeDoubleClick?: (node: GraphNode) => void;
+		/** Adds a bron to the netwerk, or takes it out. */
+		onToggleChosen?: (node: GraphNode) => void;
+		netwerkActive?: boolean;
 		onEdgeClick?: (edge: GraphEdge) => void;
 		/** A click on the stage or Escape: the card Verbinding closes; the selection stays. */
 		onClear?: () => void;
@@ -101,9 +109,14 @@
 
 	let selection = $state<GraphNode | null>(null);
 	let pinnedIds = $state<Set<string>>(new Set());
+	let coreIds = $state<ReadonlySet<string> | null>(null);
 	let filters = $state<GraphFilters>(get(store.filters));
 	let hasNodes = $state(false);
-	let canvasCounts = $state({ nodes: 0, edges: 0 });
+	let canvasCounts = $state<{
+		nodes: number;
+		edges: number;
+		kinds: Partial<Record<BronKind, number>>;
+	}>({ nodes: 0, edges: 0, kinds: {} });
 	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
 	// When the selection is a container, there is no canvas node to focus around: its
 	// own children take that role in the dim/highlight pass instead (GraphCanvas).
@@ -133,15 +146,6 @@
 		filter.bronnen ? new Set(BRON_KINDS.filter((k) => !filter.bronnen!.has(k))) : new Set()
 	);
 
-	const pinnedNodes = $derived.by<GraphNode[]>(() => {
-		const list: GraphNode[] = [];
-		for (const id of pinnedIds) {
-			const n = lookup.get(id) ?? store.getNodeById(id);
-			if (n) list.push(n);
-		}
-		return list;
-	});
-
 	let compactFiltersOpen = $state(false);
 	let mobileSidebarOpen = $state(false);
 
@@ -149,9 +153,20 @@
 	function countCanvas() {
 		let nodes = 0;
 		let edges = 0;
+		const kinds: Partial<Record<BronKind, number>> = {};
 		const visible = new Set<string>();
 		g.forEachNode((id, attrs) => {
-			if (id !== selection?.id && hiddenKinds.has(attrs.bronKind as BronKind)) return;
+			// Per kind, before the filter: the sidebar says what the filter hides.
+			const kind = attrs.bronKind as BronKind | undefined;
+			if (kind) kinds[kind] = (kinds[kind] ?? 0) + 1;
+			if (id !== selection?.id && hiddenKinds.has(kind as BronKind)) return;
+			if (
+				id !== selection?.id &&
+				filter.rechter &&
+				attrs.collection === 'judgments' &&
+				attrs.rechter !== filter.rechter
+			)
+				return;
 			visible.add(id);
 			nodes++;
 		});
@@ -161,7 +176,7 @@
 			if (filters.hiddenRelations.has(attrs.relation as Relation)) return;
 			edges++;
 		});
-		canvasCounts = { nodes, edges };
+		canvasCounts = { nodes, edges, kinds };
 	}
 
 	$effect(() => {
@@ -374,7 +389,7 @@
 	function nodeLabel(n: GraphNode): string {
 		const p = n.raw?.props ?? undefined;
 		if (n.kind === 'instrument') {
-			const meta = $instrumentMetaStore.get(getLawIdFromProps(p, n.key) ?? n.key);
+			const meta = $instrumentMetaStore.get(lawIdOf(p) ?? n.key.toUpperCase());
 			return (
 				meta?.shortTitle ??
 				meta?.citationTitle ??
@@ -384,7 +399,7 @@
 			);
 		}
 		if (n.kind !== 'article') return n.label;
-		const bwb = getLawIdFromProps(p, n.key);
+		const bwb = lawIdOf(p);
 		const shortTitle = bwb ? $instrumentMetaStore.get(bwb)?.shortTitle : null;
 		return shortTitle ? `${n.label} ${shortTitle}` : n.label;
 	}
@@ -464,6 +479,15 @@
 				kind: n.kind,
 				collection: n.collection,
 				bronKind: bronKindOf(n.collection, n.key, n.raw?.props ?? null),
+				// The court of a judgment, as the bronfilter's rechter reads it.
+				rechter:
+					n.collection === 'judgments'
+						? rechterOf({
+								identifier: typeof n.raw?.props?.ecli === 'string' ? n.raw.props.ecli : null,
+								court: typeof n.raw?.props?.court === 'string' ? n.raw.props.court : null,
+								ref: { collection: 'judgments', key: n.key }
+							})
+						: null,
 				stub,
 				date: typeof n.raw?.props?.date === 'string' ? n.raw.props.date.slice(0, 10) : null,
 				size: useImage ? rawSize * IMAGE_SIZE_BUMP : rawSize,
@@ -754,6 +778,10 @@
 				pinnedIds = new Set(s);
 				applyFilters();
 			}),
+			store.core.subscribe((c) => {
+				coreIds = c;
+				applyFilters();
+			}),
 			store.filters.subscribe((f) => {
 				filters = f;
 				applyFilters();
@@ -772,8 +800,19 @@
 		layout = null;
 	});
 
+	// The canvas as a focusable region: ← and → step through the bronnen shown only
+	// while the network has the focus, never while reading or selecting text.
+	let canvasWrap = $state<HTMLDivElement | null>(null);
+
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+		if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+		const el = e.target as HTMLElement | null;
+		if (el?.closest?.('input, select, textarea, [contenteditable]')) return;
+		if (e.key === 'Escape') {
+			onClear?.();
+			return;
+		}
+		if (!canvasWrap?.contains(document.activeElement)) return;
 		if (e.key === 'ArrowLeft' && onGoBack) {
 			e.preventDefault();
 			onGoBack();
@@ -782,7 +821,6 @@
 			e.preventDefault();
 			onGoForward();
 		}
-		if (e.key === 'Escape') onClear?.();
 	}
 
 	function toggleRelation(r: Relation) {
@@ -790,6 +828,57 @@
 		if (!next.delete(r)) next.add(r);
 		store.setFilters({ hiddenRelations: next });
 	}
+
+	// The panel floating over the canvas, measured so that hull labels keep clear of it.
+	let overlayHost = $state<HTMLDivElement | null>(null);
+	let overlayRect = $state<{ x: number; y: number; width: number; height: number } | null>(null);
+	$effect(() => {
+		const host = overlayHost;
+		if (!host) return;
+		let last: typeof overlayRect = null;
+		const measure = () => {
+			const box = host.getBoundingClientRect();
+			const panels = [...host.children].map((c) => c.getBoundingClientRect());
+			const shown = panels.filter((r) => r.width > 0 && r.height > 0);
+			if (shown.length === 0) {
+				overlayRect = last = null;
+				return;
+			}
+			const left = Math.min(...shown.map((r) => r.left));
+			const top = Math.min(...shown.map((r) => r.top));
+			const right = Math.max(...shown.map((r) => r.right));
+			const bottom = Math.max(...shown.map((r) => r.bottom));
+			const next = {
+				x: left - box.left,
+				y: top - box.top,
+				width: right - left,
+				height: bottom - top
+			};
+			// Compared with the last measure, not the state: reading the state here would
+			// make this effect depend on what it writes.
+			const same =
+				last &&
+				Math.abs(last.x - next.x) < 1 &&
+				Math.abs(last.y - next.y) < 1 &&
+				Math.abs(last.width - next.width) < 1 &&
+				Math.abs(last.height - next.height) < 1;
+			if (!same) overlayRect = last = next;
+		};
+		const resize = new ResizeObserver(measure);
+		const watch = () => {
+			resize.disconnect();
+			resize.observe(host);
+			for (const child of host.children) resize.observe(child);
+			measure();
+		};
+		const children = new MutationObserver(watch);
+		children.observe(host, { childList: true });
+		watch();
+		return () => {
+			resize.disconnect();
+			children.disconnect();
+		};
+	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -808,16 +897,12 @@
 		{canvasCounts}
 		{overlay}
 		inFluxCount={inFluxMap.size}
-		{pinnedNodes}
+		{netwerkActive}
 		{onToggleHeat}
 		{onHeatPeriodChange}
 		{onToggleMutatie}
 		{onResetGraph}
 		{hasNodes}
-		onUnpin={(id) => store.unpinNode(id)}
-		onClearPins={() => {
-			for (const id of pinnedIds) store.unpinNode(id);
-		}}
 	/>
 {/snippet}
 
@@ -842,24 +927,57 @@
 	{/if}
 
 	<div class="graph-main">
+		<!-- The canvas takes the focus so that ← and → act on it, and only then. -->
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
 			class="graph-canvas-wrap"
+			bind:this={canvasWrap}
+			role="application"
+			aria-label="Netwerk. Pijl links en rechts: vorige en volgende bron."
+			tabindex="0"
 			onpointerenter={() => (fitFollows = false)}
+			onpointerdown={() => canvasWrap?.focus({ preventScroll: true })}
 			onwheel={() => (fitFollows = false)}
 		>
+			<div class="zoom" role="group" aria-label="Zoomen">
+				<button
+					type="button"
+					class="zoom__btn"
+					aria-label="Inzoomen"
+					onclick={() => canvas?.zoom(1.5)}>+</button
+				>
+				<button
+					type="button"
+					class="zoom__btn"
+					aria-label="Uitzoomen"
+					onclick={() => canvas?.zoom(1 / 1.5)}>−</button
+				>
+				<button
+					type="button"
+					class="zoom__btn"
+					aria-label="Alles in beeld"
+					title="Alles in beeld"
+					onclick={() => canvas?.fit()}>⤢</button
+				>
+			</div>
 			{#if canvasOverlay}
-				{@render canvasOverlay()}
+				<div class="canvas-overlay" bind:this={overlayHost}>
+					{@render canvasOverlay()}
+				</div>
 			{/if}
 			<GraphCanvas
+				avoid={overlayRect}
 				graph={g}
 				focusedId={selection && !isContainerKind(selection.kind) ? selection.id : null}
 				{filters}
 				{hiddenKinds}
 				{pinnedIds}
+				{coreIds}
 				{containerGroups}
 				{focusContainerId}
 				{groupPeriod}
 				{yearPeriod}
+				rechter={filter.rechter}
 				{selectedEdgeId}
 				{inFluxMap}
 				{heatMap}
@@ -870,6 +988,10 @@
 				onNodeClick={(id) => {
 					const n = lookup.get(id);
 					if (n) onNodeClick?.(n);
+				}}
+				onNodeDoubleClick={(id) => {
+					const n = lookup.get(id);
+					if (n) onNodeDoubleClick?.(n);
 				}}
 				onEdgeClick={(id) => {
 					const e = store.getEdgeById(id);
@@ -919,14 +1041,12 @@
 			{#if !compact && hoverNode}
 				<GraphCitePanel
 					node={hoverNode}
-					isPinned={pinnedIds.has(hoverNode.id)}
+					isChosen={pinnedIds.has(hoverNode.id)}
 					onOpen={(n) => {
 						hoverNode = null;
 						onNodeClick?.(n);
 					}}
-					onTogglePin={(n) => {
-						store.togglePin(n.id);
-					}}
+					{onToggleChosen}
 					onMouseEnter={cancelHide}
 					onMouseLeave={() => {
 						hoverNode = null;
@@ -957,6 +1077,55 @@
 		flex: 1;
 		position: relative;
 		overflow: hidden;
+	}
+
+	.graph-canvas-wrap:focus {
+		outline: none;
+	}
+	.graph-canvas-wrap:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: -2px;
+	}
+
+	/* Zoom in, out and back to everything, as on a map. */
+	.zoom {
+		position: absolute;
+		right: var(--s-3);
+		bottom: var(--s-3);
+		z-index: var(--z-float);
+		display: flex;
+		flex-direction: column;
+		border: 1px solid var(--rule);
+		border-radius: var(--r-2);
+		background: var(--paper);
+		overflow: hidden;
+	}
+	.zoom__btn {
+		width: 32px;
+		height: 32px;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: 16px;
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.zoom__btn + .zoom__btn {
+		border-top: 1px solid var(--rule);
+	}
+	.zoom__btn:hover {
+		background: var(--paper-2);
+		color: var(--ink);
+	}
+
+	/* Takes the canvas's place for the panel it holds; only the panel takes the pointer. */
+	.canvas-overlay {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.canvas-overlay > :global(*) {
+		pointer-events: auto;
 	}
 
 	.compact-legend-wrap {

@@ -101,13 +101,18 @@ const CATEGORY_OF_RELATION: Record<Relation, EdgeCategory> = {
 	REFERS_TO: 'structural',
 	EXPLAINS: 'mutation',
 	APPEAL_OF: 'semantic',
+	ADVISES_ON: 'semantic',
 	SCOPED_BY: 'structural',
 	ABOUT: 'structural',
 	LED_BY: 'structural',
 	MADE_IN: 'structural',
 	MEMBER_OF: 'structural',
 	AUTHORED: 'mutation',
-	VOTED: 'semantic'
+	VOTED: 'semantic',
+	REVISES: 'mutation',
+	ACCOMPANIES: 'structural',
+	RELATED_TO: 'semantic',
+	SECOND_READING_OF: 'mutation'
 };
 
 /** Line width of an edge, by relation. */
@@ -123,13 +128,18 @@ export const EDGE_WEIGHT: Record<Relation, number> = {
 	REFERS_TO: 0.7,
 	EXPLAINS: 0.8,
 	APPEAL_OF: 0.6,
+	ADVISES_ON: 0.6,
 	SCOPED_BY: 0.6,
 	ABOUT: 0.7,
 	LED_BY: 0.7,
 	MADE_IN: 0.7,
 	MEMBER_OF: 0.6,
 	AUTHORED: 0.8,
-	VOTED: 0.6
+	VOTED: 0.6,
+	REVISES: 1.0,
+	ACCOMPANIES: 0.7,
+	RELATED_TO: 0.6,
+	SECOND_READING_OF: 1.0
 };
 
 /**
@@ -195,7 +205,7 @@ export function formatEcliLabel(ecli: string): string {
 // Dutch dossier titles are routinely 200+ characters and end with the wet's
 // handelsnaam in parentheses — "(Wet verbetering aanpak rijden onder invloed)".
 // Use that parenthetical when present; otherwise take a sensible truncation.
-function shortDossierTitle(title: string | null): string | null {
+export function shortDossierTitle(title: string | null): string | null {
 	if (!title) return null;
 	const t = title.trim();
 	const m = t.match(/\(([^()]+)\)\s*$/);
@@ -205,6 +215,31 @@ function shortDossierTitle(title: string | null): string | null {
 
 const text = (value: unknown): string | null =>
 	typeof value === 'string' && value.trim() ? value.trim() : null;
+
+/**
+ * The law of an article or a wet: its BWB id, or the CELEX number of a European one.
+ * Every article carries it since API 0.9, each boek of the Burgerlijk Wetboek its own.
+ */
+export const lawIdOf = (props: Record<string, unknown> | null | undefined): string | null =>
+	text(props?.bwb_id) ?? text(props?.celex);
+
+/** What `/api/articles/{law}/{number}` wants for an article. */
+/**
+ * The law and the address of an article in the article routes: its number, or for an
+ * article without one (the Algemene bepaling of the Grondwet) `stam_{stam_id}`, with its
+ * heading.
+ */
+export function articleOf(
+	props: Record<string, unknown> | null | undefined
+): { lawId: string; articleNumber: string; heading: string | null } | null {
+	const lawId = lawIdOf(props);
+	const number = text(props?.article_number);
+	const stam = text(props?.stam_id);
+	const articleNumber = number ?? (stam ? `stam_${stam}` : null);
+	return lawId && articleNumber
+		? { lawId, articleNumber, heading: number ? null : text(props?.label) }
+		: null;
+}
 
 /** Lead signatory of a motion or amendment, from `props.actors`. */
 function leadSignatory(actors: unknown): { name: string; faction: string | null } | null {
@@ -236,7 +271,8 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 		}
 		case 'article': {
 			const number = text(props.article_number);
-			return number ? `Art. ${number}` : (node.display_name ?? node.key);
+			// An article without a number goes by its heading: "Algemene bepaling".
+			return number ? `Art. ${number}` : (text(props.label) ?? node.display_name ?? node.key);
 		}
 		case 'document':
 		case 'activity': {

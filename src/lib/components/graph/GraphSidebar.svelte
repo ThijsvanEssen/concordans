@@ -2,8 +2,9 @@
 	// The legend of the network, which is also its filter: the bronnen that take part
 	// (with counts and the preset), the verbindingen per relation with a line sample,
 	// the depth from the focus, the lid, and one line with what is on the canvas and
-	// what the filter hides. The overlays and the pinned bronnen are under Meer.
-	import type { GraphNode } from '$lib/graph/types';
+	// what the filter hides. The overlays are under Meer.
+	import { menu } from '$lib/actions/menu';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import { HEAT_PERIODS, type Overlay } from '$lib/stores/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
@@ -13,8 +14,10 @@
 		activePreset,
 		bronnenLabel,
 		formatCount,
+		hiddenByKind,
 		toggleKind,
 		withPreset,
+		type BronKind,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
@@ -39,9 +42,7 @@
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
-		pinnedNodes = [] as GraphNode[],
-		onUnpin,
-		onClearPins,
+		netwerkActive = false,
 		hasNodes = false,
 		onResetGraph
 	}: {
@@ -54,15 +55,14 @@
 		onDepth: (d: number) => void;
 		hiddenRelations: Set<Relation>;
 		onToggleRelation: (r: Relation) => void;
-		canvasCounts: { nodes: number; edges: number };
+		canvasCounts: { nodes: number; edges: number; kinds?: Partial<Record<BronKind, number>> };
 		overlay?: Overlay;
 		inFluxCount?: number;
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
-		pinnedNodes?: GraphNode[];
-		onUnpin?: (nodeId: string) => void;
-		onClearPins?: () => void;
+		/** With a netwerk, a depth adds context around the selection instead of setting the view. */
+		netwerkActive?: boolean;
 		hasNodes?: boolean;
 		onResetGraph?: () => void;
 	} = $props();
@@ -71,7 +71,9 @@
 	let lidMenu = $state(false);
 	let confirmClear = $state(false);
 
-	const totals = $derived(kindTotals(verbonden.groups));
+	// With a netwerk and nothing selected, the kinds count what is on the canvas.
+	const fromCanvas = $derived(netwerkActive && !selectionCollection);
+	const totals = $derived(fromCanvas ? (canvasCounts.kinds ?? {}) : kindTotals(verbonden.groups));
 	// Never drawn as an edge on the canvas, so not a togglable line here either.
 	// PART_OF, MEMBER_OF and LED_BY always point at a container (a wet, fractie,
 	// commissie or dossier) — a hull groups them now, not a line. VERSION_OF links
@@ -100,7 +102,9 @@
 		committee: 'leden',
 		dossier: 'stukken, zaken'
 	};
-	const hidden = $derived(hiddenLine(verbonden.groups, filter));
+	const hidden = $derived(
+		fromCanvas ? hiddenByKind([], totals, filter) : hiddenLine(verbonden.groups, filter)
+	);
 	const lids = $derived(
 		[...lidCounts(allRows(verbonden.groups)).keys()]
 			.filter((k) => k !== '')
@@ -125,25 +129,18 @@
 	};
 </script>
 
-<svelte:window
-	onclick={() => {
-		presetMenu = false;
-		lidMenu = false;
-	}}
-/>
-
 <aside class="legend">
 	<section class="block">
 		<div class="block__head">
 			<h3 class="block__title">Bronnen</h3>
-			<div class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+			<div class="menu" use:menu={{ open: presetMenu, close: () => (presetMenu = false) }}>
 				<button
 					type="button"
 					class="btn is-text preset"
 					aria-haspopup="menu"
 					aria-expanded={presetMenu}
 					onclick={() => (presetMenu = !presetMenu)}
-					>{bronnenLabel(filter)} <span class="caret" aria-hidden="true">▾</span></button
+					>{bronnenLabel(filter)}<Caret open={presetMenu} /></button
 				>
 				{#if presetMenu}
 					<div class="menu__list" role="menu">
@@ -233,21 +230,24 @@
 	{/if}
 
 	<section class="block">
-		<div class="block__label">Diepte</div>
+		<div class="block__label">{netwerkActive ? 'Omgeving van de selectie' : 'Diepte'}</div>
 		<div class="chips">
 			{#each [1, 2, 3] as d (d)}
-				<button type="button" class="btn" class:is-primary={depth === d} onclick={() => onDepth(d)}
-					>{d}</button
+				<button
+					type="button"
+					class="btn"
+					class:is-primary={!netwerkActive && depth === d}
+					onclick={() => onDepth(d)}>{d}</button
 				>
 			{/each}
-			<span class="muted">stappen vanaf de bron</span>
+			<span class="muted">{netwerkActive ? 'stappen, als context' : 'stappen vanaf de bron'}</span>
 		</div>
 	</section>
 
 	{#if lids.length > 0}
 		<section class="block">
 			<div class="block__label">Lid van het artikel</div>
-			<div class="menu" onclick={(e) => e.stopPropagation()} role="presentation">
+			<div class="menu" use:menu={{ open: lidMenu, close: () => (lidMenu = false) }}>
 				<button
 					type="button"
 					class="btn"
@@ -258,7 +258,7 @@
 						? 'Alle leden'
 						: filter.lid === 'geen'
 							? 'Lid niet genoemd'
-							: `Lid ${filter.lid}`} <span class="caret" aria-hidden="true">▾</span></button
+							: `Lid ${filter.lid}`}<Caret open={lidMenu} /></button
 				>
 				{#if lidMenu}
 					<div class="menu__list menu__list--left" role="menu">
@@ -360,31 +360,6 @@
 				</div>
 			{/if}
 		</div>
-		{#if pinnedNodes.length > 0}
-			<div class="block">
-				<div class="block__label">
-					Vastgepind ({pinnedNodes.length})
-					{#if onClearPins}
-						<button type="button" class="link" onclick={onClearPins}>Wissen</button>
-					{/if}
-				</div>
-				<ul class="pins">
-					{#each pinnedNodes as p (p.id)}
-						<li class="pin">
-							<span class="pin__label">{p.label}</span>
-							{#if onUnpin}
-								<button
-									type="button"
-									class="link"
-									onclick={() => onUnpin?.(p.id)}
-									aria-label="Losmaken">×</button
-								>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-			</div>
-		{/if}
 		{#if hasNodes && onResetGraph}
 			<div class="block">
 				{#if confirmClear}
@@ -573,38 +548,5 @@
 	}
 	.more .block {
 		margin-top: 12px;
-	}
-	.link {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.link:hover {
-		color: var(--accent);
-	}
-	.pins {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
-	.pin {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		padding: 3px 0;
-	}
-	.pin__label {
-		flex: 1;
-		min-width: 0;
-		font-family: var(--font-serif);
-		font-size: 13px;
-		color: var(--ink-2);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
 </style>

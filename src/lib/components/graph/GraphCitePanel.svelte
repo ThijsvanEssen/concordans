@@ -1,24 +1,24 @@
 <script lang="ts">
-	// The hover panel of the canvas: what the bron is, a preview, one action: open.
+	// The hover panel of the canvas: what the bron is, a preview, and two actions: open
+	// it, and add it to the netwerk or take it out.
 	import type { GraphNode } from '$lib/graph/types';
-	import { formatEcliLabel } from '$lib/graph/types';
+	import { articleOf, formatEcliLabel, lawIdOf } from '$lib/graph/types';
 	import { getArticleDetail } from '$lib/api/articles';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { articleIdentity, getLawIdFromProps } from '$lib/util/law-id';
 	import { bronLabel } from '$lib/vocabulary';
 
 	let {
 		node,
-		isPinned = false,
+		isChosen = false,
 		onOpen,
-		onTogglePin,
+		onToggleChosen,
 		onMouseEnter,
 		onMouseLeave
 	}: {
 		node: GraphNode;
-		isPinned?: boolean;
+		isChosen?: boolean;
 		onOpen: (node: GraphNode) => void;
-		onTogglePin?: (node: GraphNode) => void;
+		onToggleChosen?: (node: GraphNode) => void;
 		onMouseEnter?: () => void;
 		onMouseLeave?: () => void;
 	} = $props();
@@ -35,9 +35,7 @@
 			case 'judgment':
 				return formatEcliLabel(text(nodeProps?.['ecli']) ?? node.label);
 			case 'article':
-				return (
-					text(nodeProps?.['instrument_citation_title']) ?? getLawIdFromProps(nodeProps, node.key)
-				);
+				return text(nodeProps?.['instrument_citation_title']) ?? lawIdOf(nodeProps);
 			case 'member':
 				return text(nodeProps?.['party']);
 			case 'dossier':
@@ -77,7 +75,7 @@
 	$effect(() => {
 		articleText = null;
 		loading = false;
-		const identity = articleIdentity(nodeProps, node.key);
+		const identity = articleOf(nodeProps);
 		if (node.stub || node.kind !== 'article' || !identity) return;
 		let stale = false;
 		loading = true;
@@ -119,12 +117,13 @@
 		{#if !node.stub}
 			<button class="act act--primary" onclick={() => onOpen(node)}>Openen</button>
 		{/if}
-		{#if onTogglePin && !node.stub}
+		{#if onToggleChosen && !node.stub}
 			<button
-				class="act act--pin"
-				class:act--pinned={isPinned}
-				aria-pressed={isPinned}
-				onclick={() => onTogglePin(node)}>{isPinned ? '★ Vast' : '☆ Vastpinnen'}</button
+				class="act act--netwerk"
+				class:act--chosen={isChosen}
+				aria-pressed={isChosen}
+				onclick={() => onToggleChosen(node)}
+				>{isChosen ? 'Uit netwerk halen' : 'Aan netwerk toevoegen'}</button
 			>
 		{/if}
 	</div>
@@ -235,11 +234,11 @@
 		color: var(--ink);
 	}
 
-	.act--pin {
+	.act--netwerk {
 		color: var(--ink-3);
 		margin-left: auto;
 	}
-	.act--pinned {
+	.act--chosen {
 		color: var(--ink);
 	}
 </style>
