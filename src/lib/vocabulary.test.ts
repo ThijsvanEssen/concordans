@@ -18,10 +18,10 @@ describe('node ids', () => {
 });
 
 describe('vocabulary', () => {
-	it('knows the 15 collections and 18 relations of the API', () => {
-		expect(Object.keys(NODE_TYPES)).toHaveLength(15);
-		expect(RELATIONS).toHaveLength(18);
-		expect(new Set(RELATIONS).size).toBe(18);
+	it('knows the 16 collections and 24 relations of the API', () => {
+		expect(Object.keys(NODE_TYPES)).toHaveLength(16);
+		expect(RELATIONS).toHaveLength(24);
+		expect(new Set(RELATIONS).size).toBe(24);
 	});
 
 	it('refuses names of the old API', () => {

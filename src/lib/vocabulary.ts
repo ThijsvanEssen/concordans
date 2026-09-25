@@ -1,5 +1,6 @@
 // The names the API defines for nodes and edges (lawgraph docs/data-model.md).
 // The schema types them as plain strings, so this is the one place they are listed.
+import type { Schema } from '$lib/api/types';
 
 /** Collection (the first half of a node id) to node type. */
 export const NODE_TYPES = {
@@ -17,7 +18,8 @@ export const NODE_TYPES = {
 	commitments: 'commitment',
 	members: 'member',
 	factions: 'faction',
-	committees: 'committee'
+	committees: 'committee',
+	cabinets: 'cabinet'
 } as const;
 
 export type Collection = keyof typeof NODE_TYPES;
@@ -35,13 +37,19 @@ export const RELATIONS = [
 	'REFERS_TO',
 	'EXPLAINS',
 	'APPEAL_OF',
+	'ADVISES_ON',
 	'SCOPED_BY',
 	'ABOUT',
 	'LED_BY',
 	'MADE_IN',
 	'MEMBER_OF',
 	'AUTHORED',
-	'VOTED'
+	'VOTED',
+	'REVISES',
+	'ACCOMPANIES',
+	'RELATED_TO',
+	'SECOND_READING_OF',
+	'SERVED_IN'
 ] as const;
 
 export type Relation = (typeof RELATIONS)[number];
@@ -82,7 +90,8 @@ export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: 
 	commitments: ['Toezegging', 'Toezeggingen'],
 	members: ['Kamerlid', 'Kamerleden'],
 	factions: ['Fractie', 'Fracties'],
-	committees: ['Commissie', 'Commissies']
+	committees: ['Commissie', 'Commissies'],
+	cabinets: ['Kabinet', 'Kabinetten']
 };
 
 export const bronLabel = (collection: Collection) => BRON_LABEL[collection][0];
@@ -101,13 +110,19 @@ export const RELATION_LABEL: Record<Relation, string> = {
 	REFERS_TO: 'verwijst naar',
 	EXPLAINS: 'licht toe',
 	APPEAL_OF: 'hoger beroep van',
+	ADVISES_ON: 'conclusie bij',
 	SCOPED_BY: 'begrensd door',
 	ABOUT: 'over',
 	LED_BY: 'geleid door',
 	MADE_IN: 'gedaan in',
 	MEMBER_OF: 'lid van',
 	AUTHORED: 'ingediend door',
-	VOTED: 'stemde over'
+	VOTED: 'stemde over',
+	REVISES: 'wijzigt de begroting',
+	ACCOMPANIES: 'ingediend met',
+	RELATED_TO: 'verbonden met',
+	SECOND_READING_OF: 'tweede lezing van',
+	SERVED_IN: 'bewindspersoon in'
 };
 
 /**
@@ -119,6 +134,47 @@ export const relationLabel = (relation: Relation, sourceCollection?: Collection 
 	relation === 'REFERS_TO' && sourceCollection && sourceCollection !== 'articles'
 		? 'haalt aan'
 		: RELATION_LABEL[relation];
+
+/** The college of a judgment, as the API names it (`tier`). */
+export type Tier = Schema<'Tier'>;
+
+/**
+ * What each college is called, in the order the filters list them: the highest courts,
+ * the other appeal courts, the lower courts, the colleges of the Caribbean part of the
+ * Kingdom and the rest, the European courts last. Typed against the API, so a new college
+ * does not go unnamed.
+ */
+export const TIER_LABEL: Record<Tier, string> = {
+	hoge_raad: 'Hoge Raad',
+	parket: 'Parket bij de Hoge Raad',
+	raad_van_state: 'Raad van State',
+	centrale_raad_van_beroep: 'Centrale Raad van Beroep',
+	college_van_beroep_bedrijfsleven: 'College van Beroep voor het bedrijfsleven',
+	gerechtshof: 'Gerechtshoven',
+	rechtbank: 'Rechtbanken',
+	kantongerecht: 'Kantongerechten',
+	tuchtcollege: 'Tuchtcolleges',
+	ambtenarengerecht: 'Ambtenarengerechten',
+	college_van_beroep_hoger_onderwijs: 'College van Beroep voor het hoger onderwijs',
+	college_van_beroep_studiefinanciering: 'College van Beroep Studiefinanciering',
+	raad_van_beroep: 'Raden van Beroep',
+	raad_van_beroep_in_ambtenarenzaken: 'Raad van Beroep in Ambtenarenzaken',
+	raad_van_beroep_voor_belastingzaken: 'Raad van Beroep voor Belastingzaken',
+	raad_voor_strafrechtstoepassing_en_jeugdbescherming:
+		'Raad voor Strafrechtstoepassing en Jeugdbescherming',
+	raad_van_arbitrage_in_bouwgeschillen: 'Raad van Arbitrage voor de Bouw',
+	tariefcommissie: 'Tariefcommissie',
+	gemeenschappelijk_hof: 'Gemeenschappelijk Hof van Justitie',
+	constitutioneel_hof: 'Constitutioneel Hof Sint Maarten',
+	gerecht_in_eerste_aanleg: 'Gerechten in eerste aanleg',
+	gerecht_in_ambtenarenzaken: 'Gerecht in Ambtenarenzaken',
+	kroon: 'Kroon',
+	buitenlandse_instantie: 'Buitenlandse instanties',
+	hvj_eu: 'Hof van Justitie EU',
+	ehrm: 'EHRM'
+};
+
+export const TIERS = Object.keys(TIER_LABEL) as Tier[];
 
 /** The status of a verbinding as the API writes it, and as the screen prints it. */
 export const statusLabel = (status: string | null | undefined) =>

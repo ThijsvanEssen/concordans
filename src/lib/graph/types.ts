@@ -38,7 +38,9 @@ const KIND_OF_COLLECTION: Record<Collection, GraphNodeKind> = {
 	commitments: 'activity',
 	members: 'member',
 	factions: 'faction',
-	committees: 'committee'
+	committees: 'committee',
+	// A cabinet is drawn as a body of people, as a committee is.
+	cabinets: 'committee'
 };
 
 export const kindOfCollection = (collection: Collection): GraphNodeKind =>
@@ -112,7 +114,8 @@ const CATEGORY_OF_RELATION: Record<Relation, EdgeCategory> = {
 	REVISES: 'mutation',
 	ACCOMPANIES: 'structural',
 	RELATED_TO: 'semantic',
-	SECOND_READING_OF: 'mutation'
+	SECOND_READING_OF: 'mutation',
+	SERVED_IN: 'structural'
 };
 
 /** Line width of an edge, by relation. */
@@ -139,7 +142,8 @@ export const EDGE_WEIGHT: Record<Relation, number> = {
 	REVISES: 1.0,
 	ACCOMPANIES: 0.7,
 	RELATED_TO: 0.6,
-	SECOND_READING_OF: 1.0
+	SECOND_READING_OF: 1.0,
+	SERVED_IN: 0.6
 };
 
 /**
