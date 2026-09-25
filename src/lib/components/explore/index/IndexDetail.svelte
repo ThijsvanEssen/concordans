@@ -1,8 +1,9 @@
 <script lang="ts">
 	// Inline detail of an opened row: header, stat tiles, a stage path for
-	// dossiers and the three ways of opening the source. Shows only what the
-	// list item carries.
+	// dossiers and the links that open the source. Shows only what the list
+	// item carries.
 	import type { Schema } from '$lib/api/types';
+	import { bronHref, isReadable } from '$lib/bron/href';
 	import {
 		OUTCOME_LABEL,
 		STAGE_LABEL,
@@ -11,14 +12,13 @@
 	} from '$lib/components/parliamentary/stages';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import { partyColor } from '$lib/utils/party-color';
-	import type { IndexCategory } from './categories';
+	import { collectionOf, type IndexCategory } from './categories';
+	import { judgmentKind } from './judgment-kind';
 
 	let {
 		category,
 		record,
-		onDiscover,
-		onSplit,
-		onRead
+		bron
 	}: {
 		category: IndexCategory;
 		record:
@@ -29,9 +29,8 @@
 			| Schema<'MemberDTO'>
 			| Schema<'FactionDTO'>
 			| Schema<'DecisionSummaryDTO'>;
-		onDiscover: () => void;
-		onSplit: () => void;
-		onRead?: () => void;
+		/** What a link names: `judgments/<key>`, `dossiers/<number>`. */
+		bron: string;
 	} = $props();
 
 	function fmtDate(iso: string | null | undefined): string {
@@ -45,16 +44,22 @@
 
 	const KIND_LABEL: Record<IndexCategory, string> = {
 		instruments: 'Wet · regelgeving',
-		judgments: 'Arrest · jurisprudentie',
+		judgments: 'Uitspraak · jurisprudentie',
 		dossiers: 'Dossier · kamerstukken',
 		committees: 'Commissie · Tweede Kamer',
 		members: 'Kamerlid · Tweede Kamer',
 		factions: 'Fractie · Tweede Kamer',
-		decisions: 'Stemming · plenaire vergadering'
+		decisions: 'Stemming · plenaire vergadering',
+		cabinets: 'Kabinet · regering',
+		ministers: 'Bewindspersoon · regering',
+		commitments: 'Toezegging · regering'
 	};
 
-	// Only laws and judgments have a full text to read.
-	const HAS_READER = new Set<IndexCategory>(['instruments', 'judgments']);
+	// Only a bron with a text of its own is read at full width; the rest reads beside the network.
+	const readHref = $derived(
+		isReadable(collectionOf(category)) ? bronHref(bron, { keepMode: false, mode: 'read' }) : null
+	);
+	const networkHref = $derived(bronHref(bron, { keepMode: false, mode: 'graph' }));
 
 	// The category says which record it is; the parent passes matching pairs.
 	const w = $derived(
@@ -77,19 +82,25 @@
 		Object.entries(s?.tally ?? {}).filter(([choice]) => choice !== 'Voor' && choice !== 'Tegen')
 	);
 	const voterUnit = $derived(s?.vote_kind === 'member' ? 'leden' : 'fracties');
+
+	const kindLabel = $derived(
+		j ? `${judgmentKind(j.decision_kind, j.tier)} · jurisprudentie` : KIND_LABEL[category]
+	);
+	const citedBy = $derived(j?.inbound_citation_count ?? 0);
 </script>
 
 <div class="detail-inner">
 	<div class="detail-head">
 		<div class="detail-head-left">
 			<div class="detail-kind">
-				<span>{KIND_LABEL[category]}</span>
+				<span>{kindLabel}</span>
 				{#if w}
 					<span class="detail-sep" aria-hidden="true">·</span>
 					<span class="detail-mono">{(w.bwb_id ?? w.celex ?? '').toUpperCase()}</span>
-				{:else if j}
+				{:else if j && j.display_name && j.ecli}
+					<!-- The ECLI once, here; without a name it is the title. -->
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">{j.ecli ?? j.key}</span>
+					<span class="detail-mono detail-ecli">{j.ecli}</span>
 				{:else if d}
 					<span class="detail-sep" aria-hidden="true">·</span>
 					<span class="detail-mono">Kamerstuk {d.number}</span>
@@ -133,7 +144,12 @@
 					</span>
 				{:else if j}
 					<span class="tag tag--outline">{j.court ?? 'Onbekende instantie'}</span>
-					<span class="tag tag--indigo"><span class="tag-dot"></span>Uitspraak</span>
+					{#if citedBy > 0}
+						<span class="tag"
+							>Aangehaald door {citedBy.toLocaleString('nl-NL')}
+							{citedBy === 1 ? 'uitspraak' : 'uitspraken'}</span
+						>
+					{/if}
 				{:else if d}
 					{#if d.track}
 						<span class="tag tag--outline">{TRACK_LABEL[d.track]}</span>
@@ -177,7 +193,11 @@
 
 	<!-- Dossier: the stages of a bill -->
 	{#if d && isBill(d.track) && d.stages?.length}
-		<LegislativeStepper stages={d.stages} current={d.current_stage ?? null} />
+		<LegislativeStepper
+			stages={d.stages}
+			current={d.current_stage ?? null}
+			complete={d.stages_complete}
+		/>
 	{/if}
 
 	<!-- Stat tiles: only what the item carries; an empty field shows '—' -->
@@ -213,16 +233,6 @@
 			<div class="tile">
 				<div class="tile-num">{j.court ?? '—'}</div>
 				<div class="tile-lbl">Instantie</div>
-			</div>
-			<div class="tile">
-				<div class="tile-num">
-					{j.inbound_citation_count ? j.inbound_citation_count.toLocaleString('nl-NL') : '—'}
-				</div>
-				<div class="tile-lbl">Citaties naar</div>
-			</div>
-			<div class="tile">
-				<div class="tile-mono">{j.ecli ?? j.key}</div>
-				<div class="tile-lbl">ECLI</div>
 			</div>
 		{:else if d}
 			<div class="tile">
@@ -311,19 +321,16 @@
 		</div>
 	{/if}
 
-	<!-- The three ways of opening the source -->
+	<!-- The ways of opening the source: its text, and the source in the network -->
 	<div class="detail-acts">
-		<button type="button" class="detail-act detail-act--primary" onclick={onDiscover}>
-			Ontdekken <span class="arrow" aria-hidden="true">→</span>
-		</button>
-		<button type="button" class="detail-act" onclick={onSplit}>
-			Verdiepen <span class="arrow" aria-hidden="true">→</span>
-		</button>
-		{#if HAS_READER.has(category) && onRead}
-			<button type="button" class="detail-act" onclick={onRead}>
+		{#if readHref}
+			<a class="detail-act detail-act--primary" href={readHref}>
 				Lezen <span class="arrow" aria-hidden="true">→</span>
-			</button>
+			</a>
 		{/if}
+		<a class="detail-act" class:detail-act--primary={!readHref} href={networkHref}>
+			Bekijk in netwerk <span class="arrow" aria-hidden="true">→</span>
+		</a>
 	</div>
 </div>
 
@@ -366,6 +373,10 @@
 		font-weight: 400;
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
+	}
+	/* An ECLI is not broken inside: it goes to the next line whole. */
+	.detail-ecli {
+		white-space: nowrap;
 	}
 	.detail-title {
 		font-family: var(--font-serif);
@@ -438,8 +449,11 @@
 		font-size: var(--t-body-2);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-2);
-		line-height: 1;
-		word-break: break-all;
+		line-height: 1.2;
+		/* An identifier is not broken: what does not fit is cut off. */
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.tile-lbl {
 		font-family: var(--font-sans);
@@ -516,6 +530,7 @@
 			color var(--dur-1) var(--ease),
 			border-color var(--dur-1) var(--ease);
 		white-space: nowrap;
+		text-decoration: none;
 	}
 	.detail-act:hover {
 		background: var(--paper-2);

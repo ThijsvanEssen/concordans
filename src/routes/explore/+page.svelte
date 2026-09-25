@@ -28,6 +28,7 @@
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
 	import IndexView from '$lib/components/explore/IndexView.svelte';
+	import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
 	import FilterSheet from '$lib/verbonden/FilterSheet.svelte';
 	import VerbindingCard from '$lib/verbonden/VerbindingCard.svelte';
@@ -766,25 +767,20 @@
 	);
 
 	// ── Bladeren ─────────────────────────────────────────────────────────────
-	const INDEX_KINDS = [
-		'instruments',
-		'judgments',
-		'dossiers',
-		'committees',
-		'members',
-		'factions',
-		'decisions'
-	] as const;
-	type IndexKind = (typeof INDEX_KINDS)[number];
-	const indexKind = $derived<IndexKind>(INDEX_KINDS.find((k) => k === param('kind')) ?? 'dossiers');
+	const indexKind = $derived<IndexCategory>(
+		isIndexCategory(param('kind')) ? (param('kind') as IndexCategory) : 'dossiers'
+	);
 	const openInMode = (m: 'read' | 'graph') => (collection: string, name: string) =>
 		goto(bronHref(`${collection}/${name}`, { keepMode: false, mode: m }));
 
-	let indexResultCount = $state<{ filtered: number; total: number } | null>(null);
-	$effect(() => {
-		void indexKind;
-		indexResultCount = null;
-	});
+	// The count the list reported, kept with its category: shown only for the category on
+	// screen, so a count of the previous one never stands beside the next.
+	let reportedCount = $state<{ filtered: number; total: number; category: string } | null>(null);
+	const indexResultCount = $derived(
+		reportedCount?.category === indexKind
+			? { filtered: reportedCount.filtered, total: reportedCount.total }
+			: null
+	);
 
 	const besideArticle = $derived(
 		selectedNode?.collection === 'articles' ? articleOf(selectedNode.raw?.props) : null
@@ -906,7 +902,7 @@
 			<IndexView
 				category={indexKind}
 				onSelectItem={openInMode('read')}
-				onResultCountChange={({ filtered, total }) => (indexResultCount = { filtered, total })}
+				onResultCountChange={(count) => (reportedCount = count)}
 			/>
 		{:else if focusMissing && !selectedNode && !netwerkActive}
 			<div class="explore-empty">

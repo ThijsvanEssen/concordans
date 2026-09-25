@@ -1,18 +1,7 @@
 <script lang="ts">
-	// Toolbar shared by every category of the index: search and sort on top,
-	// below either filter pills or a custom filter snippet (the stage
-	// filter of dossiers).
-
-	export type Facet =
-		| { sep: true }
-		| {
-				id: string;
-				label: string;
-				on: boolean;
-				count?: number;
-				swatch?: string;
-				onClick: () => void;
-		  };
+	// Search and sort, shared by every category of the index. The filters are in the
+	// column beside the list (IndexFacets).
+	import Caret from '$lib/components/ui/Caret.svelte';
 
 	export type SortOption = { id: string; label: string };
 
@@ -20,8 +9,7 @@
 		query,
 		onQueryChange,
 		searchPlaceholder = '',
-		facets = null,
-		customFilter = null,
+		searchLabel = 'Zoeken',
 		sortOptions = [],
 		sort,
 		onSortChange,
@@ -31,9 +19,8 @@
 		query: string;
 		onQueryChange: (v: string) => void;
 		searchPlaceholder?: string;
-		facets?: Facet[] | null;
-		/** Render een willekeurig fragment (snippet) in plaats van facets. */
-		customFilter?: import('svelte').Snippet | null;
+		/** The name of the field; the placeholder goes once something is typed. */
+		searchLabel?: string;
 		sortOptions?: SortOption[];
 		sort: string;
 		onSortChange: (v: string) => void;
@@ -62,25 +49,34 @@
 				type="search"
 				value={query}
 				placeholder={searchPlaceholder}
+				aria-label={searchLabel}
 				oninput={(e) => onQueryChange((e.currentTarget as HTMLInputElement).value)}
 			/>
 			{#if query}
-				<button type="button" class="clear" onclick={() => onQueryChange('')}>wis</button>
+				<button
+					type="button"
+					class="clear"
+					aria-label="Wis de zoektekst"
+					onclick={() => onQueryChange('')}>wis</button
+				>
 			{/if}
 		</label>
 
 		{#if sortOptions.length > 0}
 			<span class="toolbar-sort">
 				<span class="sort-lbl">Sorteer</span>
-				<select
-					value={sort}
-					onchange={(e) => onSortChange((e.currentTarget as HTMLSelectElement).value)}
-					aria-label="Sorteer op"
-				>
-					{#each sortOptions as opt (opt.id)}
-						<option value={opt.id}>{opt.label}</option>
-					{/each}
-				</select>
+				<span class="sort-select">
+					<select
+						value={sort}
+						onchange={(e) => onSortChange((e.currentTarget as HTMLSelectElement).value)}
+						aria-label="Sorteer op"
+					>
+						{#each sortOptions as opt (opt.id)}
+							<option value={opt.id}>{opt.label}</option>
+						{/each}
+					</select>
+					<Caret />
+				</span>
 				{#if dir && onDirToggle}
 					<button
 						type="button"
@@ -94,33 +90,6 @@
 			</span>
 		{/if}
 	</div>
-
-	{#if customFilter}
-		<div class="toolbar-bot toolbar-bot--custom">
-			{@render customFilter()}
-		</div>
-	{:else if facets && facets.length > 0}
-		<div class="toolbar-bot">
-			<span class="filter-lbl">Filter</span>
-			<span class="pills">
-				{#each facets as f, i (!('id' in f) ? `s${i}` : f.id)}
-					{#if !('id' in f)}
-						<span class="pills-sep" aria-hidden="true"></span>
-					{:else}
-						<button type="button" class="pill-btn" class:pill-btn--on={f.on} onclick={f.onClick}>
-							{#if f.swatch}
-								<span class="pill-swatch" style:background={f.swatch}></span>
-							{/if}
-							<span class="pill-label">{f.label}</span>
-							{#if f.count !== undefined}
-								<span class="pill-count">{f.count}</span>
-							{/if}
-						</button>
-					{/if}
-				{/each}
-			</span>
-		</div>
-	{/if}
 </div>
 
 <style>
@@ -135,7 +104,6 @@
 		align-items: center;
 		gap: 14px;
 		padding: 10px 14px;
-		border-bottom: 1px solid var(--rule);
 	}
 	.toolbar-search {
 		flex: 1;
@@ -144,6 +112,12 @@
 		gap: 10px;
 		color: var(--ink-3);
 		min-width: 0;
+		border-radius: var(--r-1);
+	}
+	/* The field has no outline of its own: the ring is drawn around the search as a whole. */
+	.toolbar-search:focus-within {
+		outline: 2px solid var(--accent);
+		outline-offset: 4px;
 	}
 	.toolbar-search input {
 		flex: 1;
@@ -168,6 +142,7 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
+		min-height: 24px;
 		padding: 2px 6px;
 		border-radius: var(--r-1);
 	}
@@ -187,27 +162,32 @@
 	.sort-lbl {
 		font-weight: 500;
 	}
-	.toolbar-sort select {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
-		font-style: italic;
-		background: transparent;
-		border: 0;
-		padding: 2px 18px 2px 4px;
-		cursor: pointer;
-		outline: none;
+	/* The list reads as the other menus of the app: interface type, the one chevron. */
+	.sort-select {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		color: var(--ink-3);
+	}
+	.sort-select select {
 		appearance: none;
-		background-image:
-			linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
-			linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
-		background-position:
-			calc(100% - 8px) 9px,
-			calc(100% - 4px) 9px;
-		background-size:
-			4px 4px,
-			4px 4px;
-		background-repeat: no-repeat;
+		padding: 2px 16px 2px 0;
+		border: 0;
+		background: transparent;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.sort-select select:hover {
+		color: var(--accent);
+	}
+	.sort-select :global(.caret) {
+		position: absolute;
+		right: 0;
+		margin: 0;
+		pointer-events: none;
 	}
 	.toolbar-sort .dir {
 		border: 0;
@@ -216,94 +196,13 @@
 		color: var(--ink-3);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
+		min-width: 24px;
+		min-height: 24px;
 		padding: 2px 4px;
 		border-radius: var(--r-1);
 	}
 	.toolbar-sort .dir:hover {
 		color: var(--ink);
 		background: var(--paper-2);
-	}
-
-	.toolbar-bot {
-		display: flex;
-		align-items: center;
-		gap: 14px;
-		padding: 10px 14px;
-		flex-wrap: wrap;
-	}
-	.toolbar-bot--custom {
-		padding: 4px 14px 8px;
-	}
-
-	.filter-lbl {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-3);
-	}
-
-	.pills {
-		display: inline-flex;
-		gap: 6px;
-		flex-wrap: wrap;
-		align-items: center;
-	}
-	/* Filter buttons; the active one is ink on paper. */
-	.pill-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 4px 8px;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		line-height: 16px;
-		color: var(--ink-2);
-		cursor: pointer;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease),
-			border-color var(--dur-1) var(--ease);
-	}
-	.pill-btn:hover {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-	.pill-btn--on {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
-	}
-	.pill-btn--on:hover {
-		background: var(--ink-2);
-		border-color: var(--ink-2);
-		color: var(--paper);
-	}
-	.pill-count {
-		font-variant-numeric: tabular-nums;
-		font-weight: 400;
-		color: var(--ink-3);
-		line-height: 1;
-	}
-	.pill-btn--on .pill-count {
-		color: var(--paper);
-		opacity: 0.65;
-	}
-	.pill-swatch {
-		display: inline-block;
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		flex-shrink: 0;
-	}
-	.pills-sep {
-		width: 1px;
-		height: 18px;
-		background: var(--rule);
-		align-self: center;
-		display: inline-block;
 	}
 </style>

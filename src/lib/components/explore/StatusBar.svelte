@@ -5,9 +5,10 @@
 	// nav only, not here.
 	import type { GraphNode } from '$lib/graph/types';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
-	import { bronLabel, bronPlural, isCollection, type Mode } from '$lib/vocabulary';
+	import { bronLabel, type Mode } from '$lib/vocabulary';
 	import { formatDate, textProp } from './readers/_shared';
 	import { bronHref } from '$lib/bron/href';
+	import { categoryLabel, isIndexCategory } from './index/categories';
 
 	let {
 		node,
@@ -91,9 +92,9 @@
 	{#if mode === 'index'}
 		<div class="path">
 			<span>Bladeren</span>
-			{#if isCollection(indexCategory)}
+			{#if isIndexCategory(indexCategory)}
 				<span class="sep" aria-hidden="true">›</span>
-				<span>{bronPlural(indexCategory)}</span>
+				<span>{categoryLabel(indexCategory)}</span>
 			{/if}
 		</div>
 		{#if indexResultCount}
