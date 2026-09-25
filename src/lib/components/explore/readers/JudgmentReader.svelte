@@ -168,13 +168,17 @@
 				<tbody>
 					{#each participants as p, i (i)}
 						<tr>
-							<th
-								class="reader-parties-role"
-								title={p.stated === false ? 'Rol afgeleid uit rechtsgebied en kop' : undefined}
-							>
+							<th class="reader-parties-role">
 								{p.role}
 								{#if p.party}
 									<span class="reader-parties-party">{p.party}</span>
+								{/if}
+								{#if p.stated === false}
+									<span
+										class="reader-parties-derived"
+										title="De uitspraak noemt deze rol niet; afgeleid uit rechtsgebied en kop"
+										>afgeleid</span
+									>
 								{/if}
 							</th>
 							<td class="reader-parties-name">{p.name}</td>
@@ -689,5 +693,12 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
+	}
+
+	.reader-parties-derived {
+		display: block;
+		font-weight: 400;
+		font-style: italic;
+		color: var(--ink-3);
 	}
 </style>
