@@ -412,3 +412,100 @@ test('"mr. X voornoemd en mr. Y" names two lawyers', () => {
 		'mr. J. Boer'
 	]);
 });
+
+// ── Parties from the API (`JudgmentDTO.parties`, API 0.11) ──────────────────
+
+test('the parties the API read come first, each followed by its lawyers', () => {
+	const judgment = {
+		props: { subjects: ['Civiel recht'], text: 'in de zaak van\n[X]\ntegen\n[Y]' },
+		paragraphs: [
+			{
+				kind: 'body',
+				text: 'Namens eisers heeft mr. H.J.W. Alt, advocaat te Amsterdam, het woord gevoerd.'
+			}
+		],
+		parties: [
+			{
+				name: '[eiseres 1]',
+				role: 'Eiser',
+				role_stated: true,
+				side: 'first',
+				alias: '[eisers]',
+				representatives: [{ name: 'mr. H.J.W. Alt', role: 'advocaat' }]
+			},
+			{
+				name: 'MAATSCHAP GRONINGEN',
+				role: 'Verweerder',
+				role_stated: false,
+				side: 'second',
+				alias: 'de Maatschap',
+				representatives: []
+			}
+		]
+	};
+	expect(judgmentParticipants(judgment)).toEqual([
+		{ role: 'Eiser', name: '[eiseres 1]', stated: true },
+		{ role: 'Advocaat', name: 'mr. H.J.W. Alt', party: '[eisers]' },
+		{ role: 'Verweerder', name: 'MAATSCHAP GRONINGEN', stated: false }
+	]);
+});
+
+test('an empty list from the API means the kop names no parties', () => {
+	const judgment = {
+		props: { subjects: ['Strafrecht'], text: 'in de strafzaak tegen\n[verdachte] ,' },
+		paragraphs: [],
+		parties: []
+	};
+	expect(judgmentParticipants(judgment)).toEqual([]);
+});
+
+test('without parties from the API, the reader reads the full text', () => {
+	const judgment = {
+		props: { subjects: ['Strafrecht'], text: 'in de strafzaak tegen\n[verdachte] ,' },
+		paragraphs: []
+	};
+	expect(judgmentParticipants(judgment)).toEqual([{ role: 'Verdachte', name: '[verdachte]' }]);
+	expect(judgmentParticipants({ ...judgment, parties: null })).toEqual([
+		{ role: 'Verdachte', name: '[verdachte]' }
+	]);
+});
+
+test('a lawyer in the kop is not repeated from the body', () => {
+	const paragraphs = [
+		{
+			kind: 'body',
+			text: 'Namens de Staat heeft mr. K. Teuben, advocaat te Den Haag, het woord gevoerd.'
+		}
+	];
+	const parties = [
+		{ role: 'Verweerder', name: 'DE STAAT DER NEDERLANDEN' },
+		{ role: 'Advocaat', name: 'Mr. K. Teuben', party: 'de Staat' }
+	];
+	expect(extractParticipants(paragraphs, parties)).toEqual(parties);
+});
+
+test('a lawyer for several parties in a row is one row after them (ECLI:NL:HR:2019:1278)', () => {
+	const bie = { name: 'Mr. J. de Bie Leuveling Tjeenk', role: 'advocaat' as const };
+	const party = (name: string, alias: string, representatives = [bie]) => ({
+		name,
+		role: 'Verweerder',
+		role_stated: true,
+		side: 'second' as const,
+		alias,
+		representatives
+	});
+	const parties = [
+		party('MAATSCHAP GRONINGEN', 'de Maatschap'),
+		party('NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', 'NAM'),
+		party('EBN B.V.', 'EBN', [{ name: 'mr. J.F. de Groot', role: 'advocaat' }])
+	];
+	expect(
+		judgmentParticipants({ paragraphs: [], parties }).map((p) => [p.role, p.name, p.party])
+	).toEqual([
+		['Verweerder', 'MAATSCHAP GRONINGEN', undefined],
+		['Verweerder', 'NEDERLANDSE AARDOLIE MAATSCHAPPIJ B.V.', undefined],
+		['Advocaat', 'Mr. J. de Bie Leuveling Tjeenk', 'de Maatschap, NAM'],
+		['Verweerder', 'EBN B.V.', undefined],
+		['Advocaat', 'mr. J.F. de Groot', 'EBN']
+	]);
+});

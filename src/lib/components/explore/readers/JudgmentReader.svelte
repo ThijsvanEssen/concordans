@@ -168,7 +168,10 @@
 				<tbody>
 					{#each participants as p, i (i)}
 						<tr>
-							<th class="reader-parties-role">
+							<th
+								class="reader-parties-role"
+								title={p.stated === false ? 'Rol afgeleid uit rechtsgebied en kop' : undefined}
+							>
 								{p.role}
 								{#if p.party}
 									<span class="reader-parties-party">{p.party}</span>

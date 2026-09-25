@@ -449,16 +449,67 @@ export function extractParties(text: string, area: CaseArea | null): Participant
 	return parties;
 }
 
+// The parties the API reads from the kop (API 0.11, `JudgmentDTO.parties`). Typed here
+// until the generated types catch up with that version; replace with
+// `Schema<'JudgmentParty'>` after `npm run sync:api`.
+export type JudgmentParty = {
+	name: string;
+	role: string;
+	role_stated: boolean;
+	side: 'first' | 'second' | 'other';
+	alias?: string | null;
+	representatives?: Array<{ name: string; role: 'advocaat' | 'gemachtigde' }>;
+};
+
+/** `parties` of a judgment when the API sends it, else null (an older API or judgment). */
+function partiesOf(value: unknown): JudgmentParty[] | null {
+	if (!Array.isArray(value)) return null;
+	const valid = value.every((p) => p && typeof p.name === 'string' && typeof p.role === 'string');
+	return valid ? (value as JudgmentParty[]) : null;
+}
+
+const REPRESENTATIVE_ROLES = { advocaat: 'Advocaat', gemachtigde: 'Gemachtigde' } as const;
+
 /**
- * All named participants of a judgment: the parties from the opening of its full
- * text (or, without one, from its first subheading) and the raadslieden and A-G
- * named in its first body paragraphs.
+ * The parties the API read, each followed by who acts for it. A lawyer for several
+ * parties in a row ("advocaat" under both eisers) is one row after the last of them.
+ */
+function fromApi(parties: JudgmentParty[]): Participant[] {
+	type Rep = NonNullable<JudgmentParty['representatives']>[number];
+	const acts = (p: JudgmentParty | undefined, r: Rep) =>
+		!!p?.representatives?.some((q) => q.name === r.name && q.role === r.role);
+	return parties.flatMap((p, i) => {
+		const rows: Participant[] = [{ role: p.role, name: p.name, stated: p.role_stated !== false }];
+		for (const r of p.representatives ?? []) {
+			if (acts(parties[i + 1], r)) continue;
+			let from = i;
+			while (from > 0 && acts(parties[from - 1], r)) from--;
+			const labels = new Set(parties.slice(from, i + 1).map((q) => q.alias ?? q.name));
+			rows.push({
+				role: REPRESENTATIVE_ROLES[r.role] ?? r.role,
+				name: r.name,
+				party: [...labels].join(', ')
+			});
+		}
+		return rows;
+	});
+}
+
+/**
+ * All named participants of a judgment: its parties with their advocaten and
+ * gemachtigden, and the raadslieden and A-G named in its first body paragraphs.
+ * The parties come from the API (`parties`); a judgment the API has not read them
+ * for gets them from the opening of its full text, or else its first subheading.
  */
 export function judgmentParticipants(judgment: {
 	props?: { [key: string]: unknown } | null;
 	paragraphs?: Array<{ kind?: string | null; text: string }> | null;
+	parties?: unknown;
 }): Participant[] {
 	const paragraphs = judgment.paragraphs ?? [];
+	const read = partiesOf(judgment.parties);
+	if (read) return extractParticipants(paragraphs, fromApi(read));
+
 	const subheading = paragraphs.find((p) => p.kind === 'subheading')?.text ?? null;
 	const text = judgment.props?.text;
 	const head = typeof text === 'string' && text ? judgmentHead(text) : null;
@@ -549,7 +600,14 @@ function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
 }
 
 // ── Participant extraction ────────────────────────────────────────────────
-export type Participant = { role: string; name: string; party?: string };
+export type Participant = {
+	role: string;
+	name: string;
+	/** Whom a lawyer acts for. */
+	party?: string;
+	/** False when the role is derived, not named in the judgment. */
+	stated?: boolean;
+};
 
 /**
  * Extract named parties from the judgment. The parties come from the heading
@@ -561,6 +619,9 @@ export function extractParticipants(
 	parties: Participant[]
 ): Participant[] {
 	const participants: Participant[] = [...parties];
+	// "Mr. J. de Bie" in the kop and "mr. J. de Bie" in the body are one lawyer.
+	const bare = (n: string) => n.replace(/^mr\.\s*/i, '').toLowerCase();
+	const known = (n: string) => participants.some((p) => bare(p.name) === bare(n));
 
 	// Scan first several body paragraphs for raadsman, A-G and OvJ mentions.
 	// GH judgments can place these in para 10–12 (after procesgang header), so scan wider.
@@ -603,7 +664,7 @@ export function extractParticipants(
 			for (const raw of [m[1], m[2]]) {
 				const bare = raw.trim().replace(/\s+voornoemd$/, '');
 				const n = bare.startsWith('mr.') ? bare : `mr. ${bare}`;
-				if (!participants.some((p) => p.name === n)) {
+				if (!known(n)) {
 					participants.push({ role: 'Raadsman', name: n, party });
 				}
 			}
@@ -618,7 +679,7 @@ export function extractParticipants(
 				.replace(/,$/, '')
 				.replace(/\s+voornoemd$/, '')}`;
 			const party = partyAt(m.index!);
-			if (!participants.some((p) => p.name === n)) {
+			if (!known(n)) {
 				participants.push({ role: 'Raadsman', name: n, party });
 			}
 		}
@@ -629,7 +690,7 @@ export function extractParticipants(
 		)) {
 			const n = `mr. ${m[1].trim()}`;
 			const party = partyAt(m.index!);
-			if (!participants.some((p) => p.name === n)) {
+			if (!known(n)) {
 				participants.push({ role: 'Raadsman', name: n, party });
 			}
 		}
@@ -642,7 +703,7 @@ export function extractParticipants(
 			/(?:advocaat-generaal|Advocaat-Generaal|procureur-generaal|Procureur-generaal)\s+((?:mr\.\s+)?(?:[A-Z]\.(?:[A-Z]\.)*\s+)?(?:(?:van|de|den|der|ten|ter)\s+){0,3}[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/g
 		)) {
 			const n = m[1].trim().replace(/[,.]$/, '');
-			if (n.length > 1 && !participants.some((p) => p.name === n)) {
+			if (n.length > 1 && !known(n)) {
 				participants.push({ role: 'A-G', name: n });
 			}
 		}
@@ -650,7 +711,7 @@ export function extractParticipants(
 		// Officier van Justitie (only when named: "officier van justitie mr. X")
 		for (const m of t.matchAll(/officier van justitie\s+(mr\.\s+[A-Z][^,\n]{1,50}?)(?=[,\n])/g)) {
 			const n = m[1].trim().replace(/[,.]$/, '');
-			if (n.length > 1 && !participants.some((p) => p.name === n)) {
+			if (n.length > 1 && !known(n)) {
 				participants.push({ role: 'OvJ', name: n });
 			}
 		}
