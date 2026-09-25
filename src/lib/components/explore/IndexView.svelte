@@ -3283,6 +3283,14 @@
 		.stage-aside {
 			align-items: flex-start;
 		}
+		/* The rows stack on a phone (IndexRow): the head keeps only the heads of the
+		   number columns, over the numbers at full width. */
+		.list-head {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.list-head > span:not(.nums) {
+			display: none;
+		}
 	}
 
 	.nums--repeat {

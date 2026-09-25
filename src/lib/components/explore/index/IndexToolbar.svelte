@@ -205,4 +205,14 @@
 		color: var(--ink);
 		background: var(--paper-2);
 	}
+
+	/* On a phone the search takes the whole line and the sort goes under it. */
+	@media (max-width: 480px) {
+		.toolbar-top {
+			flex-wrap: wrap;
+		}
+		.toolbar-search {
+			flex-basis: 100%;
+		}
+	}
 </style>
