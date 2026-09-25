@@ -160,6 +160,8 @@
 	/** Rows the keys move over: the citation first, then every hit. */
 	const offset = $derived(citation || bare ? 1 : 0);
 	const rowCount = $derived(offset + hits.length);
+	// A citation the API does not know: said where its row was, not dropped without a word.
+	const notFound = $derived(unresolved !== '' && unresolved === q);
 	const empty = $derived(
 		q.length > 0 && answered === q && !loading && !failed && hits.length === 0 && !citation && !bare
 	);
@@ -345,12 +347,18 @@
 
 	<div
 		class="list"
-		class:list--filled={rowCount > 0 || failed || empty}
+		class:list--filled={rowCount > 0 || failed || empty || notFound}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
 		bind:this={listEl}
 	>
+		{#if notFound}
+			<p class="state" role="status">
+				"{q}" staat niet in het netwerk. Het netwerk bevat een selectie van bronnen;
+				<a href="/docs#dekking">zie de dekking</a>.
+			</p>
+		{/if}
 		{#if citation}
 			{@const kind = CITED[citation.kind]}
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
