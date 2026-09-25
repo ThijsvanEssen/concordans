@@ -7,6 +7,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import { bronPlural, type Collection } from '$lib/vocabulary';
 	import { dossierStatus } from '$lib/components/parliamentary/stages';
+	import { shortDossierTitle } from '$lib/graph/types';
 
 	/** The ways into the material by kind; each opens Bladeren on that kind. */
 	const KINDS: Collection[] = ['instruments', 'dossiers', 'judgments', 'committees'];
@@ -189,7 +190,9 @@
 												<span class="dot">·</span><span>{dossierStatus(d)}</span>
 											{/if}
 										</div>
-										<p class="feed-row-title">{d.title ?? d.number}</p>
+										<p class="feed-row-title" title={d.title ?? undefined}>
+											{shortDossierTitle(d.title ?? null) ?? d.number}
+										</p>
 									</a>
 								</li>
 							{/each}

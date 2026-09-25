@@ -1,26 +1,44 @@
 <script lang="ts">
-	// The one search: inline on the start page and inside the ⌘K overlay.
+	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
+	// Netwerk, where a result is picked instead of opened.
 	import { goto } from '$app/navigation';
 	import { track } from '$lib/analytics';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
-	import { bronHref, type BronRef } from '$lib/bron/href';
+	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { formatDate } from '$lib/components/explore/readers/_shared';
 	import { dossierStatus, isOutcome, isStage } from '$lib/components/parliamentary/stages';
 	import { bronLabel, bronPlural, type Collection } from '$lib/vocabulary';
-	import { parseCitation, resolveQuery, type Citation } from './resolve-query';
+	import {
+		bareArticle,
+		parseCitation,
+		resolveQuery,
+		type Citation,
+		type Resolved
+	} from './resolve-query';
 
 	type Hit = Schema<'SearchResultItem'>;
 
 	let {
 		overlay = false,
-		onOpen
+		compact = false,
+		placeholder = 'Zoek een artikel, uitspraak of dossier',
+		initial = '',
+		onOpen,
+		onPick
 	}: {
+		/** The text the field starts with. */
+		initial?: string;
 		/** Inside the overlay the field takes focus and the list scrolls within the dialog. */
 		overlay?: boolean;
+		/** A narrow field and list, for a panel. */
+		compact?: boolean;
+		placeholder?: string;
 		/** Called when a bron is opened; the overlay closes on it. */
 		onOpen?: () => void;
+		/** Given, a result is not opened but handed over by the name a link uses; the field empties. */
+		onPick?: (id: string) => void;
 	} = $props();
 
 	/** The kinds the search covers, in the order the groups appear. */
@@ -29,10 +47,11 @@
 		'articles',
 		'judgments',
 		'dossiers',
-		'documents',
-		'committees',
+		// People and bodies before the papers that merely name them.
+		'members',
 		'factions',
-		'members'
+		'committees',
+		'documents'
 	] as const satisfies readonly Collection[];
 	type Kind = (typeof KINDS)[number];
 	const LIMIT = 6;
@@ -48,6 +67,10 @@
 	};
 
 	let query = $state('');
+	// A query handed over (Zoek in alle bronnen) fills the field.
+	$effect(() => {
+		if (initial) query = initial;
+	});
 	let results = $state<Partial<Record<Kind, Hit[]>>>({});
 	/** The query `results` answers; '' before the first answer. */
 	let answered = $state('');
@@ -56,6 +79,8 @@
 	let resolving = $state(false);
 	/** A citation the API did not confirm: its row is gone and the results stay. */
 	let unresolved = $state('');
+	/** "55 Gw" typed without "art.", which the API confirmed as an article. */
+	let confirmed = $state<{ term: string; target: Resolved } | null>(null);
 	let active = $state(0);
 	let listEl = $state<HTMLElement | null>(null);
 
@@ -71,11 +96,22 @@
 	const hitName = (hit: Hit) =>
 		hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
 
+	/** A list the API gives in `extra`, such as the names of a judgment. */
+	const extras = (hit: Hit, name: string): string[] => {
+		const value = hit.extra?.[name];
+		return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+	};
+
+	// An article with its heading, a judgment with its name ("Urgenda"), as lawyers know them.
 	function titleOf(hit: Hit): string {
 		if (hit.collection === 'articles' && extra(hit, 'article_number')) {
-			return `Artikel ${extra(hit, 'article_number')}`;
+			const heading = extra(hit, 'heading');
+			return `Artikel ${extra(hit, 'article_number')}${heading ? `. ${heading}` : ''}`;
 		}
-		if (hit.collection === 'judgments' && extra(hit, 'ecli')) return extra(hit, 'ecli');
+		if (hit.collection === 'judgments' && extra(hit, 'ecli')) {
+			const names = extras(hit, 'names');
+			return names.length ? `${extra(hit, 'ecli')} (${names.join(', ')})` : extra(hit, 'ecli');
+		}
 		return hit.display_name ?? hit.key;
 	}
 
@@ -118,11 +154,12 @@
 	const indexOf = $derived(new Map(hits.map((hit, i) => [hit.id, i])));
 
 	const citation = $derived(q && q !== unresolved ? parseCitation(q) : null);
+	const bare = $derived(!citation && confirmed?.term === q ? confirmed.target : null);
 	/** Rows the keys move over: the citation first, then every hit. */
-	const offset = $derived(citation ? 1 : 0);
+	const offset = $derived(citation || bare ? 1 : 0);
 	const rowCount = $derived(offset + hits.length);
 	const empty = $derived(
-		q.length > 0 && answered === q && !loading && !failed && hits.length === 0 && !citation
+		q.length > 0 && answered === q && !loading && !failed && hits.length === 0 && !citation && !bare
 	);
 
 	// One request per query: the timer waits for the typing to pause, and a newer query
@@ -137,8 +174,19 @@
 			return;
 		}
 		const controller = new AbortController();
+		const written = bareArticle(term);
 		const timer = setTimeout(() => {
 			loading = true;
+			// Beside the words, the article they may cite: shown only once the API has it.
+			if (written) {
+				resolveQuery(written)
+					.then((target) => {
+						if (!controller.signal.aborted && target) confirmed = { term, target };
+					})
+					.catch(() => {
+						// The words are searched all the same.
+					});
+			}
 			unwrap(
 				api.GET('/api/search', {
 					params: { query: { q: term, types: [...KINDS], limit: LIMIT } },
@@ -164,10 +212,14 @@
 		};
 	});
 
+	// The first row is chosen before any key: Enter opens it. The first ↓ confirms that
+	// row instead of skipping it, as a list without a preselection would.
+	let moved = false;
 	$effect(() => {
 		void q;
 		void answered;
 		active = 0;
+		moved = false;
 	});
 
 	$effect(() => {
@@ -178,6 +230,12 @@
 	});
 
 	function open(ref: BronRef | string, at: string | null = null) {
+		if (onPick) {
+			const id = focusOf(ref);
+			if (id) onPick(id);
+			query = '';
+			return;
+		}
 		const href = bronHref(ref, { at });
 		onOpen?.();
 		goto(href);
@@ -197,6 +255,11 @@
 		}
 	}
 
+	function openBare(target: Resolved) {
+		track('search_resolved', { type: target.ref.collection });
+		open(target.ref, target.at);
+	}
+
 	function openHit(hit: Hit) {
 		track('search_resolved', { type: hit.collection });
 		open(hitName(hit));
@@ -205,13 +268,16 @@
 	function onkeydown(e: KeyboardEvent) {
 		if (e.key === 'ArrowDown' && rowCount > 0) {
 			e.preventDefault();
-			active = Math.min(active + 1, rowCount - 1);
+			active = moved ? Math.min(active + 1, rowCount - 1) : active;
+			moved = true;
 		} else if (e.key === 'ArrowUp' && rowCount > 0) {
 			e.preventDefault();
 			active = Math.max(active - 1, 0);
+			moved = true;
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
 			if (citation && active === 0) void openCitation();
+			else if (bare && active === 0) openBare(bare);
 			// A hit opens only when the list answers what is typed.
 			else if (answered === q && hits[active - offset]) openHit(hits[active - offset]);
 		} else if (e.key === 'Escape' && !overlay && query) {
@@ -224,7 +290,10 @@
 	let pointerAt = '';
 	const placeOf = (e: PointerEvent) => `${e.screenX},${e.screenY}`;
 	function onpointermove(e: PointerEvent, row: number) {
-		if (placeOf(e) !== pointerAt) active = row;
+		if (placeOf(e) !== pointerAt) {
+			active = row;
+			moved = true;
+		}
 	}
 
 	function focusOnMount(node: HTMLInputElement) {
@@ -234,7 +303,7 @@
 
 <svelte:window onpointermove={(e) => (pointerAt = placeOf(e))} />
 
-<div class="search" class:search--overlay={overlay}>
+<div class="search" class:search--overlay={overlay} class:search--compact={compact}>
 	<div class="field">
 		{#if loading || resolving}
 			<span class="spinner" aria-hidden="true"></span>
@@ -265,7 +334,7 @@
 			aria-controls="{uid}-list"
 			aria-autocomplete="list"
 			aria-activedescendant={rowCount > 0 ? `${uid}-row-${active}` : undefined}
-			placeholder="Zoek een artikel, uitspraak of dossier"
+			{placeholder}
 			autocomplete="off"
 			spellcheck="false"
 		/>
@@ -297,6 +366,24 @@
 				<span class="row-title">{q}</span>
 				<span class="kbd" aria-hidden="true">↵</span>
 			</div>
+		{:else if bare}
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<div
+				id="{uid}-row-0"
+				class="row row--citation"
+				class:is-active={active === 0}
+				role="option"
+				tabindex="-1"
+				aria-selected={active === 0}
+				onclick={() => openBare(bare)}
+				onpointermove={(e) => onpointermove(e, 0)}
+			>
+				<span class="row-kind"
+					><KindGlyph collection={bare.ref.collection} /> {bronLabel(bare.ref.collection)}</span
+				>
+				<span class="row-title">{bare.label ?? q}</span>
+				<span class="kbd" aria-hidden="true">↵</span>
+			</div>
 		{/if}
 
 		{#each groups as group (group.kind)}
@@ -316,7 +403,12 @@
 						tabindex="-1"
 						aria-selected={active === i}
 						href={bronHref(hitName(hit))}
-						onclick={() => {
+						onclick={(e) => {
+							if (onPick) {
+								e.preventDefault();
+								openHit(hit);
+								return;
+							}
 							track('search_resolved', { type: hit.collection });
 							onOpen?.();
 						}}
@@ -490,6 +582,39 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
+	}
+
+	.search--compact .field {
+		gap: 8px;
+		padding: 6px 10px;
+	}
+	.search--compact input {
+		font-size: 15px;
+	}
+	.search--compact .list--filled {
+		max-height: 320px;
+		overflow-y: auto;
+	}
+	.search--compact .group-label {
+		padding: 6px 10px 2px;
+	}
+	.search--compact .row {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 1px;
+		padding: 5px 10px;
+		font-size: 14px;
+	}
+	.search--compact .row--citation {
+		flex-direction: row;
+		align-items: baseline;
+		gap: 8px;
+	}
+	.search--compact .row-context {
+		max-width: none;
+	}
+	.search--compact .state {
+		padding: 8px 10px;
 	}
 
 	@media (max-width: 640px) {

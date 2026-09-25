@@ -2,7 +2,11 @@
 	// The dialog around the one search component; ⌘K opens it on every page.
 	import Search from '$lib/search/Search.svelte';
 
-	let { open, onClose }: { open: boolean; onClose: () => void } = $props();
+	let {
+		open,
+		query = '',
+		onClose
+	}: { open: boolean; query?: string; onClose: () => void } = $props();
 
 	let previousFocus: HTMLElement | null = null;
 
@@ -30,16 +34,9 @@
 
 {#if open}
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-	<div class="overlay" onclick={onClose}>
-		<div
-			class="modal"
-			role="dialog"
-			aria-modal="true"
-			aria-label="Zoeken"
-			tabindex="-1"
-			onclick={(e) => e.stopPropagation()}
-		>
-			<Search overlay onOpen={onClose} />
+	<div class="overlay" onclick={(e) => e.target === e.currentTarget && onClose()}>
+		<div class="modal" role="dialog" aria-modal="true" aria-label="Zoeken" tabindex="-1">
+			<Search overlay initial={query} onOpen={onClose} />
 		</div>
 	</div>
 {/if}

@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/utils/platform';
+	import Wordmark from './Wordmark.svelte';
 
 	let { onSearchOpen }: { onSearchOpen?: () => void } = $props();
 
@@ -53,8 +54,7 @@
 
 <header class="topbar">
 	<a href="/" class="logo" aria-label="Concordans">
-		<span class="logo-mark" aria-hidden="true">&sect;</span>
-		<span class="logo-name">Concordans</span>
+		<Wordmark />
 	</a>
 
 	<nav class="topbar-nav" aria-label="Hoofdnavigatie">
@@ -179,7 +179,8 @@
 		background: var(--paper);
 		border-bottom: 1px solid var(--rule);
 		display: flex;
-		align-items: center;
+		/* The wordmark and the links share a baseline; the controls on the right are centred. */
+		align-items: baseline;
 		gap: 32px;
 		padding: 0 28px;
 		flex-shrink: 0;
@@ -188,34 +189,7 @@
 
 	.logo {
 		display: flex;
-		align-items: center;
-		gap: 10px;
-		color: var(--ink);
 		flex-shrink: 0;
-	}
-	.logo:hover {
-		color: var(--ink);
-	}
-
-	.logo-mark {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 22px;
-		width: 17px;
-		font-family: 'Playfair Display', var(--font-serif);
-		font-style: italic;
-		font-weight: 800;
-		font-size: 26px;
-		line-height: 1;
-		color: var(--accent);
-	}
-
-	.logo-name {
-		font-family: var(--font-serif);
-		font-weight: 500;
-		font-size: 20px;
-		line-height: 1;
 	}
 
 	.topbar-nav {
@@ -229,7 +203,8 @@
 
 	.nav-link {
 		color: inherit;
-		padding: 20px 0;
+		/* One pixel lower than centred, so the capitals sit on the bar's middle. */
+		padding: 21px 0 19px;
 	}
 
 	.nav-link:hover {
@@ -241,6 +216,7 @@
 	}
 
 	.topbar-right {
+		align-self: center;
 		margin-left: auto;
 		min-width: 0;
 		display: flex;
@@ -286,6 +262,7 @@
 	}
 
 	.mobile-menu-btn {
+		align-self: center;
 		display: none;
 		background: none;
 		border: 0;
@@ -329,7 +306,9 @@
 	}
 
 	@media (max-width: 640px) {
+		/* Without the links there is no baseline to share. */
 		.topbar {
+			align-items: center;
 			gap: 12px;
 			padding: 0 16px;
 		}

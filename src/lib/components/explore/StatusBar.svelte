@@ -1,13 +1,13 @@
 <script lang="ts">
 	// The bar above the panels: a back arrow, the breadcrumb of the selected bron, Deel,
-	// and Lezen/Netwerk as one segmented control. Bladeren is a place to go, not a view
-	// of the selected bron, so it lives in the top nav only, not here.
+	// and, for a bron with a text of its own, Volledig lezen or back to the network.
+	// Bladeren is a place to go, not a view of the selected bron, so it lives in the top
+	// nav only, not here.
 	import type { GraphNode } from '$lib/graph/types';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
-	import { bronLabel, bronPlural, isCollection, MODES, type Mode } from '$lib/vocabulary';
+	import { bronLabel, bronPlural, isCollection, type Mode } from '$lib/vocabulary';
 	import { formatDate, textProp } from './readers/_shared';
-
-	const VIEW_MODES = MODES.filter((m) => m.id !== 'index');
+	import { bronHref } from '$lib/bron/href';
 
 	let {
 		node,
@@ -18,8 +18,9 @@
 		indexResultCount = null,
 		shareCopied = false,
 		onGoBack,
-		onModeChange,
-		onShareView
+		onShareView,
+		readAction = null,
+		onRead
 	}: {
 		node: GraphNode | null;
 		focusError?: string | null;
@@ -30,47 +31,56 @@
 		indexResultCount?: { filtered: number; total: number } | null;
 		shareCopied?: boolean;
 		onGoBack?: () => void;
-		onModeChange?: (mode: Mode) => void;
 		onShareView?: () => void;
+		/** `read` offers Volledig lezen, `network` the way back; null shows neither. */
+		readAction?: 'read' | 'network' | null;
+		onRead?: (on: boolean) => void;
 	} = $props();
 
 	const nodeProps = $derived(node?.raw?.props ?? {});
 
 	// {Law} › Artikel N, {court} › date, or {kind} › name.
-	const segments = $derived.by<string[]>(() => {
+	// A segment that names a place (the law of an article, the kind of a bron) links there.
+	type Segment = { text: string; href?: string };
+	const segments = $derived.by<Segment[]>(() => {
 		if (!node) return [];
 		const p = nodeProps;
-		const segs: string[] = [];
-		const add = (text: string | null | undefined) => text && segs.push(text);
+		const segs: Segment[] = [];
+		const add = (text: string | null | undefined, href?: string) => {
+			if (text) segs.push({ text, href });
+		};
+		const kindHref = (collection: string) => `/explore?mode=index&kind=${collection}`;
 		if (node.collection === 'articles') {
 			const meta = $instrumentMetaStore.get(String(p.bwb_id));
+			const bwb = textProp(p.bwb_id);
 			add(
 				meta?.citationTitle ??
 					meta?.title ??
 					meta?.shortTitle ??
-					textProp(p.instrument_citation_title)
+					textProp(p.instrument_citation_title),
+				bwb ? bronHref({ collection: 'instruments', key: bwb.toLowerCase() }) : undefined
 			);
-			add(textProp(p.article_number) && `Artikel ${p.article_number}`);
+			add((textProp(p.article_number) && `Artikel ${p.article_number}`) || textProp(p.label));
 		} else if (node.collection === 'judgments') {
 			add(textProp(p.court) ?? textProp(p.court_code));
 			add(formatDate(textProp(p.date)));
 		} else if (node.collection === 'dossiers') {
-			add(bronLabel('dossiers'));
+			add(bronLabel('dossiers'), kindHref('dossiers'));
 			add(textProp(p.label));
 		} else if (node.collection === 'committees') {
-			add(bronLabel('committees'));
+			add(bronLabel('committees'), kindHref('committees'));
 			add(textProp(p.name) ?? textProp(p.abbreviation) ?? node.label);
 		} else if (node.collection === 'members') {
-			add(bronLabel('members'));
+			add(bronLabel('members'), kindHref('members'));
 			add(textProp(p.name) ?? node.label);
 		} else if (node.collection === 'factions') {
-			add(bronLabel('factions'));
+			add(bronLabel('factions'), kindHref('factions'));
 			add(textProp(p.abbreviation) ?? textProp(p.name) ?? node.label);
 		} else {
 			add(bronLabel(node.collection));
 			add(node.label);
 		}
-		if (tableMode) segs.push('Verbindingen');
+		if (tableMode) segs.push({ text: 'Verbindingen' });
 		return segs;
 	});
 </script>
@@ -97,7 +107,13 @@
 		<div class="path">
 			{#each segments as seg, i (i)}
 				{#if i > 0}<span class="sep" aria-hidden="true">›</span>{/if}
-				<span class="seg" title={seg}>{seg}</span>
+				{#if seg.href && i < segments.length - 1}
+					<a class="seg seg--link" href={seg.href} title={seg.text} data-sveltekit-noscroll
+						>{seg.text}</a
+					>
+				{:else}
+					<span class="seg" title={seg.text}>{seg.text}</span>
+				{/if}
 			{/each}
 		</div>
 	{:else if focusError}
@@ -112,18 +128,15 @@
 		>
 	{/if}
 
-	<div class="modes" role="tablist" aria-label="Weergave">
-		{#each VIEW_MODES as m (m.id)}
-			<button
-				type="button"
-				role="tab"
-				aria-selected={mode === m.id}
-				class="btn is-text mode"
-				class:is-primary={mode === m.id}
-				onclick={() => onModeChange?.(m.id)}>{m.label}</button
-			>
-		{/each}
-	</div>
+	{#if readAction === 'read'}
+		<button type="button" class="btn read" onclick={() => onRead?.(true)} title="Toets L"
+			>Volledig lezen</button
+		>
+	{:else if readAction === 'network'}
+		<button type="button" class="btn read" onclick={() => onRead?.(false)} title="Toets L"
+			>Terug naar netwerk</button
+		>
+	{/if}
 </div>
 
 <style>
@@ -170,6 +183,14 @@
 		text-overflow: ellipsis;
 		min-width: 40px;
 	}
+	.seg--link {
+		color: inherit;
+		text-decoration: none;
+	}
+	.seg--link:hover {
+		color: var(--ink);
+		text-decoration: underline;
+	}
 	.sep {
 		flex-shrink: 0;
 	}
@@ -182,22 +203,8 @@
 		flex: 1;
 	}
 
-	.modes {
-		display: flex;
-		gap: 2px;
+	.read {
 		margin-left: 8px;
-		padding: 2px;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-	}
-	.mode {
 		padding: 3px 10px;
-	}
-	.mode.is-primary {
-		border-color: var(--ink);
-	}
-	.mode:not(.is-primary):hover {
-		color: var(--ink);
-		background: var(--paper-2);
 	}
 </style>

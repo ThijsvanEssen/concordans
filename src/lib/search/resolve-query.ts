@@ -13,7 +13,12 @@ export type Citation =
 	| { kind: 'bwb'; id: string }
 	| { kind: 'celex'; id: string };
 
-export type Resolved = { ref: BronRef; at: string | null };
+export type Resolved = {
+	ref: BronRef;
+	at: string | null;
+	/** How the API names the bron ("Artikel 55 Grondwet"), when it says. */
+	label?: string | null;
+};
 
 const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const BWB = /^BWB[RVW]\d{7}$/i;
@@ -28,6 +33,21 @@ const ARTICLE = /^art(?:ikel|\.)?\s*(?:(\d+[a-z]?):)?(\d+[a-z]*(?:\.\d+[a-z]*)*)
 const QUALIFIER =
 	/,?\s*(?:(?:[a-z]+de|[a-z]+ste)(?:\s+en\s+[a-z]+(?:de|ste))?\s+lid|lid\s+\d+[a-z]?|aanhef(?:\s+en)?|(?:onderdeel|onder|sub)\s+(?:\d+\s*°?|[a-z]{1,2})(?![a-z]))\s*,?/gi;
 
+// "55 Gw", "6:162 BW", "3:4 Awb, tweede lid": an article cited without "art.". Too close
+// to plain words ("2024 begroting") to be taken as a citation on sight: `bareArticle`
+// only writes it out, and the API decides whether a law of that name has the article.
+const BARE_ARTICLE = /^(\d{1,4}[a-z]{0,2}(?::\d{1,4}[a-z]{0,2})?)\s+([A-Za-zÀ-ÿ][^\d]*)$/i;
+const YEAR = /^(?:1[89]|20)\d{2}$/;
+
+/** "55 Gw" as the citation "art. 55 Gw", or null when the query does not have that form. */
+export function bareArticle(query: string): string | null {
+	const q = query.trim().replace(/\s+/g, ' ');
+	const m = BARE_ARTICLE.exec(q);
+	if (!m || YEAR.test(m[1])) return null;
+	const citation = `art. ${q}`;
+	return parseCitation(citation)?.kind === 'article' ? citation : null;
+}
+
 /** The boeken of the Burgerlijk Wetboek are instruments of their own. */
 const BW_BOOKS: Record<string, string> = {
 	'1': 'BWBR0002656',
@@ -41,6 +61,7 @@ const BW_BOOKS: Record<string, string> = {
 	'8': 'BWBR0005034',
 	'10': 'BWBR0030068'
 };
+
 const isBW = (law: string) => /^(bw|burgerlijk wetboek)$/i.test(law.trim());
 
 /** The citation a query is, or null when it is words to search for. */
@@ -110,7 +131,8 @@ const apiDeps: ResolveDeps = {
 		if (!match || !collection || collection === 'dossiers') return null;
 		return {
 			ref: { collection, key: match.key },
-			at: anchorOf(parseQualifier(data?.qualifier ?? ''))
+			at: anchorOf(parseQualifier(data?.qualifier ?? '')),
+			label: match.display_name ?? null
 		};
 	},
 	lawId: async (law, articleNumber) => {

@@ -1,5 +1,53 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { getCoverage, getStats, type Coverage, type Stats } from '$lib/api/stats';
+	import { longDate } from '$lib/verbonden/rows';
+	import { formatCount } from '$lib/verbonden/filter';
 	import { modKey } from '$lib/utils/platform';
+	import { RELATIONS, RELATION_LABEL, TIERS, TIER_LABEL } from '$lib/vocabulary';
+
+	/** The collections the dekking lists, in the order of the bronnen above. */
+	const COVERAGE: { collection: string; label: string }[] = [
+		{ collection: 'instruments', label: 'Instrumenten' },
+		{ collection: 'articles', label: 'Artikelen' },
+		{ collection: 'judgments', label: 'Uitspraken' },
+		{ collection: 'dossiers', label: 'Dossiers' },
+		{ collection: 'documents', label: 'Kamerstukken en andere documenten' },
+		{ collection: 'members', label: 'Kamerleden' },
+		{ collection: 'committees', label: 'Commissies' }
+	];
+
+	let stats = $state<Stats | null>(null);
+	let coverage = $state<Coverage | null>(null);
+	let fetchedOn = $state<string | null>(null);
+
+	/** The relation types the network holds, in vocabulary order: only those the API counts. */
+	/** The colleges the dataset holds judgments of, in the order of the filters. */
+	const tiers = $derived(
+		TIERS.flatMap((tier) =>
+			(coverage?.tiers ?? []).filter((c) => c.tier === tier).map((c) => ({ ...c, tier }))
+		)
+	);
+
+	const relations = $derived(
+		stats ? RELATIONS.filter((r) => (stats!.edges.by_relation[r] ?? 0) > 0) : []
+	);
+
+	onMount(() => {
+		getStats()
+			.then((s) => {
+				stats = s;
+				fetchedOn = new Date().toLocaleDateString('nl-NL', {
+					day: 'numeric',
+					month: 'long',
+					year: 'numeric'
+				});
+			})
+			.catch(() => (stats = null));
+		getCoverage()
+			.then((c) => (coverage = c))
+			.catch(() => (coverage = null));
+	});
 </script>
 
 <svelte:head>
@@ -15,7 +63,7 @@
 			wetgevingsdossiers in één netwerk.
 		</p>
 
-		<div class="section">
+		<div class="section" id="dekking">
 			<h2 class="section-title">Bronnen en dekking</h2>
 			<p>
 				Een instrument (wet, AMvB, ministeriële regeling, verdrag) bestaat uit artikelen; de
@@ -40,6 +88,35 @@
 				>; hoe een verbinding ontstaat in de
 				<a href="/docs/methode" class="cite">methode</a>.
 			</p>
+			{#if stats}
+				<div class="list">
+					{#each COVERAGE as c (c.collection)}
+						<div class="list-row">
+							<span class="list-k">{c.label}</span><span
+								>{formatCount(stats.nodes[c.collection] ?? 0)}</span
+							>
+						</div>
+					{/each}
+				</div>
+				{#if coverage}
+					<div class="list">
+						{#each tiers as t (t.tier)}
+							<div class="list-row">
+								<span class="list-k">{TIER_LABEL[t.tier]}</span><span
+									>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
+											0,
+											4
+										)} tot {longDate(t.last_date)}{/if}</span
+								>
+							</div>
+						{/each}
+					</div>
+				{/if}
+				<p class="list-note">
+					Aantallen in het netwerk op {fetchedOn}. Een bron die ontbreekt, staat niet in deze
+					selectie; dat is geen bewijs dat hij niet bestaat.
+				</p>
+			{/if}
 		</div>
 
 		<div class="section">
@@ -51,16 +128,16 @@
 			</p>
 			<div class="list">
 				<div class="list-row">
-					<span class="list-k">ECLI</span><span>ECLI:NL:HR:2024:1493</span>
+					<span class="list-k">ECLI</span><span>ECLI:NL:HR:2019:1278</span>
 				</div>
 				<div class="list-row">
-					<span class="list-k">artikelcitaat</span><span>artikel 287 Sr, art. 6:162 BW</span>
+					<span class="list-k">artikelcitaat</span><span>artikel 287 Sr, art. 7:658 BW</span>
 				</div>
 				<div class="list-row">
-					<span class="list-k">dossiernummer</span><span>36327, 37020-XV, 36327-3</span>
+					<span class="list-k">dossiernummer</span><span>36264, 37020-XV, 37020-XV-3</span>
 				</div>
 				<div class="list-row">
-					<span class="list-k">BWB-id of CELEX</span><span>BWBR0001854, 32016L0680</span>
+					<span class="list-k">BWB-id of CELEX</span><span>BWBR0001854, 32013L0036</span>
 				</div>
 			</div>
 			<p>
@@ -75,48 +152,59 @@
 		<div class="section">
 			<h2 class="section-title">Verbindingen</h2>
 			<p>
-				Elke verbinding draagt een van achttien types, een status (vastgesteld of voorgesteld) en,
-				waar ze niet structureel is, een betrouwbaarheidsscore tussen 0 en 1: een score van 1 is
-				rechtstreeks uit de brontekst gelezen, lager is afgeleid. Een verwijzing tussen artikelen
-				kan daarnaast een aard dragen: voorwaarde, uitzondering, definitie, procedure,
-				reikwijdtebeperking of delegatie.
+				Elke verbinding draagt een type, een status (vastgesteld of voorgesteld) en, waar ze niet
+				structureel is, een betrouwbaarheidsscore tussen 0 en 1: een score van 1 is rechtstreeks uit
+				de brontekst gelezen, lager is afgeleid. Een verwijzing tussen artikelen kan daarnaast een
+				aard dragen: voorwaarde, uitzondering, definitie, procedure, reikwijdtebeperking of
+				delegatie.
 			</p>
-			<div class="list list--two-col">
-				<div class="list-row"><span class="list-k">PART_OF</span><span>onderdeel van</span></div>
-				<div class="list-row"><span class="list-k">VERSION_OF</span><span>versie van</span></div>
-				<div class="list-row"><span class="list-k">AMENDS</span><span>wijzigt</span></div>
-				<div class="list-row"><span class="list-k">INTRODUCES</span><span>voegt toe</span></div>
-				<div class="list-row"><span class="list-k">REPEALS</span><span>trekt in</span></div>
-				<div class="list-row"><span class="list-k">BASED_ON</span><span>gebaseerd op</span></div>
-				<div class="list-row">
-					<span class="list-k">IMPLEMENTS</span><span>implementeert</span>
+			{#if relations.length}
+				<div class="list list--two-col">
+					{#each relations as relation (relation)}
+						<div class="list-row">
+							<span class="list-k">{relation}</span><span>{RELATION_LABEL[relation]}</span>
+						</div>
+					{/each}
 				</div>
-				<div class="list-row">
-					<span class="list-k">LEGISLATED_IN</span><span>vastgesteld in</span>
-				</div>
-				<div class="list-row"><span class="list-k">REFERS_TO</span><span>verwijst naar</span></div>
-				<div class="list-row"><span class="list-k">EXPLAINS</span><span>licht toe</span></div>
-				<div class="list-row">
-					<span class="list-k">APPEAL_OF</span><span>hoger beroep van</span>
-				</div>
-				<div class="list-row"><span class="list-k">SCOPED_BY</span><span>begrensd door</span></div>
-				<div class="list-row"><span class="list-k">ABOUT</span><span>over</span></div>
-				<div class="list-row"><span class="list-k">LED_BY</span><span>geleid door</span></div>
-				<div class="list-row"><span class="list-k">MADE_IN</span><span>gedaan in</span></div>
-				<div class="list-row"><span class="list-k">MEMBER_OF</span><span>lid van</span></div>
-				<div class="list-row">
-					<span class="list-k">AUTHORED</span><span>ingediend door</span>
-				</div>
-				<div class="list-row"><span class="list-k">VOTED</span><span>stemde over</span></div>
-			</div>
+			{/if}
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">Netwerk samenstellen</h2>
+			<p>
+				Een klik op een bron in het netwerk opent die bron in de lezer. Het netwerk blijft staan.
+				Een dubbelklik tekent het netwerk opnieuw rond die bron, tot de gekozen diepte.
+			</p>
+			<p>
+				Een artikel, wet, uitspraak of stuk heeft een eigen tekst. <strong>Volledig lezen</strong>
+				(toets <kbd>L</kbd>) toont die tekst op volle breedte, met inhoudsopgave;
+				<strong>Terug naar netwerk</strong> keert terug. Een link van buiten de Verkenner opent zo'n bron
+				op volle breedte. Een kamerlid, commissie, fractie of dossier staat altijd naast het netwerk.
+			</p>
+			<p>
+				De Verkenner opent met het paneel Netwerk. Het zoekveld <strong>Bron toevoegen</strong>
+				kiest een bron zonder hem te openen; een geselecteerde bron komt erbij met
+				<strong>+ naam</strong>
+				in hetzelfde paneel. Gekozen bronnen staan in de URL (<code>?netwerk</code>), elk aan of uit
+				te zetten. Het netwerk toont ze met hun onderlinge verbindingen en met de bronnen die twee
+				van hen verbinden: een stuk dat beide ondertekenden, een artikel van een gekozen wet. Een
+				bron zonder zulke verbinding staat als <em>los</em> in het paneel. Paden van meer dan twee stappen
+				worden nog niet gevonden.
+			</p>
+			<p>
+				Diepte voegt met een netwerk context toe rond de geselecteerde bron, net als een groep uit
+				Verbonden. Context staat vaag getekend. <strong>Context wissen</strong> laat alleen de
+				gekozen bronnen en hun verbindingen staan. De Verkenner opent op het laatste netwerk, tot
+				<strong>Netwerk wissen</strong>.
+			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Dossiers en Parlement</h2>
 			<p>
-				Een dossier heeft een nummer, bij een begrotingshoofdstuk met toevoeging: 37020-XV is een
-				ander dossier dan 37020. Het traject is wetsvoorstel, initiatiefwetsvoorstel, begroting,
-				verdrag, initiatiefnota, motie of overig.
+				Een dossier heeft een nummer, soms met toevoeging: 37020-XV is een ander dossier dan 37020.
+				Dossiers onder hetzelfde nummer staan in Bladeren onder één regel. Het traject is
+				wetsvoorstel, initiatiefwetsvoorstel, begroting, verdrag, initiatiefnota, nota of overig.
 			</p>
 			<p>
 				Alleen een wetsvoorstel, initiatiefwetsvoorstel, begroting of verdrag doorloopt fasen:

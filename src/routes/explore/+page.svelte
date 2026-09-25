@@ -4,14 +4,19 @@
 	// the same reader beside it; Bladeren lists bronnen. The URL holds the state:
 	// ?mode, ?focus (the bron), ?naast (a toelichting opened beside an article),
 	// ?overlay, ?kind (Bladeren), the bronfilter (?bronnen, ?lid, ?rechter, ?van, ?tot,
-	// ?geldend, ?betrouwbaarheid, ?status, ?jaar, ?zoek), ?tabel, ?diepte, and the
-	// position inside the text as the fragment.
-	import { onDestroy, onMount } from 'svelte';
+	// ?geldend, ?betrouwbaarheid, ?status, ?jaar, ?zoek), ?tabel, ?diepte, the netwerk of
+	// chosen bronnen (?netwerk, ?uit, ?tussen), and the position inside the text as the
+	// fragment.
+	//
+	// A click on the canvas selects a bron: the reader follows, the canvas stays. A double
+	// click replaces the canvas with the bron's own neighbourhood.
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { track } from '$lib/analytics';
+	import { ApiError } from '$lib/api/client';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
-	import { bronHref, refId, refOf } from '$lib/bron/href';
+	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
 	import { getDossier } from '$lib/components/parliamentary/data';
 	import { createGraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
@@ -33,11 +38,24 @@
 	import { verbindingOfEdge, verbindingOfRow, type Verbinding } from '$lib/verbonden/verbinding';
 	import { allRows, filterGroups, lidCounts } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/util/perf';
-	import { articleIdentity } from '$lib/util/law-id';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { containerKindOf, isContainerKind } from '$lib/graph/container-membership';
 	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
-	import { isMode, parseNodeId, type Mode } from '$lib/vocabulary';
+	import { parseNodeId, type Mode } from '$lib/vocabulary';
+	import type { Schema } from '$lib/api/types';
+	import { articleOf, nodeToGraphNode } from '$lib/graph/types';
+	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
+	import {
+		EMPTY_NETWERK,
+		isOn,
+		netwerkParams,
+		parseNetwerk,
+		withAdded,
+		withRemoved,
+		withToggled,
+		type Netwerk,
+		type NetwerkEntry
+	} from '$lib/netwerk/netwerk';
 
 	// One store for the lifetime of this page, so it survives mode switches.
 	const store = createGraphStore();
@@ -56,9 +74,25 @@
 	});
 
 	let focusError = $state<string | null>(null);
+	/** The focus is a bron the dataset does not hold: the page says so instead of an empty canvas. */
+	let focusMissing = $state(false);
 
 	const param = (name: string) => page.url.searchParams.get(name);
-	const mode = $derived<Mode>(isMode(param('mode')) ? (param('mode') as Mode) : 'graph');
+	// The Verkenner is the network. A bron with a text of its own is read at full width
+	// (?lezen=1, once ?mode=read); its verbindingen as a table are read so too. Bladeren
+	// is ?mode=index.
+	const readableFocus = $derived.by(() => {
+		const target = parseNodeId(param('focus') ?? '');
+		return target ? isReadable(target.collection) : false;
+	});
+	const mode = $derived.by<Mode>(() => {
+		const m = param('mode');
+		if (m === 'index') return 'index';
+		if (!param('focus')) return 'graph';
+		if (param('tabel') === '1') return 'read';
+		const wantsRead = param('lezen') === '1' || m === 'read';
+		return wantsRead && readableFocus ? 'read' : 'graph';
+	});
 	const focus = $derived(param('focus') ?? '');
 	// A toelichting opened beside the article: the article stays the selected bron.
 	const beside = $derived(parseNodeId(param('naast') ?? ''));
@@ -73,12 +107,37 @@
 		depthParam ? Math.min(3, Math.max(1, Number(depthParam) || 2)) : null
 	);
 	const depthFor = (kind: GraphNodeKind) => explicitDepth ?? (isContainerKind(kind) ? 1 : 2);
-	const depth = $derived(depthFor(selectedNode?.kind ?? 'other'));
+	// The bron the canvas is drawn around; a click selects another without moving it.
+	let anchorKind = $state<GraphNodeKind>('other');
+	const depth = $derived(depthFor(anchorKind));
+
+	// ── The netwerk of chosen bronnen ─────────────────────────────────────────
+	// Parsed from its own three params only, so selecting a bron does not compose again.
+	const netwerkQuery = $derived(
+		['netwerk', 'uit', 'tussen']
+			.map((k) => [k, param(k)])
+			.filter(([, v]) => v !== null)
+			.map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
+			.join('&')
+	);
+	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
+	const netwerkActive = $derived(netwerk.ids.length > 0);
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
 	// One filter object, parsed from the URL, for the panel, the margin of the reader,
-	// the canvas, the legend and the table.
-	const filter = $derived<VerbondenFilter>(parseFilter(page.url.searchParams));
+	// the canvas, the legend and the table. Keyed on its own params only: a change
+	// elsewhere in the URL (?versies, ?naast) must not hand every consumer a new object
+	// and redraw the canvas and the panel.
+	const filterKey = $derived(JSON.stringify(filterParams(parseFilter(page.url.searchParams))));
+	const filter = $derived<VerbondenFilter>(
+		parseFilter(
+			new URLSearchParams(
+				Object.entries(JSON.parse(filterKey) as Record<string, string | null>).filter(
+					(e): e is [string, string] => e[1] !== null
+				)
+			)
+		)
+	);
 	let filterOpen = $state(false);
 	const applyFilter = (f: VerbondenFilter) => setUrl(filterParams(f));
 
@@ -120,7 +179,7 @@
 	function showInNetwork(row: Row) {
 		if (selectedNode && row.relation && row.direction)
 			store.showRows(selectedNode.id, [row as CanvasRow]);
-		if (mode !== 'graph') setMode('graph');
+		if (mode !== 'graph') setReading(false);
 	}
 	const besideHrefOf = (row: Row | null) => {
 		if (!row) return null;
@@ -184,30 +243,45 @@
 	}
 
 	// ── Focus ────────────────────────────────────────────────────────────────
+	// A focus already on the canvas is selected; the canvas stays. One that is not, or
+	// one double clicked (`replaceNext`), becomes the bron the canvas is drawn around.
+	// With a netwerk the canvas is the netwerk's: a focus not on it is only added.
 	let loadedFocus = '';
 	let deepenedId = '';
 	let deepenedDepth = 0;
+	let replaceNext: string | null = null;
 
 	$effect(() => {
 		// Read here, not only inside `deepen`: that branch does not run on the first pass,
 		// so a change of ?diepte would otherwise not rerun the effect until a reload.
 		void explicitDepth;
+		const withNetwerk = netwerkActive;
 		if (!focus) {
 			focusError = null;
 			if (selectedNode) store.setSelection(null);
 			return;
 		}
 		if (mode === 'index') return;
-		if (focus !== loadedFocus) {
+		if (focus !== loadedFocus || replaceNext === focus) {
 			loadedFocus = focus;
 			void loadFocus(focus);
-		} else if (mode === 'graph' && selectedNode) {
-			void deepen(selectedNode);
+		} else if (mode === 'graph' && !withNetwerk) {
+			const anchor = (deepenedId && store.getNodeById(deepenedId)) || selectedNode;
+			if (anchor) void deepen(anchor);
 		}
 	});
 
+	/** The message for a bron the dataset does not hold. */
+	function missing(key: string) {
+		focusMissing = true;
+		focusError = `'${key}' staat niet in de dataset.`;
+	}
+
 	async function loadFocus(id: string) {
 		focusError = null;
+		focusMissing = false;
+		const replace = replaceNext === id;
+		replaceNext = null;
 		const target = parseNodeId(id);
 		if (!target) {
 			focusError = `Bron '${id}' niet gevonden.`;
@@ -217,6 +291,22 @@
 			// A link names a dossier by its number (`37020-XV`); the API gives its node key.
 			if (target.collection === 'dossiers') target.key = (await getDossier(target.key)).key;
 			if (id !== loadedFocus) return;
+			const onCanvas =
+				store.getNodeById(`${target.collection}/${target.key}`) ??
+				store.getNodeById(`${target.collection}/${target.key.toLowerCase()}`);
+			const inGraph = untrack(() => mode === 'graph');
+			const withNetwerk = untrack(() => netwerkActive);
+			if (!replace && onCanvas && (withNetwerk || deepenedId)) {
+				store.focusNode(onCanvas.id);
+				return;
+			}
+			if (!replace && withNetwerk && inGraph) {
+				const node = await store.expandNode(target.collection, target.key, { neighborLimit: 0 });
+				if (id !== loadedFocus) return;
+				if (node) store.focusNode(node.id);
+				else missing(target.key);
+				return;
+			}
 			// A wet, fractie, commissie or dossier is a hull, not a scattered handful of
 			// dots: its own children are its point, so they are not capped like an
 			// ordinary bron's neighbours are.
@@ -224,23 +314,28 @@
 			const node = await store.expandNode(target.collection, target.key, { neighborLimit });
 			if (id !== loadedFocus) return;
 			if (!node) {
-				focusError = `Bron '${target.key}' niet gevonden.`;
+				missing(target.key);
 				return;
 			}
 			store.focusNode(node.id);
-			if (mode === 'graph') await deepen(node);
+			if (inGraph) await deepen(node, replace);
 		} catch (err) {
+			if (err instanceof ApiError && err.status === 404) {
+				missing(target.key);
+				return;
+			}
 			console.warn('[explore] focus load failed:', err);
 			focusError = `'${target.key}' niet geladen.`;
 		}
 	}
 
-	// Expand around `node` once per depth.
-	async function deepen(node: GraphNode) {
+	// Expand around `node` once per depth, or again when `force`d.
+	async function deepen(node: GraphNode, force = false) {
 		const d = depthFor(node.kind);
-		if (deepenedId === node.id && deepenedDepth === d) return;
+		if (!force && deepenedId === node.id && deepenedDepth === d) return;
 		deepenedId = node.id;
 		deepenedDepth = d;
+		anchorKind = node.kind;
 		graphView?.suppressFit();
 		const epoch = ++focusEpoch;
 		await expandAround(node, epoch);
@@ -262,13 +357,215 @@
 		end();
 	}
 
-	function handleResetGraph() {
-		store.reset();
-		loadedFocus = '';
-		deepenedId = '';
+	// A double click leaves the netwerk and draws the bron's own neighbourhood.
+	function handleNodeReplace(node: GraphNode) {
+		if (node.id.startsWith('synth:')) return;
+		const ref = refOf(node.collection, node.key, node.raw?.props);
+		const id = focusOf(ref);
+		if (!id) return;
+		if (netwerkActive) {
+			store.releaseNetwerk();
+			composedOnce = false;
+		}
+		replaceNext = id;
+		if (id === focus && !netwerkActive) {
+			replaceNext = null;
+			void deepen(node, true);
+			return;
+		}
+		void goto(bronHref(ref, { keepNetwerk: false }), { noScroll: true, keepFocus: true });
 	}
 
-	function setUrl(params: Record<string, string | null>) {
+	// ── Composing the netwerk ─────────────────────────────────────────────────
+	let netwerkEntries = $state<NetwerkEntry[]>([]);
+	let netwerkLoading = $state(false);
+	let joiningCount = $state(0);
+	let composeEpoch = 0;
+	// Whether the canvas is a composed netwerk now; the first composition of one draws it
+	// from scratch unless it grows out of the current canvas (`keepCanvas`).
+	let composedOnce = false;
+	let keepCanvas = false;
+
+	const resolved = new Map<string, Promise<Schema<'NodeGraphResponse'>>>();
+	function responseOf(id: string): Promise<Schema<'NodeGraphResponse'>> {
+		let request = resolved.get(id);
+		if (!request) {
+			const target = parseNodeId(id);
+			if (!target) return Promise.reject(new Error(`no bron ${id}`));
+			request = (async () => {
+				const key =
+					target.collection === 'dossiers' ? (await getDossier(target.key)).key : target.key;
+				return store.nodeResponse(target.collection, key);
+			})();
+			request.catch(() => resolved.delete(id));
+			resolved.set(id, request);
+		}
+		return request;
+	}
+
+	$effect(() => {
+		const n = netwerk;
+		if (mode !== 'graph') return;
+		untrack(() => {
+			if (n.ids.length > 0) void compose(n);
+			else if (composedOnce) {
+				store.releaseNetwerk();
+				composedOnce = false;
+				netwerkEntries = [];
+			}
+		});
+	});
+
+	async function compose(n: Netwerk) {
+		const epoch = ++composeEpoch;
+		netwerkLoading = true;
+		const results = await Promise.allSettled(n.ids.map(responseOf));
+		if (epoch !== composeEpoch) return;
+		const participants: { response: Schema<'NodeGraphResponse'> }[] = [];
+		const found: { id: string; response: Schema<'NodeGraphResponse'> }[] = [];
+		const missing: string[] = [];
+		results.forEach((r, i) => {
+			if (r.status !== 'fulfilled') {
+				missing.push(n.ids[i]);
+				return;
+			}
+			found.push({ id: n.ids[i], response: r.value });
+			if (isOn(n, n.ids[i])) participants.push({ response: r.value });
+		});
+		const fresh = !composedOnce && !keepCanvas;
+		keepCanvas = false;
+		graphView?.suppressFit();
+		const { alone, joining } = store.compose({ participants, withJoining: n.tussen, fresh });
+		composedOnce = true;
+		joiningCount = joining.length;
+		netwerkEntries = found.map(({ id, response }) => {
+			const node = nodeToGraphNode(response.node);
+			return {
+				id,
+				label: node?.label ?? response.node.display_name ?? id,
+				collection: response.node.collection as NetwerkEntry['collection'],
+				on: isOn(n, id),
+				alone:
+					participants.length > 1 && alone.has(`${response.node.collection}/${response.node.key}`)
+			};
+		});
+		// A chosen bron the API does not know (an old link, a removed record) stays listed,
+		// so the netwerk does not shrink without a word.
+		for (const id of missing) {
+			const ref = parseNodeId(id);
+			if (!ref) continue;
+			netwerkEntries.push({
+				id,
+				label: id.slice(id.indexOf('/') + 1),
+				collection: ref.collection as NetwerkEntry['collection'],
+				on: false,
+				alone: false,
+				missing: true
+			});
+		}
+		netwerkLoading = false;
+		graphView?.fitWhenSettled();
+	}
+
+	function setNetwerk(n: Netwerk) {
+		if (n.ids.length === 0) remember(null);
+		// Clearing the netwerk or removing a bron is undone with Back.
+		const shrinks = n.ids.length < netwerk.ids.length;
+		setUrl(netwerkParams(n), { push: shrinks });
+	}
+
+	// The Verkenner opens on the last netwerk until it is cleared: a double click that
+	// leaves it, or a bron opened elsewhere, does not forget it.
+	const NETWERK_KEY = 'concordans:netwerk';
+	function remember(query: string | null) {
+		try {
+			if (query) localStorage.setItem(NETWERK_KEY, query);
+			else localStorage.removeItem(NETWERK_KEY);
+		} catch {
+			/* storage blocked */
+		}
+	}
+	$effect(() => {
+		if (netwerk.ids.length > 0) remember(netwerkQuery);
+	});
+	$effect(() => {
+		if (focus || netwerkQuery || mode === 'index') return;
+		let saved: string | null = null;
+		try {
+			saved = localStorage.getItem(NETWERK_KEY);
+		} catch {
+			/* storage blocked */
+		}
+		if (saved) untrack(() => setUrl(Object.fromEntries(new URLSearchParams(saved))));
+	});
+	const linkIdOf = (node: GraphNode) =>
+		node.id.startsWith('synth:')
+			? null
+			: focusOf(refOf(node.collection, node.key, node.raw?.props));
+	const selectedLinkId = $derived(selectedNode ? linkIdOf(selectedNode) : null);
+
+	function addToNetwerk(node: GraphNode) {
+		const id = linkIdOf(node);
+		if (id) addIdToNetwerk(id);
+	}
+
+	function addIdToNetwerk(id: string) {
+		// The first bron chosen grows out of the canvas as it is: what is there stays, as context.
+		if (!netwerkActive) keepCanvas = true;
+		setNetwerk(withAdded(netwerk, id));
+	}
+
+	function toggleChosen(node: GraphNode) {
+		const id = linkIdOf(node);
+		if (!id) return;
+		if (netwerk.ids.includes(id)) setNetwerk(withRemoved(netwerk, id));
+		else addToNetwerk(node);
+	}
+
+	function handleResetGraph() {
+		store.reset();
+		resolved.clear();
+		loadedFocus = '';
+		deepenedId = '';
+		composedOnce = false;
+		netwerkEntries = [];
+		if (netwerkActive) setNetwerk(EMPTY_NETWERK);
+	}
+
+	// The tab names what is open, so that tabs, bookmarks and history tell bronnen apart.
+	const pageTitle = $derived.by(() => {
+		if (mode === 'index') return 'Bladeren · Concordans';
+		// A judgment by its short label (HR 2019/2007) and the name it is known by.
+		const names = selectedNode?.raw?.props?.names;
+		const known = Array.isArray(names) && names.length ? ` (${names.join(', ')})` : '';
+		const name =
+			selectedNode?.collection === 'judgments'
+				? `${selectedNode.label}${known}`
+				: (selectedNode?.raw?.display_name ?? selectedNode?.label);
+		if (name) return `${name} · Concordans`;
+		if (netwerkActive) return 'Netwerk · Concordans';
+		return 'Verkenner · Concordans';
+	});
+
+	// The ← of the status bar goes back inside Concordans; a bron opened from a link
+	// elsewhere (a new tab, a shared link) has no step to go back to, so it goes home.
+	let steppedIn = $state(false);
+	// A replaced entry (a filter) is no step; a link, Back itself, or a change of bron or
+	// of reading mode is.
+	afterNavigate((nav) => {
+		const from = nav.from?.url.searchParams;
+		const to = nav.to?.url.searchParams;
+		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
+		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('lezen'))
+			steppedIn = true;
+	});
+	const goBack = () => (steppedIn ? history.back() : goto('/'));
+
+	/**
+	 * A change of view that Back should undo (reading at full width, clearing the netwerk)
+	 * takes a history entry; a filter or a toggle replaces the current one.
+	 */
+	function setUrl(params: Record<string, string | null>, { push = false } = {}) {
 		const url = new URL(page.url);
 		for (const [k, v] of Object.entries(params)) {
 			if (v === null) url.searchParams.delete(k);
@@ -276,22 +573,39 @@
 		}
 		const search = url.search.replaceAll('%2F', '/').replaceAll('%2C', ',');
 		void goto(url.pathname + search + url.hash, {
-			replaceState: true,
+			replaceState: !push,
 			noScroll: true,
 			keepFocus: true
 		});
 	}
 
-	const setMode = (m: Mode) => setUrl({ mode: m, naast: null, tabel: null });
+	// Reading at full width, or the network with the text beside it.
+	const setReading = (on: boolean) =>
+		setUrl({ lezen: on ? '1' : null, mode: null, naast: null, tabel: null }, { push: true });
 	// Always explicit: unlike before, an unset diepte no longer means "2" for every
 	// bron, so removing the param on a plain "2" click would silently change meaning
 	// for a container (default 1).
-	const setDepth = (d: number) => setUrl({ diepte: String(d) });
+	// With a netwerk a depth adds context around the selection; the netwerk stays.
+	function setDepth(d: number) {
+		if (!netwerkActive) {
+			setUrl({ diepte: String(d) });
+			return;
+		}
+		if (!selectedNode || selectedNode.id.startsWith('synth:')) return;
+		graphView?.suppressFit();
+		void store
+			.expandNeighborhood(selectedNode.collection, selectedNode.key, {
+				depth: d,
+				cap: 200,
+				additive: true
+			})
+			.then(() => graphView?.fitWhenSettled());
+	}
 
 	const tableHref = $derived.by(() => {
 		const url = new URL(page.url);
-		url.searchParams.set('mode', 'read');
 		url.searchParams.set('tabel', '1');
+		url.searchParams.delete('mode');
 		url.searchParams.delete('naast');
 		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
 	});
@@ -424,21 +738,32 @@
 	}
 
 	// ── Keys ─────────────────────────────────────────────────────────────────
-	// 1, 2, 3 switch mode; ignored while typing or with a modifier.
+	// L reads the selected bron at full width, or goes back to the network; ignored
+	// while typing or with a modifier.
 	function handleKeydown(e: KeyboardEvent) {
 		if (tocOpen && e.key === 'Escape') {
 			tocOpen = false;
 			return;
 		}
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
-		const index = ['1', '2'].indexOf(e.key);
-		if (index < 0) return;
+		if (e.key.toLowerCase() !== 'l' || !readAction) return;
 		const el = document.activeElement as HTMLElement | null;
 		if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return;
 		e.preventDefault();
-		const target = (['read', 'graph'] as const)[index];
-		if (target !== mode) setMode(target);
+		setReading(readAction === 'read');
 	}
+
+	/** What the button in the status bar does: read the bron, or go back to the network. */
+	const readAction = $derived<'read' | 'network' | null>(
+		// The table has its own way back to the text.
+		tableMode
+			? null
+			: mode === 'read'
+				? 'network'
+				: mode === 'graph' && readableFocus && selectedNode
+					? 'read'
+					: null
+	);
 
 	// ── Bladeren ─────────────────────────────────────────────────────────────
 	const INDEX_KINDS = [
@@ -452,7 +777,7 @@
 	] as const;
 	type IndexKind = (typeof INDEX_KINDS)[number];
 	const indexKind = $derived<IndexKind>(INDEX_KINDS.find((k) => k === param('kind')) ?? 'dossiers');
-	const openInMode = (m: Mode) => (collection: string, name: string) =>
+	const openInMode = (m: 'read' | 'graph') => (collection: string, name: string) =>
 		goto(bronHref(`${collection}/${name}`, { keepMode: false, mode: m }));
 
 	let indexResultCount = $state<{ filtered: number; total: number } | null>(null);
@@ -462,9 +787,7 @@
 	});
 
 	const besideArticle = $derived(
-		selectedNode?.collection === 'articles'
-			? articleIdentity(selectedNode.raw?.props ?? undefined, selectedNode.key)
-			: null
+		selectedNode?.collection === 'articles' ? articleOf(selectedNode.raw?.props) : null
 	);
 	const closeBesideHref = $derived.by(() => {
 		const url = new URL(page.url);
@@ -476,7 +799,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
-	<title>Verkenner · Concordans</title>
+	<title>{pageTitle}</title>
 </svelte:head>
 
 {#snippet reader()}
@@ -526,6 +849,7 @@
 	{#if selectedNode}
 		<div class="panel">
 			<Verbonden
+				onRetry={() => source.reload()}
 				{verbonden}
 				selection={selectedNode}
 				{filter}
@@ -572,20 +896,26 @@
 		indexResultCount={mode === 'index' ? indexResultCount : null}
 		{shareCopied}
 		onShareView={handleShareView}
-		onGoBack={() => history.back()}
-		onModeChange={setMode}
+		onGoBack={goBack}
+		{readAction}
+		onRead={setReading}
 	/>
 
 	<div class="explore-content">
 		{#if mode === 'index'}
 			<IndexView
 				category={indexKind}
-				onSelectCategory={(kind) => setUrl({ kind })}
 				onSelectItem={openInMode('read')}
-				onDiscoverItem={openInMode('graph')}
-				onReadItem={openInMode('read')}
 				onResultCountChange={({ filtered, total }) => (indexResultCount = { filtered, total })}
 			/>
+		{:else if focusMissing && !selectedNode && !netwerkActive}
+			<div class="explore-empty">
+				<p>{focusError}</p>
+				<p>
+					Het netwerk bevat een selectie van bronnen. Zie
+					<a href="/docs#dekking" class="link">bronnen en dekking</a>.
+				</p>
+			</div>
 		{:else if mode === 'graph'}
 			<div
 				class="explore-graph"
@@ -622,9 +952,12 @@
 							handleNodeClick(n);
 							mobilePanel = 'reader';
 						}}
+						onNodeDoubleClick={handleNodeReplace}
+						onToggleChosen={toggleChosen}
+						{netwerkActive}
 						onEdgeClick={openEdgeCard}
 						onClear={() => (card = null)}
-						onGoBack={() => history.back()}
+						onGoBack={goBack}
 						onGoForward={() => history.forward()}
 						onFilter={applyFilter}
 						onOpenFilter={() => (filterOpen = true)}
@@ -633,7 +966,27 @@
 						onHeatPeriodChange={setHeatPeriod}
 						onToggleMutatie={toggleMutatie}
 						onResetGraph={handleResetGraph}
-					/>
+					>
+						{#snippet canvasOverlay()}
+							<NetwerkPanel
+								entries={netwerkActive ? netwerkEntries : []}
+								loading={netwerkLoading}
+								start={!focus && !netwerkActive}
+								onPick={addIdToNetwerk}
+								selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
+									? { label: selectedNode.label }
+									: null}
+								tussen={netwerk.tussen}
+								{joiningCount}
+								onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
+								onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
+								onAdd={() => selectedNode && addToNetwerk(selectedNode)}
+								onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
+								onClearContext={() => store.clearContext()}
+								onClear={() => setNetwerk(EMPTY_NETWERK)}
+							/>
+						{/snippet}
+					</GraphView>
 					{#if card}
 						<VerbindingCard
 							verbinding={card.verbinding}
@@ -657,6 +1010,7 @@
 		{:else if selectedNode && tableMode}
 			<div class="explore-table">
 				<VerbondenTabel
+					onRetry={() => source.reload()}
 					{verbonden}
 					selection={selectedNode}
 					{filter}
@@ -723,15 +1077,11 @@
 			</div>
 			{#if withNav && tocOpen}
 				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-				<div class="toc-sheet-backdrop" onclick={() => (tocOpen = false)}>
-					<div
-						class="toc-sheet"
-						role="dialog"
-						aria-modal="true"
-						aria-label="Inhoud"
-						tabindex="-1"
-						onclick={(e) => e.stopPropagation()}
-					>
+				<div
+					class="toc-sheet-backdrop"
+					onclick={(e) => e.target === e.currentTarget && (tocOpen = false)}
+				>
+					<div class="toc-sheet" role="dialog" aria-modal="true" aria-label="Inhoud" tabindex="-1">
 						<div class="toc-sheet__head">
 							<span class="toc-sheet__title">Inhoud</span>
 							<button
@@ -900,19 +1250,17 @@
 		color: var(--ink);
 	}
 
-	.col--reader :global(.reader-frame) {
-		max-width: 760px;
-		width: 100%;
+	/* The measure of every reader, set by the column it stands in (ReaderFrame reads
+	   it). A toelichting opened under the text inherits the same measure, so opening
+	   it moves nothing. Lezen leaves room at the left for the numbers of the leden. */
+	.col--reader {
+		--reader-max: 700px;
 	}
-
-	.col--measure :global(.reader-frame) {
-		max-width: 900px;
-		padding: 40px 48px 40px 64px;
-	}
-
-	.reader--pair :global(.reader-frame) {
-		max-width: none;
-		padding: var(--s-5);
+	.col--measure {
+		--reader-pad-top: 40px;
+		--reader-pad-left: 64px;
+		--reader-pad-right: 48px;
+		--reader-max: 790px;
 	}
 
 	.explore-empty {

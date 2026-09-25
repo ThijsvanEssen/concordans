@@ -61,7 +61,7 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	ECLI: {
 		full: 'European Case Law Identifier',
 		plain:
-			'Standaard-identificatie voor uitspraken van Europese en nationale rechtbanken, bv. ECLI:NL:HR:2024:123.'
+			'Standaard-identificatie voor uitspraken van Europese en nationale rechtbanken, bv. ECLI:NL:HR:2019:1278.'
 	},
 
 	// Kamer / Procedure

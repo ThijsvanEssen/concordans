@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>{$page.status}. Concordans.</title>
+	<title>{$page.status === 404 ? 'Niet gevonden' : 'Fout'} · Concordans</title>
 </svelte:head>
 
 <div class="error-shell">
@@ -16,11 +16,11 @@
 			{#if $page.status === 404}
 				Deze pagina bestaat niet of is verplaatst.
 			{:else}
-				{$page.error?.message ?? 'Probeer het later opnieuw.'}
+				De pagina kon niet worden getoond. Laad de pagina opnieuw of probeer het later nog eens.
 			{/if}
 		</p>
 		<div class="error-actions">
-			<a href="/" class="error-btn error-btn--primary">Terug naar home</a>
+			<a href="/" class="error-btn error-btn--primary">Naar de startpagina</a>
 			<a href="/explore" class="error-btn">Open het netwerk</a>
 		</div>
 	</div>

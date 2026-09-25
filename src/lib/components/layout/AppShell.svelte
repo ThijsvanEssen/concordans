@@ -9,12 +9,17 @@
 	let { children }: { children?: Snippet } = $props();
 
 	let searchOpen = $state(false);
+	let searchQuery = $state('');
 
-	// A page that shows the search field itself gets the focus there; elsewhere the overlay opens.
-	function openSearch() {
+	// A page that shows the search field itself gets the focus there; elsewhere the overlay
+	// opens. A query given along starts the field with that text.
+	function openSearch(query?: string) {
 		const field = document.querySelector<HTMLInputElement>('main [data-search-field]');
-		if (field) field.focus();
-		else searchOpen = true;
+		if (field && !query) field.focus();
+		else {
+			searchQuery = query ?? '';
+			searchOpen = true;
+		}
 	}
 	provideSearchOpener(openSearch);
 
@@ -25,13 +30,13 @@
 
 <div class="app-shell">
 	<a href="#main-content" class="skip-link">Naar inhoud</a>
-	<TopBar onSearchOpen={openSearch} />
+	<TopBar onSearchOpen={() => openSearch()} />
 	<main id="main-content" tabindex="-1" class="app-shell__content">
 		{@render children?.()}
 	</main>
 </div>
 
-<SearchOverlay open={searchOpen} onClose={() => (searchOpen = false)} />
+<SearchOverlay open={searchOpen} query={searchQuery} onClose={() => (searchOpen = false)} />
 
 <style>
 	/* ─── Fonts ──────────────────────────────────────────────────────────────── */
@@ -132,6 +137,11 @@
 		   and the status voorgesteld. Nothing else is red. */
 		--accent: #8c2f28;
 		--accent-soft: #f3e4e2;
+
+		/* Text an amendment inserted, in a comparison of versions. Deleted text is struck
+		   through in ink, so the two differ by more than colour. */
+		--mark-ins: #ece2bd;
+		--mark-ins-rule: #b39a4e;
 
 		/* The four colours of the material */
 		--indigo: #2f3e5e; /* judgments */

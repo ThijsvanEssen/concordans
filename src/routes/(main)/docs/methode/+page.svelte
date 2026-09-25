@@ -92,8 +92,8 @@
 			<p>
 				Elke niet-structurele verbinding draagt een score tussen 0 en 1. Een score van 1 is
 				rechtstreeks uit de brontekst gelezen, lager is afgeleid. Het netwerk toont semantische
-				verbindingen boven een vaste drempel van 0,6. Status is vastgesteld of voorgesteld: een
-				wijziging uit een wetsvoorstel dat nog niet is aangenomen staat als voorgesteld.
+				verbindingen boven een vaste drempel. Status is vastgesteld of voorgesteld: een wijziging
+				uit een wetsvoorstel dat nog niet is aangenomen staat als voorgesteld.
 			</p>
 		</div>
 

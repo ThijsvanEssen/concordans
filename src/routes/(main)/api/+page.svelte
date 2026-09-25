@@ -40,11 +40,9 @@
 			<dl class="api-terms">
 				<dt>Limiet</dt>
 				<dd>
-					200 verzoeken per minuut. Daarboven volgt 429 met <code>Retry-After</code>. Herkomsten op
-					de toegestane lijst zijn vrijgesteld.
+					Een vast aantal verzoeken per minuut. Daarboven volgt 429 met <code>Retry-After</code>.
+					Herkomsten op de toegestane lijst zijn vrijgesteld.
 				</dd>
-				<dt>Cache</dt>
-				<dd>Artikelen 30 minuten, uitspraken een uur, statistieken vijf minuten.</dd>
 			</dl>
 		</header>
 

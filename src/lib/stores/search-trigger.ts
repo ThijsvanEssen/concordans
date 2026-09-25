@@ -5,10 +5,13 @@ import { getContext, setContext } from 'svelte';
 // Svelte context; consumers import `useSearchOpener()` and call it on click.
 const KEY = Symbol('search-opener');
 
-export function provideSearchOpener(open: () => void): void {
+/** Opens the search; with a query, the field starts with that text. */
+export type SearchOpener = (query?: string) => void;
+
+export function provideSearchOpener(open: SearchOpener): void {
 	setContext(KEY, open);
 }
 
-export function useSearchOpener(): () => void {
-	return getContext<() => void>(KEY) ?? (() => {});
+export function useSearchOpener(): SearchOpener {
+	return getContext<SearchOpener>(KEY) ?? (() => {});
 }

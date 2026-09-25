@@ -16,12 +16,24 @@
 				<span class="shortcut-keys"><kbd>Esc</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Modus Lezen</span>
-				<span class="shortcut-keys"><kbd>1</kbd></span>
+				<span class="shortcut-desc">Volledig lezen, terug naar netwerk</span>
+				<span class="shortcut-keys"><kbd>L</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Modus Netwerk</span>
-				<span class="shortcut-keys"><kbd>2</kbd></span>
+				<span class="shortcut-desc">Vorige of volgende bron, als het netwerk de focus heeft</span>
+				<span class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Vorige of volgende wijziging, bij Vergelijken</span>
+				<span class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Menu sluiten, of de selectie in het netwerk opheffen</span>
+				<span class="shortcut-keys"><kbd>Esc</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Deze pagina</span>
+				<span class="shortcut-keys"><kbd>?</kbd></span>
 			</div>
 		</div>
 	</div>

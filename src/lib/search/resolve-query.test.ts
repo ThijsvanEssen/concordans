@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseCitation, resolveQuery, type ResolveDeps } from './resolve-query';
+import { bareArticle, parseCitation, resolveQuery, type ResolveDeps } from './resolve-query';
 
 describe('parseCitation', () => {
 	it.each([
@@ -138,5 +138,20 @@ describe('resolveQuery', () => {
 			await resolveQuery('artikel 9999 Sr', deps({ articleKey: async () => null }))
 		).toBeNull();
 		expect(await resolveQuery('doodslag', deps())).toBeNull();
+	});
+});
+
+describe('bareArticle', () => {
+	it('writes out an article cited without "art."', () => {
+		expect(bareArticle('55 Gw')).toBe('art. 55 Gw');
+		expect(bareArticle('6:162  BW')).toBe('art. 6:162 BW');
+		expect(bareArticle('3:4 Awb, tweede lid')).toBe('art. 3:4 Awb, tweede lid');
+	});
+
+	it('leaves years, words and full citations alone', () => {
+		expect(bareArticle('2024 begroting')).toBeNull();
+		expect(bareArticle('fit for 55')).toBeNull();
+		expect(bareArticle('55')).toBeNull();
+		expect(bareArticle('art. 55 Gw')).toBeNull();
 	});
 });
