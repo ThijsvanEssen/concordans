@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Schema } from '$lib/api/types';
+	import { seatCount } from '$lib/verbonden/filter';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 	type SeatFaction = Seats['factions'][number];
@@ -38,11 +39,10 @@
 	// SEAT_R 7 (was 6): aangrenzende stoelen raken elkaar net, zodat een
 	// fractie als een aaneengesloten band leest in plaats van losse puntjes.
 	const SEAT_R = 7;
-	// Hitbox per fractie: een transparante taartpunt die elke stoel van een
-	// fractie omvat plus een marge. Daardoor is "rond de fractie hoveren"
-	// genoeg — de individuele stoel hoeft niet exact geraakt te worden.
-	const HIT_ANGLE_PAD = 0.045; // rad ≈ 2.6°
-	const HIT_R_PAD = 14;
+	// Hitbox per fractie: a wedge from the gap before its first seat to the gap after
+	// its last, and from the inner to the outer row. Seats are dealt out by angle, so
+	// every faction holds one angular band and the wedges tile without overlap.
+	const HIT_R_PAD = SEAT_R + 2;
 
 	type Seat = {
 		x: number;
@@ -81,44 +81,32 @@
 		return out;
 	});
 
-	// Eén taartpunt per fractie: omsluit alle stoelen van die fractie en
-	// werkt als gemeenschappelijke hitbox voor hover/click/focus.
+	// One wedge per faction, bounded halfway between its outer seats and the
+	// neighbouring faction's, so the hover area follows the seats themselves.
 	type Sector = { faction: SeatFaction; path: string };
 	const sectors = $derived.by<Sector[]>(() => {
-		const byKey = new Map<string, Seat[]>();
+		const bands: { faction: SeatFaction; hi: number; lo: number }[] = [];
 		for (const s of seats) {
-			const k = s.faction.key;
-			if (!byKey.has(k)) byKey.set(k, []);
-			byKey.get(k)!.push(s);
+			const last = bands.at(-1);
+			if (last && last.faction.id === s.faction.id) last.lo = s.angle;
+			else bands.push({ faction: s.faction, hi: s.angle, lo: s.angle });
 		}
-		const out: Sector[] = [];
-		const rIn = Math.max(0, R_INNER - HIT_R_PAD);
+		const rIn = R_INNER - HIT_R_PAD;
 		const rOut = R_OUTER + HIT_R_PAD;
 		const polar = (a: number, r: number): [number, number] => [
 			CX + r * Math.cos(a),
 			CY - r * Math.sin(a)
 		];
-		for (const f of data.factions) {
-			const key = f.key;
-			const seatsF = byKey.get(key);
-			if (!seatsF || seatsF.length === 0) continue;
-			const angles = seatsF.map((s) => s.angle);
-			// Minimumhalfbreedte voor mini-fracties (1–2 zetels): zonder deze
-			// ondergrens valt de hover-wig terug op enkel HIT_ANGLE_PAD, wat in
-			// de mini-Hemicycle nauwelijks aanklikbaar is.
-			const MIN_HALF = 0.06; // rad ≈ 3.4°
-			const seatRange = (Math.max(...angles) - Math.min(...angles)) / 2;
-			const halfPad = Math.max(HIT_ANGLE_PAD, MIN_HALF - seatRange);
-			const center = (Math.max(...angles) + Math.min(...angles)) / 2;
-			const aMin = center - seatRange - halfPad;
-			const aMax = center + seatRange + halfPad;
-			const [x1, y1] = polar(aMax, rIn); // inner-left
-			const [x2, y2] = polar(aMax, rOut); // outer-left
-			const [x3, y3] = polar(aMin, rOut); // outer-right
-			const [x4, y4] = polar(aMin, rIn); // inner-right
-			// Outer arc aMax → aMin: hoek neemt af in math-conventie, in
-			// scherm-y-geïnverteerde SVG-coords is dat met de klok mee → sweep=1.
-			// Inner arc aMin → aMax: tegen de klok in → sweep=0.
+		// The outer edges of the first and last band reach the floor of the chamber.
+		const edgePad = HIT_R_PAD / R_INNER;
+		return bands.map((band, i) => {
+			const aMax = i === 0 ? band.hi + edgePad : (bands[i - 1].lo + band.hi) / 2;
+			const aMin = i === bands.length - 1 ? band.lo - edgePad : (band.lo + bands[i + 1].hi) / 2;
+			const [x1, y1] = polar(aMax, rIn);
+			const [x2, y2] = polar(aMax, rOut);
+			const [x3, y3] = polar(aMin, rOut);
+			const [x4, y4] = polar(aMin, rIn);
+			// Outer arc runs clockwise on screen (sweep 1), the inner arc back (sweep 0).
 			const path = [
 				`M ${x1} ${y1}`,
 				`L ${x2} ${y2}`,
@@ -127,14 +115,8 @@
 				`A ${rIn} ${rIn} 0 0 0 ${x1} ${y1}`,
 				'Z'
 			].join(' ');
-			out.push({ faction: f, path });
-		}
-		// Render largest fracties first, smallest last. Door HIT_ANGLE_PAD
-		// overlappen aangrenzende sectoren met ~5°; zonder deze sortering zou
-		// een grote fractie de hover-zone van een eenmans-fractie ernaast
-		// kunnen overschrijven. Klein bovenop = klein blijft selecteerbaar.
-		out.sort((a, b) => b.faction.seats - a.faction.seats);
-		return out;
+			return { faction: band.faction, path };
+		});
 	});
 
 	let hovered = $state<SeatFaction | null>(null);
@@ -160,7 +142,7 @@
 				class="sector"
 				role="button"
 				tabindex="0"
-				aria-label={`${sec.faction.abbreviation ?? sec.faction.key}, ${sec.faction.name ?? ''}, ${sec.faction.seats} zetels`}
+				aria-label={`${sec.faction.abbreviation ?? sec.faction.key}, ${sec.faction.name ?? ''}, ${seatCount(sec.faction.seats)}`}
 				onmouseenter={() => (hovered = sec.faction)}
 				onmouseleave={() => (hovered = null)}
 				onfocus={() => (hovered = sec.faction)}
@@ -175,11 +157,11 @@
 				cx={s.x}
 				cy={s.y}
 				r={SEAT_R}
-				fill={voteHighlight ? undefined : s.faction.color}
+				fill={side === 'tegen' ? undefined : s.faction.color}
+				style:stroke={side === 'tegen' ? s.faction.color : undefined}
 				class="seat"
 				class:seat--dim={hovered !== null && hovered.id !== s.faction.id}
 				class:seat--hi={hovered?.id === s.faction.id}
-				class:seat--vote-voor={side === 'voor'}
 				class:seat--vote-tegen={side === 'tegen'}
 				class:seat--vote-other={voteHighlight != null && side == null}
 			/>
@@ -196,7 +178,8 @@
 				{hovered.abbreviation ?? hovered.key}
 			</text>
 			<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
-				{hovered.seats} zetels
+				{hovered.seats}
+				{hovered.seats === 1 ? 'zetel' : 'zetels'}
 			</text>
 		{:else if voteTotals}
 			<text x={CX} y={CY - 6} text-anchor="middle" class="center-num" aria-live="polite">
@@ -218,7 +201,7 @@
        overzicht in stemvolgorde. -->
 	<ul class="hemicycle-sr-list">
 		{#each data.factions as f (f.id)}
-			<li>{f.abbreviation ?? f.key}, {f.name ?? ''}, {f.seats} zetels</li>
+			<li>{f.abbreviation ?? f.key}, {f.name ?? ''}, {seatCount(f.seats)}</li>
 		{/each}
 	</ul>
 	<figcaption class="hemicycle-caption">
@@ -262,18 +245,14 @@
 	.seat--hi {
 		stroke: none;
 	}
-	/* Voor/tegen are told apart by fill, not by a second colour: solid ink is voor,
-	   a hollow ring is tegen, a faint dot is a faction that did not vote. */
-	.seat--vote-voor {
-		fill: var(--ink);
-	}
+	/* Every seat keeps its party colour during a vote. Voor is a solid seat, tegen a
+	   ring in the party colour, and a faction that did not vote fades out. */
 	.seat--vote-tegen {
-		fill: var(--paper);
-		stroke: var(--ink-3);
-		stroke-width: 1.5;
+		fill: var(--paper-2);
+		stroke-width: 2;
 	}
 	.seat--vote-other {
-		fill: var(--rule-strong);
+		opacity: 0.18;
 	}
 	/* Sector hitbox: a transparent wedge around a whole faction. */
 	.sector {

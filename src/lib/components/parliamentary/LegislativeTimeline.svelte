@@ -39,6 +39,18 @@
 		return newestFirst ? rows : [...rows].reverse();
 	});
 
+	// An activity carries its `Activiteit.Status` (API 0.9). Without one, an entry dated
+	// after today is planned: the Kamer agenda runs ahead.
+	// Today in the reader's own time zone, not in UTC.
+	const today = new Date().toLocaleDateString('sv-SE');
+	// What did not take place is labelled as the source writes it: Gepland, Geannuleerd,
+	// Verplaatst, Vervallen.
+	const notHeld = (entry: Entry): string | null => {
+		const status = entry.node_type === 'activity' ? bodyOf(entry).status : null;
+		if (status) return status === 'Uitgevoerd' ? null : status;
+		return entry.date && entry.date.slice(0, 10) > today ? 'Gepland' : null;
+	};
+
 	const formatDate = (iso: string) =>
 		new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -87,11 +99,13 @@
 		<ol class="timeline-list">
 			{#each shown as entry (entry.node_id)}
 				{@const body = bodyOf(entry)}
-				<li class="entry" data-kind={entry.node_type}>
+				{@const planned = notHeld(entry)}
+				<li class="entry" class:entry--planned={!!planned} data-kind={entry.node_type}>
 					<div class="entry-meta">
 						{#if entry.date}
 							<time class="entry-date" datetime={entry.date}>{formatDate(entry.date)}</time>
 						{/if}
+						{#if planned}<span class="entry-planned">{planned}</span>{/if}
 						<span class="entry-kind">{entry.kind}</span>
 					</div>
 
@@ -413,5 +427,16 @@
 	.status--done,
 	.status--vervallen {
 		color: var(--ink-3);
+	}
+
+	.entry--planned {
+		opacity: 0.7;
+	}
+
+	.entry-planned {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-2);
 	}
 </style>

@@ -12,7 +12,7 @@ const d66 = (from: string, to: string | null, role = 'Lid') => ({
 	role
 });
 
-// Jetten: seven faction periods in one run, fractievoorzitter three times; then
+// Jetten: six faction periods, fractievoorzitter three times; then
 // stukken signed as minister-president and minister van Algemene Zaken.
 const memberships = [
 	d66('2017-03-23', '2018-10-08'),
@@ -38,9 +38,9 @@ describe('careerOf', () => {
 			['D66', '2023-12-06', '2026-02-09'],
 			['D66', '2017-03-23', '2022-01-10']
 		]);
+		// Fractievoorzitter twice in 2021, with eight weeks as Lid after the election between.
 		expect(seats[1].kind === 'seat' && seats[1].roles.map((r) => yearsOf(r.from, r.to))).toEqual([
-			'2018–2021',
-			'2021'
+			'2018–2021'
 		]);
 	});
 
@@ -64,5 +64,38 @@ describe('careerOf', () => {
 		expect(inYears('2017-03-23', '2022-01-10', 2019, 2019)).toBe(true);
 		expect(inYears('2026-09-08', '2026-09-16', 2019, 2021)).toBe(false);
 		expect(inYears('2025-11-12', null, 2030, null)).toBe(true);
+	});
+});
+
+describe('careerOf with posts in a cabinet', () => {
+	const government = [
+		{
+			function: 'Minister voor Klimaat en Energie',
+			cabinet: 'kabinet-Rutte IV',
+			from_date: '2022-01-10',
+			to_date: '2024-07-02'
+		},
+		{
+			function: 'minister-president van Nederland',
+			cabinet: 'kabinet-Jetten',
+			from_date: '2026-02-23',
+			to_date: null
+		}
+	];
+	const career = careerOf(memberships, signatures, government);
+
+	it('lists each post with its term and counts the stukken signed in it', () => {
+		const fns = career.filter((e) => e.kind === 'function');
+		// Newest start first.
+		expect(fns.map((f) => [f.function, f.cabinet, f.from, f.to, f.count])).toEqual([
+			// No post in Wikidata names it: known from the stukken only.
+			['minister van Algemene Zaken', null, '2026-09-15', '2026-09-15', 1],
+			['minister-president van Nederland', 'kabinet-Jetten', '2026-02-23', null, 2],
+			['Minister voor Klimaat en Energie', 'kabinet-Rutte IV', '2022-01-10', '2024-07-02', 0]
+		]);
+	});
+
+	it('names a person by the post they hold now', () => {
+		expect(currentTitle(career, false)).toBe('Minister-president van Nederland');
 	});
 });

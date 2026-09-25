@@ -1,23 +1,38 @@
 <script lang="ts">
-	import { STAGES, STAGE_LABEL, type Stage } from './stages';
+	import { STAGES, STAGE_LABEL, stepState, type Stage } from './stages';
 
 	// `stages` are the stages the dossier has passed, `current` the latest one.
 	// A dossier can loop (amendments after a report, then a nota again), so
-	// the steps are lit by membership, not by position.
-	let { stages, current }: { stages: Stage[]; current: Stage | null } = $props();
+	// the steps are lit by membership, not by position. Where the API says the record
+	// is incomplete, a stage before the furthest one is drawn as passed but not shown.
+	let {
+		stages,
+		current,
+		complete = null
+	}: {
+		stages: Stage[];
+		current: Stage | null;
+		/** `stages_complete`: false when the data lacks papers of a stage that was passed. */
+		complete?: boolean | null;
+	} = $props();
 
-	const passed = $derived(new Set<Stage>(stages));
+	const states = $derived(STAGES.map((step) => stepState(step, stages, current, complete)));
+	const reached = (i: number) => states[i] !== 'open';
+	const anyUnknown = $derived(states.includes('unknown'));
 </script>
 
 <ol class="stepper" aria-label="Wetgevingsstatus">
 	{#each STAGES as step, i (step)}
-		{@const done = passed.has(step) && step !== current}
-		{@const active = step === current}
+		{@const done = states[i] === 'done'}
+		{@const active = states[i] === 'active'}
+		{@const unknown = states[i] === 'unknown'}
 		<li
 			class="step"
 			class:step--done={done}
 			class:step--active={active}
+			class:step--unknown={unknown}
 			aria-current={active ? 'step' : undefined}
+			title={unknown ? 'Niet in de gegevens' : undefined}
 		>
 			<span class="step-dot" aria-hidden="true">
 				{#if done}
@@ -37,12 +52,18 @@
 				<span
 					class="step-connector"
 					aria-hidden="true"
-					class:step-connector--done={passed.has(step) && passed.has(STAGES[i + 1])}
+					class:step-connector--done={reached(i) && reached(i + 1)}
+					class:step-connector--unknown={states[i] === 'unknown' || states[i + 1] === 'unknown'}
 				></span>
 			{/if}
 		</li>
 	{/each}
 </ol>
+{#if anyUnknown}
+	<p class="stepper-note">
+		<span class="stepper-note__dot" aria-hidden="true"></span> Doorlopen, niet in de gegevens
+	</p>
+{/if}
 
 <style>
 	.stepper {
@@ -133,5 +154,40 @@
 	.step--done .step-connector,
 	.step-connector--done {
 		background: var(--ink-2);
+	}
+
+	/* Passed, but the data does not record it: an outline in ink-2, dashed on the way in. */
+	.step--unknown .step-dot,
+	.stepper-note__dot {
+		border-style: dashed;
+		border-color: var(--ink-2);
+	}
+
+	.step--unknown .step-label {
+		color: var(--ink-2);
+	}
+
+	.step-connector--unknown {
+		background: none;
+		border-top: 1.5px dashed var(--ink-2);
+		height: 0;
+	}
+
+	.stepper-note {
+		display: flex;
+		align-items: center;
+		gap: var(--s-1);
+		margin: var(--s-2) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+
+	.stepper-note__dot {
+		display: inline-block;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		border-width: 1.5px;
 	}
 </style>
