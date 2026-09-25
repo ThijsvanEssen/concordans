@@ -327,6 +327,9 @@
 	let dossierFacets = $state<Schema<'DossierFacetsDTO'> | null>(null);
 	let decisionFacets = $state<Schema<'DecisionFacets'> | null>(null);
 	let judgmentFacets = $state<Schema<'JudgmentFacets'> | null>(null);
+	// The EHRM judgments under the same search and period: the EHRM is its own source, so
+	// the facet of the list does not count them.
+	let echrTotal = $state<number | null>(null);
 	/** The number of commitments in each state, under the other filters. */
 	let statusCounts = $state<Map<string, number> | null>(null);
 	let cabinets = $state<Cabinet[]>([]);
@@ -377,6 +380,17 @@
 					);
 					pages.judgments = toPage(pages.judgments, r.items, offset, r.total);
 					if (!offset) judgmentFacets = r.facets ?? null;
+					if (!offset && (query.q || query.from || query.to)) {
+						const echr = await unwrap(
+							api.GET('/api/judgments', {
+								params: {
+									query: { q: query.q, from: query.from, to: query.to, source: 'echr', limit: 1 }
+								},
+								signal
+							})
+						).catch(() => null);
+						echrTotal = echr?.total ?? null;
+					} else if (!offset) echrTotal = null;
 				};
 			}
 			case 'dossiers': {
@@ -899,7 +913,8 @@
 		const echr = coverage.courts
 			.filter((c) => c.source === 'echr')
 			.reduce((n, c) => n + c.count, 0);
-		counts.set('ehrm', echr);
+		// Under a search or a period, the EHRM judgments that match it.
+		counts.set('ehrm', q || dateFrom || dateTo ? (echrTotal ?? 0) : echr);
 		return counts;
 	});
 	const USUAL: Tier[] = [
