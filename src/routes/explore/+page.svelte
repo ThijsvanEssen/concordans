@@ -13,7 +13,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { withBook } from '$lib/text/bw';
+	import { tabTitle } from '$lib/bron/tab-title';
 	import { track } from '$lib/analytics';
 	import { ApiError } from '$lib/api/client';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
@@ -537,15 +537,7 @@
 	// The tab names what is open, so that tabs, bookmarks and history tell bronnen apart.
 	const pageTitle = $derived.by(() => {
 		if (mode === 'index') return 'Bladeren · Concordans';
-		// A judgment by its short label (HR 2019/2007) and the name it is known by.
-		const names = selectedNode?.raw?.props?.names;
-		const known = Array.isArray(names) && names.length ? ` (${names.join(', ')})` : '';
-		const name =
-			selectedNode?.collection === 'judgments'
-				? `${selectedNode.label}${known}`
-				: selectedNode?.raw?.display_name
-					? withBook(selectedNode.raw.display_name)
-					: selectedNode?.label;
+		const name = selectedNode ? tabTitle(selectedNode) : null;
 		if (name) return `${name} · Concordans`;
 		if (netwerkActive) return 'Netwerk · Concordans';
 		return 'Verkenner · Concordans';
