@@ -93,7 +93,7 @@ export interface paths {
         };
         /**
          * Legislative history of an article
-         * @description Every dossier and document that introduced, changed or proposes to change this article, covering both enacted (`canoniek`) and proposed (`voorgesteld`) changes, and what refers to it. The explanatory documents are at `explained-by`. Returns an empty list when there is no history — never a 404.
+         * @description The dossiers that introduced, amended or repealed this article, or propose to: one entry per change and dossier, with the amending publication (enacted, `canoniek`) or the bill (proposed, `voorgesteld`) that carries it; proposed first, then newest first. What only cites the article (a judgment, another article) is not history. The explanatory documents are at `explained-by`. Returns an empty list when there is no history — never a 404.
          */
         get: operations["get_legislative_history_api_articles__bwb_id___article_number__legislative_history_get"];
         put?: never;
@@ -153,7 +153,7 @@ export interface paths {
         };
         /**
          * Paginated list of judgments
-         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (hoge_raad / gerechtshof / rechtbank / bijzonder), date range and a minimum citation count.
+         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the college: hoge_raad, raad_van_state, centrale_raad_van_beroep, parket, gerechtshof, rechtbank, tuchtcollege, …), area of law (`subject`), date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier filter) and per year of `date` (without `from` and `to`).
          */
         get: operations["list_judgments_api_judgments_get"];
         put?: never;
@@ -253,7 +253,7 @@ export interface paths {
         };
         /**
          * All articles of an instrument
-         * @description The articles belonging to this instrument (BWB id or CELEX number), in natural article order (9 before 10, '24c' between '24' and '25'). Meant for graph loaders: the text is a short preview, use /api/articles/{bwb_id}/{article_number} for the full content.
+         * @description The articles in force of this instrument (BWB id or CELEX number), in the order of the document: an article with only a heading (the Algemene bepaling of the Grondwet) where it stands, an annex after the regulation. `include_repealed` adds the repealed identities (last). The text is a short preview; /api/articles/{bwb_id}/{address} has the full content.
          */
         get: operations["list_articles_api_instruments__bwb_id__articles_get"];
         put?: never;
@@ -544,6 +544,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dossiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dossiers
+         * @description Every dossier, open and closed, filtered by status, outcome, track, the start of its number, committee, subject (a number, a dossier, or words of the title, such as its short title), stage, ministry, initiative and the day it opened. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter.
+         */
+        get: operations["list_dossiers_api_dossiers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/dossiers/open": {
         parameters: {
             query?: never;
@@ -553,7 +573,7 @@ export interface paths {
         };
         /**
          * Open dossiers
-         * @description Every dossier that is not closed yet. ``total`` is the absolute count, independent of ``limit``. Filters on committee slug, subject text and legislative stage.
+         * @description ``GET /api/dossiers`` with ``status=open``: the dossiers not closed yet. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter.
          */
         get: operations["list_open_dossiers_api_dossiers_open_get"];
         put?: never;
@@ -573,7 +593,7 @@ export interface paths {
         };
         /**
          * Recently active dossiers
-         * @description Dossiers with an activity, a vote, a document or their closing in the given period, the most recent first.
+         * @description Dossiers with an activity, a vote, a document or their closing in the given period, the most recent first. ``subject`` narrows them to a number, a dossier or title text.
          */
         get: operations["list_recent_dossiers_api_dossiers_recent_get"];
         put?: never;
@@ -613,7 +633,7 @@ export interface paths {
         };
         /**
          * Dossier detail
-         * @description One dossier: its title, stage, how many documents, activities, decisions and commitments it holds, and what it links to: the instruments it legislated, amends, introduces or repeals (one item per instrument, relation and status), the committees that lead its activities, its documents per kind and its Eerste Kamer papers.
+         * @description One dossier: its title, stage, how many documents, activities, decisions and commitments it holds, and what it links to: the instruments it legislated, amends, introduces or repeals (one item per instrument, relation and status), the committees that lead its activities, its documents per kind, its Eerste Kamer papers, and the dossiers it revises, accompanies or is related to (and those that revise, accompany or relate to it).
          */
         get: operations["get_dossier_api_dossiers__number__get"];
         put?: never;
@@ -773,7 +793,7 @@ export interface paths {
         };
         /**
          * Members of parliament
-         * @description Members of parliament, optionally filtered by party or name. By default only people who ever held a seat; pass ``?include_all=true`` to include ministers and other non-members.
+         * @description Members of parliament, optionally filtered by party or name, each with the posts they held in a cabinet (``government_functions``). By default only people who ever held a seat; ``?include_all=true`` includes ministers and other non-members, ``capacity=bewindspersoon`` keeps everyone who held a post in a cabinet and ``cabinet`` those who held one in that cabinet. A record without a name is never listed.
          */
         get: operations["list_members_api_members_get"];
         put?: never;
@@ -793,7 +813,7 @@ export interface paths {
         };
         /**
          * Member detail
-         * @description One member of parliament or minister.
+         * @description One member of parliament or minister, with the posts they held in a cabinet (`government_functions`, from Wikidata).
          */
         get: operations["get_member_api_members__key__get"];
         put?: never;
@@ -833,7 +853,7 @@ export interface paths {
         };
         /**
          * Dossiers a member authored in
-         * @description The dossiers in which this member signed or submitted documents (``AUTHORED``), newest opened first. Each dossier carries the roles the member had there and the number of documents. ``total`` is the absolute count.
+         * @description The dossiers in which this member signed or submitted documents (``AUTHORED``), newest opened first. Each dossier carries the roles the member had there, the functions and capacities they signed in (``kamerlid``, ``bewindspersoon``, ``overig``) and the number of documents. ``total`` is the absolute count.
          */
         get: operations["list_member_dossiers_api_members__key__dossiers_get"];
         put?: never;
@@ -936,6 +956,103 @@ export interface paths {
          * @description The laws this faction proposed changes to through bills, amendments or motions. Same shape as the member variant.
          */
         get: operations["list_faction_touched_instruments_api_factions__key__touched_instruments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ministries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ministries
+         * @description Every ministry a post, a dossier or a commitment can name, in protocol order; a former ministry (``Verkeer en Waterstaat``) follows its successor and names it.
+         */
+        get: operations["list_ministries_api_ministries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cabinets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cabinets
+         * @description Every Dutch cabinet Wikidata knows, newest first, with its prime minister, parties and counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.
+         */
+        get: operations["list_cabinets_api_cabinets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cabinets/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cabinet detail
+         * @description One cabinet with its bewindspersonen grouped by ministry (protocol order, the minister-president first), each post with the person's counts within the cabinet: ``dossiers`` and ``bills`` they signed as bewindspersoon, and ``open_commitments``.
+         */
+        get: operations["get_cabinet_detail_api_cabinets__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/commitments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Commitments
+         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``overdue`` keeps the open ones whose expected date has passed.
+         */
+        get: operations["list_commitments_api_commitments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/commitments/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Commitment detail */
+        get: operations["get_commitment_detail_api_commitments__key__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1235,9 +1352,29 @@ export interface paths {
         };
         /**
          * Database statistics
-         * @description Document counts per collection and edge counts per relation type.
+         * @description Document counts per collection without stubs, the stubs per collection (nodes known only because something refers to them) and edge counts per relation type.
          */
         get: operations["get_stats_api_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Which judgments the graph holds
+         * @description The judgments whose text is loaded, per court tier and per court, with the date of the oldest and the newest of each; and how many judgments are known only because a loaded one cites them (`stubs`). A count of judgments anywhere in the API (the judgments that cite an article, for one) is a count of this selection, not of the case law.
+         */
+        get: operations["get_coverage_api_stats_coverage_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1255,7 +1392,7 @@ export interface paths {
         };
         /**
          * Decision browser
-         * @description A page of decisions — one per Besluit — newest first, optionally filtered by outcome, party, chamber or dossier. ``total`` is the absolute count, independent of ``limit``.
+         * @description A page of decisions — one per Besluit — newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter), per outcome ``passed`` (without the passed filter) and per day (under all filters).
          */
         get: operations["list_decisions_api_decisions_get"];
         put?: never;
@@ -1375,8 +1512,9 @@ export interface components {
          * @description A dossier a member or faction authored documents in.
          *
          *     ``roles`` are the distinct ``AUTHORED`` roles as the source wrote them
-         *     (``Eerste ondertekenaar``, ``Mede ondertekenaar``, ...); ``document_count`` the distinct
-         *     documents authored in the dossier.
+         *     (``Eerste ondertekenaar``, ``Mede ondertekenaar``, ...); ``functions`` and ``capacities``
+         *     what they signed as, which changes over time (a Kamerlid who became minister-president);
+         *     ``document_count`` the distinct documents authored in the dossier.
          */
         ActorDossierDTO: {
             /** Id */
@@ -1388,16 +1526,43 @@ export interface components {
              * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
              */
             number: string;
+            /**
+             * Suffix
+             * @description The addition to the number (``Toevoeging``): ``XV`` of 37020-XV, ``31`` of 21501-31; null for a dossier without one.
+             */
+            suffix?: string | null;
+            /**
+             * Same Number Count
+             * @description How many other dossiers share the number: 24 for each dossier of a budget of 25. ``GET /api/dossiers?number=`` lists them.
+             * @default 0
+             */
+            same_number_count: number;
             /** Title */
             title?: string | null;
+            /**
+             * Short Title
+             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             */
+            short_title?: string | null;
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
             /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "motie" | "overig") | null;
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
             /** Current Stage */
             current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
             /** Stages */
             stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Stages Complete
+             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
+             * @default true
+             */
+            stages_complete: boolean;
+            /**
+             * Stages Missing
+             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             */
+            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
              * Closed
              * @default false
@@ -1409,8 +1574,30 @@ export interface components {
             opened_on?: string | null;
             /** Closed On */
             closed_on?: string | null;
+            /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Initiative
+             * @description True when a Kamerlid signed the earliest signed document first, false when a bewindspersoon did, null when neither did.
+             */
+            initiative?: boolean | null;
+            /**
+             * Cabinet
+             * @description The key of the cabinet in office when that document was signed.
+             */
+            cabinet?: string | null;
             /** Roles */
             roles?: string[];
+            /**
+             * Functions
+             * @description The distinct functions signed in, as the source writes them ('Tweede Kamerlid', 'minister-president').
+             */
+            functions?: string[];
+            /**
+             * Capacities
+             * @description The distinct capacities signed in: 'kamerlid', 'bewindspersoon', 'overig'.
+             */
+            capacities?: ("kamerlid" | "bewindspersoon" | "overig")[];
             /**
              * Document Count
              * @default 0
@@ -1479,6 +1666,11 @@ export interface components {
             date_signed?: string | null;
             /** Date Published */
             date_published?: string | null;
+            /**
+             * Official Url
+             * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
+             */
+            official_url?: string | null;
             /** Dossiers */
             dossiers?: components["schemas"]["DossierRefDTO"][];
             /**
@@ -2057,10 +2249,38 @@ export interface components {
             key: string;
             /** Bwb Id */
             bwb_id: string | null;
-            /** Article Number */
-            article_number: string | null;
+            /**
+             * Article Number
+             * @description Null for an article with only a heading, and for a repealed one.
+             */
+            article_number?: string | null;
+            /**
+             * Label
+             * @description `Artikel 287`, or the heading of an article without a number (`Algemene bepaling`).
+             */
+            label?: string | null;
+            /**
+             * Heading
+             * @description The title of its kop (`Definities`); most articles have none.
+             */
+            heading?: string | null;
+            /**
+             * Address
+             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             */
+            address: string;
+            /**
+             * Repealed
+             * @default false
+             */
+            repealed: boolean;
             /** Display Name */
             display_name: string | null;
+            /**
+             * Official Url
+             * @description The article in force on wetten.overheid.nl (its JCI); the regulation for an article without a number the JCI can address.
+             */
+            official_url?: string | null;
             /** Text */
             text: string | null;
             /**
@@ -2078,6 +2298,11 @@ export interface components {
             key: string;
             /** Article Number */
             article_number?: string | null;
+            /**
+             * Label
+             * @description `Artikel 287`, or the heading of an article without a number.
+             */
+            label?: string | null;
             /** Valid From */
             valid_from?: string | null;
             /** Valid Until */
@@ -2087,6 +2312,11 @@ export interface components {
              * @default false
              */
             current: boolean;
+            /**
+             * Official Url
+             * @description This version on wetten.overheid.nl: the JCI with ``g`` its ``valid_from``.
+             */
+            official_url?: string | null;
             /** Text */
             text?: string | null;
             /**
@@ -2134,6 +2364,199 @@ export interface components {
             } | null;
         };
         /**
+         * CabinetDetailDTO
+         * @description A cabinet with its bewindspersonen grouped by ministry: ministries in protocol
+         *     order (Algemene Zaken, with the minister-president, first), within a ministry the
+         *     posts in order (minister-president, minister, minister without portfolio,
+         *     staatssecretaris), then by start. A person with two posts is listed under each.
+         */
+        CabinetDetailDTO: {
+            /**
+             * Key
+             * @description ``rutte_iv``, ``den_uyl``.
+             */
+            key: string;
+            /**
+             * Name
+             * @description ``kabinet-Rutte IV``.
+             */
+            name: string;
+            /** From Date */
+            from_date?: string | null;
+            /**
+             * To Date
+             * @description Null while in office.
+             */
+            to_date?: string | null;
+            /**
+             * From Date Precision
+             * @description How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January.
+             */
+            from_date_precision?: ("day" | "month" | "year") | null;
+            /** To Date Precision */
+            to_date_precision?: ("day" | "month" | "year") | null;
+            /**
+             * Previous
+             * @description The key of the cabinet before it.
+             */
+            previous?: string | null;
+            prime_minister?: components["schemas"]["PersonRefDTO"] | null;
+            /** Parties */
+            parties?: components["schemas"]["CabinetPartyDTO"][];
+            /**
+             * Factions
+             * @description The faction keys of its parties.
+             */
+            factions?: string[];
+            /** Wikidata Id */
+            wikidata_id?: string | null;
+            /**
+             * Members
+             * @description The people who held a post in it.
+             * @default 0
+             */
+            members: number;
+            /**
+             * Bills
+             * @description Dossiers of track ``wetsvoorstel`` a bewindspersoon brought in while it was in office (``initiative`` false, ``cabinet`` this one).
+             * @default 0
+             */
+            bills: number;
+            /**
+             * Commitments
+             * @description Commitments made while it was in office.
+             * @default 0
+             */
+            commitments: number;
+            /** Ministries */
+            ministries?: components["schemas"]["CabinetMinistryDTO"][];
+        };
+        /**
+         * CabinetMinistryDTO
+         * @description The posts under one ministry; ``ministry`` null for a post that names none (the
+         *     viceminister-president, a minister without a named portfolio).
+         */
+        CabinetMinistryDTO: {
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /** Name */
+            name?: string | null;
+            /** Posts */
+            posts: components["schemas"]["CabinetPostDTO"][];
+        };
+        /**
+         * CabinetPartyDTO
+         * @description A party at least two members of the cabinet belonged to when their post began.
+         */
+        CabinetPartyDTO: {
+            /** Name */
+            name?: string | null;
+            /** Short */
+            short?: string | null;
+            /**
+             * Faction
+             * @description The faction key; null for a party from before the TK data.
+             */
+            faction?: string | null;
+        };
+        /**
+         * CabinetPostDTO
+         * @description One post a person held in the cabinet, with their counts within it.
+         */
+        CabinetPostDTO: {
+            member: components["schemas"]["PersonRefDTO"];
+            post?: components["schemas"]["Post"] | null;
+            /**
+             * Function
+             * @description As Wikidata names the post.
+             */
+            function?: string | null;
+            /** From Date */
+            from_date?: string | null;
+            /** To Date */
+            to_date?: string | null;
+            /**
+             * Dossiers
+             * @description Dossiers with a paper the person signed as bewindspersoon within the cabinet's period (counted per person, the same on each of their posts).
+             * @default 0
+             */
+            dossiers: number;
+            /**
+             * Bills
+             * @description Of those, dossiers of track ``wetsvoorstel``.
+             * @default 0
+             */
+            bills: number;
+            /**
+             * Open Commitments
+             * @description Their commitments made under this cabinet and still open.
+             * @default 0
+             */
+            open_commitments: number;
+        };
+        /**
+         * CabinetSummaryDTO
+         * @description A cabinet in the list, with its counts.
+         */
+        CabinetSummaryDTO: {
+            /**
+             * Key
+             * @description ``rutte_iv``, ``den_uyl``.
+             */
+            key: string;
+            /**
+             * Name
+             * @description ``kabinet-Rutte IV``.
+             */
+            name: string;
+            /** From Date */
+            from_date?: string | null;
+            /**
+             * To Date
+             * @description Null while in office.
+             */
+            to_date?: string | null;
+            /**
+             * From Date Precision
+             * @description How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January.
+             */
+            from_date_precision?: ("day" | "month" | "year") | null;
+            /** To Date Precision */
+            to_date_precision?: ("day" | "month" | "year") | null;
+            /**
+             * Previous
+             * @description The key of the cabinet before it.
+             */
+            previous?: string | null;
+            prime_minister?: components["schemas"]["PersonRefDTO"] | null;
+            /** Parties */
+            parties?: components["schemas"]["CabinetPartyDTO"][];
+            /**
+             * Factions
+             * @description The faction keys of its parties.
+             */
+            factions?: string[];
+            /** Wikidata Id */
+            wikidata_id?: string | null;
+            /**
+             * Members
+             * @description The people who held a post in it.
+             * @default 0
+             */
+            members: number;
+            /**
+             * Bills
+             * @description Dossiers of track ``wetsvoorstel`` a bewindspersoon brought in while it was in office (``initiative`` false, ``cabinet`` this one).
+             * @default 0
+             */
+            bills: number;
+            /**
+             * Commitments
+             * @description Commitments made while it was in office.
+             * @default 0
+             */
+            commitments: number;
+        };
+        /**
          * CitedArticleRef
          * @description Reference to one cited article inside a judgment-citation list.
          */
@@ -2171,7 +2594,7 @@ export interface components {
             court: string | null;
             /**
              * Tier
-             * @description `hoge_raad`, `gerechtshof`, `rechtbank` or `bijzonder`.
+             * @description The college: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket`, `gerechtshof`, `rechtbank`, … (`/api/stats/coverage` lists those present).
              */
             tier: string | null;
             /**
@@ -2181,6 +2604,85 @@ export interface components {
             date: string | null;
             /** Display Name */
             display_name: string | null;
+        };
+        /** CommitmentActivityDTO */
+        CommitmentActivityDTO: {
+            /** Key */
+            key: string;
+            /** Date */
+            date?: string | null;
+            /** Number */
+            number?: string | null;
+        };
+        /**
+         * CommitmentDTO
+         * @description A commitment (toezegging) of a bewindspersoon to the Tweede Kamer.
+         */
+        CommitmentDTO: {
+            /** Key */
+            key: string;
+            /** Text */
+            text?: string | null;
+            /** Status */
+            status?: ("open" | "done" | "partly_done" | "unfulfilled" | "lapsed") | null;
+            /**
+             * Date
+             * @description The day it was made.
+             */
+            date?: string | null;
+            /**
+             * Expected Resolution
+             * @description The day it is due; null when the Kamer names none.
+             */
+            expected_resolution?: string | null;
+            /**
+             * Minister Name
+             * @description As the source writes it.
+             */
+            minister_name?: string | null;
+            /** @description The member who made it; null when no member fits the name. */
+            member?: components["schemas"]["CommitmentMemberDTO"] | null;
+            post?: components["schemas"]["Post"] | null;
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Cabinet
+             * @description The cabinet in office that day.
+             */
+            cabinet?: string | null;
+            /** Dossiers */
+            dossiers?: components["schemas"]["CommitmentDossierDTO"][];
+            activity?: components["schemas"]["CommitmentActivityDTO"] | null;
+        };
+        /** CommitmentDossierDTO */
+        CommitmentDossierDTO: {
+            /** Key */
+            key: string;
+            /** Number */
+            number?: string | null;
+            /** Title */
+            title?: string | null;
+        };
+        /** CommitmentListResponse */
+        CommitmentListResponse: {
+            /**
+             * Total
+             * @description Matching commitments, whatever the page.
+             */
+            total: number;
+            /** Items */
+            items: components["schemas"]["CommitmentDTO"][];
+        };
+        /**
+         * CommitmentMemberDTO
+         * @description Who made the commitment, and the role they made it in as the source writes it.
+         */
+        CommitmentMemberDTO: {
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+            /** Function */
+            function?: string | null;
         };
         /**
          * CommitteeActivitiesResponse
@@ -2214,8 +2716,16 @@ export interface components {
              * @description The source's ``Soort``, e.g. Commissiedebat.
              */
             kind?: string | null;
-            /** Agenda Title */
+            /**
+             * Agenda Title
+             * @description The subject of the activity (``Activiteit.Onderwerp``).
+             */
             agenda_title?: string | null;
+            /**
+             * Status
+             * @description ``Activiteit.Status``: ``Gepland``, ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``.
+             */
+            status?: string | null;
             /**
              * Dossier Numbers
              * @description Dossiers on the agenda of the activity.
@@ -2319,6 +2829,58 @@ export interface components {
             members: components["schemas"]["MemberDTO"][];
         };
         /**
+         * CoverageCourtDTO
+         * @description The judgments of one court in the graph.
+         */
+        CoverageCourtDTO: {
+            /**
+             * Source
+             * @description `rechtspraak` or `echr`.
+             */
+            source?: string | null;
+            /**
+             * Tier
+             * @description `hoge_raad`, `parket` (the conclusions of the Parket bij de Hoge Raad), `raad_van_state`, `centrale_raad_van_beroep`, `gerechtshof`, `rechtbank`, … one per college (``core.judgments.TIERS``).
+             */
+            tier?: string | null;
+            /**
+             * Court Code
+             * @description The court in the ECLI: `GHAMS`.
+             */
+            court_code?: string | null;
+            /**
+             * Court
+             * @description Its name: Gerechtshof Amsterdam.
+             */
+            court?: string | null;
+            /** Count */
+            count: number;
+            /**
+             * First Date
+             * @description Date of its oldest judgment.
+             */
+            first_date?: string | null;
+            /**
+             * Last Date
+             * @description Date of its newest judgment.
+             */
+            last_date?: string | null;
+        };
+        /**
+         * CoverageTierDTO
+         * @description The judgments of one court tier in the graph.
+         */
+        CoverageTierDTO: {
+            /** Tier */
+            tier?: string | null;
+            /** Count */
+            count: number;
+            /** First Date */
+            first_date?: string | null;
+            /** Last Date */
+            last_date?: string | null;
+        };
+        /**
          * CrossLawDependenciesResponse
          * @description Response for GET /api/instruments/{bwb_id}/cross-law-dependencies.
          */
@@ -2394,6 +2956,53 @@ export interface components {
             votes?: components["schemas"]["VoteDTO"][];
         };
         /**
+         * DecisionDayCount
+         * @description The decisions of one day: how many, and how many of them carried.
+         */
+        DecisionDayCount: {
+            /** Date */
+            date: string | null;
+            /** Count */
+            count: number;
+            /** Passed */
+            passed: number;
+        };
+        /**
+         * DecisionFacets
+         * @description The decisions under the filters, counted.
+         *
+         *     ``kind`` is counted without the ``kind`` filter and ``passed`` without the ``passed``
+         *     filter, so each shows what choosing another value would give; ``days`` is counted
+         *     under every filter.
+         */
+        DecisionFacets: {
+            /**
+             * Kind
+             * @description Per kind, most first.
+             */
+            kind?: components["schemas"]["DecisionKindCount"][];
+            /**
+             * Passed
+             * @description Per outcome, most first.
+             */
+            passed?: components["schemas"]["DecisionOutcomeCount"][];
+            /**
+             * Days
+             * @description Per date of the vote, oldest first.
+             */
+            days?: components["schemas"]["DecisionDayCount"][];
+        };
+        /**
+         * DecisionKindCount
+         * @description How many of the decisions are of one kind.
+         */
+        DecisionKindCount: {
+            /** Value */
+            value: ("motie" | "amendement" | "wetsvoorstel" | "overig") | null;
+            /** Count */
+            count: number;
+        };
+        /**
          * DecisionListResponse
          * @description A page of decisions.
          */
@@ -2405,6 +3014,17 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["DecisionSummaryDTO"][];
+            facets?: components["schemas"]["DecisionFacets"];
+        };
+        /**
+         * DecisionOutcomeCount
+         * @description How many of the decisions carried (``true``), did not, or have no outcome (null).
+         */
+        DecisionOutcomeCount: {
+            /** Value */
+            value: boolean | null;
+            /** Count */
+            count: number;
         };
         /**
          * DecisionSummaryDTO
@@ -2428,6 +3048,11 @@ export interface components {
             external_id?: string | null;
             /** Dossier Numbers */
             dossier_numbers?: string[];
+            /**
+             * Kind
+             * @description What was voted on, from the ``Zaak.Soort`` of the case it decided (``primary_case_kind``): ``motie``, ``amendement``, ``wetsvoorstel`` (a bill, also an initiative bill or a budget) or ``overig``. Null for a decision normalized before the kind was stored.
+             */
+            kind?: ("motie" | "amendement" | "wetsvoorstel" | "overig") | null;
             /** Passed */
             passed?: boolean | null;
             /** Chamber */
@@ -2558,6 +3183,11 @@ export interface components {
              * @description The document on tweedekamer.nl.
              */
             tk_url?: string | null;
+            /**
+             * File Url
+             * @description The original file of a Tweede Kamer document (Word or PDF), from the Gegevensmagazijn.
+             */
+            file_url?: string | null;
             /** Text */
             text?: string | null;
             /** Dossier Numbers */
@@ -2605,16 +3235,43 @@ export interface components {
              * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
              */
             number: string;
+            /**
+             * Suffix
+             * @description The addition to the number (``Toevoeging``): ``XV`` of 37020-XV, ``31`` of 21501-31; null for a dossier without one.
+             */
+            suffix?: string | null;
+            /**
+             * Same Number Count
+             * @description How many other dossiers share the number: 24 for each dossier of a budget of 25. ``GET /api/dossiers?number=`` lists them.
+             * @default 0
+             */
+            same_number_count: number;
             /** Title */
             title?: string | null;
+            /**
+             * Short Title
+             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             */
+            short_title?: string | null;
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
             /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "motie" | "overig") | null;
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
             /** Current Stage */
             current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
             /** Stages */
             stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Stages Complete
+             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
+             * @default true
+             */
+            stages_complete: boolean;
+            /**
+             * Stages Missing
+             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             */
+            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
              * Closed
              * @default false
@@ -2626,6 +3283,18 @@ export interface components {
             opened_on?: string | null;
             /** Closed On */
             closed_on?: string | null;
+            /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Initiative
+             * @description True when a Kamerlid signed the earliest signed document first, false when a bewindspersoon did, null when neither did.
+             */
+            initiative?: boolean | null;
+            /**
+             * Cabinet
+             * @description The key of the cabinet in office when that document was signed.
+             */
+            cabinet?: string | null;
             /**
              * Document Count
              * @default 0
@@ -2664,6 +3333,11 @@ export interface components {
                 [key: string]: number;
             };
             senate?: components["schemas"]["DossierSenateDTO"];
+            /**
+             * Relations
+             * @description The dossiers this one revises, accompanies or is related to, and those that revise, accompany or relate to it: by relation, then outgoing before incoming, then in the order of their numbers. All dossiers of its own number are ``GET /api/dossiers?number=``.
+             */
+            relations?: components["schemas"]["DossierRelationDTO"][];
         };
         /**
          * DossierDocumentDTO
@@ -2738,6 +3412,24 @@ export interface components {
             items: components["schemas"]["DossierDocumentDTO"][];
         };
         /**
+         * DossierFacetsDTO
+         * @description Per dimension the number of dossiers per value under the current filters, each
+         *     dimension counted without its own filter (so the other values of a chosen dimension
+         *     keep their counts), the largest first.
+         */
+        DossierFacetsDTO: {
+            /** Status */
+            status?: components["schemas"]["FacetCountDTO"][];
+            /** Outcome */
+            outcome?: components["schemas"]["FacetCountDTO"][];
+            /** Track */
+            track?: components["schemas"]["FacetCountDTO"][];
+            /** Stage */
+            stage?: components["schemas"]["FacetCountDTO"][];
+            /** Ministry */
+            ministry?: components["schemas"]["FacetCountDTO"][];
+        };
+        /**
          * DossierInstrumentDTO
          * @description An instrument a dossier is tied to, and how.
          *
@@ -2790,6 +3482,7 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["DossierSummaryDTO"][];
+            facets: components["schemas"]["DossierFacetsDTO"];
         };
         /**
          * DossierMutationEdge
@@ -2862,6 +3555,46 @@ export interface components {
             title?: string | null;
         };
         /**
+         * DossierRelationDTO
+         * @description A relation between this dossier and another, and which way it points.
+         *
+         *     * ``revises``: a supplementary budget or a slotwet revises the budget of its chapter
+         *       and year; ``rule`` says which (``begrotingswijziging`` or ``slotwet``).
+         *     * ``accompanies``: a budget change is submitted with the ``nota`` its title names
+         *       (``voorjaarsnota``, ``najaarsnota``, ``miljoenennota``).
+         *     * ``related_to``: the Kamer relates a case of the one dossier to a case of the other
+         *       (``Zaak.GerelateerdNaar``), mostly a letter of the government to the motion it
+         *       answers. ``cases`` counts the pairs of cases, ``case_kinds`` names their kinds
+         *       (``Brief regering → Motie``).
+         *     * ``second_reading_of``: a change in the Grondwet in its second reading and the dossier of
+         *       its first reading, whose papers explain it: the memorandum of 35785 only refers to those
+         *       of 35418 and 35419.
+         *
+         *     ``outgoing`` means this dossier is the subject: 37035-XXII revises 36800-XXII and
+         *     accompanies 37020. On 36800-XXII the same ``revises`` is ``incoming``.
+         */
+        DossierRelationDTO: {
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "revises" | "accompanies" | "related_to" | "second_reading_of";
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "outgoing" | "incoming";
+            dossier: components["schemas"]["DossierSummaryDTO"];
+            /** Cases */
+            cases?: number | null;
+            /** Case Kinds */
+            case_kinds?: string[];
+            /** Rule */
+            rule?: ("begrotingswijziging" | "slotwet") | null;
+            /** Nota */
+            nota?: ("voorjaarsnota" | "najaarsnota" | "miljoenennota") | null;
+        };
+        /**
          * DossierSenateDTO
          * @description The Eerste Kamer papers among a dossier's documents.
          */
@@ -2881,8 +3614,15 @@ export interface components {
          * DossierSummaryDTO
          * @description A dossier in a list.
          *
-         *     ``track`` is what kind of dossier this is — wetsvoorstel, begroting,
-         *     motie — and does not change as it progresses. ``current_stage`` is the
+         *     ``track`` is what kind of dossier this is — a bill (wetsvoorstel,
+         *     initiatiefwetsvoorstel, begroting, verdrag), an initiatiefnota, a ``nota`` of the
+         *     government (the Miljoenennota, the Voorjaars- and Najaarsnota, the Financieel
+         *     Jaarverslag van het Rijk), a ``structuurvisie``, ``verantwoording`` (a
+         *     beleidsdoorlichting, the reports on a big project), ``eu`` (an EU Council, the fiches on
+         *     Commission proposals), ``interparlementair`` (an assembly the Kamer sends a delegation
+         *     to), ``kamer`` (the Kamer's own: a committee report, its code of conduct) or ``beleid``
+         *     (the letters and motions on a subject) — and does not change as it progresses. It
+         *     comes from what the dossier is, never from what is filed under it. ``current_stage`` is the
          *     latest stage seen on its documents and activities; ``stages`` lists every
          *     stage with at least one signal, in chronological order. Only a bill (a
          *     wetsvoorstel, initiatiefwetsvoorstel, begroting or verdrag) passes stages;
@@ -2900,16 +3640,43 @@ export interface components {
              * @description Kamerstuknummer, e.g. 36558, or 37020-XV for a budget chapter.
              */
             number: string;
+            /**
+             * Suffix
+             * @description The addition to the number (``Toevoeging``): ``XV`` of 37020-XV, ``31`` of 21501-31; null for a dossier without one.
+             */
+            suffix?: string | null;
+            /**
+             * Same Number Count
+             * @description How many other dossiers share the number: 24 for each dossier of a budget of 25. ``GET /api/dossiers?number=`` lists them.
+             * @default 0
+             */
+            same_number_count: number;
             /** Title */
             title?: string | null;
+            /**
+             * Short Title
+             * @description The name a bill goes by, from the parentheses that end its title: ``Verzamelwet gegevensbescherming``; null when the title has none.
+             */
+            short_title?: string | null;
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
             /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "motie" | "overig") | null;
+            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
             /** Current Stage */
             current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
             /** Stages */
             stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            /**
+             * Stages Complete
+             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
+             * @default true
+             */
+            stages_complete: boolean;
+            /**
+             * Stages Missing
+             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             */
+            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
              * Closed
              * @default false
@@ -2921,6 +3688,18 @@ export interface components {
             opened_on?: string | null;
             /** Closed On */
             closed_on?: string | null;
+            /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Initiative
+             * @description True when a Kamerlid signed the earliest signed document first, false when a bewindspersoon did, null when neither did.
+             */
+            initiative?: boolean | null;
+            /**
+             * Cabinet
+             * @description The key of the cabinet in office when that document was signed.
+             */
+            cabinet?: string | null;
         };
         /**
          * DossierTimelineResponse
@@ -3050,6 +3829,19 @@ export interface components {
             dossier_number?: string | null;
         };
         /**
+         * FacetCountDTO
+         * @description One value of a facet and how many items have it under the current filters.
+         */
+        FacetCountDTO: {
+            /**
+             * Value
+             * @description Null counts the items without one.
+             */
+            value?: string | null;
+            /** Count */
+            count: number;
+        };
+        /**
          * FactionDTO
          * @description A parliamentary party.
          */
@@ -3172,6 +3964,37 @@ export interface components {
             } | null;
         };
         /**
+         * GovernmentFunctionDTO
+         * @description A post held in a cabinet: as Wikidata names it, and normalised.
+         */
+        GovernmentFunctionDTO: {
+            /**
+             * Function
+             * @description The post as Wikidata names it: Minister voor Klimaat en Energie.
+             */
+            function?: string | null;
+            /**
+             * Cabinet
+             * @description The cabinet: kabinet-Rutte IV.
+             */
+            cabinet?: string | null;
+            /**
+             * Cabinet Key
+             * @description The cabinet node (``GET /api/cabinets/{key}``).
+             */
+            cabinet_key?: string | null;
+            post?: components["schemas"]["Post"] | null;
+            /** @description The ministry the post falls under (``GET /api/ministries``); a minister without portfolio under the ministry the post is placed under. */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /** From Date */
+            from_date?: string | null;
+            /**
+             * To Date
+             * @description Null while the post is held.
+             */
+            to_date?: string | null;
+        };
+        /**
          * GraphEdgeDTO
          * @description Graph edge with optional text annotation (for global/article-level graphs).
          */
@@ -3232,10 +4055,33 @@ export interface components {
             bwb_id: string | null;
             /** Celex */
             celex?: string | null;
-            /** Article Number */
-            article_number: string | null;
+            /**
+             * Article Number
+             * @description Null for an article with only a heading, and for a repealed one.
+             */
+            article_number?: string | null;
+            /**
+             * Label
+             * @description `Artikel 287`, or the heading of an article without a number (`Algemene bepaling`).
+             */
+            label?: string | null;
+            /**
+             * Heading
+             * @description The title of its kop (`Definities`); most articles have none.
+             */
+            heading?: string | null;
+            /**
+             * Address
+             * @description The `{article_number}` segment of the article routes: the number (`287`, `8:54`), or for an article without one the rest of its key (`stam_16464063` of the Algemene bepaling of the Grondwet; a repealed identity `2_10_stam_2866303`). It stays the same across versions.
+             */
+            address: string;
             /** Display Name */
             display_name: string | null;
+            /**
+             * Official Url
+             * @description The article in force on wetten.overheid.nl (its JCI).
+             */
+            official_url?: string | null;
             /**
              * Breadcrumb
              * @default []
@@ -3246,6 +4092,17 @@ export interface components {
              * @default false
              */
             stub: boolean;
+            /**
+             * Repealed
+             * @description The article is no longer in force: an identity whose number another article has now, or one its current version repeals.
+             * @default false
+             */
+            repealed: boolean;
+            /**
+             * Last Article Number
+             * @description The number a repealed identity last had.
+             */
+            last_article_number?: string | null;
             /** Text Preview */
             text_preview?: string | null;
         };
@@ -3269,6 +4126,11 @@ export interface components {
              * @default false
              */
             current: boolean;
+            /**
+             * Official Url
+             * @description This version on wetten.overheid.nl (JCI with ``g``).
+             */
+            official_url?: string | null;
             /** Text */
             text?: string | null;
         };
@@ -3410,6 +4272,11 @@ export interface components {
             citation_title: string | null;
             /** Short Title */
             short_title: string | null;
+            /**
+             * Aliases
+             * @description Every name it is cited by: the official abbreviations and, for a book of a code, `Boek 6 BW`, `6 BW`, `BW 6`, `BW6`, `BW`.
+             */
+            aliases?: string[];
             /** Display Name */
             display_name: string | null;
             /**
@@ -3458,6 +4325,11 @@ export interface components {
             in_force?: boolean | null;
             /** Dossier Numbers */
             dossier_numbers?: string[];
+            /**
+             * Official Url
+             * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
+             */
+            official_url?: string | null;
         };
         /**
          * InstrumentDossierItem
@@ -3683,6 +4555,11 @@ export interface components {
             kind: string | null;
             /** Article Count */
             article_count: number;
+            /**
+             * Official Url
+             * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
+             */
+            official_url?: string | null;
         };
         /**
          * InstrumentListResponse
@@ -3769,6 +4646,11 @@ export interface components {
             /** Display Name */
             display_name: string | null;
             /**
+             * Official Url
+             * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
+             */
+            official_url?: string | null;
+            /**
              * Article Count
              * @default 0
              */
@@ -3809,6 +4691,11 @@ export interface components {
             current: boolean;
             /** State Url */
             state_url?: string | null;
+            /**
+             * Official Url
+             * @description This version on wetten.overheid.nl (``/{BWB}/{valid_from}``).
+             */
+            official_url?: string | null;
             /** Article Count */
             article_count?: number | null;
         };
@@ -3922,6 +4809,36 @@ export interface components {
             mention_count: number;
         };
         /**
+         * JudgmentCoverageResponse
+         * @description Which judgments the graph holds: a count of case law is a count of this selection.
+         *
+         *     ``total`` counts the judgments whose text is loaded; ``stubs`` the judgments known only
+         *     because a loaded text cites them (they cite nothing themselves).
+         */
+        JudgmentCoverageResponse: {
+            /** Total */
+            total: number;
+            /** First Date */
+            first_date?: string | null;
+            /** Last Date */
+            last_date?: string | null;
+            /**
+             * Stubs
+             * @description Cited judgments whose text is not loaded.
+             */
+            stubs: number;
+            /**
+             * Tiers
+             * @description Per tier: the highest courts first, the parket, the courts of first instance and appeal, the other colleges, the EHRM last.
+             */
+            tiers: components["schemas"]["CoverageTierDTO"][];
+            /**
+             * Courts
+             * @description Per court, most first.
+             */
+            courts: components["schemas"]["CoverageCourtDTO"][];
+        };
+        /**
          * JudgmentDTO
          * @description Rich judgment DTO that hides raw XML but exposes metadata.
          */
@@ -3946,10 +4863,48 @@ export interface components {
             ecli: string | null;
             /** Source */
             source?: string | null;
-            /** Summary */
+            /**
+             * Summary
+             * @description The inhoudsindicatie, in Dutch. For an English translation the inhoudsindicatie of the judgment it translates; null while that is not loaded.
+             */
             summary: string | null;
+            /**
+             * Summary En
+             * @description An English inhoudsindicatie: that of the judgment itself when it is an English translation, else that of its translation. Null when there is none.
+             */
+            summary_en?: string | null;
+            /**
+             * Translation Of
+             * @description For an English translation, the ECLI of the Dutch judgment it translates (the authentic text); null otherwise.
+             */
+            translation_of?: string | null;
+            /**
+             * Names
+             * @description What lawyers call the judgment: `Haviltex`, `Urgenda`, `Lindenbaum/Cohen`. From a curated list of landmark cases; empty for most.
+             */
+            names?: string[];
+            /**
+             * Decision Kind
+             * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
+             */
+            decision_kind?: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "conclusie" | "prejudiciële beslissing") | null;
+            /**
+             * Series Id
+             * @description The series of parallel cases the judgment is one of (the same court, day and, nearly, text): the lowest ECLI in it. Null outside a series.
+             */
+            series_id?: string | null;
+            /**
+             * Series Size
+             * @description How many judgments the series has.
+             */
+            series_size?: number | null;
             /** Paragraphs */
             paragraphs?: components["schemas"]["JudgmentParagraph"][];
+            /**
+             * Parties
+             * @description The parties the kop of the judgment names, in its order. Null when the judgment was normalized before parties were read; empty when the kop names none.
+             */
+            parties?: components["schemas"]["JudgmentParty"][] | null;
         };
         /**
          * JudgmentDetailResponse
@@ -3966,10 +4921,41 @@ export interface components {
             cited_articles?: components["schemas"]["JudgmentCitedArticle"][];
             /** Cited Judgments */
             cited_judgments?: components["schemas"]["JudgmentSummaryDTO"][];
+            /**
+             * Series
+             * @description The other judgments of its series (`judgment.series_id`), in the order of their ECLI numbers; empty outside a series.
+             */
+            series?: components["schemas"]["JudgmentSummaryDTO"][];
             /** Metadata */
             metadata: {
                 [key: string]: unknown;
             } | null;
+        };
+        /**
+         * JudgmentFacetCount
+         * @description How many of the judgments have one value.
+         */
+        JudgmentFacetCount: {
+            /** Value */
+            value: string | null;
+            /** Count */
+            count: number;
+        };
+        /**
+         * JudgmentFacets
+         * @description The judgments under the filters, counted; each without its own filter.
+         */
+        JudgmentFacets: {
+            /**
+             * Tier
+             * @description Per tier, most first; counted without the `tier` filter.
+             */
+            tier?: components["schemas"]["JudgmentFacetCount"][];
+            /**
+             * Year
+             * @description Per year of `date` (`2024`), oldest first after null (no date); counted without `from` and `to`.
+             */
+            year?: components["schemas"]["JudgmentFacetCount"][];
         };
         /**
          * JudgmentGraphNodeDTO
@@ -4034,12 +5020,31 @@ export interface components {
             date: string | null;
             /** Summary */
             summary: string | null;
+            /**
+             * Names
+             * @description What lawyers call the judgment: `Haviltex`, `Urgenda`, `Lindenbaum/Cohen`. From a curated list of landmark cases; empty for most.
+             */
+            names?: string[];
+            /**
+             * Decision Kind
+             * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
+             */
+            decision_kind?: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "conclusie" | "prejudiciële beslissing") | null;
             /** Source */
             source?: string | null;
+            /**
+             * Subjects
+             * @description The areas of law the source gives it (Rechtspraak `dcterms:subject`), as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`. Empty when it gives none.
+             */
+            subjects?: string[];
             /** Inbound Citation Count */
             inbound_citation_count: number | null;
             /** Outbound Citation Count */
             outbound_citation_count?: number | null;
+            /** Series Id */
+            series_id?: string | null;
+            /** Series Size */
+            series_size?: number | null;
         };
         /**
          * JudgmentListResponse
@@ -4050,6 +5055,7 @@ export interface components {
             items: components["schemas"]["JudgmentListItemDTO"][];
             /** Total */
             total: number;
+            facets?: components["schemas"]["JudgmentFacets"];
         };
         /**
          * JudgmentParagraph
@@ -4080,6 +5086,56 @@ export interface components {
             citations?: components["schemas"]["ArticleCitationSpan"][];
         };
         /**
+         * JudgmentParty
+         * @description A party of a judgment, read from its kop.
+         */
+        JudgmentParty: {
+            /**
+             * Name
+             * @description As the judgment writes it, anonymised where the source is: `[eiser]`, `MAATSCHAP GRONINGEN`. Without its legal form, place or role.
+             */
+            name: string;
+            /**
+             * Role
+             * @description `Verdachte`, `Betrokkene`, `Klager`, `Veroordeelde`, `Eiser`, `Gedaagde`, `Verzoeker`, `Verweerder`, `Appellant`, `Geïntimeerde`, `Belanghebbende`, `Opposant`, `Wederpartij`; `Partij` when none applies.
+             */
+            role: string;
+            /**
+             * Role Stated
+             * @description True when the judgment names the role (a role line, a role behind the name, an anonymised name that is a role: `[verdachte]`); false when it is derived from the area of law and the side.
+             */
+            role_stated: boolean;
+            /**
+             * Side
+             * @description The side of the case: `first` before `tegen` or `en`, `second` after it, `other` for an interested party (belanghebbende).
+             * @enum {string}
+             */
+            side: "first" | "second" | "other";
+            /**
+             * Alias
+             * @description What the judgment calls the party: `EBN` for "hierna: EBN".
+             */
+            alias?: string | null;
+            /** Representatives */
+            representatives?: components["schemas"]["JudgmentRepresentative"][];
+        };
+        /**
+         * JudgmentRepresentative
+         * @description Who acts for a party, as the kop names them ("advocaat: mr. X").
+         */
+        JudgmentRepresentative: {
+            /**
+             * Name
+             * @description As written: `mr. H.J.W. Alt`.
+             */
+            name: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "advocaat" | "gemachtigde";
+        };
+        /**
          * JudgmentSummaryDTO
          * @description Lightweight judgment summary for listing matches.
          */
@@ -4095,25 +5151,46 @@ export interface components {
         };
         /**
          * LegislativeHistoryEntry
-         * @description One entry in the legislative history of an article.
+         * @description One change of an article in one dossier: the dossier, and the amending publication
+         *     (enacted) or the bill (proposed) that made or proposes the change.
          */
         LegislativeHistoryEntry: {
-            /** Dossier Id */
+            /**
+             * Dossier Id
+             * @description Arango _id of the dossier; null when the publication names a dossier that is not in the graph.
+             */
             dossier_id?: string | null;
             /** Dossier Number */
-            dossier_number?: string | null;
+            dossier_number: string;
             /** Dossier Title */
             dossier_title?: string | null;
-            /** Date */
+            /**
+             * Date
+             * @description Of the bill, or the publication date of the publication.
+             */
             date?: string | null;
-            /** Kind */
+            /**
+             * Kind
+             * @description Document kind of a bill, publication kind (`Stb`) of a publication.
+             */
             kind?: string | null;
-            /** Status */
+            /**
+             * Change
+             * @enum {string}
+             */
+            change: "amends" | "introduces" | "repeals";
+            /**
+             * Status
+             * @description `canoniek` (enacted) or `voorgesteld` (proposed).
+             */
             status?: string | null;
             /** Summary */
             summary?: string | null;
-            /** Document Id */
-            document_id?: string | null;
+            /**
+             * Document Id
+             * @description Arango _id of the publication or the bill.
+             */
+            document_id: string;
         };
         /**
          * LinkedInstrumentDTO
@@ -4166,10 +5243,58 @@ export interface components {
              * @default []
              */
             faction_memberships: components["schemas"]["FactionMembershipDTO"][];
+            /**
+             * Government Functions
+             * @description The posts held in a cabinet (from Wikidata), oldest first.
+             */
+            government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
             /** From Date */
             from_date?: string | null;
             /** To Date */
             to_date?: string | null;
+        };
+        /**
+         * MemberDetailDTO
+         * @description A member with the posts they held in government.
+         *
+         *     ``government_functions`` come from Wikidata (every post in a Dutch cabinet, complete
+         *     from the 1970s), oldest first; empty for a member Wikidata has no person for.
+         *     ``wikidata_id`` names that person: a member of parliament by date of birth and surname,
+         *     a minister who never sat in parliament by the papers they signed. A cabinet member the
+         *     Tweede Kamer has no person for is a member of their own (key ``wikidata_q<number>``).
+         */
+        MemberDetailDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+            /** Party */
+            party?: string | null;
+            /**
+             * Active
+             * @default false
+             */
+            active: boolean;
+            /**
+             * Faction Memberships
+             * @default []
+             */
+            faction_memberships: components["schemas"]["FactionMembershipDTO"][];
+            /**
+             * Government Functions
+             * @description The posts held in a cabinet (from Wikidata), oldest first.
+             */
+            government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
+            /** From Date */
+            from_date?: string | null;
+            /** To Date */
+            to_date?: string | null;
+            /** Birth Date */
+            birth_date?: string | null;
+            /** Wikidata Id */
+            wikidata_id?: string | null;
         };
         /**
          * MemberVoteDTO
@@ -4233,6 +5358,24 @@ export interface components {
             /** Votes */
             votes: components["schemas"]["MemberVoteDTO"][];
         };
+        /**
+         * MinistryDTO
+         * @description A ministry of ``core.ministries``; a former one names its successor and the last
+         *     day it had its name.
+         */
+        MinistryDTO: {
+            key: components["schemas"]["MinistryKey"];
+            /** Name */
+            name: string;
+            successor?: components["schemas"]["MinistryKey"] | null;
+            /** Until */
+            until?: string | null;
+        };
+        /**
+         * MinistryKey
+         * @enum {string}
+         */
+        MinistryKey: "az" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ez" | "ezk" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "szw" | "sz" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "vro" | "vrom" | "aenm";
         /**
          * NeighborBucketDTO
          * @description The neighbours that share a relation, a direction and a collection: one page of them.
@@ -4431,6 +5574,21 @@ export interface components {
             match_type: string;
         };
         /**
+         * PersonRefDTO
+         * @description A member named from another node.
+         */
+        PersonRefDTO: {
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+        };
+        /**
+         * Post
+         * @enum {string}
+         */
+        Post: "minister-president" | "viceminister-president" | "minister" | "minister_zonder_portefeuille" | "staatssecretaris";
+        /**
          * PublicationDTO
          * @description An amending publication (Staatsblad, Tractatenblad, ...) as recorded on a version.
          */
@@ -4447,6 +5605,11 @@ export interface components {
             signed?: string | null;
             /** Published */
             published?: string | null;
+            /**
+             * Official Url
+             * @description The publication on zoek.officielebekendmakingen.nl; null before 1995.
+             */
+            official_url?: string | null;
             /** Dossiers */
             dossiers?: components["schemas"]["DossierRefDTO"][];
         };
@@ -4669,8 +5832,18 @@ export interface components {
          * @description Database statistics: document counts per collection and edge counts.
          */
         StatsResponse: {
-            /** Nodes */
+            /**
+             * Nodes
+             * @description Documents per collection, without stubs.
+             */
             nodes: {
+                [key: string]: number;
+            };
+            /**
+             * Stubs
+             * @description Per collection that has them (instruments, articles, judgments): the nodes known only because something refers to them, without a text of their own.
+             */
+            stubs?: {
                 [key: string]: number;
             };
             edges: components["schemas"]["EdgeStatsDTO"];
@@ -4692,6 +5865,11 @@ export interface components {
             instruments: components["schemas"]["InstrumentStatsDTO"];
         };
         /**
+         * Tier
+         * @enum {string}
+         */
+        Tier: "hoge_raad" | "raad_van_state" | "centrale_raad_van_beroep" | "college_van_beroep_bedrijfsleven" | "parket" | "gerechtshof" | "rechtbank" | "kantongerecht" | "tuchtcollege" | "ambtenarengerecht" | "college_van_beroep_hoger_onderwijs" | "college_van_beroep_studiefinanciering" | "constitutioneel_hof" | "gemeenschappelijk_hof" | "gerecht_in_ambtenarenzaken" | "gerecht_in_eerste_aanleg" | "raad_van_arbitrage_in_bouwgeschillen" | "raad_van_beroep" | "raad_van_beroep_in_ambtenarenzaken" | "raad_van_beroep_voor_belastingzaken" | "raad_voor_strafrechtstoepassing_en_jeugdbescherming" | "tariefcommissie" | "kroon" | "buitenlandse_instantie" | "hvj_eu" | "ehrm";
+        /**
          * TimelineActivityBody
          * @description An activity entry: a debate, hearing or other agenda item.
          */
@@ -4703,7 +5881,7 @@ export interface components {
             kind?: string | null;
             /**
              * Agenda Title
-             * @description The agenda item; starts with the date.
+             * @description The subject of the activity (``Activiteit.Onderwerp``).
              */
             agenda_title?: string | null;
             /**
@@ -4711,6 +5889,11 @@ export interface components {
              * @description The activity number.
              */
             number?: string | null;
+            /**
+             * Status
+             * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none.
+             */
+            status?: string | null;
         };
         /**
          * TimelineActivityEntry
@@ -4727,6 +5910,18 @@ export interface components {
             node_id: string;
             /** Tk Url */
             tk_url?: string | null;
+            /**
+             * After Closure
+             * @description Dated after the dossier's ``closed_on``: a follow-up letter, a debate or procedure meeting after the law was published. False for an open dossier.
+             * @default false
+             */
+            after_closure: boolean;
+            /**
+             * Planned
+             * @description An activity with ``status`` ``Gepland``: announced, not (yet) held.
+             * @default false
+             */
+            planned: boolean;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
@@ -4769,6 +5964,18 @@ export interface components {
             node_id: string;
             /** Tk Url */
             tk_url?: string | null;
+            /**
+             * After Closure
+             * @description Dated after the dossier's ``closed_on``: a follow-up letter, a debate or procedure meeting after the law was published. False for an open dossier.
+             * @default false
+             */
+            after_closure: boolean;
+            /**
+             * Planned
+             * @description An activity with ``status`` ``Gepland``: announced, not (yet) held.
+             * @default false
+             */
+            planned: boolean;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
@@ -4839,6 +6046,18 @@ export interface components {
             /** Tk Url */
             tk_url?: string | null;
             /**
+             * After Closure
+             * @description Dated after the dossier's ``closed_on``: a follow-up letter, a debate or procedure meeting after the law was published. False for an open dossier.
+             * @default false
+             */
+            after_closure: boolean;
+            /**
+             * Planned
+             * @description An activity with ``status`` ``Gepland``: announced, not (yet) held.
+             * @default false
+             */
+            planned: boolean;
+            /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
@@ -4903,6 +6122,18 @@ export interface components {
             node_id: string;
             /** Tk Url */
             tk_url?: string | null;
+            /**
+             * After Closure
+             * @description Dated after the dossier's ``closed_on``: a follow-up letter, a debate or procedure meeting after the law was published. False for an open dossier.
+             * @default false
+             */
+            after_closure: boolean;
+            /**
+             * Planned
+             * @description An activity with ``status`` ``Gepland``: announced, not (yet) held.
+             * @default false
+             */
+            planned: boolean;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
@@ -4983,6 +6214,16 @@ export interface components {
              * @default
              */
             source_role: string;
+            /**
+             * Function
+             * @description The function they signed in, as the source writes it: 'Tweede Kamerlid', 'minister-president', 'vicepresident van de Raad van State'.
+             */
+            function?: string | null;
+            /**
+             * Capacity
+             * @description 'bewindspersoon' (a minister or staatssecretaris), 'kamerlid' (signed for a faction) or 'overig' (the griffier, the Raad van State, ...).
+             */
+            capacity?: ("kamerlid" | "bewindspersoon" | "overig") | null;
         };
         /**
          * TouchedInstrumentDTO
@@ -5150,7 +6391,8 @@ export interface operations {
                 offset?: number;
                 /** @description ECLI court code, e.g. 'HR', 'RBAMS' */
                 court?: string | null;
-                tier?: ("hoge_raad" | "gerechtshof" | "rechtbank" | "bijzonder") | null;
+                /** @description The college: `hoge_raad`, `raad_van_state`, `gerechtshof`, … */
+                tier?: components["schemas"]["Tier"] | null;
                 /** @description A lid number the passage names: '3', '2a' */
                 lid?: string | null;
             };
@@ -5323,13 +6565,16 @@ export interface operations {
                 q?: string | null;
                 /** @description ECLI court code, e.g. 'HR', 'RBAMS', 'GHARL' */
                 court?: string | null;
-                tier?: ("hoge_raad" | "gerechtshof" | "rechtbank" | "bijzonder") | null;
+                /** @description The college: `hoge_raad`, `raad_van_state`, `gerechtshof`, … */
+                tier?: components["schemas"]["Tier"] | null;
                 /** @description Filter op bron, e.g. 'rechtspraak', 'echr', 'cjeu' */
                 source?: string | null;
                 /** @description Lower bound on judgment date, YYYY-MM-DD */
                 from?: string | null;
                 /** @description Upper bound on judgment date, YYYY-MM-DD */
                 to?: string | null;
+                /** @description An area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`. */
+                subject?: string | null;
                 cited_by_min?: number | null;
                 sort?: "date_desc" | "date_asc" | "citation_count";
             };
@@ -5497,6 +6742,8 @@ export interface operations {
             query?: {
                 /** @description Include placeholder/stub articles (default: false) */
                 include_stubs?: boolean;
+                /** @description Include the articles no longer in force: identities whose number another article has now, and articles their current version repeals. */
+                include_repealed?: boolean;
                 /** @description Chars of text to inline as preview */
                 text_preview_chars?: number;
                 limit?: number;
@@ -6014,17 +7261,91 @@ export interface operations {
             };
         };
     };
+    list_dossiers_api_dossiers_get: {
+        parameters: {
+            query?: {
+                /** @description Open dossiers, closed ones (with an outcome) or both. */
+                status?: "open" | "closed" | "all";
+                outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+                /** @description Comma-separated tracks, e.g. ``wetsvoorstel,begroting``. */
+                track?: string | null;
+                /** @description The start of the number: ``36264`` (that number and its chapters), ``37020-`` (the chapters of 37020). */
+                number?: string | null;
+                /** @description Committee slug. */
+                committee?: string | null;
+                /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
+                subject?: string | null;
+                /** @description The dossier's latest recognised stage. To filter on a stage being present at all, use ``has_stage``. */
+                stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
+                /** @description Comma-separated stages; only dossiers that have all of them, e.g. ``mvt,advies_rvs``. */
+                has_stage?: string | null;
+                /** @description The ministry that brought it in. */
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description True: brought in by a Kamerlid; false: by the government. */
+                initiative?: boolean | null;
+                /** @description Opened on or after this day. */
+                opened_from?: string | null;
+                /** @description Opened on or before this day. */
+                opened_to?: string | null;
+                /** @description ``number`` in the order of the Kamer, ``opened_on`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``. */
+                sort?: ("number" | "opened_on" | "closed_on" | "title") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DossierListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_open_dossiers_api_dossiers_open_get: {
         parameters: {
             query?: {
+                /** @description Open dossiers, closed ones (with an outcome) or both. */
+                status?: "open" | "closed" | "all";
+                outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+                /** @description Comma-separated tracks, e.g. ``wetsvoorstel,begroting``. */
+                track?: string | null;
+                /** @description The start of the number: ``36264`` (that number and its chapters), ``37020-`` (the chapters of 37020). */
+                number?: string | null;
                 /** @description Committee slug. */
                 committee?: string | null;
-                /** @description Substring of the dossier title. */
+                /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
                 subject?: string | null;
-                /** @description The dossier's latest recognised stage, e.g. 'wetsvoorstel' or 'amendementen'. To filter on a stage being present at all, use ``has_stage``. */
-                stage?: string | null;
-                /** @description Comma-separated stages; returns only dossiers that have all of them, e.g. ``mvt,advies_rvs``. */
+                /** @description The dossier's latest recognised stage. To filter on a stage being present at all, use ``has_stage``. */
+                stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
+                /** @description Comma-separated stages; only dossiers that have all of them, e.g. ``mvt,advies_rvs``. */
                 has_stage?: string | null;
+                /** @description The ministry that brought it in. */
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description True: brought in by a Kamerlid; false: by the government. */
+                initiative?: boolean | null;
+                /** @description Opened on or after this day. */
+                opened_from?: string | null;
+                /** @description Opened on or before this day. */
+                opened_to?: string | null;
+                /** @description ``number`` in the order of the Kamer, ``opened_on`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``. */
+                sort?: ("number" | "opened_on" | "closed_on" | "title") | null;
                 limit?: number;
                 offset?: number;
             };
@@ -6060,6 +7381,8 @@ export interface operations {
                 /** @description Look-back in days. */
                 days?: number;
                 limit?: number;
+                /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
+                subject?: string | null;
             };
             header?: never;
             path?: never;
@@ -6194,6 +7517,8 @@ export interface operations {
                 order?: "asc" | "desc";
                 /** @description Comma-separated document kinds. */
                 kind?: string | null;
+                /** @description False leaves out the activities with status ``Gepland``. */
+                include_planned?: boolean;
                 limit?: number;
             };
             header?: never;
@@ -6381,6 +7706,10 @@ export interface operations {
                 /** @description Name substring. */
                 q?: string | null;
                 include_all?: boolean;
+                /** @description ``bewindspersoon``: only those who held a post in a cabinet. */
+                capacity?: "bewindspersoon" | null;
+                /** @description Only those who held a post in this cabinet (key). */
+                cabinet?: string | null;
                 limit?: number;
                 offset?: number;
             };
@@ -6427,7 +7756,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MemberDTO"];
+                    "application/json": components["schemas"]["MemberDetailDTO"];
                 };
             };
             /** @description Validation Error */
@@ -6660,6 +7989,155 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TouchedInstrumentsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ministries_api_ministries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MinistryDTO"][];
+                };
+            };
+        };
+    };
+    list_cabinets_api_cabinets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CabinetSummaryDTO"][];
+                };
+            };
+        };
+    };
+    get_cabinet_detail_api_cabinets__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CabinetDetailDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_commitments_api_commitments_get: {
+        parameters: {
+            query?: {
+                status?: ("open" | "done" | "partly_done" | "unfulfilled" | "lapsed") | null;
+                /** @description Member key. */
+                member?: string | null;
+                /** @description Cabinet key. */
+                cabinet?: string | null;
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description A dossier number or label: 36600, 36600-VII. */
+                dossier?: string | null;
+                /** @description Expected before this day. */
+                due_before?: string | null;
+                overdue?: boolean;
+                /** @description Words of the text. */
+                q?: string | null;
+                /** @description Newest made first, or soonest due first. */
+                sort?: "date" | "expected_resolution";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_commitment_detail_api_commitments__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentDTO"];
                 };
             };
             /** @description Validation Error */
@@ -7145,17 +8623,47 @@ export interface operations {
             };
         };
     };
+    get_coverage_api_stats_coverage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JudgmentCoverageResponse"];
+                };
+            };
+        };
+    };
     list_decisions_api_decisions_get: {
         parameters: {
             query?: {
+                /** @description Comma-separated: `motie`, `amendement`, `wetsvoorstel`, `overig`. */
+                kind?: string | null;
                 /** @description Only decisions that carried, or did not. */
                 passed?: boolean | null;
                 /** @description Only decisions this party voted on. */
                 party?: string | null;
+                /** @description With `party`: only decisions it voted for, or against. */
+                vote?: ("voor" | "tegen") | null;
                 /** @description 'TK' or 'EK'. */
                 chamber?: string | null;
                 /** @description Only decisions on this dossier number, e.g. 29684. */
                 dossier?: string | null;
+                /** @description Voted on or after this date, YYYY-MM-DD. */
+                from?: string | null;
+                /** @description Voted on or before this date, YYYY-MM-DD. */
+                to?: string | null;
+                /** @description A part of the subject, in any case. */
+                q?: string | null;
                 limit?: number;
                 offset?: number;
             };
