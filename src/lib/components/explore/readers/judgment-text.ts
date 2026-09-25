@@ -8,9 +8,9 @@ import { citationsWithin } from '$lib/components/articles/citations';
 type Span = Schema<'ArticleCitationSpan'>;
 
 // The first `subheading` paragraph always contains: court header, duplicate
-// metadata KV pairs, a status word (ARREST/VONNIS/TEGENSPRAAK), the defendant
-// identity block, and sometimes a full table of contents. We skip it in the
-// paragraph list and instead render just the defendant block as a party card.
+// metadata KV pairs, a status word (ARREST/VONNIS/TEGENSPRAAK), the party
+// blocks, and sometimes a full table of contents. We skip it in the paragraph
+// list and instead render just the parties in the participants table.
 
 const SKIP_LINE_RE =
 	/^(hoge raad|gerechtshof|rechtbank|parket|advocaat-generaal|strafkamer|civiele kamer|belastingkamer|arrest|vonnis|beschikking|tegenspraak|verstek|op tegenspraak|niet verschenen)$/i;
@@ -41,30 +41,431 @@ export function splitSummary(text: string): string[] {
 		.filter(Boolean);
 }
 
-/** Extract defendant/party lines from the first subheading text. */
-export function extractPartyInfo(text: string): string[] | null {
+// ── Rechtsgebied and parties ─────────────────────────────────────────────
+export type CaseArea = 'strafrecht' | 'civiel' | 'bestuursrecht';
+
+const AREA_PATTERNS: Array<[CaseArea, RegExp]> = [
+	['strafrecht', /straf/i],
+	['bestuursrecht', /bestuur|belasting|vreemdeling|sociale\s*zekerheid|ambtenaren|omgeving/i],
+	[
+		'civiel',
+		/civiel|personen|familie|ondernemings|arbeidsrecht|verbintenissen|goederen|insolventie|burgerlijk/i
+	]
+];
+
+function areaOf(text: string): CaseArea | null {
+	for (const [area, re] of AREA_PATTERNS) if (re.test(text)) return area;
+	return null;
+}
+
+/**
+ * The rechtsgebied of a judgment: from its `subjects` prop, else from the kamer or
+ * afdeling in the heading, the court, or the form of the case number.
+ */
+export function caseArea(
+	props: { subjects?: unknown; court?: unknown; case_number?: unknown } | null | undefined,
+	heading: string | null
+): CaseArea | null {
+	const subjects = Array.isArray(props?.subjects)
+		? props.subjects.filter((s): s is string => typeof s === 'string')
+		: typeof props?.subjects === 'string'
+			? props.subjects.split(/[;,]/)
+			: [];
+	for (const s of subjects) {
+		const area = areaOf(s);
+		if (area) return area;
+	}
+
+	if (heading) {
+		if (/strafkamer|strafzaak|afdeling strafrecht|parketnummer/i.test(heading)) return 'strafrecht';
+		if (/civiele kamer|civiel recht|ondernemingskamer|handelskamer|familiekamer/i.test(heading))
+			return 'civiel';
+		if (/belastingkamer|bestuursrecht/i.test(heading)) return 'bestuursrecht';
+	}
+
+	const court = typeof props?.court === 'string' ? props.court : '';
+	if (/raad van state|centrale raad van beroep|college van beroep/i.test(court))
+		return 'bestuursrecht';
+
+	const caseNumber = typeof props?.case_number === 'string' ? props.case_number.trim() : '';
+	if (/^\d{2}[-/]\d{6}-\d{2}\b/.test(caseNumber)) return 'strafrecht';
+	if (/^C\/\d+|\b(?:HA ZA|KG ZA|HA RK|CV EXPL)\b|^200\.\d{3}\.\d{3}/.test(caseNumber))
+		return 'civiel';
+	if (/^[A-Z]{3}\s+\d{2}\/\d+/.test(caseNumber)) return 'bestuursrecht';
+
+	return null;
+}
+
+// Role words a judgment uses for its own parties, and the label each gets.
+const STATED_ROLES: Array<[RegExp, string]> = [
+	[/^eise(?:r|res|rs|ressen)$/, 'Eiser'],
+	[/^verwe(?:erder|erster|erders|ersters)$/, 'Verweerder'],
+	[/^verzoek(?:er|ster|ers|sters)$/, 'Verzoeker'],
+	[/^gedaagden?$/, 'Gedaagde'],
+	[/^appellant(?:e|en)?$/, 'Appellant'],
+	[/^geïntimeerden?$/, 'Geïntimeerde'],
+	[/^opposant(?:e|en)?$/, 'Opposant'],
+	[/^verdachten?$/, 'Verdachte'],
+	[/^betrokkenen?$/, 'Betrokkene'],
+	[/^veroordeelden?$/, 'Veroordeelde'],
+	[/^(?:klager|klaagster)s?$/, 'Klager'],
+	[/^belanghebbenden?$/, 'Belanghebbende'],
+	[/^wederpartij(?:en)?$/, 'Wederpartij']
+];
+
+// "eisende partij", "gedaagde partijen": the role is in the first word.
+const PARTY_PHRASES: Array<[RegExp, string]> = [
+	[/^eisende\s+partij/, 'Eiser'],
+	[/^verzoekende\s+partij/, 'Verzoeker'],
+	[/^verwerende\s+partij/, 'Verweerder'],
+	[/^gedaagde\s+partij/, 'Gedaagde']
+];
+
+function statedRole(word: string): string | null {
+	const w = word.toLowerCase();
+	for (const [re, label] of STATED_ROLES) if (re.test(w)) return label;
+	return null;
+}
+
+/**
+ * The role a short phrase states: "EISERS in eerste aanleg", "eiser/verzoeker",
+ * "eisende partij in conventie", "hierna: de verdachte". Null for anything else.
+ */
+function roleOf(phrase: string): string | null {
+	const p = phrase
+		.toLowerCase()
+		.replace(/[,.;:]+$/, '')
+		.trim();
+	if (!p || p.split(/\s+/).length > 10) return null;
+	for (const [re, label] of PARTY_PHRASES) if (re.test(p)) return label;
+	const hierna = p.match(/^hierna:\s*(?:de\s+)?(\p{L}+)$/u);
+	if (hierna) return statedRole(hierna[1]);
+	const first = p.match(/^(\p{L}+)(?:\/\p{L}+)?(?:\s+(?:in|tot|bij)\b.*)?$/u);
+	return first ? statedRole(first[1]) : null;
+}
+
+/** An anonymised name that is itself a role: "[verdachte]", "[klager 1]", "[Appellante]". */
+function roleOfPlaceholder(name: string): string | null {
+	const m = name.match(/^\[(\p{L}+)(?:\s*\d+)?\]$/u);
+	return m ? statedRole(m[1]) : null;
+}
+
+/** The role word a placeholder starts with: "[eiser in conventie 2]", "[wederpartij A]". */
+function placeholderRole(name: string): string | null {
+	const m = name.match(/^\[(\p{L}+)/u);
+	return m ? statedRole(m[1]) : null;
+}
+
+const DEFAULT_ROLES: Record<CaseArea, { before: string | null; after: string }> = {
+	strafrecht: { before: null, after: 'Verdachte' },
+	civiel: { before: 'Eiser', after: 'Verweerder' },
+	bestuursrecht: { before: 'Appellant', after: 'Verweerder' }
+};
+
+// Where the party block of a judgment ends: the first section heading.
+const HEAD_END_RE =
+	/^(?:\d+\.?\s+)?(?:de procedure|procedure|(?:het )?procesverloop|procesgang|(?:het )?onderzoek (?:van de zaak|ter terechtzitting|op de zitting)|(?:de )?tenlastelegging|samenvatting|inleiding|overwegingen|het geding|het verloop|kern van de zaak|verzoek en verweer|de feiten|beoordeling|hoger beroep)\b/i;
+
+/**
+ * The opening lines of a judgment's full text, up to its first section heading:
+ * the part that names the court, the case and the parties.
+ */
+export function judgmentHead(text: string): string {
 	const lines = text
 		.split(/\n/)
 		.map((l) => l.replace(/\s+/g, ' ').trim())
 		.filter(Boolean);
-
-	// Find the "in de strafzaak tegen" / "...strafzaak tegen" / standalone "tegen" marker
-	const markerIdx = lines.findLastIndex(
-		(l) =>
-			/strafzaak\s+.*\stegen\s*$/.test(l) || /strafzaak\s+tegen\s*$/.test(l) || /^tegen\s*$/.test(l)
-	);
-	if (markerIdx === -1) return null;
-
-	const party: string[] = [];
-	for (let i = markerIdx + 1; i < Math.min(lines.length, markerIdx + 10); i++) {
-		const l = lines[i];
-		if (TOC_START_RE.test(l) || TOC_LINE_RE.test(l)) break;
-		if (SKIP_LINE_RE.test(l) || META_KV_RE.test(l) || PUNCT_ONLY_RE.test(l)) continue;
-		party.push(l);
-		// Stop after "hierna: de verdachte" — that's the end of the block
-		if (/hierna:/i.test(l)) break;
+	const head: string[] = [];
+	for (const l of lines.slice(0, 120)) {
+		if (head.length > 2 && HEAD_END_RE.test(l)) break;
+		head.push(l);
 	}
-	return party.length > 0 ? party : null;
+	return head.join('\n');
+}
+
+// Lines that open the first side: "in de zaak van", "inzake", "in de zaak tussen",
+// "op het verzoek van:".
+const SIDE_START_RE =
+	/^(?:in de zaak|in de zaken|inzake)\b|\b(?:tussen|van)\s*:$|\btussen$|\b(?:HA ZA|KG ZA|CV EXPL|HA RK)\b.*\bvan$/i;
+// Lines between the sides: "tegen", "en tegen", "…in de zaak tegen:".
+const SIDE_SPLIT_RE = /^(?:en\s+)?tegen\s*:?$|\btegen(?:\s+de\s+verdachte)?\s*:?$/i;
+// In a strafzaak also a lone "van" or "door" ("ten laste / van", "ingediend / door").
+const STRAF_SPLIT_RE = /^(?:van|door)$/i;
+const BELANGHEBBENDE_RE = /^als belanghebbenden?\s+(?:wordt|worden)\s+aangemerkt\s*:?$/i;
+// A second case in a joined judgment: "in de zaak 706680 / HA ZA 21-789 van".
+const NEXT_CASE_RE = /^(?:en\s+)?(?:in de zaak|inzake)\b/i;
+const BLOCK_END_RE =
+	/^(?:hierna zullen|partijen worden|de procedure\b)|\b(?:zal|zullen|worden)\s+hierna\b/i;
+const NOT_A_NAME_RE =
+	/^(?:hierna|advoca|raadsman|raadsvrouw|gemachtigde|wonend|gevestigd|zetelend|geboren|kantoorhoudend|brp-adres|adres\b|uit\b|v-nummer|waarvan|thans|nu\b|momenteel|zonder|ingeschreven|inschrijvingsadres|verblijvende|woonplaats|beiden?\b|alle\b|die\b|mede\b|handelend|voorheen|tegen\b|van$|en$|(?:en\s+)?in de zaak|inzake|de moeder|de vader)/i;
+const NUMBERED_RE = /^(\d{1,2})\.?\s+(\D.*)$/;
+const PLACEHOLDER_RE = /^\[[^\]]+\]$/;
+// A legal form without the name that follows it: "de stichting", "1. de besloten
+// vennootschap met beperkte aansprakelijkheid", "rechtspersoon naar vreemd recht".
+const LEGAL_FORM_RE =
+	/^(?:de\s+)?(?:besloten vennootschap|naamloze vennootschap|stichting|vereniging|coöperatie|commanditaire vennootschap|vennootschap onder firma|vennootschap|maatschap|publiekrechtelijke rechtspersoon|rechtspersoon)(?:\s+(?:met|naar|onder)\b[\p{L}\s]*)?$/iu;
+const LEGAL_FORMS_RE =
+	/^(?:de\s+)?(?:\p{L}+\s+)?(?:stichtingen|verenigingen|vennootschappen|rechtspersonen)\b/iu;
+const LEGAL_FORM_PREFIX_RE =
+	/^(?:de\s+)?(?:besloten vennootschap|naamloze vennootschap|stichting|vereniging|coöperatie)(?:\s+met\s+(?:beperkte aansprakelijkheid|volledige rechtsbevoegdheid))?\s+(?=[A-Z[])/;
+
+/** Letters spaced out for emphasis ("e i s e r e s ,", "t e g e n :") as one word. */
+const unspace = (line: string) =>
+	/^e n$/i.test(line)
+		? 'en'
+		: line.replace(/^((?:\p{L} ){2,}\p{L})(?=[\s,:.]|$)/u, (m) => m.replace(/ /g, ''));
+
+function partyName(segment: string): string {
+	return segment
+		.replace(/\[\s*([^\]]*?)\s*\]/g, '[$1]')
+		.replace(/\s+\.(?=\s|$)/g, '.')
+		.replace(/\s+(?:te|uit|in)\s+\[[^\]]*\]\s*$/, '')
+		.replace(/^(\[[^\]]+\])\s+(?:uit|te|gevestigd|wonend)\b.*$/, '$1')
+		.replace(/[\s,]+(?:handelend|gevestigd|wonend|zetelend)\b.*$/, '')
+		.replace(LEGAL_FORM_PREFIX_RE, '')
+		.replace(/[\s,;:]+$/, '')
+		.replace(/(?<!\b\p{Lu})\.$/u, '')
+		.trim();
+}
+
+type Party = { name: string; role: string | null; generic: boolean };
+type Side = { parties: Party[]; role: string | null; alias: string | null };
+
+/**
+ * The parties in lines `from` to `to`. A role line ("VERWEERSTERS in eerste
+ * aanleg,") applies to the parties above it that have none yet.
+ */
+function readSide(lines: string[], from: number, to: number): Side {
+	const side: Side = { parties: [], role: null, alias: null };
+	let pendingForm: string | null = null;
+	let lastNumber = 0;
+	let roleFrom = 0;
+	// After "en" or "en tegen" the next name is another party.
+	let joined = false;
+	const flush = () => {
+		if (pendingForm) side.parties.push({ name: pendingForm, role: null, generic: true });
+		pendingForm = null;
+	};
+	const assign = (role: string) => {
+		flush();
+		side.role ??= role;
+		for (const p of side.parties.slice(roleFrom)) p.role ??= role;
+		roleFrom = side.parties.length;
+	};
+	for (let i = from; i < to; i++) {
+		const l = lines[i];
+		if (TOC_START_RE.test(l) || TOC_LINE_RE.test(l) || BLOCK_END_RE.test(l) || l.length > 250)
+			break;
+		if (i > from && side.parties.length > 0 && NEXT_CASE_RE.test(l) && from > 0) break;
+		if (SIDE_SPLIT_RE.test(l) || /^en$/i.test(l) || BELANGHEBBENDE_RE.test(l)) {
+			flush();
+			joined = true;
+			continue;
+		}
+		const parens = [...l.matchAll(/\(([^)]*)\)/g)].map((m) => m[1]);
+		const segments = l
+			.replace(/\([^)]*\)/g, ' ')
+			.split(',')
+			.map((s) => s.replace(/\s+/g, ' ').trim())
+			.filter(Boolean);
+		if (segments.length === 0) continue;
+		const [first, ...rest] = segments;
+		const ownRole = () => {
+			let own: string | null = null;
+			for (const s of [...rest, ...parens]) own ??= roleOf(s);
+			return own;
+		};
+
+		const role = roleOf(first);
+		if (role) {
+			assign(role);
+			continue;
+		}
+		const hierna = first.match(/^hierna(?:\s+te\s+noemen)?\s*:?\s*(.+)$/i);
+		if (hierna) {
+			if (!/^(?:gezamenlijk|samen|respectievelijk)\b/i.test(hierna[1])) side.alias ??= hierna[1];
+			flush();
+			continue;
+		}
+		if (SKIP_LINE_RE.test(first) || META_KV_RE.test(first) || PUNCT_ONLY_RE.test(first)) continue;
+		if (NOT_A_NAME_RE.test(first) || LEGAL_FORMS_RE.test(first)) {
+			flush();
+			const own = ownRole();
+			if (own) assign(own);
+			continue;
+		}
+
+		const numbered = first.match(NUMBERED_RE);
+		// Numbering runs up within a side; "1 De procedure" after party 4 is a heading.
+		if (numbered) {
+			const n = Number(numbered[1]);
+			if (n <= lastNumber || (lastNumber === 0 && side.parties.length > 0)) break;
+			lastNumber = n;
+		}
+		const text = numbered ? numbered[2] : first;
+		if (LEGAL_FORM_RE.test(text)) {
+			flush();
+			pendingForm = text;
+			continue;
+		}
+		const name = partyName(text);
+		// Another unnumbered line is a party only as a placeholder named after a role
+		// ("[eiser in conventie 2]"), not "[BRP-adres]" or the collective "[appellanten]".
+		const extra =
+			PLACEHOLDER_RE.test(name) && !/(?:en|s)\]$/.test(name) ? placeholderRole(name) : null;
+		const another = numbered || pendingForm || joined || side.parties.length === 0 || extra;
+		pendingForm = null;
+		joined = false;
+		if (
+			!another ||
+			!name ||
+			NOT_A_NAME_RE.test(name) ||
+			side.parties.some((p) => p.name === name)
+		) {
+			const own = ownRole();
+			if (own) assign(own);
+			continue;
+		}
+		const own = ownRole() ?? (side.parties.length > 0 && !numbered ? extra : null);
+		side.parties.push({ name, role: own, generic: false });
+		if (own) {
+			side.role ??= own;
+			roleFrom = side.parties.length;
+		}
+	}
+	flush();
+	return side;
+}
+
+/**
+ * Aliases a judgment assigns after the parties, in order: "verzoekster 1 als:
+ * [Aandeelhouder 1]". Only entries whose label is a role word count.
+ */
+function aliasList(lines: string[]): Array<{ role: string; alias: string }> {
+	const out: Array<{ role: string; alias: string }> = [];
+	lines.forEach((l, i) => {
+		const m = l.match(/^(\p{L}+)(?:\s+\d+)?\s+als\s*:$/u);
+		const role = m && statedRole(m[1]);
+		const next = lines[i + 1];
+		if (role && next) out.push({ role, alias: next.split(',')[0].trim() });
+	});
+	return out;
+}
+
+const sameParty = (a: string, b: string) => {
+	const x = a.toLowerCase();
+	const y = b.toLowerCase();
+	return x === y || x.startsWith(y + ' ') || y.startsWith(x + ' ');
+};
+
+/**
+ * The parties named in the heading block of a judgment, each with its role. The
+ * block has one of these forms: "… tegen …", "… tussen … en …", "Partijen:", or
+ * a single side ("op het verzoek van:"). Parties before the split are eiser,
+ * verzoeker or appellant; after it verweerder or verdachte, depending on the
+ * rechtsgebied. A role the judgment states itself takes precedence. Without
+ * either, the role is "Partij".
+ */
+export function extractParties(text: string, area: CaseArea | null): Participant[] {
+	const lines = text
+		.split(/\n/)
+		.map((l) => unspace(l.replace(/\s+/g, ' ').trim()))
+		.filter(Boolean);
+	const defaults = area ? DEFAULT_ROLES[area] : null;
+
+	let before: Side | null = null;
+	let after: Side | null = null;
+	let afterRole: string | null = null;
+
+	const partijen = lines.findIndex((l) => /^partijen\s*:$/i.test(l));
+	let split = lines.findIndex(
+		(l) =>
+			SIDE_SPLIT_RE.test(l) ||
+			BELANGHEBBENDE_RE.test(l) ||
+			(area === 'strafrecht' && STRAF_SPLIT_RE.test(l))
+	);
+	const start = lines.findIndex((l, i) => (split === -1 || i < split) && SIDE_START_RE.test(l));
+	// Without "tegen", a lone "en" after the opening line separates the sides; in a
+	// strafzaak it joins co-klagers or co-verdachten.
+	if (split === -1 && start !== -1 && area !== 'strafrecht')
+		split = lines.findIndex((l, i) => i > start && /^en$/i.test(l));
+
+	if (partijen !== -1 && (split === -1 || partijen < split)) {
+		// "Partijen:" followed by one line per party, the first the appellant.
+		const parties = lines
+			.slice(partijen + 1)
+			.flatMap((_, k) => readSide(lines, partijen + 1 + k, partijen + 2 + k).parties);
+		before = { parties: parties.slice(0, 1), role: null, alias: null };
+		after = { parties: parties.slice(1), role: null, alias: null };
+	} else {
+		if (split === -1 && start === -1) return [];
+		if (split === -1) split = lines.length;
+		if (BELANGHEBBENDE_RE.test(lines[split] ?? '')) afterRole = 'Belanghebbende';
+		before = start === -1 ? null : readSide(lines, start + 1, split);
+		after = readSide(lines, split + 1, lines.length);
+	}
+
+	// A party on both sides is the one listed first: in "hoger beroep van: de
+	// minister … tegen de uitspraak in het geding tussen: [appellant] en de minister".
+	if (before && after)
+		after.parties = after.parties.filter(
+			(p) => p.generic || !before!.parties.some((q) => sameParty(p.name, q.name))
+		);
+
+	// A party known only by its legal form takes the alias the judgment gives it.
+	const aliases = aliasList(lines);
+	const used = new Set<number>();
+	for (const side of [before, after]) {
+		if (!side) continue;
+		const generic = side.parties.filter((p) => p.generic);
+		if (!aliases.length) {
+			if (generic.length === 1 && side.alias) generic[0].name = side.alias;
+			continue;
+		}
+		for (const p of generic) {
+			const k = aliases.findIndex((a, i) => !used.has(i) && (!p.role || a.role === p.role));
+			if (k === -1) continue;
+			used.add(k);
+			p.name = aliases[k].alias;
+			p.role ??= aliases[k].role;
+		}
+	}
+
+	const parties: Participant[] = [];
+	const push = (side: Side, fallback: string | null) => {
+		for (const p of side.parties) {
+			const role = p.role ?? side.role ?? roleOfPlaceholder(p.name) ?? fallback ?? 'Partij';
+			parties.push({ role, name: p.name });
+		}
+	};
+	const single = !after || after.parties.length === 0;
+	if (before && (area !== 'strafrecht' || single || before.role)) {
+		const verzoek = area === 'civiel' && /verzoek|beschikking/i.test(text);
+		push(before, verzoek ? 'Verzoeker' : (defaults?.before ?? null));
+	}
+	// In civil hoger beroep the other side of an appellant is geïntimeerde.
+	const hogerBeroep = area === 'civiel' && parties.some((p) => p.role === 'Appellant');
+	if (after) push(after, afterRole ?? (hogerBeroep ? 'Geïntimeerde' : (defaults?.after ?? null)));
+	return parties;
+}
+
+/**
+ * All named participants of a judgment: the parties from the opening of its full
+ * text (or, without one, from its first subheading) and the raadslieden and A-G
+ * named in its first body paragraphs.
+ */
+export function judgmentParticipants(judgment: {
+	props?: { [key: string]: unknown } | null;
+	paragraphs?: Array<{ kind?: string | null; text: string }> | null;
+}): Participant[] {
+	const paragraphs = judgment.paragraphs ?? [];
+	const subheading = paragraphs.find((p) => p.kind === 'subheading')?.text ?? null;
+	const text = judgment.props?.text;
+	const head = typeof text === 'string' && text ? judgmentHead(text) : null;
+	const area = caseArea(judgment.props, head ?? subheading);
+	let parties = head ? extractParties(head, area) : [];
+	if (parties.length === 0 && subheading) parties = extractParties(subheading, area);
+	return extractParticipants(paragraphs, parties);
 }
 
 const WHITESPACE = /[ \t]*(?:\n[ \t]*)+|[ \t]+/g;
@@ -151,21 +552,15 @@ function parseOnePara(text: string, chunkOffset: number): ParsedBodyPara {
 export type Participant = { role: string; name: string; party?: string };
 
 /**
- * Extract named parties from the judgment. Verdachte comes from the first
- * subheading; raadsman and A-G are scanned from the "Geding in cassatie"
- * body paragraph (typically the first body paragraph that mentions "mr.").
+ * Extract named parties from the judgment. The parties come from the heading
+ * block (see `extractParties`); raadsman and A-G are scanned from the "Geding in
+ * cassatie" body paragraph (typically the first body paragraph that mentions "mr.").
  */
 export function extractParticipants(
 	paragraphs: Array<{ kind?: string | null; text: string }>,
-	partyLines: string[] | null
+	parties: Participant[]
 ): Participant[] {
-	const participants: Participant[] = [];
-
-	// Verdachte
-	if (partyLines && partyLines.length > 0) {
-		const name = partyLines[0].replace(/,$/, '').trim();
-		if (name) participants.push({ role: 'Verdachte', name });
-	}
+	const participants: Participant[] = [...parties];
 
 	// Scan first several body paragraphs for raadsman, A-G and OvJ mentions.
 	// GH judgments can place these in para 10–12 (after procesgang header), so scan wider.
@@ -206,7 +601,8 @@ export function extractParticipants(
 		)) {
 			const party = partyAt(m.index!);
 			for (const raw of [m[1], m[2]]) {
-				const n = raw.trim().startsWith('mr.') ? raw.trim() : `mr. ${raw.trim()}`;
+				const bare = raw.trim().replace(/\s+voornoemd$/, '');
+				const n = bare.startsWith('mr.') ? bare : `mr. ${bare}`;
 				if (!participants.some((p) => p.name === n)) {
 					participants.push({ role: 'Raadsman', name: n, party });
 				}
@@ -215,7 +611,12 @@ export function extractParticipants(
 
 		// Single lawyer with "mr." prefix: "mr. X, advocaat te ..."
 		for (const m of t.matchAll(/mr\.\s+([A-Z][^,]{1,40}?),?\s+advocaat\b/g)) {
-			const n = `mr. ${m[1].trim().replace(/,$/, '')}`;
+			// Two lawyers ("mr. X voornoemd en mr. Y") are the pattern above.
+			if (/\sen\s+mr\./.test(m[1])) continue;
+			const n = `mr. ${m[1]
+				.trim()
+				.replace(/,$/, '')
+				.replace(/\s+voornoemd$/, '')}`;
 			const party = partyAt(m.index!);
 			if (!participants.some((p) => p.name === n)) {
 				participants.push({ role: 'Raadsman', name: n, party });

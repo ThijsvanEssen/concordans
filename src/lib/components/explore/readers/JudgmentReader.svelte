@@ -14,9 +14,8 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import {
-		extractParticipants,
-		extractPartyInfo,
 		headingId,
+		judgmentParticipants,
 		normalizeParagraphText,
 		splitBodyParagraph,
 		splitSummary
@@ -118,8 +117,7 @@
 				? `https://deeplink.rechtspraak.nl/uitspraak?id=${encodeURIComponent(j.ecli)}`
 				: null}
 		{@const firstSubheading = paragraphs.find((p) => p.kind === 'subheading')}
-		{@const partyLines = firstSubheading ? extractPartyInfo(firstSubheading.text) : null}
-		{@const participants = extractParticipants(paragraphs, partyLines)}
+		{@const participants = judgmentParticipants(j)}
 		{@const hasSummary = !!j.summary?.trim()}
 		<ReaderHead
 			collection="judgments"

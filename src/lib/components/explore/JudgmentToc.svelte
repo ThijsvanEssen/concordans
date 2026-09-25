@@ -8,8 +8,8 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { formatEcliLabel } from '$lib/graph/types';
 	import {
-		extractPartyInfo,
 		headingId,
+		judgmentParticipants,
 		normalizeParagraphText,
 		splitBodyParagraph
 	} from './readers/judgment-text';
@@ -41,10 +41,8 @@
 				const j = data.judgment;
 				ecliLabel = j.ecli ? formatEcliLabel(j.ecli) : (j.display_name ?? 'Uitspraak');
 				const paragraphs = j.paragraphs ?? [];
-				const firstSubheading = paragraphs.find((p) => p.kind === 'subheading');
-				const hasParties = firstSubheading
-					? !!extractPartyInfo(firstSubheading.text)?.length
-					: false;
+				// The same condition under which JudgmentReader renders its table.
+				const hasParties = judgmentParticipants(j).length > 0;
 
 				const out: Item[] = [];
 				if (j.summary?.trim()) out.push({ id: 'summary', label: 'Samenvatting', kind: 'summary' });
