@@ -1,0 +1,42 @@
+// The Burgerlijk Wetboek is one code in ten books, each an instrument of its own in the
+// BWB. Lawyers cite an article with its book before the number: art. 6:162 BW, not
+// "artikel 162 Burgerlijk Wetboek Boek 6".
+
+/** The boeken of the Burgerlijk Wetboek and their BWB ids. */
+export const BW_BOOKS: Record<string, string> = {
+	'1': 'BWBR0002656',
+	'2': 'BWBR0003045',
+	'3': 'BWBR0005291',
+	'4': 'BWBR0002761',
+	'5': 'BWBR0005288',
+	'6': 'BWBR0005289',
+	'7': 'BWBR0005290',
+	'7a': 'BWBR0006000',
+	'8': 'BWBR0005034',
+	'10': 'BWBR0030068'
+};
+
+const BOOK_OF: Record<string, string> = Object.fromEntries(
+	Object.entries(BW_BOOKS).map(([book, id]) => [id, book.toUpperCase()])
+);
+
+/** The number an article is cited by: `6:162` for article 162 of Boek 6, else as it is. */
+export function bookNumber(bwbId: string | null | undefined, number: string): string;
+export function bookNumber(
+	bwbId: string | null | undefined,
+	number: string | null | undefined
+): string | null;
+export function bookNumber(bwbId: string | null | undefined, number: string | null | undefined) {
+	if (!number) return number ?? null;
+	const book = bwbId ? BOOK_OF[bwbId.toUpperCase()] : undefined;
+	return book && !number.includes(':') ? `${book}:${number}` : number;
+}
+
+/** "Artikel 162 Burgerlijk Wetboek Boek 6" as lawyers write it: "Artikel 6:162 BW". */
+export function withBook(name: string): string {
+	return name.replace(
+		/^Artikel (\S+) Burgerlijk Wetboek Boek (\d+a?)$/i,
+		(_, number: string, book: string) =>
+			`Artikel ${number.includes(':') ? number : `${book.toUpperCase()}:${number}`} BW`
+	);
+}

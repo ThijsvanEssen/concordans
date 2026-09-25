@@ -13,6 +13,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
+	import { withBook } from '$lib/text/bw';
 	import { track } from '$lib/analytics';
 	import { ApiError } from '$lib/api/client';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
@@ -542,7 +543,9 @@
 		const name =
 			selectedNode?.collection === 'judgments'
 				? `${selectedNode.label}${known}`
-				: (selectedNode?.raw?.display_name ?? selectedNode?.label);
+				: selectedNode?.raw?.display_name
+					? withBook(selectedNode.raw.display_name)
+					: selectedNode?.label;
 		if (name) return `${name} · Concordans`;
 		if (netwerkActive) return 'Netwerk · Concordans';
 		return 'Verkenner · Concordans';

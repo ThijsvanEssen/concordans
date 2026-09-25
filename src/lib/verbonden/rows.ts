@@ -4,6 +4,7 @@
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
+import { withBook } from '$lib/text/bw';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
 
@@ -179,6 +180,9 @@ export function describe(
 				context: null,
 				identifier: text(props.bwb_id) ?? text(props.celex)
 			};
+		// An article of the BW by its book: "Artikel 6:162 BW".
+		case 'articles':
+			return { title: withBook(name), context: null };
 		default:
 			return { title: name, context: null };
 	}

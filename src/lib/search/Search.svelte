@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bookNumber } from '$lib/text/bw';
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
 	// Netwerk, where a result is picked instead of opened.
 	import { goto } from '$app/navigation';
@@ -106,7 +107,8 @@
 	function titleOf(hit: Hit): string {
 		if (hit.collection === 'articles' && extra(hit, 'article_number')) {
 			const heading = extra(hit, 'heading');
-			return `Artikel ${extra(hit, 'article_number')}${heading ? `. ${heading}` : ''}`;
+			const number = bookNumber(extra(hit, 'bwb_id'), extra(hit, 'article_number'));
+			return `Artikel ${number}${heading ? `. ${heading}` : ''}`;
 		}
 		if (hit.collection === 'judgments' && extra(hit, 'ecli')) {
 			const names = extras(hit, 'names');

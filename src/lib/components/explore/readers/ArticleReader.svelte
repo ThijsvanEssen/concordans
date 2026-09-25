@@ -18,6 +18,7 @@
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
 	import { bronHref, refId } from '$lib/bron/href';
 	import { citeArticle } from '$lib/text/cite';
+	import { bookNumber } from '$lib/text/bw';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, formatCount, type VerbondenFilter } from '$lib/verbonden/filter';
@@ -418,8 +419,10 @@
 	// The article with its heading where the law gives one: "Artikel 22. Verwerking van
 	// persoonsgegevens".
 	const title = (a: Schema<'ArticleSummaryDTO'>) => {
-		const name =
-			a.label ?? (a.article_number ? `Artikel ${a.article_number}` : (a.display_name ?? 'Artikel'));
+		// A BW article with its book (Artikel 6:162); an article without a number by its label.
+		const name = a.article_number
+			? `Artikel ${bookNumber(a.bwb_id, a.article_number)}`
+			: (a.label ?? a.display_name ?? 'Artikel');
 		return a.heading && a.article_number ? `${name}. ${a.heading}` : name;
 	};
 </script>

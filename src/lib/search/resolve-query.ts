@@ -1,6 +1,7 @@
 // `GET /api/resolve` (API 0.5) turns a citation into one bron. `resolveQuery` asks it
 // first and, where it is absent or finds nothing, parses the notation itself.
 // TODO(backend B11): the parser and the lookups below go when every notation resolves.
+import { BW_BOOKS } from '$lib/text/bw';
 import { api, unwrap } from '$lib/api/client';
 import type { BronRef } from '$lib/bron/href';
 import type { Collection } from '$lib/vocabulary';
@@ -47,20 +48,6 @@ export function bareArticle(query: string): string | null {
 	const citation = `art. ${q}`;
 	return parseCitation(citation)?.kind === 'article' ? citation : null;
 }
-
-/** The boeken of the Burgerlijk Wetboek are instruments of their own. */
-const BW_BOOKS: Record<string, string> = {
-	'1': 'BWBR0002656',
-	'2': 'BWBR0003045',
-	'3': 'BWBR0005291',
-	'4': 'BWBR0002761',
-	'5': 'BWBR0005288',
-	'6': 'BWBR0005289',
-	'7': 'BWBR0005290',
-	'7a': 'BWBR0006000',
-	'8': 'BWBR0005034',
-	'10': 'BWBR0030068'
-};
 
 const isBW = (law: string) => /^(bw|burgerlijk wetboek)$/i.test(law.trim());
 

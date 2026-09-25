@@ -1,4 +1,5 @@
 import type { Schema } from '$lib/api/types';
+import { bookNumber } from '$lib/text/bw';
 import {
 	isCollection,
 	isRelation,
@@ -274,7 +275,7 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 			return party ? `${name} (${party})` : name;
 		}
 		case 'article': {
-			const number = text(props.article_number);
+			const number = bookNumber(text(props.bwb_id), text(props.article_number));
 			// An article without a number goes by its heading: "Algemene bepaling".
 			return number ? `Art. ${number}` : (text(props.label) ?? node.display_name ?? node.key);
 		}
