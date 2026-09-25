@@ -41,6 +41,7 @@
 		currentCabinet,
 		getCabinets,
 		getMinistries,
+		laterPosts,
 		period,
 		type Cabinet,
 		type Ministry
@@ -851,6 +852,8 @@
 			})
 		);
 	});
+	// The counts of a person stand with their longest post in the list shown.
+	const repeatPosts = $derived(laterPosts(ministersShown ?? []));
 	/** Under the protocol order, the posts under their ministry; the others without a ministry last. */
 	const ministerGroups = $derived.by(() => {
 		if (!ministersShown) return undefined;
@@ -2233,13 +2236,22 @@
 														{/if}
 													{/snippet}
 													{#snippet aside()}
-														<span class="nums">
-															<span>{m.dossiers}</span>
-															<span>{m.bills}</span>
-															<span class:nums--hot={m.open_commitments > 0}
-																>{m.open_commitments}</span
+														{#if repeatPosts.has(m)}
+															<span
+																class="nums nums--repeat"
+																title="Geteld bij de langste functie van deze persoon in dit kabinet"
 															>
-														</span>
+																<span>–</span><span>–</span><span>–</span>
+															</span>
+														{:else}
+															<span class="nums">
+																<span>{m.dossiers}</span>
+																<span>{m.bills}</span>
+																<span class:nums--hot={m.open_commitments > 0}
+																	>{m.open_commitments}</span
+																>
+															</span>
+														{/if}
 													{/snippet}
 													{#snippet detail()}
 														<div class="gov-detail">
@@ -3256,5 +3268,9 @@
 		.stage-aside {
 			align-items: flex-start;
 		}
+	}
+
+	.nums--repeat {
+		color: var(--ink-3);
 	}
 </style>

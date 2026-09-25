@@ -52,3 +52,21 @@ export function period(from: string | null | undefined, to: string | null | unde
 	if (!to) return `sinds ${y(from)}`;
 	return y(from) === y(to) ? y(from) : `${y(from)}–${y(to)}`;
 }
+
+/**
+ * The posts of a person other than their longest. The API counts dossiers, bills and open
+ * commitments per person over the whole cabinet, so they belong with one post, not with
+ * each: a minister ad interim for ten days would otherwise seem to have signed them all.
+ */
+export function laterPosts<
+	T extends { member: { key: string }; from_date?: string | null; to_date?: string | null }
+>(rows: readonly T[], today = new Date().toISOString().slice(0, 10)): Set<T> {
+	const days = (r: T) =>
+		(Date.parse(r.to_date ?? today) - Date.parse(r.from_date ?? r.to_date ?? today)) / 86_400_000;
+	const longest = new Map<string, T>();
+	for (const row of rows) {
+		const best = longest.get(row.member.key);
+		if (!best || days(row) > days(best)) longest.set(row.member.key, row);
+	}
+	return new Set(rows.filter((r) => longest.get(r.member.key) !== r));
+}
