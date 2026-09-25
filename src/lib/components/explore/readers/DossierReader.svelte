@@ -46,7 +46,11 @@
 		return { first: of('outgoing'), second: of('incoming') };
 	});
 
+	// Raised by Opnieuw, to load the bron again after an error.
+	let attempt = $state(0);
+
 	$effect(() => {
+		void attempt;
 		// The API addresses a dossier by its number (`37020-XV`), the node's `label`.
 		const number = str(node.raw?.props?.label);
 		if (!number) {
@@ -90,7 +94,10 @@
 		{#if view.kind === 'loading'}
 			<p class="loading">Laden…</p>
 		{:else if view.kind === 'error'}
-			<p class="error">{view.message}</p>
+			<p class="error">
+				{view.message}
+				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
+			</p>
 		{:else}
 			{@const d = view.dossier}
 			{@const track = d.track ?? 'overig'}

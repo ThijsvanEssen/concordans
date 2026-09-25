@@ -10,10 +10,13 @@
 	let {
 		status = 'ready',
 		message = '',
+		onRetry,
 		children
 	}: {
 		status?: 'empty' | 'loading' | 'error' | 'ready';
 		message?: string;
+		/** Load again after an error: the API may have been out of reach for a moment. */
+		onRetry?: () => void;
 		children?: Snippet;
 	} = $props();
 </script>
@@ -31,7 +34,12 @@
 				<div class="skeleton-body skeleton-body--short"></div>
 			</div>
 		{:else if status === 'error'}
-			<div class="reader-error">{message}</div>
+			<div class="reader-error" role="alert">
+				<p>{message} De bron kon niet worden opgehaald; mogelijk is de verbinding weg.</p>
+				{#if onRetry}
+					<button type="button" class="btn is-text" onclick={onRetry}>Opnieuw</button>
+				{/if}
+			</div>
 		{:else}
 			{@render children?.()}
 		{/if}

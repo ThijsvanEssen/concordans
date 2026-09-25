@@ -85,7 +85,11 @@
 		void tick().then(() => landOn(container, anchor));
 	});
 
+	// Raised by Opnieuw, to load the bron again after an error.
+	let attempt = $state(0);
+
 	$effect(() => {
+		void attempt;
 		if (!ecli) {
 			view = { kind: 'empty' };
 			return;
@@ -112,6 +116,7 @@
 </script>
 
 <ReaderFrame
+	onRetry={() => attempt++}
 	status={view.kind === 'loaded' ? 'ready' : view.kind}
 	message={view.kind === 'error' ? view.message : ''}
 >

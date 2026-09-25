@@ -22,7 +22,11 @@
 
 	let view = $state<State>({ kind: 'loading' });
 
+	// Raised by Opnieuw, to load the bron again after an error.
+	let attempt = $state(0);
+
 	$effect(() => {
+		void attempt;
 		const key = node.key;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
@@ -55,7 +59,10 @@
 		{#if view.kind === 'loading'}
 			<p class="loading">Laden…</p>
 		{:else if view.kind === 'error'}
-			<p class="error">{view.message}</p>
+			<p class="error">
+				{view.message}
+				<button type="button" class="btn is-text" onclick={() => attempt++}>Opnieuw</button>
+			</p>
 		{:else}
 			{@const d = view.decision}
 			{@const doc = view.document}
