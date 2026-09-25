@@ -449,17 +449,8 @@ export function extractParties(text: string, area: CaseArea | null): Participant
 	return parties;
 }
 
-// The parties the API reads from the kop (API 0.11, `JudgmentDTO.parties`). Typed here
-// until the generated types catch up with that version; replace with
-// `Schema<'JudgmentParty'>` after `npm run sync:api`.
-export type JudgmentParty = {
-	name: string;
-	role: string;
-	role_stated: boolean;
-	side: 'first' | 'second' | 'other';
-	alias?: string | null;
-	representatives?: Array<{ name: string; role: 'advocaat' | 'gemachtigde' }>;
-};
+// The parties the API reads from the kop (`JudgmentDTO.parties`).
+export type JudgmentParty = Schema<'JudgmentParty'>;
 
 /** `parties` of a judgment when the API sends it, else null (an older API or judgment). */
 function partiesOf(value: unknown): JudgmentParty[] | null {
