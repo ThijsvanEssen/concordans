@@ -1128,9 +1128,10 @@
 		pointer-events: auto;
 	}
 
+	/* Bottom left: the Netwerk panel holds the top of the canvas, the zoom the bottom right. */
 	.compact-legend-wrap {
 		position: absolute;
-		top: var(--s-3);
+		bottom: var(--s-3);
 		left: var(--s-3);
 		z-index: var(--z-float);
 	}
@@ -1151,7 +1152,7 @@
 
 	.compact-legend-panel {
 		position: absolute;
-		top: calc(100% + 6px);
+		bottom: calc(100% + 6px);
 		left: 0;
 		max-height: calc(100vh - 160px);
 		overflow-y: auto;
