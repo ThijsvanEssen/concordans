@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
 	// The legend of the network, which is also its filter: the bronnen that take part
 	// (with counts and the preset), the verbindingen per relation with a line sample,
 	// the depth from the focus, the lid, and one line with what is on the canvas and
@@ -69,7 +70,6 @@
 
 	let presetMenu = $state(false);
 	let lidMenu = $state(false);
-	let confirmClear = $state(false);
 
 	// With a netwerk and nothing selected, the kinds count what is on the canvas.
 	const fromCanvas = $derived(netwerkActive && !selectionCollection);
@@ -376,25 +376,11 @@
 			</div>
 			{#if hasNodes && onResetGraph}
 				<div class="block">
-					{#if confirmClear}
-						<button
-							type="button"
-							class="btn"
-							onclick={() => {
-								confirmClear = false;
-								onResetGraph?.();
-							}}>Ja, wis het netwerk</button
-						>
-					{:else}
-						<button
-							type="button"
-							class="btn"
-							onclick={() => {
-								confirmClear = true;
-								setTimeout(() => (confirmClear = false), 4000);
-							}}>Wis netwerk</button
-						>
-					{/if}
+					<ConfirmButton
+						label="Netwerk wissen"
+						confirmLabel="Ja, netwerk wissen"
+						onConfirm={() => onResetGraph?.()}
+					/>
 				</div>
 			{/if}
 		</details>

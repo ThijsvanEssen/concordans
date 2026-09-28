@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
 	import { bronHref } from '$lib/bron/href';
 	// The netwerk of chosen bronnen, over the canvas: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
@@ -133,7 +134,12 @@
 
 			<div class="actions">
 				<button type="button" class="link" onclick={onClearContext}>Context wissen</button>
-				<button type="button" class="link" onclick={onClear}>Netwerk wissen</button>
+				<ConfirmButton
+					label="Netwerk wissen"
+					confirmLabel="Ja, netwerk wissen"
+					onConfirm={onClear}
+					buttonClass="link"
+				/>
 			</div>
 		{/if}
 	{/if}
@@ -314,7 +320,8 @@
 		display: flex;
 		gap: var(--s-3);
 	}
-	.link {
+	/* Also the button inside ConfirmButton, a component of its own. */
+	.actions :global(.link) {
 		padding: 0;
 		border: 0;
 		background: none;
@@ -323,7 +330,7 @@
 		color: var(--ink-3);
 		cursor: pointer;
 	}
-	.link:hover {
+	.actions :global(.link:hover) {
 		color: var(--accent);
 	}
 </style>
