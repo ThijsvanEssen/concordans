@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onderdeelMark } from '$lib/text/article-parts';
 	import { api, unwrap } from '$lib/api/client';
 	import { getArticleDetail } from '$lib/api/articles';
 	import { instrumentMetaStore, primeInstrumentNames } from '$lib/api/instrument-cache';
@@ -182,6 +183,7 @@
 						text={detail.article.text}
 						parts={detail.article.parts}
 						citation={citationOf(address, a.article_number ? null : (a.label ?? null))}
+						mark={onderdeelMark(bwbId)}
 					/>
 				{:else if a.text_preview}
 					<p class="whole-text">

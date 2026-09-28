@@ -22,7 +22,8 @@
 		citation = null,
 		proposed = null,
 		onCloseProposed,
-		lidNotes = new Map()
+		lidNotes = new Map(),
+		mark = '.'
 	}: {
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
@@ -39,6 +40,8 @@
 		onCloseProposed?: () => void;
 		/** Per lid, when it got its present wording, and the link to its history. */
 		lidNotes?: Map<string, { label: string; href: string }>;
+		/** The mark after an onderdeel's letter or number: `a.` in Dutch law, `a)` in EU law. */
+		mark?: '.' | ')';
 	} = $props();
 
 	const source = $derived(text ?? '');
@@ -164,7 +167,7 @@
 	{#if top}
 		<div class="lid lid--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
 			<span class="lid__no"
-				>{part.kind === 'lid' ? part.number : part.number ? `${part.number}.` : ''}</span
+				>{part.kind === 'lid' ? part.number : part.number ? `${part.number}${mark}` : ''}</span
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
 				<div class="lid__text">
@@ -196,7 +199,7 @@
 	{:else}
 		<div class="part part--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
 			{#if part.number && part.id}
-				<a class="part__number" href="#{part.id}">{part.number}.</a>
+				<a class="part__number" href="#{part.id}">{part.number}{mark}</a>
 			{/if}
 			<div class="part__body">
 				{#if body}<p><CitedText text={body} citations={spans} /></p>{/if}

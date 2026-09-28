@@ -7,7 +7,13 @@ import sv359a from '$lib/fixtures/article-bwbr0001903_359a.json';
 import sv67 from '$lib/fixtures/article-bwbr0001903_67.json';
 import gw10 from '$lib/fixtures/article-bwbr0001840_10.json';
 import hr1769 from '$lib/fixtures/judgment-hr-2024-1769.json';
-import { parseArticleParts, partsFromApi, partText, walkParts } from './article-parts';
+import {
+	onderdeelMark,
+	parseArticleParts,
+	partsFromApi,
+	partText,
+	walkParts
+} from './article-parts';
 import { anchorOf, parseQualifier } from './qualifier';
 import { findPassage } from './find-passage';
 
@@ -145,5 +151,13 @@ describe('findPassage', () => {
 
 	it('gives nothing when the toelichting is ordered by the amending law only', () => {
 		expect(findPassage(fixture('mvt-36693-excerpt.txt'), '22b')).toBeNull();
+	});
+});
+
+describe('onderdeelMark', () => {
+	it('numbers an onderdeel a. in Dutch law and a) in EU law', () => {
+		expect(onderdeelMark('BWBR0001854')).toBe('.');
+		expect(onderdeelMark('32022R0868')).toBe(')');
+		expect(onderdeelMark(null)).toBe('.');
 	});
 });

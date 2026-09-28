@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
 	// picker, the wetsvoorstellen that touch it and Citeer, then the leden with the number
 	// of verbindingen of each, and the previous and next article. The picker lists the
@@ -694,6 +695,7 @@
 					{proposed}
 					{onCloseProposed}
 					{lidNotes}
+					mark={onderdeelMark(bwbId)}
 				/>
 			{/if}
 		</div>

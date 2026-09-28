@@ -200,3 +200,7 @@ export function partText(text: string, parts: ArticlePart[], id: string): string
 	for (const part of walkParts(parts)) if (part.id === id) return text.slice(part.start, part.end);
 	return null;
 }
+
+/** How an onderdeel is numbered in print: `a.` in Dutch law (a BWB id), `a)` in EU law. */
+export const onderdeelMark = (lawId: string | null | undefined): '.' | ')' =>
+	lawId && !/^BWB/i.test(lawId) ? ')' : '.';
