@@ -297,6 +297,15 @@
 		opacity: 0.45;
 		cursor: default;
 	}
+	/* Text for a screen reader only: a live region, a full name behind a short one. */
+	:global(.sr-only) {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
 	:global(.btn .caret) {
 		font-size: var(--t-glyph);
 		opacity: 0.7;

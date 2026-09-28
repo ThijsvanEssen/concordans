@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The explorer: one bron at a time, in one of three modes. Lezen shows the bron with
 	// its verbindingen alongside; Netwerk shows the canvas and, once a bron is selected,
 	// the same reader beside it; Bladeren lists bronnen. The URL holds the state:
@@ -651,19 +652,8 @@
 		setUrl({ overlay: overlay.kind === 'open' || overlay.kind === 'dossier' ? null : 'open' });
 
 	// ── Share ────────────────────────────────────────────────────────────────
-	let shareCopied = $state(false);
-
-	async function handleShareView() {
-		try {
-			await navigator.clipboard.writeText(page.url.toString());
-			shareCopied = true;
-			setTimeout(() => {
-				shareCopied = false;
-			}, 1800);
-		} catch {
-			/* clipboard blocked */
-		}
-	}
+	const shareCopier = createCopier();
+	const handleShareView = () => shareCopier.copy(page.url.toString(), 'share');
 
 	// Narrow viewports show one column at a time.
 	let mobilePanel = $state<'reader' | 'graph' | 'verbonden'>('reader');
@@ -885,7 +875,8 @@
 		{tableMode}
 		indexCategory={mode === 'index' ? indexKind : null}
 		indexResultCount={mode === 'index' ? indexResultCount : null}
-		{shareCopied}
+		shareLabel={shareCopier.label('share', 'Deel')}
+		shareAnnouncement={shareCopier.announcement}
 		onShareView={handleShareView}
 		onGoBack={goBack}
 		{readAction}

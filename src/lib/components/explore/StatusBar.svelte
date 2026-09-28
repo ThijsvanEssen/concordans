@@ -18,7 +18,8 @@
 		tableMode = false,
 		indexCategory = null,
 		indexResultCount = null,
-		shareCopied = false,
+		shareLabel = 'Deel',
+		shareAnnouncement = '',
 		onGoBack,
 		onShareView,
 		readAction = null,
@@ -31,7 +32,9 @@
 		tableMode?: boolean;
 		indexCategory?: string | null;
 		indexResultCount?: { filtered: number; total: number } | null;
-		shareCopied?: boolean;
+		/** The share button's label: Deel, or what the last copy did. */
+		shareLabel?: string;
+		shareAnnouncement?: string;
 		onGoBack?: () => void;
 		onShareView?: () => void;
 		/** `read` offers Volledig lezen, `network` the way back; null shows neither. */
@@ -126,9 +129,8 @@
 	<span class="space"></span>
 
 	{#if onShareView}
-		<button type="button" class="btn is-text" onclick={onShareView}
-			>{shareCopied ? 'Gekopieerd' : 'Deel'}</button
-		>
+		<button type="button" class="btn is-text" onclick={onShareView}>{shareLabel}</button>
+		<span class="sr-only" aria-live="polite">{shareAnnouncement}</span>
 	{/if}
 
 	{#if readAction === 'read'}

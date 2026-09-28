@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// Two tekstversies of an article compared, for research into how its text came to be.
 	// A tekstversie is a wording: the BWB versions that only moved the text are folded
 	// into the one that introduced it. From the top: the choice of two tekstversies, a
@@ -209,16 +210,8 @@
 
 	// ── Copying ──────────────────────────────────────────────────────────────────
 
-	let copied = $state<string | null>(null);
-	async function copy(text: string, what: string) {
-		try {
-			await navigator.clipboard.writeText(text);
-			copied = what;
-			setTimeout(() => (copied = null), 1200);
-		} catch {
-			// The clipboard is unavailable in some contexts.
-		}
-	}
+	const copier = createCopier();
+	const copy = (text: string, what: string) => copier.copy(text, what);
 
 	const cite = (lid: string | null) =>
 		citation ? citeArticle({ ...citation, lid }).kort : lid ? `lid ${lid}` : 'artikel';
@@ -327,7 +320,7 @@
 								type="button"
 								class="formulation__cite"
 								onclick={() => copy(formulationCite(lidParam, f), `f${i}`)}
-								>{copied === `f${i}` ? 'Gekopieerd' : 'Kopieer citaat'}</button
+								>{copier.label(`f${i}`, 'Kopieer citaat')}</button
 							>
 						</div>
 						{#if f.kind === 'rewritten'}<span class="row__label">herschreven</span>{/if}
@@ -490,7 +483,7 @@
 						>
 					{/if}
 					<button type="button" class="btn is-text" onclick={() => copy(comparisonText, 'diff')}
-						>{copied === 'diff' ? 'Gekopieerd' : 'Kopieer'}</button
+						>{copier.label('diff', 'Kopieer')}</button
 					>
 				</span>
 			</div>
@@ -649,6 +642,7 @@
 			</tbody>
 		</table>
 	</details>
+	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 </section>
 
 <style>

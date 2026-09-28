@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
 	// bronnen on the canvas or take them off.
@@ -81,7 +82,6 @@
 	let openRow = $state<string | null>(null);
 	let openMenu = $state<'bronnen' | 'grouping' | null>(null);
 	/** What Verzamel did, for the button and the live region. */
-	let copyStatus = $state<'Gekopieerd' | 'Kopiëren mislukt' | null>(null);
 
 	let onCanvas = $state(new Set<string>());
 	$effect(() => store.nodes.subscribe((ns) => (onCanvas = new Set(ns.map((n) => n.id)))));
@@ -159,18 +159,8 @@
 		onFilter({ ...filter, jaar: filter.jaar === year ? null : year });
 	}
 
-	let copyTimer: ReturnType<typeof setTimeout> | undefined;
-	async function copyAll() {
-		try {
-			await navigator.clipboard.writeText(rowsToText(allRows(shown)));
-			copyStatus = 'Gekopieerd';
-		} catch {
-			// The clipboard is unavailable in some contexts.
-			copyStatus = 'Kopiëren mislukt';
-		}
-		clearTimeout(copyTimer);
-		copyTimer = setTimeout(() => (copyStatus = null), 2000);
-	}
+	const copier = createCopier();
+	const copyAll = () => copier.copy(rowsToText(allRows(shown)), 'all');
 
 	function exportCsv() {
 		download(
@@ -494,11 +484,13 @@
 				<a href={tableHref} class="link is-accent" data-sveltekit-noscroll
 					>Alle {formatCount(total)} in een tabel</a
 				>
-				<button type="button" class="link" onclick={copyAll}>{copyStatus ?? 'Verzamel'}</button>
+				<button type="button" class="link" onclick={copyAll}
+					>{copier.label('all', 'Verzamel')}</button
+				>
 				<button type="button" class="link" onclick={exportCsv}>Exporteer</button>
 			</div>
 		{/if}
-		<p class="visually-hidden" aria-live="polite">{copyStatus ?? ''}</p>
+		<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 	</div>
 </aside>
 

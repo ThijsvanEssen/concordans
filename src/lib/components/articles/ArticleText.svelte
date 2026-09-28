@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The text of an article as its aanhef, leden and onderdelen. Every part has an
 	// anchor, so a reference can point at it and the address can be shared. A lid is a
 	// row of a grid: the number, the text, and a column at the right with the number of
@@ -64,26 +65,12 @@
 	const keyOf = (part: ArticlePart) => part.id ?? `tekst-${part.start}`;
 
 	let menuFor = $state<string | null>(null);
-	/** What the last copy did, on the button that did it and in the live region. */
-	let copied = $state<{ key: string; ok: boolean } | null>(null);
-	let copyTimer: ReturnType<typeof setTimeout> | undefined;
-
-	async function copy(what: string, key: string) {
-		let ok = true;
-		try {
-			await navigator.clipboard.writeText(what);
-		} catch {
-			// The clipboard is unavailable in some contexts.
-			ok = false;
-		}
-		copied = { key, ok };
-		clearTimeout(copyTimer);
-		copyTimer = setTimeout(() => (copied = null), 2000);
+	const copier = createCopier();
+	function copy(what: string, key: string) {
+		void copier.copy(what, key);
 		menuFor = null;
 	}
-
-	const copyLabel = (key: string, idle: string) =>
-		copied?.key === key ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : idle;
+	const copyLabel = (key: string, idle: string) => copier.label(key, idle);
 
 	const formsOf = (part: ArticlePart) => {
 		if (!citation || !part.id) return null;
@@ -250,7 +237,7 @@
 	</div>
 {/if}
 <p class="visually-hidden" aria-live="polite">
-	{copied ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : ''}
+	{copier.announcement}
 </p>
 
 <style>

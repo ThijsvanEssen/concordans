@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
 	// picker, the wetsvoorstellen that touch it and Citeer, then the leden with the number
@@ -66,7 +67,6 @@
 	/** Dossiers the API does not know: named, but not linked. */
 	let missingDossiers = $state<ReadonlySet<string>>(new Set());
 	let citeMenu = $state(false);
-	let copied = $state(false);
 
 	// The toelichting (MvT) that explains this article, if any: a quick popup here, so
 	// the panel on the right can stay reserved for verwijzingen (Verbonden). Its own
@@ -363,14 +363,9 @@
 			: null
 	);
 
-	async function copy(text: string) {
-		try {
-			await navigator.clipboard.writeText(text);
-			copied = true;
-			setTimeout(() => (copied = false), 1000);
-		} catch {
-			// The clipboard is unavailable in some contexts.
-		}
+	const copier = createCopier();
+	function copy(text: string) {
+		void copier.copy(text, 'cite');
 		citeMenu = false;
 	}
 
@@ -566,8 +561,9 @@
 								aria-haspopup="menu"
 								aria-expanded={citeMenu}
 								onclick={() => (citeMenu = !citeMenu)}
-								>{copied ? 'Gekopieerd' : 'Citeer'}<Caret open={citeMenu} /></button
+								>{copier.label('cite', 'Citeer')}<Caret open={citeMenu} /></button
 							>
+							<span class="sr-only" aria-live="polite">{copier.announcement}</span>
 							{#if citeMenu}
 								<div class="pop pop--right" role="menu" aria-label="Citeer artikel">
 									<div class="pop__label">Kopieer als</div>

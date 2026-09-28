@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { bronHref } from '$lib/bron/href';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
@@ -59,24 +60,12 @@
 	}
 
 	let menuFor = $state<string | null>(null);
-	/** What the last copy did, on the button that did it and in the live region. */
-	let copied = $state<{ key: string; ok: boolean } | null>(null);
-	let copyTimer: ReturnType<typeof setTimeout> | undefined;
-	async function copyText(text: string, key: string) {
-		let ok = true;
-		try {
-			await navigator.clipboard.writeText(text);
-		} catch {
-			// The clipboard is unavailable in some contexts.
-			ok = false;
-		}
-		copied = { key, ok };
-		clearTimeout(copyTimer);
-		copyTimer = setTimeout(() => (copied = null), 2000);
+	const copier = createCopier();
+	function copyText(text: string, key: string) {
+		void copier.copy(text, key);
 		menuFor = null;
 	}
-	const copyLabel = (key: string, idle: string) =>
-		copied?.key === key ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : idle;
+	const copyLabel = (key: string, idle: string) => copier.label(key, idle);
 	const copyLink = (id: string) => copyText(permalink(page.url, id), `share:${id}`);
 
 	let root = $state<HTMLElement | null>(null);
@@ -363,7 +352,7 @@
 	{/if}
 </ReaderFrame>
 <p class="visually-hidden" aria-live="polite">
-	{copied ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : ''}
+	{copier.announcement}
 </p>
 
 <style>
