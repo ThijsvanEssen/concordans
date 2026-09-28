@@ -7,6 +7,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate } from './_shared';
+	import { votersOf } from './voters';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -50,8 +51,7 @@
 		choice === 'Voor' ? 'for' : choice === 'Tegen' ? 'against' : 'other';
 
 	/** A voter id is `factions/vvd` or `members/…`; the key alone does not say which. */
-	const voterHref = (v: Schema<'VoteDTO'>) =>
-		v.voter_id.includes('/') ? bronHref(v.voter_id) : null;
+	const voterHref = (id: string) => (id.includes('/') ? bronHref(id) : null);
 </script>
 
 <ReaderFrame>
@@ -75,7 +75,7 @@
 				([choice]) => choice !== 'Voor' && choice !== 'Tegen'
 			)}
 			{@const dossierNumbers = (node.raw?.props?.dossier_numbers ?? []) as string[]}
-			{@const voters = [...(d.votes ?? [])].sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0))}
+			{@const voters = votersOf(d)}
 
 			<header class="head">
 				<span class="kicker">
@@ -132,16 +132,16 @@
 						{d.vote_kind === 'member' ? 'Stemverdeling per lid' : 'Stemverdeling per fractie'}
 					</h3>
 					<ul class="voter-list">
-						{#each voters as v (v.voter_id)}
-							{@const href = voterHref(v)}
+						{#each voters as v (v.id)}
+							{@const href = voterHref(v.id)}
 							<li class="voter-row voter-row--{side(v.choice)}">
 								<span class="voter-choice">{v.choice}</span>
 								{#if href}
-									<a class="voter-name" {href} data-sveltekit-noscroll>{v.name ?? v.voter_key}</a>
+									<a class="voter-name" {href} data-sveltekit-noscroll>{v.name}</a>
 								{:else}
-									<span class="voter-name">{v.name ?? v.voter_key}</span>
+									<span class="voter-name">{v.name}</span>
 								{/if}
-								<span class="voter-seats">{v.seats}</span>
+								{#if v.seats !== null}<span class="voter-seats">{v.seats}</span>{/if}
 							</li>
 						{/each}
 					</ul>
