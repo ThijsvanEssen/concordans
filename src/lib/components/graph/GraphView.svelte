@@ -1042,9 +1042,8 @@
 				<GraphCitePanel
 					node={hoverNode}
 					isChosen={pinnedIds.has(hoverNode.id)}
-					onOpen={(n) => {
+					onOpen={() => {
 						hoverNode = null;
-						onNodeClick?.(n);
 					}}
 					{onToggleChosen}
 					onMouseEnter={cancelHide}

@@ -14,7 +14,7 @@
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
-	import { TIERS, TIER_LABEL, bronLabel, type Collection, type Tier } from '$lib/vocabulary';
+	import { TIERS, TIER_LABEL, bronLabel, type Tier } from '$lib/vocabulary';
 	import { getCoverage, type Coverage } from '$lib/api/stats';
 	import {
 		STAGES,
@@ -68,12 +68,9 @@
 
 	let {
 		category,
-		onSelectItem,
 		onResultCountChange
 	}: {
 		category: IndexCategory;
-		/** Opens the bron in Lezen, from the hemicycle. `name` is its key, and a dossier's number (`37020-XV`). */
-		onSelectItem: (collection: Collection, name: string) => void;
 		/** Reports what is shown and how many there are, for the status bar. */
 		onResultCountChange?: (info: {
 			filtered: number;
@@ -1646,7 +1643,7 @@
 					{#if category === 'factions' && seats}
 						<div class="hemi-card">
 							<div class="hemi-svg-wrap">
-								<Hemicycle data={seats} onSelect={(k) => onSelectItem('factions', k)} />
+								<Hemicycle data={seats} />
 							</div>
 						</div>
 					{/if}

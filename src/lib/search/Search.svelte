@@ -325,15 +325,20 @@
 				<span class="kbd" aria-hidden="true">↵</span>
 			</div>
 		{:else if bare}
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<div
+			<!-- A link like the hits: its target is known, so a new tab can open it. -->
+			<a
 				id="{uid}-row-0"
 				class="row row--citation"
 				class:is-active={active === 0}
 				role="option"
 				tabindex="-1"
 				aria-selected={active === 0}
-				onclick={() => openBare(bare)}
+				href={bronHref(bare.ref, { at: bare.at })}
+				onclick={(e) => {
+					if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+					e.preventDefault();
+					openBare(bare);
+				}}
 				onpointermove={(e) => onpointermove(e, 0)}
 			>
 				<span class="row-kind"
@@ -341,7 +346,7 @@
 				>
 				<span class="row-title">{bare.label ?? q}</span>
 				<span class="kbd" aria-hidden="true">↵</span>
-			</div>
+			</a>
 		{/if}
 
 		{#each groups as group (group.kind)}

@@ -755,8 +755,6 @@
 	const indexKind = $derived<IndexCategory>(
 		isIndexCategory(param('kind')) ? (param('kind') as IndexCategory) : 'dossiers'
 	);
-	const openInMode = (m: 'read' | 'graph') => (collection: string, name: string) =>
-		goto(bronHref(`${collection}/${name}`, { keepMode: false, mode: m }));
 
 	// The count the list reported, kept with its category: shown only for the category on
 	// screen, so a count of the previous one never stands beside the next.
@@ -885,11 +883,7 @@
 
 	<div class="explore-content">
 		{#if mode === 'index'}
-			<IndexView
-				category={indexKind}
-				onSelectItem={openInMode('read')}
-				onResultCountChange={(count) => (reportedCount = count)}
-			/>
+			<IndexView category={indexKind} onResultCountChange={(count) => (reportedCount = count)} />
 		{:else if focusMissing && !selectedNode && !netwerkActive}
 			<div class="explore-empty">
 				<p>{focusError}</p>

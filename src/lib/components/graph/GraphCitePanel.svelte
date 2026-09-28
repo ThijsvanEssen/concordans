@@ -5,6 +5,7 @@
 	import { articleOf, formatEcliLabel, lawIdOf } from '$lib/graph/types';
 	import { getArticleDetail } from '$lib/api/articles';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { bronHref, refOf } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 
 	let {
@@ -17,6 +18,7 @@
 	}: {
 		node: GraphNode;
 		isChosen?: boolean;
+		/** Called as the link opens the bron: the panel closes. */
 		onOpen: (node: GraphNode) => void;
 		onToggleChosen?: (node: GraphNode) => void;
 		onMouseEnter?: () => void;
@@ -115,10 +117,17 @@
 
 	<div class="foot">
 		{#if !node.stub}
-			<button class="act act--primary" onclick={() => onOpen(node)}>Openen</button>
+			<!-- A link, so a middle click or cmd-click opens the bron in a new tab. -->
+			<a
+				class="act act--primary"
+				href={bronHref(refOf(node.collection, node.key, node.raw?.props))}
+				data-sveltekit-noscroll
+				onclick={() => onOpen(node)}>Openen</a
+			>
 		{/if}
 		{#if onToggleChosen && !node.stub}
 			<button
+				type="button"
 				class="act act--netwerk"
 				class:act--chosen={isChosen}
 				aria-pressed={isChosen}
