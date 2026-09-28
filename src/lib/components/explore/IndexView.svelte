@@ -2221,11 +2221,8 @@
 												{/snippet}
 												{#snippet detail()}
 													<div class="gov-detail">
+														<!-- The number of bewindspersonen stands in the row itself. -->
 														<dl class="gov-stats">
-															<div>
-																<dt>Bewindspersonen</dt>
-																<dd>{c.members}</dd>
-															</div>
 															<div>
 																<dt>Wetsvoorstellen ingediend</dt>
 																<dd>{c.bills}</dd>
