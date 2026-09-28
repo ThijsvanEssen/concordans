@@ -174,7 +174,8 @@
 			// Of the rest, the one that explains the tekstversie on screen comes first, and of
 			// those the one that names a passage about this article. A change in the Grondwet
 			// has its memorie in the first reading; the second's is `dossier` scope.
-			const items = (data?.items ?? []).filter((i) => i.target !== 'instrument');
+			// TODO(backend): the docs name an `instrument` target the enum of `target` lacks.
+			const items = (data?.items ?? []).filter((i) => (i.target as string) !== 'instrument');
 			const onScreenItems = items.filter(
 				(i) => i.article_version_key && versionKeys.includes(i.article_version_key)
 			);

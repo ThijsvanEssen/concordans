@@ -478,11 +478,13 @@
 					);
 					shownCabinet = detail;
 					const rows = (detail.ministries ?? []).flatMap((m) =>
-						m.posts.map((p) => ({
-							...p,
-							ministry: m.ministry ?? null,
-							ministryName: m.name ?? null
-						}))
+						m.seats.flatMap((seat) =>
+							seat.posts.map((p) => ({
+								...p,
+								ministry: m.ministry ?? null,
+								ministryName: m.name ?? null
+							}))
+						)
 					);
 					pages.ministers = toPage(undefined, rows, 0, rows.length);
 				};
@@ -799,7 +801,7 @@
 				(!q ||
 					includes(c.name) ||
 					includes(c.prime_minister?.name) ||
-					(c.parties ?? []).some((p) => includes(p.short) || includes(p.name)))
+					(c.parties ?? []).some((p) => includes(p.short)))
 		);
 		return (
 			rows &&
@@ -2188,8 +2190,8 @@
 																<span class="party-item"
 																	><span
 																		class="party-dot"
-																		style:background={partyColor(p.short ?? p.name ?? '')}
-																	></span>{p.short ?? p.name}</span
+																		style:background={partyColor(p.short ?? '')}
+																	></span>{p.short}</span
 																>
 															{/each}
 														</span>

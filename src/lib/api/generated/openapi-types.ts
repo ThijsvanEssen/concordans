@@ -813,7 +813,7 @@ export interface paths {
         };
         /**
          * Member detail
-         * @description One member of parliament or minister, with the posts they held in a cabinet (`government_functions`, from Wikidata).
+         * @description One member of parliament or minister, with the posts they held in a cabinet (`government_functions`, from Rijksoverheid).
          */
         get: operations["get_member_api_members__key__get"];
         put?: never;
@@ -993,7 +993,7 @@ export interface paths {
         };
         /**
          * Cabinets
-         * @description Every Dutch cabinet Wikidata knows, newest first, with its prime minister, parties and counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.
+         * @description Every Dutch cabinet, newest first: those since 1945 from Rijksoverheid, with their prime minister, parties, ``phases`` and ``demissionary_from``; those before from Wikidata (name and period only). Counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.
          */
         get: operations["list_cabinets_api_cabinets_get"];
         put?: never;
@@ -1013,7 +1013,7 @@ export interface paths {
         };
         /**
          * Cabinet detail
-         * @description One cabinet with its bewindspersonen grouped by ministry (protocol order, the minister-president first), each post with the person's counts within the cabinet: ``dossiers`` and ``bills`` they signed as bewindspersoon, and ``open_commitments``.
+         * @description One cabinet with its bewindspersonen grouped by ministry (protocol order, the minister-president first) and within it by seat (minister, ministers without portfolio, staatssecretarissen), the posts of a seat in order of start: a successor is the next post, a stand-in has ``acting``. Each post with the person's counts within the cabinet: ``dossiers`` and ``bills`` they signed as bewindspersoon, and ``open_commitments``.
          */
         get: operations["get_cabinet_detail_api_cabinets__key__get"];
         put?: never;
@@ -1033,7 +1033,7 @@ export interface paths {
         };
         /**
          * Commitments
-         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``overdue`` keeps the open ones whose expected date has passed.
+         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``overdue`` keeps the open ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters.
          */
         get: operations["list_commitments_api_commitments_get"];
         put?: never;
@@ -1955,10 +1955,10 @@ export interface components {
             document: components["schemas"]["ExplainingDocumentDTO"];
             /**
              * Target
-             * @description What the edge points at: the 'article', one of its versions ('article_version') or its 'instrument'. An 'instrument' explanation is written only when the dossier's law changed no articles at all, so it says nothing about this article in particular.
+             * @description What the edge points at: the 'article' or one of its versions ('article_version'). An explanation of the article's law as a whole is none of this article, and is not listed.
              * @enum {string}
              */
-            target: "article" | "article_version" | "instrument";
+            target: "article" | "article_version";
             /**
              * Target Id
              * @description Arango _id of the node the edge points at.
@@ -2365,10 +2365,9 @@ export interface components {
         };
         /**
          * CabinetDetailDTO
-         * @description A cabinet with its bewindspersonen grouped by ministry: ministries in protocol
-         *     order (Algemene Zaken, with the minister-president, first), within a ministry the
-         *     posts in order (minister-president, minister, minister without portfolio,
-         *     staatssecretaris), then by start. A person with two posts is listed under each.
+         * @description A cabinet with its bewindspersonen: ministries in protocol order (Algemene Zaken,
+         *     with the minister-president, first), within a ministry the seats (``_seats``). A
+         *     person with two posts is listed under each.
          */
         CabinetDetailDTO: {
             /**
@@ -2381,7 +2380,10 @@ export interface components {
              * @description ``kabinet-Rutte IV``.
              */
             name: string;
-            /** From Date */
+            /**
+             * From Date
+             * @description The day of its beëdiging.
+             */
             from_date?: string | null;
             /**
              * To Date
@@ -2401,14 +2403,32 @@ export interface components {
              */
             previous?: string | null;
             prime_minister?: components["schemas"]["PersonRefDTO"] | null;
-            /** Parties */
-            parties?: components["schemas"]["CabinetPartyDTO"][];
+            /**
+             * Parties
+             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945.
+             */
+            parties?: components["schemas"]["PartyRefDTO"][];
             /**
              * Factions
              * @description The faction keys of its parties.
              */
             factions?: string[];
-            /** Wikidata Id */
+            /**
+             * Demissionary From
+             * @description The start of its first ``demissionair`` phase.
+             */
+            demissionary_from?: string | null;
+            /**
+             * Phases
+             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them).
+             */
+            phases?: components["schemas"]["CabinetPhaseDTO"][];
+            /** @description Rijksoverheid since 1945; Wikidata before (name and period). */
+            source?: components["schemas"]["SourceRefDTO"] | null;
+            /**
+             * Wikidata Id
+             * @description For a cabinet from Wikidata.
+             */
             wikidata_id?: string | null;
             /**
              * Members
@@ -2433,30 +2453,37 @@ export interface components {
         };
         /**
          * CabinetMinistryDTO
-         * @description The posts under one ministry; ``ministry`` null for a post that names none (the
+         * @description The seats under one ministry; ``ministry`` null for a seat that names none (the
          *     viceminister-president, a minister without a named portfolio).
          */
         CabinetMinistryDTO: {
             ministry?: components["schemas"]["MinistryKey"] | null;
             /** Name */
             name?: string | null;
-            /** Posts */
-            posts: components["schemas"]["CabinetPostDTO"][];
+            /** Seats */
+            seats: components["schemas"]["CabinetSeatDTO"][];
         };
         /**
-         * CabinetPartyDTO
-         * @description A party at least two members of the cabinet belonged to when their post began.
+         * CabinetPhaseDTO
+         * @description A phase of a cabinet; it ends where the next begins, the last with the cabinet
+         *     (null while it is in office).
          */
-        CabinetPartyDTO: {
-            /** Name */
-            name?: string | null;
-            /** Short */
-            short?: string | null;
+        CabinetPhaseDTO: {
             /**
-             * Faction
-             * @description The faction key; null for a party from before the TK data.
+             * Kind
+             * @description Null for the stretch after elections held while the cabinet was in office, when the source gives no day of its resignation.
              */
-            faction?: string | null;
+            kind?: ("formatie" | "in_functie" | "demissionair" | "dubbel_demissionair" | "missionair") | null;
+            /** From Date */
+            from_date?: string | null;
+            /** To Date */
+            to_date?: string | null;
+            /**
+             * Label
+             * @description The source's own words.
+             */
+            label?: string | null;
+            source?: components["schemas"]["SourceRefDTO"] | null;
         };
         /**
          * CabinetPostDTO
@@ -2467,13 +2494,60 @@ export interface components {
             post?: components["schemas"]["Post"] | null;
             /**
              * Function
-             * @description As Wikidata names the post.
+             * @description As Rijksoverheid names the post.
              */
             function?: string | null;
+            /**
+             * Also Named
+             * @description The same post under another name (``minister van Algemene Zaken`` beside ``Minister-president``).
+             */
+            also_named?: string[];
+            /** Seat */
+            seat?: string | null;
+            /** Portfolio */
+            portfolio?: string | null;
             /** From Date */
             from_date?: string | null;
             /** To Date */
             to_date?: string | null;
+            /**
+             * From Date Source
+             * @description The start the source gives; null when it gives none.
+             */
+            from_date_source?: string | null;
+            /**
+             * To Date Source
+             * @description The end the source gives; null when it gives none (the post then ends with the cabinet, or where the next holder of the seat begins).
+             */
+            to_date_source?: string | null;
+            /**
+             * Corrected
+             * @description Which dates the rules of a seat set, and why.
+             */
+            corrected?: string[];
+            /**
+             * Acting
+             * @description A stand-in (ad interim).
+             * @default false
+             */
+            acting: boolean;
+            /**
+             * Acting Basis
+             * @description Why: ``rijksoverheid: a.i.``, a temporary arrangement, or the rule (held another seat throughout and ended where the next holder began).
+             */
+            acting_basis?: string | null;
+            party?: components["schemas"]["PartyRefDTO"] | null;
+            /**
+             * Overlaps With
+             * @description The members who held the same seat at the same time, after the rules: a conflict in the source, not hidden.
+             */
+            overlaps_with?: string[];
+            /**
+             * Absent
+             * @description ``[from, to]`` of a ``tijdelijk afwezig`` in the post.
+             */
+            absent?: string[] | null;
+            source?: components["schemas"]["SourceRefDTO"] | null;
             /**
              * Dossiers
              * @description Dossiers with a paper the person signed as bewindspersoon within the cabinet's period (counted per person, the same on each of their posts).
@@ -2494,6 +2568,28 @@ export interface components {
             open_commitments: number;
         };
         /**
+         * CabinetSeatDTO
+         * @description One seat and its holders in order of start: a successor is the next post, a
+         *     stand-in a post with ``acting``.
+         */
+        CabinetSeatDTO: {
+            /**
+             * Seat
+             * @description ``ienw/minister``, ``viceminister-president``.
+             */
+            seat: string;
+            post?: components["schemas"]["Post"] | null;
+            /** Portfolio */
+            portfolio?: string | null;
+            /**
+             * Function
+             * @description The name of its first post.
+             */
+            function?: string | null;
+            /** Posts */
+            posts: components["schemas"]["CabinetPostDTO"][];
+        };
+        /**
          * CabinetSummaryDTO
          * @description A cabinet in the list, with its counts.
          */
@@ -2508,7 +2604,10 @@ export interface components {
              * @description ``kabinet-Rutte IV``.
              */
             name: string;
-            /** From Date */
+            /**
+             * From Date
+             * @description The day of its beëdiging.
+             */
             from_date?: string | null;
             /**
              * To Date
@@ -2528,14 +2627,32 @@ export interface components {
              */
             previous?: string | null;
             prime_minister?: components["schemas"]["PersonRefDTO"] | null;
-            /** Parties */
-            parties?: components["schemas"]["CabinetPartyDTO"][];
+            /**
+             * Parties
+             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945.
+             */
+            parties?: components["schemas"]["PartyRefDTO"][];
             /**
              * Factions
              * @description The faction keys of its parties.
              */
             factions?: string[];
-            /** Wikidata Id */
+            /**
+             * Demissionary From
+             * @description The start of its first ``demissionair`` phase.
+             */
+            demissionary_from?: string | null;
+            /**
+             * Phases
+             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them).
+             */
+            phases?: components["schemas"]["CabinetPhaseDTO"][];
+            /** @description Rijksoverheid since 1945; Wikidata before (name and period). */
+            source?: components["schemas"]["SourceRefDTO"] | null;
+            /**
+             * Wikidata Id
+             * @description For a cabinet from Wikidata.
+             */
             wikidata_id?: string | null;
             /**
              * Members
@@ -2662,6 +2779,20 @@ export interface components {
             /** Title */
             title?: string | null;
         };
+        /**
+         * CommitmentFacetsDTO
+         * @description Per dimension the number of commitments per value under the current filters, each
+         *     dimension counted without its own filter, the largest first: only the values that
+         *     have commitments (a ministry without any is not listed).
+         */
+        CommitmentFacetsDTO: {
+            /** Status */
+            status?: components["schemas"]["FacetCountDTO"][];
+            /** Cabinet */
+            cabinet?: components["schemas"]["FacetCountDTO"][];
+            /** Ministry */
+            ministry?: components["schemas"]["FacetCountDTO"][];
+        };
         /** CommitmentListResponse */
         CommitmentListResponse: {
             /**
@@ -2671,6 +2802,7 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["CommitmentDTO"][];
+            facets?: components["schemas"]["CommitmentFacetsDTO"];
         };
         /**
          * CommitmentMemberDTO
@@ -2679,7 +2811,10 @@ export interface components {
         CommitmentMemberDTO: {
             /** Key */
             key: string;
-            /** Name */
+            /**
+             * Name
+             * @description The name they go by: Sophie Hermans.
+             */
             name?: string | null;
             /** Function */
             function?: string | null;
@@ -3965,12 +4100,12 @@ export interface components {
         };
         /**
          * GovernmentFunctionDTO
-         * @description A post held in a cabinet: as Wikidata names it, and normalised.
+         * @description A post held in a cabinet, as Rijksoverheid names it, and normalised.
          */
         GovernmentFunctionDTO: {
             /**
              * Function
-             * @description The post as Wikidata names it: Minister voor Klimaat en Energie.
+             * @description The post as Rijksoverheid names it: Minister voor Klimaat en Energie.
              */
             function?: string | null;
             /**
@@ -3986,6 +4121,19 @@ export interface components {
             post?: components["schemas"]["Post"] | null;
             /** @description The ministry the post falls under (``GET /api/ministries``); a minister without portfolio under the ministry the post is placed under. */
             ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Seat
+             * @description The seat the post is held in: ministry, post and the portfolio the source names (``ienw/minister``, ``jenv/staatssecretaris/rechtsbescherming``); ``#2`` for a second seat the source does not name.
+             */
+            seat?: string | null;
+            /**
+             * Acting
+             * @description A stand-in (ad interim).
+             * @default false
+             */
+            acting: boolean;
+            /** @description The party during this post. */
+            party?: components["schemas"]["PartyRefDTO"] | null;
             /** From Date */
             from_date?: string | null;
             /**
@@ -5229,8 +5377,16 @@ export interface components {
             id: string;
             /** Key */
             key: string;
-            /** Name */
+            /**
+             * Name
+             * @description The name they go by: ``Ard van der Steur`` (``Persoon.Roepnaam``); for a minister who never sat in parliament, as Rijksoverheid gives it.
+             */
             name?: string | null;
+            /**
+             * Full Name
+             * @description ``Gerard Adriaan van der Steur``; null when the TK gives none.
+             */
+            full_name?: string | null;
             /** Party */
             party?: string | null;
             /**
@@ -5245,7 +5401,7 @@ export interface components {
             faction_memberships: components["schemas"]["FactionMembershipDTO"][];
             /**
              * Government Functions
-             * @description The posts held in a cabinet (from Wikidata), oldest first.
+             * @description The posts held in a cabinet (from Rijksoverheid), oldest first.
              */
             government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
             /** From Date */
@@ -5257,19 +5413,27 @@ export interface components {
          * MemberDetailDTO
          * @description A member with the posts they held in government.
          *
-         *     ``government_functions`` come from Wikidata (every post in a Dutch cabinet, complete
-         *     from the 1970s), oldest first; empty for a member Wikidata has no person for.
-         *     ``wikidata_id`` names that person: a member of parliament by date of birth and surname,
-         *     a minister who never sat in parliament by the papers they signed. A cabinet member the
-         *     Tweede Kamer has no person for is a member of their own (key ``wikidata_q<number>``).
+         *     ``government_functions`` come from Rijksoverheid (every post in a cabinet since 1945),
+         *     oldest first; empty for a member who held none. A bewindspersoon is matched to a member
+         *     of parliament by surname, initials and age, a minister who never sat in parliament by
+         *     the papers they signed; one the Tweede Kamer has no person for is a member of their own
+         *     (key ``rijksoverheid_<initials>_<surname>``).
          */
         MemberDetailDTO: {
             /** Id */
             id: string;
             /** Key */
             key: string;
-            /** Name */
+            /**
+             * Name
+             * @description The name they go by: ``Ard van der Steur`` (``Persoon.Roepnaam``); for a minister who never sat in parliament, as Rijksoverheid gives it.
+             */
             name?: string | null;
+            /**
+             * Full Name
+             * @description ``Gerard Adriaan van der Steur``; null when the TK gives none.
+             */
+            full_name?: string | null;
             /** Party */
             party?: string | null;
             /**
@@ -5284,7 +5448,7 @@ export interface components {
             faction_memberships: components["schemas"]["FactionMembershipDTO"][];
             /**
              * Government Functions
-             * @description The posts held in a cabinet (from Wikidata), oldest first.
+             * @description The posts held in a cabinet (from Rijksoverheid), oldest first.
              */
             government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
             /** From Date */
@@ -5293,8 +5457,11 @@ export interface components {
             to_date?: string | null;
             /** Birth Date */
             birth_date?: string | null;
-            /** Wikidata Id */
-            wikidata_id?: string | null;
+            /**
+             * Government Name
+             * @description The name as Rijksoverheid writes it: S.Th.M. Hermans.
+             */
+            government_name?: string | null;
         };
         /**
          * MemberVoteDTO
@@ -5375,7 +5542,7 @@ export interface components {
          * MinistryKey
          * @enum {string}
          */
-        MinistryKey: "az" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ez" | "ezk" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "szw" | "sz" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "vro" | "vrom" | "aenm";
+        MinistryKey: "az" | "aok" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "bzbpbo" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ez" | "ezk" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "lvv" | "szw" | "sz" | "szv" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "mw" | "vro" | "vb" | "wv" | "vrom" | "aenm" | "scheepvaart" | "ogd" | "uor" | "or" | "zo";
         /**
          * NeighborBucketDTO
          * @description The neighbours that share a relation, a direction and a collection: one page of them.
@@ -5540,6 +5707,19 @@ export interface components {
             };
         };
         /**
+         * PartyRefDTO
+         * @description A party as the source writes it (``VVD``, ``partijloos``), and its faction.
+         */
+        PartyRefDTO: {
+            /** Short */
+            short?: string | null;
+            /**
+             * Faction
+             * @description The faction key; null for a party the TK data has no faction of.
+             */
+            faction?: string | null;
+        };
+        /**
          * PassageDTO
          * @description The passage of a memorandum that explains an article.
          */
@@ -5580,7 +5760,10 @@ export interface components {
         PersonRefDTO: {
             /** Key */
             key: string;
-            /** Name */
+            /**
+             * Name
+             * @description The name they go by: Sophie Hermans.
+             */
             name?: string | null;
         };
         /**
@@ -5826,6 +6009,18 @@ export interface components {
             bwb_id: string;
             /** Annexes */
             annexes?: components["schemas"]["AnnexListItem"][];
+        };
+        /**
+         * SourceRefDTO
+         * @description Where it was read: ``rijksoverheid`` with the page and the day, or ``wikidata``.
+         */
+        SourceRefDTO: {
+            /** Name */
+            name?: string | null;
+            /** Url */
+            url?: string | null;
+            /** Read On */
+            read_on?: string | null;
         };
         /**
          * StatsResponse
@@ -6576,6 +6771,8 @@ export interface operations {
                 /** @description An area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`. */
                 subject?: string | null;
                 cited_by_min?: number | null;
+                /** @description Also the judgments known only because something cites them (no date, court or text). */
+                include_stubs?: boolean;
                 sort?: "date_desc" | "date_asc" | "citation_count";
             };
             header?: never;

@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.19.0"
+		"version": "0.21.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -465,6 +465,18 @@
 							"anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }],
 							"title": "Cited By Min"
 						}
+					},
+					{
+						"name": "include_stubs",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Also the judgments known only because something cites them (no date, court or text).",
+							"default": false,
+							"title": "Include Stubs"
+						},
+						"description": "Also the judgments known only because something cites them (no date, court or text)."
 					},
 					{
 						"name": "sort",
@@ -2658,7 +2670,7 @@
 			"get": {
 				"tags": ["members", "members"],
 				"summary": "Member detail",
-				"description": "One member of parliament or minister, with the posts they held in a cabinet (`government_functions`, from Wikidata).",
+				"description": "One member of parliament or minister, with the posts they held in a cabinet (`government_functions`, from Rijksoverheid).",
 				"operationId": "get_member_api_members__key__get",
 				"parameters": [
 					{
@@ -3040,7 +3052,7 @@
 			"get": {
 				"tags": ["cabinets", "government"],
 				"summary": "Cabinets",
-				"description": "Every Dutch cabinet Wikidata knows, newest first, with its prime minister, parties and counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.",
+				"description": "Every Dutch cabinet, newest first: those since 1945 from Rijksoverheid, with their prime minister, parties, ``phases`` and ``demissionary_from``; those before from Wikidata (name and period only). Counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.",
 				"operationId": "list_cabinets_api_cabinets_get",
 				"responses": {
 					"200": {
@@ -3062,7 +3074,7 @@
 			"get": {
 				"tags": ["cabinets", "government"],
 				"summary": "Cabinet detail",
-				"description": "One cabinet with its bewindspersonen grouped by ministry (protocol order, the minister-president first), each post with the person's counts within the cabinet: ``dossiers`` and ``bills`` they signed as bewindspersoon, and ``open_commitments``.",
+				"description": "One cabinet with its bewindspersonen grouped by ministry (protocol order, the minister-president first) and within it by seat (minister, ministers without portfolio, staatssecretarissen), the posts of a seat in order of start: a successor is the next post, a stand-in has ``acting``. Each post with the person's counts within the cabinet: ``dossiers`` and ``bills`` they signed as bewindspersoon, and ``open_commitments``.",
 				"operationId": "get_cabinet_detail_api_cabinets__key__get",
 				"parameters": [
 					{
@@ -3094,7 +3106,7 @@
 			"get": {
 				"tags": ["commitments", "government"],
 				"summary": "Commitments",
-				"description": "Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``overdue`` keeps the open ones whose expected date has passed.",
+				"description": "Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``overdue`` keeps the open ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters.",
 				"operationId": "list_commitments_api_commitments_get",
 				"parameters": [
 					{
@@ -4878,9 +4890,9 @@
 					"document": { "$ref": "#/components/schemas/ExplainingDocumentDTO" },
 					"target": {
 						"type": "string",
-						"enum": ["article", "article_version", "instrument"],
+						"enum": ["article", "article_version"],
 						"title": "Target",
-						"description": "What the edge points at: the 'article', one of its versions ('article_version') or its 'instrument'. An 'instrument' explanation is written only when the dossier's law changed no articles at all, so it says nothing about this article in particular."
+						"description": "What the edge points at: the 'article' or one of its versions ('article_version'). An explanation of the article's law as a whole is none of this article, and is not listed."
 					},
 					"target_id": {
 						"type": "string",
@@ -5354,7 +5366,8 @@
 					"name": { "type": "string", "title": "Name", "description": "``kabinet-Rutte IV``." },
 					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "From Date"
+						"title": "From Date",
+						"description": "The day of its beëdiging."
 					},
 					"to_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -5379,9 +5392,10 @@
 						"anyOf": [{ "$ref": "#/components/schemas/PersonRefDTO" }, { "type": "null" }]
 					},
 					"parties": {
-						"items": { "$ref": "#/components/schemas/CabinetPartyDTO" },
+						"items": { "$ref": "#/components/schemas/PartyRefDTO" },
 						"type": "array",
-						"title": "Parties"
+						"title": "Parties",
+						"description": "The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945."
 					},
 					"factions": {
 						"items": { "type": "string" },
@@ -5389,9 +5403,25 @@
 						"title": "Factions",
 						"description": "The faction keys of its parties."
 					},
+					"demissionary_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Demissionary From",
+						"description": "The start of its first ``demissionair`` phase."
+					},
+					"phases": {
+						"items": { "$ref": "#/components/schemas/CabinetPhaseDTO" },
+						"type": "array",
+						"title": "Phases",
+						"description": "Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them)."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/SourceRefDTO" }, { "type": "null" }],
+						"description": "Rijksoverheid since 1945; Wikidata before (name and period)."
+					},
 					"wikidata_id": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Wikidata Id"
+						"title": "Wikidata Id",
+						"description": "For a cabinet from Wikidata."
 					},
 					"members": {
 						"type": "integer",
@@ -5421,7 +5451,7 @@
 				"type": "object",
 				"required": ["key", "name"],
 				"title": "CabinetDetailDTO",
-				"description": "A cabinet with its bewindspersonen grouped by ministry: ministries in protocol\norder (Algemene Zaken, with the minister-president, first), within a ministry the\nposts in order (minister-president, minister, minister without portfolio,\nstaatssecretaris), then by start. A person with two posts is listed under each."
+				"description": "A cabinet with its bewindspersonen: ministries in protocol order (Algemene Zaken,\nwith the minister-president, first), within a ministry the seats (``_seats``). A\nperson with two posts is listed under each."
 			},
 			"CabinetMinistryDTO": {
 				"properties": {
@@ -5429,32 +5459,55 @@
 						"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }]
 					},
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
-					"posts": {
-						"items": { "$ref": "#/components/schemas/CabinetPostDTO" },
+					"seats": {
+						"items": { "$ref": "#/components/schemas/CabinetSeatDTO" },
 						"type": "array",
-						"title": "Posts"
+						"title": "Seats"
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["posts"],
+				"required": ["seats"],
 				"title": "CabinetMinistryDTO",
-				"description": "The posts under one ministry; ``ministry`` null for a post that names none (the\nviceminister-president, a minister without a named portfolio)."
+				"description": "The seats under one ministry; ``ministry`` null for a seat that names none (the\nviceminister-president, a minister without a named portfolio)."
 			},
-			"CabinetPartyDTO": {
+			"CabinetPhaseDTO": {
 				"properties": {
-					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
-					"short": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Short" },
-					"faction": {
+					"kind": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"formatie",
+									"in_functie",
+									"demissionair",
+									"dubbel_demissionair",
+									"missionair"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Kind",
+						"description": "Null for the stretch after elections held while the cabinet was in office, when the source gives no day of its resignation."
+					},
+					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Faction",
-						"description": "The faction key; null for a party from before the TK data."
+						"title": "From Date"
+					},
+					"to_date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "To Date" },
+					"label": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Label",
+						"description": "The source's own words."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/SourceRefDTO" }, { "type": "null" }]
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"title": "CabinetPartyDTO",
-				"description": "A party at least two members of the cabinet belonged to when their post began."
+				"title": "CabinetPhaseDTO",
+				"description": "A phase of a cabinet; it ends where the next begins, the last with the cabinet\n(null while it is in office)."
 			},
 			"CabinetPostDTO": {
 				"properties": {
@@ -5463,13 +5516,68 @@
 					"function": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Function",
-						"description": "As Wikidata names the post."
+						"description": "As Rijksoverheid names the post."
+					},
+					"also_named": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Also Named",
+						"description": "The same post under another name (``minister van Algemene Zaken`` beside ``Minister-president``)."
+					},
+					"seat": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Seat" },
+					"portfolio": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Portfolio"
 					},
 					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "From Date"
 					},
 					"to_date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "To Date" },
+					"from_date_source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "From Date Source",
+						"description": "The start the source gives; null when it gives none."
+					},
+					"to_date_source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "To Date Source",
+						"description": "The end the source gives; null when it gives none (the post then ends with the cabinet, or where the next holder of the seat begins)."
+					},
+					"corrected": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Corrected",
+						"description": "Which dates the rules of a seat set, and why."
+					},
+					"acting": {
+						"type": "boolean",
+						"title": "Acting",
+						"description": "A stand-in (ad interim).",
+						"default": false
+					},
+					"acting_basis": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Acting Basis",
+						"description": "Why: ``rijksoverheid: a.i.``, a temporary arrangement, or the rule (held another seat throughout and ended where the next holder began)."
+					},
+					"party": {
+						"anyOf": [{ "$ref": "#/components/schemas/PartyRefDTO" }, { "type": "null" }]
+					},
+					"overlaps_with": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Overlaps With",
+						"description": "The members who held the same seat at the same time, after the rules: a conflict in the source, not hidden."
+					},
+					"absent": {
+						"anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "type": "null" }],
+						"title": "Absent",
+						"description": "``[from, to]`` of a ``tijdelijk afwezig`` in the post."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/SourceRefDTO" }, { "type": "null" }]
+					},
 					"dossiers": {
 						"type": "integer",
 						"title": "Dossiers",
@@ -5495,13 +5603,43 @@
 				"title": "CabinetPostDTO",
 				"description": "One post a person held in the cabinet, with their counts within it."
 			},
+			"CabinetSeatDTO": {
+				"properties": {
+					"seat": {
+						"type": "string",
+						"title": "Seat",
+						"description": "``ienw/minister``, ``viceminister-president``."
+					},
+					"post": { "anyOf": [{ "$ref": "#/components/schemas/Post" }, { "type": "null" }] },
+					"portfolio": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Portfolio"
+					},
+					"function": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Function",
+						"description": "The name of its first post."
+					},
+					"posts": {
+						"items": { "$ref": "#/components/schemas/CabinetPostDTO" },
+						"type": "array",
+						"title": "Posts"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["seat", "posts"],
+				"title": "CabinetSeatDTO",
+				"description": "One seat and its holders in order of start: a successor is the next post, a\nstand-in a post with ``acting``."
+			},
 			"CabinetSummaryDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key", "description": "``rutte_iv``, ``den_uyl``." },
 					"name": { "type": "string", "title": "Name", "description": "``kabinet-Rutte IV``." },
 					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "From Date"
+						"title": "From Date",
+						"description": "The day of its beëdiging."
 					},
 					"to_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -5526,9 +5664,10 @@
 						"anyOf": [{ "$ref": "#/components/schemas/PersonRefDTO" }, { "type": "null" }]
 					},
 					"parties": {
-						"items": { "$ref": "#/components/schemas/CabinetPartyDTO" },
+						"items": { "$ref": "#/components/schemas/PartyRefDTO" },
 						"type": "array",
-						"title": "Parties"
+						"title": "Parties",
+						"description": "The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945."
 					},
 					"factions": {
 						"items": { "type": "string" },
@@ -5536,9 +5675,25 @@
 						"title": "Factions",
 						"description": "The faction keys of its parties."
 					},
+					"demissionary_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Demissionary From",
+						"description": "The start of its first ``demissionair`` phase."
+					},
+					"phases": {
+						"items": { "$ref": "#/components/schemas/CabinetPhaseDTO" },
+						"type": "array",
+						"title": "Phases",
+						"description": "Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them)."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/SourceRefDTO" }, { "type": "null" }],
+						"description": "Rijksoverheid since 1945; Wikidata before (name and period)."
+					},
 					"wikidata_id": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Wikidata Id"
+						"title": "Wikidata Id",
+						"description": "For a cabinet from Wikidata."
 					},
 					"members": {
 						"type": "integer",
@@ -5698,6 +5853,29 @@
 				"required": ["key"],
 				"title": "CommitmentDossierDTO"
 			},
+			"CommitmentFacetsDTO": {
+				"properties": {
+					"status": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Status"
+					},
+					"cabinet": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Cabinet"
+					},
+					"ministry": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Ministry"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "CommitmentFacetsDTO",
+				"description": "Per dimension the number of commitments per value under the current filters, each\ndimension counted without its own filter, the largest first: only the values that\nhave commitments (a ministry without any is not listed)."
+			},
 			"CommitmentListResponse": {
 				"properties": {
 					"total": {
@@ -5709,7 +5887,8 @@
 						"items": { "$ref": "#/components/schemas/CommitmentDTO" },
 						"type": "array",
 						"title": "Items"
-					}
+					},
+					"facets": { "$ref": "#/components/schemas/CommitmentFacetsDTO" }
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -5719,7 +5898,11 @@
 			"CommitmentMemberDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
-					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name",
+						"description": "The name they go by: Sophie Hermans."
+					},
 					"function": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Function" }
 				},
 				"additionalProperties": false,
@@ -7224,7 +7407,7 @@
 					"function": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Function",
-						"description": "The post as Wikidata names it: Minister voor Klimaat en Energie."
+						"description": "The post as Rijksoverheid names it: Minister voor Klimaat en Energie."
 					},
 					"cabinet": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -7241,6 +7424,21 @@
 						"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }],
 						"description": "The ministry the post falls under (``GET /api/ministries``); a minister without portfolio under the ministry the post is placed under."
 					},
+					"seat": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Seat",
+						"description": "The seat the post is held in: ministry, post and the portfolio the source names (``ienw/minister``, ``jenv/staatssecretaris/rechtsbescherming``); ``#2`` for a second seat the source does not name."
+					},
+					"acting": {
+						"type": "boolean",
+						"title": "Acting",
+						"description": "A stand-in (ad interim).",
+						"default": false
+					},
+					"party": {
+						"anyOf": [{ "$ref": "#/components/schemas/PartyRefDTO" }, { "type": "null" }],
+						"description": "The party during this post."
+					},
 					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "From Date"
@@ -7254,7 +7452,7 @@
 				"additionalProperties": false,
 				"type": "object",
 				"title": "GovernmentFunctionDTO",
-				"description": "A post held in a cabinet: as Wikidata names it, and normalised."
+				"description": "A post held in a cabinet, as Rijksoverheid names it, and normalised."
 			},
 			"GraphEdgeDTO": {
 				"properties": {
@@ -8680,7 +8878,16 @@
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
-					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name",
+						"description": "The name they go by: ``Ard van der Steur`` (``Persoon.Roepnaam``); for a minister who never sat in parliament, as Rijksoverheid gives it."
+					},
+					"full_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Full Name",
+						"description": "``Gerard Adriaan van der Steur``; null when the TK gives none."
+					},
 					"party": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Party" },
 					"active": { "type": "boolean", "title": "Active", "default": false },
 					"faction_memberships": {
@@ -8693,7 +8900,7 @@
 						"items": { "$ref": "#/components/schemas/GovernmentFunctionDTO" },
 						"type": "array",
 						"title": "Government Functions",
-						"description": "The posts held in a cabinet (from Wikidata), oldest first."
+						"description": "The posts held in a cabinet (from Rijksoverheid), oldest first."
 					},
 					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -8711,7 +8918,16 @@
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
-					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name",
+						"description": "The name they go by: ``Ard van der Steur`` (``Persoon.Roepnaam``); for a minister who never sat in parliament, as Rijksoverheid gives it."
+					},
+					"full_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Full Name",
+						"description": "``Gerard Adriaan van der Steur``; null when the TK gives none."
+					},
 					"party": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Party" },
 					"active": { "type": "boolean", "title": "Active", "default": false },
 					"faction_memberships": {
@@ -8724,7 +8940,7 @@
 						"items": { "$ref": "#/components/schemas/GovernmentFunctionDTO" },
 						"type": "array",
 						"title": "Government Functions",
-						"description": "The posts held in a cabinet (from Wikidata), oldest first."
+						"description": "The posts held in a cabinet (from Rijksoverheid), oldest first."
 					},
 					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -8735,16 +8951,17 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Birth Date"
 					},
-					"wikidata_id": {
+					"government_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Wikidata Id"
+						"title": "Government Name",
+						"description": "The name as Rijksoverheid writes it: S.Th.M. Hermans."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["id", "key"],
 				"title": "MemberDetailDTO",
-				"description": "A member with the posts they held in government.\n\n``government_functions`` come from Wikidata (every post in a Dutch cabinet, complete\nfrom the 1970s), oldest first; empty for a member Wikidata has no person for.\n``wikidata_id`` names that person: a member of parliament by date of birth and surname,\na minister who never sat in parliament by the papers they signed. A cabinet member the\nTweede Kamer has no person for is a member of their own (key ``wikidata_q<number>``)."
+				"description": "A member with the posts they held in government.\n\n``government_functions`` come from Rijksoverheid (every post in a cabinet since 1945),\noldest first; empty for a member who held none. A bewindspersoon is matched to a member\nof parliament by surname, initials and age, a minister who never sat in parliament by\nthe papers they signed; one the Tweede Kamer has no person for is a member of their own\n(key ``rijksoverheid_<initials>_<surname>``)."
 			},
 			"MemberVoteDTO": {
 				"properties": {
@@ -8831,12 +9048,14 @@
 				"type": "string",
 				"enum": [
 					"az",
+					"aok",
 					"bz",
 					"jenv",
 					"venj",
 					"justitie",
 					"bzk",
 					"biza",
+					"bzbpbo",
 					"ocw",
 					"ow",
 					"okw",
@@ -8860,16 +9079,26 @@
 					"lnv",
 					"lnbv",
 					"lenv",
+					"lvv",
 					"szw",
 					"sz",
+					"szv",
 					"arbeid",
 					"vws",
 					"wvc",
 					"vm",
 					"crm",
+					"mw",
 					"vro",
+					"vb",
+					"wv",
 					"vrom",
-					"aenm"
+					"aenm",
+					"scheepvaart",
+					"ogd",
+					"uor",
+					"or",
+					"zo"
 				],
 				"title": "MinistryKey"
 			},
@@ -9076,6 +9305,20 @@
 				"title": "PartyColorsResponse",
 				"description": "Party abbreviation to hex colour."
 			},
+			"PartyRefDTO": {
+				"properties": {
+					"short": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Short" },
+					"faction": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Faction",
+						"description": "The faction key; null for a party the TK data has no faction of."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "PartyRefDTO",
+				"description": "A party as the source writes it (``VVD``, ``partijloos``), and its faction."
+			},
 			"PassageDTO": {
 				"properties": {
 					"section_id": {
@@ -9120,7 +9363,11 @@
 			"PersonRefDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
-					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" }
+					"name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name",
+						"description": "The name they go by: Sophie Hermans."
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -9424,6 +9671,17 @@
 				"required": ["bwb_id"],
 				"title": "SharedAnnexesResponse",
 				"description": "Response for GET /api/instruments/{bwb_id}/shared-annexes."
+			},
+			"SourceRefDTO": {
+				"properties": {
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Url" },
+					"read_on": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Read On" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "SourceRefDTO",
+				"description": "Where it was read: ``rijksoverheid`` with the page and the day, or ``wikidata``."
 			},
 			"StatsResponse": {
 				"properties": {

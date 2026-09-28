@@ -72,12 +72,14 @@ describe('careerOf with posts in a cabinet', () => {
 		{
 			function: 'Minister voor Klimaat en Energie',
 			cabinet: 'kabinet-Rutte IV',
+			acting: false,
 			from_date: '2022-01-10',
 			to_date: '2024-07-02'
 		},
 		{
 			function: 'minister-president van Nederland',
 			cabinet: 'kabinet-Jetten',
+			acting: false,
 			from_date: '2026-02-23',
 			to_date: null
 		}
