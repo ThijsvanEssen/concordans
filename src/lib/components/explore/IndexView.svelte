@@ -1400,8 +1400,22 @@
 	const chips = $derived(activeFilters(facetGroups));
 	let filtersOpen = $state(false);
 
-	// On a narrow screen the tab strip scrolls: the category on screen is scrolled into it.
+	// On a narrow screen the tab strip scrolls: the category on screen is scrolled into it,
+	// and an edge that hides tabs fades out.
 	let catbar = $state<HTMLElement | null>(null);
+	let catMore = $state({ left: false, right: false });
+	const measureCatbar = () => {
+		if (!catbar) return;
+		const { scrollLeft, scrollWidth, clientWidth } = catbar;
+		catMore = { left: scrollLeft > 1, right: scrollLeft + clientWidth < scrollWidth - 1 };
+	};
+	$effect(() => {
+		if (!catbar) return;
+		measureCatbar();
+		const observer = new ResizeObserver(measureCatbar);
+		observer.observe(catbar);
+		return () => observer.disconnect();
+	});
 	$effect(() => {
 		void category;
 		catbar
@@ -1553,7 +1567,14 @@
 <div class="index-view">
 	<!-- The categories in three groups, each named above its tabs: the law and the
 	     courts, how the Kamer deals with a subject, and who does it. -->
-	<nav class="catbar" aria-label="Categorieën" bind:this={catbar}>
+	<nav
+		class="catbar"
+		class:catbar--more-left={catMore.left}
+		class:catbar--more-right={catMore.right}
+		aria-label="Categorieën"
+		bind:this={catbar}
+		onscroll={measureCatbar}
+	>
 		{#each INDEX_TABS as group, g (g)}
 			<div class="catgroup" role="group" aria-labelledby="catgroup-{g}">
 				<span class="catgroup__label" id="catgroup-{g}">{group.label}</span>
@@ -2482,11 +2503,28 @@
 		display: flex;
 		align-items: stretch;
 		gap: 0;
-		padding: 0 32px;
+		padding: 0 24px;
 		border-bottom: 1px solid var(--rule);
 		background: var(--paper);
 		flex-shrink: 0;
 		overflow-x: auto;
+		scrollbar-width: thin;
+		--fade-left: 0px;
+		--fade-right: 0px;
+		mask-image: linear-gradient(
+			to right,
+			transparent 0,
+			#000 var(--fade-left),
+			#000 calc(100% - var(--fade-right)),
+			transparent 100%
+		);
+	}
+	/* A hidden tab is announced by the edge that fades. */
+	.catbar--more-left {
+		--fade-left: 40px;
+	}
+	.catbar--more-right {
+		--fade-right: 40px;
 	}
 	/* A group: its name over its tabs, a hairline between groups. */
 	.catgroup {
@@ -2495,12 +2533,12 @@
 		padding-top: 10px;
 	}
 	.catgroup + .catgroup {
-		margin-left: 12px;
-		padding-left: 12px;
+		margin-left: 8px;
+		padding-left: 8px;
 		box-shadow: inset 1px 0 0 var(--rule);
 	}
 	.catgroup__label {
-		padding: 0 14px;
+		padding: 0 10px;
 		font-family: var(--font-sans);
 		font-size: 10.5px;
 		font-weight: 500;
@@ -2515,8 +2553,8 @@
 	.cat {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
-		padding: 8px 14px 12px;
+		gap: 6px;
+		padding: 8px 10px 12px;
 		text-decoration: none;
 		border-bottom: 2px solid transparent;
 		white-space: nowrap;
@@ -2524,7 +2562,7 @@
 	}
 	.cat-name {
 		font-family: var(--font-serif);
-		font-size: 17px;
+		font-size: 16px;
 		color: var(--ink-3);
 		line-height: 1;
 		transition: color var(--dur-1) var(--ease);
