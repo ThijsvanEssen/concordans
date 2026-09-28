@@ -409,7 +409,7 @@
 		border-right: 1px solid var(--rule);
 		background: var(--paper);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		color: var(--ink-2);
 		scrollbar-width: thin;
 		scrollbar-color: var(--rule) transparent;
@@ -418,13 +418,13 @@
 		display: flex;
 		align-items: baseline;
 		gap: 6px;
-		margin-bottom: 4px;
+		margin-bottom: var(--s-1);
 	}
 	.block__title {
 		flex: 1;
-		margin: 0 0 4px;
+		margin: 0 0 var(--s-1);
 		font-family: var(--font-serif);
-		font-size: 16px;
+		font-size: var(--t-body-2);
 		font-weight: 500;
 		color: var(--ink);
 	}
@@ -440,7 +440,7 @@
 		color: var(--ink-3);
 	}
 	.preset {
-		font-size: 11.5px;
+		font-size: var(--t-label);
 	}
 	.menu {
 		position: relative;
@@ -464,7 +464,7 @@
 	.menu__item {
 		display: block;
 		width: 100%;
-		padding: 6px 12px;
+		padding: 6px var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
@@ -479,8 +479,8 @@
 		font-weight: 600;
 	}
 	.menu__item--more {
-		margin-top: 4px;
-		padding-top: 8px;
+		margin-top: var(--s-1);
+		padding-top: var(--s-2);
 		border-top: 1px solid var(--rule);
 		color: var(--ink-2);
 	}
@@ -510,7 +510,7 @@
 		place-items: center;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		font-size: 10px;
+		font-size: var(--t-glyph);
 		line-height: 1;
 		color: var(--paper);
 		flex: none;
@@ -563,6 +563,6 @@
 		font-weight: 500;
 	}
 	.more .block {
-		margin-top: 12px;
+		margin-top: var(--s-3);
 	}
 </style>

@@ -214,7 +214,7 @@
 		padding: var(--s-7);
 		font-family: var(--font-serif);
 		font-style: italic;
-		font-size: 16px;
+		font-size: var(--t-body-2);
 		color: var(--ink-3);
 		text-align: center;
 	}
@@ -268,7 +268,7 @@
 		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
-		margin-bottom: 8px;
+		margin-bottom: var(--s-2);
 	}
 
 	.whole-title {
@@ -312,7 +312,7 @@
 		font-family: var(--font-serif);
 		font-weight: 500;
 		color: var(--ink);
-		font-size: 17px;
+		font-size: var(--t-body);
 		line-height: var(--lh-snug);
 	}
 

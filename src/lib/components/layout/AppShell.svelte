@@ -162,6 +162,9 @@
 		--t-body-2: 15px; /* titles of bronnen in lists and rows */
 		--t-meta: 13px; /* interface text: 12.5 to 13px */
 		--t-micro: 12px; /* captions and counts, in --ink-3 */
+		--t-label: 11px; /* small-caps labels over a group */
+		--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
+		--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */
 
 		/* Line heights */
 		--lh-tight: 1.15;
@@ -251,7 +254,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 5px;
-		padding: 4px 8px;
+		padding: var(--s-1) var(--s-2);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: transparent;
@@ -284,7 +287,7 @@
 	}
 	:global(.btn.is-text) {
 		border-color: transparent;
-		padding: 4px;
+		padding: var(--s-1);
 	}
 	:global(.btn.is-text:hover) {
 		background: transparent;
@@ -295,7 +298,7 @@
 		cursor: default;
 	}
 	:global(.btn .caret) {
-		font-size: 9px;
+		font-size: var(--t-glyph);
 		opacity: 0.7;
 	}
 
@@ -324,7 +327,7 @@
 		z-index: calc(var(--z-modal) + 1);
 		background: var(--paper);
 		color: var(--ink);
-		padding: 8px 16px;
+		padding: var(--s-2) var(--s-4);
 		border: 1px solid var(--rule-strong);
 		border-top: none;
 		font-family: var(--font-sans);

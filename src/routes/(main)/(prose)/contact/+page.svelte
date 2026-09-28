@@ -23,7 +23,7 @@
 	.container {
 		max-width: 600px;
 		margin: 0 auto;
-		padding: 0 24px;
+		padding: 0 var(--s-5);
 	}
 
 	.stub-eyebrow {
@@ -31,7 +31,7 @@
 		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
-		margin-bottom: 16px;
+		margin-bottom: var(--s-4);
 	}
 
 	.stub-title {
@@ -40,7 +40,7 @@
 		font-weight: 500;
 		line-height: var(--lh-tight);
 		color: var(--ink);
-		margin: 0 0 16px;
+		margin: 0 0 var(--s-4);
 	}
 
 	.stub-lede {

@@ -521,7 +521,7 @@
 	.head__title {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 17px;
+		font-size: var(--t-body);
 		font-weight: 500;
 		color: var(--ink);
 	}
@@ -549,11 +549,11 @@
 	.menu__item {
 		display: block;
 		width: 100%;
-		padding: 6px 12px;
+		padding: 6px var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		color: var(--ink);
 		text-align: left;
 		cursor: pointer;
@@ -565,9 +565,9 @@
 		font-weight: 600;
 	}
 	.menu__item--more {
-		margin-top: 4px;
+		margin-top: var(--s-1);
 		border-top: 1px solid var(--rule);
-		padding-top: 8px;
+		padding-top: var(--s-2);
 		color: var(--ink-2);
 	}
 	.body {
@@ -583,14 +583,14 @@
 		line-height: 1.4;
 	}
 	.hidden {
-		margin-top: 8px;
+		margin-top: var(--s-2);
 		border-top: 1px solid var(--rule);
 	}
 	.section {
 		margin: var(--s-4) 0 0;
 		padding: 0 var(--s-4);
 		font-family: var(--font-serif);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		font-weight: 500;
 		font-style: italic;
 		color: var(--ink-3);
@@ -598,13 +598,13 @@
 	.group__head {
 		display: flex;
 		align-items: baseline;
-		gap: 8px;
-		padding: 16px var(--s-4) 4px;
+		gap: var(--s-2);
+		padding: var(--s-4) var(--s-4) var(--s-1);
 	}
 	.group__label {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 15px;
+		font-size: var(--t-body-2);
 		font-weight: 500;
 		color: var(--ink);
 	}
@@ -643,7 +643,7 @@
 		place-items: center;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		font-size: 9px;
+		font-size: var(--t-glyph);
 		line-height: 1;
 		color: var(--paper);
 	}
@@ -663,7 +663,7 @@
 	}
 	.group__years-edge {
 		flex: none;
-		font-size: 10.5px;
+		font-size: var(--t-label);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
@@ -692,8 +692,8 @@
 	}
 	.group__caption {
 		margin: 0;
-		padding: 0 var(--s-4) 4px;
-		font-size: 11.5px;
+		padding: 0 var(--s-4) var(--s-1);
+		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 	.rows {
@@ -705,11 +705,11 @@
 		display: flex;
 		align-items: flex-start;
 		gap: 10px;
-		padding: 8px var(--s-4);
+		padding: var(--s-2) var(--s-4);
 		cursor: pointer;
 	}
 	.row__main :global(.kind-glyph) {
-		margin-top: 4px;
+		margin-top: var(--s-1);
 	}
 	.row__main:hover,
 	.row__main:focus-within {
@@ -774,18 +774,18 @@
 	}
 	.row__open {
 		margin: 0 var(--s-4) 10px calc(var(--s-4) + 21px);
-		padding: 12px 14px;
+		padding: var(--s-3) 14px;
 		border-left: 2px solid var(--rule-strong);
 	}
 	.row__where {
 		margin: 0 0 6px;
-		font-size: 11.5px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 	.row__passage {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 14.5px;
+		font-size: var(--t-body-2);
 		line-height: 1.5;
 		color: var(--ink);
 	}
@@ -826,9 +826,9 @@
 	}
 	.foot {
 		display: flex;
-		gap: 16px;
+		gap: var(--s-4);
 		padding: 18px var(--s-4) 20px;
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 	}
 	.visually-hidden {
 		position: absolute;

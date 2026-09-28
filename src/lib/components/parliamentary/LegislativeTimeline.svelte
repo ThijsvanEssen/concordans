@@ -362,7 +362,7 @@
 		align-items: center;
 		flex-wrap: wrap;
 		gap: 6px;
-		margin-top: 4px;
+		margin-top: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;

@@ -219,7 +219,7 @@
 		/* `flex: 1` only has effect inside a flex parent; elsewhere the figure is a block. */
 		flex: 1;
 		margin: 0;
-		padding: 16px 16px 12px;
+		padding: var(--s-4) var(--s-4) var(--s-3);
 		border: 1px solid var(--rule);
 		background: var(--paper-2);
 		display: flex;
@@ -273,7 +273,7 @@
 	}
 	.center-num {
 		font-family: var(--font-serif);
-		font-size: 32px;
+		font-size: var(--t-h1);
 		fill: var(--ink);
 	}
 	/* On hover the centre shows the faction's abbreviation, in its own colour via the
@@ -289,7 +289,7 @@
 	}
 	.hemicycle-caption {
 		margin: 0;
-		padding-top: 4px;
+		padding-top: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

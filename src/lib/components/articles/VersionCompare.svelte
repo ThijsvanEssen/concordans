@@ -701,7 +701,7 @@
 	}
 	.pick__steps {
 		display: flex;
-		gap: 4px;
+		gap: var(--s-1);
 		margin-bottom: -11px;
 	}
 	/* The comparison's own panel: set apart from the text like a sheet, closed by the
@@ -781,7 +781,7 @@
 		display: flex;
 		flex-direction: column;
 		min-width: 0;
-		padding: 0 8px 6px 6px;
+		padding: 0 var(--s-2) 6px 6px;
 		border: 0;
 		border-left: 1px solid var(--rule-strong);
 		background: none;
@@ -831,7 +831,7 @@
 		background: var(--ink);
 	}
 	.line__bar .badge {
-		margin-left: 4px;
+		margin-left: var(--s-1);
 	}
 
 	/* A and B: the same marks on the line and at the lists. */
@@ -845,7 +845,7 @@
 		border-radius: 50%;
 		background: var(--ink);
 		font-family: var(--font-sans);
-		font-size: 10.5px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		line-height: 1;
 		color: var(--paper);
@@ -868,7 +868,7 @@
 		margin: 0;
 	}
 	.history__head {
-		margin: 0 0 4px;
+		margin: 0 0 var(--s-1);
 		color: var(--ink-3);
 	}
 	.history__table {
@@ -876,7 +876,7 @@
 		border-collapse: collapse;
 	}
 	.history__table td {
-		padding: 5px 12px 5px 0;
+		padding: 5px var(--s-3) 5px 0;
 		border-top: 1px solid var(--rule);
 		vertical-align: baseline;
 	}
@@ -1034,7 +1034,7 @@
 	.tools__acts {
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		gap: var(--s-1);
 	}
 
 	/* ── The leden, as in the article text: the number in the gutter ── */
@@ -1049,7 +1049,7 @@
 	.row {
 		display: grid;
 		grid-template-columns: 36px 1fr 150px;
-		gap: 0 12px;
+		gap: 0 var(--s-3);
 		padding: 6px 10px 6px 0;
 	}
 	.compare--naast .row {
@@ -1057,7 +1057,7 @@
 		gap: 0 20px;
 	}
 	.row--head {
-		padding: 0 0 4px;
+		padding: 0 0 var(--s-1);
 		border-bottom: 1px solid var(--rule);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -1104,7 +1104,7 @@
 	.row__label {
 		display: block;
 		font-family: var(--font-sans);
-		font-size: 10.5px;
+		font-size: var(--t-label);
 		font-weight: 500;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -1132,11 +1132,11 @@
 		text-decoration-thickness: 1px;
 	}
 	.text--added {
-		padding-left: 12px;
+		padding-left: var(--s-3);
 		border-left: 3px solid var(--mark-ins-rule);
 	}
 	.text--removed {
-		padding-left: 12px;
+		padding-left: var(--s-3);
 		border-left: 3px solid var(--rule-strong);
 		color: var(--ink-3);
 		text-decoration: line-through;
@@ -1158,7 +1158,7 @@
 	}
 	.pair__old,
 	.pair__new {
-		padding-left: 12px;
+		padding-left: var(--s-3);
 		border-left: 3px solid var(--rule);
 	}
 	.pair__new {
@@ -1168,7 +1168,7 @@
 	.side-head {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 		color: var(--ink-2);
 	}
 	.row--head .badge,
@@ -1178,7 +1178,7 @@
 	.pair__when {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 		margin-bottom: 2px;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -1188,8 +1188,8 @@
 	.fold {
 		display: block;
 		width: calc(100% - 48px);
-		margin: 4px 0 4px 48px;
-		padding: 4px 0;
+		margin: var(--s-1) 0 var(--s-1) var(--s-7);
+		padding: var(--s-1) 0;
 		border: 0;
 		border-top: 1px dashed var(--rule);
 		border-bottom: 1px dashed var(--rule);
@@ -1260,7 +1260,7 @@
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: 2px 10px;
-		margin-bottom: 4px;
+		margin-bottom: var(--s-1);
 		color: var(--ink-3);
 	}
 	.formulation__when {
@@ -1315,7 +1315,7 @@
 		border-collapse: collapse;
 	}
 	.table th {
-		padding: 0 8px 6px 0;
+		padding: 0 var(--s-2) 6px 0;
 		border-bottom: 1px solid var(--rule-strong);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -1323,7 +1323,7 @@
 		text-align: left;
 	}
 	.table td {
-		padding: 6px 8px 6px 0;
+		padding: 6px var(--s-2) 6px 0;
 		border-bottom: 1px solid var(--rule);
 		vertical-align: top;
 		color: var(--ink);
@@ -1360,7 +1360,7 @@
 		}
 		.compare--naast .row {
 			grid-template-columns: 28px 1fr 1fr;
-			gap: 0 12px;
+			gap: 0 var(--s-3);
 		}
 	}
 	@container vc (max-width: 560px) {
@@ -1390,7 +1390,7 @@
 		}
 		.compare--naast .row {
 			grid-template-columns: 28px 1fr 1fr;
-			gap: 0 12px;
+			gap: 0 var(--s-3);
 		}
 	}
 </style>

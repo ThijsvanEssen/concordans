@@ -98,7 +98,7 @@
 		z-index: var(--z-float);
 		width: max-content;
 		max-width: 280px;
-		padding: 8px 10px;
+		padding: var(--s-2) 10px;
 		background: var(--ink);
 		color: var(--paper);
 		border-radius: var(--r-1);

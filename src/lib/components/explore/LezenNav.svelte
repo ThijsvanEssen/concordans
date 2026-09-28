@@ -240,7 +240,7 @@
 		padding-top: 22px;
 		background: var(--paper-2);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 	}
 
 	.note {
@@ -250,13 +250,13 @@
 	}
 
 	.head {
-		padding: 0 18px 12px;
+		padding: 0 18px var(--s-3);
 	}
 
 	.head__title {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 16px;
+		font-size: var(--t-body-2);
 		font-weight: 500;
 		line-height: 1.2;
 		color: var(--ink);
@@ -310,24 +310,24 @@
 	}
 	.group.depth-0 > .group__head {
 		font-family: var(--font-serif);
-		font-size: 13.5px;
+		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
 	}
 	.group.depth-1 > .group__head {
-		font-size: 13px;
+		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.group.depth-2 > .group__head {
-		font-size: 12px;
+		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
 		text-transform: uppercase;
 		letter-spacing: 0.02em;
 	}
 	.group.depth-3 > .group__head {
-		font-size: 12px;
+		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
 		font-style: italic;
@@ -352,7 +352,7 @@
 
 	.row {
 		display: block;
-		padding: 4px 18px;
+		padding: var(--s-1) 18px;
 		color: var(--ink-2);
 		line-height: 1.3;
 		border-left: 2px solid transparent;
@@ -368,6 +368,6 @@
 		color: var(--ink);
 		font-weight: 600;
 		border-left-color: var(--accent);
-		padding-left: 16px;
+		padding-left: var(--s-4);
 	}
 </style>

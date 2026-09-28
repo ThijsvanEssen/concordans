@@ -148,22 +148,22 @@
 		flex-shrink: 0;
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: var(--s-3);
 		padding: 0 20px;
 		border-bottom: 1px solid var(--rule);
 		background: var(--paper);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		position: relative;
 		z-index: var(--z-topbar);
 	}
 
 	.back {
-		padding: 2px 4px;
+		padding: 2px var(--s-1);
 		border: 0;
 		background: none;
 		font: inherit;
-		font-size: 15px;
+		font-size: var(--t-body-2);
 		line-height: 1;
 		color: var(--ink-2);
 		cursor: pointer;
@@ -175,7 +175,7 @@
 	.path {
 		display: flex;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 		min-width: 0;
 		overflow: hidden;
 		color: var(--ink-3);
@@ -207,7 +207,7 @@
 	}
 
 	.read {
-		margin-left: 8px;
+		margin-left: var(--s-2);
 		padding: 3px 10px;
 	}
 </style>

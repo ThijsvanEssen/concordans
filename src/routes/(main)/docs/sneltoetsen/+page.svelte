@@ -47,15 +47,15 @@
 	.container {
 		max-width: 720px;
 		margin: 0 auto;
-		padding: 0 24px;
+		padding: 0 var(--s-5);
 	}
 
 	.stub-eyebrow {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
-		margin-bottom: 16px;
+		margin-bottom: var(--s-4);
 	}
 
 	.stub-eyebrow a {
@@ -75,7 +75,7 @@
 		font-weight: 500;
 		line-height: var(--lh-tight);
 		color: var(--ink);
-		margin: 0 0 32px;
+		margin: 0 0 var(--s-6);
 	}
 
 	.shortcut-table {
@@ -88,7 +88,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 12px 20px;
+		padding: var(--s-3) 20px;
 		background: var(--paper);
 	}
 
@@ -98,22 +98,22 @@
 
 	.shortcut-desc {
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		color: var(--ink);
 	}
 
 	.shortcut-keys {
 		display: flex;
-		gap: 4px;
+		gap: var(--s-1);
 		align-items: center;
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 
 	kbd {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink-2);
 		background: var(--paper-2);
 		border: 1px solid var(--rule);

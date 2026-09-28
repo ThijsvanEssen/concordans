@@ -1238,7 +1238,7 @@
 		right: 10px;
 		z-index: 2;
 		font-family: var(--font-sans);
-		font-size: 18px;
+		font-size: var(--t-body);
 		line-height: 1;
 		color: var(--ink-3);
 		text-decoration: none;
@@ -1334,12 +1334,12 @@
 		.explore-read .mobile-tab {
 			flex: 1;
 			font-family: var(--font-sans);
-			font-size: 12.5px;
+			font-size: var(--t-micro);
 			color: var(--ink-3);
 			background: none;
 			border: 0;
 			border-bottom: 2px solid transparent;
-			padding: 8px 4px 9px;
+			padding: var(--s-2) var(--s-1) 9px;
 			cursor: pointer;
 			margin-bottom: -1px;
 		}
@@ -1390,15 +1390,15 @@
 		}
 		.toc-sheet__title {
 			font-family: var(--font-serif);
-			font-size: 16px;
+			font-size: var(--t-body-2);
 			font-weight: 500;
 			color: var(--ink);
 		}
 		.toc-sheet__close {
-			padding: 0 4px;
+			padding: 0 var(--s-1);
 			border: 0;
 			background: none;
-			font-size: 20px;
+			font-size: var(--t-h3);
 			line-height: 1;
 			color: var(--ink-3);
 			cursor: pointer;
@@ -1457,12 +1457,12 @@
 		.mobile-tab {
 			flex: 1;
 			font-family: var(--font-sans);
-			font-size: 12.5px;
+			font-size: var(--t-micro);
 			color: var(--ink-3);
 			background: none;
 			border: 0;
 			border-bottom: 2px solid transparent;
-			padding: 8px 4px 9px;
+			padding: var(--s-2) var(--s-1) 9px;
 			cursor: pointer;
 			margin-bottom: -1px;
 		}

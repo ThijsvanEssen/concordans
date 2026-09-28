@@ -125,7 +125,7 @@
 		outline: none;
 		background: transparent;
 		font-family: var(--font-serif);
-		font-size: 16px;
+		font-size: var(--t-input);
 		color: var(--ink);
 		height: 28px;
 		min-width: 0;
@@ -154,7 +154,7 @@
 	.toolbar-sort {
 		display: inline-flex;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -171,7 +171,7 @@
 	}
 	.sort-select select {
 		appearance: none;
-		padding: 2px 16px 2px 0;
+		padding: 2px var(--s-4) 2px 0;
 		border: 0;
 		background: transparent;
 		font-family: var(--font-sans);
@@ -198,7 +198,7 @@
 		font-size: var(--t-meta);
 		min-width: 24px;
 		min-height: 24px;
-		padding: 2px 4px;
+		padding: 2px var(--s-1);
 		border-radius: var(--r-1);
 	}
 	.toolbar-sort .dir:hover {

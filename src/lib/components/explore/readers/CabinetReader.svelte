@@ -160,7 +160,7 @@
 	.parties {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 4px 12px;
+		gap: var(--s-1) var(--s-3);
 	}
 	.party {
 		display: inline-flex;

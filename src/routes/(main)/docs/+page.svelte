@@ -272,7 +272,7 @@
 	.container {
 		max-width: 720px;
 		margin: 0 auto;
-		padding: 0 24px;
+		padding: 0 var(--s-5);
 	}
 
 	.stub-eyebrow {
@@ -280,7 +280,7 @@
 		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
-		margin-bottom: 16px;
+		margin-bottom: var(--s-4);
 	}
 
 	.stub-title {
@@ -289,7 +289,7 @@
 		font-weight: 500;
 		line-height: var(--lh-tight);
 		color: var(--ink);
-		margin: 0 0 16px;
+		margin: 0 0 var(--s-4);
 	}
 
 	.stub-lede {
@@ -297,7 +297,7 @@
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink-2);
-		margin-bottom: 48px;
+		margin-bottom: var(--s-7);
 	}
 
 	.section {
@@ -309,7 +309,7 @@
 		font-size: var(--t-h3);
 		font-weight: 500;
 		color: var(--ink);
-		margin: 0 0 12px;
+		margin: 0 0 var(--s-3);
 	}
 
 	p {
@@ -349,10 +349,10 @@
 
 	.list-row {
 		display: flex;
-		gap: 16px;
-		padding: 8px 16px;
+		gap: var(--s-4);
+		padding: var(--s-2) var(--s-4);
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		color: var(--ink);
 		border-top: 1px solid var(--rule);
 	}
@@ -384,10 +384,10 @@
 
 	.meta-row {
 		display: flex;
-		gap: 24px;
+		gap: var(--s-5);
 		flex-wrap: wrap;
-		margin-top: 48px;
-		padding-top: 24px;
+		margin-top: var(--s-7);
+		padding-top: var(--s-5);
 		border-top: 1px solid var(--rule);
 	}
 

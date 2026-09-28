@@ -77,7 +77,7 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
-		padding: 7px 16px;
+		padding: 7px var(--s-4);
 		border-radius: var(--r-1);
 		text-decoration: none;
 		border: 1px solid var(--rule-strong);

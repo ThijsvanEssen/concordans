@@ -198,7 +198,7 @@
 		text-align: left;
 	}
 	.head__title {
-		font-size: 10.5px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -235,7 +235,7 @@
 		border: 0;
 		background: none;
 		font-family: var(--font-serif);
-		font-size: 14px;
+		font-size: var(--t-body-2);
 		color: var(--ink);
 		text-align: left;
 		white-space: nowrap;
@@ -250,14 +250,14 @@
 		color: var(--ink-3);
 	}
 	.row__note {
-		font-size: 11px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 	.row__remove {
 		padding: 0 2px;
 		border: 0;
 		background: none;
-		font-size: 15px;
+		font-size: var(--t-body-2);
 		line-height: 1;
 		color: var(--ink-3);
 		cursor: pointer;
@@ -268,9 +268,9 @@
 
 	.add {
 		display: flex;
-		gap: 4px;
+		gap: var(--s-1);
 		min-width: 0;
-		padding: 4px 8px;
+		padding: var(--s-1) var(--s-2);
 		border: 1px dashed var(--rule-strong);
 		border-radius: var(--r-1);
 		background: none;

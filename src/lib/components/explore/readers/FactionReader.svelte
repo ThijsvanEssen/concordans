@@ -111,7 +111,7 @@
 	}
 	.chips {
 		display: flex;
-		gap: 4px;
+		gap: var(--s-1);
 	}
 	/* The seat count is a word, not a tag. */
 	.seats-chip {

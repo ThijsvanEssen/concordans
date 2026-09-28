@@ -253,7 +253,7 @@
 	.vote-summary {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: var(--s-1);
 	}
 	/* Seats for and against are told apart by the word; the bar shows the share only. */
 	.vote-bar {
@@ -295,8 +295,8 @@
 	.voter-row {
 		display: grid;
 		grid-template-columns: 50px 1fr auto;
-		gap: 8px;
-		padding: 4px var(--s-1);
+		gap: var(--s-2);
+		padding: var(--s-1) var(--s-1);
 		margin: 0 calc(-1 * var(--s-1));
 		align-items: baseline;
 		border-radius: var(--r-1);

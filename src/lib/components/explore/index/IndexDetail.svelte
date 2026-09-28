@@ -351,7 +351,7 @@
 	.detail-head-left {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: var(--s-1);
 		min-width: 0;
 	}
 	.detail-kind {
@@ -361,7 +361,7 @@
 		color: var(--ink-3);
 		display: inline-flex;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 		flex-wrap: wrap;
 	}
 	.detail-sep {
@@ -425,16 +425,16 @@
 	/* Tiles */
 	.tiles {
 		display: grid;
-		gap: 12px;
+		gap: var(--s-3);
 		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 	}
 	.tile {
 		border: 1px solid var(--rule);
 		background: var(--paper);
-		padding: 14px 16px 12px;
+		padding: 14px var(--s-4) var(--s-3);
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: var(--s-1);
 	}
 	.tile-num {
 		font-family: var(--font-serif);
@@ -472,7 +472,7 @@
 	.vote-bar-wrap {
 		display: grid;
 		grid-template-columns: 60px 1fr 60px;
-		gap: 12px;
+		gap: var(--s-3);
 		align-items: center;
 	}
 	.vote-side {
@@ -505,7 +505,7 @@
 	/* The three ways of opening the source. */
 	.detail-acts {
 		display: flex;
-		gap: 8px;
+		gap: var(--s-2);
 		flex-wrap: wrap;
 		align-items: center;
 		padding-top: 14px;
@@ -516,7 +516,7 @@
 		align-items: center;
 		gap: 6px;
 		height: 30px;
-		padding: 0 12px;
+		padding: 0 var(--s-3);
 		background: transparent;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);

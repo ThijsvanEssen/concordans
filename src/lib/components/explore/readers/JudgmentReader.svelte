@@ -399,7 +399,7 @@
 		text-decoration: none;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		padding: 2px 8px;
+		padding: 2px var(--s-2);
 		transition:
 			background var(--dur-1) var(--ease),
 			color var(--dur-1) var(--ease);
@@ -450,7 +450,7 @@
 		color: var(--ink-3);
 		text-align: left;
 		white-space: nowrap;
-		padding: 4px 12px 4px 0;
+		padding: var(--s-1) var(--s-3) var(--s-1) 0;
 		vertical-align: baseline;
 		width: 8em;
 	}
@@ -459,7 +459,7 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink);
-		padding: 4px 0;
+		padding: var(--s-1) 0;
 		vertical-align: baseline;
 	}
 	.reader-party {
@@ -497,14 +497,14 @@
 	.reader-heading {
 		display: flex;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 		font-family: var(--font-serif);
 		font-size: 1em;
 		font-weight: 600;
 		line-height: var(--lh-snug);
 		color: var(--ink);
 		margin: 2.2em 0 0.5em;
-		padding: 1.4em 8px 3px;
+		padding: 1.4em var(--s-2) 3px;
 		margin-left: -8px;
 		margin-right: -8px;
 		border-top: 1px solid var(--rule);
@@ -531,11 +531,11 @@
 	.reader-heading__link {
 		flex: none;
 		opacity: 0;
-		padding: 2px 8px;
+		padding: 2px var(--s-2);
 		border: 0;
 		background: none;
 		font-family: var(--font-sans);
-		font-size: 11.5px;
+		font-size: var(--t-label);
 		font-weight: 400;
 		color: var(--ink-3);
 		cursor: pointer;
@@ -633,7 +633,7 @@
 	.reader-para-actions {
 		opacity: 0;
 		display: flex;
-		gap: 4px;
+		gap: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 	}
@@ -653,8 +653,8 @@
 	}
 
 	.reader-para-btn {
-		padding: 2px 8px;
-		font-size: 11.5px;
+		padding: 2px var(--s-2);
+		font-size: var(--t-label);
 	}
 
 	.menu {
@@ -667,28 +667,28 @@
 		top: calc(100% + 6px);
 		z-index: var(--z-float);
 		width: 320px;
-		padding: 8px 0;
+		padding: var(--s-2) 0;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		box-shadow: var(--shadow-modal);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		text-align: left;
 	}
 
 	.pop__label {
-		padding: 2px 12px 6px;
-		font-size: 11.5px;
+		padding: 2px var(--s-3) 6px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 
 	.pop__item {
 		display: flex;
 		justify-content: space-between;
-		gap: 12px;
+		gap: var(--s-3);
 		width: 100%;
-		padding: 6px 12px;
+		padding: 6px var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
@@ -703,7 +703,7 @@
 
 	.pop__k {
 		flex: none;
-		font-size: 11.5px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 

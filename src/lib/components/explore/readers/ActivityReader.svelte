@@ -51,7 +51,7 @@
 	.head {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: var(--s-1);
 	}
 	.kicker {
 		font-family: var(--font-sans);

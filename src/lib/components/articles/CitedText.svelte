@@ -127,14 +127,14 @@
 		top: 100%;
 		z-index: 20;
 		width: min(44ch, 80vw);
-		margin-top: 4px;
+		margin-top: var(--s-1);
 		padding: var(--s-3);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
 		font-family: var(--font-serif);
-		font-size: 14px;
+		font-size: var(--t-body-2);
 		line-height: 1.45;
 		color: var(--ink-2);
 		white-space: pre-line;

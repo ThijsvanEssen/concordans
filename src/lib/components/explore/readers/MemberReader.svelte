@@ -287,7 +287,7 @@
 		align-items: center;
 		justify-content: center;
 		font-family: var(--font-serif);
-		font-size: 17px;
+		font-size: var(--t-body);
 		color: var(--ink-3);
 		flex-shrink: 0;
 	}
@@ -429,7 +429,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -451,7 +451,7 @@
 	.vote-group {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: var(--s-1);
 		margin-top: 6px;
 	}
 	.vote-group-head {
@@ -472,7 +472,7 @@
 		align-items: baseline;
 		justify-content: space-between;
 		margin-top: var(--s-3);
-		padding-bottom: 4px;
+		padding-bottom: var(--s-1);
 		border-bottom: 1px solid var(--rule);
 	}
 	.party-name {
@@ -498,7 +498,7 @@
 		background: none;
 		border: none;
 		border-radius: var(--r-1);
-		padding: 4px;
+		padding: var(--s-1);
 		margin-left: -4px;
 		cursor: pointer;
 		text-align: left;

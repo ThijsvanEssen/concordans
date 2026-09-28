@@ -181,7 +181,7 @@
 		display: flex;
 		/* The wordmark and the links share a baseline; the controls on the right are centred. */
 		align-items: baseline;
-		gap: 32px;
+		gap: var(--s-6);
 		padding: 0 28px;
 		flex-shrink: 0;
 		width: 100%;
@@ -196,7 +196,7 @@
 		display: flex;
 		gap: 20px;
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		font-weight: 500;
 		color: var(--ink-3);
 	}
@@ -227,7 +227,7 @@
 	.search-trigger {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 		width: 340px;
 		max-width: 100%;
 		min-width: 0;
@@ -238,7 +238,7 @@
 		border-radius: var(--r-1);
 		cursor: text;
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		color: var(--ink-3);
 		transition: border-color var(--dur-1) var(--ease);
 	}
@@ -256,7 +256,7 @@
 	}
 
 	.kbd {
-		font-size: 11px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 		white-space: nowrap;
 	}
@@ -267,7 +267,7 @@
 		background: none;
 		border: 0;
 		cursor: pointer;
-		padding: 6px 8px;
+		padding: 6px var(--s-2);
 		color: var(--ink-2);
 		line-height: 1;
 	}
@@ -287,9 +287,9 @@
 
 	.mobile-nav-link {
 		font-family: var(--font-sans);
-		font-size: 14px;
+		font-size: var(--t-body-2);
 		color: var(--ink-2);
-		padding: 14px 24px;
+		padding: 14px var(--s-5);
 		border-top: 1px solid var(--rule);
 	}
 
@@ -309,8 +309,8 @@
 		/* Without the links there is no baseline to share. */
 		.topbar {
 			align-items: center;
-			gap: 12px;
-			padding: 0 16px;
+			gap: var(--s-3);
+			padding: 0 var(--s-4);
 		}
 		.topbar-nav {
 			display: none;

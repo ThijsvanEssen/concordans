@@ -1209,7 +1209,7 @@
 		border-radius: 999px;
 		background: var(--paper);
 		font-family: var(--font-sans);
-		font-size: 11px;
+		font-size: var(--t-label);
 		color: var(--link-color);
 		white-space: nowrap;
 	}
@@ -1226,12 +1226,12 @@
 	.hull-label {
 		position: absolute;
 		transform: translate(-50%, -100%);
-		padding: 2px 8px;
+		padding: 2px var(--s-2);
 		border-radius: 999px;
 		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);
 		border: 1px solid color-mix(in srgb, var(--hull-color) 45%, transparent);
 		font-family: var(--font-sans);
-		font-size: 11.5px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		color: var(--hull-color);
 		white-space: nowrap;
@@ -1276,7 +1276,7 @@
 		border: 1.5px solid var(--paper);
 		box-shadow: 0 0 0 1px var(--accent);
 		font-family: var(--font-sans);
-		font-size: 9px;
+		font-size: var(--t-glyph);
 		font-weight: 600;
 		line-height: 11px;
 		text-align: center;

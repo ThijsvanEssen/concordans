@@ -309,7 +309,7 @@
 		flex-direction: column;
 		height: 100%;
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		color: var(--ink);
 	}
 	.toolbar {
@@ -317,12 +317,12 @@
 		align-items: center;
 		flex-wrap: wrap;
 		gap: 10px;
-		padding: 18px var(--s-5) 12px;
+		padding: 18px var(--s-5) var(--s-3);
 	}
 	.toolbar__title {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 20px;
+		font-size: var(--t-h3);
 		font-weight: 500;
 	}
 	.toolbar__count,
@@ -350,9 +350,9 @@
 	.menu__item {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 		width: 100%;
-		padding: 6px 12px;
+		padding: 6px var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
@@ -373,7 +373,7 @@
 		place-items: center;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		font-size: 10px;
+		font-size: var(--t-glyph);
 		line-height: 1;
 		color: var(--paper);
 		flex: none;
@@ -428,14 +428,14 @@
 	}
 	.cell-bron {
 		font-family: var(--font-serif);
-		font-size: 14.5px;
+		font-size: var(--t-body-2);
 		color: var(--ink);
 		min-width: 220px;
 	}
 	.bron {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 	}
 	.bron__sub {
 		display: block;
@@ -446,7 +446,7 @@
 	/* The card of the row, for the keyboard and touch: shown on hover and focus. */
 	.bron__card {
 		flex: none;
-		padding: 2px 4px;
+		padding: 2px var(--s-1);
 		border: 0;
 		background: none;
 		font-family: var(--font-sans);
@@ -489,7 +489,7 @@
 		display: flex;
 		align-items: center;
 		gap: 14px;
-		padding: 12px var(--s-5);
+		padding: var(--s-3) var(--s-5);
 		border-top: 1px solid var(--rule);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

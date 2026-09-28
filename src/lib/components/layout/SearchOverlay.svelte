@@ -68,7 +68,7 @@
 
 	@media (max-width: 640px) {
 		.overlay {
-			padding-top: 16px;
+			padding-top: var(--s-4);
 		}
 		.modal {
 			max-width: calc(100% - 24px);

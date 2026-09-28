@@ -237,7 +237,7 @@
 
 	.occ-ministry {
 		grid-column: 1 / -1;
-		padding: 12px 0 4px;
+		padding: var(--s-3) 0 var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
@@ -245,7 +245,7 @@
 		color: var(--ink);
 	}
 	.occ-label {
-		padding: 3px 12px 3px 0;
+		padding: 3px var(--s-3) 3px 0;
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		white-space: nowrap;
@@ -254,8 +254,8 @@
 		line-height: 16px;
 	}
 	.occ--compact .occ-label {
-		padding: 1px 12px 1px 0;
-		font-size: 11px;
+		padding: 1px var(--s-3) 1px 0;
+		font-size: var(--t-label);
 		line-height: 12px;
 	}
 	.occ-track {
@@ -279,7 +279,7 @@
 		bottom: 10px;
 		left: 0;
 		transform: translateX(-50%);
-		font-size: 11px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 		white-space: nowrap;
 	}
@@ -306,9 +306,9 @@
 		box-sizing: border-box;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		padding-left: 4px;
+		padding-left: var(--s-1);
 		border-left: 1.5px solid var(--accent);
-		font-size: 11px;
+		font-size: var(--t-label);
 		font-weight: 500;
 		color: var(--accent);
 		white-space: nowrap;
@@ -349,7 +349,7 @@
 	.blk-name {
 		display: block;
 		padding: 0 6px;
-		font-size: 11px;
+		font-size: var(--t-label);
 		line-height: 15px;
 		white-space: nowrap;
 		overflow: hidden;
@@ -393,7 +393,7 @@
 		border: 0;
 	}
 	.occ-note {
-		margin: 0 0 16px;
+		margin: 0 0 var(--s-4);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-3);

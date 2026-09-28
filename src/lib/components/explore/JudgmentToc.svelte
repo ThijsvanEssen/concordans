@@ -114,7 +114,7 @@
 		padding-top: 22px;
 		background: var(--paper-2);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 	}
 
 	.note {
@@ -124,13 +124,13 @@
 	}
 
 	.head {
-		padding: 0 18px 12px;
+		padding: 0 18px var(--s-3);
 	}
 
 	.head__title {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 16px;
+		font-size: var(--t-body-2);
 		font-weight: 500;
 		line-height: 1.2;
 		color: var(--ink);
@@ -145,7 +145,7 @@
 	.row {
 		display: block;
 		width: 100%;
-		padding: 4px 18px;
+		padding: var(--s-1) 18px;
 		border: 0;
 		background: none;
 		text-align: left;
@@ -163,7 +163,7 @@
 	.row--summary,
 	.row--parties {
 		font-family: var(--font-sans);
-		font-size: 11.5px;
+		font-size: var(--t-label);
 		font-weight: 600;
 		letter-spacing: 0.02em;
 		text-transform: uppercase;

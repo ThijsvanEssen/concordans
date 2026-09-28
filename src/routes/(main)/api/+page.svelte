@@ -187,24 +187,24 @@
 	.container {
 		max-width: 1080px;
 		margin: 0 auto;
-		padding: 0 32px;
+		padding: 0 var(--s-6);
 		display: grid;
 		grid-template-columns: 220px 1fr;
-		column-gap: 48px;
-		row-gap: 48px;
+		column-gap: var(--s-7);
+		row-gap: var(--s-7);
 	}
 
 	.page-header {
 		grid-column: 1 / -1;
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
-		padding-bottom: 24px;
+		gap: var(--s-3);
+		padding-bottom: var(--s-5);
 		border-bottom: 1px solid var(--rule);
 	}
 	.eyebrow {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
 	}
@@ -228,11 +228,11 @@
 		display: grid;
 		grid-template-columns: max-content 1fr;
 		column-gap: var(--s-4);
-		row-gap: 4px;
+		row-gap: var(--s-1);
 		margin: 6px 0 0;
 		max-width: 72ch;
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		line-height: 1.55;
 	}
 	.api-terms dt {
@@ -245,7 +245,7 @@
 	}
 	.api-terms code {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink);
 		background: var(--paper-2);
 		padding: 1px 5px;
@@ -262,10 +262,10 @@
 	}
 	.toc-title {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
-		margin-bottom: 8px;
+		margin-bottom: var(--s-2);
 	}
 	.toc-list {
 		list-style: none;
@@ -282,7 +282,7 @@
 		color: var(--ink-2);
 		text-decoration: none;
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		border-bottom: 1px dotted transparent;
 	}
 	.toc-list a:hover {
@@ -295,9 +295,9 @@
 	.toc-count {
 		font-family: var(--font-sans);
 		font-variant-numeric: tabular-nums;
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink-3);
-		margin-left: 8px;
+		margin-left: var(--s-2);
 	}
 
 	/* ── Endpoint sections ────────────────────────────────────────────────── */
@@ -312,7 +312,7 @@
 	.api-tag {
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
+		gap: var(--s-3);
 		scroll-margin-top: 90px;
 	}
 	.api-tag-head {
@@ -320,21 +320,21 @@
 		justify-content: space-between;
 		align-items: baseline;
 		border-bottom: 1px solid var(--rule);
-		padding-bottom: 8px;
+		padding-bottom: var(--s-2);
 	}
 	.api-tag-title {
 		font-family: var(--font-serif);
-		font-size: 22px;
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
 	}
 	.api-tag-desc {
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		line-height: 1.55;
 		color: var(--ink-3);
-		margin: 0 0 8px;
+		margin: 0 0 var(--s-2);
 		max-width: 60ch;
 	}
 
@@ -349,7 +349,7 @@
 		width: 100%;
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: var(--s-3);
 		padding: 10px 0;
 		background: none;
 		border: 0;
@@ -364,7 +364,7 @@
 
 	.api-method {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-2);
 		flex-shrink: 0;
@@ -374,13 +374,13 @@
 	.api-path {
 		font-family: var(--font-sans);
 		font-variant-numeric: tabular-nums;
-		font-size: 13px;
+		font-size: var(--t-meta);
 		color: var(--ink);
 		flex-shrink: 0;
 	}
 	.api-summary {
 		font-family: var(--font-serif);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		color: var(--ink-3);
 		flex: 1;
 		min-width: 0;
@@ -391,27 +391,27 @@
 	.api-default {
 		display: block;
 		color: var(--ink-3);
-		font-size: 12px;
+		font-size: var(--t-micro);
 	}
 	.api-chev {
 		color: var(--ink-3);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		transition: transform 120ms;
-		margin-right: 4px;
+		margin-right: var(--s-1);
 	}
 	.api-chev.open {
 		transform: rotate(90deg);
 	}
 
 	.api-endpoint-body {
-		padding: 4px 0 18px 60px;
+		padding: var(--s-1) 0 18px 60px;
 		display: flex;
 		flex-direction: column;
 		gap: 14px;
 	}
 	.api-desc {
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		line-height: 1.6;
 		color: var(--ink-2);
 		margin: 0;
@@ -424,7 +424,7 @@
 	}
 	.api-block-head {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 		font-weight: 500;
 	}
@@ -433,7 +433,7 @@
 	table.api-responses {
 		border-collapse: collapse;
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		width: 100%;
 	}
 	.api-params th,
@@ -449,13 +449,13 @@
 	.api-responses th {
 		font-weight: 500;
 		color: var(--ink-3);
-		font-size: 12px;
+		font-size: var(--t-micro);
 	}
 	.api-params code,
 	.api-responses code {
 		font-family: var(--font-sans);
 		font-variant-numeric: tabular-nums;
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink);
 		background: var(--paper-2);
 		padding: 1px 5px;
@@ -463,7 +463,7 @@
 	}
 	.api-in {
 		font-family: var(--font-sans);
-		font-size: 12px;
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.api-status {
@@ -472,11 +472,11 @@
 
 	.api-footer {
 		grid-column: 1 / -1;
-		margin-top: 24px;
-		padding-top: 24px;
+		margin-top: var(--s-5);
+		padding-top: var(--s-5);
 		border-top: 1px solid var(--rule);
 		font-family: var(--font-sans);
-		font-size: 13px;
+		font-size: var(--t-meta);
 		color: var(--ink-3);
 		line-height: 1.65;
 	}

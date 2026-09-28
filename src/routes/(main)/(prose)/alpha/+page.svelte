@@ -100,7 +100,7 @@
 	.container {
 		max-width: 680px;
 		margin: 0 auto;
-		padding: 0 24px;
+		padding: 0 var(--s-5);
 	}
 
 	.alpha-eyebrow {
@@ -108,7 +108,7 @@
 		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
-		margin-bottom: 16px;
+		margin-bottom: var(--s-4);
 	}
 
 	.alpha-title {
@@ -132,9 +132,9 @@
 	.alpha-badge-row {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 12px 18px;
+		gap: var(--s-3) 18px;
 		align-items: baseline;
-		padding: 14px 16px;
+		padding: 14px var(--s-4);
 		background: var(--paper-2);
 		margin: 0 0 40px;
 	}
@@ -162,9 +162,9 @@
 		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
-		margin: 0 0 12px;
+		margin: 0 0 var(--s-3);
 		border-top: 1px solid var(--rule);
-		padding-top: 24px;
+		padding-top: var(--s-5);
 	}
 
 	.alpha-section p {
@@ -172,7 +172,7 @@
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink-2);
-		margin: 0 0 16px;
+		margin: 0 0 var(--s-4);
 		max-width: 56ch;
 	}
 
@@ -182,9 +182,9 @@
 	}
 
 	.alpha-list {
-		margin: 16px 0 0;
+		margin: var(--s-4) 0 0;
 		display: grid;
-		gap: 16px;
+		gap: var(--s-4);
 	}
 
 	.alpha-list dt {
@@ -192,7 +192,7 @@
 		font-size: var(--t-body);
 		font-weight: 500;
 		color: var(--ink);
-		margin-bottom: 4px;
+		margin-bottom: var(--s-1);
 	}
 
 	.alpha-list dd {
@@ -205,7 +205,7 @@
 	}
 
 	.alpha-bullets {
-		margin: 12px 0 0;
+		margin: var(--s-3) 0 0;
 		padding-left: 20px;
 		display: grid;
 		gap: 10px;
@@ -224,9 +224,9 @@
 		flex-wrap: wrap;
 		justify-content: space-between;
 		align-items: center;
-		gap: 16px 32px;
+		gap: var(--s-4) var(--s-6);
 		margin-top: 56px;
-		padding-top: 24px;
+		padding-top: var(--s-5);
 		border-top: 1px solid var(--rule);
 	}
 
@@ -245,13 +245,13 @@
 	.alpha-foot-cta {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-2);
 		border: 1px solid var(--rule-strong);
-		padding: 6px 12px;
+		padding: 6px var(--s-3);
 		border-radius: var(--r-1);
 		text-decoration: none;
 		transition:

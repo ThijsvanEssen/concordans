@@ -124,7 +124,7 @@
 	}
 	.chips {
 		display: flex;
-		gap: 4px;
+		gap: var(--s-1);
 	}
 	/* The abbreviation: a word, not a tag. */
 	.afk-chip {
@@ -153,7 +153,7 @@
 	}
 	.stat-num {
 		font-family: var(--font-sans);
-		font-size: 17px;
+		font-size: var(--t-body);
 		font-weight: 500;
 		font-variant-numeric: tabular-nums;
 		color: var(--ink);

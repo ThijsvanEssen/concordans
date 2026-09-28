@@ -61,14 +61,14 @@
 		min-width: 0;
 		display: flex;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 
 	.reader-title {
-		margin: 0 0 8px;
+		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
 		font-weight: 500;
 		font-size: var(--t-h1);

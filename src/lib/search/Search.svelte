@@ -410,7 +410,7 @@
 	.field {
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: var(--s-3);
 		padding: 14px 18px;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
@@ -425,7 +425,7 @@
 		border: 0;
 		border-bottom: 1px solid var(--rule);
 		border-radius: 0;
-		padding: 16px 18px;
+		padding: var(--s-4) 18px;
 	}
 
 	input {
@@ -435,7 +435,7 @@
 		outline: none;
 		background: transparent;
 		font-family: var(--font-serif);
-		font-size: 19px;
+		font-size: var(--t-h3);
 		color: var(--ink);
 	}
 	input::placeholder {
@@ -485,14 +485,14 @@
 
 	.group + .group,
 	.row--citation + .group {
-		margin-top: 8px;
+		margin-top: var(--s-2);
 	}
 
 	.group-label {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		padding: 8px 18px 4px;
+		gap: var(--s-2);
+		padding: var(--s-2) 18px var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -502,10 +502,10 @@
 	.row {
 		display: flex;
 		align-items: baseline;
-		gap: 12px;
+		gap: var(--s-3);
 		padding: 7px 18px;
 		font-family: var(--font-serif);
-		font-size: 15px;
+		font-size: var(--t-body-2);
 		line-height: 1.35;
 		color: var(--ink);
 		text-decoration: none;
@@ -519,7 +519,7 @@
 	.row-kind {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 		flex-shrink: 0;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -561,7 +561,7 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		font-family: var(--font-serif);
-		font-size: 14px;
+		font-size: var(--t-body-2);
 		color: var(--ink-2);
 	}
 
@@ -578,18 +578,18 @@
 
 	.state {
 		margin: 0;
-		padding: 12px 18px;
+		padding: var(--s-3) 18px;
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
 
 	.search--compact .field {
-		gap: 8px;
+		gap: var(--s-2);
 		padding: 6px 10px;
 	}
 	.search--compact input {
-		font-size: 15px;
+		font-size: var(--t-body-2);
 	}
 	.search--compact .list--filled {
 		max-height: 320px;
@@ -603,18 +603,18 @@
 		align-items: stretch;
 		gap: 1px;
 		padding: 5px 10px;
-		font-size: 14px;
+		font-size: var(--t-body-2);
 	}
 	.search--compact .row--citation {
 		flex-direction: row;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 	}
 	.search--compact .row-context {
 		max-width: none;
 	}
 	.search--compact .state {
-		padding: 8px 10px;
+		padding: var(--s-2) 10px;
 	}
 
 	@media (max-width: 640px) {
@@ -626,13 +626,13 @@
 		.row--citation {
 			flex-direction: row;
 			align-items: baseline;
-			gap: 12px;
+			gap: var(--s-3);
 		}
 		.row-context {
 			max-width: none;
 		}
 		input {
-			font-size: 17px;
+			font-size: var(--t-body);
 		}
 	}
 </style>

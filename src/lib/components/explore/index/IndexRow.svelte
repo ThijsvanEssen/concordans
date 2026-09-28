@@ -83,7 +83,7 @@
 		display: grid;
 		grid-template-columns: var(--row-lead, 120px) minmax(0, 1fr) var(--row-aside, 190px);
 		gap: 20px;
-		padding: 10px 8px;
+		padding: 10px var(--s-2);
 		border-bottom: 1px solid var(--rule);
 		cursor: pointer;
 		align-items: baseline;
@@ -151,7 +151,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;
-		gap: 8px;
+		gap: var(--s-2);
 		text-align: right;
 		flex-wrap: wrap;
 		padding-top: 2px;
@@ -177,8 +177,8 @@
 	@media (max-width: 768px) {
 		.row {
 			grid-template-columns: 1fr;
-			gap: 4px;
-			padding: 14px 8px;
+			gap: var(--s-1);
+			padding: 14px var(--s-2);
 		}
 		.row-aside {
 			justify-content: flex-start;

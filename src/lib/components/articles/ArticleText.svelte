@@ -275,7 +275,7 @@
 		position: relative;
 		display: grid;
 		grid-template-columns: 36px 1fr 150px;
-		gap: 0 12px;
+		gap: 0 var(--s-3);
 		align-items: start;
 		padding: 6px 10px 6px 0;
 		border-radius: var(--r-1);
@@ -304,20 +304,20 @@
 	.lid__body--pair {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 16px;
+		gap: var(--s-4);
 	}
 	.lid__body p {
 		margin: 0;
 	}
 	.lid__proposed {
-		padding-left: 12px;
+		padding-left: var(--s-3);
 		border-left: 2px solid var(--accent-soft);
 	}
 	.lid__proposed-head {
 		display: flex;
 		align-items: baseline;
-		gap: 8px;
-		margin-bottom: 4px;
+		gap: var(--s-2);
+		margin-bottom: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -333,11 +333,11 @@
 		white-space: nowrap;
 	}
 	.lid__proposed-close {
-		padding: 0 4px;
+		padding: 0 var(--s-1);
 		border: 0;
 		background: none;
 		font: inherit;
-		font-size: 14px;
+		font-size: var(--t-body-2);
 		color: var(--ink-3);
 		cursor: pointer;
 	}
@@ -365,7 +365,7 @@
 	.lid__actions {
 		opacity: 0;
 		display: flex;
-		gap: 4px;
+		gap: var(--s-1);
 	}
 	/* The lid's actions, unless the pointer is on one of its onderdelen. A lid's aanhef
 	   counts as the lid's own text: it is cited with the lid. */
@@ -378,8 +378,8 @@
 		z-index: var(--z-float);
 	}
 	.act__btn {
-		padding: 2px 8px;
-		font-size: 11.5px;
+		padding: 2px var(--s-2);
+		font-size: var(--t-label);
 		white-space: nowrap;
 	}
 	.menu {
@@ -391,26 +391,26 @@
 		top: calc(100% + 6px);
 		z-index: var(--z-float);
 		width: 320px;
-		padding: 8px 0;
+		padding: var(--s-2) 0;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		box-shadow: var(--shadow-modal);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		text-align: left;
 	}
 	.pop__label {
-		padding: 2px 12px 6px;
-		font-size: 11.5px;
+		padding: 2px var(--s-3) 6px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 	.pop__item {
 		display: flex;
 		justify-content: space-between;
-		gap: 12px;
+		gap: var(--s-3);
 		width: 100%;
-		padding: 6px 12px;
+		padding: 6px var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
@@ -423,7 +423,7 @@
 	}
 	.pop__k {
 		flex: none;
-		font-size: 11.5px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 	.pop__link {
@@ -481,7 +481,7 @@
 		display: flex;
 		opacity: 0;
 		justify-content: flex-end;
-		gap: 4px;
+		gap: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 	}

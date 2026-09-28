@@ -232,7 +232,7 @@
 		max-width: 1040px;
 		min-height: calc(100vh - 60px - 320px);
 		margin: 0 auto;
-		padding: 14vh 32px 88px;
+		padding: 14vh var(--s-6) 88px;
 	}
 
 	.intro {
@@ -268,13 +268,13 @@
 	.kinds {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 8px 28px;
+		gap: var(--s-2) 28px;
 	}
 
 	.kind {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
@@ -337,7 +337,7 @@
 	.feed-row-link {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: var(--s-1);
 		padding: var(--s-3) 0;
 		color: inherit;
 		text-decoration: none;
@@ -425,7 +425,7 @@
 
 	@media (max-width: 640px) {
 		.home {
-			padding: 48px 16px 64px;
+			padding: var(--s-7) var(--s-4) var(--s-8);
 		}
 		.browse,
 		.intro {

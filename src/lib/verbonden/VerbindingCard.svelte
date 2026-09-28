@@ -154,7 +154,7 @@
 		border-radius: var(--r-2);
 		box-shadow: var(--shadow-modal);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		color: var(--ink);
 	}
 	.card.is-docked {
@@ -168,12 +168,12 @@
 	.card__head {
 		display: flex;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 	}
 	.card__title {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 17px;
+		font-size: var(--t-body);
 		font-weight: 500;
 	}
 	.card__kind {
@@ -184,9 +184,9 @@
 		flex: 1;
 	}
 	.card__close {
-		font-size: 16px;
+		font-size: var(--t-body-2);
 		line-height: 1;
-		padding: 0 4px;
+		padding: 0 var(--s-1);
 	}
 	.ends {
 		display: grid;
@@ -199,7 +199,7 @@
 	}
 	.end__title {
 		font-family: var(--font-serif);
-		font-size: 15.5px;
+		font-size: var(--t-body-2);
 		line-height: 1.25;
 		color: var(--ink);
 	}
@@ -220,10 +220,10 @@
 	}
 	.passage {
 		margin: 0;
-		padding-left: 12px;
+		padding-left: var(--s-3);
 		border-left: 2px solid var(--rule-strong);
 		font-family: var(--font-serif);
-		font-size: 14.5px;
+		font-size: var(--t-body-2);
 		line-height: 1.5;
 	}
 	.passage mark {
@@ -279,6 +279,6 @@
 	.actions {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 8px;
+		gap: var(--s-2);
 	}
 </style>

@@ -337,11 +337,11 @@
 	.heading {
 		display: flex;
 		align-items: baseline;
-		gap: 8px;
+		gap: var(--s-2);
 		scroll-margin: 20vh;
 		border-radius: var(--r-1);
 		margin: var(--s-4) -8px 2px;
-		padding: 3px 8px;
+		padding: 3px var(--s-2);
 	}
 	.heading:global(.is-landed),
 	.heading--active {
@@ -373,7 +373,7 @@
 		color: var(--ink-2);
 	}
 	.heading__badge {
-		margin-left: 8px;
+		margin-left: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -384,11 +384,11 @@
 	.heading__link {
 		flex: none;
 		opacity: 0;
-		padding: 2px 8px;
+		padding: 2px var(--s-2);
 		border: 0;
 		background: none;
 		font-family: var(--font-sans);
-		font-size: 11.5px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 		cursor: pointer;
 	}
@@ -421,7 +421,7 @@
 	.head {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: var(--s-1);
 	}
 	.kicker {
 		font-family: var(--font-sans);

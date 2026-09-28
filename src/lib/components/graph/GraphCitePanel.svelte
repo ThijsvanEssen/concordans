@@ -177,7 +177,7 @@
 
 	.title {
 		font-family: var(--font-serif);
-		font-size: 17px;
+		font-size: var(--t-body);
 		font-weight: 500;
 		line-height: var(--lh-snug);
 		color: var(--ink);
@@ -217,7 +217,7 @@
 		font-weight: 500;
 		color: var(--ink-2);
 		cursor: pointer;
-		padding: 3px 8px;
+		padding: 3px var(--s-2);
 		border-radius: var(--r-1);
 		transition:
 			color var(--dur-1) var(--ease),

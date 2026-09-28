@@ -19,7 +19,7 @@
 <style>
 	.caret {
 		flex: none;
-		margin-left: 4px;
+		margin-left: var(--s-1);
 		vertical-align: -1px;
 		fill: none;
 		stroke: currentColor;

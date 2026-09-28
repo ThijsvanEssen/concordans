@@ -56,7 +56,7 @@
 	.chip {
 		display: inline-flex;
 		align-items: center;
-		padding: 4px 8px;
+		padding: var(--s-1) var(--s-2);
 		background: transparent;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);

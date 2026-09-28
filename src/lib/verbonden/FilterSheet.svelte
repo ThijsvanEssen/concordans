@@ -419,19 +419,19 @@
 		border-left: 1px solid var(--rule-strong);
 		box-shadow: var(--shadow-modal);
 		font-family: var(--font-sans);
-		font-size: 12.5px;
+		font-size: var(--t-micro);
 		color: var(--ink);
 	}
 	.sheet__head {
 		display: flex;
 		align-items: baseline;
-		gap: 8px;
-		padding: 18px 18px 12px;
+		gap: var(--s-2);
+		padding: 18px 18px var(--s-3);
 	}
 	.sheet__title {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: 17px;
+		font-size: var(--t-body);
 		font-weight: 500;
 	}
 	.sheet__count {
@@ -442,9 +442,9 @@
 		flex: 1;
 	}
 	.sheet__close {
-		font-size: 16px;
+		font-size: var(--t-body-2);
 		line-height: 1;
-		padding: 0 4px;
+		padding: 0 var(--s-1);
 	}
 	.sheet__body {
 		flex: 1;
@@ -506,7 +506,7 @@
 		place-items: center;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		font-size: 10px;
+		font-size: var(--t-glyph);
 		line-height: 1;
 		color: var(--paper);
 		flex: none;
@@ -533,19 +533,19 @@
 	.list__row {
 		display: flex;
 		gap: 10px;
-		padding: 4px 0;
+		padding: var(--s-1) 0;
 		color: var(--ink-2);
 	}
 	.period {
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 8px;
+		gap: var(--s-2);
 	}
 	.year {
 		width: 64px;
 		height: 26px;
-		padding: 0 8px;
+		padding: 0 var(--s-2);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: var(--paper);
@@ -585,8 +585,8 @@
 	.sheet__foot {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		padding: 16px 18px;
+		gap: var(--s-2);
+		padding: var(--s-4) 18px;
 		border-top: 1px solid var(--rule);
 		font-size: var(--t-micro);
 	}

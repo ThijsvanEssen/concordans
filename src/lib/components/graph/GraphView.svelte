@@ -1106,7 +1106,7 @@
 		border: 0;
 		background: none;
 		font-family: var(--font-sans);
-		font-size: 16px;
+		font-size: var(--t-body-2);
 		color: var(--ink-2);
 		cursor: pointer;
 	}

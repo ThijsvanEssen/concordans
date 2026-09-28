@@ -244,15 +244,15 @@
 	.facets {
 		display: flex;
 		flex-direction: column;
-		gap: 24px;
+		gap: var(--s-5);
 		font-family: var(--font-sans);
 	}
 	.group-head {
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
-		margin: 0 0 8px;
-		font-size: 10.5px;
+		margin: 0 0 var(--s-2);
+		font-size: var(--t-label);
 		font-weight: 500;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -273,7 +273,7 @@
 	.subhead {
 		display: flex;
 		justify-content: space-between;
-		padding: 8px 0 2px;
+		padding: var(--s-2) 0 2px;
 		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-2);
@@ -285,9 +285,9 @@
 		position: relative;
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 		width: 100%;
-		padding: 4px 0 5px;
+		padding: var(--s-1) 0 5px;
 		border: 0;
 		background: transparent;
 		font: inherit;
@@ -297,7 +297,7 @@
 		cursor: pointer;
 	}
 	.opt--indent {
-		padding-left: 12px;
+		padding-left: var(--s-3);
 	}
 	.opt:hover {
 		color: var(--ink);
@@ -341,7 +341,7 @@
 	}
 	.n {
 		margin-left: auto;
-		padding-left: 8px;
+		padding-left: var(--s-2);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		font-variant-numeric: tabular-nums;
@@ -378,7 +378,7 @@
 		flex-direction: column;
 		align-items: stretch;
 		justify-content: flex-end;
-		gap: 4px;
+		gap: var(--s-1);
 		height: 100%;
 		padding: 0;
 		border: 0;
@@ -390,7 +390,7 @@
 		height: 64px;
 	}
 	.step-n {
-		font-size: 11px;
+		font-size: var(--t-label);
 		text-align: center;
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
@@ -417,7 +417,7 @@
 		display: flex;
 		justify-content: space-between;
 		margin-top: 6px;
-		font-size: 11px;
+		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 	.steps-on {
@@ -429,7 +429,7 @@
 	.range {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--s-2);
 	}
 	.range label {
 		flex: 1;
@@ -444,7 +444,7 @@
 		width: 100%;
 		box-sizing: border-box;
 		height: 30px;
-		padding: 0 8px;
+		padding: 0 var(--s-2);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: var(--paper);
