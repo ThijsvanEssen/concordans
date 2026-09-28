@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bookNumber, withBook } from './bw';
+import { bookNumber, placeInLaw, withBook } from './bw';
 
 describe('BW article numbers', () => {
 	it('puts the book before the number of a BW article', () => {
@@ -21,5 +21,18 @@ describe('BW article numbers', () => {
 		expect(withBook('Artikel 287 Wetboek van Strafrecht')).toBe(
 			'Artikel 287 Wetboek van Strafrecht'
 		);
+	});
+});
+
+describe('placeInLaw', () => {
+	it('leaves out the book a BW book names itself, and keeps the rest', () => {
+		const place = [
+			'Boek 6 Algemeen gedeelte van het verbintenissenrecht',
+			'Titel 3 Onrechtmatige daad',
+			'Afdeling 1 Algemene bepalingen'
+		];
+		expect(placeInLaw(place, 'Burgerlijk Wetboek Boek 6')).toEqual(place.slice(1));
+		const sr = ['Tweede Boek Misdrijven', 'Titel XX Mishandeling'];
+		expect(placeInLaw(sr, 'Wetboek van Strafrecht')).toEqual(sr);
 	});
 });

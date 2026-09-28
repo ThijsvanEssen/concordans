@@ -8,6 +8,7 @@
 	import { bronLabel, type Mode } from '$lib/vocabulary';
 	import { formatDate, textProp } from './readers/_shared';
 	import { bronHref } from '$lib/bron/href';
+	import { bookNumber } from '$lib/text/bw';
 	import { categoryLabel, isIndexCategory } from './index/categories';
 
 	let {
@@ -61,7 +62,8 @@
 					textProp(p.instrument_citation_title),
 				bwb ? bronHref({ collection: 'instruments', key: bwb.toLowerCase() }) : undefined
 			);
-			add((textProp(p.article_number) && `Artikel ${p.article_number}`) || textProp(p.label));
+			const number = textProp(p.article_number);
+			add((number && `Artikel ${bookNumber(bwb, number)}`) || textProp(p.label));
 		} else if (node.collection === 'judgments') {
 			add(textProp(p.court) ?? textProp(p.court_code));
 			add(formatDate(textProp(p.date)));

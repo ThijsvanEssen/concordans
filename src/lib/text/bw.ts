@@ -40,3 +40,14 @@ export function withBook(name: string): string {
 			`Artikel ${number.includes(':') ? number : `${book.toUpperCase()}:${number}`} BW`
 	);
 }
+
+/**
+ * The place of an article below its law, for the line above its title: the law itself is
+ * named in the bar above, and a BW book's own "Boek 6 …" would name it a second time.
+ */
+export function placeInLaw(place: string[], lawTitle: string | null | undefined): string[] {
+	const book = /\bBoek (\w+)$/i.exec(lawTitle ?? '')?.[1];
+	return book
+		? place.filter((p, i) => !(i === 0 && new RegExp(`^Boek ${book}\\b`, 'i').test(p)))
+		: place;
+}

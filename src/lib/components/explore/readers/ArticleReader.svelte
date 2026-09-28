@@ -18,7 +18,7 @@
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
 	import { bronHref, refId } from '$lib/bron/href';
 	import { citeArticle } from '$lib/text/cite';
-	import { bookNumber } from '$lib/text/bw';
+	import { bookNumber, placeInLaw } from '$lib/text/bw';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, formatCount, type VerbondenFilter } from '$lib/verbonden/filter';
@@ -462,7 +462,7 @@
 			collection="articles"
 			juris={d.instrument?.display_name}
 			title={title(a)}
-			place={[d.instrument?.display_name ?? law?.citationTitle ?? '', ...place].filter(Boolean)}
+			place={placeInLaw(place, d.instrument?.display_name ?? law?.citationTitle)}
 		>
 			{#snippet nav()}
 				{#if prevHref || nextHref}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bookNumber } from '$lib/text/bw';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
 	import { api, unwrap } from '$lib/api/client';
@@ -57,12 +58,12 @@
 	// so it stands alone; `title` is the heading's own text and reads as a suffix.
 	const crumbLabel = (seg: Schema<'InstrumentArticleBreadcrumbDTO'>) => {
 		const label = seg.label?.trim() || (seg.type ? capitalise(seg.type) : '');
-		return seg.title ? `${label} — ${seg.title}` : label;
+		return seg.title ? `${label} ${seg.title}` : label;
 	};
 	const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 	const groupLabel = (g: Group) => {
 		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalise(g.type) : '');
-		return g.title ? `${label} — ${g.title}` : label;
+		return g.title ? `${label} ${g.title}` : label;
 	};
 
 	// The Lezen table of contents is always the whole law, whatever the graph holds.
@@ -84,7 +85,10 @@
 					.filter((a) => !a.stub && (a.article_number || a.label))
 					.map((a) => ({
 						articleNumber: a.article_number ?? a.address ?? a.key,
-						label: a.label ?? `Artikel ${a.article_number}`,
+						// A BW article by its book number (6:162), as the title and the citation have it.
+						label: a.article_number
+							? `Artikel ${bookNumber(bwb, a.article_number)}`
+							: (a.label ?? a.key),
 						key: a.key,
 						breadcrumb: a.breadcrumb ?? []
 					}));
