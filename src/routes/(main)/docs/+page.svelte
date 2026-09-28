@@ -203,8 +203,10 @@
 			<h2 class="section-title">Dossiers en Parlement</h2>
 			<p>
 				Een dossier heeft een nummer, soms met toevoeging: 37020-XV is een ander dossier dan 37020.
-				Dossiers onder hetzelfde nummer staan in Bladeren onder één regel. Het traject is
-				wetsvoorstel, initiatiefwetsvoorstel, begroting, verdrag, initiatiefnota, nota of overig.
+				Dossiers onder hetzelfde nummer die in de lijst naast elkaar staan, zoals de hoofdstukken
+				van een begroting, staan in Bladeren onder één regel. Het traject is wetsvoorstel,
+				initiatiefwetsvoorstel, begroting, verdrag, initiatiefnota, nota, structuurvisie,
+				verantwoording, EU, interparlementair, Kamer of beleid.
 			</p>
 			<p>
 				Alleen een wetsvoorstel, initiatiefwetsvoorstel, begroting of verdrag doorloopt fasen:
@@ -225,6 +227,17 @@
 			<p>
 				De wetgevingsgeschiedenis van een artikel is de reeks dossiers die het invoerden, wijzigden
 				of introkken, met de dossiers die dat nu voorstellen.
+			</p>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">Regering</h2>
+			<p>
+				Bladeren toont onder Regering de kabinetten, de bewindspersonen en de toezeggingen. Een
+				kabinet heeft een periode, een minister-president en een coalitie. Per ministerie staat wie
+				welke post bekleedde, op de tijdlijn van het kabinet: een opvolger volgt op dezelfde regel,
+				een waarnemer is gearceerd, de demissionaire periode ligt als band erachter. De gegevens
+				komen van rijksoverheid.nl.
 			</p>
 		</div>
 
@@ -266,7 +279,7 @@
 
 <style>
 	.page-wrap {
-		padding: 80px 0 120px;
+		padding: var(--s-8) 0 calc(2 * var(--s-8));
 	}
 
 	.container {
@@ -301,7 +314,7 @@
 	}
 
 	.section {
-		margin-bottom: 36px;
+		margin-bottom: var(--s-6);
 	}
 
 	.section-title {
@@ -317,7 +330,7 @@
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);
-		margin: 0 0 14px;
+		margin: 0 0 var(--s-3);
 	}
 
 	p:last-child {
@@ -337,14 +350,14 @@
 		background: var(--paper-2);
 		border: 1px solid var(--rule);
 		border-radius: var(--r-1);
-		padding: 1px 6px;
+		padding: 0 var(--s-1);
 	}
 
 	.list {
 		border: 1px solid var(--rule);
 		border-radius: var(--r-2);
 		overflow: hidden;
-		margin-bottom: 14px;
+		margin-bottom: var(--s-3);
 	}
 
 	.list-row {
