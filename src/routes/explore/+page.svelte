@@ -1148,8 +1148,12 @@
 		grid-template-columns: minmax(0, 1fr);
 	}
 
+	/* The network gives way before the text does: the reader keeps 640px, enough for a
+	   measure of some 60 characters, and the canvas takes what is left up to its width. */
 	.explore-graph--with-reader {
-		grid-template-columns: var(--graph-w) 5px minmax(0, 1fr) 5px var(--panel-w);
+		grid-template-columns:
+			max(200px, min(var(--graph-w), calc(100vw - var(--panel-w) - 650px)))
+			5px minmax(0, 1fr) 5px var(--panel-w);
 	}
 
 	.explore-read {

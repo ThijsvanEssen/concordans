@@ -212,34 +212,38 @@
 {#if parts.length === 0}
 	<p class="article-text__empty">Geen tekst beschikbaar.</p>
 {:else}
-	<div class="article-text">
-		{#each parts as part (part.start)}
-			{@render render(part, true)}
-		{/each}
-		{#if proposed && !parts.some((p) => p.kind === 'lid' && p.number === proposed!.lid)}
-			<div class="lid lid--proposed-only">
-				<span class="lid__no"></span>
-				<div class="lid__body">
-					<div class="lid__proposed">
-						<div class="lid__proposed-head">
-							<span class="proposed">voorgesteld</span>
-							<span class="lid__proposed-source"
-								>{proposed.source}{proposed.lid ? `, lid ${proposed.lid}` : ''}</span
-							>
-							{#if onCloseProposed}
-								<button
-									type="button"
-									class="lid__proposed-close"
-									aria-label="Sluiten"
-									onclick={onCloseProposed}>×</button
+	<!-- The text measures its own width: in a narrow column (beside the network) the margin
+	     folds under each lid, as it does on a phone. -->
+	<div class="article-text-box">
+		<div class="article-text">
+			{#each parts as part (part.start)}
+				{@render render(part, true)}
+			{/each}
+			{#if proposed && !parts.some((p) => p.kind === 'lid' && p.number === proposed!.lid)}
+				<div class="lid lid--proposed-only">
+					<span class="lid__no"></span>
+					<div class="lid__body">
+						<div class="lid__proposed">
+							<div class="lid__proposed-head">
+								<span class="proposed">voorgesteld</span>
+								<span class="lid__proposed-source"
+									>{proposed.source}{proposed.lid ? `, lid ${proposed.lid}` : ''}</span
 								>
-							{/if}
+								{#if onCloseProposed}
+									<button
+										type="button"
+										class="lid__proposed-close"
+										aria-label="Sluiten"
+										onclick={onCloseProposed}>×</button
+									>
+								{/if}
+							</div>
+							<p>{proposed.text}</p>
 						</div>
-						<p>{proposed.text}</p>
 					</div>
 				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	</div>
 {/if}
 <p class="visually-hidden" aria-live="polite">
@@ -254,6 +258,9 @@
 		overflow: hidden;
 		clip: rect(0 0 0 0);
 		white-space: nowrap;
+	}
+	.article-text-box {
+		container-type: inline-size;
 	}
 	.article-text {
 		font-family: var(--font-serif);
@@ -517,7 +524,7 @@
 		font-size: var(--t-body);
 	}
 
-	@media (max-width: 900px) {
+	@container (max-width: 600px) {
 		.article-text {
 			margin-left: 0;
 		}
