@@ -43,9 +43,17 @@
 					>
 				</div>
 				<div class="list-row">
+					<span class="list-k">Regering</span><span
+						>Kabinetten, hun periodes en bewindspersonen van rijksoverheid.nl.</span
+					>
+				</div>
+				<div class="list-row">
 					<span class="list-k">Europees recht</span><span
 						>HTML van EUR-Lex, geadresseerd op CELEX-nummer.</span
 					>
+				</div>
+				<div class="list-row">
+					<span class="list-k">Verdragen</span><span>De Verdragenbank van de Rijksoverheid.</span>
 				</div>
 			</div>
 			<p>Bronvermelding en licenties staan in het <a href="/colofon" class="cite">colofon</a>.</p>
@@ -118,7 +126,7 @@
 
 <style>
 	.page-wrap {
-		padding: 80px 0 120px;
+		padding: var(--s-8) 0 calc(2 * var(--s-8));
 	}
 
 	.container {
@@ -162,7 +170,7 @@
 	}
 
 	.section {
-		margin-bottom: 36px;
+		margin-bottom: var(--s-6);
 	}
 
 	.section-title {
@@ -178,7 +186,7 @@
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);
-		margin: 0 0 14px;
+		margin: 0 0 var(--s-3);
 	}
 
 	p:last-child {
@@ -197,20 +205,20 @@
 		background: var(--paper-2);
 		border: 1px solid var(--rule);
 		border-radius: var(--r-1);
-		padding: 1px 6px;
+		padding: 0 var(--s-1);
 	}
 
 	.list {
 		border: 1px solid var(--rule);
 		border-radius: var(--r-2);
 		overflow: hidden;
-		margin-bottom: 14px;
+		margin-bottom: var(--s-3);
 	}
 
 	.list-row {
 		display: flex;
 		gap: var(--s-4);
-		padding: 10px var(--s-4);
+		padding: var(--s-2) var(--s-4);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		line-height: 1.5;
@@ -251,7 +259,7 @@
 	@media (max-width: 560px) {
 		.list-row {
 			flex-direction: column;
-			gap: 2px;
+			gap: var(--s-1);
 		}
 		.list-k {
 			width: auto;

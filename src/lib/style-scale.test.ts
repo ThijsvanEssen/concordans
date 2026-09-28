@@ -31,7 +31,7 @@ function offScale(text: string): string[] {
 }
 
 // 28 September 2026, when the scale was brought in; see U25 in the UI study.
-const OFF_SCALE_MAX = 423;
+const OFF_SCALE_MAX = 411;
 
 describe('the type and spacing scale', () => {
 	it('gives no font size in pixels outside the tokens', () => {

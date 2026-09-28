@@ -34,8 +34,9 @@
 				<a href="https://www.rechtspraak.nl/uitspraken" class="cite">uitspraken.rechtspraak.nl</a>
 				en, voor het EHRM, van HUDOC. Parlementaire gegevens komen uit het gegevensmagazijn van de Tweede
 				Kamer. Kamerstukken van de Eerste Kamer, het Staatsblad en de Staatscourant komen uit de repository
-				van KOOP (repository.overheid.nl). Europese regelgeving komt uit EUR-Lex en verdragen komen uit
-				de Verdragenbank.
+				van KOOP (repository.overheid.nl). Kabinetten en bewindspersonen komen van
+				<a href="https://www.rijksoverheid.nl/regering" class="cite">rijksoverheid.nl</a>, eveneens
+				onder CC0. Europese regelgeving komt uit EUR-Lex en verdragen komen uit de Verdragenbank.
 			</p>
 		</div>
 
@@ -43,8 +44,8 @@
 			<h2 class="section-title">Technologie</h2>
 			<p>
 				De applicatie is gebouwd met SvelteKit. Het netwerk staat in een ArangoDB-database achter
-				een FastAPI-service (LawGraph). Die service leest, behalve voor het volgen van bronnen en
-				het beoordelen van verbindingen. Geen commerciële tracking, geen advertentiediensten.
+				een FastAPI-service (LawGraph). Concordans leest alleen uit die service en schrijft er niets
+				naar. Geen commerciële tracking, geen advertentiediensten.
 			</p>
 		</div>
 
@@ -69,7 +70,7 @@
 
 <style>
 	.page-wrap {
-		padding: 80px 0 120px;
+		padding: var(--s-8) 0 calc(2 * var(--s-8));
 	}
 
 	.container {
@@ -104,7 +105,7 @@
 	}
 
 	.section {
-		margin-bottom: 36px;
+		margin-bottom: var(--s-6);
 	}
 
 	.section-title {
