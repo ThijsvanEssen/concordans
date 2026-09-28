@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { STAGES, STAGE_LABEL, stepState, type Stage } from './stages';
+	import { STAGES, STAGE_LABEL, STAGE_SHORT, stepState, type Stage } from './stages';
 
 	// `stages` are the stages the dossier has passed, `current` the latest one.
 	// A dossier can loop (amendments after a report, then a nota again), so
@@ -32,7 +32,7 @@
 			class:step--active={active}
 			class:step--unknown={unknown}
 			aria-current={active ? 'step' : undefined}
-			title={unknown ? 'Niet in de gegevens' : undefined}
+			title={unknown ? `${STAGE_LABEL[step]}: niet in de gegevens` : STAGE_LABEL[step]}
 		>
 			<span class="step-dot" aria-hidden="true">
 				{#if done}
@@ -47,7 +47,8 @@
 					</svg>
 				{/if}
 			</span>
-			<span class="step-label">{STAGE_LABEL[step]}</span>
+			<span class="step-label" aria-hidden="true">{STAGE_SHORT[step]}</span>
+			<span class="sr">{STAGE_LABEL[step]}</span>
 			{#if i < STAGES.length - 1}
 				<span
 					class="step-connector"
@@ -121,6 +122,15 @@
 		box-shadow: 0 0 0 3px var(--paper-2);
 	}
 
+	/* The full name of the stage, for a screen reader; the eye reads the short one. */
+	.sr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
 	.step-label {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -130,7 +140,7 @@
 		/* A label wraps inside its step rather than run into the next one. */
 		max-width: 100%;
 		padding: 0 2px;
-		hyphens: auto;
+		white-space: nowrap;
 	}
 
 	.step--done .step-label {

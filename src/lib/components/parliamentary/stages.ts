@@ -21,6 +21,19 @@ export const STAGE_LABEL: Record<Stage, string> = {
 
 export const STAGES = Object.keys(STAGE_LABEL) as Stage[];
 
+/** The stage in the width of one step of the bar: one short word, never broken. */
+export const STAGE_SHORT: Record<Stage, string> = {
+	wetsvoorstel: 'Voorstel',
+	mvt: 'MvT',
+	advies_rvs: 'RvS',
+	verslag: 'Verslag',
+	nota_naar_aanleiding_van_verslag: 'Nota',
+	amendementen: 'Amend.',
+	behandeling: 'Plenair',
+	stemming: 'Stemming',
+	afgehandeld: 'Afgerond'
+};
+
 /**
  * Every track the API gives now or gave before: `overig` is split into the kinds below
  * it (API after 0.14, branch track-kinds), and a link or cache can still carry it.
