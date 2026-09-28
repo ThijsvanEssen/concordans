@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { dossierCounts } from '$lib/components/parliamentary/counts';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { bronLabel, bronPlural } from '$lib/vocabulary';
+	import { bronLabel } from '$lib/vocabulary';
 	import { getDossier, str } from '$lib/components/parliamentary/data';
 	import {
 		OUTCOME_LABEL,
@@ -142,23 +143,13 @@
 				</div>
 			{/if}
 
-			<ul class="stats">
-				<li>
-					<span class="stat-num">{d.document_count}</span><span class="stat-label"
-						>{bronPlural('documents')}</span
-					>
-				</li>
-				<li>
-					<span class="stat-num">{d.decision_count}</span><span class="stat-label"
-						>{bronPlural('decisions')}</span
-					>
-				</li>
-				<li>
-					<span class="stat-num">{d.activity_count}</span><span class="stat-label"
-						>{bronPlural('activities')}</span
-					>
-				</li>
-			</ul>
+			<p class="counts">
+				{dossierCounts({
+					documents: d.document_count,
+					decisions: d.decision_count,
+					activities: d.activity_count
+				})}
+			</p>
 
 			{#if view.timeline && view.timeline.entries.length > 0}
 				<section class="sec sec--timeline">
@@ -252,38 +243,13 @@
 		padding: var(--s-3) 0;
 	}
 
-	.stats {
-		list-style: none;
+	/* What the dossier holds, as a sentence: no tiles, and a zero is said as "geen". */
+	.counts {
 		margin: 0;
-		padding: 0;
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-		gap: var(--s-2);
-	}
-	.stats .stat-label {
-		line-height: 1.2;
-	}
-	.stats li {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 2px;
-		padding: var(--s-2);
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-1);
-	}
-	.stat-num {
 		font-family: var(--font-sans);
-		font-size: 17px;
-		font-weight: 500;
+		font-size: var(--t-meta);
 		font-variant-numeric: tabular-nums;
-		color: var(--ink);
-	}
-	.stat-label {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+		color: var(--ink-2);
 	}
 
 	.sec {
