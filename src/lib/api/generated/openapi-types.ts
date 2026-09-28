@@ -5033,9 +5033,9 @@ export interface components {
             names?: string[];
             /**
              * Decision Kind
-             * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
+             * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
              */
-            decision_kind?: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "conclusie" | "prejudiciële beslissing") | null;
+            decision_kind?: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "beslissing" | "conclusie" | "prejudiciële beslissing") | null;
             /**
              * Series Id
              * @description The series of parallel cases the judgment is one of (the same court, day and, nearly, text): the lowest ECLI in it. Null outside a series.
@@ -5175,9 +5175,9 @@ export interface components {
             names?: string[];
             /**
              * Decision Kind
-             * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
+             * @description What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does.
              */
-            decision_kind?: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "conclusie" | "prejudiciële beslissing") | null;
+            decision_kind?: ("arrest" | "vonnis" | "beschikking" | "uitspraak" | "beslissing" | "conclusie" | "prejudiciële beslissing") | null;
             /** Source */
             source?: string | null;
             /**
@@ -5249,6 +5249,11 @@ export interface components {
              */
             role: string;
             /**
+             * Roles
+             * @description Every role the judgment names for the party, in its order: `Geïntimeerde` and `Appellant` for one that is geïntimeerde in principaal and appellante in incidenteel hoger beroep. `[role]` when it names none.
+             */
+            roles?: string[];
+            /**
              * Role Stated
              * @description True when the judgment names the role (a role line, a role behind the name, an anonymised name that is a role: `[verdachte]`); false when it is derived from the area of law and the side.
              */
@@ -5261,7 +5266,7 @@ export interface components {
             side: "first" | "second" | "other";
             /**
              * Alias
-             * @description What the judgment calls the party: `EBN` for "hierna: EBN".
+             * @description What the judgment calls the party: `EBN` for "hierna: EBN", `KLM` for "geïntimeerden worden hierna KLM respectievelijk VNV genoemd".
              */
             alias?: string | null;
             /** Representatives */

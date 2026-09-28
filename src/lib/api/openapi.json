@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.21.0"
+		"version": "0.22.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -8436,6 +8436,7 @@
 									"vonnis",
 									"beschikking",
 									"uitspraak",
+									"beslissing",
 									"conclusie",
 									"prejudiciële beslissing"
 								]
@@ -8443,7 +8444,7 @@
 							{ "type": "null" }
 						],
 						"title": "Decision Kind",
-						"description": "What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does."
+						"description": "What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does."
 					},
 					"series_id": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -8630,6 +8631,7 @@
 									"vonnis",
 									"beschikking",
 									"uitspraak",
+									"beslissing",
 									"conclusie",
 									"prejudiciële beslissing"
 								]
@@ -8637,7 +8639,7 @@
 							{ "type": "null" }
 						],
 						"title": "Decision Kind",
-						"description": "What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does."
+						"description": "What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does."
 					},
 					"source": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Source" },
 					"subjects": {
@@ -8738,6 +8740,12 @@
 						"title": "Role",
 						"description": "`Verdachte`, `Betrokkene`, `Klager`, `Veroordeelde`, `Eiser`, `Gedaagde`, `Verzoeker`, `Verweerder`, `Appellant`, `Geïntimeerde`, `Belanghebbende`, `Opposant`, `Wederpartij`; `Partij` when none applies."
 					},
+					"roles": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Roles",
+						"description": "Every role the judgment names for the party, in its order: `Geïntimeerde` and `Appellant` for one that is geïntimeerde in principaal and appellante in incidenteel hoger beroep. `[role]` when it names none."
+					},
 					"role_stated": {
 						"type": "boolean",
 						"title": "Role Stated",
@@ -8752,7 +8760,7 @@
 					"alias": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Alias",
-						"description": "What the judgment calls the party: `EBN` for \"hierna: EBN\"."
+						"description": "What the judgment calls the party: `EBN` for \"hierna: EBN\", `KLM` for \"geïntimeerden worden hierna KLM respectievelijk VNV genoemd\"."
 					},
 					"representatives": {
 						"items": { "$ref": "#/components/schemas/JudgmentRepresentative" },
