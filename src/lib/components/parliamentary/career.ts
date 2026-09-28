@@ -91,7 +91,6 @@ export function careerOf(
 		}
 	}
 
-	type Fn = Extract<CareerEntry, { kind: 'function' }>;
 	const posts = government
 		.filter((g) => g.from_date && g.function)
 		.map((g): { post: GovernmentFunction; entry: Fn } => ({
@@ -132,9 +131,38 @@ export function careerOf(
 	}
 
 	const start = (e: CareerEntry) => e.from ?? '';
-	return [...seats, ...posts.map((p) => p.entry), ...functions.values()].sort((a, b) =>
+	return foldPremier([...seats, ...posts.map((p) => p.entry), ...functions.values()]).sort((a, b) =>
 		start(b).localeCompare(start(a))
 	);
+}
+
+type Fn = Extract<CareerEntry, { kind: 'function' }>;
+const isPremier = (e: CareerEntry): e is Fn =>
+	e.kind === 'function' && /^minister-president\b/i.test(e.function);
+const isGeneralAffairs = (e: CareerEntry): e is Fn =>
+	e.kind === 'function' && /^minister van algemene zaken$/i.test(e.function);
+
+/**
+ * The minister-president is minister of Algemene Zaken: stukken signed as the one and
+ * posts named as the other are one post, not two lines of the same years. The post keeps
+ * the name minister-president.
+ */
+export function foldPremier(entries: CareerEntry[]): CareerEntry[] {
+	const premier = entries.filter(isPremier);
+	if (premier.length === 0) return entries;
+	const overlaps = (a: Fn, b: Fn) =>
+		(a.to === null || b.from <= a.to) && (b.to === null || a.from <= b.to);
+	const folded = new Set<CareerEntry>();
+	for (const az of entries.filter(isGeneralAffairs)) {
+		const mp = premier.find((p) => overlaps(p, az));
+		if (!mp) continue;
+		mp.count += az.count;
+		if (az.from < mp.from) mp.from = az.from;
+		mp.to = mp.to === null || az.to === null ? null : az.to > mp.to ? az.to : mp.to;
+		mp.cabinet ??= az.cabinet;
+		folded.add(az);
+	}
+	return entries.filter((e) => !folded.has(e));
 }
 
 /**
@@ -159,12 +187,12 @@ export function currentTitle(career: CareerEntry[], sitting: boolean): string {
 	return career.some((e) => e.kind === 'seat') ? 'Oud-Kamerlid' : 'Persoon';
 }
 
-/** `2017–2026`, `2026`, `sinds 2025`. */
+/** `2017–2026`, `2026`, `2025–` while it lasts: a year first, so a column of them aligns. */
 export function yearsOf(from: string | null, to: string | null): string {
 	const a = from?.slice(0, 4);
 	const b = to?.slice(0, 4);
 	if (a && b) return a === b ? a : `${a}–${b}`;
-	return a ? `sinds ${a}` : b ? `tot ${b}` : '';
+	return a ? `${a}–` : b ? `–${b}` : '';
 }
 
 /** Whether an entry falls in the years `van`..`tot` (open where null). */

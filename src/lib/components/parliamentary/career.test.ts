@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { careerOf, currentTitle, inYears, yearsOf } from './career';
+import { careerOf, currentTitle, foldPremier, inYears, yearsOf, type CareerEntry } from './career';
 
 const d66 = (from: string, to: string | null, role = 'Lid') => ({
 	faction_id: 'factions/d66',
@@ -49,8 +49,8 @@ describe('careerOf', () => {
 		expect(
 			functions.map((f) => f.kind === 'function' && [f.function, f.from, f.to, f.count])
 		).toEqual([
-			['minister van Algemene Zaken', '2026-09-15', '2026-09-15', 1],
-			['minister-president', '2026-09-08', '2026-09-16', 2]
+			// Signed once as minister van Algemene Zaken: the same post as minister-president.
+			['minister-president', '2026-09-08', '2026-09-16', 3]
 		]);
 	});
 
@@ -90,14 +90,45 @@ describe('careerOf with posts in a cabinet', () => {
 		const fns = career.filter((e) => e.kind === 'function');
 		// Newest start first.
 		expect(fns.map((f) => [f.function, f.cabinet, f.from, f.to, f.count])).toEqual([
-			// No post in Wikidata names it: known from the stukken only.
-			['minister van Algemene Zaken', null, '2026-09-15', '2026-09-15', 1],
-			['minister-president van Nederland', 'kabinet-Jetten', '2026-02-23', null, 2],
+			// The stuk signed as minister van Algemene Zaken counts for the minister-president.
+			['minister-president van Nederland', 'kabinet-Jetten', '2026-02-23', null, 3],
 			['Minister voor Klimaat en Energie', 'kabinet-Rutte IV', '2022-01-10', '2024-07-02', 0]
 		]);
 	});
 
 	it('names a person by the post they hold now', () => {
 		expect(currentTitle(career, false)).toBe('Minister-president van Nederland');
+	});
+});
+
+describe('yearsOf', () => {
+	it('starts every period with a year, an open one ending in a dash', () => {
+		expect(yearsOf('2017-03-23', '2021-03-31')).toBe('2017–2021');
+		expect(yearsOf('2026-02-23', null)).toBe('2026–');
+		expect(yearsOf('2024-07-02', '2024-11-12')).toBe('2024');
+	});
+});
+
+describe('foldPremier', () => {
+	it('makes minister-president and minister of Algemene Zaken one post', () => {
+		const fn = (f: string, from: string, to: string | null, count: number): CareerEntry => ({
+			kind: 'function',
+			function: f,
+			from,
+			to,
+			count,
+			cabinet: null
+		});
+		const folded = foldPremier([
+			fn('Minister-president van Nederland', '2026-02-23', null, 6),
+			fn('Minister van Algemene Zaken', '2026-03-01', '2026-09-01', 8),
+			fn('Minister voor Klimaat en Energie', '2022-01-10', '2024-07-02', 3)
+		]);
+		expect(folded.map((e) => e.kind === 'function' && [e.function, e.from, e.to, e.count])).toEqual(
+			[
+				['Minister-president van Nederland', '2026-02-23', null, 14],
+				['Minister voor Klimaat en Energie', '2022-01-10', '2024-07-02', 3]
+			]
+		);
 	});
 });
