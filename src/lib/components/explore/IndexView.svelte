@@ -39,6 +39,7 @@
 		POSTS,
 		POST_LABEL,
 		currentCabinet,
+		inOffice,
 		getCabinets,
 		getMinistries,
 		laterPosts,
@@ -797,7 +798,7 @@
 		const rows = pages.cabinets?.items.filter(
 			(c) =>
 				(!coalition || (c.parties ?? []).some((p) => p.short === coalition)) &&
-				(!dateFrom || (c.to_date ?? '9999') >= dateFrom) &&
+				(!dateFrom || (c.to_date ?? (isOpen(c) ? '9999' : (c.from_date ?? ''))) >= dateFrom) &&
 				(!dateTo || (c.from_date ?? '') <= dateTo) &&
 				(!q ||
 					includes(c.name) ||
@@ -819,15 +820,23 @@
 	const YEAR_WIDTHS = [10, 16, 28, 48, 80];
 	let yearWidth = $state(28);
 	let cabScroll = $state<HTMLElement | null>(null);
+	const thisYear = new Date().getFullYear();
+	/** A day as a year with its month as a fraction: 2024-07-02 is 2024.5. */
+	const yearOf = (iso: string | null | undefined, end: boolean) =>
+		iso ? Number(iso.slice(0, 4)) + (Number(iso.slice(5, 7)) - 1) / 12 : end ? thisYear + 1 : 0;
+	/** The cabinet in office; an older one without an end has an end no source gives. */
+	const isOpen = (c: Cabinet) => inOffice(c, cabinets);
+	// A cabinet whose end is not known is drawn as a stub of a year, its end left open.
+	const endYear = (c: Cabinet) =>
+		c.to_date ? yearOf(c.to_date, true) : isOpen(c) ? thisYear + 1 : yearOf(c.from_date, false) + 1;
 	const cabinetSpan = $derived.by(() => {
-		const year = (iso: string | null | undefined, end: boolean) =>
-			iso ? Number(iso.slice(0, 4)) + (Number(iso.slice(5, 7)) - 1) / 12 : end ? thisYear + 1 : 0;
+		const year = yearOf;
 		const rows = [...(cabinetsShown ?? [])].sort((a, b) =>
 			(a.from_date ?? '').localeCompare(b.from_date ?? '')
 		);
 		if (!rows.length) return null;
 		const from = Math.floor(Math.min(...rows.map((c) => year(c.from_date, false))));
-		const to = Math.ceil(Math.max(...rows.map((c) => year(c.to_date, true))));
+		const to = Math.ceil(Math.max(...rows.map((c) => endYear(c))));
 		return { from, to, year, rows };
 	});
 	const cabTicks = $derived.by(() => {
@@ -853,7 +862,6 @@
 		void cabinetSpan?.rows.length;
 		if (el) untrack(() => tick().then(() => (el.scrollLeft = el.scrollWidth)));
 	});
-	const thisYear = new Date().getFullYear();
 
 	const ministerPostCounts = $derived(countBy(pages.ministers?.items, (m) => m.post ?? ''));
 	const ministersShown = $derived.by(() => {
@@ -1305,10 +1313,10 @@
 							? `${currentCabinet(cabinets)!.name} (in functie)`
 							: 'Kabinet in functie',
 						options: cabinets
-							.filter((c) => c.to_date)
+							.filter((c) => !isOpen(c))
 							.map((c) => ({
 								value: c.key,
-								label: `${c.name}, ${period(c.from_date, c.to_date)}`
+								label: `${c.name}, ${period(c.from_date, c.to_date, false)}`
 							})),
 						onChange: (v) => patchUrl({ cabinet: v || null, post: null })
 					},
@@ -1756,15 +1764,16 @@
 										{/each}
 										{#each cabinetSpan.rows as c, i (c.key)}
 											{@const from = at(cabinetSpan.year(c.from_date, false))}
-											{@const width = at(cabinetSpan.year(c.to_date, true)) - from}
+											{@const width = at(endYear(c)) - from}
 											<a
 												class="cab"
-												class:cab--now={!c.to_date}
+												class:cab--now={isOpen(c)}
+												class:cab--unknown={!c.to_date && !isOpen(c)}
 												href={tabHref('ministers') + `&cabinet=${c.key}`}
 												style:left="{from}px"
 												style:top="{(i % 3) * 30}px"
 												style:--w="{Math.max(width, 2)}px"
-												title="{c.name}, {period(c.from_date, c.to_date)}"
+												title="{c.name}, {period(c.from_date, c.to_date, isOpen(c))}"
 												draggable="false"
 											>
 												<span class="cab-bar"></span>
@@ -2177,8 +2186,10 @@
 												onToggle={() => toggleOpen(bron)}
 											>
 												{#snippet lead()}
-													<span class="row-id-main">{period(c.from_date, c.to_date)}</span>
-													{#if !c.to_date}
+													<span class="row-id-main"
+														>{period(c.from_date, c.to_date, isOpen(c))}</span
+													>
+													{#if isOpen(c)}
 														<span class="row-id-sub">In functie</span>
 													{/if}
 												{/snippet}
@@ -2220,6 +2231,7 @@
 																<dd>{c.commitments}</dd>
 															</div>
 														</dl>
+														<CabinetOccupancy cabinetKey={c.key} compact />
 														<div class="gov-links">
 															<a href={tabHref('ministers') + `&cabinet=${c.key}`}
 																>Bewindspersonen</a
@@ -2888,6 +2900,10 @@
 		white-space: nowrap;
 		font-family: var(--font-sans);
 		font-size: 11.5px;
+	}
+	/* An end no source gives: the bar fades out. */
+	.cab--unknown .cab-bar {
+		background: linear-gradient(to right, var(--ink) 40%, transparent);
 	}
 	.cab--now .cab-bar {
 		background: var(--accent);

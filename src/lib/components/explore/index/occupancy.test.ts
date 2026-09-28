@@ -29,14 +29,25 @@ const post = (name: string, from: string, to: string | null, extra: Partial<Seat
 const seat = (posts: SeatPost[], extra: Partial<Seat> = {}) =>
 	({ seat: 'ienw/minister', post: 'minister', posts, ...extra }) as Seat;
 
-const schoof = termOf({ from_date: '2024-07-02', to_date: '2026-02-23' })!;
+const schoof = termOf({ from_date: '2024-07-02', to_date: '2026-02-23', ministries: [] })!;
 
 describe('termOf', () => {
-	it('runs a cabinet in office to today, and has none without a start', () => {
-		const t = termOf({ from_date: '2026-02-23', to_date: null }, '2026-09-28')!;
+	it('runs to today only while a post is held, and is not made up without posts', () => {
+		const held = (to: string | null) => [
+			{ ministry: 'az' as const, seats: [seat([post('A', '2026-02-23', to)])] }
+		];
+		const t = termOf(
+			{ from_date: '2026-02-23', to_date: null, ministries: held(null) },
+			'2026-09-28'
+		)!;
 		expect(t.open).toBe(true);
 		expect(t.end).toBe(Date.parse('2026-09-28T00:00:00Z'));
-		expect(termOf({ from_date: null, to_date: null })).toBeNull();
+		// An old cabinet whose end no source gives ends with its last post.
+		const old = termOf({ from_date: '1952-09-02', to_date: null, ministries: held('1956-10-13') })!;
+		expect(old.open).toBe(false);
+		expect(old.end).toBe(Date.parse('1956-10-13T00:00:00Z'));
+		expect(termOf({ from_date: '1913-08-29', to_date: null, ministries: [] })).toBeNull();
+		expect(termOf({ from_date: null, to_date: null, ministries: [] })).toBeNull();
 	});
 
 	it('holds a day outside the term at its edge', () => {

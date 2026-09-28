@@ -15,15 +15,26 @@ const parse = (iso: string) => Date.parse(`${iso}T00:00:00Z`);
 
 export type Term = { start: number; end: number; open: boolean };
 
-/** The cabinet's term; one in office runs to today. Null when its start is not known. */
+/**
+ * The cabinet's term. Without an end it runs to today only while a post is still held (the
+ * cabinet in office); else it ends with its last post, and without posts it is not known:
+ * an end the sources do not give is not made up.
+ */
 export function termOf(
-	cabinet: Pick<CabinetDetail, 'from_date' | 'to_date'>,
+	cabinet: Pick<CabinetDetail, 'from_date' | 'to_date' | 'ministries'>,
 	today = new Date().toISOString().slice(0, 10)
 ): Term | null {
 	if (!cabinet.from_date) return null;
 	const start = parse(cabinet.from_date);
-	const end = parse(cabinet.to_date ?? today);
-	return end > start ? { start, end, open: !cabinet.to_date } : null;
+	let end: number | null = cabinet.to_date ? parse(cabinet.to_date) : null;
+	let open = false;
+	if (end === null) {
+		const posts = (cabinet.ministries ?? []).flatMap((m) => m.seats.flatMap((s) => s.posts));
+		open = posts.some((p) => !p.to_date);
+		const ends = posts.flatMap((p) => (p.to_date ? [parse(p.to_date)] : []));
+		end = open ? parse(today) : ends.length ? Math.max(...ends) : null;
+	}
+	return end !== null && end > start ? { start, end, open } : null;
 }
 
 /** Where a day lies in the term, from 0 to 1; a day outside it is held at the edge. */

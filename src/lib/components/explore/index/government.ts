@@ -61,14 +61,25 @@ export function getCabinet(key: string): Promise<Schema<'CabinetDetailDTO'>> {
 	return request;
 }
 
-/** The cabinet in office: the newest one without an end. */
-export const currentCabinet = (cabinets: Cabinet[]): Cabinet | undefined =>
-	cabinets.find((c) => !c.to_date) ?? cabinets[0];
+/**
+ * The cabinet in office: the newest one without an end. An older cabinet without an end
+ * has one the sources do not give (most before 1945), and is not in office.
+ */
+export const currentCabinet = (cabinets: readonly Cabinet[]): Cabinet | undefined =>
+	[...cabinets].sort((a, b) => (b.from_date ?? '').localeCompare(a.from_date ?? ''))[0];
 
-/** `2024–2026`, or `sinds 2026` while in office. */
-export function period(from: string | null | undefined, to: string | null | undefined): string {
+/** Whether this is the cabinet in office. */
+export const inOffice = (cabinet: Cabinet, cabinets: readonly Cabinet[]): boolean =>
+	!cabinet.to_date && currentCabinet(cabinets)?.key === cabinet.key;
+
+/** `2024–2026`, `sinds 2026` while in office, and `1913–?` when the end is not known. */
+export function period(
+	from: string | null | undefined,
+	to: string | null | undefined,
+	open = true
+): string {
 	const y = (iso: string | null | undefined) => iso?.slice(0, 4) ?? '?';
-	if (!to) return `sinds ${y(from)}`;
+	if (!to) return open ? `sinds ${y(from)}` : `${y(from)}–?`;
 	return y(from) === y(to) ? y(from) : `${y(from)}–${y(to)}`;
 }
 
