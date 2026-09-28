@@ -303,7 +303,9 @@
 							role="checkbox"
 							aria-checked={isLayerOn(g)}
 							aria-label="{g.label} op het doek"
-							onclick={() => toggleLayer(g)}>{isLayerOn(g) ? '✓' : ''}</button
+							title={isLayerOn(g) ? 'Van het doek halen' : 'Op het doek zetten'}
+							onclick={() => toggleLayer(g)}
+							><span class="layer__box" aria-hidden="true">{isLayerOn(g) ? '✓' : ''}</span>op doek</button
 						>
 					{/if}
 				</div>
@@ -609,31 +611,46 @@
 	.group__count {
 		color: var(--ink-3);
 	}
+	/* Whether the group is drawn on the canvas, said in words beside its box. */
 	.layer {
 		position: relative;
-		width: 14px;
-		height: 14px;
 		margin-left: auto;
 		align-self: center;
-		display: grid;
-		place-items: center;
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
 		padding: 0;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
+		border: 0;
 		background: none;
-		font-size: 10px;
-		line-height: 1;
-		color: var(--paper);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 		cursor: pointer;
-		flex: none;
+		white-space: nowrap;
 	}
-	/* The box is drawn 14 wide; the target is 24. */
 	.layer::before {
 		content: '';
 		position: absolute;
 		inset: -5px;
 	}
+	.layer:hover {
+		color: var(--ink-2);
+	}
+	.layer__box {
+		width: 12px;
+		height: 12px;
+		display: grid;
+		place-items: center;
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		font-size: 9px;
+		line-height: 1;
+		color: var(--paper);
+	}
 	.layer.is-on {
+		color: var(--ink);
+	}
+	.layer.is-on .layer__box {
 		background: var(--ink);
 		border-color: var(--ink);
 	}
