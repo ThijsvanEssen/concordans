@@ -2560,6 +2560,8 @@
 	.stage-scroll {
 		flex: 1;
 		overflow-y: auto;
+		/* The filter column measures its height against this box, not the window. */
+		container-type: size;
 	}
 	/* The filters in a column beside the list; on a narrow screen above it. */
 	.page {
@@ -2576,9 +2578,12 @@
 	}
 	.facet-col {
 		position: sticky;
-		top: 0;
-		max-height: 100vh;
+		/* As far from the top as the page padding, so it does not jump when it sticks;
+		   as high as the scrolling box, so its last filter can be reached. */
+		top: 28px;
+		max-height: calc(100cqh - 28px);
 		overflow-y: auto;
+		scrollbar-gutter: stable;
 		/* Room for the focus ring: the column scrolls, so it clips what reaches its edge. */
 		margin: 0 -6px;
 		padding: 4px 6px 24px;
