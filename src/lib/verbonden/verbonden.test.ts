@@ -279,6 +279,21 @@ describe('conclusion in the same case', () => {
 		expect(groups.find((g) => g.id === 'advised')!.rows).toHaveLength(1);
 		expect(groups.find((g) => g.id === 'cited-by')!.rows).toHaveLength(0);
 	});
+
+	it('tells the earlier instance from the later one, and names the remedy', () => {
+		const appeal = (ecli: string, direction: string, procedure: string) => ({
+			...judgment(ecli, 'APPEAL_OF', direction),
+			meta: { procedure_type: procedure }
+		});
+		const groups = buildGroups('judgments', [
+			appeal('ECLI:NL:GHDHA:2025:861', 'outbound', 'Cassatie'),
+			appeal('ECLI:NL:HR:2027:1', 'inbound', 'Cassatie')
+		]);
+		const earlier = groups.find((g) => g.id === 'earlier-instance')!.rows;
+		expect(earlier.map((r) => r.identifier)).toEqual(['ECLI:NL:GHDHA:2025:861']);
+		expect(metaParts(earlier[0]).map((p) => p.text)).toContain('cassatie');
+		expect(groups.find((g) => g.id === 'later-instance')!.rows).toHaveLength(1);
+	});
 });
 
 describe('describe, a bron without a name', () => {

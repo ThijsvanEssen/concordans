@@ -342,10 +342,16 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Uitspraak in dezelfde zaak',
 			match: [{ relation: 'ADVISES_ON', direction: 'outbound', collection: 'judgments' }]
 		},
+		// The row says which remedy: `cassatie` or `hoger beroep`.
 		{
-			id: 'appeal',
-			label: 'Hoger beroep',
-			match: [{ relation: 'APPEAL_OF', collection: 'judgments' }]
+			id: 'earlier-instance',
+			label: 'Uitspraak in eerdere aanleg',
+			match: [{ relation: 'APPEAL_OF', direction: 'outbound', collection: 'judgments' }]
+		},
+		{
+			id: 'later-instance',
+			label: 'Hoger beroep of cassatie tegen deze uitspraak',
+			match: [{ relation: 'APPEAL_OF', direction: 'inbound', collection: 'judgments' }]
 		},
 		{
 			id: 'judgments',

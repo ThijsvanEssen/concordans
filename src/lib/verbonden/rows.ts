@@ -261,6 +261,9 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		match,
 		period: periodOf(meta),
 		function: text(meta.function),
+		// An appeal link names its remedy: `Cassatie`, `Hoger beroep`.
+		aard:
+			n.relation === 'APPEAL_OF' ? (text(meta.procedure_type)?.toLowerCase() ?? null) : undefined,
 		props
 	};
 }
