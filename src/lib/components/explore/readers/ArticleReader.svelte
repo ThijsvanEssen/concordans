@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { onderdeelMark } from '$lib/text/article-parts';
@@ -19,7 +20,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
-	import { bronHref, refId } from '$lib/bron/href';
+	import { refId } from '$lib/bron/href';
 	import { citeArticle } from '$lib/text/cite';
 	import { bookNumber, placeInLaw } from '$lib/text/bw';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
@@ -559,17 +560,10 @@
 							<span class="head__item"
 								>{originVerb}
 								{#each versionDossiers as dossier, i (dossier.key)}{#if i > 0},
-									{/if}{#if missingDossiers.has(dossier.number)}<span
-											title="Dit dossier staat niet in de dataset">Kamerstuk {dossier.number}</span
-										>{:else}<a
-											href={bronHref({
-												collection: 'dossiers',
-												key: dossier.key,
-												number: dossier.number
-											})}
-											data-sveltekit-noscroll
-											title={dossier.title ?? undefined}>Kamerstuk {dossier.number}</a
-										>{/if}{/each}</span
+									{/if}<DossierLink
+										{dossier}
+										missing={missingDossiers.has(dossier.number)}
+									/>{/each}</span
 							>
 						{/if}
 						{#if explanatory && explanatoryHref}
@@ -640,6 +634,7 @@
 					{citation}
 					link={withParams}
 					{go}
+					{missingDossiers}
 				/>
 			{:else}
 				<ArticleText
