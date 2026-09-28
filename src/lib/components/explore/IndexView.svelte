@@ -32,7 +32,7 @@
 		groupByNumber,
 		groupRuns
 	} from '$lib/components/parliamentary/dossier-number';
-	import { partyColor } from '$lib/utils/party-color';
+	import { partyColor } from '$lib/utils/party-color.svelte';
 	import Hemicycle from './Hemicycle.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';

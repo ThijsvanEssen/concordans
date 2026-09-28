@@ -4,7 +4,7 @@
 	// (a doubt in the sources) are outlined. The demissionary phases lie behind as bands.
 	// Compact: one line per ministry, the minister's seat, without names.
 	import { bronHref } from '$lib/bron/href';
-	import { partyColor } from '$lib/utils/party-color';
+	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { getCabinet, getPartyColors } from './government';
 	import {
 		bandsOf,

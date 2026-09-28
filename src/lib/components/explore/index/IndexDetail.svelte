@@ -11,7 +11,7 @@
 		isBill
 	} from '$lib/components/parliamentary/stages';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
-	import { partyColor } from '$lib/utils/party-color';
+	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { collectionOf, type IndexCategory } from './categories';
 	import { judgmentKind } from './judgment-kind';
 
