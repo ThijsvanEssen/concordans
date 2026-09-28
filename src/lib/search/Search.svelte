@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { bookNumber } from '$lib/text/bw';
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
 	// Netwerk, where a result is picked instead of opened.
 	import { goto } from '$app/navigation';
@@ -8,8 +7,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { formatDate } from '$lib/components/explore/readers/_shared';
-	import { dossierStatus, isOutcome, isStage } from '$lib/components/parliamentary/stages';
+	import { bySection, presentHit, sectionOf } from './present';
 	import { bronLabel, bronPlural, type Collection } from '$lib/vocabulary';
 	import {
 		bareArticle,
@@ -97,60 +95,10 @@
 	const hitName = (hit: Hit) =>
 		hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
 
-	/** A list the API gives in `extra`, such as the names of a judgment. */
-	const extras = (hit: Hit, name: string): string[] => {
-		const value = hit.extra?.[name];
-		return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
-	};
-
-	// An article with its heading, a judgment with its name ("Urgenda"), as lawyers know them.
-	function titleOf(hit: Hit): string {
-		if (hit.collection === 'articles' && extra(hit, 'article_number')) {
-			const heading = extra(hit, 'heading');
-			const number = bookNumber(extra(hit, 'bwb_id'), extra(hit, 'article_number'));
-			return `Artikel ${number}${heading ? `. ${heading}` : ''}`;
-		}
-		if (hit.collection === 'judgments' && extra(hit, 'ecli')) {
-			const names = extras(hit, 'names');
-			return names.length ? `${extra(hit, 'ecli')} (${names.join(', ')})` : extra(hit, 'ecli');
-		}
-		return hit.display_name ?? hit.key;
-	}
-
-	/** "Hoge Raad 2024-09-24 / 23/02910": court, date and case number. */
-	function judgmentContext(name: string): string {
-		const m = /^(.*?)\s+(\d{4}-\d{2}-\d{2})(?:\s*\/\s*(.+))?$/.exec(name);
-		if (!m) return name;
-		return [m[1], formatDate(m[2]), m[3]].filter(Boolean).join(' · ');
-	}
-
-	function contextOf(hit: Hit): string {
-		switch (hit.collection) {
-			case 'articles':
-				return extra(hit, 'citation_title');
-			case 'instruments':
-				return extra(hit, 'bwb_id');
-			case 'judgments':
-				return judgmentContext(hit.display_name ?? '');
-			case 'dossiers': {
-				const { outcome, current_stage } = hit.extra ?? {};
-				const status = dossierStatus({
-					outcome: isOutcome(outcome) ? outcome : null,
-					current_stage: isStage(current_stage) ? current_stage : null
-				});
-				return [extra(hit, 'number'), status].filter(Boolean).join(' · ');
-			}
-			case 'documents':
-				return extra(hit, 'kind');
-			case 'members':
-				return extra(hit, 'party');
-			default:
-				return '';
-		}
-	}
-
 	const groups = $derived(
-		KINDS.map((kind) => ({ kind, hits: results[kind] ?? [] })).filter((g) => g.hits.length > 0)
+		KINDS.map((kind) => ({ kind, hits: bySection(results[kind] ?? []) })).filter(
+			(g) => g.hits.length > 0
+		)
 	);
 	const hits = $derived(groups.flatMap((g) => g.hits));
 	const indexOf = $derived(new Map(hits.map((hit, i) => [hit.id, i])));
@@ -402,9 +350,13 @@
 					<KindGlyph collection={group.kind} />
 					{bronPlural(group.kind)}
 				</div>
-				{#each group.hits as hit (hit.id)}
+				{#each group.hits as hit, h (hit.id)}
 					{@const i = offset + (indexOf.get(hit.id) ?? 0)}
-					{@const context = contextOf(hit)}
+					{@const shown = presentHit(hit, q)}
+					{@const section = sectionOf(hit)}
+					{#if section && (h === 0 || section !== sectionOf(group.hits[h - 1]))}
+						<div class="section" role="presentation">{section}</div>
+					{/if}
 					<a
 						id="{uid}-row-{i}"
 						class="row"
@@ -424,8 +376,16 @@
 						}}
 						onpointermove={(e) => onpointermove(e, i)}
 					>
-						<span class="row-title">{titleOf(hit)}</span>
-						{#if context}<span class="row-context">{context}</span>{/if}
+						<span class="row-main">
+							<span class="row-title">{shown.title}</span>
+							{#if shown.snippet}
+								<span class="row-snippet"
+									>{#each shown.snippet as part, n (n)}{#if part.mark}<mark>{part.text}</mark
+											>{:else}{part.text}{/if}{/each}</span
+								>
+							{/if}
+						</span>
+						{#if shown.context}<span class="row-context">{shown.context}</span>{/if}
 					</a>
 				{/each}
 			</div>
@@ -567,12 +527,42 @@
 		color: var(--ink-3);
 	}
 
-	.row-title {
+	.row-main {
 		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+	}
+	.row-title {
 		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+	/* One line of the text, the words searched for marked. */
+	.row-snippet {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.row-snippet mark {
+		background: none;
+		color: var(--ink-2);
+		font-weight: 600;
+	}
+	/* The dossier the stukken below it belong to. */
+	.section {
+		padding: 6px 18px 2px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-family: var(--font-serif);
+		font-size: 14px;
+		color: var(--ink-2);
 	}
 
 	.row-context {
