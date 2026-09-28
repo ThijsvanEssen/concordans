@@ -311,12 +311,24 @@
 
 	// The law's names for the citation forms.
 	const law = $derived($instrumentMetaStore.get(bwbId) ?? null);
+	// The name the article itself gives its law: for an EU act the citation title
+	// (Verordening 2022/868/EU), where the instrument carries only its full title in capitals.
+	const ownCitationTitle = $derived(
+		typeof selection?.raw?.props?.instrument_citation_title === 'string'
+			? selection.raw.props.instrument_citation_title
+			: null
+	);
 	const citation = $derived.by(() => {
 		if (view.kind !== 'loaded') return null;
 		const a = view.data.article;
 		const address = a.article_number ?? a.address;
 		if (!address) return null;
-		const title = law?.citationTitle ?? law?.title ?? view.data.instrument?.display_name ?? null;
+		const title =
+			ownCitationTitle ??
+			law?.citationTitle ??
+			law?.title ??
+			view.data.instrument?.display_name ??
+			null;
 		if (!title) return null;
 		return {
 			articleNumber: address,
@@ -462,7 +474,7 @@
 		{@const a = d.article}
 		<ReaderHead
 			collection="articles"
-			juris={d.instrument?.display_name}
+			juris={ownCitationTitle ?? law?.citationTitle ?? d.instrument?.display_name}
 			title={title(a)}
 			place={placeInLaw(place, d.instrument?.display_name ?? law?.citationTitle)}
 		>
