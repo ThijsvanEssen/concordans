@@ -55,13 +55,14 @@ const longDate = (d: Date) =>
 	d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
 
 /** A book of the Burgerlijk Wetboek is cited as the code with the book before the article: `art. 7:3 BW`. */
-function bookOf(c: Citation): { articleNumber: string; citationTitle: string } {
+function bookOf(c: Citation): Pick<Citation, 'articleNumber' | 'citationTitle' | 'shortTitle'> {
 	const book = /^Burgerlijk Wetboek Boek (\d+)$/i.exec(c.citationTitle)?.[1];
 	if (!book) return c;
 	const articleNumber = c.articleNumber.includes(':')
 		? c.articleNumber
 		: `${book}:${c.articleNumber}`;
-	return { articleNumber, citationTitle: 'Burgerlijk Wetboek' };
+	// The book is in the number, so the code is cited as a whole: `BW`, never `BW6`.
+	return { articleNumber, citationTitle: 'Burgerlijk Wetboek', shortTitle: 'BW' };
 }
 
 /** The name of a law with its article: `het Wetboek van Strafrecht`, `de Algemene wet
@@ -78,8 +79,8 @@ function lawWithArticle(title: string): string {
  * van Strafrecht` (Aanwijzingen voor de regelgeving), and the dated short form.
  */
 export function citeArticle(c: Citation): CitationForms {
-	const { articleNumber, citationTitle } = bookOf(c);
-	const law = c.shortTitle ?? citationTitle;
+	const { articleNumber, citationTitle, shortTitle } = bookOf(c);
+	const law = shortTitle ?? citationTitle;
 	const onderdelen = c.onderdelen ?? [];
 
 	const kort = [

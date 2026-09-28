@@ -41,6 +41,14 @@ describe('citeArticle', () => {
 			'art. 7:3 lid 3 onder a BW'
 		);
 		expect(citeArticle(bw7).voluit).toBe('artikel 7:3 van het Burgerlijk Wetboek');
+		// The API names the book itself `BW6`; the citation names the code.
+		expect(
+			citeArticle({
+				articleNumber: '162',
+				shortTitle: 'BW6',
+				citationTitle: 'Burgerlijk Wetboek Boek 6'
+			}).kort
+		).toBe('art. 6:162 BW');
 	});
 
 	it('keeps a lid it cannot name in words', () => {
