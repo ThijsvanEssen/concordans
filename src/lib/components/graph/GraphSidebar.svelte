@@ -245,6 +245,7 @@
 						type="button"
 						class="btn"
 						class:is-primary={!netwerkActive && depth === d}
+						aria-pressed={!netwerkActive && depth === d}
 						onclick={() => onDepth(d)}>{d}</button
 					>
 				{/each}
@@ -329,6 +330,7 @@
 						type="button"
 						class="btn"
 						class:is-primary={!mutOn && !heatOn}
+						aria-pressed={!mutOn && !heatOn}
 						onclick={() => {
 							if (mutOn) onToggleMutatie?.();
 							else if (heatOn) onToggleHeat?.();
@@ -338,6 +340,7 @@
 						type="button"
 						class="btn"
 						class:is-primary={mutOn}
+						aria-pressed={mutOn}
 						disabled={!onToggleMutatie}
 						onclick={() => {
 							if (!mutOn) onToggleMutatie?.();
@@ -349,6 +352,7 @@
 						type="button"
 						class="btn"
 						class:is-primary={heatOn}
+						aria-pressed={heatOn}
 						disabled={!onToggleHeat}
 						onclick={() => {
 							if (!heatOn) onToggleHeat?.();
@@ -362,6 +366,7 @@
 								type="button"
 								class="btn"
 								class:is-primary={overlay.kind === 'heat' && overlay.months === m}
+								aria-pressed={overlay.kind === 'heat' && overlay.months === m}
 								onclick={() => onHeatPeriodChange?.(m)}
 								disabled={!onHeatPeriodChange}>{m} maanden</button
 							>

@@ -907,6 +907,7 @@
 								type="button"
 								class="mobile-tab"
 								class:active={mobilePanel === id}
+								aria-pressed={mobilePanel === id}
 								onclick={() => (mobilePanel = id as typeof mobilePanel)}>{label}</button
 							>
 						{/each}
@@ -1024,6 +1025,7 @@
 							type="button"
 							class="mobile-tab"
 							class:active={mobilePanel === id}
+							aria-pressed={mobilePanel === id}
 							onclick={() => (mobilePanel = id as typeof mobilePanel)}>{label}</button
 						>
 					{/each}

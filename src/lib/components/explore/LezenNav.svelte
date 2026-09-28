@@ -170,6 +170,7 @@
 		<a
 			class="row"
 			class:is-active={item.key === selectedKey}
+			aria-current={item.key === selectedKey ? 'page' : undefined}
 			href={bronHref({ collection: 'articles', key: item.key })}
 			data-sveltekit-noscroll>{item.label}</a
 		>
