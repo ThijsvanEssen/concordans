@@ -33,6 +33,7 @@
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
 	import { DECISION_KIND_LABEL, isDecisionKind } from './index/decision-kind';
+	import { judgmentRowTitle } from './index/judgment-kind';
 	import {
 		COMMITMENT_STATUSES,
 		COMMITMENT_STATUS_LABEL,
@@ -1864,7 +1865,7 @@
 											{@const bron = `judgments/${j.key}`}
 											<IndexRow
 												{bron}
-												title={j.display_name ?? j.ecli ?? j.key}
+												title={judgmentRowTitle(j)}
 												href={hrefOf(bron)}
 												open={openId === bron}
 												onToggle={() => toggleOpen(bron)}
@@ -1876,9 +1877,6 @@
 													{/if}
 												{/snippet}
 												{#snippet body()}
-													{#if j.names?.length}
-														<span class="row-names">{j.names.join(', ')}</span>
-													{/if}
 													{#if j.summary}
 														<p class="row-summary">{j.summary}</p>
 													{/if}
@@ -3124,15 +3122,6 @@
 	}
 	.row-sub--mono {
 		font-variant-numeric: tabular-nums;
-	}
-	/* The name lawyers give a judgment (Urgenda, Haviltex), under its title. */
-	.row-names {
-		display: block;
-		margin-top: 2px;
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: var(--t-body-2);
-		color: var(--ink-2);
 	}
 	/* The inhoudsindicatie of a judgment, two lines at most. */
 	.row-summary {
