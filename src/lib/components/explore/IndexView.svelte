@@ -27,7 +27,11 @@
 		type Stage,
 		type Track
 	} from '$lib/components/parliamentary/stages';
-	import { groupByNumber, numberOf } from '$lib/components/parliamentary/dossier-number';
+	import {
+		chapterTitle,
+		groupByNumber,
+		groupRuns
+	} from '$lib/components/parliamentary/dossier-number';
 	import { partyColor } from '$lib/utils/party-color';
 	import Hemicycle from './Hemicycle.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
@@ -682,14 +686,15 @@
 	/** The stages a bill passes, in order, for the bar in a dossier's row. */
 	const BILL_STAGES: Stage[] = STAGES.filter((s) => s !== 'afgehandeld');
 
-	// Sorted by number, the dossiers that share a number form one row that opens to them.
+	// The dossiers that share a number form one row that opens to them: all of them when
+	// sorted by number, neighbouring ones under another sort (a budget's chapters).
 	type DossierRow = Schema<'DossierSummaryDTO'>;
 	const dossierEntries = $derived.by(() =>
 		!dossiersShown
 			? undefined
 			: sortDef.id === 'number'
 				? groupByNumber(dossiersShown)
-				: dossiersShown.map((d) => ({ number: numberOf(d.number), rows: [d] }))
+				: groupRuns(dossiersShown)
 	);
 	let openNumbers = $state(new Set<string>());
 	const toggleNumber = (number: string) => {
@@ -2422,7 +2427,7 @@
 	<IndexRow
 		{bron}
 		{member}
-		title={d.short_title ?? d.title ?? '—'}
+		title={member && d.title ? chapterTitle(d.title) : (d.short_title ?? d.title ?? '—')}
 		href={hrefOf(bron)}
 		open={openId === bron}
 		onToggle={() => toggleOpen(bron)}

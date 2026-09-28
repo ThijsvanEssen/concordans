@@ -58,3 +58,33 @@ export function groupByNumber<T extends { number: string }>(
 		rows: members.sort((a, b) => compareSuffix(a.number, b.number))
 	}));
 }
+
+/**
+ * Runs of neighbouring rows that share a number, in the order given: under a sort by date
+ * the chapters of one budget, opened on one day, stay together without changing the order.
+ */
+export function groupRuns<T extends { number: string }>(
+	rows: T[]
+): { number: string; rows: T[] }[] {
+	const runs: { number: string; rows: T[] }[] = [];
+	for (const row of rows) {
+		const number = numberOf(row.number);
+		const last = runs.at(-1);
+		if (last?.number === number) last.rows.push(row);
+		else runs.push({ number, rows: [row] });
+	}
+	for (const run of runs) run.rows.sort((a, b) => compareSuffix(a.number, b.number));
+	return runs;
+}
+
+/**
+ * The name of a budget chapter within its budget: `Mobiliteitsfonds` for "Vaststelling van
+ * de begrotingsstaat van het Mobiliteitsfonds voor het jaar 2027"; else the title itself.
+ */
+export function chapterTitle(title: string): string {
+	const m =
+		/^Vaststelling van de begrotingssta(?:at|ten) van (?:het |de )?(.+?) voor het jaar \d{4}$/i.exec(
+			title.trim()
+		);
+	return m ? m[1].charAt(0).toUpperCase() + m[1].slice(1) : title;
+}

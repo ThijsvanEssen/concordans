@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { compareSuffix, groupByNumber, numberOf, suffixOf } from './dossier-number';
+import {
+	chapterTitle,
+	compareSuffix,
+	groupByNumber,
+	groupRuns,
+	numberOf,
+	suffixOf
+} from './dossier-number';
 
 describe('numberOf and suffixOf', () => {
 	it('split a label into number and suffix', () => {
@@ -51,5 +58,40 @@ describe('groupByNumber', () => {
 			},
 			{ number: '36327', rows: [{ number: '36327' }] }
 		]);
+	});
+});
+
+describe('groupRuns', () => {
+	it('keeps neighbouring rows of one number together, in the order given', () => {
+		const runs = groupRuns([
+			{ number: '37014' },
+			{ number: '37020' },
+			{ number: '37020-B' },
+			{ number: '37020-A' },
+			{ number: '36925-(R2219)' },
+			{ number: '37020-XV' }
+		]);
+		expect(runs.map((r) => [r.number, r.rows.map((d) => d.number)])).toEqual([
+			['37014', ['37014']],
+			['37020', ['37020', '37020-A', '37020-B']],
+			['36925', ['36925-(R2219)']],
+			['37020', ['37020-XV']]
+		]);
+	});
+});
+
+describe('chapterTitle', () => {
+	it('names a budget chapter within its budget', () => {
+		expect(
+			chapterTitle(
+				'Vaststelling van de begrotingsstaat van het Mobiliteitsfonds voor het jaar 2027'
+			)
+		).toBe('Mobiliteitsfonds');
+		expect(
+			chapterTitle(
+				'Vaststelling van de begrotingsstaten van het Ministerie van Financiën voor het jaar 2027'
+			)
+		).toBe('Ministerie van Financiën');
+		expect(chapterTitle('Wet weerbare waarden')).toBe('Wet weerbare waarden');
 	});
 });
