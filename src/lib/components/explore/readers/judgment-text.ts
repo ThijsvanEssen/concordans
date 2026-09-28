@@ -769,3 +769,55 @@ export function splitBodyParagraph(text: string, citations: Span[] = []): Parsed
 
 	return [...result, ...trailingHeadings];
 }
+
+export type RoleGroup = {
+	role: string;
+	/** Parties the judgment names, in its order. */
+	named: Participant[];
+	/** Parties it names only by a placeholder (`[appellant 1]`), counted instead of listed. */
+	anonymous: Participant[];
+	/** Some role in the group is derived, not stated in the judgment. */
+	derived: boolean;
+};
+
+const isPlaceholder = (name: string) => /^\[.*\]$/.test(name.trim());
+
+/**
+ * The parties by role, in the order the roles first appear: a mass appeal of a hundred
+ * pseudonymised appellants is one row, and the parties that are named stand out.
+ */
+export function partiesByRole(participants: Participant[]): RoleGroup[] {
+	const groups = new Map<string, RoleGroup>();
+	for (const p of participants) {
+		let g = groups.get(p.role);
+		if (!g) {
+			g = { role: p.role, named: [], anonymous: [], derived: false };
+			groups.set(p.role, g);
+		}
+		(isPlaceholder(p.name) ? g.anonymous : g.named).push(p);
+		if (p.stated === false) g.derived = true;
+	}
+	// One pseudonymised party reads better by its placeholder than as a count of one.
+	for (const g of groups.values()) {
+		if (g.anonymous.length === 1) g.named.push(...g.anonymous.splice(0));
+	}
+	// The parties first, then who represents or advises them.
+	const counsel = (g: RoleGroup) =>
+		/advocaat|raadsman|raadslieden|gemachtigde|procureur/i.test(g.role) ||
+		(g.named.length > 0 && g.named.every((p) => p.party));
+	const all = [...groups.values()];
+	return [...all.filter((g) => !counsel(g)), ...all.filter(counsel)];
+}
+
+/** Whom a lawyer acts for, with pseudonymised parties counted: `KLM en 3 geanonimiseerde partijen`. */
+export function forParties(party: string): string {
+	const parts = party
+		.split(/,\s*|\s+en\s+/)
+		.map((p) => p.trim())
+		.filter(Boolean);
+	const anonymous = parts.filter(isPlaceholder).length;
+	if (anonymous < 2) return party;
+	const named = parts.filter((p) => !isPlaceholder(p));
+	const count = `${anonymous} geanonimiseerde partijen`;
+	return named.length ? `${named.join(', ')} en ${count}` : count;
+}

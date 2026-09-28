@@ -16,6 +16,8 @@
 	import {
 		headingId,
 		judgmentParticipants,
+		forParties,
+		partiesByRole,
 		normalizeParagraphText,
 		splitBodyParagraph,
 		splitSummary
@@ -177,21 +179,16 @@
 		{/if}
 
 		{#if participants.length > 0}
-			<!-- A mass appeal names a hundred appellants: the first few, the rest on request. -->
-			{@const shownParties =
-				showAllParties || participants.length <= PARTIES_PREVIEW + 2
-					? participants
-					: participants.slice(0, PARTIES_PREVIEW)}
+			<!-- One row per role: pseudonymised parties counted, the named ones listed. -->
+			{@const roles = partiesByRole(participants)}
 			<table class="reader-parties" id="parties">
 				<tbody>
-					{#each shownParties as p, i (i)}
+					{#each roles as g (g.role)}
+						{@const named = showAllParties ? g.named : g.named.slice(0, PARTIES_PREVIEW)}
 						<tr>
 							<th class="reader-parties-role">
-								{p.role}
-								{#if p.party}
-									<span class="reader-parties-party">{p.party}</span>
-								{/if}
-								{#if p.stated === false}
+								{g.role}
+								{#if g.derived}
 									<span
 										class="reader-parties-derived"
 										title="De uitspraak noemt deze rol niet; afgeleid uit rechtsgebied en kop"
@@ -199,16 +196,35 @@
 									>
 								{/if}
 							</th>
-							<td class="reader-parties-name">{p.name}</td>
+							<td class="reader-parties-name">
+								{#each named as p, i (i)}
+									<span class="reader-party"
+										>{p.name}{#if p.party}<span class="reader-parties-party"
+												>voor {forParties(p.party)}</span
+											>{/if}</span
+									>
+								{/each}
+								{#if named.length < g.named.length}
+									<button
+										type="button"
+										class="reader-parties-more"
+										onclick={() => (showAllParties = true)}
+										>en {g.named.length - named.length} meer</button
+									>
+								{/if}
+								{#if g.anonymous.length > 0}
+									<span class="reader-parties-count"
+										>{g.named.length ? 'en ' : ''}{g.anonymous.length} geanonimiseerde {g.anonymous
+											.length === 1
+											? 'partij'
+											: 'partijen'}</span
+									>
+								{/if}
+							</td>
 						</tr>
 					{/each}
 				</tbody>
 			</table>
-			{#if shownParties.length < participants.length}
-				<button type="button" class="reader-parties-more" onclick={() => (showAllParties = true)}
-					>Alle {participants.length} partijen tonen</button
-				>
-			{/if}
 		{/if}
 
 		<div class="reader-body" bind:this={root}>
@@ -419,17 +435,12 @@
 	}
 
 	/* Participants table */
+	/* No box: the role column is the edge the names line up against. */
 	.reader-parties {
 		width: 100%;
 		max-width: var(--measure);
 		border-collapse: collapse;
 		margin: 0 0 var(--s-6);
-		border: 1px solid var(--rule);
-		background: var(--paper-2);
-	}
-
-	.reader-parties tr + tr {
-		border-top: 1px solid var(--rule);
 	}
 
 	.reader-parties-role {
@@ -439,21 +450,31 @@
 		color: var(--ink-3);
 		text-align: left;
 		white-space: nowrap;
-		padding: 6px 12px 6px var(--s-4);
-		vertical-align: top;
-		width: 7em;
+		padding: 4px 12px 4px 0;
+		vertical-align: baseline;
+		width: 8em;
 	}
 
 	.reader-parties-name {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink);
-		padding: 6px var(--s-4) 6px 0;
-		vertical-align: top;
+		padding: 4px 0;
+		vertical-align: baseline;
+	}
+	.reader-party {
+		display: block;
+	}
+	.reader-parties-count {
+		display: block;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
 	}
 
 	.reader-parties-party {
-		display: block;
+		margin-left: 6px;
+		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);

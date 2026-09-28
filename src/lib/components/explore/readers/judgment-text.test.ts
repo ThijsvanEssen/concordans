@@ -1,10 +1,12 @@
-import { expect, test } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 import {
 	caseArea,
 	extractParticipants,
 	extractParties,
 	judgmentHead,
 	judgmentParticipants,
+	forParties,
+	partiesByRole,
 	splitBodyParagraph
 } from './judgment-text';
 
@@ -508,4 +510,35 @@ test('a lawyer for several parties in a row is one row after them (ECLI:NL:HR:20
 		['Verweerder', 'EBN B.V.', undefined],
 		['Advocaat', 'mr. J.F. de Groot', 'EBN']
 	]);
+});
+
+describe('partiesByRole', () => {
+	it('counts pseudonymised parties and lists the named ones, by role', () => {
+		const appellants = Array.from({ length: 116 }, (_, i) => ({
+			role: 'Appellant',
+			name: `[appellant ${i + 1}]`
+		}));
+		const groups = partiesByRole([
+			...appellants,
+			{ role: 'Advocaat', name: 'mr. M.A. de Jager', party: '[appellant 1]' },
+			{ role: 'Geïntimeerde', name: 'KONINKLIJKE LUCHTVAART MAATSCHAPPIJ N.V.' },
+			{ role: 'Geïntimeerde', name: 'VERENIGING NEDERLANDSE VERKEERSVLIEGERS' },
+			{ role: 'Eiser', name: '[eiser]', stated: false }
+		]);
+		expect(groups.map((g) => [g.role, g.named.length, g.anonymous.length, g.derived])).toEqual([
+			['Appellant', 0, 116, false],
+			['Geïntimeerde', 2, 0, false],
+			['Eiser', 1, 0, true],
+			['Advocaat', 1, 0, false]
+		]);
+	});
+});
+
+describe('forParties', () => {
+	it('counts the pseudonymised parties a lawyer acts for', () => {
+		const many = Array.from({ length: 116 }, (_, i) => `[appellant ${i + 1}]`).join(', ');
+		expect(forParties(many)).toBe('116 geanonimiseerde partijen');
+		expect(forParties('KLM, [eiser 1] en [eiser 2]')).toBe('KLM en 2 geanonimiseerde partijen');
+		expect(forParties('[appellant]')).toBe('[appellant]');
+	});
 });
