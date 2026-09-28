@@ -7,7 +7,7 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronLabel, type Mode } from '$lib/vocabulary';
 	import { formatDate, textProp } from './readers/_shared';
-	import { bronHref } from '$lib/bron/href';
+	import { bronHref, indexHref } from '$lib/bron/href';
 	import { bookNumber } from '$lib/text/bw';
 	import { categoryLabel, isIndexCategory } from './index/categories';
 
@@ -54,7 +54,7 @@
 		const add = (text: string | null | undefined, href?: string) => {
 			if (text) segs.push({ text, href });
 		};
-		const kindHref = (collection: string) => `/explore?mode=index&kind=${collection}`;
+		const kindHref = (collection: string) => indexHref(collection);
 		if (node.collection === 'articles') {
 			const meta = $instrumentMetaStore.get(String(p.bwb_id));
 			const bwb = textProp(p.bwb_id);

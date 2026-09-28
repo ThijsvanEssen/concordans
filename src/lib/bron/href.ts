@@ -112,3 +112,9 @@ export function buildBronHref(
 /** Link to a bron from the current page. Reactive where it is read in a template. */
 export const bronHref = (ref: BronRef | string, opts?: BronHrefOptions) =>
 	buildBronHref(page.url, ref, opts);
+
+/** A list in Bladeren, with its filters: `/explore?mode=index&kind=ministers&cabinet=rutte_iv`. */
+export function indexHref(kind: string, filters: Record<string, string> = {}): string {
+	const params = new URLSearchParams({ mode: 'index', kind, ...filters });
+	return `/explore?${params.toString()}`;
+}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onControl } from '$lib/actions/outside';
 	// One row of the index. The title is a link to the bron, so it opens in a new tab,
 	// can be copied and is read as a link; the rest of the row opens its detail beneath
 	// it. The toggle is a button under the row's content, the size of the row: a click
@@ -37,7 +38,7 @@
 
 	// A click on the link is the link's; a click after selecting text selects.
 	function onRowClick(e: MouseEvent) {
-		if ((e.target as Element).closest('a, button')) return;
+		if (onControl(e)) return;
 		if (window.getSelection()?.toString()) return;
 		onToggle();
 	}
@@ -58,7 +59,7 @@
 		<div class="row-id">{@render lead?.()}</div>
 		<div class="row-body">
 			{#if href}
-				<a class="row-title" {href}>{title}</a>
+				<a class="row-title" {href} data-sveltekit-noscroll>{title}</a>
 			{:else}
 				<span class="row-title">{title}</span>
 			{/if}
