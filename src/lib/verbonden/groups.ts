@@ -5,7 +5,7 @@
 // A group is filled from the node response of the selected bron (`match`: relation,
 // direction, collection) or, where no edge says it, by a named loader (`load`).
 import { bucketKey } from '$lib/api/nodes';
-import type { Collection, Relation } from '$lib/vocabulary';
+import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
 import { formatCount, isInternational } from './filter';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
 
@@ -640,7 +640,16 @@ export function buildGroups(
 		if (g.total != null && g.total < g.rows.length) g.total = g.rows.length;
 		if (g.labelOf) g.label = g.labelOf(g.rows);
 	}
-	return groups;
+	// A relation the API gained before this list did: shown, not dropped without a word.
+	const other: Group = { id: 'other', label: 'Andere verbindingen', rows: [], capped: false };
+	for (const n of neighbors) {
+		if (isRelation(n.relation) || seen.has(n.id)) continue;
+		const row = rowOfNeighbor(n);
+		if (!row) continue;
+		seen.add(n.id);
+		other.rows.push(row);
+	}
+	return other.rows.length ? [...groups, other] : groups;
 }
 
 /** The number of bronnen of a group: what the API states, else what is loaded. */

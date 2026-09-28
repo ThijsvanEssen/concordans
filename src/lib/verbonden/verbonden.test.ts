@@ -326,3 +326,21 @@ describe('sister cases', () => {
 		expect(caseNumberOf({ ...rows[0], props: {} } as Row)).toBe('2678');
 	});
 });
+
+describe('a relation the list does not know yet', () => {
+	it('lands in Andere verbindingen instead of disappearing', () => {
+		const groups = buildGroups('judgments', [
+			{
+				id: 'judgments/ecli_nl_gharl_2026_5455',
+				key: 'ecli_nl_gharl_2026_5455',
+				collection: 'judgments',
+				relation: 'REFERRED_BY',
+				direction: 'inbound',
+				props: { ecli: 'ECLI:NL:GHARL:2026:5455' }
+			} as unknown as Neighbor
+		]);
+		const other = groups.find((g) => g.id === 'other');
+		expect(other?.label).toBe('Andere verbindingen');
+		expect(other?.rows.map((r) => r.identifier)).toEqual(['ECLI:NL:GHARL:2026:5455']);
+	});
+});
