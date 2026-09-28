@@ -210,11 +210,11 @@
 										class="feed-row-link"
 										href={bronHref({ collection: 'instruments', key: i.key })}
 									>
-										<div class="feed-row-meta">
-											<KindGlyph collection="instruments" />
-											<span>{i.article_count} artikelen</span>
-										</div>
-										<p class="feed-row-title">{instrumentTitle(i)}</p>
+										<!-- The name left, its number of articles right, as on a receipt. -->
+										<span class="feed-row-line">
+											<span class="feed-row-title">{instrumentTitle(i)}</span>
+											<span class="feed-row-count">{i.article_count} artikelen</span>
+										</span>
 									</a>
 								</li>
 							{/each}
@@ -367,6 +367,19 @@
 		line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
+	}
+	.feed-row-line {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--s-3);
+	}
+	.feed-row-count {
+		flex: none;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 	}
 	.feed-row-link:hover .feed-row-title {
 		color: var(--accent);
