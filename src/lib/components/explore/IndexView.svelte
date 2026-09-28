@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isEscape } from '$lib/actions/keys';
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row's title
 	// links to the bron; the rest of the row expands inline with its metadata and the
@@ -1457,7 +1458,7 @@
 	});
 
 	function handleKey(e: KeyboardEvent) {
-		if (e.key === 'Escape' && openId) patchUrl({ open: null }, true);
+		if (isEscape(e) && openId) patchUrl({ open: null }, true);
 	}
 
 	// ── Result count for the status bar and above the list ──────────────────

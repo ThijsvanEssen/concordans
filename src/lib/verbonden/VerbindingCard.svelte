@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	// The card Verbinding: the two bronnen with the relation between them, the passage
@@ -61,7 +62,16 @@
 				? `Open bij ${v.position}`
 				: 'Open de bron'
 	);
+
+	// Escape closes the card in every mode; taken, so the network does not also clear.
+	function onKey(e: KeyboardEvent) {
+		if (!isEscape(e)) return;
+		e.preventDefault();
+		onClose();
+	}
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 <section class="card" class:is-docked={docked} aria-label="Verbinding">
 	<div class="card__head">
