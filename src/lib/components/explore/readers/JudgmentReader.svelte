@@ -199,7 +199,10 @@
 							<td class="reader-parties-name">
 								{#each named as p, i (i)}
 									<span class="reader-party"
-										>{p.name}{#if p.party}<span class="reader-parties-party"
+										>{p.name}{#if p.alias}<span class="reader-parties-party">({p.alias})</span
+											>{/if}{#if p.alsoAs?.length}<span class="reader-parties-party"
+												>ook {p.alsoAs.map((r) => r.toLowerCase()).join(', ')}</span
+											>{/if}{#if p.party}<span class="reader-parties-party"
 												>voor {forParties(p.party)}</span
 											>{/if}</span
 									>

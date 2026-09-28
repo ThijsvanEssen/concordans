@@ -459,6 +459,8 @@ function partiesOf(value: unknown): JudgmentParty[] | null {
 	return valid ? (value as JudgmentParty[]) : null;
 }
 
+const isPlaceholder = (name: string) => /^\[.*\]$/.test(name.trim());
+
 const REPRESENTATIVE_ROLES = { advocaat: 'Advocaat', gemachtigde: 'Gemachtigde' } as const;
 
 /**
@@ -470,7 +472,18 @@ function fromApi(parties: JudgmentParty[]): Participant[] {
 	const acts = (p: JudgmentParty | undefined, r: Rep) =>
 		!!p?.representatives?.some((q) => q.name === r.name && q.role === r.role);
 	return parties.flatMap((p, i) => {
-		const rows: Participant[] = [{ role: p.role, name: p.name, stated: p.role_stated !== false }];
+		// An alias that is itself a placeholder ([eisers]) says nothing the name does not.
+		const alias = p.alias && p.alias !== p.name && !isPlaceholder(p.alias) ? p.alias : null;
+		const alsoAs = p.roles?.filter((r) => r !== p.role) ?? [];
+		const rows: Participant[] = [
+			{
+				role: p.role,
+				name: p.name,
+				stated: p.role_stated !== false,
+				...(alias ? { alias } : {}),
+				...(alsoAs.length ? { alsoAs } : {})
+			}
+		];
 		for (const r of p.representatives ?? []) {
 			if (acts(parties[i + 1], r)) continue;
 			let from = i;
@@ -598,6 +611,10 @@ export type Participant = {
 	party?: string;
 	/** False when the role is derived, not named in the judgment. */
 	stated?: boolean;
+	/** What the judgment calls the party: `KLM` for "hierna: KLM". */
+	alias?: string;
+	/** The other roles the kop names for the party: `Appellant` in incidenteel appel. */
+	alsoAs?: string[];
 };
 
 /**
@@ -779,8 +796,6 @@ export type RoleGroup = {
 	/** Some role in the group is derived, not stated in the judgment. */
 	derived: boolean;
 };
-
-const isPlaceholder = (name: string) => /^\[.*\]$/.test(name.trim());
 
 /**
  * The parties by role, in the order the roles first appear: a mass appeal of a hundred

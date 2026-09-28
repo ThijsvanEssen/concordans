@@ -448,7 +448,7 @@ test('the parties the API read come first, each followed by its lawyers', () => 
 	expect(judgmentParticipants(judgment)).toEqual([
 		{ role: 'Eiser', name: '[eiseres 1]', stated: true },
 		{ role: 'Advocaat', name: 'mr. H.J.W. Alt', party: '[eisers]' },
-		{ role: 'Verweerder', name: 'MAATSCHAP GRONINGEN', stated: false }
+		{ role: 'Verweerder', name: 'MAATSCHAP GRONINGEN', stated: false, alias: 'de Maatschap' }
 	]);
 });
 
@@ -540,5 +540,22 @@ describe('forParties', () => {
 		expect(forParties(many)).toBe('116 geanonimiseerde partijen');
 		expect(forParties('KLM, [eiser 1] en [eiser 2]')).toBe('KLM en 2 geanonimiseerde partijen');
 		expect(forParties('[appellant]')).toBe('[appellant]');
+	});
+});
+
+describe('judgmentParticipants from the API', () => {
+	it('keeps the alias and the other roles of a party', () => {
+		const [vnv] = judgmentParticipants({
+			parties: [
+				{
+					name: 'VERENIGING NEDERLANDSE VERKEERSVLIEGERS',
+					role: 'Geïntimeerde',
+					roles: ['Geïntimeerde', 'Appellant'],
+					alias: 'VNV',
+					role_stated: true
+				}
+			]
+		});
+		expect([vnv.alias, vnv.alsoAs]).toEqual(['VNV', ['Appellant']]);
 	});
 });
