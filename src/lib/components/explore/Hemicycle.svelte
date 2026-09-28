@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Schema } from '$lib/api/types';
 	import { seatCount } from '$lib/verbonden/filter';
+	import { formatLongDate } from './readers/_shared';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 	type SeatFaction = Seats['factions'][number];
@@ -205,7 +206,11 @@
 		{/each}
 	</ul>
 	<figcaption class="hemicycle-caption">
-		Tweede Kamer · {data.assigned_seats} van {data.total_seats} zetels · per {data.as_of}
+		<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
+		Tweede Kamer, stand op {formatLongDate(data.as_of ?? null)}{data.assigned_seats <
+		data.total_seats
+			? `, ${data.assigned_seats} van ${data.total_seats} zetels toegewezen`
+			: ''}
 	</figcaption>
 </figure>
 

@@ -158,7 +158,7 @@
 									</div>
 									<p class="feed-row-title">{d.subject ?? 'Onderwerp niet beschikbaar'}</p>
 									{#if split.voor + split.tegen > 0}
-										<div class="vote-mini">
+										<div class="vote-mini" class:vote-mini--passed={d.passed}>
 											<span class="vote-mini-bar"
 												><span class="vote-mini-fill" style:width="{split.pct}%"></span></span
 											>
@@ -299,14 +299,13 @@
 		gap: var(--s-5);
 	}
 
+	/* A column under one rule, not a box: the rule is the edge the rows stack on. */
 	.feed {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-3);
-		padding: var(--s-5);
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-2);
+		padding-top: var(--s-3);
+		border-top: 1px solid var(--ink);
 	}
 	.feed-heading {
 		font-family: var(--font-sans);
@@ -395,6 +394,14 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		white-space: nowrap;
+	}
+	/* Adopted in ink, rejected in grey: the result is seen before it is read. */
+	.vote-mini--passed .vote-mini-fill {
+		background: var(--ink);
+	}
+	.vote-mini--passed .vote-mini-label {
+		color: var(--ink);
+		font-weight: 500;
 	}
 
 	@media (max-width: 780px) {
