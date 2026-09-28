@@ -1049,7 +1049,8 @@
 					{
 						id: 'court',
 						label: 'Instantie',
-						note: coverage ? formatCount(coverage.total) : undefined,
+						// No total here: the list's own count stands above it, and the collection's
+						// (the EHRM included, which the list leaves out until chosen) disagreed with it.
 						kind: 'list',
 						options: courtOptions
 					},
