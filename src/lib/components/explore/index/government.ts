@@ -42,6 +42,25 @@ export const getCabinets = once(() => unwrap(api.GET('/api/cabinets')));
 /** Every ministry, in protocol order, the ones under an earlier name included. */
 export const getMinistries = once(() => unwrap(api.GET('/api/ministries')));
 
+/** The colours of the parties the API knows, by short name. */
+export const getPartyColors = once(() =>
+	unwrap(api.GET('/api/parties/colors')).then((r) => r.colors as Record<string, string>)
+);
+
+const cabinetRequests = new Map<string, Promise<Schema<'CabinetDetailDTO'>>>();
+/** One cabinet with its ministries, seats and posts, asked for once per key. */
+export function getCabinet(key: string): Promise<Schema<'CabinetDetailDTO'>> {
+	let request = cabinetRequests.get(key);
+	if (!request) {
+		request = unwrap(api.GET('/api/cabinets/{key}', { params: { path: { key } } })).catch((err) => {
+			cabinetRequests.delete(key);
+			throw err;
+		});
+		cabinetRequests.set(key, request);
+	}
+	return request;
+}
+
 /** The cabinet in office: the newest one without an end. */
 export const currentCabinet = (cabinets: Cabinet[]): Cabinet | undefined =>
 	cabinets.find((c) => !c.to_date) ?? cabinets[0];

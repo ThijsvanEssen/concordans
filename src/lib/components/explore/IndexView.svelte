@@ -48,6 +48,7 @@
 	} from './index/government';
 	import { COURT_GROUPS } from './index/courts';
 	import { pannable } from './index/pannable';
+	import CabinetOccupancy from './index/CabinetOccupancy.svelte';
 	import IndexDetail from './index/IndexDetail.svelte';
 	import IndexRow from './index/IndexRow.svelte';
 	import {
@@ -1717,6 +1718,7 @@
 							)}{#if shownCabinet.prime_minister?.name}. Minister-president {shownCabinet
 									.prime_minister.name}{/if}.
 						</p>
+						<CabinetOccupancy cabinet={shownCabinet} />
 					{/if}
 					{#if category === 'cabinets' && cabinetSpan && sortDef.id === 'date'}
 						{@const at = (y: number) => (y - cabinetSpan.from) * yearWidth}
