@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	actingReason,
 	at,
 	bandsOf,
 	lanesOf,
@@ -121,5 +122,21 @@ describe('bandsOf and ticksOf', () => {
 			'okt 2025',
 			'2026'
 		]);
+	});
+});
+
+describe('actingReason', () => {
+	it('puts the API rule in Dutch and keeps the words of Rijksoverheid', () => {
+		expect(
+			actingReason(
+				'held another seat throughout and ended where the next holder began (Minister van Klimaat en Groene Groei)'
+			)
+		).toBe('Naast de post minister van Klimaat en Groene Groei, tot de opvolger aantrad.');
+		expect(actingReason('rijksoverheid: a.i.')).toBe('Ad interim, volgens Rijksoverheid.');
+		expect(actingReason('rijksoverheid: beheer portefeuille overgenomen (X)')).toBe(
+			'Volgens Rijksoverheid: beheer portefeuille overgenomen (X)'
+		);
+		expect(actingReason('something else')).toBeNull();
+		expect(actingReason(null)).toBeNull();
 	});
 });

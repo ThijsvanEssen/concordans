@@ -47,20 +47,6 @@ export const getPartyColors = once(() =>
 	unwrap(api.GET('/api/parties/colors')).then((r) => r.colors as Record<string, string>)
 );
 
-const cabinetRequests = new Map<string, Promise<Schema<'CabinetDetailDTO'>>>();
-/** One cabinet with its ministries, seats and posts, asked for once per key. */
-export function getCabinet(key: string): Promise<Schema<'CabinetDetailDTO'>> {
-	let request = cabinetRequests.get(key);
-	if (!request) {
-		request = unwrap(api.GET('/api/cabinets/{key}', { params: { path: { key } } })).catch((err) => {
-			cabinetRequests.delete(key);
-			throw err;
-		});
-		cabinetRequests.set(key, request);
-	}
-	return request;
-}
-
 /**
  * The cabinet in office: the newest one without an end. An older cabinet without an end
  * has one the sources do not give (most before 1945), and is not in office.

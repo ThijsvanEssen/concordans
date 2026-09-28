@@ -47,7 +47,6 @@
 		inOffice,
 		getCabinets,
 		getMinistries,
-		laterPosts,
 		period,
 		type Cabinet,
 		type Ministry
@@ -258,13 +257,8 @@
 			{ id: 'bills', label: 'Wetsvoorstellen', dir: 'desc' },
 			{ id: 'name', label: 'Naam', dir: 'asc' }
 		],
-		// Protocol: the ministries in their order, as the API gives them.
-		ministers: [
-			{ id: 'protocol', label: 'Ministerie' },
-			{ id: 'name', label: 'Naam', dir: 'asc' },
-			{ id: 'dossiers', label: 'Dossiers', dir: 'desc' },
-			{ id: 'open_commitments', label: 'Open toezeggingen', dir: 'desc' }
-		],
+		// One order: the ministries in protocol order, as the chart draws them.
+		ministers: [{ id: 'protocol', label: 'Ministerie' }],
 		commitments: [
 			{ id: 'date', label: 'Datum' },
 			{ id: 'expected_resolution', label: 'Verwachte afdoening' }
@@ -870,32 +864,27 @@
 	});
 
 	const ministerPostCounts = $derived(countBy(pages.ministers?.items, (m) => m.post ?? ''));
-	const ministersShown = $derived.by(() => {
-		const rows = pages.ministers?.items.filter(
+	const ministersShown = $derived(
+		pages.ministers?.items.filter(
 			(m) => (!post || m.post === post) && (!q || includes(m.member.name))
-		);
-		return (
-			rows &&
-			sorted(rows, {
-				name: (m) => m.member.name ?? '',
-				dossiers: (m) => m.dossiers,
-				open_commitments: (m) => m.open_commitments
-			})
-		);
-	});
-	// The counts of a person stand with their longest post in the list shown.
-	const repeatPosts = $derived(laterPosts(ministersShown ?? []));
-	/** Under the protocol order, the posts under their ministry; the others without a ministry last. */
-	const ministerGroups = $derived.by(() => {
-		if (!ministersShown) return undefined;
-		if (sortDef.id !== 'protocol') return [{ key: null, name: null, rows: ministersShown }];
-		const groups: { key: string | null; name: string | null; rows: MinisterRow[] }[] = [];
-		for (const m of ministersShown) {
-			const last = groups.at(-1);
-			if (last && last.key === m.ministry) last.rows.push(m);
-			else groups.push({ key: m.ministry, name: m.ministryName, rows: [m] });
-		}
-		return groups;
+		)
+	);
+	/** The cabinet as the chart draws it: its seats with the posts the filters let through. */
+	const occupancyCabinet = $derived.by(() => {
+		if (!shownCabinet || (!post && !q)) return shownCabinet;
+		const keep = (p: Schema<'CabinetPostDTO'>) =>
+			(!post || p.post === post) && (!q || includes(p.member.name));
+		return {
+			...shownCabinet,
+			ministries: (shownCabinet.ministries ?? [])
+				.map((m) => ({
+					...m,
+					seats: m.seats
+						.map((seat) => ({ ...seat, posts: seat.posts.filter(keep) }))
+						.filter((seat) => seat.posts.length)
+				}))
+				.filter((m) => m.seats.length)
+		};
 	});
 
 	const totalSeats = $derived(factionsShown?.reduce((sum, f) => sum + (f.seats ?? 0), 0) ?? 0);
@@ -1653,7 +1642,7 @@
 
 					<!-- How many, under which filters; a click on a filter takes it off. -->
 					<div class="result-head">
-						{#if resultTotal !== null}
+						{#if resultTotal !== null && category !== 'ministers'}
 							<p class="result-count">
 								{formatCount(resultTotal)}<span class="result-noun"
 									>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
@@ -1678,7 +1667,7 @@
 						onQueryChange={typeQuery}
 						searchPlaceholder={PLACEHOLDER[category]}
 						searchLabel="Zoek in {labelOf(category)}"
-						sortOptions={SORTS[category]}
+						sortOptions={SORTS[category].length > 1 ? SORTS[category] : []}
 						sort={sortDef.id}
 						onSortChange={(v) => patchUrl({ sort: v || null })}
 						{dir}
@@ -1724,16 +1713,31 @@
 						</figure>
 					{/if}
 
-					{#if category === 'ministers' && shownCabinet}
-						<p class="gov-head">
-							<a href={hrefOf(`cabinets/${shownCabinet.key}`)}>{shownCabinet.name}</a>,
-							{period(
-								shownCabinet.from_date,
-								shownCabinet.to_date
-							)}{#if shownCabinet.prime_minister?.name}. Minister-president {shownCabinet
-									.prime_minister.name}{/if}.
+					{#if category === 'ministers' && shownCabinet && occupancyCabinet}
+						<!-- One title line; the chart is the list: a block opens its details. -->
+						<h2 class="gov-title">
+							<a href={hrefOf(`cabinets/${shownCabinet.key}`)}>{shownCabinet.name}</a>
+						</h2>
+						<p class="gov-sub">
+							{[
+								period(shownCabinet.from_date, shownCabinet.to_date, isOpen(shownCabinet)),
+								shownCabinet.prime_minister?.name &&
+									`Minister-president ${shownCabinet.prime_minister.name}`,
+								`${shownCabinet.members} ${shownCabinet.members === 1 ? 'bewindspersoon' : 'bewindspersonen'}`
+							]
+								.filter(Boolean)
+								.join(' · ')}
 						</p>
-						<CabinetOccupancy cabinet={shownCabinet} />
+						{#if !ministersShown?.length && !loading}
+							{@render empty('bewindspersonen')}
+						{:else}
+							<CabinetOccupancy
+								cabinet={occupancyCabinet}
+								{openId}
+								onToggle={toggleOpen}
+								commitmentsHref={(key) => tabHref('commitments') + `&member=${key}&status=open`}
+							/>
+						{/if}
 					{/if}
 					{#if category === 'cabinets' && cabinetSpan && sortDef.id === 'date'}
 						{@const at = (y: number) => (y - cabinetSpan.from) * yearWidth}
@@ -1805,7 +1809,7 @@
 						<p class="status-line status-line--error">{error}</p>
 					{:else}
 						<div class="shown" class:shown--stale={loading}>
-							{#if resultRows?.length}
+							{#if resultRows?.length && category !== 'ministers'}
 								<div class="list-head" aria-hidden="true">
 									<span>{columns.lead}</span>
 									<span>{columns.body}</span>
@@ -2232,10 +2236,9 @@
 																<dd>{c.commitments}</dd>
 															</div>
 														</dl>
-														<CabinetOccupancy cabinetKey={c.key} compact />
 														<div class="gov-links">
 															<a href={tabHref('ministers') + `&cabinet=${c.key}`}
-																>Bewindspersonen</a
+																>Wie bekleedde welke post</a
 															>
 															{#if c.commitments}
 																<a href={tabHref('commitments') + `&cabinet=${c.key}`}
@@ -2251,95 +2254,6 @@
 											</IndexRow>
 										{/each}
 									</ul>
-								{/if}
-							{:else if category === 'ministers' && ministerGroups}
-								{#if !ministersShown?.length}
-									{@render empty('bewindspersonen')}
-								{:else}
-									{#each ministerGroups as g, gi (gi)}
-										{#if sortDef.id === 'protocol'}
-											<div class="day-head">
-												<h3 class="day-title">{g.name ?? 'Overige functies'}</h3>
-												<span class="day-meta"
-													>{g.rows.length}
-													{g.rows.length === 1 ? 'bewindspersoon' : 'bewindspersonen'}</span
-												>
-											</div>
-										{/if}
-										<ul class="list">
-											{#each g.rows as m, i (m.member.key + (m.post ?? '') + i)}
-												{@const bron = `members/${m.member.key}`}
-												{@const rowId = `${bron}#${m.ministry ?? 'x'}-${m.post ?? ''}`}
-												<IndexRow
-													bron={rowId}
-													title={m.member.name ?? m.member.key}
-													href={hrefOf(bron)}
-													open={openId === rowId}
-													onToggle={() => toggleOpen(rowId)}
-												>
-													{#snippet lead()}
-														<span class="row-id-main"
-															>{m.post ? POST_LABEL[m.post] : 'Functie'}</span
-														>
-														<span class="row-id-sub">{period(m.from_date, m.to_date)}</span>
-													{/snippet}
-													{#snippet body()}
-														{#if m.function}
-															<span class="row-sub">{m.function}</span>
-														{/if}
-													{/snippet}
-													{#snippet aside()}
-														{#if repeatPosts.has(m)}
-															<span
-																class="nums nums--repeat"
-																title="Geteld bij de langste functie van deze persoon in dit kabinet"
-															>
-																<span>–</span><span>–</span><span>–</span>
-															</span>
-														{:else}
-															<span class="nums">
-																<span>{m.dossiers}</span>
-																<span>{m.bills}</span>
-																<span class:nums--hot={m.open_commitments > 0}
-																	>{m.open_commitments}</span
-																>
-															</span>
-														{/if}
-													{/snippet}
-													{#snippet detail()}
-														<div class="gov-detail">
-															<dl class="gov-stats">
-																<div>
-																	<dt>Dossiers ondertekend</dt>
-																	<dd>{m.dossiers}</dd>
-																</div>
-																<div>
-																	<dt>Waarvan wetsvoorstellen</dt>
-																	<dd>{m.bills}</dd>
-																</div>
-																<div>
-																	<dt>Open toezeggingen</dt>
-																	<dd>{m.open_commitments}</dd>
-																</div>
-															</dl>
-															<div class="gov-links">
-																<a href={hrefOf(bron)}>Lezen</a>
-																{#if m.open_commitments}
-																	<a
-																		href={tabHref('commitments') +
-																			`&member=${m.member.key}&status=open`}>Open toezeggingen</a
-																	>
-																{/if}
-																<a href={bronHref(bron, { keepMode: false, mode: 'graph' })}
-																	>Bekijk in netwerk</a
-																>
-															</div>
-														</div>
-													{/snippet}
-												</IndexRow>
-											{/each}
-										</ul>
-									{/each}
 								{/if}
 							{:else if category === 'commitments' && pages.commitments}
 								{#if pages.commitments.items.length === 0}
@@ -2768,9 +2682,6 @@
 		font-size: var(--t-body-2);
 		color: var(--ink);
 	}
-	.nums--hot {
-		color: var(--accent);
-	}
 	.chip {
 		display: inline-flex;
 		align-items: center;
@@ -2943,13 +2854,27 @@
 		gap: 5px;
 	}
 
-	/* The detail of a cabinet, post or commitment: three numbers and the ways on. */
-	.gov-head {
-		margin: 0 0 var(--s-2);
+	/* Bewindspersonen: the cabinet as the title of its chart. */
+	.gov-title {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-h2);
+		font-weight: 500;
+	}
+	.gov-title a {
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.gov-title a:hover {
+		color: var(--accent);
+	}
+	.gov-sub {
+		margin: var(--s-1) 0 var(--s-4);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
+	/* The detail of a cabinet or commitment: its numbers and the ways on. */
 	.gov-detail {
 		display: flex;
 		flex-direction: column;
@@ -3348,9 +3273,5 @@
 		.list-head > span:not(.nums) {
 			display: none;
 		}
-	}
-
-	.nums--repeat {
-		color: var(--ink-3);
 	}
 </style>

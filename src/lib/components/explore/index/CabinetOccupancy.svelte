@@ -1,15 +1,16 @@
 <script lang="ts">
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
-	// a successor is the next block on the line, a stand-in is hatched, two holders at once
-	// (a doubt in the sources) are outlined. The demissionary phases lie behind as bands.
-	// Compact: one line per ministry, the minister's seat, without names.
+	// a successor is the next block on the line, a stand-in has a dotted bar and a grey name.
+	// The phases (demissionair and after) are dotted lines with their name on the axis. A
+	// block opens its details beneath its line: by click, Enter or Space, and by `?open=`.
+	// On a narrow screen the lines become text: per seat the holders one under the other.
 	import { bronHref } from '$lib/bron/href';
 	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { getCabinet, getPartyColors } from './government';
+	import { POST_LABEL, getPartyColors, laterPosts } from './government';
 	import {
+		actingReason,
 		bandsOf,
 		lanesOf,
-		seatLabel,
 		termOf,
 		ticksOf,
 		type CabinetDetail,
@@ -18,31 +19,18 @@
 	} from './occupancy';
 
 	let {
-		cabinet = null,
-		cabinetKey = null,
-		compact = false
+		cabinet,
+		openId = null,
+		onToggle,
+		commitmentsHref
 	}: {
-		/** The cabinet with its seats, when the page has it already. */
-		cabinet?: CabinetDetail | null;
-		/** Else the key of the cabinet, asked for here. */
-		cabinetKey?: string | null;
-		compact?: boolean;
+		cabinet: CabinetDetail;
+		/** The post opened, as `?open=` holds it (see `postId`). */
+		openId?: string | null;
+		onToggle: (id: string) => void;
+		/** Where the open toezeggingen of a person are listed. */
+		commitmentsHref: (memberKey: string) => string;
 	} = $props();
-
-	let fetched = $state<CabinetDetail | null>(null);
-	let failed = $state(false);
-	$effect(() => {
-		if (cabinet || !cabinetKey) return;
-		let stale = false;
-		failed = false;
-		getCabinet(cabinetKey)
-			.then((c) => !stale && (fetched = c))
-			.catch(() => !stale && (failed = true));
-		return () => {
-			stale = true;
-		};
-	});
-	const shown = $derived(cabinet ?? (fetched?.key === cabinetKey ? fetched : null));
 
 	let colors = $state<Record<string, string>>({});
 	$effect(() => {
@@ -51,31 +39,48 @@
 			.catch(() => {});
 	});
 	const colorOf = (short: string | null | undefined) =>
-		short ? (colors[short] ?? partyColor(short)) : 'var(--ink-3)';
+		short ? (colors[short] ?? partyColor(short)) : 'var(--rule-strong)';
 
-	const term = $derived(shown ? termOf(shown) : null);
+	// Text instead of a timeline below the width at which a line can hold names.
+	let narrow = $state(false);
+	$effect(() => {
+		const query = window.matchMedia('(max-width: 767px)');
+		narrow = query.matches;
+		const change = () => (narrow = query.matches);
+		query.addEventListener('change', change);
+		return () => query.removeEventListener('change', change);
+	});
+
+	const term = $derived(termOf(cabinet));
 	const ticks = $derived(term ? ticksOf(term) : []);
-	const bands = $derived(term && shown ? bandsOf(shown.phases ?? [], term) : []);
-
-	const BAND_LABEL: Record<string, string> = {
+	const phases = $derived(term ? bandsOf(cabinet.phases ?? [], term) : []);
+	const PHASE_LABEL: Record<string, string> = {
 		demissionair: 'Demissionair',
 		dubbel_demissionair: 'Dubbel demissionair',
 		missionair: 'Weer missionair'
 	};
 
-	/** The ministries with their seats; compact, the first seat of each (its minister). */
 	const rows = $derived.by(() => {
-		if (!shown || !term) return [];
-		return (shown.ministries ?? [])
+		if (!term) return [];
+		return (cabinet.ministries ?? [])
 			.filter((m) => m.seats.length)
-			.map((m) => {
-				const seats: Seat[] = compact ? [m.seats[0]] : m.seats;
-				return {
-					name: m.name ?? 'Zonder ministerie',
-					seats: seats.map((seat) => ({ seat, lanes: lanesOf(seat, term) }))
-				};
-			});
+			.map((m) => ({
+				name: m.name ?? 'Zonder ministerie',
+				seats: m.seats.map((seat) => ({ seat, lanes: lanesOf(seat, term) }))
+			}));
 	});
+
+	// The API counts dossiers and toezeggingen per person over the cabinet: they belong with
+	// the person's longest post, not with a short stand-in beside it.
+	const counted = $derived.by(() => {
+		const all = (cabinet.ministries ?? []).flatMap((m) => m.seats.flatMap((s) => s.posts));
+		const later = laterPosts(all);
+		return (p: SeatPost) => !later.has(p);
+	});
+
+	/** How a post is named in `?open=`: its seat, holder and start. */
+	const postId = (seat: Seat, p: SeatPost) =>
+		`posts/${seat.seat}/${p.member.key}/${p.from_date ?? ''}`;
 
 	const MONTHS = [
 		'jan',
@@ -91,307 +96,413 @@
 		'nov',
 		'dec'
 	];
-	const fmt = (iso: string | null | undefined) => {
+	const day = (iso: string | null | undefined) => {
 		if (!iso) return 'nu';
 		const [y, m, d] = iso.split('-').map(Number);
 		return `${d} ${MONTHS[m - 1]} ${y}`;
 	};
+	const month = (iso: string | null | undefined) => {
+		if (!iso) return 'nu';
+		const [y, m] = iso.split('-').map(Number);
+		return `${MONTHS[m - 1]} ${y}`;
+	};
 
-	function tooltip(p: SeatPost): string {
-		const party = p.party?.short ? ` (${p.party.short})` : '';
-		const lines = [
-			`${p.member.name ?? p.member.key}${party}`,
-			p.function ?? '',
-			`${fmt(p.from_date)} tot ${fmt(p.to_date)}`
-		];
-		if (p.acting) lines.push(`Waarnemend${p.acting_basis ? `: ${p.acting_basis}` : ''}`);
-		if (p.overlaps_with?.length)
-			lines.push('Valt samen met een andere bekleder volgens de bronnen');
-		return lines.filter(Boolean).join('\n');
+	/** The seat's name: the post grey where it is the usual one, the portfolio in ink. */
+	function seatName(seat: Seat): { post: string; portfolio: string } {
+		if (seat.post === 'minister_zonder_portefeuille' && seat.portfolio)
+			return { post: 'Minister voor', portfolio: seat.portfolio };
+		return {
+			post: seat.post ? POST_LABEL[seat.post] : (seat.function ?? 'Post'),
+			portfolio: seat.portfolio ?? ''
+		};
 	}
-	const hrefOf = (p: SeatPost) =>
-		bronHref(`members/${p.member.key}`, { keepMode: false, mode: 'read' });
+
+	const count = (n: number, one: string, many: string) =>
+		n === 0 ? `geen ${many}` : `${n} ${n === 1 ? one : many}`;
+	const nameOf = (p: SeatPost) => p.member.name ?? p.member.key;
+	const label = (p: SeatPost) =>
+		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${day(p.from_date)} tot ${day(p.to_date)}${p.acting ? ', waarnemend' : ''}`;
 </script>
 
-{#if failed}
-	<p class="occ-note">De bezetting van dit kabinet kon niet worden geladen.</p>
-{:else if shown && !term}
-	<p class="occ-note">De periode van dit kabinet is niet bekend.</p>
-{:else if shown && term}
-	{#if rows.length === 0}
-		<p class="occ-note">Voor dit kabinet zijn geen posten bekend.</p>
-	{:else}
-		<figure class="occ" class:occ--compact={compact}>
-			<div class="occ-scroll">
-				<div class="occ-grid">
-					<!-- The axis, with the phases named where they begin. -->
-					<div class="occ-label occ-label--axis" aria-hidden="true"></div>
-					<div class="occ-track occ-track--axis" aria-hidden="true">
-						{#each bands as b, i (i)}
-							<span
-								class="band"
-								class:band--double={b.phase.kind === 'dubbel_demissionair'}
-								style:left="{b.from * 100}%"
-								style:width="{(b.to - b.from) * 100}%"
-							></span>
-							<span
-								class="band-label"
-								style:left="{b.from * 100}%"
-								style:max-width="{(b.to - b.from) * 100}%"
-								title="{BAND_LABEL[b.phase.kind ?? ''] ?? b.phase.label} vanaf {fmt(
-									b.phase.from_date
-								)}{b.phase.label ? `. ${b.phase.label}` : ''}"
-								>{BAND_LABEL[b.phase.kind ?? ''] ?? b.phase.label}</span
+{#if !term}
+	<p class="occ-note">
+		{rows.length === 0 && !(cabinet.ministries ?? []).length
+			? 'Voor dit kabinet zijn geen posten bekend.'
+			: 'De periode van dit kabinet is niet bekend.'}
+	</p>
+{:else if rows.length === 0}
+	<p class="occ-note">Voor dit kabinet zijn geen posten bekend.</p>
+{:else if narrow}
+	<!-- Phone: per seat the holders one under the other, the phases in a line. -->
+	<div class="occ-text">
+		{#if phases.length}
+			<p class="occ-phases">
+				{#each phases as b, i (i)}{i ? ', ' : ''}{(
+						PHASE_LABEL[b.phase.kind ?? ''] ??
+						b.phase.label ??
+						''
+					).toLowerCase()} vanaf {day(b.phase.from_date)}{/each}
+			</p>
+		{/if}
+		{#each rows as ministry (ministry.name)}
+			<h3 class="occ-ministry">{ministry.name}</h3>
+			{#each ministry.seats as { seat } (seat.seat)}
+				{@const name = seatName(seat)}
+				<p class="occ-seat">
+					<span class="occ-post">{name.post}</span>{name.portfolio ? ` ${name.portfolio}` : ''}
+				</p>
+				<ul class="occ-holders">
+					{#each seat.posts as p (postId(seat, p))}
+						{@const id = postId(seat, p)}
+						<li>
+							<button
+								type="button"
+								class="holder"
+								class:holder--acting={p.acting}
+								style:--party={colorOf(p.party?.short)}
+								aria-expanded={openId === id}
+								data-bron={id}
+								onclick={() => onToggle(id)}
 							>
-						{/each}
-						{#each ticks as t (t.at)}
-							<span class="tick" style:left="{t.at * 100}%"><span>{t.label}</span></span>
-						{/each}
-					</div>
-
-					{#each rows as ministry (ministry.name)}
-						{#if !compact}
-							<div class="occ-ministry">{ministry.name}</div>
-						{/if}
-						{#each ministry.seats as { seat, lanes } (seat.seat)}
-							<div class="occ-label" title={seat.function ?? undefined}>
-								{compact ? ministry.name : seatLabel(seat)}
-							</div>
-							<div class="occ-track" style:--lanes={lanes.length}>
-								{#each bands as b, i (i)}
-									<span
-										class="band"
-										class:band--double={b.phase.kind === 'dubbel_demissionair'}
-										style:left="{b.from * 100}%"
-										style:width="{(b.to - b.from) * 100}%"
-										aria-hidden="true"
-									></span>
-								{/each}
-								{#each ticks as t (t.at)}
-									<span class="grid-line" style:left="{t.at * 100}%" aria-hidden="true"></span>
-								{/each}
-								{#each lanes as lane, li (li)}
-									{#each lane as block, bi (block.post.member.key + (block.post.from_date ?? '') + bi)}
-										{@const p = block.post}
-										<a
-											class="blk"
-											class:blk--alt={bi % 2 === 1}
-											class:blk--acting={p.acting}
-											class:blk--doubt={(p.overlaps_with?.length ?? 0) > 0}
-											href={hrefOf(p)}
-											style:left="{block.from * 100}%"
-											style:width="max(3px, calc({(block.to - block.from) * 100}% - 2px))"
-											style:top="calc({li} * var(--lane))"
-											style:--party={colorOf(p.party?.short)}
-											title={tooltip(p)}
-											aria-label={tooltip(p).replaceAll('\n', ', ')}
-										>
-											{#if !compact}
-												<span class="blk-name"
-													>{p.member.name ?? p.member.key}{p.acting ? ' (waarn.)' : ''}</span
-												>
-											{/if}
-										</a>
-									{/each}
-								{/each}
-							</div>
-						{/each}
+								<span class="holder-name"
+									>{nameOf(p)}{#if p.acting}<span class="holder-note"> waarnemend</span>{/if}</span
+								>
+								<span class="holder-period">{month(p.from_date)} – {month(p.to_date)}</span>
+							</button>
+							{#if openId === id}
+								{@render detail(p)}
+							{/if}
+						</li>
 					{/each}
+				</ul>
+			{/each}
+		{/each}
+	</div>
+{:else}
+	<div class="occ" style:--phases={phases.length}>
+		<!-- The axis: the years, and the phases named where they begin. -->
+		<div class="occ-row occ-row--axis" aria-hidden="true">
+			<span></span>
+			<span class="occ-track">
+				{#each phases as b, i (i)}
+					<span class="phase-label" style:left="{b.from * 100}%"
+						>{PHASE_LABEL[b.phase.kind ?? ''] ?? b.phase.label}</span
+					>
+				{/each}
+				{#each ticks as t (t.at)}
+					<span class="tick" style:left="{t.at * 100}%">{t.label}</span>
+				{/each}
+			</span>
+		</div>
+
+		{#each rows as ministry (ministry.name)}
+			<h3 class="occ-ministry">{ministry.name}</h3>
+			{#each ministry.seats as { seat, lanes } (seat.seat)}
+				{@const name = seatName(seat)}
+				{@const opened = seat.posts.find((p) => openId === postId(seat, p))}
+				<div class="occ-row">
+					<span class="occ-seat" title={seat.function ?? undefined}
+						><span class="occ-post">{name.post}</span>{name.portfolio
+							? ` ${name.portfolio}`
+							: ''}</span
+					>
+					<span class="occ-track" style:--lanes={lanes.length}>
+						{#each phases as b, i (i)}
+							<span class="phase-line" style:left="{b.from * 100}%" aria-hidden="true"></span>
+						{/each}
+						{#each lanes as lane, li (li)}
+							{#each lane as block (postId(seat, block.post))}
+								{@const p = block.post}
+								{@const id = postId(seat, p)}
+								<button
+									type="button"
+									class="blk"
+									class:blk--acting={p.acting}
+									class:blk--open={openId === id}
+									style:left="{block.from * 100}%"
+									style:width="max(4px, calc({(block.to - block.from) * 100}% - 2px))"
+									style:top="calc({li} * var(--lane))"
+									style:--party={colorOf(p.party?.short)}
+									title={label(p)}
+									aria-label={label(p)}
+									aria-expanded={openId === id}
+									data-bron={id}
+									onclick={() => onToggle(id)}
+								>
+									<span class="blk-name">{nameOf(p)}</span>
+								</button>
+							{/each}
+						{/each}
+					</span>
 				</div>
-			</div>
-			{#if !compact}
-				<figcaption class="occ-legend">
-					<span><i class="sw"></i>Bekleder, de streep in de kleur van de partij</span>
-					<span><i class="sw sw--acting"></i>Waarnemend</span>
-					<span><i class="sw sw--doubt"></i>Twee bekleders tegelijk volgens de bronnen</span>
-					{#if bands.length}<span><i class="sw sw--band"></i>Demissionair</span>{/if}
-					{#if term.open}<span>Tot vandaag</span>{/if}
-				</figcaption>
-			{/if}
-		</figure>
-	{/if}
-{:else if cabinetKey}
-	<p class="occ-note">Laden…</p>
+				{#if opened}
+					{@render detail(opened)}
+				{/if}
+			{/each}
+		{/each}
+	</div>
 {/if}
+
+<!-- The details of a post: who, what, when, why a stand-in, and what they signed. -->
+{#snippet detail(p: SeatPost)}
+	<div class="post-detail" style:--party={colorOf(p.party?.short)}>
+		<p class="post-who">
+			<span class="post-name">{nameOf(p)}</span>
+			{#if p.party?.short}<span class="post-party">{p.party.short}</span>{/if}
+		</p>
+		<p>{p.function ?? ''}{p.acting ? ', waarnemend' : ''}</p>
+		<p class="post-meta">
+			{day(p.from_date)} tot {day(p.to_date)}{#if p.acting && actingReason(p.acting_basis)}. {actingReason(
+					p.acting_basis
+				)}{/if}
+		</p>
+		{#if p.overlaps_with?.length}
+			<p class="post-meta">Volgens de bronnen tegelijk met een andere bekleder van deze post.</p>
+		{/if}
+		{#if counted(p) && (p.dossiers || p.bills || p.open_commitments)}
+			<p class="post-meta">
+				{count(p.dossiers, 'dossier', 'dossiers')} ondertekend{p.dossiers
+					? `, waarvan ${count(p.bills, 'wetsvoorstel', 'wetsvoorstellen')}`
+					: ''}; {count(p.open_commitments, 'open toezegging', 'open toezeggingen')}
+			</p>
+		{/if}
+		<!-- TODO(reference): the shared Reference actions of the User flows session. -->
+		<p class="post-links">
+			<a href={bronHref(`members/${p.member.key}`, { keepMode: false, mode: 'read' })}>Lezen</a>
+			{#if counted(p) && p.open_commitments}
+				<a href={commitmentsHref(p.member.key)}>Toezeggingen</a>
+			{/if}
+			<a href={bronHref(`members/${p.member.key}`, { keepMode: false, mode: 'graph' })}
+				>Bekijk in netwerk</a
+			>
+		</p>
+	</div>
+{/snippet}
 
 <style>
 	.occ {
-		margin: 0 0 20px;
+		--label: 240px;
+		--lane: 24px;
+		margin: 0 0 var(--s-5);
 		font-family: var(--font-sans);
 	}
-	.occ-scroll {
-		overflow-x: auto;
-	}
-	.occ-grid {
-		--label: 240px;
-		--lane: 22px;
+	.occ-row {
 		display: grid;
 		grid-template-columns: var(--label) minmax(0, 1fr);
-		min-width: 720px;
+		align-items: start;
 	}
-	.occ--compact .occ-grid {
-		--label: 200px;
-		--lane: 12px;
-		min-width: 520px;
-	}
-
-	.occ-ministry {
-		grid-column: 1 / -1;
-		padding: var(--s-3) 0 var(--s-1);
+	.occ-row--axis {
+		height: var(--s-7);
 		border-bottom: 1px solid var(--rule-strong);
+	}
+	.occ-ministry {
+		margin: 0;
+		padding: var(--s-4) 0 var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		font-weight: 500;
 		color: var(--ink);
 	}
-	.occ-label {
-		padding: 3px var(--s-3) 3px 0;
+	.occ-seat {
+		padding: var(--s-1) var(--s-3) 0 0;
 		font-size: var(--t-micro);
+		line-height: 16px;
 		color: var(--ink-2);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		line-height: 16px;
 	}
-	.occ--compact .occ-label {
-		padding: 1px var(--s-3) 1px 0;
-		font-size: var(--t-label);
-		line-height: 12px;
+	/* The post is the usual part of a seat's name, the portfolio what tells seats apart. */
+	.occ-post {
+		color: var(--ink-3);
 	}
 	.occ-track {
 		position: relative;
-		height: calc(var(--lanes, 1) * var(--lane) + 2px);
-		border-bottom: 1px solid var(--rule);
+		display: block;
+		height: calc(var(--lanes, 1) * var(--lane));
 	}
-	.occ-track--axis {
-		height: 44px;
-		border-bottom: 1px solid var(--rule-strong);
+	.occ-row--axis .occ-track {
+		height: 100%;
 	}
 
 	.tick {
 		position: absolute;
-		bottom: 0;
-		height: 8px;
-		border-left: 1px solid var(--rule-strong);
-	}
-	.tick span {
-		position: absolute;
-		bottom: 10px;
-		left: 0;
+		bottom: var(--s-1);
 		transform: translateX(-50%);
 		font-size: var(--t-label);
 		color: var(--ink-3);
 		white-space: nowrap;
 	}
-	.grid-line {
+	/* A phase: a dotted line through the lines, its name once, on the axis. */
+	.phase-label {
 		position: absolute;
 		top: 0;
-		bottom: 0;
-		border-left: 1px solid var(--rule);
-	}
-
-	/* The demissionary phases: a tint behind, darker when the cabinet is a rump. */
-	.band {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		background: color-mix(in srgb, var(--accent) 7%, transparent);
-	}
-	.band--double {
-		background: color-mix(in srgb, var(--accent) 14%, transparent);
-	}
-	.band-label {
-		position: absolute;
-		top: 0;
-		box-sizing: border-box;
-		overflow: hidden;
-		text-overflow: ellipsis;
 		padding-left: var(--s-1);
-		border-left: 1.5px solid var(--accent);
+		border-left: 1px dotted var(--accent);
 		font-size: var(--t-label);
 		font-weight: 500;
 		color: var(--accent);
 		white-space: nowrap;
 	}
+	.phase-line {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		border-left: 1px dotted var(--accent);
+		opacity: 0.6;
+	}
 
-	/* A holder: ink, the party a stripe at the foot; a successor a shade lighter. */
+	/* A holder: light, the party a bar at the left; the one opened in ink. */
 	.blk {
 		position: absolute;
-		height: calc(var(--lane) - 4px);
-		margin-top: 2px;
+		height: calc(var(--lane) - var(--s-2));
+		margin-top: var(--s-1);
+		padding: 0;
 		box-sizing: border-box;
-		background: var(--ink);
-		border-bottom: 3px solid var(--party);
-		color: var(--paper);
-		text-decoration: none;
+		border: 0;
+		border-left: 3px solid var(--party);
+		background: var(--paper-2);
+		color: var(--ink);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
 		overflow: hidden;
 	}
-	.blk--alt {
-		background: var(--ink-2);
+	.blk:hover {
+		background: var(--rule);
+	}
+	.blk:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 1px;
 	}
 	.blk--acting {
-		background: repeating-linear-gradient(135deg, var(--ink-3) 0 3px, var(--rule-strong) 3px 6px);
-		color: var(--ink);
+		background: transparent;
+		border-left-style: dotted;
+		color: var(--ink-3);
+		font-style: italic;
 	}
-	.blk--doubt {
-		outline: 1.5px dashed var(--accent);
-		outline-offset: -1.5px;
-	}
-	.blk:hover,
-	.blk:focus-visible {
-		background: var(--accent);
+	.blk--open,
+	.blk--open:hover {
+		background: var(--ink);
 		color: var(--paper);
-	}
-	.blk:focus-visible {
-		outline: 2px solid var(--ink);
-		outline-offset: 1px;
 	}
 	.blk-name {
 		display: block;
-		padding: 0 6px;
-		font-size: var(--t-label);
-		line-height: 15px;
+		padding: 0 var(--s-1);
+		font-size: var(--t-micro);
+		line-height: var(--s-4);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	.blk--acting .blk-name {
-		background: color-mix(in srgb, var(--paper) 80%, transparent);
-	}
 
-	.occ-legend {
+	.post-detail {
+		margin: var(--s-1) 0 var(--s-3) var(--label);
+		padding: var(--s-3) var(--s-4);
+		max-width: 560px;
+		border-left: 3px solid var(--party);
+		background: var(--paper-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.post-detail p {
+		margin: 0 0 var(--s-1);
+	}
+	.post-who {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+	}
+	.post-name {
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		color: var(--ink);
+	}
+	.post-party,
+	.post-meta {
+		color: var(--ink-3);
+	}
+	.post-links {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px 18px;
-		margin-top: 10px;
+		gap: var(--s-1) var(--s-4);
+		margin-top: var(--s-2) !important;
+	}
+	.post-links a {
+		color: var(--ink);
+		text-decoration: none;
+		border-bottom: 1px solid var(--rule-strong);
+	}
+	.post-links a:hover {
+		color: var(--accent);
+	}
+
+	/* Phone: text. */
+	.occ-text {
+		margin: 0 0 var(--s-5);
+		font-family: var(--font-sans);
+	}
+	.occ-phases {
+		margin: 0;
+		font-size: var(--t-micro);
+		color: var(--accent);
+	}
+	.occ-text .occ-seat {
+		margin: var(--s-2) 0 0;
+		padding: 0;
+		white-space: normal;
+	}
+	.occ-holders {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.holder {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: var(--s-2);
+		width: 100%;
+		min-height: 44px;
+		margin: 0;
+		padding: 0 0 0 var(--s-2);
+		border: 0;
+		border-left: 3px solid var(--party);
+		background: transparent;
+		font: inherit;
+		text-align: left;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.holder--acting {
+		border-left-style: dotted;
+	}
+	.holder:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 1px;
+	}
+	.holder-name {
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+	}
+	.holder-note,
+	.holder-period {
+		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.occ-legend span {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
+	.holder-note {
+		margin-left: var(--s-2);
+		font-style: italic;
 	}
-	.sw {
-		display: inline-block;
-		width: 20px;
-		height: 11px;
-		box-sizing: border-box;
-		background: var(--ink);
-		border-bottom: 3px solid var(--ink-3);
+	.holder-period {
+		white-space: nowrap;
 	}
-	.sw--acting {
-		background: repeating-linear-gradient(135deg, var(--ink-3) 0 3px, var(--rule-strong) 3px 6px);
-		border: 0;
+	.occ-text .post-detail {
+		margin: 0 0 var(--s-2);
 	}
-	.sw--doubt {
-		background: transparent;
-		border: 1.5px dashed var(--accent);
-	}
-	.sw--band {
-		background: color-mix(in srgb, var(--accent) 14%, transparent);
-		border: 0;
-	}
+
 	.occ-note {
 		margin: 0 0 var(--s-4);
 		font-family: var(--font-sans);
