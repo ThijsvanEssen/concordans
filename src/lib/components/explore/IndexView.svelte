@@ -1634,7 +1634,7 @@
 						></button
 					>
 					<div class="facet-body" class:facet-body--open={filtersOpen}>
-						<IndexFacets groups={facetGroups} />
+						<IndexFacets groups={facetGroups} pending={!pages[category] && !error} />
 					</div>
 				</aside>
 				<div

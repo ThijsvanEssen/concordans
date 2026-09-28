@@ -1091,6 +1091,9 @@
 			{/if}
 		{:else if focusError}
 			<p class="explore-empty">{focusError}</p>
+		{:else if focus}
+			<!-- The bron is on its way: said, not left as an empty page. -->
+			<p class="explore-empty" role="status">Laden…</p>
 		{/if}
 	</div>
 </div>

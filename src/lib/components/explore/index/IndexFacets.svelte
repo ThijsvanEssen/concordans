@@ -100,7 +100,14 @@
 <script lang="ts">
 	import { formatCount } from '$lib/verbonden/filter';
 
-	let { groups }: { groups: FacetGroup[] } = $props();
+	let {
+		groups,
+		pending = false
+	}: {
+		groups: FacetGroup[];
+		/** The first answer is still on its way: no counts yet, rather than a column of zeros. */
+		pending?: boolean;
+	} = $props();
 
 	const maxOf = (options: (FacetOption | FacetHeading)[]) =>
 		Math.max(1, ...options.flatMap((o) => (isHeading(o) ? [] : [o.count ?? 0])));
@@ -110,12 +117,12 @@
 		unit === 'date' || !/^\d{4}$/.test(value) ? value : `${value}-${end ? '12-31' : '01-01'}`;
 </script>
 
-<div class="facets">
+<div class="facets" class:facets--pending={pending}>
 	{#each groups as g (g.id)}
 		<section class="group" aria-labelledby="facet-{g.id}">
 			<h3 class="group-head" id="facet-{g.id}">
 				<span>{g.label}</span>
-				{#if g.note}<span class="group-note">{g.note}</span>{/if}
+				{#if g.note && !pending}<span class="group-note">{g.note}</span>{/if}
 			</h3>
 
 			{#if g.kind === 'list'}
@@ -125,7 +132,8 @@
 						{#if isHeading(o)}
 							<li class="subhead">
 								<span>{o.heading}</span>
-								{#if o.count !== undefined}<span class="n">{formatCount(o.count)}</span>{/if}
+								{#if o.count !== undefined && !pending}<span class="n">{formatCount(o.count)}</span
+									>{/if}
 							</li>
 						{:else}
 							<li>
@@ -144,7 +152,7 @@
 										<span class="box" aria-hidden="true"></span>
 									{/if}
 									<span class="label">{o.label}</span>
-									{#if o.count !== undefined}
+									{#if o.count !== undefined && !pending}
 										<span class="n">{formatCount(o.count)}</span>
 										<span class="bar" style:width="{(o.count / max) * 100}%" aria-hidden="true"
 										></span>
@@ -166,7 +174,7 @@
 							title="{o.label}{o.count !== undefined ? `: ${o.count}` : ''}"
 							onclick={o.onClick}
 						>
-							{#if !g.compact}<span class="step-n">{o.count ?? ''}</span>{/if}
+							{#if !g.compact}<span class="step-n">{pending ? '' : (o.count ?? '')}</span>{/if}
 							<span class="step-col" style:height="{((o.count ?? 0) / max) * 56 + 2}px"></span>
 							<span class="visually-hidden">{o.label}</span>
 						</button>
@@ -354,6 +362,9 @@
 		background: var(--ink);
 	}
 
+	.facets--pending {
+		opacity: 0.6;
+	}
 	/* Ordered steps: one column per step, its height the count. */
 	.steps {
 		display: flex;
