@@ -28,7 +28,7 @@
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, rowsToCsv, rowsToText } from './export';
-	import { longDate, mentionRows, metaParts, type Row } from './rows';
+	import { caseNumberOf, longDate, mentionRows, metaParts, repeatedTitles, type Row } from './rows';
 	import type { VerbondenState } from './source';
 	import {
 		GROUPINGS,
@@ -368,6 +368,7 @@
 				<ul class="rows">
 					{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
 						{@const id = rowId(row)}
+						{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
 						{@const open = openRow === id}
 						{@const p = open ? passage(row) : null}
 						<li class="row" class:is-open={open}>
@@ -383,7 +384,7 @@
 								<KindGlyph collection={row.ref.collection} size={11} />
 								<span class="row__text">
 									<a class="row__title" href={openHref(g, row)} data-sveltekit-noscroll
-										>{row.title}</a
+										>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
 									>
 									<span class="row__meta">
 										{#each metaParts(row) as part, k (k)}
@@ -731,6 +732,13 @@
 		font-size: var(--t-body-2);
 		line-height: 1.3;
 		color: var(--ink);
+	}
+	/* The case number that tells sister cases apart, in the title where the eye looks. */
+	.row__case {
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-2);
 	}
 	.row__meta {
 		margin-top: 2px;

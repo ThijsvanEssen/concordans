@@ -339,3 +339,22 @@ export function metaParts(
 	if (word !== 'hoog') parts.push({ text: `betrouwbaarheid ${word}`, kind: 'derived' });
 	return parts;
 }
+
+/** The titles that more than one row of `rows` has: sister cases, heard on one day. */
+export function repeatedTitles(rows: Row[]): Set<string> {
+	const seen = new Set<string>();
+	const repeated = new Set<string>();
+	for (const r of rows) (seen.has(r.title) ? repeated : seen).add(r.title);
+	return repeated;
+}
+
+/** What tells a judgment from others of the same court and day: its case number. */
+export function caseNumberOf(row: Row): string | null {
+	const props = (row.props ?? {}) as Record<string, unknown>;
+	return (
+		text(props.case_number) ??
+		/\s\/\s(.+)$/.exec(text(props.display_name) ?? '')?.[1] ??
+		row.identifier?.split(':').at(-1) ??
+		null
+	);
+}

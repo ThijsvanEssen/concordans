@@ -16,6 +16,8 @@ import {
 	type Neighbor,
 	type Row,
 	describe as describeBron,
+	caseNumberOf,
+	repeatedTitles,
 	UNNAMED
 } from './rows';
 
@@ -304,5 +306,23 @@ describe('describe, a bron without a name', () => {
 		expect(describeBron('members', 'k', null, { name: 'Claudia van Bruggen' }).title).toBe(
 			'Claudia van Bruggen'
 		);
+	});
+});
+
+describe('sister cases', () => {
+	it('finds the titles rows share, and the case number that tells them apart', () => {
+		const row = (ecli: string, display_name: string) =>
+			({
+				title: 'Gerechtshof Amsterdam, 22 september 2026',
+				identifier: ecli,
+				props: { display_name }
+			}) as unknown as Row;
+		const rows = [
+			row('ECLI:NL:GHAMS:2026:2678', 'Gerechtshof Amsterdam 2026-09-22 / 200.343.062/01'),
+			row('ECLI:NL:GHAMS:2026:2679', 'Gerechtshof Amsterdam 2026-09-22 / 200.343.064/01')
+		];
+		expect([...repeatedTitles(rows)]).toEqual(['Gerechtshof Amsterdam, 22 september 2026']);
+		expect(rows.map(caseNumberOf)).toEqual(['200.343.062/01', '200.343.064/01']);
+		expect(caseNumberOf({ ...rows[0], props: {} } as Row)).toBe('2678');
 	});
 });
