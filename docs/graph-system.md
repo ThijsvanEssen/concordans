@@ -55,7 +55,7 @@ Groups are filled from the node response (`match`: relation, direction, collecti
 
 The explore page (`src/routes/explore/+page.svelte`) expands a focus with one `expandNeighborhood` request of `?diepte` steps (1, 2 or 3; default 2; `cap` 200). The bronfilter decides what of it is drawn: a hidden kind is not drawn, not laid out, and its edges are not drawn. `sweepOrphans` then removes bronnen without an edge, because the force layout throws them far out and the camera fit zooms out to include them. `reseatAround` places the focus at the origin with its neighbours on a ring, and `fitWhenSettled` fits once the layout stops. The expansion runs once per focus and depth, in Netwerk, or when the mode switches to Netwerk with a focus loaded in Lezen.
 
-The legend states what is on the canvas and what the bronfilter hides, with the counts of the panel Verbonden (`src/lib/verbonden/view.ts`), so both name the same numbers.
+The legend states what is on the canvas and what the bronfilter hides, with the counts of the panel Verbonden (`src/lib/verbonden/view.ts`), so both name the same numbers. With nothing on the canvas it shows no filters, only that there are no bronnen yet. Beside a reader the canvas is compact and the legend is a button at its bottom left, clear of the panel Netwerk at the top; the reader keeps 640px and the canvas takes what is left up to its own width.
 
 ## Rendering
 

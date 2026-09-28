@@ -20,7 +20,7 @@ There is no history in the store. Every link to a bron is a navigation (`bronHre
 | `overlay.ts`        | Not a store: `parseOverlay` and `serializeOverlay` for `?overlay=`. See [`overlays.md`](overlays.md).       |
 | `search-trigger.ts` | `provideSearchOpener` and `useSearchOpener`: Svelte context that lets any component open the search dialog. |
 
-`src/lib/api/instrument-cache.ts` is a store as well: law names by BWB id, filled as responses pass by and primed once with the 200 largest laws.
+`src/lib/api/instrument-cache.ts` is a store as well: law names by BWB id, filled as responses pass by and primed once with the 200 largest laws. `src/lib/utils/party-color.svelte.ts` holds the party colours of `/api/parties/colors` in a `$state` object, asked for once on first use; a party the API does not list is grey.
 
 ## GraphStore
 

@@ -4,7 +4,11 @@ One component, `src/lib/search/Search.svelte`, in two places: inline on the star
 
 ## Request
 
-`GET /api/search` with `types` = `KINDS` (`instruments`, `articles`, `judgments`, `dossiers`, `documents`, `committees`, `factions`, `members`) and `limit` 6 per type. Input is debounced by 180 ms; a new query aborts the previous request and earlier results stay until the answer arrives. Hits are grouped by kind in the order of `KINDS`; the order within a group is the API's. The `extra` object of a hit (`bwb_id`, `article_number`, `citation_title`, `ecli`, `number`, `current_stage`, `kind`, `party`) is untyped.
+`GET /api/search` with `types` = `KINDS` (`instruments`, `articles`, `judgments`, `dossiers`, `documents`, `committees`, `factions`, `members`) and `limit` 6 per type. Input is debounced by 180 ms; a new query aborts the previous request and earlier results stay until the answer arrives. Hits are grouped by kind in the order of `KINDS`; the order within a group is the API's, except that stukken of one dossier stand together under a heading with its number and title (`sectionOf`, `bySection`). The `extra` object of a hit (`bwb_id`, `article_number`, `heading`, `citation_title`, `short_title`, `ecli`, `names`, `number`, `current_stage`, `kind`, `dossier_number`, `party`) is untyped.
+
+## Rows
+
+`presentHit` in `src/lib/search/present.ts` makes each row: a title that tells it from its neighbours, the context at the right, and a line of the text where the API gives one (`snippet`), started just before the first word searched for (`around`) with the words marked (`marked`). An article reads `Artikel 6:164` with its code at the right (`BW` for every BW book); a judgment reads `Hoge Raad, 19 februari 1993` with its ECLI at the right and its summary as the line; a stuk is named by its kind under its dossier. A citation the API does not know leaves a line that says so, with a link to the coverage.
 
 ## Citations
 
@@ -19,4 +23,4 @@ A hit or a resolved citation opens `bronHref(ref, { at })`: from the start page 
 ## Adding a searchable type
 
 1. The API adds the type to `/api/search`.
-2. Add the collection to `KINDS` and, where its context line needs a field, a case to `contextOf`.
+2. Add the collection to `KINDS` and, where its row needs a field, a case to `presentHit` in `present.ts`.
