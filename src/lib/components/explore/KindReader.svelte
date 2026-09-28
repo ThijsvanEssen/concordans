@@ -13,6 +13,7 @@
 	import MemberReader from './readers/MemberReader.svelte';
 	import FactionReader from './readers/FactionReader.svelte';
 	import DecisionReader from './readers/DecisionReader.svelte';
+	import CabinetReader from './readers/CabinetReader.svelte';
 	import ActivityReader from './readers/ActivityReader.svelte';
 	import InstrumentReader from './readers/InstrumentReader.svelte';
 	import FallbackReader from './readers/FallbackReader.svelte';
@@ -72,6 +73,8 @@
 	<DecisionReader node={selection} />
 {:else if selection.collection === 'activities'}
 	<ActivityReader node={selection} />
+{:else if selection.collection === 'cabinets'}
+	<CabinetReader node={selection} />
 {:else if selection.collection === 'instruments'}
 	<InstrumentReader node={selection} />
 {:else}
