@@ -247,6 +247,8 @@
 
 	const wordings = $derived(wordingsOf(versions));
 	const current = $derived(wordings.at(-1)?.until === null ? wordings.at(-1)! : null);
+	/** The version that repealed the article: what the reader shows when nothing else is chosen. */
+	const lapse = $derived(wordings.at(-1)?.lapsed ? wordings.at(-1)! : null);
 	const shown = $derived(shownIndex !== null ? (wordings[shownIndex] ?? null) : null);
 	const shownVersion = $derived(shown?.first ?? null);
 	/** The tekstversie whose text is on screen, and the dossier of the wet that made it. */
@@ -281,6 +283,11 @@
 			return `Eerdere tekst, ${from ?? '?'}${until ? ` tot ${until}` : ''}`;
 		}
 		const from = longDate(validFrom);
+		// A repealed article has no geldende tekst: its last version only records the repeal.
+		if (view.kind === 'loaded' && view.data.article.repealed) {
+			const date = longDate(lapse?.from ?? null);
+			return date ? `Vervallen per ${date}` : 'Vervallen';
+		}
 		return from ? `Geldend recht, tekst sinds ${from}` : 'Geldend recht';
 	});
 
@@ -491,17 +498,17 @@
 										<button
 											type="button"
 											role="menuitemradio"
-											aria-checked={(shownIndex ?? current?.index) === w.index}
+											aria-checked={(shownIndex ?? (current ?? lapse)?.index) === w.index}
 											class="pop__item"
 											onclick={() => {
-												shownIndex = w === current ? null : w.index;
+												shownIndex = w === current || w === lapse ? null : w.index;
 												versionMenu = false;
 												// Reading one text folds the comparison away.
 												if (comparing) go({ versies: null, weergave: null });
 											}}
-											>{w === current ? 'Geldend, sinds ' : ''}{longDate(w.from)}{w.until
-												? ` tot ${longDate(w.until)}`
-												: ''}</button
+											>{w.lapsed
+												? `Vervallen per ${longDate(w.from)}`
+												: `${w === current ? 'Geldend, sinds ' : ''}${longDate(w.from)}${w.until ? ` tot ${longDate(w.until)}` : ''}`}</button
 										>
 										{#if w.index > 0}
 											<a

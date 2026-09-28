@@ -157,6 +157,18 @@ describe('wordingsOf', () => {
 		const one = lidHistory(wordingsOf(versions), '1')!;
 		expect(one.formulations).toHaveLength(1);
 	});
+
+	it('marks the version that repealed the article', () => {
+		const repealed = [
+			...history(['1995-04-01', '2020-01-01', ['Alle kosten zijn voor de Staat.']]),
+			{ key: 'v2', valid_from: '2020-01-01', valid_until: '2020-01-01', text: 'Vervallen' }
+		];
+		const wordings = wordingsOf(repealed);
+		expect(wordings.map((w) => [w.from, w.until, w.lapsed, w.summary])).toEqual([
+			['1995-04-01', '2020-01-01', false, 'oudste tekst in de dataset'],
+			['2020-01-01', '2020-01-01', true, 'vervallen']
+		]);
+	});
 });
 
 describe('plainDiff', () => {

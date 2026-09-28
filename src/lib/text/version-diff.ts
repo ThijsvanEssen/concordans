@@ -276,6 +276,8 @@ export type Wording<V extends VersionLike = VersionLike> = {
 	from: string | null;
 	/** Null while the wording is geldend recht. */
 	until: string | null;
+	/** The version that repealed the article: the API gives it no period (`until` equals `from`). */
+	lapsed: boolean;
 	/** Against the wording before; null for the oldest. */
 	rows: CompareRow[] | null;
 	summary: string;
@@ -290,15 +292,18 @@ export function wordingsOf<V extends VersionLike>(versions: V[]): Wording<V>[] {
 			last.until = v.current ? null : (v.valid_until ?? null);
 			continue;
 		}
+		const until = v.current ? null : (v.valid_until ?? null);
+		const lapsed = !!v.valid_from && v.valid_from === until;
 		const rows = last ? compareVersions(last.first, v) : null;
 		out.push({
 			index: out.length,
 			versions: [v],
 			first: v,
 			from: v.valid_from ?? null,
-			until: v.current ? null : (v.valid_until ?? null),
+			until,
+			lapsed,
 			rows,
-			summary: rows ? summarize(rows) : 'oudste tekst in de dataset'
+			summary: lapsed ? 'vervallen' : rows ? summarize(rows) : 'oudste tekst in de dataset'
 		});
 	}
 	return out;
