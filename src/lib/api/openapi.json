@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.22.0"
+		"version": "0.23.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
