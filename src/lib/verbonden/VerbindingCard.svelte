@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { createCopier } from '$lib/components/ui/copy.svelte';
+	import { page } from '$app/state';
+	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	// The card Verbinding: the two bronnen with the relation between them, the passage
 	// with the citation marked, betrouwbaarheid as a word with the reason, status, the
 	// source of the edge, and the actions open at position, show in network, citeer.
@@ -49,9 +50,6 @@
 			? 'afgeleid door Concordans'
 			: (SOURCE_OF_EDGE[v.from.ref.collection] ?? 'de gegevens van de bron')
 	);
-
-	const copier = createCopier();
-	const cite = () => copier.copy(citeVerbinding(v), 'cite');
 
 	const openHref = $derived(
 		v.relation === 'EXPLAINS' && besideHref ? besideHref : bronHref(v.from.ref, { at: v.at })
@@ -131,8 +129,14 @@
 		{#if onShowInNetwork}
 			<button type="button" class="btn" onclick={onShowInNetwork}>Toon in het netwerk</button>
 		{/if}
-		<button type="button" class="btn" onclick={cite}>{copier.label('cite', 'Citeer')}</button>
-		<p class="sr-only" aria-live="polite">{copier.announcement}</p>
+		<CiteMenu
+			items={[
+				{ kind: 'kort', text: citeVerbinding(v) },
+				{ kind: 'link', text: new URL(openHref, page.url).toString() }
+			]}
+			name="deze verbinding"
+			drop="up"
+		/>
 	</div>
 </section>
 

@@ -1,9 +1,10 @@
 <script lang="ts">
+	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
+	import { citeItems } from '$lib/components/ui/cite';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	import { bronHref } from '$lib/bron/href';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
-	import { menu } from '$lib/actions/menu';
 	import { getJudgmentDetail } from '$lib/api/judgments';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -275,55 +276,13 @@
 								<div class="reader-para-side">
 									<span class="reader-para-actions">
 										{#if forms}
-											<span
-												class="menu"
-												use:menu={{ open: menuFor === rovId, close: () => (menuFor = null) }}
-											>
-												<button
-													type="button"
-													class="btn reader-para-btn"
-													aria-haspopup="menu"
-													aria-expanded={menuFor === rovId}
-													onclick={() => (menuFor = menuFor === rovId ? null : rovId)}
-													>{copyLabel(`cite:${rovId}`, 'Citeer')}</button
-												>
-												{#if menuFor === rovId}
-													<div class="pop" role="menu" aria-label="Citeer overweging {num}">
-														<div class="pop__label">Kopieer als</div>
-														<button
-															type="button"
-															role="menuitem"
-															class="pop__item"
-															onclick={() => copyText(forms.kort, `cite:${rovId}`)}
-															><span>{forms.kort}</span><span class="pop__k">kort</span></button
-														>
-														<button
-															type="button"
-															role="menuitem"
-															class="pop__item"
-															onclick={() => copyText(forms.voluit, `cite:${rovId}`)}
-															><span>{forms.voluit}</span><span class="pop__k">voluit</span></button
-														>
-														<button
-															type="button"
-															role="menuitem"
-															class="pop__item"
-															onclick={() => copyText(forms.metDatum, `cite:${rovId}`)}
-															><span>{forms.metDatum}</span><span class="pop__k">met datum</span
-															></button
-														>
-														<button
-															type="button"
-															role="menuitem"
-															class="pop__item"
-															onclick={() => copyText(forms.link, `cite:${rovId}`)}
-															><span class="pop__link">{forms.link}</span><span class="pop__k"
-																>link</span
-															></button
-														>
-													</div>
-												{/if}
-											</span>
+											<CiteMenu
+												items={citeItems(forms, forms.link)}
+												name="overweging {num}"
+												buttonClass="btn reader-para-btn"
+												onToggle={(open) =>
+													(menuFor = open ? rovId : menuFor === rovId ? null : menuFor)}
+											/>
 										{/if}
 										<button
 											type="button"
@@ -647,63 +606,6 @@
 	.reader-para-btn {
 		padding: 2px var(--s-2);
 		font-size: var(--t-label);
-	}
-
-	.menu {
-		position: relative;
-	}
-
-	.pop {
-		position: absolute;
-		right: 0;
-		top: calc(100% + 6px);
-		z-index: var(--z-float);
-		width: 320px;
-		padding: var(--s-2) 0;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		text-align: left;
-	}
-
-	.pop__label {
-		padding: 2px var(--s-3) 6px;
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
-
-	.pop__item {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-3);
-		width: 100%;
-		padding: 6px var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink);
-		text-align: left;
-		cursor: pointer;
-	}
-
-	.pop__item:hover {
-		background: var(--paper-2);
-	}
-
-	.pop__k {
-		flex: none;
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
-
-	.pop__link {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	.reader-para-subtitle {
