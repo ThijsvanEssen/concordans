@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { uniqueBy } from '$lib/util/unique';
+	import { timelineKind } from './timeline-kind';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import KindChipFilter from './KindChipFilter.svelte';
@@ -31,13 +32,13 @@
 	// Kinds by frequency, most common first.
 	const kinds = $derived.by(() => {
 		const freq = new Map<string, number>();
-		for (const e of entries) freq.set(e.kind, (freq.get(e.kind) ?? 0) + 1);
+		for (const e of entries) freq.set(timelineKind(e), (freq.get(timelineKind(e)) ?? 0) + 1);
 		return [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([kind]) => kind);
 	});
 
 	const shown = $derived.by(() => {
 		const all = uniqueBy(entries, (e) => e.node_id);
-		const rows = kindFilter.size > 0 ? all.filter((e) => kindFilter.has(e.kind)) : all;
+		const rows = kindFilter.size > 0 ? all.filter((e) => kindFilter.has(timelineKind(e))) : all;
 		return newestFirst ? rows : [...rows].reverse();
 	});
 
@@ -108,7 +109,7 @@
 							<time class="entry-date" datetime={entry.date}>{formatDate(entry.date)}</time>
 						{/if}
 						{#if planned}<span class="entry-planned">{planned}</span>{/if}
-						<span class="entry-kind">{entry.kind}</span>
+						<span class="entry-kind">{timelineKind(entry)}</span>
 					</div>
 
 					{#if entry.node_type === 'decision'}
