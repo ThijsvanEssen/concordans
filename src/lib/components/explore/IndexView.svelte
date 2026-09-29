@@ -2244,7 +2244,7 @@
 																>
 															{/if}
 															<a href={bronHref(bron, { keepMode: false, mode: 'graph' })}
-																>Bekijk in netwerk</a
+																>Toon in netwerk</a
 															>
 														</div>
 													</div>
