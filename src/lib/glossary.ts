@@ -23,7 +23,12 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	},
 	Nota: {
 		full: 'Nota naar aanleiding van het verslag',
-		plain: 'Antwoord van de regering op vragen die de Tweede Kamer in een verslag stelde.'
+		plain:
+			'Antwoord van de indiener, regering of Kamerlid, op de vragen die de Kamer in een verslag stelde.'
+	},
+	'Nota van wijziging': {
+		full: 'Nota van wijziging',
+		plain: 'Wijziging van de tekst van een wetsvoorstel door de indiener, tijdens de behandeling.'
 	},
 	Behandeling: {
 		full: 'Mondelinge behandeling',
@@ -97,6 +102,24 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 			'Beleidsvoorstel van een of meer Kamerleden, zonder wetsvoorstel. Doorloopt geen wetgevingsfasen.'
 	}
 };
+
+/**
+ * The glossary term for the kind of a kamerstuk, as the source words it: `Nota van wijziging
+ * (initiatiefvoorstel)` is a nota van wijziging, not the nota naar aanleiding van het
+ * verslag; a memorie van antwoord is no memorie van toelichting.
+ */
+export function termOfKind(kind: string | null | undefined): string | null {
+	const k = kind?.toLowerCase().trim();
+	if (!k) return null;
+	if (k.startsWith('memorie van toelichting') || k === 'mvt') return 'MvT';
+	if (k.startsWith('nota van wijziging')) return 'Nota van wijziging';
+	if (/^nota n(aar )?\.?a(anleiding )?\.?v(an )?\.?/.test(k)) return 'Nota';
+	if (/^(nader |tweede nader )?verslag( \(|$)/.test(k)) return 'Verslag';
+	if (k.includes('amendement')) return 'Amendement';
+	if (k.includes('motie')) return 'Motie';
+	if (k.startsWith('initiatiefnota')) return 'Initiatiefnota';
+	return null;
+}
 
 export function lookupGlossary(term: string): GlossaryEntry | null {
 	return ENTRIES[term] ?? ENTRIES[term.trim()] ?? null;

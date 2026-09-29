@@ -8,6 +8,7 @@
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import GlossaryPill from './GlossaryPill.svelte';
+	import { termOfKind } from '$lib/glossary';
 	import { page } from '$app/state';
 	import { landOn, permalink } from '$lib/bron/anchor';
 	import { findPassage } from '$lib/text/find-passage';
@@ -171,16 +172,7 @@
 	});
 
 	// The kind is the source's own wording; where a glossary term exists the kicker links to it.
-	function glossaryTerm(kind: string | null | undefined): string | null {
-		const k = kind?.toLowerCase();
-		if (!k) return null;
-		if (k.includes('memorie') || k === 'mvt') return 'MvT';
-		if (k.includes('verslag')) return 'Verslag';
-		if (k.includes('nota')) return 'Nota';
-		if (k.includes('amendement')) return 'Amendement';
-		if (k.includes('motie')) return 'Motie';
-		return null;
-	}
+	const glossaryTerm = termOfKind;
 </script>
 
 <ReaderFrame>
