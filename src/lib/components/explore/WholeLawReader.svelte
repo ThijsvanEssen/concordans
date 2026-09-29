@@ -20,6 +20,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
+	import { lawFullTitle, lawKind, sourceName } from './law-head';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -130,13 +131,8 @@
 			})
 			.catch(() => {});
 	});
-	const KIND: Record<string, string> = {
-		wet: 'Wet',
-		verdrag: 'Verdrag',
-		bilateraalverdrag: 'Bilateraal verdrag',
-		multilateraalverdrag: 'Multilateraal verdrag'
-	};
-	const kindLabel = $derived((lawDetail?.kind && KIND[lawDetail.kind]) || 'Regeling');
+	const kindLabel = $derived(lawKind(lawDetail));
+	const fullTitle = $derived(lawFullTitle(lawDetail, lawName));
 	// The versions of the law, for the peildatum; the current one dates the text in force
 	// (Awb: 15 August 2026). `date_in_force` is not that date (Awb: 2013).
 	let versions = $state<Version[]>([]);
@@ -331,12 +327,14 @@
 		<header class="whole-head">
 			<span class="whole-kind">{kindLabel}</span>
 			<h1 class="whole-title">{lawName}</h1>
-			{#if lawDetail?.official_title && lawDetail.official_title !== lawName}
-				<p class="whole-official">{lawDetail.official_title}</p>
+			{#if fullTitle}
+				<p class="whole-official">{fullTitle}</p>
 			{/if}
 			<p class="whole-count">
 				{headLine}
-				{#if officialUrl}<a href={officialUrl} rel="external">wetten.overheid.nl</a>{/if}
+				{#if officialUrl}<a href={officialUrl} rel="external"
+						>{sourceName(officialUrl) ?? 'Officiële tekst'}</a
+					>{/if}
 			</p>
 			{#if versions.length > 0}
 				<!-- The peildatum: the versions of the law by year, the text of today first. -->
