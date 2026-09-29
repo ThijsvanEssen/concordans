@@ -101,6 +101,23 @@
 	const postId = (seat: Seat, p: SeatPost) =>
 		`posts/${seat.seat}/${p.member.key}/${p.from_date ?? ''}`;
 
+	// A link names a seat by its slug, and seats are merged or renamed as the sources are
+	// read better. A post whose seat is gone is found by its holder and start; a link that
+	// names neither opens nothing.
+	const openKey = $derived.by(() => {
+		if (!openId?.startsWith('posts/')) return openId;
+		const seats = (cabinet.ministries ?? []).flatMap((m) => m.seats);
+		if (seats.some((s) => s.posts.some((p) => postId(s, p) === openId))) return openId;
+		const [member, from] = openId.split('/').slice(-2);
+		for (const s of seats)
+			for (const p of s.posts)
+				if (p.member.key === member && (p.from_date ?? '') === from) return postId(s, p);
+		return null;
+	});
+
+	/** A post found through an old link closes by the link's own id. */
+	const toggle = (id: string) => onToggle(openKey === id && openId && openId !== id ? openId : id);
+
 	const MONTHS = [
 		'jan',
 		'feb',
@@ -179,16 +196,16 @@
 								class="holder"
 								class:holder--acting={p.acting}
 								style:--party={colorOf(p.party?.short)}
-								aria-expanded={openId === id}
+								aria-expanded={openKey === id}
 								data-bron={id}
-								onclick={() => onToggle(id)}
+								onclick={() => toggle(id)}
 							>
 								<span class="holder-name"
 									>{nameOf(p)}{#if p.acting}<span class="holder-note"> waarnemend</span>{/if}</span
 								>
 								<span class="holder-period">{month(p.from_date)} – {month(p.to_date)}</span>
 							</button>
-							{#if openId === id}
+							{#if openKey === id}
 								{@render detail(p)}
 							{/if}
 						</li>
@@ -218,7 +235,7 @@
 			<h3 class="occ-ministry">{ministry.name}</h3>
 			{#each ministry.seats as { seat, lanes } (seat.seat)}
 				{@const name = seatName(seat)}
-				{@const opened = seat.posts.find((p) => openId === postId(seat, p))}
+				{@const opened = seat.posts.find((p) => openKey === postId(seat, p))}
 				<div class="occ-row">
 					<span class="occ-seat" title={seat.function ?? undefined}
 						><span class="occ-post">{name.post}</span>{name.portfolio
@@ -237,16 +254,16 @@
 									type="button"
 									class="blk"
 									class:blk--acting={p.acting}
-									class:blk--open={openId === id}
+									class:blk--open={openKey === id}
 									style:left="{block.from * 100}%"
 									style:width="max(4px, calc({(block.to - block.from) * 100}% - 2px))"
 									style:top="calc({li} * var(--lane))"
 									style:--party={colorOf(p.party?.short)}
 									title={label(p)}
 									aria-label={label(p)}
-									aria-expanded={openId === id}
+									aria-expanded={openKey === id}
 									data-bron={id}
-									onclick={() => onToggle(id)}
+									onclick={() => toggle(id)}
 								>
 									<span class="blk-name">{nameOf(p)}</span>
 								</button>
@@ -270,6 +287,10 @@
 			{#if p.party?.short}<span class="post-party">{p.party.short}</span>{/if}
 		</p>
 		<p>{p.function ?? ''}{p.acting ? ', waarnemend' : ''}</p>
+		{#if p.also_named?.length}
+			<!-- The same post under another name: an older one, or AZ beside the minister-president. -->
+			<p class="post-meta">Ook genoemd: {p.also_named.join(', ')}</p>
+		{/if}
 		<p class="post-meta">
 			{day(p.from_date)} tot {day(p.to_date)}{#if p.acting && actingReason(p)}. {actingReason(
 					p
