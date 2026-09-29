@@ -51,7 +51,7 @@ describe('daysOf', () => {
 			'motie'
 		]);
 		expect('fold' in first.entries[0] && first.entries[0].fold.items).toHaveLength(3);
-		expect(countLine(first.counts)).toBe('4 moties, 1 brief regering');
+		expect(countLine(first.counts)).toBe('4 moties, 1 brief van de regering');
 		// One of a kind on another day does not fold.
 		expect(days[1].entries).toHaveLength(1);
 	});

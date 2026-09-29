@@ -24,7 +24,7 @@ export const KIND_LABEL: Record<FeedKind, { one: string; many: string }> = {
 	amendement: { one: 'Amendement', many: 'amendementen' },
 	motie: { one: 'Motie', many: 'moties' },
 	toezegging: { one: 'Toezegging', many: 'toezeggingen' },
-	brief_regering: { one: 'Brief regering', many: 'brieven van de regering' },
+	brief_regering: { one: 'Brief van de regering', many: 'brieven van de regering' },
 	publicatie: { one: 'Publicatie', many: 'publicaties' },
 	inwerkingtreding: { one: 'Inwerkingtreding', many: 'inwerkingtredingen' }
 };
