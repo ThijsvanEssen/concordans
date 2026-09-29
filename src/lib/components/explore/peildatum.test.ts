@@ -38,31 +38,27 @@ describe('versionsByYear', () => {
 });
 
 describe('atArticles', () => {
-	const current = [
-		{
-			key: 'bwbr0005537_1_1',
-			article_number: '1:1',
-			label: null,
-			breadcrumb: [{ type: 'hoofdstuk', label: 'Hoofdstuk 1', title: 'Inleidende bepalingen' }]
-		}
-	];
-	const at = (n: string) => ({
+	const current = [{ key: 'bwbr0005537_1_1', article_number: '1:1' }];
+	const at = (n: string, crumb: string) => ({
 		key: `v_${n}`,
 		article_number: n,
+		label: `Artikel ${n}`,
+		breadcrumb: [{ type: 'hoofdstuk', label: crumb, title: null }],
 		text: 'tekst',
 		text_preview: 'tekst',
 		valid_from: '2011-02-23',
 		valid_until: '2018-05-01'
 	});
-	it('gives an article that still exists its place and its link', () => {
-		const [a] = atArticles([at('1:1')], current);
+	it('places an article as it stood that day, and links it to the article of today', () => {
+		const [a] = atArticles([at('1:1', 'Hoofdstuk 1')], current);
 		expect(a.key).toBe('bwbr0005537_1_1');
 		expect(a.breadcrumb[0].label).toBe('Hoofdstuk 1');
+		expect(a.label).toBe('Artikel 1:1');
 	});
-	it('leaves an article that lapsed without place and link', () => {
-		const [a] = atArticles([at('3:47a')], current);
+	it('keeps the place of an article that lapsed since, without a link', () => {
+		const [a] = atArticles([at('4:3a', 'Hoofdstuk 4')], current);
 		expect(a.key).toBeNull();
-		expect(a.breadcrumb).toEqual([]);
-		expect(a.id).toBe('v_3:47a');
+		expect(a.breadcrumb[0].label).toBe('Hoofdstuk 4');
+		expect(a.id).toBe('v_4:3a');
 	});
 });

@@ -1,16 +1,20 @@
 // The whole law as it applied on a day (`?peildatum=2015-01-01`): which version covers
 // the day, the versions per year for the list, and the articles of that day with their
-// place in the law.
+// place in the law as it was that day.
 import type { Schema } from '$lib/api/types';
 
 type Version = Pick<Schema<'InstrumentVersionDTO'>, 'valid_from' | 'valid_until' | 'current'>;
-type Current = Pick<
-	Schema<'InstrumentArticleNodeDTO'>,
-	'key' | 'article_number' | 'label' | 'breadcrumb'
->;
+type Current = Pick<Schema<'InstrumentArticleNodeDTO'>, 'key' | 'article_number'>;
 type AtItem = Pick<
 	Schema<'InstrumentArticleVersionDTO'>,
-	'key' | 'article_number' | 'text' | 'text_preview' | 'valid_from' | 'valid_until'
+	| 'key'
+	| 'article_number'
+	| 'label'
+	| 'breadcrumb'
+	| 'text'
+	| 'text_preview'
+	| 'valid_from'
+	| 'valid_until'
 >;
 
 /** A day as the URL and the API write it. */
@@ -48,30 +52,27 @@ export type AtArticle = {
 	key: string | null;
 	article_number: string | null;
 	label: string | null;
-	breadcrumb: Current['breadcrumb'];
+	/** The divisions the article stood in on that day. */
+	breadcrumb: NonNullable<AtItem['breadcrumb']>;
 	text: string | null;
 	text_preview: string | null;
 };
 
 /**
- * The articles of a day with their place. The API gives an old version without its
- * place in the law; an article that still exists takes the place it has now.
- * TODO(backend): breadcrumb, label and heading on `/articles/at/{date}`.
+ * The articles of a day. Their place is that of the day, as the API gives it; today's list
+ * only says which article to link to, and which is no longer in the law.
  */
 export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 	const byNumber = new Map(
-		current.filter((c) => c.article_number).map((c) => [c.article_number!, c])
+		current.filter((c) => c.article_number).map((c) => [c.article_number!, c.key])
 	);
-	return items.map((i) => {
-		const now = i.article_number ? byNumber.get(i.article_number) : undefined;
-		return {
-			id: i.key,
-			key: now?.key ?? null,
-			article_number: i.article_number ?? null,
-			label: now?.label ?? null,
-			breadcrumb: now?.breadcrumb ?? [],
-			text: i.text ?? null,
-			text_preview: i.text_preview ?? null
-		};
-	});
+	return items.map((i) => ({
+		id: i.key,
+		key: (i.article_number && byNumber.get(i.article_number)) || null,
+		article_number: i.article_number ?? null,
+		label: i.label ?? null,
+		breadcrumb: i.breadcrumb ?? [],
+		text: i.text ?? null,
+		text_preview: i.text_preview ?? null
+	}));
 }

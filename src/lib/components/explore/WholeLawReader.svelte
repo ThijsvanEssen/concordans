@@ -68,6 +68,8 @@
 
 	let articles = $state<Row[]>([]);
 	let total = $state(0);
+	/** Where the BWB text of the law begins; before it there is no text of the day. */
+	let firstVersionFrom = $state<string | null>(null);
 	let status = $state<'idle' | 'loading' | 'loading-more' | 'ready' | 'error'>('idle');
 	// A plain `Map` (even inside `$state()`) does not give `.set()`/`.get()` reactivity
 	// in Svelte 5, so a mutation here would never re-render the article that just
@@ -189,8 +191,8 @@
 		(peildatum ? shownVersion?.official_url : null) ?? lawDetail?.official_url ?? null
 	);
 
-	// The articles of today, in pages; the place of an article of an earlier day is read
-	// from today's list, once per law.
+	// The articles of today, in pages; for an earlier day only which article to link to,
+	// read from today's list once per law.
 	const todayList = new Map<string, Promise<Schema<'InstrumentArticleNodeDTO'>[]>>();
 	function articlesNow(bwb: string) {
 		let list = todayList.get(bwb);
@@ -211,22 +213,22 @@
 		day: string | null,
 		offset: number,
 		signal?: AbortSignal
-	): Promise<{ items: Row[]; total: number }> {
+	): Promise<{ items: Row[]; total: number; firstVersionFrom?: string | null }> {
 		if (day) {
-			// The whole text of each old version comes with the list: there is no call per
-			// article for a version. From W2 the API gives `text` only when asked; the types do
-			// not know `include_text` yet, so the query is not a literal.
-			// TODO(backend W2): into the literal once the types are synced.
-			const query = {
-				text_preview_chars: PREVIEW_CHARS,
-				limit: PAGE_SIZE,
-				offset,
-				include_text: true
-			};
+			// The whole text of each old version comes with the list (include_text): there is
+			// no call per article for a version. Today's list says which article to link to.
 			const [at, now] = await Promise.all([
 				unwrap(
 					api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
-						params: { path: { bwb_id: bwb, at_date: day }, query },
+						params: {
+							path: { bwb_id: bwb, at_date: day },
+							query: {
+								text_preview_chars: PREVIEW_CHARS,
+								limit: PAGE_SIZE,
+								offset,
+								include_text: true
+							}
+						},
 						signal
 					})
 				),
@@ -234,6 +236,7 @@
 			]);
 			return {
 				total: at.total,
+				firstVersionFrom: at.first_version_from ?? null,
 				items: atArticles(at.items, now).map((a) => ({ ...a, address: a.article_number }))
 			};
 		}
@@ -276,6 +279,7 @@
 			.then((first) => {
 				articles = first.items;
 				total = first.total;
+				firstVersionFrom = first.firstVersionFrom ?? null;
 				status = 'ready';
 			})
 			.catch(() => {
@@ -372,7 +376,17 @@
 		</header>
 
 		{#if peildatum && articles.length === 0}
-			<p class="whole-empty-text">Geen versie van deze wet op {formatLongDate(peildatum)}.</p>
+			{#if firstVersionFrom && peildatum < firstVersionFrom}
+				<!-- Before the first toestand: the BWB holds no text of that day. -->
+				<p class="whole-before">
+					De BWB heeft geen tekst van vóór {formatLongDate(firstVersionFrom)}.
+					<a href={withParams({ peildatum: firstVersionFrom })} data-sveltekit-noscroll
+						>Naar de eerste versie</a
+					>
+				</p>
+			{:else}
+				<p class="whole-empty-text">Geen versie van deze wet op {formatLongDate(peildatum)}.</p>
+			{/if}
 		{/if}
 
 		{#each articles as a, i (a.id)}
@@ -590,6 +604,15 @@
 		color: var(--ink);
 	}
 	.whole-hist a {
+		color: var(--accent);
+	}
+	.whole-before {
+		margin: var(--s-5) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		color: var(--ink-2);
+	}
+	.whole-before a {
 		color: var(--accent);
 	}
 	.whole-art-note {
