@@ -751,12 +751,15 @@
 	/* ── The line through time ── */
 	/* One period per tekstversie, as wide as its years allow and never narrower than its
 	   label: the labels sit in their periods and never run into one another. */
+	/* More periods than fit (a phone): the line scrolls in its own track, not the column. */
 	.line {
 		display: flex;
 		min-width: 0;
 		margin: 0;
 		padding: 0;
 		list-style: none;
+		overflow-x: auto;
+		scrollbar-width: thin;
 	}
 	.line__period {
 		flex-basis: 0;
