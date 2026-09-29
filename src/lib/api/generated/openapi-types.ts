@@ -2685,6 +2685,22 @@ export interface components {
             last_date?: string | null;
         };
         /**
+         * DataAsOfDTO
+         * @description How current the graph is for one source.
+         */
+        DataAsOfDTO: {
+            /**
+             * Retrieved At
+             * @description When its newest raw record was fetched (UTC, ISO 8601).
+             */
+            retrieved_at?: string | null;
+            /**
+             * Newest
+             * @description The date of its newest dated record, on or before today: a paper of the Kamer, a judgment, a publication, a version of a law coming into force. Null for a source without dated records.
+             */
+            newest?: string | null;
+        };
+        /**
          * DecisionDTO
          * @description One decision with every vote cast on it.
          *
@@ -3910,6 +3926,13 @@ export interface components {
             total?: number | null;
             /** @description Null without facets. */
             facets?: components["schemas"]["FeedFacetsDTO"] | null;
+            /**
+             * Data As Of
+             * @description Per source: how current the graph is, as in `GET /api/stats`.
+             */
+            data_as_of?: {
+                [key: string]: components["schemas"]["DataAsOfDTO"];
+            };
         };
         /**
          * FeedVoteDTO
@@ -5739,6 +5762,13 @@ export interface components {
              *     }
              */
             instruments: components["schemas"]["InstrumentStatsDTO"];
+            /**
+             * Data As Of
+             * @description Per source (`tk`, `eerstekamer`, `rechtspraak`, `staatsblad`, `staatscourant`, `bwb`, `eurlex`, …): how current the graph is.
+             */
+            data_as_of?: {
+                [key: string]: components["schemas"]["DataAsOfDTO"];
+            };
         };
         /**
          * Tier
