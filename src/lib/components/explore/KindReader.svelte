@@ -14,6 +14,7 @@
 	import FactionReader from './readers/FactionReader.svelte';
 	import DecisionReader from './readers/DecisionReader.svelte';
 	import CabinetReader from './readers/CabinetReader.svelte';
+	import CommitmentReader from './readers/CommitmentReader.svelte';
 	import ActivityReader from './readers/ActivityReader.svelte';
 	import InstrumentReader from './readers/InstrumentReader.svelte';
 	import FallbackReader from './readers/FallbackReader.svelte';
@@ -75,6 +76,8 @@
 	<ActivityReader node={selection} />
 {:else if selection.collection === 'cabinets'}
 	<CabinetReader node={selection} />
+{:else if selection.collection === 'commitments'}
+	<CommitmentReader node={selection} />
 {:else if selection.collection === 'instruments'}
 	<InstrumentReader node={selection} />
 {:else}
