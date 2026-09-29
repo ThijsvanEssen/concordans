@@ -111,13 +111,18 @@ export function presentHit(hit: Hit, query: string): Presented {
 				snippet: null
 			};
 		}
-		case 'documents':
-			// The name of a stuk is its dossier's title; the kind is what tells stukken apart.
+		case 'documents': {
+			// The name of a stuk is its dossier's title; its kind and number tell stukken apart.
+			const kind = extra(hit, 'kind') || (hit.display_name ?? hit.key);
+			const sequence = hit.extra?.sequence;
+			const number =
+				typeof sequence === 'string' || typeof sequence === 'number' ? String(sequence) : '';
 			return {
-				title: extra(hit, 'kind') || (hit.display_name ?? hit.key),
+				title: number ? `${kind}, nr. ${number}` : kind,
 				context: '',
 				snippet: null
 			};
+		}
 		case 'instruments':
 			return { title: hit.display_name ?? hit.key, context: extra(hit, 'bwb_id'), snippet: null };
 		case 'members':
