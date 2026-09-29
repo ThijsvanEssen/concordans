@@ -62,6 +62,16 @@ describe('presentHit', () => {
 		expect(shown.snippet).toBeNull();
 		expect(sectionOf(stuk('a', 'Eindtekst'))).toBe(`32621 ${TITLE}`);
 	});
+
+	it('gives a stuk its number in the dossier, where the API has one', () => {
+		const amendement = hit({
+			collection: 'documents',
+			key: 'b',
+			display_name: TITLE,
+			extra: { kind: 'Amendement', dossier_number: '37022', sequence: '8' }
+		});
+		expect(presentHit(amendement, 'x').title).toBe('Amendement, nr. 8');
+	});
 });
 
 describe('bySection', () => {

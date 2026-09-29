@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { countLine, dayLabel, daysOf, publicationCite, type FeedItem } from './feed';
+import {
+	countLine,
+	dayLabel,
+	daysOf,
+	publicationCite,
+	type FeedItem,
+	atomParams,
+	dossierLabel,
+	titleOf
+} from './feed';
 
 let n = 0;
 const item = (date: string, kind: FeedItem['kind'], dossier: string | null): FeedItem =>
@@ -43,7 +52,7 @@ describe('daysOf', () => {
 			'motie'
 		]);
 		expect('fold' in first.entries[0] && first.entries[0].fold.items).toHaveLength(3);
-		expect(countLine(first.counts)).toBe('4 moties, 1 brief regering');
+		expect(countLine(first.counts)).toBe('4 moties, 1 brief van de regering');
 		// One of a kind on another day does not fold.
 		expect(days[1].entries).toHaveLength(1);
 	});
@@ -56,6 +65,58 @@ describe('labels', () => {
 		expect(dayLabel('2026-09-22', '2026-09-29')).toBe('Dinsdag 22 september 2026');
 		expect(publicationCite({ series: 'stb', year: 2026, number: '204', instruments: [] })).toBe(
 			'Stb. 2026, 204'
+		);
+	});
+});
+
+describe('atomParams', () => {
+	it('keeps the filters chosen and leaves out the end of today the page adds', () => {
+		const q = { faction: 'd66', until: '2026-09-29', limit: 100, kind: undefined };
+		expect(atomParams(q, '').toString()).toBe('faction=d66');
+		expect(atomParams(q, '2026-09-29').toString()).toBe('faction=d66&until=2026-09-29');
+	});
+});
+
+describe('dossierLabel', () => {
+	const d = (short_title: string | null, title: string | null) => ({
+		key: '36600',
+		number: '36600',
+		title,
+		short_title
+	});
+	it('uses the short title', () => {
+		expect(dossierLabel(d('Begroting JenV', 'Vaststelling van de begrotingsstaten'))).toBe(
+			'36600 Begroting JenV'
+		);
+	});
+	it('falls back to the name in brackets at the end of the title', () => {
+		expect(
+			dossierLabel(d(null, 'Wijziging van de Vreemdelingenwet 2000 (Wet tweestatusstelsel)'))
+		).toBe('36600 Wet tweestatusstelsel');
+	});
+	it('is the number alone without any title', () => {
+		expect(dossierLabel(d(null, null))).toBe('36600');
+	});
+});
+
+describe('titleOf', () => {
+	const bill = (title: string, dossierTitle: string | null) =>
+		({
+			...item('2026-09-15', 'wetsvoorstel', '37000'),
+			title,
+			dossier: { key: '37000', number: '37000', title: dossierTitle, short_title: null }
+		}) as FeedItem;
+	it('names a bill by its dossier', () => {
+		expect(titleOf(bill('Voorstel van wet ', 'Wijziging van enkele belastingwetten'))).toBe(
+			'Wijziging van enkele belastingwetten'
+		);
+	});
+	it('keeps the generic title without a dossier title', () => {
+		expect(titleOf(bill('Voorstel van wet', null))).toBe('Voorstel van wet');
+	});
+	it('keeps a title of its own', () => {
+		expect(titleOf(bill('Motie van het lid Boomsma', 'Begroting'))).toBe(
+			'Motie van het lid Boomsma'
 		);
 	});
 });

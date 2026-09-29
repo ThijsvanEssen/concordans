@@ -6,7 +6,15 @@
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
 	import { COMMITMENT_STATUS_LABEL } from '$lib/components/explore/index/government';
-	import { KIND_LABEL, publicationCite, shortDate, type Entry, type FeedItem } from './feed';
+	import {
+		KIND_LABEL,
+		dossierLabel,
+		publicationCite,
+		shortDate,
+		titleOf,
+		type Entry,
+		type FeedItem
+	} from './feed';
 
 	let {
 		entry,
@@ -26,15 +34,6 @@
 	} = $props();
 
 	const refOf = (i: FeedItem) => `${i.node.collection}/${i.node.key}`;
-	/** A toezegging is its text; a publication is cited as it is printed. */
-	const titleOf = (i: FeedItem): string =>
-		i.kind === 'toezegging' && i.summary
-			? i.summary
-			: i.publication && !i.title
-				? publicationCite(i.publication)
-				: (i.title ?? KIND_LABEL[i.kind].one);
-	const dossierLabel = (d: NonNullable<FeedItem['dossier']>) =>
-		`${d.number}${d.short_title ? ` ${d.short_title}` : ''}`;
 	const tally = (i: FeedItem) => {
 		const t = (i.vote?.tally ?? {}) as Record<string, number>;
 		return { voor: t['Voor'] ?? 0, tegen: t['Tegen'] ?? 0 };
@@ -173,8 +172,8 @@
 		.slice(0, 2) as p, n (p.key ?? `${p.name}${n}`)}
 		<span class="person" style:--party={colorOf(p.faction?.short)}
 			>{#if p.key}<BronLink ref={`members/${p.key}`} preview={false}>{p.name}</BronLink
-				>{:else}{p.name}{/if}{#if p.faction?.short}<span class="faction">{p.faction.short}</span
-				>{/if}</span
+				>{:else}{p.name}{/if}{#if p.faction?.short}
+				<span class="faction">{p.faction.short}</span>{/if}</span
 		>
 	{/each}
 	{#if i.persons.length > 2 || i.persons.some((p) => p.role === 'medeindiener')}
@@ -222,11 +221,10 @@
 	.faction,
 	.ministry,
 	.role {
-		margin-left: var(--s-1);
 		color: var(--ink-3);
 	}
-	.ministry {
-		margin-left: 0;
+	.role {
+		margin-left: var(--s-1);
 	}
 	.outcome {
 		font-family: var(--font-sans);

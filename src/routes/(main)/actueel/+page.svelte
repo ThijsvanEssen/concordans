@@ -2,6 +2,7 @@
 	// Actueel: what happened in the Kamer and the government, newest first, per day. Every
 	// filter and the line opened are in the URL, so a view can be shared; the same view is an
 	// Atom feed. Beside it, the day of the newest event: how current the data is.
+	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
@@ -24,6 +25,7 @@
 	import {
 		FEED_KINDS,
 		KIND_LABEL,
+		atomParams,
 		countLine,
 		dayLabel,
 		daysOf,
@@ -213,7 +215,10 @@
 
 	const groups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
-		const factionCounts = [...facetMap(facets?.faction)].slice(0, 16);
+		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
+		const factionMap = facetMap(facets?.faction);
+		if (faction && !factionMap.has(faction)) factionMap.set(faction, 0);
+		const factionCounts = [...factionMap];
 		return [
 			{
 				id: 'soort',
@@ -321,16 +326,17 @@
 	const chips = $derived(activeFilters(groups));
 	let filtersOpen = $state(false);
 
-	/** The same view as an Atom feed. */
+	/**
+	 * The same view as an Atom feed. Only the filters chosen: the page's own end of today is
+	 * left out, or a subscribed feed would stop at the day it was subscribed.
+	 */
 	const atomHref = $derived.by(() => {
-		const p = new URLSearchParams();
-		for (const [k, v] of Object.entries(query ?? {}))
-			if (v !== undefined && k !== 'limit') p.set(k, String(v));
+		const p = atomParams(query as Record<string, string | number | undefined>, until);
 		return `${API_BASE_URL}/api/feed.atom${p.size ? `?${p}` : ''}`;
 	});
 
 	function onKey(e: KeyboardEvent) {
-		if (e.key === 'Escape' && openId) patchUrl({ open: null }, true);
+		if (isEscape(e) && openId) patchUrl({ open: null }, true);
 	}
 </script>
 
@@ -363,9 +369,8 @@
 		<div class="head">
 			{#if total !== null}
 				<p class="count">
-					{total.toLocaleString('nl-NL')}<span class="noun"
-						>{total === 1 ? 'gebeurtenis' : 'gebeurtenissen'}</span
-					>
+					{total.toLocaleString('nl-NL')}
+					<span class="noun">{total === 1 ? 'gebeurtenis' : 'gebeurtenissen'}</span>
 				</p>
 			{/if}
 			{#each chips as chip (chip.id)}
@@ -488,7 +493,7 @@
 		font-variant-numeric: tabular-nums;
 	}
 	.noun {
-		margin-left: var(--s-2);
+		margin-left: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-3);

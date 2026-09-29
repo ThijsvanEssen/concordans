@@ -113,7 +113,7 @@ export interface paths {
         };
         /**
          * Explanatory documents of an article
-         * @description The documents that explain this article: every EXPLAINS edge that points at the article, at one of its versions or at its instrument. Newest first, the article-level explanations (`target` `article` and `article_version`) before those of the instrument. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). An `instrument` explanation exists only for a dossier whose law changed no articles, so it is no evidence about this article; filter on `target`. One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article — never a 404.
+         * @description The documents that explain this article: every EXPLAINS edge that points at the article (`target` `article`) or at one of its versions (`target` `article_version`); an explanation of the law as a whole is no evidence about this article and is not listed. Newest first. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article — never a 404.
          */
         get: operations["get_explained_by_api_articles__bwb_id___article_number__explained_by_get"];
         put?: never;
@@ -2345,7 +2345,10 @@ export interface components {
             label?: string | null;
             /** Valid From */
             valid_from?: string | null;
-            /** Valid Until */
+            /**
+             * Valid Until
+             * @description The first day the version is no longer in force, exclusive: the start of the next one. `2021-07-01` is in force up to and including 2021-06-30 (wetten.overheid.nl: "t/m 30-06-2021"). Null while it is in force.
+             */
             valid_until?: string | null;
             /**
              * Current
@@ -2754,6 +2757,11 @@ export interface components {
         CommitmentDTO: {
             /** Key */
             key: string;
+            /**
+             * Number
+             * @description How the Kamer cites it: `TZ202603-130`.
+             */
+            number?: string | null;
             /** Text */
             text?: string | null;
             /** Status */
@@ -2886,9 +2894,6 @@ export interface components {
         /**
          * CommitteeDTO
          * @description A parliamentary committee.
-         *
-         *     ``kind`` distinguishes standing ('vast'), temporary ('tijdelijk'),
-         *     special ('bijzonder') and inquiry ('parlementaire_enquete') committees.
          */
         CommitteeDTO: {
             /** Id */
@@ -2899,12 +2904,26 @@ export interface components {
             name?: string | null;
             /** Abbreviation */
             abbreviation?: string | null;
-            /** Slug */
+            /**
+             * Slug
+             * @description Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`.
+             */
             slug?: string | null;
-            /** Kind */
-            kind?: string | null;
+            /**
+             * Kind
+             * @description `vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`.
+             */
+            kind?: ("vast" | "algemeen" | "tijdelijk" | "enquete" | "delegatie" | "overig") | null;
+            /** Started On */
+            started_on?: string | null;
+            /**
+             * Ended On
+             * @description Null while it sits.
+             */
+            ended_on?: string | null;
             /**
              * Active Dossier Count
+             * @description The open dossiers it leads an activity about; none once ended.
              * @default 0
              */
             active_dossier_count: number;
@@ -2914,7 +2933,7 @@ export interface components {
          * @description A committee with its members and a page of the dossiers it leads.
          *
          *     ``dossiers`` is one page; ``dossier_total`` counts every dossier that matches the
-         *     ``status`` filter, and ``active_dossier_count`` the open ones whatever the filter.
+         *     ``status`` filter.
          */
         CommitteeDetailDTO: {
             /** Id */
@@ -2925,12 +2944,26 @@ export interface components {
             name?: string | null;
             /** Abbreviation */
             abbreviation?: string | null;
-            /** Slug */
+            /**
+             * Slug
+             * @description Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`.
+             */
             slug?: string | null;
-            /** Kind */
-            kind?: string | null;
+            /**
+             * Kind
+             * @description `vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`.
+             */
+            kind?: ("vast" | "algemeen" | "tijdelijk" | "enquete" | "delegatie" | "overig") | null;
+            /** Started On */
+            started_on?: string | null;
+            /**
+             * Ended On
+             * @description Null while it sits.
+             */
+            ended_on?: string | null;
             /**
              * Active Dossier Count
+             * @description The open dossiers it leads an activity about; none once ended.
              * @default 0
              */
             active_dossier_count: number;
@@ -2964,12 +2997,26 @@ export interface components {
             name?: string | null;
             /** Abbreviation */
             abbreviation?: string | null;
-            /** Slug */
+            /**
+             * Slug
+             * @description Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`.
+             */
             slug?: string | null;
-            /** Kind */
-            kind?: string | null;
+            /**
+             * Kind
+             * @description `vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`.
+             */
+            kind?: ("vast" | "algemeen" | "tijdelijk" | "enquete" | "delegatie" | "overig") | null;
+            /** Started On */
+            started_on?: string | null;
+            /**
+             * Ended On
+             * @description Null while it sits.
+             */
+            ended_on?: string | null;
             /**
              * Active Dossier Count
+             * @description The open dossiers it leads an activity about; none once ended.
              * @default 0
              */
             active_dossier_count: number;
@@ -3468,9 +3515,14 @@ export interface components {
             commitment_count: number;
             /**
              * Instruments
-             * @description Instruments legislated in, amended, introduced or repealed by the dossier, one item per instrument, relation and status.
+             * @description Instruments legislated in, amended, introduced or repealed by the dossier, one item per instrument with every link.
              */
             instruments?: components["schemas"]["DossierInstrumentDTO"][];
+            /**
+             * Laws Named
+             * @description The laws the title names (`Wetboek van Strafrecht`, `Vreemdelingenwet 2000`), each with whether the graph holds it: a law the dossier changes that is not loaded has no instrument above.
+             */
+            laws_named?: components["schemas"]["DossierLawNamedDTO"][];
             /**
              * Committees
              * @description Committees leading an activity about the dossier.
@@ -3582,14 +3634,14 @@ export interface components {
         };
         /**
          * DossierInstrumentDTO
-         * @description An instrument a dossier is tied to, and how.
+         * @description An instrument a dossier is tied to, once, and every way it is.
          *
-         *     ``relation`` is ``legislated_in`` (the instrument came out of this dossier) or
-         *     ``amends``, ``introduces``, ``repeals`` (the dossier changes it, resolved from the
-         *     article or instrument that is changed to the parent instrument). ``status`` is
-         *     ``canoniek`` for what an amending publication enacted and ``voorgesteld`` for what a
-         *     bill of the dossier proposes. An instrument with several relations or statuses
-         *     appears once per combination.
+         *     ``links`` holds each ``relation`` (``legislated_in``: the instrument came out of this
+         *     dossier; ``amends``, ``introduces``, ``repeals``: the dossier changes it, resolved from
+         *     the article or instrument that is changed to the parent instrument) with its
+         *     ``status`` (``canoniek`` for what an amending publication enacted, ``voorgesteld`` for
+         *     what a bill of the dossier proposes). ``relation`` and ``status`` are the first link:
+         *     the enacted one before the proposed.
          */
         DossierInstrumentDTO: {
             /** Id */
@@ -3620,6 +3672,47 @@ export interface components {
              * @enum {string}
              */
             status: "canoniek" | "voorgesteld";
+            /** Links */
+            links?: components["schemas"]["DossierInstrumentLinkDTO"][];
+        };
+        /**
+         * DossierInstrumentLinkDTO
+         * @description One way a dossier is tied to an instrument.
+         */
+        DossierInstrumentLinkDTO: {
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "legislated_in" | "amends" | "introduces" | "repeals";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "canoniek" | "voorgesteld";
+        };
+        /**
+         * DossierLawNamedDTO
+         * @description A law the title of a dossier names, and whether the graph holds it.
+         */
+        DossierLawNamedDTO: {
+            /**
+             * Name
+             * @description As the title writes it: `Wetboek van Strafvordering`.
+             */
+            name: string;
+            /**
+             * Loaded
+             * @description Whether the graph holds the law.
+             */
+            loaded: boolean;
+            /**
+             * Key
+             * @description The instrument key when it does.
+             */
+            key?: string | null;
+            /** Bwb Id */
+            bwb_id?: string | null;
         };
         /**
          * DossierListResponse
@@ -4519,7 +4612,10 @@ export interface components {
             article_number: string;
             /** Valid From */
             valid_from?: string | null;
-            /** Valid Until */
+            /**
+             * Valid Until
+             * @description The first day the version is no longer in force, exclusive: the start of the next one. `2021-07-01` is in force up to and including 2021-06-30 (wetten.overheid.nl: "t/m 30-06-2021"). Null while it is in force.
+             */
             valid_until?: string | null;
             /**
              * Current
@@ -5052,24 +5148,26 @@ export interface components {
             official_url?: string | null;
             /**
              * Article Count
+             * @description The articles of the instrument.
              * @default 0
              */
             article_count: number;
             /**
-             * Judgment Count
-             * @default 0
-             */
-            judgment_count: number;
-            /**
              * Inbound Citation Count
+             * @description What refers to the instrument and to its articles.
              * @default 0
              */
             inbound_citation_count: number;
             /**
-             * Outbound Citation Count
-             * @default 0
+             * Judgment Count
+             * @description Not counted here: see `GET /api/instruments/{identifier}`.
              */
-            outbound_citation_count: number;
+            judgment_count?: number | null;
+            /**
+             * Outbound Citation Count
+             * @description Not counted here: see `GET /api/instruments/{identifier}`.
+             */
+            outbound_citation_count?: number | null;
         };
         /**
          * InstrumentVersionDTO
@@ -5082,7 +5180,10 @@ export interface components {
             bwb_id: string;
             /** Valid From */
             valid_from?: string | null;
-            /** Valid Until */
+            /**
+             * Valid Until
+             * @description The first day the version is no longer in force, exclusive: the start of the next one. `2021-07-01` is in force up to and including 2021-06-30 (wetten.overheid.nl: "t/m 30-06-2021"). Null while it is in force.
+             */
             valid_until?: string | null;
             /**
              * Current
@@ -6150,7 +6251,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "article" | "instrument" | "judgment" | "dossier" | "document";
+            kind: "article" | "instrument" | "judgment" | "dossier" | "document" | "commitment";
             /** Display Name */
             display_name: string | null;
             /**
@@ -6167,7 +6268,7 @@ export interface components {
             /** Q */
             q: string;
             /** Kind */
-            kind: ("article" | "instrument" | "judgment" | "dossier" | "document") | "none";
+            kind: ("article" | "instrument" | "judgment" | "dossier" | "document" | "commitment") | "none";
             /**
              * Confidence
              * @description Confidence of `match`; 0 for `none`

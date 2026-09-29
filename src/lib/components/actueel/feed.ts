@@ -1,4 +1,5 @@
 import type { Schema } from '$lib/api/types';
+import { shortDossierTitle } from '$lib/graph/types';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
 // dossier (the moties of a debate) fold into one line that opens.
@@ -23,7 +24,7 @@ export const KIND_LABEL: Record<FeedKind, { one: string; many: string }> = {
 	amendement: { one: 'Amendement', many: 'amendementen' },
 	motie: { one: 'Motie', many: 'moties' },
 	toezegging: { one: 'Toezegging', many: 'toezeggingen' },
-	brief_regering: { one: 'Brief regering', many: 'brieven van de regering' },
+	brief_regering: { one: 'Brief van de regering', many: 'brieven van de regering' },
 	publicatie: { one: 'Publicatie', many: 'publicaties' },
 	inwerkingtreding: { one: 'Inwerkingtreding', many: 'inwerkingtredingen' }
 };
@@ -32,6 +33,27 @@ export const KIND_LABEL: Record<FeedKind, { one: string; many: string }> = {
 export const FEED_KINDS = Object.keys(KIND_LABEL) as FeedKind[];
 
 export const isFeedKind = (value: string): value is FeedKind => Object.hasOwn(KIND_LABEL, value);
+
+/** A dossier by its number and short name: the short title, or else one from its title. */
+export function dossierLabel(d: NonNullable<FeedItem['dossier']>): string {
+	const name = d.short_title?.trim() || shortDossierTitle(d.title ?? null);
+	return name ? `${d.number} ${name}` : d.number;
+}
+
+/** A title that only names the kind of paper: every bill is `Voorstel van wet`. */
+const GENERIC_TITLE = /^(voorstel van wet|nota van wijziging)$/i;
+
+/**
+ * What a row is called: a toezegging by its text, a publication as it is cited, a paper
+ * that only names its kind by the title of its dossier.
+ */
+export function titleOf(i: FeedItem): string {
+	if (i.kind === 'toezegging' && i.summary) return i.summary;
+	const title = i.title?.trim();
+	if (!title && i.publication) return publicationCite(i.publication);
+	if (title && GENERIC_TITLE.test(title)) return i.dossier?.title?.trim() || title;
+	return title || KIND_LABEL[i.kind].one;
+}
 
 /** Fewer than this many of one kind on one dossier in a day stay single rows. */
 export const FOLD_AT = 3;
@@ -151,4 +173,18 @@ export function publicationCite(p: NonNullable<FeedItem['publication']>): string
 	const SERIES: Record<string, string> = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' };
 	const series = p.series ? (SERIES[p.series] ?? p.series) : '';
 	return `${series} ${p.year ?? ''}, ${p.number ?? ''}`.trim();
+}
+
+/**
+ * The query of the Atom feed of a view: the filters chosen, without the page size and
+ * without the end of today the page adds, so a subscribed feed keeps coming.
+ */
+export function atomParams(
+	query: Record<string, string | number | undefined>,
+	chosenUntil: string
+): URLSearchParams {
+	const p = new URLSearchParams();
+	for (const [k, v] of Object.entries(query))
+		if (v !== undefined && k !== 'limit' && !(k === 'until' && !chosenUntil)) p.set(k, String(v));
+	return p;
 }
