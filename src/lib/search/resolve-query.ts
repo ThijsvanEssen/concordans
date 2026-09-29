@@ -1,7 +1,7 @@
 // `GET /api/resolve` (API 0.5) turns a citation into one bron. `resolveQuery` asks it
 // first and, where it is absent or finds nothing, parses the notation itself.
 // TODO(backend B11): the parser and the lookups below go when every notation resolves.
-import { BW_BOOKS } from '$lib/text/bw';
+import { BW_BOOKS, withBook } from '$lib/text/bw';
 import { api, unwrap } from '$lib/api/client';
 import type { BronRef } from '$lib/bron/href';
 import type { Collection } from '$lib/vocabulary';
@@ -119,7 +119,8 @@ const apiDeps: ResolveDeps = {
 		return {
 			ref: { collection, key: match.key },
 			at: anchorOf(parseQualifier(data?.qualifier ?? '')),
-			label: match.display_name ?? null
+			// "Artikel 162 Burgerlijk Wetboek Boek 6" as it is cited: "Artikel 6:162 BW".
+			label: match.display_name ? withBook(match.display_name) : null
 		};
 	},
 	lawId: async (law, articleNumber) => {
