@@ -30,6 +30,7 @@ export type Loader =
 	| 'article-explanatory'
 	| 'article-judgments'
 	| 'article-cited-by'
+	| 'article-changes'
 	| 'instrument-international'
 	| 'judgment-articles'
 	| 'instrument-dossiers'
@@ -289,10 +290,11 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			inPlace: true
 		},
 		{
+			// Enacted and proposed: the publication that changed it, or the bill that would.
 			id: 'changes',
-			label: 'Wetsvoorstellen die dit artikel wijzigen',
-			noun: 'wetsvoorstellen',
-			match: [{ relation: CHANGES, direction: 'inbound', collection: 'documents' }]
+			label: 'Wijzigingen van dit artikel',
+			noun: 'wijzigingen',
+			load: 'article-changes'
 		},
 		{
 			id: 'refers-to',

@@ -21,6 +21,7 @@ import {
 	aardLabel,
 	bundleMentions,
 	activityLine,
+	historyRow,
 	rolesLine,
 	citedLine,
 	describe,
@@ -295,6 +296,46 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			});
 		}
 		return { rows: [...byKey.values()], total };
+	},
+
+	// The changes of an article, enacted and proposed, each with its dossier and date
+	// (`legislative-history`). Without the route: the bills that change it, from the node.
+	'article-changes': async ({ node, neighbors, totals, signal }) => {
+		const bwb = bwbOf(node);
+		const number =
+			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
+		const found =
+			bwb && number
+				? await unwrap(
+						api.GET('/api/articles/{bwb_id}/{article_number}/legislative-history', {
+							params: { path: { bwb_id: bwb, article_number: number } },
+							signal
+						})
+					).catch(() => null)
+				: null;
+		if (found)
+			return {
+				total: found.total,
+				rows: (found.entries ?? []).flatMap((e) => {
+					const row = historyRow(e);
+					return row ? [row] : [];
+				})
+			};
+		const changes = ['AMENDS', 'INTRODUCES', 'REPEALS'];
+		return {
+			total:
+				changes.reduce((n, r) => n + (totals.get(bucketKey(r, 'documents', 'inbound')) ?? 0), 0) ||
+				undefined,
+			rows: neighbors
+				.filter(
+					(n) =>
+						changes.includes(n.relation as string) &&
+						n.direction === 'inbound' &&
+						n.collection === 'documents'
+				)
+				.map(rowOfNeighbor)
+				.filter((r) => r !== null)
+		};
 	},
 
 	// The European and international instruments of a law (API 0.5, `eu-links`). Before

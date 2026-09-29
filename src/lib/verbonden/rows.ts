@@ -435,3 +435,54 @@ export function rolesLine(d: {
 			.join(', ') || null
 	);
 }
+
+const CHANGE_VERB: Record<string, { verb: string; relation: Relation }> = {
+	amends: { verb: 'wijzigt', relation: 'AMENDS' },
+	introduces: { verb: 'voegt in', relation: 'INTRODUCES' },
+	repeals: { verb: 'trekt in', relation: 'REPEALS' }
+};
+
+/**
+ * One change of an article as a row: the publication that made it or the bill that
+ * proposes it, titled by its dossier, with the verb of the change and the date.
+ */
+export function historyRow(e: {
+	dossier_number?: string | null;
+	dossier_title?: string | null;
+	date?: string | null;
+	change?: string | null;
+	status?: string | null;
+	summary?: string | null;
+	document_id?: string | null;
+}): Row | null {
+	const slash = e.document_id?.indexOf('/') ?? -1;
+	const collection = slash > 0 ? e.document_id!.slice(0, slash) : null;
+	const key = slash > 0 ? e.document_id!.slice(slash + 1) : null;
+	const ref: BronRef | null =
+		collection && key && isCollection(collection)
+			? refOf(collection, key, { label: e.dossier_number })
+			: e.dossier_number
+				? { collection: 'dossiers', key: e.dossier_number, number: e.dossier_number }
+				: null;
+	if (!ref) return null;
+	const change = CHANGE_VERB[e.change ?? ''];
+	const proposed = e.status === 'voorgesteld';
+	return {
+		ref,
+		title: e.dossier_title ?? e.summary ?? e.dossier_number ?? ref.key,
+		identifier: e.summary ?? null,
+		context:
+			[
+				proposed ? 'voorgesteld' : null,
+				change?.verb,
+				e.dossier_number ? `dossier ${e.dossier_number}` : null
+			]
+				.filter(Boolean)
+				.join(', ') || null,
+		date: e.date ?? null,
+		kind: bronKindOf(ref.collection, ref.key, {}),
+		proposed,
+		relation: change?.relation,
+		direction: 'inbound'
+	};
+}

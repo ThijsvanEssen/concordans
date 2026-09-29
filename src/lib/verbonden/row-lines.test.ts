@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activityLine, citedLine, rolesLine } from './rows';
+import { activityLine, citedLine, historyRow, rolesLine } from './rows';
 
 describe('rolesLine', () => {
 	it('names the role, a function other than Kamerlid and the stukken', () => {
@@ -57,5 +57,33 @@ describe('activityLine', () => {
 			})
 		).toBe('Commissiedebat, geannuleerd, over 22112 en 21501-04');
 		expect(activityLine({})).toBeNull();
+	});
+});
+
+describe('historyRow', () => {
+	it('titles a change by its dossier and says what it does', () => {
+		const row = historyRow({
+			dossier_number: '34588',
+			dossier_title: 'Wet op de inlichtingen- en veiligheidsdiensten 2017',
+			date: '2017-08-17',
+			change: 'amends',
+			status: 'canoniek',
+			summary: 'Stb. 2017, 317',
+			document_id: 'instruments/stb_2017_317'
+		});
+		expect(row?.ref).toEqual({ collection: 'instruments', key: 'stb_2017_317' });
+		expect(row?.title).toBe('Wet op de inlichtingen- en veiligheidsdiensten 2017');
+		expect(row?.identifier).toBe('Stb. 2017, 317');
+		expect(row?.context).toBe('wijzigt, dossier 34588');
+		expect(row?.proposed).toBe(false);
+		expect(row?.relation).toBe('AMENDS');
+	});
+
+	it('marks a proposed change and falls back on the dossier', () => {
+		const row = historyRow({ dossier_number: '36000', change: 'repeals', status: 'voorgesteld' });
+		expect(row?.ref).toEqual({ collection: 'dossiers', key: '36000', number: '36000' });
+		expect(row?.proposed).toBe(true);
+		expect(row?.context).toBe('voorgesteld, trekt in, dossier 36000');
+		expect(historyRow({})).toBeNull();
 	});
 });
