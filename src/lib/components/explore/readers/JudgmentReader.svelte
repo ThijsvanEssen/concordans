@@ -1,8 +1,8 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
-	import { bronHref } from '$lib/bron/href';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
 	import { getJudgmentDetail } from '$lib/api/judgments';
@@ -149,12 +149,11 @@
 			{#if j.translation_of}
 				<p class="reader-translation">
 					Vertaling van
-					<a
-						href={bronHref({
+					<BronLink
+						ref={{
 							collection: 'judgments',
 							key: j.translation_of.toLowerCase().replaceAll(':', '_')
-						})}
-						data-sveltekit-noscroll>{j.translation_of}</a
+						}}>{j.translation_of}</BronLink
 					>. De samenvatting hieronder is die van het origineel.
 				</p>
 			{/if}

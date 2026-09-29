@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import { dossierCounts } from '$lib/components/parliamentary/counts';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
@@ -14,7 +15,6 @@
 		isBill
 	} from '$lib/components/parliamentary/stages';
 	import { formatLongDate } from './_shared';
-	import { bronHref } from '$lib/bron/href';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
 
@@ -83,10 +83,11 @@
 
 {#snippet dossierLinks(dossiers: Reading[])}
 	{dossiers.length === 1 ? 'Kamerstuk' : 'Kamerstukken'}
-	{#each dossiers as r, i (r.key)}{#if i > 0}{i === dossiers.length - 1 ? ' en ' : ', '}{/if}<a
-			href={bronHref({ collection: 'dossiers', key: r.key, number: r.number })}
-			data-sveltekit-noscroll
-			title={r.title ?? undefined}>{r.number}</a
+	{#each dossiers as r, i (r.key)}{#if i > 0}{i === dossiers.length - 1
+				? ' en '
+				: ', '}{/if}<BronLink
+			ref={{ collection: 'dossiers', key: r.key, number: r.number }}
+			title={r.title ?? undefined}>{r.number}</BronLink
 		>{/each}
 {/snippet}
 
@@ -227,13 +228,13 @@
 		color: var(--ink-2);
 		margin: 0;
 	}
-	.reading a {
+	.reading :global(a) {
 		color: inherit;
 		text-decoration: underline;
 		text-decoration-color: var(--rule);
 		text-underline-offset: 2px;
 	}
-	.reading a:hover {
+	.reading :global(a:hover) {
 		text-decoration-color: currentColor;
 	}
 
