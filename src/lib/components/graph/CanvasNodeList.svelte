@@ -7,6 +7,7 @@
 	import { bronHref, refOf } from '$lib/bron/href';
 	import { bronLabel, isCollection } from '$lib/vocabulary';
 	import { moveIndex } from './canvas-keys';
+	import { withBook } from '$lib/text/bw';
 
 	let {
 		nodes,
@@ -32,8 +33,8 @@
 	});
 
 	const kindOf = (n: GraphNode) => (isCollection(n.collection) ? bronLabel(n.collection) : '');
-	/** The full name, where the canvas shows a short one (`2011-07 · Memorie`). */
-	const nameOf = (n: GraphNode) => n.raw?.display_name ?? n.label;
+	/** The full name, where the canvas shows a short one (`2011-07 · Memorie`); a BW article as cited (Artikel 6:162 BW). */
+	const nameOf = (n: GraphNode) => withBook(n.raw?.display_name ?? n.label);
 
 	function focusAt(i: number) {
 		active = i;
