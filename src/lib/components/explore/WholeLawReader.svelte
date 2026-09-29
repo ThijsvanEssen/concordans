@@ -16,6 +16,7 @@
 
 	import { bronHref } from '$lib/bron/href';
 	import { layersOf } from '$lib/text/division';
+	import { articleName } from '$lib/text/bw';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -223,8 +224,9 @@
 						href={bronHref({ collection: 'articles', key: a.key })}
 						data-sveltekit-noscroll
 					>
+						<!-- The anchor of reading: Artikel 3:4, a BW article with its book (6:162). -->
 						<span class="whole-art-num"
-							>{a.article_number ? `Art. ${a.article_number}` : (a.label ?? a.key)}</span
+							>{articleName(bwbId, a.article_number, a.label) ?? a.key}</span
 						>
 					</a>
 				</div>
@@ -408,11 +410,11 @@
 	}
 
 	.whole-article {
-		margin: var(--s-5) 0;
+		margin: var(--s-6) 0 0;
 	}
 
 	.whole-article-head {
-		margin-bottom: var(--s-2);
+		margin-bottom: var(--s-1);
 	}
 
 	.whole-article-jump {
@@ -427,11 +429,10 @@
 	}
 
 	.whole-art-num {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
-		color: var(--ink-2);
-		font-weight: 500;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		font-weight: 600;
+		color: var(--ink);
 	}
 
 	.whole-article-jump:hover .whole-art-num {

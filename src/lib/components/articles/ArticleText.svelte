@@ -127,7 +127,11 @@
 	{#if top}
 		<div class="lid lid--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
 			<span class="lid__no"
-				>{part.kind === 'lid' ? part.number : part.number ? `${part.number}${mark}` : ''}</span
+				>{part.kind === 'lid'
+					? `${part.number}.`
+					: part.number
+						? `${part.number}${mark}`
+						: ''}</span
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
 				<div class="lid__text">
@@ -253,11 +257,11 @@
 	.lid:global(.is-landed) {
 		background: var(--accent-soft);
 	}
+	/* The number as the law prints it (1.), in the letter and on the line of the text. */
 	.lid__no {
-		padding-top: 7px;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
 		color: var(--ink-3);
 		text-align: right;
 	}
@@ -415,7 +419,6 @@
 	.part__number {
 		flex: none;
 		min-width: 1.6em;
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
 	.part__number:hover {
