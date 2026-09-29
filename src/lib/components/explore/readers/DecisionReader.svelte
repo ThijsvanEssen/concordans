@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
@@ -94,7 +95,7 @@
 					</span>
 					<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
 					{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
-					{#each dossierNumbers.slice(0, 3) as number (number)}
+					{#each uniqueBy(dossierNumbers, (n) => n).slice(0, 3) as number (number)}
 						<a href={bronHref(`dossiers/${number}`)} class="dossier-chip" data-sveltekit-noscroll
 							>{number}</a
 						>

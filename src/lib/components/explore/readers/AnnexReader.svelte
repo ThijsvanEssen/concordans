@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a bijlage: its title, the law it belongs to, its text, its entries in order
 	// and the articles that refer to it.
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -112,7 +113,7 @@
 				<section class="refs">
 					<h2>Aangehaald in</h2>
 					<ul>
-						{#each refs as r (r.article.id)}
+						{#each uniqueBy(refs, (r) => r.article.id) as r (r.article.id)}
 							<li>
 								<BronLink ref={{ collection: 'articles', key: r.article.key }}
 									>{r.article.display_name ?? r.article.key}</BronLink

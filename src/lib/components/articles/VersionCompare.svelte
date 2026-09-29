@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// Two tekstversies of an article compared, for research into how its text came to be.
@@ -255,7 +256,7 @@
 	{#if inForce && inForce !== pub}<span title={signedAndPublished(v.commencement)}
 			>in werking bij {inForce}</span
 		>{/if}
-	{#each v.amended_by?.dossiers ?? [] as dossier (dossier.key)}
+	{#each uniqueBy(v.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}
 		<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
 	{/each}
 {/snippet}
@@ -443,7 +444,7 @@
 											title={signedAndPublished(w.first.commencement)}
 											>in werking bij {inForce}</span
 										>{/if}
-									{#each w.first.amended_by?.dossiers ?? [] as dossier (dossier.key)}
+									{#each uniqueBy(w.first.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}
 										<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
 									{/each}
 								</td>
@@ -626,7 +627,7 @@
 							{#if publication(v.amended_by)}<span title={signedAndPublished(v.amended_by)}
 									>{publication(v.amended_by)}</span
 								>{/if}
-							{#each v.amended_by?.dossiers ?? [] as dossier (dossier.key)}
+							{#each uniqueBy(v.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}
 								<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
 							{/each}
 						</td>

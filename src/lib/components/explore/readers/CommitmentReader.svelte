@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a toezegging: its text, who made it in which post, the ministry and cabinet,
 	// when it was made and when it is expected to be settled, its state and its dossiers.
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -122,7 +123,7 @@
 				{#if c.dossiers?.length}
 					<dt>{c.dossiers.length === 1 ? 'Dossier' : 'Dossiers'}</dt>
 					<dd class="dossiers">
-						{#each c.dossiers as d (d.key)}
+						{#each uniqueBy(c.dossiers, (d) => d.key) as d (d.key)}
 							<BronLink ref={{ collection: 'dossiers', key: d.key, number: d.number ?? d.key }}
 								>{d.number}{d.title ? ` ${d.title}` : ''}</BronLink
 							>

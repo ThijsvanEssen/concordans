@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
 	// Netwerk, where a result is picked instead of opened.
 	import { goto } from '$app/navigation';
@@ -355,7 +356,7 @@
 					<KindGlyph collection={group.kind} />
 					{bronPlural(group.kind)}
 				</div>
-				{#each group.hits as hit, h (hit.id)}
+				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
 					{@const i = offset + (indexOf.get(hit.id) ?? 0)}
 					{@const shown = presentHit(hit, q)}
 					{@const section = sectionOf(hit)}

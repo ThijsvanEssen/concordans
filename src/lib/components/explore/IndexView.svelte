@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	// Index: browse one category at a time. Beside the list a column of filters, each
@@ -325,13 +326,20 @@
 	const PAGE = 100;
 
 	// A list without `total` (members) is over when a slice comes back short.
+	/** An item's own id, or its key; null without either. */
+	const idOf = (item: unknown): string | null => {
+		const o = item as { id?: unknown; key?: unknown };
+		return typeof o?.id === 'string' ? o.id : typeof o?.key === 'string' ? o.key : null;
+	};
+
 	function toPage<T>(
 		previous: Page<T> | undefined,
 		items: T[],
 		offset: number,
 		total?: number
 	): Page<T> {
-		const all = offset && previous ? [...previous.items, ...items] : items;
+		// A page can repeat an item of the page before when the order has ties.
+		const all = offset && previous ? uniqueBy([...previous.items, ...items], idOf) : items;
 		return {
 			items: all,
 			total: total ?? all.length,
@@ -2352,7 +2360,7 @@
 															{#if t.member}
 																<a href={hrefOf(`members/${t.member.key}`)}>{t.member.name}</a>
 															{/if}
-															{#each t.dossiers ?? [] as d (d.key)}
+															{#each uniqueBy(t.dossiers ?? [], (d) => d.key) as d (d.key)}
 																<a href={hrefOf(`dossiers/${d.number ?? d.key}`)}
 																	>{d.number}{d.title ? `: ${d.title}` : ''}</a
 																>

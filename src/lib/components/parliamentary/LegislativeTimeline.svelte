@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import KindChipFilter from './KindChipFilter.svelte';
@@ -35,7 +36,8 @@
 	});
 
 	const shown = $derived.by(() => {
-		const rows = kindFilter.size > 0 ? entries.filter((e) => kindFilter.has(e.kind)) : entries;
+		const all = uniqueBy(entries, (e) => e.node_id);
+		const rows = kindFilter.size > 0 ? all.filter((e) => kindFilter.has(e.kind)) : all;
 		return newestFirst ? rows : [...rows].reverse();
 	});
 

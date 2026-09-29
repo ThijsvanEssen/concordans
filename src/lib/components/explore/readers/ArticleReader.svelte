@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -298,7 +299,9 @@
 	// memorie van toelichting and to the behandeling it was in.
 	// TODO(backend B13): a version from before the dossier collection's coverage names a
 	// dossier the API 404s on (e.g. a pre-1990s Kamerstuknummer); the link still renders.
-	const versionDossiers = $derived(onScreen?.first.amended_by?.dossiers ?? []);
+	const versionDossiers = $derived(
+		uniqueBy(onScreen?.first.amended_by?.dossiers ?? [], (d) => d.key)
+	);
 	/** How the wet named under the text relates to it. */
 	const originVerb = $derived(
 		!onScreen

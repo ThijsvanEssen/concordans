@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { dossierCounts } from '$lib/components/parliamentary/counts';
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -81,7 +82,8 @@
 	});
 </script>
 
-{#snippet dossierLinks(dossiers: Reading[])}
+{#snippet dossierLinks(all: Reading[])}
+	{@const dossiers = uniqueBy(all, (r) => r.key)}
 	{dossiers.length === 1 ? 'Kamerstuk' : 'Kamerstukken'}
 	{#each dossiers as r, i (r.key)}{#if i > 0}{i === dossiers.length - 1
 				? ' en '

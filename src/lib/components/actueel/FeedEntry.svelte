@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	// One line of Actueel: an item, or a fold of many items of one kind on one dossier. The
 	// title of an item links to the bron; the rest of the line opens its details beneath it.
 	// Names of persons and dossiers are links, as everywhere.
@@ -109,7 +110,7 @@
 						>{i.commencement.instrument.title}</BronLink
 					>
 				{/if}
-				{#each i.publication?.instruments ?? [] as w (w.key)}
+				{#each uniqueBy(i.publication?.instruments ?? [], (w) => w.key) as w (w.key)}
 					<BronLink ref={`instruments/${w.key}`}>{w.title}</BronLink>
 				{/each}
 			</span>

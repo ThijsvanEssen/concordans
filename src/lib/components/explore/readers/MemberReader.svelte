@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
@@ -160,7 +161,7 @@
 											href={bronHref({ collection: 'factions', key: step.factionKey })}
 											data-sveltekit-noscroll>{step.faction}</a
 										>
-										{#each step.roles as r (r.role + r.from)}
+										{#each uniqueBy(step.roles, (r) => r.role + r.from) as r (r.role + r.from)}
 											<span class="career-role">{r.role.toLowerCase()} {yearsOf(r.from, r.to)}</span
 											>
 										{/each}
@@ -212,7 +213,7 @@
 									<span class="vote-group-count">{rows.length}</span>
 								</div>
 								<ul class="vote-list">
-									{#each rows as v (v.decision_id)}
+									{#each uniqueBy(rows, (v) => v.decision_id) as v (v.decision_id)}
 										<li class="vote-row">
 											<a
 												class="vote-link"

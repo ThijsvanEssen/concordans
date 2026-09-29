@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { uniqueBy } from '$lib/util/unique';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { api, unwrap } from '$lib/api/client';
 	import { getArticleDetail } from '$lib/api/articles';
@@ -159,7 +160,7 @@
 		status = 'loading-more';
 		try {
 			const page = await load(bwb, articles.length);
-			if (bwb === bwbId) articles.push(...page.items);
+			if (bwb === bwbId) articles = uniqueBy([...articles, ...page.items], (a) => a.id);
 		} catch {
 			// The articles already shown stay; the button remains for another attempt.
 		}
