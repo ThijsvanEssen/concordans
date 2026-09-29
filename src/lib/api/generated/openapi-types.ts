@@ -973,7 +973,7 @@ export interface paths {
         };
         /**
          * Ministries
-         * @description Every ministry a post, a dossier or a commitment can name, in protocol order; a former ministry (``Verkeer en Waterstaat``) follows its successor and names it.
+         * @description Every ministry a post, a dossier or a commitment can name, in protocol order; a former ministry (``Verkeer en Waterstaat``) follows its successor and names it. From ``data/ministries.json``: TOOI since about 2010 (with the decree of each change), the Rijksoverheid cabinet pages before; ``periods`` say which.
          */
         get: operations["list_ministries_api_ministries_get"];
         put?: never;
@@ -993,7 +993,7 @@ export interface paths {
         };
         /**
          * Cabinets
-         * @description Every Dutch cabinet, newest first: those since 1945 from Rijksoverheid, with their prime minister, parties, ``phases`` and ``demissionary_from``; those before from Wikidata (name and period only). Counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.
+         * @description Every Dutch cabinet since 1945, newest first, from Rijksoverheid: with its prime minister, parties, ``phases`` and ``demissionary_from``. Counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.
          */
         get: operations["list_cabinets_api_cabinets_get"];
         put?: never;
@@ -1455,6 +1455,46 @@ export interface paths {
          * @description The seated parties with their seat counts, ordered left to right as they sit in the chamber — enough to render a hemicycle.
          */
         get: operations["get_seats_api_parliament_seats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/feed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * News feed
+         * @description What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``wetsvoorstel``, ``nota_van_wijziging``, ``amendement``, ``motie`` and ``brief_regering`` (a Tweede Kamer paper submitted), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.
+         */
+        get: operations["get_feed_route_api_feed_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/feed.atom": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * News feed as Atom
+         * @description A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader: one entry per event, its link the official text or the page on tweedekamer.nl when it has one, and a ``next`` link to the next page.
+         */
+        get: operations["get_feed_atom_api_feed_atom_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2391,13 +2431,6 @@ export interface components {
              */
             to_date?: string | null;
             /**
-             * From Date Precision
-             * @description How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January.
-             */
-            from_date_precision?: ("day" | "month" | "year") | null;
-            /** To Date Precision */
-            to_date_precision?: ("day" | "month" | "year") | null;
-            /**
              * Previous
              * @description The key of the cabinet before it.
              */
@@ -2405,7 +2438,7 @@ export interface components {
             prime_minister?: components["schemas"]["PersonRefDTO"] | null;
             /**
              * Parties
-             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945.
+             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first.
              */
             parties?: components["schemas"]["PartyRefDTO"][];
             /**
@@ -2420,16 +2453,11 @@ export interface components {
             demissionary_from?: string | null;
             /**
              * Phases
-             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them).
+             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order.
              */
             phases?: components["schemas"]["CabinetPhaseDTO"][];
-            /** @description Rijksoverheid since 1945; Wikidata before (name and period). */
+            /** @description The Rijksoverheid page it was read from. */
             source?: components["schemas"]["SourceRefDTO"] | null;
-            /**
-             * Wikidata Id
-             * @description For a cabinet from Wikidata.
-             */
-            wikidata_id?: string | null;
             /**
              * Members
              * @description The people who held a post in it.
@@ -2615,13 +2643,6 @@ export interface components {
              */
             to_date?: string | null;
             /**
-             * From Date Precision
-             * @description How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January.
-             */
-            from_date_precision?: ("day" | "month" | "year") | null;
-            /** To Date Precision */
-            to_date_precision?: ("day" | "month" | "year") | null;
-            /**
              * Previous
              * @description The key of the cabinet before it.
              */
@@ -2629,7 +2650,7 @@ export interface components {
             prime_minister?: components["schemas"]["PersonRefDTO"] | null;
             /**
              * Parties
-             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945.
+             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first.
              */
             parties?: components["schemas"]["PartyRefDTO"][];
             /**
@@ -2644,16 +2665,11 @@ export interface components {
             demissionary_from?: string | null;
             /**
              * Phases
-             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them).
+             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order.
              */
             phases?: components["schemas"]["CabinetPhaseDTO"][];
-            /** @description Rijksoverheid since 1945; Wikidata before (name and period). */
+            /** @description The Rijksoverheid page it was read from. */
             source?: components["schemas"]["SourceRefDTO"] | null;
-            /**
-             * Wikidata Id
-             * @description For a cabinet from Wikidata.
-             */
-            wikidata_id?: string | null;
             /**
              * Members
              * @description The people who held a post in it.
@@ -4079,6 +4095,242 @@ export interface components {
              * @description Left-to-right position in the chamber.
              */
             order: number;
+        };
+        /**
+         * FeedCommencementDTO
+         * @description An ``inwerkingtreding``: a new version of a law in force from ``date``.
+         */
+        FeedCommencementDTO: {
+            instrument?: components["schemas"]["FeedInstrumentDTO"] | null;
+            /**
+             * Article Count
+             * @description The articles of the law.
+             */
+            article_count?: number | null;
+            /**
+             * Changed Articles
+             * @description The articles with a version that begins that day.
+             * @default 0
+             */
+            changed_articles: number;
+        };
+        /**
+         * FeedCommitmentDTO
+         * @description What a ``toezegging`` stands at.
+         */
+        FeedCommitmentDTO: {
+            /** Status */
+            status?: ("open" | "done" | "partly_done" | "unfulfilled" | "lapsed") | null;
+            /**
+             * Expected Resolution
+             * @description The day it is due; null when the Kamer names none.
+             */
+            expected_resolution?: string | null;
+        };
+        /** FeedDossierDTO */
+        FeedDossierDTO: {
+            /** Key */
+            key: string;
+            /**
+             * Number
+             * @description The label: ``36600-VII``, a path segment.
+             */
+            number: string;
+            /** Title */
+            title?: string | null;
+            /**
+             * Short Title
+             * @description The parentheses that end the title; null without.
+             */
+            short_title?: string | null;
+        };
+        /**
+         * FeedFacetsDTO
+         * @description Per dimension the events per value under the other filters, the largest first;
+         *     ``value`` null counts the events without one. An event signed for two factions counts
+         *     for both, so ``faction`` need not add up to ``total``.
+         */
+        FeedFacetsDTO: {
+            /** Kind */
+            kind?: components["schemas"]["FacetCountDTO"][];
+            /** Ministry */
+            ministry?: components["schemas"]["FacetCountDTO"][];
+            /** Faction */
+            faction?: components["schemas"]["FacetCountDTO"][];
+            /** Cabinet */
+            cabinet?: components["schemas"]["FacetCountDTO"][];
+        };
+        /** FeedFactionDTO */
+        FeedFactionDTO: {
+            /** Key */
+            key: string;
+            /**
+             * Short
+             * @description Its abbreviation: ``VVD``.
+             */
+            short?: string | null;
+        };
+        /**
+         * FeedInstrumentDTO
+         * @description A law the event is about.
+         */
+        FeedInstrumentDTO: {
+            /** Key */
+            key: string;
+            /** Title */
+            title?: string | null;
+            /** Official Url */
+            official_url?: string | null;
+        };
+        /**
+         * FeedItemDTO
+         * @description One event.
+         */
+        FeedItemDTO: {
+            /**
+             * Id
+             * @description ``collection/key`` of its node: unique.
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "toezegging" | "wetsvoorstel" | "nota_van_wijziging" | "amendement" | "motie" | "stemming" | "publicatie" | "inwerkingtreding" | "brief_regering";
+            /**
+             * Date
+             * @description YYYY-MM-DD; the source gives no time of day.
+             */
+            date: string;
+            /** Title */
+            title?: string | null;
+            /**
+             * Summary
+             * @description The whole text of a commitment, the decision of a vote (``Aangenomen.``); null for the other kinds.
+             */
+            summary?: string | null;
+            /**
+             * Subkind
+             * @description What the source calls it: the document kind (``Motie (gewijzigd/nader)``), for a vote what was voted on (``motie``, ``amendement``, ``wetsvoorstel``, ``overig``); null for the other kinds.
+             */
+            subkind?: string | null;
+            node: components["schemas"]["FeedNodeDTO"];
+            /** @description Its first dossier; null for an event without one. */
+            dossier?: components["schemas"]["FeedDossierDTO"] | null;
+            /**
+             * Persons
+             * @description Who signed it, in the order of the source: the submitters of a paper, of the paper a vote decided, the bewindspersoon of a commitment.
+             */
+            persons?: components["schemas"]["FeedPersonDTO"][];
+            /** @description Of a commitment its own; otherwise the ministry that brought its dossier in (``ministry`` of the dossier). */
+            ministry?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Cabinet
+             * @description The cabinet in office on ``date``.
+             */
+            cabinet?: string | null;
+            /**
+             * Official Url
+             * @description The official text of a publication or a version of a law.
+             */
+            official_url?: string | null;
+            /**
+             * Tk Url
+             * @description The page of a paper on tweedekamer.nl.
+             */
+            tk_url?: string | null;
+            vote?: components["schemas"]["FeedVoteDTO"] | null;
+            commitment?: components["schemas"]["FeedCommitmentDTO"] | null;
+            publication?: components["schemas"]["FeedPublicationDTO"] | null;
+            commencement?: components["schemas"]["FeedCommencementDTO"] | null;
+        };
+        /**
+         * FeedNodeDTO
+         * @description The node an event is: ``/api/nodes/{collection}/{key}`` shows it.
+         */
+        FeedNodeDTO: {
+            /** Collection */
+            collection: string;
+            /** Key */
+            key: string;
+        };
+        /**
+         * FeedPersonDTO
+         * @description Someone who signed the event: submitted a paper (``indiener``), signed it with the
+         *     one who did (``medeindiener``), or signed it or made the commitment for the
+         *     government (``bewindspersoon``).
+         */
+        FeedPersonDTO: {
+            /**
+             * Key
+             * @description Member key; null when unknown.
+             */
+            key?: string | null;
+            /** Name */
+            name?: string | null;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "indiener" | "medeindiener" | "bewindspersoon";
+            /** @description The faction a Kamerlid signed for; null for a bewindspersoon. */
+            faction?: components["schemas"]["FeedFactionDTO"] | null;
+        };
+        /**
+         * FeedPublicationDTO
+         * @description A ``publicatie`` in the Staatsblad, the Staatscourant or the Tractatenblad.
+         */
+        FeedPublicationDTO: {
+            /** Series */
+            series?: ("stb" | "stcrt" | "trb") | null;
+            /** Year */
+            year?: number | null;
+            /** Number */
+            number?: string | null;
+            /**
+             * Instruments
+             * @description The laws it amends, introduces or repeals (or articles of), by title; at most ten.
+             */
+            instruments?: components["schemas"]["FeedInstrumentDTO"][];
+        };
+        /** FeedResponse */
+        FeedResponse: {
+            /** Items */
+            items: components["schemas"]["FeedItemDTO"][];
+            /**
+             * Next Cursor
+             * @description Pass as ``cursor`` for the next page; null on the last page.
+             */
+            next_cursor?: string | null;
+            /**
+             * Total
+             * @description Events under the filters, all pages; null without facets.
+             */
+            total?: number | null;
+            /** @description Null without facets. */
+            facets?: components["schemas"]["FeedFacetsDTO"] | null;
+        };
+        /**
+         * FeedVoteDTO
+         * @description The outcome of a ``stemming``.
+         */
+        FeedVoteDTO: {
+            /** Passed */
+            passed?: boolean | null;
+            /** Outcome */
+            outcome?: ("aangenomen" | "verworpen") | null;
+            /**
+             * Vote Kind
+             * @description ``member`` for a roll-call, ``faction`` otherwise.
+             */
+            vote_kind?: ("member" | "faction") | null;
+            /**
+             * Tally
+             * @description Seats per choice as the source writes it (``Voor``, ``Tegen``, ``Niet deelgenomen``); members per choice on a roll-call.
+             */
+            tally?: {
+                [key: string]: number;
+            };
         };
         /**
          * GlobalGraphResponse
@@ -5532,22 +5784,65 @@ export interface components {
         };
         /**
          * MinistryDTO
-         * @description A ministry of ``core.ministries``; a former one names its successor and the last
-         *     day it had its name.
+         * @description A ministry name of ``data/ministries.json``: a name that came back (Economische
+         *     Zaken) has a period for each time; a former one names its successor and the last day
+         *     it had its name (``successor`` and ``until`` of its last period).
          */
         MinistryDTO: {
             key: components["schemas"]["MinistryKey"];
             /** Name */
             name: string;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /**
+             * Tooi
+             * @description The TOOI code: ``mnre1045``.
+             */
+            tooi?: string | null;
             successor?: components["schemas"]["MinistryKey"] | null;
             /** Until */
             until?: string | null;
+            /** Periods */
+            periods?: components["schemas"]["MinistryPeriodDTO"][];
         };
         /**
          * MinistryKey
          * @enum {string}
          */
-        MinistryKey: "az" | "aok" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "bzbpbo" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ez" | "ezk" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "lvv" | "szw" | "sz" | "szv" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "mw" | "vro" | "vb" | "wv" | "vrom" | "aenm" | "scheepvaart" | "ogd" | "uor" | "or" | "zo";
+        MinistryKey: "az" | "aok" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "bzbpbo" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ezk" | "ez" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "lvv" | "szw" | "sz" | "szv" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "mw" | "vro" | "vb" | "wv" | "vrom" | "aenm" | "scheepvaart" | "ogd" | "uor" | "or" | "zo";
+        /**
+         * MinistryPeriodDTO
+         * @description A stretch in which the ministry had its name, and where that is known from.
+         */
+        MinistryPeriodDTO: {
+            /**
+             * From Date
+             * @description Null where no source dates it.
+             */
+            from_date?: string | null;
+            /**
+             * Until
+             * @description The last day; null while it has the name, or where unknown.
+             */
+            until?: string | null;
+            successor?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Basis
+             * @description The Staatscourant decree the end rests on (from TOOI).
+             */
+            basis?: string | null;
+            /**
+             * Source
+             * @description ``tooi`` (the TOOI value list, since about 2010), ``rijksoverheid`` (the first post and a handover on the cabinet pages) or ``hand``.
+             * @enum {string}
+             */
+            source: "tooi" | "rijksoverheid" | "hand";
+            /**
+             * Successor Source
+             * @description ``hand`` for a succession no source gives (before 2010).
+             */
+            successor_source?: ("tooi" | "rijksoverheid" | "hand") | null;
+        };
         /**
          * NeighborBucketDTO
          * @description The neighbours that share a relation, a direction and a collection: one page of them.
@@ -6017,7 +6312,7 @@ export interface components {
         };
         /**
          * SourceRefDTO
-         * @description Where it was read: ``rijksoverheid`` with the page and the day, or ``wikidata``.
+         * @description Where it was read: ``rijksoverheid``, with the page and the day.
          */
         SourceRefDTO: {
             /** Name */
@@ -8973,6 +9268,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ParliamentSeatsResponse"];
+                };
+            };
+        };
+    };
+    get_feed_route_api_feed_get: {
+        parameters: {
+            query?: {
+                /** @description ``next_cursor`` of the page before. */
+                cursor?: string | null;
+                limit?: number;
+                /** @description Count the facets and the total. */
+                facets?: boolean;
+                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
+                kind?: string | null;
+                /** @description On or after this day. */
+                since?: string | null;
+                /** @description On or before this day. */
+                until?: string | null;
+                /** @description Cabinet key: the events of its period (``jetten``). */
+                cabinet?: string | null;
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020. */
+                dossier?: string | null;
+                /** @description Member key: what they signed, the commitments they made. */
+                member?: string | null;
+                /** @description Faction key: what its Kamerleden signed for it. */
+                faction?: string | null;
+                /** @description Words of the title, or of the title of the event's dossier, in any case. */
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_feed_atom_api_feed_atom_get: {
+        parameters: {
+            query?: {
+                /** @description ``next_cursor`` of the page before. */
+                cursor?: string | null;
+                limit?: number;
+                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
+                kind?: string | null;
+                /** @description On or after this day. */
+                since?: string | null;
+                /** @description On or before this day. */
+                until?: string | null;
+                /** @description Cabinet key: the events of its period (``jetten``). */
+                cabinet?: string | null;
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020. */
+                dossier?: string | null;
+                /** @description Member key: what they signed, the commitments they made. */
+                member?: string | null;
+                /** @description Faction key: what its Kamerleden signed for it. */
+                faction?: string | null;
+                /** @description Words of the title, or of the title of the event's dossier, in any case. */
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description An Atom 1.0 feed. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/atom+xml": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

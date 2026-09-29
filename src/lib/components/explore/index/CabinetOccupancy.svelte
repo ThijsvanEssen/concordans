@@ -4,6 +4,7 @@
 	// The phases (demissionair and after) are dotted lines with their name on the axis. A
 	// block opens its details beneath its line: by click, Enter or Space, and by `?open=`.
 	// On a narrow screen the lines become text: per seat the holders one under the other.
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import { bronHref } from '$lib/bron/href';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { POST_LABEL, getPartyColors, laterPosts } from './government';
@@ -247,7 +248,7 @@
 {#snippet detail(p: SeatPost)}
 	<div class="post-detail" style:--party={colorOf(p.party?.short)}>
 		<p class="post-who">
-			<span class="post-name">{nameOf(p)}</span>
+			<BronLink ref={`members/${p.member.key}`} class="post-name">{nameOf(p)}</BronLink>
 			{#if p.party?.short}<span class="post-party">{p.party.short}</span>{/if}
 		</p>
 		<p>{p.function ?? ''}{p.acting ? ', waarnemend' : ''}</p>
@@ -266,9 +267,7 @@
 					: ''}; {count(p.open_commitments, 'open toezegging', 'open toezeggingen')}
 			</p>
 		{/if}
-		<!-- TODO(reference): the shared Reference actions of the User flows session. -->
 		<p class="post-links">
-			<a href={bronHref(`members/${p.member.key}`, { keepMode: false, mode: 'read' })}>Lezen</a>
 			{#if counted(p) && p.open_commitments}
 				<a href={commitmentsHref(p.member.key)}>Toezeggingen</a>
 			{/if}
@@ -414,7 +413,13 @@
 		align-items: baseline;
 		gap: var(--s-2);
 	}
-	.post-name {
+	.post-who :global(a.post-name) {
+		text-decoration: none;
+	}
+	.post-who :global(a.post-name:hover) {
+		text-decoration: underline;
+	}
+	.post-who :global(a.post-name) {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink);
