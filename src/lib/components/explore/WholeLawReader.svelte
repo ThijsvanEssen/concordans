@@ -17,6 +17,9 @@
 	import { bronHref } from '$lib/bron/href';
 	import { layersOf } from '$lib/text/division';
 	import { articleName } from '$lib/text/bw';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -27,10 +30,42 @@
 	const PREVIEW_CHARS = 600;
 	const PAGE_SIZE = 100;
 
-	type Article = Schema<'InstrumentArticleNodeDTO'>;
 	type Detail = Schema<'ArticleDetailResponse'>;
+	type Version = Schema<'InstrumentVersionDTO'>;
+	/** An article as the list shows it, of today or of the peildatum. */
+	type Row = {
+		id: string;
+		/** The article to link to; null for one that is no longer in the law. */
+		key: string | null;
+		article_number: string | null;
+		label: string | null;
+		address: string | null;
+		breadcrumb: Schema<'InstrumentArticleNodeDTO'>['breadcrumb'];
+		/** The whole text of an old version, which comes with the list. */
+		text: string | null;
+		text_preview: string | null;
+	};
 
-	let articles = $state<Article[]>([]);
+	// ?peildatum=2015-01-01: the law as it applied on that day.
+	const peildatum = $derived.by(() => {
+		const day = page.url.searchParams.get('peildatum');
+		return isDay(day) ? day : null;
+	});
+	const withParams = (params: Record<string, string | null>) => {
+		const url = new URL(page.url);
+		for (const [k, v] of Object.entries(params))
+			if (v === null) url.searchParams.delete(k);
+			else url.searchParams.set(k, v);
+		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
+	};
+	const choose = (day: string) =>
+		goto(withParams({ peildatum: day || null }), {
+			replaceState: true,
+			noScroll: true,
+			keepFocus: true
+		});
+
+	let articles = $state<Row[]>([]);
 	let total = $state(0);
 	let status = $state<'idle' | 'loading' | 'loading-more' | 'ready' | 'error'>('idle');
 	// A plain `Map` (even inside `$state()`) does not give `.set()`/`.get()` reactivity
@@ -77,11 +112,6 @@
 		return { articleNumber, heading, shortTitle: meta?.shortTitle ?? null, citationTitle: title };
 	};
 
-	// An article without a number (the Algemene bepaling) is fetched by its address and
-	// headed by its label.
-	const addressOf = (a: { article_number?: string | null; address?: string | null }) =>
-		a.article_number ?? a.address ?? null;
-
 	const lawName = $derived.by(() => {
 		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
 		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwbId;
@@ -107,22 +137,108 @@
 		multilateraalverdrag: 'Multilateraal verdrag'
 	};
 	const kindLabel = $derived((lawDetail?.kind && KIND[lawDetail.kind]) || 'Regeling');
+	// The versions of the law, for the peildatum; the current one dates the text in force
+	// (Awb: 15 August 2026). `date_in_force` is not that date (Awb: 2013).
+	let versions = $state<Version[]>([]);
+	$effect(() => {
+		versions = [];
+		const bwb = bwbId;
+		if (!bwb) return;
+		const ac = new AbortController();
+		unwrap(
+			api.GET('/api/instruments/{bwb_id}/versions', {
+				params: { path: { bwb_id: bwb } },
+				signal: ac.signal
+			})
+		)
+			.then((r) => {
+				if (bwb === bwbId) versions = uniqueBy(r.items, (v) => v.valid_from ?? v.key);
+			})
+			.catch(() => {});
+		return () => ac.abort();
+	});
+	const currentVersion = $derived(versions.find((v) => v.current) ?? null);
+	const shownVersion = $derived(peildatum ? versionOn(versions, peildatum) : currentVersion);
+	const oldest = $derived(
+		versions
+			.map((v) => v.valid_from ?? '')
+			.filter(Boolean)
+			.sort()[0]
+	);
+	const today = new Date().toISOString().slice(0, 10);
+
+	// Tekst zoals geldend op 1 januari 2015, versie van 1 januari 2015 tot 1 april 2015.
+	const histLine = $derived.by(() => {
+		if (!peildatum) return '';
+		const v = shownVersion;
+		const of = v?.current
+			? ', de geldende tekst'
+			: v?.valid_from
+				? `, versie van ${formatLongDate(v.valid_from)}${v.valid_until ? ` tot ${formatLongDate(v.valid_until)}` : ''}`
+				: '';
+		return `Tekst zoals geldend op ${formatLongDate(peildatum)}${of}.`;
+	});
+
+	// The head in sentences: 587 artikelen. Geldende tekst: versie van 15 augustus 2026.
 	const headLine = $derived(
 		[
-			`${formatCount(lawDetail?.article_count ?? total)} artikelen`,
-			lawDetail?.date_in_force
-				? `geldende versie sinds ${formatLongDate(lawDetail.date_in_force)}`
+			`${formatCount(peildatum ? total : (lawDetail?.article_count ?? total))} artikelen.`,
+			!peildatum && currentVersion?.valid_from
+				? `Geldende tekst: versie van ${formatLongDate(currentVersion.valid_from)}.`
 				: null,
 			lawDetail?.inbound_citation_count
-				? `${formatCount(lawDetail.inbound_citation_count)} keer aangehaald`
+				? `${formatCount(lawDetail.inbound_citation_count)} keer aangehaald.`
 				: null
 		]
 			.filter(Boolean)
-			.join(' · ')
+			.join(' ')
+	);
+	const officialUrl = $derived(
+		(peildatum ? shownVersion?.official_url : null) ?? lawDetail?.official_url ?? null
 	);
 
-	function load(bwb: string, offset: number, signal?: AbortSignal) {
-		return unwrap(
+	// The articles of today, in pages; the place of an article of an earlier day is read
+	// from today's list, once per law.
+	const todayList = new Map<string, Promise<Schema<'InstrumentArticleNodeDTO'>[]>>();
+	function articlesNow(bwb: string) {
+		let list = todayList.get(bwb);
+		if (!list) {
+			list = unwrap(
+				api.GET('/api/instruments/{bwb_id}/articles', {
+					params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: 2000 } }
+				})
+			).then((r) => r.items);
+			list.catch(() => todayList.delete(bwb));
+			todayList.set(bwb, list);
+		}
+		return list;
+	}
+
+	async function load(
+		bwb: string,
+		day: string | null,
+		offset: number,
+		signal?: AbortSignal
+	): Promise<{ items: Row[]; total: number }> {
+		if (day) {
+			const [at, now] = await Promise.all([
+				unwrap(
+					api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
+						params: {
+							path: { bwb_id: bwb, at_date: day },
+							query: { text_preview_chars: PREVIEW_CHARS, limit: PAGE_SIZE, offset }
+						},
+						signal
+					})
+				),
+				articlesNow(bwb)
+			]);
+			return {
+				total: at.total,
+				items: atArticles(at.items, now).map((a) => ({ ...a, address: a.article_number }))
+			};
+		}
+		const r = await unwrap(
 			api.GET('/api/instruments/{bwb_id}/articles', {
 				params: {
 					path: { bwb_id: bwb },
@@ -131,6 +247,19 @@
 				signal
 			})
 		);
+		return {
+			total: r.total,
+			items: r.items.map((a) => ({
+				id: a.id,
+				key: a.key,
+				article_number: a.article_number ?? null,
+				label: a.label ?? null,
+				address: a.article_number ?? a.address ?? null,
+				breadcrumb: a.breadcrumb ?? [],
+				text: null,
+				text_preview: a.text_preview ?? null
+			}))
+		};
 	}
 
 	$effect(() => {
@@ -144,10 +273,10 @@
 		primeInstrumentNames();
 		const controller = new AbortController();
 		status = 'loading';
-		load(bwbId, 0, controller.signal)
-			.then((page) => {
-				articles = page.items;
-				total = page.total;
+		load(bwbId, peildatum, 0, controller.signal)
+			.then((first) => {
+				articles = first.items;
+				total = first.total;
 				status = 'ready';
 			})
 			.catch(() => {
@@ -161,8 +290,10 @@
 		const bwb = bwbId;
 		status = 'loading-more';
 		try {
-			const page = await load(bwb, articles.length);
-			if (bwb === bwbId) articles = uniqueBy([...articles, ...page.items], (a) => a.id);
+			const day = peildatum;
+			const next = await load(bwb, day, articles.length);
+			if (bwb === bwbId && day === peildatum)
+				articles = uniqueBy([...articles, ...next.items], (a) => a.id);
 		} catch {
 			// The articles already shown stay; the button remains for another attempt.
 		}
@@ -171,7 +302,7 @@
 
 	// The layers that begin at this article, each once; a layer that is the law itself
 	// (Boek 6 of Burgerlijk Wetboek Boek 6) is no heading.
-	function newSections(prev: Article | undefined, cur: Article) {
+	function newSections(prev: Row | undefined, cur: Row) {
 		const before = layersOf(prev?.breadcrumb ?? [], lawName);
 		return layersOf(cur.breadcrumb ?? [], lawName)
 			.map((crumb, depth) => ({ ...crumb, depth }))
@@ -197,10 +328,51 @@
 				<p class="whole-official">{lawDetail.official_title}</p>
 			{/if}
 			<p class="whole-count">
-				{headLine}{#if lawDetail?.official_url}
-					· <a href={lawDetail.official_url} rel="external">wetten.overheid.nl</a>{/if}
+				{headLine}
+				{#if officialUrl}<a href={officialUrl} rel="external">wetten.overheid.nl</a>{/if}
 			</p>
+			{#if versions.length > 0}
+				<!-- The peildatum: the versions of the law by year, the text of today first. -->
+				<div class="whole-peil">
+					<label for="peildatum-{bwbId}">Tekst geldend op</label>
+					<select
+						id="peildatum-{bwbId}"
+						class="whole-peil-pick"
+						value={peildatum ?? ''}
+						onchange={(e) => choose(e.currentTarget.value)}
+					>
+						<option value="">{formatLongDate(today)}</option>
+						{#if peildatum && !versions.some((v) => v.valid_from === peildatum)}
+							<option value={peildatum}>{formatLongDate(peildatum)}</option>
+						{/if}
+						{#each versionsByYear(versions) as [year, list] (year)}
+							<optgroup label={year}>
+								{#each list as v (v.valid_from)}
+									<option value={v.valid_from}
+										>{formatLongDate(v.valid_from ?? null)}{v.current ? ', geldend' : ''}</option
+									>
+								{/each}
+							</optgroup>
+						{/each}
+					</select>
+					<span class="whole-peil-note"
+						>{formatCount(versions.length)} versies sinds {formatLongDate(oldest ?? null)}</span
+					>
+				</div>
+			{/if}
+			{#if peildatum}
+				<p class="whole-hist">
+					{histLine}
+					<a href={withParams({ peildatum: null })} data-sveltekit-noscroll
+						>Naar de geldende tekst</a
+					>
+				</p>
+			{/if}
 		</header>
+
+		{#if peildatum && articles.length === 0}
+			<p class="whole-empty-text">Geen versie van deze wet op {formatLongDate(peildatum)}.</p>
+		{/if}
 
 		{#each articles as a, i (a.id)}
 			{#each newSections(articles[i - 1], a) as section, j (j)}
@@ -215,23 +387,31 @@
 				</h2>
 			{/each}
 
-			{@const address = addressOf(a)}
-			{@const detail = address ? detailByNumber.get(address) : undefined}
-			<section class="whole-article" id="article-{address}" use:lazyLoad={address}>
+			{@const address = a.address}
+			{@const detail = address && !peildatum ? detailByNumber.get(address) : undefined}
+			{@const name = articleName(bwbId, a.article_number, a.label) ?? a.id}
+			<section
+				class="whole-article"
+				id="article-{address}"
+				use:lazyLoad={peildatum ? null : address}
+			>
 				<div class="whole-article-head">
-					<a
-						class="whole-article-jump"
-						href={bronHref({ collection: 'articles', key: a.key })}
-						data-sveltekit-noscroll
-					>
-						<!-- The anchor of reading: Artikel 3:4, a BW article with its book (6:162). -->
-						<span class="whole-art-num"
-							>{articleName(bwbId, a.article_number, a.label) ?? a.key}</span
+					<!-- The anchor of reading: Artikel 3:4, a BW article with its book (6:162). -->
+					{#if a.key}
+						<a
+							class="whole-article-jump"
+							href={bronHref({ collection: 'articles', key: a.key })}
+							data-sveltekit-noscroll><span class="whole-art-num">{name}</span></a
 						>
-					</a>
+					{:else}
+						<span class="whole-art-num">{name}</span>
+						<span class="whole-art-note">niet meer in de geldende tekst</span>
+					{/if}
 				</div>
 
-				{#if detail}
+				{#if a.text}
+					<ArticleText text={a.text} parts={null} citation={null} mark={onderdeelMark(bwbId)} />
+				{:else if detail}
 					<ArticleText
 						text={detail.article.text}
 						parts={detail.article.parts}
@@ -319,11 +499,10 @@
 
 	.whole-kind {
 		display: block;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
 		color: var(--ink-3);
-		margin-bottom: var(--s-2);
+		margin-bottom: var(--s-1);
 	}
 
 	.whole-title {
@@ -336,10 +515,9 @@
 	}
 
 	.whole-count {
-		margin: 0;
+		margin: var(--s-2) 0 0;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
 	.whole-official {
@@ -357,6 +535,65 @@
 	}
 	.whole-count a:hover {
 		color: var(--accent);
+	}
+
+	/* The peildatum: a list that reads as a line of the head. */
+	.whole-peil {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-2);
+		margin-top: var(--s-3);
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		color: var(--ink-2);
+	}
+	.whole-peil-pick {
+		max-width: 100%;
+		padding: 0 var(--s-1);
+		border: 0;
+		border-bottom: 1px solid var(--ink-3);
+		border-radius: 0;
+		background: none;
+		font: inherit;
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	/* Below 16 px a phone zooms in on the list. */
+	@media (max-width: 768px) {
+		.whole-peil-pick {
+			font-size: var(--t-input);
+			min-height: var(--s-6);
+		}
+	}
+	.whole-peil-pick:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+	.whole-peil-note {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	/* A text of an earlier day says so, with the way back. */
+	.whole-hist {
+		margin: var(--s-3) 0 0;
+		padding: var(--s-2) var(--s-3);
+		background: var(--accent-soft);
+		border-radius: var(--r-1);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink);
+	}
+	.whole-hist a {
+		color: var(--accent);
+	}
+	.whole-art-note {
+		margin-left: var(--s-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
 	.whole-section {
