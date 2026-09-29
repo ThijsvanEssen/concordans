@@ -18,14 +18,35 @@ export const POST_LABEL: Record<Post, string> = {
 };
 export const POSTS = Object.keys(POST_LABEL) as Post[];
 
-export const COMMITMENT_STATUS_LABEL: Record<CommitmentStatus, string> = {
-	open: 'Open',
-	done: 'Voldaan',
-	partly_done: 'Deels voldaan',
-	unfulfilled: 'Niet voldaan',
+/**
+ * The states of a toezegging as the Tweede Kamer writes them (`Toezegging.Status`), in the
+ * order the filter lists them. They are shown as they are; a state the Kamer adds later
+ * shows with its own word too.
+ */
+export const COMMITMENT_STATUSES = [
+	'Openstaand',
+	'Afgedaan',
+	'Nagekomen',
+	'Deels Afgedaan',
+	'Niet nagekomen',
+	'Vervallen'
+] as const;
+
+/** The state of a toezegging not yet settled; past its date it is overdue. */
+export const OPEN_STATUS = 'Openstaand';
+
+/** The states of API 0.47 and before, as a link from then names them in `?status=`. */
+const OLD_STATUS: Record<string, string> = {
+	open: 'Openstaand',
+	done: 'Afgedaan',
+	partly_done: 'Deels Afgedaan',
+	unfulfilled: 'Niet nagekomen',
 	lapsed: 'Vervallen'
 };
-export const COMMITMENT_STATUSES = Object.keys(COMMITMENT_STATUS_LABEL) as CommitmentStatus[];
+
+/** A state from the URL: as the Kamer writes it, or by its name before API 0.48. */
+export const statusFromParam = (value: string | null): string | null =>
+	value ? (OLD_STATUS[value] ?? value) : null;
 
 function once<T>(load: () => Promise<T>): () => Promise<T> {
 	let request: Promise<T> | null = null;

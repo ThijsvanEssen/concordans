@@ -309,7 +309,7 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			label: 'Wetsvoorstellen',
 			title: `${bills.length} wetsvoorstellen ingediend`,
 			context: listLine(bills.map(name), 3),
-			href: actueelDayHref(date, ['wetsvoorstel']),
+			href: actueelDayHref(date, ['Voorstel van wet']),
 			major: true
 		}
 	];
@@ -334,9 +334,9 @@ function commencementLine(i: FeedItem): TimelineLine {
 
 /** The papers the Kamer receives, as a headline counts them. */
 const PAPERS: { kind: FeedKind; noun: [string, string] }[] = [
-	{ kind: 'motie', noun: ['motie', 'moties'] },
-	{ kind: 'amendement', noun: ['amendement', 'amendementen'] },
-	{ kind: 'nota_van_wijziging', noun: ['nota van wijziging', 'nota’s van wijziging'] }
+	{ kind: 'Motie', noun: ['motie', 'moties'] },
+	{ kind: 'Amendement', noun: ['amendement', 'amendementen'] },
+	{ kind: 'Nota van wijziging', noun: ['nota van wijziging', 'nota’s van wijziging'] }
 ];
 
 type SummaryDay = Schema<'FeedDayDTO'>;
@@ -420,7 +420,7 @@ export function dayLines(day: SummaryDay, items: readonly FeedItem[]): TimelineL
 			day.date,
 			votes.filter((v) => v.subkind === 'wetsvoorstel')
 		),
-		...billLines(day.date, of('wetsvoorstel')),
+		...billLines(day.date, of('Voorstel van wet')),
 		...of('inwerkingtreding').map(commencementLine),
 		...otherVoteLines(
 			day,
@@ -430,7 +430,7 @@ export function dayLines(day: SummaryDay, items: readonly FeedItem[]): TimelineL
 		...kamerstukLine(day),
 		...countedLine(
 			day,
-			'brief_regering',
+			'Brief regering',
 			['brief van de regering', 'brieven van de regering'],
 			'Brieven'
 		),
@@ -498,7 +498,7 @@ export function headlineOf(i: FeedItem): Headline {
 		}
 		case 'toezegging':
 			return { label: 'Toezegging', title: commitmentTitle(i), major: true };
-		case 'wetsvoorstel': {
+		case 'Voorstel van wet': {
 			const name = i.dossier ? dossierName(i.dossier) : (i.title ?? 'Wetsvoorstel');
 			return { label: 'Wetsvoorstel', title: `Wetsvoorstel ingediend: ${name}`, major: true };
 		}

@@ -30,7 +30,7 @@
 		atomParams,
 		daysOf,
 		feedStand,
-		isFeedKind,
+		kindFromParam,
 		normalizeItem,
 		standLine,
 		type DaySummary,
@@ -44,7 +44,10 @@
 
 	// ── The URL ─────────────────────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
-	const kinds = $derived((params.get('soort') ?? '').split(',').filter(isFeedKind));
+	// A link from before API 0.48 names a kind the old way (`motie`): read as the TK word.
+	const kinds = $derived([
+		...new Set((params.get('soort') ?? '').split(',').flatMap((v) => kindFromParam(v) ?? []))
+	]);
 	const since = $derived(params.get('van') ?? '');
 	const until = $derived(params.get('tot') ?? '');
 	const cabinet = $derived(params.get('kabinet') ?? '');

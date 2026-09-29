@@ -6,7 +6,6 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
-	import { COMMITMENT_STATUS_LABEL } from '$lib/components/explore/index/government';
 	import {
 		KIND_LABEL,
 		dossierLabel,
@@ -25,7 +24,7 @@
 	/** Medeindieners named in a row; the rest are counted. */
 	const SUBMITTERS_SHOWN = 2;
 	/** The kinds whose persons are its indieners: a motie, an amendement, the vote on one. */
-	const SUBMITTED = new Set<FeedItem['kind']>(['motie', 'amendement', 'stemming']);
+	const SUBMITTED = new Set<FeedItem['kind']>(['Motie', 'Amendement', 'stemming']);
 
 	let {
 		entry,
@@ -139,8 +138,7 @@
 					>{/if}
 			{:else if i.commitment}
 				<span class="aside-note"
-					>{i.commitment.status ? COMMITMENT_STATUS_LABEL[i.commitment.status] : ''}{i.commitment
-						.expected_resolution
+					>{i.commitment.status ?? ''}{i.commitment.expected_resolution
 						? `, verwacht ${shortDate(i.commitment.expected_resolution)}`
 						: ''}</span
 				>

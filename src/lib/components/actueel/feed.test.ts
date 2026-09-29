@@ -9,9 +9,21 @@ import {
 	dossierLabel,
 	feedStand,
 	foldTitle,
+	kindFromParam,
 	standLine,
 	titleOf
 } from './feed';
+
+describe('kindFromParam', () => {
+	it('reads a kind as the API names it, and one of before API 0.48 as the TK word', () => {
+		expect(kindFromParam('Motie')).toBe('Motie');
+		expect(kindFromParam('stemming')).toBe('stemming');
+		expect(kindFromParam('motie')).toBe('Motie');
+		expect(kindFromParam('brief_regering')).toBe('Brief regering');
+		expect(kindFromParam('wetsvoorstel')).toBe('Voorstel van wet');
+		expect(kindFromParam('iets')).toBeNull();
+	});
+});
 
 let n = 0;
 const item = (date: string, kind: FeedItem['kind'], dossier: string | null): FeedItem =>
@@ -39,24 +51,24 @@ const item = (date: string, kind: FeedItem['kind'], dossier: string | null): Fee
 describe('daysOf', () => {
 	it('groups per day and folds many of one kind on one dossier', () => {
 		const items = [
-			item('2026-09-24', 'motie', '30234'),
-			item('2026-09-24', 'brief_regering', null),
-			item('2026-09-24', 'motie', '30234'),
-			item('2026-09-24', 'motie', '21501-32'),
-			item('2026-09-24', 'motie', '30234'),
-			item('2026-09-23', 'motie', '30234')
+			item('2026-09-24', 'Motie', '30234'),
+			item('2026-09-24', 'Brief regering', null),
+			item('2026-09-24', 'Motie', '30234'),
+			item('2026-09-24', 'Motie', '21501-32'),
+			item('2026-09-24', 'Motie', '30234'),
+			item('2026-09-23', 'Motie', '30234')
 		];
 		const days = daysOf(items);
 		expect(days.map((d) => d.date)).toEqual(['2026-09-24', '2026-09-23']);
 		const [first] = days;
 		// The fold stands where its first item stood.
 		expect(first.entries.map((e) => ('fold' in e ? e.fold.id : e.item.kind))).toEqual([
-			'fold/2026-09-24/motie/30234',
-			'brief_regering',
-			'motie'
+			'fold/2026-09-24/Motie/30234',
+			'Brief regering',
+			'Motie'
 		]);
 		expect('fold' in first.entries[0] && first.entries[0].fold.items).toHaveLength(3);
-		expect(countLine(first.counts)).toBe('4 moties, 1 brief van de regering');
+		expect(countLine(first.counts)).toBe('4 moties, 1 brief regering');
 		// One of a kind on another day does not fold.
 		expect(days[1].entries).toHaveLength(1);
 	});
@@ -114,7 +126,7 @@ describe('dossierLabel', () => {
 describe('titleOf', () => {
 	const bill = (title: string, dossierTitle: string | null) =>
 		({
-			...item('2026-09-15', 'wetsvoorstel', '37000'),
+			...item('2026-09-15', 'Voorstel van wet', '37000'),
 			title,
 			dossier: { key: '37000', number: '37000', title: dossierTitle, short_title: null }
 		}) as FeedItem;
@@ -143,7 +155,7 @@ describe('the votes of a day', () => {
 
 	it('fold into one line at the top, the bills and the close ones apart', () => {
 		const [day] = daysOf([
-			item('2026-09-22', 'brief_regering', null),
+			item('2026-09-22', 'Brief regering', null),
 			vote('29911', 120, 30),
 			vote('29754', 20, 130),
 			vote('36892', 100, 50, 'amendement'),
@@ -156,7 +168,7 @@ describe('the votes of a day', () => {
 			'Kamer stemt over 2 moties: 1 aangenomen, 1 verworpen, en over 1 amendement'
 		);
 		expect(rest.map((e) => ('item' in e ? e.item.kind : 'fold'))).toEqual([
-			'brief_regering',
+			'Brief regering',
 			'stemming',
 			'stemming'
 		]);

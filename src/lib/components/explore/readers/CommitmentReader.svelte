@@ -11,7 +11,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import {
-		COMMITMENT_STATUS_LABEL,
+		OPEN_STATUS,
 		POST_LABEL,
 		getCabinets,
 		getMinistries,
@@ -76,7 +76,7 @@
 		{:else}
 			{@const c = view.commitment}
 			{@const late =
-				c.status === 'open' && !!c.expected_resolution && c.expected_resolution < today}
+				c.status === OPEN_STATUS && !!c.expected_resolution && c.expected_resolution < today}
 			<header class="head">
 				<span class="kicker"><KindGlyph collection="commitments" />{bronLabel('commitments')}</span>
 				<p class="text">{c.text ?? 'Toezegging zonder tekst'}</p>
@@ -113,8 +113,7 @@
 				{/if}
 				<dt>Stand</dt>
 				<dd class:late>
-					{c.status ? COMMITMENT_STATUS_LABEL[c.status] : 'onbekend'}{#if late}, over de verwachte
-						datum{/if}
+					{c.status ?? 'onbekend'}{#if late}, over de verwachte datum{/if}
 				</dd>
 				<dt>Verwacht</dt>
 				<dd class="nums">

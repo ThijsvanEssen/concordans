@@ -52,7 +52,8 @@
 	import { judgmentRowTitle } from './index/judgment-kind';
 	import {
 		COMMITMENT_STATUSES,
-		COMMITMENT_STATUS_LABEL,
+		OPEN_STATUS,
+		statusFromParam,
 		POSTS,
 		POST_LABEL,
 		currentCabinet,
@@ -110,7 +111,10 @@
 	const cabinetParam = $derived(params.get('cabinet') ?? '');
 	const memberParam = $derived(params.get('member') ?? '');
 	const post = $derived(oneOf(params.get('post'), POSTS));
-	const commitmentStatus = $derived(oneOf(params.get('status'), COMMITMENT_STATUSES));
+	// A link from before API 0.48 names a state the old way (`open`): read as the Kamer's word.
+	const commitmentStatus = $derived(
+		oneOf(statusFromParam(params.get('status')), COMMITMENT_STATUSES)
+	);
 	const overdue = $derived(params.get('overdue') === '1');
 	const coalition = $derived(params.get('coalition') ?? '');
 	// Dossiers: the open ones unless asked otherwise; a number searched for is looked up in all.
@@ -1379,7 +1383,7 @@
 							(st) => !statusCounts || (statusCounts.get(st) ?? 0) > 0 || st === commitmentStatus
 						).map((st) => ({
 							id: st,
-							label: COMMITMENT_STATUS_LABEL[st],
+							label: st,
 							count: statusCounts?.get(st),
 							on: commitmentStatus === st,
 							onClick: toggle('status', commitmentStatus, st)
@@ -1775,7 +1779,8 @@
 								cabinet={occupancyCabinet}
 								{openId}
 								onToggle={toggleOpen}
-								commitmentsHref={(key) => tabHref('commitments') + `&member=${key}&status=open`}
+								commitmentsHref={(key) =>
+									tabHref('commitments') + `&member=${key}&status=${OPEN_STATUS}`}
 							/>
 						{/if}
 					{/if}
@@ -2313,7 +2318,7 @@
 										{#each pages.commitments.items as t (t.key)}
 											{@const bron = `commitments/${t.key}`}
 											{@const late =
-												t.status === 'open' &&
+												t.status === OPEN_STATUS &&
 												!!t.expected_resolution &&
 												t.expected_resolution < new Date().toISOString().slice(0, 10)}
 											<IndexRow
@@ -2326,7 +2331,7 @@
 												{#snippet lead()}
 													<span class="row-id-main">{fmtDateShort(t.date)}</span>
 													{#if t.status}
-														<span class="row-id-sub">{COMMITMENT_STATUS_LABEL[t.status]}</span>
+														<span class="row-id-sub">{t.status}</span>
 													{/if}
 												{/snippet}
 												{#snippet body()}

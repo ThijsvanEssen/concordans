@@ -15,15 +15,18 @@ export const normalizeItem = (raw: RawFeedItem): FeedItem => ({
 	persons: raw.persons ?? []
 });
 
-/** Each kind as a label in a row, and counted in a day's heading. */
+/**
+ * Each kind as a row labels it and a day's heading counts it. A paper of the Kamer by the
+ * word of the Tweede Kamer itself (`Brief regering`), as the API gives it.
+ */
 export const KIND_LABEL: Record<FeedKind, { one: string; many: string }> = {
 	stemming: { one: 'Stemming', many: 'stemmingen' },
-	wetsvoorstel: { one: 'Wetsvoorstel', many: 'wetsvoorstellen' },
-	nota_van_wijziging: { one: 'Nota van wijziging', many: 'nota’s van wijziging' },
-	amendement: { one: 'Amendement', many: 'amendementen' },
-	motie: { one: 'Motie', many: 'moties' },
+	'Voorstel van wet': { one: 'Voorstel van wet', many: 'voorstellen van wet' },
+	'Nota van wijziging': { one: 'Nota van wijziging', many: 'nota’s van wijziging' },
+	Amendement: { one: 'Amendement', many: 'amendementen' },
+	Motie: { one: 'Motie', many: 'moties' },
 	toezegging: { one: 'Toezegging', many: 'toezeggingen' },
-	brief_regering: { one: 'Brief van de regering', many: 'brieven van de regering' },
+	'Brief regering': { one: 'Brief regering', many: 'brieven regering' },
 	publicatie: { one: 'Publicatie', many: 'publicaties' },
 	inwerkingtreding: { one: 'Inwerkingtreding', many: 'inwerkingtredingen' }
 };
@@ -32,6 +35,19 @@ export const KIND_LABEL: Record<FeedKind, { one: string; many: string }> = {
 export const FEED_KINDS = Object.keys(KIND_LABEL) as FeedKind[];
 
 export const isFeedKind = (value: string): value is FeedKind => Object.hasOwn(KIND_LABEL, value);
+
+/** The kinds of API 0.47 and before, as a link from then names them in `?soort=`. */
+const OLD_KIND: Record<string, FeedKind> = {
+	wetsvoorstel: 'Voorstel van wet',
+	nota_van_wijziging: 'Nota van wijziging',
+	amendement: 'Amendement',
+	motie: 'Motie',
+	brief_regering: 'Brief regering'
+};
+
+/** A kind from the URL: as the API names it, or by its name before API 0.48. */
+export const kindFromParam = (value: string): FeedKind | null =>
+	isFeedKind(value) ? value : (OLD_KIND[value] ?? null);
 
 type Dossier = NonNullable<FeedItem['dossier']>;
 

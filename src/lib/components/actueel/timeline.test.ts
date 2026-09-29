@@ -15,7 +15,7 @@ let n = 0;
 const item = (over: Partial<FeedItem>): FeedItem =>
 	({
 		id: `x/${++n}`,
-		kind: 'motie',
+		kind: 'Motie',
 		date: '2026-09-22',
 		title: null,
 		summary: null,
@@ -171,15 +171,15 @@ describe('dayLines', () => {
 		const lines = dayLines(
 			day({
 				kinds: [
-					{ value: 'motie', count: 54 },
-					{ value: 'amendement', count: 5 },
-					{ value: 'brief_regering', count: 14 }
+					{ value: 'Motie', count: 54 },
+					{ value: 'Amendement', count: 5 },
+					{ value: 'Brief regering', count: 14 }
 				],
 				dossiers: [
 					{ kind: 'stemming', number: '29911', short_title: 'Drugsbeleid', count: 30 },
-					{ kind: 'motie', number: '24557', short_title: 'Kansspelen', count: 12 },
-					{ kind: 'motie', number: '31765', short_title: 'Kwaliteit van zorg', count: 7 },
-					{ kind: 'amendement', number: '31765', short_title: 'Kwaliteit van zorg', count: 6 }
+					{ kind: 'Motie', number: '24557', short_title: 'Kansspelen', count: 12 },
+					{ kind: 'Motie', number: '31765', short_title: 'Kwaliteit van zorg', count: 7 },
+					{ kind: 'Amendement', number: '31765', short_title: 'Kwaliteit van zorg', count: 6 }
 				]
 			}),
 			[]
@@ -193,7 +193,7 @@ describe('dayLines', () => {
 	});
 
 	it('names one kind of paper by itself', () => {
-		const [line] = dayLines(day({ kinds: [{ value: 'motie', count: 21 }] }), []);
+		const [line] = dayLines(day({ kinds: [{ value: 'Motie', count: 21 }] }), []);
 		expect(line.label).toBe('Moties');
 		expect(line.title).toBe('21 moties ingediend');
 	});
@@ -214,13 +214,13 @@ describe('timelineOf', () => {
 			summary(
 				[
 					day({ date: '2026-09-29', total: 0 }),
-					day({ date: '2026-09-24', kinds: [{ value: 'motie', count: 1 }] }),
+					day({ date: '2026-09-24', kinds: [{ value: 'Motie', count: 1 }] }),
 					day({ date: '2026-09-17' })
 				],
 				[
 					item({
 						date: '2026-09-17',
-						kind: 'wetsvoorstel',
+						kind: 'Voorstel van wet',
 						dossier: { key: 'w', number: '37014', short_title: 'Wet weerbare waarden' } as never
 					})
 				]
@@ -236,7 +236,7 @@ describe('timelineOf', () => {
 	it('keeps what matters of the last day before its counts', () => {
 		const lines = timelineOf(
 			summary(
-				[day({ kinds: [{ value: 'brief_regering', count: 3 }] })],
+				[day({ kinds: [{ value: 'Brief regering', count: 3 }] })],
 				[
 					item({
 						kind: 'toezegging',
@@ -283,9 +283,9 @@ describe('headlineOf', () => {
 			title: 'Kamer neemt wetsvoorstel aan: Archiefwet'
 		});
 		expect(
-			headlineOf(item({ kind: 'brief_regering', title: 'Voortgang waterstofbeleid' }))
+			headlineOf(item({ kind: 'Brief regering', title: 'Voortgang waterstofbeleid' }))
 		).toEqual({
-			label: 'Brief van de regering',
+			label: 'Brief regering',
 			title: 'Voortgang waterstofbeleid',
 			major: false
 		});
