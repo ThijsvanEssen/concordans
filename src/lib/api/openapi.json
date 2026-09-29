@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.43.0"
+		"version": "0.44.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -4181,6 +4181,26 @@
 				"title": "AnnexReferencedByItem",
 				"description": "An article that references an annex, with scope metadata."
 			},
+			"AppealTarget": {
+				"properties": {
+					"court": {
+						"type": "string",
+						"title": "Court",
+						"description": "As the text writes it: `rechtbank Gelderland`."
+					},
+					"date": { "type": "string", "title": "Date", "description": "ISO date of the decision." },
+					"case_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Case Number",
+						"description": "As the text writes it: `24/6811`; null when it gives none."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["court", "date"],
+				"title": "AppealTarget",
+				"description": "A decision an appeal names in its text that is not loaded."
+			},
 			"ArticleCitationSpan": {
 				"properties": {
 					"leden": {
@@ -8233,6 +8253,12 @@
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
 						"title": "Series Size",
 						"description": "How many judgments the series has."
+					},
+					"unresolved_appeal_targets": {
+						"items": { "$ref": "#/components/schemas/AppealTarget" },
+						"type": "array",
+						"title": "Unresolved Appeal Targets",
+						"description": "The decisions an appeal says in its text it appeals (\"tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811\") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most."
 					},
 					"paragraphs": {
 						"items": { "$ref": "#/components/schemas/JudgmentParagraph" },

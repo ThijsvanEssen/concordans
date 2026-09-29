@@ -1514,6 +1514,27 @@ export interface components {
             explanation?: string | null;
         };
         /**
+         * AppealTarget
+         * @description A decision an appeal names in its text that is not loaded.
+         */
+        AppealTarget: {
+            /**
+             * Court
+             * @description As the text writes it: `rechtbank Gelderland`.
+             */
+            court: string;
+            /**
+             * Date
+             * @description ISO date of the decision.
+             */
+            date: string;
+            /**
+             * Case Number
+             * @description As the text writes it: `24/6811`; null when it gives none.
+             */
+            case_number?: string | null;
+        };
+        /**
          * ArticleCitationSpan
          * @description Character span for an internal citation inside the source article.
          */
@@ -4922,6 +4943,11 @@ export interface components {
              * @description How many judgments the series has.
              */
             series_size?: number | null;
+            /**
+             * Unresolved Appeal Targets
+             * @description The decisions an appeal says in its text it appeals ("tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most.
+             */
+            unresolved_appeal_targets?: components["schemas"]["AppealTarget"][];
             /** Paragraphs */
             paragraphs?: components["schemas"]["JudgmentParagraph"][];
             /**
