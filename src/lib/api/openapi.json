@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.44.0"
+		"version": "0.49.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -2479,7 +2479,7 @@
 			"get": {
 				"tags": ["commitments", "government"],
 				"summary": "Commitments",
-				"description": "Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``overdue`` keeps the open ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters.",
+				"description": "Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``status`` is the Toezegging.Status of the Tweede Kamer (`Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`). ``overdue`` keeps the `Openstaand` ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters.",
 				"operationId": "list_commitments_api_commitments_get",
 				"parameters": [
 					{
@@ -2487,15 +2487,11 @@
 						"in": "query",
 						"required": false,
 						"schema": {
-							"anyOf": [
-								{
-									"enum": ["open", "done", "partly_done", "unfulfilled", "lapsed"],
-									"type": "string"
-								},
-								{ "type": "null" }
-							],
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "A Toezegging.Status as the Tweede Kamer writes it: `Openstaand`.",
 							"title": "Status"
-						}
+						},
+						"description": "A Toezegging.Status as the Tweede Kamer writes it: `Openstaand`."
 					},
 					{
 						"name": "member",
@@ -3286,7 +3282,7 @@
 			"get": {
 				"tags": ["feed", "feed"],
 				"summary": "News feed",
-				"description": "What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``wetsvoorstel``, ``nota_van_wijziging``, ``amendement``, ``motie`` and ``brief_regering`` (a Tweede Kamer paper submitted), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.",
+				"description": "What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``Voorstel van wet``, ``Nota van wijziging``, ``Amendement``, ``Motie`` and ``Brief regering`` (a Tweede Kamer paper submitted, by its ``Document.Soort`` before `` (``), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.",
 				"operationId": "get_feed_route_api_feed_get",
 				"parameters": [
 					{
@@ -3352,10 +3348,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
+							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering.",
 							"title": "Kind"
 						},
-						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
+						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering."
 					},
 					{
 						"name": "cabinet",
@@ -3523,10 +3519,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
+							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering.",
 							"title": "Kind"
 						},
-						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
+						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering."
 					},
 					{
 						"name": "cabinet",
@@ -3674,10 +3670,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
+							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering.",
 							"title": "Kind"
 						},
-						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
+						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering."
 					},
 					{
 						"name": "cabinet",
@@ -4155,10 +4151,24 @@
 			"AnnexEntryDTO": {
 				"properties": {
 					"index": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Index" },
-					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name",
+						"description": "The item's own text with its marker (`a. artikel 49`)."
+					},
 					"description": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Description"
+					},
+					"heading": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Heading",
+						"description": "The paragraph that introduces its list, without the colon: the law the item falls under (`Gemeentewet`). Null when the list has none."
+					},
+					"parent_index": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Parent Index",
+						"description": "The `index` of the entry this one is nested in (`1.` under `a. Boek 1:`); null for an item of an outermost list."
 					}
 				},
 				"additionalProperties": false,
@@ -4505,12 +4515,12 @@
 					"id": {
 						"type": "string",
 						"title": "Id",
-						"description": "Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel). Unique within the article."
+						"description": "Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel), `tekst-1` (a paragraph outside the other parts, such as a line between the lists of an article of a bijlage). Unique within the article."
 					},
 					"kind": {
 						"type": "string",
 						"title": "Kind",
-						"description": "`aanhef`, `lid` or `onderdeel`."
+						"description": "`aanhef`, `lid`, `onderdeel` or `tekst`."
 					},
 					"number": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -4533,7 +4543,7 @@
 				"type": "object",
 				"required": ["id", "kind", "number", "text", "start", "end"],
 				"title": "ArticlePartDTO",
-				"description": "A lid, an onderdeel or an aanhef of an article, as a span of its `text`."
+				"description": "A lid, an onderdeel, an aanhef or a tekst of an article, as a span of its `text`.\n\nThe parts and the printed numbers between them cover the whole text."
 			},
 			"ArticleRefDTO": {
 				"properties": {
@@ -5260,14 +5270,9 @@
 					},
 					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
 					"status": {
-						"anyOf": [
-							{
-								"type": "string",
-								"enum": ["open", "done", "partly_done", "unfulfilled", "lapsed"]
-							},
-							{ "type": "null" }
-						],
-						"title": "Status"
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Status",
+						"description": "The status the Tweede Kamer gives the commitment (`Toezegging.Status`), as it writes it: `Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`; null when it gives none."
 					},
 					"date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -6876,14 +6881,9 @@
 			"FeedCommitmentDTO": {
 				"properties": {
 					"status": {
-						"anyOf": [
-							{
-								"type": "string",
-								"enum": ["open", "done", "partly_done", "unfulfilled", "lapsed"]
-							},
-							{ "type": "null" }
-						],
-						"title": "Status"
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Status",
+						"description": "Of a commitment: its Toezegging.Status (`Openstaand`)."
 					},
 					"expected_resolution": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -6929,14 +6929,14 @@
 						"type": "string",
 						"enum": [
 							"toezegging",
-							"wetsvoorstel",
-							"nota_van_wijziging",
-							"amendement",
-							"motie",
+							"Voorstel van wet",
+							"Nota van wijziging",
+							"Amendement",
+							"Motie",
 							"stemming",
 							"publicatie",
 							"inwerkingtreding",
-							"brief_regering"
+							"Brief regering"
 						],
 						"title": "Kind"
 					},
@@ -7081,14 +7081,14 @@
 						"type": "string",
 						"enum": [
 							"toezegging",
-							"wetsvoorstel",
-							"nota_van_wijziging",
-							"amendement",
-							"motie",
+							"Voorstel van wet",
+							"Nota van wijziging",
+							"Amendement",
+							"Motie",
 							"stemming",
 							"publicatie",
 							"inwerkingtreding",
-							"brief_regering"
+							"Brief regering"
 						],
 						"title": "Kind"
 					},
@@ -7622,15 +7622,23 @@
 					},
 					"date_signed": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Date Signed"
+						"title": "Date Signed",
+						"description": "When the instrument itself was signed; for a BWB regulation that of the publication that enacted it, not of a later amendment."
 					},
 					"date_published": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Date Published"
+						"title": "Date Published",
+						"description": "When the instrument itself was published."
 					},
 					"date_in_force": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Date In Force"
+						"title": "Date In Force",
+						"description": "When the instrument itself entered into force."
+					},
+					"version_date_in_force": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Version Date In Force",
+						"description": "BWB: the start of the version in force (its toestand)."
 					},
 					"treaty_number": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -7839,6 +7847,10 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Citation Title"
 					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
 					"jurisdiction": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Jurisdiction"
@@ -7961,6 +7973,21 @@
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"celex": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Celex",
+						"description": "CELEX number of an EU act."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"citation_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Citation Title"
+					},
+					"short_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short Title"
+					},
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
@@ -9674,7 +9701,7 @@
 					"status": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Status",
-						"description": "'open', 'done' or 'vervallen'."
+						"description": "The Toezegging.Status of the Tweede Kamer: `Openstaand`, …"
 					},
 					"expected_resolution": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],

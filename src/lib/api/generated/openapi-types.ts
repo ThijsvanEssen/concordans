@@ -833,7 +833,7 @@ export interface paths {
         };
         /**
          * Commitments
-         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``overdue`` keeps the open ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters.
+         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``status`` is the Toezegging.Status of the Tweede Kamer (`Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`). ``overdue`` keeps the `Openstaand` ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters.
          */
         get: operations["list_commitments_api_commitments_get"];
         put?: never;
@@ -1150,7 +1150,7 @@ export interface paths {
         };
         /**
          * News feed
-         * @description What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``wetsvoorstel``, ``nota_van_wijziging``, ``amendement``, ``motie`` and ``brief_regering`` (a Tweede Kamer paper submitted), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.
+         * @description What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``Voorstel van wet``, ``Nota van wijziging``, ``Amendement``, ``Motie`` and ``Brief regering`` (a Tweede Kamer paper submitted, by its ``Document.Soort`` before `` (``), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.
          */
         get: operations["get_feed_route_api_feed_get"];
         put?: never;
@@ -1494,10 +1494,23 @@ export interface components {
         AnnexEntryDTO: {
             /** Index */
             index?: number | null;
-            /** Name */
+            /**
+             * Name
+             * @description The item's own text with its marker (`a. artikel 49`).
+             */
             name?: string | null;
             /** Description */
             description?: string | null;
+            /**
+             * Heading
+             * @description The paragraph that introduces its list, without the colon: the law the item falls under (`Gemeentewet`). Null when the list has none.
+             */
+            heading?: string | null;
+            /**
+             * Parent Index
+             * @description The `index` of the entry this one is nested in (`1.` under `a. Boek 1:`); null for an item of an outermost list.
+             */
+            parent_index?: number | null;
         };
         /**
          * AnnexReferencedByItem
@@ -1778,17 +1791,19 @@ export interface components {
         };
         /**
          * ArticlePartDTO
-         * @description A lid, an onderdeel or an aanhef of an article, as a span of its `text`.
+         * @description A lid, an onderdeel, an aanhef or a tekst of an article, as a span of its `text`.
+         *
+         *     The parts and the printed numbers between them cover the whole text.
          */
         ArticlePartDTO: {
             /**
              * Id
-             * @description Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel). Unique within the article.
+             * @description Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel), `tekst-1` (a paragraph outside the other parts, such as a line between the lists of an article of a bijlage). Unique within the article.
              */
             id: string;
             /**
              * Kind
-             * @description `aanhef`, `lid` or `onderdeel`.
+             * @description `aanhef`, `lid`, `onderdeel` or `tekst`.
              */
             kind: string;
             /**
@@ -2450,8 +2465,11 @@ export interface components {
             number?: string | null;
             /** Text */
             text?: string | null;
-            /** Status */
-            status?: ("open" | "done" | "partly_done" | "unfulfilled" | "lapsed") | null;
+            /**
+             * Status
+             * @description The status the Tweede Kamer gives the commitment (`Toezegging.Status`), as it writes it: `Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`; null when it gives none.
+             */
+            status?: string | null;
             /**
              * Date
              * @description The day it was made.
@@ -3787,8 +3805,11 @@ export interface components {
          * @description What a ``toezegging`` stands at.
          */
         FeedCommitmentDTO: {
-            /** Status */
-            status?: ("open" | "done" | "partly_done" | "unfulfilled" | "lapsed") | null;
+            /**
+             * Status
+             * @description Of a commitment: its Toezegging.Status (`Openstaand`).
+             */
+            status?: string | null;
             /**
              * Expected Resolution
              * @description The day it is due; null when the Kamer names none.
@@ -3826,7 +3847,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "toezegging" | "wetsvoorstel" | "nota_van_wijziging" | "amendement" | "motie" | "stemming" | "publicatie" | "inwerkingtreding" | "brief_regering";
+            kind: "toezegging" | "Voorstel van wet" | "Nota van wijziging" | "Amendement" | "Motie" | "stemming" | "publicatie" | "inwerkingtreding" | "Brief regering";
             /** Number */
             number: string;
             /** Key */
@@ -3935,7 +3956,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "toezegging" | "wetsvoorstel" | "nota_van_wijziging" | "amendement" | "motie" | "stemming" | "publicatie" | "inwerkingtreding" | "brief_regering";
+            kind: "toezegging" | "Voorstel van wet" | "Nota van wijziging" | "Amendement" | "Motie" | "stemming" | "publicatie" | "inwerkingtreding" | "Brief regering";
             /**
              * Date
              * @description YYYY-MM-DD; the source gives no time of day.
@@ -4415,12 +4436,26 @@ export interface components {
              * @default 0
              */
             inbound_citation_count: number;
-            /** Date Signed */
+            /**
+             * Date Signed
+             * @description When the instrument itself was signed; for a BWB regulation that of the publication that enacted it, not of a later amendment.
+             */
             date_signed?: string | null;
-            /** Date Published */
+            /**
+             * Date Published
+             * @description When the instrument itself was published.
+             */
             date_published?: string | null;
-            /** Date In Force */
+            /**
+             * Date In Force
+             * @description When the instrument itself entered into force.
+             */
             date_in_force?: string | null;
+            /**
+             * Version Date In Force
+             * @description BWB: the start of the version in force (its toestand).
+             */
+            version_date_in_force?: string | null;
             /** Treaty Number */
             treaty_number?: string | null;
             /** In Force */
@@ -4589,6 +4624,8 @@ export interface components {
             short_title: string | null;
             /** Citation Title */
             citation_title: string | null;
+            /** Display Name */
+            display_name?: string | null;
             /** Jurisdiction */
             jurisdiction: string | null;
             /** Kind */
@@ -4683,6 +4720,19 @@ export interface components {
             id: string;
             /** Key */
             key: string;
+            /** Bwb Id */
+            bwb_id?: string | null;
+            /**
+             * Celex
+             * @description CELEX number of an EU act.
+             */
+            celex?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Citation Title */
+            citation_title?: string | null;
+            /** Short Title */
+            short_title?: string | null;
             /** Display Name */
             display_name: string | null;
             /**
@@ -6096,7 +6146,7 @@ export interface components {
             minister_role?: string | null;
             /**
              * Status
-             * @description 'open', 'done' or 'vervallen'.
+             * @description The Toezegging.Status of the Tweede Kamer: `Openstaand`, …
              */
             status?: string | null;
             /** Expected Resolution */
@@ -7887,7 +7937,8 @@ export interface operations {
     list_commitments_api_commitments_get: {
         parameters: {
             query?: {
-                status?: ("open" | "done" | "partly_done" | "unfulfilled" | "lapsed") | null;
+                /** @description A Toezegging.Status as the Tweede Kamer writes it: `Openstaand`. */
+                status?: string | null;
                 /** @description Member key. */
                 member?: string | null;
                 /** @description Cabinet key. */
@@ -8392,7 +8443,7 @@ export interface operations {
                 since?: string | null;
                 /** @description On or before this day. */
                 until?: string | null;
-                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
+                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering. */
                 kind?: string | null;
                 /** @description Cabinet key: the events of its period (``jetten``). */
                 cabinet?: string | null;
@@ -8445,7 +8496,7 @@ export interface operations {
                 few?: number;
                 /** @description Events shown one by one, at most. */
                 limit?: number;
-                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
+                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering. */
                 kind?: string | null;
                 /** @description Cabinet key: the events of its period (``jetten``). */
                 cabinet?: string | null;
@@ -8495,7 +8546,7 @@ export interface operations {
                 since?: string | null;
                 /** @description On or before this day. */
                 until?: string | null;
-                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
+                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering. */
                 kind?: string | null;
                 /** @description Cabinet key: the events of its period (``jetten``). */
                 cabinet?: string | null;
