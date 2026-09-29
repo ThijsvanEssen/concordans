@@ -1,11 +1,21 @@
 import type { BronRef } from '$lib/bron/href';
+import type { Schema } from '$lib/api/types';
 import { shortDossierTitle } from '$lib/graph/types';
-import { CLOSE_VOTE, KIND_LABEL, titleOf, voteMargin, type FeedItem, type FeedKind } from './feed';
+import {
+	CLOSE_VOTE,
+	KIND_LABEL,
+	normalizeItem,
+	titleOf,
+	voteMargin,
+	type FeedItem,
+	type FeedKind
+} from './feed';
 
-// The homepage's Actueel: one stream, newest first. What matters on a day stands on its
-// own with a headline in plain words (a bill voted on or brought in, a close vote, a
-// toezegging, a law in force); the many moties, amendementen and brieven of a day become
-// one line each, as a feed bundles its notices. Every line is one link.
+// The homepage's Actueel: one stream, newest first, from `/api/feed/summary`. What matters
+// on a day stands on its own with a headline in plain words (a bill voted on or brought
+// in, a close vote, a toezegging, a law in force); the many moties, amendementen and
+// brieven of a day are counted in one line each, as a feed bundles its notices. Every
+// line is one link.
 
 export type TimelineLine = {
 	id: string;
@@ -23,8 +33,6 @@ export type TimelineLine = {
 	failed?: boolean;
 };
 
-/** A day with at most this many votes on moties and amendementen shows each of them. */
-const FEW_VOTES = 2;
 /** Close votes shown on their own per day, the closest first. */
 const CLOSE_SHOWN = 2;
 /** Past this length a subject or a text is cut. */
@@ -64,26 +72,17 @@ function listLine(names: string[], max: number, other: [string, string] = ['ande
 
 // ── Names ───────────────────────────────────────────────────────────────
 
-/**
- * The surname of a person as a headline writes it: `P.A. Grinwis` gives `Grinwis`,
- * `D.J. van den Berg` gives `Van den Berg`, `Hans Vijlbrief` gives `Vijlbrief`.
- */
-export function surname(name: string | null | undefined): string {
-	const tokens = (name ?? '').trim().split(/\s+/).filter(Boolean);
-	// A first name written out: `Hans`, or `(Inge)` after the initials.
-	let rest = tokens.filter((t) => !t.includes('.') && !/^\(.*\)$/.test(t));
-	if (rest.length > 1 && tokens[0] === rest[0] && !tokens.some((t) => t.includes('.')))
-		rest = rest.slice(1);
-	const s = rest.join(' ');
-	return s ? s.charAt(0).toUpperCase() + s.slice(1) : (name ?? '');
-}
+/** A surname at the head of a phrase: `van den Berg` gives `Van den Berg`. */
+export const headSurname = (s: string | null | undefined) =>
+	s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
 type Dossier = NonNullable<FeedItem['dossier']>;
 
 /**
  * A dossier by a short name: its short title, the name between brackets at the end of its
  * title, else the law a `Wijziging van …` changes.
- * TODO(backend): a short name for every bill (feed follow-up, a); until then from the title.
+ * TODO(backend): `short_title` is only the brackets at the end of a title, so most bills
+ * have none (`Wijziging van de Archiefwet 1995 …`); until they do, the name from the title.
  */
 export function dossierName(d: Dossier): string {
 	const short = d.short_title?.trim();
@@ -103,26 +102,18 @@ export function dossierName(d: Dossier): string {
 
 /** `motie-Grinwis`, `motie-Kostić c.s.`: a paper by its first submitter. */
 function paperOf(noun: string, i: FeedItem): string {
-	const first = i.persons.find((p) => p.role === 'indiener') ?? i.persons[0];
-	if (!first?.name) return noun;
-	return `${noun}-${surname(first.name)}${i.persons.length > 1 ? ' c.s.' : ''}`;
+	const name = headSurname(i.headline?.surname);
+	if (!name) return noun;
+	return `${noun}-${name}${i.persons.length > 1 ? ' c.s.' : ''}`;
 }
 
 /** Past this length the subject of a vote is cut: the headline stays two lines. */
 const SUBJECT_MAX = 110;
 
-/**
- * What a motie or amendement is about: its title after ` over `, without the paper it
- * replaces (`(t.v.v. 21501-30-712)`).
- */
-const subjectOf = (title: string) => {
-	const at = title.indexOf(' over ');
-	if (at < 0) return null;
-	const subject = title
-		.slice(at + ' over '.length)
-		.replace(/\s*\(t\.v\.v\.[^)]*\)\s*$/i, '')
-		.trim();
-	return cut(subject, SUBJECT_MAX);
+/** What a motie or amendement is about, without the paper it replaces (`(t.v.v. …)`). */
+const subjectOf = (i: FeedItem) => {
+	const subject = i.headline?.subject?.replace(/\s*\(t\.v\.v\.[^)]*\)\s*$/i, '').trim();
+	return subject ? cut(subject, SUBJECT_MAX) : null;
 };
 
 const tallyOf = (i: FeedItem) => {
@@ -157,7 +148,7 @@ const hrefOf = (i: FeedItem): BronRef =>
 
 function voteLine(i: FeedItem, noun: string): TimelineLine {
 	const passed = !!i.vote?.passed;
-	const subject = subjectOf(i.title ?? '');
+	const subject = subjectOf(i);
 	const paper = paperOf(noun, i);
 	return {
 		id: i.id,
@@ -202,52 +193,71 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 	});
 }
 
-/** The votes on moties, amendementen and the rest: the close ones alone, the others in one line. */
-function otherVoteLines(date: string, votes: FeedItem[]): TimelineLine[] {
-	if (!votes.length) return [];
-	const noun = (i: FeedItem) => (i.subkind === 'amendement' ? 'amendement' : 'motie');
-	if (votes.length <= FEW_VOTES) return votes.map((v) => voteLine(v, noun(v)));
-	const close = votes
+/** The close votes on moties and amendementen of a day, the closest first. */
+function closeVoteLines(votes: FeedItem[]): TimelineLine[] {
+	return votes
 		.filter((v) => voteMargin(v) <= CLOSE_VOTE)
-		.sort((a, b) => voteMargin(a) - voteMargin(b))
-		.slice(0, CLOSE_SHOWN);
-	const moties = votes.filter((v) => v.subkind === 'motie');
-	const amendementen = votes.filter((v) => v.subkind === 'amendement');
-	const rest = votes.length - moties.length - amendementen.length;
-	const lead = moties.length ? moties : votes;
-	const passed = lead.filter((v) => v.vote?.passed).length;
+		.sort((x, y) => voteMargin(x) - voteMargin(y))
+		.slice(0, CLOSE_SHOWN)
+		.map((v) => voteLine(v, v.subkind === 'amendement' ? 'amendement' : 'motie'));
+}
+
+/**
+ * The votes of a day not on a bill, counted: `Kamer stemt over 125 moties: 88 aangenomen,
+ * 37 verworpen`, with the amendementen and the rest as context.
+ */
+function voteBundleLine(day: SummaryDay): TimelineLine[] {
+	const votes = (day.votes ?? []).filter((v) => v.subkind !== 'wetsvoorstel');
+	const sum = (subkind: string | null, outcome?: string) =>
+		votes
+			.filter(
+				(v) => (subkind === null || v.subkind === subkind) && (!outcome || v.outcome === outcome)
+			)
+			.reduce((n, v) => n + v.count, 0);
+	const all = sum(null);
+	if (!all) return [];
+	const moties = sum('motie');
+	const amendementen = sum('amendement');
+	const rest = all - moties - amendementen;
+	const lead = moties ? 'motie' : null;
+	const count = moties || all;
+	const passed = sum(lead, 'aangenomen');
+	const noun: [string, string] = moties ? ['motie', 'moties'] : ['voorstel', 'voorstellen'];
 	const also = [
-		moties.length && amendementen.length
-			? plural(amendementen.length, 'amendement', 'amendementen')
-			: null,
-		rest ? plural(rest, 'andere stemming', 'andere stemmingen') : null
-	].filter(Boolean);
+		moties && amendementen ? plural(amendementen, 'amendement', 'amendementen') : null,
+		moties && rest ? plural(rest, 'andere stemming', 'andere stemmingen') : null
+	].filter((x): x is string => !!x);
 	return [
-		...close.map((v) => voteLine(v, noun(v))),
 		{
-			id: `votes/${date}`,
-			date,
+			id: `votes/${day.date}`,
+			date: day.date,
 			label: 'Stemmingen',
-			title: `Kamer stemt over ${plural(lead.length, moties.length ? 'motie' : 'voorstel', moties.length ? 'moties' : 'voorstellen')}: ${passed} aangenomen, ${lead.length - passed} verworpen`,
-			context: also.length ? `Ook ${listLine(also as string[], 2)}` : null,
-			href: actueelDayHref(date, ['stemming']),
+			title:
+				count === 1
+					? `Kamer ${passed ? 'neemt' : 'verwerpt'} een ${noun[0]}${passed ? ' aan' : ''}`
+					: `Kamer stemt over ${plural(count, noun[0], noun[1])}: ${passed} aangenomen, ${count - passed} verworpen`,
+			context: also.length ? `Ook ${listLine(also, 2)}` : null,
+			href: actueelDayHref(day.date, ['stemming']),
 			major: false
 		}
 	];
 }
 
+const POST = /^(minister-president|minister|staatssecretaris)\b/i;
+
 /**
- * `Minister Vijlbrief komt in de startbrief terug op …`: the text of a toezegging with its
- * subject named. TODO(backend): the post of the bewindspersoon (feed follow-up, c); until
- * then the text says whether a minister or a staatssecretaris made it.
+ * `Minister Vijlbrief komt in de startbrief terug op …`: the text of a toezegging with the
+ * bewindspersoon in place of `De minister`. The post is the one they signed as.
  */
 export function commitmentTitle(i: FeedItem): string {
 	const text = (i.summary ?? i.title ?? '').trim();
-	const who = surname(i.persons[0]?.name);
-	const m = /^De (minister|staatssecretaris|minister-president)\s+/i.exec(text);
-	if (m && who)
-		return cut(`${m[1].charAt(0).toUpperCase()}${m[1].slice(1)} ${who} ${text.slice(m[0].length)}`);
-	return cut(who ? `${who}: ${text}` : text);
+	const person = i.persons[0];
+	const who = headSurname(person?.surname);
+	const post = POST.exec(person?.function ?? '')?.[1] ?? POST.exec(text.replace(/^De /i, ''))?.[1];
+	const subject = /^De (?:minister-president|minister|staatssecretaris)\s+/i.exec(text);
+	if (!who) return cut(text);
+	const named = post ? `${headSurname(post.toLowerCase())} ${who}` : who;
+	return cut(subject ? `${named} ${text.slice(subject[0].length)}` : `${named}: ${text}`);
 }
 
 function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
@@ -320,138 +330,51 @@ function commencementLine(i: FeedItem): TimelineLine {
 	};
 }
 
-/** The papers of a kind brought in on a day: one alone, more in one line. */
-function paperLines(
-	date: string,
-	kind: FeedKind,
-	items: FeedItem[],
-	noun: [string, string],
-	label: [string, string]
-): TimelineLine[] {
-	if (!items.length) return [];
-	if (items.length === 1) {
-		const [i] = items;
-		const who = i.persons.map((p) => p.name).filter(Boolean);
-		return [
-			{
-				id: i.id,
-				date,
-				label: label[0],
-				title: cut(i.title?.trim() || label[0]),
-				context:
-					[
-						who.length ? listLine(who as string[], 2) : null,
-						i.dossier ? `dossier ${i.dossier.number}` : null
-					]
-						.filter(Boolean)
-						.join(', ') || null,
-				href: hrefOf(i),
-				major: false
-			}
-		];
-	}
-	const dossiers = new Map<string, { d: Dossier; n: number }>();
-	for (const i of items)
-		if (i.dossier) {
-			const e = dossiers.get(i.dossier.number);
-			dossiers.set(i.dossier.number, { d: i.dossier, n: (e?.n ?? 0) + 1 });
-		}
-	const byCount = [...dossiers.values()].sort((a, b) => b.n - a.n);
-	const oneDossier = byCount.length === 1 && byCount[0].n === items.length ? byCount[0].d : null;
-	let context: string | null;
-	if (kind === 'brief_regering') {
-		context = listLine(items.map((i) => cut(i.title?.trim() ?? '', 60)).filter(Boolean), 2);
-	} else if (oneDossier) {
-		const who = [
-			...new Map(
-				items
-					.flatMap((i) => i.persons)
-					.filter((p) => p.name)
-					.map((p) => [
-						p.key ?? p.name,
-						`${surname(p.name)}${p.faction?.short ? ` (${p.faction.short})` : ''}`
-					])
-			).values()
-		];
-		context = who.length ? listLine(who, 3) : null;
-	} else {
-		context = byCount.length
-			? listLine(
-					byCount.map((e) => dossierName(e.d)),
-					3,
-					['ander dossier', 'andere dossiers']
-				)
-			: null;
-	}
-	return [
-		{
-			id: `${kind}/${date}`,
-			date,
-			label: label[1],
-			title: oneDossier
-				? `${plural(items.length, noun[0], noun[1])} bij ${dossierName(oneDossier)}`
-				: kind === 'brief_regering'
-					? plural(items.length, noun[0], noun[1])
-					: `${plural(items.length, noun[0], noun[1])} ingediend`,
-			context,
-			href: actueelDayHref(date, [kind], oneDossier?.number),
-			major: false
-		}
-	];
-}
-
 /** The papers the Kamer receives, as a headline counts them. */
-const PAPERS: { kind: FeedKind; noun: [string, string]; label: [string, string] }[] = [
-	{ kind: 'motie', noun: ['motie', 'moties'], label: ['Motie', 'Moties'] },
-	{
-		kind: 'amendement',
-		noun: ['amendement', 'amendementen'],
-		label: ['Amendement', 'Amendementen']
-	},
-	{
-		kind: 'nota_van_wijziging',
-		noun: ['nota van wijziging', 'nota’s van wijziging'],
-		label: ['Nota van wijziging', 'Nota’s van wijziging']
-	}
+const PAPERS: { kind: FeedKind; noun: [string, string] }[] = [
+	{ kind: 'motie', noun: ['motie', 'moties'] },
+	{ kind: 'amendement', noun: ['amendement', 'amendementen'] },
+	{ kind: 'nota_van_wijziging', noun: ['nota van wijziging', 'nota’s van wijziging'] }
 ];
 
+type SummaryDay = Schema<'FeedDayDTO'>;
+
+const countOf = (day: SummaryDay, kind: FeedKind) =>
+	day.kinds?.find((k) => k.value === kind)?.count ?? 0;
+
 /**
- * The moties, amendementen and nota's of a day: of one kind, its own line; of more kinds,
- * one line that counts each (`Ingediend: 54 moties, 5 amendementen en 2 nota’s …`).
+ * The moties, amendementen and nota's of a day counted in one line (`Ingediend: 54 moties,
+ * 5 amendementen en 2 nota’s van wijziging`), with the day's largest dossiers.
+ * TODO(backend): the dossiers are counted over all events of a day; per kind would name
+ * those of the papers alone.
  */
-function kamerstukLines(date: string, items: readonly FeedItem[]): TimelineLine[] {
-	const present = PAPERS.map((p) => ({
-		...p,
-		items: items.filter((i) => i.kind === p.kind)
-	})).filter((p) => p.items.length);
-	if (present.length <= 1)
-		return present.flatMap((p) => paperLines(date, p.kind, p.items, p.noun, p.label));
-	const all = present.flatMap((p) => p.items);
-	const dossiers = new Map<string, { d: Dossier; n: number }>();
-	for (const i of all)
-		if (i.dossier) {
-			const e = dossiers.get(i.dossier.number);
-			dossiers.set(i.dossier.number, { d: i.dossier, n: (e?.n ?? 0) + 1 });
-		}
-	const byCount = [...dossiers.values()].sort((a, b) => b.n - a.n);
+function kamerstukLine(day: SummaryDay): TimelineLine[] {
+	const present = PAPERS.map((p) => ({ ...p, count: countOf(day, p.kind) })).filter((p) => p.count);
+	if (!present.length) return [];
+	const dossiers = (day.dossiers ?? []).map((d) =>
+		dossierName({
+			key: d.key ?? d.number,
+			number: d.number,
+			title: d.title,
+			short_title: d.short_title
+		})
+	);
+	const counted = listLine(
+		present.map((p) => plural(p.count, p.noun[0], p.noun[1])),
+		present.length
+	);
 	return [
 		{
-			id: `kamerstukken/${date}`,
-			date,
-			label: 'Kamerstukken',
-			title: `Ingediend: ${listLine(
-				present.map((p) => plural(p.items.length, p.noun[0], p.noun[1])),
-				present.length
-			)}`,
-			context: byCount.length
-				? listLine(
-						byCount.map((e) => dossierName(e.d)),
-						3,
-						['ander dossier', 'andere dossiers']
-					)
-				: null,
+			id: `kamerstukken/${day.date}`,
+			date: day.date,
+			label:
+				present.length === 1
+					? headSurname(present[0].noun[present[0].count === 1 ? 0 : 1])
+					: 'Kamerstukken',
+			title: present.length === 1 ? `${counted} ingediend` : `Ingediend: ${counted}`,
+			context: dossiers.length ? listLine(dossiers, 3, ['ander dossier', 'andere dossiers']) : null,
 			href: actueelDayHref(
-				date,
+				day.date,
 				present.map((p) => p.kind)
 			),
 			major: false
@@ -459,51 +382,74 @@ function kamerstukLines(date: string, items: readonly FeedItem[]): TimelineLine[
 	];
 }
 
-/** One day's lines: what matters first, then the bundles. */
-export function dayLines(date: string, items: readonly FeedItem[]): TimelineLine[] {
+/** The brieven or publicaties of a day, counted. */
+function countedLine(
+	day: SummaryDay,
+	kind: FeedKind,
+	noun: [string, string],
+	label: string
+): TimelineLine[] {
+	const count = countOf(day, kind);
+	if (!count) return [];
+	return [
+		{
+			id: `${kind}/${day.date}`,
+			date: day.date,
+			label,
+			title: plural(count, noun[0], noun[1]),
+			context: null,
+			href: actueelDayHref(day.date, [kind]),
+			major: false
+		}
+	];
+}
+
+/**
+ * One day's lines: its events that stand alone (from the summary's items), then its counts.
+ * What matters comes first.
+ */
+export function dayLines(day: SummaryDay, items: readonly FeedItem[]): TimelineLine[] {
 	const of = (kind: FeedKind) => items.filter((i) => i.kind === kind);
 	const votes = of('stemming');
 	return [
 		...billVoteLines(
-			date,
+			day.date,
 			votes.filter((v) => v.subkind === 'wetsvoorstel')
 		),
-		...billLines(date, of('wetsvoorstel')),
+		...billLines(day.date, of('wetsvoorstel')),
 		...of('inwerkingtreding').map(commencementLine),
-		...otherVoteLines(
-			date,
-			votes.filter((v) => v.subkind !== 'wetsvoorstel')
-		),
-		...commitmentLines(date, of('toezegging')),
-		...kamerstukLines(date, items),
-		...paperLines(
-			date,
+		...closeVoteLines(votes.filter((v) => v.subkind !== 'wetsvoorstel')),
+		...voteBundleLine(day),
+		...commitmentLines(day.date, of('toezegging')),
+		...kamerstukLine(day),
+		...countedLine(
+			day,
 			'brief_regering',
-			of('brief_regering'),
 			['brief van de regering', 'brieven van de regering'],
-			['Brief van de regering', 'Brieven']
+			'Brieven'
 		),
-		...paperLines(
-			date,
+		...countedLine(
+			day,
 			'publicatie',
-			of('publicatie'),
-			['publicatie', 'publicaties'],
-			['Publicatie', 'Publicaties']
+			['publicatie in het Staatsblad', 'publicaties in het Staatsblad'],
+			'Publicaties'
 		)
 	];
 }
 
 /**
- * The lines of whole days, newest day first, up to `limit`. Of the last day that fits in
- * part, the lines that matter go before its bundles.
+ * The lines of the summary's days, newest first, up to `limit`. Of the last day that fits
+ * in part, the lines that matter go before its counts.
  */
-export function timelineOf(items: readonly FeedItem[], limit: number): TimelineLine[] {
-	const byDate = new Map<string, FeedItem[]>();
-	for (const i of items) byDate.set(i.date, [...(byDate.get(i.date) ?? []), i]);
-	const dates = [...byDate.keys()].sort((a, b) => b.localeCompare(a));
+export function timelineOf(summary: Schema<'FeedSummaryResponse'>, limit: number): TimelineLine[] {
+	const items = (summary.items ?? []).map(normalizeItem);
 	const lines: TimelineLine[] = [];
-	for (const date of dates) {
-		const day = dayLines(date, byDate.get(date)!);
+	for (const d of summary.days ?? []) {
+		if (!d.total) continue;
+		const day = dayLines(
+			d,
+			items.filter((i) => i.date === d.date)
+		);
 		const room = limit - lines.length;
 		if (day.length <= room) {
 			lines.push(...day);

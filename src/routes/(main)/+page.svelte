@@ -8,7 +8,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { indexHref } from '$lib/bron/href';
 	import { bronPlural, type Collection } from '$lib/vocabulary';
-	import { dayLabel, normalizeItem, shortDate, type FeedItem } from '$lib/components/actueel/feed';
+	import { dayLabel, feedStand, CLOSE_VOTE, shortDate } from '$lib/components/actueel/feed';
 	import { timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
 
 	/** The ways into the material by kind; each opens Bladeren on that kind. */
@@ -16,15 +16,14 @@
 
 	/** The lines of Actueel shown; the rest is in Actueel. */
 	const LINES_SHOWN = 10;
-	const FEED_PAGE = 100;
-	/** A day of votes holds some 250 events: this many pages at most. */
-	const PAGES_MAX = 6;
+	/** The days the summary spans: enough for the lines on a quiet week. */
+	const SUMMARY_DAYS = 14;
 
 	const today = new Date().toISOString().slice(0, 10);
 
 	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
 	let lines = $state<TimelineLine[]>([]);
-	let newest = $state<string | null>(null);
+	let stand = $state<ReturnType<typeof feedStand>>(null);
 
 	$effect(() => {
 		const ac = new AbortController();
@@ -35,37 +34,31 @@
 		return () => ac.abort();
 	});
 
-	/**
-	 * Whole days of events, newest first, until they give the lines shown. A day is whole
-	 * once a later page starts on an earlier day; its bundles then count all of it.
-	 * TODO(backend): a fixed order per kind within a day (feed follow-up) lets the first
-	 * page carry the lines that matter; the pages stay needed for the counts.
-	 */
+	/** The last days in one answer: their counts and the events that stand alone. */
 	async function loadLines(signal: AbortSignal) {
-		const items: FeedItem[] = [];
-		let cursor: string | null | undefined;
-		for (let page = 0; page < PAGES_MAX; page++) {
-			const r = await unwrap(
-				api.GET('/api/feed', {
-					params: {
-						query: { until: today, limit: FEED_PAGE, facets: false, cursor: cursor ?? undefined }
-					},
-					signal
-				})
-			);
-			items.push(...r.items.map(normalizeItem));
-			cursor = r.next_cursor;
-			newest ??= items[0]?.date ?? null;
-			const last = items.at(-1)?.date;
-			const whole = cursor ? items.filter((i) => i.date !== last) : items;
-			const found = timelineOf(whole, LINES_SHOWN);
-			if (found.length >= LINES_SHOWN || !cursor) {
-				lines = found;
-				return;
-			}
-		}
-		lines = timelineOf(items, LINES_SHOWN);
+		const summary = await unwrap(
+			api.GET('/api/feed/summary', {
+				params: { query: { until: today, days: SUMMARY_DAYS, margin: CLOSE_VOTE } },
+				signal
+			})
+		);
+		lines = timelineOf(summary, LINES_SHOWN);
 	}
+
+	// How current the data is. TODO(backend): data_as_of on the summary; until then from
+	// the feed, one event long.
+	$effect(() => {
+		const ac = new AbortController();
+		unwrap(
+			api.GET('/api/feed', {
+				params: { query: { until: today, limit: 1, facets: false } },
+				signal: ac.signal
+			})
+		)
+			.then((r) => (stand = feedStand(r.data_as_of)))
+			.catch(() => {});
+		return () => ac.abort();
+	});
 
 	/** `Dinsdag 22 september`: the year only when it is not this one. */
 	const dayHeading = (date: string) => {
@@ -111,9 +104,13 @@
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header class="actueel-head">
 				<h2 id="actueel-heading" class="actueel-title"><a href="/actueel">Actueel</a></h2>
-				{#if newest}
-					<!-- TODO(backend): data_as_of; until then the newest event in the data. -->
-					<span class="stand">bijgewerkt tot {shortDate(newest)}</span>
+				{#if stand}
+					<span
+						class="stand"
+						title={stand.retrievedAt
+							? `Opgehaald op ${shortDate(stand.retrievedAt.slice(0, 10))}`
+							: undefined}>tot en met {shortDate(stand.newest)}</span
+					>
 				{/if}
 			</header>
 			<ul class="lines" aria-busy={!lines.length}>

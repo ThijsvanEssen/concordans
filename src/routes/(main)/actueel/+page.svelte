@@ -24,18 +24,23 @@
 	} from '$lib/components/explore/index/government';
 	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
 	import {
+		CLOSE_VOTE,
 		FEED_KINDS,
 		KIND_LABEL,
 		atomParams,
 		daysOf,
+		feedStand,
 		isFeedKind,
 		normalizeItem,
-		shortDate,
+		standLine,
+		type DaySummary,
 		type FeedItem,
 		type FeedKind
 	} from '$lib/components/actueel/feed';
 
 	const today = new Date().toISOString().slice(0, 10);
+	/** The days one summary spans at most, as the API allows. */
+	const SUMMARY_DAYS_MAX = 31;
 
 	// ── The URL ─────────────────────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
@@ -139,6 +144,7 @@
 				cursor = r.next_cursor ?? null;
 				total = r.total ?? null;
 				facets = r.facets ?? null;
+				stand = feedStand(r.data_as_of) ?? stand;
 			})
 			.catch(() => {
 				if (!ac.signal.aborted) error = 'Actueel kon niet worden geladen.';
@@ -167,14 +173,47 @@
 
 	const days = $derived(daysOf(items));
 
-	// How current the data is: the day of the newest event, whatever the filters.
-	let newest = $state<string | null>(null);
-	$effect(() => {
-		// TODO(backend): a date of the data itself; until then the newest event in it.
-		unwrap(api.GET('/api/feed', { params: { query: { until: today, limit: 1, facets: false } } }))
-			.then((r) => (newest = r.items[0]?.date ?? null))
-			.catch(() => {});
+	// The whole of each day loaded, under the same filters: a day a page cuts off is
+	// counted in full. Asked again when the filters change or more days come in.
+	let summaries = $state<Map<string, DaySummary>>(new Map());
+	const span = $derived.by(() => {
+		const newest = days[0]?.date;
+		const oldest = days.at(-1)?.date;
+		if (!newest || !oldest) return null;
+		const count = Math.round((Date.parse(newest) - Date.parse(oldest)) / 86_400_000) + 1;
+		return { until: newest, days: Math.min(count, SUMMARY_DAYS_MAX) };
 	});
+	$effect(() => {
+		const s = span;
+		const { kind, cabinet, ministry, dossier, member, faction, q } = query;
+		if (!s) return;
+		const ac = new AbortController();
+		unwrap(
+			api.GET('/api/feed/summary', {
+				params: {
+					query: {
+						...s,
+						kind,
+						cabinet,
+						ministry,
+						dossier,
+						member,
+						faction,
+						q,
+						margin: CLOSE_VOTE,
+						limit: 1
+					}
+				},
+				signal: ac.signal
+			})
+		)
+			.then((r) => (summaries = new Map((r.days ?? []).map((d) => [d.date, d]))))
+			.catch(() => {});
+		return () => ac.abort();
+	});
+
+	// How current the data is, whatever the filters: from `data_as_of` of each response.
+	let stand = $state<ReturnType<typeof feedStand>>(null);
 
 	// ── Names for the filters ───────────────────────────────────────────────
 	let cabinets = $state<Cabinet[]>([]);
@@ -349,8 +388,8 @@
 			Wetsvoorstellen, nota’s van wijziging, amendementen, moties, stemmingen, toezeggingen, brieven
 			van de regering, publicaties en inwerkingtredingen, per dag.
 		</p>
-		{#if newest}
-			<p class="stand">Nieuwste gebeurtenis in de gegevens: {shortDate(newest)}</p>
+		{#if stand}
+			<p class="stand">{standLine(stand)}</p>
 		{/if}
 		<button
 			type="button"
@@ -400,9 +439,7 @@
 		{:else if !items.length}
 			<div class="empty">
 				<p>Geen gebeurtenissen{chips.length ? ' met deze filters' : ''}.</p>
-				{#if newest}<p class="stand">
-						Nieuwste gebeurtenis in de gegevens: {shortDate(newest)}
-					</p>{/if}
+				{#if stand}<p class="stand">{standLine(stand)}</p>{/if}
 			</div>
 		{:else}
 			<div class="days" class:days--stale={loading}>
@@ -415,6 +452,7 @@
 						{colorOf}
 						{ministryName}
 						{filterHref}
+						summary={summaries.get(day.date)}
 					/>
 				{/each}
 			</div>

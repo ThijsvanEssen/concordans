@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import type { Schema } from '$lib/api/types';
 import type { FeedItem } from './feed';
 import {
 	commitmentTitle,
 	dayLines,
 	dossierName,
+	headSurname,
 	headlineOf,
 	inWords,
-	surname,
 	timelineOf
 } from './timeline';
 
@@ -22,6 +23,7 @@ const item = (over: Partial<FeedItem>): FeedItem =>
 		node: { collection: 'documents', key: `k${n}` },
 		dossier: null,
 		persons: [],
+		headline: {},
 		...over
 	}) as FeedItem;
 
@@ -38,12 +40,18 @@ const vote = (voor: number, tegen: number, over: Partial<FeedItem> = {}) =>
 		...over
 	});
 
-describe('surname', () => {
-	it('drops initials and a first name written out', () => {
-		expect(surname('P.A. Grinwis')).toBe('Grinwis');
-		expect(surname('D.J. van den Berg')).toBe('Van den Berg');
-		expect(surname('Hans Vijlbrief')).toBe('Vijlbrief');
-		expect(surname('I. (Inge) van Dijk')).toBe('Van Dijk');
+type Day = Schema<'FeedDayDTO'>;
+const day = (over: Partial<Day> = {}): Day => ({ date: '2026-09-22', total: 1, ...over });
+
+const schilder = vote(75, 75, {
+	persons: [{ name: 'Joost Schilder', surname: 'Schilder', role: 'indiener' } as never],
+	headline: { surname: 'Schilder', subject: 'strafverzwaring' }
+});
+
+describe('headSurname', () => {
+	it('sets a surname at the head of a phrase', () => {
+		expect(headSurname('van den Berg')).toBe('Van den Berg');
+		expect(headSurname(null)).toBe('');
 	});
 });
 
@@ -66,6 +74,14 @@ describe('dossierName', () => {
 				title: 'Wijziging van de Gemeentewet, de Provinciewet en de Waterschapswet'
 			} as never)
 		).toBe('Gemeentewet');
+		expect(
+			dossierName({
+				key: 'd',
+				number: '37020-IV',
+				title:
+					'Vaststelling van de begrotingsstaten van Koninkrijksrelaties (IV) en het BES-fonds (H) voor het jaar 2027'
+			} as never)
+		).toBe('Begroting Koninkrijksrelaties');
 	});
 });
 
@@ -77,40 +93,31 @@ describe('inWords', () => {
 });
 
 describe('commitmentTitle', () => {
-	it('names the bewindspersoon in place of De minister', () => {
+	it('names the bewindspersoon by the post they signed as', () => {
+		const persons = [
+			{
+				name: 'Hans Vijlbrief',
+				surname: 'Vijlbrief',
+				function: 'Minister van Sociale Zaken en Werkgelegenheid'
+			} as never
+		];
 		expect(
 			commitmentTitle(
 				item({
 					kind: 'toezegging',
 					summary: 'De minister komt in de startbrief terug op het nabestaandenpensioen.',
-					persons: [{ name: 'Hans Vijlbrief' } as never]
+					persons
 				})
 			)
 		).toBe('Minister Vijlbrief komt in de startbrief terug op het nabestaandenpensioen.');
+		expect(
+			commitmentTitle(item({ kind: 'toezegging', summary: 'Een brief volgt.', persons }))
+		).toBe('Minister Vijlbrief: Een brief volgt.');
 	});
 });
 
 describe('dayLines', () => {
-	it('shows few votes each on their own, in plain words', () => {
-		const [line] = dayLines('2026-09-23', [
-			vote(141, 7, {
-				title: 'Gewijzigde motie van het lid Grinwis over steward ownership',
-				persons: [
-					{
-						name: 'P.A. Grinwis',
-						role: 'indiener',
-						faction: { key: 'cu', short: 'ChristenUnie' }
-					} as never
-				],
-				dossier: { key: 'd', number: '21501-30' } as never
-			})
-		]);
-		expect(line.title).toBe('Kamer neemt motie-Grinwis aan over steward ownership');
-		expect(line.context).toBe('141 voor, 7 tegen. ChristenUnie, dossier 21501-30');
-		expect(line.major).toBe(true);
-	});
-
-	it('bundles a day of votes, with the bills and the close ones on their own', () => {
+	it('shows the bills and the close votes alone, and counts the other votes', () => {
 		const bills = ['36889', '36899'].map((number) =>
 			vote(100, 50, {
 				subkind: 'wetsvoorstel',
@@ -121,146 +128,131 @@ describe('dayLines', () => {
 				} as never
 			})
 		);
-		const lines = dayLines('2026-09-22', [
-			...bills,
-			vote(75, 75, {
-				title: 'Motie van het lid Schilder over strafverzwaring',
-				persons: [{ name: 'J.M.M. Schilder', role: 'indiener' } as never]
+		const lines = dayLines(
+			day({
+				votes: [
+					{ subkind: 'wetsvoorstel', outcome: 'aangenomen', count: 2 },
+					{ subkind: 'motie', outcome: 'aangenomen', count: 88 },
+					{ subkind: 'motie', outcome: 'verworpen', count: 37 },
+					{ subkind: 'amendement', outcome: 'aangenomen', count: 9 }
+				]
 			}),
-			vote(120, 30),
-			vote(20, 130),
-			vote(90, 60, { subkind: 'amendement' })
-		]);
+			[...bills, schilder]
+		);
 		expect(lines.map((l) => l.title)).toEqual([
 			'Kamer neemt twee wetsvoorstellen aan',
 			'Kamer verwerpt motie-Schilder over strafverzwaring',
-			'Kamer stemt over 3 moties: 1 aangenomen, 2 verworpen'
+			'Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen'
 		]);
 		expect(lines[0].context).toBe('Wet 36889 en Wet 36899');
 		expect(lines[1].failed).toBe(true);
-		expect(lines[2].context).toBe('Ook 1 amendement');
+		expect(lines[1].context).toBe('75 voor, 75 tegen');
+		expect(lines[2].context).toBe('Ook 9 amendementen');
 		expect(lines[2].href).toBe('/actueel?van=2026-09-22&tot=2026-09-22&soort=stemming');
 	});
 
-	it('bundles the moties of a day and names their largest dossiers', () => {
-		const d = (number: string, short: string) =>
-			({ key: number, number, short_title: short }) as never;
-		const lines = dayLines('2026-09-24', [
-			item({ dossier: d('21501-32', 'Landbouw- en Visserijraad') }),
-			item({ dossier: d('21501-32', 'Landbouw- en Visserijraad') }),
-			item({ dossier: d('30234', 'Toekomstig sportbeleid') })
+	it('counts the papers of a day in one line, with the largest dossiers', () => {
+		const lines = dayLines(
+			day({
+				kinds: [
+					{ value: 'motie', count: 54 },
+					{ value: 'amendement', count: 5 },
+					{ value: 'brief_regering', count: 14 }
+				],
+				dossiers: [
+					{ number: '24557', short_title: 'Kansspelen', count: 12 },
+					{ number: '31765', short_title: 'Kwaliteit van zorg', count: 12 }
+				]
+			}),
+			[]
+		);
+		expect(lines.map((l) => l.title)).toEqual([
+			'Ingediend: 54 moties en 5 amendementen',
+			'14 brieven van de regering'
 		]);
-		expect(lines).toHaveLength(1);
-		expect(lines[0].title).toBe('3 moties ingediend');
-		expect(lines[0].context).toBe('Landbouw- en Visserijraad en Toekomstig sportbeleid');
+		expect(lines[0].context).toBe('Kansspelen en Kwaliteit van zorg');
 		expect(lines[0].major).toBe(false);
 	});
 
-	it('names the dossier and the submitters when all papers are on one', () => {
-		const d = { key: '36922', number: '36922', short_title: 'Studievoorschot' } as never;
-		const [line] = dayLines('2026-09-23', [
-			item({
-				kind: 'amendement',
-				dossier: d,
-				persons: [{ key: 'b', name: 'S.M. Beckerman', faction: { short: 'SP' } } as never]
-			}),
-			item({
-				kind: 'amendement',
-				dossier: d,
-				persons: [{ key: 'e', name: 'D.A. Ergin', faction: { short: 'DENK' } } as never]
-			})
-		]);
-		expect(line.title).toBe('2 amendementen bij Studievoorschot');
-		expect(line.context).toBe('Beckerman (SP) en Ergin (DENK)');
+	it('names one kind of paper by itself', () => {
+		const [line] = dayLines(day({ kinds: [{ value: 'motie', count: 21 }] }), []);
+		expect(line.label).toBe('Moties');
+		expect(line.title).toBe('21 moties ingediend');
 	});
 });
 
 describe('timelineOf', () => {
-	it('takes whole days, newest first, up to the limit', () => {
+	const summary = (days: Day[], items: FeedItem[]): Schema<'FeedSummaryResponse'> => ({
+		since: '2026-09-15',
+		until: '2026-09-29',
+		margin: 10,
+		days,
+		items,
+		items_truncated: false
+	});
+
+	it('takes the days with events, newest first, up to the limit', () => {
 		const lines = timelineOf(
-			[
-				item({
-					date: '2026-09-17',
-					kind: 'wetsvoorstel',
-					dossier: { key: 'w', number: '37014', short_title: 'Wet weerbare waarden' } as never
-				}),
-				item({ date: '2026-09-24' })
-			],
+			summary(
+				[
+					day({ date: '2026-09-29', total: 0 }),
+					day({ date: '2026-09-24', kinds: [{ value: 'motie', count: 1 }] }),
+					day({ date: '2026-09-17' })
+				],
+				[
+					item({
+						date: '2026-09-17',
+						kind: 'wetsvoorstel',
+						dossier: { key: 'w', number: '37014', short_title: 'Wet weerbare waarden' } as never
+					})
+				]
+			),
 			10
 		);
 		expect(lines.map((l) => l.title)).toEqual([
-			'Motie',
+			'1 motie ingediend',
 			'Wetsvoorstel ingediend: Wet weerbare waarden'
 		]);
 	});
 
-	it('keeps what matters of the last day before its bundles', () => {
+	it('keeps what matters of the last day before its counts', () => {
 		const lines = timelineOf(
-			[
-				item({ date: '2026-09-22', kind: 'brief_regering', title: 'Brief' }),
-				item({
-					date: '2026-09-22',
-					kind: 'toezegging',
-					summary: 'De minister stuurt een brief.',
-					persons: [{ name: 'Hans Vijlbrief' } as never]
-				})
-			],
+			summary(
+				[day({ kinds: [{ value: 'brief_regering', count: 3 }] })],
+				[
+					item({
+						kind: 'toezegging',
+						summary: 'De minister stuurt een brief.',
+						persons: [{ name: 'Hans Vijlbrief', surname: 'Vijlbrief' } as never]
+					})
+				]
+			),
 			1
 		);
 		expect(lines.map((l) => l.title)).toEqual(['Minister Vijlbrief stuurt een brief.']);
 	});
 });
 
-describe('kamerstukken', () => {
-	it('counts the moties, amendementen and nota’s of a day in one line', () => {
-		const d = { key: '36922', number: '36922', short_title: 'Studievoorschot' } as never;
-		const lines = dayLines('2026-09-23', [
-			item({ dossier: d }),
-			item({ dossier: d }),
-			item({ kind: 'amendement', dossier: d }),
-			item({ kind: 'nota_van_wijziging' })
-		]);
-		expect(lines).toHaveLength(1);
-		expect(lines[0].title).toBe('Ingediend: 2 moties, 1 amendement en 1 nota van wijziging');
-		expect(lines[0].context).toBe('Studievoorschot');
-	});
-});
-
-describe('subjects and names', () => {
-	it('leaves out the paper a motie replaces, and names a begroting', () => {
-		const [line] = dayLines('2026-09-23', [
-			vote(141, 7, {
-				title: 'Gewijzigde motie van het lid Grinwis over steward ownership (t.v.v. 21501-30-712)'
-			})
-		]);
-		expect(line.title).toBe('Kamer neemt motie aan over steward ownership');
-		expect(
-			dossierName({
-				key: 'b',
-				number: '37020-IV',
-				title:
-					'Vaststelling van de begrotingsstaten van Koninkrijksrelaties (IV) en het BES-fonds (H) voor het jaar 2027'
-			} as never)
-		).toBe('Begroting Koninkrijksrelaties');
-	});
-});
-
 describe('headlineOf', () => {
 	it('heads one event as the homepage does, major when it matters', () => {
-		expect(
-			headlineOf(
-				vote(75, 75, {
-					title: 'Motie van het lid Schilder over strafverzwaring',
-					persons: [{ name: 'J.M.M. Schilder', role: 'indiener' } as never]
-				})
-			)
-		).toEqual({
+		expect(headlineOf(schilder)).toEqual({
 			label: 'Stemming, verworpen',
 			title: 'Kamer verwerpt motie-Schilder over strafverzwaring',
 			major: true,
 			failed: true
 		});
 		expect(headlineOf(vote(120, 30)).major).toBe(false);
+		expect(
+			headlineOf(
+				vote(141, 7, {
+					persons: [{ surname: 'Grinwis', role: 'indiener' } as never],
+					headline: {
+						surname: 'Grinwis',
+						subject: 'steward ownership (t.v.v. 21501-30-712)'
+					}
+				})
+			).title
+		).toBe('Kamer neemt motie-Grinwis aan over steward ownership');
 		expect(
 			headlineOf(
 				vote(100, 50, {

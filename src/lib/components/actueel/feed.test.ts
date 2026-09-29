@@ -7,7 +7,9 @@ import {
 	type FeedItem,
 	atomParams,
 	dossierLabel,
+	feedStand,
 	foldTitle,
+	standLine,
 	titleOf
 } from './feed';
 
@@ -30,7 +32,8 @@ const item = (date: string, kind: FeedItem['kind'], dossier: string | null): Fee
 		vote: null,
 		commitment: null,
 		publication: null,
-		commencement: null
+		commencement: null,
+		headline: {}
 	}) as FeedItem;
 
 describe('daysOf', () => {
@@ -142,7 +145,7 @@ describe('the votes of a day', () => {
 		const [first, ...rest] = day.entries;
 		expect('fold' in first && first.fold.id).toBe('fold/2026-09-22/stemming');
 		expect('fold' in first && foldTitle(first.fold)).toBe(
-			'Kamer stemt over 2 moties: 1 aangenomen, 1 verworpen, en over 1 ander voorstel'
+			'Kamer stemt over 2 moties: 1 aangenomen, 1 verworpen, en over 1 amendement'
 		);
 		expect(rest.map((e) => ('item' in e ? e.item.kind : 'fold'))).toEqual([
 			'brief_regering',
@@ -150,10 +153,36 @@ describe('the votes of a day', () => {
 			'stemming'
 		]);
 		expect(day.counts[0]).toEqual({ kind: 'stemming', count: 5 });
+		// With the summary, the whole day: bills left out, the rest counted.
+		expect(
+			'fold' in first &&
+				foldTitle(first.fold, [
+					{ subkind: 'wetsvoorstel', outcome: 'aangenomen', count: 6 },
+					{ subkind: 'motie', outcome: 'aangenomen', count: 88 },
+					{ subkind: 'motie', outcome: 'verworpen', count: 37 },
+					{ subkind: 'amendement', outcome: 'aangenomen', count: 9 }
+				])
+		).toBe('Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen, en over 9 amendementen');
 	});
 
 	it('stay single lines when there are few', () => {
 		const [day] = daysOf([vote('29911', 120, 30), vote('29754', 20, 130)]);
 		expect(day.entries.every((e) => 'item' in e)).toBe(true);
+	});
+});
+
+describe('feedStand', () => {
+	it('takes the newest record of the Kamers, and says when it was fetched', () => {
+		const stand = feedStand({
+			tk: { retrieved_at: '2026-09-24T20:51:42Z', newest: '2026-09-24' },
+			eerstekamer: { retrieved_at: '2026-09-23T10:07:37Z', newest: '2026-09-21' },
+			rechtspraak: { retrieved_at: '2026-09-29T07:29:57Z', newest: '2026-09-28' }
+		});
+		expect(stand).toEqual({ newest: '2026-09-24', retrievedAt: '2026-09-24T20:51:42Z' });
+		expect(standLine(stand!)).toBe(
+			'Stukken van de Kamers tot en met 24 sep 2026, opgehaald op 24 sep 2026'
+		);
+		expect(feedStand({ bwb: { newest: '2026-09-01' } })).toBeNull();
+		expect(feedStand(undefined)).toBeNull();
 	});
 });

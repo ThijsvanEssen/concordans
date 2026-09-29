@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.31.0"
+		"version": "0.33.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -3394,17 +3394,6 @@
 						"description": "Count the facets and the total."
 					},
 					{
-						"name": "kind",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
-							"title": "Kind"
-						},
-						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
-					},
-					{
 						"name": "since",
 						"in": "query",
 						"required": false,
@@ -3425,6 +3414,17 @@
 							"title": "Until"
 						},
 						"description": "On or before this day."
+					},
+					{
+						"name": "kind",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
+							"title": "Kind"
+						},
+						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
 					},
 					{
 						"name": "cabinet",
@@ -3512,11 +3512,170 @@
 				}
 			}
 		},
+		"/api/feed/summary": {
+			"get": {
+				"tags": ["feed", "feed"],
+				"summary": "News feed summary",
+				"description": "The days up to ``until`` (default today, ``days`` of them) in one small answer, under the filters of ``GET /api/feed``: per day the events per kind, per dossier and, of the votes, per subkind and outcome; and the events a timeline shows one by one, as feed items in the order of the feed: bills submitted, votes on a bill, votes decided by at most ``margin`` seats, commitments and commencements.",
+				"operationId": "get_feed_summary_route_api_feed_summary_get",
+				"parameters": [
+					{
+						"name": "until",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "The last day; default today.",
+							"title": "Until"
+						},
+						"description": "The last day; default today."
+					},
+					{
+						"name": "days",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 31,
+							"minimum": 1,
+							"description": "How many days.",
+							"default": 3,
+							"title": "Days"
+						},
+						"description": "How many days."
+					},
+					{
+						"name": "margin",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 150,
+							"minimum": 0,
+							"description": "A vote this close (seats for minus against) is shown one by one.",
+							"default": 10,
+							"title": "Margin"
+						},
+						"description": "A vote this close (seats for minus against) is shown one by one."
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 500,
+							"minimum": 1,
+							"description": "Events shown one by one, at most.",
+							"default": 100,
+							"title": "Limit"
+						},
+						"description": "Events shown one by one, at most."
+					},
+					{
+						"name": "kind",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
+							"title": "Kind"
+						},
+						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
+					},
+					{
+						"name": "cabinet",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Cabinet key: the events of its period (``jetten``).",
+							"title": "Cabinet"
+						},
+						"description": "Cabinet key: the events of its period (``jetten``)."
+					},
+					{
+						"name": "ministry",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }],
+							"title": "Ministry"
+						}
+					},
+					{
+						"name": "dossier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^\\d+(-[A-Za-z0-9()]*)?$" },
+								{ "type": "null" }
+							],
+							"description": "A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020.",
+							"title": "Dossier"
+						},
+						"description": "A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020."
+					},
+					{
+						"name": "member",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Member key: what they signed, the commitments they made.",
+							"title": "Member"
+						},
+						"description": "Member key: what they signed, the commitments they made."
+					},
+					{
+						"name": "faction",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Faction key: what its Kamerleden signed for it.",
+							"title": "Faction"
+						},
+						"description": "Faction key: what its Kamerleden signed for it."
+					},
+					{
+						"name": "q",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "Words of the title, or of the title of the event's dossier, in any case.",
+							"title": "Q"
+						},
+						"description": "Words of the title, or of the title of the event's dossier, in any case."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/FeedSummaryResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/feed.atom": {
 			"get": {
 				"tags": ["feed", "feed"],
 				"summary": "News feed as Atom",
-				"description": "A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader: one entry per event, its link the official text or the page on tweedekamer.nl when it has one, and a ``next`` link to the next page.",
+				"description": "A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader, named after its filters (``Concordans: moties``): an ``alternate`` link to the same view on Concordans (``LAWGRAPH_SITE_URL``/actueel), per entry an ``alternate`` link to the event there and a ``related`` link to its official page, and a ``next`` link to the next page.",
 				"operationId": "get_feed_atom_api_feed_atom_get",
 				"parameters": [
 					{
@@ -3543,17 +3702,6 @@
 						}
 					},
 					{
-						"name": "kind",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
-							"title": "Kind"
-						},
-						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
-					},
-					{
 						"name": "since",
 						"in": "query",
 						"required": false,
@@ -3574,6 +3722,17 @@
 							"title": "Until"
 						},
 						"description": "On or before this day."
+					},
+					{
+						"name": "kind",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
+							"title": "Kind"
+						},
+						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
 					},
 					{
 						"name": "cabinet",
@@ -6728,6 +6887,49 @@
 				"title": "FeedCommitmentDTO",
 				"description": "What a ``toezegging`` stands at."
 			},
+			"FeedDayDTO": {
+				"properties": {
+					"date": { "type": "string", "title": "Date" },
+					"total": { "type": "integer", "title": "Total", "default": 0 },
+					"kinds": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Kinds"
+					},
+					"dossiers": {
+						"items": { "$ref": "#/components/schemas/FeedDossierCountDTO" },
+						"type": "array",
+						"title": "Dossiers",
+						"description": "Per first dossier of an event, most first."
+					},
+					"votes": {
+						"items": { "$ref": "#/components/schemas/FeedVoteCountDTO" },
+						"type": "array",
+						"title": "Votes"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["date"],
+				"title": "FeedDayDTO",
+				"description": "The events of one day, counted."
+			},
+			"FeedDossierCountDTO": {
+				"properties": {
+					"number": { "type": "string", "title": "Number" },
+					"key": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Key" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"short_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short Title"
+					},
+					"count": { "type": "integer", "title": "Count" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["number", "count"],
+				"title": "FeedDossierCountDTO"
+			},
 			"FeedDossierDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
@@ -6789,6 +6991,29 @@
 				"type": "object",
 				"required": ["key"],
 				"title": "FeedFactionDTO"
+			},
+			"FeedHeadlineDTO": {
+				"properties": {
+					"surname": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Surname",
+						"description": "Of the first submitter (``indiener``): ``van der Plas`` of ``motie-Van der Plas``; null without one."
+					},
+					"subject": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Subject",
+						"description": "What the title says it is about: the part after the first `` over ``; null when it has none."
+					},
+					"short_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short Title",
+						"description": "The short title of the event's dossier (``dossier.short_title``)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "FeedHeadlineDTO",
+				"description": "The parts a headline is made of; the front end makes the sentence."
 			},
 			"FeedInstrumentDTO": {
 				"properties": {
@@ -6873,6 +7098,7 @@
 						"title": "Tk Url",
 						"description": "The page of a paper on tweedekamer.nl."
 					},
+					"headline": { "$ref": "#/components/schemas/FeedHeadlineDTO" },
 					"vote": { "anyOf": [{ "$ref": "#/components/schemas/FeedVoteDTO" }, { "type": "null" }] },
 					"commitment": {
 						"anyOf": [{ "$ref": "#/components/schemas/FeedCommitmentDTO" }, { "type": "null" }]
@@ -6886,7 +7112,7 @@
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["id", "kind", "date", "node"],
+				"required": ["id", "kind", "date", "node", "headline"],
 				"title": "FeedItemDTO",
 				"description": "One event."
 			},
@@ -6908,7 +7134,21 @@
 						"title": "Key",
 						"description": "Member key; null when unknown."
 					},
-					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name",
+						"description": "The name they go by and the surname: ``Hanneke Steen``."
+					},
+					"surname": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Surname",
+						"description": "With its prefix, as written: ``van der Plas``."
+					},
+					"function": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Function",
+						"description": "What they signed as, as the source writes it: ``minister van Sociale Zaken en Werkgelegenheid``, ``Tweede Kamerlid``."
+					},
 					"role": {
 						"type": "string",
 						"enum": ["indiener", "medeindiener", "bewindspersoon"],
@@ -6977,6 +7217,57 @@
 				"type": "object",
 				"required": ["items"],
 				"title": "FeedResponse"
+			},
+			"FeedSummaryResponse": {
+				"properties": {
+					"since": { "type": "string", "title": "Since" },
+					"until": { "type": "string", "title": "Until" },
+					"margin": { "type": "integer", "title": "Margin" },
+					"days": {
+						"items": { "$ref": "#/components/schemas/FeedDayDTO" },
+						"type": "array",
+						"title": "Days",
+						"description": "Every day of the window, newest first."
+					},
+					"items": {
+						"items": { "$ref": "#/components/schemas/FeedItemDTO" },
+						"type": "array",
+						"title": "Items",
+						"description": "The events shown one by one, feed order."
+					},
+					"items_truncated": {
+						"type": "boolean",
+						"title": "Items Truncated",
+						"description": "More events qualified than ``limit``.",
+						"default": false
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["since", "until", "margin"],
+				"title": "FeedSummaryResponse",
+				"description": "A few days of the feed in one answer."
+			},
+			"FeedVoteCountDTO": {
+				"properties": {
+					"subkind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Subkind",
+						"description": "What was voted on: ``motie``, ``amendement``, ``wetsvoorstel``."
+					},
+					"outcome": {
+						"anyOf": [
+							{ "type": "string", "enum": ["aangenomen", "verworpen"] },
+							{ "type": "null" }
+						],
+						"title": "Outcome"
+					},
+					"count": { "type": "integer", "title": "Count" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["count"],
+				"title": "FeedVoteCountDTO"
 			},
 			"FeedVoteDTO": {
 				"properties": {
