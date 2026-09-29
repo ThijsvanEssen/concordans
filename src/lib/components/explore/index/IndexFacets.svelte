@@ -1,4 +1,5 @@
 <script lang="ts" module>
+	import { rangeLabel } from './range';
 	// The filter column of the index: per dimension its options, each with the number of
 	// bronnen it holds under the other filters and a bar for its share. A dimension of
 	// ordered steps (the stages of a bill) is drawn as columns, a period as two fields.
@@ -70,7 +71,7 @@
 						? [
 								{
 									id: g.id,
-									label: `${g.label}: ${shown(g.from, g.unit) || '…'} tot ${shown(g.to, g.unit) || 'nu'}`,
+									label: `${g.label}: ${rangeLabel(g.from, g.to, g.unit)}`,
 									onRemove: () => g.onChange('', '')
 								}
 							]
@@ -88,13 +89,6 @@
 			}
 		});
 	}
-
-	const shown = (value: string, unit: 'year' | 'date') =>
-		!value
-			? ''
-			: unit === 'year'
-				? value.slice(0, 4)
-				: new Intl.DateTimeFormat('nl-NL', { dateStyle: 'medium' }).format(new Date(value));
 </script>
 
 <script lang="ts">
