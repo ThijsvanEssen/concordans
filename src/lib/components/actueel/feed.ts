@@ -152,3 +152,17 @@ export function publicationCite(p: NonNullable<FeedItem['publication']>): string
 	const series = p.series ? (SERIES[p.series] ?? p.series) : '';
 	return `${series} ${p.year ?? ''}, ${p.number ?? ''}`.trim();
 }
+
+/**
+ * The query of the Atom feed of a view: the filters chosen, without the page size and
+ * without the end of today the page adds, so a subscribed feed keeps coming.
+ */
+export function atomParams(
+	query: Record<string, string | number | undefined>,
+	chosenUntil: string
+): URLSearchParams {
+	const p = new URLSearchParams();
+	for (const [k, v] of Object.entries(query))
+		if (v !== undefined && k !== 'limit' && !(k === 'until' && !chosenUntil)) p.set(k, String(v));
+	return p;
+}

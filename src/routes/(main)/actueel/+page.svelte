@@ -24,6 +24,7 @@
 	import {
 		FEED_KINDS,
 		KIND_LABEL,
+		atomParams,
 		countLine,
 		dayLabel,
 		daysOf,
@@ -321,11 +322,12 @@
 	const chips = $derived(activeFilters(groups));
 	let filtersOpen = $state(false);
 
-	/** The same view as an Atom feed. */
+	/**
+	 * The same view as an Atom feed. Only the filters chosen: the page's own end of today is
+	 * left out, or a subscribed feed would stop at the day it was subscribed.
+	 */
 	const atomHref = $derived.by(() => {
-		const p = new URLSearchParams();
-		for (const [k, v] of Object.entries(query ?? {}))
-			if (v !== undefined && k !== 'limit') p.set(k, String(v));
+		const p = atomParams(query as Record<string, string | number | undefined>, until);
 		return `${API_BASE_URL}/api/feed.atom${p.size ? `?${p}` : ''}`;
 	});
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countLine, dayLabel, daysOf, publicationCite, type FeedItem } from './feed';
+import { countLine, dayLabel, daysOf, publicationCite, type FeedItem, atomParams } from './feed';
 
 let n = 0;
 const item = (date: string, kind: FeedItem['kind'], dossier: string | null): FeedItem =>
@@ -57,5 +57,13 @@ describe('labels', () => {
 		expect(publicationCite({ series: 'stb', year: 2026, number: '204', instruments: [] })).toBe(
 			'Stb. 2026, 204'
 		);
+	});
+});
+
+describe('atomParams', () => {
+	it('keeps the filters chosen and leaves out the end of today the page adds', () => {
+		const q = { faction: 'd66', until: '2026-09-29', limit: 100, kind: undefined };
+		expect(atomParams(q, '').toString()).toBe('faction=d66');
+		expect(atomParams(q, '2026-09-29').toString()).toBe('faction=d66&until=2026-09-29');
 	});
 });
