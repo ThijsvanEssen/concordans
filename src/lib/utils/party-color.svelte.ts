@@ -6,23 +6,28 @@ import { api } from '$lib/api/client';
 /** The colour of a party the API does not list. */
 export const NO_PARTY_COLOR = 'var(--ink-3)';
 
-// The API keys some parties by their full name; lists and votes use the abbreviation.
-const ALIASES: Record<string, string> = {
-	cu: 'ChristenUnie',
-	gl: 'GroenLinks',
-	'groenlinks-pvda': 'GroenLinks-PvdA'
-};
-
-/** The colour of `abbr` in `colors`, matched without regard to case. */
-export function colorFor(abbr: string, colors: Record<string, string>): string {
+/**
+ * The colour of `abbr` in `colors`, matched without regard to case. The API keys some
+ * parties by their full name; `aliases` (from the API too) leads an abbreviation to it:
+ * `CU` to `ChristenUnie`, `PRO` to `GroenLinks-PvdA`.
+ */
+export function colorFor(
+	abbr: string,
+	colors: Record<string, string>,
+	aliases: Record<string, string> = {}
+): string {
 	const key = abbr.trim();
 	if (!key) return NO_PARTY_COLOR;
-	const wanted = (ALIASES[key.toLowerCase()] ?? key).toLowerCase();
-	const hit = Object.keys(colors).find((k) => k.toLowerCase() === wanted);
-	return hit ? colors[hit] : NO_PARTY_COLOR;
+	const lookup = (map: Record<string, string>, name: string) => {
+		const hit = Object.keys(map).find((k) => k.toLowerCase() === name.toLowerCase());
+		return hit ? map[hit] : undefined;
+	};
+	const wanted = lookup(aliases, key) ?? key;
+	return lookup(colors, wanted) ?? NO_PARTY_COLOR;
 }
 
 const colors = $state<Record<string, string>>({});
+const aliases = $state<Record<string, string>>({});
 let requested = false;
 
 /** A party's colour; grey until the API has answered, then its own. */
@@ -31,10 +36,13 @@ export function partyColor(abbr: string): string {
 		requested = true;
 		api
 			.GET('/api/parties/colors')
-			.then(({ data }) => Object.assign(colors, data?.colors ?? {}))
+			.then(({ data }) => {
+				Object.assign(aliases, data?.aliases ?? {});
+				Object.assign(colors, data?.colors ?? {});
+			})
 			.catch(() => {
 				// Grey stays: the colour is an aid, the abbreviation names the party.
 			});
 	}
-	return colorFor(abbr, colors);
+	return colorFor(abbr, colors, aliases);
 }
