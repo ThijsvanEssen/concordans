@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.38.0"
+		"version": "0.40.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -2654,7 +2654,7 @@
 			"get": {
 				"tags": ["parties", "parties"],
 				"summary": "Party colours",
-				"description": "Party abbreviation to hex colour, from the parties' own house styles, for rendering vote chips.",
+				"description": "Party to hex colour, from the parties' own house styles, for rendering vote chips: `colors` by every name and alias (matched without regard to case), `aliases` another name of a party -> its name in `colors`. Kept by hand (`lawgraph curated set party-colors`): no official source gives them.",
 				"operationId": "get_party_colors_api_parties_colors_get",
 				"responses": {
 					"200": {
@@ -9072,13 +9072,19 @@
 						"additionalProperties": { "type": "string" },
 						"type": "object",
 						"title": "Colors"
+					},
+					"aliases": {
+						"additionalProperties": { "type": "string" },
+						"type": "object",
+						"title": "Aliases",
+						"description": "Another name of a party (`GL-PvdA`, `CU`) -> its name in `colors`."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["colors"],
 				"title": "PartyColorsResponse",
-				"description": "Party abbreviation to hex colour."
+				"description": "Party to hex colour, by every name and alias; and the aliases."
 			},
 			"PartyRefDTO": {
 				"properties": {

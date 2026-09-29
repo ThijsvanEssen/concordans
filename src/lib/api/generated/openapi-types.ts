@@ -870,7 +870,7 @@ export interface paths {
         };
         /**
          * Party colours
-         * @description Party abbreviation to hex colour, from the parties' own house styles, for rendering vote chips.
+         * @description Party to hex colour, from the parties' own house styles, for rendering vote chips: `colors` by every name and alias (matched without regard to case), `aliases` another name of a party -> its name in `colors`. Kept by hand (`lawgraph curated set party-colors`): no official source gives them.
          */
         get: operations["get_party_colors_api_parties_colors_get"];
         put?: never;
@@ -5571,11 +5571,18 @@ export interface components {
         };
         /**
          * PartyColorsResponse
-         * @description Party abbreviation to hex colour.
+         * @description Party to hex colour, by every name and alias; and the aliases.
          */
         PartyColorsResponse: {
             /** Colors */
             colors: {
+                [key: string]: string;
+            };
+            /**
+             * Aliases
+             * @description Another name of a party (`GL-PvdA`, `CU`) -> its name in `colors`.
+             */
+            aliases?: {
                 [key: string]: string;
             };
         };
