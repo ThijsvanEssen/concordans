@@ -62,9 +62,6 @@
 		done: 'Nagekomen',
 		vervallen: 'Vervallen'
 	};
-
-	/** The agenda title starts with the date, which is shown above it already. */
-	const withoutDate = (title: string) => title.replace(/^\d{4}-\d{2}-\d{2}\s*[–—-]+\s*/, '');
 </script>
 
 <div class="timeline">
@@ -152,7 +149,7 @@
 							</div>
 						</div>
 					{:else if entry.node_type === 'activity'}
-						{@const title = withoutDate(body.agenda_title || entry.title || '')}
+						{@const title = body.agenda_title || entry.title || ''}
 						<div class="entry-body">
 							{#if title}
 								<a
