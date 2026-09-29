@@ -157,6 +157,8 @@ export function edgeColorFor(relation: Relation, sourceKind: GraphNodeKind): str
 			return t.accent;
 		case 'APPEAL_OF':
 		case 'ADVISES_ON':
+		case 'CONTINUES':
+		case 'REFERRED_BY':
 		case 'MADE_IN':
 			return t.slate;
 		default:

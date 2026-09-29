@@ -357,6 +357,28 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Hoger beroep of cassatie tegen deze uitspraak',
 			match: [{ relation: 'APPEAL_OF', direction: 'inbound', collection: 'judgments' }]
 		},
+		// One case at one court: the final judgment continues the interim one.
+		{
+			id: 'continues',
+			label: 'Vervolg op',
+			match: [{ relation: 'CONTINUES', direction: 'outbound', collection: 'judgments' }]
+		},
+		{
+			id: 'continued',
+			label: 'Voortgezet in',
+			match: [{ relation: 'CONTINUES', direction: 'inbound', collection: 'judgments' }]
+		},
+		// After cassation with referral: the decision of the court the Hoge Raad sent it to.
+		{
+			id: 'referred-by',
+			label: 'Verwezen door',
+			match: [{ relation: 'REFERRED_BY', direction: 'outbound', collection: 'judgments' }]
+		},
+		{
+			id: 'referred-to',
+			label: 'Verwezen naar',
+			match: [{ relation: 'REFERRED_BY', direction: 'inbound', collection: 'judgments' }]
+		},
 		{
 			id: 'judgments',
 			// Not `die deze uitspraak aanhaalt`: one letter from the group below, which is the other way.

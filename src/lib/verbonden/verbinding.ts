@@ -48,6 +48,8 @@ const KIND_OF_RELATION: Partial<Record<Relation, string>> = {
 	LEGISLATED_IN: 'behandeling',
 	APPEAL_OF: 'hoger beroep',
 	ADVISES_ON: 'conclusie',
+	CONTINUES: 'vervolg',
+	REFERRED_BY: 'verwijzing',
 	REVISES: 'begrotingswijziging',
 	ACCOMPANIES: 'indiening met een nota',
 	RELATED_TO: 'verband tussen zaken',

@@ -336,7 +336,7 @@ describe('a relation the list does not know yet', () => {
 				id: 'judgments/ecli_nl_gharl_2026_5455',
 				key: 'ecli_nl_gharl_2026_5455',
 				collection: 'judgments',
-				relation: 'REFERRED_BY',
+				relation: 'OVERRULES',
 				direction: 'inbound',
 				props: { ecli: 'ECLI:NL:GHARL:2026:5455' }
 			} as unknown as Neighbor
@@ -405,5 +405,31 @@ describe('the groups of a judgment', () => {
 		expect(labels.judgments).toBe('Uitspraken die hier worden aangehaald');
 		expect(labels['cited-by']).toBe('Uitspraken die deze uitspraak aanhalen');
 		expect(labels.articles).toBe('Artikelen die hier worden aangehaald');
+	});
+});
+
+describe('judgments of one case', () => {
+	const neighbor = (key: string, relation: string, direction: 'inbound' | 'outbound') =>
+		({
+			id: `judgments/${key}`,
+			key,
+			collection: 'judgments',
+			relation,
+			direction,
+			props: { ecli: key.toUpperCase().replaceAll('_', ':') }
+		}) as unknown as Neighbor;
+	it('have a group of their own for each way of CONTINUES and REFERRED_BY', () => {
+		const groups = buildGroups('judgments', [
+			neighbor('ecli_nl_ghdha_2026_2188', 'CONTINUES', 'outbound'),
+			neighbor('ecli_nl_ghdha_2026_2900', 'CONTINUES', 'inbound'),
+			neighbor('ecli_nl_hr_2025_1', 'REFERRED_BY', 'outbound'),
+			neighbor('ecli_nl_gharl_2026_5455', 'REFERRED_BY', 'inbound')
+		]);
+		const label = (id: string) => groups.find((g) => g.id === id);
+		expect(label('continues')?.label).toBe('Vervolg op');
+		expect(label('continued')?.label).toBe('Voortgezet in');
+		expect(label('referred-by')?.label).toBe('Verwezen door');
+		expect(label('referred-to')?.label).toBe('Verwezen naar');
+		expect(groups.find((g) => g.id === 'other')?.rows ?? []).toEqual([]);
 	});
 });
