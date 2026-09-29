@@ -333,7 +333,7 @@ export interface paths {
         };
         /**
          * Articles as they stood on a given date
-         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of the document. Empty when no version covers that date. ``text_preview`` is the start of ``text``; ``limit`` and ``offset`` page, ``total`` counts every article.
+         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of that day's toestand, each with the divisions it stood in that day (``breadcrumb``). Empty before the first toestand of the law (``first_version_from``) and when no version covers that date. ``text_preview`` is the start of the text; with ``text_preview_chars`` the whole ``text`` is left out unless ``include_text=true``. ``limit`` and ``offset`` page, ``total`` counts every article.
          */
         get: operations["list_articles_at_api_instruments__bwb_id__articles_at__at_date__get"];
         put?: never;
@@ -4294,7 +4294,7 @@ export interface components {
         };
         /**
          * InstrumentArticleVersionDTO
-         * @description One historical version of a single BWB article.
+         * @description One historical version of a single BWB article, in its place on the day asked for.
          */
         InstrumentArticleVersionDTO: {
             /** Key */
@@ -4303,6 +4303,22 @@ export interface components {
             bwb_id: string;
             /** Article Number */
             article_number: string;
+            /**
+             * Label
+             * @description `Artikel 1:3`, or the heading of an article without a number.
+             */
+            label?: string | null;
+            /**
+             * Heading
+             * @description The title of its kop (`Definities`); most articles have none.
+             */
+            heading?: string | null;
+            /**
+             * Breadcrumb
+             * @description The divisions the article stood in on the day asked for, outermost first: those of the toestand of that day.
+             * @default []
+             */
+            breadcrumb: components["schemas"]["InstrumentArticleBreadcrumbDTO"][];
             /** Valid From */
             valid_from?: string | null;
             /**
@@ -4320,11 +4336,14 @@ export interface components {
              * @description This version on wetten.overheid.nl (JCI with ``g``).
              */
             official_url?: string | null;
-            /** Text */
+            /**
+             * Text
+             * @description The whole text; null when it was not asked for.
+             */
             text?: string | null;
             /**
              * Text Preview
-             * @description The first ``text_preview_chars`` characters of ``text``.
+             * @description The first ``text_preview_chars`` characters of the text.
              */
             text_preview?: string | null;
         };
@@ -4342,6 +4361,11 @@ export interface components {
              * @description Every article in force on ``at_date``, independent of ``limit`` and ``offset``.
              */
             total: number;
+            /**
+             * First Version From
+             * @description The start of the first toestand of the law the source gives (the oldest ``valid_from`` of its versions). Before it the source gives no law: the route is empty, also where an article's own ``valid_from`` is older.
+             */
+            first_version_from?: string | null;
             /** Items */
             items: components["schemas"]["InstrumentArticleVersionDTO"][];
         };
@@ -7087,8 +7111,10 @@ export interface operations {
     list_articles_at_api_instruments__bwb_id__articles_at__at_date__get: {
         parameters: {
             query?: {
-                /** @description Chars of text to inline as preview */
-                text_preview_chars?: number;
+                /** @description Chars of text to inline as preview (default 160); given, the whole text is left out unless include_text=true */
+                text_preview_chars?: number | null;
+                /** @description Give the whole text; default: true unless text_preview_chars is given */
+                include_text?: boolean | null;
                 limit?: number;
                 offset?: number;
             };
