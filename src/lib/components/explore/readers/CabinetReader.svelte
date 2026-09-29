@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NameLink from '$lib/bron/NameLink.svelte';
 	// Reader for a cabinet: its period, minister-president and coalition, and what it did,
 	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -84,7 +85,11 @@
 						{#each c.parties as p, i (i)}
 							<span class="party"
 								><span class="party-dot" style:background={partyColor(p.short ?? p.faction ?? '')}
-								></span>{p.short ?? p.faction}</span
+								></span><NameLink
+									collection="factions"
+									name={p.short ?? p.faction ?? ''}
+									key={p.faction}
+								/></span
 							>
 						{/each}
 					</dd>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NameLink from '$lib/bron/NameLink.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row's title
@@ -1717,14 +1718,16 @@
 							<a href={hrefOf(`cabinets/${shownCabinet.key}`)}>{shownCabinet.name}</a>
 						</h2>
 						<p class="gov-sub">
-							{[
-								period(shownCabinet.from_date, shownCabinet.to_date, isOpen(shownCabinet)),
-								shownCabinet.prime_minister?.name &&
-									`Minister-president ${shownCabinet.prime_minister.name}`,
-								`${shownCabinet.members} ${shownCabinet.members === 1 ? 'bewindspersoon' : 'bewindspersonen'}`
-							]
-								.filter(Boolean)
-								.join(' · ')}
+							{period(shownCabinet.from_date, shownCabinet.to_date, isOpen(shownCabinet))}
+							{#if shownCabinet.prime_minister?.name}
+								· Minister-president <NameLink
+									collection="members"
+									name={shownCabinet.prime_minister.name}
+									key={shownCabinet.prime_minister.key}
+								/>
+							{/if}
+							· {shownCabinet.members}
+							{shownCabinet.members === 1 ? 'bewindspersoon' : 'bewindspersonen'}
 						</p>
 						{#if !ministersShown?.length && !loading}
 							{@render empty('bewindspersonen')}
@@ -2033,7 +2036,7 @@
 													<span class="row-id-main row-id-main--inline">
 														<span class="party-dot" style:background={partyColor(m.party ?? '')}
 														></span>
-														{m.party ?? ''}
+														{#if m.party}<NameLink collection="factions" name={m.party} />{/if}
 													</span>
 												{/snippet}
 												{#snippet detail()}
@@ -2201,7 +2204,13 @@
 												{/snippet}
 												{#snippet body()}
 													{#if c.prime_minister?.name}
-														<span class="row-sub">Minister-president {c.prime_minister.name}</span>
+														<span class="row-sub"
+															>Minister-president <NameLink
+																collection="members"
+																name={c.prime_minister.name}
+																key={c.prime_minister.key}
+															/></span
+														>
 													{/if}
 													{#if parties.length}
 														<span class="party-list">
@@ -2210,7 +2219,11 @@
 																	><span
 																		class="party-dot"
 																		style:background={partyColor(p.short ?? '')}
-																	></span>{p.short}</span
+																	></span><NameLink
+																		collection="factions"
+																		name={p.short ?? p.faction ?? ''}
+																		key={p.faction}
+																	/></span
 																>
 															{/each}
 														</span>
@@ -2280,7 +2293,11 @@
 												{#snippet body()}
 													<span class="row-sub">
 														{#if t.member}
-															{t.member.name}{t.member.function ? `, ${t.member.function}` : ''}
+															<NameLink
+																collection="members"
+																name={t.member.name ?? ''}
+																key={t.member.key}
+															/>{t.member.function ? `, ${t.member.function}` : ''}
 														{:else if t.minister_name}
 															{t.minister_name}
 														{/if}

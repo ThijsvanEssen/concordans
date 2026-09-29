@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NameLink from '$lib/bron/NameLink.svelte';
 	// Inline detail of an opened row: header, stat tiles, a stage path for
 	// dossiers and the links that open the source. Shows only what the list
 	// item carries.
@@ -175,7 +176,10 @@
 					{/if}
 				{:else if m && m.party}
 					<span class="tag tag--outline">
-						<span class="party-dot" style:background={partyColor(m.party)}></span>{m.party}
+						<span class="party-dot" style:background={partyColor(m.party)}></span><NameLink
+							collection="factions"
+							name={m.party}
+						/>
 					</span>
 				{:else if f}
 					<span class="tag tag--outline">
@@ -265,7 +269,9 @@
 			</div>
 		{:else if m}
 			<div class="tile">
-				<div class="tile-num">{m.party ?? '—'}</div>
+				<div class="tile-num">
+					{#if m.party}<NameLink collection="factions" name={m.party} />{:else}—{/if}
+				</div>
 				<div class="tile-lbl">Fractie</div>
 			</div>
 		{:else if f}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NameLink from '$lib/bron/NameLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import { neighborsOf, type Neighbor } from '$lib/api/nodes';
@@ -134,7 +135,9 @@
 					<div class="member-meta">
 						<h2 class="title">{m.name ?? m.key}</h2>
 						{#if m.party}
-							<div class="chips"><span class="party-chip">{m.party}</span></div>
+							<div class="chips">
+								<NameLink collection="factions" name={m.party} class="party-chip" />
+							</div>
 						{/if}
 					</div>
 				</div>
@@ -165,7 +168,11 @@
 								{:else}
 									<span class="career-what">
 										{step.function.charAt(0).toUpperCase() + step.function.slice(1)}
-										{#if step.cabinet}<span class="career-role">{step.cabinet}</span>{/if}
+										{#if step.cabinet}<NameLink
+												collection="cabinets"
+												name={step.cabinet}
+												class="career-role"
+											/>{/if}
 										{#if step.count > 0}
 											<span class="career-role"
 												>{step.count}
@@ -194,7 +201,7 @@
 					{#each groups as group (group.party)}
 						{#if groups.length > 1}
 							<div class="party-head">
-								<span class="party-name">{group.party}</span>
+								<NameLink collection="factions" name={group.party} class="party-name" />
 								<span class="party-total">{group.total} stemmen</span>
 							</div>
 						{/if}
@@ -316,7 +323,8 @@
 	}
 
 	/* The faction is a word, not a tag. */
-	.party-chip {
+	/* Also on the link NameLink renders. */
+	.r-member :global(.party-chip) {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -373,7 +381,8 @@
 	.career-what a:hover {
 		color: var(--accent);
 	}
-	.career-role {
+	/* Also on the link NameLink renders. */
+	.r-member :global(.career-role) {
 		display: block;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -475,7 +484,8 @@
 		padding-bottom: var(--s-1);
 		border-bottom: 1px solid var(--rule);
 	}
-	.party-name {
+	/* Also on the link NameLink renders. */
+	.r-member :global(.party-name) {
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		font-weight: 500;
