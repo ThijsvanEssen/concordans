@@ -2,7 +2,6 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
-	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
 	import { getJudgmentDetail } from '$lib/api/judgments';
@@ -61,13 +60,6 @@
 	}
 
 	let menuFor = $state<string | null>(null);
-	const copier = createCopier();
-	function copyText(text: string, key: string) {
-		void copier.copy(text, key);
-		menuFor = null;
-	}
-	const copyLabel = (key: string, idle: string) => copier.label(key, idle);
-	const copyLink = (id: string) => copyText(permalink(page.url, id), `share:${id}`);
 
 	let root = $state<HTMLElement | null>(null);
 	const anchor = $derived(anchorOfHash(page.url.hash));
@@ -231,12 +223,11 @@
 					{@const hid = headingId(clean)}
 					<h3 class="reader-heading" id={hid}>
 						<span class="reader-heading__text">{clean}</span>
-						<button
-							type="button"
-							class="reader-heading__link"
-							onclick={() => copyLink(hid)}
-							aria-label="Kopieer link naar {clean}">{copyLabel(`share:${hid}`, 'Deel')}</button
-						>
+						<CiteMenu
+							items={citeItems(null, permalink(page.url, hid))}
+							name={clean}
+							buttonClass="reader-heading__link"
+						/>
 					</h3>
 				{:else}
 					{#each splitBodyParagraph(para.text, para.citations) as seg, i (i)}
@@ -244,13 +235,11 @@
 							{@const hid = headingId(seg.text)}
 							<h3 class="reader-heading" id={hid}>
 								<span class="reader-heading__text">{seg.text}</span>
-								<button
-									type="button"
-									class="reader-heading__link"
-									onclick={() => copyLink(hid)}
-									aria-label="Kopieer link naar {seg.text}"
-									>{copyLabel(`share:${hid}`, 'Deel')}</button
-								>
+								<CiteMenu
+									items={citeItems(null, permalink(page.url, hid))}
+									name={seg.text}
+									buttonClass="reader-heading__link"
+								/>
 							</h3>
 						{:else if seg.num || (i === 0 && para.number)}
 							{@const num = String(seg.num ?? para.number)}
@@ -283,11 +272,6 @@
 													(menuFor = open ? rovId : menuFor === rovId ? null : menuFor)}
 											/>
 										{/if}
-										<button
-											type="button"
-											class="btn reader-para-btn"
-											onclick={() => copyLink(rovId)}>{copyLabel(`share:${rovId}`, 'Deel')}</button
-										>
 									</span>
 								</div>
 							</div>
@@ -309,20 +293,8 @@
 		</div>
 	{/if}
 </ReaderFrame>
-<p class="visually-hidden" aria-live="polite">
-	{copier.announcement}
-</p>
 
 <style>
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
-
 	.reader-meta-row {
 		display: flex;
 		flex-wrap: wrap;
@@ -478,7 +450,7 @@
 	}
 
 	/* Hidden by opacity, not visibility: Tab still reaches the link, and shows it. */
-	.reader-heading__link {
+	:global(.reader-heading__link) {
 		flex: none;
 		opacity: 0;
 		padding: 2px var(--s-2);
@@ -491,12 +463,12 @@
 		cursor: pointer;
 	}
 
-	.reader-heading__link:hover {
+	:global(.reader-heading__link):hover {
 		color: var(--accent);
 	}
 
-	.reader-heading:hover .reader-heading__link,
-	.reader-heading:focus-within .reader-heading__link {
+	.reader-heading:hover :global(.reader-heading__link),
+	.reader-heading:focus-within :global(.reader-heading__link) {
 		opacity: 1;
 	}
 
@@ -596,13 +568,13 @@
 
 	/* Without hover, as on a touch screen, the actions are always there. */
 	@media (hover: none) {
-		.reader-heading__link,
+		:global(.reader-heading__link),
 		.reader-para-actions {
 			opacity: 1;
 		}
 	}
 
-	.reader-para-btn {
+	:global(.reader-para-btn) {
 		padding: 2px var(--s-2);
 		font-size: var(--t-label);
 	}

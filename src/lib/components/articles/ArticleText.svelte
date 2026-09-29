@@ -340,7 +340,7 @@
 	.lid.is-open > .lid__side {
 		z-index: var(--z-float);
 	}
-	.act__btn {
+	:global(.act__btn) {
 		padding: 2px var(--s-2);
 		font-size: var(--t-label);
 		white-space: nowrap;

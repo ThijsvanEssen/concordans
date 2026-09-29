@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { createCopier } from '$lib/components/ui/copy.svelte';
+	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
+	import { citeItems } from '$lib/components/ui/cite';
 	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
 	// its text. Opened as the toelichting of an article, it lands on the passage for it.
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -169,9 +170,6 @@
 		void tick().then(() => landOn(container, 'passage'));
 	});
 
-	const copier = createCopier();
-	const copyLink = (id: string) => copier.copy(permalink(page.url, id), id);
-
 	// The kind is the source's own wording; where a glossary term exists the kicker links to it.
 	function glossaryTerm(kind: string | null | undefined): string | null {
 		const k = kind?.toLowerCase();
@@ -226,12 +224,11 @@
 											>{s.article_refs.map((r) => r.number).join(', ')}</span
 										>{/if}</span
 								>
-								<button
-									type="button"
-									class="heading__link"
-									onclick={() => copyLink(s.id)}
-									aria-label="Kopieer link naar {s.heading}">{copier.label(s.id, 'Deel')}</button
-								>
+								<CiteMenu
+									items={citeItems(null, permalink(page.url, s.id))}
+									name={s.heading}
+									buttonClass="heading__link"
+								/>
 							</div>
 						{:else if passageEntries.has(i)}
 							<p
@@ -271,9 +268,6 @@
 		{/if}
 	</div>
 </ReaderFrame>
-<p class="visually-hidden" aria-live="polite">
-	{copier.announcement}
-</p>
 
 <style>
 	.visually-hidden {
@@ -364,7 +358,7 @@
 		color: var(--ink-3);
 	}
 	/* Hidden by opacity, not visibility: Tab still reaches the link, and shows it. */
-	.heading__link {
+	:global(.heading__link) {
 		flex: none;
 		opacity: 0;
 		padding: 2px var(--s-2);
@@ -375,15 +369,15 @@
 		color: var(--ink-3);
 		cursor: pointer;
 	}
-	.heading__link:hover {
+	:global(.heading__link):hover {
 		color: var(--accent);
 	}
-	.heading:hover .heading__link,
-	.heading:focus-within .heading__link {
+	.heading:hover :global(.heading__link),
+	.heading:focus-within :global(.heading__link) {
 		opacity: 1;
 	}
 	@media (hover: none) {
-		.heading__link {
+		:global(.heading__link) {
 			opacity: 1;
 		}
 	}
