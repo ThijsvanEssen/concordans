@@ -35,6 +35,11 @@ export type TimelineLine = {
 
 /** Close votes shown on their own per day, the closest first. */
 const CLOSE_SHOWN = 2;
+/**
+ * A day with at most this many votes not on a bill shows each by name: the summary's
+ * `few`, which the homepage asks with.
+ */
+export const FEW_VOTES = 2;
 /** Past this length a subject or a text is cut. */
 const TITLE_MAX = 150;
 
@@ -193,13 +198,30 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 	});
 }
 
+const nounOf = (v: FeedItem) => (v.subkind === 'amendement' ? 'amendement' : 'motie');
+
 /** The close votes on moties and amendementen of a day, the closest first. */
 function closeVoteLines(votes: FeedItem[]): TimelineLine[] {
 	return votes
 		.filter((v) => voteMargin(v) <= CLOSE_VOTE)
 		.sort((x, y) => voteMargin(x) - voteMargin(y))
 		.slice(0, CLOSE_SHOWN)
-		.map((v) => voteLine(v, v.subkind === 'amendement' ? 'amendement' : 'motie'));
+		.map((v) => voteLine(v, nounOf(v)));
+}
+
+/** The votes of a day not on a bill, the summary counts; a bill's votes stand apart. */
+const otherVoteCount = (day: SummaryDay) =>
+	(day.votes ?? []).filter((v) => v.subkind !== 'wetsvoorstel').reduce((n, v) => n + v.count, 0);
+
+/**
+ * The votes of a day not on a bill: a day with at most FEW_VOTES shows each by name (the
+ * summary gives them all), a busier day its close ones and the rest counted in one line.
+ */
+function otherVoteLines(day: SummaryDay, votes: FeedItem[]): TimelineLine[] {
+	const count = otherVoteCount(day);
+	if (count && count <= FEW_VOTES && votes.length === count)
+		return votes.map((v) => ({ ...voteLine(v, nounOf(v)), major: voteMargin(v) <= CLOSE_VOTE }));
+	return [...closeVoteLines(votes), ...voteBundleLine(day)];
 }
 
 /**
@@ -418,8 +440,10 @@ export function dayLines(day: SummaryDay, items: readonly FeedItem[]): TimelineL
 		),
 		...billLines(day.date, of('wetsvoorstel')),
 		...of('inwerkingtreding').map(commencementLine),
-		...closeVoteLines(votes.filter((v) => v.subkind !== 'wetsvoorstel')),
-		...voteBundleLine(day),
+		...otherVoteLines(
+			day,
+			votes.filter((v) => v.subkind !== 'wetsvoorstel')
+		),
 		...commitmentLines(day.date, of('toezegging')),
 		...kamerstukLine(day),
 		...countedLine(

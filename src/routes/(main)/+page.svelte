@@ -9,7 +9,7 @@
 	import { indexHref } from '$lib/bron/href';
 	import { bronPlural, type Collection } from '$lib/vocabulary';
 	import { dayLabel, feedStand, CLOSE_VOTE, shortDate } from '$lib/components/actueel/feed';
-	import { timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
+	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
 
 	/** The ways into the material by kind; each opens Bladeren on that kind. */
 	const KINDS: Collection[] = ['instruments', 'dossiers', 'judgments', 'committees'];
@@ -38,7 +38,7 @@
 	async function loadLines(signal: AbortSignal) {
 		const summary = await unwrap(
 			api.GET('/api/feed/summary', {
-				params: { query: { until: today, days: SUMMARY_DAYS, margin: CLOSE_VOTE } },
+				params: { query: { until: today, days: SUMMARY_DAYS, margin: CLOSE_VOTE, few: FEW_VOTES } },
 				signal
 			})
 		);

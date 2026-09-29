@@ -151,6 +151,20 @@ describe('dayLines', () => {
 		expect(lines[2].href).toBe('/actueel?van=2026-09-22&tot=2026-09-22&soort=stemming');
 	});
 
+	it('names each vote of a day with few, and bundles none', () => {
+		const grinwis = vote(141, 7, {
+			persons: [{ surname: 'Grinwis', role: 'indiener' } as never],
+			headline: { surname: 'Grinwis', subject: 'steward ownership' }
+		});
+		const lines = dayLines(
+			day({ votes: [{ subkind: 'motie', outcome: 'aangenomen', count: 1 }] }),
+			[grinwis]
+		);
+		expect(lines.map((l) => [l.title, l.major])).toEqual([
+			['Kamer neemt motie-Grinwis aan over steward ownership', false]
+		]);
+	});
+
 	it('counts the papers of a day in one line, with the largest dossiers', () => {
 		const lines = dayLines(
 			day({
