@@ -162,12 +162,15 @@
 		return compareVersions(from.first, to.first);
 	});
 
+	// The same wording in A and B: the text itself, not one fold that hides it.
+	const unchanged = $derived(rows.length > 0 && rows.every((r) => r.kind === 'same'));
+
 	type Block = { kind: 'row'; row: CompareRow } | { kind: 'same'; rows: CompareRow[] };
 	const blocks = $derived.by(() => {
 		const out: Block[] = [];
 		for (const row of rows) {
 			const prev = out.at(-1);
-			if (row.kind === 'same' && !showSame) {
+			if (row.kind === 'same' && !showSame && !unchanged) {
 				if (prev?.kind === 'same') prev.rows.push(row);
 				else out.push({ kind: 'same', rows: [row] });
 			} else out.push({ kind: 'row', row });
@@ -490,6 +493,9 @@
 						><span class="badge badge--b">B</span>Tekst sinds {date(to.from)}</span
 					>
 				</div>
+			{/if}
+			{#if unchanged}
+				<p class="unchanged">De tekst is in A en B gelijk.</p>
 			{/if}
 			{#each blocks as block, i (i)}
 				{#if block.kind === 'same'}
@@ -1368,5 +1374,11 @@
 			grid-template-columns: 28px 1fr 1fr;
 			gap: 0 var(--s-3);
 		}
+	}
+	.unchanged {
+		margin: 0 0 var(--s-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
 	}
 </style>
