@@ -610,6 +610,60 @@ const matches = (m: Match, n: Neighbor) =>
 	(!m.direction || m.direction === n.direction) &&
 	(!m.where || m.where(n));
 
+const MONTHS = [
+	'januari',
+	'februari',
+	'maart',
+	'april',
+	'mei',
+	'juni',
+	'juli',
+	'augustus',
+	'september',
+	'oktober',
+	'november',
+	'december'
+];
+const longDay = (day: string) => {
+	const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(day);
+	return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : day;
+};
+
+/**
+ * The decision a judgment says it appeals from, where the dataset lacks it
+ * (`unresolved_appeal_targets`): a line under Uitspraak in eerdere aanleg, without a link.
+ * Rechtbank Gelderland, 9 juli 2025, 24/6811, niet in de dataset.
+ */
+export function withUnresolvedAppeals(groups: Group[], props: Record<string, unknown>): Group[] {
+	const targets = Array.isArray(props.unresolved_appeal_targets)
+		? (props.unresolved_appeal_targets as Record<string, unknown>[])
+		: [];
+	if (targets.length === 0) return groups;
+	const rows = targets.map((t): Row => {
+		const court = typeof t.court === 'string' ? t.court.trim() : '';
+		const day = typeof t.date === 'string' ? t.date : '';
+		const number = typeof t.case_number === 'string' ? t.case_number : '';
+		return {
+			ref: { collection: 'judgments', key: `unresolved:${court}:${day}:${number}` },
+			title: [court.charAt(0).toUpperCase() + court.slice(1), day && longDay(day), number]
+				.filter(Boolean)
+				.join(', '),
+			context: null,
+			kind: 'uitspraken',
+			missing: true
+		};
+	});
+	return groups.map((g) =>
+		g.id === 'earlier-instance'
+			? {
+					...g,
+					rows: [...g.rows, ...rows],
+					total: g.total != null ? g.total + rows.length : undefined
+				}
+			: g
+	);
+}
+
 /**
  * The groups of a bron that its node response fills, in the order of the table. Groups
  * with a loader come back empty, for the caller to fill. A neighbour lands in the first

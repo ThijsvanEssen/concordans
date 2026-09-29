@@ -7,7 +7,7 @@ import type { Schema } from '$lib/api/types';
 import { chamberOf, isExplanatory } from './chamber';
 import { buildDossierHub } from './dossier-hub';
 import { mergeExplanatory } from './explanatory-documents';
-import { buildGroups, countLabel, GROUPS, isInternational } from './groups';
+import { buildGroups, countLabel, GROUPS, isInternational, withUnresolvedAppeals } from './groups';
 import {
 	bundleMentions,
 	mentionRows,
@@ -431,5 +431,23 @@ describe('judgments of one case', () => {
 		expect(label('referred-by')?.label).toBe('Verwezen door');
 		expect(label('referred-to')?.label).toBe('Verwezen naar');
 		expect(groups.find((g) => g.id === 'other')?.rows ?? []).toEqual([]);
+	});
+});
+
+describe('an appealed decision the dataset lacks', () => {
+	it('stands under Uitspraak in eerdere aanleg, grey and without a link', () => {
+		const groups = withUnresolvedAppeals(buildGroups('judgments', []), {
+			unresolved_appeal_targets: [
+				{ court: 'rechtbank Gelderland', date: '2025-07-09', case_number: '24/6811' }
+			]
+		});
+		const rows = groups.find((g) => g.id === 'earlier-instance')?.rows ?? [];
+		expect(rows.map((r) => [r.title, r.missing])).toEqual([
+			['Rechtbank Gelderland, 9 juli 2025, 24/6811', true]
+		]);
+	});
+	it('leaves the groups as they are without one', () => {
+		const groups = buildGroups('judgments', []);
+		expect(withUnresolvedAppeals(groups, {})).toBe(groups);
 	});
 });

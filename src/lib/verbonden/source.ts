@@ -5,7 +5,7 @@ import { bucketTotals, neighborsOf } from '$lib/api/nodes';
 import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { writable, type Readable } from 'svelte/store';
-import { buildGroups, type Group } from './groups';
+import { buildGroups, withUnresolvedAppeals, type Group } from './groups';
 import { LOADERS } from './loaders';
 
 export type VerbondenState = {
@@ -51,7 +51,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				if (ac.signal.aborted) return;
 				const neighbors = neighborsOf(response);
 				const totals = bucketTotals(response);
-				let groups = buildGroups(collection, neighbors, totals);
+				let groups = withUnresolvedAppeals(
+					buildGroups(collection, neighbors, totals),
+					(response.node.props ?? {}) as Record<string, unknown>
+				);
 				const pending = new Set(groups.filter((g) => g.load).map((g) => g.id));
 				state.set({ id: selection.id, groups, loading: pending.size > 0, failed: false });
 				const ctx = {
