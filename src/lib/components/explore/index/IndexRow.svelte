@@ -13,6 +13,7 @@
 		onToggle,
 		bron,
 		member = false,
+		emphasis = false,
 		lead,
 		body,
 		aside,
@@ -27,6 +28,8 @@
 		bron?: string;
 		/** A dossier under its number, indented beneath it. */
 		member?: boolean;
+		/** What matters in a list of events (a bill, a close vote): its title larger. */
+		emphasis?: boolean;
 		lead?: Snippet;
 		/** Under the title. */
 		body?: Snippet;
@@ -47,7 +50,7 @@
 <li class="row-wrap" class:row-wrap--member={member} data-bron={bron}>
 	<!-- The button below is the keyboard's way in; this only widens its target. -->
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-	<div class="row" class:row--on={open} onclick={onRowClick}>
+	<div class="row" class:row--on={open} class:row--emphasis={emphasis} onclick={onRowClick}>
 		<button
 			type="button"
 			class="row-toggle"
@@ -139,6 +142,11 @@
 		-webkit-line-clamp: 2;
 		line-clamp: 2;
 		overflow: hidden;
+	}
+	.row--emphasis .row-title {
+		font-size: var(--t-body);
+		font-weight: 500;
+		line-height: 1.3;
 	}
 	a.row-title:hover {
 		text-decoration: underline;

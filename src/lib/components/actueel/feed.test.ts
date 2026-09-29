@@ -7,6 +7,7 @@ import {
 	type FeedItem,
 	atomParams,
 	dossierLabel,
+	foldTitle,
 	titleOf
 } from './feed';
 
@@ -118,5 +119,41 @@ describe('titleOf', () => {
 		expect(titleOf(bill('Motie van het lid Boomsma', 'Begroting'))).toBe(
 			'Motie van het lid Boomsma'
 		);
+	});
+});
+
+describe('the votes of a day', () => {
+	const vote = (dossier: string, voor: number, tegen: number, subkind = 'motie') =>
+		({
+			...item('2026-09-22', 'stemming', dossier),
+			subkind,
+			vote: { passed: voor > tegen, tally: { Voor: voor, Tegen: tegen } }
+		}) as FeedItem;
+
+	it('fold into one line at the top, the bills and the close ones apart', () => {
+		const [day] = daysOf([
+			item('2026-09-22', 'brief_regering', null),
+			vote('29911', 120, 30),
+			vote('29754', 20, 130),
+			vote('36892', 100, 50, 'amendement'),
+			vote('29911', 75, 75),
+			vote('36889', 100, 50, 'wetsvoorstel')
+		]);
+		const [first, ...rest] = day.entries;
+		expect('fold' in first && first.fold.id).toBe('fold/2026-09-22/stemming');
+		expect('fold' in first && foldTitle(first.fold)).toBe(
+			'Kamer stemt over 2 moties: 1 aangenomen, 1 verworpen, en over 1 ander voorstel'
+		);
+		expect(rest.map((e) => ('item' in e ? e.item.kind : 'fold'))).toEqual([
+			'brief_regering',
+			'stemming',
+			'stemming'
+		]);
+		expect(day.counts[0]).toEqual({ kind: 'stemming', count: 5 });
+	});
+
+	it('stay single lines when there are few', () => {
+		const [day] = daysOf([vote('29911', 120, 30), vote('29754', 20, 130)]);
+		expect(day.entries.every((e) => 'item' in e)).toBe(true);
 	});
 });

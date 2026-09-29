@@ -9,12 +9,14 @@
 	import {
 		KIND_LABEL,
 		dossierLabel,
+		foldTitle,
 		publicationCite,
 		shortDate,
 		titleOf,
 		type Entry,
 		type FeedItem
 	} from './feed';
+	import { headlineOf } from './timeline';
 
 	let {
 		entry,
@@ -42,15 +44,10 @@
 
 {#if 'fold' in entry}
 	{@const f = entry.fold}
-	{@const label = KIND_LABEL[f.kind]}
-	<IndexRow
-		bron={f.id}
-		title="{f.items.length} {label.many} over {dossierLabel(f.dossier)}"
-		open={openId === f.id}
-		onToggle={() => onToggle(f.id)}
-	>
+	{@const many = KIND_LABEL[f.kind].many}
+	<IndexRow bron={f.id} title={foldTitle(f)} open={openId === f.id} onToggle={() => onToggle(f.id)}>
 		{#snippet lead()}
-			<span class="kind">{label.one}</span>
+			<span class="kind">{many.charAt(0).toUpperCase()}{many.slice(1)}</span>
 		{/snippet}
 		{#snippet detail()}
 			<ul class="fold-items">
@@ -68,25 +65,33 @@
 				{/each}
 			</ul>
 			<p class="links">
-				<BronLink ref={{ collection: 'dossiers', key: f.dossier.key, number: f.dossier.number }}
-					>Dossier {f.dossier.number}</BronLink
-				>
-				<a href={filterHref({ dossier: f.dossier.number })}>Alles over dit dossier in Actueel</a>
+				{#if f.dossier}
+					<BronLink ref={{ collection: 'dossiers', key: f.dossier.key, number: f.dossier.number }}
+						>Dossier {f.dossier.number}</BronLink
+					>
+					<a href={filterHref({ dossier: f.dossier.number })}>Alles over dit dossier in Actueel</a>
+				{:else}
+					{@const date = f.items[0]?.date ?? ''}
+					<a href={filterHref({ soort: 'stemming', van: date, tot: date })}
+						>Alle stemmingen van deze dag</a
+					>
+				{/if}
 			</p>
 		{/snippet}
 	</IndexRow>
 {:else}
 	{@const i = entry.item}
-	{@const failed = i.vote && !i.vote.passed}
+	{@const h = headlineOf(i)}
 	<IndexRow
 		bron={i.id}
-		title={titleOf(i)}
+		title={h.title}
 		href={bronHref(refOf(i))}
 		open={openId === i.id}
 		onToggle={() => onToggle(i.id)}
+		emphasis={h.major}
 	>
 		{#snippet lead()}
-			<span class="kind">{KIND_LABEL[i.kind].one}</span>
+			<span class="kind" class:kind--failed={h.failed}>{h.label}</span>
 			{#if i.publication}<span class="kind-sub">{publicationCite(i.publication)}</span>{/if}
 		{/snippet}
 		{#snippet body()}
@@ -111,10 +116,8 @@
 		{/snippet}
 		{#snippet aside()}
 			{#if i.vote}
+				<!-- The outcome is in the label; the tally beside it. -->
 				{@const t = tally(i)}
-				<span class="outcome" class:outcome--failed={failed}
-					>{i.vote.passed ? 'Aangenomen' : 'Verworpen'}</span
-				>
 				{#if t.voor + t.tegen}<span class="aside-note">{`${t.voor} voor, ${t.tegen} tegen`}</span
 					>{/if}
 			{:else if i.commitment}
@@ -136,7 +139,7 @@
 			{/if}
 			{#if i.persons.length}
 				<ul class="people">
-					{#each i.persons as p, n (p.key ?? `${p.name}${n}`)}
+					{#each i.persons as p, n (`${p.key ?? p.name}/${n}`)}
 						<li>
 							{#if p.key}<BronLink ref={`members/${p.key}`}>{p.name}</BronLink>{:else}{p.name}{/if}
 							<span class="role"
@@ -169,7 +172,7 @@
 {#snippet persons(i: FeedItem)}
 	{#each i.persons
 		.filter((p) => p.role !== 'medeindiener')
-		.slice(0, 2) as p, n (p.key ?? `${p.name}${n}`)}
+		.slice(0, 2) as p, n (`${p.key ?? p.name}/${n}`)}
 		<span class="person" style:--party={colorOf(p.faction?.short)}
 			>{#if p.key}<BronLink ref={`members/${p.key}`} preview={false}>{p.name}</BronLink
 				>{:else}{p.name}{/if}{#if p.faction?.short}
@@ -184,11 +187,18 @@
 {/snippet}
 
 <style>
+	/* The kind in small capitals, as on the homepage; a vote lost in the accent. */
 	.kind {
 		display: block;
 		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		font-variant: all-small-caps;
+		letter-spacing: 0.05em;
 		color: var(--ink-3);
+	}
+	.kind--failed {
+		color: var(--accent);
 	}
 	.kind-sub {
 		display: block;
