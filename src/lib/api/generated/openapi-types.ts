@@ -1130,7 +1130,7 @@ export interface paths {
         };
         /**
          * Current seat composition of the Tweede Kamer
-         * @description The seated parties with their seat counts, ordered left to right as they sit in the chamber — enough to render a hemicycle.
+         * @description The seated parties with their seat counts, in the order they sit in the plenary hall from the chair's left (the plan of the Tweede Kamer, kept with `lawgraph curated set seating`; a faction it does not place sits at the right end) — enough to render a hemicycle. `seating_plan` names the plan.
          */
         get: operations["get_seats_api_parliament_seats_get"];
         put?: never;
@@ -2906,10 +2906,11 @@ export interface components {
          *     from before December 1994 has no XML and never gets one. ``sections`` are
          *     the headings of the paper in document order, empty when there is no text or
          *     the structure of the paper could not be read; their offsets are into
-         *     ``text``. ``dossier_numbers`` are the dossiers the document is PART_OF, in
-         *     either chamber; ``case_kinds`` the ``Zaak.Soort`` of the cases it belongs to
-         *     (Tweede Kamer only); ``explains`` are the articles and instruments it explains,
-         *     without duplicates.
+         *     ``text``. ``submitters`` are who submitted a motie or amendement, the indiener
+         *     first (empty for any other paper). ``dossier_numbers`` are the dossiers the
+         *     document is PART_OF, in either chamber; ``case_kinds`` the ``Zaak.Soort`` of the
+         *     cases it belongs to (Tweede Kamer only); ``explains`` are the articles and
+         *     instruments it explains, without duplicates.
          */
         DocumentTextResponse: {
             /**
@@ -2952,6 +2953,8 @@ export interface components {
             file_url?: string | null;
             /** Text */
             text?: string | null;
+            /** Submitters */
+            submitters?: components["schemas"]["SubmitterDTO"][];
             /** Dossier Numbers */
             dossier_numbers?: string[];
             /** Case Kinds */
@@ -5568,6 +5571,8 @@ export interface components {
             as_of: string;
             /** Factions */
             factions: components["schemas"]["FactionSeatsDTO"][];
+            /** @description The plan of the Tweede Kamer the order of `factions` follows. */
+            seating_plan?: components["schemas"]["SeatingPlanDTO"] | null;
         };
         /**
          * PartyColorsResponse
@@ -5829,6 +5834,29 @@ export interface components {
             };
         };
         /**
+         * SeatingPlanDTO
+         * @description The seating plan of the plenary hall the order is taken from.
+         */
+        SeatingPlanDTO: {
+            /** Title */
+            title: string;
+            /**
+             * Dated
+             * @description The date of the plan, YYYY-MM-DD.
+             */
+            dated: string;
+            /**
+             * Url
+             * @description The plan (PDF) on tweedekamer.nl.
+             */
+            url: string;
+            /**
+             * Page
+             * @description The page that links it.
+             */
+            page?: string | null;
+        };
+        /**
          * SectionDTO
          * @description One heading of a paper with the text under it: `text[char_start:char_end]`.
          */
@@ -5935,6 +5963,33 @@ export interface components {
             data_as_of?: {
                 [key: string]: components["schemas"]["DataAsOfDTO"];
             };
+        };
+        /**
+         * SubmitterDTO
+         * @description Who submitted a motie or amendement.
+         */
+        SubmitterDTO: {
+            /**
+             * Name
+             * @description As the paper names them: `C.A.M. van der Plas`.
+             */
+            name: string;
+            /**
+             * Faction
+             * @description The faction they signed for.
+             */
+            faction?: string | null;
+            /**
+             * Member Key
+             * @description Their member (`/api/nodes/members/{key}`).
+             */
+            member_key?: string | null;
+            /**
+             * Role
+             * @description `indiener` (the first signatory) or `medeindiener`.
+             * @enum {string}
+             */
+            role: "indiener" | "medeindiener";
         };
         /**
          * Tier

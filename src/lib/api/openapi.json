@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.40.0"
+		"version": "0.43.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -3268,7 +3268,7 @@
 			"get": {
 				"tags": ["parliament", "parliament"],
 				"summary": "Current seat composition of the Tweede Kamer",
-				"description": "The seated parties with their seat counts, ordered left to right as they sit in the chamber — enough to render a hemicycle.",
+				"description": "The seated parties with their seat counts, in the order they sit in the plenary hall from the chair's left (the plan of the Tweede Kamer, kept with `lawgraph curated set seating`; a faction it does not place sits at the right end) — enough to render a hemicycle. `seating_plan` names the plan.",
 				"operationId": "get_seats_api_parliament_seats_get",
 				"responses": {
 					"200": {
@@ -5867,6 +5867,11 @@
 						"description": "The original file of a Tweede Kamer document (Word or PDF), from the Gegevensmagazijn."
 					},
 					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
+					"submitters": {
+						"items": { "$ref": "#/components/schemas/SubmitterDTO" },
+						"type": "array",
+						"title": "Submitters"
+					},
 					"dossier_numbers": {
 						"items": { "type": "string" },
 						"type": "array",
@@ -5888,7 +5893,7 @@
 				"type": "object",
 				"required": ["key", "document_id"],
 				"title": "DocumentTextResponse",
-				"description": "One document with its text.\n\n``text`` is null until ``normalize tk-content`` has run for it: a paper\nfrom before December 1994 has no XML and never gets one. ``sections`` are\nthe headings of the paper in document order, empty when there is no text or\nthe structure of the paper could not be read; their offsets are into\n``text``. ``dossier_numbers`` are the dossiers the document is PART_OF, in\neither chamber; ``case_kinds`` the ``Zaak.Soort`` of the cases it belongs to\n(Tweede Kamer only); ``explains`` are the articles and instruments it explains,\nwithout duplicates."
+				"description": "One document with its text.\n\n``text`` is null until ``normalize tk-content`` has run for it: a paper\nfrom before December 1994 has no XML and never gets one. ``sections`` are\nthe headings of the paper in document order, empty when there is no text or\nthe structure of the paper could not be read; their offsets are into\n``text``. ``submitters`` are who submitted a motie or amendement, the indiener\nfirst (empty for any other paper). ``dossier_numbers`` are the dossiers the\ndocument is PART_OF, in either chamber; ``case_kinds`` the ``Zaak.Soort`` of the\ncases it belongs to (Tweede Kamer only); ``explains`` are the articles and\ninstruments it explains, without duplicates."
 			},
 			"DossierCommitteeDTO": {
 				"properties": {
@@ -9058,6 +9063,10 @@
 						"items": { "$ref": "#/components/schemas/FactionSeatsDTO" },
 						"type": "array",
 						"title": "Factions"
+					},
+					"seating_plan": {
+						"anyOf": [{ "$ref": "#/components/schemas/SeatingPlanDTO" }, { "type": "null" }],
+						"description": "The plan of the Tweede Kamer the order of `factions` follows."
 					}
 				},
 				"additionalProperties": false,
@@ -9385,6 +9394,31 @@
 				"title": "SearchResultItem",
 				"description": "One search hit, typed by collection."
 			},
+			"SeatingPlanDTO": {
+				"properties": {
+					"title": { "type": "string", "title": "Title" },
+					"dated": {
+						"type": "string",
+						"title": "Dated",
+						"description": "The date of the plan, YYYY-MM-DD."
+					},
+					"url": {
+						"type": "string",
+						"title": "Url",
+						"description": "The plan (PDF) on tweedekamer.nl."
+					},
+					"page": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Page",
+						"description": "The page that links it."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["title", "dated", "url"],
+				"title": "SeatingPlanDTO",
+				"description": "The seating plan of the plenary hall the order is taken from."
+			},
 			"SectionDTO": {
 				"properties": {
 					"id": {
@@ -9489,6 +9523,36 @@
 				"required": ["nodes", "edges"],
 				"title": "StatsResponse",
 				"description": "Database statistics: document counts per collection and edge counts."
+			},
+			"SubmitterDTO": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name",
+						"description": "As the paper names them: `C.A.M. van der Plas`."
+					},
+					"faction": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Faction",
+						"description": "The faction they signed for."
+					},
+					"member_key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Member Key",
+						"description": "Their member (`/api/nodes/members/{key}`)."
+					},
+					"role": {
+						"type": "string",
+						"enum": ["indiener", "medeindiener"],
+						"title": "Role",
+						"description": "`indiener` (the first signatory) or `medeindiener`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["name", "role"],
+				"title": "SubmitterDTO",
+				"description": "Who submitted a motie or amendement."
 			},
 			"Tier": {
 				"type": "string",
