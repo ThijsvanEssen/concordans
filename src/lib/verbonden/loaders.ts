@@ -20,6 +20,7 @@ import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
 	aardLabel,
 	bundleMentions,
+	citedLine,
 	describe,
 	lidOfMatch,
 	rowOfNeighbor,
@@ -67,6 +68,9 @@ function lidOfStub(key: string, props: Record<string, unknown> | null | undefine
 	const lid = key.toLowerCase().startsWith(`${own}_`) ? key.slice(own.length + 1) : null;
 	return lid && /^\d+[a-z]*$/i.test(lid) ? { key: key.slice(0, own.length), lid } : null;
 }
+
+/** The judgments of a law read at once: about 1.2 KB each, for the articles they cite. */
+const JUDGMENTS_SHOWN = 100;
 
 /** The laws of a dossier whose own verbindingen are read for the international group. */
 const MAX_LAWS = 3;
@@ -508,6 +512,46 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				relation: 'AMENDS',
 				direction: 'inbound'
 			}))
+		};
+	},
+
+	// The judgments that cite this law, each with the articles it cites; the total is the
+	// API's, where the node response stops at 30. Without the route: the node's own bucket.
+	'instrument-judgments': async ({ node, neighbors, totals, signal }) => {
+		const bwb = bwbOf(node);
+		const fromNode = () => ({
+			total: totals.get(bucketKey('REFERS_TO', 'judgments', 'inbound')),
+			rows: neighbors
+				.filter(
+					(n) =>
+						n.relation === 'REFERS_TO' &&
+						n.direction === 'inbound' &&
+						n.collection === 'judgments' &&
+						!isInternational(n)
+				)
+				.map(rowOfNeighbor)
+				.filter((r) => r !== null)
+		});
+		if (!bwb) return fromNode();
+		const found = await unwrap(
+			api.GET('/api/instruments/{bwb_id}/judgments', {
+				params: { path: { bwb_id: bwb }, query: { limit: JUDGMENTS_SHOWN } },
+				signal
+			})
+		).catch(() => null);
+		if (!found) return fromNode();
+		return {
+			total: found.total,
+			rows: found.items
+				.filter((j) => !isInternational({ key: j.key, props: {} }))
+				.map((j) => ({
+					ref: { collection: 'judgments' as const, key: j.key },
+					...describe('judgments', j.key, j.display_name, { ecli: j.ecli }),
+					context: citedLine(j.cited_articles ?? []),
+					kind: 'uitspraken' as const,
+					relation: 'REFERS_TO' as const,
+					direction: 'inbound' as const
+				}))
 		};
 	},
 

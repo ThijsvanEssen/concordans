@@ -36,6 +36,7 @@ export type Loader =
 	| 'instrument-related'
 	| 'instrument-aard'
 	| 'instrument-amended-by'
+	| 'instrument-judgments'
 	| 'committee-dossiers'
 	| 'member-instruments'
 	| 'faction-instruments';
@@ -261,9 +262,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'judgments',
 			label: 'Uitspraken die deze wet aanhalen',
 			noun: 'uitspraken',
-			match: [
-				{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments', where: national }
-			]
+			load: 'instrument-judgments'
 		}
 	],
 	articles: [

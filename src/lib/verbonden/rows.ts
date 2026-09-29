@@ -384,3 +384,12 @@ export const openLabelOf = (row: Pick<Row, 'position' | 'at'>, beside = false): 
 			: row.at
 				? `Open bij ${anchorLabel(row.at)}`
 				: 'Open de bron';
+
+/** `art. 4:12, 5:49 en 3 andere`: the articles of the law a judgment cites. */
+export function citedLine(articles: readonly { article_number?: string | null }[]): string | null {
+	const numbers = articles.flatMap((a) => (a.article_number ? [a.article_number] : []));
+	if (!numbers.length) return null;
+	const shown = numbers.slice(0, 2).join(', ');
+	const rest = numbers.length - 2;
+	return `art. ${shown}${rest > 0 ? ` en ${rest} ${rest === 1 ? 'ander' : 'andere'}` : ''}`;
+}
