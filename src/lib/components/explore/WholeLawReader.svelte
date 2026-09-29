@@ -221,13 +221,20 @@
 		signal?: AbortSignal
 	): Promise<{ items: Row[]; total: number }> {
 		if (day) {
+			// The whole text of each old version comes with the list: there is no call per
+			// article for a version. From W2 the API gives `text` only when asked; the types do
+			// not know `include_text` yet, so the query is not a literal.
+			// TODO(backend W2): into the literal once the types are synced.
+			const query = {
+				text_preview_chars: PREVIEW_CHARS,
+				limit: PAGE_SIZE,
+				offset,
+				include_text: true
+			};
 			const [at, now] = await Promise.all([
 				unwrap(
 					api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
-						params: {
-							path: { bwb_id: bwb, at_date: day },
-							query: { text_preview_chars: PREVIEW_CHARS, limit: PAGE_SIZE, offset }
-						},
+						params: { path: { bwb_id: bwb, at_date: day }, query },
 						signal
 					})
 				),
