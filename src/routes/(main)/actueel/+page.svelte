@@ -215,7 +215,10 @@
 
 	const groups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
-		const factionCounts = [...facetMap(facets?.faction)].slice(0, 16);
+		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
+		const factionMap = facetMap(facets?.faction);
+		if (faction && !factionMap.has(faction)) factionMap.set(faction, 0);
+		const factionCounts = [...factionMap];
 		return [
 			{
 				id: 'soort',
