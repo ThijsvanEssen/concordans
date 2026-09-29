@@ -256,9 +256,7 @@
 		padding: var(--s-6) 0 var(--s-1);
 		font-size: var(--t-meta);
 		font-weight: 500;
-		font-variant: all-small-caps;
-		letter-spacing: 0.06em;
-		color: var(--ink-3);
+		color: var(--ink-2);
 	}
 	.day:first-child {
 		padding-top: var(--s-4);

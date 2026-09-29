@@ -197,14 +197,12 @@
 {/snippet}
 
 <style>
-	/* The kind in small capitals, as on the homepage; a vote lost in the accent. */
+	/* The kind by weight, as on the homepage; a vote lost in the accent. */
 	.kind {
 		display: block;
 		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-size: var(--t-micro);
 		font-weight: 500;
-		font-variant: all-small-caps;
-		letter-spacing: 0.05em;
 		color: var(--ink-3);
 	}
 	.kind--failed {
