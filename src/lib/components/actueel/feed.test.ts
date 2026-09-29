@@ -93,10 +93,18 @@ describe('dossierLabel', () => {
 			'36600 Begroting JenV'
 		);
 	});
-	it('falls back to the name in brackets at the end of the title', () => {
+	it('names the law a bill amends as its change', () => {
+		expect(
+			dossierLabel({
+				...d('Vreemdelingenwet 2000', 'Wijziging van de Vreemdelingenwet 2000'),
+				short_title_basis: 'amended_law'
+			})
+		).toBe('36600 wijziging van Vreemdelingenwet 2000');
+	});
+	it('falls back to the whole title, without parsing it', () => {
 		expect(
 			dossierLabel(d(null, 'Wijziging van de Vreemdelingenwet 2000 (Wet tweestatusstelsel)'))
-		).toBe('36600 Wet tweestatusstelsel');
+		).toBe('36600 Wijziging van de Vreemdelingenwet 2000 (Wet tweestatusstelsel)');
 	});
 	it('is the number alone without any title', () => {
 		expect(dossierLabel(d(null, null))).toBe('36600');

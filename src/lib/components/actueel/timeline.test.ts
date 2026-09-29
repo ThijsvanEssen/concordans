@@ -56,32 +56,32 @@ describe('headSurname', () => {
 });
 
 describe('dossierName', () => {
-	it('takes the short title, the name in brackets, or the law a bill changes', () => {
+	it('takes the official short title, and names an amended law as its change', () => {
 		expect(
-			dossierName({ key: 'a', number: '37014', short_title: 'Wet weerbare waarden' } as never)
+			dossierName({
+				number: '37014',
+				short_title: 'Wet weerbare waarden',
+				short_title_basis: 'title'
+			})
 		).toBe('Wet weerbare waarden');
 		expect(
 			dossierName({
-				key: 'b',
 				number: '36889',
-				title: 'Wijziging van de Archiefwet 1995 ter verruiming van de mogelijkheden'
-			} as never)
-		).toBe('Archiefwet 1995');
-		expect(
-			dossierName({
-				key: 'c',
-				number: '36892',
-				title: 'Wijziging van de Gemeentewet, de Provinciewet en de Waterschapswet'
-			} as never)
-		).toBe('Gemeentewet');
-		expect(
-			dossierName({
-				key: 'd',
-				number: '37020-IV',
-				title:
-					'Vaststelling van de begrotingsstaten van Koninkrijksrelaties (IV) en het BES-fonds (H) voor het jaar 2027'
-			} as never)
-		).toBe('Begroting Koninkrijksrelaties');
+				title: 'Wijziging van de Archiefwet 1995 ter verruiming van de mogelijkheden',
+				short_title: 'Archiefwet 1995',
+				short_title_basis: 'amended_law'
+			})
+		).toBe('wijziging van Archiefwet 1995');
+	});
+
+	it('falls back on the title, cut, and on the number', () => {
+		const title =
+			'Vaststelling van de begrotingsstaten van Koninkrijksrelaties (IV) en het BES-fonds (H) voor het jaar 2027';
+		expect(dossierName({ number: '37020-IV', title })).toBe(`${title.slice(0, 79).trimEnd()}…`);
+		expect(dossierName({ number: '36892', title: 'Wijziging van de Gemeentewet' })).toBe(
+			'Wijziging van de Gemeentewet'
+		);
+		expect(dossierName({ number: '36000' })).toBe('36000');
 	});
 });
 
@@ -124,7 +124,9 @@ describe('dayLines', () => {
 				dossier: {
 					key: number,
 					number,
-					title: `Wijziging van de Wet ${number} in verband met iets`
+					title: `Wijziging van de Wet ${number} in verband met iets`,
+					short_title: `Wet ${number}`,
+					short_title_basis: 'amended_law'
 				} as never
 			})
 		);
@@ -144,11 +146,25 @@ describe('dayLines', () => {
 			'Kamer verwerpt motie-Schilder over strafverzwaring',
 			'Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen'
 		]);
-		expect(lines[0].context).toBe('Wet 36889 en Wet 36899');
+		expect(lines[0].context).toBe('wijziging van Wet 36889 en wijziging van Wet 36899');
 		expect(lines[1].failed).toBe(true);
 		expect(lines[1].context).toBe('75 voor, 75 tegen');
 		expect(lines[2].context).toBe('Ook 9 amendementen');
 		expect(lines[2].href).toBe('/actueel?van=2026-09-22&tot=2026-09-22&soort=stemming');
+	});
+
+	it('names each vote of a day with few, and bundles none', () => {
+		const grinwis = vote(141, 7, {
+			persons: [{ surname: 'Grinwis', role: 'indiener' } as never],
+			headline: { surname: 'Grinwis', subject: 'steward ownership' }
+		});
+		const lines = dayLines(
+			day({ votes: [{ subkind: 'motie', outcome: 'aangenomen', count: 1 }] }),
+			[grinwis]
+		);
+		expect(lines.map((l) => [l.title, l.major])).toEqual([
+			['Kamer neemt motie-Grinwis aan over steward ownership', false]
+		]);
 	});
 
 	it('counts the papers of a day in one line, with the largest dossiers', () => {
@@ -160,8 +176,10 @@ describe('dayLines', () => {
 					{ value: 'brief_regering', count: 14 }
 				],
 				dossiers: [
-					{ number: '24557', short_title: 'Kansspelen', count: 12 },
-					{ number: '31765', short_title: 'Kwaliteit van zorg', count: 12 }
+					{ kind: 'stemming', number: '29911', short_title: 'Drugsbeleid', count: 30 },
+					{ kind: 'motie', number: '24557', short_title: 'Kansspelen', count: 12 },
+					{ kind: 'motie', number: '31765', short_title: 'Kwaliteit van zorg', count: 7 },
+					{ kind: 'amendement', number: '31765', short_title: 'Kwaliteit van zorg', count: 6 }
 				]
 			}),
 			[]
@@ -170,7 +188,7 @@ describe('dayLines', () => {
 			'Ingediend: 54 moties en 5 amendementen',
 			'14 brieven van de regering'
 		]);
-		expect(lines[0].context).toBe('Kansspelen en Kwaliteit van zorg');
+		expect(lines[0].context).toBe('Kwaliteit van zorg en Kansspelen');
 		expect(lines[0].major).toBe(false);
 	});
 

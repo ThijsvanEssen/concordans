@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.35.0"
+		"version": "0.38.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -1530,75 +1530,6 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/DossierListResponse" }
-							}
-						}
-					},
-					"422": {
-						"description": "Validation Error",
-						"content": {
-							"application/json": {
-								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-							}
-						}
-					}
-				}
-			}
-		},
-		"/api/dossiers/recent": {
-			"get": {
-				"tags": ["dossiers", "dossiers"],
-				"summary": "Recently active dossiers",
-				"description": "Dossiers with an activity, a vote, a document or their closing in the given period, the most recent first. ``subject`` narrows them to a number, a dossier or title text.",
-				"operationId": "list_recent_dossiers_api_dossiers_recent_get",
-				"parameters": [
-					{
-						"name": "days",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"type": "integer",
-							"maximum": 365,
-							"minimum": 1,
-							"description": "Look-back in days.",
-							"default": 30,
-							"title": "Days"
-						},
-						"description": "Look-back in days."
-					},
-					{
-						"name": "limit",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"type": "integer",
-							"maximum": 200,
-							"minimum": 1,
-							"default": 50,
-							"title": "Limit"
-						}
-					},
-					{
-						"name": "subject",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title.",
-							"title": "Subject"
-						},
-						"description": "A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title."
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "Successful Response",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "array",
-									"items": { "$ref": "#/components/schemas/DossierSummaryDTO" },
-									"title": "Response List Recent Dossiers Api Dossiers Recent Get"
-								}
 							}
 						}
 					},
@@ -3557,6 +3488,20 @@
 							"title": "Margin"
 						},
 						"description": "A vote this close (seats for minus against) is shown one by one."
+					},
+					{
+						"name": "few",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 50,
+							"minimum": 0,
+							"description": "Every vote of a day with at most this many votes on anything but a bill is shown one by one.",
+							"default": 2,
+							"title": "Few"
+						},
+						"description": "Every vote of a day with at most this many votes on anything but a bill is shown one by one."
 					},
 					{
 						"name": "limit",
@@ -6939,7 +6884,7 @@
 						"items": { "$ref": "#/components/schemas/FeedDossierCountDTO" },
 						"type": "array",
 						"title": "Dossiers",
-						"description": "Per first dossier of an event, most first."
+						"description": "Per kind (in the order of a day) and first dossier of an event, most first within a kind."
 					},
 					"votes": {
 						"items": { "$ref": "#/components/schemas/FeedVoteCountDTO" },
@@ -6955,6 +6900,21 @@
 			},
 			"FeedDossierCountDTO": {
 				"properties": {
+					"kind": {
+						"type": "string",
+						"enum": [
+							"toezegging",
+							"wetsvoorstel",
+							"nota_van_wijziging",
+							"amendement",
+							"motie",
+							"stemming",
+							"publicatie",
+							"inwerkingtreding",
+							"brief_regering"
+						],
+						"title": "Kind"
+					},
 					"number": { "type": "string", "title": "Number" },
 					"key": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Key" },
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
@@ -6962,12 +6922,20 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Short Title"
 					},
+					"short_title_basis": {
+						"anyOf": [
+							{ "type": "string", "enum": ["title", "citation", "case", "amended_law"] },
+							{ "type": "null" }
+						],
+						"title": "Short Title Basis"
+					},
 					"count": { "type": "integer", "title": "Count" }
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["number", "count"],
-				"title": "FeedDossierCountDTO"
+				"required": ["kind", "number", "count"],
+				"title": "FeedDossierCountDTO",
+				"description": "The events of one kind in one dossier on a day."
 			},
 			"FeedDossierDTO": {
 				"properties": {
@@ -6981,7 +6949,15 @@
 					"short_title": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Short Title",
-						"description": "The parentheses that end the title; null without."
+						"description": "The name it goes by: of a budget its chapter and year, else the parentheses that end its title, else the citation title its bill gives itself, the Kamer gives the bill's case, or of the one law the bill changes; null without."
+					},
+					"short_title_basis": {
+						"anyOf": [
+							{ "type": "string", "enum": ["title", "citation", "case", "amended_law"] },
+							{ "type": "null" }
+						],
+						"title": "Short Title Basis",
+						"description": "Where ``short_title`` comes from: ``title``, ``citation``, ``case`` or ``amended_law`` (then it names the law changed, not the bill)."
 					}
 				},
 				"additionalProperties": false,
@@ -7279,6 +7255,12 @@
 						"title": "Items Truncated",
 						"description": "More events qualified than ``limit``.",
 						"default": false
+					},
+					"data_as_of": {
+						"additionalProperties": { "$ref": "#/components/schemas/DataAsOfDTO" },
+						"type": "object",
+						"title": "Data As Of",
+						"description": "Per source: how current the graph is, as in `GET /api/stats`."
 					}
 				},
 				"additionalProperties": false,

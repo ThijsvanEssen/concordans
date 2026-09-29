@@ -444,26 +444,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/dossiers/recent": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Recently active dossiers
-         * @description Dossiers with an activity, a vote, a document or their closing in the given period, the most recent first. ``subject`` narrows them to a number, a dossier or title text.
-         */
-        get: operations["list_recent_dossiers_api_dossiers_recent_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/dossiers/{number}": {
         parameters: {
             query?: never;
@@ -3807,14 +3787,22 @@ export interface components {
             kinds?: components["schemas"]["FacetCountDTO"][];
             /**
              * Dossiers
-             * @description Per first dossier of an event, most first.
+             * @description Per kind (in the order of a day) and first dossier of an event, most first within a kind.
              */
             dossiers?: components["schemas"]["FeedDossierCountDTO"][];
             /** Votes */
             votes?: components["schemas"]["FeedVoteCountDTO"][];
         };
-        /** FeedDossierCountDTO */
+        /**
+         * FeedDossierCountDTO
+         * @description The events of one kind in one dossier on a day.
+         */
         FeedDossierCountDTO: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "toezegging" | "wetsvoorstel" | "nota_van_wijziging" | "amendement" | "motie" | "stemming" | "publicatie" | "inwerkingtreding" | "brief_regering";
             /** Number */
             number: string;
             /** Key */
@@ -3823,6 +3811,8 @@ export interface components {
             title?: string | null;
             /** Short Title */
             short_title?: string | null;
+            /** Short Title Basis */
+            short_title_basis?: ("title" | "citation" | "case" | "amended_law") | null;
             /** Count */
             count: number;
         };
@@ -3839,9 +3829,14 @@ export interface components {
             title?: string | null;
             /**
              * Short Title
-             * @description The parentheses that end the title; null without.
+             * @description The name it goes by: of a budget its chapter and year, else the parentheses that end its title, else the citation title its bill gives itself, the Kamer gives the bill's case, or of the one law the bill changes; null without.
              */
             short_title?: string | null;
+            /**
+             * Short Title Basis
+             * @description Where ``short_title`` comes from: ``title``, ``citation``, ``case`` or ``amended_law`` (then it names the law changed, not the bill).
+             */
+            short_title_basis?: ("title" | "citation" | "case" | "amended_law") | null;
         };
         /**
          * FeedFacetsDTO
@@ -4078,6 +4073,13 @@ export interface components {
              * @default false
              */
             items_truncated: boolean;
+            /**
+             * Data As Of
+             * @description Per source: how current the graph is, as in `GET /api/stats`.
+             */
+            data_as_of?: {
+                [key: string]: components["schemas"]["DataAsOfDTO"];
+            };
         };
         /** FeedVoteCountDTO */
         FeedVoteCountDTO: {
@@ -7184,41 +7186,6 @@ export interface operations {
             };
         };
     };
-    list_recent_dossiers_api_dossiers_recent_get: {
-        parameters: {
-            query?: {
-                /** @description Look-back in days. */
-                days?: number;
-                limit?: number;
-                /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
-                subject?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DossierSummaryDTO"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_dossier_api_dossiers__number__get: {
         parameters: {
             query?: never;
@@ -8386,6 +8353,8 @@ export interface operations {
                 days?: number;
                 /** @description A vote this close (seats for minus against) is shown one by one. */
                 margin?: number;
+                /** @description Every vote of a day with at most this many votes on anything but a bill is shown one by one. */
+                few?: number;
                 /** @description Events shown one by one, at most. */
                 limit?: number;
                 /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
