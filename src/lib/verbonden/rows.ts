@@ -411,3 +411,27 @@ export function activityLine(a: {
 		: null;
 	return [a.kind, status, over].filter(Boolean).join(', ') || null;
 }
+
+/**
+ * `eerste ondertekenaar, als minister van Financiën, 6 stukken`: what a lid or fractie
+ * was in a dossier. The function only where it is not that of a Kamerlid.
+ */
+export function rolesLine(d: {
+	roles?: readonly string[] | null;
+	functions?: readonly string[] | null;
+	document_count?: number | null;
+}): string | null {
+	const roles = d.roles ?? [];
+	const role = roles.some((r) => /^eerste/i.test(r))
+		? 'eerste ondertekenaar'
+		: roles.length
+			? roles[0].toLowerCase()
+			: null;
+	const fn = (d.functions ?? []).find((f) => !/kamerlid/i.test(f));
+	const n = d.document_count ?? 0;
+	return (
+		[role, fn ? `als ${fn}` : null, n ? `${n} ${n === 1 ? 'stuk' : 'stukken'}` : null]
+			.filter(Boolean)
+			.join(', ') || null
+	);
+}

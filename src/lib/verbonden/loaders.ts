@@ -21,6 +21,7 @@ import {
 	aardLabel,
 	bundleMentions,
 	activityLine,
+	rolesLine,
 	citedLine,
 	describe,
 	lidOfMatch,
@@ -70,6 +71,9 @@ function lidOfStub(key: string, props: Record<string, unknown> | null | undefine
 	return lid && /^\d+[a-z]*$/i.test(lid) ? { key: key.slice(0, own.length), lid } : null;
 }
 
+/** The dossiers of a lid or fractie read at once: about 0.7 KB each. */
+const DOSSIERS_SHOWN = 100;
+
 /** The activities of a committee read at once: about 0.2 KB each. */
 const ACTIVITIES_SHOWN = 200;
 
@@ -96,6 +100,34 @@ async function touched(
 			title: i.citation_title ?? i.title ?? i.display_name ?? i.key,
 			context: `${i.count} stukken`,
 			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id })
+		}))
+	};
+}
+
+/** The dossiers a lid or a fractie signed in, newest first, with their roles there. */
+async function actorDossiers(
+	who: 'members' | 'factions',
+	key: string,
+	signal: AbortSignal
+): Promise<Loaded> {
+	const query = { params: { path: { key }, query: { limit: DOSSIERS_SHOWN } }, signal };
+	const found = await unwrap(
+		who === 'members'
+			? api.GET('/api/members/{key}/dossiers', query)
+			: api.GET('/api/factions/{key}/dossiers', query)
+	);
+	return {
+		total: found.total,
+		rows: found.items.map((d) => ({
+			ref: { collection: 'dossiers' as const, key: d.key, number: d.number },
+			...describe('dossiers', d.key, d.title, {
+				title: d.short_title ?? d.title,
+				label: d.number
+			}),
+			context: rolesLine(d),
+			kind: 'dossiers' as const,
+			relation: 'AUTHORED' as const,
+			direction: 'outbound' as const
 		}))
 	};
 }
@@ -559,6 +591,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		};
 	},
 
+	'member-dossiers': ({ node, signal }) => actorDossiers('members', node.key, signal),
+	'faction-dossiers': ({ node, signal }) => actorDossiers('factions', node.key, signal),
 	'member-instruments': ({ node, signal }) => touched('members', node.key, signal),
 	'faction-instruments': ({ node, signal }) => touched('factions', node.key, signal),
 

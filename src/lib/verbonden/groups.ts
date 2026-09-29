@@ -40,7 +40,9 @@ export type Loader =
 	| 'committee-dossiers'
 	| 'committee-activities'
 	| 'member-instruments'
-	| 'faction-instruments';
+	| 'faction-instruments'
+	| 'member-dossiers'
+	| 'faction-dossiers';
 
 export type GroupDef = {
 	id: string;
@@ -447,6 +449,12 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 				: 'Stukken ondertekend in een andere functie'
 		),
 		{
+			id: 'dossiers',
+			label: 'Dossiers van dit lid',
+			noun: 'dossiers',
+			load: 'member-dossiers'
+		},
+		{
 			id: 'instruments',
 			label: 'Wetten waaraan dit lid werkte',
 			noun: 'wetten',
@@ -465,6 +473,12 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Stukken die deze fractie indiende',
 			noun: 'stukken',
 			match: [{ relation: 'AUTHORED', direction: 'outbound', collection: 'documents' }]
+		},
+		{
+			id: 'dossiers',
+			label: 'Dossiers van deze fractie',
+			noun: 'dossiers',
+			load: 'faction-dossiers'
 		},
 		{
 			id: 'instruments',

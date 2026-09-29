@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { activityLine, citedLine } from './rows';
+import { activityLine, citedLine, rolesLine } from './rows';
+
+describe('rolesLine', () => {
+	it('names the role, a function other than Kamerlid and the stukken', () => {
+		expect(
+			rolesLine({
+				roles: ['Eerste ondertekenaar', 'Mede ondertekenaar'],
+				functions: ['minister van Financiën'],
+				document_count: 6
+			})
+		).toBe('eerste ondertekenaar, als minister van Financiën, 6 stukken');
+		expect(
+			rolesLine({
+				roles: ['Mede ondertekenaar'],
+				functions: ['Tweede Kamerlid'],
+				document_count: 1
+			})
+		).toBe('mede ondertekenaar, 1 stuk');
+		expect(rolesLine({})).toBeNull();
+	});
+});
 
 describe('citedLine', () => {
 	it('names two articles and counts the rest', () => {
