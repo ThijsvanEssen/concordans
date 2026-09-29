@@ -7,6 +7,10 @@ type Detail = Pick<
 	Schema<'InstrumentDetailDTO'>,
 	'kind' | 'title' | 'citation_title' | 'official_title' | 'official_url' | 'jurisdiction'
 >;
+type Dates = Pick<
+	Schema<'InstrumentDetailDTO'>,
+	'date_in_force' | 'version_date_in_force' | 'article_count' | 'inbound_citation_count'
+>;
 
 const KIND: Record<string, string> = {
 	wet: 'Wet',
@@ -39,4 +43,34 @@ export function sourceName(url: string | null | undefined): string | null {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * The head in sentences: 587 artikelen. In werking sinds 1 januari 1994. Geldende tekst:
+ * versie van 15 augustus 2026. 15.108 keer aangehaald. The law came into force once; its
+ * text in force is that of its latest version. On a peildatum only the count of that day.
+ */
+export function lawHeadLine(
+	d: Dates | null,
+	opts: {
+		count: number;
+		peildatum: string | null;
+		/** The current version of `/versions`, where the law gives no version_date_in_force. */
+		currentFrom?: string | null;
+		longDate: (day: string) => string;
+		formatCount: (n: number) => string;
+	}
+): string {
+	const { count, peildatum, currentFrom, longDate, formatCount } = opts;
+	const version = d?.version_date_in_force ?? currentFrom ?? null;
+	return [
+		`${formatCount(peildatum ? count : (d?.article_count ?? count))} artikelen.`,
+		d?.date_in_force ? `In werking sinds ${longDate(d.date_in_force)}.` : null,
+		!peildatum && version && version !== d?.date_in_force
+			? `Geldende tekst: versie van ${longDate(version)}.`
+			: null,
+		d?.inbound_citation_count ? `${formatCount(d.inbound_citation_count)} keer aangehaald.` : null
+	]
+		.filter(Boolean)
+		.join(' ');
 }

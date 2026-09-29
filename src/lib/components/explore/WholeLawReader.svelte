@@ -20,7 +20,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
-	import { lawFullTitle, lawKind, sourceName } from './law-head';
+	import { lawFullTitle, lawHeadLine, lawKind, sourceName } from './law-head';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -119,7 +119,8 @@
 	});
 
 	// The head of the law: its kind, official title, dates and citations, from its own detail.
-	// Its dates are those of the version in force (Awb: 2013), not of the first enactment.
+	// Its dates are those of the law itself (Awb: in force 1 January 1994); the text in force
+	// is dated by version_date_in_force (Awb: 15 August 2026).
 	let lawDetail = $state<Schema<'InstrumentDetailDTO'> | null>(null);
 	$effect(() => {
 		lawDetail = null;
@@ -134,7 +135,7 @@
 	const kindLabel = $derived(lawKind(lawDetail));
 	const fullTitle = $derived(lawFullTitle(lawDetail, lawName));
 	// The versions of the law, for the peildatum; the current one dates the text in force
-	// (Awb: 15 August 2026). `date_in_force` is not that date (Awb: 2013).
+	// where the law gives no version_date_in_force.
 	let versions = $state<Version[]>([]);
 	$effect(() => {
 		versions = [];
@@ -175,19 +176,14 @@
 		return `Tekst zoals geldend op ${formatLongDate(peildatum)}${of}.`;
 	});
 
-	// The head in sentences: 587 artikelen. Geldende tekst: versie van 15 augustus 2026.
 	const headLine = $derived(
-		[
-			`${formatCount(peildatum ? total : (lawDetail?.article_count ?? total))} artikelen.`,
-			!peildatum && currentVersion?.valid_from
-				? `Geldende tekst: versie van ${formatLongDate(currentVersion.valid_from)}.`
-				: null,
-			lawDetail?.inbound_citation_count
-				? `${formatCount(lawDetail.inbound_citation_count)} keer aangehaald.`
-				: null
-		]
-			.filter(Boolean)
-			.join(' ')
+		lawHeadLine(lawDetail, {
+			count: total,
+			peildatum,
+			currentFrom: currentVersion?.valid_from,
+			longDate: (day) => formatLongDate(day),
+			formatCount
+		})
 	);
 	const officialUrl = $derived(
 		(peildatum ? shownVersion?.official_url : null) ?? lawDetail?.official_url ?? null
