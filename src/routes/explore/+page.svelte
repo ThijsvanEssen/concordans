@@ -1428,6 +1428,12 @@
 	}
 
 	@media (max-width: 768px) {
+		/* One column on a phone: the text gets the width, 16 px from the edges. */
+		.col--measure {
+			--reader-pad-top: var(--s-5);
+			--reader-pad-left: var(--s-4);
+			--reader-pad-right: var(--s-4);
+		}
 		.explore-graph,
 		.explore-graph--with-reader,
 		.explore-read,
