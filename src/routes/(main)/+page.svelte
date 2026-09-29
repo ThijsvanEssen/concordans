@@ -8,7 +8,13 @@
 	import type { Schema } from '$lib/api/types';
 	import { indexHref } from '$lib/bron/href';
 	import { bronPlural, type Collection } from '$lib/vocabulary';
-	import { dayLabel, normalizeItem, shortDate, type FeedItem } from '$lib/components/actueel/feed';
+	import {
+		dayLabel,
+		feedStand,
+		normalizeItem,
+		shortDate,
+		type FeedItem
+	} from '$lib/components/actueel/feed';
 	import { timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
 
 	/** The ways into the material by kind; each opens Bladeren on that kind. */
@@ -24,7 +30,7 @@
 
 	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
 	let lines = $state<TimelineLine[]>([]);
-	let newest = $state<string | null>(null);
+	let stand = $state<ReturnType<typeof feedStand>>(null);
 
 	$effect(() => {
 		const ac = new AbortController();
@@ -55,7 +61,7 @@
 			);
 			items.push(...r.items.map(normalizeItem));
 			cursor = r.next_cursor;
-			newest ??= items[0]?.date ?? null;
+			stand ??= feedStand(r.data_as_of);
 			const last = items.at(-1)?.date;
 			const whole = cursor ? items.filter((i) => i.date !== last) : items;
 			const found = timelineOf(whole, LINES_SHOWN);
@@ -111,9 +117,13 @@
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header class="actueel-head">
 				<h2 id="actueel-heading" class="actueel-title"><a href="/actueel">Actueel</a></h2>
-				{#if newest}
-					<!-- TODO(backend): data_as_of; until then the newest event in the data. -->
-					<span class="stand">bijgewerkt tot {shortDate(newest)}</span>
+				{#if stand}
+					<span
+						class="stand"
+						title={stand.retrievedAt
+							? `Opgehaald op ${shortDate(stand.retrievedAt.slice(0, 10))}`
+							: undefined}>tot en met {shortDate(stand.newest)}</span
+					>
 				{/if}
 			</header>
 			<ul class="lines" aria-busy={!lines.length}>

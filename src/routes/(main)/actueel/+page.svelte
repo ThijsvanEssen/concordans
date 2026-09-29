@@ -27,9 +27,10 @@
 		KIND_LABEL,
 		atomParams,
 		daysOf,
+		feedStand,
 		isFeedKind,
 		normalizeItem,
-		shortDate,
+		standLine,
 		type FeedItem,
 		type FeedKind
 	} from '$lib/components/actueel/feed';
@@ -138,6 +139,7 @@
 				cursor = r.next_cursor ?? null;
 				total = r.total ?? null;
 				facets = r.facets ?? null;
+				stand = feedStand(r.data_as_of) ?? stand;
 			})
 			.catch(() => {
 				if (!ac.signal.aborted) error = 'Actueel kon niet worden geladen.';
@@ -166,14 +168,8 @@
 
 	const days = $derived(daysOf(items));
 
-	// How current the data is: the day of the newest event, whatever the filters.
-	let newest = $state<string | null>(null);
-	$effect(() => {
-		// TODO(backend): a date of the data itself; until then the newest event in it.
-		unwrap(api.GET('/api/feed', { params: { query: { until: today, limit: 1, facets: false } } }))
-			.then((r) => (newest = r.items[0]?.date ?? null))
-			.catch(() => {});
-	});
+	// How current the data is, whatever the filters: from `data_as_of` of each response.
+	let stand = $state<ReturnType<typeof feedStand>>(null);
 
 	// ── Names for the filters ───────────────────────────────────────────────
 	let cabinets = $state<Cabinet[]>([]);
@@ -348,8 +344,8 @@
 			Wetsvoorstellen, nota’s van wijziging, amendementen, moties, stemmingen, toezeggingen, brieven
 			van de regering, publicaties en inwerkingtredingen, per dag.
 		</p>
-		{#if newest}
-			<p class="stand">Nieuwste gebeurtenis in de gegevens: {shortDate(newest)}</p>
+		{#if stand}
+			<p class="stand">{standLine(stand)}</p>
 		{/if}
 		<button
 			type="button"
@@ -399,9 +395,7 @@
 		{:else if !items.length}
 			<div class="empty">
 				<p>Geen gebeurtenissen{chips.length ? ' met deze filters' : ''}.</p>
-				{#if newest}<p class="stand">
-						Nieuwste gebeurtenis in de gegevens: {shortDate(newest)}
-					</p>{/if}
+				{#if stand}<p class="stand">{standLine(stand)}</p>{/if}
 			</div>
 		{:else}
 			<div class="days" class:days--stale={loading}>
