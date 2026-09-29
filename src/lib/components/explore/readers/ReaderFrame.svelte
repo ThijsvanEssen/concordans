@@ -55,6 +55,15 @@
 			var(--reader-pad-left, var(--s-6));
 		box-sizing: border-box;
 	}
+	/* On a phone every reader has the width, 16 px from the edges. */
+	@media (max-width: 768px) {
+		.reader-frame {
+			/* Set here, not only used: what reads them inside (a sticky bar) agrees. */
+			--reader-pad-top: var(--s-5);
+			--reader-pad-left: var(--s-4);
+			--reader-pad-right: var(--s-4);
+		}
+	}
 	.reader-frame__col {
 		max-width: var(--reader-max, 760px);
 		min-height: 100%;
