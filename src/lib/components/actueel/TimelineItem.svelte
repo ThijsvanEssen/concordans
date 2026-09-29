@@ -34,10 +34,8 @@
 	}
 	.label {
 		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-size: var(--t-micro);
 		font-weight: 500;
-		font-variant: all-small-caps;
-		letter-spacing: 0.05em;
 		color: var(--ink-3);
 	}
 	.label--failed {
