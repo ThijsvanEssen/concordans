@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	alignUnits,
+	byYear,
 	compareVersions,
 	diffWords,
 	lidHistory,
@@ -219,5 +220,21 @@ describe('compareVersions on a bijlage', () => {
 			version('Energiewet: artikel 3.37')
 		);
 		expect(summarize(rows)).toBe('tekst gewijzigd');
+	});
+});
+
+describe('byYear', () => {
+	it('groups tekstversies by the year they took effect, in their order', () => {
+		const w = (from: string | null) => ({ from });
+		expect(
+			byYear([w('2025-01-01'), w('2025-07-01'), w('2026-01-01'), w(null)]).map(([y, g]) => [
+				y,
+				g.length
+			])
+		).toEqual([
+			['2025', 2],
+			['2026', 1],
+			['Zonder datum', 1]
+		]);
 	});
 });

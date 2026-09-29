@@ -15,6 +15,7 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { slide } from 'svelte/transition';
 	import {
+		byYear,
 		compareVersions,
 		lidHistory,
 		plainDiff,
@@ -275,10 +276,14 @@
 			value={w.index}
 			onchange={(e) => pick(Number(e.currentTarget.value))}
 		>
-			{#each wordings as option (option.index)}
-				<option value={option.index} disabled={option.index === other}
-					>Tekst sinds {optionLabel(option)}{option.until ? '' : ', geldend'}</option
-				>
+			{#each byYear(wordings) as [year, group] (year)}
+				<optgroup label={year}>
+					{#each group as option (option.index)}
+						<option value={option.index} disabled={option.index === other}
+							>Tekst sinds {optionLabel(option)}{option.until ? '' : ', geldend'}</option
+						>
+					{/each}
+				</optgroup>
 			{/each}
 		</select>
 	</label>

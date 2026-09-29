@@ -321,6 +321,18 @@ export function wordingsOf<V extends VersionLike>(versions: V[]): Wording<V>[] {
 	return out;
 }
 
+/** Tekstversies by the year they took effect, in their order: the groups of a list. */
+export function byYear<W extends { from: string | null }>(wordings: W[]): [string, W[]][] {
+	const out: [string, W[]][] = [];
+	for (const w of wordings) {
+		const year = w.from?.slice(0, 4) ?? 'Zonder datum';
+		const last = out.at(-1);
+		if (last && last[0] === year) last[1].push(w);
+		else out.push([year, [w]]);
+	}
+	return out;
+}
+
 /** The tekstversie a BWB version belongs to, by its date or its key. */
 export const wordingOf = <V extends VersionLike>(wordings: Wording<V>[], id: string) =>
 	wordings.find((w) => w.versions.some((v) => (v.valid_from ?? v.key) === id)) ?? null;
