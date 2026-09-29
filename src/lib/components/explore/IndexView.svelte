@@ -16,7 +16,16 @@
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
-	import { TIERS, TIER_LABEL, bronLabel, type Tier } from '$lib/vocabulary';
+	import {
+		COURT_KINDS,
+		COURT_KIND_LABEL,
+		OLD_TIER,
+		TIERS,
+		TIER_LABEL,
+		bronLabel,
+		type CourtKind,
+		type Tier
+	} from '$lib/vocabulary';
 	import { getCoverage, type Coverage } from '$lib/api/stats';
 	import {
 		STAGES,
@@ -53,7 +62,7 @@
 		type Cabinet,
 		type Ministry
 	} from './index/government';
-	import { COURT_GROUPS } from './index/courts';
+	import { COURT_GROUPS, MIXED_TIERS } from './index/courts';
 	import { pannable } from './index/pannable';
 	import CabinetOccupancy from './index/CabinetOccupancy.svelte';
 	import IndexDetail from './index/IndexDetail.svelte';
@@ -125,6 +134,7 @@
 	const withEmpty = $derived(params.get('leeg') === '1');
 	const source = $derived(oneOf(params.get('source'), ['echr'] as const));
 	const tier = $derived(oneOf(params.get('tier'), TIERS));
+	const courtKind = $derived(oneOf(params.get('court_kind'), COURT_KINDS));
 	const sort = $derived(params.get('sort'));
 	const dirParam = $derived(oneOf(params.get('dir'), ['asc', 'desc'] as const));
 	const onlyActive = $derived(params.get('only_active') === '1');
@@ -145,6 +155,7 @@
 		'jurisdiction',
 		'court',
 		'tier',
+		'court_kind',
 		'leeg',
 		'source',
 		'sort',
@@ -172,6 +183,15 @@
 		const search = url.search.replaceAll('%2F', '/');
 		goto(url.pathname + search, { replaceState, keepFocus: true, noScroll: true });
 	}
+
+	// A link from before API 0.30 may name a tier that is now a court within a wider tier:
+	// it opens that court. A tier the API does not know is left out, as the list would be.
+	$effect(() => {
+		const old = params.get('tier');
+		if (!old || TIERS.includes(old as Tier)) return;
+		const now = OLD_TIER[old];
+		untrack(() => patchUrl({ tier: now?.tier ?? null, court_kind: now?.courtKind ?? null }, true));
+	});
 
 	const toggleParam = (name: string, current: string | undefined, value: string) =>
 		patchUrl({ [name]: current === value ? null : value });
@@ -367,6 +387,7 @@
 					q: q || undefined,
 					court: court || undefined,
 					tier,
+					court_kind: courtKind,
 					// Without a source the list holds the cited judgments whose text is not loaded.
 					source: source ?? 'rechtspraak',
 					from: dateFrom || undefined,
@@ -942,27 +963,48 @@
 			const count = courtCounts && tiers.reduce((n, t) => n + (courtCounts.get(t) ?? 0), 0);
 			return [
 				{ heading: g.label, count: count ?? undefined },
-				...tiers.map((t) => {
+				...tiers.flatMap((t) => {
 					const ehrm = t === 'ehrm';
 					const on = ehrm ? source === 'echr' : source !== 'echr' && !court && tier === t;
-					return {
-						id: t,
-						label: TIER_LABEL[t],
-						count: courtCounts?.get(t),
-						indent: true,
-						on,
-						// One college or the EHRM at a time: the API takes one tier.
-						onClick: () =>
-							patchUrl({
-								tier: on || ehrm ? null : t,
-								court: null,
-								source: ehrm && !on ? 'echr' : null
-							})
-					};
+					return [
+						{
+							id: t,
+							label: TIER_LABEL[t],
+							count: courtCounts?.get(t),
+							indent: true,
+							on,
+							// One college or the EHRM at a time: the API takes one tier.
+							onClick: () =>
+								patchUrl({
+									tier: on || ehrm ? null : t,
+									court_kind: null,
+									court: null,
+									source: ehrm && !on ? 'echr' : null
+								})
+						},
+						...(on && MIXED_TIERS.includes(t) ? kindOptions() : [])
+					];
 				})
 			];
 		});
 	});
+
+	/** The courts within the chosen tier, from the list's facet; one at a time. */
+	function kindOptions() {
+		const counts = new Map<CourtKind, number>();
+		for (const f of judgmentFacets?.court_kind ?? [])
+			if (f.value && COURT_KINDS.includes(f.value as CourtKind))
+				counts.set(f.value as CourtKind, f.count);
+		if (courtKind && !counts.has(courtKind)) counts.set(courtKind, 0);
+		return [...counts].map(([k, count]) => ({
+			id: `kind-${k}`,
+			label: COURT_KIND_LABEL[k],
+			count,
+			indent: 'deep' as const,
+			on: courtKind === k,
+			onClick: () => patchUrl({ court_kind: courtKind === k ? null : k })
+		}));
+	}
 
 	// The years of the judgments under the filters, the last forty, as columns.
 	const judgmentYears = $derived(

@@ -24,26 +24,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/articles/{bwb_id}/{article_number}/relationships": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Semantic relationships of an article
-         * @description Upstream dependencies (outgoing references), downstream implications (incoming references) and annex scopes, each with its semantic type and explanation.
-         */
-        get: operations["get_article_relationships_api_articles__bwb_id___article_number__relationships_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/articles/{bwb_id}/{article_number}/cited-by": {
         parameters: {
             query?: never;
@@ -124,26 +104,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/articles/{bwb_id}/{article_number}/in-flux": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * In-flux status of an article
-         * @description A cheap check whether one or more open bills currently target this article. Returns a flag and the number of open dossiers. Aggressively cached — always 200, never 404.
-         */
-        get: operations["get_in_flux_api_articles__bwb_id___article_number__in_flux_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/judgments": {
         parameters: {
             query?: never;
@@ -153,7 +113,7 @@ export interface paths {
         };
         /**
          * Paginated list of judgments
-         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the college: hoge_raad, raad_van_state, centrale_raad_van_beroep, parket, gerechtshof, rechtbank, tuchtcollege, …), area of law (`subject`), date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier filter) and per year of `date` (without `from` and `to`).
+         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter) and per year of `date` (without `from` and `to`).
          */
         get: operations["list_judgments_api_judgments_get"];
         put?: never;
@@ -256,26 +216,6 @@ export interface paths {
          * @description The articles in force of this instrument (BWB id or CELEX number), in the order of the document: an article with only a heading (the Algemene bepaling of the Grondwet) where it stands, an annex after the regulation. `include_repealed` adds the repealed identities (last). The text is a short preview; /api/articles/{bwb_id}/{address} has the full content.
          */
         get: operations["list_articles_api_instruments__bwb_id__articles_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/instruments/{bwb_id}/citations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Every edge incident to this instrument (bulk)
-         * @description One round-trip with every edge touching an article of this instrument: REFERS_TO (within and across laws), AMENDS / INTRODUCES / REPEALS and EXPLAINS (legislative history), and so on. PART_OF is excluded by default — it is the structural backbone, not a reference. Beside `edges` the endpoint returns a `nodes` side-payload with the outside endpoints, grouped per collection.
-         */
-        get: operations["get_instrument_citations_api_instruments__bwb_id__citations_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -393,49 +333,9 @@ export interface paths {
         };
         /**
          * Articles as they stood on a given date
-         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions. Empty when no version covers that date.
+         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of the document. Empty when no version covers that date. ``text_preview`` is the start of ``text``; ``limit`` and ``offset`` page, ``total`` counts every article.
          */
         get: operations["list_articles_at_api_instruments__bwb_id__articles_at__at_date__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/instruments/{bwb_id}/cross-law-dependencies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * References to articles of other laws
-         * @description Article references from this law into articles of other laws, with the semantic type where one has been classified.
-         */
-        get: operations["get_cross_law_dependencies_route_api_instruments__bwb_id__cross_law_dependencies_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/instruments/{bwb_id}/shared-annexes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Annexes shared with other laws
-         * @description The annexes connecting this law to others: its own annexes that other laws refer to, and annexes of other laws that articles of this law refer to.
-         */
-        get: operations["get_shared_annexes_route_api_instruments__bwb_id__shared_annexes_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -504,26 +404,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/nodes/{collection}/{key}/facets": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Count a node's neighbors per relation, direction and collection
-         * @description How many edges the node has per relation, direction and neighbor collection (with the node type of that collection), counted in the database without reading the neighbors. `total` is the number of edges over all facets. `relations`, `node_types`, `direction` and `status` narrow the edges.
-         */
-        get: operations["get_node_facets_route_api_nodes__collection___key__facets_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/nodes/{collection}/{key}/neighborhood": {
         parameters: {
             query?: never;
@@ -564,26 +444,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/dossiers/open": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Open dossiers
-         * @description ``GET /api/dossiers`` with ``status=open``: the dossiers not closed yet. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter.
-         */
-        get: operations["list_open_dossiers_api_dossiers_open_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/dossiers/recent": {
         parameters: {
             query?: never;
@@ -596,26 +456,6 @@ export interface paths {
          * @description Dossiers with an activity, a vote, a document or their closing in the given period, the most recent first. ``subject`` narrows them to a number, a dossier or title text.
          */
         get: operations["list_recent_dossiers_api_dossiers_recent_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/dossiers/documents/bulk": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Documents for several dossiers
-         * @description The top documents per dossier for a list of dossier numbers, in one call rather than one per dossier.
-         */
-        get: operations["list_documents_for_dossiers_api_dossiers_documents_bulk_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -716,26 +556,6 @@ export interface paths {
          * @description Every parliamentary committee with its number of open dossiers.
          */
         get: operations["list_committees_api_committees_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/committees/with-members": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * All committees with their members
-         * @description One query returns every committee with its current members. The alternative is a separate call per committee, 130 times over.
-         */
-        get: operations["list_committees_with_members_api_committees_with_members_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1081,68 +901,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/graph/global": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Whole graph — every node and edge, no instrument filter
-         * @description Every instrument, article, judgment and edge, including nodes that hang off no instrument. `node_types` (`instrument`, `article`, `judgment`; default all three) says which nodes to load and `relations` (`REFERS_TO`, `EXPLAINS`, `PART_OF`, `IMPLEMENTS`, `AMENDS`; default all five) which edges to keep between them.
-         */
-        get: operations["get_global_graph_route_api_graph_global_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/graph/instruments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Instrument-level graph — instruments as nodes with aggregated edges
-         * @description Every instrument (NL and EU) as a node, with edges between instruments aggregated from article-level references (REFERS_TO, weighted) plus the direct IMPLEMENTS and AMENDS edges. Use this for the layer view, where each node stands for a whole law. `relations` (`REFERS_TO`, `IMPLEMENTS`, `AMENDS`; default all three) says which edges to return.
-         */
-        get: operations["get_instrument_layer_graph_route_api_graph_instruments_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/graph/judgments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Judgment-level graph — judgments as nodes with citation edges
-         * @description Every loaded judgment as a node, with REFERS_TO edges to the instruments it cites, aggregated from the article-level references (weight = number of distinct articles cited in that instrument).
-         *
-         *     The instrument nodes are the instruments the judgments cite — useful as anchor points in the visualisation. Use `max_judgments` to bound the size; the default is 1000.
-         */
-        get: operations["get_judgment_graph_route_api_graph_judgments_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/relationships/types": {
         parameters: {
             query?: never;
@@ -1172,29 +930,9 @@ export interface paths {
         };
         /**
          * Search semantic relationships
-         * @description Searches the classified article relationships, optionally filtered by semantic type and/or law (the bwb_id of the source article).
+         * @description Searches the classified article relationships, optionally filtered by semantic type and/or law (the bwb_id of the source article). ``type`` keeps the relationships of any of the types it names, ``exclude_type`` drops those of the types it names (both comma-separated): ``exclude_type=cross_reference`` gives every other kind in one call.
          */
         get: operations["search_api_relationships_search_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/annexes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List annexes
-         * @description Annexes, optionally filtered to one law (bwb_id) or limited to the annexes used by articles of more than one law (shared_across_laws=true).
-         */
-        get: operations["get_annexes_api_annexes_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1215,46 +953,6 @@ export interface paths {
          * @description One annex with its entries and every article referring to it.
          */
         get: operations["get_annex_detail_api_annexes__key__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/annexes/{key}/referenced-by": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Articles referring to this annex
-         * @description Every article, across all laws, that uses this annex as its scope.
-         */
-        get: operations["get_referenced_by_api_annexes__key__referenced_by_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/documents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Document index
-         * @description Documents across every source, with metadata only — no text. Backs the document index page. ``total`` is the absolute number of matches, independent of ``limit`` and ``offset``. ``dossier`` keeps the documents of one dossier, linked directly or through a case; an unknown dossier matches nothing.
-         */
-        get: operations["list_documents_api_documents_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1792,29 +1490,6 @@ export interface components {
             description?: string | null;
         };
         /**
-         * AnnexListItem
-         * @description Annex plus the laws whose articles reference it.
-         */
-        AnnexListItem: {
-            annex: components["schemas"]["AnnexDTO"];
-            /** Referencing Laws */
-            referencing_laws?: string[];
-        };
-        /**
-         * AnnexListResponse
-         * @description Paginated annex list (optionally restricted to cross-law shared ones).
-         */
-        AnnexListResponse: {
-            /** Annexes */
-            annexes: components["schemas"]["AnnexListItem"][];
-            /** Total */
-            total: number;
-            /** Limit */
-            limit: number;
-            /** Offset */
-            offset: number;
-        };
-        /**
          * AnnexReferencedByItem
          * @description An article that references an annex, with scope metadata.
          */
@@ -2039,22 +1714,6 @@ export interface components {
             items: components["schemas"]["ArticleExplanationDTO"][];
         };
         /**
-         * ArticleGraphNodeDTO
-         * @description Article node for the global graph.
-         */
-        ArticleGraphNodeDTO: {
-            /** Id */
-            id: string;
-            /** Key */
-            key: string;
-            /** Bwb Id */
-            bwb_id?: string | null;
-            /** Article Number */
-            article_number?: string | null;
-            /** Display Name */
-            display_name?: string | null;
-        };
-        /**
          * ArticleHistoryResponse
          * @description Response for GET /api/articles/{bwb_id}/{article_number}/history.
          */
@@ -2073,18 +1732,6 @@ export interface components {
              * @description All versions, oldest first.
              */
             versions?: components["schemas"]["ArticleVersionDTO"][];
-        };
-        /**
-         * ArticleInFluxResponse
-         * @description In-flux status for an article.
-         */
-        ArticleInFluxResponse: {
-            /** Article Id */
-            article_id: string;
-            /** In Flux */
-            in_flux: boolean;
-            /** Open Dossier Count */
-            open_dossier_count: number;
         };
         /**
          * ArticleLegislativeHistoryResponse
@@ -2263,20 +1910,6 @@ export interface components {
              * @description `intref` or `extref`, as on the reference itself.
              */
             reference_kind?: string | null;
-        };
-        /**
-         * ArticleRelationshipsResponse
-         * @description Response for GET /api/articles/{bwb_id}/{article_number}/relationships.
-         */
-        ArticleRelationshipsResponse: {
-            /** Article Id */
-            article_id: string;
-            /** Upstream Dependencies */
-            upstream_dependencies?: components["schemas"]["ArticleRelationshipWithType"][];
-            /** Downstream Implications */
-            downstream_implications?: components["schemas"]["ArticleRelationshipWithType"][];
-            /** Scope Articles */
-            scope_articles?: components["schemas"]["ScopeArticleReference"][];
         };
         /**
          * ArticleSummaryDTO
@@ -2730,9 +2363,14 @@ export interface components {
             court: string | null;
             /**
              * Tier
-             * @description The college: `hoge_raad`, `raad_van_state`, `centrale_raad_van_beroep`, `college_van_beroep_bedrijfsleven`, `parket`, `gerechtshof`, `rechtbank`, … (`/api/stats/coverage` lists those present).
+             * @description The tier, the Type of the court in the Instanties value list: `hoge_raad`, `raad_van_state`, `parket`, `gerechtshof`, `rechtbank`, `andere_instantie`, … (`/api/stats/coverage` lists those present).
              */
             tier: string | null;
+            /**
+             * Court Kind
+             * @description The kind of court within the tier (`ambtenarengerecht`; a tier of one kind of court is its own kind).
+             */
+            court_kind?: string | null;
             /**
              * Date
              * @description Date of the judgment, YYYY-MM-DD.
@@ -2985,47 +2623,10 @@ export interface components {
             dossier_total: number;
         };
         /**
-         * CommitteeWithMembersDTO
-         * @description A committee and its members, without the dossiers payload.
+         * CourtKind
+         * @enum {string}
          */
-        CommitteeWithMembersDTO: {
-            /** Id */
-            id: string;
-            /** Key */
-            key: string;
-            /** Name */
-            name?: string | null;
-            /** Abbreviation */
-            abbreviation?: string | null;
-            /**
-             * Slug
-             * @description Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`.
-             */
-            slug?: string | null;
-            /**
-             * Kind
-             * @description `vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`.
-             */
-            kind?: ("vast" | "algemeen" | "tijdelijk" | "enquete" | "delegatie" | "overig") | null;
-            /** Started On */
-            started_on?: string | null;
-            /**
-             * Ended On
-             * @description Null while it sits.
-             */
-            ended_on?: string | null;
-            /**
-             * Active Dossier Count
-             * @description The open dossiers it leads an activity about; none once ended.
-             * @default 0
-             */
-            active_dossier_count: number;
-            /**
-             * Members
-             * @default []
-             */
-            members: components["schemas"]["MemberDTO"][];
-        };
+        CourtKind: "hoge_raad" | "raad_van_state" | "centrale_raad_van_beroep" | "college_van_beroep_bedrijfsleven" | "parket" | "gerechtshof" | "rechtbank" | "kantongerecht" | "tuchtcollege" | "ambtenarengerecht" | "college_van_beroep_studiefinanciering" | "college_van_beroep_voor_het_hoger_onderwijs" | "raad_van_arbitrage_in_bouwgeschillen" | "raad_van_beroep" | "raad_voor_strafrechtstoepassing_en_jeugdbescherming" | "tariefcommissie" | "constitutioneel_hof" | "gemeenschappelijk_hof_van_justitie" | "gerecht_in_ambtenarenzaken" | "gerecht_in_eerste_aanleg" | "hof_van_justitie" | "raad_van_beroep_in_ambtenarenzaken" | "raad_van_beroep_voor_belastingzaken" | "kroon" | "buitenlandse_instantie" | "hvj_eu" | "ehrm";
         /**
          * CoverageCourtDTO
          * @description The judgments of one court in the graph.
@@ -3038,9 +2639,14 @@ export interface components {
             source?: string | null;
             /**
              * Tier
-             * @description `hoge_raad`, `parket` (the conclusions of the Parket bij de Hoge Raad), `raad_van_state`, `centrale_raad_van_beroep`, `gerechtshof`, `rechtbank`, … one per college (``core.judgments.TIERS``).
+             * @description The Type of the court in the Instanties value list: `hoge_raad`, `parket` (the conclusions of the Parket bij de Hoge Raad), `raad_van_state`, `gerechtshof`, `rechtbank`, `andere_instantie`, … (``core.courts.TIERS``).
              */
             tier?: string | null;
+            /**
+             * Court Kind
+             * @description The kind of court within the tier (`ambtenarengerecht`); a tier of one kind of court is its own kind.
+             */
+            court_kind?: string | null;
             /**
              * Court Code
              * @description The court in the ECLI: `GHAMS`.
@@ -3077,33 +2683,6 @@ export interface components {
             first_date?: string | null;
             /** Last Date */
             last_date?: string | null;
-        };
-        /**
-         * CrossLawDependenciesResponse
-         * @description Response for GET /api/instruments/{bwb_id}/cross-law-dependencies.
-         */
-        CrossLawDependenciesResponse: {
-            /**
-             * Bwb Id
-             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
-             */
-            bwb_id: string;
-            /** Dependencies */
-            dependencies?: components["schemas"]["CrossLawDependencyItem"][];
-        };
-        /**
-         * CrossLawDependencyItem
-         * @description An article reference crossing a law boundary.
-         */
-        CrossLawDependencyItem: {
-            source_article: components["schemas"]["ArticleRelationDTO"];
-            target_article: components["schemas"]["ArticleRelationDTO"];
-            /** Semantic Type */
-            semantic_type?: string | null;
-            /** Explanation */
-            explanation?: string | null;
-            /** Confidence */
-            confidence?: number | null;
         };
         /**
          * DecisionDTO
@@ -3267,19 +2846,6 @@ export interface components {
             };
         };
         /**
-         * DocumentListResponse
-         * @description A page of document summaries.
-         */
-        DocumentListResponse: {
-            /**
-             * Total
-             * @description Matching documents, independent of ``limit`` and ``offset``.
-             */
-            total: number;
-            /** Items */
-            items: components["schemas"]["DocumentSummaryDTO"][];
-        };
-        /**
          * DocumentPassagesResponse
          * @description The passages of one document that explain one article, in document order.
          */
@@ -3288,51 +2854,6 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["PassageDTO"][];
-        };
-        /**
-         * DocumentSummaryDTO
-         * @description One row in the document index. ``dossier_numbers`` are the labels of the dossiers
-         *     it names (``37020-XV``), in either chamber.
-         */
-        DocumentSummaryDTO: {
-            /**
-             * Chamber
-             * @description 'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication.
-             */
-            chamber?: ("TK" | "EK") | null;
-            /**
-             * Source
-             * @description Source, e.g. 'tk', 'eerstekamer', 'staatsblad'.
-             */
-            source?: string | null;
-            /**
-             * Is Explanatory
-             * @description An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.
-             * @default false
-             */
-            is_explanatory: boolean;
-            /** Key */
-            key: string;
-            /** Title */
-            title?: string | null;
-            /** Kind */
-            kind?: string | null;
-            /** Date */
-            date?: string | null;
-            /** External Id */
-            external_id?: string | null;
-            /** Dossier Numbers */
-            dossier_numbers?: string[];
-            /**
-             * Has Text
-             * @default false
-             */
-            has_text: boolean;
-            /**
-             * Linked Articles
-             * @default 0
-             */
-            linked_articles: number;
         };
         /**
          * DocumentTextResponse
@@ -3587,19 +3108,6 @@ export interface components {
             tk_url?: string | null;
             /** Display Name */
             display_name?: string | null;
-        };
-        /**
-         * DossierDocumentsBulkResponse
-         * @description Response for GET /api/dossiers/documents/bulk.
-         */
-        DossierDocumentsBulkResponse: {
-            /**
-             * Items
-             * @description Map keyed by dossier number; each value is that dossier's documents, most recent first.
-             */
-            items: {
-                [key: string]: components["schemas"]["DossierDocumentDTO"][];
-            };
         };
         /**
          * DossierDocumentsResponse
@@ -4426,24 +3934,6 @@ export interface components {
             };
         };
         /**
-         * GlobalGraphResponse
-         * @description Response for GET /api/graph/global.
-         */
-        GlobalGraphResponse: {
-            /** Instruments */
-            instruments: components["schemas"]["InstrumentLayerInstrumentDTO"][];
-            /** Articles */
-            articles: components["schemas"]["ArticleGraphNodeDTO"][];
-            /** Judgments */
-            judgments: components["schemas"]["JudgmentGraphNodeDTO"][];
-            /** Edges */
-            edges: components["schemas"]["GraphEdgeDTO"][];
-            /** Metadata */
-            metadata?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
          * GovernmentFunctionDTO
          * @description A post held in a cabinet, as Rijksoverheid names it, and normalised.
          */
@@ -4486,30 +3976,6 @@ export interface components {
              * @description Null while the post is held.
              */
             to_date?: string | null;
-        };
-        /**
-         * GraphEdgeDTO
-         * @description Graph edge with optional text annotation (for global/article-level graphs).
-         */
-        GraphEdgeDTO: {
-            /** From Id */
-            from_id: string;
-            /** To Id */
-            to_id: string;
-            /** Relation Type */
-            relation_type: string;
-            /** Start */
-            start?: number | null;
-            /** End */
-            end?: number | null;
-            /** Text */
-            text?: string | null;
-            /** Confidence */
-            confidence?: number | null;
-            /** Semantic Type */
-            semantic_type?: string | null;
-            /** Explanation */
-            explanation?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -4629,6 +4095,11 @@ export interface components {
             official_url?: string | null;
             /** Text */
             text?: string | null;
+            /**
+             * Text Preview
+             * @description The first ``text_preview_chars`` characters of ``text``.
+             */
+            text_preview?: string | null;
         };
         /**
          * InstrumentArticlesAtResponse
@@ -4639,7 +4110,10 @@ export interface components {
             bwb_id: string;
             /** At Date */
             at_date: string;
-            /** Total */
+            /**
+             * Total
+             * @description Every article in force on ``at_date``, independent of ``limit`` and ``offset``.
+             */
             total: number;
             /** Items */
             items: components["schemas"]["InstrumentArticleVersionDTO"][];
@@ -4661,80 +4135,6 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["InstrumentArticleNodeDTO"][];
-        };
-        /**
-         * InstrumentCitationEdge
-         * @description One edge incident to an article of the focal instrument.
-         *
-         *     Edges keep ``from``/``to`` (not ``source``/``target``) — that matches
-         *     the ArangoDB edge shape and the citation graph rendering convention.
-         *     For an article-node id reference inside other DTOs, ``id``/``key`` are
-         *     used instead.
-         */
-        InstrumentCitationEdge: {
-            /**
-             * From
-             * @description Edge source node _id
-             */
-            from: string;
-            /**
-             * To
-             * @description Edge target node _id
-             */
-            to: string;
-            /**
-             * Relation
-             * @description Edge relation type, e.g. REFERS_TO
-             */
-            relation: string;
-            /**
-             * Direction
-             * @description Relative to the focal instrument: ``out`` = source is in this instrument, ``in`` = target is in it, ``intra`` = both sides.
-             * @enum {string}
-             */
-            direction: "in" | "out" | "intra";
-            /**
-             * Meta
-             * @description Optional edge metadata as written by the pipeline.
-             */
-            meta?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * InstrumentCitationsResponse
-         * @description Response for GET /api/instruments/{bwb_id}/citations.
-         *
-         *     One-shot bundle of every edge incident to the instrument's articles plus
-         *     the foreign endpoints those edges point at, grouped by collection.
-         */
-        InstrumentCitationsResponse: {
-            /**
-             * Bwb Id
-             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
-             */
-            bwb_id: string;
-            /**
-             * Article Count
-             * @description Number of articles in the focal instrument.
-             */
-            article_count: number;
-            /**
-             * Total Edges
-             * @description Number of edges in the response (capped by ``max_edges``).
-             */
-            total_edges: number;
-            /** Edges */
-            edges: components["schemas"]["InstrumentCitationEdge"][];
-            /**
-             * Nodes
-             * @description Foreign endpoints grouped by collection name (e.g. ``{'judgments': [...], 'articles': [...]}``).
-             */
-            nodes: {
-                [key: string]: {
-                    [key: string]: unknown;
-                }[];
-            };
         };
         /**
          * InstrumentDetailDTO
@@ -4883,22 +4283,6 @@ export interface components {
             items: components["schemas"]["InstrumentDossierItem"][];
         };
         /**
-         * InstrumentEdgeDTO
-         * @description Aggregated instrument-layer edge with weight.
-         */
-        InstrumentEdgeDTO: {
-            /** From Id */
-            from_id: string;
-            /** To Id */
-            to_id: string;
-            /** Relation Type */
-            relation_type: string;
-            /** Weight */
-            weight?: number | null;
-            /** Confidence */
-            confidence?: number | null;
-        };
-        /**
          * InstrumentEuLinksResponse
          * @description Response for GET /api/instruments/{identifier}/eu-links.
          */
@@ -4974,52 +4358,6 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["InstrumentJudgmentItem"][];
-        };
-        /**
-         * InstrumentLayerGraphResponse
-         * @description Response for GET /api/graph/instruments.
-         */
-        InstrumentLayerGraphResponse: {
-            /** Instruments */
-            instruments: components["schemas"]["InstrumentLayerInstrumentDTO"][];
-            /** Edges */
-            edges: components["schemas"]["InstrumentEdgeDTO"][];
-            /** Metadata */
-            metadata?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /**
-         * InstrumentLayerInstrumentDTO
-         * @description Instrument node in the instrument-layer graph.
-         */
-        InstrumentLayerInstrumentDTO: {
-            /** Id */
-            id: string;
-            /** Key */
-            key: string;
-            /** Bwb Id */
-            bwb_id?: string | null;
-            /** Display Name */
-            display_name?: string | null;
-            /** Citation Title */
-            citation_title?: string | null;
-            /** Title */
-            title?: string | null;
-            /** Shorthand */
-            shorthand?: string | null;
-            /** Jurisdiction */
-            jurisdiction?: string | null;
-            /**
-             * Stub
-             * @default false
-             */
-            stub: boolean;
-            /**
-             * Citation Count
-             * @default 0
-             */
-            citation_count: number;
         };
         /**
          * InstrumentListItemDTO
@@ -5330,7 +4668,7 @@ export interface components {
             stubs: number;
             /**
              * Tiers
-             * @description Per tier: the highest courts first, the parket, the courts of first instance and appeal, the other colleges, the EHRM last.
+             * @description Per tier: the highest courts first, the parket, the courts of first instance and appeal, the disciplinary tribunals, the other colleges, the Caribbean part, then the courts outside the Netherlands, the EHRM last.
              */
             tiers: components["schemas"]["CoverageTierDTO"][];
             /**
@@ -5449,51 +4787,24 @@ export interface components {
         JudgmentFacets: {
             /**
              * Tier
-             * @description Per tier, most first; counted without the `tier` filter.
+             * @description Per tier, most first; counted without the `tier` and `court_kind` filters.
              */
             tier?: components["schemas"]["JudgmentFacetCount"][];
+            /**
+             * Court Kind
+             * @description Per kind of court, most first; counted without the `court_kind` filter (within a chosen `tier`).
+             */
+            court_kind?: components["schemas"]["JudgmentFacetCount"][];
+            /**
+             * Source
+             * @description Per source (`rechtspraak`, `echr`), most first; counted without the `source` filter.
+             */
+            source?: components["schemas"]["JudgmentFacetCount"][];
             /**
              * Year
              * @description Per year of `date` (`2024`), oldest first after null (no date); counted without `from` and `to`.
              */
             year?: components["schemas"]["JudgmentFacetCount"][];
-        };
-        /**
-         * JudgmentGraphNodeDTO
-         * @description Judgment node in the judgment-layer or global graph.
-         */
-        JudgmentGraphNodeDTO: {
-            /** Id */
-            id: string;
-            /** Key */
-            key: string;
-            /** Display Name */
-            display_name?: string | null;
-            /** Shorthand */
-            shorthand?: string | null;
-            /** Ecli */
-            ecli?: string | null;
-            /**
-             * Stub
-             * @default false
-             */
-            stub: boolean;
-        };
-        /**
-         * JudgmentLayerGraphResponse
-         * @description Response for GET /api/graph/judgments.
-         */
-        JudgmentLayerGraphResponse: {
-            /** Judgments */
-            judgments: components["schemas"]["JudgmentGraphNodeDTO"][];
-            /** Instruments */
-            instruments: components["schemas"]["InstrumentLayerInstrumentDTO"][];
-            /** Edges */
-            edges: components["schemas"]["InstrumentEdgeDTO"][];
-            /** Metadata */
-            metadata?: {
-                [key: string]: unknown;
-            } | null;
         };
         /**
          * JudgmentListItemDTO
@@ -5515,8 +4826,16 @@ export interface components {
             display_name: string | null;
             /** Court */
             court: string | null;
-            /** Tier */
-            tier: string | null;
+            /**
+             * Tier
+             * @description The coarse tier: the Type of the court in the Instanties value list of the Rechtspraak (`hoge_raad`, `gerechtshof`, `rechtbank`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, …), or `kroon`, `hvj_eu`, `ehrm`.
+             */
+            tier?: string | null;
+            /**
+             * Court Kind
+             * @description The kind of court within the tier, from its official name (`ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, …); a tier of one kind of court is its own kind (`hoge_raad`).
+             */
+            court_kind?: string | null;
             /** Date */
             date: string | null;
             /** Summary */
@@ -6007,35 +5326,6 @@ export interface components {
             } | null;
         };
         /**
-         * NodeFacetDTO
-         * @description How many edges of a node share a relation, a direction and a neighbour collection.
-         */
-        NodeFacetDTO: {
-            /** Relation */
-            relation: string | null;
-            /**
-             * Direction
-             * @enum {string}
-             */
-            direction: "outbound" | "inbound";
-            /** Collection */
-            collection: string;
-            /** Type */
-            type: string;
-            /** Count */
-            count: number;
-        };
-        /**
-         * NodeFacetsResponse
-         * @description Response for GET /api/nodes/{collection}/{key}/facets.
-         */
-        NodeFacetsResponse: {
-            /** Items */
-            items: components["schemas"]["NodeFacetDTO"][];
-            /** Total */
-            total: number;
-        };
-        /**
          * NodeGraphResponse
          * @description Response for GET /api/nodes/{collection}/{key}.
          */
@@ -6402,16 +5692,6 @@ export interface components {
             char_end: number;
         };
         /**
-         * SharedAnnexesResponse
-         * @description Response for GET /api/instruments/{bwb_id}/shared-annexes.
-         */
-        SharedAnnexesResponse: {
-            /** Bwb Id */
-            bwb_id: string;
-            /** Annexes */
-            annexes?: components["schemas"]["AnnexListItem"][];
-        };
-        /**
          * SourceRefDTO
          * @description Where it was read: ``rijksoverheid``, with the page and the day.
          */
@@ -6464,7 +5744,7 @@ export interface components {
          * Tier
          * @enum {string}
          */
-        Tier: "hoge_raad" | "raad_van_state" | "centrale_raad_van_beroep" | "college_van_beroep_bedrijfsleven" | "parket" | "gerechtshof" | "rechtbank" | "kantongerecht" | "tuchtcollege" | "ambtenarengerecht" | "college_van_beroep_hoger_onderwijs" | "college_van_beroep_studiefinanciering" | "constitutioneel_hof" | "gemeenschappelijk_hof" | "gerecht_in_ambtenarenzaken" | "gerecht_in_eerste_aanleg" | "raad_van_arbitrage_in_bouwgeschillen" | "raad_van_beroep" | "raad_van_beroep_in_ambtenarenzaken" | "raad_van_beroep_voor_belastingzaken" | "raad_voor_strafrechtstoepassing_en_jeugdbescherming" | "tariefcommissie" | "kroon" | "buitenlandse_instantie" | "hvj_eu" | "ehrm";
+        Tier: "hoge_raad" | "raad_van_state" | "centrale_raad_van_beroep" | "college_van_beroep_bedrijfsleven" | "parket" | "gerechtshof" | "rechtbank" | "kantongerecht" | "tuchtcollege" | "andere_instantie" | "koninkrijksinstantie" | "kroon" | "buitenlandse_instantie" | "hvj_eu" | "ehrm";
         /**
          * TimelineActivityBody
          * @description An activity entry: a debate, hearing or other agenda item.
@@ -6948,38 +6228,6 @@ export interface operations {
             };
         };
     };
-    get_article_relationships_api_articles__bwb_id___article_number__relationships_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                bwb_id: string;
-                article_number: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ArticleRelationshipsResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get: {
         parameters: {
             query?: {
@@ -6987,7 +6235,7 @@ export interface operations {
                 offset?: number;
                 /** @description ECLI court code, e.g. 'HR', 'RBAMS' */
                 court?: string | null;
-                /** @description The college: `hoge_raad`, `raad_van_state`, `gerechtshof`, … */
+                /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, … */
                 tier?: components["schemas"]["Tier"] | null;
                 /** @description A lid number the passage names: '3', '2a' */
                 lid?: string | null;
@@ -7120,38 +6368,6 @@ export interface operations {
             };
         };
     };
-    get_in_flux_api_articles__bwb_id___article_number__in_flux_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                bwb_id: string;
-                article_number: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ArticleInFluxResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_judgments_api_judgments_get: {
         parameters: {
             query?: {
@@ -7161,9 +6377,11 @@ export interface operations {
                 q?: string | null;
                 /** @description ECLI court code, e.g. 'HR', 'RBAMS', 'GHARL' */
                 court?: string | null;
-                /** @description The college: `hoge_raad`, `raad_van_state`, `gerechtshof`, … */
+                /** @description The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, … */
                 tier?: components["schemas"]["Tier"] | null;
-                /** @description Filter op bron, e.g. 'rechtspraak', 'echr', 'cjeu' */
+                /** @description The kind of court: `ambtenarengerecht`, `raad_van_beroep`, `hoge_raad`, … */
+                court_kind?: components["schemas"]["CourtKind"] | null;
+                /** @description The source, e.g. 'rechtspraak', 'echr'. */
                 source?: string | null;
                 /** @description Lower bound on judgment date, YYYY-MM-DD */
                 from?: string | null;
@@ -7375,43 +6593,6 @@ export interface operations {
             };
         };
     };
-    get_instrument_citations_api_instruments__bwb_id__citations_get: {
-        parameters: {
-            query?: {
-                /** @description Comma-separated whitelist of relations. Default: every relation except PART_OF. */
-                relations?: string | null;
-                /** @description Include the structural article-to-instrument edges. */
-                include_part_of?: boolean;
-                max_edges?: number;
-            };
-            header?: never;
-            path: {
-                bwb_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InstrumentCitationsResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_instrument_judgments_route_api_instruments__bwb_id__judgments_get: {
         parameters: {
             query?: {
@@ -7578,7 +6759,12 @@ export interface operations {
     };
     list_articles_at_api_instruments__bwb_id__articles_at__at_date__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Chars of text to inline as preview */
+                text_preview_chars?: number;
+                limit?: number;
+                offset?: number;
+            };
             header?: never;
             path: {
                 bwb_id: string;
@@ -7595,70 +6781,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstrumentArticlesAtResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_cross_law_dependencies_route_api_instruments__bwb_id__cross_law_dependencies_get: {
-        parameters: {
-            query?: {
-                limit?: number;
-            };
-            header?: never;
-            path: {
-                bwb_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CrossLawDependenciesResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_shared_annexes_route_api_instruments__bwb_id__shared_annexes_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                bwb_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SharedAnnexesResponse"];
                 };
             };
             /** @description Validation Error */
@@ -7775,47 +6897,6 @@ export interface operations {
             };
         };
     };
-    get_node_facets_route_api_nodes__collection___key__facets_get: {
-        parameters: {
-            query?: {
-                /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
-                relations?: string | null;
-                /** @description Comma-separated node types to keep (`article,judgment`). */
-                node_types?: string | null;
-                /** @description Keep the edges that leave (`outbound`) or reach the node. */
-                direction?: ("outbound" | "inbound") | null;
-                /** @description Keep the edges of this status (`canoniek`, `voorgesteld`). */
-                status?: string | null;
-            };
-            header?: never;
-            path: {
-                collection: string;
-                key: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NodeFacetsResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_node_neighborhood_route_api_nodes__collection___key__neighborhood_get: {
         parameters: {
             query?: {
@@ -7916,63 +6997,6 @@ export interface operations {
             };
         };
     };
-    list_open_dossiers_api_dossiers_open_get: {
-        parameters: {
-            query?: {
-                /** @description Open dossiers, closed ones (with an outcome) or both. */
-                status?: "open" | "closed" | "all";
-                outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
-                /** @description Comma-separated tracks, e.g. ``wetsvoorstel,begroting``. */
-                track?: string | null;
-                /** @description The start of the number: ``36264`` (that number and its chapters), ``37020-`` (the chapters of 37020). */
-                number?: string | null;
-                /** @description Committee slug. */
-                committee?: string | null;
-                /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
-                subject?: string | null;
-                /** @description The dossier's latest recognised stage. To filter on a stage being present at all, use ``has_stage``. */
-                stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
-                /** @description Comma-separated stages; only dossiers that have all of them, e.g. ``mvt,advies_rvs``. */
-                has_stage?: string | null;
-                /** @description The ministry that brought it in. */
-                ministry?: components["schemas"]["MinistryKey"] | null;
-                /** @description True: brought in by a Kamerlid; false: by the government. */
-                initiative?: boolean | null;
-                /** @description Opened on or after this day. */
-                opened_from?: string | null;
-                /** @description Opened on or before this day. */
-                opened_to?: string | null;
-                /** @description ``number`` in the order of the Kamer, ``opened_on`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``. */
-                sort?: ("number" | "opened_on" | "closed_on" | "title") | null;
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DossierListResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_recent_dossiers_api_dossiers_recent_get: {
         parameters: {
             query?: {
@@ -7995,39 +7019,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DossierSummaryDTO"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_documents_for_dossiers_api_dossiers_documents_bulk_get: {
-        parameters: {
-            query: {
-                /** @description Comma-separated dossier numbers, e.g. '29684,29515-Z'. */
-                numbers: string;
-                per_dossier_limit?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DossierDocumentsBulkResponse"];
                 };
             };
             /** @description Validation Error */
@@ -8196,26 +7187,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CommitteeDTO"][];
-                };
-            };
-        };
-    };
-    list_committees_with_members_api_committees_with_members_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CommitteeWithMembersDTO"][];
                 };
             };
         };
@@ -8769,108 +7740,6 @@ export interface operations {
             };
         };
     };
-    get_global_graph_route_api_graph_global_get: {
-        parameters: {
-            query?: {
-                /** @description Comma-separated node types to load. */
-                node_types?: string | null;
-                /** @description Comma-separated relations to keep. */
-                relations?: string | null;
-                /** @description Maximum number of judgments */
-                max_judgments?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GlobalGraphResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_instrument_layer_graph_route_api_graph_instruments_get: {
-        parameters: {
-            query?: {
-                /** @description Comma-separated relations to keep. */
-                relations?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InstrumentLayerGraphResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_judgment_graph_route_api_graph_judgments_get: {
-        parameters: {
-            query?: {
-                /** @description Maximum number of judgments */
-                max_judgments?: number;
-                /** @description Include stub judgments (not yet loaded) */
-                include_stubs?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["JudgmentLayerGraphResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_relationship_types_api_relationships_types_get: {
         parameters: {
             query?: never;
@@ -8896,7 +7765,10 @@ export interface operations {
     search_api_relationships_search_get: {
         parameters: {
             query?: {
+                /** @description Semantic types to keep, comma-separated. */
                 type?: string | null;
+                /** @description Semantic types to leave out, comma-separated. */
+                exclude_type?: string | null;
                 law?: string | null;
                 limit?: number;
                 offset?: number;
@@ -8914,40 +7786,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RelationshipSearchResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_annexes_api_annexes_get: {
-        parameters: {
-            query?: {
-                bwb_id?: string | null;
-                shared_across_laws?: boolean;
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AnnexListResponse"];
                 };
             };
             /** @description Validation Error */
@@ -8979,79 +7817,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnnexDetailResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_referenced_by_api_annexes__key__referenced_by_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                key: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AnnexReferencedByItem"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_documents_api_documents_get: {
-        parameters: {
-            query?: {
-                /** @description Filter on title and kind. */
-                q?: string | null;
-                /** @description Document kind, exact match. */
-                kind?: string | null;
-                /** @description 'TK' or 'EK'. */
-                chamber?: string | null;
-                /** @description Source, e.g. 'tk', 'eerstekamer', 'staatscourant'. */
-                source?: string | null;
-                /** @description Dossier number, e.g. 29684. */
-                dossier?: string | null;
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DocumentListResponse"];
                 };
             };
             /** @description Validation Error */
