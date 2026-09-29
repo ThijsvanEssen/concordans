@@ -400,7 +400,9 @@
 					{#if a.key}
 						<a
 							class="whole-article-jump"
-							href={bronHref({ collection: 'articles', key: a.key })}
+							href={peildatum
+								? `${bronHref({ collection: 'articles', key: a.key })}&peildatum=${peildatum}`
+								: bronHref({ collection: 'articles', key: a.key })}
 							data-sveltekit-noscroll><span class="whole-art-num">{name}</span></a
 						>
 					{:else}

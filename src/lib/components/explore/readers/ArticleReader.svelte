@@ -31,7 +31,7 @@
 	import { proposedTextOf, type ProposedText } from '$lib/verbonden/proposed-text';
 	import type { Row } from '$lib/verbonden/rows';
 	import { longDate } from '$lib/verbonden/rows';
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 
@@ -255,6 +255,18 @@
 	/** The version that repealed the article: what the reader shows when nothing else is chosen. */
 	const lapse = $derived(wordings.at(-1)?.lapsed ? wordings.at(-1)! : null);
 	const shown = $derived(shownIndex !== null ? (wordings[shownIndex] ?? null) : null);
+
+	// Opened from the law on a peildatum (?peildatum=2015-01-01): the text of that day, once
+	// the versions are in; a later choice in the list is the reader's own.
+	const peildatum = $derived(page.url.searchParams.get('peildatum'));
+	$effect(() => {
+		const day = peildatum;
+		if (!day || wordings.length === 0) return;
+		const w = wordings.find((x) => (x.from ?? '') <= day && (!x.until || day < x.until));
+		untrack(() => {
+			shownIndex = w && w !== current && w !== lapse ? w.index : null;
+		});
+	});
 	const shownVersion = $derived(shown?.first ?? null);
 	/** The tekstversie whose text is on screen, and the dossier of the wet that made it. */
 	const onScreen = $derived(shown ?? current);
@@ -511,8 +523,10 @@
 											onclick={() => {
 												shownIndex = w === current || w === lapse ? null : w.index;
 												versionMenu = false;
-												// Reading one text folds the comparison away.
-												if (comparing) go({ versies: null, weergave: null });
+												// Reading one text folds the comparison away; a text chosen here
+												// is no longer that of the peildatum.
+												if (comparing || peildatum)
+													go({ versies: null, weergave: null, peildatum: null });
 											}}
 											>{w.lapsed
 												? `Vervallen per ${longDate(w.from)}`
@@ -622,8 +636,13 @@
 					<a class="link" href={compareHref(shown.index, current.index)} data-sveltekit-noscroll
 						>Vergelijk met de geldende tekst</a
 					>
-					<button type="button" class="note__close" onclick={() => (shownIndex = null)}
-						>Geldend recht lezen</button
+					<button
+						type="button"
+						class="note__close"
+						onclick={() => {
+							shownIndex = null;
+							if (peildatum) go({ peildatum: null });
+						}}>Geldend recht lezen</button
 					>
 				{/if}
 			</p>
