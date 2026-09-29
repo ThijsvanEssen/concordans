@@ -2,6 +2,7 @@
 	// Actueel: what happened in the Kamer and the government, newest first, per day. Every
 	// filter and the line opened are in the URL, so a view can be shared; the same view is an
 	// Atom feed. Beside it, the day of the newest event: how current the data is.
+	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
@@ -332,7 +333,7 @@
 	});
 
 	function onKey(e: KeyboardEvent) {
-		if (e.key === 'Escape' && openId) patchUrl({ open: null }, true);
+		if (isEscape(e) && openId) patchUrl({ open: null }, true);
 	}
 </script>
 
