@@ -360,27 +360,36 @@ const PAPERS: { kind: FeedKind; noun: [string, string] }[] = [
 ];
 
 type SummaryDay = Schema<'FeedDayDTO'>;
+type SummaryDossier = Schema<'FeedDossierCountDTO'>;
 
 const countOf = (day: SummaryDay, kind: FeedKind) =>
 	day.kinds?.find((k) => k.value === kind)?.count ?? 0;
 
 /**
  * The moties, amendementen and nota's of a day counted in one line (`Ingediend: 54 moties,
- * 5 amendementen en 2 nota’s van wijziging`), with the day's largest dossiers.
- * TODO(backend): the dossiers are counted over all events of a day; per kind would name
- * those of the papers alone.
+ * 5 amendementen en 2 nota’s van wijziging`), with the largest dossiers of those papers.
  */
 function kamerstukLine(day: SummaryDay): TimelineLine[] {
 	const present = PAPERS.map((p) => ({ ...p, count: countOf(day, p.kind) })).filter((p) => p.count);
 	if (!present.length) return [];
-	const dossiers = (day.dossiers ?? []).map((d) =>
-		dossierName({
-			key: d.key ?? d.number,
-			number: d.number,
-			title: d.title,
-			short_title: d.short_title
-		})
-	);
+	// The summary counts per dossier and kind: the papers' kinds added up per dossier.
+	const kinds = new Set<string>(present.map((p) => p.kind));
+	const perDossier = new Map<string, { d: SummaryDossier; count: number }>();
+	for (const d of day.dossiers ?? [])
+		if (kinds.has(d.kind)) {
+			const had = perDossier.get(d.number);
+			perDossier.set(d.number, { d: had?.d ?? d, count: (had?.count ?? 0) + d.count });
+		}
+	const dossiers = [...perDossier.values()]
+		.sort((a, b) => b.count - a.count)
+		.map(({ d }) =>
+			dossierName({
+				key: d.key ?? d.number,
+				number: d.number,
+				title: d.title,
+				short_title: d.short_title
+			})
+		);
 	const counted = listLine(
 		present.map((p) => plural(p.count, p.noun[0], p.noun[1])),
 		present.length

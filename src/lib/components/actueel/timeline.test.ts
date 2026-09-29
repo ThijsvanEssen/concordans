@@ -174,8 +174,10 @@ describe('dayLines', () => {
 					{ value: 'brief_regering', count: 14 }
 				],
 				dossiers: [
+					{ kind: 'stemming', number: '29911', short_title: 'Drugsbeleid', count: 30 },
 					{ kind: 'motie', number: '24557', short_title: 'Kansspelen', count: 12 },
-					{ kind: 'motie', number: '31765', short_title: 'Kwaliteit van zorg', count: 12 }
+					{ kind: 'motie', number: '31765', short_title: 'Kwaliteit van zorg', count: 7 },
+					{ kind: 'amendement', number: '31765', short_title: 'Kwaliteit van zorg', count: 6 }
 				]
 			}),
 			[]
@@ -184,7 +186,7 @@ describe('dayLines', () => {
 			'Ingediend: 54 moties en 5 amendementen',
 			'14 brieven van de regering'
 		]);
-		expect(lines[0].context).toBe('Kansspelen en Kwaliteit van zorg');
+		expect(lines[0].context).toBe('Kwaliteit van zorg en Kansspelen');
 		expect(lines[0].major).toBe(false);
 	});
 
