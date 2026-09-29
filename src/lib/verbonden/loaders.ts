@@ -133,6 +133,9 @@ async function actorDossiers(
 	};
 }
 
+/** The pages of references with an aard a law loads at most: 1000 references. */
+const AARD_PAGES = 5;
+
 export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = {
 	'dossier-laws': async (ctx) => ({ rows: (await hubOf(ctx)).laws }),
 	'dossier-committees': async (ctx) => ({ rows: (await hubOf(ctx)).committees }),
@@ -459,19 +462,23 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'instrument-aard': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
 		if (!bwb) return { rows: [] };
-		const { semantic_types } = await unwrap(api.GET('/api/relationships/types', { signal }));
-		const found = await Promise.all(
-			semantic_types
-				.filter((t) => t !== 'cross_reference')
-				.map((type) =>
-					unwrap(
-						api.GET('/api/relationships/search', {
-							params: { query: { type, law: bwb.toUpperCase(), limit: 200 } },
-							signal
-						})
-					).catch(() => null)
-				)
+		// Every aard but the plain cross-reference, a page of 200 at a time.
+		const page = (offset: number) =>
+			unwrap(
+				api.GET('/api/relationships/search', {
+					params: {
+						query: { exclude_type: 'cross_reference', law: bwb.toUpperCase(), limit: 200, offset }
+					},
+					signal
+				})
+			);
+		const first = await page(0);
+		const rest = await Promise.all(
+			Array.from({ length: Math.min(Math.ceil(first.total / 200), AARD_PAGES) - 1 }, (_, i) =>
+				page((i + 1) * 200).catch(() => null)
+			)
 		);
+		const found = [first, ...rest];
 		const rows = new Map<string, Row>();
 		for (const r of found.flatMap((f) => f?.relationships ?? [])) {
 			const from = r.source_article;
@@ -507,7 +514,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					(a.aard ?? '').localeCompare(b.aard ?? '', 'nl') ||
 					order(a).localeCompare(order(b), 'nl', { numeric: true })
 			),
-			total: found.reduce((sum, f) => sum + (f?.total ?? 0), 0)
+			total: first.total
 		};
 	},
 

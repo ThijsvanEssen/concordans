@@ -367,14 +367,18 @@
 							<div
 								class="row__main"
 								onclick={(e) => {
-									if (!onControl(e)) openRow = open ? null : id;
+									if (!onControl(e) && !row.missing) openRow = open ? null : id;
 								}}
 							>
 								<KindGlyph collection={row.ref.collection} size={11} />
 								<span class="row__text">
-									<a class="row__title" href={openHref(g, row)} data-sveltekit-noscroll
-										>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
-									>
+									{#if row.missing}
+										<span class="row__title row__title--missing">{row.title}</span>
+									{:else}
+										<a class="row__title" href={openHref(g, row)} data-sveltekit-noscroll
+											>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
+										>
+									{/if}
 									<span class="row__meta">
 										{#each metaParts(row) as part, k (k)}
 											{#if k > 0}<span class="row__sep" aria-hidden="true"> · </span>{/if}
@@ -388,14 +392,16 @@
 										{/if}
 									</span>
 								</span>
-								<button
-									type="button"
-									class="row__toggle"
-									aria-expanded={open}
-									aria-controls="open-{id}"
-									aria-label={open ? 'Verberg passage' : 'Toon passage'}
-									onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
-								>
+								{#if !row.missing}
+									<button
+										type="button"
+										class="row__toggle"
+										aria-expanded={open}
+										aria-controls="open-{id}"
+										aria-label={open ? 'Verberg passage' : 'Toon passage'}
+										onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
+									>
+								{/if}
 							</div>
 							{#if open}
 								<div class="row__open" id="open-{id}">
@@ -723,6 +729,10 @@
 		font-size: var(--t-body-2);
 		line-height: 1.3;
 		color: var(--ink);
+	}
+	/* A law the title names that the dataset lacks: read, not followed. */
+	.row__title--missing {
+		color: var(--ink-3);
 	}
 	/* The case number that tells sister cases apart, in the title where the eye looks. */
 	.row__case {

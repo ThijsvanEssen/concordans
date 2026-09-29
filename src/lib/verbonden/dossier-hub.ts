@@ -50,7 +50,7 @@ export function buildDossierHub(
 	mutations: Mutations | null,
 	committees: Committees,
 	lawName: (bwbId: string) => string | null = () => null,
-	detail: Partial<Pick<Detail, 'instruments' | 'committees'>> | null = null
+	detail: Partial<Pick<Detail, 'instruments' | 'committees' | 'laws_named'>> | null = null
 ): DossierHub {
 	const laws = new Map<string, Row>();
 	for (const i of detail?.instruments ?? []) {
@@ -99,6 +99,22 @@ export function buildDossierHub(
 			proposed,
 			relation: e.relation as Row['relation'],
 			direction: 'outbound'
+		});
+	}
+
+	// The laws the title names that no link above holds: a loaded one as a link, one the
+	// dataset lacks by its name alone.
+	const named = new Set([...laws.values()].map((r) => r.title.toLowerCase()));
+	for (const l of detail?.laws_named ?? []) {
+		const key = l.key ?? l.bwb_id?.toLowerCase() ?? null;
+		if ((key && laws.has(key)) || named.has(l.name.toLowerCase())) continue;
+		laws.set(key ?? `naam:${l.name}`, {
+			ref: { collection: 'instruments', key: key ?? l.name },
+			title: l.name,
+			context: 'in de titel genoemd',
+			kind: 'wetten',
+			identifier: l.bwb_id ?? null,
+			missing: !l.loaded || !key || undefined
 		});
 	}
 

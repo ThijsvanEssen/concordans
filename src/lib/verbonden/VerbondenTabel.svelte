@@ -281,17 +281,22 @@
 									<td class="cell-bron">
 										<span class="bron">
 											<KindGlyph collection={r.ref.collection} size={11} />
-											<a href={bronHref(r.ref, { at: r.at })} data-sveltekit-noscroll>{r.title}</a>
-											<button
-												type="button"
-												class="bron__toggle"
-												aria-expanded={open}
-												aria-label={open ? 'Verberg passage' : 'Toon passage'}
-												onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
-											>
-											<button type="button" class="bron__card" onclick={() => onRow(r)}
-												>Over deze verbinding</button
-											>
+											{#if r.missing}
+												<span class="bron__missing">{r.title}</span>
+											{:else}
+												<a href={bronHref(r.ref, { at: r.at })} data-sveltekit-noscroll>{r.title}</a
+												>
+												<button
+													type="button"
+													class="bron__toggle"
+													aria-expanded={open}
+													aria-label={open ? 'Verberg passage' : 'Toon passage'}
+													onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
+												>
+												<button type="button" class="bron__card" onclick={() => onRow(r)}
+													>Over deze verbinding</button
+												>
+											{/if}
 										</span>
 										{#if r.identifier || r.context}
 											<span class="bron__sub">{r.identifier ?? r.context}</span>
@@ -473,6 +478,9 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
+	}
+	.bron__missing {
+		color: var(--ink-3);
 	}
 	.bron__sub {
 		display: block;
