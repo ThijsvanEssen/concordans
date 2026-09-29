@@ -20,11 +20,15 @@
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 	} = $props();
 
+	// The factions as they sit in the plenary hall, from the chair's left: the order of the
+	// Kamer's own plan (`seating_plan`), which the API gives per faction.
+	const seated = $derived([...data.factions].sort((a, b) => a.order - b.order));
+
 	const voteTotals = $derived.by(() => {
 		if (!voteHighlight) return null;
 		let voor = 0;
 		let tegen = 0;
-		for (const f of data.factions) {
+		for (const f of seated) {
 			if (voteHighlight[f.key] === 'voor') voor += f.seats;
 			else if (voteHighlight[f.key] === 'tegen') tegen += f.seats;
 		}
@@ -76,7 +80,7 @@
 		// Assign factions in order.
 		const out: Seat[] = [];
 		let idx = 0;
-		for (const f of data.factions) {
+		for (const f of seated) {
 			for (let k = 0; k < f.seats && idx < raw.length; k++, idx++) {
 				out.push({ ...raw[idx], faction: f });
 			}
@@ -193,7 +197,7 @@
        de seat-circles geen ruis maken; deze lijst geeft het volledige
        overzicht in stemvolgorde. -->
 	<ul class="hemicycle-sr-list">
-		{#each data.factions as f (f.id)}
+		{#each seated as f (f.id)}
 			<li>{f.abbreviation ?? f.key}, {f.name ?? ''}, {seatCount(f.seats)}</li>
 		{/each}
 	</ul>
@@ -203,6 +207,14 @@
 		data.total_seats
 			? `, ${data.assigned_seats} van ${data.total_seats} zetels toegewezen`
 			: ''}
+		{#if data.seating_plan}
+			{@const plan = data.seating_plan}
+			<span class="hemicycle-source"
+				>Zaalindeling volgens de Tweede Kamer: <a href={plan.page ?? plan.url} rel="external"
+					>{plan.title}</a
+				></span
+			>
+		{/if}
 	</figcaption>
 </figure>
 
@@ -288,6 +300,18 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		text-align: center;
+	}
+	/* Where the order comes from: a line of its own under the count. */
+	.hemicycle-source {
+		display: block;
+	}
+	.hemicycle-source a {
+		color: inherit;
+		text-decoration: none;
+		border-bottom: 1px solid var(--rule-strong);
+	}
+	.hemicycle-source a:hover {
+		color: var(--accent);
 	}
 
 	/* Visually hidden, but exposed to screen readers. */
