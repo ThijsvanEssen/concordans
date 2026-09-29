@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { bookNumber } from '$lib/text/bw';
+	import { articleName } from '$lib/text/bw';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
 	import { api, unwrap } from '$lib/api/client';
@@ -86,9 +86,7 @@
 					.map((a) => ({
 						articleNumber: a.article_number ?? a.address ?? a.key,
 						// A BW article by its book number (6:162), as the title and the citation have it.
-						label: a.article_number
-							? `Artikel ${bookNumber(bwb, a.article_number)}`
-							: (a.label ?? a.key),
+						label: articleName(bwb, a.article_number, a.label) ?? a.key,
 						key: a.key,
 						breadcrumb: a.breadcrumb ?? []
 					}));

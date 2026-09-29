@@ -32,6 +32,20 @@ export function bookNumber(bwbId: string | null | undefined, number: string | nu
 	return book && !number.includes(':') ? `${book}:${number}` : number;
 }
 
+/**
+ * An article by its number, a BW one with its book: "Artikel 6:162". A number that is a
+ * place ("bijlage 2 artikel 4") goes by the label of the API: "Artikel 4 van bijlage 2".
+ */
+export function articleName(
+	bwbId: string | null | undefined,
+	number: string | null | undefined,
+	label?: string | null
+): string | null {
+	const n = number?.trim();
+	if (n && !/\s/.test(n)) return `Artikel ${bookNumber(bwbId, n)}`;
+	return label?.trim() || (n ? `Artikel ${n}` : null);
+}
+
 /** "Artikel 162 Burgerlijk Wetboek Boek 6" as lawyers write it: "Artikel 6:162 BW". */
 export function withBook(name: string): string {
 	return name.replace(

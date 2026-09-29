@@ -1,5 +1,5 @@
 import type { Schema } from '$lib/api/types';
-import { bookNumber } from '$lib/text/bw';
+import { articleName } from '$lib/text/bw';
 import {
 	isCollection,
 	isRelation,
@@ -275,9 +275,10 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 			return party ? `${name} (${party})` : name;
 		}
 		case 'article': {
-			const number = bookNumber(text(props.bwb_id), text(props.article_number));
-			// An article without a number goes by its heading: "Algemene bepaling".
-			return number ? `Art. ${number}` : (text(props.label) ?? node.display_name ?? node.key);
+			// "Art. 6:162"; an article of a bijlage by its label, an article without a number by
+			// its heading: "Algemene bepaling".
+			const name = articleName(text(props.bwb_id), text(props.article_number), text(props.label));
+			return name?.replace(/^Artikel /, 'Art. ') ?? node.display_name ?? node.key;
 		}
 		case 'document':
 		case 'activity': {

@@ -4,7 +4,7 @@
 import type { Schema } from '$lib/api/types';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { dossierStatus, isOutcome, isStage } from '$lib/components/parliamentary/stages';
-import { bookNumber } from '$lib/text/bw';
+import { articleName } from '$lib/text/bw';
 
 type Hit = Schema<'SearchResultItem'>;
 
@@ -83,7 +83,7 @@ export function presentHit(hit: Hit, query: string): Presented {
 			if (!number) break;
 			const heading = extra(hit, 'heading');
 			return {
-				title: `Artikel ${bookNumber(extra(hit, 'bwb_id'), number)}${heading ? `. ${heading}` : ''}`,
+				title: `${articleName(extra(hit, 'bwb_id'), number, extra(hit, 'label'))}${heading ? `. ${heading}` : ''}`,
 				context: lawOf(hit),
 				snippet: snippet ? marked(around(snippet, query), query) : null
 			};
