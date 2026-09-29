@@ -17,6 +17,7 @@
 	import CommitmentReader from './readers/CommitmentReader.svelte';
 	import ActivityReader from './readers/ActivityReader.svelte';
 	import InstrumentReader from './readers/InstrumentReader.svelte';
+	import AnnexReader from './readers/AnnexReader.svelte';
 	import FallbackReader from './readers/FallbackReader.svelte';
 
 	let {
@@ -80,6 +81,8 @@
 	<CommitmentReader node={selection} />
 {:else if selection.collection === 'instruments'}
 	<InstrumentReader node={selection} />
+{:else if selection.collection === 'annexes'}
+	<AnnexReader node={selection} />
 {:else}
 	<FallbackReader node={selection} />
 {/if}
