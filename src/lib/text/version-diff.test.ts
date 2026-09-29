@@ -180,3 +180,44 @@ describe('plainDiff', () => {
 		expect(plainDiff(rows)).toBe('1. Onderwijs is vrij.\n2. Er zijn [+openbare+] scholen.');
 	});
 });
+
+describe('compareVersions on a bijlage', () => {
+	// As the API gives Awb bijlage 2 artikel 4: parts for the aanhef and the onderdelen, and
+	// the laws listed between them outside every part.
+	const version = (law: string) => {
+		const lines = [
+			'Tegen een besluit kan beroep worden ingesteld:',
+			'a. een besluit',
+			law,
+			'b. een ander'
+		];
+		const text = lines.join('\n');
+		const part = (id: string, kind: string, number: string | null, line: number, skip = 0) => {
+			const start = text.indexOf(lines[line]) + skip;
+			return {
+				id,
+				kind,
+				number,
+				text: lines[line].slice(skip),
+				start,
+				end: start + lines[line].length - skip
+			};
+		};
+		return {
+			text,
+			parts: [
+				part('aanhef', 'aanhef', null, 0),
+				part('onder-a', 'onderdeel', 'a', 1, 3),
+				part('onder-b', 'onderdeel', 'b', 3, 3)
+			]
+		};
+	};
+
+	it('sees a change in the text between the onderdelen', () => {
+		const rows = compareVersions(
+			version('Elektriciteitswet 1998: artikel 36'),
+			version('Energiewet: artikel 3.37')
+		);
+		expect(summarize(rows)).toBe('tekst gewijzigd');
+	});
+});

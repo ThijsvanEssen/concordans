@@ -141,19 +141,31 @@ export function changedShare(segments: Segment[]): number {
 }
 
 /** The leden of a version, each with its onderdelen, the number left out. */
+const BARE_NUMBER = /^(?:\d+[a-z]?|[a-z]{1,2}|\d+°)\.?$/;
+
 export function unitsOf(
 	text: string | null | undefined,
 	apiParts: Schema<'ArticlePartDTO'>[] | null | undefined
 ): Unit[] {
 	const source = text ?? '';
 	const parts = apiParts?.length ? partsFromApi(apiParts) : parseArticleParts(source);
-	const units = parts
-		.map((p) => ({
-			number: p.kind === 'lid' ? p.number : null,
-			text: source.slice(p.textStart, p.end).trim()
-		}))
-		.filter((u) => u.text);
-	if (units.length === 0 && source.trim()) return [{ number: null, text: source.trim() }];
+	// Text outside the parts (the list of laws in a bijlage between its onderdelen) is a
+	// unit of its own: a change there is a change of the article.
+	const units: Unit[] = [];
+	let at = 0;
+	const gap = (to: number) => {
+		const text = source.slice(at, to).trim();
+		// The number of the part that follows ("2.", "a.") where its offsets leave it out.
+		if (text && !BARE_NUMBER.test(text)) units.push({ number: null, text });
+	};
+	for (const p of [...parts].sort((x, y) => x.start - y.start)) {
+		if (p.start < at) continue;
+		gap(p.start);
+		const text = source.slice(p.textStart, p.end).trim();
+		if (text) units.push({ number: p.kind === 'lid' ? p.number : null, text });
+		at = p.end;
+	}
+	gap(source.length);
 	return units;
 }
 
