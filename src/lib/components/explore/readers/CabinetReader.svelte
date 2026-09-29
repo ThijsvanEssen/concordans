@@ -6,7 +6,7 @@
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { bronHref } from '$lib/bron/href';
+	import { bronHref, indexHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { formatLongDate } from './_shared';
@@ -44,7 +44,7 @@
 		!date ? null : precision === 'year' ? date.slice(0, 4) : formatLongDate(date);
 
 	const listHref = (kind: 'ministers' | 'commitments', key: string) =>
-		`/explore?mode=index&kind=${kind}&cabinet=${key}`;
+		indexHref(kind, { cabinet: key });
 </script>
 
 <ReaderFrame>
@@ -90,11 +90,15 @@
 					</dd>
 				{/if}
 				<dt>Bewindspersonen</dt>
-				<dd class="nums"><a href={listHref('ministers', c.key)}>{c.members}</a></dd>
+				<dd class="nums">
+					<a href={listHref('ministers', c.key)} data-sveltekit-noscroll>{c.members}</a>
+				</dd>
 				<dt>Wetsvoorstellen</dt>
 				<dd class="nums">{c.bills}</dd>
 				<dt>Toezeggingen</dt>
-				<dd class="nums"><a href={listHref('commitments', c.key)}>{c.commitments}</a></dd>
+				<dd class="nums">
+					<a href={listHref('commitments', c.key)} data-sveltekit-noscroll>{c.commitments}</a>
+				</dd>
 			</dl>
 		{/if}
 	</div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Schema } from '$lib/api/types';
+	import { bronHref } from '$lib/bron/href';
 	import { seatCount } from '$lib/verbonden/filter';
 	import { formatLongDate } from './readers/_shared';
 
@@ -8,11 +9,12 @@
 
 	let {
 		data,
-		onSelect,
+		hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' }),
 		voteHighlight = null
 	}: {
 		data: Seats;
-		onSelect?: (key: string) => void;
+		/** Where a fractie's sector links: its reader, unless the page says otherwise. */
+		hrefOf?: (key: string) => string;
 		/** Faction key → side on one stemming. Set to light up the seats by vote instead
 		 * of by party; a faction with no entry did not take part. */
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
@@ -121,40 +123,30 @@
 	});
 
 	let hovered = $state<SeatFaction | null>(null);
-
-	function handleClick(f: SeatFaction) {
-		onSelect?.(f.key);
-	}
-	function handleKey(e: KeyboardEvent, f: SeatFaction) {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			onSelect?.(f.key);
-		}
-	}
 </script>
 
 <figure class="hemicycle" aria-label="Zetelverdeling Tweede Kamer">
-	<svg viewBox="0 0 {VIEW_W} {VIEW_H}" aria-hidden="true">
+	<svg viewBox="0 0 {VIEW_W} {VIEW_H}">
 		<!-- Sectoren eerst (onder de stoelen) zodat ze de pointer-events
          opvangen zonder over de stoelen te tekenen. -->
 		{#each sectors as sec (sec.faction.id)}
-			<path
-				d={sec.path}
-				class="sector"
-				role="button"
-				tabindex="0"
+			<!-- A fractie is a bron: its sector is a link, as its name is everywhere else. -->
+			<a
+				href={hrefOf(sec.faction.key)}
 				aria-label={`${sec.faction.abbreviation ?? sec.faction.key}, ${sec.faction.name ?? ''}, ${seatCount(sec.faction.seats)}`}
+				data-sveltekit-noscroll
 				onmouseenter={() => (hovered = sec.faction)}
 				onmouseleave={() => (hovered = null)}
 				onfocus={() => (hovered = sec.faction)}
 				onblur={() => (hovered = null)}
-				onclick={() => handleClick(sec.faction)}
-				onkeydown={(e) => handleKey(e, sec.faction)}
-			/>
+			>
+				<path d={sec.path} class="sector" />
+			</a>
 		{/each}
 		{#each seats as s (s.faction.id + ':' + s.x + ':' + s.y)}
 			{@const side = voteHighlight?.[s.faction.key]}
 			<circle
+				aria-hidden="true"
 				cx={s.x}
 				cy={s.y}
 				r={SEAT_R}
@@ -263,9 +255,11 @@
 	.sector {
 		fill: transparent;
 		cursor: pointer;
+	}
+	a {
 		outline: none;
 	}
-	.sector:focus-visible {
+	a:focus-visible .sector {
 		fill: var(--accent-soft);
 		stroke: var(--accent);
 		stroke-width: 0.8;

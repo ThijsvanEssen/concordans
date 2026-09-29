@@ -1,4 +1,7 @@
 <script lang="ts">
+	import DossierLink from '$lib/bron/DossierLink.svelte';
+	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
+	import { citeItems } from '$lib/components/ui/cite';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
 	// picker, the wetsvoorstellen that touch it and Citeer, then the leden with the number
@@ -17,7 +20,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
-	import { bronHref, refId } from '$lib/bron/href';
+	import { refId } from '$lib/bron/href';
 	import { citeArticle } from '$lib/text/cite';
 	import { bookNumber, placeInLaw } from '$lib/text/bw';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
@@ -65,8 +68,6 @@
 	let versionMenu = $state(false);
 	/** Dossiers the API does not know: named, but not linked. */
 	let missingDossiers = $state<ReadonlySet<string>>(new Set());
-	let citeMenu = $state(false);
-	let copied = $state(false);
 
 	// The toelichting (MvT) that explains this article, if any: a quick popup here, so
 	// the panel on the right can stay reserved for verwijzingen (Verbonden). Its own
@@ -363,17 +364,6 @@
 			: null
 	);
 
-	async function copy(text: string) {
-		try {
-			await navigator.clipboard.writeText(text);
-			copied = true;
-			setTimeout(() => (copied = false), 1000);
-		} catch {
-			// The clipboard is unavailable in some contexts.
-		}
-		citeMenu = false;
-	}
-
 	const withParams = (params: Record<string, string | null>) => {
 		const url = new URL(page.url);
 		for (const [k, v] of Object.entries(params)) {
@@ -556,52 +546,8 @@
 						<a class="btn" href={officialUrl} target="_blank" rel="noopener">{officialName} ↗</a>
 					{/if}
 					{#if forms}
-						<span
-							class="menu head__acts"
-							use:menu={{ open: citeMenu, close: () => (citeMenu = false) }}
-						>
-							<button
-								type="button"
-								class="btn"
-								aria-haspopup="menu"
-								aria-expanded={citeMenu}
-								onclick={() => (citeMenu = !citeMenu)}
-								>{copied ? 'Gekopieerd' : 'Citeer'}<Caret open={citeMenu} /></button
-							>
-							{#if citeMenu}
-								<div class="pop pop--right" role="menu" aria-label="Citeer artikel">
-									<div class="pop__label">Kopieer als</div>
-									<button
-										type="button"
-										role="menuitem"
-										class="pop__item"
-										onclick={() => copy(forms.kort)}
-										><span>{forms.kort}</span><span class="pop__k">kort</span></button
-									>
-									<button
-										type="button"
-										role="menuitem"
-										class="pop__item"
-										onclick={() => copy(forms.voluit)}
-										><span>{forms.voluit}</span><span class="pop__k">voluit</span></button
-									>
-									<button
-										type="button"
-										role="menuitem"
-										class="pop__item"
-										onclick={() => copy(forms.metDatum)}
-										><span>{forms.metDatum}</span><span class="pop__k">met datum</span></button
-									>
-									<button
-										type="button"
-										role="menuitem"
-										class="pop__item"
-										onclick={() => copy(readLink)}
-										><span class="pop__link">{readLink}</span><span class="pop__k">link</span
-										></button
-									>
-								</div>
-							{/if}
+						<span class="head__acts">
+							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret />
 						</span>
 					{/if}
 				</div>
@@ -614,17 +560,10 @@
 							<span class="head__item"
 								>{originVerb}
 								{#each versionDossiers as dossier, i (dossier.key)}{#if i > 0},
-									{/if}{#if missingDossiers.has(dossier.number)}<span
-											title="Dit dossier staat niet in de dataset">Kamerstuk {dossier.number}</span
-										>{:else}<a
-											href={bronHref({
-												collection: 'dossiers',
-												key: dossier.key,
-												number: dossier.number
-											})}
-											data-sveltekit-noscroll
-											title={dossier.title ?? undefined}>Kamerstuk {dossier.number}</a
-										>{/if}{/each}</span
+									{/if}<DossierLink
+										{dossier}
+										missing={missingDossiers.has(dossier.number)}
+									/>{/each}</span
 							>
 						{/if}
 						{#if explanatory && explanatoryHref}
@@ -695,6 +634,7 @@
 					{citation}
 					link={withParams}
 					{go}
+					{missingDossiers}
 				/>
 			{:else}
 				<ArticleText
@@ -822,11 +762,6 @@
 		box-shadow: var(--shadow-modal);
 		font-size: var(--t-micro);
 	}
-	.pop__label {
-		padding: 2px var(--s-3) 6px;
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
 	.pop__item {
 		display: flex;
 		justify-content: space-between;
@@ -842,17 +777,6 @@
 	}
 	.pop__item:hover {
 		background: var(--paper-2);
-	}
-	.pop__k {
-		flex: none;
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
-	.pop__link {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	.pop--versions {
@@ -893,10 +817,6 @@
 	}
 	.pop__change--none {
 		color: var(--ink-3);
-	}
-	.pop--right {
-		left: auto;
-		right: 0;
 	}
 
 	.note {

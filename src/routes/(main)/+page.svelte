@@ -4,7 +4,7 @@
 	import Hemicycle from '$lib/components/explore/Hemicycle.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
-	import { bronHref } from '$lib/bron/href';
+	import { bronHref, indexHref } from '$lib/bron/href';
 	import { bronPlural, type Collection } from '$lib/vocabulary';
 	import { dossierStatus } from '$lib/components/parliamentary/stages';
 	import { shortDossierTitle } from '$lib/graph/types';
@@ -119,7 +119,7 @@
 		<h2 id="browse-heading" class="browse-heading">Bladeren</h2>
 		<nav class="kinds" aria-labelledby="browse-heading">
 			{#each KINDS as kind (kind)}
-				<a class="kind no-underline" href="/explore?mode=index&kind={kind}">
+				<a class="kind no-underline" href={indexHref(kind)}>
 					<KindGlyph collection={kind} />
 					{bronPlural(kind)}
 				</a>

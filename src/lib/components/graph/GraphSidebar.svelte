@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
 	// The legend of the network, which is also its filter: the bronnen that take part
 	// (with counts and the preset), the verbindingen per relation with a line sample,
 	// the depth from the focus, the lid, and one line with what is on the canvas and
@@ -69,7 +70,6 @@
 
 	let presetMenu = $state(false);
 	let lidMenu = $state(false);
-	let confirmClear = $state(false);
 
 	// With a netwerk and nothing selected, the kinds count what is on the canvas.
 	const fromCanvas = $derived(netwerkActive && !selectionCollection);
@@ -245,6 +245,7 @@
 						type="button"
 						class="btn"
 						class:is-primary={!netwerkActive && depth === d}
+						aria-pressed={!netwerkActive && depth === d}
 						onclick={() => onDepth(d)}>{d}</button
 					>
 				{/each}
@@ -329,6 +330,7 @@
 						type="button"
 						class="btn"
 						class:is-primary={!mutOn && !heatOn}
+						aria-pressed={!mutOn && !heatOn}
 						onclick={() => {
 							if (mutOn) onToggleMutatie?.();
 							else if (heatOn) onToggleHeat?.();
@@ -338,6 +340,7 @@
 						type="button"
 						class="btn"
 						class:is-primary={mutOn}
+						aria-pressed={mutOn}
 						disabled={!onToggleMutatie}
 						onclick={() => {
 							if (!mutOn) onToggleMutatie?.();
@@ -349,6 +352,7 @@
 						type="button"
 						class="btn"
 						class:is-primary={heatOn}
+						aria-pressed={heatOn}
 						disabled={!onToggleHeat}
 						onclick={() => {
 							if (!heatOn) onToggleHeat?.();
@@ -362,6 +366,7 @@
 								type="button"
 								class="btn"
 								class:is-primary={overlay.kind === 'heat' && overlay.months === m}
+								aria-pressed={overlay.kind === 'heat' && overlay.months === m}
 								onclick={() => onHeatPeriodChange?.(m)}
 								disabled={!onHeatPeriodChange}>{m} maanden</button
 							>
@@ -371,25 +376,11 @@
 			</div>
 			{#if hasNodes && onResetGraph}
 				<div class="block">
-					{#if confirmClear}
-						<button
-							type="button"
-							class="btn"
-							onclick={() => {
-								confirmClear = false;
-								onResetGraph?.();
-							}}>Ja, wis het netwerk</button
-						>
-					{:else}
-						<button
-							type="button"
-							class="btn"
-							onclick={() => {
-								confirmClear = true;
-								setTimeout(() => (confirmClear = false), 4000);
-							}}>Wis netwerk</button
-						>
-					{/if}
+					<ConfirmButton
+						label="Netwerk wissen"
+						confirmLabel="Ja, netwerk wissen"
+						onConfirm={() => onResetGraph?.()}
+					/>
 				</div>
 			{/if}
 		</details>

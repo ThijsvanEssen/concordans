@@ -1,4 +1,6 @@
 <script lang="ts">
+	import DossierLink from '$lib/bron/DossierLink.svelte';
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// Two tekstversies of an article compared, for research into how its text came to be.
 	// A tekstversie is a wording: the BWB versions that only moved the text are folded
 	// into the one that introduced it. From the top: the choice of two tekstversies, a
@@ -8,7 +10,6 @@
 	// bottom, folded, every BWB version. `?versies=lid-4` shows one lid through all its
 	// formulations instead.
 	import type { Schema } from '$lib/api/types';
-	import { bronHref } from '$lib/bron/href';
 	import { citeArticle, type Citation } from '$lib/text/cite';
 	import { longDate } from '$lib/verbonden/rows';
 	import Caret from '$lib/components/ui/Caret.svelte';
@@ -35,7 +36,8 @@
 		layout = 'een',
 		citation = null,
 		link,
-		go
+		go,
+		missingDossiers = new Set()
 	}: {
 		/** Oldest first, as the API delivers them. */
 		versions: Version[];
@@ -49,6 +51,8 @@
 		link: (params: Params) => string;
 		/** Go there, replacing the entry: a choice in a list is not a step back. */
 		go: (params: Params) => void;
+		/** Dossiers the API does not hold: named, not linked. */
+		missingDossiers?: ReadonlySet<string>;
 	} = $props();
 
 	const wordings = $derived(wordingsOf(versions));
@@ -209,16 +213,8 @@
 
 	// ── Copying ──────────────────────────────────────────────────────────────────
 
-	let copied = $state<string | null>(null);
-	async function copy(text: string, what: string) {
-		try {
-			await navigator.clipboard.writeText(text);
-			copied = what;
-			setTimeout(() => (copied = null), 1200);
-		} catch {
-			// The clipboard is unavailable in some contexts.
-		}
-	}
+	const copier = createCopier();
+	const copy = (text: string, what: string) => copier.copy(text, what);
 
 	const cite = (lid: string | null) =>
 		citation ? citeArticle({ ...citation, lid }).kort : lid ? `lid ${lid}` : 'artikel';
@@ -256,12 +252,7 @@
 			>in werking bij {inForce}</span
 		>{/if}
 	{#each v.amended_by?.dossiers ?? [] as dossier (dossier.key)}
-		<a
-			href={bronHref({ collection: 'dossiers', key: dossier.key, number: dossier.number })}
-			data-sveltekit-noscroll
-			title={dossier.title ?? 'Het dossier van de wet die de tekst wijzigde'}
-			>Kamerstuk {dossier.number}</a
-		>
+		<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
 	{/each}
 {/snippet}
 
@@ -327,7 +318,7 @@
 								type="button"
 								class="formulation__cite"
 								onclick={() => copy(formulationCite(lidParam, f), `f${i}`)}
-								>{copied === `f${i}` ? 'Gekopieerd' : 'Kopieer citaat'}</button
+								>{copier.label(`f${i}`, 'Kopieer citaat')}</button
 							>
 						</div>
 						{#if f.kind === 'rewritten'}<span class="row__label">herschreven</span>{/if}
@@ -445,16 +436,7 @@
 											>in werking bij {inForce}</span
 										>{/if}
 									{#each w.first.amended_by?.dossiers ?? [] as dossier (dossier.key)}
-										<a
-											href={bronHref({
-												collection: 'dossiers',
-												key: dossier.key,
-												number: dossier.number
-											})}
-											data-sveltekit-noscroll
-											title={dossier.title ?? 'Het dossier van de wet die de tekst wijzigde'}
-											>Kamerstuk {dossier.number}</a
-										>
+										<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
 									{/each}
 								</td>
 							</tr>
@@ -490,7 +472,7 @@
 						>
 					{/if}
 					<button type="button" class="btn is-text" onclick={() => copy(comparisonText, 'diff')}
-						>{copied === 'diff' ? 'Gekopieerd' : 'Kopieer'}</button
+						>{copier.label('diff', 'Kopieer')}</button
 					>
 				</span>
 			</div>
@@ -634,14 +616,7 @@
 									>{publication(v.amended_by)}</span
 								>{/if}
 							{#each v.amended_by?.dossiers ?? [] as dossier (dossier.key)}
-								<a
-									href={bronHref({
-										collection: 'dossiers',
-										key: dossier.key,
-										number: dossier.number
-									})}
-									data-sveltekit-noscroll>Kamerstuk {dossier.number}</a
-								>
+								<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
 							{/each}
 						</td>
 					</tr>
@@ -649,6 +624,7 @@
 			</tbody>
 		</table>
 	</details>
+	<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 </section>
 
 <style>

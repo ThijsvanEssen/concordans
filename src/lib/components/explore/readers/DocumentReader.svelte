@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
 	// its text. Opened as the toelichting of an article, it lands on the passage for it.
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -168,21 +169,8 @@
 		void tick().then(() => landOn(container, 'passage'));
 	});
 
-	/** What the last copy did, on the button that did it and in the live region. */
-	let copied = $state<{ id: string; ok: boolean } | null>(null);
-	let copyTimer: ReturnType<typeof setTimeout> | undefined;
-	async function copyLink(id: string) {
-		let ok = true;
-		try {
-			await navigator.clipboard.writeText(permalink(page.url, id));
-		} catch {
-			// The clipboard is unavailable in some contexts.
-			ok = false;
-		}
-		copied = { id, ok };
-		clearTimeout(copyTimer);
-		copyTimer = setTimeout(() => (copied = null), 2000);
-	}
+	const copier = createCopier();
+	const copyLink = (id: string) => copier.copy(permalink(page.url, id), id);
 
 	// The kind is the source's own wording; where a glossary term exists the kicker links to it.
 	function glossaryTerm(kind: string | null | undefined): string | null {
@@ -242,12 +230,7 @@
 									type="button"
 									class="heading__link"
 									onclick={() => copyLink(s.id)}
-									aria-label="Kopieer link naar {s.heading}"
-									>{copied?.id === s.id
-										? copied.ok
-											? 'Gekopieerd'
-											: 'Kopiëren mislukt'
-										: 'Deel'}</button
+									aria-label="Kopieer link naar {s.heading}">{copier.label(s.id, 'Deel')}</button
 								>
 							</div>
 						{:else if passageEntries.has(i)}
@@ -289,7 +272,7 @@
 	</div>
 </ReaderFrame>
 <p class="visually-hidden" aria-live="polite">
-	{copied ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : ''}
+	{copier.announcement}
 </p>
 
 <style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isEscape } from '$lib/actions/keys';
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row's title
 	// links to the bron; the rest of the row expands inline with its metadata and the
@@ -14,7 +15,7 @@
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
-	import { TIERS, TIER_LABEL, bronLabel, type Collection, type Tier } from '$lib/vocabulary';
+	import { TIERS, TIER_LABEL, bronLabel, type Tier } from '$lib/vocabulary';
 	import { getCoverage, type Coverage } from '$lib/api/stats';
 	import {
 		STAGES,
@@ -67,12 +68,9 @@
 
 	let {
 		category,
-		onSelectItem,
 		onResultCountChange
 	}: {
 		category: IndexCategory;
-		/** Opens the bron in Lezen, from the hemicycle. `name` is its key, and a dossier's number (`37020-XV`). */
-		onSelectItem: (collection: Collection, name: string) => void;
 		/** Reports what is shown and how many there are, for the status bar. */
 		onResultCountChange?: (info: {
 			filtered: number;
@@ -1449,7 +1447,7 @@
 	});
 
 	function handleKey(e: KeyboardEvent) {
-		if (e.key === 'Escape' && openId) patchUrl({ open: null }, true);
+		if (isEscape(e) && openId) patchUrl({ open: null }, true);
 	}
 
 	// ── Result count for the status bar and above the list ──────────────────
@@ -1635,7 +1633,7 @@
 					{#if category === 'factions' && seats}
 						<div class="hemi-card">
 							<div class="hemi-svg-wrap">
-								<Hemicycle data={seats} onSelect={(k) => onSelectItem('factions', k)} />
+								<Hemicycle data={seats} />
 							</div>
 						</div>
 					{/if}

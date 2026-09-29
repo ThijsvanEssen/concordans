@@ -324,11 +324,16 @@
 	<!-- The ways of opening the source: its text, and the source in the network -->
 	<div class="detail-acts">
 		{#if readHref}
-			<a class="detail-act detail-act--primary" href={readHref}>
+			<a class="detail-act detail-act--primary" href={readHref} data-sveltekit-noscroll>
 				Lezen <span class="arrow" aria-hidden="true">→</span>
 			</a>
 		{/if}
-		<a class="detail-act" class:detail-act--primary={!readHref} href={networkHref}>
+		<a
+			class="detail-act"
+			class:detail-act--primary={!readHref}
+			href={networkHref}
+			data-sveltekit-noscroll
+		>
 			Bekijk in netwerk <span class="arrow" aria-hidden="true">→</span>
 		</a>
 	</div>

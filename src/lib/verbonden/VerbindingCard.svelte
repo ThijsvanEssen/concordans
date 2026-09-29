@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { isEscape } from '$lib/actions/keys';
+	import { page } from '$app/state';
+	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	// The card Verbinding: the two bronnen with the relation between them, the passage
 	// with the citation marked, betrouwbaarheid as a word with the reason, status, the
 	// source of the edge, and the actions open at position, show in network, citeer.
@@ -49,17 +52,6 @@
 			: (SOURCE_OF_EDGE[v.from.ref.collection] ?? 'de gegevens van de bron')
 	);
 
-	let copied = $state(false);
-	async function cite() {
-		try {
-			await navigator.clipboard.writeText(citeVerbinding(v));
-			copied = true;
-			setTimeout(() => (copied = false), 1000);
-		} catch {
-			// The clipboard is unavailable in some contexts.
-		}
-	}
-
 	const openHref = $derived(
 		v.relation === 'EXPLAINS' && besideHref ? besideHref : bronHref(v.from.ref, { at: v.at })
 	);
@@ -70,7 +62,16 @@
 				? `Open bij ${v.position}`
 				: 'Open de bron'
 	);
+
+	// Escape closes the card in every mode; taken, so the network does not also clear.
+	function onKey(e: KeyboardEvent) {
+		if (!isEscape(e)) return;
+		e.preventDefault();
+		onClose();
+	}
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 <section class="card" class:is-docked={docked} aria-label="Verbinding">
 	<div class="card__head">
@@ -138,7 +139,14 @@
 		{#if onShowInNetwork}
 			<button type="button" class="btn" onclick={onShowInNetwork}>Toon in het netwerk</button>
 		{/if}
-		<button type="button" class="btn" onclick={cite}>{copied ? 'Gekopieerd' : 'Citeer'}</button>
+		<CiteMenu
+			items={[
+				{ kind: 'kort', text: citeVerbinding(v) },
+				{ kind: 'link', text: new URL(openHref, page.url).toString() }
+			]}
+			name="deze verbinding"
+			drop="up"
+		/>
 	</div>
 </section>
 

@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The text of an article as its aanhef, leden and onderdelen. Every part has an
 	// anchor, so a reference can point at it and the address can be shared. A lid is a
 	// row of a grid: the number, the text, and a column at the right with the number of
 	// verbindingen of that lid and, on hover, Citeer and Kopieer tekst. An onderdeel, at
 	// any depth, shows the same two actions in that column, level with its own text.
-	import { menu } from '$lib/actions/menu';
+	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
+	import { citeItems } from '$lib/components/ui/cite';
+	import { page } from '$app/state';
+	import { permalink } from '$lib/bron/anchor';
 	import type { Schema } from '$lib/api/types';
 	import { parseArticleParts, partsFromApi, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, partOfAnchor, type Citation } from '$lib/text/cite';
@@ -64,26 +68,12 @@
 	const keyOf = (part: ArticlePart) => part.id ?? `tekst-${part.start}`;
 
 	let menuFor = $state<string | null>(null);
-	/** What the last copy did, on the button that did it and in the live region. */
-	let copied = $state<{ key: string; ok: boolean } | null>(null);
-	let copyTimer: ReturnType<typeof setTimeout> | undefined;
-
-	async function copy(what: string, key: string) {
-		let ok = true;
-		try {
-			await navigator.clipboard.writeText(what);
-		} catch {
-			// The clipboard is unavailable in some contexts.
-			ok = false;
-		}
-		copied = { key, ok };
-		clearTimeout(copyTimer);
-		copyTimer = setTimeout(() => (copied = null), 2000);
+	const copier = createCopier();
+	function copy(what: string, key: string) {
+		void copier.copy(what, key);
 		menuFor = null;
 	}
-
-	const copyLabel = (key: string, idle: string) =>
-		copied?.key === key ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : idle;
+	const copyLabel = (key: string, idle: string) => copier.label(key, idle);
 
 	const formsOf = (part: ArticlePart) => {
 		if (!citation || !part.id) return null;
@@ -96,42 +86,12 @@
 	{@const forms = formsOf(part)}
 	<span class={className}>
 		{#if forms}
-			<span class="menu" use:menu={{ open: menuFor === key, close: () => (menuFor = null) }}>
-				<button
-					type="button"
-					class="btn act__btn"
-					aria-haspopup="menu"
-					aria-expanded={menuFor === key}
-					onclick={() => (menuFor = menuFor === key ? null : key)}
-					>{copyLabel(`cite:${key}`, 'Citeer')}</button
-				>
-				{#if menuFor === key}
-					<div class="pop" role="menu" aria-label="Citeer {forms.kort}">
-						<div class="pop__label">Kopieer als</div>
-						<button
-							type="button"
-							role="menuitem"
-							class="pop__item"
-							onclick={() => copy(forms.kort, `cite:${key}`)}
-							><span>{forms.kort}</span><span class="pop__k">kort</span></button
-						>
-						<button
-							type="button"
-							role="menuitem"
-							class="pop__item"
-							onclick={() => copy(forms.voluit, `cite:${key}`)}
-							><span>{forms.voluit}</span><span class="pop__k">voluit</span></button
-						>
-						<button
-							type="button"
-							role="menuitem"
-							class="pop__item"
-							onclick={() => copy(forms.metDatum, `cite:${key}`)}
-							><span>{forms.metDatum}</span><span class="pop__k">met datum</span></button
-						>
-					</div>
-				{/if}
-			</span>
+			<CiteMenu
+				items={citeItems(forms, permalink(page.url, part.id!))}
+				name={forms.kort}
+				buttonClass="btn act__btn"
+				onToggle={(open) => (menuFor = open ? key : menuFor === key ? null : menuFor)}
+			/>
 		{/if}
 		<button type="button" class="btn act__btn" onclick={() => copy(fullText(part), `text:${key}`)}
 			>{copyLabel(`text:${key}`, 'Kopieer tekst')}</button
@@ -250,7 +210,7 @@
 	</div>
 {/if}
 <p class="visually-hidden" aria-live="polite">
-	{copied ? (copied.ok ? 'Gekopieerd' : 'Kopiëren mislukt') : ''}
+	{copier.announcement}
 </p>
 
 <style>
@@ -385,57 +345,6 @@
 		font-size: var(--t-label);
 		white-space: nowrap;
 	}
-	.menu {
-		position: relative;
-	}
-	.pop {
-		position: absolute;
-		right: 0;
-		top: calc(100% + 6px);
-		z-index: var(--z-float);
-		width: 320px;
-		padding: var(--s-2) 0;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		text-align: left;
-	}
-	.pop__label {
-		padding: 2px var(--s-3) 6px;
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
-	.pop__item {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-3);
-		width: 100%;
-		padding: 6px var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink);
-		text-align: left;
-		cursor: pointer;
-	}
-	.pop__item:hover {
-		background: var(--paper-2);
-	}
-	.pop__k {
-		flex: none;
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
-	.pop__link {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
 	/* Onderdelen inside a lid keep their number in the text. */
 	.part {
 		position: relative;

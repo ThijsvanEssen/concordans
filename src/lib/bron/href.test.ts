@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://x/') } }));
 
-import { buildBronHref, refOf } from './href';
+import { buildBronHref, indexHref, refOf } from './href';
 
 const at = (path: string) => new URL(`http://localhost${path}`);
 
@@ -76,5 +76,14 @@ describe('buildBronHref', () => {
 				keepNetwerk: false
 			})
 		).toBe('/explore?focus=articles/b');
+	});
+});
+
+describe('indexHref', () => {
+	it('names a list in Bladeren with its filters', () => {
+		expect(indexHref('dossiers')).toBe('/explore?mode=index&kind=dossiers');
+		expect(indexHref('ministers', { cabinet: 'rutte_iv' })).toBe(
+			'/explore?mode=index&kind=ministers&cabinet=rutte_iv'
+		);
 	});
 });

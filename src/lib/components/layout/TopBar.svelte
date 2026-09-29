@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { indexHref } from '$lib/bron/href';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/utils/platform';
@@ -58,11 +59,24 @@
 	</a>
 
 	<nav class="topbar-nav" aria-label="Hoofdnavigatie">
-		<a href="/explore" class="nav-link" class:is-active={isExplore}>Verkenner</a>
-		<a href="/explore?mode=index&kind=dossiers" class="nav-link" class:is-active={isIndex}
-			>Bladeren</a
+		<a
+			href="/explore"
+			class="nav-link"
+			class:is-active={isExplore}
+			aria-current={isExplore ? 'page' : undefined}>Verkenner</a
 		>
-		<a href="/docs" class="nav-link" class:is-active={isDocs}>Documentatie</a>
+		<a
+			href={indexHref('dossiers')}
+			class="nav-link"
+			class:is-active={isIndex}
+			aria-current={isIndex ? 'page' : undefined}>Bladeren</a
+		>
+		<a
+			href="/docs"
+			class="nav-link"
+			class:is-active={isDocs}
+			aria-current={isDocs ? 'page' : undefined}>Documentatie</a
+		>
 	</nav>
 
 	<button
@@ -136,9 +150,7 @@
 			onclick={() => closeMobileMenu()}
 		>
 			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Verkenner</a>
-			<a href="/explore?mode=index&kind=dossiers" class="mobile-nav-link" class:is-active={isIndex}
-				>Bladeren</a
-			>
+			<a href={indexHref('dossiers')} class="mobile-nav-link" class:is-active={isIndex}>Bladeren</a>
 			<a href="/docs" class="mobile-nav-link" class:is-active={isDocs}>Documentatie</a>
 		</div>
 	{/if}
