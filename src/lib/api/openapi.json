@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.25.0"
+		"version": "0.26.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -3030,7 +3030,7 @@
 			"get": {
 				"tags": ["ministries", "government"],
 				"summary": "Ministries",
-				"description": "Every ministry a post, a dossier or a commitment can name, in protocol order; a former ministry (``Verkeer en Waterstaat``) follows its successor and names it.",
+				"description": "Every ministry a post, a dossier or a commitment can name, in protocol order; a former ministry (``Verkeer en Waterstaat``) follows its successor and names it. From ``data/ministries.json``: TOOI since about 2010 (with the decree of each change), the Rijksoverheid cabinet pages before; ``periods`` say which.",
 				"operationId": "list_ministries_api_ministries_get",
 				"responses": {
 					"200": {
@@ -3052,7 +3052,7 @@
 			"get": {
 				"tags": ["cabinets", "government"],
 				"summary": "Cabinets",
-				"description": "Every Dutch cabinet, newest first: those since 1945 from Rijksoverheid, with their prime minister, parties, ``phases`` and ``demissionary_from``; those before from Wikidata (name and period only). Counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.",
+				"description": "Every Dutch cabinet since 1945, newest first, from Rijksoverheid: with its prime minister, parties, ``phases`` and ``demissionary_from``. Counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.",
 				"operationId": "list_cabinets_api_cabinets_get",
 				"responses": {
 					"200": {
@@ -5682,15 +5682,6 @@
 						"title": "To Date",
 						"description": "Null while in office."
 					},
-					"from_date_precision": {
-						"anyOf": [{ "type": "string", "enum": ["day", "month", "year"] }, { "type": "null" }],
-						"title": "From Date Precision",
-						"description": "How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January."
-					},
-					"to_date_precision": {
-						"anyOf": [{ "type": "string", "enum": ["day", "month", "year"] }, { "type": "null" }],
-						"title": "To Date Precision"
-					},
 					"previous": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Previous",
@@ -5703,7 +5694,7 @@
 						"items": { "$ref": "#/components/schemas/PartyRefDTO" },
 						"type": "array",
 						"title": "Parties",
-						"description": "The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945."
+						"description": "The parties of the bewindspersonen sworn in on its first day, the party with the most first."
 					},
 					"factions": {
 						"items": { "type": "string" },
@@ -5720,16 +5711,11 @@
 						"items": { "$ref": "#/components/schemas/CabinetPhaseDTO" },
 						"type": "array",
 						"title": "Phases",
-						"description": "Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them)."
+						"description": "Formatie, in functie, demissionair, dubbel demissionair, missionair, in order."
 					},
 					"source": {
 						"anyOf": [{ "$ref": "#/components/schemas/SourceRefDTO" }, { "type": "null" }],
-						"description": "Rijksoverheid since 1945; Wikidata before (name and period)."
-					},
-					"wikidata_id": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Wikidata Id",
-						"description": "For a cabinet from Wikidata."
+						"description": "The Rijksoverheid page it was read from."
 					},
 					"members": {
 						"type": "integer",
@@ -5954,15 +5940,6 @@
 						"title": "To Date",
 						"description": "Null while in office."
 					},
-					"from_date_precision": {
-						"anyOf": [{ "type": "string", "enum": ["day", "month", "year"] }, { "type": "null" }],
-						"title": "From Date Precision",
-						"description": "How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January."
-					},
-					"to_date_precision": {
-						"anyOf": [{ "type": "string", "enum": ["day", "month", "year"] }, { "type": "null" }],
-						"title": "To Date Precision"
-					},
 					"previous": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Previous",
@@ -5975,7 +5952,7 @@
 						"items": { "$ref": "#/components/schemas/PartyRefDTO" },
 						"type": "array",
 						"title": "Parties",
-						"description": "The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945."
+						"description": "The parties of the bewindspersonen sworn in on its first day, the party with the most first."
 					},
 					"factions": {
 						"items": { "type": "string" },
@@ -5992,16 +5969,11 @@
 						"items": { "$ref": "#/components/schemas/CabinetPhaseDTO" },
 						"type": "array",
 						"title": "Phases",
-						"description": "Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them)."
+						"description": "Formatie, in functie, demissionair, dubbel demissionair, missionair, in order."
 					},
 					"source": {
 						"anyOf": [{ "$ref": "#/components/schemas/SourceRefDTO" }, { "type": "null" }],
-						"description": "Rijksoverheid since 1945; Wikidata before (name and period)."
-					},
-					"wikidata_id": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Wikidata Id",
-						"description": "For a cabinet from Wikidata."
+						"description": "The Rijksoverheid page it was read from."
 					},
 					"members": {
 						"type": "integer",
@@ -9665,16 +9637,30 @@
 				"properties": {
 					"key": { "$ref": "#/components/schemas/MinistryKey" },
 					"name": { "type": "string", "title": "Name" },
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation"
+					},
+					"tooi": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Tooi",
+						"description": "The TOOI code: ``mnre1045``."
+					},
 					"successor": {
 						"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }]
 					},
-					"until": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Until" }
+					"until": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Until" },
+					"periods": {
+						"items": { "$ref": "#/components/schemas/MinistryPeriodDTO" },
+						"type": "array",
+						"title": "Periods"
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["key", "name"],
 				"title": "MinistryDTO",
-				"description": "A ministry of ``core.ministries``; a former one names its successor and the last\nday it had its name."
+				"description": "A ministry name of ``data/ministries.json``: a name that came back (Economische\nZaken) has a period for each time; a former one names its successor and the last day\nit had its name (``successor`` and ``until`` of its last period)."
 			},
 			"MinistryKey": {
 				"type": "string",
@@ -9701,8 +9687,8 @@
 					"vene",
 					"owen",
 					"opw",
-					"ez",
 					"ezk",
+					"ez",
 					"eli",
 					"hn",
 					"ahn",
@@ -9733,6 +9719,47 @@
 					"zo"
 				],
 				"title": "MinistryKey"
+			},
+			"MinistryPeriodDTO": {
+				"properties": {
+					"from_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "From Date",
+						"description": "Null where no source dates it."
+					},
+					"until": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Until",
+						"description": "The last day; null while it has the name, or where unknown."
+					},
+					"successor": {
+						"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }]
+					},
+					"basis": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Basis",
+						"description": "The Staatscourant decree the end rests on (from TOOI)."
+					},
+					"source": {
+						"type": "string",
+						"enum": ["tooi", "rijksoverheid", "hand"],
+						"title": "Source",
+						"description": "``tooi`` (the TOOI value list, since about 2010), ``rijksoverheid`` (the first post and a handover on the cabinet pages) or ``hand``."
+					},
+					"successor_source": {
+						"anyOf": [
+							{ "type": "string", "enum": ["tooi", "rijksoverheid", "hand"] },
+							{ "type": "null" }
+						],
+						"title": "Successor Source",
+						"description": "``hand`` for a succession no source gives (before 2010)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["source"],
+				"title": "MinistryPeriodDTO",
+				"description": "A stretch in which the ministry had its name, and where that is known from."
 			},
 			"NeighborBucketDTO": {
 				"properties": {
@@ -10313,7 +10340,7 @@
 				"additionalProperties": false,
 				"type": "object",
 				"title": "SourceRefDTO",
-				"description": "Where it was read: ``rijksoverheid`` with the page and the day, or ``wikidata``."
+				"description": "Where it was read: ``rijksoverheid``, with the page and the day."
 			},
 			"StatsResponse": {
 				"properties": {

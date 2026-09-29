@@ -40,8 +40,8 @@
 	});
 
 	/** A date as precise as the source knows it: a year stays a year. */
-	const when = (date: string | null | undefined, precision: string | null | undefined) =>
-		!date ? null : precision === 'year' ? date.slice(0, 4) : formatLongDate(date);
+	// Since API 0.26 every cabinet is dated to the day.
+	const when = (date: string | null | undefined) => (date ? formatLongDate(date) : null);
 
 	const listHref = (kind: 'ministers' | 'commitments', key: string) =>
 		indexHref(kind, { cabinet: key });
@@ -58,8 +58,8 @@
 			</p>
 		{:else}
 			{@const c = view.cabinet}
-			{@const from = when(c.from_date, c.from_date_precision)}
-			{@const to = when(c.to_date, c.to_date_precision)}
+			{@const from = when(c.from_date)}
+			{@const to = when(c.to_date)}
 			<header class="head">
 				<span class="kicker"><KindGlyph collection="cabinets" />{bronLabel('cabinets')}</span>
 				<h2 class="title">{c.name}</h2>

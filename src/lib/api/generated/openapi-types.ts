@@ -973,7 +973,7 @@ export interface paths {
         };
         /**
          * Ministries
-         * @description Every ministry a post, a dossier or a commitment can name, in protocol order; a former ministry (``Verkeer en Waterstaat``) follows its successor and names it.
+         * @description Every ministry a post, a dossier or a commitment can name, in protocol order; a former ministry (``Verkeer en Waterstaat``) follows its successor and names it. From ``data/ministries.json``: TOOI since about 2010 (with the decree of each change), the Rijksoverheid cabinet pages before; ``periods`` say which.
          */
         get: operations["list_ministries_api_ministries_get"];
         put?: never;
@@ -993,7 +993,7 @@ export interface paths {
         };
         /**
          * Cabinets
-         * @description Every Dutch cabinet, newest first: those since 1945 from Rijksoverheid, with their prime minister, parties, ``phases`` and ``demissionary_from``; those before from Wikidata (name and period only). Counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.
+         * @description Every Dutch cabinet since 1945, newest first, from Rijksoverheid: with its prime minister, parties, ``phases`` and ``demissionary_from``. Counts: ``members`` (bewindspersonen), ``bills`` (government bills brought in while it was in office) and ``commitments``.
          */
         get: operations["list_cabinets_api_cabinets_get"];
         put?: never;
@@ -2431,13 +2431,6 @@ export interface components {
              */
             to_date?: string | null;
             /**
-             * From Date Precision
-             * @description How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January.
-             */
-            from_date_precision?: ("day" | "month" | "year") | null;
-            /** To Date Precision */
-            to_date_precision?: ("day" | "month" | "year") | null;
-            /**
              * Previous
              * @description The key of the cabinet before it.
              */
@@ -2445,7 +2438,7 @@ export interface components {
             prime_minister?: components["schemas"]["PersonRefDTO"] | null;
             /**
              * Parties
-             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945.
+             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first.
              */
             parties?: components["schemas"]["PartyRefDTO"][];
             /**
@@ -2460,16 +2453,11 @@ export interface components {
             demissionary_from?: string | null;
             /**
              * Phases
-             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them).
+             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order.
              */
             phases?: components["schemas"]["CabinetPhaseDTO"][];
-            /** @description Rijksoverheid since 1945; Wikidata before (name and period). */
+            /** @description The Rijksoverheid page it was read from. */
             source?: components["schemas"]["SourceRefDTO"] | null;
-            /**
-             * Wikidata Id
-             * @description For a cabinet from Wikidata.
-             */
-            wikidata_id?: string | null;
             /**
              * Members
              * @description The people who held a post in it.
@@ -2655,13 +2643,6 @@ export interface components {
              */
             to_date?: string | null;
             /**
-             * From Date Precision
-             * @description How precisely ``from_date`` is known: ``year`` for most cabinets before 1945, whose date is then the first of January.
-             */
-            from_date_precision?: ("day" | "month" | "year") | null;
-            /** To Date Precision */
-            to_date_precision?: ("day" | "month" | "year") | null;
-            /**
              * Previous
              * @description The key of the cabinet before it.
              */
@@ -2669,7 +2650,7 @@ export interface components {
             prime_minister?: components["schemas"]["PersonRefDTO"] | null;
             /**
              * Parties
-             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first; empty before 1945.
+             * @description The parties of the bewindspersonen sworn in on its first day, the party with the most first.
              */
             parties?: components["schemas"]["PartyRefDTO"][];
             /**
@@ -2684,16 +2665,11 @@ export interface components {
             demissionary_from?: string | null;
             /**
              * Phases
-             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order; empty before 1945 (no official source gives them).
+             * @description Formatie, in functie, demissionair, dubbel demissionair, missionair, in order.
              */
             phases?: components["schemas"]["CabinetPhaseDTO"][];
-            /** @description Rijksoverheid since 1945; Wikidata before (name and period). */
+            /** @description The Rijksoverheid page it was read from. */
             source?: components["schemas"]["SourceRefDTO"] | null;
-            /**
-             * Wikidata Id
-             * @description For a cabinet from Wikidata.
-             */
-            wikidata_id?: string | null;
             /**
              * Members
              * @description The people who held a post in it.
@@ -5808,22 +5784,65 @@ export interface components {
         };
         /**
          * MinistryDTO
-         * @description A ministry of ``core.ministries``; a former one names its successor and the last
-         *     day it had its name.
+         * @description A ministry name of ``data/ministries.json``: a name that came back (Economische
+         *     Zaken) has a period for each time; a former one names its successor and the last day
+         *     it had its name (``successor`` and ``until`` of its last period).
          */
         MinistryDTO: {
             key: components["schemas"]["MinistryKey"];
             /** Name */
             name: string;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /**
+             * Tooi
+             * @description The TOOI code: ``mnre1045``.
+             */
+            tooi?: string | null;
             successor?: components["schemas"]["MinistryKey"] | null;
             /** Until */
             until?: string | null;
+            /** Periods */
+            periods?: components["schemas"]["MinistryPeriodDTO"][];
         };
         /**
          * MinistryKey
          * @enum {string}
          */
-        MinistryKey: "az" | "aok" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "bzbpbo" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ez" | "ezk" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "lvv" | "szw" | "sz" | "szv" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "mw" | "vro" | "vb" | "wv" | "vrom" | "aenm" | "scheepvaart" | "ogd" | "uor" | "or" | "zo";
+        MinistryKey: "az" | "aok" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "bzbpbo" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ezk" | "ez" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "lvv" | "szw" | "sz" | "szv" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "mw" | "vro" | "vb" | "wv" | "vrom" | "aenm" | "scheepvaart" | "ogd" | "uor" | "or" | "zo";
+        /**
+         * MinistryPeriodDTO
+         * @description A stretch in which the ministry had its name, and where that is known from.
+         */
+        MinistryPeriodDTO: {
+            /**
+             * From Date
+             * @description Null where no source dates it.
+             */
+            from_date?: string | null;
+            /**
+             * Until
+             * @description The last day; null while it has the name, or where unknown.
+             */
+            until?: string | null;
+            successor?: components["schemas"]["MinistryKey"] | null;
+            /**
+             * Basis
+             * @description The Staatscourant decree the end rests on (from TOOI).
+             */
+            basis?: string | null;
+            /**
+             * Source
+             * @description ``tooi`` (the TOOI value list, since about 2010), ``rijksoverheid`` (the first post and a handover on the cabinet pages) or ``hand``.
+             * @enum {string}
+             */
+            source: "tooi" | "rijksoverheid" | "hand";
+            /**
+             * Successor Source
+             * @description ``hand`` for a succession no source gives (before 2010).
+             */
+            successor_source?: ("tooi" | "rijksoverheid" | "hand") | null;
+        };
         /**
          * NeighborBucketDTO
          * @description The neighbours that share a relation, a direction and a collection: one page of them.
@@ -6293,7 +6312,7 @@ export interface components {
         };
         /**
          * SourceRefDTO
-         * @description Where it was read: ``rijksoverheid`` with the page and the day, or ``wikidata``.
+         * @description Where it was read: ``rijksoverheid``, with the page and the day.
          */
         SourceRefDTO: {
             /** Name */
