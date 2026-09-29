@@ -11,6 +11,7 @@
 	import { bronLabel } from '$lib/vocabulary';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { formatCount } from '$lib/verbonden/filter';
+	import { annexGroups, type AnnexItem } from './annex';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -88,27 +89,6 @@
 				<p class="empty">Van deze bijlage is alleen de naam bekend.</p>
 			{/if}
 
-			{#if a.description}
-				<div class="text">
-					{#each linesOf(a.description) as { line, heading }, i (i)}
-						<p class:heading>{line}</p>
-					{/each}
-				</div>
-			{/if}
-
-			{#if entries.length}
-				<details class="entries">
-					<summary>{formatCount(entries.length)} onderdelen</summary>
-					<ol>
-						{#each entries as e, i (e.index ?? i)}
-							<li>
-								{e.name}{#if e.description}<span class="entry-note">{e.description}</span>{/if}
-							</li>
-						{/each}
-					</ol>
-				</details>
-			{/if}
-
 			{#if refs.length}
 				<section class="refs">
 					<h2>Aangehaald in</h2>
@@ -123,9 +103,42 @@
 					</ul>
 				</section>
 			{/if}
+
+			{#if a.description}
+				<div class="text">
+					{#each linesOf(a.description) as { line, heading }, i (i)}
+						<p class:heading>{line}</p>
+					{/each}
+				</div>
+			{/if}
+
+			{#if entries.length}
+				<!-- The entries in the bijlage's own order: per line they stand under, nested. -->
+				<details class="entries">
+					<summary>{formatCount(entries.length)} onderdelen</summary>
+					{#each annexGroups(entries) as g, i (i)}
+						<section class="law-group">
+							{#if g.heading}<h2 class="law-name">{g.heading}</h2>{/if}
+							{@render items(g.items)}
+						</section>
+					{/each}
+				</details>
+			{/if}
 		{/if}
 	</div>
 </ReaderFrame>
+
+<!-- The provisions under a law, each with the ones nested under it. -->
+{#snippet items(list: AnnexItem[])}
+	<ul class="law-items">
+		{#each list as item, i (i)}
+			<li>
+				{item.name}{#if item.note}<span class="entry-note">{item.note}</span
+					>{/if}{#if item.children.length}{@render items(item.children)}{/if}
+			</li>
+		{/each}
+	</ul>
+{/snippet}
 
 <style>
 	.r-annex {
@@ -183,6 +196,29 @@
 	.text p {
 		margin: 0;
 	}
+	/* A law and the provisions of it the bijlage names: the law as the head of its part. */
+	.law-group {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-1);
+		margin-top: var(--s-3);
+	}
+	.law-name {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink-2);
+	}
+	.law-items {
+		margin: 0;
+		padding: 0 0 0 var(--s-5);
+		list-style: none;
+	}
+	/* A nested provision: under the one it belongs to, one step further in. */
+	.law-items .law-items {
+		padding-left: var(--s-5);
+	}
 	/* A law whose entries follow: set apart as the head of its part of the list. */
 	.text .heading {
 		margin-top: var(--s-3);
@@ -203,7 +239,6 @@
 	.refs h2 {
 		cursor: default;
 	}
-	.entries ol,
 	.refs ul {
 		display: flex;
 		flex-direction: column;
