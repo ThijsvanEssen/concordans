@@ -332,7 +332,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 	judgments: [
 		{
 			id: 'articles',
-			label: 'Artikelen die deze uitspraak aanhaalt',
+			label: 'Artikelen die hier worden aangehaald',
 			noun: 'artikelen',
 			load: 'judgment-articles'
 		},
@@ -359,7 +359,8 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'judgments',
-			label: 'Uitspraken die deze uitspraak aanhaalt',
+			// Not `die deze uitspraak aanhaalt`: one letter from the group below, which is the other way.
+			label: 'Uitspraken die hier worden aangehaald',
 			noun: 'uitspraken',
 			match: [{ relation: 'REFERS_TO', direction: 'outbound', collection: 'judgments' }]
 		},

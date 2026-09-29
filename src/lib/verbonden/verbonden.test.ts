@@ -398,3 +398,12 @@ describe('buildDossierHub with laws_named', () => {
 		]);
 	});
 });
+
+describe('the groups of a judgment', () => {
+	it('tell the judgments it cites from those that cite it by more than one letter', () => {
+		const labels = Object.fromEntries((GROUPS.judgments ?? []).map((g) => [g.id, g.label]));
+		expect(labels.judgments).toBe('Uitspraken die hier worden aangehaald');
+		expect(labels['cited-by']).toBe('Uitspraken die deze uitspraak aanhalen');
+		expect(labels.articles).toBe('Artikelen die hier worden aangehaald');
+	});
+});
