@@ -320,6 +320,13 @@ export function bundleMentions(mentions: Row[]): Row {
 export const mentionRows = (rows: Row[]): Row[] => rows.flatMap((r) => r.mentions ?? [r]);
 
 /** The meta line of a row, as separate words; the panel joins them. */
+/**
+ * A row's key in a list: the bron, the place it points at, and the verbinding. One article
+ * can refer twice (two aarden), so the bron alone is not unique.
+ */
+export const rowKey = (r: Row) =>
+	`${r.ref.collection}/${r.ref.key}#${r.at ?? ''}#${r.edgeId ?? ''}`;
+
 export function metaParts(
 	row: Row
 ): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {

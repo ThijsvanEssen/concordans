@@ -12,7 +12,7 @@
 	import { relationLabel } from '$lib/vocabulary';
 	import { csvName, download, rowsToCsv } from './export';
 	import { formatCount, type VerbondenFilter } from './filter';
-	import { mentionRows, openLabelOf, shortDate, type Row } from './rows';
+	import { mentionRows, openLabelOf, rowKey, shortDate, type Row } from './rows';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import type { VerbondenState } from './source';
@@ -158,7 +158,6 @@
 
 	// The row opened under itself; one at a time, closed by Escape.
 	let openRow = $state<string | null>(null);
-	const rowKey = (r: Row) => `${r.ref.collection}/${r.ref.key}#${r.at ?? ''}#${r.edgeId ?? ''}`;
 	function onKey(e: KeyboardEvent) {
 		if (openRow && isEscape(e)) {
 			e.preventDefault();
@@ -265,7 +264,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each sorted.slice(0, shown) as r (`${r.ref.collection}/${r.ref.key}#${r.at ?? ''}#${r.edgeId ?? ''}`)}
+					{#each sorted.slice(0, shown) as r (rowKey(r))}
 						{@const id = rowKey(r)}
 						{@const open = openRow === id}
 						<!-- A click on the row opens it under itself, as in Verbonden; the card

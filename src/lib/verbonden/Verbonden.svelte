@@ -37,6 +37,7 @@
 		metaParts,
 		openLabelOf,
 		repeatedTitles,
+		rowKey,
 		type Row
 	} from './rows';
 	import type { VerbondenState } from './source';
@@ -107,7 +108,7 @@
 	const hidden = $derived(hiddenLine(verbonden.groups, filter));
 	const total = $derived(totalCount(verbonden.groups));
 
-	const rowId = (row: Row) => `${refId(row.ref)}#${row.at ?? ''}`;
+	const rowId = rowKey;
 
 	function toggle(set: Set<string>, id: string) {
 		const next = new Set(set);
