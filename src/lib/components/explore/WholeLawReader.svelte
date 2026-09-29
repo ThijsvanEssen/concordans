@@ -139,8 +139,11 @@
 	// The versions of the law, for the peildatum; the current one dates the text in force
 	// where the law gives no version_date_in_force.
 	let versions = $state<Version[]>([]);
+	/** The list of versions has come in: an empty one means the dataset keeps none. */
+	let versionsLoaded = $state(false);
 	$effect(() => {
 		versions = [];
+		versionsLoaded = false;
 		const bwb = bwbId;
 		if (!bwb) return;
 		const ac = new AbortController();
@@ -151,7 +154,9 @@
 			})
 		)
 			.then((r) => {
-				if (bwb === bwbId) versions = uniqueBy(r.items, (v) => v.valid_from ?? v.key);
+				if (bwb !== bwbId) return;
+				versions = uniqueBy(r.items, (v) => v.valid_from ?? v.key);
+				versionsLoaded = true;
 			})
 			.catch(() => {});
 		return () => ac.abort();
@@ -365,7 +370,7 @@
 					>
 				</div>
 			{/if}
-			{#if peildatum}
+			{#if peildatum && !(versionsLoaded && versions.length === 0)}
 				<p class="whole-hist">
 					{histLine}
 					<a href={withParams({ peildatum: null })} data-sveltekit-noscroll
@@ -384,8 +389,16 @@
 						>Naar de eerste versie</a
 					>
 				</p>
+			{:else if versionsLoaded && versions.length === 0}
+				<!-- An act of the EU: the dataset holds its text in force only. -->
+				<p class="whole-before">
+					Van deze regeling houdt de dataset alleen de geldende tekst bij.
+					<a href={withParams({ peildatum: null })} data-sveltekit-noscroll
+						>Naar de geldende tekst</a
+					>
+				</p>
 			{:else}
-				<p class="whole-empty-text">Geen versie van deze wet op {formatLongDate(peildatum)}.</p>
+				<p class="whole-empty-text">Geen tekst van deze regeling op {formatLongDate(peildatum)}.</p>
 			{/if}
 		{/if}
 
