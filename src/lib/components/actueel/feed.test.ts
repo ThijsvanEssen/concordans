@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { countLine, dayLabel, daysOf, publicationCite, type FeedItem, atomParams } from './feed';
+import {
+	countLine,
+	dayLabel,
+	daysOf,
+	publicationCite,
+	type FeedItem,
+	atomParams,
+	dossierLabel
+} from './feed';
 
 let n = 0;
 const item = (date: string, kind: FeedItem['kind'], dossier: string | null): FeedItem =>
@@ -65,5 +73,27 @@ describe('atomParams', () => {
 		const q = { faction: 'd66', until: '2026-09-29', limit: 100, kind: undefined };
 		expect(atomParams(q, '').toString()).toBe('faction=d66');
 		expect(atomParams(q, '2026-09-29').toString()).toBe('faction=d66&until=2026-09-29');
+	});
+});
+
+describe('dossierLabel', () => {
+	const d = (short_title: string | null, title: string | null) => ({
+		key: '36600',
+		number: '36600',
+		title,
+		short_title
+	});
+	it('uses the short title', () => {
+		expect(dossierLabel(d('Begroting JenV', 'Vaststelling van de begrotingsstaten'))).toBe(
+			'36600 Begroting JenV'
+		);
+	});
+	it('falls back to the name in brackets at the end of the title', () => {
+		expect(
+			dossierLabel(d(null, 'Wijziging van de Vreemdelingenwet 2000 (Wet tweestatusstelsel)'))
+		).toBe('36600 Wet tweestatusstelsel');
+	});
+	it('is the number alone without any title', () => {
+		expect(dossierLabel(d(null, null))).toBe('36600');
 	});
 });

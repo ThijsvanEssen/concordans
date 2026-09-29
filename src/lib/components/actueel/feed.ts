@@ -1,4 +1,5 @@
 import type { Schema } from '$lib/api/types';
+import { shortDossierTitle } from '$lib/graph/types';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
 // dossier (the moties of a debate) fold into one line that opens.
@@ -32,6 +33,12 @@ export const KIND_LABEL: Record<FeedKind, { one: string; many: string }> = {
 export const FEED_KINDS = Object.keys(KIND_LABEL) as FeedKind[];
 
 export const isFeedKind = (value: string): value is FeedKind => Object.hasOwn(KIND_LABEL, value);
+
+/** A dossier by its number and short name: the short title, or else one from its title. */
+export function dossierLabel(d: NonNullable<FeedItem['dossier']>): string {
+	const name = d.short_title?.trim() || shortDossierTitle(d.title ?? null);
+	return name ? `${d.number} ${name}` : d.number;
+}
 
 /** Fewer than this many of one kind on one dossier in a day stay single rows. */
 export const FOLD_AT = 3;

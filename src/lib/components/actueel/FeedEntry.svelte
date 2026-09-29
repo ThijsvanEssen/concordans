@@ -6,7 +6,14 @@
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
 	import { COMMITMENT_STATUS_LABEL } from '$lib/components/explore/index/government';
-	import { KIND_LABEL, publicationCite, shortDate, type Entry, type FeedItem } from './feed';
+	import {
+		KIND_LABEL,
+		dossierLabel,
+		publicationCite,
+		shortDate,
+		type Entry,
+		type FeedItem
+	} from './feed';
 
 	let {
 		entry,
@@ -33,8 +40,6 @@
 			: i.publication && !i.title
 				? publicationCite(i.publication)
 				: (i.title ?? KIND_LABEL[i.kind].one);
-	const dossierLabel = (d: NonNullable<FeedItem['dossier']>) =>
-		`${d.number}${d.short_title ? ` ${d.short_title}` : ''}`;
 	const tally = (i: FeedItem) => {
 		const t = (i.vote?.tally ?? {}) as Record<string, number>;
 		return { voor: t['Voor'] ?? 0, tegen: t['Tegen'] ?? 0 };
