@@ -314,8 +314,6 @@
 		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
-		text-transform: uppercase;
-		letter-spacing: 0.02em;
 	}
 	.group.depth-3 > .group__head {
 		font-size: var(--t-micro);

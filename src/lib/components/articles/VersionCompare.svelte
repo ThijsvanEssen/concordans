@@ -1097,8 +1097,6 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-label);
 		font-weight: 500;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
 		color: var(--ink-3);
 	}
 	.row--same .text {

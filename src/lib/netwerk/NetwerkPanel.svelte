@@ -210,9 +210,7 @@
 	}
 	.head__title {
 		font-size: var(--t-label);
-		font-weight: 600;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		font-weight: 500;
 		color: var(--ink-3);
 	}
 	.head__count {

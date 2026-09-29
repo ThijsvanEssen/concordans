@@ -323,9 +323,7 @@
 	.heading--lvl1 .heading__text {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-weight: 600;
-		letter-spacing: 0.02em;
-		text-transform: uppercase;
+		font-weight: 500;
 		color: var(--ink-3);
 	}
 	.heading--lvl2 .heading__text {

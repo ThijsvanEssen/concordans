@@ -162,7 +162,7 @@
 		--t-body-2: 15px; /* titles of bronnen in lists and rows */
 		--t-meta: 13px; /* interface text: 12.5 to 13px */
 		--t-micro: 12px; /* captions and counts, in --ink-3 */
-		--t-label: 11px; /* small-caps labels over a group */
+		--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
 		--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
 		--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */
 

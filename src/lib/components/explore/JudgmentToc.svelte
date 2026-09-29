@@ -164,9 +164,7 @@
 	.row--parties {
 		font-family: var(--font-sans);
 		font-size: var(--t-label);
-		font-weight: 600;
-		letter-spacing: 0.02em;
-		text-transform: uppercase;
+		font-weight: 500;
 		color: var(--ink-3);
 	}
 
