@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { judgmentCite } from '$lib/text/judgment-cite';
 	// The hover panel of the canvas: what the bron is, a preview, and two actions: open
 	// it, and add it to the netwerk or take it out.
 	import type { GraphNode } from '$lib/graph/types';
-	import { articleOf, formatEcliLabel, lawIdOf } from '$lib/graph/types';
+	import { articleOf, lawIdOf } from '$lib/graph/types';
 	import { getArticleDetail } from '$lib/api/articles';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronHref, refOf } from '$lib/bron/href';
@@ -35,7 +36,13 @@
 	const cite = $derived.by(() => {
 		switch (node.kind) {
 			case 'judgment':
-				return formatEcliLabel(text(nodeProps?.['ecli']) ?? node.label);
+				return text(nodeProps?.['ecli'])
+					? judgmentCite(
+							text(nodeProps?.['ecli'])!,
+							text(nodeProps?.['date']),
+							text(nodeProps?.['court'])
+						).full
+					: node.label;
 			case 'article':
 				return text(nodeProps?.['instrument_citation_title']) ?? lawIdOf(nodeProps);
 			case 'member':

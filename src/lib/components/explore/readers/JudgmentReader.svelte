@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { judgmentCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -7,7 +8,6 @@
 	import { getJudgmentDetail } from '$lib/api/judgments';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { formatEcliLabel } from '$lib/graph/types';
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn, permalink } from '$lib/bron/anchor';
@@ -43,18 +43,19 @@
 	const rov = (number: string, id?: string | null) => id || `rov-${number}`;
 
 	// Citeren van een overweging, parallel aan `citeArticle` voor een lid.
+	// Kort: HR 19 juli 2019, r.o. 3.1; voluit with the ECLI. The date is in both.
 	function citeOverweging(
 		num: string,
 		ecliStr: string | null,
-		dateLabel: string | null,
+		date: string | null,
+		court: string | null,
 		id: string
 	) {
 		if (!ecliStr) return null;
-		const short = formatEcliLabel(ecliStr);
+		const { short, full } = judgmentCite(ecliStr, date, court);
 		return {
 			kort: `${short}, r.o. ${num}`,
-			voluit: `${ecliStr}, r.o. ${num}`,
-			metDatum: `${short}, r.o. ${num}${dateLabel ? ` (${dateLabel})` : ''}`,
+			voluit: `${full}, r.o. ${num}`,
 			link: permalink(page.url, id)
 		};
 	}
@@ -119,8 +120,9 @@
 		<ReaderHead
 			collection="judgments"
 			juris={textProp(j.props?.court)}
-			title={(j.ecli ? formatEcliLabel(j.ecli) : (j.display_name ?? 'Uitspraak')) +
-				(j.names?.length ? ` (${j.names.join(', ')})` : '')}
+			title={(j.ecli
+				? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court)).full
+				: (j.display_name ?? 'Uitspraak')) + (j.names?.length ? ` (${j.names.join(', ')})` : '')}
 		>
 			<div class="reader-meta-row">
 				{#if j.decision_kind}
@@ -244,7 +246,13 @@
 						{:else if seg.num || (i === 0 && para.number)}
 							{@const num = String(seg.num ?? para.number)}
 							{@const rovId = rov(num, i === 0 ? para.paragraph_id : null)}
-							{@const forms = citeOverweging(num, j.ecli ?? null, judgmentDate, rovId)}
+							{@const forms = citeOverweging(
+								num,
+								j.ecli ?? null,
+								textProp(j.props?.date),
+								textProp(j.props?.court),
+								rovId
+							)}
 							<div
 								id={rovId}
 								class="reader-para-block"

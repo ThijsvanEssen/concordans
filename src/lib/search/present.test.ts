@@ -40,7 +40,7 @@ describe('presentHit', () => {
 		]);
 	});
 
-	it('names a judgment by its court and date, with the ECLI beside it', () => {
+	it('cites a judgment as lawyers do (HR 19 februari 1993), with the ECLI beside it', () => {
 		const shown = presentHit(
 			hit({
 				collection: 'judgments',
@@ -51,7 +51,7 @@ describe('presentHit', () => {
 			}),
 			'daad'
 		);
-		expect(shown.title).toBe('Hoge Raad, 19 februari 1993');
+		expect(shown.title).toBe('HR 19 februari 1993');
 		expect(shown.context).toBe('ECLI:NL:HR:1993:ZC0870');
 		expect(shown.snippet).not.toBeNull();
 	});

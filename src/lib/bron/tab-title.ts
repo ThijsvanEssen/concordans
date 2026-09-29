@@ -2,6 +2,7 @@
 // apart. A judgment by its label and the name it is known by, a dossier by its number and
 // short title, a BW article by its book, anything else by its name cut at a word.
 import { shortDossierTitle, type GraphNode } from '$lib/graph/types';
+import { judgmentCite } from '$lib/text/judgment-cite';
 import { withBook } from '$lib/text/bw';
 
 const MAX = 80;
@@ -22,7 +23,9 @@ export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>):
 		const names = Array.isArray(props.names)
 			? props.names.filter((n) => typeof n === 'string')
 			: [];
-		return names.length ? `${node.label} (${names.join(', ')})` : node.label;
+		const ecli = text(props.ecli);
+		const cite = ecli ? judgmentCite(ecli, text(props.date), text(props.court)).short : node.label;
+		return names.length ? `${cite} (${names.join(', ')})` : cite;
 	}
 	if (node.collection === 'dossiers') {
 		const number = text(props.label) ?? node.label;

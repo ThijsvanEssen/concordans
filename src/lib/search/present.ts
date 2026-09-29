@@ -1,3 +1,4 @@
+import { judgmentCite } from '$lib/text/judgment-cite';
 // How a search result reads: a title that tells it from its neighbours, the context a
 // lawyer checks it by, and where the API gives one, a line of the text with the words
 // searched for marked. Stukken of one dossier stand under that dossier.
@@ -89,10 +90,15 @@ export function presentHit(hit: Hit, query: string): Presented {
 			};
 		}
 		case 'judgments': {
+			// Cited as lawyers do, the ECLI under it: HR 19 juli 2019.
 			const { court, date } = judgmentParts(hit.display_name ?? '');
 			const names = extras(hit, 'names');
-			const when = date ? `${court}, ${formatLongDate(date)}` : court;
 			const ecli = extra(hit, 'ecli');
+			const when = ecli
+				? judgmentCite(ecli, date, court).short
+				: date
+					? `${court}, ${formatLongDate(date)}`
+					: court;
 			return {
 				title: names.length ? `${when} (${names.join(', ')})` : when || ecli,
 				context: ecli,
