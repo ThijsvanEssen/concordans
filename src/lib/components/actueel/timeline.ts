@@ -1,6 +1,6 @@
 import type { BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
-import type { FeedItem, FeedKind } from './feed';
+import { CLOSE_VOTE, KIND_LABEL, titleOf, voteMargin, type FeedItem, type FeedKind } from './feed';
 
 // The homepage's Actueel: one stream, newest first. What matters on a day stands on its
 // own with a headline in plain words (a bill voted on or brought in, a close vote, a
@@ -23,8 +23,6 @@ export type TimelineLine = {
 	failed?: boolean;
 };
 
-/** A vote closer than this many seats stands on its own. */
-export const CLOSE_VOTE = 10;
 /** A day with at most this many votes on moties and amendementen shows each of them. */
 const FEW_VOTES = 2;
 /** Close votes shown on their own per day, the closest first. */
@@ -209,13 +207,9 @@ function otherVoteLines(date: string, votes: FeedItem[]): TimelineLine[] {
 	if (!votes.length) return [];
 	const noun = (i: FeedItem) => (i.subkind === 'amendement' ? 'amendement' : 'motie');
 	if (votes.length <= FEW_VOTES) return votes.map((v) => voteLine(v, noun(v)));
-	const margin = (i: FeedItem) => {
-		const { voor, tegen } = tallyOf(i);
-		return voor + tegen ? Math.abs(voor - tegen) : Infinity;
-	};
 	const close = votes
-		.filter((v) => margin(v) <= CLOSE_VOTE)
-		.sort((a, b) => margin(a) - margin(b))
+		.filter((v) => voteMargin(v) <= CLOSE_VOTE)
+		.sort((a, b) => voteMargin(a) - voteMargin(b))
 		.slice(0, CLOSE_SHOWN);
 	const moties = votes.filter((v) => v.subkind === 'motie');
 	const amendementen = votes.filter((v) => v.subkind === 'amendement');
@@ -522,4 +516,45 @@ export function timelineOf(items: readonly FeedItem[], limit: number): TimelineL
 		break;
 	}
 	return lines;
+}
+
+export type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'failed'>;
+
+/**
+ * One event as Actueel heads it, in the words of the homepage: a vote as the Kamer's
+ * decision, a toezegging with its bewindspersoon, a bill brought in by its name. What
+ * matters (a bill, a close vote, a toezegging, a law in force) is major.
+ */
+export function headlineOf(i: FeedItem): Headline {
+	switch (i.kind) {
+		case 'stemming': {
+			const passed = !!i.vote?.passed;
+			if (i.subkind === 'wetsvoorstel') {
+				const name = i.dossier ? dossierName(i.dossier) : cut(i.title ?? '', 60);
+				return {
+					label: `Wetsvoorstel, ${passed ? 'aangenomen' : 'verworpen'}`,
+					title: `Kamer ${passed ? 'neemt' : 'verwerpt'} wetsvoorstel${passed ? ' aan' : ''}: ${name}`,
+					major: true,
+					failed: !passed
+				};
+			}
+			const { label, title, failed } = voteLine(
+				i,
+				i.subkind === 'amendement' ? 'amendement' : 'motie'
+			);
+			return { label, title, major: voteMargin(i) <= CLOSE_VOTE, failed };
+		}
+		case 'toezegging':
+			return { label: 'Toezegging', title: commitmentTitle(i), major: true };
+		case 'wetsvoorstel': {
+			const name = i.dossier ? dossierName(i.dossier) : (i.title ?? 'Wetsvoorstel');
+			return { label: 'Wetsvoorstel', title: `Wetsvoorstel ingediend: ${name}`, major: true };
+		}
+		case 'inwerkingtreding': {
+			const { label, title } = commencementLine(i);
+			return { label, title, major: true };
+		}
+		default:
+			return { label: KIND_LABEL[i.kind].one, title: titleOf(i), major: false };
+	}
 }

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { FeedItem } from './feed';
-import { commitmentTitle, dayLines, dossierName, inWords, surname, timelineOf } from './timeline';
+import {
+	commitmentTitle,
+	dayLines,
+	dossierName,
+	headlineOf,
+	inWords,
+	surname,
+	timelineOf
+} from './timeline';
 
 let n = 0;
 const item = (over: Partial<FeedItem>): FeedItem =>
@@ -234,5 +242,42 @@ describe('subjects and names', () => {
 					'Vaststelling van de begrotingsstaten van Koninkrijksrelaties (IV) en het BES-fonds (H) voor het jaar 2027'
 			} as never)
 		).toBe('Begroting Koninkrijksrelaties');
+	});
+});
+
+describe('headlineOf', () => {
+	it('heads one event as the homepage does, major when it matters', () => {
+		expect(
+			headlineOf(
+				vote(75, 75, {
+					title: 'Motie van het lid Schilder over strafverzwaring',
+					persons: [{ name: 'J.M.M. Schilder', role: 'indiener' } as never]
+				})
+			)
+		).toEqual({
+			label: 'Stemming, verworpen',
+			title: 'Kamer verwerpt motie-Schilder over strafverzwaring',
+			major: true,
+			failed: true
+		});
+		expect(headlineOf(vote(120, 30)).major).toBe(false);
+		expect(
+			headlineOf(
+				vote(100, 50, {
+					subkind: 'wetsvoorstel',
+					dossier: { key: 'a', number: '36889', short_title: 'Archiefwet' } as never
+				})
+			)
+		).toMatchObject({
+			label: 'Wetsvoorstel, aangenomen',
+			title: 'Kamer neemt wetsvoorstel aan: Archiefwet'
+		});
+		expect(
+			headlineOf(item({ kind: 'brief_regering', title: 'Voortgang waterstofbeleid' }))
+		).toEqual({
+			label: 'Brief van de regering',
+			title: 'Voortgang waterstofbeleid',
+			major: false
+		});
 	});
 });

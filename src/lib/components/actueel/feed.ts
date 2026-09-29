@@ -59,12 +59,56 @@ export function titleOf(i: FeedItem): string {
 export const FOLD_AT = 3;
 
 export type Fold = {
-	/** How `?open=` names it: `fold/<date>/<kind>/<dossier>`. */
+	/**
+	 * How `?open=` names it: `fold/<date>/<kind>/<dossier>`, or `fold/<date>/stemming` for
+	 * the votes of a day.
+	 */
 	id: string;
 	kind: FeedKind;
-	dossier: NonNullable<FeedItem['dossier']>;
+	/** None for the votes of a day, which span the dossiers. */
+	dossier: NonNullable<FeedItem['dossier']> | null;
 	items: FeedItem[];
 };
+
+/** A vote closer than this many seats stands on its own. */
+export const CLOSE_VOTE = 10;
+
+const tallyOf = (i: FeedItem) => {
+	const t = (i.vote?.tally ?? {}) as Record<string, number>;
+	return { voor: t['Voor'] ?? 0, tegen: t['Tegen'] ?? 0 };
+};
+
+/** The difference in seats of a vote; without a tally, none. */
+export const voteMargin = (i: FeedItem) => {
+	const { voor, tegen } = tallyOf(i);
+	return voor + tegen ? Math.abs(voor - tegen) : Infinity;
+};
+
+/** A vote that goes into the day's bundle: not on a bill, and not close. */
+const bundledVote = (i: FeedItem) =>
+	i.kind === 'stemming' && i.subkind !== 'wetsvoorstel' && voteMargin(i) > CLOSE_VOTE;
+
+/**
+ * What a fold is called: `Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen`, or
+ * `8 moties over 21501-32 Landbouw- en Visserijraad`.
+ */
+export function foldTitle(f: Fold): string {
+	if (!f.dossier) {
+		const moties = f.items.filter((i) => i.subkind === 'motie');
+		const lead = moties.length ? moties : f.items;
+		const passed = lead.filter((i) => i.vote?.passed).length;
+		const noun = moties.length
+			? lead.length === 1
+				? 'motie'
+				: 'moties'
+			: lead.length === 1
+				? 'voorstel'
+				: 'voorstellen';
+		const rest = f.items.length - lead.length;
+		return `Kamer stemt over ${lead.length} ${noun}: ${passed} aangenomen, ${lead.length - passed} verworpen${rest ? `, en over ${rest} ${rest === 1 ? 'ander voorstel' : 'andere voorstellen'}` : ''}`;
+	}
+	return `${f.items.length} ${KIND_LABEL[f.kind].many} over ${dossierLabel(f.dossier)}`;
+}
 export type Entry = { item: FeedItem } | { fold: Fold };
 
 export type Day = {
@@ -75,8 +119,9 @@ export type Day = {
 };
 
 /**
- * The items per day, in the order they came. Within a day, FOLD_AT or more items of one
- * kind on one dossier become one fold where the first of them stood.
+ * The items per day, in the order they came. Within a day, FOLD_AT or more votes that are
+ * not on a bill and not close become one fold at the top; FOLD_AT or more other items of
+ * one kind on one dossier become one fold where the first of them stood.
  */
 export function daysOf(items: readonly FeedItem[]): Day[] {
 	const days: Day[] = [];
@@ -90,7 +135,14 @@ export function daysOf(items: readonly FeedItem[]): Day[] {
 		}
 	}
 	for (const day of days) {
-		const list = byDate.get(day.date)!;
+		const all = byDate.get(day.date)!;
+		const votes = all.filter(bundledVote);
+		const bundle = votes.length >= FOLD_AT;
+		const list = bundle ? all.filter((i) => !bundledVote(i)) : all;
+		if (bundle)
+			day.entries.push({
+				fold: { id: `fold/${day.date}/stemming`, kind: 'stemming', dossier: null, items: votes }
+			});
 		const groupOf = (i: FeedItem) => (i.dossier ? `${i.kind}/${i.dossier.number}` : null);
 		const size = new Map<string, number>();
 		for (const i of list) {
@@ -116,7 +168,7 @@ export function daysOf(items: readonly FeedItem[]): Day[] {
 			} else day.entries.push({ item: i });
 		}
 		const counts = new Map<FeedKind, number>();
-		for (const i of list) counts.set(i.kind, (counts.get(i.kind) ?? 0) + 1);
+		for (const i of all) counts.set(i.kind, (counts.get(i.kind) ?? 0) + 1);
 		day.counts = [...counts]
 			.map(([kind, count]) => ({ kind, count }))
 			.sort((a, b) => b.count - a.count || FEED_KINDS.indexOf(a.kind) - FEED_KINDS.indexOf(b.kind));
