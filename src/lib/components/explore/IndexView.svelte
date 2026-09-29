@@ -4,7 +4,7 @@
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row's title
 	// links to the bron; the rest of the row expands inline with its metadata and the
-	// ways of opening it (Lezen, Bekijk in netwerk).
+	// ways of opening it (Lezen, Toon in netwerk).
 	//
 	// Every filter, the sort and the open row are in the URL, so a view can be shared.
 	// What the API can filter or sort is passed on as a query; the rest is done
@@ -2257,7 +2257,7 @@
 																>
 															{/if}
 															<a href={bronHref(bron, { keepMode: false, mode: 'graph' })}
-																>Bekijk in netwerk</a
+																>Toon in netwerk</a
 															>
 														</div>
 													</div>

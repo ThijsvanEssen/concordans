@@ -137,7 +137,7 @@
 	<div class="actions">
 		<a class="btn is-primary" href={openHref} data-sveltekit-noscroll>{openLabel}</a>
 		{#if onShowInNetwork}
-			<button type="button" class="btn" onclick={onShowInNetwork}>Toon in het netwerk</button>
+			<button type="button" class="btn" onclick={onShowInNetwork}>Toon in netwerk</button>
 		{/if}
 		<CiteMenu
 			items={[

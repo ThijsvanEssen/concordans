@@ -77,7 +77,12 @@
 		<Search compact placeholder="Bron toevoegen" {onPick} />
 
 		{#if selection}
-			<button type="button" class="add" onclick={onAdd}>
+			<button
+				type="button"
+				class="add"
+				aria-label="Voeg {selection.label} toe aan netwerk"
+				onclick={onAdd}
+			>
 				+ <span class="add__label">{selection.label}</span>
 			</button>
 		{/if}
@@ -120,7 +125,7 @@
 							type="button"
 							class="row__remove"
 							onclick={() => onRemove(e.id)}
-							aria-label="{e.label} uit netwerk halen">×</button
+							aria-label="Haal {e.label} uit netwerk">×</button
 						>
 					</li>
 				{/each}

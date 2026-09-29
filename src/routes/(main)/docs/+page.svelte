@@ -178,8 +178,9 @@
 			<p>
 				Een artikel, wet, uitspraak of stuk heeft een eigen tekst. <strong>Volledig lezen</strong>
 				(toets <kbd>L</kbd>) toont die tekst op volle breedte, met inhoudsopgave;
-				<strong>Terug naar netwerk</strong> keert terug. Een link van buiten de Verkenner opent zo'n bron
-				op volle breedte. Een kamerlid, commissie, fractie of dossier staat altijd naast het netwerk.
+				<strong>Toon in netwerk</strong> keert terug naar het netwerk. Een link van buiten de Verkenner
+				opent zo'n bron op volle breedte. Een kamerlid, commissie, fractie of dossier staat altijd naast
+				het netwerk.
 			</p>
 			<p>
 				De Verkenner opent met het paneel Netwerk. Het zoekveld <strong>Bron toevoegen</strong>

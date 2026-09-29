@@ -14,7 +14,7 @@
 		row: Row;
 		openHref: string;
 		openLabel: string;
-		/** Where Toon in het netwerk goes when there is no onShowInNetwork. */
+		/** Where Toon in netwerk goes when there is no onShowInNetwork. */
 		networkHref: string;
 		onShowInNetwork?: (row: Row) => void;
 		onVerbinding: (row: Row) => void;
@@ -35,10 +35,10 @@
 		{#if row.relation}
 			{#if onShowInNetwork}
 				<button type="button" class="link" onclick={() => onShowInNetwork(row)}
-					>Toon in het netwerk</button
+					>Toon in netwerk</button
 				>
 			{:else}
-				<a href={networkHref} class="link">Toon in het netwerk</a>
+				<a href={networkHref} class="link">Toon in netwerk</a>
 			{/if}
 			<button type="button" class="link" onclick={() => onVerbinding(row)}
 				>Over deze verbinding</button

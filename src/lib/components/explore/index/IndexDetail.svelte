@@ -340,7 +340,7 @@
 			href={networkHref}
 			data-sveltekit-noscroll
 		>
-			Bekijk in netwerk <span class="arrow" aria-hidden="true">→</span>
+			Toon in netwerk <span class="arrow" aria-hidden="true">→</span>
 		</a>
 	</div>
 </div>

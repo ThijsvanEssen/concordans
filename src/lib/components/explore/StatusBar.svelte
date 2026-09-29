@@ -139,7 +139,7 @@
 		>
 	{:else if readAction === 'network'}
 		<button type="button" class="btn read" onclick={() => onRead?.(false)} title="Toets L"
-			>Terug naar netwerk</button
+			>Toon in netwerk</button
 		>
 	{/if}
 </div>

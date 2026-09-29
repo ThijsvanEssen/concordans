@@ -273,7 +273,7 @@
 				<a href={commitmentsHref(p.member.key)}>Toezeggingen</a>
 			{/if}
 			<a href={bronHref(`members/${p.member.key}`, { keepMode: false, mode: 'graph' })}
-				>Bekijk in netwerk</a
+				>Toon in netwerk</a
 			>
 		</p>
 	</div>
