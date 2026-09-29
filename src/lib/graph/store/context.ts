@@ -124,10 +124,12 @@ export function createGraphContext() {
 		nodes.set(id, node);
 	};
 
-	const trimToCap = () => {
+	/** `keep`: the bron a response was just merged for, not yet selected but never the one to go. */
+	const trimToCap = (keep?: string) => {
 		if (nodes.size <= SOFT_NODE_CAP) return;
 		const selected = get(selectionStore);
 		const protect = new Set(pinned);
+		if (keep) protect.add(keep);
 		if (selected) {
 			protect.add(selected.id);
 			// A selected container has no edges of its own to protect its children by
@@ -266,7 +268,9 @@ export function createGraphContext() {
 	): string | null => {
 		const id = mergeInto(response, draw);
 		if (!id) return null;
-		trimToCap();
+		// The centre went in first, so it is the oldest: without this, a wet with more
+		// articles than the cap trimmed itself and its link said it was not in the dataset.
+		trimToCap(id);
 		emit();
 		return id;
 	};
