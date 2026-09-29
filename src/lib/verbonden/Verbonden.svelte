@@ -1,4 +1,6 @@
 <script lang="ts">
+	import RowOpen from './RowOpen.svelte';
+	import { isEscape } from '$lib/actions/keys';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
@@ -15,7 +17,6 @@
 	import type { GraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { anchorLabel } from '$lib/text/qualifier';
 	import {
 		kindCount,
 		BRON_KIND_NOUN,
@@ -29,7 +30,15 @@
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, rowsToCsv, rowsToText } from './export';
-	import { caseNumberOf, longDate, mentionRows, metaParts, repeatedTitles, type Row } from './rows';
+	import {
+		caseNumberOf,
+		longDate,
+		mentionRows,
+		metaParts,
+		openLabelOf,
+		repeatedTitles,
+		type Row
+	} from './rows';
 	import type { VerbondenState } from './source';
 	import {
 		GROUPINGS,
@@ -129,27 +138,6 @@
 	const openHref = (g: Group, row: Row) =>
 		g.inPlace ? inPlaceHref(row) : bronHref(row.ref, { at: row.at });
 
-	const openLabel = (g: Group, row: Row) =>
-		g.inPlace
-			? 'Open naast het artikel'
-			: row.position
-				? `Open bij ${row.position}`
-				: row.at
-					? `Open bij ${anchorLabel(row.at)}`
-					: 'Open de bron';
-
-	/** The passage with the cited phrase marked. */
-	function passage(row: Row): { before: string; mark: string; after: string } | null {
-		if (!row.snippet) return null;
-		const i = row.match ? row.snippet.indexOf(row.match) : -1;
-		if (i < 0) return { before: row.snippet, mark: '', after: '' };
-		return {
-			before: row.snippet.slice(0, i),
-			mark: row.match!,
-			after: row.snippet.slice(i + row.match!.length)
-		};
-	}
-
 	const years = (g: Group) =>
 		grouping === 'soort' && g.rows[0]?.kind === 'uitspraken' && g.rows.length > 5
 			? yearHistogram(g.rows)
@@ -185,7 +173,17 @@
 			.catch(() => {});
 	});
 	const span = $derived(coverage ? coverageFor(coverage, filter.rechter) : null);
+
+	// Escape closes the row opened under itself.
+	function onKey(e: KeyboardEvent) {
+		if (openRow && isEscape(e)) {
+			e.preventDefault();
+			openRow = null;
+		}
+	}
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 <aside class="verbonden" aria-label="Verbonden">
 	<div class="head">
@@ -362,7 +360,6 @@
 						{@const id = rowId(row)}
 						{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
 						{@const open = openRow === id}
-						{@const p = open ? passage(row) : null}
 						<li class="row" class:is-open={open}>
 							<!-- A click beside the title opens the row too, for the mouse; the
 							     keyboard has the toggle at the end of the row. -->
@@ -402,29 +399,14 @@
 							</div>
 							{#if open}
 								<div class="row__open" id="open-{id}">
-									{#if p}
-										{#if row.position}<p class="row__where">{row.position}</p>{/if}
-										<p class="row__passage">
-											{p.before}{#if p.mark}<mark>{p.mark}</mark>{/if}{p.after}
-										</p>
-									{/if}
-									<div class="row__links">
-										<a href={openHref(g, row)} data-sveltekit-noscroll class="link is-accent"
-											>{openLabel(g, row)}</a
-										>
-										{#if row.relation}
-											{#if onShowInNetwork}
-												<button type="button" class="link" onclick={() => onShowInNetwork(row)}
-													>Toon in het netwerk</button
-												>
-											{:else}
-												<a href={inNetworkHref(row)} class="link">Toon in het netwerk</a>
-											{/if}
-											<button type="button" class="link" onclick={() => onVerbinding(row)}
-												>Over deze verbinding</button
-											>
-										{/if}
-									</div>
+									<RowOpen
+										{row}
+										openHref={openHref(g, row)}
+										openLabel={openLabelOf(row, g.inPlace)}
+										networkHref={inNetworkHref(row)}
+										{onShowInNetwork}
+										{onVerbinding}
+									/>
 								</div>
 							{/if}
 						</li>
@@ -765,31 +747,7 @@
 		font-style: italic;
 	}
 	.row__open {
-		margin: 0 var(--s-4) 10px calc(var(--s-4) + 21px);
-		padding: var(--s-3) 14px;
-		border-left: 2px solid var(--rule-strong);
-	}
-	.row__where {
-		margin: 0 0 6px;
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
-	.row__passage {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		line-height: 1.5;
-		color: var(--ink);
-	}
-	.row__passage mark {
-		background: var(--accent-soft);
-		color: inherit;
-	}
-	.row__links {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 14px;
-		margin-top: 10px;
+		margin: 0 var(--s-4) var(--s-2) calc(var(--s-4) + 21px);
 	}
 	.link {
 		padding: 0;

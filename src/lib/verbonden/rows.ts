@@ -3,7 +3,7 @@
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { refOf, type BronRef } from '$lib/bron/href';
-import { anchorOf, parseQualifier } from '$lib/text/qualifier';
+import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { withBook } from '$lib/text/bw';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
@@ -358,3 +358,29 @@ export function caseNumberOf(row: Row): string | null {
 		null
 	);
 }
+
+/** The passage of a row with the cited phrase marked, or null when the row has none. */
+export function passageOf(row: Pick<Row, 'snippet' | 'match'>): {
+	before: string;
+	mark: string;
+	after: string;
+} | null {
+	if (!row.snippet) return null;
+	const i = row.match ? row.snippet.indexOf(row.match) : -1;
+	if (i < 0) return { before: row.snippet, mark: '', after: '' };
+	return {
+		before: row.snippet.slice(0, i),
+		mark: row.match!,
+		after: row.snippet.slice(i + row.match!.length)
+	};
+}
+
+/** What opening a row does, in words: at the position it names, or beside the article. */
+export const openLabelOf = (row: Pick<Row, 'position' | 'at'>, beside = false): string =>
+	beside
+		? 'Open naast het artikel'
+		: row.position
+			? `Open bij ${row.position}`
+			: row.at
+				? `Open bij ${anchorLabel(row.at)}`
+				: 'Open de bron';

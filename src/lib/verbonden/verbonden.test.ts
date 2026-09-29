@@ -12,6 +12,8 @@ import {
 	bundleMentions,
 	mentionRows,
 	metaParts,
+	openLabelOf,
+	passageOf,
 	positionsLabel,
 	type Neighbor,
 	type Row,
@@ -342,5 +344,24 @@ describe('a relation the list does not know yet', () => {
 		const other = groups.find((g) => g.id === 'other');
 		expect(other?.label).toBe('Andere verbindingen');
 		expect(other?.rows.map((r) => r.identifier)).toEqual(['ECLI:NL:GHARL:2026:5455']);
+	});
+});
+
+describe('a row opened under itself', () => {
+	it('marks the cited phrase in its passage', () => {
+		expect(
+			passageOf({ snippet: 'in strijd met art. 6:162 BW gehandeld', match: 'art. 6:162 BW' })
+		).toEqual({
+			before: 'in strijd met ',
+			mark: 'art. 6:162 BW',
+			after: ' gehandeld'
+		});
+		expect(passageOf({ snippet: null, match: null })).toBeNull();
+	});
+
+	it('says where opening it goes', () => {
+		expect(openLabelOf({ position: 'r.o. 6.16', at: 'rov-6.16' })).toBe('Open bij r.o. 6.16');
+		expect(openLabelOf({ position: null, at: null })).toBe('Open de bron');
+		expect(openLabelOf({ position: null, at: null }, true)).toBe('Open naast het artikel');
 	});
 });

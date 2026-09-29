@@ -12,7 +12,9 @@
 	import { relationLabel } from '$lib/vocabulary';
 	import { csvName, download, rowsToCsv } from './export';
 	import { formatCount, type VerbondenFilter } from './filter';
-	import { mentionRows, shortDate, type Row } from './rows';
+	import { mentionRows, openLabelOf, shortDate, type Row } from './rows';
+	import RowOpen from './RowOpen.svelte';
+	import { isEscape } from '$lib/actions/keys';
 	import type { VerbondenState } from './source';
 	import { betrouwbaarheid } from './verbinding';
 	import { allRows, countLine, filterGroups, mentionLine } from './view';
@@ -153,7 +155,19 @@
 			rowsToCsv(sorted, selection.collection, page.url.origin)
 		);
 	}
+
+	// The row opened under itself; one at a time, closed by Escape.
+	let openRow = $state<string | null>(null);
+	const rowKey = (r: Row) => `${r.ref.collection}/${r.ref.key}#${r.at ?? ''}#${r.edgeId ?? ''}`;
+	function onKey(e: KeyboardEvent) {
+		if (openRow && isEscape(e)) {
+			e.preventDefault();
+			openRow = null;
+		}
+	}
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 <div class="tabel">
 	<div class="toolbar">
@@ -252,11 +266,14 @@
 				</thead>
 				<tbody>
 					{#each sorted.slice(0, shown) as r (`${r.ref.collection}/${r.ref.key}#${r.at ?? ''}#${r.edgeId ?? ''}`)}
-						<!-- A click on the row opens the card Verbinding, for the mouse; the
-						     keyboard has the button under the title. -->
+						{@const id = rowKey(r)}
+						{@const open = openRow === id}
+						<!-- A click on the row opens it under itself, as in Verbonden; the card
+						     Verbinding is the button under the title. -->
 						<tr
+							class:is-open={open}
 							onclick={(e) => {
-								if (!onControl(e)) onRow(r);
+								if (!onControl(e)) openRow = open ? null : id;
 							}}
 						>
 							{#each visibleColumns as c (c.id)}
@@ -265,6 +282,13 @@
 										<span class="bron">
 											<KindGlyph collection={r.ref.collection} size={11} />
 											<a href={bronHref(r.ref, { at: r.at })} data-sveltekit-noscroll>{r.title}</a>
+											<button
+												type="button"
+												class="bron__toggle"
+												aria-expanded={open}
+												aria-label={open ? 'Verberg passage' : 'Toon passage'}
+												onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
+											>
 											<button type="button" class="bron__card" onclick={() => onRow(r)}
 												>Over deze verbinding</button
 											>
@@ -283,6 +307,19 @@
 								{/if}
 							{/each}
 						</tr>
+						{#if open}
+							<tr class="open-row">
+								<td colspan={visibleColumns.length}>
+									<RowOpen
+										row={r}
+										openHref={bronHref(r.ref, { at: r.at })}
+										openLabel={openLabelOf(r)}
+										networkHref={bronHref(r.ref, { keepMode: false, mode: 'graph' })}
+										onVerbinding={onRow}
+									/>
+								</td>
+							</tr>
+						{/if}
 					{/each}
 				</tbody>
 			</table>
@@ -493,5 +530,19 @@
 		border-top: 1px solid var(--rule);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	.bron__toggle {
+		padding: 0 var(--s-1);
+		border: 0;
+		background: none;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+	tr.is-open td {
+		background: var(--paper-2);
+	}
+	.open-row td {
+		padding: 0 var(--s-3) var(--s-3);
+		background: var(--paper-2);
 	}
 </style>
