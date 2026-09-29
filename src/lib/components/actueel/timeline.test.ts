@@ -160,8 +160,8 @@ describe('dayLines', () => {
 					{ value: 'brief_regering', count: 14 }
 				],
 				dossiers: [
-					{ number: '24557', short_title: 'Kansspelen', count: 12 },
-					{ number: '31765', short_title: 'Kwaliteit van zorg', count: 12 }
+					{ kind: 'motie', number: '24557', short_title: 'Kansspelen', count: 12 },
+					{ kind: 'motie', number: '31765', short_title: 'Kwaliteit van zorg', count: 12 }
 				]
 			}),
 			[]
