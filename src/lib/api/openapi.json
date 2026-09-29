@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.23.0"
+		"version": "0.25.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -4246,6 +4246,314 @@
 				}
 			}
 		},
+		"/api/feed": {
+			"get": {
+				"tags": ["feed", "feed"],
+				"summary": "News feed",
+				"description": "What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``wetsvoorstel``, ``nota_van_wijziging``, ``amendement``, ``motie`` and ``brief_regering`` (a Tweede Kamer paper submitted), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.",
+				"operationId": "get_feed_route_api_feed_get",
+				"parameters": [
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "``next_cursor`` of the page before.",
+							"title": "Cursor"
+						},
+						"description": "``next_cursor`` of the page before."
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 200,
+							"minimum": 1,
+							"default": 50,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "facets",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Count the facets and the total.",
+							"default": true,
+							"title": "Facets"
+						},
+						"description": "Count the facets and the total."
+					},
+					{
+						"name": "kind",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
+							"title": "Kind"
+						},
+						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
+					},
+					{
+						"name": "since",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or after this day.",
+							"title": "Since"
+						},
+						"description": "On or after this day."
+					},
+					{
+						"name": "until",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or before this day.",
+							"title": "Until"
+						},
+						"description": "On or before this day."
+					},
+					{
+						"name": "cabinet",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Cabinet key: the events of its period (``jetten``).",
+							"title": "Cabinet"
+						},
+						"description": "Cabinet key: the events of its period (``jetten``)."
+					},
+					{
+						"name": "ministry",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }],
+							"title": "Ministry"
+						}
+					},
+					{
+						"name": "dossier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^\\d+(-[A-Za-z0-9()]*)?$" },
+								{ "type": "null" }
+							],
+							"description": "A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020.",
+							"title": "Dossier"
+						},
+						"description": "A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020."
+					},
+					{
+						"name": "member",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Member key: what they signed, the commitments they made.",
+							"title": "Member"
+						},
+						"description": "Member key: what they signed, the commitments they made."
+					},
+					{
+						"name": "faction",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Faction key: what its Kamerleden signed for it.",
+							"title": "Faction"
+						},
+						"description": "Faction key: what its Kamerleden signed for it."
+					},
+					{
+						"name": "q",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "Words of the title, or of the title of the event's dossier, in any case.",
+							"title": "Q"
+						},
+						"description": "Words of the title, or of the title of the event's dossier, in any case."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/FeedResponse" } }
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/feed.atom": {
+			"get": {
+				"tags": ["feed", "feed"],
+				"summary": "News feed as Atom",
+				"description": "A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader: one entry per event, its link the official text or the page on tweedekamer.nl when it has one, and a ``next`` link to the next page.",
+				"operationId": "get_feed_atom_api_feed_atom_get",
+				"parameters": [
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "``next_cursor`` of the page before.",
+							"title": "Cursor"
+						},
+						"description": "``next_cursor`` of the page before."
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 200,
+							"minimum": 1,
+							"default": 50,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "kind",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering.",
+							"title": "Kind"
+						},
+						"description": "Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering."
+					},
+					{
+						"name": "since",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or after this day.",
+							"title": "Since"
+						},
+						"description": "On or after this day."
+					},
+					{
+						"name": "until",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or before this day.",
+							"title": "Until"
+						},
+						"description": "On or before this day."
+					},
+					{
+						"name": "cabinet",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Cabinet key: the events of its period (``jetten``).",
+							"title": "Cabinet"
+						},
+						"description": "Cabinet key: the events of its period (``jetten``)."
+					},
+					{
+						"name": "ministry",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }],
+							"title": "Ministry"
+						}
+					},
+					{
+						"name": "dossier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^\\d+(-[A-Za-z0-9()]*)?$" },
+								{ "type": "null" }
+							],
+							"description": "A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020.",
+							"title": "Dossier"
+						},
+						"description": "A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020."
+					},
+					{
+						"name": "member",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Member key: what they signed, the commitments they made.",
+							"title": "Member"
+						},
+						"description": "Member key: what they signed, the commitments they made."
+					},
+					{
+						"name": "faction",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Faction key: what its Kamerleden signed for it.",
+							"title": "Faction"
+						},
+						"description": "Faction key: what its Kamerleden signed for it."
+					},
+					{
+						"name": "q",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "Words of the title, or of the title of the event's dossier, in any case.",
+							"title": "Q"
+						},
+						"description": "Words of the title, or of the title of the event's dossier, in any case."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "An Atom 1.0 feed.",
+						"content": { "application/atom+xml": { "schema": { "type": "string" } } }
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/": {
 			"get": {
 				"tags": ["root"],
@@ -7368,6 +7676,322 @@
 				"required": ["id", "key", "abbreviation", "name", "seats", "color", "order"],
 				"title": "FactionSeatsDTO",
 				"description": "A party's seats, and where it sits in the hemicycle."
+			},
+			"FeedCommencementDTO": {
+				"properties": {
+					"instrument": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedInstrumentDTO" }, { "type": "null" }]
+					},
+					"article_count": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Article Count",
+						"description": "The articles of the law."
+					},
+					"changed_articles": {
+						"type": "integer",
+						"title": "Changed Articles",
+						"description": "The articles with a version that begins that day.",
+						"default": 0
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "FeedCommencementDTO",
+				"description": "An ``inwerkingtreding``: a new version of a law in force from ``date``."
+			},
+			"FeedCommitmentDTO": {
+				"properties": {
+					"status": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": ["open", "done", "partly_done", "unfulfilled", "lapsed"]
+							},
+							{ "type": "null" }
+						],
+						"title": "Status"
+					},
+					"expected_resolution": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Expected Resolution",
+						"description": "The day it is due; null when the Kamer names none."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "FeedCommitmentDTO",
+				"description": "What a ``toezegging`` stands at."
+			},
+			"FeedDossierDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"number": {
+						"type": "string",
+						"title": "Number",
+						"description": "The label: ``36600-VII``, a path segment."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"short_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short Title",
+						"description": "The parentheses that end the title; null without."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "number"],
+				"title": "FeedDossierDTO"
+			},
+			"FeedFacetsDTO": {
+				"properties": {
+					"kind": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Kind"
+					},
+					"ministry": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Ministry"
+					},
+					"faction": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Faction"
+					},
+					"cabinet": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Cabinet"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "FeedFacetsDTO",
+				"description": "Per dimension the events per value under the other filters, the largest first;\n``value`` null counts the events without one. An event signed for two factions counts\nfor both, so ``faction`` need not add up to ``total``."
+			},
+			"FeedFactionDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"short": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short",
+						"description": "Its abbreviation: ``VVD``."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key"],
+				"title": "FeedFactionDTO"
+			},
+			"FeedInstrumentDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"official_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Official Url"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key"],
+				"title": "FeedInstrumentDTO",
+				"description": "A law the event is about."
+			},
+			"FeedItemDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "``collection/key`` of its node: unique."
+					},
+					"kind": {
+						"type": "string",
+						"enum": [
+							"toezegging",
+							"wetsvoorstel",
+							"nota_van_wijziging",
+							"amendement",
+							"motie",
+							"stemming",
+							"publicatie",
+							"inwerkingtreding",
+							"brief_regering"
+						],
+						"title": "Kind"
+					},
+					"date": {
+						"type": "string",
+						"title": "Date",
+						"description": "YYYY-MM-DD; the source gives no time of day."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"summary": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Summary",
+						"description": "The whole text of a commitment, the decision of a vote (``Aangenomen.``); null for the other kinds."
+					},
+					"subkind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Subkind",
+						"description": "What the source calls it: the document kind (``Motie (gewijzigd/nader)``), for a vote what was voted on (``motie``, ``amendement``, ``wetsvoorstel``, ``overig``); null for the other kinds."
+					},
+					"node": { "$ref": "#/components/schemas/FeedNodeDTO" },
+					"dossier": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedDossierDTO" }, { "type": "null" }],
+						"description": "Its first dossier; null for an event without one."
+					},
+					"persons": {
+						"items": { "$ref": "#/components/schemas/FeedPersonDTO" },
+						"type": "array",
+						"title": "Persons",
+						"description": "Who signed it, in the order of the source: the submitters of a paper, of the paper a vote decided, the bewindspersoon of a commitment."
+					},
+					"ministry": {
+						"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }],
+						"description": "Of a commitment its own; otherwise the ministry that brought its dossier in (``ministry`` of the dossier)."
+					},
+					"cabinet": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Cabinet",
+						"description": "The cabinet in office on ``date``."
+					},
+					"official_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Official Url",
+						"description": "The official text of a publication or a version of a law."
+					},
+					"tk_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Tk Url",
+						"description": "The page of a paper on tweedekamer.nl."
+					},
+					"vote": { "anyOf": [{ "$ref": "#/components/schemas/FeedVoteDTO" }, { "type": "null" }] },
+					"commitment": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedCommitmentDTO" }, { "type": "null" }]
+					},
+					"publication": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedPublicationDTO" }, { "type": "null" }]
+					},
+					"commencement": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedCommencementDTO" }, { "type": "null" }]
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "kind", "date", "node"],
+				"title": "FeedItemDTO",
+				"description": "One event."
+			},
+			"FeedNodeDTO": {
+				"properties": {
+					"collection": { "type": "string", "title": "Collection" },
+					"key": { "type": "string", "title": "Key" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["collection", "key"],
+				"title": "FeedNodeDTO",
+				"description": "The node an event is: ``/api/nodes/{collection}/{key}`` shows it."
+			},
+			"FeedPersonDTO": {
+				"properties": {
+					"key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Key",
+						"description": "Member key; null when unknown."
+					},
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"role": {
+						"type": "string",
+						"enum": ["indiener", "medeindiener", "bewindspersoon"],
+						"title": "Role"
+					},
+					"faction": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedFactionDTO" }, { "type": "null" }],
+						"description": "The faction a Kamerlid signed for; null for a bewindspersoon."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["role"],
+				"title": "FeedPersonDTO",
+				"description": "Someone who signed the event: submitted a paper (``indiener``), signed it with the\none who did (``medeindiener``), or signed it or made the commitment for the\ngovernment (``bewindspersoon``)."
+			},
+			"FeedPublicationDTO": {
+				"properties": {
+					"series": {
+						"anyOf": [{ "type": "string", "enum": ["stb", "stcrt", "trb"] }, { "type": "null" }],
+						"title": "Series"
+					},
+					"year": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Year" },
+					"number": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Number" },
+					"instruments": {
+						"items": { "$ref": "#/components/schemas/FeedInstrumentDTO" },
+						"type": "array",
+						"title": "Instruments",
+						"description": "The laws it amends, introduces or repeals (or articles of), by title; at most ten."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "FeedPublicationDTO",
+				"description": "A ``publicatie`` in the Staatsblad, the Staatscourant or the Tractatenblad."
+			},
+			"FeedResponse": {
+				"properties": {
+					"items": {
+						"items": { "$ref": "#/components/schemas/FeedItemDTO" },
+						"type": "array",
+						"title": "Items"
+					},
+					"next_cursor": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Next Cursor",
+						"description": "Pass as ``cursor`` for the next page; null on the last page."
+					},
+					"total": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Total",
+						"description": "Events under the filters, all pages; null without facets."
+					},
+					"facets": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedFacetsDTO" }, { "type": "null" }],
+						"description": "Null without facets."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["items"],
+				"title": "FeedResponse"
+			},
+			"FeedVoteDTO": {
+				"properties": {
+					"passed": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Passed" },
+					"outcome": {
+						"anyOf": [
+							{ "type": "string", "enum": ["aangenomen", "verworpen"] },
+							{ "type": "null" }
+						],
+						"title": "Outcome"
+					},
+					"vote_kind": {
+						"anyOf": [{ "type": "string", "enum": ["member", "faction"] }, { "type": "null" }],
+						"title": "Vote Kind",
+						"description": "``member`` for a roll-call, ``faction`` otherwise."
+					},
+					"tally": {
+						"additionalProperties": { "type": "integer" },
+						"type": "object",
+						"title": "Tally",
+						"description": "Seats per choice as the source writes it (``Voor``, ``Tegen``, ``Niet deelgenomen``); members per choice on a roll-call."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "FeedVoteDTO",
+				"description": "The outcome of a ``stemming``."
 			},
 			"GlobalGraphResponse": {
 				"properties": {
