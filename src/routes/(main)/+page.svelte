@@ -34,7 +34,7 @@
 		return () => ac.abort();
 	});
 
-	/** The last days in one answer: their counts and the events that stand alone. */
+	/** The last days in one answer: their counts, the events that stand alone, how current. */
 	async function loadLines(signal: AbortSignal) {
 		const summary = await unwrap(
 			api.GET('/api/feed/summary', {
@@ -43,22 +43,8 @@
 			})
 		);
 		lines = timelineOf(summary, LINES_SHOWN);
+		stand = feedStand(summary.data_as_of);
 	}
-
-	// How current the data is. TODO(backend): data_as_of on the summary; until then from
-	// the feed, one event long.
-	$effect(() => {
-		const ac = new AbortController();
-		unwrap(
-			api.GET('/api/feed', {
-				params: { query: { until: today, limit: 1, facets: false } },
-				signal: ac.signal
-			})
-		)
-			.then((r) => (stand = feedStand(r.data_as_of)))
-			.catch(() => {});
-		return () => ac.abort();
-	});
 
 	/** `Dinsdag 22 september`: the year only when it is not this one. */
 	const dayHeading = (date: string) => {
