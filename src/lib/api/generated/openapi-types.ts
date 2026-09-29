@@ -1266,6 +1266,16 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * ActingOtherSeatDTO
+         * @description The seat a stand-in held throughout.
+         */
+        ActingOtherSeatDTO: {
+            /** Seat */
+            seat: string;
+            /** Function */
+            function?: string | null;
+        };
+        /**
          * ActorDossierDTO
          * @description A dossier a member or faction authored documents in.
          *
@@ -2216,10 +2226,27 @@ export interface components {
              */
             acting: boolean;
             /**
+             * Acting Reason
+             * @description Why a post is acting: `source`, the page says so (its words in `acting_basis`); `held_other_seat`, the holder held another seat throughout and the post ended where the next holder began (that seat in `acting_other_seat`).
+             */
+            acting_reason?: ("source" | "held_other_seat") | null;
+            /**
              * Acting Basis
-             * @description Why: ``rijksoverheid: a.i.``, a temporary arrangement, or the rule (held another seat throughout and ended where the next holder began).
+             * @description What the page says, as it says it: `a.i.`, `tijdelijke voorziening: …`, `beheer portefeuille overgenomen door de minister van …`.
              */
             acting_basis?: string | null;
+            /** @description For `held_other_seat`: the seat the holder held throughout. */
+            acting_other_seat?: components["schemas"]["ActingOtherSeatDTO"] | null;
+            /**
+             * Ministry Source
+             * @description Where the ministry of the post comes from: `page` (its function names it), `tk_signatures` (the functions the holder signed Tweede Kamer papers in), `tk_commitments` (the ministry of their commitments), `staatscourant` (the ministry that issued the publications naming the post).
+             */
+            ministry_source?: ("page" | "tk_signatures" | "tk_commitments" | "staatscourant") | null;
+            /**
+             * Ministry Missing
+             * @description Why a post has no ministry: `no_source` (no official source names one), `ambiguous` (the sources split between ministries).
+             */
+            ministry_missing?: ("no_source" | "ambiguous") | null;
             party?: components["schemas"]["PartyRefDTO"] | null;
             /**
              * Overlaps With
@@ -5382,7 +5409,7 @@ export interface components {
          * MinistryKey
          * @enum {string}
          */
-        MinistryKey: "az" | "aok" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "bzbpbo" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "opw" | "ezk" | "ez" | "eli" | "hn" | "ahn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "lvv" | "szw" | "sz" | "szv" | "arbeid" | "vws" | "wvc" | "vm" | "crm" | "mw" | "vro" | "vb" | "wv" | "vrom" | "aenm" | "scheepvaart" | "ogd" | "uor" | "or" | "zo";
+        MinistryKey: "az" | "aok" | "bz" | "jenv" | "venj" | "justitie" | "bzk" | "biza" | "bzbpbo" | "ocw" | "ow" | "okw" | "fin" | "def" | "oorlog" | "marine" | "ienw" | "ienm" | "venw" | "vene" | "owen" | "ezk" | "ez" | "eli" | "hn" | "kgg" | "lvvn" | "lnv" | "lnbv" | "lenv" | "lvv" | "szw" | "sz" | "szv" | "vws" | "wvc" | "vm" | "crm" | "mw" | "vro" | "vb" | "wv" | "vrom" | "aenm" | "scheepvaart" | "ogd" | "uor" | "or" | "zo";
         /**
          * MinistryPeriodDTO
          * @description A stretch in which the ministry had its name, and where that is known from.
@@ -5406,15 +5433,15 @@ export interface components {
             basis?: string | null;
             /**
              * Source
-             * @description ``tooi`` (the TOOI value list, since about 2010), ``rijksoverheid`` (the first post and a handover on the cabinet pages) or ``hand``.
+             * @description ``tooi`` (the TOOI value list, since about 2010) or ``rijksoverheid`` (the first post and a handover on the cabinet pages).
              * @enum {string}
              */
-            source: "tooi" | "rijksoverheid" | "hand";
+            source: "tooi" | "rijksoverheid" | "curated";
             /**
              * Successor Source
-             * @description ``hand`` for a succession no source gives (before 2010).
+             * @description ``curated`` for a succession no source gives (before 2010; ``data/curated/ministries.json``).
              */
-            successor_source?: ("tooi" | "rijksoverheid" | "hand") | null;
+            successor_source?: ("tooi" | "rijksoverheid" | "curated") | null;
         };
         /**
          * NeighborBucketDTO

@@ -116,24 +116,25 @@ export function ticksOf(term: Term): { at: number; label: string }[] {
 	return ticks;
 }
 
+const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
 /**
- * Why a post was held ad interim, in words for the reader. TODO(backend): `acting_basis` mixes
- * the API's own rule in English with the words of Rijksoverheid; until it gives a code or
- * Dutch, the rule is put in Dutch here and the source keeps its own words.
+ * Why a post was held ad interim, in words for the reader: beside which other post, or in
+ * the words of Rijksoverheid.
  */
-export function actingReason(basis: string | null | undefined): string | null {
-	if (!basis) return null;
-	const rule =
-		/^held another seat throughout and ended where the next holder began(?: \((.+)\))?/.exec(basis);
-	if (rule)
-		return rule[1]
-			? `Naast de post ${rule[1].charAt(0).toLowerCase()}${rule[1].slice(1)}, tot de opvolger aantrad.`
+export function actingReason(
+	post: Pick<SeatPost, 'acting_reason' | 'acting_basis' | 'acting_other_seat'>
+): string | null {
+	if (post.acting_reason === 'held_other_seat') {
+		const other = post.acting_other_seat?.function;
+		return other
+			? `Naast de post ${lower(other)}, tot de opvolger aantrad.`
 			: 'Naast een andere post, tot de opvolger aantrad.';
-	const source = /^rijksoverheid:\s*(.+)$/s.exec(basis);
-	if (source) {
-		const text = source[1].trim();
-		if (/^a\.i\.?$/i.test(text)) return 'Ad interim, volgens Rijksoverheid.';
-		return `Volgens Rijksoverheid: ${text.charAt(0).toLowerCase()}${text.slice(1)}`;
+	}
+	if (post.acting_reason === 'source') {
+		const text = post.acting_basis?.trim();
+		if (!text || /^a\.i\.?$/i.test(text)) return 'Ad interim, volgens Rijksoverheid.';
+		return `Volgens Rijksoverheid: ${lower(text)}`;
 	}
 	return null;
 }

@@ -61,15 +61,33 @@
 		missionair: 'Weer missionair'
 	};
 
+	// Seats without a ministry are of two kinds: a post of none (the viceminister-president)
+	// and a post whose ministry no source names or the sources dispute. The second stands
+	// last, under its own head, and is not placed under a ministry by guess.
 	const rows = $derived.by(() => {
 		if (!term) return [];
-		return (cabinet.ministries ?? [])
-			.filter((m) => m.seats.length)
-			.map((m) => ({
-				name: m.name ?? 'Zonder ministerie',
-				seats: m.seats.map((seat) => ({ seat, lanes: lanesOf(seat, term) }))
-			}));
+		const t = term;
+		const row = (name: string, seats: Seat[]) => ({
+			name,
+			seats: seats.map((seat) => ({ seat, lanes: lanesOf(seat, t) }))
+		});
+		const unknown = (s: Seat) => s.posts.some((p) => p.ministry_missing);
+		const named = (cabinet.ministries ?? []).filter((m) => m.name && m.seats.length);
+		const loose = (cabinet.ministries ?? []).filter((m) => !m.name).flatMap((m) => m.seats);
+		return [
+			...named.map((m) => row(m.name!, m.seats)),
+			row(
+				'Zonder ministerie',
+				loose.filter((s) => !unknown(s))
+			),
+			row('Ministerie onbekend', loose.filter(unknown))
+		].filter((r) => r.seats.length);
 	});
+
+	const MISSING: Record<NonNullable<SeatPost['ministry_missing']>, string> = {
+		no_source: 'Geen officiële bron noemt het ministerie.',
+		ambiguous: 'De bronnen noemen verschillende ministeries.'
+	};
 
 	// The API counts dossiers and toezeggingen per person over the cabinet: they belong with
 	// the person's longest post, not with a short stand-in beside it.
@@ -253,10 +271,13 @@
 		</p>
 		<p>{p.function ?? ''}{p.acting ? ', waarnemend' : ''}</p>
 		<p class="post-meta">
-			{day(p.from_date)} tot {day(p.to_date)}{#if p.acting && actingReason(p.acting_basis)}. {actingReason(
-					p.acting_basis
+			{day(p.from_date)} tot {day(p.to_date)}{#if p.acting && actingReason(p)}. {actingReason(
+					p
 				)}{/if}
 		</p>
+		{#if p.ministry_missing}
+			<p class="post-meta">{MISSING[p.ministry_missing]}</p>
+		{/if}
 		{#if p.overlaps_with?.length}
 			<p class="post-meta">Volgens de bronnen tegelijk met een andere bekleder van deze post.</p>
 		{/if}

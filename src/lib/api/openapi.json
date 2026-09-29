@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.33.0"
+		"version": "0.35.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -3865,6 +3865,17 @@
 	},
 	"components": {
 		"schemas": {
+			"ActingOtherSeatDTO": {
+				"properties": {
+					"seat": { "type": "string", "title": "Seat" },
+					"function": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Function" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["seat"],
+				"title": "ActingOtherSeatDTO",
+				"description": "The seat a stand-in held throughout."
+			},
 			"ActorDossierDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -5026,10 +5037,38 @@
 						"description": "A stand-in (ad interim).",
 						"default": false
 					},
+					"acting_reason": {
+						"anyOf": [
+							{ "type": "string", "enum": ["source", "held_other_seat"] },
+							{ "type": "null" }
+						],
+						"title": "Acting Reason",
+						"description": "Why a post is acting: `source`, the page says so (its words in `acting_basis`); `held_other_seat`, the holder held another seat throughout and the post ended where the next holder began (that seat in `acting_other_seat`)."
+					},
 					"acting_basis": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Acting Basis",
-						"description": "Why: ``rijksoverheid: a.i.``, a temporary arrangement, or the rule (held another seat throughout and ended where the next holder began)."
+						"description": "What the page says, as it says it: `a.i.`, `tijdelijke voorziening: …`, `beheer portefeuille overgenomen door de minister van …`."
+					},
+					"acting_other_seat": {
+						"anyOf": [{ "$ref": "#/components/schemas/ActingOtherSeatDTO" }, { "type": "null" }],
+						"description": "For `held_other_seat`: the seat the holder held throughout."
+					},
+					"ministry_source": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": ["page", "tk_signatures", "tk_commitments", "staatscourant"]
+							},
+							{ "type": "null" }
+						],
+						"title": "Ministry Source",
+						"description": "Where the ministry of the post comes from: `page` (its function names it), `tk_signatures` (the functions the holder signed Tweede Kamer papers in), `tk_commitments` (the ministry of their commitments), `staatscourant` (the ministry that issued the publications naming the post)."
+					},
+					"ministry_missing": {
+						"anyOf": [{ "type": "string", "enum": ["no_source", "ambiguous"] }, { "type": "null" }],
+						"title": "Ministry Missing",
+						"description": "Why a post has no ministry: `no_source` (no official source names one), `ambiguous` (the sources split between ministries)."
 					},
 					"party": {
 						"anyOf": [{ "$ref": "#/components/schemas/PartyRefDTO" }, { "type": "null" }]
@@ -8813,12 +8852,10 @@
 					"venw",
 					"vene",
 					"owen",
-					"opw",
 					"ezk",
 					"ez",
 					"eli",
 					"hn",
-					"ahn",
 					"kgg",
 					"lvvn",
 					"lnv",
@@ -8828,7 +8865,6 @@
 					"szw",
 					"sz",
 					"szv",
-					"arbeid",
 					"vws",
 					"wvc",
 					"vm",
@@ -8869,17 +8905,17 @@
 					},
 					"source": {
 						"type": "string",
-						"enum": ["tooi", "rijksoverheid", "hand"],
+						"enum": ["tooi", "rijksoverheid", "curated"],
 						"title": "Source",
-						"description": "``tooi`` (the TOOI value list, since about 2010), ``rijksoverheid`` (the first post and a handover on the cabinet pages) or ``hand``."
+						"description": "``tooi`` (the TOOI value list, since about 2010) or ``rijksoverheid`` (the first post and a handover on the cabinet pages)."
 					},
 					"successor_source": {
 						"anyOf": [
-							{ "type": "string", "enum": ["tooi", "rijksoverheid", "hand"] },
+							{ "type": "string", "enum": ["tooi", "rijksoverheid", "curated"] },
 							{ "type": "null" }
 						],
 						"title": "Successor Source",
-						"description": "``hand`` for a succession no source gives (before 2010)."
+						"description": "``curated`` for a succession no source gives (before 2010; ``data/curated/ministries.json``)."
 					}
 				},
 				"additionalProperties": false,

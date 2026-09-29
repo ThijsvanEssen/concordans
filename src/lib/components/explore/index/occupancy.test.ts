@@ -126,17 +126,22 @@ describe('bandsOf and ticksOf', () => {
 });
 
 describe('actingReason', () => {
-	it('puts the API rule in Dutch and keeps the words of Rijksoverheid', () => {
+	it('names the other post, or keeps the words of Rijksoverheid', () => {
 		expect(
-			actingReason(
-				'held another seat throughout and ended where the next holder began (Minister van Klimaat en Groene Groei)'
-			)
+			actingReason({
+				acting_reason: 'held_other_seat',
+				acting_other_seat: { seat: 'kgg', function: 'Minister van Klimaat en Groene Groei' }
+			})
 		).toBe('Naast de post minister van Klimaat en Groene Groei, tot de opvolger aantrad.');
-		expect(actingReason('rijksoverheid: a.i.')).toBe('Ad interim, volgens Rijksoverheid.');
-		expect(actingReason('rijksoverheid: beheer portefeuille overgenomen (X)')).toBe(
-			'Volgens Rijksoverheid: beheer portefeuille overgenomen (X)'
+		expect(actingReason({ acting_reason: 'held_other_seat' })).toBe(
+			'Naast een andere post, tot de opvolger aantrad.'
 		);
-		expect(actingReason('something else')).toBeNull();
-		expect(actingReason(null)).toBeNull();
+		expect(actingReason({ acting_reason: 'source', acting_basis: 'a.i.' })).toBe(
+			'Ad interim, volgens Rijksoverheid.'
+		);
+		expect(
+			actingReason({ acting_reason: 'source', acting_basis: 'Beheer portefeuille overgenomen (X)' })
+		).toBe('Volgens Rijksoverheid: beheer portefeuille overgenomen (X)');
+		expect(actingReason({})).toBeNull();
 	});
 });
