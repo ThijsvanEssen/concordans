@@ -20,6 +20,7 @@ import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
 	aardLabel,
 	bundleMentions,
+	activityLine,
 	citedLine,
 	describe,
 	lidOfMatch,
@@ -68,6 +69,9 @@ function lidOfStub(key: string, props: Record<string, unknown> | null | undefine
 	const lid = key.toLowerCase().startsWith(`${own}_`) ? key.slice(own.length + 1) : null;
 	return lid && /^\d+[a-z]*$/i.test(lid) ? { key: key.slice(0, own.length), lid } : null;
 }
+
+/** The activities of a committee read at once: about 0.2 KB each. */
+const ACTIVITIES_SHOWN = 200;
 
 /** The judgments of a law read at once: about 1.2 KB each, for the articles they cite. */
 const JUDGMENTS_SHOWN = 100;
@@ -557,6 +561,42 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	'member-instruments': ({ node, signal }) => touched('members', node.key, signal),
 	'faction-instruments': ({ node, signal }) => touched('factions', node.key, signal),
+
+	// The debates and hearings a committee leads, newest first, with the API's total and
+	// the dossiers on their agenda. Without the route: the node's own bucket.
+	'committee-activities': async ({ node, neighbors, totals, signal }) => {
+		const slug = typeof node.props?.slug === 'string' ? node.props.slug : null;
+		const found = slug
+			? await unwrap(
+					api.GET('/api/committees/{slug}/activities', {
+						params: { path: { slug }, query: { limit: ACTIVITIES_SHOWN } },
+						signal
+					})
+				).catch(() => null)
+			: null;
+		if (!found)
+			return {
+				total: totals.get(bucketKey('LED_BY', 'activities', 'inbound')),
+				rows: neighbors
+					.filter(
+						(n) =>
+							n.relation === 'LED_BY' && n.direction === 'inbound' && n.collection === 'activities'
+					)
+					.map(rowOfNeighbor)
+					.filter((r) => r !== null)
+			};
+		return {
+			total: found.total,
+			rows: found.items.map((a) => ({
+				ref: { collection: 'activities' as const, key: a.key },
+				...describe('activities', a.key, a.agenda_title, { ...a }),
+				context: activityLine(a),
+				kind: bronKindOf('activities', a.key, {}),
+				relation: 'LED_BY' as const,
+				direction: 'inbound' as const
+			}))
+		};
+	},
 
 	'committee-dossiers': async ({ node }) => {
 		const slug = typeof node.props?.slug === 'string' ? node.props.slug : null;

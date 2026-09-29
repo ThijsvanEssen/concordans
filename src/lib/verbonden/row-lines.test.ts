@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { citedLine } from './rows';
+import { activityLine, citedLine } from './rows';
 
 describe('citedLine', () => {
 	it('names two articles and counts the rest', () => {
@@ -21,5 +21,21 @@ describe('citedLine', () => {
 				{ article_number: '4' }
 			])
 		).toBe('art. 1, 2 en 2 andere');
+	});
+});
+
+describe('activityLine', () => {
+	it('names the kind, a status out of the ordinary and the dossiers', () => {
+		expect(
+			activityLine({ kind: 'Commissiedebat', status: 'Uitgevoerd', dossier_numbers: ['36600'] })
+		).toBe('Commissiedebat, over 36600');
+		expect(
+			activityLine({
+				kind: 'Commissiedebat',
+				status: 'Geannuleerd',
+				dossier_numbers: ['22112', '21501-04']
+			})
+		).toBe('Commissiedebat, geannuleerd, over 22112 en 21501-04');
+		expect(activityLine({})).toBeNull();
 	});
 });

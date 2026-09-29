@@ -38,6 +38,7 @@ export type Loader =
 	| 'instrument-amended-by'
 	| 'instrument-judgments'
 	| 'committee-dossiers'
+	| 'committee-activities'
 	| 'member-instruments'
 	| 'faction-instruments';
 
@@ -417,7 +418,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'activities',
 			label: 'Activiteiten van deze commissie',
 			noun: 'activiteiten',
-			match: [{ relation: 'LED_BY', direction: 'inbound', collection: 'activities' }]
+			load: 'committee-activities'
 		}
 	],
 	members: [

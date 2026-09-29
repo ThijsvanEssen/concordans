@@ -393,3 +393,21 @@ export function citedLine(articles: readonly { article_number?: string | null }[
 	const rest = numbers.length - 2;
 	return `art. ${shown}${rest > 0 ? ` en ${rest} ${rest === 1 ? 'ander' : 'andere'}` : ''}`;
 }
+
+/**
+ * `Commissiedebat, geannuleerd, over 22112 en 21501-04`: what an activity was, a status
+ * other than the usual one, and the dossiers on its agenda.
+ */
+export function activityLine(a: {
+	kind?: string | null;
+	status?: string | null;
+	dossier_numbers?: readonly string[] | null;
+}): string | null {
+	const usual = new Set(['gepland', 'uitgevoerd', 'vrijgegeven']);
+	const status = a.status && !usual.has(a.status.toLowerCase()) ? a.status.toLowerCase() : null;
+	const numbers = a.dossier_numbers ?? [];
+	const over = numbers.length
+		? `over ${numbers.length > 1 ? `${numbers.slice(0, -1).join(', ')} en ${numbers.at(-1)}` : numbers[0]}`
+		: null;
+	return [a.kind, status, over].filter(Boolean).join(', ') || null;
+}
