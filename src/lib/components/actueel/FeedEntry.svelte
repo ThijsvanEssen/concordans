@@ -178,8 +178,8 @@
 		.slice(0, 2) as p, n (p.key ?? `${p.name}${n}`)}
 		<span class="person" style:--party={colorOf(p.faction?.short)}
 			>{#if p.key}<BronLink ref={`members/${p.key}`} preview={false}>{p.name}</BronLink
-				>{:else}{p.name}{/if}{#if p.faction?.short}<span class="faction">{p.faction.short}</span
-				>{/if}</span
+				>{:else}{p.name}{/if}{#if p.faction?.short}
+				<span class="faction">{p.faction.short}</span>{/if}</span
 		>
 	{/each}
 	{#if i.persons.length > 2 || i.persons.some((p) => p.role === 'medeindiener')}
@@ -227,11 +227,10 @@
 	.faction,
 	.ministry,
 	.role {
-		margin-left: var(--s-1);
 		color: var(--ink-3);
 	}
-	.ministry {
-		margin-left: 0;
+	.role {
+		margin-left: var(--s-1);
 	}
 	.outcome {
 		font-family: var(--font-sans);

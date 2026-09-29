@@ -365,9 +365,8 @@
 		<div class="head">
 			{#if total !== null}
 				<p class="count">
-					{total.toLocaleString('nl-NL')}<span class="noun"
-						>{total === 1 ? 'gebeurtenis' : 'gebeurtenissen'}</span
-					>
+					{total.toLocaleString('nl-NL')}
+					<span class="noun">{total === 1 ? 'gebeurtenis' : 'gebeurtenissen'}</span>
 				</p>
 			{/if}
 			{#each chips as chip (chip.id)}
@@ -490,7 +489,7 @@
 		font-variant-numeric: tabular-nums;
 	}
 	.noun {
-		margin-left: var(--s-2);
+		margin-left: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
