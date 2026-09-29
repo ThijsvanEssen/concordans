@@ -14,6 +14,7 @@
 	);
 	const isExplore = $derived($page.url.pathname.startsWith('/explore') && !isIndex);
 	const isDocs = $derived($page.url.pathname.startsWith('/docs'));
+	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
 
 	let mobileMenuOpen = $state(false);
 	let toggleBtnEl: HTMLButtonElement | null = $state(null);
@@ -70,6 +71,12 @@
 			class="nav-link"
 			class:is-active={isIndex}
 			aria-current={isIndex ? 'page' : undefined}>Bladeren</a
+		>
+		<a
+			href="/actueel"
+			class="nav-link"
+			class:is-active={isActueel}
+			aria-current={isActueel ? 'page' : undefined}>Actueel</a
 		>
 		<a
 			href="/docs"
@@ -151,6 +158,7 @@
 		>
 			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Verkenner</a>
 			<a href={indexHref('dossiers')} class="mobile-nav-link" class:is-active={isIndex}>Bladeren</a>
+			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
 			<a href="/docs" class="mobile-nav-link" class:is-active={isDocs}>Documentatie</a>
 		</div>
 	{/if}

@@ -3,8 +3,17 @@ import type { Schema } from '$lib/api/types';
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
 // dossier (the moties of a debate) fold into one line that opens.
 
-export type FeedItem = Schema<'FeedItemDTO'>;
+type RawFeedItem = Schema<'FeedItemDTO'>;
+export type FeedPerson = Schema<'FeedPersonDTO'>;
+/** An item as the page uses it: an id and its persons always there. */
+export type FeedItem = Omit<RawFeedItem, 'persons' | 'id'> & { id: string; persons: FeedPerson[] };
 export type FeedKind = FeedItem['kind'];
+
+export const normalizeItem = (raw: RawFeedItem): FeedItem => ({
+	...raw,
+	id: raw.id ?? `${raw.node.collection}/${raw.node.key}`,
+	persons: raw.persons ?? []
+});
 
 /** Each kind as a label in a row, and counted in a day's heading. */
 export const KIND_LABEL: Record<FeedKind, { one: string; many: string }> = {
