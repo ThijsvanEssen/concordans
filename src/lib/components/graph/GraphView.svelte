@@ -6,6 +6,8 @@
 	import GraphCanvas from './GraphCanvas.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import GraphCitePanel from './GraphCitePanel.svelte';
+	import CanvasNodeList from './CanvasNodeList.svelte';
+	import { readingOrder } from './canvas-keys';
 	import GraphSidebar from './GraphSidebar.svelte';
 	import type { Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
@@ -177,6 +179,7 @@
 			edges++;
 		});
 		canvasCounts = { nodes, edges, kinds };
+		drawnIds = [...visible];
 	}
 
 	$effect(() => {
@@ -273,6 +276,19 @@
 
 	// Hover panel state (only in the full canvas)
 	let hoverNode = $state<GraphNode | null>(null);
+	// The bronnen drawn on the canvas, for the keyboard's list of them, and the one in its focus.
+	let drawnIds = $state<string[]>([]);
+	let keyNode = $state<GraphNode | null>(null);
+	const listNodes = $derived(
+		readingOrder(
+			drawnIds.flatMap((id) => lookup.get(id) ?? []),
+			selection?.id ?? null
+		)
+	);
+	function onKeyNode(n: GraphNode | null) {
+		keyNode = n;
+		hoverNode = n;
+	}
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
 	let showTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -927,6 +943,14 @@
 	{/if}
 
 	<div class="graph-main">
+		<!-- The bronnen on the canvas, for the keyboard: outside the canvas, so ← and →
+		     keep stepping through the history there. -->
+		<CanvasNodeList
+			nodes={listNodes}
+			isChosen={(id) => pinnedIds.has(id)}
+			onFocusNode={onKeyNode}
+			{onToggleChosen}
+		/>
 		<!-- The canvas takes the focus so that ← and → act on it, and only then. -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
@@ -1038,7 +1062,7 @@
 				</div>
 			{/if}
 
-			{#if !compact && hoverNode}
+			{#if hoverNode && (!compact || keyNode)}
 				<GraphCitePanel
 					node={hoverNode}
 					isChosen={pinnedIds.has(hoverNode.id)}
