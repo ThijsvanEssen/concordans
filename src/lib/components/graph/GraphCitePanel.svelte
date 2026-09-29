@@ -102,7 +102,7 @@
 	<div class="head">
 		<KindGlyph collection={node.collection} />
 		<span class="kind caps">{bronLabel(node.collection)}</span>
-		{#if cite}<span class="cite mono">{cite}</span>{/if}
+		{#if cite}<span class="cite">{cite}</span>{/if}
 	</div>
 
 	<h4 class="title {node.stub ? 'title--stub' : ''}">{node.label}</h4>
@@ -177,9 +177,9 @@
 	}
 
 	.cite {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-size: var(--t-meta);
 		color: var(--ink-3);
 		margin-left: auto;
 	}

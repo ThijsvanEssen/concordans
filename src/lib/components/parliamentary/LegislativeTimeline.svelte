@@ -131,13 +131,14 @@
 								<div class="decision-bar-for" style="width: {inFavourPct}%"></div>
 							</div>
 							<div class="decision-totals">
-								<span class="decision-total--for">{inFavour} voor</span>
-								<span class="decision-total-sep">·</span>
-								<span class="decision-total--against">{against} tegen</span>
-								{#each otherChoices(tally) as [choice, seats] (choice)}
-									<span class="decision-total-sep">·</span>
-									<span class="decision-total--other">{seats} {choice.toLowerCase()}</span>
-								{/each}
+								<!-- A sentence: 33 voor, 116 tegen, 1 niet deelgenomen. -->
+								<span
+									><span class="decision-total--for">{inFavour} voor</span>,
+									<span class="decision-total--against">{against} tegen</span
+									>{#each otherChoices(tally) as [choice, seats] (choice)}, <span
+											class="decision-total--other">{seats} {choice.toLowerCase()}</span
+										>{/each}</span
+								>
 								<!-- What was voted on (Wetgeving, Amendement, Motie), then the result. -->
 								<span class="decision-outcome">
 									{#if body.primary_case_kind}<span class="decision-kind"
@@ -367,7 +368,6 @@
 		margin-top: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
 	}
 	.decision-total--for,
 	.decision-total--against {
@@ -375,9 +375,6 @@
 		font-weight: 500;
 	}
 	.decision-total--other {
-		color: var(--ink-3);
-	}
-	.decision-total-sep {
 		color: var(--ink-3);
 	}
 

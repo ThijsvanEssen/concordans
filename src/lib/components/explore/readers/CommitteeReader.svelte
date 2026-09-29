@@ -155,7 +155,6 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-body);
 		font-weight: 500;
-		font-variant-numeric: tabular-nums;
 		color: var(--ink);
 	}
 	.stat-label {

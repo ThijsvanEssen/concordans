@@ -351,10 +351,8 @@
 	}
 	.heading__badge {
 		margin-left: var(--s-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		font-variant-numeric: tabular-nums;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
 	/* Hidden by opacity, not visibility: Tab still reaches the link, and shows it. */

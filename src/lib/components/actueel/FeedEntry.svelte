@@ -212,10 +212,9 @@
 	}
 	.kind-sub {
 		display: block;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
 		color: var(--ink-2);
-		font-variant-numeric: tabular-nums;
 	}
 	.meta {
 		display: flex;
@@ -260,7 +259,6 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-		font-variant-numeric: tabular-nums;
 	}
 
 	.summary {

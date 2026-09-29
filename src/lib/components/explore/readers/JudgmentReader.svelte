@@ -130,7 +130,7 @@
 				{/if}
 				{#if judgmentDate}<span class="reader-meta-item">{judgmentDate}</span>{/if}
 				{#if caseNumber}
-					<span class="reader-meta-item reader-meta-item--mono">{caseNumber}</span>
+					<span class="reader-meta-item">{caseNumber}</span>
 				{/if}
 				{#if deeplink}
 					<a href={deeplink} target="_blank" rel="noopener noreferrer" class="reader-source-link"
@@ -307,10 +307,6 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-
-	.reader-meta-item--mono {
-		font-variant-numeric: tabular-nums;
 	}
 
 	.reader-source-link {
@@ -527,9 +523,8 @@
 	}
 
 	.reader-para-num {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
 		color: var(--ink-3);
 		padding-top: 0.25em;
 		text-align: right;

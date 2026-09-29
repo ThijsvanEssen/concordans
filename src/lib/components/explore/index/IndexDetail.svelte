@@ -97,23 +97,23 @@
 				<span>{kindLabel}</span>
 				{#if w}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">{(w.bwb_id ?? w.celex ?? '').toUpperCase()}</span>
+					<span class="detail-id">{(w.bwb_id ?? w.celex ?? '').toUpperCase()}</span>
 				{:else if j && j.display_name && j.ecli}
 					<!-- The ECLI once, here; without a name it is the title. -->
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono detail-ecli">{j.ecli}</span>
+					<span class="detail-id detail-ecli">{j.ecli}</span>
 				{:else if d}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">Kamerstuk {d.number}</span>
+					<span class="detail-id">Kamerstuk {d.number}</span>
 				{:else if c}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">{c.abbreviation ?? c.slug}</span>
+					<span class="detail-id">{c.abbreviation ?? c.slug}</span>
 				{:else if f}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono">{f.abbreviation}</span>
+					<span class="detail-id">{f.abbreviation}</span>
 				{:else if s}
 					<span class="detail-sep" aria-hidden="true">·</span>
-					<span class="detail-mono"
+					<span class="detail-id"
 						>{fmtDate(s.date)}{s.dossier_numbers?.[0] ? ` · ${s.dossier_numbers[0]}` : ''}</span
 					>
 				{/if}
@@ -219,13 +219,13 @@
 			</div>
 			{#if w.celex}
 				<div class="tile">
-					<div class="tile-mono">{w.celex}</div>
+					<div class="tile-id">{w.celex}</div>
 					<div class="tile-lbl">CELEX</div>
 				</div>
 			{/if}
 			{#if w.bwb_id}
 				<div class="tile">
-					<div class="tile-mono">{w.bwb_id.toUpperCase()}</div>
+					<div class="tile-id">{w.bwb_id.toUpperCase()}</div>
 					<div class="tile-lbl">BWB-id</div>
 				</div>
 			{/if}
@@ -240,7 +240,7 @@
 			</div>
 		{:else if d}
 			<div class="tile">
-				<div class="tile-mono">{d.number}</div>
+				<div class="tile-id">{d.number}</div>
 				<div class="tile-lbl">Kamerstuk</div>
 			</div>
 			{#if d.outcome}
@@ -264,13 +264,13 @@
 				<div class="tile-lbl">Actieve dossiers</div>
 			</div>
 			<div class="tile">
-				<div class="tile-mono">{c.abbreviation ?? '—'}</div>
+				<div class="tile-id">{c.abbreviation ?? ''}</div>
 				<div class="tile-lbl">Afkorting</div>
 			</div>
 		{:else if m}
 			<div class="tile">
 				<div class="tile-num">
-					{#if m.party}<NameLink collection="factions" name={m.party} />{:else}—{/if}
+					{#if m.party}<NameLink collection="factions" name={m.party} />{/if}
 				</div>
 				<div class="tile-lbl">Fractie</div>
 			</div>
@@ -280,7 +280,7 @@
 				<div class="tile-lbl">Zetels</div>
 			</div>
 			<div class="tile">
-				<div class="tile-mono">{f.abbreviation ?? '—'}</div>
+				<div class="tile-id">{f.abbreviation ?? ''}</div>
 				<div class="tile-lbl">Afkorting</div>
 			</div>
 			<div class="tile">
@@ -378,11 +378,10 @@
 	.detail-sep {
 		color: var(--ink-3);
 	}
-	.detail-mono {
+	.detail-id {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 400;
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
 	/* An ECLI is not broken inside: it goes to the next line whole. */
@@ -455,10 +454,9 @@
 		line-height: 1;
 		font-feature-settings: 'lnum';
 	}
-	.tile-mono {
+	.tile-id {
 		font-family: var(--font-sans);
 		font-size: var(--t-body-2);
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-2);
 		line-height: 1.2;
 		/* An identifier is not broken: what does not fit is cut off. */

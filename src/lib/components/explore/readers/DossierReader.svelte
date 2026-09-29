@@ -251,7 +251,6 @@
 		margin: 0;
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-2);
 	}
 
@@ -270,7 +269,6 @@
 
 	.sec-count {
 		font-family: var(--font-sans);
-		font-variant-numeric: tabular-nums;
 		font-weight: 400;
 		margin-left: 6px;
 	}

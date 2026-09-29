@@ -739,7 +739,6 @@
 	.row__case {
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-2);
 	}
 	.row__meta {

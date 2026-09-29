@@ -1931,7 +1931,7 @@
 														<p class="row-summary">{j.summary}</p>
 													{/if}
 													{#if j.display_name && j.ecli}
-														<span class="row-sub row-sub--mono">{j.ecli}</span>
+														<span class="row-sub">{j.ecli}</span>
 													{/if}
 												{/snippet}
 												{#snippet aside()}
@@ -2694,7 +2694,6 @@
 		margin: 0 6px 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-variant-numeric: tabular-nums;
 		line-height: 1.1;
 		color: var(--ink);
 	}
@@ -3101,9 +3100,6 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.row-sub--mono {
-		font-variant-numeric: tabular-nums;
 	}
 	/* The inhoudsindicatie of a judgment, two lines at most. */
 	.row-summary {

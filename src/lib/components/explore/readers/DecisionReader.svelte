@@ -116,15 +116,14 @@
 				<div class="vote-bar">
 					<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
 				</div>
-				<div class="vote-totals">
-					<span class="vote-total vote-total--for">{inFavour} voor</span>
-					<span class="vote-total-sep">·</span>
-					<span class="vote-total vote-total--against">{against} tegen</span>
-					{#each others as [choice, seats] (choice)}
-						<span class="vote-total-sep">·</span>
-						<span class="vote-total vote-total--other">{seats} {choice.toLowerCase()}</span>
-					{/each}
-				</div>
+				<!-- A sentence: 33 voor, 116 tegen, 1 niet deelgenomen. -->
+				<p class="vote-totals">
+					<span class="vote-total vote-total--for">{inFavour} voor</span>,
+					<span class="vote-total vote-total--against">{against} tegen</span
+					>{#each others as [choice, seats] (choice)}, <span class="vote-total vote-total--other"
+							>{seats} {choice.toLowerCase()}</span
+						>{/each}
+				</p>
 			</div>
 
 			{#if voters.length > 0}
@@ -216,7 +215,6 @@
 		color: var(--ink-3);
 	}
 	.dossier-chip {
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
 	.dossier-chip:hover {
@@ -269,12 +267,10 @@
 		transition: width var(--dur-2) var(--ease);
 	}
 	.vote-totals {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
+		margin: 0;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 	}
 	.vote-total--for,
 	.vote-total--against {
@@ -282,9 +278,6 @@
 		font-weight: 500;
 	}
 	.vote-total--other {
-		color: var(--ink-3);
-	}
-	.vote-total-sep {
 		color: var(--ink-3);
 	}
 

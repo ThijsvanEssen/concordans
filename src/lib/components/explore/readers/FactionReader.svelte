@@ -117,7 +117,6 @@
 	.seats-chip {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-2);
 	}
 </style>

@@ -518,7 +518,6 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-variant-numeric: tabular-nums;
 	}
 	.noun {
 		margin-left: var(--s-1);
