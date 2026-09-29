@@ -19,6 +19,13 @@
 		type VoteCount
 	} from './feed';
 	import { headlineOf } from './timeline';
+	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
+	import { fromFeed } from '$lib/bron/submitters';
+
+	/** Medeindieners named in a row; the rest are counted. */
+	const SUBMITTERS_SHOWN = 2;
+	/** The kinds whose persons are its indieners: a motie, an amendement, the vote on one. */
+	const SUBMITTED = new Set<FeedItem['kind']>(['motie', 'amendement', 'stemming']);
 
 	let {
 		entry,
@@ -180,6 +187,17 @@
 
 <!-- The persons of an item: names as links, the party a bar, the rest grey. -->
 {#snippet persons(i: FeedItem)}
+	{@const submitters = SUBMITTED.has(i.kind) ? fromFeed(i.persons) : []}
+	{#if submitters.length}
+		<!-- A paper of the Kamer, or the vote on one: who submitted it, with their fractie. -->
+		<SubmitterLine {submitters} max={SUBMITTERS_SHOWN} />
+	{:else}
+		{@render signers(i)}
+	{/if}
+{/snippet}
+
+<!-- The bewindspersonen of a brief or a toezegging: names as links, the party a bar. -->
+{#snippet signers(i: FeedItem)}
 	{#each i.persons
 		.filter((p) => p.role !== 'medeindiener')
 		.slice(0, 2) as p, n (`${p.key ?? p.name}/${n}`)}

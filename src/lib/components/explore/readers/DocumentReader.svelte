@@ -14,6 +14,8 @@
 	import { findPassage } from '$lib/text/find-passage';
 	import { tick } from 'svelte';
 	import { formatDate } from './_shared';
+	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
+	import { fromDocument } from '$lib/bron/submitters';
 
 	let {
 		node,
@@ -196,6 +198,9 @@
 					{#if caseKinds.length}<span class="dot">·</span>{caseKinds.join(', ')}{/if}
 				</span>
 				<h2 class="title">{doc.title ?? doc.key}</h2>
+				{#if doc.submitters?.length}
+					<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
+				{/if}
 			</header>
 
 			{#if doc.text}
@@ -407,6 +412,21 @@
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
+	}
+	/* Who submitted a motie or amendement, under its title. */
+	.submitted {
+		margin: var(--s-2) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.submitted :global(a) {
+		color: var(--ink);
+		text-decoration: none;
+		border-bottom: 1px solid var(--rule-strong);
+	}
+	.submitted :global(a:hover) {
+		color: var(--accent);
 	}
 	.body {
 		font-family: var(--font-serif);
