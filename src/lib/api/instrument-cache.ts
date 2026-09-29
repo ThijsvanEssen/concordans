@@ -4,6 +4,7 @@
 
 import { writable, type Readable } from 'svelte/store';
 import { api, unwrap } from './client';
+import type { Schema } from './types';
 
 export type InstrumentMeta = {
 	/** BWB id, or the key of an instrument without one (EU). */
@@ -85,4 +86,34 @@ export function primeInstrumentNames(): void {
 	unwrap(api.GET('/api/instruments', { params: { query: { sort: 'article_count', limit: 200 } } }))
 		.then(({ items }) => items.forEach(recordInstrument))
 		.catch(() => {});
+}
+
+const details = new Map<string, Promise<Schema<'InstrumentDetailDTO'>>>();
+
+/**
+ * One instrument in full (`/api/instruments/{identifier}`): its names, dates, article count
+ * and citations, asked for once per identifier. What it says of the names goes into the
+ * cache, so a law outside the 200 of `primeInstrumentNames` is named too.
+ */
+export function getInstrumentDetail(identifier: string): Promise<Schema<'InstrumentDetailDTO'>> {
+	let request = details.get(identifier);
+	if (!request) {
+		request = unwrap(api.GET('/api/instruments/{identifier}', { params: { path: { identifier } } }))
+			.then((detail) => {
+				recordInstrument(detail);
+				return detail;
+			})
+			.catch((err) => {
+				details.delete(identifier);
+				throw err;
+			});
+		details.set(identifier, request);
+	}
+	return request;
+}
+
+/** Asks for an instrument's names when the cache has none: a fallback, not a first source. */
+export function ensureInstrumentName(bwbId: string | null | undefined): void {
+	if (!bwbId || cache.get(bwbId)?.title) return;
+	getInstrumentDetail(bwbId).catch(() => {});
 }

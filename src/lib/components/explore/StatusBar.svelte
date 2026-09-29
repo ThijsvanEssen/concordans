@@ -4,7 +4,7 @@
 	// Bladeren is a place to go, not a view of the selected bron, so it lives in the top
 	// nav only, not here.
 	import type { GraphNode } from '$lib/graph/types';
-	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronLabel, type Mode } from '$lib/vocabulary';
 	import { formatDate, textProp } from './readers/_shared';
 	import { bronHref, indexHref } from '$lib/bron/href';
@@ -47,6 +47,11 @@
 	// {Law} › Artikel N, {court} › date, or {kind} › name.
 	// A segment that names a place (the law of an article, the kind of a bron) links there.
 	type Segment = { text: string; href?: string };
+	// A law outside the names primed at start is asked for by its own route.
+	$effect(() => {
+		if (node?.collection === 'articles') ensureInstrumentName(textProp(nodeProps.bwb_id));
+	});
+
 	const segments = $derived.by<Segment[]>(() => {
 		if (!node) return [];
 		const p = nodeProps;

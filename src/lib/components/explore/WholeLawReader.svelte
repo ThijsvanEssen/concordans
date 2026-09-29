@@ -2,7 +2,13 @@
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { api, unwrap } from '$lib/api/client';
 	import { getArticleDetail } from '$lib/api/articles';
-	import { instrumentMetaStore, primeInstrumentNames } from '$lib/api/instrument-cache';
+	import {
+		getInstrumentDetail,
+		instrumentMetaStore,
+		primeInstrumentNames
+	} from '$lib/api/instrument-cache';
+	import { formatCount } from '$lib/verbonden/filter';
+	import { formatLongDate } from './readers/_shared';
 	import type { Schema } from '$lib/api/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import { SvelteMap } from 'svelte/reactivity';
@@ -78,6 +84,40 @@
 		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwbId;
 	});
 
+	// The head of the law: its kind, official title, dates and citations, from its own detail.
+	// Its dates are those of the version in force (Awb: 2013), not of the first enactment.
+	let lawDetail = $state<Schema<'InstrumentDetailDTO'> | null>(null);
+	$effect(() => {
+		lawDetail = null;
+		const bwb = bwbId;
+		if (!bwb) return;
+		getInstrumentDetail(bwb)
+			.then((d) => {
+				if (bwb === bwbId) lawDetail = d;
+			})
+			.catch(() => {});
+	});
+	const KIND: Record<string, string> = {
+		wet: 'Wet',
+		verdrag: 'Verdrag',
+		bilateraalverdrag: 'Bilateraal verdrag',
+		multilateraalverdrag: 'Multilateraal verdrag'
+	};
+	const kindLabel = $derived((lawDetail?.kind && KIND[lawDetail.kind]) || 'Regeling');
+	const headLine = $derived(
+		[
+			`${formatCount(lawDetail?.article_count ?? total)} artikelen`,
+			lawDetail?.date_in_force
+				? `geldende versie sinds ${formatLongDate(lawDetail.date_in_force)}`
+				: null,
+			lawDetail?.inbound_citation_count
+				? `${formatCount(lawDetail.inbound_citation_count)} keer aangehaald`
+				: null
+		]
+			.filter(Boolean)
+			.join(' · ')
+	);
+
 	function load(bwb: string, offset: number, signal?: AbortSignal) {
 		return unwrap(
 			api.GET('/api/instruments/{bwb_id}/articles', {
@@ -146,9 +186,15 @@
 {:else}
 	<article class="whole-law">
 		<header class="whole-head">
-			<span class="whole-kind">Regeling</span>
+			<span class="whole-kind">{kindLabel}</span>
 			<h1 class="whole-title">{lawName}</h1>
-			<p class="whole-count">{total} artikelen</p>
+			{#if lawDetail?.official_title && lawDetail.official_title !== lawName}
+				<p class="whole-official">{lawDetail.official_title}</p>
+			{/if}
+			<p class="whole-count">
+				{headLine}{#if lawDetail?.official_url}
+					· <a href={lawDetail.official_url} rel="external">wetten.overheid.nl</a>{/if}
+			</p>
 		</header>
 
 		{#each articles as a, i (a.id)}
@@ -288,6 +334,22 @@
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
+	}
+	.whole-official {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		font-style: italic;
+		color: var(--ink-2);
+		max-width: 68ch;
+	}
+	.whole-count a {
+		color: inherit;
+		text-decoration: none;
+		border-bottom: 1px solid var(--rule-strong);
+	}
+	.whole-count a:hover {
+		color: var(--accent);
 	}
 
 	.whole-section {
