@@ -1181,6 +1181,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/feed/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * News feed summary
+         * @description The days up to ``until`` (default today, ``days`` of them) in one small answer, under the filters of ``GET /api/feed``: per day the events per kind, per dossier and, of the votes, per subkind and outcome; and the events a timeline shows one by one, as feed items in the order of the feed: bills submitted, votes on a bill, votes decided by at most ``margin`` seats, commitments and commencements.
+         */
+        get: operations["get_feed_summary_route_api_feed_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/feed.atom": {
         parameters: {
             query?: never;
@@ -1190,7 +1210,7 @@ export interface paths {
         };
         /**
          * News feed as Atom
-         * @description A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader: one entry per event, its link the official text or the page on tweedekamer.nl when it has one, and a ``next`` link to the next page.
+         * @description A page of ``GET /api/feed`` under the same filters as an Atom 1.0 feed, for a feed reader, named after its filters (``Concordans: moties``): an ``alternate`` link to the same view on Concordans (``LAWGRAPH_SITE_URL``/actueel), per entry an ``alternate`` link to the event there and a ``related`` link to its official page, and a ``next`` link to the next page.
          */
         get: operations["get_feed_atom_api_feed_atom_get"];
         put?: never;
@@ -3744,6 +3764,41 @@ export interface components {
              */
             expected_resolution?: string | null;
         };
+        /**
+         * FeedDayDTO
+         * @description The events of one day, counted.
+         */
+        FeedDayDTO: {
+            /** Date */
+            date: string;
+            /**
+             * Total
+             * @default 0
+             */
+            total: number;
+            /** Kinds */
+            kinds?: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Dossiers
+             * @description Per first dossier of an event, most first.
+             */
+            dossiers?: components["schemas"]["FeedDossierCountDTO"][];
+            /** Votes */
+            votes?: components["schemas"]["FeedVoteCountDTO"][];
+        };
+        /** FeedDossierCountDTO */
+        FeedDossierCountDTO: {
+            /** Number */
+            number: string;
+            /** Key */
+            key?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Short Title */
+            short_title?: string | null;
+            /** Count */
+            count: number;
+        };
         /** FeedDossierDTO */
         FeedDossierDTO: {
             /** Key */
@@ -3786,6 +3841,27 @@ export interface components {
              * @description Its abbreviation: ``VVD``.
              */
             short?: string | null;
+        };
+        /**
+         * FeedHeadlineDTO
+         * @description The parts a headline is made of; the front end makes the sentence.
+         */
+        FeedHeadlineDTO: {
+            /**
+             * Surname
+             * @description Of the first submitter (``indiener``): ``van der Plas`` of ``motie-Van der Plas``; null without one.
+             */
+            surname?: string | null;
+            /**
+             * Subject
+             * @description What the title says it is about: the part after the first `` over ``; null when it has none.
+             */
+            subject?: string | null;
+            /**
+             * Short Title
+             * @description The short title of the event's dossier (``dossier.short_title``).
+             */
+            short_title?: string | null;
         };
         /**
          * FeedInstrumentDTO
@@ -3856,6 +3932,7 @@ export interface components {
              * @description The page of a paper on tweedekamer.nl.
              */
             tk_url?: string | null;
+            headline: components["schemas"]["FeedHeadlineDTO"];
             vote?: components["schemas"]["FeedVoteDTO"] | null;
             commitment?: components["schemas"]["FeedCommitmentDTO"] | null;
             publication?: components["schemas"]["FeedPublicationDTO"] | null;
@@ -3883,8 +3960,21 @@ export interface components {
              * @description Member key; null when unknown.
              */
             key?: string | null;
-            /** Name */
+            /**
+             * Name
+             * @description The name they go by and the surname: ``Hanneke Steen``.
+             */
             name?: string | null;
+            /**
+             * Surname
+             * @description With its prefix, as written: ``van der Plas``.
+             */
+            surname?: string | null;
+            /**
+             * Function
+             * @description What they signed as, as the source writes it: ``minister van Sociale Zaken en Werkgelegenheid``, ``Tweede Kamerlid``.
+             */
+            function?: string | null;
             /**
              * Role
              * @enum {string}
@@ -3933,6 +4023,46 @@ export interface components {
             data_as_of?: {
                 [key: string]: components["schemas"]["DataAsOfDTO"];
             };
+        };
+        /**
+         * FeedSummaryResponse
+         * @description A few days of the feed in one answer.
+         */
+        FeedSummaryResponse: {
+            /** Since */
+            since: string;
+            /** Until */
+            until: string;
+            /** Margin */
+            margin: number;
+            /**
+             * Days
+             * @description Every day of the window, newest first.
+             */
+            days?: components["schemas"]["FeedDayDTO"][];
+            /**
+             * Items
+             * @description The events shown one by one, feed order.
+             */
+            items?: components["schemas"]["FeedItemDTO"][];
+            /**
+             * Items Truncated
+             * @description More events qualified than ``limit``.
+             * @default false
+             */
+            items_truncated: boolean;
+        };
+        /** FeedVoteCountDTO */
+        FeedVoteCountDTO: {
+            /**
+             * Subkind
+             * @description What was voted on: ``motie``, ``amendement``, ``wetsvoorstel``.
+             */
+            subkind?: string | null;
+            /** Outcome */
+            outcome?: ("aangenomen" | "verworpen") | null;
+            /** Count */
+            count: number;
         };
         /**
          * FeedVoteDTO
@@ -8176,12 +8306,12 @@ export interface operations {
                 limit?: number;
                 /** @description Count the facets and the total. */
                 facets?: boolean;
-                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
-                kind?: string | null;
                 /** @description On or after this day. */
                 since?: string | null;
                 /** @description On or before this day. */
                 until?: string | null;
+                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
+                kind?: string | null;
                 /** @description Cabinet key: the events of its period (``jetten``). */
                 cabinet?: string | null;
                 ministry?: components["schemas"]["MinistryKey"] | null;
@@ -8220,18 +8350,69 @@ export interface operations {
             };
         };
     };
+    get_feed_summary_route_api_feed_summary_get: {
+        parameters: {
+            query?: {
+                /** @description The last day; default today. */
+                until?: string | null;
+                /** @description How many days. */
+                days?: number;
+                /** @description A vote this close (seats for minus against) is shown one by one. */
+                margin?: number;
+                /** @description Events shown one by one, at most. */
+                limit?: number;
+                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
+                kind?: string | null;
+                /** @description Cabinet key: the events of its period (``jetten``). */
+                cabinet?: string | null;
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020. */
+                dossier?: string | null;
+                /** @description Member key: what they signed, the commitments they made. */
+                member?: string | null;
+                /** @description Faction key: what its Kamerleden signed for it. */
+                faction?: string | null;
+                /** @description Words of the title, or of the title of the event's dossier, in any case. */
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_feed_atom_api_feed_atom_get: {
         parameters: {
             query?: {
                 /** @description ``next_cursor`` of the page before. */
                 cursor?: string | null;
                 limit?: number;
-                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
-                kind?: string | null;
                 /** @description On or after this day. */
                 since?: string | null;
                 /** @description On or before this day. */
                 until?: string | null;
+                /** @description Comma-separated: toezegging, wetsvoorstel, nota_van_wijziging, amendement, motie, stemming, publicatie, inwerkingtreding, brief_regering. */
+                kind?: string | null;
                 /** @description Cabinet key: the events of its period (``jetten``). */
                 cabinet?: string | null;
                 ministry?: components["schemas"]["MinistryKey"] | null;

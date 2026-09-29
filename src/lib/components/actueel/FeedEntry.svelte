@@ -14,7 +14,8 @@
 		shortDate,
 		titleOf,
 		type Entry,
-		type FeedItem
+		type FeedItem,
+		type VoteCount
 	} from './feed';
 	import { headlineOf } from './timeline';
 
@@ -24,7 +25,8 @@
 		onToggle,
 		colorOf,
 		ministryName,
-		filterHref
+		filterHref,
+		votes
 	}: {
 		entry: Entry;
 		openId: string | null;
@@ -33,6 +35,8 @@
 		ministryName: (key: string | null | undefined) => string;
 		/** Actueel with one more filter: `{ dossier: '36832' }`. */
 		filterHref: (patch: Record<string, string>) => string;
+		/** The day's votes counted by the summary: the fold of votes names them all. */
+		votes?: VoteCount[];
 	} = $props();
 
 	const refOf = (i: FeedItem) => `${i.node.collection}/${i.node.key}`;
@@ -45,7 +49,12 @@
 {#if 'fold' in entry}
 	{@const f = entry.fold}
 	{@const many = KIND_LABEL[f.kind].many}
-	<IndexRow bron={f.id} title={foldTitle(f)} open={openId === f.id} onToggle={() => onToggle(f.id)}>
+	<IndexRow
+		bron={f.id}
+		title={foldTitle(f, votes)}
+		open={openId === f.id}
+		onToggle={() => onToggle(f.id)}
+	>
 		{#snippet lead()}
 			<span class="kind">{many.charAt(0).toUpperCase()}{many.slice(1)}</span>
 		{/snippet}

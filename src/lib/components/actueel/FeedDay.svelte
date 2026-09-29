@@ -1,8 +1,8 @@
 <script lang="ts">
-	// One day of Actueel: its date, its kinds counted, and its lines. The homepage shows the
-	// first few lines of a day and links to the rest; Actueel shows them all.
+	// One day of Actueel: its date, its kinds counted, and its lines. The counts are the
+	// whole day's from the summary when it has come; until then, those of the lines loaded.
 	import FeedEntry from './FeedEntry.svelte';
-	import { countLine, dayLabel, type Day } from './feed';
+	import { countLine, dayLabel, summaryCounts, type Day, type DaySummary } from './feed';
 
 	let {
 		day,
@@ -12,8 +12,7 @@
 		colorOf,
 		ministryName,
 		filterHref,
-		limit,
-		moreHref
+		summary
 	}: {
 		day: Day;
 		today: string;
@@ -22,29 +21,31 @@
 		colorOf: (short: string | null | undefined) => string;
 		ministryName: (key: string | null | undefined) => string;
 		filterHref: (patch: Record<string, string>) => string;
-		/** The number of lines shown; the rest behind `moreHref`. */
-		limit?: number;
-		moreHref?: string;
+		/** The day as `/api/feed/summary` counts it, under the same filters. */
+		summary?: DaySummary;
 	} = $props();
 
-	const shown = $derived(limit ? day.entries.slice(0, limit) : day.entries);
-	const rest = $derived(day.entries.length - shown.length);
-	const dateOnly = $derived(dayLabel(day.date, today).toLowerCase());
+	const counts = $derived(summary ? summaryCounts(summary) : day.counts);
 </script>
 
 <section class="day" aria-labelledby="day-{day.date}">
 	<header class="day-head">
 		<h2 class="day-title" id="day-{day.date}">{dayLabel(day.date, today)}</h2>
-		<span class="day-meta">{countLine(day.counts)}</span>
+		<span class="day-meta">{countLine(counts)}</span>
 	</header>
 	<ul class="list">
-		{#each shown as entry ('fold' in entry ? entry.fold.id : entry.item.id)}
-			<FeedEntry {entry} {openId} {onToggle} {colorOf} {ministryName} {filterHref} />
+		{#each day.entries as entry ('fold' in entry ? entry.fold.id : entry.item.id)}
+			<FeedEntry
+				{entry}
+				{openId}
+				{onToggle}
+				{colorOf}
+				{ministryName}
+				{filterHref}
+				votes={summary?.votes}
+			/>
 		{/each}
 	</ul>
-	{#if rest > 0 && moreHref}
-		<a class="rest" href={moreHref}>{rest} meer van {dateOnly} in Actueel</a>
-	{/if}
 </section>
 
 <style>
@@ -71,16 +72,5 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
-	}
-	.rest {
-		display: inline-block;
-		padding: var(--s-2) 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-		text-decoration: none;
-	}
-	.rest:hover {
-		color: var(--accent);
 	}
 </style>

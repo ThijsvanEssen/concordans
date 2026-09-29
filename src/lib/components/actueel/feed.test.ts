@@ -32,7 +32,8 @@ const item = (date: string, kind: FeedItem['kind'], dossier: string | null): Fee
 		vote: null,
 		commitment: null,
 		publication: null,
-		commencement: null
+		commencement: null,
+		headline: {}
 	}) as FeedItem;
 
 describe('daysOf', () => {
@@ -144,7 +145,7 @@ describe('the votes of a day', () => {
 		const [first, ...rest] = day.entries;
 		expect('fold' in first && first.fold.id).toBe('fold/2026-09-22/stemming');
 		expect('fold' in first && foldTitle(first.fold)).toBe(
-			'Kamer stemt over 2 moties: 1 aangenomen, 1 verworpen, en over 1 ander voorstel'
+			'Kamer stemt over 2 moties: 1 aangenomen, 1 verworpen, en over 1 amendement'
 		);
 		expect(rest.map((e) => ('item' in e ? e.item.kind : 'fold'))).toEqual([
 			'brief_regering',
@@ -152,6 +153,16 @@ describe('the votes of a day', () => {
 			'stemming'
 		]);
 		expect(day.counts[0]).toEqual({ kind: 'stemming', count: 5 });
+		// With the summary, the whole day: bills left out, the rest counted.
+		expect(
+			'fold' in first &&
+				foldTitle(first.fold, [
+					{ subkind: 'wetsvoorstel', outcome: 'aangenomen', count: 6 },
+					{ subkind: 'motie', outcome: 'aangenomen', count: 88 },
+					{ subkind: 'motie', outcome: 'verworpen', count: 37 },
+					{ subkind: 'amendement', outcome: 'aangenomen', count: 9 }
+				])
+		).toBe('Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen, en over 9 amendementen');
 	});
 
 	it('stay single lines when there are few', () => {

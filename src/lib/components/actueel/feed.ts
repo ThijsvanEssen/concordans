@@ -92,23 +92,54 @@ const bundledVote = (i: FeedItem) =>
  * What a fold is called: `Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen`, or
  * `8 moties over 21501-32 Landbouw- en Visserijraad`.
  */
-export function foldTitle(f: Fold): string {
+export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 	if (!f.dossier) {
-		const moties = f.items.filter((i) => i.subkind === 'motie');
-		const lead = moties.length ? moties : f.items;
-		const passed = lead.filter((i) => i.vote?.passed).length;
-		const noun = moties.length
-			? lead.length === 1
+		// The whole day from the summary when there is one; else the votes loaded.
+		const counted: VoteCount[] = votes
+			? votes.filter((v) => v.subkind !== 'wetsvoorstel')
+			: f.items.map((i) => ({
+					subkind: i.subkind,
+					outcome: i.vote?.passed ? 'aangenomen' : 'verworpen',
+					count: 1
+				}));
+		const sum = (keep: (v: VoteCount) => boolean) =>
+			counted.filter(keep).reduce((n, v) => n + v.count, 0);
+		const all = sum(() => true);
+		const moties = sum((v) => v.subkind === 'motie');
+		const lead = moties || all;
+		const passed = sum((v) => (!moties || v.subkind === 'motie') && v.outcome === 'aangenomen');
+		const noun = moties
+			? lead === 1
 				? 'motie'
 				: 'moties'
-			: lead.length === 1
+			: lead === 1
 				? 'voorstel'
 				: 'voorstellen';
-		const rest = f.items.length - lead.length;
-		return `Kamer stemt over ${lead.length} ${noun}: ${passed} aangenomen, ${lead.length - passed} verworpen${rest ? `, en over ${rest} ${rest === 1 ? 'ander voorstel' : 'andere voorstellen'}` : ''}`;
+		// Beside the moties: the amendementen by name, the rest as voorstellen.
+		const amendementen = moties ? sum((v) => v.subkind === 'amendement') : 0;
+		const other = all - lead - amendementen;
+		const also = [
+			amendementen ? `${amendementen} ${amendementen === 1 ? 'amendement' : 'amendementen'}` : '',
+			other ? `${other} ${other === 1 ? 'ander voorstel' : 'andere voorstellen'}` : ''
+		]
+			.filter(Boolean)
+			.join(' en ');
+		return `Kamer stemt over ${lead} ${noun}: ${passed} aangenomen, ${lead - passed} verworpen${also ? `, en over ${also}` : ''}`;
 	}
 	return `${f.items.length} ${KIND_LABEL[f.kind].many} over ${dossierLabel(f.dossier)}`;
 }
+
+/** The votes of a day per subkind and outcome, as the summary counts them. */
+export type VoteCount = Schema<'FeedVoteCountDTO'>;
+
+/** A day as the summary counts it. */
+export type DaySummary = Schema<'FeedDayDTO'>;
+
+/** A day's kinds from the summary, most first, as `Day.counts` holds them. */
+export const summaryCounts = (s: DaySummary): Day['counts'] =>
+	(s.kinds ?? [])
+		.flatMap((k) => (k.value && isFeedKind(k.value) ? [{ kind: k.value, count: k.count }] : []))
+		.sort((a, b) => b.count - a.count || FEED_KINDS.indexOf(a.kind) - FEED_KINDS.indexOf(b.kind));
 export type Entry = { item: FeedItem } | { fold: Fold };
 
 export type Day = {
