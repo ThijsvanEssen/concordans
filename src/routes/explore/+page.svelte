@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Division } from '$lib/text/division';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The explorer: one bron at a time, in one of three modes. Lezen shows the bron with
 	// its verbindingen alongside; Netwerk shows the canvas and, once a bron is selected,
@@ -209,7 +210,7 @@
 
 	// Previous and next article in Lezen, and the place of the article in its law,
 	// from the table of contents of the law.
-	let navItems = $state<{ key: string; label: string; breadcrumb: string[] }[]>([]);
+	let navItems = $state<{ key: string; label: string; breadcrumb: Division[] }[]>([]);
 	const articleIndex = $derived(
 		selectedNode ? navItems.findIndex((it) => it.key === selectedNode!.key) : -1
 	);

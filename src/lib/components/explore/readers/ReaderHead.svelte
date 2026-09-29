@@ -12,6 +12,7 @@
 		juris,
 		title,
 		place = [],
+		placeTitle = null,
 		nav,
 		children
 	}: {
@@ -20,6 +21,8 @@
 		title: string;
 		/** The place of the bron, printed above the title: `Wetboek van Strafrecht · Tweede Boek · Titel XX`. */
 		place?: string[];
+		/** The heading of the innermost layer, after the place: `Zorgvuldigheid en belangenafweging`. */
+		placeTitle?: string | null;
 		/** Links to the previous and next bron, at the end of the first line. */
 		nav?: Snippet;
 		children?: Snippet;
@@ -29,7 +32,13 @@
 <div class="reader-head">
 	<div class="reader-line">
 		{#if place.length > 0}
-			<div class="reader-place">{place.join(' · ')}</div>
+			<!-- One line on a wide screen, the whole of it on hover; wrapped on a phone. -->
+			<div
+				class="reader-place"
+				title={placeTitle ? `${place.join(', ')}. ${placeTitle}` : place.join(', ')}
+			>
+				{place.join(', ')}{#if placeTitle}. <i>{placeTitle}</i>{/if}
+			</div>
 		{:else}
 			<div class="reader-kind">
 				<KindGlyph {collection} />
@@ -55,7 +64,6 @@
 		margin-bottom: 10px;
 	}
 
-	.reader-place,
 	.reader-kind {
 		flex: 1;
 		min-width: 0;
@@ -65,6 +73,30 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	/* The place of an article in its law, in the letter of the law. */
+	.reader-place {
+		flex: 1;
+		min-width: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		color: var(--ink-3);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.reader-place i {
+		color: var(--ink-2);
+	}
+	@media (max-width: 640px) {
+		.reader-line {
+			flex-wrap: wrap;
+			row-gap: var(--s-2);
+		}
+		.reader-place {
+			flex-basis: 100%;
+			white-space: normal;
+		}
 	}
 
 	.reader-title {

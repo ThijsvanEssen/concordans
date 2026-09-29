@@ -23,7 +23,8 @@
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
 	import { refId } from '$lib/bron/href';
 	import { citeArticle } from '$lib/text/cite';
-	import { articleName, placeInLaw } from '$lib/text/bw';
+	import { articleName } from '$lib/text/bw';
+	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { filterParams, formatCount, type VerbondenFilter } from '$lib/verbonden/filter';
@@ -48,7 +49,7 @@
 		selection: GraphNode | null;
 		prevHref?: string;
 		nextHref?: string;
-		place?: string[];
+		place?: Division[];
 		lidCounts?: Map<string, number>;
 		billCount?: number;
 		filter?: VerbondenFilter;
@@ -463,11 +464,13 @@
 	{#if view.kind === 'loaded'}
 		{@const d = view.data}
 		{@const a = d.article}
+		{@const placeLine = placeOf(place, d.instrument?.display_name ?? law?.citationTitle)}
 		<ReaderHead
 			collection="articles"
 			juris={ownCitationTitle ?? law?.citationTitle ?? d.instrument?.display_name}
 			title={title(a)}
-			place={placeInLaw(place, d.instrument?.display_name ?? law?.citationTitle)}
+			place={placeLine ? [placeLine.designation] : []}
+			placeTitle={placeLine?.title}
 		>
 			{#snippet nav()}
 				{#if prevHref || nextHref}

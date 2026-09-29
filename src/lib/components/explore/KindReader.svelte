@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Division } from '$lib/text/division';
 	// Reader dispatcher, by collection. Article and judgment readers own their text; the
 	// parliamentary readers load their own data. A toezegging and a zaak have no text of
 	// their own and get the plain reader.
@@ -35,8 +36,8 @@
 		/** The article before and after the selected one, in Lezen. */
 		prevHref?: string;
 		nextHref?: string;
-		/** The place of an article in its law: book, title. */
-		place?: string[];
+		/** The layers of an article's place in its law: hoofdstuk, afdeling. */
+		place?: Division[];
 		/** Verbindingen per lid of the article, under the bronfilter. */
 		lidCounts?: Map<string, number>;
 		billCount?: number;

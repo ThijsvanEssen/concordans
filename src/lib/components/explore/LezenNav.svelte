@@ -8,14 +8,16 @@
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import { untrack } from 'svelte';
+	import { layersOf, type Division } from '$lib/text/division';
 
 	let {
 		selection,
 		onitems
 	}: {
 		selection: GraphNode | null;
-		/** The articles of the law in order, each with the labels of its place (book, title). */
-		onitems?: (items: { key: string; label: string; breadcrumb: string[] }[]) => void;
+		/** The articles of the law in order, each with the layers of its place (book, title). */
+		onitems?: (items: { key: string; label: string; breadcrumb: Division[] }[]) => void;
 	} = $props();
 
 	type Item = {
@@ -36,7 +38,6 @@
 	};
 
 	let items = $state<Item[]>([]);
-	let groups = $state<Group[] | null>(null);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
@@ -54,12 +55,6 @@
 		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? currentBwb;
 	});
 
-	// `label` is already the whole of what the law prints ("Eerste Boek", "Hoofdstuk 1"),
-	// so it stands alone; `title` is the heading's own text and reads as a suffix.
-	const crumbLabel = (seg: Schema<'InstrumentArticleBreadcrumbDTO'>) => {
-		const label = seg.label?.trim() || (seg.type ? capitalise(seg.type) : '');
-		return seg.title ? `${label} ${seg.title}` : label;
-	};
 	const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 	const groupLabel = (g: Group) => {
 		const label = g.label.trim() || (g.type && g.type !== 'sectie' ? capitalise(g.type) : '');
@@ -90,14 +85,6 @@
 						key: a.key,
 						breadcrumb: a.breadcrumb ?? []
 					}));
-				groups = buildGroups(items);
-				onitems?.(
-					items.map((it) => ({
-						key: it.key,
-						label: it.label,
-						breadcrumb: it.breadcrumb.map(crumbLabel).filter(Boolean)
-					}))
-				);
 			})
 			.catch(() => {
 				if (!ac.signal.aborted) error = 'Overzicht niet geladen.';
@@ -138,12 +125,18 @@
 		return root.children;
 	}
 
-	const selectedKey = $derived(selection?.key ?? null);
-	const currentSection = $derived.by(() => {
-		const it = items.find((i) => i.key === selectedKey);
-		const last = it?.breadcrumb.at(-1);
-		return last ? crumbLabel(last) : null;
+	// A layer that is the law itself (Boek 6 of BW Boek 6) is no group and no place; the
+	// name of the law may come after the articles, so this follows it.
+	const shaped = $derived(
+		items.map((it) => ({ ...it, breadcrumb: layersOf(it.breadcrumb, lawName) }))
+	);
+	const groups = $derived(shaped.length > 0 ? buildGroups(shaped) : null);
+	$effect(() => {
+		const list = shaped.map((it) => ({ key: it.key, label: it.label, breadcrumb: it.breadcrumb }));
+		untrack(() => onitems?.(list));
 	});
+
+	const selectedKey = $derived(selection?.key ?? null);
 
 	let navEl = $state<HTMLElement | null>(null);
 
@@ -205,9 +198,8 @@
 	{#if currentBwb}
 		<header class="head">
 			<h3 class="head__title">{lawName}</h3>
-			{#if currentSection}
-				<div class="head__section">{currentSection}</div>
-			{:else if items.length > 0}
+			<!-- The law only: the place of an article is in the line above its title. -->
+			{#if selection?.collection !== 'articles' && items.length > 0}
 				<div class="head__section">{items.length} artikelen</div>
 			{/if}
 		</header>
