@@ -401,17 +401,12 @@
 					);
 					pages.judgments = toPage(pages.judgments, r.items, offset, r.total);
 					if (!offset) judgmentFacets = r.facets ?? null;
-					if (!offset && (query.q || query.from || query.to)) {
-						const echr = await unwrap(
-							api.GET('/api/judgments', {
-								params: {
-									query: { q: query.q, from: query.from, to: query.to, source: 'echr', limit: 1 }
-								},
-								signal
-							})
-						).catch(() => null);
-						echrTotal = echr?.total ?? null;
-					} else if (!offset) echrTotal = null;
+					// The source facet counts every source, whichever the list shows.
+					if (!offset)
+						echrTotal =
+							query.q || query.from || query.to
+								? (r.facets?.source?.find((f) => f.value === 'echr')?.count ?? 0)
+								: null;
 				};
 			}
 			case 'dossiers': {
