@@ -15,6 +15,7 @@
 	import { SvelteMap } from 'svelte/reactivity';
 
 	import { bronHref } from '$lib/bron/href';
+	import { layersOf } from '$lib/text/division';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -167,9 +168,11 @@
 		status = 'ready';
 	}
 
+	// The layers that begin at this article, each once; a layer that is the law itself
+	// (Boek 6 of Burgerlijk Wetboek Boek 6) is no heading.
 	function newSections(prev: Article | undefined, cur: Article) {
-		const before = prev?.breadcrumb ?? [];
-		return (cur.breadcrumb ?? [])
+		const before = layersOf(prev?.breadcrumb ?? [], lawName);
+		return layersOf(cur.breadcrumb ?? [], lawName)
 			.map((crumb, depth) => ({ ...crumb, depth }))
 			.filter((crumb, i) => before[i]?.label !== crumb.label || before[i]?.type !== crumb.type);
 	}
@@ -200,13 +203,14 @@
 
 		{#each articles as a, i (a.id)}
 			{#each newSections(articles[i - 1], a) as section, j (j)}
-				<h2 class="whole-section whole-section--depth-{Math.min(section.depth, 3)}">
-					<span class="whole-section-kind">{section.type}</span>
-					<span class="whole-section-label"
-						>{section.label}{#if section.title}<span class="whole-section-title">
-								— {section.title}</span
-							>{/if}</span
-					>
+				<!-- The designation once (Hoofdstuk 3), the heading under it; deeper layers on one line. -->
+				<h2 class="whole-section whole-section--depth-{Math.min(section.depth, 2)}">
+					{#if section.title}
+						<span class="whole-section-label">{section.label}</span>
+						<span class="whole-section-title">{section.title}</span>
+					{:else}
+						<span class="whole-section-title">{section.label}</span>
+					{/if}
 				</h2>
 			{/each}
 
@@ -356,43 +360,50 @@
 	.whole-section {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
-		margin: var(--s-7) 0 var(--s-3);
-		padding-bottom: 6px;
-		border-bottom: 1px solid var(--rule);
+		margin: var(--s-6) 0 0;
+		font-family: var(--font-serif);
+		font-weight: 400;
+		color: var(--ink);
+		text-wrap: balance;
 	}
-
-	.whole-section--depth-0 {
-		margin-top: var(--s-8);
-	}
-
-	.whole-section-kind {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
+	.whole-section-label {
+		font-size: var(--t-body-2);
 		color: var(--ink-3);
 	}
-
-	.whole-section-label {
-		font-family: var(--font-serif);
+	.whole-section-title {
+		font-size: var(--t-h3);
 		font-weight: 500;
-		color: var(--ink);
-		font-size: var(--t-body);
 		line-height: var(--lh-snug);
 	}
-
-	.whole-section-title {
-		font-weight: 400;
-		font-style: italic;
+	/* The outer layer: a rule above, the heading larger. */
+	.whole-section--depth-0 {
+		margin-top: var(--s-8);
+		padding-top: var(--s-5);
+		border-top: 1px solid var(--rule);
+	}
+	.whole-section--depth-0 .whole-section-label {
+		font-size: var(--t-body);
+	}
+	.whole-section--depth-0 .whole-section-title {
+		font-size: var(--t-h2);
+		line-height: var(--lh-tight);
+	}
+	/* Paragraaf and deeper: one line, the heading in italics. */
+	.whole-section--depth-2 {
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 0 var(--s-2);
+		align-items: baseline;
+		margin-top: var(--s-5);
+	}
+	.whole-section--depth-2 .whole-section-label {
+		font-size: var(--t-body);
 		color: var(--ink-2);
 	}
-
-	.whole-section--depth-0 .whole-section-label {
-		font-size: var(--t-h3);
-	}
-	.whole-section--depth-2 .whole-section-label,
-	.whole-section--depth-3 .whole-section-label {
-		font-size: var(--t-body-2);
+	.whole-section--depth-2 .whole-section-title {
+		font-size: var(--t-body);
+		font-weight: 400;
+		font-style: italic;
 		color: var(--ink-2);
 	}
 
