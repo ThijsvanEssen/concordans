@@ -37,6 +37,8 @@ export type Row = {
 	derived?: boolean;
 	/** A change a bill proposes and has not enacted. */
 	proposed?: boolean;
+	/** Named (a law in a dossier's title) but not in the dataset: no link, grey. */
+	missing?: boolean;
 	/** The edge the network draws between the selected bron and this one. */
 	relation?: Relation;
 	direction?: 'inbound' | 'outbound';
@@ -323,6 +325,7 @@ export function metaParts(
 ): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
 	const parts: { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] = [];
 	if (row.lid) parts.push({ text: `lid ${row.lid}`, kind: 'lid' });
+	if (row.missing) parts.push({ text: 'niet in de dataset', kind: 'plain' });
 	if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });
 	if (row.aard) parts.push({ text: row.aard, kind: 'plain' });
 	// A position that only names the lid (`lid 2`) is said once.

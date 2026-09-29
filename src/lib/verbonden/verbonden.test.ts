@@ -365,3 +365,36 @@ describe('a row opened under itself', () => {
 		expect(openLabelOf({ position: null, at: null }, true)).toBe('Open naast het artikel');
 	});
 });
+
+describe('buildDossierHub with laws_named', () => {
+	it('adds a law the title names: a link when loaded, grey when not', () => {
+		const hub = buildDossierHub([], null, null, [], () => null, {
+			instruments: [
+				{
+					id: 'instruments/bwbr0001854',
+					key: 'bwbr0001854',
+					bwb_id: 'BWBR0001854',
+					display_name: 'Wetboek van Strafrecht',
+					relation: 'amends',
+					status: 'canoniek',
+					links: []
+				}
+			],
+			laws_named: [
+				{ name: 'Wetboek van Strafrecht', loaded: true, key: 'bwbr0001854', bwb_id: 'BWBR0001854' },
+				{
+					name: 'Wetboek van Strafvordering',
+					loaded: true,
+					key: 'bwbr0001903',
+					bwb_id: 'BWBR0001903'
+				},
+				{ name: 'Vreemdelingenwet 2000', loaded: false, key: null, bwb_id: null }
+			]
+		} as never);
+		expect(hub.laws.map((r) => [r.title, !!r.missing])).toEqual([
+			['Wetboek van Strafrecht', false],
+			['Wetboek van Strafvordering', false],
+			['Vreemdelingenwet 2000', true]
+		]);
+	});
+});
