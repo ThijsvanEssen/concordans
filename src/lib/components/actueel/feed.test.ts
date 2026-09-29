@@ -6,7 +6,8 @@ import {
 	publicationCite,
 	type FeedItem,
 	atomParams,
-	dossierLabel
+	dossierLabel,
+	titleOf
 } from './feed';
 
 let n = 0;
@@ -95,5 +96,27 @@ describe('dossierLabel', () => {
 	});
 	it('is the number alone without any title', () => {
 		expect(dossierLabel(d(null, null))).toBe('36600');
+	});
+});
+
+describe('titleOf', () => {
+	const bill = (title: string, dossierTitle: string | null) =>
+		({
+			...item('2026-09-15', 'wetsvoorstel', '37000'),
+			title,
+			dossier: { key: '37000', number: '37000', title: dossierTitle, short_title: null }
+		}) as FeedItem;
+	it('names a bill by its dossier', () => {
+		expect(titleOf(bill('Voorstel van wet ', 'Wijziging van enkele belastingwetten'))).toBe(
+			'Wijziging van enkele belastingwetten'
+		);
+	});
+	it('keeps the generic title without a dossier title', () => {
+		expect(titleOf(bill('Voorstel van wet', null))).toBe('Voorstel van wet');
+	});
+	it('keeps a title of its own', () => {
+		expect(titleOf(bill('Motie van het lid Boomsma', 'Begroting'))).toBe(
+			'Motie van het lid Boomsma'
+		);
 	});
 });

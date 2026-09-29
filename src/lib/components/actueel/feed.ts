@@ -40,6 +40,21 @@ export function dossierLabel(d: NonNullable<FeedItem['dossier']>): string {
 	return name ? `${d.number} ${name}` : d.number;
 }
 
+/** A title that only names the kind of paper: every bill is `Voorstel van wet`. */
+const GENERIC_TITLE = /^(voorstel van wet|nota van wijziging)$/i;
+
+/**
+ * What a row is called: a toezegging by its text, a publication as it is cited, a paper
+ * that only names its kind by the title of its dossier.
+ */
+export function titleOf(i: FeedItem): string {
+	if (i.kind === 'toezegging' && i.summary) return i.summary;
+	const title = i.title?.trim();
+	if (!title && i.publication) return publicationCite(i.publication);
+	if (title && GENERIC_TITLE.test(title)) return i.dossier?.title?.trim() || title;
+	return title || KIND_LABEL[i.kind].one;
+}
+
 /** Fewer than this many of one kind on one dossier in a day stay single rows. */
 export const FOLD_AT = 3;
 

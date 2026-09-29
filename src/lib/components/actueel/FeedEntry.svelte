@@ -11,6 +11,7 @@
 		dossierLabel,
 		publicationCite,
 		shortDate,
+		titleOf,
 		type Entry,
 		type FeedItem
 	} from './feed';
@@ -33,13 +34,6 @@
 	} = $props();
 
 	const refOf = (i: FeedItem) => `${i.node.collection}/${i.node.key}`;
-	/** A toezegging is its text; a publication is cited as it is printed. */
-	const titleOf = (i: FeedItem): string =>
-		i.kind === 'toezegging' && i.summary
-			? i.summary
-			: i.publication && !i.title
-				? publicationCite(i.publication)
-				: (i.title ?? KIND_LABEL[i.kind].one);
 	const tally = (i: FeedItem) => {
 		const t = (i.vote?.tally ?? {}) as Record<string, number>;
 		return { voor: t['Voor'] ?? 0, tegen: t['Tegen'] ?? 0 };
