@@ -16,9 +16,9 @@ export const COURT_GROUPS: { label: string; tiers: readonly Tier[] }[] = [
 		]
 	},
 	{ label: 'Feitenrechtspraak', tiers: ['gerechtshof', 'rechtbank', 'kantongerecht'] },
-	{
-		label: 'Caribisch deel',
-		tiers: ['gemeenschappelijk_hof', 'gerecht_in_eerste_aanleg', 'constitutioneel_hof']
-	},
+	{ label: 'Caribisch deel', tiers: ['koninkrijksinstantie'] },
 	{ label: 'Europees', tiers: ['ehrm', 'hvj_eu'] }
 ];
+
+/** The tiers that hold several kinds of court: chosen, they list their courts beneath. */
+export const MIXED_TIERS: readonly Tier[] = ['andere_instantie', 'koninkrijksinstantie'];

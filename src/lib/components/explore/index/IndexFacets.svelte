@@ -10,8 +10,8 @@
 		onClick: () => void;
 		count?: number;
 		swatch?: string;
-		/** Under a heading of the same group. */
-		indent?: boolean;
+		/** Under a heading of the same group; `deep` under an option of it (a court in its tier). */
+		indent?: boolean | 'deep';
 		/** What holds without a choice (the open dossiers): on, but not shown as a filter. */
 		default?: boolean;
 	};
@@ -142,6 +142,7 @@
 									class="opt"
 									class:opt--on={o.on}
 									class:opt--indent={o.indent}
+									class:opt--deep={o.indent === 'deep'}
 									aria-pressed={o.on}
 									title={o.label}
 									onclick={o.onClick}
@@ -357,6 +358,12 @@
 	}
 	.opt--indent .bar {
 		left: 12px;
+	}
+	.opt--deep {
+		padding-left: var(--s-5);
+	}
+	.opt--deep .bar {
+		left: 24px;
 	}
 	.opt--on .bar {
 		background: var(--ink);

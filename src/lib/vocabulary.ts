@@ -135,14 +135,14 @@ export const relationLabel = (relation: Relation, sourceCollection?: Collection 
 		? 'haalt aan'
 		: RELATION_LABEL[relation];
 
-/** The college of a judgment, as the API names it (`tier`). */
+/** The college of a judgment, as the API names it (`tier`): its Type in the Rechtspraak's list of Instanties. */
 export type Tier = Schema<'Tier'>;
 
 /**
  * What each college is called, in the order the filters list them: the highest courts,
- * the other appeal courts, the lower courts, the colleges of the Caribbean part of the
- * Kingdom and the rest, the European courts last. Typed against the API, so a new college
- * does not go unnamed.
+ * the courts of fact, the tuchtcolleges and other colleges, the courts of the Caribbean
+ * part of the Kingdom, the Kroon and the courts abroad. Typed against the API, so a new
+ * college does not go unnamed.
  */
 export const TIER_LABEL: Record<Tier, string> = {
 	hoge_raad: 'Hoge Raad',
@@ -154,20 +154,8 @@ export const TIER_LABEL: Record<Tier, string> = {
 	rechtbank: 'Rechtbanken',
 	kantongerecht: 'Kantongerechten',
 	tuchtcollege: 'Tuchtcolleges',
-	ambtenarengerecht: 'Ambtenarengerechten',
-	college_van_beroep_hoger_onderwijs: 'College van Beroep voor het hoger onderwijs',
-	college_van_beroep_studiefinanciering: 'College van Beroep Studiefinanciering',
-	raad_van_beroep: 'Raden van Beroep',
-	raad_van_beroep_in_ambtenarenzaken: 'Raad van Beroep in Ambtenarenzaken',
-	raad_van_beroep_voor_belastingzaken: 'Raad van Beroep voor Belastingzaken',
-	raad_voor_strafrechtstoepassing_en_jeugdbescherming:
-		'Raad voor Strafrechtstoepassing en Jeugdbescherming',
-	raad_van_arbitrage_in_bouwgeschillen: 'Raad van Arbitrage voor de Bouw',
-	tariefcommissie: 'Tariefcommissie',
-	gemeenschappelijk_hof: 'Gemeenschappelijk Hof van Justitie',
-	constitutioneel_hof: 'Constitutioneel Hof Sint Maarten',
-	gerecht_in_eerste_aanleg: 'Gerechten in eerste aanleg',
-	gerecht_in_ambtenarenzaken: 'Gerecht in Ambtenarenzaken',
+	andere_instantie: 'Andere colleges',
+	koninkrijksinstantie: 'Gerechten in het Caribisch deel',
 	kroon: 'Kroon',
 	buitenlandse_instantie: 'Buitenlandse instanties',
 	hvj_eu: 'Hof van Justitie EU',
@@ -175,6 +163,84 @@ export const TIER_LABEL: Record<Tier, string> = {
 };
 
 export const TIERS = Object.keys(TIER_LABEL) as Tier[];
+
+/** The court within a tier (`court_kind`); in a tier of one kind, the tier itself. */
+export type CourtKind = Schema<'CourtKind'>;
+
+export const COURT_KIND_LABEL: Record<CourtKind, string> = {
+	hoge_raad: 'Hoge Raad',
+	parket: 'Parket bij de Hoge Raad',
+	raad_van_state: 'Raad van State',
+	centrale_raad_van_beroep: 'Centrale Raad van Beroep',
+	college_van_beroep_bedrijfsleven: 'College van Beroep voor het bedrijfsleven',
+	gerechtshof: 'Gerechtshoven',
+	rechtbank: 'Rechtbanken',
+	kantongerecht: 'Kantongerechten',
+	tuchtcollege: 'Tuchtcolleges',
+	ambtenarengerecht: 'Ambtenarengerechten',
+	college_van_beroep_studiefinanciering: 'College van Beroep Studiefinanciering',
+	college_van_beroep_voor_het_hoger_onderwijs: 'College van Beroep voor het hoger onderwijs',
+	raad_van_arbitrage_in_bouwgeschillen: 'Raad van Arbitrage voor de Bouw',
+	raad_van_beroep: 'Raden van Beroep',
+	raad_voor_strafrechtstoepassing_en_jeugdbescherming:
+		'Raad voor Strafrechtstoepassing en Jeugdbescherming',
+	tariefcommissie: 'Tariefcommissie',
+	constitutioneel_hof: 'Constitutioneel Hof Sint Maarten',
+	gemeenschappelijk_hof_van_justitie: 'Gemeenschappelijk Hof van Justitie',
+	gerecht_in_ambtenarenzaken: 'Gerecht in Ambtenarenzaken',
+	gerecht_in_eerste_aanleg: 'Gerechten in eerste aanleg',
+	hof_van_justitie: 'Hof van Justitie van de Nederlandse Antillen',
+	raad_van_beroep_in_ambtenarenzaken: 'Raad van Beroep in Ambtenarenzaken',
+	raad_van_beroep_voor_belastingzaken: 'Raad van Beroep voor Belastingzaken',
+	kroon: 'Kroon',
+	buitenlandse_instantie: 'Buitenlandse instanties',
+	hvj_eu: 'Hof van Justitie EU',
+	ehrm: 'EHRM'
+};
+
+export const COURT_KINDS = Object.keys(COURT_KIND_LABEL) as CourtKind[];
+
+/**
+ * The tiers of API 0.29 and before that are now a court within a wider tier, so a link
+ * from before opens the same courts. `gemeenschappelijk_hof` also held the Hof van Justitie
+ * of the Antilles, which is now a court of its own: it opens the whole tier.
+ */
+export const OLD_TIER: Record<string, { tier: Tier; courtKind?: CourtKind }> = {
+	ambtenarengerecht: { tier: 'andere_instantie', courtKind: 'ambtenarengerecht' },
+	raad_van_beroep: { tier: 'andere_instantie', courtKind: 'raad_van_beroep' },
+	college_van_beroep_hoger_onderwijs: {
+		tier: 'andere_instantie',
+		courtKind: 'college_van_beroep_voor_het_hoger_onderwijs'
+	},
+	college_van_beroep_studiefinanciering: {
+		tier: 'andere_instantie',
+		courtKind: 'college_van_beroep_studiefinanciering'
+	},
+	tariefcommissie: { tier: 'andere_instantie', courtKind: 'tariefcommissie' },
+	raad_voor_strafrechtstoepassing_en_jeugdbescherming: {
+		tier: 'andere_instantie',
+		courtKind: 'raad_voor_strafrechtstoepassing_en_jeugdbescherming'
+	},
+	raad_van_arbitrage_in_bouwgeschillen: {
+		tier: 'andere_instantie',
+		courtKind: 'raad_van_arbitrage_in_bouwgeschillen'
+	},
+	gemeenschappelijk_hof: { tier: 'koninkrijksinstantie' },
+	gerecht_in_eerste_aanleg: { tier: 'koninkrijksinstantie', courtKind: 'gerecht_in_eerste_aanleg' },
+	gerecht_in_ambtenarenzaken: {
+		tier: 'koninkrijksinstantie',
+		courtKind: 'gerecht_in_ambtenarenzaken'
+	},
+	raad_van_beroep_in_ambtenarenzaken: {
+		tier: 'koninkrijksinstantie',
+		courtKind: 'raad_van_beroep_in_ambtenarenzaken'
+	},
+	raad_van_beroep_voor_belastingzaken: {
+		tier: 'koninkrijksinstantie',
+		courtKind: 'raad_van_beroep_voor_belastingzaken'
+	},
+	constitutioneel_hof: { tier: 'koninkrijksinstantie', courtKind: 'constitutioneel_hof' }
+};
 
 /** The status of a verbinding as the API writes it, and as the screen prints it. */
 export const statusLabel = (status: string | null | undefined) =>
