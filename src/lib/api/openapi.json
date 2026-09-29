@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.26.0"
+		"version": "0.27.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -261,7 +261,7 @@
 			"get": {
 				"tags": ["articles", "articles"],
 				"summary": "Explanatory documents of an article",
-				"description": "The documents that explain this article: every EXPLAINS edge that points at the article, at one of its versions or at its instrument. Newest first, the article-level explanations (`target` `article` and `article_version`) before those of the instrument. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). An `instrument` explanation exists only for a dossier whose law changed no articles, so it is no evidence about this article; filter on `target`. One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article — never a 404.",
+				"description": "The documents that explain this article: every EXPLAINS edge that points at the article (`target` `article`) or at one of its versions (`target` `article_version`); an explanation of the law as a whole is no evidence about this article and is not listed. Newest first. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article — never a 404.",
 				"operationId": "get_explained_by_api_articles__bwb_id___article_number__explained_by_get",
 				"parameters": [
 					{
@@ -5602,7 +5602,8 @@
 					},
 					"valid_until": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Valid Until"
+						"title": "Valid Until",
+						"description": "The first day the version is no longer in force, exclusive: the start of the next one. `2021-07-01` is in force up to and including 2021-06-30 (wetten.overheid.nl: \"t/m 30-06-2021\"). Null while it is in force."
 					},
 					"current": { "type": "boolean", "title": "Current", "default": false },
 					"official_url": {
@@ -6068,6 +6069,11 @@
 			"CommitmentDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "How the Kamer cites it: `TZ202603-130`."
+					},
 					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
 					"status": {
 						"anyOf": [
@@ -6256,11 +6262,35 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Abbreviation"
 					},
-					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" },
-					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`."
+					},
+					"kind": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": ["vast", "algemeen", "tijdelijk", "enquete", "delegatie", "overig"]
+							},
+							{ "type": "null" }
+						],
+						"title": "Kind",
+						"description": "`vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`."
+					},
+					"started_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Started On"
+					},
+					"ended_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Ended On",
+						"description": "Null while it sits."
+					},
 					"active_dossier_count": {
 						"type": "integer",
 						"title": "Active Dossier Count",
+						"description": "The open dossiers it leads an activity about; none once ended.",
 						"default": 0
 					}
 				},
@@ -6268,7 +6298,7 @@
 				"type": "object",
 				"required": ["id", "key"],
 				"title": "CommitteeDTO",
-				"description": "A parliamentary committee.\n\n``kind`` distinguishes standing ('vast'), temporary ('tijdelijk'),\nspecial ('bijzonder') and inquiry ('parlementaire_enquete') committees."
+				"description": "A parliamentary committee."
 			},
 			"CommitteeDetailDTO": {
 				"properties": {
@@ -6279,11 +6309,35 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Abbreviation"
 					},
-					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" },
-					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`."
+					},
+					"kind": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": ["vast", "algemeen", "tijdelijk", "enquete", "delegatie", "overig"]
+							},
+							{ "type": "null" }
+						],
+						"title": "Kind",
+						"description": "`vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`."
+					},
+					"started_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Started On"
+					},
+					"ended_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Ended On",
+						"description": "Null while it sits."
+					},
 					"active_dossier_count": {
 						"type": "integer",
 						"title": "Active Dossier Count",
+						"description": "The open dossiers it leads an activity about; none once ended.",
 						"default": 0
 					},
 					"members": {
@@ -6309,7 +6363,7 @@
 				"type": "object",
 				"required": ["id", "key"],
 				"title": "CommitteeDetailDTO",
-				"description": "A committee with its members and a page of the dossiers it leads.\n\n``dossiers`` is one page; ``dossier_total`` counts every dossier that matches the\n``status`` filter, and ``active_dossier_count`` the open ones whatever the filter."
+				"description": "A committee with its members and a page of the dossiers it leads.\n\n``dossiers`` is one page; ``dossier_total`` counts every dossier that matches the\n``status`` filter."
 			},
 			"CommitteeWithMembersDTO": {
 				"properties": {
@@ -6320,11 +6374,35 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Abbreviation"
 					},
-					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" },
-					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`."
+					},
+					"kind": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": ["vast", "algemeen", "tijdelijk", "enquete", "delegatie", "overig"]
+							},
+							{ "type": "null" }
+						],
+						"title": "Kind",
+						"description": "`vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`."
+					},
+					"started_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Started On"
+					},
+					"ended_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Ended On",
+						"description": "Null while it sits."
+					},
 					"active_dossier_count": {
 						"type": "integer",
 						"title": "Active Dossier Count",
+						"description": "The open dossiers it leads an activity about; none once ended.",
 						"default": 0
 					},
 					"members": {
@@ -6921,7 +6999,13 @@
 						"items": { "$ref": "#/components/schemas/DossierInstrumentDTO" },
 						"type": "array",
 						"title": "Instruments",
-						"description": "Instruments legislated in, amended, introduced or repealed by the dossier, one item per instrument, relation and status."
+						"description": "Instruments legislated in, amended, introduced or repealed by the dossier, one item per instrument with every link."
+					},
+					"laws_named": {
+						"items": { "$ref": "#/components/schemas/DossierLawNamedDTO" },
+						"type": "array",
+						"title": "Laws Named",
+						"description": "The laws the title names (`Wetboek van Strafrecht`, `Vreemdelingenwet 2000`), each with whether the graph holds it: a law the dossier changes that is not loaded has no instrument above."
 					},
 					"committees": {
 						"items": { "$ref": "#/components/schemas/DossierCommitteeDTO" },
@@ -7088,13 +7172,58 @@
 						"enum": ["legislated_in", "amends", "introduces", "repeals"],
 						"title": "Relation"
 					},
-					"status": { "type": "string", "enum": ["canoniek", "voorgesteld"], "title": "Status" }
+					"status": { "type": "string", "enum": ["canoniek", "voorgesteld"], "title": "Status" },
+					"links": {
+						"items": { "$ref": "#/components/schemas/DossierInstrumentLinkDTO" },
+						"type": "array",
+						"title": "Links"
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["id", "key", "relation", "status"],
 				"title": "DossierInstrumentDTO",
-				"description": "An instrument a dossier is tied to, and how.\n\n``relation`` is ``legislated_in`` (the instrument came out of this dossier) or\n``amends``, ``introduces``, ``repeals`` (the dossier changes it, resolved from the\narticle or instrument that is changed to the parent instrument). ``status`` is\n``canoniek`` for what an amending publication enacted and ``voorgesteld`` for what a\nbill of the dossier proposes. An instrument with several relations or statuses\nappears once per combination."
+				"description": "An instrument a dossier is tied to, once, and every way it is.\n\n``links`` holds each ``relation`` (``legislated_in``: the instrument came out of this\ndossier; ``amends``, ``introduces``, ``repeals``: the dossier changes it, resolved from\nthe article or instrument that is changed to the parent instrument) with its\n``status`` (``canoniek`` for what an amending publication enacted, ``voorgesteld`` for\nwhat a bill of the dossier proposes). ``relation`` and ``status`` are the first link:\nthe enacted one before the proposed."
+			},
+			"DossierInstrumentLinkDTO": {
+				"properties": {
+					"relation": {
+						"type": "string",
+						"enum": ["legislated_in", "amends", "introduces", "repeals"],
+						"title": "Relation"
+					},
+					"status": { "type": "string", "enum": ["canoniek", "voorgesteld"], "title": "Status" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["relation", "status"],
+				"title": "DossierInstrumentLinkDTO",
+				"description": "One way a dossier is tied to an instrument."
+			},
+			"DossierLawNamedDTO": {
+				"properties": {
+					"name": {
+						"type": "string",
+						"title": "Name",
+						"description": "As the title writes it: `Wetboek van Strafvordering`."
+					},
+					"loaded": {
+						"type": "boolean",
+						"title": "Loaded",
+						"description": "Whether the graph holds the law."
+					},
+					"key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Key",
+						"description": "The instrument key when it does."
+					},
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["name", "loaded"],
+				"title": "DossierLawNamedDTO",
+				"description": "A law the title of a dossier names, and whether the graph holds it."
 			},
 			"DossierListResponse": {
 				"properties": {
@@ -8174,7 +8303,8 @@
 					},
 					"valid_until": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Valid Until"
+						"title": "Valid Until",
+						"description": "The first day the version is no longer in force, exclusive: the start of the next one. `2021-07-01` is in force up to and including 2021-06-30 (wetten.overheid.nl: \"t/m 30-06-2021\"). Null while it is in force."
 					},
 					"current": { "type": "boolean", "title": "Current", "default": false },
 					"official_url": {
@@ -8779,17 +8909,27 @@
 						"title": "Official Url",
 						"description": "The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none."
 					},
-					"article_count": { "type": "integer", "title": "Article Count", "default": 0 },
-					"judgment_count": { "type": "integer", "title": "Judgment Count", "default": 0 },
+					"article_count": {
+						"type": "integer",
+						"title": "Article Count",
+						"description": "The articles of the instrument.",
+						"default": 0
+					},
 					"inbound_citation_count": {
 						"type": "integer",
 						"title": "Inbound Citation Count",
+						"description": "What refers to the instrument and to its articles.",
 						"default": 0
 					},
+					"judgment_count": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Judgment Count",
+						"description": "Not counted here: see `GET /api/instruments/{identifier}`."
+					},
 					"outbound_citation_count": {
-						"type": "integer",
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
 						"title": "Outbound Citation Count",
-						"default": 0
+						"description": "Not counted here: see `GET /api/instruments/{identifier}`."
 					}
 				},
 				"additionalProperties": false,
@@ -8808,7 +8948,8 @@
 					},
 					"valid_until": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Valid Until"
+						"title": "Valid Until",
+						"description": "The first day the version is no longer in force, exclusive: the start of the next one. `2021-07-01` is in force up to and including 2021-06-30 (wetten.overheid.nl: \"t/m 30-06-2021\"). Null while it is in force."
 					},
 					"current": { "type": "boolean", "title": "Current", "default": false },
 					"state_url": {
@@ -10127,7 +10268,7 @@
 					"collection": { "type": "string", "title": "Collection" },
 					"kind": {
 						"type": "string",
-						"enum": ["article", "instrument", "judgment", "dossier", "document"],
+						"enum": ["article", "instrument", "judgment", "dossier", "document", "commitment"],
 						"title": "Kind"
 					},
 					"display_name": {
@@ -10155,7 +10296,7 @@
 						"anyOf": [
 							{
 								"type": "string",
-								"enum": ["article", "instrument", "judgment", "dossier", "document"]
+								"enum": ["article", "instrument", "judgment", "dossier", "document", "commitment"]
 							},
 							{ "type": "string", "const": "none" }
 						],
