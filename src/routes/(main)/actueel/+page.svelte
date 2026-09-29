@@ -21,13 +21,11 @@
 		type Cabinet,
 		type Ministry
 	} from '$lib/components/explore/index/government';
-	import FeedEntry from '$lib/components/actueel/FeedEntry.svelte';
+	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
 	import {
 		FEED_KINDS,
 		KIND_LABEL,
 		atomParams,
-		countLine,
-		dayLabel,
 		daysOf,
 		isFeedKind,
 		normalizeItem,
@@ -408,24 +406,15 @@
 		{:else}
 			<div class="days" class:days--stale={loading}>
 				{#each days as day (day.date)}
-					<section class="day" aria-labelledby="day-{day.date}">
-						<header class="day-head">
-							<h2 class="day-title" id="day-{day.date}">{dayLabel(day.date, today)}</h2>
-							<span class="day-meta">{countLine(day.counts)}</span>
-						</header>
-						<ul class="list">
-							{#each day.entries as entry ('fold' in entry ? entry.fold.id : entry.item.id)}
-								<FeedEntry
-									{entry}
-									{openId}
-									onToggle={toggleOpen}
-									{colorOf}
-									{ministryName}
-									{filterHref}
-								/>
-							{/each}
-						</ul>
-					</section>
+					<FeedDay
+						{day}
+						{today}
+						{openId}
+						onToggle={toggleOpen}
+						{colorOf}
+						{ministryName}
+						{filterHref}
+					/>
 				{/each}
 			</div>
 			{#if cursor}
@@ -550,29 +539,6 @@
 		font-style: italic;
 	}
 
-	.day-head {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-3);
-		padding: var(--s-5) 0 var(--s-2);
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.day-title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 500;
-	}
-	.day-meta {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-	}
 	.days--stale {
 		opacity: 0.6;
 	}
