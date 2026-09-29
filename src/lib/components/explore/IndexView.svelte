@@ -508,19 +508,13 @@
 						api.GET('/api/commitments', { params: { query: { ...query, offset } }, signal })
 					);
 					pages.commitments = toPage(pages.commitments, r.items, offset, r.total);
-					if (offset) return;
-					// The list has no facets: one count per state, under the other filters.
-					const counts = await Promise.all(
-						COMMITMENT_STATUSES.map((st) =>
-							unwrap(
-								api.GET('/api/commitments', {
-									params: { query: { ...filters, status: st, limit: 1 } },
-									signal
-								})
-							).then((c) => [st, c.total] as const)
-						)
-					);
-					statusCounts = new Map(counts);
+					// The number in each state under the other filters, from the list's facet.
+					if (!offset)
+						statusCounts = new Map(
+							(r.facets?.status ?? []).flatMap((f) =>
+								f.value ? [[f.value, f.count] as const] : []
+							)
+						);
 				};
 			}
 		}
