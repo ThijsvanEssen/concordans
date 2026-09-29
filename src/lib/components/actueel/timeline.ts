@@ -1,15 +1,17 @@
 import type { BronRef } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
-import { shortDossierTitle } from '$lib/graph/types';
 import {
 	CLOSE_VOTE,
 	KIND_LABEL,
+	dossierName,
 	normalizeItem,
 	titleOf,
 	voteMargin,
 	type FeedItem,
 	type FeedKind
 } from './feed';
+
+export { dossierName };
 
 // The homepage's Actueel: one stream, newest first, from `/api/feed/summary`. What matters
 // on a day stands on its own with a headline in plain words (a bill voted on or brought
@@ -35,6 +37,8 @@ export type TimelineLine = {
 
 /** Close votes shown on their own per day, the closest first. */
 const CLOSE_SHOWN = 2;
+/** Bills named in the context of a line that counts them; a bill without a short title is long. */
+const BILLS_NAMED = 3;
 /**
  * A day with at most this many votes not on a bill shows each by name: the summary's
  * `few`, which the homepage asks with.
@@ -80,30 +84,6 @@ function listLine(names: string[], max: number, other: [string, string] = ['ande
 /** A surname at the head of a phrase: `van den Berg` gives `Van den Berg`. */
 export const headSurname = (s: string | null | undefined) =>
 	s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
-
-type Dossier = NonNullable<FeedItem['dossier']>;
-
-/**
- * A dossier by a short name: its short title, the name between brackets at the end of its
- * title, else the law a `Wijziging van …` changes.
- * TODO(backend): `short_title` is only the brackets at the end of a title, so most bills
- * have none (`Wijziging van de Archiefwet 1995 …`); until they do, the name from the title.
- */
-export function dossierName(d: Dossier): string {
-	const short = d.short_title?.trim();
-	if (short) return short;
-	const title = d.title?.trim() ?? '';
-	const budget = /^Vaststelling van de begrotingsstaten van (?:het |de )?(.+?) \(/i.exec(
-		title
-	)?.[1];
-	if (budget) return `Begroting ${budget}`;
-	if (/\)\s*$/.test(title)) return shortDossierTitle(title) ?? d.number;
-	const law =
-		/(?:^Wijziging van|tot wijziging van) (?:de |het )?(.+?)(?: in verband met| ter | tot |, | en de | en het |$)/i.exec(
-			title
-		)?.[1];
-	return law?.trim() || shortDossierTitle(title) || d.number;
-}
 
 /** `motie-Grinwis`, `motie-Kostić c.s.`: a paper by its first submitter. */
 function paperOf(noun: string, i: FeedItem): string {
@@ -189,7 +169,7 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 					? those[0].dossier
 						? `Dossier ${those[0].dossier.number}`
 						: null
-					: listLine(names, 5),
+					: listLine(names, BILLS_NAMED),
 				href: one ? hrefOf(those[0]) : actueelDayHref(date, ['stemming']),
 				major: true,
 				failed: !passed
@@ -382,14 +362,7 @@ function kamerstukLine(day: SummaryDay): TimelineLine[] {
 		}
 	const dossiers = [...perDossier.values()]
 		.sort((a, b) => b.count - a.count)
-		.map(({ d }) =>
-			dossierName({
-				key: d.key ?? d.number,
-				number: d.number,
-				title: d.title,
-				short_title: d.short_title
-			})
-		);
+		.map(({ d }) => dossierName(d));
 	const counted = listLine(
 		present.map((p) => plural(p.count, p.noun[0], p.noun[1])),
 		present.length

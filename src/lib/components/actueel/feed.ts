@@ -1,5 +1,4 @@
 import type { Schema } from '$lib/api/types';
-import { shortDossierTitle } from '$lib/graph/types';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
 // dossier (the moties of a debate) fold into one line that opens.
@@ -34,10 +33,32 @@ export const FEED_KINDS = Object.keys(KIND_LABEL) as FeedKind[];
 
 export const isFeedKind = (value: string): value is FeedKind => Object.hasOwn(KIND_LABEL, value);
 
-/** A dossier by its number and short name: the short title, or else one from its title. */
-export function dossierLabel(d: NonNullable<FeedItem['dossier']>): string {
-	const name = d.short_title?.trim() || shortDossierTitle(d.title ?? null);
-	return name ? `${d.number} ${name}` : d.number;
+type Dossier = NonNullable<FeedItem['dossier']>;
+
+/** Past this length a dossier without a short title is named by its title, cut. */
+const DOSSIER_NAME_MAX = 80;
+
+/**
+ * A dossier by a short name, from official data only: its short title, or where that is
+ * the law the bill amends (`amended_law`), `wijziging van {wet}`. Without one, its title,
+ * cut; its number without a title.
+ */
+export function dossierName(
+	d: Pick<Dossier, 'number' | 'title' | 'short_title' | 'short_title_basis'>
+): string {
+	const short = d.short_title?.trim();
+	if (short) return d.short_title_basis === 'amended_law' ? `wijziging van ${short}` : short;
+	const title = d.title?.trim();
+	if (!title) return d.number;
+	return title.length > DOSSIER_NAME_MAX
+		? `${title.slice(0, DOSSIER_NAME_MAX - 1).trimEnd()}…`
+		: title;
+}
+
+/** A dossier by its number and short name: `36889 wijziging van Archiefwet 1995`. */
+export function dossierLabel(d: Dossier): string {
+	const name = dossierName(d);
+	return name === d.number ? d.number : `${d.number} ${name}`;
 }
 
 /** A title that only names the kind of paper: every bill is `Voorstel van wet`. */
