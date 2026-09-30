@@ -559,3 +559,15 @@ describe('judgmentParticipants from the API', () => {
 		expect([vnv.alias, vnv.alsoAs]).toEqual(['VNV', ['Appellant']]);
 	});
 });
+
+describe('a numbered line in the text', () => {
+	it('is a title when it reads as one', () => {
+		expect(splitBodyParagraph('2. De beoordeling')).toEqual([
+			{ kind: 'heading', text: '2. De beoordeling' }
+		]);
+	});
+	it('is a quotation, not a title, when it ends in a closing quote', () => {
+		const segs = splitBodyParagraph('5.1. Both grounds for appeal fail.”');
+		expect(segs.some((s) => s.kind === 'heading')).toBe(false);
+	});
+});

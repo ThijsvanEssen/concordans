@@ -738,12 +738,14 @@ export function splitBodyParagraph(text: string, citations: Span[] = []): Parsed
 
 	// Early-out: backend sometimes emits section titles as kind=body.
 	// Detect: single line (no \n), starts with a decimal number + space, short
-	// enough for a title, and does not end with sentence punctuation.
+	// enough for a title, and does not end with sentence punctuation. A line that ends
+	// in a closing quote is a quotation (a judgment quoted in the facts), never a title.
 	if (
 		!normalized.includes('\n') &&
 		normalized.length < 130 &&
 		!normalized.endsWith('.') &&
-		!normalized.endsWith(',')
+		!normalized.endsWith(',') &&
+		!/[”’"'»]$/.test(normalized)
 	) {
 		const inlineTitle = normalized.match(/^(\d+(?:\.\d+)*\.?)\s+(\S.+)$/);
 		if (inlineTitle) {
