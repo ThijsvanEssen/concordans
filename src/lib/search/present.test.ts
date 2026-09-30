@@ -72,6 +72,19 @@ describe('presentHit', () => {
 		});
 		expect(presentHit(amendement, 'x').title).toBe('Amendement, nr. 8');
 	});
+
+	it('names a stuk outside a dossier by its own name, with its kind beside it', () => {
+		const stenogram = hit({
+			collection: 'documents',
+			key: 'c',
+			display_name: 'Stikstof en natuur',
+			extra: { kind: 'Stenogram', dossier_number: null, sequence: null }
+		});
+		expect(presentHit(stenogram, 'stikstof')).toMatchObject({
+			title: 'Stikstof en natuur',
+			context: 'Stenogram'
+		});
+	});
 });
 
 describe('bySection', () => {

@@ -118,8 +118,12 @@ export function presentHit(hit: Hit, query: string): Presented {
 			};
 		}
 		case 'documents': {
-			// The name of a stuk is its dossier's title; its kind and number tell stukken apart.
+			// The name of a Kamerstuk is its dossier's title, the heading it stands under; its
+			// kind and number tell stukken apart. A stuk outside a dossier (a stenogram) has
+			// its own name: `Stikstof en natuur`, with its kind beside it.
 			const kind = extra(hit, 'kind') || (hit.display_name ?? hit.key);
+			if (!sectionOf(hit) && hit.display_name && hit.display_name !== kind)
+				return { title: hit.display_name, context: kind, snippet: null };
 			const sequence = hit.extra?.sequence;
 			const number =
 				typeof sequence === 'string' || typeof sequence === 'number' ? String(sequence) : '';
