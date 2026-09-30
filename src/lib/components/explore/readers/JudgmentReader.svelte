@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { judgmentCite } from '$lib/text/judgment-cite';
+	import { judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -43,7 +43,7 @@
 	const rov = (number: string, id?: string | null) => id || `rov-${number}`;
 
 	// Citeren van een overweging, parallel aan `citeArticle` voor een lid.
-	// Kort: HR 19 juli 2019, r.o. 3.1; voluit with the ECLI. The date is in both.
+	// Kort: HR 19 juli 2019, r.o. 3.1 (EHRM …, § 9); voluit with the ECLI. The date is in both.
 	function citeOverweging(
 		num: string,
 		ecliStr: string | null,
@@ -53,9 +53,10 @@
 	) {
 		if (!ecliStr) return null;
 		const { short, full } = judgmentCite(ecliStr, date, court);
+		const at = paragraphCite(ecliStr, num);
 		return {
-			kort: `${short}, r.o. ${num}`,
-			voluit: `${full}, r.o. ${num}`,
+			kort: `${short}, ${at}`,
+			voluit: `${full}, ${at}`,
 			link: permalink(page.url, id)
 		};
 	}
@@ -298,6 +299,10 @@
 			{#if paragraphs.length === 0 && !hasSummary}
 				<p class="reader-empty-text">Geen tekst beschikbaar.</p>
 			{/if}
+			<!-- The terms of HUDOC ask for the source under a text of the Court. -->
+			{#if j.source === 'echr' && paragraphs.length > 0}
+				<p class="reader-attribution">Tekst: © ECHR-CEDH, uit HUDOC.</p>
+			{/if}
 		</div>
 	{/if}
 </ReaderFrame>
@@ -317,6 +322,14 @@
 		color: var(--ink-3);
 	}
 
+	.reader-attribution {
+		margin: var(--s-6) 0 0;
+		padding-top: var(--s-3);
+		border-top: 1px solid var(--rule);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
 	.reader-source-link {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);

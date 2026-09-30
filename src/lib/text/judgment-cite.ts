@@ -70,3 +70,12 @@ export function judgmentCite(
 	const short = when ? `${courtCite(ecli, courtName)} ${when}` : courtCite(ecli, courtName);
 	return { short, full: `${short}, ${ecli.trim().toUpperCase()}` };
 }
+
+/**
+ * How a numbered paragraph is cited: `r.o. 3.1` (rechtsoverweging) in a Dutch judgment,
+ * `§ 9` in a judgment of the EHRM or the HvJ EU.
+ */
+export function paragraphCite(ecli: string | null | undefined, number: string): string {
+	const [, country = ''] = (ecli ?? '').trim().toUpperCase().split(':');
+	return country === 'CE' || country === 'EU' ? `§ ${number}` : `r.o. ${number}`;
+}

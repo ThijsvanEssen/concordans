@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { courtCite, judgmentCite } from './judgment-cite';
+import { courtCite, judgmentCite, paragraphCite } from './judgment-cite';
 
 describe('judgmentCite', () => {
 	it('cites the Hoge Raad as lawyers do', () => {
@@ -32,5 +32,13 @@ describe('courtCite', () => {
 	});
 	it('falls back on the court without a place in its name', () => {
 		expect(courtCite('ECLI:NL:RBMNE:2026:4501', null)).toBe('Rb.');
+	});
+});
+
+describe('paragraphCite', () => {
+	it('cites a Dutch rechtsoverweging as r.o. and a paragraph of Strasbourg or Luxembourg as §', () => {
+		expect(paragraphCite('ECLI:NL:HR:2019:1278', '3.1')).toBe('r.o. 3.1');
+		expect(paragraphCite('ECLI:CE:ECHR:2026:0908JUD000748123', '9')).toBe('§ 9');
+		expect(paragraphCite('ECLI:EU:C:2020:12', '45')).toBe('§ 45');
 	});
 });
