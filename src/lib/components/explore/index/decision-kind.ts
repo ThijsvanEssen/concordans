@@ -38,3 +38,10 @@ export function decisionOutcome(d: Decision): string | null {
 	const rest = d.decision_kind?.replace(/^Stemmen\s*-\s*/i, '').trim();
 	return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : null;
 }
+
+/**
+ * How the Eerste Kamer decided, in its own words without the outcome it adds after the comma:
+ * `Stemming bij zitten en opstaan, aangenomen` gives `Stemming bij zitten en opstaan`.
+ */
+export const decisionMethod = (d: { method?: string | null }): string | null =>
+	d.method?.replace(/,\s*(aangenomen|verworpen)\s*$/i, '').trim() || null;

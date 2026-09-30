@@ -153,7 +153,7 @@ const bundledVote = (i: FeedItem) =>
 	i.kind === 'stemming' && !isBillVote(i) && voteMargin(i) > CLOSE_VOTE;
 
 /**
- * What a fold is called: `Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen`, or
+ * What a fold is called: `Tweede Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen`, or
  * `8 moties over 21501-32 Landbouw- en Visserijraad`.
  */
 export function foldTitle(f: Fold, votes?: VoteCount[]): string {
@@ -189,7 +189,7 @@ export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 		]
 			.filter(Boolean)
 			.join(' en ');
-		return `Kamer stemt over ${lead} ${noun}: ${passed} aangenomen, ${lead - passed} verworpen${also ? `, en over ${also}` : ''}`;
+		return `Tweede Kamer stemt over ${lead} ${noun}: ${passed} aangenomen, ${lead - passed} verworpen${also ? `, en over ${also}` : ''}`;
 	}
 	return `${f.items.length} ${KIND_LABEL[f.kind].many} over ${dossierLabel(f.dossier)}`;
 }

@@ -1,5 +1,6 @@
 import type { BronRef } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
+import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 import {
 	AMENDEMENT,
 	CLOSE_VOTE,
@@ -41,8 +42,8 @@ export type TimelineLine = {
 
 /** Close votes shown on their own per day, the closest first. */
 const CLOSE_SHOWN = 2;
-/** Who decides, as a headline names the Kamer: the Tweede plainly, the Eerste by name. */
-const KAMER: Record<'TK' | 'EK', string> = { TK: 'Kamer', EK: 'Eerste Kamer' };
+/** Who decides, as a headline names the Kamer: always by name, as both vote. */
+const KAMER = CHAMBER_NAME;
 /** Bills named in the context of a line that counts them; a bill without a short title is long. */
 const BILLS_NAMED = 3;
 /**
@@ -146,7 +147,7 @@ function voteLine(i: FeedItem, noun: string): TimelineLine {
 		date: i.date,
 		label: `Stemming, ${passed ? 'aangenomen' : 'verworpen'}`,
 		title: cut(
-			`Kamer ${passed ? 'neemt' : 'verwerpt'} ${paper}${passed ? ' aan' : ''}${subject ? ` over ${subject}` : ''}`
+			`${KAMER[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} ${paper}${passed ? ' aan' : ''}${subject ? ` over ${subject}` : ''}`
 		),
 		context: voteContext(i),
 		href: hrefOf(i),
@@ -215,7 +216,7 @@ function otherVoteLines(day: SummaryDay, votes: FeedItem[]): TimelineLine[] {
 }
 
 /**
- * The votes of a day not on a bill, counted: `Kamer stemt over 125 moties: 88 aangenomen,
+ * The votes of a day not on a bill, counted: `Tweede Kamer stemt over 125 moties: 88 aangenomen,
  * 37 verworpen`, with the amendementen and the rest as context.
  */
 function voteBundleLine(day: SummaryDay): TimelineLine[] {
@@ -246,8 +247,8 @@ function voteBundleLine(day: SummaryDay): TimelineLine[] {
 			label: 'Stemmingen',
 			title:
 				count === 1
-					? `Kamer ${passed ? 'neemt' : 'verwerpt'} een ${noun[0]}${passed ? ' aan' : ''}`
-					: `Kamer stemt over ${plural(count, noun[0], noun[1])}: ${passed} aangenomen, ${count - passed} verworpen`,
+					? `Tweede Kamer ${passed ? 'neemt' : 'verwerpt'} een ${noun[0]}${passed ? ' aan' : ''}`
+					: `Tweede Kamer stemt over ${plural(count, noun[0], noun[1])}: ${passed} aangenomen, ${count - passed} verworpen`,
 			context: also.length ? `Ook ${listLine(also, 2)}` : null,
 			href: actueelDayHref(day.date, ['stemming']),
 			major: false

@@ -8,6 +8,7 @@ import { bucketKey } from '$lib/api/nodes';
 import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
 import { formatCount, isInternational } from './filter';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
+import { chamberOf, type Chamber } from './chamber';
 
 export { isInternational };
 
@@ -75,6 +76,13 @@ const national = (n: Neighbor) => !isInternational(n);
 // What a lid signed a stuk as (`meta.capacity` of AUTHORED): as Kamerlid, as
 // bewindspersoon, or in another function (vicepresident van de Raad van State).
 type Capacity = 'kamerlid' | 'bewindspersoon' | 'overig';
+/** A vote of the one Kamer or the other: the API's `chamber`, else the key (`ek_…`). */
+const votedIn = (chamber: Chamber) => (n: Neighbor) =>
+	chamberOf({
+		key: n.key,
+		chamber: (n.props as Record<string, unknown> | null)?.chamber as string
+	}) === chamber;
+
 const signedAs = (capacity: Capacity) => (n: Neighbor) =>
 	(n.meta as Record<string, unknown> | null)?.capacity === capacity;
 
@@ -198,7 +206,15 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Stemmingen over dit dossier',
 			noun: 'stemmingen',
 			section: 'Tweede Kamer',
-			match: [{ relation: 'ABOUT', direction: 'inbound', collection: 'decisions' }]
+			match: [
+				{
+					relation: 'ABOUT',
+					direction: 'inbound',
+					collection: 'decisions',
+					where: votedIn('TK'),
+					split: true
+				}
+			]
 		},
 		{
 			id: 'commitments',
@@ -213,6 +229,21 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			noun: 'stukken',
 			section: 'Eerste Kamer',
 			load: 'dossier-documents-ek'
+		},
+		{
+			id: 'decisions-ek',
+			label: 'Stemmingen over dit dossier',
+			noun: 'stemmingen',
+			section: 'Eerste Kamer',
+			match: [
+				{
+					relation: 'ABOUT',
+					direction: 'inbound',
+					collection: 'decisions',
+					where: votedIn('EK'),
+					split: true
+				}
+			]
 		},
 		{ ...EUROPEAN, match: undefined, load: 'dossier-international' }
 	],

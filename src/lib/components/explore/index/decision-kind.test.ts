@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { decisionKindFromParam, decisionOutcome, isHammer } from './decision-kind';
+import {
+	decisionKindFromParam,
+	decisionMethod,
+	decisionOutcome,
+	isHammer
+} from './decision-kind';
 
 describe('decisionOutcome', () => {
 	it('names a vote, a hamerstuk and a decision that is no vote', () => {
@@ -26,5 +31,15 @@ describe('decisionKindFromParam', () => {
 		expect(decisionKindFromParam('wetsvoorstel')).toBe('Wetgeving');
 		expect(decisionKindFromParam('overig')).toBeUndefined();
 		expect(decisionKindFromParam('')).toBeUndefined();
+	});
+});
+
+describe('decisionMethod', () => {
+	it('takes the Eerste Kamer’s method without the outcome it adds', () => {
+		expect(decisionMethod({ method: 'Stemming bij zitten en opstaan, aangenomen' })).toBe(
+			'Stemming bij zitten en opstaan'
+		);
+		expect(decisionMethod({ method: 'Hamerstuk' })).toBe('Hamerstuk');
+		expect(decisionMethod({ method: null })).toBeNull();
 	});
 });

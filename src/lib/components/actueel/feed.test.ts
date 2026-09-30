@@ -165,7 +165,7 @@ describe('the votes of a day', () => {
 		const [first, ...rest] = day.entries;
 		expect('fold' in first && first.fold.id).toBe('fold/2026-09-22/stemming');
 		expect('fold' in first && foldTitle(first.fold)).toBe(
-			'Kamer stemt over 2 moties: 1 aangenomen, 1 verworpen, en over 1 amendement'
+			'Tweede Kamer stemt over 2 moties: 1 aangenomen, 1 verworpen, en over 1 amendement'
 		);
 		expect(rest.map((e) => ('item' in e ? e.item.kind : 'fold'))).toEqual([
 			'Brief regering',
@@ -182,7 +182,9 @@ describe('the votes of a day', () => {
 					{ chamber: 'TK', subkind: 'Motie', outcome: 'verworpen', count: 37 },
 					{ chamber: 'TK', subkind: 'Amendement', outcome: 'aangenomen', count: 9 }
 				])
-		).toBe('Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen, en over 9 amendementen');
+		).toBe(
+			'Tweede Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen, en over 9 amendementen'
+		);
 	});
 
 	it('stay single lines when there are few', () => {

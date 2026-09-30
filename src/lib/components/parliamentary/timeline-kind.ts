@@ -11,14 +11,17 @@ type EntryLike = { kind?: string | null; node_type?: string | null; node_id?: st
 export const isEkDecision = (nodeId: string | null | undefined) =>
 	!!nodeId?.startsWith('decisions/ek_');
 
-/** `Stemming over motie` for the vote, `Motie` for the paper, `Stemming Eerste Kamer`. */
+/**
+ * `Stemming Tweede Kamer, over motie` for the vote, `Motie` for the paper, `Stemming Eerste
+ * Kamer`: a timeline holds the votes of both Kamers, so each names its own.
+ */
 export function timelineKind(e: EntryLike): string {
 	const kind = e.kind?.trim() || '';
 	if (e.node_type === 'decision') {
 		if (isEkDecision(e.node_id)) return 'Stemming Eerste Kamer';
 		return kind && kind.toLowerCase() !== 'stemming'
-			? `Stemming over ${kind.toLowerCase()}`
-			: 'Stemming';
+			? `Stemming Tweede Kamer, over ${kind.toLowerCase()}`
+			: 'Stemming Tweede Kamer';
 	}
 	return kind ? kind.charAt(0).toUpperCase() + kind.slice(1) : 'Overig';
 }

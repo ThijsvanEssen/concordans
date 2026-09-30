@@ -8,8 +8,9 @@
 	import { bronHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate } from './_shared';
-	import { votersOf } from './voters';
-	import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
+	import { ekFactionGroups, votersOf } from './voters';
+	import { decisionMethod, decisionOutcome } from '$lib/components/explore/index/decision-kind';
+	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -78,11 +79,13 @@
 			)}
 			{@const dossierNumbers = (node.raw?.props?.dossier_numbers ?? []) as string[]}
 			{@const voters = votersOf(d)}
+			{@const chamber = d.chamber ?? 'TK'}
 
 			<header class="head">
 				<span class="kicker">
 					<KindGlyph collection="decisions" />
 					{bronLabel('decisions')}
+					{chamberName(chamber)}
 					{#if d.date}<span class="dot">·</span>{formatLongDate(d.date)}{/if}
 				</span>
 				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet beschikbaar'}</h2>
@@ -112,7 +115,7 @@
 					<h3 class="sec-title">{doc.kind ?? 'Document'}</h3>
 					<p class="document-text">{doc.text}</p>
 				</section>
-			{:else}
+			{:else if chamber !== 'EK'}
 				<p class="document-unavailable">Tekst niet beschikbaar.</p>
 			{/if}
 
@@ -130,9 +133,31 @@
 							>{/each}
 					</p>
 				</div>
+			{:else if chamber === 'EK' && decisionMethod(d)}
+				<p class="vote-totals">{decisionMethod(d)}</p>
 			{:else if d.decision_kind}
 				<!-- A decision without votes (a hamerstuk): no tally, the Kamer's own words. -->
 				<p class="vote-totals">{d.decision_kind}</p>
+			{/if}
+
+			{#if chamber === 'EK'}
+				{@const groups = ekFactionGroups(d)}
+				{#if groups.length > 0}
+					<section class="sec">
+						<h3 class="sec-title">Fracties</h3>
+						<dl class="ek-factions">
+							{#each groups as g (g.label)}
+								<dt>{g.label}</dt>
+								<dd>{g.names.join(', ')}</dd>
+							{/each}
+						</dl>
+					</section>
+				{/if}
+				<p class="source">
+					Bron: <a href={d.source_url ?? EK_SOURCE.url} rel="external"
+						>{EK_SOURCE.name}, {EK_SOURCE.site}</a
+					>{d.retrieved_on ? `, geraadpleegd op ${formatLongDate(d.retrieved_on)}` : ''}.
+				</p>
 			{/if}
 
 			{#if voters.length > 0}
@@ -191,6 +216,29 @@
 	}
 	.dot {
 		opacity: 0.6;
+	}
+	.ek-factions {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		gap: var(--s-2) var(--s-4);
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		line-height: var(--lh-snug);
+	}
+	.ek-factions dt {
+		font-weight: 500;
+		color: var(--ink);
+	}
+	.ek-factions dd {
+		margin: 0;
+		color: var(--ink-2);
+	}
+	.source {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.title {
 		font-family: var(--font-serif);

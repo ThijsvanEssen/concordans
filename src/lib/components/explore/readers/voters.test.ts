@@ -1,6 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import { UNNAMED } from '$lib/verbonden/rows';
-import { votersOf } from './voters';
+import { ekFactionGroups, votersOf } from './voters';
+
+describe('ekFactionGroups', () => {
+	it('lists the fracties for, against and noted, leaving out an empty side', () => {
+		expect(
+			ekFactionGroups({
+				factions_for: ['CDA', 'VVD'],
+				factions_against: ['BBB', 'FVD'],
+				factions_noted: []
+			})
+		).toEqual([
+			{ label: 'Voor', names: ['CDA', 'VVD'] },
+			{ label: 'Tegen', names: ['BBB', 'FVD'] }
+		]);
+		expect(ekFactionGroups({ factions_noted: ['SGP', 'FVD', 'JA21'] })).toEqual([
+			{ label: 'Aantekening', names: ['SGP', 'FVD', 'JA21'] }
+		]);
+	});
+});
 
 const vote = (name: string, choice: string, seats: number) => ({
 	voter_id: `members/${name || 'x'}`,

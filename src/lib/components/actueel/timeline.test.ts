@@ -143,9 +143,9 @@ describe('dayLines', () => {
 			[...bills, schilder]
 		);
 		expect(lines.map((l) => l.title)).toEqual([
-			'Kamer neemt twee wetsvoorstellen aan',
-			'Kamer verwerpt motie-Schilder over strafverzwaring',
-			'Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen'
+			'Tweede Kamer neemt twee wetsvoorstellen aan',
+			'Tweede Kamer verwerpt motie-Schilder over strafverzwaring',
+			'Tweede Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen'
 		]);
 		expect(lines[0].context).toBe('wijziging van Wet 36889 en wijziging van Wet 36899');
 		expect(lines[1].failed).toBe(true);
@@ -181,7 +181,7 @@ describe('dayLines', () => {
 				'Eerste Kamer, aangenomen',
 				'Eerste Kamer neemt wetsvoorstel aan: Wet startprocedure b3-scholen'
 			],
-			['Stemmingen', 'Kamer stemt over 8 moties: 5 aangenomen, 3 verworpen']
+			['Stemmingen', 'Tweede Kamer stemt over 8 moties: 5 aangenomen, 3 verworpen']
 		]);
 		expect(headlineOf(ek).title).toBe(
 			'Eerste Kamer neemt wetsvoorstel aan: Wet startprocedure b3-scholen'
@@ -198,7 +198,7 @@ describe('dayLines', () => {
 			[grinwis]
 		);
 		expect(lines.map((l) => [l.title, l.major])).toEqual([
-			['Kamer neemt motie-Grinwis aan over steward ownership', false]
+			['Tweede Kamer neemt motie-Grinwis aan over steward ownership', false]
 		]);
 	});
 
@@ -290,7 +290,7 @@ describe('headlineOf', () => {
 	it('heads one event as the homepage does, major when it matters', () => {
 		expect(headlineOf(schilder)).toEqual({
 			label: 'Stemming, verworpen',
-			title: 'Kamer verwerpt motie-Schilder over strafverzwaring',
+			title: 'Tweede Kamer verwerpt motie-Schilder over strafverzwaring',
 			major: true,
 			failed: true
 		});
@@ -305,7 +305,7 @@ describe('headlineOf', () => {
 					}
 				})
 			).title
-		).toBe('Kamer neemt motie-Grinwis aan over steward ownership');
+		).toBe('Tweede Kamer neemt motie-Grinwis aan over steward ownership');
 		expect(
 			headlineOf(
 				vote(100, 50, {
@@ -315,7 +315,7 @@ describe('headlineOf', () => {
 			)
 		).toMatchObject({
 			label: 'Wetsvoorstel, aangenomen',
-			title: 'Kamer neemt wetsvoorstel aan: Archiefwet'
+			title: 'Tweede Kamer neemt wetsvoorstel aan: Archiefwet'
 		});
 		expect(
 			headlineOf(item({ kind: 'Brief regering', title: 'Voortgang waterstofbeleid' }))
