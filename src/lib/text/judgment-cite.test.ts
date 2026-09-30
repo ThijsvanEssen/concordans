@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { courtCite, judgmentCite, paragraphCite } from './judgment-cite';
+import { authorCite, courtCite, judgmentCite, paragraphCite } from './judgment-cite';
 
 describe('judgmentCite', () => {
 	it('cites the Hoge Raad as lawyers do', () => {
@@ -46,5 +46,21 @@ describe('paragraphCite', () => {
 		expect(paragraphCite('ecli_nl_phr_2020_453', '3.4')).toBe('onder 3.4');
 		expect(paragraphCite('judgments/ecli_ce_echr_2026_0908jud000748123', '9')).toBe('§ 9');
 		expect(paragraphCite('ecli_nl_hr_2019_1278', '3.1')).toBe('r.o. 3.1');
+	});
+});
+
+describe('authorCite', () => {
+	it('names the A-G of a conclusion by surname, as it is cited', () => {
+		expect(authorCite('T. Hartlief')).toBe('A-G Hartlief');
+		expect(authorCite('P.J. Wattel')).toBe('A-G Wattel');
+		expect(authorCite('Wattel')).toBe('A-G Wattel');
+		expect(authorCite('E.M. Wesseling-van Gent')).toBe('A-G Wesseling-van Gent');
+		expect(authorCite('J. Wortel', ['De Procureur-Generaal bij de', 'P-G'])).toBe('P-G Wortel');
+		expect(authorCite(null)).toBeNull();
+	});
+	it('goes into the citation of the conclusion', () => {
+		expect(judgmentCite('ECLI:NL:PHR:2020:453', '2020-05-08', null, 'A-G Hartlief').full).toBe(
+			'Conclusie A-G Hartlief 8 mei 2020, ECLI:NL:PHR:2020:453'
+		);
 	});
 });

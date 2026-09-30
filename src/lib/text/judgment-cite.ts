@@ -60,14 +60,37 @@ export function courtCite(ecli: string, courtName?: string | null): string {
 	return courtName?.trim() || code;
 }
 
-/** `HR 19 juli 2019` and `HR 19 juli 2019, ECLI:NL:HR:2019:1278`. */
+/**
+ * The advocate-general of a conclusion as a citation names them: `A-G Hartlief` from
+ * `T. Hartlief` (the initials go), `P-G` where the signature says Procureur-Generaal.
+ */
+export function authorCite(
+	name: string | null | undefined,
+	signature: string[] = []
+): string | null {
+	const surname = (name ?? '')
+		.trim()
+		.split(/\s+/)
+		.filter((part) => !/^([A-Z]\.)+$/.test(part) && !/^mr\.?$/i.test(part))
+		.join(' ');
+	if (!surname) return null;
+	const pg = signature.some((line) => /^(p-g|procureur-generaal)$/i.test(line.trim()));
+	return `${pg ? 'P-G' : 'A-G'} ${surname}`;
+}
+
+/**
+ * `HR 19 juli 2019` and `HR 19 juli 2019, ECLI:NL:HR:2019:1278`; a conclusion with its
+ * author: `Conclusie A-G Hartlief 8 mei 2020`.
+ */
 export function judgmentCite(
 	ecli: string,
 	date: string | null | undefined,
-	courtName?: string | null
+	courtName?: string | null,
+	author?: string | null
 ): { short: string; full: string } {
 	const when = longDate(date);
-	const short = when ? `${courtCite(ecli, courtName)} ${when}` : courtCite(ecli, courtName);
+	const who = author ? `${courtCite(ecli, courtName)} ${author}` : courtCite(ecli, courtName);
+	const short = when ? `${who} ${when}` : who;
 	return { short, full: `${short}, ${ecli.trim().toUpperCase()}` };
 }
 

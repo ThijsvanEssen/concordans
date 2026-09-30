@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
+	import { authorCite, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -53,10 +53,11 @@
 		ecliStr: string | null,
 		date: string | null,
 		court: string | null,
-		id: string
+		id: string,
+		author: string | null
 	) {
 		if (!ecliStr) return null;
-		const { short, full } = judgmentCite(ecliStr, date, court);
+		const { short, full } = judgmentCite(ecliStr, date, court, author);
 		const at = paragraphCite(ecliStr, num);
 		return {
 			kort: `${short}, ${at}`,
@@ -131,8 +132,13 @@
 		{@const signed = signatureStart(paragraphs)}
 		{@const conclusion = j.decision_kind === 'conclusie'}
 		{@const replacedBy = j.same_as ?? null}
-		<!-- A replacement the dataset lacks: named, without a link. TODO(backend R): read `replaced_by` of the detail, not of `props`, once judgments-r gives it. -->
-		{@const replacedOutside = replacedBy ? null : textProp(j.props?.replaced_by)}
+		<!-- A replacement the dataset lacks: named, without a link (`replaced_by`, API 0.72). -->
+		{@const replacedOutside = replacedBy ? null : (j.replaced_by ?? null)}
+		<!-- The A-G of a conclusion, as it is cited: Conclusie A-G Hartlief 8 mei 2020. -->
+		{@const author = authorCite(
+			j.advocate_general,
+			paragraphs.filter((p) => p.kind === 'signature').map((p) => p.text)
+		)}
 		{@const alsoAs = view.data.same_as ?? []}
 		{@const outside = j.unresolved_citations ?? []}
 		<ReaderHead
@@ -140,7 +146,7 @@
 			kind={conclusion ? 'Conclusie' : null}
 			juris={textProp(j.props?.court)}
 			title={(j.ecli
-				? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court)).full
+				? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author).full
 				: (j.display_name ?? 'Uitspraak')) + (j.names?.length ? ` (${j.names.join(', ')})` : '')}
 		>
 			<div class="reader-meta-row">
@@ -302,7 +308,8 @@
 								j.ecli ?? null,
 								textProp(j.props?.date),
 								textProp(j.props?.court),
-								rovId
+								rovId,
+								author
 							)}
 							<div
 								id={rovId}

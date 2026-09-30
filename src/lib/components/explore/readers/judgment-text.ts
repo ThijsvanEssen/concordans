@@ -846,8 +846,9 @@ const SIGNATURE_LINE_RE =
 
 /**
  * Where the signature at the end of a text starts: the index of the first of the
- * unnumbered lines after the last paragraph that read as one; `paragraphs.length`
- * when the text ends otherwise.
+ * closing lines the API marks `signature` (API 0.72), or else of the unnumbered lines
+ * after the last paragraph that read as one; `paragraphs.length` when the text ends
+ * otherwise.
  */
 export function signatureStart(
 	paragraphs: { kind?: string | null; number?: string | null; text: string }[]
@@ -855,7 +856,10 @@ export function signatureStart(
 	let i = paragraphs.length;
 	while (i > 0) {
 		const p = paragraphs[i - 1];
-		if (p.kind !== 'body' || p.number || !SIGNATURE_LINE_RE.test(p.text.trim())) break;
+		const signs =
+			p.kind === 'signature' ||
+			(p.kind === 'body' && !p.number && SIGNATURE_LINE_RE.test(p.text.trim()));
+		if (!signs) break;
 		i--;
 	}
 	return i;
