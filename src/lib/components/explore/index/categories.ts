@@ -11,7 +11,7 @@ type Group = { label: string; keys: readonly (Collection | 'ministers')[] };
 
 export const INDEX_GROUPS = [
 	{ label: 'Recht', keys: ['instruments', 'judgments'] },
-	{ label: 'Parlementaire behandeling', keys: ['dossiers', 'decisions'] },
+	{ label: 'Parlementaire behandeling', keys: ['dossiers', 'decisions', 'documents'] },
 	{ label: 'Parlement', keys: ['members', 'factions', 'committees'] },
 	{ label: 'Regering', keys: ['cabinets', 'ministers', 'commitments'] }
 ] as const satisfies readonly Group[];
@@ -39,6 +39,8 @@ const ABOUT: Record<IndexCategory, string> = {
 		'Kamerdossiers: wetsvoorstellen, begrotingen, verdragen en andere onderwerpen, met hun stukken, behandeling en uitkomst.',
 	decisions:
 		'Besluiten van de Tweede Kamer en de Eerste Kamer over wetsvoorstellen, moties en amendementen, met de stemmen per fractie of per lid.',
+	documents:
+		'Stukken van de Tweede Kamer en de Eerste Kamer: brieven, verslagen, moties, amendementen en wetsvoorstellen, met hun plaats in het dossier.',
 	members: 'Leden van de Tweede Kamer en de Eerste Kamer, met hun fractie en commissies.',
 	factions: 'Fracties in de Tweede Kamer en de Eerste Kamer, met hun zetels en leden.',
 	committees: 'Commissies van de Tweede Kamer en de Eerste Kamer, met hun leden en activiteiten.',

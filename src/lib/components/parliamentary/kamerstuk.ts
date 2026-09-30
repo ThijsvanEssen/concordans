@@ -29,6 +29,38 @@ export function kamerstukOf(
 export const kamerstukNumber = (k: Kamerstuk, chamber?: string | null): string =>
 	chamber === 'EK' ? `${k.dossier}, ${k.number}` : `${k.dossier}, nr. ${k.number}`;
 
+/** `2025-2026` as a citation writes the vergaderjaar: `2025/26`. */
+export function sessionYear(value: string | null | undefined): string | null {
+	const m = value?.trim().match(/^(\d{4})\s*[-/]\s*(\d{2,4})$/);
+	return m ? `${m[1]}/${m[2].slice(-2)}` : null;
+}
+
+type Paper = {
+	chamber?: string | null;
+	session_year?: string | null;
+	dossier_number?: string | null;
+	dossier_suffix?: string | null;
+	number?: string | null;
+};
+
+/** `36791, C` or `36945 IV, nr. 5`: a paper's place in its dossier; null for no Kamerstuk. */
+export function kamerstukLabel(p: Paper): string | null {
+	if (!p.dossier_number || !p.number) return null;
+	const dossier = p.dossier_suffix ? `${p.dossier_number} ${p.dossier_suffix}` : p.dossier_number;
+	return p.chamber === 'EK' ? `${dossier}, ${p.number}` : `${dossier}, nr. ${p.number}`;
+}
+
+/**
+ * A paper as it is cited: `Kamerstukken I 2025/26, 36791, C` or `Kamerstukken II 2025/26,
+ * 36791, nr. 5`. Null for a paper that is no Kamerstuk (a sprekerslijst, an antwoord).
+ */
+export function kamerstukCitation(p: Paper): string | null {
+	const label = kamerstukLabel(p);
+	if (!label) return null;
+	const year = sessionYear(p.session_year);
+	return `Kamerstukken ${p.chamber === 'EK' ? 'I' : 'II'}${year ? ` ${year}` : ''}, ${label}`;
+}
+
 const LEAD = /^(?:Kamerstuk|TK|EK)\s+[\w()-]+,\s*nr\.\s*[\w-]+\s*[.:]\s*/i;
 
 /** A title without the Kamerstuk the API puts before it, where that is shown on its own. */

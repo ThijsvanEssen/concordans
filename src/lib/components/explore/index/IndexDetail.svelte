@@ -13,6 +13,7 @@
 	import { judgmentKind } from './judgment-kind';
 	import { decisionMethod, decisionOutcome, isHammer } from './decision-kind';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
+	import { kamerstukCitation, kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
 
 	let {
 		category,
@@ -28,7 +29,8 @@
 			| Schema<'CommitteeDTO'>
 			| Schema<'MemberDTO'>
 			| Schema<'FactionDTO'>
-			| Schema<'DecisionSummaryDTO'>;
+			| Schema<'DecisionSummaryDTO'>
+			| Schema<'DocumentListItemDTO'>;
 		/** What a link names: `judgments/<key>`, `dossiers/<number>`. */
 		bron: string;
 		/** The Kamer the list shows: a member may sit in both, the list says which. */
@@ -54,7 +56,8 @@
 		decisions: 'Stemming · Tweede Kamer',
 		cabinets: 'Kabinet · regering',
 		ministers: 'Bewindspersoon · regering',
-		commitments: 'Toezegging · regering'
+		commitments: 'Toezegging · regering',
+		documents: 'Stuk'
 	};
 
 	// Only a bron with a text of its own is read at full width; the rest reads beside the network.
@@ -73,6 +76,7 @@
 	const m = $derived(category === 'members' ? (record as Schema<'MemberDTO'>) : null);
 	const f = $derived(category === 'factions' ? (record as Schema<'FactionDTO'>) : null);
 	const s = $derived(category === 'decisions' ? (record as Schema<'DecisionSummaryDTO'>) : null);
+	const doc = $derived(category === 'documents' ? (record as Schema<'DocumentListItemDTO'>) : null);
 
 	// Seats for and against; abstentions take no side. Any other choice gets its own tile.
 	const inFavour = $derived(s?.tally?.['Voor'] ?? 0);
@@ -90,8 +94,8 @@
 			? `${judgmentKind(j.decision_kind, j.tier)} · jurisprudentie`
 			: s
 				? `Stemming · ${chamberName(s.chamber)}`
-				: c || f
-					? `${KIND_LABEL[category]} · ${chamberName((c ?? f)?.chamber)}`
+				: c || f || doc
+					? `${KIND_LABEL[category]} · ${chamberName((c ?? f ?? doc)?.chamber)}`
 					: m
 						? `${KIND_LABEL[category]} · ${chamberName(chamber)}`
 						: KIND_LABEL[category]
@@ -123,6 +127,9 @@
 				{:else if f}
 					<span class="detail-sep" aria-hidden="true">·</span>
 					<span class="detail-id">{f.abbreviation}</span>
+				{:else if doc && kamerstukLabel(doc)}
+					<span class="detail-sep" aria-hidden="true">·</span>
+					<span class="detail-id">{kamerstukLabel(doc)}</span>
 				{:else if s}
 					<span class="detail-sep" aria-hidden="true">·</span>
 					<span class="detail-id"
@@ -146,6 +153,8 @@
 					{f.name ?? f.abbreviation}
 				{:else if s}
 					{s.subject ?? '—'}
+				{:else if doc}
+					{doc.title ?? doc.kind ?? doc.key}
 				{/if}
 			</h3>
 
@@ -288,6 +297,24 @@
 				<div class="tile-id">{c.abbreviation ?? ''}</div>
 				<div class="tile-lbl">Afkorting</div>
 			</div>
+		{:else if doc}
+			{@const citation = kamerstukCitation(doc)}
+			{#if citation}
+				<div class="tile">
+					<div class="tile-id">{citation}</div>
+					<div class="tile-lbl">Citeervorm</div>
+				</div>
+			{/if}
+			<div class="tile">
+				<div class="tile-num">{fmtDate(doc.date)}</div>
+				<div class="tile-lbl">Datum</div>
+			</div>
+			{#if doc.kind}
+				<div class="tile">
+					<div class="tile-id">{doc.kind}</div>
+					<div class="tile-lbl">Soort</div>
+				</div>
+			{/if}
 		{:else if m && ek}
 			<div class="tile">
 				<div class="tile-num">

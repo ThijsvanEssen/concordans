@@ -62,6 +62,7 @@
 		type Chamber
 	} from '$lib/components/parliamentary/chamber';
 	import { formatLongDate } from './readers/_shared';
+	import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
 	import { judgmentRowTitle } from './index/judgment-kind';
 	import {
 		COMMITMENT_STATUSES,
@@ -126,17 +127,22 @@
 	const track = $derived(kindFromParam(params.get('track') ?? '') ?? '');
 	// A decision's kind as the Kamer writes it; an old link's `motie` is read as `Motie`.
 	const decisionKindParam = $derived(decisionKindFromParam(params.get('soort') ?? '') ?? '');
+	/** A kind of stuk, as the Kamer writes it (`Brief regering`). */
+	const documentKind = $derived(params.get('soort') ?? '');
 	// The Kamer whose parliament is listed; no filter but a choice, so it stays across tabs.
 	const kamer = $derived<Chamber>(chamberFromParam(params.get('kamer')) ?? 'TK');
 	/** The tabs that list one Kamer at a time. */
 	const CHAMBER_CATEGORIES: readonly IndexCategory[] = [
 		'decisions',
+		'documents',
 		'members',
 		'factions',
 		'committees'
 	];
 	/** The Eerste Kamer is known from our first read on: no history to show or filter by. */
-	const ekComposition = $derived(kamer === 'EK' && category !== 'decisions');
+	const ekComposition = $derived(
+		kamer === 'EK' && category !== 'decisions' && category !== 'documents'
+	);
 	const ministry = $derived(params.get('ministry') ?? '');
 	/** A ministry of the URL as the API types it; an unknown key is left to the API to refuse. */
 	const asMinistry = (key: string) => (key || undefined) as Schema<'MinistryKey'> | undefined;
@@ -320,7 +326,9 @@
 		commitments: [
 			{ id: 'date', label: 'Datum' },
 			{ id: 'expected_resolution', label: 'Verwachte afdoening' }
-		]
+		],
+		// One order: newest first, as the API lists them.
+		documents: [{ id: 'date', label: 'Datum' }]
 	};
 	// The Eerste Kamer's committees are not yet linked to dossiers: no sort or column by them.
 	const noDossiers = $derived(ekComposition && category === 'committees');
@@ -359,6 +367,7 @@
 		cabinets?: Page<Cabinet>;
 		ministers?: Page<MinisterRow>;
 		commitments?: Page<Schema<'CommitmentDTO'>>;
+		documents?: Page<Schema<'DocumentListItemDTO'>>;
 	};
 	/** One post in a cabinet, with the ministry it is under. */
 	type MinisterRow = Schema<'CabinetPostDTO'> & {
@@ -397,6 +406,8 @@
 	// The counts per filter option the API gives with a list, under the other filters.
 	let dossierFacets = $state<Schema<'DossierFacetsDTO'> | null>(null);
 	let decisionFacets = $state<Schema<'DecisionFacets'> | null>(null);
+	/** The kinds of stukken under the other filters, as the list's facet counts them. */
+	let documentKinds = $state<Map<string, number>>(new Map());
 	let judgmentFacets = $state<Schema<'JudgmentFacets'> | null>(null);
 	// The EHRM judgments under the same search and period: the EHRM is its own source, so
 	// the facet of the list does not count them.
@@ -562,6 +573,24 @@
 						)
 					);
 					pages.ministers = toPage(undefined, rows, 0, rows.length);
+				};
+			}
+			case 'documents': {
+				// Always one Kamer: without a filter the list is slow on the full database.
+				const query = {
+					chamber: kamer,
+					kind: documentKind || undefined,
+					dossier: q || undefined,
+					from: dateFrom || undefined,
+					to: dateTo || undefined,
+					limit
+				};
+				return async (offset, signal) => {
+					const r = await unwrap(
+						api.GET('/api/documents', { params: { query: { ...query, offset } }, signal })
+					);
+					pages.documents = toPage(pages.documents, r.items, offset, r.total ?? undefined);
+					if (!offset) documentKinds = facetMap(r.facets?.kind);
 				};
 			}
 			case 'commitments': {
@@ -1093,7 +1122,8 @@
 		decisions: 'Zoek in onderwerp',
 		cabinets: 'Zoek op naam, minister-president of partij',
 		ministers: 'Zoek op naam',
-		commitments: 'Zoek in de tekst'
+		commitments: 'Zoek in de tekst',
+		documents: 'Zoek op Kamerstuknummer'
 	};
 
 	const labelOf = (c: IndexCategory) =>
@@ -1320,6 +1350,33 @@
 					}
 				];
 			}
+			case 'documents':
+				return [
+					{
+						id: 'soort',
+						label: 'Soort',
+						kind: 'list',
+						options: [...documentKinds]
+							.filter(([k, n]) => k !== 'null' && (n > 0 || k === documentKind))
+							.sort((a, b) => b[1] - a[1])
+							.map(([k, n]) => ({
+								id: k,
+								label: k,
+								count: n,
+								on: documentKind === k,
+								onClick: toggle('soort', documentKind, k)
+							}))
+					},
+					{
+						id: 'period',
+						label: 'Datum',
+						kind: 'range',
+						unit: 'date',
+						from: dateFrom,
+						to: dateTo,
+						onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
+					}
+				];
 			case 'members':
 				return [
 					{
@@ -1585,7 +1642,8 @@
 				decisions: decisionsShown,
 				cabinets: cabinetsShown,
 				ministers: ministersShown,
-				commitments: pages.commitments?.items
+				commitments: pages.commitments?.items,
+				documents: pages.documents?.items
 			})[category] as unknown[] | undefined
 	);
 	/** How many there are under the filters: the API's total, or the rows filtered here. */
@@ -1647,7 +1705,8 @@
 			leadW: 150,
 			asideW: 300
 		},
-		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 110, asideW: 130 }
+		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 110, asideW: 130 },
+		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', leadW: 130, asideW: 110 }
 	};
 	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
 
@@ -2438,6 +2497,38 @@
 											</IndexRow>
 										{/each}
 									</ul>
+								{/if}
+							{:else if category === 'documents' && pages.documents}
+								{#if pages.documents.items.length === 0}
+									{@render empty('stukken')}
+								{:else}
+									<ul class="list">
+										{#each pages.documents.items as doc (doc.key)}
+											{@const bron = `documents/${doc.key}`}
+											{@const label = kamerstukLabel(doc)}
+											<IndexRow
+												{bron}
+												title={doc.title ?? doc.kind ?? doc.key}
+												href={hrefOf(bron)}
+												open={openId === bron}
+												onToggle={() => toggleOpen(bron)}
+											>
+												{#snippet lead()}
+													<span class="row-id-main">{label ?? '—'}</span>
+												{/snippet}
+												{#snippet body()}
+													{#if doc.kind}<span class="row-sub">{doc.kind}</span>{/if}
+												{/snippet}
+												{#snippet aside()}
+													{#if doc.date}<span class="row-sub">{fmtDateShort(doc.date)}</span>{/if}
+												{/snippet}
+												{#snippet detail()}
+													<IndexDetail category="documents" record={doc} {bron} />
+												{/snippet}
+											</IndexRow>
+										{/each}
+									</ul>
+									{@render loadMoreButton(pages.documents, 'stukken')}
 								{/if}
 							{:else if category === 'commitments' && pages.commitments}
 								{#if pages.commitments.items.length === 0}

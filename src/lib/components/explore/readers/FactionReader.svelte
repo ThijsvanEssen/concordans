@@ -265,7 +265,7 @@
 	.vote {
 		display: grid;
 		grid-template-columns: 88px minmax(0, 1fr);
-		gap: 2px var(--s-3);
+		gap: var(--s-1) var(--s-3);
 		padding: var(--s-2) 0;
 		border-top: 1px solid var(--rule);
 	}
