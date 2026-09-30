@@ -74,6 +74,10 @@ describe('withoutKamerstuk', () => {
 			'Amendement: Gewijzigd amendement'
 		);
 		expect(withoutKamerstuk('EK 36901, nr. A: Blanco verslag')).toBe('Blanco verslag');
+		expect(withoutKamerstuk('Kamerstuk I 36901, A: Blanco verslag')).toBe('Blanco verslag');
+		expect(withoutKamerstuk('Kamerstuk I 36600 VIII, AB: Brief van de minister')).toBe(
+			'Brief van de minister'
+		);
 		expect(withoutKamerstuk('Eindtekst: Wijziging van boek 2')).toBe(
 			'Eindtekst: Wijziging van boek 2'
 		);

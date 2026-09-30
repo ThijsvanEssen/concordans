@@ -173,7 +173,7 @@ export interface paths {
         };
         /**
          * One instrument
-         * @description The instrument named by its BWB id (`BWBR0001854`), its CELEX number (`32016L0680`) or its node key (`echr_convention`, `verdrag_012345`): identifiers, names, jurisdiction, kind, dates and article count, and for a treaty the other instruments with its treaty number (`same_treaty`). 404 for an unknown instrument.
+         * @description The instrument named by its BWB id (`BWBR0001854`), its CELEX number (`32016L0680`) or its node key (`bwbv0001000`, `verdrag_012345`): identifiers, names, jurisdiction, kind, dates and article count, and for a treaty the other instruments with its treaty number (`same_treaty`). 404 for an unknown instrument.
          */
         get: operations["get_instrument_api_instruments__identifier__get"];
         put?: never;
@@ -1070,7 +1070,7 @@ export interface paths {
         };
         /**
          * Database statistics
-         * @description Document counts per collection without stubs, the stubs per collection (nodes known only because something refers to them) and edge counts per relation type.
+         * @description Document counts per collection without stubs, the stubs per collection (nodes known only because something refers to them), the replaced publications of a decision (`replaced`) and edge counts per relation type. `nodes.judgments` counts a decision once, as `/api/judgments` does.
          */
         get: operations["get_stats_api_stats_get"];
         put?: never;
@@ -1090,7 +1090,7 @@ export interface paths {
         };
         /**
          * Which judgments the graph holds
-         * @description The judgments whose text is loaded, per court tier and per court, with the date of the oldest and the newest of each; and how many judgments are known only because a loaded one cites them (`stubs`). A count of judgments anywhere in the API (the judgments that cite an article, for one) is a count of this selection, not of the case law.
+         * @description The judgments whose text is loaded, per court tier and per court, with the date of the oldest and the newest of each; and how many judgments are known only because a loaded one cites them (`stubs`). A decision published twice counts once, as in `/api/judgments`: `replaced` counts the publications another loaded one replaces. A count of judgments anywhere in the API (the judgments that cite an article, for one) is a count of this selection, not of the case law.
          */
         get: operations["get_coverage_api_stats_coverage_get"];
         put?: never;
@@ -4982,7 +4982,7 @@ export interface components {
             collection: string;
             /**
              * Bwb Id
-             * @description BWB id of a Dutch regulation or treaty; `ECHR-CONVENTION` for the Convention of the ECHR.
+             * @description BWB id of a Dutch regulation or treaty; `BWBV0001000` for the Convention of the ECHR.
              */
             bwb_id?: string | null;
             /**
@@ -5541,8 +5541,9 @@ export interface components {
          * JudgmentCoverageResponse
          * @description Which judgments the graph holds: a count of case law is a count of this selection.
          *
-         *     ``total`` counts the judgments whose text is loaded; ``stubs`` the judgments known only
-         *     because a loaded text cites them (they cite nothing themselves).
+         *     ``total`` counts the judgments whose text is loaded, a decision published twice once
+         *     (the ``total`` of ``/api/judgments``); ``stubs`` the judgments known only because a
+         *     loaded text cites them (they cite nothing themselves).
          */
         JudgmentCoverageResponse: {
             /** Total */
@@ -5556,6 +5557,12 @@ export interface components {
              * @description Cited judgments whose text is not loaded.
              */
             stubs: number;
+            /**
+             * Replaced
+             * @description Publications of a decision that another loaded publication replaces (`SAME_AS`); not in `total`, the tiers or the courts.
+             * @default 0
+             */
+            replaced: number;
             /**
              * Tiers
              * @description Per tier: the highest courts first, the parket, the courts of first instance and appeal, the disciplinary tribunals, the other colleges, the Caribbean part, then the courts outside the Netherlands, the EHRM last.
@@ -5592,6 +5599,11 @@ export interface components {
             ecli: string | null;
             /** Source */
             source?: string | null;
+            /**
+             * Official Url
+             * @description The judgment on its official site: uitspraken.rechtspraak.nl by its ECLI, HUDOC by its item id for one of the ECHR; null for a stub of another court.
+             */
+            official_url?: string | null;
             /**
              * Summary
              * @description The inhoudsindicatie, in Dutch. For an English translation the inhoudsindicatie of the judgment it translates; null while that is not loaded.
@@ -5632,6 +5644,16 @@ export interface components {
              * @description For a publication of a decision that another publication replaces (the Rechtspraak published many old arresten again under a new ECLI), the ECLI of the one kept; the lists show the decision by that one. Null otherwise.
              */
             same_as?: string | null;
+            /**
+             * Replaced By
+             * @description The ECLI of the publication that replaces this one (`dcterms:isReplacedBy`), loaded or not: `same_as` when it is loaded, a publication not in the graph otherwise. Null for most.
+             */
+            replaced_by?: string | null;
+            /**
+             * Advocate General
+             * @description For a conclusion, the advocate-general (or procureur-generaal) who wrote it, as its kop names them: `T. Hartlief`, `P.J. Wattel`, or only the surname (`Wattel`) where the kop gives no more. Null for a judgment, and for a conclusion whose kop names no one.
+             */
+            advocate_general?: string | null;
             /**
              * Unresolved Appeal Targets
              * @description The decisions an appeal says in its text it appeals ("tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most.
@@ -5813,7 +5835,7 @@ export interface components {
             number?: string | null;
             /**
              * Kind
-             * @description `heading`, `subheading` or `body`.
+             * @description `heading`, `subheading` (a nested heading, or the kop: the first paragraph), `body` or `signature` (the closing lines that sign a conclusion: `De Procureur-Generaal bij de`, `Hoge Raad der Nederlanden`, `A-G`).
              */
             kind?: string | null;
             /** Text */
@@ -6735,7 +6757,7 @@ export interface components {
         StatsResponse: {
             /**
              * Nodes
-             * @description Documents per collection, without stubs.
+             * @description Documents per collection, without stubs; `judgments` without the `replaced` publications, the `total` of `/api/judgments`.
              */
             nodes: {
                 [key: string]: number;
@@ -6745,6 +6767,13 @@ export interface components {
              * @description Per collection that has them (instruments, articles, judgments): the nodes known only because something refers to them, without a text of their own.
              */
             stubs?: {
+                [key: string]: number;
+            };
+            /**
+             * Replaced
+             * @description Per collection that has them (judgments): the publications of a decision that another loaded publication replaces (`SAME_AS`, the Rechtspraak published many old arresten again under a new ECLI). `nodes` counts the decision once, by the one kept, as `/api/judgments` does.
+             */
+            replaced?: {
                 [key: string]: number;
             };
             edges: components["schemas"]["EdgeStatsDTO"];
