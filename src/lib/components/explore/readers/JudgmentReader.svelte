@@ -124,6 +124,8 @@
 		{@const signed = signatureStart(paragraphs)}
 		{@const conclusion = j.decision_kind === 'conclusie'}
 		{@const replacedBy = j.same_as ?? null}
+		<!-- A replacement the dataset lacks: named, without a link. TODO(backend R): read `replaced_by` of the detail, not of `props`, once judgments-r gives it. -->
+		{@const replacedOutside = replacedBy ? null : textProp(j.props?.replaced_by)}
 		{@const alsoAs = view.data.same_as ?? []}
 		<ReaderHead
 			collection="judgments"
@@ -166,6 +168,11 @@
 					<BronLink ref={{ collection: 'judgments', key: ecliKey(replacedBy) }}
 						>{replacedBy}</BronLink
 					>.
+				</p>
+			{:else if replacedOutside}
+				<p class="reader-translation">
+					Vervangen publicatie. De publicatie die haar vervangt, {replacedOutside}, staat niet in de
+					dataset.
 				</p>
 			{:else if alsoAs.length > 0}
 				<p class="reader-translation">
@@ -324,7 +331,7 @@
 							/>{/if}{line.text.trim()}{/each}
 				</p>
 			{/if}
-			{#if paragraphs.length === 0 && !hasSummary && !replacedBy}
+			{#if paragraphs.length === 0 && !hasSummary && !replacedBy && !replacedOutside}
 				<p class="reader-empty-text">Geen tekst beschikbaar.</p>
 			{/if}
 			<!-- The terms of HUDOC ask for the source under a text of the Court. -->
