@@ -9,12 +9,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { getDossier, str } from '$lib/components/parliamentary/data';
-	import {
-		OUTCOME_LABEL,
-		STAGE_LABEL,
-		TRACK_LABEL,
-		isBill
-	} from '$lib/components/parliamentary/stages';
+	import { OUTCOME_LABEL } from '$lib/components/parliamentary/stages';
 	import { formatLongDate } from './_shared';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
@@ -104,7 +99,6 @@
 			</p>
 		{:else}
 			{@const d = view.dossier}
-			{@const track = d.track ?? 'overig'}
 
 			<header class="head">
 				<span class="kicker">
@@ -113,17 +107,25 @@
 				</span>
 				<h2 class="title">{d.title ?? d.number}</h2>
 				<div class="chips">
-					<span class="track-chip track-chip--{track}">{TRACK_LABEL[track]}</span>
+					{#if d.kind}<span class="track-chip">{d.kind}</span>{/if}
 					{#if d.outcome}
 						<span class="stage-chip"
 							>{OUTCOME_LABEL[d.outcome]}{d.closed_on
 								? `, ${formatLongDate(d.closed_on)}`
 								: ''}</span
 						>
-					{:else if d.current_stage}
-						<span class="stage-chip">Nu: {STAGE_LABEL[d.current_stage]}</span>
+					{:else if d.current_phase}
+						<span class="stage-chip">Nu: {d.current_phase}</span>
 					{/if}
 				</div>
+				{#if d.tk_decision?.text}
+					<!-- The last decision on the bill, as the Kamer writes it. -->
+					<p class="reading">
+						{d.tk_decision.text}{d.tk_decision.date
+							? ` (${formatLongDate(d.tk_decision.date)})`
+							: ''}
+					</p>
+				{/if}
 				{#if readings.first.length > 0}
 					<p class="reading">
 						Tweede lezing van {@render dossierLinks(readings.first)}
@@ -136,13 +138,9 @@
 				{/if}
 			</header>
 
-			{#if isBill(d.track) && d.stages?.length}
+			{#if d.phases?.length}
 				<div class="stepper-wrap">
-					<LegislativeStepper
-						stages={d.stages}
-						current={d.current_stage ?? null}
-						complete={d.stages_complete}
-					/>
+					<LegislativeStepper phases={d.phases} current={d.current_phase ?? null} />
 				</div>
 			{/if}
 
@@ -212,7 +210,7 @@
 		align-items: baseline;
 	}
 
-	/* The track, the current stage and the outcome are words, not tags. */
+	/* The kind, the current phase and the outcome are words, not tags. */
 	.track-chip,
 	.stage-chip {
 		font-family: var(--font-sans);

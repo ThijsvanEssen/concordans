@@ -1,5 +1,5 @@
 // The kind of an entry of a dossier's timeline, as a filter and a label name it. The API
-// gives a decision the kind of the case it decided, in lower case (`motie`), and a document
+// gives a decision the kind of the case it decided (`Motie`, the Zaak.Soort), and a document
 // its own kind (`Motie`): two different things that read as one.
 
 type EntryLike = { kind?: string | null; node_type?: string | null };

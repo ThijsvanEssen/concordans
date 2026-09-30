@@ -11,7 +11,10 @@
 	// The body differs per kind of entry; these are the props the entries below read.
 	type Body = {
 		tally?: Tally;
-		passed?: boolean;
+		/** Null for a decision that is no vote (`Stemmen - uitstellen`). */
+		passed?: boolean | null;
+		/** Null for a decision without votes: a hamerstuk. */
+		vote_kind?: string | null;
 		primary_case_kind?: string | null;
 		agenda_title?: string;
 		minister_name?: string;
@@ -113,7 +116,16 @@
 						{@const tally = body.tally ?? {}}
 						{@const inFavour = tally['Voor'] ?? 0}
 						{@const against = tally['Tegen'] ?? 0}
-						{@const passed = !!body.passed}
+						{@const passed = body.passed ?? null}
+						{@const voted = !!body.vote_kind}
+						{@const outcome =
+							passed === null
+								? null
+								: !voted && passed
+									? 'Zonder stemming aangenomen'
+									: passed
+										? 'Aangenomen'
+										: 'Verworpen'}
 						{@const inFavourPct =
 							inFavour + against > 0 ? Math.round((inFavour / (inFavour + against)) * 100) : 50}
 						<div class="entry-body">
@@ -125,26 +137,33 @@
 								>
 							{/if}
 
-							<div class="decision-bar">
-								<div class="decision-bar-for" style="width: {inFavourPct}%"></div>
-							</div>
+							{#if voted}
+								<div class="decision-bar">
+									<div class="decision-bar-for" style="width: {inFavourPct}%"></div>
+								</div>
+							{/if}
 							<div class="decision-totals">
-								<!-- A sentence: 33 voor, 116 tegen, 1 niet deelgenomen. -->
-								<span
-									><span class="decision-total--for">{inFavour} voor</span>,
-									<span class="decision-total--against">{against} tegen</span
-									>{#each otherChoices(tally) as [choice, seats] (choice)}, <span
-											class="decision-total--other">{seats} {choice.toLowerCase()}</span
-										>{/each}</span
-								>
+								<!-- A sentence: 33 voor, 116 tegen, 1 niet deelgenomen. A hamerstuk has none. -->
+								{#if voted}
+									<span
+										><span class="decision-total--for">{inFavour} voor</span>,
+										<span class="decision-total--against">{against} tegen</span
+										>{#each otherChoices(tally) as [choice, seats] (choice)}, <span
+												class="decision-total--other">{seats} {choice.toLowerCase()}</span
+											>{/each}</span
+									>
+								{/if}
 								<!-- What was voted on (Wetgeving, Amendement, Motie), then the result. -->
 								<span class="decision-outcome">
 									{#if body.primary_case_kind}<span class="decision-kind"
 											>{body.primary_case_kind}</span
 										>{/if}
-									<span class:outcome--passed={passed} class:outcome--failed={!passed}
-										>{passed ? 'Aangenomen' : 'Verworpen'}</span
-									>
+									{#if outcome}
+										<span
+											class:outcome--passed={passed === true}
+											class:outcome--failed={passed === false}>{outcome}</span
+										>
+									{/if}
 								</span>
 							</div>
 						</div>

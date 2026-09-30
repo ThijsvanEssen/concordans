@@ -4,7 +4,7 @@ import { judgmentCite } from '$lib/text/judgment-cite';
 // searched for marked. Stukken of one dossier stand under that dossier.
 import type { Schema } from '$lib/api/types';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
-import { dossierStatus, isOutcome, isStage } from '$lib/components/parliamentary/stages';
+import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
 
 type Hit = Schema<'SearchResultItem'>;
@@ -106,10 +106,10 @@ export function presentHit(hit: Hit, query: string): Presented {
 			};
 		}
 		case 'dossiers': {
-			const { outcome, current_stage } = hit.extra ?? {};
+			const { outcome, current_phase } = hit.extra ?? {};
 			const status = dossierStatus({
 				outcome: isOutcome(outcome) ? outcome : null,
-				current_stage: isStage(current_stage) ? current_stage : null
+				current_phase: typeof current_phase === 'string' ? current_phase : null
 			});
 			return {
 				title: hit.display_name ?? hit.key,

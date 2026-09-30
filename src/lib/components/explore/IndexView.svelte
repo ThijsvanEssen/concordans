@@ -29,15 +29,13 @@
 	} from '$lib/vocabulary';
 	import { getCoverage, type Coverage } from '$lib/api/stats';
 	import {
-		STAGES,
-		STAGE_LABEL,
+		NO_KIND_LABEL,
+		PHASES,
 		dossierStatus,
 		OUTCOME_LABEL,
-		TRACK_LABEL,
-		isStage,
-		type Outcome,
-		type Stage,
-		type Track
+		kindFromParam,
+		phaseFromParam,
+		type Outcome
 	} from '$lib/components/parliamentary/stages';
 	import {
 		chapterTitle,
@@ -48,7 +46,7 @@
 	import Hemicycle from './Hemicycle.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
-	import { DECISION_KIND_LABEL, isDecisionKind } from './index/decision-kind';
+	import { NO_DECISION_KIND, decisionKindFromParam, decisionOutcome } from './index/decision-kind';
 	import { judgmentRowTitle } from './index/judgment-kind';
 	import {
 		COMMITMENT_STATUSES,
@@ -97,14 +95,22 @@
 	// ── URL-driven filter state ─────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
 	const q = $derived(params.get('q') ?? '');
-	const stage = $derived(oneOf(params.get('stage'), STAGES));
-	// Stages a dossier must all have passed, comma-separated.
-	const hasStage = $derived((params.get('has_stage') ?? '').split(',').filter(isStage).join(','));
-	// The tracks are the API's: a new one shows up with its own name until it has a label.
-	const track = $derived(params.get('track') ?? '');
-	const trackLabel = (t: string) =>
-		TRACK_LABEL[t as Track] ?? t.charAt(0).toUpperCase() + t.slice(1).replaceAll('_', ' ');
-	const decisionKindParam = $derived(params.get('soort') ?? '');
+	// A dossier's phase and kind as the Kamer names them (API 0.52). A link from before names
+	// them the old way (`?stage=mvt`, `?track=wetsvoorstel`): read as the Kamer's word, or left
+	// out where the Kamer has none. The kind keeps the URL name `track`: `kind` is the tab.
+	const phase = $derived(
+		phaseFromParam(params.get('phase') ?? params.get('stage') ?? '') ?? undefined
+	);
+	// Phases a dossier must all have passed, comma-separated.
+	const hasPhase = $derived(
+		(params.get('has_phase') ?? params.get('has_stage') ?? '')
+			.split(',')
+			.flatMap((v) => phaseFromParam(v) ?? [])
+			.join(',')
+	);
+	const track = $derived(kindFromParam(params.get('track') ?? '') ?? '');
+	// A decision's kind as the Kamer writes it; an old link's `motie` is read as `Motie`.
+	const decisionKindParam = $derived(decisionKindFromParam(params.get('soort') ?? '') ?? '');
 	const ministry = $derived(params.get('ministry') ?? '');
 	/** A ministry of the URL as the API types it; an unknown key is left to the API to refuse. */
 	const asMinistry = (key: string) => (key || undefined) as Schema<'MinistryKey'> | undefined;
@@ -148,6 +154,8 @@
 
 	const FILTER_PARAMS = [
 		'q',
+		'phase',
+		'has_phase',
 		'stage',
 		'has_stage',
 		'track',
@@ -426,9 +434,9 @@
 					status: dossierScope,
 					outcome,
 					subject: q || undefined,
-					stage,
-					has_stage: hasStage || undefined,
-					track: track || undefined,
+					phase,
+					has_phase: hasPhase || undefined,
+					kind: track || undefined,
 					ministry: asMinistry(ministry),
 					sort: oneOf(sortDef.id, ['number', 'opened_on', 'closed_on', 'title'] as const),
 					limit
@@ -470,7 +478,7 @@
 			}
 			case 'decisions': {
 				const query = {
-					kind: isDecisionKind(decisionKindParam) ? decisionKindParam : undefined,
+					kind: decisionKindParam || undefined,
 					passed: passed === undefined ? undefined : passed === 'true',
 					from: dateFrom || undefined,
 					to: dateTo || undefined,
@@ -692,14 +700,11 @@
 	const facetMap = (facet: { value?: string | boolean | null; count: number }[] | undefined) =>
 		new Map((facet ?? []).map((f) => [String(f.value), f.count]));
 
-	const dossierTracks = $derived(facetMap(dossierFacets?.track));
-	const dossierStages = $derived(facetMap(dossierFacets?.stage));
+	const dossierKinds = $derived(facetMap(dossierFacets?.kind));
+	const dossierPhases = $derived(facetMap(dossierFacets?.phase));
 	const dossierMinistries = $derived(facetMap(dossierFacets?.ministry));
 
 	const dossiersShown = $derived(pages.dossiers?.items);
-
-	/** The stages a bill passes, in order, for the bar in a dossier's row. */
-	const BILL_STAGES: Stage[] = STAGES.filter((s) => s !== 'afgehandeld');
 
 	// The dossiers that share a number form one row that opens to them: all of them when
 	// sorted by number, neighbouring ones under another sort (a budget's chapters).
@@ -1101,12 +1106,13 @@
 					}
 				];
 			case 'dossiers': {
-				// The tracks are the ones the API counts, in its order, the chosen one always.
-				const tracks = [...dossierTracks.keys()].filter(
-					(t) => (dossierTracks.get(t) ?? 0) > 0 || t === track
+				// The kinds are the ones the API counts, in its order, the chosen one always. A
+				// dossier without a kind (letters and motions) cannot be chosen: it is counted.
+				const kinds = [...dossierKinds.keys()].filter(
+					(k) => k !== 'null' && ((dossierKinds.get(k) ?? 0) > 0 || k === track)
 				);
-				if (track && !tracks.includes(track)) tracks.push(track);
-				const stages = STAGES.filter((st) => st !== 'afgehandeld');
+				if (track && !kinds.includes(track)) kinds.push(track);
+				const withoutKind = dossierKinds.get('null') ?? 0;
 				const statusCounts_ = facetMap(dossierFacets?.status);
 				const outcomes = facetMap(dossierFacets?.outcome);
 				const scope = (v: 'open' | 'closed' | 'all') => () =>
@@ -1155,28 +1161,31 @@
 					{
 						id: 'track',
 						label: 'Soort',
+						note: withoutKind
+							? `${formatCount(withoutKind)} ${NO_KIND_LABEL.toLowerCase()}, zonder soort`
+							: undefined,
 						kind: 'list',
-						options: tracks.map((t) => ({
-							id: t,
-							label: trackLabel(t),
-							count: dossierTracks.get(t) ?? 0,
-							on: track === t,
-							onClick: toggle('track', track, t)
+						options: kinds.map((k) => ({
+							id: k,
+							label: k,
+							count: dossierKinds.get(k) ?? 0,
+							on: track === k,
+							onClick: toggle('track', track, k)
 						}))
 					},
 					{
-						id: 'stage',
+						id: 'phase',
 						label: 'Fase',
-						note: `${formatCount(stages.reduce((n, st) => n + (dossierStages.get(st) ?? 0), 0))} met fase`,
+						note: `${formatCount(PHASES.reduce((n, p) => n + (dossierPhases.get(p) ?? 0), 0))} met fase`,
 						kind: 'steps',
-						ends: ['Voorstel', 'Stemming'],
+						ends: ['Voorstel', 'Eindtekst'],
 						none: 'Alle fasen',
-						options: stages.map((st) => ({
-							id: st,
-							label: STAGE_LABEL[st],
-							count: dossierStages.get(st) ?? 0,
-							on: stage === st,
-							onClick: toggle('stage', stage, st)
+						options: PHASES.map((p) => ({
+							id: p,
+							label: p,
+							count: dossierPhases.get(p) ?? 0,
+							on: phase === p,
+							onClick: () => patchUrl({ phase: phase === p ? null : p, stage: null })
 						}))
 					},
 					{
@@ -1202,11 +1211,15 @@
 						id: 'soort',
 						label: 'Soort',
 						kind: 'list',
-						options: (Object.keys(DECISION_KIND_LABEL) as (keyof typeof DECISION_KIND_LABEL)[])
-							.filter((k) => (decisionKinds.get(k) ?? 0) > 0 || k === decisionKindParam)
+						// The kinds the Kamer's decisions have, as the facet counts them; one without
+						// a zaak cannot be chosen.
+						options: [...decisionKinds.keys()]
+							.filter(
+								(k) => k !== 'null' && ((decisionKinds.get(k) ?? 0) > 0 || k === decisionKindParam)
+							)
 							.map((k) => ({
 								id: k,
-								label: DECISION_KIND_LABEL[k],
+								label: k,
 								count: decisionKinds.get(k) ?? 0,
 								on: decisionKindParam === k,
 								onClick: toggle('soort', decisionKindParam, k)
@@ -1973,8 +1986,8 @@
 											{:else}
 												{@const isOpen = openNumbers.has(entry.number)}
 												{@const own = entry.rows.find((d) => d.number === entry.number)}
-												{@const tracks = new Set(entry.rows.map((d) => d.track))}
-												{@const [track] = tracks}
+												{@const kinds = new Set(entry.rows.map((d) => d.kind))}
+												{@const [kind] = kinds}
 												<!-- A filter or an unloaded page can leave out dossiers of the number. -->
 												{@const all = (entry.rows[0].same_number_count ?? 0) + 1}
 												<IndexRow
@@ -1985,8 +1998,8 @@
 												>
 													{#snippet lead()}
 														<span class="row-id-main">{entry.number}</span>
-														{#if tracks.size === 1 && track}
-															<span class="row-id-sub">{TRACK_LABEL[track]}</span>
+														{#if kinds.size === 1 && kind}
+															<span class="row-id-sub">{kind}</span>
 														{/if}
 													{/snippet}
 													{#snippet body()}
@@ -2175,7 +2188,7 @@
 													{#snippet lead()}
 														<span class="row-id-main"
 															>{day.date
-																? DECISION_KIND_LABEL[s.kind ?? 'overig']
+																? (s.kind ?? NO_DECISION_KIND)
 																: fmtDateShort(s.date)}</span
 														>
 														{#if s.dossier_numbers?.[0]}
@@ -2203,14 +2216,15 @@
 														{/if}
 													{/snippet}
 													{#snippet aside()}
-														{#if s.passed != null}
+														{#if decisionOutcome(s)}
+															<!-- A hamerstuk passes without a vote; a postponed one is no outcome. -->
 															<span
 																class="tag"
-																class:tag--passed={s.passed}
-																class:tag--rejected={!s.passed}
+																class:tag--passed={s.passed === true}
+																class:tag--rejected={s.passed === false}
 															>
 																<span class="tag-dot" aria-hidden="true"></span>
-																{s.passed ? 'Aangenomen' : 'Verworpen'}
+																{decisionOutcome(s)}
 															</span>
 														{/if}
 													{/snippet}
@@ -2404,8 +2418,8 @@
 	>
 		{#snippet lead()}
 			<span class="row-id-main">{d.number}</span>
-			{#if d.track && !member}
-				<span class="row-id-sub">{trackLabel(d.track)}</span>
+			{#if d.kind && !member}
+				<span class="row-id-sub">{d.kind}</span>
 			{/if}
 		{/snippet}
 		{#snippet body()}
@@ -2424,11 +2438,14 @@
 		{/snippet}
 		{#snippet aside()}
 			<span class="stage-aside">
-				{#if d.current_stage && d.current_stage !== 'afgehandeld' && !d.outcome}
-					{@const at = BILL_STAGES.indexOf(d.current_stage)}
+				{#if d.phases?.length && d.current_phase && !d.outcome}
+					<!-- The phases a record marks in ink, the current one in the accent. -->
 					<span class="stage-bar" aria-hidden="true">
-						{#each BILL_STAGES as s, i (s)}
-							<span class:stage-bar--done={i < at} class:stage-bar--now={i === at}></span>
+						{#each d.phases as p (p.name)}
+							<span
+								class:stage-bar--done={p.done && p.name !== d.current_phase}
+								class:stage-bar--now={p.name === d.current_phase}
+							></span>
 						{/each}
 					</span>
 				{/if}

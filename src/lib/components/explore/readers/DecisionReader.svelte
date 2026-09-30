@@ -9,6 +9,7 @@
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate } from './_shared';
 	import { votersOf } from './voters';
+	import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -86,13 +87,16 @@
 				</span>
 				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet beschikbaar'}</h2>
 				<div class="chips">
-					<span
-						class="result-chip"
-						class:result-chip--passed={d.passed}
-						class:result-chip--failed={!d.passed}
-					>
-						{d.passed ? 'Aangenomen' : 'Verworpen'}
-					</span>
+					{#if decisionOutcome(d)}
+						<!-- A hamerstuk is passed without a vote; a postponed decision is no outcome. -->
+						<span
+							class="result-chip"
+							class:result-chip--passed={d.passed === true}
+							class:result-chip--failed={d.passed === false}
+						>
+							{decisionOutcome(d)}
+						</span>
+					{/if}
 					<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
 					{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
 					{#each uniqueBy(dossierNumbers, (n) => n).slice(0, 3) as number (number)}
@@ -112,19 +116,24 @@
 				<p class="document-unavailable">Tekst niet beschikbaar.</p>
 			{/if}
 
-			<div class="vote-summary">
-				<div class="vote-bar">
-					<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
+			{#if d.vote_kind}
+				<div class="vote-summary">
+					<div class="vote-bar">
+						<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
+					</div>
+					<!-- A sentence: 33 voor, 116 tegen, 1 niet deelgenomen. -->
+					<p class="vote-totals">
+						<span class="vote-total vote-total--for">{inFavour} voor</span>,
+						<span class="vote-total vote-total--against">{against} tegen</span
+						>{#each others as [choice, seats] (choice)}, <span class="vote-total vote-total--other"
+								>{seats} {choice.toLowerCase()}</span
+							>{/each}
+					</p>
 				</div>
-				<!-- A sentence: 33 voor, 116 tegen, 1 niet deelgenomen. -->
-				<p class="vote-totals">
-					<span class="vote-total vote-total--for">{inFavour} voor</span>,
-					<span class="vote-total vote-total--against">{against} tegen</span
-					>{#each others as [choice, seats] (choice)}, <span class="vote-total vote-total--other"
-							>{seats} {choice.toLowerCase()}</span
-						>{/each}
-				</p>
-			</div>
+			{:else if d.decision_kind}
+				<!-- A decision without votes (a hamerstuk): no tally, the Kamer's own words. -->
+				<p class="vote-totals">{d.decision_kind}</p>
+			{/if}
 
 			{#if voters.length > 0}
 				<section class="sec">

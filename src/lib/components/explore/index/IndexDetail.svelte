@@ -1,20 +1,16 @@
 <script lang="ts">
 	import NameLink from '$lib/bron/NameLink.svelte';
-	// Inline detail of an opened row: header, stat tiles, a stage path for
+	// Inline detail of an opened row: header, stat tiles, a phase path for
 	// dossiers and the links that open the source. Shows only what the list
 	// item carries.
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, isReadable } from '$lib/bron/href';
-	import {
-		OUTCOME_LABEL,
-		STAGE_LABEL,
-		TRACK_LABEL,
-		isBill
-	} from '$lib/components/parliamentary/stages';
+	import { OUTCOME_LABEL } from '$lib/components/parliamentary/stages';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { collectionOf, type IndexCategory } from './categories';
 	import { judgmentKind } from './judgment-kind';
+	import { decisionOutcome, isHammer } from './decision-kind';
 
 	let {
 		category,
@@ -152,21 +148,18 @@
 						>
 					{/if}
 				{:else if d}
-					{#if d.track}
-						<span class="tag tag--outline">{TRACK_LABEL[d.track]}</span>
+					{#if d.kind}
+						<span class="tag tag--outline">{d.kind}</span>
 					{/if}
 					{#if d.outcome}
 						<span
 							class="tag"
 							class:tag--passed={d.outcome === 'aangenomen'}
 							class:tag--rejected={d.outcome === 'verworpen'}
-							class:tag--outline={d.outcome === 'ingetrokken'}
 							><span class="tag-dot"></span>{OUTCOME_LABEL[d.outcome]}</span
 						>
-					{:else if d.current_stage}
-						<span class="tag tag--pending"
-							><span class="tag-dot"></span>nu: {STAGE_LABEL[d.current_stage]}</span
-						>
+					{:else if d.current_phase}
+						<span class="tag tag--pending"><span class="tag-dot"></span>nu: {d.current_phase}</span>
 					{/if}
 				{:else if c}
 					{#if (c.active_dossier_count ?? 0) > 0}
@@ -186,22 +179,22 @@
 						<span class="party-dot" style:background={partyColor(f.abbreviation ?? '')}></span>
 						{f.abbreviation}{f.seats != null ? ` · ${f.seats} zetels` : ''}
 					</span>
-				{:else if s && s.passed != null}
-					<span class="tag" class:tag--passed={s.passed} class:tag--rejected={!s.passed}>
-						<span class="tag-dot"></span>{s.passed ? 'Aangenomen' : 'Verworpen'}
+				{:else if s && decisionOutcome(s)}
+					<span
+						class="tag"
+						class:tag--passed={s.passed === true}
+						class:tag--rejected={s.passed === false}
+					>
+						<span class="tag-dot"></span>{decisionOutcome(s)}
 					</span>
 				{/if}
 			</div>
 		</div>
 	</div>
 
-	<!-- Dossier: the stages of a bill -->
-	{#if d && isBill(d.track) && d.stages?.length}
-		<LegislativeStepper
-			stages={d.stages}
-			current={d.current_stage ?? null}
-			complete={d.stages_complete}
-		/>
+	<!-- Dossier: the phases of a bill -->
+	{#if d?.phases?.length}
+		<LegislativeStepper phases={d.phases} current={d.current_phase ?? null} />
 	{/if}
 
 	<!-- Stat tiles: only what the item carries; an empty field shows '—' -->
@@ -250,13 +243,13 @@
 				</div>
 			{:else}
 				<div class="tile">
-					<div class="tile-num">{d.current_stage ? STAGE_LABEL[d.current_stage] : '—'}</div>
+					<div class="tile-num">{d.current_phase ?? '—'}</div>
 					<div class="tile-lbl">Huidige fase</div>
 				</div>
 			{/if}
 			<div class="tile">
-				<div class="tile-num">{TRACK_LABEL[d.track ?? 'overig']}</div>
-				<div class="tile-lbl">Type traject</div>
+				<div class="tile-num">{d.kind ?? '—'}</div>
+				<div class="tile-lbl">Soort</div>
 			</div>
 		{:else if c}
 			<div class="tile">
@@ -309,7 +302,9 @@
 				<div class="tile">
 					<div class="tile-num">{s.passed ? '✓' : '✗'}</div>
 					<div class="tile-lbl">Uitslag</div>
-					<div class="tile-sub">{s.passed ? 'meerderheid' : 'geen meerderheid'}</div>
+					<div class="tile-sub">
+						{isHammer(s) ? 'zonder stemming' : s.passed ? 'meerderheid' : 'geen meerderheid'}
+					</div>
 				</div>
 			{/if}
 		{/if}

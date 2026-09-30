@@ -4,7 +4,7 @@
 import { api } from '$lib/api/client';
 import { getArticleDetail } from '$lib/api/articles';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
-import { dossierStatus, isOutcome, isStage } from '$lib/components/parliamentary/stages';
+import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { parseArticleParts, partText } from '$lib/text/article-parts';
 import { withBook } from '$lib/text/bw';
 import { courtName } from '$lib/verbonden/rows';
@@ -16,7 +16,7 @@ export type Preview = {
 	kicker: string;
 	title: string;
 	date: string | null;
-	/** The first lines: an article's text, a judgment's summary, a dossier's stage. */
+	/** The first lines: an article's text, a judgment's summary, a dossier's phase. */
 	lines: string | null;
 };
 
@@ -48,14 +48,14 @@ export function previewFromNode(
 			};
 		}
 		case 'dossiers': {
-			const { outcome, current_stage } = props;
+			const { outcome, current_phase } = props;
 			return {
 				kicker: `${kind} ${text(props.label) ?? ''}`.trim(),
 				title: text(props.title) ?? name,
 				date: formatLongDate(text(props.opened_on)) || null,
 				lines: dossierStatus({
 					outcome: isOutcome(outcome) ? outcome : null,
-					current_stage: isStage(current_stage) ? current_stage : null
+					current_phase: typeof current_phase === 'string' ? current_phase : null
 				})
 			};
 		}
@@ -128,7 +128,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 					title: data.title,
 					opened_on: data.opened_on,
 					outcome: data.outcome,
-					current_stage: data.current_stage
+					current_phase: data.current_phase
 				})
 			: null;
 	}

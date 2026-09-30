@@ -1,38 +1,28 @@
 <script lang="ts">
-	import { STAGES, STAGE_LABEL, STAGE_SHORT, stepState, type Stage } from './stages';
+	import { PHASE_SHORT, stepState, type Phase } from './stages';
+	import { formatDate } from '$lib/components/explore/readers/_shared';
 
-	// `stages` are the stages the dossier has passed, `current` the latest one.
-	// A dossier can loop (amendments after a report, then a nota again), so
-	// the steps are lit by membership, not by position. Where the API says the record
-	// is incomplete, a stage before the furthest one is drawn as passed but not shown.
-	let {
-		stages,
-		current,
-		complete = null
-	}: {
-		stages: Stage[];
-		current: Stage | null;
-		/** `stages_complete`: false when the data lacks papers of a stage that was passed. */
-		complete?: boolean | null;
-	} = $props();
+	// The phases of a bill as the API gives them: all eight in order, each done when a paper,
+	// an activity or a decision on the bill marks it, with the first date of that. A dossier
+	// can loop (amendments after a verslag), so the steps are lit by `done`, not by position,
+	// and a phase nothing marks stays open.
+	let { phases, current }: { phases: Phase[]; current: string | null } = $props();
 
-	const states = $derived(STAGES.map((step) => stepState(step, stages, current, complete)));
+	const states = $derived(phases.map((p) => stepState(p, current)));
 	const reached = (i: number) => states[i] !== 'open';
-	const anyUnknown = $derived(states.includes('unknown'));
+	const titleOf = (p: Phase) => (p.done && p.date ? `${p.name}, ${formatDate(p.date)}` : p.name);
 </script>
 
-<ol class="stepper" aria-label="Wetgevingsstatus">
-	{#each STAGES as step, i (step)}
+<ol class="stepper" aria-label="Fasen van het wetsvoorstel">
+	{#each phases as step, i (step.name)}
 		{@const done = states[i] === 'done'}
 		{@const active = states[i] === 'active'}
-		{@const unknown = states[i] === 'unknown'}
 		<li
 			class="step"
 			class:step--done={done}
 			class:step--active={active}
-			class:step--unknown={unknown}
 			aria-current={active ? 'step' : undefined}
-			title={unknown ? `${STAGE_LABEL[step]}: niet in de gegevens` : STAGE_LABEL[step]}
+			title={titleOf(step)}
 		>
 			<span class="step-dot" aria-hidden="true">
 				{#if done}
@@ -47,24 +37,18 @@
 					</svg>
 				{/if}
 			</span>
-			<span class="step-label" aria-hidden="true">{STAGE_SHORT[step]}</span>
-			<span class="sr">{STAGE_LABEL[step]}</span>
-			{#if i < STAGES.length - 1}
+			<span class="step-label" aria-hidden="true">{PHASE_SHORT[step.name] ?? step.name}</span>
+			<span class="sr">{titleOf(step)}{done ? ', doorlopen' : ''}</span>
+			{#if i < phases.length - 1}
 				<span
 					class="step-connector"
 					aria-hidden="true"
 					class:step-connector--done={reached(i) && reached(i + 1)}
-					class:step-connector--unknown={states[i] === 'unknown' || states[i + 1] === 'unknown'}
 				></span>
 			{/if}
 		</li>
 	{/each}
 </ol>
-{#if anyUnknown}
-	<p class="stepper-note">
-		<span class="stepper-note__dot" aria-hidden="true"></span> Doorlopen, niet in de gegevens
-	</p>
-{/if}
 
 <style>
 	.stepper {
@@ -164,40 +148,5 @@
 	.step--done .step-connector,
 	.step-connector--done {
 		background: var(--ink-2);
-	}
-
-	/* Passed, but the data does not record it: an outline in ink-2, dashed on the way in. */
-	.step--unknown .step-dot,
-	.stepper-note__dot {
-		border-style: dashed;
-		border-color: var(--ink-2);
-	}
-
-	.step--unknown .step-label {
-		color: var(--ink-2);
-	}
-
-	.step-connector--unknown {
-		background: none;
-		border-top: 1.5px dashed var(--ink-2);
-		height: 0;
-	}
-
-	.stepper-note {
-		display: flex;
-		align-items: center;
-		gap: var(--s-1);
-		margin: var(--s-2) 0 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-
-	.stepper-note__dot {
-		display: inline-block;
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		border-width: 1.5px;
 	}
 </style>
