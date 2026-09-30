@@ -39,9 +39,9 @@ const ABOUT: Record<IndexCategory, string> = {
 		'Kamerdossiers: wetsvoorstellen, begrotingen, verdragen en andere onderwerpen, met hun stukken, behandeling en uitkomst.',
 	decisions:
 		'Besluiten van de Tweede Kamer en de Eerste Kamer over wetsvoorstellen, moties en amendementen, met de stemmen per fractie of per lid.',
-	members: 'Leden van de Kamer, met hun fractie en commissies.',
-	factions: 'Fracties in de Kamer, met hun zetels en leden.',
-	committees: 'Commissies van de Kamer, met hun leden en activiteiten.',
+	members: 'Leden van de Tweede Kamer en de Eerste Kamer, met hun fractie en commissies.',
+	factions: 'Fracties in de Tweede Kamer en de Eerste Kamer, met hun zetels en leden.',
+	committees: 'Commissies van de Tweede Kamer en de Eerste Kamer, met hun leden en activiteiten.',
 	cabinets: 'Kabinetten, met hun periode, coalitie en bewindspersonen.',
 	ministers:
 		'Ministers en staatssecretarissen per kabinet en ministerie, met de dossiers die ze als bewindspersoon ondertekenden.',

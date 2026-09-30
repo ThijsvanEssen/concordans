@@ -19,7 +19,7 @@
 	import { parseFilter } from '$lib/verbonden/filter';
 	import { page } from '$app/state';
 	import { initials } from '$lib/util/initials';
-	import { formatDate } from './_shared';
+	import { formatDate, formatLongDate } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -133,8 +133,15 @@
 				(f) => !f.to_date || f.to_date.slice(0, 10) >= today
 			)}
 
+			<!-- A seat in the Eerste Kamer, as its site lists it (API 0.65); none before our first read. -->
+			{@const ek = m.ek ?? null}
+			{@const ekSitting = !!ek && !ek.observed_until}
+
 			<header class="head">
-				<span class="kicker"><KindGlyph collection="members" />{currentTitle(career, sitting)}</span
+				<span class="kicker"
+					><KindGlyph collection="members" />{ekSitting && !sitting
+						? 'Lid van de Eerste Kamer'
+						: currentTitle(career, sitting)}</span
 				>
 				<div class="member-head-row">
 					<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
@@ -144,10 +151,49 @@
 							<div class="chips">
 								<NameLink collection="factions" name={m.party} class="party-chip" />
 							</div>
+						{:else if ek?.faction && ek.abbreviation}
+							<div class="chips">
+								<a
+									class="party-chip"
+									href={bronHref({ collection: 'factions', key: ek.faction })}
+									data-sveltekit-noscroll>{ek.abbreviation}</a
+								>
+							</div>
 						{/if}
 					</div>
 				</div>
 			</header>
+
+			{#if ek}
+				<section class="sec">
+					<h3 class="sec-title">Eerste Kamer</h3>
+					<dl class="ek-facts">
+						{#if ek.faction}
+							<dt>Fractie</dt>
+							<dd>
+								<a
+									href={bronHref({ collection: 'factions', key: ek.faction })}
+									data-sveltekit-noscroll>{ek.abbreviation ?? ek.faction}</a
+								>
+							</dd>
+						{/if}
+						{#if ek.seniority_days != null}
+							<dt>Anciënniteit</dt>
+							<dd>{ek.seniority_days.toLocaleString('nl-NL')} dagen</dd>
+						{/if}
+						{#if ek.residence}
+							<dt>Woonplaats</dt>
+							<dd>{ek.residence}</dd>
+						{/if}
+					</dl>
+					{#if ek.source}
+						<p class="ek-source">
+							{`Samenstelling op ${formatLongDate(ek.source.composition_date ?? null)}, gegevens sinds ${formatLongDate(ek.source.data_since ?? null)}. `}Bron:
+							<a href={ek.source.url} rel="external">{ek.source.attribution}</a>.
+						</p>
+					{/if}
+				</section>
+			{/if}
 
 			{#if career.length > 0}
 				<section class="sec">
@@ -529,6 +575,28 @@
 
 	.career-note {
 		margin: var(--s-2) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.ek-facts {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		gap: var(--s-2) var(--s-4);
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		line-height: var(--lh-snug);
+	}
+	.ek-facts dt {
+		color: var(--ink-3);
+	}
+	.ek-facts dd {
+		margin: 0;
+		color: var(--ink);
+	}
+	.ek-source {
+		margin: 0;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

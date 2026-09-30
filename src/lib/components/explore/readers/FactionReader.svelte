@@ -6,6 +6,14 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { str } from '$lib/components/parliamentary/data';
+	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
+	import { bronHref } from '$lib/bron/href';
+	import { formatLongDate } from './_shared';
+
+	/** A member of the fractie's board, as the Eerste Kamer lists it (API 0.65). */
+	type BoardSeat = { function?: string; name?: string; member?: string | null; since?: string };
+	const boardOf = (props: Record<string, unknown> | null | undefined): BoardSeat[] =>
+		Array.isArray(props?.board) ? (props.board as BoardSeat[]) : [];
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -50,18 +58,61 @@
 			{@const name = str(f.props?.name)}
 			{@const abbreviation = str(f.props?.abbreviation)}
 			{@const seats = f.props?.seats}
+			{@const chamber = str(f.props?.chamber)}
+			{@const ek = chamber === 'EK'}
+			{@const read = str(f.props?.retrieved_on)}
+			{@const since = str(f.props?.data_since)}
+			{@const board = boardOf(f.props)}
+			{@const composed = read
+				? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
+				: ''}
 			<header class="head">
-				<span class="kicker"><KindGlyph collection="factions" />{bronLabel('factions')}</span>
+				<span class="kicker"
+					><KindGlyph collection="factions" />{bronLabel('factions')} · {chamberName(chamber)}</span
+				>
 				<h2 class="title">{abbreviation ?? name ?? f.key}</h2>
 				{#if name && abbreviation && name !== abbreviation}
 					<p class="sub">{name}</p>
 				{/if}
 				{#if typeof seats === 'number'}
 					<div class="chips">
-						<span class="seats-chip">{seats} zetels</span>
+						<span class="seats-chip"
+							>{seats}
+							{seats === 1 ? 'zetel' : 'zetels'}{ek && read
+								? ` op ${formatLongDate(read)}`
+								: ''}</span
+						>
 					</div>
 				{/if}
 			</header>
+
+			{#if board.length > 0}
+				<section class="sec">
+					<h3 class="sec-title">Fractiebestuur</h3>
+					<dl class="board">
+						{#each board as seat, i (i)}
+							<dt>{seat.function ?? ''}</dt>
+							<dd>
+								{#if seat.member}<a
+										href={bronHref(`members/${seat.member}`)}
+										data-sveltekit-noscroll>{seat.name}</a
+									>{:else}{seat.name}{/if}{#if seat.since}<span class="since"
+										>, sinds {formatLongDate(seat.since)}</span
+									>{/if}
+							</dd>
+						{/each}
+					</dl>
+				</section>
+			{/if}
+
+			{#if ek}
+				<p class="source">
+					{composed}Bron:
+					<a href={str(f.props?.url) ?? EK_SOURCE.url} rel="external"
+						>{EK_SOURCE.name}, {EK_SOURCE.site}</a
+					>.
+				</p>
+			{/if}
 		{/if}
 	</div>
 </ReaderFrame>
@@ -112,6 +163,46 @@
 	.chips {
 		display: flex;
 		gap: var(--s-1);
+	}
+	.sec {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.sec-title {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-label);
+		font-weight: 500;
+		color: var(--ink-3);
+	}
+	.board {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		gap: var(--s-2) var(--s-4);
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		line-height: var(--lh-snug);
+	}
+	.board dt {
+		color: var(--ink-3);
+	}
+	.board dt::first-letter {
+		text-transform: uppercase;
+	}
+	.board dd {
+		margin: 0;
+		color: var(--ink);
+	}
+	.since {
+		color: var(--ink-3);
+	}
+	.source {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	/* The seat count is a word, not a tag. */
 	.seats-chip {

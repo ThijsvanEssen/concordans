@@ -3,6 +3,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import { seatCount } from '$lib/verbonden/filter';
 	import { formatLongDate } from './readers/_shared';
+	import { chamberName } from '$lib/components/parliamentary/chamber';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 	type SeatFaction = Seats['factions'][number];
@@ -35,8 +36,12 @@
 		return { voor, tegen };
 	});
 
-	// Fixed row capacities, sum = 150. Radii scale linearly inner→outer.
-	const ROW_CAPS = [14, 17, 19, 21, 24, 26, 29];
+	// Fixed row capacities: 150 seats for the Tweede Kamer, 75 for the Eerste. Radii scale
+	// linearly inner→outer.
+	const ROWS_150 = [14, 17, 19, 21, 24, 26, 29];
+	const ROWS_75 = [8, 10, 11, 13, 15, 18];
+	const ROW_CAPS = $derived(data.total_seats <= 75 ? ROWS_75 : ROWS_150);
+	const kamer = $derived(chamberName(data.chamber));
 	const VIEW_W = 440;
 	const VIEW_H = 230;
 	const CX = VIEW_W / 2;
@@ -45,11 +50,11 @@
 	const R_OUTER = 200;
 	// SEAT_R 7 (was 6): aangrenzende stoelen raken elkaar net, zodat een
 	// fractie als een aaneengesloten band leest in plaats van losse puntjes.
-	const SEAT_R = 7;
+	const SEAT_R = $derived(data.total_seats <= 75 ? 9 : 7);
 	// Hitbox per fractie: a wedge from the gap before its first seat to the gap after
 	// its last, and from the inner to the outer row. Seats are dealt out by angle, so
 	// every faction holds one angular band and the wedges tile without overlap.
-	const HIT_R_PAD = SEAT_R + 2;
+	const HIT_R_PAD = $derived(SEAT_R + 2);
 
 	type Seat = {
 		x: number;
@@ -129,7 +134,7 @@
 	let hovered = $state<SeatFaction | null>(null);
 </script>
 
-<figure class="hemicycle" aria-label="Zetelverdeling Tweede Kamer">
+<figure class="hemicycle" aria-label="Zetelverdeling {kamer}">
 	<svg viewBox="0 0 {VIEW_W} {VIEW_H}">
 		<!-- Sectoren eerst (onder de stoelen) zodat ze de pointer-events
          opvangen zonder over de stoelen te tekenen. -->
@@ -203,8 +208,9 @@
 	</ul>
 	<figcaption class="hemicycle-caption">
 		<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
-		Tweede Kamer, stand op {formatLongDate(data.as_of ?? null)}{data.assigned_seats <
-		data.total_seats
+		{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {formatLongDate(
+			data.as_of ?? null
+		)}{data.assigned_seats < data.total_seats
 			? `, ${data.assigned_seats} van ${data.total_seats} zetels toegewezen`
 			: ''}
 		{#if data.seating_plan}

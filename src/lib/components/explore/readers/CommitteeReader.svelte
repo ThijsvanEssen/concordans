@@ -6,6 +6,9 @@
 	import { bronLabel } from '$lib/vocabulary';
 	import { committeeSlug, getCommittee, str } from '$lib/components/parliamentary/data';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
+	import { chamberName } from '$lib/components/parliamentary/chamber';
+	import { bronHref } from '$lib/bron/href';
+	import { formatLongDate } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -20,6 +23,9 @@
 		| { kind: 'loaded'; committee: Schema<'CommitteeDetailDTO'> };
 
 	let view = $state<State>({ kind: 'loading' });
+	const chamber = $derived(
+		str(p.chamber) ?? (view.kind === 'loaded' ? (view.committee.chamber ?? null) : null)
+	);
 
 	$effect(() => {
 		const slug = committeeSlug(node);
@@ -47,6 +53,7 @@
 			<span class="kicker">
 				<KindGlyph collection="committees" />
 				{bronLabel('committees')}
+				<span class="dot">·</span>{chamberName(chamber)}
 				{#if kind}<span class="dot">·</span>{kind}{/if}
 			</span>
 			<h2 class="title">{name}</h2>
@@ -62,6 +69,12 @@
 			{@const dossiers = c.dossiers ?? []}
 			{@const openDossiers = dossiers.filter((d) => !d.closed)}
 			{@const outcomes = Object.keys(OUTCOME_LABEL) as Outcome[]}
+			{@const ek = c.chamber === 'EK'}
+			<!-- The members with a role, as the Eerste Kamer names it: voorzitter, ondervoorzitter. -->
+			{@const officers = (c.members ?? [])
+				.filter((m) => m.role)
+				.sort((a, b) => Number(b.role === 'voorzitter') - Number(a.role === 'voorzitter'))}
+			{@const source = c.source}
 
 			<ul class="stats">
 				<li>
@@ -69,11 +82,14 @@
 						>Leden</span
 					>
 				</li>
-				<li>
-					<span class="stat-num">{openDossiers.length}</span><span class="stat-label"
-						>Open dossiers</span
-					>
-				</li>
+				{#if !ek}
+					<!-- The Eerste Kamer's committees are not yet linked to dossiers. -->
+					<li>
+						<span class="stat-num">{openDossiers.length}</span><span class="stat-label"
+							>Open dossiers</span
+						>
+					</li>
+				{/if}
 				{#each outcomes as outcome (outcome)}
 					{@const count = dossiers.filter((d) => d.outcome === outcome).length}
 					{#if count > 0}
@@ -85,6 +101,25 @@
 					{/if}
 				{/each}
 			</ul>
+
+			{#if officers.length > 0}
+				<dl class="officers">
+					{#each officers as m (m.key)}
+						<dt>{m.role}</dt>
+						<dd>
+							<a href={bronHref(`members/${m.key}`)} data-sveltekit-noscroll>{m.name}</a
+							>{#if m.ek?.abbreviation}<span class="faction">, {m.ek.abbreviation}</span>{/if}
+						</dd>
+					{/each}
+				</dl>
+			{/if}
+
+			{#if ek && source}
+				<p class="source">
+					{`Samenstelling op ${formatLongDate(source.composition_date ?? null)}, gegevens sinds ${formatLongDate(source.data_since ?? null)}. `}Bron:
+					<a href={source.url} rel="external">{source.attribution}</a>.
+				</p>
+			{/if}
 		{/if}
 	</div>
 </ReaderFrame>
@@ -113,6 +148,34 @@
 	}
 	.dot {
 		opacity: 0.6;
+	}
+	.officers {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		gap: var(--s-2) var(--s-4);
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		line-height: var(--lh-snug);
+	}
+	.officers dt {
+		color: var(--ink-3);
+	}
+	.officers dt::first-letter {
+		text-transform: uppercase;
+	}
+	.officers dd {
+		margin: 0;
+		color: var(--ink);
+	}
+	.faction {
+		color: var(--ink-3);
+	}
+	.source {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.title {
 		font-family: var(--font-serif);

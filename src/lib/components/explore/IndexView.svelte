@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row's title
@@ -59,6 +60,7 @@
 		chamberFromParam,
 		type Chamber
 	} from '$lib/components/parliamentary/chamber';
+	import { formatLongDate } from './readers/_shared';
 	import { judgmentRowTitle } from './index/judgment-kind';
 	import {
 		COMMITMENT_STATUSES,
@@ -126,7 +128,14 @@
 	// The Kamer whose parliament is listed; no filter but a choice, so it stays across tabs.
 	const kamer = $derived<Chamber>(chamberFromParam(params.get('kamer')) ?? 'TK');
 	/** The tabs that list one Kamer at a time. */
-	const CHAMBER_CATEGORIES: readonly IndexCategory[] = ['decisions'];
+	const CHAMBER_CATEGORIES: readonly IndexCategory[] = [
+		'decisions',
+		'members',
+		'factions',
+		'committees'
+	];
+	/** The Eerste Kamer is known from our first read on: no history to show or filter by. */
+	const ekComposition = $derived(kamer === 'EK' && category !== 'decisions');
 	const ministry = $derived(params.get('ministry') ?? '');
 	/** A ministry of the URL as the API types it; an unknown key is left to the API to refuse. */
 	const asMinistry = (key: string) => (key || undefined) as Schema<'MinistryKey'> | undefined;
@@ -312,7 +321,12 @@
 			{ id: 'expected_resolution', label: 'Verwachte afdoening' }
 		]
 	};
-	const sortDef = $derived(SORTS[category].find((s) => s.id === sort) ?? SORTS[category][0]);
+	// The Eerste Kamer's committees are not yet linked to dossiers: no sort or column by them.
+	const noDossiers = $derived(ekComposition && category === 'committees');
+	const sorts = $derived(
+		noDossiers ? SORTS.committees.filter((o) => o.id !== 'dossiers') : SORTS[category]
+	);
+	const sortDef = $derived(sorts.find((s) => s.id === sort) ?? sorts[0]);
 	const dir = $derived(sortDef.dir && (dirParam ?? sortDef.dir));
 
 	type Keys<T> = Record<string, (row: T) => string | number>;
@@ -465,13 +479,16 @@
 					if (!offset) dossierFacets = r.facets ?? null;
 				};
 			}
-			case 'committees':
+			case 'committees': {
+				const query = { chamber: kamer };
 				return async (_offset, signal) => {
-					const items = await unwrap(api.GET('/api/committees', { signal }));
+					const items = await unwrap(api.GET('/api/committees', { params: { query }, signal }));
 					pages.committees = toPage(undefined, items, 0, items.length);
 				};
+			}
 			case 'members': {
 				const query = {
+					chamber: kamer,
 					q: q || undefined,
 					party: party || undefined,
 					active: includeInactive ? undefined : true,
@@ -486,7 +503,11 @@
 				};
 			}
 			case 'factions': {
-				const query = { q: q || undefined, active: includeInactive ? undefined : true };
+				const query = {
+					chamber: kamer,
+					q: q || undefined,
+					active: includeInactive ? undefined : true
+				};
 				return async (_offset, signal) => {
 					const items = await unwrap(api.GET('/api/factions', { params: { query }, signal }));
 					pages.factions = toPage(undefined, items, 0, items.length);
@@ -678,27 +699,32 @@
 
 	// Seats for the hemicycle, once, when the factions are opened.
 	$effect(() => {
-		if (category !== 'factions' || seats) return;
+		if (category !== 'factions' || seats?.chamber === kamer) return;
 		const ac = new AbortController();
-		unwrap(api.GET('/api/parliament/seats', { signal: ac.signal }))
+		const chamber = kamer;
+		unwrap(api.GET('/api/parliament/seats', { params: { query: { chamber } }, signal: ac.signal }))
 			.then((r) => (seats = r))
 			.catch(() => {});
 		return () => ac.abort();
 	});
 
-	// The factions to filter members by; the member list itself is filtered by the API.
+	// The factions to filter members by, of the Kamer shown; the list is filtered by the API.
+	let partiesOf = $state<Chamber | null>(null);
 	$effect(() => {
-		if (category !== 'members' || parties.length) return;
+		if (category !== 'members' || partiesOf === kamer) return;
 		const ac = new AbortController();
-		unwrap(api.GET('/api/factions', { params: { query: { active: true } }, signal: ac.signal }))
-			.then(
-				(r) =>
-					(parties = r
-						.flatMap((f) =>
-							f.abbreviation ? [{ abbreviation: f.abbreviation, seats: f.seats ?? null }] : []
-						)
-						.sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0)))
-			)
+		const chamber = kamer;
+		unwrap(
+			api.GET('/api/factions', { params: { query: { active: true, chamber } }, signal: ac.signal })
+		)
+			.then((r) => {
+				parties = r
+					.flatMap((f) =>
+						f.abbreviation ? [{ abbreviation: f.abbreviation, seats: f.seats ?? null }] : []
+					)
+					.sort((a, b) => (b.seats ?? 0) - (a.seats ?? 0));
+				partiesOf = chamber;
+			})
 			.catch(() => {});
 		return () => ac.abort();
 	});
@@ -928,6 +954,19 @@
 				}))
 				.filter((m) => m.seats.length)
 		};
+	});
+
+	// The Eerste Kamer's composition as read from its site: the day of the composition shown,
+	// and the first read, before which nothing is known. Each row carries the same source.
+	const composition = $derived.by(() => {
+		if (!ekComposition) return null;
+		const source =
+			category === 'factions'
+				? factionsShown?.[0]?.source
+				: category === 'committees'
+					? committeesShown?.[0]?.source
+					: membersShown?.[0]?.ek?.source;
+		return source ?? null;
 	});
 
 	const totalSeats = $derived(factionsShown?.reduce((sum, f) => sum + (f.seats ?? 0), 0) ?? 0);
@@ -1297,52 +1336,61 @@
 							onClick: toggle('party', party, p.abbreviation)
 						}))
 					},
-					{
-						id: 'include_inactive',
-						label: 'Weergave',
-						kind: 'list',
-						options: [
-							{
-								id: 'hist',
-								label: 'Ook historische leden',
-								on: includeInactive,
-								onClick: flag('include_inactive', includeInactive)
-							}
-						]
-					}
+					...(ekComposition
+						? []
+						: [
+								{
+									id: 'include_inactive',
+									label: 'Weergave',
+									kind: 'list' as const,
+									options: [
+										{
+											id: 'hist',
+											label: 'Ook historische leden',
+											on: includeInactive,
+											onClick: flag('include_inactive', includeInactive)
+										}
+									]
+								}
+							])
 				];
 			case 'factions':
-				return [
-					{
-						id: 'include_inactive',
-						label: 'Weergave',
-						kind: 'list',
-						options: [
+				return ekComposition
+					? []
+					: [
 							{
-								id: 'hist',
-								label: 'Ook opgeheven fracties',
-								on: includeInactive,
-								onClick: flag('include_inactive', includeInactive)
+								id: 'include_inactive',
+								label: 'Weergave',
+								kind: 'list',
+								options: [
+									{
+										id: 'hist',
+										label: 'Ook opgeheven fracties',
+										on: includeInactive,
+										onClick: flag('include_inactive', includeInactive)
+									}
+								]
 							}
-						]
-					}
-				];
+						];
 			case 'committees':
-				return [
-					{
-						id: 'only_active',
-						label: 'Weergave',
-						kind: 'list',
-						options: [
+				// The Eerste Kamer's committees are not yet linked to dossiers.
+				return ekComposition
+					? []
+					: [
 							{
-								id: 'active',
-								label: 'Alleen met lopende dossiers',
-								on: onlyActive,
-								onClick: flag('only_active', onlyActive)
+								id: 'only_active',
+								label: 'Weergave',
+								kind: 'list',
+								options: [
+									{
+										id: 'active',
+										label: 'Alleen met lopende dossiers',
+										on: onlyActive,
+										onClick: flag('only_active', onlyActive)
+									}
+								]
 							}
-						]
-					}
-				];
+						];
 			case 'cabinets':
 				return [
 					{
@@ -1600,7 +1648,7 @@
 		},
 		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 110, asideW: 130 }
 	};
-	const columns = $derived(COLUMNS[category]);
+	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
 
 	// ── Opening a source ────────────────────────────────────────────────────
 	// The title of a row opens the bron as Lezen in the detail does: a text of its own at
@@ -1703,14 +1751,6 @@
 					style:--row-lead="{columns.leadW}px"
 					style:--row-aside="{columns.asideW}px"
 				>
-					{#if category === 'factions' && seats}
-						<div class="hemi-card">
-							<div class="hemi-svg-wrap">
-								<Hemicycle data={seats} />
-							</div>
-						</div>
-					{/if}
-
 					{#if CHAMBER_CATEGORIES.includes(category)}
 						<div class="kamer-choice" role="group" aria-label="Kamer">
 							{#each CHAMBERS as c (c)}
@@ -1718,10 +1758,26 @@
 									type="button"
 									class="kamer-option"
 									aria-pressed={kamer === c}
-									onclick={() => patchUrl({ kamer: c === 'TK' ? null : c, open: null })}
+									onclick={() =>
+										patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null })}
 									>{CHAMBER_NAME[c]}</button
 								>
 							{/each}
+						</div>
+					{/if}
+					{#if composition}
+						<p class="composition">
+							Samenstelling op {formatLongDate(composition.composition_date ?? null)}, gegevens
+							sinds {formatLongDate(composition.data_since ?? null)}. Bron:
+							<a href={composition.url} rel="external">{composition.attribution}</a>.
+						</p>
+					{/if}
+
+					{#if category === 'factions' && seats && seats.chamber === kamer}
+						<div class="hemi-card">
+							<div class="hemi-svg-wrap">
+								<Hemicycle data={seats} />
+							</div>
 						</div>
 					{/if}
 
@@ -1752,7 +1808,7 @@
 						onQueryChange={typeQuery}
 						searchPlaceholder={PLACEHOLDER[category]}
 						searchLabel="Zoek in {labelOf(category)}"
-						sortOptions={SORTS[category].length > 1 ? SORTS[category] : []}
+						sortOptions={sorts.length > 1 ? sorts : []}
 						sort={sortDef.id}
 						onSortChange={(v) => patchUrl({ sort: v || null })}
 						{dir}
@@ -2085,14 +2141,18 @@
 													<span class="row-id-main">{c.abbreviation ?? ''}</span>
 												{/snippet}
 												{#snippet body()}
-													<span class="row-sub">
-														{count > 0
-															? `${count === 1 ? 'lopend dossier' : 'lopende dossiers'}`
-															: 'Geen lopende dossiers'}
-													</span>
+													{#if c.chamber !== 'EK'}
+														<span class="row-sub">
+															{count > 0
+																? `${count === 1 ? 'lopend dossier' : 'lopende dossiers'}`
+																: 'Geen lopende dossiers'}
+														</span>
+													{/if}
 												{/snippet}
 												{#snippet aside()}
-													{#if count > 0}
+													{#if c.chamber === 'EK'}
+														<!-- Not yet linked to dossiers: no count to give. -->
+													{:else if count > 0}
 														<span class="num-strong">{count}</span>
 													{:else}
 														<span class="tag tag--outline">—</span>
@@ -2120,14 +2180,25 @@
 												onToggle={() => toggleOpen(bron)}
 											>
 												{#snippet lead()}
+													<!-- An Eerste Kamer member's fractie is the one it sits in there. -->
+													{@const ek = kamer === 'EK' ? m.ek : null}
+													{@const abbreviation = ek ? ek.abbreviation : m.party}
 													<span class="row-id-main row-id-main--inline">
-														<span class="party-dot" style:background={partyColor(m.party ?? '')}
+														<span
+															class="party-dot"
+															style:background={partyColor(abbreviation ?? '')}
 														></span>
-														{#if m.party}<NameLink collection="factions" name={m.party} />{/if}
+														{#if ek?.faction && ek.abbreviation}<BronLink
+																ref={{ collection: 'factions', key: ek.faction }}
+																>{ek.abbreviation}</BronLink
+															>{:else if m.party}<NameLink
+																collection="factions"
+																name={m.party}
+															/>{/if}
 													</span>
 												{/snippet}
 												{#snippet detail()}
-													<IndexDetail category="members" record={m} {bron} />
+													<IndexDetail category="members" record={m} {bron} chamber={kamer} />
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -2772,6 +2843,12 @@
 	.kamer-option[aria-pressed='true'] {
 		background: var(--ink);
 		color: var(--paper);
+	}
+	.composition {
+		margin: 0 0 var(--s-4);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.row-method {
 		font-family: var(--font-sans);

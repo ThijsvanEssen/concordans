@@ -1,5 +1,6 @@
 <script lang="ts">
 	import NameLink from '$lib/bron/NameLink.svelte';
+	import BronLink from '$lib/bron/BronLink.svelte';
 	// Inline detail of an opened row: header, stat tiles, a phase path for
 	// dossiers and the links that open the source. Shows only what the list
 	// item carries.
@@ -16,7 +17,8 @@
 	let {
 		category,
 		record,
-		bron
+		bron,
+		chamber = 'TK'
 	}: {
 		category: IndexCategory;
 		record:
@@ -29,6 +31,8 @@
 			| Schema<'DecisionSummaryDTO'>;
 		/** What a link names: `judgments/<key>`, `dossiers/<number>`. */
 		bron: string;
+		/** The Kamer the list shows: a member may sit in both, the list says which. */
+		chamber?: string;
 	} = $props();
 
 	function fmtDate(iso: string | null | undefined): string {
@@ -44,9 +48,9 @@
 		instruments: 'Wet · regelgeving',
 		judgments: 'Uitspraak · jurisprudentie',
 		dossiers: 'Dossier · kamerstukken',
-		committees: 'Commissie · Tweede Kamer',
-		members: 'Kamerlid · Tweede Kamer',
-		factions: 'Fractie · Tweede Kamer',
+		committees: 'Commissie',
+		members: 'Kamerlid',
+		factions: 'Fractie',
 		decisions: 'Stemming · Tweede Kamer',
 		cabinets: 'Kabinet · regering',
 		ministers: 'Bewindspersoon · regering',
@@ -86,8 +90,14 @@
 			? `${judgmentKind(j.decision_kind, j.tier)} · jurisprudentie`
 			: s
 				? `Stemming · ${chamberName(s.chamber)}`
-				: KIND_LABEL[category]
+				: c || f
+					? `${KIND_LABEL[category]} · ${chamberName((c ?? f)?.chamber)}`
+					: m
+						? `${KIND_LABEL[category]} · ${chamberName(chamber)}`
+						: KIND_LABEL[category]
 	);
+	/** An Eerste Kamer member as its site describes it, when the list is the Eerste Kamer's. */
+	const ek = $derived(chamber === 'EK' ? (m?.ek ?? null) : null);
 	const citedBy = $derived(j?.inbound_citation_count ?? 0);
 	const cites = $derived(j?.outbound_citation_count ?? 0);
 </script>
@@ -278,6 +288,28 @@
 				<div class="tile-id">{c.abbreviation ?? ''}</div>
 				<div class="tile-lbl">Afkorting</div>
 			</div>
+		{:else if m && ek}
+			<div class="tile">
+				<div class="tile-num">
+					{#if ek.faction}<BronLink ref={{ collection: 'factions', key: ek.faction }}
+							>{ek.abbreviation ?? ek.faction}</BronLink
+						>{/if}
+				</div>
+				<div class="tile-lbl">Fractie</div>
+			</div>
+			{#if ek.seniority_days != null}
+				<div class="tile">
+					<div class="tile-num">{ek.seniority_days.toLocaleString('nl-NL')}</div>
+					<div class="tile-lbl">Anciënniteit</div>
+					<div class="tile-sub">dagen</div>
+				</div>
+			{/if}
+			{#if ek.residence}
+				<div class="tile">
+					<div class="tile-id">{ek.residence}</div>
+					<div class="tile-lbl">Woonplaats</div>
+				</div>
+			{/if}
 		{:else if m}
 			<div class="tile">
 				<div class="tile-num">
