@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.62.0"
+		"version": "0.63.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -5701,7 +5701,17 @@
 						"title": "Primary Case Kind",
 						"description": "The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others."
 					},
-					"chamber": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Chamber" },
+					"dossier_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Dossier Numbers",
+						"description": "The dossiers of the cases it decided (``36774``, ``37020-XV``)."
+					},
+					"chamber": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "'TK' or 'EK'."
+					},
 					"result": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Result",
@@ -6178,7 +6188,12 @@
 					"sequence": {
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
 						"title": "Sequence",
-						"description": "Document number within the dossier."
+						"description": "The number of the paper in ``dossier_number``."
+					},
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number",
+						"description": "The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill."
 					},
 					"session_year": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9953,7 +9968,12 @@
 					"sequence": {
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
 						"title": "Sequence",
-						"description": "Document number within the dossier."
+						"description": "The number of the paper in ``dossier_number``."
+					},
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number",
+						"description": "The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill."
 					},
 					"session_year": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -10021,7 +10041,12 @@
 					"sequence": {
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
 						"title": "Sequence",
-						"description": "Document number within the dossier."
+						"description": "The number of the paper in ``dossier_number``."
+					},
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number",
+						"description": "The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill."
 					},
 					"session_year": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],

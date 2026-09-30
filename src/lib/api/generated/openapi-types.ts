@@ -2831,7 +2831,15 @@ export interface components {
              * @description The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others.
              */
             primary_case_kind?: string | null;
-            /** Chamber */
+            /**
+             * Dossier Numbers
+             * @description The dossiers of the cases it decided (``36774``, ``37020-XV``).
+             */
+            dossier_numbers?: string[];
+            /**
+             * Chamber
+             * @description 'TK' or 'EK'.
+             */
             chamber?: string | null;
             /**
              * Result
@@ -3284,9 +3292,14 @@ export interface components {
             title?: string | null;
             /**
              * Sequence
-             * @description Document number within the dossier.
+             * @description The number of the paper in ``dossier_number``.
              */
             sequence?: number | null;
+            /**
+             * Dossier Number
+             * @description The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill.
+             */
+            dossier_number?: string | null;
             /**
              * Session Year
              * @description Parliamentary year.
@@ -6544,9 +6557,14 @@ export interface components {
             title?: string | null;
             /**
              * Sequence
-             * @description Document number within the dossier.
+             * @description The number of the paper in ``dossier_number``.
              */
             sequence?: number | null;
+            /**
+             * Dossier Number
+             * @description The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill.
+             */
+            dossier_number?: string | null;
             /**
              * Session Year
              * @description Parliamentary year.
@@ -6622,9 +6640,14 @@ export interface components {
             title?: string | null;
             /**
              * Sequence
-             * @description Document number within the dossier.
+             * @description The number of the paper in ``dossier_number``.
              */
             sequence?: number | null;
+            /**
+             * Dossier Number
+             * @description The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill.
+             */
+            dossier_number?: string | null;
             /**
              * Session Year
              * @description Parliamentary year.
