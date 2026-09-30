@@ -296,11 +296,16 @@ export function periodLabel(period: NonNullable<Row['period']>): string {
 	return period.role && period.role !== 'Lid' ? `${period.role.toLowerCase()}, ${span}` : span;
 }
 
-/** `r.o. 2.2.2`, `r.o. 2.2.2 en 2.4.1`, `r.o. 2.2.2, 2.4.1 en 19 meer`. */
+const POSITION_PREFIX = /^(r\.o\.|onder|§)\s*/;
+
+/**
+ * `r.o. 2.2.2`, `r.o. 2.2.2 en 2.4.1`, `r.o. 2.2.2, 2.4.1 en 19 meer`; `onder` in a
+ * conclusion, `§` in a judgment of the EHRM (`paragraphCite`).
+ */
 export function positionsLabel(positions: string[]): string | null {
-	const numbers = positions.map((p) => p.replace(/^r\.o\.\s*/, ''));
+	const numbers = positions.map((p) => p.replace(POSITION_PREFIX, ''));
 	if (numbers.length === 0) return null;
-	const prefix = positions[0].startsWith('r.o.') ? 'r.o. ' : '';
+	const prefix = POSITION_PREFIX.exec(positions[0])?.[0] ?? '';
 	if (numbers.length === 1) return prefix + numbers[0];
 	if (numbers.length === 2) return `${prefix}${numbers[0]} en ${numbers[1]}`;
 	return `${prefix}${numbers[0]}, ${numbers[1]} en ${numbers.length - 2} meer`;

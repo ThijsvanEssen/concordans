@@ -212,6 +212,8 @@ describe('bundleMentions', () => {
 		const one = mention('r.o. 3.1', 1);
 		expect(bundleMentions([one])).toBe(one);
 		expect(positionsLabel(['r.o. 3.1', 'r.o. 3.2'])).toBe('r.o. 3.1 en 3.2');
+		expect(positionsLabel(['onder 3.4', 'onder 4.1', 'onder 5'])).toBe('onder 3.4, 4.1 en 1 meer');
+		expect(positionsLabel(['§ 9', '§ 12'])).toBe('§ 9 en 12');
 	});
 });
 

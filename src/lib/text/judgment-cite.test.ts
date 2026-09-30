@@ -43,5 +43,8 @@ describe('paragraphCite', () => {
 	});
 	it('cites a paragraph of a conclusion of the Parket as the Hoge Raad does: onder 3.4', () => {
 		expect(paragraphCite('ECLI:NL:PHR:2020:453', '3.4')).toBe('onder 3.4');
+		expect(paragraphCite('ecli_nl_phr_2020_453', '3.4')).toBe('onder 3.4');
+		expect(paragraphCite('judgments/ecli_ce_echr_2026_0908jud000748123', '9')).toBe('§ 9');
+		expect(paragraphCite('ecli_nl_hr_2019_1278', '3.1')).toBe('r.o. 3.1');
 	});
 });

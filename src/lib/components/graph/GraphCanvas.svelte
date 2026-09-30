@@ -2,6 +2,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
+	import { paragraphCite } from '$lib/text/judgment-cite';
 	import type { GraphFilters } from '$lib/graph/graph-store';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
@@ -680,7 +681,11 @@
 	}
 
 	/** `haalt aan, lid 2, r.o. 5.1`: what an edge says on hover or when selected. */
-	function edgeLabel(data: Record<string, unknown>, sourceCollection: Collection): string {
+	function edgeLabel(
+		data: Record<string, unknown>,
+		sourceCollection: Collection,
+		source: string
+	): string {
 		const relation = data.relation as Relation;
 		const meta = (data.meta ?? {}) as Record<string, unknown>;
 		// A signature says what it was signed as: "ondertekend als minister-president".
@@ -698,7 +703,7 @@
 			null;
 		if (lid) parts.push(`lid ${lid}`);
 		if (typeof meta.paragraph_number === 'string' && meta.paragraph_number)
-			parts.push(`r.o. ${meta.paragraph_number}`);
+			parts.push(paragraphCite(source, meta.paragraph_number));
 		if (data.status === 'voorgesteld') parts.push('voorgesteld');
 		return parts.join(', ');
 	}
@@ -906,7 +911,7 @@
 						type: edgeType,
 						color: t.accent,
 						size: restSize * 2.4,
-						label: edgeLabel(data, sourceCollection),
+						label: edgeLabel(data, sourceCollection, src),
 						forceLabel: true,
 						zIndex: 3
 					};
@@ -918,7 +923,7 @@
 						type: edgeType,
 						color: renderColor,
 						size: restSize * 1.8,
-						label: edgeLabel(data, sourceCollection),
+						label: edgeLabel(data, sourceCollection, src),
 						forceLabel: true,
 						zIndex: 3
 					};
@@ -933,7 +938,7 @@
 							type: edgeType,
 							color: renderColor,
 							size: restSize * 1.3,
-							label: edgeLabel(data, sourceCollection),
+							label: edgeLabel(data, sourceCollection, src),
 							forceLabel: true,
 							zIndex: 2
 						};

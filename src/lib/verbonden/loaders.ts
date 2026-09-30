@@ -16,6 +16,7 @@ import { getJudgmentDetail } from '$lib/api/judgments';
 import { bucketKey, neighborsOf } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
+import { paragraphCite } from '$lib/text/judgment-cite';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
 	aardLabel,
@@ -222,7 +223,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						kind: 'uitspraken',
 						at,
 						lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
-						position: item.paragraph_number ? `r.o. ${item.paragraph_number}` : null,
+						position: item.paragraph_number ? paragraphCite(j.key, item.paragraph_number) : null,
 						derived: item.confidence < 1,
 						confidence: item.confidence,
 						snippet: item.snippet || null,

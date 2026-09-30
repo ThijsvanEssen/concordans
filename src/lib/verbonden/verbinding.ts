@@ -4,6 +4,7 @@
 import { refOf, type BronRef } from '$lib/bron/href';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { relationLabel, statusLabel, type Relation } from '$lib/vocabulary';
+import { paragraphCite } from '$lib/text/judgment-cite';
 import { confidenceWord } from './filter';
 import { describe, type Row } from './rows';
 
@@ -144,7 +145,9 @@ export function verbindingOfEdge(
 		label: relationLabel(edge.relation, source.collection),
 		kind: kindOfVerbinding(edge.relation, source.collection),
 		lid,
-		position: text(meta.paragraph_number) ? `r.o. ${meta.paragraph_number}` : null,
+		position: text(meta.paragraph_number)
+			? paragraphCite(source.key, String(meta.paragraph_number))
+			: null,
 		at: text(meta.paragraph_id),
 		snippet: text(meta.snippet),
 		match: text(meta.raw_match),

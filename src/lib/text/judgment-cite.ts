@@ -74,10 +74,13 @@ export function judgmentCite(
 /**
  * How a numbered paragraph is cited: `r.o. 3.1` (rechtsoverweging) in a Dutch judgment,
  * `onder 3.1` in a conclusion of the Parket, as the Hoge Raad refers to one, `§ 9` in a
- * judgment of the EHRM or the HvJ EU.
+ * judgment of the EHRM or the HvJ EU. Takes the ECLI or the key of the judgment
+ * (`ecli_nl_phr_2020_453`).
  */
 export function paragraphCite(ecli: string | null | undefined, number: string): string {
-	const [, country = '', code = ''] = (ecli ?? '').trim().toUpperCase().split(':');
+	const parts = (ecli ?? '').trim().toUpperCase().split(/[:_/]/);
+	const at = parts.indexOf('ECLI');
+	const [country = '', code = ''] = at < 0 ? [] : parts.slice(at + 1);
 	if (country === 'CE' || country === 'EU') return `§ ${number}`;
 	return code === 'PHR' ? `onder ${number}` : `r.o. ${number}`;
 }
