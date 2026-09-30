@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { UNNAMED } from '$lib/verbonden/rows';
-import { ekFactionGroups, votersOf } from './voters';
+import { ekFactionGroups, ekVoteLine, votersOf } from './voters';
+
+describe('ekVoteLine', () => {
+	it('counts a fractie’s choices in the Eerste Kamer, leaving out the ones it never made', () => {
+		expect(ekVoteLine({ voor: 26 }, 26)).toBe('Voor bij 26 van de 26 stemmingen');
+		expect(ekVoteLine({ voor: 20, tegen: 5, 'aantekening gevraagd': 1 }, 26)).toBe(
+			'Voor bij 20, tegen bij 5 en aantekening gevraagd bij 1 van de 26 stemmingen'
+		);
+		expect(ekVoteLine({}, 0)).toBe('0 stemmingen');
+	});
+});
 
 describe('ekFactionGroups', () => {
 	it('lists the fracties for, against and noted, leaving out an empty side', () => {

@@ -8,7 +8,8 @@
 	import { str } from '$lib/components/parliamentary/data';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
 	import { bronHref } from '$lib/bron/href';
-	import { formatLongDate } from './_shared';
+	import { formatDate, formatLongDate } from './_shared';
+	import { ekVoteLine } from './voters';
 
 	/** A member of the fractie's board, as the Eerste Kamer lists it (API 0.65). */
 	type BoardSeat = { function?: string; name?: string; member?: string | null; since?: string };
@@ -42,6 +43,30 @@
 			});
 		return () => ac.abort();
 	});
+
+	// How an Eerste Kamer fractie voted on the bills (API 0.68); the Tweede Kamer's are
+	// with its members.
+	let votes = $state<Schema<'EkFactionVotesResponse'> | null>(null);
+	$effect(() => {
+		const f = view.kind === 'loaded' ? view.faction : null;
+		votes = null;
+		if (!f || str(f.props?.chamber) !== 'EK') return;
+		const ac = new AbortController();
+		unwrap(
+			api.GET('/api/factions/{key}/votes', { params: { path: { key: f.key } }, signal: ac.signal })
+		)
+			.then((r) => {
+				if (!ac.signal.aborted) votes = r;
+			})
+			.catch(() => {});
+		return () => ac.abort();
+	});
+
+	const CHOICE: Record<string, string> = {
+		voor: 'Voor',
+		tegen: 'Tegen',
+		'aantekening gevraagd': 'Aantekening'
+	};
 </script>
 
 <ReaderFrame>
@@ -102,6 +127,32 @@
 							</dd>
 						{/each}
 					</dl>
+				</section>
+			{/if}
+
+			{#if votes && votes.total > 0}
+				<section class="sec">
+					<h3 class="sec-title">Stemgedrag in de Eerste Kamer</h3>
+					<p class="vote-line">{ekVoteLine(votes.counts, votes.total)}.</p>
+					<ul class="votes">
+						{#each votes.items as v (v.decision_key)}
+							<li class="vote">
+								<span class="vote-choice vote-choice--{v.choice.split(' ')[0]}"
+									>{CHOICE[v.choice] ?? v.choice}</span
+								>
+								<a
+									class="vote-subject"
+									href={bronHref(`decisions/${v.decision_key}`)}
+									data-sveltekit-noscroll>{v.subject ?? v.dossier_numbers?.[0] ?? '—'}</a
+								>
+								<span class="vote-meta"
+									>{v.date ? formatDate(v.date) : ''}{v.result
+										? `, ${v.result.toLowerCase()}`
+										: ''}</span
+								>
+							</li>
+						{/each}
+					</ul>
 				</section>
 			{/if}
 
@@ -196,6 +247,47 @@
 		color: var(--ink);
 	}
 	.since {
+		color: var(--ink-3);
+	}
+	.vote-line {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.votes {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+	}
+	.vote {
+		display: grid;
+		grid-template-columns: 88px minmax(0, 1fr);
+		gap: 2px var(--s-3);
+		padding: var(--s-2) 0;
+		border-top: 1px solid var(--rule);
+	}
+	.vote-choice {
+		grid-row: span 2;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-2);
+	}
+	.vote-choice--tegen {
+		color: var(--accent);
+	}
+	.vote-subject {
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		line-height: var(--lh-snug);
+		color: var(--ink);
+	}
+	.vote-meta {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.source {
