@@ -84,6 +84,7 @@
 		j ? `${judgmentKind(j.decision_kind, j.tier)} · jurisprudentie` : KIND_LABEL[category]
 	);
 	const citedBy = $derived(j?.inbound_citation_count ?? 0);
+	const cites = $derived(j?.outbound_citation_count ?? 0);
 </script>
 
 <div class="detail-inner">
@@ -145,6 +146,12 @@
 						<span class="tag"
 							>Aangehaald door {citedBy.toLocaleString('nl-NL')}
 							{citedBy === 1 ? 'uitspraak' : 'uitspraken'}</span
+						>
+					{/if}
+					{#if cites > 0}
+						<span class="tag"
+							>Haalt {cites.toLocaleString('nl-NL')}
+							{cites === 1 ? 'uitspraak' : 'uitspraken'} aan</span
 						>
 					{/if}
 				{:else if d}
