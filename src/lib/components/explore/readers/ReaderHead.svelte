@@ -10,6 +10,7 @@
 	let {
 		collection,
 		juris,
+		kind = null,
 		title,
 		place = [],
 		placeTitle = null,
@@ -18,6 +19,8 @@
 	}: {
 		collection: Collection;
 		juris?: string | null;
+		/** The kind of the bron where it is more precise than its collection: `Conclusie`. */
+		kind?: string | null;
 		title: string;
 		/** The place of the bron, printed above the title: `Wetboek van Strafrecht · Tweede Boek · Titel XX`. */
 		place?: string[];
@@ -42,7 +45,7 @@
 		{:else}
 			<div class="reader-kind">
 				<KindGlyph {collection} />
-				<span>{bronLabel(collection)}</span>
+				<span>{kind ?? bronLabel(collection)}</span>
 				{#if juris}<span class="reader-juris">· {juris}</span>{/if}
 			</div>
 		{/if}

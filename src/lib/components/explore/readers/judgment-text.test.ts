@@ -1,5 +1,6 @@
 import { describe, expect, it, test } from 'vitest';
 import {
+	signatureStart,
 	caseArea,
 	extractParticipants,
 	extractParties,
@@ -569,5 +570,24 @@ describe('a numbered line in the text', () => {
 	it('is a quotation, not a title, when it ends in a closing quote', () => {
 		const segs = splitBodyParagraph('5.1. Both grounds for appeal fail.”');
 		expect(segs.some((s) => s.kind === 'heading')).toBe(false);
+	});
+});
+
+describe('signatureStart', () => {
+	const body = (text: string, number: string | null = null) => ({ kind: 'body', number, text });
+	it('finds the lines a conclusion of the Parket is signed with', () => {
+		const paragraphs = [
+			{ kind: 'heading', number: '4', text: 'Conclusie' },
+			body('De conclusie strekt tot vernietiging van het arrest van het hof.'),
+			body('De Procureur-Generaal bij de'),
+			body('Hoge Raad der Nederlanden'),
+			body('A-G')
+		];
+		expect(signatureStart(paragraphs)).toBe(2);
+		expect(signatureStart([...paragraphs.slice(0, 4), body('Advocaat-Generaal')])).toBe(2);
+	});
+	it('leaves a text that ends otherwise alone', () => {
+		const paragraphs = [body('Dit arrest is gewezen door de vice-president.'), body('A-G', '5.1')];
+		expect(signatureStart(paragraphs)).toBe(2);
 	});
 });

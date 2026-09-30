@@ -838,3 +838,25 @@ export function forParties(party: string): string {
 	const count = `${anonymous} geanonimiseerde partijen`;
 	return named.length ? `${named.join(', ')} en ${count}` : count;
 }
+
+// The lines a conclusion of the Parket ends with, under the text: `De Procureur-Generaal
+// bij de`, `Hoge Raad der Nederlanden`, `A-G`. The name of the A-G is not in them.
+const SIGNATURE_LINE_RE =
+	/^(de\s+)?((plv\.?\s+)?procureur-generaal|advocaat-generaal)(\s+bij\s+de)?$|^hoge raad der nederlanden$|^(a-g|p-g|plv\.?\s+p-g)$/i;
+
+/**
+ * Where the signature at the end of a text starts: the index of the first of the
+ * unnumbered lines after the last paragraph that read as one; `paragraphs.length`
+ * when the text ends otherwise.
+ */
+export function signatureStart(
+	paragraphs: { kind?: string | null; number?: string | null; text: string }[]
+): number {
+	let i = paragraphs.length;
+	while (i > 0) {
+		const p = paragraphs[i - 1];
+		if (p.kind !== 'body' || p.number || !SIGNATURE_LINE_RE.test(p.text.trim())) break;
+		i--;
+	}
+	return i;
+}

@@ -73,9 +73,11 @@ export function judgmentCite(
 
 /**
  * How a numbered paragraph is cited: `r.o. 3.1` (rechtsoverweging) in a Dutch judgment,
- * `§ 9` in a judgment of the EHRM or the HvJ EU.
+ * `onder 3.1` in a conclusion of the Parket, as the Hoge Raad refers to one, `§ 9` in a
+ * judgment of the EHRM or the HvJ EU.
  */
 export function paragraphCite(ecli: string | null | undefined, number: string): string {
-	const [, country = ''] = (ecli ?? '').trim().toUpperCase().split(':');
-	return country === 'CE' || country === 'EU' ? `§ ${number}` : `r.o. ${number}`;
+	const [, country = '', code = ''] = (ecli ?? '').trim().toUpperCase().split(':');
+	if (country === 'CE' || country === 'EU') return `§ ${number}`;
+	return code === 'PHR' ? `onder ${number}` : `r.o. ${number}`;
 }

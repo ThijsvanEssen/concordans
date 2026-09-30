@@ -20,6 +20,7 @@
 		forParties,
 		partiesByRole,
 		normalizeParagraphText,
+		signatureStart,
 		splitBodyParagraph,
 		splitSummary
 	} from './judgment-text';
@@ -120,17 +121,20 @@
 		{@const firstSubheading = paragraphs.find((p) => p.kind === 'subheading')}
 		{@const participants = judgmentParticipants(j)}
 		{@const hasSummary = !!j.summary?.trim()}
+		{@const signed = signatureStart(paragraphs)}
+		{@const conclusion = j.decision_kind === 'conclusie'}
 		{@const replacedBy = j.same_as ?? null}
 		{@const alsoAs = view.data.same_as ?? []}
 		<ReaderHead
 			collection="judgments"
+			kind={conclusion ? 'Conclusie' : null}
 			juris={textProp(j.props?.court)}
 			title={(j.ecli
 				? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court)).full
 				: (j.display_name ?? 'Uitspraak')) + (j.names?.length ? ` (${j.names.join(', ')})` : '')}
 		>
 			<div class="reader-meta-row">
-				{#if j.decision_kind}
+				{#if j.decision_kind && !conclusion}
 					<span class="reader-meta-item"
 						>{j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)}</span
 					>
@@ -233,7 +237,7 @@
 		{/if}
 
 		<div class="reader-body" bind:this={root}>
-			{#each paragraphs as para, paraIdx (paraIdx)}
+			{#each paragraphs.slice(0, signed) as para, paraIdx (paraIdx)}
 				{#if para.kind === 'subheading'}
 					<!-- The first subheading is replaced by the participants table above. -->
 					{#if para !== firstSubheading}
@@ -293,7 +297,7 @@
 										{#if forms}
 											<CiteMenu
 												items={citeItems(forms, forms.link)}
-												name="overweging {num}"
+												name="{conclusion ? 'punt' : 'overweging'} {num}"
 												buttonClass="btn reader-para-btn"
 												onToggle={(open) =>
 													(menuFor = open ? rovId : menuFor === rovId ? null : menuFor)}
@@ -314,6 +318,12 @@
 					{/each}
 				{/if}
 			{/each}
+			{#if signed < paragraphs.length}
+				<p class="reader-signature">
+					{#each paragraphs.slice(signed) as line, k (k)}{#if k > 0}<br
+							/>{/if}{line.text.trim()}{/each}
+				</p>
+			{/if}
 			{#if paragraphs.length === 0 && !hasSummary && !replacedBy}
 				<p class="reader-empty-text">Geen tekst beschikbaar.</p>
 			{/if}
@@ -629,6 +639,15 @@
 		font-style: italic;
 		color: var(--ink-3);
 		margin: 0;
+	}
+
+	/* The lines the Parket signs a conclusion with, under the text. */
+	.reader-signature {
+		margin: var(--s-6) 0 0;
+		max-width: var(--measure);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 
 	.reader-translation {
