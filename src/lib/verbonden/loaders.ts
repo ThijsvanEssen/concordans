@@ -359,6 +359,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const linked =
 			(data?.implements?.length ?? 0) +
 			(data?.implemented_by?.length ?? 0) +
+			(data?.mentions?.length ?? 0) +
+			(data?.mentioned_by?.length ?? 0) +
 			(data?.international?.length ?? 0);
 		if (response?.ok && data && linked > 0) {
 			const rows = new Map<string, Row>();
@@ -376,6 +378,20 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					derived: link.confidence != null && link.confidence < 1,
 					relation: 'IMPLEMENTS',
 					direction: implemented.includes(link) ? 'outbound' : 'inbound'
+				});
+			}
+			// An act the text names by its CELEX number without implementing it (API 0.67).
+			const mentions = data.mentions ?? [];
+			for (const link of [...mentions, ...(data.mentioned_by ?? [])]) {
+				const i = link.instrument;
+				add({
+					ref: { collection: 'instruments', key: i.key },
+					title: i.citation_title ?? i.title ?? i.key,
+					context: 'alleen genoemd',
+					kind: 'internationaal',
+					derived: link.confidence != null && link.confidence < 1,
+					relation: 'REFERS_TO',
+					direction: mentions.includes(link) ? 'outbound' : 'inbound'
 				});
 			}
 			for (const link of data.international ?? []) {
@@ -402,6 +418,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				total:
 					(data.implements_total ?? 0) +
 					(data.implemented_by_total ?? 0) +
+					(data.mentions_total ?? 0) +
+					(data.mentioned_by_total ?? 0) +
 					(data.international_total ?? 0)
 			};
 		}
