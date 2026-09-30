@@ -173,7 +173,7 @@ export interface paths {
         };
         /**
          * One instrument
-         * @description The instrument named by its BWB id (`BWBR0001854`), its CELEX number (`32016L0680`) or its node key (`echr_convention`, `verdrag_012345`): identifiers, names, jurisdiction, kind, dates and article count. 404 for an unknown instrument.
+         * @description The instrument named by its BWB id (`BWBR0001854`), its CELEX number (`32016L0680`) or its node key (`echr_convention`, `verdrag_012345`): identifiers, names, jurisdiction, kind, dates and article count, and for a treaty the other instruments with its treaty number (`same_treaty`). 404 for an unknown instrument.
          */
         get: operations["get_instrument_api_instruments__identifier__get"];
         put?: never;
@@ -1294,30 +1294,34 @@ export interface components {
             short_title?: string | null;
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
-            /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
-            /** Current Stage */
-            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
-            /** Stages */
-            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
-             * Stages Complete
-             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
-             * @default true
+             * Kind
+             * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
              */
-            stages_complete: boolean;
+            kind?: string | null;
             /**
-             * Stages Missing
-             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             * Kind Basis
+             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
              */
-            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            kind_basis?: ("case" | "document") | null;
+            /**
+             * Phases
+             * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
+             */
+            phases?: components["schemas"]["DossierPhaseDTO"][] | null;
+            /**
+             * Current Phase
+             * @description The done phase with the latest date; null for none.
+             */
+            current_phase?: string | null;
             /**
              * Closed
              * @default false
              */
             closed: boolean;
             /** Outcome */
-            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            outcome?: ("aangenomen" | "verworpen") | null;
+            tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
@@ -2109,7 +2113,7 @@ export interface components {
             from_date?: string | null;
             /**
              * To Date
-             * @description Null while in office.
+             * @description The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts. For a cabinet: the day of the beëdiging of the next one.
              */
             to_date?: string | null;
             /**
@@ -2184,9 +2188,15 @@ export interface components {
              * @description Null for the stretch after elections held while the cabinet was in office, when the source gives no day of its resignation.
              */
             kind?: ("formatie" | "in_functie" | "demissionair" | "dubbel_demissionair" | "missionair") | null;
-            /** From Date */
+            /**
+             * From Date
+             * @description The day it began.
+             */
             from_date?: string | null;
-            /** To Date */
+            /**
+             * To Date
+             * @description The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts.
+             */
             to_date?: string | null;
             /**
              * Label
@@ -2216,9 +2226,15 @@ export interface components {
             seat?: string | null;
             /** Portfolio */
             portfolio?: string | null;
-            /** From Date */
+            /**
+             * From Date
+             * @description The day it began.
+             */
             from_date?: string | null;
-            /** To Date */
+            /**
+             * To Date
+             * @description The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts.
+             */
             to_date?: string | null;
             /**
              * From Date Source
@@ -2338,7 +2354,7 @@ export interface components {
             from_date?: string | null;
             /**
              * To Date
-             * @description Null while in office.
+             * @description The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts. For a cabinet: the day of the beëdiging of the next one.
              */
             to_date?: string | null;
             /**
@@ -2789,8 +2805,21 @@ export interface components {
              * @description TK Besluit identifier.
              */
             external_id?: string | null;
-            /** Passed */
-            passed: boolean;
+            /**
+             * Passed
+             * @description Whether it carried; null for a decision that is no vote (``Stemmen - uitstellen``).
+             */
+            passed?: boolean | null;
+            /**
+             * Kind
+             * @description What was decided on: the ``Zaak.Soort`` of the case it decided (``primary_case_kind``), or the one Soort of the cases on its agenda item, as the Kamer writes it: ``Motie``, ``Amendement``, ``Wetgeving``, ``Begroting``, ...; null when neither tells.
+             */
+            kind?: string | null;
+            /**
+             * Decision Kind
+             * @description ``BesluitSoort`` as the Kamer writes it: ``Stemmen - aangenomen``, ``Stemmen - verworpen``, ``Stemmen - zonder stemming aannemen`` (a hamerstuk: no votes), ``Stemmen - uitstellen``, ...
+             */
+            decision_kind?: string | null;
             /**
              * Primary Case Kind
              * @description The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others.
@@ -2800,9 +2829,9 @@ export interface components {
             chamber?: string | null;
             /**
              * Vote Kind
-             * @default faction
+             * @description ``member``, ``faction``; null without votes (a hamerstuk).
              */
-            vote_kind: string;
+            vote_kind?: string | null;
             /** Tally */
             tally?: {
                 [key: string]: number;
@@ -2857,7 +2886,7 @@ export interface components {
          */
         DecisionKindCount: {
             /** Value */
-            value: ("motie" | "amendement" | "wetsvoorstel" | "overig") | null;
+            value: string | null;
             /** Count */
             count: number;
         };
@@ -2909,9 +2938,14 @@ export interface components {
             dossier_numbers?: string[];
             /**
              * Kind
-             * @description What was voted on, from the ``Zaak.Soort`` of the case it decided (``primary_case_kind``): ``motie``, ``amendement``, ``wetsvoorstel`` (a bill, also an initiative bill or a budget) or ``overig``. Null for a decision normalized before the kind was stored.
+             * @description What was decided on: the ``Zaak.Soort`` of the case it decided (``primary_case_kind``), or the one Soort of the cases on its agenda item, as the Kamer writes it: ``Motie``, ``Amendement``, ``Wetgeving``, ``Begroting``, ...; null when neither tells.
              */
-            kind?: ("motie" | "amendement" | "wetsvoorstel" | "overig") | null;
+            kind?: string | null;
+            /**
+             * Decision Kind
+             * @description ``BesluitSoort`` as the Kamer writes it: ``Stemmen - aangenomen``, ``Stemmen - verworpen``, ``Stemmen - zonder stemming aannemen`` (a hamerstuk: no votes), ``Stemmen - uitstellen``, ...
+             */
+            decision_kind?: string | null;
             /** Passed */
             passed?: boolean | null;
             /** Chamber */
@@ -3059,30 +3093,34 @@ export interface components {
             short_title?: string | null;
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
-            /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
-            /** Current Stage */
-            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
-            /** Stages */
-            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
-             * Stages Complete
-             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
-             * @default true
+             * Kind
+             * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
              */
-            stages_complete: boolean;
+            kind?: string | null;
             /**
-             * Stages Missing
-             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             * Kind Basis
+             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
              */
-            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            kind_basis?: ("case" | "document") | null;
+            /**
+             * Phases
+             * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
+             */
+            phases?: components["schemas"]["DossierPhaseDTO"][] | null;
+            /**
+             * Current Phase
+             * @description The done phase with the latest date; null for none.
+             */
+            current_phase?: string | null;
             /**
              * Closed
              * @default false
              */
             closed: boolean;
             /** Outcome */
-            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            outcome?: ("aangenomen" | "verworpen") | null;
+            tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
@@ -3218,10 +3256,10 @@ export interface components {
             status?: components["schemas"]["FacetCountDTO"][];
             /** Outcome */
             outcome?: components["schemas"]["FacetCountDTO"][];
-            /** Track */
-            track?: components["schemas"]["FacetCountDTO"][];
-            /** Stage */
-            stage?: components["schemas"]["FacetCountDTO"][];
+            /** Kind */
+            kind?: components["schemas"]["FacetCountDTO"][];
+            /** Phase */
+            phase?: components["schemas"]["FacetCountDTO"][];
             /** Ministry */
             ministry?: components["schemas"]["FacetCountDTO"][];
         };
@@ -3380,6 +3418,27 @@ export interface components {
             edges: components["schemas"]["DossierMutationEdge"][];
         };
         /**
+         * DossierPhaseDTO
+         * @description A phase of the bar of a bill.
+         */
+        DossierPhaseDTO: {
+            /**
+             * Name
+             * @description The phase, as the curated list ``phases`` names it.
+             */
+            name: string;
+            /**
+             * Done
+             * @description A paper, an activity that took place or a decision on the bill marks it.
+             */
+            done: boolean;
+            /**
+             * Date
+             * @description The first date of those; null for none.
+             */
+            date?: string | null;
+        };
+        /**
          * DossierRefDTO
          * @description Reference to a Kamerstukdossier by number; ``title`` is null when unknown.
          */
@@ -3451,21 +3510,17 @@ export interface components {
          * DossierSummaryDTO
          * @description A dossier in a list.
          *
-         *     ``track`` is what kind of dossier this is — a bill (wetsvoorstel,
-         *     initiatiefwetsvoorstel, begroting, verdrag), an initiatiefnota, a ``nota`` of the
-         *     government (the Miljoenennota, the Voorjaars- and Najaarsnota, the Financieel
-         *     Jaarverslag van het Rijk), a ``structuurvisie``, ``verantwoording`` (a
-         *     beleidsdoorlichting, the reports on a big project), ``eu`` (an EU Council, the fiches on
-         *     Commission proposals), ``interparlementair`` (an assembly the Kamer sends a delegation
-         *     to), ``kamer`` (the Kamer's own: a committee report, its code of conduct) or ``beleid``
-         *     (the letters and motions on a subject) — and does not change as it progresses. It
-         *     comes from what the dossier is, never from what is filed under it. ``current_stage`` is the
-         *     latest stage seen on its documents and activities; ``stages`` lists every
-         *     stage with at least one signal, in chronological order. Only a bill (a
-         *     wetsvoorstel, initiatiefwetsvoorstel, begroting or verdrag) passes stages;
-         *     any other dossier has none until it is ``afgehandeld``. A closed dossier has
-         *     an ``outcome``: ``aangenomen`` (its law was published), ``ingetrokken`` (its
-         *     bill was withdrawn) or ``verworpen`` (the Tweede Kamer voted the bill down).
+         *     ``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of
+         *     the zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,
+         *     ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``), else, from a
+         *     ``Voorstel van wet`` among its papers, ``Wetgeving`` or ``Initiatiefwetgeving``; null
+         *     for a dossier of letters and motions. ``kind_basis`` says which (``case``,
+         *     ``document``). A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has
+         *     ``phases``: every phase of the curated list in its order, each done when a paper, an
+         *     activity or a decision of the Kamer marks it; ``current_phase`` is the done phase with
+         *     the latest date. A closed dossier has an ``outcome``: ``aangenomen`` (its law was
+         *     published) or ``verworpen`` (the Tweede Kamer voted the bill down); ``tk_decision`` is
+         *     the last decision of the Kamer on the bill.
          */
         DossierSummaryDTO: {
             /** Id */
@@ -3497,30 +3552,34 @@ export interface components {
             short_title?: string | null;
             /** Title Source */
             title_source?: ("dossier" | "document" | "activiteit") | null;
-            /** Track */
-            track?: ("wetsvoorstel" | "initiatiefwetsvoorstel" | "begroting" | "verdrag" | "initiatiefnota" | "nota" | "structuurvisie" | "verantwoording" | "eu" | "interparlementair" | "kamer" | "beleid") | null;
-            /** Current Stage */
-            current_stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
-            /** Stages */
-            stages?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
             /**
-             * Stages Complete
-             * @description Whether every stage the bill passed on its way to ``current_stage`` has a document, an activity or a vote in the graph: the stages in ``stages`` before it and ``current_stage`` itself, and those every bill of its track passes (``wetsvoorstel``, ``mvt`` and ``advies_rvs`` of a bill; ``wetsvoorstel`` and ``mvt`` of a budget; ``advies_rvs`` of a treaty; and ``stemming`` once a bill or budget was aangenomen or verworpen; an ``Eindtekst`` counts as the vote). False means the graph lacks papers of the dossier: a stage between two listed ones was passed but is not in the data. True for a dossier that is no bill. ``stages_missing`` names the stages.
-             * @default true
+             * Kind
+             * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
              */
-            stages_complete: boolean;
+            kind?: string | null;
             /**
-             * Stages Missing
-             * @description The stages the bill passed without a dated document, activity or vote in the graph, in stage order: ``stemming`` on a law published without a vote on record. Empty when ``stages_complete``.
+             * Kind Basis
+             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
              */
-            stages_missing?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld")[];
+            kind_basis?: ("case" | "document") | null;
+            /**
+             * Phases
+             * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
+             */
+            phases?: components["schemas"]["DossierPhaseDTO"][] | null;
+            /**
+             * Current Phase
+             * @description The done phase with the latest date; null for none.
+             */
+            current_phase?: string | null;
             /**
              * Closed
              * @default false
              */
             closed: boolean;
             /** Outcome */
-            outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
+            outcome?: ("aangenomen" | "verworpen") | null;
+            tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
@@ -3971,7 +4030,7 @@ export interface components {
             summary?: string | null;
             /**
              * Subkind
-             * @description What the source calls it: the document kind (``Motie (gewijzigd/nader)``), for a vote what was voted on (``motie``, ``amendement``, ``wetsvoorstel``, ``overig``); null for the other kinds.
+             * @description What the source calls it: the document kind (``Motie (gewijzigd/nader)``), for a vote what was voted on (the ``Zaak.Soort``: ``Motie``, ``Amendement``, ``Wetgeving``, ...); null for the other kinds.
              */
             subkind?: string | null;
             node: components["schemas"]["FeedNodeDTO"];
@@ -4130,7 +4189,7 @@ export interface components {
         FeedVoteCountDTO: {
             /**
              * Subkind
-             * @description What was voted on: ``motie``, ``amendement``, ``wetsvoorstel``.
+             * @description What was voted on, the ``Zaak.Soort``: ``Motie``, ``Amendement``, ``Wetgeving``, ...
              */
             subkind?: string | null;
             /** Outcome */
@@ -4196,11 +4255,14 @@ export interface components {
             acting: boolean;
             /** @description The party during this post. */
             party?: components["schemas"]["PartyRefDTO"] | null;
-            /** From Date */
+            /**
+             * From Date
+             * @description The day it began.
+             */
             from_date?: string | null;
             /**
              * To Date
-             * @description Null while the post is held.
+             * @description The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts.
              */
             to_date?: string | null;
         };
@@ -4480,7 +4542,10 @@ export interface components {
              * @description BWB: the start of the version in force (its toestand).
              */
             version_date_in_force?: string | null;
-            /** Treaty Number */
+            /**
+             * Treaty Number
+             * @description A treaty: its Verdragenbank id (six digits), which the BWB text of the treaty names too (`wetgeving@verdragnummer`).
+             */
             treaty_number?: string | null;
             /** In Force */
             in_force?: boolean | null;
@@ -4491,6 +4556,11 @@ export interface components {
              * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
              */
             official_url?: string | null;
+            /**
+             * Same Treaty
+             * @description The other instruments with its treaty number: the Verdragenbank record of a BWB treaty, the BWB text of a Verdragenbank treaty.
+             */
+            same_treaty?: components["schemas"]["LinkedInstrumentDTO"][];
         };
         /**
          * InstrumentDossierItem
@@ -4510,8 +4580,11 @@ export interface components {
             title?: string | null;
             /** Display Name */
             display_name?: string | null;
-            /** Stage */
-            stage?: string | null;
+            /**
+             * Current Phase
+             * @description The current phase of the dossier's bill (``phases``).
+             */
+            current_phase?: string | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed */
@@ -6453,6 +6526,24 @@ export interface components {
             capacity?: ("kamerlid" | "bewindspersoon" | "overig") | null;
         };
         /**
+         * TkDecisionDTO
+         * @description The last decision of the Tweede Kamer on the bill of a dossier.
+         */
+        TkDecisionDTO: {
+            /**
+             * Kind
+             * @description ``BesluitSoort`` as the Kamer writes it: ``Stemmen - aangenomen``, ``Stemmen - zonder stemming aannemen`` (a hamerstuk), ``Stemmen - verworpen``, ``Stemmen - uitstellen``, ...
+             */
+            kind: string;
+            /**
+             * Text
+             * @description ``BesluitTekst``: ``Aangenomen.``
+             */
+            text?: string | null;
+            /** Date */
+            date?: string | null;
+        };
+        /**
          * TouchedInstrumentDTO
          * @description One law an actor proposes changes to, with how often they do.
          */
@@ -7298,19 +7389,19 @@ export interface operations {
             query?: {
                 /** @description Open dossiers, closed ones (with an outcome) or both. */
                 status?: "open" | "closed" | "all";
-                outcome?: ("aangenomen" | "verworpen" | "ingetrokken") | null;
-                /** @description Comma-separated tracks, e.g. ``wetsvoorstel,begroting``. */
-                track?: string | null;
+                outcome?: ("aangenomen" | "verworpen") | null;
+                /** @description Comma-separated kinds (``Zaak.Soort``), e.g. ``Wetgeving,Begroting``; one of Wetgeving, Initiatiefwetgeving, Begroting, Verdrag, Initiatiefnota, PKB/Structuurvisie. */
+                kind?: string | null;
                 /** @description The start of the number: ``36264`` (that number and its chapters), ``37020-`` (the chapters of 37020). */
                 number?: string | null;
                 /** @description Committee slug. */
                 committee?: string | null;
                 /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
                 subject?: string | null;
-                /** @description The dossier's latest recognised stage. To filter on a stage being present at all, use ``has_stage``. */
-                stage?: ("wetsvoorstel" | "mvt" | "advies_rvs" | "verslag" | "nota_naar_aanleiding_van_verslag" | "amendementen" | "behandeling" | "stemming" | "afgehandeld") | null;
-                /** @description Comma-separated stages; only dossiers that have all of them, e.g. ``mvt,advies_rvs``. */
-                has_stage?: string | null;
+                /** @description The dossier's current phase, e.g. ``Verslag``. To filter on a phase being done at all, use ``has_phase``. */
+                phase?: string | null;
+                /** @description Comma-separated phases; only dossiers that have done all of them, e.g. ``Memorie van toelichting,Advies Raad van State``. */
+                has_phase?: string | null;
                 /** @description The ministry that brought it in. */
                 ministry?: components["schemas"]["MinistryKey"] | null;
                 /** @description True: brought in by a Kamerlid; false: by the government. */
@@ -8328,7 +8419,7 @@ export interface operations {
     list_decisions_api_decisions_get: {
         parameters: {
             query?: {
-                /** @description Comma-separated: `motie`, `amendement`, `wetsvoorstel`, `overig`. */
+                /** @description Comma-separated kinds (``Zaak.Soort`` as the Kamer writes it): ``Motie``, ``Amendement``, ``Wetgeving``, ... */
                 kind?: string | null;
                 /** @description Only decisions that carried, or did not. */
                 passed?: boolean | null;
