@@ -63,8 +63,10 @@ export function lawHeadLine(
 ): string {
 	const { count, peildatum, currentFrom, longDate, formatCount } = opts;
 	const version = d?.version_date_in_force ?? currentFrom ?? null;
+	// The list is the count where the law says 0 (a BWB treaty); a record without text none.
+	const n = peildatum ? count : d?.article_count || count;
 	return [
-		`${formatCount(peildatum ? count : (d?.article_count ?? count))} artikelen.`,
+		n > 0 ? `${formatCount(n)} artikelen.` : null,
 		d?.date_in_force ? `In werking sinds ${longDate(d.date_in_force)}.` : null,
 		!peildatum && version && version !== d?.date_in_force
 			? `Geldende tekst: versie van ${longDate(version)}.`
@@ -73,4 +75,58 @@ export function lawHeadLine(
 	]
 		.filter(Boolean)
 		.join(' ');
+}
+
+/** The same treaty elsewhere: the BWB text of a Verdragenbank record, or the other way. */
+export type TreatyRef = {
+	key: string;
+	bwb_id?: string | null;
+	citation_title?: string | null;
+	title?: string | null;
+};
+
+/**
+ * `same_treaty` of API 0.55: the records with the same treaty number.
+ * TODO(types 0.55): read it from the generated type once the types are synced.
+ */
+export const sameTreatyOf = (d: unknown): TreatyRef[] => {
+	const list = (d as { same_treaty?: unknown } | null)?.same_treaty;
+	return Array.isArray(list) ? (list as TreatyRef[]) : [];
+};
+
+export type TreatyLink = {
+	label: string;
+	/** A bron in Concordans, or the Verdragenbank itself where the dataset lacks the record. */
+	target: { kind: 'bron'; key: string } | { kind: 'url'; url: string };
+};
+
+/**
+ * The link between a treaty's text in the BWB and its record in the Verdragenbank:
+ * from the BWB, Verdragenbank: nr. 005132; from the Verdragenbank, the text in the BWB.
+ */
+export function treatyLink(
+	d: { bwb_id?: string | null; treaty_number?: string | null } | null,
+	same: TreatyRef[]
+): TreatyLink | null {
+	const number = d?.treaty_number?.trim();
+	if (!number) return null;
+	if (d?.bwb_id?.toUpperCase().startsWith('BWBV')) {
+		const record = same.find((t) => !t.bwb_id);
+		return {
+			label: `Verdragenbank: nr. ${number}`,
+			target: record
+				? { kind: 'bron', key: record.key }
+				: {
+						kind: 'url',
+						url: `https://verdragenbank.overheid.nl/nl/Verdrag/Details/${encodeURIComponent(number)}`
+					}
+		};
+	}
+	const text = same.find((t) => t.bwb_id?.toUpperCase().startsWith('BWBV'));
+	return text
+		? {
+				label: `Tekst in het BWB: ${text.bwb_id!.toUpperCase()}`,
+				target: { kind: 'bron', key: text.key }
+			}
+		: null;
 }
