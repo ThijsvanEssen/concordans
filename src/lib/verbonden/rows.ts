@@ -517,3 +517,31 @@ export function historyRow(e: {
 		direction: 'inbound'
 	};
 }
+
+/** An article a judgment cites of a law the dataset lacks (`unresolved_citations`). */
+export type UnresolvedCitation = {
+	law: string;
+	article_number: string;
+	leden?: string[];
+	paragraph_ids?: string[];
+};
+
+/** `Artikel 843a Rv`: the article as the judgment cites it, before its law. */
+export const unresolvedTitle = (c: UnresolvedCitation) => `Artikel ${c.article_number} ${c.law}`;
+
+/**
+ * The articles a judgment cites of laws outside the dataset, as rows without a link:
+ * `Artikel 3 Opiumwet`, niet in de dataset.
+ */
+export function unresolvedRows(citations: UnresolvedCitation[]): Row[] {
+	return citations.map((c) => ({
+		ref: { collection: 'articles', key: `${c.law}_${c.article_number}` },
+		title: unresolvedTitle(c),
+		context: null,
+		kind: 'artikelen',
+		lid: c.leden?.[0] ?? null,
+		missing: true,
+		relation: 'REFERS_TO',
+		direction: 'outbound'
+	}));
+}

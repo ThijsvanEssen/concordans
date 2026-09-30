@@ -64,6 +64,9 @@
 		};
 	}
 
+	/** The articles outside the dataset named in the head; the rest are counted. */
+	const OUTSIDE_SHOWN = 6;
+
 	let menuFor = $state<string | null>(null);
 
 	let root = $state<HTMLElement | null>(null);
@@ -127,6 +130,7 @@
 		<!-- A replacement the dataset lacks: named, without a link. TODO(backend R): read `replaced_by` of the detail, not of `props`, once judgments-r gives it. -->
 		{@const replacedOutside = replacedBy ? null : textProp(j.props?.replaced_by)}
 		{@const alsoAs = view.data.same_as ?? []}
+		{@const outside = j.unresolved_citations ?? []}
 		<ReaderHead
 			collection="judgments"
 			kind={conclusion ? 'Conclusie' : null}
@@ -179,6 +183,19 @@
 					Ook gepubliceerd als {#each alsoAs as other, i (other.key)}{i > 0 ? ', ' : ''}<BronLink
 							ref={{ collection: 'judgments', key: other.key }}>{other.ecli ?? other.key}</BronLink
 						>{/each}.
+				</p>
+			{/if}
+			{#if outside.length > 0}
+				<!-- Articles of laws the dataset lacks (API 0.70): each to the place it is first cited. -->
+				<p class="reader-translation">
+					Haalt ook aan, niet in de dataset: {#each outside.slice(0, OUTSIDE_SHOWN) as c, i (`${c.law}_${c.article_number}`)}{i >
+						0
+							? ', '
+							: ''}{#if c.paragraph_ids?.[0]}<a href="#{c.paragraph_ids[0]}"
+								>art. {c.article_number} {c.law}</a
+							>{:else}art. {c.article_number} {c.law}{/if}{/each}{outside.length > OUTSIDE_SHOWN
+						? ` en ${outside.length - OUTSIDE_SHOWN} meer`
+						: ''}.
 				</p>
 			{/if}
 		</ReaderHead>

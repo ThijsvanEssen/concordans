@@ -29,6 +29,7 @@ import {
 	describe,
 	lidOfMatch,
 	rowOfNeighbor,
+	unresolvedRows,
 	type Neighbor,
 	type Row
 } from './rows';
@@ -477,7 +478,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			const id = `${key}#${at ?? ''}`;
 			if (!rows.has(id)) rows.set(id, row);
 		}
-		return { rows: [...rows.values()] };
+		// Then the articles of laws the dataset lacks: Artikel 3 Opiumwet (API 0.70).
+		return {
+			rows: [...rows.values(), ...unresolvedRows(detail?.judgment.unresolved_citations ?? [])]
+		};
 	},
 
 	// The references from this law's articles that carry an aard (voorwaarde,
