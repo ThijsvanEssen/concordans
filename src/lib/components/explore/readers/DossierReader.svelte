@@ -178,7 +178,7 @@
 							<span class="sec-count">{view.timeline.entries.length} / {view.timeline.total}</span>
 						{/if}
 					</h3>
-					<LegislativeTimeline entries={view.timeline.entries} />
+					<LegislativeTimeline entries={view.timeline.entries} dossier={d.number} />
 				</section>
 			{/if}
 		{/if}

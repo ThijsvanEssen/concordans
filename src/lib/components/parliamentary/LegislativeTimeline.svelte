@@ -5,6 +5,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import KindChipFilter from './KindChipFilter.svelte';
 	import { CHAMBER_NAME, chamberFromParam } from './chamber';
+	import { kamerstukNumber, kamerstukOf, withoutKamerstuk } from './kamerstuk';
 
 	type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
 	type Tally = Record<string, number>;
@@ -24,13 +25,23 @@
 		url?: string;
 		/** A paper's Kamer. */
 		chamber?: string | null;
+		/** A paper's number in its own dossier, which need not be this one (API 0.63). */
+		sequence?: string | null;
+		dossier_number?: string | null;
 	};
 	const bodyOf = (entry: Entry) => (entry.body ?? {}) as unknown as Body;
 	const otherChoices = (tally: Tally) =>
 		Object.entries(tally).filter(([choice]) => choice !== 'Voor' && choice !== 'Tegen');
 
 	// `entries` arrive newest first, as the API orders them by default.
-	let { entries }: { entries: Entry[] } = $props();
+	let {
+		entries,
+		dossier = null
+	}: {
+		entries: Entry[];
+		/** The number of the dossier whose timeline this is. */
+		dossier?: string | null;
+	} = $props();
 
 	let kindFilter = $state(new Set<string>());
 	let newestFirst = $state(true);
@@ -204,12 +215,23 @@
 						</div>
 					{:else}
 						{@const url = entry.tk_url ?? body.url}
+						<!-- A paper as the Kamerstuk it is, in its own dossier: a link where that is
+						     another than this one. -->
+						{@const stuk = entry.node_type === 'document' ? kamerstukOf(body, dossier) : null}
 						<div class="entry-body">
+							{#if stuk}
+								<span class="entry-kamerstuk"
+									>Kamerstuk {#if stuk.elsewhere}<a
+											href={bronHref(`dossiers/${stuk.dossier}`)}
+											data-sveltekit-noscroll>{kamerstukNumber(stuk, body.chamber)}</a
+										>{:else}{kamerstukNumber(stuk, body.chamber)}{/if}</span
+								>
+							{/if}
 							{#if entry.title}
 								<a
 									class="entry-title entry-title--link"
 									href={bronHref(entry.node_id)}
-									data-sveltekit-noscroll>{entry.title}</a
+									data-sveltekit-noscroll>{stuk ? withoutKamerstuk(entry.title) : entry.title}</a
 								>
 							{/if}
 							{#if url}
@@ -336,6 +358,14 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		font-weight: 500;
+	}
+	.entry-kamerstuk {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.entry-kamerstuk a {
+		color: inherit;
 	}
 	/* TK or EK, the full name on hover: where a paper was lodged. */
 	.entry-chamber {

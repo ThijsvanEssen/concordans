@@ -103,11 +103,14 @@ const COURTS: Record<string, string> = {
 export const courtName = (court: string | null): string | null =>
 	court ? (COURTS[court.toUpperCase()] ?? court) : null;
 
-/** The name of a document as a title: `Memorie van toelichting, Kamerstuk 36693, nr. 3`. */
+/**
+ * The name of a document as a title: `Memorie van toelichting, Kamerstuk 36693, nr. 3`. The
+ * dossier is the paper's own (API 0.63), else the first it is filed under.
+ */
 function documentTitle(props: Record<string, unknown>, name: string): string {
 	const kind = text(props.kind);
 	const number = text(props.sequence != null ? String(props.sequence) : null);
-	const dossier = dossierNumbersOf(props)[0] ?? null;
+	const dossier = text(props.dossier_number) ?? dossierNumbersOf(props)[0] ?? null;
 	if (!kind) return name;
 	const shortKind = kind.replace(/\s*\(.*\)\s*$/, '');
 	const stuk = dossier ? `Kamerstuk ${dossier}${number ? `, nr. ${number}` : ''}` : null;

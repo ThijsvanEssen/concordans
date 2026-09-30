@@ -114,6 +114,24 @@ describe('buildGroups', () => {
 		expect(groups.find((g) => g.id === 'laws')!.rows).toEqual([]);
 	});
 
+	it('names a paper as the Kamerstuk of its own dossier', () => {
+		const verslag = {
+			id: 'documents/v1',
+			key: 'v1',
+			collection: 'documents',
+			relation: 'REFERS_TO',
+			direction: 'inbound',
+			props: {
+				kind: 'Verslag van een wetgevingsoverleg',
+				sequence: '11',
+				dossier_number: '31058',
+				dossier_numbers: ['31746', '31058']
+			}
+		} as unknown as Neighbor;
+		const row = buildGroups('articles', [verslag]).find((g) => g.id === 'documents')!.rows[0];
+		expect(row.title).toBe('Verslag van een wetgevingsoverleg, Kamerstuk 31058, nr. 11');
+	});
+
 	it('puts the votes on a dossier under the Kamer that cast them', () => {
 		const vote = (key: string, chamber?: string) =>
 			({
