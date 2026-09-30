@@ -77,22 +77,8 @@ export function lawHeadLine(
 		.join(' ');
 }
 
-/** The same treaty elsewhere: the BWB text of a Verdragenbank record, or the other way. */
-export type TreatyRef = {
-	key: string;
-	bwb_id?: string | null;
-	citation_title?: string | null;
-	title?: string | null;
-};
-
-/**
- * `same_treaty` of API 0.55: the records with the same treaty number.
- * TODO(types 0.55): read it from the generated type once the types are synced.
- */
-export const sameTreatyOf = (d: unknown): TreatyRef[] => {
-	const list = (d as { same_treaty?: unknown } | null)?.same_treaty;
-	return Array.isArray(list) ? (list as TreatyRef[]) : [];
-};
+/** The same treaty elsewhere (`same_treaty`): the BWB text of a Verdragenbank record, or the other way. */
+export type TreatyRef = Pick<Schema<'LinkedInstrumentDTO'>, 'key' | 'bwb_id'>;
 
 export type TreatyLink = {
 	label: string;

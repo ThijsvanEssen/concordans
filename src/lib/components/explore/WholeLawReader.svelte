@@ -20,14 +20,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
-	import {
-		lawFullTitle,
-		lawHeadLine,
-		lawKind,
-		sameTreatyOf,
-		sourceName,
-		treatyLink
-	} from './law-head';
+	import { lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -152,7 +145,7 @@
 	const kindLabel = $derived(lawKind(lawDetail));
 	const fullTitle = $derived(lawFullTitle(lawDetail, lawName));
 	// A treaty: its record in the Verdragenbank, or from there its text in the BWB.
-	const treaty = $derived(treatyLink(lawDetail, sameTreatyOf(lawDetail)));
+	const treaty = $derived(treatyLink(lawDetail, lawDetail?.same_treaty ?? []));
 	// The versions of the law, for the peildatum; the current one dates the text in force
 	// where the law gives no version_date_in_force.
 	let versions = $state<Version[]>([]);
