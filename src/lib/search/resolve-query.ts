@@ -49,6 +49,15 @@ export function bareArticle(query: string): string | null {
 	return parseCitation(citation)?.kind === 'article' ? citation : null;
 }
 
+// "AVG", "Awb", "UAVG": one word of up to ten letters with a capital, as a law is abbreviated.
+const ABBREVIATION = /^(?=\S*[A-Z])[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9.]{1,9}$/;
+
+/** The query when it may abbreviate a law ("AVG"), for the API to name; null otherwise. */
+export function lawAbbreviation(query: string): string | null {
+	const q = query.trim();
+	return ABBREVIATION.test(q) ? q : null;
+}
+
 const isBW = (law: string) => /^(bw|burgerlijk wetboek)$/i.test(law.trim());
 
 /** The citation a query is, or null when it is words to search for. */
@@ -204,4 +213,16 @@ export async function resolveQuery(
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * The law an abbreviation stands for ("AVG" → Verordening (EU) 2016/679), as `/api/resolve`
+ * knows it (API 0.70: the curated abbreviations), or null.
+ */
+export async function resolveLaw(
+	query: string,
+	deps: Pick<ResolveDeps, 'resolve'> = apiDeps
+): Promise<Resolved | null> {
+	const found = await deps.resolve(query).catch(() => null);
+	return found?.ref.collection === 'instruments' ? found : null;
 }
