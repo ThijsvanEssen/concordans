@@ -243,6 +243,20 @@ const AARD: Record<string, string> = {
 export const aardLabel = (code: string | null | undefined): string | null =>
 	code ? (AARD[code.toLowerCase()] ?? code.replaceAll('_', ' ')) : null;
 
+/**
+ * The aard with how sure it is (`semantic_confidence`, API 0.70: the share a hand check
+ * found right): `voorwaarde`, or `mogelijk voorwaarde` below 0.6, where the betrouwbaarheid
+ * of a verbinding reads laag.
+ */
+export function aardOf(
+	code: string | null | undefined,
+	semanticConfidence?: number | null
+): string | null {
+	const label = aardLabel(code);
+	if (!label) return null;
+	return semanticConfidence != null && semanticConfidence < 0.6 ? `mogelijk ${label}` : label;
+}
+
 export function rowOfNeighbor(n: Neighbor): Row | null {
 	if (!isCollection(n.collection)) return null;
 	const props = n.props ?? {};
@@ -516,4 +530,32 @@ export function historyRow(e: {
 		relation: change?.relation,
 		direction: 'inbound'
 	};
+}
+
+/** An article a judgment cites of a law the dataset lacks (`unresolved_citations`). */
+export type UnresolvedCitation = {
+	law: string;
+	article_number: string;
+	leden?: string[];
+	paragraph_ids?: string[];
+};
+
+/** `Artikel 843a Rv`: the article as the judgment cites it, before its law. */
+export const unresolvedTitle = (c: UnresolvedCitation) => `Artikel ${c.article_number} ${c.law}`;
+
+/**
+ * The articles a judgment cites of laws outside the dataset, as rows without a link:
+ * `Artikel 3 Opiumwet`, niet in de dataset.
+ */
+export function unresolvedRows(citations: UnresolvedCitation[]): Row[] {
+	return citations.map((c) => ({
+		ref: { collection: 'articles', key: `${c.law}_${c.article_number}` },
+		title: unresolvedTitle(c),
+		context: null,
+		kind: 'artikelen',
+		lid: c.leden?.[0] ?? null,
+		missing: true,
+		relation: 'REFERS_TO',
+		direction: 'outbound'
+	}));
 }

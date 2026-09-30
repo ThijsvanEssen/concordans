@@ -1990,10 +1990,26 @@ export interface components {
             target_article: components["schemas"]["ArticleRelationDTO"];
             /** Semantic Type */
             semantic_type?: string | null;
-            /** Explanation */
+            /**
+             * Explanation
+             * @description What `semantic_type` rests on: the trigger phrase and where it stood.
+             */
             explanation?: string | null;
-            /** Confidence */
+            /**
+             * Confidence
+             * @description That the reference exists: 1.0 for a link of the BWB XML.
+             */
             confidence?: number | null;
+            /**
+             * Semantic Confidence
+             * @description How sure `semantic_type` is: the share of classifications by the same trigger phrase, in the same place, that a hand check found right (0.25 to 0.9). Null when the reference has no type.
+             */
+            semantic_confidence?: number | null;
+            /**
+             * Semantic Pattern
+             * @description The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …
+             */
+            semantic_pattern?: string | null;
             /**
              * Start
              * @description Offset of the reference in the text of the referring article.
@@ -5621,6 +5637,11 @@ export interface components {
              * @description The decisions an appeal says in its text it appeals ("tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most.
              */
             unresolved_appeal_targets?: components["schemas"]["AppealTarget"][];
+            /**
+             * Unresolved Citations
+             * @description The articles the judgment cites of laws that are not in the graph ("art. 392 Rv"): mentioned, not in the network. One per law and article, in reading order. Empty when it cites none, or before `semantic rechtspraak` read it.
+             */
+            unresolved_citations?: components["schemas"]["UnresolvedCitation"][];
             /** Paragraphs */
             paragraphs?: components["schemas"]["JudgmentParagraph"][];
             /**
@@ -6390,7 +6411,7 @@ export interface components {
             text: string;
             /**
              * Confidence
-             * @description Uncalibrated: 0.7 to 0.9, see `match_type`.
+             * @description The share of such matches a hand check found right (0.3 to 0.95), by `match_type` and `changed`.
              */
             confidence: number;
             /**
@@ -6398,6 +6419,16 @@ export interface components {
              * @description How the section names the article: `heading_target`, `body_named_law`, `own_number` or `inferred_law`.
              */
             match_type: string;
+            /**
+             * Changed
+             * @description Whether the dossier changed the article, which corroborates the match; a heading naming an article the dossier left alone is often of another law. Null for a link made before this was recorded.
+             */
+            changed?: boolean | null;
+            /**
+             * Explanation
+             * @description What the match rests on, in Dutch: the heading, and whether the dossier changed the article.
+             */
+            explanation?: string | null;
         };
         /**
          * PersonRefDTO
@@ -6457,10 +6488,26 @@ export interface components {
             relation: string;
             /** Semantic Type */
             semantic_type?: string | null;
-            /** Explanation */
+            /**
+             * Explanation
+             * @description What `semantic_type` rests on: the trigger phrase and where it stood.
+             */
             explanation?: string | null;
-            /** Confidence */
+            /**
+             * Confidence
+             * @description That the reference exists: 1.0 for a link of the BWB XML.
+             */
             confidence?: number | null;
+            /**
+             * Semantic Confidence
+             * @description How sure `semantic_type` is: the share of classifications by the same trigger phrase, in the same place, that a hand check found right (0.25 to 0.9). Null when the reference has no type.
+             */
+            semantic_confidence?: number | null;
+            /**
+             * Semantic Pattern
+             * @description The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …
+             */
+            semantic_pattern?: string | null;
             source_article?: components["schemas"]["ArticleRelationDTO"] | null;
             target_article?: components["schemas"]["ArticleRelationDTO"] | null;
         };
@@ -7205,6 +7252,58 @@ export interface components {
             count: number;
             /** Items */
             items: components["schemas"]["TouchedInstrumentDTO"][];
+        };
+        /**
+         * UnresolvedCitation
+         * @description An article a judgment cites of a law that is not in the graph.
+         */
+        UnresolvedCitation: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /**
+             * Law
+             * @description The law as the judgment writes it: `Rv`, `Sv`, `Vw 2000`, `Opiumwet`.
+             */
+            law: string;
+            /**
+             * Article Number
+             * @description As cited: `392`, `3.5`, `1:6p`.
+             */
+            article_number: string;
+            /**
+             * Raw Match
+             * @description The text of the first citation: `art. 392, eerste lid, Rv`.
+             */
+            raw_match: string;
+            /**
+             * Qualifier
+             * @description The qualifier of the first citation as written: `eerste lid`. `leden`, `onderdelen` and `aanhef` are what it names.
+             */
+            qualifier?: string | null;
+            /**
+             * Paragraph Ids
+             * @description The paragraphs that cite it (`JudgmentParagraph.paragraph_id`).
+             */
+            paragraph_ids?: string[];
+            /**
+             * Mention Count
+             * @description How often the judgment cites it.
+             */
+            mention_count: number;
         };
         /** ValidationError */
         ValidationError: {

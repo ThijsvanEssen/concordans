@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.69.0"
+		"version": "0.70.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -4921,11 +4921,23 @@
 					},
 					"explanation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Explanation"
+						"title": "Explanation",
+						"description": "What `semantic_type` rests on: the trigger phrase and where it stood."
 					},
 					"confidence": {
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
-						"title": "Confidence"
+						"title": "Confidence",
+						"description": "That the reference exists: 1.0 for a link of the BWB XML."
+					},
+					"semantic_confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Semantic Confidence",
+						"description": "How sure `semantic_type` is: the share of classifications by the same trigger phrase, in the same place, that a hand check found right (0.25 to 0.9). Null when the reference has no type."
+					},
+					"semantic_pattern": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Semantic Pattern",
+						"description": "The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …"
 					},
 					"start": {
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
@@ -9038,6 +9050,12 @@
 						"title": "Unresolved Appeal Targets",
 						"description": "The decisions an appeal says in its text it appeals (\"tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811\") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most."
 					},
+					"unresolved_citations": {
+						"items": { "$ref": "#/components/schemas/UnresolvedCitation" },
+						"type": "array",
+						"title": "Unresolved Citations",
+						"description": "The articles the judgment cites of laws that are not in the graph (\"art. 392 Rv\"): mentioned, not in the network. One per law and article, in reading order. Empty when it cites none, or before `semantic rechtspraak` read it."
+					},
 					"paragraphs": {
 						"items": { "$ref": "#/components/schemas/JudgmentParagraph" },
 						"type": "array",
@@ -9997,12 +10015,22 @@
 					"confidence": {
 						"type": "number",
 						"title": "Confidence",
-						"description": "Uncalibrated: 0.7 to 0.9, see `match_type`."
+						"description": "The share of such matches a hand check found right (0.3 to 0.95), by `match_type` and `changed`."
 					},
 					"match_type": {
 						"type": "string",
 						"title": "Match Type",
 						"description": "How the section names the article: `heading_target`, `body_named_law`, `own_number` or `inferred_law`."
+					},
+					"changed": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Changed",
+						"description": "Whether the dossier changed the article, which corroborates the match; a heading naming an article the dossier left alone is often of another law. Null for a link made before this was recorded."
+					},
+					"explanation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Explanation",
+						"description": "What the match rests on, in Dutch: the heading, and whether the dossier changed the article."
 					}
 				},
 				"additionalProperties": false,
@@ -10084,11 +10112,23 @@
 					},
 					"explanation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Explanation"
+						"title": "Explanation",
+						"description": "What `semantic_type` rests on: the trigger phrase and where it stood."
 					},
 					"confidence": {
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
-						"title": "Confidence"
+						"title": "Confidence",
+						"description": "That the reference exists: 1.0 for a link of the BWB XML."
+					},
+					"semantic_confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Semantic Confidence",
+						"description": "How sure `semantic_type` is: the share of classifications by the same trigger phrase, in the same place, that a hand check found right (0.25 to 0.9). Null when the reference has no type."
+					},
+					"semantic_pattern": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Semantic Pattern",
+						"description": "The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …"
 					},
 					"source_article": {
 						"anyOf": [{ "$ref": "#/components/schemas/ArticleRelationDTO" }, { "type": "null" }]
@@ -10894,6 +10934,64 @@
 				"required": ["actor_id", "count", "items"],
 				"title": "TouchedInstrumentsResponse",
 				"description": "Wrapper for an actor's touched-instruments list."
+			},
+			"UnresolvedCitation": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"law": {
+						"type": "string",
+						"title": "Law",
+						"description": "The law as the judgment writes it: `Rv`, `Sv`, `Vw 2000`, `Opiumwet`."
+					},
+					"article_number": {
+						"type": "string",
+						"title": "Article Number",
+						"description": "As cited: `392`, `3.5`, `1:6p`."
+					},
+					"raw_match": {
+						"type": "string",
+						"title": "Raw Match",
+						"description": "The text of the first citation: `art. 392, eerste lid, Rv`."
+					},
+					"qualifier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Qualifier",
+						"description": "The qualifier of the first citation as written: `eerste lid`. `leden`, `onderdelen` and `aanhef` are what it names."
+					},
+					"paragraph_ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Paragraph Ids",
+						"description": "The paragraphs that cite it (`JudgmentParagraph.paragraph_id`)."
+					},
+					"mention_count": {
+						"type": "integer",
+						"title": "Mention Count",
+						"description": "How often the judgment cites it."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["law", "article_number", "raw_match", "mention_count"],
+				"title": "UnresolvedCitation",
+				"description": "An article a judgment cites of a law that is not in the graph."
 			},
 			"ValidationError": {
 				"properties": {

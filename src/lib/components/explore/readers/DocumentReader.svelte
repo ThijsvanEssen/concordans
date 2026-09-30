@@ -89,9 +89,13 @@
 		return out.sort((a, b) => a.start - b.start || (a.type === 'heading' ? -1 : 1));
 	});
 
-	// The passage for the article: from `/passages` (API 0.5), else a text match.
+	// The passage for the article: from `/passages` (API 0.5), else a text match. Its
+	// confidence is measured (API 0.70, 0.3 to 0.95): below 0.6 the passage reads as a
+	// possible link, with what the match rests on (`explanation`) on hover.
 	// TODO(backend B5): `findPassage` goes when every document answers on `passages`.
-	let apiPassage = $state<{ start: number; end: number; derived: boolean } | null | undefined>();
+	let apiPassage = $state<
+		{ start: number; end: number; possible: boolean; why: string | null } | null | undefined
+	>();
 	$effect(() => {
 		const key = node.key;
 		const wanted = article;
@@ -107,7 +111,12 @@
 				if (ac.signal.aborted) return;
 				const first = response.ok ? data?.items[0] : undefined;
 				apiPassage = first
-					? { start: first.char_start, end: first.char_end, derived: first.confidence < 1 }
+					? {
+							start: first.char_start,
+							end: first.char_end,
+							possible: first.confidence < 0.6,
+							why: first.explanation ?? null
+						}
 					: null;
 			})
 			.catch(() => {
@@ -115,12 +124,15 @@
 			});
 		return () => ac.abort();
 	});
+	// A heading found in the text is a guess as well.
+	const fromText = (p: { start: number; end: number } | null) =>
+		p ? { start: p.start, end: p.end, possible: true, why: null } : null;
 	const passage = $derived(
 		view.kind !== 'loaded' || !article
 			? null
 			: apiPassage === undefined
 				? null
-				: (apiPassage ?? findPassage(view.document.text ?? '', article.articleNumber))
+				: (apiPassage ?? fromText(findPassage(view.document.text ?? '', article.articleNumber)))
 	);
 	// The paragraph the passage starts in; when it starts on a heading (a section of the
 	// API), the first paragraph under it.
@@ -232,11 +244,11 @@
 								class="body-para body-para--passage in-passage"
 								class:in-passage--cont={i > passageFirst}
 								id={i === passageEntryIndex ? 'passage' : undefined}
+								title={i === passageEntryIndex ? (passage?.why ?? undefined) : undefined}
 							>
-								{entry.para.text}{#if i === passageEntryIndex && passage?.derived}<span
+								{entry.para.text}{#if i === passageEntryIndex && passage?.possible}<span
 										class="derived"
-										role="img"
-										aria-label="afgeleid">≈</span
+										title={passage.why ?? undefined}>mogelijk verband</span
 									>{/if}
 							</p>
 						{:else}

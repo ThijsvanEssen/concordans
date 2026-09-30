@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { bareArticle, parseCitation, resolveQuery, type ResolveDeps } from './resolve-query';
+import {
+	bareArticle,
+	lawAbbreviation,
+	parseCitation,
+	resolveLaw,
+	resolveQuery,
+	type ResolveDeps
+} from './resolve-query';
 
 describe('parseCitation', () => {
 	it.each([
@@ -153,5 +160,23 @@ describe('bareArticle', () => {
 		expect(bareArticle('fit for 55')).toBeNull();
 		expect(bareArticle('55')).toBeNull();
 		expect(bareArticle('art. 55 Gw')).toBeNull();
+	});
+});
+
+describe('lawAbbreviation', () => {
+	it('takes one short word with a capital as a possible abbreviation of a law', () => {
+		expect(lawAbbreviation('AVG')).toBe('AVG');
+		expect(lawAbbreviation(' Awb ')).toBe('Awb');
+		expect(lawAbbreviation('stikstof')).toBeNull();
+		expect(lawAbbreviation('Wet open overheid')).toBeNull();
+	});
+});
+
+describe('resolveLaw', () => {
+	it('opens the law the API names, and nothing else', async () => {
+		const avg = { ref: { collection: 'instruments' as const, key: '32016r0679' }, at: null };
+		expect(await resolveLaw('AVG', { resolve: async () => avg })).toBe(avg);
+		const article = { ref: { collection: 'articles' as const, key: 'x' }, at: null };
+		expect(await resolveLaw('Art', { resolve: async () => article })).toBeNull();
 	});
 });

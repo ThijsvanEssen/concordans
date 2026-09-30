@@ -13,6 +13,8 @@
 	import {
 		bareArticle,
 		parseCitation,
+		lawAbbreviation,
+		resolveLaw,
 		resolveQuery,
 		type Citation,
 		type Resolved
@@ -128,11 +130,21 @@
 		}
 		const controller = new AbortController();
 		const written = bareArticle(term);
+		const abbreviation = written ? null : lawAbbreviation(term);
 		const timer = setTimeout(() => {
 			loading = true;
 			// Beside the words, the article they may cite: shown only once the API has it.
 			if (written) {
 				resolveQuery(written)
+					.then((target) => {
+						if (!controller.signal.aborted && target) confirmed = { term, target };
+					})
+					.catch(() => {
+						// The words are searched all the same.
+					});
+			} else if (abbreviation) {
+				// "AVG": the law it stands for, first, beside what the words find.
+				resolveLaw(abbreviation)
 					.then((target) => {
 						if (!controller.signal.aborted && target) confirmed = { term, target };
 					})
