@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.63.0"
+		"version": "0.65.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -1768,16 +1768,39 @@
 				"summary": "All committees",
 				"description": "Every parliamentary committee with its number of open dossiers.",
 				"operationId": "list_committees_api_committees_get",
+				"parameters": [
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["TK", "EK"],
+							"type": "string",
+							"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``).",
+							"default": "TK",
+							"title": "Chamber"
+						},
+						"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``)."
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "Successful Response",
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": { "$ref": "#/components/schemas/CommitteeDTO" },
 									"type": "array",
+									"items": { "$ref": "#/components/schemas/CommitteeDTO" },
 									"title": "Response List Committees Api Committees Get"
 								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
 							}
 						}
 					}
@@ -2005,6 +2028,19 @@
 						"in": "query",
 						"required": false,
 						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					},
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["TK", "EK"],
+							"type": "string",
+							"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``).",
+							"default": "TK",
+							"title": "Chamber"
+						},
+						"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``)."
 					}
 				],
 				"responses": {
@@ -2235,6 +2271,19 @@
 							"title": "Q"
 						},
 						"description": "Name or abbreviation."
+					},
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["TK", "EK"],
+							"type": "string",
+							"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``).",
+							"default": "TK",
+							"title": "Chamber"
+						},
+						"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``)."
 					}
 				],
 				"responses": {
@@ -3269,6 +3318,19 @@
 							"title": "Date"
 						},
 						"description": "The day, YYYY-MM-DD; today when left out."
+					},
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["TK", "EK"],
+							"type": "string",
+							"description": "``EK``: the seats of the Eerste Kamer as eerstekamer.nl shows them on the day it was last read, in the order of their size (no plan); without ``date``.",
+							"default": "TK",
+							"title": "Chamber"
+						},
+						"description": "``EK``: the seats of the Eerste Kamer as eerstekamer.nl shows them on the day it was last read, in the order of their size (no plan); without ``date``."
 					}
 				],
 				"responses": {
@@ -5450,10 +5512,30 @@
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"default": "TK"
+					},
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
 					"abbreviation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Abbreviation"
+					},
+					"observed_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed From",
+						"description": "Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer."
+					},
+					"observed_until": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed Until",
+						"description": "Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkSourceDTO" }, { "type": "null" }],
+						"description": "Of the Eerste Kamer: the page it was read from."
 					},
 					"slug": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -5497,10 +5579,30 @@
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"default": "TK"
+					},
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
 					"abbreviation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Abbreviation"
+					},
+					"observed_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed From",
+						"description": "Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer."
+					},
+					"observed_until": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed Until",
+						"description": "Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkSourceDTO" }, { "type": "null" }],
+						"description": "Of the Eerste Kamer: the page it was read from."
 					},
 					"slug": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -6426,6 +6528,13 @@
 						"title": "Name",
 						"description": "The phase, as the curated list ``phases`` names it."
 					},
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"description": "The chamber of the phase: the bar is that of the Tweede Kamer.",
+						"default": "TK"
+					},
 					"done": {
 						"type": "boolean",
 						"title": "Done",
@@ -6648,6 +6757,49 @@
 				"title": "EdgeStatsDTO",
 				"description": "Edge counts: total and per relation type."
 			},
+			"EkMembershipDTO": {
+				"properties": {
+					"name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name",
+						"description": "As the Kamer writes it: mr. B.O. Dittrich."
+					},
+					"faction": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Faction",
+						"description": "The key of its faction (``ek_…``)."
+					},
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation"
+					},
+					"seniority_days": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Seniority Days",
+						"description": "``Anciënniteit``: the days served in the Eerste Kamer, earlier terms included; no start date."
+					},
+					"residence": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Residence"
+					},
+					"observed_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed From",
+						"description": "Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer."
+					},
+					"observed_until": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed Until",
+						"description": "Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown."
+					},
+					"source": { "$ref": "#/components/schemas/EkSourceDTO" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["source"],
+				"title": "EkMembershipDTO",
+				"description": "A member's seat in the Eerste Kamer, as eerstekamer.nl shows it."
+			},
 			"EkOutcomeDTO": {
 				"properties": {
 					"outcome": {
@@ -6687,6 +6839,40 @@
 				"required": ["outcome", "attribution"],
 				"title": "EkOutcomeDTO",
 				"description": "The outcome of the bill of a dossier in the Eerste Kamer, as eerstekamer.nl gives it."
+			},
+			"EkSourceDTO": {
+				"properties": {
+					"url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Url",
+						"description": "Its page on eerstekamer.nl."
+					},
+					"retrieved_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Retrieved On",
+						"description": "The day it was read."
+					},
+					"composition_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Composition Date",
+						"description": "The day of the composition shown: the snapshot it was last seen in (``stand``)."
+					},
+					"data_since": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Data Since",
+						"description": "The day of the first snapshot the graph holds: nothing before it is known."
+					},
+					"attribution": {
+						"type": "string",
+						"title": "Attribution",
+						"description": "The source to name (``EK_ATTRIBUTION``)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["attribution"],
+				"title": "EkSourceDTO",
+				"description": "Where something of the Eerste Kamer was taken over from, to name with it."
 			},
 			"EuLinkDTO": {
 				"properties": {
@@ -6797,10 +6983,61 @@
 				"title": "FacetCountDTO",
 				"description": "One value of a facet and how many items have it under the current filters."
 			},
+			"FactionBoardSeatDTO": {
+				"properties": {
+					"function": {
+						"type": "string",
+						"title": "Function",
+						"description": "``fractievoorzitter``, ``penningmeester``."
+					},
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"member": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Member",
+						"description": "The member key."
+					},
+					"since": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Since",
+						"description": "The day the page gives: ``sinds``."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["function"],
+				"title": "FactionBoardSeatDTO",
+				"description": "A seat on the board of a faction of the Eerste Kamer, as its page gives it."
+			},
 			"FactionDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"default": "TK"
+					},
+					"observed_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed From",
+						"description": "Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer."
+					},
+					"observed_until": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed Until",
+						"description": "Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown."
+					},
+					"board": {
+						"items": { "$ref": "#/components/schemas/FactionBoardSeatDTO" },
+						"type": "array",
+						"title": "Board",
+						"description": "Of the Eerste Kamer: its board."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkSourceDTO" }, { "type": "null" }],
+						"description": "Of the Eerste Kamer: the page it was read from."
+					},
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
 					"abbreviation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -7062,6 +7299,12 @@
 						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
 						"type": "array",
 						"title": "Cabinet"
+					},
+					"chamber": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Chamber",
+						"description": "``TK``, ``EK``; null for a publication or a commencement."
 					}
 				},
 				"additionalProperties": false,
@@ -8828,6 +9071,25 @@
 						"title": "Government Functions",
 						"description": "The posts held in a cabinet (from Rijksoverheid), oldest first."
 					},
+					"ek": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkMembershipDTO" }, { "type": "null" }],
+						"description": "Their seat in the Eerste Kamer; null for none ever observed."
+					},
+					"role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Role",
+						"description": "In a committee of the Eerste Kamer: the role its page gives (``voorzitter``, ``ondervoorzitter``)."
+					},
+					"observed_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed From",
+						"description": "Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer."
+					},
+					"observed_until": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed Until",
+						"description": "Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown."
+					},
 					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "From Date"
@@ -8871,6 +9133,25 @@
 						"type": "array",
 						"title": "Government Functions",
 						"description": "The posts held in a cabinet (from Rijksoverheid), oldest first."
+					},
+					"ek": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkMembershipDTO" }, { "type": "null" }],
+						"description": "Their seat in the Eerste Kamer; null for none ever observed."
+					},
+					"role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Role",
+						"description": "In a committee of the Eerste Kamer: the role its page gives (``voorzitter``, ``ondervoorzitter``)."
+					},
+					"observed_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed From",
+						"description": "Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer."
+					},
+					"observed_until": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed Until",
+						"description": "Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown."
 					},
 					"from_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9233,6 +9514,12 @@
 			},
 			"ParliamentSeatsResponse": {
 				"properties": {
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"default": "TK"
+					},
 					"total_seats": { "type": "integer", "title": "Total Seats" },
 					"assigned_seats": { "type": "integer", "title": "Assigned Seats" },
 					"as_of": { "type": "string", "title": "As Of" },
@@ -9243,14 +9530,18 @@
 					},
 					"seating_plan": {
 						"anyOf": [{ "$ref": "#/components/schemas/SeatingPlanDTO" }, { "type": "null" }],
-						"description": "The plan of the Tweede Kamer the order of `factions` follows."
+						"description": "The plan of the Tweede Kamer the order of `factions` follows; null for the Eerste Kamer, whose factions are in the order of their seats."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkSourceDTO" }, { "type": "null" }],
+						"description": "Of the Eerste Kamer: the page the seats were read from."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["total_seats", "assigned_seats", "as_of", "factions"],
 				"title": "ParliamentSeatsResponse",
-				"description": "The current seat composition of the Tweede Kamer."
+				"description": "The seat composition of the Tweede Kamer or the Eerste Kamer."
 			},
 			"PartyColorsResponse": {
 				"properties": {
@@ -9880,6 +10171,23 @@
 			"TimelineDecisionBody": {
 				"properties": {
 					"subject": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Subject" },
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"description": "The chamber that decided: ``EK`` for a vote of the Eerste Kamer.",
+						"default": "TK"
+					},
+					"result": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Result",
+						"description": "Of the Eerste Kamer: ``Aangenomen``, ``Verworpen`` as it shows it."
+					},
+					"method": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Method",
+						"description": "Of the Eerste Kamer: how it was decided, as its report names it (``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``)."
+					},
 					"passed": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Passed" },
 					"vote_kind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],

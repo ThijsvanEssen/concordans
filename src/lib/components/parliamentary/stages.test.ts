@@ -32,7 +32,7 @@ describe('dossier phases and outcome', () => {
 });
 
 describe('stepState', () => {
-	const phase = (name: string, done: boolean) => ({ name, done, date: null });
+	const phase = (name: string, done: boolean) => ({ name, chamber: 'TK' as const, done, date: null });
 
 	it('lights the current phase, the ones a record marks, and assumes nothing else', () => {
 		expect(stepState(phase('Verslag', true), 'Verslag')).toBe('active');

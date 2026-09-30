@@ -2626,10 +2626,28 @@ export interface components {
             id: string;
             /** Key */
             key: string;
+            /**
+             * Chamber
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
             /** Name */
             name?: string | null;
             /** Abbreviation */
             abbreviation?: string | null;
+            /**
+             * Observed From
+             * @description Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer.
+             */
+            observed_from?: string | null;
+            /**
+             * Observed Until
+             * @description Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown.
+             */
+            observed_until?: string | null;
+            /** @description Of the Eerste Kamer: the page it was read from. */
+            source?: components["schemas"]["EkSourceDTO"] | null;
             /**
              * Slug
              * @description Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`.
@@ -2666,10 +2684,28 @@ export interface components {
             id: string;
             /** Key */
             key: string;
+            /**
+             * Chamber
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
             /** Name */
             name?: string | null;
             /** Abbreviation */
             abbreviation?: string | null;
+            /**
+             * Observed From
+             * @description Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer.
+             */
+            observed_from?: string | null;
+            /**
+             * Observed Until
+             * @description Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown.
+             */
+            observed_until?: string | null;
+            /** @description Of the Eerste Kamer: the page it was read from. */
+            source?: components["schemas"]["EkSourceDTO"] | null;
             /**
              * Slug
              * @description Its own: of committees that share an abbreviation the one sitting now (else the one that ended last) has it bare, the others with the year they started, `ez-2010`.
@@ -3508,6 +3544,13 @@ export interface components {
              */
             name: string;
             /**
+             * Chamber
+             * @description The chamber of the phase: the bar is that of the Tweede Kamer.
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
+            /**
              * Done
              * @description A paper, an activity that took place or a decision on the bill marks it.
              */
@@ -3706,6 +3749,42 @@ export interface components {
             };
         };
         /**
+         * EkMembershipDTO
+         * @description A member's seat in the Eerste Kamer, as eerstekamer.nl shows it.
+         */
+        EkMembershipDTO: {
+            /**
+             * Name
+             * @description As the Kamer writes it: mr. B.O. Dittrich.
+             */
+            name?: string | null;
+            /**
+             * Faction
+             * @description The key of its faction (``ek_…``).
+             */
+            faction?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /**
+             * Seniority Days
+             * @description ``Anciënniteit``: the days served in the Eerste Kamer, earlier terms included; no start date.
+             */
+            seniority_days?: number | null;
+            /** Residence */
+            residence?: string | null;
+            /**
+             * Observed From
+             * @description Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer.
+             */
+            observed_from?: string | null;
+            /**
+             * Observed Until
+             * @description Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown.
+             */
+            observed_until?: string | null;
+            source: components["schemas"]["EkSourceDTO"];
+        };
+        /**
          * EkOutcomeDTO
          * @description The outcome of the bill of a dossier in the Eerste Kamer, as eerstekamer.nl gives it.
          */
@@ -3739,6 +3818,37 @@ export interface components {
             /**
              * Attribution
              * @description The source to name with it (``EK_ATTRIBUTION``), with ``source_url`` and ``retrieved_on``: the terms of eerstekamer.nl allow reuse with the source and the day it was taken over.
+             */
+            attribution: string;
+        };
+        /**
+         * EkSourceDTO
+         * @description Where something of the Eerste Kamer was taken over from, to name with it.
+         */
+        EkSourceDTO: {
+            /**
+             * Url
+             * @description Its page on eerstekamer.nl.
+             */
+            url?: string | null;
+            /**
+             * Retrieved On
+             * @description The day it was read.
+             */
+            retrieved_on?: string | null;
+            /**
+             * Composition Date
+             * @description The day of the composition shown: the snapshot it was last seen in (``stand``).
+             */
+            composition_date?: string | null;
+            /**
+             * Data Since
+             * @description The day of the first snapshot the graph holds: nothing before it is known.
+             */
+            data_since?: string | null;
+            /**
+             * Attribution
+             * @description The source to name (``EK_ATTRIBUTION``).
              */
             attribution: string;
         };
@@ -3857,6 +3967,29 @@ export interface components {
             count: number;
         };
         /**
+         * FactionBoardSeatDTO
+         * @description A seat on the board of a faction of the Eerste Kamer, as its page gives it.
+         */
+        FactionBoardSeatDTO: {
+            /**
+             * Function
+             * @description ``fractievoorzitter``, ``penningmeester``.
+             */
+            function: string;
+            /** Name */
+            name?: string | null;
+            /**
+             * Member
+             * @description The member key.
+             */
+            member?: string | null;
+            /**
+             * Since
+             * @description The day the page gives: ``sinds``.
+             */
+            since?: string | null;
+        };
+        /**
          * FactionDTO
          * @description A parliamentary party.
          */
@@ -3865,6 +3998,29 @@ export interface components {
             id: string;
             /** Key */
             key: string;
+            /**
+             * Chamber
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
+            /**
+             * Observed From
+             * @description Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer.
+             */
+            observed_from?: string | null;
+            /**
+             * Observed Until
+             * @description Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown.
+             */
+            observed_until?: string | null;
+            /**
+             * Board
+             * @description Of the Eerste Kamer: its board.
+             */
+            board?: components["schemas"]["FactionBoardSeatDTO"][];
+            /** @description Of the Eerste Kamer: the page it was read from. */
+            source?: components["schemas"]["EkSourceDTO"] | null;
             /** Name */
             name?: string | null;
             /** Abbreviation */
@@ -4082,6 +4238,11 @@ export interface components {
             faction?: components["schemas"]["FacetCountDTO"][];
             /** Cabinet */
             cabinet?: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Chamber
+             * @description ``TK``, ``EK``; null for a publication or a commencement.
+             */
+            chamber?: components["schemas"]["FacetCountDTO"][];
         };
         /** FeedFactionDTO */
         FeedFactionDTO: {
@@ -5596,6 +5757,23 @@ export interface components {
              * @description The posts held in a cabinet (from Rijksoverheid), oldest first.
              */
             government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
+            /** @description Their seat in the Eerste Kamer; null for none ever observed. */
+            ek?: components["schemas"]["EkMembershipDTO"] | null;
+            /**
+             * Role
+             * @description In a committee of the Eerste Kamer: the role its page gives (``voorzitter``, ``ondervoorzitter``).
+             */
+            role?: string | null;
+            /**
+             * Observed From
+             * @description Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer.
+             */
+            observed_from?: string | null;
+            /**
+             * Observed Until
+             * @description Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown.
+             */
+            observed_until?: string | null;
             /** From Date */
             from_date?: string | null;
             /**
@@ -5646,6 +5824,23 @@ export interface components {
              * @description The posts held in a cabinet (from Rijksoverheid), oldest first.
              */
             government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
+            /** @description Their seat in the Eerste Kamer; null for none ever observed. */
+            ek?: components["schemas"]["EkMembershipDTO"] | null;
+            /**
+             * Role
+             * @description In a committee of the Eerste Kamer: the role its page gives (``voorzitter``, ``ondervoorzitter``).
+             */
+            role?: string | null;
+            /**
+             * Observed From
+             * @description Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer.
+             */
+            observed_from?: string | null;
+            /**
+             * Observed Until
+             * @description Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown.
+             */
+            observed_until?: string | null;
             /** From Date */
             from_date?: string | null;
             /**
@@ -5896,9 +6091,15 @@ export interface components {
         };
         /**
          * ParliamentSeatsResponse
-         * @description The current seat composition of the Tweede Kamer.
+         * @description The seat composition of the Tweede Kamer or the Eerste Kamer.
          */
         ParliamentSeatsResponse: {
+            /**
+             * Chamber
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
             /** Total Seats */
             total_seats: number;
             /** Assigned Seats */
@@ -5907,8 +6108,10 @@ export interface components {
             as_of: string;
             /** Factions */
             factions: components["schemas"]["FactionSeatsDTO"][];
-            /** @description The plan of the Tweede Kamer the order of `factions` follows. */
+            /** @description The plan of the Tweede Kamer the order of `factions` follows; null for the Eerste Kamer, whose factions are in the order of their seats. */
             seating_plan?: components["schemas"]["SeatingPlanDTO"] | null;
+            /** @description Of the Eerste Kamer: the page the seats were read from. */
+            source?: components["schemas"]["EkSourceDTO"] | null;
         };
         /**
          * PartyColorsResponse
@@ -6469,6 +6672,23 @@ export interface components {
         TimelineDecisionBody: {
             /** Subject */
             subject?: string | null;
+            /**
+             * Chamber
+             * @description The chamber that decided: ``EK`` for a vote of the Eerste Kamer.
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
+            /**
+             * Result
+             * @description Of the Eerste Kamer: ``Aangenomen``, ``Verworpen`` as it shows it.
+             */
+            result?: string | null;
+            /**
+             * Method
+             * @description Of the Eerste Kamer: how it was decided, as its report names it (``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``).
+             */
+            method?: string | null;
             /** Passed */
             passed?: boolean | null;
             /** Vote Kind */
@@ -7755,7 +7975,10 @@ export interface operations {
     };
     list_committees_api_committees_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description ``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``). */
+                chamber?: "TK" | "EK";
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -7769,6 +7992,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CommitteeDTO"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -7863,6 +8095,8 @@ export interface operations {
                 cabinet?: string | null;
                 limit?: number;
                 offset?: number;
+                /** @description ``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``). */
+                chamber?: "TK" | "EK";
             };
             header?: never;
             path?: never;
@@ -8028,6 +8262,8 @@ export interface operations {
                 active?: boolean | null;
                 /** @description Name or abbreviation. */
                 q?: string | null;
+                /** @description ``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``). */
+                chamber?: "TK" | "EK";
             };
             header?: never;
             path?: never;
@@ -8706,6 +8942,8 @@ export interface operations {
             query?: {
                 /** @description The day, YYYY-MM-DD; today when left out. */
                 date?: string | null;
+                /** @description ``EK``: the seats of the Eerste Kamer as eerstekamer.nl shows them on the day it was last read, in the order of their size (no plan); without ``date``. */
+                chamber?: "TK" | "EK";
             };
             header?: never;
             path?: never;
