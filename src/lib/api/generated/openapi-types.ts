@@ -1322,6 +1322,7 @@ export interface components {
             /** Outcome */
             outcome?: ("aangenomen" | "verworpen") | null;
             tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
+            ek_outcome?: components["schemas"]["EkOutcomeDTO"] | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
@@ -2828,6 +2829,51 @@ export interface components {
             /** Chamber */
             chamber?: string | null;
             /**
+             * Result
+             * @description The outcome the Eerste Kamer shows: ``Aangenomen``, ``Verworpen``. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            result?: string | null;
+            /**
+             * Method
+             * @description How it was decided, as the report names it: ``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``, ``Hoofdelijke stemming, verworpen``. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            method?: string | null;
+            /**
+             * Bill Decision
+             * @description Whether it is the vote that decided the bill: the list of the Eerste Kamer names a vote on a motion by its bill too. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            bill_decision?: boolean | null;
+            /**
+             * Factions For
+             * @description Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            factions_for?: string[];
+            /**
+             * Factions Against
+             * @description Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            factions_against?: string[];
+            /**
+             * Factions Noted
+             * @description The factions that asked to have their vote recorded. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            factions_noted?: string[];
+            /**
+             * Bill Url
+             * @description Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            bill_url?: string | null;
+            /**
+             * Source Url
+             * @description The part of the report of the meeting. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            source_url?: string | null;
+            /**
+             * Retrieved On
+             * @description Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            retrieved_on?: string | null;
+            /**
              * Vote Kind
              * @description ``member``, ``faction``; null without votes (a hamerstuk).
              */
@@ -2950,6 +2996,21 @@ export interface components {
             passed?: boolean | null;
             /** Chamber */
             chamber?: string | null;
+            /**
+             * Result
+             * @description The outcome the Eerste Kamer shows: ``Aangenomen``, ``Verworpen``. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            result?: string | null;
+            /**
+             * Method
+             * @description How it was decided, as the report names it: ``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``, ``Hoofdelijke stemming, verworpen``. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            method?: string | null;
+            /**
+             * Bill Decision
+             * @description Whether it is the vote that decided the bill: the list of the Eerste Kamer names a vote on a motion by its bill too. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer.
+             */
+            bill_decision?: boolean | null;
             /** Vote Kind */
             vote_kind?: string | null;
             /** Tally */
@@ -3121,6 +3182,7 @@ export interface components {
             /** Outcome */
             outcome?: ("aangenomen" | "verworpen") | null;
             tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
+            ek_outcome?: components["schemas"]["EkOutcomeDTO"] | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
@@ -3519,8 +3581,9 @@ export interface components {
          *     ``phases``: every phase of the curated list in its order, each done when a paper, an
          *     activity or a decision of the Kamer marks it; ``current_phase`` is the done phase with
          *     the latest date. A closed dossier has an ``outcome``: ``aangenomen`` (its law was
-         *     published) or ``verworpen`` (the Tweede Kamer voted the bill down); ``tk_decision`` is
-         *     the last decision of the Kamer on the bill.
+         *     published, or the Eerste Kamer adopted it) or ``verworpen`` (a chamber voted the bill
+         *     down); ``tk_decision`` is the last decision of the Tweede Kamer on the bill and
+         *     ``ek_outcome`` its outcome in the Eerste Kamer.
          */
         DossierSummaryDTO: {
             /** Id */
@@ -3580,6 +3643,7 @@ export interface components {
             /** Outcome */
             outcome?: ("aangenomen" | "verworpen") | null;
             tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
+            ek_outcome?: components["schemas"]["EkOutcomeDTO"] | null;
             /** Opened On */
             opened_on?: string | null;
             /** Closed On */
@@ -3622,6 +3686,43 @@ export interface components {
             by_relation: {
                 [key: string]: number;
             };
+        };
+        /**
+         * EkOutcomeDTO
+         * @description The outcome of the bill of a dossier in the Eerste Kamer, as eerstekamer.nl gives it.
+         */
+        EkOutcomeDTO: {
+            /**
+             * Outcome
+             * @description As the Eerste Kamer shows it.
+             * @enum {string}
+             */
+            outcome: "Aangenomen" | "Verworpen";
+            /**
+             * Date
+             * @description The day of the vote.
+             */
+            date?: string | null;
+            /**
+             * Method
+             * @description How it was decided, as the report names it: ``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``, ``Hoofdelijke stemming, verworpen``; null for a rejection known from the list of rejected bills alone (before June 2015).
+             */
+            method?: string | null;
+            /**
+             * Source Url
+             * @description The page it was taken over from: the report of the vote, or the list of rejected bills.
+             */
+            source_url?: string | null;
+            /**
+             * Retrieved On
+             * @description The day it was taken over.
+             */
+            retrieved_on?: string | null;
+            /**
+             * Attribution
+             * @description The source to name with it (``EK_ATTRIBUTION``), with ``source_url`` and ``retrieved_on``: the terms of eerstekamer.nl allow reuse with the source and the day it was taken over.
+             */
+            attribution: string;
         };
         /**
          * EuLinkDTO
@@ -4194,6 +4295,12 @@ export interface components {
         /** FeedVoteCountDTO */
         FeedVoteCountDTO: {
             /**
+             * Chamber
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
+            /**
              * Subkind
              * @description What was voted on, the ``Zaak.Soort``: ``Motie``, ``Amendement``, ``Wetgeving``, ...
              */
@@ -4208,6 +4315,13 @@ export interface components {
          * @description The outcome of a ``stemming``.
          */
         FeedVoteDTO: {
+            /**
+             * Chamber
+             * @description The chamber that voted; of the Eerste Kamer only the vote that decided the bill is an event.
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
             /** Passed */
             passed?: boolean | null;
             /** Outcome */
@@ -8597,6 +8711,8 @@ export interface operations {
                 faction?: string | null;
                 /** @description Words of the title, or of the title of the event's dossier, in any case. */
                 q?: string | null;
+                /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
+                chamber?: ("TK" | "EK") | null;
             };
             header?: never;
             path?: never;
@@ -8650,6 +8766,8 @@ export interface operations {
                 faction?: string | null;
                 /** @description Words of the title, or of the title of the event's dossier, in any case. */
                 q?: string | null;
+                /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
+                chamber?: ("TK" | "EK") | null;
             };
             header?: never;
             path?: never;
@@ -8700,6 +8818,8 @@ export interface operations {
                 faction?: string | null;
                 /** @description Words of the title, or of the title of the event's dossier, in any case. */
                 q?: string | null;
+                /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
+                chamber?: ("TK" | "EK") | null;
             };
             header?: never;
             path?: never;

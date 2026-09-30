@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.58.0"
+		"version": "0.59.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -3432,6 +3432,17 @@
 							"title": "Q"
 						},
 						"description": "Words of the title, or of the title of the event's dossier, in any case."
+					},
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["TK", "EK"], "type": "string" }, { "type": "null" }],
+							"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither.",
+							"title": "Chamber"
+						},
+						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
 					}
 				],
 				"responses": {
@@ -3603,6 +3614,17 @@
 							"title": "Q"
 						},
 						"description": "Words of the title, or of the title of the event's dossier, in any case."
+					},
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["TK", "EK"], "type": "string" }, { "type": "null" }],
+							"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither.",
+							"title": "Chamber"
+						},
+						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
 					}
 				],
 				"responses": {
@@ -3754,6 +3776,17 @@
 							"title": "Q"
 						},
 						"description": "Words of the title, or of the title of the event's dossier, in any case."
+					},
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["TK", "EK"], "type": "string" }, { "type": "null" }],
+							"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither.",
+							"title": "Chamber"
+						},
+						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
 					}
 				],
 				"responses": {
@@ -3896,6 +3929,9 @@
 					},
 					"tk_decision": {
 						"anyOf": [{ "$ref": "#/components/schemas/TkDecisionDTO" }, { "type": "null" }]
+					},
+					"ek_outcome": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkOutcomeDTO" }, { "type": "null" }]
 					},
 					"opened_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -5661,6 +5697,54 @@
 						"description": "The ``Zaak.Soort`` of the case it decided: ``Wetgeving`` on the vote on a bill itself, ``Amendement`` or ``Motie`` on the others."
 					},
 					"chamber": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Chamber" },
+					"result": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Result",
+						"description": "The outcome the Eerste Kamer shows: ``Aangenomen``, ``Verworpen``. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"method": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Method",
+						"description": "How it was decided, as the report names it: ``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``, ``Hoofdelijke stemming, verworpen``. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"bill_decision": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Bill Decision",
+						"description": "Whether it is the vote that decided the bill: the list of the Eerste Kamer names a vote on a motion by its bill too. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"factions_for": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Factions For",
+						"description": "Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"factions_against": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Factions Against",
+						"description": "Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"factions_noted": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Factions Noted",
+						"description": "The factions that asked to have their vote recorded. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"bill_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Bill Url",
+						"description": "Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"source_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source Url",
+						"description": "The part of the report of the meeting. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"retrieved_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Retrieved On",
+						"description": "Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
 					"vote_kind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Vote Kind",
@@ -5795,6 +5879,21 @@
 					},
 					"passed": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Passed" },
 					"chamber": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Chamber" },
+					"result": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Result",
+						"description": "The outcome the Eerste Kamer shows: ``Aangenomen``, ``Verworpen``. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"method": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Method",
+						"description": "How it was decided, as the report names it: ``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``, ``Hoofdelijke stemming, verworpen``. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
+					"bill_decision": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Bill Decision",
+						"description": "Whether it is the vote that decided the bill: the list of the Eerste Kamer names a vote on a motion by its bill too. Of a vote of the Eerste Kamer (``chamber`` ``EK``), as eerstekamer.nl writes it; null for the Tweede Kamer."
+					},
 					"vote_kind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Vote Kind"
@@ -5981,6 +6080,9 @@
 					},
 					"tk_decision": {
 						"anyOf": [{ "$ref": "#/components/schemas/TkDecisionDTO" }, { "type": "null" }]
+					},
+					"ek_outcome": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkOutcomeDTO" }, { "type": "null" }]
 					},
 					"opened_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -6446,6 +6548,9 @@
 					"tk_decision": {
 						"anyOf": [{ "$ref": "#/components/schemas/TkDecisionDTO" }, { "type": "null" }]
 					},
+					"ek_outcome": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkOutcomeDTO" }, { "type": "null" }]
+					},
 					"opened_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Opened On"
@@ -6473,7 +6578,7 @@
 				"type": "object",
 				"required": ["id", "key", "number"],
 				"title": "DossierSummaryDTO",
-				"description": "A dossier in a list.\n\n``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of\nthe zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,\n``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``), else, from a\n``Voorstel van wet`` among its papers, ``Wetgeving`` or ``Initiatiefwetgeving``; null\nfor a dossier of letters and motions. ``kind_basis`` says which (``case``,\n``document``). A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has\n``phases``: every phase of the curated list in its order, each done when a paper, an\nactivity or a decision of the Kamer marks it; ``current_phase`` is the done phase with\nthe latest date. A closed dossier has an ``outcome``: ``aangenomen`` (its law was\npublished) or ``verworpen`` (the Tweede Kamer voted the bill down); ``tk_decision`` is\nthe last decision of the Kamer on the bill."
+				"description": "A dossier in a list.\n\n``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of\nthe zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,\n``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``), else, from a\n``Voorstel van wet`` among its papers, ``Wetgeving`` or ``Initiatiefwetgeving``; null\nfor a dossier of letters and motions. ``kind_basis`` says which (``case``,\n``document``). A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has\n``phases``: every phase of the curated list in its order, each done when a paper, an\nactivity or a decision of the Kamer marks it; ``current_phase`` is the done phase with\nthe latest date. A closed dossier has an ``outcome``: ``aangenomen`` (its law was\npublished, or the Eerste Kamer adopted it) or ``verworpen`` (a chamber voted the bill\ndown); ``tk_decision`` is the last decision of the Tweede Kamer on the bill and\n``ek_outcome`` its outcome in the Eerste Kamer."
 			},
 			"DossierTimelineResponse": {
 				"properties": {
@@ -6522,6 +6627,46 @@
 				"required": ["total", "by_relation"],
 				"title": "EdgeStatsDTO",
 				"description": "Edge counts: total and per relation type."
+			},
+			"EkOutcomeDTO": {
+				"properties": {
+					"outcome": {
+						"type": "string",
+						"enum": ["Aangenomen", "Verworpen"],
+						"title": "Outcome",
+						"description": "As the Eerste Kamer shows it."
+					},
+					"date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date",
+						"description": "The day of the vote."
+					},
+					"method": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Method",
+						"description": "How it was decided, as the report names it: ``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``, ``Hoofdelijke stemming, verworpen``; null for a rejection known from the list of rejected bills alone (before June 2015)."
+					},
+					"source_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source Url",
+						"description": "The page it was taken over from: the report of the vote, or the list of rejected bills."
+					},
+					"retrieved_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Retrieved On",
+						"description": "The day it was taken over."
+					},
+					"attribution": {
+						"type": "string",
+						"title": "Attribution",
+						"description": "The source to name with it (``EK_ATTRIBUTION``), with ``source_url`` and ``retrieved_on``: the terms of eerstekamer.nl allow reuse with the source and the day it was taken over."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["outcome", "attribution"],
+				"title": "EkOutcomeDTO",
+				"description": "The outcome of the bill of a dossier in the Eerste Kamer, as eerstekamer.nl gives it."
 			},
 			"EuLinkDTO": {
 				"properties": {
@@ -7182,6 +7327,12 @@
 			},
 			"FeedVoteCountDTO": {
 				"properties": {
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"default": "TK"
+					},
 					"subkind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Subkind",
@@ -7203,6 +7354,13 @@
 			},
 			"FeedVoteDTO": {
 				"properties": {
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"description": "The chamber that voted; of the Eerste Kamer only the vote that decided the bill is an event.",
+						"default": "TK"
+					},
 					"passed": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Passed" },
 					"outcome": {
 						"anyOf": [

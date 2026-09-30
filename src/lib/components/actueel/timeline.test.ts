@@ -33,6 +33,7 @@ const vote = (voor: number, tegen: number, over: Partial<FeedItem> = {}) =>
 		subkind: 'Motie',
 		node: { collection: 'decisions', key: `d${n}` } as FeedItem['node'],
 		vote: {
+			chamber: 'TK',
 			passed: voor > tegen,
 			outcome: voor > tegen ? 'aangenomen' : 'verworpen',
 			tally: { Voor: voor, Tegen: tegen }
@@ -133,10 +134,10 @@ describe('dayLines', () => {
 		const lines = dayLines(
 			day({
 				votes: [
-					{ subkind: 'Wetgeving', outcome: 'aangenomen', count: 2 },
-					{ subkind: 'Motie', outcome: 'aangenomen', count: 88 },
-					{ subkind: 'Motie', outcome: 'verworpen', count: 37 },
-					{ subkind: 'Amendement', outcome: 'aangenomen', count: 9 }
+					{ chamber: 'TK', subkind: 'Wetgeving', outcome: 'aangenomen', count: 2 },
+					{ chamber: 'TK', subkind: 'Motie', outcome: 'aangenomen', count: 88 },
+					{ chamber: 'TK', subkind: 'Motie', outcome: 'verworpen', count: 37 },
+					{ chamber: 'TK', subkind: 'Amendement', outcome: 'aangenomen', count: 9 }
 				]
 			}),
 			[...bills, schilder]
@@ -159,7 +160,7 @@ describe('dayLines', () => {
 			headline: { surname: 'Grinwis', subject: 'steward ownership' }
 		});
 		const lines = dayLines(
-			day({ votes: [{ subkind: 'Motie', outcome: 'aangenomen', count: 1 }] }),
+			day({ votes: [{ chamber: 'TK', subkind: 'Motie', outcome: 'aangenomen', count: 1 }] }),
 			[grinwis]
 		);
 		expect(lines.map((l) => [l.title, l.major])).toEqual([

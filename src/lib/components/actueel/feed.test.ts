@@ -150,7 +150,7 @@ describe('the votes of a day', () => {
 		({
 			...item('2026-09-22', 'stemming', dossier),
 			subkind,
-			vote: { passed: voor > tegen, tally: { Voor: voor, Tegen: tegen } }
+			vote: { chamber: 'TK', passed: voor > tegen, tally: { Voor: voor, Tegen: tegen } }
 		}) as FeedItem;
 
 	it('fold into one line at the top, the bills and the close ones apart', () => {
@@ -177,10 +177,10 @@ describe('the votes of a day', () => {
 		expect(
 			'fold' in first &&
 				foldTitle(first.fold, [
-					{ subkind: 'Wetgeving', outcome: 'aangenomen', count: 6 },
-					{ subkind: 'Motie', outcome: 'aangenomen', count: 88 },
-					{ subkind: 'Motie', outcome: 'verworpen', count: 37 },
-					{ subkind: 'Amendement', outcome: 'aangenomen', count: 9 }
+					{ chamber: 'TK', subkind: 'Wetgeving', outcome: 'aangenomen', count: 6 },
+					{ chamber: 'TK', subkind: 'Motie', outcome: 'aangenomen', count: 88 },
+					{ chamber: 'TK', subkind: 'Motie', outcome: 'verworpen', count: 37 },
+					{ chamber: 'TK', subkind: 'Amendement', outcome: 'aangenomen', count: 9 }
 				])
 		).toBe('Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen, en over 9 amendementen');
 	});

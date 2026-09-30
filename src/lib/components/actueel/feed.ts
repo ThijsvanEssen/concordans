@@ -148,6 +148,7 @@ export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 		const counted: VoteCount[] = votes
 			? votes.filter((v) => !isBillVote(v))
 			: f.items.map((i) => ({
+					chamber: i.vote?.chamber ?? 'TK',
 					subkind: i.subkind,
 					outcome: i.vote?.passed ? 'aangenomen' : 'verworpen',
 					count: 1
