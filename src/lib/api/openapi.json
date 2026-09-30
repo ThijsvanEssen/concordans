@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.67.0"
+		"version": "0.70.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -2394,6 +2394,80 @@
 				}
 			}
 		},
+		"/api/factions/{key}/votes": {
+			"get": {
+				"tags": ["factions", "factions"],
+				"summary": "How a faction of the Eerste Kamer voted",
+				"description": "The votes of the Eerste Kamer that name this faction (its list of votes on bills, since June 2015), newest first, with the faction's choice as the list names it (``voor``, ``tegen``, ``aantekening gevraagd``) and the counts per choice. ``bill_decision`` tells the vote on the bill from one on a motion on it. Only a faction of the Eerste Kamer (``chamber`` ``EK``): the Tweede Kamer's votes per faction are ``/api/decisions?party=``.",
+				"operationId": "list_faction_votes_api_factions__key__votes_get",
+				"parameters": [
+					{
+						"name": "key",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Key" }
+					},
+					{
+						"name": "from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or after, YYYY-MM-DD.",
+							"title": "From"
+						},
+						"description": "On or after, YYYY-MM-DD."
+					},
+					{
+						"name": "to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or before, YYYY-MM-DD.",
+							"title": "To"
+						},
+						"description": "On or before, YYYY-MM-DD."
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 500,
+							"minimum": 1,
+							"default": 50,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/EkFactionVotesResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/factions/{key}/touched-instruments": {
 			"get": {
 				"tags": ["factions", "factions"],
@@ -2823,6 +2897,122 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/AnnexDetailResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/documents": {
+			"get": {
+				"tags": ["documents", "documents"],
+				"summary": "The papers of the chambers",
+				"description": "The papers of the Tweede Kamer and the Eerste Kamer, newest first, with their metadata (no text): ``chamber``, ``kind``, ``dossier_number`` (the dossier it is numbered in), ``number`` (the nr., or the letter of the Eerste Kamer), ``date``, ``title`` and ``session_year``. ``facets`` counts per ``kind`` and ``chamber``, each without its own filter; ``facets=false`` reads one page only.",
+				"operationId": "list_chamber_documents_api_documents_get",
+				"parameters": [
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["TK", "EK"], "type": "string" }, { "type": "null" }],
+							"description": "One chamber; both by default.",
+							"title": "Chamber"
+						},
+						"description": "One chamber; both by default."
+					},
+					{
+						"name": "kind",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated kinds, as the chamber writes them.",
+							"title": "Kind"
+						},
+						"description": "Comma-separated kinds, as the chamber writes them."
+					},
+					{
+						"name": "dossier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^\\d+(-[A-Za-z0-9()]+)?$" },
+								{ "type": "null" }
+							],
+							"description": "A dossier label (``36791``, ``37020-XV``): the papers part of it.",
+							"title": "Dossier"
+						},
+						"description": "A dossier label (``36791``, ``37020-XV``): the papers part of it."
+					},
+					{
+						"name": "from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or after, YYYY-MM-DD.",
+							"title": "From"
+						},
+						"description": "On or after, YYYY-MM-DD."
+					},
+					{
+						"name": "to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or before, YYYY-MM-DD.",
+							"title": "To"
+						},
+						"description": "On or before, YYYY-MM-DD."
+					},
+					{
+						"name": "facets",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Count per kind and chamber.",
+							"default": true,
+							"title": "Facets"
+						},
+						"description": "Count per kind and chamber."
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 200,
+							"minimum": 1,
+							"default": 50,
+							"title": "Limit"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/DocumentListResponse" }
 							}
 						}
 					},
@@ -4731,11 +4921,23 @@
 					},
 					"explanation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Explanation"
+						"title": "Explanation",
+						"description": "What `semantic_type` rests on: the trigger phrase and where it stood."
 					},
 					"confidence": {
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
-						"title": "Confidence"
+						"title": "Confidence",
+						"description": "That the reference exists: 1.0 for a link of the BWB XML."
+					},
+					"semantic_confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Semantic Confidence",
+						"description": "How sure `semantic_type` is: the share of classifications by the same trigger phrase, in the same place, that a hand check found right (0.25 to 0.9). Null when the reference has no type."
+					},
+					"semantic_pattern": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Semantic Pattern",
+						"description": "The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …"
 					},
 					"start": {
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
@@ -6040,6 +6242,104 @@
 				"title": "DecisionSummaryDTO",
 				"description": "One row in the decision browser.\n\n``tally`` sums the seats behind each choice — the number to show for a\nresult — and ``voters`` counts how many factions (or members) made it.\n``external_id`` identifies the motion within a debate; use it rather than\n``subject``, which is shared by every motion on the same agenda item."
 			},
+			"DocumentFacetCountDTO": {
+				"properties": {
+					"value": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Value" },
+					"count": { "type": "integer", "title": "Count" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["count"],
+				"title": "DocumentFacetCountDTO"
+			},
+			"DocumentFacetsDTO": {
+				"properties": {
+					"kind": {
+						"items": { "$ref": "#/components/schemas/DocumentFacetCountDTO" },
+						"type": "array",
+						"title": "Kind"
+					},
+					"chamber": {
+						"items": { "$ref": "#/components/schemas/DocumentFacetCountDTO" },
+						"type": "array",
+						"title": "Chamber"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "DocumentFacetsDTO",
+				"description": "The papers under the filters, per kind (without the kind filter) and per chamber\n(without the chamber filter), the largest first."
+			},
+			"DocumentListItemDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber"
+					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "As the chamber writes it: ``Memorie van toelichting``."
+					},
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number",
+						"description": "The dossier it is numbered in (its own; null for a paper that is no Kamerstuk): ``36791``."
+					},
+					"dossier_suffix": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Suffix",
+						"description": "The addition to that number: ``XV`` of ``37020 XV``."
+					},
+					"dossier_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Dossier Numbers",
+						"description": "Every dossier it is part of, as labels."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "Its number in the dossier: of the Tweede Kamer the nr. (``5``), of the Eerste Kamer the letter (``C``); null for none."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"session_year": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Session Year",
+						"description": "The session year as the source writes it (``2025-2026``): with the chamber, dossier and number the citation, Kamerstukken I 2025/26, 36791, C."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key"],
+				"title": "DocumentListItemDTO",
+				"description": "A paper of a chamber in the list: its metadata, no text."
+			},
+			"DocumentListResponse": {
+				"properties": {
+					"total": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Total",
+						"description": "Every match, whatever the page; null with ``facets=false``."
+					},
+					"items": {
+						"items": { "$ref": "#/components/schemas/DocumentListItemDTO" },
+						"type": "array",
+						"title": "Items",
+						"default": []
+					},
+					"facets": {
+						"anyOf": [{ "$ref": "#/components/schemas/DocumentFacetsDTO" }, { "type": "null" }]
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "DocumentListResponse",
+				"description": "A page of the papers of the chambers, newest first."
+			},
 			"DocumentPassagesResponse": {
 				"properties": {
 					"total": { "type": "integer", "title": "Total" },
@@ -6780,6 +7080,70 @@
 				"required": ["total", "by_relation"],
 				"title": "EdgeStatsDTO",
 				"description": "Edge counts: total and per relation type."
+			},
+			"EkFactionVoteDTO": {
+				"properties": {
+					"decision_id": { "type": "string", "title": "Decision Id" },
+					"decision_key": { "type": "string", "title": "Decision Key" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"subject": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Subject" },
+					"dossier_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Dossier Numbers",
+						"default": []
+					},
+					"result": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Result",
+						"description": "``Aangenomen``, ``Verworpen``."
+					},
+					"method": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Method" },
+					"bill_decision": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Bill Decision",
+						"description": "Whether it is the vote that decided the bill (else a vote on a motion on it)."
+					},
+					"choice": {
+						"type": "string",
+						"enum": ["voor", "tegen", "aantekening gevraagd"],
+						"title": "Choice",
+						"description": "As the list of the Eerste Kamer names the faction's vote."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["decision_id", "decision_key", "choice"],
+				"title": "EkFactionVoteDTO",
+				"description": "How a faction of the Eerste Kamer voted on one vote of its list."
+			},
+			"EkFactionVotesResponse": {
+				"properties": {
+					"faction_key": { "type": "string", "title": "Faction Key" },
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "The votes that name the faction."
+					},
+					"counts": {
+						"additionalProperties": { "type": "integer" },
+						"type": "object",
+						"title": "Counts",
+						"description": "Per choice (``voor``, ``tegen``, ``aantekening gevraagd``), over every vote that names the faction."
+					},
+					"items": {
+						"items": { "$ref": "#/components/schemas/EkFactionVoteDTO" },
+						"type": "array",
+						"title": "Items",
+						"default": []
+					},
+					"source": { "$ref": "#/components/schemas/EkSourceDTO" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["faction_key", "total", "source"],
+				"title": "EkFactionVotesResponse",
+				"description": "The votes of a faction of the Eerste Kamer, newest first."
 			},
 			"EkMembershipDTO": {
 				"properties": {
@@ -8686,6 +9050,12 @@
 						"title": "Unresolved Appeal Targets",
 						"description": "The decisions an appeal says in its text it appeals (\"tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811\") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most."
 					},
+					"unresolved_citations": {
+						"items": { "$ref": "#/components/schemas/UnresolvedCitation" },
+						"type": "array",
+						"title": "Unresolved Citations",
+						"description": "The articles the judgment cites of laws that are not in the graph (\"art. 392 Rv\"): mentioned, not in the network. One per law and article, in reading order. Empty when it cites none, or before `semantic rechtspraak` read it."
+					},
 					"paragraphs": {
 						"items": { "$ref": "#/components/schemas/JudgmentParagraph" },
 						"type": "array",
@@ -9645,12 +10015,22 @@
 					"confidence": {
 						"type": "number",
 						"title": "Confidence",
-						"description": "Uncalibrated: 0.7 to 0.9, see `match_type`."
+						"description": "The share of such matches a hand check found right (0.3 to 0.95), by `match_type` and `changed`."
 					},
 					"match_type": {
 						"type": "string",
 						"title": "Match Type",
 						"description": "How the section names the article: `heading_target`, `body_named_law`, `own_number` or `inferred_law`."
+					},
+					"changed": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Changed",
+						"description": "Whether the dossier changed the article, which corroborates the match; a heading naming an article the dossier left alone is often of another law. Null for a link made before this was recorded."
+					},
+					"explanation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Explanation",
+						"description": "What the match rests on, in Dutch: the heading, and whether the dossier changed the article."
 					}
 				},
 				"additionalProperties": false,
@@ -9732,11 +10112,23 @@
 					},
 					"explanation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Explanation"
+						"title": "Explanation",
+						"description": "What `semantic_type` rests on: the trigger phrase and where it stood."
 					},
 					"confidence": {
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
-						"title": "Confidence"
+						"title": "Confidence",
+						"description": "That the reference exists: 1.0 for a link of the BWB XML."
+					},
+					"semantic_confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Semantic Confidence",
+						"description": "How sure `semantic_type` is: the share of classifications by the same trigger phrase, in the same place, that a hand check found right (0.25 to 0.9). Null when the reference has no type."
+					},
+					"semantic_pattern": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Semantic Pattern",
+						"description": "The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …"
 					},
 					"source_article": {
 						"anyOf": [{ "$ref": "#/components/schemas/ArticleRelationDTO" }, { "type": "null" }]
@@ -10542,6 +10934,64 @@
 				"required": ["actor_id", "count", "items"],
 				"title": "TouchedInstrumentsResponse",
 				"description": "Wrapper for an actor's touched-instruments list."
+			},
+			"UnresolvedCitation": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"law": {
+						"type": "string",
+						"title": "Law",
+						"description": "The law as the judgment writes it: `Rv`, `Sv`, `Vw 2000`, `Opiumwet`."
+					},
+					"article_number": {
+						"type": "string",
+						"title": "Article Number",
+						"description": "As cited: `392`, `3.5`, `1:6p`."
+					},
+					"raw_match": {
+						"type": "string",
+						"title": "Raw Match",
+						"description": "The text of the first citation: `art. 392, eerste lid, Rv`."
+					},
+					"qualifier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Qualifier",
+						"description": "The qualifier of the first citation as written: `eerste lid`. `leden`, `onderdelen` and `aanhef` are what it names."
+					},
+					"paragraph_ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Paragraph Ids",
+						"description": "The paragraphs that cite it (`JudgmentParagraph.paragraph_id`)."
+					},
+					"mention_count": {
+						"type": "integer",
+						"title": "Mention Count",
+						"description": "How often the judgment cites it."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["law", "article_number", "raw_match", "mention_count"],
+				"title": "UnresolvedCitation",
+				"description": "An article a judgment cites of a law that is not in the graph."
 			},
 			"ValidationError": {
 				"properties": {

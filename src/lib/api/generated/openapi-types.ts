@@ -744,6 +744,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/factions/{key}/votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How a faction of the Eerste Kamer voted
+         * @description The votes of the Eerste Kamer that name this faction (its list of votes on bills, since June 2015), newest first, with the faction's choice as the list names it (``voor``, ``tegen``, ``aantekening gevraagd``) and the counts per choice. ``bill_decision`` tells the vote on the bill from one on a motion on it. Only a faction of the Eerste Kamer (``chamber`` ``EK``): the Tweede Kamer's votes per faction are ``/api/decisions?party=``.
+         */
+        get: operations["list_faction_votes_api_factions__key__votes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/factions/{key}/touched-instruments": {
         parameters: {
             query?: never;
@@ -933,6 +953,26 @@ export interface paths {
          * @description One annex with its entries and every article referring to it.
          */
         get: operations["get_annex_detail_api_annexes__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The papers of the chambers
+         * @description The papers of the Tweede Kamer and the Eerste Kamer, newest first, with their metadata (no text): ``chamber``, ``kind``, ``dossier_number`` (the dossier it is numbered in), ``number`` (the nr., or the letter of the Eerste Kamer), ``date``, ``title`` and ``session_year``. ``facets`` counts per ``kind`` and ``chamber``, each without its own filter; ``facets=false`` reads one page only.
+         */
+        get: operations["list_chamber_documents_api_documents_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1950,10 +1990,26 @@ export interface components {
             target_article: components["schemas"]["ArticleRelationDTO"];
             /** Semantic Type */
             semantic_type?: string | null;
-            /** Explanation */
+            /**
+             * Explanation
+             * @description What `semantic_type` rests on: the trigger phrase and where it stood.
+             */
             explanation?: string | null;
-            /** Confidence */
+            /**
+             * Confidence
+             * @description That the reference exists: 1.0 for a link of the BWB XML.
+             */
             confidence?: number | null;
+            /**
+             * Semantic Confidence
+             * @description How sure `semantic_type` is: the share of classifications by the same trigger phrase, in the same place, that a hand check found right (0.25 to 0.9). Null when the reference has no type.
+             */
+            semantic_confidence?: number | null;
+            /**
+             * Semantic Pattern
+             * @description The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …
+             */
+            semantic_pattern?: string | null;
             /**
              * Start
              * @description Offset of the reference in the text of the referring article.
@@ -3076,6 +3132,87 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /** DocumentFacetCountDTO */
+        DocumentFacetCountDTO: {
+            /** Value */
+            value?: string | null;
+            /** Count */
+            count: number;
+        };
+        /**
+         * DocumentFacetsDTO
+         * @description The papers under the filters, per kind (without the kind filter) and per chamber
+         *     (without the chamber filter), the largest first.
+         */
+        DocumentFacetsDTO: {
+            /** Kind */
+            kind?: components["schemas"]["DocumentFacetCountDTO"][];
+            /** Chamber */
+            chamber?: components["schemas"]["DocumentFacetCountDTO"][];
+        };
+        /**
+         * DocumentListItemDTO
+         * @description A paper of a chamber in the list: its metadata, no text.
+         */
+        DocumentListItemDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Chamber */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Kind
+             * @description As the chamber writes it: ``Memorie van toelichting``.
+             */
+            kind?: string | null;
+            /**
+             * Dossier Number
+             * @description The dossier it is numbered in (its own; null for a paper that is no Kamerstuk): ``36791``.
+             */
+            dossier_number?: string | null;
+            /**
+             * Dossier Suffix
+             * @description The addition to that number: ``XV`` of ``37020 XV``.
+             */
+            dossier_suffix?: string | null;
+            /**
+             * Dossier Numbers
+             * @description Every dossier it is part of, as labels.
+             */
+            dossier_numbers?: string[];
+            /**
+             * Number
+             * @description Its number in the dossier: of the Tweede Kamer the nr. (``5``), of the Eerste Kamer the letter (``C``); null for none.
+             */
+            number?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Session Year
+             * @description The session year as the source writes it (``2025-2026``): with the chamber, dossier and number the citation, Kamerstukken I 2025/26, 36791, C.
+             */
+            session_year?: string | null;
+        };
+        /**
+         * DocumentListResponse
+         * @description A page of the papers of the chambers, newest first.
+         */
+        DocumentListResponse: {
+            /**
+             * Total
+             * @description Every match, whatever the page; null with ``facets=false``.
+             */
+            total?: number | null;
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["DocumentListItemDTO"][];
+            facets?: components["schemas"]["DocumentFacetsDTO"] | null;
+        };
         /**
          * DocumentPassagesResponse
          * @description The passages of one document that explain one article, in document order.
@@ -3762,6 +3899,69 @@ export interface components {
             by_relation: {
                 [key: string]: number;
             };
+        };
+        /**
+         * EkFactionVoteDTO
+         * @description How a faction of the Eerste Kamer voted on one vote of its list.
+         */
+        EkFactionVoteDTO: {
+            /** Decision Id */
+            decision_id: string;
+            /** Decision Key */
+            decision_key: string;
+            /** Date */
+            date?: string | null;
+            /** Subject */
+            subject?: string | null;
+            /**
+             * Dossier Numbers
+             * @default []
+             */
+            dossier_numbers: string[];
+            /**
+             * Result
+             * @description ``Aangenomen``, ``Verworpen``.
+             */
+            result?: string | null;
+            /** Method */
+            method?: string | null;
+            /**
+             * Bill Decision
+             * @description Whether it is the vote that decided the bill (else a vote on a motion on it).
+             */
+            bill_decision?: boolean | null;
+            /**
+             * Choice
+             * @description As the list of the Eerste Kamer names the faction's vote.
+             * @enum {string}
+             */
+            choice: "voor" | "tegen" | "aantekening gevraagd";
+        };
+        /**
+         * EkFactionVotesResponse
+         * @description The votes of a faction of the Eerste Kamer, newest first.
+         */
+        EkFactionVotesResponse: {
+            /** Faction Key */
+            faction_key: string;
+            /**
+             * Total
+             * @description The votes that name the faction.
+             */
+            total: number;
+            /**
+             * Counts
+             * @description Per choice (``voor``, ``tegen``, ``aantekening gevraagd``), over every vote that names the faction.
+             */
+            counts?: {
+                [key: string]: number;
+            };
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["EkFactionVoteDTO"][];
+            source: components["schemas"]["EkSourceDTO"];
         };
         /**
          * EkMembershipDTO
@@ -5437,6 +5637,11 @@ export interface components {
              * @description The decisions an appeal says in its text it appeals ("tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most.
              */
             unresolved_appeal_targets?: components["schemas"]["AppealTarget"][];
+            /**
+             * Unresolved Citations
+             * @description The articles the judgment cites of laws that are not in the graph ("art. 392 Rv"): mentioned, not in the network. One per law and article, in reading order. Empty when it cites none, or before `semantic rechtspraak` read it.
+             */
+            unresolved_citations?: components["schemas"]["UnresolvedCitation"][];
             /** Paragraphs */
             paragraphs?: components["schemas"]["JudgmentParagraph"][];
             /**
@@ -6206,7 +6411,7 @@ export interface components {
             text: string;
             /**
              * Confidence
-             * @description Uncalibrated: 0.7 to 0.9, see `match_type`.
+             * @description The share of such matches a hand check found right (0.3 to 0.95), by `match_type` and `changed`.
              */
             confidence: number;
             /**
@@ -6214,6 +6419,16 @@ export interface components {
              * @description How the section names the article: `heading_target`, `body_named_law`, `own_number` or `inferred_law`.
              */
             match_type: string;
+            /**
+             * Changed
+             * @description Whether the dossier changed the article, which corroborates the match; a heading naming an article the dossier left alone is often of another law. Null for a link made before this was recorded.
+             */
+            changed?: boolean | null;
+            /**
+             * Explanation
+             * @description What the match rests on, in Dutch: the heading, and whether the dossier changed the article.
+             */
+            explanation?: string | null;
         };
         /**
          * PersonRefDTO
@@ -6273,10 +6488,26 @@ export interface components {
             relation: string;
             /** Semantic Type */
             semantic_type?: string | null;
-            /** Explanation */
+            /**
+             * Explanation
+             * @description What `semantic_type` rests on: the trigger phrase and where it stood.
+             */
             explanation?: string | null;
-            /** Confidence */
+            /**
+             * Confidence
+             * @description That the reference exists: 1.0 for a link of the BWB XML.
+             */
             confidence?: number | null;
+            /**
+             * Semantic Confidence
+             * @description How sure `semantic_type` is: the share of classifications by the same trigger phrase, in the same place, that a hand check found right (0.25 to 0.9). Null when the reference has no type.
+             */
+            semantic_confidence?: number | null;
+            /**
+             * Semantic Pattern
+             * @description The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …
+             */
+            semantic_pattern?: string | null;
             source_article?: components["schemas"]["ArticleRelationDTO"] | null;
             target_article?: components["schemas"]["ArticleRelationDTO"] | null;
         };
@@ -7021,6 +7252,58 @@ export interface components {
             count: number;
             /** Items */
             items: components["schemas"]["TouchedInstrumentDTO"][];
+        };
+        /**
+         * UnresolvedCitation
+         * @description An article a judgment cites of a law that is not in the graph.
+         */
+        UnresolvedCitation: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /**
+             * Law
+             * @description The law as the judgment writes it: `Rv`, `Sv`, `Vw 2000`, `Opiumwet`.
+             */
+            law: string;
+            /**
+             * Article Number
+             * @description As cited: `392`, `3.5`, `1:6p`.
+             */
+            article_number: string;
+            /**
+             * Raw Match
+             * @description The text of the first citation: `art. 392, eerste lid, Rv`.
+             */
+            raw_match: string;
+            /**
+             * Qualifier
+             * @description The qualifier of the first citation as written: `eerste lid`. `leden`, `onderdelen` and `aanhef` are what it names.
+             */
+            qualifier?: string | null;
+            /**
+             * Paragraph Ids
+             * @description The paragraphs that cite it (`JudgmentParagraph.paragraph_id`).
+             */
+            paragraph_ids?: string[];
+            /**
+             * Mention Count
+             * @description How often the judgment cites it.
+             */
+            mention_count: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -8394,6 +8677,44 @@ export interface operations {
             };
         };
     };
+    list_faction_votes_api_factions__key__votes_get: {
+        parameters: {
+            query?: {
+                /** @description On or after, YYYY-MM-DD. */
+                from?: string | null;
+                /** @description On or before, YYYY-MM-DD. */
+                to?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EkFactionVotesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_faction_touched_instruments_api_factions__key__touched_instruments_get: {
         parameters: {
             query?: {
@@ -8674,6 +8995,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnnexDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_chamber_documents_api_documents_get: {
+        parameters: {
+            query?: {
+                /** @description One chamber; both by default. */
+                chamber?: ("TK" | "EK") | null;
+                /** @description Comma-separated kinds, as the chamber writes them. */
+                kind?: string | null;
+                /** @description A dossier label (``36791``, ``37020-XV``): the papers part of it. */
+                dossier?: string | null;
+                /** @description On or after, YYYY-MM-DD. */
+                from?: string | null;
+                /** @description On or before, YYYY-MM-DD. */
+                to?: string | null;
+                /** @description Count per kind and chamber. */
+                facets?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentListResponse"];
                 };
             };
             /** @description Validation Error */
