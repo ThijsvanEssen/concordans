@@ -395,6 +395,17 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Hoger beroep of cassatie tegen deze uitspraak',
 			match: [{ relation: 'APPEAL_OF', direction: 'inbound', collection: 'judgments' }]
 		},
+		// A prejudiciële beslissing and the decision that asked its questions.
+		{
+			id: 'answers',
+			label: 'Beantwoordt prejudiciële vragen van',
+			match: [{ relation: 'ANSWERS', direction: 'outbound', collection: 'judgments' }]
+		},
+		{
+			id: 'answered',
+			label: 'Prejudiciële beslissing op vragen uit deze uitspraak',
+			match: [{ relation: 'ANSWERS', direction: 'inbound', collection: 'judgments' }]
+		},
 		// One case at one court: the final judgment continues the interim one.
 		{
 			id: 'continues',

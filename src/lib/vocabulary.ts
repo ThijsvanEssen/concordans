@@ -38,6 +38,7 @@ export const RELATIONS = [
 	'EXPLAINS',
 	'APPEAL_OF',
 	'ADVISES_ON',
+	'ANSWERS',
 	'CONTINUES',
 	'REFERRED_BY',
 	'SAME_AS',
@@ -114,6 +115,8 @@ export const RELATION_LABEL: Record<Relation, string> = {
 	EXPLAINS: 'licht toe',
 	APPEAL_OF: 'hoger beroep van',
 	ADVISES_ON: 'conclusie bij',
+	// A prejudiciële beslissing points to the decision that asked its questions.
+	ANSWERS: 'beantwoordt prejudiciële vragen van',
 	// The later decision points back: a final judgment continues the interim one; the
 	// decision after referral was referred by the Hoge Raad.
 	CONTINUES: 'vervolg op',
