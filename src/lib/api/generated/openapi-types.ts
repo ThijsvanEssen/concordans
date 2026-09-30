@@ -33,7 +33,7 @@ export interface paths {
         };
         /**
          * Passages of judgments that cite an article
-         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` and `lid` (a lid number the passage names) filter; `total` counts all passages that match. 404 when the article is unknown.
+         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` and `lid` (a lid number the passage names) filter; `total` counts all passages that match, `judgment_total` the judgments they are in. 404 when the article is unknown.
          */
         get: operations["get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get"];
         put?: never;
@@ -1683,6 +1683,11 @@ export interface components {
              * @description Every passage that matches the filters, independent of `limit`.
              */
             total: number;
+            /**
+             * Judgment Total
+             * @description The judgments those passages are in: a judgment that cites the article in three places is three passages and one judgment.
+             */
+            judgment_total: number;
         };
         /**
          * ArticleDetailResponse
@@ -5211,6 +5216,11 @@ export interface components {
              */
             series_size?: number | null;
             /**
+             * Same As
+             * @description For a publication of a decision that another publication replaces (the Rechtspraak published many old arresten again under a new ECLI), the ECLI of the one kept; the lists show the decision by that one. Null otherwise.
+             */
+            same_as?: string | null;
+            /**
              * Unresolved Appeal Targets
              * @description The decisions an appeal says in its text it appeals ("tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most.
              */
@@ -5236,8 +5246,16 @@ export interface components {
              * @description The same articles, each with the passages of the judgment that cite it: paragraphs, the lid or onderdeel named, a snippet.
              */
             cited_articles?: components["schemas"]["JudgmentCitedArticle"][];
-            /** Cited Judgments */
+            /**
+             * Cited Judgments
+             * @description The judgments its text cites by ECLI (`REFERS_TO`), newest first; not the earlier instances or the conclusion its metadata names.
+             */
             cited_judgments?: components["schemas"]["JudgmentSummaryDTO"][];
+            /**
+             * Same As
+             * @description The other publications of the same decision (`SAME_AS`): for the one kept those it replaces, for a replaced one the one kept. Empty for most.
+             */
+            same_as?: components["schemas"]["JudgmentSummaryDTO"][];
             /**
              * Series
              * @description The other judgments of its series (`judgment.series_id`), in the order of their ECLI numbers; empty outside a series.
@@ -5335,9 +5353,15 @@ export interface components {
              * @description The areas of law the source gives it (Rechtspraak `dcterms:subject`), as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`. Empty when it gives none.
              */
             subjects?: string[];
-            /** Inbound Citation Count */
+            /**
+             * Inbound Citation Count
+             * @description The judgments that cite it, or another publication of the same decision, each once.
+             */
             inbound_citation_count: number | null;
-            /** Outbound Citation Count */
+            /**
+             * Outbound Citation Count
+             * @description The judgments its text cites (`cited_judgments` of the detail); null before `semantic graph-list-stats` counted them.
+             */
             outbound_citation_count?: number | null;
             /** Series Id */
             series_id?: string | null;
