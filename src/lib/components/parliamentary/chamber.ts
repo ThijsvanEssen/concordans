@@ -17,6 +17,10 @@ export function chamberFromParam(value: string | null | undefined): Chamber | un
 	return v === 'TK' || v === 'EK' ? v : undefined;
 }
 
+/** The name of a Kamer as the API gives it (`'EK'`); a record without one is the Tweede Kamer's. */
+export const chamberName = (value: string | null | undefined): string =>
+	CHAMBER_NAME[chamberFromParam(value) ?? 'TK'];
+
 /** The Eerste Kamer's data comes from its own site, under its terms, named as it asks. */
 export const EK_SOURCE = {
 	name: 'Eerste Kamer der Staten-Generaal',

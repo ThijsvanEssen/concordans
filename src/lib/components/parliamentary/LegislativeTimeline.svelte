@@ -4,6 +4,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import KindChipFilter from './KindChipFilter.svelte';
+	import { CHAMBER_NAME, chamberFromParam } from './chamber';
 
 	type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
 	type Tally = Record<string, number>;
@@ -21,6 +22,8 @@
 		text?: string;
 		status?: string;
 		url?: string;
+		/** A paper's Kamer. */
+		chamber?: string | null;
 	};
 	const bodyOf = (entry: Entry) => (entry.body ?? {}) as unknown as Body;
 	const otherChoices = (tally: Tally) =>
@@ -110,6 +113,10 @@
 						{/if}
 						{#if planned}<span class="entry-planned">{planned}</span>{/if}
 						<span class="entry-kind">{timelineKind(entry)}</span>
+						{#if entry.node_type === 'document' && chamberFromParam(body.chamber)}
+							{@const c = chamberFromParam(body.chamber)!}
+							<abbr class="entry-chamber" title={CHAMBER_NAME[c]}>{c}</abbr>
+						{/if}
 					</div>
 
 					{#if entry.node_type === 'decision'}
@@ -329,6 +336,15 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		font-weight: 500;
+	}
+	/* TK or EK, the full name on hover: where a paper was lodged. */
+	.entry-chamber {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+		text-decoration: none;
+		border-bottom: 1px dotted var(--rule-strong);
+		cursor: help;
 	}
 
 	.entry-body {

@@ -114,6 +114,27 @@ describe('buildGroups', () => {
 		expect(groups.find((g) => g.id === 'laws')!.rows).toEqual([]);
 	});
 
+	it('puts the votes on a dossier under the Kamer that cast them', () => {
+		const vote = (key: string, chamber?: string) =>
+			({
+				id: `decisions/${key}`,
+				key,
+				collection: 'decisions',
+				relation: 'ABOUT',
+				direction: 'inbound',
+				props: chamber ? { chamber } : {}
+			}) as unknown as Neighbor;
+		const groups = buildGroups('dossiers', [
+			vote('tk_1', 'TK'),
+			vote('ek_2026_09_22_36901_1', 'EK'),
+			vote('ek_2026_09_29_36791_1')
+		]);
+		expect(groups.find((g) => g.id === 'decisions')!.rows).toHaveLength(1);
+		const ek = groups.find((g) => g.id === 'decisions-ek')!;
+		expect(ek.section).toBe('Eerste Kamer');
+		expect(ek.rows).toHaveLength(2);
+	});
+
 	it('marks a bucket at the cap of an API without totals, and prints the total of one with', () => {
 		const many = Array.from({ length: 30 }, (_, i) => ({
 			id: `articles/a${i}`,

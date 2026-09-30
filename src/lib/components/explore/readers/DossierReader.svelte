@@ -119,9 +119,9 @@
 					{/if}
 				</div>
 				{#if d.tk_decision?.text}
-					<!-- The last decision on the bill, as the Kamer writes it. -->
+					<!-- The Tweede Kamer's last decision on the bill, in its own words. -->
 					<p class="reading">
-						{d.tk_decision.text}{d.tk_decision.date
+						Tweede Kamer: {d.tk_decision.text}{d.tk_decision.date
 							? ` (${formatLongDate(d.tk_decision.date)})`
 							: ''}
 					</p>

@@ -3,12 +3,14 @@ import { timelineKind } from './timeline-kind';
 
 describe('timelineKind', () => {
 	it('tells the vote on a motie from the motie', () => {
-		expect(timelineKind({ kind: 'motie', node_type: 'decision' })).toBe('Stemming over motie');
+		expect(timelineKind({ kind: 'motie', node_type: 'decision' })).toBe(
+			'Stemming Tweede Kamer, over motie'
+		);
 		expect(timelineKind({ kind: 'Motie', node_type: 'document' })).toBe('Motie');
 	});
-	it('names a decision without a case kind a Stemming', () => {
-		expect(timelineKind({ kind: null, node_type: 'decision' })).toBe('Stemming');
-		expect(timelineKind({ kind: 'Stemming', node_type: 'decision' })).toBe('Stemming');
+	it('names a decision without a case kind a Stemming of its Kamer', () => {
+		expect(timelineKind({ kind: null, node_type: 'decision' })).toBe('Stemming Tweede Kamer');
+		expect(timelineKind({ kind: 'Stemming', node_type: 'decision' })).toBe('Stemming Tweede Kamer');
 	});
 	it('names a vote of the Eerste Kamer as such', () => {
 		expect(

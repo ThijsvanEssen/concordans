@@ -10,7 +10,8 @@
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { collectionOf, type IndexCategory } from './categories';
 	import { judgmentKind } from './judgment-kind';
-	import { decisionOutcome, isHammer } from './decision-kind';
+	import { decisionMethod, decisionOutcome, isHammer } from './decision-kind';
+	import { chamberName } from '$lib/components/parliamentary/chamber';
 
 	let {
 		category,
@@ -46,7 +47,7 @@
 		committees: 'Commissie · Tweede Kamer',
 		members: 'Kamerlid · Tweede Kamer',
 		factions: 'Fractie · Tweede Kamer',
-		decisions: 'Stemming · plenaire vergadering',
+		decisions: 'Stemming · Tweede Kamer',
 		cabinets: 'Kabinet · regering',
 		ministers: 'Bewindspersoon · regering',
 		commitments: 'Toezegging · regering'
@@ -81,7 +82,11 @@
 	const voterUnit = $derived(s?.vote_kind === 'member' ? 'leden' : 'fracties');
 
 	const kindLabel = $derived(
-		j ? `${judgmentKind(j.decision_kind, j.tier)} · jurisprudentie` : KIND_LABEL[category]
+		j
+			? `${judgmentKind(j.decision_kind, j.tier)} · jurisprudentie`
+			: s
+				? `Stemming · ${chamberName(s.chamber)}`
+				: KIND_LABEL[category]
 	);
 	const citedBy = $derived(j?.inbound_citation_count ?? 0);
 </script>
@@ -280,6 +285,21 @@
 				<div class="tile-num">{f.member_count ?? '—'}</div>
 				<div class="tile-lbl">Leden</div>
 			</div>
+		{:else if s && s.chamber === 'EK'}
+			<!-- The Eerste Kamer gives no seats: how it decided, and the outcome. -->
+			{#if decisionMethod(s)}
+				<div class="tile">
+					<div class="tile-id">{decisionMethod(s)}</div>
+					<div class="tile-lbl">Wijze van stemmen</div>
+				</div>
+			{/if}
+			{#if s.passed != null}
+				<div class="tile">
+					<div class="tile-num">{s.passed ? '✓' : '✗'}</div>
+					<div class="tile-lbl">Uitslag</div>
+					<div class="tile-sub">{s.passed ? 'aangenomen' : 'verworpen'}</div>
+				</div>
+			{/if}
 		{:else if s}
 			<div class="tile">
 				<div class="tile-num">{inFavour.toLocaleString('nl-NL')}</div>

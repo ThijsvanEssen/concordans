@@ -31,6 +31,12 @@
 <!-- Wide enough, a bar of short words; in a narrow column (the reader, a phone) a list of the
      full names with their dates. The width of the place it stands in decides, not the screen. -->
 <div class="stepper-box">
+	<!-- Which Kamer each step belongs to: the eight phases in the Tweede Kamer, then the
+	     Eerste Kamer's decision. -->
+	<div class="chambers" aria-hidden="true">
+		<span class="chamber" style:flex={phases.length}>Tweede Kamer</span>
+		{#if ek}<span class="chamber chamber--ek" style:flex="1">Eerste Kamer</span>{/if}
+	</div>
 	<ol class="stepper" aria-label="Fasen van het wetsvoorstel">
 		{#each phases as step, i (step.name)}
 			{@const done = states[i] === 'done'}
@@ -85,7 +91,7 @@
 						/>
 					</svg>
 				</span>
-				<span class="step-label" aria-hidden="true">Eerste Kamer</span>
+				<span class="step-label" aria-hidden="true">{ek.outcome}</span>
 				<span class="step-full" aria-hidden="true"
 					>Eerste Kamer, {ek.outcome.toLowerCase()}{#if ek.date}<span class="step-date"
 							>{formatDate(ek.date)}</span
@@ -100,6 +106,24 @@
 <style>
 	.stepper-box {
 		container-type: inline-size;
+	}
+
+	.chambers {
+		display: flex;
+		margin-bottom: var(--s-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		font-weight: 500;
+		color: var(--ink-2);
+	}
+	.chamber {
+		min-width: 0;
+		padding-bottom: var(--s-1);
+		border-bottom: 1px solid var(--rule);
+	}
+	.chamber--ek {
+		margin-left: var(--s-2);
+		text-align: center;
 	}
 
 	.stepper {
@@ -223,6 +247,10 @@
 	/* Too narrow for eight short words side by side: a list, the line of the bar running
 	   down along the dots, each phase by its full name and the date a record marks. */
 	@container (max-width: 520px) {
+		/* In the list the Eerste Kamer's step names its Kamer itself. */
+		.chamber--ek {
+			display: none;
+		}
 		.stepper {
 			flex-direction: column;
 			overflow: visible;
