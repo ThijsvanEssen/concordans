@@ -80,6 +80,8 @@ export function dossierNumbersOf(props: Record<string, unknown> | null | undefin
 const COURTS: Record<string, string> = {
 	HR: 'Hoge Raad',
 	PHR: 'Parket bij de Hoge Raad',
+	// A judgment of the EHRM has no court name, only its code.
+	ECHR: 'Europees Hof voor de Rechten van de Mens',
 	RVS: 'Raad van State',
 	CRVB: 'Centrale Raad van Beroep',
 	CBB: 'College van Beroep voor het bedrijfsleven',

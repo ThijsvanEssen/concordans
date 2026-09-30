@@ -546,3 +546,38 @@ describe('aardOf', () => {
 		expect(aardOf(null, 0.3)).toBeNull();
 	});
 });
+
+describe('the judgments of the EHRM that cite an article of the EVRM', () => {
+	it('count as the rows they are, not as the bucket of every citing judgment', () => {
+		const judgment = (key: string, source: string) =>
+			({
+				id: `judgments/${key}`,
+				key,
+				collection: 'judgments',
+				relation: 'REFERS_TO',
+				direction: 'inbound',
+				props: { source }
+			}) as unknown as Neighbor;
+		const neighbors = [
+			judgment('ecli_ce_echr_2024_1210jud000447021', 'echr'),
+			judgment('ecli_ce_echr_2025_0401jud000279916', 'echr'),
+			judgment('ecli_nl_rvs_2026_5542', 'rechtspraak')
+		];
+		const totals = new Map([['REFERS_TO/judgments/inbound', 435]]);
+		const group = buildGroups('articles', neighbors, totals).find((g) => g.id === 'international')!;
+		expect(group.rows).toHaveLength(2);
+		expect(group.total).toBeUndefined();
+		expect(group.capped).toBe(true);
+	});
+});
+
+describe('a judgment of the EHRM', () => {
+	it('is named by its court in Dutch, not by its code', () => {
+		const bron = describeBron('judgments', 'k', null, {
+			court_code: 'ECHR',
+			date: '2024-12-10',
+			ecli: 'ECLI:CE:ECHR:2024:1210JUD000447021'
+		});
+		expect(bron.title).toBe('Europees Hof voor de Rechten van de Mens, 10 december 2024');
+	});
+});

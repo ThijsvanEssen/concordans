@@ -131,7 +131,15 @@ const EUROPEAN: GroupDef = {
 			collection: ['instruments', 'articles'],
 			where: isInternational
 		},
-		{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments', where: isInternational }
+		// The judgments that cite a bron come in one bucket, Dutch and of the EHRM together
+		// (art. 8 EVRM: 435, of which 92 of the EHRM): the bucket's total is not this group's.
+		{
+			relation: 'REFERS_TO',
+			direction: 'inbound',
+			collection: 'judgments',
+			where: isInternational,
+			split: true
+		}
 	]
 };
 
