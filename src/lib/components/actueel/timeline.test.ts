@@ -30,7 +30,7 @@ const item = (over: Partial<FeedItem>): FeedItem =>
 const vote = (voor: number, tegen: number, over: Partial<FeedItem> = {}) =>
 	item({
 		kind: 'stemming',
-		subkind: 'motie',
+		subkind: 'Motie',
 		node: { collection: 'decisions', key: `d${n}` } as FeedItem['node'],
 		vote: {
 			passed: voor > tegen,
@@ -120,7 +120,7 @@ describe('dayLines', () => {
 	it('shows the bills and the close votes alone, and counts the other votes', () => {
 		const bills = ['36889', '36899'].map((number) =>
 			vote(100, 50, {
-				subkind: 'wetsvoorstel',
+				subkind: 'Wetgeving',
 				dossier: {
 					key: number,
 					number,
@@ -133,10 +133,10 @@ describe('dayLines', () => {
 		const lines = dayLines(
 			day({
 				votes: [
-					{ subkind: 'wetsvoorstel', outcome: 'aangenomen', count: 2 },
-					{ subkind: 'motie', outcome: 'aangenomen', count: 88 },
-					{ subkind: 'motie', outcome: 'verworpen', count: 37 },
-					{ subkind: 'amendement', outcome: 'aangenomen', count: 9 }
+					{ subkind: 'Wetgeving', outcome: 'aangenomen', count: 2 },
+					{ subkind: 'Motie', outcome: 'aangenomen', count: 88 },
+					{ subkind: 'Motie', outcome: 'verworpen', count: 37 },
+					{ subkind: 'Amendement', outcome: 'aangenomen', count: 9 }
 				]
 			}),
 			[...bills, schilder]
@@ -159,7 +159,7 @@ describe('dayLines', () => {
 			headline: { surname: 'Grinwis', subject: 'steward ownership' }
 		});
 		const lines = dayLines(
-			day({ votes: [{ subkind: 'motie', outcome: 'aangenomen', count: 1 }] }),
+			day({ votes: [{ subkind: 'Motie', outcome: 'aangenomen', count: 1 }] }),
 			[grinwis]
 		);
 		expect(lines.map((l) => [l.title, l.major])).toEqual([
@@ -274,7 +274,7 @@ describe('headlineOf', () => {
 		expect(
 			headlineOf(
 				vote(100, 50, {
-					subkind: 'wetsvoorstel',
+					subkind: 'Wetgeving',
 					dossier: { key: 'a', number: '36889', short_title: 'Archiefwet' } as never
 				})
 			)

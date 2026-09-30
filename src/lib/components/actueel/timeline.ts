@@ -1,9 +1,12 @@
 import type { BronRef } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
 import {
+	AMENDEMENT,
 	CLOSE_VOTE,
 	KIND_LABEL,
+	MOTIE,
 	dossierName,
+	isBillVote,
 	normalizeItem,
 	titleOf,
 	voteMargin,
@@ -178,7 +181,7 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 	});
 }
 
-const nounOf = (v: FeedItem) => (v.subkind === 'amendement' ? 'amendement' : 'motie');
+const nounOf = (v: FeedItem) => (v.subkind === AMENDEMENT ? 'amendement' : 'motie');
 
 /** The close votes on moties and amendementen of a day, the closest first. */
 function closeVoteLines(votes: FeedItem[]): TimelineLine[] {
@@ -191,7 +194,7 @@ function closeVoteLines(votes: FeedItem[]): TimelineLine[] {
 
 /** The votes of a day not on a bill, the summary counts; a bill's votes stand apart. */
 const otherVoteCount = (day: SummaryDay) =>
-	(day.votes ?? []).filter((v) => v.subkind !== 'wetsvoorstel').reduce((n, v) => n + v.count, 0);
+	(day.votes ?? []).filter((v) => !isBillVote(v)).reduce((n, v) => n + v.count, 0);
 
 /**
  * The votes of a day not on a bill: a day with at most FEW_VOTES shows each by name (the
@@ -209,7 +212,7 @@ function otherVoteLines(day: SummaryDay, votes: FeedItem[]): TimelineLine[] {
  * 37 verworpen`, with the amendementen and the rest as context.
  */
 function voteBundleLine(day: SummaryDay): TimelineLine[] {
-	const votes = (day.votes ?? []).filter((v) => v.subkind !== 'wetsvoorstel');
+	const votes = (day.votes ?? []).filter((v) => !isBillVote(v));
 	const sum = (subkind: string | null, outcome?: string) =>
 		votes
 			.filter(
@@ -218,10 +221,10 @@ function voteBundleLine(day: SummaryDay): TimelineLine[] {
 			.reduce((n, v) => n + v.count, 0);
 	const all = sum(null);
 	if (!all) return [];
-	const moties = sum('motie');
-	const amendementen = sum('amendement');
+	const moties = sum(MOTIE);
+	const amendementen = sum(AMENDEMENT);
 	const rest = all - moties - amendementen;
-	const lead = moties ? 'motie' : null;
+	const lead = moties ? MOTIE : null;
 	const count = moties || all;
 	const passed = sum(lead, 'aangenomen');
 	const noun: [string, string] = moties ? ['motie', 'moties'] : ['voorstel', 'voorstellen'];
@@ -418,13 +421,13 @@ export function dayLines(day: SummaryDay, items: readonly FeedItem[]): TimelineL
 	return [
 		...billVoteLines(
 			day.date,
-			votes.filter((v) => v.subkind === 'wetsvoorstel')
+			votes.filter((v) => isBillVote(v))
 		),
 		...billLines(day.date, of('Voorstel van wet')),
 		...of('inwerkingtreding').map(commencementLine),
 		...otherVoteLines(
 			day,
-			votes.filter((v) => v.subkind !== 'wetsvoorstel')
+			votes.filter((v) => !isBillVote(v))
 		),
 		...commitmentLines(day.date, of('toezegging')),
 		...kamerstukLine(day),
@@ -481,7 +484,7 @@ export function headlineOf(i: FeedItem): Headline {
 	switch (i.kind) {
 		case 'stemming': {
 			const passed = !!i.vote?.passed;
-			if (i.subkind === 'wetsvoorstel') {
+			if (isBillVote(i)) {
 				const name = i.dossier ? dossierName(i.dossier) : cut(i.title ?? '', 60);
 				return {
 					label: `Wetsvoorstel, ${passed ? 'aangenomen' : 'verworpen'}`,
@@ -492,7 +495,7 @@ export function headlineOf(i: FeedItem): Headline {
 			}
 			const { label, title, failed } = voteLine(
 				i,
-				i.subkind === 'amendement' ? 'amendement' : 'motie'
+				i.subkind === AMENDEMENT ? 'amendement' : 'motie'
 			);
 			return { label, title, major: voteMargin(i) <= CLOSE_VOTE, failed };
 		}

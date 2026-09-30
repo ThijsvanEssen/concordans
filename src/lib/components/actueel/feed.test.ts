@@ -146,7 +146,7 @@ describe('titleOf', () => {
 });
 
 describe('the votes of a day', () => {
-	const vote = (dossier: string, voor: number, tegen: number, subkind = 'motie') =>
+	const vote = (dossier: string, voor: number, tegen: number, subkind = 'Motie') =>
 		({
 			...item('2026-09-22', 'stemming', dossier),
 			subkind,
@@ -158,9 +158,9 @@ describe('the votes of a day', () => {
 			item('2026-09-22', 'Brief regering', null),
 			vote('29911', 120, 30),
 			vote('29754', 20, 130),
-			vote('36892', 100, 50, 'amendement'),
+			vote('36892', 100, 50, 'Amendement'),
 			vote('29911', 75, 75),
-			vote('36889', 100, 50, 'wetsvoorstel')
+			vote('36889', 100, 50, 'Wetgeving')
 		]);
 		const [first, ...rest] = day.entries;
 		expect('fold' in first && first.fold.id).toBe('fold/2026-09-22/stemming');
@@ -177,10 +177,10 @@ describe('the votes of a day', () => {
 		expect(
 			'fold' in first &&
 				foldTitle(first.fold, [
-					{ subkind: 'wetsvoorstel', outcome: 'aangenomen', count: 6 },
-					{ subkind: 'motie', outcome: 'aangenomen', count: 88 },
-					{ subkind: 'motie', outcome: 'verworpen', count: 37 },
-					{ subkind: 'amendement', outcome: 'aangenomen', count: 9 }
+					{ subkind: 'Wetgeving', outcome: 'aangenomen', count: 6 },
+					{ subkind: 'Motie', outcome: 'aangenomen', count: 88 },
+					{ subkind: 'Motie', outcome: 'verworpen', count: 37 },
+					{ subkind: 'Amendement', outcome: 'aangenomen', count: 9 }
 				])
 		).toBe('Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen, en over 9 amendementen');
 	});

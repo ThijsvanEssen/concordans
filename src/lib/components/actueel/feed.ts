@@ -121,9 +121,22 @@ export const voteMargin = (i: FeedItem) => {
 	return voor + tegen ? Math.abs(voor - tegen) : Infinity;
 };
 
+/**
+ * What a vote decided, as the Kamer names the zaak (`subkind`, API 0.52): a motion, an
+ * amendment, or a bill of one of three kinds. A hamerstuk on a bill is a vote too, without
+ * a tally.
+ */
+export const MOTIE = 'Motie';
+export const AMENDEMENT = 'Amendement';
+const BILL_KINDS: ReadonlySet<string> = new Set(['Wetgeving', 'Initiatiefwetgeving', 'Begroting']);
+
+/** A vote on a bill itself. */
+export const isBillVote = (v: { subkind?: string | null }) =>
+	!!v.subkind && BILL_KINDS.has(v.subkind);
+
 /** A vote that goes into the day's bundle: not on a bill, and not close. */
 const bundledVote = (i: FeedItem) =>
-	i.kind === 'stemming' && i.subkind !== 'wetsvoorstel' && voteMargin(i) > CLOSE_VOTE;
+	i.kind === 'stemming' && !isBillVote(i) && voteMargin(i) > CLOSE_VOTE;
 
 /**
  * What a fold is called: `Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen`, or
@@ -133,7 +146,7 @@ export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 	if (!f.dossier) {
 		// The whole day from the summary when there is one; else the votes loaded.
 		const counted: VoteCount[] = votes
-			? votes.filter((v) => v.subkind !== 'wetsvoorstel')
+			? votes.filter((v) => !isBillVote(v))
 			: f.items.map((i) => ({
 					subkind: i.subkind,
 					outcome: i.vote?.passed ? 'aangenomen' : 'verworpen',
@@ -142,9 +155,9 @@ export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 		const sum = (keep: (v: VoteCount) => boolean) =>
 			counted.filter(keep).reduce((n, v) => n + v.count, 0);
 		const all = sum(() => true);
-		const moties = sum((v) => v.subkind === 'motie');
+		const moties = sum((v) => v.subkind === MOTIE);
 		const lead = moties || all;
-		const passed = sum((v) => (!moties || v.subkind === 'motie') && v.outcome === 'aangenomen');
+		const passed = sum((v) => (!moties || v.subkind === MOTIE) && v.outcome === 'aangenomen');
 		const noun = moties
 			? lead === 1
 				? 'motie'
@@ -153,7 +166,7 @@ export function foldTitle(f: Fold, votes?: VoteCount[]): string {
 				? 'voorstel'
 				: 'voorstellen';
 		// Beside the moties: the amendementen by name, the rest as voorstellen.
-		const amendementen = moties ? sum((v) => v.subkind === 'amendement') : 0;
+		const amendementen = moties ? sum((v) => v.subkind === AMENDEMENT) : 0;
 		const other = all - lead - amendementen;
 		const also = [
 			amendementen ? `${amendementen} ${amendementen === 1 ? 'amendement' : 'amendementen'}` : '',
