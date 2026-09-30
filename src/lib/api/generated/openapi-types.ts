@@ -1129,8 +1129,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Current seat composition of the Tweede Kamer
-         * @description The seated parties with their seat counts, in the order they sit in the plenary hall from the chair's left (the plan of the Tweede Kamer, kept with `lawgraph curated set seating`; a faction it does not place sits at the right end) — enough to render a hemicycle. `seating_plan` names the plan.
+         * Seat composition of the Tweede Kamer
+         * @description The seated parties with their seat counts, in the order they sit in the plenary hall from the chair's left (the plan of the Tweede Kamer, kept with `lawgraph curated set seating`; a faction it does not place sits at the right end) — enough to render a hemicycle. `seating_plan` names the plan. With `date`, the seats on that day: those the members held (FractieZetelPersoon, every seat from the Kamer installed on 30 November 2006; before it only the seats of members who also sat later), in the order of today's plan.
          */
         get: operations["get_seats_api_parliament_seats_get"];
         put?: never;
@@ -3764,7 +3764,10 @@ export interface components {
             seats?: number | null;
             /** Active From */
             active_from?: string | null;
-            /** Active Until */
+            /**
+             * Active Until
+             * @description The last day, inclusive (the Kamer's TotEnMet); null while open.
+             */
             active_until?: string | null;
             /**
              * Member Count
@@ -3813,7 +3816,10 @@ export interface components {
             aliases: string[];
             /** From Date */
             from_date?: string | null;
-            /** To Date */
+            /**
+             * To Date
+             * @description The last day, inclusive (the Kamer's TotEnMet); null while open.
+             */
             to_date?: string | null;
             /** Role */
             role?: string | null;
@@ -5441,7 +5447,10 @@ export interface components {
             government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
             /** From Date */
             from_date?: string | null;
-            /** To Date */
+            /**
+             * To Date
+             * @description The last day, inclusive (the Kamer's TotEnMet); null while open.
+             */
             to_date?: string | null;
         };
         /**
@@ -5488,7 +5497,10 @@ export interface components {
             government_functions?: components["schemas"]["GovernmentFunctionDTO"][];
             /** From Date */
             from_date?: string | null;
-            /** To Date */
+            /**
+             * To Date
+             * @description The last day, inclusive (the Kamer's TotEnMet); null while open.
+             */
             to_date?: string | null;
             /** Birth Date */
             birth_date?: string | null;
@@ -8530,7 +8542,10 @@ export interface operations {
     };
     get_seats_api_parliament_seats_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The day, YYYY-MM-DD; today when left out. */
+                date?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -8544,6 +8559,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ParliamentSeatsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

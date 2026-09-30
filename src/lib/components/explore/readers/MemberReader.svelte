@@ -23,6 +23,8 @@
 
 	let { node }: { node: GraphNode } = $props();
 
+	const today = new Date().toISOString().slice(0, 10);
+
 	type Vote = Schema<'MemberVoteDTO'>;
 
 	type State =
@@ -126,7 +128,10 @@
 				view.signatures,
 				m.government_functions ?? []
 			)}
-			{@const sitting = (m.faction_memberships ?? []).some((f) => !f.to_date)}
+			<!-- An end date is the last day in the seat (TotEnMet): on it, the member still sits. -->
+			{@const sitting = (m.faction_memberships ?? []).some(
+				(f) => !f.to_date || f.to_date.slice(0, 10) >= today
+			)}
 
 			<header class="head">
 				<span class="kicker"><KindGlyph collection="members" />{currentTitle(career, sitting)}</span

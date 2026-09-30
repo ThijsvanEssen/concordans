@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.55.0"
+		"version": "0.58.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -3255,15 +3255,36 @@
 		"/api/parliament/seats": {
 			"get": {
 				"tags": ["parliament", "parliament"],
-				"summary": "Current seat composition of the Tweede Kamer",
-				"description": "The seated parties with their seat counts, in the order they sit in the plenary hall from the chair's left (the plan of the Tweede Kamer, kept with `lawgraph curated set seating`; a faction it does not place sits at the right end) — enough to render a hemicycle. `seating_plan` names the plan.",
+				"summary": "Seat composition of the Tweede Kamer",
+				"description": "The seated parties with their seat counts, in the order they sit in the plenary hall from the chair's left (the plan of the Tweede Kamer, kept with `lawgraph curated set seating`; a faction it does not place sits at the right end) — enough to render a hemicycle. `seating_plan` names the plan. With `date`, the seats on that day: those the members held (FractieZetelPersoon, every seat from the Kamer installed on 30 November 2006; before it only the seats of members who also sat later), in the order of today's plan.",
 				"operationId": "get_seats_api_parliament_seats_get",
+				"parameters": [
+					{
+						"name": "date",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "The day, YYYY-MM-DD; today when left out.",
+							"title": "Date"
+						},
+						"description": "The day, YYYY-MM-DD; today when left out."
+					}
+				],
 				"responses": {
 					"200": {
 						"description": "Successful Response",
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/ParliamentSeatsResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
 							}
 						}
 					}
@@ -6634,7 +6655,8 @@
 					},
 					"active_until": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Active Until"
+						"title": "Active Until",
+						"description": "The last day, inclusive (the Kamer's TotEnMet); null while open."
 					},
 					"member_count": { "type": "integer", "title": "Member Count", "default": 0 }
 				},
@@ -6684,7 +6706,11 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "From Date"
 					},
-					"to_date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "To Date" },
+					"to_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "To Date",
+						"description": "The last day, inclusive (the Kamer's TotEnMet); null while open."
+					},
 					"role": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Role" }
 				},
 				"additionalProperties": false,
@@ -8614,7 +8640,11 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "From Date"
 					},
-					"to_date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "To Date" }
+					"to_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "To Date",
+						"description": "The last day, inclusive (the Kamer's TotEnMet); null while open."
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -8654,7 +8684,11 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "From Date"
 					},
-					"to_date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "To Date" },
+					"to_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "To Date",
+						"description": "The last day, inclusive (the Kamer's TotEnMet); null while open."
+					},
 					"birth_date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Birth Date"
