@@ -13,44 +13,56 @@
 	const titleOf = (p: Phase) => (p.done && p.date ? `${p.name}, ${formatDate(p.date)}` : p.name);
 </script>
 
-<ol class="stepper" aria-label="Fasen van het wetsvoorstel">
-	{#each phases as step, i (step.name)}
-		{@const done = states[i] === 'done'}
-		{@const active = states[i] === 'active'}
-		<li
-			class="step"
-			class:step--done={done}
-			class:step--active={active}
-			aria-current={active ? 'step' : undefined}
-			title={titleOf(step)}
-		>
-			<span class="step-dot" aria-hidden="true">
-				{#if done}
-					<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-						<path
-							d="M2 5l2.5 2.5L8 3"
-							stroke="currentColor"
-							stroke-width="1.5"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-					</svg>
+<!-- Wide enough, a bar of short words; in a narrow column (the reader, a phone) a list of the
+     full names with their dates. The width of the place it stands in decides, not the screen. -->
+<div class="stepper-box">
+	<ol class="stepper" aria-label="Fasen van het wetsvoorstel">
+		{#each phases as step, i (step.name)}
+			{@const done = states[i] === 'done'}
+			{@const active = states[i] === 'active'}
+			<li
+				class="step"
+				class:step--done={done}
+				class:step--active={active}
+				aria-current={active ? 'step' : undefined}
+				title={titleOf(step)}
+			>
+				<span class="step-dot" aria-hidden="true">
+					{#if done}
+						<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+							<path
+								d="M2 5l2.5 2.5L8 3"
+								stroke="currentColor"
+								stroke-width="1.5"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+						</svg>
+					{/if}
+				</span>
+				<span class="step-label" aria-hidden="true">{PHASE_SHORT[step.name] ?? step.name}</span>
+				<span class="step-full" aria-hidden="true"
+					>{step.name}{#if done && step.date}<span class="step-date">{formatDate(step.date)}</span
+						>{/if}</span
+				>
+				<span class="sr">{titleOf(step)}{done ? ', doorlopen' : ''}</span>
+				{#if i < phases.length - 1}
+					<span
+						class="step-connector"
+						aria-hidden="true"
+						class:step-connector--done={reached(i) && reached(i + 1)}
+					></span>
 				{/if}
-			</span>
-			<span class="step-label" aria-hidden="true">{PHASE_SHORT[step.name] ?? step.name}</span>
-			<span class="sr">{titleOf(step)}{done ? ', doorlopen' : ''}</span>
-			{#if i < phases.length - 1}
-				<span
-					class="step-connector"
-					aria-hidden="true"
-					class:step-connector--done={reached(i) && reached(i + 1)}
-				></span>
-			{/if}
-		</li>
-	{/each}
-</ol>
+			</li>
+		{/each}
+	</ol>
+</div>
 
 <style>
+	.stepper-box {
+		container-type: inline-size;
+	}
+
 	.stepper {
 		display: flex;
 		align-items: flex-start;
@@ -72,7 +84,7 @@
 		align-items: center;
 		gap: var(--s-1);
 		flex: 1;
-		min-width: 64px;
+		min-width: 0;
 		position: relative;
 	}
 
@@ -148,5 +160,57 @@
 	.step--done .step-connector,
 	.step-connector--done {
 		background: var(--ink-2);
+	}
+
+	/* The full name and date: for the list only. */
+	.step-full {
+		display: none;
+	}
+	.step-date {
+		margin-left: var(--s-2);
+		color: var(--ink-3);
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* Too narrow for eight short words side by side: a list, the line of the bar running
+	   down along the dots, each phase by its full name and the date a record marks. */
+	@container (max-width: 520px) {
+		.stepper {
+			flex-direction: column;
+			overflow: visible;
+		}
+		.step {
+			flex-direction: row;
+			align-items: center;
+			gap: var(--s-2);
+			padding-bottom: var(--s-2);
+		}
+		.step:last-child {
+			padding-bottom: 0;
+		}
+		.step-label {
+			display: none;
+		}
+		.step-full {
+			display: inline;
+			font-family: var(--font-sans);
+			font-size: var(--t-meta);
+			color: var(--ink-3);
+		}
+		.step--done .step-full {
+			color: var(--ink-2);
+		}
+		.step--active .step-full {
+			color: var(--ink);
+			font-weight: 500;
+		}
+		.step-connector {
+			top: 18px;
+			bottom: 0;
+			left: 8.25px;
+			right: auto;
+			width: 1.5px;
+			height: auto;
+		}
 	}
 </style>
