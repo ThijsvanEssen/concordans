@@ -432,6 +432,20 @@ describe('judgments of one case', () => {
 		expect(label('referred-to')?.label).toBe('Verwezen naar');
 		expect(groups.find((g) => g.id === 'other')?.rows ?? []).toEqual([]);
 	});
+
+	it('show the other publications of the same decision first, in either direction of SAME_AS', () => {
+		const replaced = buildGroups('judgments', [
+			neighbor('ecli_nl_hr_2011_bn6324', 'SAME_AS', 'outbound'),
+			neighbor('ecli_nl_hr_2016_252', 'REFERS_TO', 'outbound')
+		]);
+		expect(replaced[0].id).toBe('same-as');
+		expect(replaced[0].label).toBe('Zelfde uitspraak, ook gepubliceerd als');
+		expect(replaced[0].rows.map((r) => r.ref.key)).toEqual(['ecli_nl_hr_2011_bn6324']);
+		const kept = buildGroups('judgments', [
+			neighbor('ecli_nl_hr_2011_bw1231', 'SAME_AS', 'inbound')
+		]);
+		expect(kept.find((g) => g.id === 'same-as')?.rows).toHaveLength(1);
+	});
 });
 
 describe('an appealed decision the dataset lacks', () => {

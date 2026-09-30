@@ -40,6 +40,7 @@ export const RELATIONS = [
 	'ADVISES_ON',
 	'CONTINUES',
 	'REFERRED_BY',
+	'SAME_AS',
 	'SCOPED_BY',
 	'ABOUT',
 	'LED_BY',
@@ -117,6 +118,8 @@ export const RELATION_LABEL: Record<Relation, string> = {
 	// decision after referral was referred by the Hoge Raad.
 	CONTINUES: 'vervolg op',
 	REFERRED_BY: 'verwezen door',
+	// A publication the Rechtspraak replaced under a new ECLI and the one it kept.
+	SAME_AS: 'zelfde uitspraak als',
 	SCOPED_BY: 'begrensd door',
 	ABOUT: 'over',
 	LED_BY: 'geleid door',

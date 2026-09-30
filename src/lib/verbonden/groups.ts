@@ -330,6 +330,13 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		EUROPEAN
 	],
 	judgments: [
+		// The Rechtspraak published many old arresten again under a new ECLI: the kept
+		// publication and the replaced ones point at each other.
+		{
+			id: 'same-as',
+			label: 'Zelfde uitspraak, ook gepubliceerd als',
+			match: [{ relation: 'SAME_AS', collection: 'judgments' }]
+		},
 		{
 			id: 'articles',
 			label: 'Artikelen die hier worden aangehaald',

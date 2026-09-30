@@ -40,6 +40,8 @@
 	// The anchor of an overweging: `paragraph_id` for the first sub-paragraph split out of
 	// an API paragraph, else built from its number — a later split shares one `paragraph_id`
 	// with the first and needs its own anchor.
+	const ecliKey = (e: string) => e.toLowerCase().replaceAll(':', '_');
+
 	const rov = (number: string, id?: string | null) => id || `rov-${number}`;
 
 	// Citeren van een overweging, parallel aan `citeArticle` voor een lid.
@@ -118,6 +120,8 @@
 		{@const firstSubheading = paragraphs.find((p) => p.kind === 'subheading')}
 		{@const participants = judgmentParticipants(j)}
 		{@const hasSummary = !!j.summary?.trim()}
+		{@const replacedBy = j.same_as ?? null}
+		{@const alsoAs = view.data.same_as ?? []}
 		<ReaderHead
 			collection="judgments"
 			juris={textProp(j.props?.court)}
@@ -147,9 +151,23 @@
 					<BronLink
 						ref={{
 							collection: 'judgments',
-							key: j.translation_of.toLowerCase().replaceAll(':', '_')
+							key: ecliKey(j.translation_of)
 						}}>{j.translation_of}</BronLink
 					>. De samenvatting hieronder is die van het origineel.
+				</p>
+			{/if}
+			{#if replacedBy}
+				<p class="reader-translation">
+					Vervangen publicatie. De uitspraak staat onder
+					<BronLink ref={{ collection: 'judgments', key: ecliKey(replacedBy) }}
+						>{replacedBy}</BronLink
+					>.
+				</p>
+			{:else if alsoAs.length > 0}
+				<p class="reader-translation">
+					Ook gepubliceerd als {#each alsoAs as other, i (other.key)}{i > 0 ? ', ' : ''}<BronLink
+							ref={{ collection: 'judgments', key: other.key }}>{other.ecli ?? other.key}</BronLink
+						>{/each}.
 				</p>
 			{/if}
 		</ReaderHead>
@@ -296,7 +314,7 @@
 					{/each}
 				{/if}
 			{/each}
-			{#if paragraphs.length === 0 && !hasSummary}
+			{#if paragraphs.length === 0 && !hasSummary && !replacedBy}
 				<p class="reader-empty-text">Geen tekst beschikbaar.</p>
 			{/if}
 			<!-- The terms of HUDOC ask for the source under a text of the Court. -->
