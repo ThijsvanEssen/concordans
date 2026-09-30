@@ -140,7 +140,8 @@ export function describe(
 			const known = names.length ? ` (${names.join(', ')})` : '';
 			return {
 				title: (court ? (join(court, longDate(date)) ?? court) : name) + known,
-				context: null,
+				// A judgment known only as cited: its ECLI and court, nothing more.
+				context: props.stub === true ? 'niet in de dataset' : null,
 				identifier: ecli ?? (court ? null : name),
 				date,
 				court
@@ -370,6 +371,8 @@ export function repeatedTitles(rows: Row[]): Set<string> {
 /** What tells a judgment from others of the same court and day: its case number. */
 export function caseNumberOf(row: Row): string | null {
 	const props = (row.props ?? {}) as Record<string, unknown>;
+	// A judgment outside the dataset has no case number; its ECLI stands in the meta line.
+	if (props.stub === true) return null;
 	return (
 		text(props.case_number) ??
 		/\s\/\s(.+)$/.exec(text(props.display_name) ?? '')?.[1] ??

@@ -327,6 +327,24 @@ describe('sister cases', () => {
 		expect(rows.map(caseNumberOf)).toEqual(['200.343.062/01', '200.343.064/01']);
 		expect(caseNumberOf({ ...rows[0], props: {} } as Row)).toBe('2678');
 	});
+
+	it('say of a judgment outside the dataset that it is, without a case number', () => {
+		const props = { court_code: 'HR', ecli: 'ECLI:NL:HR:2017:305', stub: true };
+		const bron = describeBron('judgments', 'ecli_nl_hr_2017_305', null, props);
+		expect(bron.title).toBe('Hoge Raad');
+		expect(bron.context).toBe('niet in de dataset');
+		const row: Row = {
+			ref: { collection: 'judgments', key: 'k' },
+			kind: 'uitspraken',
+			...bron,
+			props
+		};
+		expect(caseNumberOf(row)).toBeNull();
+		expect(metaParts(row).map((p) => p.text)).toEqual([
+			'niet in de dataset',
+			'ECLI:NL:HR:2017:305'
+		]);
+	});
 });
 
 describe('a relation the list does not know yet', () => {
