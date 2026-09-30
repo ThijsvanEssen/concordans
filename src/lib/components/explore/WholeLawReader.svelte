@@ -20,7 +20,14 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
-	import { lawFullTitle, lawHeadLine, lawKind, sourceName } from './law-head';
+	import {
+		lawFullTitle,
+		lawHeadLine,
+		lawKind,
+		sameTreatyOf,
+		sourceName,
+		treatyLink
+	} from './law-head';
 
 	let { bwbId }: { bwbId: string | null } = $props();
 
@@ -117,7 +124,15 @@
 
 	const lawName = $derived.by(() => {
 		const meta = bwbId ? $instrumentMetaStore.get(bwbId) : null;
-		return meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwbId;
+		// A record without a BWB id (a treaty of the Verdragenbank) by the title of its detail.
+		return (
+			meta?.citationTitle ??
+			meta?.title ??
+			meta?.shortTitle ??
+			lawDetail?.citation_title ??
+			lawDetail?.title ??
+			bwbId
+		);
 	});
 
 	// The head of the law: its kind, official title, dates and citations, from its own detail.
@@ -136,6 +151,8 @@
 	});
 	const kindLabel = $derived(lawKind(lawDetail));
 	const fullTitle = $derived(lawFullTitle(lawDetail, lawName));
+	// A treaty: its record in the Verdragenbank, or from there its text in the BWB.
+	const treaty = $derived(treatyLink(lawDetail, sameTreatyOf(lawDetail)));
 	// The versions of the law, for the peildatum; the current one dates the text in force
 	// where the law gives no version_date_in_force.
 	let versions = $state<Version[]>([]);
@@ -341,6 +358,18 @@
 						>{sourceName(officialUrl) ?? 'Officiële tekst'}</a
 					>{/if}
 			</p>
+			{#if treaty}
+				<p class="whole-count">
+					{#if treaty.target.kind === 'bron'}
+						<a
+							href={bronHref({ collection: 'instruments', key: treaty.target.key })}
+							data-sveltekit-noscroll>{treaty.label}</a
+						>
+					{:else}
+						<a href={treaty.target.url} rel="external">{treaty.label}</a>
+					{/if}
+				</p>
+			{/if}
 			{#if versions.length > 0}
 				<!-- The peildatum: the versions of the law by year, the text of today first. -->
 				<div class="whole-peil">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lawFullTitle, lawHeadLine, lawKind, sourceName } from './law-head';
+import { lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
 
 const eu = {
 	kind: null,
@@ -76,5 +76,50 @@ describe('the head line', () => {
 				opts
 			)
 		).toBe('99 artikelen.');
+	});
+});
+
+describe('a treaty in the BWB and in the Verdragenbank', () => {
+	const evrmBwb = { bwb_id: 'BWBV0001000', treaty_number: '005132' };
+	const evrmRecord = { bwb_id: null, treaty_number: '005132' };
+	it('links the BWB text to its Verdragenbank record', () => {
+		expect(treatyLink(evrmBwb, [{ key: 'verdrag_005132', bwb_id: null }])).toEqual({
+			label: 'Verdragenbank: nr. 005132',
+			target: { kind: 'bron', key: 'verdrag_005132' }
+		});
+	});
+	it('links to the Verdragenbank itself where the dataset lacks the record', () => {
+		expect(treatyLink({ bwb_id: 'BWBV0001002', treaty_number: '007233' }, [])?.target).toEqual({
+			kind: 'url',
+			url: 'https://verdragenbank.overheid.nl/nl/Verdrag/Details/007233'
+		});
+	});
+	it('links the Verdragenbank record to the text in the BWB', () => {
+		expect(treatyLink(evrmRecord, [{ key: 'bwbv0001000', bwb_id: 'BWBV0001000' }])).toEqual({
+			label: 'Tekst in het BWB: BWBV0001000',
+			target: { kind: 'bron', key: 'bwbv0001000' }
+		});
+		expect(treatyLink(evrmRecord, [])).toBeNull();
+	});
+	it('is nothing for a law without a treaty number', () => {
+		expect(treatyLink({ bwb_id: 'BWBR0005537', treaty_number: null }, [])).toBeNull();
+	});
+});
+
+describe('the count in the head', () => {
+	const opts = {
+		peildatum: null,
+		longDate: (d: string) => d,
+		formatCount: (n: number) => String(n)
+	};
+	it('takes the list where the law says 0, and leaves out a count of none', () => {
+		const d = {
+			date_in_force: null,
+			version_date_in_force: null,
+			article_count: 0,
+			inbound_citation_count: 0
+		};
+		expect(lawHeadLine(d, { ...opts, count: 66 })).toBe('66 artikelen.');
+		expect(lawHeadLine(d, { ...opts, count: 0 })).toBe('');
 	});
 });
