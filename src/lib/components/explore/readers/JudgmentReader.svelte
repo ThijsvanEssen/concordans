@@ -25,6 +25,7 @@
 		splitSummary
 	} from './judgment-text';
 	import { formatDate, textProp } from './_shared';
+	import { sourceName } from '../law-head';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -117,10 +118,13 @@
 		{@const paragraphs = j.paragraphs ?? []}
 		{@const caseNumber = textProp(j.props?.case_number)}
 		{@const judgmentDate = formatDate(textProp(j.props?.date))}
+		<!-- The judgment on its official site, named by it as a law is (API 0.71):
+		     uitspraken.rechtspraak.nl, hudoc.echr.coe.int. -->
 		{@const deeplink =
-			j.source === 'rechtspraak' && j.ecli
+			j.official_url ??
+			(j.source === 'rechtspraak' && j.ecli
 				? `https://deeplink.rechtspraak.nl/uitspraak?id=${encodeURIComponent(j.ecli)}`
-				: null}
+				: null)}
 		{@const firstSubheading = paragraphs.find((p) => p.kind === 'subheading')}
 		{@const participants = judgmentParticipants(j)}
 		{@const hasSummary = !!j.summary?.trim()}
@@ -151,7 +155,7 @@
 				{/if}
 				{#if deeplink}
 					<a href={deeplink} target="_blank" rel="noopener noreferrer" class="reader-source-link"
-						>Rechtspraak.nl ↗</a
+						>{sourceName(deeplink) ?? 'Officiële tekst'} ↗</a
 					>
 				{/if}
 			</div>

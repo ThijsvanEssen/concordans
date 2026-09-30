@@ -83,7 +83,9 @@ describe('bronKindOf', () => {
 		);
 		expect(bronKindOf('documents', 'd', { kind: 'Brief regering' })).toBe('dossiers');
 		expect(bronKindOf('articles', 'bwbv0001000_6', {})).toBe('internationaal');
-		expect(bronKindOf('judgments', 'echr_1', {})).toBe('internationaal');
+		expect(bronKindOf('judgments', 'ecli_ce_echr_2026_0908jud000748123', {})).toBe(
+			'internationaal'
+		);
 		expect(bronKindOf('instruments', 'bwbr0001854', {})).toBe('wetten');
 	});
 

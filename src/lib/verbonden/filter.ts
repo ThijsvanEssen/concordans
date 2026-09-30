@@ -230,8 +230,8 @@ export const withKind = (f: VerbondenFilter, kind: BronKind): VerbondenFilter =>
 
 // TODO(backend B9): nothing marks a bron as European or international. Until an
 // `eu-links` route exists, the jurisdiction is read from the id: a CELEX number, a
-// BWBV (verdrag) id, the ECHR collection.
-const INTERNATIONAL_KEY = /^(bwbv\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4}|echr_)/i;
+// BWBV (verdrag) id, an ECLI of the EHRM.
+const INTERNATIONAL_KEY = /^(bwbv\d{7}|[0-9ce]\d{4}[a-z]{1,2}\d{4}|ecli_ce_echr_)/i;
 
 export const isInternational = (n: {
 	key: string;
@@ -307,7 +307,8 @@ export function rechterOf(row: Pick<Row, 'identifier' | 'court' | 'ref'>): Recht
 	if (/gerechtshof|\bhof\b/i.test(court)) return 'hof';
 	if (/rechtbank/i.test(court)) return 'rechtbank';
 	if (/raad van state/i.test(court)) return 'rvs';
-	if (/echr|ehrm|europees hof/i.test(court) || row.ref.key.startsWith('echr_')) return 'ehrm';
+	if (/echr|ehrm|europees hof/i.test(court) || row.ref.key.startsWith('ecli_ce_echr_'))
+		return 'ehrm';
 	return null;
 }
 
