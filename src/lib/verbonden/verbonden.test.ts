@@ -9,6 +9,7 @@ import { buildDossierHub } from './dossier-hub';
 import { mergeExplanatory } from './explanatory-documents';
 import { buildGroups, countLabel, GROUPS, isInternational, withUnresolvedAppeals } from './groups';
 import {
+	aardOf,
 	bundleMentions,
 	unresolvedRows,
 	mentionRows,
@@ -534,5 +535,14 @@ describe('unresolvedRows', () => {
 		expect(row.title).toBe('Artikel 843a Rv');
 		expect(row.missing).toBe(true);
 		expect(metaParts(row).map((p) => p.text)).toEqual(['lid 1', 'niet in de dataset']);
+	});
+});
+
+describe('aardOf', () => {
+	it('says an aard the hand check found often wrong is only possible', () => {
+		expect(aardOf('conditional_requirement', 0.3)).toBe('mogelijk voorwaarde');
+		expect(aardOf('conditional_requirement', 0.9)).toBe('voorwaarde');
+		expect(aardOf('definition', null)).toBe('definitie');
+		expect(aardOf(null, 0.3)).toBeNull();
 	});
 });

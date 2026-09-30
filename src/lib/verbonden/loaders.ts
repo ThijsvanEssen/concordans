@@ -20,7 +20,7 @@ import { get } from 'svelte/store';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
-	aardLabel,
+	aardOf,
 	bundleMentions,
 	activityLine,
 	historyRow,
@@ -298,7 +298,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			byKey.set(t.key, {
 				...row,
 				lid: rel.leden?.[0] ?? row.lid ?? lidOfMatch(rel.text),
-				aard: aardLabel(rel.semantic_type) ?? row.aard ?? null,
+				aard: aardOf(rel.semantic_type, rel.semantic_confidence) ?? row.aard ?? null,
 				match: rel.text ?? row.match ?? null,
 				edgeId: rel.edge_id ?? row.edgeId ?? null,
 				confidence: rel.confidence ?? row.confidence ?? null,
@@ -525,14 +525,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					: (from.display_name ?? from.key),
 				context: target ? `verwijst naar ${target}` : null,
 				kind: 'artikelen',
-				aard: aardLabel(r.semantic_type),
+				// The aard says how sure it is; the reference itself is in the BWB (1.0).
+				aard: aardOf(r.semantic_type, r.semantic_confidence),
 				relation: 'REFERS_TO',
 				direction: 'outbound',
 				edgeId: r.edge_id,
-				// TODO(backend G7): the aard is a keyword match near the reference, reported
-				// with confidence 1.0; until the API says otherwise it counts as matig.
-				confidence: null,
-				derived: true
+				confidence: r.confidence ?? null,
+				derived: r.confidence != null && r.confidence < 1
 			});
 		}
 		const order = (row: Row) => row.title;
