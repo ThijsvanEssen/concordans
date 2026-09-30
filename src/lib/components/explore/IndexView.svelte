@@ -46,7 +46,19 @@
 	import Hemicycle from './Hemicycle.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
-	import { NO_DECISION_KIND, decisionKindFromParam, decisionOutcome } from './index/decision-kind';
+	import {
+		NO_DECISION_KIND,
+		decisionKindFromParam,
+		decisionMethod,
+		decisionOutcome
+	} from './index/decision-kind';
+	import {
+		CHAMBERS,
+		CHAMBER_NAME,
+		EK_SOURCE,
+		chamberFromParam,
+		type Chamber
+	} from '$lib/components/parliamentary/chamber';
 	import { judgmentRowTitle } from './index/judgment-kind';
 	import {
 		COMMITMENT_STATUSES,
@@ -111,6 +123,10 @@
 	const track = $derived(kindFromParam(params.get('track') ?? '') ?? '');
 	// A decision's kind as the Kamer writes it; an old link's `motie` is read as `Motie`.
 	const decisionKindParam = $derived(decisionKindFromParam(params.get('soort') ?? '') ?? '');
+	// The Kamer whose parliament is listed; no filter but a choice, so it stays across tabs.
+	const kamer = $derived<Chamber>(chamberFromParam(params.get('kamer')) ?? 'TK');
+	/** The tabs that list one Kamer at a time. */
+	const CHAMBER_CATEGORIES: readonly IndexCategory[] = ['decisions'];
 	const ministry = $derived(params.get('ministry') ?? '');
 	/** A ministry of the URL as the API types it; an unknown key is left to the API to refuse. */
 	const asMinistry = (key: string) => (key || undefined) as Schema<'MinistryKey'> | undefined;
@@ -478,6 +494,7 @@
 			}
 			case 'decisions': {
 				const query = {
+					chamber: kamer,
 					kind: decisionKindParam || undefined,
 					passed: passed === undefined ? undefined : passed === 'true',
 					from: dateFrom || undefined,
@@ -1205,26 +1222,24 @@
 					}
 				];
 			}
-			case 'decisions':
+			case 'decisions': {
+				// The kinds the Kamer's decisions have, as the facet counts them; one without a zaak
+				// cannot be chosen. The Eerste Kamer's decisions have none yet: no group then.
+				const kinds = [...decisionKinds.keys()]
+					.filter(
+						(k) => k !== 'null' && ((decisionKinds.get(k) ?? 0) > 0 || k === decisionKindParam)
+					)
+					.map((k) => ({
+						id: k,
+						label: k,
+						count: decisionKinds.get(k) ?? 0,
+						on: decisionKindParam === k,
+						onClick: toggle('soort', decisionKindParam, k)
+					}));
 				return [
-					{
-						id: 'soort',
-						label: 'Soort',
-						kind: 'list',
-						// The kinds the Kamer's decisions have, as the facet counts them; one without
-						// a zaak cannot be chosen.
-						options: [...decisionKinds.keys()]
-							.filter(
-								(k) => k !== 'null' && ((decisionKinds.get(k) ?? 0) > 0 || k === decisionKindParam)
-							)
-							.map((k) => ({
-								id: k,
-								label: k,
-								count: decisionKinds.get(k) ?? 0,
-								on: decisionKindParam === k,
-								onClick: toggle('soort', decisionKindParam, k)
-							}))
-					},
+					...(kinds.length || kamer === 'TK'
+						? [{ id: 'soort', label: 'Soort', kind: 'list' as const, options: kinds }]
+						: []),
 					{
 						id: 'passed',
 						label: 'Uitslag',
@@ -1264,6 +1279,7 @@
 						onChange: (v) => patchUrl({ dossier: v || null })
 					}
 				];
+			}
 			case 'members':
 				return [
 					{
@@ -1692,6 +1708,20 @@
 							<div class="hemi-svg-wrap">
 								<Hemicycle data={seats} />
 							</div>
+						</div>
+					{/if}
+
+					{#if CHAMBER_CATEGORIES.includes(category)}
+						<div class="kamer-choice" role="group" aria-label="Kamer">
+							{#each CHAMBERS as c (c)}
+								<button
+									type="button"
+									class="kamer-option"
+									aria-pressed={kamer === c}
+									onclick={() => patchUrl({ kamer: c === 'TK' ? null : c, open: null })}
+									>{CHAMBER_NAME[c]}</button
+								>
+							{/each}
 						</div>
 					{/if}
 
@@ -2178,6 +2208,9 @@
 												{@const inFavour = s.tally?.['Voor'] ?? 0}
 												{@const against = s.tally?.['Tegen'] ?? 0}
 												{@const inFavourPct = (inFavour / (inFavour + against)) * 100}
+												<!-- The Eerste Kamer's decisions carry no kind yet: their dossier leads. -->
+												{@const kindLabel =
+													s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
 												<IndexRow
 													{bron}
 													title={s.subject ?? '—'}
@@ -2186,13 +2219,15 @@
 													onToggle={() => toggleOpen(bron)}
 												>
 													{#snippet lead()}
-														<span class="row-id-main"
-															>{day.date
-																? (s.kind ?? NO_DECISION_KIND)
-																: fmtDateShort(s.date)}</span
-														>
-														{#if s.dossier_numbers?.[0]}
-															<span class="row-id-sub">{s.dossier_numbers[0]}</span>
+														{#if !day.date || kindLabel}
+															<span class="row-id-main"
+																>{day.date ? kindLabel : fmtDateShort(s.date)}</span
+															>
+															{#if s.dossier_numbers?.[0]}
+																<span class="row-id-sub">{s.dossier_numbers[0]}</span>
+															{/if}
+														{:else if s.dossier_numbers?.[0]}
+															<span class="row-id-main">{s.dossier_numbers[0]}</span>
 														{/if}
 													{/snippet}
 													{#snippet body()}
@@ -2213,6 +2248,8 @@
 																<span class="stem-mini__t">{against}</span>
 																<span class="stem-mini__unit">zetels</span>
 															</span>
+														{:else if decisionMethod(s)}
+															<span class="row-method">{decisionMethod(s)}</span>
 														{/if}
 													{/snippet}
 													{#snippet aside()}
@@ -2236,6 +2273,12 @@
 										</ul>
 									{/each}
 									{@render loadMoreButton(pages.decisions, 'stemmingen')}
+									{#if kamer === 'EK'}
+										<p class="list-source">
+											Bron: {EK_SOURCE.name},
+											<a href={EK_SOURCE.url} rel="external">{EK_SOURCE.site}</a>.
+										</p>
+									{/if}
 								{/if}
 							{:else if category === 'cabinets' && cabinetsShown}
 								{#if cabinetsShown.length === 0}
@@ -2700,6 +2743,46 @@
 		min-width: 0;
 		overflow: visible;
 		white-space: nowrap;
+	}
+
+	/* The Kamer whose parliament is listed: two options, the chosen one in ink. */
+	.kamer-choice {
+		display: inline-flex;
+		margin: 0 0 var(--s-4);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		overflow: hidden;
+	}
+	.kamer-option {
+		min-height: 36px;
+		padding: 0 var(--s-4);
+		border: 0;
+		background: transparent;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.kamer-option + .kamer-option {
+		border-left: 1px solid var(--rule-strong);
+	}
+	.kamer-option:hover {
+		background: var(--paper-2);
+	}
+	.kamer-option[aria-pressed='true'] {
+		background: var(--ink);
+		color: var(--paper);
+	}
+	.row-method {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.list-source {
+		margin: var(--s-4) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
 	/* Above the list: how many, then the filters that are on. */
