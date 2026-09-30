@@ -744,6 +744,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/factions/{key}/votes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * How a faction of the Eerste Kamer voted
+         * @description The votes of the Eerste Kamer that name this faction (its list of votes on bills, since June 2015), newest first, with the faction's choice as the list names it (``voor``, ``tegen``, ``aantekening gevraagd``) and the counts per choice. ``bill_decision`` tells the vote on the bill from one on a motion on it. Only a faction of the Eerste Kamer (``chamber`` ``EK``): the Tweede Kamer's votes per faction are ``/api/decisions?party=``.
+         */
+        get: operations["list_faction_votes_api_factions__key__votes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/factions/{key}/touched-instruments": {
         parameters: {
             query?: never;
@@ -933,6 +953,26 @@ export interface paths {
          * @description One annex with its entries and every article referring to it.
          */
         get: operations["get_annex_detail_api_annexes__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The papers of the chambers
+         * @description The papers of the Tweede Kamer and the Eerste Kamer, newest first, with their metadata (no text): ``chamber``, ``kind``, ``dossier_number`` (the dossier it is numbered in), ``number`` (the nr., or the letter of the Eerste Kamer), ``date``, ``title`` and ``session_year``. ``facets`` counts per ``kind`` and ``chamber``, each without its own filter; ``facets=false`` reads one page only.
+         */
+        get: operations["list_chamber_documents_api_documents_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3076,6 +3116,87 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /** DocumentFacetCountDTO */
+        DocumentFacetCountDTO: {
+            /** Value */
+            value?: string | null;
+            /** Count */
+            count: number;
+        };
+        /**
+         * DocumentFacetsDTO
+         * @description The papers under the filters, per kind (without the kind filter) and per chamber
+         *     (without the chamber filter), the largest first.
+         */
+        DocumentFacetsDTO: {
+            /** Kind */
+            kind?: components["schemas"]["DocumentFacetCountDTO"][];
+            /** Chamber */
+            chamber?: components["schemas"]["DocumentFacetCountDTO"][];
+        };
+        /**
+         * DocumentListItemDTO
+         * @description A paper of a chamber in the list: its metadata, no text.
+         */
+        DocumentListItemDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Chamber */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Kind
+             * @description As the chamber writes it: ``Memorie van toelichting``.
+             */
+            kind?: string | null;
+            /**
+             * Dossier Number
+             * @description The dossier it is numbered in (its own; null for a paper that is no Kamerstuk): ``36791``.
+             */
+            dossier_number?: string | null;
+            /**
+             * Dossier Suffix
+             * @description The addition to that number: ``XV`` of ``37020 XV``.
+             */
+            dossier_suffix?: string | null;
+            /**
+             * Dossier Numbers
+             * @description Every dossier it is part of, as labels.
+             */
+            dossier_numbers?: string[];
+            /**
+             * Number
+             * @description Its number in the dossier: of the Tweede Kamer the nr. (``5``), of the Eerste Kamer the letter (``C``); null for none.
+             */
+            number?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Session Year
+             * @description The session year as the source writes it (``2025-2026``): with the chamber, dossier and number the citation, Kamerstukken I 2025/26, 36791, C.
+             */
+            session_year?: string | null;
+        };
+        /**
+         * DocumentListResponse
+         * @description A page of the papers of the chambers, newest first.
+         */
+        DocumentListResponse: {
+            /**
+             * Total
+             * @description Every match, whatever the page; null with ``facets=false``.
+             */
+            total?: number | null;
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["DocumentListItemDTO"][];
+            facets?: components["schemas"]["DocumentFacetsDTO"] | null;
+        };
         /**
          * DocumentPassagesResponse
          * @description The passages of one document that explain one article, in document order.
@@ -3762,6 +3883,69 @@ export interface components {
             by_relation: {
                 [key: string]: number;
             };
+        };
+        /**
+         * EkFactionVoteDTO
+         * @description How a faction of the Eerste Kamer voted on one vote of its list.
+         */
+        EkFactionVoteDTO: {
+            /** Decision Id */
+            decision_id: string;
+            /** Decision Key */
+            decision_key: string;
+            /** Date */
+            date?: string | null;
+            /** Subject */
+            subject?: string | null;
+            /**
+             * Dossier Numbers
+             * @default []
+             */
+            dossier_numbers: string[];
+            /**
+             * Result
+             * @description ``Aangenomen``, ``Verworpen``.
+             */
+            result?: string | null;
+            /** Method */
+            method?: string | null;
+            /**
+             * Bill Decision
+             * @description Whether it is the vote that decided the bill (else a vote on a motion on it).
+             */
+            bill_decision?: boolean | null;
+            /**
+             * Choice
+             * @description As the list of the Eerste Kamer names the faction's vote.
+             * @enum {string}
+             */
+            choice: "voor" | "tegen" | "aantekening gevraagd";
+        };
+        /**
+         * EkFactionVotesResponse
+         * @description The votes of a faction of the Eerste Kamer, newest first.
+         */
+        EkFactionVotesResponse: {
+            /** Faction Key */
+            faction_key: string;
+            /**
+             * Total
+             * @description The votes that name the faction.
+             */
+            total: number;
+            /**
+             * Counts
+             * @description Per choice (``voor``, ``tegen``, ``aantekening gevraagd``), over every vote that names the faction.
+             */
+            counts?: {
+                [key: string]: number;
+            };
+            /**
+             * Items
+             * @default []
+             */
+            items: components["schemas"]["EkFactionVoteDTO"][];
+            source: components["schemas"]["EkSourceDTO"];
         };
         /**
          * EkMembershipDTO
@@ -8394,6 +8578,44 @@ export interface operations {
             };
         };
     };
+    list_faction_votes_api_factions__key__votes_get: {
+        parameters: {
+            query?: {
+                /** @description On or after, YYYY-MM-DD. */
+                from?: string | null;
+                /** @description On or before, YYYY-MM-DD. */
+                to?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EkFactionVotesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_faction_touched_instruments_api_factions__key__touched_instruments_get: {
         parameters: {
             query?: {
@@ -8674,6 +8896,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnnexDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_chamber_documents_api_documents_get: {
+        parameters: {
+            query?: {
+                /** @description One chamber; both by default. */
+                chamber?: ("TK" | "EK") | null;
+                /** @description Comma-separated kinds, as the chamber writes them. */
+                kind?: string | null;
+                /** @description A dossier label (``36791``, ``37020-XV``): the papers part of it. */
+                dossier?: string | null;
+                /** @description On or after, YYYY-MM-DD. */
+                from?: string | null;
+                /** @description On or before, YYYY-MM-DD. */
+                to?: string | null;
+                /** @description Count per kind and chamber. */
+                facets?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentListResponse"];
                 };
             };
             /** @description Validation Error */
