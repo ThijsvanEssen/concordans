@@ -277,12 +277,21 @@ function periodOf(meta: Record<string, unknown>): Row['period'] {
 	return from || to ? { from, to, role: text(meta.role) } : null;
 }
 
-/** `2017–2021`, `sinds 2025`, with a role other than plain membership in front. */
+/**
+ * `2017–2021`, `sinds 2025`, `tot en met 2021`, with a role other than plain membership in
+ * front. The end date is the last day of the period (the Kamer's TotEnMet).
+ */
 export function periodLabel(period: NonNullable<Row['period']>): string {
 	const from = period.from?.slice(0, 4);
 	const to = period.to?.slice(0, 4);
 	const span =
-		from && to ? (from === to ? from : `${from}–${to}`) : from ? `sinds ${from}` : `tot ${to}`;
+		from && to
+			? from === to
+				? from
+				: `${from}–${to}`
+			: from
+				? `sinds ${from}`
+				: `tot en met ${to}`;
 	return period.role && period.role !== 'Lid' ? `${period.role.toLowerCase()}, ${span}` : span;
 }
 

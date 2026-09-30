@@ -62,5 +62,7 @@ describe('periodLabel', () => {
 		expect(periodLabel({ from: '2023-12-06', to: '2026-02-09', role: 'Fractievoorzitter' })).toBe(
 			'fractievoorzitter, 2023–2026'
 		);
+		// The end date is the last day of the seat (TotEnMet).
+		expect(periodLabel({ from: null, to: '2026-06-09', role: null })).toBe('tot en met 2026');
 	});
 });
