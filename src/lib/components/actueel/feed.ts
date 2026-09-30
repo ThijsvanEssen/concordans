@@ -130,9 +130,23 @@ export const MOTIE = 'Motie';
 export const AMENDEMENT = 'Amendement';
 const BILL_KINDS: ReadonlySet<string> = new Set(['Wetgeving', 'Initiatiefwetgeving', 'Begroting']);
 
-/** A vote on a bill itself. */
-export const isBillVote = (v: { subkind?: string | null }) =>
-	!!v.subkind && BILL_KINDS.has(v.subkind);
+type VoteLike = {
+	subkind?: string | null;
+	/** On a count of the summary. */
+	chamber?: 'TK' | 'EK';
+	/** On an item of the feed. */
+	vote?: { chamber?: 'TK' | 'EK' } | null;
+};
+
+/** The Kamer that voted (API 0.59): the Tweede unless the vote says the Eerste. */
+export const chamberOf = (v: VoteLike): 'TK' | 'EK' => v.chamber ?? v.vote?.chamber ?? 'TK';
+
+/**
+ * A vote on a bill itself: of the Tweede Kamer by the kind of its zaak; of the Eerste Kamer
+ * always, as the feed gives only the vote that decided a bill there.
+ */
+export const isBillVote = (v: VoteLike) =>
+	chamberOf(v) === 'EK' || (!!v.subkind && BILL_KINDS.has(v.subkind));
 
 /** A vote that goes into the day's bundle: not on a bill, and not close. */
 const bundledVote = (i: FeedItem) =>

@@ -154,6 +154,40 @@ describe('dayLines', () => {
 		expect(lines[2].href).toBe('/actueel?van=2026-09-22&tot=2026-09-22&soort=stemming');
 	});
 
+	it('names the Eerste Kamer when it decides a bill, and keeps it out of the Kamer’s count', () => {
+		const ek = item({
+			kind: 'stemming',
+			subkind: null,
+			node: { collection: 'decisions', key: 'ek_1' } as FeedItem['node'],
+			dossier: {
+				key: '36745',
+				number: '36745',
+				short_title: 'Wet startprocedure b3-scholen'
+			} as never,
+			vote: { chamber: 'EK', passed: true, outcome: 'aangenomen', tally: {} } as FeedItem['vote']
+		});
+		const lines = dayLines(
+			day({
+				votes: [
+					{ chamber: 'EK', subkind: null, outcome: 'aangenomen', count: 1 },
+					{ chamber: 'TK', subkind: 'Motie', outcome: 'aangenomen', count: 5 },
+					{ chamber: 'TK', subkind: 'Motie', outcome: 'verworpen', count: 3 }
+				]
+			}),
+			[ek]
+		);
+		expect(lines.map((l) => [l.label, l.title])).toEqual([
+			[
+				'Eerste Kamer, aangenomen',
+				'Eerste Kamer neemt wetsvoorstel aan: Wet startprocedure b3-scholen'
+			],
+			['Stemmingen', 'Kamer stemt over 8 moties: 5 aangenomen, 3 verworpen']
+		]);
+		expect(headlineOf(ek).title).toBe(
+			'Eerste Kamer neemt wetsvoorstel aan: Wet startprocedure b3-scholen'
+		);
+	});
+
 	it('names each vote of a day with few, and bundles none', () => {
 		const grinwis = vote(141, 7, {
 			persons: [{ surname: 'Grinwis', role: 'indiener' } as never],

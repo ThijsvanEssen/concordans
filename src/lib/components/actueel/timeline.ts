@@ -5,6 +5,7 @@ import {
 	CLOSE_VOTE,
 	KIND_LABEL,
 	MOTIE,
+	chamberOf,
 	dossierName,
 	isBillVote,
 	normalizeItem,
@@ -40,6 +41,8 @@ export type TimelineLine = {
 
 /** Close votes shown on their own per day, the closest first. */
 const CLOSE_SHOWN = 2;
+/** Who decides, as a headline names the Kamer: the Tweede plainly, the Eerste by name. */
+const KAMER: Record<'TK' | 'EK', string> = { TK: 'Kamer', EK: 'Eerste Kamer' };
 /** Bills named in the context of a line that counts them; a bill without a short title is long. */
 const BILLS_NAMED = 3;
 /**
@@ -154,20 +157,24 @@ function voteLine(i: FeedItem, noun: string): TimelineLine {
 
 /** The bills voted on in a day: one line per outcome. */
 function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
-	return [true, false].flatMap((passed) => {
-		const those = bills.filter((b) => !!b.vote?.passed === passed);
+	const groups = (['TK', 'EK'] as const).flatMap((chamber) =>
+		[true, false].map((passed) => ({ chamber, passed }))
+	);
+	return groups.flatMap(({ chamber, passed }) => {
+		const those = bills.filter((b) => chamberOf(b) === chamber && !!b.vote?.passed === passed);
 		if (!those.length) return [];
 		const verb = passed ? 'neemt' : 'verwerpt';
+		const who = KAMER[chamber];
 		const names = those.map((b) => (b.dossier ? dossierName(b.dossier) : cut(b.title ?? '', 60)));
 		const one = those.length === 1;
 		return [
 			{
-				id: `bills/${date}/${passed}`,
+				id: `bills/${date}/${chamber}/${passed}`,
 				date,
-				label: `${one ? 'Wetsvoorstel' : 'Wetsvoorstellen'}, ${passed ? 'aangenomen' : 'verworpen'}`,
+				label: `${chamber === 'EK' ? 'Eerste Kamer' : one ? 'Wetsvoorstel' : 'Wetsvoorstellen'}, ${passed ? 'aangenomen' : 'verworpen'}`,
 				title: one
-					? `Kamer ${verb} wetsvoorstel${passed ? ' aan' : ''}: ${names[0]}`
-					: `Kamer ${verb} ${inWords(those.length)} wetsvoorstellen${passed ? ' aan' : ''}`,
+					? `${who} ${verb} wetsvoorstel${passed ? ' aan' : ''}: ${names[0]}`
+					: `${who} ${verb} ${inWords(those.length)} wetsvoorstellen${passed ? ' aan' : ''}`,
 				context: one
 					? those[0].dossier
 						? `Dossier ${those[0].dossier.number}`
@@ -486,9 +493,10 @@ export function headlineOf(i: FeedItem): Headline {
 			const passed = !!i.vote?.passed;
 			if (isBillVote(i)) {
 				const name = i.dossier ? dossierName(i.dossier) : cut(i.title ?? '', 60);
+				const ek = chamberOf(i) === 'EK';
 				return {
-					label: `Wetsvoorstel, ${passed ? 'aangenomen' : 'verworpen'}`,
-					title: `Kamer ${passed ? 'neemt' : 'verwerpt'} wetsvoorstel${passed ? ' aan' : ''}: ${name}`,
+					label: `${ek ? 'Eerste Kamer' : 'Wetsvoorstel'}, ${passed ? 'aangenomen' : 'verworpen'}`,
+					title: `${KAMER[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} wetsvoorstel${passed ? ' aan' : ''}: ${name}`,
 					major: true,
 					failed: !passed
 				};

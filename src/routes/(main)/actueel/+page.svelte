@@ -56,6 +56,9 @@
 	const member = $derived(params.get('persoon') ?? '');
 	const faction = $derived(params.get('fractie') ?? '');
 	const q = $derived(params.get('q') ?? '');
+	// Which Kamer (API 0.59): the Tweede with its papers, votes and toezeggingen, or the
+	// Eerste with the votes that decided a bill. Publications belong to neither.
+	const chamber = $derived(((v) => (v === 'TK' || v === 'EK' ? v : ''))(params.get('kamer')));
 	// An inwerkingtreding can lie ahead; without asking, the feed ends today.
 	const ahead = $derived(params.get('komend') === '1');
 	const openId = $derived(params.get('open'));
@@ -70,6 +73,7 @@
 		'persoon',
 		'fractie',
 		'q',
+		'kamer',
 		'komend'
 	];
 
@@ -125,6 +129,7 @@
 		member: member || undefined,
 		faction: faction || undefined,
 		q: q || undefined,
+		chamber: chamber || undefined,
 		limit: 100
 	});
 
@@ -188,7 +193,7 @@
 	});
 	$effect(() => {
 		const s = span;
-		const { kind, cabinet, ministry, dossier, member, faction, q } = query;
+		const { kind, cabinet, ministry, dossier, member, faction, q, chamber } = query;
 		if (!s) return;
 		const ac = new AbortController();
 		unwrap(
@@ -203,6 +208,7 @@
 						member,
 						faction,
 						q,
+						chamber,
 						margin: CLOSE_VOTE,
 						limit: 1
 					}
@@ -271,6 +277,18 @@
 					count: facets ? (kindCounts.get(k) ?? 0) : undefined,
 					on: kinds.includes(k),
 					onClick: () => toggleKind(k)
+				}))
+			},
+			{
+				// TODO(backend): a facet per chamber, to count them.
+				id: 'kamer',
+				label: 'Kamer',
+				kind: 'list',
+				options: (['TK', 'EK'] as const).map((c) => ({
+					id: c,
+					label: c === 'TK' ? 'Tweede Kamer' : 'Eerste Kamer',
+					on: chamber === c,
+					onClick: () => patchUrl({ kamer: chamber === c ? null : c })
 				}))
 			},
 			{
