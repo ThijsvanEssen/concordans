@@ -193,7 +193,7 @@ export interface paths {
         };
         /**
          * EU and international links of an instrument
-         * @description `implements`: EU acts whose CELEX number the text of this instrument names. `implemented_by`: national regulations that name the CELEX number of this EU act. Both are `IMPLEMENTS` edges between instruments, written from a CELEX number named in the text (`basis`): not a transposition relation, not per article. `international`: treaties (BWB treaties) that articles of this instrument refer to, and ECHR judgments that refer to it or to its articles, each with the evidence of its edge; the graph holds no other links to treaties or to the articles of the ECHR Convention from Dutch text. The instrument is named by BWB id, CELEX number or node key; 404 when unknown. `limit` bounds each list; the `*_total` fields are absolute.
+         * @description `implements`: EU acts this instrument implements; `implemented_by`: the national publications and regulations that implement this EU act. Both are `IMPLEMENTS` edges between instruments with what they rest on (`bases`): EUR-Lex lists the publication as a national implementing measure, or the considerans says so; not per article. `mentions` and `mentioned_by`: the same for an EU act a regulation names by CELEX number without implementing it (`REFERS_TO`). `international`: treaties (BWB treaties) that articles of this instrument refer to, and ECHR judgments that refer to it or to its articles, each with the evidence of its edge; the graph holds no other links to treaties or to the articles of the ECHR Convention from Dutch text. The instrument is named by BWB id, CELEX number or node key; 404 when unknown. `limit` bounds each list; the `*_total` fields are absolute.
          */
         get: operations["get_instrument_eu_links_api_instruments__identifier__eu_links_get"];
         put?: never;
@@ -1323,8 +1323,13 @@ export interface components {
             outcome?: ("aangenomen" | "verworpen") | null;
             tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
             ek_outcome?: components["schemas"]["EkOutcomeDTO"] | null;
-            /** Opened On */
+            /**
+             * Opened On
+             * @description The day it opened, as the Kamer dates its papers: of nr. 1 of its own numbering, else of its Koninklijke boodschap, else of its first paper or activity (``opened_on_basis``).
+             */
             opened_on?: string | null;
+            /** Opened On Basis */
+            opened_on_basis?: ("first_paper" | "royal_message" | "earliest_record") | null;
             /** Closed On */
             closed_on?: string | null;
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
@@ -2063,7 +2068,7 @@ export interface components {
             effect?: string | null;
             /**
              * Change
-             * @description Normalised effect: 'introduces', 'amends', 'repeals' or null.
+             * @description Normalised effect: 'introduces', 'amends', 'repeals', 'republishes' (the text placed again, unchanged: a republication, as of the Grondwet) or null.
              */
             change?: string | null;
             /** Source Publication */
@@ -3232,8 +3237,13 @@ export interface components {
             outcome?: ("aangenomen" | "verworpen") | null;
             tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
             ek_outcome?: components["schemas"]["EkOutcomeDTO"] | null;
-            /** Opened On */
+            /**
+             * Opened On
+             * @description The day it opened, as the Kamer dates its papers: of nr. 1 of its own numbering, else of its Koninklijke boodschap, else of its first paper or activity (``opened_on_basis``).
+             */
             opened_on?: string | null;
+            /** Opened On Basis */
+            opened_on_basis?: ("first_paper" | "royal_message" | "earliest_record") | null;
             /** Closed On */
             closed_on?: string | null;
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
@@ -3705,8 +3715,13 @@ export interface components {
             outcome?: ("aangenomen" | "verworpen") | null;
             tk_decision?: components["schemas"]["TkDecisionDTO"] | null;
             ek_outcome?: components["schemas"]["EkOutcomeDTO"] | null;
-            /** Opened On */
+            /**
+             * Opened On
+             * @description The day it opened, as the Kamer dates its papers: of nr. 1 of its own numbering, else of its Koninklijke boodschap, else of its first paper or activity (``opened_on_basis``).
+             */
             opened_on?: string | null;
+            /** Opened On Basis */
+            opened_on_basis?: ("first_paper" | "royal_message" | "earliest_record") | null;
             /** Closed On */
             closed_on?: string | null;
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
@@ -3854,11 +3869,14 @@ export interface components {
         };
         /**
          * EuLinkDTO
-         * @description An `IMPLEMENTS` edge between a national regulation and an EU act.
+         * @description An `IMPLEMENTS` or `REFERS_TO` edge between a national instrument and an EU act.
          *
-         *     The edge means that the text of the regulation names the CELEX number of the EU act
-         *     (`basis`). It does not say that the regulation transposes the act, nor which articles
-         *     do: it links instruments, not articles, and its `confidence` is that of a text match.
+         *     `IMPLEMENTS` rests on an implementation source (`bases`): EUR-Lex lists the publication
+         *     as a national implementing measure of the act, or it enacted or changed the regulation
+         *     (`national_implementing_measure`, `meta.publications`), or the considerans of the
+         *     regulation says it implements the act (`considerans`). It links instruments: no source
+         *     names the article that implements. `REFERS_TO`: the text of the regulation names the
+         *     CELEX number of an act it does not implement.
          */
         EuLinkDTO: {
             /** @description The other end: the EU act for `implements`, the national regulation for `implemented_by`. */
@@ -3871,18 +3889,18 @@ export interface components {
             /** Confidence */
             confidence?: number | null;
             /**
-             * Basis
-             * @description What the edge rests on: `celex_named_in_text`, the text of the regulation names the CELEX number of the act. Not a transposition signal.
+             * Bases
+             * @description What an `IMPLEMENTS` edge rests on: `national_implementing_measure` (EUR-Lex) and/or `considerans`; empty for `REFERS_TO`.
              */
-            basis?: "celex_named_in_text" | null;
+            bases?: ("national_implementing_measure" | "considerans")[];
             /**
              * Source
-             * @description The pipeline that wrote the edge (`bwb-implements-directive`).
+             * @description The pipeline that wrote the edge (`bwb-implements`).
              */
             source?: string | null;
             /**
              * Meta
-             * @description Edge evidence as stored (`celex`).
+             * @description Edge evidence as stored (`celex`, `bases`, `publications`).
              */
             meta?: {
                 [key: string]: unknown;
@@ -4927,7 +4945,7 @@ export interface components {
             instrument: components["schemas"]["LinkedInstrumentDTO"];
             /**
              * Implements
-             * @description EU acts whose CELEX number the text of this instrument names.
+             * @description EU acts this instrument implements.
              */
             implements?: components["schemas"]["EuLinkDTO"][];
             /**
@@ -4937,7 +4955,7 @@ export interface components {
             implements_total: number;
             /**
              * Implemented By
-             * @description National regulations whose text names the CELEX number of this act.
+             * @description National publications and regulations that implement this act.
              */
             implemented_by?: components["schemas"]["EuLinkDTO"][];
             /**
@@ -4945,6 +4963,26 @@ export interface components {
              * @description Absolute number of `implemented_by`, independent of `limit`.
              */
             implemented_by_total: number;
+            /**
+             * Mentions
+             * @description EU acts whose CELEX number the text of this regulation names and that it does not implement (`REFERS_TO`).
+             */
+            mentions?: components["schemas"]["EuLinkDTO"][];
+            /**
+             * Mentions Total
+             * @description Absolute number of `mentions`, independent of `limit`.
+             */
+            mentions_total: number;
+            /**
+             * Mentioned By
+             * @description Regulations that name this act and do not implement it.
+             */
+            mentioned_by?: components["schemas"]["EuLinkDTO"][];
+            /**
+             * Mentioned By Total
+             * @description Absolute number of `mentioned_by`, independent of `limit`.
+             */
+            mentioned_by_total: number;
             /**
              * International
              * @description Treaties that articles of this instrument refer to and ECHR judgments that refer to it, at most `limit`, treaties first.

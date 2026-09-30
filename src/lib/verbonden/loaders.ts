@@ -32,6 +32,14 @@ import {
 	type Row
 } from './rows';
 
+/** What an implementation rests on (API 0.67), in words: EUR-Lex, the considerans, or both. */
+const BASIS: Record<string, string> = {
+	national_implementing_measure: 'uitvoeringsmaatregel volgens EUR-Lex',
+	considerans: 'volgens de considerans'
+};
+export const basesLine = (bases: readonly string[] | null | undefined): string | null =>
+	(bases ?? []).map((b) => BASIS[b] ?? b).join(', ') || null;
+
 export type LoaderContext = {
 	node: Schema<'BaseNodeDTO'>;
 	neighbors: Neighbor[];
@@ -363,7 +371,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				add({
 					ref: { collection: 'instruments', key: i.key },
 					title: i.citation_title ?? i.title ?? i.key,
-					context: link.basis ?? null,
+					context: basesLine(link.bases),
 					kind: 'internationaal',
 					derived: link.confidence != null && link.confidence < 1,
 					relation: 'IMPLEMENTS',
