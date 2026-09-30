@@ -216,14 +216,16 @@
 				geen fase tot het is afgehandeld.
 			</p>
 			<p>
-				Een afgehandeld dossier heeft een uitkomst en een datum. Aangenomen: de wet is in het
-				Staatsblad gepubliceerd. Verworpen: de Tweede Kamer stemde tegen het wetsvoorstel.
-				Ingetrokken: het wetsvoorstel is bij brief ingetrokken.
+				Een afgehandeld dossier heeft een uitkomst en een datum. Aangenomen: de Eerste Kamer nam het
+				wetsvoorstel aan, of de wet is in het Staatsblad gepubliceerd. Verworpen: de Tweede Kamer of
+				de Eerste Kamer stemde tegen het wetsvoorstel. Ingetrokken: het wetsvoorstel is bij brief
+				ingetrokken.
 			</p>
 			<p>
-				Een stemming staat per fractie geregistreerd, of per lid bij een hoofdelijke stemming.
-				Zonder hoofdelijke stemming volgt de stem van een lid uit de fractie waarbij het op dat
-				moment hoorde.
+				Een stemming van de Tweede Kamer staat per fractie geregistreerd, met zetels, of per lid bij
+				een hoofdelijke stemming. Zonder hoofdelijke stemming volgt de stem van een lid uit de
+				fractie waarbij het op dat moment hoorde. Van een stemming van de Eerste Kamer staan de
+				wijze van stemmen en de fracties voor en tegen geregistreerd, zonder zetels.
 			</p>
 			<p>
 				De wetgevingsgeschiedenis van een artikel is de reeks dossiers die het invoerden, wijzigden
@@ -245,9 +247,9 @@
 		<div class="section" id="beperkingen">
 			<h2 class="section-title">Bekende beperkingen</h2>
 			<p>
-				<strong>Eerste Kamer.</strong> Alleen kamerstukken van de Eerste Kamer zijn opgenomen,
-				gekoppeld aan het dossiernummer van de Tweede Kamer. Leden, fracties, commissies en
-				stemmingen van de Eerste Kamer ontbreken; zie
+				<strong>Eerste Kamer.</strong> Kamerstukken van de Eerste Kamer zijn opgenomen onder het
+				dossiernummer van het wetsvoorstel, en haar besluiten over wetsvoorstellen vanaf juli 2026.
+				Leden, fracties en commissies van de Eerste Kamer ontbreken; zie
 				<a href="https://www.eerstekamer.nl" class="cite">eerstekamer.nl</a>.
 			</p>
 			<p>

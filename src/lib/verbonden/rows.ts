@@ -433,7 +433,8 @@ export function activityLine(a: {
 
 /**
  * `eerste ondertekenaar, als minister van Financiën, 6 stukken`: what a lid or fractie
- * was in a dossier. The function only where it is not that of a Kamerlid.
+ * was in a dossier. The function only where it is not the plain seat of a Tweede Kamerlid:
+ * an Eerste Kamerlid is named as such.
  */
 export function rolesLine(d: {
 	roles?: readonly string[] | null;
@@ -446,7 +447,7 @@ export function rolesLine(d: {
 		: roles.length
 			? roles[0].toLowerCase()
 			: null;
-	const fn = (d.functions ?? []).find((f) => !/kamerlid/i.test(f));
+	const fn = (d.functions ?? []).find((f) => !/^tweede kamerlid$/i.test(f.trim()));
 	const n = d.document_count ?? 0;
 	return (
 		[role, fn ? `als ${fn}` : null, n ? `${n} ${n === 1 ? 'stuk' : 'stukken'}` : null]

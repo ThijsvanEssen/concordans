@@ -17,6 +17,9 @@ describe('rolesLine', () => {
 				document_count: 1
 			})
 		).toBe('mede ondertekenaar, 1 stuk');
+		expect(rolesLine({ roles: ['Mede ondertekenaar'], functions: ['Eerste Kamerlid'] })).toBe(
+			'mede ondertekenaar, als Eerste Kamerlid'
+		);
 		expect(rolesLine({})).toBeNull();
 	});
 });
