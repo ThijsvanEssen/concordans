@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	decisionKindFromParam,
-	decisionMethod,
-	decisionOutcome,
-	isHammer
-} from './decision-kind';
+import { decisionKindFromParam, decisionMethod, decisionOutcome, isHammer } from './decision-kind';
 
 describe('decisionOutcome', () => {
 	it('names a vote, a hamerstuk and a decision that is no vote', () => {
