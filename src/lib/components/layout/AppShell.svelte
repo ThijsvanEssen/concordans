@@ -25,6 +25,38 @@
 
 	onMount(() => {
 		initAnalytics();
+		// Ontwerpstudie ronde 2: ?contrast=1|2|3 (0 clears), kept for the tab in sessionStorage.
+		const apply = () => {
+			const p = new URL(location.href).searchParams.get('contrast');
+			if (p !== null) sessionStorage.setItem('r2-contrast', p);
+			const level = sessionStorage.getItem('r2-contrast') ?? '0';
+			if (level === '0') delete document.documentElement.dataset.contrast;
+			else document.documentElement.dataset.contrast = level;
+		};
+		apply();
+		window.addEventListener('popstate', apply);
+		// Opname voor de studie: schrijft een PNG naar een lokale ontvanger op :5199.
+		(window as unknown as Record<string, unknown>).__shot = async (
+			name: string,
+			sel?: string,
+			o: { w?: number; h?: number; pr?: number } = {}
+		) => {
+			const src = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm';
+			const m = await import(/* @vite-ignore */ src);
+			const node = sel ? document.querySelector(sel) : document.body;
+			const data = await m.toPng(node, {
+				pixelRatio: o.pr ?? 2,
+				backgroundColor: getComputedStyle(document.body).backgroundColor,
+				width: o.w,
+				height: o.h
+			});
+			const r = await fetch('http://127.0.0.1:5199/', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ name, data })
+			});
+			return r.status;
+		};
 	});
 </script>
 
@@ -213,6 +245,50 @@
 		--z-panel: 30;
 		--z-float: 40;
 		--z-modal: 50;
+	}
+
+	/* ─── Ontwerpstudie ronde 2: contrastniveaus (prototype, niet voor main) ─── */
+	/* C1 iets meer: alleen tinten. Grijs 5,3:1, lijnen zichtbaarder. */
+	:global(:root[data-contrast='1']) {
+		--paper-2: #eeeae1;
+		--rule: #dcd7cb;
+		--rule-strong: #b5ae9f;
+		--ink-2: #46433e;
+		--ink-3: #6a665e;
+	}
+	/* C2 duidelijk: tinten plus gewicht. Nummers in inkt, titels groter. */
+	:global(:root[data-contrast='2']) {
+		--paper: #faf8f3;
+		--paper-2: #ece7dc;
+		--rule: #cfc8b9;
+		--rule-strong: #948c7c;
+		--ink: #161513;
+		--ink-2: #3b3834;
+		--ink-3: #5d5951;
+		--t-body-2: 16px;
+	}
+	:global(:root[data-contrast='2'] .row-id-main),
+	:global(:root[data-contrast='3'] .row-id-main) {
+		color: var(--ink);
+		font-weight: 500;
+		font-size: var(--t-meta);
+	}
+	/* C3 uitgesproken: lichter papier, harde lijnen, titels op 500, koppen met een lijn. */
+	:global(:root[data-contrast='3']) {
+		--paper: #fcfbf8;
+		--paper-2: #e8e2d4;
+		--rule: #b9b1a0;
+		--rule-strong: #6f6859;
+		--ink: #0f0e0d;
+		--ink-2: #2e2c28;
+		--ink-3: #514d46;
+		--t-body-2: 16px;
+	}
+	:global(:root[data-contrast='3'] .row-title) {
+		font-weight: 500;
+	}
+	:global(:root[data-contrast='3'] .list) {
+		border-top: 2px solid var(--ink);
 	}
 
 	/* ─── Global base ────────────────────────────────────────────────────────── */

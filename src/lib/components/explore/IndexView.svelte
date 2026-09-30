@@ -45,6 +45,7 @@
 		groupRuns
 	} from '$lib/components/parliamentary/dossier-number';
 	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { stand, datum, GROUP_LABEL, GROUP_ORDER, type StandGroup } from '$lib/components/parliamentary/stand';
 	import Hemicycle from './Hemicycle.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
@@ -110,6 +111,9 @@
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
+	// Ontwerpstudie ronde 2: ?ontwerp=rij (nieuwe dossierrij) of groep (rij plus groepen naar stand).
+	const ontwerp = $derived(params.get('ontwerp') ?? '');
+	let openGroups = $state(new Set<StandGroup>(['ek', 'tk', 'ingediend']));
 	const q = $derived(params.get('q') ?? '');
 	// A dossier's phase and kind as the Kamer names them (API 0.52). A link from before names
 	// them the old way (`?stage=mvt`, `?track=wetsvoorstel`): read as the Kamer's word, or left
@@ -2125,6 +2129,9 @@
 												: 'dossiers'
 									)}
 								{:else}
+									{#if ontwerp === 'groep'}
+										{@render dossierGroups()}
+									{:else}
 									<ul class="list">
 										{#each dossierEntries as entry (entry.number + entry.rows[0].id)}
 											{#if entry.rows.length === 1}
@@ -2174,6 +2181,7 @@
 											{/if}
 										{/each}
 									</ul>
+									{/if}
 									{@render loadMoreButton(pages.dossiers, 'dossiers')}
 								{/if}
 							{:else if category === 'committees' && committeesShown}
@@ -2612,7 +2620,101 @@
 	</div>
 </div>
 
+{#snippet dossierGroups()}
+	{@const rows = (dossiersShown ?? []).map((d) => ({ d, st: stand(d) }))}
+	{#each GROUP_ORDER as g (g)}
+		{@const inGroup = rows.filter((r) => (r.st?.group ?? 'geen') === g)}
+		{#if inGroup.length}
+			{@const isOpen = openGroups.has(g)}
+			<section class="r2-group">
+				<button
+					type="button"
+					class="r2-group-head"
+					aria-expanded={isOpen}
+					onclick={() => {
+						const next = new Set(openGroups);
+						if (isOpen) next.delete(g);
+						else next.add(g);
+						openGroups = next;
+					}}
+				>
+					<span class="r2-group-name">{GROUP_LABEL[g]}</span>
+					<span class="r2-group-count">{inGroup.length}</span>
+					{#if g === 'geen'}
+						<span class="r2-group-note">brieven, moties en begrotingen zonder fase</span>
+					{/if}
+					<span class="r2-group-act">{isOpen ? 'Verberg' : 'Toon'}</span>
+				</button>
+				{#if isOpen}
+					<ul class="list">
+						{#each inGroup as r (r.d.id)}
+							{@render dossierRowR2(r.d, false)}
+						{/each}
+					</ul>
+				{/if}
+			</section>
+		{/if}
+	{/each}
+{/snippet}
+
 {#snippet dossierRow(d: DossierRow, member: boolean)}
+	{#if ontwerp}
+		{@render dossierRowR2(d, member)}
+	{:else}
+		{@render dossierRowNu(d, member)}
+	{/if}
+{/snippet}
+
+{#snippet dossierRowR2(d: DossierRow, member: boolean)}
+	{@const bron = `dossiers/${d.number}`}
+	{@const st = stand(d)}
+	{@const who = d.initiative ? 'Initiatief van Kamerleden' : d.ministry ? ministryName(d.ministry) : ''}
+	<IndexRow
+		{bron}
+		{member}
+		title={member && d.title ? chapterTitle(d.title) : (d.short_title ?? d.title ?? d.number)}
+		href={hrefOf(bron)}
+		open={openId === bron}
+		onToggle={() => toggleOpen(bron)}
+	>
+		{#snippet lead()}
+			<span class="row-id-main r2-num">{d.number}</span>
+			{#if d.kind && !member}
+				<span class="row-id-sub">{d.kind}</span>
+			{/if}
+		{/snippet}
+		{#snippet body()}
+			{#if st?.zin}
+				<span class="r2-zin">{st.zin}</span>
+			{/if}
+			<span class="row-sub"
+				>{who}{who && d.opened_on ? ', ' : ''}{#if d.opened_on}geopend {datum(d.opened_on)}{/if}</span
+			>
+		{/snippet}
+		{#snippet aside()}
+			{#if st}
+				<span
+					class="r2-stand"
+					aria-label="Stand: {st.bodies
+						.map(
+							(b) =>
+								`${b.name} ${b.state === 'done' ? 'klaar' : b.state === 'now' ? 'nu' : b.state === 'none' ? 'niet' : 'nog niet'}`
+						)
+						.join(', ')}"
+				>
+					{#each st.bodies as b (b.short)}
+						<span class="r2-body r2-body--{b.state}"><abbr title={b.name}>{b.short}</abbr></span>
+					{/each}
+				</span>
+			{/if}
+		{/snippet}
+		{#snippet detail()}
+			<IndexDetail category="dossiers" record={d} {bron} />
+		{/snippet}
+	</IndexRow>
+{/snippet}
+
+{#snippet dossierRowNu(d: DossierRow, member: boolean)}
 	{@const bron = `dossiers/${d.number}`}
 	<IndexRow
 		{bron}
@@ -3385,6 +3487,83 @@
 		overflow: hidden;
 	}
 	/* A bill's stages as a bar: passed in ink, the current one in the accent. */
+	/* Ontwerpstudie ronde 2 (prototype) */
+	.r2-num {
+		color: var(--ink);
+		font-weight: 500;
+		font-size: var(--t-meta);
+	}
+	.r2-zin {
+		display: block;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+		line-height: var(--lh-snug);
+		margin-top: var(--s-1);
+	}
+	.r2-stand {
+		display: inline-grid;
+		grid-template-columns: repeat(3, var(--s-7));
+		gap: var(--s-1);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+	}
+	.r2-body {
+		padding-top: var(--s-1);
+		border-top: 4px solid var(--rule);
+		color: var(--ink-3);
+		text-align: left;
+	}
+	.r2-body abbr {
+		text-decoration: none;
+	}
+	.r2-body--done {
+		border-top-color: var(--ink-2);
+		color: var(--ink-2);
+	}
+	.r2-body--now {
+		border-top-color: var(--ink);
+		color: var(--ink);
+		font-weight: 600;
+	}
+	.r2-body--none {
+		border-top-style: dotted;
+	}
+	.r2-group + .r2-group {
+		margin-top: var(--s-5);
+	}
+	.r2-group-head {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		width: 100%;
+		padding: var(--s-2);
+		border: 0;
+		border-bottom: 2px solid var(--ink);
+		background: transparent;
+		font-family: var(--font-sans);
+		text-align: left;
+		cursor: pointer;
+	}
+	.r2-group-name {
+		font-size: var(--t-body-2);
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.r2-group-count {
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+		font-variant-numeric: tabular-nums;
+	}
+	.r2-group-note {
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.r2-group-act {
+		margin-left: auto;
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
 	.stage-aside {
 		display: flex;
 		flex-direction: column;
