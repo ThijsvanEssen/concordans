@@ -191,7 +191,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	}),
 
 	// The judgments that cite an article, each at the overweging that does (API 0.5,
-	// `cited-by`). Before that: the citing judgments from the node, without a position.
+	// `cited-by`), counted as the API counts them: passages and judgments (`judgment_total`, 0.62).
+	// Before that: the citing judgments from the node, without a position.
 	// TODO(backend B8): the fallback goes when every article answers on `cited-by`.
 	'article-judgments': async ({ node, neighbors, totals, signal }) => {
 		const bwb = bwbOf(node);
@@ -232,12 +233,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					});
 				}
 				const rows = [...mentions.values()].map((of) => bundleMentions([...of.values()]));
-				const judgments = totals.get(bucketKey('REFERS_TO', 'judgments', 'inbound'));
-				return {
-					rows,
-					total: judgments ?? (data.items.length >= data.total ? rows.length : undefined),
-					mentions: data.total
-				};
+				return { rows, total: data.judgment_total, mentions: data.total };
 			}
 		}
 		return {
