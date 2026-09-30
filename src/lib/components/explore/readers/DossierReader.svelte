@@ -9,7 +9,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { getDossier, str } from '$lib/components/parliamentary/data';
-	import { OUTCOME_LABEL } from '$lib/components/parliamentary/stages';
+	import { OUTCOME_LABEL, openedOnBasis } from '$lib/components/parliamentary/stages';
 	import { formatLongDate } from './_shared';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
@@ -109,7 +109,9 @@
 				<div class="chips">
 					{#if d.kind}<span class="track-chip">{d.kind}</span>{/if}
 					{#if d.opened_on}
-						<span class="stage-chip">Geopend {formatLongDate(d.opened_on)}</span>
+						<span class="stage-chip" title={openedOnBasis(d.opened_on_basis)}
+							>Geopend {formatLongDate(d.opened_on)}</span
+						>
 					{/if}
 					{#if d.outcome}
 						<span class="stage-chip"

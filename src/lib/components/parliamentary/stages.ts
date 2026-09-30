@@ -105,3 +105,13 @@ export type StepState = 'done' | 'active' | 'open';
  */
 export const stepState = (phase: Phase, current: string | null | undefined): StepState =>
 	phase.name === current ? 'active' : phase.done ? 'done' : 'open';
+
+/** What a dossier's opening date is the date of (API 0.67), as its tooltip says it. */
+const OPENED_ON_BASIS: Record<string, string> = {
+	first_paper: 'Datum van nr. 1 van het dossier',
+	royal_message: 'Datum van de Koninklijke boodschap',
+	earliest_record: 'Datum van het eerste stuk of de eerste activiteit'
+};
+
+export const openedOnBasis = (basis: string | null | undefined): string | undefined =>
+	basis ? OPENED_ON_BASIS[basis] : undefined;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import openapi from '$lib/api/openapi.json';
 import {
+	openedOnBasis,
 	OUTCOME_LABEL,
 	PHASES,
 	PHASE_SHORT,
@@ -56,5 +57,13 @@ describe('old links', () => {
 		expect(phaseFromParam('mvt')).toBe('Memorie van toelichting');
 		expect(phaseFromParam('Stemmingen')).toBe('Stemmingen');
 		expect(phaseFromParam('behandeling')).toBeNull();
+	});
+});
+
+describe('openedOnBasis', () => {
+	it('says what the opening date is the date of, and nothing for none', () => {
+		expect(openedOnBasis('first_paper')).toBe('Datum van nr. 1 van het dossier');
+		expect(openedOnBasis('royal_message')).toBe('Datum van de Koninklijke boodschap');
+		expect(openedOnBasis(null)).toBeUndefined();
 	});
 });

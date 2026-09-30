@@ -6,7 +6,7 @@
 	// item carries.
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, isReadable } from '$lib/bron/href';
-	import { OUTCOME_LABEL } from '$lib/components/parliamentary/stages';
+	import { OUTCOME_LABEL, openedOnBasis } from '$lib/components/parliamentary/stages';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { collectionOf, type IndexCategory } from './categories';
@@ -259,7 +259,7 @@
 				<div class="tile-lbl">Kamerstuk</div>
 			</div>
 			{#if d.opened_on}
-				<div class="tile">
+				<div class="tile" title={openedOnBasis(d.opened_on_basis)}>
 					<div class="tile-num">{fmtDate(d.opened_on)}</div>
 					<div class="tile-lbl">Geopend</div>
 				</div>

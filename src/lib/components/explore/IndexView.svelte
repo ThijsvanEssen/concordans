@@ -35,6 +35,7 @@
 		dossierStatus,
 		OUTCOME_LABEL,
 		kindFromParam,
+		openedOnBasis,
 		phaseFromParam,
 		type Outcome
 	} from '$lib/components/parliamentary/stages';
@@ -2544,9 +2545,9 @@
 					: ''}
 			{#if who || d.opened_on}
 				<span class="row-sub"
-					>{who}{who && d.opened_on ? ' · ' : ''}{d.opened_on
-						? `geopend ${fmtDateShort(d.opened_on)}`
-						: ''}</span
+					>{who}{who && d.opened_on ? ' · ' : ''}{#if d.opened_on}<span
+							title={openedOnBasis(d.opened_on_basis)}>geopend {fmtDateShort(d.opened_on)}</span
+						>{/if}</span
 				>
 			{/if}
 		{/snippet}
