@@ -5,7 +5,8 @@ import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
 import { getCommittee, str } from '$lib/components/parliamentary/data';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
-import type { Collection } from '$lib/vocabulary';
+import { parseNodeId, type Collection } from '$lib/vocabulary';
+import { refOf } from '$lib/bron/href';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { getArticleDetail } from '$lib/api/articles';
@@ -591,12 +592,14 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		);
 		return {
 			total: found.total,
+			// An amending instrument is a publication (`instruments/stb_2026_94`), named by its
+			// display name: `Stb. 2026, 94`. Its identifier is its key, not a second name.
 			rows: found.items.map((d) => ({
-				ref: { collection: 'documents', key: d.key },
+				ref: refOf(parseNodeId(d.id)?.collection ?? 'instruments', d.key, {}),
 				title: d.display_name ?? d.identifier ?? d.key,
 				context: null,
 				kind: 'wetsvoorstellen' as const,
-				identifier: d.identifier ?? null,
+				identifier: d.identifier && d.identifier !== d.key ? d.identifier : null,
 				date: d.first_effective_date ?? null,
 				relation: 'AMENDS',
 				direction: 'inbound'
