@@ -194,7 +194,7 @@
 
 	<!-- Dossier: the phases of a bill -->
 	{#if d?.phases?.length}
-		<LegislativeStepper phases={d.phases} current={d.current_phase ?? null} />
+		<LegislativeStepper phases={d.phases} current={d.current_phase ?? null} ek={d.ek_outcome} />
 	{/if}
 
 	<!-- Stat tiles: only what the item carries; an empty field shows '—' -->

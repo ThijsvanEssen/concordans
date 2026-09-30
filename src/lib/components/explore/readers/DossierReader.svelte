@@ -126,6 +126,20 @@
 							: ''}
 					</p>
 				{/if}
+				{#if d.ek_outcome}
+					{@const ek = d.ek_outcome}
+					<!-- The Eerste Kamer's decision, from its own site: named with its source. -->
+					<p class="reading">
+						Eerste Kamer: {ek.outcome.toLowerCase()}{ek.date
+							? `, ${formatLongDate(ek.date)}`
+							: ''}{ek.method ? ` (${ek.method})` : ''}.
+					</p>
+					<p class="source">
+						Bron: <a href={ek.source_url} rel="external">{ek.attribution}</a>{ek.retrieved_on
+							? `, geraadpleegd op ${formatLongDate(ek.retrieved_on)}`
+							: ''}
+					</p>
+				{/if}
 				{#if readings.first.length > 0}
 					<p class="reading">
 						Tweede lezing van {@render dossierLinks(readings.first)}
@@ -140,7 +154,11 @@
 
 			{#if d.phases?.length}
 				<div class="stepper-wrap">
-					<LegislativeStepper phases={d.phases} current={d.current_phase ?? null} />
+					<LegislativeStepper
+						phases={d.phases}
+						current={d.current_phase ?? null}
+						ek={d.ek_outcome}
+					/>
 				</div>
 			{/if}
 
@@ -236,6 +254,22 @@
 	}
 	.reading :global(a:hover) {
 		text-decoration-color: currentColor;
+	}
+	/* Where the Eerste Kamer's outcome comes from: its site, named as its terms ask. */
+	.source {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.source a {
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-color: var(--rule);
+		text-underline-offset: 2px;
+	}
+	.source a:hover {
+		color: var(--accent);
 	}
 
 	.stepper-wrap {

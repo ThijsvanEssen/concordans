@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { uniqueBy } from '$lib/util/unique';
-	import { timelineKind } from './timeline-kind';
+	import { isEkDecision, timelineKind } from './timeline-kind';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import KindChipFilter from './KindChipFilter.svelte';
@@ -118,10 +118,12 @@
 						{@const against = tally['Tegen'] ?? 0}
 						{@const passed = body.passed ?? null}
 						{@const voted = !!body.vote_kind}
+						<!-- The Eerste Kamer votes too, but its site gives no seats: no tally is no hamerstuk. -->
+						{@const ek = isEkDecision(entry.node_id)}
 						{@const outcome =
 							passed === null
 								? null
-								: !voted && passed
+								: !voted && passed && !ek
 									? 'Zonder stemming aangenomen'
 									: passed
 										? 'Aangenomen'
@@ -155,7 +157,8 @@
 								{/if}
 								<!-- What was voted on (Wetgeving, Amendement, Motie), then the result. -->
 								<span class="decision-outcome">
-									{#if body.primary_case_kind}<span class="decision-kind"
+									{#if ek}<span class="decision-kind">Eerste Kamer</span
+										>{:else if body.primary_case_kind}<span class="decision-kind"
 											>{body.primary_case_kind}</span
 										>{/if}
 									{#if outcome}

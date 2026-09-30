@@ -8,6 +8,16 @@ describe('timelineKind', () => {
 	});
 	it('names a decision without a case kind a Stemming', () => {
 		expect(timelineKind({ kind: null, node_type: 'decision' })).toBe('Stemming');
+		expect(timelineKind({ kind: 'Stemming', node_type: 'decision' })).toBe('Stemming');
+	});
+	it('names a vote of the Eerste Kamer as such', () => {
+		expect(
+			timelineKind({
+				kind: 'Stemming',
+				node_type: 'decision',
+				node_id: 'decisions/ek_2026_09_29_36745_1'
+			})
+		).toBe('Stemming Eerste Kamer');
 	});
 	it('keeps the kind of an activity', () => {
 		expect(timelineKind({ kind: 'Procedurevergadering', node_type: 'activity' })).toBe(

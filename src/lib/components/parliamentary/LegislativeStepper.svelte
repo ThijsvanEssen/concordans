@@ -6,11 +6,26 @@
 	// an activity or a decision on the bill marks it, with the first date of that. A dossier
 	// can loop (amendments after a verslag), so the steps are lit by `done`, not by position,
 	// and a phase nothing marks stays open.
-	let { phases, current }: { phases: Phase[]; current: string | null } = $props();
+	// After them, where the Eerste Kamer has decided on the bill, its decision (from its own
+	// site): one more step, passed when adopted, marked in the accent when rejected.
+	let {
+		phases,
+		current,
+		ek = null
+	}: {
+		phases: Phase[];
+		current: string | null;
+		ek?: { outcome: 'Aangenomen' | 'Verworpen'; date?: string | null } | null;
+	} = $props();
 
 	const states = $derived(phases.map((p) => stepState(p, current)));
 	const reached = (i: number) => states[i] !== 'open';
 	const titleOf = (p: Phase) => (p.done && p.date ? `${p.name}, ${formatDate(p.date)}` : p.name);
+	const ekTitle = $derived(
+		ek
+			? `Eerste Kamer: ${ek.outcome.toLowerCase()}${ek.date ? `, ${formatDate(ek.date)}` : ''}`
+			: ''
+	);
 </script>
 
 <!-- Wide enough, a bar of short words; in a narrow column (the reader, a phone) a list of the
@@ -46,15 +61,39 @@
 						>{/if}</span
 				>
 				<span class="sr">{titleOf(step)}{done ? ', doorlopen' : ''}</span>
-				{#if i < phases.length - 1}
+				{#if i < phases.length - 1 || ek}
 					<span
 						class="step-connector"
 						aria-hidden="true"
-						class:step-connector--done={reached(i) && reached(i + 1)}
+						class:step-connector--done={reached(i) &&
+							(i < phases.length - 1 ? reached(i + 1) : !!ek)}
 					></span>
 				{/if}
 			</li>
 		{/each}
+		{#if ek}
+			{@const passed = ek.outcome === 'Aangenomen'}
+			<li class="step step--done" class:step--rejected={!passed} title={ekTitle}>
+				<span class="step-dot" aria-hidden="true">
+					<svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+						<path
+							d={passed ? 'M2 5l2.5 2.5L8 3' : 'M3 3l4 4M7 3l-4 4'}
+							stroke="currentColor"
+							stroke-width="1.5"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+					</svg>
+				</span>
+				<span class="step-label" aria-hidden="true">Eerste Kamer</span>
+				<span class="step-full" aria-hidden="true"
+					>Eerste Kamer, {ek.outcome.toLowerCase()}{#if ek.date}<span class="step-date"
+							>{formatDate(ek.date)}</span
+						>{/if}</span
+				>
+				<span class="sr">{ekTitle}</span>
+			</li>
+		{/if}
 	</ol>
 </div>
 
@@ -110,6 +149,15 @@
 	.step--done .step-dot {
 		background: var(--ink-2);
 		border-color: var(--ink-2);
+	}
+	/* Rejected by the Eerste Kamer: the one step in the accent. */
+	.step--rejected .step-dot {
+		background: var(--accent);
+		border-color: var(--accent);
+	}
+	.step--rejected .step-label,
+	.step--rejected .step-full {
+		color: var(--accent);
 	}
 
 	.step--active .step-dot {
