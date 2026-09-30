@@ -248,6 +248,12 @@
 				<div class="tile-id">{d.number}</div>
 				<div class="tile-lbl">Kamerstuk</div>
 			</div>
+			{#if d.opened_on}
+				<div class="tile">
+					<div class="tile-num">{fmtDate(d.opened_on)}</div>
+					<div class="tile-lbl">Geopend</div>
+				</div>
+			{/if}
 			{#if d.outcome}
 				<div class="tile">
 					<div class="tile-num">{OUTCOME_LABEL[d.outcome]}</div>

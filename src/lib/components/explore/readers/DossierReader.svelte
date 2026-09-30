@@ -108,6 +108,9 @@
 				<h2 class="title">{d.title ?? d.number}</h2>
 				<div class="chips">
 					{#if d.kind}<span class="track-chip">{d.kind}</span>{/if}
+					{#if d.opened_on}
+						<span class="stage-chip">Geopend {formatLongDate(d.opened_on)}</span>
+					{/if}
 					{#if d.outcome}
 						<span class="stage-chip"
 							>{OUTCOME_LABEL[d.outcome]}{d.closed_on
