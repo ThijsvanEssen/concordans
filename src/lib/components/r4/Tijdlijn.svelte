@@ -3,6 +3,7 @@
 	// kolom, een teken op een doorlopende lijn, dan de zin. Een besluit krijgt het vakje van
 	// Uitkomst (vorm en kleur); wat nog kan volgen staat gestippeld en zegt dat het kan volgen.
 	import { dagMaand, type TijdGroep } from './tijdlijn';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 
 	let {
 		groepen,
@@ -21,8 +22,8 @@
 						<span class="datum">{r.datum ? dagMaand(r.datum) : ''}{#if jaar && r.datum}<span class="j"> {r.datum.slice(0, 4)}</span>{/if}</span>
 						<span class="teken" aria-hidden="true"></span>
 						<span class="tekst">
-							{#if r.label}<span class="label">{r.label}</span>{/if}
-							{#if r.href}<a href={r.href} class="zin">{r.zin}</a>{:else}<span class="zin">{r.zin}</span>{/if}
+							{#if r.label}<span class="label">{#if r.soort}<KindGlyph collection={r.soort} size={11} />{/if}{r.label}</span>{/if}
+							{#if r.href}<a href={r.href} class="zin">{#if r.soort && !r.label}<KindGlyph collection={r.soort} size={11} />{/if}{r.zin}</a>{:else}<span class="zin">{#if r.soort && !r.label}<KindGlyph collection={r.soort} size={11} />{/if}{r.zin}</span>{/if}
 							{#if r.meta}<span class="meta">{r.meta}</span>{/if}
 						</span>
 					</li>
@@ -142,6 +143,9 @@
 		min-width: 0;
 	}
 	.label {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -152,6 +156,10 @@
 	}
 	.regel--nee .label {
 		color: var(--uitkomst-nee, #8c2f28);
+	}
+	.zin :global(.kind-glyph) {
+		margin-right: var(--s-2);
+		vertical-align: 0;
 	}
 	.zin {
 		font-family: var(--font-serif);

@@ -5,6 +5,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { stand, datum } from './stand';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 
 	let { memberKey, ruim = false }: { memberKey: string; ruim?: boolean } = $props();
 
@@ -46,7 +47,7 @@
 
 {#if commitments && commitments.total > 0}
 	<section class="ov" class:ruim id="toezeggingen">
-		<h3 class="t">Toezeggingen</h3>
+		<h3 class="t"><KindGlyph collection="commitments" size={14} />Toezeggingen</h3>
 		<p class="zin">
 			<a href={href()}>{commitments.total} toezeggingen</a>:
 			{#each statusCounts as s, i (s.value)}{#if i > 0}{i === statusCounts.length - 1 ? ' en ' : ', '}{/if}<a
@@ -76,7 +77,7 @@
 
 {#if dossiers && dossiers.total > 0}
 	<section class="ov" class:ruim id="dossiers">
-		<h3 class="t">Dossiers</h3>
+		<h3 class="t"><KindGlyph collection="dossiers" size={14} />Dossiers</h3>
 		<p class="zin">{dossiers.total} dossiers met stukken die deze bewindspersoon ondertekende.</p>
 		<ol class="items">
 			{#each dossiers.items as d (d.key)}
@@ -101,6 +102,9 @@
 		border-top: 2px solid var(--ink);
 	}
 	.t {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);

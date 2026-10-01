@@ -30,13 +30,14 @@
 			const out: TijdRegel[] = [];
 			for (const f of det?.phases ?? []) {
 				const k = f.kind ?? '';
-				out.push({ id: `f-${k}-${f.from_date}`, datum: f.from_date ?? null, teken: 'activiteit', label: FASE[k] ?? k, zin: f.label ?? FASE[k] ?? k });
+				out.push({ id: `f-${k}-${f.from_date}`, datum: f.from_date ?? null, teken: 'activiteit', soort: 'cabinets', label: FASE[k] ?? k, zin: f.label ?? FASE[k] ?? k });
 			}
 			for (const t of c?.items ?? [])
 				out.push({
 					id: t.key,
 					datum: t.date ?? null,
 					teken: t.status === 'Afgedaan' ? 'ja' : t.status === 'Vervallen' ? 'nee' : 'open',
+					soort: 'commitments',
 					label: `Toezegging van ${(t.minister_name ?? '').replace(/,.*$/, '')}, ${(t.status ?? '').toLowerCase()}`,
 					zin: t.text ?? '',
 					href: bronHref(`commitments/${t.key}`, { keepMode: false, mode: 'read' })

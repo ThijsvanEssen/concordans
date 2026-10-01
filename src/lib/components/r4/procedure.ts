@@ -78,6 +78,7 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 				id: e.node_id,
 				datum: e.date,
 				teken: passed ? 'ja' : 'nee',
+				soort: 'decisions',
 				label: groep === 'ek' ? 'Stemming Eerste Kamer' : 'Stemming Tweede Kamer',
 				zin: `${passed ? 'Aangenomen' : 'Verworpen'}${how}`,
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
@@ -89,6 +90,7 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 				id: e.node_id,
 				datum: e.date,
 				teken: 'activiteit',
+				soort: 'activities',
 				label: null,
 				zin: typeof b.agenda_title === 'string' ? b.agenda_title : (e.kind ?? ''),
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' })
@@ -110,6 +112,7 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 			id: `d-${groep}-${day}`,
 			datum: day,
 			teken: 'stuk',
+			soort: 'documents',
 			label: null,
 			zin: zin.charAt(0).toUpperCase() + zin.slice(1),
 			meta:

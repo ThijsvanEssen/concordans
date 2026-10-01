@@ -4,6 +4,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { api, unwrap } from '$lib/api/client';
 	import { indexHref } from '$lib/bron/href';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { datum } from '$lib/components/parliamentary/stand';
 
 	let { m }: { m: Schema<'MemberDetailDTO'> } = $props();
@@ -29,7 +30,7 @@
 </script>
 
 <header class="kop">
-	<span class="soort">Bewindspersoon{partij ? ` · ${partij}` : ''}</span>
+	<span class="soort"><KindGlyph collection="members" />Bewindspersoon{partij ? ` · ${partij}` : ''}</span>
 	<h2 class="naam">{m.name ?? m.key}</h2>
 	{#if laatst}
 		<p class="zin">
@@ -63,6 +64,9 @@
 		gap: var(--s-2);
 	}
 	.soort {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;

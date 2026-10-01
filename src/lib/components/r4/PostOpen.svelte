@@ -55,6 +55,7 @@
 						id: t.key,
 						datum: t.date ?? null,
 						teken: t.status === 'Afgedaan' ? 'ja' : t.status === 'Vervallen' ? 'nee' : 'open',
+						soort: 'commitments',
 						label: `Toezegging, ${(t.status ?? '').toLowerCase()}`,
 						zin: t.text ?? '',
 						href: bronHref(`commitments/${t.key}`, { keepMode: false, mode: 'read' })
@@ -72,6 +73,7 @@
 						id: x.id,
 						datum: String(x.props?.date),
 						teken: 'stuk',
+						soort: (x.id.split('/')[0] as import('$lib/vocabulary').Collection) ?? 'documents',
 						label: 'Ondertekend',
 						zin: x.display_name ?? x.id,
 						href: bronHref(x.id, { keepMode: false, mode: 'read' })
