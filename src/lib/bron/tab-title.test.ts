@@ -25,6 +25,19 @@ describe('tabTitle', () => {
 		);
 	});
 
+	it('names a translation as such: it shares the date and name of its original', () => {
+		const props = {
+			ecli: 'ECLI:NL:HR:2019:2007',
+			date: '2019-12-20',
+			court: 'Hoge Raad',
+			names: ['Urgenda'],
+			translation_of: 'ECLI:NL:HR:2019:2006'
+		};
+		expect(tabTitle(node('judgments', 'x', null, props))).toBe(
+			'HR 20 december 2019 (Urgenda), vertaling'
+		);
+	});
+
 	it('names a conclusion by its A-G, as it is cited', () => {
 		const props = {
 			ecli: 'ECLI:NL:PHR:2019:887',

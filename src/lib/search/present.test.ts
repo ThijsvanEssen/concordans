@@ -95,6 +95,47 @@ describe('presentHit', () => {
 	});
 });
 
+describe('two judgments of one name', () => {
+	const urgenda = (key: string, ecli: string, name: string) =>
+		hit({
+			collection: 'judgments',
+			key,
+			display_name: name,
+			extra: { ecli, names: ['Urgenda'] }
+		});
+
+	it('tells the translation from the original by the name the court gives it', () => {
+		expect(
+			presentHit(urgenda('a', 'ECLI:NL:HR:2019:2006', 'Hoge Raad 2019-12-20 / 19/00135'), '').title
+		).toBe('HR 20 december 2019 (Urgenda)');
+		expect(
+			presentHit(
+				urgenda('b', 'ECLI:NL:HR:2019:2007', 'Hoge Raad 2019-12-20 / 19/00135 (Engels)'),
+				''
+			).title
+		).toBe('HR 20 december 2019 (Urgenda), Engelse vertaling');
+		expect(
+			presentHit(
+				urgenda(
+					'c',
+					'ECLI:NL:RBDHA:2015:7196',
+					'Rechtbank Den Haag 2015-06-24 / C/09/456689 / HA ZA 13-1396 (English translation)'
+				),
+				''
+			).title
+		).toBe('Rb. Den Haag 24 juni 2015 (Urgenda), Engelse vertaling');
+	});
+
+	it('gives a judgment that is only cited the year of its ECLI', () => {
+		const lindenbaum = hit({
+			collection: 'judgments',
+			key: 'ecli_nl_hr_1919_ag1776',
+			extra: { ecli: 'ECLI:NL:HR:1919:AG1776', names: ['Lindenbaum/Cohen'] }
+		});
+		expect(presentHit(lindenbaum, '').title).toBe('HR 1919 (Lindenbaum/Cohen)');
+	});
+});
+
 describe('the Kamer of a hit', () => {
 	it("marks a stuk with its Kamer: the Eerste Kamer's are keyed ek_", () => {
 		expect(chamberOfHit(stuk('ek_kst_1269940', 'Brief'))).toBe('EK');
