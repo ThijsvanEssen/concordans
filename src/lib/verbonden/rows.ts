@@ -5,7 +5,7 @@
 import { korteDatum, langeDatum } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
-import { withBook } from '$lib/text/bw';
+import { articleTitle } from '$lib/text/bw';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
 
@@ -191,7 +191,7 @@ export function describe(
 			};
 		// An article of the BW by its book: "Artikel 6:162 BW".
 		case 'articles':
-			return { title: withBook(name), context: null };
+			return { title: articleTitle(name, props), context: null };
 		default:
 			return { title: text(displayName) ?? UNNAMED, context: null };
 	}

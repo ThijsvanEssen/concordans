@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { articleName, bookNumber, withBook } from './bw';
+import { articleName, articleTitle, bookNumber, withBook } from './bw';
 
 describe('BW article numbers', () => {
 	it('puts the book before the number of a BW article', () => {
@@ -35,5 +35,30 @@ describe('articleName', () => {
 	});
 	it('names an article without a number by its label', () => {
 		expect(articleName('BWBR0005537', null, 'Algemene bepaling')).toBe('Algemene bepaling');
+	});
+});
+
+describe('articleTitle', () => {
+	it('names an article by the abbreviation of its law', () => {
+		const evrm = { instrument_abbreviation: 'EVRM', article_number: '8' };
+		expect(articleTitle('Artikel 8 Verdrag tot bescherming van de rechten van de mens', evrm)).toBe(
+			'Artikel 8 EVRM'
+		);
+		expect(
+			articleTitle('Artikel 3:4 Algemene wet bestuursrecht', {
+				instrument_abbreviation: 'Awb',
+				article_number: '3:4'
+			})
+		).toBe('Artikel 3:4 Awb');
+	});
+
+	it('keeps the book of a BW article and the name where there is no abbreviation', () => {
+		expect(
+			articleTitle('Artikel 162 Burgerlijk Wetboek Boek 6', {
+				instrument_abbreviation: 'BW6',
+				article_number: '162'
+			})
+		).toBe('Artikel 6:162 BW');
+		expect(articleTitle('Artikel 1 Wet X', { article_number: '1' })).toBe('Artikel 1 Wet X');
 	});
 });

@@ -3,7 +3,7 @@
 // short title, a BW article by its book, anything else by its name cut at a word.
 import { shortDossierTitle, type GraphNode } from '$lib/graph/types';
 import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
-import { withBook } from '$lib/text/bw';
+import { articleTitle } from '$lib/text/bw';
 
 const MAX = 80;
 
@@ -49,5 +49,5 @@ export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>):
 		if (subject) return cut(`Tweede Kamer: ${shortDossierTitle(subject) ?? subject}`);
 	}
 	const name = text(node.raw?.display_name);
-	return cut(name ? withBook(name) : node.label);
+	return cut(name ? articleTitle(name, node.collection === 'articles' ? props : null) : node.label);
 }

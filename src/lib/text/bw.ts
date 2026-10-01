@@ -54,3 +54,26 @@ export function withBook(name: string): string {
 			`Artikel ${number.includes(':') ? number : `${book.toUpperCase()}:${number}`} BW`
 	);
 }
+
+/**
+ * An article by the abbreviation its law is cited by (API 0.73, `instrument_abbreviation`):
+ * "Artikel 8 EVRM", "Artikel 3:4 Awb", "Artikel 6 AVG"; a BW article by its book
+ * ("Artikel 6:162 BW", not "BW6"). Without one, the name the API gives.
+ */
+export function articleTitle(
+	name: string,
+	props: Record<string, unknown> | null | undefined
+): string {
+	const abbreviation = props?.instrument_abbreviation;
+	const number = props?.article_number;
+	if (
+		typeof abbreviation === 'string' &&
+		abbreviation.trim() &&
+		!/^BW\d/i.test(abbreviation) &&
+		typeof number === 'string' &&
+		number.trim() &&
+		!/\s/.test(number.trim())
+	)
+		return `Artikel ${number.trim()} ${abbreviation.trim()}`;
+	return withBook(name);
+}
