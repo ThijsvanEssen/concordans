@@ -42,6 +42,7 @@
 		type Row
 	} from './rows';
 	import type { VerbondenState } from './source';
+	import { groupRequest } from './open-group';
 	import {
 		GROUPINGS,
 		allRows,
@@ -102,6 +103,26 @@
 
 	let onCanvas = $state(new Set<string>());
 	$effect(() => store.nodes.subscribe((ns) => (onCanvas = new Set(ns.map((n) => n.id)))));
+
+	// "Bekijk in Verbonden" on a cluster bron: the group with most bronnen of its kind,
+	// opened and in view.
+	let root = $state<HTMLElement | null>(null);
+	$effect(() =>
+		groupRequest.subscribe((r) => {
+			if (!r) return;
+			const count = (g: (typeof shown)[number]) =>
+				g.rows.filter((row) => row.ref.collection === r.collection).length;
+			const best = [...shown].sort((a, b) => count(b) - count(a))[0];
+			groupRequest.set(null);
+			if (!best || count(best) === 0) return;
+			expanded = new Set([...expanded, best.id]);
+			requestAnimationFrame(() =>
+				root
+					?.querySelector(`[data-group="${CSS.escape(best.id)}"]`)
+					?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+			);
+		})
+	);
 
 	// A new bron starts closed.
 	$effect(() => {
@@ -193,7 +214,7 @@
 
 <svelte:window onkeydown={onKey} />
 
-<aside class="verbonden" aria-label="Verbonden">
+<aside class="verbonden" aria-label="Verbonden" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
 		{#if verbonden.groups.length > 0}
@@ -287,7 +308,7 @@
 			{#if g.section && g.section !== shown[i - 1]?.section}
 				<h3 class="section">{g.section}</h3>
 			{/if}
-			<section class="group">
+			<section class="group" data-group={g.id}>
 				<div class="group__head">
 					<h3 class="group__label">{g.label}</h3>
 					<span class="group__count">{countLabel(g)}</span>

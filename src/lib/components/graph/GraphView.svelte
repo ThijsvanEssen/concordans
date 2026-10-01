@@ -12,7 +12,10 @@
 	import type { Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
-	import { isVersionCollection } from '$lib/graph/types';
+	import { isVersionCollection, kindOfCollection } from '$lib/graph/types';
+	import { clusterLabel, clustersOf, isClusterId, type Cluster } from '$lib/netwerk/cluster';
+	import { openGroup } from '$lib/verbonden/open-group';
+	import { bronPlural } from '$lib/vocabulary';
 	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
@@ -326,6 +329,8 @@
 
 	// Elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
 	// (dossier, fractie, commissie) een stap groter.
+	/** A cluster bron stands for forty or more: a step larger than a group. */
+	const CLUSTER_SIZE = 12;
 	const NODE_SIZE: Record<GraphNodeKind, number> = {
 		article: 8,
 		instrument: 8,
@@ -430,7 +435,8 @@
 	}
 
 	// Node label: one name per bron (bron/naam.ts), as in the netwerk panel.
-	const nodeLabel = (n: GraphNode) => bronNaam(n, $instrumentMetaStore);
+	const nodeLabel = (n: GraphNode) =>
+		isClusterId(n.id) ? n.label : bronNaam(n, $instrumentMetaStore);
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
@@ -440,7 +446,124 @@
 	const isCanvasNode = (n: GraphNode) =>
 		(n.anchor || !isContainerKind(n.kind)) && !isVersionCollection(n.collection);
 
-	function syncNodes(nodes: GraphNode[]) {
+	// ── clusters ────────────────────────────────────────────────────────────────
+	// What the store holds goes to the canvas through the clusters ($lib/netwerk/cluster):
+	// past forty loose bronnen of one kind around the focus, one cluster bron stands for
+	// them. Shown in full (`expanded`) until the reader folds them again or the focus moves.
+	let rawNodes: GraphNode[] = [];
+	let rawEdges: GraphEdge[] = [];
+	let clusters = $state<Cluster[]>([]);
+	const clusterById = new Map<string, Cluster>();
+	let expanded = $state<ReadonlySet<string>>(new Set());
+	/** Kinds shown in full that would fold: their count, for the button that folds them. */
+	let foldable = $state<Cluster[]>([]);
+	let clusteredFor: string | null = null;
+	let clusterCard = $state<{ cluster: Cluster; x: number; y: number } | null>(null);
+	let lastPointer: { x: number; y: number } | null = null;
+
+	let rawChanged = false;
+	let drawnClusters = '';
+	const syncNodes = (nodes: GraphNode[]) => {
+		rawNodes = nodes;
+		rawChanged = true;
+		redraw();
+	};
+	const syncEdges = (edges: GraphEdge[]) => {
+		rawEdges = edges;
+		rawChanged = true;
+		redraw();
+	};
+
+	/** Draw what the store holds, through the clusters; only when that or they changed. */
+	function redraw() {
+		const focus = selection && !isContainerKind(selection.kind) ? selection.id : null;
+		if (focus !== clusteredFor) {
+			clusteredFor = focus;
+			expanded = new Set();
+			clusterCard = null;
+		}
+		const keep = new Set<string>([...pinnedIds, ...(coreIds ?? [])]);
+		for (const group of containerGroups.values()) for (const id of group.members) keep.add(id);
+		const canvasNodes = rawNodes.filter(isCanvasNode);
+		const edges = rawEdges.filter((e) => e.relation !== 'VERSION_OF');
+		clusters = clustersOf(canvasNodes, edges, focus, keep, expanded);
+		foldable =
+			expanded.size > 0
+				? clustersOf(canvasNodes, edges, focus, keep, new Set()).filter((c) => expanded.has(c.id))
+				: [];
+		const signature = clusters.map((c) => `${c.id}:${c.members.length}`).join(',');
+		if (!rawChanged && signature === drawnClusters) {
+			applyFilters();
+			return;
+		}
+		rawChanged = false;
+		drawnClusters = signature;
+		clusterById.clear();
+		const folded = new Set<string>();
+		for (const c of clusters) {
+			clusterById.set(c.id, c);
+			for (const id of c.members) folded.add(id);
+		}
+		drawNodes([
+			...rawNodes.filter((n) => !folded.has(n.id)),
+			...clusters.map((c) => clusterNode(c))
+		]);
+		drawEdges([
+			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
+			...clusters.flatMap((c) => (focus ? [clusterEdge(c, focus)] : []))
+		]);
+	}
+
+	const clusterNode = (c: Cluster): GraphNode =>
+		({
+			id: c.id,
+			collection: c.collection,
+			key: c.id,
+			kind: kindOfCollection(c.collection),
+			label: clusterLabel(c),
+			size: CLUSTER_SIZE
+		}) as GraphNode;
+
+	const clusterEdge = (c: Cluster, focus: string): GraphEdge => ({
+		id: `${c.id}~${focus}`,
+		source: c.toFocus ? c.id : focus,
+		target: c.toFocus ? focus : c.id,
+		relation: c.relation as Relation,
+		label: '',
+		directed: true
+	});
+
+	function showCluster(c: Cluster) {
+		expanded = new Set([...expanded, c.id]);
+		clusterCard = null;
+		redraw();
+	}
+
+	function foldCluster(c: Cluster) {
+		const next = new Set(expanded);
+		next.delete(c.id);
+		expanded = next;
+		redraw();
+	}
+
+	/** One click on a cluster: its card beside it, as a row opens in place. */
+	function openCluster(id: string) {
+		const c = clusterById.get(id);
+		if (!c) return;
+		const at = lastPointer ?? { x: CARD_GAP, y: CARD_GAP };
+		const w = canvasWrap?.clientWidth ?? CARD_W;
+		const x = at.x + CARD_GAP + CARD_W < w ? at.x + CARD_GAP : Math.max(8, w - CARD_W - 8);
+		clusterCard = { cluster: c, x, y: Math.max(8, at.y - CARD_GAP) };
+	}
+	const CARD_W = 280;
+	const CARD_GAP = 16;
+
+	function closeClusterCard(e: PointerEvent) {
+		if (clusterCard && !(e.target as HTMLElement | null)?.closest?.('.cluster-kaart'))
+			clusterCard = null;
+	}
+
+	function drawNodes(nodes: GraphNode[]) {
 		const camKey = compact ? 'compact' : 'full';
 		const newIds = new Set(nodes.map((n) => n.id));
 		const prev = _camNodeIds[camKey];
@@ -503,6 +626,8 @@
 			const rawSize = nodeSize(n.id);
 			const attrs: Record<string, unknown> = {
 				label: nodeLabel(n),
+				cluster: isClusterId(n.id),
+				forceLabel: isClusterId(n.id),
 				color: useImage ? 'rgba(0,0,0,0)' : color,
 				borderColor,
 				kind: n.kind,
@@ -722,7 +847,7 @@
 		if (disks.length > 0) canvas?.refresh();
 	}
 
-	function syncEdges(allEdges: GraphEdge[]) {
+	function drawEdges(allEdges: GraphEdge[]) {
 		// VERSION_OF links an article's own versions across time: real, but not a
 		// network relation — the reader's own version nav uses it directly, not this
 		// canvas, so it never becomes an edge here.
@@ -760,7 +885,8 @@
 
 	// The hover panel opens only after the pointer rests on a node for 400 ms.
 	function handleNodeHover(nodeId: string, vx?: number, vy?: number) {
-		if (compact) return;
+		if (vx !== undefined && vy !== undefined) lastPointer = { x: vx, y: vy };
+		if (compact || isClusterId(nodeId)) return;
 		// De kaart staat naast de bron, niet los in een hoek.
 		if (vx !== undefined && vy !== undefined && canvasWrap) {
 			const W = 360,
@@ -813,15 +939,15 @@
 			store.edges.subscribe(syncEdges),
 			store.selection.subscribe((n) => {
 				selection = n;
-				applyFilters();
+				redraw();
 			}),
 			store.pinned.subscribe((s) => {
 				pinnedIds = new Set(s);
-				applyFilters();
+				redraw();
 			}),
 			store.core.subscribe((c) => {
 				coreIds = c;
-				applyFilters();
+				redraw();
 			}),
 			store.filters.subscribe((f) => {
 				filters = f;
@@ -829,6 +955,7 @@
 			}),
 			containerMembershipStore.subscribe((groups) => {
 				containerGroups = groups;
+				redraw();
 				syncContainerAnchors();
 			})
 		];
@@ -849,6 +976,10 @@
 		if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 		const el = e.target as HTMLElement | null;
 		if (el?.closest?.('input, select, textarea, [contenteditable]')) return;
+		if (e.key === 'Escape' && clusterCard) {
+			clusterCard = null;
+			return;
+		}
 		if (e.key === 'Escape') {
 			onClear?.();
 			return;
@@ -922,7 +1053,7 @@
 	});
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} onpointerdown={closeClusterCard} />
 
 {#snippet sidebar()}
 	<GraphSidebar
@@ -955,6 +1086,7 @@
 			isChosen={(id) => pinnedIds.has(id)}
 			onFocusNode={onKeyNode}
 			{onToggleChosen}
+			onOpenCluster={(n) => openCluster(n.id)}
 		/>
 		<!-- The canvas takes the focus so that ← and → act on it, and only then. -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -1015,10 +1147,12 @@
 				mutatieActive={overlay.kind === 'open' || overlay.kind === 'dossier'}
 				externalHoveredId={hoverNode?.id ?? null}
 				onNodeClick={(id) => {
+					if (isClusterId(id)) return openCluster(id);
 					const n = lookup.get(id);
 					if (n) onNodeClick?.(n);
 				}}
 				onNodeDoubleClick={(id) => {
+					if (isClusterId(id)) return;
 					const n = lookup.get(id);
 					if (n) onNodeDoubleClick?.(n);
 				}}
@@ -1044,6 +1178,43 @@
 					_cam[compact ? 'compact' : 'full'] = state;
 				}}
 			/>
+
+			{#if clusterCard}
+				{@const c = clusterCard.cluster}
+				<div
+					class="cluster-kaart"
+					role="dialog"
+					aria-label={clusterLabel(c)}
+					style="left:{clusterCard.x}px; top:{clusterCard.y}px"
+				>
+					<p class="cluster-naam">
+						<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
+					</p>
+					<p class="cluster-zin">Alleen met deze bron verbonden.</p>
+					<div class="cluster-knoppen">
+						<button type="button" class="act act--pri" onclick={() => showCluster(c)}
+							>Toon alle {c.members.length.toLocaleString('nl-NL')} in het netwerk</button
+						>
+						<button
+							type="button"
+							class="act"
+							onclick={() => {
+								openGroup(c.collection);
+								clusterCard = null;
+							}}>Bekijk in Verbonden</button
+						>
+					</div>
+				</div>
+			{/if}
+			{#if foldable.length > 0}
+				<div class="vouw">
+					{#each foldable as c (c.id)}
+						<button type="button" class="act" onclick={() => foldCluster(c)}
+							><KindGlyph collection={c.collection} size={12} />{bronPlural(c.collection)} samenvouwen</button
+						>
+					{/each}
+				</div>
+			{/if}
 
 			<!-- De legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
 			     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
@@ -1192,6 +1363,71 @@
 	}
 
 	/* De legenda links boven, een kaart zoals het netwerkpaneel rechts boven. */
+	/* A cluster bron's card: beside it, as an opened row (RowOpen) in its buttons. */
+	.cluster-kaart {
+		position: absolute;
+		z-index: var(--z-float);
+		width: 280px;
+		padding: var(--s-3);
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-pop);
+	}
+	.cluster-naam {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		color: var(--ink);
+	}
+	.cluster-zin {
+		margin: var(--s-1) 0 0;
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.cluster-knoppen,
+	.vouw {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-2);
+	}
+	.cluster-knoppen {
+		margin-top: var(--s-3);
+	}
+	.vouw {
+		position: absolute;
+		bottom: var(--s-3);
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: var(--z-float);
+		white-space: nowrap;
+	}
+	.act {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		padding: var(--s-1) var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font: inherit;
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.act:hover {
+		border-color: var(--ink);
+	}
+	.act--pri {
+		background: var(--ink);
+		border-color: var(--ink);
+		color: var(--paper);
+	}
+
 	.legenda {
 		position: absolute;
 		top: var(--s-3);
