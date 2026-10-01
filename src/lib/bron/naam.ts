@@ -3,6 +3,9 @@
 import type { InstrumentMeta } from '$lib/api/instrument-cache';
 import { lawIdOf, type GraphNode } from '$lib/graph/types';
 import { describe, UNNAMED } from '$lib/verbonden/rows';
+import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
+import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
+import { langeDatum } from '$lib/text/datum';
 
 export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	const p = n.raw?.props ?? undefined;
@@ -24,4 +27,26 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	const bwb = lawIdOf(p);
 	const shortTitle = bwb ? meta.get(bwb)?.shortTitle : null;
 	return shortTitle ? `${n.label} ${shortTitle}` : n.label;
+}
+
+/**
+ * A vote as the dossier's procedure names it, with its day and what was decided:
+ * "Stemming Tweede Kamer, aangenomen, 29 september 2026: Wijziging van de Wet …". The
+ * API's own name ("Wetgeving 2025Z15911: …") carries the Kamer's zaak number instead.
+ */
+export function stemmingNaam(n: Pick<GraphNode, 'id' | 'label' | 'raw'>): string {
+	const p = n.raw?.props ?? {};
+	const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+	const kamer = isEkDecision(n.id) || p['chamber'] === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer';
+	const uitslag = decisionOutcome({
+		kind: text(p['kind']),
+		decision_kind: text(p['decision_kind']),
+		passed: typeof p['passed'] === 'boolean' ? p['passed'] : null
+	});
+	const datum = text(p['date']);
+	const kop = [`Stemming ${kamer}`, uitslag?.toLowerCase(), datum ? langeDatum(datum) : null]
+		.filter(Boolean)
+		.join(', ');
+	const over = text(p['subject']) ?? text(p['title']);
+	return over ? `${kop}: ${over}` : kop;
 }

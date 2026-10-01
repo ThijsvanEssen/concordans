@@ -8,6 +8,7 @@
 	import { bronLabel, isCollection } from '$lib/vocabulary';
 	import { moveIndex } from './canvas-keys';
 	import { withBook } from '$lib/text/bw';
+	import { stemmingNaam } from '$lib/bron/naam';
 
 	let {
 		nodes,
@@ -33,8 +34,9 @@
 	});
 
 	const kindOf = (n: GraphNode) => (isCollection(n.collection) ? bronLabel(n.collection) : '');
-	/** The full name, where the canvas shows a short one (`2011-07 · Memorie`); a BW article as cited (Artikel 6:162 BW). */
-	const nameOf = (n: GraphNode) => withBook(n.raw?.display_name ?? n.label);
+	/** The full name, where the canvas shows a short one (`2011-07 · Memorie`); a BW article as cited (Artikel 6:162 BW); a vote as the dossier's text names it. */
+	const nameOf = (n: GraphNode) =>
+		n.collection === 'decisions' ? stemmingNaam(n) : withBook(n.raw?.display_name ?? n.label);
 
 	function focusAt(i: number) {
 		active = i;
