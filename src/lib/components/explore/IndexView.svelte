@@ -1853,7 +1853,7 @@
 							{/each}
 						</div>
 					{/if}
-					{#if composition}
+					{#if composition && category !== 'factions'}
 						<p class="composition">
 							Samenstelling op {formatLongDate(composition.composition_date ?? null)}, gegevens
 							sinds {formatLongDate(composition.data_since ?? null)}. Bron:
@@ -1875,6 +1875,12 @@
 								{/if}
 								<ZaalLegenda
 									data={seats}
+									peil={seats.chamber === 'EK'
+										? `Eerste Kamer, samenstelling op ${formatLongDate(composition?.composition_date ?? seats.as_of ?? null)}`
+										: `Tweede Kamer, stand op ${formatLongDate(seats.as_of ?? null)}`}
+									bron={seats.chamber === 'EK'
+										? composition ? { label: composition.attribution ?? 'eerstekamer.nl', href: composition.url ?? '' } : null
+										: seats.seating_plan ? { label: seats.seating_plan.title ?? 'Zetelverdeling', href: seats.seating_plan.page ?? seats.seating_plan.url ?? '' } : null}
 									plaatsen={seats.chamber === 'EK'
 										? ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie']
 										: ['Voorzitter', 'Griffier', 'Kabinet (vak-K)', 'Verslag en redactie', 'Spreekgestoelte']}
@@ -3478,12 +3484,9 @@
 	}
 
 	/* ── Hemicycle card (factions only) ──────────────────────────────── */
+	/* Ronde 4: de zaal zonder kader of vlak. */
 	.hemi-card {
-		margin-bottom: 28px;
-		padding: 22px 28px;
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		border-radius: var(--r-2);
+		margin-bottom: var(--s-6);
 	}
 	.hemi-svg-wrap :global(.hemicycle) {
 		background: transparent;

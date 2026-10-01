@@ -140,7 +140,7 @@
 	let hovered = $state<SeatFaction | null>(null);
 </script>
 
-<figure class="hemicycle" aria-label="Zetelverdeling {kamer}">
+<figure class="hemicycle" class:kaal={meubels} aria-label="Zetelverdeling {kamer}">
 	<svg viewBox="0 0 {VIEW_W} {VIEW_H}">
 		<!-- Sectoren eerst (onder de stoelen) zodat ze de pointer-events
          opvangen zonder over de stoelen te tekenen. -->
@@ -197,7 +197,7 @@
 			<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
 				voor · {voteTotals.tegen} tegen
 			</text>
-		{:else}
+		{:else if !meubels}
 			<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">
 				{data.assigned_seats}
 			</text>
@@ -229,6 +229,7 @@
 			<li>{f.abbreviation ?? f.key}, {f.name ?? ''}, {seatCount(f.seats)}</li>
 		{/each}
 	</ul>
+	{#if !meubels}
 	<figcaption class="hemicycle-caption">
 		<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
 		{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {formatLongDate(
@@ -245,6 +246,7 @@
 			>
 		{/if}
 	</figcaption>
+	{/if}
 </figure>
 
 <style>
@@ -258,6 +260,12 @@
 	.nr-t {
 		font: 600 var(--t-glyph) var(--font-sans);
 		fill: var(--paper);
+	}
+	/* Ronde 4: zonder kader en vlak, zoals de zaal van de Eerste Kamer. */
+	.hemicycle.kaal {
+		padding: 0;
+		border: 0;
+		background: transparent;
 	}
 	.hemicycle {
 		/* `flex: 1` only has effect inside a flex parent; elsewhere the figure is a block. */
