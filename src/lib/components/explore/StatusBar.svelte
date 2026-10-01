@@ -84,7 +84,11 @@
 			add(bronLabel('committees'), kindHref('committees'));
 			add(textProp(p.name) ?? textProp(p.abbreviation) ?? node.label);
 		} else if (node.collection === 'members') {
-			add(bronLabel('members'), kindHref('members'));
+			// Someone who held a post in a cabinet is a bewindspersoon, as the head of the reader
+			// says, and leads back to Bewindspersonen.
+			const minister = Array.isArray(p.government_functions) && p.government_functions.length > 0;
+			if (minister) add('Bewindspersoon', kindHref('ministers'));
+			else add(bronLabel('members'), kindHref('members'));
 			add(textProp(p.name) ?? node.label);
 		} else if (node.collection === 'factions') {
 			add(bronLabel('factions'), kindHref('factions'));
