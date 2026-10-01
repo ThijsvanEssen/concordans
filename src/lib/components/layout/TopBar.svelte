@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { indexHref } from '$lib/bron/href';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/utils/platform';
@@ -67,7 +66,7 @@
 			aria-current={isExplore ? 'page' : undefined}>Verkenner</a
 		>
 		<a
-			href={indexHref('dossiers')}
+			href="/explore?mode=index"
 			class="nav-link"
 			class:is-active={isIndex}
 			aria-current={isIndex ? 'page' : undefined}>Bladeren</a
@@ -157,7 +156,7 @@
 			onclick={() => closeMobileMenu()}
 		>
 			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Verkenner</a>
-			<a href={indexHref('dossiers')} class="mobile-nav-link" class:is-active={isIndex}>Bladeren</a>
+			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bladeren</a>
 			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
 			<a href="/docs" class="mobile-nav-link" class:is-active={isDocs}>Documentatie</a>
 		</div>
