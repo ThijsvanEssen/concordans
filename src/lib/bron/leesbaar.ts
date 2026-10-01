@@ -4,6 +4,7 @@
 //   /wetten/BWBR0005289/artikel/6:162    an article, by its law and number
 //   /dossiers/36600-VIII                 a dossier, by its number
 //   /kamerstukken/36799/31               a Kamerstuk, by its dossier and number
+//   /kamerstukken/36600-VIII/AB          one of the Eerste Kamer, by its letter
 //
 // Each is a second address of the Verkenner (`reroute` in src/hooks.ts serves /explore);
 // the API ids stay as they are. The rest of the view stays in the query: ?lezen=1,
@@ -30,6 +31,8 @@ const segment = (s: string) => {
 
 const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const DOSSIER = /^\d{4,6}(-[A-Z0-9()]+)*$/i;
+/** The number of a stuk: a figure in the Tweede Kamer, letters in the Eerste (`A`, `AB`). */
+const STUK = /^(\d+|[A-Z]{1,3})$/i;
 
 /** The readable address in a path, or null for any other page. */
 export function parsePad(pathname: string): Pad | null {
@@ -42,8 +45,8 @@ export function parsePad(pathname: string): Pad | null {
 		return { soort: 'artikel', wet: a.toUpperCase(), nummer: c };
 	if (first === 'dossiers' && parts.length === 2 && DOSSIER.test(a))
 		return { soort: 'dossier', nummer: a.toUpperCase() };
-	if (first === 'kamerstukken' && parts.length === 3 && DOSSIER.test(a) && /^\d+$/.test(b))
-		return { soort: 'kamerstuk', dossier: a.toUpperCase(), nummer: b };
+	if (first === 'kamerstukken' && parts.length === 3 && DOSSIER.test(a) && STUK.test(b))
+		return { soort: 'kamerstuk', dossier: a.toUpperCase(), nummer: b.toUpperCase() };
 	return null;
 }
 
@@ -110,6 +113,15 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 		});
 		const key = data?.article?.key;
 		focus = key ? `articles/${key}` : null;
+	} else if (pad.soort === 'kamerstuk' && /^[A-Z]/.test(pad.nummer)) {
+		// A letter is a stuk of the Eerste Kamer, which /api/resolve does not know; its
+		// dossier's stukken of that Kamer hold it. TODO(backend): /api/lookup?kind=document.
+		const { data } = await api.GET('/api/documents', {
+			params: { query: { chamber: 'EK', dossier: pad.dossier, limit: 200 } },
+			signal
+		});
+		const found = data?.items.find((d) => d.number?.toUpperCase() === pad.nummer);
+		focus = found ? `documents/${found.key}` : null;
 	} else if (pad.soort === 'kamerstuk') {
 		const { data } = await api.GET('/api/resolve', {
 			params: { query: { q: `${pad.dossier}, nr. ${pad.nummer}` } },
@@ -154,10 +166,15 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			return padHref({ soort: 'artikel', wet, nummer: bookNumber(wet, nummer) });
 		}
 		case 'documents': {
-			const dossier = text(props?.dossier_number);
-			const nummer = props?.sequence;
-			if (target.key.startsWith('ek_') || !dossier || typeof nummer !== 'number') return null;
-			return padHref({ soort: 'kamerstuk', dossier, nummer: String(nummer) });
+			// Dossier and number as the stuk is cited: 36600-VIII, and 31 in the Tweede
+			// Kamer or AB in the Eerste (`number`, the letter).
+			const number = text(props?.dossier_number);
+			const suffix = text(props?.dossier_suffix);
+			const dossier = number && suffix ? `${number}-${suffix}` : number;
+			const nummer =
+				typeof props?.sequence === 'number' ? String(props.sequence) : text(props?.number);
+			if (!dossier || !nummer || !STUK.test(nummer)) return null;
+			return padHref({ soort: 'kamerstuk', dossier, nummer: nummer.toUpperCase() });
 		}
 	}
 	return null;

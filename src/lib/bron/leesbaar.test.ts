@@ -29,6 +29,14 @@ describe('a readable address', () => {
 		});
 	});
 
+	it('reads the letter of a stuk of the Eerste Kamer', () => {
+		expect(parsePad('/kamerstukken/36600-VIII/ab')).toEqual({
+			soort: 'kamerstuk',
+			dossier: '36600-VIII',
+			nummer: 'AB'
+		});
+	});
+
 	it('leaves every other page alone', () => {
 		for (const path of [
 			'/',
@@ -36,7 +44,7 @@ describe('a readable address', () => {
 			'/docs',
 			'/uitspraken',
 			'/dossiers/abc',
-			'/kamerstukken/36799/A'
+			'/kamerstukken/36799/A1'
 		])
 			expect(parsePad(path)).toBeNull();
 		expect(isVerkenner('/explore')).toBe(true);
@@ -72,11 +80,20 @@ describe('the address of a focus', () => {
 		).toBe('/wetten/32017L1132/artikel/27');
 	});
 
-	it('gives a Kamerstuk of the Tweede Kamer its number, and none to the rest', () => {
+	it('gives a Kamerstuk its number, or the letter of the Eerste Kamer', () => {
 		expect(padOfFocus('documents/1501fbca', { dossier_number: '36799', sequence: 31 })).toBe(
 			'/kamerstukken/36799/31'
 		);
-		expect(padOfFocus('documents/ek_kst_1', { dossier_number: '32317', number: 'QK' })).toBeNull();
+		expect(padOfFocus('documents/ek_kst_1', { dossier_number: '32317', number: 'QK' })).toBe(
+			'/kamerstukken/32317/QK'
+		);
+		expect(
+			padOfFocus('documents/ek_kst_2', {
+				dossier_number: '36600',
+				dossier_suffix: 'VIII',
+				number: 'AB'
+			})
+		).toBe('/kamerstukken/36600-VIII/AB');
 		expect(padOfFocus('members/49be')).toBeNull();
 	});
 
