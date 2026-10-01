@@ -697,7 +697,14 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.filter((j) => !isInternational({ key: j.key, props: {} }))
 				.map((j) => ({
 					ref: { collection: 'judgments' as const, key: j.key },
-					...describe('judgments', j.key, j.display_name, { ecli: j.ecli }),
+					// The court and the day (API 0.73, BE-7), as every other row of a judgment.
+					...describe('judgments', j.key, j.display_name, {
+						ecli: j.ecli,
+						court: j.court,
+						tier: j.tier,
+						court_kind: j.court_kind,
+						date: j.date
+					}),
 					context: citedLine(j.cited_articles ?? []),
 					kind: 'uitspraken' as const,
 					relation: 'REFERS_TO' as const,
