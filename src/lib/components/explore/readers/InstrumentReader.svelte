@@ -7,13 +7,13 @@
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import WholeLawReader from '../WholeLawReader.svelte';
 	import { formatLongDate, textProp } from './_shared';
+	import { publicationName } from '../law-head';
 
 	let { node }: { node: GraphNode } = $props();
 
 	const p = $derived(node.raw?.props ?? {});
 	const bwbId = $derived(lawIdOf(p) ?? node.key.toUpperCase());
 	const publication = $derived(textProp(p.publication_kind));
-	const PUBLICATION: Record<string, string> = { Stb: 'Staatsblad', Stcrt: 'Staatscourant' };
 </script>
 
 <ReaderFrame>
@@ -21,7 +21,7 @@
 		<ReaderHead
 			collection="instruments"
 			title={textProp(p.display_name) ?? node.label}
-			place={[PUBLICATION[publication] ?? publication]}
+			place={[publicationName(publication)]}
 		>
 			<p class="publication">
 				{#if textProp(p.date_signed)}Ondertekend {formatLongDate(textProp(p.date_signed))}.{/if}

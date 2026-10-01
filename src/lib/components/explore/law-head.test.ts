@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
+import {
+	lawFullTitle,
+	lawHeadLine,
+	lawKind,
+	publicationName,
+	sourceName,
+	treatyLink
+} from './law-head';
 
 const eu = {
 	kind: null,
@@ -17,6 +24,10 @@ describe('the head of a law', () => {
 		expect(lawKind({ ...eu, citation_title: 'Richtlijn 95/46/EG' })).toBe('Richtlijn');
 		expect(lawKind({ ...eu, kind: 'wet', jurisdiction: 'nl' })).toBe('Wet');
 		expect(lawKind(null)).toBe('Regeling');
+	});
+	it('names a publication by where it appeared, not as a Regeling', () => {
+		expect(publicationName('Stb')).toBe('Staatsblad');
+		expect(publicationName('Stcrt')).toBe('Staatscourant');
 	});
 	it('gives the full title where the official title is missing', () => {
 		expect(lawFullTitle(eu, 'Verordening (EU) 2022/868')).toBe(eu.title);

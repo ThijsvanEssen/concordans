@@ -6,7 +6,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronLabel, type Mode } from '$lib/vocabulary';
-	import { lawKind } from './law-head';
+	import { lawKind, publicationName } from './law-head';
 	import { formatDate, textProp } from './readers/_shared';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { articleName } from '$lib/text/bw';
@@ -94,8 +94,10 @@
 			add(bronLabel('factions'), kindHref('factions'));
 			add(textProp(p.abbreviation) ?? textProp(p.name) ?? node.label);
 		} else if (node.collection === 'instruments') {
-			// Its own kind, as the head of the law says it: Wet, Verordening, Richtlijn.
-			add(lawKind(p as Parameters<typeof lawKind>[0]));
+			// Its own kind, as the head of the law says it: Wet, Verordening, Richtlijn. A
+			// publication is named by where it appeared: Staatsblad, Staatscourant.
+			const publication = textProp(p.publication_kind);
+			add(publication ? publicationName(publication) : lawKind(p as Parameters<typeof lawKind>[0]));
 			add(node.label);
 		} else {
 			add(bronLabel(node.collection));
