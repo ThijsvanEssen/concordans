@@ -6,6 +6,8 @@ import type { Schema } from '$lib/api/types';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
+import { bronPlural, type Collection } from '$lib/vocabulary';
+import type { Chamber } from '$lib/components/parliamentary/chamber';
 
 type Hit = Schema<'SearchResultItem'>;
 
@@ -17,7 +19,25 @@ export type Presented = {
 	context: string;
 	/** A line of the text, or null when the API gives none worth reading. */
 	snippet: Segment[] | null;
+	/** The Kamer of a stuk: the same kind of stuk exists in both. */
+	chamber?: Chamber;
 };
+
+/**
+ * The Kamer a stuk was published in. The Eerste Kamer's stukken come from its own site,
+ * keyed `ek_…`; the rest are the Tweede Kamer's.
+ * TODO(backend): `chamber` in the `extra` of a document in /api/search, as /api/documents has it.
+ */
+export function chamberOfHit(hit: Hit): Chamber | undefined {
+	if (hit.collection !== 'documents') return undefined;
+	const given = extra(hit, 'chamber').toUpperCase();
+	if (given === 'TK' || given === 'EK') return given;
+	return hit.key.startsWith('ek_') ? 'EK' : 'TK';
+}
+
+/** The heading of a group of hits. Leden: a group holds members of both Kamers and bewindspersonen. */
+export const groupLabel = (kind: Collection): string =>
+	kind === 'members' ? 'Leden' : bronPlural(kind);
 
 const extra = (hit: Hit, name: string): string => {
 	const value = hit.extra?.[name];
@@ -122,15 +142,17 @@ export function presentHit(hit: Hit, query: string): Presented {
 			// kind and number tell stukken apart. A stuk outside a dossier (a stenogram) has
 			// its own name: `Stikstof en natuur`, with its kind beside it.
 			const kind = extra(hit, 'kind') || (hit.display_name ?? hit.key);
+			const chamber = chamberOfHit(hit);
 			if (!sectionOf(hit) && hit.display_name && hit.display_name !== kind)
-				return { title: hit.display_name, context: kind, snippet: null };
+				return { title: hit.display_name, context: kind, snippet: null, chamber };
 			const sequence = hit.extra?.sequence;
 			const number =
 				typeof sequence === 'string' || typeof sequence === 'number' ? String(sequence) : '';
 			return {
 				title: number ? `${kind}, nr. ${number}` : kind,
 				context: '',
-				snippet: null
+				snippet: null,
+				chamber
 			};
 		}
 		case 'instruments':

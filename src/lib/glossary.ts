@@ -19,12 +19,12 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	},
 	Verslag: {
 		full: 'Verslag van een Kamercommissie',
-		plain: 'Schriftelijke vragen en commentaar van de Kamer op een wetsvoorstel.'
+		plain: 'Schriftelijke vragen en commentaar van een Kamer op een wetsvoorstel.'
 	},
 	Nota: {
 		full: 'Nota naar aanleiding van het verslag',
 		plain:
-			'Antwoord van de indiener, regering of Kamerlid, op de vragen die de Kamer in een verslag stelde.'
+			'Antwoord van de indiener, regering of Kamerlid, op de vragen die een Kamer in een verslag stelde.'
 	},
 	'Nota van wijziging': {
 		full: 'Nota van wijziging',
@@ -38,11 +38,11 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	Amendement: {
 		full: 'Amendement',
 		plain:
-			'Voorstel van een Kamerlid om de tekst van een wetsvoorstel te wijzigen voordat erover gestemd wordt.'
+			'Voorstel van een lid van de Tweede Kamer om de tekst van een wetsvoorstel te wijzigen voordat erover gestemd wordt.'
 	},
 	Motie: {
 		full: 'Motie',
-		plain: 'Uitspraak van de Kamer waarmee zij de regering om iets vraagt; geen bindende wet.'
+		plain: 'Uitspraak van een Kamer waarmee zij de regering om iets vraagt; geen bindende wet.'
 	},
 
 	// Adviesorganen
@@ -73,19 +73,19 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	Stemming: {
 		full: 'Stemming',
 		plain:
-			'Beslissingsmoment waarop de Kamer voor of tegen een voorstel stemt; uitkomst is aangenomen of verworpen.'
+			'Beslissingsmoment waarop een Kamer voor of tegen een voorstel stemt; uitkomst is aangenomen of verworpen.'
 	},
 	Toezegging: {
 		full: 'Toezegging',
 		plain:
-			'Belofte van een minister aan de Kamer om iets te doen; wordt later opgevolgd door dezelfde commissie.'
+			'Belofte van een minister aan een Kamer om iets te doen; wordt later opgevolgd door dezelfde commissie.'
 	},
 
 	// Trajecten
 	Initiatiefwet: {
 		full: 'Initiatiefwetsvoorstel',
 		plain:
-			'Wetsvoorstel dat door één of meer Kamerleden wordt ingediend in plaats van door de regering.'
+			'Wetsvoorstel dat door één of meer leden van de Tweede Kamer wordt ingediend in plaats van door de regering.'
 	},
 	Begroting: {
 		full: 'Begroting',
@@ -99,7 +99,7 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 	Initiatiefnota: {
 		full: 'Initiatiefnota',
 		plain:
-			'Beleidsvoorstel van een of meer Kamerleden, zonder wetsvoorstel. Doorloopt geen wetgevingsfasen.'
+			'Beleidsvoorstel van een of meer leden van de Tweede Kamer, zonder wetsvoorstel. Doorloopt geen wetgevingsfasen.'
 	}
 };
 

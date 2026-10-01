@@ -25,6 +25,16 @@ describe('tabTitle', () => {
 		);
 	});
 
+	it('names the Kamer of a stemming, and its subject', () => {
+		const subject =
+			'Wijziging van de Wet structuur uitvoeringsorganisatie werk en inkomen (Wet proactieve dienstverlening SZW) ';
+		expect(tabTitle(node('decisions', 'x', `Wetgeving 2025Z15911: ${subject}`, { subject }))).toBe(
+			'Tweede Kamer: Wet proactieve dienstverlening SZW'
+		);
+		const ek = 'Eerste Kamer 2026-09-29: Goedkeuring Verdrag (36.455 (R2188))';
+		expect(tabTitle(node('decisions', 'x', ek, { subject: 'Goedkeuring Verdrag' }))).toBe(ek);
+	});
+
 	it('cuts a long name at a word', () => {
 		const long =
 			'Motie 2026Z19641 — Gewijzigde motie van het lid Grinwis over optionele varianten van steward ownership en werknemerseigendom';
