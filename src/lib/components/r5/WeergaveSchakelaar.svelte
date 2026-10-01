@@ -17,7 +17,7 @@
 
 <div class="ws" role="group" aria-label="Weergave (toets L)">
 	<button type="button" aria-pressed={stand === 'netwerk'} onclick={() => onKies('netwerk')} title="Netwerk: de verbindingen">
-		<Picto naam="netwerk" size={13} />Netwerk
+		<Picto naam="netwerk" size={15} />Netwerk
 	</button>
 	<button
 		type="button"
@@ -26,38 +26,48 @@
 		onclick={() => onKies('tekst')}
 		title={tekstMogelijk ? 'Tekst: lezen op volle breedte' : 'Deze bron heeft geen eigen tekst'}
 	>
-		<Picto naam="tekst" size={13} />Tekst
+		<Picto naam="tekst" size={15} />Tekst
 	</button>
 </div>
 
 <style>
+	/* Een kleine knoppenrij: de gekozen stand gevuld in inkt, de andere als knop met rand. */
 	.ws {
 		display: inline-flex;
-		gap: var(--s-1);
+		border: 1px solid var(--ink);
+		border-radius: var(--r-1);
+		overflow: hidden;
 	}
 	button {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-1);
-		padding: 2px var(--s-2);
+		padding: 3px var(--s-2);
 		border: 0;
-		border-bottom: 2px solid transparent;
-		background: none;
+		background: var(--paper);
 		font: inherit;
 		font-size: var(--t-micro);
-		color: var(--ink-3);
+		font-weight: 500;
+		color: var(--ink);
 		cursor: pointer;
 	}
-	button:hover:not(:disabled) {
-		color: var(--ink);
+	button + button {
+		border-left: 1px solid var(--ink);
+	}
+	button:hover:not(:disabled):not([aria-pressed='true']) {
+		background: var(--paper-2);
 	}
 	button[aria-pressed='true'] {
-		color: var(--ink);
-		font-weight: 600;
-		border-bottom-color: var(--ink);
+		background: var(--ink);
+		color: var(--paper);
+		cursor: default;
 	}
 	button:disabled {
-		opacity: 0.45;
+		color: var(--ink-3);
 		cursor: default;
+	}
+	button:focus-visible {
+		outline: 2px solid var(--ink);
+		outline-offset: 2px;
 	}
 </style>

@@ -6,11 +6,13 @@
 
 <svg class="picto" width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
 	{#if naam === 'netwerk'}
-		<g stroke="currentColor" stroke-width="1.2" fill="none"><path d="M8 8 3 3.5M8 8l5-4.5M8 8l-4.5 5M8 8l5 5" /></g>
-		<g fill="currentColor"><rect x="6" y="6" width="4" height="4" /><circle cx="3" cy="3" r="2" /><circle cx="13" cy="3" r="2" /><circle cx="3" cy="13" r="2" /><circle cx="13" cy="13" r="2" /></g>
+		<!-- Een bron in het midden, verbonden met drie andere soorten: blad, cirkel, driehoek. -->
+		<g stroke="currentColor" stroke-width="1.1" fill="none"><path d="M8 8 3.2 3.4M8 8l4.9-4.4M8 8v4.6" /></g>
+		<g fill="currentColor"><rect x="5.9" y="5.9" width="4.2" height="4.2" /><path d="M1.2 1h3l1.2 1.2v3.6H1.2z" /><circle cx="13.2" cy="3.2" r="2.1" /><path d="M8 11.6 10.4 15.5H5.6z" /></g>
 	{:else if naam === 'tekst'}
-		<g fill="currentColor"><rect x="1.5" y="2" width="8" height="2" /><rect x="1.5" y="6" width="9" height="1.4" /><rect x="1.5" y="9" width="9" height="1.4" /><rect x="1.5" y="12" width="7" height="1.4" /><circle cx="13.5" cy="7" r="1.4" /><circle cx="13.5" cy="11" r="1.4" /></g>
-		<path d="M12 2v13" stroke="currentColor" stroke-width="0.8" opacity="0.5" />
+		<!-- Een blad met tekstregels; in de kantlijn de verbindingen. -->
+		<path d="M1.5 1h9v14h-9z" fill="none" stroke="currentColor" stroke-width="1.2" />
+		<g fill="currentColor"><rect x="3.2" y="3.5" width="5.6" height="1.3" /><rect x="3.2" y="6.3" width="5.6" height="1" /><rect x="3.2" y="8.6" width="5.6" height="1" /><rect x="3.2" y="10.9" width="4" height="1" /><circle cx="13.3" cy="5" r="1.3" /><circle cx="13.3" cy="9" r="1.3" /></g>
 	{:else if naam === 'klik'}
 		<path d="M5 2v10l2.6-2.4L9.4 14l1.8-.8-1.8-4.3H13z" fill="currentColor" />
 	{:else if naam === 'dubbelklik'}
