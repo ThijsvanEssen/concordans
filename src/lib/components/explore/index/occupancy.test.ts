@@ -115,11 +115,11 @@ describe('bandsOf and ticksOf', () => {
 
 	it('marks the quarters of a short term', () => {
 		expect(ticksOf(schoof).map((t) => t.label)).toEqual([
-			'okt 2024',
+			'okt. 2024',
 			'2025',
-			'apr 2025',
-			'jul 2025',
-			'okt 2025',
+			'apr. 2025',
+			'jul. 2025',
+			'okt. 2025',
 			'2026'
 		]);
 	});

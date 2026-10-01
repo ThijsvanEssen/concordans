@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { korteDatum, maandJaar } from '$lib/text/datum';
 	import PostOpen from '$lib/components/open/PostOpen.svelte';
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
 	// a successor is the next block on the line, a stand-in has a dotted bar and a grey name.
@@ -117,30 +118,8 @@
 	/** A post found through an old link closes by the link's own id. */
 	const toggle = (id: string) => onToggle(openKey === id && openId && openId !== id ? openId : id);
 
-	const MONTHS = [
-		'jan',
-		'feb',
-		'mrt',
-		'apr',
-		'mei',
-		'jun',
-		'jul',
-		'aug',
-		'sep',
-		'okt',
-		'nov',
-		'dec'
-	];
-	const day = (iso: string | null | undefined) => {
-		if (!iso) return 'nu';
-		const [y, m, d] = iso.split('-').map(Number);
-		return `${d} ${MONTHS[m - 1]} ${y}`;
-	};
-	const month = (iso: string | null | undefined) => {
-		if (!iso) return 'nu';
-		const [y, m] = iso.split('-').map(Number);
-		return `${MONTHS[m - 1]} ${y}`;
-	};
+	const day = (iso: string | null | undefined) => korteDatum(iso) || 'nu';
+	const month = (iso: string | null | undefined) => maandJaar(iso) || 'nu';
 
 	/** The seat's name: the post grey where it is the usual one, the portfolio in ink. */
 	function seatName(seat: Seat): { post: string; portfolio: string } {

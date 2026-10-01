@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { korteDatum } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
@@ -135,14 +136,7 @@
 	const effectOf = (v: Version) => (v.effect ?? '').replaceAll('-', ', ') || null;
 
 	/** Short enough for a list beside another one on a phone: "6 apr. 2006". */
-	const optionLabel = (w: VersionWording) =>
-		w.from
-			? new Date(w.from).toLocaleDateString('nl-NL', {
-					day: 'numeric',
-					month: 'short',
-					year: 'numeric'
-				})
-			: w.first.key;
+	const optionLabel = (w: VersionWording) => (w.from ? korteDatum(w.from) : w.first.key);
 
 	// ── The line through time ────────────────────────────────────────────────────
 

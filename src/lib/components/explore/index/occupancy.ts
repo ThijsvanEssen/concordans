@@ -1,3 +1,4 @@
+import { maandJaar } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { POST_LABEL } from './government';
 
@@ -96,7 +97,6 @@ export function bandsOf(
 export function ticksOf(term: Term): { at: number; label: string }[] {
 	const years = (term.end - term.start) / (365.25 * DAY);
 	const months = years <= 3 ? 3 : years <= 8 ? 12 : 24;
-	const MONTH = ['jan', 'apr', 'jul', 'okt'];
 	const ticks: { at: number; label: string }[] = [];
 	const d = new Date(term.start);
 	let y = d.getUTCFullYear();
@@ -109,7 +109,10 @@ export function ticksOf(term: Term): { at: number; label: string }[] {
 		if (t >= term.start)
 			ticks.push({
 				at: (t - term.start) / (term.end - term.start),
-				label: months === 3 && m !== 0 ? `${MONTH[m / 3]} ${y}` : String(y)
+				label:
+					months === 3 && m !== 0
+						? maandJaar(`${y}-${String(m + 1).padStart(2, '0')}-01`)
+						: String(y)
 			});
 		m += months;
 	}

@@ -1,28 +1,10 @@
 // A judgment as a lawyer cites it: the court in its usual short form, the date in full,
 // then the ECLI. HR 19 juli 2019, ECLI:NL:HR:2019:1278; Rb. Den Haag 6 juli 2026, …;
 // Hof Amsterdam 22 september 2026, ….
-
-const MONTHS = [
-	'januari',
-	'februari',
-	'maart',
-	'april',
-	'mei',
-	'juni',
-	'juli',
-	'augustus',
-	'september',
-	'oktober',
-	'november',
-	'december'
-];
+import { langeDatum } from './datum';
 
 /** `2019-07-19` as `19 juli 2019`; null for anything else. */
-function longDate(day: string | null | undefined): string | null {
-	const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(day ?? '');
-	if (!m) return null;
-	return `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}`;
-}
+const longDate = (day: string | null | undefined): string | null => langeDatum(day) || null;
 
 /** The place of a rechtbank or gerechtshof from its name: `Rechtbank Den Haag` → `Den Haag`. */
 const placeOf = (name: string | null | undefined, kind: 'Rechtbank' | 'Gerechtshof') =>

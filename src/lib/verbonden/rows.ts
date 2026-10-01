@@ -2,6 +2,7 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
+import { korteDatum, langeDatum } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { withBook } from '$lib/text/bw';
@@ -60,15 +61,9 @@ const text = (value: unknown): string | null =>
 
 const join = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).join(', ') || null;
 
-export const shortDate = (iso: string | null) =>
-	iso
-		? new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })
-		: null;
+export const shortDate = (iso: string | null) => korteDatum(iso) || null;
 
-export const longDate = (iso: string | null) =>
-	iso
-		? new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
-		: null;
+export const longDate = (iso: string | null) => langeDatum(iso) || null;
 
 /** The dossier numbers of a node (`37020-XV`), in either chamber. */
 export function dossierNumbersOf(props: Record<string, unknown> | null | undefined): string[] {

@@ -4,6 +4,7 @@
 //
 // A group is filled from the node response of the selected bron (`match`: relation,
 // direction, collection) or, where no edge says it, by a named loader (`load`).
+import { langeDatum } from '$lib/text/datum';
 import { bucketKey } from '$lib/api/nodes';
 import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
 import { formatCount, isInternational } from './filter';
@@ -667,24 +668,7 @@ const matches = (m: Match, n: Neighbor) =>
 	(!m.direction || m.direction === n.direction) &&
 	(!m.where || m.where(n));
 
-const MONTHS = [
-	'januari',
-	'februari',
-	'maart',
-	'april',
-	'mei',
-	'juni',
-	'juli',
-	'augustus',
-	'september',
-	'oktober',
-	'november',
-	'december'
-];
-const longDay = (day: string) => {
-	const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(day);
-	return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : day;
-};
+const longDay = (day: string) => langeDatum(day) || day;
 
 /**
  * The decision a judgment says it appeals from, where the dataset lacks it

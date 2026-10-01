@@ -3,6 +3,7 @@
 	// kolom, een teken op een doorlopende lijn, dan de zin. Een besluit krijgt het vakje van
 	// Uitkomst (vorm en kleur); wat nog kan volgen staat gestippeld en zegt dat het kan volgen.
 	import { dagMaand, type TijdGroep } from './tijdlijn';
+	import { vandaag } from '$lib/text/datum';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
 	// Het teken op de lijn is het bronteken zelf; de uitkomst zit in vulling en kleur.
 	const vormVanSoort = (s: string | null | undefined) =>
@@ -10,13 +11,17 @@
 
 	let {
 		groepen,
-		jaar = false,
+		jaar = 'anders',
 		datums = true
 	}: {
 		groepen: TijdGroep[];
-		jaar?: boolean;
+		/** The year under the day: always, never, or only when it is not this year. */
+		jaar?: boolean | 'anders';
 		/** Zonder datumkolom als de kop de dag al noemt. */ datums?: boolean;
 	} = $props();
+	const ditJaar = vandaag().slice(0, 4);
+	const metJaar = (iso: string) =>
+		jaar === true || (jaar === 'anders' && iso.slice(0, 4) !== ditJaar);
 </script>
 
 <div class="tl" class:zonder={!datums}>
@@ -30,8 +35,8 @@
 					{@const v = vormVanSoort(r.soort)}
 					<li class="regel regel--{r.teken}" class:groot={r.groot}>
 						<span class="datum"
-							>{r.datum ? dagMaand(r.datum) : ''}{#if jaar && r.datum}<span class="j">
-									{r.datum.slice(0, 4)}</span
+							>{r.datum ? dagMaand(r.datum) : ''}{#if r.datum && metJaar(r.datum)}<span class="j"
+									>{r.datum.slice(0, 4)}</span
 								>{/if}</span
 						>
 						{#if v}
@@ -115,11 +120,11 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
-		font-variant-numeric: tabular-nums;
 		text-align: right;
 		line-height: 1.6;
 	}
 	.j {
+		display: block;
 		color: var(--ink-3);
 	}
 	.teken {
@@ -154,10 +159,10 @@
 		stroke: none;
 	}
 	.regel--ja .bteken path.vol {
-		fill: var(--uitkomst-ja, #456247);
+		fill: var(--uitkomst-ja);
 	}
 	.regel--nee .bteken path {
-		stroke: var(--uitkomst-nee, #8c2f28);
+		stroke: var(--uitkomst-nee);
 		stroke-width: 2;
 	}
 	.regel--open .bteken path,
@@ -173,13 +178,13 @@
 		width: 11px;
 		height: 11px;
 		border: 0;
-		background: var(--uitkomst-ja, #456247);
+		background: var(--uitkomst-ja);
 	}
 	.regel--nee .teken {
 		border-radius: 0;
 		width: 11px;
 		height: 11px;
-		border: 2px solid var(--uitkomst-nee, #8c2f28);
+		border: 2px solid var(--uitkomst-nee);
 	}
 	/* Openstaand: het vakje van Uitkomst (gestippeld), de tekst gewoon. */
 	.regel--open .teken {
@@ -210,10 +215,10 @@
 		color: var(--ink-2);
 	}
 	.regel--ja .label {
-		color: var(--uitkomst-ja, #456247);
+		color: var(--uitkomst-ja);
 	}
 	.regel--nee .label {
-		color: var(--uitkomst-nee, #8c2f28);
+		color: var(--uitkomst-nee);
 	}
 	.zin {
 		font-family: var(--font-serif);

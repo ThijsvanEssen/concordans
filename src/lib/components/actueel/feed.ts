@@ -1,3 +1,4 @@
+import { korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
@@ -281,22 +282,6 @@ export const countLine = (counts: Day['counts']) =>
 		)
 		.join(', ');
 
-const WEEKDAY = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
-const MONTH = [
-	'januari',
-	'februari',
-	'maart',
-	'april',
-	'mei',
-	'juni',
-	'juli',
-	'augustus',
-	'september',
-	'oktober',
-	'november',
-	'december'
-];
-
 /** `Vandaag`, `Gisteren`, else `Dinsdag 22 september 2026`. */
 export function dayLabel(iso: string, today: string): string {
 	const d = new Date(`${iso}T00:00:00Z`);
@@ -305,8 +290,7 @@ export function dayLabel(iso: string, today: string): string {
 	if (diff === 0) return 'Vandaag';
 	if (diff === 1) return 'Gisteren';
 	if (diff === -1) return 'Morgen';
-	const w = WEEKDAY[d.getUTCDay()];
-	return `${w.charAt(0).toUpperCase()}${w.slice(1)} ${d.getUTCDate()} ${MONTH[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+	return weekdag(iso);
 }
 
 /** The sources Actueel's events come from, as `data_as_of` names them. */
@@ -326,7 +310,7 @@ export function feedStand(
 	return known[0] ?? null;
 }
 
-/** `Stukken van de Kamers tot en met 24 sep 2026, opgehaald op 24 sep 2026` */
+/** `Stukken van de Kamers tot en met 24 sep. 2026, opgehaald op 24 sep. 2026` */
 export function standLine(stand: NonNullable<ReturnType<typeof feedStand>>): string {
 	const fetched = stand.retrievedAt
 		? `, opgehaald op ${shortDate(stand.retrievedAt.slice(0, 10))}`
@@ -334,12 +318,8 @@ export function standLine(stand: NonNullable<ReturnType<typeof feedStand>>): str
 	return `Stukken van de Kamers tot en met ${shortDate(stand.newest)}${fetched}`;
 }
 
-/** `24 sep 2026`, for a date in a line of text. */
-export function shortDate(iso: string | null | undefined): string {
-	if (!iso) return '';
-	const d = new Date(`${iso}T00:00:00Z`);
-	return `${d.getUTCDate()} ${MONTH[d.getUTCMonth()].slice(0, 3)} ${d.getUTCFullYear()}`;
-}
+/** `24 sep. 2026`, for a date in a line of text. */
+export const shortDate = (iso: string | null | undefined): string => korteDatum(iso);
 
 /** `Stb. 2026, 204`, as a publication is cited. */
 export function publicationCite(p: NonNullable<FeedItem['publication']>): string {

@@ -39,16 +39,16 @@
 		box-sizing: border-box;
 	}
 	.uk--ja .vak {
-		background: var(--uitkomst-ja, #456247);
+		background: var(--uitkomst-ja);
 	}
 	.uk--ja .w {
-		color: var(--uitkomst-ja, #456247);
+		color: var(--uitkomst-ja);
 	}
 	.uk--nee .vak {
-		border: 2px solid var(--uitkomst-nee, #8c2f28);
+		border: 2px solid var(--uitkomst-nee);
 	}
 	.uk--nee .w {
-		color: var(--uitkomst-nee, #8c2f28);
+		color: var(--uitkomst-nee);
 	}
 	.uk--nu .vak {
 		background: var(--ink);

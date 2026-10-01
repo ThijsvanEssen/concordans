@@ -24,21 +24,4 @@ export type TijdGroep = {
 	noot?: string | null;
 };
 
-const MAANDEN = [
-	'jan.',
-	'feb.',
-	'mrt.',
-	'apr.',
-	'mei',
-	'jun.',
-	'jul.',
-	'aug.',
-	'sep.',
-	'okt.',
-	'nov.',
-	'dec.'
-];
-export const dagMaand = (iso: string) => {
-	const [, m, d] = iso.slice(0, 10).split('-').map(Number);
-	return `${d} ${MAANDEN[m - 1]}`;
-};
+export { dagMaand } from '$lib/text/datum';

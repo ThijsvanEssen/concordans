@@ -661,13 +661,14 @@
 		color: var(--ink-2);
 	}
 	.group__jaren select {
+		height: var(--veld-h-klein);
 		margin-left: var(--s-1);
 		font: inherit;
 		color: var(--ink);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: var(--paper);
-		padding: 1px var(--s-1);
+		padding: 0 var(--s-1);
 	}
 	.row__main {
 		display: flex;

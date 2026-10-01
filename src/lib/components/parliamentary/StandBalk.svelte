@@ -163,14 +163,13 @@
 	.wanneer {
 		font-size: var(--t-micro);
 		color: var(--ink-2);
-		font-variant-numeric: tabular-nums;
 	}
 	.vak--ja .streep {
-		background: var(--uitkomst-ja, #456247);
+		background: var(--uitkomst-ja);
 	}
 	.vak--nee .streep {
 		background: transparent;
-		border: 2px solid var(--uitkomst-nee, #8c2f28);
+		border: 2px solid var(--uitkomst-nee);
 		box-sizing: border-box;
 	}
 	.vak--nu {

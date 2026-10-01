@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { korteDatum } from '$lib/text/datum';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	// Inline detail of an opened row: header, stat tiles, a phase path for
@@ -37,14 +38,7 @@
 		chamber?: string;
 	} = $props();
 
-	function fmtDate(iso: string | null | undefined): string {
-		if (!iso) return '—';
-		return new Intl.DateTimeFormat('nl-NL', {
-			day: 'numeric',
-			month: 'short',
-			year: 'numeric'
-		}).format(new Date(iso));
-	}
+	const fmtDate = (iso: string | null | undefined) => korteDatum(iso) || '—';
 
 	const KIND_LABEL: Record<IndexCategory, string> = {
 		instruments: 'Wet · regelgeving',

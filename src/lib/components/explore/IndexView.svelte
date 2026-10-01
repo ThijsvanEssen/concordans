@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -1733,24 +1734,11 @@
 					? 'Stb.'
 					: 'NL';
 
-	const fmtDay = (iso: string) =>
-		new Intl.DateTimeFormat('nl-NL', {
-			weekday: 'long',
-			day: 'numeric',
-			month: 'long',
-			year: 'numeric'
-		}).format(new Date(iso));
+	const fmtDay = (iso: string) => weekdag(iso);
 
 	const openSearch = useSearchOpener();
 
-	const fmtDateShort = (iso: string | null | undefined) =>
-		iso
-			? new Intl.DateTimeFormat('nl-NL', {
-					day: 'numeric',
-					month: 'short',
-					year: 'numeric'
-				}).format(new Date(iso))
-			: '—';
+	const fmtDateShort = (iso: string | null | undefined) => korteDatum(iso) || '—';
 </script>
 
 <svelte:window onkeydown={handleKey} />

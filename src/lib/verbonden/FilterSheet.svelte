@@ -544,7 +544,7 @@
 	}
 	.year {
 		width: 64px;
-		height: 26px;
+		height: var(--veld-h);
 		padding: 0 var(--s-2);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);

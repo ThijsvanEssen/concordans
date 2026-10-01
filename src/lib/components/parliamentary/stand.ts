@@ -1,3 +1,4 @@
+import { korteDatum } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
 // Where a bill stands, per body that handles it, Raad van
@@ -25,25 +26,8 @@ const TK_PHASES = [
 ];
 const SUBMITTED = ['Voorstel van wet', 'Memorie van toelichting', 'Advies Raad van State'];
 
-const MONTHS = [
-	'jan.',
-	'feb.',
-	'mrt.',
-	'apr.',
-	'mei',
-	'jun.',
-	'jul.',
-	'aug.',
-	'sep.',
-	'okt.',
-	'nov.',
-	'dec.'
-];
-export const datum = (iso: string | null | undefined): string => {
-	if (!iso) return '';
-	const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
-	return `${d} ${MONTHS[m - 1]} ${y}`;
-};
+/** `28 sep. 2026`; see `$lib/text/datum`. */
+export const datum = korteDatum;
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 /** A phase as a sentence names it. */

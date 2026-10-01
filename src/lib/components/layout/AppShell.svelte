@@ -133,8 +133,8 @@
 		--ink-2: #3b3834;
 		--ink-3: #5d5951; /* captions; 6.6:1 on paper */
 
-		/* The accent has one meaning: a link on hover, the selected or focused bron,
-		   and the status voorgesteld. Nothing else is red. */
+		/* The accent: a link on hover, the status voorgesteld, and an outcome that says no
+		   (--uitkomst-nee). Nothing else is red. */
 		--accent: #8c2f28;
 		--accent-soft: #f3e4e2;
 
@@ -146,6 +146,16 @@
 		/* The four colours of the material */
 		--indigo: #2f3e5e; /* judgments */
 		--moss: #456247; /* structural edges, references between articles */
+
+		/* An outcome, always with its shape or word beside it: passed, done, yes; rejected,
+		   withdrawn, no. Dashed is open or expected and needs no colour. */
+		--uitkomst-ja: var(--moss);
+		--uitkomst-nee: var(--accent);
+
+		/* The height of a control: a field, a select, a choice of buttons. In a bar, the
+		   smaller one. */
+		--veld-h: 32px;
+		--veld-h-klein: 24px;
 		--plum: #5e3a55; /* toelichting */
 		--slate: #4b5563; /* citations by judgments */
 

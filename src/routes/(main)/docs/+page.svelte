@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { langeDatum, vandaag } from '$lib/text/datum';
 	import { onMount } from 'svelte';
 	import { getCoverage, getStats, type Coverage, type Stats } from '$lib/api/stats';
 	import { longDate } from '$lib/verbonden/rows';
@@ -37,11 +38,7 @@
 		getStats()
 			.then((s) => {
 				stats = s;
-				fetchedOn = new Date().toLocaleDateString('nl-NL', {
-					day: 'numeric',
-					month: 'long',
-					year: 'numeric'
-				});
+				fetchedOn = langeDatum(vandaag());
 			})
 			.catch(() => (stats = null));
 		getCoverage()

@@ -355,7 +355,7 @@
 	.text {
 		width: 100%;
 		box-sizing: border-box;
-		height: 30px;
+		height: var(--veld-h);
 		padding: 0 var(--s-2);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);

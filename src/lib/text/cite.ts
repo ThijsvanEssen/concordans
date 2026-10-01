@@ -1,3 +1,4 @@
+import { langeDatum, vandaag } from './datum';
 // The three forms in which an article, a lid or an onderdeel is cited.
 // TODO(backend): the API gives no citation formats per article; the short and long
 // forms are built from the instrument's `short_title` and `citation_title`, the lid
@@ -51,8 +52,7 @@ export type Citation = {
 
 export type CitationForms = { kort: string; voluit: string; metDatum: string };
 
-const longDate = (d: Date) =>
-	d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+const longDate = (d: Date) => langeDatum(vandaag(d));
 
 /** A book of the Burgerlijk Wetboek is cited as the code with the book before the article: `art. 7:3 BW`. */
 function bookOf(c: Citation): Pick<Citation, 'articleNumber' | 'citationTitle' | 'shortTitle'> {
