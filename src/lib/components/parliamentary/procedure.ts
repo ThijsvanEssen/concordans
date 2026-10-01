@@ -64,7 +64,7 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 	for (const e of asc) {
 		if (e.node_type === 'decision') {
 			const b = bodyOf(e);
-			const passed = b.passed !== false && b.result !== 'Verworpen';
+			const uitslag = uitslagVan(b);
 			const method = typeof b.method === 'string' ? b.method : '';
 			const how =
 				method === 'Hamerstuk'
@@ -78,10 +78,13 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 			out.push({
 				id: e.node_id,
 				datum: e.date,
-				teken: passed ? 'ja' : 'nee',
+				teken: uitslag === null ? 'open' : uitslag ? 'ja' : 'nee',
 				soort: 'decisions',
 				label: groep === 'ek' ? 'Stemming Eerste Kamer' : 'Stemming Tweede Kamer',
-				zin: `${passed ? 'Aangenomen' : 'Verworpen'}${how}`,
+				zin:
+					uitslag === null
+						? 'Geen uitslag in de gegevens'
+						: `${uitslag ? 'Aangenomen' : 'Verworpen'}${how}`,
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 				ref: e.node_id,
 				groot: true
@@ -157,6 +160,17 @@ const MEERVOUD: Record<string, string> = {
 	'plenair debat': 'plenaire debatten',
 	'inbreng verslag': 'inbrengen voor het verslag'
 };
+
+/**
+ * The outcome of a vote as the source gives it: aangenomen (true), verworpen (false), or
+ * none (null) for a vote that was postponed or has no result yet. The Tweede Kamer gives
+ * `passed`, the Eerste Kamer also `result`; a missing value is no "Aangenomen".
+ */
+export function uitslagVan(b: { passed?: unknown; result?: unknown }): boolean | null {
+	if (b.passed === true || b.result === 'Aangenomen') return true;
+	if (b.passed === false || b.result === 'Verworpen') return false;
+	return null;
+}
 
 export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const st = stand(d);
