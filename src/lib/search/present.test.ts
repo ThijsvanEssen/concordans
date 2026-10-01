@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
-import { around, bySection, marked, presentHit, sectionOf } from './present';
+import {
+	around,
+	bySection,
+	chamberOfHit,
+	groupLabel,
+	marked,
+	presentHit,
+	sectionOf
+} from './present';
 
 type Hit = Schema<'SearchResultItem'>;
 const hit = (h: Partial<Hit> & Pick<Hit, 'collection' | 'key'>): Hit =>
@@ -84,6 +92,29 @@ describe('presentHit', () => {
 			title: 'Stikstof en natuur',
 			context: 'Stenogram'
 		});
+	});
+});
+
+describe('the Kamer of a hit', () => {
+	it("marks a stuk with its Kamer: the Eerste Kamer's are keyed ek_", () => {
+		expect(chamberOfHit(stuk('ek_kst_1269940', 'Brief'))).toBe('EK');
+		expect(chamberOfHit(stuk('1501fbca_49c8', 'Motie'))).toBe('TK');
+		expect(presentHit(stuk('ek_kst_1269940', 'Brief'), '').chamber).toBe('EK');
+	});
+
+	it('takes the Kamer the API gives over the key', () => {
+		const given = hit({
+			collection: 'documents',
+			key: 'x',
+			extra: { kind: 'Brief', chamber: 'EK' }
+		});
+		expect(chamberOfHit(given)).toBe('EK');
+	});
+
+	it('marks nothing but stukken, and heads the members as Leden', () => {
+		expect(chamberOfHit(hit({ collection: 'members', key: 'ek_a_kanis_d66' }))).toBeUndefined();
+		expect(groupLabel('members')).toBe('Leden');
+		expect(groupLabel('dossiers')).toBe('Dossiers');
 	});
 });
 

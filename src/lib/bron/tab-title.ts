@@ -37,6 +37,15 @@ export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>):
 		const short = text(props.short_title) ?? shortDossierTitle(text(props.title));
 		return short ? `${number} ${short}` : number;
 	}
+	if (
+		node.collection === 'decisions' &&
+		!text(node.raw?.display_name)?.startsWith('Eerste Kamer')
+	) {
+		// A stemming names its Kamer, as the Eerste Kamer's do ("Eerste Kamer 2026-09-29: …"),
+		// and its subject, not the Kamer's case number ("Wetgeving 2025Z15911: …").
+		const subject = text(props.subject);
+		if (subject) return cut(`Tweede Kamer: ${shortDossierTitle(subject) ?? subject}`);
+	}
 	const name = text(node.raw?.display_name);
 	return cut(name ? withBook(name) : node.label);
 }

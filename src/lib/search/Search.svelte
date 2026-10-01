@@ -8,8 +8,9 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { bySection, presentHit, sectionOf } from './present';
-	import { bronLabel, bronPlural, type Collection } from '$lib/vocabulary';
+	import { bySection, groupLabel, presentHit, sectionOf } from './present';
+	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
+	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import {
 		bareArticle,
 		parseCitation,
@@ -372,7 +373,7 @@
 			<div class="group" role="group" aria-labelledby="{uid}-{group.kind}">
 				<div class="group-label" id="{uid}-{group.kind}">
 					<KindGlyph collection={group.kind} />
-					{bronPlural(group.kind)}
+					{groupLabel(group.kind)}
 				</div>
 				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
 					{@const i = offset + (indexOf.get(hit.id) ?? 0)}
@@ -409,7 +410,10 @@
 								>
 							{/if}
 						</span>
-						{#if shown.context}<span class="row-context">{shown.context}</span>{/if}
+						{#if shown.chamber || shown.context}<span class="row-context"
+								>{#if shown.chamber}<abbr title={CHAMBER_NAME[shown.chamber]}>{shown.chamber}</abbr
+									>{/if}{shown.chamber && shown.context ? ` ${shown.context}` : shown.context}</span
+							>{/if}
 					</a>
 				{/each}
 			</div>
@@ -633,6 +637,9 @@
 		flex-direction: row;
 		align-items: baseline;
 		gap: var(--s-2);
+	}
+	.row-context abbr {
+		text-decoration: none;
 	}
 	.search--compact .row-context {
 		max-width: none;
