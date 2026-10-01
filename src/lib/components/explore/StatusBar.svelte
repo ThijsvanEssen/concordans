@@ -113,7 +113,11 @@
 
 	{#if mode === 'index'}
 		<div class="path">
-			<span>Bladeren</span>
+			{#if isIndexCategory(indexCategory)}
+				<a class="seg seg--link" href="/explore?mode=index">Bladeren</a>
+			{:else}
+				<span>Bladeren</span>
+			{/if}
 			{#if isIndexCategory(indexCategory)}
 				<span class="sep" aria-hidden="true">›</span>
 				<span>{categoryLabel(indexCategory)}</span>

@@ -31,6 +31,7 @@
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
 	import IndexView from '$lib/components/explore/IndexView.svelte';
+	import IndexOverzicht from '$lib/components/explore/index/IndexOverzicht.svelte';
 	import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
 	import FilterSheet from '$lib/verbonden/FilterSheet.svelte';
@@ -885,7 +886,7 @@
 		{focusError}
 		{mode}
 		{tableMode}
-		indexCategory={mode === 'index' ? indexKind : null}
+		indexCategory={mode === 'index' && param('kind') !== null ? indexKind : null}
 		indexResultCount={mode === 'index' ? indexResultCount : null}
 		shareLabel={shareCopier.label('share', 'Deel')}
 		shareAnnouncement={shareCopier.announcement}
@@ -897,7 +898,11 @@
 
 	<div class="explore-content">
 		{#if mode === 'index'}
-			<IndexView category={indexKind} onResultCountChange={(count) => (reportedCount = count)} />
+			{#if param('kind') === null}
+				<IndexOverzicht />
+			{:else}
+				<IndexView category={indexKind} onResultCountChange={(count) => (reportedCount = count)} />
+			{/if}
 		{:else if focusMissing && !selectedNode && !netwerkActive}
 			<div class="explore-empty">
 				<p>{focusError}</p>
