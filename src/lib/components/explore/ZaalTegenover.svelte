@@ -6,6 +6,7 @@
 	// in seating_plan (BE-4). Niet voor main.
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
+	import { kleurVan } from '$lib/components/r4/partijkleuren';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 
@@ -89,14 +90,6 @@
 		return out;
 	});
 
-	const order = (rows: string[]) => {
-		const seen: string[] = [];
-		for (const row of rows) for (const n of row.split(',')) if (n && !seen.includes(n)) seen.push(n);
-		return seen;
-	};
-	const legendL = order(LEFT);
-	const legendR = order(RIGHT);
-	const count = (n: string) => stoelen.filter((s) => s.name === n).length;
 
 	const side = (name: string) => {
 		const f = byName.get(name);
@@ -110,7 +103,9 @@
 			d="M{W / 2 - 46} 8 H{W / 2 + 46} L{W / 2 + 40} 26 H{W / 2 - 40} Z"
 			class="meubel"
 		/>
-		<text x={W / 2} y="21" text-anchor="middle" class="lbl">Regering</text>
+		<circle cx={W / 2} cy="17" r="7" class="nr" /><text x={W / 2} y="20" text-anchor="middle" class="nr-t">3</text>
+		<rect x={W / 2 - 22} y={rowY(4)} width="44" height={2 * ROW - 4} rx="2" class="meubel" />
+		<circle cx={W / 2} cy={rowY(4) + ROW - 2} r="7" class="nr" /><text x={W / 2} y={rowY(4) + ROW + 1} text-anchor="middle" class="nr-t">4</text>
 		{#each stoelen as s, i (i)}
 			{@const f = byName.get(s.name)}
 			{@const v = side(s.name)}
@@ -123,25 +118,15 @@
 					rx="3"
 					class:tegen={v === 'tegen'}
 					class:voor={v === 'voor'}
-					fill={voteHighlight ? undefined : fillOf.get(s.name)}
+					fill={voteHighlight ? undefined : kleurVan('EK', s.name, i, fillOf.get(s.name) ?? null)}
 				><title>{s.name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect>
 			</a>
 		{/each}
-		<text x={W / 2} y={rowY(9) + S + 16} text-anchor="middle" class="lbl">Voorzitter</text>
+		<rect x={W / 2 - S / 2 - 10 - S} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
+		<rect x={W / 2 + S / 2 + 10} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
+		<circle cx={W / 2} cy={rowY(9) + S + 14} r="7" class="nr" /><text x={W / 2} y={rowY(9) + S + 17} text-anchor="middle" class="nr-t">1</text>
+		<circle cx={W / 2 - S - 10} cy={rowY(9) + S + 14} r="7" class="nr" /><text x={W / 2 - S - 10} y={rowY(9) + S + 17} text-anchor="middle" class="nr-t">2</text>
 	</svg>
-	<div class="legend">
-		<div>
-			<span class="side">Links</span>
-			{#each legendL as n (n)}<span><i style:background={fillOf.get(n)}></i>{n} {count(n)}</span>{/each}
-		</div>
-		<div>
-			<span class="side">Rechts</span>
-			{#each legendR as n (n)}<span><i style:background={fillOf.get(n)}></i>{n} {count(n)}</span>{/each}
-		</div>
-	</div>
-	<figcaption>
-		Eerste Kamer, 75 zetels. Plaatsen naar "Wie zit waar" op eerstekamer.nl, 30 september 2026.
-	</figcaption>
 </figure>
 
 <style>
@@ -160,9 +145,12 @@
 		fill: var(--paper-2);
 		stroke: var(--rule-strong);
 	}
-	.lbl {
-		font: 500 var(--t-micro) var(--font-sans);
-		fill: var(--ink-2);
+	.nr {
+		fill: var(--ink);
+	}
+	.nr-t {
+		font: 600 var(--t-glyph) var(--font-sans);
+		fill: var(--paper);
 	}
 	rect.voor {
 		fill: var(--ink-2);
@@ -175,35 +163,5 @@
 	a:focus-visible rect {
 		stroke: var(--ink);
 		stroke-width: 2;
-	}
-	.legend {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--s-4);
-		font: var(--t-micro) var(--font-sans);
-		color: var(--ink-2);
-		width: 100%;
-		max-width: 520px;
-	}
-	.legend > div {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-	.side {
-		font-weight: 500;
-		color: var(--ink);
-	}
-	.legend i {
-		display: inline-block;
-		width: 10px;
-		height: 10px;
-		border-radius: 2px;
-		margin-right: var(--s-2);
-	}
-	figcaption {
-		font: var(--t-micro) var(--font-sans);
-		color: var(--ink-3);
-		text-align: center;
 	}
 </style>

@@ -18,6 +18,11 @@
 
 	// Ontwerpstudie ronde 3: ?ontwerp toont de kop met de stand van zaken.
 	const ontwerp = $derived(!!page.url.searchParams.get('ontwerp'));
+	const r4 = $derived(page.url.searchParams.get('ontwerp') === 'r4');
+	import StandBalk from '$lib/components/r4/StandBalk.svelte';
+	import Tijdlijn from '$lib/components/r4/Tijdlijn.svelte';
+	import { procedure } from '$lib/components/r4/procedure';
+	let metOverig = $state(false);
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -115,7 +120,7 @@
 					{#if d.short_title && d.title && d.title.trim() !== d.short_title}
 						<details class="r3-full"><summary>Volledige titel</summary><p>{d.title}</p></details>
 					{/if}
-					<StandVanZaken {d} />
+					{#if r4}<StandBalk {d} />{:else}<StandVanZaken {d} />{/if}
 				{:else}
 				<h2 class="title">{d.title ?? d.number}</h2>
 				<div class="chips">
@@ -180,6 +185,18 @@
 				</div>
 			{/if}
 
+			{#if r4 && view.timeline}
+				{@const p = procedure(d, view.timeline.entries, metOverig)}
+				<section class="sec r4-proc">
+					<h3 class="sec-title">Procedure</h3>
+					<Tijdlijn groepen={p.groepen} />
+					{#if p.overig}
+						<button type="button" class="r4-overig" onclick={() => (metOverig = !metOverig)}
+							>{metOverig ? 'Alleen de procedure' : `Toon ook de ${p.overig} andere items`}</button
+						>
+					{/if}
+				</section>
+			{:else}
 			<p class="counts">
 				{dossierCounts({
 					documents: d.document_count,
@@ -199,11 +216,25 @@
 					<LegislativeTimeline entries={view.timeline.entries} dossier={d.number} compact={ontwerp} />
 				</section>
 			{/if}
+			{/if}
 		{/if}
 	</div>
 </ReaderFrame>
 
 <style>
+	.r4-overig {
+		align-self: flex-start;
+		margin-top: var(--s-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		padding: var(--s-1) var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: transparent;
+		cursor: pointer;
+	}
 	.r3-full summary {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);

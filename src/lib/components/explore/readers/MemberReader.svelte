@@ -22,6 +22,8 @@
 	import { formatDate, formatLongDate } from './_shared';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
 	const ontwerp = $derived(!!page.url.searchParams.get('ontwerp'));
+	const r4 = $derived(page.url.searchParams.get('ontwerp') === 'r4');
+	import BewindspersoonKop from '$lib/components/r4/BewindspersoonKop.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -139,6 +141,9 @@
 			{@const ek = m.ek ?? null}
 			{@const ekSitting = !!ek && !ek.observed_until}
 
+			{#if r4 && (m.government_functions ?? []).length > 0}
+				<BewindspersoonKop {m} />
+			{:else}
 			<header class="head">
 				<span class="kicker"
 					><KindGlyph collection="members" />{ekSitting && !sitting
@@ -165,6 +170,7 @@
 					</div>
 				</div>
 			</header>
+			{/if}
 
 			{#if ek}
 				<section class="sec">
@@ -198,11 +204,11 @@
 			{/if}
 
 			{#if ontwerp && (m.government_functions ?? []).length > 0}
-				<BewindspersoonOverzicht memberKey={m.key} />
+				<BewindspersoonOverzicht memberKey={m.key} ruim={r4} />
 			{/if}
 
 			{#if career.length > 0}
-				<section class="sec">
+				<section class="sec" id="loopbaan">
 					<h3 class="sec-title">Loopbaan</h3>
 					<ul class="career">
 						{#each career as step (step.kind + (step.kind === 'seat' ? step.factionKey : step.function) + step.from)}

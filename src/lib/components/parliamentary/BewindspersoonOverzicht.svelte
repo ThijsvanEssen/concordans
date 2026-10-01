@@ -6,7 +6,7 @@
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { stand, datum } from './stand';
 
-	let { memberKey }: { memberKey: string } = $props();
+	let { memberKey, ruim = false }: { memberKey: string; ruim?: boolean } = $props();
 
 	type C = Schema<'CommitmentListResponse'>;
 	type D = Schema<'ActorDossiersResponse'>;
@@ -45,7 +45,7 @@
 </script>
 
 {#if commitments && commitments.total > 0}
-	<section class="ov">
+	<section class="ov" class:ruim id="toezeggingen">
 		<h3 class="t">Toezeggingen</h3>
 		<p class="zin">
 			<a href={href()}>{commitments.total} toezeggingen</a>:
@@ -75,7 +75,7 @@
 {/if}
 
 {#if dossiers && dossiers.total > 0}
-	<section class="ov">
+	<section class="ov" class:ruim id="dossiers">
 		<h3 class="t">Dossiers</h3>
 		<p class="zin">{dossiers.total} dossiers met stukken die deze bewindspersoon ondertekende.</p>
 		<ol class="items">
@@ -160,5 +160,13 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	.ruim {
+		gap: var(--s-3);
+		margin-top: var(--s-5);
+	}
+	.ruim .items li {
+		padding: var(--s-3) 0;
+		gap: var(--s-1);
 	}
 </style>

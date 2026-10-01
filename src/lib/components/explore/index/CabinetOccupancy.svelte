@@ -1,4 +1,7 @@
 <script lang="ts">
+	import PostOpen from '$lib/components/r4/PostOpen.svelte';
+	import { page } from '$app/state';
+	const r4 = $derived(!!page.url.searchParams.get('ontwerp'));
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
 	// a successor is the next block on the line, a stand-in has a dotted bar and a grey name.
 	// The phases (demissionair and after) are dotted lines with their name on the axis. A
@@ -281,6 +284,18 @@
 
 <!-- The details of a post: who, what, when, why a stand-in, and what they signed. -->
 {#snippet detail(p: SeatPost)}
+	{#if r4}
+		<PostOpen
+			memberKey={p.member.key}
+			naam={nameOf(p)}
+			partij={p.party?.short ?? null}
+			functie={(p.function ?? '') + (p.acting ? ', waarnemend' : '')}
+			van={p.from_date ?? null}
+			tot={p.to_date ?? null}
+			dossiers={p.dossiers ?? 0}
+			wetsvoorstellen={p.bills ?? 0}
+		/>
+	{:else}
 	<div class="post-detail" style:--party={colorOf(p.party?.short)}>
 		<p class="post-who">
 			<BronLink ref={`members/${p.member.key}`} class="post-name">{nameOf(p)}</BronLink>
@@ -318,6 +333,7 @@
 			>
 		</p>
 	</div>
+	{/if}
 {/snippet}
 
 <style>

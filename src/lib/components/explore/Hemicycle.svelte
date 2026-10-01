@@ -11,8 +11,14 @@
 	let {
 		data,
 		hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' }),
-		voteHighlight = null
+		voteHighlight = null,
+		colorOf = null,
+		meubels = false
 	}: {
+		/** Ronde 4: de kleur van een stoel (fractie, volgnummer), zoals de Kamer haar tekent. */
+		colorOf?: ((f: SeatFaction, i: number) => string) | null;
+		/** Ronde 4: Voorzitter, griffier, kabinet (vak-K), verslag en spreekgestoelte tekenen. */
+		meubels?: boolean;
 		data: Seats;
 		/** Where a fractie's sector links: its reader, unless the page says otherwise. */
 		hrefOf?: (key: string) => string;
@@ -43,7 +49,7 @@
 	const ROW_CAPS = $derived(data.total_seats <= 75 ? ROWS_75 : ROWS_150);
 	const kamer = $derived(chamberName(data.chamber));
 	const VIEW_W = 440;
-	const VIEW_H = 230;
+	const VIEW_H = $derived(meubels ? 292 : 230);
 	const CX = VIEW_W / 2;
 	const CY = 210;
 	const R_INNER = 90;
@@ -152,15 +158,16 @@
 				<path d={sec.path} class="sector" />
 			</a>
 		{/each}
-		{#each seats as s (s.faction.id + ':' + s.x + ':' + s.y)}
+		{#each seats as s, i (s.faction.id + ':' + s.x + ':' + s.y)}
 			{@const side = voteHighlight?.[s.faction.key]}
+			{@const kleur = colorOf ? colorOf(s.faction, i) : s.faction.color}
 			<circle
 				aria-hidden="true"
 				cx={s.x}
 				cy={s.y}
 				r={SEAT_R}
-				fill={side === 'tegen' ? undefined : s.faction.color}
-				style:stroke={side === 'tegen' ? s.faction.color : undefined}
+				fill={side === 'tegen' ? undefined : kleur}
+				style:stroke={side === 'tegen' ? kleur : undefined}
 				class="seat"
 				class:seat--dim={hovered !== null && hovered.id !== s.faction.id}
 				class:seat--hi={hovered?.id === s.faction.id}
@@ -196,6 +203,22 @@
 			</text>
 			<text x={CX} y={CY + 8} text-anchor="middle" class="center-lbl">zetels</text>
 		{/if}
+		{#if meubels}
+			{@const y = CY + 30}
+			<!-- Zoals de zetelverdeling van de Tweede Kamer: 1 Voorzitter, 2 Griffier,
+			     3 Kabinet (vak-K), 4 Verslag en redactie, 5 Spreekgestoelte. -->
+			<g class="meubel">
+				<rect x={CX - 118} y={y} width="56" height="14" rx="2" />
+				<rect x={CX - 56} y={y} width="36" height="14" rx="2" />
+				<rect x={CX - 12} y={y + 22} width="24" height="12" rx="2" />
+				<rect x={CX + 22} y={y} width="96" height="14" rx="2" />
+				<rect x={CX + 126} y={y} width="44" height="14" rx="2" />
+			</g>
+			{#each [[CX - 90, y + 7, '1'], [CX - 38, y + 7, '2'], [CX + 70, y + 7, '3'], [CX + 148, y + 7, '4'], [CX, y + 28, '5']] as [x, yy, n] (n)}
+				<circle cx={x} cy={yy} r="7" class="nr" />
+				<text x={x} y={Number(yy) + 3} text-anchor="middle" class="nr-t">{n}</text>
+			{/each}
+		{/if}
 	</svg>
 
 	<!-- Tekstfallback voor schermlezers: de SVG zelf is aria-hidden zodat
@@ -225,6 +248,17 @@
 </figure>
 
 <style>
+	.meubel rect {
+		fill: var(--paper-2);
+		stroke: var(--rule-strong);
+	}
+	.nr {
+		fill: var(--ink);
+	}
+	.nr-t {
+		font: 600 var(--t-glyph) var(--font-sans);
+		fill: var(--paper);
+	}
 	.hemicycle {
 		/* `flex: 1` only has effect inside a flex parent; elsewhere the figure is a block. */
 		flex: 1;
