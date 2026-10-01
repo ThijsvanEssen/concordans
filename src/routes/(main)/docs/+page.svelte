@@ -180,6 +180,10 @@
 				Cmd-klik, ctrl-klik en een klik met de middelste knop openen de bron direct, in een nieuw
 				tabblad waar de browser dat doet. <kbd>Esc</kbd> of een klik ernaast sluit een kaart.
 			</p>
+			<p>
+				Uitzondering: een zoekresultaat opent de bron direct. Zoeken is navigeren; wie een bron
+				zoekt, wil erheen.
+			</p>
 		</div>
 
 		<div class="section">
