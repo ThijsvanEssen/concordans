@@ -108,7 +108,10 @@
 			? `Artikel ${p.nummer} van ${p.wet}`
 			: p.soort === 'kamerstuk'
 				? `Kamerstuk ${p.dossier}, ${/^\d/.test(p.nummer) ? 'nr. ' : ''}${p.nummer}`
-				: padHref(p);
+				: p.soort === 'publicatie'
+					? `${REEKS_NAAM[p.reeks]} ${p.jaar}, ${p.nummer}`
+					: padHref(p);
+	const REEKS_NAAM = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
 	$effect(() => {
 		const p = pad;
 		padMissing = null;

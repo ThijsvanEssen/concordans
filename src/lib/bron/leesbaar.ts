@@ -5,6 +5,7 @@
 //   /dossiers/36600-VIII                 a dossier, by its number
 //   /kamerstukken/36799/31               a Kamerstuk, by its dossier and number
 //   /kamerstukken/36600-VIII/AB          one of the Eerste Kamer, by its letter
+//   /stb/2026/94                         a publication, by series, year and number
 //
 // Each is a second address of the Verkenner (`reroute` in src/hooks.ts serves /explore);
 // the API ids stay as they are. The rest of the view stays in the query: ?lezen=1,
@@ -19,7 +20,12 @@ export type Pad =
 	| { soort: 'uitspraak'; ecli: string }
 	| { soort: 'artikel'; wet: string; nummer: string }
 	| { soort: 'dossier'; nummer: string }
-	| { soort: 'kamerstuk'; dossier: string; nummer: string };
+	| { soort: 'kamerstuk'; dossier: string; nummer: string }
+	| { soort: 'publicatie'; reeks: Reeks; jaar: string; nummer: string };
+
+/** The series of officielebekendmakingen.nl a publication appears in. */
+export type Reeks = 'stb' | 'stcrt' | 'trb';
+const REEKSEN: readonly string[] = ['stb', 'stcrt', 'trb'];
 
 const segment = (s: string) => {
 	try {
@@ -45,6 +51,8 @@ export function parsePad(pathname: string): Pad | null {
 		return { soort: 'artikel', wet: a.toUpperCase(), nummer: c };
 	if (first === 'dossiers' && parts.length === 2 && DOSSIER.test(a))
 		return { soort: 'dossier', nummer: a.toUpperCase() };
+	if (REEKSEN.includes(first) && parts.length === 3 && /^\d{4}$/.test(a) && /^\d+$/.test(b))
+		return { soort: 'publicatie', reeks: first as Reeks, jaar: a, nummer: b };
 	if (first === 'kamerstukken' && parts.length === 3 && DOSSIER.test(a) && STUK.test(b))
 		return { soort: 'kamerstuk', dossier: a.toUpperCase(), nummer: b.toUpperCase() };
 	return null;
@@ -68,6 +76,8 @@ export function padHref(pad: Pad): string {
 			return `/dossiers/${e(pad.nummer)}`;
 		case 'kamerstuk':
 			return `/kamerstukken/${e(pad.dossier)}/${e(pad.nummer)}`;
+		case 'publicatie':
+			return `/${pad.reeks}/${pad.jaar}/${pad.nummer}`;
 	}
 }
 
@@ -97,43 +107,43 @@ export function focusOfPad(pad: Pad): string | null {
 	return focusVan.get(padHref(pad)) ?? null;
 }
 
+/** What /api/lookup is asked for an address: its kind and exact parameters. */
+function lookupQuery(pad: Pad) {
+	switch (pad.soort) {
+		case 'uitspraak':
+			return { kind: 'judgment', ecli: pad.ecli } as const;
+		case 'artikel':
+			return { kind: 'article', law: pad.wet, number: pad.nummer } as const;
+		case 'dossier':
+			return { kind: 'dossier', number: pad.nummer } as const;
+		case 'kamerstuk':
+			return { kind: 'document', dossier: pad.dossier, number: pad.nummer } as const;
+		case 'publicatie':
+			return {
+				kind: 'publication',
+				series: pad.reeks,
+				year: pad.jaar,
+				number: pad.nummer
+			} as const;
+	}
+}
+
 /**
- * The focus of an address that needs the API: an article by the article route, a
- * Kamerstuk by /api/resolve. Exact or nothing: a Kamerstuk that is not in the data does
- * not open its dossier instead. Null when the data lacks it.
+ * The focus of an address that needs the API, by /api/lookup: exact or nothing. A
+ * Kamerstuk that is not in the data does not open its dossier instead. Null when the
+ * data lacks it (404 `not_in_data`); another failure is thrown, to be said as such.
  */
 export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | null> {
 	const known = focusOfPad(pad);
 	if (known) return known;
-	let focus: string | null = null;
-	if (pad.soort === 'artikel') {
-		const { data } = await api.GET('/api/articles/{bwb_id}/{article_number}', {
-			params: { path: { bwb_id: pad.wet, article_number: pad.nummer } },
-			signal
-		});
-		const key = data?.article?.key;
-		focus = key ? `articles/${key}` : null;
-	} else if (pad.soort === 'kamerstuk' && /^[A-Z]/.test(pad.nummer)) {
-		// A letter is a stuk of the Eerste Kamer, which /api/resolve does not know; its
-		// dossier's stukken of that Kamer hold it. TODO(backend): /api/lookup?kind=document.
-		const { data } = await api.GET('/api/documents', {
-			params: { query: { chamber: 'EK', dossier: pad.dossier, limit: 200 } },
-			signal
-		});
-		const found = data?.items.find((d) => d.number?.toUpperCase() === pad.nummer);
-		focus = found ? `documents/${found.key}` : null;
-	} else if (pad.soort === 'kamerstuk') {
-		const { data } = await api.GET('/api/resolve', {
-			params: { query: { q: `${pad.dossier}, nr. ${pad.nummer}` } },
-			signal
-		});
-		const match = data?.match;
-		focus =
-			match && match.collection === 'documents' && (data?.confidence ?? 0) >= 0.9
-				? `documents/${match.key}`
-				: null;
-	}
-	if (focus) remember(padHref(pad), focus);
+	const { data, response } = await api.GET('/api/lookup', {
+		params: { query: lookupQuery(pad) },
+		signal
+	});
+	if (response.status === 404) return null;
+	if (!data) throw new Error(`lookup ${response.status}`);
+	const focus = `${data.collection}/${data.key}`;
+	remember(padHref(pad), focus);
 	return focus;
 }
 
@@ -164,6 +174,14 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			// A number with a space ("bijlage 2 artikel 6") has no address of its own.
 			if (!wet || !nummer || /\s/.test(nummer)) return null;
 			return padHref({ soort: 'artikel', wet, nummer: bookNumber(wet, nummer) });
+		}
+		case 'instruments': {
+			// A publication by its id at officielebekendmakingen.nl (stb-2026-94), or its key.
+			const id = text(props?.official_id) ?? target.key.replaceAll('_', '-');
+			const m = /^(stb|stcrt|trb)-(\d{4})-(\d+)$/.exec(id.toLowerCase());
+			return m
+				? padHref({ soort: 'publicatie', reeks: m[1] as Reeks, jaar: m[2], nummer: m[3] })
+				: null;
 		}
 		case 'documents': {
 			// Dossier and number as the stuk is cited: 36600-VIII, and 31 in the Tweede

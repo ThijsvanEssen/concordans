@@ -156,7 +156,12 @@
 					<span class="list-k">dossier</span><span>/dossiers/36600-VIII</span>
 				</div>
 				<div class="list-row">
-					<span class="list-k">Kamerstuk</span><span>/kamerstukken/36799/31</span>
+					<span class="list-k">Kamerstuk</span><span
+						>/kamerstukken/36799/31, /kamerstukken/36600-VIII/AB</span
+					>
+				</div>
+				<div class="list-row">
+					<span class="list-k">publicatie</span><span>/stb/2026/94</span>
 				</div>
 			</div>
 			<p>

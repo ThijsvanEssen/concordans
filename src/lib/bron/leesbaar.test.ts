@@ -29,6 +29,21 @@ describe('a readable address', () => {
 		});
 	});
 
+	it('reads a publication by series, year and number', () => {
+		expect(parsePad('/stb/2026/94')).toEqual({
+			soort: 'publicatie',
+			reeks: 'stb',
+			jaar: '2026',
+			nummer: '94'
+		});
+		expect(parsePad('/stb/26/94')).toBeNull();
+		expect(padOfFocus('instruments/stb_2026_94')).toBe('/stb/2026/94');
+		expect(padOfFocus('instruments/x', { official_id: 'stcrt-2025-1234' })).toBe(
+			'/stcrt/2025/1234'
+		);
+		expect(padOfFocus('instruments/bwbr0005537')).toBeNull();
+	});
+
 	it('reads the letter of a stuk of the Eerste Kamer', () => {
 		expect(parsePad('/kamerstukken/36600-VIII/ab')).toEqual({
 			soort: 'kamerstuk',
