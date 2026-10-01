@@ -1061,34 +1061,41 @@
 			...COURT_GROUPS,
 			{ label: 'Overig', tiers: TIERS.filter((t) => !named.has(t)) }
 		];
-		return groups.flatMap((g) => {
+		// Each group of courts is a filter group of its own, under its own heading, as every
+		// other filter: no heading inside a list, and so no indent.
+		return groups.flatMap((g): FacetGroup[] => {
 			const tiers = g.tiers.filter(held);
 			if (!tiers.length) return [];
 			const count = courtCounts && tiers.reduce((n, t) => n + (courtCounts.get(t) ?? 0), 0);
+			const options = tiers.flatMap((t) => {
+				const ehrm = t === 'ehrm';
+				const on = ehrm ? source === 'echr' : source !== 'echr' && !court && tier === t;
+				return [
+					{
+						id: t,
+						label: TIER_LABEL[t],
+						count: courtCounts?.get(t),
+						on,
+						// One college or the EHRM at a time: the API takes one tier.
+						onClick: () =>
+							patchUrl({
+								tier: on || ehrm ? null : t,
+								court_kind: null,
+								court: null,
+								source: ehrm && !on ? 'echr' : null
+							})
+					},
+					...(on && MIXED_TIERS.includes(t) ? kindOptions() : [])
+				];
+			});
 			return [
-				{ heading: g.label, count: count ?? undefined },
-				...tiers.flatMap((t) => {
-					const ehrm = t === 'ehrm';
-					const on = ehrm ? source === 'echr' : source !== 'echr' && !court && tier === t;
-					return [
-						{
-							id: t,
-							label: TIER_LABEL[t],
-							count: courtCounts?.get(t),
-							indent: true,
-							on,
-							// One college or the EHRM at a time: the API takes one tier.
-							onClick: () =>
-								patchUrl({
-									tier: on || ehrm ? null : t,
-									court_kind: null,
-									court: null,
-									source: ehrm && !on ? 'echr' : null
-								})
-						},
-						...(on && MIXED_TIERS.includes(t) ? kindOptions() : [])
-					];
-				})
+				{
+					id: `court-${g.label}`,
+					label: g.label,
+					note: count != null ? formatCount(count) : undefined,
+					kind: 'list',
+					options
+				}
 			];
 		});
 	});
@@ -1104,7 +1111,7 @@
 			id: `kind-${k}`,
 			label: COURT_KIND_LABEL[k],
 			count,
-			indent: 'deep' as const,
+			indent: true,
 			on: courtKind === k,
 			onClick: () => patchUrl({ court_kind: courtKind === k ? null : k })
 		}));
@@ -1180,14 +1187,8 @@
 				];
 			case 'judgments':
 				return [
-					{
-						id: 'court',
-						label: 'Instantie',
-						// No total here: the list's own count stands above it, and the collection's
-						// (the EHRM included, which the list leaves out until chosen) disagreed with it.
-						kind: 'list',
-						options: courtOptions
-					},
+					// The groups of courts, each under its own heading; no heading Instantie above.
+					...courtOptions,
 					{
 						id: 'period',
 						label: 'Periode',
