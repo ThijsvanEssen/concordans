@@ -3316,8 +3316,6 @@
 	   what is read. */
 	.row-id-main {
 		display: block;
-		color: var(--ink-2);
-		font-size: var(--t-micro);
 	}
 	.row-id-main--inline {
 		display: inline-flex;
