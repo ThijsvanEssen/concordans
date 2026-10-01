@@ -3,6 +3,7 @@ import {
 	bareArticle,
 	lawAbbreviation,
 	parseCitation,
+	lawTitle,
 	resolveLaw,
 	resolveQuery,
 	type ResolveDeps
@@ -201,5 +202,23 @@ describe('resolveLaw', () => {
 		expect(await resolveLaw('AVG', { resolve: async () => avg })).toBe(avg);
 		const article = { ref: { collection: 'articles' as const, key: 'x' }, at: null };
 		expect(await resolveLaw('Art', { resolve: async () => article })).toBeNull();
+	});
+});
+
+describe('lawTitle', () => {
+	it('knows a regeling by its title', () => {
+		for (const q of [
+			'Omgevingswet',
+			'Handelsregisterwet 2007',
+			'Wet op de rechterlijke organisatie',
+			'Wetboek van Strafvordering',
+			'Besluit bouwwerken leefomgeving'
+		])
+			expect(lawTitle(q)).toBe(q);
+	});
+
+	it('leaves words, a lone "wet" and citations to the search', () => {
+		for (const q of ['huurrecht', 'wet', 'ontslag op staande voet', 'art. 3:4 Awb'])
+			expect(lawTitle(q)).toBeNull();
 	});
 });

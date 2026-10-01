@@ -60,6 +60,18 @@ export function lawAbbreviation(query: string): string | null {
 	return ABBREVIATION.test(q) ? q : null;
 }
 
+// The name of a regeling: "Omgevingswet", "Handelsregisterwet 2007", "Wet op de
+// rechterlijke organisatie", "Besluit bouwwerken leefomgeving". Eight words at most.
+const LAW_END = /\p{L}(wet|wetboek|besluit|regeling|verordening|reglement)(\s+\d{4})?$/iu;
+const LAW_START = /^(wet|wetboek|besluit|regeling|verordening|reglement)\s+\p{L}/iu;
+
+/** The query when it names a regeling by its title, for the API to find; null otherwise. */
+export function lawTitle(query: string): string | null {
+	const q = query.trim().replace(/\s+/g, ' ');
+	if (q.split(' ').length > 8 || /[0-9]:/.test(q)) return null;
+	return LAW_END.test(q) || LAW_START.test(q) ? q : null;
+}
+
 const isBW = (law: string) => /^(bw|burgerlijk wetboek)$/i.test(law.trim());
 
 /** The citation a query is, or null when it is words to search for. */
