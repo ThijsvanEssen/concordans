@@ -89,6 +89,9 @@ const DOSSIERS_SHOWN = 100;
 /** The activities of a committee read at once: about 0.2 KB each. */
 const ACTIVITIES_SHOWN = 200;
 
+/** The articles of a law read at once, in the law's order, without their text. */
+const ARTICLES_SHOWN = 100;
+
 /** The judgments of a law read at once: about 1.2 KB each, for the articles they cite. */
 const JUDGMENTS_SHOWN = 100;
 
@@ -619,11 +622,46 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				ref: refOf(parseNodeId(d.id)?.collection ?? 'instruments', d.key, {}),
 				title: d.display_name ?? d.identifier ?? d.key,
 				context: null,
-				kind: 'wetsvoorstellen' as const,
+				kind: 'wetten' as const,
 				identifier: d.identifier && d.identifier !== d.key ? d.identifier : null,
 				date: d.first_effective_date ?? null,
 				relation: 'AMENDS',
 				direction: 'inbound'
+			}))
+		};
+	},
+
+	// The articles of this law in the law's own order, as the reader has them: the node
+	// response holds a sample in no order (Richtlijn 2017/1132 began with 27, 126, 10).
+	// Without the route: the node's own bucket.
+	'instrument-articles': async ({ node, neighbors, totals, signal }) => {
+		const law = lawIdOf(node.props);
+		const fromNode = () => ({
+			total: totals.get(bucketKey('PART_OF', 'articles', 'inbound')),
+			rows: neighbors
+				.filter(
+					(n) =>
+						n.relation === 'PART_OF' && n.direction === 'inbound' && n.collection === 'articles'
+				)
+				.map(rowOfNeighbor)
+				.filter((r) => r !== null)
+		});
+		if (!law) return fromNode();
+		const found = await unwrap(
+			api.GET('/api/instruments/{bwb_id}/articles', {
+				params: { path: { bwb_id: law }, query: { limit: ARTICLES_SHOWN, text_preview_chars: 0 } },
+				signal
+			})
+		).catch(() => null);
+		if (!found) return fromNode();
+		return {
+			total: found.total,
+			rows: found.items.map((a) => ({
+				ref: refOf('articles', a.key, a),
+				...describe('articles', a.key, a.display_name, a),
+				kind: 'artikelen' as const,
+				relation: 'PART_OF' as const,
+				direction: 'inbound' as const
 			}))
 		};
 	},

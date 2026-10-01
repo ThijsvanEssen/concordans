@@ -25,6 +25,18 @@ describe('tabTitle', () => {
 		);
 	});
 
+	it('names a conclusion by its A-G, as it is cited', () => {
+		const props = {
+			ecli: 'ECLI:NL:PHR:2019:887',
+			date: '2019-09-13',
+			court: 'Parket bij de Hoge Raad',
+			advocate_general: 'F.F. Langemeijer en M.H. Wissink'
+		};
+		expect(tabTitle(node('judgments', 'x', null, props))).toBe(
+			'Conclusie A-G Langemeijer en Wissink 13 september 2019'
+		);
+	});
+
 	it('cuts a long name at a word', () => {
 		const long =
 			'Motie 2026Z19641 — Gewijzigde motie van het lid Grinwis over optionele varianten van steward ownership en werknemerseigendom';

@@ -39,6 +39,7 @@ export type Loader =
 	| 'instrument-related'
 	| 'instrument-aard'
 	| 'instrument-amended-by'
+	| 'instrument-articles'
 	| 'instrument-judgments'
 	| 'committee-dossiers'
 	| 'committee-activities'
@@ -275,7 +276,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'articles',
 			label: 'Artikelen van deze wet',
 			noun: 'artikelen',
-			match: [{ relation: 'PART_OF', direction: 'inbound', collection: 'articles' }]
+			load: 'instrument-articles'
 		},
 		{
 			id: 'implemented-by',
@@ -286,8 +287,9 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		{ ...EUROPEAN, match: undefined, load: 'instrument-international' },
 		{
 			id: 'amended-by',
-			label: 'Wetsvoorstellen die deze wet wijzigen',
-			noun: 'wetsvoorstellen',
+			// The rows are publications in the Staatsblad (`/amended-by`), not bills.
+			label: 'Publicaties die deze wet wijzigen',
+			noun: 'publicaties',
 			load: 'instrument-amended-by'
 		},
 		{

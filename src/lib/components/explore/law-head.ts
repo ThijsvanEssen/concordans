@@ -29,6 +29,13 @@ export function lawKind(d: Detail | null): string {
 	return 'Regeling';
 }
 
+const PUBLICATION: Record<string, string> = { Stb: 'Staatsblad', Stcrt: 'Staatscourant' };
+
+/** Where a publication appeared, as the reader and the breadcrumb name it: Staatsblad, Staatscourant. */
+export function publicationName(kind: string): string {
+	return PUBLICATION[kind] ?? kind;
+}
+
 /** The full title under the name, where it says more than the name. */
 export function lawFullTitle(d: Detail | null, name: string | null): string | null {
 	const full = d?.official_title ?? d?.title ?? null;
