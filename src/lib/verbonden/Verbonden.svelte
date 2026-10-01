@@ -645,7 +645,8 @@
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: var(--s-1) var(--s-3);
-		margin: var(--s-1) 0 0;
+		margin: 0;
+		padding: var(--s-1) var(--s-4);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
