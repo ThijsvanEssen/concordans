@@ -353,7 +353,11 @@
 									if (!onControl(e) && !row.missing) openRow = open ? null : id;
 								}}
 							>
-								<KindGlyph collection={row.ref.collection} size={11} />
+								<KindGlyph
+									collection={row.ref.collection}
+									vorm={row.kind === 'wetsvoorstellen' ? 'voorstel' : undefined}
+									size={11}
+								/>
 								<span class="row__text">
 									{#if row.missing}
 										<span class="row__title row__title--missing">{row.title}</span>

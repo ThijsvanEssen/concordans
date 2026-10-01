@@ -14,12 +14,12 @@
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { isVersionCollection } from '$lib/graph/types';
 	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
-	import { vormVan } from '$lib/bron/vormen';
+	import { vormVanBron } from '$lib/bron/vormen';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { BRON_KIND_COLLECTION } from '$lib/bron/vormen';
+	import { BRON_KIND_VORM } from '$lib/bron/vormen';
 	import { BRON_KIND_LABEL } from '$lib/verbonden/filter';
 	import {
 		containerIdFor,
@@ -323,17 +323,19 @@
 		return { color: n.stub || n.kind === 'other' ? tokens().paper : fillFor(n.kind), borderColor };
 	}
 
+	// Ronde 6: elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
+	// (dossier, fractie, commissie) een stap groter.
 	const NODE_SIZE: Record<GraphNodeKind, number> = {
-		article: 7,
-		instrument: 9,
+		article: 8,
+		instrument: 8,
 		judgment: 8,
-		dossier: 11,
+		dossier: 10,
 		committee: 10,
 		faction: 10,
-		member: 6.5,
-		document: 6,
-		activity: 5,
-		other: 7
+		member: 8,
+		document: 8,
+		activity: 8,
+		other: 8
 	};
 	function nodeSize(id: string): number {
 		const n = lookup.get(id);
@@ -494,7 +496,7 @@
 			if (!isCanvasNode(n)) continue;
 			const { color, borderColor } = nodeColors(n);
 			// Ronde 5: elke bron als teken uit vormen.ts.
-			const vorm = vormVan(n.id);
+			const vorm = vormVanBron(n.collection, n.raw?.props);
 			const useImage = true;
 			const stub = !!n.stub;
 			const rawSize = nodeSize(n.id);
@@ -1054,7 +1056,7 @@
 						{#if !legendaOpen}
 							{#each BRON_KINDS.filter((k) => (canvasCounts.kinds[k] ?? 0) > 0) as k (k)}
 								<span class="r6-teken" title="{BRON_KIND_LABEL[k]}: {canvasCounts.kinds[k]}"
-									><KindGlyph collection={BRON_KIND_COLLECTION[k]} size={11} /></span
+									><KindGlyph vorm={BRON_KIND_VORM[k]} size={11} /></span
 								>
 							{/each}
 						{/if}

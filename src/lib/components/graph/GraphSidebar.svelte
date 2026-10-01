@@ -26,7 +26,7 @@
 	import { edgeColorFor, edgeStyleFor, hullColorFor } from './nodeSprites';
 	import { kindOfCollection } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { BRON_KIND_COLLECTION } from '$lib/bron/vormen';
+	import { BRON_KIND_VORM } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
 
 	let {
@@ -185,7 +185,7 @@
 						onchange={() => onFilter(toggleKind(filter, k))}
 					/>
 					<span class="box" aria-hidden="true">{isOn(k) ? '✓' : ''}</span>
-					<KindGlyph collection={BRON_KIND_COLLECTION[k]} size={11} />
+					<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />
 					<span class="row__name">{BRON_KIND_LABEL[k]}</span>
 					<span class="row__count">{formatCount(n)}</span>
 				</label>

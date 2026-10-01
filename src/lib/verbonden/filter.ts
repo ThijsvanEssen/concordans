@@ -243,7 +243,7 @@ export const isInternational = (n: {
 	n.props?.jurisdiction === 'int';
 
 /** A document that proposes or enacts a change: a wetsvoorstel or an amendment to it. */
-const BILL_KIND = /\b(voorstel van wet|wetsvoorstel|nota van wijziging|amendement)\b/i;
+export const BILL_KIND = /\b(voorstel van wet|wetsvoorstel|nota van wijziging|amendement)\b/i;
 const CHANGE_RELATIONS: ReadonlySet<string> = new Set(['AMENDS', 'INTRODUCES', 'REPEALS']);
 
 /**

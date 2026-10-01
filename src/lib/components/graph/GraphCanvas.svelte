@@ -795,6 +795,27 @@
 			stagePadding: STAGE_PADDING,
 			zoomToSizeRatioFunction: (ratio: number) => Math.min(Math.sqrt(ratio), 1.5),
 			// A wet's anchor is a point, not a bron: its hull shows the name on hover.
+			// Ronde 6: een naam staat op een papieren ondergrond, zodat verbindingen hem niet
+			// doorsnijden.
+			defaultDrawNodeLabel: (context, data, settings) => {
+				if (!data.label) return;
+				const size = settings.labelSize;
+				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
+				const w = context.measureText(data.label).width;
+				const x = data.x + data.size + 3;
+				context.save();
+				context.globalAlpha = 1;
+				context.fillStyle = t.paper;
+				context.fillRect(x - 2, data.y - size / 2 - 2, w + 4, size + 4);
+				context.restore();
+				context.fillStyle =
+					settings.labelColor.attribute
+						? ((data as Record<string, unknown>)[settings.labelColor.attribute] as string) ??
+							settings.labelColor.color ??
+							t.ink
+						: (settings.labelColor.color ?? t.ink);
+				context.fillText(data.label, x, data.y + size / 3);
+			},
 			defaultDrawNodeHover: (context, data, settings) => {
 				if (!data.anchor) drawDiscNodeHover(context, data, settings);
 			},

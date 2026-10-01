@@ -2,10 +2,14 @@
 	// The one glyph of a kind of bron, as on the canvas. Ronde 5: the shape says what a bron
 	// is, in ink (vormen.ts); there is no colour to remember.
 	import type { Collection } from '$lib/vocabulary';
-	import { VORMEN, VORM_VAN } from './vormen';
+	import { VORMEN, VORM_VAN, type Vorm } from './vormen';
 
-	let { collection, size = 12 }: { collection: Collection; size?: number } = $props();
-	const v = $derived(VORMEN[VORM_VAN[collection] ?? 'overig']);
+	let {
+		collection,
+		vorm,
+		size = 12
+	}: { collection?: Collection; vorm?: Vorm; size?: number } = $props();
+	const v = $derived(VORMEN[vorm ?? (collection ? VORM_VAN[collection] : undefined) ?? 'overig']);
 </script>
 
 <svg

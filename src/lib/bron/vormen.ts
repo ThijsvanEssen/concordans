@@ -2,13 +2,14 @@
 // is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
 // in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
 import type { Collection } from '$lib/vocabulary';
-import type { BronKind } from '$lib/verbonden/filter';
+import { BILL_KIND, type BronKind } from '$lib/verbonden/filter';
 
 export type Vorm =
 	| 'regel'
 	| 'regel-o'
 	| 'uitspraak'
 	| 'stuk'
+	| 'voorstel'
 	| 'dossier'
 	| 'besluit'
 	| 'activiteit'
@@ -32,6 +33,8 @@ export const VORMEN: Record<Vorm, { d: string; wijze: Wijze; naam: string }> = {
 	'regel-o': { d: 'M3 3h10v10H3z', wijze: 'lijn', naam: 'artikel' },
 	uitspraak: { d: CIRKEL(8, 8, 6.5), wijze: 'vul', naam: 'uitspraak' },
 	stuk: { d: 'M3.5 1h6.5l3 3v11H3.5z', wijze: 'vul', naam: 'stuk' },
+	// Ronde 6: een wetsvoorstel is een blad met een open vak, los van de toelichting.
+	voorstel: { d: 'M3.5 1h6.5l3 3v11H3.5zM5.6 7.2h5.3v5.3H5.6z', wijze: 'gat', naam: 'wetsvoorstel' },
 	dossier: { d: 'M1 3.5h5l1.5 1.5H15V14H1z', wijze: 'vul', naam: 'dossier' },
 	besluit: { d: 'M8 1.5 15 14.5H1z', wijze: 'vul', naam: 'besluit' },
 	activiteit: { d: 'M8 3.2 13.6 13.5H2.4z', wijze: 'lijn', naam: 'activiteit' },
@@ -70,14 +73,22 @@ export const VORM_VAN: Record<Collection, Vorm> = {
 export const vormVan = (idOfCollectie: string): Vorm =>
 	VORM_VAN[idOfCollectie.split('/')[0] as Collection] ?? 'overig';
 
-/** Het teken van een soort in het bronfilter: de collectie die hem draagt. */
-export const BRON_KIND_COLLECTION: Record<BronKind, Collection> = {
-	artikelen: 'articles',
-	wetten: 'instruments',
-	uitspraken: 'judgments',
-	toelichtingen: 'documents',
-	wetsvoorstellen: 'documents',
-	dossiers: 'dossiers',
-	leden: 'members',
-	internationaal: 'instruments'
+/** Het teken van een soort in het bronfilter. */
+export const BRON_KIND_VORM: Record<BronKind, Vorm> = {
+	artikelen: 'regel-o',
+	wetten: 'regel',
+	uitspraken: 'uitspraak',
+	toelichtingen: 'stuk',
+	wetsvoorstellen: 'voorstel',
+	dossiers: 'dossier',
+	leden: 'persoon',
+	internationaal: 'regel'
 };
+
+/** De vorm van één bron: een stuk dat een wetsvoorstel is, krijgt het eigen teken. */
+export function vormVanBron(collection: string, props?: Record<string, unknown> | null): Vorm {
+	const vorm = VORM_VAN[collection as Collection] ?? 'overig';
+	if (collection === 'documents' && typeof props?.kind === 'string' && BILL_KIND.test(props.kind))
+		return 'voorstel';
+	return vorm;
+}
