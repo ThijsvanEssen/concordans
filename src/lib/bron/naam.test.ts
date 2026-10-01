@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { InstrumentMeta } from '$lib/api/instrument-cache';
 import type { GraphNode } from '$lib/graph/types';
-import { bronNaam } from './naam';
+import { bronNaam, stemmingNaam } from './naam';
 
 const awb: InstrumentMeta = {
 	bwbId: 'BWBR0005537',
@@ -50,5 +50,37 @@ describe('bronNaam', () => {
 			} as unknown as GraphNode['raw']
 		});
 		expect(bronNaam(j, meta)).toBe('Raad van State, 11 januari 2023');
+	});
+});
+
+describe('stemmingNaam', () => {
+	const vote = (key: string, props: Record<string, unknown>) =>
+		({
+			id: `decisions/${key}`,
+			label: 'Wetgeving 2025Z15911: Wijziging van de Wet SUWI',
+			raw: { props }
+		}) as unknown as GraphNode;
+
+	it('names a vote as the procedure does, not by its zaak number', () => {
+		expect(
+			stemmingNaam(
+				vote('abc', {
+					date: '2026-09-29',
+					subject: 'Wijziging van de Wet SUWI ',
+					decision_kind: 'Stemmen - aangenomen',
+					kind: 'Wetgeving',
+					passed: true
+				})
+			)
+		).toBe('Stemming Tweede Kamer, aangenomen, 29 september 2026: Wijziging van de Wet SUWI');
+	});
+
+	it('says a postponed vote and a vote of the Eerste Kamer in their own words', () => {
+		expect(stemmingNaam(vote('abc', { decision_kind: 'Stemmen - uitstellen', passed: null }))).toBe(
+			'Stemming Tweede Kamer, uitstellen'
+		);
+		expect(stemmingNaam(vote('ek_36799', { passed: false }))).toBe(
+			'Stemming Eerste Kamer, verworpen'
+		);
 	});
 });
