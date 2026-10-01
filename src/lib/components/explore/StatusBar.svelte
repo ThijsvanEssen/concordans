@@ -3,7 +3,7 @@
 	// and the switch Netwerk / Tekst (WeergaveSchakelaar).
 	// Bladeren is a place to go, not a view of the selected bron, so it lives in the top
 	// nav only, not here.
-	import type { GraphNode } from '$lib/graph/types';
+	import { shortDossierTitle, type GraphNode } from '$lib/graph/types';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronLabel, type Mode } from '$lib/vocabulary';
 	import { lawKind, publicationName } from './law-head';
@@ -99,6 +99,14 @@
 			const publication = textProp(p.publication_kind);
 			add(publication ? publicationName(publication) : lawKind(p as Parameters<typeof lawKind>[0]));
 			add(node.label);
+		} else if (node.collection === 'decisions') {
+			// Stemming › Tweede Kamer › Wet proactieve dienstverlening SZW: the Kamer and the
+			// subject, as the tab says it, not the Kamer's case number ("2026-09 · Wetgeving").
+			const ek = node.key.startsWith('ek_') || p.chamber === 'EK';
+			const subject = textProp(p.subject);
+			add(bronLabel('decisions'), kindHref('decisions'));
+			add(ek ? 'Eerste Kamer' : 'Tweede Kamer');
+			add(subject ? (shortDossierTitle(subject) ?? subject) : node.label);
 		} else {
 			add(bronLabel(node.collection));
 			add(node.label);
