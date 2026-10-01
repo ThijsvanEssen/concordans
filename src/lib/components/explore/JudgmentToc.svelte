@@ -117,7 +117,7 @@
 	.judgment-toc {
 		height: 100%;
 		overflow-y: auto;
-		padding-top: 22px;
+		padding-top: var(--s-5);
 		background: var(--paper-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -125,12 +125,12 @@
 
 	.note {
 		margin: 0;
-		padding: var(--s-4) 18px;
+		padding: var(--s-4);
 		color: var(--ink-3);
 	}
 
 	.head {
-		padding: 0 18px var(--s-3);
+		padding: 0 var(--s-4) var(--s-3);
 	}
 
 	.head__title {
@@ -151,7 +151,7 @@
 	.row {
 		display: block;
 		width: 100%;
-		padding: var(--s-1) 18px;
+		padding: var(--s-1) var(--s-4);
 		border: 0;
 		background: none;
 		text-align: left;

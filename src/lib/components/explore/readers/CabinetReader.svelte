@@ -135,7 +135,7 @@
 		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
-		gap: 6px;
+		gap: var(--s-2);
 	}
 	.title {
 		font-family: var(--font-serif);
@@ -156,7 +156,7 @@
 	.party {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		gap: var(--s-2);
 	}
 	.party-dot {
 		width: 8px;

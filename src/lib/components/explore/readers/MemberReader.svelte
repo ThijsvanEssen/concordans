@@ -358,7 +358,7 @@
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
+		gap: var(--s-2);
 		padding-top: 2px;
 	}
 	.title {
@@ -457,8 +457,8 @@
 	.vote-list :global(.vote-link) {
 		display: flex;
 		flex-direction: column;
-		gap: 3px;
-		padding: 6px var(--s-1);
+		gap: var(--s-1);
+		padding: var(--s-1);
 		margin: 0 calc(-1 * var(--s-1));
 		border-radius: var(--r-1);
 		text-decoration: none;
@@ -503,12 +503,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-1);
-		margin-top: 6px;
+		margin-top: var(--s-2);
 	}
 	.vote-group-head {
 		display: flex;
 		align-items: center;
-		gap: 6px;
+		gap: var(--s-2);
 		padding: 2px 0;
 	}
 	.vote-group-count {
@@ -551,7 +551,7 @@
 		border: none;
 		border-radius: var(--r-1);
 		padding: var(--s-1);
-		margin-left: -4px;
+		margin-left: calc(-1 * var(--s-1));
 		cursor: pointer;
 		text-align: left;
 		transition:

@@ -316,7 +316,7 @@
 		left: -6px;
 	}
 	.derived {
-		margin-left: 6px;
+		margin-left: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 400;
@@ -330,8 +330,8 @@
 		gap: var(--s-2);
 		scroll-margin: 20vh;
 		border-radius: var(--r-1);
-		margin: var(--s-4) -8px 2px;
-		padding: 3px var(--s-2);
+		margin: var(--s-4) calc(-1 * var(--s-2)) 2px;
+		padding: var(--s-1) var(--s-2);
 	}
 	.heading:global(.is-landed),
 	.heading--active {
@@ -415,7 +415,7 @@
 		font-weight: 500;
 		color: var(--ink-3);
 		display: flex;
-		gap: 5px;
+		gap: var(--s-1);
 		align-items: baseline;
 	}
 	.dot {

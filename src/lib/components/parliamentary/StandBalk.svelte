@@ -189,7 +189,7 @@
 		background: transparent;
 		border-top: 2px dashed var(--ink-3);
 		height: 0;
-		margin: 4px 0 var(--s-2);
+		margin: var(--s-1) 0 var(--s-2);
 	}
 	.vak--open .naam,
 	.vak--open .wanneer {

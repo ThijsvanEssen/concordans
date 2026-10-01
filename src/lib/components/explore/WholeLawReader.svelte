@@ -558,7 +558,7 @@
 	}
 
 	.whole-title {
-		margin: 0 0 6px;
+		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
 		font-weight: 500;
 		font-size: var(--t-h1);
@@ -757,7 +757,7 @@
 		background: none;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		padding: 6px 14px;
+		padding: var(--s-1) var(--s-4);
 		cursor: pointer;
 	}
 

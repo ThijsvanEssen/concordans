@@ -706,7 +706,7 @@
 	/* 28px with its border, as the other controls of the comparison. */
 	.toggle button {
 		height: 26px;
-		padding: 0 10px;
+		padding: 0 var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
@@ -729,7 +729,7 @@
 	}
 	.leden a {
 		min-width: 24px;
-		padding: 2px 6px;
+		padding: 2px var(--s-2);
 		border-radius: var(--r-1);
 		text-align: center;
 		color: var(--ink-2);
@@ -861,7 +861,7 @@
 		border-collapse: collapse;
 	}
 	.history__table td {
-		padding: 5px var(--s-3) 5px 0;
+		padding: var(--s-1) var(--s-3) var(--s-1) 0;
 		border-top: 1px solid var(--rule);
 		vertical-align: baseline;
 	}
@@ -879,7 +879,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: flex-end;
-		gap: 0 10px;
+		gap: 0 var(--s-3);
 		color: var(--ink-3);
 		text-align: right;
 	}
@@ -913,9 +913,9 @@
 		position: relative;
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: var(--s-3);
 		min-width: 0;
-		padding: 7px 10px;
+		padding: var(--s-2) var(--s-3);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		background: var(--paper);
@@ -1242,7 +1242,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: 2px 10px;
+		gap: 2px var(--s-3);
 		margin-bottom: var(--s-1);
 		color: var(--ink-3);
 	}
@@ -1298,7 +1298,7 @@
 		border-collapse: collapse;
 	}
 	.table th {
-		padding: 0 var(--s-2) 6px 0;
+		padding: 0 var(--s-2) var(--s-1) 0;
 		border-bottom: 1px solid var(--rule-strong);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -1306,7 +1306,7 @@
 		text-align: left;
 	}
 	.table td {
-		padding: 6px var(--s-2) 6px 0;
+		padding: var(--s-1) var(--s-2) var(--s-1) 0;
 		border-bottom: 1px solid var(--rule);
 		vertical-align: top;
 		color: var(--ink);
@@ -1318,7 +1318,7 @@
 	.table__source {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0 10px;
+		gap: 0 var(--s-3);
 		color: var(--ink-3);
 	}
 	tr.is-quiet td {

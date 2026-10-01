@@ -686,7 +686,7 @@
 	   what is coming. Each quieter than the one before. */
 	.head {
 		display: grid;
-		gap: 6px;
+		gap: var(--s-2);
 		margin-bottom: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -753,7 +753,7 @@
 	.head__pending a {
 		display: inline-flex;
 		align-items: center;
-		gap: 7px;
+		gap: var(--s-2);
 		color: var(--accent);
 	}
 	.head__dot {
@@ -763,7 +763,7 @@
 		background: var(--accent);
 	}
 	.head__count {
-		margin-left: 10px;
+		margin-left: var(--s-3);
 		font-weight: 400;
 		color: var(--ink-3);
 	}
@@ -790,7 +790,7 @@
 		justify-content: space-between;
 		gap: var(--s-3);
 		width: 100%;
-		padding: 6px var(--s-3);
+		padding: var(--s-1) var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
@@ -808,7 +808,7 @@
 	.pop__cols {
 		display: flex;
 		justify-content: space-between;
-		padding: 2px var(--s-3) 6px;
+		padding: 2px var(--s-3) var(--s-1);
 		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
@@ -828,7 +828,7 @@
 	.pop__change {
 		flex: none;
 		max-width: 50%;
-		padding: 6px var(--s-3) 6px 0;
+		padding: var(--s-1) var(--s-3) var(--s-1) 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -856,7 +856,7 @@
 		color: var(--ink-2);
 	}
 	.note--old .link {
-		margin-left: 6px;
+		margin-left: var(--s-2);
 	}
 	.note__close {
 		margin-left: var(--s-2);
@@ -892,7 +892,7 @@
 		display: flex;
 		gap: var(--s-3);
 		margin-top: 40px;
-		padding-top: 18px;
+		padding-top: var(--s-4);
 		border-top: 1px solid var(--rule);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);

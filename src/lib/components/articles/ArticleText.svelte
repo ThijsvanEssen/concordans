@@ -244,7 +244,7 @@
 		grid-template-columns: 36px 1fr 150px;
 		gap: 0 var(--s-3);
 		align-items: start;
-		padding: 6px 10px 6px 0;
+		padding: var(--s-1) var(--s-3) var(--s-1) 0;
 		border-radius: var(--r-1);
 		scroll-margin: 20vh;
 		transition: background var(--dur-2) var(--ease);
@@ -316,7 +316,7 @@
 		flex-direction: column;
 		align-items: flex-end;
 		gap: 2px;
-		padding-top: 6px;
+		padding-top: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -449,7 +449,7 @@
 		.lid__side {
 			grid-column: 2;
 			flex-direction: row;
-			gap: 10px;
+			gap: var(--s-3);
 			padding-top: 2px;
 		}
 		.lid__body--pair {

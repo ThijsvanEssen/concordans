@@ -98,7 +98,7 @@
 		z-index: var(--z-float);
 		width: max-content;
 		max-width: 280px;
-		padding: var(--s-2) 10px;
+		padding: var(--s-2) var(--s-3);
 		background: var(--ink);
 		color: var(--paper);
 		border-radius: var(--r-1);
@@ -114,7 +114,7 @@
 			transform var(--dur-1) var(--ease);
 		display: flex;
 		flex-direction: column;
-		gap: 3px;
+		gap: var(--s-1);
 		text-decoration: none;
 		text-align: left;
 	}

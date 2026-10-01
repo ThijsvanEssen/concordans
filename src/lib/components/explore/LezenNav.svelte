@@ -196,7 +196,7 @@
 	.lezen-nav {
 		height: 100%;
 		overflow-y: auto;
-		padding-top: 22px;
+		padding-top: var(--s-5);
 		background: var(--paper-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -204,12 +204,12 @@
 
 	.note {
 		margin: 0;
-		padding: var(--s-4) 18px;
+		padding: var(--s-4);
 		color: var(--ink-3);
 	}
 
 	.head {
-		padding: 0 18px var(--s-3);
+		padding: 0 var(--s-4) var(--s-3);
 	}
 
 	.head__title {
@@ -222,7 +222,7 @@
 	}
 
 	.head__section {
-		margin-top: 3px;
+		margin-top: var(--s-1);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -251,8 +251,8 @@
 	.group__head {
 		display: flex;
 		align-items: flex-start;
-		gap: 6px;
-		padding: 5px 18px;
+		gap: var(--s-2);
+		padding: var(--s-1) var(--s-4);
 		color: var(--ink-3);
 	}
 	.group__head:hover {
@@ -304,12 +304,12 @@
 	}
 
 	.children {
-		padding-left: 10px;
+		padding-left: var(--s-3);
 	}
 
 	.row {
 		display: block;
-		padding: var(--s-1) 18px;
+		padding: var(--s-1) var(--s-4);
 		color: var(--ink-2);
 		line-height: 1.3;
 		border-left: 2px solid transparent;

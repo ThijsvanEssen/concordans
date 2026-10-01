@@ -145,7 +145,7 @@
 		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
-		gap: 6px;
+		gap: var(--s-2);
 	}
 	.dot {
 		opacity: 0.6;
