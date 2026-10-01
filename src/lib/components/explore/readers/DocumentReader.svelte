@@ -201,7 +201,11 @@
 		{:else}
 			{@const doc = view.document}
 			{@const term = glossaryTerm(doc.kind)}
-			{@const caseKinds = doc.case_kinds ?? []}
+			<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
+			     a case of the kind Motie, which "Motie · 7 sep. 2026 · Motie" said twice. -->
+			{@const caseKinds = (doc.case_kinds ?? []).filter(
+				(k) => k.toLowerCase() !== doc.kind?.toLowerCase()
+			)}
 			<header class="head">
 				<span class="kicker">
 					{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
