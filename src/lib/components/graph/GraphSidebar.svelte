@@ -26,7 +26,7 @@
 	import { edgeColorFor, edgeStyleFor, hullColorFor } from './nodeSprites';
 	import { kindOfCollection } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { BRON_KIND_VORM } from '$lib/bron/vormen';
+	import { BRON_KIND_VORM, VORM_LABEL, VORM_VOLGORDE, type Vorm } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
 
 	let {
@@ -58,7 +58,12 @@
 		onDepth: (d: number) => void;
 		hiddenRelations: Set<Relation>;
 		onToggleRelation: (r: Relation) => void;
-		canvasCounts: { nodes: number; edges: number; kinds?: Partial<Record<BronKind, number>> };
+		canvasCounts: {
+			nodes: number;
+			edges: number;
+			kinds?: Partial<Record<BronKind, number>>;
+			vormen?: Partial<Record<Vorm, number>>;
+		};
 		overlay?: Overlay;
 		inFluxCount?: number;
 		onToggleHeat?: () => void;
@@ -191,6 +196,24 @@
 				</label>
 			{/each}
 		</section>
+
+		<!-- Every shape on the canvas, with what it stands for: the filter above groups them,
+		     this says what each one is. -->
+		{#if canvasCounts.vormen && Object.keys(canvasCounts.vormen).length > 0}
+			<section class="block">
+				<h3 class="block__title">Tekens</h3>
+				<div class="tekens">
+					{#each VORM_VOLGORDE.filter((v) => (canvasCounts.vormen?.[v] ?? 0) > 0) as v (v)}
+						<span class="teken"
+							><KindGlyph vorm={v} size={11} />{VORM_LABEL[v]}<span class="row__count"
+								>{formatCount(canvasCounts.vormen?.[v] ?? 0)}</span
+							></span
+						>
+					{/each}
+				</div>
+				<p class="muted">Een omtrek: niet in de gegevens, alleen genoemd.</p>
+			</section>
+		{/if}
 
 		<section class="block">
 			<h3 class="block__title">Groepering</h3>
@@ -487,6 +510,21 @@
 	}
 	.row.is-empty {
 		color: var(--ink-3);
+	}
+	.tekens {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--s-1) var(--s-3);
+	}
+	.teken {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		min-width: 0;
+		white-space: nowrap;
+	}
+	.teken .row__count {
+		margin-left: auto;
 	}
 	.row--static {
 		cursor: default;

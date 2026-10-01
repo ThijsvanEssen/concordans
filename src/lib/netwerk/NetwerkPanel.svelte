@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
 	// The netwerk of chosen bronnen, over the canvas: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
 	// that join them shown or not, and the context around them cleared. On an empty
@@ -74,24 +73,24 @@
 		{/if}
 	{:else}
 		<!-- De gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
-		     één regel voor wat ertussen ligt; wissen achter het menu. -->
+		     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
 		<div class="kop">
 			<span class="titel">Netwerk</span>
 			{#if loading}<span class="laden">laden</span>{/if}
 			<span class="ruimte"></span>
 			{#if entries.length > 0}
+				<button
+					type="button"
+					class="wis"
+					onclick={onClear}
+					title="Leeg het netwerk en het canvas; Terug zet het terug">Wissen</button
+				>
 				<details class="menu">
 					<summary aria-label="Meer">⋯</summary>
 					<div class="menu-lijst">
 						<button type="button" class="link" onclick={onClearContext}
 							>Alleen de gekozen bronnen tonen</button
 						>
-						<ConfirmButton
-							label="Netwerk wissen"
-							confirmLabel="Ja, netwerk wissen"
-							onConfirm={onClear}
-							buttonClass="link"
-						/>
 					</div>
 				</details>
 			{/if}
@@ -182,6 +181,21 @@
 	}
 	.ruimte {
 		flex: 1;
+	}
+	.wis {
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.wis:hover {
+		color: var(--ink);
 	}
 	.menu {
 		position: relative;

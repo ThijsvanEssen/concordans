@@ -1719,14 +1719,10 @@
 	const kamerGroup = $derived<FacetGroup>({
 		id: 'kamer',
 		label: 'Kamer',
-		kind: 'list',
-		options: CHAMBERS.map((c) => ({
-			id: c,
-			label: CHAMBER_NAME[c],
-			on: kamer === c,
-			default: c === 'TK',
-			onClick: () => patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null })
-		}))
+		kind: 'keuze',
+		value: kamer,
+		options: CHAMBERS.map((c) => ({ value: c, label: CHAMBER_NAME[c] })),
+		onChange: (c) => patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null })
 	});
 	const facetGroups = $derived(
 		CHAMBER_CATEGORIES.includes(category) ? [kamerGroup, ...facetGroupsAll] : facetGroupsAll
@@ -1820,14 +1816,6 @@
 					style:--row-lead="{columns.leadW}px"
 					style:--row-aside="{columns.asideW}px"
 				>
-					{#if composition && category !== 'factions'}
-						<p class="composition">
-							Samenstelling op {formatLongDate(composition.composition_date ?? null)}, gegevens
-							sinds {formatLongDate(composition.data_since ?? null)}. Bron:
-							<a href={composition.url} rel="external">{composition.attribution}</a>.
-						</p>
-					{/if}
-
 					{#if category === 'factions' && seats && seats.chamber === kamer}
 						<div class="hemi-card">
 							<div class="hemi-svg-wrap">
@@ -2641,6 +2629,14 @@
 							{/if}
 						</div>
 					{/if}
+					<!-- Where the list comes from, under it: the source and its date close the list. -->
+					{#if composition && category !== 'factions' && !loading}
+						<p class="list-source">
+							Samenstelling op {formatLongDate(composition.composition_date ?? null)}, gegevens
+							sinds {formatLongDate(composition.data_since ?? null)}. Bron:
+							<a href={composition.url} rel="external">{composition.attribution}</a>.
+						</p>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -2938,12 +2934,6 @@
 		white-space: nowrap;
 	}
 
-	.composition {
-		margin: 0 0 var(--s-4);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	.row-method {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);

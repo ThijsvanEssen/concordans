@@ -539,6 +539,22 @@
 		if (netwerkActive) setNetwerk(EMPTY_NETWERK);
 	}
 
+	// Wissen leaves nothing: no chosen bronnen, no focus, no canvas, nothing remembered for
+	// the next visit. One step, so Back brings it all back.
+	function wisAlles() {
+		store.reset();
+		resolved.clear();
+		loadedFocus = '';
+		deepenedId = '';
+		composedOnce = false;
+		netwerkEntries = [];
+		remember(null);
+		setUrl(
+			{ netwerk: null, uit: null, tussen: null, focus: null, lezen: null, open: null, mode: null },
+			{ push: true }
+		);
+	}
+
 	// The tab names what is open, so that tabs, bookmarks and history tell bronnen apart.
 	const pageTitle = $derived.by(() => {
 		if (mode === 'index') return 'Bladeren · Concordans';
@@ -982,7 +998,7 @@
 								onAdd={() => selectedNode && addToNetwerk(selectedNode)}
 								onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
 								onClearContext={() => store.clearContext()}
-								onClear={() => setNetwerk(EMPTY_NETWERK)}
+								onClear={wisAlles}
 							/>
 						{/snippet}
 					</GraphView>

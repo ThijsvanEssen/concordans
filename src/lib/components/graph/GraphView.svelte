@@ -14,13 +14,11 @@
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { isVersionCollection } from '$lib/graph/types';
 	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
-	import { vormVanBron } from '$lib/bron/vormen';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { BRON_KIND_VORM } from '$lib/bron/vormen';
-	import { BRON_KIND_LABEL } from '$lib/verbonden/filter';
+	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron, type Vorm } from '$lib/bron/vormen';
 	import {
 		containerIdFor,
 		containerMembershipStore,
@@ -124,7 +122,9 @@
 		nodes: number;
 		edges: number;
 		kinds: Partial<Record<BronKind, number>>;
-	}>({ nodes: 0, edges: 0, kinds: {} });
+		/** The shapes drawn, for the legend: every shape on the canvas has its line there. */
+		vormen: Partial<Record<Vorm, number>>;
+	}>({ nodes: 0, edges: 0, kinds: {}, vormen: {} });
 	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
 	// When the selection is a container, there is no canvas node to focus around: its
 	// own children take that role in the dim/highlight pass instead (GraphCanvas).
@@ -179,6 +179,7 @@
 		let nodes = 0;
 		let edges = 0;
 		const kinds: Partial<Record<BronKind, number>> = {};
+		const vormen: Partial<Record<Vorm, number>> = {};
 		const visible = new Set<string>();
 		g.forEachNode((id, attrs) => {
 			// Per kind, before the filter: the sidebar says what the filter hides.
@@ -194,6 +195,8 @@
 				return;
 			visible.add(id);
 			nodes++;
+			const vorm = attrs.vorm as Vorm | undefined;
+			if (vorm && !attrs.anchor) vormen[vorm] = (vormen[vorm] ?? 0) + 1;
 		});
 		g.forEachEdge((_id, attrs, src, tgt) => {
 			if (attrs.layoutOnly) return;
@@ -201,7 +204,7 @@
 			if (filters.hiddenRelations.has(attrs.relation as Relation)) return;
 			edges++;
 		});
-		canvasCounts = { nodes, edges, kinds };
+		canvasCounts = { nodes, edges, kinds, vormen };
 		drawnIds = [...visible];
 	}
 
@@ -1057,9 +1060,9 @@
 					>
 						<span class="legenda-titel">Legenda</span>
 						{#if !legendaOpen}
-							{#each BRON_KINDS.filter((k) => (canvasCounts.kinds[k] ?? 0) > 0) as k (k)}
-								<span class="teken" title="{BRON_KIND_LABEL[k]}: {canvasCounts.kinds[k]}"
-									><KindGlyph vorm={BRON_KIND_VORM[k]} size={11} /></span
+							{#each VORM_VOLGORDE.filter((v) => (canvasCounts.vormen[v] ?? 0) > 0) as v (v)}
+								<span class="teken" title="{VORM_LABEL[v]}: {canvasCounts.vormen[v]}"
+									><KindGlyph vorm={v} size={11} /></span
 								>
 							{/each}
 						{/if}

@@ -96,3 +96,39 @@ export function vormVanBron(collection: string, props?: Record<string, unknown> 
 		return 'voorstel';
 	return vorm;
 }
+
+/** The order of the shapes in a legend: law, the parliament, people and bodies, the rest. */
+export const VORM_VOLGORDE: Vorm[] = [
+	'regel',
+	'regel-o',
+	'uitspraak',
+	'dossier',
+	'stuk',
+	'voorstel',
+	'besluit',
+	'activiteit',
+	'toezegging',
+	'persoon',
+	'orgaan',
+	'orgaan-o',
+	'kabinet',
+	'overig'
+];
+
+/** What a shape stands for, as a legend names it. */
+export const VORM_LABEL: Record<Vorm, string> = {
+	regel: 'Wet of verdrag',
+	'regel-o': 'Artikel',
+	uitspraak: 'Uitspraak',
+	dossier: 'Dossier',
+	stuk: 'Stuk',
+	voorstel: 'Wetsvoorstel',
+	besluit: 'Stemming',
+	activiteit: 'Activiteit',
+	toezegging: 'Toezegging',
+	persoon: 'Persoon',
+	orgaan: 'Fractie',
+	'orgaan-o': 'Commissie',
+	kabinet: 'Kabinet',
+	overig: 'Overig'
+};

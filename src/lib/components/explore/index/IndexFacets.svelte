@@ -48,6 +48,13 @@
 				onChange: (from: string, to: string) => void;
 		  }
 		| { kind: 'text'; value: string; placeholder: string; onChange: (v: string) => void }
+		| {
+				/** One of a few, always one chosen: a choice, not a filter (the Kamer). */
+				kind: 'keuze';
+				value: string;
+				options: { value: string; label: string }[];
+				onChange: (v: string) => void;
+		  }
 	);
 
 	/** A filter that is on, as a chip above the list. */
@@ -86,6 +93,8 @@
 					return g.value
 						? [{ id: g.id, label: `${g.label}: ${g.value}`, onRemove: () => g.onChange('') }]
 						: [];
+				case 'keuze':
+					return [];
 			}
 		});
 	}
@@ -93,6 +102,7 @@
 
 <script lang="ts">
 	import { formatCount } from '$lib/verbonden/filter';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
 
 	let {
 		groups,
@@ -211,6 +221,14 @@
 						/>
 					</label>
 				</div>
+			{:else if g.kind === 'keuze'}
+				{@const k = g}
+				<Keuze
+					label={k.label}
+					waarde={k.value}
+					onKies={k.onChange}
+					opties={k.options.map((o) => ({ waarde: o.value, label: o.label }))}
+				/>
 			{:else if g.kind === 'text'}
 				{@const t = g}
 				<input

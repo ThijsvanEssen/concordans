@@ -14,11 +14,15 @@
 	let commitments = $state<C | null>(null);
 	let open = $state<C | null>(null);
 	let dossiers = $state<D | null>(null);
+	/** All of the dossiers, not the three newest: after "Alle … dossiers". */
+	let alleDossiers = $state(false);
 
 	$effect(() => {
 		const key = memberKey;
 		const ac = new AbortController();
-		commitments = open = dossiers = null;
+		void alleDossiers;
+		commitments = open = null;
+		if (!alleDossiers) dossiers = null;
 		const q = (status?: string) =>
 			unwrap(
 				api.GET('/api/commitments', {
@@ -30,7 +34,7 @@
 		q('Openstaand').then((r) => (open = r));
 		unwrap(
 			api.GET('/api/members/{key}/dossiers', {
-				params: { path: { key }, query: { limit: 3 } },
+				params: { path: { key }, query: { limit: alleDossiers ? 100 : 3 } },
 				signal: ac.signal
 			})
 		)
@@ -96,6 +100,11 @@
 					</li>
 				{/each}
 			</ol>
+			{#if !alleDossiers && dossiers.total > dossiers.items.length}
+				<button type="button" class="alle" onclick={() => (alleDossiers = true)}
+					>Alle {dossiers.total} dossiers</button
+				>
+			{/if}
 		</div>
 	</Sectie>
 {/if}
@@ -126,6 +135,10 @@
 		margin: 0;
 		padding: 0;
 	}
+	/* A list ends without a rule: the next section brings its own. */
+	.items li:last-child {
+		border-bottom: 0;
+	}
 	.items li {
 		display: flex;
 		flex-direction: column;
@@ -150,6 +163,15 @@
 		color: var(--ink-3);
 	}
 	.alle {
+		align-self: flex-start;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		font-weight: 500;
