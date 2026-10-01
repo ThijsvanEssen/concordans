@@ -2,6 +2,7 @@
 // within a number of steps of one focus. The URL holds it: ?netwerk lists the
 // chosen bronnen by the name a link uses (`members/<key>`, `dossiers/37020-XV`),
 // ?uit the ones switched off, and ?tussen=0 hides the bronnen that join them.
+import type { GraphNode } from '$lib/graph/types';
 import type { Neighbor } from '$lib/api/nodes';
 import { nodeId, parseNodeId, type Collection } from '$lib/vocabulary';
 
@@ -25,6 +26,8 @@ export type NetwerkEntry = {
 	alone: boolean;
 	/** The API does not know it: listed so that it can be removed. */
 	missing?: boolean;
+	/** Ronde 5: the bron itself, so that its name follows bron/naam.ts once law titles load. */
+	node?: GraphNode;
 };
 
 export const EMPTY_NETWERK: Netwerk = { ids: [], uit: new Set(), tussen: true };

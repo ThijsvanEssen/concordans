@@ -47,10 +47,7 @@
 		onVoorbeeld?: () => void;
 	} = $props();
 
-	// Closed beside a canvas of its own until a bron is chosen; the start is always open.
-	let toggled = $state<boolean | null>(null);
-	const open = $derived(start || (toggled ?? entries.length > 0));
-	const onCount = $derived(entries.filter((e) => e.on).length);
+	let zoeken = $state(false);
 </script>
 
 <section class="netwerk" class:netwerk--start={start} aria-label="Netwerk">
@@ -79,100 +76,195 @@
 			>
 		{/if}
 	{:else}
-		<header class="head">
-			<button
-				type="button"
-				class="head__toggle"
-				aria-expanded={open}
-				onclick={() => (toggled = !open)}
-			>
-				<span class="head__title">Netwerk</span>
-				<span class="head__count">
-					{#if loading}laden{:else if entries.length > 0}{onCount} van {entries.length} aan{:else}samenstellen{/if}
-				</span>
-				<Caret side {open} />
-			</button>
-		</header>
-	{/if}
-
-	{#if open}
-		<Search compact placeholder="Bron toevoegen" {onPick} />
-
-		{#if selection}
-			<button
-				type="button"
-				class="add"
-				aria-label="Voeg {selection.label} toe aan netwerk"
-				onclick={onAdd}
-			>
-				+ <span class="add__label">{selection.label}</span>
-			</button>
-		{/if}
-
-		{#if entries.length > 0}
-			<ul class="list">
-				{#each entries as e (e.id)}
-					<li class="row" class:row--off={!e.on}>
-						<input
-							type="checkbox"
-							id="netwerk-{e.id}"
-							checked={e.on}
-							disabled={e.missing}
-							onchange={() => onToggle(e.id)}
-							aria-label="{e.label} tonen"
-						/>
-						<KindGlyph collection={e.collection} size={11} />
-						{#if e.missing}
-							<span class="row__name" title={e.label}>{e.label}</span>
-						{:else}
-							<!-- A link, so that a bron opens in a new tab as well. -->
-							<a
-								class="row__name"
-								href={bronHref(e.id)}
-								title={e.label}
-								data-sveltekit-noscroll
-								data-sveltekit-keepfocus>{e.label}</a
-							>
-						{/if}
-						{#if e.missing}
-							<span class="row__note" title="Deze bron staat niet in het netwerk"
-								>niet gevonden</span
-							>
-						{:else if e.alone}
-							<span class="row__note" title="Geen verbinding met de andere gekozen bronnen gevonden"
-								>los</span
-							>
-						{/if}
-						<button
-							type="button"
-							class="row__remove"
-							onclick={() => onRemove(e.id)}
-							aria-label="Haal {e.label} uit netwerk">×</button
-						>
-					</li>
-				{/each}
-			</ul>
-
-			<label class="switch">
+		<!-- Ronde 5: de gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
+		     één regel voor wat ertussen ligt; wissen achter het menu. -->
+		<div class="r5-kop">
+			<span class="r5-titel">Netwerk</span>
+			{#if loading}<span class="r5-laden">laden</span>{/if}
+			<span class="r5-ruimte"></span>
+			{#if entries.length > 0}
+				<details class="r5-menu">
+					<summary aria-label="Meer">⋯</summary>
+					<div class="r5-menu-lijst">
+						<button type="button" class="link" onclick={onClearContext}>Alleen de gekozen bronnen tonen</button>
+						<ConfirmButton label="Netwerk wissen" confirmLabel="Ja, netwerk wissen" onConfirm={onClear} buttonClass="link" />
+					</div>
+				</details>
+			{/if}
+		</div>
+		<ul class="r5-chips">
+			{#each entries as e (e.id)}
+				<li class="r5-chip" class:uit={!e.on} class:mist={e.missing}>
+					<button
+						type="button"
+						class="r5-chip-naam"
+						aria-pressed={e.on}
+						disabled={e.missing}
+						title={e.missing ? 'Niet gevonden' : e.on ? `${e.label}: verbergen` : `${e.label}: tonen`}
+						onclick={() => onToggle(e.id)}><KindGlyph collection={e.collection} size={11} />{e.label}{#if e.alone}<span class="r5-los" title="Geen verbinding met de andere gekozen bronnen"> · los</span>{/if}</button
+					>
+					<button type="button" class="r5-chip-weg" onclick={() => onRemove(e.id)} aria-label="Haal {e.label} uit netwerk">×</button>
+				</li>
+			{/each}
+			{#if selection}
+				<li><button type="button" class="r5-chip r5-chip--voorstel" onclick={onAdd} aria-label="Voeg {selection.label} toe aan netwerk">+ {selection.label}</button></li>
+			{/if}
+			<li>
+				{#if zoeken}
+					<div class="r5-zoek"><Search compact placeholder="Bron toevoegen" onPick={(id) => {
+						onPick(id);
+						zoeken = false;
+					}} /></div>
+				{:else}
+					<button type="button" class="r5-chip r5-chip--plus" onclick={() => (zoeken = true)}>+ bron</button>
+				{/if}
+			</li>
+		</ul>
+		{#if entries.length > 1}
+			<label class="r5-tussen">
 				<input type="checkbox" id="netwerk-tussen" checked={tussen} onchange={onTussen} />
-				<span>Tussenliggende bronnen</span>
-				{#if tussen}<span class="switch__count">{joiningCount}</span>{/if}
+				{#if tussen}<b>{joiningCount}</b> {joiningCount === 1 ? 'bron' : 'bronnen'} ertussen{:else}Bronnen ertussen tonen{/if}
 			</label>
-
-			<div class="actions">
-				<button type="button" class="link" onclick={onClearContext}>Context wissen</button>
-				<ConfirmButton
-					label="Netwerk wissen"
-					confirmLabel="Ja, netwerk wissen"
-					onConfirm={onClear}
-					buttonClass="link"
-				/>
-			</div>
 		{/if}
 	{/if}
 </section>
 
 <style>
+	.r5-kop {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+	}
+	.r5-titel {
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		font-weight: 500;
+		color: var(--ink);
+	}
+	.r5-laden {
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.r5-ruimte {
+		flex: 1;
+	}
+	.r5-menu {
+		position: relative;
+		font-size: var(--t-micro);
+	}
+	.r5-menu summary {
+		list-style: none;
+		cursor: pointer;
+		padding: 0 var(--s-1);
+		color: var(--ink-2);
+	}
+	.r5-menu summary::-webkit-details-marker {
+		display: none;
+	}
+	.r5-menu-lijst {
+		position: absolute;
+		right: 0;
+		top: 100%;
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--s-2);
+		padding: var(--s-3);
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-pop);
+		white-space: nowrap;
+	}
+	.r5-chips {
+		list-style: none;
+		margin: var(--s-2) 0 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-1);
+	}
+	.r5-chip {
+		display: inline-flex;
+		align-items: center;
+		border: 1px solid var(--ink);
+		border-radius: 999px;
+		background: var(--paper);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink);
+	}
+	.r5-chip-naam {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-1);
+		max-width: 16rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		padding: var(--s-1) var(--s-1) var(--s-1) var(--s-2);
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+	}
+	.r5-chip-weg {
+		padding: 0 var(--s-2) 0 var(--s-1);
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+	.r5-chip-weg:hover {
+		color: var(--ink);
+	}
+	.r5-chip.uit {
+		border-style: dashed;
+		color: var(--ink-3);
+	}
+	.r5-chip.mist {
+		border-color: var(--rule-strong);
+		color: var(--ink-3);
+	}
+	.r5-los {
+		color: var(--ink-3);
+	}
+	.r5-chip--voorstel,
+	.r5-chip--plus {
+		padding: var(--s-1) var(--s-2);
+		border-style: dashed;
+		border-color: var(--rule-strong);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.r5-chip--plus:hover,
+	.r5-chip--voorstel:hover {
+		border-color: var(--ink);
+		color: var(--ink);
+	}
+	.r5-zoek {
+		min-width: 14rem;
+	}
+	.r5-tussen {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		margin-top: var(--s-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.r5-tussen input {
+		accent-color: var(--ink);
+	}
+	.r5-tussen b {
+		color: var(--ink);
+		font-weight: 600;
+	}
 	.r5-schets {
 		width: 100%;
 		height: auto;
@@ -262,145 +354,8 @@
 		font-weight: 500;
 	}
 
-	.head__toggle {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		width: 100%;
-		padding: 2px 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		cursor: pointer;
-		text-align: left;
-	}
-	.head__title {
-		font-size: var(--t-label);
-		font-weight: 500;
-		color: var(--ink-3);
-	}
-	.head__count {
-		margin-left: auto;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		font-variant-numeric: tabular-nums;
-	}
-	.list {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		gap: 1px;
-	}
-	.row {
-		display: grid;
-		grid-template-columns: auto auto minmax(0, 1fr) auto auto;
-		align-items: center;
-		gap: 6px;
-		padding: 2px 0;
-	}
-	.row input {
-		margin: 0;
-		accent-color: var(--ink);
-	}
-	.row__name {
-		min-width: 0;
-		text-decoration: none;
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
-		text-align: left;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		cursor: pointer;
-	}
-	.row__name:hover {
-		color: var(--accent);
-	}
-	.row--off .row__name {
-		color: var(--ink-3);
-	}
-	.row__note {
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
-	.row__remove {
-		padding: 0 2px;
-		border: 0;
-		background: none;
-		font-size: var(--t-body-2);
-		line-height: 1;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.row__remove:hover {
-		color: var(--accent);
-	}
 
-	.add {
-		display: flex;
-		gap: var(--s-1);
-		min-width: 0;
-		padding: var(--s-1) var(--s-2);
-		border: 1px dashed var(--rule-strong);
-		border-radius: var(--r-1);
-		background: none;
-		font: inherit;
-		color: var(--ink-2);
-		text-align: left;
-		cursor: pointer;
-	}
-	.add:hover {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-	.add__label {
-		min-width: 0;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
 
-	.switch {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		padding-top: var(--s-2);
-		border-top: 1px solid var(--rule);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.switch input {
-		margin: 0;
-		accent-color: var(--ink);
-	}
-	.switch__count {
-		margin-left: auto;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		font-variant-numeric: tabular-nums;
-	}
 
-	.actions {
-		display: flex;
-		gap: var(--s-3);
-	}
 	/* Also the button inside ConfirmButton, a component of its own. */
-	.actions :global(.link) {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.actions :global(.link:hover) {
-		color: var(--accent);
-	}
 </style>

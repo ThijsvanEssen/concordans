@@ -2,6 +2,7 @@
 	// A row opened under itself, the same in Verbonden and in the table: the passage that
 	// names the bron, then how to open it, show it in the network, or read the verbinding.
 	import { passageOf, type Row } from './rows';
+	import Picto from '$lib/components/r5/Picto.svelte';
 
 	let {
 		row,
@@ -30,19 +31,18 @@
 			{p.before}{#if p.mark}<mark>{p.mark}</mark>{/if}{p.after}
 		</p>
 	{/if}
-	<div class="links">
-		<a href={openHref} data-sveltekit-noscroll class="link is-accent">{openLabel}</a>
-		{#if row.relation}
-			{#if onShowInNetwork}
-				<button type="button" class="link" onclick={() => onShowInNetwork(row)}
-					>Toon in netwerk</button
-				>
-			{:else}
-				<a href={networkHref} class="link">Toon in netwerk</a>
-			{/if}
-			<button type="button" class="link" onclick={() => onVerbinding(row)}
-				>Over deze verbinding</button
+	<!-- Ronde 5: dezelfde twee knoppen als de open rij in Bladeren (r4/OpenRij). -->
+	<div class="acts">
+		<a href={openHref} data-sveltekit-noscroll class="act act--pri"><Picto naam="tekst" size={13} />{openLabel}</a>
+		{#if onShowInNetwork}
+			<button type="button" class="act" onclick={() => onShowInNetwork(row)}
+				><Picto naam="netwerk" size={13} />In het netwerk</button
 			>
+		{:else}
+			<a href={networkHref} class="act"><Picto naam="netwerk" size={13} />In het netwerk</a>
+		{/if}
+		{#if row.relation}
+			<button type="button" class="link" onclick={() => onVerbinding(row)}>Over deze verbinding</button>
 		{/if}
 	</div>
 </div>
@@ -70,13 +70,38 @@
 		background: var(--accent-soft);
 		color: inherit;
 	}
-	.links {
+	.acts {
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--s-3);
-		margin-top: var(--s-2);
+		align-items: center;
+		gap: var(--s-2);
+		margin-top: var(--s-3);
+	}
+	.act {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		padding: var(--s-1) var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font: inherit;
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		text-decoration: none;
+		cursor: pointer;
+	}
+	.act:hover {
+		border-color: var(--ink);
+	}
+	.act--pri {
+		background: var(--ink);
+		border-color: var(--ink);
+		color: var(--paper);
 	}
 	.link {
+		margin-left: var(--s-2);
 		padding: 0;
 		border: 0;
 		background: none;
@@ -86,9 +111,6 @@
 		cursor: pointer;
 	}
 	.link:hover {
-		color: var(--accent);
-	}
-	.link.is-accent {
 		color: var(--accent);
 	}
 </style>

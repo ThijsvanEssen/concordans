@@ -305,47 +305,23 @@
 					{/if}
 				</div>
 				{#if bars.length > 0}
-					<div class="group__years">
-						<span class="group__years-edge">{bars[0].year}</span>
-						<!-- The bars are 16 high; each year takes the full 24 of the drawing and its
-						     8 of width as its target, so the pointer need not hit the bar. -->
-						<svg
-							class="years"
-							width={bars.length * 8}
-							height="24"
-							viewBox="0 0 {bars.length * 8} 24"
-							role="group"
-							aria-label="Uitspraken per jaar, {bars[0].year} tot {bars.at(-1)?.year}"
+					<!-- Ronde 5: een zin en een keuzelijst in plaats van het jarendiagram. -->
+					{@const piek = bars.reduce((m, x) => (x.count > m.count ? x : m), bars[0])}
+					<p class="group__jaren">
+						Van {bars[0].year} tot {bars.at(-1)?.year}; de meeste in {piek.year} ({piek.count}).
+						<label
+							>Jaar <select
+								value={filter.jaar ?? ''}
+								onchange={(e) => {
+									const v = e.currentTarget.value;
+									onFilter({ ...filter, jaar: v ? Number(v) : null });
+								}}
+							>
+								<option value="">alle</option>
+								{#each [...bars].reverse().filter((x) => x.count) as x (x.year)}<option value={x.year}>{x.year} ({x.count})</option>{/each}
+							</select></label
 						>
-							{#each bars as b, j (b.year)}
-								{@const max = Math.max(...bars.map((x) => x.count), 1)}
-								{@const h = b.count ? Math.max(2, Math.round((b.count / max) * 16)) : 0}
-								<g
-									class="year"
-									class:is-active={filter.jaar === b.year}
-									onclick={() => chooseYear(b.year)}
-									onkeydown={(e) => {
-										if (e.key === 'Enter' || e.key === ' ') {
-											e.preventDefault();
-											chooseYear(b.year);
-										}
-									}}
-									role="button"
-									tabindex="0"
-									aria-pressed={filter.jaar === b.year}
-									aria-label="{b.year}: {b.count}"
-									><title>{b.year}: {b.count}</title><rect
-										class="year__hit"
-										x={j * 8}
-										y="0"
-										width="8"
-										height="24"
-									/><rect class="year__bar" x={j * 8} y={20 - h} width="6" height={h} /></g
-								>
-							{/each}
-						</svg>
-						<span class="group__years-edge">{bars.at(-1)?.year}</span>
-					</div>
+					</p>
 					{#if filter.jaar}
 						<p class="group__caption">
 							<button type="button" class="link" onclick={() => chooseYear(filter.jaar!)}
@@ -653,42 +629,6 @@
 		background: var(--ink);
 		border-color: var(--ink);
 	}
-	.group__years {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		padding: 0 var(--s-4) 2px;
-		overflow-x: auto;
-	}
-	.group__years-edge {
-		flex: none;
-		font-size: var(--t-label);
-		font-variant-numeric: tabular-nums;
-		color: var(--ink-3);
-	}
-	.years {
-		flex: none;
-		margin: -4px 0;
-	}
-	.year {
-		cursor: pointer;
-		outline: none;
-	}
-	.year__hit {
-		fill: transparent;
-	}
-	.year__bar {
-		fill: var(--rule-strong);
-	}
-	.year:hover .year__bar {
-		fill: var(--ink-3);
-	}
-	.year:focus-visible .year__hit {
-		fill: var(--accent-soft);
-	}
-	.year.is-active .year__bar {
-		fill: var(--accent);
-	}
 	.group__caption {
 		margin: 0;
 		padding: 0 var(--s-4) var(--s-1);
@@ -699,6 +639,25 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
+	}
+	.group__jaren {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-3);
+		margin: var(--s-1) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+	}
+	.group__jaren select {
+		margin-left: var(--s-1);
+		font: inherit;
+		color: var(--ink);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		padding: 1px var(--s-1);
 	}
 	.row__main {
 		display: flex;

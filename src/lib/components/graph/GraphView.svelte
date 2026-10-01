@@ -13,10 +13,15 @@
 	import type { Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
-	import { isVersionCollection, lawIdOf } from '$lib/graph/types';
+	import { isVersionCollection } from '$lib/graph/types';
 	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
 	import { vormVan } from '$lib/bron/vormen';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { bronNaam } from '$lib/bron/naam';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import Caret from '$lib/components/ui/Caret.svelte';
+	import { BRON_KIND_COLLECTION } from '$lib/bron/vormen';
+	import { BRON_KIND_LABEL } from '$lib/verbonden/filter';
 	import {
 		containerIdFor,
 		containerMembershipStore,
@@ -151,7 +156,24 @@
 	);
 
 	let compactFiltersOpen = $state(false);
-	let mobileSidebarOpen = $state(false);
+	// Ronde 6: de zwevende legenda, dicht tot iemand hem opent; per browser onthouden.
+	const LEGENDA = 'concordans:legenda';
+	let legendaOpen = $state(false);
+	$effect(() => {
+		try {
+			legendaOpen = localStorage.getItem(LEGENDA) === 'open';
+		} catch {
+			legendaOpen = false;
+		}
+	});
+	const zetLegenda = (v: boolean) => {
+		legendaOpen = v;
+		try {
+			localStorage.setItem(LEGENDA, v ? 'open' : 'dicht');
+		} catch {
+			/* geen opslag */
+		}
+	};
 
 	// What the filter leaves on the canvas.
 	function countCanvas() {
@@ -403,24 +425,8 @@
 		}, burst);
 	}
 
-	// Node label: an article gets the short title of its law ("Art. 287 Sr").
-	function nodeLabel(n: GraphNode): string {
-		const p = n.raw?.props ?? undefined;
-		if (n.kind === 'instrument') {
-			const meta = $instrumentMetaStore.get(lawIdOf(p) ?? n.key.toUpperCase());
-			return (
-				meta?.shortTitle ??
-				meta?.citationTitle ??
-				(p?.['citation_title'] as string | undefined) ??
-				(p?.['title'] as string | undefined) ??
-				n.label
-			);
-		}
-		if (n.kind !== 'article') return n.label;
-		const bwb = lawIdOf(p);
-		const shortTitle = bwb ? $instrumentMetaStore.get(bwb)?.shortTitle : null;
-		return shortTitle ? `${n.label} ${shortTitle}` : n.label;
-	}
+	// Node label: one name per bron (bron/naam.ts), as in the netwerk panel.
+	const nodeLabel = (n: GraphNode) => bronNaam(n, $instrumentMetaStore);
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor
@@ -927,28 +933,6 @@
 {/snippet}
 
 <div class="graph-view">
-	{#if !compact}
-		<button
-			type="button"
-			class="btn mobile-legend-toggle"
-			onclick={() => (mobileSidebarOpen = !mobileSidebarOpen)}
-			aria-expanded={mobileSidebarOpen}>Legenda</button
-		>
-		<!-- Ronde 5: zonder bronnen in het netwerk is er niets te filteren; de kolom vervalt. -->
-		{#if canvasCounts.nodes > 0}
-			<div class="graph-sidebar-wrap" class:graph-sidebar-wrap--open={mobileSidebarOpen}>
-				{@render sidebar()}
-			</div>
-		{/if}
-		{#if mobileSidebarOpen}
-			<div
-				class="mobile-sidebar-backdrop"
-				role="presentation"
-				onclick={() => (mobileSidebarOpen = false)}
-			></div>
-		{/if}
-	{/if}
-
 	<div class="graph-main">
 		<!-- The bronnen on the canvas, for the keyboard: outside the canvas, so ← and →
 		     keep stepping through the history there. -->
@@ -1048,6 +1032,31 @@
 			/>
 
 			<div class="r5-gids" class:r5-gids--kort={compact}><NetwerkGids kort={compact} /></div>
+			<!-- Ronde 6: de legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
+			     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
+			{#if !compact && canvasCounts.nodes > 0}
+				<div class="r6-legenda" class:open={legendaOpen}>
+					<button
+						type="button"
+						class="r6-legenda-kop"
+						aria-expanded={legendaOpen}
+						onclick={() => zetLegenda(!legendaOpen)}
+					>
+						<span class="r6-legenda-titel">Legenda</span>
+						{#if !legendaOpen}
+							{#each BRON_KINDS.filter((k) => (canvasCounts.kinds[k] ?? 0) > 0) as k (k)}
+								<span class="r6-teken" title="{BRON_KIND_LABEL[k]}: {canvasCounts.kinds[k]}"
+									><KindGlyph collection={BRON_KIND_COLLECTION[k]} size={11} /></span
+								>
+							{/each}
+						{/if}
+						<Caret open={legendaOpen} />
+					</button>
+					{#if legendaOpen}
+						<div class="r6-legenda-inhoud">{@render sidebar()}</div>
+					{/if}
+				</div>
+			{/if}
 			{#if compact}
 				<div class="compact-legend-wrap">
 					<button
@@ -1159,6 +1168,56 @@
 		pointer-events: auto;
 	}
 
+	/* Ronde 6: de legenda links boven, een kaart zoals het netwerkpaneel rechts boven. */
+	.r6-legenda {
+		position: absolute;
+		top: var(--s-3);
+		left: var(--s-3);
+		z-index: var(--z-float);
+		max-height: calc(100% - 7rem);
+		display: flex;
+		flex-direction: column;
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-pop);
+	}
+	.r6-legenda-kop {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		padding: var(--s-2) var(--s-3);
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.r6-legenda-kop:hover {
+		color: var(--ink);
+	}
+	.r6-legenda-titel {
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		font-weight: 500;
+		color: var(--ink);
+		margin-right: var(--s-1);
+	}
+	.r6-teken {
+		display: inline-flex;
+		color: var(--ink);
+	}
+	.r6-legenda-inhoud {
+		overflow-y: auto;
+		border-top: 1px solid var(--rule);
+	}
+	.r6-legenda-inhoud :global(.legend) {
+		height: auto;
+		border-right: 0;
+		padding-top: var(--s-3);
+	}
+
 	/* Ronde 5: de gids onder in het midden van het canvas. */
 	.r5-gids {
 		position: absolute;
@@ -1211,42 +1270,9 @@
 		border-right: 0;
 	}
 
-	.mobile-legend-toggle {
-		display: none;
-		position: absolute;
-		top: var(--s-3);
-		left: var(--s-3);
-		z-index: var(--z-float);
-		background: var(--paper);
-	}
-
-	.mobile-sidebar-backdrop {
-		display: none;
-		position: fixed;
-		inset: 0;
-		background: rgba(28, 27, 25, 0.2);
-		z-index: calc(var(--z-float) - 1);
-	}
-
 	@media (max-width: 768px) {
-		.mobile-legend-toggle {
-			display: inline-flex;
-		}
-		.graph-sidebar-wrap {
-			position: fixed;
-			top: 60px;
-			left: 0;
-			bottom: 0;
-			z-index: var(--z-float);
-			background: var(--paper);
-			transform: translateX(-100%);
-			transition: transform var(--dur-1) var(--ease);
-		}
-		.graph-sidebar-wrap--open {
-			transform: translateX(0);
-		}
-		.mobile-sidebar-backdrop {
-			display: block;
+		.r6-legenda-inhoud :global(.legend) {
+			width: min(250px, calc(100vw - 48px));
 		}
 	}
 </style>

@@ -369,7 +369,7 @@ export function spriteFor(kind: GraphNodeKind, stub: boolean, focused: boolean):
 	return url;
 }
 
-export const IMAGE_SIZE_BUMP = 1.0;
+export const IMAGE_SIZE_BUMP = 1.35;
 
 // Per-axis badge offset at 45° (top-right), in units of node radius.
 const BADGE_AXIS_OFFSET: Record<NodeShape, number> = {

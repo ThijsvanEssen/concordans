@@ -48,6 +48,8 @@
 	import { parseNodeId, type Mode } from '$lib/vocabulary';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, nodeToGraphNode } from '$lib/graph/types';
+	import { bronNaam } from '$lib/bron/naam';
+	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
 	import {
 		EMPTY_NETWERK,
@@ -447,6 +449,7 @@
 			return {
 				id,
 				label: node?.label ?? response.node.display_name ?? id,
+				node: node ?? undefined,
 				collection: response.node.collection as NetwerkEntry['collection'],
 				on: isOn(n, id),
 				alone:
@@ -952,7 +955,11 @@
 					>
 						{#snippet canvasOverlay()}
 							<NetwerkPanel
-								entries={netwerkActive ? netwerkEntries : []}
+								entries={netwerkActive
+									? netwerkEntries.map((e) =>
+											e.node ? { ...e, label: bronNaam(e.node, $instrumentMetaStore) } : e
+										)
+									: []}
 								loading={netwerkLoading}
 								start={!focus && !netwerkActive}
 								onPick={addIdToNetwerk}
@@ -966,7 +973,7 @@
 									);
 								}}
 								selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
-									? { label: selectedNode.label }
+									? { label: bronNaam(selectedNode, $instrumentMetaStore) }
 									: null}
 								tussen={netwerk.tussen}
 								{joiningCount}
