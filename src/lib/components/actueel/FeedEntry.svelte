@@ -167,7 +167,8 @@
 				</ul>
 			{/if}
 			<p class="links">
-				<a href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}>Toon in netwerk</a>
+				<a href={bronHref(refOf(i), { keepMode: false, mode: 'read' })}>Lees</a>
+				<a href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}>In het netwerk</a>
 				{#if i.official_url}<a href={i.official_url} rel="external">Officiële publicatie</a>{/if}
 				{#if i.tk_url}<a href={i.tk_url} rel="external">Op tweedekamer.nl</a>{/if}
 				{#if i.dossier}<a href={filterHref({ dossier: i.dossier.number })}

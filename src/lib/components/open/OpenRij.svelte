@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	// Één vorm voor elke geopende rij in Bladeren.
 	// Bovenaan wat het is in één zin; dan wat er recent gebeurde in de gedeelde tijdlijn,
 	// zodat zonder klikken te zien is wat iemand of iets deed; dan links met aantallen; dan
@@ -23,7 +24,8 @@
 		zin?: string | null;
 		groepen?: TijdGroep[];
 		laden?: boolean;
-		links?: { label: string; href?: string | null }[];
+		/** With `ref`, the link is a bron: a click opens it in place (BronLink). */
+		links?: { label: string; href?: string | null; ref?: string | null }[];
 		lezen: string;
 		lezenLabel: string;
 		netwerk: string;
@@ -46,7 +48,9 @@
 	{#if links.length}
 		<p class="links">
 			{#each links as l, i (l.label)}{#if i > 0}<span class="sep" aria-hidden="true">·</span
-					>{/if}{#if l.href}<a href={l.href}>{l.label}</a>{:else}<span>{l.label}</span>{/if}{/each}
+					>{/if}{#if l.ref}<BronLink ref={l.ref}>{l.label}</BronLink>{:else if l.href}<a
+						href={l.href}>{l.label}</a
+					>{:else}<span>{l.label}</span>{/if}{/each}
 		</p>
 	{/if}
 	<div class="acts">
@@ -91,7 +95,7 @@
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
-	.links a {
+	.links :global(a) {
 		color: var(--ink);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);

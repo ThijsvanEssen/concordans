@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -104,9 +105,7 @@
 					<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
 					{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
 					{#each uniqueBy(dossierNumbers, (n) => n).slice(0, 3) as number (number)}
-						<a href={bronHref(`dossiers/${number}`)} class="dossier-chip" data-sveltekit-noscroll
-							>{number}</a
-						>
+						<BronLink ref={`dossiers/${number}`} class="dossier-chip">{number}</BronLink>
 					{/each}
 				</div>
 			</header>
@@ -256,7 +255,7 @@
 	/* The outcome, the kind of case and the dossier numbers are words, not tags. */
 	.result-chip,
 	.case-chip,
-	.dossier-chip {
+	:global(.dossier-chip) {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -269,10 +268,10 @@
 	.case-chip {
 		color: var(--ink-3);
 	}
-	.dossier-chip {
+	:global(.dossier-chip) {
 		color: var(--ink-3);
 	}
-	.dossier-chip:hover {
+	:global(.dossier-chip:hover) {
 		color: var(--accent);
 	}
 

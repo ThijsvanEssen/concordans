@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
@@ -8,7 +9,6 @@
 	import { bronLabel } from '$lib/vocabulary';
 	import { str } from '$lib/components/parliamentary/data';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
-	import { bronHref } from '$lib/bron/href';
 	import { formatDate, formatLongDate } from './_shared';
 	import { ekVoteLine } from './voters';
 
@@ -118,9 +118,7 @@
 						{#each board as seat, i (i)}
 							<dt>{seat.function ?? ''}</dt>
 							<dd>
-								{#if seat.member}<a
-										href={bronHref(`members/${seat.member}`)}
-										data-sveltekit-noscroll>{seat.name}</a
+								{#if seat.member}<BronLink ref={`members/${seat.member}`}>{seat.name}</BronLink
 									>{:else}{seat.name}{/if}{#if seat.since}<span class="since"
 										>, sinds {formatLongDate(seat.since)}</span
 									>{/if}
@@ -139,10 +137,8 @@
 								<span class="vote-choice vote-choice--{v.choice.split(' ')[0]}"
 									>{CHOICE[v.choice] ?? v.choice}</span
 								>
-								<a
-									class="vote-subject"
-									href={bronHref(`decisions/${v.decision_key}`)}
-									data-sveltekit-noscroll>{v.subject ?? v.dossier_numbers?.[0] ?? '—'}</a
+								<BronLink ref={`decisions/${v.decision_key}`} class="vote-subject"
+									>{v.subject ?? v.dossier_numbers?.[0] ?? '—'}</BronLink
 								>
 								<span class="vote-meta"
 									>{v.date ? formatDate(v.date) : ''}{v.result
@@ -266,7 +262,7 @@
 	.vote-choice--tegen {
 		color: var(--accent);
 	}
-	.vote-subject {
+	.votes :global(.vote-subject) {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);

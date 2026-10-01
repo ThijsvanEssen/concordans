@@ -77,7 +77,8 @@
 						soort: 'commitments',
 						label: `Toezegging, ${(t.status ?? '').toLowerCase()}`,
 						zin: t.text ?? '',
-						href: bronHref(`commitments/${t.key}`, { keepMode: false, mode: 'read' })
+						href: bronHref(`commitments/${t.key}`, { keepMode: false, mode: 'read' }),
+						ref: `commitments/${t.key}`
 					});
 			}
 			if (n) {
@@ -95,7 +96,8 @@
 						soort: (x.id.split('/')[0] as import('$lib/vocabulary').Collection) ?? 'documents',
 						label: 'Ondertekend',
 						zin: x.display_name ?? x.id,
-						href: bronHref(x.id, { keepMode: false, mode: 'read' })
+						href: bronHref(x.id, { keepMode: false, mode: 'read' }),
+						ref: x.id
 					});
 			}
 			regels = out.sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? '')).slice(0, 5);

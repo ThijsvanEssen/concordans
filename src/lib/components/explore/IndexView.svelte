@@ -7,7 +7,7 @@
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row's title
 	// links to the bron; the rest of the row expands inline with its metadata and the
-	// ways of opening it (Lezen, Toon in netwerk).
+	// ways on to the bron (… lezen, In het netwerk).
 	//
 	// Every filter, the sort and the open row are in the URL, so a view can be shared.
 	// What the API can filter or sort is passed on as a query; the rest is done
@@ -2598,20 +2598,20 @@
 																? [
 																		{
 																			label: t.member.name ?? 'Bewindspersoon',
-																			href: hrefOf(`members/${t.member.key}`)
+																			ref: `members/${t.member.key}`
 																		}
 																	]
 																: []),
 															...uniqueBy(t.dossiers ?? [], (d) => d.key).map((d) => ({
 																label: `${d.number}${d.title ? `: ${d.title}` : ''}`,
-																href: hrefOf(`dossiers/${d.number ?? d.key}`)
+																ref: `dossiers/${d.number ?? d.key}`
 															})),
 															...(t.activity
 																? [
 																		{
 																			label:
 																				`Gedaan in activiteit ${t.activity.number ?? ''}`.trim(),
-																			href: hrefOf(`activities/${t.activity.key}`)
+																			ref: `activities/${t.activity.key}`
 																		}
 																	]
 																: [])

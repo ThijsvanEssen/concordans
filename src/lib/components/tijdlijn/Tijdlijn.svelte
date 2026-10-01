@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	// De gedeelde tijdlijn. Datum links in een vaste
 	// kolom, een teken op een doorlopende lijn, dan de zin. Een besluit krijgt het vakje van
 	// Uitkomst (vorm en kleur); wat nog kan volgen staat gestippeld en zegt dat het kan volgen.
@@ -53,9 +54,10 @@
 						{/if}
 						<span class="tekst">
 							{#if r.label}<span class="label">{r.label}</span>{/if}
-							{#if r.href}<a href={r.href} class="zin">{r.zin}</a>{:else}<span class="zin"
-									>{r.zin}</span
-								>{/if}
+							{#if r.ref}<BronLink ref={r.ref} class="zin">{r.zin}</BronLink>{:else if r.href}<a
+									href={r.href}
+									class="zin">{r.zin}</a
+								>{:else}<span class="zin">{r.zin}</span>{/if}
 							{#if r.meta}<span class="meta">{r.meta}</span>{/if}
 						</span>
 					</li>
@@ -220,7 +222,8 @@
 	.regel--nee .label {
 		color: var(--uitkomst-nee);
 	}
-	.zin {
+	.zin,
+	.tekst :global(a.zin) {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);
@@ -228,14 +231,16 @@
 		text-decoration: none;
 		text-wrap: pretty;
 	}
-	a.zin:hover {
+	.tekst :global(a.zin:hover) {
 		color: var(--accent);
 	}
-	.groot .zin {
+	.groot .zin,
+	.groot :global(a.zin) {
 		font-size: var(--t-h3);
 		font-weight: 500;
 	}
-	.regel--verwacht .zin {
+	.regel--verwacht .zin,
+	.regel--verwacht :global(a.zin) {
 		color: var(--ink-3);
 		font-style: italic;
 	}

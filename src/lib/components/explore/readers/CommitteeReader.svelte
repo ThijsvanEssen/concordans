@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import type { Schema } from '$lib/api/types';
@@ -7,7 +8,6 @@
 	import { committeeSlug, getCommittee, str } from '$lib/components/parliamentary/data';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
-	import { bronHref } from '$lib/bron/href';
 	import { formatLongDate } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
@@ -107,8 +107,9 @@
 					{#each officers as m (m.key)}
 						<dt>{m.role}</dt>
 						<dd>
-							<a href={bronHref(`members/${m.key}`)} data-sveltekit-noscroll>{m.name}</a
-							>{#if m.ek?.abbreviation}<span class="faction">, {m.ek.abbreviation}</span>{/if}
+							<BronLink ref={`members/${m.key}`}>{m.name}</BronLink>{#if m.ek?.abbreviation}<span
+									class="faction">, {m.ek.abbreviation}</span
+								>{/if}
 						</dd>
 					{/each}
 				</dl>

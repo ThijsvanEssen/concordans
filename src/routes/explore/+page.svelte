@@ -52,7 +52,6 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
 	import {
-		EMPTY_NETWERK,
 		isOn,
 		netwerkParams,
 		parseNetwerk,
@@ -529,16 +528,6 @@
 		else addToNetwerk(node);
 	}
 
-	function handleResetGraph() {
-		store.reset();
-		resolved.clear();
-		loadedFocus = '';
-		deepenedId = '';
-		composedOnce = false;
-		netwerkEntries = [];
-		if (netwerkActive) setNetwerk(EMPTY_NETWERK);
-	}
-
 	// Wissen leaves nothing: no chosen bronnen, no focus, no canvas, nothing remembered for
 	// the next visit. One step, so Back brings it all back.
 	function wisAlles() {
@@ -967,7 +956,6 @@
 						onToggleHeat={toggleHeat}
 						onHeatPeriodChange={setHeatPeriod}
 						onToggleMutatie={toggleMutatie}
-						onResetGraph={handleResetGraph}
 					>
 						{#snippet canvasOverlay()}
 							<NetwerkPanel

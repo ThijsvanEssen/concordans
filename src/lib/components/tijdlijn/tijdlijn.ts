@@ -13,6 +13,8 @@ export type TijdRegel = {
 	zin: string;
 	meta?: string | null;
 	href?: string | null;
+	/** The bron the line names: a click opens it in place (BronLink), as everywhere. */
+	ref?: import('$lib/bron/href').BronRef | string | null;
 	/** Een besluit of een wetsvoorstel: groter gezet. */
 	groot?: boolean;
 };

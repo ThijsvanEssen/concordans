@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { terPlekke } from '$lib/actions/klik';
 	// All verbindingen of the selected bron as a table, under the same bronfilter:
 	// bron, verbinding, plaats in de bron, plaats in dit artikel, aard, status,
 	// betrouwbaarheid, datum. Fifty rows per page.
@@ -283,7 +284,11 @@
 											{#if r.missing}
 												<span class="bron__missing">{r.title}</span>
 											{:else}
-												<a href={bronHref(r.ref, { at: r.at })} data-sveltekit-noscroll>{r.title}</a
+												<a
+													href={bronHref(r.ref, { at: r.at })}
+													data-sveltekit-noscroll
+													onclick={(e) => terPlekke(e, () => (openRow = open ? null : id))}
+													>{r.title}</a
 												>
 												<button
 													type="button"

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { terPlekke } from '$lib/actions/klik';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
@@ -365,7 +366,11 @@
 									{#if row.missing}
 										<span class="row__title row__title--missing">{row.title}</span>
 									{:else}
-										<a class="row__title" href={openHref(g, row)} data-sveltekit-noscroll
+										<a
+											class="row__title"
+											href={openHref(g, row)}
+											data-sveltekit-noscroll
+											onclick={(e) => terPlekke(e, () => (openRow = open ? null : id))}
 											>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
 										>
 									{/if}
@@ -416,6 +421,8 @@
 										networkHref={inNetworkHref(row)}
 										{onShowInNetwork}
 										{onVerbinding}
+										onAdd={onAddToNetwerk && !row.missing ? () => onAddToNetwerk(row) : undefined}
+										added={inNetwerk?.(row) ?? false}
 									/>
 								</div>
 							{/if}

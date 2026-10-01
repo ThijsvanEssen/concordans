@@ -1,6 +1,8 @@
 <script lang="ts">
 	// A row opened under itself, the same in Verbonden and in the table: the passage that
-	// names the bron, then how to open it, show it in the network, or read the verbinding.
+	// names the bron, then the ways on: Lees (the bron itself), Alleen de omgeving (the bron
+	// with what it touches, as a double click on the canvas), In netwerk (one of the chosen
+	// bronnen), and what the verbinding is.
 	import { passageOf, type Row } from './rows';
 	import Picto from '$lib/components/ui/Picto.svelte';
 
@@ -10,15 +12,21 @@
 		openLabel,
 		networkHref,
 		onShowInNetwork,
-		onVerbinding
+		onVerbinding,
+		onAdd,
+		added = false
 	}: {
 		row: Row;
 		openHref: string;
 		openLabel: string;
-		/** Where Toon in netwerk goes when there is no onShowInNetwork. */
+		/** Where Alleen de omgeving goes: the bron with what it touches. */
 		networkHref: string;
 		onShowInNetwork?: (row: Row) => void;
 		onVerbinding: (row: Row) => void;
+		/** Put the bron among the chosen bronnen of the netwerk. */
+		onAdd?: () => void;
+		/** It is there already. */
+		added?: boolean;
 	} = $props();
 
 	const p = $derived(passageOf(row));
@@ -31,17 +39,21 @@
 			{p.before}{#if p.mark}<mark>{p.mark}</mark>{/if}{p.after}
 		</p>
 	{/if}
-	<!-- Dezelfde twee knoppen als de open rij in Bladeren (OpenRij). -->
 	<div class="acts">
 		<a href={openHref} data-sveltekit-noscroll class="act act--pri"
 			><Picto naam="tekst" size={13} />{openLabel}</a
 		>
-		{#if onShowInNetwork}
-			<button type="button" class="act" onclick={() => onShowInNetwork(row)}
-				><Picto naam="netwerk" size={13} />In het netwerk</button
+		<a href={networkHref} data-sveltekit-noscroll class="act"
+			><Picto naam="omgeving" size={13} />Alleen de omgeving</a
+		>
+		{#if onAdd}
+			<button type="button" class="act" disabled={added} onclick={onAdd}
+				><Picto naam="plus" size={13} />{added ? 'Staat in netwerk' : 'In netwerk'}</button
 			>
-		{:else}
-			<a href={networkHref} class="act"><Picto naam="netwerk" size={13} />In het netwerk</a>
+		{:else if onShowInNetwork}
+			<button type="button" class="act" onclick={() => onShowInNetwork(row)}
+				><Picto naam="plus" size={13} />In netwerk</button
+			>
 		{/if}
 		{#if row.relation}
 			<button type="button" class="link" onclick={() => onVerbinding(row)}
@@ -98,6 +110,10 @@
 	}
 	.act:hover {
 		border-color: var(--ink);
+	}
+	.act:disabled {
+		color: var(--ink-3);
+		cursor: default;
 	}
 	.act--pri {
 		background: var(--ink);

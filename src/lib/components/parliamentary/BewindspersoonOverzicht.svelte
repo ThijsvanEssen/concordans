@@ -1,10 +1,11 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	// Wat een bewindspersoon toezegde en ondertekende,
 	// bovenaan de lezer. Tellingen per stand zijn links naar Bladeren met het filter gezet.
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
-	import { bronHref, indexHref } from '$lib/bron/href';
+	import { indexHref } from '$lib/bron/href';
 	import { stand, datum } from './stand';
 
 	let { memberKey, ruim = false }: { memberKey: string; ruim?: boolean } = $props();
@@ -63,9 +64,7 @@
 				<ol class="items">
 					{#each open.items as c (c.key)}
 						<li>
-							<a href={bronHref(`commitments/${c.key}`, { keepMode: false, mode: 'read' })}
-								>{c.text}</a
-							>
+							<BronLink ref={`commitments/${c.key}`}>{c.text}</BronLink>
 							<span class="meta"
 								>{c.number}, toegezegd {datum(c.date)}{c.expected_resolution
 									? `, verwacht ${datum(c.expected_resolution)}`
@@ -93,9 +92,7 @@
 				{#each dossiers.items as d (d.key)}
 					{@const st = stand(d)}
 					<li>
-						<a href={bronHref(`dossiers/${d.number}`, { keepMode: false, mode: 'read' })}
-							>{d.short_title ?? d.title ?? d.number}</a
-						>
+						<BronLink ref={`dossiers/${d.number}`}>{d.short_title ?? d.title ?? d.number}</BronLink>
 						<span class="meta">{st?.zin ?? ''} {d.number}</span>
 					</li>
 				{/each}
@@ -149,7 +146,7 @@
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);
 	}
-	.items li > a {
+	.items li :global(.bronlink > a) {
 		text-decoration: none;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;

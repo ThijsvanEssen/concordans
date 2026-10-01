@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { terPlekke } from '$lib/actions/klik';
 	import { onControl } from '$lib/actions/outside';
 	// One row of the index. A click anywhere in the row, the title too, opens its detail
 	// beneath it; the bron itself opens from the buttons there. The title stays a link, so
@@ -48,12 +49,7 @@
 	}
 
 	/** A plain click on the title opens the row; with a modifier it is the link's. */
-	function onTitleClick(e: MouseEvent) {
-		if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-		e.preventDefault();
-		e.stopPropagation();
-		onToggle();
-	}
+	const onTitleClick = (e: MouseEvent) => terPlekke(e, onToggle);
 </script>
 
 <li class="row-wrap" class:row-wrap--member={member} data-bron={bron}>

@@ -61,6 +61,17 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /tabular-nums/.test(t), columns)).toEqual([]);
 	});
 
+	it('opens a row in place on one click, through the shared rule', () => {
+		// A row whose title is a link to the bron (Bladeren, Verbonden, the table) takes the
+		// click through terPlekke ($lib/actions/klik), so a plain click opens the row and a
+		// cmd-click goes to the bron.
+		const rows = sources.filter(({ text }) =>
+			/class="(row-title|row__title)"[\s\S]{0,80}href=/.test(text)
+		);
+		expect(rows.length).toBeGreaterThan(0);
+		expect(rows.filter(({ text }) => !text.includes('terPlekke')).map((s) => s.path)).toEqual([]);
+	});
+
 	it('has no prototype switches or study folders left', () => {
 		expect(
 			offenders((t) => /searchParams\.get\('(ontwerp|contrast)'\)|components\/r[0-9]\//.test(t))

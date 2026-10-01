@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
@@ -8,7 +9,6 @@
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { bronHref } from '$lib/bron/href';
 	import { getMemberVotes } from '$lib/components/parliamentary/data';
 	import {
 		careerOf,
@@ -159,10 +159,8 @@
 								</div>
 							{:else if ek?.faction && ek.abbreviation}
 								<div class="chips">
-									<a
-										class="party-chip"
-										href={bronHref({ collection: 'factions', key: ek.faction })}
-										data-sveltekit-noscroll>{ek.abbreviation}</a
+									<BronLink ref={{ collection: 'factions', key: ek.faction }} class="party-chip"
+										>{ek.abbreviation}</BronLink
 									>
 								</div>
 							{/if}
@@ -177,9 +175,8 @@
 						{#if ek.faction}
 							<dt>Fractie</dt>
 							<dd>
-								<a
-									href={bronHref({ collection: 'factions', key: ek.faction })}
-									data-sveltekit-noscroll>{ek.abbreviation ?? ek.faction}</a
+								<BronLink ref={{ collection: 'factions', key: ek.faction }}
+									>{ek.abbreviation ?? ek.faction}</BronLink
 								>
 							</dd>
 						{/if}
@@ -217,9 +214,8 @@
 								{#if step.kind === 'seat'}
 									<span class="career-what">
 										Kamerlid,
-										<a
-											href={bronHref({ collection: 'factions', key: step.factionKey })}
-											data-sveltekit-noscroll>{step.faction}</a
+										<BronLink ref={{ collection: 'factions', key: step.factionKey }}
+											>{step.faction}</BronLink
 										>
 										{#each uniqueBy(step.roles, (r) => r.role + r.from) as r (r.role + r.from)}
 											<span class="career-role">{r.role.toLowerCase()} {yearsOf(r.from, r.to)}</span
@@ -274,10 +270,9 @@
 								<ul class="vote-list">
 									{#each uniqueBy(rows, (v) => v.decision_id) as v (v.decision_id)}
 										<li class="vote-row">
-											<a
+											<BronLink
+												ref={{ collection: 'decisions', key: v.decision_key }}
 												class="vote-link"
-												href={bronHref({ collection: 'decisions', key: v.decision_key })}
-												data-sveltekit-noscroll
 											>
 												<span class="vote-subject">{v.subject ?? '—'}</span>
 												<span class="vote-meta">
@@ -295,7 +290,7 @@
 													{/if}
 													{#if v.date}<span class="vote-date">{formatDate(v.date)}</span>{/if}
 												</span>
-											</a>
+											</BronLink>
 										</li>
 									{/each}
 								</ul>
@@ -422,10 +417,10 @@
 		color: var(--ink);
 		overflow-wrap: anywhere;
 	}
-	.career-what a {
+	.career-what :global(a) {
 		color: inherit;
 	}
-	.career-what a:hover {
+	.career-what :global(a:hover) {
 		color: var(--accent);
 	}
 	/* Also on the link NameLink renders. */
@@ -459,7 +454,7 @@
 	.vote-row {
 		padding: 0;
 	}
-	.vote-link {
+	.vote-list :global(.vote-link) {
 		display: flex;
 		flex-direction: column;
 		gap: 3px;
@@ -468,10 +463,10 @@
 		border-radius: var(--r-1);
 		text-decoration: none;
 	}
-	.vote-link:hover {
+	.vote-list :global(.vote-link:hover) {
 		background: var(--paper-2);
 	}
-	.vote-link:hover .vote-subject {
+	.vote-list :global(.vote-link:hover .vote-subject) {
 		color: var(--accent);
 	}
 	.vote-subject {

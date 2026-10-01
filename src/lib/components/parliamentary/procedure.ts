@@ -83,6 +83,7 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 				label: groep === 'ek' ? 'Stemming Eerste Kamer' : 'Stemming Tweede Kamer',
 				zin: `${passed ? 'Aangenomen' : 'Verworpen'}${how}`,
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
+				ref: e.node_id,
 				groot: true
 			});
 		} else if (e.node_type === 'activity') {
@@ -94,7 +95,8 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 				soort: 'activities',
 				label: null,
 				zin: typeof b.agenda_title === 'string' ? b.agenda_title : (e.kind ?? ''),
-				href: bronHref(e.node_id, { keepMode: false, mode: 'read' })
+				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
+				ref: e.node_id
 			});
 		}
 	}
@@ -121,7 +123,8 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 			meta: nummers.length
 				? `Kamerstuk${groep === 'ek' ? ' I' : ''} ${dossier}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
 				: null,
-			href: bronHref(first.node_id, { keepMode: false, mode: 'read' })
+			href: bronHref(first.node_id, { keepMode: false, mode: 'read' }),
+			ref: first.node_id
 		});
 	}
 	return out.sort((a, b) => (a.datum ?? '').localeCompare(b.datum ?? ''));

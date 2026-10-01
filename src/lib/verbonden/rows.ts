@@ -419,12 +419,12 @@ export function passageOf(row: Pick<Row, 'snippet' | 'match'>): {
 /** What opening a row does, in words: at the position it names, or beside the article. */
 export const openLabelOf = (row: Pick<Row, 'position' | 'at'>, beside = false): string =>
 	beside
-		? 'Open naast het artikel'
+		? 'Lees naast het artikel'
 		: row.position
-			? `Open bij ${row.position}`
+			? `Lees bij ${row.position}`
 			: row.at
-				? `Open bij ${anchorLabel(row.at)}`
-				: 'Open de bron';
+				? `Lees bij ${anchorLabel(row.at)}`
+				: 'Lees';
 
 /** `art. 4:12, 5:49 en 3 andere`: the articles of the law a judgment cites. */
 export function citedLine(articles: readonly { article_number?: string | null }[]): string | null {

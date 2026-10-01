@@ -16,7 +16,7 @@
 				<span class="shortcut-keys"><kbd>Esc</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Volledig lezen, of toon in netwerk</span>
+				<span class="shortcut-desc">Wissel tussen netwerk en tekst</span>
 				<span class="shortcut-keys"><kbd>L</kbd></span>
 			</div>
 			<div class="shortcut-row">

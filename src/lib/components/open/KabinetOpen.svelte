@@ -67,7 +67,8 @@
 					soort: 'commitments',
 					label: `Toezegging van ${(t.minister_name ?? '').replace(/,.*$/, '')}, ${(t.status ?? '').toLowerCase()}`,
 					zin: t.text ?? '',
-					href: bronHref(`commitments/${t.key}`, { keepMode: false, mode: 'read' })
+					href: bronHref(`commitments/${t.key}`, { keepMode: false, mode: 'read' }),
+					ref: `commitments/${t.key}`
 				});
 			regels = out.sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? '')).slice(0, 5);
 		});

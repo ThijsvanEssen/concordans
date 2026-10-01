@@ -421,9 +421,9 @@ describe('a row opened under itself', () => {
 	});
 
 	it('says where opening it goes', () => {
-		expect(openLabelOf({ position: 'r.o. 6.16', at: 'rov-6.16' })).toBe('Open bij r.o. 6.16');
-		expect(openLabelOf({ position: null, at: null })).toBe('Open de bron');
-		expect(openLabelOf({ position: null, at: null }, true)).toBe('Open naast het artikel');
+		expect(openLabelOf({ position: 'r.o. 6.16', at: 'rov-6.16' })).toBe('Lees bij r.o. 6.16');
+		expect(openLabelOf({ position: null, at: null })).toBe('Lees');
+		expect(openLabelOf({ position: null, at: null }, true)).toBe('Lees naast het artikel');
 	});
 });
 

@@ -104,6 +104,7 @@
 				zin: l.title,
 				meta: l.context,
 				href: typeof l.href === 'string' ? l.href : bronHref(l.href),
+				ref: typeof l.href === 'string' ? null : l.href,
 				groot: l.major
 			}))
 		}))

@@ -1,6 +1,6 @@
 <script lang="ts">
 	// The bar above the panels: a back arrow, the breadcrumb of the selected bron, Deel,
-	// and, for a bron with a text of its own, Volledig lezen or back to the network.
+	// and the switch Netwerk / Tekst (WeergaveSchakelaar).
 	// Bladeren is a place to go, not a view of the selected bron, so it lives in the top
 	// nav only, not here.
 	import type { GraphNode } from '$lib/graph/types';
@@ -40,7 +40,7 @@
 		shareAnnouncement?: string;
 		onGoBack?: () => void;
 		onShareView?: () => void;
-		/** `read` offers Volledig lezen, `network` the way back; null shows neither. */
+		/** `read` offers Tekst, `network` the way back to Netwerk; null shows neither. */
 		readAction?: 'read' | 'network' | null;
 		onRead?: (on: boolean) => void;
 	} = $props();

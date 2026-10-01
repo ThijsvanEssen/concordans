@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ConfirmButton from '$lib/components/ui/ConfirmButton.svelte';
 	// The legend of the network, which is also its filter: the bronnen that take part
 	// (with counts and the preset), the verbindingen per relation with a line sample,
 	// the depth from the focus, the lid, and one line with what is on the canvas and
@@ -46,8 +45,7 @@
 		onHeatPeriodChange,
 		onToggleMutatie,
 		netwerkActive = false,
-		hasNodes = false,
-		onResetGraph
+		hasNodes = false
 	}: {
 		verbonden: VerbondenState;
 		filter: VerbondenFilter;
@@ -72,7 +70,6 @@
 		/** With a netwerk, a depth adds context around the selection instead of setting the view. */
 		netwerkActive?: boolean;
 		hasNodes?: boolean;
-		onResetGraph?: () => void;
 	} = $props();
 
 	let presetMenu = $state(false);
@@ -400,15 +397,6 @@
 					</div>
 				{/if}
 			</div>
-			{#if hasNodes && onResetGraph}
-				<div class="block">
-					<ConfirmButton
-						label="Netwerk wissen"
-						confirmLabel="Ja, netwerk wissen"
-						onConfirm={() => onResetGraph?.()}
-					/>
-				</div>
-			{/if}
 		</details>
 	{/if}
 </aside>

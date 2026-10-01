@@ -75,7 +75,6 @@
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
-		onResetGraph,
 		canvasOverlay
 	}: {
 		store: GraphStore;
@@ -104,7 +103,6 @@
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
-		onResetGraph?: () => void;
 		canvasOverlay?: Snippet;
 	} = $props();
 
@@ -944,7 +942,6 @@
 		{onToggleHeat}
 		{onHeatPeriodChange}
 		{onToggleMutatie}
-		{onResetGraph}
 		{hasNodes}
 	/>
 {/snippet}

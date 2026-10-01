@@ -167,33 +167,57 @@
 		</div>
 
 		<div class="section">
+			<h2 class="section-title">Klikken</h2>
+			<p>
+				Eén klik op een rij, een titel of een verwijzing opent die ter plekke: de rij klapt uit, of
+				naast de verwijzing verschijnt een kaart met soort, naam, datum en de eerste regels. Daarin
+				staat de weg naar de bron zelf: <strong>Lees</strong> opent de bron,
+				<strong>In het netwerk</strong>
+				toont haar tussen haar verbindingen. In Verbonden staan er ook
+				<strong>Alleen de omgeving</strong> en <strong>In netwerk</strong>.
+			</p>
+			<p>
+				Cmd-klik, ctrl-klik en een klik met de middelste knop openen de bron direct, in een nieuw
+				tabblad waar de browser dat doet. <kbd>Esc</kbd> of een klik ernaast sluit een kaart.
+			</p>
+		</div>
+
+		<div class="section">
 			<h2 class="section-title">Netwerk samenstellen</h2>
 			<p>
-				Een klik op een bron in het netwerk opent die bron in de lezer. Het netwerk blijft staan.
-				Een dubbelklik tekent het netwerk opnieuw rond die bron, tot de gekozen diepte.
+				Een klik op een bron in het netwerk kiest die bron; de lezer ernaast toont haar. Het netwerk
+				blijft staan. Rust de muis op een bron, dan staat naast haar een kaart met
+				<strong>Tekst lezen</strong>, <strong>Omgeving tonen</strong> en
+				<strong>In netwerk</strong>. Een dubbelklik doet hetzelfde als Omgeving tonen: het netwerk
+				opnieuw rond die bron, tot de gekozen diepte.
 			</p>
 			<p>
-				Een artikel, wet, uitspraak of stuk heeft een eigen tekst. <strong>Volledig lezen</strong>
-				(toets <kbd>L</kbd>) toont die tekst op volle breedte, met inhoudsopgave;
-				<strong>Toon in netwerk</strong> keert terug naar het netwerk. Een link van buiten de Verkenner
-				opent zo'n bron op volle breedte. Een kamerlid, commissie, fractie of dossier staat altijd naast
-				het netwerk.
+				Een artikel, wet, uitspraak of stuk heeft een eigen tekst. De schakelaar
+				<strong>Netwerk</strong> / <strong>Tekst</strong> rechtsboven (toets <kbd>L</kbd>) wisselt
+				tussen het netwerk met de lezer ernaast en de tekst op volle breedte, met inhoudsopgave. Een
+				link van buiten de Verkenner opent zo'n bron op volle breedte. Een kamerlid, commissie,
+				fractie of dossier staat altijd naast het netwerk.
 			</p>
 			<p>
-				De Verkenner opent met het paneel Netwerk. Het zoekveld <strong>Bron toevoegen</strong>
-				kiest een bron zonder hem te openen; een geselecteerde bron komt erbij met
-				<strong>+ naam</strong>
-				in hetzelfde paneel. Gekozen bronnen staan in de URL (<code>?netwerk</code>), elk aan of uit
-				te zetten. Het netwerk toont ze met hun onderlinge verbindingen en met de bronnen die twee
-				van hen verbinden: een stuk dat beide ondertekenden, een artikel van een gekozen wet. Een
-				bron zonder zulke verbinding staat als <em>los</em> in het paneel. Paden van meer dan twee stappen
-				worden nog niet gevonden.
+				Het paneel Netwerk rechtsboven toont de gekozen bronnen als labels: een klik zet een bron
+				uit of aan, × haalt haar weg. <strong>+ bron</strong> zoekt een bron om toe te voegen; een
+				geselecteerde bron komt erbij met <strong>+ naam</strong>, en elke rij in Verbonden heeft
+				een +. Gekozen bronnen staan in de URL (<code>?netwerk</code>). Het netwerk toont ze met hun
+				onderlinge verbindingen en met de bronnen die twee van hen verbinden: een stuk dat beide
+				ondertekenden, een artikel van een gekozen wet. Een bron zonder zulke verbinding staat als
+				<em>los</em> in het paneel. Paden van meer dan twee stappen worden nog niet gevonden.
 			</p>
 			<p>
-				Diepte voegt met een netwerk context toe rond de geselecteerde bron, net als een groep uit
-				Verbonden. Context staat vaag getekend. <strong>Context wissen</strong> laat alleen de
-				gekozen bronnen en hun verbindingen staan. De Verkenner opent op het laatste netwerk, tot
-				<strong>Netwerk wissen</strong>.
+				Diepte voegt context toe rond de geselecteerde bron, net als een groep uit Verbonden.
+				Context staat vaag getekend. <strong>Alleen de gekozen bronnen tonen</strong> (onder ⋯) laat
+				de gekozen bronnen en hun verbindingen staan. <strong>Wissen</strong> maakt alles leeg: gekozen
+				bronnen, selectie en canvas. Terug zet het terug. Zonder wissen opent de Verkenner op het laatste
+				netwerk.
+			</p>
+			<p>
+				De legenda linksboven toont dicht de tekens van wat op het canvas staat, en open het
+				bronfilter, alle tekens met hun betekenis, de groepering en de verbindingen. Een omtrek is
+				een bron die alleen genoemd wordt en niet in de gegevens staat.
 			</p>
 		</div>
 

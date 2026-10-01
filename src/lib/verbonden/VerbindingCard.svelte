@@ -57,10 +57,10 @@
 	);
 	const openLabel = $derived(
 		v.relation === 'EXPLAINS' && besideHref
-			? 'Open naast het artikel'
+			? 'Lees naast het artikel'
 			: v.position
-				? `Open bij ${v.position}`
-				: 'Open de bron'
+				? `Lees bij ${v.position}`
+				: 'Lees'
 	);
 
 	// Escape closes the card in every mode; taken, so the network does not also clear.
@@ -137,7 +137,7 @@
 	<div class="actions">
 		<a class="btn is-primary" href={openHref} data-sveltekit-noscroll>{openLabel}</a>
 		{#if onShowInNetwork}
-			<button type="button" class="btn" onclick={onShowInNetwork}>Toon in netwerk</button>
+			<button type="button" class="btn" onclick={onShowInNetwork}>In netwerk</button>
 		{/if}
 		<CiteMenu
 			items={[

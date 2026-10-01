@@ -1,4 +1,5 @@
 <script lang="ts">
+	import BronLink from '$lib/bron/BronLink.svelte';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	// Reader for a cabinet: its period, minister-president and coalition, and what it did,
 	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
@@ -7,7 +8,7 @@
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { bronHref, indexHref } from '$lib/bron/href';
+	import { indexHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { formatLongDate } from './_shared';
@@ -74,9 +75,7 @@
 				{#if c.prime_minister}
 					<dt>Minister-president</dt>
 					<dd>
-						<a href={bronHref(`members/${c.prime_minister.key}`)} data-sveltekit-noscroll
-							>{c.prime_minister.name}</a
-						>
+						<BronLink ref={`members/${c.prime_minister.key}`}>{c.prime_minister.name}</BronLink>
 					</dd>
 				{/if}
 				{#if c.parties?.length}
