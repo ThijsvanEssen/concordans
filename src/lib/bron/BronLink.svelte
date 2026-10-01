@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { gewoneKlik } from '$lib/actions/klik';
+	import { focusIn } from './leesbaar';
 	// A reference to a bron, the same everywhere. One click opens it in place: a card beside
 	// it with the kind, the name, a date and the first lines, and the ways on to the bron
 	// itself (Lees, In het netwerk). Cmd-click, ctrl-click and a middle click go to the bron
@@ -40,7 +41,7 @@
 
 	// A reference into the bron on screen is a jump within the page.
 	const id = $derived(focusOf(ref));
-	const inPage = $derived(!!at && !!id && page.url.searchParams.get('focus') === id);
+	const inPage = $derived(!!at && !!id && focusIn(page.url) === id);
 	const href = $derived(inPage ? `#${at}` : bronHref(ref, { at }));
 	const lees = $derived(bronHref(ref, { at, keepMode: false, mode: 'read' }));
 	const netwerk = $derived(bronHref(ref, { keepMode: false, mode: 'graph' }));

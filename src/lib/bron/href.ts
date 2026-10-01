@@ -4,6 +4,7 @@
 // network stays the network. From outside the Verkenner a bron opens to be read.
 import { page } from '$app/state';
 import { parseNodeId, type Collection, type Mode } from '$lib/vocabulary';
+import { isVerkenner, verkennerHref, verkennerUrl } from './leesbaar';
 
 /** Bronnen with a text long enough to read at full width; the rest reads beside the network. */
 const READABLE: ReadonlySet<Collection> = new Set([
@@ -85,28 +86,28 @@ export function buildBronHref(
 	const focus = focusOf(ref);
 	const target = focus && parseNodeId(focus);
 	if (!focus || !target) return '/explore';
-	const inExplore = current?.pathname === '/explore';
-	const currentMode = inExplore ? current.searchParams.get('mode') : null;
+	const inExplore = !!current && isVerkenner(current.pathname);
+	if (current && inExplore) current = verkennerUrl(current);
+	const currentMode = inExplore && current ? current.searchParams.get('mode') : null;
 	// Bladeren lists bronnen; opening one from there is reading it. `mode=read` is the
 	// name reading had before ?lezen.
 	const within = keepMode && inExplore && currentMode !== 'index';
-	const reading = within
-		? current.searchParams.get('lezen') === '1' || currentMode === 'read'
-		: (mode ?? 'read') === 'read';
+	const reading =
+		within && current
+			? current.searchParams.get('lezen') === '1' || currentMode === 'read'
+			: (mode ?? 'read') === 'read';
 
 	const params = new URLSearchParams();
 	params.set('focus', focus);
 	if (reading && isReadable(target.collection)) params.set('lezen', '1');
-	if (inExplore) {
+	if (inExplore && current) {
 		for (const name of KEPT_PARAMS) {
 			if (!keepNetwerk && NETWERK_PARAMS.has(name)) continue;
 			const value = current.searchParams.get(name);
 			if (value) params.set(name, value);
 		}
 	}
-	// A node id is safe in a query string as it is; the escaped slash only hurts legibility.
-	const query = params.toString().replaceAll('%2F', '/').replaceAll('%2C', ',');
-	return `/explore?${query}${at ? `#${encodeURIComponent(at)}` : ''}`;
+	return verkennerHref(params, at ? `#${encodeURIComponent(at)}` : '');
 }
 
 /** Link to a bron from the current page. Reactive where it is read in a template. */

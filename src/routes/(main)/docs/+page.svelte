@@ -144,6 +144,25 @@
 				>, <code>#lid-2-onder-a</code>, <code>#aanhef</code> in een artikel, <code>#rov-5.3</code> in
 				een uitspraak.
 			</p>
+			<p>Een bron heeft een eigen adres op zijn officiële nummer:</p>
+			<div class="list">
+				<div class="list-row">
+					<span class="list-k">uitspraak</span><span>/uitspraken/ECLI:NL:HR:2019:2006</span>
+				</div>
+				<div class="list-row">
+					<span class="list-k">artikel</span><span>/wetten/BWBR0005289/artikel/6:162</span>
+				</div>
+				<div class="list-row">
+					<span class="list-k">dossier</span><span>/dossiers/36600-VIII</span>
+				</div>
+				<div class="list-row">
+					<span class="list-k">Kamerstuk</span><span>/kamerstukken/36799/31</span>
+				</div>
+			</div>
+			<p>
+				De weergave staat erachter: <code>?lezen=1</code> voor de tekst op volle breedte. Andere
+				bronnen houden een adres onder <code>/explore</code>.
+			</p>
 		</div>
 
 		<div class="section">

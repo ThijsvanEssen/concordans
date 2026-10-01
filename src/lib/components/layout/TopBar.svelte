@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { isVerkenner } from '$lib/bron/leesbaar';
 	import { goto } from '$app/navigation';
 	import { modKey } from '$lib/utils/platform';
 	import Wordmark from './Wordmark.svelte';
@@ -11,7 +12,7 @@
 	const isIndex = $derived(
 		$page.url.pathname.startsWith('/explore') && $page.url.searchParams.get('mode') === 'index'
 	);
-	const isExplore = $derived($page.url.pathname.startsWith('/explore') && !isIndex);
+	const isExplore = $derived(isVerkenner($page.url.pathname) && !isIndex);
 	const isDocs = $derived($page.url.pathname.startsWith('/docs'));
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
 

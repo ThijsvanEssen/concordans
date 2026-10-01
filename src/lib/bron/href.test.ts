@@ -14,16 +14,16 @@ describe('buildBronHref', () => {
 	});
 
 	it('opens a bron without a text of its own in the network', () => {
-		expect(buildBronHref(at('/'), 'dossiers/36327')).toBe('/explore?focus=dossiers/36327');
+		expect(buildBronHref(at('/'), 'dossiers/36327')).toBe('/dossiers/36327');
 		expect(buildBronHref(at('/'), 'members/x')).toBe('/explore?focus=members/x');
 	});
 
 	it('names a dossier by its number, not its node key', () => {
 		expect(
 			buildBronHref(at('/'), { collection: 'dossiers', key: '37020_xv', number: '37020-XV' })
-		).toBe('/explore?focus=dossiers/37020-XV');
+		).toBe('/dossiers/37020-XV');
 		expect(buildBronHref(at('/'), refOf('dossiers', '37020_j', { label: '37020-J' }))).toBe(
-			'/explore?focus=dossiers/37020-J'
+			'/dossiers/37020-J'
 		);
 	});
 
@@ -37,7 +37,7 @@ describe('buildBronHref', () => {
 				collection: 'judgments',
 				key: 'ecli_nl_hr_2024_1769'
 			})
-		).toBe('/explore?focus=judgments/ecli_nl_hr_2024_1769&overlay=open');
+		).toBe('/uitspraken/ECLI:NL:HR:2024:1769?overlay=open');
 	});
 
 	it('keeps reading, also under the old name mode=read', () => {
@@ -59,6 +59,18 @@ describe('buildBronHref', () => {
 		expect(buildBronHref(null, 'articles/bwbr0001903_27c', { at: 'lid-2' })).toBe(
 			'/explore?focus=articles/bwbr0001903_27c&lezen=1#lid-2'
 		);
+	});
+
+	it('keeps the view of a readable address, and gives one where the bron has it', () => {
+		expect(
+			buildBronHref(
+				at('/uitspraken/ECLI:NL:HR:2019:2006?lezen=1&bronnen=artikelen'),
+				'dossiers/36799'
+			)
+		).toBe('/dossiers/36799?bronnen=artikelen');
+		expect(
+			buildBronHref(at('/dossiers/36799'), 'judgments/ecli_nl_hr_2019_2006', { at: 'rov-5.3' })
+		).toBe('/uitspraken/ECLI:NL:HR:2019:2006#rov-5.3');
 	});
 
 	it('can force the network', () => {
