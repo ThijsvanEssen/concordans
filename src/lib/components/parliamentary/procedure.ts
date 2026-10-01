@@ -13,11 +13,17 @@ type Body = Record<string, unknown>;
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const bodyOf = (e: Entry) => (e.body ?? {}) as Body;
-const nrOf = (e: Entry): string | null => {
+/**
+ * The number of a paper in its dossier: the Eerste Kamer's letter (`number`, API 0.73,
+ * BE-2), the Tweede Kamer's number in the title or as `sequence`.
+ */
+export const nrOf = (e: { title?: string | null; body?: unknown }): string | null => {
+	const b = (e.body ?? {}) as Body;
+	if (typeof b.number === 'string' && b.number.trim()) return b.number.trim();
 	const m = (e.title ?? '').match(/nr\. (\d+)/);
 	if (m) return m[1];
-	const seq = bodyOf(e).sequence;
-	return typeof seq === 'string' && seq ? seq : null;
+	const seq = b.sequence;
+	return typeof seq === 'number' || (typeof seq === 'string' && seq) ? String(seq) : null;
 };
 const instantie = (e: Entry): 'rvs' | 'tk' | 'ek' => {
 	if ((e.kind ?? '').startsWith('Advies Afdeling advisering')) return 'rvs';
