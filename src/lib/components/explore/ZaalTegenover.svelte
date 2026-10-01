@@ -90,6 +90,19 @@
 		return out;
 	});
 
+	// As in the hemicycle of the Tweede Kamer: a fractie under the pointer stands out, the
+	// others dim, and the aisle says its name and seats.
+	let hovered = $state<string | null>(null);
+	const seatsOf = (name: string) =>
+		byName.get(name)?.seats ?? stoelen.filter((s) => s.name === name).length;
+
+	/** The seats per fractie, each with its place in the hall (for its colour). */
+	const fractieStoelen = $derived.by(() => {
+		const m = new Map<string, { s: Stoel; i: number }[]>();
+		stoelen.forEach((s, i) => m.set(s.name, [...(m.get(s.name) ?? []), { s, i }]));
+		return [...m];
+	});
+
 	const side = (name: string) => {
 		const f = byName.get(name);
 		return voteHighlight && f ? voteHighlight[f.key] : null;
@@ -112,26 +125,60 @@
 			text-anchor="middle"
 			class="nr-t">4</text
 		>
-		{#each stoelen as s, i (i)}
-			{@const f = byName.get(s.name)}
-			{@const v = side(s.name)}
+		<!-- One link per fractie, as the sectors of the hemicycle: its seats and the cells
+		     around them are one target, so the pointer need not land on a seat itself. -->
+		{#each fractieStoelen as [name, eigen] (name)}
+			{@const f = byName.get(name)}
+			{@const v = side(name)}
 			<a
 				href={f ? hrefOf(f.key) : undefined}
-				aria-label="{s.name}{s === stoelen.at(-1) ? ', Voorzitter' : ''}"
+				aria-label="{name}, {seatsOf(name)} {seatsOf(name) === 1 ? 'zetel' : 'zetels'}"
+				onmouseenter={() => (hovered = name)}
+				onmouseleave={() => (hovered = null)}
+				onfocus={() => (hovered = name)}
+				onblur={() => (hovered = null)}
 			>
-				<rect
-					x={s.x}
-					y={s.y}
-					width={S}
-					height={S}
-					rx="3"
-					class:tegen={v === 'tegen'}
-					class:voor={v === 'voor'}
-					fill={voteHighlight ? undefined : kleurVan('EK', s.name, i, fillOf.get(s.name) ?? null)}
-					><title>{s.name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
-				>
+				{#each eigen as { s } (s.x + ':' + s.y)}
+					<rect
+						class="cel"
+						x={s.x - (COL - S) / 2}
+						y={s.y - (ROW - S) / 2 - PAIR / 2}
+						width={COL}
+						height={ROW + PAIR}
+					/>
+				{/each}
+				{#each eigen as { s, i } (s.x + ':' + s.y)}
+					<rect
+						x={s.x}
+						y={s.y}
+						width={S}
+						height={S}
+						rx="3"
+						class="stoel"
+						class:tegen={v === 'tegen'}
+						class:voor={v === 'voor'}
+						class:dim={hovered !== null && hovered !== name}
+						fill={voteHighlight ? undefined : kleurVan('EK', name, i, fillOf.get(name) ?? null)}
+						><title>{name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
+					>
+				{/each}
 			</a>
 		{/each}
+		{#if hovered}
+			<!-- In the aisle, between the blocks: the fractie and its seats. -->
+			<text
+				x={W / 2}
+				y={rowY(1) + 6}
+				text-anchor="middle"
+				class="hover-naam"
+				class:lang={hovered.replace(/^Fractie-/, '').length > 8}
+				style:fill={kleurVan('EK', hovered, 0, fillOf.get(hovered) ?? null)}
+				aria-live="polite">{hovered.replace(/^Fractie-/, '')}</text
+			>
+			<text x={W / 2} y={rowY(1) + 22} text-anchor="middle" class="hover-zetels"
+				>{seatsOf(hovered)} {seatsOf(hovered) === 1 ? 'zetel' : 'zetels'}</text
+			>
+		{/if}
 		<rect x={W / 2 - S / 2 - 10 - S} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
 		<rect x={W / 2 + S / 2 + 10} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
 		<circle cx={W / 2} cy={rowY(9) + S + 14} r="7" class="nr" /><text
@@ -181,7 +228,29 @@
 		stroke: var(--accent);
 		stroke-width: 2;
 	}
-	a:focus-visible rect {
+	.stoel {
+		pointer-events: none;
+		transition: opacity var(--dur-1) var(--ease);
+	}
+	/* The target of a fractie: transparent, the size of a place with its share of the aisle. */
+	.cel {
+		fill: transparent;
+	}
+	rect.dim {
+		opacity: 0.22;
+	}
+	.hover-naam {
+		font: 500 var(--t-h3) var(--font-serif);
+	}
+	/* A long name (a one-member fractie) in a smaller size, to stay inside the aisle. */
+	.hover-naam.lang {
+		font-size: var(--t-micro);
+	}
+	.hover-zetels {
+		font: var(--t-micro) var(--font-sans);
+		fill: var(--ink-3);
+	}
+	a:focus-visible .stoel {
 		stroke: var(--ink);
 		stroke-width: 2;
 	}
