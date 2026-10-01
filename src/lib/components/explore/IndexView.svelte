@@ -69,7 +69,7 @@
 	} from '$lib/components/parliamentary/chamber';
 	import { formatLongDate } from './readers/_shared';
 	import { kamerstukLabel } from '$lib/components/parliamentary/kamerstuk';
-	import { judgmentRowTitle } from './index/judgment-kind';
+	import { judgmentCaseNumber, judgmentCourt, judgmentRowTitle } from './index/judgment-kind';
 	import {
 		COMMITMENT_STATUSES,
 		OPEN_STATUS,
@@ -2123,16 +2123,24 @@
 											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={fmtDateShort(j.date)} /></span>
-													{#if j.court}
-														<span class="row-id-sub">{j.court}</span>
-													{/if}
+													<span class="row-id-sub"
+														><Waarde value={judgmentCourt(j.display_name, j.court)} /></span
+													>
 												{/snippet}
 												{#snippet body()}
 													{#if j.summary}
 														<p class="row-summary">{j.summary}</p>
 													{/if}
-													{#if j.display_name && j.ecli}
-														<span class="row-sub">{j.ecli}</span>
+													<!-- The case number and the rechtsgebied, as rechtspraak.nl lists them;
+													     the ECLI is the title unless the case has a name. -->
+													{@const zaak = judgmentCaseNumber(j.display_name)}
+													{@const context = [
+														j.names?.length ? j.ecli : null,
+														zaak,
+														j.subjects?.join('; ')
+													].filter(Boolean)}
+													{#if context.length}
+														<span class="row-sub">{context.join(', ')}</span>
 													{/if}
 												{/snippet}
 												{#snippet aside()}
