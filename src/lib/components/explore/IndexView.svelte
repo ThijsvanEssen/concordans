@@ -1594,7 +1594,7 @@
 	const chips = $derived(activeFilters(facetGroupsAll));
 	let filtersOpen = $state(false);
 
-	// On a narrow screen the tab strip scrolls: the category on screen is scrolled into it,
+	// On a phone the tab strip scrolls (wider, it wraps): the category on screen is scrolled into it,
 	// and an edge that hides tabs fades out.
 	let catbar = $state<HTMLElement | null>(null);
 	let catMore = $state({ left: false, right: false });
@@ -2838,6 +2838,28 @@
 	.cat--on .cat-name {
 		color: var(--ink);
 		font-weight: 500;
+	}
+
+	/* From a tablet up the groups wrap to a second line instead of scrolling: every tab
+	   stays in sight (Regering goes under the rest at 1280 and 1024). Each group has its
+	   hairline at its left; the bar's left inset clips the one that would start a line. */
+	@media (min-width: 769px) {
+		.catbar {
+			flex-wrap: wrap;
+			overflow: visible;
+			mask-image: none;
+			padding-left: calc(var(--s-5) - var(--s-2) - 1px);
+			clip-path: inset(0 0 0 calc(var(--s-5) - var(--s-2)));
+		}
+		.cat {
+			gap: var(--s-1);
+		}
+		.catgroup,
+		.catgroup + .catgroup {
+			margin: 0 var(--s-2) 0 0;
+			padding-left: var(--s-2);
+			box-shadow: inset 1px 0 0 var(--rule);
+		}
 	}
 
 	/* ── Stage container ─────────────────────────────────────────────── */
