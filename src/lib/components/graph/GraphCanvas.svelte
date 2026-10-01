@@ -138,6 +138,10 @@
 	// measures a 0×0 viewport; it never notices the resize on its own once the tab
 	// becomes visible.
 	let lastObservedSize = { width: 0, height: 0 };
+	// The camera is where the last fit put it: no wheel or drag on the canvas since. Then a
+	// change of the canvas's size (the reader opening beside it) fits again, instead of
+	// leaving the drawing where it was framed for the old width.
+	let framedByFit = false;
 
 	// Plain mutable refs read inside sigma reducer closures, not reactive state.
 	let latestFilters: GraphFilters | null = null;
@@ -661,8 +665,11 @@
 				const fromTop = panel.y + panel.height + EDGE_GAP;
 				const shareW = fromRight / usableW;
 				const shareH = fromTop / usable;
-				if (shareW < shareH && shareW < 0.6) right = (span * shareW) / (1 - shareW);
-				else if (shareH < 0.6) top = Math.max(top, ((height + top) * shareH) / (1 - shareH));
+				// A share at or below zero is a panel not over this canvas (measured before
+				// the canvas had its width): it takes no room, and would shrink the box.
+				if (shareW > 0 && shareW < shareH && shareW < 0.6) right = (span * shareW) / (1 - shareW);
+				else if (shareH > 0 && shareH < 0.6)
+					top = Math.max(top, ((height + top) * shareH) / (1 - shareH));
 			}
 			renderer.setCustomBBox({
 				x: [minX, (maxX > minX ? maxX : minX + 1) + right],
@@ -676,6 +683,7 @@
 		// the previous fit's scale until something else refreshes (a hover).
 		renderer.refresh();
 		renderer.getCamera().animatedReset({ duration: 300 });
+		framedByFit = true;
 	}
 
 	function restoreCamera(state: { x: number; y: number; ratio: number }) {
@@ -718,11 +726,18 @@
 			const box = entries[0]?.contentRect;
 			if (!box || box.width === 0 || box.height === 0) return;
 			const wasHidden = lastObservedSize.width === 0 || lastObservedSize.height === 0;
+			const changed =
+				Math.abs(box.width - lastObservedSize.width) > 1 ||
+				Math.abs(box.height - lastObservedSize.height) > 1;
 			lastObservedSize = { width: box.width, height: box.height };
 			renderer?.resize();
-			if (wasHidden) fit();
+			if (wasHidden || (changed && framedByFit)) fit();
 		});
 		resizeObserver.observe(wrap);
+		// The reader's own hand on the camera: from then on a resize keeps its view.
+		const handMoved = () => (framedByFit = false);
+		wrap.addEventListener('wheel', handMoved, { passive: true });
+		wrap.addEventListener('pointerdown', handMoved);
 
 		const [
 			{ default: Sigma },
