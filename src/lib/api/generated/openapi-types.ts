@@ -33,7 +33,7 @@ export interface paths {
         };
         /**
          * Passages of judgments that cite an article
-         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` and `lid` (a lid number the passage names) filter; `total` counts all passages that match, `judgment_total` the judgments they are in. 404 when the article is unknown.
+         * @description One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` and `lid` (a lid number the passage names) filter; `total` counts all passages that match, `judgment_total` the judgments they are in, `echr_judgment_total` the ECHR judgments that cite the article (no passage: HUDOC names the article). 404 when the article is unknown.
          */
         get: operations["get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get"];
         put?: never;
@@ -113,7 +113,7 @@ export interface paths {
         };
         /**
          * Paginated list of judgments
-         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter) and per year of `date` (without `from` and `to`).
+         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter).
          */
         get: operations["list_judgments_api_judgments_get"];
         put?: never;
@@ -890,7 +890,7 @@ export interface paths {
         };
         /**
          * Party colours
-         * @description Party to hex colour, from the parties' own house styles, for rendering vote chips: `colors` by every name and alias (matched without regard to case), `aliases` another name of a party -> its name in `colors`. Kept by hand (`lawgraph curated set party-colors`): no official source gives them.
+         * @description Party to hex colour, from the parties' own house styles, for rendering vote chips: `colors` by every name and alias (matched without regard to case), `aliases` another name of a party -> its name in `colors`; `chambers` the colours each Kamer draws its factions in, with where they were read. Kept by hand (`lawgraph curated set party-colors`): no source gives colours as data.
          */
         get: operations["get_party_colors_api_parties_colors_get"];
         put?: never;
@@ -990,7 +990,7 @@ export interface paths {
         };
         /**
          * Document text
-         * @description One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains. `text` is null when `normalize tk-content` has not reached it.
+         * @description One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains, and the votes taken on it (`decisions`, with the vote of every faction). `text` is null when `normalize tk-content` has not reached it.
          */
         get: operations["get_document_text_api_documents__key__get"];
         put?: never;
@@ -1213,6 +1213,46 @@ export interface paths {
          * @description The days up to ``until`` (default today, ``days`` of them) in one small answer, under the filters of ``GET /api/feed``: per day the events per kind, per dossier and, of the votes, per subkind and outcome; and the events a timeline shows one by one, as feed items in the order of the feed: bills submitted, votes on a bill, votes decided by at most ``margin`` seats, commitments and commencements.
          */
         get: operations["get_feed_summary_route_api_feed_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/paths": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The shortest paths between chosen nodes
+         * @description For every pair of `ids` (2 to 5 node ids, `collection/key`, comma-separated), the shortest path of at most `max_depth` edges between them, following edges in either direction, with every node and edge on the paths: the nodes between a member and an article (a document they signed, its dossier, the law it made, the change). No edge is derived. 404 when one of the nodes is not there.
+         */
+        get: operations["get_paths_route_api_paths_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The node a readable URL names, exactly
+         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug) and `cabinet` (`id`).
+         */
+        get: operations["get_lookup_api_lookup_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1733,6 +1773,12 @@ export interface components {
              * @description The judgments those passages are in: a judgment that cites the article in three places is three passages and one judgment.
              */
             judgment_total: number;
+            /**
+             * Echr Judgment Total
+             * @description The ECHR judgments that cite the article, whatever the filters. HUDOC names the articles a judgment applies, not the passage, so they are no row of `items`; `GET /api/instruments/{identifier}/eu-links` lists them (`international`).
+             * @default 0
+             */
+            echr_judgment_total: number;
         };
         /**
          * ArticleDetailResponse
@@ -2472,6 +2518,20 @@ export interface components {
             commitments: number;
         };
         /**
+         * ChamberColorsDTO
+         * @description The colours a Kamer draws its factions in.
+         */
+        ChamberColorsDTO: {
+            /**
+             * Colors
+             * @description Faction to its colours (two for one drawn in stripes), by every name and alias.
+             */
+            colors: {
+                [key: string]: string[];
+            };
+            source: components["schemas"]["ColorSourceDTO"];
+        };
+        /**
          * CitedArticleRef
          * @description Reference to one cited article inside a judgment-citation list.
          */
@@ -2524,6 +2584,26 @@ export interface components {
             date: string | null;
             /** Display Name */
             display_name: string | null;
+            /**
+             * Inbound Citation Count
+             * @description The judgments that cite it, or another publication of the same decision, each once (as in `/api/judgments`): a standard judgment has many.
+             */
+            inbound_citation_count?: number | null;
+        };
+        /**
+         * ColorSourceDTO
+         * @description Where the colours of a Kamer were read.
+         */
+        ColorSourceDTO: {
+            /** Url */
+            url: string;
+            /** What */
+            what: string;
+            /**
+             * Read On
+             * @description YYYY-MM-DD.
+             */
+            read_on: string;
         };
         /** CommitmentActivityDTO */
         CommitmentActivityDTO: {
@@ -3288,6 +3368,11 @@ export interface components {
             explains?: components["schemas"]["ExplainedTargetDTO"][];
             /** Sections */
             sections?: components["schemas"]["SectionDTO"][];
+            /**
+             * Decisions
+             * @description The votes taken on this document, oldest first, each with how every faction (or, on a roll-call, every member) voted: of a motion or an amendment the vote on it, of a bill the votes on the bill. A decision is about the case of an agenda item it names; the document it was taken on is the oldest of that case, as the timeline of a dossier shows it. Empty for any other paper.
+             */
+            decisions?: components["schemas"]["DecisionDTO"][];
         };
         /**
          * DossierCommitteeDTO
@@ -3987,6 +4072,8 @@ export interface components {
             seniority_days?: number | null;
             /** Residence */
             residence?: string | null;
+            /** @description Where they sit in the plenary hall, as Wie zit waar on eerstekamer.nl draws it; null when it places them nowhere. */
+            seat?: components["schemas"]["HallSeatDTO"] | null;
             /**
              * Observed From
              * @description Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer.
@@ -4332,8 +4419,16 @@ export interface components {
             name: string | null;
             /** Seats */
             seats: number;
-            /** Color */
-            color: string | null;
+            /**
+             * Color
+             * @description The colour this Kamer draws the faction in (the first of `colors`), else the party's house colour; null for none.
+             */
+            color?: string | null;
+            /**
+             * Colors
+             * @description Every colour this Kamer draws the faction in, as it draws them: two for a faction drawn in stripes (PRO in the Tweede Kamer); empty when it draws none the list knows.
+             */
+            colors?: string[];
             /**
              * Order
              * @description Left-to-right position in the chamber.
@@ -4735,6 +4830,16 @@ export interface components {
             tally?: {
                 [key: string]: number;
             };
+            /**
+             * Method
+             * @description Of the Eerste Kamer: how it was decided, as its report names it (``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``, ``Hoofdelijke stemming, verworpen``).
+             */
+            method?: string | null;
+            /**
+             * Decision Kind
+             * @description Of the Tweede Kamer: its ``BesluitSoort`` as the Kamer writes it (``Stemmen - aangenomen``, ``Stemmen - zonder stemming aannemen``: a hamerstuk, no votes).
+             */
+            decision_kind?: string | null;
         };
         /**
          * GovernmentFunctionDTO
@@ -4787,6 +4892,81 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HallDTO
+         * @description The plenary hall of the Eerste Kamer as Wie zit waar on eerstekamer.nl draws it.
+         */
+        HallDTO: {
+            /** Url */
+            url: string;
+            /**
+             * Seats
+             * @description Every seat a member holds: the left block, the chair, the right block, each row by row and place by place. A place no one holds is not listed: a row has as many places as its highest column.
+             */
+            seats: components["schemas"]["HallPlaceDTO"][];
+        };
+        /**
+         * HallPlaceDTO
+         * @description A seat of the hall and who holds it.
+         */
+        HallPlaceDTO: {
+            /**
+             * Block
+             * @description ``left`` or ``right`` seen from the government, looking at the chair; ``chair`` the seat of the Voorzitter.
+             * @enum {string}
+             */
+            block: "left" | "right" | "chair";
+            /**
+             * Row
+             * @description From the government (0) to the chair.
+             */
+            row: number;
+            /**
+             * Column
+             * @description From the outer wall (0) to the aisle; 0 for the chair.
+             */
+            column: number;
+            /**
+             * Faction
+             * @description The key of the faction (``ek_…``).
+             */
+            faction: string;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /**
+             * Member
+             * @description The key of the member.
+             */
+            member: string;
+            /**
+             * Name
+             * @description As the Kamer writes it.
+             */
+            name?: string | null;
+        };
+        /**
+         * HallSeatDTO
+         * @description A place in the plenary hall of the Eerste Kamer: two blocks of benches facing each
+         *     other, rows from the government to the chair, and the seat of the Voorzitter.
+         */
+        HallSeatDTO: {
+            /**
+             * Block
+             * @description ``left`` or ``right`` seen from the government, looking at the chair; ``chair`` the seat of the Voorzitter.
+             * @enum {string}
+             */
+            block: "left" | "right" | "chair";
+            /**
+             * Row
+             * @description From the government (0) to the chair.
+             */
+            row: number;
+            /**
+             * Column
+             * @description From the outer wall (0) to the aisle; 0 for the chair.
+             */
+            column: number;
         };
         /**
          * InstrumentArticleBreadcrumbDTO
@@ -4998,6 +5178,11 @@ export interface components {
             citation_title: string | null;
             /** Short Title */
             short_title: string | null;
+            /**
+             * Abbreviation
+             * @description The abbreviation it is cited by: its WTI short title (EVRM), else the one kept by hand for it (AVG); the same as `instrument_abbreviation` on its articles.
+             */
+            abbreviation?: string | null;
             /**
              * Aliases
              * @description Every name it is cited by: the official abbreviations and, for a book of a code, `Boek 6 BW`, `6 BW`, `BW 6`, `BW6`, `BW`.
@@ -5211,6 +5396,26 @@ export interface components {
             /** Display Name */
             display_name?: string | null;
             /**
+             * Court
+             * @description ECLI court code, `HR`, `RBAMS`.
+             */
+            court?: string | null;
+            /**
+             * Tier
+             * @description The tier, the Type of the court in the Instanties value list: `hoge_raad`, `raad_van_state`, `gerechtshof`, `rechtbank`, … (as in `/api/judgments`).
+             */
+            tier?: string | null;
+            /**
+             * Court Kind
+             * @description The kind of court within the tier.
+             */
+            court_kind?: string | null;
+            /**
+             * Date
+             * @description Date of the judgment, YYYY-MM-DD.
+             */
+            date?: string | null;
+            /**
              * Cited Articles
              * @description Articles of the focal instrument that this judgment cites.
              */
@@ -5367,6 +5572,11 @@ export interface components {
             citation_title?: string | null;
             /** Short Title */
             short_title?: string | null;
+            /**
+             * Abbreviation
+             * @description The abbreviation it is cited by: its WTI short title (EVRM), else the one kept by hand for it (AVG); the same as `instrument_abbreviation` on its articles.
+             */
+            abbreviation?: string | null;
             /** Display Name */
             display_name: string | null;
             /**
@@ -5655,6 +5865,11 @@ export interface components {
              */
             advocate_general?: string | null;
             /**
+             * Advocate General Role
+             * @description For a conclusion, the role it is signed in, read from its signature: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal` or `plaatsvervangend advocaat-generaal`. Null for a judgment, and for a conclusion that writes none or one that is not clear.
+             */
+            advocate_general_role?: string | null;
+            /**
              * Unresolved Appeal Targets
              * @description The decisions an appeal says in its text it appeals ("tegen de uitspraak van de rechtbank Gelderland van 9 juli 2025 in zaak nr. 24/6811") that are not loaded; one that is loaded is its `APPEAL_OF` edge. Empty for most.
              */
@@ -5740,6 +5955,16 @@ export interface components {
              * @description Per year of `date` (`2024`), oldest first after null (no date); counted without `from` and `to`.
              */
             year?: components["schemas"]["JudgmentFacetCount"][];
+            /**
+             * Subjects
+             * @description Per area of law, as the source writes it (`Strafrecht`, `Bestuursrecht; Belastingrecht`), most first; a judgment counts for each of its areas; counted without the `subject` filter.
+             */
+            subjects?: components["schemas"]["JudgmentFacetCount"][];
+            /**
+             * Procedure
+             * @description Per procedure (Rechtspraak `psi:procedure`, as written: `Hoger beroep`, `Cassatie`; null when it gives none), most first; counted without the `procedure` filter.
+             */
+            procedure?: components["schemas"]["JudgmentFacetCount"][];
         };
         /**
          * JudgmentListItemDTO
@@ -5981,6 +6206,43 @@ export interface components {
             jurisdiction: string | null;
         };
         /**
+         * LookupResponse
+         * @description The one node an exact lookup names, with what its URL is built back from.
+         */
+        LookupResponse: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Collection */
+            collection: string;
+            /**
+             * Kind
+             * @description What the node is: `document`, `dossier`, `article`, `instrument`, `judgment`, `commitment`, `faction`, `committee`, `cabinet`.
+             */
+            kind: string;
+            /** Display Name */
+            display_name?: string | null;
+            /**
+             * Chamber
+             * @description `TK` or `EK` for a paper or a vote; null otherwise.
+             */
+            chamber?: string | null;
+            /**
+             * Stub
+             * @description Known only because something cites it (a judgment not loaded): the address shows it as cited only.
+             * @default false
+             */
+            stub: boolean;
+            /**
+             * Props
+             * @description The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication.
+             */
+            props?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
          * MemberDTO
          * @description A member of parliament or a minister.
          *
@@ -6005,6 +6267,16 @@ export interface components {
              * @description ``Gerard Adriaan van der Steur``; null when the TK gives none.
              */
             full_name?: string | null;
+            /**
+             * Family Name
+             * @description The surname without its tussenvoegsel, as the TK gives it (``Persoon.Achternaam``): ``Steur``. A list sorted by surname (``sort=family_name``) sorts on it, then on ``name_prefix``.
+             */
+            family_name?: string | null;
+            /**
+             * Name Prefix
+             * @description The tussenvoegsel, as the TK gives it (``Persoon.Tussenvoegsel``): ``van der``; null for none.
+             */
+            name_prefix?: string | null;
             /** Party */
             party?: string | null;
             /**
@@ -6072,6 +6344,16 @@ export interface components {
              * @description ``Gerard Adriaan van der Steur``; null when the TK gives none.
              */
             full_name?: string | null;
+            /**
+             * Family Name
+             * @description The surname without its tussenvoegsel, as the TK gives it (``Persoon.Achternaam``): ``Steur``. A list sorted by surname (``sort=family_name``) sorts on it, then on ``name_prefix``.
+             */
+            family_name?: string | null;
+            /**
+             * Name Prefix
+             * @description The tussenvoegsel, as the TK gives it (``Persoon.Tussenvoegsel``): ``van der``; null for none.
+             */
+            name_prefix?: string | null;
             /** Party */
             party?: string | null;
             /**
@@ -6377,6 +6659,8 @@ export interface components {
             seating_plan?: components["schemas"]["SeatingPlanDTO"] | null;
             /** @description Of the Eerste Kamer: the page the seats were read from. */
             source?: components["schemas"]["EkSourceDTO"] | null;
+            /** @description Of the Eerste Kamer: who sits where in its plenary hall; null for the Tweede Kamer, and when no plan was read. */
+            hall?: components["schemas"]["HallDTO"] | null;
         };
         /**
          * PartyColorsResponse
@@ -6393,6 +6677,13 @@ export interface components {
              */
             aliases?: {
                 [key: string]: string;
+            };
+            /**
+             * Chambers
+             * @description Per Kamer the colours it draws the factions in, and where they were read: the Tweede Kamer in the legend of its seat distribution, the Eerste Kamer in Wie zit waar.
+             */
+            chambers?: {
+                [key: string]: components["schemas"]["ChamberColorsDTO"];
             };
         };
         /**
@@ -6451,6 +6742,70 @@ export interface components {
              * @description What the match rests on, in Dutch: the heading, and whether the dossier changed the article.
              */
             explanation?: string | null;
+        };
+        /**
+         * PathDTO
+         * @description The shortest path between two of the nodes asked for.
+         */
+        PathDTO: {
+            /**
+             * Source
+             * @description The id of the node it starts at.
+             */
+            source: string;
+            /**
+             * Target
+             * @description The id of the node it ends at.
+             */
+            target: string;
+            /**
+             * Length
+             * @description Its edges, 1 for direct neighbours.
+             */
+            length: number;
+            /**
+             * Node Ids
+             * @description Its nodes, from `source` to `target`.
+             */
+            node_ids: string[];
+            /**
+             * Edge Ids
+             * @description Its edges, in that order.
+             */
+            edge_ids: string[];
+        };
+        /**
+         * PathsResponse
+         * @description Response for GET /api/paths.
+         */
+        PathsResponse: {
+            /**
+             * Ids
+             * @description The nodes asked for, each once, in their order.
+             */
+            ids: string[];
+            /** Max Depth */
+            max_depth: number;
+            /**
+             * Paths
+             * @description For every pair of `ids` that a path of at most `max_depth` edges joins, the shortest one (of those as short, the one through the lowest ids); a pair without one has none.
+             */
+            paths: components["schemas"]["PathDTO"][];
+            /**
+             * Nodes
+             * @description Every node on the paths, each once.
+             */
+            nodes: components["schemas"]["BaseNodeDTO"][];
+            /**
+             * Edges
+             * @description Every edge on the paths, each once.
+             */
+            edges: components["schemas"]["NodeNeighborhoodEdge"][];
+            /**
+             * Capped
+             * @description A level of a search reached its cap (5,000 nodes): a longer way around a hub may have been missed.
+             */
+            capped: boolean;
         };
         /**
          * PersonRefDTO
@@ -7079,6 +7434,11 @@ export interface components {
              */
             sequence?: number | null;
             /**
+             * Number
+             * @description Its number in the dossier: of the Tweede Kamer the nr. (``5``), of the Eerste Kamer the letter (``C``); null for none.
+             */
+            number?: string | null;
+            /**
              * Dossier Number
              * @description The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill.
              */
@@ -7424,6 +7784,8 @@ export interface operations {
                 tier?: components["schemas"]["Tier"] | null;
                 /** @description A lid number the passage names: '3', '2a' */
                 lid?: string | null;
+                /** @description `date_desc`: the newest judgment first; `citation_count`: the most cited judgment first (a standard judgment), then the newest. */
+                sort?: "date_desc" | "citation_count";
             };
             header?: never;
             path: {
@@ -7574,6 +7936,8 @@ export interface operations {
                 to?: string | null;
                 /** @description An area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`. */
                 subject?: string | null;
+                /** @description The procedure, as the source writes it (Rechtspraak `psi:procedure`): `Hoger beroep`, `Cassatie`, `Eerste aanleg - meervoudig`. */
+                procedure?: string | null;
                 cited_by_min?: number | null;
                 /** @description Also the judgments known only because something cites them (no date, court or text). */
                 include_stubs?: boolean;
@@ -8443,6 +8807,8 @@ export interface operations {
                 capacity?: "bewindspersoon" | null;
                 /** @description Only those who held a post in this cabinet (key). */
                 cabinet?: string | null;
+                /** @description ``name`` (default): by the name they go by. ``family_name``: by surname, then tussenvoegsel, as the Kamer lists its members (Steur, van der); those without a surname in the source last. */
+                sort?: "name" | "family_name";
                 limit?: number;
                 offset?: number;
                 /** @description ``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``). */
@@ -9499,6 +9865,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeedSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_paths_route_api_paths_get: {
+        parameters: {
+            query: {
+                /** @description Node ids, comma-separated: `members/x,articles/y` */
+                ids: string;
+                max_depth?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PathsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_lookup_api_lookup_get: {
+        parameters: {
+            query: {
+                kind: "document" | "dossier" | "article" | "law" | "judgment" | "publication" | "official" | "commitment" | "faction" | "committee" | "cabinet";
+                dossier?: string | null;
+                number?: string | null;
+                law?: string | null;
+                ecli?: string | null;
+                series?: string | null;
+                year?: string | null;
+                id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LookupResponse"];
                 };
             };
             /** @description Validation Error */

@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.72.4"
+		"version": "0.73.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -50,7 +50,7 @@
 			"get": {
 				"tags": ["articles", "articles"],
 				"summary": "Passages of judgments that cite an article",
-				"description": "One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` and `lid` (a lid number the passage names) filter; `total` counts all passages that match, `judgment_total` the judgments they are in. 404 when the article is unknown.",
+				"description": "One row per passage: a judgment and the paragraph in it that cites the article, with the lid, onderdeel or aanhef it names, a snippet and the confidence of the detection. Newest judgment first. `court` (ECLI court code), `tier` and `lid` (a lid number the passage names) filter; `total` counts all passages that match, `judgment_total` the judgments they are in, `echr_judgment_total` the ECHR judgments that cite the article (no passage: HUDOC names the article). 404 when the article is unknown.",
 				"operationId": "get_article_cited_by_passages_api_articles__bwb_id___article_number__cited_by_get",
 				"parameters": [
 					{
@@ -115,6 +115,19 @@
 							"title": "Lid"
 						},
 						"description": "A lid number the passage names: '3', '2a'"
+					},
+					{
+						"name": "sort",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["date_desc", "citation_count"],
+							"type": "string",
+							"description": "`date_desc`: the newest judgment first; `citation_count`: the most cited judgment first (a standard judgment), then the newest.",
+							"default": "date_desc",
+							"title": "Sort"
+						},
+						"description": "`date_desc`: the newest judgment first; `citation_count`: the most cited judgment first (a standard judgment), then the newest."
 					}
 				],
 				"responses": {
@@ -279,7 +292,7 @@
 			"get": {
 				"tags": ["judgments", "judgments"],
 				"summary": "Paginated list of judgments",
-				"description": "A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter) and per year of `date` (without `from` and `to`).",
+				"description": "A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter).",
 				"operationId": "list_judgments_api_judgments_get",
 				"parameters": [
 					{
@@ -387,6 +400,17 @@
 							"title": "Subject"
 						},
 						"description": "An area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`."
+					},
+					{
+						"name": "procedure",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "The procedure, as the source writes it (Rechtspraak `psi:procedure`): `Hoger beroep`, `Cassatie`, `Eerste aanleg - meervoudig`.",
+							"title": "Procedure"
+						},
+						"description": "The procedure, as the source writes it (Rechtspraak `psi:procedure`): `Hoger beroep`, `Cassatie`, `Eerste aanleg - meervoudig`."
 					},
 					{
 						"name": "cited_by_min",
@@ -2012,6 +2036,19 @@
 						"description": "Only those who held a post in this cabinet (key)."
 					},
 					{
+						"name": "sort",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["name", "family_name"],
+							"type": "string",
+							"description": "``name`` (default): by the name they go by. ``family_name``: by surname, then tussenvoegsel, as the Kamer lists its members (Steur, van der); those without a surname in the source last.",
+							"default": "name",
+							"title": "Sort"
+						},
+						"description": "``name`` (default): by the name they go by. ``family_name``: by surname, then tussenvoegsel, as the Kamer lists its members (Steur, van der); those without a surname in the source last."
+					},
+					{
 						"name": "limit",
 						"in": "query",
 						"required": false,
@@ -2765,7 +2802,7 @@
 			"get": {
 				"tags": ["parties", "parties"],
 				"summary": "Party colours",
-				"description": "Party to hex colour, from the parties' own house styles, for rendering vote chips: `colors` by every name and alias (matched without regard to case), `aliases` another name of a party -> its name in `colors`. Kept by hand (`lawgraph curated set party-colors`): no official source gives them.",
+				"description": "Party to hex colour, from the parties' own house styles, for rendering vote chips: `colors` by every name and alias (matched without regard to case), `aliases` another name of a party -> its name in `colors`; `chambers` the colours each Kamer draws its factions in, with where they were read. Kept by hand (`lawgraph curated set party-colors`): no source gives colours as data.",
 				"operationId": "get_party_colors_api_parties_colors_get",
 				"responses": {
 					"200": {
@@ -3031,7 +3068,7 @@
 			"get": {
 				"tags": ["documents", "documents"],
 				"summary": "Document text",
-				"description": "One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains. `text` is null when `normalize tk-content` has not reached it.",
+				"description": "One document with its text, read from the XML of the paper, its `sections` (the headings of the paper with their offsets into `text`), the dossiers it belongs to and, for an explanatory document, the articles and laws it explains, and the votes taken on it (`decisions`, with the vote of every faction). `text` is null when `normalize tk-content` has not reached it.",
 				"operationId": "get_document_text_api_documents__key__get",
 				"parameters": [
 					{
@@ -3189,7 +3226,10 @@
 							"description": "Entity types to search",
 							"default": [
 								"articles",
+								"cabinets",
+								"commitments",
 								"committees",
+								"decisions",
 								"documents",
 								"dossiers",
 								"factions",
@@ -3886,6 +3926,145 @@
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/FeedSummaryResponse" }
 							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/paths": {
+			"get": {
+				"tags": ["paths", "paths"],
+				"summary": "The shortest paths between chosen nodes",
+				"description": "For every pair of `ids` (2 to 5 node ids, `collection/key`, comma-separated), the shortest path of at most `max_depth` edges between them, following edges in either direction, with every node and edge on the paths: the nodes between a member and an article (a document they signed, its dossier, the law it made, the change). No edge is derived. 404 when one of the nodes is not there.",
+				"operationId": "get_paths_route_api_paths_get",
+				"parameters": [
+					{
+						"name": "ids",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"description": "Node ids, comma-separated: `members/x,articles/y`",
+							"title": "Ids"
+						},
+						"description": "Node ids, comma-separated: `members/x,articles/y`"
+					},
+					{
+						"name": "max_depth",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 4,
+							"minimum": 1,
+							"default": 4,
+							"title": "Max Depth"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/PathsResponse" } }
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/lookup": {
+			"get": {
+				"tags": ["lookup", "lookup"],
+				"summary": "The node a readable URL names, exactly",
+				"description": "No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug) and `cabinet` (`id`).",
+				"operationId": "get_lookup_api_lookup_get",
+				"parameters": [
+					{
+						"name": "kind",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"enum": [
+								"document",
+								"dossier",
+								"article",
+								"law",
+								"judgment",
+								"publication",
+								"official",
+								"commitment",
+								"faction",
+								"committee",
+								"cabinet"
+							],
+							"type": "string",
+							"title": "Kind"
+						}
+					},
+					{
+						"name": "dossier",
+						"in": "query",
+						"required": false,
+						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Dossier" }
+					},
+					{
+						"name": "number",
+						"in": "query",
+						"required": false,
+						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Number" }
+					},
+					{
+						"name": "law",
+						"in": "query",
+						"required": false,
+						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Law" }
+					},
+					{
+						"name": "ecli",
+						"in": "query",
+						"required": false,
+						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ecli" }
+					},
+					{
+						"name": "series",
+						"in": "query",
+						"required": false,
+						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Series" }
+					},
+					{
+						"name": "year",
+						"in": "query",
+						"required": false,
+						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Year" }
+					},
+					{
+						"name": "id",
+						"in": "query",
+						"required": false,
+						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Id" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/LookupResponse" } }
 						}
 					},
 					"422": {
@@ -4609,6 +4788,12 @@
 						"type": "integer",
 						"title": "Judgment Total",
 						"description": "The judgments those passages are in: a judgment that cites the article in three places is three passages and one judgment."
+					},
+					"echr_judgment_total": {
+						"type": "integer",
+						"title": "Echr Judgment Total",
+						"description": "The ECHR judgments that cite the article, whatever the filters. HUDOC names the articles a judgment applies, not the passage, so they are no row of `items`; `GET /api/instruments/{identifier}/eu-links` lists them (`international`).",
+						"default": 0
 					}
 				},
 				"additionalProperties": false,
@@ -5466,6 +5651,22 @@
 				"title": "CabinetSummaryDTO",
 				"description": "A cabinet in the list, with its counts."
 			},
+			"ChamberColorsDTO": {
+				"properties": {
+					"colors": {
+						"additionalProperties": { "items": { "type": "string" }, "type": "array" },
+						"type": "object",
+						"title": "Colors",
+						"description": "Faction to its colours (two for one drawn in stripes), by every name and alias."
+					},
+					"source": { "$ref": "#/components/schemas/ColorSourceDTO" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["colors", "source"],
+				"title": "ChamberColorsDTO",
+				"description": "The colours a Kamer draws its factions in."
+			},
 			"CitedArticleRef": {
 				"properties": {
 					"id": {
@@ -5517,6 +5718,11 @@
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
+					},
+					"inbound_citation_count": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Inbound Citation Count",
+						"description": "The judgments that cite it, or another publication of the same decision, each once (as in `/api/judgments`): a standard judgment has many."
 					}
 				},
 				"additionalProperties": false,
@@ -5524,6 +5730,18 @@
 				"required": ["id", "key", "ecli", "court", "tier", "date", "display_name"],
 				"title": "CitedByJudgment",
 				"description": "The judgment of a passage that cites an article."
+			},
+			"ColorSourceDTO": {
+				"properties": {
+					"url": { "type": "string", "title": "Url" },
+					"what": { "type": "string", "title": "What" },
+					"read_on": { "type": "string", "title": "Read On", "description": "YYYY-MM-DD." }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["url", "what", "read_on"],
+				"title": "ColorSourceDTO",
+				"description": "Where the colours of a Kamer were read."
 			},
 			"CommitmentActivityDTO": {
 				"properties": {
@@ -6413,6 +6631,12 @@
 						"items": { "$ref": "#/components/schemas/SectionDTO" },
 						"type": "array",
 						"title": "Sections"
+					},
+					"decisions": {
+						"items": { "$ref": "#/components/schemas/DecisionDTO" },
+						"type": "array",
+						"title": "Decisions",
+						"description": "The votes taken on this document, oldest first, each with how every faction (or, on a roll-call, every member) voted: of a motion or an amendment the vote on it, of a bill the votes on the bill. A decision is about the case of an agenda item it names; the document it was taken on is the oldest of that case, as the timeline of a dossier shows it. Empty for any other paper."
 					}
 				},
 				"additionalProperties": false,
@@ -7170,6 +7394,10 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Residence"
 					},
+					"seat": {
+						"anyOf": [{ "$ref": "#/components/schemas/HallSeatDTO" }, { "type": "null" }],
+						"description": "Where they sit in the plenary hall, as Wie zit waar on eerstekamer.nl draws it; null when it places them nowhere."
+					},
 					"observed_from": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Observed From",
@@ -7520,7 +7748,17 @@
 					},
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
 					"seats": { "type": "integer", "title": "Seats" },
-					"color": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Color" },
+					"color": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Color",
+						"description": "The colour this Kamer draws the faction in (the first of `colors`), else the party's house colour; null for none."
+					},
+					"colors": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Colors",
+						"description": "Every colour this Kamer draws the faction in, as it draws them: two for a faction drawn in stripes (PRO in the Tweede Kamer); empty when it draws none the list knows."
+					},
 					"order": {
 						"type": "integer",
 						"title": "Order",
@@ -7529,7 +7767,7 @@
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["id", "key", "abbreviation", "name", "seats", "color", "order"],
+				"required": ["id", "key", "abbreviation", "name", "seats", "order"],
 				"title": "FactionSeatsDTO",
 				"description": "A party's seats, and where it sits in the hemicycle."
 			},
@@ -8031,6 +8269,16 @@
 						"type": "object",
 						"title": "Tally",
 						"description": "Seats per choice as the source writes it (``Voor``, ``Tegen``, ``Niet deelgenomen``); members per choice on a roll-call."
+					},
+					"method": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Method",
+						"description": "Of the Eerste Kamer: how it was decided, as its report names it (``Hamerstuk``, ``Stemming bij zitten en opstaan, aangenomen``, ``Hoofdelijke stemming, verworpen``)."
+					},
+					"decision_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decision Kind",
+						"description": "Of the Tweede Kamer: its ``BesluitSoort`` as the Kamer writes it (``Stemmen - aangenomen``, ``Stemmen - zonder stemming aannemen``: a hamerstuk, no votes)."
 					}
 				},
 				"additionalProperties": false,
@@ -8101,6 +8349,91 @@
 				},
 				"type": "object",
 				"title": "HTTPValidationError"
+			},
+			"HallDTO": {
+				"properties": {
+					"url": { "type": "string", "title": "Url" },
+					"seats": {
+						"items": { "$ref": "#/components/schemas/HallPlaceDTO" },
+						"type": "array",
+						"title": "Seats",
+						"description": "Every seat a member holds: the left block, the chair, the right block, each row by row and place by place. A place no one holds is not listed: a row has as many places as its highest column."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["url", "seats"],
+				"title": "HallDTO",
+				"description": "The plenary hall of the Eerste Kamer as Wie zit waar on eerstekamer.nl draws it."
+			},
+			"HallPlaceDTO": {
+				"properties": {
+					"block": {
+						"type": "string",
+						"enum": ["left", "right", "chair"],
+						"title": "Block",
+						"description": "``left`` or ``right`` seen from the government, looking at the chair; ``chair`` the seat of the Voorzitter."
+					},
+					"row": {
+						"type": "integer",
+						"title": "Row",
+						"description": "From the government (0) to the chair."
+					},
+					"column": {
+						"type": "integer",
+						"title": "Column",
+						"description": "From the outer wall (0) to the aisle; 0 for the chair."
+					},
+					"faction": {
+						"type": "string",
+						"title": "Faction",
+						"description": "The key of the faction (``ek_…``)."
+					},
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation"
+					},
+					"member": {
+						"type": "string",
+						"title": "Member",
+						"description": "The key of the member."
+					},
+					"name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name",
+						"description": "As the Kamer writes it."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["block", "row", "column", "faction", "member"],
+				"title": "HallPlaceDTO",
+				"description": "A seat of the hall and who holds it."
+			},
+			"HallSeatDTO": {
+				"properties": {
+					"block": {
+						"type": "string",
+						"enum": ["left", "right", "chair"],
+						"title": "Block",
+						"description": "``left`` or ``right`` seen from the government, looking at the chair; ``chair`` the seat of the Voorzitter."
+					},
+					"row": {
+						"type": "integer",
+						"title": "Row",
+						"description": "From the government (0) to the chair."
+					},
+					"column": {
+						"type": "integer",
+						"title": "Column",
+						"description": "From the outer wall (0) to the aisle; 0 for the chair."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["block", "row", "column"],
+				"title": "HallSeatDTO",
+				"description": "A place in the plenary hall of the Eerste Kamer: two blocks of benches facing each\nother, rows from the government to the chair, and the seat of the Voorzitter."
 			},
 			"InstrumentArticleBreadcrumbDTO": {
 				"properties": {
@@ -8308,6 +8641,11 @@
 					"short_title": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Short Title"
+					},
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation",
+						"description": "The abbreviation it is cited by: its WTI short title (EVRM), else the one kept by hand for it (AVG); the same as `instrument_abbreviation` on its articles."
 					},
 					"aliases": {
 						"items": { "type": "string" },
@@ -8552,6 +8890,26 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
 					},
+					"court": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Court",
+						"description": "ECLI court code, `HR`, `RBAMS`."
+					},
+					"tier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Tier",
+						"description": "The tier, the Type of the court in the Instanties value list: `hoge_raad`, `raad_van_state`, `gerechtshof`, `rechtbank`, … (as in `/api/judgments`)."
+					},
+					"court_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Court Kind",
+						"description": "The kind of court within the tier."
+					},
+					"date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date",
+						"description": "Date of the judgment, YYYY-MM-DD."
+					},
 					"cited_articles": {
 						"items": { "$ref": "#/components/schemas/CitedArticleRef" },
 						"type": "array",
@@ -8745,6 +9103,11 @@
 					"short_title": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Short Title"
+					},
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation",
+						"description": "The abbreviation it is cited by: its WTI short title (EVRM), else the one kept by hand for it (AVG); the same as `instrument_abbreviation` on its articles."
 					},
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9065,6 +9428,11 @@
 						"title": "Advocate General",
 						"description": "For a conclusion, the advocate-general (or procureur-generaal) who wrote it, as its kop names them: `T. Hartlief`, `P.J. Wattel`, or only the surname (`Wattel`) where the kop gives no more. Null for a judgment, and for a conclusion whose kop names no one."
 					},
+					"advocate_general_role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Advocate General Role",
+						"description": "For a conclusion, the role it is signed in, read from its signature: `advocaat-generaal`, `waarnemend advocaat-generaal`, `plaatsvervangend procureur-generaal` or `plaatsvervangend advocaat-generaal`. Null for a judgment, and for a conclusion that writes none or one that is not clear."
+					},
 					"unresolved_appeal_targets": {
 						"items": { "$ref": "#/components/schemas/AppealTarget" },
 						"type": "array",
@@ -9186,6 +9554,18 @@
 						"type": "array",
 						"title": "Year",
 						"description": "Per year of `date` (`2024`), oldest first after null (no date); counted without `from` and `to`."
+					},
+					"subjects": {
+						"items": { "$ref": "#/components/schemas/JudgmentFacetCount" },
+						"type": "array",
+						"title": "Subjects",
+						"description": "Per area of law, as the source writes it (`Strafrecht`, `Bestuursrecht; Belastingrecht`), most first; a judgment counts for each of its areas; counted without the `subject` filter."
+					},
+					"procedure": {
+						"items": { "$ref": "#/components/schemas/JudgmentFacetCount" },
+						"type": "array",
+						"title": "Procedure",
+						"description": "Per procedure (Rechtspraak `psi:procedure`, as written: `Hoger beroep`, `Cassatie`; null when it gives none), most first; counted without the `procedure` filter."
 					}
 				},
 				"additionalProperties": false,
@@ -9483,6 +9863,44 @@
 				"title": "LinkedInstrumentDTO",
 				"description": "The instrument at the other end of a link."
 			},
+			"LookupResponse": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"collection": { "type": "string", "title": "Collection" },
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "What the node is: `document`, `dossier`, `article`, `instrument`, `judgment`, `commitment`, `faction`, `committee`, `cabinet`."
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"chamber": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "`TK` or `EK` for a paper or a vote; null otherwise."
+					},
+					"stub": {
+						"type": "boolean",
+						"title": "Stub",
+						"description": "Known only because something cites it (a judgment not loaded): the address shows it as cited only.",
+						"default": false
+					},
+					"props": {
+						"additionalProperties": true,
+						"type": "object",
+						"title": "Props",
+						"description": "The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "collection", "kind"],
+				"title": "LookupResponse",
+				"description": "The one node an exact lookup names, with what its URL is built back from."
+			},
 			"MemberDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -9496,6 +9914,16 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Full Name",
 						"description": "``Gerard Adriaan van der Steur``; null when the TK gives none."
+					},
+					"family_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Family Name",
+						"description": "The surname without its tussenvoegsel, as the TK gives it (``Persoon.Achternaam``): ``Steur``. A list sorted by surname (``sort=family_name``) sorts on it, then on ``name_prefix``."
+					},
+					"name_prefix": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name Prefix",
+						"description": "The tussenvoegsel, as the TK gives it (``Persoon.Tussenvoegsel``): ``van der``; null for none."
 					},
 					"party": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Party" },
 					"active": { "type": "boolean", "title": "Active", "default": false },
@@ -9559,6 +9987,16 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Full Name",
 						"description": "``Gerard Adriaan van der Steur``; null when the TK gives none."
+					},
+					"family_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Family Name",
+						"description": "The surname without its tussenvoegsel, as the TK gives it (``Persoon.Achternaam``): ``Steur``. A list sorted by surname (``sort=family_name``) sorts on it, then on ``name_prefix``."
+					},
+					"name_prefix": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Name Prefix",
+						"description": "The tussenvoegsel, as the TK gives it (``Persoon.Tussenvoegsel``): ``van der``; null for none."
 					},
 					"party": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Party" },
 					"active": { "type": "boolean", "title": "Active", "default": false },
@@ -9975,6 +10413,10 @@
 					"source": {
 						"anyOf": [{ "$ref": "#/components/schemas/EkSourceDTO" }, { "type": "null" }],
 						"description": "Of the Eerste Kamer: the page the seats were read from."
+					},
+					"hall": {
+						"anyOf": [{ "$ref": "#/components/schemas/HallDTO" }, { "type": "null" }],
+						"description": "Of the Eerste Kamer: who sits where in its plenary hall; null for the Tweede Kamer, and when no plan was read."
 					}
 				},
 				"additionalProperties": false,
@@ -9995,6 +10437,12 @@
 						"type": "object",
 						"title": "Aliases",
 						"description": "Another name of a party (`GL-PvdA`, `CU`) -> its name in `colors`."
+					},
+					"chambers": {
+						"additionalProperties": { "$ref": "#/components/schemas/ChamberColorsDTO" },
+						"type": "object",
+						"title": "Chambers",
+						"description": "Per Kamer the colours it draws the factions in, and where they were read: the Tweede Kamer in the legend of its seat distribution, the Eerste Kamer in Wie zit waar."
 					}
 				},
 				"additionalProperties": false,
@@ -10067,6 +10515,81 @@
 				],
 				"title": "PassageDTO",
 				"description": "The passage of a memorandum that explains an article."
+			},
+			"PathDTO": {
+				"properties": {
+					"source": {
+						"type": "string",
+						"title": "Source",
+						"description": "The id of the node it starts at."
+					},
+					"target": {
+						"type": "string",
+						"title": "Target",
+						"description": "The id of the node it ends at."
+					},
+					"length": {
+						"type": "integer",
+						"title": "Length",
+						"description": "Its edges, 1 for direct neighbours."
+					},
+					"node_ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Node Ids",
+						"description": "Its nodes, from `source` to `target`."
+					},
+					"edge_ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Edge Ids",
+						"description": "Its edges, in that order."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["source", "target", "length", "node_ids", "edge_ids"],
+				"title": "PathDTO",
+				"description": "The shortest path between two of the nodes asked for."
+			},
+			"PathsResponse": {
+				"properties": {
+					"ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Ids",
+						"description": "The nodes asked for, each once, in their order."
+					},
+					"max_depth": { "type": "integer", "title": "Max Depth" },
+					"paths": {
+						"items": { "$ref": "#/components/schemas/PathDTO" },
+						"type": "array",
+						"title": "Paths",
+						"description": "For every pair of `ids` that a path of at most `max_depth` edges joins, the shortest one (of those as short, the one through the lowest ids); a pair without one has none."
+					},
+					"nodes": {
+						"items": { "$ref": "#/components/schemas/BaseNodeDTO" },
+						"type": "array",
+						"title": "Nodes",
+						"description": "Every node on the paths, each once."
+					},
+					"edges": {
+						"items": { "$ref": "#/components/schemas/NodeNeighborhoodEdge" },
+						"type": "array",
+						"title": "Edges",
+						"description": "Every edge on the paths, each once."
+					},
+					"capped": {
+						"type": "boolean",
+						"title": "Capped",
+						"description": "A level of a search reached its cap (5,000 nodes): a longer way around a hub may have been missed."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["ids", "max_depth", "paths", "nodes", "edges", "capped"],
+				"title": "PathsResponse",
+				"description": "Response for GET /api/paths."
 			},
 			"PersonRefDTO": {
 				"properties": {
@@ -10745,6 +11268,11 @@
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
 						"title": "Sequence",
 						"description": "The number of the paper in ``dossier_number``."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "Its number in the dossier: of the Tweede Kamer the nr. (``5``), of the Eerste Kamer the letter (``C``); null for none."
 					},
 					"dossier_number": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
