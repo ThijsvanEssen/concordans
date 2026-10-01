@@ -293,6 +293,8 @@
 		labelX: number;
 		labelY: number;
 		label: string;
+		/** Wider than the canvas: the name wraps instead of being cut. */
+		long: boolean;
 		/** Out of the hover: the hovered bron is not in it and not tied to it. */
 		dim: boolean;
 	};
@@ -412,12 +414,14 @@
 			// border (or a fit that leaves little room) would cut its label in half.
 			const { width } = renderer.getDimensions();
 			const half = Math.min(labelWidth(shown), width - 2 * EDGE_GAP) / 2;
+			// A name wider than the canvas wraps; its lines stay below the top edge.
+			const lines = Math.ceil(labelWidth(shown) / (width - 2 * EDGE_GAP));
 			const at = clearOfPanel(
 				Math.min(
 					Math.max(top.x, half + EDGE_GAP),
 					Math.max(half + EDGE_GAP, width - half - EDGE_GAP)
 				),
-				Math.max(top.y - LABEL_GAP, LABEL_HEIGHT + EDGE_GAP),
+				Math.max(top.y - LABEL_GAP, lines * LABEL_HEIGHT + EDGE_GAP),
 				half
 			);
 			drawn.set(group.id, {
@@ -425,6 +429,7 @@
 				path,
 				color: hullColorFor(group.kind),
 				label: shown,
+				long: lines > 1,
 				labelX: at.x,
 				labelY: at.y,
 				dim: false,
@@ -817,7 +822,12 @@
 				const size = settings.labelSize;
 				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
 				const w = context.measureText(data.label).width;
-				const x = data.x + data.size + 3;
+				// Right of the bron; on its left where the right would run past the canvas
+				// edge ("36799, Kamerst…" in a narrow column).
+				const room = context.canvas.width / (window.devicePixelRatio || 1);
+				const right = data.x + data.size + 3;
+				const left = data.x - data.size - 3 - w;
+				const x = right + w + 2 > room && left >= 2 ? left : right;
 				context.save();
 				context.globalAlpha = 1;
 				context.fillStyle = t.paper;
@@ -1177,6 +1187,7 @@
 				<span
 					class="hull-label"
 					class:is-dim={h.dim}
+					class:is-long={h.long}
 					style="left:{h.labelX}px; top:{h.labelY}px; --hull-color:{h.color}">{h.label}</span
 				>
 			{/each}
@@ -1287,10 +1298,16 @@
 		font-weight: 600;
 		color: var(--hull-color);
 		white-space: nowrap;
-		/* A dossier's title in full can be wider than the canvas. */
+		/* A dossier's title in full can be wider than the canvas: it wraps (.is-long). */
 		max-width: calc(100% - 20px);
 		overflow: hidden;
 		text-overflow: ellipsis;
+	}
+	.hull-label.is-long {
+		width: max-content;
+		white-space: normal;
+		border-radius: var(--r-1);
+		line-height: var(--lh-snug);
 	}
 
 	.activity-overlay {
