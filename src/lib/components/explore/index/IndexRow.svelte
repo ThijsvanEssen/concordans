@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onControl } from '$lib/actions/outside';
-	// One row of the index. The title is a link to the bron, so it opens in a new tab,
-	// can be copied and is read as a link; the rest of the row opens its detail beneath
-	// it. The toggle is a button under the row's content, the size of the row: a click
-	// anywhere but the link reaches it, and it is what the keyboard stops on.
+	// One row of the index. A click anywhere in the row, the title too, opens its detail
+	// beneath it; the bron itself opens from the buttons there. The title stays a link, so
+	// cmd-click and a middle click open the bron in a new tab and it can be copied. The
+	// toggle is a button under the row's content, the size of the row: it is what the
+	// keyboard stops on.
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -39,10 +40,18 @@
 
 	const uid = $props.id();
 
-	// A click on the link is the link's; a click after selecting text selects.
+	// A click after selecting text selects; a click on another control is that control's.
 	function onRowClick(e: MouseEvent) {
 		if (onControl(e)) return;
 		if (window.getSelection()?.toString()) return;
+		onToggle();
+	}
+
+	/** A plain click on the title opens the row; with a modifier it is the link's. */
+	function onTitleClick(e: MouseEvent) {
+		if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+		e.preventDefault();
+		e.stopPropagation();
 		onToggle();
 	}
 </script>
@@ -62,7 +71,7 @@
 		<div class="row-id">{@render lead?.()}</div>
 		<div class="row-body">
 			{#if href}
-				<a class="row-title" {href} data-sveltekit-noscroll>{title}</a>
+				<a class="row-title" {href} data-sveltekit-noscroll onclick={onTitleClick}>{title}</a>
 			{:else}
 				<span class="row-title">{title}</span>
 			{/if}

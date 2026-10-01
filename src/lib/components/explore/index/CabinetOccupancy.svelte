@@ -212,7 +212,7 @@
 			{#each ministry.seats as { seat, lanes } (seat.seat)}
 				{@const name = seatName(seat)}
 				{@const opened = seat.posts.find((p) => openKey === postId(seat, p))}
-				<div class="occ-row">
+				<div class="occ-row" class:occ-row--open={!!opened}>
 					<span class="occ-seat" title={seat.function ?? undefined}
 						><span class="occ-post">{name.post}</span>{name.portfolio
 							? ` ${name.portfolio}`
@@ -248,7 +248,8 @@
 					</span>
 				</div>
 				{#if opened}
-					{@render detail(opened)}
+					<!-- As an opened row in Bladeren: the same ground, indented to where the bars begin. -->
+					<div class="post-open">{@render detail(opened)}</div>
 				{/if}
 			{/each}
 		{/each}
@@ -290,6 +291,15 @@
 		display: grid;
 		grid-template-columns: var(--label) minmax(0, 1fr);
 		align-items: start;
+	}
+	.occ-row--open {
+		background: var(--paper-2);
+	}
+	.post-open {
+		padding-left: var(--label);
+		margin-bottom: var(--s-3);
+		background: var(--paper-2);
+		border-bottom: 1px solid var(--rule);
 	}
 	.occ-row--axis {
 		height: var(--s-7);

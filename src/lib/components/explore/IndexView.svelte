@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { korteDatum, weekdag } from '$lib/text/datum';
+	import { korteDatum, langeDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -48,6 +48,7 @@
 	import Hemicycle from './Hemicycle.svelte';
 	import ZaalTegenover from './ZaalTegenover.svelte';
 	import DossierOpen from '$lib/components/open/DossierOpen.svelte';
+	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import KabinetOpen from '$lib/components/open/KabinetOpen.svelte';
 	import ZaalLegenda from './ZaalLegenda.svelte';
 	import { kleurVan } from './partijkleuren';
@@ -2600,24 +2601,37 @@
 													{/if}
 												{/snippet}
 												{#snippet detail()}
-													<div class="gov-detail">
-														<p class="gov-text">{t.text}</p>
-														<div class="gov-links">
-															{#if t.member}
-																<a href={hrefOf(`members/${t.member.key}`)}>{t.member.name}</a>
-															{/if}
-															{#each uniqueBy(t.dossiers ?? [], (d) => d.key) as d (d.key)}
-																<a href={hrefOf(`dossiers/${d.number ?? d.key}`)}
-																	>{d.number}{d.title ? `: ${d.title}` : ''}</a
-																>
-															{/each}
-															{#if t.activity}
-																<a href={hrefOf(`activities/${t.activity.key}`)}
-																	>Gedaan in activiteit {t.activity.number ?? ''}</a
-																>
-															{/if}
-														</div>
-													</div>
+													<OpenRij
+														zin={t.status
+															? `${t.status}${t.expected_resolution ? `, verwacht ${langeDatum(t.expected_resolution)}` : ''}.`
+															: null}
+														links={[
+															...(t.member
+																? [
+																		{
+																			label: t.member.name ?? 'Bewindspersoon',
+																			href: hrefOf(`members/${t.member.key}`)
+																		}
+																	]
+																: []),
+															...uniqueBy(t.dossiers ?? [], (d) => d.key).map((d) => ({
+																label: `${d.number}${d.title ? `: ${d.title}` : ''}`,
+																href: hrefOf(`dossiers/${d.number ?? d.key}`)
+															})),
+															...(t.activity
+																? [
+																		{
+																			label:
+																				`Gedaan in activiteit ${t.activity.number ?? ''}`.trim(),
+																			href: hrefOf(`activities/${t.activity.key}`)
+																		}
+																	]
+																: [])
+														]}
+														lezen={bronHref(bron, { keepMode: false, mode: 'read' })}
+														lezenLabel="Toezegging lezen"
+														netwerk={bronHref(bron, { keepMode: false, mode: 'graph' })}
+													/>
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -3184,35 +3198,6 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
-	}
-	/* The detail of a cabinet or commitment: its numbers and the ways on. */
-	.gov-detail {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-3);
-		padding: var(--s-1) 0 var(--s-2);
-	}
-	.gov-text {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		line-height: 1.5;
-		max-width: 68ch;
-	}
-	.gov-links {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-2) 20px;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-	}
-	.gov-links a {
-		color: var(--ink);
-		border-bottom: 1px solid var(--rule-strong);
-		text-decoration: none;
-	}
-	.gov-links a:hover {
-		color: var(--accent);
 	}
 	.row-sub--late {
 		color: var(--accent);
