@@ -1,0 +1,111 @@
+<script lang="ts">
+	// Ontwerpstudie ronde 4b (prototype): één vorm voor elke geopende rij in Bladeren.
+	// Bovenaan wat het is in één zin; dan wat er recent gebeurde in de gedeelde tijdlijn,
+	// zodat zonder klikken te zien is wat iemand of iets deed; dan links met aantallen; dan
+	// dezelfde twee knoppen als bij een dossier.
+	import type { Snippet } from 'svelte';
+	import Tijdlijn from './Tijdlijn.svelte';
+	import type { TijdGroep } from './tijdlijn';
+
+	let {
+		zin = null,
+		groepen = [],
+		laden = false,
+		links = [],
+		lezen,
+		lezenLabel,
+		netwerk,
+		boven
+	}: {
+		/** Alleen wat de rij zelf nog niet zegt. */
+		zin?: string | null;
+		groepen?: TijdGroep[];
+		laden?: boolean;
+		links?: { label: string; href?: string | null }[];
+		lezen: string;
+		lezenLabel: string;
+		netwerk: string;
+		/** Iets dat boven de tijdlijn hoort, zoals de standbalk van een dossier. */
+		boven?: Snippet;
+	} = $props();
+</script>
+
+<div class="or">
+	{#if zin}<p class="zin">{zin}</p>{/if}
+	{@render boven?.()}
+	{#if laden}
+		<p class="laden">Laden…</p>
+	{:else if groepen.some((g) => g.regels.length)}
+		<Tijdlijn {groepen} />
+	{/if}
+	{#if links.length}
+		<p class="links">
+			{#each links as l, i (l.label)}{#if i > 0}<span class="sep" aria-hidden="true">·</span>{/if}{#if l.href}<a href={l.href}>{l.label}</a>{:else}<span>{l.label}</span>{/if}{/each}
+		</p>
+	{/if}
+	<div class="acts">
+		<a class="act act--pri" href={lezen}>{lezenLabel} →</a>
+		<a class="act" href={netwerk}>Toon in netwerk →</a>
+	</div>
+</div>
+
+<style>
+	.or {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-3);
+		padding: var(--s-4) var(--s-4) var(--s-5);
+		max-width: 52rem;
+	}
+	.zin {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-snug);
+		color: var(--ink);
+	}
+	.laden {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-style: italic;
+		color: var(--ink-3);
+	}
+	.links {
+		margin: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.links a {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+	}
+	.sep {
+		color: var(--ink-3);
+	}
+	.acts {
+		display: flex;
+		gap: var(--s-2);
+		flex-wrap: wrap;
+	}
+	.act {
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		padding: var(--s-2) var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.act--pri {
+		background: var(--ink);
+		border-color: var(--ink);
+		color: var(--paper);
+	}
+</style>

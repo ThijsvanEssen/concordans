@@ -122,6 +122,13 @@
 		height: 11px;
 		border: 2px solid var(--uitkomst-nee, #8c2f28);
 	}
+	/* Openstaand: het vakje van Uitkomst (gestippeld), de tekst gewoon. */
+	.regel--open .teken {
+		border-radius: 0;
+		width: 11px;
+		height: 11px;
+		border: 1.5px dashed var(--ink-2);
+	}
 	.regel--verwacht .teken {
 		border-radius: 0;
 		border: 1.5px dashed var(--ink-3);

@@ -1,9 +1,13 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 4 (prototype): een geopende post in Bewindspersonen. Eerst wie en
-	// wat in één zin, dan drie ingangen met aantallen (altijd, ook bij nul), dan twee knoppen.
+	// Ontwerpstudie ronde 4b (prototype): een geopende post in Bewindspersonen, in de vorm
+	// van OpenRij. Wat de bewindspersoon deed staat er meteen: de laatste toezeggingen (met
+	// hun stand), de laatste stukken die hij of zij ondertekende, en de dossiers.
 	import { api, unwrap } from '$lib/api/client';
+	import { neighborsOf } from '$lib/api/nodes';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { datum } from '$lib/components/parliamentary/stand';
+	import OpenRij from './OpenRij.svelte';
+	import type { TijdRegel } from './tijdlijn';
 
 	let {
 		memberKey,
@@ -25,124 +29,75 @@
 		wetsvoorstellen: number;
 	} = $props();
 
-	let toezeggingen = $state<{ total: number; open: number } | null>(null);
+	let regels = $state<TijdRegel[] | null>(null);
+	let tz = $state<{ total: number; open: number } | null>(null);
+	let stukken = $state(0);
+
 	$effect(() => {
+		const key = memberKey;
 		const ac = new AbortController();
-		unwrap(api.GET('/api/commitments', { params: { query: { member: memberKey, limit: 1 } }, signal: ac.signal }))
-			.then((r) => {
-				const open = r.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0;
-				toezeggingen = { total: r.total, open };
-			})
-			.catch(() => (toezeggingen = null));
+		regels = null;
+		Promise.all([
+			unwrap(api.GET('/api/commitments', { params: { query: { member: key, limit: 3, sort: 'date' } }, signal: ac.signal })).catch(() => null),
+			unwrap(
+				api.GET('/api/nodes/{collection}/{key}', {
+					params: { path: { collection: 'members', key }, query: { relations: 'AUTHORED', limit: 200 } },
+					signal: ac.signal
+				})
+			).catch(() => null)
+		]).then(([c, n]) => {
+			if (ac.signal.aborted) return;
+			const out: TijdRegel[] = [];
+			if (c) {
+				tz = { total: c.total, open: c.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0 };
+				for (const t of c.items)
+					out.push({
+						id: t.key,
+						datum: t.date ?? null,
+						teken: t.status === 'Afgedaan' ? 'ja' : t.status === 'Vervallen' ? 'nee' : 'open',
+						label: `Toezegging, ${(t.status ?? '').toLowerCase()}`,
+						zin: t.text ?? '',
+						href: bronHref(`commitments/${t.key}`, { keepMode: false, mode: 'read' })
+					});
+			}
+			if (n) {
+				const nb = neighborsOf(n);
+				stukken = nb.length;
+				const recent = [...nb]
+					.filter((x) => typeof x.props?.date === 'string')
+					.sort((a, b) => String(b.props?.date).localeCompare(String(a.props?.date)))
+					.slice(0, 3);
+				for (const x of recent)
+					out.push({
+						id: x.id,
+						datum: String(x.props?.date),
+						teken: 'stuk',
+						label: 'Ondertekend',
+						zin: x.display_name ?? x.id,
+						href: bronHref(x.id, { keepMode: false, mode: 'read' })
+					});
+			}
+			regels = out.sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? '')).slice(0, 5);
+		});
 		return () => ac.abort();
 	});
+
 	const bron = $derived(`members/${memberKey}`);
+	const zin = $derived(
+		`${naam}${partij ? ` (${partij})` : ''}: ${functie.charAt(0).toLowerCase()}${functie.slice(1)}, ${tot ? `van ${datum(van)} tot ${datum(tot)}` : `sinds ${datum(van)}`}.`
+	);
 </script>
 
-<div class="po">
-	<p class="wie"><a href={bronHref(bron, { keepMode: false, mode: 'read' }) + '&ontwerp=r4'}>{naam}</a>{#if partij}<span class="p">{partij}</span>{/if}</p>
-	<p class="zin">{functie}, {tot ? `van ${datum(van)} tot ${datum(tot)}` : `sinds ${datum(van)}`}.</p>
-	<ul class="ing">
-		<li>
-			{#if toezeggingen && toezeggingen.total}
-				<a href={indexHref('commitments', { member: memberKey })}><b>{toezeggingen.total}</b> toezeggingen</a>
-				<span class="s">{toezeggingen.open ? `${toezeggingen.open} openstaand` : 'geen openstaand'}</span>
-			{:else}
-				<span class="leeg"><b>0</b> toezeggingen in de gegevens</span>
-			{/if}
-		</li>
-		<li><span><b>{dossiers}</b> dossiers ondertekend</span><span class="s">als bewindspersoon in deze post</span></li>
-		<li><span><b>{wetsvoorstellen}</b> wetsvoorstellen</span><span class="s">daarvan</span></li>
-	</ul>
-	<div class="acts">
-		<a class="act act--pri" href={bronHref(bron, { keepMode: false, mode: 'read' }) + '&ontwerp=r4'}>Bewindspersoon lezen →</a>
-		<a class="act" href={bronHref(bron, { keepMode: false, mode: 'graph' })}>Toon in netwerk →</a>
-	</div>
-</div>
-
-<style>
-	.po {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-3);
-		padding: var(--s-4);
-		background: var(--paper);
-		border-left: 4px solid var(--ink);
-	}
-	.wie {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 500;
-	}
-	.wie a {
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.wie a:hover {
-		color: var(--accent);
-	}
-	.p {
-		margin-left: var(--s-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	.zin {
-		margin: 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink);
-	}
-	.ing {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: var(--s-3);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-	}
-	.ing li {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		border-top: 2px solid var(--ink);
-		padding-top: var(--s-2);
-	}
-	.ing a {
-		color: var(--ink);
-	}
-	.ing b {
-		display: block;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 500;
-	}
-	.s,
-	.leeg {
-		color: var(--ink-3);
-		font-size: var(--t-micro);
-	}
-	.acts {
-		display: flex;
-		gap: var(--s-2);
-		flex-wrap: wrap;
-	}
-	.act {
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		font-weight: 500;
-		padding: var(--s-2) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.act--pri {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
-	}
-</style>
+<OpenRij
+	{zin}
+	laden={regels === null}
+	groepen={regels ? [{ id: 'recent', titel: 'Recent', regels }] : []}
+	links={[
+		{ label: tz ? `${tz.total} toezeggingen, ${tz.open} openstaand` : 'Toezeggingen', href: indexHref('commitments', { member: memberKey }) },
+		{ label: `${stukken} stukken ondertekend` },
+		{ label: `${dossiers} dossiers in deze post, ${wetsvoorstellen} wetsvoorstellen` }
+	]}
+	lezen={bronHref(bron, { keepMode: false, mode: 'read' }) + '&ontwerp=r4'}
+	lezenLabel="Bewindspersoon lezen"
+	netwerk={bronHref(bron, { keepMode: false, mode: 'graph' })}
+/>

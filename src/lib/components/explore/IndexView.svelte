@@ -49,6 +49,7 @@
 	import Hemicycle from './Hemicycle.svelte';
 	import ZaalTegenover from './ZaalTegenover.svelte';
 	import DossierOpen from '$lib/components/r4/DossierOpen.svelte';
+	import KabinetOpen from '$lib/components/r4/KabinetOpen.svelte';
 	import ZaalLegenda from '$lib/components/r4/ZaalLegenda.svelte';
 	import { kleurVan } from '$lib/components/r4/partijkleuren';
 	import IndexToolbar from './index/IndexToolbar.svelte';
@@ -2527,24 +2528,7 @@
 												{/snippet}
 												{#snippet detail()}
 													{#if ontwerp}
-														<div class="r4-open">
-															<p class="r4-zin">
-																{isOpen(c) ? 'In functie sinds' : 'Van'}
-																{datum(c.from_date)}{isOpen(c) ? '' : ` tot ${datum(c.to_date)}`}.
-																{#if c.prime_minister?.name}Minister-president {c.prime_minister.name}.{/if}
-															</p>
-															<ul class="r4-ingangen">
-																<li><a href={tabHref('ministers') + `&ontwerp=${ontwerp}&cabinet=${c.key}`}><b>{c.members}</b> bewindspersonen, per ministerie</a></li>
-																<li>
-																	{#if c.commitments}<a href={tabHref('commitments') + `&cabinet=${c.key}`}><b>{c.commitments}</b> toezeggingen</a>{:else}<span class="r4-leeg">Geen toezeggingen in de gegevens</span>{/if}
-																</li>
-																<li><span><b>{c.bills}</b> wetsvoorstellen ingediend</span></li>
-															</ul>
-															<div class="r4-acts">
-																<a class="r4-act r4-act--pri" href={hrefOf(bron)}>Kabinet lezen →</a>
-																<a class="r4-act" href={bronHref(bron, { keepMode: false, mode: 'graph' })}>Toon in netwerk →</a>
-															</div>
-														</div>
+														<KabinetOpen cabinetKey={c.key} naam={c.name} inFunctie={isOpen(c)} {bron} ministersHref={tabHref('ministers') + `&ontwerp=${ontwerp}&cabinet=${c.key}`} />
 													{:else}
 													<div class="gov-detail">
 														<!-- The number of bewindspersonen stands in the row itself. -->
@@ -3595,66 +3579,6 @@
 	}
 	/* A bill's stages as a bar: passed in ink, the current one in the accent. */
 	/* Ontwerpstudie ronde 4 (prototype) */
-	.r4-open {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-3);
-		padding: var(--s-4) var(--s-4) var(--s-5);
-	}
-	.r4-zin {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
-	}
-	.r4-ingangen {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: var(--s-3);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-	}
-	.r4-ingangen li {
-		border-top: 2px solid var(--ink);
-		padding-top: var(--s-2);
-	}
-	.r4-ingangen a {
-		color: var(--ink);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-	}
-	.r4-ingangen b {
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 500;
-		display: block;
-	}
-	.r4-leeg {
-		color: var(--ink-3);
-	}
-	.r4-acts {
-		display: flex;
-		gap: var(--s-2);
-	}
-	.r4-act {
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		font-weight: 500;
-		padding: var(--s-2) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.r4-act--pri {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
-	}
 	/* Ontwerpstudie ronde 3 (prototype) */
 	.r3-zin {
 		display: block;

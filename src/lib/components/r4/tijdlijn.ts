@@ -1,6 +1,6 @@
 // Ontwerpstudie ronde 4 (prototype): één vorm voor elke tijdlijn in Concordans. Een groep
 // (dag, instantie of maand) met regels; elke regel heeft een datum, een teken en een zin.
-export type Teken = 'ja' | 'nee' | 'stuk' | 'activiteit' | 'verwacht';
+export type Teken = 'ja' | 'nee' | 'stuk' | 'activiteit' | 'verwacht' | 'open';
 export type TijdRegel = {
 	id: string;
 	/** ISO-datum; leeg bij wat nog kan volgen. */
