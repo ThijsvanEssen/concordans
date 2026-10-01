@@ -13,6 +13,11 @@
 	import { formatLongDate } from './_shared';
 	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
 	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
+	import StandVanZaken from '$lib/components/parliamentary/StandVanZaken.svelte';
+	import { page } from '$app/state';
+
+	// Ontwerpstudie ronde 3: ?ontwerp toont de kop met de stand van zaken.
+	const ontwerp = $derived(!!page.url.searchParams.get('ontwerp'));
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -105,6 +110,13 @@
 					<KindGlyph collection="dossiers" />
 					{bronLabel('dossiers')} · Kamerstuk {d.number}
 				</span>
+				{#if ontwerp}
+					<h2 class="title">{d.short_title ?? d.title ?? d.number}</h2>
+					{#if d.short_title && d.title && d.title.trim() !== d.short_title}
+						<details class="r3-full"><summary>Volledige titel</summary><p>{d.title}</p></details>
+					{/if}
+					<StandVanZaken {d} />
+				{:else}
 				<h2 class="title">{d.title ?? d.number}</h2>
 				<div class="chips">
 					{#if d.kind}<span class="track-chip">{d.kind}</span>{/if}
@@ -155,9 +167,10 @@
 						Eerste lezing. Tweede lezing in {@render dossierLinks(readings.second)}
 					</p>
 				{/if}
+				{/if}
 			</header>
 
-			{#if d.phases?.length}
+			{#if d.phases?.length && !ontwerp}
 				<div class="stepper-wrap">
 					<LegislativeStepper
 						phases={d.phases}
@@ -183,7 +196,7 @@
 							<span class="sec-count">{view.timeline.entries.length} / {view.timeline.total}</span>
 						{/if}
 					</h3>
-					<LegislativeTimeline entries={view.timeline.entries} dossier={d.number} />
+					<LegislativeTimeline entries={view.timeline.entries} dossier={d.number} compact={ontwerp} />
 				</section>
 			{/if}
 		{/if}
@@ -191,6 +204,17 @@
 </ReaderFrame>
 
 <style>
+	.r3-full summary {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.r3-full p {
+		margin: var(--s-1) 0 0;
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
 	.r-dossier {
 		display: flex;
 		flex-direction: column;

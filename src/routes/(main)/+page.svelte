@@ -10,6 +10,38 @@
 	import { bronPlural, type Collection } from '$lib/vocabulary';
 	import { dayLabel, feedStand, CLOSE_VOTE, shortDate } from '$lib/components/actueel/feed';
 	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
+	import { page } from '$app/state';
+
+	// Ontwerpstudie ronde 3: ?ontwerp toont een eerste regel over wat Concordans bevat en
+	// drie ingangen met aantallen; het halfrond gaat naar Bladeren.
+	const ontwerp = $derived(!!page.url.searchParams.get('ontwerp'));
+	type Ingang = { label: string; zin: string; href: string };
+	let stats = $state<{ wetten: number; uitspraken: number; dossiers: number; wetsvoorstellen: number; open: number } | null>(null);
+	$effect(() => {
+		if (!ontwerp) return;
+		const ac = new AbortController();
+		Promise.all([
+			unwrap(api.GET('/api/stats', { signal: ac.signal })),
+			unwrap(api.GET('/api/dossiers', { params: { query: { status: 'open', kind: 'Wetgeving', limit: 1 } }, signal: ac.signal })),
+			unwrap(api.GET('/api/commitments', { params: { query: { status: 'Openstaand', limit: 1 } }, signal: ac.signal }))
+		])
+			.then(([st, wv, tz]) => {
+				const n = st.nodes as Record<string, number>;
+				stats = { wetten: n.instruments, uitspraken: n.judgments, dossiers: n.dossiers, wetsvoorstellen: wv.total, open: tz.total };
+			})
+			.catch(() => {});
+		return () => ac.abort();
+	});
+	const fmt = (n: number) => n.toLocaleString('nl-NL');
+	const ingangen = $derived<Ingang[]>(
+		stats
+			? [
+					{ label: 'Wetsvoorstellen', zin: `${fmt(stats.wetsvoorstellen)} in behandeling, met de stand bij Raad van State, Tweede Kamer en Eerste Kamer.`, href: indexHref('dossiers', { track: 'Wetgeving', ontwerp: 'r3' }) },
+					{ label: 'Uitspraken', zin: `${fmt(stats.uitspraken)} uitspraken, met de wetsartikelen die ze aanhalen.`, href: indexHref('judgments') },
+					{ label: 'Regering', zin: `Kabinet-Jetten: bewindspersonen en ${fmt(stats.open)} openstaande toezeggingen.`, href: indexHref('commitments', { status: 'Openstaand' }) }
+				]
+			: []
+	);
 
 	/** The ways into the material by kind; each opens Bladeren on that kind. */
 	const KINDS: Collection[] = ['instruments', 'dossiers', 'judgments', 'committees'];
@@ -68,13 +100,30 @@
 </svelte:head>
 
 <div class="home">
-	<h1 class="sr-only">Concordans</h1>
+	{#if ontwerp}
+		<div class="r3-intro">
+			<h1>Concordans</h1>
+			<p>
+				Nederlandse wetten, uitspraken en Kamerstukken met hun onderlinge verbindingen{#if stats}:
+					{fmt(stats.wetten)} wetten en verdragen, {fmt(stats.uitspraken)} uitspraken, {fmt(stats.dossiers)} Kamerdossiers{/if}.
+			</p>
+		</div>
+	{:else}
+		<h1 class="sr-only">Concordans</h1>
+	{/if}
 
 	<div class="intro">
 		<Search />
 	</div>
+	{#if ontwerp && ingangen.length}
+		<nav class="r3-ingangen" aria-label="Ingangen">
+			{#each ingangen as g (g.label)}
+				<a href={g.href}><span class="l">{g.label}</span><span class="z">{g.zin}</span></a>
+			{/each}
+		</nav>
+	{/if}
 
-	<div class="browse">
+	<div class="browse" class:r3-hide={ontwerp}>
 		<h2 id="browse-heading" class="browse-heading">Bladeren</h2>
 		<nav class="kinds" aria-labelledby="browse-heading">
 			{#each KINDS as kind (kind)}
@@ -110,7 +159,7 @@
 			<a class="all" href="/actueel">Alles in Actueel →</a>
 		</section>
 
-		{#if seats}
+		{#if seats && !ontwerp}
 			<aside class="kamer" aria-labelledby="kamer-heading">
 				<h2 id="kamer-heading" class="kamer-title">Tweede Kamer</h2>
 				<div class="hemi-wrap">
@@ -122,6 +171,63 @@
 </div>
 
 <style>
+	.r3-intro {
+		max-width: 720px;
+		margin: 0 auto var(--s-5);
+	}
+	.r3-intro h1 {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-h1);
+		font-weight: 500;
+		color: var(--ink);
+	}
+	.r3-intro p {
+		margin: var(--s-2) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-snug);
+		color: var(--ink-2);
+	}
+	.r3-ingangen {
+		max-width: 720px;
+		margin: var(--s-5) auto 0;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--s-4);
+	}
+	.r3-ingangen a {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-1);
+		padding-top: var(--s-2);
+		border-top: 2px solid var(--ink);
+		text-decoration: none;
+		color: var(--ink);
+	}
+	.r3-ingangen a:hover .l {
+		color: var(--accent);
+	}
+	.r3-ingangen .l {
+		font-family: var(--font-serif);
+		font-size: var(--t-h3);
+		font-weight: 500;
+	}
+	.r3-ingangen .z {
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+		line-height: var(--lh-snug);
+	}
+	.r3-hide {
+		display: none;
+	}
+	@media (max-width: 640px) {
+		.r3-ingangen {
+			grid-template-columns: 1fr;
+		}
+	}
+
 	.home {
 		width: 100%;
 		max-width: 1120px;

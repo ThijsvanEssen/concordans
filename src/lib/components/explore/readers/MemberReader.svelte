@@ -20,6 +20,8 @@
 	import { page } from '$app/state';
 	import { initials } from '$lib/util/initials';
 	import { formatDate, formatLongDate } from './_shared';
+	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
+	const ontwerp = $derived(!!page.url.searchParams.get('ontwerp'));
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -193,6 +195,10 @@
 						</p>
 					{/if}
 				</section>
+			{/if}
+
+			{#if ontwerp && (m.government_functions ?? []).length > 0}
+				<BewindspersoonOverzicht memberKey={m.key} />
 			{/if}
 
 			{#if career.length > 0}

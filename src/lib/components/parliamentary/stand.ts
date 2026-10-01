@@ -28,10 +28,23 @@ export const datum = (iso: string | null | undefined): string => {
 };
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+/** A phase as a sentence names it. */
+const PHASE_ZIN: Record<string, string> = {
+	Verslag: 'verslag',
+	'Nota n.a.v. het verslag': 'nota naar aanleiding van het verslag',
+	'Nota van wijziging / Amendement': 'nota van wijziging',
+	Stemmingen: 'stemmingen'
+};
 
 export function stand(d: Dossier): Stand | null {
 	const phases = d.phases ?? [];
-	const done = (name: string) => phases.find((p) => p.name === name)?.done ?? false;
+	// A record marks a phase done; a later phase done counts every earlier one as done
+	// (ronde 3: 12 of 14 bills the Tweede Kamer passed lack the Raad van State's mark).
+	const lastDone = Math.max(-1, ...phases.map((p, i) => (p.done ? i : -1)));
+	const done = (name: string) => {
+		const i = phases.findIndex((p) => p.name === name);
+		return i >= 0 && (phases[i].done || i <= lastDone);
+	};
 	const dateOf = (name: string | null | undefined) =>
 		phases.find((p) => p.name === name)?.date ?? null;
 	if (!d.current_phase && !d.tk_decision && !d.ek_outcome) return null;
@@ -69,7 +82,7 @@ export function stand(d: Dossier): Stand | null {
 		group = 'ek';
 	} else if (d.current_phase && TK_PHASES.includes(d.current_phase)) {
 		const when = dateOf(d.current_phase);
-		zin = `Bij de Tweede Kamer: ${lower(d.current_phase)}${when ? `, ${datum(when)}` : ''}.`;
+		zin = `Bij de Tweede Kamer: ${PHASE_ZIN[d.current_phase] ?? lower(d.current_phase)}${when ? `, ${datum(when)}` : ''}.`;
 		group = 'tk';
 	} else if (d.current_phase && SUBMITTED.includes(d.current_phase)) {
 		const when = dateOf('Voorstel van wet') ?? d.opened_on;
@@ -90,3 +103,25 @@ export const GROUP_LABEL: Record<StandGroup, string> = {
 	geen: 'Zonder wetgevingsfase'
 };
 export const GROUP_ORDER: StandGroup[] = ['ek', 'tk', 'ingediend', 'afgehandeld', 'geen'];
+
+/** What a dossier is, in words, for the grey line of a row. */
+export function soortZin(d: Dossier, who: string): string {
+	const kind = d.kind;
+	const van = who ? ` ${d.initiative ? 'van Kamerleden' : `van ${who}`}` : '';
+	switch (kind) {
+		case 'Wetgeving':
+			return `Wetsvoorstel${van}`;
+		case 'Initiatiefwetgeving':
+			return 'Initiatiefwetsvoorstel';
+		case 'Begroting':
+			return `Begroting${van}`;
+		case 'Verdrag':
+			return `Verdrag${van}`;
+		case 'Initiatiefnota':
+			return 'Initiatiefnota';
+		case 'PKB/Structuurvisie':
+			return 'Structuurvisie';
+		default:
+			return `Dossier${van}`;
+	}
+}

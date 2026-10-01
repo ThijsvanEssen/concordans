@@ -29,7 +29,7 @@
 		const apply = () => {
 			const p = new URL(location.href).searchParams.get('contrast');
 			if (p !== null) sessionStorage.setItem('r2-contrast', p);
-			const level = sessionStorage.getItem('r2-contrast') ?? '0';
+			const level = sessionStorage.getItem('r2-contrast') ?? '4';
 			if (level === '0') delete document.documentElement.dataset.contrast;
 			else document.documentElement.dataset.contrast = level;
 		};
@@ -272,6 +272,26 @@
 		color: var(--ink);
 		font-weight: 500;
 		font-size: var(--t-meta);
+	}
+	/* C4 (ronde 3, keuze Thijs): de tinten en het gewicht van C2 met de lijnen van C3.
+	   Standaard op design-r2; ?contrast=0 toont main. */
+	:global(:root[data-contrast='4']) {
+		--paper: #faf8f3;
+		--paper-2: #ece7dc;
+		--rule: #b9b1a0;
+		--rule-strong: #6f6859;
+		--ink: #161513;
+		--ink-2: #3b3834;
+		--ink-3: #5d5951;
+		--t-body-2: 16px;
+	}
+	:global(:root[data-contrast='4'] .row-id-main) {
+		color: var(--ink);
+		font-weight: 500;
+		font-size: var(--t-meta);
+	}
+	:global(:root[data-contrast='4'] .list) {
+		border-top: 2px solid var(--ink);
 	}
 	/* C3 uitgesproken: lichter papier, harde lijnen, titels op 500, koppen met een lijn. */
 	:global(:root[data-contrast='3']) {

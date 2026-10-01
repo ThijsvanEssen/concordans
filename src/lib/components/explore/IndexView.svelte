@@ -45,8 +45,9 @@
 		groupRuns
 	} from '$lib/components/parliamentary/dossier-number';
 	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { stand, datum, GROUP_LABEL, GROUP_ORDER, type StandGroup } from '$lib/components/parliamentary/stand';
+	import { stand, datum, soortZin, GROUP_LABEL, GROUP_ORDER, type StandGroup } from '$lib/components/parliamentary/stand';
 	import Hemicycle from './Hemicycle.svelte';
+	import ZaalTegenover from './ZaalTegenover.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
 	import {
@@ -114,6 +115,8 @@
 	// Ontwerpstudie ronde 2: ?ontwerp=rij (nieuwe dossierrij) of groep (rij plus groepen naar stand).
 	const ontwerp = $derived(params.get('ontwerp') ?? '');
 	let openGroups = $state(new Set<StandGroup>(['ek', 'tk', 'ingediend']));
+	// Ronde 3: in Dossiers standaard twee filters; de rest achter "Meer filters".
+	let meerFilters = $state(false);
 	const q = $derived(params.get('q') ?? '');
 	// A dossier's phase and kind as the Kamer names them (API 0.52). A link from before names
 	// them the old way (`?stage=mvt`, `?track=wetsvoorstel`): read as the Kamer's word, or left
@@ -1139,7 +1142,7 @@
 		toggleParam(name, current, value);
 	const flag = (name: string, on: boolean) => () => patchUrl({ [name]: on ? null : '1' });
 
-	const facetGroups = $derived.by<FacetGroup[]>(() => {
+	const facetGroupsAll = $derived.by<FacetGroup[]>(() => {
 		switch (category) {
 			case 'instruments':
 				return [
@@ -1585,7 +1588,7 @@
 				];
 		}
 	});
-	const chips = $derived(activeFilters(facetGroups));
+	const chips = $derived(activeFilters(facetGroupsAll));
 	let filtersOpen = $state(false);
 
 	// On a narrow screen the tab strip scrolls: the category on screen is scrolled into it,
@@ -1712,7 +1715,19 @@
 		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 110, asideW: 130 },
 		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', leadW: 130, asideW: 110 }
 	};
-	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
+	const facetGroups = $derived(
+		ontwerp === 'r3' && category === 'dossiers' && !meerFilters
+			? facetGroupsAll.filter((g) => g.id === 'stand' || g.id === 'ministry')
+			: facetGroupsAll
+	);
+	const r3 = $derived(ontwerp === 'r3' && category === 'dossiers');
+	const columns = $derived(
+		r3
+			? { lead: '', body: 'Dossier', aside: 'Stand', leadW: 0, asideW: 150 }
+			: noDossiers
+				? { ...COLUMNS.committees, aside: '' }
+				: COLUMNS[category]
+	);
 
 	// ── Opening a source ────────────────────────────────────────────────────
 	// The title of a row opens the bron as Lezen in the detail does: a text of its own at
@@ -1807,6 +1822,11 @@
 					>
 					<div class="facet-body" class:facet-body--open={filtersOpen}>
 						<IndexFacets groups={facetGroups} pending={!pages[category] && !error} />
+						{#if ontwerp === 'r3' && category === 'dossiers'}
+							<button type="button" class="r3-meer" onclick={() => (meerFilters = !meerFilters)}
+								>{meerFilters ? 'Minder filters' : 'Meer filters: soort, fase'}</button
+							>
+						{/if}
 					</div>
 				</aside>
 				<div
@@ -1840,7 +1860,11 @@
 					{#if category === 'factions' && seats && seats.chamber === kamer}
 						<div class="hemi-card">
 							<div class="hemi-svg-wrap">
-								<Hemicycle data={seats} />
+								{#if seats.chamber === 'EK'}
+									<ZaalTegenover data={seats} />
+								{:else}
+									<Hemicycle data={seats} />
+								{/if}
 							</div>
 						</div>
 					{/if}
@@ -2120,6 +2144,18 @@
 									{@render loadMoreButton(pages.judgments, 'uitspraken')}
 								{/if}
 							{:else if category === 'dossiers' && dossierEntries}
+								{#if ontwerp === 'r3'}
+									<nav class="r3-ingang" aria-label="Ingang">
+										{#each [['Wetgeving', 'Wetsvoorstellen'], ['Begroting', 'Begrotingen'], ['', 'Alle dossiers']] as [k, label] (label)}
+											<button
+												type="button"
+												aria-pressed={track === k}
+												onclick={() => patchUrl({ track: k || null })}
+												>{label}{#if k}<span>{dossierKinds.get(k) ?? ''}</span>{/if}</button
+											>
+										{/each}
+									</nav>
+								{/if}
 								{#if dossierEntries.length === 0}
 									{@render empty(
 										dossierScope === 'open'
@@ -2658,11 +2694,46 @@
 {/snippet}
 
 {#snippet dossierRow(d: DossierRow, member: boolean)}
-	{#if ontwerp}
+	{#if ontwerp === 'r3'}
+		{@render dossierRowR3(d, member)}
+	{:else if ontwerp}
 		{@render dossierRowR2(d, member)}
 	{:else}
 		{@render dossierRowNu(d, member)}
 	{/if}
+{/snippet}
+
+{#snippet dossierRowR3(d: DossierRow, member: boolean)}
+	{@const bron = `dossiers/${d.number}`}
+	{@const st = stand(d)}
+	{@const who = d.ministry ? ministryName(d.ministry) : ''}
+	<IndexRow
+		{bron}
+		{member}
+		title={member && d.title ? chapterTitle(d.title) : (d.short_title ?? d.title ?? d.number)}
+		href={hrefOf(bron)}
+		open={openId === bron}
+		onToggle={() => toggleOpen(bron)}
+	>
+		{#snippet body()}
+			{#if st?.zin}
+				<span class="r3-zin">{st.zin}</span>
+			{/if}
+			<span class="row-sub">{soortZin(d, who)} · {d.number}</span>
+		{/snippet}
+		{#snippet aside()}
+			{#if st}
+				<span class="r2-stand">
+					{#each st.bodies as b (b.short)}
+						<span class="r2-body r2-body--{b.state}"><abbr title={b.name}>{b.short}</abbr></span>
+					{/each}
+				</span>
+			{/if}
+		{/snippet}
+		{#snippet detail()}
+			<IndexDetail category="dossiers" record={d} {bron} />
+		{/snippet}
+	</IndexRow>
 {/snippet}
 
 {#snippet dossierRowR2(d: DossierRow, member: boolean)}
@@ -3487,6 +3558,55 @@
 		overflow: hidden;
 	}
 	/* A bill's stages as a bar: passed in ink, the current one in the accent. */
+	/* Ontwerpstudie ronde 3 (prototype) */
+	.r3-zin {
+		display: block;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		line-height: var(--lh-snug);
+		margin: var(--s-1) 0 2px;
+	}
+	.r3-meer {
+		margin-top: var(--s-3);
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.r3-ingang {
+		display: flex;
+		gap: var(--s-2);
+		margin-bottom: var(--s-4);
+	}
+	.r3-ingang button {
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		padding: var(--s-2) var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: transparent;
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.r3-ingang button[aria-pressed='true'] {
+		background: var(--ink);
+		border-color: var(--ink);
+		color: var(--paper);
+		font-weight: 500;
+	}
+	.r3-ingang span {
+		margin-left: var(--s-2);
+		font-variant-numeric: tabular-nums;
+		opacity: 0.8;
+	}
 	/* Ontwerpstudie ronde 2 (prototype) */
 	.r2-num {
 		color: var(--ink);

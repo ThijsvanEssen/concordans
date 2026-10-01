@@ -36,14 +36,19 @@
 	// `entries` arrive newest first, as the API orders them by default.
 	let {
 		entries,
-		dossier = null
+		dossier = null,
+		compact = false
 	}: {
 		entries: Entry[];
+		/** Ontwerpstudie ronde 3: één keuzelijst in plaats van knoppen, en eerst vijf items. */
+		compact?: boolean;
 		/** The number of the dossier whose timeline this is. */
 		dossier?: string | null;
 	} = $props();
 
 	let kindFilter = $state(new Set<string>());
+	let all = $state(false);
+	const freqOf = (k: string) => entries.filter((e) => timelineKind(e) === k).length;
 	let newestFirst = $state(true);
 
 	// Kinds by frequency, most common first.
@@ -83,7 +88,22 @@
 
 <div class="timeline">
 	<div class="timeline-toolbar">
-		<KindChipFilter {kinds} selected={kindFilter} onChange={(next) => (kindFilter = next)} />
+		{#if compact}
+			<label class="r3-soort"
+				>Soort
+				<select
+					onchange={(e) => {
+						const v = e.currentTarget.value;
+						kindFilter = new Set(v ? [v] : []);
+					}}
+				>
+					<option value="">alle ({entries.length})</option>
+					{#each kinds as k (k)}<option value={k}>{k} ({freqOf(k)})</option>{/each}
+				</select></label
+			>
+		{:else}
+			<KindChipFilter {kinds} selected={kindFilter} onChange={(next) => (kindFilter = next)} />
+		{/if}
 		<button
 			type="button"
 			class="order-btn"
@@ -114,7 +134,7 @@
 		<p class="timeline-empty">Geen items voor deze selectie.</p>
 	{:else}
 		<ol class="timeline-list">
-			{#each shown as entry (entry.node_id)}
+			{#each compact && !all ? shown.slice(0, 5) : shown as entry (entry.node_id)}
 				{@const body = bodyOf(entry)}
 				{@const planned = notHeld(entry)}
 				<li class="entry" class:entry--planned={!!planned} data-kind={entry.node_type}>
@@ -244,10 +264,41 @@
 				</li>
 			{/each}
 		</ol>
+		{#if compact && !all && shown.length > 5}
+			<button type="button" class="r3-alle" onclick={() => (all = true)}>Alle {shown.length} items</button>
+		{/if}
 	{/if}
 </div>
 
 <style>
+	.r3-soort {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.r3-soort select {
+		font: inherit;
+		color: var(--ink);
+		padding: var(--s-1) var(--s-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+	}
+	.r3-alle {
+		margin-top: var(--s-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		padding: var(--s-1) var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: transparent;
+		cursor: pointer;
+	}
 	.timeline {
 		display: flex;
 		flex-direction: column;
