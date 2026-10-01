@@ -311,8 +311,9 @@
 			{ id: 'abbreviation', label: 'Afkorting', dir: 'asc' },
 			{ id: 'name', label: 'Naam', dir: 'asc' }
 		],
+		// By surname over all pages, as the API sorts it (BE-11): "Van der Lee" under L.
 		members: [
-			{ id: 'name', label: 'Naam', dir: 'asc' },
+			{ id: 'family_name', label: 'Achternaam' },
 			{ id: 'party', label: 'Fractie', dir: 'asc' }
 		],
 		factions: [
@@ -514,6 +515,7 @@
 					party: party || undefined,
 					active: includeInactive ? undefined : true,
 					include_all: includeInactive,
+					sort: oneOf(sortDef.id, ['family_name', 'name'] as const),
 					limit
 				};
 				return async (offset, signal) => {
@@ -822,8 +824,7 @@
 	});
 
 	const membersShown = $derived(
-		pages.members &&
-			sorted(pages.members.items, { name: (m) => m.name ?? '', party: (m) => m.party ?? '' })
+		pages.members && sorted(pages.members.items, { party: (m) => m.party ?? '' })
 	);
 
 	const factionsShown = $derived(
