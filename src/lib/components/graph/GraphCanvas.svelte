@@ -7,6 +7,7 @@
 	import type { GraphFilters } from '$lib/graph/graph-store';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
+	import { labelX } from './label-place';
 	import { relationLabel, type Collection, type Relation } from '$lib/vocabulary';
 	import type { BronKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
@@ -822,12 +823,9 @@
 				const size = settings.labelSize;
 				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
 				const w = context.measureText(data.label).width;
-				// Right of the bron; on its left where the right would run past the canvas
-				// edge ("36799, Kamerst…" in a narrow column).
+				// Right of the bron, left of it, or kept whole on the canvas ($lib label-place).
 				const room = context.canvas.width / (window.devicePixelRatio || 1);
-				const right = data.x + data.size + 3;
-				const left = data.x - data.size - 3 - w;
-				const x = right + w + 2 > room && left >= 2 ? left : right;
+				const x = labelX(data.x, data.size, w, room);
 				context.save();
 				context.globalAlpha = 1;
 				context.fillStyle = t.paper;
