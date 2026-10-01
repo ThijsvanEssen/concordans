@@ -6,6 +6,7 @@ import type { Schema } from '$lib/api/types';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
+import { korteDatum } from '$lib/text/datum';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
@@ -23,16 +24,11 @@ export type Presented = {
 	chamber?: Chamber;
 };
 
-/**
- * The Kamer a stuk was published in. The Eerste Kamer's stukken come from its own site,
- * keyed `ek_…`; the rest are the Tweede Kamer's.
- * TODO(backend): `chamber` in the `extra` of a document in /api/search, as /api/documents has it.
- */
+/** The Kamer a stuk was published in, as the API gives it (0.73, BE-39). */
 export function chamberOfHit(hit: Hit): Chamber | undefined {
 	if (hit.collection !== 'documents') return undefined;
 	const given = extra(hit, 'chamber').toUpperCase();
-	if (given === 'TK' || given === 'EK') return given;
-	return hit.key.startsWith('ek_') ? 'EK' : 'TK';
+	return given === 'TK' || given === 'EK' ? given : undefined;
 }
 
 /** The heading of a group of hits. Leden: a group holds members of both Kamers and bewindspersonen. */
@@ -153,14 +149,21 @@ export function presentHit(hit: Hit, query: string): Presented {
 			// its own name: `Stikstof en natuur`, with its kind beside it.
 			const kind = extra(hit, 'kind') || (hit.display_name ?? hit.key);
 			const chamber = chamberOfHit(hit);
+			// The day it was published (BE-1): stukken of one kind differ by it.
+			const date = korteDatum(extra(hit, 'date'));
 			if (!sectionOf(hit) && hit.display_name && hit.display_name !== kind)
-				return { title: hit.display_name, context: kind, snippet: null, chamber };
+				return {
+					title: hit.display_name,
+					context: [kind, date].filter(Boolean).join(', '),
+					snippet: null,
+					chamber
+				};
 			const sequence = hit.extra?.sequence;
 			const number =
 				typeof sequence === 'string' || typeof sequence === 'number' ? String(sequence) : '';
 			return {
 				title: number ? `${kind}, nr. ${number}` : kind,
-				context: '',
+				context: date,
 				snippet: null,
 				chamber
 			};
