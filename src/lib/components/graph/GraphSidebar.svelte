@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	// The legend of the network, which is also its filter: the bronnen that take part
 	// (with counts and the preset), the verbindingen per relation with a line sample,
 	// the depth from the focus, the lid, and one line with what is on the canvas and
@@ -180,17 +181,15 @@
 			</div>
 			{#each BRON_KINDS as k (k)}
 				{@const n = totals[k] ?? 0}
-				<label class="row" class:is-empty={n === 0}>
-					<input
-						type="checkbox"
-						checked={isOn(k)}
-						onchange={() => onFilter(toggleKind(filter, k))}
-					/>
-					<span class="box" aria-hidden="true">{isOn(k) ? '✓' : ''}</span>
-					<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />
-					<span class="row__name">{BRON_KIND_LABEL[k]}</span>
-					<span class="row__count">{formatCount(n)}</span>
-				</label>
+				<FilterOptie
+					label={BRON_KIND_LABEL[k]}
+					on={isOn(k)}
+					onToggle={() => onFilter(toggleKind(filter, k))}
+					count={n}
+					empty={n === 0}
+				>
+					{#snippet voor()}<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />{/snippet}
+				</FilterOptie>
 			{/each}
 		</section>
 
@@ -217,7 +216,7 @@
 			{#each Object.keys(CONTAINER_KIND_LABEL) as ck (ck)}
 				{@const kind = ck as ContainerKind}
 				<div class="row row--static">
-					<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+					<svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true">
 						<circle
 							cx="7"
 							cy="7"
@@ -239,23 +238,19 @@
 				{#each relations as r (r.relation)}
 					{@const rel = r.relation as Relation}
 					{@const on = !hiddenRelations.has(rel)}
-					<label class="row">
-						<input type="checkbox" checked={on} onchange={() => onToggleRelation(rel)} />
-						<span class="box" aria-hidden="true">{on ? '✓' : ''}</span>
-						<svg width="26" height="8" viewBox="0 0 26 8" aria-hidden="true"
-							><line
-								x1="1"
-								y1="4"
-								x2="25"
-								y2="4"
-								stroke={edgeColorFor(rel, sourceKind(rel))}
-								stroke-width="1.6"
-								stroke-dasharray={dash(rel)}
-							/></svg
-						>
-						<span class="row__name">{r.label}</span>
-						<span class="row__count">{formatCount(r.count)}</span>
-					</label>
+					<FilterOptie label={r.label} {on} onToggle={() => onToggleRelation(rel)} count={r.count}>
+						{#snippet voor()}<svg width="26" height="8" viewBox="0 0 26 8" aria-hidden="true"
+								><line
+									x1="1"
+									y1="4"
+									x2="25"
+									y2="4"
+									stroke={edgeColorFor(rel, sourceKind(rel))}
+									stroke-width="1.6"
+									stroke-dasharray={dash(rel)}
+								/></svg
+							>{/snippet}
+					</FilterOptie>
 				{/each}
 			</section>
 		{/if}
@@ -489,15 +484,15 @@
 		border-top: 1px solid var(--rule);
 		color: var(--ink-2);
 	}
+	/* A line without a box (Groepering) on the columns of FilterOptie: the mark where the
+	   box stands, the name, the note at the right edge. */
 	.row {
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		padding: 6px 0;
-		cursor: pointer;
-	}
-	.row.is-empty {
-		color: var(--ink-3);
+		gap: var(--s-2);
+		min-height: var(--veld-h-klein);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 	.tekens {
 		display: grid;
@@ -517,36 +512,11 @@
 	.row--static {
 		cursor: default;
 	}
-	.row input {
-		position: absolute;
-		opacity: 0;
-		width: 0;
-		height: 0;
-	}
-	.box {
-		width: 14px;
-		height: 14px;
-		display: grid;
-		place-items: center;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-size: var(--t-glyph);
-		line-height: 1;
-		color: var(--paper);
-		flex: none;
-	}
-	.row input:checked + .box {
-		background: var(--ink);
-		border-color: var(--ink);
-	}
-	.row input:focus-visible + .box {
-		outline: 2px solid var(--accent);
-		outline-offset: 2px;
-	}
 	.row__name {
 		flex: 1;
 	}
 	.row__count {
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.chips {

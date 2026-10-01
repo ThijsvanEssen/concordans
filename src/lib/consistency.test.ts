@@ -54,6 +54,7 @@ describe('one form for each thing', () => {
 			'lib/components/explore/readers/CommitmentReader.svelte',
 			'lib/components/explore/readers/DecisionReader.svelte',
 			'lib/components/explore/readers/MemberReader.svelte',
+			'lib/components/ui/FilterOptie.svelte',
 			'routes/(main)/api/+page.svelte',
 			'routes/(main)/docs/+page.svelte'
 		];
@@ -69,6 +70,10 @@ describe('one form for each thing', () => {
 		);
 		expect(rows.length).toBeGreaterThan(0);
 		expect(rows.filter(({ text }) => !text.includes('terPlekke')).map((s) => s.path)).toEqual([]);
+	});
+
+	it('draws every option of a filter with FilterOptie', () => {
+		expect(offenders((t) => /class="(box|opt|check__box)"/.test(t))).toEqual([]);
 	});
 
 	it('has no prototype switches or study folders left', () => {

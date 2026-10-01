@@ -103,6 +103,7 @@
 <script lang="ts">
 	import { formatCount } from '$lib/verbonden/filter';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 
 	let {
 		groups,
@@ -137,26 +138,14 @@
 							</li>
 						{:else}
 							<li>
-								<button
-									type="button"
-									class="opt"
-									class:opt--on={o.on}
-									class:opt--indent={o.indent}
-									class:opt--deep={o.indent === 'deep'}
-									aria-pressed={o.on}
-									title={o.label}
-									onclick={o.onClick}
-								>
-									{#if o.swatch}
-										<span class="swatch" style:background={o.swatch}></span>
-									{:else}
-										<span class="box" aria-hidden="true"></span>
-									{/if}
-									<span class="label">{o.label}</span>
-									{#if o.count !== undefined && !pending}
-										<span class="n">{formatCount(o.count)}</span>
-									{/if}
-								</button>
+								<FilterOptie
+									label={o.label}
+									on={o.on}
+									onToggle={o.onClick}
+									count={pending ? null : o.count}
+									swatch={o.swatch}
+									indent={o.indent}
+								/>
 							</li>
 						{/if}
 					{/each}
@@ -166,18 +155,12 @@
 				<ul class="options" aria-label={g.label}>
 					{#each g.options as o (o.id)}
 						<li>
-							<button
-								type="button"
-								class="opt"
-								class:opt--on={o.on}
-								aria-pressed={o.on}
-								onclick={o.onClick}
-							>
-								<span class="box" aria-hidden="true"></span>
-								<span class="label">{o.label}</span>
-								{#if o.count !== undefined && !pending}<span class="n">{formatCount(o.count)}</span
-									>{/if}
-							</button>
+							<FilterOptie
+								label={o.label}
+								on={o.on}
+								onToggle={o.onClick}
+								count={pending ? null : o.count}
+							/>
 						</li>
 					{/each}
 				</ul>
@@ -283,64 +266,6 @@
 	.subhead:first-child {
 		padding-top: 0;
 	}
-	.opt {
-		position: relative;
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		width: 100%;
-		padding: var(--s-1) 0;
-		border: 0;
-		background: transparent;
-		font: inherit;
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-		text-align: left;
-		cursor: pointer;
-	}
-	.opt--indent {
-		padding-left: var(--s-3);
-	}
-	.opt:hover {
-		color: var(--ink);
-	}
-	.opt:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 1px;
-	}
-	.opt--on {
-		color: var(--ink);
-		font-weight: 500;
-	}
-	.box {
-		width: 12px;
-		height: 12px;
-		flex-shrink: 0;
-		border: 1px solid var(--rule-strong);
-		border-radius: 2px;
-		box-sizing: border-box;
-	}
-	.opt--on .box {
-		background: var(--ink);
-		border-color: var(--ink);
-	}
-	.swatch {
-		width: 9px;
-		height: 9px;
-		flex-shrink: 0;
-		border-radius: 50%;
-	}
-	.opt--on .swatch {
-		box-shadow:
-			0 0 0 2px var(--paper),
-			0 0 0 3px var(--ink);
-	}
-	.label {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
 	.n {
 		margin-left: auto;
 		padding-left: var(--s-2);
@@ -348,9 +273,6 @@
 		font-weight: 400;
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
-	}
-	.opt--deep {
-		padding-left: var(--s-5);
 	}
 
 	.facets--pending {

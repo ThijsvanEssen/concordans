@@ -1,4 +1,7 @@
 <script lang="ts">
+	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { BRON_KIND_VORM } from '$lib/bron/vormen';
 	// The filter sheet: bronnen, verbindingen, lid, rechter, periode, betrouwbaarheid and
 	// status, applied with one button. The same sheet opens from the panel and from
 	// the legend of the network. A modal dialog: the focus goes to the search field on
@@ -192,16 +195,15 @@
 				<div class="block__label">Bronnen</div>
 				{#each BRON_KINDS as k (k)}
 					{@const n = totals[k] ?? 0}
-					<label class="check" class:is-empty={n === 0}>
-						<input
-							type="checkbox"
-							checked={isOn(k)}
-							onchange={() => (draft = toggleKind(draft, k))}
-						/>
-						<span class="check__box" aria-hidden="true">{isOn(k) ? '✓' : ''}</span>
-						<span class="check__name">{BRON_KIND_LABEL[k]}</span>
-						<span class="check__count">{formatCount(n)}</span>
-					</label>
+					<FilterOptie
+						label={BRON_KIND_LABEL[k]}
+						on={isOn(k)}
+						onToggle={() => (draft = toggleKind(draft, k))}
+						count={n}
+						empty={n === 0}
+					>
+						{#snippet voor()}<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />{/snippet}
+					</FilterOptie>
 				{/each}
 			</div>
 
@@ -481,43 +483,6 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 5px;
-	}
-	.check {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		padding: 6px 0;
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.check.is-empty {
-		color: var(--ink-3);
-	}
-	.check input {
-		position: absolute;
-		opacity: 0;
-		width: 0;
-		height: 0;
-	}
-	.check__box {
-		width: 14px;
-		height: 14px;
-		display: grid;
-		place-items: center;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-size: var(--t-glyph);
-		line-height: 1;
-		color: var(--paper);
-		flex: none;
-	}
-	.check input:checked + .check__box {
-		background: var(--ink);
-		border-color: var(--ink);
-	}
-	.check input:focus-visible + .check__box {
-		outline: 2px solid var(--accent);
-		outline-offset: 2px;
 	}
 	.check__name {
 		flex: 1;
