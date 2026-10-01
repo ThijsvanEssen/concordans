@@ -325,7 +325,9 @@
 			</p>
 		{/if}
 		{#if citation}
-			{@const kind = CITED[citation.kind]}
+			<!-- "36799, nr. 31" is a stuk; the dossier itself has no number after it. -->
+			{@const kind =
+				citation.kind === 'dossier' && citation.document ? 'documents' : CITED[citation.kind]}
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<div
 				id="{uid}-row-0"

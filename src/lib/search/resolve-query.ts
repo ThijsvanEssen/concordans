@@ -25,9 +25,11 @@ const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const BWB = /^BWB[RVW]\d{7}$/i;
 const CELEX = /^[0-9CE]\d{4}[A-Z]{1,2}\d{4}(?:R\(\d+\))?$/i;
 // A dossier number with its suffix: `36327`, `37020-XV`, `23908-(R1519)`. A digit suffix
-// (`21501-31`) reads as a paper number; `resolveQuery` asks the API which it is.
+// (`21501-31`) reads as a paper number; `resolveQuery` asks the API which it is. Cited in
+// full, with Kamer and vergaderjaar: "Kamerstukken II 2025/26, 36799, nr. 31", and an
+// Eerste Kamer paper by its letter: "Kamerstukken I 2025/26, 36799, A".
 const DOSSIER =
-	/^(?:kamerstuk(?:ken)?\s+(?:I{1,2}\s+)?)?(\d{5}(?:-(?:[A-Z]+|\([A-Z0-9]+\)))?)(?:\s*-\s*(\d+)|,?\s*nr\.?\s*(\d+|[A-Z]{1,2}))?$/i;
+	/^(?:kamerstuk(?:ken)?\s+(?:I{1,2}\s+)?(?:\d{4}\s*[/-]\s*\d{2,4},?\s+)?)?(\d{5}(?:-(?:[A-Z]+|\([A-Z0-9]+\)))?)(?:\s*-\s*(\d+)|,?\s*nr\.?\s*(\d+|[A-Z]{1,2})|,\s*([A-Z]{1,2}))?$/i;
 // "artikel 287 Sr", "art. 6:162 BW", "art. 359a lid 1 onder b Sv", "artikel 3:4, tweede lid, Awb".
 const ARTICLE = /^art(?:ikel|\.)?\s*(?:(\d+[a-z]?):)?(\d+[a-z]*(?:\.\d+[a-z]*)*)(?![\w:])(.*)$/i;
 // What stands between the article number and the law: ", tweede lid,", "lid 1 onder b".
@@ -72,7 +74,7 @@ export function parseCitation(query: string): Citation | null {
 		return {
 			kind: 'dossier',
 			number: dossier[1].toUpperCase(),
-			document: dossier[2] ?? dossier[3] ?? null
+			document: (dossier[2] ?? dossier[3] ?? dossier[4])?.toUpperCase() ?? null
 		};
 	}
 	const article = ARTICLE.exec(q);

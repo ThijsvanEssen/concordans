@@ -38,6 +38,16 @@ describe('parseCitation', () => {
 		['21501-31', { kind: 'dossier', number: '21501', document: '31' }],
 		['37020-XV-3', { kind: 'dossier', number: '37020-XV', document: '3' }],
 		['Kamerstuk 36327 nr. A', { kind: 'dossier', number: '36327', document: 'A' }],
+		[
+			'Kamerstukken II 2025/26, 36799, nr. 31',
+			{ kind: 'dossier', number: '36799', document: '31' }
+		],
+		[
+			'Kamerstukken II 2025-2026 36799 nr. 31',
+			{ kind: 'dossier', number: '36799', document: '31' }
+		],
+		['Kamerstukken I 2025/26, 36799, A', { kind: 'dossier', number: '36799', document: 'A' }],
+		['Kamerstukken II 2025/26, 36799', { kind: 'dossier', number: '36799', document: null }],
 		['BWBR0001854', { kind: 'bwb', id: 'BWBR0001854' }],
 		['32004L0017', { kind: 'celex', id: '32004L0017' }]
 	])('%s', (query, expected) => {
@@ -107,6 +117,19 @@ describe('resolveQuery', () => {
 			number: '21501-31'
 		});
 		expect(d.documentKey).not.toHaveBeenCalled();
+	});
+
+	it('opens the stuk a full Kamerstuk citation names, as the API resolves it', async () => {
+		const d = deps({
+			resolve: vi.fn(async () => ({
+				ref: { collection: 'documents' as const, key: '1501fbca' },
+				at: null
+			}))
+		});
+		const q = 'Kamerstukken II 2025/26, 36799, nr. 31';
+		expect((await resolveQuery(q, d))?.ref).toEqual({ collection: 'documents', key: '1501fbca' });
+		expect(d.resolve).toHaveBeenCalledWith(q);
+		expect(d.dossier).not.toHaveBeenCalled();
 	});
 
 	it('opens the document of a dossier, and the dossier when it has no such document', async () => {
