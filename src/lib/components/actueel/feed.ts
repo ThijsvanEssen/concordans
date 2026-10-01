@@ -52,6 +52,14 @@ export const kindFromParam = (value: string): FeedKind | null =>
 
 type Dossier = NonNullable<FeedItem['dossier']>;
 
+/**
+ * A short title that only cites where a treaty was published ("Trb. 2018, 201 en Trb. 2023,
+ * 54") names no subject; the dossier's title does.
+ * TODO(backend BE-12): goes once 0.73.0 gives a short title without publication references.
+ */
+const PUBLICATIONS_ONLY =
+	/^(?:(?:Trb|Stb|Stcrt)\.\s*\d{4},\s*\d+[a-z]?)(?:\s*(?:,|en)\s*(?:Trb|Stb|Stcrt)\.\s*\d{4},\s*\d+[a-z]?)*$/i;
+
 /** Past this length a dossier without a short title is named by its title, cut. */
 const DOSSIER_NAME_MAX = 80;
 
@@ -64,7 +72,8 @@ export function dossierName(
 	d: Pick<Dossier, 'number' | 'title' | 'short_title' | 'short_title_basis'>
 ): string {
 	const short = d.short_title?.trim();
-	if (short) return d.short_title_basis === 'amended_law' ? `wijziging van ${short}` : short;
+	if (short && !PUBLICATIONS_ONLY.test(short))
+		return d.short_title_basis === 'amended_law' ? `wijziging van ${short}` : short;
 	const title = d.title?.trim();
 	if (!title) return d.number;
 	return title.length > DOSSIER_NAME_MAX
