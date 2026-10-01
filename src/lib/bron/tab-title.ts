@@ -30,7 +30,9 @@ export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>):
 		const cite = ecli
 			? judgmentCite(ecli, text(props.date), text(props.court), author).short
 			: node.label;
-		return names.length ? `${cite} (${names.join(', ')})` : cite;
+		// A translation shares the date and the name of its original: the tab says which.
+		const translation = text(props.translation_of) ? ', vertaling' : '';
+		return `${names.length ? `${cite} (${names.join(', ')})` : cite}${translation}`;
 	}
 	if (node.collection === 'dossiers') {
 		const number = text(props.label) ?? node.label;

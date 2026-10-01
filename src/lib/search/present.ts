@@ -77,6 +77,8 @@ export function around(text: string, query: string, lead = 40): string {
 	return `…${text.slice(start < 0 ? at - lead : start + 1)}`;
 }
 
+const TRANSLATION = /\((engels|engelse vertaling|english translation)\)\s*$/i;
+
 /** "Hoge Raad 2024-09-24 / 23/02910" in its parts. */
 function judgmentParts(name: string): {
 	court: string;
@@ -111,16 +113,24 @@ export function presentHit(hit: Hit, query: string): Presented {
 		}
 		case 'judgments': {
 			// Cited as lawyers do, the ECLI under it: HR 19 juli 2019.
-			const { court, date } = judgmentParts(hit.display_name ?? '');
+			const { court, date, caseNumber } = judgmentParts(hit.display_name ?? '');
 			const names = extras(hit, 'names');
 			const ecli = extra(hit, 'ecli');
-			const when = ecli
-				? judgmentCite(ecli, date, court).short
+			// A judgment only cited, not in the data, has no date: the year of its ECLI.
+			const year = !date && ecli ? (/^ECLI:[^:]+:[^:]+:(\d{4}):/i.exec(ecli)?.[1] ?? null) : null;
+			const cited = ecli ? judgmentCite(ecli, date, court).short : null;
+			const when = cited
+				? year
+					? `${cited} ${year}`
+					: cited
 				: date
 					? `${court}, ${formatLongDate(date)}`
 					: court;
+			// The court publishes a translation under its own ECLI and the same date; the name
+			// it gives says so ("(Engels)", "(English translation)"), and the title too.
+			const translation = TRANSLATION.test(caseNumber ?? '') ? ', Engelse vertaling' : '';
 			return {
-				title: names.length ? `${when} (${names.join(', ')})` : when || ecli,
+				title: `${names.length ? `${when} (${names.join(', ')})` : when || ecli}${translation}`,
 				context: ecli,
 				snippet: snippet && snippet !== ecli ? marked(around(snippet, query), query) : null
 			};
