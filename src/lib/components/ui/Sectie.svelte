@@ -12,6 +12,7 @@
 		aantal,
 		id,
 		naast,
+		niveau = 3,
 		children
 	}: {
 		titel: string;
@@ -21,17 +22,19 @@
 		id?: string;
 		/** Beside the title, at the right: a link or a control. */
 		naast?: Snippet;
+		/** The level of the heading: 3 in a reader under its title, 2 on a page of sections. */
+		niveau?: 2 | 3;
 		children: Snippet;
 	} = $props();
 </script>
 
 <section class="sectie" {id}>
-	<h3 class="kop">
+	<svelte:element this={`h${niveau}`} class="kop">
 		{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
 				class="aantal">{aantal.toLocaleString('nl-NL')}</span
 			>{/if}
 		{#if naast}<span class="naast">{@render naast()}</span>{/if}
-	</h3>
+	</svelte:element>
 	{@render children()}
 </section>
 

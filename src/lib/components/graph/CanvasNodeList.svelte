@@ -25,7 +25,7 @@
 		onFocusNode: (node: GraphNode | null) => void;
 		onToggleChosen?: (node: GraphNode) => void;
 		/** A cluster bron ("250 uitspraken"): Enter opens its card, as a click does. */
-		onOpenCluster?: (node: GraphNode) => void;
+		onOpenCluster?: (node: GraphNode, opener: HTMLElement) => void;
 	} = $props();
 
 	let active = $state(0);
@@ -105,10 +105,11 @@
 			<li>
 				<a
 					href={isClusterId(n.id) ? '#' : bronHref(refOf(n.collection, n.key, n.raw?.props))}
+					aria-haspopup={isClusterId(n.id) ? 'dialog' : undefined}
 					onclick={(e) => {
 						if (!isClusterId(n.id)) return;
 						e.preventDefault();
-						onOpenCluster?.(n);
+						onOpenCluster?.(n, e.currentTarget);
 					}}
 					data-sveltekit-noscroll
 					data-index={i}

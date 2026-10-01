@@ -141,7 +141,7 @@
 </script>
 
 <figure class="hemicycle" class:kaal={meubels} aria-label="Zetelverdeling {kamer}">
-	<svg viewBox="0 0 {VIEW_W} {VIEW_H}">
+	<svg viewBox="0 0 {VIEW_W} {VIEW_H}" role="group" aria-label="Zetels per fractie">
 		<!-- Sectoren eerst (onder de stoelen) zodat ze de pointer-events
          opvangen zonder over de stoelen te tekenen. -->
 		{#each sectors as sec (sec.faction.id)}
@@ -175,60 +175,56 @@
 				class:seat--vote-other={voteHighlight != null && side == null}
 			/>
 		{/each}
-		{#if hovered}
-			<text
-				x={CX}
-				y={CY - 6}
-				text-anchor="middle"
-				class="center-num center-num--party"
-				style:fill={hovered.color}
-				aria-live="polite"
-			>
-				{hovered.abbreviation ?? hovered.key}
-			</text>
-			<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
-				{hovered.seats}
-				{hovered.seats === 1 ? 'zetel' : 'zetels'}
-			</text>
-		{:else if voteTotals}
-			<text x={CX} y={CY - 6} text-anchor="middle" class="center-num" aria-live="polite">
-				{voteTotals.voor}
-			</text>
-			<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
-				voor · {voteTotals.tegen} tegen
-			</text>
-		{:else if !meubels}
-			<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">
-				{data.assigned_seats}
-			</text>
-			<text x={CX} y={CY + 8} text-anchor="middle" class="center-lbl">zetels</text>
-		{/if}
+		<!-- What the middle says, the sector's link says already: not read twice. -->
+		<g aria-hidden="true">
+			{#if hovered}
+				<text
+					x={CX}
+					y={CY - 6}
+					text-anchor="middle"
+					class="center-num center-num--party"
+					style:fill={hovered.color}
+				>
+					{hovered.abbreviation ?? hovered.key}
+				</text>
+				<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
+					{hovered.seats}
+					{hovered.seats === 1 ? 'zetel' : 'zetels'}
+				</text>
+			{:else if voteTotals}
+				<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">
+					{voteTotals.voor}
+				</text>
+				<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
+					voor · {voteTotals.tegen} tegen
+				</text>
+			{:else if !meubels}
+				<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">
+					{data.assigned_seats}
+				</text>
+				<text x={CX} y={CY + 8} text-anchor="middle" class="center-lbl">zetels</text>
+			{/if}
+		</g>
 		{#if meubels}
 			{@const y = CY + 30}
-			<!-- Zoals de zetelverdeling van de Tweede Kamer: 1 Voorzitter, 2 Griffier,
+			<g aria-hidden="true">
+				<!-- Zoals de zetelverdeling van de Tweede Kamer: 1 Voorzitter, 2 Griffier,
 			     3 Kabinet (vak-K), 4 Verslag en redactie, 5 Spreekgestoelte. -->
-			<g class="meubel">
-				<rect x={CX - 118} {y} width="56" height="14" rx="2" />
-				<rect x={CX - 56} {y} width="36" height="14" rx="2" />
-				<rect x={CX - 12} y={y + 22} width="24" height="12" rx="2" />
-				<rect x={CX + 22} {y} width="96" height="14" rx="2" />
-				<rect x={CX + 126} {y} width="44" height="14" rx="2" />
+				<g class="meubel">
+					<rect x={CX - 118} {y} width="56" height="14" rx="2" />
+					<rect x={CX - 56} {y} width="36" height="14" rx="2" />
+					<rect x={CX - 12} y={y + 22} width="24" height="12" rx="2" />
+					<rect x={CX + 22} {y} width="96" height="14" rx="2" />
+					<rect x={CX + 126} {y} width="44" height="14" rx="2" />
+				</g>
+				{#each [[CX - 90, y + 7, '1'], [CX - 38, y + 7, '2'], [CX + 70, y + 7, '3'], [CX + 148, y + 7, '4'], [CX, y + 28, '5']] as [x, yy, n] (n)}
+					<circle cx={x} cy={yy} r="7" class="nr" />
+					<text {x} y={Number(yy) + 3} text-anchor="middle" class="nr-t">{n}</text>
+				{/each}
 			</g>
-			{#each [[CX - 90, y + 7, '1'], [CX - 38, y + 7, '2'], [CX + 70, y + 7, '3'], [CX + 148, y + 7, '4'], [CX, y + 28, '5']] as [x, yy, n] (n)}
-				<circle cx={x} cy={yy} r="7" class="nr" />
-				<text {x} y={Number(yy) + 3} text-anchor="middle" class="nr-t">{n}</text>
-			{/each}
 		{/if}
 	</svg>
 
-	<!-- Tekstfallback voor schermlezers: de SVG zelf is aria-hidden zodat
-       de seat-circles geen ruis maken; deze lijst geeft het volledige
-       overzicht in stemvolgorde. -->
-	<ul class="hemicycle-sr-list">
-		{#each seated as f (f.id)}
-			<li>{f.abbreviation ?? f.key}, {f.name ?? ''}, {seatCount(f.seats)}</li>
-		{/each}
-	</ul>
 	{#if !meubels}
 		<figcaption class="hemicycle-caption">
 			<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
@@ -360,18 +356,5 @@
 	}
 	.hemicycle-source a:hover {
 		color: var(--accent);
-	}
-
-	/* Visually hidden, but exposed to screen readers. */
-	.hemicycle-sr-list {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		margin: -1px;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
 	}
 </style>

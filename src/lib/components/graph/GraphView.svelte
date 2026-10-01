@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
+	import { isEscape } from '$lib/actions/keys';
 	import { get } from 'svelte/store';
 	import Graph from 'graphology';
 	import type FA2LayoutType from 'graphology-layout-forceatlas2/worker';
@@ -547,10 +548,19 @@
 		redraw();
 	}
 
-	/** One click on a cluster: its card beside it, as a row opens in place. */
-	function openCluster(id: string) {
+	/**
+	 * One click on a cluster: its card beside it, as a row opens in place. Opened from the
+	 * list of the network (Enter), the focus goes into the card and comes back on Escape.
+	 */
+	let clusterOpener: HTMLElement | null = null;
+	function openCluster(id: string, opener: HTMLElement | null = null) {
 		const c = clusterById.get(id);
 		if (!c) return;
+		clusterOpener = opener;
+		if (opener)
+			void tick().then(() =>
+				canvasWrap?.parentElement?.querySelector<HTMLElement>('.cluster-kaart button')?.focus()
+			);
 		const at = lastPointer ?? { x: CARD_GAP, y: CARD_GAP };
 		const w = canvasWrap?.clientWidth ?? CARD_W;
 		const x = at.x + CARD_GAP + CARD_W < w ? at.x + CARD_GAP : Math.max(8, w - CARD_W - 8);
@@ -1132,7 +1142,7 @@
 			isChosen={(id) => pinnedIds.has(id)}
 			onFocusNode={onKeyNode}
 			{onToggleChosen}
-			onOpenCluster={(n) => openCluster(n.id)}
+			onOpenCluster={(n, opener) => openCluster(n.id, opener)}
 		/>
 		<!-- The canvas takes the focus so that ← and → act on it, and only then. -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -1231,7 +1241,14 @@
 					class="cluster-kaart"
 					role="dialog"
 					aria-label={clusterLabel(c)}
+					tabindex="-1"
 					style="left:{clusterCard.x}px; top:{clusterCard.y}px"
+					onkeydown={(e) => {
+						if (!isEscape(e)) return;
+						e.preventDefault();
+						clusterCard = null;
+						if (clusterOpener?.isConnected) clusterOpener.focus();
+					}}
 				>
 					<p class="cluster-naam">
 						<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}

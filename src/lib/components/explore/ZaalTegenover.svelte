@@ -110,20 +110,34 @@
 </script>
 
 <figure class="zaal">
-	<svg viewBox="0 0 {W} {H}" role="img" aria-label="Plattegrond van de Eerste Kamer, 75 zetels">
-		<path d="M{W / 2 - 46} 8 H{W / 2 + 46} L{W / 2 + 40} 26 H{W / 2 - 40} Z" class="meubel" />
-		<circle cx={W / 2} cy="17" r="7" class="nr" /><text
+	<svg viewBox="0 0 {W} {H}" role="group" aria-label="Plattegrond van de Eerste Kamer, 75 zetels">
+		<path
+			d="M{W / 2 - 46} 8 H{W / 2 + 46} L{W / 2 + 40} 26 H{W / 2 - 40} Z"
+			class="meubel"
+			aria-hidden="true"
+		/>
+		<circle cx={W / 2} cy="17" r="7" class="nr" aria-hidden="true" /><text
 			x={W / 2}
 			y="20"
 			text-anchor="middle"
-			class="nr-t">3</text
+			class="nr-t"
+			aria-hidden="true">3</text
 		>
-		<rect x={W / 2 - 22} y={rowY(4)} width="44" height={2 * ROW - 4} rx="2" class="meubel" />
-		<circle cx={W / 2} cy={rowY(4) + ROW - 2} r="7" class="nr" /><text
+		<rect
+			x={W / 2 - 22}
+			y={rowY(4)}
+			width="44"
+			height={2 * ROW - 4}
+			rx="2"
+			class="meubel"
+			aria-hidden="true"
+		/>
+		<circle cx={W / 2} cy={rowY(4) + ROW - 2} r="7" class="nr" aria-hidden="true" /><text
 			x={W / 2}
 			y={rowY(4) + ROW + 1}
 			text-anchor="middle"
-			class="nr-t">4</text
+			class="nr-t"
+			aria-hidden="true">4</text
 		>
 		<!-- One link per fractie, as the sectors of the hemicycle: its seats and the cells
 		     around them are one target, so the pointer need not land on a seat itself. -->
@@ -171,27 +185,46 @@
 				y={rowY(1) + 6}
 				text-anchor="middle"
 				class="hover-naam"
+				aria-hidden="true"
 				class:lang={hovered.replace(/^Fractie-/, '').length > 8}
 				style:fill={kleurVan('EK', hovered, 0, fillOf.get(hovered) ?? null)}
-				aria-live="polite">{hovered.replace(/^Fractie-/, '')}</text
+				>{hovered.replace(/^Fractie-/, '')}</text
 			>
-			<text x={W / 2} y={rowY(1) + 22} text-anchor="middle" class="hover-zetels"
+			<text x={W / 2} y={rowY(1) + 22} text-anchor="middle" class="hover-zetels" aria-hidden="true"
 				>{seatsOf(hovered)} {seatsOf(hovered) === 1 ? 'zetel' : 'zetels'}</text
 			>
 		{/if}
-		<rect x={W / 2 - S / 2 - 10 - S} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
-		<rect x={W / 2 + S / 2 + 10} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
-		<circle cx={W / 2} cy={rowY(9) + S + 14} r="7" class="nr" /><text
+		<rect
+			x={W / 2 - S / 2 - 10 - S}
+			y={rowY(9)}
+			width={S}
+			height={S}
+			rx="3"
+			class="meubel"
+			aria-hidden="true"
+		/>
+		<rect
+			x={W / 2 + S / 2 + 10}
+			y={rowY(9)}
+			width={S}
+			height={S}
+			rx="3"
+			class="meubel"
+			aria-hidden="true"
+		/>
+		<circle cx={W / 2} cy={rowY(9) + S + 14} r="7" class="nr" aria-hidden="true" /><text
 			x={W / 2}
 			y={rowY(9) + S + 17}
 			text-anchor="middle"
-			class="nr-t">1</text
+			class="nr-t"
+			aria-hidden="true">1</text
 		>
-		<circle cx={W / 2 - S - 10} cy={rowY(9) + S + 14} r="7" class="nr" /><text
+		<circle cx={W / 2 - S - 10} cy={rowY(9) + S + 14} r="7" class="nr" aria-hidden="true" /><text
 			x={W / 2 - S - 10}
 			y={rowY(9) + S + 17}
 			text-anchor="middle"
-			class="nr-t">2</text
+			class="nr-t"
+			aria-hidden="true">2</text
 		>
 	</svg>
 </figure>

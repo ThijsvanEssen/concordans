@@ -122,10 +122,10 @@
 <div class="facets" class:facets--pending={pending}>
 	{#each groups as g (g.id)}
 		<section class="group" aria-labelledby="facet-{g.id}">
-			<h3 class="group-head" id="facet-{g.id}">
+			<h2 class="group-head" id="facet-{g.id}">
 				<span>{g.label}</span>
 				{#if g.note && !pending}<span class="group-note">{g.note}</span>{/if}
-			</h3>
+			</h2>
 
 			{#if g.kind === 'list'}
 				<ul class="options">

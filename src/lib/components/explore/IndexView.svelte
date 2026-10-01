@@ -94,6 +94,7 @@
 	import {
 		INDEX_CATEGORIES,
 		INDEX_TABS,
+		categoryLabel,
 		collectionOf,
 		type IndexCategory
 	} from './index/categories';
@@ -1796,6 +1797,8 @@
 	<div class="stage">
 		<div class="stage-scroll" bind:this={scroller}>
 			<div class="page">
+				<!-- The page names itself for a screen reader; the tabs above show it. -->
+				<h1 class="sr-only">Bladeren: {categoryLabel(category)}</h1>
 				<aside class="facet-col" aria-label="Filters">
 					<!-- On a narrow screen the filters fold away above the list. -->
 					<button
