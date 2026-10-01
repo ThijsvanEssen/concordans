@@ -122,11 +122,8 @@
 									`${keuze} ${meervoud(zetels, 'zetel', 'zetels')} (${meervoud(s.voters?.[keuze] ?? 0, unit[0], unit[1])})`
 							)
 							.join(', ');
-				const delen = [
-					uitslag,
-					wijze && !isHammer(s) ? wijze.toLowerCase() : null,
-					s.date ? langeDatum(s.date) : null
-				].filter(Boolean);
+				// The day stands above the vote in the list; the sentence does not repeat it.
+				const delen = [uitslag, wijze && !isHammer(s) ? wijze.toLowerCase() : null].filter(Boolean);
 				return {
 					zin: delen.length ? `${delen.join(', ')}.` : null,
 					links: telling ? [{ label: telling }] : []

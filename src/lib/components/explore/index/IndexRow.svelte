@@ -122,10 +122,11 @@
 		position: relative;
 	}
 
+	/* No tabular figures: the column holds words too, and they would give a comma or a
+	   full stop the width of a figure ("Wetsvoorstel , aangenomen"). */
 	.row-id {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 		line-height: 1.4;
 		padding-top: 3px;

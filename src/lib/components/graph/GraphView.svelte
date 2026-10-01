@@ -1298,6 +1298,13 @@
 	}
 
 	@media (max-width: 768px) {
+		/* Narrow: the Netwerk panel takes the top; the legend stands at the bottom left,
+		   across from the zoom, and opens upward. */
+		.legenda {
+			top: auto;
+			bottom: var(--s-3);
+			max-height: calc(100% - 12rem);
+		}
 		.legenda-inhoud :global(.legend) {
 			width: min(250px, calc(100vw - 48px));
 		}

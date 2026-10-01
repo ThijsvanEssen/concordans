@@ -50,7 +50,6 @@ describe('one form for each thing', () => {
 			'lib/components/explore/IndexView.svelte',
 			'lib/components/explore/ZaalLegenda.svelte',
 			'lib/components/explore/index/IndexFacets.svelte',
-			'lib/components/explore/index/IndexRow.svelte',
 			'lib/components/explore/readers/CabinetReader.svelte',
 			'lib/components/explore/readers/CommitmentReader.svelte',
 			'lib/components/explore/readers/DecisionReader.svelte',

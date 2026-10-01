@@ -1687,7 +1687,7 @@
 		},
 		judgments: { lead: 'Datum', body: 'Uitspraak', aside: 'Aangehaald', leadW: 140, asideW: 110 },
 		dossiers: { lead: 'Nummer', body: 'Titel', aside: 'Fase', leadW: 140, asideW: 150 },
-		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', leadW: 140, asideW: 110 },
+		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', leadW: 140, asideW: 180 },
 		members: { lead: 'Fractie', body: 'Naam', aside: '', leadW: 140, asideW: 60 },
 		factions: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', leadW: 140, asideW: 110 },
 		committees: {
@@ -2660,7 +2660,7 @@
 		onToggle={() => toggleOpen(bron)}
 	>
 		{#snippet lead()}
-			<span class="row-id-main row-num">{d.number}</span>
+			<span class="row-id-main">{d.number}</span>
 			{#if d.kind && !member}
 				<span class="row-id-sub">{d.kind}</span>
 			{/if}
@@ -3351,11 +3351,6 @@
 		line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-	}
-	.row-num {
-		color: var(--ink);
-		font-weight: 500;
-		font-size: var(--t-meta);
 	}
 	.row-zin {
 		display: block;

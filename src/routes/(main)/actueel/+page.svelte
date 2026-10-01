@@ -405,10 +405,6 @@
 <div class="actueel">
 	<aside class="filters" aria-label="Filters">
 		<h1 class="title">Actueel</h1>
-		<p class="about">
-			Wetsvoorstellen, nota’s van wijziging, amendementen, moties, stemmingen, toezeggingen, brieven
-			van de regering, publicaties en inwerkingtredingen, per dag.
-		</p>
 		{#if stand}
 			<p class="stand">{standLine(stand)}</p>
 		{/if}
@@ -512,11 +508,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
 		font-weight: 500;
-	}
-	.about {
-		margin: var(--s-2) 0;
-		font-size: var(--t-meta);
-		color: var(--ink-2);
 	}
 	.stand {
 		margin: 0 0 var(--s-5);

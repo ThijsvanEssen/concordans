@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Picto from '$lib/components/ui/Picto.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	// One line of Actueel: an item, or a fold of many items of one kind on one dossier. The
 	// title of an item links to the bron; the rest of the line opens its details beneath it.
@@ -166,9 +167,16 @@
 					{/each}
 				</ul>
 			{/if}
+			<!-- The same two buttons as every opened row (OpenRij); the rest as links. -->
+			<p class="acts">
+				<a class="act act--pri" href={bronHref(refOf(i), { keepMode: false, mode: 'read' })}
+					><Picto naam="tekst" size={13} />Lees</a
+				>
+				<a class="act" href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}
+					><Picto naam="netwerk" size={13} />In het netwerk</a
+				>
+			</p>
 			<p class="links">
-				<a href={bronHref(refOf(i), { keepMode: false, mode: 'read' })}>Lees</a>
-				<a href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}>In het netwerk</a>
 				{#if i.official_url}<a href={i.official_url} rel="external">Officiële publicatie</a>{/if}
 				{#if i.tk_url}<a href={i.tk_url} rel="external">Op tweedekamer.nl</a>{/if}
 				{#if i.dossier}<a href={filterHref({ dossier: i.dossier.number })}
@@ -308,6 +316,35 @@
 	}
 	.fold-items :global(a.fold-title:hover) {
 		text-decoration: underline;
+	}
+	.acts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-2);
+		margin: var(--s-3) 0 0;
+	}
+	.act {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.act:hover {
+		border-color: var(--ink);
+	}
+	.act--pri {
+		background: var(--ink);
+		border-color: var(--ink);
+		color: var(--paper);
 	}
 	.links {
 		display: flex;
