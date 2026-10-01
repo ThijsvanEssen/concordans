@@ -19,6 +19,8 @@
 		type Ministry
 	} from '$lib/components/explore/index/government';
 	import { formatLongDate } from './_shared';
+	import Feiten from '$lib/components/ui/Feiten.svelte';
+	import Veld from '$lib/components/ui/Veld.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -82,54 +84,44 @@
 				<h2 class="text">{c.text ?? 'Toezegging zonder tekst'}</h2>
 			</header>
 
-			<dl class="facts">
-				<dt>Bewindspersoon</dt>
-				<dd>
+			<Feiten>
+				<Veld label="Bewindspersoon" value={c.member ?? c.minister_name} nodig>
 					{#if c.member}
 						<BronLink ref={`members/${c.member.key}`}>{c.member.name ?? c.member.key}</BronLink>
 					{:else}
-						{c.minister_name ?? 'onbekend'}
+						{c.minister_name}
 					{/if}
-				</dd>
-				{#if c.member?.function || c.post}
-					<dt>Functie</dt>
-					<dd>{c.member?.function ?? (c.post ? POST_LABEL[c.post] : '')}</dd>
-				{/if}
-				{#if ministryName(c.ministry)}
-					<dt>Ministerie</dt>
-					<dd>{ministryName(c.ministry)}</dd>
-				{/if}
-				{#if c.cabinet}
-					<dt>Kabinet</dt>
-					<dd><BronLink ref={`cabinets/${c.cabinet}`}>{cabinetName(c.cabinet)}</BronLink></dd>
-				{/if}
-				{#if c.date}
-					<dt>Gedaan op</dt>
-					<dd class="nums">
-						{formatLongDate(c.date)}{#if c.activity}, in <BronLink
+				</Veld>
+				<Veld label="Functie" value={c.member?.function ?? (c.post ? POST_LABEL[c.post] : null)} />
+				<Veld label="Ministerie" value={ministryName(c.ministry)} />
+				<Veld label="Kabinet" value={c.cabinet}>
+					<BronLink ref={`cabinets/${c.cabinet}`}>{cabinetName(c.cabinet ?? '')}</BronLink>
+				</Veld>
+				<Veld label="Gedaan op" value={c.date}>
+					<span class="nums"
+						>{formatLongDate(c.date ?? null)}{#if c.activity}, in <BronLink
 								ref={`activities/${c.activity.key}`}>activiteit {c.activity.number ?? ''}</BronLink
-							>{/if}
-					</dd>
-				{/if}
-				<dt>Stand</dt>
-				<dd class:late>
-					{c.status ?? 'onbekend'}{#if late}, over de verwachte datum{/if}
-				</dd>
-				<dt>Verwacht</dt>
-				<dd class="nums">
-					{c.expected_resolution ? formatLongDate(c.expected_resolution) : 'geen datum genoemd'}
-				</dd>
-				{#if c.dossiers?.length}
-					<dt>{c.dossiers.length === 1 ? 'Dossier' : 'Dossiers'}</dt>
-					<dd class="dossiers">
-						{#each uniqueBy(c.dossiers, (d) => d.key) as d (d.key)}
+							>{/if}</span
+					>
+				</Veld>
+				<Veld label="Stand" value={c.status} nodig>
+					<span class:late
+						>{c.status}{#if late}, over de verwachte datum{/if}</span
+					>
+				</Veld>
+				<Veld label="Verwacht" value={c.expected_resolution} nodig>
+					<span class="nums">{formatLongDate(c.expected_resolution ?? null)}</span>
+				</Veld>
+				<Veld label={c.dossiers?.length === 1 ? 'Dossier' : 'Dossiers'} value={c.dossiers}>
+					<span class="dossiers">
+						{#each uniqueBy(c.dossiers ?? [], (d) => d.key) as d (d.key)}
 							<BronLink ref={{ collection: 'dossiers', key: d.key, number: d.number ?? d.key }}
 								>{d.number}{d.title ? ` ${d.title}` : ''}</BronLink
 							>
 						{/each}
-					</dd>
-				{/if}
-			</dl>
+					</span>
+				</Veld>
+			</Feiten>
 
 			{#if c.member}
 				<p class="more">
@@ -178,24 +170,6 @@
 		line-height: 1.6;
 		color: var(--ink);
 		max-width: 68ch;
-	}
-	/* Label left, value beside it: one edge for the labels, one for the values. */
-	.facts {
-		display: grid;
-		grid-template-columns: 10em minmax(0, 1fr);
-		gap: var(--s-2) var(--s-4);
-		margin: 0;
-	}
-	.facts dt {
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-	}
-	.facts dd {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
 	}
 	.late {
 		color: var(--accent) !important;

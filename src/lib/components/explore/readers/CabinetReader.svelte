@@ -1,5 +1,7 @@
 <script lang="ts">
 	import BronLink from '$lib/bron/BronLink.svelte';
+	import Feiten from '$lib/components/ui/Feiten.svelte';
+	import Veld from '$lib/components/ui/Veld.svelte';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	// Reader for a cabinet: its period, minister-president and coalition, and what it did,
 	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
@@ -67,21 +69,18 @@
 				<h2 class="title">{c.name}</h2>
 			</header>
 
-			<dl class="facts">
-				<dt>Periode</dt>
-				<dd class="nums">
-					{#if from && to}{from} tot {to}{:else if from}sinds {from}{:else}onbekend{/if}
-				</dd>
-				{#if c.prime_minister}
-					<dt>Minister-president</dt>
-					<dd>
-						<BronLink ref={`members/${c.prime_minister.key}`}>{c.prime_minister.name}</BronLink>
-					</dd>
-				{/if}
-				{#if c.parties?.length}
-					<dt>Coalitie</dt>
-					<dd class="parties">
-						{#each c.parties as p, i (i)}
+			<Feiten>
+				<Veld label="Periode" value={from} nodig>
+					<span class="nums"
+						>{#if to}{from} tot {to}{:else}sinds {from}{/if}</span
+					>
+				</Veld>
+				<Veld label="Minister-president" value={c.prime_minister}>
+					<BronLink ref={`members/${c.prime_minister?.key}`}>{c.prime_minister?.name}</BronLink>
+				</Veld>
+				<Veld label="Coalitie" value={c.parties}>
+					<span class="parties">
+						{#each c.parties ?? [] as p, i (i)}
 							<span class="party"
 								><span class="party-dot" style:background={partyColor(p.short ?? p.faction ?? '')}
 								></span><NameLink
@@ -91,19 +90,21 @@
 								/></span
 							>
 						{/each}
-					</dd>
-				{/if}
-				<dt>Bewindspersonen</dt>
-				<dd class="nums">
-					<a href={listHref('ministers', c.key)} data-sveltekit-noscroll>{c.members}</a>
-				</dd>
-				<dt>Wetsvoorstellen</dt>
-				<dd class="nums">{c.bills}</dd>
-				<dt>Toezeggingen</dt>
-				<dd class="nums">
-					<a href={listHref('commitments', c.key)} data-sveltekit-noscroll>{c.commitments}</a>
-				</dd>
-			</dl>
+					</span>
+				</Veld>
+				<Veld label="Bewindspersonen" value={c.members}>
+					<a class="nums" href={listHref('ministers', c.key)} data-sveltekit-noscroll>{c.members}</a
+					>
+				</Veld>
+				<Veld label="Wetsvoorstellen" value={c.bills}>
+					<span class="nums">{c.bills}</span>
+				</Veld>
+				<Veld label="Toezeggingen" value={c.commitments}>
+					<a class="nums" href={listHref('commitments', c.key)} data-sveltekit-noscroll
+						>{c.commitments}</a
+					>
+				</Veld>
+			</Feiten>
 		{/if}
 	</div>
 </ReaderFrame>
@@ -143,24 +144,6 @@
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
-	}
-	/* Label left, value beside it: one edge for the labels, one for the values. */
-	.facts {
-		display: grid;
-		grid-template-columns: 10em minmax(0, 1fr);
-		gap: var(--s-2) var(--s-4);
-		margin: 0;
-	}
-	.facts dt {
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-	}
-	.facts dd {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
 	}
 	.nums {
 		font-variant-numeric: tabular-nums;

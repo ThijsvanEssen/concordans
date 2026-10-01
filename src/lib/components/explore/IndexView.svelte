@@ -89,6 +89,8 @@
 	import CabinetOccupancy from './index/CabinetOccupancy.svelte';
 	import IndexDetail from './index/IndexDetail.svelte';
 	import IndexRow from './index/IndexRow.svelte';
+	import Waarde from '$lib/components/ui/Waarde.svelte';
+	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
 	import {
 		INDEX_CATEGORIES,
 		INDEX_TABS,
@@ -1752,7 +1754,7 @@
 
 	const openSearch = useSearchOpener();
 
-	const fmtDateShort = (iso: string | null | undefined) => korteDatum(iso) || '—';
+	const fmtDateShort = (iso: string | null | undefined) => korteDatum(iso) || null;
 </script>
 
 <svelte:window onkeydown={handleKey} />
@@ -2117,7 +2119,7 @@
 												onToggle={() => toggleOpen(bron)}
 											>
 												{#snippet lead()}
-													<span class="row-id-main">{fmtDateShort(j.date)}</span>
+													<span class="row-id-main"><Waarde value={fmtDateShort(j.date)} /></span>
 													{#if j.court}
 														<span class="row-id-sub">{j.court}</span>
 													{/if}
@@ -2230,7 +2232,7 @@
 												onToggle={() => toggleOpen(bron)}
 											>
 												{#snippet lead()}
-													<span class="row-id-main">{c.abbreviation ?? ''}</span>
+													<span class="row-id-main"><Waarde value={c.abbreviation} /></span>
 												{/snippet}
 												{#snippet body()}
 													{#if c.chamber !== 'EK'}
@@ -2246,8 +2248,6 @@
 														<!-- Not yet linked to dossiers: no count to give. -->
 													{:else if count > 0}
 														<span class="num-strong">{count}</span>
-													{:else}
-														<span class="tag tag--outline">—</span>
 													{/if}
 												{/snippet}
 												{#snippet detail()}
@@ -2376,7 +2376,7 @@
 													s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
 												<IndexRow
 													{bron}
-													title={s.subject ?? '—'}
+													title={stemmingNaam(s.subject, s.dossier_numbers?.[0])}
 													href={hrefOf(bron)}
 													open={openId === bron}
 													onToggle={() => toggleOpen(bron)}
@@ -2384,7 +2384,9 @@
 													{#snippet lead()}
 														{#if !day.date || kindLabel}
 															<span class="row-id-main"
-																>{day.date ? kindLabel : fmtDateShort(s.date)}</span
+																><Waarde
+																	value={day.date ? kindLabel : fmtDateShort(s.date)}
+																/></span
 															>
 															{#if s.dossier_numbers?.[0]}
 																<span class="row-id-sub">{s.dossier_numbers[0]}</span>
@@ -2527,7 +2529,7 @@
 												onToggle={() => toggleOpen(bron)}
 											>
 												{#snippet lead()}
-													<span class="row-id-main">{label ?? '—'}</span>
+													<span class="row-id-main"><Waarde value={label} /></span>
 												{/snippet}
 												{#snippet body()}
 													{#if doc.kind}<span class="row-sub">{doc.kind}</span>{/if}
@@ -2562,7 +2564,7 @@
 												onToggle={() => toggleOpen(bron)}
 											>
 												{#snippet lead()}
-													<span class="row-id-main">{fmtDateShort(t.date)}</span>
+													<span class="row-id-main"><Waarde value={fmtDateShort(t.date)} /></span>
 													{#if t.status}
 														<span class="row-id-sub">{t.status}</span>
 													{/if}

@@ -11,6 +11,7 @@
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
 	import { formatDate, formatLongDate } from './_shared';
 	import { ekVoteLine } from './voters';
+	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
 
 	/** A member of the fractie's board, as the Eerste Kamer lists it (API 0.65). */
 	type BoardSeat = { function?: string; name?: string; member?: string | null; since?: string };
@@ -138,7 +139,7 @@
 									>{CHOICE[v.choice] ?? v.choice}</span
 								>
 								<BronLink ref={`decisions/${v.decision_key}`} class="vote-subject"
-									>{v.subject ?? v.dossier_numbers?.[0] ?? '—'}</BronLink
+									>{stemmingNaam(v.subject, v.dossier_numbers?.[0])}</BronLink
 								>
 								<span class="vote-meta"
 									>{v.date ? formatDate(v.date) : ''}{v.result

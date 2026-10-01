@@ -23,6 +23,9 @@
 	import { formatDate, formatLongDate } from './_shared';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
 	import BewindspersoonKop from './BewindspersoonKop.svelte';
+	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import Feiten from '$lib/components/ui/Feiten.svelte';
+	import Veld from '$lib/components/ui/Veld.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -83,9 +86,9 @@
 
 	// Votes are grouped by the faction the member belonged to at the time, so a
 	// switch of faction reads as separate blocks, and then by choice.
-	type PartyGroup = { party: string; total: number; byChoice: [string, Vote[]][] };
+	type PartyGroup = { party: string | null; total: number; byChoice: [string, Vote[]][] };
 	function groupVotes(votes: Vote[]): PartyGroup[] {
-		const byParty = Map.groupBy(votes, (v) => v.party ?? '—');
+		const byParty = Map.groupBy(votes, (v) => v.party ?? null);
 		const rank = (choice: string) => {
 			const i = CHOICE_ORDER.indexOf(choice);
 			return i === -1 ? CHOICE_ORDER.length : i;
@@ -171,24 +174,17 @@
 
 			{#if ek}
 				<Sectie titel="Eerste Kamer">
-					<dl class="ek-facts">
-						{#if ek.faction}
-							<dt>Fractie</dt>
-							<dd>
-								<BronLink ref={{ collection: 'factions', key: ek.faction }}
-									>{ek.abbreviation ?? ek.faction}</BronLink
-								>
-							</dd>
-						{/if}
-						{#if ek.seniority_days != null}
-							<dt>Anciënniteit</dt>
-							<dd>{ek.seniority_days.toLocaleString('nl-NL')} dagen</dd>
-						{/if}
-						{#if ek.residence}
-							<dt>Woonplaats</dt>
-							<dd>{ek.residence}</dd>
-						{/if}
-					</dl>
+					<Feiten klein>
+						<Veld label="Fractie" value={ek.faction}>
+							<BronLink ref={{ collection: 'factions', key: ek.faction ?? '' }}
+								>{ek.abbreviation ?? ek.faction}</BronLink
+							>
+						</Veld>
+						<Veld label="Anciënniteit" value={ek.seniority_days}>
+							{ek.seniority_days?.toLocaleString('nl-NL')} dagen
+						</Veld>
+						<Veld label="Woonplaats" value={ek.residence} />
+					</Feiten>
 					{#if ek.source}
 						<p class="ek-source">
 							{`Samenstelling op ${formatLongDate(ek.source.composition_date ?? null)}, gegevens sinds ${formatLongDate(ek.source.data_since ?? null)}. `}Bron:
@@ -257,7 +253,11 @@
 					{#each groups as group (group.party)}
 						{#if groups.length > 1}
 							<div class="party-head">
-								<NameLink collection="factions" name={group.party} class="party-name" />
+								{#if group.party}<NameLink
+										collection="factions"
+										name={group.party}
+										class="party-name"
+									/>{:else}<span class="party-name">Zonder fractie</span>{/if}
 								<span class="party-total">{group.total} stemmen</span>
 							</div>
 						{/if}
@@ -274,7 +274,7 @@
 												ref={{ collection: 'decisions', key: v.decision_key }}
 												class="vote-link"
 											>
-												<span class="vote-subject">{v.subject ?? '—'}</span>
+												<span class="vote-subject">{stemmingNaam(v.subject)}</span>
 												<span class="vote-meta">
 													{#if (v.seats ?? 0) > 1}<span class="vote-seats"
 															>stem van de fractie, {v.seats} zetels</span
@@ -568,22 +568,6 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.ek-facts {
-		display: grid;
-		grid-template-columns: max-content minmax(0, 1fr);
-		gap: var(--s-2) var(--s-4);
-		margin: 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-	}
-	.ek-facts dt {
-		color: var(--ink-3);
-	}
-	.ek-facts dd {
-		margin: 0;
-		color: var(--ink);
 	}
 	.ek-source {
 		margin: 0;
