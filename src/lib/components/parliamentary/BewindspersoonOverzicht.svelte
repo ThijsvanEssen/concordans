@@ -87,7 +87,10 @@
 {#if dossiers && dossiers.total > 0}
 	<Sectie titel="Dossiers" soort="dossiers" id="dossiers">
 		<div class="ov" class:ruim>
-			<p class="zin">{dossiers.total} dossiers met stukken die deze bewindspersoon ondertekende.</p>
+			<p class="zin">
+				{dossiers.total}
+				{dossiers.total === 1 ? 'dossier' : 'dossiers'} met stukken die deze bewindspersoon ondertekende.
+			</p>
 			<ol class="items">
 				{#each dossiers.items as d (d.key)}
 					{@const st = stand(d)}

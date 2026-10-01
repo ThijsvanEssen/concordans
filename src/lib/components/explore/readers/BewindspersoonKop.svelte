@@ -72,7 +72,7 @@
 			</li>
 		{/if}
 		<li>
-			<a href="#dossiers"><b>{dossiers ?? '…'}</b> dossiers</a>
+			<a href="#dossiers"><b>{dossiers ?? '…'}</b> {dossiers === 1 ? 'dossier' : 'dossiers'}</a>
 			<span class="s">met stukken die deze persoon ondertekende</span>
 		</li>
 		<li>
