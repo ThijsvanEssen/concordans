@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { judgmentCite } from '$lib/text/judgment-cite';
 	// The hover panel of the canvas: what the bron is, a preview, and two actions: open
 	// it, and add it to the netwerk or take it out.
 	import type { GraphNode } from '$lib/graph/types';
@@ -8,12 +7,16 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronHref, refOf } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
+	import Picto from '$lib/components/r5/Picto.svelte';
+	import { bronNaam } from '$lib/bron/naam';
+	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 
 	let {
 		node,
 		isChosen = false,
 		onOpen,
 		onToggleChosen,
+		onOmgeving,
 		onMouseEnter,
 		onMouseLeave
 	}: {
@@ -22,6 +25,8 @@
 		/** Called as the link opens the bron: the panel closes. */
 		onOpen: (node: GraphNode) => void;
 		onToggleChosen?: (node: GraphNode) => void;
+		/** Ronde 6: wat een dubbelklik doet, als knop: alleen de omgeving van deze bron. */
+		onOmgeving?: (node: GraphNode) => void;
 		onMouseEnter?: () => void;
 		onMouseLeave?: () => void;
 	} = $props();
@@ -35,14 +40,9 @@
 	// The line next to the kind: the context the source belongs to.
 	const cite = $derived.by(() => {
 		switch (node.kind) {
+			// The title already names court and date (bron/naam.ts); the ECLI identifies it.
 			case 'judgment':
-				return text(nodeProps?.['ecli'])
-					? judgmentCite(
-							text(nodeProps?.['ecli'])!,
-							text(nodeProps?.['date']),
-							text(nodeProps?.['court'])
-						).full
-					: node.label;
+				return text(nodeProps?.['ecli']);
 			case 'article':
 				return text(nodeProps?.['instrument_citation_title']) ?? lawIdOf(nodeProps);
 			case 'member':
@@ -112,7 +112,7 @@
 		{#if cite}<span class="cite">{cite}</span>{/if}
 	</div>
 
-	<h4 class="title {node.stub ? 'title--stub' : ''}">{node.label}</h4>
+	<h4 class="title {node.stub ? 'title--stub' : ''}">{bronNaam(node, $instrumentMetaStore)}</h4>
 
 	{#if node.stub}
 		<p class="snippet stub-note">Niet in de database.</p>
@@ -129,7 +129,12 @@
 				class="act act--primary"
 				href={bronHref(refOf(node.collection, node.key, node.raw?.props))}
 				data-sveltekit-noscroll
-				onclick={() => onOpen(node)}>Openen</a
+				onclick={() => onOpen(node)}><Picto naam="tekst" size={13} />Lezen</a
+			>
+		{/if}
+		{#if onOmgeving && !node.stub}
+			<button type="button" class="act" onclick={() => onOmgeving(node)}
+				><Picto naam="verbindt" size={13} />Alleen de omgeving</button
 			>
 		{/if}
 		{#if onToggleChosen && !node.stub}
@@ -139,17 +144,18 @@
 				class:act--chosen={isChosen}
 				aria-pressed={isChosen}
 				onclick={() => onToggleChosen(node)}
-				>{isChosen ? '− Uit netwerk' : '+ In netwerk'}</button
+				><Picto naam="plus" size={13} />{isChosen ? 'Uit netwerk' : 'In netwerk'}</button
 			>
 		{/if}
 	</div>
 </div>
 
 <style>
+	/* Ronde 6: rechtsonder naast de zoom; rechtsboven staat het netwerkpaneel. */
 	.citepanel {
 		position: absolute;
-		top: 16px;
-		right: 16px;
+		bottom: var(--s-3);
+		right: calc(var(--s-3) + 32px + var(--s-3));
 		z-index: 80;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
@@ -226,6 +232,9 @@
 
 	/* Text buttons: no border, the hover as a paper-2 field. */
 	.act {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-1);
 		background: none;
 		border: none;
 		font-family: var(--font-sans);

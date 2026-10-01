@@ -6,7 +6,6 @@
 	import GraphCanvas from './GraphCanvas.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import GraphCitePanel from './GraphCitePanel.svelte';
-	import NetwerkGids from '$lib/components/r5/NetwerkGids.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder } from './canvas-keys';
 	import GraphSidebar from './GraphSidebar.svelte';
@@ -1031,7 +1030,6 @@
 				}}
 			/>
 
-			<div class="r5-gids" class:r5-gids--kort={compact}><NetwerkGids kort={compact} /></div>
 			<!-- Ronde 6: de legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
 			     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
 			{#if !compact && canvasCounts.nodes > 0}
@@ -1087,6 +1085,12 @@
 						hoverNode = null;
 					}}
 					{onToggleChosen}
+					onOmgeving={onNodeDoubleClick
+						? (n) => {
+								hoverNode = null;
+								onNodeDoubleClick?.(n);
+							}
+						: undefined}
 					onMouseEnter={cancelHide}
 					onMouseLeave={() => {
 						hoverNode = null;
@@ -1218,19 +1222,6 @@
 		padding-top: var(--s-3);
 	}
 
-	/* Ronde 5: de gids onder in het midden van het canvas. */
-	.r5-gids {
-		position: absolute;
-		bottom: var(--s-3);
-		left: 50%;
-		transform: translateX(-50%);
-		z-index: var(--z-float);
-	}
-	/* In een smal canvas naast de knop Legenda, alleen de tekens. */
-	.r5-gids--kort {
-		left: 96px;
-		transform: none;
-	}
 	/* Bottom left: the Netwerk panel holds the top of the canvas, the zoom the bottom right. */
 	.compact-legend-wrap {
 		position: absolute;
