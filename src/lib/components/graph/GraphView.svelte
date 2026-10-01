@@ -6,6 +6,7 @@
 	import GraphCanvas from './GraphCanvas.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import GraphCitePanel from './GraphCitePanel.svelte';
+	import NetwerkGids from '$lib/components/r5/NetwerkGids.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder } from './canvas-keys';
 	import GraphSidebar from './GraphSidebar.svelte';
@@ -13,7 +14,8 @@
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { isVersionCollection, lawIdOf } from '$lib/graph/types';
-	import { spriteFor, shapeFor, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
+	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
+	import { vormVan } from '$lib/bron/vormen';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import {
 		containerIdFor,
@@ -484,8 +486,9 @@
 			lookup.set(n.id, n);
 			if (!isCanvasNode(n)) continue;
 			const { color, borderColor } = nodeColors(n);
-			const shape = shapeFor(n.kind);
-			const useImage = shape !== 'circle';
+			// Ronde 5: elke bron als teken uit vormen.ts.
+			const vorm = vormVan(n.id);
+			const useImage = true;
 			const stub = !!n.stub;
 			const rawSize = nodeSize(n.id);
 			const attrs: Record<string, unknown> = {
@@ -493,6 +496,7 @@
 				color: useImage ? 'rgba(0,0,0,0)' : color,
 				borderColor,
 				kind: n.kind,
+				vorm,
 				collection: n.collection,
 				bronKind: bronKindOf(n.collection, n.key, n.raw?.props ?? null),
 				// The court of a judgment, as the bronfilter's rechter reads it.
@@ -509,7 +513,7 @@
 				size: useImage ? rawSize * IMAGE_SIZE_BUMP : rawSize,
 				type: useImage ? 'image' : 'border'
 			};
-			if (useImage) attrs.image = spriteFor(n.kind, stub, false);
+			if (useImage) attrs.image = spriteForVorm(vorm, stub, false);
 			// A wet's anchor is a point its hull and the lines of a change end at, not a dot.
 			if (n.anchor)
 				Object.assign(attrs, {
@@ -1040,6 +1044,7 @@
 				}}
 			/>
 
+			<div class="r5-gids" class:r5-gids--kort={compact}><NetwerkGids kort={compact} /></div>
 			{#if compact}
 				<div class="compact-legend-wrap">
 					<button
@@ -1151,6 +1156,19 @@
 		pointer-events: auto;
 	}
 
+	/* Ronde 5: de gids onder in het midden van het canvas. */
+	.r5-gids {
+		position: absolute;
+		bottom: var(--s-3);
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: var(--z-float);
+	}
+	/* In een smal canvas naast de knop Legenda, alleen de tekens. */
+	.r5-gids--kort {
+		left: 96px;
+		transform: none;
+	}
 	/* Bottom left: the Netwerk panel holds the top of the canvas, the zoom the bottom right. */
 	.compact-legend-wrap {
 		position: absolute;

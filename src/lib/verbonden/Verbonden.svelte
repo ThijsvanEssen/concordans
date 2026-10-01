@@ -63,6 +63,8 @@
 		onOpenFilter,
 		onVerbinding,
 		onShowInNetwork,
+		onAddToNetwerk,
+		inNetwerk,
 		onProposedText,
 		tableHref,
 		onRetry
@@ -78,6 +80,10 @@
 		/** Opens the card Verbinding for a row. */
 		onVerbinding: (row: Row) => void;
 		onShowInNetwork?: (row: Row) => void;
+		/** Ronde 5: één bron uit de rij in het netwerk zetten. */
+		onAddToNetwerk?: (row: Row) => void;
+		/** Of de bron van een rij al in het netwerk staat. */
+		inNetwerk?: (row: Row) => boolean;
 		/** A wetsvoorstel row: show the proposed wording next to the current text. */
 		onProposedText?: (row: Row) => void;
 		tableHref: string;
@@ -291,10 +297,10 @@
 							class:is-on={isLayerOn(g)}
 							role="checkbox"
 							aria-checked={isLayerOn(g)}
-							aria-label="{g.label} op het doek"
-							title={isLayerOn(g) ? 'Van het doek halen' : 'Op het doek zetten'}
+							aria-label="{g.label} in het netwerk"
+							title={isLayerOn(g) ? 'Uit het netwerk halen' : 'In het netwerk tonen'}
 							onclick={() => toggleLayer(g)}
-							><span class="layer__box" aria-hidden="true">{isLayerOn(g) ? '✓' : ''}</span>op doek</button
+							><span class="layer__box" aria-hidden="true">{isLayerOn(g) ? '✓' : ''}</span>in netwerk</button
 						>
 					{/if}
 				</div>
@@ -393,6 +399,18 @@
 										{/if}
 									</span>
 								</span>
+								{#if !row.missing && onAddToNetwerk}
+									{@const al = inNetwerk?.(row) ?? false}
+									<button
+										type="button"
+										class="row__plus"
+										class:is-in={al}
+										aria-pressed={al}
+										aria-label={al ? `${row.title} staat in het netwerk` : `${row.title} in het netwerk`}
+										title={al ? 'Staat in het netwerk' : 'In het netwerk'}
+										onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</button
+									>
+								{/if}
 								{#if !row.missing}
 									<button
 										type="button"
@@ -698,6 +716,39 @@
 	}
 	.row.is-open .row__main {
 		background: var(--accent-soft);
+	}
+	/* Ronde 5: + zet de bron in het netwerk; zichtbaar bij hover en focus, en als hij er al in staat. */
+	.row__plus {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 22px;
+		height: 22px;
+		margin-top: -1px;
+		padding: 0;
+		border: 1px solid var(--rule-strong);
+		border-radius: 50%;
+		background: var(--paper);
+		color: var(--ink-2);
+		font: 600 var(--t-meta) var(--font-sans);
+		line-height: 1;
+		cursor: pointer;
+		opacity: 0;
+	}
+	.row__main:hover .row__plus,
+	.row__main:focus-within .row__plus,
+	.row__plus.is-in {
+		opacity: 1;
+	}
+	.row__plus.is-in {
+		border-color: var(--ink);
+		background: var(--ink);
+		color: var(--paper);
+		cursor: default;
+	}
+	.row__plus:hover:not(.is-in) {
+		border-color: var(--ink);
+		color: var(--ink);
 	}
 	.row__toggle {
 		flex: none;

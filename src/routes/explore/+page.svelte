@@ -839,6 +839,11 @@
 				onOpenFilter={() => (filterOpen = true)}
 				onVerbinding={openRowCard}
 				onShowInNetwork={showInNetwork}
+				onAddToNetwerk={(row) => {
+					const id = focusOf(row.ref);
+					if (id) addIdToNetwerk(id);
+				}}
+				inNetwerk={(row) => netwerk.ids.includes(focusOf(row.ref) ?? '')}
 				onProposedText={(row) => (proposedRow = row)}
 				{tableHref}
 			/>

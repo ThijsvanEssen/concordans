@@ -139,7 +139,7 @@
 				class:act--chosen={isChosen}
 				aria-pressed={isChosen}
 				onclick={() => onToggleChosen(node)}
-				>{isChosen ? 'Haal uit netwerk' : 'Voeg toe aan netwerk'}</button
+				>{isChosen ? '− Uit netwerk' : '+ In netwerk'}</button
 			>
 		{/if}
 	</div>

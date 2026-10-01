@@ -1,3 +1,4 @@
+import { VORMEN, type Vorm } from '$lib/bron/vormen';
 // The colours and shapes of the canvas, read from the design tokens.
 //
 // Sigma draws in WebGL and cannot read CSS variables, so the tokens are read once
@@ -313,6 +314,48 @@ function buildSprite(kind: GraphNodeKind, variant: Variant): string {
 	if (variant === 'focused') return drawSprite(shape, fillFor(kind), t.accent, 2.8);
 	const isOpen = fillFor(kind) === t.paper;
 	return drawSprite(shape, fillFor(kind), strokeFor(kind), isOpen ? 2.4 : 1);
+}
+
+// Ronde 5: een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
+// omtrek van zijn vorm; de gekozen bron krijgt een rand in inkt en een papieren halo.
+const vormCache: Map<string, string> = new Map();
+export function spriteForVorm(vorm: Vorm, stub: boolean, focused: boolean): string {
+	const k = `${vorm}:${stub}:${focused}`;
+	let url = vormCache.get(k);
+	if (url) return url;
+	const t = tokens();
+	const canvas = document.createElement('canvas');
+	canvas.width = canvas.height = SPRITE_PX;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return '';
+	// The 16-box of vormen.ts, centred in the 32-box with room for a halo.
+	ctx.scale(SPRITE_PX / VB, SPRITE_PX / VB);
+	ctx.translate(4, 4);
+	ctx.scale(1.5, 1.5);
+	const v = VORMEN[vorm];
+	const path = new Path2D(v.d);
+	if (focused) {
+		ctx.lineJoin = 'round';
+		ctx.strokeStyle = t.paper;
+		ctx.lineWidth = 4;
+		ctx.stroke(path);
+		ctx.strokeStyle = t.ink;
+		ctx.lineWidth = 1.6;
+		ctx.stroke(path);
+	}
+	if (stub || v.wijze === 'lijn') {
+		ctx.fillStyle = t.paper;
+		ctx.fill(path, v.wijze === 'gat' ? 'evenodd' : 'nonzero');
+		ctx.strokeStyle = stub ? t.ink3 : t.ink;
+		ctx.lineWidth = v.wijze === 'lijn' ? 2 : 1.3;
+		ctx.stroke(path);
+	} else {
+		ctx.fillStyle = t.ink;
+		ctx.fill(path, v.wijze === 'gat' ? 'evenodd' : 'nonzero');
+	}
+	url = canvas.toDataURL('image/png');
+	vormCache.set(k, url);
+	return url;
 }
 
 export function spriteFor(kind: GraphNodeKind, stub: boolean, focused: boolean): string {

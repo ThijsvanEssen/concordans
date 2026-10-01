@@ -77,7 +77,7 @@
 	<ul
 		class="sr-only nodes"
 		bind:this={list}
-		aria-label="Bronnen op het doek, {nodes.length}. Pijl omhoog en omlaag: volgende bron. Enter: openen.{onToggleChosen
+		aria-label="Bronnen in het netwerk, {nodes.length}. Pijl omhoog en omlaag: volgende bron. Enter: openen.{onToggleChosen
 			? ' N: voeg toe aan of haal uit netwerk.'
 			: ''}"
 		{onfocusin}

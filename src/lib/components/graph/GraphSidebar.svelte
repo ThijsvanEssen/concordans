@@ -132,7 +132,7 @@
 <aside class="legend">
 	<!-- Nothing on the canvas: nothing to filter, group or count yet. -->
 	{#if !hasNodes}
-		<p class="empty">Nog geen bronnen op het doek. Filters verschijnen zodra er bronnen staan.</p>
+		<p class="empty">Nog geen bronnen in het netwerk.</p>
 	{:else}
 		<section class="block">
 			<div class="block__head">
@@ -313,7 +313,7 @@
 		<p class="status">
 			{formatCount(canvasCounts.nodes)}
 			{canvasCounts.nodes === 1 ? 'bron' : 'bronnen'}, {formatCount(canvasCounts.edges)}
-			{canvasCounts.edges === 1 ? 'verbinding' : 'verbindingen'} op het doek.
+			{canvasCounts.edges === 1 ? 'verbinding' : 'verbindingen'} in het netwerk.
 			{#if hidden.length > 0}
 				{hidden
 					.map((h) => `${formatCount(h.count)} ${BRON_KIND_LABEL[h.kind].toLowerCase()}`)

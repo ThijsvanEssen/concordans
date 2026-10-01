@@ -11,6 +11,7 @@
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { articleName } from '$lib/text/bw';
 	import { categoryLabel, isIndexCategory } from './index/categories';
+	import WeergaveSchakelaar from '$lib/components/r5/WeergaveSchakelaar.svelte';
 
 	let {
 		node,
@@ -142,14 +143,10 @@
 		<span class="sr-only" aria-live="polite">{shareAnnouncement}</span>
 	{/if}
 
-	{#if readAction === 'read'}
-		<button type="button" class="btn read" onclick={() => onRead?.(true)} title="Toets L"
-			>Volledig lezen</button
-		>
-	{:else if readAction === 'network'}
-		<button type="button" class="btn read" onclick={() => onRead?.(false)} title="Toets L"
-			>Toon in netwerk</button
-		>
+	{#if readAction}
+		<WeergaveSchakelaar stand={readAction === 'read' ? 'netwerk' : 'tekst'} onKies={(k) => onRead?.(k === 'tekst')} />
+	{:else if node && mode !== 'index'}
+		<WeergaveSchakelaar stand="netwerk" onKies={() => {}} tekstMogelijk={false} />
 	{/if}
 </div>
 
@@ -217,8 +214,4 @@
 		flex: 1;
 	}
 
-	.read {
-		margin-left: var(--s-2);
-		padding: 3px 10px;
-	}
 </style>

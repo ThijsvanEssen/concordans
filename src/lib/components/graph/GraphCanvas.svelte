@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Vorm } from '$lib/bron/vormen';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
@@ -13,6 +14,7 @@
 	import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 	import {
 		spriteFor,
+		spriteForVorm,
 		shapeFor,
 		badgeAxisOffset,
 		edgeColorFor,
@@ -836,7 +838,7 @@
 						// A shape is a sprite, which the colours above do not reach: its outline instead.
 						image:
 							data.type === 'image'
-								? spriteFor(data.kind as GraphNodeKind, true, false)
+								? spriteForVorm(data.vorm as Vorm, true, false)
 								: data.image,
 						selectionColor: 'rgba(0,0,0,0)'
 					};
@@ -863,7 +865,7 @@
 				if (id !== focusedId) return { ...data, hidden: false, label, forceLabel };
 				const focusKind = data.kind as GraphNodeKind;
 				const focusBoost = ((data.size as number) ?? 4) * 1.6;
-				if (shapeFor(focusKind) === 'circle') {
+				if (data.type !== 'image' && shapeFor(focusKind) === 'circle') {
 					return {
 						...data,
 						hidden: false,
@@ -879,7 +881,7 @@
 					hidden: false,
 					label,
 					forceLabel,
-					image: spriteFor(focusKind, !!data.stub, true),
+					image: data.vorm ? spriteForVorm(data.vorm as Vorm, !!data.stub, true) : spriteFor(focusKind, !!data.stub, true),
 					size: focusBoost,
 					zIndex: 2
 				};

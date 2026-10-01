@@ -16,13 +16,12 @@
 	import { bronHref as bronHrefR4 } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	const r4 = $derived(page.url.searchParams.get('ontwerp') === 'r4');
-	import BronTeken, { type Vorm, type Domein } from '$lib/components/r4/BronTeken.svelte';
 	// Vier ingangen om te zoeken, elk met de tekens van wat erin valt.
-	const SCOPES: { id: string; label: string; kinds: string[]; tekens: [Vorm, Domein][]; href: string }[] = [
-		{ id: 'wetten', label: 'Wetten', kinds: ['instruments', 'articles'], tekens: [['regel', 'recht'], ['regel-o', 'recht']], href: indexHref('instruments') },
-		{ id: 'uitspraken', label: 'Uitspraken', kinds: ['judgments'], tekens: [['uitspraak', 'recht']], href: indexHref('judgments') },
-		{ id: 'parlement', label: 'Parlement', kinds: ['dossiers', 'documents', 'members', 'factions', 'committees'], tekens: [['dossier', 'parlement'], ['stuk', 'parlement'], ['besluit', 'parlement'], ['persoon', 'parlement']], href: indexHref('dossiers', { ontwerp: 'r3', track: 'Wetgeving' }) },
-		{ id: 'kabinet', label: 'Kabinet', kinds: ['members'], tekens: [['orgaan', 'regering'], ['persoon', 'regering'], ['toezegging', 'regering']], href: indexHref('cabinets', { ontwerp: 'r4' }) }
+	const SCOPES: { id: string; label: string; kinds: string[]; tekens: Collection[]; href: string }[] = [
+		{ id: 'wetten', label: 'Wetten', kinds: ['instruments', 'articles'], tekens: ['instruments', 'articles'], href: indexHref('instruments') },
+		{ id: 'uitspraken', label: 'Uitspraken', kinds: ['judgments'], tekens: ['judgments'], href: indexHref('judgments') },
+		{ id: 'parlement', label: 'Parlement', kinds: ['dossiers', 'documents', 'members', 'factions', 'committees'], tekens: ['dossiers', 'documents', 'decisions', 'members'], href: indexHref('dossiers', { ontwerp: 'r3', track: 'Wetgeving' }) },
+		{ id: 'kabinet', label: 'Kabinet', kinds: ['members'], tekens: ['cabinets', 'members', 'commitments'], href: indexHref('cabinets', { ontwerp: 'r4' }) }
 	];
 	let scope = $state<string | null>(null);
 	/** De tekens van de verkenner, met hun naam, zodat ze vóór het netwerk bekend zijn. */
@@ -145,7 +144,7 @@
 			<div class="r4-scopes" role="group" aria-label="Zoek in">
 				{#each SCOPES as sc (sc.id)}
 					<button type="button" aria-pressed={scope === sc.id} onclick={() => (scope = scope === sc.id ? null : sc.id)}>
-						<span class="r4-tekens">{#each sc.tekens as [v, d], i (i)}<BronTeken vorm={v} domein={d} />{/each}</span>
+						<span class="r4-tekens">{#each sc.tekens as c (c)}<KindGlyph collection={c} size={14} />{/each}</span>
 						{sc.label}
 					</button>
 				{/each}

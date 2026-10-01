@@ -5,6 +5,7 @@
 	// dezelfde twee knoppen als bij een dossier.
 	import type { Snippet } from 'svelte';
 	import Tijdlijn from './Tijdlijn.svelte';
+	import Picto from '$lib/components/r5/Picto.svelte';
 	import type { TijdGroep } from './tijdlijn';
 
 	let {
@@ -44,8 +45,8 @@
 		</p>
 	{/if}
 	<div class="acts">
-		<a class="act act--pri" href={lezen}>{lezenLabel} →</a>
-		<a class="act" href={netwerk}>Toon in netwerk →</a>
+		<a class="act act--pri" href={lezen}><Picto naam="tekst" size={13} />{lezenLabel}</a>
+		<a class="act" href={netwerk}><Picto naam="netwerk" size={13} />In het netwerk</a>
 	</div>
 </div>
 
@@ -94,6 +95,9 @@
 		flex-wrap: wrap;
 	}
 	.act {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		font-weight: 500;

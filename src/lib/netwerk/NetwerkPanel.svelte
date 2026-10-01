@@ -8,6 +8,7 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
+	import Picto from '$lib/components/r5/Picto.svelte';
 	import type { NetwerkEntry } from './netwerk';
 
 	let {
@@ -51,11 +52,13 @@
 
 <section class="netwerk" class:netwerk--start={start} aria-label="Netwerk">
 	{#if start}
-		<h2 class="start__title">Netwerk samenstellen</h2>
-		<p class="start__text">
-			Zoek bronnen en voeg ze toe. Het netwerk toont hun onderlinge verbindingen en de bronnen die
-			ze verbinden.
-		</p>
+		<h2 class="start__title">Netwerk</h2>
+		<!-- Ronde 5: drie stappen in beeld, met een woord elk. -->
+		<ol class="r5-stappen">
+			<li><Picto naam="zoek" size={22} /><span>Zoek een bron</span></li>
+			<li><Picto naam="plus" size={22} /><span>Voeg er meer toe</span></li>
+			<li><Picto naam="verbindt" size={22} /><span>Zie wat ze verbindt</span></li>
+		</ol>
 	{:else}
 		<header class="head">
 			<button
@@ -151,6 +154,28 @@
 </section>
 
 <style>
+	.r5-stappen {
+		list-style: none;
+		margin: var(--s-2) 0 var(--s-4);
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--s-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+	}
+	.r5-stappen li {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--s-2);
+		text-align: center;
+		color: var(--ink);
+	}
+	.r5-stappen span {
+		color: var(--ink-2);
+	}
 	.netwerk {
 		position: absolute;
 		top: var(--s-3);
@@ -188,11 +213,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
 		font-weight: 500;
-	}
-	.start__text {
-		margin: 0;
-		color: var(--ink-2);
-		line-height: 1.5;
 	}
 
 	.head__toggle {
