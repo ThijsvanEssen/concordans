@@ -74,9 +74,16 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 								const judgments = judgmentsOf?.[g.id];
 								if (judgments == null) return g;
 								// Its other bronnen as counted, and the judgments as the API counts them.
-								const other =
-									g.total ?? g.rows.filter((r) => r.ref.collection !== 'judgments').length;
-								return { ...g, total: other + judgments, capped: false };
+								const others = g.rows.filter((r) => r.ref.collection !== 'judgments');
+								const loaded = judgments.rows.length
+									? judgments.rows
+									: g.rows.filter((r) => r.ref.collection === 'judgments');
+								return {
+									...g,
+									rows: [...others, ...loaded],
+									total: (g.total ?? others.length) + judgments.total,
+									capped: false
+								};
 							});
 						})
 						.catch(() => {
