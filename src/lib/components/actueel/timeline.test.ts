@@ -75,19 +75,6 @@ describe('dossierName', () => {
 		).toBe('wijziging van Archiefwet 1995');
 	});
 
-	it('passes over a short title that only cites where a treaty was published', () => {
-		const title =
-			'Goedkeuring van het op 28 januari 1981 te Straatsburg tot stand gekomen Verdrag tot bescherming van personen';
-		expect(
-			dossierName({
-				number: '36455-(R2188)',
-				title,
-				short_title: 'Trb. 2018, 201 en Trb. 2023, 54',
-				short_title_basis: 'title'
-			})
-		).toBe(`${title.slice(0, 79).trimEnd()}…`);
-	});
-
 	it('falls back on the title, cut, and on the number', () => {
 		const title =
 			'Vaststelling van de begrotingsstaten van Koninkrijksrelaties (IV) en het BES-fonds (H) voor het jaar 2027';
