@@ -50,6 +50,16 @@
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, nodeToGraphNode } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
+	import {
+		lookUp,
+		padHref,
+		padOfFocus,
+		parsePad,
+		remember as rememberPad,
+		verkennerHref,
+		verkennerUrl,
+		type Pad
+	} from '$lib/bron/leesbaar';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
 	import {
@@ -83,7 +93,53 @@
 	/** The focus is a bron the dataset does not hold: the page says so instead of an empty canvas. */
 	let focusMissing = $state(false);
 
-	const param = (name: string) => page.url.searchParams.get(name);
+	// The URL as the Verkenner reads it: a readable address (/uitspraken/ECLI:…) has its
+	// focus in the path, and reads as /explore?focus=… (see $lib/bron/leesbaar.ts).
+	const logisch = $derived(verkennerUrl(page.url));
+	const param = (name: string) => logisch.searchParams.get(name);
+
+	// ── A readable address the API has to look up ────────────────────────────
+	// An article or a Kamerstuk is looked up once; a judgment or a dossier needs no request.
+	// What the data lacks is said, not opened as a neighbour (a dossier for its stuk).
+	const pad = $derived(parsePad(page.url.pathname));
+	let padMissing = $state<string | null>(null);
+	const padName = (p: Pad) =>
+		p.soort === 'artikel'
+			? `Artikel ${p.nummer} van ${p.wet}`
+			: p.soort === 'kamerstuk'
+				? `Kamerstuk ${p.dossier}, nr. ${p.nummer}`
+				: padHref(p);
+	$effect(() => {
+		const p = pad;
+		padMissing = null;
+		if (!p || untrack(() => param('focus'))) return;
+		const ac = new AbortController();
+		lookUp(p, ac.signal)
+			.then((found) => {
+				if (!found && !ac.signal.aborted) padMissing = `${padName(p)} staat niet in de gegevens.`;
+			})
+			.catch(() => {
+				if (!ac.signal.aborted) padMissing = `${padName(p)} kon niet geladen worden.`;
+			});
+		return () => ac.abort();
+	});
+
+	// A bron opened at /explore?focus=… gets its readable address once it is known, in
+	// place: no step in the history. A shared old link opens the same bron.
+	$effect(() => {
+		const node = selectedNode;
+		const f = focus;
+		if (!node || !f || mode === 'index' || page.url.pathname !== '/explore') return;
+		const props = node.id === f ? (node.raw?.props ?? null) : null;
+		const path = padOfFocus(f, props);
+		if (!path) return;
+		rememberPad(path, f);
+		void goto(verkennerHref(logisch.searchParams, page.url.hash, props), {
+			replaceState: true,
+			noScroll: true,
+			keepFocus: true
+		});
+	});
 	// The Verkenner is the network. A bron with a text of its own is read at full width
 	// (?lezen=1, once ?mode=read); its verbindingen as a table are read so too. Bladeren
 	// is ?mode=index.
@@ -560,8 +616,8 @@
 	// A replaced entry (a filter) is no step; a link, Back itself, or a change of bron or
 	// of reading mode is.
 	afterNavigate((nav) => {
-		const from = nav.from?.url.searchParams;
-		const to = nav.to?.url.searchParams;
+		const from = nav.from && verkennerUrl(nav.from.url).searchParams;
+		const to = nav.to && verkennerUrl(nav.to.url).searchParams;
 		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
 		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('lezen'))
 			steppedIn = true;
@@ -573,13 +629,15 @@
 	 * takes a history entry; a filter or a toggle replaces the current one.
 	 */
 	function setUrl(params: Record<string, string | null>, { push = false } = {}) {
-		const url = new URL(page.url);
+		const url = new URL(logisch);
 		for (const [k, v] of Object.entries(params)) {
 			if (v === null) url.searchParams.delete(k);
 			else url.searchParams.set(k, v);
 		}
-		const search = url.search.replaceAll('%2F', '/').replaceAll('%2C', ',');
-		void goto(url.pathname + search + url.hash, {
+		// The readable address of the focus where it has one: /dossiers/36799?lezen=1.
+		const f = url.searchParams.get('focus');
+		const props = selectedNode && selectedNode.id === f ? selectedNode.raw?.props : null;
+		void goto(verkennerHref(url.searchParams, page.url.hash, props), {
 			replaceState: !push,
 			noScroll: true,
 			keepFocus: true
@@ -906,7 +964,7 @@
 <div class="explore-shell">
 	<StatusBar
 		node={selectedNode}
-		{focusError}
+		focusError={padMissing ?? focusError}
 		{mode}
 		{tableMode}
 		indexCategory={mode === 'index' && param('kind') !== null ? indexKind : null}
@@ -926,9 +984,9 @@
 			{:else}
 				<IndexView category={indexKind} onResultCountChange={(count) => (reportedCount = count)} />
 			{/if}
-		{:else if focusMissing && !selectedNode && !netwerkActive}
+		{:else if (focusMissing || padMissing) && !selectedNode && !netwerkActive}
 			<div class="explore-empty">
-				<p>{focusError}</p>
+				<p>{padMissing ?? focusError}</p>
 				<p>
 					Het netwerk bevat een selectie van bronnen. Zie
 					<a href="/docs#dekking" class="link">bronnen en dekking</a>.
@@ -1135,7 +1193,7 @@
 			{/if}
 		{:else if focusError}
 			<p class="explore-empty">{focusError}</p>
-		{:else if focus}
+		{:else if focus || pad}
 			<!-- The bron is on its way: said, not left as an empty page. -->
 			<p class="explore-empty" role="status">Laden…</p>
 		{/if}
