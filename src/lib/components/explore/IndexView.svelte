@@ -2793,7 +2793,7 @@
 	.catgroup {
 		display: flex;
 		flex-direction: column;
-		padding-top: 10px;
+		padding-top: var(--s-3);
 	}
 	.catgroup + .catgroup {
 		margin-left: var(--s-2);
@@ -2801,7 +2801,7 @@
 		box-shadow: inset 1px 0 0 var(--rule);
 	}
 	.catgroup__label {
-		padding: 0 10px;
+		padding: 0 var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-label);
 		font-weight: 500;
@@ -2814,8 +2814,8 @@
 	.cat {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
-		padding: var(--s-2) 10px var(--s-3);
+		gap: var(--s-2);
+		padding: var(--s-2) var(--s-2) var(--s-3);
 		text-decoration: none;
 		border-bottom: 2px solid transparent;
 		white-space: nowrap;
@@ -2876,8 +2876,8 @@
 		scrollbar-width: thin;
 		scrollbar-color: var(--rule) transparent;
 		/* Room for the focus ring: the column scrolls, so it clips what reaches its edge. */
-		margin: 0 -6px;
-		padding: var(--s-1) 6px var(--s-5);
+		margin: 0 calc(-1 * var(--s-2));
+		padding: var(--s-1) var(--s-2) var(--s-5);
 	}
 	.results {
 		min-width: 0;
@@ -2904,7 +2904,7 @@
 	/* Uitspraken per year: a column per year, the chosen one in ink, the ones outside the
 	   period pale. */
 	.years {
-		margin: 0 0 18px;
+		margin: 0 0 var(--s-4);
 	}
 	.years-bars {
 		display: flex;
@@ -2967,11 +2967,11 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: var(--s-2) 10px;
+		gap: var(--s-2) var(--s-3);
 		margin: 0 0 var(--s-3);
 	}
 	.result-count {
-		margin: 0 6px 0 0;
+		margin: 0 var(--s-2) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
 		line-height: 1.1;
@@ -2988,8 +2988,8 @@
 	.list-head {
 		display: grid;
 		grid-template-columns: var(--row-lead, 120px) minmax(0, 1fr) var(--row-aside, 190px);
-		gap: 20px;
-		padding: 0 var(--s-2) 6px;
+		gap: var(--s-5);
+		padding: 0 var(--s-2) var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
 		font-family: var(--font-sans);
 		font-size: var(--t-label);
@@ -3016,9 +3016,9 @@
 	.chip {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		gap: var(--s-2);
 		min-height: 24px;
-		padding: 3px var(--s-2);
+		padding: var(--s-1) var(--s-2);
 		border: 1px solid var(--ink);
 		border-radius: var(--r-1);
 		background: transparent;
@@ -3037,7 +3037,7 @@
 		min-height: 24px;
 		border: 0;
 		background: transparent;
-		padding: 3px var(--s-1);
+		padding: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -3057,14 +3057,14 @@
 
 	/* Kabinetten: each cabinet a bar on one line of years; the one in office in the accent. */
 	.cab-strip {
-		margin: var(--s-1) 0 22px;
+		margin: var(--s-1) 0 var(--s-5);
 	}
 	.cab-tools {
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;
-		gap: 6px;
-		margin-bottom: 6px;
+		gap: var(--s-2);
+		margin-bottom: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -3095,7 +3095,7 @@
 		overflow-x: auto;
 		overscroll-behavior-x: contain;
 		cursor: grab;
-		padding-bottom: 6px;
+		padding-bottom: var(--s-1);
 	}
 	.cab-scroll:global(.is-dragging) {
 		cursor: grabbing;
@@ -3124,7 +3124,7 @@
 		position: absolute;
 		display: flex;
 		flex-direction: column;
-		gap: 3px;
+		gap: var(--s-1);
 		/* The name may run under the next two cabinets, which lie in the other lanes. */
 		width: calc(var(--w) * 3);
 		text-decoration: none;
@@ -3174,7 +3174,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-3);
-		margin-top: 6px;
+		margin-top: var(--s-2);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
@@ -3182,7 +3182,7 @@
 	.party-item {
 		display: inline-flex;
 		align-items: center;
-		gap: 5px;
+		gap: var(--s-1);
 	}
 
 	/* Bewindspersonen: the cabinet as the title of its chart. */
@@ -3214,7 +3214,7 @@
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-3);
-		padding: 18px var(--s-2) var(--s-2);
+		padding: var(--s-4) var(--s-2) var(--s-2);
 		border-bottom: 1px solid var(--rule-strong);
 	}
 	.day-head:first-of-type {
@@ -3310,7 +3310,7 @@
 	.empty-act {
 		margin-top: var(--s-4);
 		min-height: 32px;
-		padding: 0 14px;
+		padding: 0 var(--s-4);
 		background: transparent;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
@@ -3378,7 +3378,7 @@
 
 	.row-sub {
 		display: block;
-		margin-top: 5px;
+		margin-top: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -3442,7 +3442,7 @@
 	.tag {
 		display: inline-flex;
 		align-items: baseline;
-		gap: 5px;
+		gap: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -3490,7 +3490,7 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
-		margin-top: 6px;
+		margin-top: var(--s-2);
 	}
 	.stem-mini__v {
 		color: var(--ink-2);
@@ -3535,7 +3535,7 @@
 	/* Committees: where the ones without dossiers begin */
 	.group-divider {
 		list-style: none;
-		padding: 18px var(--s-2) 10px;
+		padding: var(--s-4) var(--s-2) var(--s-3);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -3588,13 +3588,13 @@
 			padding: 0 var(--s-4);
 		}
 		.cat {
-			padding: var(--s-2) 14px 10px;
+			padding: var(--s-2) var(--s-4) var(--s-3);
 		}
 		.catgroup__label {
-			padding: 0 14px;
+			padding: 0 var(--s-4);
 		}
 		.page {
-			padding: 18px var(--s-4) 60px;
+			padding: var(--s-4) var(--s-4) 60px;
 			grid-template-columns: minmax(0, 1fr);
 		}
 		.facet-col {

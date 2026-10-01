@@ -229,7 +229,7 @@
 		grid-template-columns: max-content 1fr;
 		column-gap: var(--s-4);
 		row-gap: var(--s-1);
-		margin: 6px 0 0;
+		margin: var(--s-2) 0 0;
 		max-width: 72ch;
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
@@ -248,7 +248,7 @@
 		font-size: var(--t-micro);
 		color: var(--ink);
 		background: var(--paper-2);
-		padding: 1px 5px;
+		padding: 1px var(--s-1);
 		border-radius: var(--r-1);
 	}
 
@@ -278,7 +278,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
-		padding: 5px 0;
+		padding: var(--s-1) 0;
 		color: var(--ink-2);
 		text-decoration: none;
 		font-family: var(--font-sans);
@@ -350,7 +350,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--s-3);
-		padding: 10px 0;
+		padding: var(--s-3) 0;
 		background: none;
 		border: 0;
 		border-radius: var(--r-1);
@@ -404,10 +404,10 @@
 	}
 
 	.api-endpoint-body {
-		padding: var(--s-1) 0 18px 60px;
+		padding: var(--s-1) 0 var(--s-4) 60px;
 		display: flex;
 		flex-direction: column;
-		gap: 14px;
+		gap: var(--s-4);
 	}
 	.api-desc {
 		font-family: var(--font-sans);
@@ -420,7 +420,7 @@
 	.api-block {
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
+		gap: var(--s-2);
 	}
 	.api-block-head {
 		font-family: var(--font-sans);
@@ -441,7 +441,7 @@
 	.api-responses th,
 	.api-responses td {
 		text-align: left;
-		padding: 6px 10px 6px 0;
+		padding: var(--s-1) var(--s-3) var(--s-1) 0;
 		border-bottom: 1px solid var(--rule);
 		vertical-align: top;
 	}
@@ -458,7 +458,7 @@
 		font-size: var(--t-micro);
 		color: var(--ink);
 		background: var(--paper-2);
-		padding: 1px 5px;
+		padding: 1px var(--s-1);
 		border-radius: var(--r-1);
 	}
 	.api-in {

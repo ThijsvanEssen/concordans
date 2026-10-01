@@ -526,8 +526,8 @@
 		display: flex;
 		align-items: baseline;
 		flex-wrap: wrap;
-		gap: 6px;
-		padding: 18px var(--s-4) 10px;
+		gap: var(--s-2);
+		padding: var(--s-4) var(--s-4) var(--s-3);
 		border-bottom: 1px solid var(--rule);
 	}
 	.head__title {
@@ -552,7 +552,7 @@
 		right: 0;
 		z-index: var(--z-float);
 		min-width: 200px;
-		padding: 6px 0;
+		padding: var(--s-1) 0;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
@@ -561,7 +561,7 @@
 	.menu__item {
 		display: block;
 		width: 100%;
-		padding: 6px var(--s-3);
+		padding: var(--s-1) var(--s-3);
 		border: 0;
 		background: none;
 		font: inherit;
@@ -590,7 +590,7 @@
 	.note,
 	.hidden {
 		margin: 0;
-		padding: 14px var(--s-4);
+		padding: var(--s-4);
 		color: var(--ink-3);
 		line-height: 1.4;
 	}
@@ -630,7 +630,7 @@
 		align-self: center;
 		display: inline-flex;
 		align-items: center;
-		gap: 5px;
+		gap: var(--s-1);
 		padding: 0;
 		border: 0;
 		background: none;
@@ -701,7 +701,7 @@
 	.row__main {
 		display: flex;
 		align-items: flex-start;
-		gap: 10px;
+		gap: var(--s-3);
 		padding: var(--s-2) var(--s-4);
 		cursor: pointer;
 	}
@@ -754,7 +754,7 @@
 		place-items: center;
 		width: 24px;
 		height: 24px;
-		margin: -2px -6px 0 0;
+		margin: -2px calc(-1 * var(--s-2)) 0 0;
 		padding: 0;
 		border: 0;
 		border-radius: var(--r-1);
@@ -830,7 +830,7 @@
 	}
 	.group__more {
 		display: block;
-		padding: 6px var(--s-4) 2px;
+		padding: var(--s-1) var(--s-4) 2px;
 		border: 0;
 		background: none;
 		font: inherit;
@@ -841,7 +841,7 @@
 	.foot {
 		display: flex;
 		gap: var(--s-4);
-		padding: 18px var(--s-4) 20px;
+		padding: var(--s-4);
 		font-size: var(--t-micro);
 	}
 	.visually-hidden {
