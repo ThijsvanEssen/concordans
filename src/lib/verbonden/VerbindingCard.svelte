@@ -154,9 +154,9 @@
 	.card {
 		display: flex;
 		flex-direction: column;
-		gap: 14px;
+		gap: var(--s-4);
 		width: 100%;
-		padding: 18px 20px 20px;
+		padding: var(--s-4);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
@@ -199,11 +199,11 @@
 	.ends {
 		display: grid;
 		grid-template-columns: 14px 1fr;
-		gap: 6px 10px;
+		gap: var(--s-2) var(--s-3);
 		align-items: start;
 	}
 	.ends :global(.kind-glyph) {
-		margin-top: 3px;
+		margin-top: var(--s-1);
 	}
 	.end__title {
 		font-family: var(--font-serif);
@@ -222,7 +222,7 @@
 		color: var(--ink-3);
 	}
 	.end__label {
-		padding-top: 3px;
+		padding-top: var(--s-1);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -241,7 +241,7 @@
 	.kv {
 		display: grid;
 		grid-template-columns: 128px 1fr;
-		gap: 6px 14px;
+		gap: var(--s-2) var(--s-4);
 		margin: 0;
 		line-height: 1.4;
 	}
@@ -258,7 +258,7 @@
 		display: inline-block;
 		width: 7px;
 		height: 7px;
-		margin-right: 3px;
+		margin-right: var(--s-1);
 		border: 1.3px solid var(--ink-3);
 		border-radius: 50%;
 		vertical-align: 0;

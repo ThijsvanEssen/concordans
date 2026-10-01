@@ -475,7 +475,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--s-3);
-		padding: 14px 18px;
+		padding: var(--s-4);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		background: var(--paper);
@@ -489,7 +489,7 @@
 		border: 0;
 		border-bottom: 1px solid var(--rule);
 		border-radius: 0;
-		padding: var(--s-4) 18px;
+		padding: var(--s-4);
 	}
 
 	input {
@@ -513,7 +513,7 @@
 		font-weight: 500;
 		color: var(--ink-3);
 		border: 1px solid var(--rule);
-		padding: 1px 6px;
+		padding: 1px var(--s-2);
 		border-radius: var(--r-1);
 		flex-shrink: 0;
 	}
@@ -539,7 +539,7 @@
 	}
 
 	.list--filled {
-		padding: 6px 0;
+		padding: var(--s-1) 0;
 	}
 	.search--overlay .list {
 		flex: 1;
@@ -556,7 +556,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--s-2);
-		padding: var(--s-2) 18px var(--s-1);
+		padding: var(--s-2) var(--s-4) var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
@@ -567,7 +567,7 @@
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-3);
-		padding: 7px 18px;
+		padding: var(--s-2) var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: 1.35;
@@ -620,7 +620,7 @@
 	}
 	/* The dossier the stukken below it belong to. */
 	.section {
-		padding: 6px 18px 2px;
+		padding: var(--s-1) var(--s-4) 2px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -642,7 +642,7 @@
 
 	.state {
 		margin: 0;
-		padding: var(--s-3) 18px;
+		padding: var(--s-3) var(--s-4);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
@@ -650,7 +650,7 @@
 
 	.search--compact .field {
 		gap: var(--s-2);
-		padding: 6px 10px;
+		padding: var(--s-1) var(--s-3);
 	}
 	.search--compact input {
 		font-size: var(--t-body-2);
@@ -660,13 +660,13 @@
 		overflow-y: auto;
 	}
 	.search--compact .group-label {
-		padding: 6px 10px 2px;
+		padding: var(--s-1) var(--s-3) 2px;
 	}
 	.search--compact .row {
 		flex-direction: column;
 		align-items: stretch;
 		gap: 1px;
-		padding: 5px 10px;
+		padding: var(--s-1) var(--s-3);
 		font-size: var(--t-body-2);
 	}
 	.search--compact .row--citation {
@@ -681,7 +681,7 @@
 		max-width: none;
 	}
 	.search--compact .state {
-		padding: var(--s-2) 10px;
+		padding: var(--s-2) var(--s-3);
 	}
 
 	@media (max-width: 640px) {

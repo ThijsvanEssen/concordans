@@ -30,8 +30,8 @@ function offScale(text: string): string[] {
 	return found;
 }
 
-// 28 September 2026, when the scale was brought in (U25); 263 after the readers, 2 October.
-const OFF_SCALE_MAX = 263;
+// 28 September 2026, when the scale was brought in (U25); 263 after the readers, 178 after Bladeren, Search, Verbonden and the api page, 2 October.
+const OFF_SCALE_MAX = 178;
 
 describe('the type and spacing scale', () => {
 	it('gives no font size in pixels outside the tokens', () => {
