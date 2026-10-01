@@ -430,6 +430,7 @@
 				}
 			}
 			separateContainerGroups();
+			placeClusters();
 			scheduleFit();
 		}, burst);
 	}
@@ -745,6 +746,51 @@
 	const CLUSTER_GAP = 36;
 	const GOLDEN_ANGLE = 2.399963229728653;
 	const groupRadius = (memberCount: number) => Math.max(26, 14 + Math.sqrt(memberCount) * 10);
+
+	// A cluster bron stands where it has most room around the focus: FA2 put "172
+	// uitspraken" on the hull of BW5 and its name under the hull's. Of sixteen directions
+	// just outside the focus's other neighbours, the one furthest from any bron.
+	function placeClusters() {
+		const focus = focusNodeId;
+		if (!focus || !g.hasNode(focus) || clusters.length === 0) return;
+		const fx = g.getNodeAttribute(focus, 'x') as number;
+		const fy = g.getNodeAttribute(focus, 'y') as number;
+		const taken: { x: number; y: number }[] = [];
+		g.forEachNode((id, a) => {
+			if (id !== focus && !isClusterId(id) && !a.anchor)
+				taken.push({ x: a.x as number, y: a.y as number });
+		});
+		const dists = g
+			.neighbors(focus)
+			.filter((id) => !isClusterId(id))
+			.map((id) =>
+				Math.hypot(
+					(g.getNodeAttribute(id, 'x') as number) - fx,
+					(g.getNodeAttribute(id, 'y') as number) - fy
+				)
+			)
+			.sort((a, b) => a - b);
+		// Just outside the ring of the other neighbours, which FA2 sets at one distance.
+		const r = dists.length ? dists[Math.floor((dists.length - 1) * 0.9)] * CLUSTER_OUT : 100;
+		const room = (x: number, y: number) =>
+			taken.reduce((min, t) => Math.min(min, Math.hypot(t.x - x, t.y - y)), Infinity);
+		for (const c of clusters) {
+			if (!g.hasNode(c.id)) continue;
+			let best = { x: fx - r, y: fy, room: -1 };
+			for (let k = 0; k < DIRECTIONS; k++) {
+				const angle = (k / DIRECTIONS) * 2 * Math.PI;
+				const x = fx + Math.cos(angle) * r;
+				const y = fy + Math.sin(angle) * r;
+				const free = room(x, y);
+				if (free > best.room) best = { x, y, room: free };
+			}
+			g.setNodeAttribute(c.id, 'x', best.x);
+			g.setNodeAttribute(c.id, 'y', best.y);
+			taken.push(best);
+		}
+	}
+	const DIRECTIONS = 16;
+	const CLUSTER_OUT = 1.3;
 
 	function separateContainerGroups() {
 		type Disk = { cx: number; cy: number; r: number; ids: string[] };
