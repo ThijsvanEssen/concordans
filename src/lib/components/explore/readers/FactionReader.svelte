@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
@@ -112,8 +113,7 @@
 			</header>
 
 			{#if board.length > 0}
-				<section class="sec">
-					<h3 class="sec-title">Fractiebestuur</h3>
+				<Sectie titel="Fractiebestuur" soort="members">
 					<dl class="board">
 						{#each board as seat, i (i)}
 							<dt>{seat.function ?? ''}</dt>
@@ -127,12 +127,11 @@
 							</dd>
 						{/each}
 					</dl>
-				</section>
+				</Sectie>
 			{/if}
 
 			{#if votes && votes.total > 0}
-				<section class="sec">
-					<h3 class="sec-title">Stemgedrag in de Eerste Kamer</h3>
+				<Sectie titel="Stemgedrag in de Eerste Kamer" soort="decisions">
 					<p class="vote-line">{ekVoteLine(votes.counts, votes.total)}.</p>
 					<ul class="votes">
 						{#each votes.items as v (v.decision_key)}
@@ -153,7 +152,7 @@
 							</li>
 						{/each}
 					</ul>
-				</section>
+				</Sectie>
 			{/if}
 
 			{#if ek}
@@ -199,7 +198,7 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: var(--t-h3);
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
@@ -214,18 +213,6 @@
 	.chips {
 		display: flex;
 		gap: var(--s-1);
-	}
-	.sec {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.sec-title {
-		margin: 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-label);
-		font-weight: 500;
-		color: var(--ink-3);
 	}
 	.board {
 		display: grid;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -136,15 +137,14 @@
 
 			{#if view.timeline}
 				{@const p = procedure(d, view.timeline.entries, metOverig)}
-				<section class="sec">
-					<h3 class="sec-title">Procedure</h3>
+				<Sectie titel="Procedure">
 					<Tijdlijn groepen={p.groepen} />
 					{#if p.overig}
 						<button type="button" class="overig" onclick={() => (metOverig = !metOverig)}
 							>{metOverig ? 'Alleen de procedure' : `Toon ook de ${p.overig} andere items`}</button
 						>
 					{/if}
-				</section>
+				</Sectie>
 			{/if}
 		{/if}
 	</div>
@@ -204,7 +204,7 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: var(--t-h3);
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
@@ -241,18 +241,5 @@
 	}
 	.source a:hover {
 		color: var(--accent);
-	}
-
-	.sec {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.sec-title {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-3);
-		margin: 0;
 	}
 </style>

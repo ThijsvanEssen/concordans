@@ -1,11 +1,11 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	// Wat een bewindspersoon toezegde en ondertekende,
 	// bovenaan de lezer. Tellingen per stand zijn links naar Bladeren met het filter gezet.
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { stand, datum } from './stand';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 
 	let { memberKey, ruim = false }: { memberKey: string; ruim?: boolean } = $props();
 
@@ -46,56 +46,58 @@
 </script>
 
 {#if commitments && commitments.total > 0}
-	<section class="ov" class:ruim id="toezeggingen">
-		<h3 class="t"><KindGlyph collection="commitments" size={14} />Toezeggingen</h3>
-		<p class="zin">
-			<a href={href()}>{commitments.total} toezeggingen</a>:
-			{#each statusCounts as s, i (s.value)}{#if i > 0}{i === statusCounts.length - 1
-						? ' en '
-						: ', '}{/if}<a href={href(s.value ?? undefined)}>{s.count} {lower(s.value ?? '')}</a
-				>{/each}.
-		</p>
-		{#if open && open.items.length}
-			<ol class="items">
-				{#each open.items as c (c.key)}
-					<li>
-						<a href={bronHref(`commitments/${c.key}`, { keepMode: false, mode: 'read' })}
-							>{c.text}</a
-						>
-						<span class="meta"
-							>{c.number}, toegezegd {datum(c.date)}{c.expected_resolution
-								? `, verwacht ${datum(c.expected_resolution)}`
-								: ''}</span
-						>
-					</li>
-				{/each}
-			</ol>
-			{#if open.total > open.items.length}
-				<a class="alle" href={href('Openstaand')}>Alle {open.total} openstaande toezeggingen</a>
+	<Sectie titel="Toezeggingen" soort="commitments" id="toezeggingen">
+		<div class="ov" class:ruim>
+			<p class="zin">
+				<a href={href()}>{commitments.total} toezeggingen</a>:
+				{#each statusCounts as s, i (s.value)}{#if i > 0}{i === statusCounts.length - 1
+							? ' en '
+							: ', '}{/if}<a href={href(s.value ?? undefined)}>{s.count} {lower(s.value ?? '')}</a
+					>{/each}.
+			</p>
+			{#if open && open.items.length}
+				<ol class="items">
+					{#each open.items as c (c.key)}
+						<li>
+							<a href={bronHref(`commitments/${c.key}`, { keepMode: false, mode: 'read' })}
+								>{c.text}</a
+							>
+							<span class="meta"
+								>{c.number}, toegezegd {datum(c.date)}{c.expected_resolution
+									? `, verwacht ${datum(c.expected_resolution)}`
+									: ''}</span
+							>
+						</li>
+					{/each}
+				</ol>
+				{#if open.total > open.items.length}
+					<a class="alle" href={href('Openstaand')}>Alle {open.total} openstaande toezeggingen</a>
+				{/if}
 			{/if}
-		{/if}
-		<p class="dekking">
-			Toezeggingen in de gegevens: kabinet-Rutte IV (2), kabinet-Schoof en kabinet-Jetten.
-		</p>
-	</section>
+			<p class="dekking">
+				Toezeggingen in de gegevens: kabinet-Rutte IV (2), kabinet-Schoof en kabinet-Jetten.
+			</p>
+		</div>
+	</Sectie>
 {/if}
 
 {#if dossiers && dossiers.total > 0}
-	<section class="ov" class:ruim id="dossiers">
-		<h3 class="t"><KindGlyph collection="dossiers" size={14} />Dossiers</h3>
-		<p class="zin">{dossiers.total} dossiers met stukken die deze bewindspersoon ondertekende.</p>
-		<ol class="items">
-			{#each dossiers.items as d (d.key)}
-				{@const st = stand(d)}
-				<li>
-					<a href={bronHref(`dossiers/${d.number}`, { keepMode: false, mode: 'read' })}
-						>{d.short_title ?? d.title ?? d.number}</a
-					>
-					<span class="meta">{st?.zin ?? ''} {d.number}</span>
-				</li>
-			{/each}
-		</ol>
-	</section>
+	<Sectie titel="Dossiers" soort="dossiers" id="dossiers">
+		<div class="ov" class:ruim>
+			<p class="zin">{dossiers.total} dossiers met stukken die deze bewindspersoon ondertekende.</p>
+			<ol class="items">
+				{#each dossiers.items as d (d.key)}
+					{@const st = stand(d)}
+					<li>
+						<a href={bronHref(`dossiers/${d.number}`, { keepMode: false, mode: 'read' })}
+							>{d.short_title ?? d.title ?? d.number}</a
+						>
+						<span class="meta">{st?.zin ?? ''} {d.number}</span>
+					</li>
+				{/each}
+			</ol>
+		</div>
+	</Sectie>
 {/if}
 
 <style>
@@ -103,18 +105,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-		padding-top: var(--s-3);
-		border-top: 2px solid var(--ink);
-	}
-	.t {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 500;
-		color: var(--ink);
 	}
 	.zin {
 		margin: 0;
@@ -172,7 +162,6 @@
 	}
 	.ruim {
 		gap: var(--s-3);
-		margin-top: var(--s-5);
 	}
 	.ruim .items li {
 		padding: var(--s-3) 0;

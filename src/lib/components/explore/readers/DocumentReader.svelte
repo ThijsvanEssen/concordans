@@ -419,7 +419,7 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: var(--t-h3);
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0;

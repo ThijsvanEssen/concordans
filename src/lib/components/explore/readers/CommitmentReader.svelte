@@ -79,7 +79,7 @@
 				c.status === OPEN_STATUS && !!c.expected_resolution && c.expected_resolution < today}
 			<header class="head">
 				<span class="kicker"><KindGlyph collection="commitments" />{bronLabel('commitments')}</span>
-				<p class="text">{c.text ?? 'Toezegging zonder tekst'}</p>
+				<h2 class="text">{c.text ?? 'Toezegging zonder tekst'}</h2>
 			</header>
 
 			<dl class="facts">

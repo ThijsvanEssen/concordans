@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -171,8 +172,7 @@
 			{/if}
 
 			{#if ek}
-				<section class="sec">
-					<h3 class="sec-title">Eerste Kamer</h3>
+				<Sectie titel="Eerste Kamer">
 					<dl class="ek-facts">
 						{#if ek.faction}
 							<dt>Fractie</dt>
@@ -198,7 +198,7 @@
 							<a href={ek.source.url} rel="external">{ek.source.attribution}</a>.
 						</p>
 					{/if}
-				</section>
+				</Sectie>
 			{/if}
 
 			{#if (m.government_functions ?? []).length > 0}
@@ -206,8 +206,7 @@
 			{/if}
 
 			{#if career.length > 0}
-				<section class="sec" id="loopbaan">
-					<h3 class="sec-title">Loopbaan</h3>
+				<Sectie titel="Loopbaan" id="loopbaan">
 					<ul class="career">
 						{#each career as step (step.kind + (step.kind === 'seat' ? step.factionKey : step.function) + step.from)}
 							<li
@@ -252,14 +251,13 @@
 							die van de stukken, niet de ambtstermijn.
 						</p>
 					{/if}
-				</section>
+				</Sectie>
 			{/if}
 
 			{#if view.votes && view.votes.votes.length > 0}
 				{@const votes = view.votes.votes}
 				{@const groups = groupVotes(showAllVotes ? votes : votes.slice(0, VOTES_PREVIEW))}
-				<section class="sec">
-					<h3 class="sec-title">Stemgeschiedenis ({view.votes.count})</h3>
+				<Sectie titel="Stemgeschiedenis" soort="decisions" aantal={view.votes.count}>
 					{#each groups as group (group.party)}
 						{#if groups.length > 1}
 							<div class="party-head">
@@ -309,7 +307,7 @@
 							+{votes.length - VOTES_PREVIEW} meer stemmen
 						</button>
 					{/if}
-				</section>
+				</Sectie>
 			{/if}
 		{/if}
 	</div>
@@ -370,7 +368,7 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: var(--t-h3);
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
@@ -393,19 +391,6 @@
 		color: var(--ink-2);
 	}
 
-	/* ── Sections ── */
-	.sec {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.sec-title {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-3);
-		margin: 0;
-	}
 	/* ── Loopbaan: newest first, the years in the margin ── */
 	.career {
 		list-style: none;

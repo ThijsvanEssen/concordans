@@ -65,10 +65,12 @@
 		</p>
 	{/if}
 	<ul class="ing">
-		<li>
-			<a href="#toezeggingen"><b>{tz?.open ?? '…'}</b> openstaande toezeggingen</a>
-			<span class="s">van {tz?.total ?? '…'} in de gegevens</span>
-		</li>
+		{#if tz?.total !== 0}
+			<li>
+				<a href="#toezeggingen"><b>{tz?.open ?? '…'}</b> openstaande toezeggingen</a>
+				<span class="s">van {tz?.total ?? '…'} in de gegevens</span>
+			</li>
+		{/if}
 		<li>
 			<a href="#dossiers"><b>{dossiers ?? '…'}</b> dossiers</a>
 			<span class="s">met stukken die deze persoon ondertekende</span>
@@ -100,7 +102,7 @@
 	.naam {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-h1);
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 	}

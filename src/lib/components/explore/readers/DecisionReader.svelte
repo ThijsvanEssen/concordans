@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
@@ -111,10 +112,9 @@
 			</header>
 
 			{#if doc?.text}
-				<section class="sec">
-					<h3 class="sec-title">{doc.kind ?? 'Document'}</h3>
+				<Sectie titel={doc.kind ?? 'Document'} soort="documents">
 					<p class="document-text">{doc.text}</p>
-				</section>
+				</Sectie>
 			{:else if chamber !== 'EK'}
 				<p class="document-unavailable">Tekst niet beschikbaar.</p>
 			{/if}
@@ -143,15 +143,14 @@
 			{#if chamber === 'EK'}
 				{@const groups = ekFactionGroups(d)}
 				{#if groups.length > 0}
-					<section class="sec">
-						<h3 class="sec-title">Fracties</h3>
+					<Sectie titel="Fracties" soort="factions">
 						<dl class="ek-factions">
 							{#each groups as g (g.label)}
 								<dt>{g.label}</dt>
 								<dd>{g.names.join(', ')}</dd>
 							{/each}
 						</dl>
-					</section>
+					</Sectie>
 				{/if}
 				<p class="source">
 					Bron: <a href={d.source_url ?? EK_SOURCE.url} rel="external"
@@ -161,10 +160,9 @@
 			{/if}
 
 			{#if voters.length > 0}
-				<section class="sec">
-					<h3 class="sec-title">
-						{d.vote_kind === 'member' ? 'Stemverdeling per lid' : 'Stemverdeling per fractie'}
-					</h3>
+				<Sectie
+					titel={d.vote_kind === 'member' ? 'Stemverdeling per lid' : 'Stemverdeling per fractie'}
+				>
 					<ul class="voter-list">
 						{#each voters as v (v.id)}
 							{@const href = voterHref(v.id)}
@@ -179,7 +177,7 @@
 							</li>
 						{/each}
 					</ul>
-				</section>
+				</Sectie>
 			{/if}
 		{/if}
 	</div>
@@ -242,7 +240,7 @@
 	}
 	.title {
 		font-family: var(--font-serif);
-		font-size: var(--t-h3);
+		font-size: var(--t-h2);
 		font-weight: 500;
 		color: var(--ink);
 		margin: 0;
@@ -278,18 +276,6 @@
 		color: var(--accent);
 	}
 
-	.sec {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.sec-title {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-3);
-		margin: 0;
-	}
 	.document-text {
 		font-family: var(--font-serif);
 		font-size: var(--t-body);

@@ -501,8 +501,8 @@
 		align-items: baseline;
 		gap: var(--s-2);
 		font-family: var(--font-serif);
-		font-size: 1em;
-		font-weight: 600;
+		font-size: var(--t-body);
+		font-weight: 500;
 		line-height: var(--lh-snug);
 		color: var(--ink);
 		margin: 2.2em 0 0.5em;
@@ -660,8 +660,8 @@
 
 	.reader-para-subtitle {
 		font-family: var(--font-serif);
-		font-weight: 600;
-		font-size: 0.88em;
+		font-weight: 500;
+		font-size: var(--t-body-2);
 		color: var(--ink-2);
 		margin: 0 0 0.5em;
 	}

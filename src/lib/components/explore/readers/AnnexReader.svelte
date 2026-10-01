@@ -172,7 +172,7 @@
 	.title {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-h3);
+		font-size: var(--t-h1);
 		font-weight: 500;
 		line-height: 1.25;
 		color: var(--ink);
