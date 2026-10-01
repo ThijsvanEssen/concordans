@@ -7,7 +7,7 @@
 	import { bronHref, refOf } from '$lib/bron/href';
 	import { bronLabel, isCollection } from '$lib/vocabulary';
 	import { moveIndex } from './canvas-keys';
-	import { withBook } from '$lib/text/bw';
+	import { articleTitle } from '$lib/text/bw';
 	import { stemmingNaam } from '$lib/bron/naam';
 	import { isClusterId } from '$lib/netwerk/cluster';
 
@@ -45,7 +45,10 @@
 			? n.label
 			: n.collection === 'decisions'
 				? stemmingNaam(n)
-				: withBook(n.raw?.display_name ?? n.label);
+				: articleTitle(
+						n.raw?.display_name ?? n.label,
+						n.collection === 'articles' ? n.raw?.props : null
+					);
 
 	function focusAt(i: number) {
 		active = i;

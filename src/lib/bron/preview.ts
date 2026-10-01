@@ -6,7 +6,7 @@ import { getArticleDetail } from '$lib/api/articles';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { parseArticleParts, partText } from '$lib/text/article-parts';
-import { withBook } from '$lib/text/bw';
+import { articleTitle } from '$lib/text/bw';
 import { courtName } from '$lib/verbonden/rows';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
@@ -91,7 +91,7 @@ export function previewFromNode(
 			};
 		}
 		case 'articles':
-			return { kicker: kind, title: withBook(name), date: null, lines: null };
+			return { kicker: kind, title: articleTitle(name, props), date: null, lines: null };
 		default:
 			return { kicker: kind, title: name, date: null, lines: null };
 	}
