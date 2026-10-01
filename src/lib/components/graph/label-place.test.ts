@@ -1,0 +1,19 @@
+import { describe, expect, it } from 'vitest';
+import { labelX } from './label-place';
+
+describe('labelX', () => {
+	it('puts a name right of its bron where it fits', () => {
+		expect(labelX(100, 8, 80, 320)).toBe(111);
+	});
+
+	it('puts it left where the right would run past the edge', () => {
+		expect(labelX(280, 8, 80, 320)).toBe(189);
+	});
+
+	it('keeps it whole on the canvas where neither side has room', () => {
+		// A name of 200 px beside a bron at 120 in a column of 320 px.
+		expect(labelX(120, 8, 200, 320)).toBe(118);
+		// Wider than the canvas: from its left edge.
+		expect(labelX(120, 8, 400, 320)).toBe(2);
+	});
+});
