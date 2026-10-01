@@ -8,7 +8,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { bySection, groupLabel, presentHit, sectionOf } from './present';
+	import { bySection, groupLabel, orderGroups, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import {
@@ -48,7 +48,7 @@
 		onPick?: (id: string) => void;
 	} = $props();
 
-	/** The kinds the search covers, in the order the groups appear. */
+	/** The kinds the search covers; the groups appear best answer first (orderGroups). */
 	const KINDS = [
 		'instruments',
 		'articles',
@@ -107,10 +107,13 @@
 	const hitName = (hit: Hit) =>
 		hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
 
+	// One request answers every kind; its groups stand best answer first (orderGroups).
 	const groups = $derived(
-		kinds
-			.map((kind) => ({ kind, hits: bySection(results[kind] ?? []) }))
-			.filter((g) => g.hits.length > 0)
+		orderGroups(
+			kinds
+				.map((kind) => ({ kind, hits: bySection(results[kind] ?? []) }))
+				.filter((g) => g.hits.length > 0)
+		)
 	);
 	const hits = $derived(groups.flatMap((g) => g.hits));
 	const indexOf = $derived(new Map(hits.map((hit, i) => [hit.id, i])));

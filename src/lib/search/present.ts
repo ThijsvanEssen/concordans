@@ -194,3 +194,31 @@ export function bySection(hits: Hit[]): Hit[] {
 	}
 	return order.flatMap((s) => buckets.get(s)!);
 }
+
+/**
+ * The groups of a search, the best answer first. /api/search gives every hit a score, its
+ * rank tier for the query: an identifier (1), the whole name (0.75), the start of the name
+ * (0.5), part of it (0.25) or words of the text only (0.1). A group stands by its best hit:
+ * "PVV" names a fractie (1) before the judgments on IB/PVV that only contain it (0.1);
+ * "stikstof" names debates (0.5) before judgments. On a tie a name comes first: a fractie,
+ * a lid, a dossier, before the papers that name them.
+ */
+const TIE_ORDER: readonly Collection[] = [
+	'factions',
+	'members',
+	'dossiers',
+	'committees',
+	'instruments',
+	'articles',
+	'judgments',
+	'documents'
+];
+
+export function orderGroups<G extends { kind: Collection; hits: Hit[] }>(groups: G[]): G[] {
+	const best = (g: G) => Math.max(0, ...g.hits.map((h) => h.score ?? 0));
+	const tie = (g: G) => {
+		const i = TIE_ORDER.indexOf(g.kind);
+		return i < 0 ? TIE_ORDER.length : i;
+	};
+	return [...groups].sort((a, b) => best(b) - best(a) || tie(a) - tie(b));
+}
