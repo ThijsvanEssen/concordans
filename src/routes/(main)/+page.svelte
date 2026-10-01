@@ -16,6 +16,15 @@
 	import { bronHref as bronHrefR4 } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	const r4 = $derived(page.url.searchParams.get('ontwerp') === 'r4');
+	import BronTeken, { type Vorm, type Domein } from '$lib/components/r4/BronTeken.svelte';
+	// Vier ingangen om te zoeken, elk met de tekens van wat erin valt.
+	const SCOPES: { id: string; label: string; kinds: string[]; tekens: [Vorm, Domein][]; href: string }[] = [
+		{ id: 'wetten', label: 'Wetten', kinds: ['instruments', 'articles'], tekens: [['regel', 'recht'], ['regel-o', 'recht']], href: indexHref('instruments') },
+		{ id: 'uitspraken', label: 'Uitspraken', kinds: ['judgments'], tekens: [['uitspraak', 'recht']], href: indexHref('judgments') },
+		{ id: 'parlement', label: 'Parlement', kinds: ['dossiers', 'documents', 'members', 'factions', 'committees'], tekens: [['dossier', 'parlement'], ['stuk', 'parlement'], ['besluit', 'parlement'], ['persoon', 'parlement']], href: indexHref('dossiers', { ontwerp: 'r3', track: 'Wetgeving' }) },
+		{ id: 'kabinet', label: 'Kabinet', kinds: ['members'], tekens: [['orgaan', 'regering'], ['persoon', 'regering'], ['toezegging', 'regering']], href: indexHref('cabinets', { ontwerp: 'r4' }) }
+	];
+	let scope = $state<string | null>(null);
 	/** De tekens van de verkenner, met hun naam, zodat ze vóór het netwerk bekend zijn. */
 	const TEKENS: Collection[] = ['instruments', 'articles', 'judgments', 'dossiers', 'documents', 'decisions', 'members', 'factions', 'committees', 'cabinets', 'commitments'];
 
@@ -129,24 +138,26 @@
 <div class="r4-home">
 	<aside class="r4-links">
 		<h1>Concordans</h1>
-		<p class="r4-wat">
-			Nederlandse wetten, uitspraken en Kamerstukken met hun onderlinge verbindingen{#if stats}:
-				{fmt(stats.wetten)} wetten en verdragen, {fmt(stats.uitspraken)} uitspraken, {fmt(stats.dossiers)} Kamerdossiers{/if}.
-		</p>
-		<nav class="r4-ing" aria-label="Ingangen">
-			{#each ingangen as g (g.label)}
-				<a href={g.href}><span class="l">{g.label}</span><span class="z">{g.zin}</span></a>
-			{/each}
-		</nav>
-		<section class="r4-tekens" aria-labelledby="tekens-kop">
-			<h2 id="tekens-kop">Tekens in de verkenner</h2>
-			<ul>
-				{#each TEKENS as c (c)}<li><KindGlyph collection={c} />{bronLabel(c)}</li>{/each}
-			</ul>
-		</section>
+		<p class="r4-wat">Wetten, uitspraken en Kamerstukken met hun onderlinge verbindingen.</p>
 	</aside>
 	<div class="r4-rechts">
-		<Search />
+		<div class="r4-zoek">
+			<div class="r4-scopes" role="group" aria-label="Zoek in">
+				{#each SCOPES as sc (sc.id)}
+					<button type="button" aria-pressed={scope === sc.id} onclick={() => (scope = scope === sc.id ? null : sc.id)}>
+						<span class="r4-tekens">{#each sc.tekens as [v, d], i (i)}<BronTeken vorm={v} domein={d} />{/each}</span>
+						{sc.label}
+					</button>
+				{/each}
+			</div>
+			{#key scope}
+				<Search scope={scope ? SCOPES.find((x) => x.id === scope)?.kinds : null} placeholder={scope ? `Zoek in ${SCOPES.find((x) => x.id === scope)?.label.toLowerCase()}` : 'Zoek een wet, uitspraak, dossier of persoon'} />
+			{/key}
+			{#if scope}
+				{@const sc = SCOPES.find((x) => x.id === scope)}
+				{#if sc}<a class="r4-blader" href={sc.href}>Of blader door {sc.label.toLowerCase()} →</a>{/if}
+			{/if}
+		</div>
 		<section class="r4-actueel" aria-labelledby="r4-actueel-kop">
 			<header>
 				<h2 id="r4-actueel-kop"><a href="/actueel">Actueel</a></h2>
@@ -259,56 +270,42 @@
 		line-height: var(--lh-snug);
 		color: var(--ink-2);
 	}
-	.r4-ing {
+	.r4-zoek {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		gap: var(--s-3);
 	}
-	.r4-ing a {
+	.r4-scopes {
 		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-		padding-top: var(--s-2);
-		border-top: 2px solid var(--ink);
-		color: var(--ink);
-		text-decoration: none;
+		flex-wrap: wrap;
+		gap: var(--s-2);
 	}
-	.r4-ing .l {
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 500;
-	}
-	.r4-ing a:hover .l {
-		color: var(--accent);
-	}
-	.r4-ing .z {
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-		color: var(--ink-2);
-	}
-	.r4-tekens h2 {
-		margin: 0 0 var(--s-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-2);
-	}
-	.r4-tekens ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--s-1) var(--s-3);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-	}
-	.r4-tekens li {
-		display: flex;
+	.r4-scopes button {
+		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
+		padding: var(--s-2) var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.r4-scopes button[aria-pressed='true'] {
+		border-color: var(--ink);
+		box-shadow: inset 0 -3px 0 var(--ink);
+	}
+	.r4-tekens {
+		display: inline-flex;
+		gap: 3px;
+	}
+	.r4-blader {
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink);
 	}
 	.r4-rechts {
 		display: flex;

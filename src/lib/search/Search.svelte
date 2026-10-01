@@ -28,8 +28,11 @@
 		placeholder = 'Zoek een artikel, uitspraak of dossier',
 		initial = '',
 		onOpen,
-		onPick
+		onPick,
+		scope = null
 	}: {
+		/** Ronde 4: alleen deze soorten doorzoeken (een ingang op de startpagina). */
+		scope?: readonly string[] | null;
 		/** The text the field starts with. */
 		initial?: string;
 		/** Inside the overlay the field takes focus and the list scrolls within the dialog. */
@@ -56,6 +59,7 @@
 		'documents'
 	] as const satisfies readonly Collection[];
 	type Kind = (typeof KINDS)[number];
+	const kinds = $derived(scope ? KINDS.filter((k) => scope.includes(k)) : KINDS);
 	const LIMIT = 6;
 	const DEBOUNCE_MS = 180;
 
@@ -99,7 +103,7 @@
 		hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
 
 	const groups = $derived(
-		KINDS.map((kind) => ({ kind, hits: bySection(results[kind] ?? []) })).filter(
+		kinds.map((kind) => ({ kind, hits: bySection(results[kind] ?? []) })).filter(
 			(g) => g.hits.length > 0
 		)
 	);
@@ -154,7 +158,7 @@
 			}
 			unwrap(
 				api.GET('/api/search', {
-					params: { query: { q: term, types: [...KINDS], limit: LIMIT } },
+					params: { query: { q: term, types: [...kinds], limit: LIMIT } },
 					signal: controller.signal
 				})
 			)
