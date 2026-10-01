@@ -152,7 +152,7 @@
 					{/each}
 				</ul>
 			{:else if g.kind === 'steps'}
-				<!-- Ronde 6: de fasen als rijen, zoals elk ander filter; geen staafjes. -->
+				<!-- De fasen als rijen, zoals elk ander filter; geen staafjes. -->
 				<ul class="options" aria-label={g.label}>
 					{#each g.options as o (o.id)}
 						<li>
@@ -165,7 +165,8 @@
 							>
 								<span class="box" aria-hidden="true"></span>
 								<span class="label">{o.label}</span>
-								{#if o.count !== undefined && !pending}<span class="n">{formatCount(o.count)}</span>{/if}
+								{#if o.count !== undefined && !pending}<span class="n">{formatCount(o.count)}</span
+									>{/if}
 							</button>
 						</li>
 					{/each}

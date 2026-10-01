@@ -32,10 +32,8 @@
 	import {
 		NO_KIND_LABEL,
 		PHASES,
-		dossierStatus,
 		OUTCOME_LABEL,
 		kindFromParam,
-		openedOnBasis,
 		phaseFromParam,
 		type Outcome
 	} from '$lib/components/parliamentary/stages';
@@ -45,13 +43,13 @@
 		groupRuns
 	} from '$lib/components/parliamentary/dossier-number';
 	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { stand, datum, soortZin, GROUP_LABEL, GROUP_ORDER, type StandGroup } from '$lib/components/parliamentary/stand';
+	import { stand, datum } from '$lib/components/parliamentary/stand';
 	import Hemicycle from './Hemicycle.svelte';
 	import ZaalTegenover from './ZaalTegenover.svelte';
-	import DossierOpen from '$lib/components/r4/DossierOpen.svelte';
-	import KabinetOpen from '$lib/components/r4/KabinetOpen.svelte';
-	import ZaalLegenda from '$lib/components/r4/ZaalLegenda.svelte';
-	import { kleurVan } from '$lib/components/r4/partijkleuren';
+	import DossierOpen from '$lib/components/open/DossierOpen.svelte';
+	import KabinetOpen from '$lib/components/open/KabinetOpen.svelte';
+	import ZaalLegenda from './ZaalLegenda.svelte';
+	import { kleurVan } from './partijkleuren';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
 	import {
@@ -116,11 +114,6 @@
 
 	// ── URL-driven filter state ─────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
-	// Ontwerpstudie ronde 2: ?ontwerp=rij (nieuwe dossierrij) of groep (rij plus groepen naar stand).
-	const ontwerp = $derived(params.get('ontwerp') ?? '');
-	let openGroups = $state(new Set<StandGroup>(['ek', 'tk', 'ingediend']));
-	// Ronde 3: in Dossiers standaard twee filters; de rest achter "Meer filters".
-	let meerFilters = $state(false);
 	const q = $derived(params.get('q') ?? '');
 	// A dossier's phase and kind as the Kamer names them (API 0.52). A link from before names
 	// them the old way (`?stage=mvt`, `?track=wetsvoorstel`): read as the Kamer's word, or left
@@ -1719,19 +1712,8 @@
 		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 110, asideW: 130 },
 		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', leadW: 130, asideW: 110 }
 	};
-	const facetGroups = $derived(
-		ontwerp === 'r3' && category === 'dossiers' && !meerFilters
-			? facetGroupsAll.filter((g) => g.id === 'stand' || g.id === 'ministry')
-			: facetGroupsAll
-	);
-	const r3 = $derived(ontwerp === 'r3' && category === 'dossiers');
-	const columns = $derived(
-		r3
-			? { lead: '', body: 'Dossier', aside: 'Stand', leadW: 0, asideW: 150 }
-			: noDossiers
-				? { ...COLUMNS.committees, aside: '' }
-				: COLUMNS[category]
-	);
+	const facetGroups = $derived(facetGroupsAll);
+	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
 
 	// ── Opening a source ────────────────────────────────────────────────────
 	// The title of a row opens the bron as Lezen in the detail does: a text of its own at
@@ -1826,11 +1808,6 @@
 					>
 					<div class="facet-body" class:facet-body--open={filtersOpen}>
 						<IndexFacets groups={facetGroups} pending={!pages[category] && !error} />
-						{#if ontwerp === 'r3' && category === 'dossiers'}
-							<button type="button" class="r3-meer" onclick={() => (meerFilters = !meerFilters)}
-								>{meerFilters ? 'Minder filters' : 'Meer filters: soort, fase'}</button
-							>
-						{/if}
 					</div>
 				</aside>
 				<div
@@ -1870,7 +1847,8 @@
 									<Hemicycle
 										data={seats}
 										meubels
-										colorOf={(f, i) => kleurVan('TK', f.abbreviation ?? f.name ?? f.key, i, f.color ?? null)}
+										colorOf={(f, i) =>
+											kleurVan('TK', f.abbreviation ?? f.name ?? f.key, i, f.color ?? null)}
 									/>
 								{/if}
 								<ZaalLegenda
@@ -1879,11 +1857,27 @@
 										? `Eerste Kamer, samenstelling op ${formatLongDate(composition?.composition_date ?? seats.as_of ?? null)}`
 										: `Tweede Kamer, stand op ${formatLongDate(seats.as_of ?? null)}`}
 									bron={seats.chamber === 'EK'
-										? composition ? { label: composition.attribution ?? 'eerstekamer.nl', href: composition.url ?? '' } : null
-										: seats.seating_plan ? { label: seats.seating_plan.title ?? 'Zetelverdeling', href: seats.seating_plan.page ?? seats.seating_plan.url ?? '' } : null}
+										? composition
+											? {
+													label: composition.attribution ?? 'eerstekamer.nl',
+													href: composition.url ?? ''
+												}
+											: null
+										: seats.seating_plan
+											? {
+													label: seats.seating_plan.title ?? 'Zetelverdeling',
+													href: seats.seating_plan.page ?? seats.seating_plan.url ?? ''
+												}
+											: null}
 									plaatsen={seats.chamber === 'EK'
 										? ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie']
-										: ['Voorzitter', 'Griffier', 'Kabinet (vak-K)', 'Verslag en redactie', 'Spreekgestoelte']}
+										: [
+												'Voorzitter',
+												'Griffier',
+												'Kabinet (vak-K)',
+												'Verslag en redactie',
+												'Spreekgestoelte'
+											]}
 								/>
 							</div>
 						</div>
@@ -2032,9 +2026,7 @@
 												class="cab"
 												class:cab--now={isOpen(c)}
 												class:cab--unknown={!c.to_date && !isOpen(c)}
-												href={ontwerp
-													? tabHref('cabinets') + `&ontwerp=${ontwerp}&open=cabinets/${c.key}`
-													: tabHref('ministers') + `&cabinet=${c.key}`}
+												href={tabHref('cabinets') + `&open=cabinets/${c.key}`}
 												style:left="{from}px"
 												style:top="{(i % 3) * 30}px"
 												style:--w="{Math.max(width, 2)}px"
@@ -2166,18 +2158,6 @@
 									{@render loadMoreButton(pages.judgments, 'uitspraken')}
 								{/if}
 							{:else if category === 'dossiers' && dossierEntries}
-								{#if ontwerp === 'r3'}
-									<nav class="r3-ingang" aria-label="Ingang">
-										{#each [['Wetgeving', 'Wetsvoorstellen'], ['Begroting', 'Begrotingen'], ['', 'Alle dossiers']] as [k, label] (label)}
-											<button
-												type="button"
-												aria-pressed={track === k}
-												onclick={() => patchUrl({ track: k || null })}
-												>{label}{#if k}<span>{dossierKinds.get(k) ?? ''}</span>{/if}</button
-											>
-										{/each}
-									</nav>
-								{/if}
 								{#if dossierEntries.length === 0}
 									{@render empty(
 										dossierScope === 'open'
@@ -2187,9 +2167,6 @@
 												: 'dossiers'
 									)}
 								{:else}
-									{#if ontwerp === 'groep'}
-										{@render dossierGroups()}
-									{:else}
 									<ul class="list">
 										{#each dossierEntries as entry (entry.number + entry.rows[0].id)}
 											{#if entry.rows.length === 1}
@@ -2239,7 +2216,6 @@
 											{/if}
 										{/each}
 									</ul>
-									{/if}
 									{@render loadMoreButton(pages.dossiers, 'dossiers')}
 								{/if}
 							{:else if category === 'committees' && committeesShown}
@@ -2533,36 +2509,13 @@
 													>
 												{/snippet}
 												{#snippet detail()}
-													{#if ontwerp}
-														<KabinetOpen cabinetKey={c.key} naam={c.name} inFunctie={isOpen(c)} {bron} ministersHref={tabHref('ministers') + `&ontwerp=${ontwerp}&cabinet=${c.key}`} />
-													{:else}
-													<div class="gov-detail">
-														<!-- The number of bewindspersonen stands in the row itself. -->
-														<dl class="gov-stats">
-															<div>
-																<dt>Wetsvoorstellen ingediend</dt>
-																<dd>{c.bills}</dd>
-															</div>
-															<div>
-																<dt>Toezeggingen</dt>
-																<dd>{c.commitments}</dd>
-															</div>
-														</dl>
-														<div class="gov-links">
-															<a href={tabHref('ministers') + `&cabinet=${c.key}`}
-																>Wie bekleedde welke post</a
-															>
-															{#if c.commitments}
-																<a href={tabHref('commitments') + `&cabinet=${c.key}`}
-																	>Toezeggingen</a
-																>
-															{/if}
-															<a href={bronHref(bron, { keepMode: false, mode: 'graph' })}
-																>Toon in netwerk</a
-															>
-														</div>
-													</div>
-													{/if}
+													<KabinetOpen
+														cabinetKey={c.key}
+														naam={c.name}
+														inFunctie={isOpen(c)}
+														{bron}
+														ministersHref={tabHref('ministers') + `&cabinet=${c.key}`}
+													/>
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -2682,90 +2635,14 @@
 	</div>
 </div>
 
-{#snippet dossierGroups()}
-	{@const rows = (dossiersShown ?? []).map((d) => ({ d, st: stand(d) }))}
-	{#each GROUP_ORDER as g (g)}
-		{@const inGroup = rows.filter((r) => (r.st?.group ?? 'geen') === g)}
-		{#if inGroup.length}
-			{@const isOpen = openGroups.has(g)}
-			<section class="r2-group">
-				<button
-					type="button"
-					class="r2-group-head"
-					aria-expanded={isOpen}
-					onclick={() => {
-						const next = new Set(openGroups);
-						if (isOpen) next.delete(g);
-						else next.add(g);
-						openGroups = next;
-					}}
-				>
-					<span class="r2-group-name">{GROUP_LABEL[g]}</span>
-					<span class="r2-group-count">{inGroup.length}</span>
-					{#if g === 'geen'}
-						<span class="r2-group-note">brieven, moties en begrotingen zonder fase</span>
-					{/if}
-					<span class="r2-group-act">{isOpen ? 'Verberg' : 'Toon'}</span>
-				</button>
-				{#if isOpen}
-					<ul class="list">
-						{#each inGroup as r (r.d.id)}
-							{@render dossierRowR2(r.d, false)}
-						{/each}
-					</ul>
-				{/if}
-			</section>
-		{/if}
-	{/each}
-{/snippet}
-
 {#snippet dossierRow(d: DossierRow, member: boolean)}
-	{#if ontwerp === 'r3'}
-		{@render dossierRowR3(d, member)}
-	{:else if ontwerp}
-		{@render dossierRowR2(d, member)}
-	{:else}
-		{@render dossierRowNu(d, member)}
-	{/if}
-{/snippet}
-
-{#snippet dossierRowR3(d: DossierRow, member: boolean)}
 	{@const bron = `dossiers/${d.number}`}
 	{@const st = stand(d)}
-	{@const who = d.ministry ? ministryName(d.ministry) : ''}
-	<IndexRow
-		{bron}
-		{member}
-		title={member && d.title ? chapterTitle(d.title) : (d.short_title ?? d.title ?? d.number)}
-		href={hrefOf(bron)}
-		open={openId === bron}
-		onToggle={() => toggleOpen(bron)}
-	>
-		{#snippet body()}
-			{#if st?.zin}
-				<span class="r3-zin">{st.zin}</span>
-			{/if}
-			<span class="row-sub">{soortZin(d, who)} · {d.number}</span>
-		{/snippet}
-		{#snippet aside()}
-			{#if st}
-				<span class="r2-stand">
-					{#each st.bodies as b (b.short)}
-						<span class="r2-body r2-body--{b.state}"><abbr title={b.name}>{b.short}</abbr></span>
-					{/each}
-				</span>
-			{/if}
-		{/snippet}
-		{#snippet detail()}
-			<DossierOpen {d} />
-		{/snippet}
-	</IndexRow>
-{/snippet}
-
-{#snippet dossierRowR2(d: DossierRow, member: boolean)}
-	{@const bron = `dossiers/${d.number}`}
-	{@const st = stand(d)}
-	{@const who = d.initiative ? 'Initiatief van Kamerleden' : d.ministry ? ministryName(d.ministry) : ''}
+	{@const who = d.initiative
+		? 'Initiatief van Kamerleden'
+		: d.ministry
+			? ministryName(d.ministry)
+			: ''}
 	<IndexRow
 		{bron}
 		{member}
@@ -2775,23 +2652,25 @@
 		onToggle={() => toggleOpen(bron)}
 	>
 		{#snippet lead()}
-			<span class="row-id-main r2-num">{d.number}</span>
+			<span class="row-id-main row-num">{d.number}</span>
 			{#if d.kind && !member}
 				<span class="row-id-sub">{d.kind}</span>
 			{/if}
 		{/snippet}
 		{#snippet body()}
 			{#if st?.zin}
-				<span class="r2-zin">{st.zin}</span>
+				<span class="row-zin">{st.zin}</span>
 			{/if}
 			<span class="row-sub"
-				>{who}{who && d.opened_on ? ', ' : ''}{#if d.opened_on}geopend {datum(d.opened_on)}{/if}</span
+				>{who}{who && d.opened_on ? ', ' : ''}{#if d.opened_on}geopend {datum(
+						d.opened_on
+					)}{/if}</span
 			>
 		{/snippet}
 		{#snippet aside()}
 			{#if st}
 				<span
-					class="r2-stand"
+					class="stand"
 					aria-label="Stand: {st.bodies
 						.map(
 							(b) =>
@@ -2800,67 +2679,15 @@
 						.join(', ')}"
 				>
 					{#each st.bodies as b (b.short)}
-						<span class="r2-body r2-body--{b.state}"><abbr title={b.name}>{b.short}</abbr></span>
+						<span class="stand-body stand-body--{b.state}"
+							><abbr title={b.name}>{b.short}</abbr></span
+						>
 					{/each}
 				</span>
 			{/if}
 		{/snippet}
 		{#snippet detail()}
-			<IndexDetail category="dossiers" record={d} {bron} />
-		{/snippet}
-	</IndexRow>
-{/snippet}
-
-{#snippet dossierRowNu(d: DossierRow, member: boolean)}
-	{@const bron = `dossiers/${d.number}`}
-	<IndexRow
-		{bron}
-		{member}
-		title={member && d.title ? chapterTitle(d.title) : (d.short_title ?? d.title ?? '—')}
-		href={hrefOf(bron)}
-		open={openId === bron}
-		onToggle={() => toggleOpen(bron)}
-	>
-		{#snippet lead()}
-			<span class="row-id-main">{d.number}</span>
-			{#if d.kind && !member}
-				<span class="row-id-sub">{d.kind}</span>
-			{/if}
-		{/snippet}
-		{#snippet body()}
-			{@const who = d.initiative
-				? 'Initiatief van Kamerleden'
-				: d.ministry
-					? ministryName(d.ministry)
-					: ''}
-			{#if who || d.opened_on}
-				<span class="row-sub"
-					>{who}{who && d.opened_on ? ' · ' : ''}{#if d.opened_on}<span
-							title={openedOnBasis(d.opened_on_basis)}>geopend {fmtDateShort(d.opened_on)}</span
-						>{/if}</span
-				>
-			{/if}
-		{/snippet}
-		{#snippet aside()}
-			<span class="stage-aside">
-				{#if d.phases?.length && d.current_phase && !d.outcome}
-					<!-- The phases a record marks in ink, the current one in the accent. -->
-					<span class="stage-bar" aria-hidden="true">
-						{#each d.phases as p (p.name)}
-							<span
-								class:stage-bar--done={p.done && p.name !== d.current_phase}
-								class:stage-bar--now={p.name === d.current_phase}
-							></span>
-						{/each}
-					</span>
-				{/if}
-				{#if dossierStatus(d)}
-					<span class="row-sub">{dossierStatus(d)}</span>
-				{/if}
-			</span>
-		{/snippet}
-		{#snippet detail()}
-			<IndexDetail category="dossiers" record={d} {bron} />
+			<DossierOpen {d} />
 		{/snippet}
 	</IndexRow>
 {/snippet}
@@ -3032,7 +2859,7 @@
 		max-height: calc(100cqh - 28px);
 		overflow-y: auto;
 		scrollbar-gutter: stable;
-		/* Ronde 6: een smalle, stille schuifbalk die de aantallen niet raakt. */
+		/* Een smalle, stille schuifbalk die de aantallen niet raakt. */
 		scrollbar-width: thin;
 		scrollbar-color: var(--rule) transparent;
 		/* Room for the focus ring: the column scrolls, so it clips what reaches its edge. */
@@ -3406,23 +3233,6 @@
 		gap: var(--s-3);
 		padding: var(--s-1) 0 var(--s-2);
 	}
-	.gov-stats {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-3) var(--s-6);
-		margin: 0;
-	}
-	.gov-stats dt {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.gov-stats dd {
-		margin: 2px 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-variant-numeric: tabular-nums;
-	}
 	.gov-text {
 		margin: 0;
 		font-family: var(--font-serif);
@@ -3487,7 +3297,7 @@
 	}
 
 	/* ── Hemicycle card (factions only) ──────────────────────────────── */
-	/* Ronde 4: de zaal zonder kader of vlak. */
+	/* De zaal zonder kader of vlak. */
 	.hemi-card {
 		margin-bottom: var(--s-6);
 	}
@@ -3546,9 +3356,13 @@
 		list-style: none;
 		padding: 0;
 		margin: 0;
+		border-top: 2px solid var(--ink);
 	}
 	.row-id-main {
 		display: block;
+		color: var(--ink);
+		font-weight: 500;
+		font-size: var(--t-meta);
 	}
 	.row-id-main--inline {
 		display: inline-flex;
@@ -3583,64 +3397,12 @@
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
-	/* A bill's stages as a bar: passed in ink, the current one in the accent. */
-	/* Ontwerpstudie ronde 4 (prototype) */
-	/* Ontwerpstudie ronde 3 (prototype) */
-	.r3-zin {
-		display: block;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		font-weight: 500;
-		color: var(--ink);
-		line-height: var(--lh-snug);
-		margin: var(--s-1) 0 2px;
-	}
-	.r3-meer {
-		margin-top: var(--s-3);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.r3-ingang {
-		display: flex;
-		gap: var(--s-2);
-		margin-bottom: var(--s-4);
-	}
-	.r3-ingang button {
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		padding: var(--s-2) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.r3-ingang button[aria-pressed='true'] {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
-		font-weight: 500;
-	}
-	.r3-ingang span {
-		margin-left: var(--s-2);
-		font-variant-numeric: tabular-nums;
-		opacity: 0.8;
-	}
-	/* Ontwerpstudie ronde 2 (prototype) */
-	.r2-num {
+	.row-num {
 		color: var(--ink);
 		font-weight: 500;
 		font-size: var(--t-meta);
 	}
-	.r2-zin {
+	.row-zin {
 		display: block;
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
@@ -3648,89 +3410,38 @@
 		line-height: var(--lh-snug);
 		margin-top: var(--s-1);
 	}
-	.r2-stand {
+	.stand {
 		display: inline-grid;
 		grid-template-columns: repeat(3, var(--s-7));
 		gap: var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 	}
-	.r2-body {
+	.stand-body {
 		padding-top: var(--s-1);
 		border-top: 4px solid var(--rule);
 		color: var(--ink-3);
 		text-align: left;
 	}
-	.r2-body abbr {
+	.stand-body abbr {
 		text-decoration: none;
 	}
-	.r2-body--done {
+	.stand-body--done {
 		border-top-color: var(--ink-2);
 		color: var(--ink-2);
 	}
-	.r2-body--now {
+	.stand-body--now {
 		border-top-color: var(--ink);
 		color: var(--ink);
 		font-weight: 600;
 	}
-	.r2-body--none {
+	.stand-body--none {
 		border-top-style: dotted;
-	}
-	.r2-group + .r2-group {
-		margin-top: var(--s-5);
-	}
-	.r2-group-head {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		width: 100%;
-		padding: var(--s-2);
-		border: 0;
-		border-bottom: 2px solid var(--ink);
-		background: transparent;
-		font-family: var(--font-sans);
-		text-align: left;
-		cursor: pointer;
-	}
-	.r2-group-name {
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.r2-group-count {
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-		font-variant-numeric: tabular-nums;
-	}
-	.r2-group-note {
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-	}
-	.r2-group-act {
-		margin-left: auto;
-		font-size: var(--t-meta);
-		color: var(--ink-2);
 	}
 	.stage-aside {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-	}
-	.stage-bar {
-		display: flex;
-		gap: 2px;
-		width: 112px;
-	}
-	.stage-bar span {
-		flex: 1;
-		height: 5px;
-		background: var(--rule);
-	}
-	.stage-bar span.stage-bar--done {
-		background: var(--ink-2);
-	}
-	.stage-bar span.stage-bar--now {
-		background: var(--accent);
 	}
 
 	/* Qualities on a row are words: the outcome of a vote in ink-2, the rest in ink-3. */

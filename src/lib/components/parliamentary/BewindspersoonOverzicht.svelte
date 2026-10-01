@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 3 (prototype): wat een bewindspersoon toezegde en ondertekende,
+	// Wat een bewindspersoon toezegde en ondertekende,
 	// bovenaan de lezer. Tellingen per stand zijn links naar Bladeren met het filter gezet.
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
@@ -50,15 +50,18 @@
 		<h3 class="t"><KindGlyph collection="commitments" size={14} />Toezeggingen</h3>
 		<p class="zin">
 			<a href={href()}>{commitments.total} toezeggingen</a>:
-			{#each statusCounts as s, i (s.value)}{#if i > 0}{i === statusCounts.length - 1 ? ' en ' : ', '}{/if}<a
-					href={href(s.value ?? undefined)}>{s.count} {lower(s.value ?? '')}</a
+			{#each statusCounts as s, i (s.value)}{#if i > 0}{i === statusCounts.length - 1
+						? ' en '
+						: ', '}{/if}<a href={href(s.value ?? undefined)}>{s.count} {lower(s.value ?? '')}</a
 				>{/each}.
 		</p>
 		{#if open && open.items.length}
 			<ol class="items">
 				{#each open.items as c (c.key)}
 					<li>
-						<a href={bronHref(`commitments/${c.key}`, { keepMode: false, mode: 'read' })}>{c.text}</a>
+						<a href={bronHref(`commitments/${c.key}`, { keepMode: false, mode: 'read' })}
+							>{c.text}</a
+						>
 						<span class="meta"
 							>{c.number}, toegezegd {datum(c.date)}{c.expected_resolution
 								? `, verwacht ${datum(c.expected_resolution)}`
@@ -71,7 +74,9 @@
 				<a class="alle" href={href('Openstaand')}>Alle {open.total} openstaande toezeggingen</a>
 			{/if}
 		{/if}
-		<p class="dekking">Toezeggingen in de gegevens: kabinet-Rutte IV (2), kabinet-Schoof en kabinet-Jetten.</p>
+		<p class="dekking">
+			Toezeggingen in de gegevens: kabinet-Rutte IV (2), kabinet-Schoof en kabinet-Jetten.
+		</p>
 	</section>
 {/if}
 

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { dossierCounts } from '$lib/components/parliamentary/counts';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
@@ -9,19 +8,11 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { getDossier, str } from '$lib/components/parliamentary/data';
-	import { OUTCOME_LABEL, openedOnBasis } from '$lib/components/parliamentary/stages';
 	import { formatLongDate } from './_shared';
-	import LegislativeStepper from '$lib/components/parliamentary/LegislativeStepper.svelte';
-	import LegislativeTimeline from '$lib/components/parliamentary/LegislativeTimeline.svelte';
-	import StandVanZaken from '$lib/components/parliamentary/StandVanZaken.svelte';
-	import { page } from '$app/state';
 
-	// Ontwerpstudie ronde 3: ?ontwerp toont de kop met de stand van zaken.
-	const ontwerp = $derived(!!page.url.searchParams.get('ontwerp'));
-	const r4 = $derived(page.url.searchParams.get('ontwerp') === 'r4');
-	import StandBalk from '$lib/components/r4/StandBalk.svelte';
-	import Tijdlijn from '$lib/components/r4/Tijdlijn.svelte';
-	import { procedure } from '$lib/components/r4/procedure';
+	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
+	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
+	import { procedure } from '$lib/components/parliamentary/procedure';
 	let metOverig = $state(false);
 
 	let { node }: { node: GraphNode } = $props();
@@ -115,51 +106,20 @@
 					<KindGlyph collection="dossiers" />
 					{bronLabel('dossiers')} · Kamerstuk {d.number}
 				</span>
-				{#if ontwerp}
-					<h2 class="title">{d.short_title ?? d.title ?? d.number}</h2>
-					{#if d.short_title && d.title && d.title.trim() !== d.short_title}
-						<details class="r3-full"><summary>Volledige titel</summary><p>{d.title}</p></details>
-					{/if}
-					{#if r4}<StandBalk {d} />{:else}<StandVanZaken {d} />{/if}
-				{:else}
-				<h2 class="title">{d.title ?? d.number}</h2>
-				<div class="chips">
-					{#if d.kind}<span class="track-chip">{d.kind}</span>{/if}
-					{#if d.opened_on}
-						<span class="stage-chip" title={openedOnBasis(d.opened_on_basis)}
-							>Geopend {formatLongDate(d.opened_on)}</span
-						>
-					{/if}
-					{#if d.outcome}
-						<span class="stage-chip"
-							>{OUTCOME_LABEL[d.outcome]}{d.closed_on
-								? `, ${formatLongDate(d.closed_on)}`
-								: ''}</span
-						>
-					{:else if d.current_phase}
-						<span class="stage-chip">Nu: {d.current_phase}</span>
-					{/if}
-				</div>
-				{#if d.tk_decision?.text}
-					<!-- The Tweede Kamer's last decision on the bill, in its own words. -->
-					<p class="reading">
-						Tweede Kamer: {d.tk_decision.text}{d.tk_decision.date
-							? ` (${formatLongDate(d.tk_decision.date)})`
-							: ''}
-					</p>
+				<h2 class="title">{d.short_title ?? d.title ?? d.number}</h2>
+				{#if d.short_title && d.title && d.title.trim() !== d.short_title}
+					<details class="full-title">
+						<summary>Volledige titel</summary>
+						<p>{d.title}</p>
+					</details>
 				{/if}
+				<StandBalk {d} />
 				{#if d.ek_outcome}
 					{@const ek = d.ek_outcome}
-					<!-- The Eerste Kamer's decision, from its own site: named with its source. -->
-					<p class="reading">
-						Eerste Kamer: {ek.outcome.toLowerCase()}{ek.date
-							? `, ${formatLongDate(ek.date)}`
-							: ''}{ek.method ? ` (${ek.method})` : ''}.
-					</p>
+					<!-- The Eerste Kamer's decision stands in the bar; its source is named here. -->
 					<p class="source">
-						Bron: <a href={ek.source_url} rel="external">{ek.attribution}</a>{ek.retrieved_on
-							? `, geraadpleegd op ${formatLongDate(ek.retrieved_on)}`
-							: ''}
+						Eerste Kamer: <a href={ek.source_url} rel="external">{ek.attribution}</a
+						>{ek.retrieved_on ? `, geraadpleegd op ${formatLongDate(ek.retrieved_on)}` : ''}
 					</p>
 				{/if}
 				{#if readings.first.length > 0}
@@ -172,57 +132,26 @@
 						Eerste lezing. Tweede lezing in {@render dossierLinks(readings.second)}
 					</p>
 				{/if}
-				{/if}
 			</header>
 
-			{#if d.phases?.length && !ontwerp}
-				<div class="stepper-wrap">
-					<LegislativeStepper
-						phases={d.phases}
-						current={d.current_phase ?? null}
-						ek={d.ek_outcome}
-					/>
-				</div>
-			{/if}
-
-			{#if r4 && view.timeline}
+			{#if view.timeline}
 				{@const p = procedure(d, view.timeline.entries, metOverig)}
-				<section class="sec r4-proc">
+				<section class="sec">
 					<h3 class="sec-title">Procedure</h3>
 					<Tijdlijn groepen={p.groepen} />
 					{#if p.overig}
-						<button type="button" class="r4-overig" onclick={() => (metOverig = !metOverig)}
+						<button type="button" class="overig" onclick={() => (metOverig = !metOverig)}
 							>{metOverig ? 'Alleen de procedure' : `Toon ook de ${p.overig} andere items`}</button
 						>
 					{/if}
 				</section>
-			{:else}
-			<p class="counts">
-				{dossierCounts({
-					documents: d.document_count,
-					decisions: d.decision_count,
-					activities: d.activity_count
-				})}
-			</p>
-
-			{#if view.timeline && view.timeline.entries.length > 0}
-				<section class="sec sec--timeline">
-					<h3 class="sec-title">
-						Tijdlijn
-						{#if view.timeline.total > view.timeline.entries.length}
-							<span class="sec-count">{view.timeline.entries.length} / {view.timeline.total}</span>
-						{/if}
-					</h3>
-					<LegislativeTimeline entries={view.timeline.entries} dossier={d.number} compact={ontwerp} />
-				</section>
-			{/if}
 			{/if}
 		{/if}
 	</div>
 </ReaderFrame>
 
 <style>
-	.r4-overig {
+	.overig {
 		align-self: flex-start;
 		margin-top: var(--s-3);
 		font-family: var(--font-sans);
@@ -235,13 +164,13 @@
 		background: transparent;
 		cursor: pointer;
 	}
-	.r3-full summary {
+	.full-title summary {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		cursor: pointer;
 	}
-	.r3-full p {
+	.full-title p {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-meta);
 		color: var(--ink-2);
@@ -281,24 +210,6 @@
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-3);
-		align-items: baseline;
-	}
-
-	/* The kind, the current phase and the outcome are words, not tags. */
-	.track-chip,
-	.stage-chip {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-3);
-	}
-	.stage-chip {
-		color: var(--ink-2);
-	}
 
 	.reading {
 		font-family: var(--font-sans);
@@ -332,20 +243,6 @@
 		color: var(--accent);
 	}
 
-	.stepper-wrap {
-		border-top: 1px solid var(--rule);
-		border-bottom: 1px solid var(--rule);
-		padding: var(--s-3) 0;
-	}
-
-	/* What the dossier holds, as a sentence: no tiles, and a zero is said as "geen". */
-	.counts {
-		margin: 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-
 	.sec {
 		display: flex;
 		flex-direction: column;
@@ -357,14 +254,5 @@
 		font-weight: 500;
 		color: var(--ink-3);
 		margin: 0;
-	}
-
-	.sec-count {
-		font-family: var(--font-sans);
-		font-weight: 400;
-		margin-left: 6px;
-	}
-	.sec--timeline {
-		gap: 0;
 	}
 </style>

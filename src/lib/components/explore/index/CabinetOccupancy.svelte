@@ -1,14 +1,10 @@
 <script lang="ts">
-	import PostOpen from '$lib/components/r4/PostOpen.svelte';
-	import { page } from '$app/state';
-	const r4 = $derived(!!page.url.searchParams.get('ontwerp'));
+	import PostOpen from '$lib/components/open/PostOpen.svelte';
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
 	// a successor is the next block on the line, a stand-in has a dotted bar and a grey name.
 	// The phases (demissionair and after) are dotted lines with their name on the axis. A
 	// block opens its details beneath its line: by click, Enter or Space, and by `?open=`.
 	// On a narrow screen the lines become text: per seat the holders one under the other.
-	import BronLink from '$lib/bron/BronLink.svelte';
-	import { bronHref } from '$lib/bron/href';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { POST_LABEL, getPartyColors, laterPosts } from './government';
 	import {
@@ -156,8 +152,6 @@
 		};
 	}
 
-	const count = (n: number, one: string, many: string) =>
-		n === 0 ? `geen ${many}` : `${n} ${n === 1 ? one : many}`;
 	const nameOf = (p: SeatPost) => p.member.name ?? p.member.key;
 	const label = (p: SeatPost) =>
 		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${day(p.from_date)} tot ${day(p.to_date)}${p.acting ? ', waarnemend' : ''}`;
@@ -284,56 +278,26 @@
 
 <!-- The details of a post: who, what, when, why a stand-in, and what they signed. -->
 {#snippet detail(p: SeatPost)}
-	{#if r4}
-		<PostOpen
-			memberKey={p.member.key}
-			naam={nameOf(p)}
-			partij={p.party?.short ?? null}
-			functie={(p.function ?? '') + (p.acting ? ', waarnemend' : '')}
-			van={p.from_date ?? null}
-			tot={p.to_date ?? null}
-			dossiers={p.dossiers ?? 0}
-			wetsvoorstellen={p.bills ?? 0}
-		/>
-	{:else}
-	<div class="post-detail" style:--party={colorOf(p.party?.short)}>
-		<p class="post-who">
-			<BronLink ref={`members/${p.member.key}`} class="post-name">{nameOf(p)}</BronLink>
-			{#if p.party?.short}<span class="post-party">{p.party.short}</span>{/if}
-		</p>
-		<p>{p.function ?? ''}{p.acting ? ', waarnemend' : ''}</p>
-		{#if p.also_named?.length}
-			<!-- The same post under another name: an older one, or AZ beside the minister-president. -->
-			<p class="post-meta">Ook genoemd: {p.also_named.join(', ')}</p>
-		{/if}
-		<p class="post-meta">
-			{day(p.from_date)} tot {day(p.to_date)}{#if p.acting && actingReason(p)}. {actingReason(
-					p
-				)}{/if}
-		</p>
-		{#if p.ministry_missing}
-			<p class="post-meta">{MISSING[p.ministry_missing]}</p>
-		{/if}
-		{#if p.overlaps_with?.length}
-			<p class="post-meta">Volgens de bronnen tegelijk met een andere bekleder van deze post.</p>
-		{/if}
-		{#if counted(p) && (p.dossiers || p.bills || p.open_commitments)}
-			<p class="post-meta">
-				{count(p.dossiers, 'dossier', 'dossiers')} ondertekend{p.dossiers
-					? `, waarvan ${count(p.bills, 'wetsvoorstel', 'wetsvoorstellen')}`
-					: ''}; {count(p.open_commitments, 'open toezegging', 'open toezeggingen')}
-			</p>
-		{/if}
-		<p class="post-links">
-			{#if counted(p) && p.open_commitments}
-				<a href={commitmentsHref(p.member.key)}>Toezeggingen</a>
-			{/if}
-			<a href={bronHref(`members/${p.member.key}`, { keepMode: false, mode: 'graph' })}
-				>Toon in netwerk</a
-			>
-		</p>
-	</div>
-	{/if}
+	<PostOpen
+		memberKey={p.member.key}
+		naam={nameOf(p)}
+		partij={p.party?.short ?? null}
+		functie={(p.function ?? '') + (p.acting ? ', waarnemend' : '')}
+		van={p.from_date ?? null}
+		tot={p.to_date ?? null}
+		dossiers={p.dossiers ?? 0}
+		wetsvoorstellen={p.bills ?? 0}
+		geteld={counted(p)}
+		toezeggingenHref={counted(p) && p.open_commitments ? commitmentsHref(p.member.key) : null}
+		opmerkingen={[
+			...(p.also_named?.length ? [`Ook genoemd: ${p.also_named.join(', ')}.`] : []),
+			...(p.acting && actingReason(p) ? [`${actingReason(p)}.`] : []),
+			...(p.ministry_missing ? [MISSING[p.ministry_missing]] : []),
+			...(p.overlaps_with?.length
+				? ['Volgens de bronnen tegelijk met een andere bekleder van deze post.']
+				: [])
+		]}
+	/>
 {/snippet}
 
 <style>
@@ -453,54 +417,6 @@
 		text-overflow: ellipsis;
 	}
 
-	.post-detail {
-		margin: var(--s-1) 0 var(--s-3) var(--label);
-		padding: var(--s-3) var(--s-4);
-		max-width: 560px;
-		border-left: 3px solid var(--party);
-		background: var(--paper-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	.post-detail p {
-		margin: 0 0 var(--s-1);
-	}
-	.post-who {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-	}
-	.post-who :global(a.post-name) {
-		text-decoration: none;
-	}
-	.post-who :global(a.post-name:hover) {
-		text-decoration: underline;
-	}
-	.post-who :global(a.post-name) {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
-	}
-	.post-party,
-	.post-meta {
-		color: var(--ink-3);
-	}
-	.post-links {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-1) var(--s-4);
-		margin-top: var(--s-2) !important;
-	}
-	.post-links a {
-		color: var(--ink);
-		text-decoration: none;
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.post-links a:hover {
-		color: var(--accent);
-	}
-
 	/* Phone: text. */
 	.occ-text {
 		margin: 0 0 var(--s-5);
@@ -561,9 +477,6 @@
 	}
 	.holder-period {
 		white-space: nowrap;
-	}
-	.occ-text .post-detail {
-		margin: 0 0 var(--s-2);
 	}
 
 	.occ-note {

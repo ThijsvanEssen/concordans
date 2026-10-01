@@ -1,7 +1,7 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 5 (prototype): wisselen tussen netwerk en tekst. Klein, twee
+	// Wisselen tussen netwerk en tekst. Klein, twee
 	// knoppen met een beeld en één woord; de gekozen stand onderstreept in inkt. Toets L.
-	import Picto from './Picto.svelte';
+	import Picto from '$lib/components/ui/Picto.svelte';
 
 	let {
 		stand,
@@ -16,7 +16,12 @@
 </script>
 
 <div class="ws" role="group" aria-label="Weergave (toets L)">
-	<button type="button" aria-pressed={stand === 'netwerk'} onclick={() => onKies('netwerk')} title="Netwerk: de verbindingen">
+	<button
+		type="button"
+		aria-pressed={stand === 'netwerk'}
+		onclick={() => onKies('netwerk')}
+		title="Netwerk: de verbindingen"
+	>
 		<Picto naam="netwerk" size={15} />Netwerk
 	</button>
 	<button

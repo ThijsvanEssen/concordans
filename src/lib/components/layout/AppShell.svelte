@@ -25,38 +25,6 @@
 
 	onMount(() => {
 		initAnalytics();
-		// Ontwerpstudie ronde 2: ?contrast=1|2|3 (0 clears), kept for the tab in sessionStorage.
-		const apply = () => {
-			const p = new URL(location.href).searchParams.get('contrast');
-			if (p !== null) sessionStorage.setItem('r2-contrast', p);
-			const level = sessionStorage.getItem('r2-contrast') ?? '4';
-			if (level === '0') delete document.documentElement.dataset.contrast;
-			else document.documentElement.dataset.contrast = level;
-		};
-		apply();
-		window.addEventListener('popstate', apply);
-		// Opname voor de studie: schrijft een PNG naar een lokale ontvanger op :5199.
-		(window as unknown as Record<string, unknown>).__shot = async (
-			name: string,
-			sel?: string,
-			o: { w?: number; h?: number; pr?: number } = {}
-		) => {
-			const src = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm';
-			const m = await import(/* @vite-ignore */ src);
-			const node = sel ? document.querySelector(sel) : document.body;
-			const data = await m.toPng(node, {
-				pixelRatio: o.pr ?? 2,
-				backgroundColor: getComputedStyle(document.body).backgroundColor,
-				width: o.w,
-				height: o.h
-			});
-			const r = await fetch('http://127.0.0.1:5199/', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ name, data })
-			});
-			return r.status;
-		};
 	});
 </script>
 
@@ -155,15 +123,15 @@
 	   nodeSprites.ts (readTokens), so a change here reaches the network after a reload. */
 	:global(:root) {
 		/* Paper and rules */
-		--paper: #f8f6f1;
-		--paper-2: #f1eee7; /* hover, selected row, sheets */
-		--rule: #e3dfd6;
-		--rule-strong: #c9c4b8;
+		--paper: #faf8f3;
+		--paper-2: #ece7dc; /* hover, selected row, sheets */
+		--rule: #b9b1a0;
+		--rule-strong: #6f6859;
 
 		/* Ink */
-		--ink: #1c1b19;
-		--ink-2: #4a4742;
-		--ink-3: #77736b; /* captions; 4.6:1 on paper, the lowest contrast allowed */
+		--ink: #161513;
+		--ink-2: #3b3834;
+		--ink-3: #5d5951; /* captions; 6.6:1 on paper */
 
 		/* The accent has one meaning: a link on hover, the selected or focused bron,
 		   and the status voorgesteld. Nothing else is red. */
@@ -191,7 +159,7 @@
 		--t-h2: 24px;
 		--t-h3: 20px;
 		--t-body: 17.5px; /* reading text, line-height 1.6 */
-		--t-body-2: 15px; /* titles of bronnen in lists and rows */
+		--t-body-2: 16px; /* titles of bronnen in lists and rows */
 		--t-meta: 13px; /* interface text: 12.5 to 13px */
 		--t-micro: 12px; /* captions and counts, in --ink-3 */
 		--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
@@ -245,70 +213,6 @@
 		--z-panel: 30;
 		--z-float: 40;
 		--z-modal: 50;
-	}
-
-	/* ─── Ontwerpstudie ronde 2: contrastniveaus (prototype, niet voor main) ─── */
-	/* C1 iets meer: alleen tinten. Grijs 5,3:1, lijnen zichtbaarder. */
-	:global(:root[data-contrast='1']) {
-		--paper-2: #eeeae1;
-		--rule: #dcd7cb;
-		--rule-strong: #b5ae9f;
-		--ink-2: #46433e;
-		--ink-3: #6a665e;
-	}
-	/* C2 duidelijk: tinten plus gewicht. Nummers in inkt, titels groter. */
-	:global(:root[data-contrast='2']) {
-		--paper: #faf8f3;
-		--paper-2: #ece7dc;
-		--rule: #cfc8b9;
-		--rule-strong: #948c7c;
-		--ink: #161513;
-		--ink-2: #3b3834;
-		--ink-3: #5d5951;
-		--t-body-2: 16px;
-	}
-	:global(:root[data-contrast='2'] .row-id-main),
-	:global(:root[data-contrast='3'] .row-id-main) {
-		color: var(--ink);
-		font-weight: 500;
-		font-size: var(--t-meta);
-	}
-	/* C4 (ronde 3, keuze Thijs): de tinten en het gewicht van C2 met de lijnen van C3.
-	   Standaard op design-r2; ?contrast=0 toont main. */
-	:global(:root[data-contrast='4']) {
-		--paper: #faf8f3;
-		--paper-2: #ece7dc;
-		--rule: #b9b1a0;
-		--rule-strong: #6f6859;
-		--ink: #161513;
-		--ink-2: #3b3834;
-		--ink-3: #5d5951;
-		--t-body-2: 16px;
-	}
-	:global(:root[data-contrast='4'] .row-id-main) {
-		color: var(--ink);
-		font-weight: 500;
-		font-size: var(--t-meta);
-	}
-	:global(:root[data-contrast='4'] .list) {
-		border-top: 2px solid var(--ink);
-	}
-	/* C3 uitgesproken: lichter papier, harde lijnen, titels op 500, koppen met een lijn. */
-	:global(:root[data-contrast='3']) {
-		--paper: #fcfbf8;
-		--paper-2: #e8e2d4;
-		--rule: #b9b1a0;
-		--rule-strong: #6f6859;
-		--ink: #0f0e0d;
-		--ink-2: #2e2c28;
-		--ink-3: #514d46;
-		--t-body-2: 16px;
-	}
-	:global(:root[data-contrast='3'] .row-title) {
-		font-weight: 500;
-	}
-	:global(:root[data-contrast='3'] .list) {
-		border-top: 2px solid var(--ink);
 	}
 
 	/* ─── Global base ────────────────────────────────────────────────────────── */

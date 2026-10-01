@@ -1,11 +1,11 @@
-// Ontwerpstudie ronde 4 (prototype): de tijdlijn van een dossier als procedure, in drie
+// De tijdlijn van een dossier als procedure, in drie
 // groepen (Raad van State, Tweede Kamer, Eerste Kamer). Alleen wat gebeurd is; wat nog kan
 // volgen staat als één gestippelde regel die zegt dat het kan volgen. Moties, amendementen,
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
-import { stand } from '$lib/components/parliamentary/stand';
-import type { TijdGroep, TijdRegel } from './tijdlijn';
+import { stand } from './stand';
+import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 
 type Detail = Schema<'DossierDetailResponse'>;
 type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
@@ -71,7 +71,8 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 					? ' als hamerstuk'
 					: method.startsWith('Stemming bij zitten')
 						? ' bij zitten en opstaan'
-						: (e.kind ?? '').includes('zonder stemming') || (e.title ?? '').includes('zonder stemming')
+						: (e.kind ?? '').includes('zonder stemming') ||
+							  (e.title ?? '').includes('zonder stemming')
 							? ' zonder stemming'
 							: '';
 			out.push({
@@ -98,7 +99,9 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 		}
 	}
 	for (const [day, docs] of byDay) {
-		let kinds = [...new Set(docs.map((d) => d.kind ?? ''))].filter((k) => k !== 'Bijgewerkte tekst');
+		let kinds = [...new Set(docs.map((d) => d.kind ?? ''))].filter(
+			(k) => k !== 'Bijgewerkte tekst'
+		);
 		// Advies en nader rapport bevat het advies: één keer noemen.
 		if (kinds.some((k) => k.endsWith('en Nader rapport')))
 			kinds = kinds.filter((k) => k !== 'Advies Afdeling advisering Raad van State');
@@ -115,17 +118,22 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 			soort: 'documents',
 			label: null,
 			zin: zin.charAt(0).toUpperCase() + zin.slice(1),
-			meta:
-				nummers.length
-					? `Kamerstuk${groep === 'ek' ? ' I' : ''} ${dossier}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
-					: null,
+			meta: nummers.length
+				? `Kamerstuk${groep === 'ek' ? ' I' : ''} ${dossier}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
+				: null,
 			href: bronHref(first.node_id, { keepMode: false, mode: 'read' })
 		});
 	}
 	return out.sort((a, b) => (a.datum ?? '').localeCompare(b.datum ?? ''));
 }
 
-const TK_NOG = ['verslag', 'nota naar aanleiding van het verslag', 'nota van wijziging', 'plenaire behandeling', 'stemming'];
+const TK_NOG = [
+	'verslag',
+	'nota naar aanleiding van het verslag',
+	'nota van wijziging',
+	'plenaire behandeling',
+	'stemming'
+];
 /** De fase waar het voorstel is, als plaats in TK_NOG; wat erna komt kan nog volgen. */
 const FASE_PLAATS: Record<string, number> = {
 	'Voorstel van wet': -1,
@@ -183,13 +191,21 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const tk = regelsVan(per.get('tk') ?? [], 'tk', d.number);
 	// De wijze staat in tk_decision, niet in het besluit zelf.
 	if (d.tk_decision?.kind?.includes('zonder stemming'))
-		for (const r of tk) if (r.teken === 'ja' && r.zin === 'Aangenomen') r.zin = 'Aangenomen zonder stemming';
+		for (const r of tk)
+			if (r.teken === 'ja' && r.zin === 'Aangenomen') r.zin = 'Aangenomen zonder stemming';
 	if (state[1] === 'now') {
 		const i = FASE_PLAATS[d.current_phase ?? ''] ?? -1;
 		// Een nota van wijziging kan steeds opnieuw komen; ze blijft in de lijst.
-		const nog = TK_NOG.slice(i + 1).concat(i === 2 ? [] : []).filter((x, k, a) => a.indexOf(x) === k);
+		const nog = TK_NOG.slice(i + 1)
+			.concat(i === 2 ? [] : [])
+			.filter((x, k, a) => a.indexOf(x) === k);
 		if (i === 2) nog.unshift('nog een nota van wijziging');
-		tk.push({ id: 'tk-nog', datum: null, teken: 'verwacht', zin: `Kan nog volgen: ${reeks(nog)}.` });
+		tk.push({
+			id: 'tk-nog',
+			datum: null,
+			teken: 'verwacht',
+			zin: `Kan nog volgen: ${reeks(nog)}.`
+		});
 	}
 	groepen.push({
 		id: 'tk',
@@ -200,14 +216,26 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 
 	const ek = regelsVan(per.get('ek') ?? [], 'ek', d.number);
 	if (state[2] === 'now')
-		ek.push({ id: 'ek-nog', datum: null, teken: 'verwacht', zin: 'Kan nog volgen: verslag of plenaire behandeling, en stemming.' });
+		ek.push({
+			id: 'ek-nog',
+			datum: null,
+			teken: 'verwacht',
+			zin: 'Kan nog volgen: verslag of plenaire behandeling, en stemming.'
+		});
 	if (state[2] === 'open')
-		ek.push({ id: 'ek-open', datum: null, teken: 'verwacht', zin: 'Aan de orde na aanneming door de Tweede Kamer.' });
+		ek.push({
+			id: 'ek-open',
+			datum: null,
+			teken: 'verwacht',
+			zin: 'Aan de orde na aanneming door de Tweede Kamer.'
+		});
 	if (ek.length) groepen.push({ id: 'ek', titel: 'Eerste Kamer', regels: ek });
 
 	// Het jaar staat in de kop van de groep, niet bij elke datum.
 	for (const g of groepen) {
-		const jaren = [...new Set(g.regels.flatMap((r) => (r.datum ? [r.datum.slice(0, 4)] : [])))].sort();
+		const jaren = [
+			...new Set(g.regels.flatMap((r) => (r.datum ? [r.datum.slice(0, 4)] : [])))
+		].sort();
 		g.sub = jaren.length ? (jaren.length > 1 ? `${jaren[0]}–${jaren.at(-1)}` : jaren[0]) : null;
 	}
 	return { groepen, overig: overig.length };

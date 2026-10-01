@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 4 (prototype): een uitkomst in vorm én kleur, zodat ook wie rood
+	// Een uitkomst in vorm én kleur, zodat ook wie rood
 	// en groen niet onderscheidt het ziet. Ja: een gevuld vakje in mos. Nee: een open vakje
 	// met een rand in het accent. Nu: een gevuld vakje in inkt. Nog niet: een gestippeld vakje.
 	let {
@@ -10,7 +10,13 @@
 		/** Het woord naast het vakje; zonder woord alleen het vakje (met een title). */
 		woord?: string | null;
 	} = $props();
-	const TITLE = { ja: 'aangenomen of afgerond', nee: 'verworpen of tegen', nu: 'nu', open: 'nog niet', klaar: 'afgerond' };
+	const TITLE = {
+		ja: 'aangenomen of afgerond',
+		nee: 'verworpen of tegen',
+		nu: 'nu',
+		open: 'nog niet',
+		klaar: 'afgerond'
+	};
 </script>
 
 <span class="uk uk--{soort}" title={woord ? undefined : TITLE[soort]}

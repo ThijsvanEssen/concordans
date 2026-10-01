@@ -1,16 +1,21 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 4 (prototype): de stand van een wetsvoorstel als balk in drie
+	// De stand van een wetsvoorstel als balk in drie
 	// gelijke vakken, in de volgorde van de procedure. Afgerond met een uitkomst: mos met een
 	// gevuld vakje. Afgerond zonder uitkomst: inkt 2. Nu: inkt, vet, met een vlak. Nog niet:
 	// gestippeld. Onder elk vak één zin met de datum. Werkt op een lijstitem en op het detail.
 	import type { Schema } from '$lib/api/types';
-	import { stand, datum } from '$lib/components/parliamentary/stand';
+	import { stand, datum } from './stand';
 	import Uitkomst from './Uitkomst.svelte';
 
 	type Item = Schema<'DossierSummaryDTO'> | Schema<'DossierDetailResponse'>;
 	let { d, kop = true }: { d: Item; kop?: boolean } = $props();
 
-	type Vak = { naam: string; soort: 'ja' | 'nee' | 'nu' | 'open' | 'klaar'; woord: string; zin: string };
+	type Vak = {
+		naam: string;
+		soort: 'ja' | 'nee' | 'nu' | 'open' | 'klaar';
+		woord: string;
+		zin: string;
+	};
 	const st = $derived(stand(d));
 	const dateOf = (name: string) => d.phases?.find((p) => p.name === name)?.date ?? null;
 
@@ -20,16 +25,36 @@
 		const a = dateOf('Advies Raad van State');
 		const v1: Vak =
 			rvs.state === 'done'
-				? { naam: 'Raad van State', soort: 'klaar', woord: 'Advies', zin: a ? `Uitgebracht, ${datum(a)}` : 'Uitgebracht' }
-				: { naam: 'Raad van State', soort: 'open', woord: 'Nog niet', zin: d.kind === 'Initiatiefwetgeving' ? 'Advies kan nog volgen' : 'Niet in de gegevens' };
+				? {
+						naam: 'Raad van State',
+						soort: 'klaar',
+						woord: 'Advies',
+						zin: a ? `Uitgebracht, ${datum(a)}` : 'Uitgebracht'
+					}
+				: {
+						naam: 'Raad van State',
+						soort: 'open',
+						woord: 'Nog niet',
+						zin: d.kind === 'Initiatiefwetgeving' ? 'Advies kan nog volgen' : 'Niet in de gegevens'
+					};
 		let v2: Vak;
 		if (d.tk_decision) {
 			const how = d.tk_decision.kind?.includes('zonder stemming') ? ', zonder stemming' : '';
-			v2 = { naam: 'Tweede Kamer', soort: 'ja', woord: 'Aangenomen', zin: `${datum(d.tk_decision.date)}${how}` };
+			v2 = {
+				naam: 'Tweede Kamer',
+				soort: 'ja',
+				woord: 'Aangenomen',
+				zin: `${datum(d.tk_decision.date)}${how}`
+			};
 		} else if (d.outcome === 'verworpen') {
 			v2 = { naam: 'Tweede Kamer', soort: 'nee', woord: 'Verworpen', zin: datum(d.closed_on) };
 		} else if (tk.state === 'done') {
-			v2 = { naam: 'Tweede Kamer', soort: 'ja', woord: 'Aangenomen', zin: datum(dateOf('Eindtekst')) };
+			v2 = {
+				naam: 'Tweede Kamer',
+				soort: 'ja',
+				woord: 'Aangenomen',
+				zin: datum(dateOf('Eindtekst'))
+			};
 		} else {
 			const fase = (st.zin.match(/: (.*?)(,|\.)/)?.[1] ?? '').trim();
 			const when = st.zin.match(/(\d+ \w+\.? \d{4})/)?.[1] ?? '';
@@ -37,19 +62,42 @@
 				naam: 'Tweede Kamer',
 				soort: 'nu',
 				woord: st.group === 'ingediend' ? 'Ingediend' : 'In behandeling',
-				zin: st.group === 'ingediend' ? when : `${fase.charAt(0).toUpperCase() + fase.slice(1)}${when ? `, ${when}` : ''}`
+				zin:
+					st.group === 'ingediend'
+						? when
+						: `${fase.charAt(0).toUpperCase() + fase.slice(1)}${when ? `, ${when}` : ''}`
 			};
 		}
 		let v3: Vak;
 		if (d.ek_outcome) {
 			const m = d.ek_outcome.method ?? '';
-			const how = m === 'Hamerstuk' ? ', hamerstuk' : m.startsWith('Stemming bij zitten') ? ', zitten en opstaan' : '';
+			const how =
+				m === 'Hamerstuk'
+					? ', hamerstuk'
+					: m.startsWith('Stemming bij zitten')
+						? ', zitten en opstaan'
+						: '';
 			const ja = d.ek_outcome.outcome !== 'Verworpen';
-			v3 = { naam: 'Eerste Kamer', soort: ja ? 'ja' : 'nee', woord: d.ek_outcome.outcome, zin: `${datum(d.ek_outcome.date)}${how}` };
+			v3 = {
+				naam: 'Eerste Kamer',
+				soort: ja ? 'ja' : 'nee',
+				woord: d.ek_outcome.outcome,
+				zin: `${datum(d.ek_outcome.date)}${how}`
+			};
 		} else if (ek.state === 'now') {
-			v3 = { naam: 'Eerste Kamer', soort: 'nu', woord: 'In behandeling', zin: 'Sinds aanneming door de Tweede Kamer' };
+			v3 = {
+				naam: 'Eerste Kamer',
+				soort: 'nu',
+				woord: 'In behandeling',
+				zin: 'Sinds aanneming door de Tweede Kamer'
+			};
 		} else if (ek.state === 'none') {
-			v3 = { naam: 'Eerste Kamer', soort: 'open', woord: 'Niet aan de orde', zin: 'Verworpen door de Tweede Kamer' };
+			v3 = {
+				naam: 'Eerste Kamer',
+				soort: 'open',
+				woord: 'Niet aan de orde',
+				zin: 'Verworpen door de Tweede Kamer'
+			};
 		} else {
 			v3 = { naam: 'Eerste Kamer', soort: 'open', woord: 'Nog niet', zin: 'Na de Tweede Kamer' };
 		}

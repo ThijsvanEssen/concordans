@@ -795,7 +795,7 @@
 			stagePadding: STAGE_PADDING,
 			zoomToSizeRatioFunction: (ratio: number) => Math.min(Math.sqrt(ratio), 1.5),
 			// A wet's anchor is a point, not a bron: its hull shows the name on hover.
-			// Ronde 6: een naam staat op een papieren ondergrond, zodat verbindingen hem niet
+			// Een naam staat op een papieren ondergrond, zodat verbindingen hem niet
 			// doorsnijden.
 			defaultDrawNodeLabel: (context, data, settings) => {
 				if (!data.label) return;
@@ -808,12 +808,11 @@
 				context.fillStyle = t.paper;
 				context.fillRect(x - 2, data.y - size / 2 - 2, w + 4, size + 4);
 				context.restore();
-				context.fillStyle =
-					settings.labelColor.attribute
-						? ((data as Record<string, unknown>)[settings.labelColor.attribute] as string) ??
-							settings.labelColor.color ??
-							t.ink
-						: (settings.labelColor.color ?? t.ink);
+				context.fillStyle = settings.labelColor.attribute
+					? (((data as Record<string, unknown>)[settings.labelColor.attribute] as string) ??
+						settings.labelColor.color ??
+						t.ink)
+					: (settings.labelColor.color ?? t.ink);
 				context.fillText(data.label, x, data.y + size / 3);
 			},
 			defaultDrawNodeHover: (context, data, settings) => {
@@ -858,9 +857,7 @@
 						borderColor: dimColor(0.38),
 						// A shape is a sprite, which the colours above do not reach: its outline instead.
 						image:
-							data.type === 'image'
-								? spriteForVorm(data.vorm as Vorm, true, false)
-								: data.image,
+							data.type === 'image' ? spriteForVorm(data.vorm as Vorm, true, false) : data.image,
 						selectionColor: 'rgba(0,0,0,0)'
 					};
 				}
@@ -902,7 +899,9 @@
 					hidden: false,
 					label,
 					forceLabel,
-					image: data.vorm ? spriteForVorm(data.vorm as Vorm, !!data.stub, true) : spriteFor(focusKind, !!data.stub, true),
+					image: data.vorm
+						? spriteForVorm(data.vorm as Vorm, !!data.stub, true)
+						: spriteFor(focusKind, !!data.stub, true),
 					size: focusBoost,
 					zIndex: 2
 				};

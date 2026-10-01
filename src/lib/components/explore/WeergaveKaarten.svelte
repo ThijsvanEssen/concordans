@@ -1,7 +1,7 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 5 (prototype): de eerste keer dat een bron opent, twee kaarten
-	// onder de schakelaar (ronde 4, thema 6). Een kaart kiest de weergave; daarna niet meer.
-	import Picto from './Picto.svelte';
+	// De eerste keer dat een bron opent, twee kaarten
+	// onder de schakelaar. Een kaart kiest de weergave; daarna niet meer.
+	import Picto from '$lib/components/ui/Picto.svelte';
 
 	let { stand, onKies }: { stand: 'netwerk' | 'tekst'; onKies: (k: 'netwerk' | 'tekst') => void } =
 		$props();
@@ -31,7 +31,12 @@
 
 {#if open}
 	<div class="kaarten" role="dialog" aria-label="Netwerk of tekst">
-		<button type="button" class="kaart" class:aan={stand === 'netwerk'} onclick={() => kies('netwerk')}>
+		<button
+			type="button"
+			class="kaart"
+			class:aan={stand === 'netwerk'}
+			onclick={() => kies('netwerk')}
+		>
 			<Picto naam="netwerk" size={28} />
 			<b>Netwerk</b>
 			<span>Een klik op een bron kiest die bron; het netwerk volgt.</span>

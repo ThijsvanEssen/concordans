@@ -1,4 +1,4 @@
-// Ontwerpstudie ronde 4 (prototype): fractiekleuren zoals de Kamers ze zelf tekenen.
+// Fractiekleuren zoals de Kamers ze zelf tekenen.
 // Tweede Kamer: legenda van "Zetelverdeling plenaire zaal, juni 2026" (tweedekamer.nl, pdf).
 // Eerste Kamer: "Wie zit waar" op eerstekamer.nl, 30 september 2026. Hoort in de curated
 // lijst party_colors van de back end; hier alleen om het ontwerp te toetsen.
@@ -61,7 +61,9 @@ export function kleurenVan(_kamer: string, naam: string, fallback: string | null
 }
 /** Wit of inkt op een kleurbalk, naar de luminantie. */
 export function tekstOp(hex: string): string {
-	const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+	const c = [1, 3, 5]
+		.map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+		.map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
 	const L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 	return L > 0.32 ? '#161513' : '#ffffff';
 }

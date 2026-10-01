@@ -15,9 +15,9 @@
 		colorOf = null,
 		meubels = false
 	}: {
-		/** Ronde 4: de kleur van een stoel (fractie, volgnummer), zoals de Kamer haar tekent. */
+		/** De kleur van een stoel (fractie, volgnummer), zoals de Kamer haar tekent. */
 		colorOf?: ((f: SeatFaction, i: number) => string) | null;
-		/** Ronde 4: Voorzitter, griffier, kabinet (vak-K), verslag en spreekgestoelte tekenen. */
+		/** Voorzitter, griffier, kabinet (vak-K), verslag en spreekgestoelte tekenen. */
 		meubels?: boolean;
 		data: Seats;
 		/** Where a fractie's sector links: its reader, unless the page says otherwise. */
@@ -208,15 +208,15 @@
 			<!-- Zoals de zetelverdeling van de Tweede Kamer: 1 Voorzitter, 2 Griffier,
 			     3 Kabinet (vak-K), 4 Verslag en redactie, 5 Spreekgestoelte. -->
 			<g class="meubel">
-				<rect x={CX - 118} y={y} width="56" height="14" rx="2" />
-				<rect x={CX - 56} y={y} width="36" height="14" rx="2" />
+				<rect x={CX - 118} {y} width="56" height="14" rx="2" />
+				<rect x={CX - 56} {y} width="36" height="14" rx="2" />
 				<rect x={CX - 12} y={y + 22} width="24" height="12" rx="2" />
-				<rect x={CX + 22} y={y} width="96" height="14" rx="2" />
-				<rect x={CX + 126} y={y} width="44" height="14" rx="2" />
+				<rect x={CX + 22} {y} width="96" height="14" rx="2" />
+				<rect x={CX + 126} {y} width="44" height="14" rx="2" />
 			</g>
 			{#each [[CX - 90, y + 7, '1'], [CX - 38, y + 7, '2'], [CX + 70, y + 7, '3'], [CX + 148, y + 7, '4'], [CX, y + 28, '5']] as [x, yy, n] (n)}
 				<circle cx={x} cy={yy} r="7" class="nr" />
-				<text x={x} y={Number(yy) + 3} text-anchor="middle" class="nr-t">{n}</text>
+				<text {x} y={Number(yy) + 3} text-anchor="middle" class="nr-t">{n}</text>
 			{/each}
 		{/if}
 	</svg>
@@ -230,22 +230,22 @@
 		{/each}
 	</ul>
 	{#if !meubels}
-	<figcaption class="hemicycle-caption">
-		<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
-		{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {formatLongDate(
-			data.as_of ?? null
-		)}{data.assigned_seats < data.total_seats
-			? `, ${data.assigned_seats} van ${data.total_seats} zetels toegewezen`
-			: ''}
-		{#if data.seating_plan}
-			{@const plan = data.seating_plan}
-			<span class="hemicycle-source"
-				>Zaalindeling volgens de Tweede Kamer: <a href={plan.page ?? plan.url} rel="external"
-					>{plan.title}</a
-				></span
-			>
-		{/if}
-	</figcaption>
+		<figcaption class="hemicycle-caption">
+			<!-- The count stands in the middle; only seats not yet assigned are worth a word. -->
+			{kamer}, {data.chamber === 'EK' ? 'samenstelling' : 'stand'} op {formatLongDate(
+				data.as_of ?? null
+			)}{data.assigned_seats < data.total_seats
+				? `, ${data.assigned_seats} van ${data.total_seats} zetels toegewezen`
+				: ''}
+			{#if data.seating_plan}
+				{@const plan = data.seating_plan}
+				<span class="hemicycle-source"
+					>Zaalindeling volgens de Tweede Kamer: <a href={plan.page ?? plan.url} rel="external"
+						>{plan.title}</a
+					></span
+				>
+			{/if}
+		</figcaption>
 	{/if}
 </figure>
 
@@ -261,7 +261,7 @@
 		font: 600 var(--t-glyph) var(--font-sans);
 		fill: var(--paper);
 	}
-	/* Ronde 4: zonder kader en vlak, zoals de zaal van de Eerste Kamer. */
+	/* Zonder kader en vlak, zoals de zaal van de Eerste Kamer. */
 	.hemicycle.kaal {
 		padding: 0;
 		border: 0;

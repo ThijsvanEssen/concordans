@@ -2,7 +2,7 @@
 	// A row opened under itself, the same in Verbonden and in the table: the passage that
 	// names the bron, then how to open it, show it in the network, or read the verbinding.
 	import { passageOf, type Row } from './rows';
-	import Picto from '$lib/components/r5/Picto.svelte';
+	import Picto from '$lib/components/ui/Picto.svelte';
 
 	let {
 		row,
@@ -31,9 +31,11 @@
 			{p.before}{#if p.mark}<mark>{p.mark}</mark>{/if}{p.after}
 		</p>
 	{/if}
-	<!-- Ronde 5: dezelfde twee knoppen als de open rij in Bladeren (r4/OpenRij). -->
+	<!-- Dezelfde twee knoppen als de open rij in Bladeren (OpenRij). -->
 	<div class="acts">
-		<a href={openHref} data-sveltekit-noscroll class="act act--pri"><Picto naam="tekst" size={13} />{openLabel}</a>
+		<a href={openHref} data-sveltekit-noscroll class="act act--pri"
+			><Picto naam="tekst" size={13} />{openLabel}</a
+		>
 		{#if onShowInNetwork}
 			<button type="button" class="act" onclick={() => onShowInNetwork(row)}
 				><Picto naam="netwerk" size={13} />In het netwerk</button
@@ -42,7 +44,9 @@
 			<a href={networkHref} class="act"><Picto naam="netwerk" size={13} />In het netwerk</a>
 		{/if}
 		{#if row.relation}
-			<button type="button" class="link" onclick={() => onVerbinding(row)}>Over deze verbinding</button>
+			<button type="button" class="link" onclick={() => onVerbinding(row)}
+				>Over deze verbinding</button
+			>
 		{/if}
 	</div>
 </div>

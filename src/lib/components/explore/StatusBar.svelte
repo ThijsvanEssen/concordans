@@ -11,8 +11,8 @@
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { articleName } from '$lib/text/bw';
 	import { categoryLabel, isIndexCategory } from './index/categories';
-	import WeergaveSchakelaar from '$lib/components/r5/WeergaveSchakelaar.svelte';
-	import WeergaveKaarten from '$lib/components/r5/WeergaveKaarten.svelte';
+	import WeergaveSchakelaar from './WeergaveSchakelaar.svelte';
+	import WeergaveKaarten from './WeergaveKaarten.svelte';
 
 	let {
 		node,
@@ -146,8 +146,14 @@
 
 	{#if readAction}
 		<span class="weergave">
-			<WeergaveSchakelaar stand={readAction === 'read' ? 'netwerk' : 'tekst'} onKies={(k) => onRead?.(k === 'tekst')} />
-			<WeergaveKaarten stand={readAction === 'read' ? 'netwerk' : 'tekst'} onKies={(k) => onRead?.(k === 'tekst')} />
+			<WeergaveSchakelaar
+				stand={readAction === 'read' ? 'netwerk' : 'tekst'}
+				onKies={(k) => onRead?.(k === 'tekst')}
+			/>
+			<WeergaveKaarten
+				stand={readAction === 'read' ? 'netwerk' : 'tekst'}
+				onKies={(k) => onRead?.(k === 'tekst')}
+			/>
 		</span>
 	{:else if node && mode !== 'index'}
 		<WeergaveSchakelaar stand="netwerk" onKies={() => {}} tekstMogelijk={false} />
@@ -220,5 +226,4 @@
 	.weergave {
 		position: relative;
 	}
-
 </style>

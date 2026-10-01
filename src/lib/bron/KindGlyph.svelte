@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The one glyph of a kind of bron, as on the canvas. Ronde 5: the shape says what a bron
+	// The one glyph of a kind of bron, as on the canvas. The shape says what a bron
 	// is, in ink (vormen.ts); there is no colour to remember.
 	import type { Collection } from '$lib/vocabulary';
 	import { VORMEN, VORM_VAN, type Vorm } from './vormen';

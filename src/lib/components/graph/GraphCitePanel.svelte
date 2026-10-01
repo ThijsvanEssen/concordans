@@ -7,7 +7,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronHref, refOf } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
-	import Picto from '$lib/components/r5/Picto.svelte';
+	import Picto from '$lib/components/ui/Picto.svelte';
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 
@@ -26,9 +26,9 @@
 		/** Called as the link opens the bron: the panel closes. */
 		onOpen: (node: GraphNode) => void;
 		onToggleChosen?: (node: GraphNode) => void;
-		/** Ronde 6: wat een dubbelklik doet, als knop: alleen de omgeving van deze bron. */
+		/** Wat een dubbelklik doet, als knop: alleen de omgeving van deze bron. */
 		onOmgeving?: (node: GraphNode) => void;
-		/** Ronde 6: waar de kaart staat, naast de bron onder de muis; zonder: rechtsonder. */
+		/** Waar de kaart staat, naast de bron onder de muis; zonder: rechtsonder. */
 		at?: { x: number; y: number } | null;
 		onMouseEnter?: () => void;
 		onMouseLeave?: () => void;
@@ -111,7 +111,10 @@
 <div
 	class="citepanel"
 	class:bij-bron={!!at}
-	style="width:{W}px;{at ? `left:${at.x}px;top:${at.y}px;` : ''}" onmouseenter={onMouseEnter} onmouseleave={onMouseLeave}>
+	style="width:{W}px;{at ? `left:${at.x}px;top:${at.y}px;` : ''}"
+	onmouseenter={onMouseEnter}
+	onmouseleave={onMouseLeave}
+>
 	<div class="head">
 		<KindGlyph collection={node.collection} />
 		<span class="kind caps">{bronLabel(node.collection)}</span>
@@ -157,7 +160,7 @@
 </div>
 
 <style>
-	/* Ronde 6: rechtsonder naast de zoom; rechtsboven staat het netwerkpaneel. */
+	/* Rechtsonder naast de zoom; rechtsboven staat het netwerkpaneel. */
 	.citepanel {
 		position: absolute;
 		bottom: var(--s-3);

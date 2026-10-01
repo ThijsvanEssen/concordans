@@ -32,13 +32,13 @@ export type Tokens = {
 
 // The values of AppShell.svelte, for the server and for a page without the tokens.
 const FALLBACK: Tokens = {
-	paper: '#f8f6f1',
-	paper2: '#f1eee7',
-	rule: '#e3dfd6',
-	ruleStrong: '#c9c4b8',
-	ink: '#1c1b19',
-	ink2: '#4a4742',
-	ink3: '#77736b',
+	paper: '#faf8f3',
+	paper2: '#ece7dc',
+	rule: '#b9b1a0',
+	ruleStrong: '#6f6859',
+	ink: '#161513',
+	ink2: '#3b3834',
+	ink3: '#5d5951',
 	accent: '#8c2f28',
 	accentSoft: '#f3e4e2',
 	indigo: '#2f3e5e',
@@ -316,7 +316,7 @@ function buildSprite(kind: GraphNodeKind, variant: Variant): string {
 	return drawSprite(shape, fillFor(kind), strokeFor(kind), isOpen ? 2.4 : 1);
 }
 
-// Ronde 5: een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
+// Een sprite per vorm (vormen.ts), in inkt. Een bron buiten de gegevens is de
 // omtrek van zijn vorm; de gekozen bron krijgt een rand in inkt en een papieren halo.
 const vormCache: Map<string, string> = new Map();
 export function spriteForVorm(vorm: Vorm, stub: boolean, focused: boolean): string {

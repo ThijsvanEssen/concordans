@@ -31,7 +31,7 @@
 		onPick,
 		scope = null
 	}: {
-		/** Ronde 4: alleen deze soorten doorzoeken (een ingang op de startpagina). */
+		/** Alleen deze soorten doorzoeken (een ingang op de startpagina). */
 		scope?: readonly string[] | null;
 		/** The text the field starts with. */
 		initial?: string;
@@ -103,9 +103,9 @@
 		hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
 
 	const groups = $derived(
-		kinds.map((kind) => ({ kind, hits: bySection(results[kind] ?? []) })).filter(
-			(g) => g.hits.length > 0
-		)
+		kinds
+			.map((kind) => ({ kind, hits: bySection(results[kind] ?? []) }))
+			.filter((g) => g.hits.length > 0)
 	);
 	const hits = $derived(groups.flatMap((g) => g.hits));
 	const indexOf = $derived(new Map(hits.map((hit, i) => [hit.id, i])));

@@ -1,4 +1,4 @@
-// Ontwerpstudie ronde 5 (prototype): één naam per bron, op het canvas en in het
+// Één naam per bron, op het canvas en in het
 // netwerkpaneel gelijk, en gelijk aan de titel in Verbonden. Een artikel draagt de korte titel van zijn wet ("Art. 3:4 Awb").
 import type { InstrumentMeta } from '$lib/api/instrument-cache';
 import { lawIdOf, type GraphNode } from '$lib/graph/types';

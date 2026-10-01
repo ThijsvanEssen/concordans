@@ -26,7 +26,7 @@ export type NetwerkEntry = {
 	alone: boolean;
 	/** The API does not know it: listed so that it can be removed. */
 	missing?: boolean;
-	/** Ronde 5: the bron itself, so that its name follows bron/naam.ts once law titles load. */
+	/** The bron itself, so that its name follows bron/naam.ts once law titles load. */
 	node?: GraphNode;
 };
 

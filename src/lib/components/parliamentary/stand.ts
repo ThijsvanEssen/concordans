@@ -1,6 +1,6 @@
 import type { Schema } from '$lib/api/types';
 
-// Ontwerpstudie ronde 2 (prototype): where a bill stands, per body that handles it, Raad van
+// Where a bill stands, per body that handles it, Raad van
 // State, Tweede Kamer, Eerste Kamer, and one sentence that says it with a date. Derived from
 // the list item only; no field of our own.
 
@@ -17,10 +17,28 @@ export type Stand = {
 	group: StandGroup;
 };
 
-const TK_PHASES = ['Verslag', 'Nota n.a.v. het verslag', 'Nota van wijziging / Amendement', 'Stemmingen'];
+const TK_PHASES = [
+	'Verslag',
+	'Nota n.a.v. het verslag',
+	'Nota van wijziging / Amendement',
+	'Stemmingen'
+];
 const SUBMITTED = ['Voorstel van wet', 'Memorie van toelichting', 'Advies Raad van State'];
 
-const MONTHS = ['jan.', 'feb.', 'mrt.', 'apr.', 'mei', 'jun.', 'jul.', 'aug.', 'sep.', 'okt.', 'nov.', 'dec.'];
+const MONTHS = [
+	'jan.',
+	'feb.',
+	'mrt.',
+	'apr.',
+	'mei',
+	'jun.',
+	'jul.',
+	'aug.',
+	'sep.',
+	'okt.',
+	'nov.',
+	'dec.'
+];
 export const datum = (iso: string | null | undefined): string => {
 	if (!iso) return '';
 	const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
@@ -39,7 +57,7 @@ const PHASE_ZIN: Record<string, string> = {
 export function stand(d: Dossier): Stand | null {
 	const phases = d.phases ?? [];
 	// A record marks a phase done; a later phase done counts every earlier one as done
-	// (ronde 3: 12 of 14 bills the Tweede Kamer passed lack the Raad van State's mark).
+	// (12 of 14 bills the Tweede Kamer passed lack the Raad van State's mark).
 	const lastDone = Math.max(-1, ...phases.map((p, i) => (p.done ? i : -1)));
 	const done = (name: string) => {
 		const i = phases.findIndex((p) => p.name === name);
@@ -55,7 +73,15 @@ export function stand(d: Dossier): Stand | null {
 	const rejected = d.outcome === 'verworpen';
 
 	const tk: BodyState = tkDone || rejected ? 'done' : 'now';
-	const ek: BodyState = ekDone ? 'done' : rejected ? 'none' : tkDone && !d.closed ? 'now' : d.closed ? 'done' : 'open';
+	const ek: BodyState = ekDone
+		? 'done'
+		: rejected
+			? 'none'
+			: tkDone && !d.closed
+				? 'now'
+				: d.closed
+					? 'done'
+					: 'open';
 
 	const bodies: [Body, Body, Body] = [
 		{ name: 'Raad van State', short: 'RvS', state: rvs },

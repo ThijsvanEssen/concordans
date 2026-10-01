@@ -21,9 +21,7 @@
 	import { initials } from '$lib/util/initials';
 	import { formatDate, formatLongDate } from './_shared';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
-	const ontwerp = $derived(!!page.url.searchParams.get('ontwerp'));
-	const r4 = $derived(page.url.searchParams.get('ontwerp') === 'r4');
-	import BewindspersoonKop from '$lib/components/r4/BewindspersoonKop.svelte';
+	import BewindspersoonKop from './BewindspersoonKop.svelte';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -141,35 +139,35 @@
 			{@const ek = m.ek ?? null}
 			{@const ekSitting = !!ek && !ek.observed_until}
 
-			{#if r4 && (m.government_functions ?? []).length > 0}
+			{#if (m.government_functions ?? []).length > 0}
 				<BewindspersoonKop {m} />
 			{:else}
-			<header class="head">
-				<span class="kicker"
-					><KindGlyph collection="members" />{ekSitting && !sitting
-						? 'Lid van de Eerste Kamer'
-						: currentTitle(career, sitting)}</span
-				>
-				<div class="member-head-row">
-					<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
-					<div class="member-meta">
-						<h2 class="title">{m.name ?? m.key}</h2>
-						{#if m.party}
-							<div class="chips">
-								<NameLink collection="factions" name={m.party} class="party-chip" />
-							</div>
-						{:else if ek?.faction && ek.abbreviation}
-							<div class="chips">
-								<a
-									class="party-chip"
-									href={bronHref({ collection: 'factions', key: ek.faction })}
-									data-sveltekit-noscroll>{ek.abbreviation}</a
-								>
-							</div>
-						{/if}
+				<header class="head">
+					<span class="kicker"
+						><KindGlyph collection="members" />{ekSitting && !sitting
+							? 'Lid van de Eerste Kamer'
+							: currentTitle(career, sitting)}</span
+					>
+					<div class="member-head-row">
+						<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
+						<div class="member-meta">
+							<h2 class="title">{m.name ?? m.key}</h2>
+							{#if m.party}
+								<div class="chips">
+									<NameLink collection="factions" name={m.party} class="party-chip" />
+								</div>
+							{:else if ek?.faction && ek.abbreviation}
+								<div class="chips">
+									<a
+										class="party-chip"
+										href={bronHref({ collection: 'factions', key: ek.faction })}
+										data-sveltekit-noscroll>{ek.abbreviation}</a
+									>
+								</div>
+							{/if}
+						</div>
 					</div>
-				</div>
-			</header>
+				</header>
 			{/if}
 
 			{#if ek}
@@ -203,8 +201,8 @@
 				</section>
 			{/if}
 
-			{#if ontwerp && (m.government_functions ?? []).length > 0}
-				<BewindspersoonOverzicht memberKey={m.key} ruim={r4} />
+			{#if (m.government_functions ?? []).length > 0}
+				<BewindspersoonOverzicht memberKey={m.key} ruim />
 			{/if}
 
 			{#if career.length > 0}

@@ -1,4 +1,4 @@
-// Ontwerpstudie ronde 5 (prototype): de tekens van Concordans. De vorm zegt wat een bron
+// De tekens van Concordans. De vorm zegt wat een bron
 // is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
 // in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
 import type { Collection } from '$lib/vocabulary';
@@ -33,8 +33,12 @@ export const VORMEN: Record<Vorm, { d: string; wijze: Wijze; naam: string }> = {
 	'regel-o': { d: 'M3 3h10v10H3z', wijze: 'lijn', naam: 'artikel' },
 	uitspraak: { d: CIRKEL(8, 8, 6.5), wijze: 'vul', naam: 'uitspraak' },
 	stuk: { d: 'M3.5 1h6.5l3 3v11H3.5z', wijze: 'vul', naam: 'stuk' },
-	// Ronde 6: een wetsvoorstel is een blad met een open vak, los van de toelichting.
-	voorstel: { d: 'M3.5 1h6.5l3 3v11H3.5zM5.6 7.2h5.3v5.3H5.6z', wijze: 'gat', naam: 'wetsvoorstel' },
+	// Een wetsvoorstel is een blad met een open vak, los van de toelichting.
+	voorstel: {
+		d: 'M3.5 1h6.5l3 3v11H3.5zM5.6 7.2h5.3v5.3H5.6z',
+		wijze: 'gat',
+		naam: 'wetsvoorstel'
+	},
 	dossier: { d: 'M1 3.5h5l1.5 1.5H15V14H1z', wijze: 'vul', naam: 'dossier' },
 	besluit: { d: 'M8 1.5 15 14.5H1z', wijze: 'vul', naam: 'besluit' },
 	activiteit: { d: 'M8 3.2 13.6 13.5H2.4z', wijze: 'lijn', naam: 'activiteit' },

@@ -155,7 +155,7 @@
 	);
 
 	let compactFiltersOpen = $state(false);
-	// Ronde 6: de zwevende legenda, dicht tot iemand hem opent; per browser onthouden.
+	// De zwevende legenda, dicht tot iemand hem opent; per browser onthouden.
 	const LEGENDA = 'concordans:legenda';
 	let legendaOpen = $state(false);
 	$effect(() => {
@@ -323,7 +323,7 @@
 		return { color: n.stub || n.kind === 'other' ? tokens().paper : fillFor(n.kind), borderColor };
 	}
 
-	// Ronde 6: elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
+	// Elk teken even groot; de vorm zegt wat een bron is, niet de maat. Een groep
 	// (dossier, fractie, commissie) een stap groter.
 	const NODE_SIZE: Record<GraphNodeKind, number> = {
 		article: 8,
@@ -495,7 +495,7 @@
 			lookup.set(n.id, n);
 			if (!isCanvasNode(n)) continue;
 			const { color, borderColor } = nodeColors(n);
-			// Ronde 5: elke bron als teken uit vormen.ts.
+			// Elke bron als teken uit vormen.ts.
 			const vorm = vormVanBron(n.collection, n.raw?.props);
 			const useImage = true;
 			const stub = !!n.stub;
@@ -760,10 +760,13 @@
 	// The hover panel opens only after the pointer rests on a node for 400 ms.
 	function handleNodeHover(nodeId: string, vx?: number, vy?: number) {
 		if (compact) return;
-		// Ronde 6: de kaart staat naast de bron, niet los in een hoek.
+		// De kaart staat naast de bron, niet los in een hoek.
 		if (vx !== undefined && vy !== undefined && canvasWrap) {
-			const W = 360, H = 240, GAP = 20;
-			const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight;
+			const W = 360,
+				H = 240,
+				GAP = 20;
+			const w = canvasWrap.clientWidth,
+				h = canvasWrap.clientHeight;
 			const x = vx + GAP + W < w - 8 ? vx + GAP : Math.max(8, vx - GAP - W);
 			const y = Math.min(Math.max(8, vy - 40), Math.max(8, h - H - 8));
 			hoverAt = { x, y };
@@ -1042,20 +1045,20 @@
 				}}
 			/>
 
-			<!-- Ronde 6: de legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
+			<!-- De legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
 			     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
 			{#if !compact && canvasCounts.nodes > 0}
-				<div class="r6-legenda" class:open={legendaOpen}>
+				<div class="legenda" class:open={legendaOpen}>
 					<button
 						type="button"
-						class="r6-legenda-kop"
+						class="legenda-kop"
 						aria-expanded={legendaOpen}
 						onclick={() => zetLegenda(!legendaOpen)}
 					>
-						<span class="r6-legenda-titel">Legenda</span>
+						<span class="legenda-titel">Legenda</span>
 						{#if !legendaOpen}
 							{#each BRON_KINDS.filter((k) => (canvasCounts.kinds[k] ?? 0) > 0) as k (k)}
-								<span class="r6-teken" title="{BRON_KIND_LABEL[k]}: {canvasCounts.kinds[k]}"
+								<span class="teken" title="{BRON_KIND_LABEL[k]}: {canvasCounts.kinds[k]}"
 									><KindGlyph vorm={BRON_KIND_VORM[k]} size={11} /></span
 								>
 							{/each}
@@ -1063,7 +1066,7 @@
 						<Caret open={legendaOpen} />
 					</button>
 					{#if legendaOpen}
-						<div class="r6-legenda-inhoud">{@render sidebar()}</div>
+						<div class="legenda-inhoud">{@render sidebar()}</div>
 					{/if}
 				</div>
 			{/if}
@@ -1115,7 +1118,7 @@
 </div>
 
 <style>
-	/* Ronde 6: het canvas is een eigen stapellaag. Legenda, netwerkpaneel en kaart zweven
+	/* Het canvas is een eigen stapellaag. Legenda, netwerkpaneel en kaart zweven
 	   binnen het canvas en komen nooit boven menu's, statusbalk of kaarten van buiten. */
 	.graph-view {
 		display: flex;
@@ -1188,8 +1191,8 @@
 		pointer-events: auto;
 	}
 
-	/* Ronde 6: de legenda links boven, een kaart zoals het netwerkpaneel rechts boven. */
-	.r6-legenda {
+	/* De legenda links boven, een kaart zoals het netwerkpaneel rechts boven. */
+	.legenda {
 		position: absolute;
 		top: var(--s-3);
 		left: var(--s-3);
@@ -1202,7 +1205,7 @@
 		border-radius: var(--r-2);
 		box-shadow: var(--shadow-pop);
 	}
-	.r6-legenda-kop {
+	.legenda-kop {
 		display: flex;
 		align-items: center;
 		gap: var(--s-2);
@@ -1214,42 +1217,42 @@
 		color: var(--ink-2);
 		cursor: pointer;
 	}
-	.r6-legenda-kop:hover {
+	.legenda-kop:hover {
 		color: var(--ink);
 	}
-	.r6-legenda-titel {
+	.legenda-titel {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		font-weight: 500;
 		color: var(--ink);
 		margin-right: var(--s-1);
 	}
-	.r6-teken {
+	.teken {
 		display: inline-flex;
 		color: var(--ink);
 	}
-	.r6-legenda-inhoud {
+	.legenda-inhoud {
 		overflow-y: auto;
 		border-top: 1px solid var(--rule);
 	}
 	/* Een menu in de legenda opent binnen de kaart, onder zijn knop, en schuift mee;
 	   zo valt het nooit onder of buiten de kaart. */
-	.r6-legenda-inhoud :global(.menu__list),
+	.legenda-inhoud :global(.menu__list),
 	.compact-legend-panel :global(.menu__list) {
 		position: static;
 		min-width: 0;
 		margin-top: var(--s-1);
 		box-shadow: none;
 	}
-	.r6-legenda-inhoud :global(.block__head),
+	.legenda-inhoud :global(.block__head),
 	.compact-legend-panel :global(.block__head) {
 		flex-wrap: wrap;
 	}
-	.r6-legenda-inhoud :global(.menu:has(.menu__list)),
+	.legenda-inhoud :global(.menu:has(.menu__list)),
 	.compact-legend-panel :global(.menu:has(.menu__list)) {
 		flex-basis: 100%;
 	}
-	.r6-legenda-inhoud :global(.legend) {
+	.legenda-inhoud :global(.legend) {
 		height: auto;
 		border-right: 0;
 		padding-top: var(--s-3);
@@ -1295,7 +1298,7 @@
 	}
 
 	@media (max-width: 768px) {
-		.r6-legenda-inhoud :global(.legend) {
+		.legenda-inhoud :global(.legend) {
 			width: min(250px, calc(100vw - 48px));
 		}
 	}

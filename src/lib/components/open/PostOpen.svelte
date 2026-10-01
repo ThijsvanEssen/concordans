@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 4b (prototype): een geopende post in Bewindspersonen, in de vorm
+	// Een geopende post in Bewindspersonen, in de vorm
 	// van OpenRij. Wat de bewindspersoon deed staat er meteen: de laatste toezeggingen (met
 	// hun stand), de laatste stukken die hij of zij ondertekende, en de dossiers.
 	import { api, unwrap } from '$lib/api/client';
@@ -7,7 +7,7 @@
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { datum } from '$lib/components/parliamentary/stand';
 	import OpenRij from './OpenRij.svelte';
-	import type { TijdRegel } from './tijdlijn';
+	import type { TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 
 	let {
 		memberKey,
@@ -17,7 +17,10 @@
 		van,
 		tot,
 		dossiers,
-		wetsvoorstellen
+		wetsvoorstellen,
+		geteld = true,
+		toezeggingenHref = null,
+		opmerkingen = []
 	}: {
 		memberKey: string;
 		naam: string;
@@ -27,6 +30,11 @@
 		tot: string | null;
 		dossiers: number;
 		wetsvoorstellen: number;
+		/** False for a short stand-in beside a longer post: the API counts per person. */
+		geteld?: boolean;
+		toezeggingenHref?: string | null;
+		/** What the row needs said: an older name, why acting, a missing ministry. */
+		opmerkingen?: string[];
 	} = $props();
 
 	let regels = $state<TijdRegel[] | null>(null);
@@ -38,10 +46,18 @@
 		const ac = new AbortController();
 		regels = null;
 		Promise.all([
-			unwrap(api.GET('/api/commitments', { params: { query: { member: key, limit: 3, sort: 'date' } }, signal: ac.signal })).catch(() => null),
+			unwrap(
+				api.GET('/api/commitments', {
+					params: { query: { member: key, limit: 3, sort: 'date' } },
+					signal: ac.signal
+				})
+			).catch(() => null),
 			unwrap(
 				api.GET('/api/nodes/{collection}/{key}', {
-					params: { path: { collection: 'members', key }, query: { relations: 'AUTHORED', limit: 200 } },
+					params: {
+						path: { collection: 'members', key },
+						query: { relations: 'AUTHORED', limit: 200 }
+					},
 					signal: ac.signal
 				})
 			).catch(() => null)
@@ -49,7 +65,10 @@
 			if (ac.signal.aborted) return;
 			const out: TijdRegel[] = [];
 			if (c) {
-				tz = { total: c.total, open: c.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0 };
+				tz = {
+					total: c.total,
+					open: c.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0
+				};
 				for (const t of c.items)
 					out.push({
 						id: t.key,
@@ -95,11 +114,17 @@
 	laden={regels === null}
 	groepen={regels ? [{ id: 'recent', titel: 'Recent', regels }] : []}
 	links={[
-		{ label: tz ? `${tz.total} toezeggingen, ${tz.open} openstaand` : 'Toezeggingen', href: indexHref('commitments', { member: memberKey }) },
+		{
+			label: tz ? `${tz.total} toezeggingen, ${tz.open} openstaand` : 'Toezeggingen',
+			href: toezeggingenHref ?? indexHref('commitments', { member: memberKey })
+		},
 		{ label: `${stukken} stukken ondertekend` },
-		{ label: `${dossiers} dossiers in deze post, ${wetsvoorstellen} wetsvoorstellen` }
+		...(geteld
+			? [{ label: `${dossiers} dossiers in deze post, ${wetsvoorstellen} wetsvoorstellen` }]
+			: [])
 	]}
-	lezen={bronHref(bron, { keepMode: false, mode: 'read' }) + '&ontwerp=r4'}
+	{opmerkingen}
+	lezen={bronHref(bron, { keepMode: false, mode: 'read' })}
 	lezenLabel="Bewindspersoon lezen"
 	netwerk={bronHref(bron, { keepMode: false, mode: 'graph' })}
 />

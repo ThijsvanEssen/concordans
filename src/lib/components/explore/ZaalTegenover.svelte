@@ -1,12 +1,12 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 3 (prototype): de vergaderzaal van de Eerste Kamer. Twee blokken
+	// De vergaderzaal van de Eerste Kamer. Twee blokken
 	// banken tegenover elkaar, elk vier plaatsen breed en tien rijen diep; de regering aan de
 	// kop, de Voorzitter aan het andere eind. De plaats per fractie komt hier uit een vaste
 	// tabel naar "Wie zit waar" op eerstekamer.nl (30 september 2026), tot de API haar geeft
-	// in seating_plan (BE-4). Niet voor main.
+	// in seating_plan (BE-4).
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
-	import { kleurVan } from '$lib/components/r4/partijkleuren';
+	import { kleurVan } from './partijkleuren';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 
@@ -90,7 +90,6 @@
 		return out;
 	});
 
-
 	const side = (name: string) => {
 		const f = byName.get(name);
 		return voteHighlight && f ? voteHighlight[f.key] : null;
@@ -99,17 +98,27 @@
 
 <figure class="zaal">
 	<svg viewBox="0 0 {W} {H}" role="img" aria-label="Plattegrond van de Eerste Kamer, 75 zetels">
-		<path
-			d="M{W / 2 - 46} 8 H{W / 2 + 46} L{W / 2 + 40} 26 H{W / 2 - 40} Z"
-			class="meubel"
-		/>
-		<circle cx={W / 2} cy="17" r="7" class="nr" /><text x={W / 2} y="20" text-anchor="middle" class="nr-t">3</text>
+		<path d="M{W / 2 - 46} 8 H{W / 2 + 46} L{W / 2 + 40} 26 H{W / 2 - 40} Z" class="meubel" />
+		<circle cx={W / 2} cy="17" r="7" class="nr" /><text
+			x={W / 2}
+			y="20"
+			text-anchor="middle"
+			class="nr-t">3</text
+		>
 		<rect x={W / 2 - 22} y={rowY(4)} width="44" height={2 * ROW - 4} rx="2" class="meubel" />
-		<circle cx={W / 2} cy={rowY(4) + ROW - 2} r="7" class="nr" /><text x={W / 2} y={rowY(4) + ROW + 1} text-anchor="middle" class="nr-t">4</text>
+		<circle cx={W / 2} cy={rowY(4) + ROW - 2} r="7" class="nr" /><text
+			x={W / 2}
+			y={rowY(4) + ROW + 1}
+			text-anchor="middle"
+			class="nr-t">4</text
+		>
 		{#each stoelen as s, i (i)}
 			{@const f = byName.get(s.name)}
 			{@const v = side(s.name)}
-			<a href={f ? hrefOf(f.key) : undefined} aria-label="{s.name}{s === stoelen.at(-1) ? ', Voorzitter' : ''}">
+			<a
+				href={f ? hrefOf(f.key) : undefined}
+				aria-label="{s.name}{s === stoelen.at(-1) ? ', Voorzitter' : ''}"
+			>
 				<rect
 					x={s.x}
 					y={s.y}
@@ -119,13 +128,24 @@
 					class:tegen={v === 'tegen'}
 					class:voor={v === 'voor'}
 					fill={voteHighlight ? undefined : kleurVan('EK', s.name, i, fillOf.get(s.name) ?? null)}
-				><title>{s.name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect>
+					><title>{s.name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
+				>
 			</a>
 		{/each}
 		<rect x={W / 2 - S / 2 - 10 - S} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
 		<rect x={W / 2 + S / 2 + 10} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
-		<circle cx={W / 2} cy={rowY(9) + S + 14} r="7" class="nr" /><text x={W / 2} y={rowY(9) + S + 17} text-anchor="middle" class="nr-t">1</text>
-		<circle cx={W / 2 - S - 10} cy={rowY(9) + S + 14} r="7" class="nr" /><text x={W / 2 - S - 10} y={rowY(9) + S + 17} text-anchor="middle" class="nr-t">2</text>
+		<circle cx={W / 2} cy={rowY(9) + S + 14} r="7" class="nr" /><text
+			x={W / 2}
+			y={rowY(9) + S + 17}
+			text-anchor="middle"
+			class="nr-t">1</text
+		>
+		<circle cx={W / 2 - S - 10} cy={rowY(9) + S + 14} r="7" class="nr" /><text
+			x={W / 2 - S - 10}
+			y={rowY(9) + S + 17}
+			text-anchor="middle"
+			class="nr-t">2</text
+		>
 	</svg>
 </figure>
 
@@ -136,7 +156,7 @@
 		gap: var(--s-3);
 		justify-items: center;
 	}
-	/* Ronde 6: even hoog als het halfrond van de Tweede Kamer (Hemicycle, max 320). */
+	/* Even hoog als het halfrond van de Tweede Kamer (Hemicycle, max 320). */
 	svg {
 		width: auto;
 		max-width: 100%;

@@ -1,34 +1,46 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 4 (prototype): de gedeelde tijdlijn. Datum links in een vaste
+	// De gedeelde tijdlijn. Datum links in een vaste
 	// kolom, een teken op een doorlopende lijn, dan de zin. Een besluit krijgt het vakje van
 	// Uitkomst (vorm en kleur); wat nog kan volgen staat gestippeld en zegt dat het kan volgen.
 	import { dagMaand, type TijdGroep } from './tijdlijn';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
-	// Ronde 5b: het teken op de lijn is het bronteken zelf; de uitkomst zit in vulling en kleur.
-	const vormVanSoort = (s: string | null | undefined) => (s ? VORMEN[VORM_VAN[s as keyof typeof VORM_VAN] ?? 'overig'] : null);
+	// Het teken op de lijn is het bronteken zelf; de uitkomst zit in vulling en kleur.
+	const vormVanSoort = (s: string | null | undefined) =>
+		s ? VORMEN[VORM_VAN[s as keyof typeof VORM_VAN] ?? 'overig'] : null;
 
 	let {
 		groepen,
 		jaar = false,
 		datums = true
-	}: { groepen: TijdGroep[]; jaar?: boolean; /** Zonder datumkolom als de kop de dag al noemt. */ datums?: boolean } = $props();
+	}: {
+		groepen: TijdGroep[];
+		jaar?: boolean;
+		/** Zonder datumkolom als de kop de dag al noemt. */ datums?: boolean;
+	} = $props();
 </script>
 
 <div class="tl" class:zonder={!datums}>
 	{#each groepen as g (g.id)}
 		<section class="groep">
-			<h4 class="kop">{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}</h4>
+			<h4 class="kop">
+				{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}
+			</h4>
 			<ol class="regels">
 				{#each g.regels as r (r.id)}
 					{@const v = vormVanSoort(r.soort)}
 					<li class="regel regel--{r.teken}" class:groot={r.groot}>
-						<span class="datum">{r.datum ? dagMaand(r.datum) : ''}{#if jaar && r.datum}<span class="j"> {r.datum.slice(0, 4)}</span>{/if}</span>
+						<span class="datum"
+							>{r.datum ? dagMaand(r.datum) : ''}{#if jaar && r.datum}<span class="j">
+									{r.datum.slice(0, 4)}</span
+								>{/if}</span
+						>
 						{#if v}
 							<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
 								><path
 									d={v.d}
 									fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
-									class:vol={v.wijze !== 'lijn' && (r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
+									class:vol={v.wijze !== 'lijn' &&
+										(r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
 								/></svg
 							>
 						{:else}
@@ -36,7 +48,9 @@
 						{/if}
 						<span class="tekst">
 							{#if r.label}<span class="label">{r.label}</span>{/if}
-							{#if r.href}<a href={r.href} class="zin">{r.zin}</a>{:else}<span class="zin">{r.zin}</span>{/if}
+							{#if r.href}<a href={r.href} class="zin">{r.zin}</a>{:else}<span class="zin"
+									>{r.zin}</span
+								>{/if}
 							{#if r.meta}<span class="meta">{r.meta}</span>{/if}
 						</span>
 					</li>

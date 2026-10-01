@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Ontwerpstudie ronde 4 (prototype): een kleine legenda in de stijl van Concordans. Per
+	// Een kleine legenda in de stijl van Concordans. Per
 	// fractie een stip in de kleur van de zaal, de naam en de zetels, op grootte, in kolommen;
 	// daaronder de genummerde plaatsen op één regel. Gelijk voor beide Kamers.
 	import type { Schema } from '$lib/api/types';
@@ -23,11 +23,20 @@
 </script>
 
 <div class="leg">
-	<ol class="fr" aria-label="Zetels per fractie" style:grid-template-rows="repeat({Math.ceil(fracties.length / 3)}, auto)">
+	<ol
+		class="fr"
+		aria-label="Zetels per fractie"
+		style:grid-template-rows="repeat({Math.ceil(fracties.length / 3)}, auto)"
+	>
 		{#each fracties as f (f.key)}
 			{@const k = kleurenVan(data.chamber, naam(f), f.color ?? null)}
 			<li>
-				<span class="stip" style:background={k.length > 1 ? `linear-gradient(90deg, ${k[0]} 50%, ${k[1]} 50%)` : k[0]}></span>
+				<span
+					class="stip"
+					style:background={k.length > 1
+						? `linear-gradient(90deg, ${k[0]} 50%, ${k[1]} 50%)`
+						: k[0]}
+				></span>
 				<span class="n">{naam(f)}</span><span class="z">{f.seats}</span>
 			</li>
 		{/each}
@@ -36,7 +45,9 @@
 		{#each plaatsen as p, i (p)}<span><b>{i + 1}</b>{p}</span>{/each}
 	</p>
 	{#if peil}
-		<p class="peil">{peil}{#if bron}. <a href={bron.href} rel="external">{bron.label}</a>{/if}</p>
+		<p class="peil">
+			{peil}{#if bron}. <a href={bron.href} rel="external">{bron.label}</a>{/if}
+		</p>
 	{/if}
 </div>
 

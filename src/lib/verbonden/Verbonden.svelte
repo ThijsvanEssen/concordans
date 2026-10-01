@@ -80,7 +80,7 @@
 		/** Opens the card Verbinding for a row. */
 		onVerbinding: (row: Row) => void;
 		onShowInNetwork?: (row: Row) => void;
-		/** Ronde 5: één bron uit de rij in het netwerk zetten. */
+		/** Één bron uit de rij in het netwerk zetten. */
 		onAddToNetwerk?: (row: Row) => void;
 		/** Of de bron van een rij al in het netwerk staat. */
 		inNetwerk?: (row: Row) => boolean;
@@ -300,12 +300,13 @@
 							aria-label="{g.label} in het netwerk"
 							title={isLayerOn(g) ? 'Uit het netwerk halen' : 'In het netwerk tonen'}
 							onclick={() => toggleLayer(g)}
-							><span class="layer__box" aria-hidden="true">{isLayerOn(g) ? '✓' : ''}</span>in netwerk</button
+							><span class="layer__box" aria-hidden="true">{isLayerOn(g) ? '✓' : ''}</span>in
+							netwerk</button
 						>
 					{/if}
 				</div>
 				{#if bars.length > 0}
-					<!-- Ronde 5: een zin en een keuzelijst in plaats van het jarendiagram. -->
+					<!-- Een zin en een keuzelijst in plaats van het jarendiagram. -->
 					{@const piek = bars.reduce((m, x) => (x.count > m.count ? x : m), bars[0])}
 					<p class="group__jaren">
 						Van {bars[0].year} tot {bars.at(-1)?.year}; de meeste in {piek.year} ({piek.count}).
@@ -318,7 +319,9 @@
 								}}
 							>
 								<option value="">alle</option>
-								{#each [...bars].reverse().filter((x) => x.count) as x (x.year)}<option value={x.year}>{x.year} ({x.count})</option>{/each}
+								{#each [...bars].reverse().filter((x) => x.count) as x (x.year)}<option
+										value={x.year}>{x.year} ({x.count})</option
+									>{/each}
 							</select></label
 						>
 					</p>
@@ -386,7 +389,9 @@
 										class="row__plus"
 										class:is-in={al}
 										aria-pressed={al}
-										aria-label={al ? `${row.title} staat in het netwerk` : `${row.title} in het netwerk`}
+										aria-label={al
+											? `${row.title} staat in het netwerk`
+											: `${row.title} in het netwerk`}
 										title={al ? 'Staat in het netwerk' : 'In het netwerk'}
 										onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</button
 									>
@@ -681,7 +686,7 @@
 	.row.is-open .row__main {
 		background: var(--accent-soft);
 	}
-	/* Ronde 5: + zet de bron in het netwerk; zichtbaar bij hover en focus, en als hij er al in staat. */
+	/* + zet de bron in het netwerk; zichtbaar bij hover en focus, en als hij er al in staat. */
 	.row__plus {
 		flex: none;
 		display: grid;
