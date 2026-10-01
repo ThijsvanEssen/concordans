@@ -46,14 +46,17 @@ export const KLEUREN: Record<'TK' | 'EK', Record<string, string | [string, strin
 	}
 };
 
+/** De kleur van een fractie in beide Kamers: die van de Tweede Kamer, en waar de Tweede
+ * Kamer geen kleur heeft (eenmansfracties, OPNL) die van de Eerste Kamer (Thijs, 1 okt). */
+const kleur = (naam: string) => KLEUREN.TK[naam] ?? KLEUREN.EK[naam];
 /** De kleur van een stoel; een fractie met twee kleuren wisselt per stoel. */
-export function kleurVan(kamer: string, naam: string, i: number, fallback: string | null): string {
-	const k = KLEUREN[kamer === 'EK' ? 'EK' : 'TK'][naam];
+export function kleurVan(_kamer: string, naam: string, i: number, fallback: string | null): string {
+	const k = kleur(naam);
 	if (Array.isArray(k)) return k[i % 2];
 	return k ?? fallback ?? '#a39d90';
 }
-export function kleurenVan(kamer: string, naam: string, fallback: string | null): string[] {
-	const k = KLEUREN[kamer === 'EK' ? 'EK' : 'TK'][naam];
+export function kleurenVan(_kamer: string, naam: string, fallback: string | null): string[] {
+	const k = kleur(naam);
 	return Array.isArray(k) ? k : [k ?? fallback ?? '#a39d90'];
 }
 /** Wit of inkt op een kleurbalk, naar de luminantie. */

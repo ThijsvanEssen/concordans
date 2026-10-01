@@ -4,10 +4,21 @@
 	// geen teken: dat staat als naam in de zin.
 	export type Vorm = 'regel' | 'regel-o' | 'uitspraak' | 'stuk' | 'dossier' | 'besluit' | 'toezegging' | 'persoon' | 'orgaan' | 'orgaan-o';
 	export type Domein = 'recht' | 'parlement' | 'regering';
-	let { vorm, domein, size = 14 }: { vorm: Vorm; domein: Domein; size?: number } = $props();
+	let {
+		vorm,
+		domein,
+		size = 14,
+		kleur = false
+	}: {
+		vorm: Vorm;
+		domein: Domein;
+		size?: number;
+		/** Ronde 4b: standaard in inkt; de vorm draagt de betekenis, er valt geen kleur te onthouden. */
+		kleur?: boolean;
+	} = $props();
 </script>
 
-<svg class="bt bt--{domein}" width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
+<svg class="bt" class:bt--recht={kleur && domein === 'recht'} class:bt--parlement={kleur && domein === 'parlement'} class:bt--regering={kleur && domein === 'regering'} width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
 	{#if vorm === 'regel'}<rect x="2" y="2" width="12" height="12" />
 	{:else if vorm === 'regel-o'}<rect x="3" y="3" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" />
 	{:else if vorm === 'uitspraak'}<circle cx="8" cy="8" r="6.5" />
@@ -23,6 +34,7 @@
 <style>
 	.bt {
 		flex: none;
+		color: var(--ink);
 		fill: currentColor;
 		vertical-align: -2px;
 	}
