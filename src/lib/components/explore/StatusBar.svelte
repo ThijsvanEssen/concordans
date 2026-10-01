@@ -107,6 +107,23 @@
 			add(bronLabel('decisions'), kindHref('decisions'));
 			add(ek ? 'Eerste Kamer' : 'Tweede Kamer');
 			add(subject ? (shortDossierTitle(subject) ?? subject) : node.label);
+		} else if (node.collection === 'documents' && textProp(p.dossier_number)) {
+			// Stuk › 36799 › Motie nr. 31: the dossier it is in and its number there, as it is
+			// cited, not the Kamer's own short name ("Motie-Beer (VVD)").
+			const dossier = textProp(p.dossier_number)!;
+			const suffix = textProp(p.dossier_suffix);
+			const number = p.sequence != null ? String(p.sequence) : null;
+			const ek = p.chamber === 'EK' || p.source === 'ek';
+			add(bronLabel('documents'), kindHref('documents'));
+			add(
+				suffix ? `${dossier} ${suffix}` : dossier,
+				bronHref(`dossiers/${suffix ? `${dossier}-${suffix}` : dossier}`)
+			);
+			add(
+				[textProp(p.kind) ?? bronLabel('documents'), number && (ek ? number : `nr. ${number}`)]
+					.filter(Boolean)
+					.join(' ')
+			);
 		} else {
 			add(bronLabel(node.collection));
 			add(node.label);
