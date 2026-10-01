@@ -6,6 +6,7 @@ import type { Schema } from '$lib/api/types';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
+import { korteDatum } from '$lib/text/datum';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
 
@@ -169,6 +170,16 @@ export function presentHit(hit: Hit, query: string): Presented {
 			return { title: hit.display_name ?? hit.key, context: extra(hit, 'bwb_id'), snippet: null };
 		case 'members':
 			return { title: hit.display_name ?? hit.key, context: extra(hit, 'party'), snippet: null };
+		case 'cabinets': {
+			// "kabinet-Schoof", with its period (BE-35): "2 jul. 2024 tot 23 feb. 2026".
+			const from = korteDatum(extra(hit, 'from_date'));
+			const to = korteDatum(extra(hit, 'to_date'));
+			return {
+				title: hit.display_name ?? hit.key,
+				context: from ? (to ? `${from} tot ${to}` : `sinds ${from}`) : '',
+				snippet: null
+			};
+		}
 	}
 	return { title: hit.display_name ?? hit.key, context: '', snippet: null };
 }
@@ -204,6 +215,7 @@ export function bySection(hits: Hit[]): Hit[] {
  * a lid, a dossier, before the papers that name them.
  */
 const TIE_ORDER: readonly Collection[] = [
+	'cabinets',
 	'factions',
 	'members',
 	'dossiers',
