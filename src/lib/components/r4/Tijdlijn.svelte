@@ -3,7 +3,9 @@
 	// kolom, een teken op een doorlopende lijn, dan de zin. Een besluit krijgt het vakje van
 	// Uitkomst (vorm en kleur); wat nog kan volgen staat gestippeld en zegt dat het kan volgen.
 	import { dagMaand, type TijdGroep } from './tijdlijn';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
+	// Ronde 5b: het teken op de lijn is het bronteken zelf; de uitkomst zit in vulling en kleur.
+	const vormVanSoort = (s: string | null | undefined) => (s ? VORMEN[VORM_VAN[s as keyof typeof VORM_VAN] ?? 'overig'] : null);
 
 	let {
 		groepen,
@@ -18,12 +20,23 @@
 			<h4 class="kop">{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}</h4>
 			<ol class="regels">
 				{#each g.regels as r (r.id)}
+					{@const v = vormVanSoort(r.soort)}
 					<li class="regel regel--{r.teken}" class:groot={r.groot}>
 						<span class="datum">{r.datum ? dagMaand(r.datum) : ''}{#if jaar && r.datum}<span class="j"> {r.datum.slice(0, 4)}</span>{/if}</span>
-						<span class="teken" aria-hidden="true"></span>
+						{#if v}
+							<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
+								><path
+									d={v.d}
+									fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+									class:vol={v.wijze !== 'lijn' && (r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
+								/></svg
+							>
+						{:else}
+							<span class="teken" aria-hidden="true"></span>
+						{/if}
 						<span class="tekst">
-							{#if r.label}<span class="label">{#if r.soort}<KindGlyph collection={r.soort} size={11} />{/if}{r.label}</span>{/if}
-							{#if r.href}<a href={r.href} class="zin">{#if r.soort && !r.label}<KindGlyph collection={r.soort} size={11} />{/if}{r.zin}</a>{:else}<span class="zin">{#if r.soort && !r.label}<KindGlyph collection={r.soort} size={11} />{/if}{r.zin}</span>{/if}
+							{#if r.label}<span class="label">{r.label}</span>{/if}
+							{#if r.href}<a href={r.href} class="zin">{r.zin}</a>{:else}<span class="zin">{r.zin}</span>{/if}
 							{#if r.meta}<span class="meta">{r.meta}</span>{/if}
 						</span>
 					</li>
@@ -107,6 +120,37 @@
 		border: 1.5px solid var(--ink-2);
 		border-radius: 50%;
 	}
+	/* Het bronteken op de lijn: gevuld in inkt; aangenomen of afgedaan in mos; verworpen als
+	   omtrek in het accent; openstaand of verwacht als gestippelde omtrek. */
+	.bteken {
+		position: relative;
+		z-index: 1;
+		justify-self: center;
+		margin-top: calc(var(--s-2) + 3px);
+		background: var(--paper);
+		overflow: visible;
+	}
+	.bteken path {
+		fill: var(--paper);
+		stroke: var(--ink);
+		stroke-width: 1.6;
+	}
+	.bteken path.vol {
+		fill: var(--ink);
+		stroke: none;
+	}
+	.regel--ja .bteken path.vol {
+		fill: var(--uitkomst-ja, #456247);
+	}
+	.regel--nee .bteken path {
+		stroke: var(--uitkomst-nee, #8c2f28);
+		stroke-width: 2;
+	}
+	.regel--open .bteken path,
+	.regel--verwacht .bteken path {
+		stroke-dasharray: 2 1.5;
+		stroke: var(--ink-2);
+	}
 	.regel--stuk .teken {
 		background: var(--ink-2);
 	}
@@ -156,10 +200,6 @@
 	}
 	.regel--nee .label {
 		color: var(--uitkomst-nee, #8c2f28);
-	}
-	.zin :global(.kind-glyph) {
-		margin-right: var(--s-2);
-		vertical-align: 0;
 	}
 	.zin {
 		font-family: var(--font-serif);
