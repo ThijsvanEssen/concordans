@@ -9,12 +9,14 @@
 	import { moveIndex } from './canvas-keys';
 	import { withBook } from '$lib/text/bw';
 	import { stemmingNaam } from '$lib/bron/naam';
+	import { isClusterId } from '$lib/netwerk/cluster';
 
 	let {
 		nodes,
 		isChosen,
 		onFocusNode,
-		onToggleChosen
+		onToggleChosen,
+		onOpenCluster
 	}: {
 		/** In reading order: the selected bron first. */
 		nodes: GraphNode[];
@@ -22,6 +24,8 @@
 		/** The bron in focus, or null when the focus leaves the list. */
 		onFocusNode: (node: GraphNode | null) => void;
 		onToggleChosen?: (node: GraphNode) => void;
+		/** A cluster bron ("250 uitspraken"): Enter opens its card, as a click does. */
+		onOpenCluster?: (node: GraphNode) => void;
 	} = $props();
 
 	let active = $state(0);
@@ -33,10 +37,15 @@
 		if (active > nodes.length - 1) active = Math.max(0, nodes.length - 1);
 	});
 
-	const kindOf = (n: GraphNode) => (isCollection(n.collection) ? bronLabel(n.collection) : '');
+	const kindOf = (n: GraphNode) =>
+		isClusterId(n.id) ? 'groep' : isCollection(n.collection) ? bronLabel(n.collection) : '';
 	/** The full name, where the canvas shows a short one (`2011-07 · Memorie`); a BW article as cited (Artikel 6:162 BW); a vote as the dossier's text names it. */
 	const nameOf = (n: GraphNode) =>
-		n.collection === 'decisions' ? stemmingNaam(n) : withBook(n.raw?.display_name ?? n.label);
+		isClusterId(n.id)
+			? n.label
+			: n.collection === 'decisions'
+				? stemmingNaam(n)
+				: withBook(n.raw?.display_name ?? n.label);
 
 	function focusAt(i: number) {
 		active = i;
@@ -64,7 +73,14 @@
 			return;
 		}
 		const n = nodes[active];
-		if (n && onToggleChosen && (e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) {
+		if (
+			n &&
+			!isClusterId(n.id) &&
+			onToggleChosen &&
+			(e.key === 'n' || e.key === 'N') &&
+			!e.metaKey &&
+			!e.ctrlKey
+		) {
 			e.preventDefault();
 			const was = isChosen(n.id);
 			onToggleChosen(n);
@@ -88,7 +104,12 @@
 		{#each nodes as n, i (n.id)}
 			<li>
 				<a
-					href={bronHref(refOf(n.collection, n.key, n.raw?.props))}
+					href={isClusterId(n.id) ? '#' : bronHref(refOf(n.collection, n.key, n.raw?.props))}
+					onclick={(e) => {
+						if (!isClusterId(n.id)) return;
+						e.preventDefault();
+						onOpenCluster?.(n);
+					}}
 					data-sveltekit-noscroll
 					data-index={i}
 					tabindex={i === active ? 0 : -1}

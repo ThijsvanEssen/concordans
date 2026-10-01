@@ -887,11 +887,12 @@
 					};
 				}
 
-				// Labels only on hover, on the focus and on the chosen bronnen of a netwerk.
+				// Labels only on hover, on the focus, on the chosen bronnen of a netwerk and on a
+				// cluster bron, whose name ("250 uitspraken") is what it says.
 				let label = '';
 				let forceLabel = false;
 				const chosen = latestPinnedIds.has(id);
-				if ((inHover && inFocusGroup) || id === focusedId || chosen) {
+				if ((inHover && inFocusGroup) || id === focusedId || chosen || data.cluster) {
 					label = data.label as string;
 					forceLabel = true;
 				}
