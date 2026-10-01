@@ -103,9 +103,6 @@
 		pending?: boolean;
 	} = $props();
 
-	const maxOf = (options: (FacetOption | FacetHeading)[]) =>
-		Math.max(1, ...options.flatMap((o) => (isHeading(o) ? [] : [o.count ?? 0])));
-
 	// A year field holds `2020`; the URL holds the first or last day of it.
 	const toParam = (value: string, unit: 'year' | 'date', end: boolean) =>
 		unit === 'date' || !/^\d{4}$/.test(value) ? value : `${value}-${end ? '12-31' : '01-01'}`;
@@ -120,7 +117,6 @@
 			</h3>
 
 			{#if g.kind === 'list'}
-				{@const max = maxOf(g.options)}
 				<ul class="options">
 					{#each g.options as o, i (isHeading(o) ? `h${i}` : o.id)}
 						{#if isHeading(o)}
@@ -149,8 +145,6 @@
 									<span class="label">{o.label}</span>
 									{#if o.count !== undefined && !pending}
 										<span class="n">{formatCount(o.count)}</span>
-										<span class="bar" style:width="{(o.count / max) * 100}%" aria-hidden="true"
-										></span>
 									{/if}
 								</button>
 							</li>
@@ -158,28 +152,24 @@
 					{/each}
 				</ul>
 			{:else if g.kind === 'steps'}
-				{@const max = maxOf(g.options)}
-				<div class="steps" class:steps--compact={g.compact} role="group" aria-label={g.label}>
+				<!-- Ronde 6: de fasen als rijen, zoals elk ander filter; geen staafjes. -->
+				<ul class="options" aria-label={g.label}>
 					{#each g.options as o (o.id)}
-						<button
-							type="button"
-							class="step"
-							class:step--on={o.on}
-							aria-pressed={o.on}
-							title="{o.label}{o.count !== undefined ? `: ${o.count}` : ''}"
-							onclick={o.onClick}
-						>
-							{#if !g.compact}<span class="step-n">{pending ? '' : (o.count ?? '')}</span>{/if}
-							<span class="step-col" style:height="{((o.count ?? 0) / max) * 56 + 2}px"></span>
-							<span class="visually-hidden">{o.label}</span>
-						</button>
+						<li>
+							<button
+								type="button"
+								class="opt"
+								class:opt--on={o.on}
+								aria-pressed={o.on}
+								onclick={o.onClick}
+							>
+								<span class="box" aria-hidden="true"></span>
+								<span class="label">{o.label}</span>
+								{#if o.count !== undefined && !pending}<span class="n">{formatCount(o.count)}</span>{/if}
+							</button>
+						</li>
 					{/each}
-				</div>
-				<div class="steps-ends" aria-hidden="true">
-					<span>{g.ends[0]}</span><span>{g.ends[1]}</span>
-				</div>
-				{@const on = g.options.find((o) => o.on)}
-				<p class="steps-on">{on ? on.label : g.none}</p>
+				</ul>
 			{:else if g.kind === 'select'}
 				{@const sel = g}
 				<select
@@ -239,7 +229,7 @@
 	.facets {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-5);
+		gap: var(--s-6);
 		font-family: var(--font-sans);
 	}
 	.group-head {
@@ -280,7 +270,7 @@
 		align-items: center;
 		gap: var(--s-2);
 		width: 100%;
-		padding: var(--s-1) 0 5px;
+		padding: var(--s-1) 0;
 		border: 0;
 		background: transparent;
 		font: inherit;
@@ -304,8 +294,8 @@
 		font-weight: 500;
 	}
 	.box {
-		width: 11px;
-		height: 11px;
+		width: 12px;
+		height: 12px;
 		flex-shrink: 0;
 		border: 1px solid var(--rule-strong);
 		border-radius: 2px;
@@ -340,91 +330,13 @@
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
-	/* The share of the option, a hairline under it. */
-	.bar {
-		position: absolute;
-		left: 0;
-		bottom: 0;
-		height: 2px;
-		background: var(--rule);
-	}
-	.opt--indent .bar {
-		left: 12px;
-	}
 	.opt--deep {
 		padding-left: var(--s-5);
-	}
-	.opt--deep .bar {
-		left: 24px;
-	}
-	.opt--on .bar {
-		background: var(--ink);
 	}
 
 	.facets--pending {
 		opacity: 0.6;
 	}
-	/* Ordered steps: one column per step, its height the count. */
-	.steps {
-		display: flex;
-		align-items: flex-end;
-		gap: 3px;
-		height: 80px;
-	}
-	.step {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		justify-content: flex-end;
-		gap: var(--s-1);
-		height: 100%;
-		padding: 0;
-		border: 0;
-		background: transparent;
-		cursor: pointer;
-	}
-	.steps--compact {
-		gap: 1px;
-		height: 64px;
-	}
-	.step-n {
-		font-size: var(--t-label);
-		text-align: center;
-		font-variant-numeric: tabular-nums;
-		color: var(--ink-3);
-	}
-	.step-col {
-		background: var(--rule-strong);
-		transition: background var(--dur-1) var(--ease);
-	}
-	.step:hover .step-col {
-		background: var(--ink-3);
-	}
-	.step--on .step-col {
-		background: var(--ink);
-	}
-	.step--on .step-n {
-		color: var(--ink);
-		font-weight: 500;
-	}
-	.step:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 1px;
-	}
-	.steps-ends {
-		display: flex;
-		justify-content: space-between;
-		margin-top: 6px;
-		font-size: var(--t-label);
-		color: var(--ink-3);
-	}
-	.steps-on {
-		margin: 6px 0 0;
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-
 	.range {
 		display: flex;
 		align-items: center;

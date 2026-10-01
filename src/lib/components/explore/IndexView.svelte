@@ -3032,6 +3032,9 @@
 		max-height: calc(100cqh - 28px);
 		overflow-y: auto;
 		scrollbar-gutter: stable;
+		/* Ronde 6: een smalle, stille schuifbalk die de aantallen niet raakt. */
+		scrollbar-width: thin;
+		scrollbar-color: var(--rule) transparent;
 		/* Room for the focus ring: the column scrolls, so it clips what reaches its edge. */
 		margin: 0 -6px;
 		padding: var(--s-1) 6px var(--s-5);

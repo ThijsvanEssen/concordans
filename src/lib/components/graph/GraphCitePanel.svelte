@@ -162,7 +162,7 @@
 		position: absolute;
 		bottom: var(--s-3);
 		right: calc(var(--s-3) + 32px + var(--s-3));
-		z-index: 80;
+		z-index: calc(var(--z-float) + 1);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);

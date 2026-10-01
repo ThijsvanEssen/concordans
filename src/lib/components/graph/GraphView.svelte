@@ -1113,11 +1113,14 @@
 </div>
 
 <style>
+	/* Ronde 6: het canvas is een eigen stapellaag. Legenda, netwerkpaneel en kaart zweven
+	   binnen het canvas en komen nooit boven menu's, statusbalk of kaarten van buiten. */
 	.graph-view {
 		display: flex;
 		width: 100%;
 		height: 100%;
 		overflow: hidden;
+		isolation: isolate;
 	}
 
 	.graph-main {
@@ -1226,6 +1229,23 @@
 	.r6-legenda-inhoud {
 		overflow-y: auto;
 		border-top: 1px solid var(--rule);
+	}
+	/* Een menu in de legenda opent binnen de kaart, onder zijn knop, en schuift mee;
+	   zo valt het nooit onder of buiten de kaart. */
+	.r6-legenda-inhoud :global(.menu__list),
+	.compact-legend-panel :global(.menu__list) {
+		position: static;
+		min-width: 0;
+		margin-top: var(--s-1);
+		box-shadow: none;
+	}
+	.r6-legenda-inhoud :global(.block__head),
+	.compact-legend-panel :global(.block__head) {
+		flex-wrap: wrap;
+	}
+	.r6-legenda-inhoud :global(.menu:has(.menu__list)),
+	.compact-legend-panel :global(.menu:has(.menu__list)) {
+		flex-basis: 100%;
 	}
 	.r6-legenda-inhoud :global(.legend) {
 		height: auto;
