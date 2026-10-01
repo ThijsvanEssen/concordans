@@ -2,6 +2,7 @@
 	// De eerste keer dat een bron opent, twee kaarten
 	// onder de schakelaar. Een kaart kiest de weergave; daarna niet meer.
 	import Picto from '$lib/components/ui/Picto.svelte';
+	import { isEscape } from '$lib/actions/keys';
 
 	let { stand, onKies }: { stand: 'netwerk' | 'tekst'; onKies: (k: 'netwerk' | 'tekst') => void } =
 		$props();
@@ -27,10 +28,22 @@
 		if (k !== stand) onKies(k);
 		sluit();
 	};
+
+	// The cards stand over Verbonden: a click anywhere else, or Escape, means they were
+	// seen. The click is only watched, never stopped.
+	let kaarten = $state<HTMLElement | null>(null);
+	const ernaast = (e: PointerEvent) => {
+		if (open && kaarten && e.target instanceof Node && !kaarten.contains(e.target)) sluit();
+	};
+	const toets = (e: KeyboardEvent) => {
+		if (open && isEscape(e)) sluit();
+	};
 </script>
 
+<svelte:window onpointerdown={ernaast} onkeydown={toets} />
+
 {#if open}
-	<div class="kaarten" role="dialog" aria-label="Netwerk of tekst">
+	<div class="kaarten" role="dialog" aria-label="Netwerk of tekst" bind:this={kaarten}>
 		<button
 			type="button"
 			class="kaart"
