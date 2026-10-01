@@ -6,6 +6,7 @@ import {
 	chamberOfHit,
 	groupLabel,
 	marked,
+	orderGroups,
 	presentHit,
 	sectionOf
 } from './present';
@@ -183,5 +184,27 @@ describe('around', () => {
 describe('marked', () => {
 	it('leaves short words and other text alone', () => {
 		expect(marked('art. 6:162 BW', 'bw')).toEqual([{ text: 'art. 6:162 BW', mark: false }]);
+	});
+});
+
+describe('orderGroups', () => {
+	const g = (kind: Hit['collection'], ...scores: number[]) => ({
+		kind: kind as never,
+		hits: scores.map((score, i) => hit({ collection: kind, key: `${kind}${i}`, score }))
+	});
+
+	it('puts the group with the best hit first: a fractie before judgments that contain its name', () => {
+		const order = orderGroups([g('judgments', 0.25, 0.1), g('members', 0.1), g('factions', 1, 1)]);
+		expect(order.map((x) => x.kind)).toEqual(['factions', 'judgments', 'members']);
+	});
+
+	it('names debates before judgments for a subject', () => {
+		const order = orderGroups([g('judgments', 0.1), g('dossiers', 0.25), g('documents', 0.5)]);
+		expect(order.map((x) => x.kind)).toEqual(['documents', 'dossiers', 'judgments']);
+	});
+
+	it('puts a name first on a tie', () => {
+		const order = orderGroups([g('documents', 0.25), g('dossiers', 0.25), g('members', 0.25)]);
+		expect(order.map((x) => x.kind)).toEqual(['members', 'dossiers', 'documents']);
 	});
 });

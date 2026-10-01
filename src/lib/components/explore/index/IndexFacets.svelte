@@ -119,7 +119,7 @@
 		unit === 'date' || !/^\d{4}$/.test(value) ? value : `${value}-${end ? '12-31' : '01-01'}`;
 </script>
 
-<div class="facets" class:facets--pending={pending}>
+<div class="facets" class:facets--pending={pending} aria-busy={pending}>
 	{#each groups as g (g.id)}
 		<section class="group" aria-labelledby="facet-{g.id}">
 			<h2 class="group-head" id="facet-{g.id}">
