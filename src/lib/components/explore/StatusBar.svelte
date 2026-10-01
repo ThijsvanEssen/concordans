@@ -162,7 +162,9 @@
 			/>
 		</span>
 	{:else if node && mode !== 'index'}
-		<WeergaveSchakelaar stand="netwerk" onKies={() => {}} tekstMogelijk={false} />
+		<span class="weergave">
+			<WeergaveSchakelaar stand="netwerk" onKies={() => {}} tekstMogelijk={false} />
+		</span>
 	{/if}
 </div>
 
@@ -231,5 +233,12 @@
 	}
 	.weergave {
 		position: relative;
+	}
+	/* On a phone the tabs under the bar (Tekst, Netwerk, Verbonden) are the one control,
+	   and the breadcrumb gets the room. */
+	@media (max-width: 768px) {
+		.weergave {
+			display: none;
+		}
 	}
 </style>

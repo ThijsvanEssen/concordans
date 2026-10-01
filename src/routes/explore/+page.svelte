@@ -698,7 +698,20 @@
 		} catch {
 			/* ignore */
 		}
+		// Below 1440px Verbonden starts narrower, so the network keeps some 320px beside a
+		// readable text; a width the reader dragged is kept.
+		if (!storedPanelW() && window.innerWidth < 1440) panelW = PANEL_NARROW;
 	});
+
+	const PANEL_NARROW = 340;
+	function storedPanelW(): boolean {
+		try {
+			return !!(JSON.parse(localStorage.getItem(WIDTHS_KEY) ?? '{}') as Record<string, number>)
+				.panelW;
+		} catch {
+			return false;
+		}
+	}
 
 	function saveWidths() {
 		try {
@@ -746,6 +759,16 @@
 		if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return;
 		e.preventDefault();
 		setReading(readAction === 'read');
+	}
+
+	/**
+	 * A tab on a phone, where the tabs are the one control: Tekst reads the bron, as the
+	 * switch Netwerk / Tekst does on a wide screen, and Netwerk goes back to the network.
+	 */
+	function kiesPaneel(id: 'reader' | 'graph' | 'verbonden') {
+		if (id === 'reader' && readAction === 'read') setReading(true);
+		else if (id === 'graph' && readAction === 'network') setReading(false);
+		mobilePanel = id;
 	}
 
 	/** What the button in the status bar does: read the bron, or go back to the network. */
@@ -871,7 +894,7 @@
 
 {#snippet handle(which: Handle)}
 	<div
-		class="resize-handle"
+		class="resize-handle resize-handle--{which}"
 		onpointerdown={(e) => startResize(e, which)}
 		onpointermove={onResizeMove}
 		onpointerup={onResizeEnd}
@@ -922,10 +945,22 @@
 								class="mobile-tab"
 								class:active={mobilePanel === id}
 								aria-pressed={mobilePanel === id}
-								onclick={() => (mobilePanel = id as typeof mobilePanel)}>{label}</button
+								onclick={() => kiesPaneel(id as typeof mobilePanel)}>{label}</button
 							>
 						{/each}
 					</nav>
+				{/if}
+				<!-- The text and Verbonden come before the network in the page, so a screen reader
+				     reads the bron before the list of the network; the grid places them. -->
+				{#if selectedNode}
+					<div class="col col--reader" class:mobile-hidden={mobilePanel !== 'reader'}>
+						{@render reader()}
+					</div>
+					{@render handle('panel')}
+					<div class="col col--panel" class:mobile-hidden={mobilePanel !== 'verbonden'}>
+						{@render panel(true)}
+					</div>
+					{@render handle('graph')}
 				{/if}
 				<div class="col col--graph" class:mobile-hidden={selectedNode && mobilePanel !== 'graph'}>
 					<GraphView
@@ -999,16 +1034,6 @@
 						/>
 					{/if}
 				</div>
-				{#if selectedNode}
-					{@render handle('graph')}
-					<div class="col col--reader" class:mobile-hidden={mobilePanel !== 'reader'}>
-						{@render reader()}
-					</div>
-					{@render handle('panel')}
-					<div class="col col--panel" class:mobile-hidden={mobilePanel !== 'verbonden'}>
-						{@render panel(true)}
-					</div>
-				{/if}
 			</div>
 		{:else if selectedNode && tableMode}
 			<div class="explore-table">
@@ -1046,13 +1071,14 @@
 				style:--panel-w="{panelW}px"
 			>
 				<nav class="mobile-tabs" aria-label="Panelen">
-					{#each [['reader', 'Tekst'], ['verbonden', 'Verbonden']] as [id, label] (id)}
+					{#each [['reader', 'Tekst'], ['graph', 'Netwerk'], ['verbonden', 'Verbonden']] as [id, label] (id)}
 						<button
 							type="button"
 							class="mobile-tab"
+							class:mobile-tab--phone={id === 'graph'}
 							class:active={mobilePanel === id}
 							aria-pressed={mobilePanel === id}
-							onclick={() => (mobilePanel = id as typeof mobilePanel)}>{label}</button
+							onclick={() => kiesPaneel(id as typeof mobilePanel)}>{label}</button
 						>
 					{/each}
 					{#if withNav}
@@ -1164,12 +1190,36 @@
 		grid-template-columns: minmax(0, 1fr);
 	}
 
-	/* The network gives way before the text does: the reader keeps 640px, enough for a
-	   measure of some 60 characters, and the canvas takes what is left up to its width. */
+	/* The network gives way before the text does: the reader keeps 610px, enough for a
+	   measure of some 60 characters, and the canvas takes what is left up to its width.
+	   At 1280px: network 320, reader 610, Verbonden 340. */
 	.explore-graph--with-reader {
 		grid-template-columns:
-			max(200px, min(var(--graph-w), calc(100vw - var(--panel-w) - 650px)))
+			max(200px, min(var(--graph-w), calc(100vw - var(--panel-w) - 620px)))
 			5px minmax(0, 1fr) 5px var(--panel-w);
+	}
+
+	/* In the page the text comes first (see the markup); on a wide screen the network
+	   stands left of it. */
+	@media (min-width: 1101px) {
+		.explore-graph--with-reader > * {
+			grid-row: 1;
+		}
+		.explore-graph--with-reader .col--graph {
+			grid-column: 1;
+		}
+		.explore-graph--with-reader .resize-handle--graph {
+			grid-column: 2;
+		}
+		.explore-graph--with-reader .col--reader {
+			grid-column: 3;
+		}
+		.explore-graph--with-reader .resize-handle--panel {
+			grid-column: 4;
+		}
+		.explore-graph--with-reader .col--panel {
+			grid-column: 5;
+		}
 	}
 
 	.explore-read {
@@ -1316,6 +1366,16 @@
 
 	.mobile-tabs {
 		display: none;
+	}
+
+	/* Netwerk in the tabs of Tekst: on a phone the tabs replace the switch in the bar. */
+	.mobile-tab--phone {
+		display: none;
+	}
+	@media (max-width: 768px) {
+		.explore-read .mobile-tab--phone {
+			display: block;
+		}
 	}
 
 	.mobile-tab--toc {
