@@ -53,27 +53,26 @@
 <section class="netwerk" class:netwerk--start={start} aria-label="Netwerk">
 	{#if start}
 		<h2 class="start__title">Netwerk</h2>
-		<!-- Ronde 5: drie stappen in beeld, met een woord elk. -->
-		<!-- Wat een netwerk laat zien: twee gekozen bronnen, en wat ze verbindt. -->
-		<svg class="r5-schets" viewBox="0 0 300 74" role="img" aria-label="Twee gekozen bronnen en de bron die ze verbindt">
-			<g stroke="currentColor" stroke-width="1.2" opacity="0.55"><path d="M48 30 150 30M150 30 252 30" /><path d="M48 30 98 60M252 30 202 60" stroke-dasharray="3 3" /></g>
-			<rect x="38" y="20" width="20" height="20" fill="currentColor" />
-			<circle cx="252" cy="30" r="10" fill="currentColor" />
-			<path d="M150 18 162 40H138z" fill="var(--paper)" stroke="currentColor" stroke-width="2" />
-			<circle cx="98" cy="60" r="4" fill="currentColor" opacity="0.35" /><circle cx="202" cy="60" r="4" fill="currentColor" opacity="0.35" />
-			<text x="48" y="12" text-anchor="middle" class="r5-s">gekozen</text>
-			<text x="252" y="12" text-anchor="middle" class="r5-s">gekozen</text>
-			<text x="150" y="56" text-anchor="middle" class="r5-s r5-s--b">verbindt ze</text>
-		</svg>
-		<ol class="r5-stappen">
-			<li><Picto naam="zoek" size={20} /><span>Zoek een bron</span></li>
-			<li><Picto naam="plus" size={20} /><span>Voeg er een toe</span></li>
-			<li><Picto naam="verbindt" size={20} /><span>Zie wat ze verbindt</span></li>
+		<!-- Ronde 6: geen schets; drie stappen onder elkaar, elk met beeld, naam en één regel. -->
+		<ol class="r6-stappen">
+			<li>
+				<span class="r6-beeld"><Picto naam="zoek" size={16} /></span>
+				<span><b>Zoek een bron</b><br />Een wet, artikel, uitspraak of dossier.</span>
+			</li>
+			<li>
+				<span class="r6-beeld"><Picto naam="plus" size={16} /></span>
+				<span><b>Voeg er een toe</b><br />Met + bij een verbonden bron.</span>
+			</li>
+			<li>
+				<span class="r6-beeld"><Picto naam="netwerk" size={16} /></span>
+				<span><b>Zie wat ze verbindt</b><br />De bronnen ertussen staan op het canvas.</span>
+			</li>
 		</ol>
 		{#if onVoorbeeld}
-			<button type="button" class="r5-voorbeeld" onclick={onVoorbeeld}
-				>Voorbeeld: art. 3:2 en 3:4 Awb, en de uitspraken die beide aanhalen</button
-			>
+			<button type="button" class="r6-voorbeeld" onclick={onVoorbeeld}>
+				<span class="r6-voorbeeld-kop">Voorbeeld</span>
+				<span>Art. 3:2 en 3:4 Awb, en de uitspraken die beide aanhalen</span>
+			</button>
 		{/if}
 	{:else}
 		<!-- Ronde 5: de gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
@@ -265,55 +264,62 @@
 		color: var(--ink);
 		font-weight: 600;
 	}
-	.r5-schets {
-		width: 100%;
-		height: auto;
-		color: var(--ink);
-		margin-top: var(--s-1);
-	}
-	.r5-s {
-		font: var(--t-glyph) var(--font-sans);
-		fill: var(--ink-3);
-	}
-	.r5-s--b {
-		fill: var(--ink);
-		font-weight: 600;
-	}
-	.r5-voorbeeld {
-		margin-top: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-		text-align: left;
-	}
-	.r5-stappen {
+	.r6-stappen {
 		list-style: none;
-		margin: var(--s-2) 0 var(--s-4);
+		margin: var(--s-3) 0 0;
 		padding: 0;
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
+		display: flex;
+		flex-direction: column;
 		gap: var(--s-3);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
+		line-height: 1.4;
 		color: var(--ink-2);
 	}
-	.r5-stappen li {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--s-2);
-		text-align: center;
+	.r6-stappen li {
+		display: grid;
+		grid-template-columns: 32px 1fr;
+		gap: var(--s-3);
+		align-items: start;
+	}
+	.r6-stappen b {
+		font-weight: 500;
 		color: var(--ink);
 	}
-	.r5-stappen span {
+	.r6-beeld {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		border: 1px solid var(--rule-strong);
+		border-radius: 50%;
+		color: var(--ink);
+	}
+	.r6-voorbeeld {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--s-1);
+		width: 100%;
+		margin-top: var(--s-4);
+		padding: var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		background: var(--paper);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		line-height: 1.4;
 		color: var(--ink-2);
+		text-align: left;
+		cursor: pointer;
+	}
+	.r6-voorbeeld:hover {
+		border-color: var(--ink);
+		color: var(--ink);
+	}
+	.r6-voorbeeld-kop {
+		font-weight: 500;
+		color: var(--ink);
 	}
 	.netwerk {
 		position: absolute;

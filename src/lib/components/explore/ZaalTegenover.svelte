@@ -136,10 +136,11 @@
 		gap: var(--s-3);
 		justify-items: center;
 	}
+	/* Ronde 6: even hoog als het halfrond van de Tweede Kamer (Hemicycle, max 320). */
 	svg {
-		width: 100%;
-		max-width: 420px;
-		height: auto;
+		width: auto;
+		max-width: 100%;
+		height: 320px;
 	}
 	.meubel {
 		fill: var(--paper-2);
