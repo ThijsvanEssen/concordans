@@ -15,6 +15,7 @@
 		bareArticle,
 		parseCitation,
 		lawAbbreviation,
+		lawTitle,
 		resolveLaw,
 		resolveQuery,
 		type Citation,
@@ -88,6 +89,9 @@
 	let unresolved = $state('');
 	/** "55 Gw" typed without "art.", which the API confirmed as an article. */
 	let confirmed = $state<{ term: string; target: Resolved } | null>(null);
+	// A regeling named by its title that the API does not know ("Omgevingswet"): the
+	// network holds a selection of laws, and the hits only mention it.
+	let outside = $state('');
 	let active = $state(0);
 	let listEl = $state<HTMLElement | null>(null);
 
@@ -118,8 +122,24 @@
 	const rowCount = $derived(offset + hits.length);
 	// A citation the API does not know: said where its row was, not dropped without a word.
 	const notFound = $derived(unresolved !== '' && unresolved === q);
+	const outsideLaw = $derived(
+		outside !== '' &&
+			outside === q &&
+			answered === q &&
+			!bare &&
+			!(results.instruments ?? []).some((h) =>
+				(h.display_name ?? '').toLowerCase().includes(q.trim().toLowerCase())
+			)
+	);
 	const empty = $derived(
-		q.length > 0 && answered === q && !loading && !failed && hits.length === 0 && !citation && !bare
+		q.length > 0 &&
+			answered === q &&
+			!loading &&
+			!failed &&
+			hits.length === 0 &&
+			!citation &&
+			!bare &&
+			!outsideLaw
 	);
 
 	// One request per query: the timer waits for the typing to pause, and a newer query
@@ -136,6 +156,7 @@
 		const controller = new AbortController();
 		const written = bareArticle(term);
 		const abbreviation = written ? null : lawAbbreviation(term);
+		const title = written ? null : lawTitle(term);
 		const timer = setTimeout(() => {
 			loading = true;
 			// Beside the words, the article they may cite: shown only once the API has it.
@@ -147,11 +168,14 @@
 					.catch(() => {
 						// The words are searched all the same.
 					});
-			} else if (abbreviation) {
-				// "AVG": the law it stands for, first, beside what the words find.
-				resolveLaw(abbreviation)
+			} else if (abbreviation || title) {
+				// "AVG": the law it stands for, first, beside what the words find. A title the
+				// API does not know is a law outside the selection.
+				resolveLaw(abbreviation ?? title ?? term)
 					.then((target) => {
-						if (!controller.signal.aborted && target) confirmed = { term, target };
+						if (controller.signal.aborted) return;
+						if (target) confirmed = { term, target };
+						else if (title) outside = term;
 					})
 					.catch(() => {
 						// The words are searched all the same.
@@ -313,12 +337,21 @@
 
 	<div
 		class="list"
-		class:list--filled={rowCount > 0 || failed || empty || notFound}
+		class:list--filled={rowCount > 0 || failed || empty || notFound || outsideLaw}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
 		bind:this={listEl}
 	>
+		{#if outsideLaw}
+			<p class="state" role="status">
+				"{q}" staat niet in Concordans. Het netwerk bevat een selectie van wetten;
+				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="noopener"
+					>zoek de regeling op wetten.overheid.nl</a
+				>.
+				{#if hits.length}De treffers hieronder noemen haar.{/if}
+			</p>
+		{/if}
 		{#if notFound}
 			<p class="state" role="status">
 				"{q}" staat niet in het netwerk. Het netwerk bevat een selectie van bronnen;
