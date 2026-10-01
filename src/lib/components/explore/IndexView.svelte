@@ -1832,6 +1832,7 @@
 								<ZaalLegenda
 									data={seats}
 									kolommen={2}
+									rijen={10}
 									peil={seats.chamber === 'EK'
 										? `Eerste Kamer, samenstelling op ${formatLongDate(composition?.composition_date ?? seats.as_of ?? null)}`
 										: `Tweede Kamer, stand op ${formatLongDate(seats.as_of ?? null)}`}
@@ -3240,12 +3241,25 @@
 	}
 	.hemi-svg-wrap {
 		display: grid;
-		grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+		grid-template-columns: 456px minmax(0, 1fr);
 		column-gap: var(--s-7);
 		align-items: center;
+		justify-items: center;
 	}
 	.hemi-svg-wrap :global(.leg) {
 		margin: 0;
+		justify-self: stretch;
+	}
+	.hemi-svg-wrap :global(.hemicycle) {
+		justify-self: stretch;
+	}
+	/* Both halls exactly as high, whatever their shape; the width follows. */
+	.hemi-svg-wrap :global(.hemicycle svg),
+	.hemi-svg-wrap :global(.zaal svg) {
+		width: auto;
+		max-width: 100%;
+		height: 300px;
+		max-height: none;
 	}
 	@media (max-width: 1100px) {
 		.hemi-svg-wrap {

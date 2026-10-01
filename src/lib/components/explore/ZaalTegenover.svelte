@@ -96,6 +96,13 @@
 	const seatsOf = (name: string) =>
 		byName.get(name)?.seats ?? stoelen.filter((s) => s.name === name).length;
 
+	/** The seats per fractie, each with its place in the hall (for its colour). */
+	const fractieStoelen = $derived.by(() => {
+		const m = new Map<string, { s: Stoel; i: number }[]>();
+		stoelen.forEach((s, i) => m.set(s.name, [...(m.get(s.name) ?? []), { s, i }]));
+		return [...m];
+	});
+
 	const side = (name: string) => {
 		const f = byName.get(name);
 		return voteHighlight && f ? voteHighlight[f.key] : null;
@@ -118,32 +125,43 @@
 			text-anchor="middle"
 			class="nr-t">4</text
 		>
-		{#each stoelen as s, i (i)}
-			{@const f = byName.get(s.name)}
-			{@const v = side(s.name)}
+		<!-- One link per fractie, as the sectors of the hemicycle: its seats and the cells
+		     around them are one target, so the pointer need not land on a seat itself. -->
+		{#each fractieStoelen as [name, eigen] (name)}
+			{@const f = byName.get(name)}
+			{@const v = side(name)}
 			<a
 				href={f ? hrefOf(f.key) : undefined}
-				aria-label="{s.name}, {seatsOf(s.name)} {seatsOf(s.name) === 1 ? 'zetel' : 'zetels'}{s ===
-				stoelen.at(-1)
-					? ', Voorzitter'
-					: ''}"
-				onmouseenter={() => (hovered = s.name)}
+				aria-label="{name}, {seatsOf(name)} {seatsOf(name) === 1 ? 'zetel' : 'zetels'}"
+				onmouseenter={() => (hovered = name)}
 				onmouseleave={() => (hovered = null)}
-				onfocus={() => (hovered = s.name)}
+				onfocus={() => (hovered = name)}
 				onblur={() => (hovered = null)}
 			>
-				<rect
-					x={s.x}
-					y={s.y}
-					width={S}
-					height={S}
-					rx="3"
-					class:tegen={v === 'tegen'}
-					class:voor={v === 'voor'}
-					class:dim={hovered !== null && hovered !== s.name}
-					fill={voteHighlight ? undefined : kleurVan('EK', s.name, i, fillOf.get(s.name) ?? null)}
-					><title>{s.name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
-				>
+				{#each eigen as { s } (s.x + ':' + s.y)}
+					<rect
+						class="cel"
+						x={s.x - (COL - S) / 2}
+						y={s.y - (ROW - S) / 2 - PAIR / 2}
+						width={COL}
+						height={ROW + PAIR}
+					/>
+				{/each}
+				{#each eigen as { s, i } (s.x + ':' + s.y)}
+					<rect
+						x={s.x}
+						y={s.y}
+						width={S}
+						height={S}
+						rx="3"
+						class="stoel"
+						class:tegen={v === 'tegen'}
+						class:voor={v === 'voor'}
+						class:dim={hovered !== null && hovered !== name}
+						fill={voteHighlight ? undefined : kleurVan('EK', name, i, fillOf.get(name) ?? null)}
+						><title>{name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
+					>
+				{/each}
 			</a>
 		{/each}
 		{#if hovered}
@@ -210,8 +228,13 @@
 		stroke: var(--accent);
 		stroke-width: 2;
 	}
-	rect {
+	.stoel {
+		pointer-events: none;
 		transition: opacity var(--dur-1) var(--ease);
+	}
+	/* The target of a fractie: transparent, the size of a place with its share of the aisle. */
+	.cel {
+		fill: transparent;
 	}
 	rect.dim {
 		opacity: 0.22;
@@ -227,7 +250,7 @@
 		font: var(--t-micro) var(--font-sans);
 		fill: var(--ink-3);
 	}
-	a:focus-visible rect {
+	a:focus-visible .stoel {
 		stroke: var(--ink);
 		stroke-width: 2;
 	}
