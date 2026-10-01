@@ -134,7 +134,7 @@
 		{/if}
 		{#if onOmgeving && !node.stub}
 			<button type="button" class="act" onclick={() => onOmgeving(node)}
-				><Picto naam="verbindt" size={13} />Alleen de omgeving</button
+				><Picto naam="omgeving" size={13} />Alleen de omgeving</button
 			>
 		{/if}
 		{#if onToggleChosen && !node.stub}
