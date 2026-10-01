@@ -1008,12 +1008,11 @@
 					// as a fan in their own colour when there are hundreds, so the fan reads as
 					// one shape and a single line still shows on hover.
 					if (src === focusedId || tgt === focusedId) {
-						const alpha = Math.min(1, Math.max(0.35, 3 / Math.sqrt(focusLevel1.size || 1)));
 						return {
 							...data,
 							hidden: false,
 							type: edgeType,
-							color: towardPaper(renderColor, alpha),
+							color: towardPaper(renderColor, fanStrength(focusLevel1.size)),
 							size: restSize,
 							label: ''
 						};
@@ -1045,11 +1044,19 @@
 					};
 				}
 
+				// Without a focus, a member with a hundred stukken draws a hundred lines: the
+				// fan pales by the size of its busier end, as the focus's own fan does.
+				let degree = 1;
+				try {
+					degree = Math.max(graph.degree(src), graph.degree(tgt));
+				} catch {
+					/* node removed mid-render */
+				}
 				return {
 					...data,
 					hidden: false,
 					type: edgeType,
-					color: renderColor,
+					color: towardPaper(renderColor, fanStrength(degree)),
 					size: restSize,
 					label: ''
 				};
@@ -1100,6 +1107,9 @@
 
 		onReady?.({ refresh, fit, restoreCamera, zoom });
 	});
+
+	/** How strong a line of a fan of `n` lines is drawn: in full up to nine, paler beyond. */
+	const fanStrength = (n: number) => Math.min(1, Math.max(0.35, 3 / Math.sqrt(n || 1)));
 
 	let focusLevel1 = new Set<string>();
 	function recomputeFocusLevel1() {
