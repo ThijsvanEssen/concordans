@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Division } from '$lib/text/division';
+	import { lawArticles, lawNav, type LawNavItem } from '$lib/api/law-articles';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The explorer: one bron at a time, in one of three modes. Lezen shows the bron with
 	// its verbindingen alongside; Netwerk shows the canvas and, once a bron is selected,
@@ -48,7 +48,7 @@
 	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
 	import { parseNodeId, type Mode } from '$lib/vocabulary';
 	import type { Schema } from '$lib/api/types';
-	import { articleOf, nodeToGraphNode } from '$lib/graph/types';
+	import { articleOf, lawIdOf, nodeToGraphNode } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
 	import {
 		lookUp,
@@ -266,9 +266,33 @@
 		}
 	});
 
-	// Previous and next article in Lezen, and the place of the article in its law,
-	// from the table of contents of the law.
-	let navItems = $state<{ key: string; label: string; breadcrumb: Division[] }[]>([]);
+	// Previous and next article, and the place of the article in its law, from the list of
+	// the law's articles: in Netwerk as in Tekst, one request per law, shared with the table
+	// of contents ($lib/api/law-articles).
+	let navItems = $state<LawNavItem[]>([]);
+	const navLaw = $derived(
+		selectedNode?.collection === 'articles' ? lawIdOf(selectedNode.raw?.props) : null
+	);
+	$effect(() => {
+		const bwb = navLaw;
+		if (!bwb) {
+			navItems = [];
+			return;
+		}
+		const meta = $instrumentMetaStore.get(bwb);
+		const lawName = meta?.citationTitle ?? meta?.title ?? meta?.shortTitle ?? bwb;
+		let current = true;
+		lawArticles(bwb)
+			.then((list) => {
+				if (current) navItems = lawNav(list, lawName);
+			})
+			.catch(() => {
+				if (current) navItems = [];
+			});
+		return () => {
+			current = false;
+		};
+	});
 	const articleIndex = $derived(
 		selectedNode ? navItems.findIndex((it) => it.key === selectedNode!.key) : -1
 	);
@@ -910,7 +934,7 @@
 		{:else if selectedNode.collection === 'judgments'}
 			<JudgmentToc selection={selectedNode} />
 		{:else}
-			<LezenNav selection={selectedNode} onitems={(it) => (navItems = it)} />
+			<LezenNav selection={selectedNode} />
 		{/if}
 	{/if}
 {/snippet}

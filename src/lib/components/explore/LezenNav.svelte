@@ -1,33 +1,16 @@
 <script lang="ts">
-	import { articleName } from '$lib/text/bw';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
-	import { api, unwrap } from '$lib/api/client';
-	import type { Schema } from '$lib/api/types';
+	import { lawArticles, type LawArticle } from '$lib/api/law-articles';
+	import { layersOf } from '$lib/text/division';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { untrack } from 'svelte';
-	import { layersOf, type Division } from '$lib/text/division';
 
-	let {
-		selection,
-		onitems
-	}: {
-		selection: GraphNode | null;
-		/** The articles of the law in order, each with the layers of its place (book, title). */
-		onitems?: (items: { key: string; label: string; breadcrumb: Division[] }[]) => void;
-	} = $props();
+	let { selection }: { selection: GraphNode | null } = $props();
 
-	type Item = {
-		/** The number, or the address of an article without one (`stam_16464063`). */
-		articleNumber: string;
-		/** "Artikel 1", or the heading of an article without a number. */
-		label: string;
-		key: string;
-		breadcrumb: Schema<'InstrumentArticleBreadcrumbDTO'>[];
-	};
+	type Item = LawArticle;
 
 	type Group = {
 		label: string;
@@ -61,38 +44,27 @@
 		return g.title ? `${label} ${g.title}` : label;
 	};
 
-	// The Lezen table of contents is always the whole law, whatever the graph holds.
+	// The Lezen table of contents is always the whole law, whatever the graph holds; the
+	// list is the one the place line above the article reads ($lib/api/law-articles).
 	$effect(() => {
 		const bwb = currentBwb;
 		if (!bwb) return;
-		const ac = new AbortController();
+		let current = true;
 		loading = true;
 		error = null;
-		unwrap(
-			api.GET('/api/instruments/{bwb_id}/articles', {
-				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: 2000 } },
-				signal: ac.signal
-			})
-		)
-			.then((resp) => {
-				// An article without a number (the Algemene bepaling) is listed by its heading.
-				items = resp.items
-					.filter((a) => !a.stub && (a.article_number || a.label))
-					.map((a) => ({
-						articleNumber: a.article_number ?? a.address ?? a.key,
-						// A BW article by its book number (6:162), as the title and the citation have it.
-						label: articleName(bwb, a.article_number, a.label) ?? a.key,
-						key: a.key,
-						breadcrumb: a.breadcrumb ?? []
-					}));
+		lawArticles(bwb)
+			.then((list) => {
+				if (current) items = list;
 			})
 			.catch(() => {
-				if (!ac.signal.aborted) error = 'Overzicht niet geladen.';
+				if (current) error = 'Overzicht niet geladen.';
 			})
 			.finally(() => {
-				if (!ac.signal.aborted) loading = false;
+				if (current) loading = false;
 			});
-		return () => ac.abort();
+		return () => {
+			current = false;
+		};
 	});
 
 	// A tree of groups from each article's breadcrumb; articles without one go into "Overig".
@@ -131,10 +103,6 @@
 		items.map((it) => ({ ...it, breadcrumb: layersOf(it.breadcrumb, lawName) }))
 	);
 	const groups = $derived(shaped.length > 0 ? buildGroups(shaped) : null);
-	$effect(() => {
-		const list = shaped.map((it) => ({ key: it.key, label: it.label, breadcrumb: it.breadcrumb }));
-		untrack(() => onitems?.(list));
-	});
 
 	const selectedKey = $derived(selection?.key ?? null);
 
