@@ -107,7 +107,7 @@
 		p.soort === 'artikel'
 			? `Artikel ${p.nummer} van ${p.wet}`
 			: p.soort === 'kamerstuk'
-				? `Kamerstuk ${p.dossier}, nr. ${p.nummer}`
+				? `Kamerstuk ${p.dossier}, ${/^\d/.test(p.nummer) ? 'nr. ' : ''}${p.nummer}`
 				: padHref(p);
 	$effect(() => {
 		const p = pad;
