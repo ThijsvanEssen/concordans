@@ -934,9 +934,12 @@
 			onclick={() => (mobileSidebarOpen = !mobileSidebarOpen)}
 			aria-expanded={mobileSidebarOpen}>Legenda</button
 		>
-		<div class="graph-sidebar-wrap" class:graph-sidebar-wrap--open={mobileSidebarOpen}>
-			{@render sidebar()}
-		</div>
+		<!-- Ronde 5: zonder bronnen in het netwerk is er niets te filteren; de kolom vervalt. -->
+		{#if canvasCounts.nodes > 0}
+			<div class="graph-sidebar-wrap" class:graph-sidebar-wrap--open={mobileSidebarOpen}>
+				{@render sidebar()}
+			</div>
+		{/if}
 		{#if mobileSidebarOpen}
 			<div
 				class="mobile-sidebar-backdrop"

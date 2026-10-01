@@ -956,6 +956,15 @@
 								loading={netwerkLoading}
 								start={!focus && !netwerkActive}
 								onPick={addIdToNetwerk}
+								onVoorbeeld={() => {
+									keepCanvas = true;
+									setNetwerk(
+										withAdded(
+											withAdded(netwerk, 'articles/bwbr0005537_3_4'),
+											'articles/bwbr0005537_3_2'
+										)
+									);
+								}}
 								selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
 									? { label: selectedNode.label }
 									: null}
