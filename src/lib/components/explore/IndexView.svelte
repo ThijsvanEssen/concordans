@@ -1831,6 +1831,7 @@
 								{/if}
 								<ZaalLegenda
 									data={seats}
+									kolommen={2}
 									peil={seats.chamber === 'EK'
 										? `Eerste Kamer, samenstelling op ${formatLongDate(composition?.composition_date ?? seats.as_of ?? null)}`
 										: `Tweede Kamer, stand op ${formatLongDate(seats.as_of ?? null)}`}
@@ -3232,8 +3233,25 @@
 
 	/* ── Hemicycle card (factions only) ──────────────────────────────── */
 	/* De zaal zonder kader of vlak. */
+	/* The hall and its legend side by side, using the width of the list; under each other
+	   where the list is narrow. */
 	.hemi-card {
 		margin-bottom: var(--s-6);
+	}
+	.hemi-svg-wrap {
+		display: grid;
+		grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+		column-gap: var(--s-7);
+		align-items: center;
+	}
+	.hemi-svg-wrap :global(.leg) {
+		margin: 0;
+	}
+	@media (max-width: 1100px) {
+		.hemi-svg-wrap {
+			grid-template-columns: minmax(0, 1fr);
+			row-gap: var(--s-4);
+		}
 	}
 	.hemi-svg-wrap :global(.hemicycle) {
 		background: transparent;

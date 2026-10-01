@@ -10,13 +10,16 @@
 		data,
 		plaatsen,
 		peil = null,
-		bron = null
+		bron = null,
+		kolommen = 3
 	}: {
 		data: Seats;
 		plaatsen: string[];
 		/** De peildatum, klein onderaan. */
 		peil?: string | null;
 		bron?: { label: string; href: string } | null;
+		/** Beside the hall two columns, under it three. */
+		kolommen?: number;
 	} = $props();
 	const fracties = $derived([...data.factions].sort((a, b) => b.seats - a.seats));
 	const naam = (f: Seats['factions'][number]) => f.abbreviation ?? f.name ?? f.key;
@@ -26,7 +29,8 @@
 	<ol
 		class="fr"
 		aria-label="Zetels per fractie"
-		style:grid-template-rows="repeat({Math.ceil(fracties.length / 3)}, auto)"
+		style:grid-template-rows="repeat({Math.ceil(fracties.length / kolommen)}, auto)"
+		style:grid-template-columns="repeat({kolommen}, minmax(0, 1fr))"
 	>
 		{#each fracties as f (f.key)}
 			{@const k = kleurenVan(data.chamber, naam(f), f.color ?? null)}
@@ -66,7 +70,6 @@
 		padding: 0;
 		display: grid;
 		grid-auto-flow: column;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
 		column-gap: var(--s-6);
 	}
 	.fr li {

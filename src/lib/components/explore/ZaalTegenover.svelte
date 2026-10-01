@@ -90,6 +90,12 @@
 		return out;
 	});
 
+	// As in the hemicycle of the Tweede Kamer: a fractie under the pointer stands out, the
+	// others dim, and the aisle says its name and seats.
+	let hovered = $state<string | null>(null);
+	const seatsOf = (name: string) =>
+		byName.get(name)?.seats ?? stoelen.filter((s) => s.name === name).length;
+
 	const side = (name: string) => {
 		const f = byName.get(name);
 		return voteHighlight && f ? voteHighlight[f.key] : null;
@@ -117,7 +123,14 @@
 			{@const v = side(s.name)}
 			<a
 				href={f ? hrefOf(f.key) : undefined}
-				aria-label="{s.name}{s === stoelen.at(-1) ? ', Voorzitter' : ''}"
+				aria-label="{s.name}, {seatsOf(s.name)} {seatsOf(s.name) === 1 ? 'zetel' : 'zetels'}{s ===
+				stoelen.at(-1)
+					? ', Voorzitter'
+					: ''}"
+				onmouseenter={() => (hovered = s.name)}
+				onmouseleave={() => (hovered = null)}
+				onfocus={() => (hovered = s.name)}
+				onblur={() => (hovered = null)}
 			>
 				<rect
 					x={s.x}
@@ -127,11 +140,27 @@
 					rx="3"
 					class:tegen={v === 'tegen'}
 					class:voor={v === 'voor'}
+					class:dim={hovered !== null && hovered !== s.name}
 					fill={voteHighlight ? undefined : kleurVan('EK', s.name, i, fillOf.get(s.name) ?? null)}
 					><title>{s.name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
 				>
 			</a>
 		{/each}
+		{#if hovered}
+			<!-- In the aisle, between the blocks: the fractie and its seats. -->
+			<text
+				x={W / 2}
+				y={rowY(1) + 6}
+				text-anchor="middle"
+				class="hover-naam"
+				class:lang={hovered.replace(/^Fractie-/, '').length > 8}
+				style:fill={kleurVan('EK', hovered, 0, fillOf.get(hovered) ?? null)}
+				aria-live="polite">{hovered.replace(/^Fractie-/, '')}</text
+			>
+			<text x={W / 2} y={rowY(1) + 22} text-anchor="middle" class="hover-zetels"
+				>{seatsOf(hovered)} {seatsOf(hovered) === 1 ? 'zetel' : 'zetels'}</text
+			>
+		{/if}
 		<rect x={W / 2 - S / 2 - 10 - S} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
 		<rect x={W / 2 + S / 2 + 10} y={rowY(9)} width={S} height={S} rx="3" class="meubel" />
 		<circle cx={W / 2} cy={rowY(9) + S + 14} r="7" class="nr" /><text
@@ -180,6 +209,23 @@
 		fill: var(--paper);
 		stroke: var(--accent);
 		stroke-width: 2;
+	}
+	rect {
+		transition: opacity var(--dur-1) var(--ease);
+	}
+	rect.dim {
+		opacity: 0.22;
+	}
+	.hover-naam {
+		font: 500 var(--t-h3) var(--font-serif);
+	}
+	/* A long name (a one-member fractie) in a smaller size, to stay inside the aisle. */
+	.hover-naam.lang {
+		font-size: var(--t-micro);
+	}
+	.hover-zetels {
+		font: var(--t-micro) var(--font-sans);
+		fill: var(--ink-3);
 	}
 	a:focus-visible rect {
 		stroke: var(--ink);
