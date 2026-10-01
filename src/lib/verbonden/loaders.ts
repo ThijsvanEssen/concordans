@@ -57,6 +57,8 @@ export type Loaded = {
 	total?: number;
 	/** The places the bronnen name the selected one, where rows bundle several. */
 	mentions?: number;
+	/** Judgments another group counts, by its id: the ECHR's on `cited-by` (API 0.73). */
+	judgmentsOf?: Record<string, number>;
 };
 
 // The four dossier groups read one hub.
@@ -247,7 +249,14 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					});
 				}
 				const rows = [...mentions.values()].map((of) => bundleMentions([...of.values()]));
-				return { rows, total: data.judgment_total, mentions: data.total };
+				return {
+					rows,
+					total: data.judgment_total,
+					mentions: data.total,
+					// The ECHR judgments are no passage (HUDOC names the article, not the place):
+					// they count in Europees en internationaal, not here (BE-9).
+					judgmentsOf: { international: data.echr_judgment_total }
+				};
 			}
 		}
 		return {

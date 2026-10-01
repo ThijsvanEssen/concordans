@@ -67,9 +67,17 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				for (const def of groups) {
 					if (!def.load) continue;
 					LOADERS[def.load](ctx)
-						.then(({ rows, total, mentions }) => {
+						.then(({ rows, total, mentions, judgmentsOf }) => {
 							if (ac.signal.aborted) return;
-							groups = groups.map((g) => (g.id === def.id ? { ...g, rows, total, mentions } : g));
+							groups = groups.map((g) => {
+								if (g.id === def.id) return { ...g, rows, total, mentions };
+								const judgments = judgmentsOf?.[g.id];
+								if (judgments == null) return g;
+								// Its other bronnen as counted, and the judgments as the API counts them.
+								const other =
+									g.total ?? g.rows.filter((r) => r.ref.collection !== 'judgments').length;
+								return { ...g, total: other + judgments, capped: false };
+							});
 						})
 						.catch(() => {
 							// A group that cannot be filled is left out, like an empty one.
