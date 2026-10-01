@@ -17,6 +17,7 @@
 		onOpen,
 		onToggleChosen,
 		onOmgeving,
+		at = null,
 		onMouseEnter,
 		onMouseLeave
 	}: {
@@ -27,6 +28,8 @@
 		onToggleChosen?: (node: GraphNode) => void;
 		/** Ronde 6: wat een dubbelklik doet, als knop: alleen de omgeving van deze bron. */
 		onOmgeving?: (node: GraphNode) => void;
+		/** Ronde 6: waar de kaart staat, naast de bron onder de muis; zonder: rechtsonder. */
+		at?: { x: number; y: number } | null;
 		onMouseEnter?: () => void;
 		onMouseLeave?: () => void;
 	} = $props();
@@ -105,7 +108,10 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="citepanel" style="width:{W}px" onmouseenter={onMouseEnter} onmouseleave={onMouseLeave}>
+<div
+	class="citepanel"
+	class:bij-bron={!!at}
+	style="width:{W}px;{at ? `left:${at.x}px;top:${at.y}px;` : ''}" onmouseenter={onMouseEnter} onmouseleave={onMouseLeave}>
 	<div class="head">
 		<KindGlyph collection={node.collection} />
 		<span class="kind caps">{bronLabel(node.collection)}</span>
@@ -129,12 +135,12 @@
 				class="act act--primary"
 				href={bronHref(refOf(node.collection, node.key, node.raw?.props))}
 				data-sveltekit-noscroll
-				onclick={() => onOpen(node)}><Picto naam="tekst" size={13} />Lezen</a
+				onclick={() => onOpen(node)}><Picto naam="tekst" size={13} />Tekst lezen</a
 			>
 		{/if}
 		{#if onOmgeving && !node.stub}
 			<button type="button" class="act" onclick={() => onOmgeving(node)}
-				><Picto naam="omgeving" size={13} />Alleen de omgeving</button
+				><Picto naam="omgeving" size={13} />Omgeving tonen</button
 			>
 		{/if}
 		{#if onToggleChosen && !node.stub}
@@ -232,6 +238,7 @@
 
 	/* Text buttons: no border, the hover as a paper-2 field. */
 	.act {
+		white-space: nowrap;
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-1);
@@ -259,6 +266,10 @@
 		color: var(--ink);
 	}
 
+	.citepanel.bij-bron {
+		right: auto;
+		bottom: auto;
+	}
 	.act--netwerk {
 		color: var(--ink-3);
 		margin-left: auto;

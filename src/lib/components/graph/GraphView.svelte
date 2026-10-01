@@ -299,6 +299,7 @@
 
 	// Hover panel state (only in the full canvas)
 	let hoverNode = $state<GraphNode | null>(null);
+	let hoverAt = $state<{ x: number; y: number } | null>(null);
 	// The bronnen drawn on the canvas, for the keyboard's list of them, and the one in its focus.
 	let drawnIds = $state<string[]>([]);
 	let keyNode = $state<GraphNode | null>(null);
@@ -310,6 +311,7 @@
 	);
 	function onKeyNode(n: GraphNode | null) {
 		keyNode = n;
+		hoverAt = null;
 		hoverNode = n;
 	}
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
@@ -754,8 +756,16 @@
 	}
 
 	// The hover panel opens only after the pointer rests on a node for 400 ms.
-	function handleNodeHover(nodeId: string) {
+	function handleNodeHover(nodeId: string, vx?: number, vy?: number) {
 		if (compact) return;
+		// Ronde 6: de kaart staat naast de bron, niet los in een hoek.
+		if (vx !== undefined && vy !== undefined && canvasWrap) {
+			const W = 360, H = 240, GAP = 20;
+			const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight;
+			const x = vx + GAP + W < w - 8 ? vx + GAP : Math.max(8, vx - GAP - W);
+			const y = Math.min(Math.max(8, vy - 40), Math.max(8, h - H - 8));
+			hoverAt = { x, y };
+		}
 		if (hideTimer) {
 			clearTimeout(hideTimer);
 			hideTimer = null;
@@ -1081,6 +1091,7 @@
 				<GraphCitePanel
 					node={hoverNode}
 					isChosen={pinnedIds.has(hoverNode.id)}
+					at={keyNode ? null : hoverAt}
 					onOpen={() => {
 						hoverNode = null;
 					}}
