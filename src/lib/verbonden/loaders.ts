@@ -57,7 +57,37 @@ export type Loaded = {
 	total?: number;
 	/** The places the bronnen name the selected one, where rows bundle several. */
 	mentions?: number;
+	/** Judgments another group shows, by its id: the ECHR's that cite an article (API 0.73). */
+	judgmentsOf?: Record<string, { rows: Row[]; total: number }>;
 };
+
+/**
+ * The ECHR judgments that cite an article, from its treaty's international links (HUDOC
+ * names the article a judgment applies): all of them, not the few in the node response.
+ */
+async function echrJudgments(bwb: string, articleKey: string, signal: AbortSignal): Promise<Row[]> {
+	const { data } = await api
+		.GET('/api/instruments/{identifier}/eu-links', {
+			params: { path: { identifier: bwb } },
+			signal
+		})
+		.catch(() => ({ data: undefined }));
+	return (data?.international ?? [])
+		.filter((l) => l.judgment && l.own_article?.key === articleKey)
+		.map((l) => {
+			const j = l.judgment!;
+			const props = { ecli: j.ecli };
+			return {
+				ref: { collection: 'judgments' as const, key: j.key },
+				...describe('judgments', j.key, j.display_name, props),
+				kind: bronKindOf('judgments', j.key, props, 'REFERS_TO'),
+				relation: 'REFERS_TO' as const,
+				direction: 'inbound' as const,
+				confidence: l.confidence ?? null,
+				props
+			};
+		});
+}
 
 // The four dossier groups read one hub.
 let hub: { key: string; request: Promise<DossierHub> } | null = null;
@@ -247,7 +277,22 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					});
 				}
 				const rows = [...mentions.values()].map((of) => bundleMentions([...of.values()]));
-				return { rows, total: data.judgment_total, mentions: data.total };
+				return {
+					rows,
+					total: data.judgment_total,
+					mentions: data.total,
+					// The ECHR judgments are no passage (HUDOC names the article, not the place):
+					// they stand in Europees en internationaal, not here (BE-9).
+					judgmentsOf:
+						data.echr_judgment_total > 0
+							? {
+									international: {
+										rows: await echrJudgments(bwb, node.key, signal),
+										total: data.echr_judgment_total
+									}
+								}
+							: undefined
+				};
 			}
 		}
 		return {
