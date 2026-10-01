@@ -1681,39 +1681,55 @@
 			lead: 'BWB of CELEX',
 			body: 'Wet',
 			aside: 'Rechtsorde',
-			leadW: 130,
+			leadW: 140,
 			asideW: 110
 		},
-		judgments: { lead: 'Datum', body: 'Uitspraak', aside: 'Aangehaald', leadW: 110, asideW: 110 },
-		dossiers: { lead: 'Nummer', body: 'Titel', aside: 'Fase', leadW: 110, asideW: 150 },
-		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', leadW: 110, asideW: 110 },
-		members: { lead: 'Fractie', body: 'Naam', aside: '', leadW: 150, asideW: 60 },
-		factions: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', leadW: 130, asideW: 110 },
+		judgments: { lead: 'Datum', body: 'Uitspraak', aside: 'Aangehaald', leadW: 140, asideW: 110 },
+		dossiers: { lead: 'Nummer', body: 'Titel', aside: 'Fase', leadW: 140, asideW: 150 },
+		decisions: { lead: 'Soort', body: 'Onderwerp', aside: 'Uitslag', leadW: 140, asideW: 110 },
+		members: { lead: 'Fractie', body: 'Naam', aside: '', leadW: 140, asideW: 60 },
+		factions: { lead: 'Fractie', body: 'Naam', aside: 'Zetels', leadW: 140, asideW: 110 },
 		committees: {
 			lead: 'Afkorting',
 			body: 'Commissie',
 			aside: 'Lopende dossiers',
-			leadW: 110,
+			leadW: 140,
 			asideW: 130
 		},
 		cabinets: {
 			lead: 'Periode',
 			body: 'Kabinet',
 			aside: 'Bewindspersonen',
-			leadW: 110,
+			leadW: 140,
 			asideW: 130
 		},
 		ministers: {
 			lead: 'Functie',
 			body: 'Bewindspersoon',
 			aside: ['Dossiers', 'Wetsvoorstellen', 'Open toezeggingen'],
-			leadW: 150,
+			leadW: 140,
 			asideW: 300
 		},
-		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 110, asideW: 130 },
-		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', leadW: 130, asideW: 110 }
+		commitments: { lead: 'Gedaan', body: 'Toezegging', aside: 'Verwacht', leadW: 140, asideW: 130 },
+		documents: { lead: 'Kamerstuk', body: 'Stuk', aside: 'Datum', leadW: 140, asideW: 110 }
 	};
-	const facetGroups = $derived(facetGroupsAll);
+	// The Kamer is a choice, not a filter: the first group of the filters, always one of the
+	// two, and no chip above the list (chips come from facetGroupsAll).
+	const kamerGroup = $derived<FacetGroup>({
+		id: 'kamer',
+		label: 'Kamer',
+		kind: 'list',
+		options: CHAMBERS.map((c) => ({
+			id: c,
+			label: CHAMBER_NAME[c],
+			on: kamer === c,
+			default: c === 'TK',
+			onClick: () => patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null })
+		}))
+	});
+	const facetGroups = $derived(
+		CHAMBER_CATEGORIES.includes(category) ? [kamerGroup, ...facetGroupsAll] : facetGroupsAll
+	);
 	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
 
 	// ── Opening a source ────────────────────────────────────────────────────
@@ -1779,9 +1795,8 @@
 
 	<div class="stage">
 		<div class="stage-scroll" bind:this={scroller}>
-			<div class={category === 'factions' || category === 'decisions' ? 'page page--wide' : 'page'}>
+			<div class="page">
 				<aside class="facet-col" aria-label="Filters">
-					<p class="page-about">{INDEX_CATEGORIES.find((c) => c.key === category)?.about}</p>
 					<!-- On a narrow screen the filters fold away above the list. -->
 					<button
 						type="button"
@@ -1804,20 +1819,6 @@
 					style:--row-lead="{columns.leadW}px"
 					style:--row-aside="{columns.asideW}px"
 				>
-					{#if CHAMBER_CATEGORIES.includes(category)}
-						<div class="kamer-choice" role="group" aria-label="Kamer">
-							{#each CHAMBERS as c (c)}
-								<button
-									type="button"
-									class="kamer-option"
-									aria-pressed={kamer === c}
-									onclick={() =>
-										patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null })}
-									>{CHAMBER_NAME[c]}</button
-								>
-							{/each}
-						</div>
-					{/if}
 					{#if composition && category !== 'factions'}
 						<p class="composition">
 							Samenstelling op {formatLongDate(composition.composition_date ?? null)}, gegevens
@@ -1879,6 +1880,9 @@
 									>{resultTotal === 1 ? noun1(category) : labelOf(category)}</span
 								>
 							</p>
+						{:else if category !== 'ministers'}
+							<!-- The count's own height before it is known, so nothing below it moves. -->
+							<p class="result-count" aria-hidden="true">&nbsp;</p>
 						{/if}
 						{#each chips as chip (chip.id)}
 							<button type="button" class="chip" onclick={chip.onRemove}>
@@ -2038,7 +2042,13 @@
 
 					<!-- While the next result loads, the previous one stays, dimmed. -->
 					{#if loading && !pages[category]}
-						<p class="status-line">Laden…</p>
+						<!-- The shape of a list while it loads: rows where rows will stand. -->
+						<p class="visually-hidden" role="status">Laden…</p>
+						<ul class="list skelet" aria-hidden="true">
+							{#each { length: 8 } as _, i (i)}
+								<li class="skelet-rij"><span></span><span></span></li>
+							{/each}
+						</ul>
 					{:else if error}
 						<p class="status-line status-line--error">{error}</p>
 					{:else}
@@ -2804,14 +2814,6 @@
 		font-weight: 500;
 	}
 
-	/* What the category holds, in one sentence, above its list. */
-	.page-about {
-		margin: 0 0 var(--s-4);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-
 	/* ── Stage container ─────────────────────────────────────────────── */
 	.stage {
 		flex: 1;
@@ -2830,21 +2832,18 @@
 	.page {
 		max-width: 1440px;
 		margin: 0 auto;
-		padding: 28px var(--s-6) 80px;
+		padding: var(--s-6) var(--s-6) var(--s-8);
 		display: grid;
 		grid-template-columns: 240px minmax(0, 1fr);
 		column-gap: 40px;
 		align-items: start;
 	}
-	.page--wide {
-		max-width: 1560px;
-	}
 	.facet-col {
 		position: sticky;
 		/* As far from the top as the page padding, so it does not jump when it sticks;
 		   as high as the scrolling box, so its last filter can be reached. */
-		top: 28px;
-		max-height: calc(100cqh - 28px);
+		top: var(--s-6);
+		max-height: calc(100cqh - var(--s-6));
 		overflow-y: auto;
 		scrollbar-gutter: stable;
 		/* Een smalle, stille schuifbalk die de aantallen niet raakt. */
@@ -2925,34 +2924,6 @@
 		white-space: nowrap;
 	}
 
-	/* The Kamer whose parliament is listed: two options, the chosen one in ink. */
-	.kamer-choice {
-		display: inline-flex;
-		margin: 0 0 var(--s-4);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		overflow: hidden;
-	}
-	.kamer-option {
-		min-height: 36px;
-		padding: 0 var(--s-4);
-		border: 0;
-		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.kamer-option + .kamer-option {
-		border-left: 1px solid var(--rule-strong);
-	}
-	.kamer-option:hover {
-		background: var(--paper-2);
-	}
-	.kamer-option[aria-pressed='true'] {
-		background: var(--ink);
-		color: var(--paper);
-	}
 	.composition {
 		margin: 0 0 var(--s-4);
 		font-family: var(--font-sans);
@@ -3340,17 +3311,38 @@
 	}
 
 	/* ── List and row ────────────────────────────────────────────────── */
+	.skelet-rij {
+		display: grid;
+		grid-template-columns: var(--row-lead) minmax(0, 1fr);
+		gap: var(--s-5);
+		align-items: center;
+		height: var(--s-8);
+		padding: 0 var(--s-3);
+		border-bottom: 1px solid var(--rule);
+	}
+	.skelet-rij span {
+		height: var(--s-3);
+		border-radius: var(--r-1);
+		background: var(--paper-2);
+	}
+	.skelet-rij span:first-child {
+		width: 60%;
+	}
+	.skelet-rij span:last-child {
+		width: 70%;
+	}
 	.list {
 		list-style: none;
 		padding: 0;
 		margin: 0;
 		border-top: 2px solid var(--ink);
 	}
+	/* What identifies the row (a number, a date, a kind): small and grey; the title is
+	   what is read. */
 	.row-id-main {
 		display: block;
-		color: var(--ink);
-		font-weight: 500;
-		font-size: var(--t-meta);
+		color: var(--ink-2);
+		font-size: var(--t-micro);
 	}
 	.row-id-main--inline {
 		display: inline-flex;
