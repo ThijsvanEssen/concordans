@@ -123,6 +123,12 @@
 						<p>{d.title}</p>
 					</details>
 				{/if}
+				{#if d.submitted_on_tk}
+					<!-- The day the bill reached the Kamer (API 0.75), before any stage below it. -->
+					<p class="reading">
+						Ingediend bij de Tweede Kamer op {formatLongDate(d.submitted_on_tk)}.
+					</p>
+				{/if}
 				<StandBalk {d} />
 				{#if d.ek_outcome}
 					{@const ek = d.ek_outcome}
