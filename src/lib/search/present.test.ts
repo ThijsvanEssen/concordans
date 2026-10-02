@@ -138,10 +138,26 @@ describe('two judgments of one name', () => {
 });
 
 describe('the Kamer of a hit', () => {
-	it("marks a stuk with its Kamer: the Eerste Kamer's are keyed ek_", () => {
-		expect(chamberOfHit(stuk('ek_kst_1269940', 'Brief'))).toBe('EK');
-		expect(chamberOfHit(stuk('1501fbca_49c8', 'Motie'))).toBe('TK');
-		expect(presentHit(stuk('ek_kst_1269940', 'Brief'), '').chamber).toBe('EK');
+	it('marks a stuk with the Kamer the API gives, and none where it gives none', () => {
+		const ek = { ...stuk('ek_kst_1269940', 'Brief'), extra: { kind: 'Brief', chamber: 'EK' } };
+		expect(chamberOfHit(ek)).toBe('EK');
+		expect(presentHit(ek, '').chamber).toBe('EK');
+		expect(chamberOfHit(stuk('ek_kst_1269940', 'Brief'))).toBeUndefined();
+	});
+
+	it('dates a stuk: a stenogram beside its kind, a Kamerstuk under its dossier', () => {
+		const stenogram = hit({
+			collection: 'documents',
+			key: 'c',
+			display_name: 'Stikstof en natuur',
+			extra: { kind: 'Stenogram', date: '2025-05-22', chamber: 'TK' }
+		});
+		expect(presentHit(stenogram, '').context).toBe('Stenogram, 22 mei 2025');
+		const motie = {
+			...stuk('m', 'Motie'),
+			extra: { kind: 'Motie', dossier_number: '32621', sequence: 21, date: '2026-09-07' }
+		};
+		expect(presentHit(motie, '')).toMatchObject({ title: 'Motie, nr. 21', context: '7 sep. 2026' });
 	});
 
 	it('takes the Kamer the API gives over the key', () => {
