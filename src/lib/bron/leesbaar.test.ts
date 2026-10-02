@@ -29,6 +29,13 @@ describe('a readable address', () => {
 		});
 	});
 
+	it('reads a lid by its slug, and gives a lid its address from its slug', () => {
+		expect(parsePad('/leden/rob-jetten')).toEqual({ soort: 'lid', slug: 'rob-jetten' });
+		expect(parsePad('/leden/Rob Jetten')).toBeNull();
+		expect(padOfFocus('members/49be', { slug: 'rob-jetten' })).toBe('/leden/rob-jetten');
+		expect(padOfFocus('members/49be')).toBeNull();
+	});
+
 	it('reads a publication by series, year and number', () => {
 		expect(parsePad('/stb/2026/94')).toEqual({
 			soort: 'publicatie',
