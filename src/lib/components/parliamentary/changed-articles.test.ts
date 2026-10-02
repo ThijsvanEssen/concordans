@@ -9,7 +9,12 @@ import {
 } from './changed-articles';
 
 const change = (nr: string, stage: DossierChange['stage'], source: string): DossierChange => ({
-	article: { id: `articles/bwbr0001854_${nr}`, key: `bwbr0001854_${nr}`, article_number: nr },
+	article: {
+		id: `articles/bwbr0001854_${nr}`,
+		key: `bwbr0001854_${nr}`,
+		article_number: nr,
+		stub: false
+	},
 	relation: 'amends',
 	stage,
 	source: { id: source }
@@ -30,10 +35,16 @@ describe('changed articles', () => {
 
 	it('names an article as cited in its law, a BW article with its book', () => {
 		expect(
-			articleLabel({ id: 'x', bwb_id: 'BWBR0001854' }, { id: 'a', key: 'k', article_number: '21b' })
+			articleLabel(
+				{ id: 'x', bwb_id: 'BWBR0001854' },
+				{ id: 'a', key: 'k', article_number: '21b', stub: false }
+			)
 		).toBe('Artikel 21b');
 		expect(
-			articleLabel({ id: 'x', bwb_id: 'BWBR0005289' }, { id: 'a', key: 'k', article_number: '162' })
+			articleLabel(
+				{ id: 'x', bwb_id: 'BWBR0005289' },
+				{ id: 'a', key: 'k', article_number: '162', stub: false }
+			)
 		).toBe('Artikel 6:162');
 	});
 

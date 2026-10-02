@@ -1,68 +1,28 @@
 // The articles a bill changes, per law (GET /api/dossiers/{number}/changed-articles, API
 // 0.74.0): what the dossier reader shows under "Gewijzigde artikelen".
-// TODO(sync 0.74.0): the types below and the fetch go to the generated client.
-import { API_BASE_URL } from '$lib/api/base-url';
+import { api } from '$lib/api/client';
+import type { Schema } from '$lib/api/types';
 import { bookNumber } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
 
-export type ChangedArticle = {
-	id: string;
-	/** Null for an article that is not in the graph. */
-	key: string | null;
-	article_number?: string | null;
-	display_name?: string | null;
-	stub?: boolean;
-};
-
-export type ChangeSource = {
-	id: string;
-	key?: string | null;
-	display_name?: string | null;
-	/** Of a publication, its id on officielebekendmakingen.nl (`stb-2026-154`). */
-	official_id?: string | null;
-};
-
-export type DossierChange = {
-	article: ChangedArticle;
-	relation: 'amends' | 'introduces' | 'repeals';
-	stage: 'enacted' | 'proposed';
-	source: ChangeSource;
-	/** Of an enacted change, the day it takes effect. */
-	effective_date?: string | null;
-};
-
-export type ChangedLaw = {
-	law: {
-		id: string | null;
-		bwb_id?: string | null;
-		celex?: string | null;
-		display_name?: string | null;
-	};
-	total: number;
-	changes: DossierChange[];
-};
-
-export type ChangedArticles = {
-	number: string;
-	total: number;
-	articles: number;
-	enacted: number;
-	proposed: number;
-	laws: ChangedLaw[];
-};
+export type ChangedArticle = Schema<'ChangedArticleRef'>;
+export type ChangeSource = Schema<'ChangeSource'>;
+export type DossierChange = Schema<'DossierChange'>;
+export type ChangedLaw = Schema<'DossierChangedLaw'>;
+export type ChangedArticles = Schema<'DossierChangedArticlesResponse'>;
 
 /** The changes of a dossier, or null where the API has none to give (an older API: 404). */
 export async function getChangedArticles(
 	number: string,
 	signal?: AbortSignal
 ): Promise<ChangedArticles | null> {
-	const res = await fetch(
-		`${API_BASE_URL}/api/dossiers/${encodeURIComponent(number)}/changed-articles`,
-		{ signal }
-	);
-	if (res.status === 404) return null;
-	if (!res.ok) throw new Error(`changed-articles ${res.status}`);
-	return (await res.json()) as ChangedArticles;
+	const { data, response } = await api.GET('/api/dossiers/{number}/changed-articles', {
+		params: { path: { number } },
+		signal
+	});
+	if (response.status === 404) return null;
+	if (!data) throw new Error(`changed-articles ${response.status}`);
+	return data;
 }
 
 /** What a change does to the article, as the first word of its line. */
