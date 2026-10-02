@@ -644,6 +644,28 @@ describe('the body as the reader lays it out', () => {
 		expect(items.map((i) => i.kind)).toEqual(['prose', 'prose']);
 	});
 
+	it('takes the kinds the API will give: a table of contents is left out, continues is followed', () => {
+		const items = bodyItems([
+			p('toc', '1 Procesverloop'),
+			p(
+				'body',
+				'Op 1 januari 2024 zijn de Omgevingswet en de Invoeringswet in werking getreden.',
+				'1',
+				'rov-1'
+			),
+			p('body', 'Tussenkop', null, 'p-1'),
+			{
+				...(p('body', 'Een zin die de overweging voortzet.', null, 'p-2') as object),
+				continues: 'rov-1'
+			} as never
+		]);
+		expect(items.map((i) => (i.kind === 'prose' ? `prose:${i.within}` : i.kind))).toEqual([
+			'rov',
+			'subheading',
+			'prose:true'
+		]);
+	});
+
 	it('puts the number of a heading before its title', () => {
 		const items = bodyItems([
 			p('heading', 'Beoordeling van de aanvraag', '3'),

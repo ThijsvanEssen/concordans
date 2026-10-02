@@ -945,8 +945,16 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 	const items: BodyItem[] = [];
 	let within = false;
 
-	const body = (text: string, citations: Span[] | undefined, number: unknown, paraId?: string) => {
+	const body = (
+		text: string,
+		citations: Span[] | undefined,
+		number: unknown,
+		paraId?: string,
+		/** The API marks a paragraph that continues an overweging (`continues`, BE-56). */
+		continues = false
+	) => {
 		const segs = splitBodyParagraph(text, citations ?? []);
+		if (continues) within = true;
 		segs.forEach((seg, i) => {
 			if (seg.kind === 'heading') {
 				items.push({ kind: 'heading', text: seg.text, id: headingId(seg.text) });
@@ -966,7 +974,7 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 				within = true;
 				return;
 			}
-			if (segs.length === 1 && isTitleLine(seg.body)) {
+			if (segs.length === 1 && !continues && isTitleLine(seg.body)) {
 				items.push({ kind: 'subheading', text: seg.body });
 				within = false;
 				return;
@@ -996,7 +1004,20 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 			// The anchor stays that of the title alone, so a shared link keeps working.
 			items.push({ kind: 'heading', text, id: headingId(title) });
 			within = false;
-		} else body(p.text, p.citations ?? [], p.number, p.paragraph_id ?? undefined);
+		} else if (p.kind === 'toc') {
+			// The judgment's own table of contents (BE-54): the column beside the text gives
+			// it, and its lines are no overwegingen.
+			continue;
+		} else {
+			const continues = (p as { continues?: unknown }).continues;
+			body(
+				p.text,
+				p.citations ?? [],
+				p.number,
+				p.paragraph_id ?? undefined,
+				typeof continues === 'string' && continues !== ''
+			);
+		}
 	}
 	return items;
 }
