@@ -43,6 +43,8 @@
 	} from './rows';
 	import type { VerbondenState } from './source';
 	import { groupRequest } from './open-group';
+	import { uitspraakVolgorde, type UitspraakVolgorde } from './volgorde';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import {
 		GROUPINGS,
 		allRows,
@@ -327,6 +329,25 @@
 						>
 					{/if}
 				</div>
+				{#if g.id === 'judgments' && selection.collection === 'articles' && onRetry}
+					<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
+					<div class="group__volgorde">
+						<Keuze
+							label="Volgorde"
+							klein
+							opties={[
+								{ waarde: 'date_desc' as UitspraakVolgorde, label: 'Datum' },
+								{ waarde: 'citation_count' as UitspraakVolgorde, label: 'Meest aangehaald' }
+							]}
+							waarde={$uitspraakVolgorde}
+							onKies={(w) => {
+								if (w === $uitspraakVolgorde) return;
+								uitspraakVolgorde.set(w);
+								onRetry();
+							}}
+						/>
+					</div>
+				{/if}
 				{#if g.order}<p class="group__caption">{g.order}</p>{/if}
 				{#if bars.length > 0}
 					<!-- Een zin en een keuzelijst in plaats van het jarendiagram. Over de geladen
@@ -670,6 +691,9 @@
 	.layer.is-on .layer__box {
 		background: var(--ink);
 		border-color: var(--ink);
+	}
+	.group__volgorde {
+		margin: var(--s-1) 0 var(--s-2);
 	}
 	.group__caption {
 		margin: 0;

@@ -17,6 +17,7 @@ import { getJudgmentDetail } from '$lib/api/judgments';
 import { bucketKey, neighborsOf } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
+import { uitspraakVolgorde } from './volgorde';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
@@ -245,9 +246,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const number =
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
 		if (bwb && number) {
+			const sort = get(uitspraakVolgorde);
 			const { data, response } = await api
 				.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
-					params: { path: { bwb_id: bwb, article_number: number }, query: { limit: 200 } },
+					params: {
+						path: { bwb_id: bwb, article_number: number },
+						query: { limit: 200, sort }
+					},
 					signal
 				})
 				.catch(() => ({ data: undefined, response: null }));
@@ -283,6 +288,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					rows,
 					total: data.judgment_total,
 					mentions: data.total,
+					order: sort === 'citation_count' ? 'Eerst de meest aangehaalde uitspraken.' : undefined,
 					// The ECHR judgments are no passage (HUDOC names the article, not the place):
 					// they stand in Europees en internationaal, not here (BE-9).
 					judgmentsOf:
