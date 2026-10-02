@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.74.1"
+		"version": "0.75.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -400,6 +400,17 @@
 							"title": "Subject"
 						},
 						"description": "An area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`."
+					},
+					{
+						"name": "subject_area",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "A main area of law: the judgments with a subject in it, `Bestuursrecht` for `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike (the part of a subject before its first `;`).",
+							"title": "Subject Area"
+						},
+						"description": "A main area of law: the judgments with a subject in it, `Bestuursrecht` for `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike (the part of a subject before its first `;`)."
 					},
 					{
 						"name": "procedure",
@@ -1475,10 +1486,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "The dossier's current phase, e.g. ``Verslag``. To filter on a phase being done at all, use ``has_phase``.",
+							"description": "Comma-separated: the dossiers whose current phase is one of them, e.g. ``Verslag`` or ``Stemmingen,Eindtekst``. To filter on a phase being done at all, use ``has_phase``.",
 							"title": "Phase"
 						},
-						"description": "The dossier's current phase, e.g. ``Verslag``. To filter on a phase being done at all, use ``has_phase``."
+						"description": "Comma-separated: the dossiers whose current phase is one of them, e.g. ``Verslag`` or ``Stemmingen,Eindtekst``. To filter on a phase being done at all, use ``has_phase``."
 					},
 					{
 						"name": "has_phase",
@@ -1541,13 +1552,16 @@
 						"required": false,
 						"schema": {
 							"anyOf": [
-								{ "enum": ["number", "opened_on", "closed_on", "title"], "type": "string" },
+								{
+									"enum": ["number", "opened_on", "last_activity", "closed_on", "title"],
+									"type": "string"
+								},
 								{ "type": "null" }
 							],
-							"description": "``number`` in the order of the Kamer, ``opened_on`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``.",
+							"description": "``number`` in the order of the Kamer, ``opened_on``, ``last_activity`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``.",
 							"title": "Sort"
 						},
-						"description": "``number`` in the order of the Kamer, ``opened_on`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``."
+						"description": "``number`` in the order of the Kamer, ``opened_on``, ``last_activity`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``."
 					},
 					{
 						"name": "limit",
@@ -2102,6 +2116,17 @@
 							"title": "Cabinet"
 						},
 						"description": "Only those who held a post in this cabinet (key)."
+					},
+					{
+						"name": "slug",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "The member of this slug (``rob-jetten``); see ``slug``.",
+							"title": "Slug"
+						},
+						"description": "The member of this slug (``rob-jetten``); see ``slug``."
 					},
 					{
 						"name": "sort",
@@ -4117,7 +4142,7 @@
 			"get": {
 				"tags": ["lookup", "lookup"],
 				"summary": "The node a readable URL names, exactly",
-				"description": "No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug) and `cabinet` (`id`).",
+				"description": "No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).",
 				"operationId": "get_lookup_api_lookup_get",
 				"parameters": [
 					{
@@ -4136,7 +4161,8 @@
 								"commitment",
 								"faction",
 								"committee",
-								"cabinet"
+								"cabinet",
+								"member"
 							],
 							"type": "string",
 							"title": "Kind"
@@ -4511,6 +4537,16 @@
 							{ "type": "null" }
 						],
 						"title": "Opened On Basis"
+					},
+					"submitted_on_tk": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Submitted On Tk",
+						"description": "The day the bill was submitted to the Tweede Kamer, as it dates it: the ``Zaak.GestartOp`` of the dossier's own zaak of a bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``); null for another dossier."
+					},
+					"last_activity": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Last Activity",
+						"description": "The day of its newest paper, activity that took place (not one only planned, cancelled or moved) or decision, as the Kamer dates them; null for none. ``sort=last_activity`` lists the dossiers by it, newest first."
 					},
 					"closed_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -6286,6 +6322,34 @@
 				"title": "CommitteeDetailDTO",
 				"description": "A committee with its members and a page of the dossiers it leads.\n\n``dossiers`` is one page; ``dossier_total`` counts every dossier that matches the\n``status`` filter."
 			},
+			"CommitteeSeatDTO": {
+				"properties": {
+					"from_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "From Date"
+					},
+					"to_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "To Date",
+						"description": "The last day, inclusive (the Kamer's TotEnMet); null while open."
+					},
+					"role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Role",
+						"description": "As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none."
+					},
+					"substitute": {
+						"type": "boolean",
+						"title": "Substitute",
+						"description": "A substitute's seat (``CommissieZetelVervangerPersoon``).",
+						"default": false
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "CommitteeSeatDTO",
+				"description": "One period a member held a seat on a committee."
+			},
 			"CourtKind": {
 				"type": "string",
 				"enum": [
@@ -7021,6 +7085,16 @@
 						],
 						"title": "Opened On Basis"
 					},
+					"submitted_on_tk": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Submitted On Tk",
+						"description": "The day the bill was submitted to the Tweede Kamer, as it dates it: the ``Zaak.GestartOp`` of the dossier's own zaak of a bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``); null for another dossier."
+					},
+					"last_activity": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Last Activity",
+						"description": "The day of its newest paper, activity that took place (not one only planned, cancelled or moved) or decision, as the Kamer dates them; null for none. ``sort=last_activity`` lists the dossiers by it, newest first."
+					},
 					"closed_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Closed On"
@@ -7507,6 +7581,16 @@
 							{ "type": "null" }
 						],
 						"title": "Opened On Basis"
+					},
+					"submitted_on_tk": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Submitted On Tk",
+						"description": "The day the bill was submitted to the Tweede Kamer, as it dates it: the ``Zaak.GestartOp`` of the dossier's own zaak of a bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``); null for another dossier."
+					},
+					"last_activity": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Last Activity",
+						"description": "The day of its newest paper, activity that took place (not one only planned, cancelled or moved) or decision, as the Kamer dates them; null for none. ``sort=last_activity`` lists the dossiers by it, newest first."
 					},
 					"closed_on": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9942,6 +10026,12 @@
 						"title": "Subjects",
 						"description": "Per area of law, as the source writes it (`Strafrecht`, `Bestuursrecht; Belastingrecht`), most first; a judgment counts for each of its areas; counted without the `subject` filter."
 					},
+					"subject_area": {
+						"items": { "$ref": "#/components/schemas/JudgmentFacetCount" },
+						"type": "array",
+						"title": "Subject Area",
+						"description": "Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter."
+					},
 					"procedure": {
 						"items": { "$ref": "#/components/schemas/JudgmentFacetCount" },
 						"type": "array",
@@ -10074,7 +10164,12 @@
 					"kind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Kind",
-						"description": "`heading`, `subheading` (a nested heading, or the kop: the first paragraph), `body` or `signature` (the closing lines that sign a conclusion: `De Procureur-Generaal bij de`, `Hoge Raad der Nederlanden`, `A-G`)."
+						"description": "`heading`, `subheading` (a nested heading, or the kop: the first paragraph, up to the end of the parties), `body`, `toc` (a line of a table of contents: no consideration, no heading, an id from its text) or `signature` (the closing lines that sign a conclusion: `De Procureur-Generaal bij de`, `Hoge Raad der Nederlanden`, `A-G`)."
+					},
+					"continues": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Continues",
+						"description": "Of a `body` paragraph without a number: the `paragraph_id` of the numbered consideration it goes on with (`rov-1`), up to the next number or heading. Null otherwise."
 					},
 					"text": { "type": "string", "title": "Text" },
 					"citations": {
@@ -10282,6 +10377,64 @@
 				"title": "LookupResponse",
 				"description": "The one node an exact lookup names, with what its URL is built back from."
 			},
+			"MemberCommitteeDTO": {
+				"properties": {
+					"from_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "From Date"
+					},
+					"to_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "To Date",
+						"description": "The last day, inclusive (the Kamer's TotEnMet); null while open."
+					},
+					"role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Role",
+						"description": "As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none."
+					},
+					"substitute": {
+						"type": "boolean",
+						"title": "Substitute",
+						"description": "A substitute's seat (``CommissieZetelVervangerPersoon``).",
+						"default": false
+					},
+					"key": { "type": "string", "title": "Key" },
+					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" },
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation"
+					},
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"default": "TK"
+					},
+					"observed_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed From",
+						"description": "Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer."
+					},
+					"observed_until": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Observed Until",
+						"description": "Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown."
+					},
+					"periods": {
+						"items": { "$ref": "#/components/schemas/CommitteeSeatDTO" },
+						"type": "array",
+						"title": "Periods",
+						"description": "Every seat on it, oldest first, when there was more than one or it has a role; the fields above are the one that represents them (an open seat before a closed one, a member's before a substitute's, the latest)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key"],
+				"title": "MemberCommitteeDTO",
+				"description": "A committee a member sat on, and their seat on it."
+			},
 			"MemberDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -10295,6 +10448,11 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Full Name",
 						"description": "``Gerard Adriaan van der Steur``; null when the TK gives none."
+					},
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "A stable name for a readable URL: ``rob-jetten``; a namesake who came later has the year they were born (``jan-de-vries-1971``), else their number of the Tweede Kamer. Never changes once given. ``/api/members?slug=`` and ``/api/lookup?kind=member`` find the member by it."
 					},
 					"family_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -10327,7 +10485,7 @@
 					"role": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Role",
-						"description": "In a committee of the Eerste Kamer: the role its page gives (``voorzitter``, ``ondervoorzitter``)."
+						"description": "In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``)."
 					},
 					"observed_from": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -10369,6 +10527,11 @@
 						"title": "Full Name",
 						"description": "``Gerard Adriaan van der Steur``; null when the TK gives none."
 					},
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "A stable name for a readable URL: ``rob-jetten``; a namesake who came later has the year they were born (``jan-de-vries-1971``), else their number of the Tweede Kamer. Never changes once given. ``/api/members?slug=`` and ``/api/lookup?kind=member`` find the member by it."
+					},
 					"family_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Family Name",
@@ -10400,7 +10563,7 @@
 					"role": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Role",
-						"description": "In a committee of the Eerste Kamer: the role its page gives (``voorzitter``, ``ondervoorzitter``)."
+						"description": "In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``)."
 					},
 					"observed_from": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -10429,6 +10592,12 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Government Name",
 						"description": "The name as Rijksoverheid writes it: S.Th.M. Hermans."
+					},
+					"committees": {
+						"items": { "$ref": "#/components/schemas/MemberCommitteeDTO" },
+						"type": "array",
+						"title": "Committees",
+						"description": "The committees they sat on, of either chamber, with their seat and role: those they sit on now first, then by name."
 					}
 				},
 				"additionalProperties": false,
@@ -10471,6 +10640,13 @@
 					"faction_key": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Faction Key"
+					},
+					"vote_source": {
+						"type": "string",
+						"enum": ["member", "faction"],
+						"title": "Vote Source",
+						"description": "``member``: their own vote, on a roll-call (hoofdelijke stemming); ``faction``: their faction's, cast while they belonged to it (``faction_key``).",
+						"default": "member"
 					}
 				},
 				"additionalProperties": false,

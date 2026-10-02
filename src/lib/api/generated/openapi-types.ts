@@ -1270,7 +1270,7 @@ export interface paths {
         };
         /**
          * The node a readable URL names, exactly
-         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug) and `cabinet` (`id`).
+         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).
          */
         get: operations["get_lookup_api_lookup_get"];
         put?: never;
@@ -1430,6 +1430,16 @@ export interface components {
             opened_on?: string | null;
             /** Opened On Basis */
             opened_on_basis?: ("first_paper" | "royal_message" | "earliest_record") | null;
+            /**
+             * Submitted On Tk
+             * @description The day the bill was submitted to the Tweede Kamer, as it dates it: the ``Zaak.GestartOp`` of the dossier's own zaak of a bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``); null for another dossier.
+             */
+            submitted_on_tk?: string | null;
+            /**
+             * Last Activity
+             * @description The day of its newest paper, activity that took place (not one only planned, cancelled or moved) or decision, as the Kamer dates them; null for none. ``sort=last_activity`` lists the dossiers by it, newest first.
+             */
+            last_activity?: string | null;
             /** Closed On */
             closed_on?: string | null;
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
@@ -2962,6 +2972,30 @@ export interface components {
             dossier_total: number;
         };
         /**
+         * CommitteeSeatDTO
+         * @description One period a member held a seat on a committee.
+         */
+        CommitteeSeatDTO: {
+            /** From Date */
+            from_date?: string | null;
+            /**
+             * To Date
+             * @description The last day, inclusive (the Kamer's TotEnMet); null while open.
+             */
+            to_date?: string | null;
+            /**
+             * Role
+             * @description As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none.
+             */
+            role?: string | null;
+            /**
+             * Substitute
+             * @description A substitute's seat (``CommissieZetelVervangerPersoon``).
+             * @default false
+             */
+            substitute: boolean;
+        };
+        /**
          * CourtKind
          * @enum {string}
          */
@@ -3603,6 +3637,16 @@ export interface components {
             opened_on?: string | null;
             /** Opened On Basis */
             opened_on_basis?: ("first_paper" | "royal_message" | "earliest_record") | null;
+            /**
+             * Submitted On Tk
+             * @description The day the bill was submitted to the Tweede Kamer, as it dates it: the ``Zaak.GestartOp`` of the dossier's own zaak of a bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``); null for another dossier.
+             */
+            submitted_on_tk?: string | null;
+            /**
+             * Last Activity
+             * @description The day of its newest paper, activity that took place (not one only planned, cancelled or moved) or decision, as the Kamer dates them; null for none. ``sort=last_activity`` lists the dossiers by it, newest first.
+             */
+            last_activity?: string | null;
             /** Closed On */
             closed_on?: string | null;
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
@@ -4081,6 +4125,16 @@ export interface components {
             opened_on?: string | null;
             /** Opened On Basis */
             opened_on_basis?: ("first_paper" | "royal_message" | "earliest_record") | null;
+            /**
+             * Submitted On Tk
+             * @description The day the bill was submitted to the Tweede Kamer, as it dates it: the ``Zaak.GestartOp`` of the dossier's own zaak of a bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``); null for another dossier.
+             */
+            submitted_on_tk?: string | null;
+            /**
+             * Last Activity
+             * @description The day of its newest paper, activity that took place (not one only planned, cancelled or moved) or decision, as the Kamer dates them; null for none. ``sort=last_activity`` lists the dossiers by it, newest first.
+             */
+            last_activity?: string | null;
             /** Closed On */
             closed_on?: string | null;
             /** @description The ministry (``GET /api/ministries``) of the bewindspersoon who signed the earliest signed document of the dossier first; null for an initiative or when nobody in government or parliament signed first. */
@@ -6192,6 +6246,11 @@ export interface components {
              */
             subjects?: components["schemas"]["JudgmentFacetCount"][];
             /**
+             * Subject Area
+             * @description Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter.
+             */
+            subject_area?: components["schemas"]["JudgmentFacetCount"][];
+            /**
              * Procedure
              * @description Per procedure (Rechtspraak `psi:procedure`, as written: `Hoger beroep`, `Cassatie`; null when it gives none), most first; counted without the `procedure` filter.
              */
@@ -6291,9 +6350,14 @@ export interface components {
             number?: string | null;
             /**
              * Kind
-             * @description `heading`, `subheading` (a nested heading, or the kop: the first paragraph), `body` or `signature` (the closing lines that sign a conclusion: `De Procureur-Generaal bij de`, `Hoge Raad der Nederlanden`, `A-G`).
+             * @description `heading`, `subheading` (a nested heading, or the kop: the first paragraph, up to the end of the parties), `body`, `toc` (a line of a table of contents: no consideration, no heading, an id from its text) or `signature` (the closing lines that sign a conclusion: `De Procureur-Generaal bij de`, `Hoge Raad der Nederlanden`, `A-G`).
              */
             kind?: string | null;
+            /**
+             * Continues
+             * @description Of a `body` paragraph without a number: the `paragraph_id` of the numbered consideration it goes on with (`rov-1`), up to the next number or heading. Null otherwise.
+             */
+            continues?: string | null;
             /** Text */
             text: string;
             /**
@@ -6474,6 +6538,59 @@ export interface components {
             };
         };
         /**
+         * MemberCommitteeDTO
+         * @description A committee a member sat on, and their seat on it.
+         */
+        MemberCommitteeDTO: {
+            /** From Date */
+            from_date?: string | null;
+            /**
+             * To Date
+             * @description The last day, inclusive (the Kamer's TotEnMet); null while open.
+             */
+            to_date?: string | null;
+            /**
+             * Role
+             * @description As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none.
+             */
+            role?: string | null;
+            /**
+             * Substitute
+             * @description A substitute's seat (``CommissieZetelVervangerPersoon``).
+             * @default false
+             */
+            substitute: boolean;
+            /** Key */
+            key: string;
+            /** Slug */
+            slug?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /**
+             * Chamber
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
+            /**
+             * Observed From
+             * @description Of the Eerste Kamer: the day a snapshot of eerstekamer.nl first showed it (not the day it began: the site gives no start as data); null for the Tweede Kamer.
+             */
+            observed_from?: string | null;
+            /**
+             * Observed Until
+             * @description Of the Eerste Kamer: the day of the first snapshot that no longer showed it (not the day it ended); null while it is shown.
+             */
+            observed_until?: string | null;
+            /**
+             * Periods
+             * @description Every seat on it, oldest first, when there was more than one or it has a role; the fields above are the one that represents them (an open seat before a closed one, a member's before a substitute's, the latest).
+             */
+            periods?: components["schemas"]["CommitteeSeatDTO"][];
+        };
+        /**
          * MemberDTO
          * @description A member of parliament or a minister.
          *
@@ -6498,6 +6615,11 @@ export interface components {
              * @description ``Gerard Adriaan van der Steur``; null when the TK gives none.
              */
             full_name?: string | null;
+            /**
+             * Slug
+             * @description A stable name for a readable URL: ``rob-jetten``; a namesake who came later has the year they were born (``jan-de-vries-1971``), else their number of the Tweede Kamer. Never changes once given. ``/api/members?slug=`` and ``/api/lookup?kind=member`` find the member by it.
+             */
+            slug?: string | null;
             /**
              * Family Name
              * @description The surname without its tussenvoegsel, as the TK gives it (``Persoon.Achternaam``): ``Steur``. A list sorted by surname (``sort=family_name``) sorts on it, then on ``name_prefix``.
@@ -6529,7 +6651,7 @@ export interface components {
             ek?: components["schemas"]["EkMembershipDTO"] | null;
             /**
              * Role
-             * @description In a committee of the Eerste Kamer: the role its page gives (``voorzitter``, ``ondervoorzitter``).
+             * @description In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``).
              */
             role?: string | null;
             /**
@@ -6576,6 +6698,11 @@ export interface components {
              */
             full_name?: string | null;
             /**
+             * Slug
+             * @description A stable name for a readable URL: ``rob-jetten``; a namesake who came later has the year they were born (``jan-de-vries-1971``), else their number of the Tweede Kamer. Never changes once given. ``/api/members?slug=`` and ``/api/lookup?kind=member`` find the member by it.
+             */
+            slug?: string | null;
+            /**
              * Family Name
              * @description The surname without its tussenvoegsel, as the TK gives it (``Persoon.Achternaam``): ``Steur``. A list sorted by surname (``sort=family_name``) sorts on it, then on ``name_prefix``.
              */
@@ -6606,7 +6733,7 @@ export interface components {
             ek?: components["schemas"]["EkMembershipDTO"] | null;
             /**
              * Role
-             * @description In a committee of the Eerste Kamer: the role its page gives (``voorzitter``, ``ondervoorzitter``).
+             * @description In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``).
              */
             role?: string | null;
             /**
@@ -6633,6 +6760,11 @@ export interface components {
              * @description The name as Rijksoverheid writes it: S.Th.M. Hermans.
              */
             government_name?: string | null;
+            /**
+             * Committees
+             * @description The committees they sat on, of either chamber, with their seat and role: those they sit on now first, then by name.
+             */
+            committees?: components["schemas"]["MemberCommitteeDTO"][];
         };
         /**
          * MemberVoteDTO
@@ -6677,6 +6809,13 @@ export interface components {
             party?: string | null;
             /** Faction Key */
             faction_key?: string | null;
+            /**
+             * Vote Source
+             * @description ``member``: their own vote, on a roll-call (hoofdelijke stemming); ``faction``: their faction's, cast while they belonged to it (``faction_key``).
+             * @default member
+             * @enum {string}
+             */
+            vote_source: "member" | "faction";
         };
         /**
          * MemberVotesResponse
@@ -8180,6 +8319,8 @@ export interface operations {
                 to?: string | null;
                 /** @description An area of law, one of `subjects` as written: `Strafrecht`, `Bestuursrecht; Belastingrecht`. */
                 subject?: string | null;
+                /** @description A main area of law: the judgments with a subject in it, `Bestuursrecht` for `Bestuursrecht` and `Bestuursrecht; Belastingrecht` alike (the part of a subject before its first `;`). */
+                subject_area?: string | null;
                 /** @description The procedure, as the source writes it (Rechtspraak `psi:procedure`): `Hoger beroep`, `Cassatie`, `Eerste aanleg - meervoudig`. */
                 procedure?: string | null;
                 cited_by_min?: number | null;
@@ -8753,7 +8894,7 @@ export interface operations {
                 committee?: string | null;
                 /** @description A number (``37035``: every dossier of that number), a dossier (``37035-XXII``) or a substring of the title. */
                 subject?: string | null;
-                /** @description The dossier's current phase, e.g. ``Verslag``. To filter on a phase being done at all, use ``has_phase``. */
+                /** @description Comma-separated: the dossiers whose current phase is one of them, e.g. ``Verslag`` or ``Stemmingen,Eindtekst``. To filter on a phase being done at all, use ``has_phase``. */
                 phase?: string | null;
                 /** @description Comma-separated phases; only dossiers that have done all of them, e.g. ``Memorie van toelichting,Advies Raad van State``. */
                 has_phase?: string | null;
@@ -8765,8 +8906,8 @@ export interface operations {
                 opened_from?: string | null;
                 /** @description Opened on or before this day. */
                 opened_to?: string | null;
-                /** @description ``number`` in the order of the Kamer, ``opened_on`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``. */
-                sort?: ("number" | "opened_on" | "closed_on" | "title") | null;
+                /** @description ``number`` in the order of the Kamer, ``opened_on``, ``last_activity`` and ``closed_on`` newest first, ``title`` alphabetically; ties by key. Default ``number`` with a ``number`` filter, else ``opened_on``. */
+                sort?: ("number" | "opened_on" | "last_activity" | "closed_on" | "title") | null;
                 limit?: number;
                 offset?: number;
             };
@@ -9087,6 +9228,8 @@ export interface operations {
                 capacity?: "bewindspersoon" | null;
                 /** @description Only those who held a post in this cabinet (key). */
                 cabinet?: string | null;
+                /** @description The member of this slug (``rob-jetten``); see ``slug``. */
+                slug?: string | null;
                 /** @description ``name`` (default): by the name they go by. ``family_name``: by surname, then tussenvoegsel, as the Kamer lists its members (Steur, van der); those without a surname in the source last. */
                 sort?: "name" | "family_name";
                 limit?: number;
@@ -10204,7 +10347,7 @@ export interface operations {
     get_lookup_api_lookup_get: {
         parameters: {
             query: {
-                kind: "document" | "dossier" | "article" | "law" | "judgment" | "publication" | "official" | "commitment" | "faction" | "committee" | "cabinet";
+                kind: "document" | "dossier" | "article" | "law" | "judgment" | "publication" | "official" | "commitment" | "faction" | "committee" | "cabinet" | "member";
                 dossier?: string | null;
                 number?: string | null;
                 law?: string | null;
