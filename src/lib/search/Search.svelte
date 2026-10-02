@@ -16,7 +16,7 @@
 		parseCitation,
 		lawAbbreviation,
 		lawTitle,
-		resolveLaw,
+		resolvedOf,
 		resolveQuery,
 		type Citation,
 		type Resolved
@@ -92,6 +92,8 @@
 	let unresolved = $state('');
 	/** "55 Gw" typed without "art.", which the API confirmed as an article. */
 	let confirmed = $state<{ term: string; target: Resolved } | null>(null);
+	/** What /api/search resolved the query to, with its hits (`resolve=true`, API 0.74). */
+	let resolvedWith = $state<{ term: string; target: Resolved | null } | null>(null);
 	// A regeling named by its title that the API does not know ("Omgevingswet"): the
 	// network holds a selection of laws, and the hits only mention it.
 	let outside = $state('');
@@ -174,26 +176,24 @@
 					.catch(() => {
 						// The words are searched all the same.
 					});
-			} else if (abbreviation || title) {
-				// "AVG": the law it stands for, first, beside what the words find. A title the
-				// API does not know is a law outside the selection.
-				resolveLaw(abbreviation ?? title ?? term)
-					.then((target) => {
-						if (controller.signal.aborted) return;
-						if (target) confirmed = { term, target };
-						else if (title) outside = term;
-					})
-					.catch(() => {
-						// The words are searched all the same.
-					});
 			}
+			// One request: the hits and what the query cites (BE-16). "AVG" has its law the
+			// moment its hits are there, so Enter cannot open a hit before the law is known.
 			unwrap(
 				api.GET('/api/search', {
-					params: { query: { q: term, types: [...kinds], limit: LIMIT } },
+					params: { query: { q: term, types: [...kinds], limit: LIMIT, resolve: true } },
 					signal: controller.signal
 				})
 			)
 				.then((r) => {
+					const target = resolvedOf(r.resolved);
+					resolvedWith = { term, target };
+					if (abbreviation || title) {
+						// The law an abbreviation stands for, first; a title the API does not know
+						// is a law outside the selection.
+						if (target?.ref.collection === 'instruments') confirmed = { term, target };
+						else if (title) outside = term;
+					}
 					results = r.results;
 					answered = term;
 					loading = false;
@@ -245,7 +245,9 @@
 		if (resolving) return;
 		const term = q;
 		resolving = true;
-		const target = await resolveQuery(term);
+		// The answer that came with the hits, where it names the bron; else the full way.
+		const known = resolvedWith?.term === term ? resolvedWith.target : null;
+		const target = known ?? (await resolveQuery(term));
 		resolving = false;
 		if (target) {
 			track('search_resolved', { type: target.ref.collection });
