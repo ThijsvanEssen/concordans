@@ -666,6 +666,18 @@ describe('the body as the reader lays it out', () => {
 		]);
 	});
 
+	it('leaves out the heading of a table of contents with its lines', () => {
+		const items = bodyItems([
+			p('heading', 'Inhoudsopgave'),
+			p('toc', '1 Procesverloop'),
+			p('toc', '2 Uitgangspunten en feiten (2.1-2.3.2)'),
+			p('heading', 'Procesverloop', '1')
+		]);
+		expect(items.map((i) => (i.kind === 'heading' ? i.text : i.kind))).toEqual([
+			'1. Procesverloop'
+		]);
+	});
+
 	it('puts the number of a heading before its title', () => {
 		const items = bodyItems([
 			p('heading', 'Beoordeling van de aanvraag', '3'),
