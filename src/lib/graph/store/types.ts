@@ -90,7 +90,11 @@ export type GraphStore = {
 		participants: NetwerkParticipant[];
 		withJoining: boolean;
 		fresh: boolean;
+		/** Bronnen on the paths between the chosen ones (`mergePaths`), kept as joining. */
+		onPaths?: string[];
 	}) => { alone: ReadonlySet<string>; joining: string[] };
+	/** Draws the paths between chosen bronnen (`/api/paths`, API 0.73); returns what it drew. */
+	mergePaths: (response: Schema<'PathsResponse'>) => string[];
 	/** The chosen bronnen and what ties them, while a netwerk is drawn; null otherwise. */
 	core: Readable<ReadonlySet<string> | null>;
 	/** Leaves only the chosen bronnen, what ties them and the selection. */

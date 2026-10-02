@@ -15,7 +15,7 @@ import type { GraphStore } from './types';
 
 export function createExpansion(
 	ctx: GraphContext
-): Pick<GraphStore, 'expandNode' | 'expandNeighborhood' | 'nodeResponse'> {
+): Pick<GraphStore, 'expandNode' | 'expandNeighborhood' | 'nodeResponse' | 'mergePaths'> {
 	const {
 		nodes,
 		cache,
@@ -57,6 +57,67 @@ export function createExpansion(
 		return request;
 	};
 
+	type SubNode = Schema<'NodeNeighborhoodResponse'>['nodes'][number];
+	type SubEdge = Schema<'NodeNeighborhoodResponse'>['edges'][number];
+
+	/**
+	 * Draws the nodes and edges of a subgraph (a neighbourhood, the paths between chosen
+	 * bronnen) by the canvas's rules: a container becomes a hull, a wet a stuk changes its
+	 * anchor, an edge under the threshold stays out. Returns what it drew.
+	 */
+	function mergeSubgraph(nodesIn: SubNode[], edgesIn: SubEdge[], focalId: string | null) {
+		const byId = new Map(nodesIn.map((n) => [`${n.collection}/${n.key}`, n]));
+		const drawn = new Set<string>();
+		for (const node of nodesIn) {
+			// The requested bron itself is drawn even when it is a container: it stays
+			// selectable for the reader, though `GraphView` never draws it as a canvas
+			// node. A container met only as a neighbour is folded into a hull instead.
+			const isFocal = `${node.collection}/${node.key}` === focalId;
+			if (isFocal) {
+				const containerKind = containerKindOf(node.collection);
+				if (containerKind) recordContainerFor(node, containerKind);
+			}
+			const graphNode = isFocal ? nodeToGraphNode(node) : drawable(node);
+			if (!graphNode) continue;
+			touchNode(graphNode.id, graphNode);
+			drawn.add(graphNode.id);
+		}
+
+		// An edge to a container is recorded rather than drawn, whether the container
+		// is a neighbour left out above or the bron this neighbourhood is centred on
+		// (`isContainerMembership`: any relation, except a wet, where only PART_OF —
+		// an article — counts; a stuk that merely AMENDS or REFERS_TO the wet is not
+		// one of its articles and stays a dropped edge, not a member of its hull).
+		for (const e of edgesIn) {
+			const relation = relationOf(e.relation);
+			if (!relation) continue;
+			const targetNode = byId.get(e.target);
+			const targetKind = targetNode && containerKindOf(targetNode.collection);
+			if (targetKind && isContainerMembership(targetKind, relation) && drawn.has(e.source)) {
+				recordContainerMember(targetKind, containerIdFor(targetNode!), e.source, relation);
+				continue;
+			}
+			// A wet a drawn stuk changes is drawn as its anchor (`lawAnchor`).
+			const changed = targetNode && drawn.has(e.source) && lawAnchor(targetNode, relation);
+			if (changed) {
+				drawn.add(changed.id);
+				addEdge(e.source, changed.id, relation, { confidence: e.confidence, status: e.status });
+				continue;
+			}
+			const sourceNode = byId.get(e.source);
+			const sourceKind = sourceNode && containerKindOf(sourceNode.collection);
+			if (sourceKind && isContainerMembership(sourceKind, relation) && drawn.has(e.target)) {
+				recordContainerMember(sourceKind, containerIdFor(sourceNode!), e.target, relation);
+				continue;
+			}
+			if (!drawn.has(e.source) || !drawn.has(e.target)) continue;
+			const source = nodes.get(e.source);
+			if (!source || !passesThreshold(relation, source.kind, e.confidence)) continue;
+			addEdge(e.source, e.target, relation, { confidence: e.confidence, status: e.status });
+		}
+		return { byId, drawn };
+	}
+
 	return {
 		nodeResponse,
 
@@ -67,59 +128,32 @@ export function createExpansion(
 			return nodes.get(mergeResponse(response, draw) ?? id) ?? null;
 		},
 
+		mergePaths: (response) => {
+			// A path through a wet by one of its articles (stuk → Awb ← art. 3:7, PART_OF) says
+			// no more than that the stuk names the wet the article is in: it is left out, and
+			// with it what only it brought.
+			const throughLaw = new Set(
+				response.edges
+					.filter((e) => e.relation === 'PART_OF' && e.target.startsWith('instruments/'))
+					.map((e) => e.id)
+			);
+			const paths = response.paths.filter((p) => !p.edge_ids.some((id) => throughLaw.has(id)));
+			const onPath = new Set(paths.flatMap((p) => p.node_ids));
+			const edgeIds = new Set(paths.flatMap((p) => p.edge_ids));
+			const { drawn } = mergeSubgraph(
+				response.nodes.filter((n) => onPath.has(`${n.collection}/${n.key}`)),
+				response.edges.filter((e) => edgeIds.has(e.id)),
+				null
+			);
+			emit();
+			return [...drawn];
+		},
+
 		expandNeighborhood: async (collection, key, opts = {}) => {
 			const response = await getNodeNeighborhood(collection, key, { ...opts, signal: signal() });
 			const additive = !!opts.relations || !!opts.additive;
 
-			const byId = new Map(response.nodes.map((n) => [`${n.collection}/${n.key}`, n]));
-			const drawn = new Set<string>();
-			for (const node of response.nodes) {
-				// The requested bron itself is drawn even when it is a container: it stays
-				// selectable for the reader, though `GraphView` never draws it as a canvas
-				// node. A container met only as a neighbour is folded into a hull instead.
-				const isFocal = `${node.collection}/${node.key}` === response.focal_id;
-				if (isFocal) {
-					const containerKind = containerKindOf(node.collection);
-					if (containerKind) recordContainerFor(node, containerKind);
-				}
-				const graphNode = isFocal ? nodeToGraphNode(node) : drawable(node);
-				if (!graphNode) continue;
-				touchNode(graphNode.id, graphNode);
-				drawn.add(graphNode.id);
-			}
-
-			// An edge to a container is recorded rather than drawn, whether the container
-			// is a neighbour left out above or the bron this neighbourhood is centred on
-			// (`isContainerMembership`: any relation, except a wet, where only PART_OF —
-			// an article — counts; a stuk that merely AMENDS or REFERS_TO the wet is not
-			// one of its articles and stays a dropped edge, not a member of its hull).
-			for (const e of response.edges) {
-				const relation = relationOf(e.relation);
-				if (!relation) continue;
-				const targetNode = byId.get(e.target);
-				const targetKind = targetNode && containerKindOf(targetNode.collection);
-				if (targetKind && isContainerMembership(targetKind, relation) && drawn.has(e.source)) {
-					recordContainerMember(targetKind, containerIdFor(targetNode!), e.source, relation);
-					continue;
-				}
-				// A wet a drawn stuk changes is drawn as its anchor (`lawAnchor`).
-				const changed = targetNode && drawn.has(e.source) && lawAnchor(targetNode, relation);
-				if (changed) {
-					drawn.add(changed.id);
-					addEdge(e.source, changed.id, relation, { confidence: e.confidence, status: e.status });
-					continue;
-				}
-				const sourceNode = byId.get(e.source);
-				const sourceKind = sourceNode && containerKindOf(sourceNode.collection);
-				if (sourceKind && isContainerMembership(sourceKind, relation) && drawn.has(e.target)) {
-					recordContainerMember(sourceKind, containerIdFor(sourceNode!), e.target, relation);
-					continue;
-				}
-				if (!drawn.has(e.source) || !drawn.has(e.target)) continue;
-				const source = nodes.get(e.source);
-				if (!source || !passesThreshold(relation, source.kind, e.confidence)) continue;
-				addEdge(e.source, e.target, relation, { confidence: e.confidence, status: e.status });
-			}
+			const { byId, drawn } = mergeSubgraph(response.nodes, response.edges, response.focal_id);
 
 			// A neighbourhood request replaces the canvas's exploratory context: without
 			// this, a bron revisited after browsing elsewhere keeps edges from every stop
