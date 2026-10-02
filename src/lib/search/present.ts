@@ -170,6 +170,22 @@ export function presentHit(hit: Hit, query: string): Presented {
 			return { title: hit.display_name ?? hit.key, context: extra(hit, 'bwb_id'), snippet: null };
 		case 'members':
 			return { title: hit.display_name ?? hit.key, context: extra(hit, 'party'), snippet: null };
+		case 'commitments': {
+			// A toezegging by its text, with its number and the day it was made: "TZ202609-117,
+			// 29 sep. 2026", and its status where it is not open.
+			const status = extra(hit, 'status');
+			return {
+				title: hit.display_name ?? hit.key,
+				context: [
+					extra(hit, 'number'),
+					korteDatum(extra(hit, 'made_on')),
+					status && status !== 'Openstaand' ? status.toLowerCase() : ''
+				]
+					.filter(Boolean)
+					.join(', '),
+				snippet: null
+			};
+		}
 		case 'cabinets': {
 			// "kabinet-Schoof", with its period (BE-35): "2 jul. 2024 tot 23 feb. 2026".
 			const from = korteDatum(extra(hit, 'from_date'));
@@ -216,6 +232,7 @@ export function bySection(hits: Hit[]): Hit[] {
  */
 const TIE_ORDER: readonly Collection[] = [
 	'cabinets',
+	'commitments',
 	'factions',
 	'members',
 	'dossiers',

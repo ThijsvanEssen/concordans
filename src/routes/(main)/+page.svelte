@@ -42,7 +42,7 @@
 		{
 			id: 'kabinet',
 			label: 'Kabinet',
-			kinds: ['cabinets', 'members'],
+			kinds: ['cabinets', 'members', 'commitments'],
 			tekens: ['cabinets', 'members', 'commitments'],
 			href: indexHref('cabinets')
 		}

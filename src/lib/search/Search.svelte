@@ -57,6 +57,7 @@
 		// People and bodies before the papers that merely name them.
 		'cabinets',
 		'members',
+		'commitments',
 		'factions',
 		'committees',
 		'documents'

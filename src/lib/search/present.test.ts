@@ -223,3 +223,18 @@ describe('a cabinet', () => {
 		});
 	});
 });
+
+describe('a toezegging', () => {
+	it('is named by its text, with its number and day', () => {
+		const tz = hit({
+			collection: 'commitments',
+			key: 't',
+			display_name: 'De Kamer ontvangt de rapportage mensenhandel',
+			extra: { number: 'TZ202609-117', made_on: '2026-09-29', status: 'Openstaand' }
+		});
+		expect(presentHit(tz, 'mensenhandel')).toMatchObject({
+			title: 'De Kamer ontvangt de rapportage mensenhandel',
+			context: 'TZ202609-117, 29 sep. 2026'
+		});
+	});
+});
