@@ -864,3 +864,139 @@ export function signatureStart(
 	}
 	return i;
 }
+
+// ── The body as the reader lays it out ──────────────────────────────────────
+type Paragraph = Schema<'JudgmentParagraph'>;
+
+export type BodyItem =
+	| { kind: 'heading'; text: string; id: string }
+	| { kind: 'subheading'; text: string }
+	| {
+			kind: 'rov';
+			num: string;
+			subTitle: string | null;
+			body: string;
+			citations?: Span[];
+			/** The anchor of the overweging: `paragraph_id` of its paragraph, else `rov-<num>`. */
+			id: string;
+	  }
+	| {
+			kind: 'prose';
+			body: string;
+			citations?: Span[];
+			id?: string;
+			/** It continues the overweging above it: the API numbers only an overweging's first paragraph. */
+			within: boolean;
+	  };
+
+/**
+ * A paragraph that is a title, though the API gives it as body: "Procesverloop",
+ * "Overwegingen", "Toetsingskader" (Raad van State, rechtbank, CRvB). One short line that
+ * starts with a capital and ends without a stop, a comma, a colon, a bracket or a quote.
+ * TODO(backend I): goes once every court's titles come as subheading or heading.
+ */
+export function isTitleLine(text: string): boolean {
+	const t = text.trim();
+	return (
+		t.length >= 3 &&
+		t.length <= 80 &&
+		!t.includes('\n') &&
+		/^[A-ZÀ-Ý]/.test(t) &&
+		/[a-zà-ÿ]/.test(t) &&
+		!/[.,;:)\]’”"'»?!]$/.test(t)
+	);
+}
+
+/** The line that ends the parties of a conclusion or an arrest: "hierna: de verdachte". */
+const PARTIES_END_RE = /^\(?hierna(?: te noemen)?\s*:/i;
+
+/**
+ * What the first subheading holds after the kop: the text that the source left in it
+ * (TODO(backend H)). A conclusion's first points follow "hierna: de verdachte" there
+ * (PHR:2026:901); an arrest's first chapters follow its kop (HR:2026:1530). Blocks of
+ * the text, or none where the subheading is only the kop.
+ */
+export function headRest(text: string): string[] {
+	const blocks = text
+		.split(/\n[ \t]*\n+/)
+		.map((b) => b.trim())
+		.filter(Boolean);
+	// After the first section heading of the kop (judgmentHead stops there) …
+	let from = blocks.findIndex((b, i) => i > 2 && HEAD_END_RE.test(b.replace(/\s+/g, ' ')));
+	// … else after the line that names the last party.
+	if (from < 0) {
+		const last = blocks.findLastIndex((b) => PARTIES_END_RE.test(b));
+		from = last < 0 ? -1 : last + 1;
+	}
+	if (from < 0 || from >= blocks.length) return [];
+	const rest = blocks.slice(from);
+	// Only an argument, not the tail of a kop: some sentence of some length in it.
+	return rest.some((b) => b.length > 120 && /[.:]$/.test(b)) ? rest : [];
+}
+
+/**
+ * The paragraphs of a judgment, up to its signature, as the reader shows them: headings,
+ * subheadings, numbered overwegingen, and prose that either continues the overweging
+ * above it or stands on its own. The first subheading is the kop (the participants
+ * table shows it); only what the source left after it is read.
+ */
+export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
+	const first = paragraphs.find((p) => p.kind === 'subheading');
+	const items: BodyItem[] = [];
+	let within = false;
+
+	const body = (text: string, citations: Span[] | undefined, number: unknown, paraId?: string) => {
+		const segs = splitBodyParagraph(text, citations ?? []);
+		segs.forEach((seg, i) => {
+			if (seg.kind === 'heading') {
+				items.push({ kind: 'heading', text: seg.text, id: headingId(seg.text) });
+				within = false;
+				return;
+			}
+			const num = seg.num ?? (i === 0 && number != null ? String(number) : null);
+			if (num) {
+				items.push({
+					kind: 'rov',
+					num,
+					subTitle: seg.subTitle,
+					body: seg.body,
+					citations: seg.citations,
+					id: (i === 0 && paraId) || `rov-${num}`
+				});
+				within = true;
+				return;
+			}
+			if (segs.length === 1 && isTitleLine(seg.body)) {
+				items.push({ kind: 'subheading', text: seg.body });
+				within = false;
+				return;
+			}
+			items.push({
+				kind: 'prose',
+				body: seg.body,
+				citations: seg.citations,
+				id: i === 0 ? paraId : undefined,
+				within
+			});
+		});
+	};
+
+	for (const p of paragraphs) {
+		if (p.kind === 'subheading') {
+			if (p === first) for (const block of headRest(p.text)) body(block, [], null);
+			else {
+				items.push({ kind: 'subheading', text: normalizeParagraphText(p.text) });
+				within = false;
+			}
+		} else if (p.kind === 'heading') {
+			// The number the API gives apart stands before the title, as in "1. Procesverloop".
+			const title = normalizeParagraphText(p.text);
+			const nr = p.number != null ? String(p.number) : null;
+			const text = nr && !title.startsWith(nr) ? `${nr}. ${title}` : title;
+			// The anchor stays that of the title alone, so a shared link keeps working.
+			items.push({ kind: 'heading', text, id: headingId(title) });
+			within = false;
+		} else body(p.text, p.citations ?? [], p.number, p.paragraph_id ?? undefined);
+	}
+	return items;
+}

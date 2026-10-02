@@ -15,13 +15,11 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import {
-		headingId,
 		judgmentParticipants,
 		forParties,
 		partiesByRole,
-		normalizeParagraphText,
 		signatureStart,
-		splitBodyParagraph,
+		bodyItems,
 		splitSummary
 	} from './judgment-text';
 	import { formatDate, textProp } from './_shared';
@@ -43,8 +41,6 @@
 	// an API paragraph, else built from its number — a later split shares one `paragraph_id`
 	// with the first and needs its own anchor.
 	const ecliKey = (e: string) => e.toLowerCase().replaceAll(':', '_');
-
-	const rov = (number: string, id?: string | null) => id || `rov-${number}`;
 
 	// Citeren van een overweging, parallel aan `citeArticle` voor een lid.
 	// Kort: HR 19 juli 2019, r.o. 3.1 (EHRM …, § 9); voluit with the ECLI. The date is in both.
@@ -126,10 +122,12 @@
 			(j.source === 'rechtspraak' && j.ecli
 				? `https://deeplink.rechtspraak.nl/uitspraak?id=${encodeURIComponent(j.ecli)}`
 				: null)}
-		{@const firstSubheading = paragraphs.find((p) => p.kind === 'subheading')}
 		{@const participants = judgmentParticipants(j)}
 		{@const hasSummary = !!j.summary?.trim()}
 		{@const signed = signatureStart(paragraphs)}
+		{@const items = bodyItems(paragraphs.slice(0, signed))}
+		<!-- With numbers, all text stands in one column and the numbers hang left of it. -->
+		{@const numbered = items.some((it) => it.kind === 'rov')}
 		{@const conclusion = j.decision_kind === 'conclusie'}
 		{@const replacedBy = j.same_as ?? null}
 		<!-- A replacement the dataset lacks: named, without a link (`replaced_by`, API 0.72). -->
@@ -270,87 +268,64 @@
 			</table>
 		{/if}
 
-		<div class="reader-body" bind:this={root}>
-			{#each paragraphs.slice(0, signed) as para, paraIdx (paraIdx)}
-				{#if para.kind === 'subheading'}
-					<!-- The first subheading is replaced by the participants table above. -->
-					{#if para !== firstSubheading}
-						<p class="reader-subheading">{normalizeParagraphText(para.text)}</p>
-					{/if}
-				{:else if para.kind === 'heading'}
-					{@const clean = normalizeParagraphText(para.text)}
-					{@const hid = headingId(clean)}
-					<h3 class="reader-heading" id={hid}>
-						<span class="reader-heading__text">{clean}</span>
+		<div class="reader-body" class:reader-body--numbered={numbered} bind:this={root}>
+			{#each items as item, k (k)}
+				{#if item.kind === 'subheading'}
+					<p class="reader-subheading">{item.text}</p>
+				{:else if item.kind === 'heading'}
+					<h3 class="reader-heading" id={item.id}>
+						<span class="reader-heading__text">{item.text}</span>
 						<CiteMenu
-							items={citeItems(null, permalink(page.url, hid))}
-							name={clean}
+							items={citeItems(null, permalink(page.url, item.id))}
+							name={item.text}
 							buttonClass="reader-heading__link"
 						/>
 					</h3>
-				{:else}
-					{#each splitBodyParagraph(para.text, para.citations) as seg, i (i)}
-						{#if seg.kind === 'heading'}
-							{@const hid = headingId(seg.text)}
-							<h3 class="reader-heading" id={hid}>
-								<span class="reader-heading__text">{seg.text}</span>
-								<CiteMenu
-									items={citeItems(null, permalink(page.url, hid))}
-									name={seg.text}
-									buttonClass="reader-heading__link"
-								/>
-							</h3>
-						{:else if seg.num || (i === 0 && para.number)}
-							{@const num = String(seg.num ?? para.number)}
-							{@const rovId = rov(num, i === 0 ? para.paragraph_id : null)}
-							{@const forms = citeOverweging(
-								num,
-								j.ecli ?? null,
-								textProp(j.props?.date),
-								textProp(j.props?.court),
-								rovId,
-								author
-							)}
-							<div
-								id={rovId}
-								class="reader-para-block"
-								class:reader-para-block--sub={seg.depth > 0}
-								class:is-open={menuFor === rovId}
-								style={seg.depth > 1 ? `padding-left:${(seg.depth - 1) * 1.2}em` : ''}
-							>
-								<span class="reader-para-num">{num}</span>
-								<div class="reader-para-inner">
-									{#if seg.subTitle}
-										<p class="reader-para-subtitle">{seg.subTitle}</p>
-									{/if}
-									<p class="reader-para">
-										<CitedText text={seg.body} citations={seg.citations} />
-									</p>
-								</div>
-								<div class="reader-para-side">
-									<span class="reader-para-actions">
-										{#if forms}
-											<CiteMenu
-												items={citeItems(forms, forms.link)}
-												name="{conclusion ? 'punt' : 'overweging'} {num}"
-												buttonClass="btn reader-para-btn"
-												onToggle={(open) =>
-													(menuFor = open ? rovId : menuFor === rovId ? null : menuFor)}
-											/>
-										{/if}
-									</span>
-								</div>
-							</div>
-						{:else}
-							<!-- An unnumbered paragraph is still a target: its positional id (`p-21`). -->
-							<p
-								class="reader-para reader-para--prose"
-								id={i === 0 ? para.paragraph_id : undefined}
-							>
-								<CitedText text={seg.body} citations={seg.citations} />
+				{:else if item.kind === 'rov'}
+					{@const forms = citeOverweging(
+						item.num,
+						j.ecli ?? null,
+						textProp(j.props?.date),
+						textProp(j.props?.court),
+						item.id,
+						author
+					)}
+					<!-- Every number in one column, whatever its depth; Citeer under it, so the
+					     text of an overweging is as wide as the prose around it. -->
+					<div id={item.id} class="reader-para-block" class:is-open={menuFor === item.id}>
+						<div class="reader-para-num">
+							<span>{item.num}</span>
+							{#if forms}
+								<span class="reader-para-actions">
+									<CiteMenu
+										items={citeItems(forms, forms.link)}
+										name="{conclusion ? 'punt' : 'overweging'} {item.num}"
+										buttonClass="btn reader-para-btn"
+										onToggle={(open) =>
+											(menuFor = open ? item.id : menuFor === item.id ? null : menuFor)}
+									/>
+								</span>
+							{/if}
+						</div>
+						<div class="reader-para-inner">
+							{#if item.subTitle}
+								<p class="reader-para-subtitle">{item.subTitle}</p>
+							{/if}
+							<p class="reader-para">
+								<CitedText text={item.body} citations={item.citations} />
 							</p>
-						{/if}
-					{/each}
+						</div>
+					</div>
+				{:else}
+					<!-- An unnumbered paragraph is still a target: its positional id (`p-21`).
+					     Under an overweging it continues it, in the same column. -->
+					<p
+						class="reader-para reader-para--prose"
+						class:reader-para--within={item.within}
+						id={item.id}
+					>
+						<CitedText text={item.body} citations={item.citations} />
+					</p>
 				{/if}
 			{/each}
 			{#if signed < paragraphs.length}
@@ -570,18 +545,29 @@
 		max-width: var(--measure);
 	}
 
+	/* The number of an overweging hangs left of the text; every paragraph of a judgment
+	   with numbers stands in the text column, so an overweging and what continues it
+	   start at one edge. */
+	.reader-body {
+		--rov-num: 3.4em;
+		--rov-gap: var(--s-3);
+	}
+	.reader-body--numbered .reader-para--prose {
+		margin-left: calc(var(--rov-num) + var(--rov-gap) - var(--s-2));
+	}
+
 	.reader-para:last-child {
 		margin-bottom: 0;
 	}
 
 	.reader-para-block {
 		display: grid;
-		grid-template-columns: 2.8em 1fr 130px;
-		gap: 0 var(--s-3);
-		margin-bottom: 1.4em;
+		grid-template-columns: var(--rov-num) minmax(0, 1fr);
+		gap: 0 var(--rov-gap);
+		margin-bottom: 1.3em;
 		padding: 2px var(--s-2) 2px 0;
 		margin-left: calc(-1 * var(--s-2));
-		max-width: calc(var(--measure) + 2.8em + 130px + 2 * var(--s-3));
+		max-width: calc(var(--measure) + var(--rov-num) + var(--rov-gap) + var(--s-2));
 	}
 
 	.reader-para-block {
@@ -602,11 +588,12 @@
 			6px 0 0 var(--accent-soft);
 	}
 
-	.reader-para-block--sub {
-		margin-bottom: 1em;
-	}
-
+	/* The number, and under it Citeer. */
 	.reader-para-num {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink-3);
@@ -617,18 +604,8 @@
 		flex-shrink: 0;
 	}
 
-	.reader-para-block--sub .reader-para-num {
-		opacity: 0.7;
-	}
-
 	.reader-para-inner {
 		min-width: 0;
-	}
-
-	.reader-para-side {
-		display: flex;
-		align-items: flex-start;
-		padding-top: 0.2em;
 	}
 
 	.reader-para-actions {

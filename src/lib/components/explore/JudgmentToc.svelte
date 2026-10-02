@@ -7,12 +7,7 @@
 	// request in flight with JudgmentReader (`getJudgmentDetail`'s own cache).
 	import { getJudgmentDetail } from '$lib/api/judgments';
 	import type { GraphNode } from '$lib/graph/types';
-	import {
-		headingId,
-		judgmentParticipants,
-		normalizeParagraphText,
-		splitBodyParagraph
-	} from './readers/judgment-text';
+	import { bodyItems, judgmentParticipants, signatureStart } from './readers/judgment-text';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -53,19 +48,9 @@
 				const out: Item[] = [];
 				if (j.summary?.trim()) out.push({ id: 'summary', label: 'Samenvatting', kind: 'summary' });
 				if (hasParties) out.push({ id: 'parties', label: 'Partijen', kind: 'parties' });
-				for (const para of paragraphs) {
-					if (para.kind === 'heading') {
-						const clean = normalizeParagraphText(para.text);
-						out.push({ id: headingId(clean), label: clean, kind: 'heading' });
-						continue;
-					}
-					if (para.kind !== 'subheading') {
-						for (const seg of splitBodyParagraph(para.text)) {
-							if (seg.kind === 'heading')
-								out.push({ id: headingId(seg.text), label: seg.text, kind: 'heading' });
-						}
-					}
-				}
+				// The headings as the reader lays the body out, the text left in the kop included.
+				for (const item of bodyItems(paragraphs.slice(0, signatureStart(paragraphs))))
+					if (item.kind === 'heading') out.push({ id: item.id, label: item.text, kind: 'heading' });
 				items = out;
 			})
 			.catch(() => {

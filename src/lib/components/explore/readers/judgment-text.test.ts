@@ -1,13 +1,16 @@
 import { describe, expect, it, test } from 'vitest';
 import {
-	signatureStart,
+	bodyItems,
 	caseArea,
 	extractParticipants,
 	extractParties,
+	forParties,
+	headRest,
+	isTitleLine,
 	judgmentHead,
 	judgmentParticipants,
-	forParties,
 	partiesByRole,
+	signatureStart,
 	splitBodyParagraph
 } from './judgment-text';
 
@@ -589,5 +592,81 @@ describe('signatureStart', () => {
 	it('leaves a text that ends otherwise alone', () => {
 		const paragraphs = [body('Dit arrest is gewezen door de vice-president.'), body('A-G', '5.1')];
 		expect(signatureStart(paragraphs)).toBe(2);
+	});
+});
+
+describe('the body as the reader lays it out', () => {
+	const p = (kind: string, text: string, number: string | null = null, paragraph_id?: string) =>
+		({ kind, text, number, paragraph_id, citations: [] }) as never;
+
+	it('keeps a paragraph under the overweging it continues (RVS:2026:5682, r.o. 1)', () => {
+		const items = bodyItems([
+			p('subheading', 'AFDELING\n\nBESTUURSRECHTSPRAAK'),
+			p('body', 'Overgangsrecht inwerkingtreding Omgevingswet', null, 'p-1'),
+			p(
+				'body',
+				'Op 1 januari 2024 zijn de Omgevingswet en de Invoeringswet in werking getreden.',
+				'1',
+				'rov-1'
+			),
+			p('body', 'De aanvraag om een omgevingsvergunning is ingediend op 22 mei 2022.', null, 'p-2'),
+			p('body', 'Inleiding', null, 'p-3'),
+			p(
+				'body',
+				'Tot slot stelt appellant dat de vergunning leidt tot rechtsongelijkheid.',
+				null,
+				'p-4'
+			)
+		]);
+		expect(items.map((i) => (i.kind === 'prose' ? `prose:${i.within}` : i.kind))).toEqual([
+			'subheading',
+			'rov',
+			'prose:true',
+			'subheading',
+			'prose:false'
+		]);
+		expect(items[1]).toMatchObject({ kind: 'rov', num: '1', id: 'rov-1' });
+	});
+
+	it('reads the text a conclusion left in its kop, after "hierna: de verdachte"', () => {
+		const kop = [
+			'PROCUREUR-GENERAAL',
+			'BIJ DE',
+			'HOGE RAAD DER NEDERLANDEN',
+			'CONCLUSIE',
+			'[verdachte] ,',
+			'hierna: de verdachte',
+			'De verdachte is bij arrest van 7 oktober 2014 door het gerechtshof niet-ontvankelijk verklaard in het hoger beroep, ingesteld tegen het vonnis van de politierechter.',
+			'Derhalve is het cassatieberoep ontvankelijk.'
+		].join('\n\n');
+		expect(headRest(kop)).toHaveLength(2);
+		const items = bodyItems([p('subheading', kop)]);
+		expect(items.map((i) => i.kind)).toEqual(['prose', 'prose']);
+	});
+
+	it('puts the number of a heading before its title', () => {
+		const items = bodyItems([
+			p('heading', 'Beoordeling van de aanvraag', '3'),
+			p('heading', '4. Beslissing', '4')
+		]);
+		expect(items.map((i) => (i.kind === 'heading' ? i.text : ''))).toEqual([
+			'3. Beoordeling van de aanvraag',
+			'4. Beslissing'
+		]);
+	});
+
+	it('leaves a kop that is only a kop', () => {
+		expect(
+			headRest('HOGE RAAD\n\nSTRAFKAMER\n\nNummer 25/04731\n\nARREST\n\nhierna: de klager.')
+		).toEqual([]);
+	});
+
+	it('takes a short line without a stop for a title, a sentence or a signature not', () => {
+		expect(isTitleLine('Toetsingskader')).toBe(true);
+		expect(isTitleLine('Bijlage: lijst van gebruikte afkortingen')).toBe(true);
+		expect(isTitleLine('(zie hierna in 4.1-4.8)')).toBe(false);
+		expect(isTitleLine('w.g. Minderhoud lid van de enkelvoudige kamer')).toBe(false);
+		expect(isTitleLine('932-1191')).toBe(false);
+		expect(isTitleLine('Ten slotte is vonnis bepaald.')).toBe(false);
 	});
 });
