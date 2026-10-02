@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.73.0"
+		"version": "0.74.1"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -765,7 +765,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Every judgment citing this instrument",
-				"description": "Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``.",
+				"description": "Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``. ``sort``: ``date`` (default), the newest first; ``cited``, the most cited articles of the law first, then the newest. ``facets.year`` counts every citing judgment per year, not the page; ``year`` keeps the judgments of one year (``total`` and the page).",
 				"operationId": "get_instrument_judgments_route_api_instruments__bwb_id__judgments_get",
 				"parameters": [
 					{
@@ -785,6 +785,34 @@
 							"default": 500,
 							"title": "Limit"
 						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					},
+					{
+						"name": "sort",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["date", "cited"],
+							"type": "string",
+							"default": "date",
+							"title": "Sort"
+						}
+					},
+					{
+						"name": "year",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "pattern": "^\\d{4}$" }, { "type": "null" }],
+							"description": "The judgments of this year (of their date) alone; ``facets.year`` still counts every year.",
+							"title": "Year"
+						},
+						"description": "The judgments of this year (of their date) alone; ``facets.year`` still counts every year."
 					}
 				],
 				"responses": {
@@ -1732,6 +1760,46 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/DossierTimelineResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/dossiers/{number}/changed-articles": {
+			"get": {
+				"tags": ["dossiers", "dossiers"],
+				"summary": "The articles a bill changes",
+				"description": "Per law, the articles this dossier amends, introduces or repeals, each with its `stage`: `enacted`, by a publication legislated in the dossier (with its `official_id` and the `effective_date` of the change), or `proposed`, by a paper of the dossier (a bill, an amendment). Citations and explanations are no change; `/mutations` has the graph of all of them.",
+				"operationId": "get_changed_articles_api_dossiers__number__changed_articles_get",
+				"parameters": [
+					{
+						"name": "number",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"pattern": "^\\d+(-[A-Za-z0-9()]+)?$",
+							"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220).",
+							"title": "Number"
+						},
+						"description": "Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220)."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/DossierChangedArticlesResponse" }
 							}
 						}
 					},
@@ -3201,7 +3269,7 @@
 			"get": {
 				"tags": ["search", "search"],
 				"summary": "Search across several entity types",
-				"description": "Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first.",
+				"description": "Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first. With `resolve=true` the answer also holds `resolved`, what `/api/resolve` answers for `q`: one request for a search box that goes to the node a citation names and lists the hits otherwise.",
 				"operationId": "search_api_search_get",
 				"parameters": [
 					{
@@ -3263,6 +3331,18 @@
 							"default": 20,
 							"title": "Limit"
 						}
+					},
+					{
+						"name": "resolve",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Also resolve `q`, as `/api/resolve` does",
+							"default": false,
+							"title": "Resolve"
+						},
+						"description": "Also resolve `q`, as `/api/resolve` does"
 					}
 				],
 				"responses": {
@@ -3587,7 +3667,7 @@
 			"get": {
 				"tags": ["feed", "feed"],
 				"summary": "News feed",
-				"description": "What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``Voorstel van wet``, ``Nota van wijziging``, ``Amendement``, ``Motie`` and ``Brief regering`` (a Tweede Kamer paper submitted, by its ``Document.Soort`` before `` (``), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.",
+				"description": "What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``Voorstel van wet``, ``Nota van wijziging``, ``Amendement``, ``Motie`` and ``Brief regering`` (a Tweede Kamer paper submitted, by its ``Document.Soort`` before `` (``), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force) and ``uitspraak`` (a judgment or conclusion, on the day it was published; only with ``kind=uitspraak`` or ``tier``, of the highest courts and the Parket unless ``tier`` asks for others). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.",
 				"operationId": "get_feed_route_api_feed_get",
 				"parameters": [
 					{
@@ -3653,10 +3733,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering.",
+							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak.",
 							"title": "Kind"
 						},
-						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering."
+						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak."
 					},
 					{
 						"name": "cabinet",
@@ -3735,6 +3815,17 @@
 							"title": "Chamber"
 						},
 						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
+					},
+					{
+						"name": "tier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket.",
+							"title": "Tier"
+						},
+						"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket."
 					}
 				],
 				"responses": {
@@ -3835,10 +3926,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering.",
+							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak.",
 							"title": "Kind"
 						},
-						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering."
+						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak."
 					},
 					{
 						"name": "cabinet",
@@ -3917,6 +4008,17 @@
 							"title": "Chamber"
 						},
 						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
+					},
+					{
+						"name": "tier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket.",
+							"title": "Tier"
+						},
+						"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket."
 					}
 				],
 				"responses": {
@@ -3943,7 +4045,7 @@
 			"get": {
 				"tags": ["paths", "paths"],
 				"summary": "The shortest paths between chosen nodes",
-				"description": "For every pair of `ids` (2 to 5 node ids, `collection/key`, comma-separated), the shortest path of at most `max_depth` edges between them, following edges in either direction, with every node and edge on the paths: the nodes between a member and an article (a document they signed, its dossier, the law it made, the change). No edge is derived. 404 when one of the nodes is not there.",
+				"description": "For every pair of `ids` (2 to 5 node ids, `collection/key`, comma-separated), the shortest path of at most `max_depth` edges between them, following edges in either direction, with every node and edge on the paths: the nodes between a member and an article (a document they signed, its dossier, the law it made, the change). No edge is derived. 404 when one of the nodes is not there. `relations` keeps to the edges of those relations (comma-separated, as the neighbourhood takes them). A path does not pass through a law by its articles (the `PART_OF` of an article and its law is followed only where the law is one of the pair) unless `through_laws=true`: else any two articles of a law are two steps apart.",
 				"operationId": "get_paths_route_api_paths_get",
 				"parameters": [
 					{
@@ -3968,6 +4070,29 @@
 							"default": 4,
 							"title": "Max Depth"
 						}
+					},
+					{
+						"name": "relations",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated relations to keep (`AUTHORED,PART_OF`).",
+							"title": "Relations"
+						},
+						"description": "Comma-separated relations to keep (`AUTHORED,PART_OF`)."
+					},
+					{
+						"name": "through_laws",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Let a path pass through a law by its articles.",
+							"default": false,
+							"title": "Through Laws"
+						},
+						"description": "Let a path pass through a law by its articles."
 					}
 				],
 				"responses": {
@@ -4136,10 +4261,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "string" }, { "type": "null" }],
-							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering.",
+							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak.",
 							"title": "Kind"
 						},
-						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering."
+						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak."
 					},
 					{
 						"name": "cabinet",
@@ -4218,6 +4343,17 @@
 							"title": "Chamber"
 						},
 						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
+					},
+					{
+						"name": "tier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket.",
+							"title": "Tier"
+						},
+						"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket."
 					}
 				],
 				"responses": {
@@ -5667,6 +5803,68 @@
 				"title": "ChamberColorsDTO",
 				"description": "The colours a Kamer draws its factions in."
 			},
+			"ChangeSource": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Key" },
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"official_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Official Id",
+						"description": "Of a publication, its id on officielebekendmakingen.nl (`stb-2026-154`); null for a paper."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id"],
+				"title": "ChangeSource",
+				"description": "What makes the change: the publication that enacts it, or the paper that proposes\nit (the bill, an amendment)."
+			},
+			"ChangedArticleRef": {
+				"properties": {
+					"id": { "type": "string", "title": "Id", "description": "`articles/<key>`" },
+					"key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Key",
+						"description": "Null for an article that is not in the graph."
+					},
+					"article_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article Number"
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"stub": { "type": "boolean", "title": "Stub", "default": false }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key"],
+				"title": "ChangedArticleRef"
+			},
+			"ChangedLawRef": {
+				"properties": {
+					"id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Id",
+						"description": "Null for a law that is not in the graph."
+					},
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"celex": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Celex" },
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id"],
+				"title": "ChangedLawRef"
+			},
 			"CitedArticleRef": {
 				"properties": {
 					"id": {
@@ -6644,6 +6842,84 @@
 				"required": ["key", "document_id"],
 				"title": "DocumentTextResponse",
 				"description": "One document with its text.\n\n``text`` is null until ``normalize tk-content`` has run for it: a paper\nfrom before December 1994 has no XML and never gets one. ``sections`` are\nthe headings of the paper in document order, empty when there is no text or\nthe structure of the paper could not be read; their offsets are into\n``text``. ``submitters`` are who submitted a motie or amendement, the indiener\nfirst (empty for any other paper). ``dossier_numbers`` are the dossiers the\ndocument is PART_OF, in either chamber; ``case_kinds`` the ``Zaak.Soort`` of the\ncases it belongs to (Tweede Kamer only); ``explains`` are the articles and\ninstruments it explains, without duplicates."
+			},
+			"DossierChange": {
+				"properties": {
+					"article": { "$ref": "#/components/schemas/ChangedArticleRef" },
+					"relation": {
+						"type": "string",
+						"enum": ["amends", "introduces", "repeals"],
+						"title": "Relation",
+						"description": "As the dossier hub names its laws' relations."
+					},
+					"stage": {
+						"type": "string",
+						"enum": ["enacted", "proposed"],
+						"title": "Stage",
+						"description": "`enacted`: a publication legislated in this dossier changes the article; `proposed`: a paper of the dossier proposes it (status `voorgesteld`)."
+					},
+					"source": { "$ref": "#/components/schemas/ChangeSource" },
+					"effective_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Effective Date",
+						"description": "Of an enacted change, the date it takes effect (YYYY-MM-DD), as the BWB dates the version it makes; null for a proposed one."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["article", "relation", "stage", "source"],
+				"title": "DossierChange"
+			},
+			"DossierChangedArticlesResponse": {
+				"properties": {
+					"number": { "type": "string", "title": "Number" },
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Every change, in every law."
+					},
+					"articles": {
+						"type": "integer",
+						"title": "Articles",
+						"description": "The articles changed, each once."
+					},
+					"enacted": {
+						"type": "integer",
+						"title": "Enacted",
+						"description": "The enacted changes."
+					},
+					"proposed": {
+						"type": "integer",
+						"title": "Proposed",
+						"description": "The proposed changes."
+					},
+					"laws": {
+						"items": { "$ref": "#/components/schemas/DossierChangedLaw" },
+						"type": "array",
+						"title": "Laws",
+						"description": "Per law, by title (a law not in the graph last)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["number", "total", "articles", "enacted", "proposed", "laws"],
+				"title": "DossierChangedArticlesResponse"
+			},
+			"DossierChangedLaw": {
+				"properties": {
+					"law": { "$ref": "#/components/schemas/ChangedLawRef" },
+					"total": { "type": "integer", "title": "Total" },
+					"changes": {
+						"items": { "$ref": "#/components/schemas/DossierChange" },
+						"type": "array",
+						"title": "Changes"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["law", "total", "changes"],
+				"title": "DossierChangedLaw",
+				"description": "The changes to one law, in the order of the law."
 			},
 			"DossierCommitteeDTO": {
 				"properties": {
@@ -7851,7 +8127,8 @@
 							"stemming",
 							"publicatie",
 							"inwerkingtreding",
-							"Brief regering"
+							"Brief regering",
+							"uitspraak"
 						],
 						"title": "Kind"
 					},
@@ -8009,7 +8286,8 @@
 							"stemming",
 							"publicatie",
 							"inwerkingtreding",
-							"Brief regering"
+							"Brief regering",
+							"uitspraak"
 						],
 						"title": "Kind"
 					},
@@ -8022,7 +8300,7 @@
 					"summary": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Summary",
-						"description": "The whole text of a commitment, the decision of a vote (``Aangenomen.``); null for the other kinds."
+						"description": "The whole text of a commitment, the decision of a vote (``Aangenomen.``), the inhoudsindicatie of a judgment; null for the other kinds."
 					},
 					"subkind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -8069,6 +8347,9 @@
 					},
 					"commencement": {
 						"anyOf": [{ "$ref": "#/components/schemas/FeedCommencementDTO" }, { "type": "null" }]
+					},
+					"judgment": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedJudgmentDTO" }, { "type": "null" }]
 					}
 				},
 				"additionalProperties": false,
@@ -8076,6 +8357,53 @@
 				"required": ["id", "kind", "date", "node", "headline"],
 				"title": "FeedItemDTO",
 				"description": "One event."
+			},
+			"FeedJudgmentDTO": {
+				"properties": {
+					"ecli": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ecli" },
+					"court": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Court",
+						"description": "ECLI court code, `HR`, `RVS`."
+					},
+					"tier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Tier",
+						"description": "As in `/api/judgments`."
+					},
+					"court_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Court Kind"
+					},
+					"decision_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decision Kind",
+						"description": "`arrest`, `uitspraak`, `conclusie`, ..."
+					},
+					"procedure": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Procedure",
+						"description": "As the source gives it: `Cassatie`, `Hoger beroep`."
+					},
+					"decided_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decided On",
+						"description": "The date of the decision (YYYY-MM-DD), before its publication."
+					},
+					"advocate_general": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Advocate General",
+						"description": "Of a conclusion, who wrote it (as on the detail)."
+					},
+					"advocate_general_role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Advocate General Role"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "FeedJudgmentDTO",
+				"description": "An ``uitspraak``: a judgment or conclusion published on ``date`` (its ``Datum\npublicatie``), of the highest courts unless a ``tier`` is asked for."
 			},
 			"FeedNodeDTO": {
 				"properties": {
@@ -8877,6 +9205,20 @@
 				"title": "InstrumentEuLinksResponse",
 				"description": "Response for GET /api/instruments/{identifier}/eu-links."
 			},
+			"InstrumentJudgmentFacets": {
+				"properties": {
+					"year": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Year",
+						"description": "Per year of the judgment, the oldest first; `value` null counts those without a date."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "InstrumentJudgmentFacets",
+				"description": "Every judgment that cites this instrument counted, not the page."
+			},
 			"InstrumentJudgmentItem": {
 				"properties": {
 					"id": {
@@ -8910,6 +9252,16 @@
 						"title": "Date",
 						"description": "Date of the judgment, YYYY-MM-DD."
 					},
+					"advocate_general": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Advocate General",
+						"description": "For a conclusion, the advocate-general who wrote it, as on `/api/judgments/{ecli}`. Null for a judgment."
+					},
+					"advocate_general_role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Advocate General Role",
+						"description": "For a conclusion, the role it is signed in (`advocaat-generaal`, `waarnemend advocaat-generaal`, ...), as on `/api/judgments/{ecli}`. Null for a judgment."
+					},
 					"cited_articles": {
 						"items": { "$ref": "#/components/schemas/CitedArticleRef" },
 						"type": "array",
@@ -8935,6 +9287,19 @@
 						"title": "Total",
 						"description": "Absolute number of judgments citing this instrument (independent of ``limit``)."
 					},
+					"year": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Year",
+						"description": "The year asked for (`year`), null for every year."
+					},
+					"sort": {
+						"type": "string",
+						"enum": ["date", "cited"],
+						"title": "Sort",
+						"description": "The order of `items`: `date`, the newest first; `cited`, the most cited articles of this law first, then the newest. Ties by id.",
+						"default": "date"
+					},
+					"facets": { "$ref": "#/components/schemas/InstrumentJudgmentFacets" },
 					"items": {
 						"items": { "$ref": "#/components/schemas/InstrumentJudgmentItem" },
 						"type": "array",
@@ -8973,6 +9338,17 @@
 					},
 					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
 					"article_count": { "type": "integer", "title": "Article Count" },
+					"inbound_citation_count": {
+						"type": "integer",
+						"title": "Inbound Citation Count",
+						"description": "How often the law and its articles are cited (REFERS_TO), as on the instrument's detail.",
+						"default": 0
+					},
+					"next_version_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Next Version From",
+						"description": "The date of the first coming change: the start of the first toestand of the law after today, as the BWB lists it. Null when none is known (and for an EU instrument)."
+					},
 					"official_url": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Official Url",
@@ -9423,6 +9799,11 @@
 						"title": "Replaced By",
 						"description": "The ECLI of the publication that replaces this one (`dcterms:isReplacedBy`), loaded or not: `same_as` when it is loaded, a publication not in the graph otherwise. Null for most."
 					},
+					"published_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Published On",
+						"description": "The day it was published on uitspraken.rechtspraak.nl (\"Datum publicatie\", YYYY-MM-DD), as the source gives it; often weeks after the decision. Null for a judgment of another source or without a published document."
+					},
 					"advocate_general": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Advocate General",
@@ -9683,7 +10064,7 @@
 					"paragraph_id": {
 						"type": "string",
 						"title": "Paragraph Id",
-						"description": "Names the paragraph in the judgment, for a deep link: `rov-5.3` for the numbered consideration 5.3, `kop-5` for a numbered heading, `p-12` (its position) for a paragraph without a number. Unique in the judgment."
+						"description": "Names the paragraph in the judgment, for a deep link: `rov-5.3` for the numbered consideration 5.3, `kop-5` for a numbered heading, `p-3f2a9c1e` (from its text, not its position: it stays when another paragraph comes or goes) for a paragraph without a number. Unique in the judgment."
 					},
 					"number": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -10561,6 +10942,17 @@
 						"description": "The nodes asked for, each once, in their order."
 					},
 					"max_depth": { "type": "integer", "title": "Max Depth" },
+					"relations": {
+						"anyOf": [{ "items": { "type": "string" }, "type": "array" }, { "type": "null" }],
+						"title": "Relations",
+						"description": "The relations the paths keep to, as asked; null for all."
+					},
+					"through_laws": {
+						"type": "boolean",
+						"title": "Through Laws",
+						"description": "Whether a path may pass through a law by its articles (`PART_OF`).",
+						"default": false
+					},
 					"paths": {
 						"items": { "$ref": "#/components/schemas/PathDTO" },
 						"type": "array",
@@ -10813,6 +11205,10 @@
 						},
 						"type": "object",
 						"title": "Results"
+					},
+					"resolved": {
+						"anyOf": [{ "$ref": "#/components/schemas/ResolveResponse" }, { "type": "null" }],
+						"description": "With `resolve=true`: what `/api/resolve` answers for `q`, in the same request (kind `none` when nothing fits). Null without it."
 					}
 				},
 				"additionalProperties": false,

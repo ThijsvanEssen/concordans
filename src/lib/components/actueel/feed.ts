@@ -29,7 +29,8 @@ export const KIND_LABEL: Record<FeedKind, { one: string; many: string }> = {
 	toezegging: { one: 'Toezegging', many: 'toezeggingen' },
 	'Brief regering': { one: 'Brief regering', many: 'brieven regering' },
 	publicatie: { one: 'Publicatie', many: 'publicaties' },
-	inwerkingtreding: { one: 'Inwerkingtreding', many: 'inwerkingtredingen' }
+	inwerkingtreding: { one: 'Inwerkingtreding', many: 'inwerkingtredingen' },
+	uitspraak: { one: 'Uitspraak', many: 'uitspraken' }
 };
 
 /** The kinds in the order the filter lists them: what the Kamer decides first. */

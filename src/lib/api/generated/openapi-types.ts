@@ -233,7 +233,7 @@ export interface paths {
         };
         /**
          * Every judgment citing this instrument
-         * @description Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``.
+         * @description Per judgment: light metadata plus the specific articles it refers to. Meant for the case-law layer of the graph. ``total`` is the absolute count, independent of ``limit``. ``sort``: ``date`` (default), the newest first; ``cited``, the most cited articles of the law first, then the newest. ``facets.year`` counts every citing judgment per year, not the page; ``year`` keeps the judgments of one year (``total`` and the page).
          */
         get: operations["get_instrument_judgments_route_api_instruments__bwb_id__judgments_get"];
         put?: never;
@@ -496,6 +496,26 @@ export interface paths {
          * @description Documents, activities, decisions and commitments in date order, newest first by default. Filter with ``?kind=motie,amendement``.
          */
         get: operations["get_timeline_api_dossiers__number__timeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dossiers/{number}/changed-articles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The articles a bill changes
+         * @description Per law, the articles this dossier amends, introduces or repeals, each with its `stage`: `enacted`, by a publication legislated in the dossier (with its `official_id` and the `effective_date` of the change), or `proposed`, by a paper of the dossier (a bill, an amendment). Citations and explanations are no change; `/mutations` has the graph of all of them.
+         */
+        get: operations["get_changed_articles_api_dossiers__number__changed_articles_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1050,7 +1070,7 @@ export interface paths {
         };
         /**
          * Search across several entity types
-         * @description Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first.
+         * @description Searches articles, judgments, dossiers and documents. Use `types` to restrict the search to specific collections and `kind` to facet on document or dossier kinds. Every hit has a `score` between 0 and 1, its rank tier for the query: the query is an identifier of the hit (1), its whole name (0.75), the start of its name (0.5), part of its name (0.25) or the hit matched on words only (0.1). Hits of a type come best score first. With `resolve=true` the answer also holds `resolved`, what `/api/resolve` answers for `q`: one request for a search box that goes to the node a citation names and lists the hits otherwise.
          */
         get: operations["search_api_search_get"];
         put?: never;
@@ -1190,7 +1210,7 @@ export interface paths {
         };
         /**
          * News feed
-         * @description What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``Voorstel van wet``, ``Nota van wijziging``, ``Amendement``, ``Motie`` and ``Brief regering`` (a Tweede Kamer paper submitted, by its ``Document.Soort`` before `` (``), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.
+         * @description What was promised and proposed, as a stream of events, newest first: ``toezegging`` (a commitment made), ``Voorstel van wet``, ``Nota van wijziging``, ``Amendement``, ``Motie`` and ``Brief regering`` (a Tweede Kamer paper submitted, by its ``Document.Soort`` before `` (``), ``stemming`` (a vote with its outcome), ``publicatie`` (in the Staatsblad, Staatscourant or Tractatenblad) and ``inwerkingtreding`` (a new version of a law in force) and ``uitspraak`` (a judgment or conclusion, on the day it was published; only with ``kind=uitspraak`` or ``tier``, of the highest courts and the Parket unless ``tier`` asks for others). Ordered by date, then by ``id``, both descending; ``next_cursor`` gives the next page, which neither repeats nor skips an event. ``facets`` counts per ``kind``, ``ministry``, ``faction`` and ``cabinet`` the events under the other filters, with ``total``; ``facets=false`` leaves both out and reads only one page.
          */
         get: operations["get_feed_route_api_feed_get"];
         put?: never;
@@ -1230,7 +1250,7 @@ export interface paths {
         };
         /**
          * The shortest paths between chosen nodes
-         * @description For every pair of `ids` (2 to 5 node ids, `collection/key`, comma-separated), the shortest path of at most `max_depth` edges between them, following edges in either direction, with every node and edge on the paths: the nodes between a member and an article (a document they signed, its dossier, the law it made, the change). No edge is derived. 404 when one of the nodes is not there.
+         * @description For every pair of `ids` (2 to 5 node ids, `collection/key`, comma-separated), the shortest path of at most `max_depth` edges between them, following edges in either direction, with every node and edge on the paths: the nodes between a member and an article (a document they signed, its dossier, the law it made, the change). No edge is derived. 404 when one of the nodes is not there. `relations` keeps to the edges of those relations (comma-separated, as the neighbourhood takes them). A path does not pass through a law by its articles (the `PART_OF` of an article and its law is followed only where the law is one of the pair) unless `through_laws=true`: else any two articles of a law are two steps apart.
          */
         get: operations["get_paths_route_api_paths_get"];
         put?: never;
@@ -2532,6 +2552,60 @@ export interface components {
             source: components["schemas"]["ColorSourceDTO"];
         };
         /**
+         * ChangeSource
+         * @description What makes the change: the publication that enacts it, or the paper that proposes
+         *     it (the bill, an amendment).
+         */
+        ChangeSource: {
+            /** Id */
+            id: string;
+            /** Key */
+            key?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /**
+             * Official Id
+             * @description Of a publication, its id on officielebekendmakingen.nl (`stb-2026-154`); null for a paper.
+             */
+            official_id?: string | null;
+        };
+        /** ChangedArticleRef */
+        ChangedArticleRef: {
+            /**
+             * Id
+             * @description `articles/<key>`
+             */
+            id: string;
+            /**
+             * Key
+             * @description Null for an article that is not in the graph.
+             */
+            key: string | null;
+            /** Article Number */
+            article_number?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /**
+             * Stub
+             * @default false
+             */
+            stub: boolean;
+        };
+        /** ChangedLawRef */
+        ChangedLawRef: {
+            /**
+             * Id
+             * @description Null for a law that is not in the graph.
+             */
+            id: string | null;
+            /** Bwb Id */
+            bwb_id?: string | null;
+            /** Celex */
+            celex?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+        };
+        /**
          * CitedArticleRef
          * @description Reference to one cited article inside a judgment-citation list.
          */
@@ -3373,6 +3447,69 @@ export interface components {
              * @description The votes taken on this document, oldest first, each with how every faction (or, on a roll-call, every member) voted: of a motion or an amendment the vote on it, of a bill the votes on the bill. A decision is about the case of an agenda item it names; the document it was taken on is the oldest of that case, as the timeline of a dossier shows it. Empty for any other paper.
              */
             decisions?: components["schemas"]["DecisionDTO"][];
+        };
+        /** DossierChange */
+        DossierChange: {
+            article: components["schemas"]["ChangedArticleRef"];
+            /**
+             * Relation
+             * @description As the dossier hub names its laws' relations.
+             * @enum {string}
+             */
+            relation: "amends" | "introduces" | "repeals";
+            /**
+             * Stage
+             * @description `enacted`: a publication legislated in this dossier changes the article; `proposed`: a paper of the dossier proposes it (status `voorgesteld`).
+             * @enum {string}
+             */
+            stage: "enacted" | "proposed";
+            source: components["schemas"]["ChangeSource"];
+            /**
+             * Effective Date
+             * @description Of an enacted change, the date it takes effect (YYYY-MM-DD), as the BWB dates the version it makes; null for a proposed one.
+             */
+            effective_date?: string | null;
+        };
+        /** DossierChangedArticlesResponse */
+        DossierChangedArticlesResponse: {
+            /** Number */
+            number: string;
+            /**
+             * Total
+             * @description Every change, in every law.
+             */
+            total: number;
+            /**
+             * Articles
+             * @description The articles changed, each once.
+             */
+            articles: number;
+            /**
+             * Enacted
+             * @description The enacted changes.
+             */
+            enacted: number;
+            /**
+             * Proposed
+             * @description The proposed changes.
+             */
+            proposed: number;
+            /**
+             * Laws
+             * @description Per law, by title (a law not in the graph last).
+             */
+            laws: components["schemas"]["DossierChangedLaw"][];
+        };
+        /**
+         * DossierChangedLaw
+         * @description The changes to one law, in the order of the law.
+         */
+        DossierChangedLaw: {
+            law: components["schemas"]["ChangedLawRef"];
+            /** Total */
+            total: number;
+            /** Changes */
+            changes: components["schemas"]["DossierChange"][];
         };
         /**
          * DossierCommitteeDTO
@@ -4500,7 +4637,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "toezegging" | "Voorstel van wet" | "Nota van wijziging" | "Amendement" | "Motie" | "stemming" | "publicatie" | "inwerkingtreding" | "Brief regering";
+            kind: "toezegging" | "Voorstel van wet" | "Nota van wijziging" | "Amendement" | "Motie" | "stemming" | "publicatie" | "inwerkingtreding" | "Brief regering" | "uitspraak";
             /** Number */
             number: string;
             /** Key */
@@ -4614,7 +4751,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "toezegging" | "Voorstel van wet" | "Nota van wijziging" | "Amendement" | "Motie" | "stemming" | "publicatie" | "inwerkingtreding" | "Brief regering";
+            kind: "toezegging" | "Voorstel van wet" | "Nota van wijziging" | "Amendement" | "Motie" | "stemming" | "publicatie" | "inwerkingtreding" | "Brief regering" | "uitspraak";
             /**
              * Date
              * @description YYYY-MM-DD; the source gives no time of day.
@@ -4624,7 +4761,7 @@ export interface components {
             title?: string | null;
             /**
              * Summary
-             * @description The whole text of a commitment, the decision of a vote (``Aangenomen.``); null for the other kinds.
+             * @description The whole text of a commitment, the decision of a vote (``Aangenomen.``), the inhoudsindicatie of a judgment; null for the other kinds.
              */
             summary?: string | null;
             /**
@@ -4662,6 +4799,50 @@ export interface components {
             commitment?: components["schemas"]["FeedCommitmentDTO"] | null;
             publication?: components["schemas"]["FeedPublicationDTO"] | null;
             commencement?: components["schemas"]["FeedCommencementDTO"] | null;
+            judgment?: components["schemas"]["FeedJudgmentDTO"] | null;
+        };
+        /**
+         * FeedJudgmentDTO
+         * @description An ``uitspraak``: a judgment or conclusion published on ``date`` (its ``Datum
+         *     publicatie``), of the highest courts unless a ``tier`` is asked for.
+         */
+        FeedJudgmentDTO: {
+            /** Ecli */
+            ecli?: string | null;
+            /**
+             * Court
+             * @description ECLI court code, `HR`, `RVS`.
+             */
+            court?: string | null;
+            /**
+             * Tier
+             * @description As in `/api/judgments`.
+             */
+            tier?: string | null;
+            /** Court Kind */
+            court_kind?: string | null;
+            /**
+             * Decision Kind
+             * @description `arrest`, `uitspraak`, `conclusie`, ...
+             */
+            decision_kind?: string | null;
+            /**
+             * Procedure
+             * @description As the source gives it: `Cassatie`, `Hoger beroep`.
+             */
+            procedure?: string | null;
+            /**
+             * Decided On
+             * @description The date of the decision (YYYY-MM-DD), before its publication.
+             */
+            decided_on?: string | null;
+            /**
+             * Advocate General
+             * @description Of a conclusion, who wrote it (as on the detail).
+             */
+            advocate_general?: string | null;
+            /** Advocate General Role */
+            advocate_general_role?: string | null;
         };
         /**
          * FeedNodeDTO
@@ -5380,6 +5561,17 @@ export interface components {
             international_total: number;
         };
         /**
+         * InstrumentJudgmentFacets
+         * @description Every judgment that cites this instrument counted, not the page.
+         */
+        InstrumentJudgmentFacets: {
+            /**
+             * Year
+             * @description Per year of the judgment, the oldest first; `value` null counts those without a date.
+             */
+            year?: components["schemas"]["FacetCountDTO"][];
+        };
+        /**
          * InstrumentJudgmentItem
          * @description One judgment that cites this instrument.
          */
@@ -5416,6 +5608,16 @@ export interface components {
              */
             date?: string | null;
             /**
+             * Advocate General
+             * @description For a conclusion, the advocate-general who wrote it, as on `/api/judgments/{ecli}`. Null for a judgment.
+             */
+            advocate_general?: string | null;
+            /**
+             * Advocate General Role
+             * @description For a conclusion, the role it is signed in (`advocaat-generaal`, `waarnemend advocaat-generaal`, ...), as on `/api/judgments/{ecli}`. Null for a judgment.
+             */
+            advocate_general_role?: string | null;
+            /**
              * Cited Articles
              * @description Articles of the focal instrument that this judgment cites.
              */
@@ -5436,6 +5638,19 @@ export interface components {
              * @description Absolute number of judgments citing this instrument (independent of ``limit``).
              */
             total: number;
+            /**
+             * Year
+             * @description The year asked for (`year`), null for every year.
+             */
+            year?: string | null;
+            /**
+             * Sort
+             * @description The order of `items`: `date`, the newest first; `cited`, the most cited articles of this law first, then the newest. Ties by id.
+             * @default date
+             * @enum {string}
+             */
+            sort: "date" | "cited";
+            facets?: components["schemas"]["InstrumentJudgmentFacets"];
             /** Items */
             items: components["schemas"]["InstrumentJudgmentItem"][];
         };
@@ -5471,6 +5686,17 @@ export interface components {
             kind: string | null;
             /** Article Count */
             article_count: number;
+            /**
+             * Inbound Citation Count
+             * @description How often the law and its articles are cited (REFERS_TO), as on the instrument's detail.
+             * @default 0
+             */
+            inbound_citation_count: number;
+            /**
+             * Next Version From
+             * @description The date of the first coming change: the start of the first toestand of the law after today, as the BWB lists it. Null when none is known (and for an EU instrument).
+             */
+            next_version_from?: string | null;
             /**
              * Official Url
              * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
@@ -5860,6 +6086,11 @@ export interface components {
              */
             replaced_by?: string | null;
             /**
+             * Published On
+             * @description The day it was published on uitspraken.rechtspraak.nl ("Datum publicatie", YYYY-MM-DD), as the source gives it; often weeks after the decision. Null for a judgment of another source or without a published document.
+             */
+            published_on?: string | null;
+            /**
              * Advocate General
              * @description For a conclusion, the advocate-general (or procureur-generaal) who wrote it, as its kop names them: `T. Hartlief`, `P.J. Wattel`, or only the surname (`Wattel`) where the kop gives no more. Null for a judgment, and for a conclusion whose kop names no one.
              */
@@ -6050,7 +6281,7 @@ export interface components {
         JudgmentParagraph: {
             /**
              * Paragraph Id
-             * @description Names the paragraph in the judgment, for a deep link: `rov-5.3` for the numbered consideration 5.3, `kop-5` for a numbered heading, `p-12` (its position) for a paragraph without a number. Unique in the judgment.
+             * @description Names the paragraph in the judgment, for a deep link: `rov-5.3` for the numbered consideration 5.3, `kop-5` for a numbered heading, `p-3f2a9c1e` (from its text, not its position: it stays when another paragraph comes or goes) for a paragraph without a number. Unique in the judgment.
              */
             paragraph_id: string;
             /**
@@ -6787,6 +7018,17 @@ export interface components {
             /** Max Depth */
             max_depth: number;
             /**
+             * Relations
+             * @description The relations the paths keep to, as asked; null for all.
+             */
+            relations?: string[] | null;
+            /**
+             * Through Laws
+             * @description Whether a path may pass through a law by its articles (`PART_OF`).
+             * @default false
+             */
+            through_laws: boolean;
+            /**
              * Paths
              * @description For every pair of `ids` that a path of at most `max_depth` edges joins, the shortest one (of those as short, the one through the lowest ids); a pair without one has none.
              */
@@ -6990,6 +7232,8 @@ export interface components {
             results: {
                 [key: string]: components["schemas"]["SearchResultItem"][];
             };
+            /** @description With `resolve=true`: what `/api/resolve` answers for `q`, in the same request (kind `none` when nothing fits). Null without it. */
+            resolved?: components["schemas"]["ResolveResponse"] | null;
         };
         /**
          * SearchResultItem
@@ -8146,6 +8390,10 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
+                offset?: number;
+                sort?: "date" | "cited";
+                /** @description The judgments of this year (of their date) alone; ``facets.year`` still counts every year. */
+                year?: string | null;
             };
             header?: never;
             path: {
@@ -8642,6 +8890,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DossierTimelineResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_changed_articles_api_dossiers__number__changed_articles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dossier number, e.g. 29684, 29684-I, 21501-31 or 36956-(R2220). */
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DossierChangedArticlesResponse"];
                 };
             };
             /** @description Validation Error */
@@ -9556,6 +9836,8 @@ export interface operations {
                 /** @description Comma-separated kind filter (documents and dossiers) */
                 kind?: string | null;
                 limit?: number;
+                /** @description Also resolve `q`, as `/api/resolve` does */
+                resolve?: boolean;
             };
             header?: never;
             path?: never;
@@ -9781,7 +10063,7 @@ export interface operations {
                 since?: string | null;
                 /** @description On or before this day. */
                 until?: string | null;
-                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering. */
+                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak. */
                 kind?: string | null;
                 /** @description Cabinet key: the events of its period (``jetten``). */
                 cabinet?: string | null;
@@ -9796,6 +10078,8 @@ export interface operations {
                 q?: string | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
+                /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
+                tier?: string | null;
             };
             header?: never;
             path?: never;
@@ -9836,7 +10120,7 @@ export interface operations {
                 few?: number;
                 /** @description Events shown one by one, at most. */
                 limit?: number;
-                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering. */
+                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak. */
                 kind?: string | null;
                 /** @description Cabinet key: the events of its period (``jetten``). */
                 cabinet?: string | null;
@@ -9851,6 +10135,8 @@ export interface operations {
                 q?: string | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
+                /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
+                tier?: string | null;
             };
             header?: never;
             path?: never;
@@ -9884,6 +10170,10 @@ export interface operations {
                 /** @description Node ids, comma-separated: `members/x,articles/y` */
                 ids: string;
                 max_depth?: number;
+                /** @description Comma-separated relations to keep (`AUTHORED,PART_OF`). */
+                relations?: string | null;
+                /** @description Let a path pass through a law by its articles. */
+                through_laws?: boolean;
             };
             header?: never;
             path?: never;
@@ -9959,7 +10249,7 @@ export interface operations {
                 since?: string | null;
                 /** @description On or before this day. */
                 until?: string | null;
-                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering. */
+                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak. */
                 kind?: string | null;
                 /** @description Cabinet key: the events of its period (``jetten``). */
                 cabinet?: string | null;
@@ -9974,6 +10264,8 @@ export interface operations {
                 q?: string | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
+                /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
+                tier?: string | null;
             };
             header?: never;
             path?: never;
