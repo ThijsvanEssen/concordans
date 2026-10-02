@@ -8,7 +8,8 @@ import {
 	headSurname,
 	headlineOf,
 	inWords,
-	timelineOf
+	timelineOf,
+	voteHow
 } from './timeline';
 
 let n = 0;
@@ -324,5 +325,18 @@ describe('headlineOf', () => {
 			title: 'Voortgang waterstofbeleid',
 			major: false
 		});
+	});
+});
+
+describe('voteHow', () => {
+	it('says how a vote without a tally was decided', () => {
+		const ek = (method: string) =>
+			({ vote: { chamber: 'EK', passed: true, method } }) as Parameters<typeof voteHow>[0];
+		expect(voteHow(ek('Stemming bij zitten en opstaan, aangenomen'))).toBe('Bij zitten en opstaan');
+		expect(voteHow(ek('Hamerstuk'))).toBe('Hamerstuk');
+		const tk = (decision_kind: string) =>
+			({ vote: { chamber: 'TK', passed: true, decision_kind } }) as Parameters<typeof voteHow>[0];
+		expect(voteHow(tk('Stemmen - zonder stemming aannemen'))).toBe('Hamerstuk');
+		expect(voteHow(tk('Stemmen - aangenomen'))).toBeNull();
 	});
 });

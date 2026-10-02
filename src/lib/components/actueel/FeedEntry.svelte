@@ -18,7 +18,7 @@
 		type FeedItem,
 		type VoteCount
 	} from './feed';
-	import { headlineOf } from './timeline';
+	import { headlineOf, voteHow } from './timeline';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import { fromFeed } from '$lib/bron/submitters';
 
@@ -133,10 +133,11 @@
 		{/snippet}
 		{#snippet aside()}
 			{#if i.vote}
-				<!-- The outcome is in the label; the tally beside it. -->
+				<!-- The outcome is in the label; the tally beside it, or how it was decided. -->
 				{@const t = tally(i)}
+				{@const how = voteHow(i)}
 				{#if t.voor + t.tegen}<span class="aside-note">{`${t.voor} voor, ${t.tegen} tegen`}</span
-					>{/if}
+					>{:else if how}<span class="aside-note">{how}</span>{/if}
 			{:else if i.commitment}
 				<span class="aside-note"
 					>{i.commitment.status ?? ''}{i.commitment.expected_resolution

@@ -114,11 +114,22 @@ const tallyOf = (i: FeedItem) => {
 };
 
 /** `141 voor, 7 tegen. ChristenUnie, dossier 21501-30` */
+/**
+ * How a vote was decided where no tally says it (API 0.73, BE-24): the Eerste Kamer's own
+ * words without the outcome ("Bij zitten en opstaan", "Hamerstuk"), the Tweede Kamer's
+ * hamerstuk ("Stemmen - zonder stemming aannemen"). Null for an ordinary vote.
+ */
+export function voteHow(i: Pick<FeedItem, 'vote'>): string | null {
+	const method = i.vote?.method?.replace(/,\s*(aangenomen|verworpen)\s*$/i, '').trim();
+	if (method) return method.replace(/^Stemming bij /, 'Bij ');
+	return i.vote?.decision_kind === 'Stemmen - zonder stemming aannemen' ? 'Hamerstuk' : null;
+}
+
 function voteContext(i: FeedItem): string {
 	const { voor, tegen } = tallyOf(i);
 	const faction = i.persons[0]?.faction?.short;
 	const where = [faction, i.dossier ? `dossier ${i.dossier.number}` : null].filter(Boolean);
-	return [voor + tegen ? `${voor} voor, ${tegen} tegen` : null, where.join(', ') || null]
+	return [voor + tegen ? `${voor} voor, ${tegen} tegen` : voteHow(i), where.join(', ') || null]
 		.filter(Boolean)
 		.join('. ');
 }
@@ -177,9 +188,9 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 					? `${who} ${verb} wetsvoorstel${passed ? ' aan' : ''}: ${names[0]}`
 					: `${who} ${verb} ${inWords(those.length)} wetsvoorstellen${passed ? ' aan' : ''}`,
 				context: one
-					? those[0].dossier
-						? `Dossier ${those[0].dossier.number}`
-						: null
+					? [voteHow(those[0]), those[0].dossier ? `Dossier ${those[0].dossier.number}` : null]
+							.filter(Boolean)
+							.join('. ') || null
 					: listLine(names, BILLS_NAMED),
 				href: one ? hrefOf(those[0]) : actueelDayHref(date, ['stemming']),
 				major: true,
