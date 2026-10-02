@@ -14,7 +14,13 @@
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { isVersionCollection, kindOfCollection } from '$lib/graph/types';
-	import { clusterLabel, clustersOf, isClusterId, type Cluster } from '$lib/netwerk/cluster';
+	import {
+		clusterLabel,
+		clustersOf,
+		isClusterId,
+		placeCard,
+		type Cluster
+	} from '$lib/netwerk/cluster';
 	import { openGroup } from '$lib/verbonden/open-group';
 	import { bronPlural } from '$lib/vocabulary';
 	import { spriteForVorm, IMAGE_SIZE_BUMP, tokens, fillFor, strokeFor } from './nodeSprites';
@@ -565,9 +571,32 @@
 		const w = canvasWrap?.clientWidth ?? CARD_W;
 		const x = at.x + CARD_GAP + CARD_W < w ? at.x + CARD_GAP : Math.max(8, w - CARD_W - 8);
 		clusterCard = { cluster: c, x, y: Math.max(8, at.y - CARD_GAP) };
+		// Measured once drawn, before it is painted: the card moves off the panels it covers.
+		void tick().then(() => {
+			const card = canvasWrap?.querySelector<HTMLElement>('.cluster-kaart');
+			if (!canvasWrap || !card || !clusterCard) return;
+			const origin = canvasWrap.getBoundingClientRect();
+			const boxOf = (el: Element) => {
+				const r = el.getBoundingClientRect();
+				return { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height };
+			};
+			const obstacles = [...canvasWrap.querySelectorAll(FLOATING)]
+				.map(boxOf)
+				.filter((b) => b.w > 0 && b.h > 0);
+			const place = placeCard(
+				at,
+				{ w: card.offsetWidth, h: card.offsetHeight },
+				{ width: canvasWrap.clientWidth, height: canvasWrap.clientHeight },
+				obstacles,
+				CARD_GAP
+			);
+			clusterCard = { ...clusterCard, ...place };
+		});
 	}
 	const CARD_W = 280;
 	const CARD_GAP = 16;
+	/** What floats over the canvas and stays readable: the panel Netwerk, zoom, legenda. */
+	const FLOATING = '.canvas-overlay > *, .zoom, .legenda, .compact-legend-wrap, .vouw';
 
 	function closeClusterCard(e: PointerEvent) {
 		if (clusterCard && !(e.target as HTMLElement | null)?.closest?.('.cluster-kaart'))
