@@ -1,6 +1,7 @@
 import type { BronRef } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
+import { describe } from '$lib/verbonden/rows';
 import {
 	AMENDEMENT,
 	CLOSE_VOTE,
@@ -528,6 +529,23 @@ export function headlineOf(i: FeedItem): Headline {
 		case 'inwerkingtreding': {
 			const { label, title } = commencementLine(i);
 			return { label, title, major: true };
+		}
+		case 'uitspraak': {
+			// A judgment as it is cited, by its court and the day it was decided; a conclusion
+			// by its A-G (BE-26). The highest courts and their parket stand out.
+			const j = i.judgment;
+			const { title } = describe('judgments', i.node.key, i.title, {
+				ecli: j?.ecli,
+				court: j?.court,
+				date: j?.decided_on,
+				advocate_general: j?.advocate_general,
+				advocate_general_role: j?.advocate_general_role
+			});
+			return {
+				label: j?.advocate_general ? 'Conclusie' : 'Uitspraak',
+				title,
+				major: j?.tier === 'hoge_raad' || j?.tier === 'parket'
+			};
 		}
 		default:
 			return { label: KIND_LABEL[i.kind].one, title: titleOf(i), major: false };
