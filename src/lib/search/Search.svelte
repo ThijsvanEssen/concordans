@@ -73,7 +73,8 @@
 		article: 'articles',
 		dossier: 'dossiers',
 		bwb: 'instruments',
-		celex: 'instruments'
+		celex: 'instruments',
+		publication: 'instruments'
 	};
 
 	let query = $state('');
