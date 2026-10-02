@@ -224,3 +224,18 @@ describe('orderGroups', () => {
 		expect(order.map((x) => x.kind)).toEqual(['members', 'dossiers', 'documents']);
 	});
 });
+
+describe('a cabinet', () => {
+	it('is named with its period', () => {
+		const schoof = hit({
+			collection: 'cabinets',
+			key: 'schoof',
+			display_name: 'kabinet-Schoof',
+			extra: { from_date: '2024-07-02', to_date: '2026-02-23' }
+		});
+		expect(presentHit(schoof, 'schoof')).toMatchObject({
+			title: 'kabinet-Schoof',
+			context: '2 jul. 2024 tot 23 feb. 2026'
+		});
+	});
+});
