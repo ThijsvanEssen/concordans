@@ -15,6 +15,7 @@
 	import { tick } from 'svelte';
 	import { formatDate } from './_shared';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
+	import StemmingUitslag from '$lib/components/parliamentary/StemmingUitslag.svelte';
 	import { fromDocument } from '$lib/bron/submitters';
 
 	let {
@@ -218,6 +219,8 @@
 					<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
 				{/if}
 			</header>
+
+			<StemmingUitslag decisions={doc.decisions ?? []} />
 
 			{#if doc.text}
 				<div class="body" bind:this={root}>
