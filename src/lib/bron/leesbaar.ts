@@ -6,6 +6,7 @@
 //   /kamerstukken/36799/31               a Kamerstuk, by its dossier and number
 //   /kamerstukken/36600-VIII/AB          one of the Eerste Kamer, by its letter
 //   /stb/2026/94                         a publication, by series, year and number
+//   /leden/rob-jetten                    a lid or bewindspersoon, by the slug the API gives
 //
 // Each is a second address of the Verkenner (`reroute` in src/hooks.ts serves /explore);
 // the API ids stay as they are. The rest of the view stays in the query: ?lezen=1,
@@ -21,7 +22,8 @@ export type Pad =
 	| { soort: 'artikel'; wet: string; nummer: string }
 	| { soort: 'dossier'; nummer: string }
 	| { soort: 'kamerstuk'; dossier: string; nummer: string }
-	| { soort: 'publicatie'; reeks: Reeks; jaar: string; nummer: string };
+	| { soort: 'publicatie'; reeks: Reeks; jaar: string; nummer: string }
+	| { soort: 'lid'; slug: string };
 
 /** The series of officielebekendmakingen.nl a publication appears in. */
 export type Reeks = 'stb' | 'stcrt' | 'trb';
@@ -51,6 +53,8 @@ export function parsePad(pathname: string): Pad | null {
 		return { soort: 'artikel', wet: a.toUpperCase(), nummer: c };
 	if (first === 'dossiers' && parts.length === 2 && DOSSIER.test(a))
 		return { soort: 'dossier', nummer: a.toUpperCase() };
+	if (first === 'leden' && parts.length === 2 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a))
+		return { soort: 'lid', slug: a };
 	if (REEKSEN.includes(first) && parts.length === 3 && /^\d{4}$/.test(a) && /^\d+$/.test(b))
 		return { soort: 'publicatie', reeks: first as Reeks, jaar: a, nummer: b };
 	if (first === 'kamerstukken' && parts.length === 3 && DOSSIER.test(a) && STUK.test(b))
@@ -78,6 +82,8 @@ export function padHref(pad: Pad): string {
 			return `/kamerstukken/${e(pad.dossier)}/${e(pad.nummer)}`;
 		case 'publicatie':
 			return `/${pad.reeks}/${pad.jaar}/${pad.nummer}`;
+		case 'lid':
+			return `/leden/${pad.slug}`;
 	}
 }
 
@@ -125,6 +131,8 @@ function lookupQuery(pad: Pad) {
 				year: pad.jaar,
 				number: pad.nummer
 			} as const;
+		case 'lid':
+			return { kind: 'member', id: pad.slug } as const;
 	}
 }
 
@@ -181,6 +189,13 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			const m = /^(stb|stcrt|trb)-(\d{4})-(\d+)$/.exec(id.toLowerCase());
 			return m
 				? padHref({ soort: 'publicatie', reeks: m[1] as Reeks, jaar: m[2], nummer: m[3] })
+				: null;
+		}
+		case 'members': {
+			// A lid by the slug the API gives (API 0.75); without one it keeps /explore.
+			const slug = text(props?.slug);
+			return slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
+				? padHref({ soort: 'lid', slug })
 				: null;
 		}
 		case 'documents': {

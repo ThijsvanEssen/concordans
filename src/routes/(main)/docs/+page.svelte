@@ -163,6 +163,9 @@
 				<div class="list-row">
 					<span class="list-k">publicatie</span><span>/stb/2026/94</span>
 				</div>
+				<div class="list-row">
+					<span class="list-k">lid</span><span>/leden/rob-jetten</span>
+				</div>
 			</div>
 			<p>
 				De weergave staat erachter: <code>?lezen=1</code> voor de tekst op volle breedte. Andere
