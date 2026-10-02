@@ -30,17 +30,21 @@ export const kindOfGroup = (g: Group): BronKind | null => g.rows[0]?.kind ?? nul
 /** The groups with the rows that pass the filter; a group without rows is left out. */
 export function filterGroups(groups: Group[], f: VerbondenFilter): Group[] {
 	const cut = cutsRows(f);
+	// The year alone, where the API asked for that year (a wet's judgments, BE-51): its total
+	// is the year's, and holds.
+	const yearOnly = cut && !cutsRows({ ...f, jaar: null });
 	return groups
 		.map((g) => {
 			const rows = g.rows.filter((r) => rowPasses(r, f));
 			// A name that follows its rows follows the rows the filter leaves.
 			const label = g.labelOf ? g.labelOf(rows) : g.label;
+			const holds = !cut || (yearOnly && !!g.years?.length);
 			return {
 				...g,
 				label,
 				rows,
-				total: cut ? undefined : g.total,
-				capped: cut ? false : g.capped
+				total: holds ? g.total : undefined,
+				capped: holds ? g.capped : false
 			};
 		})
 		.filter((g) => g.rows.length > 0);

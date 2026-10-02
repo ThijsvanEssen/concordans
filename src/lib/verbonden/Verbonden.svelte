@@ -45,11 +45,13 @@
 	import { groupRequest } from './open-group';
 	import {
 		uitspraakVolgorde,
+		wetUitspraakJaar,
 		wetUitspraakVolgorde,
 		type UitspraakVolgorde,
 		type WetVolgorde
 	} from './volgorde';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import { get } from 'svelte/store';
 	import {
 		GROUPINGS,
 		allRows,
@@ -130,6 +132,15 @@
 			);
 		})
 	);
+
+	// The year of the bronfilter, for a wet asked of the API itself (BE-51): its judgments
+	// of that year are loaded, not filtered out of the first page.
+	$effect(() => {
+		const jaar = selection.collection === 'instruments' ? filter.jaar : null;
+		if (jaar === get(wetUitspraakJaar)) return;
+		wetUitspraakJaar.set(jaar);
+		onRetry?.();
+	});
 
 	// A new bron starts closed.
 	$effect(() => {

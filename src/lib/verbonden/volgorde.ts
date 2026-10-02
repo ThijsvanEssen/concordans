@@ -10,3 +10,6 @@ export const uitspraakVolgorde = writable<UitspraakVolgorde>('date_desc');
 /** The judgments that cite a law (API 0.74, BE-47): newest first, or by its articles cited. */
 export type WetVolgorde = 'date' | 'cited';
 export const wetUitspraakVolgorde = writable<WetVolgorde>('date');
+
+/** The year the judgments that cite a law are asked for (API 0.74, BE-51); null for all. */
+export const wetUitspraakJaar = writable<number | null>(null);

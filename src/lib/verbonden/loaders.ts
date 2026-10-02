@@ -17,7 +17,7 @@ import { getJudgmentDetail } from '$lib/api/judgments';
 import { bucketKey, neighborsOf } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
-import { uitspraakVolgorde, wetUitspraakVolgorde } from './volgorde';
+import { uitspraakVolgorde, wetUitspraakJaar, wetUitspraakVolgorde } from './volgorde';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
@@ -740,9 +740,15 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		});
 		if (!bwb) return fromNode();
 		const sort = get(wetUitspraakVolgorde);
+		// One year of them where the bronfilter chooses one (BE-51): all of that year, not
+		// the year's share of the first page.
+		const jaar = get(wetUitspraakJaar);
 		const found = await unwrap(
 			api.GET('/api/instruments/{bwb_id}/judgments', {
-				params: { path: { bwb_id: bwb }, query: { limit: JUDGMENTS_SHOWN, sort } },
+				params: {
+					path: { bwb_id: bwb },
+					query: { limit: JUDGMENTS_SHOWN, sort, year: jaar ? String(jaar) : undefined }
+				},
 				signal
 			})
 		).catch(() => null);
