@@ -189,6 +189,8 @@
 	const courtKind = $derived(oneOf(params.get('court_kind'), COURT_KINDS));
 	// Rechtsgebied and procedure as rechtspraak.nl gives them (API 0.74, BE-44).
 	const subject = $derived(params.get('subject') ?? '');
+	// The main area of law (BE-57, API 0.75): `Bestuursrecht` holds `Bestuursrecht; Belastingrecht`.
+	const subjectArea = $derived(params.get('subject_area') ?? '');
 	const procedure = $derived(params.get('procedure') ?? '');
 	const sort = $derived(params.get('sort'));
 	const dirParam = $derived(oneOf(params.get('dir'), ['asc', 'desc'] as const));
@@ -214,6 +216,7 @@
 		'tier',
 		'court_kind',
 		'subject',
+		'subject_area',
 		'procedure',
 		'leeg',
 		'source',
@@ -466,6 +469,7 @@
 					tier,
 					court_kind: courtKind,
 					subject: subject || undefined,
+					subject_area: subjectArea || undefined,
 					procedure: procedure || undefined,
 					// Without a source the list holds the cited judgments whose text is not loaded.
 					source: source ?? 'rechtspraak',
@@ -1128,6 +1132,55 @@
 		}));
 	}
 
+	/** The main area of a subject as rechtspraak.nl writes it: up to its first `;`. */
+	const areaOf = (value: string) => value.split(';')[0].trim();
+
+	/**
+	 * Rechtsgebied as a tree: the main areas with their counts (facets.subject_area), and
+	 * under the chosen one its sub-areas (facets.subjects, "Bestuursrecht; Belastingrecht"
+	 * as "Belastingrecht"). A main area alone holds its sub-areas; a sub-area narrows it.
+	 * A judgment of the main area without a sub-area has no option of its own.
+	 */
+	function areaFacet(): FacetGroup[] {
+		const chosenArea = subjectArea || (subject ? areaOf(subject) : '');
+		const areas = (judgmentFacets?.subject_area ?? []).flatMap((f) =>
+			f.value ? [{ value: f.value, count: f.count }] : []
+		);
+		if (chosenArea && !areas.some((a) => a.value === chosenArea))
+			areas.unshift({ value: chosenArea, count: 0 });
+		const subs = (area: string) =>
+			(judgmentFacets?.subjects ?? []).flatMap((f) =>
+				f.value && f.value.includes(';') && areaOf(f.value) === area
+					? [
+							{
+								id: f.value,
+								label: f.value.slice(f.value.indexOf(';') + 1).trim(),
+								count: f.count,
+								indent: true as const,
+								on: subject === f.value,
+								onClick: () =>
+									patchUrl({ subject: subject === f.value ? null : f.value, subject_area: area })
+							}
+						]
+					: []
+			);
+		const options = areas.flatMap((a) => {
+			const on = chosenArea === a.value;
+			return [
+				{
+					id: `area-${a.value}`,
+					label: a.value,
+					count: a.count,
+					// Chosen while one of its sub-areas narrows it; a click lets go of both.
+					on,
+					onClick: () => patchUrl({ subject_area: on ? null : a.value, subject: null })
+				},
+				...(on ? subs(a.value) : [])
+			];
+		});
+		return options.length ? [{ id: 'subject', label: 'Rechtsgebied', kind: 'list', options }] : [];
+	}
+
 	/**
 	 * A facet of the list as the source names its values (rechtsgebied, procedure), most
 	 * judgments first; the API counts it without its own filter. A judgment without the
@@ -1236,7 +1289,7 @@
 				return [
 					// The groups of courts, each under its own heading; no heading Instantie above.
 					...courtOptions,
-					...sourceFacet('subject', 'Rechtsgebied', judgmentFacets?.subjects, subject),
+					...areaFacet(),
 					...sourceFacet('procedure', 'Procedure', judgmentFacets?.procedure, procedure),
 					{
 						id: 'period',
