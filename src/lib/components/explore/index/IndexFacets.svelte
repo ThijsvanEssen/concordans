@@ -21,7 +21,12 @@
 	export type FacetHeading = { heading: string; count?: number };
 
 	export type FacetGroup = { id: string; label: string; note?: string } & (
-		| { kind: 'list'; options: (FacetOption | FacetHeading)[] }
+		| {
+				kind: 'list';
+				options: (FacetOption | FacetHeading)[];
+				/** A long list (the rechtsgebieden) shows this many, the chosen one too, then Alle N. */
+				preview?: number;
+		  }
 		| {
 				kind: 'steps';
 				options: FacetOption[];
@@ -114,6 +119,13 @@
 		pending?: boolean;
 	} = $props();
 
+	let alle = $state<Record<string, boolean>>({});
+	/** The options a long list shows: the first `preview`, and a chosen one beyond them. */
+	const shown = (g: FacetGroup & { kind: 'list' }) =>
+		!g.preview || alle[g.id]
+			? g.options
+			: g.options.filter((o, i) => i < g.preview! || (!isHeading(o) && o.on));
+
 	// A year field holds `2020`; the URL holds the first or last day of it.
 	const toParam = (value: string, unit: 'year' | 'date', end: boolean) =>
 		unit === 'date' || !/^\d{4}$/.test(value) ? value : `${value}-${end ? '12-31' : '01-01'}`;
@@ -129,7 +141,7 @@
 
 			{#if g.kind === 'list'}
 				<ul class="options">
-					{#each g.options as o, i (isHeading(o) ? `h${i}` : o.id)}
+					{#each shown(g) as o, i (isHeading(o) ? `h${i}` : o.id)}
 						{#if isHeading(o)}
 							<li class="subhead">
 								<span>{o.heading}</span>
@@ -150,6 +162,15 @@
 						{/if}
 					{/each}
 				</ul>
+				{#if g.preview && g.options.length > g.preview}
+					<button
+						type="button"
+						class="meer"
+						aria-expanded={alle[g.id] ?? false}
+						onclick={() => (alle = { ...alle, [g.id]: !alle[g.id] })}
+						>{alle[g.id] ? 'Minder' : `Alle ${formatCount(g.options.length)}`}</button
+					>
+				{/if}
 			{:else if g.kind === 'steps'}
 				<!-- De fasen als rijen, zoals elk ander filter; geen staafjes. -->
 				<ul class="options" aria-label={g.label}>
@@ -254,6 +275,21 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
+	}
+	.meer {
+		margin-top: var(--s-1);
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.meer:hover {
+		color: var(--accent);
 	}
 	.subhead {
 		display: flex;

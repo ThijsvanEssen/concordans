@@ -187,6 +187,9 @@
 	const source = $derived(oneOf(params.get('source'), ['echr'] as const));
 	const tier = $derived(oneOf(params.get('tier'), TIERS));
 	const courtKind = $derived(oneOf(params.get('court_kind'), COURT_KINDS));
+	// Rechtsgebied and procedure as rechtspraak.nl gives them (API 0.74, BE-44).
+	const subject = $derived(params.get('subject') ?? '');
+	const procedure = $derived(params.get('procedure') ?? '');
 	const sort = $derived(params.get('sort'));
 	const dirParam = $derived(oneOf(params.get('dir'), ['asc', 'desc'] as const));
 	const onlyActive = $derived(params.get('only_active') === '1');
@@ -210,6 +213,8 @@
 		'court',
 		'tier',
 		'court_kind',
+		'subject',
+		'procedure',
 		'leeg',
 		'source',
 		'sort',
@@ -460,6 +465,8 @@
 					court: court || undefined,
 					tier,
 					court_kind: courtKind,
+					subject: subject || undefined,
+					procedure: procedure || undefined,
 					// Without a source the list holds the cited judgments whose text is not loaded.
 					source: source ?? 'rechtspraak',
 					from: dateFrom || undefined,
@@ -1121,6 +1128,42 @@
 		}));
 	}
 
+	/**
+	 * A facet of the list as the source names its values (rechtsgebied, procedure), most
+	 * judgments first; the API counts it without its own filter. A judgment without the
+	 * value cannot be chosen by it and is left out. One value at a time.
+	 */
+	function sourceFacet(
+		param: 'subject' | 'procedure',
+		label: string,
+		facet: { value?: string | null; count: number }[] | null | undefined,
+		current: string
+	): FacetGroup[] {
+		const options = (facet ?? []).flatMap((f) =>
+			f.value
+				? [
+						{
+							id: f.value,
+							label: f.value,
+							count: f.count,
+							on: current === f.value,
+							onClick: () => toggleParam(param, current, f.value!)
+						}
+					]
+				: []
+		);
+		if (current && !options.some((o) => o.on))
+			options.unshift({
+				id: current,
+				label: current,
+				count: 0,
+				on: true,
+				onClick: () => toggleParam(param, current, current)
+			});
+		// No counts yet, or an API without the facet: no group, rather than an empty heading.
+		return options.length ? [{ id: param, label, kind: 'list', preview: 6, options }] : [];
+	}
+
 	// The years of the judgments under the filters, the last forty, as columns.
 	const judgmentYears = $derived(
 		(judgmentFacets?.year ?? [])
@@ -1193,6 +1236,8 @@
 				return [
 					// The groups of courts, each under its own heading; no heading Instantie above.
 					...courtOptions,
+					...sourceFacet('subject', 'Rechtsgebied', judgmentFacets?.subjects, subject),
+					...sourceFacet('procedure', 'Procedure', judgmentFacets?.procedure, procedure),
 					{
 						id: 'period',
 						label: 'Periode',
