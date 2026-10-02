@@ -123,8 +123,11 @@
 	// A dossier's phase and kind as the Kamer names them (API 0.52). A link from before names
 	// them the old way (`?stage=mvt`, `?track=wetsvoorstel`): read as the Kamer's word, or left
 	// out where the Kamer has none. The kind keeps the URL name `track`: `kind` is the tab.
-	const phase = $derived(
-		phaseFromParam(params.get('phase') ?? params.get('stage') ?? '') ?? undefined
+	// One phase or several (API 0.75): the dossiers whose current phase is one of them.
+	const phases = $derived(
+		(params.get('phase') ?? params.get('stage') ?? '')
+			.split(',')
+			.flatMap((v) => phaseFromParam(v) ?? [])
 	);
 	// Phases a dossier must all have passed, comma-separated.
 	const hasPhase = $derived(
@@ -307,6 +310,8 @@
 		// Sorted by the API, over all pages.
 		dossiers: [
 			{ id: 'opened_on', label: 'Geopend (nieuw → oud)' },
+			// The day of its newest paper, activity or decision (API 0.75).
+			{ id: 'last_activity', label: 'Laatste activiteit' },
 			{ id: 'number', label: 'Kamerstuknummer' },
 			{ id: 'closed_on', label: 'Afgehandeld (nieuw → oud)' },
 			{ id: 'title', label: 'Titel' }
@@ -493,11 +498,17 @@
 					status: dossierScope,
 					outcome,
 					subject: q || undefined,
-					phase,
+					phase: phases.length ? phases.join(',') : undefined,
 					has_phase: hasPhase || undefined,
 					kind: track || undefined,
 					ministry: asMinistry(ministry),
-					sort: oneOf(sortDef.id, ['number', 'opened_on', 'closed_on', 'title'] as const),
+					sort: oneOf(sortDef.id, [
+						'number',
+						'opened_on',
+						'last_activity',
+						'closed_on',
+						'title'
+					] as const),
 					limit
 				};
 				return async (offset, signal) => {
@@ -1327,8 +1338,11 @@
 							id: p,
 							label: p,
 							count: dossierPhases.get(p) ?? 0,
-							on: phase === p,
-							onClick: () => patchUrl({ phase: phase === p ? null : p, stage: null })
+							on: phases.includes(p),
+							onClick: () => {
+								const next = phases.includes(p) ? phases.filter((x) => x !== p) : [...phases, p];
+								patchUrl({ phase: next.length ? next.join(',') : null, stage: null });
+							}
 						}))
 					},
 					{
@@ -2731,10 +2745,12 @@
 			{#if st?.zin}
 				<span class="row-zin">{st.zin}</span>
 			{/if}
+			<!-- Sorted by its last activity, that day; else the day it was opened. -->
+			{@const laatst = sortDef.id === 'last_activity' ? d.last_activity : null}
+			{@const dag = laatst ?? d.opened_on}
 			<span class="row-sub"
-				>{who}{who && d.opened_on ? ', ' : ''}{#if d.opened_on}geopend {datum(
-						d.opened_on
-					)}{/if}</span
+				>{who}{who && dag ? ', ' : ''}{#if dag}{laatst ? 'laatste activiteit' : 'geopend'}
+					{datum(dag)}{/if}</span
 			>
 		{/snippet}
 		{#snippet aside()}
