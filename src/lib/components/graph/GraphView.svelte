@@ -17,6 +17,7 @@
 	import {
 		clusterLabel,
 		clustersOf,
+		clusterZinnen,
 		isClusterId,
 		placeCard,
 		type Cluster
@@ -593,6 +594,13 @@
 			clusterCard = { ...clusterCard, ...place };
 		});
 	}
+	/** The group in Verbonden that lists the cluster's kind, as "Bekijk in Verbonden" opens it. */
+	const groupOf = (c: Cluster) => {
+		const count = (g: (typeof verbonden.groups)[number]) =>
+			g.rows.filter((row) => row.ref.collection === c.collection).length;
+		const best = [...verbonden.groups].sort((a, b) => count(b) - count(a))[0];
+		return best && count(best) > 0 ? best : null;
+	};
 	const CARD_W = 280;
 	const CARD_GAP = 16;
 	/** What floats over the canvas and stays readable: the panel Netwerk, zoom, legenda. */
@@ -1282,7 +1290,9 @@
 					<p class="cluster-naam">
 						<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
 					</p>
-					<p class="cluster-zin">Alleen met deze bron verbonden.</p>
+					{#each clusterZinnen(c, groupOf(c)) as zin (zin)}
+						<p class="cluster-zin">{zin}</p>
+					{/each}
 					<div class="cluster-knoppen">
 						<button type="button" class="act act--pri" onclick={() => showCluster(c)}
 							>Toon alle {c.members.length.toLocaleString('nl-NL')} in het netwerk</button

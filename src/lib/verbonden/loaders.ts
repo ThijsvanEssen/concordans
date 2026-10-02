@@ -121,6 +121,10 @@ function lidOfStub(key: string, props: Record<string, unknown> | null | undefine
 /** The dossiers of a lid or fractie read at once: about 0.7 KB each. */
 const DOSSIERS_SHOWN = 100;
 
+/** The passages of the judgments that cite an article: 200 a page, at most five pages. */
+const CITED_BY_PAGE = 200;
+const CITED_BY_PAGES = 5;
+
 /** The activities of a committee read at once: about 0.2 KB each. */
 const ACTIVITIES_SHOWN = 200;
 
@@ -249,19 +253,34 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
 		if (bwb && number) {
 			const sort = get(uitspraakVolgorde);
-			const { data, response } = await api
-				.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
-					params: {
-						path: { bwb_id: bwb, article_number: number },
-						query: { limit: 200, sort }
-					},
-					signal
-				})
-				.catch(() => ({ data: undefined, response: null }));
+			const page = (offset: number) =>
+				api
+					.GET('/api/articles/{bwb_id}/{article_number}/cited-by', {
+						params: {
+							path: { bwb_id: bwb, article_number: number },
+							query: { limit: CITED_BY_PAGE, offset, sort }
+						},
+						signal
+					})
+					.catch(() => ({ data: undefined, response: null }));
+			const { data, response } = await page(0);
 			if (response?.ok && data && data.items.length > 0) {
+				// The passages page by page, one after the other, until every judgment is in:
+				// 6:162 BW has 624 passages in 250 judgments, the first 200 only in 119.
+				const items = [...data.items];
+				const judgments = () => new Set(items.map((item) => item.judgment.key)).size;
+				while (
+					items.length < data.total &&
+					items.length < CITED_BY_PAGE * CITED_BY_PAGES &&
+					judgments() < data.judgment_total
+				) {
+					const next = await page(items.length);
+					if (!next.data || next.data.items.length === 0) break;
+					items.push(...next.data.items);
+				}
 				// One row per judgment; each overweging that cites the article is a mention.
 				const mentions = new Map<string, Map<string, Row>>();
-				for (const item of data.items) {
+				for (const item of items) {
 					const j = item.judgment;
 					if (isInternational({ key: j.key, props: {} })) continue;
 					const at =
