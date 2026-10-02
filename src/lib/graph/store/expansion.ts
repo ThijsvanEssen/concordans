@@ -1,15 +1,17 @@
-import { getNodeGraph, getNodeNeighborhood } from '$lib/api/nodes';
+import { getNodeGraph, getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
 	containerKindOf,
 	getContainerGroup,
 	isContainerMembership,
+	markLone,
 	recordContainerMember
 } from '../container-membership';
+import { foldVersions } from '../paths';
 import { nodeId } from '$lib/vocabulary';
 import { get } from 'svelte/store';
-import { nodeToGraphNode, relationOf } from '../types';
+import { nodeToGraphNode, relationOf, type BaseNode } from '../types';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
 
@@ -128,7 +130,7 @@ export function createExpansion(
 			return nodes.get(mergeResponse(response, draw) ?? id) ?? null;
 		},
 
-		mergePaths: (response) => {
+		mergePaths: async (response) => {
 			// A path through a wet by one of its articles (stuk → Awb ← art. 3:7, PART_OF) says
 			// no more than that the stuk names the wet the article is in: it is left out, and
 			// with it what only it brought.
@@ -140,10 +142,34 @@ export function createExpansion(
 			const paths = response.paths.filter((p) => !p.edge_ids.some((id) => throughLaw.has(id)));
 			const onPath = new Set(paths.flatMap((p) => p.node_ids));
 			const edgeIds = new Set(paths.flatMap((p) => p.edge_ids));
-			const { drawn } = mergeSubgraph(
+			// A version of an article is no bron: the hop through it folds onto the article.
+			const folded = foldVersions(
 				response.nodes.filter((n) => onPath.has(`${n.collection}/${n.key}`)),
-				response.edges.filter((e) => edgeIds.has(e.id)),
-				null
+				response.edges.filter((e) => edgeIds.has(e.id))
+			);
+			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null);
+			// The dossier a stuk on a path is in, as a hull around it: the MvT of 33328 shows
+			// the bill it explains (BE-49). From the stuk's own response, asked once.
+			await Promise.all(
+				[...drawn]
+					.filter((id) => id.startsWith('documents/'))
+					.map(async (id) => {
+						const key = id.slice('documents/'.length);
+						const r = await nodeResponse('documents', key).catch(() => null);
+						const dossier = r
+							? neighborsOf(r).find(
+									(n) =>
+										n.relation === 'PART_OF' &&
+										n.collection === 'dossiers' &&
+										n.direction === 'outbound'
+								)
+							: undefined;
+						if (!dossier) return;
+						recordContainerFor(dossier as unknown as BaseNode, 'dossier');
+						const container = containerIdFor(dossier);
+						recordContainerMember('dossier', container, id, 'PART_OF');
+						markLone(container);
+					})
 			);
 			emit();
 			return [...drawn];
