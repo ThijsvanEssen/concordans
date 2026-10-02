@@ -989,7 +989,11 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 		});
 	};
 
-	for (const p of paragraphs) {
+	paragraphs.forEach((p, i) => {
+		// The heading of the judgment's own table of contents ("Inhoudsopgave") goes with it:
+		// its lines (kind toc) are left out, and a heading over nothing would remain.
+		if ((p.kind === 'heading' || p.kind === 'subheading') && p !== first)
+			if (paragraphs[i + 1]?.kind === 'toc') return;
 		if (p.kind === 'subheading') {
 			if (p === first) for (const block of headRest(p.text)) body(block, [], null);
 			else {
@@ -1007,7 +1011,7 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 		} else if (p.kind === 'toc') {
 			// The judgment's own table of contents (BE-54): the column beside the text gives
 			// it, and its lines are no overwegingen.
-			continue;
+			return;
 		} else {
 			const continues = (p as { continues?: unknown }).continues;
 			body(
@@ -1018,6 +1022,6 @@ export function bodyItems(paragraphs: Paragraph[]): BodyItem[] {
 				typeof continues === 'string' && continues !== ''
 			);
 		}
-	}
+	});
 	return items;
 }
