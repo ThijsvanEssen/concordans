@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getCabinet } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
@@ -6,7 +7,6 @@
 	// Reader for a cabinet: its period, minister-president and coalition, and what it did,
 	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -27,12 +27,16 @@
 	// Raised by Opnieuw, to load the bron again after an error.
 	let attempt = $state(0);
 
+	// The key, not the node: the node is drawn anew with the same key once its
+	// neighbourhood loads, and the record is not asked again for that.
+	const bronKey = $derived(node.key);
+
 	$effect(() => {
 		void attempt;
-		const key = node.key;
+		const key = bronKey;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
-		unwrap(api.GET('/api/cabinets/{key}', { params: { path: { key } }, signal: ac.signal }))
+		getCabinet(key)
 			.then((cabinet) => {
 				if (!ac.signal.aborted) view = { kind: 'loaded', cabinet };
 			})

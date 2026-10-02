@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { getDecision, getDecisionDocument } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -31,17 +31,16 @@
 	// Raised by Opnieuw, to load the bron again after an error.
 	let attempt = $state(0);
 
+	// The key, not the node: the node is drawn anew with the same key once its
+	// neighbourhood loads, and the record is not asked again for that.
+	const bronKey = $derived(node.key);
+
 	$effect(() => {
 		void attempt;
-		const key = node.key;
+		const key = bronKey;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
-		Promise.all([
-			unwrap(api.GET('/api/decisions/{key}', { params: { path: { key } }, signal: ac.signal })),
-			unwrap(
-				api.GET('/api/decisions/{key}/document', { params: { path: { key } }, signal: ac.signal })
-			).catch(() => null)
-		])
+		Promise.all([getDecision(key), getDecisionDocument(key).catch(() => null)])
 			.then(([decision, document]) => {
 				if (!ac.signal.aborted) view = { kind: 'loaded', decision, document };
 			})

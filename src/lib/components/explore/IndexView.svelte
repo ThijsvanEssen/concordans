@@ -18,6 +18,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
+	import { getCabinet } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
 	import {
 		COURT_KINDS,
@@ -593,9 +594,8 @@
 						pages.ministers = toPage(undefined, [], 0, 0);
 						return;
 					}
-					const detail = await unwrap(
-						api.GET('/api/cabinets/{key}', { params: { path: { key: chosen } }, signal })
-					);
+					const detail = await getCabinet(chosen);
+					if (signal.aborted) return;
 					shownCabinet = detail;
 					const rows = (detail.ministries ?? []).flatMap((m) =>
 						m.seats.flatMap((seat) =>

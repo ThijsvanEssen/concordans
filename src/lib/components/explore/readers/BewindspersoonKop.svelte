@@ -2,7 +2,7 @@
 	// De kop van een bewindspersoon. Wie en wat in één
 	// zin; dan drie ingangen met aantallen, zodat duidelijk is waar te beginnen.
 	import type { Schema } from '$lib/api/types';
-	import { api, unwrap } from '$lib/api/client';
+	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { datum } from '$lib/components/parliamentary/stand';
 
@@ -22,27 +22,18 @@
 	$effect(() => {
 		const key = m.key;
 		const ac = new AbortController();
-		unwrap(
-			api.GET('/api/commitments', {
-				params: { query: { member: key, limit: 1 } },
-				signal: ac.signal
+		// The counts the overview below lists too: the same requests serve both.
+		getMemberCommitments(key, 1)
+			.then((r) => {
+				if (ac.signal.aborted) return;
+				tz = {
+					total: r.total,
+					open: r.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0
+				};
 			})
-		)
-			.then(
-				(r) =>
-					(tz = {
-						total: r.total,
-						open: r.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0
-					})
-			)
 			.catch(() => {});
-		unwrap(
-			api.GET('/api/members/{key}/dossiers', {
-				params: { path: { key }, query: { limit: 1 } },
-				signal: ac.signal
-			})
-		)
-			.then((r) => (dossiers = r.total))
+		getMemberDossiers(key, 3)
+			.then((r) => !ac.signal.aborted && (dossiers = r.total))
 			.catch(() => {});
 		return () => ac.abort();
 	});

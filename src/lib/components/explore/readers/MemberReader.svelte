@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { getMember, getMemberAuthored } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { api, unwrap } from '$lib/api/client';
 	import { neighborsOf, type Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -54,24 +54,20 @@
 	// Raised by Opnieuw, to load the bron again after an error.
 	let attempt = $state(0);
 
+	// The key, not the node: the node is drawn anew with the same key once its
+	// neighbourhood loads, and the records are not asked again for that.
+	const bronKey = $derived(node.key);
+
 	$effect(() => {
 		void attempt;
-		const key = node.key;
+		const key = bronKey;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
 		showAllVotes = false;
 		Promise.all([
-			unwrap(api.GET('/api/members/{key}', { params: { path: { key } }, signal: ac.signal })),
+			getMember(key),
 			getMemberVotes(key).catch(() => null),
-			unwrap(
-				api.GET('/api/nodes/{collection}/{key}', {
-					params: {
-						path: { collection: 'members', key },
-						query: { relations: 'AUTHORED', limit: 200 }
-					},
-					signal: ac.signal
-				})
-			)
+			getMemberAuthored(key)
 				.then((r) => neighborsOf(r).map(signatureOf))
 				.catch(() => [])
 		])

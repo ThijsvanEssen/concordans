@@ -4,7 +4,7 @@
 	// stuk names its decisions; the fracties of the Tweede Kamer are in the decision's votes,
 	// those of the Eerste Kamer in its own lists.
 	import type { Schema } from '$lib/api/types';
-	import { api, unwrap } from '$lib/api/client';
+	import { getDecision } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
@@ -21,7 +21,7 @@
 		const keys = decisions.filter((d) => d.chamber !== 'EK').map((d) => d.key);
 		Promise.all(
 			keys.map((key) =>
-				unwrap(api.GET('/api/decisions/{key}', { params: { path: { key } }, signal: ac.signal }))
+				getDecision(key)
 					.then((d) => [key, d] as const)
 					.catch(() => null)
 			)

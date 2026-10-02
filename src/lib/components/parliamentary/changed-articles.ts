@@ -1,5 +1,6 @@
 // The articles a bill changes, per law (GET /api/dossiers/{number}/changed-articles, API
 // 0.74.0): what the dossier reader shows under "Gewijzigde artikelen".
+import { once } from '$lib/api/records';
 import { api } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
 import { bookNumber } from '$lib/text/bw';
@@ -12,18 +13,15 @@ export type ChangedLaw = Schema<'DossierChangedLaw'>;
 export type ChangedArticles = Schema<'DossierChangedArticlesResponse'>;
 
 /** The changes of a dossier, or null where the API has none to give (an older API: 404). */
-export async function getChangedArticles(
-	number: string,
-	signal?: AbortSignal
-): Promise<ChangedArticles | null> {
-	const { data, response } = await api.GET('/api/dossiers/{number}/changed-articles', {
-		params: { path: { number } },
-		signal
+export const getChangedArticles = (number: string): Promise<ChangedArticles | null> =>
+	once(`dossiers/${number}/changed-articles`, async () => {
+		const { data, response } = await api.GET('/api/dossiers/{number}/changed-articles', {
+			params: { path: { number } }
+		});
+		if (response.status === 404) return null;
+		if (!data) throw new Error(`changed-articles ${response.status}`);
+		return data;
 	});
-	if (response.status === 404) return null;
-	if (!data) throw new Error(`changed-articles ${response.status}`);
-	return data;
-}
 
 /** What a change does to the article, as the first word of its line. */
 export const RELATION_WORD: Record<DossierChange['relation'], string> = {

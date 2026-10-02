@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getCommitment } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a toezegging: its text, who made it in which post, the ministry and cabinet,
 	// when it was made and when it is expected to be settled, its state and its dossiers.
@@ -6,7 +7,6 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { indexHref } from '$lib/bron/href';
-	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
@@ -33,12 +33,16 @@
 	// Raised by Opnieuw, to load the bron again after an error.
 	let attempt = $state(0);
 
+	// The key, not the node: the node is drawn anew with the same key once its
+	// neighbourhood loads, and the record is not asked again for that.
+	const bronKey = $derived(node.key);
+
 	$effect(() => {
 		void attempt;
-		const key = node.key;
+		const key = bronKey;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
-		unwrap(api.GET('/api/commitments/{key}', { params: { path: { key } }, signal: ac.signal }))
+		getCommitment(key)
 			.then((commitment) => {
 				if (!ac.signal.aborted) view = { kind: 'loaded', commitment };
 			})

@@ -4,7 +4,7 @@
 	// The table of contents of a document (memorie, verslag, nota, ...) in Lezen: its
 	// headings, the same nav-column slot LezenNav fills for a wet. Fetches its own copy
 	// of the document, the way LezenNav fetches its own copy of the law's articles.
-	import { api, unwrap } from '$lib/api/client';
+	import { getDocument } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 
@@ -26,7 +26,7 @@
 		const ac = new AbortController();
 		loading = true;
 		error = null;
-		unwrap(api.GET('/api/documents/{key}', { params: { path: { key: k } }, signal: ac.signal }))
+		getDocument(k)
 			.then((doc) => {
 				title = doc.title ?? doc.key;
 				kind = doc.kind ?? null;

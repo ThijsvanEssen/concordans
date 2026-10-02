@@ -69,7 +69,7 @@
 	</div>
 
 	<div class="container foot-bottom">
-		<span>© 2026– Concordans</span>
+		<span>© 2026 Concordans</span>
 	</div>
 </footer>
 
