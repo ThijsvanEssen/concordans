@@ -14,6 +14,7 @@
 		careerOf,
 		currentTitle,
 		inYears,
+		seatWord,
 		yearsOf,
 		type Signature
 	} from '$lib/components/parliamentary/career';
@@ -243,6 +244,45 @@
 							die van de stukken, niet de ambtstermijn.
 						</p>
 					{/if}
+				</Sectie>
+			{/if}
+
+			{#if (m.committees ?? []).length > 0}
+				<!-- The committees they sat on (API 0.75, BE-30), those they sit on now first: the
+				     seat that stands for them, its role where it is more than a seat, and the other
+				     periods beside it, as Loopbaan names a role. -->
+				<Sectie titel="Commissies" soort="committees" aantal={m.committees?.length}>
+					<ul class="career">
+						{#each m.committees ?? [] as c (c.key)}
+							{@const others = (c.periods ?? []).filter(
+								(p) => p.from_date !== c.from_date || p.to_date !== c.to_date
+							)}
+							<li
+								class="career-step"
+								class:is-out={!inYears(
+									c.from_date ?? null,
+									c.to_date ?? null,
+									years.van,
+									years.tot
+								)}
+							>
+								<span class="career-years">{yearsOf(c.from_date ?? null, c.to_date ?? null)}</span>
+								<span class="career-what">
+									<BronLink ref={{ collection: 'committees', key: c.key }}
+										>{c.name ?? c.key}</BronLink
+									>{seatWord(c.role, c.substitute)
+										? `, ${seatWord(c.role, c.substitute)}`
+										: ''}{c.chamber === 'EK' ? ', Eerste Kamer' : ''}
+									{#each others as p ((p.from_date ?? '') + (p.role ?? '') + (p.substitute ? 'v' : ''))}
+										<span class="career-role"
+											>{seatWord(p.role, p.substitute) ?? 'lid'}
+											{yearsOf(p.from_date ?? null, p.to_date ?? null)}</span
+										>
+									{/each}
+								</span>
+							</li>
+						{/each}
+					</ul>
 				</Sectie>
 			{/if}
 

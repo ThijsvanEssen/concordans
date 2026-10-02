@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { careerOf, currentTitle, foldPremier, inYears, yearsOf, type CareerEntry } from './career';
+import {
+	careerOf,
+	currentTitle,
+	foldPremier,
+	inYears,
+	seatWord,
+	type CareerEntry,
+	yearsOf
+} from './career';
 
 const d66 = (from: string, to: string | null, role = 'Lid') => ({
 	faction_id: 'factions/d66',
@@ -130,5 +138,17 @@ describe('foldPremier', () => {
 				['Minister voor Klimaat en Energie', '2022-01-10', '2024-07-02', 3]
 			]
 		);
+	});
+});
+
+describe('seatWord', () => {
+	it('names a seat where it is more than a seat', () => {
+		expect(seatWord('Lid')).toBeNull();
+		expect(seatWord(null)).toBeNull();
+		expect(seatWord('Voorzitter')).toBe('voorzitter');
+		expect(seatWord('OnderVz')).toBe('ondervoorzitter');
+		expect(seatWord('Plv. lid')).toBe('plaatsvervangend lid');
+		expect(seatWord('Lid', true)).toBe('plaatsvervangend lid');
+		expect(seatWord('ondervoorzitter')).toBe('ondervoorzitter');
 	});
 });
