@@ -14,6 +14,11 @@
 	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import { procedure } from '$lib/components/parliamentary/procedure';
+	import GewijzigdeArtikelen from '$lib/components/parliamentary/GewijzigdeArtikelen.svelte';
+	import {
+		getChangedArticles,
+		type ChangedArticles
+	} from '$lib/components/parliamentary/changed-articles';
 	let metOverig = $state(false);
 
 	let { node }: { node: GraphNode } = $props();
@@ -25,6 +30,8 @@
 				kind: 'loaded';
 				dossier: Schema<'DossierDetailResponse'>;
 				timeline: Schema<'DossierTimelineResponse'> | null;
+				/** The articles the bill changes; null without them or on an older API. */
+				changed: ChangedArticles | null;
 		  };
 
 	const TIMELINE_LIMIT = 200;
@@ -66,10 +73,12 @@
 					params: { path: { number }, query: { limit: TIMELINE_LIMIT } },
 					signal: ac.signal
 				})
-			).catch(() => null)
+			).catch(() => null),
+			// Optional too: a dossier without changed articles has no section.
+			getChangedArticles(number, ac.signal).catch(() => null)
 		])
-			.then(([dossier, timeline]) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', dossier, timeline };
+			.then(([dossier, timeline, changed]) => {
+				if (!ac.signal.aborted) view = { kind: 'loaded', dossier, timeline, changed };
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
@@ -145,6 +154,10 @@
 						>
 					{/if}
 				</Sectie>
+			{/if}
+
+			{#if view.changed && view.changed.total > 0}
+				<GewijzigdeArtikelen data={view.changed} />
 			{/if}
 		{/if}
 	</div>
