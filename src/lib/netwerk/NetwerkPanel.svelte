@@ -113,7 +113,7 @@
 								class="los"
 								title="Geen verbinding met de andere gekozen bronnen"
 							>
-								· los</span
+								, los</span
 							>{/if}</button
 					>
 					<button

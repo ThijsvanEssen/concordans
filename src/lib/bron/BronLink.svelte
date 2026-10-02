@@ -118,7 +118,7 @@
 			id="{uid}-card"
 			role={vast ? 'dialog' : 'tooltip'}
 			aria-label={vast ? card.title : undefined}
-			><span class="card__kicker">{card.kicker}{card.date ? ` · ${card.date}` : ''}</span><span
+			><span class="card__kicker">{card.kicker}{card.date ? `, ${card.date}` : ''}</span><span
 				class="card__title">{card.title}</span
 			>{#if card.lines}<span class="card__lines">{card.lines}</span>{/if}{#if vast}<span
 					class="card__acts"

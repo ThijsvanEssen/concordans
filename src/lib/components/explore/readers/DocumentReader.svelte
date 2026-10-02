@@ -203,7 +203,7 @@
 			{@const doc = view.document}
 			{@const term = glossaryTerm(doc.kind)}
 			<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
-			     a case of the kind Motie, which "Motie · 7 sep. 2026 · Motie" said twice. -->
+			     a case of the kind Motie, which "Motie, 7 sep. 2026, Motie" said twice. -->
 			{@const caseKinds = (doc.case_kinds ?? []).filter(
 				(k) => k.toLowerCase() !== doc.kind?.toLowerCase()
 			)}
@@ -211,8 +211,8 @@
 				<span class="kicker">
 					{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
 							'Document'}{/if}
-					{#if doc.date}<span class="dot">·</span>{formatDate(doc.date)}{/if}
-					{#if caseKinds.length}<span class="dot">·</span>{caseKinds.join(', ')}{/if}
+					{#if doc.date}<span class="komma">,</span>{formatDate(doc.date)}{/if}
+					{#if caseKinds.length}<span class="komma">,</span>{caseKinds.join(', ')}{/if}
 				</span>
 				<h2 class="title">{doc.title ?? doc.key}</h2>
 				{#if doc.submitters?.length}
@@ -421,8 +421,9 @@
 		gap: var(--s-1);
 		align-items: baseline;
 	}
-	.dot {
-		opacity: 0.6;
+	/* A comma against the word before it: the kicker's gap only after it. */
+	.komma {
+		margin-left: calc(-1 * var(--s-1));
 	}
 	.title {
 		font-family: var(--font-serif);

@@ -22,7 +22,7 @@
 		/** The kind of the bron where it is more precise than its collection: `Conclusie`. */
 		kind?: string | null;
 		title: string;
-		/** The place of the bron, printed above the title: `Wetboek van Strafrecht · Tweede Boek · Titel XX`. */
+		/** The place of the bron, printed above the title: `Wetboek van Strafrecht, Tweede Boek, Titel XX`. */
 		place?: string[];
 		/** The heading of the innermost layer, after the place: `Zorgvuldigheid en belangenafweging`. */
 		placeTitle?: string | null;
@@ -46,7 +46,7 @@
 			<div class="reader-kind">
 				<KindGlyph {collection} />
 				<span>{kind ?? bronLabel(collection)}</span>
-				{#if juris}<span class="reader-juris">· {juris}</span>{/if}
+				{#if juris}<span class="reader-juris komma">, {juris}</span>{/if}
 			</div>
 		{/if}
 		{@render nav?.()}
@@ -110,5 +110,9 @@
 		line-height: 1.15;
 		color: var(--ink);
 		text-wrap: pretty;
+	}
+	/* The jurisdiction after a comma, against the kind: the line's gap only after it. */
+	.komma {
+		margin-left: calc(-1 * var(--s-2));
 	}
 </style>

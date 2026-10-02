@@ -187,7 +187,7 @@ export function createGraphContext() {
 					: (text(p.abbreviation) ??
 						buildNodeLabel(node, kindOfCollection(node.collection as Collection)));
 			const full =
-				containerKind === 'dossier' ? [short, text(p.title)].filter(Boolean).join(' · ') : name;
+				containerKind === 'dossier' ? [short, text(p.title)].filter(Boolean).join(', ') : name;
 			recordContainerMeta(containerKind, containerIdFor(node), short ?? '', full ?? '');
 		}
 	};

@@ -114,7 +114,7 @@
 			<header class="head">
 				<span class="kicker">
 					<KindGlyph collection="dossiers" />
-					{bronLabel('dossiers')} · Kamerstuk {d.number}
+					{bronLabel('dossiers')}, Kamerstuk {d.number}
 				</span>
 				<h2 class="title">{d.short_title ?? d.title ?? d.number}</h2>
 				{#if d.short_title && d.title && d.title.trim() !== d.short_title}

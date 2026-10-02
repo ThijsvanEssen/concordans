@@ -139,7 +139,7 @@ export function presentHit(hit: Hit, query: string): Presented {
 			});
 			return {
 				title: hit.display_name ?? hit.key,
-				context: [extra(hit, 'number'), status].filter(Boolean).join(' · '),
+				context: [extra(hit, 'number'), status].filter(Boolean).join(', '),
 				snippet: null
 			};
 		}

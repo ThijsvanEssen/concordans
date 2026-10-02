@@ -196,7 +196,7 @@
 					{voteTotals.voor}
 				</text>
 				<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
-					voor · {voteTotals.tegen} tegen
+					voor, {voteTotals.tegen} tegen
 				</text>
 			{:else if !meubels}
 				<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">

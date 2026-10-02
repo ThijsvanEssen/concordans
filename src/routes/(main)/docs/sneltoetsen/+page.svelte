@@ -4,7 +4,7 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow"><a href="/docs">Documentatie</a> · Sneltoetsen</div>
+		<div class="stub-eyebrow"><a href="/docs">Documentatie</a>, Sneltoetsen</div>
 		<h1 class="stub-title">Sneltoetsen</h1>
 		<div class="shortcut-table">
 			<div class="shortcut-row">

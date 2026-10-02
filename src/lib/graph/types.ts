@@ -272,7 +272,7 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 		case 'dossier': {
 			const number = text(props.label) ?? node.key;
 			const title = shortDossierTitle(text(props.title));
-			return title ? `${number} · ${title}` : number;
+			return title ? `${number}, ${title}` : number;
 		}
 		case 'committee':
 		case 'faction':
@@ -301,7 +301,7 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 					: `${firstWord}-${lastName}`;
 			}
 			const yearMonth = text(props.date)?.slice(0, 7);
-			return yearMonth ? `${yearMonth} · ${firstWord}` : firstWord;
+			return yearMonth ? `${yearMonth}, ${firstWord}` : firstWord;
 		}
 		case 'judgment': {
 			const ecli = text(props.ecli) ?? node.display_name;

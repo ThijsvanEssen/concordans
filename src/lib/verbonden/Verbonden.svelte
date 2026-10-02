@@ -464,11 +464,11 @@
 									{/if}
 									<span class="row__meta">
 										{#each metaParts(row) as part, k (k)}
-											{#if k > 0}<span class="row__sep" aria-hidden="true">·</span>{/if}
+											{#if k > 0}<span class="row__sep">,</span>{/if}
 											<span class="row__part row__part--{part.kind}">{part.text}</span>
 										{/each}
 										{#if row.proposed && onProposedText}
-											<span class="row__sep" aria-hidden="true">·</span>
+											<span class="row__sep">,</span>
 											<button type="button" class="link" onclick={() => onProposedText(row)}
 												>toon voorgestelde tekst</button
 											>
@@ -555,7 +555,7 @@
 			<p class="hidden">
 				{hidden.map((h) => kindCount(h.count, h.kind)).join(', ')} verborgen.
 				{#each hidden as h, k (h.kind)}
-					{#if k > 0}<span class="row__sep" aria-hidden="true">·</span>{/if}
+					{#if k > 0}<span class="row__sep">,</span>{/if}
 					<button
 						type="button"
 						class="link is-accent"
@@ -862,8 +862,9 @@
 	}
 	/* The dot between parts, with its own room: whitespace around it in the markup is not
 	   kept at the start of an element. */
+	/* A comma against the word before it, a space after. */
 	.row__sep {
-		margin: 0 0.3em;
+		margin-right: 0.3em;
 	}
 	.row__meta {
 		margin-top: 2px;

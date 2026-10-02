@@ -82,6 +82,12 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /class="(box|opt|check__box)"/.test(t))).toEqual([]);
 	});
 
+	it('separates with a comma, not a middle dot (Thijs, 2 October 2026)', () => {
+		// "Motie, nr. 21", "Dossier, Kamerstuk 36799", "Aangenomen, 7 sep. 2026". Only the
+		// browser tab keeps its "Actueel · Concordans".
+		expect(offenders((t) => /·(?! Concordans)/.test(t.replace(/· Concordans/g, '')))).toEqual([]);
+	});
+
 	it('has no prototype switches or study folders left', () => {
 		expect(
 			offenders((t) => /searchParams\.get\('(ontwerp|contrast)'\)|components\/r[0-9]\//.test(t))

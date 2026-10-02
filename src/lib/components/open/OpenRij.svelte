@@ -47,10 +47,9 @@
 	{/if}
 	{#if links.length}
 		<p class="links">
-			{#each links as l, i (l.label)}{#if i > 0}<span class="sep" aria-hidden="true">·</span
-					>{/if}{#if l.ref}<BronLink ref={l.ref}>{l.label}</BronLink>{:else if l.href}<a
-						href={l.href}>{l.label}</a
-					>{:else}<span>{l.label}</span>{/if}{/each}
+			{#each links as l, i (l.label)}{#if i > 0}<span class="sep">,</span>{/if}{#if l.ref}<BronLink
+						ref={l.ref}>{l.label}</BronLink
+					>{:else if l.href}<a href={l.href}>{l.label}</a>{:else}<span>{l.label}</span>{/if}{/each}
 		</p>
 	{/if}
 	<div class="acts">

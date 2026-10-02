@@ -39,7 +39,7 @@
 
 	const kindOf = (n: GraphNode) =>
 		isClusterId(n.id) ? 'groep' : isCollection(n.collection) ? bronLabel(n.collection) : '';
-	/** The full name, where the canvas shows a short one (`2011-07 · Memorie`); a BW article as cited (Artikel 6:162 BW); a vote as the dossier's text names it. */
+	/** The full name, where the canvas shows a short one (`2011-07, Memorie`); a BW article as cited (Artikel 6:162 BW); a vote as the dossier's text names it. */
 	const nameOf = (n: GraphNode) =>
 		isClusterId(n.id)
 			? n.label

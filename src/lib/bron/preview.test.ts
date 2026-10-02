@@ -8,7 +8,7 @@ describe('previewFromNode', () => {
 			date: '2019-07-19',
 			summary: 'Prejudiciële vraag (art. 392 Rv). Aardbevingsschade.'
 		});
-		expect(p.kicker).toBe('Uitspraak · Hoge Raad');
+		expect(p.kicker).toBe('Uitspraak, Hoge Raad');
 		expect(p.date).toBe('19 juli 2019');
 		expect(p.lines).toContain('Aardbevingsschade');
 	});

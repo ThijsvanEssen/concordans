@@ -95,7 +95,7 @@
 				: ''}
 			<header class="head">
 				<span class="kicker"
-					><KindGlyph collection="factions" />{bronLabel('factions')} · {chamberName(chamber)}</span
+					><KindGlyph collection="factions" />{bronLabel('factions')}, {chamberName(chamber)}</span
 				>
 				<h2 class="title">{abbreviation ?? name ?? f.key}</h2>
 				{#if name && abbreviation && name !== abbreviation}

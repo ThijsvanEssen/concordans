@@ -31,7 +31,7 @@
 <div class="page-wrap">
 	<div class="container">
 		<header class="page-header">
-			<div class="eyebrow">OpenAPI {data.version} · {data.totalEndpoints} endpoints</div>
+			<div class="eyebrow">OpenAPI {data.version}, {data.totalEndpoints} endpoints</div>
 			<h1 class="page-title">API-referentie</h1>
 			<p class="page-lede">
 				De endpoints van de LawGraph-API, zoals het OpenAPI-schema ze beschrijft. Elke route leest;

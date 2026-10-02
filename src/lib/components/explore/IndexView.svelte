@@ -1954,13 +1954,13 @@
 						<p class="gov-sub">
 							{period(shownCabinet.from_date, shownCabinet.to_date, isOpen(shownCabinet))}
 							{#if shownCabinet.prime_minister?.name}
-								· Minister-president <NameLink
+								, minister-president <NameLink
 									collection="members"
 									name={shownCabinet.prime_minister.name}
 									key={shownCabinet.prime_minister.key}
 								/>
 							{/if}
-							· {shownCabinet.members}
+							, {shownCabinet.members}
 							{shownCabinet.members === 1 ? 'bewindspersoon' : 'bewindspersonen'}
 						</p>
 						{#if !ministersShown?.length && !loading}
@@ -2368,7 +2368,7 @@
 												<h3 class="day-title">{fmtDay(day.date)}</h3>
 												<span class="day-meta"
 													>{day.count}
-													{day.count === 1 ? 'stemming' : 'stemmingen'} · {day.passed} aangenomen,
+													{day.count === 1 ? 'stemming' : 'stemmingen'}: {day.passed} aangenomen,
 													{failed}
 													verworpen</span
 												>
@@ -2593,7 +2593,7 @@
 															{t.minister_name}
 														{/if}
 														{#if t.dossiers?.length}
-															· {t.dossiers.map((d) => d.number).join(', ')}
+															, {t.dossiers.map((d) => d.number).join(', ')}
 														{/if}
 													</span>
 												{/snippet}

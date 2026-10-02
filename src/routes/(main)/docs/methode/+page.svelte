@@ -4,7 +4,7 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow"><a href="/docs">Documentatie</a> · Methode</div>
+		<div class="stub-eyebrow"><a href="/docs">Documentatie</a>, Methode</div>
 		<h1 class="stub-title">Methode</h1>
 		<p class="stub-lede">
 			Concordans haalt bronnen op, normaliseert ze tot één model en registreert de verbindingen die

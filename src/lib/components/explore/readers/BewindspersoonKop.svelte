@@ -50,7 +50,7 @@
 
 <header class="kop">
 	<span class="soort"
-		><KindGlyph collection="members" />Bewindspersoon{partij ? ` · ${partij}` : ''}</span
+		><KindGlyph collection="members" />Bewindspersoon{partij ? `, ${partij}` : ''}</span
 	>
 	<h2 class="naam">{m.name ?? m.key}</h2>
 	{#if laatst}

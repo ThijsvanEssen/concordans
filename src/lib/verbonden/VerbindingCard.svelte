@@ -126,8 +126,7 @@
 		<dd>
 			<button type="button" class="link" disabled title="Beoordelen is niet ingeschakeld"
 				>Klopt</button
-			>
-			·
+			>,
 			<button type="button" class="link" disabled title="Beoordelen is niet ingeschakeld"
 				>Klopt niet</button
 			>

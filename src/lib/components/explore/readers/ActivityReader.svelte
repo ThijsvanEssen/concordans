@@ -26,7 +26,7 @@
 			<span class="kicker">
 				<KindGlyph collection="activities" />
 				{attrs.kind ?? bronLabel('activities')}
-				{#if attrs.date}<span class="dot">·</span>{formatLongDate(attrs.date)}{/if}
+				{#if attrs.date}<span class="komma">,</span>{formatLongDate(attrs.date)}{/if}
 			</span>
 			<h2 class="title">{attrs.agenda_title || node.label}</h2>
 		</header>
@@ -62,8 +62,9 @@
 		gap: 5px;
 		align-items: baseline;
 	}
-	.dot {
-		opacity: 0.6;
+	/* A comma against the word before it: the kicker's gap only after it. */
+	.komma {
+		margin-left: calc(-1 * 5px);
 	}
 	.title {
 		font-family: var(--font-serif);

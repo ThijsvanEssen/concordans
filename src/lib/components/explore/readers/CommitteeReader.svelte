@@ -53,8 +53,8 @@
 			<span class="kicker">
 				<KindGlyph collection="committees" />
 				{bronLabel('committees')}
-				<span class="dot">·</span>{chamberName(chamber)}
-				{#if kind}<span class="dot">·</span>{kind}{/if}
+				<span class="komma">,</span>{chamberName(chamber)}
+				{#if kind}<span class="komma">,</span>{kind}{/if}
 			</span>
 			<h2 class="title">{name}</h2>
 			{#if abbreviation && abbreviation !== name}
@@ -147,8 +147,9 @@
 		align-items: baseline;
 		gap: var(--s-2);
 	}
-	.dot {
-		opacity: 0.6;
+	/* A comma against the word before it: the kicker's gap only after it. */
+	.komma {
+		margin-left: calc(-1 * var(--s-2));
 	}
 	.officers {
 		display: grid;

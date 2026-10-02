@@ -88,7 +88,7 @@
 					<KindGlyph collection="decisions" />
 					{bronLabel('decisions')}
 					{chamberName(chamber)}
-					{#if d.date}<span class="dot">·</span>{formatLongDate(d.date)}{/if}
+					{#if d.date}<span class="komma">,</span>{formatLongDate(d.date)}{/if}
 				</span>
 				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet beschikbaar'}</h2>
 				<div class="chips">
@@ -211,8 +211,9 @@
 		align-items: baseline;
 		gap: 6px;
 	}
-	.dot {
-		opacity: 0.6;
+	/* A comma against the word before it: the kicker's gap only after it. */
+	.komma {
+		margin-left: calc(-1 * 6px);
 	}
 	.ek-factions {
 		display: grid;

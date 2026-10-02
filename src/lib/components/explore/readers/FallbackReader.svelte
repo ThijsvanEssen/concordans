@@ -30,7 +30,7 @@
 		>
 		<h2 class="title">{title}</h2>
 		{#if facts.length > 0}
-			<p class="facts">{facts.join(' · ')}</p>
+			<p class="facts">{facts.join(', ')}</p>
 		{/if}
 		{#if textProp(p.text)}
 			<p class="text">{textProp(p.text)}</p>

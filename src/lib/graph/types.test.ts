@@ -65,7 +65,7 @@ describe('node labels', () => {
 			}),
 			'dossier'
 		);
-		expect(label).toBe('36600 · Wet verbetering aanpak Y');
+		expect(label).toBe('36600, Wet verbetering aanpak Y');
 	});
 
 	it('labels an article and a judgment', () => {

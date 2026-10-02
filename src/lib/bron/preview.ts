@@ -12,7 +12,7 @@ import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
 
 export type Preview = {
-	/** The kind, and where it helps its place: `Uitspraak · Hoge Raad`. */
+	/** The kind, and where it helps its place: `Uitspraak, Hoge Raad`. */
 	kicker: string;
 	title: string;
 	date: string | null;
@@ -41,7 +41,7 @@ export function previewFromNode(
 		case 'judgments': {
 			const court = courtName(text(props.court) ?? text(props.court_code));
 			return {
-				kicker: court ? `${kind} · ${court}` : kind,
+				kicker: court ? `${kind}, ${court}` : kind,
 				title: name,
 				date: formatLongDate(text(props.date)) || null,
 				lines: clip(text(props.summary))

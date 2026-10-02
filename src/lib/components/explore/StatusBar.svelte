@@ -101,7 +101,7 @@
 			add(node.label);
 		} else if (node.collection === 'decisions') {
 			// Stemming › Tweede Kamer › Wet proactieve dienstverlening SZW: the Kamer and the
-			// subject, as the tab says it, not the Kamer's case number ("2026-09 · Wetgeving").
+			// subject, as the tab says it, not the Kamer's case number ("2026-09, Wetgeving").
 			const ek = node.key.startsWith('ek_') || p.chamber === 'EK';
 			const subject = textProp(p.subject);
 			add(bronLabel('decisions'), kindHref('decisions'));
