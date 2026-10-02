@@ -3,7 +3,7 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	// Wat een bewindspersoon toezegde en ondertekende,
 	// bovenaan de lezer. Tellingen per stand zijn links naar Bladeren met het filter gezet.
-	import { api, unwrap } from '$lib/api/client';
+	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
 	import { indexHref } from '$lib/bron/href';
 	import { stand, datum } from './stand';
@@ -24,22 +24,15 @@
 		void alleDossiers;
 		commitments = open = null;
 		if (!alleDossiers) dossiers = null;
-		const q = (status?: string) =>
-			unwrap(
-				api.GET('/api/commitments', {
-					params: { query: { member: key, limit: status ? 3 : 1, ...(status ? { status } : {}) } },
-					signal: ac.signal
-				})
-			).catch(() => null);
-		q().then((r) => (commitments = r));
-		q('Openstaand').then((r) => (open = r));
-		unwrap(
-			api.GET('/api/members/{key}/dossiers', {
-				params: { path: { key }, query: { limit: alleDossiers ? 100 : 3 } },
-				signal: ac.signal
-			})
-		)
-			.then((r) => (dossiers = r))
+		// The same counts the kop above asks for: one request serves both.
+		getMemberCommitments(key, 1)
+			.catch(() => null)
+			.then((r) => !ac.signal.aborted && (commitments = r));
+		getMemberCommitments(key, 3, 'Openstaand')
+			.catch(() => null)
+			.then((r) => !ac.signal.aborted && (open = r));
+		getMemberDossiers(key, alleDossiers ? 100 : 3)
+			.then((r) => !ac.signal.aborted && (dossiers = r))
 			.catch(() => null);
 		return () => ac.abort();
 	});

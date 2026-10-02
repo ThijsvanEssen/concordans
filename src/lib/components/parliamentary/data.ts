@@ -1,17 +1,9 @@
 import { api, unwrap } from '$lib/api/client';
+import { once } from '$lib/api/records';
 import type { GraphNode } from '$lib/graph/types';
 
-// The reader and the panel Verbonden of one bron mount together and ask for the same lists.
-const inflight = new Map<string, Promise<unknown>>();
-
-function shared<T>(id: string, load: () => Promise<T>): Promise<T> {
-	let request = inflight.get(id) as Promise<T> | undefined;
-	if (!request) {
-		request = load().finally(() => inflight.delete(id));
-		inflight.set(id, request);
-	}
-	return request;
-}
+// The reader and the panel Verbonden of one bron ask for the same lists: asked once ($lib/api/records).
+const shared = once;
 
 export const getDossier = (number: string) =>
 	shared(`dossier/${number}`, () =>

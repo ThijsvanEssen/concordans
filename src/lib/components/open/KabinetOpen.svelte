@@ -3,6 +3,7 @@
 	// kabinet is in één zin; wat er gebeurde (formatie, beëdiging, demissionair) en de laatste
 	// toezeggingen in de tijdlijn; links naar bewindspersonen, toezeggingen en wetsvoorstellen.
 	import { api, unwrap } from '$lib/api/client';
+	import { getCabinet } from '$lib/api/records';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { datum } from '$lib/components/parliamentary/stand';
 	import OpenRij from './OpenRij.svelte';
@@ -18,8 +19,7 @@
 		$props();
 
 	type Detail = Awaited<ReturnType<typeof load>>;
-	const load = (key: string, signal: AbortSignal) =>
-		unwrap(api.GET('/api/cabinets/{key}', { params: { path: { key } }, signal }));
+	const load = (key: string) => getCabinet(key);
 	let d = $state<Detail | null>(null);
 	let regels = $state<TijdRegel[] | null>(null);
 
@@ -37,7 +37,7 @@
 		const ac = new AbortController();
 		regels = null;
 		Promise.all([
-			load(key, ac.signal).catch(() => null),
+			load(key).catch(() => null),
 			unwrap(
 				api.GET('/api/commitments', {
 					params: { query: { cabinet: key, limit: 3, sort: 'date' } },

@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { getDocument } from '$lib/api/records';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	// Reader for a document (memorie van toelichting, verslag, nota, amendement, motie, ...):
 	// its text. Opened as the toelichting of an article, it lands on the passage for it.
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { api, unwrap } from '$lib/api/client';
+	import { api } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import GlossaryPill from './GlossaryPill.svelte';
@@ -36,12 +37,16 @@
 	/** Raised by Opnieuw: the load runs again. */
 	let attempt = $state(0);
 
+	// The key, not the node: the node is drawn anew with the same key once its
+	// neighbourhood loads, and the record is not asked again for that.
+	const bronKey = $derived(node.key);
+
 	$effect(() => {
 		void attempt;
-		const key = node.key;
+		const key = bronKey;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
-		unwrap(api.GET('/api/documents/{key}', { params: { path: { key } }, signal: ac.signal }))
+		getDocument(key)
 			.then((document) => {
 				if (!ac.signal.aborted) view = { kind: 'loaded', document };
 			})

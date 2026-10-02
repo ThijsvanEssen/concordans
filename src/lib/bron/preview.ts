@@ -1,6 +1,7 @@
 // What a reference shows on hover or focus, for any kind of bron: its kind, its name, a
 // date, and its first lines. Read from the node the API gives; for an article, the text
 // of the part the reference names.
+import { getDossier } from '$lib/components/parliamentary/data';
 import { api } from '$lib/api/client';
 import { getArticleDetail } from '$lib/api/articles';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
@@ -121,7 +122,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 	const key = id.slice(slash + 1);
 	if (!isCollection(collection)) return null;
 	if (collection === 'dossiers') {
-		const { data } = await api.GET('/api/dossiers/{number}', { params: { path: { number: key } } });
+		const data = await getDossier(key).catch(() => null);
 		return data
 			? previewFromNode('dossiers', data.title ?? null, {
 					label: data.number,

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getExplainedBy } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
@@ -170,10 +171,9 @@
 		if (!bwb || !num) return;
 		const ac = new AbortController();
 		const find = async () => {
-			const { data } = await api.GET('/api/articles/{bwb_id}/{article_number}/explained-by', {
-				params: { path: { bwb_id: bwb, article_number: num }, query: { limit: 10 } },
-				signal: ac.signal
-			});
+			// Asked once per article: this runs again when the tekstversies arrive.
+			const data = await getExplainedBy(bwb, num);
+			if (ac.signal.aborted) return;
 			// An explanation of the instrument is no evidence about this article (API docs).
 			// Of the rest, the one that explains the tekstversie on screen comes first, and of
 			// those the one that names a passage about this article. A change in the Grondwet

@@ -3,7 +3,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { api, unwrap } from '$lib/api/client';
+	import { getDossierTimeline } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -55,10 +55,13 @@
 	// Raised by Opnieuw, to load the bron again after an error.
 	let attempt = $state(0);
 
+	// The API addresses a dossier by its number (`37020-XV`), the node's `label`. The
+	// number, not the node: the node is drawn anew once its neighbourhood loads.
+	const dossierNumber = $derived(str(node.raw?.props?.label));
+
 	$effect(() => {
 		void attempt;
-		// The API addresses a dossier by its number (`37020-XV`), the node's `label`.
-		const number = str(node.raw?.props?.label);
+		const number = dossierNumber;
 		if (!number) {
 			view = { kind: 'error', message: 'Dossier kon niet geladen worden.' };
 			return;
@@ -68,14 +71,9 @@
 		// The timeline is optional: when it fails its section is left out.
 		Promise.all([
 			getDossier(number),
-			unwrap(
-				api.GET('/api/dossiers/{number}/timeline', {
-					params: { path: { number }, query: { limit: TIMELINE_LIMIT } },
-					signal: ac.signal
-				})
-			).catch(() => null),
+			getDossierTimeline(number, TIMELINE_LIMIT).catch(() => null),
 			// Optional too: a dossier without changed articles has no section.
-			getChangedArticles(number, ac.signal).catch(() => null)
+			getChangedArticles(number).catch(() => null)
 		])
 			.then(([dossier, timeline, changed]) => {
 				if (!ac.signal.aborted) view = { kind: 'loaded', dossier, timeline, changed };
