@@ -903,7 +903,11 @@
 
 	// The count the list reported, kept with its category: shown only for the category on
 	// screen, so a count of the previous one never stands beside the next.
-	let reportedCount = $state<{ filtered: number; total: number; category: string } | null>(null);
+	let reportedCount = $state<{
+		filtered: number;
+		total: number | null;
+		category: string;
+	} | null>(null);
 	const indexResultCount = $derived(
 		reportedCount?.category === indexKind
 			? { filtered: reportedCount.filtered, total: reportedCount.total }

@@ -109,7 +109,7 @@
 		/** Reports what is shown and how many there are, for the status bar. */
 		onResultCountChange?: (info: {
 			filtered: number;
-			total: number;
+			total: number | null;
 			category: IndexCategory;
 		}) => void;
 	} = $props();
@@ -377,7 +377,8 @@
 	}
 
 	// ── Data ────────────────────────────────────────────────────────────────
-	type Page<T> = { items: T[]; total: number; more: boolean };
+	/** `total` is null when the API gives none and more items may follow. */
+	type Page<T> = { items: T[]; total: number | null; more: boolean };
 	type AnyPage = Page<unknown>;
 	type Pages = {
 		instruments?: Page<Schema<'InstrumentListItemDTO'>>;
@@ -399,6 +400,9 @@
 	};
 
 	const PAGE = 100;
+	// The sitting members of a Kamer in one slice: no Kamer has more than 150 seats, and
+	// a list without `total` can then count them.
+	const SEATED = 200;
 
 	// A list without `total` (members) is over when a slice comes back short.
 	/** An item's own id, or its key; null without either. */
@@ -415,11 +419,8 @@
 	): Page<T> {
 		// A page can repeat an item of the page before when the order has ties.
 		const all = offset && previous ? uniqueBy([...previous.items, ...items], idOf) : items;
-		return {
-			items: all,
-			total: total ?? all.length,
-			more: total === undefined ? items.length === PAGE : all.length < total
-		};
+		const more = total === undefined ? items.length === PAGE : all.length < total;
+		return { items: all, total: total ?? (more ? null : all.length), more };
 	}
 
 	let pages = $state<Pages>({});
@@ -538,7 +539,7 @@
 					active: includeInactive ? undefined : true,
 					include_all: includeInactive,
 					sort: oneOf(sortDef.id, ['family_name', 'name'] as const),
-					limit
+					limit: includeInactive ? limit : SEATED
 				};
 				return async (offset, signal) => {
 					const items = await unwrap(
@@ -1769,20 +1770,21 @@
 				documents: pages.documents?.items
 			})[category] as unknown[] | undefined
 	);
-	/** How many there are under the filters: the API's total, or the rows filtered here. */
+	// How many there are under the filters: the API's total, or the rows filtered here.
+	// Null while a list without a total has more to load: the rows loaded are not the count.
+	const listTotal = (rows: unknown[]): number | null => {
+		const page = pages[category];
+		return page ? page.total : rows.length;
+	};
 	const resultTotal = $derived.by(() => {
 		if (!resultRows) return null;
 		const clientFiltered = ['committees', 'cabinets', 'ministers'].includes(category);
-		return clientFiltered ? resultRows.length : (pages[category]?.total ?? resultRows.length);
+		return clientFiltered ? resultRows.length : listTotal(resultRows);
 	});
 	$effect(() => {
 		const rows = resultRows;
 		if (!rows) return;
-		onResultCountChange?.({
-			filtered: rows.length,
-			total: pages[category]?.total ?? rows.length,
-			category
-		});
+		onResultCountChange?.({ filtered: rows.length, total: listTotal(rows), category });
 	});
 
 	// ── Columns ─────────────────────────────────────────────────────────────
@@ -2851,7 +2853,7 @@
 
 {#snippet loadMoreButton(loaded: AnyPage | undefined, noun: string)}
 	{#if loaded?.more}
-		{@const remaining = loaded.total - loaded.items.length}
+		{@const remaining = (loaded.total ?? 0) - loaded.items.length}
 		<div class="load-more">
 			{#if loadMoreFailed}
 				<p class="load-more-error" role="alert">Meer {noun} laden is mislukt.</p>

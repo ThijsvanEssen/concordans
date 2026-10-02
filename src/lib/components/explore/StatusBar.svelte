@@ -34,7 +34,8 @@
 		/** The verbindingen of the bron as a table. */
 		tableMode?: boolean;
 		indexCategory?: string | null;
-		indexResultCount?: { filtered: number; total: number } | null;
+		/** `total` is null when the list does not say how many there are. */
+		indexResultCount?: { filtered: number; total: number | null } | null;
 		/** The share button's label: Deel, or what the last copy did. */
 		shareLabel?: string;
 		shareAnnouncement?: string;
@@ -150,9 +151,13 @@
 		</div>
 		{#if indexResultCount}
 			<span class="count">
-				{indexResultCount.filtered.toLocaleString('nl-NL')} van {indexResultCount.total.toLocaleString(
-					'nl-NL'
-				)}
+				{#if indexResultCount.total === null}
+					{indexResultCount.filtered.toLocaleString('nl-NL')} geladen
+				{:else}
+					{indexResultCount.filtered.toLocaleString('nl-NL')} van {indexResultCount.total.toLocaleString(
+						'nl-NL'
+					)}
+				{/if}
 			</span>
 		{/if}
 	{:else if node}
