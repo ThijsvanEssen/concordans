@@ -598,7 +598,9 @@
 		if (netwerk.ids.length > 0) remember(netwerkQuery);
 	});
 	$effect(() => {
-		if (focus || netwerkQuery || mode === 'index') return;
+		// A readable address names its bron, also while it is looked up (a Kamerstuk, an
+		// article): the remembered netwerk does not take its place.
+		if (focus || pad || netwerkQuery || mode === 'index') return;
 		let saved: string | null = null;
 		try {
 			saved = localStorage.getItem(NETWERK_KEY);
