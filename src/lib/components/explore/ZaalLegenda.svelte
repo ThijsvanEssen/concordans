@@ -3,7 +3,7 @@
 	// fractie een stip in de kleur van de zaal, de naam en de zetels, op grootte, in kolommen;
 	// daaronder de genummerde plaatsen op één regel. Gelijk voor beide Kamers.
 	import type { Schema } from '$lib/api/types';
-	import { kleurenVan } from './partijkleuren';
+	import { kleurenVan } from './partijkleuren.svelte';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 	let {

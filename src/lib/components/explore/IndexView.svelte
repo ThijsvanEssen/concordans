@@ -51,7 +51,7 @@
 	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import KabinetOpen from '$lib/components/open/KabinetOpen.svelte';
 	import ZaalLegenda from './ZaalLegenda.svelte';
-	import { kleurVan } from './partijkleuren';
+	import { kleurVan } from './partijkleuren.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
 	import {

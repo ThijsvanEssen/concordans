@@ -1,12 +1,11 @@
 <script lang="ts">
 	// De vergaderzaal van de Eerste Kamer. Twee blokken
 	// banken tegenover elkaar, elk vier plaatsen breed en tien rijen diep; de regering aan de
-	// kop, de Voorzitter aan het andere eind. De plaats per fractie komt hier uit een vaste
-	// tabel naar "Wie zit waar" op eerstekamer.nl (30 september 2026), tot de API haar geeft
-	// in seating_plan (BE-4).
+	// kop, de Voorzitter aan het andere eind. Wie waar zit geeft de API in `hall` (0.73, BE-4),
+	// gelezen uit "Wie zit waar" op eerstekamer.nl.
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
-	import { kleurVan } from './partijkleuren';
+	import { kleurVan } from './partijkleuren.svelte';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 
@@ -19,33 +18,6 @@
 		hrefOf?: (key: string) => string;
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 	} = $props();
-
-	// Per rij, van de regering naar de Voorzitter; een lege plaats is ''.
-	const LEFT = [
-		'SP,SP,SP,',
-		'VVD,PvdD,PvdD,',
-		'VVD,VVD,VVD,VVD',
-		'VVD,VVD,VVD,VVD',
-		'PVV,PVV,PVV,PVV',
-		'BBB,BBB,JA21,JA21',
-		'BBB,BBB,BBB,BBB',
-		'BBB,BBB,BBB,BBB',
-		'BBB,Fractie-Van de Sanden,Fractie-Visseren-Hamakers,50PLUS',
-		'Fractie-Van Gasteren,Fractie-Beukering,Fractie-Walenkamp,OPNL'
-	];
-	const RIGHT = [
-		',FVD,FVD,FVD',
-		',D66,D66,D66',
-		'D66,D66,D66,D66',
-		'SGP,SGP,CDA,CDA',
-		'CDA,CDA,CDA,CDA',
-		'ChristenUnie,ChristenUnie,ChristenUnie,PRO',
-		'PRO,PRO,PRO,PRO',
-		'PRO,PRO,PRO,PRO',
-		',Volt,Volt,PRO',
-		',PRO,PRO,PRO'
-	];
-	const CHAIR = 'PRO';
 
 	const S = 22; // stoel
 	const COL = 28; // plaats per kolom
@@ -74,21 +46,15 @@
 	});
 
 	type Stoel = { x: number; y: number; name: string };
-	const stoelen = $derived.by<Stoel[]>(() => {
-		const out: Stoel[] = [];
-		LEFT.forEach((row, r) =>
-			row.split(',').forEach((name, c) => {
-				if (name) out.push({ x: c * COL, y: rowY(r), name });
-			})
-		);
-		RIGHT.forEach((row, r) =>
-			row.split(',').forEach((name, c) => {
-				if (name) out.push({ x: blockW + AISLE + c * COL, y: rowY(r), name });
-			})
-		);
-		out.push({ x: W / 2 - S / 2, y: rowY(9), name: CHAIR });
-		return out;
-	});
+	// Rij 0 bij de regering, kolom 0 aan de buitenkant; de Voorzitter aan het andere eind.
+	const stoelen = $derived.by<Stoel[]>(() =>
+		(data.hall?.seats ?? []).map((s) => {
+			const name = s.abbreviation ?? s.faction;
+			if (s.block === 'chair') return { x: W / 2 - S / 2, y: rowY(9), name };
+			const x = s.block === 'left' ? s.column * COL : blockW + AISLE + s.column * COL;
+			return { x, y: rowY(s.row), name };
+		})
+	);
 
 	// As in the hemicycle of the Tweede Kamer: a fractie under the pointer stands out, the
 	// others dim, and the aisle says its name and seats.
