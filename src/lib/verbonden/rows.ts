@@ -6,6 +6,7 @@ import { korteDatum, langeDatum } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { articleTitle } from '$lib/text/bw';
+import { authorCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
 
@@ -138,8 +139,16 @@ export function describe(
 				? props.names.filter((n): n is string => typeof n === 'string')
 				: [];
 			const known = names.length ? ` (${names.join(', ')})` : '';
+			// A conclusion by its author (API 0.74): "Conclusie A-G Niessen, 2 augustus 2018".
+			const ag = text(props.advocate_general);
+			const role = text(props.advocate_general_role) ?? '';
+			const author = ag
+				? authorCite(ag, /procureur-generaal/i.test(role) ? ['procureur-generaal'] : [])
+				: null;
 			return {
-				title: (court ? (join(court, longDate(date)) ?? court) : name) + known,
+				title: author
+					? (join(`Conclusie ${author}`, longDate(date)) ?? `Conclusie ${author}`) + known
+					: (court ? (join(court, longDate(date)) ?? court) : name) + known,
 				// A judgment known only as cited: its ECLI and court, nothing more.
 				context: props.stub === true ? 'niet in de dataset' : null,
 				identifier: ecli ?? (court ? null : name),

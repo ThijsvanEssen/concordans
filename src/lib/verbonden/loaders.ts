@@ -17,7 +17,7 @@ import { getJudgmentDetail } from '$lib/api/judgments';
 import { bucketKey, neighborsOf } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
-import { uitspraakVolgorde } from './volgorde';
+import { uitspraakVolgorde, wetUitspraakVolgorde } from './volgorde';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
@@ -62,6 +62,8 @@ export type Loaded = {
 	judgmentsOf?: Record<string, { rows: Row[]; total: number }>;
 	/** The order of the rows where it is not the date. */
 	order?: string;
+	/** The years of all of a group's bronnen, where the API counts them (not only the rows). */
+	years?: { year: number; count: number }[];
 };
 
 /**
@@ -737,17 +739,26 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.filter((r) => r !== null)
 		});
 		if (!bwb) return fromNode();
+		const sort = get(wetUitspraakVolgorde);
 		const found = await unwrap(
 			api.GET('/api/instruments/{bwb_id}/judgments', {
-				params: { path: { bwb_id: bwb }, query: { limit: JUDGMENTS_SHOWN } },
+				params: { path: { bwb_id: bwb }, query: { limit: JUDGMENTS_SHOWN, sort } },
 				signal
 			})
 		).catch(() => null);
 		if (!found) return fromNode();
 		return {
 			total: found.total,
-			// The API lists them by the number of the law's articles they cite (33, 27, 26 …).
-			order: 'Eerst de uitspraken die de meeste artikelen van de wet aanhalen.',
+			// Newest first, or (sort=cited) by the number of the law's articles they cite.
+			order:
+				sort === 'cited'
+					? 'Eerst de uitspraken die de meeste artikelen van de wet aanhalen.'
+					: undefined,
+			// Every citing judgment per year (BE-47), not the page; the oldest first.
+			years: (found.facets?.year ?? [])
+				.filter((f) => f.value)
+				.map((f) => ({ year: Number(f.value), count: f.count }))
+				.slice(-12),
 			rows: found.items
 				.filter((j) => !isInternational({ key: j.key, props: {} }))
 				.map((j) => ({
@@ -758,7 +769,9 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						court: j.court,
 						tier: j.tier,
 						court_kind: j.court_kind,
-						date: j.date
+						date: j.date,
+						advocate_general: j.advocate_general,
+						advocate_general_role: j.advocate_general_role
 					}),
 					context: citedLine(j.cited_articles ?? []),
 					kind: 'uitspraken' as const,

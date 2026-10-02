@@ -71,6 +71,8 @@ export type Group = GroupDef & {
 	mentions?: number;
 	/** The order the rows come in where it is not the date: what the API sorts them by. */
 	order?: string;
+	/** The years of all its bronnen, as the API counts them; else counted from the rows. */
+	years?: { year: number; count: number }[];
 	/** The API caps a bucket without saying how many there are: shown as `30+`. */
 	capped: boolean;
 };

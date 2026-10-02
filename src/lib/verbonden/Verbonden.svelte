@@ -43,7 +43,12 @@
 	} from './rows';
 	import type { VerbondenState } from './source';
 	import { groupRequest } from './open-group';
-	import { uitspraakVolgorde, type UitspraakVolgorde } from './volgorde';
+	import {
+		uitspraakVolgorde,
+		wetUitspraakVolgorde,
+		type UitspraakVolgorde,
+		type WetVolgorde
+	} from './volgorde';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import {
 		GROUPINGS,
@@ -169,10 +174,16 @@
 	const openHref = (g: Group, row: Row) =>
 		g.inPlace ? inPlaceHref(row) : bronHref(row.ref, { at: row.at });
 
+	// The years of all the group's judgments where the API counts them (a wet, BE-47);
+	// else of the rows loaded, which the sentence then says.
 	const years = (g: Group) =>
-		grouping === 'soort' && g.rows[0]?.kind === 'uitspraken' && g.rows.length > 5
-			? yearHistogram(g.rows)
-			: [];
+		grouping !== 'soort' || g.rows[0]?.kind !== 'uitspraken'
+			? []
+			: g.years?.length
+				? g.years
+				: g.rows.length > 5
+					? yearHistogram(g.rows)
+					: [];
 
 	function chooseYear(year: number) {
 		onFilter({ ...filter, jaar: filter.jaar === year ? null : year });
@@ -348,12 +359,31 @@
 						/>
 					</div>
 				{/if}
+				{#if g.id === 'judgments' && selection.collection === 'instruments' && onRetry}
+					<!-- Newest first, or by the number of the law's articles they cite (BE-47). -->
+					<div class="group__volgorde">
+						<Keuze
+							label="Volgorde"
+							klein
+							opties={[
+								{ waarde: 'date' as WetVolgorde, label: 'Datum' },
+								{ waarde: 'cited' as WetVolgorde, label: 'Meeste artikelen' }
+							]}
+							waarde={$wetUitspraakVolgorde}
+							onKies={(w) => {
+								if (w === $wetUitspraakVolgorde) return;
+								wetUitspraakVolgorde.set(w);
+								onRetry();
+							}}
+						/>
+					</div>
+				{/if}
 				{#if g.order}<p class="group__caption">{g.order}</p>{/if}
 				{#if bars.length > 0}
 					<!-- Een zin en een keuzelijst in plaats van het jarendiagram. Over de geladen
 					     rijen: waar dat er minder zijn dan de telling, zegt de zin het. -->
 					{@const piek = bars.reduce((m, x) => (x.count > m.count ? x : m), bars[0])}
-					{@const geladen = g.rows.length < count ? g.rows.length : null}
+					{@const geladen = !g.years?.length && g.rows.length < count ? g.rows.length : null}
 					<p class="group__jaren">
 						{geladen
 							? `Van de ${formatCount(geladen)} geladen: van ${bars[0].year}`

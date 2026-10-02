@@ -67,10 +67,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				for (const def of groups) {
 					if (!def.load) continue;
 					LOADERS[def.load](ctx)
-						.then(({ rows, total, mentions, order, judgmentsOf }) => {
+						.then(({ rows, total, mentions, order, years, judgmentsOf }) => {
 							if (ac.signal.aborted) return;
 							groups = groups.map((g) => {
-								if (g.id === def.id) return { ...g, rows, total, mentions, order };
+								if (g.id === def.id) return { ...g, rows, total, mentions, order, years };
 								const judgments = judgmentsOf?.[g.id];
 								if (judgments == null) return g;
 								// Its other bronnen as counted, and the judgments as the API counts them.
