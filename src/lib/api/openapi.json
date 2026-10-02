@@ -514,7 +514,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Paginated list of instruments",
-				"description": "A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter and a minimum article count.",
+				"description": "A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter.",
 				"operationId": "list_instruments_api_instruments_get",
 				"parameters": [
 					{
@@ -569,6 +569,28 @@
 							"anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }],
 							"title": "Article Count Min"
 						}
+					},
+					{
+						"name": "legal_area",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "A legal area by TOOI id (`c_e49bce03`) or slug (`familierecht`).",
+							"title": "Legal Area"
+						},
+						"description": "A legal area by TOOI id (`c_e49bce03`) or slug (`familierecht`)."
+					},
+					{
+						"name": "policy_domain",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "A government theme by TOOI id or slug.",
+							"title": "Policy Domain"
+						},
+						"description": "A government theme by TOOI id or slug."
 					},
 					{
 						"name": "sort",
@@ -4495,9 +4517,9 @@
 						"description": "``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none."
 					},
 					"kind_basis": {
-						"anyOf": [{ "type": "string", "enum": ["case", "document"] }, { "type": "null" }],
+						"anyOf": [{ "type": "string", "const": "case" }, { "type": "null" }],
 						"title": "Kind Basis",
-						"description": "``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph)."
+						"description": "``case``: a zaak of the dossier gives the kind; null without a kind."
 					},
 					"phases": {
 						"anyOf": [
@@ -7042,9 +7064,9 @@
 						"description": "``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none."
 					},
 					"kind_basis": {
-						"anyOf": [{ "type": "string", "enum": ["case", "document"] }, { "type": "null" }],
+						"anyOf": [{ "type": "string", "const": "case" }, { "type": "null" }],
 						"title": "Kind Basis",
-						"description": "``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph)."
+						"description": "``case``: a zaak of the dossier gives the kind; null without a kind."
 					},
 					"phases": {
 						"anyOf": [
@@ -7142,6 +7164,10 @@
 						"description": "Documents per kind (``Motie``, ``Amendement``, ...); a document without a kind is not counted."
 					},
 					"senate": { "$ref": "#/components/schemas/DossierSenateDTO" },
+					"next_activity": {
+						"anyOf": [{ "$ref": "#/components/schemas/NextActivityDTO" }, { "type": "null" }],
+						"description": "The next thing the Tweede Kamer has planned about the dossier: the earliest of its activities with status ``Gepland`` (``Activiteit.Status``) from today on; null when it plans nothing. The Kamer gives no next phase as data: a planned debate or vote is an activity like any other."
+					},
 					"relations": {
 						"items": { "$ref": "#/components/schemas/DossierRelationDTO" },
 						"type": "array",
@@ -7493,12 +7519,32 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "First Date",
 						"description": "Date of the earliest paper (YYYY-MM-DD)."
+					},
+					"submitted_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Submitted On",
+						"description": "The day the page of the bill says it was submitted (``Kerngegevens``: ``ingediend``); null without a page."
+					},
+					"status": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Status",
+						"description": "Where it is, as the list of its committee heads it: ``In schriftelijke voorbereiding``, ``Gereed voor plenaire behandeling door de Eerste Kamer``, ``Plenaire behandeling Eerste Kamer afgerond``; null for a bill on no such list."
+					},
+					"progress": {
+						"items": { "$ref": "#/components/schemas/EkStepDTO" },
+						"type": "array",
+						"title": "Progress",
+						"description": "The progress of the bill as its page shows it, step by step; empty without a page. What the page does not show is not here."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkBillSourceDTO" }, { "type": "null" }],
+						"description": "The page it was taken over from; null without one."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"title": "DossierSenateDTO",
-				"description": "The Eerste Kamer papers among a dossier's documents."
+				"description": "The Eerste Kamer papers among a dossier's documents, and the page of its bill on\neerstekamer.nl."
 			},
 			"DossierSummaryDTO": {
 				"properties": {
@@ -7539,9 +7585,9 @@
 						"description": "``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none."
 					},
 					"kind_basis": {
-						"anyOf": [{ "type": "string", "enum": ["case", "document"] }, { "type": "null" }],
+						"anyOf": [{ "type": "string", "const": "case" }, { "type": "null" }],
 						"title": "Kind Basis",
-						"description": "``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph)."
+						"description": "``case``: a zaak of the dossier gives the kind; null without a kind."
 					},
 					"phases": {
 						"anyOf": [
@@ -7615,7 +7661,7 @@
 				"type": "object",
 				"required": ["id", "key", "number"],
 				"title": "DossierSummaryDTO",
-				"description": "A dossier in a list.\n\n``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of\nthe zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,\n``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``), else, from a\n``Voorstel van wet`` among its papers, ``Wetgeving`` or ``Initiatiefwetgeving``; null\nfor a dossier of letters and motions. ``kind_basis`` says which (``case``,\n``document``). A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has\n``phases``: every phase of the curated list in its order, each done when a paper, an\nactivity or a decision of the Kamer marks it; ``current_phase`` is the furthest done\nphase in that order. A closed dossier has an ``outcome``: ``aangenomen`` (its law was\npublished, or the Eerste Kamer adopted it) or ``verworpen`` (a chamber voted the bill\ndown); ``tk_decision`` is the last decision of the Tweede Kamer on the bill and\n``ek_outcome`` its outcome in the Eerste Kamer."
+				"description": "A dossier in a list.\n\n``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of\nthe zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,\n``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``); null without\none (\"zonder soort\": no kind is made up from its papers). ``kind_basis`` is ``case``\nwith a kind. A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has\n``phases``: every phase of the curated list in its order, each done when a paper, an\nactivity or a decision of the Kamer marks it; ``current_phase`` is the furthest done\nphase in that order. A closed dossier has an ``outcome``: ``aangenomen`` (its law was\npublished, or the Eerste Kamer adopted it) or ``verworpen`` (a chamber voted the bill\ndown); ``tk_decision`` is the last decision of the Tweede Kamer on the bill and\n``ek_outcome`` its outcome in the Eerste Kamer."
 			},
 			"DossierTimelineResponse": {
 				"properties": {
@@ -7664,6 +7710,21 @@
 				"required": ["total", "by_relation"],
 				"title": "EdgeStatsDTO",
 				"description": "Edge counts: total and per relation type."
+			},
+			"EkBillSourceDTO": {
+				"properties": {
+					"url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Url" },
+					"read_on": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Read On" },
+					"attribution": {
+						"type": "string",
+						"title": "Attribution",
+						"default": "Eerste Kamer der Staten-Generaal, www.eerstekamer.nl"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "EkBillSourceDTO",
+				"description": "The page of the bill on eerstekamer.nl."
 			},
 			"EkFactionVoteDTO": {
 				"properties": {
@@ -7816,6 +7877,27 @@
 				"title": "EkOutcomeDTO",
 				"description": "The outcome of the bill of a dossier in the Eerste Kamer, as eerstekamer.nl gives it."
 			},
+			"EkPaperDTO": {
+				"properties": {
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "As the page names it: ``verslag``, ``stemming (hamerstuk)``."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "As the page writes it: ``EK, B``, ``TK, 2``; null for none."
+					},
+					"url": { "type": "string", "title": "Url" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["kind", "url"],
+				"title": "EkPaperDTO",
+				"description": "A paper of a step of a bill, as the page of the Eerste Kamer lists it."
+			},
 			"EkSourceDTO": {
 				"properties": {
 					"url": {
@@ -7849,6 +7931,34 @@
 				"required": ["attribution"],
 				"title": "EkSourceDTO",
 				"description": "Where something of the Eerste Kamer was taken over from, to name with it."
+			},
+			"EkStepDTO": {
+				"properties": {
+					"phase": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Phase",
+						"description": "``Schriftelijke voorbereiding``, ``Plenair``, ``Afkondiging``; null for the first step, in the Tweede Kamer."
+					},
+					"house": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "House",
+						"description": "``Tweede Kamer``, ``Eerste Kamer``, ``Staatsblad(en)``; null where the page names none (the plenary step of the Eerste Kamer)."
+					},
+					"state": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "State",
+						"description": "As the page marks it: ``vol`` (it drew the step full: done), ``geblokt`` (the step the bill is in), ``leeg`` (not reached)."
+					},
+					"papers": {
+						"items": { "$ref": "#/components/schemas/EkPaperDTO" },
+						"type": "array",
+						"title": "Papers"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "EkStepDTO",
+				"description": "A step of the progress of a bill, as the page of the Eerste Kamer shows it."
 			},
 			"EuLinkDTO": {
 				"properties": {
@@ -9069,6 +9179,18 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
 					},
+					"legal_areas": {
+						"items": { "$ref": "#/components/schemas/LegalAreaDTO" },
+						"type": "array",
+						"title": "Legal Areas",
+						"description": "The legal areas of a BWB regulation as its WTI files it (`main`, `specific`), each with the URI of its concept in the TOOI thesaurus `scw_bwb_rechtsgebieden` (null when the thesaurus lacks the label)."
+					},
+					"policy_domains": {
+						"items": { "$ref": "#/components/schemas/PolicyDomainDTO" },
+						"type": "array",
+						"title": "Policy Domains",
+						"description": "The government themes of a BWB regulation as its WTI files it (`label`), with the URI of its concept in the TOOI thesaurus `scw_bwb_themas`."
+					},
 					"jurisdiction": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Jurisdiction",
@@ -9289,6 +9411,26 @@
 				"title": "InstrumentEuLinksResponse",
 				"description": "Response for GET /api/instruments/{identifier}/eu-links."
 			},
+			"InstrumentFacets": {
+				"properties": {
+					"legal_area": {
+						"items": { "$ref": "#/components/schemas/LegalAreaFacetDTO" },
+						"type": "array",
+						"title": "Legal Area",
+						"description": "The legal areas of the TOOI thesaurus `scw_bwb_rechtsgebieden` as a tree: main areas, most first, each with its specific areas (`narrower`). An instrument counts once per area. Counted without the `legal_area` filter."
+					},
+					"policy_domain": {
+						"items": { "$ref": "#/components/schemas/RegisterConceptDTO" },
+						"type": "array",
+						"title": "Policy Domain",
+						"description": "The government themes of `scw_bwb_themas`, most first. Counted without the `policy_domain` filter."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "InstrumentFacets",
+				"description": "The instruments under the filters, counted per register; each without its own\nfilter, so the other areas stay in view when one is chosen."
+			},
 			"InstrumentJudgmentFacets": {
 				"properties": {
 					"year": {
@@ -9463,7 +9605,8 @@
 						"type": "array",
 						"title": "Items"
 					},
-					"total": { "type": "integer", "title": "Total" }
+					"total": { "type": "integer", "title": "Total" },
+					"facets": { "$ref": "#/components/schemas/InstrumentFacets" }
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -10027,10 +10170,10 @@
 						"description": "Per area of law, as the source writes it (`Strafrecht`, `Bestuursrecht; Belastingrecht`), most first; a judgment counts for each of its areas; counted without the `subject` filter."
 					},
 					"subject_area": {
-						"items": { "$ref": "#/components/schemas/JudgmentFacetCount" },
+						"items": { "$ref": "#/components/schemas/SubjectAreaFacetCount" },
 						"type": "array",
 						"title": "Subject Area",
-						"description": "Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter."
+						"description": "Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter. `narrower`: the subjects under it as the source writes them."
 					},
 					"procedure": {
 						"items": { "$ref": "#/components/schemas/JudgmentFacetCount" },
@@ -10261,6 +10404,78 @@
 				"required": ["id", "key", "display_name", "ecli"],
 				"title": "JudgmentSummaryDTO",
 				"description": "Lightweight judgment summary for listing matches."
+			},
+			"LegalAreaDTO": {
+				"properties": {
+					"main": {
+						"type": "string",
+						"title": "Main",
+						"description": "The main area: `Staats- en bestuursrecht`."
+					},
+					"main_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Main Id",
+						"description": "Its TOOI concept: `c_5d8350bb`."
+					},
+					"main_uri": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Main Uri" },
+					"main_slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Main Slug",
+						"description": "Its slug, unique in the list: `staats-en-bestuursrecht`."
+					},
+					"specific": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Specific",
+						"description": "The specific area: `Bestuursrecht`."
+					},
+					"specific_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Specific Id"
+					},
+					"specific_uri": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Specific Uri"
+					},
+					"specific_slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Specific Slug"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["main"],
+				"title": "LegalAreaDTO",
+				"description": "A legal area of a regulation (WTI ``rechtsgebied``) and its TOOI concepts."
+			},
+			"LegalAreaFacetDTO": {
+				"properties": {
+					"id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Id",
+						"description": "Its TOOI concept (`c_e49bce03`); null without the thesaurus."
+					},
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "Unique in its list (`familierecht`); the filter takes it too."
+					},
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "As the WTI writes it: `Familierecht`."
+					},
+					"count": { "type": "integer", "title": "Count" },
+					"narrower": {
+						"items": { "$ref": "#/components/schemas/RegisterConceptDTO" },
+						"type": "array",
+						"title": "Narrower"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["label", "count"],
+				"title": "LegalAreaFacetDTO",
+				"description": "A main legal area and its specific areas."
 			},
 			"LegislativeHistoryEntry": {
 				"properties": {
@@ -10883,6 +11098,31 @@
 				"title": "NeighborDTO",
 				"description": "A neighbour with the edge that leads to it, used by the generic node explorer."
 			},
+			"NextActivityDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "``Activiteit.Soort``: ``Commissiedebat``, ``Plenair debat``, ``Stemmingen``, …"
+					},
+					"agenda_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Agenda Title"
+					},
+					"committee": {
+						"anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+						"title": "Committee",
+						"description": "Its lead committee (``key``, ``slug``, ``name``); null in plenary."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key"],
+				"title": "NextActivityDTO",
+				"description": "An activity the Tweede Kamer has planned."
+			},
 			"NodeGraphResponse": {
 				"properties": {
 					"node": { "$ref": "#/components/schemas/BaseNodeDTO" },
@@ -11174,6 +11414,23 @@
 				"title": "PersonRefDTO",
 				"description": "A member named from another node."
 			},
+			"PolicyDomainDTO": {
+				"properties": {
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "`Overheid, bestuur en koninkrijk`."
+					},
+					"id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Id" },
+					"uri": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Uri" },
+					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["label"],
+				"title": "PolicyDomainDTO",
+				"description": "A government theme of a regulation (WTI ``overheidsdomein``) and its TOOI concept."
+			},
 			"Post": {
 				"type": "string",
 				"enum": [
@@ -11211,6 +11468,31 @@
 				"type": "object",
 				"title": "PublicationDTO",
 				"description": "An amending publication (Staatsblad, Tractatenblad, ...) as recorded on a version."
+			},
+			"RegisterConceptDTO": {
+				"properties": {
+					"id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Id",
+						"description": "Its TOOI concept (`c_e49bce03`); null without the thesaurus."
+					},
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "Unique in its list (`familierecht`); the filter takes it too."
+					},
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "As the WTI writes it: `Familierecht`."
+					},
+					"count": { "type": "integer", "title": "Count" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["label", "count"],
+				"title": "RegisterConceptDTO",
+				"description": "A concept of a register with the instruments under the filters filed under it."
 			},
 			"RelationshipDTO": {
 				"properties": {
@@ -11554,6 +11836,43 @@
 				"required": ["nodes", "edges"],
 				"title": "StatsResponse",
 				"description": "Database statistics: document counts per collection and edge counts."
+			},
+			"SubjectAreaFacetCount": {
+				"properties": {
+					"value": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Value" },
+					"count": { "type": "integer", "title": "Count" },
+					"narrower": {
+						"items": { "$ref": "#/components/schemas/SubjectFacetCount" },
+						"type": "array",
+						"title": "Narrower",
+						"description": "The subjects of the source under this main area, most first; counted without the `subject_area` and `subject` filters."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["value", "count"],
+				"title": "SubjectAreaFacetCount",
+				"description": "A main area of law with the subjects under it."
+			},
+			"SubjectFacetCount": {
+				"properties": {
+					"value": {
+						"type": "string",
+						"title": "Value",
+						"description": "The subject as the source writes it (`Bestuursrecht; Belastingrecht`); the `subject` filter takes it."
+					},
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "The part after the main area: `Belastingrecht`."
+					},
+					"count": { "type": "integer", "title": "Count" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["value", "label", "count"],
+				"title": "SubjectFacetCount",
+				"description": "A subject of the Rechtspraak under a main area, as the source writes it."
 			},
 			"SubmitterDTO": {
 				"properties": {

@@ -153,7 +153,7 @@ export interface paths {
         };
         /**
          * Paginated list of instruments
-         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter and a minimum article count.
+         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter.
          */
         get: operations["list_instruments_api_instruments_get"];
         put?: never;
@@ -1401,9 +1401,9 @@ export interface components {
             kind?: string | null;
             /**
              * Kind Basis
-             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
+             * @description ``case``: a zaak of the dossier gives the kind; null without a kind.
              */
-            kind_basis?: ("case" | "document") | null;
+            kind_basis?: "case" | null;
             /**
              * Phases
              * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
@@ -3608,9 +3608,9 @@ export interface components {
             kind?: string | null;
             /**
              * Kind Basis
-             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
+             * @description ``case``: a zaak of the dossier gives the kind; null without a kind.
              */
-            kind_basis?: ("case" | "document") | null;
+            kind_basis?: "case" | null;
             /**
              * Phases
              * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
@@ -3704,6 +3704,8 @@ export interface components {
                 [key: string]: number;
             };
             senate?: components["schemas"]["DossierSenateDTO"];
+            /** @description The next thing the Tweede Kamer has planned about the dossier: the earliest of its activities with status ``Gepland`` (``Activiteit.Status``) from today on; null when it plans nothing. The Kamer gives no next phase as data: a planned debate or vote is an activity like any other. */
+            next_activity?: components["schemas"]["NextActivityDTO"] | null;
             /**
              * Relations
              * @description The dossiers this one revises, accompanies or is related to, and those that revise, accompany or relate to it: by relation, then outgoing before incoming, then in the order of their numbers. All dossiers of its own number are ``GET /api/dossiers?number=``.
@@ -4028,7 +4030,8 @@ export interface components {
         };
         /**
          * DossierSenateDTO
-         * @description The Eerste Kamer papers among a dossier's documents.
+         * @description The Eerste Kamer papers among a dossier's documents, and the page of its bill on
+         *     eerstekamer.nl.
          */
         DossierSenateDTO: {
             /**
@@ -4041,6 +4044,23 @@ export interface components {
              * @description Date of the earliest paper (YYYY-MM-DD).
              */
             first_date?: string | null;
+            /**
+             * Submitted On
+             * @description The day the page of the bill says it was submitted (``Kerngegevens``: ``ingediend``); null without a page.
+             */
+            submitted_on?: string | null;
+            /**
+             * Status
+             * @description Where it is, as the list of its committee heads it: ``In schriftelijke voorbereiding``, ``Gereed voor plenaire behandeling door de Eerste Kamer``, ``Plenaire behandeling Eerste Kamer afgerond``; null for a bill on no such list.
+             */
+            status?: string | null;
+            /**
+             * Progress
+             * @description The progress of the bill as its page shows it, step by step; empty without a page. What the page does not show is not here.
+             */
+            progress?: components["schemas"]["EkStepDTO"][];
+            /** @description The page it was taken over from; null without one. */
+            source?: components["schemas"]["EkBillSourceDTO"] | null;
         };
         /**
          * DossierSummaryDTO
@@ -4048,10 +4068,9 @@ export interface components {
          *
          *     ``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of
          *     the zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,
-         *     ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``), else, from a
-         *     ``Voorstel van wet`` among its papers, ``Wetgeving`` or ``Initiatiefwetgeving``; null
-         *     for a dossier of letters and motions. ``kind_basis`` says which (``case``,
-         *     ``document``). A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has
+         *     ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``); null without
+         *     one ("zonder soort": no kind is made up from its papers). ``kind_basis`` is ``case``
+         *     with a kind. A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has
          *     ``phases``: every phase of the curated list in its order, each done when a paper, an
          *     activity or a decision of the Kamer marks it; ``current_phase`` is the furthest done
          *     phase in that order. A closed dossier has an ``outcome``: ``aangenomen`` (its law was
@@ -4096,9 +4115,9 @@ export interface components {
             kind?: string | null;
             /**
              * Kind Basis
-             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
+             * @description ``case``: a zaak of the dossier gives the kind; null without a kind.
              */
-            kind_basis?: ("case" | "document") | null;
+            kind_basis?: "case" | null;
             /**
              * Phases
              * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
@@ -4175,6 +4194,21 @@ export interface components {
             by_relation: {
                 [key: string]: number;
             };
+        };
+        /**
+         * EkBillSourceDTO
+         * @description The page of the bill on eerstekamer.nl.
+         */
+        EkBillSourceDTO: {
+            /** Url */
+            url?: string | null;
+            /** Read On */
+            read_on?: string | null;
+            /**
+             * Attribution
+             * @default Eerste Kamer der Staten-Generaal, www.eerstekamer.nl
+             */
+            attribution: string;
         };
         /**
          * EkFactionVoteDTO
@@ -4315,6 +4349,26 @@ export interface components {
             attribution: string;
         };
         /**
+         * EkPaperDTO
+         * @description A paper of a step of a bill, as the page of the Eerste Kamer lists it.
+         */
+        EkPaperDTO: {
+            /**
+             * Kind
+             * @description As the page names it: ``verslag``, ``stemming (hamerstuk)``.
+             */
+            kind: string;
+            /** Date */
+            date?: string | null;
+            /**
+             * Number
+             * @description As the page writes it: ``EK, B``, ``TK, 2``; null for none.
+             */
+            number?: string | null;
+            /** Url */
+            url: string;
+        };
+        /**
          * EkSourceDTO
          * @description Where something of the Eerste Kamer was taken over from, to name with it.
          */
@@ -4344,6 +4398,29 @@ export interface components {
              * @description The source to name (``EK_ATTRIBUTION``).
              */
             attribution: string;
+        };
+        /**
+         * EkStepDTO
+         * @description A step of the progress of a bill, as the page of the Eerste Kamer shows it.
+         */
+        EkStepDTO: {
+            /**
+             * Phase
+             * @description ``Schriftelijke voorbereiding``, ``Plenair``, ``Afkondiging``; null for the first step, in the Tweede Kamer.
+             */
+            phase?: string | null;
+            /**
+             * House
+             * @description ``Tweede Kamer``, ``Eerste Kamer``, ``Staatsblad(en)``; null where the page names none (the plenary step of the Eerste Kamer).
+             */
+            house?: string | null;
+            /**
+             * State
+             * @description As the page marks it: ``vol`` (it drew the step full: done), ``geblokt`` (the step the bill is in), ``leeg`` (not reached).
+             */
+            state?: string | null;
+            /** Papers */
+            papers?: components["schemas"]["EkPaperDTO"][];
         };
         /**
          * EuLinkDTO
@@ -5426,6 +5503,16 @@ export interface components {
             /** Display Name */
             display_name: string | null;
             /**
+             * Legal Areas
+             * @description The legal areas of a BWB regulation as its WTI files it (`main`, `specific`), each with the URI of its concept in the TOOI thesaurus `scw_bwb_rechtsgebieden` (null when the thesaurus lacks the label).
+             */
+            legal_areas?: components["schemas"]["LegalAreaDTO"][];
+            /**
+             * Policy Domains
+             * @description The government themes of a BWB regulation as its WTI files it (`label`), with the URI of its concept in the TOOI thesaurus `scw_bwb_themas`.
+             */
+            policy_domains?: components["schemas"]["PolicyDomainDTO"][];
+            /**
              * Jurisdiction
              * @description `nl`, `eu` or `int` (Verdragenbank treaties).
              */
@@ -5615,6 +5702,23 @@ export interface components {
             international_total: number;
         };
         /**
+         * InstrumentFacets
+         * @description The instruments under the filters, counted per register; each without its own
+         *     filter, so the other areas stay in view when one is chosen.
+         */
+        InstrumentFacets: {
+            /**
+             * Legal Area
+             * @description The legal areas of the TOOI thesaurus `scw_bwb_rechtsgebieden` as a tree: main areas, most first, each with its specific areas (`narrower`). An instrument counts once per area. Counted without the `legal_area` filter.
+             */
+            legal_area?: components["schemas"]["LegalAreaFacetDTO"][];
+            /**
+             * Policy Domain
+             * @description The government themes of `scw_bwb_themas`, most first. Counted without the `policy_domain` filter.
+             */
+            policy_domain?: components["schemas"]["RegisterConceptDTO"][];
+        };
+        /**
          * InstrumentJudgmentFacets
          * @description Every judgment that cites this instrument counted, not the page.
          */
@@ -5766,6 +5870,7 @@ export interface components {
             items: components["schemas"]["InstrumentListItemDTO"][];
             /** Total */
             total: number;
+            facets?: components["schemas"]["InstrumentFacets"];
         };
         /**
          * InstrumentRelatedItem
@@ -6247,9 +6352,9 @@ export interface components {
             subjects?: components["schemas"]["JudgmentFacetCount"][];
             /**
              * Subject Area
-             * @description Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter.
+             * @description Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter. `narrower`: the subjects under it as the source writes them.
              */
-            subject_area?: components["schemas"]["JudgmentFacetCount"][];
+            subject_area?: components["schemas"]["SubjectAreaFacetCount"][];
             /**
              * Procedure
              * @description Per procedure (Rechtspraak `psi:procedure`, as written: `Hoger beroep`, `Cassatie`; null when it gives none), most first; counted without the `procedure` filter.
@@ -6434,6 +6539,65 @@ export interface components {
             display_name: string | null;
             /** Ecli */
             ecli: string | null;
+        };
+        /**
+         * LegalAreaDTO
+         * @description A legal area of a regulation (WTI ``rechtsgebied``) and its TOOI concepts.
+         */
+        LegalAreaDTO: {
+            /**
+             * Main
+             * @description The main area: `Staats- en bestuursrecht`.
+             */
+            main: string;
+            /**
+             * Main Id
+             * @description Its TOOI concept: `c_5d8350bb`.
+             */
+            main_id?: string | null;
+            /** Main Uri */
+            main_uri?: string | null;
+            /**
+             * Main Slug
+             * @description Its slug, unique in the list: `staats-en-bestuursrecht`.
+             */
+            main_slug?: string | null;
+            /**
+             * Specific
+             * @description The specific area: `Bestuursrecht`.
+             */
+            specific?: string | null;
+            /** Specific Id */
+            specific_id?: string | null;
+            /** Specific Uri */
+            specific_uri?: string | null;
+            /** Specific Slug */
+            specific_slug?: string | null;
+        };
+        /**
+         * LegalAreaFacetDTO
+         * @description A main legal area and its specific areas.
+         */
+        LegalAreaFacetDTO: {
+            /**
+             * Id
+             * @description Its TOOI concept (`c_e49bce03`); null without the thesaurus.
+             */
+            id?: string | null;
+            /**
+             * Slug
+             * @description Unique in its list (`familierecht`); the filter takes it too.
+             */
+            slug?: string | null;
+            /**
+             * Label
+             * @description As the WTI writes it: `Familierecht`.
+             */
+            label: string;
+            /** Count */
+            count: number;
+            /** Narrower */
+            narrower?: components["schemas"]["RegisterConceptDTO"][];
         };
         /**
          * LegislativeHistoryEntry
@@ -6959,6 +7123,30 @@ export interface components {
             } | null;
         };
         /**
+         * NextActivityDTO
+         * @description An activity the Tweede Kamer has planned.
+         */
+        NextActivityDTO: {
+            /** Key */
+            key: string;
+            /** Date */
+            date?: string | null;
+            /**
+             * Kind
+             * @description ``Activiteit.Soort``: ``Commissiedebat``, ``Plenair debat``, ``Stemmingen``, …
+             */
+            kind?: string | null;
+            /** Agenda Title */
+            agenda_title?: string | null;
+            /**
+             * Committee
+             * @description Its lead committee (``key``, ``slug``, ``name``); null in plenary.
+             */
+            committee?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
          * NodeGraphResponse
          * @description Response for GET /api/nodes/{collection}/{key}.
          */
@@ -7202,6 +7390,23 @@ export interface components {
             name?: string | null;
         };
         /**
+         * PolicyDomainDTO
+         * @description A government theme of a regulation (WTI ``overheidsdomein``) and its TOOI concept.
+         */
+        PolicyDomainDTO: {
+            /**
+             * Label
+             * @description `Overheid, bestuur en koninkrijk`.
+             */
+            label: string;
+            /** Id */
+            id?: string | null;
+            /** Uri */
+            uri?: string | null;
+            /** Slug */
+            slug?: string | null;
+        };
+        /**
          * Post
          * @enum {string}
          */
@@ -7230,6 +7435,29 @@ export interface components {
             official_url?: string | null;
             /** Dossiers */
             dossiers?: components["schemas"]["DossierRefDTO"][];
+        };
+        /**
+         * RegisterConceptDTO
+         * @description A concept of a register with the instruments under the filters filed under it.
+         */
+        RegisterConceptDTO: {
+            /**
+             * Id
+             * @description Its TOOI concept (`c_e49bce03`); null without the thesaurus.
+             */
+            id?: string | null;
+            /**
+             * Slug
+             * @description Unique in its list (`familierecht`); the filter takes it too.
+             */
+            slug?: string | null;
+            /**
+             * Label
+             * @description As the WTI writes it: `Familierecht`.
+             */
+            label: string;
+            /** Count */
+            count: number;
         };
         /**
          * RelationshipDTO
@@ -7538,6 +7766,39 @@ export interface components {
             data_as_of?: {
                 [key: string]: components["schemas"]["DataAsOfDTO"];
             };
+        };
+        /**
+         * SubjectAreaFacetCount
+         * @description A main area of law with the subjects under it.
+         */
+        SubjectAreaFacetCount: {
+            /** Value */
+            value: string | null;
+            /** Count */
+            count: number;
+            /**
+             * Narrower
+             * @description The subjects of the source under this main area, most first; counted without the `subject_area` and `subject` filters.
+             */
+            narrower?: components["schemas"]["SubjectFacetCount"][];
+        };
+        /**
+         * SubjectFacetCount
+         * @description A subject of the Rechtspraak under a main area, as the source writes it.
+         */
+        SubjectFacetCount: {
+            /**
+             * Value
+             * @description The subject as the source writes it (`Bestuursrecht; Belastingrecht`); the `subject` filter takes it.
+             */
+            value: string;
+            /**
+             * Label
+             * @description The part after the main area: `Belastingrecht`.
+             */
+            label: string;
+            /** Count */
+            count: number;
         };
         /**
          * SubmitterDTO
@@ -8395,6 +8656,10 @@ export interface operations {
                 jurisdiction?: ("nl" | "eu") | null;
                 kind?: string | null;
                 article_count_min?: number | null;
+                /** @description A legal area by TOOI id (`c_e49bce03`) or slug (`familierecht`). */
+                legal_area?: string | null;
+                /** @description A government theme by TOOI id or slug. */
+                policy_domain?: string | null;
                 sort?: "title" | "article_count";
             };
             header?: never;
