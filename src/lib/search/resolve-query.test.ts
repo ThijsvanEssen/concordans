@@ -50,7 +50,10 @@ describe('parseCitation', () => {
 		['Kamerstukken I 2025/26, 36799, A', { kind: 'dossier', number: '36799', document: 'A' }],
 		['Kamerstukken II 2025/26, 36799', { kind: 'dossier', number: '36799', document: null }],
 		['BWBR0001854', { kind: 'bwb', id: 'BWBR0001854' }],
-		['32004L0017', { kind: 'celex', id: '32004L0017' }]
+		['32004L0017', { kind: 'celex', id: '32004L0017' }],
+		['Stb. 2026, 94', { kind: 'publication', series: 'stb', year: '2026', number: '94' }],
+		['Staatsblad 2026, 94', { kind: 'publication', series: 'stb', year: '2026', number: '94' }],
+		['Trb. 2018, 201', { kind: 'publication', series: 'trb', year: '2018', number: '201' }]
 	])('%s', (query, expected) => {
 		expect(parseCitation(query)).toEqual(expected);
 	});
@@ -69,6 +72,7 @@ describe('resolveQuery', () => {
 		documentKey: vi.fn(async () => 'a572870e'),
 		dossier: vi.fn(async (number) => ({ key: number.toLowerCase().replace('-', '_'), number })),
 		exists: vi.fn(async () => true),
+		lookUp: vi.fn(async () => null),
 		...over
 	});
 
@@ -118,6 +122,28 @@ describe('resolveQuery', () => {
 			number: '21501-31'
 		});
 		expect(d.documentKey).not.toHaveBeenCalled();
+	});
+
+	it('opens a Kamerstuk and a publication by lookup, the stuk itself', async () => {
+		const d = deps({
+			lookUp: vi.fn(async (pad) =>
+				pad.soort === 'kamerstuk' ? 'documents/1501fbca' : 'instruments/stb_2026_94'
+			)
+		});
+		expect((await resolveQuery('36799, nr. 31', d))?.ref).toEqual({
+			collection: 'documents',
+			key: '1501fbca'
+		});
+		expect(d.lookUp).toHaveBeenCalledWith({ soort: 'kamerstuk', dossier: '36799', nummer: '31' });
+		expect((await resolveQuery('Staatsblad 2026, 94', d))?.ref).toEqual({
+			collection: 'instruments',
+			key: 'stb_2026_94'
+		});
+		expect(d.resolve).not.toHaveBeenCalled();
+	});
+
+	it('finds no publication the data lacks, instead of searching on', async () => {
+		expect(await resolveQuery('Stb. 2026, 999', deps())).toBeNull();
 	});
 
 	it('opens the stuk a full Kamerstuk citation names, as the API resolves it', async () => {

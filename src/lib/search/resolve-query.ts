@@ -4,15 +4,17 @@
 import { BW_BOOKS, withBook } from '$lib/text/bw';
 import { api, unwrap } from '$lib/api/client';
 import type { BronRef } from '$lib/bron/href';
-import type { Collection } from '$lib/vocabulary';
+import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
+import { lookUp, type Pad, type Reeks } from '$lib/bron/leesbaar';
 
 export type Citation =
 	| { kind: 'ecli'; ecli: string }
 	| { kind: 'article'; number: string; law: string; book: string | null; at: string | null }
 	| { kind: 'dossier'; number: string; document: string | null }
 	| { kind: 'bwb'; id: string }
-	| { kind: 'celex'; id: string };
+	| { kind: 'celex'; id: string }
+	| { kind: 'publication'; series: Reeks; year: string; number: string };
 
 export type Resolved = {
 	ref: BronRef;
@@ -21,6 +23,17 @@ export type Resolved = {
 	label?: string | null;
 };
 
+// "Stb. 2026, 94", "Staatsblad 2026, 94", "Stcrt. 2026, nr. 12345", "Trb. 2018, 201".
+const PUBLICATION =
+	/^(stb|staatsblad|stcrt|staatscourant|trb|tractatenblad)\.?\s*(\d{4}),?\s*(?:nr\.?\s*)?(\d+)$/i;
+const SERIES: Record<string, Reeks> = {
+	stb: 'stb',
+	staatsblad: 'stb',
+	stcrt: 'stcrt',
+	staatscourant: 'stcrt',
+	trb: 'trb',
+	tractatenblad: 'trb'
+};
 const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const BWB = /^BWB[RVW]\d{7}$/i;
 const CELEX = /^[0-9CE]\d{4}[A-Z]{1,2}\d{4}(?:R\(\d+\))?$/i;
@@ -81,6 +94,14 @@ export function parseCitation(query: string): Citation | null {
 	if (ECLI.test(q)) return { kind: 'ecli', ecli: q.toUpperCase() };
 	if (BWB.test(q)) return { kind: 'bwb', id: q.toUpperCase() };
 	if (CELEX.test(q)) return { kind: 'celex', id: q.toUpperCase() };
+	const publication = PUBLICATION.exec(q);
+	if (publication)
+		return {
+			kind: 'publication',
+			series: SERIES[publication[1].toLowerCase()],
+			year: publication[2],
+			number: publication[3]
+		};
 	const dossier = DOSSIER.exec(q);
 	if (dossier) {
 		return {
@@ -123,6 +144,8 @@ export type ResolveDeps = {
 	/** Node key and label of the dossier a number names, or null when there is none. */
 	dossier: (number: string) => Promise<{ key: string; number: string } | null>;
 	exists: (ref: BronRef) => Promise<boolean>;
+	/** The bron a readable address names, by /api/lookup (API 0.73): exact or null. */
+	lookUp: (pad: Pad) => Promise<string | null>;
 };
 
 const RESOLVE_KINDS: Record<string, Collection> = {
@@ -175,6 +198,7 @@ const apiDeps: ResolveDeps = {
 		const { data } = await api.GET('/api/dossiers/{number}', { params: { path: { number } } });
 		return data ? { key: data.key, number: data.number } : null;
 	},
+	lookUp: (pad) => lookUp(pad),
 	exists: async ({ collection, key }) => {
 		const { response } = await api.GET('/api/nodes/{collection}/{key}', {
 			params: { path: { collection, key }, query: { limit: 1 } }
@@ -196,6 +220,19 @@ export async function resolveQuery(
 	const c = parseCitation(query);
 	if (!c) return null;
 	try {
+		// A Kamerstuk with its number, a publication: the stuk itself, by lookup, exact.
+		const pad: Pad | null =
+			c.kind === 'publication'
+				? { soort: 'publicatie', reeks: c.series, jaar: c.year, nummer: c.number }
+				: c.kind === 'dossier' && c.document
+					? { soort: 'kamerstuk', dossier: c.number, nummer: c.document }
+					: null;
+		const found = pad ? await deps.lookUp(pad).catch(() => null) : null;
+		const target = found ? parseNodeId(found) : null;
+		// A stuk or a publication; a dossier (a Kamerstuk without number) goes the way below.
+		if (target && target.collection !== 'dossiers')
+			return { ref: { collection: target.collection, key: target.key } as BronRef, at: null };
+		if (c.kind === 'publication') return null;
 		const resolved = await deps.resolve(query).catch(() => null);
 		if (resolved) return resolved;
 		if (c.kind === 'article') {
