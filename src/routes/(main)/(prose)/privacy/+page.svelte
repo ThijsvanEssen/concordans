@@ -2,7 +2,7 @@
 </script>
 
 <svelte:head>
-	<title>Privacyverklaring. Concordans.</title>
+	<title>Privacyverklaring, Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">

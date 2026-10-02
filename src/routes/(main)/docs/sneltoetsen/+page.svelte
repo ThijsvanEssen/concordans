@@ -1,5 +1,5 @@
 <svelte:head>
-	<title>Sneltoetsen · Concordans</title>
+	<title>Sneltoetsen, Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">

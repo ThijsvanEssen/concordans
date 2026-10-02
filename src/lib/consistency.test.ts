@@ -83,9 +83,8 @@ describe('one form for each thing', () => {
 	});
 
 	it('separates with a comma, not a middle dot (Thijs, 2 October 2026)', () => {
-		// "Motie, nr. 21", "Dossier, Kamerstuk 36799", "Aangenomen, 7 sep. 2026". Only the
-		// browser tab keeps its "Actueel · Concordans".
-		expect(offenders((t) => /·(?! Concordans)/.test(t.replace(/· Concordans/g, '')))).toEqual([]);
+		// "Motie, nr. 21", "Dossier, Kamerstuk 36799", and the browser tab: "Actueel, Concordans".
+		expect(offenders((t) => t.includes('\u00b7'))).toEqual([]);
 	});
 
 	it('has no prototype switches or study folders left', () => {

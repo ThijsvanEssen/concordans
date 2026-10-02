@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>{$page.status === 404 ? 'Niet gevonden' : 'Fout'} · Concordans</title>
+	<title>{$page.status === 404 ? 'Niet gevonden' : 'Fout'}, Concordans</title>
 </svelte:head>
 
 <div class="error-shell">

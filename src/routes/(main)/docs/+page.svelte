@@ -48,7 +48,7 @@
 </script>
 
 <svelte:head>
-	<title>Documentatie · Concordans</title>
+	<title>Documentatie, Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">

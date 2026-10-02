@@ -2,7 +2,7 @@
 </script>
 
 <svelte:head>
-	<title>Contact. Concordans.</title>
+	<title>Contact, Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">

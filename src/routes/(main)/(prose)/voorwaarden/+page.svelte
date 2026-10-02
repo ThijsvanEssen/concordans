@@ -2,7 +2,7 @@
 </script>
 
 <svelte:head>
-	<title>Gebruiksvoorwaarden. Concordans.</title>
+	<title>Gebruiksvoorwaarden, Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">

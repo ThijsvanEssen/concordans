@@ -655,11 +655,11 @@
 
 	// The tab names what is open, so that tabs, bookmarks and history tell bronnen apart.
 	const pageTitle = $derived.by(() => {
-		if (mode === 'index') return 'Bladeren · Concordans';
+		if (mode === 'index') return 'Bladeren, Concordans';
 		const name = selectedNode ? tabTitle(selectedNode) : null;
-		if (name) return `${name} · Concordans`;
-		if (netwerkActive) return 'Netwerk · Concordans';
-		return 'Verkenner · Concordans';
+		if (name) return `${name}, Concordans`;
+		if (netwerkActive) return 'Netwerk, Concordans';
+		return 'Verkenner, Concordans';
 	});
 
 	// The ← of the status bar goes back inside Concordans; a bron opened from a link

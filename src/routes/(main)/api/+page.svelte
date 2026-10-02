@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-	<title>API-referentie. Concordans.</title>
+	<title>API-referentie, Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">

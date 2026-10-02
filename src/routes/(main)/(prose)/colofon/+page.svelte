@@ -2,7 +2,7 @@
 </script>
 
 <svelte:head>
-	<title>Colofon. Concordans.</title>
+	<title>Colofon, Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">

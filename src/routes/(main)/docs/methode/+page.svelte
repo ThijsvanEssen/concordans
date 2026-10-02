@@ -1,5 +1,5 @@
 <svelte:head>
-	<title>Methode · Concordans</title>
+	<title>Methode, Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">

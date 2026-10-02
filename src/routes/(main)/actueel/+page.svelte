@@ -399,7 +399,7 @@
 	}
 </script>
 
-<svelte:head><title>Actueel · Concordans</title></svelte:head>
+<svelte:head><title>Actueel, Concordans</title></svelte:head>
 <svelte:window onkeydown={onKey} />
 
 <div class="actueel">

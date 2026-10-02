@@ -2,7 +2,7 @@
 </script>
 
 <svelte:head>
-	<title>Alpha. Concordans.</title>
+	<title>Alpha, Concordans</title>
 	<meta
 		name="description"
 		content="Concordans is in alpha. Wat dat betekent voor de inhoud, de functies en de betrouwbaarheid van wat op het scherm staat."
