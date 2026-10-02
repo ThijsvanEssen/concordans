@@ -17,7 +17,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { tabTitle } from '$lib/bron/tab-title';
 	import { track } from '$lib/analytics';
-	import { ApiError } from '$lib/api/client';
+	import { api, ApiError } from '$lib/api/client';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
 	import { getDossier } from '$lib/components/parliamentary/data';
@@ -505,6 +505,16 @@
 		});
 	});
 
+	async function pathsBetween(
+		participants: { response: Schema<'NodeGraphResponse'> }[]
+	): Promise<string[]> {
+		const ids = participants.map((p) => `${p.response.node.collection}/${p.response.node.key}`);
+		const { data } = await api
+			.GET('/api/paths', { params: { query: { ids: ids.join(','), max_depth: 4 } } })
+			.catch(() => ({ data: undefined }));
+		return data ? store.mergePaths(data) : [];
+	}
+
 	async function compose(n: Netwerk) {
 		const epoch = ++composeEpoch;
 		netwerkLoading = true;
@@ -521,10 +531,19 @@
 			found.push({ id: n.ids[i], response: r.value });
 			if (isOn(n, n.ids[i])) participants.push({ response: r.value });
 		});
+		// The paths between the chosen bronnen, up to four steps (BE-38): what joins them
+		// further than one shared neighbour. Without the route, the shared neighbours only.
+		const onPaths = n.tussen && participants.length > 1 ? await pathsBetween(participants) : [];
+		if (epoch !== composeEpoch) return;
 		const fresh = !composedOnce && !keepCanvas;
 		keepCanvas = false;
 		graphView?.suppressFit();
-		const { alone, joining } = store.compose({ participants, withJoining: n.tussen, fresh });
+		const { alone, joining } = store.compose({
+			participants,
+			withJoining: n.tussen,
+			fresh,
+			onPaths
+		});
 		composedOnce = true;
 		joiningCount = joining.length;
 		netwerkEntries = found.map(({ id, response }) => {

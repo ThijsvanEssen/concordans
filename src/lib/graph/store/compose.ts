@@ -62,7 +62,7 @@ export function createCompose(
 		return seen;
 	};
 
-	const compose: GraphStore['compose'] = ({ participants, withJoining, fresh }) => {
+	const compose: GraphStore['compose'] = ({ participants, withJoining, fresh, onPaths = [] }) => {
 		const selectedId = get(selectionStore)?.id ?? null;
 		const on = participants.map((p) => nodeIdOf(p.response));
 		const result: Between = between(
@@ -80,6 +80,13 @@ export function createCompose(
 
 		const wanted = new Set(on);
 		for (const kept of result.keep.values()) for (const id of kept) wanted.add(id);
+		// What lies on a path between two chosen bronnen, further than one shared neighbour
+		// (member → stuk → wet → artikel, BE-38): joining too, when the joining are drawn.
+		const onPath = withJoining ? onPaths.filter((id) => !on.includes(id)) : [];
+		for (const id of onPath) {
+			wanted.add(id);
+			result.joining.add(id);
+		}
 
 		// What the last composition drew and this one does not: a bron switched off or
 		// removed, and what only tied it.
