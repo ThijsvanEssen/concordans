@@ -29,6 +29,8 @@ const KIND_OF_COLLECTION: Partial<Record<string, ContainerKind>> = {
 	instruments: 'instrument',
 	factions: 'faction',
 	committees: 'committee',
+	// A cabinet holds its bewindspersonen as a commissie holds its leden (SERVED_IN).
+	cabinets: 'committee',
 	dossiers: 'dossier'
 };
 

@@ -512,6 +512,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			load: 'committee-activities'
 		}
 	],
+	cabinets: [
+		{
+			id: 'bewindspersonen',
+			label: 'Bewindspersonen',
+			noun: 'bewindspersonen',
+			match: [{ relation: 'SERVED_IN', direction: 'inbound', collection: 'members' }]
+		}
+	],
 	members: [
 		{
 			id: 'factions',

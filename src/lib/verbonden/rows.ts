@@ -294,8 +294,29 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 	};
 }
 
-/** The seat a MEMBER_OF edge records, from its meta. */
+/**
+ * The seat a MEMBER_OF edge records, from its meta. A SERVED_IN edge lists the posts of a
+ * bewindspersoon in the cabinet (`meta.posts`): their functions, from the first to the
+ * end of the last, open while one is open.
+ */
 function periodOf(meta: Record<string, unknown>): Row['period'] {
+	if (Array.isArray(meta.posts) && meta.posts.length > 0) {
+		const seats = meta.posts.map((post) => periodOf((post ?? {}) as Record<string, unknown>));
+		const froms = seats.map((seat) => seat?.from ?? null);
+		const tos = seats.map((seat) => seat?.to ?? null);
+		const functions = [
+			...new Set(
+				meta.posts
+					.map((post) => text((post as Record<string, unknown> | null)?.function))
+					.filter((f): f is string => !!f)
+			)
+		];
+		return {
+			from: froms.includes(null) ? null : (froms as string[]).sort()[0],
+			to: tos.includes(null) ? null : (tos as string[]).sort().at(-1)!,
+			role: functions.length > 0 ? functions.map(firstLower).join(' en ') : null
+		};
+	}
 	const from = text(meta.from_date)?.slice(0, 10) ?? null;
 	const to = text(meta.to_date)?.slice(0, 10) ?? null;
 	return from || to ? { from, to, role: text(meta.role) } : null;
@@ -316,8 +337,12 @@ export function periodLabel(period: NonNullable<Row['period']>): string {
 			: from
 				? `sinds ${from}`
 				: `tot en met ${to}`;
-	return period.role && period.role !== 'Lid' ? `${period.role.toLowerCase()}, ${span}` : span;
+	if (!period.role || period.role === 'Lid') return span;
+	return `${firstLower(period.role)}, ${span}`;
 }
+
+/** `voorzitter`, `minister van Justitie en Veiligheid`: the names in a function keep their capitals. */
+const firstLower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 const POSITION_PREFIX = /^(r\.o\.|onder|§)\s*/;
 
