@@ -7,7 +7,8 @@ import type { Schema } from '$lib/api/types';
 
 type Dossier = Schema<'DossierSummaryDTO'>;
 
-export type BodyState = 'done' | 'now' | 'open' | 'none';
+/** `unknown`: the source gives no mark, which is not the same as not done. */
+export type BodyState = 'done' | 'now' | 'open' | 'none' | 'unknown';
 export type Body = { name: string; short: string; state: BodyState };
 export type StandGroup = 'ek' | 'tk' | 'ingediend' | 'afgehandeld' | 'geen';
 
@@ -40,18 +41,14 @@ const PHASE_ZIN: Record<string, string> = {
 
 export function stand(d: Dossier): Stand | null {
 	const phases = d.phases ?? [];
-	// A record marks a phase done; a later phase done counts every earlier one as done
-	// (12 of 14 bills the Tweede Kamer passed lack the Raad van State's mark).
-	const lastDone = Math.max(-1, ...phases.map((p, i) => (p.done ? i : -1)));
-	const done = (name: string) => {
-		const i = phases.findIndex((p) => p.name === name);
-		return i >= 0 && (phases[i].done || i <= lastDone);
-	};
+	// A phase is done where the source marks it so, and only there: a later phase does not
+	// stand in for an earlier one (Thijs, BE-27). A phase without a mark is not in the data.
+	const done = (name: string) => !!phases.find((p) => p.name === name)?.done;
 	const dateOf = (name: string | null | undefined) =>
 		phases.find((p) => p.name === name)?.date ?? null;
 	if (!d.current_phase && !d.tk_decision && !d.ek_outcome) return null;
 
-	const rvs: BodyState = done('Advies Raad van State') ? 'done' : 'open';
+	const rvs: BodyState = done('Advies Raad van State') ? 'done' : 'unknown';
 	const tkDone = !!d.tk_decision || done('Eindtekst') || (d.closed && d.outcome === 'aangenomen');
 	const ekDone = !!d.ek_outcome;
 	const rejected = d.outcome === 'verworpen';

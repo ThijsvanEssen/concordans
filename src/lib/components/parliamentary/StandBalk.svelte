@@ -32,10 +32,11 @@
 						zin: a ? `Uitgebracht, ${datum(a)}` : 'Uitgebracht'
 					}
 				: {
+						// No mark in the source: not in the data, which is not "not yet".
 						naam: 'Raad van State',
 						soort: 'open',
-						woord: 'Nog niet',
-						zin: d.kind === 'Initiatiefwetgeving' ? 'Advies kan nog volgen' : 'Niet in de gegevens'
+						woord: 'Advies',
+						zin: 'Niet in de gegevens'
 					};
 		let v2: Vak;
 		if (d.tk_decision) {

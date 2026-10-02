@@ -2813,7 +2813,7 @@
 					aria-label="Stand: {st.bodies
 						.map(
 							(b) =>
-								`${b.name} ${b.state === 'done' ? 'klaar' : b.state === 'now' ? 'nu' : b.state === 'none' ? 'niet' : 'nog niet'}`
+								`${b.name} ${b.state === 'done' ? 'klaar' : b.state === 'now' ? 'nu' : b.state === 'none' ? 'niet' : b.state === 'unknown' ? 'niet in de gegevens' : 'nog niet'}`
 						)
 						.join(', ')}"
 				>
