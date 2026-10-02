@@ -172,7 +172,9 @@ export function createExpansion(
 					})
 			);
 			emit();
-			return [...drawn];
+			// The chosen bronnen at the ends of a path that is drawn: they are tied.
+			const tied = paths.flatMap((p) => [p.source, p.target]);
+			return { onPath: [...drawn], tied: [...new Set(tied)] };
 		},
 
 		expandNeighborhood: async (collection, key, opts = {}) => {

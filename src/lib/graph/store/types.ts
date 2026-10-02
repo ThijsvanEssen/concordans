@@ -92,9 +92,11 @@ export type GraphStore = {
 		fresh: boolean;
 		/** Bronnen on the paths between the chosen ones (`mergePaths`), kept as joining. */
 		onPaths?: string[];
+		/** Chosen bronnen a drawn path reaches: tied, not alone. */
+		tiedByPaths?: string[];
 	}) => { alone: ReadonlySet<string>; joining: string[] };
 	/** Draws the paths between chosen bronnen (`/api/paths`, API 0.73); returns what it drew. */
-	mergePaths: (response: Schema<'PathsResponse'>) => Promise<string[]>;
+	mergePaths: (response: Schema<'PathsResponse'>) => Promise<{ onPath: string[]; tied: string[] }>;
 	/** The chosen bronnen and what ties them, while a netwerk is drawn; null otherwise. */
 	core: Readable<ReadonlySet<string> | null>;
 	/** Leaves only the chosen bronnen, what ties them and the selection. */
