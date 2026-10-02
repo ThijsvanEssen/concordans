@@ -133,6 +133,7 @@
 	});
 
 	let wrap: HTMLDivElement;
+	let destroyed = false;
 	let renderer: SigmaType | null = null;
 	let resizeObserver: ResizeObserver | null = null;
 	// The mobile tab strip mounts this canvas behind `display: none`, where sigma
@@ -761,6 +762,8 @@
 			import('@sigma/node-image'),
 			import('./DashedEdgeProgram')
 		]);
+		// Left before sigma had loaded (a quick step to the next bron): no container to draw in.
+		if (destroyed) return;
 		const t = tokens();
 		const NodeImageProgram = createNodeImageProgram({
 			keepWithinCircle: true,
@@ -1138,6 +1141,7 @@
 	});
 
 	onDestroy(() => {
+		destroyed = true;
 		resizeObserver?.disconnect();
 		renderer?.kill();
 		renderer = null;
