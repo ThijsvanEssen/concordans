@@ -12,8 +12,13 @@ export const anchorOfHash = (hash: string): string | null => {
 /** Scrolls to the element with `id` inside `root` and marks it. False when there is none. */
 export function landOn(root: ParentNode, id: string): boolean {
 	const target = root.querySelector<HTMLElement>(`[id="${CSS.escape(id)}"]`);
-	if (!target) return false;
 	for (const old of root.querySelectorAll(`.${MARK}`)) old.classList.remove(MARK);
+	if (!target) {
+		// An anchor the bron does not have (an old `p-12` after the ids changed, 0.74):
+		// the top of the bron, not the place the previous anchor left the reader at.
+		if (root instanceof HTMLElement) scrollerOf(root)?.scrollTo({ top: 0 });
+		return false;
+	}
 	target.classList.add(MARK);
 	target.scrollIntoView({ block: 'center', behavior: 'auto' });
 	// The click that brought the reader here has passed by the time this runs.
@@ -21,6 +26,15 @@ export function landOn(root: ParentNode, id: string): boolean {
 		window.addEventListener('click', () => target.classList.remove(MARK), { once: true });
 	});
 	return true;
+}
+
+/** The element a reader scrolls in: the nearest ancestor that scrolls. */
+function scrollerOf(el: HTMLElement): HTMLElement | null {
+	for (let p = el.parentElement; p; p = p.parentElement) {
+		const y = getComputedStyle(p).overflowY;
+		if ((y === 'auto' || y === 'scroll') && p.scrollHeight > p.clientHeight) return p;
+	}
+	return null;
 }
 
 /** The address of a position in the current view, for the clipboard. */
