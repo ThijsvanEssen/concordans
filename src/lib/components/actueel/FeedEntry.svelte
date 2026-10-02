@@ -19,6 +19,7 @@
 		type VoteCount
 	} from './feed';
 	import { headlineOf, voteHow } from './timeline';
+	import { langeDatum } from '$lib/text/datum';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import { fromFeed } from '$lib/bron/submitters';
 
@@ -126,6 +127,7 @@
 						>{i.commencement.instrument.title}</BronLink
 					>
 				{/if}
+				{#if i.judgment?.procedure}<span class="ministry">{i.judgment.procedure}</span>{/if}
 				{#each uniqueBy(i.publication?.instruments ?? [], (w) => w.key) as w (w.key)}
 					<BronLink ref={`instruments/${w.key}`}>{w.title}</BronLink>
 				{/each}
@@ -151,6 +153,14 @@
 			{/if}
 		{/snippet}
 		{#snippet detail()}
+			{#if i.judgment}
+				<!-- Published on the day of the row; decided earlier, as the court dates it. -->
+				<p class="summary">
+					Gepubliceerd op {langeDatum(i.date)}{i.judgment.decided_on
+						? `, beslist op ${langeDatum(i.judgment.decided_on)}`
+						: ''}.
+				</p>
+			{/if}
 			{#if i.summary && i.kind !== 'toezegging' && !i.vote}
 				<p class="summary">{i.summary}</p>
 			{/if}
@@ -178,7 +188,9 @@
 				>
 			</p>
 			<p class="links">
-				{#if i.official_url}<a href={i.official_url} rel="external">Officiële publicatie</a>{/if}
+				{#if i.official_url}<a href={i.official_url} rel="external"
+						>{i.judgment ? 'Op rechtspraak.nl' : 'Officiële publicatie'}</a
+					>{/if}
 				{#if i.tk_url}<a href={i.tk_url} rel="external">Op tweedekamer.nl</a>{/if}
 				{#if i.dossier}<a href={filterHref({ dossier: i.dossier.number })}
 						>Alles over dit dossier in Actueel</a

@@ -340,3 +340,35 @@ describe('voteHow', () => {
 		expect(voteHow(tk('Stemmen - aangenomen'))).toBeNull();
 	});
 });
+
+describe('a judgment in the feed', () => {
+	it('is cited by its court and the day it was decided, a conclusion by its A-G', () => {
+		const item = (judgment: Record<string, unknown>) =>
+			({
+				id: 'judgments/x',
+				kind: 'uitspraak',
+				date: '2026-09-23',
+				title: 'Raad van State 2026-09-15 / BRS.26.004338',
+				node: { collection: 'judgments', key: 'ecli_nl_rvs_2026_5403' },
+				persons: [],
+				judgment
+			}) as unknown as FeedItem;
+		expect(
+			headlineOf(item({ court: 'RVS', tier: 'raad_van_state', decided_on: '2026-09-15' }))
+		).toEqual({ label: 'Uitspraak', title: 'Raad van State, 15 september 2026', major: false });
+		const conclusie = headlineOf(
+			item({
+				court: 'PHR',
+				tier: 'parket',
+				decided_on: '2018-08-02',
+				advocate_general: 'mr. R.E.C.M. Niessen',
+				advocate_general_role: 'advocaat-generaal'
+			})
+		);
+		expect(conclusie).toEqual({
+			label: 'Conclusie',
+			title: 'Conclusie A-G Niessen, 2 augustus 2018',
+			major: true
+		});
+	});
+});
