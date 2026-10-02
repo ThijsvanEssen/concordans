@@ -249,7 +249,13 @@
 			{#if view.votes && view.votes.votes.length > 0}
 				{@const votes = view.votes.votes}
 				{@const groups = groupVotes(showAllVotes ? votes : votes.slice(0, VOTES_PREVIEW))}
-				<Sectie titel="Stemgeschiedenis" soort="decisions" aantal={view.votes.count}>
+				<!-- Their own votes on a roll-call, and their faction's while they sat in it (API
+				     0.75, BE-43); a bewindspersoon's are what they voted as a Kamerlid. -->
+				<Sectie
+					titel={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
+					soort="decisions"
+					aantal={view.votes.count}
+				>
 					{#each groups as group (group.party)}
 						{#if groups.length > 1}
 							<div class="party-head">
@@ -276,9 +282,12 @@
 											>
 												<span class="vote-subject">{stemmingNaam(v.subject)}</span>
 												<span class="vote-meta">
-													{#if (v.seats ?? 0) > 1}<span class="vote-seats"
-															>stem van de fractie, {v.seats} zetels</span
-														>{/if}
+													{#if v.vote_source === 'faction'}<span class="vote-seats"
+															>stem van de fractie{v.party ? ` (${v.party})` : ''}{(v.seats ?? 0) >
+															1
+																? `, ${v.seats} zetels`
+																: ''}</span
+														>{:else}<span class="vote-seats">eigen stem, hoofdelijk</span>{/if}
 													{#if v.passed != null}
 														<span
 															class="vote-outcome"
