@@ -3,6 +3,7 @@
 // TODO(backend B11): the parser and the lookups below go when every notation resolves.
 import { BW_BOOKS, withBook } from '$lib/text/bw';
 import { api, unwrap } from '$lib/api/client';
+import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
 import { parseNodeId, type Collection } from '$lib/vocabulary';
 import { anchorOf, parseQualifier } from '$lib/text/qualifier';
@@ -158,16 +159,7 @@ const RESOLVE_KINDS: Record<string, Collection> = {
 const apiDeps: ResolveDeps = {
 	resolve: async (q) => {
 		const { data, response } = await api.GET('/api/resolve', { params: { query: { q } } });
-		const match = response.ok ? data?.match : null;
-		// A dossier match carries no label; a dossier is looked up by its number instead.
-		const collection = match && (RESOLVE_KINDS[match.kind] ?? null);
-		if (!match || !collection || collection === 'dossiers') return null;
-		return {
-			ref: { collection, key: match.key },
-			at: anchorOf(parseQualifier(data?.qualifier ?? '')),
-			// "Artikel 162 Burgerlijk Wetboek Boek 6" as it is cited: "Artikel 6:162 BW".
-			label: match.display_name ? withBook(match.display_name) : null
-		};
+		return response.ok ? resolvedOf(data) : null;
 	},
 	lawId: async (law, articleNumber) => {
 		// The API's parser stops at a colon, so it is asked for the part before it.
@@ -206,6 +198,23 @@ const apiDeps: ResolveDeps = {
 		return response.ok;
 	}
 };
+
+/**
+ * The bron an answer of /api/resolve names, as /api/resolve gives it and as /api/search
+ * does with `resolve=true` (API 0.74, BE-16); null for none, and for a dossier, which is
+ * looked up by its number instead (a dossier match carries no label).
+ */
+export function resolvedOf(data: Schema<'ResolveResponse'> | null | undefined): Resolved | null {
+	const match = data?.match;
+	const collection = match && (RESOLVE_KINDS[match.kind] ?? null);
+	if (!match || !collection || collection === 'dossiers') return null;
+	return {
+		ref: { collection, key: match.key },
+		at: anchorOf(parseQualifier(data?.qualifier ?? '')),
+		// "Artikel 162 Burgerlijk Wetboek Boek 6" as it is cited: "Artikel 6:162 BW".
+		label: match.display_name ? withBook(match.display_name) : null
+	};
+}
 
 const nodeKey = (id: string) => id.toLowerCase().replace(/[^a-z0-9]+/g, '_');
 

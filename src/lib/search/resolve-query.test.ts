@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+	type ResolveDeps,
 	bareArticle,
 	lawAbbreviation,
-	parseCitation,
 	lawTitle,
+	parseCitation,
 	resolveLaw,
 	resolveQuery,
-	type ResolveDeps
+	resolvedOf
 } from './resolve-query';
 
 describe('parseCitation', () => {
@@ -246,5 +247,31 @@ describe('lawTitle', () => {
 	it('leaves words, a lone "wet" and citations to the search', () => {
 		for (const q of ['huurrecht', 'wet', 'ontslag op staande voet', 'art. 3:4 Awb'])
 			expect(lawTitle(q)).toBeNull();
+	});
+});
+
+describe('resolvedOf', () => {
+	const answer = (kind: string, collection: string, key: string, display_name: string) =>
+		({
+			q: 'x',
+			kind,
+			confidence: 1,
+			match: { id: `${collection}/${key}`, key, collection, kind, display_name, confidence: 1 },
+			alternatives: [],
+			qualifier: null
+		}) as unknown as Parameters<typeof resolvedOf>[0];
+
+	it('names an article as it is cited, and no dossier', () => {
+		expect(
+			resolvedOf(
+				answer('article', 'articles', 'bwbr0005289_162', 'Artikel 162 Burgerlijk Wetboek Boek 6')
+			)
+		).toEqual({
+			ref: { collection: 'articles', key: 'bwbr0005289_162' },
+			at: null,
+			label: 'Artikel 6:162 BW'
+		});
+		expect(resolvedOf(answer('dossier', 'dossiers', '36799', 'Dossier 36799'))).toBeNull();
+		expect(resolvedOf(null)).toBeNull();
 	});
 });
