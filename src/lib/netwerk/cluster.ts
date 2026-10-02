@@ -19,6 +19,8 @@ export type Cluster = {
 	relation: string;
 	/** Whether that line runs from the members to the focus (an uitspraak that cites it). */
 	toFocus: boolean;
+	/** The neighbours of this kind on the canvas, in the cluster or loose beside it. */
+	neighbours: number;
 };
 
 type Node = { id: string; collection: Collection };
@@ -82,10 +84,35 @@ export function clustersOf(
 			collection,
 			members,
 			relation,
-			toFocus: way === 'in'
+			toFocus: way === 'in',
+			neighbours: [...level1].filter((id) => collectionOf.get(id) === collection).length
 		});
 	}
 	return clusters;
+}
+
+/**
+ * What the count of a cluster stands for, in sentences for its card. The cluster holds
+ * the neighbours of its kind tied to the focus alone; the others of that kind stand loose
+ * beside it; the network may hold fewer than the group in Verbonden counts (`group`, the
+ * API's total), since it asks for one capped neighbourhood.
+ */
+export function clusterZinnen(
+	c: Pick<Cluster, 'members' | 'neighbours'>,
+	group: { label: string; total?: number } | null
+): string[] {
+	const n = (v: number) => v.toLocaleString('nl-NL');
+	const zinnen = ['Alleen met deze bron verbonden.'];
+	const loose = c.neighbours - c.members.length;
+	if (loose > 0)
+		zinnen.push(
+			`${n(loose)} ${loose === 1 ? 'andere staat' : 'andere staan'} los: ook met een andere bron verbonden.`
+		);
+	if (group?.total && group.total > c.neighbours)
+		zinnen.push(
+			`In het netwerk: ${n(c.neighbours)} van de ${n(group.total)} ${group.label.charAt(0).toLowerCase()}${group.label.slice(1)}.`
+		);
+	return zinnen;
 }
 
 export type Box = { x: number; y: number; w: number; h: number };

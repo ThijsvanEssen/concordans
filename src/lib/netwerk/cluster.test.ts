@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CLUSTER_MAX_LOOSE, clusterLabel, clustersOf } from './cluster';
+import { CLUSTER_MAX_LOOSE, clusterLabel, clustersOf, clusterZinnen } from './cluster';
 
 const focus = 'articles/a';
 const judgments = (n: number) =>
@@ -50,5 +50,23 @@ describe('clustersOf', () => {
 	it('makes no cluster without a focus', () => {
 		const js = judgments(50);
 		expect(clustersOf(nodes(50), citing(js), null, new Set(), new Set())).toEqual([]);
+	});
+});
+
+describe('clusterZinnen', () => {
+	const c = { members: Array.from({ length: 172 }, (_, i) => `j${i}`), neighbours: 174 };
+
+	it('explains the count against the loose ones and the total of Verbonden (art. 6:162)', () => {
+		expect(clusterZinnen(c, { label: 'Uitspraken die dit artikel aanhalen', total: 250 })).toEqual([
+			'Alleen met deze bron verbonden.',
+			'2 andere staan los: ook met een andere bron verbonden.',
+			'In het netwerk: 174 van de 250 uitspraken die dit artikel aanhalen.'
+		]);
+	});
+
+	it('says no more where the network holds them all', () => {
+		expect(
+			clusterZinnen({ members: c.members, neighbours: 172 }, { label: 'X', total: 172 })
+		).toEqual(['Alleen met deze bron verbonden.']);
 	});
 });
