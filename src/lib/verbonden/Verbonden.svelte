@@ -327,11 +327,16 @@
 						>
 					{/if}
 				</div>
+				{#if g.order}<p class="group__caption">{g.order}</p>{/if}
 				{#if bars.length > 0}
-					<!-- Een zin en een keuzelijst in plaats van het jarendiagram. -->
+					<!-- Een zin en een keuzelijst in plaats van het jarendiagram. Over de geladen
+					     rijen: waar dat er minder zijn dan de telling, zegt de zin het. -->
 					{@const piek = bars.reduce((m, x) => (x.count > m.count ? x : m), bars[0])}
+					{@const geladen = g.rows.length < count ? g.rows.length : null}
 					<p class="group__jaren">
-						Van {bars[0].year} tot {bars.at(-1)?.year}; de meeste in {piek.year} ({piek.count}).
+						{geladen
+							? `Van de ${formatCount(geladen)} geladen: van ${bars[0].year}`
+							: `Van ${bars[0].year}`} tot {bars.at(-1)?.year}; de meeste in {piek.year} ({piek.count}).
 						<label
 							>Jaar <select
 								value={filter.jaar ?? ''}

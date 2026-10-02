@@ -69,6 +69,8 @@ export type Group = GroupDef & {
 	total?: number;
 	/** The places these bronnen name the selected one, where a row bundles several. */
 	mentions?: number;
+	/** The order the rows come in where it is not the date: what the API sorts them by. */
+	order?: string;
 	/** The API caps a bucket without saying how many there are: shown as `30+`. */
 	capped: boolean;
 };

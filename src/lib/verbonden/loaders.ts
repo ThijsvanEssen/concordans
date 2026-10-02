@@ -59,6 +59,8 @@ export type Loaded = {
 	mentions?: number;
 	/** Judgments another group shows, by its id: the ECHR's that cite an article (API 0.73). */
 	judgmentsOf?: Record<string, { rows: Row[]; total: number }>;
+	/** The order of the rows where it is not the date. */
+	order?: string;
 };
 
 /**
@@ -738,6 +740,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (!found) return fromNode();
 		return {
 			total: found.total,
+			// The API lists them by the number of the law's articles they cite (33, 27, 26 …).
+			order: 'Eerst de uitspraken die de meeste artikelen van de wet aanhalen.',
 			rows: found.items
 				.filter((j) => !isInternational({ key: j.key, props: {} }))
 				.map((j) => ({
