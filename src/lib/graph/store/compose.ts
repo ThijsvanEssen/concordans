@@ -62,7 +62,13 @@ export function createCompose(
 		return seen;
 	};
 
-	const compose: GraphStore['compose'] = ({ participants, withJoining, fresh, onPaths = [] }) => {
+	const compose: GraphStore['compose'] = ({
+		participants,
+		withJoining,
+		fresh,
+		onPaths = [],
+		tiedByPaths = []
+	}) => {
 		const selectedId = get(selectionStore)?.id ?? null;
 		const on = participants.map((p) => nodeIdOf(p.response));
 		const result: Between = between(
@@ -115,7 +121,8 @@ export function createCompose(
 		trimToCap();
 		coreStore.set(core);
 		emit();
-		return { alone: result.alone, joining: [...result.joining].filter((id) => nodes.has(id)) };
+		const alone = new Set([...result.alone].filter((id) => !tiedByPaths.includes(id)));
+		return { alone, joining: [...result.joining].filter((id) => nodes.has(id)) };
 	};
 
 	return {

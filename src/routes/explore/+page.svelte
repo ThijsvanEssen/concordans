@@ -507,12 +507,12 @@
 
 	async function pathsBetween(
 		participants: { response: Schema<'NodeGraphResponse'> }[]
-	): Promise<string[]> {
+	): Promise<{ onPath: string[]; tied: string[] }> {
 		const ids = participants.map((p) => `${p.response.node.collection}/${p.response.node.key}`);
 		const { data } = await api
 			.GET('/api/paths', { params: { query: { ids: ids.join(','), max_depth: 4 } } })
 			.catch(() => ({ data: undefined }));
-		return data ? store.mergePaths(data) : [];
+		return data ? store.mergePaths(data) : { onPath: [], tied: [] };
 	}
 
 	async function compose(n: Netwerk) {
@@ -533,7 +533,10 @@
 		});
 		// The paths between the chosen bronnen, up to four steps (BE-38): what joins them
 		// further than one shared neighbour. Without the route, the shared neighbours only.
-		const onPaths = n.tussen && participants.length > 1 ? await pathsBetween(participants) : [];
+		const paths =
+			n.tussen && participants.length > 1
+				? await pathsBetween(participants)
+				: { onPath: [], tied: [] };
 		if (epoch !== composeEpoch) return;
 		const fresh = !composedOnce && !keepCanvas;
 		keepCanvas = false;
@@ -542,7 +545,8 @@
 			participants,
 			withJoining: n.tussen,
 			fresh,
-			onPaths
+			onPaths: paths.onPath,
+			tiedByPaths: paths.tied
 		});
 		composedOnce = true;
 		joiningCount = joining.length;

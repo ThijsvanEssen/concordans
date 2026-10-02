@@ -393,11 +393,12 @@
 				if (isHiddenNode(id, attrs)) continue;
 				points.push(renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number }));
 			}
-			// One member is a hull only when it is a wet's anchor: the wet itself, not a bron in it.
+			// One member is a hull only when it is a wet's anchor (the wet itself, not a bron in
+			// it), or the dossier of a stuk on a path between chosen bronnen (`lone`).
 			const anchored = [...group.members].some(
 				(id) => graph.hasNode(id) && !!graph.getNodeAttribute(id, 'anchor')
 			);
-			if (points.length < (anchored ? 1 : 2)) continue;
+			if (points.length < (anchored || group.lone ? 1 : 2)) continue;
 			const meta = group.kind === 'instrument' ? getInstrumentMeta(group.id) : null;
 			const label = meta ? (meta.shortTitle ?? meta.citationTitle ?? '') : group.label;
 			if (!label) continue;

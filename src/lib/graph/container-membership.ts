@@ -63,6 +63,8 @@ export type ContainerGroup = {
 	parts: Set<string>;
 	/** When a member belonged to it (a lid's seat on a commissie or in a fractie), where the edge says. */
 	periods: Map<string, Period>;
+	/** Drawn around one member too: the dossier of a stuk on a path between chosen bronnen. */
+	lone?: boolean;
 };
 
 /** A stretch of time as ISO dates, open where null. */
@@ -181,6 +183,14 @@ export function recordContainerMember(
 	group.members.add(childId);
 	if (part) group.parts.add(childId);
 	if (period) group.periods.set(childId, period);
+	flush();
+}
+
+/** Lets a container's hull stand around a single member (a stuk on a path, BE-49). */
+export function markLone(id: string | null): void {
+	const group = id ? groups.get(id) : undefined;
+	if (!group || group.lone) return;
+	group.lone = true;
 	flush();
 }
 
