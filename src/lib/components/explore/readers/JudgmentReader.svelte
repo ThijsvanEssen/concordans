@@ -24,6 +24,11 @@
 	} from './judgment-text';
 	import { formatDate, textProp } from './_shared';
 	import { sourceName } from '../law-head';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
+	import { once } from '$lib/api/records';
+	import { korteDatum } from '$lib/text/datum';
+	import { samenhangVan, type Samenhang } from './samenhang';
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
@@ -93,6 +98,25 @@
 			.catch(() => {
 				if (!stale) view = { kind: 'error', message: 'Uitspraak kon niet geladen worden.' };
 			});
+		return () => (stale = true);
+	});
+
+	// The connected cases (API 0.78): the sentence that ties each is on the edge of the node
+	// response, asked only for a judgment that has any.
+	let samenhang = $state<Samenhang[]>([]);
+	$effect(() => {
+		samenhang = [];
+		if (view.kind !== 'loaded') return;
+		const j = view.data.judgment;
+		const related = view.data.related_to ?? [];
+		if (related.length === 0) return;
+		let stale = false;
+		samenhang = samenhangVan([], related);
+		once(`nodes/judgments/${j.key}`, () => getNodeGraph('judgments', j.key, { limit: 50 }))
+			.then((response) => {
+				if (!stale) samenhang = samenhangVan(neighborsOf(response), related);
+			})
+			.catch(() => {});
 		return () => (stale = true);
 	});
 
@@ -268,6 +292,29 @@
 			</table>
 		{/if}
 
+		{#if samenhang.length > 0}
+			<Sectie titel="Samenhangende zaken" soort="judgments" aantal={samenhang.length}>
+				<ul class="samenhang">
+					{#each samenhang as z (z.key)}
+						<li>
+							<p class="samenhang-kop">
+								<BronLink ref={{ collection: 'judgments', key: z.key }}>{z.titel}</BronLink>
+								{#if z.instantie || z.datum}<span class="samenhang-meta"
+										>{[z.instantie, korteDatum(z.datum)].filter(Boolean).join(', ')}</span
+									>{/if}
+							</p>
+							{#each z.zinnen as zin (zin.text)}
+								<blockquote class="samenhang-zin">
+									<p>{zin.text}</p>
+									<footer>Inhoudsindicatie van {zin.van} uitspraak</footer>
+								</blockquote>
+							{/each}
+						</li>
+					{/each}
+				</ul>
+			</Sectie>
+		{/if}
+
 		<div class="reader-body" class:reader-body--numbered={numbered} bind:this={root}>
 			{#each items as item, k (k)}
 				{#if item.kind === 'subheading'}
@@ -355,6 +402,48 @@
 	}
 
 	.reader-meta-item {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+
+	.samenhang {
+		margin: 0 0 var(--s-6);
+		padding: 0;
+		list-style: none;
+		max-width: var(--measure);
+	}
+	.samenhang li + li {
+		margin-top: var(--s-3);
+	}
+	.samenhang-kop {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-2);
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		color: var(--ink);
+	}
+	.samenhang-meta {
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.samenhang-zin {
+		margin: var(--s-1) 0 0;
+		padding-left: var(--s-3);
+		border-left: 1px solid var(--rule);
+	}
+	.samenhang-zin p {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.samenhang-zin footer {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
