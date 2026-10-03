@@ -35,7 +35,7 @@
 		{
 			id: 'parlement',
 			label: 'Parlement',
-			kinds: ['dossiers', 'documents', 'members', 'factions', 'committees'],
+			kinds: ['dossiers', 'documents', 'decisions', 'members', 'factions', 'committees'],
 			tekens: ['dossiers', 'documents', 'decisions', 'members'],
 			href: indexHref('dossiers', { track: 'Wetgeving' })
 		},

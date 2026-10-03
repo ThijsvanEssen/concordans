@@ -60,7 +60,8 @@
 		'commitments',
 		'factions',
 		'committees',
-		'documents'
+		'documents',
+		'decisions'
 	] as const satisfies readonly Collection[];
 	type Kind = (typeof KINDS)[number];
 	const kinds = $derived(scope ? KINDS.filter((k) => scope.includes(k)) : KINDS);

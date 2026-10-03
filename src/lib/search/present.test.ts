@@ -254,3 +254,21 @@ describe('a toezegging', () => {
 		});
 	});
 });
+
+describe('a vote as a hit', () => {
+	it('is named by its subject, with outcome, day and Kamer from the source', () => {
+		const hit = {
+			id: 'decisions/ek_2026_09_29_36791_1',
+			key: 'ek_2026_09_29_36791_1',
+			collection: 'decisions',
+			display_name: 'Eerste Kamer 2026-09-29: Wet toekomstbestendige huurcommissie (36.791)',
+			extra: { date: '2026-09-29', passed: true, chamber: 'EK' }
+		} as unknown as Hit;
+		expect(presentHit(hit, 'huurcommissie')).toEqual({
+			title: 'Wet toekomstbestendige huurcommissie (36.791)',
+			context: 'aangenomen, 29 sep. 2026',
+			snippet: null,
+			chamber: 'EK'
+		});
+	});
+});
