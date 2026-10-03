@@ -7,6 +7,10 @@
 //   /kamerstukken/36600-VIII/AB          one of the Eerste Kamer, by its letter
 //   /stb/2026/94                         a publication, by series, year and number
 //   /leden/rob-jetten                    a lid or bewindspersoon, by the slug the API gives
+//   /kabinetten/rutte_iv                 a cabinet, by its key
+//   /fracties/d66                        a fractie, by its key (ek_democraten_1966 in the EK)
+//   /commissies/szw                      a commissie, by its slug
+//   /toezeggingen/TZ202609-124           a toezegging, by its number
 //
 // Each is a second address of the Verkenner (`reroute` in src/hooks.ts serves /explore);
 // the API ids stay as they are. The rest of the view stays in the query: ?lezen=1,
@@ -23,7 +27,11 @@ export type Pad =
 	| { soort: 'dossier'; nummer: string }
 	| { soort: 'kamerstuk'; dossier: string; nummer: string }
 	| { soort: 'publicatie'; reeks: Reeks; jaar: string; nummer: string }
-	| { soort: 'lid'; slug: string };
+	| { soort: 'lid'; slug: string }
+	| { soort: 'kabinet'; key: string }
+	| { soort: 'fractie'; key: string }
+	| { soort: 'commissie'; slug: string }
+	| { soort: 'toezegging'; nummer: string };
 
 /** The series of officielebekendmakingen.nl a publication appears in. */
 export type Reeks = 'stb' | 'stcrt' | 'trb';
@@ -39,6 +47,10 @@ const segment = (s: string) => {
 
 const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const DOSSIER = /^\d{4,6}(-[A-Z0-9()]+)*$/i;
+/** A key or slug as the API gives it: `rutte_iv`, `ek_democraten_1966`, `buhaos-2021`. */
+const SLEUTEL = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
+/** The number of a toezegging: `TZ202609-124`. */
+const TOEZEGGING = /^TZ\d+-\d+$/i;
 /** The number of a stuk: a figure in the Tweede Kamer, letters in the Eerste (`A`, `AB`). */
 const STUK = /^(\d+|[A-Z]{1,3})$/i;
 
@@ -55,6 +67,14 @@ export function parsePad(pathname: string): Pad | null {
 		return { soort: 'dossier', nummer: a.toUpperCase() };
 	if (first === 'leden' && parts.length === 2 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a))
 		return { soort: 'lid', slug: a };
+	if (first === 'kabinetten' && parts.length === 2 && SLEUTEL.test(a))
+		return { soort: 'kabinet', key: a };
+	if (first === 'fracties' && parts.length === 2 && SLEUTEL.test(a))
+		return { soort: 'fractie', key: a };
+	if (first === 'commissies' && parts.length === 2 && SLEUTEL.test(a))
+		return { soort: 'commissie', slug: a };
+	if (first === 'toezeggingen' && parts.length === 2 && TOEZEGGING.test(a))
+		return { soort: 'toezegging', nummer: a.toUpperCase() };
 	if (REEKSEN.includes(first) && parts.length === 3 && /^\d{4}$/.test(a) && /^\d+$/.test(b))
 		return { soort: 'publicatie', reeks: first as Reeks, jaar: a, nummer: b };
 	if (first === 'kamerstukken' && parts.length === 3 && DOSSIER.test(a) && STUK.test(b))
@@ -84,6 +104,14 @@ export function padHref(pad: Pad): string {
 			return `/${pad.reeks}/${pad.jaar}/${pad.nummer}`;
 		case 'lid':
 			return `/leden/${pad.slug}`;
+		case 'kabinet':
+			return `/kabinetten/${pad.key}`;
+		case 'fractie':
+			return `/fracties/${pad.key}`;
+		case 'commissie':
+			return `/commissies/${pad.slug}`;
+		case 'toezegging':
+			return `/toezeggingen/${pad.nummer}`;
 	}
 }
 
@@ -106,10 +134,15 @@ export function remember(path: string, focus: string) {
 	padVan.set(focus, path);
 }
 
-/** The focus an address names without a request: a judgment and a dossier, or one seen. */
+/**
+ * The focus an address names without a request: a judgment, a dossier, a cabinet and a
+ * fractie (their key is their id), or one seen.
+ */
 export function focusOfPad(pad: Pad): string | null {
 	if (pad.soort === 'uitspraak') return `judgments/${ecliKey(pad.ecli)}`;
 	if (pad.soort === 'dossier') return `dossiers/${pad.nummer}`;
+	if (pad.soort === 'kabinet') return `cabinets/${pad.key}`;
+	if (pad.soort === 'fractie') return `factions/${pad.key}`;
 	return focusVan.get(padHref(pad)) ?? null;
 }
 
@@ -133,6 +166,14 @@ function lookupQuery(pad: Pad) {
 			} as const;
 		case 'lid':
 			return { kind: 'member', id: pad.slug } as const;
+		case 'kabinet':
+			return { kind: 'cabinet', id: pad.key } as const;
+		case 'fractie':
+			return { kind: 'faction', id: pad.key } as const;
+		case 'commissie':
+			return { kind: 'committee', id: pad.slug } as const;
+		case 'toezegging':
+			return { kind: 'commitment', number: pad.nummer } as const;
 	}
 }
 
@@ -160,7 +201,7 @@ const text = (value: unknown): string | null =>
 
 /**
  * The readable address of a focus, from its key or from the props of its node; null
- * where it has none (a lid, a stemming, a stuk of the Eerste Kamer: still /explore).
+ * where it has none (a stemming: still /explore).
  */
 export function padOfFocus(focus: string, props?: Record<string, unknown> | null): string | null {
 	const seen = padVan.get(focus);
@@ -196,6 +237,21 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			const slug = text(props?.slug);
 			return slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
 				? padHref({ soort: 'lid', slug })
+				: null;
+		}
+		case 'cabinets':
+			return SLEUTEL.test(target.key) ? padHref({ soort: 'kabinet', key: target.key }) : null;
+		case 'factions':
+			return SLEUTEL.test(target.key) ? padHref({ soort: 'fractie', key: target.key }) : null;
+		case 'committees': {
+			// A commissie's key is a uuid; its slug (szw) is what a reader types.
+			const slug = text(props?.slug);
+			return slug && SLEUTEL.test(slug) ? padHref({ soort: 'commissie', slug }) : null;
+		}
+		case 'commitments': {
+			const nummer = text(props?.number);
+			return nummer && TOEZEGGING.test(nummer)
+				? padHref({ soort: 'toezegging', nummer: nummer.toUpperCase() })
 				: null;
 		}
 		case 'documents': {

@@ -112,7 +112,11 @@
 					? `${REEKS_NAAM[p.reeks]} ${p.jaar}, ${p.nummer}`
 					: p.soort === 'lid'
 						? `Lid ${p.slug}`
-						: padHref(p);
+						: p.soort === 'commissie'
+							? `Commissie ${p.slug}`
+							: p.soort === 'toezegging'
+								? `Toezegging ${p.nummer}`
+								: padHref(p);
 	const REEKS_NAAM = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
 	$effect(() => {
 		const p = pad;
