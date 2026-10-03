@@ -166,10 +166,22 @@
 				<div class="list-row">
 					<span class="list-k">lid</span><span>/leden/rob-jetten</span>
 				</div>
+				<div class="list-row">
+					<span class="list-k">kabinet</span><span>/kabinetten/rutte_iv</span>
+				</div>
+				<div class="list-row">
+					<span class="list-k">fractie</span><span>/fracties/d66</span>
+				</div>
+				<div class="list-row">
+					<span class="list-k">commissie</span><span>/commissies/szw</span>
+				</div>
+				<div class="list-row">
+					<span class="list-k">toezegging</span><span>/toezeggingen/TZ202609-124</span>
+				</div>
 			</div>
 			<p>
-				De weergave staat erachter: <code>?lezen=1</code> voor de tekst op volle breedte. Andere
-				bronnen houden een adres onder <code>/explore</code>.
+				De weergave staat erachter: <code>?lezen=1</code> voor de tekst op volle breedte. Een
+				stemming houdt een adres onder <code>/explore</code>.
 			</p>
 		</div>
 

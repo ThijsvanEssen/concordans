@@ -29,6 +29,35 @@ describe('a readable address', () => {
 		});
 	});
 
+	it('reads a cabinet, a fractie, a commissie and a toezegging, and gives them back', () => {
+		expect(parsePad('/kabinetten/rutte_iv')).toEqual({ soort: 'kabinet', key: 'rutte_iv' });
+		expect(parsePad('/fracties/ek_democraten_1966')).toEqual({
+			soort: 'fractie',
+			key: 'ek_democraten_1966'
+		});
+		expect(parsePad('/commissies/buhaos-2021')).toEqual({
+			soort: 'commissie',
+			slug: 'buhaos-2021'
+		});
+		expect(parsePad('/toezeggingen/tz202609-124')).toEqual({
+			soort: 'toezegging',
+			nummer: 'TZ202609-124'
+		});
+		expect(parsePad('/kabinetten/Rutte IV')).toBeNull();
+		expect(parsePad('/toezeggingen/124')).toBeNull();
+		expect(focusOfPad({ soort: 'kabinet', key: 'jetten' })).toBe('cabinets/jetten');
+		expect(focusOfPad({ soort: 'fractie', key: 'd66' })).toBe('factions/d66');
+		expect(focusOfPad({ soort: 'commissie', slug: 'szw' })).toBeNull();
+		expect(padOfFocus('cabinets/rutte_iv')).toBe('/kabinetten/rutte_iv');
+		expect(padOfFocus('factions/d66')).toBe('/fracties/d66');
+		expect(padOfFocus('committees/b18e', { slug: 'szw' })).toBe('/commissies/szw');
+		expect(padOfFocus('committees/b18e')).toBeNull();
+		expect(padOfFocus('commitments/6149', { number: 'TZ202609-124' })).toBe(
+			'/toezeggingen/TZ202609-124'
+		);
+		expect(padOfFocus('decisions/decision_6312')).toBeNull();
+	});
+
 	it('reads a lid by its slug, and gives a lid its address from its slug', () => {
 		expect(parsePad('/leden/rob-jetten')).toEqual({ soort: 'lid', slug: 'rob-jetten' });
 		expect(parsePad('/leden/Rob Jetten')).toBeNull();
