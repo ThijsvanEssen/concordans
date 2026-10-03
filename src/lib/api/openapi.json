@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.77.0"
+		"version": "0.78.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -10147,6 +10147,12 @@
 						"type": "array",
 						"title": "Same As",
 						"description": "The other publications of the same decision (`SAME_AS`): for the one kept those it replaces, for a replaced one the one kept. Empty for most."
+					},
+					"related_to": {
+						"items": { "$ref": "#/components/schemas/JudgmentSummaryDTO" },
+						"type": "array",
+						"title": "Related To",
+						"description": "The connected cases (`RELATED_TO`, as between dossiers), both ways: those its summary names (\"Samenhang met 24/03860 E\", \"Zie ook: ECLI:…\") and those whose summary names it, each found by its exact ECLI or case number. Empty for most."
 					},
 					"series": {
 						"items": { "$ref": "#/components/schemas/JudgmentSummaryDTO" },
