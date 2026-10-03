@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.75.0"
+		"version": "0.76.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -4495,9 +4495,9 @@
 						"description": "``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none."
 					},
 					"kind_basis": {
-						"anyOf": [{ "type": "string", "enum": ["case", "document"] }, { "type": "null" }],
+						"anyOf": [{ "type": "string", "const": "case" }, { "type": "null" }],
 						"title": "Kind Basis",
-						"description": "``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph)."
+						"description": "``case``: a zaak of the dossier gives the kind; null without a kind."
 					},
 					"phases": {
 						"anyOf": [
@@ -7042,9 +7042,9 @@
 						"description": "``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none."
 					},
 					"kind_basis": {
-						"anyOf": [{ "type": "string", "enum": ["case", "document"] }, { "type": "null" }],
+						"anyOf": [{ "type": "string", "const": "case" }, { "type": "null" }],
 						"title": "Kind Basis",
-						"description": "``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph)."
+						"description": "``case``: a zaak of the dossier gives the kind; null without a kind."
 					},
 					"phases": {
 						"anyOf": [
@@ -7142,6 +7142,10 @@
 						"description": "Documents per kind (``Motie``, ``Amendement``, ...); a document without a kind is not counted."
 					},
 					"senate": { "$ref": "#/components/schemas/DossierSenateDTO" },
+					"next_activity": {
+						"anyOf": [{ "$ref": "#/components/schemas/NextActivityDTO" }, { "type": "null" }],
+						"description": "The next thing the Tweede Kamer has planned about the dossier: the earliest of its activities with status ``Gepland`` (``Activiteit.Status``) from today on; null when it plans nothing. The Kamer gives no next phase as data: a planned debate or vote is an activity like any other."
+					},
 					"relations": {
 						"items": { "$ref": "#/components/schemas/DossierRelationDTO" },
 						"type": "array",
@@ -7493,12 +7497,32 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "First Date",
 						"description": "Date of the earliest paper (YYYY-MM-DD)."
+					},
+					"submitted_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Submitted On",
+						"description": "The day the page of the bill says it was submitted (``Kerngegevens``: ``ingediend``); null without a page."
+					},
+					"status": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Status",
+						"description": "Where it is, as the list of its committee heads it: ``In schriftelijke voorbereiding``, ``Gereed voor plenaire behandeling door de Eerste Kamer``, ``Plenaire behandeling Eerste Kamer afgerond``; null for a bill on no such list."
+					},
+					"progress": {
+						"items": { "$ref": "#/components/schemas/EkStepDTO" },
+						"type": "array",
+						"title": "Progress",
+						"description": "The progress of the bill as its page shows it, step by step; empty without a page. What the page does not show is not here."
+					},
+					"source": {
+						"anyOf": [{ "$ref": "#/components/schemas/EkBillSourceDTO" }, { "type": "null" }],
+						"description": "The page it was taken over from; null without one."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"title": "DossierSenateDTO",
-				"description": "The Eerste Kamer papers among a dossier's documents."
+				"description": "The Eerste Kamer papers among a dossier's documents, and the page of its bill on\neerstekamer.nl."
 			},
 			"DossierSummaryDTO": {
 				"properties": {
@@ -7539,9 +7563,9 @@
 						"description": "``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none."
 					},
 					"kind_basis": {
-						"anyOf": [{ "type": "string", "enum": ["case", "document"] }, { "type": "null" }],
+						"anyOf": [{ "type": "string", "const": "case" }, { "type": "null" }],
 						"title": "Kind Basis",
-						"description": "``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph)."
+						"description": "``case``: a zaak of the dossier gives the kind; null without a kind."
 					},
 					"phases": {
 						"anyOf": [
@@ -7615,7 +7639,7 @@
 				"type": "object",
 				"required": ["id", "key", "number"],
 				"title": "DossierSummaryDTO",
-				"description": "A dossier in a list.\n\n``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of\nthe zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,\n``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``), else, from a\n``Voorstel van wet`` among its papers, ``Wetgeving`` or ``Initiatiefwetgeving``; null\nfor a dossier of letters and motions. ``kind_basis`` says which (``case``,\n``document``). A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has\n``phases``: every phase of the curated list in its order, each done when a paper, an\nactivity or a decision of the Kamer marks it; ``current_phase`` is the furthest done\nphase in that order. A closed dossier has an ``outcome``: ``aangenomen`` (its law was\npublished, or the Eerste Kamer adopted it) or ``verworpen`` (a chamber voted the bill\ndown); ``tk_decision`` is the last decision of the Tweede Kamer on the bill and\n``ek_outcome`` its outcome in the Eerste Kamer."
+				"description": "A dossier in a list.\n\n``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of\nthe zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,\n``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``); null without\none (\"zonder soort\": no kind is made up from its papers). ``kind_basis`` is ``case``\nwith a kind. A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has\n``phases``: every phase of the curated list in its order, each done when a paper, an\nactivity or a decision of the Kamer marks it; ``current_phase`` is the furthest done\nphase in that order. A closed dossier has an ``outcome``: ``aangenomen`` (its law was\npublished, or the Eerste Kamer adopted it) or ``verworpen`` (a chamber voted the bill\ndown); ``tk_decision`` is the last decision of the Tweede Kamer on the bill and\n``ek_outcome`` its outcome in the Eerste Kamer."
 			},
 			"DossierTimelineResponse": {
 				"properties": {
@@ -7664,6 +7688,21 @@
 				"required": ["total", "by_relation"],
 				"title": "EdgeStatsDTO",
 				"description": "Edge counts: total and per relation type."
+			},
+			"EkBillSourceDTO": {
+				"properties": {
+					"url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Url" },
+					"read_on": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Read On" },
+					"attribution": {
+						"type": "string",
+						"title": "Attribution",
+						"default": "Eerste Kamer der Staten-Generaal, www.eerstekamer.nl"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "EkBillSourceDTO",
+				"description": "The page of the bill on eerstekamer.nl."
 			},
 			"EkFactionVoteDTO": {
 				"properties": {
@@ -7816,6 +7855,27 @@
 				"title": "EkOutcomeDTO",
 				"description": "The outcome of the bill of a dossier in the Eerste Kamer, as eerstekamer.nl gives it."
 			},
+			"EkPaperDTO": {
+				"properties": {
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "As the page names it: ``verslag``, ``stemming (hamerstuk)``."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "As the page writes it: ``EK, B``, ``TK, 2``; null for none."
+					},
+					"url": { "type": "string", "title": "Url" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["kind", "url"],
+				"title": "EkPaperDTO",
+				"description": "A paper of a step of a bill, as the page of the Eerste Kamer lists it."
+			},
 			"EkSourceDTO": {
 				"properties": {
 					"url": {
@@ -7850,6 +7910,34 @@
 				"title": "EkSourceDTO",
 				"description": "Where something of the Eerste Kamer was taken over from, to name with it."
 			},
+			"EkStepDTO": {
+				"properties": {
+					"phase": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Phase",
+						"description": "``Schriftelijke voorbereiding``, ``Plenair``, ``Afkondiging``; null for the first step, in the Tweede Kamer."
+					},
+					"house": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "House",
+						"description": "``Tweede Kamer``, ``Eerste Kamer``, ``Staatsblad(en)``; null where the page names none (the plenary step of the Eerste Kamer)."
+					},
+					"state": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "State",
+						"description": "As the page marks it: ``vol`` (it drew the step full: done), ``geblokt`` (the step the bill is in), ``leeg`` (not reached)."
+					},
+					"papers": {
+						"items": { "$ref": "#/components/schemas/EkPaperDTO" },
+						"type": "array",
+						"title": "Papers"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "EkStepDTO",
+				"description": "A step of the progress of a bill, as the page of the Eerste Kamer shows it."
+			},
 			"EuLinkDTO": {
 				"properties": {
 					"instrument": {
@@ -7872,11 +7960,17 @@
 						"title": "Source",
 						"description": "The pipeline that wrote the edge (`bwb-implements`)."
 					},
+					"via": {
+						"items": { "$ref": "#/components/schemas/ImplementingMeasureDTO" },
+						"type": "array",
+						"title": "Via",
+						"description": "The national implementing measures EUR-Lex lists for the act through which this instrument implements it (`national_implementing_measure`): a law that changed it to implement the act, or its own enacting publication. Empty for `considerans` alone and for `REFERS_TO`."
+					},
 					"meta": {
 						"additionalProperties": true,
 						"type": "object",
 						"title": "Meta",
-						"description": "Edge evidence as stored (`celex`, `bases`, `publications`)."
+						"description": "Edge evidence as stored (`celex`, `bases`, `publications`, `measures`)."
 					}
 				},
 				"additionalProperties": false,
@@ -8847,6 +8941,35 @@
 				"title": "HallSeatDTO",
 				"description": "A place in the plenary hall of the Eerste Kamer: two blocks of benches facing each\nother, rows from the government to the chair, and the seat of the Voorzitter."
 			},
+			"ImplementingMeasureDTO": {
+				"properties": {
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"description": "Its id on officielebekendmakingen.nl: `stb-2013-102`."
+					},
+					"citation": {
+						"type": "string",
+						"title": "Citation",
+						"description": "How it is cited: `Stb. 2013, 102`."
+					},
+					"title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Title",
+						"description": "Its title, as EUR-Lex gives it."
+					},
+					"type": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Type",
+						"description": "The kind of act, as EUR-Lex gives it: `Wet`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["publication", "citation"],
+				"title": "ImplementingMeasureDTO",
+				"description": "A national implementing measure as EUR-Lex lists it for the EU act: the publication\nthrough which the instrument implements it (the law that changed the Awb to implement a\ndirective)."
+			},
 			"InstrumentArticleBreadcrumbDTO": {
 				"properties": {
 					"type": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Type" },
@@ -9069,6 +9192,18 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
 					},
+					"legal_areas": {
+						"items": { "$ref": "#/components/schemas/LegalAreaDTO" },
+						"type": "array",
+						"title": "Legal Areas",
+						"description": "The legal areas of a BWB regulation as its WTI files it (`main`, `specific`), each with the URI of its concept in the TOOI thesaurus `scw_bwb_rechtsgebieden` (null when the thesaurus lacks the label)."
+					},
+					"policy_domains": {
+						"items": { "$ref": "#/components/schemas/PolicyDomainDTO" },
+						"type": "array",
+						"title": "Policy Domains",
+						"description": "The government themes of a BWB regulation as its WTI files it (`label`), with the URI of its concept in the TOOI thesaurus `scw_bwb_themas`."
+					},
 					"jurisdiction": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Jurisdiction",
@@ -9134,6 +9269,10 @@
 						"type": "array",
 						"title": "Same Treaty",
 						"description": "The other instruments with its treaty number: the Verdragenbank record of a BWB treaty, the BWB text of a Verdragenbank treaty."
+					},
+					"treaty": {
+						"anyOf": [{ "$ref": "#/components/schemas/TreatyRegisterDTO" }, { "type": "null" }],
+						"description": "Of a treaty of the Verdragenbank: where it was signed, its Tractatenblad publications, its parties with their dates, the parts of the Kingdom, the dossiers of its approval and the treaties it belongs to or that belong to it. Null for any other instrument."
 					}
 				},
 				"additionalProperties": false,
@@ -10262,6 +10401,30 @@
 				"title": "JudgmentSummaryDTO",
 				"description": "Lightweight judgment summary for listing matches."
 			},
+			"LegalAreaDTO": {
+				"properties": {
+					"main": {
+						"type": "string",
+						"title": "Main",
+						"description": "The main area: `Staats- en bestuursrecht`."
+					},
+					"main_uri": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Main Uri" },
+					"specific": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Specific",
+						"description": "The specific area: `Bestuursrecht`."
+					},
+					"specific_uri": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Specific Uri"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["main"],
+				"title": "LegalAreaDTO",
+				"description": "A legal area of a regulation (WTI ``rechtsgebied``) and its TOOI concepts."
+			},
 			"LegislativeHistoryEntry": {
 				"properties": {
 					"dossier_id": {
@@ -10883,6 +11046,31 @@
 				"title": "NeighborDTO",
 				"description": "A neighbour with the edge that leads to it, used by the generic node explorer."
 			},
+			"NextActivityDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "``Activiteit.Soort``: ``Commissiedebat``, ``Plenair debat``, ``Stemmingen``, …"
+					},
+					"agenda_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Agenda Title"
+					},
+					"committee": {
+						"anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
+						"title": "Committee",
+						"description": "Its lead committee (``key``, ``slug``, ``name``); null in plenary."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key"],
+				"title": "NextActivityDTO",
+				"description": "An activity the Tweede Kamer has planned."
+			},
 			"NodeGraphResponse": {
 				"properties": {
 					"node": { "$ref": "#/components/schemas/BaseNodeDTO" },
@@ -11174,6 +11362,21 @@
 				"title": "PersonRefDTO",
 				"description": "A member named from another node."
 			},
+			"PolicyDomainDTO": {
+				"properties": {
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "`Overheid, bestuur en koninkrijk`."
+					},
+					"uri": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Uri" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["label"],
+				"title": "PolicyDomainDTO",
+				"description": "A government theme of a regulation (WTI ``overheidsdomein``) and its TOOI concept."
+			},
 			"Post": {
 				"type": "string",
 				"enum": [
@@ -11211,6 +11414,22 @@
 				"type": "object",
 				"title": "PublicationDTO",
 				"description": "An amending publication (Staatsblad, Tractatenblad, ...) as recorded on a version."
+			},
+			"RelatedTreatyDTO": {
+				"properties": {
+					"id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Id",
+						"description": "Its Verdragenbank id: `005132`."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"place": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Place" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "RelatedTreatyDTO",
+				"description": "A treaty a treaty belongs to (a Convention of its Protocol), or that belongs to it."
 			},
 			"RelationshipDTO": {
 				"properties": {
@@ -11626,7 +11845,29 @@
 					"status": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Status",
-						"description": "``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none."
+						"description": "``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none (the Eerste Kamer gives none)."
+					},
+					"chamber": {
+						"type": "string",
+						"enum": ["TK", "EK"],
+						"title": "Chamber",
+						"description": "``EK``: a block of a plenary sitting or a committee meeting of the Eerste Kamer, from its agenda on eerstekamer.nl.",
+						"default": "TK"
+					},
+					"time": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Time",
+						"description": "Of the Eerste Kamer: the time its agenda gives (``13.30-13.35``, ``14.15 uur``)."
+					},
+					"source_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source Url",
+						"description": "Of the Eerste Kamer: the page it was taken over from (reuse with the source named: ``EK_ATTRIBUTION``)."
+					},
+					"retrieved_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Retrieved On",
+						"description": "Of the Eerste Kamer: the day that page was read."
 					}
 				},
 				"additionalProperties": false,
@@ -12061,6 +12302,161 @@
 				"required": ["actor_id", "count", "items"],
 				"title": "TouchedInstrumentsResponse",
 				"description": "Wrapper for an actor's touched-instruments list."
+			},
+			"TreatyDossierDTO": {
+				"properties": {
+					"dossier": { "type": "string", "title": "Dossier" },
+					"rijks_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Rijks Number"
+					},
+					"sub_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Sub Number"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["dossier"],
+				"title": "TreatyDossierDTO",
+				"description": "A dossier of the approval of a treaty."
+			},
+			"TreatyKingdomPartDTO": {
+				"properties": {
+					"part": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Part" },
+					"provisional": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Provisional"
+					},
+					"in_force": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "In Force" },
+					"retroactive": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Retroactive"
+					},
+					"terminated": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Terminated"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "TreatyKingdomPartDTO",
+				"description": "A part of the Kingdom the treaty applies to, and from when."
+			},
+			"TreatyPartyDTO": {
+				"properties": {
+					"name": { "type": "string", "title": "Name" },
+					"signed": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Signed" },
+					"ratified": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ratified" },
+					"consent": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Consent",
+						"description": "How it consented, the register's code (`R`, `T`, `A`, …)."
+					},
+					"provisional": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Provisional",
+						"description": "Provisional application from."
+					},
+					"in_force": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "In Force" },
+					"retroactive": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Retroactive"
+					},
+					"denounced": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Denounced"
+					},
+					"terminated": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Terminated"
+					},
+					"reservation": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Reservation",
+						"description": "It made a reservation; the text is on the register's page (`reservations_url` of the treaty)."
+					},
+					"objection": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Objection"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["name"],
+				"title": "TreatyPartyDTO",
+				"description": "A state party to a treaty, with its dates (YYYY-MM-DD) as the register gives them."
+			},
+			"TreatyPublicationDTO": {
+				"properties": {
+					"official_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Official Id",
+						"description": "Its id on officielebekendmakingen.nl: `trb-1951-154`."
+					},
+					"text": {
+						"type": "string",
+						"title": "Text",
+						"description": "As the register writes it: \"1951, 154\"."
+					},
+					"description": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Description",
+						"description": "What it publishes: \"goedkeuring, inwerkingtreding\"."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["text"],
+				"title": "TreatyPublicationDTO",
+				"description": "A Tractatenblad of a treaty, as the Verdragenbank lists it."
+			},
+			"TreatyRegisterDTO": {
+				"properties": {
+					"place_signed": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Place Signed"
+					},
+					"reservations_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Reservations Url",
+						"description": "The register's page with the texts of the reservations and objections of the parties; null when no party made one."
+					},
+					"tractatenblad": {
+						"items": { "$ref": "#/components/schemas/TreatyPublicationDTO" },
+						"type": "array",
+						"title": "Tractatenblad"
+					},
+					"parties": {
+						"items": { "$ref": "#/components/schemas/TreatyPartyDTO" },
+						"type": "array",
+						"title": "Parties"
+					},
+					"kingdom_parts": {
+						"items": { "$ref": "#/components/schemas/TreatyKingdomPartDTO" },
+						"type": "array",
+						"title": "Kingdom Parts"
+					},
+					"kamerstukken": {
+						"items": { "$ref": "#/components/schemas/TreatyDossierDTO" },
+						"type": "array",
+						"title": "Kamerstukken"
+					},
+					"parent_treaties": {
+						"items": { "$ref": "#/components/schemas/RelatedTreatyDTO" },
+						"type": "array",
+						"title": "Parent Treaties"
+					},
+					"child_treaties": {
+						"items": { "$ref": "#/components/schemas/RelatedTreatyDTO" },
+						"type": "array",
+						"title": "Child Treaties"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "TreatyRegisterDTO",
+				"description": "What the Verdragenbank registers of a treaty beyond its title and dates."
 			},
 			"UnresolvedCitation": {
 				"properties": {
