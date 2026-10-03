@@ -56,6 +56,7 @@
 							{#if r.label}<span class="label">{r.label}</span>{/if}
 							{#if r.ref}<BronLink ref={r.ref} class="zin">{r.zin}</BronLink>{:else if r.href}<a
 									href={r.href}
+									rel={/^https?:/.test(r.href) ? 'external' : undefined}
 									class="zin">{r.zin}</a
 								>{:else}<span class="zin">{r.zin}</span>{/if}
 							{#if r.meta}<span class="meta">{r.meta}</span>{/if}
