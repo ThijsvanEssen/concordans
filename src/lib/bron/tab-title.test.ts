@@ -50,14 +50,24 @@ describe('tabTitle', () => {
 		);
 	});
 
-	it('names the Kamer of a stemming, and its subject', () => {
+	it('names a stemming as its heading does: Kamer, day and subject, no ISO date', () => {
 		const subject =
 			'Wijziging van de Wet structuur uitvoeringsorganisatie werk en inkomen (Wet proactieve dienstverlening SZW) ';
-		expect(tabTitle(node('decisions', 'x', `Wetgeving 2025Z15911: ${subject}`, { subject }))).toBe(
-			'Tweede Kamer: Wet proactieve dienstverlening SZW'
-		);
+		expect(
+			tabTitle(
+				node('decisions', 'x', `Wetgeving 2025Z15911: ${subject}`, { subject, date: '2026-09-29' })
+			)
+		).toBe('Tweede Kamer, 29 september 2026: Wet proactieve dienstverlening SZW');
 		const ek = 'Eerste Kamer 2026-09-29: Goedkeuring Verdrag (36.455 (R2188))';
-		expect(tabTitle(node('decisions', 'x', ek, { subject: 'Goedkeuring Verdrag' }))).toBe(ek);
+		expect(
+			tabTitle(
+				node('decisions', 'x', ek, {
+					subject: 'Goedkeuring Verdrag',
+					chamber: 'EK',
+					date: '2026-09-29'
+				})
+			)
+		).toBe('Eerste Kamer, 29 september 2026: Goedkeuring Verdrag');
 	});
 
 	it('cuts a long name at a word', () => {
