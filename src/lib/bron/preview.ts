@@ -11,6 +11,7 @@ import { articleTitle } from '$lib/text/bw';
 import { courtName } from '$lib/verbonden/rows';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
+import { tabTitle } from './tab-title';
 
 export type Preview = {
 	/** The kind, and where it helps its place: `Uitspraak, Hoge Raad`. */
@@ -38,13 +39,18 @@ export function previewFromNode(
 ): Preview {
 	const kind = bronLabel(collection);
 	const name = text(displayName) ?? text(props.name) ?? text(props.title) ?? kind;
+	// A judgment and a stemming are named as their heading and tab name them, not by the
+	// display name with its ISO date ("Hoge Raad 2026-08-25 / 24/01299").
+	const asHeading = () =>
+		tabTitle({ collection, label: name, raw: { display_name: displayName, props } as never });
 	switch (collection) {
 		case 'judgments': {
 			const court = courtName(text(props.court) ?? text(props.court_code));
 			return {
 				kicker: court ? `${kind}, ${court}` : kind,
-				title: name,
-				date: formatLongDate(text(props.date)) || null,
+				title: asHeading(),
+				// Cited by its ECLI, the title carries the day already: HR 25 augustus 2026.
+				date: text(props.ecli) ? null : formatLongDate(text(props.date)) || null,
 				lines: clip(text(props.summary))
 			};
 		}
@@ -91,6 +97,22 @@ export function previewFromNode(
 				lines: null
 			};
 		}
+		case 'decisions':
+			// The title carries the Kamer and the day: "Eerste Kamer, 29 september 2026: …".
+			return {
+				kicker: kind,
+				title: asHeading(),
+				date: null,
+				lines: null
+			};
+		case 'activities':
+			// "Stemmingen (2026-09-29)": the kind, with its day on the date line.
+			return {
+				kicker: kind,
+				title: text(props.kind) ?? name.replace(/\s*\(\d{4}-\d{2}-\d{2}\)$/, ''),
+				date: formatLongDate(text(props.date)) || null,
+				lines: null
+			};
 		case 'articles':
 			return { kicker: kind, title: articleTitle(name, props), date: null, lines: null };
 		default:
