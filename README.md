@@ -26,6 +26,10 @@ The API is read-only, so the app has no server routes of its own. To see every f
 ARANGO_DB_NAME=lawgraph_small LAWGRAPH_API_PORT=8001 .venv/bin/lawgraph-api
 ```
 
+## Deploy
+
+A push to `release` deploys that commit (`.github/workflows/deploy.yml`): lint, check and tests, then a static build against the API at the repository variable `CONCORDANS_API_BASE_URL`. The build is copied to `/srv/lawgraph/concordans/releases/<commit>` on the server and `/srv/lawgraph/concordans/current` is pointed at it; the reverse proxy serves `current` with `index.html` as fallback. The five newest builds stay, so going back is `ln -sfn /srv/lawgraph/concordans/releases/<commit> /srv/lawgraph/concordans/current` on the server. Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, and optionally `VITE_POSTHOG_KEY`.
+
 ## Documentation
 
 Developer documentation is in [`docs/`](docs/README.md), start with [`docs/architecture.md`](docs/architecture.md). The API is documented in the back end repository (`docs/api.md`, `docs/data-model.md`). Documentation for users is part of the app under `/docs`.

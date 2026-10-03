@@ -1,0 +1,67 @@
+# A push to `release` puts that commit on the server: lint, check and tests first, then a static
+# build that is copied into a directory of its own on the server, after which `current` points
+# at it. The reverse proxy serves `current`; the five newest builds stay, so going back is one
+# `ln -sfn`.
+#
+# Repository settings (Settings → Secrets and variables → Actions):
+#   variable CONCORDANS_API_BASE_URL  the address of the API the build talks to
+#   secret   VITE_POSTHOG_KEY         optional; empty means no analytics
+#   secret   DEPLOY_SSH_KEY           the private key whose public half is on the server
+#   secret   DEPLOY_HOST              the address of the server
+#   secret   DEPLOY_USER              the user that owns DEPLOY_DIR
+name: deploy
+
+on:
+  push:
+    branches: [release]
+
+# one deploy at a time; a second push waits for the first instead of cancelling it halfway
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  DEPLOY_DIR: /srv/lawgraph/concordans
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check
+      - run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_CONCORDANS_API_BASE_URL: ${{ vars.CONCORDANS_API_BASE_URL }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
+
+      - name: SSH key and host key
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+
+      - name: Copy and switch
+        run: |
+          SSH="ssh -i $HOME/.ssh/deploy_key -o ServerAliveInterval=30"
+          RELEASE="$DEPLOY_DIR/releases/$GITHUB_SHA"
+          rsync -az --delete --chmod=Do+rx,Fo+r -e "$SSH" build/ "$DEPLOY_USER@$DEPLOY_HOST:$RELEASE/"
+          $SSH "$DEPLOY_USER@$DEPLOY_HOST" \
+            "ln -sfn '$RELEASE' '$DEPLOY_DIR/current' && ls -1dt '$DEPLOY_DIR'/releases/*/ | tail -n +6 | xargs -r rm -rf"
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
