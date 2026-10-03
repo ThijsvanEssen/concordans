@@ -121,10 +121,19 @@
 
 	let alle = $state<Record<string, boolean>>({});
 	/** The options a long list shows: the first `preview`, and a chosen one beyond them. */
-	const shown = (g: FacetGroup & { kind: 'list' }) =>
-		!g.preview || alle[g.id]
-			? g.options
-			: g.options.filter((o, i) => i < g.preview! || (!isHeading(o) && o.on));
+	// An indented option stands under a chosen one (the specific areas of a rechtsgebied):
+	// it is shown with it and not counted against the preview.
+	const shown = (g: FacetGroup & { kind: 'list' }) => {
+		if (!g.preview || alle[g.id]) return g.options;
+		let rank = 0;
+		return g.options.filter((o) => {
+			if (!isHeading(o) && o.indent) return true;
+			return rank++ < g.preview! || (!isHeading(o) && o.on);
+		});
+	};
+	/** The options a preview counts: all but the indented ones. */
+	const counted = (g: FacetGroup & { kind: 'list' }) =>
+		g.options.filter((o) => isHeading(o) || !o.indent).length;
 
 	// A year field holds `2020`; the URL holds the first or last day of it.
 	const toParam = (value: string, unit: 'year' | 'date', end: boolean) =>
@@ -162,13 +171,13 @@
 						{/if}
 					{/each}
 				</ul>
-				{#if g.preview && g.options.length > g.preview}
+				{#if g.preview && counted(g) > g.preview}
 					<button
 						type="button"
 						class="meer"
 						aria-expanded={alle[g.id] ?? false}
 						onclick={() => (alle = { ...alle, [g.id]: !alle[g.id] })}
-						>{alle[g.id] ? 'Minder' : `Alle ${formatCount(g.options.length)}`}</button
+						>{alle[g.id] ? 'Minder' : `Alle ${formatCount(counted(g))}`}</button
 					>
 				{/if}
 			{:else if g.kind === 'steps'}

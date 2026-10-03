@@ -153,7 +153,7 @@ export interface paths {
         };
         /**
          * Paginated list of instruments
-         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter and a minimum article count.
+         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter.
          */
         get: operations["list_instruments_api_instruments_get"];
         put?: never;
@@ -5737,6 +5737,23 @@ export interface components {
             international_total: number;
         };
         /**
+         * InstrumentFacets
+         * @description The instruments under the filters, counted per register; each without its own
+         *     filter, so the other areas stay in view when one is chosen.
+         */
+        InstrumentFacets: {
+            /**
+             * Legal Area
+             * @description The legal areas of the TOOI thesaurus `scw_bwb_rechtsgebieden` as a tree: main areas, most first, each with its specific areas (`narrower`). An instrument counts once per area. Counted without the `legal_area` filter.
+             */
+            legal_area?: components["schemas"]["LegalAreaFacetDTO"][];
+            /**
+             * Policy Domain
+             * @description The government themes of `scw_bwb_themas`, most first. Counted without the `policy_domain` filter.
+             */
+            policy_domain?: components["schemas"]["RegisterConceptDTO"][];
+        };
+        /**
          * InstrumentJudgmentFacets
          * @description Every judgment that cites this instrument counted, not the page.
          */
@@ -5888,6 +5905,7 @@ export interface components {
             items: components["schemas"]["InstrumentListItemDTO"][];
             /** Total */
             total: number;
+            facets?: components["schemas"]["InstrumentFacets"];
         };
         /**
          * InstrumentRelatedItem
@@ -6369,9 +6387,9 @@ export interface components {
             subjects?: components["schemas"]["JudgmentFacetCount"][];
             /**
              * Subject Area
-             * @description Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter.
+             * @description Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas. `narrower`: the subjects under it as the source writes them. The whole tree is counted without the `subject_area` and `subject` filters, so the other areas stay in view when one is chosen.
              */
-            subject_area?: components["schemas"]["JudgmentFacetCount"][];
+            subject_area?: components["schemas"]["SubjectAreaFacetCount"][];
             /**
              * Procedure
              * @description Per procedure (Rechtspraak `psi:procedure`, as written: `Hoger beroep`, `Cassatie`; null when it gives none), most first; counted without the `procedure` filter.
@@ -6567,15 +6585,54 @@ export interface components {
              * @description The main area: `Staats- en bestuursrecht`.
              */
             main: string;
+            /**
+             * Main Id
+             * @description Its TOOI concept: `c_5d8350bb`.
+             */
+            main_id?: string | null;
             /** Main Uri */
             main_uri?: string | null;
+            /**
+             * Main Slug
+             * @description Its slug, unique in the list: `staats-en-bestuursrecht`.
+             */
+            main_slug?: string | null;
             /**
              * Specific
              * @description The specific area: `Bestuursrecht`.
              */
             specific?: string | null;
+            /** Specific Id */
+            specific_id?: string | null;
             /** Specific Uri */
             specific_uri?: string | null;
+            /** Specific Slug */
+            specific_slug?: string | null;
+        };
+        /**
+         * LegalAreaFacetDTO
+         * @description A main legal area and its specific areas.
+         */
+        LegalAreaFacetDTO: {
+            /**
+             * Id
+             * @description Its TOOI concept (`c_e49bce03`); null without the thesaurus.
+             */
+            id?: string | null;
+            /**
+             * Slug
+             * @description Unique in its list (`familierecht`); the filter takes it too.
+             */
+            slug?: string | null;
+            /**
+             * Label
+             * @description As the WTI writes it: `Familierecht`.
+             */
+            label: string;
+            /** Count */
+            count: number;
+            /** Narrower */
+            narrower?: components["schemas"]["RegisterConceptDTO"][];
         };
         /**
          * LegislativeHistoryEntry
@@ -7377,8 +7434,12 @@ export interface components {
              * @description `Overheid, bestuur en koninkrijk`.
              */
             label: string;
+            /** Id */
+            id?: string | null;
             /** Uri */
             uri?: string | null;
+            /** Slug */
+            slug?: string | null;
         };
         /**
          * Post
@@ -7409,6 +7470,29 @@ export interface components {
             official_url?: string | null;
             /** Dossiers */
             dossiers?: components["schemas"]["DossierRefDTO"][];
+        };
+        /**
+         * RegisterConceptDTO
+         * @description A concept of a register with the instruments under the filters filed under it.
+         */
+        RegisterConceptDTO: {
+            /**
+             * Id
+             * @description Its TOOI concept (`c_e49bce03`); null without the thesaurus.
+             */
+            id?: string | null;
+            /**
+             * Slug
+             * @description Unique in its list (`familierecht`); the filter takes it too.
+             */
+            slug?: string | null;
+            /**
+             * Label
+             * @description As the WTI writes it: `Familierecht`.
+             */
+            label: string;
+            /** Count */
+            count: number;
         };
         /**
          * RelatedTreatyDTO
@@ -7734,6 +7818,39 @@ export interface components {
             data_as_of?: {
                 [key: string]: components["schemas"]["DataAsOfDTO"];
             };
+        };
+        /**
+         * SubjectAreaFacetCount
+         * @description A main area of law with the subjects under it.
+         */
+        SubjectAreaFacetCount: {
+            /** Value */
+            value: string | null;
+            /** Count */
+            count: number;
+            /**
+             * Narrower
+             * @description The subjects of the source under this main area, most first; counted without the `subject_area` and `subject` filters.
+             */
+            narrower?: components["schemas"]["SubjectFacetCount"][];
+        };
+        /**
+         * SubjectFacetCount
+         * @description A subject of the Rechtspraak under a main area, as the source writes it.
+         */
+        SubjectFacetCount: {
+            /**
+             * Value
+             * @description The subject as the source writes it (`Bestuursrecht; Belastingrecht`); the `subject` filter takes it.
+             */
+            value: string;
+            /**
+             * Label
+             * @description The part after the main area: `Belastingrecht`.
+             */
+            label: string;
+            /** Count */
+            count: number;
         };
         /**
          * SubmitterDTO
@@ -8724,6 +8841,10 @@ export interface operations {
                 jurisdiction?: ("nl" | "eu") | null;
                 kind?: string | null;
                 article_count_min?: number | null;
+                /** @description A legal area by TOOI id (`c_e49bce03`) or slug (`familierecht`). */
+                legal_area?: string | null;
+                /** @description A government theme by TOOI id or slug. */
+                policy_domain?: string | null;
                 sort?: "title" | "article_count";
             };
             header?: never;

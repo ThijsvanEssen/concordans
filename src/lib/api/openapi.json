@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.76.0"
+		"version": "0.77.0"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -514,7 +514,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Paginated list of instruments",
-				"description": "A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter and a minimum article count.",
+				"description": "A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter.",
 				"operationId": "list_instruments_api_instruments_get",
 				"parameters": [
 					{
@@ -569,6 +569,28 @@
 							"anyOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }],
 							"title": "Article Count Min"
 						}
+					},
+					{
+						"name": "legal_area",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "A legal area by TOOI id (`c_e49bce03`) or slug (`familierecht`).",
+							"title": "Legal Area"
+						},
+						"description": "A legal area by TOOI id (`c_e49bce03`) or slug (`familierecht`)."
+					},
+					{
+						"name": "policy_domain",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "A government theme by TOOI id or slug.",
+							"title": "Policy Domain"
+						},
+						"description": "A government theme by TOOI id or slug."
 					},
 					{
 						"name": "sort",
@@ -9428,6 +9450,26 @@
 				"title": "InstrumentEuLinksResponse",
 				"description": "Response for GET /api/instruments/{identifier}/eu-links."
 			},
+			"InstrumentFacets": {
+				"properties": {
+					"legal_area": {
+						"items": { "$ref": "#/components/schemas/LegalAreaFacetDTO" },
+						"type": "array",
+						"title": "Legal Area",
+						"description": "The legal areas of the TOOI thesaurus `scw_bwb_rechtsgebieden` as a tree: main areas, most first, each with its specific areas (`narrower`). An instrument counts once per area. Counted without the `legal_area` filter."
+					},
+					"policy_domain": {
+						"items": { "$ref": "#/components/schemas/RegisterConceptDTO" },
+						"type": "array",
+						"title": "Policy Domain",
+						"description": "The government themes of `scw_bwb_themas`, most first. Counted without the `policy_domain` filter."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "InstrumentFacets",
+				"description": "The instruments under the filters, counted per register; each without its own\nfilter, so the other areas stay in view when one is chosen."
+			},
 			"InstrumentJudgmentFacets": {
 				"properties": {
 					"year": {
@@ -9602,7 +9644,8 @@
 						"type": "array",
 						"title": "Items"
 					},
-					"total": { "type": "integer", "title": "Total" }
+					"total": { "type": "integer", "title": "Total" },
+					"facets": { "$ref": "#/components/schemas/InstrumentFacets" }
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -10166,10 +10209,10 @@
 						"description": "Per area of law, as the source writes it (`Strafrecht`, `Bestuursrecht; Belastingrecht`), most first; a judgment counts for each of its areas; counted without the `subject` filter."
 					},
 					"subject_area": {
-						"items": { "$ref": "#/components/schemas/JudgmentFacetCount" },
+						"items": { "$ref": "#/components/schemas/SubjectAreaFacetCount" },
 						"type": "array",
 						"title": "Subject Area",
-						"description": "Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter."
+						"description": "Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas. `narrower`: the subjects under it as the source writes them. The whole tree is counted without the `subject_area` and `subject` filters, so the other areas stay in view when one is chosen."
 					},
 					"procedure": {
 						"items": { "$ref": "#/components/schemas/JudgmentFacetCount" },
@@ -10408,15 +10451,33 @@
 						"title": "Main",
 						"description": "The main area: `Staats- en bestuursrecht`."
 					},
+					"main_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Main Id",
+						"description": "Its TOOI concept: `c_5d8350bb`."
+					},
 					"main_uri": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Main Uri" },
+					"main_slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Main Slug",
+						"description": "Its slug, unique in the list: `staats-en-bestuursrecht`."
+					},
 					"specific": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Specific",
 						"description": "The specific area: `Bestuursrecht`."
 					},
+					"specific_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Specific Id"
+					},
 					"specific_uri": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Specific Uri"
+					},
+					"specific_slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Specific Slug"
 					}
 				},
 				"additionalProperties": false,
@@ -10424,6 +10485,36 @@
 				"required": ["main"],
 				"title": "LegalAreaDTO",
 				"description": "A legal area of a regulation (WTI ``rechtsgebied``) and its TOOI concepts."
+			},
+			"LegalAreaFacetDTO": {
+				"properties": {
+					"id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Id",
+						"description": "Its TOOI concept (`c_e49bce03`); null without the thesaurus."
+					},
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "Unique in its list (`familierecht`); the filter takes it too."
+					},
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "As the WTI writes it: `Familierecht`."
+					},
+					"count": { "type": "integer", "title": "Count" },
+					"narrower": {
+						"items": { "$ref": "#/components/schemas/RegisterConceptDTO" },
+						"type": "array",
+						"title": "Narrower"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["label", "count"],
+				"title": "LegalAreaFacetDTO",
+				"description": "A main legal area and its specific areas."
 			},
 			"LegislativeHistoryEntry": {
 				"properties": {
@@ -11369,7 +11460,9 @@
 						"title": "Label",
 						"description": "`Overheid, bestuur en koninkrijk`."
 					},
-					"uri": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Uri" }
+					"id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Id" },
+					"uri": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Uri" },
+					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" }
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -11414,6 +11507,31 @@
 				"type": "object",
 				"title": "PublicationDTO",
 				"description": "An amending publication (Staatsblad, Tractatenblad, ...) as recorded on a version."
+			},
+			"RegisterConceptDTO": {
+				"properties": {
+					"id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Id",
+						"description": "Its TOOI concept (`c_e49bce03`); null without the thesaurus."
+					},
+					"slug": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Slug",
+						"description": "Unique in its list (`familierecht`); the filter takes it too."
+					},
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "As the WTI writes it: `Familierecht`."
+					},
+					"count": { "type": "integer", "title": "Count" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["label", "count"],
+				"title": "RegisterConceptDTO",
+				"description": "A concept of a register with the instruments under the filters filed under it."
 			},
 			"RelatedTreatyDTO": {
 				"properties": {
@@ -11773,6 +11891,43 @@
 				"required": ["nodes", "edges"],
 				"title": "StatsResponse",
 				"description": "Database statistics: document counts per collection and edge counts."
+			},
+			"SubjectAreaFacetCount": {
+				"properties": {
+					"value": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Value" },
+					"count": { "type": "integer", "title": "Count" },
+					"narrower": {
+						"items": { "$ref": "#/components/schemas/SubjectFacetCount" },
+						"type": "array",
+						"title": "Narrower",
+						"description": "The subjects of the source under this main area, most first; counted without the `subject_area` and `subject` filters."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["value", "count"],
+				"title": "SubjectAreaFacetCount",
+				"description": "A main area of law with the subjects under it."
+			},
+			"SubjectFacetCount": {
+				"properties": {
+					"value": {
+						"type": "string",
+						"title": "Value",
+						"description": "The subject as the source writes it (`Bestuursrecht; Belastingrecht`); the `subject` filter takes it."
+					},
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "The part after the main area: `Belastingrecht`."
+					},
+					"count": { "type": "integer", "title": "Count" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["value", "label", "count"],
+				"title": "SubjectFacetCount",
+				"description": "A subject of the Rechtspraak under a main area, as the source writes it."
 			},
 			"SubmitterDTO": {
 				"properties": {

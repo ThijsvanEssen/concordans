@@ -195,6 +195,9 @@
 	const subject = $derived(params.get('subject') ?? '');
 	// The main area of law (BE-57, API 0.75): `Bestuursrecht` holds `Bestuursrecht; Belastingrecht`.
 	const subjectArea = $derived(params.get('subject_area') ?? '');
+	// The registers of the BWB (TOOI): a legal area, main or specific, and a theme, by slug.
+	const legalArea = $derived(params.get('legal_area') ?? '');
+	const policyDomain = $derived(params.get('policy_domain') ?? '');
 	const procedure = $derived(params.get('procedure') ?? '');
 	const sort = $derived(params.get('sort'));
 	const dirParam = $derived(oneOf(params.get('dir'), ['asc', 'desc'] as const));
@@ -222,6 +225,8 @@
 		'subject',
 		'subject_area',
 		'procedure',
+		'legal_area',
+		'policy_domain',
 		'leeg',
 		'source',
 		'sort',
@@ -434,6 +439,7 @@
 	/** The kinds of stukken under the other filters, as the list's facet counts them. */
 	let documentKinds = $state<Map<string, number>>(new Map());
 	let judgmentFacets = $state<Schema<'JudgmentFacets'> | null>(null);
+	let instrumentFacets = $state<Schema<'InstrumentFacets'> | null>(null);
 	// The EHRM judgments under the same search and period: the EHRM is its own source, so
 	// the facet of the list does not count them.
 	let echrTotal = $state<number | null>(null);
@@ -459,6 +465,8 @@
 					q: q || undefined,
 					jurisdiction,
 					article_count_min: withEmpty ? undefined : 1,
+					legal_area: legalArea || undefined,
+					policy_domain: policyDomain || undefined,
 					sort: oneOf(sortDef.id, ['title', 'article_count'] as const),
 					limit
 				};
@@ -466,6 +474,7 @@
 					const r = await unwrap(
 						api.GET('/api/instruments', { params: { query: { ...query, offset } }, signal })
 					);
+					if (!offset) instrumentFacets = r.facets ?? null;
 					pages.instruments = toPage(pages.instruments, r.items, offset, r.total);
 				};
 			}
@@ -1144,53 +1153,149 @@
 		}));
 	}
 
-	/** The main area of a subject as rechtspraak.nl writes it: up to its first `;`. */
-	const areaOf = (value: string) => value.split(';')[0].trim();
+	/** A main area with its specific areas, as a register gives them with their counts. */
+	type Area = { id: string; label: string; count: number; narrower: Omit<Area, 'narrower'>[] };
 
 	/**
-	 * Rechtsgebied as a tree: the main areas with their counts (facets.subject_area), and
-	 * under the chosen one its sub-areas (facets.subjects, "Bestuursrecht; Belastingrecht"
-	 * as "Belastingrecht"). A main area alone holds its sub-areas; a sub-area narrows it.
-	 * A judgment of the main area without a sub-area has no option of its own.
+	 * A choice the register does not hold (an old link, a value with no bronnen under the
+	 * other filters) stays in the list with 0, so it can be seen and let go of.
 	 */
-	function areaFacet(): FacetGroup[] {
-		const chosenArea = subjectArea || (subject ? areaOf(subject) : '');
-		const areas = (judgmentFacets?.subject_area ?? []).flatMap((f) =>
-			f.value ? [{ value: f.value, count: f.count }] : []
-		);
-		if (chosenArea && !areas.some((a) => a.value === chosenArea))
-			areas.unshift({ value: chosenArea, count: 0 });
-		const subs = (area: string) =>
-			(judgmentFacets?.subjects ?? []).flatMap((f) =>
-				f.value && f.value.includes(';') && areaOf(f.value) === area
-					? [
-							{
-								id: f.value,
-								label: f.value.slice(f.value.indexOf(';') + 1).trim(),
-								count: f.count,
-								indent: true as const,
-								on: subject === f.value,
-								onClick: () =>
-									patchUrl({ subject: subject === f.value ? null : f.value, subject_area: area })
-							}
-						]
-					: []
-			);
+	const keepChosen = (areas: Area[], key: string) => {
+		if (!areas.some((a) => a.id === key || a.narrower.some((n) => n.id === key)))
+			areas.unshift({ id: key, label: key, count: 0, narrower: [] });
+	};
+
+	/**
+	 * Rechtsgebied as a tree: the main areas with their counts, and under the chosen one its
+	 * specific areas, indented. A main area alone holds its specific areas; a specific area
+	 * narrows it. Both registers give the tree themselves (`narrower`): the Rechtspraak for
+	 * judgments, the TOOI thesaurus of the BWB for laws.
+	 */
+	function areaTree(
+		areas: Area[],
+		chosenMain: string,
+		chosenSub: string,
+		choose: (main: string | null, sub: string | null) => void,
+		/** A long register (the 27 of the BWB) shows this many main areas, then Alle N. */
+		preview?: number
+	): FacetGroup[] {
 		const options = areas.flatMap((a) => {
-			const on = chosenArea === a.value;
+			const on = chosenMain === a.id;
 			return [
 				{
-					id: `area-${a.value}`,
-					label: a.value,
+					id: `area-${a.id}`,
+					label: a.label,
 					count: a.count,
-					// Chosen while one of its sub-areas narrows it; a click lets go of both.
+					// Chosen while one of its specific areas narrows it; a click lets go of both.
 					on,
-					onClick: () => patchUrl({ subject_area: on ? null : a.value, subject: null })
+					onClick: () => choose(on ? null : a.id, null)
 				},
-				...(on ? subs(a.value) : [])
+				...(on
+					? a.narrower.map((n) => ({
+							id: n.id,
+							label: n.label,
+							count: n.count,
+							indent: true as const,
+							on: chosenSub === n.id,
+							onClick: () => choose(a.id, chosenSub === n.id ? null : n.id)
+						}))
+					: [])
 			];
 		});
-		return options.length ? [{ id: 'subject', label: 'Rechtsgebied', kind: 'list', options }] : [];
+		return options.length
+			? [{ id: 'area', label: 'Rechtsgebied', kind: 'list', preview, options }]
+			: [];
+	}
+
+	/** The Rechtspraak's rechtsgebieden: `subject_area` the main area, `subject` the source value. */
+	function judgmentAreas(): FacetGroup[] {
+		const areas: Area[] = (judgmentFacets?.subject_area ?? []).flatMap((f) =>
+			f.value
+				? [
+						{
+							id: f.value,
+							label: f.value,
+							count: f.count,
+							narrower: (f.narrower ?? []).flatMap((n) =>
+								n.value ? [{ id: n.value, label: n.label ?? n.value, count: n.count }] : []
+							)
+						}
+					]
+				: []
+		);
+		const main =
+			subjectArea || areas.find((a) => a.narrower.some((n) => n.id === subject))?.id || '';
+		if (main) keepChosen(areas, main);
+		return areaTree(areas, main, subject, (m, sub) => patchUrl({ subject_area: m, subject: sub }));
+	}
+
+	type Concept = { id?: string | null; slug?: string | null };
+	/** A TOOI concept in the URL: its slug, else its id. */
+	const conceptKey = (c: Concept | undefined) => c?.slug ?? c?.id ?? '';
+	/** Every concept of a register by slug and by id, so a link with either finds it. */
+	const byKey = <T extends Concept>(concepts: T[]) =>
+		new Map(concepts.flatMap((c) => [c.slug, c.id].flatMap((k) => (k ? [[k, c] as const] : []))));
+	const legalConcepts = $derived(
+		byKey((instrumentFacets?.legal_area ?? []).flatMap((f) => [f, ...(f.narrower ?? [])]))
+	);
+	const themeConcepts = $derived(byKey(instrumentFacets?.policy_domain ?? []));
+
+	/**
+	 * The BWB's rechtsgebieden (TOOI) for laws. One parameter holds the main or the specific
+	 * area, by slug; a link with the TOOI id finds it too.
+	 */
+	function lawAreas(): FacetGroup[] {
+		const areas: Area[] = (instrumentFacets?.legal_area ?? []).flatMap((f) =>
+			conceptKey(f)
+				? [
+						{
+							id: conceptKey(f),
+							label: f.label,
+							count: f.count,
+							narrower: (f.narrower ?? []).flatMap((n) =>
+								conceptKey(n) ? [{ id: conceptKey(n), label: n.label, count: n.count }] : []
+							)
+						}
+					]
+				: []
+		);
+		if (legalArea && !legalConcepts.has(legalArea)) keepChosen(areas, legalArea);
+		const chosen = (key: string) =>
+			legalArea !== '' && key === (conceptKey(legalConcepts.get(legalArea)) || legalArea);
+		const main = areas.find((a) => chosen(a.id) || a.narrower.some((n) => chosen(n.id)));
+		const sub = main?.narrower.find((n) => chosen(n.id));
+		return areaTree(
+			areas,
+			main?.id ?? '',
+			sub?.id ?? '',
+			(m, s) => patchUrl({ legal_area: s ?? m }),
+			8
+		);
+	}
+
+	/** The government themes of the BWB (TOOI), one at a time. */
+	function lawThemes(): FacetGroup[] {
+		const chosen = conceptKey(themeConcepts.get(policyDomain)) || policyDomain;
+		const themes = [...(instrumentFacets?.policy_domain ?? [])];
+		if (policyDomain && !themeConcepts.has(policyDomain))
+			themes.unshift({ slug: policyDomain, label: policyDomain, count: 0 });
+		const options = themes.flatMap((f) => {
+			const value = conceptKey(f);
+			if (!value) return [];
+			const on = value === chosen;
+			return [
+				{
+					id: value,
+					label: f.label,
+					count: f.count,
+					on,
+					onClick: () => patchUrl({ policy_domain: on ? null : value })
+				}
+			];
+		});
+		return options.length
+			? [{ id: 'theme', label: 'Thema', kind: 'list', preview: 6, options }]
+			: [];
 	}
 
 	/**
@@ -1264,6 +1369,8 @@
 		switch (category) {
 			case 'instruments':
 				return [
+					...lawAreas(),
+					...lawThemes(),
 					{
 						id: 'jurisdiction',
 						label: 'Rechtsorde',
@@ -1301,7 +1408,7 @@
 				return [
 					// The groups of courts, each under its own heading; no heading Instantie above.
 					...courtOptions,
-					...areaFacet(),
+					...judgmentAreas(),
 					...sourceFacet('procedure', 'Procedure', judgmentFacets?.procedure, procedure),
 					{
 						id: 'period',
