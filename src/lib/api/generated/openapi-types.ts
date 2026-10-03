@@ -6336,6 +6336,11 @@ export interface components {
              */
             same_as?: components["schemas"]["JudgmentSummaryDTO"][];
             /**
+             * Related To
+             * @description The connected cases (`RELATED_TO`, as between dossiers), both ways: those its summary names ("Samenhang met 24/03860 E", "Zie ook: ECLI:…") and those whose summary names it, each found by its exact ECLI or case number. Empty for most.
+             */
+            related_to?: components["schemas"]["JudgmentSummaryDTO"][];
+            /**
              * Series
              * @description The other judgments of its series (`judgment.series_id`), in the order of their ECLI numbers; empty outside a series.
              */
