@@ -1401,9 +1401,9 @@ export interface components {
             kind?: string | null;
             /**
              * Kind Basis
-             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
+             * @description ``case``: a zaak of the dossier gives the kind; null without a kind.
              */
-            kind_basis?: ("case" | "document") | null;
+            kind_basis?: "case" | null;
             /**
              * Phases
              * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
@@ -3608,9 +3608,9 @@ export interface components {
             kind?: string | null;
             /**
              * Kind Basis
-             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
+             * @description ``case``: a zaak of the dossier gives the kind; null without a kind.
              */
-            kind_basis?: ("case" | "document") | null;
+            kind_basis?: "case" | null;
             /**
              * Phases
              * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
@@ -3704,6 +3704,8 @@ export interface components {
                 [key: string]: number;
             };
             senate?: components["schemas"]["DossierSenateDTO"];
+            /** @description The next thing the Tweede Kamer has planned about the dossier: the earliest of its activities with status ``Gepland`` (``Activiteit.Status``) from today on; null when it plans nothing. The Kamer gives no next phase as data: a planned debate or vote is an activity like any other. */
+            next_activity?: components["schemas"]["NextActivityDTO"] | null;
             /**
              * Relations
              * @description The dossiers this one revises, accompanies or is related to, and those that revise, accompany or relate to it: by relation, then outgoing before incoming, then in the order of their numbers. All dossiers of its own number are ``GET /api/dossiers?number=``.
@@ -4028,7 +4030,8 @@ export interface components {
         };
         /**
          * DossierSenateDTO
-         * @description The Eerste Kamer papers among a dossier's documents.
+         * @description The Eerste Kamer papers among a dossier's documents, and the page of its bill on
+         *     eerstekamer.nl.
          */
         DossierSenateDTO: {
             /**
@@ -4041,6 +4044,23 @@ export interface components {
              * @description Date of the earliest paper (YYYY-MM-DD).
              */
             first_date?: string | null;
+            /**
+             * Submitted On
+             * @description The day the page of the bill says it was submitted (``Kerngegevens``: ``ingediend``); null without a page.
+             */
+            submitted_on?: string | null;
+            /**
+             * Status
+             * @description Where it is, as the list of its committee heads it: ``In schriftelijke voorbereiding``, ``Gereed voor plenaire behandeling door de Eerste Kamer``, ``Plenaire behandeling Eerste Kamer afgerond``; null for a bill on no such list.
+             */
+            status?: string | null;
+            /**
+             * Progress
+             * @description The progress of the bill as its page shows it, step by step; empty without a page. What the page does not show is not here.
+             */
+            progress?: components["schemas"]["EkStepDTO"][];
+            /** @description The page it was taken over from; null without one. */
+            source?: components["schemas"]["EkBillSourceDTO"] | null;
         };
         /**
          * DossierSummaryDTO
@@ -4048,10 +4068,9 @@ export interface components {
          *
          *     ``kind`` is what the dossier is, as the Tweede Kamer names it: the ``Zaak.Soort`` of
          *     the zaak that is the dossier itself (``Wetgeving``, ``Initiatiefwetgeving``,
-         *     ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``), else, from a
-         *     ``Voorstel van wet`` among its papers, ``Wetgeving`` or ``Initiatiefwetgeving``; null
-         *     for a dossier of letters and motions. ``kind_basis`` says which (``case``,
-         *     ``document``). A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has
+         *     ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``); null without
+         *     one ("zonder soort": no kind is made up from its papers). ``kind_basis`` is ``case``
+         *     with a kind. A bill (``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``) has
          *     ``phases``: every phase of the curated list in its order, each done when a paper, an
          *     activity or a decision of the Kamer marks it; ``current_phase`` is the furthest done
          *     phase in that order. A closed dossier has an ``outcome``: ``aangenomen`` (its law was
@@ -4096,9 +4115,9 @@ export interface components {
             kind?: string | null;
             /**
              * Kind Basis
-             * @description ``case``: a zaak of the dossier gives the kind; ``document``: its ``Voorstel van wet`` (no zaak of the bill in the graph).
+             * @description ``case``: a zaak of the dossier gives the kind; null without a kind.
              */
-            kind_basis?: ("case" | "document") | null;
+            kind_basis?: "case" | null;
             /**
              * Phases
              * @description Of a ``Wetgeving``, ``Initiatiefwetgeving`` or ``Begroting``: every phase of the bar in order; null for another kind.
@@ -4175,6 +4194,21 @@ export interface components {
             by_relation: {
                 [key: string]: number;
             };
+        };
+        /**
+         * EkBillSourceDTO
+         * @description The page of the bill on eerstekamer.nl.
+         */
+        EkBillSourceDTO: {
+            /** Url */
+            url?: string | null;
+            /** Read On */
+            read_on?: string | null;
+            /**
+             * Attribution
+             * @default Eerste Kamer der Staten-Generaal, www.eerstekamer.nl
+             */
+            attribution: string;
         };
         /**
          * EkFactionVoteDTO
@@ -4315,6 +4349,26 @@ export interface components {
             attribution: string;
         };
         /**
+         * EkPaperDTO
+         * @description A paper of a step of a bill, as the page of the Eerste Kamer lists it.
+         */
+        EkPaperDTO: {
+            /**
+             * Kind
+             * @description As the page names it: ``verslag``, ``stemming (hamerstuk)``.
+             */
+            kind: string;
+            /** Date */
+            date?: string | null;
+            /**
+             * Number
+             * @description As the page writes it: ``EK, B``, ``TK, 2``; null for none.
+             */
+            number?: string | null;
+            /** Url */
+            url: string;
+        };
+        /**
          * EkSourceDTO
          * @description Where something of the Eerste Kamer was taken over from, to name with it.
          */
@@ -4344,6 +4398,29 @@ export interface components {
              * @description The source to name (``EK_ATTRIBUTION``).
              */
             attribution: string;
+        };
+        /**
+         * EkStepDTO
+         * @description A step of the progress of a bill, as the page of the Eerste Kamer shows it.
+         */
+        EkStepDTO: {
+            /**
+             * Phase
+             * @description ``Schriftelijke voorbereiding``, ``Plenair``, ``Afkondiging``; null for the first step, in the Tweede Kamer.
+             */
+            phase?: string | null;
+            /**
+             * House
+             * @description ``Tweede Kamer``, ``Eerste Kamer``, ``Staatsblad(en)``; null where the page names none (the plenary step of the Eerste Kamer).
+             */
+            house?: string | null;
+            /**
+             * State
+             * @description As the page marks it: ``vol`` (it drew the step full: done), ``geblokt`` (the step the bill is in), ``leeg`` (not reached).
+             */
+            state?: string | null;
+            /** Papers */
+            papers?: components["schemas"]["EkPaperDTO"][];
         };
         /**
          * EuLinkDTO
@@ -4377,8 +4454,13 @@ export interface components {
              */
             source?: string | null;
             /**
+             * Via
+             * @description The national implementing measures EUR-Lex lists for the act through which this instrument implements it (`national_implementing_measure`): a law that changed it to implement the act, or its own enacting publication. Empty for `considerans` alone and for `REFERS_TO`.
+             */
+            via?: components["schemas"]["ImplementingMeasureDTO"][];
+            /**
              * Meta
-             * @description Edge evidence as stored (`celex`, `bases`, `publications`).
+             * @description Edge evidence as stored (`celex`, `bases`, `publications`, `measures`).
              */
             meta?: {
                 [key: string]: unknown;
@@ -5204,6 +5286,34 @@ export interface components {
             column: number;
         };
         /**
+         * ImplementingMeasureDTO
+         * @description A national implementing measure as EUR-Lex lists it for the EU act: the publication
+         *     through which the instrument implements it (the law that changed the Awb to implement a
+         *     directive).
+         */
+        ImplementingMeasureDTO: {
+            /**
+             * Publication
+             * @description Its id on officielebekendmakingen.nl: `stb-2013-102`.
+             */
+            publication: string;
+            /**
+             * Citation
+             * @description How it is cited: `Stb. 2013, 102`.
+             */
+            citation: string;
+            /**
+             * Title
+             * @description Its title, as EUR-Lex gives it.
+             */
+            title?: string | null;
+            /**
+             * Type
+             * @description The kind of act, as EUR-Lex gives it: `Wet`.
+             */
+            type?: string | null;
+        };
+        /**
          * InstrumentArticleBreadcrumbDTO
          * @description One division an article stands in, outermost first: ``type`` is the element of the
          *     BWB XML (``boek``, ``titeldeel``, ``hoofdstuk``, ``afdeling``, ``paragraaf``, ...),
@@ -5426,6 +5536,16 @@ export interface components {
             /** Display Name */
             display_name: string | null;
             /**
+             * Legal Areas
+             * @description The legal areas of a BWB regulation as its WTI files it (`main`, `specific`), each with the URI of its concept in the TOOI thesaurus `scw_bwb_rechtsgebieden` (null when the thesaurus lacks the label).
+             */
+            legal_areas?: components["schemas"]["LegalAreaDTO"][];
+            /**
+             * Policy Domains
+             * @description The government themes of a BWB regulation as its WTI files it (`label`), with the URI of its concept in the TOOI thesaurus `scw_bwb_themas`.
+             */
+            policy_domains?: components["schemas"]["PolicyDomainDTO"][];
+            /**
              * Jurisdiction
              * @description `nl`, `eu` or `int` (Verdragenbank treaties).
              */
@@ -5498,6 +5618,8 @@ export interface components {
              * @description The other instruments with its treaty number: the Verdragenbank record of a BWB treaty, the BWB text of a Verdragenbank treaty.
              */
             same_treaty?: components["schemas"]["LinkedInstrumentDTO"][];
+            /** @description Of a treaty of the Verdragenbank: where it was signed, its Tractatenblad publications, its parties with their dates, the parts of the Kingdom, the dossiers of its approval and the treaties it belongs to or that belong to it. Null for any other instrument. */
+            treaty?: components["schemas"]["TreatyRegisterDTO"] | null;
         };
         /**
          * InstrumentDossierItem
@@ -6436,6 +6558,26 @@ export interface components {
             ecli: string | null;
         };
         /**
+         * LegalAreaDTO
+         * @description A legal area of a regulation (WTI ``rechtsgebied``) and its TOOI concepts.
+         */
+        LegalAreaDTO: {
+            /**
+             * Main
+             * @description The main area: `Staats- en bestuursrecht`.
+             */
+            main: string;
+            /** Main Uri */
+            main_uri?: string | null;
+            /**
+             * Specific
+             * @description The specific area: `Bestuursrecht`.
+             */
+            specific?: string | null;
+            /** Specific Uri */
+            specific_uri?: string | null;
+        };
+        /**
          * LegislativeHistoryEntry
          * @description One change of an article in one dossier: the dossier, and the amending publication
          *     (enacted) or the bill (proposed) that made or proposes the change.
@@ -6959,6 +7101,30 @@ export interface components {
             } | null;
         };
         /**
+         * NextActivityDTO
+         * @description An activity the Tweede Kamer has planned.
+         */
+        NextActivityDTO: {
+            /** Key */
+            key: string;
+            /** Date */
+            date?: string | null;
+            /**
+             * Kind
+             * @description ``Activiteit.Soort``: ``Commissiedebat``, ``Plenair debat``, ``Stemmingen``, …
+             */
+            kind?: string | null;
+            /** Agenda Title */
+            agenda_title?: string | null;
+            /**
+             * Committee
+             * @description Its lead committee (``key``, ``slug``, ``name``); null in plenary.
+             */
+            committee?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
          * NodeGraphResponse
          * @description Response for GET /api/nodes/{collection}/{key}.
          */
@@ -7202,6 +7368,19 @@ export interface components {
             name?: string | null;
         };
         /**
+         * PolicyDomainDTO
+         * @description A government theme of a regulation (WTI ``overheidsdomein``) and its TOOI concept.
+         */
+        PolicyDomainDTO: {
+            /**
+             * Label
+             * @description `Overheid, bestuur en koninkrijk`.
+             */
+            label: string;
+            /** Uri */
+            uri?: string | null;
+        };
+        /**
          * Post
          * @enum {string}
          */
@@ -7230,6 +7409,23 @@ export interface components {
             official_url?: string | null;
             /** Dossiers */
             dossiers?: components["schemas"]["DossierRefDTO"][];
+        };
+        /**
+         * RelatedTreatyDTO
+         * @description A treaty a treaty belongs to (a Convention of its Protocol), or that belongs to it.
+         */
+        RelatedTreatyDTO: {
+            /**
+             * Id
+             * @description Its Verdragenbank id: `005132`.
+             */
+            id?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Place */
+            place?: string | null;
         };
         /**
          * RelationshipDTO
@@ -7593,9 +7789,31 @@ export interface components {
             number?: string | null;
             /**
              * Status
-             * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none.
+             * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none (the Eerste Kamer gives none).
              */
             status?: string | null;
+            /**
+             * Chamber
+             * @description ``EK``: a block of a plenary sitting or a committee meeting of the Eerste Kamer, from its agenda on eerstekamer.nl.
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
+            /**
+             * Time
+             * @description Of the Eerste Kamer: the time its agenda gives (``13.30-13.35``, ``14.15 uur``).
+             */
+            time?: string | null;
+            /**
+             * Source Url
+             * @description Of the Eerste Kamer: the page it was taken over from (reuse with the source named: ``EK_ATTRIBUTION``).
+             */
+            source_url?: string | null;
+            /**
+             * Retrieved On
+             * @description Of the Eerste Kamer: the day that page was read.
+             */
+            retrieved_on?: string | null;
         };
         /**
          * TimelineActivityEntry
@@ -8024,6 +8242,117 @@ export interface components {
             count: number;
             /** Items */
             items: components["schemas"]["TouchedInstrumentDTO"][];
+        };
+        /**
+         * TreatyDossierDTO
+         * @description A dossier of the approval of a treaty.
+         */
+        TreatyDossierDTO: {
+            /** Dossier */
+            dossier: string;
+            /** Rijks Number */
+            rijks_number?: string | null;
+            /** Sub Number */
+            sub_number?: string | null;
+        };
+        /**
+         * TreatyKingdomPartDTO
+         * @description A part of the Kingdom the treaty applies to, and from when.
+         */
+        TreatyKingdomPartDTO: {
+            /** Part */
+            part?: string | null;
+            /** Provisional */
+            provisional?: string | null;
+            /** In Force */
+            in_force?: string | null;
+            /** Retroactive */
+            retroactive?: string | null;
+            /** Terminated */
+            terminated?: string | null;
+        };
+        /**
+         * TreatyPartyDTO
+         * @description A state party to a treaty, with its dates (YYYY-MM-DD) as the register gives them.
+         */
+        TreatyPartyDTO: {
+            /** Name */
+            name: string;
+            /** Signed */
+            signed?: string | null;
+            /** Ratified */
+            ratified?: string | null;
+            /**
+             * Consent
+             * @description How it consented, the register's code (`R`, `T`, `A`, …).
+             */
+            consent?: string | null;
+            /**
+             * Provisional
+             * @description Provisional application from.
+             */
+            provisional?: string | null;
+            /** In Force */
+            in_force?: string | null;
+            /** Retroactive */
+            retroactive?: string | null;
+            /** Denounced */
+            denounced?: string | null;
+            /** Terminated */
+            terminated?: string | null;
+            /**
+             * Reservation
+             * @description It made a reservation; the text is on the register's page (`reservations_url` of the treaty).
+             */
+            reservation?: boolean | null;
+            /** Objection */
+            objection?: boolean | null;
+        };
+        /**
+         * TreatyPublicationDTO
+         * @description A Tractatenblad of a treaty, as the Verdragenbank lists it.
+         */
+        TreatyPublicationDTO: {
+            /**
+             * Official Id
+             * @description Its id on officielebekendmakingen.nl: `trb-1951-154`.
+             */
+            official_id?: string | null;
+            /**
+             * Text
+             * @description As the register writes it: "1951, 154".
+             */
+            text: string;
+            /**
+             * Description
+             * @description What it publishes: "goedkeuring, inwerkingtreding".
+             */
+            description?: string | null;
+        };
+        /**
+         * TreatyRegisterDTO
+         * @description What the Verdragenbank registers of a treaty beyond its title and dates.
+         */
+        TreatyRegisterDTO: {
+            /** Place Signed */
+            place_signed?: string | null;
+            /**
+             * Reservations Url
+             * @description The register's page with the texts of the reservations and objections of the parties; null when no party made one.
+             */
+            reservations_url?: string | null;
+            /** Tractatenblad */
+            tractatenblad?: components["schemas"]["TreatyPublicationDTO"][];
+            /** Parties */
+            parties?: components["schemas"]["TreatyPartyDTO"][];
+            /** Kingdom Parts */
+            kingdom_parts?: components["schemas"]["TreatyKingdomPartDTO"][];
+            /** Kamerstukken */
+            kamerstukken?: components["schemas"]["TreatyDossierDTO"][];
+            /** Parent Treaties */
+            parent_treaties?: components["schemas"]["RelatedTreatyDTO"][];
+            /** Child Treaties */
+            child_treaties?: components["schemas"]["RelatedTreatyDTO"][];
         };
         /**
          * UnresolvedCitation
