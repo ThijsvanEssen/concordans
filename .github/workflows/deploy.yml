@@ -8,6 +8,8 @@
 #   secret   VITE_POSTHOG_KEY         optional; empty means no analytics
 #   secret   DEPLOY_SSH_KEY           the private key whose public half is on the server
 #   secret   DEPLOY_HOST              the address of the server
+#   secret   DEPLOY_KNOWN_HOSTS       the known_hosts line of the server's host key, taken on the
+#                                     server itself; a changed key stops the deploy
 #   secret   DEPLOY_USER              the user that owns DEPLOY_DIR
 name: deploy
 
@@ -50,14 +52,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          echo "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
 
       - name: Copy and switch
         run: |
-          SSH="ssh -i $HOME/.ssh/deploy_key -o ServerAliveInterval=30"
+          SSH="ssh -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes -o ServerAliveInterval=30"
           RELEASE="$DEPLOY_DIR/releases/$GITHUB_SHA"
           rsync -az --delete --chmod=Do+rx,Fo+r -e "$SSH" build/ "$DEPLOY_USER@$DEPLOY_HOST:$RELEASE/"
           $SSH "$DEPLOY_USER@$DEPLOY_HOST" \
