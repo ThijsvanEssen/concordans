@@ -43,6 +43,39 @@ const BASIS: Record<string, string> = {
 export const basesLine = (bases: readonly string[] | null | undefined): string | null =>
 	(bases ?? []).map((b) => BASIS[b] ?? b).join(', ') || null;
 
+/** The publication of a measure as a key: `stb-2013-102` and `stb_2013_102` are one. */
+const publicationKey = (id: string) => id.toLowerCase().replace(/-/g, '_');
+
+/**
+ * What an implementation rests on, with the measures EUR-Lex names (`via`, API 0.76, BE-58).
+ * A measure that also changes the law (`amending`, the publications of its AMENDS edges)
+ * is a change to implement the act: "gewijzigd ter implementatie door Stb. 2013, 102".
+ * Another, such as the law's own publication, is named as EUR-Lex has it, without a claim.
+ */
+export function implementationLine(
+	link: {
+		bases?: readonly string[] | null;
+		via?: readonly { publication: string; citation: string }[] | null;
+	},
+	amending: ReadonlySet<string>
+): string | null {
+	const via = link.via ?? [];
+	if (via.length === 0) return basesLine(link.bases);
+	const changed = via.filter((m) => amending.has(publicationKey(m.publication)));
+	const other = via.filter((m) => !changed.includes(m));
+	const cite = (ms: typeof via) => ms.map((m) => m.citation).join(' en ');
+	return (
+		[
+			changed.length > 0 ? `gewijzigd ter implementatie door ${cite(changed)}` : null,
+			other.length > 0 ? `uitvoeringsmaatregel ${cite(other)} volgens EUR-Lex` : null,
+			link.bases?.includes('considerans') ? BASIS.considerans : null
+		]
+			.filter(Boolean)
+			// A citation has a comma of its own (`Stb. 2013, 102`): the parts take a semicolon.
+			.join('; ')
+	);
+}
+
 export type LoaderContext = {
 	node: Schema<'BaseNodeDTO'>;
 	neighbors: Neighbor[];
@@ -447,12 +480,29 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				if (!rows.has(row.ref.key)) rows.set(row.ref.key, row);
 			};
 			const implemented = data.implements ?? [];
+			// Which of the measures EUR-Lex names change this law: its AMENDS publications.
+			const bwb = bwbOf(node);
+			const amending =
+				bwb && implemented.some((link) => (link.via ?? []).length > 0)
+					? await api
+							.GET('/api/instruments/{bwb_id}/amended-by', {
+								params: { path: { bwb_id: bwb }, query: { limit: 500 } },
+								signal
+							})
+							.then(({ data }) => new Set((data?.items ?? []).map((d) => publicationKey(d.key))))
+							.catch(() => new Set<string>())
+					: new Set<string>();
 			for (const link of [...implemented, ...(data.implemented_by ?? [])]) {
 				const i = link.instrument;
 				add({
 					ref: { collection: 'instruments', key: i.key },
 					title: i.citation_title ?? i.title ?? i.key,
-					context: basesLine(link.bases),
+					// The other way round (a directive and the laws that implement it), this law's
+					// AMENDS publications are not the ones to test: the measures stand as EUR-Lex has them.
+					context: implementationLine(
+						link,
+						implemented.includes(link) ? amending : new Set<string>()
+					),
 					kind: 'internationaal',
 					derived: link.confidence != null && link.confidence < 1,
 					relation: 'IMPLEMENTS',
