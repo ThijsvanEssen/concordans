@@ -86,11 +86,14 @@
 				zin: `${datum(d.ek_outcome.date)}${how}`
 			};
 		} else if (ek.state === 'now') {
+			// Where the bill is, as eerstekamer.nl heads its list (API 0.76); else its step.
+			const senate = 'senate' in d ? d.senate : null;
+			const step = senate?.progress?.find((s) => s.state === 'geblokt')?.phase;
 			v3 = {
 				naam: 'Eerste Kamer',
 				soort: 'nu',
 				woord: 'In behandeling',
-				zin: 'Sinds aanneming door de Tweede Kamer'
+				zin: senate?.status ?? step ?? 'Sinds aanneming door de Tweede Kamer'
 			};
 		} else if (ek.state === 'none') {
 			v3 = {

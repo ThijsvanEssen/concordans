@@ -26,7 +26,7 @@ export type Presented = {
 
 /** The Kamer a stuk was published in, as the API gives it (0.73, BE-39). */
 export function chamberOfHit(hit: Hit): Chamber | undefined {
-	if (hit.collection !== 'documents') return undefined;
+	if (hit.collection !== 'documents' && hit.collection !== 'decisions') return undefined;
 	const given = extra(hit, 'chamber').toUpperCase();
 	return given === 'TK' || given === 'EK' ? given : undefined;
 }
@@ -188,6 +188,24 @@ export function presentHit(hit: Hit, query: string): Presented {
 				snippet: null
 			};
 		}
+		case 'decisions': {
+			// A vote by what it was about, with its outcome and day as the source has them:
+			// "Wet toekomstbestendige huurcommissie (36.791)", "aangenomen, 29 sep. 2026".
+			const name = hit.display_name ?? hit.key;
+			const subject = extra(hit, 'subject') || name.replace(/^[^:]*\d{4}-\d{2}-\d{2}:\s*/, '');
+			const passed = hit.extra?.passed;
+			return {
+				title: subject || name,
+				context: [
+					passed === true ? 'aangenomen' : passed === false ? 'verworpen' : '',
+					korteDatum(extra(hit, 'date'))
+				]
+					.filter(Boolean)
+					.join(', '),
+				snippet: null,
+				chamber: chamberOfHit(hit)
+			};
+		}
 		case 'cabinets': {
 			// "kabinet-Schoof", with its period (BE-35): "2 jul. 2024 tot 23 feb. 2026".
 			const from = korteDatum(extra(hit, 'from_date'));
@@ -242,7 +260,8 @@ const TIE_ORDER: readonly Collection[] = [
 	'instruments',
 	'articles',
 	'judgments',
-	'documents'
+	'documents',
+	'decisions'
 ];
 
 export function orderGroups<G extends { kind: Collection; hits: Hit[] }>(groups: G[]): G[] {

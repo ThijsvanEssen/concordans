@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { kamerLinks, kamerOf } from './kamer';
 	import { uniqueBy } from '$lib/util/unique';
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
 	// Netwerk, where a result is picked instead of opened.
@@ -60,7 +61,8 @@
 		'commitments',
 		'factions',
 		'committees',
-		'documents'
+		'documents',
+		'decisions'
 	] as const satisfies readonly Collection[];
 	type Kind = (typeof KINDS)[number];
 	const kinds = $derived(scope ? KINDS.filter((k) => scope.includes(k)) : KINDS);
@@ -130,6 +132,7 @@
 	const rowCount = $derived(offset + hits.length);
 	// A citation the API does not know: said where its row was, not dropped without a word.
 	const notFound = $derived(unresolved !== '' && unresolved === q);
+	const kamer = $derived(kamerOf(q));
 	const outsideLaw = $derived(
 		outside !== '' &&
 			outside === q &&
@@ -345,7 +348,7 @@
 
 	<div
 		class="list"
-		class:list--filled={rowCount > 0 || failed || empty || notFound || outsideLaw}
+		class:list--filled={rowCount > 0 || failed || empty || notFound || outsideLaw || kamer}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
@@ -358,6 +361,14 @@
 					>zoek de regeling op wetten.overheid.nl</a
 				>.
 				{#if hits.length}De treffers hieronder noemen haar.{/if}
+			</p>
+		{/if}
+		{#if kamer}
+			<p class="state" role="status">
+				De {kamer === 'EK' ? 'Eerste' : 'Tweede'} Kamer is geen bron in het netwerk. Bekijk haar
+				{#each kamerLinks(kamer) as link, i (link.href)}{i > 0 ? (i === 2 ? ' en ' : ', ') : ''}<a
+						href={link.href}>{link.label}</a
+					>{/each}.
 			</p>
 		{/if}
 		{#if notFound}

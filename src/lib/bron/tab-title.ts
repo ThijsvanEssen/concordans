@@ -4,6 +4,7 @@
 import { shortDossierTitle, type GraphNode } from '$lib/graph/types';
 import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
 import { articleTitle } from '$lib/text/bw';
+import { langeDatum } from '$lib/text/datum';
 
 const MAX = 80;
 
@@ -39,14 +40,17 @@ export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>):
 		const short = text(props.short_title) ?? shortDossierTitle(text(props.title));
 		return short ? `${number} ${short}` : number;
 	}
-	if (
-		node.collection === 'decisions' &&
-		!text(node.raw?.display_name)?.startsWith('Eerste Kamer')
-	) {
-		// A stemming names its Kamer, as the Eerste Kamer's do ("Eerste Kamer 2026-09-29: …"),
-		// and its subject, not the Kamer's case number ("Wetgeving 2025Z15911: …").
+	if (node.collection === 'decisions') {
+		// A stemming as its heading reads: its Kamer and day, then its subject, not the
+		// Kamer's case number ("Wetgeving 2025Z15911: …") or an ISO date ("2026-09-29").
 		const subject = text(props.subject);
-		if (subject) return cut(`Tweede Kamer: ${shortDossierTitle(subject) ?? subject}`);
+		if (subject) {
+			const kamer = text(props.chamber) === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer';
+			const day = langeDatum(text(props.date));
+			return cut(
+				`${[kamer, day].filter(Boolean).join(', ')}: ${shortDossierTitle(subject) ?? subject}`
+			);
+		}
 	}
 	const name = text(node.raw?.display_name);
 	return cut(name ? articleTitle(name, node.collection === 'articles' ? props : null) : node.label);

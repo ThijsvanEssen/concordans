@@ -153,7 +153,7 @@ export interface paths {
         };
         /**
          * Paginated list of instruments
-         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter.
+         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter and a minimum article count.
          */
         get: operations["list_instruments_api_instruments_get"];
         put?: never;
@@ -4454,8 +4454,13 @@ export interface components {
              */
             source?: string | null;
             /**
+             * Via
+             * @description The national implementing measures EUR-Lex lists for the act through which this instrument implements it (`national_implementing_measure`): a law that changed it to implement the act, or its own enacting publication. Empty for `considerans` alone and for `REFERS_TO`.
+             */
+            via?: components["schemas"]["ImplementingMeasureDTO"][];
+            /**
              * Meta
-             * @description Edge evidence as stored (`celex`, `bases`, `publications`).
+             * @description Edge evidence as stored (`celex`, `bases`, `publications`, `measures`).
              */
             meta?: {
                 [key: string]: unknown;
@@ -5281,6 +5286,34 @@ export interface components {
             column: number;
         };
         /**
+         * ImplementingMeasureDTO
+         * @description A national implementing measure as EUR-Lex lists it for the EU act: the publication
+         *     through which the instrument implements it (the law that changed the Awb to implement a
+         *     directive).
+         */
+        ImplementingMeasureDTO: {
+            /**
+             * Publication
+             * @description Its id on officielebekendmakingen.nl: `stb-2013-102`.
+             */
+            publication: string;
+            /**
+             * Citation
+             * @description How it is cited: `Stb. 2013, 102`.
+             */
+            citation: string;
+            /**
+             * Title
+             * @description Its title, as EUR-Lex gives it.
+             */
+            title?: string | null;
+            /**
+             * Type
+             * @description The kind of act, as EUR-Lex gives it: `Wet`.
+             */
+            type?: string | null;
+        };
+        /**
          * InstrumentArticleBreadcrumbDTO
          * @description One division an article stands in, outermost first: ``type`` is the element of the
          *     BWB XML (``boek``, ``titeldeel``, ``hoofdstuk``, ``afdeling``, ``paragraaf``, ...),
@@ -5585,6 +5618,8 @@ export interface components {
              * @description The other instruments with its treaty number: the Verdragenbank record of a BWB treaty, the BWB text of a Verdragenbank treaty.
              */
             same_treaty?: components["schemas"]["LinkedInstrumentDTO"][];
+            /** @description Of a treaty of the Verdragenbank: where it was signed, its Tractatenblad publications, its parties with their dates, the parts of the Kingdom, the dossiers of its approval and the treaties it belongs to or that belong to it. Null for any other instrument. */
+            treaty?: components["schemas"]["TreatyRegisterDTO"] | null;
         };
         /**
          * InstrumentDossierItem
@@ -5700,23 +5735,6 @@ export interface components {
              * @description Absolute number of `international`, independent of `limit`.
              */
             international_total: number;
-        };
-        /**
-         * InstrumentFacets
-         * @description The instruments under the filters, counted per register; each without its own
-         *     filter, so the other areas stay in view when one is chosen.
-         */
-        InstrumentFacets: {
-            /**
-             * Legal Area
-             * @description The legal areas of the TOOI thesaurus `scw_bwb_rechtsgebieden` as a tree: main areas, most first, each with its specific areas (`narrower`). An instrument counts once per area. Counted without the `legal_area` filter.
-             */
-            legal_area?: components["schemas"]["LegalAreaFacetDTO"][];
-            /**
-             * Policy Domain
-             * @description The government themes of `scw_bwb_themas`, most first. Counted without the `policy_domain` filter.
-             */
-            policy_domain?: components["schemas"]["RegisterConceptDTO"][];
         };
         /**
          * InstrumentJudgmentFacets
@@ -5870,7 +5888,6 @@ export interface components {
             items: components["schemas"]["InstrumentListItemDTO"][];
             /** Total */
             total: number;
-            facets?: components["schemas"]["InstrumentFacets"];
         };
         /**
          * InstrumentRelatedItem
@@ -6352,9 +6369,9 @@ export interface components {
             subjects?: components["schemas"]["JudgmentFacetCount"][];
             /**
              * Subject Area
-             * @description Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter. `narrower`: the subjects under it as the source writes them.
+             * @description Per main area of law: a subject up to its first `;` (`Bestuursrecht` holds `Bestuursrecht; Belastingrecht`), most first; a judgment counts once for each of its main areas; counted without the `subject_area` filter.
              */
-            subject_area?: components["schemas"]["SubjectAreaFacetCount"][];
+            subject_area?: components["schemas"]["JudgmentFacetCount"][];
             /**
              * Procedure
              * @description Per procedure (Rechtspraak `psi:procedure`, as written: `Hoger beroep`, `Cassatie`; null when it gives none), most first; counted without the `procedure` filter.
@@ -6550,54 +6567,15 @@ export interface components {
              * @description The main area: `Staats- en bestuursrecht`.
              */
             main: string;
-            /**
-             * Main Id
-             * @description Its TOOI concept: `c_5d8350bb`.
-             */
-            main_id?: string | null;
             /** Main Uri */
             main_uri?: string | null;
-            /**
-             * Main Slug
-             * @description Its slug, unique in the list: `staats-en-bestuursrecht`.
-             */
-            main_slug?: string | null;
             /**
              * Specific
              * @description The specific area: `Bestuursrecht`.
              */
             specific?: string | null;
-            /** Specific Id */
-            specific_id?: string | null;
             /** Specific Uri */
             specific_uri?: string | null;
-            /** Specific Slug */
-            specific_slug?: string | null;
-        };
-        /**
-         * LegalAreaFacetDTO
-         * @description A main legal area and its specific areas.
-         */
-        LegalAreaFacetDTO: {
-            /**
-             * Id
-             * @description Its TOOI concept (`c_e49bce03`); null without the thesaurus.
-             */
-            id?: string | null;
-            /**
-             * Slug
-             * @description Unique in its list (`familierecht`); the filter takes it too.
-             */
-            slug?: string | null;
-            /**
-             * Label
-             * @description As the WTI writes it: `Familierecht`.
-             */
-            label: string;
-            /** Count */
-            count: number;
-            /** Narrower */
-            narrower?: components["schemas"]["RegisterConceptDTO"][];
         };
         /**
          * LegislativeHistoryEntry
@@ -7399,12 +7377,8 @@ export interface components {
              * @description `Overheid, bestuur en koninkrijk`.
              */
             label: string;
-            /** Id */
-            id?: string | null;
             /** Uri */
             uri?: string | null;
-            /** Slug */
-            slug?: string | null;
         };
         /**
          * Post
@@ -7437,27 +7411,21 @@ export interface components {
             dossiers?: components["schemas"]["DossierRefDTO"][];
         };
         /**
-         * RegisterConceptDTO
-         * @description A concept of a register with the instruments under the filters filed under it.
+         * RelatedTreatyDTO
+         * @description A treaty a treaty belongs to (a Convention of its Protocol), or that belongs to it.
          */
-        RegisterConceptDTO: {
+        RelatedTreatyDTO: {
             /**
              * Id
-             * @description Its TOOI concept (`c_e49bce03`); null without the thesaurus.
+             * @description Its Verdragenbank id: `005132`.
              */
             id?: string | null;
-            /**
-             * Slug
-             * @description Unique in its list (`familierecht`); the filter takes it too.
-             */
-            slug?: string | null;
-            /**
-             * Label
-             * @description As the WTI writes it: `Familierecht`.
-             */
-            label: string;
-            /** Count */
-            count: number;
+            /** Title */
+            title?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Place */
+            place?: string | null;
         };
         /**
          * RelationshipDTO
@@ -7768,39 +7736,6 @@ export interface components {
             };
         };
         /**
-         * SubjectAreaFacetCount
-         * @description A main area of law with the subjects under it.
-         */
-        SubjectAreaFacetCount: {
-            /** Value */
-            value: string | null;
-            /** Count */
-            count: number;
-            /**
-             * Narrower
-             * @description The subjects of the source under this main area, most first; counted without the `subject_area` and `subject` filters.
-             */
-            narrower?: components["schemas"]["SubjectFacetCount"][];
-        };
-        /**
-         * SubjectFacetCount
-         * @description A subject of the Rechtspraak under a main area, as the source writes it.
-         */
-        SubjectFacetCount: {
-            /**
-             * Value
-             * @description The subject as the source writes it (`Bestuursrecht; Belastingrecht`); the `subject` filter takes it.
-             */
-            value: string;
-            /**
-             * Label
-             * @description The part after the main area: `Belastingrecht`.
-             */
-            label: string;
-            /** Count */
-            count: number;
-        };
-        /**
          * SubmitterDTO
          * @description Who submitted a motie or amendement.
          */
@@ -7854,9 +7789,31 @@ export interface components {
             number?: string | null;
             /**
              * Status
-             * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none.
+             * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none (the Eerste Kamer gives none).
              */
             status?: string | null;
+            /**
+             * Chamber
+             * @description ``EK``: a block of a plenary sitting or a committee meeting of the Eerste Kamer, from its agenda on eerstekamer.nl.
+             * @default TK
+             * @enum {string}
+             */
+            chamber: "TK" | "EK";
+            /**
+             * Time
+             * @description Of the Eerste Kamer: the time its agenda gives (``13.30-13.35``, ``14.15 uur``).
+             */
+            time?: string | null;
+            /**
+             * Source Url
+             * @description Of the Eerste Kamer: the page it was taken over from (reuse with the source named: ``EK_ATTRIBUTION``).
+             */
+            source_url?: string | null;
+            /**
+             * Retrieved On
+             * @description Of the Eerste Kamer: the day that page was read.
+             */
+            retrieved_on?: string | null;
         };
         /**
          * TimelineActivityEntry
@@ -8287,6 +8244,117 @@ export interface components {
             items: components["schemas"]["TouchedInstrumentDTO"][];
         };
         /**
+         * TreatyDossierDTO
+         * @description A dossier of the approval of a treaty.
+         */
+        TreatyDossierDTO: {
+            /** Dossier */
+            dossier: string;
+            /** Rijks Number */
+            rijks_number?: string | null;
+            /** Sub Number */
+            sub_number?: string | null;
+        };
+        /**
+         * TreatyKingdomPartDTO
+         * @description A part of the Kingdom the treaty applies to, and from when.
+         */
+        TreatyKingdomPartDTO: {
+            /** Part */
+            part?: string | null;
+            /** Provisional */
+            provisional?: string | null;
+            /** In Force */
+            in_force?: string | null;
+            /** Retroactive */
+            retroactive?: string | null;
+            /** Terminated */
+            terminated?: string | null;
+        };
+        /**
+         * TreatyPartyDTO
+         * @description A state party to a treaty, with its dates (YYYY-MM-DD) as the register gives them.
+         */
+        TreatyPartyDTO: {
+            /** Name */
+            name: string;
+            /** Signed */
+            signed?: string | null;
+            /** Ratified */
+            ratified?: string | null;
+            /**
+             * Consent
+             * @description How it consented, the register's code (`R`, `T`, `A`, …).
+             */
+            consent?: string | null;
+            /**
+             * Provisional
+             * @description Provisional application from.
+             */
+            provisional?: string | null;
+            /** In Force */
+            in_force?: string | null;
+            /** Retroactive */
+            retroactive?: string | null;
+            /** Denounced */
+            denounced?: string | null;
+            /** Terminated */
+            terminated?: string | null;
+            /**
+             * Reservation
+             * @description It made a reservation; the text is on the register's page (`reservations_url` of the treaty).
+             */
+            reservation?: boolean | null;
+            /** Objection */
+            objection?: boolean | null;
+        };
+        /**
+         * TreatyPublicationDTO
+         * @description A Tractatenblad of a treaty, as the Verdragenbank lists it.
+         */
+        TreatyPublicationDTO: {
+            /**
+             * Official Id
+             * @description Its id on officielebekendmakingen.nl: `trb-1951-154`.
+             */
+            official_id?: string | null;
+            /**
+             * Text
+             * @description As the register writes it: "1951, 154".
+             */
+            text: string;
+            /**
+             * Description
+             * @description What it publishes: "goedkeuring, inwerkingtreding".
+             */
+            description?: string | null;
+        };
+        /**
+         * TreatyRegisterDTO
+         * @description What the Verdragenbank registers of a treaty beyond its title and dates.
+         */
+        TreatyRegisterDTO: {
+            /** Place Signed */
+            place_signed?: string | null;
+            /**
+             * Reservations Url
+             * @description The register's page with the texts of the reservations and objections of the parties; null when no party made one.
+             */
+            reservations_url?: string | null;
+            /** Tractatenblad */
+            tractatenblad?: components["schemas"]["TreatyPublicationDTO"][];
+            /** Parties */
+            parties?: components["schemas"]["TreatyPartyDTO"][];
+            /** Kingdom Parts */
+            kingdom_parts?: components["schemas"]["TreatyKingdomPartDTO"][];
+            /** Kamerstukken */
+            kamerstukken?: components["schemas"]["TreatyDossierDTO"][];
+            /** Parent Treaties */
+            parent_treaties?: components["schemas"]["RelatedTreatyDTO"][];
+            /** Child Treaties */
+            child_treaties?: components["schemas"]["RelatedTreatyDTO"][];
+        };
+        /**
          * UnresolvedCitation
          * @description An article a judgment cites of a law that is not in the graph.
          */
@@ -8656,10 +8724,6 @@ export interface operations {
                 jurisdiction?: ("nl" | "eu") | null;
                 kind?: string | null;
                 article_count_min?: number | null;
-                /** @description A legal area by TOOI id (`c_e49bce03`) or slug (`familierecht`). */
-                legal_area?: string | null;
-                /** @description A government theme by TOOI id or slug. */
-                policy_domain?: string | null;
                 sort?: "title" | "article_count";
             };
             header?: never;

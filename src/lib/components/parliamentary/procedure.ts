@@ -139,6 +139,60 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 	return out.sort((a, b) => (a.datum ?? '').localeCompare(b.datum ?? ''));
 }
 
+type EkStep = Schema<'EkStepDTO'>;
+
+/** Een stap van de Eerste Kamer, zoals de zin hem noemt. */
+const STAP: Record<string, string> = {
+	'Schriftelijke voorbereiding': 'schriftelijke voorbereiding',
+	Plenair: 'plenaire behandeling',
+	Afkondiging: 'afkondiging'
+};
+const stapNaam = (s: EkStep) => (s.phase ? (STAP[s.phase] ?? lower(s.phase)) : '');
+
+/**
+ * De voortgang zoals de pagina van het wetsvoorstel op eerstekamer.nl hem toont (API 0.76):
+ * de stukken van de Eerste Kamer per stap, en waar het voorstel nu staat. De eerste stap is
+ * die van de Tweede Kamer en staat hierboven al. Een stuk dat de tijdlijn al heeft (dezelfde
+ * letter) en een stemming die als besluit in de gegevens staat, komen niet dubbel.
+ * Null zonder pagina: dan blijft de algemene regel staan.
+ */
+function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
+	const steps = (d.senate?.progress ?? []).filter((s) => s.phase);
+	if (!steps.length) return null;
+	const letters = new Set(ek.flatMap((r) => (r.meta ? r.meta.split(', ').slice(1) : [])));
+	const besluit = !!d.ek_outcome || ek.some((r) => r.soort === 'decisions');
+	const out: TijdRegel[] = [];
+	for (const step of steps)
+		for (const [i, p] of (step.papers ?? []).entries()) {
+			const letter = p.number?.match(/^EK, (.+)$/)?.[1] ?? null;
+			if (letter && letters.has(letter)) continue;
+			if (besluit && /^stemming/i.test(p.kind ?? '')) continue;
+			const kind = p.kind ?? stapNaam(step);
+			out.push({
+				id: `ek-${step.phase}-${i}`,
+				datum: p.date ?? null,
+				teken: 'stuk',
+				soort: 'documents',
+				label: null,
+				zin: kind.charAt(0).toUpperCase() + kind.slice(1),
+				meta: letter ? `Kamerstuk I ${d.number}, ${letter}` : null,
+				href: p.url ?? null
+			});
+		}
+	const nu = steps.find((s) => s.state === 'geblokt');
+	const nog = steps.filter((s) => s.state === 'leeg').map(stapNaam);
+	if (nu || nog.length)
+		out.push({
+			id: 'ek-nu',
+			datum: null,
+			teken: 'verwacht',
+			zin: [nu ? `Nu: ${stapNaam(nu)}.` : '', nog.length ? `Kan nog volgen: ${reeks(nog)}.` : '']
+				.filter(Boolean)
+				.join(' ')
+		});
+	return out;
+}
+
 const TK_NOG = [
 	'verslag',
 	'nota naar aanleiding van het verslag',
@@ -238,7 +292,9 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	});
 
 	const ek = regelsVan(per.get('ek') ?? [], 'ek', d.number);
-	if (state[2] === 'now')
+	const voortgang = ekVoortgang(d, ek);
+	if (voortgang) ek.push(...voortgang);
+	else if (state[2] === 'now')
 		ek.push({
 			id: 'ek-nog',
 			datum: null,
