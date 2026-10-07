@@ -498,11 +498,9 @@
 				return async (offset, signal) => {
 					// Only the first page asks for the facets (API 0.79.2); a further page, or
 					// "meer laden", only for its rows and the total, which the API keeps.
-					// TODO(api 0.79.2): the cast goes once sync:api brings `facets` into the types.
-					const page = offset ? ({ ...query, offset, facets: false } as typeof query) : query;
 					const r = await unwrap(
 						api.GET('/api/judgments', {
-							params: { query: { ...page, offset } },
+							params: { query: { ...query, offset, facets: !offset } },
 							signal
 						})
 					);
