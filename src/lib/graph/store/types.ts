@@ -65,6 +65,8 @@ export type GraphStore = {
 		key: string,
 		opts?: GraphExpansionOptions
 	) => Promise<GraphNode | null>;
+	/** Draws the bron alone from its light node, before its neighbours; null when unknown. */
+	peekNode: (collection: Collection, key: string) => Promise<GraphNode | null>;
 	/**
 	 * Every node and edge within `depth` hops of a node, in one request; it replaces the
 	 * canvas's context. Narrowed to `relations` (and `nodeTypes`), it only adds.

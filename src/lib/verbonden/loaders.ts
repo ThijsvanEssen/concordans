@@ -227,10 +227,16 @@ async function actorDossiers(
 const AARD_PAGES = 5;
 
 export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = {
-	'dossier-laws': async (ctx) => ({ rows: (await hubOf(ctx)).laws }),
-	'dossier-committees': async (ctx) => ({ rows: (await hubOf(ctx)).committees }),
-	'dossier-documents-tk': async (ctx) => ({ rows: (await hubOf(ctx)).tweedeKamer }),
-	'dossier-documents-ek': async (ctx) => ({ rows: (await hubOf(ctx)).eersteKamer }),
+	'dossier-laws': async (ctx) => ({ rows: (await abortable(hubOf(ctx), ctx.signal)).laws }),
+	'dossier-committees': async (ctx) => ({
+		rows: (await abortable(hubOf(ctx), ctx.signal)).committees
+	}),
+	'dossier-documents-tk': async (ctx) => ({
+		rows: (await abortable(hubOf(ctx), ctx.signal)).tweedeKamer
+	}),
+	'dossier-documents-ek': async (ctx) => ({
+		rows: (await abortable(hubOf(ctx), ctx.signal)).eersteKamer
+	}),
 
 	// The other dossiers of the number, in the order of the Kamer.
 	'dossier-same-number': async ({ node, signal }) => {
@@ -253,7 +259,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// TODO(backend B1, B9): the European and international instruments of a dossier are
 	// those of its laws, read from the node of each law.
 	'dossier-international': async (ctx) => {
-		const { laws } = await hubOf(ctx);
+		const { laws } = await abortable(hubOf(ctx), ctx.signal);
 		const responses = await Promise.all(
 			laws
 				.slice(0, MAX_LAWS)
