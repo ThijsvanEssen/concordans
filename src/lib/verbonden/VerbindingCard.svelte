@@ -122,15 +122,6 @@
 		<dd class:is-proposed={v.status === 'voorgesteld'}>{v.status}</dd>
 		<dt>Bron van de verbinding</dt>
 		<dd>{sourceOfEdge}</dd>
-		<dt>Beoordeling</dt>
-		<dd>
-			<button type="button" class="link" disabled title="Beoordelen is niet ingeschakeld"
-				>Klopt</button
-			>,
-			<button type="button" class="link" disabled title="Beoordelen is niet ingeschakeld"
-				>Klopt niet</button
-			>
-		</dd>
 	</dl>
 
 	<div class="actions">
@@ -267,21 +258,6 @@
 	}
 	.conf--matig {
 		background: linear-gradient(90deg, var(--ink-3) 50%, transparent 50%);
-	}
-	.link {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.link:hover {
-		color: var(--accent);
-	}
-	.link:disabled {
-		color: var(--ink-3);
-		cursor: default;
 	}
 	.actions {
 		display: flex;
