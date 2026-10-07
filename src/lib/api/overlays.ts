@@ -53,13 +53,7 @@ export async function getHeat(
 		(portion) =>
 			unwrap(
 				api.GET('/api/nodes/heat', {
-					// TODO(api 0.79.3): the cast goes once sync:api brings `ids` into the types.
-					params: {
-						query: { months, min_count: 2, ids: portion.join(',') } as {
-							months: number;
-							min_count: number;
-						}
-					},
+					params: { query: { months, min_count: 2, ids: portion.join(',') } },
 					signal
 				})
 			),
