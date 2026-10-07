@@ -115,7 +115,7 @@
 	<title>Concordans</title>
 	<meta
 		name="description"
-		content="Nederlandse wetten, uitspraken en parlementaire stukken met hun onderlinge verbindingen."
+		content="Wetten, uitspraken en Kamerstukken uit officiële bronnen, met hun onderlinge verbindingen."
 	/>
 	<link
 		rel="alternate"

@@ -183,7 +183,7 @@
 					<circle cx="5.5" cy="5.5" r="4" />
 					<path d="M8.5 8.5l3 3" />
 				</svg>
-				<span class="search-trigger-label">Zoek een artikel, uitspraak of dossier</span>
+				<span class="search-trigger-label">Zoek een wet, uitspraak, dossier of persoon</span>
 				<span class="kbd">{modKey}K</span>
 			</button>
 		</div>

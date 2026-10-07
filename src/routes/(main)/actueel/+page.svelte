@@ -443,7 +443,7 @@
 			<span class="visually-hidden">Zoek in Actueel</span>
 			<input
 				type="search"
-				placeholder="Zoek in titels en teksten"
+				placeholder="Zoek in titels en dossiertitels"
 				value={qDraft ?? q}
 				oninput={(e) => typeQuery(e.currentTarget.value)}
 			/>
