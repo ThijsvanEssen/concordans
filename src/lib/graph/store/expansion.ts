@@ -1,4 +1,5 @@
 import { getNodeGraph, getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
+import { inPool } from '$lib/api/pool';
 import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
@@ -149,27 +150,28 @@ export function createExpansion(
 			);
 			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null);
 			// The dossier a stuk on a path is in, as a hull around it: the MvT of 33328 shows
-			// the bill it explains (BE-49). From the stuk's own response, asked once.
-			await Promise.all(
-				[...drawn]
-					.filter((id) => id.startsWith('documents/'))
-					.map(async (id) => {
-						const key = id.slice('documents/'.length);
-						const r = await nodeResponse('documents', key).catch(() => null);
-						const dossier = r
-							? neighborsOf(r).find(
-									(n) =>
-										n.relation === 'PART_OF' &&
-										n.collection === 'dossiers' &&
-										n.direction === 'outbound'
-								)
-							: undefined;
-						if (!dossier) return;
-						recordContainerFor(dossier as unknown as BaseNode, 'dossier');
-						const container = containerIdFor(dossier);
-						recordContainerMember('dossier', container, id, 'PART_OF');
-						markLone(container);
-					})
+			// the bill it explains (BE-49). From the stuk's own response, asked once; four at a
+			// time and for at most twelve stuken, so one composition stays within the API's limit.
+			await inPool(
+				[...drawn].filter((id) => id.startsWith('documents/')),
+				async (id) => {
+					const key = id.slice('documents/'.length);
+					const r = await nodeResponse('documents', key).catch(() => null);
+					const dossier = r
+						? neighborsOf(r).find(
+								(n) =>
+									n.relation === 'PART_OF' &&
+									n.collection === 'dossiers' &&
+									n.direction === 'outbound'
+							)
+						: undefined;
+					if (!dossier) return;
+					recordContainerFor(dossier as unknown as BaseNode, 'dossier');
+					const container = containerIdFor(dossier);
+					recordContainerMember('dossier', container, id, 'PART_OF');
+					markLone(container);
+				},
+				{ parallel: 4, max: 12 }
 			);
 			emit();
 			// The chosen bronnen at the ends of a path that is drawn: they are tied.

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { forgetRecords, once } from './records';
+import { forgetRecords, once, RECORDS_KEPT } from './records';
 
 describe('once', () => {
 	beforeEach(() => forgetRecords());
@@ -31,7 +31,7 @@ describe('once', () => {
 	it('keeps the most recently asked records', async () => {
 		const load = vi.fn(async () => 1);
 		await once('first', load);
-		for (let i = 0; i < 100; i++) await once(`other/${i}`, async () => i);
+		for (let i = 0; i < RECORDS_KEPT; i++) await once(`other/${i}`, async () => i);
 		await once('first', load);
 		expect(load).toHaveBeenCalledTimes(2);
 	});

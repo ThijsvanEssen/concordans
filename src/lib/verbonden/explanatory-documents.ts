@@ -3,7 +3,7 @@
 // `GET /api/articles/{bwb_id}/{n}/explained-by`. Before that they are read here from the
 // documents that point at the article in its own node response.
 // TODO(backend B4): the fallback goes when every article answers on `explained-by`.
-import { api } from '$lib/api/client';
+import { getExplainedBy } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import { isExplanatory } from './chamber';
 import { describe, lidOfMatch, type Neighbor, type Row } from './rows';
@@ -89,21 +89,13 @@ export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Ro
 
 export async function explanatoryDocuments(
 	article: { bwbId: string | null; number: string | null },
-	neighbors: Neighbor[],
-	signal?: AbortSignal
+	neighbors: Neighbor[]
 ): Promise<Row[]> {
 	if (article.bwbId && article.number) {
-		const { data, response } = await api
-			.GET('/api/articles/{bwb_id}/{article_number}/explained-by', {
-				params: {
-					path: { bwb_id: article.bwbId, article_number: article.number },
-					query: { limit: 50 }
-				},
-				signal
-			})
-			.catch(() => ({ data: undefined, response: null }));
-		// An empty answer means the pipeline has not reached this article: the fallback still applies.
-		if (response?.ok && data && data.items.length > 0) return rowsOfExplanations(data.items);
+		// One request with the reader (`getExplainedBy`); an empty answer means the pipeline
+		// has not reached this article: the fallback still applies.
+		const data = await getExplainedBy(article.bwbId, article.number).catch(() => null);
+		if (data && data.items.length > 0) return rowsOfExplanations(data.items);
 	}
 	return mergeExplanatory(neighbors);
 }

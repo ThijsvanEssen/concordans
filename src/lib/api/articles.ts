@@ -1,21 +1,13 @@
 import { api, unwrap } from './client';
+import { once } from './records';
 
-// The reader, the panel and a hover preview may ask for the same article at once.
-const inflight = new Map<string, ReturnType<typeof fetchArticle>>();
-
-const fetchArticle = (bwbId: string, articleNumber: string) =>
-	unwrap(
-		api.GET('/api/articles/{bwb_id}/{article_number}', {
-			params: { path: { bwb_id: bwbId, article_number: articleNumber } }
-		})
+// The reader, the panel, the list of what cites it and a hover card ask for the same
+// article: it is asked once per session (`once`, the most recent records kept).
+export const getArticleDetail = (bwbId: string, articleNumber: string) =>
+	once(`articles/${bwbId}/${articleNumber}`, () =>
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}', {
+				params: { path: { bwb_id: bwbId, article_number: articleNumber } }
+			})
+		)
 	);
-
-export function getArticleDetail(bwbId: string, articleNumber: string) {
-	const id = `${bwbId}/${articleNumber}`;
-	let request = inflight.get(id);
-	if (!request) {
-		request = fetchArticle(bwbId, articleNumber).finally(() => inflight.delete(id));
-		inflight.set(id, request);
-	}
-	return request;
-}

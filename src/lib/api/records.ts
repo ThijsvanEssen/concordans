@@ -9,7 +9,8 @@
 // others. A caller that leaves ignores the answer instead.
 import { api, unwrap } from './client';
 
-const MAX = 100;
+// An article read through a law is a record too: room for a few hundred.
+const MAX = 400;
 const kept = new Map<string, Promise<unknown>>();
 
 /** The answer of `load` for `id`, asked once while it is kept. */
@@ -32,6 +33,9 @@ export function once<T>(id: string, load: () => Promise<T>): Promise<T> {
 
 /** For tests: forget every kept record. */
 export const forgetRecords = () => kept.clear();
+
+/** How many records are kept. */
+export const RECORDS_KEPT = MAX;
 
 export const getMember = (key: string) =>
 	once(`members/${key}`, () =>
@@ -104,12 +108,13 @@ export const getMemberDossiers = (key: string, limit: number) =>
 		unwrap(api.GET('/api/members/{key}/dossiers', { params: { path: { key }, query: { limit } } }))
 	);
 
-/** The stukken that explain an article, the ten first; null when the API has none. */
+/** The stukken that explain an article, the first fifty; null when the API has none. The
+ *  reader and the panel Verbonden share it. */
 export const getExplainedBy = (bwb: string, number: string) =>
 	once(`articles/${bwb}/${number}/explained-by`, () =>
 		api
 			.GET('/api/articles/{bwb_id}/{article_number}/explained-by', {
-				params: { path: { bwb_id: bwb, article_number: number }, query: { limit: 10 } }
+				params: { path: { bwb_id: bwb, article_number: number }, query: { limit: 50 } }
 			})
 			.then(({ data }) => data ?? null)
 	);

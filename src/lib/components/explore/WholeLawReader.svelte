@@ -44,6 +44,8 @@
 		breadcrumb: Schema<'InstrumentArticleNodeDTO'>['breadcrumb'];
 		/** The whole text of an old version, which comes with the list. */
 		text: string | null;
+		/** The whole text of today, from the list of the day (`include_text`), per page. */
+		textToday?: string | null;
 		text_preview: string | null;
 	};
 
@@ -255,18 +257,35 @@
 				items: atArticles(at.items, now).map((a) => ({ ...a, address: a.article_number }))
 			};
 		}
-		const r = await unwrap(
-			api.GET('/api/instruments/{bwb_id}/articles', {
-				params: {
-					path: { bwb_id: bwb },
-					query: { text_preview_chars: PREVIEW_CHARS, limit: PAGE_SIZE, offset }
-				},
-				signal
-			})
-		);
+		// Today's texts come a page at a time with the list of the day, in the same order:
+		// one request per hundred articles instead of one per article that scrolls into view.
+		// An article that list lacks (the articles of a bijlage) is still asked for alone.
+		const [r, texts] = await Promise.all([
+			unwrap(
+				api.GET('/api/instruments/{bwb_id}/articles', {
+					params: {
+						path: { bwb_id: bwb },
+						query: { text_preview_chars: PREVIEW_CHARS, limit: PAGE_SIZE, offset }
+					},
+					signal
+				})
+			),
+			unwrap(
+				api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
+					params: {
+						path: { bwb_id: bwb, at_date: today },
+						query: { text_preview_chars: 0, limit: PAGE_SIZE, offset, include_text: true }
+					},
+					signal
+				})
+			)
+				.then((at) => new Map(at.items.map((a) => [a.article_number, a.text ?? null])))
+				.catch(() => new Map<string, string | null>())
+		]);
 		return {
 			total: r.total,
 			items: r.items.map((a) => ({
+				textToday: a.article_number ? (texts.get(a.article_number) ?? null) : null,
 				id: a.id,
 				key: a.key,
 				article_number: a.article_number ?? null,
@@ -443,7 +462,7 @@
 			<section
 				class="whole-article"
 				id="article-{address}"
-				use:lazyLoad={peildatum ? null : address}
+				use:lazyLoad={peildatum || a.textToday ? null : address}
 			>
 				<div class="whole-article-head">
 					<!-- The anchor of reading: Artikel 3:4, a BW article with its book (6:162). -->
@@ -463,6 +482,13 @@
 
 				{#if a.text}
 					<ArticleText text={a.text} parts={null} citation={null} mark={onderdeelMark(bwbId)} />
+				{:else if a.textToday}
+					<ArticleText
+						text={a.textToday}
+						parts={null}
+						citation={citationOf(address, a.article_number ? null : (a.label ?? null))}
+						mark={onderdeelMark(bwbId)}
+					/>
 				{:else if detail}
 					<ArticleText
 						text={detail.article.text}
