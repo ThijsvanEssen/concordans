@@ -29,8 +29,8 @@
 			<p>
 				De API registreert bij elk verzoek het IP-adres, het tijdstip en het opgevraagde adres,
 				inclusief zoektermen. Die gegevens dienen voor technisch beheer, beveiliging en de grens aan
-				het aantal verzoeken per IP-adres. Voor dit logboek geldt nog geen vaste bewaartermijn. De
-				webserver van de site zelf houdt geen bezoeken bij.
+				het aantal verzoeken per IP-adres. Dit logboek wordt na 30 dagen verwijderd. De webserver
+				van de site zelf houdt geen bezoeken bij.
 			</p>
 		</div>
 
