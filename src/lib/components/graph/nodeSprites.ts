@@ -26,6 +26,10 @@ export type Tokens = {
 	moss: string;
 	plum: string;
 	slate: string;
+	groepWet: string;
+	groepFractie: string;
+	groepCommissie: string;
+	groepDossier: string;
 	fontSerif: string;
 	fontSans: string;
 };
@@ -45,6 +49,10 @@ const FALLBACK: Tokens = {
 	moss: '#456247',
 	plum: '#5e3a55',
 	slate: '#4b5563',
+	groepWet: '#00487c',
+	groepFractie: '#944078',
+	groepCommissie: '#438365',
+	groepDossier: '#d3762d',
 	fontSerif: "'Newsreader', Georgia, serif",
 	fontSans: "'Schibsted Grotesk', system-ui, sans-serif"
 };
@@ -63,6 +71,10 @@ const NAMES: Record<keyof Tokens, string> = {
 	moss: '--moss',
 	plum: '--plum',
 	slate: '--slate',
+	groepWet: '--groep-wet',
+	groepFractie: '--groep-fractie',
+	groepCommissie: '--groep-commissie',
+	groepDossier: '--groep-dossier',
 	fontSerif: '--font-serif',
 	fontSans: '--font-sans'
 };
@@ -202,18 +214,35 @@ export function dimColor(strength = 0.4): string {
 	return towardPaper(tokens().ink3, strength);
 }
 
-/** The hull colour of a container: the same family as its `PART_OF`/`MEMBER_OF` edges would be. */
+/** The colour of a group's hull (`--groep-*`): Wet, Fractie, Commissie, Dossier. */
 export function hullColorFor(kind: ContainerKind): string {
 	const t = tokens();
 	switch (kind) {
 		case 'instrument':
-			return t.moss;
+			return t.groepWet;
 		case 'faction':
-			return t.plum;
+			return t.groepFractie;
 		case 'committee':
-			return t.ink3;
+			return t.groepCommissie;
 		case 'dossier':
-			return t.accent;
+			return t.groepDossier;
+	}
+}
+
+/**
+ * The line of a group's hull, as an SVG dash array: a Wet solid, a Dossier dashed, a
+ * Fractie dotted, a Commissie dash and dot. The kind reads without its colour.
+ */
+export function hullDashFor(kind: ContainerKind): string | undefined {
+	switch (kind) {
+		case 'instrument':
+			return undefined;
+		case 'dossier':
+			return '6 4';
+		case 'faction':
+			return '1.5 3';
+		case 'committee':
+			return '8 3 1.5 3';
 	}
 }
 
