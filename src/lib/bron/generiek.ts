@@ -69,7 +69,7 @@ export function isGeneriek(titel: string | null | undefined, soort?: string | nu
  * all of them; the kind and the number tell them apart.
  */
 const WETSTITEL =
-	/^(gewijzigd |nader gewijzigd )?voorstel van wet|^memorie van|^nota (van wijziging|naar aanleiding|n\.a\.v\.)|^(eind|tweede |nader |blanco )?verslag|^advies (afdeling|raad van state)|^nader rapport|^eindtekst|^bijgewerkte tekst|^koninklijke boodschap/i;
+	/^(gewijzigd |nader gewijzigd )?voorstel van wet|^(nadere )?memorie( van)?|^nota (van wijziging|naar aanleiding|n\.a\.v\.)|^(eind|tweede |nader |blanco )?verslag|^advies (afdeling|raad van state)|^nader rapport|^eindtekst|^bijgewerkte tekst|^koninklijke boodschap/i;
 
 export const draagtWetstitel = (soort: string | null | undefined): boolean =>
 	!!soort && WETSTITEL.test(soort.trim());

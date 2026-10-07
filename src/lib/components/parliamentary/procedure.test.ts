@@ -120,3 +120,59 @@ describe('procedure: the Eerste Kamer as eerstekamer.nl shows it', () => {
 		]);
 	});
 });
+
+describe('procedure: a paper that is not one of the bill’s', () => {
+	type Detail = Parameters<typeof procedure>[0];
+	type Entry = Parameters<typeof procedure>[1][number];
+	const d = {
+		number: '36547',
+		kind: 'Wetgeving',
+		closed: false,
+		current_phase: 'Verslag',
+		phases: []
+	} as unknown as Detail;
+	const doc = (id: string, kind: string, title: string, sequence: number | null = null) =>
+		({
+			node_type: 'document',
+			node_id: `documents/${id}`,
+			date: '2024-04-25',
+			kind,
+			title,
+			body: { chamber: 'TK', sequence }
+		}) as unknown as Entry;
+	const tk = (entries: Entry[]) =>
+		procedure(d, entries, true)
+			.groepen.find((g) => g.id === 'tk')!
+			.regels.filter((r) => r.soort === 'documents');
+
+	it('stands on a line of its own by its title, its kind above it, beside the bill’s papers of that day', () => {
+		const regels = tk([
+			doc(
+				'vw',
+				'Voorstel van wet',
+				'Kamerstuk 36547, nr. 2. Voorstel van wet: Wijziging van het Wetboek van Strafrecht',
+				2
+			),
+			doc('mvt', 'Memorie van toelichting', 'Wijziging van het Wetboek van Strafrecht', 3),
+			doc(
+				'brief',
+				'Brief regering',
+				'Kamerstuk 36547, nr. 4: Aanbieding van het onderzoek naar uitbuiting',
+				4
+			)
+		]);
+		expect(regels.map((r) => [r.label, r.zin, r.meta])).toEqual([
+			[null, 'Voorstel van wet en memorie van toelichting', 'Kamerstuk 36547, nrs. 2–3'],
+			['Brief regering', 'Aanbieding van het onderzoek naar uitbuiting', 'Kamerstuk 36547, nr. 4']
+		]);
+	});
+
+	it('is named by its kind where its title only names the kind', () => {
+		const [regel] = tk([doc('m', 'Motie', 'Motie', 12)]);
+		expect([regel.label, regel.zin, regel.meta]).toEqual([
+			null,
+			'Motie',
+			'Kamerstuk 36547, nr. 12'
+		]);
+	});
+});
