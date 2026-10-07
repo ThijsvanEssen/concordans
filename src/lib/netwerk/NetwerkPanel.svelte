@@ -45,6 +45,13 @@
 	} = $props();
 
 	let zoeken = $state(false);
+
+	// A long netwerk (the start page's band opens with fifteen) folds after a few, so it
+	// does not cover the canvas.
+	const KORT = 5;
+	let alles = $state(false);
+	const gevouwen = $derived(!alles && entries.length > KORT + 1);
+	const getoond = $derived(gevouwen ? entries.slice(0, KORT) : entries);
 </script>
 
 <section class="netwerk" class:netwerk--start={start} aria-label="Netwerk">
@@ -96,7 +103,7 @@
 			{/if}
 		</div>
 		<ul class="chips">
-			{#each entries as e (e.id)}
+			{#each getoond as e (e.id)}
 				<li class="chip" class:uit={!e.on} class:mist={e.missing}>
 					<button
 						type="button"
@@ -124,6 +131,19 @@
 					>
 				</li>
 			{/each}
+			{#if gevouwen}
+				<li>
+					<button type="button" class="chip chip--meer" onclick={() => (alles = true)}
+						>en {entries.length - KORT} andere</button
+					>
+				</li>
+			{:else if entries.length > KORT + 1}
+				<li>
+					<button type="button" class="chip chip--meer" onclick={() => (alles = false)}
+						>minder</button
+					>
+				</li>
+			{/if}
 			{#if selection}
 				<li>
 					<button
@@ -303,6 +323,18 @@
 	.chip--plus:hover,
 	.chip--voorstel:hover {
 		border-color: var(--ink);
+		color: var(--ink);
+	}
+	.chip--meer {
+		padding: var(--s-1) var(--s-2);
+		border-color: transparent;
+		color: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.chip--meer:hover {
 		color: var(--ink);
 	}
 	.zoek {
