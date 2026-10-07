@@ -64,9 +64,12 @@
 			--reader-pad-right: var(--s-4);
 		}
 	}
+	/* Left in Lezen, beside the table of contents; centred where the column says so. */
 	.reader-frame__col {
 		max-width: var(--reader-max, 760px);
 		min-height: 100%;
+		margin-left: var(--reader-col-left, 0);
+		margin-right: auto;
 	}
 
 	.reader-empty {
@@ -82,8 +85,9 @@
 		padding: var(--s-6);
 	}
 
+	/* Where the text would begin: the frame's own margins, no more. */
 	.reader-error {
-		padding: var(--s-5);
+		padding: var(--s-5) 0;
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
