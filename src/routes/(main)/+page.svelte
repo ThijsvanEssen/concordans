@@ -8,6 +8,9 @@
 	import { dayLabel, feedStand, CLOSE_VOTE, shortDate } from '$lib/components/actueel/feed';
 	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
+	import Wetsnetwerk from '$lib/components/actueel/Wetsnetwerk.svelte';
+	import { laadWetsnetwerk, type Schets } from '$lib/components/actueel/wetsnetwerk';
+	import { tick } from 'svelte';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 
 	// Four ways in to search, each with the glyphs of what it holds.
@@ -59,6 +62,8 @@
 
 	let lines = $state<TimelineLine[]>([]);
 	let stand = $state<ReturnType<typeof feedStand>>(null);
+	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
+	let wetsnetwerk = $state<Schets | null>(null);
 
 	$effect(() => {
 		const ac = new AbortController();
@@ -76,7 +81,19 @@
 		);
 		lines = timelineOf(summary, LINES_SHOWN);
 		stand = feedStand(summary.data_as_of);
+		// The network waits until Actueel is drawn and the browser is idle.
+		await tick();
+		await idle();
+		if (signal.aborted) return;
+		wetsnetwerk = await laadWetsnetwerk(summary.items ?? [], today, signal).catch(() => null);
 	}
+
+	const idle = () =>
+		new Promise<void>((done) =>
+			'requestIdleCallback' in window
+				? requestIdleCallback(() => done(), { timeout: 2000 })
+				: setTimeout(done, 200)
+		);
 
 	/** `Dinsdag 22 september`: the year only when it is not this one. */
 	const dayHeading = (date: string) => {
@@ -158,6 +175,7 @@
 				<a class="blader" href={chosen.href}>Of blader door {chosen.label.toLowerCase()} →</a>
 			{/if}
 		</div>
+		{#if wetsnetwerk}<Wetsnetwerk schets={wetsnetwerk} />{/if}
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>
