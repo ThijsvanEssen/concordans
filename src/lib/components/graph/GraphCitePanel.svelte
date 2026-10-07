@@ -124,7 +124,7 @@
 	<h4 class="title {node.stub ? 'title--stub' : ''}">{bronNaam(node, $instrumentMetaStore)}</h4>
 
 	{#if node.stub}
-		<p class="snippet stub-note">Niet in de database.</p>
+		<p class="snippet stub-note">Niet in de gegevens.</p>
 	{:else if loading}
 		<span class="cite-loading">Laden…</span>
 	{:else if snippet}

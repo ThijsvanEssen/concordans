@@ -373,7 +373,7 @@
 		{/if}
 		{#if notFound}
 			<p class="state" role="status">
-				"{q}" staat niet in het netwerk. Het netwerk bevat een selectie van bronnen;
+				"{q}" staat niet in de gegevens. Het netwerk bevat een selectie van bronnen;
 				<a href="/docs#dekking">zie de dekking</a>.
 			</p>
 		{/if}

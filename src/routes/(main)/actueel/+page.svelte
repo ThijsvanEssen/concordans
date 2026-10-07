@@ -173,7 +173,7 @@
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
 		} catch {
-			error = 'Meer laden lukte niet.';
+			error = 'De volgende dagen konden niet worden geladen.';
 		} finally {
 			loadingMore = false;
 		}

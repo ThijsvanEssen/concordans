@@ -316,7 +316,7 @@
 	<div class="body" aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
 			<p class="note">
-				Verbindingen niet geladen.
+				De verbindingen konden niet worden geladen.
 				{#if onRetry}
 					<button type="button" class="link is-accent" onclick={onRetry}>Opnieuw</button>
 				{/if}
@@ -500,8 +500,8 @@
 										aria-pressed={al}
 										aria-label={al
 											? `${row.title} staat in het netwerk`
-											: `${row.title} in het netwerk`}
-										title={al ? 'Staat in het netwerk' : 'In het netwerk'}
+											: `${row.title} aan het netwerk toevoegen`}
+										title={al ? 'Staat in het netwerk' : 'Aan het netwerk toevoegen'}
 										onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</button
 									>
 								{/if}
@@ -564,7 +564,7 @@
 			<p class="note">Geen verbindingen binnen de gekozen bronnen en filters.</p>
 		{/if}
 		{#if !verbonden.loading && !verbonden.failed && verbonden.groups.length === 0 && verbonden.id}
-			<p class="note">Geen verbindingen bekend voor deze bron.</p>
+			<p class="note">Deze bron heeft geen verbindingen in de gegevens.</p>
 		{/if}
 
 		{#if hidden.length > 0}

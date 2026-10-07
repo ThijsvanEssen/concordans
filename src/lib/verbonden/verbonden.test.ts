@@ -375,7 +375,7 @@ describe('sister cases', () => {
 		const props = { court_code: 'HR', ecli: 'ECLI:NL:HR:2017:305', stub: true };
 		const bron = describeBron('judgments', 'ecli_nl_hr_2017_305', null, props);
 		expect(bron.title).toBe('Hoge Raad');
-		expect(bron.context).toBe('niet in de dataset');
+		expect(bron.context).toBe('niet in de gegevens');
 		const row: Row = {
 			ref: { collection: 'judgments', key: 'k' },
 			kind: 'uitspraken',
@@ -384,7 +384,7 @@ describe('sister cases', () => {
 		};
 		expect(caseNumberOf(row)).toBeNull();
 		expect(metaParts(row).map((p) => p.text)).toEqual([
-			'niet in de dataset',
+			'niet in de gegevens',
 			'ECLI:NL:HR:2017:305'
 		]);
 	});
@@ -534,7 +534,7 @@ describe('unresolvedRows', () => {
 		]);
 		expect(row.title).toBe('Artikel 843a Rv');
 		expect(row.missing).toBe(true);
-		expect(metaParts(row).map((p) => p.text)).toEqual(['lid 1', 'niet in de dataset']);
+		expect(metaParts(row).map((p) => p.text)).toEqual(['lid 1', 'niet in de gegevens']);
 	});
 });
 

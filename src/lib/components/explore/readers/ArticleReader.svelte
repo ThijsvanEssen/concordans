@@ -119,7 +119,7 @@
 			return;
 		}
 		if (!bwbId || !articleNumber) {
-			view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
+			view = { kind: 'error', message: 'Artikel kon niet worden geladen.' };
 			return;
 		}
 
@@ -136,7 +136,7 @@
 				view = { kind: 'loaded', data };
 			})
 			.catch(() => {
-				if (!stale) view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
+				if (!stale) view = { kind: 'error', message: 'Artikel kon niet worden geladen.' };
 			});
 		// The versions of the text, for the picker. Empty until the pipeline has run.
 		unwrap(
@@ -288,8 +288,8 @@
 		if (!stub && !empty) return null;
 		const cited = Number(d.metadata?.judgment_count ?? 0);
 		return cited > 0
-			? `Niet in de dataset. Bekend uit ${formatCount(cited)} ${cited === 1 ? 'uitspraak' : 'uitspraken'}.`
-			: 'Niet in de dataset.';
+			? `Niet in de gegevens. Genoemd in ${formatCount(cited)} ${cited === 1 ? 'uitspraak' : 'uitspraken'}.`
+			: 'Niet in de gegevens.';
 	});
 
 	const versionLabel = $derived.by(() => {

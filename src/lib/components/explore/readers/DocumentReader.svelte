@@ -52,7 +52,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Document kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Document kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});
@@ -269,7 +269,7 @@
 					{/each}
 				</div>
 			{:else}
-				<p class="empty">Geen tekst beschikbaar.</p>
+				<p class="empty">Tekst niet in de gegevens.</p>
 			{/if}
 
 			{#if doc.tk_url || doc.file_url}

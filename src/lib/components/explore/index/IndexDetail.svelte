@@ -67,7 +67,7 @@
 				const by = j.inbound_citation_count ?? 0;
 				const cites = j.outbound_citation_count ?? 0;
 				return {
-					zin: `${judgmentKind(j.decision_kind, j.tier)} van ${j.court ?? 'een onbekende instantie'}${j.date ? `, ${langeDatum(j.date)}` : ''}.`,
+					zin: `${judgmentKind(j.decision_kind, j.tier)} van ${j.court ?? 'een instantie die niet in de gegevens staat'}${j.date ? `, ${langeDatum(j.date)}` : ''}.`,
 					links: [
 						...(j.ecli ? [{ label: j.ecli }] : []),
 						...(by

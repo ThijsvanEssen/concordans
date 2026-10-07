@@ -234,7 +234,7 @@
 	<div class="scroll" aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
 			<p class="note">
-				Verbindingen niet geladen.
+				De verbindingen konden niet worden geladen.
 				{#if onRetry}
 					<button type="button" class="btn is-text" onclick={onRetry}>Opnieuw</button>
 				{/if}

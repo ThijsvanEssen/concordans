@@ -116,7 +116,7 @@ function documentTitle(props: Record<string, unknown>, name: string): string {
 }
 
 /** A bron the data gives no name: said so, never shown by its database key. */
-export const UNNAMED = 'Naam onbekend';
+export const UNNAMED = 'Naam niet in de gegevens';
 
 /**
  * Title, context, identifier, date and court of a bron, from what a list or node
@@ -150,7 +150,7 @@ export function describe(
 					? (join(`Conclusie ${author}`, longDate(date)) ?? `Conclusie ${author}`) + known
 					: (court ? (join(court, longDate(date)) ?? court) : name) + known,
 				// A judgment known only as cited: its ECLI and court, nothing more.
-				context: props.stub === true ? 'niet in de dataset' : null,
+				context: props.stub === true ? 'niet in de gegevens' : null,
 				identifier: ecli ?? (court ? null : name),
 				date,
 				court
@@ -395,7 +395,7 @@ export function metaParts(
 ): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
 	const parts: { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] = [];
 	if (row.lid) parts.push({ text: `lid ${row.lid}`, kind: 'lid' });
-	if (row.missing) parts.push({ text: 'niet in de dataset', kind: 'plain' });
+	if (row.missing) parts.push({ text: 'niet in de gegevens', kind: 'plain' });
 	if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });
 	if (row.aard) parts.push({ text: row.aard, kind: 'plain' });
 	// A position that only names the lid (`lid 2`) is said once.

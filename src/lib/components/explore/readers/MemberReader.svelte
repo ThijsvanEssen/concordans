@@ -76,7 +76,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Kamerlid kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Persoon kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});

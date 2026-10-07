@@ -54,7 +54,7 @@
 				items = out;
 			})
 			.catch(() => {
-				if (!stale) error = 'Overzicht niet geladen.';
+				if (!stale) error = 'De inhoudsopgave kon niet worden geladen.';
 			})
 			.finally(() => {
 				if (!stale) loading = false;

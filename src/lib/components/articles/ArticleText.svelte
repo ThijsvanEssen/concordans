@@ -177,7 +177,7 @@
 {/snippet}
 
 {#if parts.length === 0}
-	<p class="article-text__empty">Geen tekst beschikbaar.</p>
+	<p class="article-text__empty">Tekst niet in de gegevens.</p>
 {:else}
 	<!-- The text measures its own width: in a narrow column (beside the network) the margin
 	     folds under each lid, as it does on a phone. -->

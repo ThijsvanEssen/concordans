@@ -37,7 +37,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Bijlage kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Bijlage kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});
@@ -86,7 +86,7 @@
 			</header>
 
 			{#if a.stub}
-				<p class="empty">Van deze bijlage is alleen de naam bekend.</p>
+				<p class="empty">Van deze bijlage staat alleen de naam in de gegevens.</p>
 			{/if}
 
 			{#if refs.length}

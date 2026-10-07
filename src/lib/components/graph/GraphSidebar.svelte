@@ -374,7 +374,7 @@
 						disabled={!onToggleHeat}
 						onclick={() => {
 							if (!heatOn) onToggleHeat?.();
-						}}>Citaties per maand</button
+						}}>Verwijzingen per maand</button
 					>
 				</div>
 				{#if heatOn}

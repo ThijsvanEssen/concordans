@@ -46,7 +46,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Stemming kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Stemming kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});
@@ -89,7 +89,7 @@
 					{chamberName(chamber)}
 					{#if d.date}<span class="komma">,</span>{formatLongDate(d.date)}{/if}
 				</span>
-				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet beschikbaar'}</h2>
+				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}</h2>
 				<div class="chips">
 					{#if decisionOutcome(d)}
 						<!-- A hamerstuk is passed without a vote; a postponed decision is no outcome. -->
@@ -114,7 +114,7 @@
 					<p class="document-text">{doc.text}</p>
 				</Sectie>
 			{:else if chamber !== 'EK'}
-				<p class="document-unavailable">Tekst niet beschikbaar.</p>
+				<p class="document-unavailable">Tekst niet in de gegevens.</p>
 			{/if}
 
 			{#if d.vote_kind}

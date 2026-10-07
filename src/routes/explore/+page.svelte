@@ -128,7 +128,7 @@
 				if (!found && !ac.signal.aborted) padMissing = `${padName(p)} staat niet in de gegevens.`;
 			})
 			.catch(() => {
-				if (!ac.signal.aborted) padMissing = `${padName(p)} kon niet geladen worden.`;
+				if (!ac.signal.aborted) padMissing = `${padName(p)} kon niet worden geladen.`;
 			});
 		return () => ac.abort();
 	});
@@ -369,7 +369,7 @@
 	/** The message for a bron the dataset does not hold. */
 	function missing(key: string) {
 		focusMissing = true;
-		focusError = `'${key}' staat niet in de dataset.`;
+		focusError = `'${key}' staat niet in de gegevens.`;
 	}
 
 	async function loadFocus(id: string) {
@@ -427,7 +427,7 @@
 				return;
 			}
 			console.warn('[explore] focus load failed:', err);
-			focusError = `'${target.key}' niet geladen.`;
+			focusError = `'${target.key}' kon niet worden geladen.`;
 		}
 	}
 

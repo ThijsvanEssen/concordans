@@ -308,7 +308,7 @@
 	type SortDef = { id: string; label: string; dir?: 'asc' | 'desc' };
 	const SORTS: Record<IndexCategory, SortDef[]> = {
 		instruments: [
-			{ id: 'title', label: 'Citatietitel' },
+			{ id: 'title', label: 'Citeertitel' },
 			{ id: 'article_count', label: 'Aantal artikelen' }
 		],
 		judgments: [
@@ -2312,8 +2312,8 @@
 														>{w.article_count > 0
 															? `${w.article_count} artikelen`
 															: isPublication(w)
-																? 'Publicatie in het Staatsblad; tekst niet in de dataset'
-																: 'geen artikelen geïndexeerd'}</span
+																? 'Publicatie in het Staatsblad; tekst niet in de gegevens'
+																: 'geen artikelen in de gegevens'}</span
 													>
 												{/snippet}
 												{#snippet aside()}
@@ -2963,7 +2963,7 @@
 		{@const remaining = (loaded.total ?? 0) - loaded.items.length}
 		<div class="load-more">
 			{#if loadMoreFailed}
-				<p class="load-more-error" role="alert">Meer {noun} laden is mislukt.</p>
+				<p class="load-more-error" role="alert">De volgende {noun} konden niet worden geladen.</p>
 			{/if}
 			<button type="button" class="load-more-btn" onclick={loadMore} disabled={loadingMore}>
 				{loadingMore

@@ -35,7 +35,7 @@
 			</div>
 		{:else if status === 'error'}
 			<div class="reader-error" role="alert">
-				<p>{message} De bron kon niet worden opgehaald; mogelijk is de verbinding weg.</p>
+				<p>{message || 'De bron kon niet worden geladen.'}</p>
 				{#if onRetry}
 					<button type="button" class="btn is-text" onclick={onRetry}>Opnieuw</button>
 				{/if}

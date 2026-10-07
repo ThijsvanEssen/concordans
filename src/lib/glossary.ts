@@ -59,26 +59,24 @@ const ENTRIES: Record<string, GlossaryEntry> = {
 
 	// Identifiers
 	BWB: {
-		full: 'Basis Wetten Bestand',
+		full: 'Basiswettenbestand',
 		plain:
-			'Identifier van de Nederlandse overheid voor wetten en regelingen, bijvoorbeeld BWBR0001854 voor het Wetboek van Strafrecht.'
+			'Nummer waarmee het Basiswettenbestand een regeling aanduidt, bijvoorbeeld BWBR0001854 voor het Wetboek van Strafrecht.'
 	},
 	ECLI: {
 		full: 'European Case Law Identifier',
-		plain:
-			'Standaard-identificatie voor uitspraken van Europese en nationale rechtbanken, bv. ECLI:NL:HR:2019:1278.'
+		plain: 'Europees nummer van een rechterlijke uitspraak, bijvoorbeeld ECLI:NL:HR:2019:1278.'
 	},
 
 	// Kamer / Procedure
 	Stemming: {
 		full: 'Stemming',
-		plain:
-			'Beslissingsmoment waarop een Kamer voor of tegen een voorstel stemt; uitkomst is aangenomen of verworpen.'
+		plain: 'Besluit van een Kamer over een voorstel: aangenomen of verworpen.'
 	},
 	Toezegging: {
 		full: 'Toezegging',
 		plain:
-			'Belofte van een minister aan een Kamer om iets te doen; wordt later opgevolgd door dezelfde commissie.'
+			'Belofte van een bewindspersoon aan een Kamer; de Kamer houdt bij of zij wordt nagekomen.'
 	},
 
 	// Trajecten
