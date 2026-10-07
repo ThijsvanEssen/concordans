@@ -45,8 +45,7 @@
 			<h2 class="section-title">Technologie</h2>
 			<p>
 				De applicatie is gebouwd met SvelteKit. Het netwerk staat in een database achter een
-				FastAPI-service (LawGraph). Concordans leest alleen uit die service. Geen analytics, geen
-				advertenties.
+				FastAPI-service (LawGraph). Concordans leest alleen uit die service.
 			</p>
 		</div>
 
