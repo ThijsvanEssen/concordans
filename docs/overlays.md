@@ -6,12 +6,12 @@ Two overlays paint counts on the network: **Open dossiers** (open proposed chang
 
 `?overlay=` holds the overlay. Parsing and serialising are in `src/lib/stores/overlay.ts` (`parseOverlay`, `serializeOverlay`, type `Overlay` with kinds `none`, `open`, `dossier`, `heat`).
 
-| Value              | Overlay                                                                                               |
-| ------------------ | ----------------------------------------------------------------------------------------------------- |
-| `open`             | Open dossiers for all open dossiers                                                                   |
-| `dossier:{number}` | Open dossiers for one dossier                                                                         |
+| Value              | Overlay                                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| `open`             | Open dossiers for all open dossiers                                                                       |
+| `dossier:{number}` | Open dossiers for one dossier                                                                             |
 | `heat:{months}`    | Verwijzingen per maand over a window of `months` (`HEAT_PERIODS`: 3, 6, 12, 24; `DEFAULT_HEAT_MONTHS` 12) |
-| absent             | none                                                                                                  |
+| absent             | none                                                                                                      |
 
 The switch sets `open` or `heat:12`, or clears the active overlay; clearing covers `dossier:{number}` too. `dossier:{number}` is entered by URL only: no page builds such a link. `bronHref` carries `overlay` along, so the overlay stays while moving between bronnen.
 
@@ -21,7 +21,7 @@ The switch sets `open` or `heat:12`, or clears the active overlay; clearing cove
 
 | Overlay                    | Function in `src/lib/api/overlays.ts` | API                                |
 | -------------------------- | ------------------------------------- | ---------------------------------- |
-| Verwijzingen per maand         | `getHeat(months)`                     | `/api/nodes/heat` (`min_count` 2)  |
+| Verwijzingen per maand     | `getHeat(months)`                     | `/api/nodes/heat` (`min_count` 2)  |
 | Open dossiers, `open`      | `getInFlux()`                         | `/api/nodes/in-flux`               |
 | Open dossiers, one dossier | `getDossierInFlux(number)`            | `/api/dossiers/{number}/mutations` |
 
