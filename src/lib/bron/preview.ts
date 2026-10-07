@@ -2,7 +2,7 @@
 // date, and its first lines. Read from the node the API gives; for an article, the text
 // of the part the reference names.
 import { getDossier } from '$lib/components/parliamentary/data';
-import { api } from '$lib/api/client';
+import { getNodeFirst } from '$lib/api/records';
 import { getArticleDetail } from '$lib/api/articles';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
@@ -155,9 +155,9 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 				})
 			: null;
 	}
-	const { data } = await api.GET('/api/nodes/{collection}/{key}', {
-		params: { path: { collection, key }, query: { limit: 1 } }
-	});
+	// The light node, kept as a record: a click on the bron after the card opens its
+	// reader and the heads of its panel at once (`peekNode`, Verbonden's preview).
+	const data = await getNodeFirst(collection, key).catch(() => null);
 	const node = data?.node;
 	if (!node) return null;
 	const props = (node.props ?? {}) as Record<string, unknown>;

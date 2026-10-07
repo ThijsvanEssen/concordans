@@ -1,6 +1,6 @@
 import { getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import { inPool } from '$lib/api/pool';
-import { abortable, getNode } from '$lib/api/records';
+import { abortable, getNode, getNodeFirst } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
@@ -19,7 +19,10 @@ import type { GraphStore } from './types';
 
 export function createExpansion(
 	ctx: GraphContext
-): Pick<GraphStore, 'expandNode' | 'expandNeighborhood' | 'nodeResponse' | 'mergePaths'> {
+): Pick<
+	GraphStore,
+	'peekNode' | 'expandNode' | 'expandNeighborhood' | 'nodeResponse' | 'mergePaths'
+> {
 	const {
 		nodes,
 		cache,
@@ -124,6 +127,20 @@ export function createExpansion(
 
 	return {
 		nodeResponse,
+
+		// The bron itself before its neighbours: from the light node (`getNodeFirst`), so the
+		// reader and the panels start while the full node is still on its way.
+		peekNode: async (collection, key) => {
+			const id = nodeId(collection, key.toLowerCase());
+			const known = nodes.get(id);
+			if (known) return known;
+			const response = await abortable(getNodeFirst(collection, key), signal());
+			const node = nodeToGraphNode(response.node);
+			if (!node) return null;
+			touchNode(node.id, node);
+			emit();
+			return nodes.get(node.id) ?? null;
+		},
 
 		expandNode: async (collection, key, opts = {}) => {
 			const id = nodeId(collection, key.toLowerCase());

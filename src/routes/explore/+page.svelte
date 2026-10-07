@@ -406,6 +406,13 @@
 			// dots: its own children are its point, so they are not capped like an
 			// ordinary bron's neighbours are.
 			const neighborLimit = containerKindOf(target.collection) ? Number.POSITIVE_INFINITY : 30;
+			// The bron itself first, from its light node: the reader and the panels start while
+			// the full node (the Awb's is 4.9 MB) is still on its way, asked at the same time.
+			const full = store.nodeResponse(target.collection, target.key);
+			full.catch(() => {});
+			const first = await store.peekNode(target.collection, target.key).catch(() => null);
+			if (id !== loadedFocus) return;
+			if (first) store.focusNode(first.id);
 			const node = await store.expandNode(target.collection, target.key, { neighborLimit });
 			if (id !== loadedFocus) return;
 			if (!node) {

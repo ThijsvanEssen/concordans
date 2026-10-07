@@ -56,6 +56,16 @@ export const getNode = (collection: Collection, key: string) =>
 		getNodeGraph(collection, key, { limit: NODE_BUCKET })
 	);
 
+/**
+ * The node of a bron with one neighbour per bucket: its own props and the count of every
+ * bucket, in a fraction of the full node (the Awb: 13 kB against 4.9 MB). What a reader,
+ * a card and the first view need; the canvas fills in from `getNode` after it.
+ */
+export const getNodeFirst = (collection: Collection, key: string) =>
+	once(`nodes/${collection}/${key.toLowerCase()}/first`, () =>
+		getNodeGraph(collection, key, { limit: 1 })
+	);
+
 /** The most the API gives per bucket of a node (API 0.5). */
 export const NODE_BUCKET = 200;
 
