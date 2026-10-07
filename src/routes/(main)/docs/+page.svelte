@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { langeDatum, vandaag } from '$lib/text/datum';
 	import { onMount } from 'svelte';
 	import { getCoverage, getStats, type Coverage, type Stats } from '$lib/api/stats';
 	import { longDate } from '$lib/verbonden/rows';
@@ -14,13 +13,38 @@
 		{ collection: 'judgments', label: 'Uitspraken' },
 		{ collection: 'dossiers', label: 'Dossiers' },
 		{ collection: 'documents', label: 'Kamerstukken en andere documenten' },
-		{ collection: 'members', label: 'Kamerleden' },
-		{ collection: 'committees', label: 'Commissies' }
+		{ collection: 'members', label: 'Personen' },
+		{ collection: 'committees', label: 'Commissies' },
+		{ collection: 'cabinets', label: 'Kabinetten' },
+		{ collection: 'commitments', label: 'Toezeggingen' }
 	];
+
+	/** The sources the API names in `data_as_of`, as a reader knows them. */
+	const SOURCE_LABEL: Record<string, string> = {
+		bwb: 'wetten.overheid.nl',
+		rechtspraak: 'rechtspraak.nl',
+		echr: 'HUDOC',
+		eurlex: 'EUR-Lex',
+		tk: 'Tweede Kamer',
+		eerstekamer: 'Eerste Kamer',
+		staatsblad: 'Staatsblad',
+		staatscourant: 'Staatscourant',
+		rijksoverheid: 'rijksoverheid.nl',
+		tooi: 'TOOI',
+		verdragenbank: 'Verdragenbank'
+	};
 
 	let stats = $state<Stats | null>(null);
 	let coverage = $state<Coverage | null>(null);
-	let fetchedOn = $state<string | null>(null);
+
+	/** When each source was last read, as the API says (`data_as_of`). */
+	const asOf = $derived(
+		Object.entries(stats?.data_as_of ?? {}).flatMap(([source, d]) =>
+			d?.retrieved_at
+				? [{ source: SOURCE_LABEL[source] ?? source, date: d.retrieved_at.slice(0, 10) }]
+				: []
+		)
+	);
 
 	/** The relation types the network holds, in vocabulary order: only those the API counts. */
 	/** The colleges the dataset holds judgments of, in the order of the filters. */
@@ -36,10 +60,7 @@
 
 	onMount(() => {
 		getStats()
-			.then((s) => {
-				stats = s;
-				fetchedOn = langeDatum(vandaag());
-			})
+			.then((s) => (stats = s))
 			.catch(() => (stats = null));
 		getCoverage()
 			.then((c) => (coverage = c))
@@ -56,34 +77,44 @@
 		<div class="stub-eyebrow">Documentatie</div>
 		<h1 class="stub-title">Documentatie</h1>
 		<p class="stub-lede">
-			Concordans verbindt wetsartikelen, rechterlijke uitspraken, parlementaire documenten en
-			wetgevingsdossiers in één netwerk.
+			Concordans toont wetten, uitspraken en parlementaire stukken uit officiële bronnen, met de
+			verbindingen ertussen. Het is een naslagwerk en geeft geen juridisch advies.
 		</p>
+
+		<div class="section" id="onderdelen">
+			<h2 class="section-title">Onderdelen</h2>
+			<p>
+				Zoeken (startpagina, <kbd>{modKey} K</kbd>) gaat naar een bron. Bladeren toont lijsten per
+				soort bron in vier groepen: Recht, Parlementaire behandeling, Parlement en Regering. Actueel
+				toont per dag nieuwe Kamerstukken, stemmingen, toezeggingen, uitspraken en publicaties.
+			</p>
+			<p>
+				Een bron opent in de Verkenner. Een artikel, wet, uitspraak of Kamerstuk staat daar als
+				tekst op volle breedte (<strong>Tekst</strong>) of naast het netwerk (<strong
+					>Netwerk</strong
+				>). Elke andere bron staat naast het netwerk. Verbonden, rechts, somt de verbindingen van de
+				bron op per groep. Het netwerk tekent dezelfde verbindingen.
+			</p>
+		</div>
 
 		<div class="section" id="dekking">
 			<h2 class="section-title">Bronnen en dekking</h2>
 			<p>
-				Een instrument (wet, AMvB, ministeriële regeling, verdrag) bestaat uit artikelen; de
-				verbinding tussen beide is <em>onderdeel van</em>. Een eerdere tekst van een artikel is een
-				eigen bron, verbonden met <em>versie van</em>. Een publicatie in het Staatsblad wijzigt,
-				voegt toe aan of trekt een regeling in.
+				Een instrument is een regeling uit het Basiswettenbestand, een verdrag of een Europese
+				regeling. Het bestaat uit artikelen. Een eerdere tekst van een artikel is een eigen bron.
+				Een publicatie in het Staatsblad wijzigt een regeling, voegt eraan toe of trekt haar in.
 			</p>
 			<p>
 				Een uitspraak verwijst naar artikelen, instrumenten en andere uitspraken. Een uitspraak in
-				hoger beroep of cassatie is <em>hoger beroep van</em> de bestreden uitspraak.
+				hoger beroep of cassatie is verbonden met de bestreden uitspraak.
 			</p>
 			<p>
-				Een wetgevingsdossier bundelt de kamerstukken, zaken, activiteiten, stemmingen en
-				toezeggingen van een wetsvoorstel, bij Tweede en Eerste Kamer.
+				Een dossier bundelt de Kamerstukken, activiteiten, stemmingen en toezeggingen over één
+				onderwerp, bij beide Kamers.
 			</p>
 			<p>
-				Het netwerk is gericht op Nederlands recht. Gemeentelijke verordeningen en
-				niet-gepubliceerde uitspraken vallen buiten de dekking. Europese regelgeving staat erin voor
-				zover een Nederlandse regeling ernaar verwijst. Waar de gegevens vandaan komen staat in het <a
-					href="/colofon"
-					class="cite">colofon</a
-				>; hoe een verbinding ontstaat in de
-				<a href="/docs/methode" class="cite">methode</a>.
+				De herkomst per bron staat in de <a href="/docs/methode" class="cite">methode</a>; de
+				bronvermelding in het <a href="/colofon" class="cite">colofon</a>.
 			</p>
 			{#if stats}
 				<div class="list">
@@ -109,20 +140,28 @@
 						{/each}
 					</div>
 				{/if}
-				<p class="list-note">
-					Aantallen in het netwerk op {fetchedOn}. Een bron die ontbreekt, staat niet in deze
-					selectie; dat is geen bewijs dat hij niet bestaat.
-				</p>
+				{#if asOf.length}
+					<p class="list-note">Laatst opgehaald:</p>
+					<div class="list">
+						{#each asOf as a (a.source)}
+							<div class="list-row">
+								<span class="list-k">{a.source}</span><span>{longDate(a.date)}</span>
+							</div>
+						{/each}
+					</div>
+				{/if}
 			{/if}
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Zoeken</h2>
 			<p>
-				Het zoekveld (startpagina, <kbd>{modKey} K</kbd>) doorzoekt instrumenten, artikelen,
-				uitspraken, dossiers, documenten, commissies, kamerleden en fracties op tekst. Vier notaties
-				openen een bron direct:
+				Het zoekveld doorzoekt instrumenten, artikelen, uitspraken, dossiers, Kamerstukken,
+				stemmingen, personen, fracties, commissies, kabinetten en toezeggingen. Een treffer op
+				nummer staat eerst, dan een op de volledige naam, het begin van de naam, een deel ervan en
+				ten slotte op woorden.
 			</p>
+			<p>Een nummer, citaat of wetsnaam opent de bron direct:</p>
 			<div class="list">
 				<div class="list-row">
 					<span class="list-k">ECLI</span><span>ECLI:NL:HR:2019:1278</span>
@@ -131,20 +170,26 @@
 					<span class="list-k">artikelcitaat</span><span>artikel 287 Sr, art. 7:658 BW</span>
 				</div>
 				<div class="list-row">
-					<span class="list-k">dossiernummer</span><span>36264, 37020-XV, 37020-XV-3</span>
+					<span class="list-k">dossier</span><span>36264, 37020-XV</span>
+				</div>
+				<div class="list-row">
+					<span class="list-k">Kamerstuk</span><span
+						>37020-XV-3, Kamerstukken II 2020/21, 36327, nr. 3</span
+					>
 				</div>
 				<div class="list-row">
 					<span class="list-k">BWB-id of CELEX</span><span>BWBR0001854, 32013L0036</span>
 				</div>
+				<div class="list-row">
+					<span class="list-k">wetsnaam</span><span
+						>Awb, Algemene verordening gegevensbescherming</span
+					>
+				</div>
 			</div>
 			<p>
-				De zoekindex doorzoekt tekst als substring, niet gerangschikt op relevantie. Een recent
-				toegevoegde bron ontbreekt er soms nog in. De positie binnen een bron staat in de URL: <code
-					>#lid-2</code
-				>, <code>#lid-2-onder-a</code>, <code>#aanhef</code> in een artikel, <code>#rov-5.3</code> in
-				een uitspraak.
+				Een bron heeft een eigen adres: op haar officiële nummer, en voor personen en organen op
+				naam.
 			</p>
-			<p>Een bron heeft een eigen adres op zijn officiële nummer:</p>
 			<div class="list">
 				<div class="list-row">
 					<span class="list-k">uitspraak</span><span>/uitspraken/ECLI:NL:HR:2019:2006</span>
@@ -161,7 +206,7 @@
 					>
 				</div>
 				<div class="list-row">
-					<span class="list-k">publicatie</span><span>/stb/2026/94</span>
+					<span class="list-k">publicatie</span><span>/stb/2026/94, /stcrt/…, /trb/…</span>
 				</div>
 				<div class="list-row">
 					<span class="list-k">lid</span><span>/leden/rob-jetten</span>
@@ -180,19 +225,18 @@
 				</div>
 			</div>
 			<p>
-				De weergave staat erachter: <code>?lezen=1</code> voor de tekst op volle breedte. Een
-				stemming houdt een adres onder <code>/explore</code>.
+				De weergave staat erachter: <code>?lezen=1</code> voor de tekst op volle breedte. Een plaats
+				in de tekst staat na het hekje: <code>#lid-2-onder-a</code> in een artikel,
+				<code>#rov-5.3</code> in een uitspraak. Een stemming heeft geen eigen adres en blijft onder
+				<code>/explore</code>.
 			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Verbindingen</h2>
 			<p>
-				Elke verbinding draagt een type, een status (vastgesteld of voorgesteld) en, waar ze niet
-				structureel is, een betrouwbaarheidsscore tussen 0 en 1: een score van 1 is rechtstreeks uit
-				de brontekst gelezen, lager is afgeleid. Een verwijzing tussen artikelen kan daarnaast een
-				aard dragen: voorwaarde, uitzondering, definitie, procedure, reikwijdtebeperking of
-				delegatie.
+				Elke verbinding heeft een soort. Hoe een verbinding ontstaat en wat haar score en status
+				betekenen, staat in de <a href="/docs/methode" class="cite">methode</a>.
 			</p>
 			{#if relations.length}
 				<div class="list list--two-col">
@@ -208,59 +252,44 @@
 		<div class="section">
 			<h2 class="section-title">Klikken</h2>
 			<p>
-				Eén klik op een rij, een titel of een verwijzing opent die ter plekke: de rij klapt uit, of
-				naast de verwijzing verschijnt een kaart met soort, naam, datum en de eerste regels. Daarin
-				staat de weg naar de bron zelf: <strong>Lees</strong> opent de bron,
-				<strong>In het netwerk</strong>
-				toont haar tussen haar verbindingen. In Verbonden staan er ook
-				<strong>Alleen de omgeving</strong> en <strong>In netwerk</strong>.
+				Eén klik op een rij, een titel of een verwijzing opent die ter plekke. Een rij klapt uit;
+				naast een verwijzing verschijnt een kaart met soort, naam, datum en de eerste regels. Met de
+				muis erop of met de toetsenbordfocus verschijnt dezelfde kaart, zonder knoppen.
 			</p>
 			<p>
-				Cmd-klik, ctrl-klik en een klik met de middelste knop openen de bron direct, in een nieuw
-				tabblad waar de browser dat doet. <kbd>Esc</kbd> of een klik ernaast sluit een kaart.
-			</p>
-			<p>
-				Uitzondering: een zoekresultaat opent de bron direct. Zoeken is navigeren; wie een bron
-				zoekt, wil erheen.
+				In de kaart opent <strong>Lees</strong> de bron. <strong>In het netwerk</strong> toont haar met
+				haar verbindingen. Cmd-klik, ctrl-klik en een klik met de middelste knop openen de bron direct.
+				Een zoekresultaat opent de bron ook direct.
 			</p>
 		</div>
 
 		<div class="section">
-			<h2 class="section-title">Netwerk samenstellen</h2>
+			<h2 class="section-title">Netwerk</h2>
 			<p>
-				Een klik op een bron in het netwerk kiest die bron; de lezer ernaast toont haar. Het netwerk
-				blijft staan. Rust de muis op een bron, dan staat naast haar een kaart met
-				<strong>Tekst lezen</strong>, <strong>Omgeving tonen</strong> en
-				<strong>In netwerk</strong>. Een dubbelklik doet hetzelfde als Omgeving tonen: het netwerk
-				opnieuw rond die bron, tot de gekozen diepte.
+				Een klik op een bron in het netwerk kiest die bron; de lezer ernaast toont haar. Een
+				dubbelklik tekent het netwerk opnieuw rond die bron, tot de gekozen diepte. Diepte voegt
+				bronnen rond de gekozen bron toe; die staan vaag getekend.
 			</p>
 			<p>
-				Een artikel, wet, uitspraak of stuk heeft een eigen tekst. De schakelaar
-				<strong>Netwerk</strong> / <strong>Tekst</strong> rechtsboven (toets <kbd>L</kbd>) wisselt
-				tussen het netwerk met de lezer ernaast en de tekst op volle breedte, met inhoudsopgave. Een
-				link van buiten de Verkenner opent zo'n bron op volle breedte. Een kamerlid, commissie,
-				fractie of dossier staat altijd naast het netwerk.
+				Meer dan veertig bronnen van één soort die alleen aan de gekozen bron hangen, staan als één
+				groep, zoals ‘250 uitspraken’. Een klik op de groep tekent ze alle of toont ze in Verbonden.
+				De artikelen van één wet, de stukken van één dossier en de leden van een fractie of
+				commissie staan binnen een omtrek met haar naam. Een open teken, alleen de rand, is een bron
+				die alleen genoemd wordt en niet in de gegevens staat.
 			</p>
 			<p>
-				Het paneel Netwerk rechtsboven toont de gekozen bronnen als labels: een klik zet een bron
-				uit of aan, × haalt haar weg. <strong>+ bron</strong> zoekt een bron om toe te voegen; een
-				geselecteerde bron komt erbij met <strong>+ naam</strong>, en elke rij in Verbonden heeft
-				een +. Gekozen bronnen staan in de URL (<code>?netwerk</code>). Het netwerk toont ze met hun
-				onderlinge verbindingen en met de bronnen die twee van hen verbinden: een stuk dat beide
-				ondertekenden, een artikel van een gekozen wet. Een bron zonder zulke verbinding staat als
-				<em>los</em> in het paneel. Paden van meer dan twee stappen worden nog niet gevonden.
+				Het paneel Netwerk, rechtsboven, houdt bronnen vast over meerdere keuzes heen. Een klik op
+				een naam zet de bron uit of aan; × haalt haar weg. <strong>+ bron</strong> zoekt een bron om
+				toe te voegen; in Verbonden heeft elke rij een +. De gekozen bronnen staan in de URL (<code
+					>?netwerk</code
+				>).
 			</p>
 			<p>
-				Diepte voegt context toe rond de geselecteerde bron, net als een groep uit Verbonden.
-				Context staat vaag getekend. <strong>Alleen de gekozen bronnen tonen</strong> (onder ⋯) laat
-				de gekozen bronnen en hun verbindingen staan. <strong>Wissen</strong> maakt alles leeg: gekozen
-				bronnen, selectie en canvas. Terug zet het terug. Zonder wissen opent de Verkenner op het laatste
-				netwerk.
-			</p>
-			<p>
-				De legenda linksboven toont dicht de tekens van wat op het canvas staat, en open het
-				bronfilter, alle tekens met hun betekenis, de groepering en de verbindingen. Een omtrek is
-				een bron die alleen genoemd wordt en niet in de gegevens staat.
+				Het netwerk toont de gekozen bronnen met hun onderlinge verbindingen en met de bronnen
+				ertussen, tot vier stappen. <strong>Bronnen ertussen</strong> zet die aan of uit. Een
+				gekozen bron zonder verbinding met de andere staat als <em>los</em> in het paneel.
+				<strong>Wissen</strong> maakt het netwerk leeg; Terug zet het terug. Zonder wissen opent de Verkenner
+				op het laatste netwerk.
 			</p>
 		</div>
 
@@ -268,32 +297,33 @@
 			<h2 class="section-title">Dossiers en Parlement</h2>
 			<p>
 				Een dossier heeft een nummer, soms met toevoeging: 37020-XV is een ander dossier dan 37020.
-				Dossiers onder hetzelfde nummer die in de lijst naast elkaar staan, zoals de hoofdstukken
-				van een begroting, staan in Bladeren onder één regel. Het traject is wetsvoorstel,
-				initiatiefwetsvoorstel, begroting, verdrag, initiatiefnota, nota, structuurvisie,
-				verantwoording, EU, interparlementair, Kamer of beleid.
+				Bladeren zet dossiers onder één nummer, zoals de hoofdstukken van een begroting, op één
+				regel.
 			</p>
 			<p>
-				Alleen een wetsvoorstel, initiatiefwetsvoorstel, begroting of verdrag doorloopt fasen:
-				wetsvoorstel, memorie van toelichting, advies Raad van State, verslag, nota naar aanleiding
-				van het verslag, amendementen, behandeling, stemming, afgehandeld. Een ander dossier heeft
-				geen fase tot het is afgehandeld.
+				De soort van een dossier is die van de Tweede Kamer: Wetgeving, Initiatiefwetgeving,
+				Begroting, Verdrag, Initiatiefnota of PKB/Structuurvisie. Een ander dossier staat onder
+				Overige dossiers.
 			</p>
 			<p>
-				Een afgehandeld dossier heeft een uitkomst en een datum. Aangenomen: de Eerste Kamer nam het
-				wetsvoorstel aan, of de wet is in het Staatsblad gepubliceerd. Verworpen: de Tweede Kamer of
-				de Eerste Kamer stemde tegen het wetsvoorstel. Ingetrokken: het wetsvoorstel is bij brief
-				ingetrokken.
+				Een wetsvoorstel en een begroting doorlopen fasen: voorstel van wet, memorie van
+				toelichting, advies Raad van State, verslag, nota naar aanleiding van het verslag, nota van
+				wijziging of amendement, stemmingen en eindtekst. Een fase is doorlopen als een stuk,
+				activiteit of besluit in de gegevens haar markeert.
 			</p>
 			<p>
-				Een stemming van de Tweede Kamer staat per fractie geregistreerd, met zetels, of per lid bij
-				een hoofdelijke stemming. Zonder hoofdelijke stemming volgt de stem van een lid uit de
-				fractie waarbij het op dat moment hoorde. Van een stemming van de Eerste Kamer staan de
-				wijze van stemmen en de fracties voor en tegen geregistreerd, zonder zetels.
+				Een wetsvoorstel is aangenomen of verworpen, per Kamer, met datum en wijze van stemmen. Van
+				de Eerste Kamer toont het dossier ook de stand en de stukken op eerstekamer.nl.
 			</p>
 			<p>
-				De wetgevingsgeschiedenis van een artikel is de reeks dossiers die het invoerden, wijzigden
-				of introkken, met de dossiers die dat nu voorstellen.
+				Een stemming van de Tweede Kamer staat per fractie, met zetels, of per lid bij een
+				hoofdelijke stemming. Zonder hoofdelijke stemming volgt de stem van een lid uit de fractie
+				waartoe het op dat moment behoorde. Van een stemming van de Eerste Kamer staan de wijze van
+				stemmen en de fracties voor en tegen, zonder zetels.
+			</p>
+			<p>
+				De wetsgeschiedenis van een artikel is de reeks dossiers die het invoerden, wijzigden of
+				introkken, met de dossiers die dat nu voorstellen.
 			</p>
 		</div>
 
@@ -301,37 +331,41 @@
 			<h2 class="section-title">Regering</h2>
 			<p>
 				Bladeren toont onder Regering de kabinetten, de bewindspersonen en de toezeggingen. Een
-				kabinet heeft een periode, een minister-president en een coalitie. Per ministerie staat wie
-				welke post bekleedde, op de tijdlijn van het kabinet: een opvolger volgt op dezelfde regel,
-				een waarnemer is gearceerd, de demissionaire periode ligt als band erachter. De gegevens
-				komen van rijksoverheid.nl.
+				kabinet heeft een periode, een minister-president en een coalitie. Per ministerie staat op
+				de tijdlijn van het kabinet wie welke post bekleedde. Een opvolger staat op dezelfde regel;
+				een waarnemer staat gestippeld, met ‘waarnemend’. De demissionaire periode is een
+				stippellijn op de tijdas.
 			</p>
 		</div>
 
 		<div class="section" id="beperkingen">
 			<h2 class="section-title">Bekende beperkingen</h2>
 			<p>
-				<strong>Eerste Kamer.</strong> Kamerstukken van de Eerste Kamer zijn opgenomen onder het
-				dossiernummer van het wetsvoorstel, en haar besluiten over wetsvoorstellen vanaf juli 2026.
-				Leden, fracties en commissies van de Eerste Kamer ontbreken; zie
-				<a href="https://www.eerstekamer.nl" class="cite">eerstekamer.nl</a>.
+				Het netwerk bevat een selectie: niet elk BWB-instrument, niet alle uitspraken van
+				rechtspraak.nl, niet het volledige archief van de Kamers. Gemeentelijke verordeningen en
+				ongepubliceerde uitspraken vallen erbuiten. Een bron die ontbreekt, staat niet in deze
+				selectie; dat is geen bewijs dat ze niet bestaat.
 			</p>
 			<p>
-				<strong>Europees en verdragsrecht.</strong> Een Europese richtlijn of verordening staat in
-				het netwerk voor zover een Nederlandse regeling ernaar verwijst, niet volledig. Uitspraken
-				van het EHRM zijn opgenomen; dekking van het Hof van Justitie is niet betrouwbaar. Zie
-				<a href="https://eur-lex.europa.eu" class="cite">eur-lex.europa.eu</a>
+				Een Europese richtlijn of verordening staat erin voor zover een Nederlandse regeling ernaar
+				verwijst. Van het EHRM staat een selectie uitspraken in het netwerk, van het Hof van
+				Justitie vrijwel niets. Zie <a href="https://eur-lex.europa.eu" class="cite"
+					>eur-lex.europa.eu</a
+				>
 				en
 				<a href="https://hudoc.echr.coe.int" class="cite">hudoc.echr.coe.int</a>.
 			</p>
 			<p>
-				<strong>Actualisering.</strong> Elke bron wordt afzonderlijk ververst, niet doorlopend. De geldigheidsdatum
-				van een artikel is de inwerkingtredingsdatum, niet het moment van verversen.
+				Van de Eerste Kamer staan leden, fracties en commissies erin vanaf 2 oktober 2026, zonder
+				eerdere samenstelling, en besluiten over wetsvoorstellen vanaf juli 2026.
 			</p>
 			<p>
-				<strong>Dekking.</strong> Het netwerk bevat een selectie: niet elk BWB-instrument, niet de volledige
-				rechtspraak.nl-collectie, niet het volledige Tweede Kamer-archief. Het ontbreken van een resultaat
-				is geen bewijs dat de bron niet bestaat.
+				Elke bron wordt afzonderlijk opgehaald; de datum per bron staat onder Bronnen en dekking. De
+				geldigheidsdatum van een artikel is de datum van inwerkingtreding, niet die van het ophalen.
+			</p>
+			<p>
+				Concordans is in ontwikkeling. Functies en weergave kunnen wijzigen. Een adres op ECLI,
+				BWB-id of officieel nummer blijft werken.
 			</p>
 		</div>
 
