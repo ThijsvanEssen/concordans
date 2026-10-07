@@ -1,6 +1,6 @@
 # Overlays
 
-Two overlays paint counts on the network: **Open dossiers** (open proposed changes, per bron) and **Citaties per maand** (edges created recently, per bron). At most one is active; the legend of the network offers them under Meer as a three-way switch with "none".
+Two overlays paint counts on the network: **Open dossiers** (open proposed changes, per bron) and **Citaties per maand** (edges created recently, per bron). At most one is active; the legend of the network offers them under Meer: Geen, Open dossiers, Citaties per maand (with a period of 3 to 24 months).
 
 ## URL
 

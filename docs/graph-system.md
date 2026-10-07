@@ -28,13 +28,14 @@ The layers of the network are the groups of the panel Verbonden (`src/lib/verbon
 | File              | Contents                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------- |
 | `context.ts`      | Node and edge maps, writable stores, the response cache, soft cap, derived nodes and edges, `mergeResponse` |
-| `expansion.ts`    | `nodeResponse`, `expandNode`, `expandNeighborhood`                                                          |
+| `expansion.ts`    | `nodeResponse`, `expandNode`, `expandNeighborhood`, `mergePaths`                                            |
+| `compose.ts`      | `compose`: the composed netwerk of chosen bronnen, with what ties them (`/api/paths`)                       |
 | `view-actions.ts` | Selection, pinning, `showRows`/`hideRows`, filters, pruning, `sweepOrphans`, `reset`, `getEdgeById`         |
 | `types.ts`        | `GraphStore`, `GraphFilters`, `CanvasRow`, `DEFAULT_FILTERS`, `SOFT_NODE_CAP`                               |
 
-Each module is a factory that receives the context and returns part of the `GraphStore`. Scalars that several modules change (`seq`, `proxiesEnabled`) live on `ctx.state`; destructuring them would freeze a copy.
+Each module is a factory that receives the context and returns part of the `GraphStore`. A scalar that several modules change (`seq`) lives on `ctx.state`; destructuring it would freeze a copy.
 
-**One request per bron.** `nodeResponse(collection, key)` fetches `/api/nodes/{collection}/{key}` with `limit` 200, the most the API allows per bucket, caches the response by node id and joins concurrent callers. The canvas draws from it and the panel Verbonden reads it, so a bron is asked for once. `expandNode` merges the response and draws at most `neighborLimit` neighbours (30 by default); `expandNeighborhood` fetches every node and edge within `depth` hops in one request. Instruments are recorded in the instrument cache and not drawn as neighbours. Edges below `semanticThreshold` are dropped when merged.
+**One request per bron.** `nodeResponse(collection, key)` fetches `/api/nodes/{collection}/{key}` with `limit` 200, the most the API allows per bucket, through `getNode` in `records.ts`, so the record is asked once per session. The canvas draws from it and the panel Verbonden reads it, so a bron is asked for once. `expandNode` merges the response and draws at most `neighborLimit` neighbours (30 by default); `expandNeighborhood` fetches every node and edge within `depth` hops in one request. Instruments are recorded in the instrument cache and not drawn as neighbours. Edges below `semanticThreshold` are dropped when merged.
 
 **Soft cap.** `SOFT_NODE_CAP` is 400. A merge that passes it removes the oldest nodes that are not pinned, selected or next to the selection; `trimmedCount` counts them.
 
@@ -45,6 +46,12 @@ Each module is a factory that receives the context and returns part of the `Grap
 - A document or judgment that relates to an article gets an edge to the instrument of that law, with the same relation and the label `via artikel`.
 - Articles get a `PART_OF` edge to their instrument node; members get `MEMBER_OF` edges to factions from `faction_memberships`.
 
+## The composed netwerk
+
+The panel Netwerk (`src/lib/netwerk/NetwerkPanel.svelte`) holds chosen bronnen across focuses. They are in the URL (`?netwerk=`, switched off in `?uit=`, `?tussen=0` without the bronnen between them; `netwerk.ts`) and the last one in `localStorage`. `store.compose` draws the chosen bronnen, their verbindingen with each other, and the bronnen on the paths between them (`/api/paths`, up to four steps). A container two of them share is drawn as an anchor with a line to each; an anchor whose lines all go to members of its own hull is left out (`$lib/graph/anchor.ts`).
+
+**Clusters.** More than `CLUSTER_MAX_LOOSE` (40) bronnen of one kind tied only to the focus are drawn as one cluster bron ("250 uitspraken", `src/lib/netwerk/cluster.ts`); its card draws them all or opens their group in Verbonden.
+
 ## Layers
 
 `src/lib/verbonden/groups.ts` is the table kind of bron → groups, the one definition the panel renders. In Netwerk each group with drawable rows (a `relation` and a `direction`) carries a layer button: `store.showRows(focusId, rows)` puts the rows on the canvas, each with the verbinding that ties it to the focus (a `CanvasRow`; a row not on the canvas becomes a `syntheticNode`), and `store.hideRows(ids)` takes them off, sparing the selected and the pinned. A layer is "on" when every drawable row is on the canvas.
@@ -53,9 +60,9 @@ Groups are filled from the node response (`match`: relation, direction, collecti
 
 ## Expansion around a focus
 
-The explore page (`src/routes/explore/+page.svelte`) expands a focus with one `expandNeighborhood` request of `?diepte` steps (1, 2 or 3; default 2; `cap` 200). The bronfilter decides what of it is drawn: a hidden kind is not drawn, not laid out, and its edges are not drawn. `sweepOrphans` then removes bronnen without an edge, because the force layout throws them far out and the camera fit zooms out to include them. `reseatAround` places the focus at the origin with its neighbours on a ring, and `fitWhenSettled` fits once the layout stops. The expansion runs once per focus and depth, in Netwerk, or when the mode switches to Netwerk with a focus loaded in Lezen.
+The explore page (`src/routes/explore/+page.svelte`) expands a focus with one `expandNeighborhood` request of `?diepte` steps (1 to 3; default 1 for a wet, fractie, commissie or dossier, else 2; `cap` 200). The bronfilter decides what of it is drawn: a hidden kind is not drawn, not laid out, and its edges are not drawn. `sweepOrphans` then removes bronnen without an edge, because the force layout throws them far out and the camera fit zooms out to include them. `reseatAround` places the focus at the origin with its neighbours on a ring, and `fitWhenSettled` fits once the layout stops. The expansion runs once per focus and depth, in Netwerk, or when the mode switches to Netwerk with a focus loaded in Lezen.
 
-The legend states what is on the canvas and what the bronfilter hides, with the counts of the panel Verbonden (`src/lib/verbonden/view.ts`), so both name the same numbers. With nothing on the canvas it shows no filters, only that there are no bronnen yet. Beside a reader the canvas is compact and the legend is a button at its bottom left, clear of the panel Netwerk at the top; the reader keeps 640px and the canvas takes what is left up to its own width.
+The legend states what is on the canvas and what the bronfilter hides, with the counts of the panel Verbonden (`src/lib/verbonden/view.ts`), so both name the same numbers. With nothing on the canvas it shows no filters, only that there are no bronnen yet. Beside a reader the canvas is compact and the legend is a button at its bottom left, clear of the panel Netwerk at the top; the reader keeps its width and the canvas takes what is left.
 
 ## Rendering
 

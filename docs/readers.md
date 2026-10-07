@@ -2,15 +2,15 @@
 
 The reading surfaces of `/explore` for the selected bron:
 
-| Place                    | Modes                           | Component                                                                                                         |
-| ------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Reader                   | Lezen; Netwerk with a selection | `KindReader.svelte`, which picks one reader per collection                                                        |
-| Table                    | Lezen with `?tabel=1`           | `src/lib/verbonden/VerbondenTabel.svelte`: every verbinding of the bron, sortable, fifty per page, CSV export     |
-| Beside the reader        | both, with `?naast=`            | `DocumentReader` with the article as `article`: a toelichting next to the article it explains                     |
-| Table of contents (left) | Lezen, for an article or a law  | `LezenNav.svelte`: the articles of the whole law from `/api/instruments/{bwb_id}/articles`, grouped by breadcrumb |
-| Verbonden (right)        | both                            | `src/lib/verbonden/Verbonden.svelte`: the verbindingen of the bron in groups                                      |
+| Place                    | Modes                           | Component                                                                                                      |
+| ------------------------ | ------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Reader                   | Tekst; Netwerk with a selection | `KindReader.svelte`, which picks one reader per collection                                                     |
+| Table                    | `?tabel=1`                      | `src/lib/verbonden/VerbondenTabel.svelte`: every verbinding of the bron, sortable, fifty at a time, CSV export |
+| Beside the reader        | both, with `?naast=`            | `DocumentReader` with the article as `article`: a toelichting next to the article it explains                  |
+| Table of contents (left) | Tekst, for an article or a law  | `LezenNav.svelte`: the articles of the whole law (`law-articles.ts`), grouped by their place in the law        |
+| Verbonden (right)        | both                            | `src/lib/verbonden/Verbonden.svelte`: the verbindingen of the bron in groups                                   |
 
-`explore/+page.svelte` places them. `LezenNav` reports its items through `onitems`, each with the labels of its place in the law; the page derives `prevHref`, `nextHref` and `place` for `ArticleReader` from them. The page also loads the verbindingen of the bron once (`createVerbondenSource` in `src/lib/verbonden/source.ts`) and hands the same state to the panel, the table, the legend and the reader (the counts per lid, the number of wetsvoorstellen).
+`explore/+page.svelte` places them. The page and `LezenNav` share one article list per law (`lawArticles`); the page derives `prevHref`, `nextHref` and `place` for `ArticleReader` from it. The page also loads the verbindingen of the bron once (`createVerbondenSource` in `src/lib/verbonden/source.ts`) and hands the same state to the panel, the table, the legend and the reader (the counts per lid, the number of wetsvoorstellen).
 
 ## Dispatch
 
@@ -20,15 +20,17 @@ The reading surfaces of `/explore` for the selected bron:
 | ------------- | ------------------ | ------------------------------------------------------------------------------------------------------------ |
 | `articles`    | `ArticleReader`    | `getArticleDetail`, `/history`, `/explained-by`; without a memorie there, `/api/dossiers/{number}/documents` |
 | `judgments`   | `JudgmentReader`   | `getJudgmentDetail`                                                                                          |
-| `documents`   | `DocumentReader`   | `/api/documents/{key}`, with an article `/api/documents/{key}/passages`                                      |
-| `dossiers`    | `DossierReader`    | `getDossier`, `/api/dossiers/{number}/timeline`                                                              |
+| `documents`   | `DocumentReader`   | `getDocument`, with an article `/api/documents/{key}/passages`                                               |
+| `dossiers`    | `DossierReader`    | `getDossier`, `getDossierTimeline`, `getChangedArticles`                                                     |
 | `committees`  | `CommitteeReader`  | `getCommittee(slug)`                                                                                         |
-| `members`     | `MemberReader`     | `/api/members/{key}`, `getMemberVotes`                                                                       |
+| `members`     | `MemberReader`     | `getMember`, `getMemberVotes`, `getMemberAuthored`                                                           |
 | `factions`    | `FactionReader`    | `/api/factions/{key}`                                                                                        |
-| `decisions`   | `DecisionReader`   | `/api/decisions/{key}`, `/api/decisions/{key}/document`                                                      |
-| `cabinets`    | `CabinetReader`    | `/api/cabinets/{key}`; posts per ministry are in Bladeren                                                    |
+| `decisions`   | `DecisionReader`   | `getDecision`, `getDecisionDocument`                                                                         |
+| `cabinets`    | `CabinetReader`    | `getCabinet`; posts per ministry are in Bladeren                                                             |
+| `commitments` | `CommitmentReader` | `getCommitment`                                                                                              |
+| `annexes`     | `AnnexReader`      | `/api/annexes/{key}`                                                                                         |
 | `activities`  | `ActivityReader`   | Nothing: the node's own props                                                                                |
-| `instruments` | `InstrumentReader` | Renders `WholeLawReader`: `/api/instruments/{bwb_id}/articles`, paged                                        |
+| `instruments` | `InstrumentReader` | Renders `WholeLawReader`: the articles paged; with `?peildatum=` the text of that day                        |
 | anything else | `FallbackReader`   | Nothing: kind, title, date, status and the source's URL from the props                                       |
 
 The endpoints are described in the API's `api.md`. Calls go through `$lib/api/client` (see [`api-client.md`](api-client.md)).
@@ -37,11 +39,11 @@ The endpoints are described in the API's `api.md`. Calls go through `$lib/api/cl
 
 A reader that loads data holds its state as `view` (`loading`, `error`, `loaded`; the text readers add `empty`) and loads in an `$effect` that aborts its request, or ignores a late answer, when the selection changes. A reader depends on primitives such as the key or `bwb_id`, so a new selection object for the same bron does not reload it.
 
-Every reader renders inside `ReaderFrame` (scroll container, empty, loading and error states, with Opnieuw after an error); `ArticleReader` and `JudgmentReader` also use `ReaderHead` (glyph, kind label, title, and a snippet for extra rows). The frame is sized per mode by `explore/+page.svelte` (`.reader-frame`). `judgment-text.ts` holds the pure helpers that structure judgment text, among them `partiesByRole`: one row per role, pseudonymised parties (`[appellant 1]`) counted, the named ones listed with the alias the judgment gives them and their other roles, counsel after the parties. `_shared.ts` holds date formatting and `textProp`, which reads an untyped prop. `MemberReader` shows a person's career (`careerOf` in `src/lib/components/parliamentary/career.ts`): their seats in a fractie, joined where they run on, with the roles in them, their posts in a cabinet (`government_functions`), and the functions they signed stukken in (AUTHORED `meta.function` and `meta.capacity`), with the years of those stukken; minister-president and minister van Algemene Zaken are one post (`foldPremier`). Every period starts with its year (`yearsOf`: `2017–2021`, `2026–`). Its kicker is what the person is now (`currentTitle`): Kamerlid, the function of the latest signature, or Oud-Kamerlid. A step outside the years of the bronfilter steps back. In the panel a person's stukken are grouped by what they signed as, named after the functions of the rows shown.
+Every reader renders inside `ReaderFrame` (scroll container, empty, loading and error states, with Opnieuw after an error); `ArticleReader`, `JudgmentReader` and `InstrumentReader` also use `ReaderHead` (glyph, kind label, title, and a snippet for extra rows). The frame is sized per mode by `explore/+page.svelte` (`.reader-frame`). `judgment-text.ts` holds the pure helpers that structure judgment text, among them `partiesByRole`: one row per role, pseudonymised parties (`[appellant 1]`) counted, the named ones listed with the alias the judgment gives them and their other roles, counsel after the parties. `_shared.ts` holds date formatting and `textProp`, which reads an untyped prop. `MemberReader` shows a person's career from `careerOf` (`src/lib/components/parliamentary/career.ts`): seats in a fractie, posts in a cabinet, and the functions they signed stukken in, each with its years.
 
-The parliamentary readers share request helpers in `src/lib/components/parliamentary/data.ts` and the labels for stages, tracks and outcomes in `stages.ts`. Only a bill passes stages (`isBill`), so only a bill shows `LegislativeStepper`; a closed dossier shows its outcome and `closed_on`.
+The parliamentary readers share request helpers in `src/lib/components/parliamentary/data.ts`. `DossierReader` shows the stand as `StandBalk` (`stand.ts`) and the procedure per Kamer (`procedure.ts`), with the Eerste Kamer's progress from `senate`; the phase and outcome labels are in `stages.ts`.
 
-`ArticleReader` records the law name with `recordInstrument`, so the status bar and the hover panel can show it. Its head is one grey line with the place of the article below its law (`placeInLaw` in `src/lib/text/bw.ts`: titel and afdeling, never the law or a BW book a second time), the title (`Artikel 6:162`), and one line with the version picker (`/history`; `Geldend recht, tekst sinds …`, or `Vervallen per …` for an article the API marks `repealed`), the wetsvoorstellen that touch the article (a link that filters Verbonden to them) and `Citeer artikel`. The leden are a grid (`ArticleText`): the number in the margin, the text, and at the right the number of verbindingen of that lid (a link to `?lid=`) with `Citeer` and `Kopieer tekst` on hover. Where the text itself is narrower than 600px (a container query, beside the network or on a phone), that right column folds under each lid. Every onderdeel, at any depth, shows the same two actions in that column, level with its own text. `Citeer` offers the three forms of `citeArticle` (`src/lib/text/cite.ts`): kort (`art. 5 lid 1 onder d sub i Sr`), voluit (`artikel 5, eerste lid, onderdeel d, onder i, Wetboek van Strafrecht`, after the Aanwijzingen voor de regelgeving) and met datum; the short and long forms are built from the instrument's short title and citation title, a book of the BW cited as `art. 7:3 BW` (never the API's short title of the book, `BW7`). `Kopieer tekst` copies the part's text with its onderdelen. The whole-law reader offers the same actions. A wetsvoorstel row of the panel can show its proposed wording next to the current lid (`proposed-text.ts`, from the mutations of its dossier).
+`ArticleReader` records the law name with `recordInstrument`, so the status bar and the hover panel can show it. Its head is one grey line with the place of the article below its law (`layersOf` in `src/lib/text/division.ts`: titel and afdeling, never the law or a BW book a second time), the title (`Artikel 6:162`), and one line with the version picker (`/history`; `Geldend recht, tekst sinds …`, or `Vervallen per …` for an article the API marks `repealed`), the wetsvoorstellen that touch the article (a link that filters Verbonden to them) and `Citeer artikel`. The leden are a grid (`ArticleText`): the number in the margin, the text, and at the right the number of verbindingen of that lid (a link to `?lid=`) with `Citeer` and `Kopieer tekst` on hover. Where the text itself is narrower than 600px (a container query, beside the network or on a phone), that right column folds under each lid. Every onderdeel, at any depth, shows the same two actions in that column, level with its own text. `Citeer` offers the three forms of `citeArticle` (`src/lib/text/cite.ts`): kort (`art. 5 lid 1 onder d sub i Sr`), voluit (`artikel 5, eerste lid, onderdeel d, onder i, Wetboek van Strafrecht`, after the Aanwijzingen voor de regelgeving) and met datum; the short and long forms are built from the instrument's short title and citation title, a book of the BW cited as `art. 7:3 BW` (never the API's short title of the book, `BW7`). `Kopieer tekst` copies the part's text with its onderdelen. The whole-law reader offers the same actions. A wetsvoorstel row of the panel can show its proposed wording next to the current lid (`proposed-text.ts`, from the mutations of its dossier).
 
 ## Text and anchors
 
@@ -57,7 +59,7 @@ The parliamentary readers share request helpers in `src/lib/components/parliamen
 
 ## Navigation
 
-Links inside a reader are `bronHref` (see [`routes.md`](routes.md#links-to-a-bron)); a reader has no navigation callback. `StatusBar.svelte` (the bar above the panels: breadcrumb, history, mode, copy citation, share) reads the selection's props and needs no change for a new reader.
+Links inside a reader are `bronHref` (see [`routes.md`](routes.md#links-to-a-bron)); a reader has no navigation callback. `StatusBar.svelte` (the bar above the panels: back, breadcrumb, Deel, the switch Netwerk/Tekst) reads the selection's props and needs no change for a new reader.
 
 ## Adding a reader
 
