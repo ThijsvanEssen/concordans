@@ -496,8 +496,13 @@
 					limit
 				};
 				return async (offset, signal) => {
+					// Only the first page asks for the facets (API 0.79.2); a further page, or
+					// "meer laden", only for its rows and the total, which the API keeps.
 					const r = await unwrap(
-						api.GET('/api/judgments', { params: { query: { ...query, offset } }, signal })
+						api.GET('/api/judgments', {
+							params: { query: { ...query, offset, facets: !offset } },
+							signal
+						})
 					);
 					pages.judgments = toPage(pages.judgments, r.items, offset, r.total);
 					if (!offset) judgmentFacets = r.facets ?? null;
