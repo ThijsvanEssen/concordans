@@ -6,6 +6,8 @@ import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { stand } from './stand';
 import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
+import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
+import { withoutKamerstuk } from './kamerstuk';
 
 type Detail = Schema<'DossierDetailResponse'>;
 type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
@@ -59,12 +61,48 @@ const reeks = (namen: string[]) =>
 const nrs = (n: string[]) =>
 	n.length === 0 ? '' : n.length === 1 ? `nr. ${n[0]}` : `nrs. ${n[0]}–${n.at(-1)}`;
 
+/** An activity by its agenda title; where that only names the kind, the kind. */
+function activiteitZin(e: Entry, b: Body): string {
+	const agenda = typeof b.agenda_title === 'string' ? b.agenda_title.trim() : '';
+	const kind = e.kind ?? '';
+	if (agenda && !isGeneriek(agenda, kind)) return agenda;
+	const zin = agenda || kind;
+	return zin.charAt(0).toUpperCase() + zin.slice(1);
+}
+
+/**
+ * A paper that is not one of the bill's: by its own title (`Brief van de minister van J&V
+ * over …`), its kind small above it, its number under it. A title that only names the kind
+ * gives way to the kind; the number and the day still tell it apart.
+ */
+function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel {
+	const kind = (e.kind ?? '').replace(/\s*\(.*\)\s*$/, '');
+	const title = e.title ? withoutKamerstuk(e.title).trim() : '';
+	const eigen = title && !isGeneriek(title, e.kind) ? title : null;
+	const nr = nrOf(e);
+	return {
+		id: e.node_id,
+		datum: e.date?.slice(0, 10) ?? null,
+		teken: 'stuk',
+		soort: 'documents',
+		label: eigen ? kind || null : null,
+		zin: eigen ?? (kind || title || 'Stuk'),
+		meta: nr
+			? `Kamerstuk${groep === 'ek' ? ' I' : ''} ${dossier}, ${groep === 'ek' ? nr : `nr. ${nr}`}`
+			: null,
+		href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
+		ref: e.node_id
+	};
+}
+
 function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel[] {
 	const out: TijdRegel[] = [];
 	const asc = [...entries].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
-	// Stukken van één dag in één regel.
+	// The papers of the bill of one day on one line: they carry the bill's title, their kind and
+	// number tell them apart. Any other paper (a brief, a motie) on a line of its own, by its title.
+	const docs = asc.filter((e) => e.node_type === 'document');
 	const byDay = Map.groupBy(
-		asc.filter((e) => e.node_type === 'document'),
+		docs.filter((e) => draagtWetstitel(e.kind)),
 		(e) => e.date?.slice(0, 10) ?? ''
 	);
 	for (const e of asc) {
@@ -102,8 +140,10 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 				datum: e.date,
 				teken: 'activiteit',
 				soort: 'activities',
+				// Its agenda title where that says more than its kind; the committee under it.
 				label: null,
-				zin: typeof b.agenda_title === 'string' ? b.agenda_title : (e.kind ?? ''),
+				zin: activiteitZin(e, b),
+				meta: e.node_type === 'activity' ? (e.committee?.name ?? null) : null,
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 				ref: e.node_id
 			});
@@ -136,6 +176,9 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 			ref: first.node_id
 		});
 	}
+	// After the bill's papers, so on one day the bill comes first (the sort keeps the order).
+	for (const e of docs.filter((e) => !draagtWetstitel(e.kind)))
+		out.push(eigenStuk(e, groep, dossier));
 	return out.sort((a, b) => (a.datum ?? '').localeCompare(b.datum ?? ''));
 }
 

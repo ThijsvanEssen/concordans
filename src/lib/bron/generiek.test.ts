@@ -37,6 +37,7 @@ describe('draagtWetstitel', () => {
 		for (const soort of [
 			'Voorstel van wet',
 			'Memorie van toelichting',
+			'Nadere memorie van antwoord',
 			'Nota van wijziging',
 			'Nota n.a.v. het (nader/tweede nader/enz.) verslag',
 			'Verslag',
