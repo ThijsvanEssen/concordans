@@ -15,6 +15,7 @@
 		voor,
 		indent = false,
 		empty = false,
+		bezig = false,
 		title
 	}: {
 		label: string;
@@ -30,6 +31,8 @@
 		indent?: boolean | 'deep';
 		/** Nothing of this kind: the option stays, quieter. */
 		empty?: boolean;
+		/** Its count is still being read: "…" in its place. */
+		bezig?: boolean;
 		title?: string;
 	} = $props();
 </script>
@@ -52,7 +55,9 @@
 	{/if}
 	{#if voor}<span class="voor">{@render voor()}</span>{/if}
 	<span class="label">{label}</span>
-	{#if count != null}<span class="aantal">{formatCount(count)}</span>{/if}
+	{#if bezig}<span class="aantal" aria-label="wordt geteld">…</span>{:else if count != null}<span
+			class="aantal">{formatCount(count)}</span
+		>{/if}
 </button>
 
 <style>

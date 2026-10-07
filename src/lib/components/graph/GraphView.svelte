@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { onDestroy, onMount, tick } from 'svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import { get } from 'svelte/store';
@@ -68,6 +69,7 @@
 		filter,
 		verbonden,
 		depth = 2,
+		reach = null,
 		selectedEdgeId = null,
 		inFluxMap = new Map() as NodeCounts,
 		heatMap = new Map() as NodeCounts,
@@ -93,6 +95,8 @@
 		filter: VerbondenFilter;
 		verbonden: VerbondenState;
 		depth?: number;
+		/** How far the last neighbourhood reached, and whether the API cut it off. */
+		reach?: NeighborhoodReach | null;
 		selectedEdgeId?: string | null;
 		inFluxMap?: NodeCounts;
 		heatMap?: NodeCounts;
@@ -1168,6 +1172,7 @@
 		{onFilter}
 		{onOpenFilter}
 		{depth}
+		{reach}
 		{onDepth}
 		hiddenRelations={filters.hiddenRelations}
 		onToggleRelation={toggleRelation}
