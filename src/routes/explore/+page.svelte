@@ -513,6 +513,9 @@
 		});
 	});
 
+	/** The most bronnen `/api/paths` takes in one request. */
+	const PATHS_MAX = 5;
+
 	async function pathsBetween(
 		participants: { response: Schema<'NodeGraphResponse'> }[]
 	): Promise<{ onPath: string[]; tied: string[] }> {
@@ -541,8 +544,9 @@
 		});
 		// The paths between the chosen bronnen, up to four steps (BE-38): what joins them
 		// further than one shared neighbour. Without the route, the shared neighbours only.
+		// The route takes 2 to 5 bronnen; a larger netwerk keeps the shared neighbours.
 		const paths =
-			n.tussen && participants.length > 1
+			n.tussen && participants.length > 1 && participants.length <= PATHS_MAX
 				? await pathsBetween(participants)
 				: { onPath: [], tied: [] };
 		if (epoch !== composeEpoch) return;

@@ -203,7 +203,14 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 
 	const art = top[0].c.article;
 	const artLabel = articleLabel(law.law, art);
-	const netwerk = [dossier.id, art.id];
+	// The Verkenner gets at least what the band draws: the dossier, every stuk that changes
+	// a law (the amendments one by one), every law it changes with the changed articles in
+	// it (a chosen law keeps the articles its stukken amend), the article and its judgments.
+	const alleStukken = [...new Map(changes.map((c) => [c.source.id, c.source])).values()]
+		.map((s) => ({ id: s.id, nr: stukNaam(s.display_name ?? '').nr }))
+		.sort((a, b) => nummer(a.nr) - nummer(b.nr))
+		.map((s) => s.id);
+	const netwerk = [dossier.id, ...alleStukken, ...laws.map(lawNodeId), art.id];
 	const uitspraken = cb?.judgment_total ?? null;
 	if (cb && cb.judgment_total > 0) {
 		const uniek = [...new Map(cb.items.map((i) => [i.judgment.id, i.judgment])).values()].slice(
@@ -236,7 +243,8 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		kolommen.push({ titel: `Uitspraken over ${artLabel.toLowerCase()}`, bronnen: us });
 		netwerk.push(...uniek.map((j) => j.id));
 	}
-	const params = new URLSearchParams({ focus: dossier.id, netwerk: netwerk.join(',') });
+	// No focus: the canvas takes the page, as the band's network grown, not a reader.
+	const params = new URLSearchParams({ netwerk: netwerk.join(',') });
 	return {
 		kandidaat: k,
 		kolommen,
@@ -253,11 +261,11 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 }
 
 const lawName = (l: ChangedLaw) => l.law.display_name ?? l.law.bwb_id ?? l.law.id ?? '';
+const lawKey = (l: ChangedLaw) =>
+	(l.law.id ?? l.law.bwb_id ?? '').replace(/^instruments\//, '').toLowerCase();
+const lawNodeId = (l: ChangedLaw) => `instruments/${lawKey(l)}`;
 const lawHref = (l: ChangedLaw) =>
-	buildBronHref(null, {
-		collection: 'instruments',
-		key: (l.law.id ?? l.law.bwb_id ?? '').replace(/^instruments\//, '').toLowerCase()
-	});
+	buildBronHref(null, { collection: 'instruments', key: lawKey(l) });
 
 /** The judgments on an article, the most cited first; one page is enough for two. */
 const getCitedBy = (bwb: string, number: string, signal?: AbortSignal) =>
