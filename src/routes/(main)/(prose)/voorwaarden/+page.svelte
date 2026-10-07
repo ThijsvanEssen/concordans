@@ -16,20 +16,34 @@
 		<div class="section">
 			<h2 class="section-title">Geen juridisch advies</h2>
 			<p>
-				De informatie op Concordans is bedoeld ter ondersteuning van juridisch onderzoek. Concordans
-				biedt geen juridisch advies. Verbindingen worden machinaal geëxtraheerd en kunnen
-				onjuistheden bevatten. Raadpleeg voor juridische beslissingen altijd de officiële bronnen en
-				een bevoegde jurist.
+				Concordans ondersteunt juridisch onderzoek en geeft geen juridisch advies. Verbindingen
+				worden deels machinaal afgeleid en kunnen onjuist zijn. Raadpleeg voor een juridische
+				beslissing de officiële bron en een bevoegde jurist.
 			</p>
 		</div>
 
 		<div class="section">
-			<h2 class="section-title">Gebruik van de inhoud</h2>
+			<h2 class="section-title">Hergebruik</h2>
 			<p>
-				De wetteksten en rechterlijke uitspraken zijn afkomstig van openbare overheidsbronnen en
-				vallen onder het publieke domein. De structuur, visualisaties en afgeleide gegevens van
-				Concordans mogen worden gebruikt voor onderzoek en educatieve doeleinden, mits de bron wordt
-				vermeld.
+				Wetteksten, uitspraken en parlementaire stukken komen van overheidsbronnen en zijn vrij te
+				hergebruiken. Voor teksten uit EUR-Lex en HUDOC gelden de voorwaarden van die bronnen.
+			</p>
+			<p>
+				Wat Concordans toevoegt, zoals de verbindingen en de uitvoer van de API, is vrij te
+				hergebruiken onder <a
+					href="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+					class="cite">CC0 1.0</a
+				>. Bronvermelding is welkom, niet verplicht.
+			</p>
+		</div>
+
+		<div class="section">
+			<h2 class="section-title">API</h2>
+			<p>
+				De <a href="/api" class="cite">API</a> is vrij te gebruiken, zonder sleutel. Het aantal
+				verzoeken per minuut per IP-adres is begrensd; daarboven volgt 429. Voor grootschalig
+				gebruik:
+				<a href="/contact" class="cite">contact</a>.
 			</p>
 		</div>
 
@@ -49,7 +63,7 @@
 			</p>
 		</div>
 
-		<div class="updated">Laatste wijziging: mei 2026</div>
+		<div class="updated">Laatste wijziging: oktober 2026</div>
 	</div>
 </div>
 

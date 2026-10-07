@@ -10,34 +10,33 @@
 		<div class="stub-eyebrow">Juridisch</div>
 		<h1 class="stub-title">Privacyverklaring</h1>
 		<p class="stub-lede">
-			Concordans verwerkt zo min mogelijk persoonsgegevens. Deze pagina beschrijft welke gegevens
-			worden verwerkt en waarom.
+			Concordans verwerkt zo min mogelijk persoonsgegevens. Deze pagina zegt welke en waarom.
 		</p>
 
 		<div class="section">
 			<h2 class="section-title">Wat wordt verwerkt</h2>
 			<p>
-				Concordans verwerkt geen persoonsgegevens van bezoekers, tenzij per e-mail via de
-				contactpagina gegevens worden achtergelaten. Er zijn geen gebruikersaccounts en geen
-				inlogfunctie. Er worden geen tracking- of advertentiecookies geplaatst.
+				Concordans heeft geen accounts en meet geen bezoek: er is geen analytics en er zijn geen
+				cookies. Wie via de <a href="/contact" class="cite">contactpagina</a> een e-mail stuurt, deelt
+				het e-mailadres en de inhoud van het bericht.
 			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Serverlogbestanden</h2>
 			<p>
-				De webserver registreert standaard technische gegevens: IP-adres, tijdstip van toegang en
-				het opgevraagde pad. Deze logbestanden worden maximaal dertig dagen bewaard en uitsluitend
-				gebruikt voor technisch beheer en beveiliging.
+				De webserver en de API registreren bij elk verzoek het IP-adres, het tijdstip en het
+				opgevraagde pad. Die gegevens dienen voor technisch beheer, beveiliging en de grens aan het
+				aantal verzoeken per IP-adres. De logbestanden worden maximaal dertig dagen bewaard.
 			</p>
 		</div>
 
 		<div class="section">
-			<h2 class="section-title">Cookies</h2>
+			<h2 class="section-title">Opslag in de browser</h2>
 			<p>
-				Concordans gebruikt uitsluitend functionele cookies die noodzakelijk zijn voor de werking
-				van de applicatie, zoals de weergavevoorkeur. Er worden geen analytische of marketingcookies
-				gebruikt.
+				Concordans bewaart enkele weergave-instellingen in de opslag van de browser: de breedte van
+				de panelen, het laatst samengestelde netwerk en of de legenda open staat. Die blijven in de
+				browser en gaan niet naar een server.
 			</p>
 		</div>
 
@@ -50,7 +49,7 @@
 			</p>
 		</div>
 
-		<div class="updated">Laatste wijziging: mei 2026</div>
+		<div class="updated">Laatste wijziging: oktober 2026</div>
 	</div>
 </div>
 
