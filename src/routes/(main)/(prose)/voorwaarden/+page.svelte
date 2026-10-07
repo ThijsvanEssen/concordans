@@ -31,9 +31,9 @@
 			<p>
 				Wat Concordans toevoegt, zoals de verbindingen en de uitvoer van de API, is vrij te
 				hergebruiken onder <a
-					href="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-					class="cite">CC0 1.0</a
-				>. Bronvermelding is welkom, niet verplicht.
+					href="https://creativecommons.org/licenses/by/4.0/deed.nl"
+					class="cite">CC BY 4.0</a
+				>, met vermelding van Concordans als bron.
 			</p>
 		</div>
 
