@@ -92,7 +92,12 @@ export function betrouwbaarheid(
 }
 
 const endOfNode = (node: GraphNode): End => {
-	const d = describe(node.collection, node.key, node.label, node.raw?.props ?? {});
+	const d = describe(
+		node.collection,
+		node.key,
+		node.raw?.display_name ?? node.label,
+		node.raw?.props ?? {}
+	);
 	return {
 		ref: refOf(node.collection, node.key, node.raw?.props),
 		title: node.raw?.display_name ?? d.title,

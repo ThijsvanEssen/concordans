@@ -1,5 +1,6 @@
 import { korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
+import { isGeneriek } from '$lib/bron/generiek';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
 // dossier (the moties of a debate) fold into one line that opens.
@@ -79,9 +80,6 @@ export function dossierLabel(d: Dossier): string {
 	return name === d.number ? d.number : `${d.number} ${name}`;
 }
 
-/** A title that only names the kind of paper: every bill is `Voorstel van wet`. */
-const GENERIC_TITLE = /^(voorstel van wet|nota van wijziging)$/i;
-
 /**
  * What a row is called: a toezegging by its text, a publication as it is cited, a paper
  * that only names its kind by the title of its dossier.
@@ -90,7 +88,8 @@ export function titleOf(i: FeedItem): string {
 	if (i.kind === 'toezegging' && i.summary) return i.summary;
 	const title = i.title?.trim();
 	if (!title && i.publication) return publicationCite(i.publication);
-	if (title && GENERIC_TITLE.test(title)) return i.dossier?.title?.trim() || title;
+	// A title that only names the kind (every bill is `Voorstel van wet`): the dossier's.
+	if (title && isGeneriek(title, i.kind)) return i.dossier?.title?.trim() || title;
 	return title || KIND_LABEL[i.kind].one;
 }
 
