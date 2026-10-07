@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * One article with its references
-         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument and every judgment that cites it, plus the article references recorded on the article itself.
+         * @description Looks up an article by `bwb_id` and `article_number`, adds its parent instrument, the number of judgments that cite it (`metadata.judgment_count`; `/cited-by` pages them), and the article references recorded on the article itself.
          */
         get: operations["get_article_detail_api_articles__bwb_id___article_number__get"];
         put?: never;
@@ -113,7 +113,7 @@ export interface paths {
         };
         /**
          * Paginated list of judgments
-         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter).
+         * @description A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter). `facets=false` leaves them out (null): the pages after the first need none.
          */
         get: operations["list_judgments_api_judgments_get"];
         put?: never;
@@ -373,7 +373,7 @@ export interface paths {
         };
         /**
          * Bulk activity score per node (heat layer)
-         * @description A map of node id → activity count over the past N months, where activity is the number of incoming edges created in that window. Pass months=3 for a 90-day window.
+         * @description A map of node id → activity count over the past N months, where activity is the number of incoming edges created in that window. Pass months=3 for a 90-day window. `ids` (comma-separated node ids, at most 500) counts those nodes alone, the ones a view draws; without it the `limit` nodes with the highest counts (the whole graph has 1.85 million).
          */
         get: operations["bulk_heat_api_nodes_heat_get"];
         put?: never;
@@ -1330,7 +1330,12 @@ export interface paths {
         };
         /**
          * Health
-         * @description Health check — verifies database connectivity.
+         * @description Health check — verifies database connectivity. ``warm``: the answers every visitor
+         *     asks are computed for the data as it is now (null when the API does not warm up); a
+         *     deploy waits for true before its smoke test. ``warm_version`` the data version they
+         *     were last computed for (the answers a request gets while a newer one computes, null
+         *     before the first warm-up), ``data_version`` the version now, ``computing`` whether a
+         *     warm-up or an answer of a newer version is being computed.
          */
         get: operations["health_api_health_get"];
         put?: never;
@@ -1817,8 +1822,6 @@ export interface components {
         ArticleDetailResponse: {
             article: components["schemas"]["ArticleSummaryDTO"];
             instrument: components["schemas"]["InstrumentSummaryDTO"] | null;
-            /** Judgments */
-            judgments: components["schemas"]["JudgmentSummaryDTO"][];
             /** Citations */
             citations?: components["schemas"]["ArticleCitationSpan"][];
             /**
@@ -6476,7 +6479,7 @@ export interface components {
             items: components["schemas"]["JudgmentListItemDTO"][];
             /** Total */
             total: number;
-            facets?: components["schemas"]["JudgmentFacets"];
+            facets?: components["schemas"]["JudgmentFacets"] | null;
         };
         /**
          * JudgmentParagraph
@@ -8754,6 +8757,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                /** @description Count per tier, court kind, source, year, area. */
+                facets?: boolean;
                 /** @description Free-text over display_name/ecli/summary */
                 q?: string | null;
                 /** @description ECLI court code, e.g. 'HR', 'RBAMS', 'GHARL' */
@@ -9218,6 +9223,10 @@ export interface operations {
                 months?: number;
                 /** @description Drop nodes with fewer than this many activity hits. Default 1 returns everything; bump to 2-5 for a much smaller payload without losing visible heat halos. */
                 min_count?: number;
+                /** @description Comma-separated node ids to count, at most 500. */
+                ids?: string | null;
+                /** @description Without ids: the nodes with the highest counts, this many. */
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -10929,7 +10938,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: string;
+                        [key: string]: string | boolean | null;
                     };
                 };
             };
