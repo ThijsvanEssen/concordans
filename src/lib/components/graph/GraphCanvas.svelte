@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { redundantAnchors } from '$lib/graph/anchor';
 	import type { Vorm } from '$lib/bron/vormen';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import type SigmaType from 'sigma';
@@ -596,6 +597,28 @@
 			);
 			if (!shown) next.add(id);
 		});
+		// A container's anchor that only repeats its hull: the bronnen it ties are in it.
+		const anchors: string[] = [];
+		graph.forEachNode((id, attrs) => {
+			if (attrs.anchor && id !== focusedId) anchors.push(id);
+		});
+		const leftOut = redundantAnchors({
+			anchors,
+			groupsOf: (id) =>
+				[...(nodeGroupIds.get(id) ?? [])].flatMap((g) => latestContainerGroups.get(g) ?? []),
+			neighboursOf: (id) => {
+				const ends: string[] = [];
+				graph.forEachEdge(id, (_e, a, src, tgt) => {
+					if (!a.layoutOnly) ends.push(src === id ? tgt : src);
+				});
+				return ends;
+			},
+			drawnMember: (id) =>
+				graph.hasNode(id) &&
+				!graph.getNodeAttribute(id, 'anchor') &&
+				!hiddenByFilter(graph.getNodeAttributes(id))
+		});
+		for (const id of leftOut) next.add(id);
 		strays = next;
 	}
 
