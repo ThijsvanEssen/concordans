@@ -798,9 +798,13 @@
 
 	// ── Resizable columns ────────────────────────────────────────────────────
 	const WIDTHS_KEY = 'concordans:panel-widths';
+	// A width the reader dragged is kept and wins; until then the columns follow the
+	// screen (--graph-w-auto, --panel-w-auto in the style below).
 	let navW = $state(220);
 	let panelW = $state(400);
 	let graphW = $state(360);
+	let panelDragged = $state(false);
+	let graphDragged = $state(false);
 
 	onMount(() => {
 		try {
@@ -808,30 +812,24 @@
 			if (raw) {
 				const p = JSON.parse(raw) as Record<string, number>;
 				if (p.navW) navW = p.navW;
-				if (p.panelW) panelW = p.panelW;
-				if (p.graphW) graphW = p.graphW;
+				if (p.panelW) [panelW, panelDragged] = [p.panelW, true];
+				if (p.graphW) [graphW, graphDragged] = [p.graphW, true];
 			}
 		} catch {
 			/* ignore */
 		}
-		// Below 1440px Verbonden starts narrower, so the network keeps some 320px beside a
-		// readable text; a width the reader dragged is kept.
-		if (!storedPanelW() && window.innerWidth < 1440) panelW = PANEL_NARROW;
 	});
-
-	const PANEL_NARROW = 340;
-	function storedPanelW(): boolean {
-		try {
-			return !!(JSON.parse(localStorage.getItem(WIDTHS_KEY) ?? '{}') as Record<string, number>)
-				.panelW;
-		} catch {
-			return false;
-		}
-	}
 
 	function saveWidths() {
 		try {
-			localStorage.setItem(WIDTHS_KEY, JSON.stringify({ navW, panelW, graphW }));
+			localStorage.setItem(
+				WIDTHS_KEY,
+				JSON.stringify({
+					navW,
+					panelW: panelDragged ? panelW : undefined,
+					graphW: graphDragged ? graphW : undefined
+				})
+			);
 		} catch {
 			/* ignore */
 		}
@@ -842,7 +840,12 @@
 
 	function startResize(e: PointerEvent, handle: Handle) {
 		e.preventDefault();
-		const startW = handle === 'nav' ? navW : handle === 'panel' ? panelW : graphW;
+		// From the width on screen: a column that follows the screen is not at its default.
+		const column = (e.currentTarget as HTMLElement)
+			.closest('.explore-graph, .explore-read')
+			?.querySelector<HTMLElement>(handle === 'panel' ? '.col--panel' : '.col--graph');
+		const shown = column?.getBoundingClientRect().width;
+		const startW = handle === 'nav' ? navW : (shown ?? (handle === 'panel' ? panelW : graphW));
 		drag = { handle, startX: e.clientX, startW };
 		(e.target as HTMLElement).setPointerCapture(e.pointerId);
 	}
@@ -851,8 +854,13 @@
 		if (!drag) return;
 		const delta = e.clientX - drag.startX;
 		if (drag.handle === 'nav') navW = Math.max(140, Math.min(320, drag.startW + delta));
-		else if (drag.handle === 'graph') graphW = Math.max(200, Math.min(640, drag.startW + delta));
-		else panelW = Math.max(240, Math.min(520, drag.startW - delta));
+		else if (drag.handle === 'graph') {
+			graphW = Math.max(200, Math.min(1400, drag.startW + delta));
+			graphDragged = true;
+		} else {
+			panelW = Math.max(240, Math.min(560, drag.startW - delta));
+			panelDragged = true;
+		}
 	}
 
 	function onResizeEnd() {
@@ -1058,8 +1066,8 @@
 				class="explore-graph"
 				class:explore-graph--with-reader={!!selectedNode}
 				class:is-resizing={!!drag}
-				style:--graph-w="{graphW}px"
-				style:--panel-w="{panelW}px"
+				style:--graph-w={graphDragged ? `${graphW}px` : undefined}
+				style:--panel-w={panelDragged ? `${panelW}px` : undefined}
 			>
 				{#if selectedNode}
 					<nav class="mobile-tabs" aria-label="Panelen">
@@ -1193,7 +1201,7 @@
 				class:explore-read--with-nav={withNav}
 				class:is-resizing={!!drag}
 				style:--nav-w="{navW}px"
-				style:--panel-w="{panelW}px"
+				style:--panel-w={panelDragged ? `${panelW}px` : undefined}
 			>
 				<nav class="mobile-tabs" aria-label="Panelen">
 					{#each [['reader', 'Tekst'], ['graph', 'Netwerk'], ['verbonden', 'Verbonden']] as [id, label] (id)}
@@ -1320,8 +1328,33 @@
 	   At 1280px: network 320, reader 610, Verbonden 340. */
 	.explore-graph--with-reader {
 		grid-template-columns:
-			max(200px, min(var(--graph-w), calc(100vw - var(--panel-w) - 620px)))
-			5px minmax(0, 1fr) 5px var(--panel-w);
+			max(200px, min(var(--graph-w, var(--graph-w-auto)), calc(100vw - var(--panel) - 620px)))
+			5px minmax(0, 1fr) 5px var(--panel);
+	}
+
+	/* The widths that follow the screen, until a column is dragged. Below 1440 Verbonden is
+	   narrower so the network keeps some 320px beside a readable text. From 1600 the room
+	   goes to the network: the reader keeps some 850px (a measure of 700 in the middle),
+	   Verbonden grows a little, from 400 to at most 460 at 2200 (Thijs: "niet te veel").
+	   At 1920: network 620, reader 850, Verbonden 432; at 2560: 1250, 850, 460. */
+	.explore-graph,
+	.explore-read {
+		--graph-w-auto: 360px;
+		--panel-w-auto: 340px;
+		--panel: var(--panel-w, var(--panel-w-auto));
+	}
+	@media (min-width: 1440px) {
+		.explore-graph,
+		.explore-read {
+			--panel-w-auto: 400px;
+		}
+	}
+	@media (min-width: 1600px) {
+		.explore-graph,
+		.explore-read {
+			--panel-w-auto: clamp(400px, calc(400px + (100vw - 1600px) / 10), 460px);
+			--graph-w-auto: max(360px, calc(100vw - var(--panel) - 850px));
+		}
 	}
 
 	/* In the page the text comes first (see the markup); on a wide screen the network
@@ -1348,11 +1381,11 @@
 	}
 
 	.explore-read {
-		grid-template-columns: minmax(0, 1fr) 5px var(--panel-w);
+		grid-template-columns: minmax(0, 1fr) 5px var(--panel);
 	}
 
 	.explore-read--with-nav {
-		grid-template-columns: var(--nav-w) 5px minmax(0, 1fr) 5px var(--panel-w);
+		grid-template-columns: var(--nav-w) 5px minmax(0, 1fr) 5px var(--panel);
 	}
 
 	.col {
