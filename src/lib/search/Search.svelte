@@ -4,7 +4,6 @@
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
 	// Netwerk, where a result is picked instead of opened.
 	import { goto } from '$app/navigation';
-	import { track } from '$lib/analytics';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
@@ -253,7 +252,6 @@
 		const target = known ?? (await resolveQuery(term));
 		resolving = false;
 		if (target) {
-			track('search_resolved', { type: target.ref.collection });
 			open(target.ref, target.at);
 		} else {
 			unresolved = term;
@@ -261,12 +259,10 @@
 	}
 
 	function openBare(target: Resolved) {
-		track('search_resolved', { type: target.ref.collection });
 		open(target.ref, target.at);
 	}
 
 	function openHit(hit: Hit) {
-		track('search_resolved', { type: hit.collection });
 		open(hitName(hit));
 	}
 
@@ -448,7 +444,6 @@
 								openHit(hit);
 								return;
 							}
-							track('search_resolved', { type: hit.collection });
 							onOpen?.();
 						}}
 						onpointermove={(e) => onpointermove(e, i)}

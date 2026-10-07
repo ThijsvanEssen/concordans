@@ -16,7 +16,6 @@
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { tabTitle } from '$lib/bron/tab-title';
-	import { track } from '$lib/analytics';
 	import { api, ApiError } from '$lib/api/client';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
@@ -79,14 +78,6 @@
 	let selectedNode = $state<GraphNode | null>(null);
 	store.selection.subscribe((n) => {
 		selectedNode = n;
-	});
-
-	let firstNodeTracked = false;
-	store.nodes.subscribe((ns) => {
-		if (ns.length > 0 && !firstNodeTracked) {
-			firstNodeTracked = true;
-			track('first_node', { kind: ns[0]?.kind ?? 'unknown' });
-		}
 	});
 
 	let focusError = $state<string | null>(null);
@@ -267,14 +258,6 @@
 		proposedRow = null;
 	});
 
-	const trackedModes = new Set<string>();
-	$effect(() => {
-		if (!trackedModes.has(mode)) {
-			trackedModes.add(mode);
-			track('mode_used', { mode });
-		}
-	});
-
 	// Previous and next article, and the place of the article in its law, from the list of
 	// the law's articles: in Netwerk as in Tekst, one request per law, shared with the table
 	// of contents ($lib/api/law-articles).
@@ -450,7 +433,6 @@
 	function handleNodeClick(node: GraphNode) {
 		const end = perfStart(`click ${node.id}`);
 		if (!node.id.startsWith('synth:')) {
-			track('network_expanded', { kind: node.kind });
 			void goto(bronHref(refOf(node.collection, node.key, node.raw?.props)), {
 				noScroll: true,
 				keepFocus: true

@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { Snippet } from 'svelte';
 	import TopBar from './TopBar.svelte';
 	import SearchOverlay from './SearchOverlay.svelte';
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
-	import { initAnalytics } from '$lib/analytics';
 
 	let { children }: { children?: Snippet } = $props();
 
@@ -22,10 +20,6 @@
 		}
 	}
 	provideSearchOpener(openSearch);
-
-	onMount(() => {
-		initAnalytics();
-	});
 </script>
 
 <div class="app-shell">
