@@ -5,7 +5,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
-	import { neighborsOf, type Neighbor } from '$lib/api/nodes';
+	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -68,7 +68,7 @@
 			getMember(key),
 			getMemberVotes(key).catch(() => null),
 			getMemberAuthored(key)
-				.then((r) => neighborsOf(r).map(signatureOf))
+				.then((authored) => authored.map(signatureOf))
 				.catch(() => [])
 		])
 			.then(([member, votes, signatures]) => {

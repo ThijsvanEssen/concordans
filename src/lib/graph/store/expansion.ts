@@ -1,5 +1,6 @@
-import { getNodeGraph, getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
+import { getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import { inPool } from '$lib/api/pool';
+import { abortable, getNode } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
@@ -37,10 +38,8 @@ export function createExpansion(
 		signal
 	} = ctx;
 
-	// One request per bron serves the canvas and the panel Verbonden. API 0.5 applies
-	// `limit` per bucket (relation, collection, direction) and allows at most 200; every
-	// bucket then comes with its total.
-	const ALL_BUCKETS = 200;
+	// One request per bron serves the canvas, the panel Verbonden and a reader (`getNode`:
+	// 200 per bucket, the most API 0.5 allows; every bucket comes with its total).
 	const inflight = new Map<string, Promise<Schema<'NodeGraphResponse'>>>();
 
 	const nodeResponse: GraphStore['nodeResponse'] = (collection, key, opts = {}) => {
@@ -49,7 +48,9 @@ export function createExpansion(
 		if (cached) return Promise.resolve(cached);
 		let request = inflight.get(id);
 		if (!request) {
-			request = getNodeGraph(collection, key, { limit: ALL_BUCKETS, signal: signal() })
+			// Shared with a reader that wants a bucket of the same node (a lid's AUTHORED); a
+			// reset of the canvas drops this answer, not the request.
+			request = abortable(getNode(collection, key), signal())
 				.then((response) => {
 					cache.set(id, response);
 					return response;

@@ -19,33 +19,40 @@ export type LawArticle = {
 /** An article with the layers of its place (book, title), as the reader shows them. */
 export type LawNavItem = { key: string; label: string; breadcrumb: Division[] };
 
-const requests = new Map<string, Promise<LawArticle[]>>();
+const lists = new Map<string, Promise<Schema<'InstrumentArticlesResponse'>>>();
 
-/** The articles of the law `bwb`, asked once; a failed request is asked again next time. */
-export function lawArticles(bwb: string): Promise<LawArticle[]> {
-	let request = requests.get(bwb);
+/**
+ * The list of a law as the API gives it, asked once per law: the table of contents, the
+ * place line and the group in Verbonden share it. A failed request is asked again next time.
+ */
+export function lawArticleList(bwb: string): Promise<Schema<'InstrumentArticlesResponse'>> {
+	let request = lists.get(bwb);
 	if (!request) {
 		request = unwrap(
 			api.GET('/api/instruments/{bwb_id}/articles', {
 				params: { path: { bwb_id: bwb }, query: { text_preview_chars: 0, limit: 2000 } }
 			})
-		).then((resp) =>
-			resp.items
-				// An article without a number (the Algemene bepaling) is listed by its heading.
-				.filter((a) => !a.stub && (a.article_number || a.label))
-				.map((a) => ({
-					articleNumber: a.article_number ?? a.address ?? a.key,
-					// A BW article by its book number (6:162), as the title and the citation have it.
-					label: articleName(bwb, a.article_number, a.label) ?? a.key,
-					key: a.key,
-					breadcrumb: a.breadcrumb ?? []
-				}))
 		);
-		request.catch(() => requests.delete(bwb));
-		requests.set(bwb, request);
+		request.catch(() => lists.delete(bwb));
+		lists.set(bwb, request);
 	}
 	return request;
 }
+
+/** The articles of the law `bwb`, from its list. */
+export const lawArticles = (bwb: string): Promise<LawArticle[]> =>
+	lawArticleList(bwb).then((resp) =>
+		resp.items
+			// An article without a number (the Algemene bepaling) is listed by its heading.
+			.filter((a) => !a.stub && (a.article_number || a.label))
+			.map((a) => ({
+				articleNumber: a.article_number ?? a.address ?? a.key,
+				// A BW article by its book number (6:162), as the title and the citation have it.
+				label: articleName(bwb, a.article_number, a.label) ?? a.key,
+				key: a.key,
+				breadcrumb: a.breadcrumb ?? []
+			}))
+	);
 
 /**
  * The articles with their place as layers. A layer that is the law itself (Boek 6 of BW
