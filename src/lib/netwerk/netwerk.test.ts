@@ -93,3 +93,23 @@ describe('what joins the chosen bronnen', () => {
 		expect([...b.alone]).toEqual([BUMA, SR]);
 	});
 });
+
+describe('a netwerk on a phone', () => {
+	it('starts without the bronnen between, and keeps the choice to show them', () => {
+		const q = new URLSearchParams(`netwerk=${JETTEN},${BUMA}`);
+		const n = parseNetwerk(q, false);
+		expect(n.tussen).toBe(false);
+		expect(netwerkParams(n, false).tussen).toBeNull();
+		const shown = { ...n, tussen: true };
+		expect(netwerkParams(shown, false).tussen).toBe('1');
+		expect(parseNetwerk(new URLSearchParams(`netwerk=${JETTEN}&tussen=1`), false).tussen).toBe(
+			true
+		);
+	});
+
+	it('reads ?tussen=0 the same on any screen', () => {
+		const q = new URLSearchParams(`netwerk=${JETTEN}&tussen=0`);
+		expect(parseNetwerk(q, true).tussen).toBe(false);
+		expect(parseNetwerk(q, false).tussen).toBe(false);
+	});
+});
