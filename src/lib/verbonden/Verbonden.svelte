@@ -500,8 +500,8 @@
 										aria-pressed={al}
 										aria-label={al
 											? `${row.title} staat in het netwerk`
-											: `${row.title} in het netwerk`}
-										title={al ? 'Staat in het netwerk' : 'In het netwerk'}
+											: `${row.title} aan het netwerk toevoegen`}
+										title={al ? 'Staat in het netwerk' : 'Aan het netwerk toevoegen'}
 										onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</button
 									>
 								{/if}

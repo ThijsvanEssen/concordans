@@ -308,7 +308,7 @@
 	type SortDef = { id: string; label: string; dir?: 'asc' | 'desc' };
 	const SORTS: Record<IndexCategory, SortDef[]> = {
 		instruments: [
-			{ id: 'title', label: 'Citatietitel' },
+			{ id: 'title', label: 'Citeertitel' },
 			{ id: 'article_count', label: 'Aantal artikelen' }
 		],
 		judgments: [

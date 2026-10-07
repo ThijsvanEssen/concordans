@@ -84,7 +84,7 @@ export function betrouwbaarheid(
 		reason === 'bwb_article' || reason === 'ecli'
 			? 'de verwijzing is als geheel herkend in de tekst'
 			: reason
-				? `herkend als ${reason.replaceAll('_', ' ')}`
+				? 'herkend in de tekst'
 				: derived
 					? 'afgeleid uit het dossier of uit de tekst, niet uit een verwijzing'
 					: 'gelezen uit de bron';
