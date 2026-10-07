@@ -231,9 +231,19 @@
 		<div class="section">
 			<h2 class="section-title">Verbindingen</h2>
 			<p>
-				Elke verbinding heeft een soort. Hoe een verbinding ontstaat en wat haar score en status
-				betekenen, staat in de <a href="/docs/methode" class="cite">methode</a>.
+				Een verbinding legt vast wat de ene bron met de andere doet: een uitspraak verwijst naar een
+				artikel, een Kamerstuk wijzigt een artikel, een Kamerlid is lid van een fractie.
 			</p>
+			<p>
+				De kaart van een verbinding noemt haar betrouwbaarheid (hoog, matig of laag) met de
+				herkomst: gelezen uit de bron, herkend in de tekst of afgeleid. Ook noemt de kaart de
+				status. Een verbinding is vastgesteld, of voorgesteld als een wetsvoorstel haar nog maar
+				voorstelt. Wat de woorden betekenen, staat in de <a
+					href="/docs/methode#betrouwbaarheid"
+					class="cite">methode</a
+				>.
+			</p>
+			<p>De soorten verbindingen:</p>
 			{#if relations.length}
 				<div class="list list--two-col">
 					{#each relations as relation (relation)}
