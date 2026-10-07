@@ -1,52 +1,69 @@
 # Routes
 
-Every URL and the query parameters it reads. The URL holds anything that can be linked to.
+## Pages
 
-| URL                                                          | Purpose                                                      |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `/`                                                          | Start page: the search field and links into Bladeren by kind |
-| `/explore`                                                   | The explorer: Lezen, Netwerk and Bladeren                    |
-| `/docs`, `/docs/methode`, `/docs/sneltoetsen`                | Documentation for users                                      |
-| `/api`                                                       | API reference rendered from `src/lib/api/openapi.json`       |
-| `/alpha`, `/colofon`, `/contact`, `/privacy`, `/voorwaarden` | Prose pages                                                  |
+| URL                                                | Purpose                                                                           |
+| -------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `/`                                                | Start page: search with four scopes, each linking into Bladeren; Actueel in short |
+| `/actueel`                                         | What came in per day, with filters in the URL and an Atom feed                    |
+| `/explore`                                         | The Verkenner                                                                     |
+| Readable addresses (below)                         | The Verkenner, for one bron                                                       |
+| `/docs`, `/docs/methode`, `/docs/sneltoetsen`      | Documentation for users                                                           |
+| `/api`                                             | API reference, rendered from `src/lib/api/openapi.json`                           |
+| `/colofon`, `/contact`, `/privacy`, `/voorwaarden` | Prose pages                                                                       |
 
-## `/explore` query
+## Readable addresses
 
-| Param             | Values                                                                                                                                                                                                                                                                                                                              | Effect                                                                                                          |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `mode`            | `read` (Lezen), `graph` (Netwerk, default), `index` (Bladeren)                                                                                                                                                                                                                                                                      | Which surface. The store persists across modes.                                                                 |
-| `focus`           | `{collection}/{key}`, e.g. `articles/bwbr0001854_287`; a dossier by number, `dossiers/37020-XV`                                                                                                                                                                                                                                     | The selected bron: read, and in Netwerk expanded around.                                                        |
-| `naast`           | `{collection}/{key}` of a document                                                                                                                                                                                                                                                                                                  | A toelichting opened beside the article; the article stays the selected bron. A mode switch clears it.          |
-| `overlay`         | `open`, `dossier:{number}`, `heat:{months}`                                                                                                                                                                                                                                                                                         | See [`overlays.md`](overlays.md).                                                                               |
-| `kind`            | `instruments`, `judgments`, `dossiers`, `decisions`, `members`, `factions`, `committees`, `cabinets`, `ministers`, `commitments`                                                                                                                                                                                                    | Bladeren category (default `dossiers`), in the four groups of `src/lib/components/explore/index/categories.ts`. |
-| `tabel`           | `1`                                                                                                                                                                                                                                                                                                                                 | In Lezen: every verbinding of the bron as a table instead of the text and the panel.                            |
-| `diepte`          | `1`, `2` (default), `3`                                                                                                                                                                                                                                                                                                             | Steps from the focus the network loads.                                                                         |
-| `bronnen`         | Comma-separated kinds: `artikelen`, `wetten`, `uitspraken`, `toelichtingen`, `wetsvoorstellen`, `dossiers`, `internationaal`; absent means all                                                                                                                                                                                      | The bronfilter: which kinds of bron take part in the panel, the margin, the canvas, the legend and the table.   |
-| `lid`             | `2`, or `geen` for verbindingen that name no lid                                                                                                                                                                                                                                                                                    | Only the verbindingen that name that lid of the article.                                                        |
-| `rechter`         | `hr`, `hof`, `rechtbank`, `rvs`, `ehrm`                                                                                                                                                                                                                                                                                             | Only judgments of that court.                                                                                   |
-| `van`, `tot`      | Years                                                                                                                                                                                                                                                                                                                               | Period of the source.                                                                                           |
-| `geldend`         | `YYYY-MM-DD`                                                                                                                                                                                                                                                                                                                        | Verbindingen in force on that date, instead of a period.                                                        |
-| `betrouwbaarheid` | `bron` (read from the source), `afgeleid`                                                                                                                                                                                                                                                                                           | Only verbindingen of that betrouwbaarheid.                                                                      |
-| `status`          | `vastgesteld`, `voorgesteld`                                                                                                                                                                                                                                                                                                        | Only verbindingen of that status.                                                                               |
-| `jaar`            | A year                                                                                                                                                                                                                                                                                                                              | One year, chosen in the bar chart of the judgments.                                                             |
-| `zoek`            | Text                                                                                                                                                                                                                                                                                                                                | Text within the current verbindingen.                                                                           |
-| index filters     | `q`, `stand`, `outcome`, `stage`, `has_stage`, `track`, `soort`, `passed`, `from`, `to`, `dossier`, `party`, `coalition`, `jurisdiction`, `court`, `tier`, `source`, `leeg`, `ministry`, `cabinet`, `member`, `post`, `status`, `overdue`, `sort`, `dir`, `only_active`, `include_inactive` (`FILTER_PARAMS` in `IndexView.svelte`) | Which apply depends on `kind`; switching `kind` drops them. Those the API filters on are sent to it.            |
-| `open`            | `{collection}/{key}`                                                                                                                                                                                                                                                                                                                | In Bladeren: the row opened to its detail, so a link or Back finds it open.                                     |
+`src/hooks.ts` serves these paths with the Verkenner; `src/lib/bron/leesbaar.ts` reads and writes them.
 
-The fragment is the position inside the text: `#lid-2`, `#lid-2-onder-a`, `#aanhef` in an article, `#rov-5.3` in a judgment. `src/lib/bron/anchor.ts` scrolls to the element with that id and marks it.
+| Bron        | Address                                                      | Focus                            |
+| ----------- | ------------------------------------------------------------ | -------------------------------- |
+| judgment    | `/uitspraken/ECLI:NL:HR:2019:2006`                           | from the ECLI                    |
+| article     | `/wetten/BWBR0005289/artikel/6:162`                          | `/api/lookup` kind `article`     |
+| dossier     | `/dossiers/36600-VIII`                                       | from the number                  |
+| Kamerstuk   | `/kamerstukken/36799/31`, `/kamerstukken/36600-VIII/AB` (EK) | `/api/lookup` kind `document`    |
+| publication | `/stb/2026/94`, `/stcrt/…`, `/trb/…`                         | `/api/lookup` kind `publication` |
+| lid         | `/leden/rob-jetten`                                          | `/api/lookup` kind `member`      |
+| cabinet     | `/kabinetten/rutte_iv`                                       | from the key                     |
+| fractie     | `/fracties/d66`                                              | from the key                     |
+| commissie   | `/commissies/szw`                                            | `/api/lookup` kind `committee`   |
+| toezegging  | `/toezeggingen/TZ202609-124`                                 | `/api/lookup` kind `commitment`  |
 
-Keys `1`, `2` switch to Lezen and Netwerk, the two views of a selected bron. Bladeren is a place to go, not a view of one, so it has no key and no tab in `StatusBar`; it opens from the top nav or a `bronHref` with `mode: 'index'`. Lezen without a `focus` shows nothing; Netwerk without one shows the canvas alone.
+A stemming has none and stays under `/explore?focus=`. A lookup that answers 404 `not_in_data` reads "… staat niet in de gegevens".
+
+## Query of the Verkenner
+
+| Param                 | Values                                                                                             | Effect                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `focus`               | `{collection}/{key}`; a dossier by number, `dossiers/37020-XV`                                     | The bron, where the path is not a readable address                                                  |
+| `lezen`               | `1`                                                                                                | Tekst: the reader at full width (articles, laws, judgments, documents). `mode=read` is the old name |
+| `mode`                | `index`                                                                                            | Bladeren                                                                                            |
+| `kind`                | the keys of `src/lib/components/explore/index/categories.ts`                                       | The Bladeren category; without it, the overview                                                     |
+| index filters         | `FILTER_PARAMS` in `IndexView.svelte`                                                              | Which apply depends on `kind`; switching `kind` drops them                                          |
+| `open`                | `{collection}/{key}`                                                                               | In Bladeren: the row opened to its detail                                                           |
+| `naast`               | `{collection}/{key}` of a document                                                                 | A toelichting beside the article                                                                    |
+| `tabel`               | `1`                                                                                                | Every verbinding of the bron as a table                                                             |
+| `diepte`              | `1` to `3`; default 1 for a wet, fractie, commissie or dossier, else 2                             | Steps from the focus the network loads                                                              |
+| `netwerk`             | comma-separated node ids                                                                           | The chosen bronnen of a composed netwerk ([`graph-system.md`](graph-system.md))                     |
+| `uit`                 | node ids                                                                                           | Chosen bronnen switched off                                                                         |
+| `tussen`              | `0`                                                                                                | Without the bronnen between the chosen ones                                                         |
+| `overlay`             | `open`, `dossier:{number}`, `heat:{months}`                                                        | [`overlays.md`](overlays.md)                                                                        |
+| `versies`             | `van..tot` (the dates two versions took effect), or `lid-4`                                        | Two versions of an article compared, or one lid through its versions                                |
+| `weergave`            | `naast`                                                                                            | The comparison side by side                                                                         |
+| `peildatum`           | `YYYY-MM-DD`                                                                                       | A law or article as it stood on that date                                                           |
+| bronfilter            | `bronnen`, `rechter`, `van`, `tot`, `geldend`, `betrouwbaarheid`, `status` (`verbonden/filter.ts`) | Which verbindingen the panel, the canvas, the legend and the table show                             |
+| `lid`, `jaar`, `zoek` | a lid, a year, text                                                                                | A place within the verbindingen of one bron                                                         |
+
+The fragment is a position in the text: `#lid-2-onder-a`, `#aanhef` in an article, `#rov-5.3` in a judgment. `bron/anchor.ts` scrolls to it and marks it.
+
+The key `L` switches between Netwerk and Tekst. Bladeren opens from the top nav.
 
 ## Links to a bron
 
-`bronHref(ref, { at, keepMode, mode })` in `src/lib/bron/href.ts` builds every link to a bron; nothing else writes `?focus=`. It keeps the `mode`, the `overlay`, the bronfilter (`bronnen`, `rechter`, `van`, `tot`, `geldend`, `betrouwbaarheid`, `status`) and `diepte` of the view it stands in, so reading stays reading, the network stays the network, and the choice of bronnen holds from one bron to the next. `lid`, `jaar`, `zoek` and `tabel` name a place in one bron and stay behind.
+`bronHref(ref, { at, keepMode, mode, keepNetwerk })` in `src/lib/bron/href.ts` builds every link to a bron, as its readable address where it has one. It keeps the view it stands in: Tekst stays Tekst, and `KEPT_PARAMS` (overlay, bronfilter, `diepte`, `netwerk`, `uit`, `tussen`) travel along. `lid`, `jaar`, `zoek` and `tabel` stay behind. From outside the Verkenner, or from Bladeren, a readable bron opens in Tekst and any other in Netwerk. `indexHref` builds a link into Bladeren.
 
-The filter is parsed once, in `explore/+page.svelte` (`parseFilter` in `src/lib/verbonden/filter.ts`), into one object that the panel, the reader, the canvas, the legend and the table read. It is never kept in a store. From Bladeren, or with `keepMode: false`, it opens in `mode` (default `read`). `at` becomes the fragment.
-
-A dossier is linked by its number: a `BronRef` of a dossier carries `number` next to its node key (`refOf` reads it from `props.label`), and a string ref is already the name a link carries (`dossiers/37020-XV`). `explore/+page.svelte` turns that number into the node through `GET /api/dossiers/{number}`.
-
-Every link is a navigation, so the browser history is the history of bronnen. The back and forward buttons of the status bar and the arrow keys of the canvas call `history.back()` and `history.forward()`. A click on the canvas is `goto(bronHref(refOf(...)))`.
+A dossier is linked by its number: a `BronRef` of a dossier carries `number` next to its key (`refOf` reads it from `props.label`).
 
 ## Adding a query parameter
 
-Read it in `routes/explore/+page.svelte` in a `$derived`, write it with `setUrl` (`goto` with `replaceState`, `noScroll`, `keepFocus`), and add it to the table above. A parameter that belongs to the view and must travel with a link to a bron goes in `KEPT_PARAMS` of `href.ts`.
+Read it in `routes/explore/+page.svelte` in a `$derived`, write it with `setUrl` (`goto` with `replaceState`, `noScroll`, `keepFocus`), and add it to the table above. A parameter that must travel with a link to a bron goes in `KEPT_PARAMS`.
