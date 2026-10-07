@@ -7,7 +7,7 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow">Juridisch</div>
+		<div class="stub-eyebrow">Over Concordans</div>
 		<h1 class="stub-title">Privacyverklaring</h1>
 		<p class="stub-lede">
 			Concordans verwerkt zo min mogelijk persoonsgegevens. Deze pagina zegt welke en waarom.
@@ -17,7 +17,7 @@
 			<h2 class="section-title">Wat wordt verwerkt</h2>
 			<p>
 				Concordans heeft geen accounts en plaatst geen cookies. Wie via de <a
-					href="/contact"
+					href="/over#contact"
 					class="cite">contactpagina</a
 				> een e-mail stuurt, deelt het e-mailadres en de inhoud van het bericht. Een advertentie op Concordans
 				is nooit afgestemd op wie de pagina bekijkt.
@@ -46,8 +46,9 @@
 		<div class="section">
 			<h2 class="section-title">Contact</h2>
 			<p>
-				Vragen over de verwerking van persoonsgegevens gaan via de <a href="/contact" class="cite"
-					>contactpagina</a
+				Vragen over de verwerking van persoonsgegevens gaan via de <a
+					href="/over#contact"
+					class="cite">contactpagina</a
 				>.
 			</p>
 		</div>

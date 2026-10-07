@@ -370,7 +370,7 @@
 		{#if notFound}
 			<p class="state" role="status">
 				"{q}" staat niet in de gegevens. Het netwerk bevat een selectie van bronnen;
-				<a href="/docs#dekking">zie de dekking</a>.
+				<a href="/bronnen#dekking">zie de dekking</a>.
 			</p>
 		{/if}
 		{#if citation}

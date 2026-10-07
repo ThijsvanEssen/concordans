@@ -2,15 +2,15 @@
 
 ## Pages
 
-| URL                                                | Purpose                                                                           |
-| -------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `/`                                                | Start page: search with four scopes, each linking into Bladeren; Actueel in short |
-| `/actueel`                                         | What came in per day, with filters in the URL and an Atom feed                    |
-| `/explore`                                         | The Verkenner                                                                     |
-| Readable addresses (below)                         | The Verkenner, for one bron                                                       |
-| `/docs`, `/docs/methode`, `/docs/sneltoetsen`      | Documentation for users                                                           |
-| `/api`                                             | API reference, rendered from `src/lib/api/openapi.json`                           |
-| `/colofon`, `/contact`, `/privacy`, `/voorwaarden` | Prose pages                                                                       |
+| URL                                             | Purpose                                                                           |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- |
+| `/`                                             | Start page: search with four scopes, each linking into Bladeren; Actueel in short |
+| `/actueel`                                      | What came in per day, with filters in the URL and an Atom feed                    |
+| `/explore`                                      | The Verkenner                                                                     |
+| Readable addresses (below)                      | The Verkenner, for one bron                                                       |
+| `/docs`, `/docs/methode`, `/docs/sneltoetsen`   | Documentation for users                                                           |
+| `/api`                                          | API reference, rendered from `src/lib/api/openapi.json`                           |
+| `/over`, `/bronnen`, `/privacy`, `/voorwaarden` | Prose pages                                                                       |
 
 ## Readable addresses
 

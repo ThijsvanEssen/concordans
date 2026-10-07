@@ -1,67 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getCoverage, getStats, type Coverage, type Stats } from '$lib/api/stats';
-	import { longDate } from '$lib/verbonden/rows';
-	import { formatCount } from '$lib/verbonden/filter';
+	import { getStats, type Stats } from '$lib/api/stats';
 	import { modKey } from '$lib/utils/platform';
-	import { RELATIONS, RELATION_LABEL, TIERS, TIER_LABEL } from '$lib/vocabulary';
-
-	/** The collections the dekking lists, in the order of the bronnen above. */
-	const COVERAGE: { collection: string; label: string }[] = [
-		{ collection: 'instruments', label: 'Wetten en regelingen' },
-		{ collection: 'articles', label: 'Artikelen' },
-		{ collection: 'judgments', label: 'Uitspraken' },
-		{ collection: 'dossiers', label: 'Dossiers' },
-		{ collection: 'documents', label: 'Kamerstukken en andere documenten' },
-		{ collection: 'members', label: 'Personen' },
-		{ collection: 'committees', label: 'Commissies' },
-		{ collection: 'cabinets', label: 'Kabinetten' },
-		{ collection: 'commitments', label: 'Toezeggingen' }
-	];
-
-	/** The sources the API names in `data_as_of`, as a reader knows them. */
-	const SOURCE_LABEL: Record<string, string> = {
-		bwb: 'wetten.overheid.nl',
-		rechtspraak: 'rechtspraak.nl',
-		echr: 'HUDOC',
-		eurlex: 'EUR-Lex',
-		tk: 'Tweede Kamer',
-		eerstekamer: 'Eerste Kamer',
-		staatsblad: 'Staatsblad',
-		staatscourant: 'Staatscourant',
-		rijksoverheid: 'rijksoverheid.nl',
-		tooi: 'TOOI',
-		verdragenbank: 'Verdragenbank'
-	};
+	import { RELATIONS, RELATION_LABEL } from '$lib/vocabulary';
 
 	let stats = $state<Stats | null>(null);
-	let coverage = $state<Coverage | null>(null);
-
-	/**
-	 * How current each source is, as the API says (`data_as_of`): the last date in its data
-	 * where it gives one, and when it was fetched.
-	 */
-	const asOf = $derived(
-		Object.entries(stats?.data_as_of ?? {}).flatMap(([source, d]) =>
-			d?.retrieved_at
-				? [
-						{
-							source: SOURCE_LABEL[source] ?? source,
-							newest: d.newest ?? null,
-							fetched: d.retrieved_at.slice(0, 10)
-						}
-					]
-				: []
-		)
-	);
-
-	/** The relation types the network holds, in vocabulary order: only those the API counts. */
-	/** The colleges the dataset holds judgments of, in the order of the filters. */
-	const tiers = $derived(
-		TIERS.flatMap((tier) =>
-			(coverage?.tiers ?? []).filter((c) => c.tier === tier).map((c) => ({ ...c, tier }))
-		)
-	);
 
 	const relations = $derived(
 		stats ? RELATIONS.filter((r) => (stats!.edges.by_relation[r] ?? 0) > 0) : []
@@ -71,9 +14,6 @@
 		getStats()
 			.then((s) => (stats = s))
 			.catch(() => (stats = null));
-		getCoverage()
-			.then((c) => (coverage = c))
-			.catch(() => (coverage = null));
 	});
 </script>
 
@@ -87,9 +27,10 @@
 		<h1 class="stub-title">Documentatie</h1>
 		<p class="stub-lede">
 			Concordans toont wetten, uitspraken en parlementaire stukken uit officiële bronnen, met de
-			verbindingen ertussen. Het is een naslagwerk, geen juridisch advies (zie de
-			<a href="/voorwaarden" class="cite">voorwaarden</a>), en het is niet volledig (zie de
-			<a href="#beperkingen" class="cite">bekende beperkingen</a>).
+			verbindingen ertussen. Waar de gegevens vandaan komen en wat ermee mag, staat bij
+			<a href="/bronnen" class="cite">Bronnen en hergebruik</a>; hoe de verbindingen ontstaan en
+			waar de grenzen liggen, in de <a href="/docs/methode" class="cite">Methode</a>; wat geldt voor
+			gebruik, in de <a href="/voorwaarden" class="cite">Voorwaarden</a>.
 		</p>
 
 		<div class="section" id="onderdelen">
@@ -108,8 +49,8 @@
 			</p>
 		</div>
 
-		<div class="section" id="dekking">
-			<h2 class="section-title">Bronnen en dekking</h2>
+		<div class="section" id="soorten">
+			<h2 class="section-title">Soorten bronnen</h2>
 			<p>
 				Een wet of regeling komt uit het Basiswettenbestand; verdragen en Europese regelingen staan
 				ernaast. Een regeling bestaat uit artikelen. Een eerdere tekst van een artikel is een eigen
@@ -125,51 +66,9 @@
 				onderwerp, bij beide Kamers.
 			</p>
 			<p>
-				De herkomst per bron staat in de <a href="/docs/methode" class="cite">methode</a>; de
-				bronvermelding in het <a href="/colofon" class="cite">colofon</a>.
+				De herkomst, de dekking en de stand per bron staan bij
+				<a href="/bronnen#dekking" class="cite">Bronnen en hergebruik</a>.
 			</p>
-			{#if stats}
-				<div class="list">
-					{#each COVERAGE as c (c.collection)}
-						<div class="list-row">
-							<span class="list-k">{c.label}</span><span
-								>{formatCount(stats.nodes[c.collection] ?? 0)}</span
-							>
-						</div>
-					{/each}
-				</div>
-				{#if coverage}
-					<div class="list">
-						{#each tiers as t (t.tier)}
-							<div class="list-row">
-								<span class="list-k">{TIER_LABEL[t.tier]}</span><span
-									>{formatCount(t.count)}{#if t.first_date && t.last_date}, {t.first_date.slice(
-											0,
-											4
-										)} tot {longDate(t.last_date)}{/if}</span
-								>
-							</div>
-						{/each}
-					</div>
-				{/if}
-				{#if asOf.length}
-					<p class="list-note">
-						Stand per bron: de laatste datum in de gegevens, waar de bron die heeft, en de datum van
-						ophalen.
-					</p>
-					<div class="list">
-						{#each asOf as a (a.source)}
-							<div class="list-row">
-								<span class="list-k">{a.source}</span><span
-									>{a.newest ? `tot en met ${longDate(a.newest)}, ` : ''}opgehaald {longDate(
-										a.fetched
-									)}</span
-								>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			{/if}
 		</div>
 
 		<div class="section">
@@ -244,22 +143,13 @@
 			</div>
 		</div>
 
-		<div class="section" id="aanhalen">
-			<h2 class="section-title">Terugvinden en aanhalen</h2>
+		<div class="section" id="terugvinden">
+			<h2 class="section-title">Terugvinden</h2>
 			<p>
 				Elke lezer linkt naar de bron bij de uitgever: wetten.overheid.nl, rechtspraak.nl,
-				tweedekamer.nl, eerstekamer.nl, EUR-Lex of HUDOC. Daar staat de officiële tekst.
-			</p>
-			<p>
-				Haal een tekst aan naar de officiële bron: het ECLI, het artikel met de wet, het Kamerstuk
-				of de vindplaats in het Staatsblad. Haal de verbindingen van Concordans aan met het adres en
-				de datum van raadplegen. Ze vallen onder
-				<a href="https://creativecommons.org/licenses/by/4.0/deed.nl" class="cite">CC BY 4.0</a>
-				(zie de <a href="/voorwaarden" class="cite">voorwaarden</a>):
-			</p>
-			<p class="voorbeeld">
-				Concordans, verbindingen van art. 273f Sr,
-				https://concordans.nl/wetten/BWBR0001854/artikel/273f (geraadpleegd 7 oktober 2026).
+				tweedekamer.nl, eerstekamer.nl, EUR-Lex of HUDOC. Daar staat de officiële tekst. Hoe een
+				tekst en de verbindingen worden aangehaald, staat bij
+				<a href="/bronnen#hergebruik" class="cite">Bronnen en hergebruik</a>.
 			</p>
 			<p>
 				Een plaats in de tekst staat in het adres na het hekje: <code>#lid-2-onder-a</code> in een
@@ -382,42 +272,11 @@
 			</p>
 		</div>
 
-		<div class="section" id="beperkingen">
-			<h2 class="section-title">Bekende beperkingen</h2>
-			<p>
-				Het netwerk bevat een selectie: niet elke regeling uit het Basiswettenbestand, niet alle
-				uitspraken van rechtspraak.nl, niet het volledige archief van de Kamers. Gemeentelijke
-				verordeningen en ongepubliceerde uitspraken vallen erbuiten. Een bron die ontbreekt, staat
-				niet in deze selectie; dat is geen bewijs dat ze niet bestaat.
-			</p>
-			<p>
-				Een Europese richtlijn of verordening staat erin voor zover een Nederlandse regeling ernaar
-				verwijst. Van het EHRM staat een selectie uitspraken in het netwerk, van het Hof van
-				Justitie vrijwel niets. Zie <a href="https://eur-lex.europa.eu" class="cite"
-					>eur-lex.europa.eu</a
-				>
-				en
-				<a href="https://hudoc.echr.coe.int" class="cite">hudoc.echr.coe.int</a>.
-			</p>
-			<p>
-				Van de Eerste Kamer staan leden, fracties en commissies erin in hun huidige samenstelling,
-				zonder eerdere, en besluiten over wetsvoorstellen vanaf juli 2026.
-			</p>
-			<p>
-				Elke bron wordt afzonderlijk opgehaald; de stand per bron staat onder Bronnen en dekking. De
-				geldigheidsdatum van een artikel is de datum van inwerkingtreding, niet die van het ophalen.
-			</p>
-			<p>
-				Concordans is in ontwikkeling. Functies en weergave kunnen wijzigen. Een adres op ECLI,
-				BWB-id of officieel nummer blijft werken.
-			</p>
-		</div>
-
 		<div class="meta-row">
 			<a href="/docs/methode" class="meta-link">Methode</a>
 			<a href="/docs/sneltoetsen" class="meta-link">Sneltoetsen</a>
 			<a href="/api" class="meta-link">API-referentie</a>
-			<a href="/colofon" class="meta-link">Colofon</a>
+			<a href="/bronnen" class="meta-link">Bronnen en hergebruik</a>
 		</div>
 	</div>
 </div>
@@ -482,13 +341,6 @@
 		margin-bottom: 0;
 	}
 
-	.voorbeeld {
-		padding-left: var(--s-4);
-		border-left: 2px solid var(--rule-strong);
-		color: var(--ink-2);
-		overflow-wrap: anywhere;
-	}
-
 	.cite {
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
@@ -530,7 +382,6 @@
 		flex: none;
 		width: 11em;
 		color: var(--ink-3);
-		font-variant-numeric: tabular-nums;
 	}
 
 	.list--two-col {

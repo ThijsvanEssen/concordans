@@ -48,9 +48,7 @@
 				</dd>
 				<dt>Licentie</dt>
 				<dd>
-					De uitvoer valt onder
-					<a href="https://creativecommons.org/licenses/by/4.0/deed.nl">CC BY 4.0</a>, met
-					vermelding van Concordans als bron. Zie de <a href="/voorwaarden">voorwaarden</a>.
+					Zie <a href="/bronnen#hergebruik">Bronnen en hergebruik</a>.
 				</dd>
 				<dt>Techniek</dt>
 				<dd>Een FastAPI-service (LawGraph); de site is gebouwd met SvelteKit.</dd>
@@ -202,7 +200,7 @@
 			<p>
 				De werkomgeving staat in de <a href="/docs">documentatie</a>, de herkomst van de gegevens in
 				de <a href="/docs/methode">methode</a>. Voor grootschalig gebruik:
-				<a href="/contact">contact</a>.
+				<a href="/over#contact">contact</a>.
 			</p>
 		</div>
 	</div>

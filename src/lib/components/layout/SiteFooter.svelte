@@ -60,17 +60,17 @@
 						>eur-lex.europa.eu</a
 					>
 				</li>
-				<li><a href="/docs/methode" class="no-underline">Herkomst per bron</a></li>
+				<li><a href="/bronnen" class="no-underline">Herkomst per bron</a></li>
 			</ul>
 		</div>
 
 		<div class="foot-col">
 			<h4>Over</h4>
 			<ul>
-				<li><a href="/colofon" class="no-underline">Colofon</a></li>
-				<li><a href="/privacy" class="no-underline">Privacy</a></li>
+				<li><a href="/over" class="no-underline">Over Concordans</a></li>
+				<li><a href="/bronnen" class="no-underline">Bronnen en hergebruik</a></li>
 				<li><a href="/voorwaarden" class="no-underline">Voorwaarden</a></li>
-				<li><a href="/contact" class="no-underline">Contact</a></li>
+				<li><a href="/privacy" class="no-underline">Privacy</a></li>
 			</ul>
 		</div>
 	</div>

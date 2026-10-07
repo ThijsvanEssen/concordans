@@ -69,7 +69,7 @@ describe('one form for each thing', () => {
 			'lib/components/explore/readers/MemberReader.svelte',
 			'lib/components/ui/FilterOptie.svelte',
 			'routes/(main)/api/+page.svelte',
-			'routes/(main)/docs/+page.svelte'
+			'routes/(main)/(prose)/bronnen/+page.svelte'
 		];
 		expect(offenders((t) => /tabular-nums/.test(t), columns)).toEqual([]);
 	});
