@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { describe as describeBron, periodLabel, rowKey, rowOfNeighbor, type Row } from './rows';
+import {
+	describe as describeBron,
+	historyRow,
+	periodLabel,
+	rowKey,
+	rowOfNeighbor,
+	uniqueRows,
+	type Row
+} from './rows';
 import type { Neighbor } from '$lib/api/nodes';
 
 describe('rowKey', () => {
@@ -13,6 +21,19 @@ describe('rowKey', () => {
 				edgeId
 			}) as Row;
 		expect(rowKey(row('e1'))).not.toBe(rowKey(row('e2')));
+	});
+
+	it('tells apart two changes by one stuk without an edge: it amends and it repeals', () => {
+		// Art. 273f Sr: the memorie van toelichting of 36547 does both.
+		const change = (kind: string) =>
+			historyRow({
+				document_id: 'documents/mvt',
+				dossier_number: '36547',
+				change: kind,
+				status: 'voorgesteld'
+			})!;
+		expect(rowKey(change('amends'))).not.toBe(rowKey(change('repeals')));
+		expect(uniqueRows([change('amends'), change('repeals'), change('amends')])).toHaveLength(2);
 	});
 });
 
