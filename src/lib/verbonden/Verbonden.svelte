@@ -798,8 +798,10 @@
 		background: var(--ink);
 		border-color: var(--ink);
 	}
+	/* On the margin of the group's head and caption. */
 	.group__volgorde {
 		margin: var(--s-1) 0 var(--s-2);
+		padding: 0 var(--s-4);
 	}
 	.group__caption {
 		margin: 0;
