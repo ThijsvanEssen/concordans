@@ -17,8 +17,9 @@
 			<h2 class="section-title">Geen juridisch advies</h2>
 			<p>
 				Concordans ondersteunt juridisch onderzoek en geeft geen juridisch advies. Verbindingen
-				worden deels machinaal afgeleid en kunnen onjuist zijn. Raadpleeg voor een juridische
-				beslissing de officiële bron en een bevoegde jurist.
+				worden deels machinaal afgeleid en kunnen onjuist zijn. Aan de weergaven en verbindingen
+				kunnen geen rechten worden ontleend. Raadpleeg voor een juridische beslissing de officiële
+				bron en een bevoegde jurist.
 			</p>
 		</div>
 

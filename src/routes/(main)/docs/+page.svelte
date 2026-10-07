@@ -8,7 +8,7 @@
 
 	/** The collections the dekking lists, in the order of the bronnen above. */
 	const COVERAGE: { collection: string; label: string }[] = [
-		{ collection: 'instruments', label: 'Instrumenten' },
+		{ collection: 'instruments', label: 'Wetten en regelingen' },
 		{ collection: 'articles', label: 'Artikelen' },
 		{ collection: 'judgments', label: 'Uitspraken' },
 		{ collection: 'dossiers', label: 'Dossiers' },
@@ -37,11 +37,20 @@
 	let stats = $state<Stats | null>(null);
 	let coverage = $state<Coverage | null>(null);
 
-	/** When each source was last read, as the API says (`data_as_of`). */
+	/**
+	 * How current each source is, as the API says (`data_as_of`): the last date in its data
+	 * where it gives one, and when it was fetched.
+	 */
 	const asOf = $derived(
 		Object.entries(stats?.data_as_of ?? {}).flatMap(([source, d]) =>
 			d?.retrieved_at
-				? [{ source: SOURCE_LABEL[source] ?? source, date: d.retrieved_at.slice(0, 10) }]
+				? [
+						{
+							source: SOURCE_LABEL[source] ?? source,
+							newest: d.newest ?? null,
+							fetched: d.retrieved_at.slice(0, 10)
+						}
+					]
 				: []
 		)
 	);
@@ -78,7 +87,9 @@
 		<h1 class="stub-title">Documentatie</h1>
 		<p class="stub-lede">
 			Concordans toont wetten, uitspraken en parlementaire stukken uit officiële bronnen, met de
-			verbindingen ertussen. Het is een naslagwerk en geeft geen juridisch advies.
+			verbindingen ertussen. Het is een naslagwerk, geen juridisch advies (zie de
+			<a href="/voorwaarden" class="cite">voorwaarden</a>), en het is niet volledig (zie de
+			<a href="#beperkingen" class="cite">bekende beperkingen</a>).
 		</p>
 
 		<div class="section" id="onderdelen">
@@ -100,9 +111,10 @@
 		<div class="section" id="dekking">
 			<h2 class="section-title">Bronnen en dekking</h2>
 			<p>
-				Een instrument is een regeling uit het Basiswettenbestand, een verdrag of een Europese
-				regeling. Het bestaat uit artikelen. Een eerdere tekst van een artikel is een eigen bron.
-				Een publicatie in het Staatsblad wijzigt een regeling, voegt eraan toe of trekt haar in.
+				Een wet of regeling komt uit het Basiswettenbestand; verdragen en Europese regelingen staan
+				ernaast. Een regeling bestaat uit artikelen. Een eerdere tekst van een artikel is een eigen
+				bron. Een publicatie in het Staatsblad wijzigt een regeling, voegt eraan toe of trekt haar
+				in.
 			</p>
 			<p>
 				Een uitspraak verwijst naar artikelen, instrumenten en andere uitspraken. Een uitspraak in
@@ -141,11 +153,18 @@
 					</div>
 				{/if}
 				{#if asOf.length}
-					<p class="list-note">Laatst opgehaald:</p>
+					<p class="list-note">
+						Stand per bron: de laatste datum in de gegevens, waar de bron die heeft, en de datum van
+						ophalen.
+					</p>
 					<div class="list">
 						{#each asOf as a (a.source)}
 							<div class="list-row">
-								<span class="list-k">{a.source}</span><span>{longDate(a.date)}</span>
+								<span class="list-k">{a.source}</span><span
+									>{a.newest ? `tot en met ${longDate(a.newest)}, ` : ''}opgehaald {longDate(
+										a.fetched
+									)}</span
+								>
 							</div>
 						{/each}
 					</div>
@@ -158,8 +177,7 @@
 			<p>
 				Het zoekveld doorzoekt instrumenten, artikelen, uitspraken, dossiers, Kamerstukken,
 				stemmingen, personen, fracties, commissies, kabinetten en toezeggingen. Een treffer op
-				nummer staat eerst, dan een op de volledige naam, het begin van de naam, een deel ervan en
-				ten slotte op woorden.
+				nummer staat eerst.
 			</p>
 			<p>Een nummer, citaat of wetsnaam opent de bron direct:</p>
 			<div class="list">
@@ -178,7 +196,7 @@
 					>
 				</div>
 				<div class="list-row">
-					<span class="list-k">BWB-id of CELEX</span><span>BWBR0001854, 32013L0036</span>
+					<span class="list-k">BWB-id of CELEX-nummer</span><span>BWBR0001854, 32013L0036</span>
 				</div>
 				<div class="list-row">
 					<span class="list-k">wetsnaam</span><span
@@ -224,25 +242,52 @@
 					<span class="list-k">toezegging</span><span>/toezeggingen/TZ202609-124</span>
 				</div>
 			</div>
+		</div>
+
+		<div class="section" id="aanhalen">
+			<h2 class="section-title">Terugvinden en aanhalen</h2>
 			<p>
-				De weergave staat erachter: <code>?lezen=1</code> voor de tekst op volle breedte. Een plaats
-				in de tekst staat na het hekje: <code>#lid-2-onder-a</code> in een artikel,
-				<code>#rov-5.3</code> in een uitspraak. Een stemming heeft geen eigen adres en blijft onder
-				<code>/explore</code>.
+				Elke lezer linkt naar de bron bij de uitgever: wetten.overheid.nl, rechtspraak.nl,
+				tweedekamer.nl, eerstekamer.nl, EUR-Lex of HUDOC. Daar staat de officiële tekst.
+			</p>
+			<p>
+				Haal een tekst aan naar de officiële bron: het ECLI, het artikel met de wet, het Kamerstuk
+				of de vindplaats in het Staatsblad. Haal de verbindingen van Concordans aan met het adres en
+				de datum van raadplegen. Ze vallen onder
+				<a href="https://creativecommons.org/licenses/by/4.0/deed.nl" class="cite">CC BY 4.0</a>
+				(zie de <a href="/voorwaarden" class="cite">voorwaarden</a>):
+			</p>
+			<p class="voorbeeld">
+				Concordans, verbindingen van art. 273f Sr,
+				https://concordans.nl/wetten/BWBR0001854/artikel/273f (geraadpleegd 7 oktober 2026).
+			</p>
+			<p>
+				Een plaats in de tekst staat in het adres na het hekje: <code>#lid-2-onder-a</code> in een
+				artikel, <code>#rov-5.3</code> in een uitspraak.
 			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Verbindingen</h2>
 			<p>
-				Elke verbinding heeft een soort. Hoe een verbinding ontstaat en wat haar score en status
-				betekenen, staat in de <a href="/docs/methode" class="cite">methode</a>.
+				Een verbinding legt vast wat de ene bron met de andere doet: een uitspraak verwijst naar een
+				artikel, een Kamerstuk wijzigt een artikel, een Kamerlid is lid van een fractie.
 			</p>
+			<p>
+				De kaart van een verbinding noemt haar betrouwbaarheid (hoog, matig of laag) met de
+				herkomst: gelezen uit de bron, herkend in de tekst of afgeleid. Ook noemt de kaart de
+				status. Een verbinding is vastgesteld, of voorgesteld als een wetsvoorstel haar nog maar
+				voorstelt. Wat de woorden betekenen, staat in de <a
+					href="/docs/methode#betrouwbaarheid"
+					class="cite">methode</a
+				>.
+			</p>
+			<p>De soorten verbindingen:</p>
 			{#if relations.length}
 				<div class="list list--two-col">
 					{#each relations as relation (relation)}
 						<div class="list-row">
-							<span class="list-k">{relation}</span><span>{RELATION_LABEL[relation]}</span>
+							<span>{RELATION_LABEL[relation]}</span>
 						</div>
 					{/each}
 				</div>
@@ -257,9 +302,9 @@
 				muis erop of met de toetsenbordfocus verschijnt dezelfde kaart, zonder knoppen.
 			</p>
 			<p>
-				In de kaart opent <strong>Lees</strong> de bron. <strong>In het netwerk</strong> toont haar met
-				haar verbindingen. Cmd-klik, ctrl-klik en een klik met de middelste knop openen de bron direct.
-				Een zoekresultaat opent de bron ook direct.
+				In de kaart opent <strong>Lees</strong> de bron. <strong>In het netwerk</strong> toont haar
+				met haar verbindingen. Een zoekresultaat opent de bron direct; zie ook de
+				<a href="/docs/sneltoetsen" class="cite">sneltoetsen</a>.
 			</p>
 		</div>
 
@@ -279,10 +324,9 @@
 			</p>
 			<p>
 				Het paneel Netwerk, rechtsboven, houdt bronnen vast over meerdere keuzes heen. Een klik op
-				een naam zet de bron uit of aan; × haalt haar weg. <strong>+ bron</strong> zoekt een bron om
-				toe te voegen; in Verbonden heeft elke rij een +. De gekozen bronnen staan in de URL (<code
-					>?netwerk</code
-				>).
+				een naam zet de bron uit of aan; × haalt haar weg. <strong>+ bron</strong> zoekt een bron om toe
+				te voegen; in Verbonden heeft elke rij een +. De gekozen bronnen staan in het adres; een gedeelde
+				link toont hetzelfde netwerk.
 			</p>
 			<p>
 				Het netwerk toont de gekozen bronnen met hun onderlinge verbindingen en met de bronnen
@@ -341,10 +385,10 @@
 		<div class="section" id="beperkingen">
 			<h2 class="section-title">Bekende beperkingen</h2>
 			<p>
-				Het netwerk bevat een selectie: niet elk BWB-instrument, niet alle uitspraken van
-				rechtspraak.nl, niet het volledige archief van de Kamers. Gemeentelijke verordeningen en
-				ongepubliceerde uitspraken vallen erbuiten. Een bron die ontbreekt, staat niet in deze
-				selectie; dat is geen bewijs dat ze niet bestaat.
+				Het netwerk bevat een selectie: niet elke regeling uit het Basiswettenbestand, niet alle
+				uitspraken van rechtspraak.nl, niet het volledige archief van de Kamers. Gemeentelijke
+				verordeningen en ongepubliceerde uitspraken vallen erbuiten. Een bron die ontbreekt, staat
+				niet in deze selectie; dat is geen bewijs dat ze niet bestaat.
 			</p>
 			<p>
 				Een Europese richtlijn of verordening staat erin voor zover een Nederlandse regeling ernaar
@@ -356,11 +400,11 @@
 				<a href="https://hudoc.echr.coe.int" class="cite">hudoc.echr.coe.int</a>.
 			</p>
 			<p>
-				Van de Eerste Kamer staan leden, fracties en commissies erin vanaf 2 oktober 2026, zonder
-				eerdere samenstelling, en besluiten over wetsvoorstellen vanaf juli 2026.
+				Van de Eerste Kamer staan leden, fracties en commissies erin in hun huidige samenstelling,
+				zonder eerdere, en besluiten over wetsvoorstellen vanaf juli 2026.
 			</p>
 			<p>
-				Elke bron wordt afzonderlijk opgehaald; de datum per bron staat onder Bronnen en dekking. De
+				Elke bron wordt afzonderlijk opgehaald; de stand per bron staat onder Bronnen en dekking. De
 				geldigheidsdatum van een artikel is de datum van inwerkingtreding, niet die van het ophalen.
 			</p>
 			<p>
@@ -436,6 +480,13 @@
 
 	p:last-child {
 		margin-bottom: 0;
+	}
+
+	.voorbeeld {
+		padding-left: var(--s-4);
+		border-left: 2px solid var(--rule-strong);
+		color: var(--ink-2);
+		overflow-wrap: anywhere;
 	}
 
 	.cite {

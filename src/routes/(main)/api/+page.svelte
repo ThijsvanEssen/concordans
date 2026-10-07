@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import type { EndpointDoc } from './+page';
+	import { RELATIONS, RELATION_LABEL } from '$lib/vocabulary';
 
 	let { data }: { data: PageData } = $props();
 
@@ -45,6 +46,14 @@
 					Het aantal verzoeken per minuut per IP-adres is begrensd. Daarboven volgt 429 met
 					<code>Retry-After</code>.
 				</dd>
+				<dt>Licentie</dt>
+				<dd>
+					De uitvoer valt onder
+					<a href="https://creativecommons.org/licenses/by/4.0/deed.nl">CC BY 4.0</a>, met
+					vermelding van Concordans als bron. Zie de <a href="/voorwaarden">voorwaarden</a>.
+				</dd>
+				<dt>Techniek</dt>
+				<dd>Een FastAPI-service (LawGraph); de site is gebouwd met SvelteKit.</dd>
 			</dl>
 		</header>
 
@@ -59,6 +68,12 @@
 						</a>
 					</li>
 				{/each}
+				<li>
+					<a href="#relaties">
+						<span class="toc-name">Relatienamen</span>
+						<span class="toc-count">{RELATIONS.length}</span>
+					</a>
+				</li>
 			</ul>
 		</aside>
 
@@ -131,13 +146,6 @@
 											</div>
 										{/if}
 
-										{#if ep.requestSchema}
-											<div class="api-block">
-												<div class="api-block-head">Body</div>
-												<p class="api-desc"><code>{ep.requestSchema}</code> als JSON.</p>
-											</div>
-										{/if}
-
 										{#if ep.responses.length > 0}
 											<div class="api-block">
 												<div class="api-block-head">Antwoorden</div>
@@ -170,6 +178,24 @@
 					</ul>
 				</section>
 			{/each}
+			<section id="relaties" class="api-tag">
+				<header class="api-tag-head">
+					<h2 class="api-tag-title">Relatienamen</h2>
+				</header>
+				<p class="api-tag-desc">
+					De naam van een verbinding in de API (<code>relation</code>) en zoals de site haar noemt.
+				</p>
+				<table class="api-params">
+					<thead>
+						<tr><th>API</th><th>Op de site</th></tr>
+					</thead>
+					<tbody>
+						{#each RELATIONS as relation (relation)}
+							<tr><td><code>{relation}</code></td><td>{RELATION_LABEL[relation]}</td></tr>
+						{/each}
+					</tbody>
+				</table>
+			</section>
 		</div>
 
 		<div class="api-footer">
