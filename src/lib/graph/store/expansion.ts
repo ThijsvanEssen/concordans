@@ -12,16 +12,21 @@ import {
 } from '../container-membership';
 import { foldVersions } from '../paths';
 import { nodeId } from '$lib/vocabulary';
-import { get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { nodeToGraphNode, relationOf, type BaseNode } from '../types';
 import type { GraphContext } from './context';
-import type { GraphStore } from './types';
+import {
+	NEIGHBORHOOD_CAP,
+	NEIGHBORHOOD_DEPTH,
+	type GraphStore,
+	type NeighborhoodReach
+} from './types';
 
 export function createExpansion(
 	ctx: GraphContext
 ): Pick<
 	GraphStore,
-	'peekNode' | 'expandNode' | 'expandNeighborhood' | 'nodeResponse' | 'mergePaths'
+	'peekNode' | 'expandNode' | 'expandNeighborhood' | 'nodeResponse' | 'mergePaths' | 'neighborhood'
 > {
 	const {
 		nodes,
@@ -40,6 +45,8 @@ export function createExpansion(
 		pruneToIds,
 		signal
 	} = ctx;
+
+	const neighborhoodStore = writable<NeighborhoodReach | null>(null);
 
 	// One request per bron serves the canvas, the panel Verbonden and a reader (`getNode`:
 	// 200 per bucket, the most API 0.5 allows; every bucket comes with its total).
@@ -197,9 +204,19 @@ export function createExpansion(
 			return { onPath: [...drawn], tied: [...new Set(tied)] };
 		},
 
+		neighborhood: { subscribe: neighborhoodStore.subscribe },
+
 		expandNeighborhood: async (collection, key, opts = {}) => {
 			const response = await getNodeNeighborhood(collection, key, { ...opts, signal: signal() });
 			const additive = !!opts.relations || !!opts.additive;
+			// The API gives one more than the cap when it cut the neighbourhood off: a step
+			// further then gives the same bronnen (art. 3:7 Awb is full at two steps).
+			if (!opts.relations)
+				neighborhoodStore.set({
+					focal: response.focal_id,
+					depth: opts.depth ?? NEIGHBORHOOD_DEPTH,
+					capped: response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP)
+				});
 
 			const { byId, drawn } = mergeSubgraph(response.nodes, response.edges, response.focal_id);
 

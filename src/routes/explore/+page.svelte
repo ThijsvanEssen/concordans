@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { lawArticles, lawNav, type LawNavItem } from '$lib/api/law-articles';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The explorer: one bron at a time, in one of three modes. Lezen shows the bron with
@@ -76,6 +77,9 @@
 	const store = createGraphStore();
 
 	let selectedNode = $state<GraphNode | null>(null);
+	/** How far the canvas's neighbourhood reached, for the legend's Diepte. */
+	let reach = $state<NeighborhoodReach | null>(null);
+	store.neighborhood.subscribe((r) => (reach = r));
 	store.selection.subscribe((n) => {
 		selectedNode = n;
 	});
@@ -1084,6 +1088,7 @@
 						{filter}
 						{verbonden}
 						{depth}
+						{reach}
 						selectedEdgeId={card?.edgeId ?? null}
 						{inFluxMap}
 						{heatMap}

@@ -153,6 +153,14 @@
 		--plum: #5e3a55; /* toelichting */
 		--slate: #4b5563; /* citations by judgments */
 
+		/* The groups in the network (a hull around their members), each told apart by hue,
+		   by a step of 10 in lightness (L* 30, 40, 50, 59) and by its line: apart also with
+		   deuteranopia, protanopia and in grey. Against the paper 8.9, 6.1, 4.2 and 3.1:1. */
+		--groep-wet: #00487c; /* solid */
+		--groep-fractie: #944078; /* dotted */
+		--groep-commissie: #438365; /* dash and dot */
+		--groep-dossier: #d3762d; /* dashed */
+
 		/* Typography: one text face, one interface face. Identifiers are set in the sans. */
 		--font-serif: 'Newsreader', Georgia, serif;
 		--font-sans: 'Schibsted Grotesk', system-ui, sans-serif;

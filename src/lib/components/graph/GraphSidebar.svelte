@@ -23,11 +23,12 @@
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
 	import { allRows, hiddenLine, kindTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
-	import { edgeColorFor, edgeStyleFor, hullColorFor } from './nodeSprites';
+	import { edgeColorFor, edgeStyleFor, hullColorFor, hullDashFor } from './nodeSprites';
 	import { kindOfCollection } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { BRON_KIND_VORM, VORM_LABEL, VORM_VOLGORDE, type Vorm } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
+	import { NEIGHBORHOOD_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
 
 	let {
 		verbonden,
@@ -46,7 +47,8 @@
 		onHeatPeriodChange,
 		onToggleMutatie,
 		netwerkActive = false,
-		hasNodes = false
+		hasNodes = false,
+		reach = null
 	}: {
 		verbonden: VerbondenState;
 		filter: VerbondenFilter;
@@ -71,14 +73,24 @@
 		/** With a netwerk, a depth adds context around the selection instead of setting the view. */
 		netwerkActive?: boolean;
 		hasNodes?: boolean;
+		/** How far the last neighbourhood reached, and whether the API cut it off. */
+		reach?: NeighborhoodReach | null;
 	} = $props();
 
 	let presetMenu = $state(false);
 	let lidMenu = $state(false);
 
-	// With a netwerk and nothing selected, the kinds count what is on the canvas.
-	const fromCanvas = $derived(netwerkActive && !selectionCollection);
+	// With nothing selected, the kinds count what is on the canvas; with a selection, its
+	// verbindingen. While those load the counts say so ("…"), not a column of zeros.
+	const fromCanvas = $derived(!selectionCollection);
 	const totals = $derived(fromCanvas ? (canvasCounts.kinds ?? {}) : kindTotals(verbonden.groups));
+	const counting = $derived(!fromCanvas && verbonden.loading && verbonden.groups.length === 0);
+
+	// Diepte: the steps that add nothing, as the API cut the neighbourhood off at its cap.
+	const DEPTHS = [1, 2, 3];
+	const CAPPED_REASON = `Grens van ${NEIGHBORHOOD_CAP} bronnen bereikt; een stap verder voegt niets toe.`;
+	const beyondCap = (d: number) => !netwerkActive && !!reach?.capped && d > reach.depth;
+	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
 	// Never drawn as an edge on the canvas, so not a togglable line here either.
 	// PART_OF, MEMBER_OF and LED_BY always point at a container (a wet, fractie,
 	// commissie or dossier) — a hull groups them now, not a line. VERSION_OF links
@@ -148,8 +160,8 @@
 						class="btn is-text preset"
 						aria-haspopup="menu"
 						aria-expanded={presetMenu}
-						onclick={() => (presetMenu = !presetMenu)}
-						>{bronnenLabel(filter)}<Caret open={presetMenu} /></button
+						title={bronnenLabel(filter)}
+						onclick={() => (presetMenu = !presetMenu)}>Voorkeuze<Caret open={presetMenu} /></button
 					>
 					{#if presetMenu}
 						<div class="menu__list" role="menu">
@@ -185,8 +197,9 @@
 					label={BRON_KIND_LABEL[k]}
 					on={isOn(k)}
 					onToggle={() => onFilter(toggleKind(filter, k))}
-					count={n}
-					empty={n === 0}
+					count={counting ? null : n}
+					bezig={counting}
+					empty={!counting && n === 0}
 				>
 					{#snippet voor()}<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />{/snippet}
 				</FilterOptie>
@@ -216,14 +229,19 @@
 			{#each Object.keys(CONTAINER_KIND_LABEL) as ck (ck)}
 				{@const kind = ck as ContainerKind}
 				<div class="row row--static">
-					<svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true">
-						<circle
-							cx="7"
-							cy="7"
-							r="6"
+					<!-- As on the canvas: the colour of the group and its own line. -->
+					<svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
+						<rect
+							x="1"
+							y="1"
+							width="20"
+							height="10"
+							rx="5"
 							fill={hullColorFor(kind)}
-							fill-opacity="0.18"
+							fill-opacity="0.08"
 							stroke={hullColorFor(kind)}
+							stroke-width="1.5"
+							stroke-dasharray={hullDashFor(kind)}
 						/>
 					</svg>
 					<span class="row__name">{CONTAINER_KIND_LABEL[kind]}</span>
@@ -256,20 +274,42 @@
 		{/if}
 
 		<section class="block">
-			<div class="block__label">{netwerkActive ? 'Omgeving van de selectie' : 'Diepte'}</div>
+			<div class="block__label">
+				{netwerkActive ? 'Context rond de gekozen bron' : 'Diepte'}
+			</div>
+			<p class="uitleg">
+				{netwerkActive
+					? 'Voegt de buren van de geselecteerde bron toe; het netwerk blijft.'
+					: 'Stappen vanaf de bron.'}
+			</p>
 			<div class="chips">
-				{#each [1, 2, 3] as d (d)}
+				{#each DEPTHS as d (d)}
+					{@const reden =
+						netwerkActive && !selectionCollection
+							? NO_SELECTION_REASON
+							: beyondCap(d)
+								? CAPPED_REASON
+								: null}
 					<button
 						type="button"
 						class="btn"
 						class:is-primary={!netwerkActive && depth === d}
 						aria-pressed={!netwerkActive && depth === d}
+						disabled={!!reden}
+						title={reden ?? undefined}
 						onclick={() => onDepth(d)}>{d}</button
 					>
 				{/each}
-				<span class="muted">{netwerkActive ? 'stappen, als context' : 'stappen vanaf de bron'}</span
-				>
 			</div>
+			<p class="uitleg">
+				{#if netwerkActive && !selectionCollection}
+					{NO_SELECTION_REASON}
+				{:else if !netwerkActive && reach?.capped}
+					{CAPPED_REASON}
+				{:else}
+					Per stap hooguit {NEIGHBORHOOD_CAP} bronnen.
+				{/if}
+			</p>
 		</section>
 
 		{#if lids.length > 0}
@@ -339,10 +379,9 @@
 			{/if}
 		</p>
 
-		<details class="more">
-			<summary>Meer</summary>
+		<section class="block">
+			<div class="block__label">Overlay</div>
 			<div class="block">
-				<div class="block__label">Overlay</div>
 				<div class="chips">
 					<button
 						type="button"
@@ -391,8 +430,18 @@
 						{/each}
 					</div>
 				{/if}
+				<p class="uitleg">
+					{#if mutOn}
+						Open dossiers: een ring om de bronnen die een wetsvoorstel wil wijzigen.
+					{:else if heatOn}
+						Verwijzingen per maand: hoe vaak een bron in de gekozen periode is aangehaald.
+					{:else}
+						Open dossiers toont wat een wetsvoorstel wil wijzigen; verwijzingen per maand hoe vaak
+						een bron recent is aangehaald.
+					{/if}
+				</p>
 			</div>
-		</details>
+		</section>
 	{/if}
 </aside>
 
@@ -439,8 +488,10 @@
 		font-weight: 500;
 		color: var(--ink-3);
 	}
+	/* The presets of the filter: a plain control, not a summary in the accent. */
 	.preset {
 		font-size: var(--t-label);
+		color: var(--ink-2);
 	}
 	.menu {
 		position: relative;
@@ -544,15 +595,11 @@
 		color: var(--ink-3);
 		line-height: 1.4;
 	}
-	.more {
+	/* One line that says what a control does, or why it is off. */
+	.uitleg {
+		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
+		line-height: var(--lh-snug);
 		color: var(--ink-3);
-	}
-	.more summary {
-		cursor: pointer;
-		font-weight: 500;
-	}
-	.more .block {
-		margin-top: var(--s-3);
 	}
 </style>

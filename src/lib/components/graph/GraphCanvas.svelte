@@ -22,6 +22,7 @@
 		edgeColorFor,
 		edgeStyleFor,
 		hullColorFor,
+		hullDashFor,
 		dimColor,
 		towardPaper,
 		withAlpha,
@@ -293,6 +294,8 @@
 		id: string;
 		path: string;
 		color: string;
+		/** The line of its kind (`hullDashFor`): the kind reads without its colour. */
+		dash: string | undefined;
 		labelX: number;
 		labelY: number;
 		label: string;
@@ -432,6 +435,7 @@
 				id: group.id,
 				path,
 				color: hullColorFor(group.kind),
+				dash: hullDashFor(group.kind),
 				label: shown,
 				long: lines > 1,
 				labelX: at.x,
@@ -1194,7 +1198,8 @@
 					class:is-dim={h.dim}
 					d={h.path}
 					fill={withAlpha(h.color, 0.08)}
-					stroke={withAlpha(h.color, 0.35)}
+					stroke={h.color}
+					stroke-dasharray={h.dash}
 				/>
 			{/each}
 			{#each hullLinks as l (l.id)}
@@ -1319,11 +1324,12 @@
 		padding: 2px var(--s-2);
 		border-radius: 999px;
 		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);
-		border: 1px solid color-mix(in srgb, var(--hull-color) 45%, transparent);
+		border: 1px solid var(--hull-color);
 		font-family: var(--font-sans);
 		font-size: var(--t-label);
 		font-weight: 600;
-		color: var(--hull-color);
+		/* The name in ink: the lighter groups (Dossier, 3.1:1) are too faint for text. */
+		color: var(--ink-2);
 		white-space: nowrap;
 		/* A dossier's title in full can be wider than the canvas: it wraps (.is-long). */
 		max-width: calc(100% - 20px);

@@ -4,6 +4,13 @@ import type { Collection, Relation } from '$lib/vocabulary';
 import type { GraphNode, GraphEdge } from '../types';
 
 /** A chosen bron of a netwerk that is on, with its node response. */
+/** The API's defaults for a neighbourhood: three steps, at most 200 bronnen. */
+export const NEIGHBORHOOD_DEPTH = 3;
+export const NEIGHBORHOOD_CAP = 200;
+
+/** A neighbourhood as drawn: around `focal`, `depth` steps, `capped` at the cap. */
+export type NeighborhoodReach = { focal: string; depth: number; capped: boolean };
+
 export type NetwerkParticipant = { response: Schema<'NodeGraphResponse'> };
 
 /** A bron a group of the panel Verbonden puts on the canvas. */
@@ -71,6 +78,8 @@ export type GraphStore = {
 	 * Every node and edge within `depth` hops of a node, in one request; it replaces the
 	 * canvas's context. Narrowed to `relations` (and `nodeTypes`), it only adds.
 	 */
+	/** How far the last neighbourhood reached, and whether the API cut it off at its cap. */
+	neighborhood: Readable<NeighborhoodReach | null>;
 	expandNeighborhood: (
 		collection: Collection,
 		key: string,
