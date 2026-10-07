@@ -494,7 +494,7 @@
 
 	@media (max-width: 820px) {
 		.container {
-			grid-template-columns: 1fr;
+			grid-template-columns: minmax(0, 1fr);
 		}
 		.toc {
 			position: static;
@@ -510,6 +510,12 @@
 		}
 		.api-summary {
 			display: none;
+		}
+		/* A long route breaks after a slash instead of widening the page. */
+		.api-path {
+			flex-shrink: 1;
+			min-width: 0;
+			overflow-wrap: anywhere;
 		}
 	}
 </style>

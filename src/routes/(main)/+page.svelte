@@ -151,7 +151,7 @@
 					scope={chosen?.kinds ?? null}
 					placeholder={chosen
 						? `Zoek in ${chosen.label.toLowerCase()}`
-						: 'Zoek een wet, uitspraak, dossier of persoon'}
+						: 'Zoek een wet, uitspraak of dossier'}
 				/>
 			{/key}
 			{#if chosen}
