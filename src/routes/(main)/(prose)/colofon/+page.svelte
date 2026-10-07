@@ -23,40 +23,22 @@
 		<div class="section">
 			<h2 class="section-title">Bronnen</h2>
 			<p>
-				Wetteksten komen van <a href="https://wetten.overheid.nl" class="cite">wetten.overheid.nl</a
-				>, onder de
+				Concordans gebruikt alleen officiële bronnen; welke bron waarvandaan komt, staat in de
+				<a href="/docs/methode" class="cite">methode</a>. Wetteksten van wetten.overheid.nl en de
+				gegevens van rijksoverheid.nl vallen onder de
 				<a href="https://creativecommons.org/publicdomain/zero/1.0/deed.nl" class="cite"
 					>CC0-licentie</a
 				>
-				van de Nederlandse overheid. Uitspraken komen van
-				<a href="https://www.rechtspraak.nl/uitspraken" class="cite">rechtspraak.nl</a>, die van het
-				EHRM van HUDOC. Parlementaire gegevens komen uit het gegevensmagazijn van de Tweede Kamer en
-				van <a href="https://www.eerstekamer.nl" class="cite">eerstekamer.nl</a>. Staatsblad,
-				Staatscourant en Tractatenblad komen uit de repository van KOOP. Kabinetten en
-				bewindspersonen komen van
-				<a href="https://www.rijksoverheid.nl/regering" class="cite">rijksoverheid.nl</a>, eveneens
-				onder CC0. Europese regelgeving en uitspraken van het Hof van Justitie komen uit EUR-Lex,
-				verdragen uit de Verdragenbank, ministeries en rechtsgebieden uit de TOOI-waardelijsten. De
-				herkomst per bron staat in de <a href="/docs/methode" class="cite">methode</a>.
-			</p>
-		</div>
-
-		<div class="section">
-			<h2 class="section-title">Technologie</h2>
-			<p>
-				De applicatie is gebouwd met SvelteKit. Het netwerk staat in een database achter een
-				FastAPI-service (LawGraph). Concordans leest alleen uit die service.
+				van de Nederlandse overheid. Wat geldt voor hergebruik, ook van EUR-Lex en HUDOC, staat in de
+				<a href="/voorwaarden" class="cite">gebruiksvoorwaarden</a>.
 			</p>
 		</div>
 
 		<div class="section">
 			<h2 class="section-title">Aansprakelijkheid</h2>
 			<p>
-				Concordans is bedoeld als hulpmiddel bij juridisch onderzoek, niet als juridisch advies. Aan
-				de weergaven en verbindingen kunnen geen rechten worden ontleend. Zie ook de <a
-					href="/voorwaarden"
-					class="cite">gebruiksvoorwaarden</a
-				>.
+				Concordans geeft geen juridisch advies. Zie de
+				<a href="/voorwaarden" class="cite">gebruiksvoorwaarden</a>.
 			</p>
 		</div>
 

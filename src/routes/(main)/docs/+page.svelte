@@ -302,9 +302,9 @@
 				muis erop of met de toetsenbordfocus verschijnt dezelfde kaart, zonder knoppen.
 			</p>
 			<p>
-				In de kaart opent <strong>Lees</strong> de bron. <strong>In het netwerk</strong> toont haar met
-				haar verbindingen. Cmd-klik, ctrl-klik en een klik met de middelste knop openen de bron direct.
-				Een zoekresultaat opent de bron ook direct.
+				In de kaart opent <strong>Lees</strong> de bron. <strong>In het netwerk</strong> toont haar
+				met haar verbindingen. Een zoekresultaat opent de bron direct; zie ook de
+				<a href="/docs/sneltoetsen" class="cite">sneltoetsen</a>.
 			</p>
 		</div>
 

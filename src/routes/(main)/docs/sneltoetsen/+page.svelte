@@ -44,6 +44,12 @@
 				<span class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></span>
 			</div>
 			<div class="shortcut-row">
+				<span class="shortcut-desc">Een verwijzing direct openen, zonder kaart</span>
+				<span class="shortcut-keys"
+					><kbd>⌘</kbd>-klik, <kbd>Ctrl</kbd>-klik of de middelste muisknop</span
+				>
+			</div>
+			<div class="shortcut-row">
 				<span class="shortcut-desc">Een kaart, menu of opengeklapte rij sluiten</span>
 				<span class="shortcut-keys"><kbd>Esc</kbd></span>
 			</div>
