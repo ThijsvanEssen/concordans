@@ -37,9 +37,20 @@ const awb = {
 	}
 };
 
+const getNodeGraph = vi.fn(async (_c: string, _k: string, opts: { limit?: number } = {}) =>
+	opts.limit === 1
+		? {
+				...awb,
+				neighbors: {
+					...awb.neighbors,
+					buckets: awb.neighbors.buckets.map((b) => ({ ...b, items: b.items.slice(0, 1) }))
+				}
+			}
+		: awb
+);
 vi.mock('$lib/api/nodes', async (original) => ({
 	...(await original<typeof import('$lib/api/nodes')>()),
-	getNodeGraph: vi.fn(async () => awb)
+	getNodeGraph
 }));
 
 const { createGraphStore } = await import('./graph-store');
@@ -51,5 +62,24 @@ describe('a wet as the focus', () => {
 			neighborLimit: Number.POSITIVE_INFINITY
 		});
 		expect(node?.id).toBe('instruments/bwbr0005537');
+	});
+});
+
+describe('the bron before its neighbours', () => {
+	it('is drawn alone from its light node, and its neighbours follow with the full one', async () => {
+		const store = createGraphStore();
+		const nodes = () => {
+			let all: { id: string }[] = [];
+			store.nodes.subscribe((ns) => (all = ns))();
+			return all.map((n) => n.id);
+		};
+		const first = await store.peekNode('instruments', 'bwbr0005537');
+		expect(first?.id).toBe('instruments/bwbr0005537');
+		expect(nodes()).toEqual(['instruments/bwbr0005537']);
+		expect(getNodeGraph).toHaveBeenCalledWith('instruments', 'bwbr0005537', { limit: 1 });
+		await store.expandNode('instruments', 'bwbr0005537', {
+			neighborLimit: Number.POSITIVE_INFINITY
+		});
+		expect(nodes().length).toBeGreaterThan(1);
 	});
 });
