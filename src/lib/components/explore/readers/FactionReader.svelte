@@ -41,7 +41,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Fractie kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Fractie kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});

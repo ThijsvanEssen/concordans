@@ -52,7 +52,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Document kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Document kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});

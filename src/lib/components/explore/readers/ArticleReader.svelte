@@ -119,7 +119,7 @@
 			return;
 		}
 		if (!bwbId || !articleNumber) {
-			view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
+			view = { kind: 'error', message: 'Artikel kon niet worden geladen.' };
 			return;
 		}
 
@@ -136,7 +136,7 @@
 				view = { kind: 'loaded', data };
 			})
 			.catch(() => {
-				if (!stale) view = { kind: 'error', message: 'Artikel kon niet geladen worden.' };
+				if (!stale) view = { kind: 'error', message: 'Artikel kon niet worden geladen.' };
 			});
 		// The versions of the text, for the picker. Empty until the pipeline has run.
 		unwrap(

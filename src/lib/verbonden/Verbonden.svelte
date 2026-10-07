@@ -316,7 +316,7 @@
 	<div class="body" aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
 			<p class="note">
-				Verbindingen niet geladen.
+				De verbindingen konden niet worden geladen.
 				{#if onRetry}
 					<button type="button" class="link is-accent" onclick={onRetry}>Opnieuw</button>
 				{/if}

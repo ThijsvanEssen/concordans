@@ -33,7 +33,7 @@
 				sections = doc.sections ?? [];
 			})
 			.catch(() => {
-				if (!ac.signal.aborted) error = 'Overzicht niet geladen.';
+				if (!ac.signal.aborted) error = 'De inhoudsopgave kon niet worden geladen.';
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;

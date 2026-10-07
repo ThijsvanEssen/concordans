@@ -355,7 +355,7 @@
 		<span>Laden…</span>
 	</div>
 {:else if status === 'error'}
-	<div class="whole-error">Wet niet geladen.</div>
+	<div class="whole-error">De wet kon niet worden geladen.</div>
 {:else}
 	<article class="whole-law">
 		<header class="whole-head">

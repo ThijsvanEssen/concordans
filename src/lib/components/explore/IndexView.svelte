@@ -2963,7 +2963,7 @@
 		{@const remaining = (loaded.total ?? 0) - loaded.items.length}
 		<div class="load-more">
 			{#if loadMoreFailed}
-				<p class="load-more-error" role="alert">Meer {noun} laden is mislukt.</p>
+				<p class="load-more-error" role="alert">De volgende {noun} konden niet worden geladen.</p>
 			{/if}
 			<button type="button" class="load-more-btn" onclick={loadMore} disabled={loadingMore}>
 				{loadingMore

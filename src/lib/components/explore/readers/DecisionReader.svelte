@@ -46,7 +46,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Stemming kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Stemming kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});

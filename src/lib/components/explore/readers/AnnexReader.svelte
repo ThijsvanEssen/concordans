@@ -37,7 +37,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Bijlage kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Bijlage kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});

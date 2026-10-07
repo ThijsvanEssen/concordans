@@ -57,7 +57,7 @@
 				if (current) items = list;
 			})
 			.catch(() => {
-				if (current) error = 'Overzicht niet geladen.';
+				if (current) error = 'De inhoudsopgave kon niet worden geladen.';
 			})
 			.finally(() => {
 				if (current) loading = false;

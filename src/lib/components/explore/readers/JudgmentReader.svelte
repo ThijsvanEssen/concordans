@@ -96,7 +96,7 @@
 				if (!stale) view = { kind: 'loaded', data };
 			})
 			.catch(() => {
-				if (!stale) view = { kind: 'error', message: 'Uitspraak kon niet geladen worden.' };
+				if (!stale) view = { kind: 'error', message: 'Uitspraak kon niet worden geladen.' };
 			});
 		return () => (stale = true);
 	});

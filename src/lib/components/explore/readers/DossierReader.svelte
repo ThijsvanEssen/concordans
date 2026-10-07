@@ -63,7 +63,7 @@
 		void attempt;
 		const number = dossierNumber;
 		if (!number) {
-			view = { kind: 'error', message: 'Dossier kon niet geladen worden.' };
+			view = { kind: 'error', message: 'Dossier kon niet worden geladen.' };
 			return;
 		}
 		const ac = new AbortController();
@@ -80,7 +80,7 @@
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
-					view = { kind: 'error', message: 'Dossier kon niet geladen worden.' };
+					view = { kind: 'error', message: 'Dossier kon niet worden geladen.' };
 			});
 		return () => ac.abort();
 	});
