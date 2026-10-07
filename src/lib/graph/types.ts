@@ -1,5 +1,7 @@
 import type { Schema } from '$lib/api/types';
 import { articleName } from '$lib/text/bw';
+import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
+import { maandJaar } from '$lib/text/datum';
 import {
 	isCollection,
 	isRelation,
@@ -229,6 +231,45 @@ export function shortDossierTitle(title: string | null): string | null {
 const text = (value: unknown): string | null =>
 	typeof value === 'string' && value.trim() ? value.trim() : null;
 
+/** A name the canvas can carry: at most `max` characters, cut at a word, with "…". */
+export function kort(name: string, max = 40): string {
+	if (name.length <= max) return name;
+	const cut = name.slice(0, max - 1);
+	const space = cut.lastIndexOf(' ');
+	return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,.:;(–-]+$/, '')}…`;
+}
+
+/**
+ * A Kamerstuk on the canvas, short and by what tells it apart in its dossier (API 0.79.6
+ * `number`): a paper of the bill by its kind and number ("Voorstel van wet, nr. 2"), a motie or
+ * an amendement by its first signatory ("Amendement Verkuijlen, nr. 20"), another paper by its
+ * own title where that says more than its kind. The Eerste Kamer numbers with a letter ("C").
+ * Without a number, the month. The full name is in the panel and the card.
+ */
+export function stukLabel(props: Record<string, unknown>): string | null {
+	const kind = text(props.kind);
+	const shortKind = kind?.replace(/\s*\(.*\)\s*$/, '') ?? null;
+	const number =
+		text(props.number) ?? (props.sequence != null ? text(String(props.sequence)) : null);
+	const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;
+	const title = text(props.title);
+	const motie = kind ? /amendement|motie/i.exec(kind) : null;
+	const lead = motie ? leadSignatory(props.actors) : null;
+	const indiener = lead
+		? `${lead.name.replace(/^(\p{Lu}[\p{L}]?\.\s*)+/u, '')}${lead.faction ? ` (${lead.faction})` : ''}`
+		: null;
+	const naam = motie
+		? [`${motie[0][0].toUpperCase()}${motie[0].slice(1).toLowerCase()}`, indiener]
+				.filter(Boolean)
+				.join(' ')
+		: !draagtWetstitel(kind) && title && !isGeneriek(title, kind)
+			? kort(title, 36)
+			: (shortKind ?? title);
+	if (!naam) return null;
+	const waar = nr ?? (text(props.date) ? maandJaar(text(props.date)) : null);
+	return waar ? `${naam}, ${waar}` : naam;
+}
+
 /**
  * The law of an article or a wet: its BWB id, or the CELEX number of a European one.
  * Every article carries it since API 0.9, each boek of the Burgerlijk Wetboek its own.
@@ -288,7 +329,11 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 			const name = articleName(text(props.bwb_id), text(props.article_number), text(props.label));
 			return name?.replace(/^Artikel /, 'Art. ') ?? node.display_name ?? node.key;
 		}
-		case 'document':
+		case 'document': {
+			const label = stukLabel(props);
+			if (label) return label;
+			break;
+		}
 		case 'activity': {
 			const documentKind = text(props.kind);
 			if (!documentKind) break;

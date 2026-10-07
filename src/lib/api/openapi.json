@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.3"
+		"version": "0.79.6"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -5911,7 +5911,7 @@
 			"get": {
 				"tags": ["root"],
 				"summary": "Health",
-				"description": "Health check \u2014 verifies database connectivity. ``warm``: the answers every visitor\nasks are computed for the data as it is now (null when the API does not warm up); a\ndeploy waits for true before its smoke test. ``warm_version`` the data version they\nwere last computed for (the answers a request gets while a newer one computes, null\nbefore the first warm-up), ``data_version`` the version now, ``computing`` whether a\nwarm-up or an answer of a newer version is being computed.",
+				"description": "Health check \u2014 verifies database connectivity; ``version`` the version of the API\n(what a deploy checks against its tag). ``warm``: the answers every visitor\nasks are computed for the data as it is now (null when the API does not warm up); a\ndeploy waits for true before its smoke test. ``warm_version`` the data version they\nwere last computed for (the answers a request gets while a newer one computes, null\nbefore the first warm-up), ``data_version`` the version now, ``computing`` whether a\nwarm-up or an answer of a newer version is being computed. ``pools``: per connection\npool its size, the free connections and the reads waiting for one; ``busy`` what the\nthreads of the shared pools run now, and how long.",
 				"operationId": "health_api_health_get",
 				"responses": {
 					"200": {
@@ -5919,21 +5919,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"additionalProperties": {
-										"anyOf": [
-											{
-												"type": "string"
-											},
-											{
-												"type": "boolean"
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"type": "object",
-									"title": "Response Health Api Health Get"
+									"$ref": "#/components/schemas/HealthDTO"
 								}
 							}
 						}
@@ -7861,6 +7847,28 @@
 				"required": ["id", "key", "collection", "type", "display_name", "labels", "props"],
 				"title": "BaseNodeDTO",
 				"description": "Common node representation used by multiple responses."
+			},
+			"BusyCallDTO": {
+				"properties": {
+					"thread": {
+						"type": "string",
+						"title": "Thread"
+					},
+					"call": {
+						"type": "string",
+						"title": "Call",
+						"description": "The function: module, name and, of a lambda, its line."
+					},
+					"seconds": {
+						"type": "number",
+						"title": "Seconds",
+						"description": "How long it has run."
+					}
+				},
+				"type": "object",
+				"required": ["thread", "call", "seconds"],
+				"title": "BusyCallDTO",
+				"description": "A call a thread of a shared pool runs now (queries side by side, the searches)."
 			},
 			"CabinetDetailDTO": {
 				"properties": {
@@ -10649,6 +10657,18 @@
 						],
 						"title": "Kind"
 					},
+					"number": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Number",
+						"description": "Its number in its dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``)."
+					},
 					"date": {
 						"anyOf": [
 							{
@@ -11319,6 +11339,18 @@
 						],
 						"title": "Sequence",
 						"description": "The number of the paper in ``dossier_number``."
+					},
+					"number": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Number",
+						"description": "Its number in the dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``)."
 					},
 					"dossier_number": {
 						"anyOf": [
@@ -13896,6 +13928,18 @@
 						"title": "Tk Url",
 						"description": "The page of a paper on tweedekamer.nl."
 					},
+					"number": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Number",
+						"description": "Of a paper its nr. in its dossier (``12``); null for the other kinds."
+					},
 					"headline": {
 						"$ref": "#/components/schemas/FeedHeadlineDTO"
 					},
@@ -14677,6 +14721,98 @@
 				"required": ["block", "row", "column"],
 				"title": "HallSeatDTO",
 				"description": "A place in the plenary hall of the Eerste Kamer: two blocks of benches facing each\nother, rows from the government to the chair, and the seat of the Voorzitter."
+			},
+			"HealthDTO": {
+				"properties": {
+					"status": {
+						"type": "string",
+						"title": "Status"
+					},
+					"version": {
+						"type": "string",
+						"title": "Version",
+						"description": "The version of the API (a deploy checks its tag)."
+					},
+					"database": {
+						"type": "string",
+						"title": "Database"
+					},
+					"warm": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Warm",
+						"description": "The answers every visitor asks are computed for the data as it is now; null when the API does not warm up."
+					},
+					"warm_version": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Warm Version",
+						"description": "The data version the last warm-up was done for (null before it)."
+					},
+					"data_version": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Data Version",
+						"description": "The data version now (null without warm-up)."
+					},
+					"computing": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Computing",
+						"description": "A warm-up waits or runs, or an answer of the cache is computed."
+					},
+					"pools": {
+						"additionalProperties": {
+							"anyOf": [
+								{
+									"$ref": "#/components/schemas/PoolUsageDTO"
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"type": "object",
+						"title": "Pools",
+						"description": "Per connection pool (`requests`, `background`; null before the background one is first needed) its use."
+					},
+					"busy": {
+						"items": {
+							"$ref": "#/components/schemas/BusyCallDTO"
+						},
+						"type": "array",
+						"title": "Busy",
+						"description": "The calls the threads of the shared pools run now, longest first."
+					}
+				},
+				"type": "object",
+				"required": ["status", "version", "database", "warm", "pools"],
+				"title": "HealthDTO",
+				"description": "Whether the API reaches its database, and how warm and busy it is."
 			},
 			"ImplementingMeasureDTO": {
 				"properties": {
@@ -19471,6 +19607,29 @@
 				"title": "PolicyDomainDTO",
 				"description": "A government theme of a regulation (WTI ``overheidsdomein``) and its TOOI concept."
 			},
+			"PoolUsageDTO": {
+				"properties": {
+					"size": {
+						"type": "integer",
+						"title": "Size",
+						"description": "Its connections."
+					},
+					"free": {
+						"type": "integer",
+						"title": "Free",
+						"description": "Those not reading now."
+					},
+					"waiting": {
+						"type": "integer",
+						"title": "Waiting",
+						"description": "Reads waiting for a connection of it."
+					}
+				},
+				"type": "object",
+				"required": ["size", "free", "waiting"],
+				"title": "PoolUsageDTO",
+				"description": "One connection pool of the API process."
+			},
 			"Post": {
 				"type": "string",
 				"enum": [
@@ -21238,6 +21397,18 @@
 						],
 						"title": "Sequence",
 						"description": "The number of the paper in ``dossier_number``."
+					},
+					"number": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Number",
+						"description": "Its number in the dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``)."
 					},
 					"dossier_number": {
 						"anyOf": [

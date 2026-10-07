@@ -8,7 +8,7 @@
 	import type { GraphFilters } from '$lib/graph/graph-store';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
-	import { labelX } from './label-place';
+	import { plaatsLabel, type Rect as LabelRect } from './label-place';
 	import { relationLabel, type Collection, type Relation } from '$lib/vocabulary';
 	import type { BronKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
@@ -136,6 +136,8 @@
 
 	let wrap: HTMLDivElement;
 	let destroyed = false;
+	/** The names drawn in this frame, so the next one stands beside them, not over them. */
+	let labelsTaken: LabelRect[] = [];
 	let renderer: SigmaType | null = null;
 	let resizeObserver: ResizeObserver | null = null;
 	// The mobile tab strip mounts this canvas behind `display: none`, where sigma
@@ -250,10 +252,27 @@
 	 * says; one line into a hull is what ties that hull to the network.
 	 */
 	let linesIntoGroup = new Map<string, number>();
+	/**
+	 * Of all lines from one bron into one hull it is not in (`bron|group`, also from inside
+	 * another hull): how many, and the one that stands for them. Nine stukken of a dossier
+	 * changing 44 articles of the Sr draw one line each into the Sr, not 116.
+	 */
+	let bundles = new Map<string, { count: number; first: string }>();
 	function recomputeLinesIntoGroup() {
 		const counts = new Map<string, number>();
-		graph.forEachEdge((_edge, attrs, source, target) => {
+		const bundled = new Map<string, { count: number; first: string }>();
+		graph.forEachEdge((edge, attrs, source, target) => {
 			if (attrs.layoutOnly) return;
+			// In the direction of the line: a stuk into the articles it changes, a judgment
+			// into the articles it cites. The articles are carried by their hull.
+			const own = nodeGroupIds.get(source);
+			for (const group of nodeGroupIds.get(target) ?? []) {
+				if (own?.has(group)) continue;
+				const key = `${source}|${group}`;
+				const b = bundled.get(key);
+				if (b) b.count++;
+				else bundled.set(key, { count: 1, first: edge });
+			}
 			for (const [from, to] of [
 				[source, target],
 				[target, source]
@@ -264,6 +283,20 @@
 			}
 		});
 		linesIntoGroup = counts;
+		bundles = bundled;
+	}
+	/** Whether a line is one of several from a bron into the same hull, and not the one that
+	 *  stands for them: it waits for a hover. */
+	function bundledInto(edge: string, src: string, tgt: string): boolean {
+		let bundled = false;
+		const own = nodeGroupIds.get(src);
+		for (const group of nodeGroupIds.get(tgt) ?? []) {
+			if (own?.has(group)) continue;
+			const b = bundles.get(`${src}|${group}`);
+			if (!b || b.count === 1 || b.first === edge) return false;
+			bundled = true;
+		}
+		return bundled;
 	}
 	/** Whether a line between two bronnen, neither the focus, only repeats a hull. */
 	function repeatsHull(src: string, tgt: string): boolean {
@@ -894,20 +927,35 @@
 				const size = settings.labelSize;
 				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
 				const w = context.measureText(data.label).width;
-				// Right of the bron, left of it, or kept whole on the canvas ($lib label-place).
+				// Right of the bron, left, above or below it, where no other name stands; the
+				// focus always ($lib label-place). A name with no free place waits for a hover.
 				const room = context.canvas.width / (window.devicePixelRatio || 1);
-				const x = labelX(data.x, data.size, w, room);
+				const focus = ((data as { zIndex?: number }).zIndex ?? 0) >= 2;
+				const at = plaatsLabel(
+					data.x,
+					data.y,
+					data.size,
+					w + 4,
+					size + 4,
+					room,
+					labelsTaken,
+					focus
+				);
+				if (!at) return;
+				labelsTaken.push({ x: at.x, y: at.y, w: w + 4, h: size + 4 });
+				const x = at.x + 2;
+				const y = at.y + 2 + size / 2;
 				context.save();
 				context.globalAlpha = 1;
 				context.fillStyle = t.paper;
-				context.fillRect(x - 2, data.y - size / 2 - 2, w + 4, size + 4);
+				context.fillRect(x - 2, y - size / 2 - 2, w + 4, size + 4);
 				context.restore();
 				context.fillStyle = settings.labelColor.attribute
 					? (((data as Record<string, unknown>)[settings.labelColor.attribute] as string) ??
 						settings.labelColor.color ??
 						t.ink)
 					: (settings.labelColor.color ?? t.ink);
-				context.fillText(data.label, x, data.y + size / 3);
+				context.fillText(data.label, x, y + size / 3);
 			},
 			defaultDrawNodeHover: (context, data, settings) => {
 				if (!data.anchor) drawDiscNodeHover(context, data, settings);
@@ -1124,6 +1172,10 @@
 					};
 				}
 
+				// Without a focus, several lines from one bron into one hull are one line; the
+				// others show on a hover.
+				if (bundledInto(edge, src, tgt)) return { ...data, hidden: true };
+
 				// Without a focus, a member with a hundred stukken draws a hundred lines: the
 				// fan pales by the size of its busier end, as the focus's own fan does.
 				let degree = 1;
@@ -1155,6 +1207,7 @@
 			}
 		});
 
+		renderer.on('beforeRender', () => (labelsTaken = []));
 		renderer.on('afterRender', updateViewportLabels);
 
 		renderer.on('clickNode', ({ node }) => onNodeClick?.(node));

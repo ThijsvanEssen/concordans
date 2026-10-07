@@ -3,6 +3,7 @@ import { NODE_TYPES, RELATIONS, type Collection } from '$lib/vocabulary';
 import {
 	EDGE_WEIGHT,
 	buildNodeLabel,
+	kort,
 	edgeCategory,
 	kindOfCollection,
 	nodeToGraphNode,
@@ -89,7 +90,44 @@ describe('node labels', () => {
 			}),
 			'document'
 		);
-		expect(label).toBe('Motie-Vries (D66)');
+		expect(label).toBe('Motie de Vries (D66), jan. 2026');
+	});
+
+	it('names a Kamerstuk by its kind and number, an EK paper by its letter', () => {
+		const doc = (props: Record<string, unknown>) =>
+			buildNodeLabel(node('documents', 'd', props), 'document');
+		expect(
+			doc({
+				kind: 'Voorstel van wet',
+				number: '2',
+				title: 'Wijziging van het Wetboek van Strafrecht'
+			})
+		).toBe('Voorstel van wet, nr. 2');
+		expect(doc({ kind: 'Memorie van antwoord', number: 'C', title: 'Memorie van antwoord' })).toBe(
+			'Memorie van antwoord, C'
+		);
+		expect(
+			doc({
+				kind: 'Amendement',
+				number: '20',
+				actors: [{ name: 'H.M. Verkuijlen', faction: 'VVD', role: 'Eerste indiener' }]
+			})
+		).toBe('Amendement Verkuijlen (VVD), nr. 20');
+		expect(
+			doc({
+				kind: 'Brief regering',
+				number: '41',
+				title: 'Stand van zaken van de aanpak van mensenhandel in Caribisch Nederland'
+			})
+		).toBe('Stand van zaken van de aanpak van…, nr. 41');
+		expect(doc({ kind: 'Brief', sequence: 12, title: 'Brief' })).toBe('Brief, nr. 12');
+	});
+
+	it('cuts a long name at a word', () => {
+		expect(kort('Wet modernisering en uitbreiding strafbaarstelling mensenhandel')).toBe(
+			'Wet modernisering en uitbreiding…'
+		);
+		expect(kort('Art. 3:4 Awb')).toBe('Art. 3:4 Awb');
 	});
 
 	it('labels a member with the party', () => {
