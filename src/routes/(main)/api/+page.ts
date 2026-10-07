@@ -30,7 +30,6 @@ interface OpenApiOperation {
 	description?: string;
 	operationId?: string;
 	parameters?: OpenApiParam[];
-	requestBody?: { content?: Record<string, { schema?: SchemaNode }> };
 	responses?: Record<
 		string,
 		{ description?: string; content?: Record<string, { schema?: SchemaNode }> }
@@ -43,7 +42,6 @@ export interface EndpointDoc {
 	summary: string;
 	description: string;
 	parameters: OpenApiParam[];
-	requestSchema: string | null;
 	responses: Array<{ status: string; description: string; schema: string | null }>;
 	operationId: string;
 }
@@ -164,7 +162,6 @@ export const load: PageLoad = () => {
 				summary: op.summary ?? '',
 				description: op.description ?? '',
 				parameters: op.parameters ?? [],
-				requestSchema: schemaName(op.requestBody?.content?.['application/json']?.schema),
 				responses: Object.entries(op.responses ?? {}).map(([status, r]) => ({
 					status,
 					description: r.description ?? '',
