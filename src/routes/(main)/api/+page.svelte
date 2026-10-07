@@ -31,17 +31,19 @@
 <div class="page-wrap">
 	<div class="container">
 		<header class="page-header">
-			<div class="eyebrow">OpenAPI {data.version}, {data.totalEndpoints} endpoints</div>
+			<div class="eyebrow">OpenAPI {data.version}, {data.totalEndpoints} routes</div>
 			<h1 class="page-title">API-referentie</h1>
 			<p class="page-lede">
-				De endpoints van de LawGraph-API, zoals het OpenAPI-schema ze beschrijft. Elke route leest;
-				geen ervan vraagt een sleutel.
+				De routes van de API achter Concordans. Elke route is een GET-verzoek zonder sleutel. De
+				beschrijving per route komt uit het OpenAPI-schema en is Engels.
 			</p>
 			<dl class="api-terms">
+				<dt>Adres</dt>
+				<dd><code>https://concordans.nl</code>; elke route begint met <code>/api</code>.</dd>
 				<dt>Limiet</dt>
 				<dd>
-					Een vast aantal verzoeken per minuut. Daarboven volgt 429 met <code>Retry-After</code>.
-					Herkomsten op de toegestane lijst zijn vrijgesteld.
+					Het aantal verzoeken per minuut per IP-adres is begrensd. Daarboven volgt 429 met
+					<code>Retry-After</code>.
 				</dd>
 			</dl>
 		</header>
@@ -173,7 +175,7 @@
 		<div class="api-footer">
 			<p>
 				De werkomgeving staat in de <a href="/docs">documentatie</a>, de herkomst van de gegevens in
-				de <a href="/docs/methode">methode-bijlage</a>. Voor grootschalig gebruik:
+				de <a href="/docs/methode">methode</a>. Voor grootschalig gebruik:
 				<a href="/contact">contact</a>.
 			</p>
 		</div>

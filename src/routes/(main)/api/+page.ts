@@ -53,17 +53,16 @@ const TAGS: Record<string, { label: string; description: string }> = {
 	instruments: {
 		label: 'Instrumenten',
 		description:
-			'Wetten, AMvB’s, ministeriële regelingen, verdragen en Europese instrumenten, met artikelen, toestanden en wijzigingen.'
+			'Regelingen, verdragen en Europese instrumenten, met artikelen, tekst op een datum en wijzigingen.'
 	},
 	articles: {
 		label: 'Artikelen',
 		description:
-			'Artikel met tekst, versiegeschiedenis, wetgevingsgeschiedenis, verwijzingen en aanhangige wijzigingen.'
+			'Een artikel met tekst, versies, wetsgeschiedenis, verwijzingen en aanhangige wijzigingen.'
 	},
 	annexes: {
 		label: 'Bijlagen',
-		description:
-			'Bijlagen bij instrumenten en de artikelen waarvan de reikwijdte erdoor wordt bepaald.'
+		description: 'Een bijlage bij een instrument en de artikelen waarvan zij de reikwijdte bepaalt.'
 	},
 	judgments: {
 		label: 'Uitspraken',
@@ -71,51 +70,73 @@ const TAGS: Record<string, { label: string; description: string }> = {
 	},
 	dossiers: {
 		label: 'Dossiers',
+		description: 'Kamerdossiers: stand, tijdlijn, stukken en voorgestelde wijzigingen.'
+	},
+	documents: {
+		label: 'Stukken',
 		description:
-			'Wetgevingsdossiers van de Tweede Kamer: stand, tijdlijn, documenten en voorgestelde wijzigingen.'
+			'Kamerstukken van beide Kamers en publicaties in Staatsblad en Staatscourant, met tekst.'
 	},
 	decisions: {
 		label: 'Stemmingen',
-		description: 'Besluiten van de Kamer met de uitgebrachte stemmen en het besluit zelf.'
-	},
-	committees: {
-		label: 'Commissies',
-		description: 'Commissies met hun leden en de dossiers waarvoor ze de voortouwcommissie zijn.'
+		description: 'Besluiten van beide Kamers, met de stemmen.'
 	},
 	members: {
-		label: 'Kamerleden',
-		description: 'Kamerleden, hun stemmen en de instrumenten waarvoor ze wijzigingen voorstelden.'
+		label: 'Personen',
+		description: 'Kamerleden en bewindspersonen van beide Kamers, met stemmen en dossiers.'
 	},
 	factions: {
 		label: 'Fracties',
-		description: 'Fracties met zetels en de instrumenten waarvoor ze wijzigingen voorstelden.'
+		description: 'Fracties van beide Kamers, met zetels, stemmen en dossiers.'
 	},
-	parties: { label: 'Partijen', description: 'Kleurcode per partij.' },
-	parliament: { label: 'Parlement', description: 'Zetelverdeling van de Tweede Kamer.' },
-	documents: {
-		label: 'Documenten',
+	committees: {
+		label: 'Commissies',
+		description: 'Commissies van beide Kamers, met leden, dossiers en activiteiten.'
+	},
+	parliament: { label: 'Parlement', description: 'Zetelverdeling per Kamer.' },
+	parties: { label: 'Partijen', description: 'Kleur per partij.' },
+	cabinets: {
+		label: 'Kabinetten',
+		description: 'Kabinetten met periode, coalitie en bewindspersonen per ministerie.'
+	},
+	ministries: {
+		label: 'Ministeries',
 		description:
-			'Kamerstukken en publicaties (Staatsblad, Staatscourant, Eerste Kamer), als metadata of met tekst.'
+			'De ministeries in protocolvolgorde; een voormalig ministerie staat bij zijn opvolger.'
 	},
-	relationships: {
-		label: 'Semantische verbindingen',
-		description: 'Geclassificeerde verwijzingen tussen artikelen: de typen, en erop zoeken.'
+	commitments: {
+		label: 'Toezeggingen',
+		description: 'Toezeggingen van bewindspersonen, met hun stand.'
+	},
+	feed: {
+		label: 'Actueel',
+		description: 'Wat er per dag bijkwam, als lijst, als samenvatting en als Atom-feed.'
 	},
 	nodes: {
 		label: 'Bronnen',
 		description:
-			'Een bron met al zijn verbindingen, de omgeving binnen enkele stappen en de overlays voor aanhangige wijzigingen en recente activiteit.'
+			'Een bron met al haar verbindingen, haar omgeving binnen enkele stappen, en de lagen voor aanhangige wijzigingen en recente activiteit.'
 	},
-	graph: {
-		label: 'Netwerk',
-		description: 'Delen van het netwerk als bronnen en verbindingen.'
+	paths: { label: 'Paden', description: 'De kortste paden tussen twee tot vijf gekozen bronnen.' },
+	relationships: {
+		label: 'Verwijzingen tussen artikelen',
+		description: 'Verwijzingen tussen artikelen naar hun aard: de soorten, en erop zoeken.'
 	},
-	search: { label: 'Zoeken', description: 'Tekstzoekopdracht over acht typen bronnen.' },
+	search: { label: 'Zoeken', description: 'Zoeken over elf soorten bronnen, best passende eerst.' },
+	resolve: {
+		label: 'Citaat herleiden',
+		description: 'De bron die een citaat, nummer of wetsnaam aanwijst.'
+	},
+	lookup: {
+		label: 'Adres opzoeken',
+		description: 'De bron achter een leesbaar adres; precies, of niets.'
+	},
 	stats: {
 		label: 'Statistieken',
-		description: 'Aantal bronnen per collectie en aantal verbindingen per type.'
+		description:
+			'Aantallen per soort bron en verbinding, dekking van de rechtspraak, en de datum per bron.'
 	},
-	root: { label: 'Service', description: 'Naam, versie en bereikbaarheid van de database.' }
+	root: { label: 'Service', description: 'Naam, versie en bereikbaarheid.' }
 };
 const TAG_ORDER = Object.keys(TAGS);
 
