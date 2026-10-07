@@ -16,7 +16,7 @@
 		<div class="section">
 			<h2 class="section-title">Wat wordt verwerkt</h2>
 			<p>
-				Concordans heeft geen accounts, houdt geen bezoekers bij en plaatst geen cookies. Wie via de <a
+				Concordans heeft geen accounts en plaatst geen cookies. Wie via de <a
 					href="/contact"
 					class="cite">contactpagina</a
 				> een e-mail stuurt, deelt het e-mailadres en de inhoud van het bericht. Een advertentie op Concordans
@@ -27,9 +27,10 @@
 		<div class="section">
 			<h2 class="section-title">Serverlogbestanden</h2>
 			<p>
-				De webserver en de API registreren bij elk verzoek het IP-adres, het tijdstip en het
-				opgevraagde pad. Die gegevens dienen voor technisch beheer, beveiliging en de grens aan het
-				aantal verzoeken per IP-adres. De logbestanden worden maximaal dertig dagen bewaard.
+				De API registreert bij elk verzoek het IP-adres, het tijdstip en het opgevraagde adres,
+				inclusief zoektermen. Die gegevens dienen voor technisch beheer, beveiliging en de grens aan
+				het aantal verzoeken per IP-adres. Voor dit logboek geldt nog geen vaste bewaartermijn. De
+				webserver van de site zelf houdt geen bezoeken bij.
 			</p>
 		</div>
 
