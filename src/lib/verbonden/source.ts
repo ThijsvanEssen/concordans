@@ -4,8 +4,9 @@
 import { bucketTotals, neighborsOf } from '$lib/api/nodes';
 import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
-import { writable, type Readable } from 'svelte/store';
-import { buildGroups, withUnresolvedAppeals, type Group } from './groups';
+import { get, writable, type Readable } from 'svelte/store';
+import { getNodeFirst } from '$lib/api/records';
+import { buildGroups, groupCount, withUnresolvedAppeals, type Group } from './groups';
 import { LOADERS } from './loaders';
 
 export type VerbondenState = {
@@ -15,6 +16,11 @@ export type VerbondenState = {
 	/** Requests still under way. */
 	loading: boolean;
 	failed: boolean;
+	/**
+	 * The groups to come, with their counts, from the light node while the full one is on
+	 * its way: the panel shows their heads before their rows (the Awb's full node is 4.9 MB).
+	 */
+	preview?: { id: string; label: string; count: number | null }[];
 };
 
 export type VerbondenSource = Readable<VerbondenState> & {
@@ -45,6 +51,15 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		controller = ac;
 		state.set({ id: selection.id, groups: [], loading: true, failed: false });
 		const { collection, key } = selection;
+		getNodeFirst(collection, key)
+			.then((first) => {
+				if (ac.signal.aborted || get(state).groups.length > 0) return;
+				const preview = buildGroups(collection, neighborsOf(first), bucketTotals(first))
+					.filter((g) => g.load || g.rows.length > 0)
+					.map((g) => ({ id: g.id, label: g.label, count: g.load ? null : groupCount(g) }));
+				state.set({ id: selection.id, groups: [], loading: true, failed: false, preview });
+			})
+			.catch(() => {});
 		store
 			.nodeResponse(collection, key)
 			.then((response) => {

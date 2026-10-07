@@ -322,7 +322,23 @@
 				{/if}
 			</p>
 		{:else if verbonden.loading && verbonden.groups.length === 0}
-			<p class="note">Laden…</p>
+			<!-- The heads of the groups to come, with their counts, and rows still being read. -->
+			{#each verbonden.preview?.length ? verbonden.preview : [null] as p, i (p?.id ?? i)}
+				<div class="voorlopig" aria-hidden={p ? undefined : 'true'}>
+					{#if p}
+						<p class="voorlopig-kop">
+							{p.label}{#if p.count != null}<span class="voorlopig-aantal"
+									>{formatCount(p.count)}</span
+								>{/if}
+						</p>
+					{:else}
+						<span class="balk balk--kop"></span>
+					{/if}
+					<span class="balk"></span>
+					<span class="balk balk--kort"></span>
+				</div>
+			{/each}
+			<p class="sr-only" role="status">Verbindingen laden</p>
 		{/if}
 
 		{#each shown as g, i (g.id)}
@@ -654,6 +670,53 @@
 		overflow-y: auto;
 		padding-bottom: var(--s-6);
 	}
+	/* The groups while their rows load: their heads, and quiet bars where rows will be. */
+	.voorlopig {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+		padding: var(--s-3) var(--s-4);
+		border-bottom: 1px solid var(--rule);
+	}
+	.voorlopig-kop {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		color: var(--ink-2);
+	}
+	.voorlopig-aantal {
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.balk {
+		display: block;
+		height: 12px;
+		width: 85%;
+		border-radius: var(--r-1);
+		background: var(--paper-2);
+	}
+	.balk--kop {
+		height: 16px;
+		width: 45%;
+	}
+	.balk--kort {
+		width: 60%;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		.balk {
+			animation: ademen 1.6s ease-in-out infinite;
+		}
+	}
+	@keyframes ademen {
+		50% {
+			opacity: 0.55;
+		}
+	}
+
 	.note,
 	.hidden {
 		margin: 0;
