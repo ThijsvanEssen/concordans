@@ -472,15 +472,27 @@
 
 	let rawChanged = false;
 	let drawnClusters = '';
+	// The store gives nodes and then edges for one change: they are drawn once, together,
+	// in a microtask, before anyone awaiting that change goes on. Drawn separately, the
+	// Awb's 456 bronnen were laid out twice for every response (1.1 s, then 0.6 s).
+	let redrawQueued = false;
+	const queueRedraw = () => {
+		if (redrawQueued) return;
+		redrawQueued = true;
+		queueMicrotask(() => {
+			redrawQueued = false;
+			redraw();
+		});
+	};
 	const syncNodes = (nodes: GraphNode[]) => {
 		rawNodes = nodes;
 		rawChanged = true;
-		redraw();
+		queueRedraw();
 	};
 	const syncEdges = (edges: GraphEdge[]) => {
 		rawEdges = edges;
 		rawChanged = true;
-		redraw();
+		queueRedraw();
 	};
 
 	/** Draw what the store holds, through the clusters; only when that or they changed. */
