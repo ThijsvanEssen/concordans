@@ -1093,7 +1093,7 @@
 				<p>{padMissing ?? focusError}</p>
 				<p>
 					Het netwerk bevat een selectie van bronnen. Zie
-					<a href="/docs#dekking" class="link">bronnen en dekking</a>.
+					<a href="/bronnen#dekking" class="link">bronnen en dekking</a>.
 				</p>
 			</div>
 		{:else if mode === 'graph'}

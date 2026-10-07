@@ -2,13 +2,13 @@
 </script>
 
 <svelte:head>
-	<title>Colofon, Concordans</title>
+	<title>Over Concordans</title>
 </svelte:head>
 
 <div class="page-wrap">
 	<div class="container">
 		<div class="stub-eyebrow">Over Concordans</div>
-		<h1 class="stub-title">Colofon</h1>
+		<h1 class="stub-title">Over Concordans</h1>
 		<p class="stub-lede">
 			Concordans is een onafhankelijk onderzoeksproject naar de structuur van het Nederlandse recht.
 		</p>
@@ -20,32 +20,18 @@
 			</p>
 		</div>
 
-		<div class="section">
-			<h2 class="section-title">Bronnen</h2>
+		<div class="section" id="contact">
+			<h2 class="section-title">Contact</h2>
 			<p>
-				Concordans gebruikt alleen officiële bronnen; welke bron waarvandaan komt, staat in de
-				<a href="/docs/methode" class="cite">methode</a>. Wetteksten van wetten.overheid.nl en de
-				gegevens van rijksoverheid.nl vallen onder de
-				<a href="https://creativecommons.org/publicdomain/zero/1.0/deed.nl" class="cite"
-					>CC0-licentie</a
-				>
-				van de Nederlandse overheid. Wat geldt voor hergebruik, ook van EUR-Lex en HUDOC, staat in de
-				<a href="/voorwaarden" class="cite">gebruiksvoorwaarden</a>.
-			</p>
-		</div>
-
-		<div class="section">
-			<h2 class="section-title">Aansprakelijkheid</h2>
-			<p>
-				Concordans geeft geen juridisch advies. Zie de
-				<a href="/voorwaarden" class="cite">gebruiksvoorwaarden</a>.
+				Vragen, opmerkingen, verzoeken voor grootschalig gebruik van de API en vragen over privacy
+				gaan naar <a href="mailto:concordans@tmve.nl" class="cite">concordans@tmve.nl</a>.
 			</p>
 		</div>
 
 		<div class="meta-row">
-			<a href="/privacy" class="meta-link">Privacyverklaring</a>
-			<a href="/voorwaarden" class="meta-link">Gebruiksvoorwaarden</a>
-			<a href="/contact" class="meta-link">Contact</a>
+			<a href="/bronnen" class="meta-link">Bronnen en hergebruik</a>
+			<a href="/voorwaarden" class="meta-link">Voorwaarden</a>
+			<a href="/privacy" class="meta-link">Privacy</a>
 		</div>
 	</div>
 </div>

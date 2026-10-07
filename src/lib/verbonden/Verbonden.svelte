@@ -554,7 +554,7 @@
 						{span.of}{#if span.first && span.last}, van {span.first.slice(0, 4)} tot {longDate(
 								span.last
 							)}{/if}.
-						<a href="/docs#dekking" class="link">Dekking</a>
+						<a href="/bronnen#dekking" class="link">Dekking</a>
 					</p>
 				{/if}
 			</section>

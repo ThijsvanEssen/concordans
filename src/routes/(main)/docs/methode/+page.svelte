@@ -9,52 +9,10 @@
 		<p class="stub-lede">
 			Concordans haalt elke bron op bij de officiële uitgever en legt de verbindingen ertussen vast.
 			Een verbinding komt uit de gegevens van de bron zelf, zoals een artikel en zijn wet of een
-			Kamerlid en zijn fractie, of uit een verwijzing in de tekst.
+			Kamerlid en zijn fractie, of uit een verwijzing in de tekst. Welke bronnen dat zijn en wat
+			ermee mag, staat bij
+			<a href="/bronnen" class="cite">Bronnen en hergebruik</a>.
 		</p>
-
-		<div class="section">
-			<h2 class="section-title">Herkomst per bron</h2>
-			<div class="list">
-				<div class="list-row">
-					<span class="list-k">Wetgeving</span><span
-						>wetten.overheid.nl (Basiswettenbestand), op BWB-id.</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Rechtspraak</span><span
-						>rechtspraak.nl, en HUDOC voor het EHRM, op ECLI.</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Parlement</span><span
-						>De open data van de Tweede Kamer, en eerstekamer.nl. Kamerstukken op dossier- en
-						ondernummer.</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Publicaties</span><span
-						>Staatsblad, Staatscourant en Tractatenblad, van officielebekendmakingen.nl.</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Regering</span><span
-						>Kabinetten, hun periodes en bewindspersonen van rijksoverheid.nl.</span
-					>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Europees recht</span><span>EUR-Lex, op CELEX-nummer.</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Verdragen</span><span>De Verdragenbank van de Rijksoverheid.</span>
-				</div>
-				<div class="list-row">
-					<span class="list-k">Organisaties</span><span
-						>Ministeries en rechtsgebieden uit de waardelijsten van de overheid.</span
-					>
-				</div>
-			</div>
-			<p>Bronvermelding en licenties staan in het <a href="/colofon" class="cite">colofon</a>.</p>
-		</div>
 
 		<div class="section">
 			<h2 class="section-title">Verwijzingen in de tekst</h2>
@@ -118,21 +76,46 @@
 			</p>
 		</div>
 
-		<div class="section">
+		<div class="section" id="grenzen">
 			<h2 class="section-title">Grenzen</h2>
 			<p>
 				De patronen begrijpen de tekst niet. Een ongebruikelijke formulering wordt gemist of aan de
-				verkeerde bron gelegd. De dekking per bron staat bij de <a
-					href="/docs#beperkingen"
-					class="cite">bekende beperkingen</a
-				>.
+				verkeerde bron gelegd.
+			</p>
+			<p>
+				Het netwerk bevat een selectie: niet elke regeling uit het Basiswettenbestand, niet alle
+				uitspraken van rechtspraak.nl, niet het volledige archief van de Kamers. Gemeentelijke
+				verordeningen en ongepubliceerde uitspraken vallen erbuiten. Een bron die ontbreekt, staat
+				niet in deze selectie; dat is geen bewijs dat ze niet bestaat.
+			</p>
+			<p>
+				Een Europese richtlijn of verordening staat erin voor zover een Nederlandse regeling ernaar
+				verwijst. Van het EHRM staat een selectie uitspraken in het netwerk, van het Hof van
+				Justitie vrijwel niets. Zie <a href="https://eur-lex.europa.eu" class="cite"
+					>eur-lex.europa.eu</a
+				>
+				en
+				<a href="https://hudoc.echr.coe.int" class="cite">hudoc.echr.coe.int</a>.
+			</p>
+			<p>
+				Van de Eerste Kamer staan leden, fracties en commissies erin in hun huidige samenstelling,
+				zonder eerdere, en besluiten over wetsvoorstellen vanaf juli 2026.
+			</p>
+			<p>
+				Elke bron wordt afzonderlijk opgehaald; de stand per bron staat bij
+				<a href="/bronnen#dekking" class="cite">Bronnen en hergebruik</a>. De geldigheidsdatum van
+				een artikel is de datum van inwerkingtreding, niet die van het ophalen.
+			</p>
+			<p>
+				Concordans is in ontwikkeling. Functies en weergave kunnen wijzigen. Een adres op ECLI,
+				BWB-id of officieel nummer blijft werken.
 			</p>
 		</div>
 
 		<div class="meta-row">
 			<a href="/docs" class="meta-link">Documentatie</a>
 			<a href="/api" class="meta-link">API-referentie</a>
-			<a href="/colofon" class="meta-link">Colofon</a>
+			<a href="/bronnen" class="meta-link">Bronnen en hergebruik</a>
 		</div>
 	</div>
 </div>
