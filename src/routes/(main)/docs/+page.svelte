@@ -8,7 +8,7 @@
 
 	/** The collections the dekking lists, in the order of the bronnen above. */
 	const COVERAGE: { collection: string; label: string }[] = [
-		{ collection: 'instruments', label: 'Instrumenten' },
+		{ collection: 'instruments', label: 'Wetten en regelingen' },
 		{ collection: 'articles', label: 'Artikelen' },
 		{ collection: 'judgments', label: 'Uitspraken' },
 		{ collection: 'dossiers', label: 'Dossiers' },
@@ -78,7 +78,9 @@
 		<h1 class="stub-title">Documentatie</h1>
 		<p class="stub-lede">
 			Concordans toont wetten, uitspraken en parlementaire stukken uit officiële bronnen, met de
-			verbindingen ertussen. Het is een naslagwerk en geeft geen juridisch advies.
+			verbindingen ertussen. Het is een naslagwerk, geen juridisch advies (zie de
+			<a href="/voorwaarden" class="cite">voorwaarden</a>), en het is niet volledig (zie de
+			<a href="#beperkingen" class="cite">bekende beperkingen</a>).
 		</p>
 
 		<div class="section" id="onderdelen">
@@ -100,9 +102,10 @@
 		<div class="section" id="dekking">
 			<h2 class="section-title">Bronnen en dekking</h2>
 			<p>
-				Een instrument is een regeling uit het Basiswettenbestand, een verdrag of een Europese
-				regeling. Het bestaat uit artikelen. Een eerdere tekst van een artikel is een eigen bron.
-				Een publicatie in het Staatsblad wijzigt een regeling, voegt eraan toe of trekt haar in.
+				Een wet of regeling komt uit het Basiswettenbestand; verdragen en Europese regelingen staan
+				ernaast. Een regeling bestaat uit artikelen. Een eerdere tekst van een artikel is een eigen
+				bron. Een publicatie in het Staatsblad wijzigt een regeling, voegt eraan toe of trekt haar
+				in.
 			</p>
 			<p>
 				Een uitspraak verwijst naar artikelen, instrumenten en andere uitspraken. Een uitspraak in
@@ -158,8 +161,7 @@
 			<p>
 				Het zoekveld doorzoekt instrumenten, artikelen, uitspraken, dossiers, Kamerstukken,
 				stemmingen, personen, fracties, commissies, kabinetten en toezeggingen. Een treffer op
-				nummer staat eerst, dan een op de volledige naam, het begin van de naam, een deel ervan en
-				ten slotte op woorden.
+				nummer staat eerst.
 			</p>
 			<p>Een nummer, citaat of wetsnaam opent de bron direct:</p>
 			<div class="list">
@@ -178,7 +180,7 @@
 					>
 				</div>
 				<div class="list-row">
-					<span class="list-k">BWB-id of CELEX</span><span>BWBR0001854, 32013L0036</span>
+					<span class="list-k">BWB-id of CELEX-nummer</span><span>BWBR0001854, 32013L0036</span>
 				</div>
 				<div class="list-row">
 					<span class="list-k">wetsnaam</span><span
@@ -224,12 +226,6 @@
 					<span class="list-k">toezegging</span><span>/toezeggingen/TZ202609-124</span>
 				</div>
 			</div>
-			<p>
-				De weergave staat erachter: <code>?lezen=1</code> voor de tekst op volle breedte. Een plaats
-				in de tekst staat na het hekje: <code>#lid-2-onder-a</code> in een artikel,
-				<code>#rov-5.3</code> in een uitspraak. Een stemming heeft geen eigen adres en blijft onder
-				<code>/explore</code>.
-			</p>
 		</div>
 
 		<div class="section">
@@ -242,7 +238,7 @@
 				<div class="list list--two-col">
 					{#each relations as relation (relation)}
 						<div class="list-row">
-							<span class="list-k">{relation}</span><span>{RELATION_LABEL[relation]}</span>
+							<span>{RELATION_LABEL[relation]}</span>
 						</div>
 					{/each}
 				</div>
@@ -279,10 +275,9 @@
 			</p>
 			<p>
 				Het paneel Netwerk, rechtsboven, houdt bronnen vast over meerdere keuzes heen. Een klik op
-				een naam zet de bron uit of aan; × haalt haar weg. <strong>+ bron</strong> zoekt een bron om
-				toe te voegen; in Verbonden heeft elke rij een +. De gekozen bronnen staan in de URL (<code
-					>?netwerk</code
-				>).
+				een naam zet de bron uit of aan; × haalt haar weg. <strong>+ bron</strong> zoekt een bron om toe
+				te voegen; in Verbonden heeft elke rij een +. De gekozen bronnen staan in het adres; een gedeelde
+				link toont hetzelfde netwerk.
 			</p>
 			<p>
 				Het netwerk toont de gekozen bronnen met hun onderlinge verbindingen en met de bronnen
@@ -341,10 +336,10 @@
 		<div class="section" id="beperkingen">
 			<h2 class="section-title">Bekende beperkingen</h2>
 			<p>
-				Het netwerk bevat een selectie: niet elk BWB-instrument, niet alle uitspraken van
-				rechtspraak.nl, niet het volledige archief van de Kamers. Gemeentelijke verordeningen en
-				ongepubliceerde uitspraken vallen erbuiten. Een bron die ontbreekt, staat niet in deze
-				selectie; dat is geen bewijs dat ze niet bestaat.
+				Het netwerk bevat een selectie: niet elke regeling uit het Basiswettenbestand, niet alle
+				uitspraken van rechtspraak.nl, niet het volledige archief van de Kamers. Gemeentelijke
+				verordeningen en ongepubliceerde uitspraken vallen erbuiten. Een bron die ontbreekt, staat
+				niet in deze selectie; dat is geen bewijs dat ze niet bestaat.
 			</p>
 			<p>
 				Een Europese richtlijn of verordening staat erin voor zover een Nederlandse regeling ernaar
@@ -356,8 +351,8 @@
 				<a href="https://hudoc.echr.coe.int" class="cite">hudoc.echr.coe.int</a>.
 			</p>
 			<p>
-				Van de Eerste Kamer staan leden, fracties en commissies erin vanaf 2 oktober 2026, zonder
-				eerdere samenstelling, en besluiten over wetsvoorstellen vanaf juli 2026.
+				Van de Eerste Kamer staan leden, fracties en commissies erin in hun huidige samenstelling,
+				zonder eerdere, en besluiten over wetsvoorstellen vanaf juli 2026.
 			</p>
 			<p>
 				Elke bron wordt afzonderlijk opgehaald; de datum per bron staat onder Bronnen en dekking. De
