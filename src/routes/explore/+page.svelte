@@ -84,6 +84,12 @@
 		selectedNode = n;
 	});
 
+	/** The bronnen on the canvas, for the heat overlay, which counts only those. */
+	let canvasIds = $state<string[]>([]);
+	store.nodes.subscribe((ns) => {
+		canvasIds = ns.map((n) => n.id).filter((id) => !id.startsWith('synth:'));
+	});
+
 	let focusError = $state<string | null>(null);
 	/** The focus is a bron the dataset does not hold: the page says so instead of an empty canvas. */
 	let focusMissing = $state(false);
@@ -748,23 +754,52 @@
 		heatMap = new Map();
 		if (o.kind === 'none') return;
 
+		if (o.kind === 'heat') return;
+
 		const ctrl = new AbortController();
 		const request =
-			o.kind === 'heat'
-				? getHeat(o.months, ctrl.signal)
-				: o.kind === 'open'
-					? getInFlux(ctrl.signal)
-					: getDossierInFlux(o.id, ctrl.signal);
+			o.kind === 'open' ? getInFlux(ctrl.signal) : getDossierInFlux(o.id, ctrl.signal);
 		request
 			.then((counts) => {
 				if (ctrl.signal.aborted) return;
-				if (o.kind === 'heat') heatMap = counts;
-				else inFluxMap = counts;
+				inFluxMap = counts;
 			})
 			.catch((err) => {
 				if (!ctrl.signal.aborted) console.warn('[explore] overlay load failed:', err);
 			});
 		return () => ctrl.abort();
+	});
+
+	// The heat of what is drawn: each bron once per period, asked when it comes on the canvas.
+	// A change of period or overlay starts anew; a growing canvas only asks for what is new.
+	let heatAsked = new Set<string>();
+	let heatFor: string | null = null;
+	let heatAbort: AbortController | null = null;
+	$effect(() => {
+		const o = overlay;
+		const ids = canvasIds;
+		const key = o.kind === 'heat' ? `heat:${o.months}` : null;
+		if (key !== heatFor) {
+			heatAbort?.abort();
+			heatAbort = key ? new AbortController() : null;
+			heatFor = key;
+			heatAsked = new Set();
+		}
+		if (o.kind !== 'heat' || !heatAbort) return;
+		const todo = ids.filter((id) => !heatAsked.has(id));
+		if (todo.length === 0) return;
+		for (const id of todo) heatAsked.add(id);
+		const ctrl = heatAbort;
+		getHeat(o.months, todo, ctrl.signal)
+			.then((counts) => {
+				if (ctrl.signal.aborted || counts.size === 0) return;
+				heatMap = new Map([...untrack(() => heatMap), ...counts]);
+			})
+			.catch((err) => {
+				// Asked again when the canvas next changes.
+				for (const id of todo) heatAsked.delete(id);
+				if (!ctrl.signal.aborted) console.warn('[explore] heat load failed:', err);
+			});
 	});
 
 	const toggleHeat = () =>
