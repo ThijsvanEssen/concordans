@@ -1173,6 +1173,7 @@
 									: []}
 								loading={netwerkLoading}
 								start={!focus && !netwerkActive}
+								{telefoon}
 								onPick={addIdToNetwerk}
 								onVoorbeeld={() => {
 									keepCanvas = true;

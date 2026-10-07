@@ -6,6 +6,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import Picto from '$lib/components/ui/Picto.svelte';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import type { NetwerkEntry } from './netwerk';
 
 	let {
@@ -22,7 +23,8 @@
 		onTussen,
 		onClearContext,
 		onClear,
-		onVoorbeeld
+		onVoorbeeld,
+		telefoon = false
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
@@ -42,7 +44,30 @@
 		onClear: () => void;
 		/** Een voorbeeldnetwerk met één klik. */
 		onVoorbeeld?: () => void;
+		/** A phone: the panel starts folded, as it covers the canvas there. */
+		telefoon?: boolean;
 	} = $props();
+
+	// Folded to its head, like the legend; per browser remembered. Without a choice it is
+	// open, on a phone folded.
+	const PANEEL = 'concordans:netwerkpaneel';
+	let open = $state(true);
+	$effect(() => {
+		try {
+			const v = localStorage.getItem(PANEEL);
+			open = v ? v === 'open' : !telefoon;
+		} catch {
+			open = !telefoon;
+		}
+	});
+	const zetOpen = (v: boolean) => {
+		open = v;
+		try {
+			localStorage.setItem(PANEEL, v ? 'open' : 'dicht');
+		} catch {
+			/* geen opslag */
+		}
+	};
 
 	let zoeken = $state(false);
 
@@ -54,7 +79,12 @@
 	const getoond = $derived(gevouwen ? entries.slice(0, KORT) : entries);
 </script>
 
-<section class="netwerk" class:netwerk--start={start} aria-label="Netwerk">
+<section
+	class="netwerk"
+	class:netwerk--start={start}
+	class:netwerk--dicht={!start && !open}
+	aria-label="Netwerk"
+>
 	{#if start}
 		<h2 class="start__title">Netwerk</h2>
 		<!-- Geen schets; drie stappen onder elkaar, elk met beeld, naam en één regel. -->
@@ -82,10 +112,15 @@
 		<!-- De gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
 		     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
 		<div class="kop">
-			<span class="titel">Netwerk</span>
-			{#if loading}<span class="laden">laden</span>{/if}
+			<button type="button" class="kop-knop" aria-expanded={open} onclick={() => zetOpen(!open)}>
+				<span class="titel">Netwerk</span>
+				{#if loading}<span class="laden">laden</span>{:else if !open && entries.length > 0}<span
+						class="aantal">{entries.length} {entries.length === 1 ? 'bron' : 'bronnen'}</span
+					>{/if}
+				<Caret {open} />
+			</button>
 			<span class="ruimte"></span>
-			{#if entries.length > 0}
+			{#if open && entries.length > 0}
 				<button
 					type="button"
 					class="wis"
@@ -102,83 +137,85 @@
 				</details>
 			{/if}
 		</div>
-		<ul class="chips">
-			{#each getoond as e (e.id)}
-				<li class="chip" class:uit={!e.on} class:mist={e.missing}>
-					<button
-						type="button"
-						class="chip-naam"
-						aria-pressed={e.on}
-						disabled={e.missing}
-						title={e.missing
-							? 'Niet gevonden'
-							: e.on
-								? `${e.label}: verbergen`
-								: `${e.label}: tonen`}
-						onclick={() => onToggle(e.id)}
-						><KindGlyph collection={e.collection} size={11} />{e.label}{#if e.alone}<span
-								class="los"
-								title="Geen verbinding met de andere gekozen bronnen"
-							>
-								, los</span
-							>{/if}</button
-					>
-					<button
-						type="button"
-						class="chip-weg"
-						onclick={() => onRemove(e.id)}
-						aria-label="Haal {e.label} uit netwerk">×</button
-					>
-				</li>
-			{/each}
-			{#if gevouwen}
-				<li>
-					<button type="button" class="chip chip--meer" onclick={() => (alles = true)}
-						>en {entries.length - KORT} andere</button
-					>
-				</li>
-			{:else if entries.length > KORT + 1}
-				<li>
-					<button type="button" class="chip chip--meer" onclick={() => (alles = false)}
-						>minder</button
-					>
-				</li>
-			{/if}
-			{#if selection}
-				<li>
-					<button
-						type="button"
-						class="chip chip--voorstel"
-						onclick={onAdd}
-						aria-label="Voeg {selection.label} toe aan netwerk">+ {selection.label}</button
-					>
-				</li>
-			{/if}
-			<li>
-				{#if zoeken}
-					<div class="zoek">
-						<Search
-							compact
-							placeholder="Bron toevoegen"
-							onPick={(id) => {
-								onPick(id);
-								zoeken = false;
-							}}
-						/>
-					</div>
-				{:else}
-					<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
-						>+ bron</button
-					>
+		{#if open}
+			<ul class="chips">
+				{#each getoond as e (e.id)}
+					<li class="chip" class:uit={!e.on} class:mist={e.missing}>
+						<button
+							type="button"
+							class="chip-naam"
+							aria-pressed={e.on}
+							disabled={e.missing}
+							title={e.missing
+								? 'Niet gevonden'
+								: e.on
+									? `${e.label}: verbergen`
+									: `${e.label}: tonen`}
+							onclick={() => onToggle(e.id)}
+							><KindGlyph collection={e.collection} size={11} />{e.label}{#if e.alone}<span
+									class="los"
+									title="Geen verbinding met de andere gekozen bronnen"
+								>
+									, los</span
+								>{/if}</button
+						>
+						<button
+							type="button"
+							class="chip-weg"
+							onclick={() => onRemove(e.id)}
+							aria-label="Haal {e.label} uit netwerk">×</button
+						>
+					</li>
+				{/each}
+				{#if gevouwen}
+					<li>
+						<button type="button" class="chip chip--meer" onclick={() => (alles = true)}
+							>en {entries.length - KORT} andere</button
+						>
+					</li>
+				{:else if entries.length > KORT + 1}
+					<li>
+						<button type="button" class="chip chip--meer" onclick={() => (alles = false)}
+							>minder</button
+						>
+					</li>
 				{/if}
-			</li>
-		</ul>
-		{#if entries.length > 1}
-			<label class="tussen">
-				<input type="checkbox" id="netwerk-tussen" checked={tussen} onchange={onTussen} />
-				{#if tussen}<b>{joiningCount}</b>
-					{joiningCount === 1 ? 'bron' : 'bronnen'} ertussen{:else}Toon de bronnen ertussen{/if}
-			</label>
+				{#if selection}
+					<li>
+						<button
+							type="button"
+							class="chip chip--voorstel"
+							onclick={onAdd}
+							aria-label="Voeg {selection.label} toe aan netwerk">+ {selection.label}</button
+						>
+					</li>
+				{/if}
+				<li>
+					{#if zoeken}
+						<div class="zoek">
+							<Search
+								compact
+								placeholder="Bron toevoegen"
+								onPick={(id) => {
+									onPick(id);
+									zoeken = false;
+								}}
+							/>
+						</div>
+					{:else}
+						<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
+							>+ bron</button
+						>
+					{/if}
+				</li>
+			</ul>
+			{#if entries.length > 1}
+				<label class="tussen">
+					<input type="checkbox" id="netwerk-tussen" checked={tussen} onchange={onTussen} />
+					{#if tussen}<b>{joiningCount}</b>
+						{joiningCount === 1 ? 'bron' : 'bronnen'} ertussen{:else}Toon de bronnen ertussen{/if}
+				</label>
+			{/if}
 		{/if}
 	{/if}
 </section>
@@ -188,6 +225,24 @@
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
+	}
+	.kop-knop {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.kop-knop:hover {
+		color: var(--ink);
+	}
+	.aantal {
+		color: var(--ink-2);
 	}
 	.titel {
 		font-family: var(--font-serif);
@@ -436,6 +491,10 @@
 		align-content: start;
 	}
 
+	.netwerk--dicht {
+		width: auto;
+		padding-bottom: var(--s-2);
+	}
 	.netwerk--start {
 		top: 18%;
 		left: 50%;
