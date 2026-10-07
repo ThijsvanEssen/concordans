@@ -265,14 +265,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		return { rows: [...rows.values()] };
 	},
 
-	'article-explanatory': async ({ node, neighbors, signal }) => ({
+	'article-explanatory': async ({ node, neighbors }) => ({
 		rows: await explanatoryDocuments(
 			{
 				bwbId: bwbOf(node),
 				number: typeof node.props?.article_number === 'string' ? node.props.article_number : null
 			},
-			neighbors,
-			signal
+			neighbors
 		)
 	}),
 

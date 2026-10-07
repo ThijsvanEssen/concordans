@@ -2,6 +2,8 @@
 // first and, where it is absent or finds nothing, parses the notation itself.
 // TODO(backend B11): the parser and the lookups below go when every notation resolves.
 import { BW_BOOKS, withBook } from '$lib/text/bw';
+import { getArticleDetail } from '$lib/api/articles';
+import { getDossier, getDossierDocuments } from '$lib/components/parliamentary/data';
 import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
 import type { BronRef } from '$lib/bron/href';
@@ -170,26 +172,22 @@ const apiDeps: ResolveDeps = {
 		const bwb = found.results.articles?.[0]?.extra?.bwb_id;
 		return typeof bwb === 'string' ? bwb : null;
 	},
-	articleKey: async (bwbId, articleNumber) => {
-		const { data } = await api.GET('/api/articles/{bwb_id}/{article_number}', {
-			params: { path: { bwb_id: bwbId, article_number: articleNumber } }
-		});
-		return data?.article.key ?? null;
-	},
+	articleKey: (bwbId, articleNumber) =>
+		getArticleDetail(bwbId, articleNumber)
+			.then((d) => d.article.key ?? null)
+			.catch(() => null),
 	documentKey: async (dossier, nr) => {
-		const { data } = await api.GET('/api/dossiers/{number}/documents', {
-			params: { path: { number: dossier } }
-		});
+		const data = await getDossierDocuments(dossier).catch(() => null);
 		const wanted = nr.toLowerCase();
 		const hit = data?.items.find(
 			(d) => String(d.sequence ?? '') === wanted || d.key.toLowerCase().endsWith(`_${wanted}`)
 		);
 		return hit?.key ?? null;
 	},
-	dossier: async (number) => {
-		const { data } = await api.GET('/api/dossiers/{number}', { params: { path: { number } } });
-		return data ? { key: data.key, number: data.number } : null;
-	},
+	dossier: (number) =>
+		getDossier(number)
+			.then((d) => ({ key: d.key, number: d.number }))
+			.catch(() => null),
 	lookUp: (pad) => lookUp(pad),
 	exists: async ({ collection, key }) => {
 		const { response } = await api.GET('/api/nodes/{collection}/{key}', {
