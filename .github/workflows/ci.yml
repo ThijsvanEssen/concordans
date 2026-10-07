@@ -1,0 +1,38 @@
+# Every pull request and every push to main runs the checks the deploy runs, so main is
+# always deployable: a formatting slip shows on the pull request, not at the deploy.
+# Lint is prettier --check over the whole repository (Markdown included) and ESLint.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# a newer push to the same branch or pull request makes the older run moot
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - name: Lint (prettier --check, eslint)
+        run: npm run lint
+      - name: Type check (svelte-check)
+        run: npm run check
+      - name: Tests (vitest)
+        run: npm test
+      - name: Build
+        run: npm run build
