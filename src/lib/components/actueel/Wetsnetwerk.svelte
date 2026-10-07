@@ -16,17 +16,21 @@
 	const telwoord = (n: number, een: string, meer: string) =>
 		`${n.toLocaleString('nl-NL')} ${n === 1 ? een : meer}`;
 
-	/** `9 stukken → 11 artikelen in Wetboek van Strafrecht → 1.854 uitspraken over artikel 273f` */
-	const ketenRegel = $derived(
+	/** The chain in counts, one step a line: what a phone shows before the sketch. */
+	const stappen = $derived(
 		[
-			telwoord(keten.stukken, 'stuk', 'stukken'),
-			`${telwoord(keten.artikelen, 'artikel', 'artikelen')} in ${keten.wet}`,
+			{ vorm: 'stuk' as const, tekst: telwoord(keten.stukken, 'stuk', 'stukken') },
+			{
+				vorm: 'regel-o' as const,
+				tekst: `${telwoord(keten.artikelen, 'artikel', 'artikelen')} in ${keten.wet}`
+			},
 			keten.uitspraken
-				? `${telwoord(keten.uitspraken, 'uitspraak', 'uitspraken')} over ${keten.artikel.toLowerCase()}`
+				? {
+						vorm: 'uitspraak' as const,
+						tekst: `${telwoord(keten.uitspraken, 'uitspraak', 'uitspraken')} over ${keten.artikel.toLowerCase()}`
+					}
 				: null
-		]
-			.filter(Boolean)
-			.join(' → ')
+		].filter((x) => x !== null)
 	);
 
 	let root = $state<HTMLElement>();
@@ -84,7 +88,11 @@
 	<p class="waarom">Laatst aangenomen wetsvoorstel: {KAMER[k.kamer]}, {langeDatum(k.datum)}</p>
 	<h2 id="wetsnetwerk-heading">{k.naam}</h2>
 
-	<p class="keten">{ketenRegel}</p>
+	<ol class="keten">
+		{#each stappen as st (st.vorm)}
+			<li><span class="kteken"><KindGlyph vorm={st.vorm} size={12} /></span>{st.tekst}</li>
+		{/each}
+	</ol>
 	<button type="button" class="toon" aria-expanded={open} onclick={() => (open = !open)}
 		>{open ? 'Verberg het netwerk' : 'Toon het netwerk'}</button
 	>
@@ -292,13 +300,42 @@
 		h2 {
 			margin-bottom: var(--s-2);
 		}
+		/* One step a line, the signs joined by a rule, as on the timeline. */
 		.keten {
-			display: block;
-			margin: 0 0 var(--s-2);
+			display: flex;
+			flex-direction: column;
+			gap: var(--s-1);
+			margin: 0 0 var(--s-3);
+			padding: 0;
+			list-style: none;
 			font-family: var(--font-sans);
 			font-size: var(--t-meta);
-			line-height: var(--lh-snug);
 			color: var(--ink-2);
+		}
+		/* A line of 20px with the sign centred in it: 4px above and below the sign, 4px
+		   between the lines, so the rule between two signs is 8px with 2px clear. */
+		.keten li {
+			position: relative;
+			display: grid;
+			grid-template-columns: 12px minmax(0, 1fr);
+			column-gap: var(--s-2);
+			align-items: start;
+			line-height: 20px;
+		}
+		.kteken {
+			display: flex;
+			align-items: center;
+			height: 20px;
+		}
+		.keten li + li::before {
+			content: '';
+			position: absolute;
+			/* Under the middle of a 12px sign. */
+			left: 5.5px;
+			top: -6px;
+			height: var(--s-2);
+			width: 1px;
+			background: var(--rule-strong);
 		}
 		.toon {
 			display: inline-block;
@@ -325,13 +362,16 @@
 		.lijnen {
 			display: none;
 		}
+		/* Between the layers a short rule under the signs, where the desktop draws lines. */
 		.kolom + .kolom::before {
-			content: '↓';
+			content: '';
 			position: absolute;
-			top: calc(-1 * var(--s-5));
-			left: 0;
-			font-size: var(--t-micro);
-			color: var(--ink-3);
+			/* Under the middle of a 14px sign. */
+			left: 6.5px;
+			top: calc(-1 * var(--s-5) + var(--s-1));
+			height: var(--s-4);
+			width: 1px;
+			background: var(--rule-strong);
 		}
 		.verkenner {
 			margin-left: 0;
