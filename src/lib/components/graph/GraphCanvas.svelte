@@ -163,6 +163,7 @@
 	// Which group(s) each bron belongs to, so two members of the same hull can be
 	// told apart from a connection that actually crosses into or out of it.
 	let nodeGroupIds: Map<string, Set<string>> = new Map();
+	let hiddenGroupKinds: ReadonlySet<string> = new Set();
 
 	let sigmaHoveredId: string | null = null;
 	let hoveredId: string | null = null;
@@ -214,8 +215,11 @@
 
 	$effect(() => {
 		latestContainerGroups = containerGroups ?? new Map();
+		// A grouping switched off draws no hull; its bronnen stand loose and keep their lines.
+		hiddenGroupKinds = filters?.hiddenGroups ?? new Set();
 		const byNode = new Map<string, Set<string>>();
 		for (const group of latestContainerGroups.values()) {
+			if (hiddenGroupKinds.has(group.kind)) continue;
 			for (const id of group.members) {
 				let set = byNode.get(id);
 				if (!set) {
@@ -425,7 +429,7 @@
 		type Drawn = Hull & { polygon: Point[]; center: Point; members: Set<string> };
 		const drawn = new Map<string, Drawn>();
 		for (const group of latestContainerGroups.values()) {
-			if (!drawnGroup(group)) continue;
+			if (!drawnGroup(group) || hiddenGroupKinds.has(group.kind)) continue;
 			const points: { x: number; y: number }[] = [];
 			for (const id of group.members) {
 				if (!graph.hasNode(id)) continue;

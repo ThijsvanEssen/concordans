@@ -38,7 +38,8 @@
 		momentOf,
 		type Period,
 		isContainerKind,
-		type ContainerGroup
+		type ContainerGroup,
+		type ContainerKind
 	} from '$lib/graph/container-membership';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/stores/overlay';
@@ -1104,6 +1105,13 @@
 		}
 	}
 
+	function toggleGroup(kind: ContainerKind) {
+		const next = new Set(filters.hiddenGroups);
+		if (next.has(kind)) next.delete(kind);
+		else next.add(kind);
+		store.setFilters({ hiddenGroups: next });
+	}
+
 	function toggleRelation(r: Relation) {
 		const next = new Set(filters.hiddenRelations);
 		if (!next.delete(r)) next.add(r);
@@ -1176,6 +1184,8 @@
 		{onDepth}
 		hiddenRelations={filters.hiddenRelations}
 		onToggleRelation={toggleRelation}
+		hiddenGroups={filters.hiddenGroups}
+		onToggleGroup={toggleGroup}
 		{canvasCounts}
 		{overlay}
 		inFluxCount={inFluxMap.size}

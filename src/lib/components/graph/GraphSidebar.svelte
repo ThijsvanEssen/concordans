@@ -26,7 +26,7 @@
 	import { edgeColorFor, edgeStyleFor, hullColorFor, hullDashFor } from './nodeSprites';
 	import { kindOfCollection } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { BRON_KIND_VORM, VORM_LABEL, VORM_VOLGORDE, type Vorm } from '$lib/bron/vormen';
+	import { BRON_KIND_VORM } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
 	import { NEIGHBORHOOD_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
 
@@ -40,6 +40,8 @@
 		onDepth,
 		hiddenRelations,
 		onToggleRelation,
+		hiddenGroups = new Set(),
+		onToggleGroup,
 		canvasCounts,
 		overlay = { kind: 'none' } as Overlay,
 		inFluxCount = 0,
@@ -59,11 +61,13 @@
 		onDepth: (d: number) => void;
 		hiddenRelations: Set<Relation>;
 		onToggleRelation: (r: Relation) => void;
+		/** Groupings switched off: no hull around their bronnen. */
+		hiddenGroups?: ReadonlySet<ContainerKind>;
+		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
 			nodes: number;
 			edges: number;
 			kinds?: Partial<Record<BronKind, number>>;
-			vormen?: Partial<Record<Vorm, number>>;
 		};
 		overlay?: Overlay;
 		inFluxCount?: number;
@@ -114,10 +118,24 @@
 		dossier: 'Dossier'
 	};
 	const CONTAINER_KIND_HINT: Record<ContainerKind, string> = {
-		instrument: 'artikelen',
-		faction: 'leden',
-		committee: 'leden',
-		dossier: 'stukken, zaken'
+		instrument: 'een omtrek om de artikelen van een wet',
+		faction: 'een omtrek om de leden van een fractie',
+		committee: 'een omtrek om de leden van een commissie',
+		dossier: 'een omtrek om de stukken van een dossier'
+	};
+
+	// On the canvas a wet, dossier, fractie or commissie is a hull, never a bron: the kinds
+	// are named by what does stand there (Thijs). Verbonden lists the wetten, dossiers and
+	// fracties themselves, and keeps their names; the switch is the same.
+	const OP_HET_NETWERK: Partial<Record<BronKind, { label: string; elders: string }>> = {
+		wetten: { label: 'Publicaties', elders: 'Wetten' },
+		dossiers: { label: 'Overige stukken', elders: 'Dossiers' },
+		leden: { label: 'Leden', elders: 'Leden en fracties' }
+	};
+	const kindLabel = (k: BronKind) => OP_HET_NETWERK[k]?.label ?? BRON_KIND_LABEL[k];
+	const kindTitle = (k: BronKind) => {
+		const n = OP_HET_NETWERK[k];
+		return n ? `${n.label} (in Verbonden: ${n.elders})` : undefined;
 	};
 	const hidden = $derived(
 		fromCanvas ? hiddenByKind([], totals, filter) : hiddenLine(verbonden.groups, filter)
@@ -194,7 +212,9 @@
 			{#each BRON_KINDS as k (k)}
 				{@const n = totals[k] ?? 0}
 				<FilterOptie
-					label={BRON_KIND_LABEL[k]}
+					label={kindLabel(k)}
+					title={kindTitle(k)}
+					wrap
 					on={isOn(k)}
 					onToggle={() => onFilter(toggleKind(filter, k))}
 					count={counting ? null : n}
@@ -206,47 +226,32 @@
 			{/each}
 		</section>
 
-		<!-- Every shape on the canvas, with what it stands for: the filter above groups them,
-		     this says what each one is. -->
-		{#if canvasCounts.vormen && Object.keys(canvasCounts.vormen).length > 0}
-			<section class="block">
-				<h3 class="block__title">Tekens</h3>
-				<div class="tekens">
-					{#each VORM_VOLGORDE.filter((v) => (canvasCounts.vormen?.[v] ?? 0) > 0) as v (v)}
-						<span class="teken"
-							><KindGlyph vorm={v} size={11} />{VORM_LABEL[v]}<span class="row__count"
-								>{formatCount(canvasCounts.vormen?.[v] ?? 0)}</span
-							></span
-						>
-					{/each}
-				</div>
-				<p class="muted">Een omtrek: niet in de gegevens, alleen genoemd.</p>
-			</section>
-		{/if}
-
 		<section class="block">
 			<h3 class="block__title">Groepering</h3>
 			{#each Object.keys(CONTAINER_KIND_LABEL) as ck (ck)}
 				{@const kind = ck as ContainerKind}
-				<div class="row row--static">
+				<FilterOptie
+					label={CONTAINER_KIND_LABEL[kind]}
+					title={`${CONTAINER_KIND_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}`}
+					on={!hiddenGroups.has(kind)}
+					onToggle={() => onToggleGroup?.(kind)}
+				>
 					<!-- As on the canvas: the colour of the group and its own line. -->
-					<svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
-						<rect
-							x="1"
-							y="1"
-							width="20"
-							height="10"
-							rx="5"
-							fill={hullColorFor(kind)}
-							fill-opacity="0.08"
-							stroke={hullColorFor(kind)}
-							stroke-width="1.5"
-							stroke-dasharray={hullDashFor(kind)}
-						/>
-					</svg>
-					<span class="row__name">{CONTAINER_KIND_LABEL[kind]}</span>
-					<span class="row__count">{CONTAINER_KIND_HINT[kind]}</span>
-				</div>
+					{#snippet voor()}<svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
+							<rect
+								x="1"
+								y="1"
+								width="20"
+								height="10"
+								rx="5"
+								fill={hullColorFor(kind)}
+								fill-opacity="0.08"
+								stroke={hullColorFor(kind)}
+								stroke-width="1.5"
+								stroke-dasharray={hullDashFor(kind)}
+							/>
+						</svg>{/snippet}
+				</FilterOptie>
 			{/each}
 		</section>
 
@@ -373,9 +378,8 @@
 			{canvasCounts.nodes === 1 ? 'bron' : 'bronnen'}, {formatCount(canvasCounts.edges)}
 			{canvasCounts.edges === 1 ? 'verbinding' : 'verbindingen'} in het netwerk.
 			{#if hidden.length > 0}
-				{hidden
-					.map((h) => `${formatCount(h.count)} ${BRON_KIND_LABEL[h.kind].toLowerCase()}`)
-					.join(', ')} verborgen door het bronfilter.
+				{hidden.map((h) => `${formatCount(h.count)} ${kindLabel(h.kind).toLowerCase()}`).join(', ')} verborgen
+				door het bronfilter.
 			{/if}
 		</p>
 
@@ -535,41 +539,6 @@
 		border-top: 1px solid var(--rule);
 		color: var(--ink-2);
 	}
-	/* A line without a box (Groepering) on the columns of FilterOptie: the mark where the
-	   box stands, the name, the note at the right edge. */
-	.row {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		min-height: var(--veld-h-klein);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	.tekens {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--s-1) var(--s-3);
-	}
-	.teken {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		min-width: 0;
-		white-space: nowrap;
-	}
-	.teken .row__count {
-		margin-left: auto;
-	}
-	.row--static {
-		cursor: default;
-	}
-	.row__name {
-		flex: 1;
-	}
-	.row__count {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	.chips {
 		display: flex;
 		flex-wrap: wrap;
@@ -578,10 +547,6 @@
 	}
 	.chips--sub {
 		margin-top: 6px;
-	}
-	.muted {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	.empty {
 		margin: 0;
