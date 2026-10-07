@@ -1,7 +1,8 @@
 # A push to `release` puts that commit on the server: lint, check and tests first, then a static
 # build that is copied into a directory of its own on the server, after which `current` points
 # at it. The reverse proxy serves `current`; the five newest builds stay, so going back is one
-# `ln -sfn`.
+# `ln -sfn`. `immutable` holds the _app/immutable files of all five: a tab opened before a deploy
+# still finds its chunks there (Caddy serves /_app/immutable/* from it, a 404 when none has it).
 #
 # Repository settings (Settings → Secrets and variables → Actions):
 #   variable CONCORDANS_API_BASE_URL  the address of the API the build talks to
@@ -61,8 +62,23 @@ jobs:
           SSH="ssh -i $HOME/.ssh/deploy_key -o StrictHostKeyChecking=yes -o ServerAliveInterval=30"
           RELEASE="$DEPLOY_DIR/releases/$GITHUB_SHA"
           rsync -az --delete --chmod=Do+rx,Fo+r -e "$SSH" build/ "$DEPLOY_USER@$DEPLOY_HOST:$RELEASE/"
-          $SSH "$DEPLOY_USER@$DEPLOY_HOST" \
-            "ln -sfn '$RELEASE' '$DEPLOY_DIR/current' && ls -1dt '$DEPLOY_DIR'/releases/*/ | tail -n +6 | xargs -r rm -rf"
+          # immutable/ is the union of _app/immutable of the kept builds: filled before the switch
+          # (the new chunks are there before current points at them), pruned after old builds go
+          $SSH "$DEPLOY_USER@$DEPLOY_HOST" "D='$DEPLOY_DIR' RELEASE='$RELEASE' sh -s" << 'EOF'
+          set -e
+          sync_immutable() {
+            set --
+            for r in "$D"/releases/*/; do
+              [ -d "${r}_app/immutable" ] && set -- "$@" "${r}_app/immutable/"
+            done
+            mkdir -p "$D/immutable"
+            rsync -a --delete --chmod=Do+rx,Fo+r "$@" "$D/immutable/"
+          }
+          sync_immutable
+          ln -sfn "$RELEASE" "$D/current"
+          ls -1dt "$D"/releases/*/ | tail -n +6 | xargs -r rm -rf
+          sync_immutable
+          EOF
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
