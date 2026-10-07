@@ -229,6 +229,7 @@
 		void groupPeriod;
 		void focusedId;
 		recomputeStrays();
+		recomputeLinesIntoGroup();
 		computeHulls();
 		renderer?.refresh();
 	});
@@ -239,6 +240,40 @@
 
 	/** Whether `a` and `b` both belong to the same hull: an edge between them adds
 	 *  nothing a hull did not already say, so it stays out of the way at rest. */
+	/**
+	 * How many lines a bron outside every hull draws into each hull (`bron|group`): a
+	 * judgment citing five articles of one law draws five, and those repeat what the hull
+	 * says; one line into a hull is what ties that hull to the network.
+	 */
+	let linesIntoGroup = new Map<string, number>();
+	function recomputeLinesIntoGroup() {
+		const counts = new Map<string, number>();
+		graph.forEachEdge((_edge, attrs, source, target) => {
+			if (attrs.layoutOnly) return;
+			for (const [from, to] of [
+				[source, target],
+				[target, source]
+			]) {
+				if (nodeGroupIds.has(from)) continue;
+				for (const group of nodeGroupIds.get(to) ?? [])
+					counts.set(`${from}|${group}`, (counts.get(`${from}|${group}`) ?? 0) + 1);
+			}
+		});
+		linesIntoGroup = counts;
+	}
+	/** Whether a line between two bronnen, neither the focus, only repeats a hull. */
+	function repeatsHull(src: string, tgt: string): boolean {
+		if (inSameGroup(src, tgt)) return true;
+		const inA = nodeGroupIds.has(src);
+		const inB = nodeGroupIds.has(tgt);
+		// Between two hulls the line says why the other one is there (art. 126uba Sv → Sr).
+		if (inA && inB) return false;
+		const [outside, inside] = inA ? [tgt, src] : [src, tgt];
+		return [...(nodeGroupIds.get(inside) ?? [])].some(
+			(group) => (linesIntoGroup.get(`${outside}|${group}`) ?? 0) > 1
+		);
+	}
+
 	function inSameGroup(a: string, b: string): boolean {
 		const groupsOfA = nodeGroupIds.get(a);
 		if (!groupsOfA) return false;
@@ -646,6 +681,7 @@
 	function refresh() {
 		recomputeFocusLevel1();
 		recomputeStrays();
+		recomputeLinesIntoGroup();
 		renderer?.refresh();
 	}
 
@@ -1057,10 +1093,10 @@
 							label: ''
 						};
 					}
-					// A line between two other bronnen is context. Into a hull it repeats what
-					// the hull says (a judgment citing more articles of the same law), so it
-					// waits for a hover; elsewhere it is a trace in its own colour.
-					if (nodeGroupIds.has(src) || nodeGroupIds.has(tgt)) return { ...data, hidden: true };
+					// A line between two other bronnen is context. Where it only repeats a hull
+					// (inside one, or one of several from a judgment into the same law) it waits
+					// for a hover; otherwise it is a trace in its own colour.
+					if (repeatsHull(src, tgt)) return { ...data, hidden: true };
 					return {
 						...data,
 						hidden: false,

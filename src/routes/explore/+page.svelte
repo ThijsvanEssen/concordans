@@ -1439,8 +1439,11 @@
 	/* The measure of every reader, set by the column it stands in (ReaderFrame reads
 	   it). A toelichting opened under the text inherits the same measure, so opening
 	   it moves nothing. Lezen leaves room at the left for the numbers of the leden. */
+	/* Beside the network the text stands in the middle of its column: wider than the
+	   measure (Verbonden narrow, a wide screen), the space falls on both sides. */
 	.col--reader {
 		--reader-max: 700px;
+		--reader-col-left: auto;
 	}
 	.col--measure {
 		--reader-pad-top: 40px;
