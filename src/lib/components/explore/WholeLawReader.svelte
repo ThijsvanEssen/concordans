@@ -433,7 +433,7 @@
 			{:else if versionsLoaded && versions.length === 0}
 				<!-- An act of the EU: the dataset holds its text in force only. -->
 				<p class="whole-before">
-					Van deze regeling houdt de dataset alleen de geldende tekst bij.
+					Van deze regeling staat alleen de geldende tekst in de gegevens.
 					<a href={withParams({ peildatum: null })} data-sveltekit-noscroll
 						>Naar de geldende tekst</a
 					>
@@ -501,7 +501,7 @@
 						{a.text_preview}{a.text_preview.length >= PREVIEW_CHARS ? '…' : ''}
 					</p>
 				{:else}
-					<p class="whole-text"><span class="whole-empty-text">Geen tekst beschikbaar.</span></p>
+					<p class="whole-text"><span class="whole-empty-text">Tekst niet in de gegevens.</span></p>
 				{/if}
 			</section>
 		{/each}

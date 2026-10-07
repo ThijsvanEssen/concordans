@@ -315,7 +315,7 @@ export function wordingsOf<V extends VersionLike>(versions: V[]): Wording<V>[] {
 			until,
 			lapsed,
 			rows,
-			summary: lapsed ? 'vervallen' : rows ? summarize(rows) : 'oudste tekst in de dataset'
+			summary: lapsed ? 'vervallen' : rows ? summarize(rows) : 'oudste tekst in de gegevens'
 		});
 	}
 	return out;

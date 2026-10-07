@@ -140,7 +140,7 @@ describe('wordingsOf', () => {
 			['2017-11-17', null, 1]
 		]);
 		expect(wordings.map((w) => w.summary)).toEqual([
-			'oudste tekst in de dataset',
+			'oudste tekst in de gegevens',
 			'lid 2 gewijzigd',
 			'lid 2 gewijzigd'
 		]);
@@ -166,7 +166,7 @@ describe('wordingsOf', () => {
 		];
 		const wordings = wordingsOf(repealed);
 		expect(wordings.map((w) => [w.from, w.until, w.lapsed, w.summary])).toEqual([
-			['1995-04-01', '2020-01-01', false, 'oudste tekst in de dataset'],
+			['1995-04-01', '2020-01-01', false, 'oudste tekst in de gegevens'],
 			['2020-01-01', '2020-01-01', true, 'vervallen']
 		]);
 	});

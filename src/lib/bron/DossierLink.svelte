@@ -13,7 +13,7 @@
 	} = $props();
 </script>
 
-{#if missing}<span title="Dit dossier staat niet in de dataset">Kamerstuk {dossier.number}</span
+{#if missing}<span title="Dit dossier staat niet in de gegevens">Kamerstuk {dossier.number}</span
 	>{:else}<BronLink
 		ref={{ collection: 'dossiers', key: dossier.key, number: dossier.number }}
 		title={dossier.title ?? 'Het dossier van de wet die de tekst wijzigde'}

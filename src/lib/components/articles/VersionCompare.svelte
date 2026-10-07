@@ -114,7 +114,7 @@
 
 	// ── Wording ──────────────────────────────────────────────────────────────────
 
-	const date = (iso: string | null | undefined) => longDate(iso ?? null) ?? 'onbekend';
+	const date = (iso: string | null | undefined) => longDate(iso ?? null) ?? 'niet in de gegevens';
 	const year = (iso: string | null | undefined) => (iso ? iso.slice(0, 4) : '');
 	const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 
@@ -313,7 +313,7 @@
 								>{capital(period({ from: f.since.from, until: f.through.until }))}</span
 							>
 							{#if f.kind === 'first' && f.since.index === 0}
-								<span>Oudste tekst in de dataset</span>
+								<span>Oudste tekst in de gegevens</span>
 							{:else}
 								{@render made(f.since, f.kind === 'added' ? 'Ingevoegd per' : 'Gewijzigd per')}
 							{/if}
@@ -376,7 +376,7 @@
 								class:is-on={adjacent && w.index === newer.index}
 								disabled={w.index === 0}
 								title="{capital(period(w))}: {w.index === 0
-									? 'oudste tekst in de dataset'
+									? 'oudste tekst in de gegevens'
 									: w.summary}"
 								onclick={() => showChange(w.index)}
 								><span class="line__year">{year(w.from)}</span><span class="line__what"

@@ -369,7 +369,7 @@
 	/** The message for a bron the dataset does not hold. */
 	function missing(key: string) {
 		focusMissing = true;
-		focusError = `'${key}' staat niet in de dataset.`;
+		focusError = `'${key}' staat niet in de gegevens.`;
 	}
 
 	async function loadFocus(id: string) {

@@ -548,7 +548,7 @@
 			<p class="note">Geen verbindingen binnen de gekozen bronnen en filters.</p>
 		{/if}
 		{#if !verbonden.loading && !verbonden.failed && verbonden.groups.length === 0 && verbonden.id}
-			<p class="note">Geen verbindingen bekend voor deze bron.</p>
+			<p class="note">Deze bron heeft geen verbindingen in de gegevens.</p>
 		{/if}
 
 		{#if hidden.length > 0}

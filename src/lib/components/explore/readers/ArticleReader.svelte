@@ -288,8 +288,8 @@
 		if (!stub && !empty) return null;
 		const cited = Number(d.metadata?.judgment_count ?? 0);
 		return cited > 0
-			? `Niet in de dataset. Bekend uit ${formatCount(cited)} ${cited === 1 ? 'uitspraak' : 'uitspraken'}.`
-			: 'Niet in de dataset.';
+			? `Niet in de gegevens. Genoemd in ${formatCount(cited)} ${cited === 1 ? 'uitspraak' : 'uitspraken'}.`
+			: 'Niet in de gegevens.';
 	});
 
 	const versionLabel = $derived.by(() => {

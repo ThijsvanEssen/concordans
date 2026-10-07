@@ -2312,8 +2312,8 @@
 														>{w.article_count > 0
 															? `${w.article_count} artikelen`
 															: isPublication(w)
-																? 'Publicatie in het Staatsblad; tekst niet in de dataset'
-																: 'geen artikelen geïndexeerd'}</span
+																? 'Publicatie in het Staatsblad; tekst niet in de gegevens'
+																: 'geen artikelen in de gegevens'}</span
 													>
 												{/snippet}
 												{#snippet aside()}

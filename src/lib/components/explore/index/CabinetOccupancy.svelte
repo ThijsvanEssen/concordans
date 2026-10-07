@@ -80,7 +80,7 @@
 				'Zonder ministerie',
 				loose.filter((s) => !unknown(s))
 			),
-			row('Ministerie onbekend', loose.filter(unknown))
+			row('Ministerie niet in de gegevens', loose.filter(unknown))
 		].filter((r) => r.seats.length);
 	});
 
@@ -139,11 +139,11 @@
 {#if !term}
 	<p class="occ-note">
 		{rows.length === 0 && !(cabinet.ministries ?? []).length
-			? 'Voor dit kabinet zijn geen posten bekend.'
-			: 'De periode van dit kabinet is niet bekend.'}
+			? 'Posten van dit kabinet staan niet in de gegevens.'
+			: 'De periode van dit kabinet staat niet in de gegevens.'}
 	</p>
 {:else if rows.length === 0}
-	<p class="occ-note">Voor dit kabinet zijn geen posten bekend.</p>
+	<p class="occ-note">Posten van dit kabinet staan niet in de gegevens.</p>
 {:else if narrow}
 	<!-- Phone: per seat the holders one under the other, the phases in a line. -->
 	<div class="occ-text">
@@ -179,7 +179,7 @@
 								<span class="holder-name"
 									>{nameOf(p)}{#if p.acting}<span class="holder-note"> waarnemend</span>{/if}</span
 								>
-								<span class="holder-period">{month(p.from_date)} – {month(p.to_date)}</span>
+								<span class="holder-period">{month(p.from_date)} tot {month(p.to_date)}</span>
 							</button>
 							{#if openKey === id}
 								{@render detail(p)}

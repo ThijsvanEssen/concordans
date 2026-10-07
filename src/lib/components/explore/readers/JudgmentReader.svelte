@@ -208,7 +208,7 @@
 			{:else if replacedOutside}
 				<p class="reader-translation">
 					Vervangen publicatie. De publicatie die haar vervangt, {replacedOutside}, staat niet in de
-					dataset.
+					gegevens.
 				</p>
 			{:else if alsoAs.length > 0}
 				<p class="reader-translation">
@@ -220,7 +220,7 @@
 			{#if outside.length > 0}
 				<!-- Articles of laws the dataset lacks (API 0.70): each to the place it is first cited. -->
 				<p class="reader-translation">
-					Haalt ook aan, niet in de dataset: {#each outside.slice(0, OUTSIDE_SHOWN) as c, i (`${c.law}_${c.article_number}`)}{i >
+					Haalt ook aan, niet in de gegevens: {#each outside.slice(0, OUTSIDE_SHOWN) as c, i (`${c.law}_${c.article_number}`)}{i >
 						0
 							? ', '
 							: ''}{#if c.paragraph_ids?.[0]}<a href="#{c.paragraph_ids[0]}"
@@ -382,7 +382,7 @@
 				</p>
 			{/if}
 			{#if paragraphs.length === 0 && !hasSummary && !replacedBy && !replacedOutside}
-				<p class="reader-empty-text">Geen tekst beschikbaar.</p>
+				<p class="reader-empty-text">Tekst niet in de gegevens.</p>
 			{/if}
 			<!-- The terms of HUDOC ask for the source under a text of the Court. -->
 			{#if j.source === 'echr' && paragraphs.length > 0}
