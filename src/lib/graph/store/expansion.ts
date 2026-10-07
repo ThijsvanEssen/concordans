@@ -11,6 +11,7 @@ import {
 	recordContainerMember
 } from '../container-membership';
 import { foldVersions } from '../paths';
+import { withoutLawHops } from '../neighborhood';
 import { nodeId } from '$lib/vocabulary';
 import { get, writable } from 'svelte/store';
 import { nodeToGraphNode, relationOf, type BaseNode } from '../types';
@@ -218,7 +219,17 @@ export function createExpansion(
 					capped: response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP)
 				});
 
-			const { byId, drawn } = mergeSubgraph(response.nodes, response.edges, response.focal_id);
+			// A full neighbourhood without the detour through a law (`withoutLawHops`); one
+			// narrowed to some relations is drawn as asked.
+			const shown = opts.relations
+				? response
+				: withoutLawHops(
+						response.nodes,
+						response.edges,
+						response.focal_id,
+						opts.depth ?? NEIGHBORHOOD_DEPTH
+					);
+			const { byId, drawn } = mergeSubgraph(shown.nodes, shown.edges, response.focal_id);
 
 			// A neighbourhood request replaces the canvas's exploratory context: without
 			// this, a bron revisited after browsing elsewhere keeps edges from every stop
