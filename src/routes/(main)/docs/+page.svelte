@@ -228,6 +228,29 @@
 			</div>
 		</div>
 
+		<div class="section" id="aanhalen">
+			<h2 class="section-title">Terugvinden en aanhalen</h2>
+			<p>
+				Elke lezer linkt naar de bron bij de uitgever: wetten.overheid.nl, rechtspraak.nl,
+				tweedekamer.nl, eerstekamer.nl, EUR-Lex of HUDOC. Daar staat de officiële tekst.
+			</p>
+			<p>
+				Haal een tekst aan naar de officiële bron: het ECLI, het artikel met de wet, het Kamerstuk
+				of de vindplaats in het Staatsblad. Haal de verbindingen van Concordans aan met het adres en
+				de datum van raadplegen. Ze vallen onder
+				<a href="https://creativecommons.org/licenses/by/4.0/deed.nl" class="cite">CC BY 4.0</a>
+				(zie de <a href="/voorwaarden" class="cite">voorwaarden</a>):
+			</p>
+			<p class="voorbeeld">
+				Concordans, verbindingen van art. 273f Sr,
+				https://concordans.nl/wetten/BWBR0001854/artikel/273f (geraadpleegd 7 oktober 2026).
+			</p>
+			<p>
+				Een plaats in de tekst staat in het adres na het hekje: <code>#lid-2-onder-a</code> in een
+				artikel, <code>#rov-5.3</code> in een uitspraak.
+			</p>
+		</div>
+
 		<div class="section">
 			<h2 class="section-title">Verbindingen</h2>
 			<p>
@@ -441,6 +464,13 @@
 
 	p:last-child {
 		margin-bottom: 0;
+	}
+
+	.voorbeeld {
+		padding-left: var(--s-4);
+		border-left: 2px solid var(--rule-strong);
+		color: var(--ink-2);
+		overflow-wrap: anywhere;
 	}
 
 	.cite {
