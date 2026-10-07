@@ -7,19 +7,18 @@
 		<div class="stub-eyebrow"><a href="/docs">Documentatie</a>, Methode</div>
 		<h1 class="stub-title">Methode</h1>
 		<p class="stub-lede">
-			Concordans haalt bronnen op, normaliseert ze tot één model en registreert de verbindingen die
-			de tekst impliceert.
+			Concordans haalt bronnen op bij de officiële uitgever, zet ze om naar één model en legt de
+			verbindingen ertussen vast: uit de gegevens van de bron en uit verwijzingen in de tekst.
 		</p>
 
 		<div class="section">
 			<h2 class="section-title">Pijplijn</h2>
 			<p>
-				Drie stappen per bron. Ophalen: de officiële bron zelf, in haar eigen formaat. Normaliseren:
-				omzetten naar een bron in het netwerk, met een adres van de vorm <code
-					>collectie/sleutel</code
-				>
-				(<code>dossiers/36558</code>). Verbinden: detectoren lezen de tekst en leggen de verbinding
-				vast die erin staat.
+				Drie stappen per bron. Ophalen: de officiële bron zelf, in haar eigen formaat. Omzetten: een
+				bron in het netwerk, met een eigen adres op haar officiële nummer (<code
+					>/dossiers/36558</code
+				>). Verbinden: een verbinding komt uit de gegevens van de bron, zoals een artikel en zijn
+				wet of een lid en zijn fractie, of uit een verwijzing in de tekst.
 			</p>
 		</div>
 
@@ -38,8 +37,13 @@
 				</div>
 				<div class="list-row">
 					<span class="list-k">Parlement</span><span
-						>OData van het gegevensmagazijn van de Tweede Kamer; Eerste Kamer, Staatsblad en
-						Staatscourant via de SRU-repository van KOOP.</span
+						>OData van het gegevensmagazijn van de Tweede Kamer. Van de Eerste Kamer eerstekamer.nl
+						en de repository van KOOP.</span
+					>
+				</div>
+				<div class="list-row">
+					<span class="list-k">Publicaties</span><span
+						>Staatsblad, Staatscourant en Tractatenblad via de repository van KOOP.</span
 					>
 				</div>
 				<div class="list-row">
@@ -54,6 +58,11 @@
 				</div>
 				<div class="list-row">
 					<span class="list-k">Verdragen</span><span>De Verdragenbank van de Rijksoverheid.</span>
+				</div>
+				<div class="list-row">
+					<span class="list-k">Organisaties</span><span
+						>Ministeries en rechtsgebieden uit de TOOI-waardelijsten van de overheid.</span
+					>
 				</div>
 			</div>
 			<p>Bronvermelding en licenties staan in het <a href="/colofon" class="cite">colofon</a>.</p>
@@ -77,11 +86,11 @@
 		<div class="section">
 			<h2 class="section-title">Afgeleide gegevens</h2>
 			<p>
-				Een aantal gegevens komt, waar de API ze niet zelf meegeeft, uit een tekstbewerking in
-				Concordans in plaats van uit de bron: het lid dat een verwijzing noemt volgt uit de tekst
-				van de verwijzing zelf; de leden en onderdelen van een artikel uit de regelindeling van de
-				tekst; de passage van een memorie van toelichting bij een artikel uit een tekstmatch op
-				"Artikel N". Deze afleidingen vervallen zodra de API de gegevens zelf levert.
+				Een paar gegevens leidt Concordans zelf uit de tekst af, waar de API ze niet meegeeft. Het
+				lid dat een verwijzing noemt, volgt uit de tekst van de verwijzing. De leden en onderdelen
+				van een artikel volgen uit de regelindeling. De passage van een memorie van toelichting bij
+				een artikel komt van de API; zonder die passage zoekt Concordans naar "Artikel N". Een
+				afleiding vervalt zodra de API het gegeven zelf levert.
 			</p>
 		</div>
 

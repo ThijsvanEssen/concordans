@@ -28,7 +28,7 @@
 	let {
 		overlay = false,
 		compact = false,
-		placeholder = 'Zoek een artikel, uitspraak of dossier',
+		placeholder = 'Zoek een wet, uitspraak of dossier',
 		initial = '',
 		onOpen,
 		onPick,

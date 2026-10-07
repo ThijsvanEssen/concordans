@@ -18,25 +18,29 @@ Array parameters are sent repeated (`types=a&types=b`).
 
 ## Adding a call
 
-Call `unwrap(api.GET(...))` where the data is used. A helper is worth having only when it adds logic:
+Call `unwrap(api.GET(...))` where the data is used. A helper is worth having when it adds logic:
 
-| Module                | Adds                                                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `articles.ts`         | joins concurrent requests for the same article (reader, panel and hover preview ask at once)                                    |
-| `judgments.ts`        | joins concurrent requests for the same judgment (reader and panel)                                                              |
-| `nodes.ts`            | lower-cases the key (the node routes are case-sensitive); `neighborsOf` and `bucketTotals` read the bucketed neighbour response |
-| `overlays.ts`         | turns the `in-flux` and `heat` maps into `Map` and reduces a dossier's mutations to counts                                      |
-| `instrument-cache.ts` | keeps the names of laws (title, short title such as `Sr`) that labels and citations print; primes the 200 largest laws once     |
+| Module                | Adds                                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `records.ts`          | `once(id, load)`: a record asked once per session, the 400 most recent kept, a failure asked again; getters for the records of readers |
+| `articles.ts`         | one article, through `once`                                                                                                            |
+| `judgments.ts`        | one judgment, through `once`                                                                                                           |
+| `law-articles.ts`     | the articles of a law in order, one request per law, shared by the table of contents and Vorig/Volgend                                 |
+| `stats.ts`            | `/api/stats` and `/api/stats/coverage`, once per page load                                                                             |
+| `nodes.ts`            | lower-cases the key (the node routes are case-sensitive); `neighborsOf` and `bucketTotals` read the bucketed neighbour response        |
+| `overlays.ts`         | turns the `in-flux` and `heat` maps into `Map` and reduces a dossier's mutations to counts                                             |
+| `instrument-cache.ts` | the names of laws (title, short title such as `Sr`) that labels and citations print                                                    |
+| `pool.ts`             | `inPool`: at most a few requests at a time for one action; the API limits requests per visitor                                         |
 
-`src/lib/components/parliamentary/data.ts` joins the dossier, document and committee requests the reader and the panel Verbonden share.
+`src/lib/components/parliamentary/data.ts` holds the dossier, document and committee requests the reader and the panel Verbonden share, through `once`.
 
 ## Stopgaps
 
-The snapshot is API 0.6.0. Where a field or route does not yet carry data for every bron (the ingest pipeline has not reached it), the front end falls back to deriving the same thing itself: `chamberOf` reads `chamber` or the key prefix, `explanatoryDocuments` reads `explained-by` or merges the node's neighbours with the dossiers of the law, `LezenNav` groups by `breadcrumb` or shows a flat list when every article's is empty. Each fallback is marked `TODO(backend Bn)` in the code (`git grep "TODO(backend"`); it goes once the pipeline covers every bron, not on an API version alone.
+Where a field or route does not yet carry data for every bron, the front end derives the same thing itself and marks it `TODO(backend…)` (`git grep "TODO(backend"`). A fallback goes once the data covers every bron, not on an API version alone.
 
 ## Caching
 
-The API sets `Cache-Control` (articles 30 min, judgments 1 h, stats 5 min, the rest 60 s private); the browser applies it. The client keeps no cache of its own except the in-flight joins above and the law names. `GraphStore` caches one node response per bron (`nodeResponse`), which the canvas and the panel Verbonden share; see [`graph-system.md`](graph-system.md).
+The API sends `Cache-Control: max-age=60` (public for articles, judgments and stats, private for the rest) and an ETag that changes with every migration. The client keeps records per session (`once`), the article list per law, the stats, the law names and the party colours. `GraphStore` reads a node through the same `getNode` record the readers use; see [`graph-system.md`](graph-system.md).
 
 ## Errors
 

@@ -12,23 +12,39 @@
 				<span class="shortcut-keys"><kbd>⌘</kbd><kbd>K</kbd> of <kbd>Ctrl</kbd><kbd>K</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Zoeken sluiten</span>
+				<span class="shortcut-desc">Door de zoekresultaten; Enter opent er een</span>
+				<span class="shortcut-keys"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Zoekveld wissen, of zoeken sluiten</span>
 				<span class="shortcut-keys"><kbd>Esc</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Wissel tussen netwerk en tekst</span>
+				<span class="shortcut-desc">In de Verkenner: wissel tussen netwerk en tekst</span>
 				<span class="shortcut-keys"><kbd>L</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Vorige of volgende bron, als het netwerk de focus heeft</span>
+				<span class="shortcut-desc"
+					>Terug of vooruit naar de vorige bron, als het netwerk de focus heeft</span
+				>
 				<span class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc">Door de bronnen in de lijst van het netwerk</span>
+				<span class="shortcut-keys"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>Home</kbd> <kbd>End</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc"
+					>De bron in die lijst aan het netwerk toevoegen of eruit halen</span
+				>
+				<span class="shortcut-keys"><kbd>N</kbd></span>
 			</div>
 			<div class="shortcut-row">
 				<span class="shortcut-desc">Vorige of volgende wijziging, bij Vergelijken</span>
 				<span class="shortcut-keys"><kbd>←</kbd> <kbd>→</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">Menu sluiten, of de selectie in het netwerk opheffen</span>
+				<span class="shortcut-desc">Een kaart, menu of opengeklapte rij sluiten</span>
 				<span class="shortcut-keys"><kbd>Esc</kbd></span>
 			</div>
 			<div class="shortcut-row">

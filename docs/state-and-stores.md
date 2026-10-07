@@ -1,13 +1,14 @@
 # State and stores
 
-| State                                                             | Lives in                    | Survives                      |
-| ----------------------------------------------------------------- | --------------------------- | ----------------------------- |
-| Mode, focus, naast, overlay, index category and filters, fragment | URL                         | reload, sharing, back/forward |
-| Nodes, edges, selection, pinned, filters, node response cache     | `GraphStore`                | mode switches, not reload     |
-| The sequence of bronnen                                           | browser history             | reload                        |
-| State shared by unrelated components                              | a store in `src/lib/stores` | the page session              |
-| Column widths of the explorer                                     | `localStorage`              | sessions                      |
-| Everything else                                                   | component `$state`          | the component                 |
+| State                                                    | Lives in                                   | Survives                      |
+| -------------------------------------------------------- | ------------------------------------------ | ----------------------------- |
+| The bron (path), the view and its filters, the fragment  | URL ([`routes.md`](routes.md))             | reload, sharing, back/forward |
+| Nodes, edges, selection, pinned, filters                 | `GraphStore`                               | view switches, not reload     |
+| Records read from the API                                | `$lib/api/records.ts` and the other caches | the session                   |
+| The sequence of bronnen                                  | browser history                            | reload                        |
+| State shared by unrelated components                     | a store in `src/lib/stores`                | the page session              |
+| Column widths, the last netwerk, the legend open or shut | `localStorage`                             | sessions                      |
+| Everything else                                          | component `$state`                         | the component                 |
 
 Prefer the URL for anything that can be linked to, `$state` for the rest. A store is for state that several branches of the tree change and that no close ancestor can hold.
 
@@ -20,16 +21,16 @@ There is no history in the store. Every link to a bron is a navigation (`bronHre
 | `overlay.ts`        | Not a store: `parseOverlay` and `serializeOverlay` for `?overlay=`. See [`overlays.md`](overlays.md).       |
 | `search-trigger.ts` | `provideSearchOpener` and `useSearchOpener`: Svelte context that lets any component open the search dialog. |
 
-`src/lib/api/instrument-cache.ts` is a store as well: law names by BWB id, filled as responses pass by and primed once with the 200 largest laws. `src/lib/utils/party-color.svelte.ts` holds the party colours of `/api/parties/colors` in a `$state` object, asked for once on first use; a party the API does not list is grey.
+Module-level caches: `$lib/api/records.ts` (`once`, the records of readers and of `GraphStore`), `law-articles.ts` (the articles of a law), `stats.ts`, `instrument-cache.ts` (law names by BWB id), `src/lib/utils/party-color.svelte.ts` (party colours; a party the API does not list is grey) and the address ↔ focus maps of `bron/leesbaar.ts`.
 
 ## GraphStore
 
 `createGraphStore()` in `src/lib/graph/graph-store.ts`, assembled from `src/lib/graph/store/`. One instance lives as long as the `/explore` page.
 
 - `nodes`, `edges`, `selection`, `pinned`, `filters` and `trimmedCount` are `Readable`; components subscribe.
-- `nodeResponse(collection, key)` is the cached node response of a bron: one request serves the canvas and the panel Verbonden.
+- `nodeResponse(collection, key)` reads a bron through `getNode` (`records.ts`): one request serves the canvas and the panel Verbonden.
 - The graphology graph belongs to `GraphView`, built from the store's arrays. Components never receive the store's maps.
-- `reset()` aborts every request in flight and empties the canvas.
+- `reset()` aborts every request in flight and empties the canvas; the records stay.
 - Node kinds, edge categories and labels come from `src/lib/graph/types.ts`; collections and relations from `src/lib/vocabulary.ts`.
 
 ## Patterns

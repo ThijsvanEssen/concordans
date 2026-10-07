@@ -1,35 +1,41 @@
 # Concordans
 
-Frontend for Concordans, a research environment that shows the structure of Dutch law: the connections between wetten, artikelen, uitspraken and parliamentary dossiers. SvelteKit 2 with Svelte 5 runes, Sigma 3 for the network view, and the LawGraph API as its only data source.
+Concordans shows Dutch law and how it came about: laws and their articles, judgments, Kamerstukken, votes, members, cabinets and commitments, with the connections between them. Everything comes from official sources (wetten.overheid.nl, rechtspraak.nl and HUDOC, the open data of both Kamers, officielebekendmakingen.nl, rijksoverheid.nl, EUR-Lex), read through the LawGraph API. This repository is the front end: SvelteKit 2 with Svelte 5 runes, Sigma 3 for the network.
+
+A reader finds a bron by search (start page, ⌘K), by Bladeren (lists per kind of bron) or in Actueel (what came in per day). A bron opens in the Verkenner at its own address (`/wetten/BWBR0005289/artikel/6:162`, `/uitspraken/ECLI:…`): as text, or beside the network of its connections, with the panel Verbonden listing them.
 
 ## Development
 
 ```sh
 npm install
-cp .env.example .env    # set PUBLIC_CONCORDANS_API_BASE_URL if the API is not on localhost:8000
+cp .env.example .env    # PUBLIC_CONCORDANS_API_BASE_URL, default http://localhost:8000
 npm run dev             # http://localhost:5173
 ```
 
-| Command             | Purpose                                                                                       |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| `npm run check`     | Type check, including every API call against the schema                                       |
-| `npm run lint`      | Prettier and ESLint                                                                           |
-| `npm test`          | Vitest                                                                                        |
-| `npm run build`     | Production build                                                                              |
-| `npm run sync:api`  | Fetch the schema from the running API and regenerate `src/lib/api/generated/openapi-types.ts` |
-| `npm run check:api` | `sync:api`, then fail when the committed schema or types differ                               |
+| Command             | Purpose                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm run check`     | Type check, including every API call against the schema                                         |
+| `npm run lint`      | Prettier and ESLint                                                                             |
+| `npm test`          | Vitest                                                                                          |
+| `npm run build`     | Static build in `build/`                                                                        |
+| `npm run sync:api`  | Fetch the schema from the API in `.env` and regenerate `src/lib/api/generated/openapi-types.ts` |
+| `npm run check:api` | `sync:api`, then fail when the committed schema or types differ                                 |
 
-The API is read-only, so the app has no server routes of its own. To see every feature (every relation of the model occurs in it), run the API on the test database and point `PUBLIC_CONCORDANS_API_BASE_URL` at it:
+The test database holds every relation of the model. Run the API on it and point `.env` at it:
 
 ```sh
 # in ~/Development/lawgraph
 ARANGO_DB_NAME=lawgraph_small LAWGRAPH_API_PORT=8001 .venv/bin/lawgraph-api
 ```
 
-## Deploy
+## Build and deploy
 
-A push to `release` deploys that commit (`.github/workflows/deploy.yml`): lint, check and tests, then a static build against the API at the repository variable `CONCORDANS_API_BASE_URL`. The build is copied to `/srv/lawgraph/concordans/releases/<commit>` on the server and `/srv/lawgraph/concordans/current` is pointed at it; the reverse proxy serves `current` with `index.html` as fallback. The five newest builds stay, so going back is `ln -sfn /srv/lawgraph/concordans/releases/<commit> /srv/lawgraph/concordans/current` on the server. Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_KNOWN_HOSTS` (the line of the server's host key, taken on the server itself: a changed key stops the deploy), and optionally `VITE_POSTHOG_KEY`.
+The app is a static build (adapter-static) that fetches everything in the browser. A readable address such as `/dossiers/36799` is no file, so the web server answers every unknown path with `index.html` (`fallback` in `svelte.config.js`).
+
+A push to the branch `release` deploys that commit (`.github/workflows/deploy.yml`); main is merged into `release` to deploy. The workflow lints, checks and tests, builds against the API at the repository variable `CONCORDANS_API_BASE_URL`, copies the build to `/srv/lawgraph/concordans/releases/<commit>` and points `/srv/lawgraph/concordans/current` at it. The five newest builds stay; going back is `ln -sfn /srv/lawgraph/concordans/releases/<commit> /srv/lawgraph/concordans/current` on the server.
+
+Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_KNOWN_HOSTS` (the server's host key line; a changed key stops the deploy) and, optionally, `VITE_POSTHOG_KEY` (analytics; without it there are none).
 
 ## Documentation
 
-Developer documentation is in [`docs/`](docs/README.md), start with [`docs/architecture.md`](docs/architecture.md). The API is documented in the back end repository (`docs/api.md`, `docs/data-model.md`). Documentation for users is part of the app under `/docs`.
+For developers: [`docs/`](docs/README.md). For users: the pages `/docs`, `/docs/methode` and `/docs/sneltoetsen` of the app. The API is documented in the back end repository.

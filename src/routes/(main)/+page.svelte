@@ -115,7 +115,7 @@
 	<title>Concordans</title>
 	<meta
 		name="description"
-		content="Nederlandse wetten, uitspraken en parlementaire stukken met hun onderlinge verbindingen."
+		content="Wetten, uitspraken en Kamerstukken uit officiële bronnen, met hun onderlinge verbindingen."
 	/>
 	<link
 		rel="alternate"
@@ -151,7 +151,7 @@
 					scope={chosen?.kinds ?? null}
 					placeholder={chosen
 						? `Zoek in ${chosen.label.toLowerCase()}`
-						: 'Zoek een wet, uitspraak, dossier of persoon'}
+						: 'Zoek een wet, uitspraak of dossier'}
 				/>
 			{/key}
 			{#if chosen}

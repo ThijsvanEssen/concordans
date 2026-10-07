@@ -8,15 +8,15 @@
 			<a href="/" class="foot-logo no-underline" aria-label="Concordans home">
 				<Wordmark size={17} />
 			</a>
-			<p>Werkomgeving voor juridisch onderzoek, gebouwd op de officiële geconsolideerde bronnen.</p>
+			<p>Werkomgeving voor juridisch onderzoek, op officiële bronnen.</p>
 		</div>
 
 		<div class="foot-col">
-			<h4>Product</h4>
+			<h4>Concordans</h4>
 			<ul>
-				<li><a href="/explore" class="no-underline">Open Concordans</a></li>
+				<li><a href="/explore" class="no-underline">Verkenner</a></li>
 				<li><a href="/docs" class="no-underline">Documentatie</a></li>
-				<li><a href="/docs/methode" class="no-underline">Methode-bijlage</a></li>
+				<li><a href="/docs/methode" class="no-underline">Methode</a></li>
 				<li><a href="/api" class="no-underline">API</a></li>
 			</ul>
 		</div>
@@ -25,35 +25,42 @@
 			<h4>Bronnen</h4>
 			<ul>
 				<li>
-					<a href="https://wetten.overheid.nl" target="_blank" rel="noopener" class="no-underline">
-						wetten.overheid.nl
-					</a>
+					<a href="https://wetten.overheid.nl" target="_blank" rel="noopener" class="no-underline"
+						>wetten.overheid.nl</a
+					>
 				</li>
 				<li>
 					<a
 						href="https://www.rechtspraak.nl/uitspraken"
 						target="_blank"
 						rel="noopener"
-						class="no-underline"
+						class="no-underline">rechtspraak.nl</a
 					>
-						rechtspraak.nl
-					</a>
+				</li>
+				<li>
+					<a href="https://www.tweedekamer.nl" target="_blank" rel="noopener" class="no-underline"
+						>tweedekamer.nl</a
+					>
+				</li>
+				<li>
+					<a href="https://www.eerstekamer.nl" target="_blank" rel="noopener" class="no-underline"
+						>eerstekamer.nl</a
+					>
 				</li>
 				<li>
 					<a
-						href="https://officielebekendmakingen.nl"
+						href="https://www.officielebekendmakingen.nl"
 						target="_blank"
 						rel="noopener"
-						class="no-underline"
+						class="no-underline">officielebekendmakingen.nl</a
 					>
-						Staatsblad
-					</a>
 				</li>
 				<li>
-					<a href="https://eur-lex.europa.eu" target="_blank" rel="noopener" class="no-underline">
-						eur-lex.europa.eu
-					</a>
+					<a href="https://eur-lex.europa.eu" target="_blank" rel="noopener" class="no-underline"
+						>eur-lex.europa.eu</a
+					>
 				</li>
+				<li><a href="/docs/methode" class="no-underline">Herkomst per bron</a></li>
 			</ul>
 		</div>
 

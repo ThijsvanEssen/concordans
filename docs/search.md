@@ -1,26 +1,32 @@
 # Search
 
-One component, `src/lib/search/Search.svelte`, in two places: inline on the start page and inside the ⌘K dialog `src/lib/components/layout/SearchOverlay.svelte`. `AppShell` owns the dialog and provides the opener through `src/lib/stores/search-trigger.ts`. On a page with its own field (`main [data-search-field]`) ⌘K focuses that field; elsewhere it opens the dialog.
+One component, `src/lib/search/Search.svelte`, in three places: on the start page (with a scope: Wetten, Uitspraken, Parlement or Kabinet), in the ⌘K dialog `src/lib/components/layout/SearchOverlay.svelte`, and in the panel Netwerk, to add a bron (`src/lib/netwerk/NetwerkPanel.svelte`). `AppShell` owns the dialog and provides the opener through `src/lib/stores/search-trigger.ts`. On a page with its own field (`main [data-search-field]`) ⌘K focuses that field; elsewhere it opens the dialog.
 
 ## Request
 
-`GET /api/search` with `types` = `KINDS` (`instruments`, `articles`, `judgments`, `dossiers`, `documents`, `committees`, `factions`, `members`) and `limit` 6 per type. Input is debounced by 180 ms; a new query aborts the previous request and earlier results stay until the answer arrives. Hits are grouped by kind in the order of `KINDS`; the order within a group is the API's, except that stukken of one dossier stand together under a heading with its number and title (`sectionOf`, `bySection`). The `extra` object of a hit (`bwb_id`, `article_number`, `heading`, `citation_title`, `short_title`, `ecli`, `names`, `number`, `current_stage`, `kind`, `dossier_number`, `party`) is untyped.
+`GET /api/search?resolve=true` with `types` = `KINDS` (eleven collections, narrowed by the scope) and `limit` 6 per type. Input is debounced by 180 ms; a new query aborts the previous request, and earlier results stay until the answer arrives. The API orders hits within a type by `score`; `orderGroups` (`present.ts`) puts the group with the best answer first. Stukken of one dossier stand together under its number and title (`sectionOf`, `bySection`). The `extra` object of a hit is untyped.
 
 ## Rows
 
-`presentHit` in `src/lib/search/present.ts` makes each row: a title that tells it from its neighbours, the context at the right, and a line of the text where the API gives one (`snippet`), started just before the first word searched for (`around`) with the words marked (`marked`). An article reads `Artikel 6:164` with its code at the right (`BW` for every BW book); a judgment reads `Hoge Raad, 19 februari 1993` with its ECLI at the right and its summary as the line; a stuk is named by its kind under its dossier. A citation the API does not know leaves a line that says so, with a link to the coverage.
+`presentHit` in `src/lib/search/present.ts` makes each row: a title that tells it from its neighbours, the context at the right, and a line of the text where the API gives one (`snippet`), started just before the first word searched for, with the words marked. An article reads `Artikel 6:164` with its code at the right; a judgment `Hoge Raad, 19 februari 1993` with its ECLI; a stuk is named by its kind under its dossier.
 
 ## Citations
 
-`parseCitation` in `src/lib/search/resolve-query.ts` recognises an ECLI, a BWB id, a CELEX number, a dossier number with an optional document number, and an article citation ("art. 6:162 BW", "artikel 359a lid 1 onder b Sv", "artikel 3:4, tweede lid, Awb"). A query that parses gets a first row above the hits, marked as the kind the citation stands for.
+`parseCitation` in `src/lib/search/resolve-query.ts` recognises an ECLI, a BWB id, a CELEX number, a publication (`Stb. 2026, 94`), a dossier number with an optional document number, and an article citation (`art. 6:162 BW`, `artikel 359a lid 1 onder b Sv`, `artikel 3:4, tweede lid, Awb`). A query that parses gets a first row above the hits.
 
-Choosing that row calls `resolveQuery`: `GET /api/resolve` first; where that route is absent or finds nothing, the parser's own lookups (the BW books from a table, other laws through `/api/search`, the article through `/api/articles/{bwb_id}/{n}`, a document through `/api/dossiers/{n}/documents`, existence through `/api/nodes/{collection}/{key}`). A dossier is looked up by its number through `/api/dossiers/{number}`, which gives its node key; an unknown number is a 404. A letter or parenthesised suffix is part of the number (`37020-XV`, `23908-(R1519)`); a digit suffix (`21501-31`) is tried as a dossier first, then as a paper of the bare number. A dossier hit links by `extra.number`. A bron is opened only after the API confirmed it exists; otherwise the row disappears and the hits stay. The lid or onderdeel of the citation becomes the fragment (`parseQualifier` and `anchorOf` in `src/lib/text/qualifier.ts`).
+Choosing that row resolves it. The `resolved` part of the search answer is used when it is there; otherwise `resolveQuery`:
+
+1. A Kamerstuk with its number, or a publication: `/api/lookup`, exact.
+2. Anything else: `/api/resolve`.
+3. Where that finds nothing, the parser's own lookups: the article of a law, the paper or the dossier of a number, the existence of a judgment or law.
+
+A bron opens only when the API confirmed it; otherwise the row goes and the hits stay. The lid or onderdeel of a citation becomes the fragment (`parseQualifier` and `anchorOf` in `src/lib/text/qualifier.ts`).
 
 ## Opening
 
-A hit or a resolved citation opens `bronHref(ref, { at })`: from the start page in Lezen, inside `/explore` in the current mode. Arrow keys move over the citation row and the hits; Enter opens the active row, a hit only when the list answers the query as typed. In the dialog Tab stays on the field and Escape closes it.
+A hit or a resolved citation opens `bronHref(ref, { at })`, at its readable address: from the start page in Tekst where the bron has a text, inside the Verkenner in the current view. ↑ and ↓ move over the rows; Enter opens the active one. Escape clears the field, or closes the dialog.
 
 ## Adding a searchable type
 
 1. The API adds the type to `/api/search`.
-2. Add the collection to `KINDS` and, where its row needs a field, a case to `presentHit` in `present.ts`.
+2. Add the collection to `KINDS` and, where its row needs a field, a case to `presentHit`.
