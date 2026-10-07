@@ -697,7 +697,9 @@
 		height: 12px;
 		width: 85%;
 		border-radius: var(--r-1);
-		background: var(--paper-2);
+		/* The panel is paper-2 itself: the bars take the colour of its rules, faintly. */
+		background: var(--rule);
+		opacity: 0.6;
 	}
 	.balk--kop {
 		height: 16px;
@@ -713,7 +715,7 @@
 	}
 	@keyframes ademen {
 		50% {
-			opacity: 0.55;
+			opacity: 0.3;
 		}
 	}
 
