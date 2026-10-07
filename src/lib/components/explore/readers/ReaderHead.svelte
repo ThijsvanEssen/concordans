@@ -51,7 +51,10 @@
 		{/if}
 		{@render nav?.()}
 	</div>
-	<h2 class="reader-title">{title}</h2>
+	<!-- A break may fall after a colon (an ECLI); copying keeps the text as it is. -->
+	<h2 class="reader-title">
+		{#each title.split(/(?<=:)/) as part, i (i)}{#if i}<wbr />{/if}{part}{/each}
+	</h2>
 	{@render children?.()}
 </div>
 
@@ -110,6 +113,9 @@
 		line-height: 1.15;
 		color: var(--ink);
 		text-wrap: pretty;
+		/* An ECLI or a long number is one word; on a phone it breaks rather than run past the
+		   column. */
+		overflow-wrap: anywhere;
 	}
 	/* The jurisdiction after a comma, against the kind: the line's gap only after it. */
 	.komma {

@@ -27,6 +27,7 @@ import {
 	bundleMentions,
 	activityLine,
 	historyRow,
+	uniqueRows,
 	rolesLine,
 	citedLine,
 	describe,
@@ -445,10 +446,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (found)
 			return {
 				total: found.total,
-				rows: (found.entries ?? []).flatMap((e) => {
-					const row = historyRow(e);
-					return row ? [row] : [];
-				})
+				rows: uniqueRows(
+					(found.entries ?? []).flatMap((e) => {
+						const row = historyRow(e);
+						return row ? [row] : [];
+					})
+				)
 			};
 		const changes = ['AMENDS', 'INTRODUCES', 'REPEALS'];
 		return {

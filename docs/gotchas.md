@@ -26,3 +26,9 @@ The API sends `max-age=60` with an ETag that changes after every migration ([`ap
 
 - `{@const}` must be the direct child of `{#if}`, `{#each}`, `{:else}`, `{#snippet}`, `<svelte:fragment>` or a component. Inside a plain element it does not compile.
 - A variable named `state` or `props` makes the compiler read `$state` and `$props` as store subscriptions of that variable, and everything derived from it degrades to `any`. Name it `view`, `status` or `nodeProps`. The readers use `view` for their load state.
+
+## Narrow screens
+
+Nothing scrolls sideways on a phone. A flex or grid child that holds text gets `min-width: 0`. A long word gets `overflow-wrap: anywhere`, and an ECLI may break after a colon (`<wbr>`). Text also must not run past its box: a label that overflows its cell still makes the column wider than the screen.
+
+In development, `src/lib/dev/zijscroll.ts` checks each page after navigation at 640 px or less and warns in the console about what scrolls sideways. An area that pans on purpose, such as the categories of Bladeren, the cabinets in time or the line of tekstversies, carries `data-zijscroll`. `consistency.test.ts` requires the mark wherever a file sets `overflow-x: auto` or `scroll`.

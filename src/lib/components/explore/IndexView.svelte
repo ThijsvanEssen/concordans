@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { axisLabels } from './index/years-axis';
 	import { korteDatum, langeDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
@@ -1334,6 +1335,8 @@
 		return options.length ? [{ id: param, label, kind: 'list', preview: 6, options }] : [];
 	}
 
+	/** The width of the year axis, for the labels that fit (`axisLabels`). */
+	let yearsAxisWidth = $state(0);
 	// The years of the judgments under the filters, the last forty, as columns.
 	const judgmentYears = $derived(
 		(judgmentFacets?.year ?? [])
@@ -1987,6 +1990,7 @@
 	     courts, how the Kamer deals with a subject, and who does it. -->
 	<nav
 		class="catbar"
+		data-zijscroll
 		class:catbar--more-left={catMore.left}
 		class:catbar--more-right={catMore.right}
 		aria-label="Categorieën"
@@ -2155,13 +2159,9 @@
 									></button>
 								{/each}
 							</div>
-							<figcaption class="years-axis">
-								{#each judgmentYears as { year }, i (year)}
-									<span
-										>{i === 0 || i === judgmentYears.length - 1 || Number(year) % 10 === 0
-											? year
-											: ''}</span
-									>
+							<figcaption class="years-axis" bind:clientWidth={yearsAxisWidth}>
+								{#each axisLabels( judgmentYears.map((y) => y.year), yearsAxisWidth ) as label, i (judgmentYears[i].year)}
+									<span>{label}</span>
 								{/each}
 							</figcaption>
 						</figure>
@@ -2220,6 +2220,7 @@
 							</div>
 							<div
 								class="cab-scroll"
+								data-zijscroll
 								bind:this={cabScroll}
 								use:pannable
 								role="region"
@@ -3194,6 +3195,11 @@
 		min-width: 0;
 		overflow: visible;
 		white-space: nowrap;
+	}
+	/* The last year ends at the edge and runs inward, never past it. */
+	.years-axis span:last-child {
+		display: flex;
+		justify-content: flex-end;
 	}
 
 	.row-method {

@@ -359,7 +359,7 @@
 			</div>
 
 			<div class="pick">
-				<ol class="line" aria-label="Tekstversies">
+				<ol class="line" aria-label="Tekstversies" data-zijscroll>
 					{#each wordings as w (w.index)}
 						{@const isA = w.index === from.index}
 						{@const isB = w.index === to.index}

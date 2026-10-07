@@ -385,10 +385,23 @@ export const mentionRows = (rows: Row[]): Row[] => rows.flatMap((r) => r.mention
 /** The meta line of a row, as separate words; the panel joins them. */
 /**
  * A row's key in a list: the bron, the place it points at, and the verbinding. One article
- * can refer twice (two aarden), so the bron alone is not unique.
+ * can refer twice (two aarden), so the bron alone is not unique. A row without an edge (a
+ * change from the legislative history) is told apart by its relation: one memorie van
+ * toelichting can amend an article and repeal it.
  */
 export const rowKey = (r: Row) =>
-	`${r.ref.collection}/${r.ref.key}#${r.at ?? ''}#${r.edgeId ?? ''}`;
+	`${r.ref.collection}/${r.ref.key}#${r.at ?? ''}#${r.edgeId ?? r.relation ?? ''}`;
+
+/** The rows each once, by their key, the first kept. */
+export function uniqueRows(rows: Row[]): Row[] {
+	const seen = new Set<string>();
+	return rows.filter((r) => {
+		const k = rowKey(r);
+		if (seen.has(k)) return false;
+		seen.add(k);
+		return true;
+	});
+}
 
 export function metaParts(
 	row: Row
