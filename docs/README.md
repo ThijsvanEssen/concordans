@@ -10,7 +10,7 @@ For users the app has `/docs`, `/docs/methode` and `/docs/sneltoetsen`. The API 
 | [`api-client.md`](api-client.md)             | Calling the API, caching, the stopgaps still open                      |
 | [`state-and-stores.md`](state-and-stores.md) | Where state lives                                                      |
 | [`graph-system.md`](graph-system.md)         | GraphStore, the composed netwerk, hulls and clusters, rendering        |
-| [`overlays.md`](overlays.md)                 | The overlays Open dossiers and Citaties per maand                      |
+| [`overlays.md`](overlays.md)                 | The overlays Open dossiers and Verwijzingen per maand                      |
 | [`readers.md`](readers.md)                   | Readers per kind of bron, text anchors, the panel Verbonden            |
 | [`search.md`](search.md)                     | The search component and citation resolving                            |
 | [`gotchas.md`](gotchas.md)                   | Things that look wrong and are not                                     |

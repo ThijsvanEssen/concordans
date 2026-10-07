@@ -1,6 +1,6 @@
 # Overlays
 
-Two overlays paint counts on the network: **Open dossiers** (open proposed changes, per bron) and **Citaties per maand** (edges created recently, per bron). At most one is active; the legend of the network offers them under Meer: Geen, Open dossiers, Citaties per maand (with a period of 3 to 24 months).
+Two overlays paint counts on the network: **Open dossiers** (open proposed changes, per bron) and **Verwijzingen per maand** (edges created recently, per bron). At most one is active; the legend of the network offers them under Meer: Geen, Open dossiers, Verwijzingen per maand (with a period of 3 to 24 months).
 
 ## URL
 
@@ -10,7 +10,7 @@ Two overlays paint counts on the network: **Open dossiers** (open proposed chang
 | ------------------ | ----------------------------------------------------------------------------------------------------- |
 | `open`             | Open dossiers for all open dossiers                                                                   |
 | `dossier:{number}` | Open dossiers for one dossier                                                                         |
-| `heat:{months}`    | Citaties per maand over a window of `months` (`HEAT_PERIODS`: 3, 6, 12, 24; `DEFAULT_HEAT_MONTHS` 12) |
+| `heat:{months}`    | Verwijzingen per maand over a window of `months` (`HEAT_PERIODS`: 3, 6, 12, 24; `DEFAULT_HEAT_MONTHS` 12) |
 | absent             | none                                                                                                  |
 
 The switch sets `open` or `heat:12`, or clears the active overlay; clearing covers `dossier:{number}` too. `dossier:{number}` is entered by URL only: no page builds such a link. `bronHref` carries `overlay` along, so the overlay stays while moving between bronnen.
@@ -21,7 +21,7 @@ The switch sets `open` or `heat:12`, or clears the active overlay; clearing cove
 
 | Overlay                    | Function in `src/lib/api/overlays.ts` | API                                |
 | -------------------------- | ------------------------------------- | ---------------------------------- |
-| Citaties per maand         | `getHeat(months)`                     | `/api/nodes/heat` (`min_count` 2)  |
+| Verwijzingen per maand         | `getHeat(months)`                     | `/api/nodes/heat` (`min_count` 2)  |
 | Open dossiers, `open`      | `getInFlux()`                         | `/api/nodes/in-flux`               |
 | Open dossiers, one dossier | `getDossierInFlux(number)`            | `/api/dossiers/{number}/mutations` |
 
@@ -31,7 +31,7 @@ All three return `NodeCounts`, a map from node id to count; `getDossierInFlux` c
 
 `GraphCanvas` draws both overlays as HTML layers over the Sigma canvas (`.activity-overlay` for the halos, `.mutatie-overlay` for the badges). `updateViewportLabels()` recomputes their positions on every Sigma `afterRender` with `renderer.graphToViewport()`, for the visible nodes that appear in the map.
 
-**Halo (Citaties per maand).** The radius grows with the rate `count / months`. `HEAT_SATURATION_RATE` (5 per month) is the rate at which it stops growing. The rate is per month, so that a different window changes the halo for the same bron.
+**Halo (Verwijzingen per maand).** The radius grows with the rate `count / months`. `HEAT_SATURATION_RATE` (5 per month) is the rate at which it stops growing. The rate is per month, so that a different window changes the halo for the same bron.
 
 **Badge (Open dossiers).** A dot at the top right of the bron, with the count when it is above 1. It sits at the edge of the drawn node, offset by `badgeAxisOffset(kind)` (`nodeSprites.ts`), which depends on the shape of the kind.
 

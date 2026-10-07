@@ -1,6 +1,6 @@
 // The `?overlay=` parameter of the network: one overlay at a time.
 //
-//   heat:12       Citaties per maand, the last 12 months
+//   heat:12       Verwijzingen per maand, the last 12 months
 //   open          Open dossiers, every open dossier
 //   dossier:36410 Open dossiers, one dossier
 
