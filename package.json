@@ -23,7 +23,6 @@
 		"graphology": "^0.26.0",
 		"graphology-layout-forceatlas2": "^0.10.1",
 		"openapi-fetch": "^0.17.0",
-		"posthog-js": "^1.373.4",
 		"sigma": "^3.0.2"
 	},
 	"devDependencies": {

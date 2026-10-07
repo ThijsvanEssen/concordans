@@ -34,7 +34,7 @@ The app is a static build (adapter-static) that fetches everything in the browse
 
 A push to the branch `release` deploys that commit (`.github/workflows/deploy.yml`); main is merged into `release` to deploy. The workflow lints, checks and tests, builds against the API at the repository variable `CONCORDANS_API_BASE_URL`, copies the build to `/srv/lawgraph/concordans/releases/<commit>` and points `/srv/lawgraph/concordans/current` at it. The five newest builds stay; going back is `ln -sfn /srv/lawgraph/concordans/releases/<commit> /srv/lawgraph/concordans/current` on the server.
 
-Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_KNOWN_HOSTS` (the server's host key line; a changed key stops the deploy) and, optionally, `VITE_POSTHOG_KEY` (analytics; without it there are none).
+Secrets: `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER` and `DEPLOY_KNOWN_HOSTS` (the server's host key line; a changed key stops the deploy).
 
 ## Documentation
 
