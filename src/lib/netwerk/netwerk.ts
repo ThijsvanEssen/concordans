@@ -1,7 +1,9 @@
 // A network put together from bronnen chosen one by one, instead of everything
 // within a number of steps of one focus. The URL holds it: ?netwerk lists the
 // chosen bronnen by the name a link uses (`members/<key>`, `dossiers/37020-XV`),
-// ?uit the ones switched off, and ?tussen=0 hides the bronnen that join them.
+// ?uit the ones switched off, and ?tussen=0 hides the bronnen that join them. On a phone
+// they start hidden (a dossier and three judgments had 120 between them at 375 px):
+// there ?tussen=1 shows them.
 import type { GraphNode } from '$lib/graph/types';
 import type { Neighbor } from '$lib/api/nodes';
 import { nodeId, parseNodeId, type Collection } from '$lib/vocabulary';
@@ -38,18 +40,21 @@ const list = (value: string | null) =>
 		.map((s) => s.trim())
 		.filter((s) => parseNodeId(s) !== null);
 
-export function parseNetwerk(params: URLSearchParams): Netwerk {
+/** `tussenStandaard`: whether the bronnen between are drawn when the URL does not say. */
+export function parseNetwerk(params: URLSearchParams, tussenStandaard = true): Netwerk {
 	const ids = [...new Set(list(params.get('netwerk')))];
 	const uit = new Set(list(params.get('uit')).filter((id) => ids.includes(id)));
-	return { ids, uit, tussen: params.get('tussen') !== '0' };
+	const t = params.get('tussen');
+	return { ids, uit, tussen: t === '0' ? false : t === '1' ? true : tussenStandaard };
 }
 
-export function netwerkParams(n: Netwerk): Record<string, string | null> {
+/** The URL of a netwerk; ?tussen only where it differs from `tussenStandaard`. */
+export function netwerkParams(n: Netwerk, tussenStandaard = true): Record<string, string | null> {
 	const uit = n.ids.filter((id) => n.uit.has(id));
 	return {
 		netwerk: n.ids.length > 0 ? n.ids.join(',') : null,
 		uit: uit.length > 0 ? uit.join(',') : null,
-		tussen: n.ids.length > 0 && !n.tussen ? '0' : null
+		tussen: n.ids.length > 0 && n.tussen !== tussenStandaard ? (n.tussen ? '1' : '0') : null
 	};
 }
 

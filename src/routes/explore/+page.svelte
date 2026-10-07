@@ -186,7 +186,10 @@
 			.map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
 			.join('&')
 	);
-	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
+	// On a phone a netwerk starts with its chosen bronnen and their own verbindingen only;
+	// the bronnen between them follow on request (?tussen=1).
+	const telefoon = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery), !telefoon));
 	const netwerkActive = $derived(netwerk.ids.length > 0);
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
@@ -583,7 +586,7 @@
 		if (n.ids.length === 0) remember(null);
 		// Clearing the netwerk or removing a bron is undone with Back.
 		const shrinks = n.ids.length < netwerk.ids.length;
-		setUrl(netwerkParams(n), { push: shrinks });
+		setUrl(netwerkParams(n, !telefoon), { push: shrinks });
 	}
 
 	// The Verkenner opens on the last netwerk until it is cleared: a double click that
@@ -775,7 +778,10 @@
 	const handleShareView = () => shareCopier.copy(page.url.toString(), 'share');
 
 	// Narrow viewports show one column at a time.
-	let mobilePanel = $state<'reader' | 'graph' | 'verbonden'>('reader');
+	// Arriving with a netwerk (a link from the start page), the network is what was asked for.
+	let mobilePanel = $state<'reader' | 'graph' | 'verbonden'>(
+		untrack(() => netwerkActive) ? 'graph' : 'reader'
+	);
 	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
 	// instead of taking a permanent column.
 	let tocOpen = $state(false);

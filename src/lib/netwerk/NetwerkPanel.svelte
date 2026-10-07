@@ -157,7 +157,7 @@
 			<label class="tussen">
 				<input type="checkbox" id="netwerk-tussen" checked={tussen} onchange={onTussen} />
 				{#if tussen}<b>{joiningCount}</b>
-					{joiningCount === 1 ? 'bron' : 'bronnen'} ertussen{:else}Bronnen ertussen tonen{/if}
+					{joiningCount === 1 ? 'bron' : 'bronnen'} ertussen{:else}Toon de bronnen ertussen{/if}
 			</label>
 		{/if}
 	{/if}
