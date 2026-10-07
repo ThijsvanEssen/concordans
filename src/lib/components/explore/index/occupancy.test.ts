@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	actingReason,
+	periodOf,
 	at,
 	bandsOf,
 	lanesOf,
@@ -143,5 +144,19 @@ describe('actingReason', () => {
 			actingReason({ acting_reason: 'source', acting_basis: 'Beheer portefeuille overgenomen (X)' })
 		).toBe('Volgens Rijksoverheid: beheer portefeuille overgenomen (X)');
 		expect(actingReason({})).toBeNull();
+	});
+});
+
+describe('periodOf', () => {
+	const fmt = (iso: string) => iso.slice(0, 7);
+	it('names a period from its start, to its end or to now', () => {
+		expect(periodOf('2022-01-10', '2024-07-02', fmt)).toBe('2022-01 tot 2024-07');
+		expect(periodOf('2026-02-23', null, fmt)).toBe('2026-02 tot nu');
+	});
+	it('says nothing of now without a start date', () => {
+		expect(periodOf(null, null, fmt)).toBe('begindatum niet in de gegevens');
+		expect(periodOf(undefined, '2024-07-02', fmt)).toBe(
+			'begindatum niet in de gegevens, tot 2024-07'
+		);
 	});
 });

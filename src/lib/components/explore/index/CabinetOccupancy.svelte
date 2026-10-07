@@ -16,7 +16,8 @@
 		ticksOf,
 		type CabinetDetail,
 		type Seat,
-		type SeatPost
+		type SeatPost,
+		periodOf
 	} from './occupancy';
 
 	let {
@@ -118,8 +119,8 @@
 	/** A post found through an old link closes by the link's own id. */
 	const toggle = (id: string) => onToggle(openKey === id && openId && openId !== id ? openId : id);
 
-	const day = (iso: string | null | undefined) => korteDatum(iso) || 'nu';
-	const month = (iso: string | null | undefined) => maandJaar(iso) || 'nu';
+	const day = (iso: string) => korteDatum(iso);
+	const month = (iso: string) => maandJaar(iso);
 
 	/** The seat's name: the post grey where it is the usual one, the portfolio in ink. */
 	function seatName(seat: Seat): { post: string; portfolio: string } {
@@ -133,7 +134,7 @@
 
 	const nameOf = (p: SeatPost) => p.member.name ?? p.member.key;
 	const label = (p: SeatPost) =>
-		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${day(p.from_date)} tot ${day(p.to_date)}${p.acting ? ', waarnemend' : ''}`;
+		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodOf(p.from_date, p.to_date, day)}${p.acting ? ', waarnemend' : ''}`;
 </script>
 
 {#if !term}
@@ -153,7 +154,7 @@
 						PHASE_LABEL[b.phase.kind ?? ''] ??
 						b.phase.label ??
 						''
-					).toLowerCase()} vanaf {day(b.phase.from_date)}{/each}
+					).toLowerCase()}{b.phase.from_date ? ` vanaf ${day(b.phase.from_date)}` : ''}{/each}
 			</p>
 		{/if}
 		{#each rows as ministry (ministry.name)}
@@ -179,7 +180,7 @@
 								<span class="holder-name"
 									>{nameOf(p)}{#if p.acting}<span class="holder-note"> waarnemend</span>{/if}</span
 								>
-								<span class="holder-period">{month(p.from_date)} tot {month(p.to_date)}</span>
+								<span class="holder-period">{periodOf(p.from_date, p.to_date, month)}</span>
 							</button>
 							{#if openKey === id}
 								{@render detail(p)}

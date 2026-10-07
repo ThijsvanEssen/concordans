@@ -141,3 +141,18 @@ export function actingReason(
 	}
 	return null;
 }
+
+/**
+ * The period of a post in words: `jan. 2022 tot nu`. Without a start the source names no
+ * period, so neither does this: a missing end is "nu" only when the start is known.
+ */
+export function periodOf(
+	from: string | null | undefined,
+	to: string | null | undefined,
+	fmt: (iso: string) => string
+): string {
+	const end = to ? fmt(to) : null;
+	if (!from)
+		return end ? `begindatum niet in de gegevens, tot ${end}` : 'begindatum niet in de gegevens';
+	return `${fmt(from)} tot ${end ?? 'nu'}`;
+}
