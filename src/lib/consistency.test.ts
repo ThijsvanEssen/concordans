@@ -40,6 +40,13 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /class="sec-title"|\.sec-title\b/.test(t))).toEqual([]);
 	});
 
+	it('scrolls sideways only where it says so: data-zijscroll (lib/dev/zijscroll.ts)', () => {
+		// On a phone nothing scrolls sideways; an area that pans on purpose is marked, so the
+		// check in development passes it by.
+		const pans = /overflow-x:\s*(auto|scroll)/;
+		expect(offenders((t) => pans.test(t) && !t.includes('data-zijscroll'))).toEqual([]);
+	});
+
 	it('gives every tab of Bladeren the same width', () => {
 		expect(offenders((t) => /page--wide/.test(t))).toEqual([]);
 	});

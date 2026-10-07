@@ -1990,6 +1990,7 @@
 	     courts, how the Kamer deals with a subject, and who does it. -->
 	<nav
 		class="catbar"
+		data-zijscroll
 		class:catbar--more-left={catMore.left}
 		class:catbar--more-right={catMore.right}
 		aria-label="Categorieën"
@@ -2219,6 +2220,7 @@
 							</div>
 							<div
 								class="cab-scroll"
+								data-zijscroll
 								bind:this={cabScroll}
 								use:pannable
 								role="region"
