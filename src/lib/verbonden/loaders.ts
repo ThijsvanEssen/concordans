@@ -10,6 +10,8 @@ import { refOf } from '$lib/bron/href';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { getArticleDetail } from '$lib/api/articles';
+import { abortable, getAmendedBy, getMemberDossiers } from '$lib/api/records';
+import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, type Loader } from './groups';
 import { bronKindOf, isInternational } from './filter';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
@@ -163,6 +165,8 @@ const ACTIVITIES_SHOWN = 200;
 
 /** The articles of a law read at once, in the law's order, without their text. */
 const ARTICLES_SHOWN = 100;
+/** The publications that change a law the group shows; the rest are counted. */
+const AMENDED_SHOWN = 30;
 
 /** The judgments of a law read at once: about 1.2 KB each, for the articles they cite. */
 const JUDGMENTS_SHOWN = 100;
@@ -198,11 +202,11 @@ async function actorDossiers(
 	signal: AbortSignal
 ): Promise<Loaded> {
 	const query = { params: { path: { key }, query: { limit: DOSSIERS_SHOWN } }, signal };
-	const found = await unwrap(
+	// A lid's dossiers are one record with the head of a bewindspersoon (`getMemberDossiers`).
+	const found =
 		who === 'members'
-			? api.GET('/api/members/{key}/dossiers', query)
-			: api.GET('/api/factions/{key}/dossiers', query)
-	);
+			? await abortable(getMemberDossiers(key, DOSSIERS_SHOWN), signal)
+			: await unwrap(api.GET('/api/factions/{key}/dossiers', query));
 	return {
 		total: found.total,
 		rows: found.items.map((d) => ({
@@ -483,12 +487,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			const bwb = bwbOf(node);
 			const amending =
 				bwb && implemented.some((link) => (link.via ?? []).length > 0)
-					? await api
-							.GET('/api/instruments/{bwb_id}/amended-by', {
-								params: { path: { bwb_id: bwb }, query: { limit: 500 } },
-								signal
-							})
-							.then(({ data }) => new Set((data?.items ?? []).map((d) => publicationKey(d.key))))
+					? await abortable(getAmendedBy(bwb), signal)
+							.then((found) => new Set(found.items.map((d) => publicationKey(d.key))))
 							.catch(() => new Set<string>())
 					: new Set<string>();
 			for (const link of [...implemented, ...(data.implemented_by ?? [])]) {
@@ -731,17 +731,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'instrument-amended-by': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
 		if (!bwb) return { rows: [] };
-		const found = await unwrap(
-			api.GET('/api/instruments/{bwb_id}/amended-by', {
-				params: { path: { bwb_id: bwb }, query: { limit: 30 } },
-				signal
-			})
-		);
+		const found = await abortable(getAmendedBy(bwb), signal);
 		return {
 			total: found.total,
 			// An amending instrument is a publication (`instruments/stb_2026_94`), named by its
 			// display name: `Stb. 2026, 94`. Its identifier is its key, not a second name.
-			rows: found.items.map((d) => ({
+			rows: found.items.slice(0, AMENDED_SHOWN).map((d) => ({
 				ref: refOf(parseNodeId(d.id)?.collection ?? 'instruments', d.key, {}),
 				title: d.display_name ?? d.identifier ?? d.key,
 				context: null,
@@ -770,16 +765,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.filter((r) => r !== null)
 		});
 		if (!law) return fromNode();
-		const found = await unwrap(
-			api.GET('/api/instruments/{bwb_id}/articles', {
-				params: { path: { bwb_id: law }, query: { limit: ARTICLES_SHOWN, text_preview_chars: 0 } },
-				signal
-			})
-		).catch(() => null);
+		// The law's whole list, which the reader's table of contents asks for too.
+		const found = await abortable(lawArticleList(law), signal).catch(() => null);
 		if (!found) return fromNode();
 		return {
 			total: found.total,
-			rows: found.items.map((a) => ({
+			rows: found.items.slice(0, ARTICLES_SHOWN).map((a) => ({
 				ref: refOf('articles', a.key, a),
 				...describe('articles', a.key, a.display_name, a),
 				kind: 'artikelen' as const,

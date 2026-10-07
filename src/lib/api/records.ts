@@ -8,6 +8,8 @@
 // A shared request takes no AbortSignal: one caller leaving must not cancel it for the
 // others. A caller that leaves ignores the answer instead.
 import { api, unwrap } from './client';
+import { getNodeGraph, neighborsOf } from './nodes';
+import type { Collection } from '$lib/vocabulary';
 
 // An article read through a law is a record too: room for a few hundred.
 const MAX = 400;
@@ -31,6 +33,32 @@ export function once<T>(id: string, load: () => Promise<T>): Promise<T> {
 	return request;
 }
 
+/**
+ * A shared request for one caller that may leave: the caller's answer rejects when its
+ * signal aborts, while the request itself goes on for the others.
+ */
+export function abortable<T>(request: Promise<T>, signal?: AbortSignal): Promise<T> {
+	if (!signal) return request;
+	if (signal.aborted) return Promise.reject(signal.reason);
+	return new Promise<T>((resolve, reject) => {
+		const stop = () => reject(signal.reason);
+		signal.addEventListener('abort', stop, { once: true });
+		request.then(resolve, reject).finally(() => signal.removeEventListener('abort', stop));
+	});
+}
+
+/**
+ * The node of a bron with its neighbours, 200 per bucket: what the canvas and the panel
+ * Verbonden draw from, and what a reader can take its own bucket from (a lid's AUTHORED).
+ */
+export const getNode = (collection: Collection, key: string) =>
+	once(`nodes/${collection}/${key.toLowerCase()}`, () =>
+		getNodeGraph(collection, key, { limit: NODE_BUCKET })
+	);
+
+/** The most the API gives per bucket of a node (API 0.5). */
+export const NODE_BUCKET = 200;
+
 /** For tests: forget every kept record. */
 export const forgetRecords = () => kept.clear();
 
@@ -43,16 +71,10 @@ export const getMember = (key: string) =>
 	);
 
 /** The stukken a lid signed, as the neighbours of the lid. */
+/** The stukken a lid signed: the AUTHORED bucket of the lid's own node, asked once. */
 export const getMemberAuthored = (key: string) =>
-	once(`members/${key}/authored`, () =>
-		unwrap(
-			api.GET('/api/nodes/{collection}/{key}', {
-				params: {
-					path: { collection: 'members', key },
-					query: { relations: 'AUTHORED', limit: 200 }
-				}
-			})
-		)
+	getNode('members', key).then((node) =>
+		neighborsOf(node).filter((n) => n.relation === 'AUTHORED')
 	);
 
 export const getCommitment = (key: string) =>
@@ -102,10 +124,31 @@ export const getMemberCommitments = (key: string, limit: number, status?: string
 		)
 	);
 
-/** The dossiers with stukken a lid signed; `total` counts them all. */
-export const getMemberDossiers = (key: string, limit: number) =>
-	once(`members/${key}/dossiers/${limit}`, () =>
-		unwrap(api.GET('/api/members/{key}/dossiers', { params: { path: { key }, query: { limit } } }))
+/** The most dossiers of a lid any view shows: the panel Verbonden lists a hundred. */
+export const MEMBER_DOSSIERS = 100;
+
+/**
+ * The dossiers with stukken a lid signed, the first `limit`; `total` counts them all. One
+ * request of a hundred serves the head of a bewindspersoon (3) and Verbonden (100).
+ */
+export const getMemberDossiers = (key: string, limit: number = MEMBER_DOSSIERS) =>
+	once(`members/${key}/dossiers`, () =>
+		unwrap(
+			api.GET('/api/members/{key}/dossiers', {
+				params: { path: { key }, query: { limit: MEMBER_DOSSIERS } }
+			})
+		)
+	).then((found) => ({ ...found, items: found.items.slice(0, limit) }));
+
+/** The publications that change a law, up to 500 (the Awb has 114): the group in Verbonden
+ *  and the implementations of BE-58 share them. */
+export const getAmendedBy = (bwb: string) =>
+	once(`instruments/${bwb}/amended-by`, () =>
+		unwrap(
+			api.GET('/api/instruments/{bwb_id}/amended-by', {
+				params: { path: { bwb_id: bwb }, query: { limit: 500 } }
+			})
+		)
 	);
 
 /** The stukken that explain an article, the first fifty; null when the API has none. The
