@@ -37,11 +37,20 @@
 	let stats = $state<Stats | null>(null);
 	let coverage = $state<Coverage | null>(null);
 
-	/** When each source was last read, as the API says (`data_as_of`). */
+	/**
+	 * How current each source is, as the API says (`data_as_of`): the last date in its data
+	 * where it gives one, and when it was fetched.
+	 */
 	const asOf = $derived(
 		Object.entries(stats?.data_as_of ?? {}).flatMap(([source, d]) =>
 			d?.retrieved_at
-				? [{ source: SOURCE_LABEL[source] ?? source, date: d.retrieved_at.slice(0, 10) }]
+				? [
+						{
+							source: SOURCE_LABEL[source] ?? source,
+							newest: d.newest ?? null,
+							fetched: d.retrieved_at.slice(0, 10)
+						}
+					]
 				: []
 		)
 	);
@@ -144,11 +153,18 @@
 					</div>
 				{/if}
 				{#if asOf.length}
-					<p class="list-note">Laatst opgehaald:</p>
+					<p class="list-note">
+						Stand per bron: de laatste datum in de gegevens, waar de bron die heeft, en de datum van
+						ophalen.
+					</p>
 					<div class="list">
 						{#each asOf as a (a.source)}
 							<div class="list-row">
-								<span class="list-k">{a.source}</span><span>{longDate(a.date)}</span>
+								<span class="list-k">{a.source}</span><span
+									>{a.newest ? `tot en met ${longDate(a.newest)}, ` : ''}opgehaald {longDate(
+										a.fetched
+									)}</span
+								>
 							</div>
 						{/each}
 					</div>
@@ -388,7 +404,7 @@
 				zonder eerdere, en besluiten over wetsvoorstellen vanaf juli 2026.
 			</p>
 			<p>
-				Elke bron wordt afzonderlijk opgehaald; de datum per bron staat onder Bronnen en dekking. De
+				Elke bron wordt afzonderlijk opgehaald; de stand per bron staat onder Bronnen en dekking. De
 				geldigheidsdatum van een artikel is de datum van inwerkingtreding, niet die van het ophalen.
 			</p>
 			<p>
