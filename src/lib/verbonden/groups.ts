@@ -5,6 +5,7 @@
 // A group is filled from the node response of the selected bron (`match`: relation,
 // direction, collection) or, where no edge says it, by a named loader (`load`).
 import { langeDatum } from '$lib/text/datum';
+import { lawKind } from '$lib/components/explore/law-head';
 import { bucketKey } from '$lib/api/nodes';
 import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
 import { formatCount, isInternational } from './filter';
@@ -809,3 +810,30 @@ export const countLabel = (group: Pick<Group, 'rows' | 'capped' | 'total'>) =>
 	group.total != null && group.total >= group.rows.length
 		? formatCount(group.total)
 		: `${formatCount(group.rows.length)}${group.capped ? '+' : ''}`;
+
+/** A de-word and a het-word: "deze richtlijn", "dit verdrag". */
+const DIT: Record<string, string> = {
+	richtlijn: 'deze richtlijn',
+	verordening: 'deze verordening',
+	verdrag: 'dit verdrag',
+	besluit: 'dit besluit',
+	kaderbesluit: 'dit kaderbesluit'
+};
+
+/**
+ * The groups of an instrument named by its kind, as its head names it (`lawKind`): a
+ * richtlijn has "Artikelen van deze richtlijn", not "van deze wet". A wet or another
+ * regeling keeps "deze wet".
+ */
+export function naarSoort<G extends { label: string }>(
+	groups: G[],
+	props: Record<string, unknown> | null | undefined
+): G[] {
+	const soort = lawKind((props ?? {}) as never)
+		.toLowerCase()
+		.split(' ')
+		.at(-1)!;
+	const dit = DIT[soort];
+	if (!dit) return groups;
+	return groups.map((g) => ({ ...g, label: g.label.replace(/\bdeze wet\b/, dit) }));
+}
