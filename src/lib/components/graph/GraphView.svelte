@@ -14,7 +14,7 @@
 	import type { Snippet } from 'svelte';
 	import type { GraphStore, GraphFilters } from '$lib/graph/graph-store';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
-	import { isVersionCollection, kindOfCollection } from '$lib/graph/types';
+	import { isVersionCollection, kindOfCollection, kort } from '$lib/graph/types';
 	import {
 		clusterLabel,
 		clustersOf,
@@ -448,9 +448,10 @@
 		}, burst);
 	}
 
-	// Node label: one name per bron (bron/naam.ts), as in the netwerk panel.
+	// Node label: the name of the bron (bron/naam.ts), short enough for the canvas; a
+	// Kamerstuk by its kind and number (`stukLabel`). The full name is in the panel and the card.
 	const nodeLabel = (n: GraphNode) =>
-		isClusterId(n.id) ? n.label : bronNaam(n, $instrumentMetaStore);
+		isClusterId(n.id) || n.kind === 'document' ? n.label : kort(bronNaam(n, $instrumentMetaStore));
 
 	// A container (a wet, fractie, commissie or dossier) is never a canvas node: its
 	// children carry it as a hull instead (`syncContainerAnchors`, GraphCanvas). Nor

@@ -1330,12 +1330,15 @@ export interface paths {
         };
         /**
          * Health
-         * @description Health check — verifies database connectivity. ``warm``: the answers every visitor
+         * @description Health check — verifies database connectivity; ``version`` the version of the API
+         *     (what a deploy checks against its tag). ``warm``: the answers every visitor
          *     asks are computed for the data as it is now (null when the API does not warm up); a
          *     deploy waits for true before its smoke test. ``warm_version`` the data version they
          *     were last computed for (the answers a request gets while a newer one computes, null
          *     before the first warm-up), ``data_version`` the version now, ``computing`` whether a
-         *     warm-up or an answer of a newer version is being computed.
+         *     warm-up or an answer of a newer version is being computed. ``pools``: per connection
+         *     pool its size, the free connections and the reads waiting for one; ``busy`` what the
+         *     threads of the shared pools run now, and how long.
          */
         get: operations["health_api_health_get"];
         put?: never;
@@ -2234,6 +2237,24 @@ export interface components {
             props: {
                 [key: string]: unknown;
             } | null;
+        };
+        /**
+         * BusyCallDTO
+         * @description A call a thread of a shared pool runs now (queries side by side, the searches).
+         */
+        BusyCallDTO: {
+            /** Thread */
+            thread: string;
+            /**
+             * Call
+             * @description The function: module, name and, of a lambda, its line.
+             */
+            call: string;
+            /**
+             * Seconds
+             * @description How long it has run.
+             */
+            seconds: number;
         };
         /**
          * CabinetDetailDTO
@@ -3453,6 +3474,11 @@ export interface components {
             title?: string | null;
             /** Kind */
             kind?: string | null;
+            /**
+             * Number
+             * @description Its number in its dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``).
+             */
+            number?: string | null;
             /** Date */
             date?: string | null;
             /** External Id */
@@ -3749,6 +3775,11 @@ export interface components {
              * @description The number of the paper in ``dossier_number``.
              */
             sequence?: number | null;
+            /**
+             * Number
+             * @description Its number in the dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``).
+             */
+            number?: string | null;
             /**
              * Dossier Number
              * @description The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill.
@@ -4933,6 +4964,11 @@ export interface components {
              * @description The page of a paper on tweedekamer.nl.
              */
             tk_url?: string | null;
+            /**
+             * Number
+             * @description Of a paper its nr. in its dossier (``12``); null for the other kinds.
+             */
+            number?: string | null;
             headline: components["schemas"]["FeedHeadlineDTO"];
             vote?: components["schemas"]["FeedVoteDTO"] | null;
             commitment?: components["schemas"]["FeedCommitmentDTO"] | null;
@@ -5287,6 +5323,53 @@ export interface components {
              * @description From the outer wall (0) to the aisle; 0 for the chair.
              */
             column: number;
+        };
+        /**
+         * HealthDTO
+         * @description Whether the API reaches its database, and how warm and busy it is.
+         */
+        HealthDTO: {
+            /** Status */
+            status: string;
+            /**
+             * Version
+             * @description The version of the API (a deploy checks its tag).
+             */
+            version: string;
+            /** Database */
+            database: string;
+            /**
+             * Warm
+             * @description The answers every visitor asks are computed for the data as it is now; null when the API does not warm up.
+             */
+            warm: boolean | null;
+            /**
+             * Warm Version
+             * @description The data version the last warm-up was done for (null before it).
+             */
+            warm_version?: string | null;
+            /**
+             * Data Version
+             * @description The data version now (null without warm-up).
+             */
+            data_version?: string | null;
+            /**
+             * Computing
+             * @description A warm-up waits or runs, or an answer of the cache is computed.
+             */
+            computing?: boolean | null;
+            /**
+             * Pools
+             * @description Per connection pool (`requests`, `background`; null before the background one is first needed) its use.
+             */
+            pools: {
+                [key: string]: components["schemas"]["PoolUsageDTO"] | null;
+            };
+            /**
+             * Busy
+             * @description The calls the threads of the shared pools run now, longest first.
+             */
+            busy?: components["schemas"]["BusyCallDTO"][];
         };
         /**
          * ImplementingMeasureDTO
@@ -7450,6 +7533,27 @@ export interface components {
             slug?: string | null;
         };
         /**
+         * PoolUsageDTO
+         * @description One connection pool of the API process.
+         */
+        PoolUsageDTO: {
+            /**
+             * Size
+             * @description Its connections.
+             */
+            size: number;
+            /**
+             * Free
+             * @description Those not reading now.
+             */
+            free: number;
+            /**
+             * Waiting
+             * @description Reads waiting for a connection of it.
+             */
+            waiting: number;
+        };
+        /**
          * Post
          * @enum {string}
          */
@@ -8247,6 +8351,11 @@ export interface components {
              * @description The number of the paper in ``dossier_number``.
              */
             sequence?: number | null;
+            /**
+             * Number
+             * @description Its number in the dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``).
+             */
+            number?: string | null;
             /**
              * Dossier Number
              * @description The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill.
@@ -10937,9 +11046,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: string | boolean | null;
-                    };
+                    "application/json": components["schemas"]["HealthDTO"];
                 };
             };
         };
