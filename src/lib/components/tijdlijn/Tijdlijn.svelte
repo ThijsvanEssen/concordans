@@ -101,8 +101,16 @@
 		grid-template-columns: 4rem 20px minmax(0, 1fr);
 		gap: 0 var(--s-2);
 		position: relative;
+		/* Where the line opens for the teken of the row: the teken stands on the page
+		   itself, with no plate of its own, in light and dark alike. */
+		--gat-van: calc(var(--s-2) + 1px);
+		--gat-tot: calc(var(--s-2) + 19px);
 	}
-	/* De doorlopende lijn door de tekens. */
+	.regel:has(.teken) {
+		--gat-van: calc(var(--s-2) + 3px);
+		--gat-tot: calc(var(--s-2) + 18px);
+	}
+	/* De doorlopende lijn door de tekens, open waar het teken staat. */
 	.regel::before {
 		content: '';
 		position: absolute;
@@ -110,10 +118,16 @@
 		top: 0;
 		bottom: 0;
 		width: 1px;
-		background: var(--rule);
+		background: linear-gradient(
+			to bottom,
+			var(--rule) var(--gat-van),
+			transparent var(--gat-van) var(--gat-tot),
+			var(--rule) var(--gat-tot)
+		);
 	}
 	.regel:first-child::before {
-		top: var(--s-3);
+		top: var(--gat-tot);
+		background: var(--rule);
 	}
 	.regel:last-child::before {
 		bottom: calc(100% - var(--s-3) - 6px);
@@ -138,7 +152,7 @@
 		width: 9px;
 		height: 9px;
 		box-sizing: border-box;
-		background: var(--paper);
+		background: transparent;
 		border: 1.5px solid var(--ink-2);
 		border-radius: 50%;
 	}
@@ -149,11 +163,10 @@
 		z-index: 1;
 		justify-self: center;
 		margin-top: calc(var(--s-2) + 3px);
-		background: var(--paper);
 		overflow: visible;
 	}
 	.bteken path {
-		fill: var(--paper);
+		fill: none;
 		stroke: var(--ink);
 		stroke-width: 1.6;
 	}
