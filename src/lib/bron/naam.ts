@@ -21,7 +21,8 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	}
 	// Anything else by the title Verbonden gives it: "Rechtbank Rotterdam, 2 juni 2022".
 	if (n.kind !== 'article') {
-		const title = describe(n.collection, n.key, n.label, p ?? {}).title;
+		// The source's own name, not the short label of the canvas ("2026-09, Brief").
+		const title = describe(n.collection, n.key, n.raw?.display_name ?? n.label, p ?? {}).title;
 		return title && title !== UNNAMED ? title : n.label;
 	}
 	const bwb = lawIdOf(p);

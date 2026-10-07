@@ -8,6 +8,8 @@ import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { articleTitle } from '$lib/text/bw';
 import { authorCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
+import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
+import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
 
 export type { Neighbor } from '$lib/api/nodes';
@@ -102,17 +104,61 @@ export const courtName = (court: string | null): string | null =>
 	court ? (COURTS[court.toUpperCase()] ?? court) : null;
 
 /**
- * The name of a document as a title: `Memorie van toelichting, Kamerstuk 36693, nr. 3`. The
- * dossier is the paper's own (API 0.63), else the first it is filed under.
+ * The name and the line under it of a Kamerstuk, by what tells it apart: its own title where
+ * that says more than its kind (`Motie van het lid Krul c.s. over …`); else its kind or title
+ * with its number (`Verslag, Kamerstuk I 36547, C`); else with its date. Never the kind alone
+ * where something else is known. The line under it names the kind and the number the title
+ * leaves out.
  */
-function documentTitle(props: Record<string, unknown>, name: string): string {
+function documentName(
+	props: Record<string, unknown>,
+	name: string
+): { title: string; context: string | null } {
 	const kind = text(props.kind);
-	const number = text(props.sequence != null ? String(props.sequence) : null);
+	const shortKind = kind?.replace(/\s*\(.*\)\s*$/, '') ?? null;
+	const title = text(props.title) ? withoutKamerstuk(text(props.title)!) : null;
 	const dossier = text(props.dossier_number) ?? dossierNumbersOf(props)[0] ?? null;
-	if (!kind) return name;
-	const shortKind = kind.replace(/\s*\(.*\)\s*$/, '');
-	const stuk = dossier ? `Kamerstuk ${dossier}${number ? `, nr. ${number}` : ''}` : null;
-	return stuk ? `${shortKind}, ${stuk}` : number ? `${shortKind}, nr. ${number}` : shortKind;
+	const sequence = text(props.sequence != null ? String(props.sequence) : null);
+	// The Eerste Kamer numbers its papers with a letter (`C`, `AB`), without `nr.`.
+	const letter = sequence ? null : text(props.number);
+	const ek = props.chamber === 'EK' || !!letter;
+	const nr = sequence ? `nr. ${sequence}` : letter;
+	const stuk = dossier ? `Kamerstuk${ek ? ' I' : ''} ${dossier}${nr ? `, ${nr}` : ''}` : nr;
+	if (!kind && !title) return { title: name, context: null };
+	// A paper of a bill by its kind and number: its title is the bill's, the same for all.
+	// `Blanco verslag` says more than the kind `Verslag`.
+	if (draagtWetstitel(kind) && stuk)
+		return {
+			title: join(title && isGeneriek(title, kind) ? title : shortKind, stuk)!,
+			context: null
+		};
+	if (title && !isGeneriek(title, kind)) return { title, context: join(shortKind, stuk) };
+	const lead = title ?? shortKind!;
+	const where = stuk ?? longDate(text(props.date));
+	return { title: join(lead, where) ?? lead, context: null };
+}
+
+/**
+ * An activity, a zaak or a toezegging by what tells it apart: its agenda or own title where
+ * that says more than its kind (`Procedures en brieven`); else the name the source gives it,
+ * which names the committee and the day (`Commissie voor Justitie en Veiligheid (J&V)
+ * (2026-03-24)`); else its kind with its date (`Stemmingen, 29 september 2026`). The kind goes
+ * on the line under it.
+ */
+function activityName(
+	props: Record<string, unknown>,
+	displayName: string | null | undefined,
+	name: string
+): { title: string; context: string | null } {
+	const kind = text(props.kind);
+	const own = text(props.agenda_title) ?? text(props.title) ?? text(props.text);
+	const context = kind && own?.toLowerCase() !== kind.toLowerCase() ? kind : null;
+	if (own && !isGeneriek(own, kind)) return { title: own, context };
+	const given = text(displayName);
+	if (given && !isGeneriek(given.replace(/\s*\(\d{4}-\d{2}-\d{2}\)$/, ''), kind))
+		return { title: given, context };
+	const lead = own ?? kind ?? name;
+	return { title: join(lead, longDate(text(props.date))) ?? lead, context };
 }
 
 /** A bron the data gives no name: said so, never shown by its database key. */
@@ -164,12 +210,7 @@ export function describe(
 				date
 			};
 		case 'documents':
-			return {
-				title: documentTitle(props, name),
-				context: text(props.kind) ? null : text(props.title),
-				identifier: null,
-				date
-			};
+			return { ...documentName(props, name), identifier: null, date };
 		case 'decisions':
 			return {
 				title: text(props.subject) ?? text(props.title) ?? name,
@@ -179,11 +220,7 @@ export function describe(
 		case 'activities':
 		case 'commitments':
 		case 'cases':
-			return {
-				title: text(props.agenda_title) ?? text(props.title) ?? text(props.kind) ?? name,
-				context: text(props.kind),
-				date
-			};
+			return { ...activityName(props, displayName, name), date };
 		case 'members':
 			return {
 				title: text(props.name) ?? text(displayName) ?? UNNAMED,

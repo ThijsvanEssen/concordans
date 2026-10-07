@@ -84,3 +84,92 @@ describe('a bewindspersoon of a cabinet', () => {
 		);
 	});
 });
+
+describe('the name of a Kamerstuk', () => {
+	const doc = (props: Record<string, unknown>) =>
+		describeBron('documents', 'k', 'Kamerstuk 36547', props);
+
+	it('is its own title where that says more than its kind, with kind and number under it', () => {
+		expect(
+			doc({
+				kind: 'Brief',
+				title: 'Brief van de minister van J&V betreffende het verzoek',
+				dossier_numbers: ['36547'],
+				number: 'G',
+				chamber: 'EK'
+			})
+		).toMatchObject({
+			title: 'Brief van de minister van J&V betreffende het verzoek',
+			context: 'Brief, Kamerstuk I 36547, G'
+		});
+		expect(
+			doc({
+				kind: 'Motie',
+				title: 'Kamerstuk 36547, nr. 38: Motie van het lid Krul c.s. over pleegouders',
+				dossier_number: '36547',
+				sequence: 38
+			})
+		).toMatchObject({
+			title: 'Motie van het lid Krul c.s. over pleegouders',
+			context: 'Motie, Kamerstuk 36547, nr. 38'
+		});
+	});
+
+	it('is its kind and number where the title only names the kind', () => {
+		expect(
+			doc({
+				kind: 'Verslag',
+				title: 'Blanco verslag',
+				dossier_number: '36547',
+				number: 'C',
+				chamber: 'EK'
+			}).title
+		).toBe('Blanco verslag, Kamerstuk I 36547, C');
+	});
+
+	it('names a paper of a bill by its kind and number, not by the title of the bill', () => {
+		expect(
+			doc({
+				kind: 'Memorie van toelichting',
+				title: 'Wijziging van het Wetboek van Strafrecht',
+				dossier_number: '36547',
+				sequence: 3
+			}).title
+		).toBe('Memorie van toelichting, Kamerstuk 36547, nr. 3');
+	});
+
+	it('is never the kind alone where the date is known', () => {
+		expect(doc({ kind: 'Brief', title: 'Brief', date: '2026-09-10' }).title).toBe(
+			'Brief, 10 september 2026'
+		);
+	});
+});
+
+describe('the name of an activity', () => {
+	const act = (props: Record<string, unknown>, name = 'act') =>
+		describeBron('activities', 'k', name, props);
+
+	it('is its agenda title, with its kind under it', () => {
+		expect(
+			act({ kind: 'Procedurevergadering', agenda_title: 'Procedures en brieven' })
+		).toMatchObject({ title: 'Procedures en brieven', context: 'Procedurevergadering' });
+	});
+
+	it('is the name the source gives (the committee and the day) without an agenda title', () => {
+		expect(
+			act({ date: '2026-03-24' }, 'Commissie voor Justitie en Veiligheid (J&V) (2026-03-24)').title
+		).toBe('Commissie voor Justitie en Veiligheid (J&V) (2026-03-24)');
+	});
+
+	it('is its kind with its date where nothing else tells it apart', () => {
+		expect(
+			act(
+				{ kind: 'plenaire vergadering', agenda_title: 'Stemmingen', date: '2026-09-29' },
+				'Stemmingen (2026-09-29)'
+			).title
+		).toBe('Stemmingen, 29 september 2026');
+		expect(
+			act({ kind: 'Plenair debat', date: '2026-09-22' }, 'Plenair debat (2026-09-22)').title
+		).toBe('Plenair debat, 22 september 2026');
+	});
+});
