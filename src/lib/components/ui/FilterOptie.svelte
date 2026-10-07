@@ -16,6 +16,7 @@
 		indent = false,
 		empty = false,
 		bezig = false,
+		wrap = false,
 		title
 	}: {
 		label: string;
@@ -33,6 +34,8 @@
 		empty?: boolean;
 		/** Its count is still being read: "…" in its place. */
 		bezig?: boolean;
+		/** A long label runs on to a second line instead of being cut ("Europees en internationaal"). */
+		wrap?: boolean;
 		title?: string;
 	} = $props();
 </script>
@@ -54,7 +57,7 @@
 		<span class="vak" aria-hidden="true">{on ? '✓' : ''}</span>
 	{/if}
 	{#if voor}<span class="voor">{@render voor()}</span>{/if}
-	<span class="label">{label}</span>
+	<span class="label" class:wrap>{label}</span>
 	{#if bezig}<span class="aantal" aria-label="wordt geteld">…</span>{:else if count != null}<span
 			class="aantal">{formatCount(count)}</span
 		>{/if}
@@ -136,6 +139,10 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+	.label.wrap {
+		white-space: normal;
+		line-height: var(--lh-snug);
 	}
 	.aantal {
 		margin-left: auto;

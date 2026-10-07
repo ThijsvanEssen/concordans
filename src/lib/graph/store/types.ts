@@ -2,6 +2,7 @@ import type { Readable } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import type { GraphNode, GraphEdge } from '../types';
+import type { ContainerKind } from '../container-membership';
 
 /** A chosen bron of a netwerk that is on, with its node response. */
 /** The API's defaults for a neighbourhood: three steps, at most 200 bronnen. */
@@ -26,6 +27,8 @@ export type CanvasRow = {
 export type GraphFilters = {
 	/** Relations the legend switched off; their edges are not drawn. */
 	hiddenRelations: Set<Relation>;
+	/** Groupings the legend switched off: their bronnen stand loose, without a hull. */
+	hiddenGroups: Set<ContainerKind>;
 	/** Semantic edges with a lower confidence are left out. */
 	semanticThreshold: number;
 	/** Neighbours requested per expanded node. */
@@ -43,6 +46,7 @@ export type GraphExpansionOptions = {
 
 export const DEFAULT_FILTERS: GraphFilters = {
 	hiddenRelations: new Set<Relation>(),
+	hiddenGroups: new Set<ContainerKind>(),
 	semanticThreshold: 0.6,
 	neighborLimit: 30,
 	dimStaleContext: false
