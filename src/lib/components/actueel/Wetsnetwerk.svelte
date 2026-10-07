@@ -2,7 +2,7 @@
 	// The network of the last passed bill, in fixed columns: no force layout, no movement.
 	// Lines are drawn between the measured places. A click on a bron chooses it here (its
 	// verbindingen dark, the rest faint); the line under the sketch opens it. On a phone the
-	// chain stands as one line, and the sketch opens on request.
+	// chain stands one step a line, and the sketch is the Verkenner's.
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import { onMount, tick } from 'svelte';
@@ -36,7 +36,6 @@
 	let root = $state<HTMLElement>();
 	let paden = $state<{ id: string; d: string; aan: boolean }[]>([]);
 	let gekozen = $state<SchetsBron | null>(null);
-	let open = $state(false);
 
 	const buren = $derived.by(() => {
 		const id = gekozen?.id;
@@ -46,11 +45,6 @@
 
 	function meet() {
 		if (!root) return;
-		// One column: the chain runs down without lines.
-		if (getComputedStyle(root).gridTemplateColumns.split(' ').length < 2) {
-			paden = [];
-			return;
-		}
 		const o = root.getBoundingClientRect();
 		const rect = (id: string, sel: string) =>
 			root!
@@ -93,11 +87,9 @@
 			<li><span class="kteken"><KindGlyph vorm={st.vorm} size={12} /></span>{st.tekst}</li>
 		{/each}
 	</ol>
-	<button type="button" class="toon" aria-expanded={open} onclick={() => (open = !open)}
-		>{open ? 'Verberg het netwerk' : 'Toon het netwerk'}</button
-	>
+	<a class="toon" href={schets.verkenner}>Toon in de Verkenner →</a>
 
-	<figure class="schets" class:open>
+	<figure class="schets">
 		<div class="veld" bind:this={root} style:--kolommen={schets.kolommen.length}>
 			<svg class="lijnen" aria-hidden="true">
 				{#each paden as p (p.id)}<path d={p.d} class:aan={p.aan} />{/each}
@@ -295,7 +287,7 @@
 		font-weight: 500;
 	}
 
-	/* A phone: the chain as one line; the sketch, one column down, on request. */
+	/* A phone: the chain one step a line, and a link to the same network in the Verkenner. */
 	@media (max-width: 640px) {
 		h2 {
 			margin-bottom: var(--s-2);
@@ -346,35 +338,10 @@
 			font-family: var(--font-sans);
 			font-size: var(--t-meta);
 			color: var(--ink);
-			cursor: pointer;
+			text-decoration: none;
 		}
 		.schets {
 			display: none;
-			margin-top: var(--s-3);
-		}
-		.schets.open {
-			display: block;
-		}
-		.veld {
-			grid-template-columns: minmax(0, 1fr);
-			row-gap: var(--s-5);
-		}
-		.lijnen {
-			display: none;
-		}
-		/* Between the layers a short rule under the signs, where the desktop draws lines. */
-		.kolom + .kolom::before {
-			content: '';
-			position: absolute;
-			/* Under the middle of a 14px sign. */
-			left: 6.5px;
-			top: calc(-1 * var(--s-5) + var(--s-1));
-			height: var(--s-4);
-			width: 1px;
-			background: var(--rule-strong);
-		}
-		.verkenner {
-			margin-left: 0;
 		}
 	}
 </style>
