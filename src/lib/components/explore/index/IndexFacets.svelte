@@ -140,7 +140,8 @@
 		unit === 'date' || !/^\d{4}$/.test(value) ? value : `${value}-${end ? '12-31' : '01-01'}`;
 </script>
 
-<div class="facets" class:facets--pending={pending} aria-busy={pending}>
+<!-- While a page loads, the counts read "…" (as in the legend); the text keeps its contrast. -->
+<div class="facets" aria-busy={pending}>
 	{#each groups as g (g.id)}
 		<section class="group" aria-labelledby="facet-{g.id}">
 			<h2 class="group-head" id="facet-{g.id}">
@@ -164,6 +165,7 @@
 									on={o.on}
 									onToggle={o.onClick}
 									count={pending ? null : o.count}
+									bezig={pending && o.count !== undefined}
 									swatch={o.swatch}
 									indent={o.indent}
 								/>
@@ -190,6 +192,7 @@
 								on={o.on}
 								onToggle={o.onClick}
 								count={pending ? null : o.count}
+								bezig={pending && o.count !== undefined}
 							/>
 						</li>
 					{/each}
@@ -320,9 +323,6 @@
 		color: var(--ink-3);
 	}
 
-	.facets--pending {
-		opacity: 0.6;
-	}
 	.range {
 		display: flex;
 		align-items: center;

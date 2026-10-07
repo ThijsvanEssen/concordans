@@ -6,7 +6,7 @@ import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst } from '$lib/api/records';
-import { buildGroups, groupCount, withUnresolvedAppeals, type Group } from './groups';
+import { buildGroups, groupCount, naarSoort, withUnresolvedAppeals, type Group } from './groups';
 import { LOADERS } from './loaders';
 
 export type VerbondenState = {
@@ -54,7 +54,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		getNodeFirst(collection, key)
 			.then((first) => {
 				if (ac.signal.aborted || get(state).groups.length > 0) return;
-				const preview = buildGroups(collection, neighborsOf(first), bucketTotals(first))
+				const preview = naarSoort(
+					buildGroups(collection, neighborsOf(first), bucketTotals(first)),
+					first.node.props as Record<string, unknown>
+				)
 					.filter((g) => g.load || g.rows.length > 0)
 					.map((g) => ({ id: g.id, label: g.label, count: g.load ? null : groupCount(g) }));
 				state.set({ id: selection.id, groups: [], loading: true, failed: false, preview });
@@ -66,9 +69,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				if (ac.signal.aborted) return;
 				const neighbors = neighborsOf(response);
 				const totals = bucketTotals(response);
-				let groups = withUnresolvedAppeals(
-					buildGroups(collection, neighbors, totals),
-					(response.node.props ?? {}) as Record<string, unknown>
+				const props = (response.node.props ?? {}) as Record<string, unknown>;
+				let groups = naarSoort(
+					withUnresolvedAppeals(buildGroups(collection, neighbors, totals), props),
+					props
 				);
 				const pending = new Set(groups.filter((g) => g.load).map((g) => g.id));
 				state.set({ id: selection.id, groups, loading: pending.size > 0, failed: false });
