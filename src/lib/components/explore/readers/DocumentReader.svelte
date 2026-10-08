@@ -383,7 +383,7 @@
 		border: 0;
 		background: none;
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 		cursor: pointer;
 	}

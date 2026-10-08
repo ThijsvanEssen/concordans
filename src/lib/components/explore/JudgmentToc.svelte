@@ -154,8 +154,8 @@
 	.row--summary,
 	.row--parties {
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
-		font-weight: 500;
+		font-size: var(--t-micro);
+		font-weight: 400;
 		color: var(--ink-3);
 	}
 

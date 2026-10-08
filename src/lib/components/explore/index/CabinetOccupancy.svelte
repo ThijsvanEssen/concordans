@@ -340,7 +340,7 @@
 		position: absolute;
 		bottom: var(--s-1);
 		transform: translateX(-50%);
-		font-size: var(--t-label);
+		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		color: var(--ink-3);
 		white-space: nowrap;
 	}
@@ -350,7 +350,7 @@
 		top: 0;
 		padding-left: var(--s-1);
 		border-left: 1px dotted var(--accent);
-		font-size: var(--t-label);
+		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		font-weight: 500;
 		color: var(--accent);
 		white-space: nowrap;

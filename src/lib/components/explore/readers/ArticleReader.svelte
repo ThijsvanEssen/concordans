@@ -809,7 +809,7 @@
 		display: flex;
 		justify-content: space-between;
 		padding: 2px var(--s-3) var(--s-1);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.pop__row {
@@ -832,7 +832,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
 	.pop__change:hover {

@@ -272,15 +272,17 @@
 		justify-content: space-between;
 		align-items: baseline;
 		margin: 0 0 var(--s-2);
-		font-size: var(--t-label);
-		font-weight: 500;
-		color: var(--ink-3);
+		/* A group in a section, rung 3 of docs/typografie.md; its note rung 6. */
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink);
 	}
 	.group-note {
 		font-weight: 400;
 		letter-spacing: 0;
 		text-transform: none;
 		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
 	.options {

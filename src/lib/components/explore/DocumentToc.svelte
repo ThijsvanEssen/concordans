@@ -140,11 +140,12 @@
 		color: var(--ink);
 	}
 
+	/* Heads a group of the contents: rung 3 of docs/typografie.md. */
 	.row.level-1 {
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
-		font-weight: 500;
-		color: var(--ink-3);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink);
 		margin-top: var(--s-3);
 	}
 
