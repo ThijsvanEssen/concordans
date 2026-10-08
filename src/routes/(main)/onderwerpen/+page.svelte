@@ -22,6 +22,7 @@
 		lees,
 		nieuwBezoek,
 		haalTermWeg,
+		naarParam,
 		normaal,
 		ontvolg,
 		splitsTermen,
@@ -202,6 +203,9 @@
 	const actueelHref = (term: string) =>
 		`/actueel?${new URLSearchParams({ q: term, van: dagenTerug(365) })}`;
 
+	const overzichtHref = (o: Pick<Onderwerp, 'termen'>) =>
+		`/onderwerpen/overzicht?${new URLSearchParams({ onderwerp: naarParam(o.termen) })}`;
+
 	// ── Following ───────────────────────────────────────────────────────────
 	let invoer = $state('');
 	function voegToe(e: SubmitEvent) {
@@ -322,6 +326,7 @@
 					>
 					<button type="button" class="stil" onclick={() => verwijder(o)}>Niet meer volgen</button>
 				{/if}
+				<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>
 			</div>
 			{#if bewerkt === sleutel(o) && !gedeeld.length}
 				<div class="woorden">
@@ -471,6 +476,13 @@
 		align-items: baseline;
 		gap: var(--s-2) var(--s-4);
 		margin-bottom: var(--s-3);
+	}
+	.naar-overzicht {
+		color: var(--ink-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		text-decoration: underline;
+		text-underline-offset: 2px;
 	}
 	.woorden {
 		margin: 0 0 var(--s-4);
