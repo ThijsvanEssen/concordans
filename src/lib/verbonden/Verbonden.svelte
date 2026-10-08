@@ -19,6 +19,8 @@
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import {
+		RECHTERS,
+		type Rechter,
 		kindCount,
 		BRON_KIND_NOUN,
 		PRESETS,
@@ -238,10 +240,6 @@
 				: g.rows.length > 5
 					? yearHistogram(g.rows)
 					: [];
-
-	function chooseYear(year: number) {
-		onFilter({ ...filter, jaar: filter.jaar === year ? null : year });
-	}
 
 	const copier = createCopier();
 	// A copy and an export hold every row: those not loaded yet are asked first.
@@ -480,6 +478,9 @@
 						{geladen
 							? `Van de ${formatCount(geladen)} geladen: van ${bars[0].year}`
 							: `Van ${bars[0].year}`} tot {bars.at(-1)?.year}; de meeste in {piek.year} ({piek.count}).
+					</p>
+					<!-- The filters of the judgments on one line: the year and the court. -->
+					<div class="group__jaren group__filters">
 						<label
 							>Jaar <select
 								value={filter.jaar ?? ''}
@@ -494,22 +495,19 @@
 									>{/each}
 							</select></label
 						>
-					</p>
-					{#if filter.jaar}
-						<p class="group__caption">
-							<button type="button" class="link" onclick={() => chooseYear(filter.jaar!)}
-								>Alle jaren</button
+						<label
+							>Rechter <select
+								value={filter.rechter ?? ''}
+								onchange={(e) => {
+									const v = e.currentTarget.value as Rechter | '';
+									onFilter({ ...filter, rechter: v || null });
+								}}
 							>
-						</p>
-					{:else if !filter.rechter}
-						<p class="group__caption">
-							<button
-								type="button"
-								class="link"
-								onclick={() => onFilter({ ...filter, rechter: 'hr' })}>Alleen Hoge Raad</button
-							>
-						</p>
-					{/if}
+								<option value="">alle</option>
+								{#each RECHTERS as r (r.id)}<option value={r.id}>{r.label}</option>{/each}
+							</select></label
+						>
+					</div>
 				{/if}
 				<ul class="rows">
 					{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}

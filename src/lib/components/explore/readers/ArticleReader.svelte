@@ -1,4 +1,5 @@
 <script lang="ts">
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { getExplainedBy } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
@@ -613,7 +614,7 @@
 				{#if billCount > 0}
 					<div class="head__pending">
 						<a href={billsHref} data-sveltekit-noscroll
-							><span class="head__dot" aria-hidden="true"></span>{billCount}
+							><KindGlyph vorm="voorstel" size={12} />{billCount}
 							{billCount === 1 ? 'wetsvoorstel raakt' : 'wetsvoorstellen raken'} dit artikel</a
 						>
 					</div>
@@ -754,17 +755,12 @@
 		color: var(--accent);
 	}
 	/* The status voorgesteld is the one use of the accent outside links. */
+	/* Information, not a warning: in ink, with the sign of a wetsvoorstel (UX 8 Oct). */
 	.head__pending a {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
-		color: var(--accent);
-	}
-	.head__dot {
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--accent);
+		color: var(--ink);
 	}
 	.head__count {
 		margin-left: var(--s-3);
