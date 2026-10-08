@@ -1,8 +1,11 @@
-// Where a bron stands, for the band "Behoort bij" above every reader: the layers above it
-// on its own axis, and the groups beside and below it, in the terms of its source. The rows
-// follow docs/hierarchie.md; a layer the data lacks is left out without a word. Thijs, 9 Oct:
-// "maak het consistent en klikbaar zodat de hiërarchie gelijk voelt voor de hele website".
+// Where a bron stands, for the band "Behoort bij" above every reader: the kern, the relations
+// without which the bron does not read (Procesgang, Ingediend bij, Wet), as lines in the
+// reading column; under them the groups of its context, folded. The lines follow
+// docs/hierarchie.md ("Kern of context"); a layer the data lacks is left out without a word.
+// Thijs, 9 Oct: "maak het consistent en klikbaar", and the conclusie and eerdere aanleg of an
+// arrest are "vrij cruciale info", not extra data.
 import type { NodeGraph, Neighbor } from '$lib/api/nodes';
+import { getNodeFirst } from '$lib/api/records';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
 import { deelIds, layersOf } from '$lib/text/division';
@@ -21,6 +24,20 @@ export type Laag = {
 	at?: string;
 	vol?: string;
 	kort?: string;
+	/** The bron itself in a chain ("deze uitspraak"): no link. */
+	huidig?: boolean;
+};
+
+/**
+ * A line of the kern: a legal term and the bronnen it names, a chain separated by "›".
+ * `laad` gives the line in full where it needs more than the light node (the instances
+ * before the eerdere aanleg); until it answers the line shows `lagen`.
+ */
+export type Regel = {
+	id: string;
+	label: string;
+	lagen: Laag[];
+	laad?: (signal?: AbortSignal) => Promise<Laag[]>;
 };
 
 /** The bucket a group lists, as the API names it. */
@@ -38,9 +55,9 @@ export type Groep = {
 	laad?: (signal?: AbortSignal) => Promise<Laag[]>;
 };
 
-export type Behoort = { boven: Laag[]; naast: Groep[]; onder: Groep[] };
+export type Behoort = { regels: Regel[]; naast: Groep[]; onder: Groep[] };
 
-const LEEG: Behoort = { boven: [], naast: [], onder: [] };
+const LEEG: Behoort = { regels: [], naast: [], onder: [] };
 
 const KAMER: Record<string, string> = { TK: 'Tweede Kamer', EK: 'Eerste Kamer' };
 
@@ -58,7 +75,27 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 		const titel = shortDossierTitle(vol.replace(/^Kamerstukdossier\s+[^:]+:\s*/, ''));
 		return { soort, naam: titel && titel !== nummer ? `${nummer} ${titel}` : nummer, ref, vol };
 	}
+	if (n.collection === 'judgments') return { soort, naam: vol, ref, kort: instantie(vol) };
 	return { soort, naam: vol, ref };
+}
+
+const GERECHT: [RegExp, string][] = [
+	[/^Rechtbank\b/, 'Rb.'],
+	[/^Gerechtshof\b/, 'Hof'],
+	[/^Hoge Raad\b/, 'HR'],
+	[/^Centrale Raad van Beroep\b/, 'CRvB'],
+	[/^Raad van State\b/, 'RvS']
+];
+
+/**
+ * A judgment as a phone's line carries it, the court as lawyers shorten it and the year:
+ * "Rechtbank Den Haag, 24 juni 2015 (Urgenda)" is "Rb. Den Haag 2015".
+ */
+function instantie(naam: string): string | undefined {
+	const gerecht = naam.split(',')[0].trim();
+	const jaar = /\b(1[89]|20)\d{2}\b/.exec(naam.slice(gerecht.length))?.[0];
+	const kort = GERECHT.reduce((g, [re, k]) => g.replace(re, k), gerecht);
+	return kort !== gerecht || jaar ? [kort, jaar].filter(Boolean).join(' ') : undefined;
 }
 
 /**
@@ -105,6 +142,10 @@ export function behoort(
 		return k ? [{ soort: 'Kamer', naam: k }] : [];
 	};
 
+	/** A line where it names something. */
+	const regel = (id: string, label: string, lagen: Laag[]): Regel[] =>
+		lagen.length > 0 ? [{ id, label, lagen }] : [];
+
 	switch (collection) {
 		case 'articles': {
 			// Wet › hoofdstuk › titel › afdeling: the law as a bron, the division by name
@@ -128,40 +169,90 @@ export function behoort(
 					at: wet[0]?.ref ? ids[i] : undefined
 				}))
 				.filter((l) => l.kort);
-			return { boven: [...wet, ...deel], naast: [], onder: [] };
+			return { regels: regel('wet', 'Wet', [...wet, ...deel]), naast: [], onder: [] };
 		}
-		case 'judgments':
+		case 'judgments': {
+			// The procesgang: eerdere aanleg › this uitspraak › hoger beroep or cassatie, the
+			// instances before the eerdere aanleg asked one by one; and the conclusie of the A-G
+			// or P-G. A conclusie names the arrest it is for.
+			const eerder = eerste('APPEAL_OF', 'outbound', 'judgments', 'Eerdere aanleg');
+			const later = eerste('APPEAL_OF', 'inbound', 'judgments', 'Hoger beroep of cassatie');
+			const gang: Laag[] =
+				eerder.length + later.length > 0
+					? [
+							...eerder,
+							{ soort: 'Deze uitspraak', naam: 'deze uitspraak', kort: 'deze', huidig: true },
+							...later
+						]
+					: [];
+			const procesgang: Regel[] = gang.length
+				? [
+						{
+							id: 'procesgang',
+							label: 'Procesgang',
+							lagen: gang,
+							laad: eerder[0]?.ref
+								? async () => [...(await eerdereAanleg(eerder[0].ref!.key)), ...gang]
+								: undefined
+						}
+					]
+				: [];
+			const beroep = bak('APPEAL_OF', 'inbound', 'judgments');
 			return {
-				boven: eerste('APPEAL_OF', 'outbound', 'judgments', 'Eerdere aanleg'),
+				regels: [
+					...regel(
+						'conclusie-bij',
+						'Conclusie bij',
+						eerste('ADVISES_ON', 'outbound', 'judgments', 'Arrest')
+					),
+					...procesgang,
+					...regel(
+						'conclusie',
+						'Conclusie',
+						eerste('ADVISES_ON', 'inbound', 'judgments', 'Conclusie').map((l) => ({
+							...l,
+							// "Conclusie P-G Langemeijer en Wissink" after the term Conclusie.
+							naam: l.naam.replace(/^Conclusie\s+/i, '')
+						}))
+					)
+				],
 				naast: [
-					...groep('conclusie', 'Conclusie in dezelfde zaak', 'ADVISES_ON', 'inbound', 'judgments'),
-					...groep('zaak', 'Uitspraak in dezelfde zaak', 'ADVISES_ON', 'outbound', 'judgments'),
 					...groep('ook', 'Ook gepubliceerd als', 'SAME_AS', 'outbound', 'judgments'),
 					...groep('samenhang', 'Samenhang met', 'RELATED_TO', 'outbound', 'judgments')
 				],
-				onder: groep(
-					'beroep',
-					'Hoger beroep of cassatie tegen deze uitspraak',
-					'APPEAL_OF',
-					'inbound',
-					'judgments'
-				)
+				// More than one appeal against it: the line names the first, the group all.
+				onder:
+					beroep && beroep.total > 1
+						? groep('beroep', 'Hoger beroep of cassatie', 'APPEAL_OF', 'inbound', 'judgments')
+						: []
 			};
-		case 'documents':
-			// A stuk in its dossier; a stenogram in its debat and a bijlage at its brief once
-			// the data has them (#351: MADE_IN, ACCOMPANIES).
+		}
+		case 'documents': {
+			// A motie or amendement is ingediend bij its dossier, another stuk is in it; a
+			// stenogram records its debat and a bijlage goes with its brief once the data has
+			// them (#351: MADE_IN, ACCOMPANIES).
+			const ingediend = /motie|amendement/i.test(text(props.kind) ?? '');
 			return {
-				boven: [
-					...eerste('PART_OF', 'outbound', 'dossiers', 'Dossier'),
-					...eerste('MADE_IN', 'outbound', 'activities', 'Activiteit'),
-					...eerste('ACCOMPANIES', 'outbound', 'documents', 'Bijlage bij')
+				regels: [
+					...regel(
+						'dossier',
+						ingediend ? 'Ingediend bij' : 'Dossier',
+						eerste('PART_OF', 'outbound', 'dossiers', 'Dossier')
+					),
+					...regel(
+						'debat',
+						'Verslag van',
+						eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')
+					),
+					...regel('brief', 'Bijlage bij', eerste('ACCOMPANIES', 'outbound', 'documents', 'Brief'))
 				],
 				naast: [],
 				onder: groep('bijlagen', 'Bijlagen', 'ACCOMPANIES', 'inbound', 'documents')
 			};
+		}
 		case 'dossiers':
 			return {
-				boven: kamer(),
+				regels: regel('kamer', 'Behandeld in', kamer()),
 				naast: groep(
 					'verbonden',
 					'Dossiers die de Kamer ermee verbindt',
@@ -179,15 +270,18 @@ export function behoort(
 			};
 		case 'cases':
 			return {
-				boven: eerste('PART_OF', 'outbound', 'dossiers', 'Dossier'),
+				regels: regel('dossier', 'Dossier', eerste('PART_OF', 'outbound', 'dossiers', 'Dossier')),
 				naast: [],
 				onder: groep('stukken', 'Stukken', 'PART_OF', 'inbound', 'documents')
 			};
 		case 'members': {
-			// Kamer › fractie › lid. A lid of several fracties over time has them as a group.
+			// A lid in its fractie. A lid of several fracties over time has them as a group.
 			const fracties = bak('MEMBER_OF', 'outbound', 'factions');
 			return {
-				boven: fracties?.total === 1 ? eerste('MEMBER_OF', 'outbound', 'factions', 'Fractie') : [],
+				regels:
+					fracties?.total === 1
+						? regel('fractie', 'Fractie', eerste('MEMBER_OF', 'outbound', 'factions', 'Fractie'))
+						: [],
 				naast: [
 					...(fracties && fracties.total > 1
 						? groep('fracties', 'Fracties', 'MEMBER_OF', 'outbound', 'factions')
@@ -200,13 +294,13 @@ export function behoort(
 		}
 		case 'factions':
 			return {
-				boven: kamer(),
+				regels: regel('kamer', 'Kamer', kamer()),
 				naast: [],
 				onder: groep('leden', 'Leden', 'MEMBER_OF', 'inbound', 'members')
 			};
 		case 'committees':
 			return {
-				boven: kamer(),
+				regels: regel('kamer', 'Kamer', kamer()),
 				naast: [],
 				onder: [
 					...groep('leden', 'Leden', 'MEMBER_OF', 'inbound', 'members'),
@@ -215,15 +309,19 @@ export function behoort(
 			};
 		case 'cabinets':
 			return {
-				boven: [],
+				regels: [],
 				naast: [],
 				onder: groep('bewindspersonen', 'Bewindspersonen', 'SERVED_IN', 'inbound', 'members')
 			};
 		case 'activities':
 			return {
-				boven: [
-					...eerste('LED_BY', 'outbound', 'committees', 'Commissie'),
-					...eerste('ABOUT', 'outbound', 'dossiers', 'Dossier')
+				regels: [
+					...regel(
+						'commissie',
+						'Commissie',
+						eerste('LED_BY', 'outbound', 'committees', 'Commissie')
+					),
+					...regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier'))
 				],
 				naast: [],
 				onder: [
@@ -233,22 +331,26 @@ export function behoort(
 			};
 		case 'decisions':
 			return {
-				boven: eerste('ABOUT', 'outbound', 'dossiers', 'Dossier'),
+				regels: regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier')),
 				naast: [],
 				onder: groep('fracties', 'Stem per fractie', 'VOTED', 'inbound', 'factions')
 			};
 		case 'commitments':
 			return {
-				boven: [
-					...eerste('ABOUT', 'outbound', 'dossiers', 'Dossier'),
-					...eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')
+				regels: [
+					...regel('debat', 'Gedaan in', eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')),
+					...regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier'))
 				],
 				naast: [],
 				onder: []
 			};
 		case 'instruments':
 			return {
-				boven: eerste('LEGISLATED_IN', 'outbound', 'dossiers', 'Dossier'),
+				regels: regel(
+					'wetsvoorstel',
+					'Wetsvoorstel',
+					eerste('LEGISLATED_IN', 'outbound', 'dossiers', 'Dossier')
+				),
 				naast: [],
 				onder: [
 					...groep('artikelen', 'Artikelen', 'PART_OF', 'inbound', 'articles'),
@@ -260,8 +362,28 @@ export function behoort(
 	}
 }
 
+/**
+ * The instances before an eerdere aanleg, the earliest first: up to three steps down
+ * `APPEAL_OF`, each a light node (cached), each asked only after the one before.
+ */
+async function eerdereAanleg(key: string): Promise<Laag[]> {
+	const keten: Laag[] = [];
+	let k = key;
+	for (let i = 0; i < 3; i++) {
+		const light = await getNodeFirst('judgments', k).catch(() => null);
+		const n = light?.neighbors.buckets?.find(
+			(b) =>
+				b.relation === 'APPEAL_OF' && b.direction === 'outbound' && b.collection === 'judgments'
+		)?.items?.[0];
+		if (!n) break;
+		keten.unshift(laagVan(n, 'Eerdere aanleg'));
+		k = n.key;
+	}
+	return keten;
+}
+
 /** Whether a band has anything to show. */
-export const heeftIets = (b: Behoort) => b.boven.length + b.naast.length + b.onder.length > 0;
+export const heeftIets = (b: Behoort) => b.regels.length + b.naast.length + b.onder.length > 0;
 
 /** The context through which a reader's frame learns which bron its band is for. */
 export const BEHOORT_KEY = Symbol('behoort-bij');

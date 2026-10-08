@@ -1,9 +1,13 @@
 <script lang="ts">
-	// The band "Behoort bij" above every reader (docs/hierarchie.md): the layers above the bron
-	// on its own axis as links, and the groups beside and below it with their counts, each
-	// listed when it is opened. Same place, same terms for every kind of bron (Thijs, 9 Oct).
-	// It reads the light node the reader has asked already, so the first paint never waits for
-	// it; a group asks its rows only when it is opened. On a phone it is one line that folds open.
+	// The band "Behoort bij" above every reader (docs/hierarchie.md, "Kern of context"): the
+	// kern as lines, a legal term and the bronnen it names as links (Procesgang, Ingediend bij,
+	// Wet); under them the groups of the context with their counts, each listed when it is
+	// opened. Same place, same terms for every kind of bron (Thijs, 9 Oct). It reads the light
+	// node the reader has asked already, so the first paint never waits for it; a line that
+	// needs more (the instances before the eerdere aanleg) fills in when its answer comes, a
+	// group asks its rows only when it is opened. On a phone the first line shows, the rest
+	// folds open, in the short names of its bronnen (Awb, Rb. Den Haag 2015), wrapping rather
+	// than cut. Type follows docs/typografie.md: the term rung 6, a bron rung 4.
 	import { getNodeFirst } from '$lib/api/records';
 	import { getBuckets, type NodeGraph } from '$lib/api/nodes';
 	import type { GraphNode } from '$lib/graph/types';
@@ -34,6 +38,27 @@
 	const band = $derived(
 		behoort(node.collection, (node.raw?.props ?? {}) as Record<string, unknown>, light)
 	);
+
+	// A line that needs more than the light node: its full form once it has come.
+	let vol = $state<Record<string, Laag[]>>({});
+	$effect(() => {
+		void id;
+		vol = {};
+	});
+	$effect(() => {
+		const voor = id;
+		const controller = new AbortController();
+		for (const r of band.regels) {
+			if (!r.laad) continue;
+			r.laad(controller.signal)
+				.then((lagen) => {
+					if (voor === id) vol = { ...vol, [r.id]: lagen };
+				})
+				.catch(() => {});
+		}
+		return () => controller.abort();
+	});
+	const regels = $derived(band.regels.map((r) => ({ ...r, lagen: vol[r.id] ?? r.lagen })));
 
 	// A group's rows, asked when it is opened; one list open at a time.
 	let open = $state<string | null>(null);
@@ -70,7 +95,7 @@
 			});
 	}
 
-	// On a phone the band is one line until it is opened.
+	// On a phone the band is its first line until it is opened.
 	let uit = $state(false);
 	$effect(() => {
 		void id;
@@ -78,11 +103,14 @@
 	});
 
 	const groepen = $derived([...band.naast, ...band.onder]);
+	const verborgen = $derived(regels.length - 1 + groepen.length);
 	// The fold button on a phone: the one group by its name where the line has room for it.
 	const knop = $derived(
-		groepen.length === 1 && band.boven.length === 0
+		regels.length === 0 && groepen.length === 1
 			? groepen[0].label
-			: `${groepen.length} ${groepen.length === 1 ? 'groep' : 'groepen'}`
+			: regels.length > 1
+				? 'Meer'
+				: `${groepen.length} ${groepen.length === 1 ? 'groep' : 'groepen'}`
 	);
 </script>
 
@@ -90,31 +118,40 @@
 			>{laag.kort}</span
 		>{/if}{/snippet}
 
+{#snippet meer()}
+	{#if verborgen > 0}
+		<button type="button" class="meer btn is-text" aria-expanded={uit} onclick={() => (uit = !uit)}
+			>{knop}<Caret open={uit} /></button
+		>
+	{/if}
+{/snippet}
+
 {#if heeftIets(band)}
 	<nav class="behoort" class:uit aria-label="Behoort bij">
-		<div class="regel">
-			{#if band.boven.length > 0}
-				<span class="kop">Behoort bij</span>
-				<ol class="lagen">
-					{#each band.boven as laag, i (i)}
-						<li>
-							{#if laag.ref}<a
-									href={bronHref(laag.ref, { at: laag.at })}
-									title={`${laag.soort}: ${laag.vol ?? laag.naam}`}>{@render naam(laag)}</a
-								>{:else}<span title={laag.soort}>{@render naam(laag)}</span>{/if}
-						</li>
-					{/each}
-				</ol>
-			{/if}
-			{#if groepen.length > 0}
-				<button
-					type="button"
-					class="meer btn is-text"
-					aria-expanded={uit}
-					onclick={() => (uit = !uit)}>{knop}<Caret open={uit} /></button
-				>
-			{/if}
-		</div>
+		{#if regels.length > 0}
+			<dl class="regels">
+				{#each regels as r, i (r.id)}
+					<div class="regel">
+						<dt class="term">{r.label}</dt>
+						<dd>
+							<ol class="lagen">
+								{#each r.lagen as laag, j (j)}
+									<li class:huidig={laag.huidig}>
+										{#if laag.ref}<a
+												href={bronHref(laag.ref, { at: laag.at })}
+												title={`${laag.soort}: ${laag.vol ?? laag.naam}`}>{@render naam(laag)}</a
+											>{:else}<span title={laag.soort}>{@render naam(laag)}</span>{/if}
+									</li>
+								{/each}
+							</ol>
+							{#if i === 0}{@render meer()}{/if}
+						</dd>
+					</div>
+				{/each}
+			</dl>
+		{:else}
+			<div class="regel">{@render meer()}</div>
+		{/if}
 		{#if groepen.length > 0}
 			<div class="groepen">
 				{#each groepen as g (g.id)}
@@ -134,6 +171,8 @@
 								<p class="stil">Laden…</p>
 							{:else if r === 'fout'}
 								<p class="stil">Kon niet worden geladen.</p>
+							{:else if r.length === 0}
+								<p class="stil">Niets in deze groep.</p>
 							{:else}
 								<ul class="rijen">
 									{#each r as laag, i (i)}
@@ -163,17 +202,32 @@
 		padding: 0 0 var(--s-3);
 		border-bottom: 1px solid var(--rule);
 		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	/* The term at rung 6, the bronnen at rung 4 (docs/typografie.md). */
+	.regels {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr);
+		gap: var(--s-1) var(--s-3);
+		margin: 0;
 	}
 	.regel {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-1) var(--s-2);
+		display: contents;
 	}
-	.kop {
+	.regels > .regel > dt,
+	.regels > .regel > dd {
+		margin: 0;
+		min-width: 0;
+	}
+	.term {
+		padding-top: 2px;
 		color: var(--ink-3);
+	}
+	.regels dd {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
 	}
 	.lagen {
 		display: flex;
@@ -183,11 +237,18 @@
 		padding: 0;
 		list-style: none;
 		min-width: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		color: var(--ink);
 	}
 	.lagen li + li::before {
 		content: '›';
 		margin-right: var(--s-1);
 		color: var(--ink-3);
+	}
+	.lagen .huidig {
+		color: var(--ink-2);
+		font-style: italic;
 	}
 	.lagen a,
 	.rijen a {
@@ -207,6 +268,8 @@
 	.meer {
 		display: none;
 		margin-left: auto;
+		flex: none;
+		white-space: nowrap;
 	}
 	.groepen {
 		display: flex;
@@ -244,43 +307,30 @@
 		list-style: none;
 		display: grid;
 		gap: var(--s-1);
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
 	}
 	.stil {
 		margin: var(--s-1) 0 0;
 		color: var(--ink-3);
 	}
-	/* A phone: one line, the groups once it is opened. */
+	/* A phone: the first line, the rest once it is opened. */
 	@media (max-width: 768px) {
 		.meer {
 			display: inline-flex;
 		}
-		.behoort:not(.uit) .groepen {
+		.behoort:not(.uit) .groepen,
+		.behoort:not(.uit) .regels > .regel:not(:first-child) {
 			display: none;
-		}
-		.behoort:not(.uit) .regel {
-			flex-wrap: nowrap;
 		}
 		.behoort:not(.uit) .lagen {
 			flex: 1 1 auto;
-			flex-wrap: nowrap;
-			overflow: hidden;
-		}
-		.kop,
-		.meer {
-			flex: none;
-			white-space: nowrap;
 		}
 		.behoort:not(.uit) li:has(.kort) .vol {
 			display: none;
 		}
 		.behoort:not(.uit) .kort {
 			display: inline;
-		}
-		.behoort:not(.uit) .lagen li {
-			min-width: 0;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
 		}
 	}
 </style>

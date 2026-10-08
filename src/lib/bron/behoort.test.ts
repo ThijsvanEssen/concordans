@@ -54,20 +54,22 @@ describe('behoort', () => {
 				}
 			])
 		);
-		expect(b.boven.map((l) => [l.soort, l.naam])).toEqual([
+		expect(b.regels.map((r) => r.label)).toEqual(['Wet']);
+		const wet = b.regels[0].lagen;
+		expect(wet.map((l) => [l.soort, l.naam])).toEqual([
 			['Wet', 'Algemene wet bestuursrecht'],
 			['hoofdstuk', 'Hoofdstuk 3 Algemene bepalingen over besluiten'],
 			['afdeling', 'Afdeling 3.2 Zorgvuldigheid en belangenafweging']
 		]);
-		expect(b.boven.map((l) => l.at)).toEqual([
+		expect(wet.map((l) => l.at)).toEqual([
 			undefined,
 			'deel-hoofdstuk-3',
 			'deel-hoofdstuk-3-afdeling-3.2'
 		]);
-		expect(b.boven[2].ref).toEqual({ collection: 'instruments', key: 'bwbr0005537' });
+		expect(wet[2].ref).toEqual({ collection: 'instruments', key: 'bwbr0005537' });
 	});
 
-	it('names a judgment’s earlier instance, and the appeals against it as a group', () => {
+	it('gives a judgment its procesgang and its conclusie as kern, more appeals as a group', () => {
 		const b = behoort(
 			'judgments',
 			{},
@@ -81,25 +83,62 @@ describe('behoort', () => {
 						{
 							key: 'ecli_nl_ghdha_2018_2591',
 							collection: 'judgments',
-							display_name: 'Hof Den Haag 9 oktober 2018'
+							display_name: 'Gerechtshof Den Haag, 9 oktober 2018 (Urgenda)'
 						}
 					]
 				},
-				{ relation: 'APPEAL_OF', direction: 'inbound', collection: 'judgments', total: 2 },
-				{ relation: 'ADVISES_ON', direction: 'inbound', collection: 'judgments', total: 1 }
+				{
+					relation: 'APPEAL_OF',
+					direction: 'inbound',
+					collection: 'judgments',
+					total: 2,
+					items: [
+						{
+							key: 'ecli_nl_hr_2020_1',
+							collection: 'judgments',
+							display_name: 'Hoge Raad, 3 maart 2020'
+						}
+					]
+				},
+				{
+					relation: 'ADVISES_ON',
+					direction: 'inbound',
+					collection: 'judgments',
+					total: 1,
+					items: [{ key: 'ecli_nl_phr_2019_887', collection: 'judgments', display_name: 'PHR' }]
+				}
 			])
 		);
-		expect(b.boven.map((l) => l.soort)).toEqual(['Eerdere aanleg']);
-		expect(b.naast.map((g) => [g.label, g.aantal])).toEqual([['Conclusie in dezelfde zaak', 1]]);
-		expect(b.onder.map((g) => [g.label, g.aantal])).toEqual([
-			['Hoger beroep of cassatie tegen deze uitspraak', 2]
+		expect(b.regels.map((r) => r.label)).toEqual(['Procesgang', 'Conclusie']);
+		expect(b.regels[0].lagen.map((l) => [l.soort, !!l.huidig])).toEqual([
+			['Eerdere aanleg', false],
+			['Deze uitspraak', true],
+			['Hoger beroep of cassatie', false]
 		]);
+		expect(b.regels[0].laad).toBeTypeOf('function');
+		expect(b.regels[0].lagen.map((l) => l.kort)).toEqual(['Hof Den Haag 2018', 'deze', 'HR 2020']);
+		expect(b.naast).toEqual([]);
+		expect(b.onder.map((g) => [g.label, g.aantal])).toEqual([['Hoger beroep of cassatie', 2]]);
+		const conclusie = behoort(
+			'judgments',
+			{},
+			light([
+				{
+					relation: 'ADVISES_ON',
+					direction: 'outbound',
+					collection: 'judgments',
+					total: 1,
+					items: [{ key: 'ecli_nl_hr_2019_2006', collection: 'judgments', display_name: 'HR' }]
+				}
+			])
+		);
+		expect(conclusie.regels.map((r) => r.label)).toEqual(['Conclusie bij']);
 	});
 
 	it('puts a stuk in its dossier, a lid in its one fractie, and leaves out what is missing', () => {
 		const stuk = behoort(
 			'documents',
-			{},
+			{ kind: 'Motie' },
 			light([
 				{
 					relation: 'PART_OF',
@@ -118,9 +157,13 @@ describe('behoort', () => {
 				}
 			])
 		);
-		expect(stuk.boven.map((l) => l.soort)).toEqual(['Dossier']);
-		expect(stuk.boven[0].naam).toBe('36496 Wet betaalbare huur');
-		expect(stuk.boven[0].ref).toEqual({ collection: 'dossiers', key: '36496', number: '36496' });
+		expect(stuk.regels.map((r) => r.label)).toEqual(['Ingediend bij']);
+		expect(stuk.regels[0].lagen[0].naam).toBe('36496 Wet betaalbare huur');
+		expect(stuk.regels[0].lagen[0].ref).toEqual({
+			collection: 'dossiers',
+			key: '36496',
+			number: '36496'
+		});
 		expect(stuk.onder).toEqual([]);
 		const lid = behoort(
 			'members',
@@ -136,7 +179,7 @@ describe('behoort', () => {
 				{ relation: 'MEMBER_OF', direction: 'outbound', collection: 'committees', total: 4 }
 			])
 		);
-		expect(lid.boven.map((l) => l.soort)).toEqual(['Fractie']);
+		expect(lid.regels.map((r) => r.label)).toEqual(['Fractie']);
 		expect(lid.naast.map((g) => g.label)).toEqual(['Commissies']);
 		expect(heeftIets(behoort('cabinets', {}, light([])))).toBe(false);
 	});
