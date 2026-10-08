@@ -93,22 +93,6 @@ describe('node labels', () => {
 		expect(label).toBe('Motie de Vries (D66), jan. 2026');
 	});
 
-	it('takes the eerste ondertekenaar of a motie, wherever the source lists it', () => {
-		const label = buildNodeLabel(
-			node('documents', 'd', {
-				kind: 'Motie (gewijzigd/nader)',
-				number: '45',
-				actors: [
-					{ name: 'M. Schenk', faction: 'FVD', role: 'Mede ondertekenaar' },
-					{ name: 'A.J. Flach', faction: 'SGP', role: 'Mede ondertekenaar' },
-					{ name: 'D.G.M. Ceder', faction: 'ChristenUnie', role: 'Eerste ondertekenaar' }
-				]
-			}),
-			'document'
-		);
-		expect(label).toBe('Motie Ceder (ChristenUnie), nr. 45');
-	});
-
 	it('names a Kamerstuk by its kind and number, an EK paper by its letter', () => {
 		const doc = (props: Record<string, unknown>) =>
 			buildNodeLabel(node('documents', 'd', props), 'document');

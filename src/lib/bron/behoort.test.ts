@@ -183,4 +183,30 @@ describe('behoort', () => {
 		expect(lid.naast.map((g) => g.label)).toEqual(['Commissies']);
 		expect(heeftIets(behoort('cabinets', {}, light([])))).toBe(false);
 	});
+
+	it('puts a paper of a bill with its wetsvoorstel and the rest of its zaak beside it', () => {
+		const metZaak = (kind: string) =>
+			behoort('documents', { kind }, {
+				...(light([
+					{ relation: 'PART_OF', direction: 'outbound', collection: 'cases', total: 1 }
+				]) as object),
+				node: { key: 'mvt' }
+			} as never);
+		const mvt = metZaak('Memorie van toelichting (initiatiefvoorstel)');
+		expect(mvt.regels.map((r) => [r.id, r.label, r.lagen.length, !!r.laad])).toEqual([
+			['wetsvoorstel', 'Bij wetsvoorstel', 0, true]
+		]);
+		expect(mvt.naast.map((g) => [g.label, g.aantal, !!g.laad])).toEqual([
+			['In dezelfde zaak', null, true]
+		]);
+		// A motie is no paper of the bill; it has its zaak beside it all the same.
+		expect(metZaak('Motie').regels).toEqual([]);
+		expect(metZaak('Motie').naast).toHaveLength(1);
+		// Without a zaak, nothing: no line waits, no empty group.
+		const zonder = behoort('documents', { kind: 'Nota van wijziging' }, {
+			...(light([]) as object),
+			node: { key: 'x' }
+		} as never);
+		expect([zonder.regels, zonder.naast]).toEqual([[], []]);
+	});
 });
