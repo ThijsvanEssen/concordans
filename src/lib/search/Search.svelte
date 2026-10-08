@@ -14,6 +14,7 @@
 	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import {
 		bareArticle,
+		keuzesOf,
 		parseCitation,
 		lawAbbreviation,
 		lawTitle,
@@ -170,6 +171,8 @@
 	let confirmed = $state<{ term: string; target: Resolved } | null>(null);
 	/** What /api/search resolved the query to, with its hits (`resolve=true`, API 0.74). */
 	let resolvedWith = $state<{ term: string; target: Resolved | null } | null>(null);
+	/** The articles a citation can mean where it is not one ("artikel 3 BW"), per query. */
+	let keuzesVoor = $state<{ term: string; items: Resolved[]; total: number } | null>(null);
 	// A regeling named by its title that the API does not know ("Omgevingswet"): the
 	// network holds a selection of laws, and the hits only mention it.
 	let outside = $state('');
@@ -202,10 +205,15 @@
 	const hits = $derived(groups.flatMap((g) => g.hits));
 	const indexOf = $derived(new Map(hits.map((hit, i) => [hit.id, i])));
 
-	const citation = $derived(q && q !== unresolved ? parseCitation(q) : null);
-	const bare = $derived(!citation && confirmed?.term === q ? confirmed.target : null);
-	/** Rows the keys move over: the citation first, then every hit. */
-	const offset = $derived(citation || bare ? 1 : 0);
+	/** "Artikel 3 BW" in Boek 1, 3, 6 …: a row each, in place of the citation row. */
+	const keuzes = $derived(keuzesVoor?.term === q ? keuzesVoor.items : []);
+	const keuzesMeer = $derived(keuzesVoor?.term === q ? keuzesVoor.total - keuzes.length : 0);
+	const citation = $derived(q && q !== unresolved && keuzes.length === 0 ? parseCitation(q) : null);
+	const bare = $derived(
+		!citation && keuzes.length === 0 && confirmed?.term === q ? confirmed.target : null
+	);
+	/** Rows the keys move over: the choices or the citation first, then every hit. */
+	const offset = $derived(keuzes.length || (citation || bare ? 1 : 0));
 	const rowCount = $derived(offset + hits.length);
 	// A citation the API does not know: said where its row was, not dropped without a word.
 	const notFound = $derived(unresolved !== '' && unresolved === q);
@@ -272,6 +280,7 @@
 					.then((r) => {
 						const target = resolvedOf(r.resolved);
 						resolvedWith = { term, target };
+						keuzesVoor = { term, ...keuzesOf(r.resolved) };
 						if (abbreviation || title) {
 							// The law an abbreviation stands for, first; a title the API does not know
 							// is a law outside the selection.
@@ -328,6 +337,7 @@
 				laanHits[laan.id] = r.results as Partial<Record<Kind, Hit[]>>;
 				if (eerste) {
 					resolvedWith = { term, target: resolvedOf(r.resolved) };
+					keuzesVoor = { term, ...keuzesOf(r.resolved) };
 					answered = term;
 				}
 				laanStand[laan.id] = 'klaar';
@@ -430,7 +440,8 @@
 			moved = true;
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
-			if (citation && active === 0) void openCitation();
+			if (active < keuzes.length) openBare(keuzes[active]);
+			else if (citation && active === 0) void openCitation();
 			else if (bare && active === 0) openBare(bare);
 			// A hit opens only when the list answers what is typed.
 			else if (answered === q && hits[active - offset]) openHit(hits[active - offset]);
@@ -532,7 +543,41 @@
 				<a href="/bronnen#dekking">zie de dekking</a>.
 			</p>
 		{/if}
-		{#if citation}
+		{#if keuzes.length > 0}
+			<!-- A citation that fits more than one article: each, straight to the article. -->
+			<div class="group" role="group" aria-labelledby="{uid}-keuzes">
+				<div class="group-label" id="{uid}-keuzes">
+					<KindGlyph collection="articles" />
+					Kies een artikel
+				</div>
+				{#each keuzes as keuze, i (keuze.ref.key)}
+					<a
+						id="{uid}-row-{i}"
+						class="row row--citation"
+						class:is-active={active === i}
+						role="option"
+						tabindex="-1"
+						aria-selected={active === i}
+						href={bronHref(keuze.ref, { at: keuze.at })}
+						onclick={(e) => {
+							if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+							e.preventDefault();
+							openBare(keuze);
+						}}
+						onpointermove={(e) => onpointermove(e, i)}
+					>
+						<span class="row-title">{keuze.label ?? keuze.ref.key}</span>
+						{#if active === i}<span class="kbd" aria-hidden="true">↵</span>{/if}
+					</a>
+				{/each}
+				{#if keuzesMeer > 0}
+					<p class="state state--group">
+						en {keuzesMeer}
+						{keuzesMeer === 1 ? 'ander artikel' : 'andere artikelen'}
+					</p>
+				{/if}
+			</div>
+		{:else if citation}
 			<!-- "36799, nr. 31" is a stuk; the dossier itself has no number after it. -->
 			{@const kind =
 				citation.kind === 'dossier' && citation.document ? 'documents' : CITED[citation.kind]}

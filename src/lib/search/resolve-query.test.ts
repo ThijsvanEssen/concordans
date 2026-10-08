@@ -7,6 +7,7 @@ import {
 	parseCitation,
 	resolveLaw,
 	resolveQuery,
+	keuzesOf,
 	resolvedOf
 } from './resolve-query';
 
@@ -273,5 +274,50 @@ describe('resolvedOf', () => {
 		});
 		expect(resolvedOf(answer('dossier', 'dossiers', '36799', 'Dossier 36799'))).toBeNull();
 		expect(resolvedOf(null)).toBeNull();
+	});
+});
+
+describe('keuzesOf', () => {
+	const art = (book: string, key: string) => ({
+		id: `articles/${key}`,
+		key,
+		collection: 'articles',
+		kind: 'article',
+		display_name: `Artikel 3 Burgerlijk Wetboek Boek ${book}`,
+		confidence: 0.4
+	});
+	const ambiguous = {
+		q: 'artikel 3 bw lid 2',
+		kind: 'article',
+		confidence: 0.4,
+		match: null,
+		alternatives: [art('1', 'bwbr0002656_3'), art('3', 'bwbr0005291_3')],
+		qualifier: 'tweede lid'
+	} as unknown as Parameters<typeof keuzesOf>[0];
+
+	it('lists every article a citation can mean, in order, with its lid', () => {
+		expect(keuzesOf(ambiguous)).toEqual({
+			items: [
+				{
+					ref: { collection: 'articles', key: 'bwbr0002656_3' },
+					at: 'lid-2',
+					label: 'Artikel 1:3 BW'
+				},
+				{
+					ref: { collection: 'articles', key: 'bwbr0005291_3' },
+					at: 'lid-2',
+					label: 'Artikel 3:3 BW'
+				}
+			],
+			total: 2
+		});
+	});
+
+	it('counts the ones left out, and gives nothing beside a match', () => {
+		expect(keuzesOf({ ...ambiguous!, alternatives_total: 14 } as never).total).toBe(14);
+		expect(keuzesOf({ ...ambiguous!, match: art('6', 'bwbr0005289_3') } as never).items).toEqual(
+			[]
+		);
+		expect(keuzesOf(null).items).toEqual([]);
 	});
 });

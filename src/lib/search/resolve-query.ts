@@ -204,14 +204,38 @@ const apiDeps: ResolveDeps = {
  */
 export function resolvedOf(data: Schema<'ResolveResponse'> | null | undefined): Resolved | null {
 	const match = data?.match;
-	const collection = match && (RESOLVE_KINDS[match.kind] ?? null);
-	if (!match || !collection || collection === 'dossiers') return null;
+	return match ? resolvedMatch(match, data?.qualifier) : null;
+}
+
+function resolvedMatch(
+	match: Schema<'ResolveMatch'>,
+	qualifier: string | null | undefined
+): Resolved | null {
+	const collection = RESOLVE_KINDS[match.kind] ?? null;
+	if (!collection || collection === 'dossiers') return null;
 	return {
 		ref: { collection, key: match.key },
-		at: anchorOf(parseQualifier(data?.qualifier ?? '')),
+		at: anchorOf(parseQualifier(qualifier ?? '')),
 		// "Artikel 162 Burgerlijk Wetboek Boek 6" as it is cited: "Artikel 6:162 BW".
 		label: match.display_name ? withBook(match.display_name) : null
 	};
+}
+
+/**
+ * The bronnen a citation can mean where it is not one: "artikel 3 BW" is in Boek 1, 3, 6 and
+ * more. The API names them as `alternatives` beside no match, in the order of the books, at
+ * most ten of `alternatives_total`; the lid applies to each.
+ */
+export function keuzesOf(data: Schema<'ResolveResponse'> | null | undefined): {
+	items: Resolved[];
+	total: number;
+} {
+	if (!data || data.match) return { items: [], total: 0 };
+	const items = (data.alternatives ?? [])
+		.map((m) => resolvedMatch(m, data.qualifier))
+		.filter((r): r is Resolved => r !== null);
+	const total = (data as { alternatives_total?: number }).alternatives_total ?? items.length;
+	return { items, total: Math.max(total, items.length) };
 }
 
 const nodeKey = (id: string) => id.toLowerCase().replace(/[^a-z0-9]+/g, '_');
