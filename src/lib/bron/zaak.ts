@@ -40,15 +40,28 @@ const isWetsvoorstel = (r: Pick<Row, 'props'>) =>
 /** The voorstel van wet of the zaak, the one Bij wetsvoorstel names; null without one. */
 export const wetsvoorstelVan = (rows: Row[]): Row | null => rows.find(isWetsvoorstel) ?? null;
 
+/** A letter that offers a paper (geleidende brief, aanbiedingsbrief): it says nothing without it. */
+export const isAanbieding = (kind: unknown) =>
+	/geleidende brief|aanbiedingsbrief/i.test(typeof kind === 'string' ? kind : '');
+
+/** The papers a letter offers: the substance of its zaak (zaakRang 0), its kern line Biedt aan. */
+export const aangebodenVan = (rows: Row[]): Row[] => rows.filter((r) => zaakRang(r) === 0);
+
+/** What a stuk's kern lines name of its zaak: the voorstel of a paper of a bill, the offered papers of a letter. */
+export function kernVanZaak(kind: unknown, rows: Row[]): Row[] {
+	if (isBijWetsvoorstel(kind)) return [wetsvoorstelVan(rows)].flatMap((r) => (r ? [r] : []));
+	if (isAanbieding(kind)) return aangebodenVan(rows);
+	return [];
+}
+
 /**
- * The papers beside a stuk: for a paper of a bill without the voorstel its kern line names
- * (Thijs, 9 Oct: kern in the reader, not again in Verbonden).
+ * The papers beside a stuk, without what its kern lines name (Thijs, 9 Oct: kern in the
+ * reader, not again in Verbonden).
  */
 export function naastHetStuk(kind: unknown, zaak: DezelfdeZaak): DezelfdeZaak {
-	if (!isBijWetsvoorstel(kind)) return zaak;
-	const voorstel = wetsvoorstelVan(zaak.rows);
-	if (!voorstel) return zaak;
-	const rows = zaak.rows.filter((r) => r !== voorstel);
+	const kern = new Set(kernVanZaak(kind, zaak.rows));
+	if (!kern.size) return zaak;
+	const rows = zaak.rows.filter((r) => !kern.has(r));
 	return {
 		rows,
 		order: new Set(rows.map(zaakRang)).size > 1 ? zaak.order : undefined
