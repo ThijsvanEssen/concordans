@@ -62,12 +62,16 @@
 
 	let lines = $state<TimelineLine[]>([]);
 	let stand = $state<ReturnType<typeof feedStand>>(null);
+	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
+	let actueelStaat = $state<'laden' | 'klaar' | 'fout'>('laden');
 	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
 	let wetsnetwerk = $state<Schets | null>(null);
 
 	$effect(() => {
 		const ac = new AbortController();
-		loadLines(ac.signal).catch(() => {});
+		loadLines(ac.signal).catch(() => {
+			if (!ac.signal.aborted) actueelStaat = 'fout';
+		});
 		return () => ac.abort();
 	});
 
@@ -81,6 +85,7 @@
 		);
 		lines = timelineOf(summary, LINES_SHOWN);
 		stand = feedStand(summary.data_as_of);
+		actueelStaat = 'klaar';
 		// The network waits until Actueel is drawn and the browser is idle.
 		await tick();
 		await idle();
@@ -179,8 +184,27 @@
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>
-				{#if stand}<span class="stand">tot en met {shortDate(stand.newest)}</span>{/if}
+				<!-- How far the Kamers' data goes, and when it was fetched: a date days back is then
+				     the source's, not a page left standing. -->
+				{#if stand}<span class="stand"
+						>tot en met {shortDate(stand.newest)}{stand.retrievedAt
+							? `, opgehaald ${shortDate(stand.retrievedAt.slice(0, 10))}`
+							: ''}</span
+					>{/if}
 			</header>
+			{#if actueelStaat === 'laden'}
+				<div class="laden" aria-hidden="true">
+					{#each [0, 1, 2] as i (i)}
+						<div class="laden__regel">
+							<span class="balk balk--kort"></span>
+							<span class="balk"></span>
+						</div>
+					{/each}
+				</div>
+				<p class="sr-only" role="status">Actueel laden</p>
+			{:else if actueelStaat === 'fout'}
+				<p class="fout">Actueel kon niet worden geladen.</p>
+			{/if}
 			<Tijdlijn {groepen} datums={false} />
 			<a class="all" href="/actueel">Alles in Actueel →</a>
 		</section>
@@ -308,5 +332,32 @@
 		.all {
 			padding: var(--s-2) 0;
 		}
+	}
+
+	/* While Actueel loads: a few quiet lines where the timeline will stand. */
+	.laden {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-5);
+		padding: var(--s-3) 0;
+	}
+	.laden__regel {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.balk {
+		display: block;
+		height: var(--s-3);
+		width: 80%;
+		border-radius: var(--r-1);
+		background: var(--paper-2);
+	}
+	.balk--kort {
+		width: 30%;
+	}
+	.fout {
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 </style>
