@@ -19,6 +19,7 @@
 	import { tabTitle } from '$lib/bron/tab-title';
 	import { api, ApiError } from '$lib/api/client';
 	import { getMember, getNodeFirst } from '$lib/api/records';
+	import { getJudgmentDetail } from '$lib/api/judgments';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
 	import { getDossier, getMemberVotes } from '$lib/components/parliamentary/data';
@@ -49,13 +50,14 @@
 	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
 	import { parseNodeId, type Mode } from '$lib/vocabulary';
 	import type { Schema } from '$lib/api/types';
-	import { articleOf, lawIdOf, nodeToGraphNode } from '$lib/graph/types';
+	import { articleOf, lawIdOf, memberToGraphNode, nodeToGraphNode } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
 	import {
 		lookUp,
 		padHref,
 		padOfFocus,
 		parsePad,
+		keyEcli,
 		remember as rememberPad,
 		verkennerHref,
 		verkennerUrl,
@@ -384,10 +386,20 @@
 			if (target.collection === 'dossiers') target.key = (await getDossier(target.key)).key;
 			// A person's reader stands on their own record: asked beside the node, not after it
 			// (the light node of a Kamerlid took 1.8 s on prod, 9 Oct).
+			// The reader stands on the person's record alone (0.4 s), not on their node (1 to
+			// 1.8 s on prod): the node, once in, takes its place under the same id.
 			if (target.collection === 'members') {
-				void getMember(target.key).catch(() => {});
+				void getMember(target.key)
+					.then((member) => {
+						if (id === loadedFocus && !selectedNode)
+							selectedNode = memberToGraphNode(member as Schema<'MemberDTO'>);
+					})
+					.catch(() => {});
 				void getMemberVotes(target.key).catch(() => {});
 			}
+			// A judgment's text is asked beside its node, not after it (0.8 s earlier on prod).
+			const ecli = target.collection === 'judgments' ? keyEcli(target.key) : null;
+			if (ecli) void getJudgmentDetail(ecli).catch(() => {});
 			if (id !== loadedFocus) return;
 			const onCanvas =
 				store.getNodeById(`${target.collection}/${target.key}`) ??
