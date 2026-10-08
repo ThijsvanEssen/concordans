@@ -308,3 +308,36 @@ describe('besteTreffer', () => {
 		expect(besteTreffer([group('articles', hit('art', 'articles', 0.5))])).toBeNull();
 	});
 });
+
+describe('citeertitel', () => {
+	it('names a bill by its citation title, the long title below (Z5)', () => {
+		const maak = (h: Partial<Hit> & Pick<Hit, 'collection' | 'key'>): Hit =>
+			({ id: `${h.collection}/${h.key}`, type: '', display_name: null, score: 1, ...h }) as Hit;
+		const lang =
+			'Wijziging van de Wet goed verhuurderschap, Boek 7 van het Burgerlijk Wetboek en enige andere wetten in verband met de regulering van huurprijzen (Wet betaalbare huur)';
+		const dossier = maak({
+			collection: 'dossiers',
+			key: '36496',
+			display_name: lang,
+			extra: { number: '36496', outcome: 'aangenomen' }
+		});
+		const shown = presentHit(dossier, 'huur');
+		expect(shown.title).toBe('Wet betaalbare huur');
+		expect(shown.snippet).toEqual([{ text: lang, mark: false }]);
+		const zonder = maak({ collection: 'dossiers', key: '1', display_name: TITLE, extra: {} });
+		expect(presentHit(zonder, 'x')).toMatchObject({ title: TITLE, snippet: null });
+		const stuk36496 = maak({
+			collection: 'documents',
+			key: 'd',
+			display_name: lang,
+			extra: { kind: 'Memorie van toelichting', dossier_number: '36496' }
+		});
+		expect(sectionOf(stuk36496)).toBe('36496 Wet betaalbare huur');
+		const beschreven = maak({
+			collection: 'dossiers',
+			key: '36311',
+			display_name: 'Wijziging van de Wet op de huurtoeslag (vereenvoudiging van de huurtoeslag)'
+		});
+		expect(presentHit(beschreven, 'huur').snippet).toBeNull();
+	});
+});

@@ -1039,6 +1039,15 @@
 		.row-context {
 			max-width: none;
 		}
+		/* Two lines on a phone: one cuts a title before what tells it apart. */
+		.row-title,
+		.section {
+			display: -webkit-box;
+			-webkit-box-orient: vertical;
+			-webkit-line-clamp: 2;
+			line-clamp: 2;
+			white-space: normal;
+		}
 		input {
 			font-size: var(--t-body);
 		}
