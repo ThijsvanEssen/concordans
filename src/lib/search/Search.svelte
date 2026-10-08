@@ -88,6 +88,15 @@
 	let answered = $state('');
 	let loading = $state(false);
 	let failed = $state(false);
+	/**
+	 * The judgments come in their own request, as they take seconds where the rest takes
+	 * less than one: their group waits or fails on its own, and the other groups stand.
+	 */
+	let uitspraken = $state<'klaar' | 'laden' | 'mislukt'>('klaar');
+	/** The judgments last answered; they stay, like the other hits, while the next query runs. */
+	let uitspraakHits = $state<Hit[]>([]);
+	/** Raised by "probeer opnieuw": the judgments are asked again. */
+	let opnieuw = $state(0);
 	let resolving = $state(false);
 	/** A citation the API did not confirm: its row is gone and the results stay. */
 	let unresolved = $state('');
@@ -117,7 +126,16 @@
 	const groups = $derived(
 		orderGroups(
 			kinds
-				.map((kind) => ({ kind, hits: bySection(results[kind] ?? []) }))
+				.map((kind) => ({
+					kind,
+					hits: bySection(
+						(kind === 'judgments'
+							? uitspraken === 'klaar'
+								? uitspraakHits
+								: []
+							: results[kind]) ?? []
+					)
+				}))
 				.filter((g) => g.hits.length > 0)
 		)
 	);
@@ -146,14 +164,17 @@
 			answered === q &&
 			!loading &&
 			!failed &&
+			uitspraken === 'klaar' &&
 			hits.length === 0 &&
 			!citation &&
 			!bare &&
 			!outsideLaw
 	);
 
-	// One request per query: the timer waits for the typing to pause, and a newer query
-	// aborts the request of the previous one. Earlier results stay while the next runs.
+	// Two requests per query, side by side: every kind but the judgments (here), and the
+	// judgments (below), which take seconds. The timer waits for the typing to pause, and a
+	// newer query aborts the requests of the previous one. Earlier results stay while the
+	// next run.
 	$effect(() => {
 		const term = q;
 		failed = false;
@@ -179,33 +200,81 @@
 						// The words are searched all the same.
 					});
 			}
-			// One request: the hits and what the query cites (BE-16). "AVG" has its law the
-			// moment its hits are there, so Enter cannot open a hit before the law is known.
+			// The hits and what the query cites (BE-16), with the fast kinds: "AVG" has its law
+			// the moment its hits are there, so Enter cannot open a hit before the law is known.
+			const snel = kinds.filter((k) => k !== 'judgments');
+			if (snel.length === 0) loading = false;
+			else
+				unwrap(
+					api.GET('/api/search', {
+						params: { query: { q: term, types: snel, limit: LIMIT, resolve: true } },
+						signal: controller.signal
+					})
+				)
+					.then((r) => {
+						const target = resolvedOf(r.resolved);
+						resolvedWith = { term, target };
+						if (abbreviation || title) {
+							// The law an abbreviation stands for, first; a title the API does not know
+							// is a law outside the selection.
+							if (target?.ref.collection === 'instruments') confirmed = { term, target };
+							else if (title) outside = term;
+						}
+						results = r.results;
+						answered = term;
+						loading = false;
+					})
+					.catch(() => {
+						if (controller.signal.aborted) return;
+						results = {};
+						answered = term;
+						failed = true;
+						loading = false;
+					});
+		}, DEBOUNCE_MS);
+		return () => {
+			clearTimeout(timer);
+			controller.abort();
+		};
+	});
+
+	// The judgments of the query, on their own: their group waits or fails alone, and
+	// "Probeer opnieuw" asks for them again without the rest.
+	$effect(() => {
+		const term = q;
+		void opnieuw;
+		if (!term || !kinds.includes('judgments')) {
+			uitspraakHits = [];
+			uitspraken = 'klaar';
+			return;
+		}
+		const alleen = kinds.length === 1;
+		const controller = new AbortController();
+		const timer = setTimeout(() => {
+			uitspraken = 'laden';
 			unwrap(
 				api.GET('/api/search', {
-					params: { query: { q: term, types: [...kinds], limit: LIMIT, resolve: true } },
+					// Alone (Uitspraken), it also says what the query cites.
+					params: {
+						query: { q: term, types: ['judgments'], limit: LIMIT, resolve: alleen || undefined }
+					},
 					signal: controller.signal
 				})
 			)
 				.then((r) => {
-					const target = resolvedOf(r.resolved);
-					resolvedWith = { term, target };
-					if (abbreviation || title) {
-						// The law an abbreviation stands for, first; a title the API does not know
-						// is a law outside the selection.
-						if (target?.ref.collection === 'instruments') confirmed = { term, target };
-						else if (title) outside = term;
+					if (controller.signal.aborted) return;
+					uitspraakHits = (r.results as Partial<Record<Kind, Hit[]>>).judgments ?? [];
+					if (alleen) {
+						resolvedWith = { term, target: resolvedOf(r.resolved) };
+						answered = term;
 					}
-					results = r.results;
-					answered = term;
-					loading = false;
+					uitspraken = 'klaar';
 				})
 				.catch(() => {
 					if (controller.signal.aborted) return;
-					results = {};
-					answered = term;
-					failed = true;
-					loading = false;
+					uitspraakHits = [];
+					if (alleen) answered = term;
+					uitspraken = 'mislukt';
 				});
 		}, DEBOUNCE_MS);
 		return () => {
@@ -344,7 +413,13 @@
 
 	<div
 		class="list"
-		class:list--filled={rowCount > 0 || failed || empty || notFound || outsideLaw || kamer}
+		class:list--filled={rowCount > 0 ||
+			failed ||
+			empty ||
+			notFound ||
+			outsideLaw ||
+			kamer ||
+			(q && uitspraken !== 'klaar')}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
@@ -465,6 +540,24 @@
 				{/each}
 			</div>
 		{/each}
+
+		{#if q && uitspraken !== 'klaar'}
+			<!-- The judgments come later: their group says so, the other groups stand. -->
+			<div class="group" role="group" aria-labelledby="{uid}-judgments-state">
+				<div class="group-label" id="{uid}-judgments-state">
+					<KindGlyph collection="judgments" />
+					{groupLabel('judgments')}
+				</div>
+				{#if uitspraken === 'laden'}
+					<p class="state state--group" role="status">Laden…</p>
+				{:else}
+					<p class="state state--group" role="status">
+						Uitspraken konden niet worden geladen.
+						<button type="button" class="opnieuw" onclick={() => opnieuw++}>Probeer opnieuw</button>
+					</p>
+				{/if}
+			</div>
+		{/if}
 
 		{#if failed}
 			<p class="state" role="status">Zoeken mislukt</p>
@@ -657,6 +750,24 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
+	}
+
+	.state--group {
+		padding-top: 0;
+	}
+	.opnieuw {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.opnieuw:hover {
+		color: var(--ink);
 	}
 
 	.search--compact .field {
