@@ -32,7 +32,7 @@ export type Laan = {
  * without it runs an aborted query to its end, and a part of a word ("zor", "stik") took it
  * seconds (prod, 8 Oct). Set it once the live mode is measured on prod.
  */
-export const LIVE = false;
+export const LIVE = true;
 
 /** The pause in the typing the fast lane waits for. */
 export const DEBOUNCE_MS = LIVE ? 150 : 250;
