@@ -8,7 +8,8 @@
 	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
-	import { api, unwrap } from '$lib/api/client';
+	import { ApiError, api, unwrap } from '$lib/api/client';
+	import { untrack } from 'svelte';
 	import { API_BASE_URL } from '$lib/api/base-url';
 	import type { Schema } from '$lib/api/types';
 	import type { paths } from '$lib/api/generated/openapi-types';
@@ -153,22 +154,58 @@
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	let error = $state<string | null>(null);
+	/** The API gave up on the words searched (30 s): a shorter period is quick. */
+	let teLang = $state(false);
+	/** As long as the API waits on a slow query. */
+	const WACHT = 35_000;
+	const dagenTerug = (n: number) =>
+		new Date(Date.parse(today) - n * 86_400_000).toISOString().slice(0, 10);
+	/** A shorter period to offer, when the one asked is longer. */
+	const korter = $derived(
+		[
+			{ dagen: 91, label: 'De afgelopen 3 maanden' },
+			{ dagen: 365, label: 'Het afgelopen jaar' }
+		].filter((k) => !since || since < dagenTerug(k.dagen))
+	);
 
 	// The items first, the counts beside them in a request of their own: a slow or failed
 	// count leaves the items standing, and the filters show their counts when they come.
+	// Other words searched: the list of the words before goes at once, or it reads as the
+	// answer to the new ones (FE1 audit, 9 Oct).
+	let gezocht = untrack(() => q);
 	$effect(() => {
 		const q = query;
 		const ac = new AbortController();
 		loading = true;
 		error = null;
-		unwrap(api.GET('/api/feed', { params: { query: { ...q, facets: false } }, signal: ac.signal }))
+		teLang = false;
+		if ((q.q ?? '') !== gezocht) {
+			gezocht = q.q ?? '';
+			items = [];
+			cursor = null;
+		}
+		unwrap(
+			api.GET('/api/feed', {
+				params: { query: { ...q, facets: false } },
+				signal: AbortSignal.any([ac.signal, AbortSignal.timeout(WACHT)])
+			})
+		)
 			.then((r) => {
 				items = r.items.map(normalizeItem);
 				cursor = r.next_cursor ?? null;
 				stand = feedStand(r.data_as_of) ?? stand;
 			})
-			.catch(() => {
-				if (!ac.signal.aborted) error = 'Actueel kon niet worden geladen.';
+			.catch((e) => {
+				if (ac.signal.aborted) return;
+				// No list under filters it does not answer.
+				items = [];
+				cursor = null;
+				teLang =
+					(e instanceof ApiError && (e.status === 503 || e.status === 504)) ||
+					(e instanceof DOMException && e.name === 'TimeoutError');
+				error = teLang
+					? 'Zoeken in Actueel duurt te lang. Een kortere periode gaat sneller.'
+					: 'Actueel kon niet worden geladen.';
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
@@ -527,7 +564,18 @@
 		{#if loading && !items.length}
 			<p class="status">Laden…</p>
 		{:else if error && !items.length}
-			<p class="status status--error">{error}</p>
+			<div class="status status--error">
+				<p>{error}</p>
+				{#if teLang && korter.length}
+					<p class="korter">
+						{#each korter as k (k.dagen)}
+							<button type="button" onclick={() => patchUrl({ van: dagenTerug(k.dagen) })}
+								>{k.label}</button
+							>
+						{/each}
+					</p>
+				{/if}
+			</div>
 		{:else if !items.length}
 			<div class="empty">
 				<p>Geen gebeurtenissen{chips.length ? ' met deze filters' : ''}.</p>
@@ -708,6 +756,27 @@
 	}
 	.status--error {
 		color: var(--accent);
+	}
+	.status--error p {
+		margin: 0 0 var(--s-2);
+	}
+	.korter {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-2);
+	}
+	.korter button {
+		padding: var(--s-2) var(--s-4);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: transparent;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.korter button:hover {
+		background: var(--paper-2);
 	}
 	.empty p {
 		margin: 0 0 var(--s-1);
