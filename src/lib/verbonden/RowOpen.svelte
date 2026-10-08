@@ -74,7 +74,7 @@
 	}
 	.where {
 		margin: 0 0 var(--s-1);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.passage {

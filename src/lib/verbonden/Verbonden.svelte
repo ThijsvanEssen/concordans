@@ -887,13 +887,13 @@
 	.group__melding {
 		margin: 0;
 		padding: 0 var(--s-4) var(--s-1);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
 	.group__caption {
 		margin: 0;
 		padding: 0 var(--s-4) var(--s-1);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.rows {

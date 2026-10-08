@@ -3050,8 +3050,8 @@
 	.catgroup__label {
 		padding: 0 var(--s-2);
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
-		font-weight: 500;
+		font-size: var(--t-micro);
+		font-weight: 400;
 		white-space: nowrap;
 		color: var(--ink-3);
 	}
@@ -3212,7 +3212,7 @@
 		gap: 2px;
 		margin-top: var(--s-1);
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
+		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		color: var(--ink-3);
 	}
 	.years-axis span {
@@ -3269,8 +3269,8 @@
 		padding: 0 var(--s-2) var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
-		font-weight: 500;
+		font-size: var(--t-micro);
+		font-weight: 400;
 		color: var(--ink-3);
 	}
 	.list-head__aside {
@@ -3419,7 +3419,7 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
+		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 	}
 	/* An end no source gives: the bar fades out. */
 	.cab--unknown .cab-bar {
@@ -3440,7 +3440,7 @@
 		height: 16px;
 		margin-top: var(--s-1);
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
+		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		color: var(--ink-3);
 	}
 	.cab-axis span {

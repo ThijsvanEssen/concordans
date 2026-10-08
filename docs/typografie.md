@@ -22,11 +22,19 @@ Rules:
 
 - A person's votes (`MemberReader.svelte`, 9 Oct 2026): the stem as group (rung 3) with its box in every row, the fractie as group, no tabular figures in the meta line.
 - The voters of a besluit (`DecisionReader.svelte`) and the list of an Overzicht carry the same `Stem`.
+- The readers and the lists around them (9 Oct 2026). `--t-label` went to rung 6 (`--t-micro`, 400) for:
+  - the controls in ArticleReader, JudgmentReader and DocumentReader (link to a heading, paragraph buttons, the columns of the versions menu);
+  - the summary and parties rows of JudgmentToc;
+  - Verbonden's captions and notices, and the place line of an opened row;
+  - Bladeren's column heads and the label over a group of tabs.
+- A head over a group moved to rung 3 (`--t-meta`, 600, `ink`): the facet groups of Bladeren (Stand, Soort, Fase, Ministerie), with their note at rung 6, and the first level of DocumentToc. CommitteeReader had no `--t-label`.
+- Actueel checked (9 Oct 2026), nothing to change: its day heads stand at rung 2, its facet heads at rung 3, a title at rung 4, the kind and meta line at rungs 5 and 6.
+- The band "Behoort bij" above every reader: the legal term at rung 6, a bron at rung 4.
+
+## Exception
+
+A chart's own labels stay at `--t-label` (11px): the names in the bars and the axes of the cabinet timeline, and the ticks and phases of CabinetOccupancy. At 12px the names in a bar of fixed width are cut off sooner ("Balkenend…"). They are part of the figure, not of the text.
 
 ## Still to do
 
-Not yet held against the ladder, for when they are next touched:
-
-- The other readers. `CommitteeReader`, `ArticleReader`, `JudgmentReader` and `DocumentReader` use `--t-label` (11px), below rung 6; where it heads a group, it moves to rung 3.
-- Verbonden, Bladeren and Actueel: their group heads and meta lines.
 - `/onderwerpen/overzicht`: the column heads of its tables would need a rung of their own if more tables come.

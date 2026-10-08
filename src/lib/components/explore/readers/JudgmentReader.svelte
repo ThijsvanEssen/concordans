@@ -601,7 +601,7 @@
 		border: 0;
 		background: none;
 		font-family: var(--font-sans);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
 		cursor: pointer;
@@ -721,7 +721,7 @@
 
 	:global(.reader-para-btn) {
 		padding: 2px var(--s-2);
-		font-size: var(--t-label);
+		font-size: var(--t-micro);
 	}
 
 	.reader-para-subtitle {
