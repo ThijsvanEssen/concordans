@@ -171,16 +171,20 @@ export const getCommittees = () =>
 	}));
 
 /**
- * `number` is the dossier's number (`37020-XV`, the node's `label`); `neighbors` is the
- * dossier's node response, which the caller has already.
+ * `number` is the dossier's number (`37020-XV`, the node's `label`); `buren` gives the
+ * dossier's laws and activities, asked only where the dossier's detail lacks them.
  */
-export async function loadDossierHub(number: string, neighbors: Neighbor[]): Promise<DossierHub> {
+export async function loadDossierHub(
+	number: string,
+	buren: () => Promise<Neighbor[]>
+): Promise<DossierHub> {
 	const detail = await getDossier(number).catch(() => null);
 	const joined = !detail?.instruments;
-	const [documents, mutations, committees] = await Promise.all([
+	const [documents, mutations, committees, neighbors] = await Promise.all([
 		getDossierDocuments(number).catch(() => null),
 		joined ? getDossierMutations(number).catch(() => null) : null,
-		joined ? getCommittees().catch(() => []) : []
+		joined ? getCommittees().catch(() => []) : [],
+		joined || !detail?.committees ? buren().catch(() => []) : []
 	]);
 	const names = get(instrumentMetaStore);
 	return buildDossierHub(

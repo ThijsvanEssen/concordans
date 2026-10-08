@@ -1,5 +1,5 @@
 import type { Schema } from '$lib/api/types';
-import type { Collection } from '$lib/vocabulary';
+import { NODE_TYPES, type Collection, type Relation } from '$lib/vocabulary';
 import { api, unwrap, zoekApi } from './client';
 
 // Keys are lower case in the API and the routes are case-sensitive.
@@ -36,6 +36,37 @@ export const getNodeGraph = (
 
 type NodeGraph = Schema<'NodeGraphResponse'>;
 export type Neighbor = Schema<'NeighborDTO'>;
+
+/** One bucket or a few of one direction: a group's or a loader's. */
+export type Bucket = {
+	relation: Relation | Relation[];
+	direction?: 'inbound' | 'outbound';
+	collection: Collection | Collection[];
+};
+
+/** The rows of these buckets of a bron, up to 200 each, one request per bucket. */
+export const getBuckets = (
+	collection: Collection,
+	key: string,
+	buckets: Bucket[],
+	signal?: AbortSignal
+): Promise<Neighbor[]> =>
+	Promise.allSettled(
+		buckets.map((b) =>
+			getNodeGraph(collection, key, {
+				limit: 200,
+				relations: [b.relation].flat().join(','),
+				nodeTypes: [b.collection]
+					.flat()
+					.map((c) => NODE_TYPES[c])
+					.join(','),
+				direction: b.direction,
+				signal
+			})
+		)
+	).then((results) =>
+		results.flatMap((r) => (r.status === 'fulfilled' ? neighborsOf(r.value) : []))
+	);
 
 /** The neighbours of a node response, whatever bucket they are in. An API before 0.5 lists them flat. */
 export const neighborsOf = (response: NodeGraph): Neighbor[] =>

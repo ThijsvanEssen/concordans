@@ -6,9 +6,8 @@ import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
-import { getNodeGraph, type Neighbor } from '$lib/api/nodes';
-import type { Schema } from '$lib/api/types';
-import { NODE_TYPES, type Collection } from '$lib/vocabulary';
+import { getBuckets, type Neighbor } from '$lib/api/nodes';
+import type { Collection } from '$lib/vocabulary';
 import {
 	buildGroups,
 	groupCount,
@@ -16,30 +15,21 @@ import {
 	naarSoort,
 	withUnresolvedAppeals,
 	type Group,
-	type Loader
+	type Loader,
+	type Match
 } from './groups';
 import { LOADERS } from './loaders';
 
 /**
- * Loaders that read the rows of the node itself (a dossier's hub, an article's groups): a kind
- * that has one keeps the whole node. The others draw from five per bucket and ask a group's
- * rows when it is opened (Thijs, 9 Oct: "alles zo lazy mogelijk").
+ * Loaders that read the rows of the node itself (an article's groups): a kind that has one
+ * keeps the whole node. The others draw from five per bucket, ask a group's rows when it is
+ * opened and a loader's buckets when it needs them (Thijs, 9 Oct: "alles zo lazy mogelijk").
  */
 const MET_BUREN: ReadonlySet<Loader> = new Set<Loader>([
-	'dossier-laws',
-	'dossier-committees',
-	'dossier-documents-tk',
-	'dossier-documents-ek',
-	'dossier-international',
 	'article-explanatory',
 	'article-judgments',
 	'article-cited-by',
-	'article-changes',
-	'instrument-international',
-	'judgment-articles',
-	'instrument-articles',
-	'instrument-judgments',
-	'committee-activities'
+	'article-changes'
 ]);
 
 /** Whether Verbonden of this kind can start from five per bucket. */
@@ -171,7 +161,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					node: response.node,
 					neighbors,
 					totals,
-					nodeResponse: store.nodeResponse,
+					buren: (match: Match[]) =>
+						lui ? getBuckets(collection, key, match, ac.signal) : Promise.resolve(neighbors),
 					signal: ac.signal
 				};
 				for (const def of groups) {
@@ -225,28 +216,13 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			const def = (GROUPS[b.collection] ?? []).find((d) => d.id === id);
 			if (!def?.match) return;
 			b.geopend.add(id);
-			const asks = def.match.map((m) =>
-				getNodeGraph(b.collection, b.key, {
-					limit: 200,
-					relations: [m.relation].flat().join(','),
-					nodeTypes: [m.collection]
-						.flat()
-						.map((c) => NODE_TYPES[c])
-						.join(','),
-					direction: m.direction,
-					signal: b.signal
-				})
-			);
-			Promise.allSettled(asks).then((results) => {
+			getBuckets(b.collection, b.key, def.match, b.signal).then((found) => {
 				if (b !== basis) return;
 				const seen = new Set(b.neighbors.map(neighborKey));
-				for (const r of results) {
-					if (r.status !== 'fulfilled') continue;
-					for (const n of neighborsOf(r.value as Schema<'NodeGraphResponse'>)) {
-						if (seen.has(neighborKey(n))) continue;
-						seen.add(neighborKey(n));
-						b.neighbors.push(n);
-					}
+				for (const n of found) {
+					if (seen.has(neighborKey(n))) continue;
+					seen.add(neighborKey(n));
+					b.neighbors.push(n);
 				}
 				herbouw();
 			});

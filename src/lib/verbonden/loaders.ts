@@ -5,18 +5,18 @@ import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
 import { getCommittee, str } from '$lib/components/parliamentary/data';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
-import { parseNodeId, type Collection } from '$lib/vocabulary';
+import { parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { getArticleDetail } from '$lib/api/articles';
 import { abortable, getAmendedBy, getMemberDossiers } from '$lib/api/records';
 import { lawArticleList } from '$lib/api/law-articles';
-import { buildGroups, type Loader } from './groups';
+import { buildGroups, EUROPEAN, type Loader, type Match } from './groups';
 import { bronKindOf, isInternational } from './filter';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
-import { bucketKey, neighborsOf } from '$lib/api/nodes';
+import { bucketKey, getBuckets } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
 import { uitspraakVolgorde, wetUitspraakJaar, wetUitspraakVolgorde } from './volgorde';
@@ -84,8 +84,11 @@ export type LoaderContext = {
 	neighbors: Neighbor[];
 	/** What the database holds per bucket; see `bucketTotals`. */
 	totals: Map<string, number>;
-	/** The store's cached node response, so a bron is asked for once. */
-	nodeResponse: (collection: Collection, key: string) => Promise<Schema<'NodeGraphResponse'>>;
+	/**
+	 * The rows of these buckets, up to 200 each: from `neighbors` where the node is whole,
+	 * else asked bucket by bucket, so a kind can start from five per bucket.
+	 */
+	buren: (match: Match[]) => Promise<Neighbor[]>;
 	signal: AbortSignal;
 };
 
@@ -132,9 +135,17 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 
 // The four dossier groups read one hub.
 let hub: { key: string; request: Promise<DossierHub> } | null = null;
-const hubOf = ({ node, neighbors }: LoaderContext) => {
+const hubOf = ({ node, buren }: LoaderContext) => {
 	if (hub?.key !== node.key)
-		hub = { key: node.key, request: loadDossierHub(str(node.props?.label) ?? '', neighbors) };
+		hub = {
+			key: node.key,
+			request: loadDossierHub(str(node.props?.label) ?? '', () =>
+				buren([
+					{ relation: 'LEGISLATED_IN', direction: 'inbound', collection: 'instruments' },
+					{ relation: 'ABOUT', direction: 'inbound', collection: 'activities' }
+				])
+			)
+		};
 	return hub.request;
 };
 
@@ -261,16 +272,17 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// those of its laws, read from the node of each law.
 	'dossier-international': async (ctx) => {
 		const { laws } = await abortable(hubOf(ctx), ctx.signal);
-		const responses = await Promise.all(
+		// Their European buckets, not their whole nodes (Wetboek van Strafrecht: 2 MB).
+		const found = await Promise.all(
 			laws
 				.slice(0, MAX_LAWS)
-				.map((law) => ctx.nodeResponse('instruments', law.ref.key).catch(() => null))
+				.map((law) =>
+					getBuckets('instruments', law.ref.key, EUROPEAN.match ?? [], ctx.signal).catch(() => [])
+				)
 		);
 		const rows = new Map<string, Row>();
-		for (const response of responses) {
-			const group = buildGroups('instruments', response ? neighborsOf(response) : []).find(
-				(g) => g.id === 'international'
-			);
+		for (const neighbors of found) {
+			const group = buildGroups('instruments', neighbors).find((g) => g.id === 'international');
 			for (const row of group?.rows ?? []) rows.set(row.ref.key, { ...row, relation: undefined });
 		}
 		return { rows: [...rows.values()] };
@@ -473,7 +485,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// The European and international instruments of a law (API 0.5, `eu-links`). Before
 	// that, what the node shows: IMPLEMENTS and references to treaties.
 	// TODO(backend B9): the fallback goes when every law answers on `eu-links`.
-	'instrument-international': async ({ node, neighbors, signal }) => {
+	'instrument-international': async ({ node, buren, signal }) => {
 		const { data, response } = await api
 			.GET('/api/instruments/{identifier}/eu-links', {
 				params: { path: { identifier: node.key }, query: { limit: 50 } },
@@ -560,16 +572,21 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					(data.international_total ?? 0)
 			};
 		}
-		const group = buildGroups('instruments', neighbors).find((g) => g.id === 'international');
+		const group = buildGroups('instruments', await buren(EUROPEAN.match ?? [])).find(
+			(g) => g.id === 'international'
+		);
 		return { rows: group?.rows ?? [] };
 	},
 
 	// TODO(backend B7): the lid a judgment cites is not a field. Where the citation
 	// pipeline made a stub article `{law}_{article}_{lid}`, the lid is in the key; else it
 	// is read from the citation spans of the paragraphs.
-	'judgment-articles': async ({ node, neighbors }) => {
+	'judgment-articles': async ({ node, buren }) => {
 		const ecli = typeof node.props?.ecli === 'string' ? node.props.ecli : node.key;
-		const detail = await getJudgmentDetail(ecli).catch(() => null);
+		const [detail, neighbors] = await Promise.all([
+			getJudgmentDetail(ecli).catch(() => null),
+			buren([{ relation: 'REFERS_TO', direction: 'outbound', collection: 'articles' }])
+		]);
 		const fromSpans = new Map<string, string>();
 		for (const p of detail?.judgment.paragraphs ?? []) {
 			for (const c of p.citations ?? []) {
@@ -761,11 +778,11 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// The articles of this law in the law's own order, as the reader has them: the node
 	// response holds a sample in no order (Richtlijn 2017/1132 began with 27, 126, 10).
 	// Without the route: the node's own bucket.
-	'instrument-articles': async ({ node, neighbors, totals, signal }) => {
+	'instrument-articles': async ({ node, buren, totals, signal }) => {
 		const law = lawIdOf(node.props);
-		const fromNode = () => ({
+		const fromNode = async () => ({
 			total: totals.get(bucketKey('PART_OF', 'articles', 'inbound')),
-			rows: neighbors
+			rows: (await buren([{ relation: 'PART_OF', direction: 'inbound', collection: 'articles' }]))
 				.filter(
 					(n) =>
 						n.relation === 'PART_OF' && n.direction === 'inbound' && n.collection === 'articles'
@@ -791,11 +808,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	// The judgments that cite this law, each with the articles it cites; the total is the
 	// API's, where the node response stops at 30. Without the route: the node's own bucket.
-	'instrument-judgments': async ({ node, neighbors, totals, signal }) => {
+	'instrument-judgments': async ({ node, buren, totals, signal }) => {
 		const bwb = bwbOf(node);
-		const fromNode = () => ({
+		const fromNode = async () => ({
 			total: totals.get(bucketKey('REFERS_TO', 'judgments', 'inbound')),
-			rows: neighbors
+			rows: (
+				await buren([{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }])
+			)
 				.filter(
 					(n) =>
 						n.relation === 'REFERS_TO' &&
@@ -862,7 +881,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	// The debates and hearings a committee leads, newest first, with the API's total and
 	// the dossiers on their agenda. Without the route: the node's own bucket.
-	'committee-activities': async ({ node, neighbors, totals, signal }) => {
+	'committee-activities': async ({ node, buren, totals, signal }) => {
 		const slug = typeof node.props?.slug === 'string' ? node.props.slug : null;
 		const found = slug
 			? await unwrap(
@@ -875,7 +894,9 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (!found)
 			return {
 				total: totals.get(bucketKey('LED_BY', 'activities', 'inbound')),
-				rows: neighbors
+				rows: (
+					await buren([{ relation: 'LED_BY', direction: 'inbound', collection: 'activities' }])
+				)
 					.filter(
 						(n) =>
 							n.relation === 'LED_BY' && n.direction === 'inbound' && n.collection === 'activities'
