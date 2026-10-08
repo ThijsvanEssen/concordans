@@ -24,6 +24,37 @@ export function zaakRang(row: Pick<Row, 'props'>): number {
 	return 0;
 }
 
+/**
+ * A paper that changes or explains a bill (nota van wijziging, memorie van toelichting,
+ * nader rapport, nota naar aanleiding van het verslag): its voorstel van wet is a kern line,
+ * Bij wetsvoorstel, and so not one of the papers listed beside it.
+ */
+export const isBijWetsvoorstel = (kind: unknown) =>
+	/nota van wijziging|memorie van toelichting|nader rapport|naar aanleiding van het verslag/i.test(
+		typeof kind === 'string' ? kind : ''
+	);
+
+const isWetsvoorstel = (r: Pick<Row, 'props'>) =>
+	/^voorstel van wet/i.test(String(r.props?.kind ?? ''));
+
+/** The voorstel van wet of the zaak, the one Bij wetsvoorstel names; null without one. */
+export const wetsvoorstelVan = (rows: Row[]): Row | null => rows.find(isWetsvoorstel) ?? null;
+
+/**
+ * The papers beside a stuk: for a paper of a bill without the voorstel its kern line names
+ * (Thijs, 9 Oct: kern in the reader, not again in Verbonden).
+ */
+export function naastHetStuk(kind: unknown, zaak: DezelfdeZaak): DezelfdeZaak {
+	if (!isBijWetsvoorstel(kind)) return zaak;
+	const voorstel = wetsvoorstelVan(zaak.rows);
+	if (!voorstel) return zaak;
+	const rows = zaak.rows.filter((r) => r !== voorstel);
+	return {
+		rows,
+		order: new Set(rows.map(zaakRang)).size > 1 ? zaak.order : undefined
+	};
+}
+
 export type DezelfdeZaak = {
 	/** The other papers, without the stuk itself; empty where its zaak holds only it. */
 	rows: Row[];
