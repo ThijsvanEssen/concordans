@@ -18,10 +18,10 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { tabTitle } from '$lib/bron/tab-title';
 	import { api, ApiError } from '$lib/api/client';
-	import { getNodeFirst } from '$lib/api/records';
+	import { getMember, getNodeFirst } from '$lib/api/records';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
-	import { getDossier } from '$lib/components/parliamentary/data';
+	import { getDossier, getMemberVotes } from '$lib/components/parliamentary/data';
 	import { createGraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import GraphView from '$lib/components/graph/GraphView.svelte';
@@ -382,6 +382,12 @@
 		try {
 			// A link names a dossier by its number (`37020-XV`); the API gives its node key.
 			if (target.collection === 'dossiers') target.key = (await getDossier(target.key)).key;
+			// A person's reader stands on their own record: asked beside the node, not after it
+			// (the light node of a Kamerlid took 1.8 s on prod, 9 Oct).
+			if (target.collection === 'members') {
+				void getMember(target.key).catch(() => {});
+				void getMemberVotes(target.key).catch(() => {});
+			}
 			if (id !== loadedFocus) return;
 			const onCanvas =
 				store.getNodeById(`${target.collection}/${target.key}`) ??

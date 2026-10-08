@@ -37,18 +37,18 @@
 	type State =
 		| { kind: 'loading' }
 		| { kind: 'error'; message: string }
-		| {
-				kind: 'loaded';
-				member: Schema<'MemberDetailDTO'>;
-				votes: Schema<'MemberVotesResponse'> | null;
-				/** What the person signed stukken as, and when (AUTHORED meta). */
-				signatures: Signature[];
-		  };
+		| { kind: 'loaded'; member: Schema<'MemberDetailDTO'> };
 
 	const VOTES_PREVIEW = 20;
 	const CHOICE_ORDER = ['Voor', 'Tegen'];
 
 	let view = $state<State>({ kind: 'loading' });
+	// The votes (8.8 s on prod, 9 Oct) and the signatures (from the full node) come after
+	// the person: the reader stands as soon as the person is in, and these fill in.
+	let votes = $state<Schema<'MemberVotesResponse'> | null>(null);
+	let votesLaden = $state(true);
+	/** What the person signed stukken as, and when (AUTHORED meta). */
+	let signatures = $state<Signature[]>([]);
 	let showAllVotes = $state(false);
 
 	// Raised by Opnieuw, to load the bron again after an error.
@@ -64,20 +64,29 @@
 		const ac = new AbortController();
 		view = { kind: 'loading' };
 		showAllVotes = false;
-		Promise.all([
-			getMember(key),
-			getMemberVotes(key).catch(() => null),
-			getMemberAuthored(key)
-				.then((authored) => authored.map(signatureOf))
-				.catch(() => [])
-		])
-			.then(([member, votes, signatures]) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', member, votes, signatures };
+		votes = null;
+		votesLaden = true;
+		signatures = [];
+		getMember(key)
+			.then((member) => {
+				if (!ac.signal.aborted) view = { kind: 'loaded', member };
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
 					view = { kind: 'error', message: 'Persoon kon niet worden geladen.' };
 			});
+		getMemberVotes(key)
+			.catch(() => null)
+			.then((v) => {
+				if (ac.signal.aborted) return;
+				votes = v;
+				votesLaden = false;
+			});
+		getMemberAuthored(key)
+			.then((authored) => {
+				if (!ac.signal.aborted) signatures = authored.map(signatureOf);
+			})
+			.catch(() => {});
 		return () => ac.abort();
 	});
 
@@ -128,7 +137,7 @@
 			{@const m = view.member}
 			{@const career = careerOf(
 				m.faction_memberships ?? [],
-				view.signatures,
+				signatures,
 				m.government_functions ?? []
 			)}
 			<!-- An end date is the last day in the seat (TotEnMet): on it, the member still sits. -->
@@ -282,15 +291,17 @@
 				</Sectie>
 			{/if}
 
-			{#if view.votes && view.votes.votes.length > 0}
-				{@const votes = view.votes.votes}
-				{@const groups = groupVotes(showAllVotes ? votes : votes.slice(0, VOTES_PREVIEW))}
+			{#if votesLaden}
+				<p class="laden">Stemmen laden…</p>
+			{:else if votes && votes.votes.length > 0}
+				{@const alle = votes.votes}
+				{@const groups = groupVotes(showAllVotes ? alle : alle.slice(0, VOTES_PREVIEW))}
 				<!-- Their own votes on a roll-call, and their faction's while they sat in it (API
 				     0.75, BE-43); a bewindspersoon's are what they voted as a Kamerlid. -->
 				<Sectie
 					titel={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
 					soort="decisions"
-					aantal={view.votes.count}
+					aantal={votes.count}
 				>
 					{#each groups as group (group.party)}
 						{#if groups.length > 1}
@@ -342,9 +353,9 @@
 							</div>
 						{/each}
 					{/each}
-					{#if votes.length > VOTES_PREVIEW && !showAllVotes}
+					{#if alle.length > VOTES_PREVIEW && !showAllVotes}
 						<button type="button" class="more-btn" onclick={() => (showAllVotes = true)}>
-							+{votes.length - VOTES_PREVIEW} meer stemmen
+							+{alle.length - VOTES_PREVIEW} meer stemmen
 						</button>
 					{/if}
 				</Sectie>
@@ -618,6 +629,12 @@
 		margin: 0;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.laden {
+		margin: var(--s-4) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
 </style>
