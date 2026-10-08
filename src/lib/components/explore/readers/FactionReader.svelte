@@ -64,6 +64,43 @@
 		return () => ac.abort();
 	});
 
+	// The members of a Tweede Kamer fractie, in a request of their own after the head: the
+	// chair as the source names a membership (`Fractievoorzitter`), the members by name. A phone
+	// shows the reader alone; without this it held the name and the seats only (Thijs, 9 Oct).
+	type Lid = Schema<'MemberDTO'>;
+	let leden = $state<{ staat: 'laden' | 'klaar' | 'fout'; lijst: Lid[] }>({
+		staat: 'laden',
+		lijst: []
+	});
+	$effect(() => {
+		const f = view.kind === 'loaded' ? view.faction : null;
+		leden = { staat: 'laden', lijst: [] };
+		if (!f || str(f.props?.chamber) === 'EK') return;
+		const ac = new AbortController();
+		unwrap(
+			api.GET('/api/members', {
+				params: { query: { party: f.key, active: true, limit: 200 } },
+				signal: ac.signal
+			})
+		)
+			.then((r) => {
+				if (ac.signal.aborted) return;
+				const lijst = [...(r as Lid[])].sort((a, b) =>
+					(a.family_name ?? a.name ?? '').localeCompare(b.family_name ?? b.name ?? '', 'nl')
+				);
+				leden = { staat: 'klaar', lijst };
+			})
+			.catch(() => {
+				if (!ac.signal.aborted) leden = { staat: 'fout', lijst: [] };
+			});
+		return () => ac.abort();
+	});
+	/** Its current membership of this fractie names the chair (`Fractievoorzitter`). */
+	const isVoorzitter = (m: Lid, key: string) =>
+		(m.faction_memberships ?? []).some(
+			(fm) => fm.faction_key === key && !fm.to_date && /voorzitter/i.test(fm.role ?? '')
+		);
+
 	const CHOICE: Record<string, string> = {
 		voor: 'Voor',
 		tegen: 'Tegen',
@@ -90,6 +127,7 @@
 			{@const read = str(f.props?.retrieved_on)}
 			{@const since = str(f.props?.data_since)}
 			{@const board = boardOf(f.props)}
+			{@const sinds = str(f.props?.active_from)}
 			{@const composed = read
 				? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
 				: ''}
@@ -109,6 +147,8 @@
 								? ` op ${formatLongDate(read)}`
 								: ''}</span
 						>
+						{#if sinds && !ek}<span class="since-chip">fractie sinds {formatLongDate(sinds)}</span
+							>{/if}
 					</div>
 				{/if}
 			</header>
@@ -126,6 +166,37 @@
 							</dd>
 						{/each}
 					</dl>
+				</Sectie>
+			{/if}
+
+			{#if !ek}
+				{@const voorzitters = leden.lijst.filter((m) => isVoorzitter(m, f.key))}
+				{#if voorzitters.length > 0}
+					<dl class="board">
+						{#each voorzitters as m (m.key)}
+							<dt>Fractievoorzitter</dt>
+							<dd><BronLink ref={`members/${m.key}`}>{m.name}</BronLink></dd>
+						{/each}
+					</dl>
+				{/if}
+				<Sectie
+					titel="Leden"
+					soort="members"
+					aantal={leden.staat === 'klaar' ? leden.lijst.length : null}
+				>
+					{#if leden.staat === 'laden'}
+						<p class="loading">Laden…</p>
+					{:else if leden.staat === 'fout'}
+						<p class="error">Leden konden niet worden geladen.</p>
+					{:else if leden.lijst.length === 0}
+						<p class="loading">Geen leden in de gegevens.</p>
+					{:else}
+						<ul class="leden">
+							{#each leden.lijst as m (m.key)}
+								<li><BronLink ref={`members/${m.key}`}>{m.name}</BronLink></li>
+							{/each}
+						</ul>
+					{/if}
 				</Sectie>
 			{/if}
 
@@ -285,5 +356,24 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
+	}
+	.since-chip {
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	/* The members in two columns where the line is wide enough, one on a phone. */
+	.leden {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		columns: 2 12rem;
+		column-gap: var(--s-6);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		line-height: var(--lh-body);
+	}
+	.leden li {
+		break-inside: avoid;
 	}
 </style>
