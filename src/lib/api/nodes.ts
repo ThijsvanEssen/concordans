@@ -55,6 +55,21 @@ export function bucketTotals(response: NodeGraph): Map<string, number> {
 	return totals;
 }
 
+/**
+ * The verbindingen per lid of an article, over every bucket as a whole (API 0.79.17,
+ * `lid_counts`; "" for none that names a lid); null where the API gives none.
+ */
+export function lidCountsOf(response: NodeGraph): Map<string, number> | null {
+	let counts: Map<string, number> | null = null;
+	for (const b of response.neighbors.buckets ?? []) {
+		const lid = (b as { lid_counts?: Record<string, number> | null }).lid_counts;
+		if (!lid) continue;
+		counts ??= new Map();
+		for (const [k, n] of Object.entries(lid)) counts.set(k, (counts.get(k) ?? 0) + n);
+	}
+	return counts;
+}
+
 /** Every node and edge within `depth` hops, in one traversal. */
 export const getNodeNeighborhood = (
 	collection: Collection,
