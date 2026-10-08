@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Periode from '$lib/components/ui/Periode.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { BRON_KIND_VORM } from '$lib/bron/vormen';
@@ -109,19 +110,9 @@
 		(draft = { ...draft, status: draft.status === s ? null : s });
 
 	/** The year field that holds no year, until it does. */
-	let badYear = $state<'van' | 'tot' | null>(null);
-	$effect(() => {
-		if (open) badYear = null;
-	});
-
-	function yearInput(e: Event, key: 'van' | 'tot') {
-		const v = (e.target as HTMLInputElement).value.trim();
-		if (v !== '' && !/^\d{4}$/.test(v)) {
-			badYear = key;
-			return;
-		}
-		if (badYear === key) badYear = null;
-		const next = { ...draft, [key]: v ? Number(v) : null, geldendOp: null };
+	/** The period, as every list with dates has it ($lib/components/ui/Periode). */
+	function periode(van: string, tot: string) {
+		const next = { ...draft, van: van || null, tot: tot || null, geldendOp: null };
 		// A period given the wrong way round is read the right way round.
 		draft =
 			next.van !== null && next.tot !== null && next.van > next.tot
@@ -305,37 +296,11 @@
 						>
 					</div>
 				{:else}
-					<div class="period">
-						<input
-							class="year"
-							type="text"
-							inputmode="numeric"
-							placeholder="jaar"
-							value={draft.van ?? ''}
-							onchange={(e) => yearInput(e, 'van')}
-							aria-label="Van"
-							aria-invalid={badYear === 'van'}
-							aria-describedby={badYear ? `${uid}-year` : undefined}
-						/>
-						<span class="muted">tot</span>
-						<input
-							class="year"
-							type="text"
-							inputmode="numeric"
-							placeholder="jaar"
-							value={draft.tot ?? ''}
-							onchange={(e) => yearInput(e, 'tot')}
-							aria-label="Tot"
-							aria-invalid={badYear === 'tot'}
-							aria-describedby={badYear ? `${uid}-year` : undefined}
-						/>
-						<span class="muted">of</span>
+					<Periode van={draft.van ?? ''} tot={draft.tot ?? ''} onChange={periode} />
+					<p class="period">
 						<button type="button" class="link" onclick={() => (dateMode = true)}
-							>tot een datum</button
+							>Of geldend op een datum</button
 						>
-					</div>
-					<p class="error" id="{uid}-year" aria-live="polite">
-						{#if badYear}<span>Vul een jaartal in, bijvoorbeeld 2015.</span>{/if}
 					</p>
 				{/if}
 			</div>
@@ -524,17 +489,6 @@
 	}
 	.year[type='date'] {
 		width: auto;
-	}
-	.year[aria-invalid='true'] {
-		border-color: var(--accent);
-	}
-	.error {
-		margin: 0;
-		color: var(--accent);
-	}
-	.error span {
-		display: block;
-		margin-top: 6px;
 	}
 	.muted {
 		color: var(--ink-3);

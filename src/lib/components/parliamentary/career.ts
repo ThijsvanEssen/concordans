@@ -199,11 +199,12 @@ export function yearsOf(from: string | null, to: string | null): string {
 export const inYears = (
 	from: string | null,
 	to: string | null,
-	van: number | null,
-	tot: number | null
+	van: string | null,
+	tot: string | null
 ) =>
-	(van === null || to === null || Number(to.slice(0, 4)) >= van) &&
-	(tot === null || from === null || Number(from.slice(0, 4)) <= tot);
+	// Days, as the bronfilter's period holds them ($lib/text/periode).
+	(van === null || to === null || to.slice(0, 10) >= van) &&
+	(tot === null || from === null || from.slice(0, 10) <= tot);
 
 /**
  * A seat on a committee in words, where it is more than a seat (API 0.75): "voorzitter",

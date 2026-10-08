@@ -69,9 +69,9 @@ describe('careerOf', () => {
 	});
 
 	it('tells whether an entry falls in the chosen years', () => {
-		expect(inYears('2017-03-23', '2022-01-10', 2019, 2019)).toBe(true);
-		expect(inYears('2026-09-08', '2026-09-16', 2019, 2021)).toBe(false);
-		expect(inYears('2025-11-12', null, 2030, null)).toBe(true);
+		expect(inYears('2017-03-23', '2022-01-10', '2019-01-01', '2019-12-31')).toBe(true);
+		expect(inYears('2026-09-08', '2026-09-16', '2019-01-01', '2021-12-31')).toBe(false);
+		expect(inYears('2025-11-12', null, '2030-01-01', null)).toBe(true);
 	});
 });
 

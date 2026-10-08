@@ -4,6 +4,7 @@
 // (`?bronnen=artikelen,wetten`; absent means all) and is parsed once, in
 // explore/+page.svelte, into one `VerbondenFilter` that the panel, the margin of the
 // reader, the canvas, the legend and the table read.
+import { alsDag } from '$lib/text/periode';
 import { isExplanatory } from './chamber';
 import type { Row } from './rows';
 
@@ -90,8 +91,9 @@ export type VerbondenFilter = {
 	/** `2`, or `geen` for verbindingen that name no lid. */
 	lid: string | null;
 	rechter: Rechter | null;
-	van: number | null;
-	tot: number | null;
+	/** The period, in days (YYYY-MM-DD) as every list with dates has it ($lib/text/periode). */
+	van: string | null;
+	tot: string | null;
 	/** Verbindingen in force on this date (ISO), instead of a period. */
 	geldendOp: string | null;
 	betrouwbaarheid: Betrouwbaarheid | null;
@@ -133,8 +135,8 @@ export function parseFilter(params: URLSearchParams): VerbondenFilter {
 		bronnen: kinds.length > 0 ? new Set(kinds) : null,
 		lid: params.get('lid') || null,
 		rechter: isRechter(rechter) ? rechter : null,
-		van: year(params.get('van')),
-		tot: year(params.get('tot')),
+		van: alsDag(params.get('van'), false),
+		tot: alsDag(params.get('tot'), true),
 		geldendOp: geldendOp && /^\d{4}-\d{2}-\d{2}$/.test(geldendOp) ? geldendOp : null,
 		betrouwbaarheid:
 			betrouwbaarheid === 'bron' || betrouwbaarheid === 'afgeleid' ? betrouwbaarheid : null,
@@ -150,8 +152,8 @@ export function filterParams(f: VerbondenFilter): Record<string, string | null> 
 		bronnen: f.bronnen ? BRON_KINDS.filter((k) => f.bronnen!.has(k)).join(',') : null,
 		lid: f.lid,
 		rechter: f.rechter,
-		van: f.van ? String(f.van) : null,
-		tot: f.tot ? String(f.tot) : null,
+		van: f.van,
+		tot: f.tot,
 		geldend: f.geldendOp,
 		betrouwbaarheid: f.betrouwbaarheid,
 		status: f.status,
@@ -320,6 +322,12 @@ const spans = (first: number | null, last: number | null, van: number | null, to
 	(van === null || last === null || last >= van) &&
 	(tot === null || first === null || first <= tot);
 
+/** The same for days: a row's first and last day (open where null) and the period. */
+const meets = (first: string | null, last: string | null, van: string | null, tot: string | null) =>
+	(van === null || last === null || last >= van) &&
+	(tot === null || first === null || first <= tot);
+const day = (d: string | null | undefined) => (d ? d.slice(0, 10) : null);
+
 /** Whether a row passes the filter. */
 export function rowPasses(row: Row, f: VerbondenFilter): boolean {
 	if (f.bronnen && !f.bronnen.has(row.kind)) return false;
@@ -337,7 +345,15 @@ export function rowPasses(row: Row, f: VerbondenFilter): boolean {
 	const last = row.period ? yearOfDate(row.period.to) : yearOf(row);
 	const undated = first === null && last === null;
 	if (f.jaar !== null && (undated || !spans(first, last, f.jaar, f.jaar))) return false;
-	if (!spans(first, last, f.van, f.tot)) return false;
+	if (
+		!meets(
+			row.period ? day(row.period.from) : day(row.date),
+			row.period ? day(row.period.to) : day(row.date),
+			f.van,
+			f.tot
+		)
+	)
+		return false;
 	if (f.geldendOp !== null && row.date && row.date.slice(0, 10) > f.geldendOp) return false;
 	// `bron`: betrouwbaarheid hoog; `afgeleid`: matig or laag.
 	const high = confidenceWord(row.confidence, !!row.derived) === 'hoog';

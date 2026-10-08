@@ -164,8 +164,8 @@
 	const yearPeriod = $derived<Period | null>(
 		filter.van !== null || filter.tot !== null
 			? {
-					from: filter.van !== null ? `${filter.van}-01-01` : null,
-					to: filter.tot !== null ? `${filter.tot}-12-31` : null
+					from: filter.van,
+					to: filter.tot
 				}
 			: null
 	);
