@@ -2,12 +2,12 @@
 // tijdsfilter systematisch in alle filterpanes"). Days as the URL and the API hold them
 // (YYYY-MM-DD), a few periods back from today to choose at once, and a van and tot.
 
-export type Voorkeuze = { id: string; label: string; maanden: number };
+export type Voorkeuze = { id: string; label: string; titel: string; maanden: number };
 
 export const VOORKEUZEN: readonly Voorkeuze[] = [
-	{ id: 'maand', label: 'Afgelopen maand', maanden: 1 },
-	{ id: 'kwartaal', label: '3 maanden', maanden: 3 },
-	{ id: 'jaar', label: 'Afgelopen jaar', maanden: 12 }
+	{ id: 'maand', label: 'Maand', titel: 'De afgelopen maand', maanden: 1 },
+	{ id: 'kwartaal', label: 'Kwartaal', titel: 'De afgelopen drie maanden', maanden: 3 },
+	{ id: 'jaar', label: 'Jaar', titel: 'Het afgelopen jaar', maanden: 12 }
 ];
 
 /** The day `maanden` months before `vandaag`, the same day of the month where it exists. */

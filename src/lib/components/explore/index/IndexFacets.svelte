@@ -141,7 +141,8 @@
 
 <!-- While a page loads, the counts read "…" (as in the legend); the text keeps its contrast. -->
 <div class="facets" aria-busy={pending}>
-	{#each groups as g (g.id)}
+	<!-- The period first in every pane (Thijs, 9 Oct). -->
+	{#each [...groups.filter((g) => g.kind === 'range'), ...groups.filter((g) => g.kind !== 'range')] as g (g.id)}
 		<section class="group" aria-labelledby="facet-{g.id}">
 			<h2 class="group-head" id="facet-{g.id}">
 				<span>{g.label}</span>
@@ -213,13 +214,7 @@
 				</select>
 			{:else if g.kind === 'range'}
 				<!-- The same period in every list with dates ($lib/components/ui/Periode). -->
-				<Periode
-					van={g.from}
-					tot={g.to}
-					jaar={g.unit === 'year'}
-					label={g.label}
-					onChange={g.onChange}
-				/>
+				<Periode van={g.from} tot={g.to} label={g.label} onChange={g.onChange} />
 			{:else if g.kind === 'keuze'}
 				{@const k = g}
 				<Keuze
