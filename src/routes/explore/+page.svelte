@@ -589,6 +589,8 @@
 	let netwerkEntries = $state<NetwerkEntry[]>([]);
 	let netwerkLoading = $state(false);
 	let joiningCount = $state(0);
+	/** The paths of the last composition are not all there (`partial`, API 0.79.23). */
+	let padenDeels = $state(false);
 	let composeEpoch = 0;
 	// Whether the canvas is a composed netwerk now; the first composition of one draws it
 	// from scratch unless it grows out of the current canvas (`keepCanvas`).
@@ -693,6 +695,7 @@
 		// further than one shared neighbour. Without the route, the shared neighbours only.
 		const onPaths = route ? await store.mergePaths(route) : { onPath: [], tied: [] };
 		if (epoch !== composeEpoch) return;
+		padenDeels = !!(route as { partial?: boolean } | null)?.partial;
 		draw(n, results, onPaths, uitgebreidOf(route));
 		netwerkLoading = false;
 		graphView?.fitWhenSettled();
@@ -1376,6 +1379,7 @@
 									: null}
 								tussen={netwerk.tussen}
 								{joiningCount}
+								deels={padenDeels}
 								onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
 								onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
 								onAdd={() => selectedNode && addToNetwerk(selectedNode)}
