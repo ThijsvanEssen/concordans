@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Schema } from '$lib/api/types';
+import type { Collection } from '$lib/vocabulary';
 import {
+	besteTreffer,
 	around,
 	bySection,
 	chamberOfHit,
@@ -270,5 +272,39 @@ describe('a vote as a hit', () => {
 			snippet: null,
 			chamber: 'EK'
 		});
+	});
+});
+
+describe('besteTreffer', () => {
+	type H = Schema<'SearchResultItem'>;
+	const hit = (id: string, collection: string, score: number) =>
+		({ id, key: id, collection, display_name: id, score }) as unknown as H;
+	const group = (kind: Collection, ...hits: H[]) => ({ kind, hits });
+
+	it('leads with the rule where it scores nearly as well: huurverhoging', () => {
+		const best = besteTreffer([
+			group('documents', hit('kamervragen', 'documents', 0.25)),
+			group('dossiers', hit('36511', 'dossiers', 0.25)),
+			group('articles', hit('7:248', 'articles', 0.1), hit('7:253', 'articles', 0.1))
+		]);
+		expect(best?.hit.id).toBe('7:248');
+	});
+
+	it('keeps a name that fits far better on top: a fractie for PVV', () => {
+		const best = besteTreffer([
+			group('factions', hit('pvv', 'factions', 0.75)),
+			group('articles', hit('art', 'articles', 0.1))
+		]);
+		expect(best?.hit.id).toBe('pvv');
+	});
+
+	it('takes an identifier first, and says nothing for one group', () => {
+		expect(
+			besteTreffer([
+				group('articles', hit('art', 'articles', 0.5)),
+				group('judgments', hit('ecli', 'judgments', 1))
+			])?.hit.id
+		).toBe('ecli');
+		expect(besteTreffer([group('articles', hit('art', 'articles', 0.5))])).toBeNull();
 	});
 });

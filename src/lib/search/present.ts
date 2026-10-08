@@ -272,3 +272,30 @@ export function orderGroups<G extends { kind: Collection; hits: Hit[] }>(groups:
 	};
 	return [...groups].sort((a, b) => best(b) - best(a) || tie(a) - tie(b));
 }
+
+/** How much lower a law's or an article's best hit may score and still come first. */
+export const RECHT_MARGE = 0.25;
+const RECHT: readonly Collection[] = ['articles', 'instruments'];
+
+/**
+ * The one hit above all groups (Thijs, 8 Oct: "Beste treffer"): an identifier where one
+ * matches; else an article or a law where its best hit scores nearly as well as the best of
+ * all (within RECHT_MARGE), so "huurverhoging" leads with the rule and not with Kamervragen;
+ * else the best hit of all. None for a single group, which says it already.
+ */
+export function besteTreffer<G extends { kind: Collection; hits: Hit[] }>(
+	groups: G[]
+): { kind: G['kind']; hit: Hit } | null {
+	if (groups.length < 2) return null;
+	const all = groups.flatMap((g) => g.hits.map((hit) => ({ kind: g.kind, hit })));
+	if (!all.length) return null;
+	const score = (x: { hit: Hit }) => x.hit.score ?? 0;
+	const top = Math.max(...all.map(score));
+	const first = (xs: typeof all) =>
+		xs.reduce<(typeof all)[number] | null>((m, x) => (!m || score(x) > score(m) ? x : m), null);
+	const id = all.find((x) => score(x) >= 1);
+	if (id) return id;
+	const recht = first(RECHT.flatMap((k) => all.filter((x) => x.kind === k && score(x) > 0)));
+	if (recht && score(recht) >= top - RECHT_MARGE) return recht;
+	return first(orderGroups(groups).flatMap((g) => all.filter((x) => x.kind === g.kind)));
+}
