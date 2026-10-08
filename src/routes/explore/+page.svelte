@@ -356,6 +356,9 @@
 	let deepenedId = '';
 	let deepenedDepth = 0;
 	let replaceNext: string | null = null;
+	// A focus loaded without the canvas (reading, or a phone's text tab): its light node only;
+	// the full node and its neighbourhood wait until the canvas is shown.
+	let lichtGeladen: string | null = null;
 
 	$effect(() => {
 		// Read here, not only inside `deepen`: that branch does not run on the first pass,
@@ -368,10 +371,11 @@
 			return;
 		}
 		if (mode === 'index') return;
-		if (focus !== loadedFocus || replaceNext === focus) {
+		const zichtbaar = canvasZichtbaar;
+		if (focus !== loadedFocus || replaceNext === focus || (zichtbaar && lichtGeladen === focus)) {
 			loadedFocus = focus;
 			void loadFocus(focus);
-		} else if (mode === 'graph' && !withNetwerk) {
+		} else if (zichtbaar && !withNetwerk) {
 			const anchor = (deepenedId && store.getNodeById(deepenedId)) || selectedNode;
 			if (anchor) void deepen(anchor);
 		}
@@ -388,6 +392,7 @@
 		focusMissing = false;
 		const replace = replaceNext === id;
 		replaceNext = null;
+		lichtGeladen = null;
 		const target = parseNodeId(id);
 		if (!target) {
 			focusError = `Bron '${id}' niet gevonden.`;
@@ -408,8 +413,20 @@
 			const onCanvas =
 				store.getNodeById(`${target.collection}/${target.key}`) ??
 				store.getNodeById(`${target.collection}/${target.key.toLowerCase()}`);
-			const inGraph = untrack(() => mode === 'graph');
+			const inGraph = untrack(() => canvasZichtbaar);
 			const withNetwerk = untrack(() => netwerkActive);
+			// Without the canvas, the light node is all the reader and the page need.
+			if (!inGraph && !onCanvas && !withNetwerk) {
+				const first = await store.peekNode(target.collection, target.key);
+				if (id !== loadedFocus) return;
+				if (!first) {
+					missing(target.key);
+					return;
+				}
+				store.focusNode(first.id);
+				lichtGeladen = id;
+				return;
+			}
 			if (!replace && onCanvas && (withNetwerk || deepenedId)) {
 				store.focusNode(onCanvas.id);
 				return;
@@ -878,6 +895,8 @@
 	let mobilePanel = $state<'reader' | 'graph' | 'verbonden'>(
 		untrack(() => netwerkActive) ? 'graph' : 'reader'
 	);
+	/** The canvas is on the screen: the network, and on a phone its tab. */
+	const canvasZichtbaar = $derived(mode === 'graph' && !(telefoon && mobilePanel !== 'graph'));
 	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
 	// instead of taking a permanent column.
 	let tocOpen = $state(false);
