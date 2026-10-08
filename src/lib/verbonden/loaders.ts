@@ -7,7 +7,7 @@ import { getCommittee, str } from '$lib/components/parliamentary/data';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
 import { parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';
-import { stukkenInDezelfdeZaak } from '$lib/bron/zaak';
+import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { getArticleDetail } from '$lib/api/articles';
@@ -256,10 +256,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// The other dossiers of the number, in the order of the Kamer.
 	// The papers of the same zaak, the substance first ($lib/bron/zaak).
 	'document-same-case': async ({ node, buren, signal }) =>
-		stukkenInDezelfdeZaak(
-			node,
-			signal,
-			await buren([{ relation: 'PART_OF', direction: 'outbound', collection: 'cases' }])
+		naastHetStuk(
+			node.props?.kind,
+			await stukkenInDezelfdeZaak(
+				node,
+				signal,
+				await buren([{ relation: 'PART_OF', direction: 'outbound', collection: 'cases' }])
+			)
 		),
 
 	'dossier-same-number': async ({ node, signal }) => {

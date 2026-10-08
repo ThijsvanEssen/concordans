@@ -11,7 +11,7 @@ import { shortDossierTitle } from '$lib/graph/types';
 import { deelIds, layersOf } from '$lib/text/division';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
-import { stukkenInDezelfdeZaak } from './zaak';
+import { isBijWetsvoorstel, naastHetStuk, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 /**
@@ -175,11 +175,13 @@ export function behoort(
 				label: 'In dezelfde zaak',
 				aantal: null,
 				laad: (signal) =>
-					stukkenInDezelfdeZaak({ key }, signal).then(({ rows }) =>
-						rows.map((r) =>
-							stukLaag(r, text(r.props?.kind) ?? 'Stuk', gedeeldeTitels(rows, text(props.title)))
-						)
-					)
+					stukkenInDezelfdeZaak({ key }, signal).then((zaak) => {
+						// The title the zaak shares, counted over all its papers.
+						const gedeeld = gedeeldeTitels(zaak.rows, text(props.title));
+						return naastHetStuk(props.kind, zaak).rows.map((r) =>
+							stukLaag(r, text(r.props?.kind) ?? 'Stuk', gedeeld)
+						);
+					})
 			}
 		];
 	};
@@ -191,13 +193,7 @@ export function behoort(
 	const bijWetsvoorstel = (): Regel[] => {
 		const key = light?.node.key;
 		const soort = text(props.kind) ?? '';
-		if (
-			!key ||
-			!(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) ||
-			!/nota van wijziging|memorie van toelichting|nader rapport|naar aanleiding van het verslag/i.test(
-				soort
-			)
-		)
+		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) || !isBijWetsvoorstel(soort))
 			return [];
 		return [
 			{
@@ -206,10 +202,9 @@ export function behoort(
 				lagen: [],
 				laad: (signal) =>
 					stukkenInDezelfdeZaak({ key }, signal).then(({ rows }) =>
-						rows
-							.filter((r) => /^voorstel van wet/i.test(text(r.props?.kind) ?? ''))
-							.slice(0, 1)
-							.map((r) => stukLaag(r, 'Wetsvoorstel', new Set()))
+						[wetsvoorstelVan(rows)].flatMap((r) =>
+							r ? [stukLaag(r, 'Wetsvoorstel', new Set())] : []
+						)
 					)
 			}
 		];
