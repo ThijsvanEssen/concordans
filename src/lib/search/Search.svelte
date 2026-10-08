@@ -6,7 +6,7 @@
 	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api, isTimeout, unwrap } from '$lib/api/client';
-	import { LANEN as ALLE_LANEN, type Laan as LaanDef } from './lanen';
+	import { DEBOUNCE_MS, LANEN as ALLE_LANEN, LIVE, type Laan as LaanDef } from './lanen';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -69,9 +69,7 @@
 	type Kind = (typeof KINDS)[number];
 	const kinds = $derived(scope ? KINDS.filter((k) => scope.includes(k)) : KINDS);
 	const LIMIT = 6;
-	// The API runs an aborted query to its end until it cancels on a closed connection
-	// (Back-end #1): till then 250 ms, after that 150.
-	const DEBOUNCE_MS = 250;
+
 	/** The fast kinds from two characters: one says nothing. */
 	const SNEL_MIN = 2;
 
@@ -126,6 +124,8 @@
 	let laanMeer = $state<Record<string, string>>({});
 	/** The query asked in full after "Meer uitspraken" (`mode=full`). */
 	let volVoor = $state('');
+	/** The fast kinds the live answer cut off, for its query. */
+	let snelMeer = $state<{ term: string; kinds: Kind[] }>({ term: '', kinds: [] });
 	/** Raised by "Probeer opnieuw": that lane is asked again, the rest not. */
 	let opnieuw = $state<Record<string, number>>({});
 	/** The kinds of the first request; without them, the first lane in scope says what the query cites. */
@@ -171,7 +171,10 @@
 	const q = $derived(query.trim());
 	/** Kinds whose live answer left more out for this query, not yet asked in full. */
 	const meerKinds = $derived(
-		new Set(lanen.filter((l) => laanMeer[l.id] === q && volVoor !== q).flatMap((l) => l.kinds))
+		new Set([
+			...lanen.filter((l) => laanMeer[l.id] === q && volVoor !== q).flatMap((l) => l.kinds),
+			...(snelMeer.term === q && volVoor !== q ? snelMeer.kinds : [])
+		])
 	);
 
 	const extra = (hit: Hit, name: string): string => {
@@ -236,6 +239,8 @@
 	// requests of the previous one. Earlier results stay while the next run.
 	$effect(() => {
 		const term = q;
+		// "Meer …" asks the whole query again in full, the fast kinds too.
+		if (LIVE) void volVoor;
 		failed = false;
 		if (term.length < SNEL_MIN) {
 			results = {};
@@ -265,7 +270,9 @@
 			else
 				unwrap(
 					api.GET('/api/search', {
-						params: { query: zoekVraag(term, snel, true) },
+						params: {
+							query: zoekVraag(term, snel, true, LIVE ? (volVoor === term ? 'full' : 'live') : null)
+						},
 						signal: controller.signal
 					})
 				)
@@ -280,6 +287,8 @@
 							else if (title) outside = term;
 						}
 						results = r.results;
+						const partial = (r as { partial?: Partial<Record<Kind, boolean>> }).partial ?? {};
+						snelMeer = { term, kinds: snel.filter((k) => partial[k]) };
 						answered = term;
 						loading = false;
 					})
