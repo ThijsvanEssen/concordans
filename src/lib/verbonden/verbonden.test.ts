@@ -1,4 +1,4 @@
-import { zaakRang } from './loaders';
+import { zaakRang } from '$lib/bron/zaak';
 import { describe, expect, it } from 'vitest';
 import node35869 from '$lib/fixtures/node-dossier-35869.json';
 import node36327 from '$lib/fixtures/node-dossier-36327.json';
