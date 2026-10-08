@@ -6,7 +6,7 @@
 // direction, collection) or, where no edge says it, by a named loader (`load`).
 import { langeDatum } from '$lib/text/datum';
 import { lawKind } from '$lib/components/explore/law-head';
-import { bucketKey } from '$lib/api/nodes';
+import { bucketKey, type Bucket } from '$lib/api/nodes';
 import { isRelation, type Collection, type Relation } from '$lib/vocabulary';
 import { formatCount, isInternational } from './filter';
 import { rowOfNeighbor, type Neighbor, type Row } from './rows';
@@ -14,10 +14,7 @@ import { chamberOf, type Chamber } from './chamber';
 
 export { isInternational };
 
-export type Match = {
-	relation: Relation | Relation[];
-	direction?: 'inbound' | 'outbound';
-	collection: Collection | Collection[];
+export type Match = Bucket & {
 	where?: (n: Neighbor) => boolean;
 	/** The bucket is divided over several groups by `where`: none of them takes its total. */
 	split?: boolean;
@@ -127,7 +124,7 @@ const authored = (
 
 const CHANGES: Relation[] = ['AMENDS', 'INTRODUCES', 'REPEALS'];
 
-const EUROPEAN: GroupDef = {
+export const EUROPEAN: GroupDef = {
 	id: 'international',
 	label: 'Europees en internationaal',
 	noun: 'Europese en internationale bronnen',
