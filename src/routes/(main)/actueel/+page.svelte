@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	// Actueel: what happened in the Kamer and the government, newest first, per day. Every
 	// filter and the line opened are in the URL, so a view can be shared; the same view is an
@@ -446,15 +447,32 @@
 		{#if stand}
 			<p class="stand">{standLine(stand)}</p>
 		{/if}
-		<button
-			type="button"
-			class="filters-toggle"
-			aria-expanded={filtersOpen}
-			onclick={() => (filtersOpen = !filtersOpen)}
-			>Filters{chips.length ? ` (${chips.length})` : ''}</button
-		>
-		<div class="filters-body" class:filters-body--open={filtersOpen}>
-			<IndexFacets {groups} pending={tellen} />
+		<!-- On a phone: the Kamer one tap away outside the folded filters, and the bar scrolls
+		     along under the top bar (Thijs, 9 Oct). -->
+		<div class="filterbalk">
+			<div class="kamer-snel">
+				<Keuze
+					label="Kamer"
+					klein
+					waarde={chamber || 'beide'}
+					onKies={(w) => patchUrl({ kamer: w === 'beide' ? null : w })}
+					opties={[
+						{ waarde: 'beide', label: 'Beide' },
+						{ waarde: 'TK', label: 'Tweede Kamer' },
+						{ waarde: 'EK', label: 'Eerste Kamer' }
+					]}
+				/>
+			</div>
+			<button
+				type="button"
+				class="filters-toggle"
+				aria-expanded={filtersOpen}
+				onclick={() => (filtersOpen = !filtersOpen)}
+				>Filters{chips.length ? ` (${chips.length})` : ''}</button
+			>
+			<div class="filters-body" class:filters-body--open={filtersOpen}>
+				<IndexFacets {groups} pending={tellen} />
+			</div>
 		</div>
 	</aside>
 
@@ -554,7 +572,8 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.filters-toggle {
+	.filters-toggle,
+	.kamer-snel {
 		display: none;
 	}
 
@@ -678,9 +697,26 @@
 			gap: var(--s-4);
 			padding: var(--s-4) var(--s-4) var(--s-7);
 		}
+		/* The column dissolves into the page, so its bar can stick the whole length of the feed
+		   (a sticky box never leaves its parent). */
 		.filters {
-			position: static;
-			max-height: none;
+			display: contents;
+		}
+		/* Under the sticky top bar (60px), so it stays one tap away while scrolling. */
+		.filterbalk {
+			position: sticky;
+			top: 60px;
+			z-index: 2;
+			margin: 0 calc(-1 * var(--s-4));
+			padding: 0 var(--s-4);
+			background: var(--paper);
+		}
+		.kamer-snel {
+			display: block;
+			padding: var(--s-2) 0;
+		}
+		.filters-body :global(section:has(#facet-kamer)) {
+			display: none;
 		}
 		.filters-toggle {
 			display: block;
@@ -704,6 +740,14 @@
 		}
 		.filters-body--open {
 			display: block;
+			max-height: 60dvh;
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			scrollbar-gutter: stable;
+			scrollbar-width: thin;
+			padding-right: var(--s-2);
+			padding-bottom: var(--s-3);
+			border-bottom: 1px solid var(--rule);
 		}
 		.atom {
 			margin-left: 0;
