@@ -115,7 +115,6 @@ export function tussenClustersOf(
 	expanded: ReadonlySet<string>
 ): Cluster[] {
 	if (chosen.size < 2) return [];
-	const collectionOf = new Map(nodes.map((n) => [n.id, n.collection]));
 	const ties = new Map<string, Edge[]>();
 	for (const e of edges) {
 		(ties.get(e.source) ?? ties.set(e.source, []).get(e.source)!).push(e);
