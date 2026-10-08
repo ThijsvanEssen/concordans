@@ -25,16 +25,24 @@ export type Laan = {
 };
 
 /**
- * The slow lanes wait for a real pause in the typing: the API runs an aborted query to its
- * end, and a part of a word ("zor", "stik") takes it seconds (prod, 8 Oct), so a request per
- * keystroke filled its pool. With the live mode of the API their wait can go down.
+ * The switch for the API's live mode on every lane (API 0.79.12, Back-end #1 #303): no
+ * ranking, the start of a word from three characters, 250 ms per type with `partial` where
+ * there is more. On, every lane asks per keystroke in that mode, the waits go down and
+ * judgments come from three characters. Off, the slow lanes wait for a real pause: the API
+ * without it runs an aborted query to its end, and a part of a word ("zor", "stik") took it
+ * seconds (prod, 8 Oct). Set it once the live mode is measured on prod.
  */
-export const LANGZAAM_MS = 300;
+export const LIVE = false;
+
+/** The pause in the typing the fast lane waits for. */
+export const DEBOUNCE_MS = LIVE ? 150 : 250;
+/** The pause the slow lanes wait for. */
+export const LANGZAAM_MS = LIVE ? 150 : 300;
 
 export const LANEN: readonly Laan[] = [
 	// Articles and stukken from three characters: "st" takes the API seconds and says
-	// nothing. Judgments from four, until the API has its live mode: "hu" took 11 s, "huur"
-	// 6 to 14 s (prod 0.79.9).
+	// nothing. Judgments from four without the live mode: "hu" took 11 s, "huur" 6 to 14 s
+	// (prod 0.79.9).
 	{
 		id: 'tekst',
 		kinds: ['articles', 'documents'],
@@ -42,12 +50,12 @@ export const LANEN: readonly Laan[] = [
 		wacht: LANGZAAM_MS,
 		laden: false,
 		client: zoekApi,
-		live: false
+		live: LIVE
 	},
 	{
 		id: 'uitspraken',
 		kinds: ['judgments'],
-		min: 4,
+		min: LIVE ? 3 : 4,
 		wacht: LANGZAAM_MS,
 		laden: true,
 		client: zoekApi,
