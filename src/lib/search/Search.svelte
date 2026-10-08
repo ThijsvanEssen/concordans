@@ -1,4 +1,8 @@
 <script lang="ts">
+	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import { heeftParameter } from '$lib/api/heeft';
+	import { VOORKEUZEN, maandenTerug } from '$lib/text/periode';
+	import { vandaag } from '$lib/text/datum';
 	import { kamerLinks, kamerOf } from './kamer';
 	import { uniqueBy } from '$lib/util/unique';
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
@@ -100,8 +104,15 @@
 		limit: LIMIT,
 		resolve: resolve || undefined,
 		// Not in the schema yet; an API without it ignores it.
-		...(mode ? ({ mode } as object) : {})
+		...(mode ? ({ mode } as object) : {}),
+		// The period (Thijs, 9 Oct), once `/api/search` takes it ($lib/api/heeft).
+		...(MET_PERIODE && periodeVan ? ({ from: periodeVan } as object) : {})
 	});
+
+	/** The search by period: shown once the API takes `from` and `to` (Back-end #1). */
+	const MET_PERIODE = heeftParameter('/api/search', 'from', 'to');
+	let periodeVan = $state('');
+	const vandaagDag = vandaag();
 
 	/** What a citation row is marked as before the API has confirmed the bron. */
 	const CITED: Record<Citation['kind'], Collection> = {
@@ -261,6 +272,7 @@
 	// requests of the previous one. Earlier results stay while the next run.
 	$effect(() => {
 		const term = q;
+		void periodeVan;
 		// "Meer …" asks the whole query again in full, the fast kinds too.
 		if (LIVE) void volVoor;
 		failed = false;
@@ -397,6 +409,7 @@
 		$effect(() => {
 			const term = q;
 			void opnieuw[laan.id];
+			void periodeVan;
 			if (laan.live) void volVoor;
 			const types = laan.kinds.filter((k) => kinds.includes(k));
 			volgende[laan.id] = null;
@@ -545,6 +558,26 @@
 		/>
 		{#if overlay}<span class="kbd" aria-hidden="true">esc</span>{/if}
 	</div>
+
+	{#if MET_PERIODE && q.length >= SNEL_MIN}
+		<!-- The same periods as every list with dates, as buttons: no van and tot here. -->
+		<div class="periode">
+			<Keuze
+				klein
+				label="Periode"
+				opties={[
+					{ waarde: '', label: 'Alles', titel: 'Zonder begin of eind' },
+					...VOORKEUZEN.map((v) => ({
+						waarde: maandenTerug(vandaagDag, v.maanden),
+						label: v.label,
+						titel: v.titel
+					}))
+				]}
+				waarde={periodeVan}
+				onKies={(w) => (periodeVan = w)}
+			/>
+		</div>
+	{/if}
 
 	<div
 		class="list"
@@ -767,6 +800,9 @@
 </div>
 
 <style>
+	.periode {
+		padding: var(--s-2) 0;
+	}
 	.search {
 		display: flex;
 		flex-direction: column;

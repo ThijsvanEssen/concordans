@@ -103,6 +103,7 @@
 		type IndexCategory
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { heeftParameter } from '$lib/api/heeft';
 	import { formatCount } from '$lib/verbonden/filter';
 
 	let {
@@ -182,6 +183,14 @@
 	);
 	const outcome = $derived(oneOf(params.get('outcome'), OUTCOMES));
 	const passed = $derived(oneOf(params.get('passed'), ['true', 'false'] as const));
+	// Which list routes take a period yet (the schema of this build).
+	const PERIODE = {
+		instruments: heeftParameter('/api/instruments', 'from', 'to'),
+		commitments: heeftParameter('/api/commitments', 'from', 'to'),
+		members: heeftParameter('/api/members', 'active_from', 'active_to'),
+		factions: heeftParameter('/api/factions', 'active_from', 'active_to'),
+		committees: heeftParameter('/api/committees', 'active_from', 'active_to')
+	};
 	const dateFrom = $derived(params.get('from') ?? '');
 	const dateTo = $derived(params.get('to') ?? '');
 	const dossierFilter = $derived(params.get('dossier') ?? '');
@@ -470,6 +479,7 @@
 					article_count_min: withEmpty ? undefined : 1,
 					legal_area: legalArea || undefined,
 					policy_domain: policyDomain || undefined,
+					...(PERIODE.instruments ? { from: dateFrom || undefined, to: dateTo || undefined } : {}),
 					sort: oneOf(sortDef.id, ['title', 'article_count'] as const),
 					limit
 				};
@@ -545,7 +555,12 @@
 				};
 			}
 			case 'committees': {
-				const query = { chamber: kamer };
+				const query = {
+					chamber: kamer,
+					...(PERIODE.committees
+						? { active_from: dateFrom || undefined, active_to: dateTo || undefined }
+						: {})
+				};
 				return async (_offset, signal) => {
 					const items = await unwrap(api.GET('/api/committees', { params: { query }, signal }));
 					pages.committees = toPage(undefined, items, 0, items.length);
@@ -558,6 +573,9 @@
 					party: party || undefined,
 					active: includeInactive ? undefined : true,
 					include_all: includeInactive,
+					...(PERIODE.members
+						? { active_from: dateFrom || undefined, active_to: dateTo || undefined }
+						: {}),
 					sort: oneOf(sortDef.id, ['family_name', 'name'] as const),
 					limit: includeInactive ? limit : SEATED
 				};
@@ -572,7 +590,10 @@
 				const query = {
 					chamber: kamer,
 					q: q || undefined,
-					active: includeInactive ? undefined : true
+					active: includeInactive ? undefined : true,
+					...(PERIODE.factions
+						? { active_from: dateFrom || undefined, active_to: dateTo || undefined }
+						: {})
 				};
 				return async (_offset, signal) => {
 					const items = await unwrap(api.GET('/api/factions', { params: { query }, signal }));
@@ -606,6 +627,7 @@
 				};
 			case 'ministers': {
 				const key = cabinetParam;
+				const [from, to] = [dateFrom, dateTo];
 				return async (_offset, signal) => {
 					const all = await getCabinets();
 					const chosen = key || currentCabinet(all)?.key;
@@ -625,7 +647,13 @@
 							}))
 						)
 					);
-					pages.ministers = toPage(undefined, rows, 0, rows.length);
+					// A post in the period: its own days meet it (a source value of the cabinet).
+					const inPeriode = rows.filter(
+						(p) =>
+							(!from || !p.to_date || p.to_date >= from) &&
+							(!to || !p.from_date || p.from_date <= to)
+					);
+					pages.ministers = toPage(undefined, inPeriode, 0, inPeriode.length);
 				};
 			}
 			case 'documents': {
@@ -652,7 +680,8 @@
 					ministry: asMinistry(ministry),
 					member: memberParam || undefined,
 					overdue: overdue || undefined,
-					q: q || undefined
+					q: q || undefined,
+					...(PERIODE.commitments ? { from: dateFrom || undefined, to: dateTo || undefined } : {})
 				};
 				const query = {
 					...filters,
@@ -1377,7 +1406,7 @@
 		toggleParam(name, current, value);
 	const flag = (name: string, on: boolean) => () => patchUrl({ [name]: on ? null : '1' });
 
-	const facetGroupsAll = $derived.by<FacetGroup[]>(() => {
+	const facetGroupsBasis = $derived.by<FacetGroup[]>(() => {
 		switch (category) {
 			case 'instruments':
 				return [
@@ -1834,6 +1863,33 @@
 						: [])
 				];
 		}
+	});
+	// The period of a list whose route takes one only once the API has it (Back-end #2,
+	// 0.79.30+; $lib/api/heeft), and of the bewindspersonen, whose posts carry their own days.
+	const PERIODE_LABEL: Partial<Record<string, string>> = {
+		instruments: PERIODE.instruments ? 'In werking getreden' : undefined,
+		commitments: PERIODE.commitments ? 'Gedaan' : undefined,
+		members: PERIODE.members ? 'Actief' : undefined,
+		factions: PERIODE.factions ? 'Actief' : undefined,
+		committees: PERIODE.committees ? 'Actief' : undefined,
+		ministers: 'In functie'
+	};
+	const facetGroupsAll = $derived.by<FacetGroup[]>(() => {
+		const label = PERIODE_LABEL[category];
+		return label
+			? [
+					...facetGroupsBasis,
+					{
+						id: 'period',
+						label,
+						kind: 'range',
+						unit: 'date',
+						from: dateFrom,
+						to: dateTo,
+						onChange: (from: string, to: string) => patchUrl({ from: from || null, to: to || null })
+					}
+				]
+			: facetGroupsBasis;
 	});
 	const chips = $derived(activeFilters(facetGroupsAll));
 	let filtersOpen = $state(false);

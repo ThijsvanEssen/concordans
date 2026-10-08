@@ -171,6 +171,44 @@
 				/>
 			</div>
 
+			<!-- The period first, as in every filter pane (Thijs, 9 Oct). -->
+			<div class="block">
+				<div class="block__label">Periode</div>
+				{#if dateMode}
+					<div class="period">
+						<span class="muted">tot en met</span>
+						<input
+							class="year"
+							type="date"
+							value={draft.geldendOp ?? ''}
+							onchange={(e) =>
+								(draft = {
+									...draft,
+									geldendOp: (e.target as HTMLInputElement).value || null,
+									van: null,
+									tot: null
+								})}
+						/>
+						<span class="muted">of</span>
+						<button
+							type="button"
+							class="link"
+							onclick={() => {
+								dateMode = false;
+								draft = { ...draft, geldendOp: null };
+							}}>een periode</button
+						>
+					</div>
+				{:else}
+					<Periode van={draft.van ?? ''} tot={draft.tot ?? ''} onChange={periode} />
+					<p class="period">
+						<button type="button" class="link" onclick={() => (dateMode = true)}
+							>Of geldend op een datum</button
+						>
+					</p>
+				{/if}
+			</div>
+
 			<div class="block">
 				<div class="block__label">Snel</div>
 				<div class="chips">
@@ -266,43 +304,6 @@
 						>
 					{/each}
 				</div>
-			</div>
-
-			<div class="block">
-				<div class="block__label">Periode</div>
-				{#if dateMode}
-					<div class="period">
-						<span class="muted">tot en met</span>
-						<input
-							class="year"
-							type="date"
-							value={draft.geldendOp ?? ''}
-							onchange={(e) =>
-								(draft = {
-									...draft,
-									geldendOp: (e.target as HTMLInputElement).value || null,
-									van: null,
-									tot: null
-								})}
-						/>
-						<span class="muted">of</span>
-						<button
-							type="button"
-							class="link"
-							onclick={() => {
-								dateMode = false;
-								draft = { ...draft, geldendOp: null };
-							}}>een periode</button
-						>
-					</div>
-				{:else}
-					<Periode van={draft.van ?? ''} tot={draft.tot ?? ''} onChange={periode} />
-					<p class="period">
-						<button type="button" class="link" onclick={() => (dateMode = true)}
-							>Of geldend op een datum</button
-						>
-					</p>
-				{/if}
 			</div>
 
 			<div class="block">
