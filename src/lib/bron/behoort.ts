@@ -4,11 +4,12 @@
 // docs/hierarchie.md ("Kern of context"); a layer the data lacks is left out without a word.
 // Thijs, 9 Oct: "maak het consistent en klikbaar", and the conclusie and eerdere aanleg of an
 // arrest are "vrij cruciale info", not extra data.
-import type { NodeGraph, Neighbor } from '$lib/api/nodes';
+import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getNodeFirst } from '$lib/api/records';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
 import { deelIds, layersOf } from '$lib/text/division';
+import { langeDatum } from '$lib/text/datum';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
 import { isBijWetsvoorstel, naastHetStuk, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
@@ -247,7 +248,27 @@ export function behoort(
 			// The procesgang: eerdere aanleg › this uitspraak › hoger beroep or cassatie, the
 			// instances before the eerdere aanleg asked one by one; and the conclusie of the A-G
 			// or P-G. A conclusie names the arrest it is for.
-			const eerder = eerste('APPEAL_OF', 'outbound', 'judgments', 'Eerdere aanleg');
+			// An eerdere aanleg the source names but the data lacks (`unresolved_appeal_targets`)
+			// stands in the line as text: "Rechtbank Gelderland, 9 juli 2025, 24/6811".
+			const nietInGegevens: Laag[] = (
+				Array.isArray(props.unresolved_appeal_targets)
+					? (props.unresolved_appeal_targets as Record<string, unknown>[])
+					: []
+			).map((t) => {
+				const court = text(t.court) ?? '';
+				const naam = [
+					court.charAt(0).toUpperCase() + court.slice(1),
+					text(t.date) ? langeDatum(text(t.date)!) : null,
+					text(t.case_number)
+				]
+					.filter(Boolean)
+					.join(', ');
+				return { soort: 'Eerdere aanleg, niet in de gegevens', naam, kort: instantie(naam) };
+			});
+			const eerder = [
+				...nietInGegevens,
+				...eerste('APPEAL_OF', 'outbound', 'judgments', 'Eerdere aanleg')
+			];
 			const later = eerste('APPEAL_OF', 'inbound', 'judgments', 'Hoger beroep of cassatie');
 			const gang: Laag[] =
 				eerder.length + later.length > 0
@@ -263,8 +284,8 @@ export function behoort(
 							id: 'procesgang',
 							label: 'Procesgang',
 							lagen: gang,
-							laad: eerder[0]?.ref
-								? async () => [...(await eerdereAanleg(eerder[0].ref!.key)), ...gang]
+							laad: eerder.at(-1)?.ref
+								? async () => [...(await eerdereAanleg(eerder.at(-1)!.ref!.key)), ...gang]
 								: undefined
 						}
 					]
@@ -469,6 +490,59 @@ async function eerdereAanleg(key: string): Promise<Laag[]> {
 		k = n.key;
 	}
 	return keten;
+}
+
+/**
+ * The buckets of the kern per kind of bron: what the lines of the band read. Verbonden leaves
+ * a group out that reads only these (Thijs, 9 Oct: "dubbelop"); Verbonden is the context.
+ */
+export const KERN: Partial<Record<Collection, Bak[]>> = {
+	articles: [{ relation: 'PART_OF', direction: 'outbound', collection: 'instruments' }],
+	judgments: [
+		{ relation: 'APPEAL_OF', direction: 'outbound', collection: 'judgments' },
+		{ relation: 'APPEAL_OF', direction: 'inbound', collection: 'judgments' },
+		{ relation: 'ADVISES_ON', direction: 'inbound', collection: 'judgments' },
+		{ relation: 'ADVISES_ON', direction: 'outbound', collection: 'judgments' }
+	],
+	documents: [
+		{ relation: 'PART_OF', direction: 'outbound', collection: 'dossiers' },
+		{ relation: 'MADE_IN', direction: 'outbound', collection: 'activities' },
+		{ relation: 'ACCOMPANIES', direction: 'outbound', collection: 'documents' }
+	],
+	cases: [{ relation: 'PART_OF', direction: 'outbound', collection: 'dossiers' }],
+	members: [{ relation: 'MEMBER_OF', direction: 'outbound', collection: 'factions' }],
+	activities: [
+		{ relation: 'LED_BY', direction: 'outbound', collection: 'committees' },
+		{ relation: 'ABOUT', direction: 'outbound', collection: 'dossiers' }
+	],
+	decisions: [{ relation: 'ABOUT', direction: 'outbound', collection: 'dossiers' }],
+	commitments: [
+		{ relation: 'MADE_IN', direction: 'outbound', collection: 'activities' },
+		{ relation: 'ABOUT', direction: 'outbound', collection: 'dossiers' }
+	],
+	instruments: [{ relation: 'LEGISLATED_IN', direction: 'outbound', collection: 'dossiers' }]
+};
+
+/**
+ * Whether a group of Verbonden reads only the kern: every bucket it matches is in `KERN`,
+ * and it has no loader of its own.
+ */
+export function isKernGroep(
+	collection: Collection,
+	g: { load?: string; match?: readonly Bucket[] }
+): boolean {
+	const kern = KERN[collection] ?? [];
+	if (g.load || !g.match?.length) return false;
+	const lijst = <T>(v: T | T[]) => (Array.isArray(v) ? v : [v]);
+	return g.match.every((m) =>
+		lijst(m.relation).every((relation) =>
+			lijst(m.collection).every((coll) =>
+				kern.some(
+					(k) => k.relation === relation && k.direction === m.direction && k.collection === coll
+				)
+			)
+		)
+	);
 }
 
 /** Whether a band has anything to show. */

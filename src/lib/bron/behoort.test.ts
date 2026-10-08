@@ -210,3 +210,40 @@ describe('behoort', () => {
 		expect([zonder.regels, zonder.naast]).toEqual([[], []]);
 	});
 });
+
+describe('kern of context', () => {
+	it('leaves the kern out of Verbonden, and only the kern', async () => {
+		const { GROUPS } = await import('$lib/verbonden/groups');
+		const { isKernGroep } = await import('./behoort');
+		const kern = (c: keyof typeof GROUPS) =>
+			(GROUPS[c] ?? []).filter((g) => isKernGroep(c, g)).map((g) => g.id);
+		expect(kern('judgments')).toEqual([
+			'conclusion',
+			'advised',
+			'earlier-instance',
+			'later-instance'
+		]);
+		expect(kern('articles')).toEqual(['law']);
+		expect(kern('documents')).toEqual(['dossier']);
+		expect(kern('members')).toEqual(['factions']);
+		expect(kern('instruments')).toEqual([]);
+	});
+
+	it('puts an eerdere aanleg the data lacks in the procesgang, as text', () => {
+		const b = behoort(
+			'judgments',
+			{
+				unresolved_appeal_targets: [
+					{ court: 'rechtbank Gelderland', date: '2025-07-09', case_number: '24/6811' }
+				]
+			},
+			light([])
+		);
+		expect(b.regels[0].label).toBe('Procesgang');
+		expect(b.regels[0].lagen[0]).toMatchObject({
+			naam: 'Rechtbank Gelderland, 9 juli 2025, 24/6811',
+			kort: 'Rb. Gelderland 2025'
+		});
+		expect(b.regels[0].lagen[0].ref).toBeUndefined();
+	});
+});
