@@ -38,8 +38,10 @@
 			<h2 class="section-title">Opslag in de browser</h2>
 			<p>
 				Concordans bewaart enkele weergave-instellingen in de opslag van de browser: de breedte van
-				de panelen, het laatst samengestelde netwerk en of de legenda open staat. Die blijven in de
-				browser en gaan niet naar een server.
+				de panelen, het laatst samengestelde netwerk en of de legenda open staat. Ook de gevolgde
+				onderwerpen staan daar, met de dag van het vorige bezoek. Die blijven in de browser en gaan
+				niet naar een server. Om nieuwe stukken bij een onderwerp te vinden, gaan de woorden als
+				zoekterm naar de API.
 			</p>
 		</div>
 

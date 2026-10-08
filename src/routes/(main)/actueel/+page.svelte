@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { uniqueBy } from '$lib/util/unique';
+	import { volg, volgt } from '$lib/onderwerpen/onderwerpen';
 	// Actueel: what happened in the Kamer and the government, newest first, per day. Every
 	// filter and the line opened are in the URL, so a view can be shared; the same view is an
 	// Atom feed. Beside it, the day of the newest event: how current the data is.
@@ -117,6 +118,13 @@
 	$effect(() => {
 		if (qDraft === q) qDraft = null;
 	});
+
+	// Following the words searched: new matches on /onderwerpen, kept in this browser.
+	let gevolgd = $derived(volgt(q));
+	function volgQ() {
+		volg([q]);
+		gevolgd = volgt(q);
+	}
 
 	// ── The feed ────────────────────────────────────────────────────────────
 	type Query = NonNullable<paths['/api/feed']['get']['parameters']['query']>;
@@ -497,15 +505,24 @@
 			<a class="atom" href={atomHref} rel="alternate" type="application/atom+xml">Atom-feed</a>
 		</div>
 
-		<label class="search">
-			<span class="visually-hidden">Zoek in Actueel</span>
-			<input
-				type="search"
-				placeholder="Zoek in titels en dossiertitels"
-				value={qDraft ?? q}
-				oninput={(e) => typeQuery(e.currentTarget.value)}
-			/>
-		</label>
+		<div class="zoekregel">
+			<label class="search">
+				<span class="visually-hidden">Zoek in Actueel</span>
+				<input
+					type="search"
+					placeholder="Zoek in titels en dossiertitels"
+					value={qDraft ?? q}
+					oninput={(e) => typeQuery(e.currentTarget.value)}
+				/>
+			</label>
+			{#if q}
+				{#if gevolgd}
+					<a class="volg volg--aan" href="/onderwerpen">Gevolgd</a>
+				{:else}
+					<button type="button" class="volg" onclick={volgQ}>Volg</button>
+				{/if}
+			{/if}
+		</div>
 
 		{#if loading && !items.length}
 			<p class="status">Laden…</p>
@@ -630,6 +647,37 @@
 	.clear:hover,
 	.atom:hover {
 		color: var(--accent);
+	}
+	.zoekregel {
+		display: flex;
+		gap: var(--s-2);
+		align-items: center;
+	}
+	.zoekregel .search {
+		flex: 1;
+		min-width: 0;
+	}
+	.volg {
+		flex: none;
+		height: var(--s-7);
+		padding: 0 var(--s-4);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		background: var(--paper);
+		color: var(--ink);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		cursor: pointer;
+	}
+	.volg--aan {
+		display: inline-flex;
+		align-items: center;
+		box-sizing: border-box;
+		color: var(--ink-2);
+		text-decoration: none;
+	}
+	.volg--aan:hover {
+		color: var(--ink);
 	}
 	.search input {
 		width: 100%;
