@@ -116,6 +116,12 @@ One pattern for every reader: the band "Behoort bij" **is** the kern block. It d
 - The groups under it (Commissies, Samenhang met, Bijlagen as a count) stay folded. A group that is kern for its reader becomes a line.
 - On a phone the first line shows, and the rest folds open.
 
+A relation in the kern does not come back as a group in Verbonden (Thijs, 9 October 2026: "dubbelop"). `KERN` in `src/lib/bron/behoort.ts` lists the buckets the kern lines read, per kind of bron. `isKernGroep` tells Verbonden which of its groups read only those, and it leaves them out of its list and its count. The table keeps every connection.
+
+- Its switch "toon in netwerk" goes with the group. A uitspraak's eerdere aanleg, conclusie and hoger beroep are on the network by default. The wet of an artikel, the dossier of a stuk and the fractie of a lid have their switch under Groepering in the legend.
+- A bron reached by another relation stays in Verbonden. For example, the Rechtbank in the procesgang of HR Urgenda is also cited by the arrest (`REFERS_TO`), so it stays under "Uitspraken die hier worden aangehaald".
+- An eerdere aanleg the data lacks (`unresolved_appeal_targets`) stands in the procesgang as text, without a link.
+
 Thijs's answers (9 October 2026):
 
 - **Lid:** the fractie line carries its period: "Fractie: Volt, sinds 2021"; an earlier fractie "VVD, 2017–2021". It is built from the lid's own `faction_memberships` (`fractiePeriodes` in `src/lib/bron/fractie-periode.ts`): records that follow on (a new role the next day) make one period, and the current fractie comes first. On a phone the period stays.

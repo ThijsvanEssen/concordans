@@ -54,6 +54,7 @@
 		type WetVolgorde
 	} from './volgorde';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import { isKernGroep } from '$lib/bron/behoort';
 	import { get } from 'svelte/store';
 	import {
 		GROUPINGS,
@@ -162,9 +163,17 @@
 		openRow = null;
 	});
 
-	const filtered = $derived(filterGroups(verbonden.groups, filter));
+	// The kern of the bron (Procesgang, Ingediend bij, Wet, Fractie) stands above its text in
+	// the band; Verbonden is the context and leaves those groups out (Thijs, 9 Oct: "dubbelop";
+	// docs/hierarchie.md, Kern of context). Its count is what it lists; the table keeps all.
+	const groepen = $derived(verbonden.groups.filter((g) => !isKernGroep(selection.collection, g)));
+	const alleenKern = $derived(
+		groepen.every((g) => g.rows.length === 0) &&
+			verbonden.groups.some((g) => g.rows.length > 0 && isKernGroep(selection.collection, g))
+	);
+	const filtered = $derived(filterGroups(groepen, filter));
 	const shown = $derived(regroup(filtered, grouping, selection.collection));
-	const hidden = $derived(hiddenLine(verbonden.groups, filter));
+	const hidden = $derived(hiddenLine(groepen, filter));
 	const total = $derived(totalCount(verbonden.groups));
 
 	const rowId = rowKey;
@@ -297,7 +306,7 @@
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
 		{#if verbonden.groups.length > 0}
-			<span class="head__count">{countLine(verbonden.groups, filter)}</span>
+			<span class="head__count">{countLine(groepen, filter)}</span>
 		{/if}
 		<span class="head__space"></span>
 		<div class="menu" use:menu={{ open: openMenu === 'bronnen', close: () => (openMenu = null) }}>
@@ -641,7 +650,9 @@
 			</section>
 		{/each}
 
-		{#if !verbonden.loading && !verbonden.failed && shown.length === 0 && verbonden.groups.length > 0}
+		{#if !verbonden.loading && !verbonden.failed && alleenKern}
+			<p class="note">Geen verbindingen buiten wat boven de tekst staat.</p>
+		{:else if !verbonden.loading && !verbonden.failed && shown.length === 0 && groepen.length > 0}
 			<p class="note">Geen verbindingen binnen de gekozen bronnen en filters.</p>
 		{/if}
 		{#if !verbonden.loading && !verbonden.failed && verbonden.groups.length === 0 && verbonden.id}
