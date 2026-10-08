@@ -22,6 +22,7 @@
 		parts: apiParts = null,
 		citations = [],
 		counts = new Map(),
+		tellend = false,
 		lidHref,
 		citation = null,
 		proposed = null,
@@ -35,6 +36,8 @@
 		citations?: Schema<'ArticleCitationSpan'>[];
 		/** Verbindingen per lid; a lid without an entry shows no count. */
 		counts?: Map<string, number>;
+		/** The counts are still on their way: each lid says "…". */
+		tellend?: boolean;
 		/** The address that filters the panel Verbonden to a lid. */
 		lidHref?: (lid: string) => string;
 		/** What is needed to cite the article; without it Citeer is not offered. */
@@ -108,6 +111,8 @@
 			<a class="lid__count" href={lidHref(lid)} data-sveltekit-noscroll
 				>{formatCount(count)} {count === 1 ? 'verbinding' : 'verbindingen'}</a
 			>
+		{:else if lid && tellend}
+			<span class="lid__count" aria-label="wordt geteld">…</span>
 		{/if}
 		{#if note}
 			<a

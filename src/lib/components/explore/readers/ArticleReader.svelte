@@ -42,6 +42,7 @@
 		nextHref,
 		place = [],
 		lidCounts = new Map(),
+		lidTellend = false,
 		billCount = 0,
 		filter,
 		proposedRow = null,
@@ -52,6 +53,8 @@
 		nextHref?: string;
 		place?: Division[];
 		lidCounts?: Map<string, number>;
+		/** The counts per lid are still on their way. */
+		lidTellend?: boolean;
 		billCount?: number;
 		filter?: VerbondenFilter;
 		proposedRow?: Row | null;
@@ -665,6 +668,7 @@
 					parts={shownVersion?.parts ?? a.parts}
 					citations={shownVersion ? [] : d.citations}
 					counts={shown ? new Map() : lidCounts}
+					tellend={!shown && lidTellend}
 					{lidHref}
 					{citation}
 					{proposed}
