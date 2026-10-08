@@ -94,6 +94,22 @@ function lawOf(hit: Hit): string {
 	return extra(hit, 'short_title') || title;
 }
 
+/**
+ * The name a bill is known by, as the source writes it at the end of its title: "(Wet
+ * betaalbare huur)" in "Wijziging van de Wet goed verhuurderschap, … (Wet betaalbare huur)".
+ * The API's short title first, when a hit carries one. On a phone the long title cuts off
+ * before it (UX audit Z5, 9 Oct).
+ */
+export function citeertitel(hit: Hit): string | null {
+	const kort = extra(hit, 'short_title');
+	if (kort) return kort;
+	const m = /\(([^()]+)\)\s*$/.exec((hit.display_name ?? '').trim());
+	const naam = m?.[1].trim();
+	// A name starts with a capital ("Wet betaalbare huur"); "(vereenvoudiging van de
+	// huurtoeslag)" describes the bill and is no name of it.
+	return naam && /^\p{Lu}/u.test(naam) ? naam : null;
+}
+
 export function presentHit(hit: Hit, query: string): Presented {
 	const snippet = typeof hit.snippet === 'string' ? hit.snippet.trim() : '';
 	switch (hit.collection) {
@@ -137,10 +153,13 @@ export function presentHit(hit: Hit, query: string): Presented {
 				outcome: isOutcome(outcome) ? outcome : null,
 				current_phase: typeof current_phase === 'string' ? current_phase : null
 			});
+			const kort = citeertitel(hit);
+			const lang = hit.display_name ?? hit.key;
 			return {
-				title: hit.display_name ?? hit.key,
+				title: kort ?? lang,
 				context: [extra(hit, 'number'), status].filter(Boolean).join(', '),
-				snippet: null
+				// The long title below the name it is known by.
+				snippet: kort && kort !== lang ? [{ text: lang, mark: false }] : null
 			};
 		}
 		case 'documents': {
@@ -224,7 +243,7 @@ export function presentHit(hit: Hit, query: string): Presented {
 export function sectionOf(hit: Hit): string | null {
 	if (hit.collection !== 'documents') return null;
 	const number = extra(hit, 'dossier_number');
-	return number ? `${number} ${hit.display_name ?? ''}`.trim() : null;
+	return number ? `${number} ${citeertitel(hit) ?? hit.display_name ?? ''}`.trim() : null;
 }
 
 /** Hits of one section together, in the order their sections first appear. */
