@@ -15,6 +15,7 @@
 	const isExplore = $derived(isVerkenner($page.url.pathname) && !isIndex);
 	const isDocs = $derived($page.url.pathname.startsWith('/docs'));
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
+	const isOnderwerpen = $derived($page.url.pathname.startsWith('/onderwerpen'));
 
 	let mobileMenuOpen = $state(false);
 	let toggleBtnEl: HTMLButtonElement | null = $state(null);
@@ -77,6 +78,12 @@
 			class="nav-link"
 			class:is-active={isActueel}
 			aria-current={isActueel ? 'page' : undefined}>Actueel</a
+		>
+		<a
+			href="/onderwerpen"
+			class="nav-link"
+			class:is-active={isOnderwerpen}
+			aria-current={isOnderwerpen ? 'page' : undefined}>Onderwerpen</a
 		>
 		<a
 			href="/docs"
@@ -159,6 +166,7 @@
 			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Verkenner</a>
 			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bladeren</a>
 			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
+			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}>Onderwerpen</a>
 			<a href="/docs" class="mobile-nav-link" class:is-active={isDocs}>Documentatie</a>
 		</div>
 	{/if}
@@ -324,8 +332,19 @@
 			width: 220px;
 		}
 	}
+	/* The five links keep their room: the search field folds to its icon first. */
+	@media (max-width: 900px) {
+		.search-trigger {
+			width: auto;
+		}
+		.search-trigger-label,
+		.kbd {
+			display: none;
+		}
+	}
 
-	@media (max-width: 640px) {
+	/* Five links and the search icon need about 650 px: below that, the menu. */
+	@media (max-width: 720px) {
 		/* Without the links there is no baseline to share. */
 		.topbar {
 			align-items: center;
