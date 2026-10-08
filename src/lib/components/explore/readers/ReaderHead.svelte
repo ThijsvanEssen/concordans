@@ -3,7 +3,7 @@
 	// article: law, book, title; otherwise the kind), then the title. Reader-specific
 	// rows go in the snippet. `nav` sits at the end of the first line, whose place does
 	// not move from one bron to the next, so stepping through them keeps the pointer still.
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import type { Snippet } from 'svelte';
 
@@ -44,8 +44,7 @@
 			</div>
 		{:else}
 			<div class="reader-kind">
-				<KindGlyph {collection} />
-				<span>{kind ?? bronLabel(collection)}</span>
+				<SoortLink {collection}><span>{kind ?? bronLabel(collection)}</span></SoortLink>
 				{#if juris}<span class="reader-juris komma">, {juris}</span>{/if}
 			</div>
 		{/if}

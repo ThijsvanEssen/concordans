@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getDecision, getDecisionDocument } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
@@ -8,7 +9,6 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate } from './_shared';
@@ -86,8 +86,7 @@
 
 			<header class="head">
 				<span class="kicker">
-					<KindGlyph collection="decisions" />
-					{bronLabel('decisions')}
+					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink>
 					{chamberName(chamber)}
 					{#if d.date}<span class="komma">,</span>{formatLongDate(d.date)}{/if}
 				</span>

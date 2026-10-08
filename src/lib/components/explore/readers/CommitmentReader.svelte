@@ -1,11 +1,11 @@
 <script lang="ts">
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getCommitment } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a toezegging: its text, who made it in which post, the ministry and cabinet,
 	// when it was made and when it is expected to be settled, its state and its dossiers.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { indexHref } from '$lib/bron/href';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -84,7 +84,9 @@
 			{@const late =
 				c.status === OPEN_STATUS && !!c.expected_resolution && c.expected_resolution < today}
 			<header class="head">
-				<span class="kicker"><KindGlyph collection="commitments" />{bronLabel('commitments')}</span>
+				<span class="kicker"
+					><SoortLink collection="commitments">{bronLabel('commitments')}</SoortLink></span
+				>
 				<h2 class="text">{c.text ?? 'Toezegging zonder tekst'}</h2>
 			</header>
 

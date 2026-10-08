@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
@@ -8,7 +9,6 @@
 	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { getMemberVotes } from '$lib/components/parliamentary/data';
 	import {
 		careerOf,
@@ -155,9 +155,13 @@
 			{:else}
 				<header class="head">
 					<span class="kicker"
-						><KindGlyph collection="members" />{ekSitting && !sitting
-							? 'Lid van de Eerste Kamer'
-							: currentTitle(career, sitting)}</span
+						><SoortLink
+							collection="members"
+							lijst={(m.government_functions ?? []).length > 0 ? 'ministers' : 'members'}
+							>{ekSitting && !sitting
+								? 'Lid van de Eerste Kamer'
+								: currentTitle(career, sitting)}</SoortLink
+						></span
 					>
 					<div class="member-head-row">
 						<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>

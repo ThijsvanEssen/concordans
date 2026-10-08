@@ -1,15 +1,12 @@
 <script lang="ts">
-	// The bar above the panels: a back arrow, the breadcrumb of the selected bron, Deel,
-	// and the switch Netwerk / Tekst (WeergaveSchakelaar).
+	// The bar above the panels: a back arrow, the name of the bron once its title is out of
+	// view, Deel, and the switch Netwerk / Tekst (WeergaveSchakelaar). In Bladeren: where.
 	// Bladeren is a place to go, not a view of the selected bron, so it lives in the top
 	// nav only, not here.
-	import { shortDossierTitle, type GraphNode } from '$lib/graph/types';
-	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
-	import { bronLabel, type Mode } from '$lib/vocabulary';
-	import { lawKind, publicationName } from './law-head';
-	import { formatDate, textProp } from './readers/_shared';
-	import { bronHref, indexHref } from '$lib/bron/href';
-	import { articleName } from '$lib/text/bw';
+	import type { GraphNode } from '$lib/graph/types';
+	import type { Mode } from '$lib/vocabulary';
+	import { tabTitle } from '$lib/bron/tab-title';
+	import { kop } from '$lib/stores/kop.svelte';
 	import { categoryLabel, isIndexCategory } from './index/categories';
 	import WeergaveSchakelaar from './WeergaveSchakelaar.svelte';
 
@@ -45,95 +42,15 @@
 		onRead?: (on: boolean) => void;
 	} = $props();
 
-	const nodeProps = $derived(node?.raw?.props ?? {});
-
-	// {Law} › Artikel N, {court} › date, or {kind} › name.
-	// A segment that names a place (the law of an article, the kind of a bron) links there.
-	type Segment = { text: string; href?: string };
-	// A law outside the names primed at start is asked for by its own route.
-	$effect(() => {
-		if (node?.collection === 'articles') ensureInstrumentName(textProp(nodeProps.bwb_id));
-	});
-
-	const segments = $derived.by<Segment[]>(() => {
-		if (!node) return [];
-		const p = nodeProps;
-		const segs: Segment[] = [];
-		const add = (text: string | null | undefined, href?: string) => {
-			if (text) segs.push({ text, href });
-		};
-		const kindHref = (collection: string) => indexHref(collection);
-		if (node.collection === 'articles') {
-			const meta = $instrumentMetaStore.get(String(p.bwb_id));
-			const bwb = textProp(p.bwb_id);
-			add(
-				meta?.citationTitle ??
-					meta?.title ??
-					meta?.shortTitle ??
-					textProp(p.instrument_citation_title),
-				bwb ? bronHref({ collection: 'instruments', key: bwb.toLowerCase() }) : undefined
-			);
-			add(articleName(bwb, textProp(p.article_number), textProp(p.label)) ?? undefined);
-		} else if (node.collection === 'judgments') {
-			add(textProp(p.court) ?? textProp(p.court_code));
-			add(formatDate(textProp(p.date)));
-		} else if (node.collection === 'dossiers') {
-			add(bronLabel('dossiers'), kindHref('dossiers'));
-			add(textProp(p.label));
-		} else if (node.collection === 'committees') {
-			add(bronLabel('committees'), kindHref('committees'));
-			add(textProp(p.name) ?? textProp(p.abbreviation) ?? node.label);
-		} else if (node.collection === 'members') {
-			// Someone who held a post in a cabinet is a bewindspersoon, as the head of the reader
-			// says, and leads back to Bewindspersonen.
-			const minister = Array.isArray(p.government_functions) && p.government_functions.length > 0;
-			if (minister) add('Bewindspersoon', kindHref('ministers'));
-			else add(bronLabel('members'), kindHref('members'));
-			add(textProp(p.name) ?? node.label);
-		} else if (node.collection === 'factions') {
-			add(bronLabel('factions'), kindHref('factions'));
-			add(textProp(p.abbreviation) ?? textProp(p.name) ?? node.label);
-		} else if (node.collection === 'instruments') {
-			// Its own kind, as the head of the law says it: Wet, Verordening, Richtlijn. A
-			// publication is named by where it appeared: Staatsblad, Staatscourant.
-			const publication = textProp(p.publication_kind);
-			add(publication ? publicationName(publication) : lawKind(p as Parameters<typeof lawKind>[0]));
-			add(node.label);
-		} else if (node.collection === 'decisions') {
-			// Stemming › Tweede Kamer › Wet proactieve dienstverlening SZW: the Kamer and the
-			// subject, as the tab says it, not the Kamer's case number ("2026-09, Wetgeving").
-			const ek = node.key.startsWith('ek_') || p.chamber === 'EK';
-			const subject = textProp(p.subject);
-			add(bronLabel('decisions'), kindHref('decisions'));
-			add(ek ? 'Eerste Kamer' : 'Tweede Kamer');
-			add(subject ? (shortDossierTitle(subject) ?? subject) : node.label);
-		} else if (node.collection === 'documents' && textProp(p.dossier_number)) {
-			// Stuk › 36799 › Motie nr. 31: the dossier it is in and its number there, as it is
-			// cited, not the Kamer's own short name ("Motie-Beer (VVD)").
-			const dossier = textProp(p.dossier_number)!;
-			const suffix = textProp(p.dossier_suffix);
-			const number = p.sequence != null ? String(p.sequence) : null;
-			const ek = p.chamber === 'EK' || p.source === 'ek';
-			add(bronLabel('documents'), kindHref('documents'));
-			add(
-				suffix ? `${dossier} ${suffix}` : dossier,
-				bronHref(`dossiers/${suffix ? `${dossier}-${suffix}` : dossier}`)
-			);
-			add(
-				[textProp(p.kind) ?? bronLabel('documents'), number && (ek ? number : `nr. ${number}`)]
-					.filter(Boolean)
-					.join(' ')
-			);
-		} else {
-			add(bronLabel(node.collection));
-			add(node.label);
-		}
-		if (tableMode) segs.push({ text: 'Verbindingen' });
-		return segs;
-	});
+	// The place of the bron is the band above its text (Behoort bij); this bar holds the
+	// actions, and names the bron once its title has scrolled away (Thijs, 9 Oct, option A of
+	// statusbalk-voorstel.md). The kind's list is the link above the title (SoortLink).
+	const naam = $derived(node ? tabTitle(node) : '');
+	// The table of verbindingen has no title of its own: the name stands from the start.
+	const zichtbaar = $derived(kop.uitBeeld || tableMode);
 </script>
 
-<div class="status-bar">
+<div class="status-bar" class:status-bar--bron={!!node && mode !== 'index'}>
 	<button type="button" class="back" onclick={onGoBack} aria-label="Terug">←</button>
 
 	{#if mode === 'index'}
@@ -160,17 +77,8 @@
 			</span>
 		{/if}
 	{:else if node}
-		<div class="path">
-			{#each segments as seg, i (i)}
-				{#if i > 0}<span class="sep" aria-hidden="true">›</span>{/if}
-				{#if seg.href && i < segments.length - 1}
-					<a class="seg seg--link" href={seg.href} title={seg.text} data-sveltekit-noscroll
-						>{seg.text}</a
-					>
-				{:else}
-					<span class="seg" title={seg.text}>{seg.text}</span>
-				{/if}
-			{/each}
+		<div class="naam" class:naam--zichtbaar={zichtbaar} aria-hidden={!zichtbaar}>
+			{tableMode ? `${naam}, verbindingen` : naam}
 		</div>
 	{:else if focusError}
 		<div class="error">{focusError}</div>
@@ -252,6 +160,18 @@
 	.sep {
 		flex-shrink: 0;
 	}
+	.naam {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		color: var(--ink-2);
+		opacity: 0;
+		transition: opacity var(--dur-1) var(--ease);
+	}
+	.naam--zichtbaar {
+		opacity: 1;
+	}
 	.count,
 	.error {
 		color: var(--ink-3);
@@ -267,6 +187,10 @@
 	   and the breadcrumb gets the room. */
 	@media (max-width: 768px) {
 		.weergave {
+			display: none;
+		}
+		/* A bron on a phone: ← and Deel stand beside the tabs (explore/+page), the bar goes. */
+		.status-bar--bron {
 			display: none;
 		}
 	}
