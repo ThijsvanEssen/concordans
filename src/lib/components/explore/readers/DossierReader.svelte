@@ -29,14 +29,17 @@
 		| {
 				kind: 'loaded';
 				dossier: Schema<'DossierDetailResponse'>;
-				timeline: Schema<'DossierTimelineResponse'> | null;
-				/** The articles the bill changes; null without them or on an older API. */
-				changed: ChangedArticles | null;
 		  };
 
 	const TIMELINE_LIMIT = 200;
 
 	let view = $state<State>({ kind: 'loading' });
+	// The procedure and the changed articles come after the dossier: the reader stands on the
+	// dossier alone (Thijs, 9 Oct: "alles zo lazy mogelijk"). Null when the API has none.
+	let timeline = $state<Schema<'DossierTimelineResponse'> | null>(null);
+	let timelineLaden = $state(true);
+	/** The articles the bill changes; null without them or on an older API. */
+	let changed = $state<ChangedArticles | null>(null);
 
 	type Reading = Schema<'DossierRelationDTO'>['dossier'];
 	/**
@@ -68,20 +71,31 @@
 		}
 		const ac = new AbortController();
 		view = { kind: 'loading' };
-		// The timeline is optional: when it fails its section is left out.
-		Promise.all([
-			getDossier(number),
-			getDossierTimeline(number, TIMELINE_LIMIT).catch(() => null),
-			// Optional too: a dossier without changed articles has no section.
-			getChangedArticles(number).catch(() => null)
-		])
-			.then(([dossier, timeline, changed]) => {
-				if (!ac.signal.aborted) view = { kind: 'loaded', dossier, timeline, changed };
+		timeline = null;
+		timelineLaden = true;
+		changed = null;
+		getDossier(number)
+			.then((dossier) => {
+				if (!ac.signal.aborted) view = { kind: 'loaded', dossier };
 			})
 			.catch(() => {
 				if (!ac.signal.aborted)
 					view = { kind: 'error', message: 'Dossier kon niet worden geladen.' };
 			});
+		// The timeline is optional: when it fails its section is left out.
+		getDossierTimeline(number, TIMELINE_LIMIT)
+			.catch(() => null)
+			.then((t) => {
+				if (ac.signal.aborted) return;
+				timeline = t;
+				timelineLaden = false;
+			});
+		// Optional too: a dossier without changed articles has no section.
+		getChangedArticles(number)
+			.then((c) => {
+				if (!ac.signal.aborted) changed = c;
+			})
+			.catch(() => {});
 		return () => ac.abort();
 	});
 </script>
@@ -156,8 +170,10 @@
 				{/if}
 			</header>
 
-			{#if view.timeline}
-				{@const p = procedure(d, view.timeline.entries, metOverig)}
+			{#if timelineLaden}
+				<p class="laden">Procedure laden…</p>
+			{:else if timeline}
+				{@const p = procedure(d, timeline.entries, metOverig)}
 				<Sectie titel="Procedure">
 					<Tijdlijn groepen={p.groepen} />
 					{#if p.overig}
@@ -168,8 +184,8 @@
 				</Sectie>
 			{/if}
 
-			{#if view.changed && view.changed.total > 0}
-				<GewijzigdeArtikelen data={view.changed} />
+			{#if changed && changed.total > 0}
+				<GewijzigdeArtikelen data={changed} />
 			{/if}
 		{/if}
 	</div>
@@ -266,5 +282,11 @@
 	}
 	.source a:hover {
 		color: var(--accent);
+	}
+	.laden {
+		margin: var(--s-4) 0 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
 	}
 </style>
