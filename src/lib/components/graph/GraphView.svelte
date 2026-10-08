@@ -191,7 +191,10 @@
 	let legendaOpen = $state(false);
 	$effect(() => {
 		try {
-			legendaOpen = localStorage.getItem(LEGENDA) === 'open';
+			// On a phone it starts closed: the panel Netwerk has the room (laatstOpen).
+			legendaOpen =
+				localStorage.getItem(LEGENDA) === 'open' &&
+				!window.matchMedia('(max-width: 768px)').matches;
 		} catch {
 			legendaOpen = false;
 		}
