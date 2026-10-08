@@ -1,6 +1,13 @@
 import { getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import { inPool } from '$lib/api/pool';
-import { abortable, CANVAS_BUCKET, getNode, getNodeCanvas, getNodeFirst } from '$lib/api/records';
+import {
+	abortable,
+	CANVAS_BUCKET,
+	getNode,
+	getNodeCanvas,
+	getNodeFirst,
+	getNodeHull
+} from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
@@ -157,7 +164,9 @@ export function createExpansion(
 			const response =
 				!opts.force && Number.isFinite(draw) && draw <= CANVAS_BUCKET && !cache.has(id)
 					? await abortable(getNodeCanvas(collection, key), signal())
-					: await nodeResponse(collection, key, opts);
+					: opts.hull && collection === 'instruments' && !opts.force && !cache.has(id)
+						? await abortable(getNodeHull(collection, key), signal())
+						: await nodeResponse(collection, key, opts);
 			return nodes.get(mergeResponse(response, draw) ?? id) ?? null;
 		},
 

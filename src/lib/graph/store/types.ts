@@ -55,6 +55,8 @@ export type GraphExpansionOptions = {
 	neighborLimit?: number;
 	/** Fetch again although the neighbours of the node are cached. */
 	force?: boolean;
+	/** A container drawn as its hull: only the buckets that hold its members (`getNodeHull`). */
+	hull?: boolean;
 };
 
 export const DEFAULT_FILTERS: GraphFilters = {

@@ -22,7 +22,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { tabTitle } from '$lib/bron/tab-title';
 	import { api, ApiError } from '$lib/api/client';
-	import { getNodeCanvas, getNodeFirst } from '$lib/api/records';
+	import { getNodeCanvas, getNodeFirst, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/kop';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
@@ -492,15 +492,19 @@
 			const neighborLimit = containerKindOf(target.collection) ? Number.POSITIVE_INFINITY : 30;
 			// The bron itself first, from its light node: the reader and the panels start while
 			// the node the canvas draws is on its way, asked at the same time: a container's
-			// whole node, an ordinary bron's 30 per bucket (`getNodeCanvas`).
+			// hull (`getNodeHull`: a wet's articles, a dossier's whole node), an ordinary bron's
+			// 30 per bucket (`getNodeCanvas`).
 			const canvasNode = Number.isFinite(neighborLimit)
 				? getNodeCanvas(target.collection, target.key)
-				: store.nodeResponse(target.collection, target.key);
+				: getNodeHull(target.collection, target.key);
 			canvasNode.catch(() => {});
 			const first = await store.peekNode(target.collection, target.key).catch(() => null);
 			if (id !== loadedFocus) return;
 			if (first) store.focusNode(first.id);
-			const node = await store.expandNode(target.collection, target.key, { neighborLimit });
+			const node = await store.expandNode(target.collection, target.key, {
+				neighborLimit,
+				hull: !Number.isFinite(neighborLimit)
+			});
 			if (id !== loadedFocus) return;
 			if (!node) {
 				missing(target.key);
