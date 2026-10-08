@@ -89,7 +89,7 @@ export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Ro
 
 export async function explanatoryDocuments(
 	article: { bwbId: string | null; number: string | null },
-	neighbors: Neighbor[]
+	neighbors: () => Promise<Neighbor[]>
 ): Promise<Row[]> {
 	if (article.bwbId && article.number) {
 		// One request with the reader (`getExplainedBy`); an empty answer means the pipeline
@@ -97,5 +97,5 @@ export async function explanatoryDocuments(
 		const data = await getExplainedBy(article.bwbId, article.number).catch(() => null);
 		if (data && data.items.length > 0) return rowsOfExplanations(data.items);
 	}
-	return mergeExplanatory(neighbors);
+	return mergeExplanatory(await neighbors());
 }

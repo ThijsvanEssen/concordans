@@ -288,13 +288,20 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		return { rows: [...rows.values()] };
 	},
 
-	'article-explanatory': async ({ node, neighbors }) => ({
+	'article-explanatory': async ({ node, buren }) => ({
 		rows: await explanatoryDocuments(
 			{
 				bwbId: bwbOf(node),
 				number: typeof node.props?.article_number === 'string' ? node.props.article_number : null
 			},
-			neighbors
+			() =>
+				buren([
+					{
+						relation: ['EXPLAINS', 'AMENDS', 'INTRODUCES'],
+						direction: 'inbound',
+						collection: 'documents'
+					}
+				])
 		)
 	}),
 
@@ -302,7 +309,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// `cited-by`), counted as the API counts them: passages and judgments (`judgment_total`, 0.62).
 	// Before that: the citing judgments from the node, without a position.
 	// TODO(backend B8): the fallback goes when every article answers on `cited-by`.
-	'article-judgments': async ({ node, neighbors, totals, signal }) => {
+	'article-judgments': async ({ node, buren, totals, signal }) => {
 		const bwb = bwbOf(node);
 		const number =
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
@@ -381,7 +388,9 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		}
 		return {
 			total: totals.get(bucketKey('REFERS_TO', 'judgments', 'inbound')),
-			rows: neighbors
+			rows: (
+				await buren([{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }])
+			)
 				.filter(
 					(n) =>
 						n.relation === 'REFERS_TO' &&
@@ -398,10 +407,16 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	// reference, from the article's own detail (`downstream_implications`). Without
 	// it: the citing articles from the node, the lid read from the phrase.
 	// TODO(backend B6): the aard and the lid belong on the edge of the node response.
-	'article-cited-by': async ({ node, neighbors, totals }) => {
+	'article-cited-by': async ({ node, buren, totals }) => {
 		const bwb = bwbOf(node);
 		const number =
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
+		const [neighbors, detail] = await Promise.all([
+			buren([
+				{ relation: ['REFERS_TO', 'BASED_ON'], direction: 'inbound', collection: 'articles' }
+			]),
+			bwb && number ? getArticleDetail(bwb, number).catch(() => null) : null
+		]);
 		const fromNode = neighbors
 			.filter(
 				(n) =>
@@ -414,7 +429,6 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		const total =
 			(totals.get(bucketKey('REFERS_TO', 'articles', 'inbound')) ?? 0) +
 				(totals.get(bucketKey('BASED_ON', 'articles', 'inbound')) ?? 0) || undefined;
-		const detail = bwb && number ? await getArticleDetail(bwb, number).catch(() => null) : null;
 		const byKey = new Map(fromNode.map((r) => [r.ref.key, r]));
 		for (const rel of detail?.downstream_implications ?? []) {
 			const t = rel.target_article;
@@ -442,7 +456,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	// The changes of an article, enacted and proposed, each with its dossier and date
 	// (`legislative-history`). Without the route: the bills that change it, from the node.
-	'article-changes': async ({ node, neighbors, totals, signal }) => {
+	'article-changes': async ({ node, buren, totals, signal }) => {
 		const bwb = bwbOf(node);
 		const number =
 			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
@@ -470,7 +484,15 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			total:
 				changes.reduce((n, r) => n + (totals.get(bucketKey(r, 'documents', 'inbound')) ?? 0), 0) ||
 				undefined,
-			rows: neighbors
+			rows: (
+				await buren([
+					{
+						relation: ['AMENDS', 'INTRODUCES', 'REPEALS'],
+						direction: 'inbound',
+						collection: 'documents'
+					}
+				])
+			)
 				.filter(
 					(n) =>
 						changes.includes(n.relation as string) &&

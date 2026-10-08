@@ -34,7 +34,7 @@ export const getNodeGraph = (
 		})
 	);
 
-type NodeGraph = Schema<'NodeGraphResponse'>;
+export type NodeGraph = Schema<'NodeGraphResponse'>;
 export type Neighbor = Schema<'NeighborDTO'>;
 
 /** One bucket or a few of one direction: a group's or a loader's. */
