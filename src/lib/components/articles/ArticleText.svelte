@@ -244,11 +244,13 @@
 		margin-left: -48px;
 	}
 
-	/* A lid: 36px for the number, the text, 150px at the right. */
+	/* A lid: 36px for the number (in the frame's margin), the text to the column's right
+	   edge, its count and actions under it (Thijs, 9 Oct: "de artikelen oprekken" to the
+	   width of the reader). */
 	.lid {
 		position: relative;
 		display: grid;
-		grid-template-columns: 36px 1fr 150px;
+		grid-template-columns: 36px minmax(0, 1fr);
 		gap: 0 var(--s-3);
 		align-items: start;
 		padding: var(--s-1) var(--s-3) var(--s-1) 0;
@@ -319,11 +321,11 @@
 	.lid__side {
 		position: relative;
 		z-index: 2;
+		grid-column: 2;
 		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 2px;
-		padding-top: var(--s-1);
+		align-items: baseline;
+		gap: var(--s-3);
+		padding-top: 2px;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -381,26 +383,16 @@
 	.part.is-open > .part__number {
 		color: var(--accent);
 	}
-	/*
-	 * The onderdeel's hover area runs on through the gap into the lid's right column, over
-	 * the onderdeel's full height, so the pointer reaches its actions without leaving it.
-	 * A deeper onderdeel's area comes later in the page and so lies on top.
-	 */
-	.part--onderdeel::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		left: 100%;
-		width: 162px;
-	}
-	/* In the lid's right column, level with the onderdeel's first line. */
+	/* Over the end of the onderdeel's last line, so the text keeps the
+	   column's width and nothing moves when the actions appear. */
 	.part__actions {
 		position: absolute;
-		top: 0;
-		left: calc(100% + 12px);
+		right: 0;
+		bottom: 0;
 		z-index: 3;
-		width: 150px;
+		padding-left: var(--s-2);
+		/* The onderdeel's own tint while it is pointed at, so the actions sit on it. */
+		background: inherit;
 		display: flex;
 		opacity: 0;
 		justify-content: flex-end;
@@ -465,9 +457,6 @@
 		/* No right column: the actions follow the onderdeel's text while it is touched. */
 		.part {
 			flex-wrap: wrap;
-		}
-		.part--onderdeel::before {
-			content: none;
 		}
 		.part__actions {
 			position: static;

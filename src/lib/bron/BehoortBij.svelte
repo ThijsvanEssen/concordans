@@ -106,7 +106,9 @@
 	});
 
 	const groepen = $derived([...band.naast, ...band.onder]);
-	const verborgen = $derived(regels.length - 1 + groepen.length);
+	// What the phone's first line folds away: the lines after it and the groups; with no line
+	// at all (a kabinet), the groups behind the button alone.
+	const verborgen = $derived(Math.max(regels.length - 1, 0) + groepen.length);
 	// The fold button on a phone: the one group by its name where the line has room for it.
 	const knop = $derived(
 		regels.length === 0 && groepen.length === 1
@@ -130,7 +132,7 @@
 {/snippet}
 
 {#if heeftIets(band)}
-	<nav class="behoort" class:uit aria-label="Behoort bij">
+	<nav class="behoort" class:uit class:zonder-kern={regels.length === 0} aria-label="Behoort bij">
 		{#if regels.length > 0}
 			<dl class="regels">
 				{#each regels as r, i (r.id)}
@@ -328,6 +330,10 @@
 	}
 	/* A phone: the first line, the rest once it is opened. */
 	@media (max-width: 768px) {
+		/* Without a kern line (a kabinet) a phone shows no band: its groups are in Verbonden. */
+		.behoort.zonder-kern {
+			display: none;
+		}
 		.meer {
 			display: inline-flex;
 		}

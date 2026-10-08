@@ -411,7 +411,6 @@
 		margin: 0 0 var(--s-6);
 		padding: 0;
 		list-style: none;
-		max-width: var(--measure);
 	}
 	.samenhang li + li {
 		margin-top: var(--s-3);
@@ -555,11 +554,6 @@
 		color: var(--ink);
 	}
 
-	.reader-heading,
-	.reader-subheading {
-		max-width: var(--measure);
-	}
-
 	.reader-heading {
 		display: flex;
 		align-items: baseline;
@@ -630,10 +624,6 @@
 		overflow-wrap: break-word;
 	}
 
-	.reader-para--prose {
-		max-width: var(--measure);
-	}
-
 	/* The number of an overweging hangs left of the text; every paragraph of a judgment
 	   with numbers stands in the text column, so an overweging and what continues it
 	   start at one edge. */
@@ -667,9 +657,11 @@
 		grid-template-columns: var(--rov-num) minmax(0, 1fr);
 		gap: 0 var(--rov-gap);
 		margin-bottom: 1.3em;
+		/* The hover background reaches beyond the text on the right, so the text keeps the
+		   column's right edge. */
 		padding: 2px var(--s-2) 2px 0;
 		margin-left: calc(-1 * var(--s-2));
-		max-width: calc(var(--measure) + var(--rov-num) + var(--rov-gap) + var(--s-2));
+		margin-right: calc(-1 * var(--s-2));
 	}
 
 	.reader-para-block {
@@ -758,7 +750,6 @@
 	/* The lines the Parket signs a conclusion with, under the text. */
 	.reader-signature {
 		margin: var(--s-6) 0 0;
-		max-width: var(--measure);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 		color: var(--ink-2);

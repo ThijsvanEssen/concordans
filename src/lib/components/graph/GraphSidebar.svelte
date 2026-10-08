@@ -14,15 +14,13 @@
 		PRESETS,
 		activePreset,
 		bronnenLabel,
-		formatCount,
-		hiddenByKind,
 		toggleKind,
 		withPreset,
 		type BronKind,
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
-	import { allRows, hiddenLine, kindTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
+	import { allRows, kindTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
 	import { edgeColorFor, edgeStyleFor, hullColorFor, hullDashFor } from './nodeSprites';
 	import { kindOfCollection } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -65,8 +63,6 @@
 		hiddenGroups?: ReadonlySet<ContainerKind>;
 		onToggleGroup?: (kind: ContainerKind) => void;
 		canvasCounts: {
-			nodes: number;
-			edges: number;
 			kinds?: Partial<Record<BronKind, number>>;
 			metGroep?: Partial<
 				Record<BronKind, { count: number; van: number; groepen: ContainerKind[] }>
@@ -143,9 +139,6 @@
 		const n = OP_HET_NETWERK[k];
 		return n ? `${n.label} (in Verbonden: ${n.elders})` : undefined;
 	};
-	const hidden = $derived(
-		fromCanvas ? hiddenByKind([], totals, filter) : hiddenLine(verbonden.groups, filter)
-	);
 	const lids = $derived(
 		[...(verbonden.lidTellingen ?? lidCounts(allRows(verbonden.groups)))]
 			.map(([k]) => k)
@@ -304,14 +297,16 @@
 		{/if}
 
 		<section class="block">
-			<div class="block__label">
-				{netwerkActive ? 'Context rond de gekozen bron' : 'Diepte'}
+			<!-- The label says what the buttons do; the rest in a title (Thijs, 9 Oct: what the
+			     interface makes clear is not written out under it). -->
+			<div
+				class="block__label"
+				title={netwerkActive
+					? 'De buren van de gekozen bron erbij; het netwerk blijft'
+					: `Stappen vanaf de bron, per stap hooguit ${grens} bronnen`}
+			>
+				{netwerkActive ? 'Buren' : 'Diepte'}
 			</div>
-			<p class="uitleg">
-				{netwerkActive
-					? 'Voegt de buren van de geselecteerde bron toe; het netwerk blijft.'
-					: 'Stappen vanaf de bron.'}
-			</p>
 			<div class="chips">
 				{#each DEPTHS as d (d)}
 					{@const reden =
@@ -331,15 +326,12 @@
 					>
 				{/each}
 			</div>
-			<p class="uitleg">
-				{#if netwerkActive && !selectionCollection}
-					{NO_SELECTION_REASON}
-				{:else if !netwerkActive && reach?.capped}
-					{CAPPED_REASON}
-				{:else}
-					Per stap hooguit {grens} bronnen.
-				{/if}
-			</p>
+			<!-- Why the buttons are off, where they are: a state, not an explanation. -->
+			{#if netwerkActive && !selectionCollection}
+				<p class="uitleg">{NO_SELECTION_REASON}</p>
+			{:else if !netwerkActive && reach?.capped}
+				<p class="uitleg">{CAPPED_REASON}</p>
+			{/if}
 		</section>
 
 		{#if lids.length > 0}
@@ -398,16 +390,6 @@
 			</section>
 		{/if}
 
-		<p class="status">
-			{formatCount(canvasCounts.nodes)}
-			{canvasCounts.nodes === 1 ? 'bron' : 'bronnen'}, {formatCount(canvasCounts.edges)}
-			{canvasCounts.edges === 1 ? 'verbinding' : 'verbindingen'} in het netwerk.
-			{#if hidden.length > 0}
-				{hidden.map((h) => `${formatCount(h.count)} ${kindLabel(h.kind).toLowerCase()}`).join(', ')} verborgen
-				door het bronfilter.
-			{/if}
-		</p>
-
 		<section class="block">
 			<div class="block__label">Overlay</div>
 			<div class="block">
@@ -428,6 +410,7 @@
 						class:is-primary={mutOn}
 						aria-pressed={mutOn}
 						disabled={!onToggleMutatie}
+						title="Een ring om de bronnen die een wetsvoorstel wil wijzigen"
 						onclick={() => {
 							if (!mutOn) onToggleMutatie?.();
 						}}
@@ -440,6 +423,7 @@
 						class:is-primary={heatOn}
 						aria-pressed={heatOn}
 						disabled={!onToggleHeat}
+						title="Hoe vaak een bron in de gekozen periode is aangehaald"
 						onclick={() => {
 							if (!heatOn) onToggleHeat?.();
 						}}>Verwijzingen per maand</button
@@ -459,16 +443,6 @@
 						{/each}
 					</div>
 				{/if}
-				<p class="uitleg">
-					{#if mutOn}
-						Open dossiers: een ring om de bronnen die een wetsvoorstel wil wijzigen.
-					{:else if heatOn}
-						Verwijzingen per maand: hoe vaak een bron in de gekozen periode is aangehaald.
-					{:else}
-						Open dossiers toont wat een wetsvoorstel wil wijzigen; verwijzingen per maand hoe vaak
-						een bron recent is aangehaald.
-					{/if}
-				</p>
 			</div>
 		</section>
 	{/if}
@@ -576,12 +550,6 @@
 	.empty {
 		margin: 0;
 		font-size: var(--t-meta);
-		color: var(--ink-3);
-		line-height: 1.4;
-	}
-	.status {
-		margin: auto 0 0;
-		font-size: var(--t-micro);
 		color: var(--ink-3);
 		line-height: 1.4;
 	}
