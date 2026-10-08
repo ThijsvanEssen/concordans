@@ -20,12 +20,9 @@
 		deelAdres,
 		lees,
 		nieuwBezoek,
-		haalTermWeg,
 		normaal,
 		ontvolg,
-		splitsTermen,
 		uitParams,
-		voegTermenToe,
 		volg,
 		woordIn,
 		zetGezien,
@@ -167,27 +164,11 @@
 	let invoer = $state('');
 	function voegToe(e: SubmitEvent) {
 		e.preventDefault();
-		const termen = splitsTermen(invoer);
+		const termen = invoer.split(',').map(normaal).filter(Boolean);
 		if (!termen.length) return;
 		volg(termen);
 		eigen = lees();
 		invoer = '';
-	}
-	// Words of a topic changed in place: the topic loads again under its new words.
-	let bewerkt = $state<string | null>(null);
-	let erbij = $state('');
-	function voegWoordToe(e: SubmitEvent, o: Onderwerp) {
-		e.preventDefault();
-		voegTermenToe(o.termen[0], splitsTermen(erbij));
-		eigen = lees();
-		erbij = '';
-		bewerkt = sleutel(eigen.find((x) => x.termen[0] === o.termen[0]) ?? o);
-	}
-	function haalWeg(o: Onderwerp, term: string) {
-		haalTermWeg(term);
-		eigen = lees();
-		const blijft = o.termen.find((t) => t !== term);
-		bewerkt = sleutel(eigen.find((x) => blijft && x.termen.includes(blijft)) ?? o);
 	}
 	function verwijder(o: Onderwerp) {
 		ontvolg(o.termen[0]);
@@ -234,15 +215,15 @@
 		{:else}
 			<p class="uitleg">
 				Nieuwe stukken, stemmingen en toezeggingen in Actueel met deze woorden in de titel, sinds
-				het vorige bezoek. Synoniemen horen bij één onderwerp: AI; kunstmatige intelligentie. Een
-				stuk dat meer woorden raakt, telt één keer. De onderwerpen staan alleen in deze browser.
+				het vorige bezoek. Meer woorden voor één onderwerp staan met een komma ertussen. De
+				onderwerpen staan alleen in deze browser.
 			</p>
 			<form class="nieuw" onsubmit={voegToe}>
 				<input
 					type="text"
 					aria-label="Onderwerp volgen"
 					bind:value={invoer}
-					placeholder="Woorden of synoniemen, gescheiden door ; of ,"
+					placeholder="kunstmatige intelligentie, AI"
 				/>
 				<button type="submit" disabled={!normaal(invoer)}>Volg</button>
 			</form>
@@ -269,7 +250,7 @@
 		{@const s = standen[vak(o)]}
 		<section class="onderwerp" aria-labelledby="onderwerp-{n}">
 			<div class="onderwerp__kop">
-				<h2 id="onderwerp-{n}">{o.termen.join('; ')}</h2>
+				<h2 id="onderwerp-{n}">{o.termen.join(', ')}</h2>
 				<p class="sinds">
 					{#if s?.status === 'klaar'}
 						{s.meer ? 'ten minste ' : ''}{s.items.length} nieuw,
@@ -277,40 +258,9 @@
 					{o.vorige ? `sinds ${shortDate(o.vorige)}` : `de afgelopen ${DAGEN_ZONDER_BEZOEK} dagen`}
 				</p>
 				{#if !gedeeld.length}
-					<button
-						type="button"
-						class="stil"
-						aria-expanded={bewerkt === sleutel(o)}
-						onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}>Woorden</button
-					>
 					<button type="button" class="stil" onclick={() => verwijder(o)}>Niet meer volgen</button>
 				{/if}
 			</div>
-			{#if bewerkt === sleutel(o) && !gedeeld.length}
-				<div class="woorden">
-					<ul>
-						{#each o.termen as term (term)}
-							<li>
-								{term}{#if o.termen.length > 1}<button
-										type="button"
-										class="weg"
-										aria-label="‘{term}’ weghalen"
-										onclick={() => haalWeg(o, term)}>×</button
-									>{/if}
-							</li>
-						{/each}
-					</ul>
-					<form class="nieuw nieuw--klein" onsubmit={(e) => voegWoordToe(e, o)}>
-						<input
-							type="text"
-							aria-label="Woord toevoegen aan dit onderwerp"
-							bind:value={erbij}
-							placeholder="Woord of synoniem"
-						/>
-						<button type="submit" disabled={!normaal(erbij)}>Toevoegen</button>
-					</form>
-				</div>
-			{/if}
 			{#if !s || s.status === 'laden'}
 				<p class="status">Laden…</p>
 			{:else if s.status === 'fout'}
@@ -432,43 +382,7 @@
 		gap: var(--s-2) var(--s-4);
 		margin-bottom: var(--s-3);
 	}
-	.woorden {
-		margin: 0 0 var(--s-4);
-	}
-	.woorden ul {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-2);
-		margin: 0 0 var(--s-3);
-		padding: 0;
-		list-style: none;
-	}
-	.woorden li {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-		padding: var(--s-1) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-	}
-	button.weg {
-		height: auto;
-		padding: 0 0 0 var(--s-1);
-		border: 0;
-		background: none;
-		color: var(--ink-3);
-	}
-	button.weg:hover {
-		color: var(--ink);
-	}
-	.nieuw--klein {
-		max-width: 420px;
-	}
 	.onderwerp__kop h2 {
-		/* The words above, what is new and the actions on a line below. */
-		flex-basis: 100%;
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);

@@ -210,15 +210,16 @@
 			<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
 			     a case of the kind Motie, which "Motie, 7 sep. 2026, Motie" said twice. -->
 			{@const caseKinds = (doc.case_kinds ?? []).filter(
-				(k) => k.toLowerCase() !== doc.kind?.toLowerCase()
+				(k) => !doc.kind?.toLowerCase().startsWith(k.toLowerCase())
 			)}
 			<header class="head">
-				<span class="kicker">
-					{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
-							'Document'}{/if}
-					{#if doc.date}<span class="komma">,</span>{formatDate(doc.date)}{/if}
-					{#if caseKinds.length}<span class="komma">,</span>{caseKinds.join(', ')}{/if}
-				</span>
+				<!-- Running text, the comma against the word before it: as flex items they stood
+				     apart on a phone ("Amendement (…) , 25 apr. 2024 , Amendement"). -->
+				<span class="kicker"
+					>{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
+							'Document'}{/if}{#if doc.date}, {formatDate(doc.date)}{/if}{#if caseKinds.length},
+						{caseKinds.join(', ')}{/if}</span
+				>
 				<h2 class="title">{doc.title ?? doc.key}</h2>
 				{#if doc.submitters?.length}
 					<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
@@ -418,18 +419,13 @@
 		gap: var(--s-1);
 	}
 	.kicker {
+		display: block;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		font-weight: 500;
 		color: var(--ink-3);
-		display: flex;
-		gap: var(--s-1);
-		align-items: baseline;
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
-	.komma {
-		margin-left: calc(-1 * var(--s-1));
-	}
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);

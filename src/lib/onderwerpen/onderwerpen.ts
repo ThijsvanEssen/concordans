@@ -51,22 +51,8 @@ export function bewaar(lijst: Onderwerp[]) {
 
 export const volgt = (term: string) => !!normaal(term) && vindIndex(lees(), term) >= 0;
 
-/** The words once each, whatever their capitals, in the order given. */
-export function uniek(termen: string[]): string[] {
-	const gezien = new Set<string>();
-	return termen.map(normaal).filter((t) => {
-		const k = t.toLowerCase();
-		if (!t || gezien.has(k)) return false;
-		gezien.add(k);
-		return true;
-	});
-}
-
-/** `AI; kunstmatige intelligentie, artificial intelligence`: words apart by `;` or `,`. */
-export const splitsTermen = (invoer: string) => uniek(invoer.split(/[;,]/));
-
 export function volg(termen: string[]) {
-	const schoon = uniek(termen);
+	const schoon = [...new Set(termen.map(normaal).filter(Boolean))];
 	if (!schoon.length) return;
 	const lijst = lees();
 	if (schoon.some((t) => vindIndex(lijst, t) >= 0)) return;
@@ -77,26 +63,6 @@ export function ontvolg(term: string) {
 	const lijst = lees();
 	const i = vindIndex(lijst, term);
 	if (i >= 0) bewaar(lijst.filter((_, j) => j !== i));
-}
-
-/** More words for the topic `term` is in; a word another topic has stays there. */
-export function voegTermenToe(term: string, nieuw: string[]) {
-	const lijst = lees();
-	const i = vindIndex(lijst, term);
-	if (i < 0) return;
-	const erbij = uniek(nieuw).filter((t) => vindIndex(lijst, t) < 0);
-	if (!erbij.length) return;
-	lijst[i] = { ...lijst[i], termen: [...lijst[i].termen, ...erbij] };
-	bewaar(lijst);
-}
-
-/** One word less; the last word of a topic stays, as dropping it is `ontvolg`. */
-export function haalTermWeg(term: string) {
-	const lijst = lees();
-	const i = vindIndex(lijst, term);
-	if (i < 0 || lijst[i].termen.length < 2) return;
-	lijst[i] = { ...lijst[i], termen: lijst[i].termen.filter((t) => !gelijk(t, term)) };
-	bewaar(lijst);
 }
 
 /**
@@ -131,13 +97,10 @@ export function zetGezien(term: string, dag: string) {
 export const naarParam = (termen: string[]) => termen.map(normaal).join('|');
 
 export function uitParams(params: URLSearchParams): string[][] {
-	return (
-		params
-			.getAll('onderwerp')
-			// `|` since 9 Oct; `;` as typed works too.
-			.map((v) => uniek(v.split(/[|;]/)))
-			.filter((t) => t.length)
-	);
+	return params
+		.getAll('onderwerp')
+		.map((v) => [...new Set(v.split('|').map(normaal).filter(Boolean))])
+		.filter((t) => t.length);
 }
 
 export function deelAdres(lijst: Pick<Onderwerp, 'termen'>[]): string {

@@ -77,7 +77,14 @@ describe('a readable address', () => {
 		expect(padOfFocus('instruments/x', { official_id: 'stcrt-2025-1234' })).toBe(
 			'/stcrt/2025/1234'
 		);
-		expect(padOfFocus('instruments/bwbr0005537')).toBeNull();
+	});
+
+	it('reads a law by its BWB id, and names it so', () => {
+		expect(parsePad('/wetten/BWBR0005537')).toEqual({ soort: 'wet', wet: 'BWBR0005537' });
+		expect(parsePad('/wetten/bwbr0005537')).toEqual({ soort: 'wet', wet: 'BWBR0005537' });
+		expect(parsePad('/wetten/Awb')).toBeNull();
+		expect(padOfFocus('instruments/bwbr0005537')).toBe('/wetten/BWBR0005537');
+		expect(focusOfPad({ soort: 'wet', wet: 'BWBR0005537' })).toBe('instruments/bwbr0005537');
 	});
 
 	it('reads the letter of a stuk of the Eerste Kamer', () => {

@@ -500,6 +500,10 @@
 	function focusOnMount(node: HTMLInputElement) {
 		if (overlay) node.focus();
 	}
+
+	/** "Artikel 3:4 Awb" under the kind Artikel: the kind is not said twice. */
+	const begintMet = (naam: string, soort: string) =>
+		naam.toLowerCase().startsWith(`${soort.toLowerCase()} `);
 </script>
 
 <svelte:window onpointermove={(e) => (pointerAt = placeOf(e))} />
@@ -617,6 +621,8 @@
 			<!-- "36799, nr. 31" is a stuk; the dossier itself has no number after it. -->
 			{@const kind =
 				citation.kind === 'dossier' && citation.document ? 'documents' : CITED[citation.kind]}
+			<!-- The name from the source once the answer has it, not the query as typed. -->
+			{@const naam = (resolvedWith?.term === q ? resolvedWith.target?.label : null) ?? q}
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<div
 				id="{uid}-row-0"
@@ -628,8 +634,11 @@
 				onclick={openCitation}
 				onpointermove={(e) => onpointermove(e, 0)}
 			>
-				<span class="row-kind"><KindGlyph collection={kind} /> {bronLabel(kind)}</span>
-				<span class="row-title">{q}</span>
+				<span class="row-kind"
+					><KindGlyph collection={kind} />{#if !begintMet(naam, bronLabel(kind))}
+						{bronLabel(kind)}{/if}</span
+				>
+				<span class="row-title">{naam}</span>
 				<span class="kbd" aria-hidden="true">↵</span>
 			</div>
 		{:else if bare}
@@ -650,7 +659,10 @@
 				onpointermove={(e) => onpointermove(e, 0)}
 			>
 				<span class="row-kind"
-					><KindGlyph collection={bare.ref.collection} /> {bronLabel(bare.ref.collection)}</span
+					><KindGlyph
+						collection={bare.ref.collection}
+					/>{#if !begintMet(bare.label ?? q, bronLabel(bare.ref.collection))}
+						{bronLabel(bare.ref.collection)}{/if}</span
 				>
 				<span class="row-title">{bare.label ?? q}</span>
 				<span class="kbd" aria-hidden="true">↵</span>
@@ -666,7 +678,9 @@
 				aria-labelledby="{uid}-{gid}"
 			>
 				<div class="group-label" id="{uid}-{gid}">
-					{#if group.beste}Beste treffer{:else}<KindGlyph collection={group.kind} />
+					<!-- The best hit says what it is, as every group does: "Beste treffer, Dossier". -->
+					{#if group.beste}Beste treffer, <KindGlyph collection={group.kind} />
+						{bronLabel(group.kind)}{:else}<KindGlyph collection={group.kind} />
 						{groupLabel(group.kind)}{/if}
 					{#if ladend.has(group.kind)}<span class="laden">laden…</span>{/if}
 				</div>

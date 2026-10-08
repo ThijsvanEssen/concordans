@@ -28,7 +28,7 @@
 	import { kopNode } from '$lib/bron/kop';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
-	import { getDossier, getMemberVotes } from '$lib/components/parliamentary/data';
+	import { getDossierKey, getMemberVotes } from '$lib/components/parliamentary/data';
 	import { createGraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import GraphView from '$lib/components/graph/GraphView.svelte';
@@ -482,7 +482,7 @@
 				.catch(() => {});
 			if (target.collection === 'members') void getMemberVotes(target.key).catch(() => {});
 			// A link names a dossier by its number (`37020-XV`); the API gives its node key.
-			if (target.collection === 'dossiers') target.key = (await getDossier(target.key)).key;
+			if (target.collection === 'dossiers') target.key = await getDossierKey(target.key);
 			if (id !== loadedFocus) return;
 			const onCanvas =
 				store.getNodeById(`${target.collection}/${target.key}`) ??
@@ -618,8 +618,7 @@
 			const target = parseNodeId(id);
 			if (!target) return Promise.reject(new Error(`no bron ${id}`));
 			request = (async () => {
-				const key =
-					target.collection === 'dossiers' ? (await getDossier(target.key)).key : target.key;
+				const key = target.collection === 'dossiers' ? await getDossierKey(target.key) : target.key;
 				return store.nodeResponse(target.collection, key);
 			})();
 			request.then(
@@ -635,7 +634,7 @@
 		if (full.has(id)) return responseOf(id);
 		const target = parseNodeId(id);
 		if (!target) throw new Error(`no bron ${id}`);
-		const key = target.collection === 'dossiers' ? (await getDossier(target.key)).key : target.key;
+		const key = target.collection === 'dossiers' ? await getDossierKey(target.key) : target.key;
 		return getNodeFirst(target.collection, key);
 	}
 
