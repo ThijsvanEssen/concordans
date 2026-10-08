@@ -10,7 +10,7 @@
 	import { onControl } from '$lib/actions/outside';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { getCoverage, type Coverage } from '$lib/api/stats';
 	import { coverageFor } from './coverage';
 	import { bronHref, refId } from '$lib/bron/href';
@@ -78,7 +78,9 @@
 		inNetwerk,
 		onProposedText,
 		tableHref,
-		onRetry
+		onRetry,
+		onMeer,
+		onAlles
 	}: {
 		verbonden: VerbondenState;
 		selection: GraphNode;
@@ -100,6 +102,10 @@
 		tableHref: string;
 		/** Loads the verbindingen again after a failed load; without it no Opnieuw is offered. */
 		onRetry?: () => void;
+		/** A group is opened: its rows beyond the first few are asked now. */
+		onMeer?: (groupId: string) => void;
+		/** Every row, before a copy or an export. */
+		onAlles?: () => Promise<void>;
 	} = $props();
 
 	const PREVIEW = 3;
@@ -142,9 +148,10 @@
 		onRetry?.();
 	});
 
-	// A new bron starts closed.
+	// A new bron starts closed; the same bron with more rows (a group opened) stays as it is.
+	const bronId = $derived(verbonden.id);
 	$effect(() => {
-		void verbonden.id;
+		void bronId;
 		expanded = new Set();
 		openRow = null;
 	});
@@ -201,9 +208,16 @@
 	}
 
 	const copier = createCopier();
-	const copyAll = () => copier.copy(rowsToText(allRows(shown)), 'all');
+	// A copy and an export hold every row: those not loaded yet are asked first.
+	const copyAll = async () => {
+		await onAlles?.();
+		await tick();
+		copier.copy(rowsToText(allRows(shown)), 'all');
+	};
 
-	function exportCsv() {
+	async function exportCsv() {
+		await onAlles?.();
+		await tick();
 		download(
 			csvName(selection.label, selection.key),
 			rowsToCsv(mentionRows(allRows(shown)), selection.collection, page.url.origin)
@@ -537,7 +551,10 @@
 					<button
 						type="button"
 						class="group__more"
-						onclick={() => (expanded = toggle(expanded, g.id))}
+						onclick={() => {
+							if (!all && (g.total ?? 0) > g.rows.length) onMeer?.(g.id);
+							expanded = toggle(expanded, g.id);
+						}}
 					>
 						{all ? 'Minder' : `Alle ${formatCount(count)} ${g.noun ?? 'verbindingen'}`}
 					</button>
