@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -107,7 +108,7 @@
 				? ' en '
 				: ', '}{/if}<BronLink
 			ref={{ collection: 'dossiers', key: r.key, number: r.number }}
-			title={r.title ?? undefined}>{r.number}</BronLink
+			title={r.title ?? undefined}><DossierNaam dossier={r} /></BronLink
 		>{/each}
 {/snippet}
 
