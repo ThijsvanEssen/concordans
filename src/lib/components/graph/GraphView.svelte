@@ -41,6 +41,7 @@
 		type ContainerGroup,
 		type ContainerKind
 	} from '$lib/graph/container-membership';
+	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/stores/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/stores/overlay';
@@ -138,7 +139,9 @@
 		kinds: Partial<Record<BronKind, number>>;
 		/** The shapes drawn, for the legend: every shape on the canvas has its line there. */
 		vormen: Partial<Record<Vorm, number>>;
-	}>({ nodes: 0, edges: 0, kinds: {}, vormen: {} });
+		/** Per kind, the bronnen hidden with a grouping switched off, and which groupings. */
+		metGroep: Partial<Record<BronKind, { count: number; van: number; groepen: ContainerKind[] }>>;
+	}>({ nodes: 0, edges: 0, kinds: {}, vormen: {}, metGroep: {} });
 	let containerGroups = $state<Map<string, ContainerGroup>>(new Map());
 	// When the selection is a container, there is no canvas node to focus around: its
 	// own children take that role in the dim/highlight pass instead (GraphCanvas).
@@ -194,7 +197,25 @@
 		let edges = 0;
 		const kinds: Partial<Record<BronKind, number>> = {};
 		const vormen: Partial<Record<Vorm, number>> = {};
+		const metGroep: Partial<
+			Record<BronKind, { count: number; van: number; groepen: ContainerKind[] }>
+		> = {};
+		const bronnen: Partial<Record<BronKind, number>> = {};
 		const visible = new Set<string>();
+		const verborgen = metGroepVerborgen({
+			groups: containerGroups.values(),
+			uit: filters.hiddenGroups,
+			houd: (id) => id === selection?.id || pinnedIds.has(id),
+			buren: (id) => {
+				const ends: string[] = [];
+				if (g.hasNode(id))
+					g.forEachEdge(id, (_e, a, src, tgt) => {
+						if (!a.layoutOnly) ends.push(src === id ? tgt : src);
+					});
+				return ends;
+			},
+			anker: (id) => g.hasNode(id) && !!g.getNodeAttribute(id, 'anchor')
+		});
 		g.forEachNode((id, attrs) => {
 			// Per kind, before the filter: the sidebar says what the filter hides.
 			const kind = attrs.bronKind as BronKind | undefined;
@@ -207,6 +228,16 @@
 				attrs.rechter !== filter.rechter
 			)
 				return;
+			if (kind && !attrs.anchor) bronnen[kind] = (bronnen[kind] ?? 0) + 1;
+			const groep = verborgen.get(id);
+			if (groep) {
+				if (kind && !attrs.anchor) {
+					const m = (metGroep[kind] ??= { count: 0, van: 0, groepen: [] });
+					m.count++;
+					if (!m.groepen.includes(groep)) m.groepen.push(groep);
+				}
+				return;
+			}
 			visible.add(id);
 			nodes++;
 			const vorm = attrs.vorm as Vorm | undefined;
@@ -218,7 +249,8 @@
 			if (filters.hiddenRelations.has(attrs.relation as Relation)) return;
 			edges++;
 		});
-		canvasCounts = { nodes, edges, kinds, vormen };
+		for (const [k, m] of Object.entries(metGroep)) m.van = bronnen[k as BronKind] ?? 0;
+		canvasCounts = { nodes, edges, kinds, vormen, metGroep };
 		drawnIds = [...visible];
 	}
 

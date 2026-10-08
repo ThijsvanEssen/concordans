@@ -68,6 +68,9 @@
 			nodes: number;
 			edges: number;
 			kinds?: Partial<Record<BronKind, number>>;
+			metGroep?: Partial<
+				Record<BronKind, { count: number; van: number; groepen: ContainerKind[] }>
+			>;
 		};
 		overlay?: Overlay;
 		inFluxCount?: number;
@@ -154,6 +157,20 @@
 	);
 	const isOn = (k: (typeof BRON_KINDS)[number]) => filter.bronnen === null || filter.bronnen.has(k);
 
+	// A kind whose bronnen went with a grouping switched off stays, with that said: it can
+	// still be switched on its own, and comes back with the grouping (Thijs, 9 Oct).
+	const metGroepNoot = (k: BronKind): string | null => {
+		const m = canvasCounts.metGroep?.[k];
+		if (!m || m.count === 0 || !isOn(k)) return null;
+		const groepen = m.groepen.map((g) => CONTAINER_KIND_LABEL[g]).join(' en ');
+		const alle = m.count >= m.van;
+		return alle ? `verborgen met ${groepen}` : `${formatCount(m.count)} verborgen met ${groepen}`;
+	};
+	const alleMetGroep = (k: BronKind) => {
+		const m = canvasCounts.metGroep?.[k];
+		return !!m && isOn(k) && m.count > 0 && m.count >= m.van;
+	};
+
 	const mutOn = $derived(overlay.kind === 'open' || overlay.kind === 'dossier');
 	const heatOn = $derived(overlay.kind === 'heat');
 
@@ -227,7 +244,8 @@
 					onToggle={() => onFilter(toggleKind(filter, k))}
 					count={counting ? null : n}
 					bezig={counting}
-					empty={!counting && n === 0}
+					empty={(!counting && n === 0) || alleMetGroep(k)}
+					noot={metGroepNoot(k)}
 				>
 					{#snippet voor()}<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />{/snippet}
 				</FilterOptie>

@@ -13,6 +13,7 @@
 	import type { BronKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
+	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 	import {
 		spriteFor,
@@ -759,11 +760,29 @@
 	let strays = new Set<string>();
 	function recomputeStrays() {
 		const next = new Set<string>();
+		const endsOf = (id: string) => {
+			const ends: string[] = [];
+			if (graph.hasNode(id))
+				graph.forEachEdge(id, (_e, a, src, tgt) => {
+					if (!a.layoutOnly) ends.push(src === id ? tgt : src);
+				});
+			return ends;
+		};
+		// A grouping switched off takes along what is in it (the stukken of a dossier).
+		const metGroep = metGroepVerborgen({
+			groups: latestContainerGroups.values(),
+			uit: new Set(latestFilters?.hiddenGroups ?? []),
+			houd: (id) => id === focusedId || latestPinnedIds.has(id),
+			buren: endsOf,
+			anker: (id) => graph.hasNode(id) && !!graph.getNodeAttribute(id, 'anchor')
+		});
+		for (const id of metGroep.keys()) if (graph.hasNode(id)) next.add(id);
 		const hiddenEnd = (id: string) =>
-			id !== focusedId && hiddenByFilter(graph.getNodeAttributes(id));
+			id !== focusedId && (metGroep.has(id) || hiddenByFilter(graph.getNodeAttributes(id)));
 		graph.forEachNode((id, attrs) => {
 			// A chosen bron of a netwerk is drawn whether or not anything ties it.
-			if (id === focusedId || latestPinnedIds.has(id) || hiddenByFilter(attrs)) return;
+			if (id === focusedId || latestPinnedIds.has(id) || next.has(id) || hiddenByFilter(attrs))
+				return;
 			const groups = [...(nodeGroupIds.get(id) ?? [])].map((g) => latestContainerGroups.get(g));
 			if (groups.some((g) => g && drawnGroup(g))) return;
 			const shown = graph.someEdge(
@@ -781,13 +800,7 @@
 			anchors,
 			groupsOf: (id) =>
 				[...(nodeGroupIds.get(id) ?? [])].flatMap((g) => latestContainerGroups.get(g) ?? []),
-			neighboursOf: (id) => {
-				const ends: string[] = [];
-				graph.forEachEdge(id, (_e, a, src, tgt) => {
-					if (!a.layoutOnly) ends.push(src === id ? tgt : src);
-				});
-				return ends;
-			},
+			neighboursOf: endsOf,
 			drawnMember: (id) =>
 				graph.hasNode(id) &&
 				!graph.getNodeAttribute(id, 'anchor') &&
