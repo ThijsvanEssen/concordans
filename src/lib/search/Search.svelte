@@ -406,6 +406,8 @@
 		});
 	});
 
+	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
+	// the + in the Netwerk panel (onPick) is the way to add one.
 	function open(ref: BronRef | string, at: string | null = null) {
 		if (onPick) {
 			const id = focusOf(ref);
@@ -413,7 +415,7 @@
 			query = '';
 			return;
 		}
-		const href = bronHref(ref, { at });
+		const href = bronHref(ref, { at, keepNetwerk: false });
 		onOpen?.();
 		goto(href);
 	}
@@ -570,7 +572,7 @@
 						role="option"
 						tabindex="-1"
 						aria-selected={active === i}
-						href={bronHref(keuze.ref, { at: keuze.at })}
+						href={bronHref(keuze.ref, { at: keuze.at, keepNetwerk: false })}
 						onclick={(e) => {
 							if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
 							e.preventDefault();
@@ -617,7 +619,7 @@
 				role="option"
 				tabindex="-1"
 				aria-selected={active === 0}
-				href={bronHref(bare.ref, { at: bare.at })}
+				href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
 				onclick={(e) => {
 					if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
 					e.preventDefault();
@@ -654,7 +656,7 @@
 						role="option"
 						tabindex="-1"
 						aria-selected={active === i}
-						href={bronHref(hitName(hit))}
+						href={bronHref(hitName(hit), { keepNetwerk: false })}
 						onclick={(e) => {
 							if (onPick) {
 								e.preventDefault();
