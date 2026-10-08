@@ -299,8 +299,10 @@ export function articleOf(
 function leadSignatory(actors: unknown): { name: string; faction: string | null } | null {
 	if (!Array.isArray(actors)) return null;
 	const roleOf = (a: Record<string, unknown>) => String(a.role ?? '').toLowerCase();
+	// The source writes "Eerste ondertekenaar" and lists the others before it as often as
+	// after (motie 36799-45: Schenk and Flach, then Ceder as eerste ondertekenaar).
 	const lead =
-		actors.find((a) => roleOf(a) === 'eerste indiener') ??
+		actors.find((a) => /^eerste (indiener|ondertekenaar)$/.test(roleOf(a))) ??
 		actors.find((a) => roleOf(a) === 'indiener') ??
 		actors[0];
 	const name = text(lead?.name);
