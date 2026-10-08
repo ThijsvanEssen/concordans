@@ -251,3 +251,24 @@ describe('kern of context', () => {
 		expect(b.regels[0].lagen[0].ref).toBeUndefined();
 	});
 });
+
+describe('a translation and a dossier', () => {
+	it('names the original of a translation, its procesgang to follow', () => {
+		const b = behoort('judgments', { translation_of: 'ECLI:NL:HR:2019:2006' }, light([]));
+		expect(b.regels.map((r) => [r.id, r.label, r.lagen.length, !!r.laad])).toEqual([
+			['vertaling', 'Vertaling van', 1, true],
+			['procesgang', 'Procesgang', 0, true]
+		]);
+		expect(b.regels[0].lagen[0].ref).toEqual({
+			collection: 'judgments',
+			key: 'ecli_nl_hr_2019_2006'
+		});
+	});
+
+	it('reads the Kamer of a dossier from its label where props lack it', () => {
+		const l = { node: { labels: ['TK'] }, neighbors: { total: 0, buckets: [] } } as never;
+		expect(behoort('dossiers', {}, l).regels.map((r) => [r.label, r.lagen[0].naam])).toEqual([
+			['Behandeld in', 'Tweede Kamer']
+		]);
+	});
+});

@@ -206,7 +206,11 @@ export function behoort(
 		];
 	};
 	const kamer = (): Laag[] => {
-		const k = KAMER[text(props.chamber)?.toUpperCase() ?? ''];
+		// The Kamer in props, else in the bron's label (a dossier node: `TK`), a source value.
+		const label = (light?.node as { labels?: string[] } | undefined)?.labels?.find(
+			(l) => l === 'TK' || l === 'EK'
+		);
+		const k = KAMER[(text(props.chamber) ?? label ?? '').toUpperCase()];
 		return k ? [{ soort: 'Kamer', naam: k }] : [];
 	};
 
@@ -285,9 +289,43 @@ export function behoort(
 						}
 					]
 				: [];
+			// A translation the Rechtspraak published under its own ECLI has no instances of its
+			// own: it names its original (`translation_of`, a source value), and the procesgang
+			// is the original's, asked when the band is there (audit L4).
+			const origineel = text(props.translation_of);
+			const origineelKey = origineel ? ecliKey(origineel) : null;
+			const vertaling: Regel[] =
+				origineelKey && !gang.length
+					? [
+							{
+								id: 'vertaling',
+								label: 'Vertaling van',
+								lagen: [
+									{
+										soort: 'Origineel',
+										naam: origineel!,
+										ref: { collection: 'judgments', key: origineelKey }
+									}
+								],
+								laad: async () => {
+									const l = await getNodeFirst('judgments', origineelKey).catch(() => null);
+									return l?.node
+										? [laagVan({ ...l.node, collection: 'judgments' } as Neighbor, 'Origineel')]
+										: [];
+								}
+							},
+							{
+								id: 'procesgang',
+								label: 'Procesgang',
+								lagen: [],
+								laad: () => procesgangVan(origineelKey)
+							}
+						]
+					: [];
 			const beroep = bak('APPEAL_OF', 'inbound', 'judgments');
 			return {
 				regels: [
+					...vertaling,
 					...regel(
 						'conclusie-bij',
 						'Conclusie bij',
@@ -459,6 +497,32 @@ async function eerdereAanleg(key: string): Promise<Laag[]> {
 	return keten;
 }
 
+/** An ECLI as the key of its judgment: `ECLI:NL:HR:2019:2006` is `ecli_nl_hr_2019_2006`. */
+export const ecliKey = (ecli: string) => ecli.trim().toLowerCase().replaceAll(':', '_');
+
+const appeal = (light: NodeGraph | null, direction: 'inbound' | 'outbound') =>
+	light?.neighbors.buckets?.find(
+		(b) => b.relation === 'APPEAL_OF' && b.direction === direction && b.collection === 'judgments'
+	)?.items?.[0];
+
+/**
+ * The procesgang of another judgment, with that judgment as a link in its place: for a
+ * translation, its original's. Its light node and those before it, cached.
+ */
+async function procesgangVan(key: string): Promise<Laag[]> {
+	const light = await getNodeFirst('judgments', key).catch(() => null);
+	if (!light?.node) return [];
+	const eerder = appeal(light, 'outbound');
+	const later = appeal(light, 'inbound');
+	if (!eerder && !later) return [];
+	const zelf = laagVan({ ...light.node, collection: 'judgments' } as Neighbor, 'Het origineel');
+	return [
+		...(eerder ? [...(await eerdereAanleg(eerder.key)), laagVan(eerder, 'Eerdere aanleg')] : []),
+		zelf,
+		...(later ? [laagVan(later, 'Hoger beroep of cassatie')] : [])
+	];
+}
+
 /**
  * The ids of the instances before a judgment's eerdere aanleg (the Rechtbank before the
  * Hof), which its procesgang names but no bucket of its own holds: Verbonden does not list
@@ -467,6 +531,14 @@ async function eerdereAanleg(key: string): Promise<Laag[]> {
  */
 export async function procesgangIds(key: string): Promise<string[]> {
 	const light = await getNodeFirst('judgments', key).catch(() => null);
+	// A translation: its original's procesgang, the original included.
+	const origineel = text(
+		(light?.node as { props?: Record<string, unknown> } | undefined)?.props?.translation_of
+	);
+	if (origineel && !appeal(light, 'outbound') && !appeal(light, 'inbound'))
+		return (await procesgangVan(ecliKey(origineel))).flatMap((l) =>
+			l.ref ? [`${l.ref.collection}/${l.ref.key}`] : []
+		);
 	const eerder = light?.neighbors.buckets?.find(
 		(b) => b.relation === 'APPEAL_OF' && b.direction === 'outbound' && b.collection === 'judgments'
 	)?.items?.[0];
