@@ -199,6 +199,10 @@ describe('behoort', () => {
 		]);
 		// The rest of the zaak is context: in Verbonden, not in the band (Thijs, 9 Oct).
 		expect(mvt.naast).toEqual([]);
+		// A geleidende brief offers the substance of its zaak: kern, side by side.
+		expect(metZaak('Geleidende brief').regels.map((r) => [r.id, r.label, r.los, !!r.laad])).toEqual(
+			[['biedt-aan', 'Biedt aan', true, true]]
+		);
 		// A motie is no paper of the bill: no line.
 		expect(metZaak('Motie').regels).toEqual([]);
 		expect(metZaak('Motie').naast).toEqual([]);

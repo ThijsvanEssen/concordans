@@ -29,7 +29,15 @@ describe('naastHetStuk', () => {
 	});
 
 	it('houdt alles naast een stuk zonder die regel', () => {
-		expect(naastHetStuk('Geleidende brief', zaak)).toBe(zaak);
 		expect(naastHetStuk('Motie', zaak)).toBe(zaak);
+	});
+
+	it('laat bij een geleidende brief de aangeboden stukken weg: die zijn zijn kernregel', () => {
+		const mvt = rij('nr3', 'Memorie van toelichting');
+		const metMvt = { rows: [voorstel, mvt], order: undefined };
+		expect(naastHetStuk('Geleidende brief', metMvt).rows).toEqual([]);
+		expect(
+			naastHetStuk('Aanbiedingsbrief', { rows: [voorstel, brief], order: undefined }).rows
+		).toEqual([brief]);
 	});
 });
