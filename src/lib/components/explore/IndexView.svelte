@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { axisLabels } from './index/years-axis';
 	import { korteDatum, langeDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
@@ -1950,13 +1951,16 @@
 	};
 	// The Kamer is a choice, not a filter: the first group of the filters, always one of the
 	// two, and no chip above the list (chips come from facetGroupsAll).
+	/** Another Kamer: its own list, without the filters that belonged to the other. */
+	const kiesKamer = (c: Chamber) =>
+		patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null });
 	const kamerGroup = $derived<FacetGroup>({
 		id: 'kamer',
 		label: 'Kamer',
 		kind: 'keuze',
 		value: kamer,
 		options: CHAMBERS.map((c) => ({ value: c, label: CHAMBER_NAME[c] })),
-		onChange: (c) => patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null })
+		onChange: (c) => kiesKamer(c as Chamber)
 	});
 	const facetGroups = $derived(
 		CHAMBER_CATEGORIES.includes(category) ? [kamerGroup, ...facetGroupsAll] : facetGroupsAll
@@ -2031,6 +2035,19 @@
 				<!-- The page names itself for a screen reader; the tabs above show it. -->
 				<h1 class="sr-only">Bladeren: {categoryLabel(category)}</h1>
 				<aside class="facet-col" aria-label="Filters">
+					<!-- On a phone the Kamer stands outside the folded filters, one tap away (Thijs,
+					     9 Oct: to switch, one had to know it was among them). -->
+					{#if CHAMBER_CATEGORIES.includes(category)}
+						<div class="kamer-snel">
+							<Keuze
+								label="Kamer"
+								klein
+								waarde={kamer}
+								onKies={kiesKamer}
+								opties={CHAMBERS.map((c) => ({ waarde: c, label: CHAMBER_NAME[c] }))}
+							/>
+						</div>
+					{/if}
 					<!-- On a narrow screen the filters fold away above the list. -->
 					<button
 						type="button"
@@ -3134,6 +3151,9 @@
 	.results {
 		min-width: 0;
 	}
+	.kamer-snel {
+		display: none;
+	}
 	.facet-toggle {
 		display: none;
 		align-items: center;
@@ -3869,6 +3889,14 @@
 		}
 		.facet-toggle {
 			display: flex;
+		}
+		.kamer-snel {
+			display: block;
+			padding: var(--s-2) 0;
+		}
+		/* The Kamer is above; the folded filters leave it out. */
+		.facet-body :global(section:has(#facet-kamer)) {
+			display: none;
 		}
 		.facet-body {
 			display: none;
