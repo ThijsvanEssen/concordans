@@ -83,9 +83,16 @@ let primed = false;
 export function primeInstrumentNames(): void {
 	if (primed) return;
 	primed = true;
-	unwrap(api.GET('/api/instruments', { params: { query: { sort: 'article_count', limit: 200 } } }))
-		.then(({ items }) => items.forEach(recordInstrument))
-		.catch(() => {});
+	// Not on the first view (110 kB): the browser asks it when it is idle, and until then a
+	// law keeps the name its own response carried (Thijs, 9 Oct: "alles zo lazy mogelijk").
+	const ask = () =>
+		unwrap(
+			api.GET('/api/instruments', { params: { query: { sort: 'article_count', limit: 200 } } })
+		)
+			.then(({ items }) => items.forEach(recordInstrument))
+			.catch(() => {});
+	if (typeof requestIdleCallback === 'function') requestIdleCallback(ask, { timeout: 3000 });
+	else setTimeout(ask, 1500);
 }
 
 const details = new Map<string, Promise<Schema<'InstrumentDetailDTO'>>>();
