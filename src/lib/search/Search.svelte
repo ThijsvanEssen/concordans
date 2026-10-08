@@ -10,7 +10,14 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { bySection, groupLabel, orderGroups, presentHit, sectionOf } from './present';
+	import {
+		besteTreffer,
+		bySection,
+		groupLabel,
+		orderGroups,
+		presentHit,
+		sectionOf
+	} from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import {
@@ -197,7 +204,22 @@
 				.filter((g) => g.hits.length > 0)
 		)
 	);
-	const hits = $derived(groups.flatMap((g) => g.hits));
+	/**
+	 * The one hit above the groups (besteTreffer), out of its own group. Only once the lane of
+	 * articles has answered, so the top does not change under the pointer.
+	 */
+	const beste = $derived((laanStand['tekst'] ?? 'klaar') === 'klaar' ? besteTreffer(groups) : null);
+	const getoond = $derived(
+		beste
+			? [
+					{ kind: beste.kind, hits: [beste.hit], beste: true },
+					...groups
+						.map((g) => ({ ...g, hits: g.hits.filter((h) => h.id !== beste.hit.id), beste: false }))
+						.filter((g) => g.hits.length > 0)
+				]
+			: groups.map((g) => ({ ...g, beste: false }))
+	);
+	const hits = $derived(getoond.flatMap((g) => g.hits));
 	const indexOf = $derived(new Map(hits.map((hit, i) => [hit.id, i])));
 
 	/** "Artikel 3 BW" in Boek 1, 3, 6 …: a row each, in place of the citation row. */
@@ -635,11 +657,17 @@
 			</a>
 		{/if}
 
-		{#each groups as group (group.kind)}
-			<div class="group" role="group" aria-labelledby="{uid}-{group.kind}">
-				<div class="group-label" id="{uid}-{group.kind}">
-					<KindGlyph collection={group.kind} />
-					{groupLabel(group.kind)}
+		{#each getoond as group (group.beste ? 'beste' : group.kind)}
+			{@const gid = group.beste ? 'beste' : group.kind}
+			<div
+				class="group"
+				class:group--beste={group.beste}
+				role="group"
+				aria-labelledby="{uid}-{gid}"
+			>
+				<div class="group-label" id="{uid}-{gid}">
+					{#if group.beste}Beste treffer{:else}<KindGlyph collection={group.kind} />
+						{groupLabel(group.kind)}{/if}
 					{#if ladend.has(group.kind)}<span class="laden">laden…</span>{/if}
 				</div>
 				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
