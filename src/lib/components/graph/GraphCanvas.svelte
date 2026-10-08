@@ -218,7 +218,11 @@
 	$effect(() => {
 		latestContainerGroups = containerGroups ?? new Map();
 		// A grouping switched off draws no hull; its bronnen stand loose and keep their lines.
-		hiddenGroupKinds = filters?.hiddenGroups ?? new Set();
+		// A wet goes with its articles (Thijs, 9 Oct): articles off, no law hull either.
+		hiddenGroupKinds = new Set([
+			...(filters?.hiddenGroups ?? []),
+			...(hiddenKinds.has('artikelen') ? ['instrument'] : [])
+		]);
 		const byNode = new Map<string, Set<string>>();
 		for (const group of latestContainerGroups.values()) {
 			if (hiddenGroupKinds.has(group.kind)) continue;
@@ -420,6 +424,11 @@
 			return !!group && drawnGroup(group) && !hiddenGroupKinds.has(group.kind);
 		});
 	}
+
+	const lawAnchor = (id: string) =>
+		graph.hasNode(id) &&
+		!!graph.getNodeAttribute(id, 'anchor') &&
+		graph.getNodeAttribute(id, 'collection') === 'instruments';
 
 	const inside = (p: Point, polygon: Point[]) => {
 		let hit = false;
@@ -1151,6 +1160,9 @@
 				const relation = data.relation as Relation;
 				if (latestFilters?.hiddenRelations.has(relation)) return { ...data, hidden: true };
 				if (hullLinkOf(src, tgt) || anchorWithHull(src) || anchorWithHull(tgt))
+					return { ...data, hidden: true };
+				// A line to a wet whose articles are switched off goes with them.
+				if (hiddenGroupKinds.has('instrument') && (lawAnchor(src) || lawAnchor(tgt)))
 					return { ...data, hidden: true };
 
 				const sourceKind = srcAttrs.kind as GraphNodeKind;
