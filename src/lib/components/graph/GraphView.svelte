@@ -363,6 +363,34 @@
 		hoverAt = null;
 		hoverNode = n;
 	}
+
+	// One click marks a bron: it lights up with its own lines, its card beside it. The reader
+	// opens with "Tekst lezen", a second click on it or Enter; the network keeps its size
+	// (Thijs, 9 Oct; before, one click opened the reader).
+	let gemarkeerd = $state<GraphNode | null>(null);
+	function markeer(n: GraphNode) {
+		if (gemarkeerd?.id === n.id) return open(n);
+		if (showTimer) clearTimeout(showTimer);
+		if (hideTimer) clearTimeout(hideTimer);
+		showTimer = hideTimer = null;
+		gemarkeerd = n;
+		keyNode = null;
+		// Beside the bron; in a narrow network (beside the reader) or after a tap, at its foot.
+		hoverAt = compact ? null : kaartPlek(lastPointer);
+		hoverNode = n;
+	}
+	function ontmarkeer() {
+		gemarkeerd = null;
+		hoverNode = null;
+	}
+	function open(n: GraphNode) {
+		ontmarkeer();
+		onNodeClick?.(n);
+	}
+	// A bron that left the canvas is no longer marked.
+	$effect(() => {
+		if (gemarkeerd && !drawnIds.includes(gemarkeerd.id)) ontmarkeer();
+	});
 	let hideTimer: ReturnType<typeof setTimeout> | null = null;
 	let showTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -1032,17 +1060,10 @@
 	function handleNodeHover(nodeId: string, vx?: number, vy?: number) {
 		if (vx !== undefined && vy !== undefined) lastPointer = { x: vx, y: vy };
 		if (compact || isClusterId(nodeId)) return;
+		// A marked bron keeps its card; hovering another only lights it.
+		if (gemarkeerd) return;
 		// De kaart staat naast de bron, niet los in een hoek.
-		if (vx !== undefined && vy !== undefined && canvasWrap) {
-			const W = 360,
-				H = 240,
-				GAP = 20;
-			const w = canvasWrap.clientWidth,
-				h = canvasWrap.clientHeight;
-			const x = vx + GAP + W < w - 8 ? vx + GAP : Math.max(8, vx - GAP - W);
-			const y = Math.min(Math.max(8, vy - 40), Math.max(8, h - H - 8));
-			hoverAt = { x, y };
-		}
+		if (vx !== undefined && vy !== undefined) hoverAt = kaartPlek({ x: vx, y: vy });
 		if (hideTimer) {
 			clearTimeout(hideTimer);
 			hideTimer = null;
@@ -1059,8 +1080,26 @@
 		}, 400);
 	}
 
+	/** Where the card stands: beside the bron at `at`, not loose in a corner. */
+	function kaartPlek(at: { x: number; y: number } | null): { x: number; y: number } | null {
+		if (!at || !canvasWrap) return null;
+		const W = 360,
+			H = 240,
+			GAP = 20;
+		const w = canvasWrap.clientWidth,
+			h = canvasWrap.clientHeight;
+		// In a narrow network (beside the reader) the card is as wide as the network allows.
+		const breed = Math.min(W, w - 16);
+		const x =
+			at.x + GAP + breed < w - 8
+				? at.x + GAP
+				: Math.max(8, Math.min(at.x - GAP - breed, w - breed - 8));
+		const y = Math.min(Math.max(8, at.y - 40), Math.max(8, h - H - 8));
+		return { x, y };
+	}
+
 	function handleNodeLeave() {
-		if (compact) return;
+		if (compact || gemarkeerd) return;
 		if (showTimer) {
 			clearTimeout(showTimer);
 			showTimer = null;
@@ -1123,6 +1162,15 @@
 		if (el?.closest?.('input, select, textarea, [contenteditable]')) return;
 		if (e.key === 'Escape' && clusterCard) {
 			clusterCard = null;
+			return;
+		}
+		if (e.key === 'Escape' && gemarkeerd) {
+			ontmarkeer();
+			return;
+		}
+		if (e.key === 'Enter' && gemarkeerd && canvasWrap?.contains(document.activeElement)) {
+			e.preventDefault();
+			open(gemarkeerd);
 			return;
 		}
 		if (e.key === 'Escape') {
@@ -1300,16 +1348,18 @@
 				heatActive={overlay.kind === 'heat'}
 				heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
 				mutatieActive={overlay.kind === 'open' || overlay.kind === 'dossier'}
-				externalHoveredId={hoverNode?.id ?? null}
+				externalHoveredId={gemarkeerd?.id ?? hoverNode?.id ?? null}
 				onNodeClick={(id) => {
 					if (isClusterId(id)) return openCluster(id);
 					const n = lookup.get(id);
-					if (n) onNodeClick?.(n);
+					if (n) markeer(n);
 				}}
 				onNodeDoubleClick={(id) => {
+					// The second click: the bron opens. "Omgeving tonen" on its card draws its own
+					// neighbourhood, as a double click did before.
 					if (isClusterId(id)) return;
 					const n = lookup.get(id);
-					if (n) onNodeDoubleClick?.(n);
+					if (n) open(n);
 				}}
 				onEdgeClick={(id) => {
 					const e = store.getEdgeById(id);
@@ -1317,7 +1367,10 @@
 				}}
 				onNodeHover={handleNodeHover}
 				onNodeLeave={handleNodeLeave}
-				onStageClick={() => onClear?.()}
+				onStageClick={() => {
+					ontmarkeer();
+					onClear?.();
+				}}
 				onReady={(api) => {
 					canvas = api;
 					canvas.refresh();
@@ -1427,24 +1480,25 @@
 				</div>
 			{/if}
 
-			{#if hoverNode && (!compact || keyNode)}
+			{#if hoverNode && (!compact || keyNode || gemarkeerd)}
 				<GraphCitePanel
 					node={hoverNode}
 					isChosen={pinnedIds.has(hoverNode.id)}
 					at={keyNode ? null : hoverAt}
 					onOpen={() => {
-						hoverNode = null;
+						ontmarkeer();
 					}}
+					onLezen={open}
 					{onToggleChosen}
 					onOmgeving={onNodeDoubleClick
 						? (n) => {
-								hoverNode = null;
+								ontmarkeer();
 								onNodeDoubleClick?.(n);
 							}
 						: undefined}
 					onMouseEnter={cancelHide}
 					onMouseLeave={() => {
-						hoverNode = null;
+						if (!gemarkeerd) hoverNode = null;
 					}}
 				/>
 			{/if}

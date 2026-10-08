@@ -25,6 +25,10 @@ Conventions:
   - A slow or failed part never holds up or empties the rest; it says so in its own place.
   - A call the API may take long for (search lanes, a full node, a person's votes) waits as long as the API does (`zoekApi`, 30 s), not the 10 s of `api`.
   - A new or changed page is checked for what is on its critical path: which calls the first paint waits for, and whether each must.
+- A click on a bron in the network marks it; it does not open it (Thijs, 9 October 2026; this replaces "a click chooses, the reader follows" of 24 September):
+  - One click (a tap on a phone) lights the bron and its own lines, with its card beside it: Tekst lezen, Omgeving tonen, In netwerk. The network keeps its size.
+  - The reader opens with Tekst lezen, a second click on the bron (a double click too) or Enter.
+  - A click on the empty network or Escape removes the mark. Omgeving tonen does what a double click did before: the bron's own neighbourhood in place of the netwerk.
 - Comments say why, not what.
 - The interface is Dutch; code and these files are English. The interface calls a node a bron and an edge a verbinding.
 - Styles take their sizes from the tokens in `AppShell.svelte` (`--t-*` for type, `--s-1` to `--s-8` for space). `src/lib/style-scale.test.ts` fails on a font size in pixels and on more spacing off the 4px scale than `OFF_SCALE_MAX`; a rule that is changed moves to the tokens, and `OFF_SCALE_MAX` goes down to the new count.

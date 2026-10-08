@@ -15,6 +15,7 @@
 		node,
 		isChosen = false,
 		onOpen,
+		onLezen,
 		onToggleChosen,
 		onOmgeving,
 		at = null,
@@ -25,8 +26,10 @@
 		isChosen?: boolean;
 		/** Called as the link opens the bron: the panel closes. */
 		onOpen: (node: GraphNode) => void;
+		/** A plain click on "Tekst lezen" opens the bron here; a new tab keeps the link. */
+		onLezen?: (node: GraphNode) => void;
 		onToggleChosen?: (node: GraphNode) => void;
-		/** Wat een dubbelklik doet, als knop: alleen de omgeving van deze bron. */
+		/** Alleen de omgeving van deze bron, in plaats van het netwerk (vroeger een dubbelklik). */
 		onOmgeving?: (node: GraphNode) => void;
 		/** Waar de kaart staat, naast de bron onder de muis; zonder: rechtsonder. */
 		at?: { x: number; y: number } | null;
@@ -111,7 +114,7 @@
 <div
 	class="citepanel"
 	class:bij-bron={!!at}
-	style="width:{W}px;{at ? `left:${at.x}px;top:${at.y}px;` : ''}"
+	style="width:min({W}px, calc(100% - var(--s-4)));{at ? `left:${at.x}px;top:${at.y}px;` : ''}"
 	onmouseenter={onMouseEnter}
 	onmouseleave={onMouseLeave}
 >
@@ -138,7 +141,12 @@
 				class="act act--primary"
 				href={bronHref(refOf(node.collection, node.key, node.raw?.props))}
 				data-sveltekit-noscroll
-				onclick={() => onOpen(node)}><Picto naam="tekst" size={13} />Tekst lezen</a
+				onclick={(e) => {
+					if (onLezen && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+						e.preventDefault();
+						onLezen(node);
+					} else onOpen(node);
+				}}><Picto naam="tekst" size={13} />Tekst lezen</a
 			>
 		{/if}
 		{#if onOmgeving && !node.stub}
@@ -164,7 +172,11 @@
 	.citepanel {
 		position: absolute;
 		bottom: var(--s-3);
-		right: calc(var(--s-3) + 32px + var(--s-3));
+		/* Beside the zoom; in a narrow network (beside the reader) never past its left edge. */
+		right: min(
+			calc(var(--s-3) + 32px + var(--s-3)),
+			calc(100% - min(360px, 100% - var(--s-4)) - var(--s-2))
+		);
 		z-index: calc(var(--z-float) + 1);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);

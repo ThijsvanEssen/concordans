@@ -201,9 +201,11 @@
 		<div class="section">
 			<h2 class="section-title">Netwerk</h2>
 			<p>
-				Een klik op een bron in het netwerk kiest die bron; de lezer ernaast toont haar. Een
-				dubbelklik tekent het netwerk opnieuw rond die bron, tot de gekozen diepte. Diepte voegt
-				bronnen rond de gekozen bron toe; die staan vaag getekend.
+				Een klik op een bron in het netwerk markeert die bron: zij licht op met haar eigen
+				verbindingen, en een kaart ernaast toont Tekst lezen, Omgeving tonen en In netwerk. Een
+				tweede klik, Tekst lezen of Enter opent de lezer. Omgeving tonen tekent het netwerk opnieuw
+				rond die bron, tot de gekozen diepte. Een klik ernaast of Escape heft de markering op.
+				Diepte voegt bronnen rond de gekozen bron toe; die staan vaag getekend.
 			</p>
 			<p>
 				Meer dan veertig bronnen van één soort die alleen aan de gekozen bron hangen, staan als één
