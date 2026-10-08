@@ -554,7 +554,9 @@
 		text-align: left;
 		font-weight: 400;
 	}
+	/* Column heads at rung 6, the fractie over its two columns at rung 3 (docs/typografie.md). */
 	thead th {
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 		border-bottom-color: var(--rule-strong);
 		hyphens: auto;
@@ -567,7 +569,9 @@
 	thead .boven td {
 		border-bottom: 0;
 		padding-bottom: 0;
-		color: var(--ink-2);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink);
 	}
 	tbody th {
 		color: var(--ink);

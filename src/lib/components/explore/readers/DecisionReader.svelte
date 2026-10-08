@@ -334,7 +334,7 @@
 	}
 	.voter-row {
 		display: grid;
-		grid-template-columns: 50px 1fr auto;
+		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 50px) 1fr auto;
 		gap: var(--s-2);
 		padding: var(--s-1) var(--s-1);
 		margin: 0 calc(-1 * var(--s-1));

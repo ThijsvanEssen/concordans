@@ -868,8 +868,9 @@
 		cursor: pointer;
 	}
 
+	/* The leden hang their own numbers in the frame's margin (ArticleText, ReaderFrame). */
 	.reader-body {
-		margin-left: 46px;
+		margin-left: 0;
 	}
 	/* The comparison starts at the edge of the head; its leden keep the article's
 	   columns, the number included. */

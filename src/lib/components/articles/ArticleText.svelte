@@ -239,7 +239,9 @@
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);
-		margin-left: -46px;
+		/* The number of a lid hangs in the frame's margin, its text at the column's edge
+		   (ReaderFrame); a narrow column takes it in (below). */
+		margin-left: -48px;
 	}
 
 	/* A lid: 36px for the number, the text, 150px at the right. */
