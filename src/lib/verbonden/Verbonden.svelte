@@ -175,10 +175,46 @@
 		return rows.length > 0 && rows.every((r) => onCanvas.has(refId(r.ref)));
 	};
 
+	/**
+	 * What the last "toon in netwerk" did, under its group: how many were drawn or taken off,
+	 * with a way back (UX 8 Oct: the box changed nothing one could see). Gone after a while.
+	 */
+	let melding = $state<{ groep: string; tekst: string; terug: (() => void) | null } | null>(null);
+	let meldingTimer: ReturnType<typeof setTimeout> | undefined;
+	const MELDING_MS = 8000;
+
+	/** `31 bronnen`, `1 bron`: the kind of a row is not always the noun of its group. */
+	const telling = (rows: Row[]) => (rows.length === 1 ? '1 bron' : `${rows.length} bronnen`);
+
+	// Another bron: its groups have their own notes, none yet.
+	$effect(() => {
+		void selection.id;
+		melding = null;
+	});
+
+	function meld(groep: string, tekst: string, terug: (() => void) | null) {
+		clearTimeout(meldingTimer);
+		melding = { groep, tekst, terug };
+		meldingTimer = setTimeout(() => (melding = null), MELDING_MS);
+	}
+
 	function toggleLayer(g: Group) {
 		const rows = drawable(g.rows);
-		if (isLayerOn(g)) store.hideRows(rows.map((r) => refId(r.ref)));
-		else store.showRows(selection.id, rows as CanvasRow[]);
+		if (isLayerOn(g)) {
+			const ids = rows.map((r) => refId(r.ref));
+			store.hideRows(ids);
+			meld(g.id, `${telling(rows)} uit het netwerk gehaald.`, () =>
+				store.showRows(selection.id, rows as CanvasRow[])
+			);
+			return;
+		}
+		const nieuw = rows.filter((r) => !onCanvas.has(refId(r.ref)));
+		store.showRows(selection.id, rows as CanvasRow[]);
+		if (nieuw.length)
+			meld(g.id, `${telling(nieuw)} getekend in het netwerk.`, () =>
+				store.hideRows(nieuw.map((r) => refId(r.ref)))
+			);
+		else meld(g.id, `Alle ${telling(rows)} stonden al in het netwerk.`, null);
 	}
 
 	// A row of an in-place group opens beside the selected bron, which stays selected.
@@ -376,11 +412,26 @@
 							aria-label="{g.label} in het netwerk"
 							title={isLayerOn(g) ? 'Uit het netwerk halen' : 'In het netwerk tonen'}
 							onclick={() => toggleLayer(g)}
-							><span class="layer__box" aria-hidden="true">{isLayerOn(g) ? '✓' : ''}</span>in
+							><span class="layer__box" aria-hidden="true">{isLayerOn(g) ? '✓' : ''}</span>toon in
 							netwerk</button
 						>
 					{/if}
 				</div>
+				{#if melding?.groep === g.id}
+					<p class="group__melding" role="status">
+						{melding.tekst}
+						{#if melding.terug}
+							<button
+								type="button"
+								class="link"
+								onclick={() => {
+									melding?.terug?.();
+									melding = null;
+								}}>Ongedaan maken</button
+							>
+						{/if}
+					</p>
+				{/if}
 				{#if g.id === 'judgments' && selection.collection === 'articles' && onRetry}
 					<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
 					<div class="group__volgorde">
@@ -819,6 +870,12 @@
 	.group__volgorde {
 		margin: var(--s-1) 0 var(--s-2);
 		padding: 0 var(--s-4);
+	}
+	.group__melding {
+		margin: 0;
+		padding: 0 var(--s-4) var(--s-1);
+		font-size: var(--t-label);
+		color: var(--ink-2);
 	}
 	.group__caption {
 		margin: 0;
