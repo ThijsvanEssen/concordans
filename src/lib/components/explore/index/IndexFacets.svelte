@@ -1,4 +1,5 @@
 <script lang="ts" module>
+	import Periode from '$lib/components/ui/Periode.svelte';
 	import { rangeLabel } from './range';
 	// The filter column of the index: per dimension its options, each with the number of
 	// bronnen it holds under the other filters and a bar for its share. A dimension of
@@ -136,8 +137,6 @@
 		g.options.filter((o) => isHeading(o) || !o.indent).length;
 
 	// A year field holds `2020`; the URL holds the first or last day of it.
-	const toParam = (value: string, unit: 'year' | 'date', end: boolean) =>
-		unit === 'date' || !/^\d{4}$/.test(value) ? value : `${value}-${end ? '12-31' : '01-01'}`;
 </script>
 
 <!-- While a page loads, the counts read "…" (as in the legend); the text keeps its contrast. -->
@@ -213,30 +212,14 @@
 					{/each}
 				</select>
 			{:else if g.kind === 'range'}
-				{@const r = g}
-				<div class="range">
-					<label>
-						<span class="visually-hidden">Van</span>
-						<input
-							type={r.unit === 'year' ? 'number' : 'date'}
-							inputmode="numeric"
-							placeholder="van"
-							value={r.unit === 'year' ? r.from.slice(0, 4) : r.from}
-							onchange={(e) => r.onChange(toParam(e.currentTarget.value, r.unit, false), r.to)}
-						/>
-					</label>
-					<span class="range-sep">tot</span>
-					<label>
-						<span class="visually-hidden">Tot</span>
-						<input
-							type={r.unit === 'year' ? 'number' : 'date'}
-							inputmode="numeric"
-							placeholder="nu"
-							value={r.unit === 'year' ? r.to.slice(0, 4) : r.to}
-							onchange={(e) => r.onChange(r.from, toParam(e.currentTarget.value, r.unit, true))}
-						/>
-					</label>
-				</div>
+				<!-- The same period in every list with dates ($lib/components/ui/Periode). -->
+				<Periode
+					van={g.from}
+					tot={g.to}
+					jaar={g.unit === 'year'}
+					label={g.label}
+					onChange={g.onChange}
+				/>
 			{:else if g.kind === 'keuze'}
 				{@const k = g}
 				<Keuze
@@ -325,20 +308,6 @@
 		color: var(--ink-3);
 	}
 
-	.range {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-	}
-	.range label {
-		flex: 1;
-		min-width: 0;
-	}
-	.range-sep {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.range input,
 	.text {
 		width: 100%;
 		box-sizing: border-box;
@@ -354,17 +323,7 @@
 	.select {
 		cursor: pointer;
 	}
-	.range input::placeholder,
 	.text::placeholder {
 		color: var(--ink-3);
-	}
-
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
 	}
 </style>

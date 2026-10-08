@@ -525,6 +525,8 @@
 					has_phase: hasPhase || undefined,
 					kind: track || undefined,
 					ministry: asMinistry(ministry),
+					opened_from: dateFrom || undefined,
+					opened_to: dateTo || undefined,
 					sort: oneOf(sortDef.id, [
 						'number',
 						'opened_on',
@@ -1530,6 +1532,17 @@
 								on: ministry === m,
 								onClick: toggle('ministry', ministry, m)
 							}))
+					},
+					// When the dossier was opened (`opened_from`/`opened_to`), as every list with
+					// dates has its period (Thijs, 9 Oct).
+					{
+						id: 'period',
+						label: 'Geopend',
+						kind: 'range',
+						unit: 'date',
+						from: dateFrom,
+						to: dateTo,
+						onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
 					}
 				];
 			}

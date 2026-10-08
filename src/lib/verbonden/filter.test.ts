@@ -38,14 +38,15 @@ describe('parseFilter', () => {
 		expect([...f.bronnen!]).toEqual(['artikelen', 'wetten', 'toelichtingen']);
 		expect(f.lid).toBe('2');
 		expect(f.rechter).toBe('hof');
-		expect(f.van).toBe(2015);
-		expect(f.tot).toBe(2026);
+		// An address from before, with years, reads as days (the period of every list).
+		expect(f.van).toBe('2015-01-01');
+		expect(f.tot).toBe('2026-12-31');
 		expect(filterParams(f)).toMatchObject({
 			bronnen: 'artikelen,wetten,toelichtingen',
 			lid: '2',
 			rechter: 'hof',
-			van: '2015',
-			tot: '2026',
+			van: '2015-01-01',
+			tot: '2026-12-31',
 			betrouwbaarheid: null
 		});
 	});
@@ -114,8 +115,8 @@ describe('rowPasses', () => {
 		expect(rowPasses(hof, only({ rechter: 'hr' }))).toBe(false);
 		// A rechter narrows the judgments only.
 		expect(rowPasses(art, only({ rechter: 'hr' }))).toBe(true);
-		expect(rowPasses(hof, only({ van: 2020 }))).toBe(false);
-		expect(rowPasses(hr, only({ van: 2020, tot: 2026 }))).toBe(true);
+		expect(rowPasses(hof, only({ van: '2020-01-01' }))).toBe(false);
+		expect(rowPasses(hr, only({ van: '2020-01-01', tot: '2026-12-31' }))).toBe(true);
 		expect(rowPasses(hof, only({ betrouwbaarheid: 'bron' }))).toBe(false);
 		expect(rowPasses(hof, only({ betrouwbaarheid: 'afgeleid' }))).toBe(true);
 		// A confidence of 0.95 counts as hoog, whatever `derived` says.
@@ -138,11 +139,11 @@ describe('rowPasses', () => {
 			kind: 'leden',
 			period: { from: '2025-11-12', to: null, role: null }
 		});
-		expect(rowPasses(lnv, only({ van: 2019, tot: 2019 }))).toBe(true);
-		expect(rowPasses(lnv, only({ van: 2022 }))).toBe(false);
+		expect(rowPasses(lnv, only({ van: '2019-01-01', tot: '2019-12-31' }))).toBe(true);
+		expect(rowPasses(lnv, only({ van: '2022-01-01' }))).toBe(false);
 		expect(rowPasses(lnv, only({ jaar: 2020 }))).toBe(true);
-		expect(rowPasses(now, only({ van: 2030 }))).toBe(true);
-		expect(rowPasses(now, only({ tot: 2024 }))).toBe(false);
+		expect(rowPasses(now, only({ van: '2030-01-01' }))).toBe(true);
+		expect(rowPasses(now, only({ tot: '2024-12-31' }))).toBe(false);
 	});
 
 	it('tells the rechter from the ECLI and the court name', () => {
