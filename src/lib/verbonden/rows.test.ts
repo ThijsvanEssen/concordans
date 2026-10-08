@@ -173,3 +173,15 @@ describe('the name of an activity', () => {
 		).toBe('Plenair debat, 22 september 2026');
 	});
 });
+
+describe('a translation of a judgment', () => {
+	it('says it is the English translation, as its name in the source does', () => {
+		const d = describeBron(
+			'judgments',
+			'ecli_nl_rbdha_2015_7196',
+			'Rechtbank Den Haag 2015-06-24 / C/09/456689 / HA ZA 13-1396 (English translation)',
+			{ ecli: 'ECLI:NL:RBDHA:2015:7196', court: 'Rechtbank Den Haag', date: '2015-06-24' }
+		);
+		expect(d.context).toBe('Engelse vertaling');
+	});
+});

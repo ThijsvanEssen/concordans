@@ -12,7 +12,7 @@ import { deelIds, layersOf } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
-import { isBijWetsvoorstel, naastHetStuk, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
+import { isBijWetsvoorstel, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 /**
@@ -78,14 +78,6 @@ const norm = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
 function stukLaag(r: Row, soort: string, gedeeld: Set<string>): Laag {
 	const naam = r.context && gedeeld.has(norm(r.title)) ? r.context : r.title;
 	return { soort, naam, ref: r.ref, vol: naam === r.title ? undefined : r.title };
-}
-
-/** The titles more than one paper carries, this stuk's own among them. */
-function gedeeldeTitels(rows: Row[], eigen: string | null): Set<string> {
-	const tel = new Map<string, number>();
-	for (const t of [...rows.map((r) => r.title), ...(eigen ? [eigen] : [])])
-		tel.set(norm(t), (tel.get(norm(t)) ?? 0) + 1);
-	return new Set([...tel].filter(([, n]) => n > 1).map(([t]) => t));
 }
 
 /** A neighbour as a layer: its kind in the source's word, its name, its ref. */
@@ -161,30 +153,6 @@ export function behoort(
 		return b && b.total > 0
 			? [{ id, label, aantal: b.total, bak: { relation, direction, collection: coll } }]
 			: [];
-	};
-	/**
-	 * The other papers of the stuk's zaak (the Kamer's case), the substance first: no one
-	 * bucket, so asked when opened, its count not known before ($lib/bron/zaak). Only where
-	 * the stuk has a zaak; a zaak that holds only the stuk lists nothing.
-	 */
-	const inDezelfdeZaak = (): Groep[] => {
-		const key = light?.node.key;
-		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0)) return [];
-		return [
-			{
-				id: 'zaak',
-				label: 'In dezelfde zaak',
-				aantal: null,
-				laad: (signal) =>
-					stukkenInDezelfdeZaak({ key }, signal).then((zaak) => {
-						// The title the zaak shares, counted over all its papers.
-						const gedeeld = gedeeldeTitels(zaak.rows, text(props.title));
-						return naastHetStuk(props.kind, zaak).rows.map((r) =>
-							stukLaag(r, text(r.props?.kind) ?? 'Stuk', gedeeld)
-						);
-					})
-			}
-		];
 	};
 	/**
 	 * A paper that changes or explains a bill (nota van wijziging, memorie van toelichting,
@@ -309,10 +277,7 @@ export function behoort(
 						}))
 					)
 				],
-				naast: [
-					...groep('ook', 'Ook gepubliceerd als', 'SAME_AS', 'outbound', 'judgments'),
-					...groep('samenhang', 'Samenhang met', 'RELATED_TO', 'outbound', 'judgments')
-				],
+				naast: [],
 				// More than one appeal against it: the line names the first, the group all.
 				onder:
 					beroep && beroep.total > 1
@@ -340,33 +305,22 @@ export function behoort(
 					...regel('brief', 'Bijlage bij', eerste('ACCOMPANIES', 'outbound', 'documents', 'Brief')),
 					...bijWetsvoorstel()
 				],
-				naast: inDezelfdeZaak(),
+				naast: [],
+				// The bijlagen of a brief are its kern: a brief is read with them.
 				onder: groep('bijlagen', 'Bijlagen', 'ACCOMPANIES', 'inbound', 'documents')
 			};
 		}
 		case 'dossiers':
 			return {
 				regels: regel('kamer', 'Behandeld in', kamer()),
-				naast: groep(
-					'verbonden',
-					'Dossiers die de Kamer ermee verbindt',
-					'RELATED_TO',
-					'inbound',
-					'dossiers'
-				),
-				onder: [
-					...groep('zaken', 'Zaken', 'PART_OF', 'inbound', 'cases'),
-					...groep('stukken', 'Stukken', 'PART_OF', 'inbound', 'documents'),
-					...groep('activiteiten', 'Activiteiten', 'ABOUT', 'inbound', 'activities'),
-					...groep('stemmingen', 'Stemmingen', 'ABOUT', 'inbound', 'decisions'),
-					...groep('toezeggingen', 'Toezeggingen', 'ABOUT', 'inbound', 'commitments')
-				]
+				naast: [],
+				onder: []
 			};
 		case 'cases':
 			return {
 				regels: regel('dossier', 'Dossier', eerste('PART_OF', 'outbound', 'dossiers', 'Dossier')),
 				naast: [],
-				onder: groep('stukken', 'Stukken', 'PART_OF', 'inbound', 'documents')
+				onder: []
 			};
 		case 'members': {
 			// A lid in its fracties, each with its period from the lid's own memberships
@@ -392,13 +346,7 @@ export function behoort(
 					: [];
 			return {
 				regels,
-				naast: [
-					...(!periodes.length && fracties && fracties.total > 1
-						? groep('fracties', 'Fracties', 'MEMBER_OF', 'outbound', 'factions')
-						: []),
-					...groep('commissies', 'Commissies', 'MEMBER_OF', 'outbound', 'committees'),
-					...groep('kabinetten', 'Kabinetten', 'SERVED_IN', 'outbound', 'cabinets')
-				],
+				naast: [],
 				onder: []
 			};
 		}
@@ -406,22 +354,19 @@ export function behoort(
 			return {
 				regels: regel('kamer', 'Kamer', kamer()),
 				naast: [],
-				onder: groep('leden', 'Leden', 'MEMBER_OF', 'inbound', 'members')
+				onder: []
 			};
 		case 'committees':
 			return {
 				regels: regel('kamer', 'Kamer', kamer()),
 				naast: [],
-				onder: [
-					...groep('leden', 'Leden', 'MEMBER_OF', 'inbound', 'members'),
-					...groep('activiteiten', 'Activiteiten', 'LED_BY', 'inbound', 'activities')
-				]
+				onder: []
 			};
 		case 'cabinets':
 			return {
 				regels: [],
 				naast: [],
-				onder: groep('bewindspersonen', 'Bewindspersonen', 'SERVED_IN', 'inbound', 'members')
+				onder: []
 			};
 		case 'activities':
 			return {
@@ -434,16 +379,13 @@ export function behoort(
 					...regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier'))
 				],
 				naast: [],
-				onder: [
-					...groep('stukken', 'Stukken bij deze activiteit', 'MADE_IN', 'inbound', 'documents'),
-					...groep('toezeggingen', 'Toezeggingen', 'MADE_IN', 'inbound', 'commitments')
-				]
+				onder: []
 			};
 		case 'decisions':
 			return {
 				regels: regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier')),
 				naast: [],
-				onder: groep('fracties', 'Stem per fractie', 'VOTED', 'inbound', 'factions')
+				onder: []
 			};
 		case 'commitments':
 			return {
@@ -462,10 +404,7 @@ export function behoort(
 					eerste('LEGISLATED_IN', 'outbound', 'dossiers', 'Dossier')
 				),
 				naast: [],
-				onder: [
-					...groep('artikelen', 'Artikelen', 'PART_OF', 'inbound', 'articles'),
-					...groep('versies', 'Versies', 'VERSION_OF', 'inbound', 'instrument_versions')
-				]
+				onder: []
 			};
 		default:
 			return LEEG;
@@ -490,6 +429,22 @@ async function eerdereAanleg(key: string): Promise<Laag[]> {
 		k = n.key;
 	}
 	return keten;
+}
+
+/**
+ * The ids of the instances before a judgment's eerdere aanleg (the Rechtbank before the
+ * Hof), which its procesgang names but no bucket of its own holds: Verbonden does not list
+ * them again under what the judgment cites (Thijs, 9 Oct). The same cached light nodes as
+ * the band's line.
+ */
+export async function procesgangIds(key: string): Promise<string[]> {
+	const light = await getNodeFirst('judgments', key).catch(() => null);
+	const eerder = light?.neighbors.buckets?.find(
+		(b) => b.relation === 'APPEAL_OF' && b.direction === 'outbound' && b.collection === 'judgments'
+	)?.items?.[0];
+	if (!eerder) return [];
+	const keten = await eerdereAanleg(eerder.key);
+	return keten.flatMap((l) => (l.ref ? [`${l.ref.collection}/${l.ref.key}`] : []));
 }
 
 /**

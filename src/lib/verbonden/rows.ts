@@ -195,8 +195,15 @@ export function describe(
 				title: author
 					? (join(`Conclusie ${author}`, longDate(date)) ?? `Conclusie ${author}`) + known
 					: (court ? (join(court, longDate(date)) ?? court) : name) + known,
-				// A judgment known only as cited: its ECLI and court, nothing more.
-				context: props.stub === true ? 'niet in de gegevens' : null,
+				// A judgment known only as cited: its ECLI and court, nothing more. A translation
+				// the Rechtspraak published under its own ECLI says so (in its name, as the source
+				// gives it): HR Urgenda cites the English one of the Rechtbank, not its procesgang.
+				context:
+					props.stub === true
+						? 'niet in de gegevens'
+						: text(props.translation_of) || /\(English translation\)\s*$/i.test(name ?? '')
+							? 'Engelse vertaling'
+							: null,
 				identifier: ecli ?? (court ? null : name),
 				date,
 				court

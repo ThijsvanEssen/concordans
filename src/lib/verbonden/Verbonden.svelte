@@ -54,7 +54,7 @@
 		type WetVolgorde
 	} from './volgorde';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import { isKernGroep } from '$lib/bron/behoort';
+	import { isKernGroep, procesgangIds } from '$lib/bron/behoort';
 	import { get } from 'svelte/store';
 	import {
 		GROUPINGS,
@@ -166,7 +166,44 @@
 	// The kern of the bron (Procesgang, Ingediend bij, Wet, Fractie) stands above its text in
 	// the band; Verbonden is the context and leaves those groups out (Thijs, 9 Oct: "dubbelop";
 	// docs/hierarchie.md, Kern of context). Its count is what it lists; the table keeps all.
-	const groepen = $derived(verbonden.groups.filter((g) => !isKernGroep(selection.collection, g)));
+	// A bron in the kern is not listed again by another relation either: the Rechtbank of a
+	// procesgang is no "uitspraak die hier wordt aangehaald" (Thijs, 9 Oct). The instances
+	// before the eerdere aanleg come with the band's own cached light nodes.
+	let keten = $state<Set<string>>(new Set());
+	$effect(() => {
+		const { collection, key, id } = selection;
+		keten = new Set();
+		if (collection !== 'judgments') return;
+		procesgangIds(key).then((ids) => {
+			if (selection.id === id) keten = new Set(ids);
+		});
+	});
+	/** The judgment a translation renders (`translation_of`, an ECLI), as an id. */
+	const vertalingVan = (r: Row) => {
+		const ecli = r.props?.translation_of;
+		return typeof ecli === 'string' && ecli.trim()
+			? `judgments/${ecli.trim().toLowerCase().replaceAll(':', '_')}`
+			: null;
+	};
+	const kernIds = $derived(
+		new Set([
+			...verbonden.groups
+				.filter((g) => isKernGroep(selection.collection, g))
+				.flatMap((g) => g.rows.map((r) => refId(r.ref))),
+			...keten
+		])
+	);
+	const groepen = $derived(
+		verbonden.groups
+			.filter((g) => !isKernGroep(selection.collection, g))
+			.map((g) => {
+				const rows = g.rows.filter(
+					(r) => !kernIds.has(refId(r.ref)) && !kernIds.has(vertalingVan(r) ?? '')
+				);
+				const weg = g.rows.length - rows.length;
+				return weg ? { ...g, rows, total: g.total != null ? g.total - weg : g.total } : g;
+			})
+	);
 	const alleenKern = $derived(
 		groepen.every((g) => g.rows.length === 0) &&
 			verbonden.groups.some((g) => g.rows.length > 0 && isKernGroep(selection.collection, g))
