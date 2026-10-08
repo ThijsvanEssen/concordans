@@ -481,11 +481,13 @@
 		{@const d = view.data}
 		{@const a = d.article}
 		{@const placeLine = placeOf(place, d.instrument?.display_name ?? law?.citationTitle)}
+		<!-- Wet › hoofdstuk › afdeling stands in the band Behoort bij; the head keeps the heading
+		     of the innermost layer only, which the band does not say. -->
 		<ReaderHead
 			collection="articles"
 			juris={ownCitationTitle ?? law?.citationTitle ?? d.instrument?.display_name}
 			title={title(a)}
-			place={placeLine ? [placeLine.designation] : []}
+			place={[]}
 			placeTitle={placeLine?.title}
 		>
 			{#snippet nav()}
