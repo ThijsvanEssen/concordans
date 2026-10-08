@@ -9,6 +9,7 @@
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { laatstOpen } from '$lib/stores/zwevend';
 	import type { NetwerkEntry } from './netwerk';
+	import { formatCount } from '$lib/verbonden/filter';
 
 	let {
 		entries,
@@ -86,6 +87,16 @@
 	let alles = $state(false);
 	const gevouwen = $derived(!alles && entries.length > KORT + 1);
 	const getoond = $derived(gevouwen ? entries.slice(0, KORT) : entries);
+
+	/** What a group's members are called: a wet's artikelen, a fractie's leden. */
+	const ledenVan = (c: NetwerkEntry['collection']) =>
+		c === 'instruments'
+			? 'artikelen'
+			: c === 'dossiers'
+				? 'stukken'
+				: c === 'cabinets'
+					? 'bewindspersonen'
+					: 'leden';
 </script>
 
 <section
@@ -165,6 +176,13 @@
 								>{e.label}{#if e.alone}<span
 										class="los"
 										title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
+									>{:else if e.via}<span
+										class="los"
+										title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {ledenVan(
+											e.collection
+										)}"
+										>, via {formatCount(e.via.used)} van {formatCount(e.via.total)}
+										{ledenVan(e.collection)}</span
 									>{/if}</span
 							></button
 						>

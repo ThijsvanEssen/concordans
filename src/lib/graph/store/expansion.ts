@@ -47,6 +47,7 @@ export function createExpansion(
 		addEdge,
 		drawable,
 		lawAnchor,
+		anchorContainer,
 		recordContainerFor,
 		passesThreshold,
 		mergeResponse,
@@ -87,7 +88,13 @@ export function createExpansion(
 	 * bronnen) by the canvas's rules: a container becomes a hull, a wet a stuk changes its
 	 * anchor, an edge under the threshold stays out. Returns what it drew.
 	 */
-	function mergeSubgraph(nodesIn: SubNode[], edgesIn: SubEdge[], focalId: string | null) {
+	function mergeSubgraph(
+		nodesIn: SubNode[],
+		edgesIn: SubEdge[],
+		focalId: string | null,
+		/** Paths: a step to a container is drawn to its hull, not dropped (Sr, VVD). */
+		naarOmtrek = false
+	) {
 		const byId = new Map(nodesIn.map((n) => [`${n.collection}/${n.key}`, n]));
 		const drawn = new Set<string>();
 		for (const node of nodesIn) {
@@ -126,7 +133,21 @@ export function createExpansion(
 				addEdge(e.source, changed.id, relation, { confidence: e.confidence, status: e.status });
 				continue;
 			}
+			// On a path every step ties: a stuk that REFERS_TO a chosen wet ends on the wet's
+			// hull, or the wet stands as "zonder verbinding" with the path drawn up to it.
 			const sourceNode = byId.get(e.source);
+			if (naarOmtrek) {
+				const naar = targetKind && drawn.has(e.source) ? anchorContainer(targetNode!) : null;
+				const sourceKindHier = sourceNode && containerKindOf(sourceNode.collection);
+				const van =
+					!naar && sourceKindHier && drawn.has(e.target) ? anchorContainer(sourceNode!) : null;
+				if (naar || van) {
+					const [s, t] = naar ? [e.source, naar.id] : [van!.id, e.target];
+					drawn.add(naar?.id ?? van!.id);
+					addEdge(s, t, relation, { confidence: e.confidence, status: e.status });
+					continue;
+				}
+			}
 			const sourceKind = sourceNode && containerKindOf(sourceNode.collection);
 			if (sourceKind && isContainerMembership(sourceKind, relation) && drawn.has(e.target)) {
 				recordContainerMember(sourceKind, containerIdFor(sourceNode!), e.target, relation);
@@ -174,9 +195,21 @@ export function createExpansion(
 			// A path through a wet by one of its articles (stuk → Awb ← art. 3:7, PART_OF) says
 			// no more than that the stuk names the wet the article is in: it is left out, and
 			// with it what only it brought.
+			// Unless the API widened the wet to its articles (`expand=members`): then the
+			// article's PART_OF is how the wet is reached, and the path is wanted.
+			const membership = new Set(
+				response.paths.flatMap(
+					(p) => (p as { membership_edge_ids?: string[] }).membership_edge_ids ?? []
+				)
+			);
 			const throughLaw = new Set(
 				response.edges
-					.filter((e) => e.relation === 'PART_OF' && e.target.startsWith('instruments/'))
+					.filter(
+						(e) =>
+							e.relation === 'PART_OF' &&
+							e.target.startsWith('instruments/') &&
+							!membership.has(e.id)
+					)
 					.map((e) => e.id)
 			);
 			const paths = response.paths.filter((p) => !p.edge_ids.some((id) => throughLaw.has(id)));
@@ -187,7 +220,7 @@ export function createExpansion(
 				response.nodes.filter((n) => onPath.has(`${n.collection}/${n.key}`)),
 				response.edges.filter((e) => edgeIds.has(e.id))
 			);
-			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null);
+			const { drawn } = mergeSubgraph(folded.nodes, folded.edges, null, true);
 			// The dossier a stuk on a path is in, as a hull around it: the MvT of 33328 shows
 			// the bill it explains (BE-49). From the stuk's light node (its one PART_OF dossier;
 			// 9 kB, not 42), four at a time and for at most twelve stukken, so one composition
