@@ -7,4 +7,8 @@ describe('search lanes', () => {
 		for (const laan of LANEN) expect(laan.client).toBe(zoekApi);
 		expect(LANEN.find((l) => l.kinds.includes('judgments'))?.min).toBe(4);
 	});
+
+	it('asks the judgments in the live mode, the rest as before', () => {
+		expect(LANEN.filter((l) => l.live).map((l) => l.id)).toEqual(['uitspraken']);
+	});
 });

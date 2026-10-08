@@ -84,11 +84,18 @@
 	 * The query of a request. One place for what a lane asks: the live mode of the API
 	 * (`mode: 'live'`, Back-end #1) goes here once the schema has it.
 	 */
-	const zoekVraag = (term: string, types: Kind[], resolve: boolean) => ({
+	const zoekVraag = (
+		term: string,
+		types: Kind[],
+		resolve: boolean,
+		mode: 'live' | 'full' | null = null
+	) => ({
 		q: term,
 		types,
 		limit: LIMIT,
-		resolve: resolve || undefined
+		resolve: resolve || undefined,
+		// Not in the schema yet; an API without it ignores it.
+		...(mode ? ({ mode } as object) : {})
 	});
 
 	/** What a citation row is marked as before the API has confirmed the bron. */
@@ -115,6 +122,10 @@
 	let laanHits = $state<Record<string, Partial<Record<Kind, Hit[]>>>>({});
 	/** `traag`: it gave up on its own time (`zoekApi`, 30 s), not on an error of the API. */
 	let laanStand = $state<Record<string, 'klaar' | 'laden' | 'mislukt' | 'traag'>>({});
+	/** Per lane, the query whose answer in the live mode left more out (`partial`). */
+	let laanMeer = $state<Record<string, string>>({});
+	/** The query asked in full after "Meer uitspraken" (`mode=full`). */
+	let volVoor = $state('');
 	/** Raised by "Probeer opnieuw": that lane is asked again, the rest not. */
 	let opnieuw = $state<Record<string, number>>({});
 	/** The kinds of the first request; without them, the first lane in scope says what the query cites. */
@@ -158,6 +169,10 @@
 
 	const uid = $props.id();
 	const q = $derived(query.trim());
+	/** Kinds whose live answer left more out for this query, not yet asked in full. */
+	const meerKinds = $derived(
+		new Set(lanen.filter((l) => laanMeer[l.id] === q && volVoor !== q).flatMap((l) => l.kinds))
+	);
 
 	const extra = (hit: Hit, name: string): string => {
 		const value = hit.extra?.[name];
@@ -305,13 +320,23 @@
 		const geldt = () => term === laatste;
 		unwrap(
 			laan.client.GET('/api/search', {
-				params: { query: zoekVraag(term, types, eerste) },
+				params: {
+					query: zoekVraag(
+						term,
+						types,
+						eerste,
+						laan.live ? (volVoor === term ? 'full' : 'live') : null
+					)
+				},
 				signal: stopt.signal
 			})
 		)
 			.then((r) => {
 				if (!geldt()) return;
 				laanHits[laan.id] = r.results as Partial<Record<Kind, Hit[]>>;
+				// The live mode names the kinds it cut off at its time: more on "Meer uitspraken".
+				const partial = (r as { partial?: Partial<Record<Kind, boolean>> }).partial ?? {};
+				laanMeer[laan.id] = types.some((k) => partial[k]) ? term : '';
 				if (eerste) {
 					resolvedWith = { term, target: resolvedOf(r.resolved) };
 					keuzesVoor = { term, ...keuzesOf(r.resolved) };
@@ -341,6 +366,7 @@
 		$effect(() => {
 			const term = q;
 			void opnieuw[laan.id];
+			if (laan.live) void volVoor;
 			const types = laan.kinds.filter((k) => kinds.includes(k));
 			volgende[laan.id] = null;
 			if (!term || types.length === 0 || term.length < laan.min) {
@@ -645,6 +671,12 @@
 							>{/if}
 					</a>
 				{/each}
+				{#if meerKinds.has(group.kind)}
+					<!-- The live mode answered within its time and left more out: the full answer on asking. -->
+					<button type="button" class="meer-uitspraken" onclick={() => (volVoor = q)}
+						>Meer {groupLabel(group.kind).toLowerCase()}</button
+					>
+				{/if}
 			</div>
 		{/each}
 
@@ -866,6 +898,22 @@
 		color: var(--ink-3);
 	}
 
+	.meer-uitspraken {
+		margin: 0 var(--s-4) var(--s-2);
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.meer-uitspraken:hover {
+		color: var(--ink);
+	}
 	.group-label .laden {
 		margin-left: var(--s-2);
 		color: var(--ink-3);

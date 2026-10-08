@@ -16,6 +16,12 @@ export type Laan = {
 	laden: boolean;
 	/** The client it asks with: the slow lanes wait as long as the API does (30 s). */
 	client: typeof api;
+	/**
+	 * Asked per keystroke in the API's live mode (`mode=live`, Back-end #1): within about
+	 * 250 ms, by name, ECLI and title, with `partial` where there is more; the full answer
+	 * (`mode=full`) on "Meer uitspraken". An API without the mode ignores it.
+	 */
+	live: boolean;
 };
 
 /**
@@ -35,7 +41,8 @@ export const LANEN: readonly Laan[] = [
 		min: 3,
 		wacht: LANGZAAM_MS,
 		laden: false,
-		client: zoekApi
+		client: zoekApi,
+		live: false
 	},
 	{
 		id: 'uitspraken',
@@ -43,6 +50,7 @@ export const LANEN: readonly Laan[] = [
 		min: 4,
 		wacht: LANGZAAM_MS,
 		laden: true,
-		client: zoekApi
+		client: zoekApi,
+		live: true
 	}
 ];
