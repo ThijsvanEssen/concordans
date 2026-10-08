@@ -1,3 +1,4 @@
+import { eersteIndiener } from '$lib/bron/submitters';
 import type { Schema } from '$lib/api/types';
 import { articleName } from '$lib/text/bw';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
@@ -298,15 +299,9 @@ export function articleOf(
 /** Lead signatory of a motion or amendment, from `props.actors`. */
 function leadSignatory(actors: unknown): { name: string; faction: string | null } | null {
 	if (!Array.isArray(actors)) return null;
-	const roleOf = (a: Record<string, unknown>) => String(a.role ?? '').toLowerCase();
-	// The source writes "Eerste ondertekenaar" and lists the others before it as often as
-	// after (motie 36799-45: Schenk and Flach, then Ceder as eerste ondertekenaar).
-	const lead =
-		actors.find((a) => /^eerste (indiener|ondertekenaar)$/.test(roleOf(a))) ??
-		actors.find((a) => roleOf(a) === 'indiener') ??
-		actors[0];
+	const lead = eersteIndiener(actors as Record<string, unknown>[]);
 	const name = text(lead?.name);
-	return name ? { name, faction: text(lead.faction) } : null;
+	return name ? { name, faction: text(lead?.faction) } : null;
 }
 
 export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {

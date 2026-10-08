@@ -55,3 +55,23 @@ export function groupSubmitters(list: readonly Submitter[]): {
 	const by = list.filter((s) => s.role === 'indiener');
 	return { by, with: list.filter((s) => s.role !== 'indiener') };
 }
+
+/**
+ * Whether a role is that of the first submitter, as the source or the API writes it: the
+ * TK's `Eerste ondertekenaar` (a motie) and `Eerste indiener`, the API's `indiener`.
+ */
+export const isEersteIndiener = (role: unknown) =>
+	/^(eerste (indiener|ondertekenaar)|indiener)$/i.test(String(role ?? '').trim());
+
+/**
+ * The first submitter of a list of persons, by role and never by place: the source lists
+ * the mede-ondertekenaars first as often as after (motie 36799-45: Schenk and Flach, then
+ * Ceder). The first in the list only where no role says it.
+ */
+export const eersteIndiener = <T extends { role?: unknown }>(list: readonly T[]): T | undefined =>
+	list.find((p) => isEersteIndiener(p.role)) ?? list[0];
+
+/** The bewindspersoon of a feed item (a toezegging), by role. */
+export const bewindspersoonVan = <T extends { role?: unknown }>(
+	list: readonly T[]
+): T | undefined => list.find((p) => p.role === 'bewindspersoon') ?? list[0];

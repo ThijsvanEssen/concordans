@@ -9,6 +9,7 @@ import { getNodeFirst } from '$lib/api/records';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
 import { deelIds, layersOf } from '$lib/text/division';
+import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
 import { stukkenInDezelfdeZaak } from './zaak';
 import type { Collection, Relation } from '$lib/vocabulary';
@@ -39,6 +40,8 @@ export type Regel = {
 	label: string;
 	lagen: Laag[];
 	laad?: (signal?: AbortSignal) => Promise<Laag[]>;
+	/** Bronnen side by side (the fracties of a lid), not a chain: "; " in place of "›". */
+	los?: boolean;
 };
 
 /** The bucket a group lists, as the API names it. */
@@ -350,15 +353,31 @@ export function behoort(
 				onder: groep('stukken', 'Stukken', 'PART_OF', 'inbound', 'documents')
 			};
 		case 'members': {
-			// A lid in its fractie. A lid of several fracties over time has them as a group.
+			// A lid in its fracties, each with its period from the lid's own memberships
+			// ("D66, sinds 2023"; "VVD, 2017–2021"), the current one first (Thijs, 9 Oct).
+			const periodes = fractiePeriodes(props.faction_memberships);
 			const fracties = bak('MEMBER_OF', 'outbound', 'factions');
+			const regels: Regel[] = periodes.length
+				? [
+						{
+							id: 'fractie',
+							label: periodes.length > 1 ? 'Fracties' : 'Fractie',
+							los: true,
+							lagen: periodes.map((f) => ({
+								soort: 'Fractie',
+								// The period on a phone too: it is what Thijs asked for.
+								naam: `${f.naam}, ${f.periode}`,
+								ref: refOf('factions', f.key, {})
+							}))
+						}
+					]
+				: fracties?.total === 1
+					? regel('fractie', 'Fractie', eerste('MEMBER_OF', 'outbound', 'factions', 'Fractie'))
+					: [];
 			return {
-				regels:
-					fracties?.total === 1
-						? regel('fractie', 'Fractie', eerste('MEMBER_OF', 'outbound', 'factions', 'Fractie'))
-						: [],
+				regels,
 				naast: [
-					...(fracties && fracties.total > 1
+					...(!periodes.length && fracties && fracties.total > 1
 						? groep('fracties', 'Fracties', 'MEMBER_OF', 'outbound', 'factions')
 						: []),
 					...groep('commissies', 'Commissies', 'MEMBER_OF', 'outbound', 'committees'),

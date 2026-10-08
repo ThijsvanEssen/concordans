@@ -2,7 +2,9 @@
 	// The vote on a motie or an amendement, on the page of the stuk itself (API 0.73, BE-33):
 	// the outcome and the day, the seats for and against, and the fracties on each side. The
 	// stuk names its decisions; the fracties of the Tweede Kamer are in the decision's votes,
-	// those of the Eerste Kamer in its own lists.
+	// those of the Eerste Kamer in its own lists. The outcome stands first, in shape, colour and
+	// word, the seats beside it, so it reads at once without scrolling, on a phone too (Thijs,
+	// 9 Oct: "De uitslag moet duidelijk zijn"); docs/typografie.md.
 	import type { Schema } from '$lib/api/types';
 	import { getDecision } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -10,6 +12,8 @@
 	import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 	import { ekFactionGroups } from '$lib/components/explore/readers/voters';
 	import { langeDatum } from '$lib/text/datum';
+	import Uitkomst from './Uitkomst.svelte';
+	import Stem from './Stem.svelte';
 
 	type Decision = Schema<'DecisionDTO'>;
 
@@ -43,6 +47,14 @@
 			.map((c) => ({ label: c, names: by.get(c)!.map((v) => v.name?.trim() || v.voter_id) }));
 	}
 
+	/** Aangenomen (also without a vote) a filled box, verworpen an open one, else dashed. */
+	const soortVan = (d: Decision, uitslag: string | null) =>
+		d.passed === true || /aangenomen/i.test(uitslag ?? '')
+			? ('ja' as const)
+			: d.passed === false
+				? ('nee' as const)
+				: ('open' as const);
+
 	/** "120 voor, 30 tegen" from the tally; empty for a decision without votes. */
 	function telling(d: Decision): string {
 		const tally = details.get(d.key)?.tally ?? d.tally ?? {};
@@ -59,13 +71,21 @@
 			{@const tally = telling(d)}
 			<div class="stemming">
 				<p class="uitslag">
-					<BronLink ref={`decisions/${d.key}`}>{uitslag ?? 'Stemming'}</BronLink>{d.date
-						? ` op ${langeDatum(d.date)}`
-						: ''}{tally ? `: ${tally}` : ''}.
+					<Uitkomst soort={soortVan(d, uitslag)} woord={uitslag ?? 'Stemming'} />{#if tally}<span
+							class="telling">{tally}</span
+						>{/if}
 				</p>
+				{#if d.date}
+					<p class="wanneer">
+						<BronLink ref={`decisions/${d.key}`}>Stemming op {langeDatum(d.date)}</BronLink>
+					</p>
+				{/if}
 				{#each sides(d) as side (side.label)}
 					{#if side.names.length > 0}
-						<p class="kant"><span class="kant-naam">{side.label}</span> {side.names.join(', ')}</p>
+						<p class="kant">
+							<span class="kant-naam"><Stem keuze={side.label} /></span>
+							{side.names.join(', ')}
+						</p>
 					{/if}
 				{/each}
 			</div>
@@ -82,11 +102,26 @@
 	.stemming + .stemming {
 		margin-top: var(--s-3);
 	}
+	/* The outcome at the size of a section heading, the seats beside it. */
 	.uitslag {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-3);
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-body);
+		font-size: var(--t-h3);
 		color: var(--ink);
+	}
+	.telling {
+		font-size: var(--t-body);
+		color: var(--ink-2);
+	}
+	.wanneer {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.kant {
 		margin: 0;
@@ -97,7 +132,7 @@
 	}
 	.kant-naam {
 		display: inline-block;
-		min-width: 48px;
+		min-width: var(--s-8);
 		margin-right: var(--s-1);
 		font-weight: 600;
 		color: var(--ink);
