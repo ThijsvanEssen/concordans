@@ -101,4 +101,4 @@ The band "Behoort bij" in every reader reads its three parts from this model and
   - "Bijlagen" only once #351 gives `ACCOMPANIES`; until then no part and no empty heading.
 - A layer with status **missing** is left out without a word; one **in props** shows as text, or as a link where a reader for it exists (an afdeling of a wet in the wetslezer).
 - The band never holds up the first paint: "Behoort bij" comes from the head (often in props), the other two parts each with their own request.
-- Each part of "beside" and "below" is a group `{ id, label, aantal, laad }`: `aantal` is null until known, `laad(signal)` runs when the group is opened or comes into view, at most 2 at a time (the API's rate limit).
+- Each part of "beside" and "below" is a group `{ id, label, aantal, bak?, laad? }` (`Groep` in `src/lib/bron/behoort.ts`). `aantal` comes from the light node (`limit=1`), null where it is not known. The rows are asked when the group is opened: the bucket `bak`, or `laad(signal)` for a list that is not one bucket, such as the stukken of a zaak. One group is open at a time; the band lists at most 50 rows, and Verbonden lists all of them.

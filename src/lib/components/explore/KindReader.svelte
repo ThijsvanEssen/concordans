@@ -20,6 +20,8 @@
 	import InstrumentReader from './readers/InstrumentReader.svelte';
 	import AnnexReader from './readers/AnnexReader.svelte';
 	import FallbackReader from './readers/FallbackReader.svelte';
+	import { setContext } from 'svelte';
+	import { BEHOORT_KEY } from '$lib/bron/behoort';
 
 	let {
 		selection,
@@ -48,6 +50,9 @@
 		proposedRow?: Row | null;
 		onCloseProposed?: () => void;
 	} = $props();
+
+	// Every reader's frame shows where this bron stands, from the same place (BehoortBij).
+	setContext(BEHOORT_KEY, () => selection);
 </script>
 
 {#if selection.collection === 'articles'}

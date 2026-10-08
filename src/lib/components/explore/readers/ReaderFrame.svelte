@@ -5,7 +5,10 @@
 	// --reader-pad-top, --reader-pad-left, --reader-pad-right and --reader-max
 	// (explore/+page.svelte). So the text keeps its place and width whatever opens
 	// beside it, and the scrollbar keeps its gutter whether or not the text scrolls.
-	import type { Snippet } from 'svelte';
+	import { getContext, type Snippet } from 'svelte';
+	import type { GraphNode } from '$lib/graph/types';
+	import BehoortBij from '$lib/bron/BehoortBij.svelte';
+	import { BEHOORT_KEY } from '$lib/bron/behoort';
 
 	let {
 		status = 'ready',
@@ -19,10 +22,14 @@
 		onRetry?: () => void;
 		children?: Snippet;
 	} = $props();
+
+	// Where the bron stands, above its text and before it loads (docs/hierarchie.md).
+	const bron = getContext<(() => GraphNode) | undefined>(BEHOORT_KEY);
 </script>
 
 <div class="reader-frame">
 	<div class="reader-frame__col">
+		{#if bron && status !== 'empty'}<BehoortBij node={bron()} />{/if}
 		{#if status === 'empty'}
 			<div class="reader-empty">
 				<p>Selecteer een artikel, uitspraak of parlementaire bron om de inhoud hier te lezen.</p>
