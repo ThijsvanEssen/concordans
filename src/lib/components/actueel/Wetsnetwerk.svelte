@@ -79,7 +79,10 @@
 </script>
 
 <section class="wetsnetwerk" aria-labelledby="wetsnetwerk-heading">
-	<p class="waarom">Laatst aangenomen wetsvoorstel: {KAMER[k.kamer]}, {langeDatum(k.datum)}</p>
+	<p class="waarom">
+		<KindGlyph vorm="voorstel" size={12} />Laatst aangenomen wetsvoorstel: {KAMER[k.kamer]},
+		{langeDatum(k.datum)}
+	</p>
 	<h2 id="wetsnetwerk-heading">{k.naam}</h2>
 
 	<ol class="keten">
@@ -141,6 +144,9 @@
 
 <style>
 	.waarom {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
 		margin: 0 0 var(--s-1);
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
@@ -289,8 +295,19 @@
 
 	/* A phone: the chain one step a line, and a link to the same network in the Verkenner. */
 	@media (max-width: 640px) {
+		/* On a phone the band stands apart from the list under it: on the second paper, in a
+		   block of its own, its title a step larger (Thijs, 9 Oct). */
+		.wetsnetwerk {
+			padding: var(--s-4);
+			border-radius: var(--r-1);
+			background: var(--paper-2);
+		}
+		.waarom {
+			color: var(--ink-2);
+		}
 		h2 {
-			margin-bottom: var(--s-2);
+			margin-bottom: var(--s-3);
+			font-size: var(--t-h2);
 		}
 		/* One step a line, the signs joined by a rule, as on the timeline. */
 		.keten {
