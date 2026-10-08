@@ -722,7 +722,9 @@
 					type: 'circle',
 					color: 'rgba(0,0,0,0)',
 					size: 2,
-					label: ''
+					label: '',
+					// Its hull's name where the law's meta has none (a law that only joins a netwerk).
+					anchorNaam: kort(bronNaam(n, $instrumentMetaStore))
 				});
 			const seed = n as GraphNode & { x?: number; y?: number };
 			const seedHasPos = typeof seed.x === 'number' && typeof seed.y === 'number';

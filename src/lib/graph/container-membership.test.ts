@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isDrawnGroup, momentOf, type ContainerGroup } from './container-membership';
+import {
+	containerIdFor,
+	isDrawnGroup,
+	momentOf,
+	type ContainerGroup
+} from './container-membership';
 import { periodLabel } from '$lib/verbonden/rows';
 
 const lid = 'members/jetten';
@@ -64,5 +69,20 @@ describe('periodLabel', () => {
 		);
 		// The end date is the last day of the seat (TotEnMet).
 		expect(periodLabel({ from: null, to: '2026-06-09', role: null })).toBe('tot en met 2026');
+	});
+});
+
+describe('containerIdFor', () => {
+	it('groups a law by its BWB id, an act of the EU without one by its key', () => {
+		expect(
+			containerIdFor({
+				collection: 'instruments',
+				key: 'bwbr0001854',
+				props: { bwb_id: 'BWBR0001854' }
+			})
+		).toBe('BWBR0001854');
+		expect(containerIdFor({ collection: 'instruments', key: '32011l0036', props: {} })).toBe(
+			'32011L0036'
+		);
 	});
 });
