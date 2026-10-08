@@ -124,6 +124,19 @@ export function zetGezien(term: string, dag: string) {
 	bewaar(lijst);
 }
 
+/** A topic shows at least this many days, new or not. */
+export const RECENT_DAGEN = 30;
+
+/**
+ * From which day a topic is shown: the recent days, or from the visit before when that lies
+ * further back. Only what is new would leave a topic visited today empty (Thijs, 9 Oct).
+ */
+export const vensterVan = (vorige: string | null, recent: string) =>
+	vorige && vorige < recent ? vorige : recent;
+
+/** New: after the day the data had reached at the visit before. */
+export const isNieuw = (datum: string, vorige: string | null) => !!vorige && datum > vorige;
+
 // ── The address ────────────────────────────────────────────────────────────
 // `?onderwerp=kunstmatige intelligentie|AI&onderwerp=stikstof`: one parameter per topic, its
 // words apart by `|`, which a title rarely holds.

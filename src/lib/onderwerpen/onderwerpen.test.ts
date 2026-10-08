@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
 	deelAdres,
 	haalTermWeg,
+	isNieuw,
 	lees,
 	nieuwBezoek,
 	ontvolg,
 	splitsTermen,
 	uitParams,
+	vensterVan,
 	voegTermenToe,
 	volg,
 	volgt,
@@ -68,6 +70,19 @@ describe('onderwerpen', () => {
 		haalTermWeg('kunstmatige intelligentie');
 		expect(lees()[0].termen).toEqual(['algoritme']);
 		expect(uitParams(new URLSearchParams('onderwerp=AI|ki;KI'))).toEqual([['AI', 'ki']]);
+	});
+
+	it('een onderwerp van vandaag houdt in een nieuwe sessie zijn recente lijst', () => {
+		volg(['AI']);
+		zetGezien('AI', '2026-10-08');
+		sessionStorage.clear();
+		const [o] = nieuwBezoek(lees());
+		expect(o.vorige).toBe('2026-10-08');
+		expect(vensterVan(o.vorige, '2026-09-08')).toBe('2026-09-08');
+		expect(vensterVan('2026-08-01', '2026-09-08')).toBe('2026-08-01');
+		expect(isNieuw('2026-10-08', o.vorige)).toBe(false);
+		expect(isNieuw('2026-10-09', o.vorige)).toBe(true);
+		expect(isNieuw('2026-10-09', null)).toBe(false);
 	});
 
 	it('het adres draagt de onderwerpen heen en terug', () => {

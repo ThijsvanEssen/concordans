@@ -18,6 +18,7 @@
 	import { headlineOf, hrefOf } from '$lib/components/actueel/timeline';
 	import {
 		deelAdres,
+		isNieuw,
 		lees,
 		nieuwBezoek,
 		haalTermWeg,
@@ -25,6 +26,8 @@
 		ontvolg,
 		splitsTermen,
 		uitParams,
+		RECENT_DAGEN,
+		vensterVan,
 		voegTermenToe,
 		volg,
 		woordIn,
@@ -33,10 +36,14 @@
 	} from '$lib/onderwerpen/onderwerpen';
 	import { vandaag } from '$lib/text/datum';
 
-	/** Without a visit before: this many days back. */
-	const DAGEN_ZONDER_BEZOEK = 30;
-	/** Per word, as the feed gives at most in one page. */
+	/** Per word and page, as the feed gives at most. */
 	const PER_TERM = 100;
+	/**
+	 * The API matches any part of a title (`ai` in `Raijer`): pages on until this many hit
+	 * the word itself, or MAX_PAGINAS.
+	 */
+	const GENOEG = 30;
+	const MAX_PAGINAS = 3;
 	/** Lines shown of a topic before `Alle … tonen`. */
 	const EERST = 10;
 	/** The API's own limit on a slow query. */
@@ -63,7 +70,8 @@
 	const sleutel = (o: Pick<Onderwerp, 'termen'>) => o.termen.join('|').toLowerCase();
 	// A shared topic asks another window than an own one with the same words.
 	const vak = (o: Pick<Onderwerp, 'termen'>) => (gedeeld.length ? 'gedeeld:' : '') + sleutel(o);
-	const vanaf = (o: Onderwerp) => o.vorige ?? dagenTerug(DAGEN_ZONDER_BEZOEK);
+	const recent = dagenTerug(RECENT_DAGEN);
+	const vanaf = (o: Onderwerp) => vensterVan(o.vorige, recent);
 
 	/** One request per word, at most two at a time (the API's limit per address). */
 	async function laadAlles(onderwerpen: Onderwerp[], signal: AbortSignal) {
@@ -76,24 +84,40 @@
 			for (let t = taken.shift(); t && !signal.aborted; t = taken.shift()) {
 				const k = vak(t.o);
 				try {
-					const r = await unwrap(
-						api.GET('/api/feed', {
-							params: {
-								query: { q: t.term, since: vanaf(t.o), limit: PER_TERM, facets: false }
-							},
-							signal: AbortSignal.any([signal, AbortSignal.timeout(WACHT)])
-						})
-					);
 					const items = per.get(k) ?? new Map<string, FeedItem>();
-					for (const raw of r.items) {
-						const i = normalizeItem(raw);
-						if ([i.title, i.dossier?.title, i.summary].some((x) => woordIn(t.term, x)))
-							items.set(i.id, i);
-					}
 					per.set(k, items);
-					if (r.next_cursor) meer.add(k);
-					const stand = feedStand(r.data_as_of);
-					if (stand && !gedeeld.length) zetGezien(t.term, stand.newest);
+					let cursor: string | undefined;
+					let raak = 0;
+					for (let p = 0; p < MAX_PAGINAS; p++) {
+						const r = await unwrap(
+							api.GET('/api/feed', {
+								params: {
+									query: {
+										q: t.term,
+										since: vanaf(t.o),
+										limit: PER_TERM,
+										facets: false,
+										...(cursor ? { cursor } : {})
+									}
+								},
+								signal: AbortSignal.any([signal, AbortSignal.timeout(WACHT)])
+							})
+						);
+						for (const raw of r.items) {
+							const i = normalizeItem(raw);
+							if ([i.title, i.dossier?.title, i.summary].some((x) => woordIn(t.term, x))) {
+								items.set(i.id, i);
+								raak++;
+							}
+						}
+						if (p === 0) {
+							const stand = feedStand(r.data_as_of);
+							if (stand && !gedeeld.length) zetGezien(t.term, stand.newest);
+						}
+						cursor = r.next_cursor ?? undefined;
+						if (!cursor || raak >= GENOEG) break;
+					}
+					if (cursor) meer.add(k);
 				} catch {
 					if (signal.aborted) return;
 					fout.add(k);
@@ -133,7 +157,7 @@
 		const label = dayLabel(date, today);
 		return date.slice(0, 4) === today.slice(0, 4) ? label.replace(/ \d{4}$/, '') : label;
 	};
-	const groepenVan = (items: FeedItem[]): TijdGroep[] =>
+	const groepenVan = (items: FeedItem[], vorige: string | null): TijdGroep[] =>
 		[...Map.groupBy(items, (i) => i.date)].map(([date, is]) => ({
 			id: date,
 			titel: dagKop(date),
@@ -150,7 +174,7 @@
 							: h.major
 								? 'stuk'
 								: 'activiteit',
-					label: h.label,
+					label: isNieuw(i.date, vorige) ? `${h.label}, nieuw` : h.label,
 					zin: h.title,
 					href: bronHref(ref),
 					ref,
@@ -158,6 +182,21 @@
 				};
 			})
 		}));
+
+	const periodeVan = (o: Onderwerp) =>
+		vanaf(o) === recent ? `de afgelopen ${RECENT_DAGEN} dagen` : `sinds ${shortDate(vanaf(o))}`;
+	/** `2 nieuw sinds 8 okt. 2026; 25 de afgelopen 30 dagen` */
+	function telRegel(o: Onderwerp, s: Stand | undefined): string {
+		const periode = periodeVan(o);
+		if (s?.status !== 'klaar') return periode;
+		const min = s.meer ? 'ten minste ' : '';
+		if (!o.vorige) return `${min}${s.items.length} ${periode}`;
+		const nieuw = s.items.filter((i) => isNieuw(i.date, o.vorige)).length;
+		const sinds = `nieuw sinds ${shortDate(o.vorige)}`;
+		// Shown from the visit before: all of it is new.
+		if (vanaf(o) === o.vorige) return `${min}${nieuw} ${sinds}`;
+		return `${nieuw} ${sinds}; ${min}${s.items.length} ${periode}`;
+	}
 
 	// A word without a period took the API over 30 s (9 Oct): Actueel opens on a year.
 	const actueelHref = (term: string) =>
@@ -222,7 +261,7 @@
 		<h1 class="titel">Onderwerpen</h1>
 		{#if gedeeld.length}
 			<p class="uitleg">
-				Gedeelde onderwerpen, de afgelopen {DAGEN_ZONDER_BEZOEK} dagen in Actueel.
+				Gedeelde onderwerpen, de afgelopen {RECENT_DAGEN} dagen in Actueel.
 			</p>
 			<div class="acties">
 				{#if alGevolgd}
@@ -233,9 +272,10 @@
 			</div>
 		{:else}
 			<p class="uitleg">
-				Nieuwe stukken, stemmingen en toezeggingen in Actueel met deze woorden in de titel, sinds
-				het vorige bezoek. Synoniemen horen bij één onderwerp: AI; kunstmatige intelligentie. Een
-				stuk dat meer woorden raakt, telt één keer. De onderwerpen staan alleen in deze browser.
+				Stukken, stemmingen en toezeggingen in Actueel met deze woorden in de titel, de afgelopen
+				{RECENT_DAGEN} dagen. Nieuw is wat dateert van na het vorige bezoek. Synoniemen horen bij één
+				onderwerp: AI; kunstmatige intelligentie. Een stuk dat meer woorden raakt, telt één keer. De onderwerpen
+				staan alleen in deze browser.
 			</p>
 			<form class="nieuw" onsubmit={voegToe}>
 				<input
@@ -271,10 +311,7 @@
 			<div class="onderwerp__kop">
 				<h2 id="onderwerp-{n}">{o.termen.join('; ')}</h2>
 				<p class="sinds">
-					{#if s?.status === 'klaar'}
-						{s.meer ? 'ten minste ' : ''}{s.items.length} nieuw,
-					{/if}
-					{o.vorige ? `sinds ${shortDate(o.vorige)}` : `de afgelopen ${DAGEN_ZONDER_BEZOEK} dagen`}
+					{telRegel(o, s)}
 				</p>
 				{#if !gedeeld.length}
 					<button
@@ -316,10 +353,13 @@
 			{:else if s.status === 'fout'}
 				<p class="status status--fout">Dit onderwerp kon niet worden geladen.</p>
 			{:else if !s.items.length}
-				<p class="status">Niets nieuws.</p>
+				<p class="status">Niets {periodeVan(o)}.</p>
 			{:else}
 				{@const alle = uitgeklapt[vak(o)] || s.items.length <= EERST + 2}
-				<Tijdlijn groepen={groepenVan(alle ? s.items : s.items.slice(0, EERST))} datums={false} />
+				<Tijdlijn
+					groepen={groepenVan(alle ? s.items : s.items.slice(0, EERST), o.vorige)}
+					datums={false}
+				/>
 				{#if !alle}
 					<button type="button" class="stil meer" onclick={() => (uitgeklapt[vak(o)] = true)}
 						>Alle {s.items.length} tonen</button
@@ -499,6 +539,10 @@
 	}
 
 	@media (max-width: 640px) {
+		/* The count on a line of its own, the actions below it. */
+		.sinds {
+			flex-basis: 100%;
+		}
 		.onderwerpen {
 			padding: var(--s-4) var(--s-4) var(--s-7);
 		}
