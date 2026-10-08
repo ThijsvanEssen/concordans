@@ -56,6 +56,7 @@
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
+	import { laatstOpen } from '$lib/stores/zwevend';
 
 	// ── Camera persistence across mounts ──────────────────────────────────────
 	// GraphView is unmounted when the mode leaves Netwerk and mounted again on
@@ -174,6 +175,17 @@
 	);
 
 	let compactFiltersOpen = $state(false);
+	$effect(() => {
+		if (compactFiltersOpen) laatstOpen.set('legenda');
+	});
+	// On a phone the panel Netwerk opened folds the legend: there is room for one.
+	$effect(() =>
+		laatstOpen.subscribe((wie) => {
+			if (wie !== 'netwerk' || !window.matchMedia('(max-width: 768px)').matches) return;
+			legendaOpen = false;
+			compactFiltersOpen = false;
+		})
+	);
 	// De zwevende legenda, dicht tot iemand hem opent; per browser onthouden.
 	const LEGENDA = 'concordans:legenda';
 	let legendaOpen = $state(false);
@@ -186,6 +198,7 @@
 	});
 	const zetLegenda = (v: boolean) => {
 		legendaOpen = v;
+		if (v) laatstOpen.set('legenda');
 		try {
 			localStorage.setItem(LEGENDA, v ? 'open' : 'dicht');
 		} catch {
@@ -1622,7 +1635,8 @@
 		pointer-events: auto;
 	}
 
-	/* De legenda links boven, een kaart zoals het netwerkpaneel rechts boven. */
+	/* De legenda links onder, overal op dezelfde plek: dicht zijn kop, open erboven wat hij
+	   uitlegt, de kop blijft staan. */
 	/* A cluster bron's card: beside it, as an opened row (RowOpen) in its buttons. */
 	.cluster-kaart {
 		position: absolute;
@@ -1690,12 +1704,12 @@
 
 	.legenda {
 		position: absolute;
-		top: var(--s-3);
+		bottom: var(--s-3);
 		left: var(--s-3);
 		z-index: var(--z-float);
 		max-height: calc(100% - 7rem);
 		display: flex;
-		flex-direction: column;
+		flex-direction: column-reverse;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
@@ -1729,7 +1743,7 @@
 	}
 	.legenda-inhoud {
 		overflow-y: auto;
-		border-top: 1px solid var(--rule);
+		border-bottom: 1px solid var(--rule);
 	}
 	/* Een menu in de legenda opent binnen de kaart, onder zijn knop, en schuift mee;
 	   zo valt het nooit onder of buiten de kaart. */
@@ -1794,11 +1808,9 @@
 	}
 
 	@media (max-width: 768px) {
-		/* Narrow: the Netwerk panel takes the top; the legend stands at the bottom left,
-		   across from the zoom, and opens upward. */
+		/* Narrow: the Netwerk panel takes the top; the legend stays at the bottom left and
+		   leaves room for it. */
 		.legenda {
-			top: auto;
-			bottom: var(--s-3);
 			max-height: calc(100% - 12rem);
 		}
 		.legenda-inhoud :global(.legend) {

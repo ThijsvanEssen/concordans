@@ -7,6 +7,7 @@
 	import Search from '$lib/search/Search.svelte';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import { laatstOpen } from '$lib/stores/zwevend';
 	import type { NetwerkEntry } from './netwerk';
 
 	let {
@@ -62,12 +63,20 @@
 	});
 	const zetOpen = (v: boolean) => {
 		open = v;
+		if (v) laatstOpen.set('netwerk');
 		try {
 			localStorage.setItem(PANEEL, v ? 'open' : 'dicht');
 		} catch {
 			/* geen opslag */
 		}
 	};
+
+	// On a phone, the legend opened folds this panel: there is room for one.
+	$effect(() =>
+		laatstOpen.subscribe((wie) => {
+			if (telefoon && wie === 'legenda' && open) open = false;
+		})
+	);
 
 	let zoeken = $state(false);
 
