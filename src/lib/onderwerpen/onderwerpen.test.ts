@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
 	deelAdres,
+	haalTermWeg,
 	lees,
 	nieuwBezoek,
 	ontvolg,
+	splitsTermen,
 	uitParams,
+	voegTermenToe,
 	volg,
 	volgt,
 	woordIn,
@@ -49,6 +52,22 @@ describe('onderwerpen', () => {
 		expect(nieuwBezoek(lees())[0]).toMatchObject({ vorige: '2026-10-02' });
 		zetGezien('stikstof', '2026-10-08');
 		expect(nieuwBezoek(lees())[0]).toMatchObject({ vorige: '2026-10-02', gezien: '2026-10-08' });
+	});
+
+	it('synoniemen met ; of , in één onderwerp, achteraf aan te vullen en in te korten', () => {
+		volg(splitsTermen('AI; kunstmatige intelligentie, artificial intelligence; ai'));
+		expect(lees()[0].termen).toEqual([
+			'AI',
+			'kunstmatige intelligentie',
+			'artificial intelligence'
+		]);
+		voegTermenToe('ai', ['algoritme', 'Kunstmatige intelligentie']);
+		expect(lees()[0].termen).toHaveLength(4);
+		haalTermWeg('artificial intelligence');
+		haalTermWeg('AI');
+		haalTermWeg('kunstmatige intelligentie');
+		expect(lees()[0].termen).toEqual(['algoritme']);
+		expect(uitParams(new URLSearchParams('onderwerp=AI|ki;KI'))).toEqual([['AI', 'ki']]);
 	});
 
 	it('het adres draagt de onderwerpen heen en terug', () => {
