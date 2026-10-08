@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { terPlekke } from '$lib/actions/klik';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
@@ -201,6 +202,8 @@
 		clearTimeout(meldingTimer);
 		melding = { groep, tekst, terug };
 		meldingTimer = setTimeout(() => (melding = null), MELDING_MS);
+		// On a phone the network says it too: the Netwerk tab is where the reader goes.
+		meldNetwerk(tekst, terug, MELDING_MS);
 	}
 
 	function toggleLayer(g: Group) {
@@ -215,6 +218,7 @@
 		}
 		const nieuw = rows.filter((r) => !onCanvas.has(refId(r.ref)));
 		store.showRows(selection.id, rows as CanvasRow[]);
+		onNaarNetwerk?.();
 		if (nieuw.length)
 			meld(g.id, `${telling(nieuw)} getekend in het netwerk.`, () =>
 				store.hideRows(nieuw.map((r) => refId(r.ref)))

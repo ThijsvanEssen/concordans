@@ -29,6 +29,7 @@ Conventions:
   - One click (a tap on a phone) lights the bron and its own lines, with its card beside it: Tekst lezen, Omgeving tonen, In netwerk. The network keeps its size.
   - The reader opens with Tekst lezen, a second click on the bron (a double click too) or Enter.
   - A click on the empty network or Escape removes the mark. Omgeving tonen does what a double click did before: the bron's own neighbourhood in place of the netwerk.
+- On a phone, whatever puts a bron in the network or opens it there goes to the Netwerk tab (Thijs, 9 October 2026): In netwerk, toon in netwerk, Alleen de omgeving, and a link to the network from Bladeren or Actueel (`bronHref(…, { mode: 'graph' })` carries `paneel=netwerk`, read once). What it did stands at the foot of the network, with Ongedaan maken (`meldNetwerk`).
 - Comments say why, not what.
 - The interface is Dutch; code and these files are English. The interface calls a node a bron and an edge a verbinding.
 - Styles take their sizes from the tokens in `AppShell.svelte` (`--t-*` for type, `--s-1` to `--s-8` for space). `src/lib/style-scale.test.ts` fails on a font size in pixels and on more spacing off the 4px scale than `OFF_SCALE_MAX`; a rule that is changed moves to the tokens, and `OFF_SCALE_MAX` goes down to the new count.

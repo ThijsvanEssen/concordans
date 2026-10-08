@@ -57,6 +57,7 @@
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
 	import { laatstOpen } from '$lib/stores/zwevend';
+	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 
 	// ── Camera persistence across mounts ──────────────────────────────────────
 	// GraphView is unmounted when the mode leaves Netwerk and mounted again on
@@ -1491,6 +1492,23 @@
 				</div>
 			{/if}
 
+			<!-- On a phone, what the last action on the network did, with the way back: the
+			     place it was done from (Verbonden) is out of sight on the Netwerk tab. -->
+			{#if $netwerkMelding}
+				<p class="netwerk-melding" role="status">
+					{$netwerkMelding.tekst}
+					{#if $netwerkMelding.terug}
+						<button
+							type="button"
+							class="btn is-text"
+							onclick={() => {
+								$netwerkMelding?.terug?.();
+								netwerkMelding.set(null);
+							}}>Ongedaan maken</button
+						>
+					{/if}
+				</p>
+			{/if}
 			<!-- De legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
 			     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
 			{#if !compact && canvasCounts.nodes > 0}
@@ -1810,7 +1828,29 @@
 		border-right: 0;
 	}
 
+	.netwerk-melding {
+		display: none;
+	}
 	@media (max-width: 768px) {
+		.netwerk-melding {
+			position: absolute;
+			left: var(--s-3);
+			right: calc(var(--s-3) + 40px + var(--s-2));
+			bottom: calc(var(--s-3) + 48px);
+			z-index: var(--z-float);
+			display: flex;
+			flex-wrap: wrap;
+			align-items: baseline;
+			gap: var(--s-1) var(--s-2);
+			margin: 0;
+			padding: var(--s-2) var(--s-3);
+			font-family: var(--font-sans);
+			font-size: var(--t-meta);
+			background: var(--paper);
+			border: 1px solid var(--rule-strong);
+			border-radius: var(--r-2);
+			box-shadow: var(--shadow-pop);
+		}
 		/* Narrow: the Netwerk panel takes the top; the legend stays at the bottom left and
 		   leaves room for it. */
 		.legenda {

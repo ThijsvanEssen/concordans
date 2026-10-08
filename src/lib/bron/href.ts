@@ -100,6 +100,9 @@ export function buildBronHref(
 	const params = new URLSearchParams();
 	params.set('focus', focus);
 	if (reading && isReadable(target.collection)) params.set('lezen', '1');
+	// A link to the network (In het netwerk, Alleen de omgeving): on a phone the Verkenner
+	// opens its Netwerk tab, not the text (Thijs, 9 Oct). Read once and dropped.
+	if (!within && mode === 'graph') params.set('paneel', 'netwerk');
 	if (inExplore && current) {
 		for (const name of KEPT_PARAMS) {
 			if (!keepNetwerk && NETWERK_PARAMS.has(name)) continue;

@@ -73,13 +73,13 @@ describe('buildBronHref', () => {
 		).toBe('/uitspraken/ECLI:NL:HR:2019:2006#rov-5.3');
 	});
 
-	it('can force the network', () => {
+	it('can force the network, and tells a phone to open its Netwerk tab', () => {
 		expect(
 			buildBronHref(at('/explore?focus=articles/a&lezen=1'), 'articles/b', {
 				keepMode: false,
 				mode: 'graph'
 			})
-		).toBe('/explore?focus=articles/b');
+		).toBe('/explore?focus=articles/b&paneel=netwerk');
 	});
 
 	it('leaves the netwerk behind when asked', () => {
