@@ -6,6 +6,7 @@
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import Periode from '$lib/components/ui/Periode.svelte';
 	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
 	import { buildBronHref } from '$lib/bron/href';
 	import { korteDatum } from '$lib/text/datum';
@@ -42,6 +43,15 @@
 	const termenSleutel = $derived((uitParams(params)[0] ?? []).join('|'));
 	const termen = $derived(termenSleutel ? termenSleutel.split('|') : []);
 	const kamer = $derived(((v) => (v === 'TK' || v === 'EK' ? v : ''))(params.get('kamer')));
+	// The period, as everywhere (Periode.svelte): days in the URL and to the API.
+	const dag = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '');
+	const van = $derived(dag(params.get('van')));
+	const tot = $derived(dag(params.get('tot')));
+	/** The bounds of the period as /api/decisions takes them. */
+	const periode = (v: string, t: string) => ({
+		...(v ? { from: v } : {}),
+		...(t ? { to: t } : {})
+	});
 	const fractie = $derived(params.get('fractie') ?? '');
 	const f = $derived<Filter>({
 		soort: params.get('soort') || undefined,
@@ -104,6 +114,7 @@
 	$effect(() => {
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
 		const k = kamer;
+		const p = periode(van, tot);
 		const ac = new AbortController();
 		besluiten = [];
 		perTerm = woorden.map((term) => ({ term, api: null, nagelopen: 0, tot: null }));
@@ -112,7 +123,7 @@
 		laden = true;
 		const gezien = new Map<string, Besluit>();
 		tweeTegelijk(woorden, (term) =>
-			pagina({ q: term, ...(k ? { chamber: k } : {}) }, ac.signal, (items, total) => {
+			pagina({ q: term, ...(k ? { chamber: k } : {}), ...p }, ac.signal, (items, total) => {
 				for (const d of items) if (opOnderwerp(d, woorden)) gezien.set(d.key, d);
 				besluiten = [...gezien.values()].sort(
 					(a, b) => (b.date ?? '').localeCompare(a.date ?? '') || a.key.localeCompare(b.key)
@@ -144,6 +155,7 @@
 	$effect(() => {
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
 		const k = kamer;
+		const p = periode(van, tot);
 		const wie = fractie;
 		const ac = new AbortController();
 		stemmen = new Map();
@@ -155,7 +167,7 @@
 		);
 		tweeTegelijk(taken, ({ term, stem }) =>
 			pagina(
-				{ q: term, party: wie, vote: stem, ...(k ? { chamber: k } : {}) },
+				{ q: term, party: wie, vote: stem, ...(k ? { chamber: k } : {}), ...p },
 				ac.signal,
 				(items) => {
 					for (const d of items) m.set(d.key, stem);
@@ -368,6 +380,9 @@
 				</select>
 			</label>
 		</div>
+		<div class="periode">
+			<Periode {van} {tot} onChange={(v, t) => zet({ van: v || null, tot: t || null })} />
+		</div>
 
 		<p class="stand">
 			{#each perTerm as p (p.term)}
@@ -508,6 +523,10 @@
 		color: var(--ink);
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
+	}
+	.periode {
+		max-width: 520px;
+		margin-bottom: var(--s-4);
 	}
 	.stand {
 		display: flex;
