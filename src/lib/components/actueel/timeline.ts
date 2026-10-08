@@ -145,7 +145,7 @@ export function actueelDayHref(date: string, kinds: FeedKind[], dossier?: string
 	return `/actueel?${p.toString().replaceAll('%2C', ',')}`;
 }
 
-const hrefOf = (i: FeedItem): BronRef =>
+export const hrefOf = (i: FeedItem): BronRef =>
 	i.node.collection === 'dossiers' && i.dossier
 		? { collection: 'dossiers', key: i.node.key, number: i.dossier.number }
 		: ({ collection: i.node.collection, key: i.node.key } as BronRef);
