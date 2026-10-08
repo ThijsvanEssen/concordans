@@ -117,7 +117,7 @@ export function padHref(pad: Pad): string {
 
 /** A judgment's node key from its ECLI, and back: `ecli_nl_hr_2019_2006`. */
 const ecliKey = (ecli: string) => ecli.toLowerCase().replaceAll(':', '_');
-const keyEcli = (key: string) =>
+export const keyEcli = (key: string) =>
 	/^ecli_[a-z]{2}_[a-z0-9]+_\d{4}_[a-z0-9.]+$/.test(key)
 		? key.toUpperCase().replaceAll('_', ':')
 		: null;
