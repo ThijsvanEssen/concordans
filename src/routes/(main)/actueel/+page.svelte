@@ -138,6 +138,8 @@
 	let items = $state<FeedItem[]>([]);
 	let cursor = $state<string | null>(null);
 	let total = $state<number | null>(null);
+	/** The counts are under way, or the API answered without them in time (`partial`). */
+	let tellen = $state(false);
 	let facets = $state<Schema<'FeedFacetsDTO'> | null>(null);
 	let loading = $state(true);
 	let loadingMore = $state(false);
@@ -164,20 +166,35 @@
 			});
 		facets = null;
 		total = null;
-		unwrap(
-			api.GET('/api/feed', {
-				params: { query: { ...q, limit: 1, facets: true } },
-				signal: ac.signal
-			})
-		)
-			.then((r) => {
-				facets = r.facets ?? null;
-				total = r.total ?? null;
-			})
-			.catch(() => {
-				// The filters stand without their counts.
-			});
-		return () => ac.abort();
+		tellen = true;
+		// Without the counts in 3 s the API answers `partial` (0.79.14) and counts on: asked
+		// once more after 30 s, or with the next filter. Then the filters stand without them.
+		let opnieuw: ReturnType<typeof setTimeout> | undefined;
+		const tel = (poging: number) =>
+			unwrap(
+				api.GET('/api/feed', {
+					params: { query: { ...q, limit: 1, facets: true } },
+					signal: ac.signal
+				})
+			)
+				.then((r) => {
+					if ((r as { partial?: boolean }).partial && !r.facets) {
+						if (poging === 0) opnieuw = setTimeout(() => tel(1), 30_000);
+						else tellen = false;
+						return;
+					}
+					facets = r.facets ?? null;
+					total = r.total ?? null;
+					tellen = false;
+				})
+				.catch(() => {
+					if (!ac.signal.aborted) tellen = false;
+				});
+		void tel(0);
+		return () => {
+			clearTimeout(opnieuw);
+			ac.abort();
+		};
 	});
 
 	async function loadMore() {
@@ -294,7 +311,8 @@
 				options: FEED_KINDS.map((k) => ({
 					id: k,
 					label: KIND_LABEL[k].one,
-					count: facets ? (kindCounts.get(k) ?? 0) : undefined,
+					// While counting, "…" beside each kind (IndexFacets `pending`).
+					count: facets ? (kindCounts.get(k) ?? 0) : tellen ? 0 : undefined,
 					on: kinds.includes(k),
 					onClick: () => toggleKind(k)
 				}))
@@ -436,7 +454,7 @@
 			>Filters{chips.length ? ` (${chips.length})` : ''}</button
 		>
 		<div class="filters-body" class:filters-body--open={filtersOpen}>
-			<IndexFacets {groups} />
+			<IndexFacets {groups} pending={tellen} />
 		</div>
 	</aside>
 
@@ -447,6 +465,8 @@
 					{total.toLocaleString('nl-NL')}
 					<span class="noun">{total === 1 ? 'gebeurtenis' : 'gebeurtenissen'}</span>
 				</p>
+			{:else if tellen}
+				<p class="count"><span class="noun">tellen…</span></p>
 			{/if}
 			{#each chips as chip (chip.id)}
 				<button type="button" class="chip" onclick={chip.onRemove}
