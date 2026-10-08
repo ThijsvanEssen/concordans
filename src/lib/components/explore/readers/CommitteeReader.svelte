@@ -1,9 +1,9 @@
 <script lang="ts">
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import type { Schema } from '$lib/api/types';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { committeeSlug, getCommittee, str } from '$lib/components/parliamentary/data';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
@@ -51,8 +51,7 @@
 		<!-- The header comes from the node, so a failed detail request costs the counts only. -->
 		<header class="head">
 			<span class="kicker">
-				<KindGlyph collection="committees" />
-				{bronLabel('committees')}
+				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>
 				<span class="komma">,</span>{chamberName(chamber)}
 				{#if kind}<span class="komma">,</span>{kind}{/if}
 			</span>

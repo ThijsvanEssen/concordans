@@ -9,6 +9,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import BehoortBij from '$lib/bron/BehoortBij.svelte';
 	import { BEHOORT_KEY } from '$lib/bron/behoort';
+	import { kop } from '$lib/stores/kop.svelte';
 
 	let {
 		status = 'ready',
@@ -25,9 +26,31 @@
 
 	// Where the bron stands, above its text and before it loads (docs/hierarchie.md).
 	const bron = getContext<(() => GraphNode) | undefined>(BEHOORT_KEY);
+
+	// The title of the reader scrolled above the frame: the status bar names the bron then.
+	let frame = $state<HTMLElement | null>(null);
+	$effect(() => {
+		kop.uitBeeld = false;
+		if (status !== 'ready' || !frame) return;
+		const titel = [...frame.querySelectorAll<HTMLElement>('h1, h2')].find(
+			(h) => !h.closest('.behoort')
+		);
+		if (!titel) return;
+		const kijk = new IntersectionObserver(
+			([e]) => {
+				kop.uitBeeld = !e.isIntersecting && e.boundingClientRect.top < (e.rootBounds?.top ?? 0);
+			},
+			{ root: frame }
+		);
+		kijk.observe(titel);
+		return () => {
+			kijk.disconnect();
+			kop.uitBeeld = false;
+		};
+	});
 </script>
 
-<div class="reader-frame">
+<div class="reader-frame" bind:this={frame}>
 	<div class="reader-frame__col">
 		{#if bron && status !== 'empty'}<BehoortBij node={bron()} />{/if}
 		{#if status === 'empty'}

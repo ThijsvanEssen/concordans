@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
@@ -7,7 +8,6 @@
 	import { getDossierTimeline } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { getDossier, str } from '$lib/components/parliamentary/data';
 	import { formatLongDate } from './_shared';
@@ -126,8 +126,7 @@
 
 			<header class="head">
 				<span class="kicker">
-					<KindGlyph collection="dossiers" />
-					{bronLabel('dossiers')}, Kamerstuk {d.number}
+					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink>, Kamerstuk {d.number}
 				</span>
 				<h2 class="title">{d.short_title ?? d.title ?? d.number}</h2>
 				{#if d.short_title && d.title && d.title.trim() !== d.short_title}
