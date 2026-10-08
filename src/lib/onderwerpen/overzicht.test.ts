@@ -73,11 +73,19 @@ describe('overzicht', () => {
 	});
 
 	it('de CSV leest in Excel met Nederlandse instellingen', () => {
-		const csv = naarCsv(lijst.slice(0, 1), 'https://concordans.nl', 'VVD', stemmen);
+		const csv = naarCsv(
+			lijst.slice(0, 1),
+			'https://concordans.nl',
+			'VVD',
+			stemmen,
+			new Map([['35334', 'Problematiek rondom stikstof en PFAS']])
+		);
 		expect(csv.startsWith('﻿')).toBe(true);
 		const [kop, rij] = csv.slice(1).split('\r\n');
 		expect(kop.split(';')).toContain('stem VVD');
-		expect(rij).toContain('2026-07-02;TK;Motie;Motie over stikstof;35334;aangenomen');
+		expect(rij).toContain(
+			'2026-07-02;TK;Motie;Motie over stikstof;35334;Problematiek rondom stikstof en PFAS;aangenomen'
+		);
 		expect(rij).toContain(';voor;https://concordans.nl/');
 	});
 });

@@ -52,33 +52,9 @@ const OLD_KIND: Record<string, FeedKind> = {
 export const kindFromParam = (value: string): FeedKind | null =>
 	isFeedKind(value) ? value : (OLD_KIND[value] ?? null);
 
-type Dossier = NonNullable<FeedItem['dossier']>;
-
-/** Past this length a dossier without a short title is named by its title, cut. */
-const DOSSIER_NAME_MAX = 80;
-
-/**
- * A dossier by a short name, from official data only: its short title, or where that is
- * the law the bill amends (`amended_law`), `wijziging van {wet}`. Without one, its title,
- * cut; its number without a title.
- */
-export function dossierName(
-	d: Pick<Dossier, 'number' | 'title' | 'short_title' | 'short_title_basis'>
-): string {
-	const short = d.short_title?.trim();
-	if (short) return d.short_title_basis === 'amended_law' ? `wijziging van ${short}` : short;
-	const title = d.title?.trim();
-	if (!title) return d.number;
-	return title.length > DOSSIER_NAME_MAX
-		? `${title.slice(0, DOSSIER_NAME_MAX - 1).trimEnd()}…`
-		: title;
-}
-
-/** A dossier by its number and short name: `36889 wijziging van Archiefwet 1995`. */
-export function dossierLabel(d: Dossier): string {
-	const name = dossierName(d);
-	return name === d.number ? d.number : `${d.number} ${name}`;
-}
+// A dossier by number and name: one helper for the whole site ($lib/bron/dossier-naam).
+import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
+export { dossierLabel, dossierName };
 
 /**
  * What a row is called: a toezegging by its text, a publication as it is cited, a paper
