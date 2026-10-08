@@ -58,7 +58,10 @@
 		}
 		return () => controller.abort();
 	});
-	const regels = $derived(band.regels.map((r) => ({ ...r, lagen: vol[r.id] ?? r.lagen })));
+	// A line that waits on its `laad` (Bij wetsvoorstel) stands once it has a layer.
+	const regels = $derived(
+		band.regels.map((r) => ({ ...r, lagen: vol[r.id] ?? r.lagen })).filter((r) => r.lagen.length)
+	);
 
 	// A group's rows, asked when it is opened; one list open at a time.
 	let open = $state<string | null>(null);

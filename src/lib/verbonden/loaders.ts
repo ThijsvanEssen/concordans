@@ -7,6 +7,7 @@ import { getCommittee, str } from '$lib/components/parliamentary/data';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
 import { parseNodeId } from '$lib/vocabulary';
 import { refOf } from '$lib/bron/href';
+import { stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { getArticleDetail } from '$lib/api/articles';
@@ -77,21 +78,6 @@ export function implementationLine(
 			// A citation has a comma of its own (`Stb. 2013, 102`): the parts take a semicolon.
 			.join('; ')
 	);
-}
-
-/** The zaken of a stuk asked for their papers: one is the rule, a few at most. */
-const ZAKEN_MAX = 3;
-
-/**
- * Where a paper of a zaak stands, by the kind the source gives (`props.kind`): the substance
- * (a nota, a voorstel, a memorie, a bijlage, a rapport) first, then letters, the geleidende
- * brief last.
- */
-export function zaakRang(row: Pick<Row, 'props'>): number {
-	const soort = String(row.props?.kind ?? '').toLowerCase();
-	if (/geleidende brief|aanbiedingsbrief/.test(soort)) return 2;
-	if (/^brief/.test(soort)) return 1;
-	return 0;
 }
 
 export type LoaderContext = {
@@ -268,44 +254,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	}),
 
 	// The other dossiers of the number, in the order of the Kamer.
-	// The papers of the same zaak (the Kamer's case): a geleidende brief and the nota it
-	// offers share one, as the source files them (PART_OF). The substance first, the cover
-	// letter last, by the kind the source gives (Thijs, 9 Oct: "het gaat om de nota's").
-	'document-same-case': async ({ node, buren, signal }) => {
-		const cases = (
+	// The papers of the same zaak, the substance first ($lib/bron/zaak).
+	'document-same-case': async ({ node, buren, signal }) =>
+		stukkenInDezelfdeZaak(
+			node,
+			signal,
 			await buren([{ relation: 'PART_OF', direction: 'outbound', collection: 'cases' }])
-		)
-			.filter(
-				(n) => n.relation === 'PART_OF' && n.direction === 'outbound' && n.collection === 'cases'
-			)
-			.slice(0, ZAKEN_MAX);
-		const rows = new Map<string, Row>();
-		for (const c of cases) {
-			const docs = await getBuckets(
-				'cases',
-				c.key,
-				[{ relation: 'PART_OF', direction: 'inbound', collection: 'documents' }],
-				signal
-			);
-			for (const d of docs) {
-				if (d.collection !== 'documents' || d.key === node.key || rows.has(d.key)) continue;
-				const row = rowOfNeighbor(d);
-				// No edge joins it to this stuk: it is not drawn around it.
-				if (row) rows.set(d.key, { ...row, relation: undefined, direction: undefined });
-			}
-		}
-		const lijst = [...rows.values()].sort(
-			(a, b) => zaakRang(a) - zaakRang(b) || (a.date ?? '').localeCompare(b.date ?? '') || 0
-		);
-		return {
-			rows: lijst,
-			// Said only where the list holds both: the substance and a letter.
-			order:
-				new Set(lijst.map(zaakRang)).size > 1
-					? 'Het stuk zelf eerst, de begeleidende brief als laatste'
-					: undefined
-		};
-	},
+		),
 
 	'dossier-same-number': async ({ node, signal }) => {
 		const label = str(node.props?.label);

@@ -10,7 +10,8 @@ import { refOf, type BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
 import { deelIds, layersOf } from '$lib/text/division';
 import { fractiePeriodes } from './fractie-periode';
-import { describe } from '$lib/verbonden/rows';
+import { describe, type Row } from '$lib/verbonden/rows';
+import { stukkenInDezelfdeZaak } from './zaak';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 /**
@@ -65,6 +66,26 @@ const LEEG: Behoort = { regels: [], naast: [], onder: [] };
 const KAMER: Record<string, string> = { TK: 'Tweede Kamer', EK: 'Eerste Kamer' };
 
 const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
+const norm = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
+
+/**
+ * A paper of a zaak by its kind and number, "Geleidende brief, Kamerstuk 37027, nr. 1", where
+ * its title is the one its zaak shares (the bill's, on every paper of it): that says nothing
+ * of what it is. A letter with a title of its own keeps it. The title in full on hover.
+ */
+function stukLaag(r: Row, soort: string, gedeeld: Set<string>): Laag {
+	const naam = r.context && gedeeld.has(norm(r.title)) ? r.context : r.title;
+	return { soort, naam, ref: r.ref, vol: naam === r.title ? undefined : r.title };
+}
+
+/** The titles more than one paper carries, this stuk's own among them. */
+function gedeeldeTitels(rows: Row[], eigen: string | null): Set<string> {
+	const tel = new Map<string, number>();
+	for (const t of [...rows.map((r) => r.title), ...(eigen ? [eigen] : [])])
+		tel.set(norm(t), (tel.get(norm(t)) ?? 0) + 1);
+	return new Set([...tel].filter(([, n]) => n > 1).map(([t]) => t));
+}
 
 /** A neighbour as a layer: its kind in the source's word, its name, its ref. */
 export function laagVan(n: Neighbor, soort: string): Laag {
@@ -139,6 +160,59 @@ export function behoort(
 		return b && b.total > 0
 			? [{ id, label, aantal: b.total, bak: { relation, direction, collection: coll } }]
 			: [];
+	};
+	/**
+	 * The other papers of the stuk's zaak (the Kamer's case), the substance first: no one
+	 * bucket, so asked when opened, its count not known before ($lib/bron/zaak). Only where
+	 * the stuk has a zaak; a zaak that holds only the stuk lists nothing.
+	 */
+	const inDezelfdeZaak = (): Groep[] => {
+		const key = light?.node.key;
+		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0)) return [];
+		return [
+			{
+				id: 'zaak',
+				label: 'In dezelfde zaak',
+				aantal: null,
+				laad: (signal) =>
+					stukkenInDezelfdeZaak({ key }, signal).then(({ rows }) =>
+						rows.map((r) =>
+							stukLaag(r, text(r.props?.kind) ?? 'Stuk', gedeeldeTitels(rows, text(props.title)))
+						)
+					)
+			}
+		];
+	};
+	/**
+	 * A paper that changes or explains a bill (nota van wijziging, memorie van toelichting,
+	 * nader rapport, nota naar aanleiding van het verslag) belongs with it: the voorstel van
+	 * wet of its zaak, the text it is about. Found when the zaak's papers come in.
+	 */
+	const bijWetsvoorstel = (): Regel[] => {
+		const key = light?.node.key;
+		const soort = text(props.kind) ?? '';
+		if (
+			!key ||
+			!(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) ||
+			!/nota van wijziging|memorie van toelichting|nader rapport|naar aanleiding van het verslag/i.test(
+				soort
+			)
+		)
+			return [];
+		return [
+			{
+				id: 'wetsvoorstel',
+				label: 'Bij wetsvoorstel',
+				lagen: [],
+				laad: (signal) =>
+					stukkenInDezelfdeZaak({ key }, signal).then(({ rows }) =>
+						rows
+							.filter((r) => /^voorstel van wet/i.test(text(r.props?.kind) ?? ''))
+							.slice(0, 1)
+							.map((r) => stukLaag(r, 'Wetsvoorstel', new Set()))
+					)
+			}
+		];
 	};
 	const kamer = (): Laag[] => {
 		const k = KAMER[text(props.chamber)?.toUpperCase() ?? ''];
@@ -247,9 +321,10 @@ export function behoort(
 						'Verslag van',
 						eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')
 					),
-					...regel('brief', 'Bijlage bij', eerste('ACCOMPANIES', 'outbound', 'documents', 'Brief'))
+					...regel('brief', 'Bijlage bij', eerste('ACCOMPANIES', 'outbound', 'documents', 'Brief')),
+					...bijWetsvoorstel()
 				],
-				naast: [],
+				naast: inDezelfdeZaak(),
 				onder: groep('bijlagen', 'Bijlagen', 'ACCOMPANIES', 'inbound', 'documents')
 			};
 		}
