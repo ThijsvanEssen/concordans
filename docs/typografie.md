@@ -26,7 +26,7 @@ Every reader has the same lines (`ReaderFrame.svelte`; Thijs, 9 Oct 2026: "strak
 - **The column's edge:** the title, the kicker, the meta line, a heading, and all running text: a summary, the overwegingen of a uitspraak, the leden of an artikel, the text of a Kamerstuk. There is no indent.
 - **The frame's margin (desktop):** the number of an overweging or a lid hangs there, outside the column. On a phone, which has no margin to hang in, it stands in a narrow column of its own.
 - **The term column** (`--reader-term`, 96px): a term and what it names share one column. This covers the band Behoort bij, the partijen of a uitspraak, Voor and Tegen of a stemming, the years of a career, and the stem of a voter. 96px fits the longest term ("Bij wetsvoorstel") on one line at rung 6. On a phone the column is only as wide as its term.
-- **One right edge:** the column's. A block (the summary) or a table runs to it.
+- **One right edge:** the column's (`--reader-max`). Running text has no line width of its own: the overwegingen, the leden of an artikel and the text of a Kamerstuk run to the same edge as the summary, the band and the partijen (Thijs, 9 Oct: "de artikelen breder getrokken tot de hele breedte"). A lid's count and actions stand under its text; an onderdeel's actions appear over the end of its last line.
 
 ## Applied
 
