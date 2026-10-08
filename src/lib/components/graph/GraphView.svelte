@@ -18,6 +18,7 @@
 	import {
 		clusterLabel,
 		clustersOf,
+		tussenClustersOf,
 		clusterZinnen,
 		isClusterId,
 		placeCard,
@@ -42,6 +43,7 @@
 		type ContainerKind
 	} from '$lib/graph/container-membership';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
+	import { kolomPlekken } from '$lib/netwerk/kolommen';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import type { Overlay } from '$lib/stores/overlay';
 	import { DEFAULT_HEAT_MONTHS } from '$lib/stores/overlay';
@@ -573,11 +575,17 @@
 		for (const group of containerGroups.values()) for (const id of group.members) keep.add(id);
 		const canvasNodes = rawNodes.filter(isCanvasNode);
 		const edges = rawEdges.filter((e) => e.relation !== 'VERSION_OF');
-		clusters = clustersOf(canvasNodes, edges, focus, keep, expanded);
-		foldable =
-			expanded.size > 0
-				? clustersOf(canvasNodes, edges, focus, keep, new Set()).filter((c) => expanded.has(c.id))
-				: [];
+		// Between the chosen bronnen of a netwerk: what ties the same ones, as one.
+		const chosen = new Set<string>(pinnedIds);
+		if (focus) chosen.add(focus);
+		const inHull = new Set<string>();
+		for (const group of containerGroups.values()) for (const id of group.members) inHull.add(id);
+		const alle = (open: ReadonlySet<string>) => [
+			...clustersOf(canvasNodes, edges, focus, keep, open),
+			...(pinnedIds.size > 0 ? tussenClustersOf(canvasNodes, edges, chosen, inHull, open) : [])
+		];
+		clusters = alle(expanded);
+		foldable = expanded.size > 0 ? alle(new Set()).filter((c) => expanded.has(c.id)) : [];
 		const signature = clusters.map((c) => `${c.id}:${c.members.length}`).join(',');
 		if (!rawChanged && signature === drawnClusters) {
 			applyFilters();
@@ -597,7 +605,15 @@
 		]);
 		drawEdges([
 			...rawEdges.filter((e) => !folded.has(e.source) && !folded.has(e.target)),
-			...clusters.flatMap((c) => (focus ? [clusterEdge(c, focus)] : []))
+			...clusters.flatMap((c) =>
+				c.ends
+					? c.ends.map((end) =>
+							clusterEdge({ ...c, relation: end.relation, toFocus: end.toEnd }, end.id)
+						)
+					: focus
+						? [clusterEdge(c, focus)]
+						: []
+			)
 		]);
 	}
 
@@ -740,6 +756,20 @@
 		const fySeed = focalIdForSeed ? ((g.getNodeAttribute(focalIdForSeed, 'y') as number) ?? 0) : 0;
 		const seedRingR = Math.max(18, 8 + Math.sqrt(Math.max(unseededCount, 1)) * 7);
 		let seededIdx = 0;
+		// A netwerk starts in the homepage's columns: parliament, the law, the judgments.
+		const kolommen =
+			pinnedIds.size > 0
+				? kolomPlekken(
+						nodes.filter((n) => {
+							const seed = n as GraphNode & { x?: number };
+							return isCanvasNode(n) && !g.hasNode(n.id) && typeof seed.x !== 'number';
+						}),
+						fxSeed,
+						fySeed,
+						seedRingR * 1.5,
+						seedRingR * 2
+					)
+				: null;
 
 		for (const n of nodes) {
 			lookup.set(n.id, n);
@@ -793,9 +823,13 @@
 				g.mergeNodeAttributes(n.id, merged);
 			} else {
 				let x: number, y: number;
+				const kolom = kolommen?.get(n.id);
 				if (seedHasPos) {
 					x = seed.x!;
 					y = seed.y!;
+				} else if (kolom) {
+					x = kolom.x + (Math.random() - 0.5) * 2;
+					y = kolom.y + (Math.random() - 0.5) * 2;
 				} else {
 					const angle = (seededIdx / Math.max(unseededCount, 1)) * Math.PI * 2;
 					const rJitter = (Math.random() - 0.5) * 4;
@@ -1405,21 +1439,26 @@
 					<p class="cluster-naam">
 						<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
 					</p>
-					{#each clusterZinnen(c, groupOf(c)) as zin (zin)}
+					{#each clusterZinnen( c, c.ends ? null : groupOf(c), (c.ends ?? []).flatMap((e) => {
+							const n = lookup.get(e.id);
+							return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
+						}) ) as zin (zin)}
 						<p class="cluster-zin">{zin}</p>
 					{/each}
 					<div class="cluster-knoppen">
 						<button type="button" class="act act--pri" onclick={() => showCluster(c)}
 							>Toon alle {c.members.length.toLocaleString('nl-NL')} in het netwerk</button
 						>
-						<button
-							type="button"
-							class="act"
-							onclick={() => {
-								openGroup(c.collection);
-								clusterCard = null;
-							}}>Bekijk in Verbonden</button
-						>
+						{#if !c.ends}
+							<button
+								type="button"
+								class="act"
+								onclick={() => {
+									openGroup(c.collection);
+									clusterCard = null;
+								}}>Bekijk in Verbonden</button
+							>
+						{/if}
 					</div>
 				</div>
 			{/if}
