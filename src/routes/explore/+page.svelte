@@ -205,10 +205,10 @@
 			.map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
 			.join('&')
 	);
-	// On a phone a netwerk starts with its chosen bronnen and their own verbindingen only;
-	// the bronnen between them follow on request (?tussen=1).
 	const telefoon = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
-	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery), !telefoon));
+	// "Bronnen ertussen" is on by default, on a phone too (Thijs, 9 Oct, from an iPhone): the
+	// clusters, the faint bronnen between and the cap of 100 keep it light there.
+	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
 	const netwerkActive = $derived(netwerk.ids.length > 0);
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
@@ -741,7 +741,7 @@
 		if (n.ids.length === 0) remember(null);
 		// Clearing the netwerk or removing a bron is undone with Back.
 		const shrinks = n.ids.length < netwerk.ids.length;
-		setUrl(netwerkParams(n, !telefoon), { push: shrinks });
+		setUrl(netwerkParams(n), { push: shrinks });
 	}
 
 	// The Verkenner opens on the last netwerk until it is cleared: a double click that
