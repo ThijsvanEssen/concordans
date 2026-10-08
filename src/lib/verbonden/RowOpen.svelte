@@ -11,6 +11,7 @@
 		openHref,
 		openLabel,
 		networkHref,
+		onNaarNetwerk,
 		onShowInNetwork,
 		onVerbinding,
 		onAdd,
@@ -21,6 +22,8 @@
 		openLabel: string;
 		/** Where Alleen de omgeving goes: the bron with what it touches. */
 		networkHref: string;
+		/** Alleen de omgeving was followed: on a phone, the Netwerk tab shows it. */
+		onNaarNetwerk?: () => void;
 		onShowInNetwork?: (row: Row) => void;
 		onVerbinding: (row: Row) => void;
 		/** Put the bron among the chosen bronnen of the netwerk. */
@@ -43,7 +46,7 @@
 		<a href={openHref} data-sveltekit-noscroll class="act act--pri"
 			><Picto naam="tekst" size={13} />{openLabel}</a
 		>
-		<a href={networkHref} data-sveltekit-noscroll class="act"
+		<a href={networkHref} data-sveltekit-noscroll class="act" onclick={() => onNaarNetwerk?.()}
 			><Picto naam="omgeving" size={13} />Alleen de omgeving</a
 		>
 		{#if onAdd}

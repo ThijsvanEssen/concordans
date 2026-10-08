@@ -76,6 +76,7 @@
 		onOpenFilter,
 		onVerbinding,
 		onShowInNetwork,
+		onNaarNetwerk,
 		onAddToNetwerk,
 		inNetwerk,
 		onProposedText,
@@ -95,6 +96,8 @@
 		/** Opens the card Verbinding for a row. */
 		onVerbinding: (row: Row) => void;
 		onShowInNetwork?: (row: Row) => void;
+		/** A row's Alleen de omgeving was followed (on a phone: to the Netwerk tab). */
+		onNaarNetwerk?: () => void;
 		/** Één bron uit de rij in het netwerk zetten. */
 		onAddToNetwerk?: (row: Row) => void;
 		/** Of de bron van een rij al in het netwerk staat. */
@@ -594,6 +597,7 @@
 										openLabel={openLabelOf(row, g.inPlace)}
 										networkHref={inNetworkHref(row)}
 										{onShowInNetwork}
+										{onNaarNetwerk}
 										{onVerbinding}
 										onAdd={onAddToNetwerk && !row.missing ? () => onAddToNetwerk(row) : undefined}
 										added={inNetwerk?.(row) ?? false}

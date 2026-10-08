@@ -1194,6 +1194,7 @@
 				onOpenFilter={() => (filterOpen = true)}
 				onVerbinding={openRowCard}
 				onShowInNetwork={showInNetwork}
+				onNaarNetwerk={() => (mobilePanel = 'graph')}
 				onAddToNetwerk={(row) => {
 					const id = focusOf(row.ref);
 					if (id) addIdToNetwerk(id);
