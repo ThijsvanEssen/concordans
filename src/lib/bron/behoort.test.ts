@@ -180,11 +180,12 @@ describe('behoort', () => {
 			])
 		);
 		expect(lid.regels.map((r) => r.label)).toEqual(['Fractie']);
-		expect(lid.naast.map((g) => g.label)).toEqual(['Commissies']);
+		// Commissies are context: in Verbonden, not in the band (Thijs, 9 Oct).
+		expect(lid.naast).toEqual([]);
 		expect(heeftIets(behoort('cabinets', {}, light([])))).toBe(false);
 	});
 
-	it('puts a paper of a bill with its wetsvoorstel and the rest of its zaak beside it', () => {
+	it('puts a paper of a bill with its wetsvoorstel, and the rest of its zaak in Verbonden only', () => {
 		const metZaak = (kind: string) =>
 			behoort('documents', { kind }, {
 				...(light([
@@ -196,12 +197,11 @@ describe('behoort', () => {
 		expect(mvt.regels.map((r) => [r.id, r.label, r.lagen.length, !!r.laad])).toEqual([
 			['wetsvoorstel', 'Bij wetsvoorstel', 0, true]
 		]);
-		expect(mvt.naast.map((g) => [g.label, g.aantal, !!g.laad])).toEqual([
-			['In dezelfde zaak', null, true]
-		]);
-		// A motie is no paper of the bill; it has its zaak beside it all the same.
+		// The rest of the zaak is context: in Verbonden, not in the band (Thijs, 9 Oct).
+		expect(mvt.naast).toEqual([]);
+		// A motie is no paper of the bill: no line.
 		expect(metZaak('Motie').regels).toEqual([]);
-		expect(metZaak('Motie').naast).toHaveLength(1);
+		expect(metZaak('Motie').naast).toEqual([]);
 		// Without a zaak, nothing: no line waits, no empty group.
 		const zonder = behoort('documents', { kind: 'Nota van wijziging' }, {
 			...(light([]) as object),
