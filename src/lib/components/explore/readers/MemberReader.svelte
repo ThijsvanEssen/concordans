@@ -456,7 +456,7 @@
 	}
 	.career-step {
 		display: grid;
-		grid-template-columns: 5.5em 1fr;
+		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 5.5em) minmax(0, 1fr);
 		gap: var(--s-2);
 		align-items: baseline;
 		transition: opacity var(--dur-1) var(--ease);

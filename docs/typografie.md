@@ -18,6 +18,15 @@ Rules:
 - A stem (Voor, Tegen) and an outcome have a shape as well as a colour: `Stem.svelte` and `Uitkomst.svelte`. Voor and aangenomen a filled box in `--uitkomst-ja`, tegen and verworpen an open box in `--uitkomst-nee`, the rest a dashed box. The word goes with the box where there is room; a row under a group carries the box alone.
 - Tabular figures only in a column of figures, never in a sentence: "6 okt . 2026" is what they do to a date in a line (`consistency.test.ts`).
 
+## Alignment in a reader
+
+Every reader has the same lines (`ReaderFrame.svelte`; Thijs, 9 Oct 2026: "strak trekken", "de ruimte goed benut", "een design taal").
+
+- **The column's edge:** the title, the kicker, the meta line, a heading, and all running text: a summary, the overwegingen of a uitspraak, the leden of an artikel, the text of a Kamerstuk. There is no indent.
+- **The frame's margin (desktop):** the number of an overweging or a lid hangs there, outside the column. On a phone, which has no margin to hang in, it stands in a narrow column of its own.
+- **The term column** (`--reader-term`, 96px): a term and what it names share one column. This covers the band Behoort bij, the partijen of a uitspraak, Voor and Tegen of a stemming, the years of a career, and the stem of a voter. 96px fits the longest term ("Bij wetsvoorstel") on one line at rung 6. On a phone the column is only as wide as its term.
+- **One right edge:** the column's. A block (the summary) or a table runs to it.
+
 ## Applied
 
 - A person's votes (`MemberReader.svelte`, 9 Oct 2026): the stem as group (rung 3) with its box in every row, the fractie as group, no tabular figures in the meta line.

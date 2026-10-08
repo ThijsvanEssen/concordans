@@ -211,8 +211,8 @@
 	/* The term at rung 6, the bronnen at rung 4 (docs/typografie.md). */
 	.regels {
 		display: grid;
-		grid-template-columns: max-content minmax(0, 1fr);
-		gap: var(--s-1) var(--s-3);
+		grid-template-columns: minmax(var(--reader-term, 0px), max-content) minmax(0, 1fr);
+		gap: var(--s-1) 0;
 		margin: 0;
 	}
 	.regel {
@@ -224,7 +224,8 @@
 		min-width: 0;
 	}
 	.term {
-		padding-top: 2px;
+		padding: 2px var(--s-1) 0 0;
+		white-space: nowrap;
 		color: var(--ink-3);
 	}
 	.regels dd {

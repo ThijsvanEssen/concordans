@@ -123,7 +123,10 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
+	/* Voor and Tegen in the margin column, the fracties at the text edge, wrapping there. */
 	.kant {
+		display: grid;
+		grid-template-columns: minmax(var(--reader-term, var(--s-8)), max-content) minmax(0, 1fr);
 		margin: 0;
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
@@ -131,9 +134,7 @@
 		color: var(--ink-2);
 	}
 	.kant-naam {
-		display: inline-block;
-		min-width: var(--s-8);
-		margin-right: var(--s-1);
+		padding-right: var(--s-2);
 		font-weight: 600;
 		color: var(--ink);
 	}

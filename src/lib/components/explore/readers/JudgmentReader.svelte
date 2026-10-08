@@ -484,7 +484,6 @@
 		padding: var(--s-4) var(--s-5);
 		background: var(--paper-2);
 		border-left: 3px solid var(--indigo);
-		max-width: var(--measure);
 	}
 
 	.reader-summary-para {
@@ -504,7 +503,6 @@
 	/* No box: the role column is the edge the names line up against. */
 	.reader-parties {
 		width: 100%;
-		max-width: var(--measure);
 		border-collapse: collapse;
 		margin: 0 0 var(--s-6);
 	}
@@ -516,9 +514,11 @@
 		color: var(--ink-3);
 		text-align: left;
 		white-space: nowrap;
-		padding: var(--s-1) var(--s-3) var(--s-1) 0;
+		padding: var(--s-1) var(--s-2) var(--s-1) 0;
 		vertical-align: baseline;
-		width: 8em;
+		/* The role in the term column (ReaderFrame), like the terms of Behoort bij. */
+		box-sizing: border-box;
+		width: var(--reader-term);
 	}
 
 	.reader-parties-name {
@@ -640,6 +640,19 @@
 	.reader-body {
 		--rov-num: 3.4em;
 		--rov-gap: var(--s-3);
+	}
+	/* On a desktop the number hangs in the frame's margin and the text of an overweging
+	   starts at the column's edge, like all running text (ReaderFrame). */
+	@media (min-width: 769px) {
+		.reader-body {
+			--rov-num: 2.6em;
+		}
+		.reader-body.reader-body--numbered .reader-para--prose {
+			margin-left: 0;
+		}
+		.reader-body .reader-para-block {
+			margin-left: calc(-1 * (var(--rov-num) + var(--rov-gap)));
+		}
 	}
 	.reader-body--numbered .reader-para--prose {
 		margin-left: calc(var(--rov-num) + var(--rov-gap) - var(--s-2));
