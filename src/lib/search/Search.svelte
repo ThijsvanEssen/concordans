@@ -3,6 +3,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
 	// Netwerk, where a result is picked instead of opened.
+	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
@@ -78,19 +79,27 @@
 	 * articles and stukken up to 0.6 s, judgments 3–8 s). The kinds in no lane go in the
 	 * first request, which also says what the query cites (`resolve`).
 	 */
-	type Laan = { id: string; kinds: readonly Kind[]; min: number; wacht: number };
+	type Laan = {
+		id: string;
+		kinds: readonly Kind[];
+		min: number;
+		wacht: number;
+		/** Its group says "Laden…" while it waits: only the judgments are slow enough. */
+		laden: boolean;
+	};
 	/**
 	 * The slow lanes wait for a real pause in the typing: the API runs an aborted query to
 	 * its end, and a part of a word ("zor", "stik") takes it seconds (prod, 8 Oct), so a
 	 * request per keystroke filled its pool. With the live mode of the API (`zoekVraag`)
 	 * their wait goes to `DEBOUNCE_MS`.
 	 */
-	const LANGZAAM_MS = 450;
+	const LANGZAAM_MS = 300;
 	const LANEN: readonly Laan[] = [
-		// Articles, stukken and judgments only from three characters: "st" takes the API
-		// seconds and says nothing.
-		{ id: 'tekst', kinds: ['articles', 'documents'], min: 3, wacht: LANGZAAM_MS },
-		{ id: 'uitspraken', kinds: ['judgments'], min: 3, wacht: LANGZAAM_MS }
+		// Articles and stukken from three characters: "st" takes the API seconds and says
+		// nothing. Judgments from four, until the API has its live mode: "hu" took 11 s,
+		// "huur" 6 s (prod 0.79.9).
+		{ id: 'tekst', kinds: ['articles', 'documents'], min: 3, wacht: LANGZAAM_MS, laden: false },
+		{ id: 'uitspraken', kinds: ['judgments'], min: 4, wacht: LANGZAAM_MS, laden: true }
 	];
 	const INLAAN = new Set<Kind>(LANEN.flatMap((l) => l.kinds));
 
@@ -152,7 +161,7 @@
 			}))
 	);
 	const ladend = $derived(
-		new Set(lanenBezig.filter((l) => l.stand === 'laden').flatMap((l) => l.kinds))
+		new Set(lanenBezig.filter((l) => l.stand === 'laden' && l.laden).flatMap((l) => l.kinds))
 	);
 	let resolving = $state(false);
 	/** A citation the API did not confirm: its row is gone and the results stay. */
@@ -290,46 +299,71 @@
 	// Each lane on its own: its group waits or fails alone, and "Probeer opnieuw" asks it
 	// again without the rest. Without fast kinds in scope (Uitspraken), the first lane also
 	// says what the query cites.
+	//
+	// One request per lane at a time. The API runs an aborted query to its end, so aborting
+	// frees nothing: a newer query waits until the running one is done, and then only the
+	// latest goes. An answer to an older query is not shown; the hits before it stay.
+	const bezig: Record<string, boolean> = {};
+	const volgende: Record<string, (() => void) | null> = {};
+	let laatste = '';
+	const stopt = new AbortController();
+	onDestroy(() => stopt.abort());
+
+	function vraag(laan: Laan, term: string, types: Kind[], eerste: boolean) {
+		if (bezig[laan.id]) {
+			volgende[laan.id] = () => vraag(laan, term, types, eerste);
+			return;
+		}
+		bezig[laan.id] = true;
+		laanStand[laan.id] = 'laden';
+		const geldt = () => term === laatste;
+		unwrap(
+			api.GET('/api/search', {
+				params: { query: zoekVraag(term, types, eerste) },
+				signal: stopt.signal
+			})
+		)
+			.then((r) => {
+				if (!geldt()) return;
+				laanHits[laan.id] = r.results as Partial<Record<Kind, Hit[]>>;
+				if (eerste) {
+					resolvedWith = { term, target: resolvedOf(r.resolved) };
+					answered = term;
+				}
+				laanStand[laan.id] = 'klaar';
+			})
+			.catch(() => {
+				if (stopt.signal.aborted || !geldt()) return;
+				laanHits[laan.id] = {};
+				if (eerste) answered = term;
+				laanStand[laan.id] = 'mislukt';
+			})
+			.finally(() => {
+				bezig[laan.id] = false;
+				const next = volgende[laan.id];
+				volgende[laan.id] = null;
+				next?.();
+			});
+	}
+
+	$effect(() => {
+		laatste = q;
+	});
+
 	for (const laan of LANEN) {
 		$effect(() => {
 			const term = q;
 			void opnieuw[laan.id];
 			const types = laan.kinds.filter((k) => kinds.includes(k));
+			volgende[laan.id] = null;
 			if (!term || types.length === 0 || term.length < laan.min) {
 				laanHits[laan.id] = {};
 				laanStand[laan.id] = 'klaar';
 				return;
 			}
 			const eerste = snel.length === 0 && lanen[0]?.id === laan.id;
-			const controller = new AbortController();
-			const timer = setTimeout(() => {
-				laanStand[laan.id] = 'laden';
-				unwrap(
-					api.GET('/api/search', {
-						params: { query: zoekVraag(term, types, eerste) },
-						signal: controller.signal
-					})
-				)
-					.then((r) => {
-						if (controller.signal.aborted) return;
-						laanHits[laan.id] = r.results as Partial<Record<Kind, Hit[]>>;
-						if (eerste) {
-							resolvedWith = { term, target: resolvedOf(r.resolved) };
-							answered = term;
-						}
-						laanStand[laan.id] = 'klaar';
-					})
-					.catch(() => {
-						if (controller.signal.aborted) return;
-						laanHits[laan.id] = {};
-						if (eerste) answered = term;
-						laanStand[laan.id] = 'mislukt';
-					});
-			}, laan.wacht);
-			return () => {
-				clearTimeout(timer);
-				controller.abort();
-			};
+			const timer = setTimeout(() => vraag(laan, term, types, eerste), laan.wacht);
+			return () => clearTimeout(timer);
 		});
 	}
 
@@ -469,7 +503,7 @@
 			notFound ||
 			outsideLaw ||
 			kamer ||
-			(q && lanenBezig.length > 0)}
+			(q && lanenBezig.some((l) => l.stand === 'mislukt' || l.laden))}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
@@ -592,7 +626,7 @@
 			</div>
 		{/each}
 
-		{#each lanenBezig.filter((l) => l.stand === 'mislukt' || !l.toont) as laan (laan.id)}
+		{#each lanenBezig.filter((l) => l.stand === 'mislukt' || (l.laden && !l.toont)) as laan (laan.id)}
 			<!-- A lane that comes later or failed: its group says so, the other groups stand. -->
 			{@const naam = laan.kinds.map((k) => groupLabel(k)).join(' en ')}
 			<div class="group" role="group" aria-labelledby="{uid}-{laan.id}-stand">
