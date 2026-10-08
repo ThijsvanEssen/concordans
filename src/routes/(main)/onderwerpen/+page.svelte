@@ -10,6 +10,8 @@
 	import { bronHref } from '$lib/bron/href';
 	import {
 		dayLabel,
+		dagVoor,
+		doorzochtVanaf,
 		feedStand,
 		normalizeItem,
 		shortDate,
@@ -65,7 +67,13 @@
 		gedeeld.length ? gedeeld.map((termen) => ({ termen, vorige: null, gezien: null })) : eigen
 	);
 
-	type Stand = { status: 'laden' | 'klaar' | 'fout'; items: FeedItem[]; meer: boolean };
+	type Stand = {
+		status: 'laden' | 'klaar' | 'fout';
+		items: FeedItem[];
+		meer: boolean;
+		/** The first day searched, when the API stopped short (0.79.28). */
+		doorzocht: string | null;
+	};
 	let standen = $state<Record<string, Stand>>({});
 	let uitgeklapt = $state<Record<string, boolean>>({});
 	const sleutel = (o: Pick<Onderwerp, 'termen'>) => o.termen.join('|').toLowerCase();
@@ -75,9 +83,17 @@
 	const vanaf = (o: Onderwerp) => vensterVan(o.vorige, recent);
 
 	/** One request per word, at most two at a time (the API's limit per address). */
-	async function laadAlles(onderwerpen: Onderwerp[], signal: AbortSignal) {
+	async function laadAlles(
+		onderwerpen: Onderwerp[],
+		signal: AbortSignal,
+		/** Further back: up to this day, on top of the lines already there. */
+		verder?: { tot: string; items: FeedItem[] }
+	) {
 		const taken = onderwerpen.flatMap((o) => o.termen.map((term) => ({ o, term })));
-		const per = new Map<string, Map<string, FeedItem>>();
+		const per = new Map<string, Map<string, FeedItem>>(
+			verder ? onderwerpen.map((o) => [vak(o), new Map(verder.items.map((i) => [i.id, i]))]) : []
+		);
+		const doorzocht = new Map<string, string>();
 		const open = new Map(onderwerpen.map((o) => [vak(o), o.termen.length]));
 		const fout = new Set<string>();
 		const meer = new Set<string>();
@@ -96,6 +112,7 @@
 									query: {
 										q: t.term,
 										since: vanaf(t.o),
+										...(verder ? { until: verder.tot } : {}),
 										limit: PER_TERM,
 										facets: false,
 										...(cursor ? { cursor } : {})
@@ -111,11 +128,17 @@
 								raak++;
 							}
 						}
-						if (p === 0) {
+						if (p === 0 && !verder) {
 							const stand = feedStand(r.data_as_of);
 							if (stand && !gedeeld.length) zetGezien(t.term, stand.newest);
 						}
 						cursor = r.next_cursor ?? undefined;
+						// Searched only from a day on: the rest is a question further back.
+						const tot = doorzochtVanaf(r);
+						if (tot) {
+							if (tot > (doorzocht.get(k) ?? '')) doorzocht.set(k, tot);
+							cursor = undefined;
+						}
 						if (!cursor || raak >= GENOEG) break;
 					}
 					if (cursor) meer.add(k);
@@ -131,7 +154,8 @@
 						items: [...(per.get(k)?.values() ?? [])].sort(
 							(a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
 						),
-						meer: meer.has(k)
+						meer: meer.has(k),
+						doorzocht: doorzocht.get(k) ?? null
 					};
 			}
 		};
@@ -146,7 +170,8 @@
 		if (!geladen) return;
 		const nieuw = lijst.filter((o) => !untrack(() => standen[vak(o)]));
 		if (!nieuw.length) return;
-		for (const o of nieuw) standen[vak(o)] = { status: 'laden', items: [], meer: false };
+		for (const o of nieuw)
+			standen[vak(o)] = { status: 'laden', items: [], meer: false, doorzocht: null };
 		void laadAlles(
 			nieuw.map((o) => ({ ...o, termen: [...o.termen] })),
 			ac.signal
@@ -184,19 +209,33 @@
 			})
 		}));
 
+	let verderBezig = $state<string | null>(null);
+	async function verderTerug(o: Onderwerp) {
+		const s = standen[vak(o)];
+		if (!s?.doorzocht || verderBezig) return;
+		verderBezig = vak(o);
+		try {
+			await laadAlles([o], ac.signal, { tot: dagVoor(s.doorzocht), items: s.items });
+		} finally {
+			verderBezig = null;
+		}
+	}
+
 	const periodeVan = (o: Onderwerp) =>
 		vanaf(o) === recent ? `de afgelopen ${RECENT_DAGEN} dagen` : `sinds ${shortDate(vanaf(o))}`;
 	/** `2 nieuw sinds 8 okt. 2026; 25 de afgelopen 30 dagen` */
 	function telRegel(o: Onderwerp, s: Stand | undefined): string {
 		const periode = periodeVan(o);
 		if (s?.status !== 'klaar') return periode;
-		const min = s.meer ? 'ten minste ' : '';
+		const min = s.meer || s.doorzocht ? 'ten minste ' : '';
 		if (!o.vorige) return `${min}${s.items.length} ${periode}`;
 		const nieuw = s.items.filter((i) => isNieuw(i.date, o.vorige)).length;
 		const sinds = `nieuw sinds ${shortDate(o.vorige)}`;
 		// Shown from the visit before: all of it is new.
 		if (vanaf(o) === o.vorige) return `${min}${nieuw} ${sinds}`;
-		return `${nieuw} ${sinds}; ${min}${s.items.length} ${periode}`;
+		// Searched only from after the visit before: what is new may be more too.
+		const minNieuw = s.doorzocht && s.doorzocht > o.vorige ? 'ten minste ' : '';
+		return `${minNieuw}${nieuw} ${sinds}; ${min}${s.items.length} ${periode}`;
 	}
 
 	// A word without a period took the API over 30 s (9 Oct): Actueel opens on a year.
@@ -370,6 +409,18 @@
 						>Alle {s.items.length} tonen</button
 					>
 				{/if}
+			{/if}
+			{#if s?.status === 'klaar' && s.doorzocht}
+				<p class="status">
+					Doorzocht vanaf {shortDate(s.doorzocht)}.
+					<button
+						type="button"
+						class="stil"
+						disabled={verderBezig === vak(o)}
+						onclick={() => verderTerug(o)}
+						>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</button
+					>
+				</p>
 			{/if}
 			<p class="verder">
 				{#each o.termen as term (term)}

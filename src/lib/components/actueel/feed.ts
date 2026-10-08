@@ -341,3 +341,19 @@ export function atomParams(
 		if (v !== undefined && k !== 'limit' && !(k === 'until' && !chosenUntil)) p.set(k, String(v));
 	return p;
 }
+
+/**
+ * The first day searched, when the API stopped short of the whole period (0.79.28: `partial`
+ * with `searched_from`); null when it searched all. An API before it has neither field.
+ */
+export function doorzochtVanaf(r: object): string | null {
+	const { partial, searched_from: vanaf } = r as {
+		partial?: boolean | null;
+		searched_from?: string | null;
+	};
+	return partial && typeof vanaf === 'string' && vanaf ? vanaf.slice(0, 10) : null;
+}
+
+/** The day before: where a search goes on further back. */
+export const dagVoor = (iso: string) =>
+	new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
