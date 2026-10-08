@@ -122,7 +122,9 @@
 	const query = $derived<Query>({
 		kind: kinds.join(',') || undefined,
 		since: since || undefined,
-		until: until || (ahead ? undefined : today),
+		// Only a day in the past: with `until` the API counts apart and took 100+ s (prod,
+		// 9 Oct), without it 0.25 s. What lies ahead is left out here instead (`shown`).
+		until: until && until < today ? until : undefined,
 		cabinet: cabinet || undefined,
 		ministry: (ministry || undefined) as Schema<'MinistryKey'> | undefined,
 		dossier: dossier || undefined,
@@ -141,17 +143,17 @@
 	let loadingMore = $state(false);
 	let error = $state<string | null>(null);
 
+	// The items first, the counts beside them in a request of their own: a slow or failed
+	// count leaves the items standing, and the filters show their counts when they come.
 	$effect(() => {
 		const q = query;
 		const ac = new AbortController();
 		loading = true;
 		error = null;
-		unwrap(api.GET('/api/feed', { params: { query: { ...q, facets: true } }, signal: ac.signal }))
+		unwrap(api.GET('/api/feed', { params: { query: { ...q, facets: false } }, signal: ac.signal }))
 			.then((r) => {
 				items = r.items.map(normalizeItem);
 				cursor = r.next_cursor ?? null;
-				total = r.total ?? null;
-				facets = r.facets ?? null;
 				stand = feedStand(r.data_as_of) ?? stand;
 			})
 			.catch(() => {
@@ -159,6 +161,21 @@
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
+			});
+		facets = null;
+		total = null;
+		unwrap(
+			api.GET('/api/feed', {
+				params: { query: { ...q, limit: 1, facets: true } },
+				signal: ac.signal
+			})
+		)
+			.then((r) => {
+				facets = r.facets ?? null;
+				total = r.total ?? null;
+			})
+			.catch(() => {
+				// The filters stand without their counts.
 			});
 		return () => ac.abort();
 	});
@@ -179,7 +196,10 @@
 		}
 	}
 
-	const days = $derived(daysOf(items));
+	// Without a day asked, what lies ahead (an inwerkingtreding) waits for "komend".
+	const tot = $derived(until && until < today ? until : today);
+	const shown = $derived(ahead ? items : items.filter((i) => i.date <= tot));
+	const days = $derived(daysOf(shown));
 
 	// The whole of each day loaded, under the same filters: a day a page cuts off is
 	// counted in full. Asked again when the filters change or more days come in.
