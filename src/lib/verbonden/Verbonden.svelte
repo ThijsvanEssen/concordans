@@ -474,10 +474,17 @@
 					     rijen: waar dat er minder zijn dan de telling, zegt de zin het. -->
 					{@const piek = bars.reduce((m, x) => (x.count > m.count ? x : m), bars[0])}
 					{@const geladen = !g.years?.length && g.rows.length < count ? g.rows.length : null}
+					<!-- The years that occur, not the twelve the histogram spans: the first page of an
+					     article's judgments (the newest) can all be of one year. -->
+					{@const jaren = bars.filter((x) => x.count > 0)}
+					{@const eerste = jaren[0]?.year}
+					{@const laatste = jaren.at(-1)?.year}
 					<p class="group__jaren">
 						{geladen
-							? `Van de ${formatCount(geladen)} geladen: van ${bars[0].year}`
-							: `Van ${bars[0].year}`} tot {bars.at(-1)?.year}; de meeste in {piek.year} ({piek.count}).
+							? `De ${formatCount(geladen)} geladen van ${formatCount(count)}: `
+							: ''}{eerste === laatste
+							? `${geladen ? 'alle' : 'Alle'} uit ${eerste}.`
+							: `${geladen ? 'van' : 'Van'} ${eerste} tot ${laatste}; de meeste in ${piek.year} (${formatCount(piek.count)}).`}
 					</p>
 					<!-- The filters of the judgments on one line: the year and the court. -->
 					<div class="group__jaren group__filters">
