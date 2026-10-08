@@ -508,12 +508,19 @@
 		for (const group of latestContainerGroups.values()) {
 			if (!drawnGroup(group) || hiddenGroupKinds.has(group.kind)) continue;
 			const points: { x: number; y: number }[] = [];
+			let anchorPoint: { x: number; y: number } | null = null;
 			for (const id of group.members) {
 				if (!graph.hasNode(id)) continue;
 				const attrs = graph.getNodeAttributes(id);
 				if (isHiddenNode(id, attrs)) continue;
-				points.push(renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number }));
+				const p = renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
+				if (attrs.anchor) anchorPoint = p;
+				else points.push(p);
 			}
+			// The anchor is no bron: the hull goes round what it holds, not to where the anchor
+			// is pulled (Awb with only art. 3:4 was a pill to an empty point, Thijs 9 Oct). An
+			// anchor alone is its own empty hull.
+			if (points.length === 0 && anchorPoint) points.push(anchorPoint);
 			// One member is a hull when it is a container's anchor (the wet or fractie itself,
 			// drawn as an empty hull), the dossier of a stuk on a path between chosen bronnen
 			// (`lone`), or an article: an article always stands in its wet (Thijs, 9 Oct).
