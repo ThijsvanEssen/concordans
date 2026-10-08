@@ -92,7 +92,10 @@
 
 	// Diepte: the steps that add nothing, as the API cut the neighbourhood off at its cap.
 	const DEPTHS = [1, 2, 3];
-	const CAPPED_REASON = `Grens van ${NEIGHBORHOOD_CAP} bronnen bereikt; een stap verder voegt niets toe.`;
+	const grens = $derived(reach?.cap ?? NEIGHBORHOOD_CAP);
+	const CAPPED_REASON = $derived(
+		`Grens van ${grens} bronnen bereikt; een stap verder voegt niets toe.`
+	);
 	const beyondCap = (d: number) => !netwerkActive && !!reach?.capped && d > reach.depth;
 	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
 	// Never drawn as an edge on the canvas, so not a togglable line here either.
@@ -318,7 +321,7 @@
 				{:else if !netwerkActive && reach?.capped}
 					{CAPPED_REASON}
 				{:else}
-					Per stap hooguit {NEIGHBORHOOD_CAP} bronnen.
+					Per stap hooguit {grens} bronnen.
 				{/if}
 			</p>
 		</section>
