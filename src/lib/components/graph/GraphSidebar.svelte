@@ -209,7 +209,8 @@
 					{/if}
 				</div>
 			</div>
-			{#each BRON_KINDS as k (k)}
+			<!-- Articles are switched with their wet, under Groepering (Thijs, 9 Oct). -->
+			{#each BRON_KINDS.filter((b) => b !== 'artikelen') as k (k)}
 				{@const n = totals[k] ?? 0}
 				<FilterOptie
 					label={kindLabel(k)}
@@ -232,8 +233,10 @@
 				{@const kind = ck as ContainerKind}
 				<FilterOptie
 					label={CONTAINER_KIND_LABEL[kind]}
-					title={`${CONTAINER_KIND_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}${kind === 'instrument' ? '; samen met Artikelen aan en uit' : ''}`}
+					title={`${CONTAINER_KIND_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}${kind === 'instrument' ? '; uit verbergt ook de artikelen' : ''}`}
 					on={kind === 'instrument' ? isOn('artikelen') : !hiddenGroups.has(kind)}
+					count={kind === 'instrument' && !counting ? (totals.artikelen ?? 0) : null}
+					bezig={kind === 'instrument' && counting}
 					onToggle={() =>
 						kind === 'instrument'
 							? onFilter(toggleKind(filter, 'artikelen'))
