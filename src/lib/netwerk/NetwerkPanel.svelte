@@ -152,12 +152,12 @@
 									? `${e.label}: verbergen`
 									: `${e.label}: tonen`}
 							onclick={() => onToggle(e.id)}
-							><KindGlyph collection={e.collection} size={11} />{e.label}{#if e.alone}<span
-									class="los"
-									title="Geen verbinding met de andere gekozen bronnen"
-								>
-									, los</span
-								>{/if}</button
+							><KindGlyph collection={e.collection} size={11} /><span
+								>{e.label}{#if e.alone}<span
+										class="los"
+										title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
+									>{/if}</span
+							></button
 						>
 						<button
 							type="button"

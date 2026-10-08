@@ -223,7 +223,8 @@
 			<p>
 				Het netwerk toont de gekozen bronnen met hun onderlinge verbindingen en met de bronnen
 				ertussen, tot vier stappen. <strong>Bronnen ertussen</strong> zet die aan of uit. Een
-				gekozen bron zonder verbinding met de andere staat als <em>los</em> in het paneel.
+				gekozen bron zonder verbinding met de andere staat in het paneel met
+				<em>zonder verbinding</em>.
 				<strong>Wissen</strong> maakt het netwerk leeg; Terug zet het terug. Zonder wissen opent de Verkenner
 				op het laatste netwerk.
 			</p>
