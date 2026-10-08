@@ -6,6 +6,7 @@
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
 	import { buildBronHref } from '$lib/bron/href';
 	import { korteDatum } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
@@ -412,9 +413,9 @@
 									>{d.subject?.trim() || soortVan(d)}</a
 								>
 								<span class="rij__uitkomst"
-									>{UITKOMST_LABEL[uitkomstVan(d)]}{tally(d) ? `, ${tally(d)}` : ''}{s
-										? `; ${fractie} ${s}`
-										: ''}</span
+									>{UITKOMST_LABEL[uitkomstVan(d)]}{tally(d) ? `, ${tally(d)}` : ''}{#if s}<span
+											class="rij__stem">{fractie} <StemTeken keuze={s} /></span
+										>{/if}</span
 								>
 							</div>
 						</li>
@@ -635,6 +636,9 @@
 	}
 	.rij__datum,
 	.rij__soort,
+	.rij__stem {
+		margin-left: var(--s-3);
+	}
 	.rij__uitkomst {
 		color: var(--ink-3);
 		font-family: var(--font-sans);

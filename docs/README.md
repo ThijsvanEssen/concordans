@@ -15,6 +15,7 @@ For users the app has `/docs`, `/docs/methode` and `/docs/sneltoetsen`. The API 
 | [`search.md`](search.md)                     | The search component and citation resolving                                    |
 | [`gotchas.md`](gotchas.md)                   | Things that look wrong and are not                                             |
 | [`hierarchie.md`](hierarchie.md)             | Where every bron stands: axes, layers in the source's terms, relations, routes |
+| [`typografie.md`](typografie.md)             | The text hierarchy: page title down to a count, in tokens; how a stem looks    |
 
 Conventions:
 

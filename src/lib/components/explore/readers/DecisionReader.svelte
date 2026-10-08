@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getDecision, getDecisionDocument } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
+	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -165,7 +166,7 @@
 						{#each voters as v (v.id)}
 							{@const href = voterHref(v.id)}
 							<li class="voter-row voter-row--{side(v.choice)}">
-								<span class="voter-choice">{v.choice}</span>
+								<span class="voter-choice"><Stem keuze={v.choice} /></span>
 								{#if href}
 									<a class="voter-name" {href} data-sveltekit-noscroll>{v.name}</a>
 								{:else}
@@ -341,17 +342,10 @@
 	.voter-row:hover {
 		background: var(--paper-2);
 	}
+	/* The stem in shape, colour and word (Stem), as on a member's page. */
 	.voter-choice {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-weight: 500;
-	}
-	.voter-row--for .voter-choice,
-	.voter-row--against .voter-choice {
-		color: var(--ink-2);
-	}
-	.voter-row--other .voter-choice {
-		color: var(--ink-3);
 	}
 	.voter-name {
 		font-family: var(--font-serif);

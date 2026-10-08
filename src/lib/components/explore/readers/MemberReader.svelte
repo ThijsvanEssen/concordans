@@ -25,6 +25,7 @@
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
 	import BewindspersoonKop from './BewindspersoonKop.svelte';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 
@@ -317,7 +318,7 @@
 						{#each group.byChoice as [choice, rows] (choice)}
 							<div class="vote-group">
 								<div class="vote-group-head">
-									<span class="vote-choice vote-choice--{choice.toLowerCase()}">{choice}</span>
+									<Stem keuze={choice} />
 									<span class="vote-group-count">{rows.length}</span>
 								</div>
 								<ul class="vote-list">
@@ -327,6 +328,8 @@
 												ref={{ collection: 'decisions', key: v.decision_key }}
 												class="vote-link"
 											>
+												<!-- The stem beside each row as well: a long group scrolls its head away. -->
+												<span class="vote-mark"><Stem keuze={choice} woord={false} /></span>
 												<span class="vote-subject">{stemmingNaam(v.subject)}</span>
 												<span class="vote-meta">
 													{#if v.vote_source === 'faction'}<span class="vote-seats"
@@ -487,20 +490,9 @@
 		color: var(--ink-3);
 	}
 
-	/* ── Votes ── */
-	.vote-choice {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-3);
-	}
-	.vote-choice--voor,
-	.vote-choice--tegen {
-		color: var(--ink-2);
-	}
-	.vote-choice--onthouden {
-		color: var(--ink-3);
-	}
+	/* ── Votes ──
+	   The ladder of docs/typografie.md: section (Sectie) > group (the stem, rung 3) > the
+	   motie (rung 4) > its meta line (rung 5). */
 
 	.vote-list {
 		list-style: none;
@@ -511,9 +503,10 @@
 		padding: 0;
 	}
 	.vote-list :global(.vote-link) {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
+		display: grid;
+		grid-template-columns: var(--s-4) minmax(0, 1fr);
+		column-gap: var(--s-2);
+		row-gap: var(--s-1);
 		padding: var(--s-1);
 		margin: 0 calc(-1 * var(--s-1));
 		border-radius: var(--r-1);
@@ -525,7 +518,14 @@
 	.vote-list :global(.vote-link:hover .vote-subject) {
 		color: var(--accent);
 	}
+	.vote-mark {
+		grid-row: 1;
+		grid-column: 1;
+		font-size: var(--t-body-2);
+		line-height: var(--lh-snug);
+	}
 	.vote-subject {
+		grid-column: 2;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink);
@@ -533,6 +533,7 @@
 		overflow-wrap: anywhere;
 	}
 	.vote-meta {
+		grid-column: 2;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
@@ -541,9 +542,6 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.vote-seats {
-		font-variant-numeric: tabular-nums;
-	}
 	.vote-outcome {
 		font-weight: 500;
 	}
@@ -551,26 +549,25 @@
 	.vote-outcome--failed {
 		color: var(--ink-2);
 	}
-	.vote-date {
-		font-variant-numeric: tabular-nums;
-	}
 
 	.vote-group {
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-1);
-		margin-top: var(--s-2);
+		margin-top: var(--s-4);
 	}
+	/* Rung 3, a group in a section: the sans at --t-meta, the stem in shape and word. */
 	.vote-group-head {
 		display: flex;
-		align-items: center;
+		align-items: baseline;
 		gap: var(--s-2);
-		padding: 2px 0;
+		padding-bottom: var(--s-1);
+		border-bottom: 1px solid var(--rule);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
 	}
 	.vote-group-count {
-		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
 
@@ -586,13 +583,12 @@
 	.r-member :global(.party-name) {
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
-		font-weight: 500;
-		color: var(--ink-2);
+		font-weight: 600;
+		color: var(--ink);
 	}
 	.party-total {
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
 	}
 
