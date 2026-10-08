@@ -27,6 +27,7 @@
 		nextHref,
 		place = [],
 		lidCounts = new Map(),
+		lidTellend = false,
 		billCount = 0,
 		filter,
 		proposedRow = null,
@@ -40,6 +41,7 @@
 		place?: Division[];
 		/** Verbindingen per lid of the article, under the bronfilter. */
 		lidCounts?: Map<string, number>;
+		lidTellend?: boolean;
 		billCount?: number;
 		filter?: VerbondenFilter;
 		/** A wetsvoorstel whose proposed text is shown next to the current one. */
@@ -55,6 +57,7 @@
 		{nextHref}
 		{place}
 		{lidCounts}
+		{lidTellend}
 		{billCount}
 		{filter}
 		{proposedRow}

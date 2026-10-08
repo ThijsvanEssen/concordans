@@ -222,13 +222,26 @@
 	const source = createVerbondenSource(store);
 	let verbonden = $state<VerbondenState>({ id: null, groups: [], loading: false, failed: false });
 	source.subscribe((s) => (verbonden = s));
-	$effect(() => source.load(mode === 'index' ? null : selectedNode));
+	// Verbonden loads when it is in view (Thijs, 9 Oct: "alles zo lazy mogelijk"): beside the
+	// reader on a wide screen; on a phone when its tab is opened, or for an article, whose
+	// counts per lid stand in the text.
+	$effect(() => {
+		const node = mode === 'index' ? null : selectedNode;
+		if (node && telefoon && mobilePanel !== 'verbonden' && node.collection !== 'articles') return;
+		source.load(node);
+	});
 	onDestroy(() => source.destroy());
 
 	// The counts in the margin of the reader hold under every filter but the lid, so a
 	// lid keeps its count when another lid is chosen.
+	// Only Verbonden of this bron counts: a phone may still hold the previous one's.
+	const verbondenHier = $derived(
+		!!selectedNode && verbonden.id === selectedNode.id && verbonden.groups.length > 0
+	);
 	const lidCountsOfArticle = $derived(
-		lidCounts(allRows(filterGroups(verbonden.groups, { ...filter, lid: null })))
+		verbondenHier
+			? lidCounts(allRows(filterGroups(verbonden.groups, { ...filter, lid: null })))
+			: new Map<string, number>()
 	);
 	const billCount = $derived(
 		allRows(verbonden.groups).filter((r) => r.kind === 'wetsvoorstellen').length
@@ -1034,6 +1047,7 @@
 					nextHref={articleIndex >= 0 ? articleHref(articleIndex + 1) : undefined}
 					{place}
 					lidCounts={lidCountsOfArticle}
+					lidTellend={!verbondenHier}
 					{billCount}
 					{filter}
 					{proposedRow}
