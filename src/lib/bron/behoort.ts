@@ -12,7 +12,13 @@ import { deelIds, layersOf } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
-import { isBijWetsvoorstel, stukkenInDezelfdeZaak, wetsvoorstelVan } from './zaak';
+import {
+	aangebodenVan,
+	isAanbieding,
+	isBijWetsvoorstel,
+	stukkenInDezelfdeZaak,
+	wetsvoorstelVan
+} from './zaak';
 import type { Collection, Relation } from '$lib/vocabulary';
 
 /**
@@ -178,6 +184,27 @@ export function behoort(
 			}
 		];
 	};
+	/**
+	 * A geleidende brief or aanbiedingsbrief says nothing without what it offers: the substance
+	 * of its zaak (aangebodenVan), side by side. Found when the zaak's papers come in.
+	 */
+	const biedtAan = (): Regel[] => {
+		const key = light?.node.key;
+		if (!key || !(bak('PART_OF', 'outbound', 'cases')?.total ?? 0) || !isAanbieding(props.kind))
+			return [];
+		return [
+			{
+				id: 'biedt-aan',
+				label: 'Biedt aan',
+				lagen: [],
+				los: true,
+				laad: (signal) =>
+					stukkenInDezelfdeZaak({ key }, signal).then(({ rows }) =>
+						aangebodenVan(rows).map((r) => stukLaag(r, text(r.props?.kind) ?? 'Stuk', new Set()))
+					)
+			}
+		];
+	};
 	const kamer = (): Laag[] => {
 		const k = KAMER[text(props.chamber)?.toUpperCase() ?? ''];
 		return k ? [{ soort: 'Kamer', naam: k }] : [];
@@ -303,7 +330,8 @@ export function behoort(
 						eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')
 					),
 					...regel('brief', 'Bijlage bij', eerste('ACCOMPANIES', 'outbound', 'documents', 'Brief')),
-					...bijWetsvoorstel()
+					...bijWetsvoorstel(),
+					...biedtAan()
 				],
 				naast: [],
 				// The bijlagen of a brief are its kern: a brief is read with them.

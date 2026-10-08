@@ -116,7 +116,7 @@ One pattern for every reader: the band "Behoort bij" **is** the kern block. It d
 - The groups under it (Commissies, Samenhang met, Bijlagen as a count) stay folded. A group that is kern for its reader becomes a line.
 - On a phone the first line shows, and the rest folds open.
 
-For a Kamerstuk (Front-end #2, 9 October 2026): "Bij wetsvoorstel" is kern for a paper that changes or explains a bill (nota van wijziging, memorie van toelichting, nader rapport, nota naar aanleiding van het verslag). "Biedt aan" is kern for a geleidende brief or aanbiedingsbrief: the stukken it offers. That one is in progress (Front-end #2). "In dezelfde zaak" is context: a stuk reads without the other papers of its zaak, so it is in Verbonden only.
+For a Kamerstuk (Front-end #2, 9 October 2026): "Bij wetsvoorstel" is kern for a paper that changes or explains a bill (nota van wijziging, memorie van toelichting, nader rapport, nota naar aanleiding van het verslag). "Biedt aan" is kern for a geleidende brief or aanbiedingsbrief: the stukken it offers. The line lists them side by side ("Biedt aan: Voorstel van wet, Kamerstuk 37027, nr. 2; Memorie van toelichting, …"), and Verbonden leaves them out of "Stukken van dezelfde zaak" (`naastHetStuk` in `$lib/bron/zaak.ts`). "In dezelfde zaak" is context: a stuk reads without the other papers of its zaak, so it is in Verbonden only.
 
 A relation in the kern does not come back as a group in Verbonden (Thijs, 9 October 2026: "dubbelop"). `KERN` in `src/lib/bron/behoort.ts` lists the buckets the kern lines read, per kind of bron. `isKernGroep` tells Verbonden which of its groups read only those, and it leaves them out of its list and its count. The table keeps every connection.
 
