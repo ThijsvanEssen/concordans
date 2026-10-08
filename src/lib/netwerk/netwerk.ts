@@ -29,7 +29,13 @@ export type NetwerkEntry = {
 	missing?: boolean;
 	/** The bron itself, so that its name follows bron/naam.ts once law titles load. */
 	node?: GraphNode;
+	/** A group the paths ran through some of its members of: how many of how many. */
+	via?: { used: number; total: number };
 };
+
+/** Only where the API took part of a group's members: then the chip says so. */
+export const deelVan = (e: { used: number; total: number } | undefined) =>
+	e && e.used < e.total ? e : undefined;
 
 export const EMPTY_NETWERK: Netwerk = { ids: [], uit: new Set(), tussen: true };
 

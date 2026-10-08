@@ -70,6 +70,7 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
 	import {
+		deelVan,
 		isOn,
 		netwerkParams,
 		parseNetwerk,
@@ -640,12 +641,28 @@
 	/** The most bronnen `/api/paths` takes in one request. */
 	const PATHS_MAX = 5;
 
+	/** A wet, fractie, commissie or dossier ties through its members, at most this many each. */
+	const EXPAND_CAP = 200;
+
 	async function pathsBetween(ids: string[]): Promise<Schema<'PathsResponse'> | null> {
+		// A group ties through its children too (API 0.79.23, #341): VVD and Sr meet through
+		// a lid's MEMBER_OF and an article's PART_OF (Thijs, 9 Oct). An API without
+		// `expand` ignores it.
+		const query = { ids: ids.join(','), max_depth: 4, expand: 'members', expand_cap: EXPAND_CAP };
 		const { data } = await api
-			.GET('/api/paths', { params: { query: { ids: ids.join(','), max_depth: 4 } } })
+			.GET('/api/paths', { params: { query: query as { ids: string; max_depth: number } } })
 			.catch(() => ({ data: undefined }));
 		return data ?? null;
 	}
+
+	/** Per group the API widened, how many of its members it took: "via 200 van 846 leden". */
+	const uitgebreidOf = (route: Schema<'PathsResponse'> | null) =>
+		new Map(
+			Object.entries(
+				(route as { expanded?: Record<string, { used: number; total: number }> } | null)
+					?.expanded ?? {}
+			)
+		);
 
 	type Settled = PromiseSettledResult<Schema<'NodeGraphResponse'>>;
 	const nodeIdOf = (r: Schema<'NodeGraphResponse'>) => `${r.node.collection}/${r.node.key}`;
@@ -676,7 +693,7 @@
 		// further than one shared neighbour. Without the route, the shared neighbours only.
 		const onPaths = route ? await store.mergePaths(route) : { onPath: [], tied: [] };
 		if (epoch !== composeEpoch) return;
-		draw(n, results, onPaths);
+		draw(n, results, onPaths, uitgebreidOf(route));
 		netwerkLoading = false;
 		graphView?.fitWhenSettled();
 	}
@@ -684,7 +701,8 @@
 	function draw(
 		n: Netwerk,
 		results: Settled[],
-		paths: { onPath: string[]; tied: string[] } | null
+		paths: { onPath: string[]; tied: string[] } | null,
+		uitgebreid: Map<string, { used: number; total: number }> = new Map()
 	) {
 		const participants: { response: Schema<'NodeGraphResponse'> }[] = [];
 		const found: { id: string; response: Schema<'NodeGraphResponse'> }[] = [];
@@ -718,7 +736,8 @@
 				collection: response.node.collection as NetwerkEntry['collection'],
 				on: isOn(n, id),
 				alone:
-					participants.length > 1 && alone.has(`${response.node.collection}/${response.node.key}`)
+					participants.length > 1 && alone.has(`${response.node.collection}/${response.node.key}`),
+				via: deelVan(uitgebreid.get(`${response.node.collection}/${response.node.key}`))
 			};
 		});
 		// A chosen bron the API does not know (an old link, a removed record) stays listed,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Neighbor } from '$lib/api/nodes';
 import {
+	deelVan,
 	between,
 	isOn,
 	netwerkParams,
@@ -111,5 +112,13 @@ describe('a netwerk on a phone', () => {
 		const q = new URLSearchParams(`netwerk=${JETTEN}&tussen=0`);
 		expect(parseNetwerk(q, true).tussen).toBe(false);
 		expect(parseNetwerk(q, false).tussen).toBe(false);
+	});
+});
+
+describe('deelVan', () => {
+	it('says how many members a path ran through only where the API took part of them', () => {
+		expect(deelVan({ used: 200, total: 846 })).toEqual({ used: 200, total: 846 });
+		expect(deelVan({ used: 12, total: 12 })).toBeUndefined();
+		expect(deelVan(undefined)).toBeUndefined();
 	});
 });
