@@ -121,7 +121,9 @@ export function containerIdFor(node: {
 	key: string;
 	props?: Record<string, unknown> | null;
 }): string | null {
-	if (node.collection === 'instruments') return instrumentContainerId(node.props ?? {});
+	// A law without a BWB id (an act of the EU) by its key, as its articles name it (CELEX).
+	if (node.collection === 'instruments')
+		return instrumentContainerId({ key: node.key.toUpperCase(), ...node.props });
 	return isCollection(node.collection) ? nodeId(node.collection, node.key) : null;
 }
 

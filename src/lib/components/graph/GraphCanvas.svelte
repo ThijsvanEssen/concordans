@@ -408,6 +408,19 @@
 		return to && from ? { from, to } : null;
 	}
 
+	/**
+	 * A container's anchor (a wet, a fractie) is no bron on the canvas, only its hull: a line
+	 * to it is drawn to the edge of that hull, not into it (Thijs, 9 Oct). True when the
+	 * anchor's hull is drawn; then the line is the overlay's, not the canvas's.
+	 */
+	function anchorWithHull(id: string): boolean {
+		if (!graph.hasNode(id) || !graph.getNodeAttribute(id, 'anchor')) return false;
+		return [...(nodeGroupIds.get(id) ?? [])].some((g) => {
+			const group = latestContainerGroups.get(g);
+			return !!group && drawnGroup(group) && !hiddenGroupKinds.has(group.kind);
+		});
+	}
+
 	const inside = (p: Point, polygon: Point[]) => {
 		let hit = false;
 		for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -461,6 +474,8 @@
 		}
 		type Drawn = Hull & { polygon: Point[]; center: Point; members: Set<string> };
 		const drawn = new Map<string, Drawn>();
+		/** Per anchor, the hull drawn for it. */
+		const anchorHull = new Map<string, Drawn>();
 		for (const group of latestContainerGroups.values()) {
 			if (!drawnGroup(group) || hiddenGroupKinds.has(group.kind)) continue;
 			const points: { x: number; y: number }[] = [];
@@ -470,14 +485,18 @@
 				if (isHiddenNode(id, attrs)) continue;
 				points.push(renderer!.graphToViewport({ x: attrs.x as number, y: attrs.y as number }));
 			}
-			// One member is a hull only when it is a wet's anchor (the wet itself, not a bron in
-			// it), or the dossier of a stuk on a path between chosen bronnen (`lone`).
-			const anchored = [...group.members].some(
+			// One member is a hull when it is a container's anchor (the wet or fractie itself,
+			// drawn as an empty hull), the dossier of a stuk on a path between chosen bronnen
+			// (`lone`), or an article: an article always stands in its wet (Thijs, 9 Oct).
+			const anchor = [...group.members].find(
 				(id) => graph.hasNode(id) && !!graph.getNodeAttribute(id, 'anchor')
 			);
-			if (points.length < (anchored || group.lone ? 1 : 2)) continue;
+			if (points.length < (anchor || group.lone || group.kind === 'instrument' ? 1 : 2)) continue;
 			const meta = group.kind === 'instrument' ? getInstrumentMeta(group.id) : null;
-			const label = meta ? (meta.shortTitle ?? meta.citationTitle ?? '') : group.label;
+			const label =
+				(meta ? (meta.shortTitle ?? meta.citationTitle) : group.label) ||
+				group.label ||
+				(anchor ? ((graph.getNodeAttribute(anchor, 'anchorNaam') as string) ?? '') : '');
 			if (!label) continue;
 			// The full name while the hull, or a bron in it, is under the pointer.
 			const inHover =
@@ -517,6 +536,7 @@
 				center: centroid(points),
 				members: group.members
 			});
+			if (anchor) anchorHull.set(anchor, drawn.get(group.id)!);
 		}
 
 		// One line per pair of hulls, from where it leaves the one to where it enters the other.
@@ -586,6 +606,76 @@
 				labelY: (start.y + end.y) / 2
 			});
 		}
+
+		// A line to an anchor ends at the edge of its hull, its arrow there; a line from one
+		// starts at that edge. One per bron and hull.
+		const seen = new Set<string>();
+		graph.forEachEdge((_e, attrs, src, tgt) => {
+			if (attrs.layoutOnly || hullLinkOf(src, tgt)) return;
+			const fromHull = anchorHull.get(src);
+			const toHull = anchorHull.get(tgt);
+			if (!fromHull && !toHull) return;
+			const nodeEnd = !fromHull ? src : !toHull ? tgt : null;
+			if (nodeEnd && isHiddenNode(nodeEnd, graph.getNodeAttributes(nodeEnd))) return;
+			const key = `${fromHull?.id ?? src}->${toHull?.id ?? tgt}`;
+			if (seen.has(key)) return;
+			seen.add(key);
+			const pointOf = (id: string) => {
+				const a = graph.getNodeAttributes(id);
+				return renderer!.graphToViewport({ x: a.x as number, y: a.y as number });
+			};
+			const radius = (id: string) => (renderer!.getNodeDisplayData(id)?.size ?? 4) + 2;
+			let start: Point;
+			let end: Point;
+			if (fromHull && toHull) {
+				start = exitPoint(fromHull.center, toHull.center, fromHull.polygon);
+				end = exitPoint(toHull.center, fromHull.center, toHull.polygon);
+			} else if (toHull) {
+				const p = pointOf(src);
+				end = exitPoint(toHull.center, p, toHull.polygon);
+				const d = Math.hypot(end.x - p.x, end.y - p.y) || 1;
+				start = {
+					x: p.x + ((end.x - p.x) / d) * radius(src),
+					y: p.y + ((end.y - p.y) / d) * radius(src)
+				};
+			} else {
+				const p = pointOf(tgt);
+				start = exitPoint(fromHull!.center, p, fromHull!.polygon);
+				const d = Math.hypot(start.x - p.x, start.y - p.y) || 1;
+				end = {
+					x: p.x + ((start.x - p.x) / d) * radius(tgt),
+					y: p.y + ((start.y - p.y) / d) * radius(tgt)
+				};
+			}
+			const dx = end.x - start.x;
+			const dy = end.y - start.y;
+			const len = Math.hypot(dx, dy) || 1;
+			const ux = dx / len;
+			const uy = dy / len;
+			const back = { x: end.x - ux * 7, y: end.y - uy * 7 };
+			const hull = (toHull ?? fromHull)!;
+			const lit = hoveredHullId === hull.id || (nodeEnd !== null && hoveredId === nodeEnd);
+			const relation = attrs.relation as Relation;
+			const sourceKind = graph.getNodeAttribute(src, 'kind') as GraphNodeKind;
+			nextLinks.push({
+				id: `anker:${key}`,
+				d: `M ${start.x} ${start.y} L ${back.x} ${back.y}`,
+				arrow: `M ${end.x} ${end.y} L ${back.x - uy * 3.5} ${back.y + ux * 3.5} L ${back.x + uy * 3.5} ${back.y - ux * 3.5} Z`,
+				color: edgeColorFor(relation, sourceKind),
+				dashed: attrs.status === 'voorgesteld',
+				dim: active !== null && !lit && !active.has(hull.id),
+				label: lit
+					? [
+							relationLabel(relation, graph.getNodeAttribute(src, 'collection') as Collection),
+							attrs.status === 'voorgesteld' ? 'voorgesteld' : null
+						]
+							.filter(Boolean)
+							.join(', ')
+					: null,
+				labelX: (start.x + end.x) / 2,
+				labelY: (start.y + end.y) / 2
+			});
+		});
 
 		const next = [...drawn.values()];
 		hullHitAreas = next.map((h) => {
@@ -1060,7 +1150,8 @@
 
 				const relation = data.relation as Relation;
 				if (latestFilters?.hiddenRelations.has(relation)) return { ...data, hidden: true };
-				if (hullLinkOf(src, tgt)) return { ...data, hidden: true };
+				if (hullLinkOf(src, tgt) || anchorWithHull(src) || anchorWithHull(tgt))
+					return { ...data, hidden: true };
 
 				const sourceKind = srcAttrs.kind as GraphNodeKind;
 				const style = edgeStyleFor(relation, data.status as string | null);
