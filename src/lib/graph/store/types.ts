@@ -7,10 +7,23 @@ import type { ContainerKind } from '../container-membership';
 /** A chosen bron of a netwerk that is on, with its node response. */
 /** The API's defaults for a neighbourhood: three steps, at most 200 bronnen. */
 export const NEIGHBORHOOD_DEPTH = 3;
-export const NEIGHBORHOOD_CAP = 200;
+/**
+ * The most bronnen one neighbourhood brings (Thijs, 9 Oct: "diepte houden, max omlaag"). At 150
+ * the ten busiest bronnen of a cap of 200 all stay (126ffa Sv, 3:4 Awb, HR Urgenda, a Kamerlid,
+ * dossier 36547 on prod), at 45 to 55 % of the bytes for a dossier, 75 to 80 % for the rest.
+ * A phone draws fewer: 100, where a Kamerlid keeps six of the ten.
+ */
+export const NEIGHBORHOOD_CAP = 150;
+export const NEIGHBORHOOD_CAP_PHONE = 100;
 
 /** A neighbourhood as drawn: around `focal`, `depth` steps, `capped` at the cap. */
-export type NeighborhoodReach = { focal: string; depth: number; capped: boolean };
+export type NeighborhoodReach = {
+	focal: string;
+	depth: number;
+	capped: boolean;
+	/** The cap the request was made with. */
+	cap: number;
+};
 
 export type NetwerkParticipant = { response: Schema<'NodeGraphResponse'> };
 

@@ -1,5 +1,9 @@
 <script lang="ts">
-	import type { NeighborhoodReach } from '$lib/graph/store/types';
+	import {
+		NEIGHBORHOOD_CAP,
+		NEIGHBORHOOD_CAP_PHONE,
+		type NeighborhoodReach
+	} from '$lib/graph/store/types';
 	import { lawArticles, lawNav, type LawNavItem } from '$lib/api/law-articles';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The explorer: one bron at a time, in one of three modes. Lezen shows the bron with
@@ -341,12 +345,14 @@
 	// One neighbourhood request of `depthFor(node)` steps; the bronfilter decides what
 	// is drawn.
 	let focusEpoch = 0;
+	// The most bronnen a neighbourhood brings: fewer on a phone.
+	const omgevingGrens = telefoon ? NEIGHBORHOOD_CAP_PHONE : NEIGHBORHOOD_CAP;
 
 	async function expandAround(node: GraphNode, epoch: number) {
 		if (node.id.startsWith('synth:')) return;
 		await store.expandNeighborhood(node.collection, node.key, {
 			depth: depthFor(node.kind),
-			cap: 200
+			cap: omgevingGrens
 		});
 		if (epoch !== focusEpoch) return;
 		// A dossier's stukken change wetten two steps away (dossier, stuk, wet): the one
@@ -354,7 +360,7 @@
 		if (node.collection === 'dossiers') {
 			await store.expandNeighborhood(node.collection, node.key, {
 				depth: 2,
-				cap: 200,
+				cap: omgevingGrens,
 				relations: ['PART_OF', 'AMENDS', 'INTRODUCES', 'REPEALS'],
 				nodeTypes: ['document', 'instrument', 'dossier']
 			});
@@ -817,7 +823,7 @@
 		void store
 			.expandNeighborhood(selectedNode.collection, selectedNode.key, {
 				depth: d,
-				cap: 200,
+				cap: omgevingGrens,
 				additive: true
 			})
 			.then(() => graphView?.fitWhenSettled());

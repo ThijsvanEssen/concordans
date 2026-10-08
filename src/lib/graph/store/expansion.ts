@@ -221,7 +221,8 @@ export function createExpansion(
 				neighborhoodStore.set({
 					focal: response.focal_id,
 					depth: opts.depth ?? NEIGHBORHOOD_DEPTH,
-					capped: response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP)
+					capped: response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP),
+					cap: opts.cap ?? NEIGHBORHOOD_CAP
 				});
 
 			// A full neighbourhood without the detour through a law (`withoutLawHops`); one
