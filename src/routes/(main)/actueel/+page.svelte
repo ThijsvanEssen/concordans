@@ -31,10 +31,13 @@
 		FEED_KINDS,
 		KIND_LABEL,
 		atomParams,
+		dagVoor,
 		daysOf,
+		doorzochtVanaf,
 		feedStand,
 		kindFromParam,
 		normalizeItem,
+		shortDate,
 		standLine,
 		type DaySummary,
 		type FeedItem,
@@ -179,6 +182,7 @@
 		loading = true;
 		error = null;
 		teLang = false;
+		doorzocht = null;
 		if ((q.q ?? '') !== gezocht) {
 			gezocht = q.q ?? '';
 			items = [];
@@ -194,6 +198,7 @@
 				items = r.items.map(normalizeItem);
 				cursor = r.next_cursor ?? null;
 				stand = feedStand(r.data_as_of) ?? stand;
+				doorzocht = doorzochtVanaf(r);
 			})
 			.catch((e) => {
 				if (ac.signal.aborted) return;
@@ -242,6 +247,30 @@
 			ac.abort();
 		};
 	});
+
+	// The API searches words for a while and then answers with what it found, from the day it
+	// reached (0.79.28): further back is the same question up to the day before.
+	let doorzocht = $state<string | null>(null);
+	let verderLaden = $state(false);
+	async function verderTerug() {
+		if (!doorzocht || verderLaden) return;
+		verderLaden = true;
+		try {
+			const r = await unwrap(
+				api.GET('/api/feed', {
+					params: { query: { ...query, until: dagVoor(doorzocht), facets: false } },
+					signal: AbortSignal.timeout(WACHT)
+				})
+			);
+			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
+			cursor = r.next_cursor ?? null;
+			doorzocht = doorzochtVanaf(r);
+		} catch {
+			error = 'Verder terug zoeken lukte niet.';
+		} finally {
+			verderLaden = false;
+		}
+	}
 
 	async function loadMore() {
 		if (!cursor || loadingMore) return;
@@ -484,6 +513,17 @@
 </script>
 
 <svelte:head><title>Actueel, Concordans</title></svelte:head>
+
+{#snippet verder()}
+	{#if doorzocht}
+		<p class="doorzocht">
+			Doorzocht vanaf {shortDate(doorzocht)}.
+			<button type="button" onclick={verderTerug} disabled={verderLaden}
+				>{verderLaden ? 'Laden…' : 'Zoek verder terug'}</button
+			>
+		</p>
+	{/if}
+{/snippet}
 <svelte:window onkeydown={onKey} />
 
 <div class="actueel">
@@ -580,6 +620,7 @@
 			<div class="empty">
 				<p>Geen gebeurtenissen{chips.length ? ' met deze filters' : ''}.</p>
 				{#if stand}<p class="stand">{standLine(stand)}</p>{/if}
+				{@render verder()}
 			</div>
 		{:else}
 			<div class="days" class:days--stale={loading}>
@@ -596,7 +637,8 @@
 					/>
 				{/each}
 			</div>
-			{#if cursor}
+			{@render verder()}
+			{#if cursor && !doorzocht}
 				<div class="more">
 					<button type="button" onclick={loadMore} disabled={loadingMore}
 						>{loadingMore ? 'Laden…' : 'Meer laden'}</button
@@ -780,6 +822,25 @@
 	}
 	.empty p {
 		margin: 0 0 var(--s-1);
+	}
+	.doorzocht {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-2) var(--s-3);
+		margin: var(--s-5) 0;
+		color: var(--ink-2);
+		font-family: var(--font-sans);
+		font-size: var(--t-meta);
+	}
+	.doorzocht button {
+		padding: var(--s-1) var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: transparent;
+		color: var(--ink);
+		font: inherit;
+		cursor: pointer;
 	}
 	.more {
 		display: flex;

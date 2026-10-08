@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+	dagVoor,
+	doorzochtVanaf,
 	countLine,
 	dayLabel,
 	daysOf,
@@ -206,5 +208,15 @@ describe('feedStand', () => {
 		);
 		expect(feedStand({ bwb: { newest: '2026-09-01' } })).toBeNull();
 		expect(feedStand(undefined)).toBeNull();
+	});
+});
+
+describe('doorzochtVanaf', () => {
+	it('alleen bij een deels doorzochte periode, en de dag ervoor voor verder terug', () => {
+		expect(doorzochtVanaf({ partial: true, searched_from: '2026-07-01' })).toBe('2026-07-01');
+		expect(doorzochtVanaf({ partial: true, searched_from: null })).toBeNull();
+		expect(doorzochtVanaf({ partial: false })).toBeNull();
+		expect(doorzochtVanaf({})).toBeNull();
+		expect(dagVoor('2026-03-01')).toBe('2026-02-28');
 	});
 });
