@@ -82,6 +82,7 @@
 		overlay = { kind: 'none' } as Overlay,
 		onNodeClick,
 		onNodeDoubleClick,
+		onMetGroep,
 		onToggleChosen,
 		netwerkActive = false,
 		onEdgeClick,
@@ -110,6 +111,8 @@
 		onNodeClick?: (node: GraphNode) => void;
 		/** Replaces the canvas with the bron's own neighbourhood; a click only selects. */
 		onNodeDoubleClick?: (node: GraphNode) => void;
+		/** The bronnen hidden with a grouping that is off, by canvas id: their chips grey. */
+		onMetGroep?: (verborgen: ReadonlyMap<string, ContainerKind>) => void;
 		/** Adds a bron to the netwerk, or takes it out. */
 		onToggleChosen?: (node: GraphNode) => void;
 		netwerkActive?: boolean;
@@ -224,17 +227,9 @@
 		const verborgen = metGroepVerborgen({
 			groups: containerGroups.values(),
 			uit: filters.hiddenGroups,
-			houd: (id) => id === selection?.id || pinnedIds.has(id),
-			buren: (id) => {
-				const ends: string[] = [];
-				if (g.hasNode(id))
-					g.forEachEdge(id, (_e, a, src, tgt) => {
-						if (!a.layoutOnly) ends.push(src === id ? tgt : src);
-					});
-				return ends;
-			},
-			anker: (id) => g.hasNode(id) && !!g.getNodeAttribute(id, 'anchor')
+			houd: (id) => id === selection?.id
 		});
+		onMetGroep?.(verborgen);
 		g.forEachNode((id, attrs) => {
 			// Per kind, before the filter: the sidebar says what the filter hides.
 			const kind = attrs.bronKind as BronKind | undefined;

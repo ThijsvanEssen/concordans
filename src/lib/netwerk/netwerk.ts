@@ -31,6 +31,8 @@ export type NetwerkEntry = {
 	missing?: boolean;
 	/** The bron itself, so that its name follows bron/naam.ts once law titles load. */
 	node?: GraphNode;
+	/** On, but hidden with a grouping switched off (a stuk of a dossier with Dossier off). */
+	verborgenMet?: 'instrument' | 'faction' | 'committee' | 'dossier';
 	/** A group the paths ran through some of its members of: how many of how many. */
 	via?: { used: number; total: number };
 };

@@ -12,39 +12,20 @@ const group = (kind: ContainerKind, id: string, members: string[]): ContainerGro
 	periods: new Map()
 });
 
-// Dossier D (its own bron d) holds stukken s1 to s4; s3 also changes the focus f; s2 is in
-// commissie C too; s1 changes law l, which is in view through D as well.
-const lines: Record<string, string[]> = {
-	d: ['s1', 's2', 's3', 's4'],
-	s1: ['d', 'l'],
-	s2: ['d'],
-	s3: ['d', 'f'],
-	s4: ['d'],
-	f: ['s3'],
-	l: ['s1']
-};
-const run = (uit: string[], houd: string[] = ['f']) =>
-	metGroepVerborgen({
-		groups: [group('dossier', 'D', ['d', 's1', 's2', 's3', 's4']), group('committee', 'C', ['s2'])],
-		uit: new Set(uit),
-		houd: (id) => houd.includes(id),
-		buren: (id) => lines[id] ?? [],
-		anker: (id) => id === 'd'
-	});
+// Dossier D (its own bron d) holds stukken s1 to s3; s2 is in commissie C too.
+const groups = [group('dossier', 'D', ['d', 's1', 's2', 's3']), group('committee', 'C', ['s2'])];
+const run = (uit: string[], houd: string[] = []) =>
+	metGroepVerborgen({ groups, uit: new Set(uit), houd: (id) => houd.includes(id) });
 
 describe('metGroepVerborgen', () => {
-	it('hides what is in the grouping, keeps a bron with a line of its own to the focus', () => {
-		expect([...run(['dossier']).keys()].sort()).toEqual(['d', 's1', 's4']);
+	it('hides everything in a grouping that is off, chosen or with a line of its own', () => {
+		expect([...run(['dossier']).keys()].sort()).toEqual(['d', 's1', 's3']);
 	});
 
-	it('keeps a bron that is in a grouping still on', () => {
+	it('keeps a bron that is in a grouping still on, and the focus', () => {
 		expect(run(['dossier']).has('s2')).toBe(false);
 		expect(run(['dossier', 'committee']).get('s2')).toBe('dossier');
-	});
-
-	it('takes the focused dossier itself for no route: its stukken go with it', () => {
-		const focused = run(['dossier'], ['d']);
-		expect([...focused.keys()].sort()).toEqual(['s1', 's2', 's3', 's4'].filter((s) => s !== 's2'));
+		expect(run(['dossier'], ['s1']).has('s1')).toBe(false);
 	});
 
 	it('hides nothing while every grouping is on', () => {
