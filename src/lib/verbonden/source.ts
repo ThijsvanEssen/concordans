@@ -8,8 +8,10 @@ import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
 import {
 	bucketTotals,
 	getBuckets,
+	lidCountsByCollection,
 	lidCountsOf,
 	neighborsOf,
+	sumLidCounts,
 	type Neighbor,
 	type NodeGraph
 } from '$lib/api/nodes';
@@ -23,7 +25,7 @@ import {
 	type Group,
 	type Match
 } from './groups';
-import { LOADERS } from './loaders';
+import { LOADERS, type Loaded } from './loaders';
 
 /**
  * Whether Verbonden of a bron can start from five per bucket: a group's rows are asked when
@@ -50,6 +52,8 @@ export type VerbondenState = {
 	preview?: { id: string; label: string; count: number | null }[];
 	/** The verbindingen per lid of an article, as the API counts them (`lid_counts`). */
 	lidTellingen?: Map<string, number> | null;
+	/** The same per collection of the buckets, for the bronfilter (`lidTellingenOnder`). */
+	lidPerBak?: Map<string, Map<string, number>> | null;
 	/** Whether the groups hold every row, not the first five per bucket. */
 	volledig?: boolean;
 };
@@ -85,6 +89,25 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		geopend: Set<string>;
 	} | null = null;
 	let groups: Group[] = [];
+	// A loader's rest, asked when its group is opened, the table or an export (`Loaded.meer`).
+	const vervolg = new Map<string, () => Promise<Loaded>>();
+	const vervolgVan = (id: string): Promise<void> => {
+		const meer = vervolg.get(id);
+		if (!meer) return Promise.resolve();
+		vervolg.delete(id);
+		const b = basis;
+		return meer()
+			.then(({ rows, total, mentions, order, years }) => {
+				if (b !== basis) return;
+				groups = groups.map((g) =>
+					g.id === id ? { ...g, rows, total, mentions, order, years } : g
+				);
+				state.set({ ...get(state), groups });
+			})
+			.catch(() => {
+				if (b === basis) vervolg.set(id, meer);
+			});
+	};
 
 	const bouw = (b: NonNullable<typeof basis>) => {
 		const fresh = naarSoort(
@@ -114,7 +137,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		controller = ac;
 		state.set({ id: selection.id, groups: [], loading: true, failed: false });
 		const { collection, key } = selection;
-		let tellingen: Map<string, number> | null = null;
+		let perBak: Map<string, Map<string, number>> | null = null;
 		const first = getNodeFirst(collection, key);
 		first
 			.then((first) => {
@@ -131,17 +154,19 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					loading: true,
 					failed: false,
 					preview,
-					lidTellingen: lidCountsOf(first)
+					lidTellingen: lidCountsOf(first),
+					lidPerBak: lidCountsByCollection(first)
 				});
 			})
 			.catch(() => {});
 		basis = null;
 		groups = [];
+		vervolg.clear();
 		let lui = true;
 		// An article waits for its light node, to see whether the API counts its leden.
 		(collection === 'articles' ? first.catch(() => null) : Promise.resolve(null))
 			.then((first) => {
-				if (first) tellingen = lidCountsOf(first);
+				if (first) perBak = lidCountsByCollection(first);
 				lui = luiTeLaden(collection, first);
 				return lui ? getNodeVerbonden(collection, key) : store.nodeResponse(collection, key);
 			})
@@ -169,7 +194,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						groups,
 						loading: pending.size > 0,
 						failed: false,
-						lidTellingen: tellingen,
+						lidTellingen: perBak ? sumLidCounts(perBak) : null,
+						lidPerBak: perBak,
 						volledig: basis?.volledig ?? false
 					});
 				zet();
@@ -184,8 +210,9 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				for (const def of groups) {
 					if (!def.load) continue;
 					LOADERS[def.load](ctx)
-						.then(({ rows, total, mentions, order, years, judgmentsOf }) => {
+						.then(({ rows, total, mentions, order, years, judgmentsOf, meer }) => {
 							if (ac.signal.aborted) return;
+							if (meer) vervolg.set(def.id, meer);
 							groups = groups.map((g) => {
 								if (g.id === def.id) return { ...g, rows, total, mentions, order, years };
 								const judgments = judgmentsOf?.[g.id];
@@ -227,6 +254,10 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			load(last);
 		},
 		groep: (id) => {
+			if (vervolg.has(id)) {
+				void vervolgVan(id);
+				return;
+			}
 			const b = basis;
 			if (!b || b.volledig || b.geopend.has(id)) return;
 			const def = (GROUPS[b.collection] ?? []).find((d) => d.id === id);
@@ -244,10 +275,11 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			});
 		},
 		volledig: () => {
+			const rest = Promise.all([...vervolg.keys()].map(vervolgVan));
 			const b = basis;
-			if (!b || b.volledig) return Promise.resolve();
+			if (!b || b.volledig) return rest.then(() => {});
 			b.volledig = true;
-			return store
+			const node = store
 				.nodeResponse(b.collection, b.key)
 				.then((response) => {
 					if (b !== basis) return;
@@ -258,6 +290,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				.catch(() => {
 					b.volledig = false;
 				});
+			return Promise.all([rest, node]).then(() => {});
 		},
 		destroy: () => controller?.abort()
 	};

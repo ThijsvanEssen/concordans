@@ -78,6 +78,24 @@ export const getNodeCanvas = (collection: Collection, key: string) =>
 	);
 
 /**
+ * The hull of a wet as the canvas draws it: its articles alone (PART_OF), the only bronnen in
+ * its hull; its other buckets are no member and not drawn (Awb on prod: 149 kB against 1.3 MB
+ * for the same 200 articles). A dossier, fractie or commissie holds every neighbour in its
+ * hull and keeps `getNode`.
+ */
+export const getNodeHull = (collection: Collection, key: string) =>
+	collection === 'instruments'
+		? once(`nodes/${collection}/${key.toLowerCase()}/hull`, () =>
+				getNodeGraph(collection, key, {
+					limit: 200,
+					relations: 'PART_OF',
+					nodeTypes: 'article',
+					direction: 'inbound'
+				})
+			)
+		: getNode(collection, key);
+
+/**
  * The node of a bron as Verbonden first draws it: the count of every bucket and the rows a
  * closed group shows (3), not the 200 per bucket (Yeşilgöz: 8 kB against 150 gzip, prod 9 Oct).
  * A group's own rows come when it is opened.
