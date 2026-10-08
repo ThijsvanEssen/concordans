@@ -1,6 +1,6 @@
 import type { Schema } from '$lib/api/types';
 import type { Collection } from '$lib/vocabulary';
-import { api, unwrap } from './client';
+import { api, unwrap, zoekApi } from './client';
 
 // Keys are lower case in the API and the routes are case-sensitive.
 const path = (collection: Collection, key: string) => ({ collection, key: key.toLowerCase() });
@@ -10,8 +10,10 @@ export const getNodeGraph = (
 	key: string,
 	opts: { limit?: number; signal?: AbortSignal } = {}
 ) =>
+	// A full node can take a cold API more than 10 s (art. 3:2 Awb, 651 kB, prod 9 Oct): it
+	// waits as long as the API does, so the work is not cut off and asked again.
 	unwrap(
-		api.GET('/api/nodes/{collection}/{key}', {
+		((opts.limit ?? 0) > 1 ? zoekApi : api).GET('/api/nodes/{collection}/{key}', {
 			params: { path: path(collection, key), query: { limit: opts.limit } },
 			signal: opts.signal
 		})
