@@ -721,6 +721,30 @@
 		});
 
 		const next = [...drawn.values()];
+		// A hull's name stands where no other hull's name stands (6e: around art. 273f a
+		// dozen law hulls named themselves on top of each other in a column). The hull under
+		// the pointer goes first, then the one holding the focus or a chosen bron, then the
+		// larger; a name with no free place waits for a hover or a zoom.
+		const voorrang = (h: (typeof next)[number]) =>
+			(hoveredHullId === h.id || (hoveredId !== null && h.members.has(hoveredId)) ? 4 : 0) +
+			(focusedId !== null && h.members.has(focusedId) ? 2 : 0) +
+			([...h.members].some((id) => latestPinnedIds.has(id)) ? 1 : 0);
+		const geplaatst: { x: number; y: number; w: number; h: number }[] = [];
+		for (const h of [...next].sort(
+			(a, b) => voorrang(b) - voorrang(a) || b.members.size - a.members.size
+		)) {
+			if (!h.label) continue;
+			const w = labelWidth(h.label);
+			const r = { x: h.labelX - w / 2, y: h.labelY - LABEL_HEIGHT, w, h: LABEL_HEIGHT };
+			const botst = geplaatst.some(
+				(o) => r.x < o.x + o.w && o.x < r.x + r.w && r.y < o.y + o.h && o.y < r.y + r.h
+			);
+			if (botst && voorrang(h) < 4) {
+				h.label = '';
+				continue;
+			}
+			geplaatst.push(r);
+		}
 		hullHitAreas = next.map((h) => {
 			const w = labelWidth(h.label);
 			return {
