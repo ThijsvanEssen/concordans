@@ -58,6 +58,8 @@
 
 	/** A voter id is `factions/vvd` or `members/…`; the key alone does not say which. */
 	const voterHref = (id: string) => (id.includes('/') ? bronHref(id) : null);
+	/** A fractie of the Eerste Kamer by its key (`ek_<slug>`, #369) or its id. */
+	const ekHref = (id: string) => bronHref(id.includes('/') ? id : `factions/${id}`);
 </script>
 
 <ReaderFrame>
@@ -81,8 +83,15 @@
 				([choice]) => choice !== 'Voor' && choice !== 'Tegen'
 			)}
 			{@const dossierNumbers = (node.raw?.props?.dossier_numbers ?? []) as string[]}
-			{@const voters = votersOf(d)}
 			{@const chamber = d.chamber ?? 'TK'}
+			<!-- The Eerste Kamer's fracties stand once, in its own lists (complete, also a fractie
+			     without a node); its votes[] (#369) only link the names they share. -->
+			{@const voters = chamber === 'EK' ? [] : votersOf(d)}
+			{@const ekLink = new Map(
+				chamber === 'EK'
+					? (d.votes ?? []).flatMap((v) => (v.name?.trim() ? [[v.name.trim(), v.voter_id]] : []))
+					: []
+			)}
 
 			<header class="head">
 				<span class="kicker">
@@ -120,7 +129,8 @@
 				<p class="document-unavailable">Tekst niet in de gegevens.</p>
 			{/if}
 
-			{#if d.vote_kind}
+			<!-- Seats of 0 are unknown (an older Eerste Kamer vote), not a tally of 0. -->
+			{#if d.vote_kind && inFavour + against > 0}
 				<div class="vote-summary">
 					<div class="vote-bar">
 						<div class="vote-bar-for" style="width: {inFavourPct}%"></div>
@@ -148,7 +158,11 @@
 						<dl class="ek-factions">
 							{#each groups as g (g.label)}
 								<dt>{g.label}</dt>
-								<dd>{g.names.join(', ')}</dd>
+								<dd>
+									{#each g.names as name, i (name)}{i > 0 ? ', ' : ''}{#if ekLink.get(name)}<a
+												href={ekHref(ekLink.get(name)!)}>{name}</a
+											>{:else}{name}{/if}{/each}
+								</dd>
 							{/each}
 						</dl>
 					</Sectie>
