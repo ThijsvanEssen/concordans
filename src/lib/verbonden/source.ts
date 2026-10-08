@@ -1,7 +1,7 @@
 // One load of the verbindingen of the selected bron, read by the panel, the table,
 // the legend of the network and the margin of the reader. The groups come from the
 // group table; a group with a loader fills in as its request answers.
-import { bucketTotals, neighborsOf } from '$lib/api/nodes';
+import { bucketTotals, lidCountsOf, neighborsOf } from '$lib/api/nodes';
 import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
@@ -61,6 +61,8 @@ export type VerbondenState = {
 	 * its way: the panel shows their heads before their rows (the Awb's full node is 4.9 MB).
 	 */
 	preview?: { id: string; label: string; count: number | null }[];
+	/** The verbindingen per lid of an article, from the light node, before the rows are in. */
+	lidTellingen?: Map<string, number> | null;
 };
 
 export type VerbondenSource = Readable<VerbondenState> & {
@@ -132,7 +134,14 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				)
 					.filter((g) => g.load || g.rows.length > 0)
 					.map((g) => ({ id: g.id, label: g.label, count: g.load ? null : groupCount(g) }));
-				state.set({ id: selection.id, groups: [], loading: true, failed: false, preview });
+				state.set({
+					id: selection.id,
+					groups: [],
+					loading: true,
+					failed: false,
+					preview,
+					lidTellingen: lidCountsOf(first)
+				});
 			})
 			.catch(() => {});
 		const lui = luiTeLaden(collection);

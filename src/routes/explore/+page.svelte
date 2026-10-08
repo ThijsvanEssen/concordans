@@ -257,10 +257,26 @@
 	const verbondenHier = $derived(
 		!!selectedNode && verbonden.id === selectedNode.id && verbonden.groups.length > 0
 	);
+	// Before the rows: the API's counts per lid (`lid_counts`), as long as no filter narrows them.
+	const vroegeTellingen = $derived(
+		!verbondenHier &&
+			!!selectedNode &&
+			verbonden.id === selectedNode.id &&
+			!filter.bronnen &&
+			!filter.rechter &&
+			!filter.van &&
+			!filter.tot &&
+			!filter.geldendOp &&
+			!filter.status &&
+			!filter.betrouwbaarheid &&
+			!filter.jaar
+			? (verbonden.lidTellingen ?? null)
+			: null
+	);
 	const lidCountsOfArticle = $derived(
 		verbondenHier
 			? lidCounts(allRows(filterGroups(verbonden.groups, { ...filter, lid: null })))
-			: new Map<string, number>()
+			: (vroegeTellingen ?? new Map<string, number>())
 	);
 	const billCount = $derived(
 		allRows(verbonden.groups).filter((r) => r.kind === 'wetsvoorstellen').length
@@ -1090,7 +1106,7 @@
 					nextHref={articleIndex >= 0 ? articleHref(articleIndex + 1) : undefined}
 					{place}
 					lidCounts={lidCountsOfArticle}
-					lidTellend={!verbondenHier}
+					lidTellend={!verbondenHier && !vroegeTellingen}
 					{billCount}
 					{filter}
 					{proposedRow}
