@@ -66,6 +66,17 @@ export const getNodeFirst = (collection: Collection, key: string) =>
 		getNodeGraph(collection, key, { limit: 1 })
 	);
 
+/**
+ * The node of a bron as the canvas draws it: an ordinary bron draws at most 30 neighbours, so
+ * 30 per bucket (39 kB against 162 for art. 3:4 Awb, prod 9 Oct). A container (a wet, a
+ * dossier) draws all its members and asks `getNode`.
+ */
+export const CANVAS_BUCKET = 30;
+export const getNodeCanvas = (collection: Collection, key: string) =>
+	once(`nodes/${collection}/${key.toLowerCase()}/canvas`, () =>
+		getNodeGraph(collection, key, { limit: CANVAS_BUCKET })
+	);
+
 /** The most the API gives per bucket of a node (API 0.5). */
 export const NODE_BUCKET = 200;
 

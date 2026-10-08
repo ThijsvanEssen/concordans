@@ -1,6 +1,6 @@
 import { getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import { inPool } from '$lib/api/pool';
-import { abortable, getNode, getNodeFirst } from '$lib/api/records';
+import { abortable, CANVAS_BUCKET, getNode, getNodeCanvas, getNodeFirst } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
 import {
 	containerIdFor,
@@ -152,8 +152,12 @@ export function createExpansion(
 
 		expandNode: async (collection, key, opts = {}) => {
 			const id = nodeId(collection, key.toLowerCase());
-			const response = await nodeResponse(collection, key, opts);
 			const draw = opts.neighborLimit ?? get(filtersStore).neighborLimit;
+			// A bron that draws few neighbours asks few, unless its whole node is in already.
+			const response =
+				!opts.force && Number.isFinite(draw) && draw <= CANVAS_BUCKET && !cache.has(id)
+					? await abortable(getNodeCanvas(collection, key), signal())
+					: await nodeResponse(collection, key, opts);
 			return nodes.get(mergeResponse(response, draw) ?? id) ?? null;
 		},
 
