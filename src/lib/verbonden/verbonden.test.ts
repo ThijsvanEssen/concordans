@@ -1,3 +1,4 @@
+import { zaakRang } from './loaders';
 import { describe, expect, it } from 'vitest';
 import node35869 from '$lib/fixtures/node-dossier-35869.json';
 import node36327 from '$lib/fixtures/node-dossier-36327.json';
@@ -579,5 +580,16 @@ describe('a judgment of the EHRM', () => {
 			ecli: 'ECLI:CE:ECHR:2024:1210JUD000447021'
 		});
 		expect(bron.title).toBe('Europees Hof voor de Rechten van de Mens, 10 december 2024');
+	});
+});
+
+describe('zaakRang', () => {
+	it('puts the substance first and the geleidende brief last, by the kind the source gives', () => {
+		const rang = (kind: string) => zaakRang({ props: { kind } });
+		expect(rang('Memorie van toelichting (initiatiefvoorstel)')).toBe(0);
+		expect(rang('Bijlage')).toBe(0);
+		expect(rang('Nota n.a.v. het (nader/tweede nader/enz.) verslag')).toBe(0);
+		expect(rang('Brief regering')).toBe(1);
+		expect(rang('Geleidende brief')).toBe(2);
 	});
 });

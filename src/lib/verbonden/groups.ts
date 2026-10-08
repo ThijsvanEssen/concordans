@@ -23,6 +23,7 @@ export type Match = Bucket & {
 export type Loader =
 	| 'dossier-laws'
 	| 'dossier-same-number'
+	| 'document-same-case'
 	| 'dossier-committees'
 	| 'dossier-documents-tk'
 	| 'dossier-documents-ek'
@@ -460,6 +461,12 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'dossier',
 			label: 'Dossier',
 			match: [{ relation: 'PART_OF', direction: 'outbound', collection: 'dossiers' }]
+		},
+		{
+			id: 'same-case',
+			label: 'Stukken van dezelfde zaak',
+			noun: 'stukken',
+			load: 'document-same-case'
 		},
 		{
 			id: 'explains',
