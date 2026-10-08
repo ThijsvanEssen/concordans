@@ -19,6 +19,12 @@ Conventions:
 
 - The URL holds the state a link should keep.
 - Components call the API through `$lib/api` and never call `fetch`.
+- Every page loads as lazily as it can (Thijs, 9 October 2026):
+  - The first paint waits only for the cheapest call that gives the head and the main text: a person's reader on `/api/members/{id}`, a judgment on its text, not on the node.
+  - Everything else follows in parallel, each part with its own "laden…": Verbonden, the network, counts, lists, votes, facets. Where it can, a part loads when it comes into view or is opened.
+  - A slow or failed part never holds up or empties the rest; it says so in its own place.
+  - A call the API may take long for (search lanes, a full node, a person's votes) waits as long as the API does (`zoekApi`, 30 s), not the 10 s of `api`.
+  - A new or changed page is checked for what is on its critical path: which calls the first paint waits for, and whether each must.
 - Comments say why, not what.
 - The interface is Dutch; code and these files are English. The interface calls a node a bron and an edge a verbinding.
 - Styles take their sizes from the tokens in `AppShell.svelte` (`--t-*` for type, `--s-1` to `--s-8` for space). `src/lib/style-scale.test.ts` fails on a font size in pixels and on more spacing off the 4px scale than `OFF_SCALE_MAX`; a rule that is changed moves to the tokens, and `OFF_SCALE_MAX` goes down to the new count.
