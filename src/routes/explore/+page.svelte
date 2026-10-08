@@ -802,7 +802,12 @@
 		} catch {
 			/* storage blocked */
 		}
-		if (saved) untrack(() => setUrl(Object.fromEntries(new URLSearchParams(saved))));
+		if (!saved) return;
+		// The bronnen between start shown, whatever the last netwerk had (Thijs, 9 Oct:
+		// "standaard aan"); only a link that says ?tussen=0 keeps them off.
+		const terug = new URLSearchParams(saved);
+		terug.delete('tussen');
+		untrack(() => setUrl({ ...Object.fromEntries(terug), tussen: null }));
 	});
 	const linkIdOf = (node: GraphNode) =>
 		node.id.startsWith('synth:')
