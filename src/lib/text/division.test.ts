@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layersOf, placeOf } from './division';
+import { deelIds, layersOf, placeOf } from './division';
 
 const awb34 = [
 	{ type: 'hoofdstuk', label: 'Hoofdstuk 3', title: 'Algemene bepalingen over besluiten' },
@@ -55,5 +55,16 @@ describe('placeOf', () => {
 	});
 	it('is null without a layer', () => {
 		expect(placeOf([], 'Grondwet')).toBeNull();
+	});
+
+	it('names each layer by its path, a book of the BW with its titel', () => {
+		expect(
+			deelIds([
+				{ label: 'Boek 6' },
+				{ label: 'Titel 3' },
+				{ label: 'Afdeling 1', title: 'Onrechtmatige daad' }
+			])
+		).toEqual(['deel-boek-6', 'deel-boek-6-titel-3', 'deel-boek-6-titel-3-afdeling-1']);
+		expect(deelIds([{ label: 'Hoofdstuk Ä 2' }])).toEqual(['deel-hoofdstuk-a-2']);
 	});
 });

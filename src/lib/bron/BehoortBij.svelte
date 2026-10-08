@@ -99,7 +99,7 @@
 					{#each band.boven as laag, i (i)}
 						<li>
 							{#if laag.ref}<a
-									href={bronHref(laag.ref)}
+									href={bronHref(laag.ref, { at: laag.at })}
 									title={`${laag.soort}: ${laag.vol ?? laag.naam}`}>{@render naam(laag)}</a
 								>{:else}<span title={laag.soort}>{@render naam(laag)}</span>{/if}
 						</li>

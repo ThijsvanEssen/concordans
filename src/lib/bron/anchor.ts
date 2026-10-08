@@ -20,12 +20,25 @@ export function landOn(root: ParentNode, id: string): boolean {
 		return false;
 	}
 	target.classList.add(MARK);
-	target.scrollIntoView({ block: 'center', behavior: 'auto' });
+	scrollInReader(target, 'center');
 	// The click that brought the reader here has passed by the time this runs.
 	setTimeout(() => {
 		window.addEventListener('click', () => target.classList.remove(MARK), { once: true });
 	});
 	return true;
+}
+
+/**
+ * Scrolls `target` into view in its reader only. `scrollIntoView` also moves the frames
+ * around it that hide their overflow (the app's shell), which pushed its head out of sight.
+ */
+export function scrollInReader(target: HTMLElement, block: 'start' | 'center' = 'start') {
+	const scroller = scrollerOf(target);
+	if (!scroller) return target.scrollIntoView({ block });
+	const box = scroller.getBoundingClientRect();
+	const at = target.getBoundingClientRect();
+	const offset = block === 'center' ? (box.height - at.height) / 2 : 16;
+	scroller.scrollTo({ top: scroller.scrollTop + at.top - box.top - Math.max(offset, 0) });
 }
 
 /** The element a reader scrolls in: the nearest ancestor that scrolls. */

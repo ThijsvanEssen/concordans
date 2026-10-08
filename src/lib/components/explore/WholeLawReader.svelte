@@ -15,7 +15,8 @@
 	import { SvelteMap } from 'svelte/reactivity';
 
 	import { bronHref } from '$lib/bron/href';
-	import { layersOf } from '$lib/text/division';
+	import { scrollInReader } from '$lib/bron/anchor';
+	import { deelIds, layersOf } from '$lib/text/division';
 	import { articleName } from '$lib/text/bw';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
@@ -322,6 +323,22 @@
 		return () => controller.abort();
 	});
 
+	// A link to a division (the band Behoort bij, `#deel-hoofdstuk-3`): the pages load
+	// until its heading is there, then it scrolls into view once.
+	let deelGezien = '';
+	$effect(() => {
+		const hash = decodeURIComponent(page.url.hash.slice(1));
+		if (!hash.startsWith('deel-') || status !== 'ready' || deelGezien === hash) return;
+		void articles.length;
+		// Not an id: on a fresh load the browser would scroll the document itself to it.
+		const el = document.querySelector<HTMLElement>(`[data-deel="${CSS.escape(hash)}"]`);
+		if (el) {
+			deelGezien = hash;
+			scrollInReader(el);
+		} else if (articles.length < total) void loadMore();
+		else deelGezien = hash;
+	});
+
 	async function loadMore() {
 		if (!bwbId || status !== 'ready') return;
 		const bwb = bwbId;
@@ -341,8 +358,11 @@
 	// (Boek 6 of Burgerlijk Wetboek Boek 6) is no heading.
 	function newSections(prev: Row | undefined, cur: Row) {
 		const before = layersOf(prev?.breadcrumb ?? [], lawName);
-		return layersOf(cur.breadcrumb ?? [], lawName)
-			.map((crumb, depth) => ({ ...crumb, depth }))
+		const crumbs = cur.breadcrumb ?? [];
+		const layers = layersOf(crumbs, lawName);
+		const ids = deelIds(crumbs).slice(crumbs.length - layers.length);
+		return layers
+			.map((crumb, depth) => ({ ...crumb, depth, id: ids[depth] }))
 			.filter((crumb, i) => before[i]?.label !== crumb.label || before[i]?.type !== crumb.type);
 	}
 </script>
@@ -446,7 +466,10 @@
 		{#each articles as a, i (a.id)}
 			{#each newSections(articles[i - 1], a) as section, j (j)}
 				<!-- The designation once (Hoofdstuk 3), the heading under it; deeper layers on one line. -->
-				<h2 class="whole-section whole-section--depth-{Math.min(section.depth, 2)}">
+				<h2
+					class="whole-section whole-section--depth-{Math.min(section.depth, 2)}"
+					data-deel={section.id}
+				>
 					{#if section.title}
 						<span class="whole-section-label">{section.label}</span>
 						<span class="whole-section-title">{section.title}</span>
