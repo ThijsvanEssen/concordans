@@ -18,6 +18,7 @@
 		start = false,
 		tussen,
 		joiningCount,
+		deels = false,
 		onPick,
 		onToggle,
 		onRemove,
@@ -36,6 +37,8 @@
 		start?: boolean;
 		tussen: boolean;
 		joiningCount: number;
+		/** The API ran out of time looking for paths: these are the ones it found (`partial`). */
+		deels?: boolean;
 		/** Adds a bron found by the search, by the name a link uses. */
 		onPick: (id: string) => void;
 		onToggle: (id: string) => void;
@@ -242,12 +245,20 @@
 					{#if tussen}<b>{joiningCount}</b>
 						{joiningCount === 1 ? 'bron' : 'bronnen'} ertussen{:else}Toon de bronnen ertussen{/if}
 				</label>
+				{#if tussen && deels}
+					<p class="deels">Niet alle paden gevonden; de zoektocht duurde te lang.</p>
+				{/if}
 			{/if}
 		{/if}
 	{/if}
 </section>
 
 <style>
+	.deels {
+		margin: var(--s-1) 0 0;
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
 	.kop {
 		display: flex;
 		align-items: baseline;
