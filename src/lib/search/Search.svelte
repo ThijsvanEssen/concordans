@@ -66,7 +66,44 @@
 	type Kind = (typeof KINDS)[number];
 	const kinds = $derived(scope ? KINDS.filter((k) => scope.includes(k)) : KINDS);
 	const LIMIT = 6;
-	const DEBOUNCE_MS = 180;
+	// The API runs an aborted query to its end until it cancels on a closed connection
+	// (Back-end #1): till then 250 ms, after that 150.
+	const DEBOUNCE_MS = 250;
+	/** The fast kinds from two characters: one says nothing. */
+	const SNEL_MIN = 2;
+
+	/**
+	 * Search answers per lane, side by side, so the fast kinds stand within a few hundred
+	 * milliseconds and the slow ones fill in as they come (prod, 8 Oct: a name 0.1–0.2 s,
+	 * articles and stukken up to 0.6 s, judgments 3–8 s). The kinds in no lane go in the
+	 * first request, which also says what the query cites (`resolve`).
+	 */
+	type Laan = { id: string; kinds: readonly Kind[]; min: number; wacht: number };
+	/**
+	 * The slow lanes wait for a real pause in the typing: the API runs an aborted query to
+	 * its end, and a part of a word ("zor", "stik") takes it seconds (prod, 8 Oct), so a
+	 * request per keystroke filled its pool. With the live mode of the API (`zoekVraag`)
+	 * their wait goes to `DEBOUNCE_MS`.
+	 */
+	const LANGZAAM_MS = 450;
+	const LANEN: readonly Laan[] = [
+		// Articles, stukken and judgments only from three characters: "st" takes the API
+		// seconds and says nothing.
+		{ id: 'tekst', kinds: ['articles', 'documents'], min: 3, wacht: LANGZAAM_MS },
+		{ id: 'uitspraken', kinds: ['judgments'], min: 3, wacht: LANGZAAM_MS }
+	];
+	const INLAAN = new Set<Kind>(LANEN.flatMap((l) => l.kinds));
+
+	/**
+	 * The query of a request. One place for what a lane asks: the live mode of the API
+	 * (`mode: 'live'`, Back-end #1) goes here once the schema has it.
+	 */
+	const zoekVraag = (term: string, types: Kind[], resolve: boolean) => ({
+		q: term,
+		types,
+		limit: LIMIT,
+		resolve: resolve || undefined
+	});
 
 	/** What a citation row is marked as before the API has confirmed the bron. */
 	const CITED: Record<Citation['kind'], Collection> = {
@@ -88,15 +125,35 @@
 	let answered = $state('');
 	let loading = $state(false);
 	let failed = $state(false);
-	/**
-	 * The judgments come in their own request, as they take seconds where the rest takes
-	 * less than one: their group waits or fails on its own, and the other groups stand.
-	 */
-	let uitspraken = $state<'klaar' | 'laden' | 'mislukt'>('klaar');
-	/** The judgments last answered; they stay, like the other hits, while the next query runs. */
-	let uitspraakHits = $state<Hit[]>([]);
-	/** Raised by "probeer opnieuw": the judgments are asked again. */
-	let opnieuw = $state(0);
+	/** Per lane: what it last answered (it stays while the next query runs), and how it stands. */
+	let laanHits = $state<Record<string, Partial<Record<Kind, Hit[]>>>>({});
+	let laanStand = $state<Record<string, 'klaar' | 'laden' | 'mislukt'>>({});
+	/** Raised by "Probeer opnieuw": that lane is asked again, the rest not. */
+	let opnieuw = $state<Record<string, number>>({});
+	/** The kinds of the first request; without them, the first lane in scope says what the query cites. */
+	const snel = $derived(kinds.filter((k) => !INLAAN.has(k)));
+	const lanen = $derived(
+		LANEN.map((l) => ({ ...l, kinds: l.kinds.filter((k) => kinds.includes(k)) })).filter(
+			(l) => l.kinds.length > 0
+		)
+	);
+	const hitsVan = (kind: Kind): Hit[] | undefined => {
+		const laan = LANEN.find((l) => l.kinds.includes(kind));
+		return laan ? laanHits[laan.id]?.[kind] : results[kind];
+	};
+	/** A lane under way or failed, with whether any of its kinds shows hits meanwhile. */
+	const lanenBezig = $derived(
+		lanen
+			.filter((l) => (laanStand[l.id] ?? 'klaar') !== 'klaar')
+			.map((l) => ({
+				...l,
+				stand: laanStand[l.id],
+				toont: l.kinds.some((k) => (hitsVan(k) ?? []).length > 0)
+			}))
+	);
+	const ladend = $derived(
+		new Set(lanenBezig.filter((l) => l.stand === 'laden').flatMap((l) => l.kinds))
+	);
 	let resolving = $state(false);
 	/** A citation the API did not confirm: its row is gone and the results stay. */
 	let unresolved = $state('');
@@ -128,13 +185,7 @@
 			kinds
 				.map((kind) => ({
 					kind,
-					hits: bySection(
-						(kind === 'judgments'
-							? uitspraken === 'klaar'
-								? uitspraakHits
-								: []
-							: results[kind]) ?? []
-					)
+					hits: bySection(hitsVan(kind) ?? [])
 				}))
 				.filter((g) => g.hits.length > 0)
 		)
@@ -164,21 +215,20 @@
 			answered === q &&
 			!loading &&
 			!failed &&
-			uitspraken === 'klaar' &&
+			lanenBezig.length === 0 &&
 			hits.length === 0 &&
 			!citation &&
 			!bare &&
 			!outsideLaw
 	);
 
-	// Two requests per query, side by side: every kind but the judgments (here), and the
-	// judgments (below), which take seconds. The timer waits for the typing to pause, and a
-	// newer query aborts the requests of the previous one. Earlier results stay while the
-	// next run.
+	// The first request per query: the fast kinds and what the query cites; the lanes below
+	// run beside it. The timer waits for the typing to pause, and a newer query aborts the
+	// requests of the previous one. Earlier results stay while the next run.
 	$effect(() => {
 		const term = q;
 		failed = false;
-		if (!term) {
+		if (term.length < SNEL_MIN) {
 			results = {};
 			answered = '';
 			loading = false;
@@ -202,12 +252,11 @@
 			}
 			// The hits and what the query cites (BE-16), with the fast kinds: "AVG" has its law
 			// the moment its hits are there, so Enter cannot open a hit before the law is known.
-			const snel = kinds.filter((k) => k !== 'judgments');
 			if (snel.length === 0) loading = false;
 			else
 				unwrap(
 					api.GET('/api/search', {
-						params: { query: { q: term, types: snel, limit: LIMIT, resolve: true } },
+						params: { query: zoekVraag(term, snel, true) },
 						signal: controller.signal
 					})
 				)
@@ -238,50 +287,51 @@
 		};
 	});
 
-	// The judgments of the query, on their own: their group waits or fails alone, and
-	// "Probeer opnieuw" asks for them again without the rest.
-	$effect(() => {
-		const term = q;
-		void opnieuw;
-		if (!term || !kinds.includes('judgments')) {
-			uitspraakHits = [];
-			uitspraken = 'klaar';
-			return;
-		}
-		const alleen = kinds.length === 1;
-		const controller = new AbortController();
-		const timer = setTimeout(() => {
-			uitspraken = 'laden';
-			unwrap(
-				api.GET('/api/search', {
-					// Alone (Uitspraken), it also says what the query cites.
-					params: {
-						query: { q: term, types: ['judgments'], limit: LIMIT, resolve: alleen || undefined }
-					},
-					signal: controller.signal
-				})
-			)
-				.then((r) => {
-					if (controller.signal.aborted) return;
-					uitspraakHits = (r.results as Partial<Record<Kind, Hit[]>>).judgments ?? [];
-					if (alleen) {
-						resolvedWith = { term, target: resolvedOf(r.resolved) };
-						answered = term;
-					}
-					uitspraken = 'klaar';
-				})
-				.catch(() => {
-					if (controller.signal.aborted) return;
-					uitspraakHits = [];
-					if (alleen) answered = term;
-					uitspraken = 'mislukt';
-				});
-		}, DEBOUNCE_MS);
-		return () => {
-			clearTimeout(timer);
-			controller.abort();
-		};
-	});
+	// Each lane on its own: its group waits or fails alone, and "Probeer opnieuw" asks it
+	// again without the rest. Without fast kinds in scope (Uitspraken), the first lane also
+	// says what the query cites.
+	for (const laan of LANEN) {
+		$effect(() => {
+			const term = q;
+			void opnieuw[laan.id];
+			const types = laan.kinds.filter((k) => kinds.includes(k));
+			if (!term || types.length === 0 || term.length < laan.min) {
+				laanHits[laan.id] = {};
+				laanStand[laan.id] = 'klaar';
+				return;
+			}
+			const eerste = snel.length === 0 && lanen[0]?.id === laan.id;
+			const controller = new AbortController();
+			const timer = setTimeout(() => {
+				laanStand[laan.id] = 'laden';
+				unwrap(
+					api.GET('/api/search', {
+						params: { query: zoekVraag(term, types, eerste) },
+						signal: controller.signal
+					})
+				)
+					.then((r) => {
+						if (controller.signal.aborted) return;
+						laanHits[laan.id] = r.results as Partial<Record<Kind, Hit[]>>;
+						if (eerste) {
+							resolvedWith = { term, target: resolvedOf(r.resolved) };
+							answered = term;
+						}
+						laanStand[laan.id] = 'klaar';
+					})
+					.catch(() => {
+						if (controller.signal.aborted) return;
+						laanHits[laan.id] = {};
+						if (eerste) answered = term;
+						laanStand[laan.id] = 'mislukt';
+					});
+			}, laan.wacht);
+			return () => {
+				clearTimeout(timer);
+				controller.abort();
+			};
+		});
+	}
 
 	// The first row is chosen before any key: Enter opens it. The first ↓ confirms that
 	// row instead of skipping it, as a list without a preselection would.
@@ -419,7 +469,7 @@
 			notFound ||
 			outsideLaw ||
 			kamer ||
-			(q && uitspraken !== 'klaar')}
+			(q && lanenBezig.length > 0)}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
@@ -497,6 +547,7 @@
 				<div class="group-label" id="{uid}-{group.kind}">
 					<KindGlyph collection={group.kind} />
 					{groupLabel(group.kind)}
+					{#if ladend.has(group.kind)}<span class="laden">laden…</span>{/if}
 				</div>
 				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
 					{@const i = offset + (indexOf.get(hit.id) ?? 0)}
@@ -541,23 +592,29 @@
 			</div>
 		{/each}
 
-		{#if q && uitspraken !== 'klaar'}
-			<!-- The judgments come later: their group says so, the other groups stand. -->
-			<div class="group" role="group" aria-labelledby="{uid}-judgments-state">
-				<div class="group-label" id="{uid}-judgments-state">
-					<KindGlyph collection="judgments" />
-					{groupLabel('judgments')}
+		{#each lanenBezig.filter((l) => l.stand === 'mislukt' || !l.toont) as laan (laan.id)}
+			<!-- A lane that comes later or failed: its group says so, the other groups stand. -->
+			{@const naam = laan.kinds.map((k) => groupLabel(k)).join(' en ')}
+			<div class="group" role="group" aria-labelledby="{uid}-{laan.id}-stand">
+				<div class="group-label" id="{uid}-{laan.id}-stand">
+					<KindGlyph collection={laan.kinds[0]} />
+					{naam}
 				</div>
-				{#if uitspraken === 'laden'}
+				{#if laan.stand === 'laden'}
 					<p class="state state--group" role="status">Laden…</p>
 				{:else}
 					<p class="state state--group" role="status">
-						Uitspraken konden niet worden geladen.
-						<button type="button" class="opnieuw" onclick={() => opnieuw++}>Probeer opnieuw</button>
+						{naam} konden niet worden geladen.
+						<button
+							type="button"
+							class="opnieuw"
+							onclick={() => (opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1)}
+							>Probeer opnieuw</button
+						>
 					</p>
 				{/if}
 			</div>
-		{/if}
+		{/each}
 
 		{#if failed}
 			<p class="state" role="status">Zoeken mislukt</p>
@@ -752,6 +809,10 @@
 		color: var(--ink-3);
 	}
 
+	.group-label .laden {
+		margin-left: var(--s-2);
+		color: var(--ink-3);
+	}
 	.state--group {
 		padding-top: 0;
 	}
