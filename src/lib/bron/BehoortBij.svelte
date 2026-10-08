@@ -134,7 +134,7 @@
 					<div class="regel">
 						<dt class="term">{r.label}</dt>
 						<dd>
-							<ol class="lagen">
+							<ol class="lagen" class:los={r.los}>
 								{#each r.lagen as laag, j (j)}
 									<li class:huidig={laag.huidig}>
 										{#if laag.ref}<a
@@ -245,6 +245,14 @@
 		content: '›';
 		margin-right: var(--s-1);
 		color: var(--ink-3);
+	}
+	/* Side by side, not a chain: the fracties of a lid. */
+	.lagen.los li:not(:last-child)::after {
+		content: ';';
+		color: var(--ink-3);
+	}
+	.lagen.los li + li::before {
+		content: none;
 	}
 	.lagen .huidig {
 		color: var(--ink-2);
