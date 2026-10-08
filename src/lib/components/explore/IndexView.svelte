@@ -3854,11 +3854,18 @@
 			padding: var(--s-4) var(--s-4) 60px;
 			grid-template-columns: minmax(0, 1fr);
 		}
+		/* The filters scroll along on a phone: their bar stays at the top of the list, so a
+		   filter is one tap away wherever one is (Thijs, 9 Oct). Open, they scroll on their own
+		   and leave the list below in sight. */
 		.facet-col {
-			position: static;
+			position: sticky;
+			top: 0;
+			z-index: 2;
 			max-height: none;
-			margin-bottom: var(--s-4);
-			padding-bottom: 0;
+			overflow: visible;
+			margin: 0 calc(-1 * var(--s-4)) var(--s-4);
+			padding: 0 var(--s-4);
+			background: var(--paper);
 		}
 		.facet-toggle {
 			display: flex;
@@ -3869,6 +3876,15 @@
 		}
 		.facet-body--open {
 			display: block;
+			max-height: 60dvh;
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			/* Room for the scrollbar beside the counts, so it never covers a figure. */
+			scrollbar-gutter: stable;
+			scrollbar-width: thin;
+			padding-right: var(--s-2);
+			padding-bottom: var(--s-3);
+			border-bottom: 1px solid var(--rule);
 		}
 		.stage-aside {
 			align-items: flex-start;
