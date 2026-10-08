@@ -37,6 +37,7 @@ Every reader has the same lines (`ReaderFrame.svelte`; Thijs, 9 Oct 2026: "strak
   - Verbonden's captions and notices, and the place line of an opened row;
   - Bladeren's column heads and the label over a group of tabs.
 - A head over a group moved to rung 3 (`--t-meta`, 600, `ink`): the facet groups of Bladeren (Stand, Soort, Fase, Ministerie), with their note at rung 6, and the first level of DocumentToc. CommitteeReader had no `--t-label`.
+- `/onderwerpen/overzicht` (9 Oct 2026): the column heads of its tables at rung 6, the fractie over its voor and tegen columns at rung 3.
 - Actueel checked (9 Oct 2026), nothing to change: its day heads stand at rung 2, its facet heads at rung 3, a title at rung 4, the kind and meta line at rungs 5 and 6.
 - The band "Behoort bij" above every reader: the legal term at rung 6, a bron at rung 4.
 
@@ -46,4 +47,4 @@ A chart's own labels stay at `--t-label` (11px): the names in the bars and the a
 
 ## Still to do
 
-- `/onderwerpen/overzicht`: the column heads of its tables would need a rung of their own if more tables come.
+Nothing.
