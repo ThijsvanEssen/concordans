@@ -1,4 +1,4 @@
-import { api, unwrap } from '$lib/api/client';
+import { api, unwrap, zoekApi } from '$lib/api/client';
 import { once } from '$lib/api/records';
 import type { GraphNode } from '$lib/graph/types';
 
@@ -21,9 +21,13 @@ export const getDossierMutations = (number: string) =>
 	);
 
 /** The votes of a member's reader; one request serves every mount of the same key. */
+// A person's votes take the API seconds (8.8 to 10 s on prod, 9 Oct): they wait as long as the
+// API does, not the 10 s of `api`, which cut them off.
 export const getMemberVotes = (key: string) =>
 	shared(`votes/${key}`, () =>
-		unwrap(api.GET('/api/members/{key}/votes', { params: { path: { key }, query: { limit: 50 } } }))
+		unwrap(
+			zoekApi.GET('/api/members/{key}/votes', { params: { path: { key }, query: { limit: 50 } } })
+		)
 	);
 
 /** Node props are untyped in the schema; this is a string prop, or null. */
