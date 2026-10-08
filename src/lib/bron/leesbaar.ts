@@ -1,6 +1,7 @@
 // A bron at an address a lawyer can read and type: the official identifier in the path.
 //
 //   /uitspraken/ECLI:NL:HR:2019:2006     a judgment, by its ECLI (as rechtspraak.nl)
+//   /wetten/BWBR0005289                  a law, by its BWB id
 //   /wetten/BWBR0005289/artikel/6:162    an article, by its law and number
 //   /dossiers/36600-VIII                 a dossier, by its number
 //   /kamerstukken/36799/31               a Kamerstuk, by its dossier and number
@@ -24,6 +25,7 @@ import { parseNodeId } from '$lib/vocabulary';
 export type Pad =
 	| { soort: 'uitspraak'; ecli: string }
 	| { soort: 'artikel'; wet: string; nummer: string }
+	| { soort: 'wet'; wet: string }
 	| { soort: 'dossier'; nummer: string }
 	| { soort: 'kamerstuk'; dossier: string; nummer: string }
 	| { soort: 'publicatie'; reeks: Reeks; jaar: string; nummer: string }
@@ -47,6 +49,8 @@ const segment = (s: string) => {
 
 const ECLI = /^ECLI:[A-Z]{2}:[A-Z0-9]+:\d{4}:[A-Z0-9.]+$/i;
 const DOSSIER = /^\d{4,6}(-[A-Z0-9()]+)*$/i;
+/** A law in the BWB by its id, which is its node key too: BWBR0005290. */
+const BWB = /^BWBR\d{7}$/i;
 /** A key or slug as the API gives it: `rutte_iv`, `ek_democraten_1966`, `buhaos-2021`. */
 const SLEUTEL = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 /** The number of a toezegging: `TZ202609-124`. */
@@ -61,6 +65,8 @@ export function parsePad(pathname: string): Pad | null {
 	const [first, a, b, c] = parts as string[];
 	if (first === 'uitspraken' && parts.length === 2 && ECLI.test(a))
 		return { soort: 'uitspraak', ecli: a.toUpperCase() };
+	if (first === 'wetten' && parts.length === 2 && BWB.test(a))
+		return { soort: 'wet', wet: a.toUpperCase() };
 	if (first === 'wetten' && parts.length === 4 && b === 'artikel' && a && c)
 		return { soort: 'artikel', wet: a.toUpperCase(), nummer: c };
 	if (first === 'dossiers' && parts.length === 2 && DOSSIER.test(a))
@@ -96,6 +102,8 @@ export function padHref(pad: Pad): string {
 			return `/uitspraken/${keep(pad.ecli)}`;
 		case 'artikel':
 			return `/wetten/${e(pad.wet)}/artikel/${keep(pad.nummer)}`;
+		case 'wet':
+			return `/wetten/${e(pad.wet)}`;
 		case 'dossier':
 			return `/dossiers/${e(pad.nummer)}`;
 		case 'kamerstuk':
@@ -141,6 +149,7 @@ export function remember(path: string, focus: string) {
 export function focusOfPad(pad: Pad): string | null {
 	if (pad.soort === 'uitspraak') return `judgments/${ecliKey(pad.ecli)}`;
 	if (pad.soort === 'dossier') return `dossiers/${pad.nummer}`;
+	if (pad.soort === 'wet') return `instruments/${pad.wet.toLowerCase()}`;
 	if (pad.soort === 'kabinet') return `cabinets/${pad.key}`;
 	if (pad.soort === 'fractie') return `factions/${pad.key}`;
 	return focusVan.get(padHref(pad)) ?? null;
@@ -153,6 +162,8 @@ function lookupQuery(pad: Pad) {
 			return { kind: 'judgment', ecli: pad.ecli } as const;
 		case 'artikel':
 			return { kind: 'article', law: pad.wet, number: pad.nummer } as const;
+		case 'wet':
+			return { kind: 'law', law: pad.wet } as const;
 		case 'dossier':
 			return { kind: 'dossier', number: pad.nummer } as const;
 		case 'kamerstuk':
@@ -225,6 +236,8 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			return padHref({ soort: 'artikel', wet, nummer: bookNumber(wet, nummer) });
 		}
 		case 'instruments': {
+			// A law of the BWB by its id (/wetten/BWBR0005290).
+			if (BWB.test(target.key)) return padHref({ soort: 'wet', wet: target.key.toUpperCase() });
 			// A publication by its id at officielebekendmakingen.nl (stb-2026-94), or its key.
 			const id = text(props?.official_id) ?? target.key.replaceAll('_', '-');
 			const m = /^(stb|stcrt|trb)-(\d{4})-(\d+)$/.exec(id.toLowerCase());
