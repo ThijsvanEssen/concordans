@@ -18,7 +18,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { tabTitle } from '$lib/bron/tab-title';
 	import { api, ApiError } from '$lib/api/client';
-	import { getNodeFirst } from '$lib/api/records';
+	import { getNodeCanvas, getNodeFirst } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/kop';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
@@ -443,9 +443,12 @@
 			// ordinary bron's neighbours are.
 			const neighborLimit = containerKindOf(target.collection) ? Number.POSITIVE_INFINITY : 30;
 			// The bron itself first, from its light node: the reader and the panels start while
-			// the full node (the Awb's is 4.9 MB) is still on its way, asked at the same time.
-			const full = store.nodeResponse(target.collection, target.key);
-			full.catch(() => {});
+			// the node the canvas draws is on its way, asked at the same time: a container's
+			// whole node, an ordinary bron's 30 per bucket (`getNodeCanvas`).
+			const canvasNode = Number.isFinite(neighborLimit)
+				? getNodeCanvas(target.collection, target.key)
+				: store.nodeResponse(target.collection, target.key);
+			canvasNode.catch(() => {});
 			const first = await store.peekNode(target.collection, target.key).catch(() => null);
 			if (id !== loadedFocus) return;
 			if (first) store.focusNode(first.id);
