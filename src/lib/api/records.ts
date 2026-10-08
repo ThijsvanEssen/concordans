@@ -77,6 +77,17 @@ export const getNodeCanvas = (collection: Collection, key: string) =>
 		getNodeGraph(collection, key, { limit: CANVAS_BUCKET })
 	);
 
+/**
+ * The node of a bron as Verbonden first draws it: the count of every bucket and the rows a
+ * closed group shows (3), not the 200 per bucket (Yeşilgöz: 8 kB against 150 gzip, prod 9 Oct).
+ * A group's own rows come when it is opened.
+ */
+export const VERBONDEN_BUCKET = 5;
+export const getNodeVerbonden = (collection: Collection, key: string) =>
+	once(`nodes/${collection}/${key.toLowerCase()}/verbonden`, () =>
+		getNodeGraph(collection, key, { limit: VERBONDEN_BUCKET })
+	);
+
 /** The most the API gives per bucket of a node (API 0.5). */
 export const NODE_BUCKET = 200;
 
@@ -93,10 +104,11 @@ export const getMember = (key: string) =>
 
 /** The stukken a lid signed, as the neighbours of the lid. */
 /** The stukken a lid signed: the AUTHORED bucket of the lid's own node, asked once. */
+// Only the bucket it reads (what the person signed), not the whole node (150 kB gzip).
 export const getMemberAuthored = (key: string) =>
-	getNode('members', key).then((node) =>
-		neighborsOf(node).filter((n) => n.relation === 'AUTHORED')
-	);
+	once(`nodes/members/${key.toLowerCase()}/authored`, () =>
+		getNodeGraph('members', key, { limit: NODE_BUCKET, relations: 'AUTHORED' })
+	).then((node) => neighborsOf(node).filter((n) => n.relation === 'AUTHORED'));
 
 export const getCommitment = (key: string) =>
 	once(`commitments/${key}`, () =>

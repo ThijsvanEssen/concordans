@@ -5,9 +5,49 @@ import { bucketTotals, neighborsOf } from '$lib/api/nodes';
 import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
-import { getNodeFirst } from '$lib/api/records';
-import { buildGroups, groupCount, naarSoort, withUnresolvedAppeals, type Group } from './groups';
+import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
+import { getNodeGraph, type Neighbor } from '$lib/api/nodes';
+import type { Schema } from '$lib/api/types';
+import { NODE_TYPES, type Collection } from '$lib/vocabulary';
+import {
+	buildGroups,
+	groupCount,
+	GROUPS,
+	naarSoort,
+	withUnresolvedAppeals,
+	type Group,
+	type Loader
+} from './groups';
 import { LOADERS } from './loaders';
+
+/**
+ * Loaders that read the rows of the node itself (a dossier's hub, an article's groups): a kind
+ * that has one keeps the whole node. The others draw from five per bucket and ask a group's
+ * rows when it is opened (Thijs, 9 Oct: "alles zo lazy mogelijk").
+ */
+const MET_BUREN: ReadonlySet<Loader> = new Set<Loader>([
+	'dossier-laws',
+	'dossier-committees',
+	'dossier-documents-tk',
+	'dossier-documents-ek',
+	'dossier-international',
+	'article-explanatory',
+	'article-judgments',
+	'article-cited-by',
+	'article-changes',
+	'instrument-international',
+	'judgment-articles',
+	'instrument-articles',
+	'instrument-judgments',
+	'committee-activities'
+]);
+
+/** Whether Verbonden of this kind can start from five per bucket. */
+export const luiTeLaden = (collection: Collection): boolean =>
+	collection !== 'articles' &&
+	(GROUPS[collection] ?? []).every((d) => !d.load || !MET_BUREN.has(d.load));
+
+const neighborKey = (n: Neighbor) => `${n.relation}|${n.direction}|${n.collection}/${n.key}`;
 
 export type VerbondenState = {
 	/** The id of the bron the groups belong to. */
@@ -27,6 +67,10 @@ export type VerbondenSource = Readable<VerbondenState> & {
 	load: (selection: GraphNode | null) => void;
 	/** Load the same bron again, after a failed request. */
 	reload: () => void;
+	/** The rows of one group, when it is opened: its own buckets, up to 200 each. */
+	groep: (id: string) => void;
+	/** Every row, for a filter, the table or an export: the whole node. */
+	volledig: () => Promise<void>;
 	destroy: () => void;
 };
 
@@ -37,6 +81,34 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	let controller: AbortController | null = null;
 	let current: string | null = null;
 	let last: GraphNode | null = null;
+	// What the groups of the current bron are built from, so a group opened adds its rows.
+	let basis: {
+		id: string;
+		collection: Collection;
+		key: string;
+		props: Record<string, unknown>;
+		neighbors: Neighbor[];
+		totals: Map<string, number>;
+		signal: AbortSignal;
+		volledig: boolean;
+		geopend: Set<string>;
+	} | null = null;
+	let groups: Group[] = [];
+
+	const bouw = (b: NonNullable<typeof basis>) => {
+		const fresh = naarSoort(
+			withUnresolvedAppeals(buildGroups(b.collection, b.neighbors, b.totals), b.props),
+			b.props
+		);
+		// A loader's group keeps what its loader brought.
+		return fresh.map((g) => (g.load ? (groups.find((x) => x.id === g.id) ?? g) : g));
+	};
+	const herbouw = () => {
+		if (!basis) return;
+		groups = bouw(basis);
+		const st = get(state);
+		state.set({ ...st, groups });
+	};
 
 	const load = (selection: GraphNode | null) => {
 		if (selection?.id === current) return;
@@ -63,17 +135,27 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				state.set({ id: selection.id, groups: [], loading: true, failed: false, preview });
 			})
 			.catch(() => {});
-		store
-			.nodeResponse(collection, key)
+		const lui = luiTeLaden(collection);
+		basis = null;
+		groups = [];
+		(lui ? getNodeVerbonden(collection, key) : store.nodeResponse(collection, key))
 			.then((response) => {
 				if (ac.signal.aborted) return;
 				const neighbors = neighborsOf(response);
 				const totals = bucketTotals(response);
 				const props = (response.node.props ?? {}) as Record<string, unknown>;
-				let groups = naarSoort(
-					withUnresolvedAppeals(buildGroups(collection, neighbors, totals), props),
-					props
-				);
+				basis = {
+					id: selection.id,
+					collection,
+					key,
+					props,
+					neighbors,
+					totals,
+					signal: ac.signal,
+					volledig: !lui,
+					geopend: new Set()
+				};
+				groups = bouw(basis);
 				const pending = new Set(groups.filter((g) => g.load).map((g) => g.id));
 				state.set({ id: selection.id, groups, loading: pending.size > 0, failed: false });
 				const ctx = {
@@ -127,6 +209,54 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		reload: () => {
 			current = null;
 			load(last);
+		},
+		groep: (id) => {
+			const b = basis;
+			if (!b || b.volledig || b.geopend.has(id)) return;
+			const def = (GROUPS[b.collection] ?? []).find((d) => d.id === id);
+			if (!def?.match) return;
+			b.geopend.add(id);
+			const asks = def.match.map((m) =>
+				getNodeGraph(b.collection, b.key, {
+					limit: 200,
+					relations: [m.relation].flat().join(','),
+					nodeTypes: [m.collection]
+						.flat()
+						.map((c) => NODE_TYPES[c])
+						.join(','),
+					direction: m.direction,
+					signal: b.signal
+				})
+			);
+			Promise.allSettled(asks).then((results) => {
+				if (b !== basis) return;
+				const seen = new Set(b.neighbors.map(neighborKey));
+				for (const r of results) {
+					if (r.status !== 'fulfilled') continue;
+					for (const n of neighborsOf(r.value as Schema<'NodeGraphResponse'>)) {
+						if (seen.has(neighborKey(n))) continue;
+						seen.add(neighborKey(n));
+						b.neighbors.push(n);
+					}
+				}
+				herbouw();
+			});
+		},
+		volledig: () => {
+			const b = basis;
+			if (!b || b.volledig) return Promise.resolve();
+			b.volledig = true;
+			return store
+				.nodeResponse(b.collection, b.key)
+				.then((response) => {
+					if (b !== basis) return;
+					b.neighbors = neighborsOf(response);
+					b.totals = bucketTotals(response);
+					herbouw();
+				})
+				.catch(() => {
+					b.volledig = false;
+				});
 		},
 		destroy: () => controller?.abort()
 	};

@@ -231,6 +231,21 @@
 		source.load(node);
 	});
 	onDestroy(() => source.destroy());
+	// A filter on the rows or the table needs every row, not the first few per group.
+	$effect(() => {
+		const f = filter;
+		const opRijen =
+			f.lid ||
+			f.rechter ||
+			f.van ||
+			f.tot ||
+			f.geldendOp ||
+			f.betrouwbaarheid ||
+			f.status ||
+			f.jaar ||
+			f.zoek;
+		if (tableMode || opRijen) void source.volledig();
+	});
 
 	// The counts in the margin of the reader hold under every filter but the lid, so a
 	// lid keeps its count when another lid is chosen.
@@ -1108,6 +1123,8 @@
 		<div class="panel">
 			<Verbonden
 				onRetry={() => source.reload()}
+				onMeer={(id) => source.groep(id)}
+				onAlles={() => source.volledig()}
 				{verbonden}
 				selection={selectedNode}
 				{filter}
