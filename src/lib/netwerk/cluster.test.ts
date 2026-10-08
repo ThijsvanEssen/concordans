@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { CLUSTER_MAX_LOOSE, clusterLabel, clustersOf, clusterZinnen } from './cluster';
+import {
+	CLUSTER_MAX_LOOSE,
+	clusterLabel,
+	clustersOf,
+	clusterZinnen,
+	TUSSEN_MAX_LOOSE,
+	tussenClustersOf
+} from './cluster';
 
 const focus = 'articles/a';
 const judgments = (n: number) =>
@@ -68,5 +75,49 @@ describe('clusterZinnen', () => {
 		expect(
 			clusterZinnen({ members: c.members, neighbours: 172 }, { label: 'X', total: 172 })
 		).toEqual(['Alleen met deze bron verbonden.']);
+	});
+});
+
+describe('tussenClustersOf', () => {
+	// HR 2015 and art. 273f Sr chosen; uitspraken that cite both, one that also cites a third.
+	const hr = 'judgments/hr2015';
+	const art = 'articles/273f';
+	const chosen = new Set([hr, art]);
+	const many = Array.from({ length: TUSSEN_MAX_LOOSE + 2 }, (_, i) => `judgments/u${i}`);
+	const nodes = [hr, art, 'documents/x', ...many].map((id) => ({
+		id,
+		collection: id.split('/')[0] as 'judgments'
+	}));
+	const edges = [
+		...many.flatMap((id) => [
+			{ source: id, target: hr, relation: 'REFERS_TO' },
+			{ source: id, target: art, relation: 'REFERS_TO' }
+		]),
+		{ source: many[0], target: 'documents/x', relation: 'REFERS_TO' }
+	];
+
+	it('folds the bronnen of a kind between the same chosen bronnen, with a line to each', () => {
+		const [c] = tussenClustersOf(nodes, edges, chosen, new Set(), new Set());
+		expect(c.members).toHaveLength(TUSSEN_MAX_LOOSE + 1);
+		expect(c.members).not.toContain(many[0]);
+		expect(c.ends?.map((e) => [e.id, e.relation, e.toEnd])).toEqual([
+			[art, 'REFERS_TO', true],
+			[hr, 'REFERS_TO', true]
+		]);
+		expect(clusterLabel(c)).toBe(`${TUSSEN_MAX_LOOSE + 1} uitspraken`);
+	});
+
+	it('leaves few alone, and a cluster shown in full', () => {
+		const few = edges.slice(0, 2 * TUSSEN_MAX_LOOSE);
+		expect(tussenClustersOf(nodes, few, chosen, new Set(), new Set())).toEqual([]);
+		const [c] = tussenClustersOf(nodes, edges, chosen, new Set(), new Set());
+		expect(tussenClustersOf(nodes, edges, chosen, new Set(), new Set([c.id]))).toEqual([]);
+	});
+
+	it('names the chosen bronnen on its card', () => {
+		const [c] = tussenClustersOf(nodes, edges, chosen, new Set(), new Set());
+		expect(clusterZinnen(c, null, ['Art. 273f Sr', 'HR 24 november 2015'])).toEqual([
+			'Elk alleen verbonden met Art. 273f Sr en HR 24 november 2015.'
+		]);
 	});
 });

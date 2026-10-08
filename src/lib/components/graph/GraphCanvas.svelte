@@ -139,6 +139,8 @@
 	let destroyed = false;
 	/** The names drawn in this frame, so the next one stands beside them, not over them. */
 	let labelsTaken: LabelRect[] = [];
+	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
+	const HULL_LABEL_ZOOM = 0.6;
 	let renderer: SigmaType | null = null;
 	let resizeObserver: ResizeObserver | null = null;
 	// The mobile tab strip mounts this canvas behind `display: none`, where sigma
@@ -247,7 +249,24 @@
 
 	/** Context of a netwerk: on the canvas, but not chosen nor tying chosen bronnen. */
 	const isContext = (id: string) =>
-		latestCoreIds !== null && !latestCoreIds.has(id) && id !== focusedId;
+		latestCoreIds !== null &&
+		!latestCoreIds.has(id) &&
+		id !== focusedId &&
+		!graph.getNodeAttribute(id, 'cluster');
+
+	/**
+	 * A bron between the chosen bronnen of a netwerk ("bronnen ertussen"): faint and without a
+	 * label until a hover, so the chosen bronnen and what ties them directly carry the view
+	 * (UX evaluation of 8 Oct, point 1: 204 bronnen read as a tangle). A cluster of them keeps
+	 * its name.
+	 */
+	const isTussen = (id: string) =>
+		latestCoreIds !== null &&
+		latestPinnedIds.size > 0 &&
+		latestCoreIds.has(id) &&
+		!latestPinnedIds.has(id) &&
+		id !== focusedId &&
+		!graph.getNodeAttribute(id, 'cluster');
 
 	/** Whether `a` and `b` both belong to the same hull: an edge between them adds
 	 *  nothing a hull did not already say, so it stays out of the way at rest. */
@@ -512,7 +531,14 @@
 			const inHover =
 				hoveredHullId === group.id || (hoveredId !== null && group.members.has(hoveredId));
 			const full = meta ? (meta.citationTitle ?? meta.title) : group.fullLabel;
-			const shown = inHover && full ? full : label;
+			// In a netwerk, a hull of only bronnen between the chosen ones names itself on a
+			// hover or zoomed in; zoomed out its name would cover the chosen bronnen' (6e).
+			const stil =
+				latestPinnedIds.size > 0 &&
+				!inHover &&
+				renderer.getCamera().ratio > HULL_LABEL_ZOOM &&
+				![...group.members].some((id) => id === focusedId || latestPinnedIds.has(id));
+			const shown = stil ? '' : inHover && full ? full : label;
 			// The label anchors to this hull's own outline, not a raw member point: a
 			// bron in several groups at once (a lid on many commissies) would otherwise
 			// put every one of its hulls' labels on that one shared point.
@@ -1083,6 +1109,7 @@
 				// count as in focus instead, so the rest of a busy view still dims.
 				const dimStale =
 					isContext(id) ||
+					isTussen(id) ||
 					(f0?.dimStaleContext !== false &&
 						!latestPinnedIds.has(id) &&
 						(focusedId !== null
@@ -1235,13 +1262,20 @@
 					};
 				}
 
-				// A line to context steps back behind what ties the netwerk together.
-				if ((isContext(src) || isContext(tgt)) && src !== focusedId && tgt !== focusedId) {
+				// A line to context, or through a bron between the chosen ones, steps back behind the
+				// chosen bronnen and what ties them directly.
+				if (
+					(isContext(src) || isContext(tgt) || isTussen(src) || isTussen(tgt)) &&
+					src !== focusedId &&
+					tgt !== focusedId
+				) {
 					return {
 						...data,
 						hidden: false,
 						type: edgeType,
-						color: dimColor(0.2),
+						// Through a bron between the chosen ones: fainter still, two hundred of them
+						// are a haze otherwise.
+						color: dimColor(isTussen(src) || isTussen(tgt) ? 0.12 : 0.2),
 						size: restSize * 0.7,
 						label: ''
 					};
@@ -1424,7 +1458,7 @@
 			{/each}
 		</svg>
 		<div class="hull-label-overlay" aria-hidden="true">
-			{#each hulls as h (h.id)}
+			{#each hulls.filter((h) => h.label) as h (h.id)}
 				<span
 					class="hull-label"
 					class:is-dim={h.dim}

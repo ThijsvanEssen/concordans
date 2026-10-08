@@ -21,6 +21,11 @@ export type Cluster = {
 	toFocus: boolean;
 	/** The neighbours of this kind on the canvas, in the cluster or loose beside it. */
 	neighbours: number;
+	/**
+	 * Between the chosen bronnen of a netwerk (`tussenClustersOf`): the chosen bronnen each
+	 * member ties, with the verbinding most members have with each. Without: around a focus.
+	 */
+	ends?: { id: string; relation: string; toEnd: boolean }[];
 };
 
 type Node = { id: string; collection: Collection };
@@ -91,6 +96,84 @@ export function clustersOf(
 	return clusters;
 }
 
+/** More than this many bronnen of one kind between the same chosen bronnen make a cluster. */
+export const TUSSEN_MAX_LOOSE = 8;
+
+/**
+ * The clusters between the chosen bronnen of a netwerk ("bronnen ertussen"): per kind, the
+ * bronnen whose every verbinding goes to the same chosen bronnen, when there are more than
+ * TUSSEN_MAX_LOOSE of them. The hundred judgments that cite both HR 24 November 2015 and
+ * art. 273f Sr stand as one, "98 uitspraken", with a line to each, not as a fan (UX
+ * evaluation of 8 Oct, point 1). A bron in `keep` (in a hull) is never folded in, nor a
+ * cluster in `expanded`.
+ */
+export function tussenClustersOf(
+	nodes: readonly Node[],
+	edges: readonly Edge[],
+	chosen: ReadonlySet<string>,
+	keep: ReadonlySet<string>,
+	expanded: ReadonlySet<string>
+): Cluster[] {
+	if (chosen.size < 2) return [];
+	const collectionOf = new Map(nodes.map((n) => [n.id, n.collection]));
+	const ties = new Map<string, Edge[]>();
+	for (const e of edges) {
+		(ties.get(e.source) ?? ties.set(e.source, []).get(e.source)!).push(e);
+		(ties.get(e.target) ?? ties.set(e.target, []).get(e.target)!).push(e);
+	}
+	const byEnds = new Map<string, { collection: Collection; ends: string[]; members: string[] }>();
+	for (const n of nodes) {
+		if (chosen.has(n.id) || keep.has(n.id) || isClusterId(n.id)) continue;
+		const own = ties.get(n.id) ?? [];
+		if (own.length === 0) continue;
+		const ends = new Set<string>();
+		let loose = true;
+		for (const e of own) {
+			const other = e.source === n.id ? e.target : e.source;
+			if (!chosen.has(other)) {
+				loose = false;
+				break;
+			}
+			ends.add(other);
+		}
+		if (!loose || ends.size < 2) continue;
+		const sorted = [...ends].sort();
+		const id = `${CLUSTER_PREFIX}${n.collection}~${sorted.join('+')}`;
+		if (expanded.has(id)) continue;
+		const at = byEnds.get(id) ?? { collection: n.collection, ends: sorted, members: [] };
+		at.members.push(n.id);
+		byEnds.set(id, at);
+	}
+
+	const clusters: Cluster[] = [];
+	for (const [id, { collection, ends, members }] of byEnds) {
+		if (members.length <= TUSSEN_MAX_LOOSE) continue;
+		const set = new Set(members);
+		const lines = ends.map((end) => {
+			const counts = new Map<string, number>();
+			for (const m of members)
+				for (const e of ties.get(m) ?? []) {
+					if (e.source !== end && e.target !== end) continue;
+					const key = `${e.relation}|${set.has(e.source) ? 'in' : 'out'}`;
+					counts.set(key, (counts.get(key) ?? 0) + 1);
+				}
+			const [top] = [...counts].sort((a, b) => b[1] - a[1]);
+			const [relation, way] = (top?.[0] ?? 'RELATED_TO|in').split('|');
+			return { id: end, relation, toEnd: way === 'in' };
+		});
+		clusters.push({
+			id,
+			collection,
+			members,
+			relation: lines[0].relation,
+			toFocus: lines[0].toEnd,
+			neighbours: members.length,
+			ends: lines
+		});
+	}
+	return clusters;
+}
+
 /**
  * What the count of a cluster stands for, in sentences for its card. The cluster holds
  * the neighbours of its kind tied to the focus alone; the others of that kind stand loose
@@ -98,10 +181,17 @@ export function clustersOf(
  * API's total), since it asks for one capped neighbourhood.
  */
 export function clusterZinnen(
-	c: Pick<Cluster, 'members' | 'neighbours'>,
-	group: { label: string; total?: number } | null
+	c: Pick<Cluster, 'members' | 'neighbours' | 'ends'>,
+	group: { label: string; total?: number } | null,
+	namen: string[] = []
 ): string[] {
 	const n = (v: number) => v.toLocaleString('nl-NL');
+	if (c.ends)
+		return [
+			namen.length > 0
+				? `Elk alleen verbonden met ${namen.slice(0, -1).join(', ')} en ${namen.at(-1)}.`
+				: 'Elk alleen verbonden met dezelfde gekozen bronnen.'
+		];
 	const zinnen = ['Alleen met deze bron verbonden.'];
 	const loose = c.neighbours - c.members.length;
 	if (loose > 0)
