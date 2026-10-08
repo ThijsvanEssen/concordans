@@ -21,7 +21,7 @@
 	import { headlineOf, voteHow } from './timeline';
 	import { langeDatum } from '$lib/text/datum';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
-	import { fromFeed } from '$lib/bron/submitters';
+	import { bewindspersoonVan, fromFeed } from '$lib/bron/submitters';
 
 	/** Medeindieners named in a row; the rest are counted. */
 	const SUBMITTERS_SHOWN = 2;
@@ -195,9 +195,10 @@
 				{#if i.dossier}<a href={filterHref({ dossier: i.dossier.number })}
 						>Alles over dit dossier in Actueel</a
 					>{/if}
-				{#if i.kind === 'toezegging' && i.persons[0]?.key}
-					<a href={indexHref('commitments', { member: i.persons[0].key })}
-						>Alle toezeggingen van {i.persons[0].name}</a
+				{#if i.kind === 'toezegging' && bewindspersoonVan(i.persons)?.key}
+					{@const wie = bewindspersoonVan(i.persons)!}
+					<a href={indexHref('commitments', { member: wie.key! })}
+						>Alle toezeggingen van {wie.name}</a
 					>
 				{/if}
 			</p>

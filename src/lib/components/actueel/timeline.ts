@@ -1,3 +1,4 @@
+import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
@@ -128,7 +129,7 @@ export function voteHow(i: Pick<FeedItem, 'vote'>): string | null {
 
 function voteContext(i: FeedItem): string {
 	const { voor, tegen } = tallyOf(i);
-	const faction = i.persons[0]?.faction?.short;
+	const faction = eersteIndiener(i.persons)?.faction?.short;
 	const where = [faction, i.dossier ? `dossier ${i.dossier.number}` : null].filter(Boolean);
 	return [voor + tegen ? `${voor} voor, ${tegen} tegen` : voteHow(i), where.join(', ') || null]
 		.filter(Boolean)
@@ -276,7 +277,7 @@ const POST = /^(minister-president|minister|staatssecretaris)\b/i;
  */
 export function commitmentTitle(i: FeedItem): string {
 	const text = (i.summary ?? i.title ?? '').trim();
-	const person = i.persons[0];
+	const person = bewindspersoonVan(i.persons);
 	const who = headSurname(person?.surname);
 	const post = POST.exec(person?.function ?? '')?.[1] ?? POST.exec(text.replace(/^De /i, ''))?.[1];
 	const subject = /^De (?:minister-president|minister|staatssecretaris)\s+/i.exec(text);
@@ -288,7 +289,7 @@ export function commitmentTitle(i: FeedItem): string {
 function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 	const groups = new Map<string, FeedItem[]>();
 	for (const i of items) {
-		const g = `${i.dossier?.number ?? ''}/${i.persons[0]?.key ?? ''}`;
+		const g = `${i.dossier?.number ?? ''}/${bewindspersoonVan(i.persons)?.key ?? ''}`;
 		groups.set(g, [...(groups.get(g) ?? []), i]);
 	}
 	return [...groups.values()].map((group) => {
