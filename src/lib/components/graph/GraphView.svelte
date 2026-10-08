@@ -565,7 +565,9 @@
 
 	/** Draw what the store holds, through the clusters; only when that or they changed. */
 	function redraw() {
-		const focus = selection && !isContainerKind(selection.kind) ? selection.id : null;
+		// A fractie, commissie or dossier as focus clusters too: its anchor is the point its
+		// neighbours tie to ("332 dossiers" beside VVD); its own members stay in its hull.
+		const focus = selection?.id ?? null;
 		if (focus !== clusteredFor) {
 			clusteredFor = focus;
 			expanded = new Set();
@@ -912,7 +914,8 @@
 	// uitspraken" on the hull of BW5 and its name under the hull's. Of sixteen directions
 	// just outside the focus's other neighbours, the one furthest from any bron.
 	function placeClusters() {
-		const focus = focusNodeId;
+		// A fractie, commissie or dossier as focus: round its anchor, outside its hull.
+		const focus = focusNodeId ?? selection?.id ?? null;
 		if (!focus || !g.hasNode(focus) || clusters.length === 0) return;
 		const fx = g.getNodeAttribute(focus, 'x') as number;
 		const fy = g.getNodeAttribute(focus, 'y') as number;

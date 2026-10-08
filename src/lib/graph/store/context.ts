@@ -305,9 +305,16 @@ export function createGraphContext() {
 	): string | null => {
 		const center = nodeToGraphNode(response.node);
 		if (!center) return null;
-		touchNode(center.id, center);
 		const centerContainerKind = containerKindOf(response.node.collection);
-		if (centerContainerKind) recordContainerFor(response.node, centerContainerKind);
+		// A fractie, commissie, dossier or wet is its hull, and its anchor the point what is
+		// not in it ties to (VVD's stemmingen, "100 stemmingen"): without it those lines had
+		// no end and their bronnen went unseen.
+		if (centerContainerKind) {
+			center.anchor = true;
+			recordContainerFor(response.node, centerContainerKind);
+			recordContainerMember(centerContainerKind, containerIdFor(response.node), center.id);
+		}
+		touchNode(center.id, center);
 
 		for (const neighbor of neighborsOf(response).slice(0, draw)) {
 			if (keep && !keep(`${neighbor.collection}/${neighbor.key}`)) continue;

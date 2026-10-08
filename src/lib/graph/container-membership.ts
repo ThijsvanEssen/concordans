@@ -44,13 +44,18 @@ export function containerKindOf(collection: string): ContainerKind | null {
  * A wet's members are its articles alone (PART_OF): a stuk that AMENDS or
  * REFERS_TO the wet directly relates to it without being part of it, the same
  * way it would for one of the wet's articles, so that stays a dropped edge, not
- * membership. A fractie, commissie or dossier has no such second, looser
- * relation in this app's vocabulary, so any relation to one counts: a
+ * membership. A fractie holds its leden alone (below). A commissie or dossier has no
+ * such second, looser relation in this app's vocabulary, so any relation to one counts: a
  * commissie no longer draws a node either, so an activity it merely leidt
  * would otherwise lose its only link to the canvas rather than join a hull.
  */
 export function isContainerMembership(kind: ContainerKind, relation: Relation): boolean {
-	return kind === 'instrument' ? relation === 'PART_OF' : true;
+	if (kind === 'instrument') return relation === 'PART_OF';
+	// A fractie holds its leden; the dossiers they signed and the stemmingen it cast stand
+	// beside it. Drawn in it, "toon in netwerk" on VVD's 332 dossiers turned the hull black
+	// on a phone (Thijs, 9 Oct).
+	if (kind === 'faction') return relation === 'MEMBER_OF';
+	return true;
 }
 
 export type ContainerGroup = {
