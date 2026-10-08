@@ -77,9 +77,11 @@
 		color: var(--paper);
 		cursor: default;
 	}
+	/* An option that does not apply here (Tekst for a dossier): plainly out of reach, word
+	   and picture alike, not a third shade of ink that reads as a button that does nothing. */
 	button:disabled {
-		color: var(--ink-3);
-		cursor: default;
+		color: var(--rule);
+		cursor: not-allowed;
 	}
 	button:focus-visible {
 		outline: 2px solid var(--ink);
