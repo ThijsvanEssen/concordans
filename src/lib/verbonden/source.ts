@@ -1,12 +1,18 @@
 // One load of the verbindingen of the selected bron, read by the panel, the table,
 // the legend of the network and the margin of the reader. The groups come from the
 // group table; a group with a loader fills in as its request answers.
-import { bucketTotals, lidCountsOf, neighborsOf } from '$lib/api/nodes';
 import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
-import { getBuckets, type Neighbor } from '$lib/api/nodes';
+import {
+	bucketTotals,
+	getBuckets,
+	lidCountsOf,
+	neighborsOf,
+	type Neighbor,
+	type NodeGraph
+} from '$lib/api/nodes';
 import type { Collection } from '$lib/vocabulary';
 import {
 	buildGroups,
@@ -15,27 +21,18 @@ import {
 	naarSoort,
 	withUnresolvedAppeals,
 	type Group,
-	type Loader,
 	type Match
 } from './groups';
 import { LOADERS } from './loaders';
 
 /**
- * Loaders that read the rows of the node itself (an article's groups): a kind that has one
- * keeps the whole node. The others draw from five per bucket, ask a group's rows when it is
- * opened and a loader's buckets when it needs them (Thijs, 9 Oct: "alles zo lazy mogelijk").
+ * Whether Verbonden of a bron can start from five per bucket: a group's rows are asked when
+ * it is opened, a loader's buckets when it needs them (Thijs, 9 Oct: "alles zo lazy mogelijk").
+ * An article only where the API counts its leden (`lid_counts`, API 0.79.17): five rows per
+ * bucket cannot count them.
  */
-const MET_BUREN: ReadonlySet<Loader> = new Set<Loader>([
-	'article-explanatory',
-	'article-judgments',
-	'article-cited-by',
-	'article-changes'
-]);
-
-/** Whether Verbonden of this kind can start from five per bucket. */
-export const luiTeLaden = (collection: Collection): boolean =>
-	collection !== 'articles' &&
-	(GROUPS[collection] ?? []).every((d) => !d.load || !MET_BUREN.has(d.load));
+export const luiTeLaden = (collection: Collection, first: NodeGraph | null): boolean =>
+	collection !== 'articles' || (first != null && lidCountsOf(first) != null);
 
 const neighborKey = (n: Neighbor) => `${n.relation}|${n.direction}|${n.collection}/${n.key}`;
 
@@ -51,8 +48,10 @@ export type VerbondenState = {
 	 * its way: the panel shows their heads before their rows (the Awb's full node is 4.9 MB).
 	 */
 	preview?: { id: string; label: string; count: number | null }[];
-	/** The verbindingen per lid of an article, from the light node, before the rows are in. */
+	/** The verbindingen per lid of an article, as the API counts them (`lid_counts`). */
 	lidTellingen?: Map<string, number> | null;
+	/** Whether the groups hold every row, not the first five per bucket. */
+	volledig?: boolean;
 };
 
 export type VerbondenSource = Readable<VerbondenState> & {
@@ -99,7 +98,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		if (!basis) return;
 		groups = bouw(basis);
 		const st = get(state);
-		state.set({ ...st, groups });
+		state.set({ ...st, groups, volledig: basis.volledig });
 	};
 
 	const load = (selection: GraphNode | null) => {
@@ -115,7 +114,9 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		controller = ac;
 		state.set({ id: selection.id, groups: [], loading: true, failed: false });
 		const { collection, key } = selection;
-		getNodeFirst(collection, key)
+		let tellingen: Map<string, number> | null = null;
+		const first = getNodeFirst(collection, key);
+		first
 			.then((first) => {
 				if (ac.signal.aborted || get(state).groups.length > 0) return;
 				const preview = naarSoort(
@@ -134,10 +135,16 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				});
 			})
 			.catch(() => {});
-		const lui = luiTeLaden(collection);
 		basis = null;
 		groups = [];
-		(lui ? getNodeVerbonden(collection, key) : store.nodeResponse(collection, key))
+		let lui = true;
+		// An article waits for its light node, to see whether the API counts its leden.
+		(collection === 'articles' ? first.catch(() => null) : Promise.resolve(null))
+			.then((first) => {
+				if (first) tellingen = lidCountsOf(first);
+				lui = luiTeLaden(collection, first);
+				return lui ? getNodeVerbonden(collection, key) : store.nodeResponse(collection, key);
+			})
 			.then((response) => {
 				if (ac.signal.aborted) return;
 				const neighbors = neighborsOf(response);
@@ -156,7 +163,16 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				};
 				groups = bouw(basis);
 				const pending = new Set(groups.filter((g) => g.load).map((g) => g.id));
-				state.set({ id: selection.id, groups, loading: pending.size > 0, failed: false });
+				const zet = () =>
+					state.set({
+						id: selection.id,
+						groups,
+						loading: pending.size > 0,
+						failed: false,
+						lidTellingen: tellingen,
+						volledig: basis?.volledig ?? false
+					});
+				zet();
 				const ctx = {
 					node: response.node,
 					neighbors,
@@ -193,7 +209,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						.finally(() => {
 							if (ac.signal.aborted) return;
 							pending.delete(def.id);
-							state.set({ id: selection.id, groups, loading: pending.size > 0, failed: false });
+							zet();
 						});
 				}
 			})

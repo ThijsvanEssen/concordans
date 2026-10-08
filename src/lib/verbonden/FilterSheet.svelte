@@ -29,6 +29,7 @@
 		open,
 		filter,
 		groups,
+		lidTellingen = null,
 		selection,
 		onApply,
 		onClose
@@ -36,6 +37,8 @@
 		open: boolean;
 		filter: VerbondenFilter;
 		groups: Group[];
+		/** An article's counts per lid from the API, while its rows are not all in. */
+		lidTellingen?: Map<string, number> | null;
 		selection: Collection;
 		onApply: (f: VerbondenFilter) => void;
 		onClose: () => void;
@@ -88,12 +91,13 @@
 
 	const totals = $derived(kindTotals(groups));
 	const relations = $derived(relationCounts(groups, selection));
+	const perLid = $derived(lidTellingen ?? lidCounts(allRows(groups)));
 	const lids = $derived(
-		[...lidCounts(allRows(groups)).entries()]
+		[...perLid.entries()]
 			.filter(([k]) => k !== '')
 			.sort(([a], [b]) => a.localeCompare(b, 'nl', { numeric: true }))
 	);
-	const noLid = $derived(lidCounts(allRows(groups)).get('') ?? 0);
+	const noLid = $derived(perLid.get('') ?? 0);
 	const total = $derived(totalCount(groups));
 	const count = $derived(shownCount(groups, draft));
 

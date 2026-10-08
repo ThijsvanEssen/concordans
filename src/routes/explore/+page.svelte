@@ -247,7 +247,9 @@
 			f.betrouwbaarheid ||
 			f.status ||
 			f.jaar ||
-			f.zoek;
+			f.zoek ||
+			// An article's counts per lid under a bronfilter are counted from its rows.
+			(f.bronnen && selectedNode?.collection === 'articles');
 		if (tableMode || opRijen) void source.volledig();
 	});
 
@@ -257,9 +259,11 @@
 	const verbondenHier = $derived(
 		!!selectedNode && verbonden.id === selectedNode.id && verbonden.groups.length > 0
 	);
-	// Before the rows: the API's counts per lid (`lid_counts`), as long as no filter narrows them.
+	// Counted from the rows once they are all in, or where the API counts no lid.
+	const geteld = $derived(verbondenHier && (!!verbonden.volledig || !verbonden.lidTellingen));
+	// Else the API's counts per lid (`lid_counts`), as long as no filter narrows them.
 	const vroegeTellingen = $derived(
-		!verbondenHier &&
+		!geteld &&
 			!!selectedNode &&
 			verbonden.id === selectedNode.id &&
 			!filter.bronnen &&
@@ -274,7 +278,7 @@
 			: null
 	);
 	const lidCountsOfArticle = $derived(
-		verbondenHier
+		geteld
 			? lidCounts(allRows(filterGroups(verbonden.groups, { ...filter, lid: null })))
 			: (vroegeTellingen ?? new Map<string, number>())
 	);
@@ -1106,7 +1110,7 @@
 					nextHref={articleIndex >= 0 ? articleHref(articleIndex + 1) : undefined}
 					{place}
 					lidCounts={lidCountsOfArticle}
-					lidTellend={!verbondenHier && !vroegeTellingen}
+					lidTellend={!geteld && !vroegeTellingen}
 					{billCount}
 					{filter}
 					{proposedRow}
@@ -1434,6 +1438,7 @@
 		open={filterOpen}
 		{filter}
 		groups={verbonden.groups}
+		lidTellingen={verbonden.volledig ? null : (verbonden.lidTellingen ?? null)}
 		selection={selectedNode.collection}
 		onApply={applyFilter}
 		onClose={() => (filterOpen = false)}
