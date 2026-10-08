@@ -829,9 +829,7 @@
 		const metGroep = metGroepVerborgen({
 			groups: latestContainerGroups.values(),
 			uit: new Set(latestFilters?.hiddenGroups ?? []),
-			houd: (id) => id === focusedId || latestPinnedIds.has(id),
-			buren: endsOf,
-			anker: (id) => graph.hasNode(id) && !!graph.getNodeAttribute(id, 'anchor')
+			houd: (id) => id === focusedId
 		});
 		for (const id of metGroep.keys()) if (graph.hasNode(id)) next.add(id);
 		const hiddenEnd = (id: string) =>

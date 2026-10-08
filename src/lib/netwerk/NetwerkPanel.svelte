@@ -22,6 +22,7 @@
 		onPick,
 		onToggle,
 		onRemove,
+		onGroepAan,
 		onAdd,
 		onTussen,
 		onClearContext,
@@ -43,6 +44,8 @@
 		onPick: (id: string) => void;
 		onToggle: (id: string) => void;
 		onRemove: (id: string) => void;
+		/** A chip greyed with its grouping: switch that grouping on again. */
+		onGroepAan?: (kind: NonNullable<NetwerkEntry['verborgenMet']>) => void;
 		onAdd: () => void;
 		onTussen: () => void;
 		onClearContext: () => void;
@@ -100,6 +103,14 @@
 				: c === 'cabinets'
 					? 'bewindspersonen'
 					: 'leden';
+
+	/** A grouping by its name in the legend. */
+	const GROEP = {
+		instrument: 'Wet',
+		faction: 'Fractie',
+		committee: 'Commissie',
+		dossier: 'Dossier'
+	} as const;
 </script>
 
 <section
@@ -163,7 +174,7 @@
 		{#if open}
 			<ul class="chips">
 				{#each getoond as e (e.id)}
-					<li class="chip" class:uit={!e.on} class:mist={e.missing}>
+					<li class="chip" class:uit={!e.on} class:mist={e.missing} class:gedimd={!!e.verborgenMet}>
 						<button
 							type="button"
 							class="chip-naam"
@@ -171,10 +182,12 @@
 							disabled={e.missing}
 							title={e.missing
 								? 'Niet gevonden'
-								: e.on
-									? `${e.titel ?? e.label}: verbergen`
-									: `${e.titel ?? e.label}: tonen`}
-							onclick={() => onToggle(e.id)}
+								: e.verborgenMet
+									? `Aan met ${GROEP[e.verborgenMet]}`
+									: e.on
+										? `${e.titel ?? e.label}: verbergen`
+										: `${e.titel ?? e.label}: tonen`}
+							onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
 							><KindGlyph collection={e.collection} size={11} /><span
 								>{e.label}{#if e.alone}<span
 										class="los"
@@ -393,6 +406,13 @@
 	}
 	.chip-weg:hover {
 		color: var(--ink);
+	}
+	.chip.gedimd {
+		color: var(--ink-3);
+		border-color: var(--rule-strong);
+	}
+	.chip.gedimd :global(svg) {
+		opacity: 0.5;
 	}
 	.chip.uit {
 		border-style: dashed;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { get } from 'svelte/store';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import {
 		NEIGHBORHOOD_CAP,
@@ -52,7 +53,11 @@
 	import { allRows, filterGroups, lidCounts, lidTellingenOnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/util/perf';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
-	import { containerKindOf, isContainerKind } from '$lib/graph/container-membership';
+	import {
+		containerKindOf,
+		isContainerKind,
+		type ContainerKind
+	} from '$lib/graph/container-membership';
 	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
 	import { parseNodeId, type Mode } from '$lib/vocabulary';
 	import type { Schema } from '$lib/api/types';
@@ -594,6 +599,8 @@
 	let netwerkEntries = $state<NetwerkEntry[]>([]);
 	let netwerkLoading = $state(false);
 	let joiningCount = $state(0);
+	/** The bronnen a grouping switched off hides, by canvas id: their chips grey. */
+	let metGroep = $state<ReadonlyMap<string, ContainerKind>>(new Map());
 	/** The paths of the last composition are not all there (`partial`, API 0.79.23). */
 	let padenDeels = $state(false);
 	let composeEpoch = 0;
@@ -1367,6 +1374,7 @@
 							mobilePanel = 'reader';
 						}}
 						onNodeDoubleClick={handleNodeReplace}
+						onMetGroep={(m) => (metGroep = m)}
 						onToggleChosen={toggleChosen}
 						{netwerkActive}
 						onEdgeClick={openEdgeCard}
@@ -1383,7 +1391,9 @@
 						{#snippet canvasOverlay()}
 							<NetwerkPanel
 								entries={netwerkActive
-									? netwerkEntries.map((e) => (e.node ? chipNaam(e, e.node) : e))
+									? netwerkEntries.map((e) =>
+											e.node ? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) } : e
+										)
 									: []}
 								loading={netwerkLoading}
 								start={!focus && !netwerkActive}
@@ -1402,6 +1412,11 @@
 									? { label: bronNaam(selectedNode, $instrumentMetaStore) }
 									: null}
 								tussen={netwerk.tussen}
+								onGroepAan={(kind) => {
+									const uit = new Set(get(store.filters).hiddenGroups);
+									uit.delete(kind);
+									store.setFilters({ hiddenGroups: uit });
+								}}
 								{joiningCount}
 								deels={padenDeels}
 								onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
