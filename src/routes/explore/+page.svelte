@@ -756,6 +756,18 @@
 		}
 	}
 
+	/**
+	 * A chip's name: a fractie by its abbreviation (VVD), its full name in the title, so a
+	 * suffix ("via 200 van 846 leden") fits on a phone (Thijs, 9 Oct); the rest by bronNaam.
+	 */
+	function chipNaam(e: NetwerkEntry, node: GraphNode): NetwerkEntry {
+		const naam = bronNaam(node, $instrumentMetaStore);
+		const afkorting = node.raw?.props?.abbreviation;
+		return node.collection === 'factions' && typeof afkorting === 'string' && afkorting
+			? { ...e, label: afkorting, titel: naam }
+			: { ...e, label: naam };
+	}
+
 	function setNetwerk(n: Netwerk) {
 		if (n.ids.length === 0) remember(null);
 		// Clearing the netwerk or removing a bron is undone with Back.
@@ -1344,9 +1356,7 @@
 						{#snippet canvasOverlay()}
 							<NetwerkPanel
 								entries={netwerkActive
-									? netwerkEntries.map((e) =>
-											e.node ? { ...e, label: bronNaam(e.node, $instrumentMetaStore) } : e
-										)
+									? netwerkEntries.map((e) => (e.node ? chipNaam(e, e.node) : e))
 									: []}
 								loading={netwerkLoading}
 								start={!focus && !netwerkActive}

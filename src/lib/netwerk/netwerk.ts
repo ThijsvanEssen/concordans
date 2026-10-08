@@ -21,6 +21,8 @@ export type NetwerkEntry = {
 	/** The name a link uses: `members/<key>`, `dossiers/37020-XV`. */
 	id: string;
 	label: string;
+	/** The full name, where `label` is short (a fractie's abbreviation). */
+	titel?: string;
 	collection: Collection;
 	on: boolean;
 	/** On, and tied to no other chosen bron. */
