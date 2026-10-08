@@ -169,8 +169,8 @@
 							title={e.missing
 								? 'Niet gevonden'
 								: e.on
-									? `${e.label}: verbergen`
-									: `${e.label}: tonen`}
+									? `${e.titel ?? e.label}: verbergen`
+									: `${e.titel ?? e.label}: tonen`}
 							onclick={() => onToggle(e.id)}
 							><KindGlyph collection={e.collection} size={11} /><span
 								>{e.label}{#if e.alone}<span
