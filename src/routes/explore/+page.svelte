@@ -31,6 +31,7 @@
 	import type { CanvasRow } from '$lib/graph/store/types';
 	import GraphView from '$lib/components/graph/GraphView.svelte';
 	import KindReader from '$lib/components/explore/KindReader.svelte';
+	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import StatusBar from '$lib/components/explore/StatusBar.svelte';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
@@ -83,6 +84,12 @@
 	const store = createGraphStore();
 
 	let selectedNode = $state<GraphNode | null>(null);
+	/**
+	 * A focus on its way while another bron is still selected: the reader shows its loading
+	 * state instead of the old text until the new bron's head is in (UX 8 Oct: a dossier opened
+	 * from search kept the article's text for 8 s).
+	 */
+	let wachtOp = $state<string | null>(null);
 	/** How far the canvas's neighbourhood reached, for the legend's Diepte. */
 	let reach = $state<NeighborhoodReach | null>(null);
 	store.neighborhood.subscribe((r) => (reach = r));
@@ -424,6 +431,7 @@
 
 	/** The message for a bron the dataset does not hold. */
 	function missing(key: string) {
+		wachtOp = null;
 		focusMissing = true;
 		focusError = `'${key}' staat niet in de gegevens.`;
 	}
@@ -439,12 +447,19 @@
 			focusError = `Bron '${id}' niet gevonden.`;
 			return;
 		}
+		// A bron already on the canvas (a click on it) needs no wait: it is there.
+		const huidig = untrack(() => selectedNode);
+		wachtOp =
+			huidig && huidig.id !== id && linkIdOf(huidig) !== id && !store.getNodeById(id) ? id : null;
 		try {
 			// The reader stands on the bron's head ($lib/bron/kop): a person's record, a judgment's
 			// text, a law's or a dossier's detail; the node, once in, takes its place.
 			void kopNode(target.collection, target.key)
 				?.then((node) => {
-					if (id === loadedFocus && !selectedNode) selectedNode = node;
+					if (id === loadedFocus && (!selectedNode || wachtOp === id)) {
+						selectedNode = node;
+						wachtOp = null;
+					}
 				})
 				.catch(() => {});
 			if (target.collection === 'members') void getMemberVotes(target.key).catch(() => {});
@@ -506,6 +521,7 @@
 				missing(target.key);
 				return;
 			}
+			wachtOp = null;
 			console.warn('[explore] focus load failed:', err);
 			focusError = `'${target.key}' kon niet worden geladen.`;
 		}
@@ -748,6 +764,11 @@
 			? null
 			: focusOf(refOf(node.collection, node.key, node.raw?.props));
 	const selectedLinkId = $derived(selectedNode ? linkIdOf(selectedNode) : null);
+	// The new bron has reached the reader (its light node or its node): the wait is over.
+	$effect(() => {
+		if (wachtOp && selectedNode && (selectedNode.id === wachtOp || selectedLinkId === wachtOp))
+			wachtOp = null;
+	});
 
 	function addToNetwerk(node: GraphNode) {
 		const id = linkIdOf(node);
@@ -1101,7 +1122,9 @@
 </svelte:head>
 
 {#snippet reader()}
-	{#if selectedNode}
+	{#if wachtOp}
+		<ReaderFrame status="loading" />
+	{:else if selectedNode}
 		<div class="reader" class:reader--pair={!!beside}>
 			<div class="reader__main">
 				<KindReader
