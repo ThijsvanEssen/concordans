@@ -232,9 +232,12 @@
 				{@const kind = ck as ContainerKind}
 				<FilterOptie
 					label={CONTAINER_KIND_LABEL[kind]}
-					title={`${CONTAINER_KIND_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}`}
-					on={!hiddenGroups.has(kind)}
-					onToggle={() => onToggleGroup?.(kind)}
+					title={`${CONTAINER_KIND_LABEL[kind]}: ${CONTAINER_KIND_HINT[kind]}${kind === 'instrument' ? '; samen met Artikelen aan en uit' : ''}`}
+					on={kind === 'instrument' ? isOn('artikelen') : !hiddenGroups.has(kind)}
+					onToggle={() =>
+						kind === 'instrument'
+							? onFilter(toggleKind(filter, 'artikelen'))
+							: onToggleGroup?.(kind)}
 				>
 					<!-- As on the canvas: the colour of the group and its own line. -->
 					{#snippet voor()}<svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true">
