@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import {
 		NEIGHBORHOOD_CAP,
 		NEIGHBORHOOD_CAP_PHONE,
@@ -55,7 +56,7 @@
 	import { parseOverlay, DEFAULT_HEAT_MONTHS, type Overlay } from '$lib/stores/overlay';
 	import { parseNodeId, type Mode } from '$lib/vocabulary';
 	import type { Schema } from '$lib/api/types';
-	import { articleOf, lawIdOf, nodeToGraphNode } from '$lib/graph/types';
+	import { articleOf, kort, lawIdOf, nodeToGraphNode } from '$lib/graph/types';
 	import { bronNaam } from '$lib/bron/naam';
 	import {
 		lookUp,
@@ -321,9 +322,13 @@
 		card = { verbinding: verbindingOfEdge(edge, from, to), edgeId: edge.id, row: null };
 	}
 	function showInNetwork(row: Row) {
-		if (selectedNode && row.relation && row.direction)
+		if (selectedNode && row.relation && row.direction) {
 			store.showRows(selectedNode.id, [row as CanvasRow]);
+			const id = refId(row.ref);
+			meldNetwerk(`${row.title} getekend in het netwerk.`, () => store.hideRows([id]));
+		}
 		if (mode !== 'graph') setReading(false);
+		mobilePanel = 'graph';
 	}
 	const besideHrefOf = (row: Row | null) => {
 		if (!row) return null;
@@ -822,13 +827,18 @@
 
 	function addToNetwerk(node: GraphNode) {
 		const id = linkIdOf(node);
-		if (id) addIdToNetwerk(id);
+		if (id) addIdToNetwerk(id, kort(bronNaam(node, $instrumentMetaStore)));
 	}
 
-	function addIdToNetwerk(id: string) {
+	function addIdToNetwerk(id: string, naam?: string) {
 		// The first bron chosen grows out of the canvas as it is: what is there stays, as context.
 		if (!netwerkActive) keepCanvas = true;
 		setNetwerk(withAdded(netwerk, id));
+		// On a phone the Netwerk tab shows it was added, with the way back (Thijs, 9 Oct).
+		mobilePanel = 'graph';
+		meldNetwerk(`${naam ?? 'De bron'} toegevoegd aan het netwerk.`, () =>
+			setNetwerk(withRemoved(netwerk, id))
+		);
 	}
 
 	function toggleChosen(node: GraphNode) {
@@ -1010,6 +1020,15 @@
 	let mobilePanel = $state<'reader' | 'graph' | 'verbonden'>(
 		untrack(() => netwerkActive) ? 'graph' : 'reader'
 	);
+	// A link to the network (In het netwerk from Actueel, a network link in Bladeren) opens
+	// the Netwerk tab on a phone; the hint is read once and dropped from the address.
+	$effect(() => {
+		if (page.url.searchParams.get('paneel') !== 'netwerk') return;
+		untrack(() => {
+			mobilePanel = 'graph';
+			setUrl({ paneel: null });
+		});
+	});
 	/** The canvas is on the screen: the network, and on a phone its tab. */
 	const canvasZichtbaar = $derived(mode === 'graph' && !(telefoon && mobilePanel !== 'graph'));
 	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
@@ -1236,7 +1255,7 @@
 				onNaarNetwerk={() => (mobilePanel = 'graph')}
 				onAddToNetwerk={(row) => {
 					const id = focusOf(row.ref);
-					if (id) addIdToNetwerk(id);
+					if (id) addIdToNetwerk(id, row.title);
 				}}
 				inNetwerk={(row) => netwerk.ids.includes(focusOf(row.ref) ?? '')}
 				onProposedText={(row) => (proposedRow = row)}
