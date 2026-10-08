@@ -18,6 +18,7 @@
 	import { afterNavigate, goto } from '$app/navigation';
 	import { tabTitle } from '$lib/bron/tab-title';
 	import { api, ApiError } from '$lib/api/client';
+	import { getNodeFirst } from '$lib/api/records';
 	import { getInFlux, getHeat, getDossierInFlux, type NodeCounts } from '$lib/api/overlays';
 	import { bronHref, focusOf, isReadable, refId, refOf } from '$lib/bron/href';
 	import { getDossier } from '$lib/components/parliamentary/data';
@@ -484,6 +485,8 @@
 	let keepCanvas = false;
 
 	const resolved = new Map<string, Promise<Schema<'NodeGraphResponse'>>>();
+	/** The chosen bronnen whose full node is in. */
+	const full = new Set<string>();
 	function responseOf(id: string): Promise<Schema<'NodeGraphResponse'>> {
 		let request = resolved.get(id);
 		if (!request) {
@@ -494,10 +497,21 @@
 					target.collection === 'dossiers' ? (await getDossier(target.key)).key : target.key;
 				return store.nodeResponse(target.collection, key);
 			})();
-			request.catch(() => resolved.delete(id));
+			request.then(
+				() => full.add(id),
+				() => resolved.delete(id)
+			);
 			resolved.set(id, request);
 		}
 		return request;
+	}
+	/** A chosen bron's light node (one neighbour per bucket), or its full one where that is in. */
+	async function lightOf(id: string): Promise<Schema<'NodeGraphResponse'>> {
+		if (full.has(id)) return responseOf(id);
+		const target = parseNodeId(id);
+		if (!target) throw new Error(`no bron ${id}`);
+		const key = target.collection === 'dossiers' ? (await getDossier(target.key)).key : target.key;
+		return getNodeFirst(target.collection, key);
 	}
 
 	$effect(() => {
@@ -516,21 +530,52 @@
 	/** The most bronnen `/api/paths` takes in one request. */
 	const PATHS_MAX = 5;
 
-	async function pathsBetween(
-		participants: { response: Schema<'NodeGraphResponse'> }[]
-	): Promise<{ onPath: string[]; tied: string[] }> {
-		const ids = participants.map((p) => `${p.response.node.collection}/${p.response.node.key}`);
+	async function pathsBetween(ids: string[]): Promise<Schema<'PathsResponse'> | null> {
 		const { data } = await api
 			.GET('/api/paths', { params: { query: { ids: ids.join(','), max_depth: 4 } } })
 			.catch(() => ({ data: undefined }));
-		return data ? store.mergePaths(data) : { onPath: [], tied: [] };
+		return data ?? null;
 	}
 
+	type Settled = PromiseSettledResult<Schema<'NodeGraphResponse'>>;
+	const nodeIdOf = (r: Schema<'NodeGraphResponse'>) => `${r.node.collection}/${r.node.key}`;
+
+	// A netwerk is drawn at once from the light nodes of its bronnen (0.1–0.2 s each), and
+	// again when their full nodes are in: a bron added stands on the canvas before the
+	// neighbours of the others (art. 3:2 Awb: 651 kB, 3.8 s on prod). The paths between them
+	// need only their ids, so they are asked beside the full nodes, not after them.
 	async function compose(n: Netwerk) {
 		const epoch = ++composeEpoch;
 		netwerkLoading = true;
-		const results = await Promise.allSettled(n.ids.map(responseOf));
+		const fullRequests = Promise.allSettled(n.ids.map(responseOf));
+		const pending = n.ids.some((id) => !full.has(id));
+		const lights = await Promise.allSettled(n.ids.map(lightOf));
 		if (epoch !== composeEpoch) return;
+		const onIds = lights
+			.map((r, i) => (r.status === 'fulfilled' && isOn(n, n.ids[i]) ? nodeIdOf(r.value) : null))
+			.filter((id): id is string => id !== null);
+		// The route takes 2 to 5 bronnen; a larger netwerk keeps the shared neighbours.
+		const paths =
+			n.tussen && onIds.length > 1 && onIds.length <= PATHS_MAX
+				? pathsBetween(onIds)
+				: Promise.resolve(null);
+		if (pending) draw(n, lights, null);
+		const [results, route] = await Promise.all([fullRequests, paths]);
+		if (epoch !== composeEpoch) return;
+		// The paths between the chosen bronnen, up to four steps (BE-38): what joins them
+		// further than one shared neighbour. Without the route, the shared neighbours only.
+		const onPaths = route ? await store.mergePaths(route) : { onPath: [], tied: [] };
+		if (epoch !== composeEpoch) return;
+		draw(n, results, onPaths);
+		netwerkLoading = false;
+		graphView?.fitWhenSettled();
+	}
+
+	function draw(
+		n: Netwerk,
+		results: Settled[],
+		paths: { onPath: string[]; tied: string[] } | null
+	) {
 		const participants: { response: Schema<'NodeGraphResponse'> }[] = [];
 		const found: { id: string; response: Schema<'NodeGraphResponse'> }[] = [];
 		const missing: string[] = [];
@@ -542,14 +587,6 @@
 			found.push({ id: n.ids[i], response: r.value });
 			if (isOn(n, n.ids[i])) participants.push({ response: r.value });
 		});
-		// The paths between the chosen bronnen, up to four steps (BE-38): what joins them
-		// further than one shared neighbour. Without the route, the shared neighbours only.
-		// The route takes 2 to 5 bronnen; a larger netwerk keeps the shared neighbours.
-		const paths =
-			n.tussen && participants.length > 1 && participants.length <= PATHS_MAX
-				? await pathsBetween(participants)
-				: { onPath: [], tied: [] };
-		if (epoch !== composeEpoch) return;
 		const fresh = !composedOnce && !keepCanvas;
 		keepCanvas = false;
 		graphView?.suppressFit();
@@ -557,8 +594,8 @@
 			participants,
 			withJoining: n.tussen,
 			fresh,
-			onPaths: paths.onPath,
-			tiedByPaths: paths.tied
+			onPaths: paths?.onPath ?? [],
+			tiedByPaths: paths?.tied ?? []
 		});
 		composedOnce = true;
 		joiningCount = joining.length;
@@ -588,8 +625,6 @@
 				missing: true
 			});
 		}
-		netwerkLoading = false;
-		graphView?.fitWhenSettled();
 	}
 
 	function setNetwerk(n: Netwerk) {

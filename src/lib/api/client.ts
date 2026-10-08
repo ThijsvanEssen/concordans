@@ -18,8 +18,8 @@ export const timedFetch = (ms: number) => (request: Request) =>
 export const api = createClient<paths>({ baseUrl: API_BASE_URL, fetch: timedFetch(TIMEOUT_MS) });
 
 /**
- * The same API for the slow search lanes: they wait as long as the API does ("huur" took the
- * judgments 13.8 s on prod, past the 10 s of `api`).
+ * The same API for what waits as long as the API does: the slow search lanes ("huur" took
+ * the judgments 13.8 s on prod, past the 10 s of `api`) and a full node (`getNodeGraph`).
  */
 export const zoekApi = createClient<paths>({
 	baseUrl: API_BASE_URL,
