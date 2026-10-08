@@ -5,7 +5,8 @@
 	// Netwerk, where a result is picked instead of opened.
 	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { api, unwrap } from '$lib/api/client';
+	import { api, isTimeout, unwrap } from '$lib/api/client';
+	import { LANEN as ALLE_LANEN, type Laan as LaanDef } from './lanen';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -74,34 +75,9 @@
 	/** The fast kinds from two characters: one says nothing. */
 	const SNEL_MIN = 2;
 
-	/**
-	 * Search answers per lane, side by side, so the fast kinds stand within a few hundred
-	 * milliseconds and the slow ones fill in as they come (prod, 8 Oct: a name 0.1–0.2 s,
-	 * articles and stukken up to 0.6 s, judgments 3–8 s). The kinds in no lane go in the
-	 * first request, which also says what the query cites (`resolve`).
-	 */
-	type Laan = {
-		id: string;
-		kinds: readonly Kind[];
-		min: number;
-		wacht: number;
-		/** Its group says "Laden…" while it waits: only the judgments are slow enough. */
-		laden: boolean;
-	};
-	/**
-	 * The slow lanes wait for a real pause in the typing: the API runs an aborted query to
-	 * its end, and a part of a word ("zor", "stik") takes it seconds (prod, 8 Oct), so a
-	 * request per keystroke filled its pool. With the live mode of the API (`zoekVraag`)
-	 * their wait goes to `DEBOUNCE_MS`.
-	 */
-	const LANGZAAM_MS = 300;
-	const LANEN: readonly Laan[] = [
-		// Articles and stukken from three characters: "st" takes the API seconds and says
-		// nothing. Judgments from four, until the API has its live mode: "hu" took 11 s,
-		// "huur" 6 s (prod 0.79.9).
-		{ id: 'tekst', kinds: ['articles', 'documents'], min: 3, wacht: LANGZAAM_MS, laden: false },
-		{ id: 'uitspraken', kinds: ['judgments'], min: 4, wacht: LANGZAAM_MS, laden: true }
-	];
+	type Laan = Omit<LaanDef, 'kinds'> & { kinds: readonly Kind[] };
+	/** The lanes ($lib/search/lanen), their kinds as this search knows them. */
+	const LANEN = ALLE_LANEN as readonly Laan[];
 	const INLAAN = new Set<Kind>(LANEN.flatMap((l) => l.kinds));
 
 	/**
@@ -137,7 +113,8 @@
 	let failed = $state(false);
 	/** Per lane: what it last answered (it stays while the next query runs), and how it stands. */
 	let laanHits = $state<Record<string, Partial<Record<Kind, Hit[]>>>>({});
-	let laanStand = $state<Record<string, 'klaar' | 'laden' | 'mislukt'>>({});
+	/** `traag`: it gave up on its own time (`zoekApi`, 30 s), not on an error of the API. */
+	let laanStand = $state<Record<string, 'klaar' | 'laden' | 'mislukt' | 'traag'>>({});
 	/** Raised by "Probeer opnieuw": that lane is asked again, the rest not. */
 	let opnieuw = $state<Record<string, number>>({});
 	/** The kinds of the first request; without them, the first lane in scope says what the query cites. */
@@ -327,7 +304,7 @@
 		laanStand[laan.id] = 'laden';
 		const geldt = () => term === laatste;
 		unwrap(
-			api.GET('/api/search', {
+			laan.client.GET('/api/search', {
 				params: { query: zoekVraag(term, types, eerste) },
 				signal: stopt.signal
 			})
@@ -342,11 +319,11 @@
 				}
 				laanStand[laan.id] = 'klaar';
 			})
-			.catch(() => {
+			.catch((e) => {
 				if (stopt.signal.aborted || !geldt()) return;
 				laanHits[laan.id] = {};
 				if (eerste) answered = term;
-				laanStand[laan.id] = 'mislukt';
+				laanStand[laan.id] = isTimeout(e) ? 'traag' : 'mislukt';
 			})
 			.finally(() => {
 				bezig[laan.id] = false;
@@ -514,7 +491,7 @@
 			notFound ||
 			outsideLaw ||
 			kamer ||
-			(q && lanenBezig.some((l) => l.stand === 'mislukt' || l.laden))}
+			(q && lanenBezig.some((l) => l.stand !== 'laden' || l.laden))}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
@@ -671,7 +648,7 @@
 			</div>
 		{/each}
 
-		{#each lanenBezig.filter((l) => l.stand === 'mislukt' || (l.laden && !l.toont)) as laan (laan.id)}
+		{#each lanenBezig.filter((l) => l.stand !== 'laden' || (l.laden && !l.toont)) as laan (laan.id)}
 			<!-- A lane that comes later or failed: its group says so, the other groups stand. -->
 			{@const naam = laan.kinds.map((k) => groupLabel(k)).join(' en ')}
 			<div class="group" role="group" aria-labelledby="{uid}-{laan.id}-stand">
@@ -683,7 +660,8 @@
 					<p class="state state--group" role="status">Laden…</p>
 				{:else}
 					<p class="state state--group" role="status">
-						{naam} konden niet worden geladen.
+						{naam}
+						{laan.stand === 'traag' ? 'duren lang.' : 'konden niet worden geladen.'}
 						<button
 							type="button"
 							class="opnieuw"
