@@ -157,18 +157,11 @@
 	);
 	const isOn = (k: (typeof BRON_KINDS)[number]) => filter.bronnen === null || filter.bronnen.has(k);
 
-	// A kind whose bronnen went with a grouping switched off stays, with that said: it can
-	// still be switched on its own, and comes back with the grouping (Thijs, 9 Oct).
-	const metGroepNoot = (k: BronKind): string | null => {
+	// A kind whose bronnen all went with a grouping switched off stays, greyed: a click
+	// switches that grouping on again (Thijs, 9 Oct). Partly hidden, the row is as ever.
+	const metGroepUit = (k: BronKind): ContainerKind[] | null => {
 		const m = canvasCounts.metGroep?.[k];
-		if (!m || m.count === 0 || !isOn(k)) return null;
-		const groepen = m.groepen.map((g) => CONTAINER_KIND_LABEL[g]).join(' en ');
-		const alle = m.count >= m.van;
-		return alle ? `verborgen met ${groepen}` : `${formatCount(m.count)} verborgen met ${groepen}`;
-	};
-	const alleMetGroep = (k: BronKind) => {
-		const m = canvasCounts.metGroep?.[k];
-		return !!m && isOn(k) && m.count > 0 && m.count >= m.van;
+		return m && isOn(k) && m.count > 0 && m.count >= m.van ? m.groepen : null;
 	};
 
 	const mutOn = $derived(overlay.kind === 'open' || overlay.kind === 'dossier');
@@ -236,16 +229,20 @@
 			<!-- Articles are switched with their wet, under Groepering (Thijs, 9 Oct). -->
 			{#each BRON_KINDS.filter((b) => b !== 'artikelen') as k (k)}
 				{@const n = totals[k] ?? 0}
+				{@const groepen = metGroepUit(k)}
 				<FilterOptie
 					label={kindLabel(k)}
-					title={kindTitle(k)}
+					title={groepen
+						? `Aan met ${groepen.map((g) => CONTAINER_KIND_LABEL[g]).join(' en ')}`
+						: kindTitle(k)}
 					wrap
 					on={isOn(k)}
-					onToggle={() => onFilter(toggleKind(filter, k))}
+					onToggle={() =>
+						groepen ? groepen.forEach((g) => onToggleGroup?.(g)) : onFilter(toggleKind(filter, k))}
 					count={counting ? null : n}
 					bezig={counting}
-					empty={(!counting && n === 0) || alleMetGroep(k)}
-					noot={metGroepNoot(k)}
+					empty={!counting && n === 0}
+					gedimd={!!groepen}
 				>
 					{#snippet voor()}<KindGlyph vorm={BRON_KIND_VORM[k]} size={11} />{/snippet}
 				</FilterOptie>

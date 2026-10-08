@@ -17,7 +17,7 @@
 		empty = false,
 		bezig = false,
 		wrap = false,
-		noot = null,
+		gedimd = false,
 		title
 	}: {
 		label: string;
@@ -37,8 +37,8 @@
 		bezig?: boolean;
 		/** A long label runs on to a second line instead of being cut ("Europees en internationaal"). */
 		wrap?: boolean;
-		/** A line under the label: why its bronnen are not on the canvas ("met Dossier verborgen"). */
-		noot?: string | null;
+		/** On, but nothing of it shown for another switch (its grouping off): all of it grey. */
+		gedimd?: boolean;
 		title?: string;
 	} = $props();
 </script>
@@ -48,6 +48,7 @@
 	class="optie"
 	class:aan={on}
 	class:leeg={empty}
+	class:gedimd
 	class:in={indent}
 	class:diep={indent === 'deep'}
 	aria-pressed={on}
@@ -60,9 +61,7 @@
 		<span class="vak" aria-hidden="true">{on ? '✓' : ''}</span>
 	{/if}
 	{#if voor}<span class="voor">{@render voor()}</span>{/if}
-	<span class="label" class:wrap
-		>{label}{#if noot}<span class="noot">{noot}</span>{/if}</span
-	>
+	<span class="label" class:wrap>{label}</span>
 	{#if bezig}<span class="aantal" aria-label="wordt geteld">…</span>{:else if count != null}<span
 			class="aantal">{formatCount(count)}</span
 		>{/if}
@@ -98,6 +97,18 @@
 	}
 	.leeg {
 		color: var(--ink-3);
+	}
+	.gedimd,
+	.gedimd .aantal {
+		color: var(--ink-3);
+		font-weight: 400;
+	}
+	.gedimd .vak {
+		background: var(--rule-strong);
+		border-color: var(--rule-strong);
+	}
+	.gedimd .voor {
+		opacity: 0.5;
 	}
 	.in {
 		padding-left: var(--s-3);
@@ -148,13 +159,6 @@
 	.label.wrap {
 		white-space: normal;
 		line-height: var(--lh-snug);
-	}
-	.noot {
-		display: block;
-		font-size: var(--t-micro);
-		font-weight: 400;
-		color: var(--ink-3);
-		white-space: normal;
 	}
 	.aantal {
 		margin-left: auto;
