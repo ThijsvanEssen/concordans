@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getCabinet } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
@@ -9,7 +10,6 @@
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { indexHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { partyColor } from '$lib/utils/party-color.svelte';
@@ -69,7 +69,9 @@
 			{@const from = when(c.from_date)}
 			{@const to = when(c.to_date)}
 			<header class="head">
-				<span class="kicker"><KindGlyph collection="cabinets" />{bronLabel('cabinets')}</span>
+				<span class="kicker"
+					><SoortLink collection="cabinets">{bronLabel('cabinets')}</SoortLink></span
+				>
 				<h2 class="title">{c.name}</h2>
 			</header>
 

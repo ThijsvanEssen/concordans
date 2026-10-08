@@ -1,8 +1,8 @@
 <script lang="ts">
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	// Reader for the kinds without a text of their own (toezegging, zaak, ...): what the
 	// bron is, when, and where the source keeps it. Its verbindingen are in the panel.
 	import ReaderFrame from './ReaderFrame.svelte';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate, textProp } from './_shared';
@@ -26,7 +26,7 @@
 <ReaderFrame>
 	<article class="r-simple">
 		<span class="kicker"
-			><KindGlyph collection={node.collection} /> {bronLabel(node.collection)}</span
+			><SoortLink collection={node.collection}>{bronLabel(node.collection)}</SoortLink></span
 		>
 		<h2 class="title">{title}</h2>
 		{#if facts.length > 0}

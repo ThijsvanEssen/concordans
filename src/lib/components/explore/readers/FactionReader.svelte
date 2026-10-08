@@ -1,11 +1,11 @@
 <script lang="ts">
+	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { str } from '$lib/components/parliamentary/data';
 	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
@@ -133,7 +133,9 @@
 				: ''}
 			<header class="head">
 				<span class="kicker"
-					><KindGlyph collection="factions" />{bronLabel('factions')}, {chamberName(chamber)}</span
+					><SoortLink collection="factions">{bronLabel('factions')}</SoortLink>, {chamberName(
+						chamber
+					)}</span
 				>
 				<h2 class="title">{abbreviation ?? name ?? f.key}</h2>
 				{#if name && abbreviation && name !== abbreviation}
