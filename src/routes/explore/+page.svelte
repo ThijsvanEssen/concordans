@@ -47,7 +47,7 @@
 	import type { Row } from '$lib/verbonden/rows';
 	import { createVerbondenSource, type VerbondenState } from '$lib/verbonden/source';
 	import { verbindingOfEdge, verbindingOfRow, type Verbinding } from '$lib/verbonden/verbinding';
-	import { allRows, filterGroups, lidCounts } from '$lib/verbonden/view';
+	import { allRows, filterGroups, lidCounts, lidTellingenOnder } from '$lib/verbonden/view';
 	import { perfStart } from '$lib/util/perf';
 	import type { GraphEdge, GraphNode, GraphNodeKind } from '$lib/graph/types';
 	import { containerKindOf, isContainerKind } from '$lib/graph/container-membership';
@@ -248,8 +248,11 @@
 			f.status ||
 			f.jaar ||
 			f.zoek ||
-			// An article's counts per lid under a bronfilter are counted from its rows.
-			(f.bronnen && selectedNode?.collection === 'articles');
+			// An article's counts per lid under a bronfilter that splits what one of its
+			// buckets holds (toelichtingen without wetsvoorstellen) are counted from its rows.
+			(f.bronnen &&
+				selectedNode?.collection === 'articles' &&
+				!(verbonden.lidPerBak && lidTellingenOnder(verbonden.lidPerBak, f.bronnen)));
 		if (tableMode || opRijen) void source.volledig();
 	});
 
@@ -259,14 +262,13 @@
 	const verbondenHier = $derived(
 		!!selectedNode && verbonden.id === selectedNode.id && verbonden.groups.length > 0
 	);
-	// Counted from the rows once they are all in, or where the API counts no lid.
-	const geteld = $derived(verbondenHier && (!!verbonden.volledig || !verbonden.lidTellingen));
-	// Else the API's counts per lid (`lid_counts`), as long as no filter narrows them.
-	const vroegeTellingen = $derived(
-		!geteld &&
-			!!selectedNode &&
+	// The API's counts per lid (`lid_counts`), under the bronfilter its buckets', as long as
+	// no other filter narrows them: the rows of a much cited article are a sample (3:4 Awb on
+	// prod: 874 judgments at lid 1, 46 in the first 1,000 passages).
+	const apiTellingen = $derived(
+		!!selectedNode &&
 			verbonden.id === selectedNode.id &&
-			!filter.bronnen &&
+			!!verbonden.lidPerBak &&
 			!filter.rechter &&
 			!filter.van &&
 			!filter.tot &&
@@ -274,13 +276,18 @@
 			!filter.status &&
 			!filter.betrouwbaarheid &&
 			!filter.jaar
-			? (verbonden.lidTellingen ?? null)
+			? lidTellingenOnder(verbonden.lidPerBak, filter.bronnen)
 			: null
 	);
+	// Else counted from the rows, once they are all in or where the API counts no lid.
+	const geteld = $derived(
+		!apiTellingen && verbondenHier && (!!verbonden.volledig || !verbonden.lidTellingen)
+	);
 	const lidCountsOfArticle = $derived(
-		geteld
-			? lidCounts(allRows(filterGroups(verbonden.groups, { ...filter, lid: null })))
-			: (vroegeTellingen ?? new Map<string, number>())
+		apiTellingen ??
+			(geteld
+				? lidCounts(allRows(filterGroups(verbonden.groups, { ...filter, lid: null })))
+				: new Map<string, number>())
 	);
 	const billCount = $derived(
 		allRows(verbonden.groups).filter((r) => r.kind === 'wetsvoorstellen').length
@@ -1110,7 +1117,7 @@
 					nextHref={articleIndex >= 0 ? articleHref(articleIndex + 1) : undefined}
 					{place}
 					lidCounts={lidCountsOfArticle}
-					lidTellend={!geteld && !vroegeTellingen}
+					lidTellend={!geteld && !apiTellingen}
 					{billCount}
 					{filter}
 					{proposedRow}
@@ -1438,7 +1445,7 @@
 		open={filterOpen}
 		{filter}
 		groups={verbonden.groups}
-		lidTellingen={verbonden.volledig ? null : (verbonden.lidTellingen ?? null)}
+		lidTellingen={verbonden.lidTellingen ?? null}
 		selection={selectedNode.collection}
 		onApply={applyFilter}
 		onClose={() => (filterOpen = false)}

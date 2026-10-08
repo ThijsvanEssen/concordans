@@ -147,10 +147,7 @@
 		fromCanvas ? hiddenByKind([], totals, filter) : hiddenLine(verbonden.groups, filter)
 	);
 	const lids = $derived(
-		[
-			...((verbonden.volledig ? null : verbonden.lidTellingen) ??
-				lidCounts(allRows(verbonden.groups)))
-		]
+		[...(verbonden.lidTellingen ?? lidCounts(allRows(verbonden.groups)))]
 			.map(([k]) => k)
 			.filter((k) => k !== '')
 			.sort((a, b) => a.localeCompare(b, 'nl', { numeric: true }))

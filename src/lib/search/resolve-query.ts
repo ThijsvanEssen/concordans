@@ -223,8 +223,9 @@ function resolvedMatch(
 
 /**
  * The bronnen a citation can mean where it is not one: "artikel 3 BW" is in Boek 1, 3, 6 and
- * more. The API names them as `alternatives` beside no match, in the order of the books, at
- * most ten of `alternatives_total`; the lid applies to each.
+ * more. The API names them as `alternatives` beside no match, the most cited first and the
+ * order of the books between equals (#310), at most ten of `alternatives_total`; the lid
+ * applies to each.
  */
 export function keuzesOf(data: Schema<'ResolveResponse'> | null | undefined): {
 	items: Resolved[];

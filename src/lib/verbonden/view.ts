@@ -1,6 +1,7 @@
 // What the panel, the table and the legend derive from the groups and the filter:
 // the rows that pass, the counts, the groupings and the years of the judgments.
 import { relationLabel, type Collection } from '$lib/vocabulary';
+import { sumLidCounts } from '$lib/api/nodes';
 import {
 	BRON_KINDS,
 	formatCount,
@@ -128,6 +129,31 @@ export function hiddenLine(
 	f: VerbondenFilter
 ): { kind: BronKind; count: number }[] {
 	return hiddenByKind(allRows(groups), kindTotals(groups), f);
+}
+
+/** The bron kinds the buckets of a collection hold, as far as an article's lid counts go. */
+const KINDS_OF_BUCKET: Record<string, BronKind[]> = {
+	judgments: ['uitspraken'],
+	articles: ['artikelen'],
+	documents: ['toelichtingen', 'wetsvoorstellen', 'dossiers']
+};
+
+/**
+ * An article's counts per lid under the bronfilter, from the API's per bucket (`lid_counts`):
+ * the buckets of the kinds that are on. Null where the filter splits what one bucket holds
+ * (toelichtingen without wetsvoorstellen): then the rows count.
+ */
+export function lidTellingenOnder(
+	per: Map<string, Map<string, number>>,
+	bronnen: ReadonlySet<BronKind> | null
+): Map<string, number> | null {
+	if (!bronnen) return sumLidCounts(per);
+	for (const collection of per.keys()) {
+		const kinds = KINDS_OF_BUCKET[collection];
+		const on = kinds ? kinds.filter((k) => bronnen.has(k)).length : 0;
+		if (!kinds || (on > 0 && on < kinds.length)) return null;
+	}
+	return sumLidCounts(per, (c) => KINDS_OF_BUCKET[c].some((k) => bronnen.has(k)));
 }
 
 /** Rows per lid of the selected article, the ones without a lid under `Hele artikel`. */

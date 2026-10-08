@@ -91,12 +91,35 @@ export function bucketTotals(response: NodeGraph): Map<string, number> {
  * `lid_counts`; "" for none that names a lid); null where the API gives none.
  */
 export function lidCountsOf(response: NodeGraph): Map<string, number> | null {
-	let counts: Map<string, number> | null = null;
+	const per = lidCountsByCollection(response);
+	return per ? sumLidCounts(per) : null;
+}
+
+/** The counts per lid of each collection's buckets (`lid_counts`); null where the API gives none. */
+export function lidCountsByCollection(
+	response: NodeGraph
+): Map<string, Map<string, number>> | null {
+	let per: Map<string, Map<string, number>> | null = null;
 	for (const b of response.neighbors.buckets ?? []) {
 		const lid = (b as { lid_counts?: Record<string, number> | null }).lid_counts;
 		if (!lid) continue;
-		counts ??= new Map();
-		for (const [k, n] of Object.entries(lid)) counts.set(k, (counts.get(k) ?? 0) + n);
+		per ??= new Map();
+		const of = per.get(b.collection) ?? new Map<string, number>();
+		per.set(b.collection, of);
+		for (const [k, n] of Object.entries(lid)) of.set(k, (of.get(k) ?? 0) + n);
+	}
+	return per;
+}
+
+/** The counts per lid of these collections together (all of them without `keep`). */
+export function sumLidCounts(
+	per: Map<string, Map<string, number>>,
+	keep: (collection: string) => boolean = () => true
+): Map<string, number> {
+	const counts = new Map<string, number>();
+	for (const [collection, of] of per) {
+		if (!keep(collection)) continue;
+		for (const [k, n] of of) counts.set(k, (counts.get(k) ?? 0) + n);
 	}
 	return counts;
 }

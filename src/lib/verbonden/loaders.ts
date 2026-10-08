@@ -103,6 +103,8 @@ export type Loaded = {
 	order?: string;
 	/** The years of all of a group's bronnen, where the API counts them (not only the rows). */
 	years?: { year: number; count: number }[];
+	/** The rest of the rows, asked when the group is opened, the table or an export. */
+	meer?: () => Promise<Loaded>;
 };
 
 /**
@@ -327,62 +329,77 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					.catch(() => ({ data: undefined, response: null }));
 			const { data, response } = await page(0);
 			if (response?.ok && data && data.items.length > 0) {
-				// The passages page by page, one after the other, until every judgment is in:
-				// 6:162 BW has 624 passages in 250 judgments, the first 200 only in 119.
-				const items = [...data.items];
-				const judgments = () => new Set(items.map((item) => item.judgment.key)).size;
-				while (
-					items.length < data.total &&
-					items.length < CITED_BY_PAGE * CITED_BY_PAGES &&
-					judgments() < data.judgment_total
-				) {
-					const next = await page(items.length);
-					if (!next.data || next.data.items.length === 0) break;
-					items.push(...next.data.items);
-				}
-				// One row per judgment; each overweging that cites the article is a mention.
-				const mentions = new Map<string, Map<string, Row>>();
-				for (const item of items) {
-					const j = item.judgment;
-					if (isInternational({ key: j.key, props: {} })) continue;
-					const at =
-						item.paragraph_id || (item.paragraph_number ? `rov-${item.paragraph_number}` : null);
-					const of = mentions.get(j.key) ?? new Map<string, Row>();
-					mentions.set(j.key, of);
-					if (of.has(at ?? '')) continue;
-					of.set(at ?? '', {
-						ref: { collection: 'judgments', key: j.key },
-						...describe('judgments', j.key, j.display_name, { ...j }),
-						kind: 'uitspraken',
-						at,
-						lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
-						position: item.paragraph_number ? paragraphCite(j.key, item.paragraph_number) : null,
-						derived: item.confidence < 1,
-						confidence: item.confidence,
-						snippet: item.snippet || null,
-						match: item.text || null,
-						relation: 'REFERS_TO',
-						direction: 'inbound',
-						props: { ...j }
-					});
-				}
-				const rows = [...mentions.values()].map((of) => bundleMentions([...of.values()]));
-				return {
-					rows,
-					total: data.judgment_total,
-					mentions: data.total,
-					order: sort === 'citation_count' ? 'Eerst de meest aangehaalde uitspraken.' : undefined,
-					// The ECHR judgments are no passage (HUDOC names the article, not the place):
-					// they stand in Europees en internationaal, not here (BE-9).
-					judgmentsOf:
-						data.echr_judgment_total > 0
-							? {
-									international: {
-										rows: await echrJudgments(bwb, node.key, signal),
-										total: data.echr_judgment_total
-									}
+				// The ECHR judgments are no passage (HUDOC names the article, not the place):
+				// they stand in Europees en internationaal, not here (BE-9).
+				const judgmentsOf =
+					data.echr_judgment_total > 0
+						? {
+								international: {
+									rows: await echrJudgments(bwb, node.key, signal),
+									total: data.echr_judgment_total
 								}
-							: undefined
+							}
+						: undefined;
+				const loaded = (items: typeof data.items): Loaded => {
+					// One row per judgment; each overweging that cites the article is a mention.
+					const mentions = new Map<string, Map<string, Row>>();
+					for (const item of items) {
+						const j = item.judgment;
+						if (isInternational({ key: j.key, props: {} })) continue;
+						const at =
+							item.paragraph_id || (item.paragraph_number ? `rov-${item.paragraph_number}` : null);
+						const of = mentions.get(j.key) ?? new Map<string, Row>();
+						mentions.set(j.key, of);
+						if (of.has(at ?? '')) continue;
+						of.set(at ?? '', {
+							ref: { collection: 'judgments', key: j.key },
+							...describe('judgments', j.key, j.display_name, { ...j }),
+							kind: 'uitspraken',
+							at,
+							lid: item.leden?.[0] ?? lidOfMatch(item.qualifier ?? item.text),
+							position: item.paragraph_number ? paragraphCite(j.key, item.paragraph_number) : null,
+							derived: item.confidence < 1,
+							confidence: item.confidence,
+							snippet: item.snippet || null,
+							match: item.text || null,
+							relation: 'REFERS_TO',
+							direction: 'inbound',
+							props: { ...j }
+						});
+					}
+					const rows = [...mentions.values()].map((of) => bundleMentions([...of.values()]));
+					return {
+						rows,
+						total: data.judgment_total,
+						mentions: data.total,
+						order: sort === 'citation_count' ? 'Eerst de meest aangehaalde uitspraken.' : undefined,
+						judgmentsOf
+					};
+				};
+				const first = [...data.items];
+				const judgments = (items: typeof first) =>
+					new Set(items.map((item) => item.judgment.key)).size;
+				const complete = (items: typeof first) =>
+					items.length >= data.total ||
+					items.length >= CITED_BY_PAGE * CITED_BY_PAGES ||
+					judgments(items) >= data.judgment_total;
+				// The first page now; the others when the group is opened (Thijs, 9 Oct: "alles
+				// zo lazy mogelijk"). 3:4 Awb on prod: five pages, 1 MB, the last after 6 s.
+				return {
+					...loaded(first),
+					meer: complete(first)
+						? undefined
+						: async () => {
+								// The passages page by page, one after the other, until every judgment is
+								// in: 6:162 BW has 624 passages in 250 judgments, the first 200 only in 119.
+								const items = [...first];
+								while (!complete(items)) {
+									const next = await page(items.length);
+									if (!next.data || next.data.items.length === 0) break;
+									items.push(...next.data.items);
+								}
+								return loaded(items);
+							}
 				};
 			}
 		}
