@@ -11,6 +11,7 @@
 	import { korteDatum } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { uitParams } from '$lib/onderwerpen/onderwerpen';
+	import { naamVanNummer } from '$lib/bron/dossier-naam';
 	import {
 		filter,
 		naarCsv,
@@ -223,13 +224,31 @@
 
 	const naam = $derived(termen.join('; '));
 
-	function exporteer() {
+	// The dossiers' names for the CSV, asked at export: one request per number not asked
+	// before (naamVanNummer), at most CSV_NAMEN of them.
+	const CSV_NAMEN = 100;
+	let exporteren = $state(false);
+	async function exporteer() {
+		exporteren = true;
+		const nummers = [...new Set(lijst.flatMap((d) => d.dossier_numbers ?? []))].slice(0, CSV_NAMEN);
+		const namen = new Map<string, string>();
+		await Promise.all(
+			nummers.map((n) =>
+				naamVanNummer(n).then((naam) => {
+					if (naam) namen.set(n, naam);
+				})
+			)
+		);
+		exporteren = false;
 		const veilig =
 			naam
 				.replace(/[\\/:*?"<>|]+/g, ' ')
 				.slice(0, 80)
 				.trim() || 'onderwerp';
-		download(`Overzicht ${veilig}.csv`, naarCsv(lijst, page.url.origin, fractie || null, stemmen));
+		download(
+			`Overzicht ${veilig}.csv`,
+			naarCsv(lijst, page.url.origin, fractie || null, stemmen, namen)
+		);
 	}
 
 	const tally = (d: Besluit) =>
@@ -395,7 +414,11 @@
 					{#if filterLabels.length}
 						<a class="wis" href={hrefMet({})}>Alle besluiten</a>
 					{/if}
-					<button type="button" class="csv" onclick={exporteer} disabled={!lijst.length}>CSV</button
+					<button
+						type="button"
+						class="csv"
+						onclick={exporteer}
+						disabled={!lijst.length || exporteren}>{exporteren ? 'Namen ophalen…' : 'CSV'}</button
 					>
 				</div>
 				<ol class="rijen">

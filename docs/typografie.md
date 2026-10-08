@@ -18,6 +18,8 @@ Rules:
 - A stem (Voor, Tegen) and an outcome have a shape as well as a colour: `Stem.svelte` and `Uitkomst.svelte`. Voor and aangenomen a filled box in `--uitkomst-ja`, tegen and verworpen an open box in `--uitkomst-nee`, the rest a dashed box. The word goes with the box where there is room; a row under a group carries the box alone.
 - Tabular figures only in a column of figures, never in a sentence: "6 okt . 2026" is what they do to a date in a line (`consistency.test.ts`).
 
+- A dossier is its number and its name, "36496 Wet betaalbare huur", never the number alone (Thijs, 9 Oct). `dossierLabel()` in `$lib/bron/dossier-naam.ts` where the data has the title or short title; `DossierNaam.svelte` where it has only the number: the number at once, the name asked by number once it is in view (once per number, two at a time). The number stays first: Kamerstukken are cited by it. A name wraps on a phone; it is not cut there.
+
 ## Applied
 
 - A person's votes (`MemberReader.svelte`, 9 Oct 2026): the stem as group (rung 3) with its box in every row, the fractie as group, no tabular figures in the meta line.

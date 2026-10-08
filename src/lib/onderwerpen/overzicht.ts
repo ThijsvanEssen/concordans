@@ -111,7 +111,9 @@ export function naarCsv(
 	lijst: readonly Besluit[],
 	origin: string,
 	fractie: string | null,
-	stemmen: ReadonlyMap<string, Stem>
+	stemmen: ReadonlyMap<string, Stem>,
+	/** A dossier's name by its number, where it was found. */
+	namen: ReadonlyMap<string, string> = new Map()
 ): string {
 	const kop = [
 		'datum',
@@ -119,6 +121,7 @@ export function naarCsv(
 		'soort',
 		'onderwerp',
 		'dossier',
+		'dossiernaam',
 		'uitkomst',
 		'besluit',
 		'stemmen voor',
@@ -133,6 +136,7 @@ export function naarCsv(
 			soortVan(d),
 			(d.subject ?? '').trim(),
 			(d.dossier_numbers ?? []).join(', '),
+			(d.dossier_numbers ?? []).flatMap((n) => namen.get(n) ?? []).join('; '),
 			UITKOMST[uitkomstVan(d)],
 			d.decision_kind,
 			d.tally?.Voor,

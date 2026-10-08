@@ -8,6 +8,7 @@ import {
 	KIND_LABEL,
 	MOTIE,
 	chamberOf,
+	dossierLabel,
 	dossierName,
 	isBillVote,
 	normalizeItem,
@@ -129,7 +130,7 @@ export function voteHow(i: Pick<FeedItem, 'vote'>): string | null {
 function voteContext(i: FeedItem): string {
 	const { voor, tegen } = tallyOf(i);
 	const faction = i.persons[0]?.faction?.short;
-	const where = [faction, i.dossier ? `dossier ${i.dossier.number}` : null].filter(Boolean);
+	const where = [faction, i.dossier ? `dossier ${dossierLabel(i.dossier)}` : null].filter(Boolean);
 	return [voor + tegen ? `${voor} voor, ${tegen} tegen` : voteHow(i), where.join(', ') || null]
 		.filter(Boolean)
 		.join('. ');
@@ -296,7 +297,7 @@ function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 		const more = group.length - 1;
 		const context = [
 			more ? `En ${plural(more, 'andere toezegging', 'andere toezeggingen')}` : null,
-			first.dossier ? `Dossier ${first.dossier.number}` : null
+			first.dossier ? `Dossier ${dossierLabel(first.dossier)}` : null
 		]
 			.filter(Boolean)
 			.join('. ');

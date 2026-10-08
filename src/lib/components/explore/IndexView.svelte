@@ -1,4 +1,5 @@
 <script lang="ts">
+	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { axisLabels } from './index/years-axis';
 	import { korteDatum, langeDatum, weekdag } from '$lib/text/datum';
@@ -2835,10 +2836,8 @@
 															/>{t.member.function ? `, ${t.member.function}` : ''}
 														{:else if t.minister_name}
 															{t.minister_name}
-														{/if}
-														{#if t.dossiers?.length}
-															, {t.dossiers.map((d) => d.number).join(', ')}
-														{/if}
+														{/if}<!-- A dossier by number and name, the name asked once in view; no space before the comma. -->{#each t.dossiers?.flatMap( (d) => (d.number ? [d.number] : []) ) ?? [] as nr (nr)},
+															<DossierNaam dossier={nr} />{/each}
 													</span>
 												{/snippet}
 												{#snippet aside()}
