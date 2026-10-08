@@ -59,6 +59,11 @@ describe('behoort', () => {
 			['hoofdstuk', 'Hoofdstuk 3 Algemene bepalingen over besluiten'],
 			['afdeling', 'Afdeling 3.2 Zorgvuldigheid en belangenafweging']
 		]);
+		expect(b.boven.map((l) => l.at)).toEqual([
+			undefined,
+			'deel-hoofdstuk-3',
+			'deel-hoofdstuk-3-afdeling-3.2'
+		]);
 		expect(b.boven[2].ref).toEqual({ collection: 'instruments', key: 'bwbr0005537' });
 	});
 

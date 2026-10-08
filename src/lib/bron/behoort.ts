@@ -5,7 +5,7 @@
 import type { NodeGraph, Neighbor } from '$lib/api/nodes';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
-import { layersOf } from '$lib/text/division';
+import { deelIds, layersOf } from '$lib/text/division';
 import { describe } from '$lib/verbonden/rows';
 import type { Collection, Relation } from '$lib/vocabulary';
 
@@ -13,7 +13,15 @@ import type { Collection, Relation } from '$lib/vocabulary';
  * One layer: a bron to open, or (in props) only a name; `vol` the full name where it is cut,
  * `kort` the name a phone's one line carries ("Awb", "Hoofdstuk 3").
  */
-export type Laag = { soort: string; naam: string; ref?: BronRef; vol?: string; kort?: string };
+export type Laag = {
+	soort: string;
+	naam: string;
+	ref?: BronRef;
+	/** The place in the bron the link goes to: a division of a law (`deel-hoofdstuk-3`). */
+	at?: string;
+	vol?: string;
+	kort?: string;
+};
 
 /** The bucket a group lists, as the API names it. */
 export type Bak = { relation: Relation; direction: 'inbound' | 'outbound'; collection: Collection };
@@ -105,19 +113,21 @@ export function behoort(
 			const wet = eerste('PART_OF', 'outbound', 'instruments', 'Wet').map((l) =>
 				afk ? { ...l, kort: afk } : l
 			);
-			const deel = layersOf(
-				Array.isArray(props.breadcrumb)
-					? (props.breadcrumb as { type?: string; label?: string; title?: string }[])
-					: [],
-				text(props.instrument_citation_title)
-			)
-				.filter((c) => text(c.label))
-				.map((c) => ({
+			const crumbs = Array.isArray(props.breadcrumb)
+				? (props.breadcrumb as { type?: string; label?: string; title?: string }[])
+				: [];
+			const lagen = layersOf(crumbs, text(props.instrument_citation_title));
+			// Each division opens in the whole law at its heading (WholeLawReader, `deelIds`).
+			const ids = deelIds(crumbs).slice(crumbs.length - lagen.length);
+			const deel = lagen
+				.map((c, i) => ({
 					soort: text(c.type) ?? 'Deel',
 					naam: [text(c.label), text(c.title)].filter(Boolean).join(' '),
 					kort: text(c.label) ?? undefined,
-					ref: wet[0]?.ref
-				}));
+					ref: wet[0]?.ref,
+					at: wet[0]?.ref ? ids[i] : undefined
+				}))
+				.filter((l) => l.kort);
 			return { boven: [...wet, ...deel], naast: [], onder: [] };
 		}
 		case 'judgments':

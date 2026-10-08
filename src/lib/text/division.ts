@@ -36,3 +36,24 @@ export function placeOf(
 		.join(', ');
 	return { designation, title: layers.at(-1)?.title?.trim() || null };
 }
+
+const slug = (s: string) =>
+	s
+		.normalize('NFKD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase()
+		.replace(/[^a-z0-9.]+/g, '-')
+		.replace(/^-+|-+$/g, '');
+
+/**
+ * The anchor of each layer in the whole law, by the path of labels down to it:
+ * `deel-hoofdstuk-3-afdeling-3.2`. One per crumb, over the whole breadcrumb, so the band
+ * Behoort bij and the whole-law reader name a layer alike whatever name the law has.
+ */
+export function deelIds(crumbs: Division[]): string[] {
+	const path: string[] = [];
+	return crumbs.map((c) => {
+		path.push(slug(c.label ?? c.title ?? ''));
+		return `deel-${path.filter(Boolean).join('-')}`;
+	});
+}
