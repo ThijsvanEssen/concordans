@@ -1,5 +1,6 @@
 <script lang="ts">
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Gevolgde onderwerpen: per topic what came into Actueel since the visit before. The topics
 	// are kept in this browser; an address with `?onderwerp=` shows someone else's without
@@ -231,8 +232,8 @@
 
 	// ── Following ───────────────────────────────────────────────────────────
 	let invoer = $state('');
-	function voegToe(e: SubmitEvent) {
-		e.preventDefault();
+	function voegToe(e?: SubmitEvent) {
+		e?.preventDefault();
 		const termen = splitsTermen(invoer);
 		if (!termen.length) return;
 		volg(termen);
@@ -284,11 +285,9 @@
 <RouteKop pad="/onderwerpen" />
 
 <div class="onderwerpen blad blad__indeling">
+	<!-- The heading with its actions at the right, as Actueel (docs/bediening.md). -->
 	<header class="kop">
 		<h1 class="titel">Onderwerpen</h1>
-	</header>
-	<!-- The page's own controls in the facet column, as Bladeren has its filters. -->
-	<aside class="opzij" aria-label="Volgen">
 		{#if gedeeld.length}
 			<div class="acties">
 				{#if alGevolgd}
@@ -297,24 +296,39 @@
 					<button type="button" onclick={volgGedeeld}>Volg deze onderwerpen</button>
 				{/if}
 			</div>
-		{:else}
-			<form class="nieuw" onsubmit={voegToe}>
-				<input
-					type="text"
-					aria-label="Onderwerp volgen"
-					bind:value={invoer}
-					placeholder="AI; kunstmatige intelligentie"
-				/>
-				<button type="submit" disabled={!normaal(invoer)}>Volg</button>
-			</form>
-			{#if eigen.length}
-				<div class="acties">
-					<a href={deelAdres(eigen)}>Adres van deze onderwerpen</a>
-					<TekstLink onclick={kopieer}>{gekopieerd ? 'Gekopieerd' : 'Kopieer'}</TekstLink>
-				</div>
-			{/if}
+		{:else if eigen.length}
+			<div class="acties">
+				<a href={deelAdres(eigen)}>Adres van deze onderwerpen</a>
+				<TekstLink onclick={kopieer}>{gekopieerd ? 'Gekopieerd' : 'Kopieer'}</TekstLink>
+			</div>
 		{/if}
-	</aside>
+	</header>
+	{#if !gedeeld.length}
+		<!-- The choose-line: the words of a topic to follow (Bepaalregel). -->
+		<div class="regel">
+			<Bepaalregel
+				zoek={{
+					label: 'Onderwerp',
+					naam: 'Onderwerp volgen',
+					placeholder: 'AI; kunstmatige intelligentie',
+					waarde: invoer,
+					onInput: (v) => (invoer = v),
+					knop: { label: 'Volg', disabled: !normaal(invoer), onSubmit: () => voegToe() }
+				}}
+			/>
+		</div>
+	{/if}
+	<!-- The topics of the page, as a facet column holds its groups: a way to each. -->
+	<nav class="opzij" aria-label="Onderwerpen op deze pagina">
+		{#if lijst.length > 1}
+			<h2 class="opzij__kop">Gevolgd</h2>
+			<ul>
+				{#each lijst as o, n (sleutel(o))}
+					<li><a href="#onderwerp-{n}">{o.termen.join('; ')}</a></li>
+				{/each}
+			</ul>
+		{/if}
+	</nav>
 
 	<div class="inhoud">
 		{#if geladen && !lijst.length}
@@ -407,9 +421,50 @@
 <style>
 	/* The column's width, not its content's: without a paragraph under the title the page
 	   would shrink to the field and stand off-centre. */
-	/* The frame and grid of Bladeren (AppShell): the heading over both columns. */
+	/* The frame and grid of Bladeren (AppShell): the heading and the choose-line over both
+	   columns. */
 	.kop {
 		grid-column: 1 / -1;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--s-3);
+		margin-bottom: var(--s-4);
+	}
+	.regel {
+		grid-column: 1 / -1;
+		margin-bottom: var(--s-5);
+	}
+	.opzij__kop {
+		margin: 0 0 var(--s-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.opzij ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+	}
+	.opzij li {
+		padding: 2px 0;
+	}
+	.opzij a {
+		color: var(--ink-2);
+		text-decoration: none;
+	}
+	.opzij a:hover {
+		color: var(--ink);
+		text-decoration: underline;
+	}
+	@media (max-width: 768px) {
+		.opzij {
+			display: none;
+		}
 	}
 	.inhoud {
 		min-width: 0;
