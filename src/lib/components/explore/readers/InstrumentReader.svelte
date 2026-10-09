@@ -29,7 +29,6 @@
 						textProp(p.date_published)
 					)}.{/if}
 			</p>
-			<p class="publication">De artikelen die deze publicatie wijzigt, staan in Verbonden.</p>
 		</ReaderHead>
 	{:else}
 		<WholeLawReader {bwbId} />

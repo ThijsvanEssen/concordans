@@ -230,7 +230,12 @@
 										{/each}
 									</span>
 								{:else}
-									<span class="career-what">
+									<span
+										class="career-what"
+										title={step.cabinet
+											? undefined
+											: 'Bekend uit ondertekende stukken; de jaren zijn die van de stukken'}
+									>
 										{step.function.charAt(0).toUpperCase() + step.function.slice(1)}
 										{#if step.cabinet}<NameLink
 												collection="cabinets"
@@ -248,12 +253,6 @@
 							</li>
 						{/each}
 					</ul>
-					{#if career.some((step) => step.kind === 'function' && !step.cabinet)}
-						<p class="career-note">
-							Een functie zonder kabinet is alleen bekend uit ondertekende stukken. De jaren zijn
-							die van de stukken, niet de ambtstermijn.
-						</p>
-					{/if}
 				</Sectie>
 			{/if}
 
@@ -619,12 +618,6 @@
 		color: var(--ink);
 	}
 
-	.career-note {
-		margin: var(--s-2) 0 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
 	.ek-source {
 		margin: 0;
 		font-family: var(--font-sans);

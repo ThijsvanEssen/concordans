@@ -326,12 +326,6 @@
 					>
 				{/each}
 			</div>
-			<!-- Why the buttons are off, where they are: a state, not an explanation. -->
-			{#if netwerkActive && !selectionCollection}
-				<p class="uitleg">{NO_SELECTION_REASON}</p>
-			{:else if !netwerkActive && reach?.capped}
-				<p class="uitleg">{CAPPED_REASON}</p>
-			{/if}
 		</section>
 
 		{#if lids.length > 0}
@@ -554,10 +548,4 @@
 		line-height: 1.4;
 	}
 	/* One line that says what a control does, or why it is off. */
-	.uitleg {
-		margin: var(--s-1) 0 0;
-		font-size: var(--t-micro);
-		line-height: var(--lh-snug);
-		color: var(--ink-3);
-	}
 </style>

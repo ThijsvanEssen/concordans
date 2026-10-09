@@ -5,7 +5,6 @@
 	// Verkenner it is the start of the page, in the middle of the canvas.
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
-	import Picto from '$lib/components/ui/Picto.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { laatstOpen } from '$lib/stores/zwevend';
 	import type { NetwerkEntry } from './netwerk';
@@ -121,21 +120,11 @@
 >
 	{#if start}
 		<h2 class="start__title">Netwerk</h2>
-		<!-- Geen schets; drie stappen onder elkaar, elk met beeld, naam en één regel. -->
-		<ol class="stappen">
-			<li>
-				<span class="beeld"><Picto naam="zoek" size={16} /></span>
-				<span><b>Zoek een bron</b><br />Een wet, artikel, uitspraak of dossier.</span>
-			</li>
-			<li>
-				<span class="beeld"><Picto naam="plus" size={16} /></span>
-				<span><b>Voeg er een toe</b><br />Met + bij een verbonden bron.</span>
-			</li>
-			<li>
-				<span class="beeld"><Picto naam="netwerk" size={16} /></span>
-				<span><b>Zie wat ze verbindt</b><br />De bronnen ertussen staan op het canvas.</span>
-			</li>
-		</ol>
+		<!-- The field itself, not steps that explain it (Thijs, 9 Oct: "de UI moet zichzelf
+		     wijzen"). -->
+		<div class="zoek zoek--start">
+			<Search compact placeholder="Bron toevoegen" {onPick} />
+		</div>
 		{#if onVoorbeeld}
 			<button type="button" class="voorbeeld" onclick={onVoorbeeld}>
 				<span class="voorbeeld-kop">Voorbeeld</span>
@@ -470,36 +459,8 @@
 		color: var(--ink);
 		font-weight: 600;
 	}
-	.stappen {
-		list-style: none;
-		margin: var(--s-3) 0 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-3);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		line-height: 1.4;
-		color: var(--ink-2);
-	}
-	.stappen li {
-		display: grid;
-		grid-template-columns: 32px 1fr;
-		gap: var(--s-3);
-		align-items: start;
-	}
-	.stappen b {
-		font-weight: 500;
-		color: var(--ink);
-	}
-	.beeld {
-		display: grid;
-		place-items: center;
-		width: 32px;
-		height: 32px;
-		border: 1px solid var(--rule-strong);
-		border-radius: 50%;
-		color: var(--ink);
+	.zoek--start {
+		margin-top: var(--s-3);
 	}
 	.voorbeeld {
 		display: flex;

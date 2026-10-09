@@ -736,10 +736,7 @@
 					<!-- The researcher's own coding of the moties: counted, kept as a file. -->
 					<div class="richting-kop">
 						<p class="richting-telling">
-							Richting, eigen codering: {getal(richtingTelling.alles.totaal)} van {getal(
-								motiesOpPagina
-							)}
-							{motiesOpPagina === 1 ? 'motie' : 'moties'} op deze pagina gecodeerd{#if richtingTelling.alles.totaal}:
+							{getal(richtingTelling.alles.totaal)} van {getal(motiesOpPagina)} gecodeerd{#if richtingTelling.alles.totaal}:
 								{deel(richtingTelling.alles)}{/if}.
 							{#each ['aangenomen', 'verworpen'] as const as u (u)}
 								{#if richtingTelling.perUitkomst[u].totaal}

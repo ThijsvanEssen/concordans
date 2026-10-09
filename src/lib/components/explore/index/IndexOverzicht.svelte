@@ -1,6 +1,6 @@
 <script lang="ts">
-	// Bladeren without a category: the four groups with their categories, each with the
-	// sentence that says what it holds. "Bladeren" in the top nav opens this, so a reader
+	// Bladeren without a category: the four groups with their categories; what each holds
+	// is its title (no explanation under a link, Thijs 9 Oct). "Bladeren" in the top nav opens this, so a reader
 	// sees Parlement and Regering before choosing, instead of landing in Dossiers.
 	import { indexHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -18,10 +18,9 @@
 				<ul>
 					{#each groep.categories as cat (cat.key)}
 						<li>
-							<a href={indexHref(cat.key)}
+							<a href={indexHref(cat.key)} title={cat.about}
 								><KindGlyph collection={collectionOf(cat.key)} size={14} />{cat.label}</a
 							>
-							<p>{cat.about}</p>
 						</li>
 					{/each}
 				</ul>
@@ -59,7 +58,7 @@
 		list-style: none;
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		gap: var(--s-3);
 	}
 	a {
 		display: inline-flex;
@@ -72,13 +71,6 @@
 	}
 	a:hover {
 		text-decoration: underline;
-	}
-	p {
-		margin: var(--s-1) 0 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		line-height: var(--lh-snug);
-		color: var(--ink-2);
 	}
 	@media (max-width: 860px) {
 		.overzicht,

@@ -2299,7 +2299,6 @@
 						     fit; a cabinet opens its bewindspersonen. -->
 						<div class="cab-strip">
 							<div class="cab-tools">
-								<span>Sleep of scroll opzij door de tijd</span>
 								<button
 									type="button"
 									class="cab-zoom"
@@ -3435,9 +3434,6 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.cab-tools span {
-		margin-right: var(--s-2);
 	}
 	.cab-zoom {
 		width: 28px;
