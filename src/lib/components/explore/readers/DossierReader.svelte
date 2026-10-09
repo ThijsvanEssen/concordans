@@ -177,7 +177,7 @@
 			{:else if timeline}
 				{@const p = procedure(d, timeline.entries, metOverig)}
 				<Sectie titel="Procedure">
-					<Tijdlijn groepen={p.groepen} />
+					<Tijdlijn groepen={p.groepen} inklapbaar />
 					{#if p.overig}
 						<button type="button" class="overig" onclick={() => (metOverig = !metOverig)}
 							>{metOverig ? 'Alleen de procedure' : `Toon ook de ${p.overig} andere items`}</button
