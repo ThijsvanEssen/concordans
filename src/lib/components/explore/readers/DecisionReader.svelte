@@ -139,21 +139,21 @@
 					{#if d.date}<span class="komma">,</span>{formatLongDate(d.date)}{/if}
 				</span>
 				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}</h2>
-				<div class="chips">
+				<div class="woorden">
 					{#if decisionOutcome(d)}
 						<!-- A hamerstuk is passed without a vote; a postponed decision is no outcome. -->
 						<span
-							class="result-chip"
-							class:result-chip--passed={d.passed === true}
-							class:result-chip--failed={d.passed === false}
+							class="uitslag"
+							class:uitslag--passed={d.passed === true}
+							class:uitslag--failed={d.passed === false}
 						>
 							{decisionOutcome(d)}
 						</span>
 					{/if}
 					<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
-					{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
+					{#if d.primary_case_kind}<span class="zaaksoort">{d.primary_case_kind}</span>{/if}
 					{#each uniqueBy(dossiers, (x) => x.number).slice(0, 3) as dossier (dossier.number)}
-						<BronLink ref={`dossiers/${dossier.number}`} class="dossier-chip"
+						<BronLink ref={`dossiers/${dossier.number}`} class="dossier-woord"
 							><DossierNaam {dossier} /></BronLink
 						>
 					{/each}
@@ -332,7 +332,7 @@
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
-	.chips {
+	.woorden {
 		display: flex;
 		gap: var(--s-3);
 		flex-wrap: wrap;
@@ -340,25 +340,25 @@
 	}
 
 	/* The outcome, the kind of case and the dossier numbers are words, not tags. */
-	.result-chip,
-	.case-chip,
-	:global(.dossier-chip) {
+	.uitslag,
+	.zaaksoort,
+	:global(.dossier-woord) {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 600;
 		text-decoration: none;
 	}
-	.result-chip--passed,
-	.result-chip--failed {
+	.uitslag--passed,
+	.uitslag--failed {
 		color: var(--ink-2);
 	}
-	.case-chip {
+	.zaaksoort {
 		color: var(--ink-3);
 	}
-	:global(.dossier-chip) {
+	:global(.dossier-woord) {
 		color: var(--ink-3);
 	}
-	:global(.dossier-chip:hover) {
+	:global(.dossier-woord:hover) {
 		color: var(--accent);
 	}
 

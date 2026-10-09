@@ -57,7 +57,7 @@
 			</span>
 			<h2 class="title">{name}</h2>
 			{#if abbreviation && abbreviation !== name}
-				<div class="chips"><span class="afk-chip">{abbreviation}</span></div>
+				<div class="woorden"><span class="afk">{abbreviation}</span></div>
 			{/if}
 		</header>
 
@@ -186,12 +186,12 @@
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
-	.chips {
+	.woorden {
 		display: flex;
 		gap: var(--s-1);
 	}
 	/* The abbreviation: a word, not a tag. */
-	.afk-chip {
+	.afk {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

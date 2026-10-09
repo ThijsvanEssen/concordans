@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	// The articles a bill changes, per law in the order of the law: each article once, with
 	// a line per change, what it does and where it stands: in force since a day, by its
 	// publication in the Staatsblad, or proposed in a paper of the dossier. An article, a law,
@@ -93,9 +94,14 @@
 					{/each}
 				</ul>
 				{#if artikelen.length > PREVIEW}
-					<button type="button" class="meer" onclick={() => (open = { ...open, [key]: !alle })}
-						>{alle ? 'Minder' : `Alle ${artikelen.length} artikelen`}</button
-					>
+					<p class="alle">
+						<AlleN
+							aantal={artikelen.length}
+							noun="artikelen"
+							open={alle}
+							onclick={() => (open = { ...open, [key]: !alle })}
+						/>
+					</p>
 				{/if}
 			{/if}
 		</div>
@@ -173,18 +179,8 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.meer {
-		align-self: flex-start;
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
+	.alle {
+		margin: var(--s-3) 0 0;
 		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.meer:hover {
-		color: var(--accent);
 	}
 </style>

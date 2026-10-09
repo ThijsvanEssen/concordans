@@ -164,8 +164,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			'lib/components/ui/TekstMenu.svelte': 'the one form',
 			'lib/components/explore/index/IndexFacets.svelte':
 				"its 'select' facets, until TekstMenu replaces them (step 3, Bladeren)",
-			'lib/components/articles/VersionCompare.svelte': 'the versions (step 2, the reader head)',
-			'lib/components/explore/WholeLawReader.svelte': 'the whole law (step 2, the reader head)',
 			'lib/components/explore/index/IndexToolbar.svelte': 'the order of a list (step 3, Bladeren)',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'Fractie (step 4, Overzicht)'
 		};
@@ -176,10 +174,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		const chips: Uitzonderingen = {
 			'lib/netwerk/NetwerkPanel.svelte': 'the chosen bronnen: content, not a filter',
 			'lib/components/explore/IndexView.svelte': 'step 3, Bladeren',
-			'lib/components/explore/readers/CommitteeReader.svelte': 'step 2, the readers',
-			'lib/components/explore/readers/DecisionReader.svelte': 'step 2, the readers',
-			'lib/components/explore/readers/FactionReader.svelte': 'step 2, the readers',
-			'lib/components/explore/readers/MemberReader.svelte': 'step 2, the readers',
 			'lib/components/graph/GraphSidebar.svelte': 'step 5, the network',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'step 4, Overzicht'
 		};
@@ -193,12 +187,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 				m[1].split(/\s+/).some((c) => /(^|[_-])(more|meer)($|[_-])/.test(c))
 			);
 		const eigen: Uitzonderingen = {
-			'lib/bron/BehoortBij.svelte': 'step 2, the band',
-			'lib/components/explore/WholeLawReader.svelte': 'step 2, the readers',
-			'lib/components/explore/readers/CommitmentReader.svelte': 'step 2, the readers',
-			'lib/components/explore/readers/JudgmentReader.svelte': 'step 2, the readers',
-			'lib/components/explore/readers/MemberReader.svelte': 'step 2, the readers',
-			'lib/components/parliamentary/GewijzigdeArtikelen.svelte': 'step 2, the readers',
 			'lib/components/explore/IndexView.svelte': 'step 3, Bladeren',
 			'lib/components/explore/index/IndexFacets.svelte': 'step 3, Bladeren',
 			'routes/(main)/actueel/+page.svelte': 'Meer laden (step 3, with Bladeren)',
@@ -218,7 +206,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 				(m) => !/^(var\(--veld-h(-klein)?\)|auto|100%)$/.test(m[1].trim())
 			);
 		const anders: Uitzonderingen = {
-			'lib/components/articles/VersionCompare.svelte': '26 and 28 px (step 2, the reader head)',
 			'lib/components/explore/index/IndexToolbar.svelte': 'the field, 28 px (step 3, Bladeren)',
 			'routes/(main)/onderwerpen/+page.svelte': '48 px (step 5, Onderwerpen)'
 		};

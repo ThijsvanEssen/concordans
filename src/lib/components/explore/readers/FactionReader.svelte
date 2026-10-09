@@ -141,15 +141,14 @@
 					<p class="sub">{name}</p>
 				{/if}
 				{#if typeof seats === 'number'}
-					<div class="chips">
-						<span class="seats-chip"
+					<div class="woorden">
+						<span class="zetels"
 							>{seats}
 							{seats === 1 ? 'zetel' : 'zetels'}{ek && read
 								? ` op ${formatLongDate(read)}`
 								: ''}</span
 						>
-						{#if sinds && !ek}<span class="since-chip">fractie sinds {formatLongDate(sinds)}</span
-							>{/if}
+						{#if sinds && !ek}<span class="sinds">fractie sinds {formatLongDate(sinds)}</span>{/if}
 					</div>
 				{/if}
 			</header>
@@ -279,7 +278,7 @@
 		color: var(--ink-3);
 		margin: 0;
 	}
-	.chips {
+	.woorden {
 		display: flex;
 		gap: var(--s-1);
 	}
@@ -353,12 +352,12 @@
 		color: var(--ink-3);
 	}
 	/* The seat count is a word, not a tag. */
-	.seats-chip {
+	.zetels {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
-	.since-chip {
+	.sinds {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

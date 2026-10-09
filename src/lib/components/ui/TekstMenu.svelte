@@ -19,7 +19,8 @@
 		klein = false,
 		rechts = false,
 		inhoud,
-		onder
+		onder,
+		knop
 	}: {
 		/** What the menu sets, for a screen reader: `Bronnen`, `Volgorde`. */
 		label: string;
@@ -36,6 +37,8 @@
 		inhoud?: Snippet<[() => void]>;
 		/** Under the options, after a rule: a step out of the menu (`Kies bronnen en verbindingen`). */
 		onder?: Snippet<[() => void]>;
+		/** What the button shows where it is more than words (a badge and two dates). */
+		knop?: Snippet;
 	} = $props();
 
 	let open = $state(false);
@@ -51,7 +54,8 @@
 		aria-haspopup="menu"
 		aria-expanded={open}
 		aria-label="{label}: {woorden}"
-		onclick={() => (open = !open)}>{woorden}<Caret {open} /></button
+		onclick={() => (open = !open)}
+		>{#if knop}{@render knop()}{:else}{woorden}{/if}<Caret {open} /></button
 	>
 	{#if open}
 		<div class="tekstmenu__lijst" class:rechts role="menu" aria-label={label}>

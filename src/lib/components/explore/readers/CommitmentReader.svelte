@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getCommitment } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
@@ -130,9 +131,9 @@
 			</Feiten>
 
 			{#if c.member}
-				<p class="more">
-					<a href={indexHref('commitments', { member: c.member.key })} data-sveltekit-noscroll
-						>Alle toezeggingen van {c.member.name}</a
+				<p class="alle">
+					<TekstLink href={indexHref('commitments', { member: c.member.key })}
+						>Alle toezeggingen van {c.member.name}</TekstLink
 					>
 				</p>
 			{/if}
@@ -188,17 +189,8 @@
 		flex-direction: column;
 		gap: var(--s-1);
 	}
-	.more {
-		margin: 0;
-		font-family: var(--font-serif);
+	.alle {
+		margin: var(--s-3) 0 0;
 		font-size: var(--t-meta);
-	}
-	.more a {
-		color: var(--ink);
-		text-decoration: none;
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.more a:hover {
-		color: var(--accent);
 	}
 </style>

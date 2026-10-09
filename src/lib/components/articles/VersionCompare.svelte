@@ -15,6 +15,9 @@
 	import { citeArticle, type Citation } from '$lib/text/cite';
 	import { longDate } from '$lib/verbonden/rows';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { slide } from 'svelte/transition';
 	import {
 		byYear,
@@ -256,32 +259,34 @@
 {/snippet}
 
 {#snippet chooser(which: 'A' | 'B', w: VersionWording, other: number, pick: (i: number) => void)}
-	<!-- A card that says which text it is; the list of the system lies over it, unseen,
-	     so choosing works as any list does, by pointer, keyboard or screen reader. -->
-	<label class="ab__card">
-		<span class="badge badge--{which.toLowerCase()}">{which}</span>
-		<span class="ab__text">
-			<span class="ab__date">Tekst sinds {date(w.from)}</span>
-			<span class="ab__period">{w.until ? `tot ${date(w.until)}` : 'geldend recht'}</span>
-		</span>
-		<Caret />
-		<select
-			class="ab__native"
-			aria-label="Tekstversie {which}"
-			value={w.index}
-			onchange={(e) => pick(Number(e.currentTarget.value))}
-		>
-			{#each byYear(wordings) as [year, group] (year)}
-				<optgroup label={year}>
+	<!-- Which text it is, as a text menu (docs/bediening.md): the badge and its dates, the
+	     versions under it per year; the one the other side shows cannot be chosen. -->
+	<TekstMenu label="Tekstversie {which}" tekst="Tekst sinds {date(w.from)}">
+		{#snippet knop()}<span class="badge badge--{which.toLowerCase()}">{which}</span><span
+				class="ab__text"
+				>Tekst sinds {date(w.from)}, {w.until ? `tot ${date(w.until)}` : 'geldend recht'}</span
+			>{/snippet}
+		{#snippet inhoud(sluit)}
+			<div class="ab__lijst">
+				{#each byYear(wordings) as [year, group] (year)}
+					<span class="ab__jaar" aria-hidden="true">{year}</span>
 					{#each group as option (option.index)}
-						<option value={option.index} disabled={option.index === other}
-							>Tekst sinds {optionLabel(option)}{option.until ? '' : ', geldend'}</option
+						<button
+							type="button"
+							role="menuitemradio"
+							class="ab__menuitem"
+							aria-checked={option.index === w.index}
+							disabled={option.index === other}
+							onclick={() => {
+								sluit();
+								if (option.index !== w.index) pick(option.index);
+							}}>Tekst sinds {optionLabel(option)}{option.until ? '' : ', geldend'}</button
 						>
 					{/each}
-				</optgroup>
-			{/each}
-		</select>
-	</label>
+				{/each}
+			</div>
+		{/snippet}
+	</TekstMenu>
 {/snippet}
 
 <section class="vc" aria-label="Versies vergelijken">
@@ -345,15 +350,10 @@
 		     change that began it; ‹ › and the arrow keys step through the changes. -->
 			<div class="ab">
 				{@render chooser('A', from, to.index, (i) => showPair(i, to.index))}
-				<button
-					type="button"
-					class="ab__btn"
-					title="A en B omdraaien"
-					aria-label="A en B omdraaien"
-					onclick={() => showPair(to.index, from.index)}
-					><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"
+				<IconKnop label="A en B omdraaien" onclick={() => showPair(to.index, from.index)}
+					><svg class="ab__ruil" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"
 						><path d="M2 5.5h11M10 2.5l3 3-3 3M14 10.5H3M6 7.5l-3 3 3 3" /></svg
-					></button
+					></IconKnop
 				>
 				{@render chooser('B', to, from.index, (i) => showPair(from.index, i))}
 			</div>
@@ -392,21 +392,16 @@
 					{/each}
 				</ol>
 				<span class="pick__steps">
-					<button
-						type="button"
-						class="ab__btn ab__btn--prev"
-						aria-label="Vorige wijziging"
-						title="Vorige wijziging (←)"
+					<IconKnop
+						class="ab__vorige"
+						label="Vorige wijziging (←)"
 						disabled={prevChange === null}
-						onclick={() => prevChange !== null && showChange(prevChange)}><Caret side /></button
+						onclick={() => prevChange !== null && showChange(prevChange)}><Caret side /></IconKnop
 					>
-					<button
-						type="button"
-						class="ab__btn"
-						aria-label="Volgende wijziging"
-						title="Volgende wijziging (→)"
+					<IconKnop
+						label="Volgende wijziging (→)"
 						disabled={nextChange === null}
-						onclick={() => nextChange !== null && showChange(nextChange)}><Caret side /></button
+						onclick={() => nextChange !== null && showChange(nextChange)}><Caret side /></IconKnop
 					>
 				</span>
 			</div>
@@ -455,20 +450,16 @@
 					<span class="text"><del>{reversed ? 'alleen in A' : 'geschrapt'}</del></span>
 				</span>
 				<span class="tools__acts">
-					<span class="toggle" role="radiogroup" aria-label="Weergave">
-						<button
-							type="button"
-							role="radio"
-							aria-checked={layout === 'een'}
-							onclick={() => go({ weergave: null })}>In één tekst</button
-						>
-						<button
-							type="button"
-							role="radio"
-							aria-checked={layout === 'naast'}
-							onclick={() => go({ weergave: 'naast' })}>Naast elkaar</button
-						>
-					</span>
+					<Keuze
+						klein
+						label="Weergave"
+						opties={[
+							{ waarde: 'een', label: 'In één tekst' },
+							{ waarde: 'naast', label: 'Naast elkaar' }
+						]}
+						waarde={layout}
+						onKies={(w) => go({ weergave: w === 'naast' ? 'naast' : null })}
+					/>
 					{#if sameCount > 0}
 						<button type="button" class="btn is-text" onclick={() => (showSame = !showSame)}
 							>{showSame ? 'Alleen wijzigingen' : 'Alle leden'}</button
@@ -697,32 +688,6 @@
 		border: 1px solid var(--rule);
 		border-radius: var(--r-2);
 	}
-	.toggle {
-		display: inline-flex;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		overflow: hidden;
-	}
-	/* 28px with its border, as the other controls of the comparison. */
-	.toggle button {
-		height: 26px;
-		padding: 0 var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.toggle button + button {
-		border-left: 1px solid var(--rule-strong);
-	}
-	.toggle button[aria-checked='true'] {
-		background: var(--ink);
-		color: var(--paper);
-	}
 	.leden {
 		display: flex;
 		flex-wrap: wrap;
@@ -910,94 +875,61 @@
 		align-items: center;
 		gap: var(--s-2);
 	}
-	.ab__card {
-		position: relative;
-		display: flex;
-		align-items: center;
-		gap: var(--s-3);
+	/* The A and B choosers are text menus: the badge, the dates, a caret. */
+	.ab :global(.tekstmenu) {
 		min-width: 0;
-		padding: var(--s-2) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		background: var(--paper);
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.ab__card:hover {
-		border-color: var(--ink-3);
-	}
-	.ab__card:focus-within {
-		outline: 2px solid var(--ink-3);
-		outline-offset: 1px;
-	}
-	.ab__card .badge {
-		border-color: var(--paper);
 	}
 	.ab__text {
-		display: flex;
-		flex-direction: column;
-		flex: 1;
-		min-width: 0;
-		line-height: 1.3;
-	}
-	.ab__date,
-	.ab__period {
+		margin-left: var(--s-2);
 		overflow: hidden;
 		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
-	.ab__date {
-		font-weight: 600;
-		color: var(--ink);
+	.ab__lijst {
+		display: flex;
+		flex-direction: column;
+		max-height: 60vh;
+		overflow-y: auto;
 	}
-	.ab__period {
+	.ab__jaar {
+		padding: var(--s-2) var(--s-3) var(--s-1);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
+		font-weight: 600;
+		color: var(--ink-3);
 	}
-	.ab__card :global(.caret) {
-		margin: 0;
-	}
-	.ab__native {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		opacity: 0;
-		cursor: pointer;
-	}
-	.ab__btn {
-		display: grid;
-		place-items: center;
-		width: 28px;
-		height: 28px;
-		padding: 0;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
+	.ab__menuitem {
+		padding: var(--s-1) var(--s-3);
+		border: 0;
 		background: none;
-		color: var(--ink-2);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink);
+		text-align: left;
+		white-space: nowrap;
 		cursor: pointer;
 	}
-	.ab__btn:hover:not(:disabled) {
-		background: var(--paper);
-		color: var(--ink);
+	.ab__menuitem:hover:not(:disabled),
+	.ab__menuitem:focus-visible {
+		background: var(--paper-2);
+		outline: none;
 	}
-	.ab__btn:disabled {
-		opacity: 0.4;
+	.ab__menuitem[aria-checked='true'] {
+		font-weight: 600;
+	}
+	.ab__menuitem:disabled {
+		color: var(--rule-strong);
 		cursor: default;
 	}
-	.ab__btn :global(.caret) {
-		margin: 0;
-		opacity: 1;
-	}
-	/* The chevron points right; the previous change turns it round. */
-	.ab__btn--prev :global(.caret.is-side) {
-		transform: rotate(90deg);
-	}
-	.ab__btn svg {
+	.ab__ruil {
 		fill: none;
 		stroke: currentColor;
 		stroke-width: 1.4;
 		stroke-linecap: round;
 		stroke-linejoin: round;
+	}
+	/* The chevron points right; the previous change turns it round. */
+	:global(.ab__vorige .caret.is-side) {
+		transform: rotate(90deg);
 	}
 
 	.tools {
