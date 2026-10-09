@@ -134,8 +134,6 @@
 					{gekozen.label}{gekozen.sub ? `, ${gekozen.sub}` : ''}</span
 				>
 				<a href={gekozen.href}>{gekozen.groep ? 'Open de lijst' : 'Open de bron'} →</a>
-			{:else}
-				<span class="hint">Kies een bron voor haar verbindingen.</span>
 			{/if}
 			<a class="verkenner" href={schets.verkenner}>Open in de Verkenner →</a>
 		</figcaption>
@@ -284,9 +282,6 @@
 	}
 	figcaption a {
 		color: var(--ink);
-	}
-	.hint {
-		color: var(--ink-3);
 	}
 	.verkenner {
 		margin-left: auto;

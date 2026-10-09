@@ -590,25 +590,23 @@
 	>
 		{#if outsideLaw}
 			<p class="state" role="status">
-				"{q}" staat niet in Concordans. Het netwerk bevat een selectie van wetten;
+				"{q}" staat niet in Concordans.
 				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="noopener"
-					>zoek de regeling op wetten.overheid.nl</a
-				>.
-				{#if hits.length}De treffers hieronder noemen haar.{/if}
+					>wetten.overheid.nl</a
+				>
 			</p>
 		{/if}
 		{#if kamer}
 			<p class="state" role="status">
-				De {kamer === 'EK' ? 'Eerste' : 'Tweede'} Kamer is geen bron in het netwerk. Bekijk haar
-				{#each kamerLinks(kamer) as link, i (link.href)}{i > 0 ? (i === 2 ? ' en ' : ', ') : ''}<a
-						href={link.href}>{link.label}</a
-					>{/each}.
+				{kamer === 'EK' ? 'Eerste' : 'Tweede'} Kamer:
+				{#each kamerLinks(kamer) as link, i (link.href)}{i > 0 ? ', ' : ''}<a href={link.href}
+						>{link.label}</a
+					>{/each}
 			</p>
 		{/if}
 		{#if notFound}
 			<p class="state" role="status">
-				"{q}" staat niet in de gegevens. Het netwerk bevat een selectie van bronnen;
-				<a href="/bronnen#dekking">zie de dekking</a>.
+				"{q}" staat niet in de gegevens. <a href="/bronnen#dekking">Dekking</a>
 			</p>
 		{/if}
 		{#if keuzes.length > 0}
@@ -616,7 +614,7 @@
 			<div class="group" role="group" aria-labelledby="{uid}-keuzes">
 				<div class="group-label" id="{uid}-keuzes">
 					<KindGlyph collection="articles" />
-					Kies een artikel
+					Artikelen met dit nummer
 				</div>
 				{#each keuzes as keuze, i (keuze.ref.key)}
 					<a
