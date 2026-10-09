@@ -19,6 +19,10 @@
 			/** What the field searches, for a screen reader: `Zoek in Actueel`. */
 			naam: string;
 			onInput: (v: string) => void;
+			/** The label above it: Zoeken, or what the field takes (`Onderwerp`). */
+			label?: string;
+			/** A field that adds rather than searches: its button beside it, Enter submits. */
+			knop?: { label: string; disabled?: boolean; onSubmit: () => void } | null;
 		} | null;
 		periode?: {
 			/** Its own name where the list has one (`Datum van uitspraak`); else Periode. */
@@ -35,15 +39,26 @@
 <div class="bepaal">
 	{#if zoek}
 		<div class="vak vak--zoek">
-			<label class="kop" for="{uid}-zoek">Zoeken</label>
-			<input
-				id="{uid}-zoek"
-				type="search"
-				aria-label={zoek.naam}
-				placeholder={zoek.placeholder}
-				value={zoek.waarde}
-				oninput={(e) => zoek.onInput(e.currentTarget.value)}
-			/>
+			<label class="kop" for="{uid}-zoek">{zoek.label ?? 'Zoeken'}</label>
+			<form
+				class="veld"
+				onsubmit={(e) => {
+					e.preventDefault();
+					if (zoek.knop && !zoek.knop.disabled) zoek.knop.onSubmit();
+				}}
+			>
+				<input
+					id="{uid}-zoek"
+					type={zoek.knop ? 'text' : 'search'}
+					aria-label={zoek.naam}
+					placeholder={zoek.placeholder}
+					value={zoek.waarde}
+					oninput={(e) => zoek.onInput(e.currentTarget.value)}
+				/>
+				{#if zoek.knop}<button type="submit" class="knop" disabled={zoek.knop.disabled}
+						>{zoek.knop.label}</button
+					>{/if}
+			</form>
 		</div>
 	{/if}
 	{#if periode}
@@ -97,8 +112,15 @@
 		color: var(--ink);
 		white-space: nowrap;
 	}
+	.veld {
+		display: flex;
+		gap: var(--s-2);
+		margin: 0;
+	}
 	input {
 		box-sizing: border-box;
+		flex: 1;
+		min-width: 0;
 		width: 100%;
 		height: var(--veld-h);
 		padding: 0 var(--s-3);
@@ -115,6 +137,27 @@
 	input:focus-visible {
 		outline: 2px solid var(--accent);
 		outline-offset: 1px;
+	}
+	/* A knop on a page: 32 px (docs/bediening.md). */
+	.knop {
+		flex: none;
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.knop:hover:not(:disabled) {
+		border-color: var(--ink);
+	}
+	.knop:disabled {
+		color: var(--rule-strong);
+		cursor: default;
 	}
 	@media (max-width: 768px) {
 		.vak {
