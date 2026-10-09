@@ -61,6 +61,12 @@ export const dagMaand = (iso: string | null | undefined): string => {
 	return t ? `${t.d} ${MAAND_KORT[t.m - 1]}` : '';
 };
 
+/** The month alone, `september` or, `kort`, `sep.`: over the days of a timetable. */
+export const maandNaam = (iso: string | null | undefined, kort = false): string => {
+	const t = dagVan(iso);
+	return t ? (kort ? MAAND_KORT : MAAND)[t.m - 1] : '';
+};
+
 /** `sep. 2026`; empty without a date. */
 export const maandJaar = (iso: string | null | undefined): string => {
 	const t = dagVan(iso);
