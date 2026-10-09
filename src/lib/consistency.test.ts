@@ -132,6 +132,16 @@ describe('one form for each thing', () => {
 		expect(actueel.text).toMatch(/\n\tvorm: Vorm;/);
 	});
 
+	it('chooses a Kamer with a Keuze, never with boxes (docs/bediening.md)', () => {
+		expect(
+			offenders(
+				(t) =>
+					/kind: 'list',[^}]{0,300}Tweede Kamer/.test(t) ||
+					/\[\{ c: 'TK', label: 'Tweede Kamer' \}[^\n]*\n[^\n]*<FilterOptie/.test(t)
+			)
+		).toEqual([]);
+	});
+
 	it('draws every option of a filter with FilterOptie', () => {
 		expect(offenders((t) => /class="(box|opt|check__box)"/.test(t))).toEqual([]);
 	});
