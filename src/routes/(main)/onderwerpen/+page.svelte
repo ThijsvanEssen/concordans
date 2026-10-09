@@ -9,11 +9,10 @@
 	import { untrack } from 'svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import { API_BASE_URL } from '$lib/api/base-url';
-	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
-	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
-	import { bronHref } from '$lib/bron/href';
+	import FeedDay from '$lib/components/actueel/FeedDay.svelte';
+	import { partyColor } from '$lib/utils/party-color.svelte';
 	import {
-		dayLabel,
+		daysOf,
 		dagVoor,
 		doorzochtVanaf,
 		feedStand,
@@ -21,7 +20,6 @@
 		shortDate,
 		type FeedItem
 	} from '$lib/components/actueel/feed';
-	import { headlineOf, hrefOf } from '$lib/components/actueel/timeline';
 	import {
 		deelAdres,
 		isNieuw,
@@ -155,37 +153,8 @@
 		);
 	});
 
-	/** `Dinsdag 22 september`: the year only when it is not this one. */
-	const dagKop = (date: string) => {
-		const label = dayLabel(date, today);
-		return date.slice(0, 4) === today.slice(0, 4) ? label.replace(/ \d{4}$/, '') : label;
-	};
-	const groepenVan = (items: FeedItem[], vorige: string | null): TijdGroep[] =>
-		[...Map.groupBy(items, (i) => i.date)].map(([date, is]) => ({
-			id: date,
-			titel: dagKop(date),
-			regels: is.map((i) => {
-				const h = headlineOf(i);
-				const ref = hrefOf(i);
-				return {
-					id: i.id,
-					datum: null,
-					teken: h.failed
-						? 'nee'
-						: /aangenomen/i.test(h.label)
-							? 'ja'
-							: h.major
-								? 'stuk'
-								: 'activiteit',
-					vorm: h.vorm,
-					label: isNieuw(i.date, vorige) ? `${h.label}, nieuw` : h.label,
-					zin: h.title,
-					href: bronHref(ref, { keepMode: false, mode: 'graph' }),
-					ref,
-					groot: h.major
-				};
-			})
-		}));
+	/** The row opened in place, as on Actueel. */
+	let openId = $state<string | null>(null);
 
 	let verderBezig = $state<string | null>(null);
 	async function verderTerug(o: Onderwerp) {
@@ -386,10 +355,21 @@
 					<p class="status">Niets {periodeVan(o)}.</p>
 				{:else}
 					{@const alle = uitgeklapt[vak(o)] || s.items.length <= EERST + 2}
-					<Tijdlijn
-						groepen={groepenVan(alle ? s.items : s.items.slice(0, EERST), o.vorige)}
-						datums={false}
-					/>
+					<!-- The rows of Actueel, day by day: both read the same. -->
+					<div class="dagen">
+						{#each daysOf(alle ? s.items : s.items.slice(0, EERST)) as day (day.date)}
+							<FeedDay
+								{day}
+								{today}
+								{openId}
+								onToggle={(id) => (openId = openId === id ? null : id)}
+								colorOf={(short) => (short ? partyColor(short) : 'var(--rule-strong)')}
+								ministryName={(key) => key ?? ''}
+								filterHref={(patch) => `/actueel?${new URLSearchParams(patch)}`}
+								nieuwSinds={o.vorige}
+							/>
+						{/each}
+					</div>
 					{#if !alle}
 						<p class="alle">
 							<TekstLink onclick={() => (uitgeklapt[vak(o)] = true)}
@@ -468,6 +448,11 @@
 	}
 	.inhoud {
 		min-width: 0;
+	}
+	/* Actueel's rows, with Actueel's (and Bladeren's) columns. */
+	.dagen {
+		--row-lead: 140px;
+		--row-aside: 150px;
 	}
 	.titel {
 		margin: 0 0 var(--s-2);
