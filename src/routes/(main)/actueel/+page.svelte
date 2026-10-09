@@ -1,6 +1,7 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import { volg, volgt } from '$lib/onderwerpen/onderwerpen';
 	// Actueel: what happened in the Kamer and the government, newest first, per day. Every
@@ -576,7 +577,7 @@
 		<div class="filters-body" id="actueel-facetten" class:filters-body--open={filtersOpen}>
 			<IndexFacets {groups} pending={tellen} />
 			{#if chips.length}
-				<button type="button" class="wis-knop" onclick={clearFilters}>Wis alle filters</button>
+				<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
 			{/if}
 		</div>
 	</aside>
@@ -726,20 +727,8 @@
 	.verfijnen-knop {
 		display: none;
 	}
-	.wis-knop {
-		margin-top: var(--s-3);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink-3);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.wis-knop:hover {
-		color: var(--ink);
+	.wis {
+		margin: var(--s-3) 0 0;
 	}
 
 	/* The count above the list, on the ink rule that opens it. */

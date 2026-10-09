@@ -252,7 +252,7 @@
 		width: 340px;
 		max-width: 100%;
 		min-width: 0;
-		height: 32px;
+		height: var(--veld-h);
 		padding: 0 10px;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);

@@ -1021,7 +1021,7 @@
 		color: var(--ink-2);
 	}
 	.fractie select {
-		height: var(--s-6);
+		height: var(--veld-h);
 		padding: 0 var(--s-2);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
