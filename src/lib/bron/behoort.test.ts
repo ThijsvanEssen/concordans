@@ -267,8 +267,12 @@ describe('a translation and a dossier', () => {
 
 	it('reads the Kamer of a dossier from its label where props lack it', () => {
 		const l = { node: { labels: ['TK'] }, neighbors: { total: 0, buckets: [] } } as never;
-		expect(behoort('dossiers', {}, l).regels.map((r) => [r.label, r.lagen[0].naam])).toEqual([
-			['Behandeld in', 'Tweede Kamer']
+		const regels = behoort('dossiers', {}, l).regels;
+		expect(regels.map((r) => [r.label, r.lagen[0]?.naam ?? null, !!r.laad])).toEqual([
+			['Behandeld in', 'Tweede Kamer', false],
+			// What the bill amends and implements comes with the detail (legal_effect, 0.79.30).
+			['Wijzigt', null, true],
+			['Implementeert', null, true]
 		]);
 	});
 });

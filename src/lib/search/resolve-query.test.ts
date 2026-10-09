@@ -321,3 +321,24 @@ describe('keuzesOf', () => {
 		expect(keuzesOf(null).items).toEqual([]);
 	});
 });
+
+describe('a fractie or lid the API resolves (0.79.30)', () => {
+	it('opens the fractie for "VVD", not the regulation with that abbreviation', () => {
+		const r = resolvedOf({
+			q: 'VVD',
+			kind: 'faction',
+			confidence: 0.9,
+			match: {
+				id: 'factions/vvd',
+				key: 'vvd',
+				collection: 'factions',
+				kind: 'faction',
+				display_name: 'Volkspartij voor Vrijheid en Democratie',
+				confidence: 0.9
+			},
+			alternatives: []
+		} as never);
+		expect(r?.ref).toEqual({ collection: 'factions', key: 'vvd' });
+		expect(r?.label).toBe('Volkspartij voor Vrijheid en Democratie');
+	});
+});

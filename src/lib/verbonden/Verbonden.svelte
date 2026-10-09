@@ -54,7 +54,7 @@
 		type WetVolgorde
 	} from './volgorde';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import { isKernGroep, procesgangIds } from '$lib/bron/behoort';
+	import { isKernGroep, lazeKernIds } from '$lib/bron/behoort';
 	import { get } from 'svelte/store';
 	import {
 		GROUPINGS,
@@ -173,10 +173,11 @@
 	$effect(() => {
 		const { collection, key, id } = selection;
 		keten = new Set();
-		if (collection !== 'judgments') return;
-		procesgangIds(key).then((ids) => {
-			if (selection.id === id) keten = new Set(ids);
-		});
+		lazeKernIds(collection, key, (selection.raw?.props ?? {}) as Record<string, unknown>).then(
+			(ids) => {
+				if (selection.id === id) keten = new Set(ids);
+			}
+		);
 	});
 	/** The judgment a translation renders (`translation_of`, an ECLI), as an id. */
 	const vertalingVan = (r: Row) => {

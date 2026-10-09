@@ -155,7 +155,11 @@ const RESOLVE_KINDS: Record<string, Collection> = {
 	article: 'articles',
 	instrument: 'instruments',
 	judgment: 'judgments',
-	document: 'documents'
+	document: 'documents',
+	// API 0.79.30 (Back-end #1): "VVD" is the fractie, not the Warenwetregeling (audit Z3).
+	faction: 'factions',
+	member: 'members',
+	commitment: 'commitments'
 };
 
 const apiDeps: ResolveDeps = {

@@ -800,8 +800,9 @@
 </div>
 
 <style>
+	/* In line with the hits below it. */
 	.periode {
-		padding: var(--s-2) 0;
+		padding: var(--s-2) var(--s-4) 0;
 	}
 	.search {
 		display: flex;
