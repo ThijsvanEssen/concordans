@@ -14,4 +14,5 @@
 		<title>{title ?? kop.title}</title>
 		<meta name="description" content={kop.description} />
 	{/if}
+	{#if kop.index === false}<meta name="robots" content="noindex" />{/if}
 </svelte:head>

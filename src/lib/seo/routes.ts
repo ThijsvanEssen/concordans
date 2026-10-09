@@ -4,7 +4,13 @@
 // next to index.html, for the head it serves and to tell a page from a 404.
 import routes from './spa-routes.json';
 
-export type SpaRoute = { path: string; title: string; description: string };
+export type SpaRoute = {
+	path: string;
+	title: string;
+	description: string;
+	/** `false`: a page of this browser alone (Gemarkeerd), noindex and not in the sitemap. */
+	index?: boolean;
+};
 
 export const SPA_ROUTES: readonly SpaRoute[] = routes;
 

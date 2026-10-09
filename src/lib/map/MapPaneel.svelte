@@ -22,7 +22,7 @@
 
 	const gedeeld = $derived(kaart.gedeeld);
 	const items = $derived(gedeeld?.items ?? kaart.items);
-	const volgorde = $derived<Map['volgorde']>(gedeeld ? 'groep' : kaart.actief.volgorde);
+	const volgorde = $derived<Map['volgorde']>(gedeeld?.volgorde ?? kaart.actief.volgorde);
 	const reeksen = $derived(
 		volgorde === 'eigen' ? [{ groep: '', items: [...items] }] : groepen(items)
 	);
@@ -37,6 +37,7 @@
 		const url = new URL('/explore', page.url.origin);
 		url.searchParams.set('map', naarParam(kaart.items));
 		url.searchParams.set('mapnaam', kaart.actief.naam);
+		if (kaart.actief.volgorde === 'eigen') url.searchParams.set('mapvolgorde', 'eigen');
 		return url.toString();
 	};
 	// The name wraps, its last word stays with the caret of the menu.
@@ -90,6 +91,7 @@
 		if (!url.searchParams.has('map')) return;
 		url.searchParams.delete('map');
 		url.searchParams.delete('mapnaam');
+		url.searchParams.delete('mapvolgorde');
 		void goto(url.pathname + url.search + url.hash, {
 			replaceState: true,
 			noScroll: true,

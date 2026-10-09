@@ -68,7 +68,7 @@ What a reader keeps while reading goes into a map (`src/lib/map`; concept ux-voo
 - **Notes:** Aantekening beside an item opens a field in place; Enter keeps it, Escape leaves it. The note stands in italics under the item and goes into the link, the citations and the CSV.
 - **Order:** per law, dossier or judgment, or the reader's own. ↑ and ↓ move an item within its group, or among all items in the own order.
 - **Alle mappen:** `/gemarkeerd`, a table of the maps by name, number of bronnen and last change, the active one in weight. A name makes its map active and opens the panel.
-- **Sharing:** a link (`?map=`, with `mapnaam=`) opens the set in the panel under its name: Bewaar als map, Voeg toe aan the active map, or Niet bewaren. Fields per item `id~at~kort~groep~notitie`, items separated by `;`; only `%`, `~` and `;` are escaped.
+- **Sharing:** a link (`?map=`, with `mapnaam=` and, in the own order, `mapvolgorde=eigen`) opens the set in the panel under its name: Bewaar als map, Voeg toe aan the active map, or Niet bewaren. Fields per item `id~at~kort~groep~notitie`, items separated by `;`; only `%`, `~` and `;` are escaped.
 - **Storage:** the maps live in this browser (`concordans:mappen`), without an account. The one map of step 1 (`concordans:map`) became the first map.
 
 ## Marks on a timeline
