@@ -12,7 +12,7 @@
 	import { korteDatum } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { uitParams } from '$lib/onderwerpen/onderwerpen';
-	import { naamVanNummer } from '$lib/bron/dossier-naam';
+	import { dossierName, naamVanNummer } from '$lib/bron/dossier-naam';
 	import {
 		filter,
 		naarCsv,
@@ -242,8 +242,16 @@
 	let exporteren = $state(false);
 	async function exporteer() {
 		exporteren = true;
-		const nummers = [...new Set(lijst.flatMap((d) => d.dossier_numbers ?? []))].slice(0, CSV_NAMEN);
+		// The names the decisions carry (API 0.79.30); asked by number only where they do not.
 		const namen = new Map<string, string>();
+		for (const d of lijst)
+			for (const x of d.dossiers ?? []) {
+				const n = dossierName(x);
+				if (n !== x.number) namen.set(x.number, n);
+			}
+		const nummers = [...new Set(lijst.flatMap((d) => d.dossier_numbers ?? []))]
+			.filter((n) => !namen.has(n))
+			.slice(0, CSV_NAMEN);
 		await Promise.all(
 			nummers.map((n) =>
 				naamVanNummer(n).then((naam) => {
