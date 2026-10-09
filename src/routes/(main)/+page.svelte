@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import { api, unwrap } from '$lib/api/client';
@@ -133,12 +134,9 @@
 	);
 </script>
 
+<RouteKop pad="/" />
+
 <svelte:head>
-	<title>Concordans</title>
-	<meta
-		name="description"
-		content="Wetten, uitspraken en Kamerstukken uit officiële bronnen, met hun onderlinge verbindingen."
-	/>
 	<link
 		rel="alternate"
 		type="application/atom+xml"

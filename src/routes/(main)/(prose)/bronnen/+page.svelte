@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Bronnen en hergebruik: the one place for where the data comes from, how far it goes, and
 	// what may be done with it. Elsewhere one sentence links here.
 	import { onMount } from 'svelte';
@@ -145,9 +146,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Bronnen en hergebruik, Concordans</title>
-</svelte:head>
+<RouteKop pad="/bronnen" />
 
 <div class="page-wrap">
 	<div class="container">

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Gevolgde onderwerpen: per topic what came into Actueel since the visit before. The topics
 	// are kept in this browser; an address with `?onderwerp=` shows someone else's without
 	// touching the own list, and can be followed in one step.
@@ -278,7 +279,7 @@
 	}
 </script>
 
-<svelte:head><title>Onderwerpen, Concordans</title></svelte:head>
+<RouteKop pad="/onderwerpen" />
 
 <div class="onderwerpen">
 	<header class="kop">

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import { volg, volgt } from '$lib/onderwerpen/onderwerpen';
@@ -513,7 +514,7 @@
 	}
 </script>
 
-<svelte:head><title>Actueel, Concordans</title></svelte:head>
+<RouteKop pad="/actueel" />
 
 {#snippet verder()}
 	{#if doorzocht}

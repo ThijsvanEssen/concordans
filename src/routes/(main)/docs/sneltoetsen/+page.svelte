@@ -1,6 +1,8 @@
-<svelte:head>
-	<title>Sneltoetsen, Concordans</title>
-</svelte:head>
+<script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
+</script>
+
+<RouteKop pad="/docs/sneltoetsen" />
 
 <div class="page-wrap">
 	<div class="container">

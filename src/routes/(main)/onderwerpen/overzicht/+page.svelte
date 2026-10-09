@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Overzicht of a topic: the decisions of the Kamers on moties, amendementen and bills with
 	// its words in the title, by kind, outcome and year, and for one fractie by its vote. Every
 	// number is a link to the list it counts, on this page; the list goes out as a CSV.
@@ -561,7 +562,10 @@
 			: null;
 </script>
 
-<svelte:head><title>{naam ? `${naam}, overzicht` : 'Overzicht'}, Concordans</title></svelte:head>
+<RouteKop
+	pad="/onderwerpen/overzicht"
+	title={naam ? `${naam}, overzicht, Concordans` : undefined}
+/>
 
 {#snippet cel(n: number, patch: Patch, bezig = false)}
 	{#if n > 0}
