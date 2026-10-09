@@ -36,8 +36,9 @@
 		href?: string;
 		open?: boolean;
 		onToggle?: () => void;
-		/** The ways on at the end of the row instead of a detail beneath it. */
-		acties?: boolean;
+		/** The ways on at the end of the row instead of a detail beneath it; `titel` where the
+		 *  title is the one way on (a kabinet, read only in the network). */
+		acties?: boolean | 'titel';
 		/** What the row stands for (`judgments/<key>`), to find it again in the list. */
 		bron?: string;
 		/** A dossier under its number, indented beneath it. */
@@ -99,17 +100,17 @@
 			{@render body?.()}
 		</div>
 		<div class="row-aside">{@render aside?.()}</div>
-		{#if acties && bron}
+		{#if acties === true && bron}
 			<div class="row-acties">
 				{#if leesbaar}
-					<a class="actie" href={lezen} aria-label="{title} lezen"
+					<a class="act" href={lezen} aria-label="{title} lezen"
 						><Picto naam="tekst" size={13} />Lezen</a
 					>
-					<a class="actie" href={netwerk} aria-label="{title} in het netwerk"
+					<a class="act" href={netwerk} aria-label="{title} in het netwerk"
 						><Picto naam="netwerk" size={13} />Netwerk</a
 					>
 				{:else}
-					<a class="actie" href={netwerk} aria-label="{title} openen">Openen</a>
+					<a class="act" href={netwerk} aria-label="{title} openen">Openen</a>
 				{/if}
 			</div>
 		{/if}
@@ -225,18 +226,18 @@
 		padding-top: 2px;
 		white-space: nowrap;
 	}
-	.actie {
+	.act {
 		display: inline-flex;
 		align-items: center;
 		gap: 4px;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		color: var(--ink-2);
 		text-decoration: none;
 	}
-	.actie:hover,
-	.actie:focus-visible {
+	.act:hover,
+	.act:focus-visible {
 		color: var(--ink);
 		text-decoration: underline;
 		text-underline-offset: 3px;

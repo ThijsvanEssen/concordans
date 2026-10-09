@@ -2,16 +2,17 @@
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { axisLabels } from './index/years-axis';
-	import { korteDatum, langeDatum, weekdag } from '$lib/text/datum';
+	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import { rijen } from '$lib/actions/rijen';
 	// Index: browse one category at a time. Beside the list a column of filters, each
-	// option with the number of bronnen it holds under the other filters. A row's title
-	// links to the bron; the rest of the row expands inline with its metadata and the
-	// ways on to the bron (… lezen, In het netwerk).
+	// option with the number of bronnen it holds under the other filters. A row says what
+	// the bron is in its own lines; its title opens it, and at its end stand the ways on in
+	// one click (Lezen, Netwerk; Openen for a bron read beside the network). No panel
+	// opens beneath a row (Thijs, 10 Oct).
 	//
 	// Every filter, the sort and the open row are in the URL, so a view can be shared.
 	// What the API can filter or sort is passed on as a query; the rest is done
@@ -2463,12 +2464,7 @@
 									<ul class="list">
 										{#each pages.judgments.items as j (j.id)}
 											{@const bron = `judgments/${j.key}`}
-											<IndexRow
-												{bron}
-												title={judgmentRowTitle(j)}
-												href={hrefOf(bron)}
-												acties
-											>
+											<IndexRow {bron} title={judgmentRowTitle(j)} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={fmtDateShort(j.date)} /></span>
 													<span class="row-id-sub"
@@ -2580,12 +2576,7 @@
 													<span>Zonder lopende dossiers</span>
 												</li>
 											{/if}
-											<IndexRow
-												{bron}
-												title={c.name ?? c.key}
-												href={hrefOf(bron)}
-												acties
-											>
+											<IndexRow {bron} title={c.name ?? c.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={c.abbreviation} /></span>
 												{/snippet}
@@ -2616,12 +2607,7 @@
 									<ul class="list">
 										{#each membersShown as m (m.id)}
 											{@const bron = `members/${m.key}`}
-											<IndexRow
-												{bron}
-												title={m.name ?? m.key}
-												href={hrefOf(bron)}
-												acties
-											>
+											<IndexRow {bron} title={m.name ?? m.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<!-- An Eerste Kamer member's fractie is the one it sits in there. -->
 													{@const ek = kamer === 'EK' ? m.ek : null}
@@ -2652,12 +2638,7 @@
 									<ul class="list">
 										{#each factionsShown as f (f.id)}
 											{@const bron = `factions/${f.key}`}
-											<IndexRow
-												{bron}
-												title={f.name ?? f.key}
-												href={hrefOf(bron)}
-												acties
-											>
+											<IndexRow {bron} title={f.name ?? f.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main row-id-main--inline">
 														<span
@@ -2811,12 +2792,7 @@
 										{#each cabinetsShown as c (c.key)}
 											{@const bron = `cabinets/${c.key}`}
 											{@const parties = c.parties ?? []}
-											<IndexRow
-												{bron}
-												title={c.name}
-												href={hrefOf(bron)}
-												acties
-											>
+											<IndexRow {bron} title={c.name} href={hrefOf(bron)} acties="titel">
 												{#snippet lead()}
 													<span class="row-id-main"
 														>{period(c.from_date, c.to_date, isOpen(c))}</span
