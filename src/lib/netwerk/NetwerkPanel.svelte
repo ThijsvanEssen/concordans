@@ -569,6 +569,16 @@
 		width: auto;
 		padding-bottom: var(--s-2);
 	}
+	/* On a phone the full width at the top of the canvas, open or folded: no empty strip
+	   beside it (sweep at 375, 10 Oct). */
+	@media (max-width: 767px) {
+		.netwerk:not(.netwerk--start) {
+			left: var(--s-3);
+			right: var(--s-3);
+			width: auto;
+			max-width: none;
+		}
+	}
 	.netwerk--start {
 		top: 18%;
 		left: 50%;
