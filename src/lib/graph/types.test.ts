@@ -14,6 +14,7 @@ import {
 const node = (collection: string, key: string, props: BaseNode['props'] = {}): BaseNode => ({
 	id: `${collection}/${key}`,
 	key,
+	path: null,
 	collection,
 	type: 'x',
 	display_name: null,

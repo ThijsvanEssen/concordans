@@ -184,6 +184,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/instruments/{identifier}/definitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The definitions an instrument gives itself
+         * @description Its begripsbepalingen, as its text gives them, in the order of the text: each `term` with its `text`, the article and letter it stands in, where it holds (`scope`: the whole regulation, or a chapter or paragraph of it) and the regulation a definition is (`refers_to`: `wet`, de Zorgverzekeringswet). Empty for one that defines nothing. 404 for an unknown instrument.
+         */
+        get: operations["get_instrument_definitions_api_instruments__identifier__definitions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/instruments/{identifier}/eu-links": {
         parameters: {
             query?: never;
@@ -1500,6 +1520,11 @@ export interface components {
              * @default 0
              */
             document_count: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * ActorDossiersResponse
@@ -1736,6 +1761,11 @@ export interface components {
             reference_kind?: string | null;
             /** Confidence */
             confidence?: number | null;
+            /**
+             * Definition Ref
+             * @description The definition the regulation gives of a term in the citation's text that is the regulation cited ("van de wet": its `wet`), as `definitions[].ref`.
+             */
+            definition_ref?: string | null;
         };
         /**
          * ArticleCitationTarget
@@ -1848,6 +1878,16 @@ export interface components {
             instrument: components["schemas"]["InstrumentSummaryDTO"] | null;
             /** Citations */
             citations?: components["schemas"]["ArticleCitationSpan"][];
+            /**
+             * Term Spans
+             * @description Every place the text uses a term its regulation defines (where that definition holds: its regulation, or its chapter or paragraph), as `definitions`; not inside a citation, which names the definition itself (`definition_ref`) when it is the regulation cited.
+             */
+            term_spans?: components["schemas"]["TermSpanDTO"][];
+            /**
+             * Definitions
+             * @description The definitions `term_spans` and `citations` name, as the regulation gives them.
+             */
+            definitions?: components["schemas"]["DefinitionDTO"][];
             /**
              * References
              * @description Every reference the text of the article makes, as stored on it, whether or not the target is in the graph. `citations` holds the resolved ones, one per target.
@@ -2064,6 +2104,11 @@ export interface components {
             /** Article Number */
             article_number: string | null;
             instrument: components["schemas"]["InstrumentSummaryDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * ArticleRelationshipWithType
@@ -2181,6 +2226,11 @@ export interface components {
              * @description Aanhef, leden and onderdelen as spans of `text`; empty when the article has no structure or was normalized before parts existed.
              */
             parts?: components["schemas"]["ArticlePartDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * ArticleVersionDTO
@@ -2258,6 +2308,11 @@ export interface components {
             props: {
                 [key: string]: unknown;
             } | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * BusyCallDTO
@@ -2352,6 +2407,11 @@ export interface components {
             commitments: number;
             /** Ministries */
             ministries?: components["schemas"]["CabinetMinistryDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * CabinetMinistryDTO
@@ -2622,6 +2682,11 @@ export interface components {
              * @default 0
              */
             commitments: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * ChamberColorsDTO
@@ -2770,6 +2835,11 @@ export interface components {
              * @description The judgments that cite it, or another publication of the same decision, each once (as in `/api/judgments`): a standard judgment has many.
              */
             inbound_citation_count?: number | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * CoalitionFactionSeatsDTO
@@ -2780,13 +2850,59 @@ export interface components {
             key: string;
             /** Abbreviation */
             abbreviation?: string | null;
-            /** Seats */
+            /**
+             * Seats
+             * @description Its seats, a vacant one among them.
+             */
             seats: number;
+            /**
+             * Vacant
+             * @description Of its seats, those no member held that day (FractieZetelVacature): between a member who left and the successor's installation.
+             * @default 0
+             */
+            vacant: number;
             /**
              * Coalition
              * @description Its party held a post in the cabinet that day; a faction split off a coalition party holds none: opposition.
              */
             coalition: boolean;
+        };
+        /**
+         * CoalitionVoteDTO
+         * @description What the coalition of the cabinet in office did on a vote of the Tweede Kamer
+         *     (``semantic tk-coalition-votes``): the seats ``Voor`` and ``Tegen`` of the coalition and
+         *     of the opposition (a faction with its seats that day, a member of a roll call as one).
+         */
+        CoalitionVoteDTO: {
+            /**
+             * Cabinet
+             * @description The key of the cabinet in office that day.
+             */
+            cabinet: string;
+            /** Coalition For */
+            coalition_for: number;
+            /** Coalition Against */
+            coalition_against: number;
+            /** Opposition For */
+            opposition_for: number;
+            /** Opposition Against */
+            opposition_against: number;
+            /**
+             * Pattern
+             * @description `together`: every coalition seat on one side; `split`: on both; `wissel`: split, and the side that won holds coalition and opposition seats.
+             * @enum {string}
+             */
+            pattern: "together" | "split" | "wissel";
+            /**
+             * Carried
+             * @description Passed with the coalition's seats alone more than half cast.
+             */
+            carried: boolean;
+            /**
+             * Decisive
+             * @description Had the whole coalition voted against the outcome, it would have turned.
+             */
+            decisive: boolean;
         };
         /**
          * ColorSourceDTO
@@ -2858,6 +2974,11 @@ export interface components {
             /** Dossiers */
             dossiers?: components["schemas"]["CommitmentDossierDTO"][];
             activity?: components["schemas"]["CommitmentActivityDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /** CommitmentDossierDTO */
         CommitmentDossierDTO: {
@@ -2872,6 +2993,11 @@ export interface components {
              * @description The name it goes by, as ``/api/dossiers`` gives it.
              */
             short_title?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * CommitmentFacetsDTO
@@ -2912,6 +3038,11 @@ export interface components {
             name?: string | null;
             /** Function */
             function?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * CommitteeActivitiesResponse
@@ -3020,6 +3151,11 @@ export interface components {
              * @default 0
              */
             active_dossier_count: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * CommitteeDetailDTO
@@ -3094,6 +3230,11 @@ export interface components {
              * @default 0
              */
             dossier_total: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * CommitteeSeatDTO
@@ -3196,6 +3337,44 @@ export interface components {
              * @description The date of its newest dated record, on or before today: a paper of the Kamer, a judgment, a publication, a version of a law coming into force. Null for a source without dated records.
              */
             newest?: string | null;
+        };
+        /**
+         * DecisionCabinetCoalition
+         * @description What the coalition of one cabinet did on the decisions under every filter.
+         */
+        DecisionCabinetCoalition: {
+            /**
+             * Cabinet
+             * @description The key of the cabinet.
+             */
+            cabinet: string;
+            /** Name */
+            name?: string | null;
+            /**
+             * Votes
+             * @description The votes with a coalition vote of it.
+             */
+            votes: number;
+            /** Together */
+            together: number;
+            /** Split */
+            split: number;
+            /** Wissel */
+            wissel: number;
+            /** Carried */
+            carried: number;
+            /** Decisive */
+            decisive: number;
+        };
+        /**
+         * DecisionCoalitionCount
+         * @description How many of the decisions saw the coalition do this (``coalition`` filter values).
+         */
+        DecisionCoalitionCount: {
+            /** Value */
+            value: string;
+            /** Count */
+            count: number;
         };
         /**
          * DecisionDTO
@@ -3315,11 +3494,18 @@ export interface components {
             };
             /** Votes */
             votes?: components["schemas"]["VoteDTO"][];
+            /** @description What the coalition did on the vote; null without a cabinet, without a coalition vote, and in the Eerste Kamer. */
+            coalition?: components["schemas"]["CoalitionVoteDTO"] | null;
             /**
              * Dictum
              * @description Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text.
              */
             dictum?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DecisionDayCount
@@ -3367,6 +3553,16 @@ export interface components {
              * @description With ``party_votes``: per faction asked, by key, how it voted.
              */
             party_votes?: components["schemas"]["PartyVotes"][];
+            /**
+             * Coalition
+             * @description Under every filter but `coalition`: how many votes the coalition voted `together`, `split` (no wisselmeerderheid) or as a `wissel`, and how many it `carried` or was `decisive` on; those with none left out.
+             */
+            coalition?: components["schemas"]["DecisionCoalitionCount"][];
+            /**
+             * Coalition Cabinets
+             * @description Under every filter (a topic of the Overzicht: its words, Kamer and period): per cabinet, newest first, what its coalition did on those votes.
+             */
+            coalition_cabinets?: components["schemas"]["DecisionCabinetCoalition"][];
         };
         /**
          * DecisionKindCount
@@ -3501,6 +3697,13 @@ export interface components {
              * @description Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text.
              */
             dictum?: string | null;
+            /** @description What the coalition did on the vote, as on the detail. */
+            coalition?: components["schemas"]["CoalitionVoteDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DecisionYearCount
@@ -3515,6 +3718,44 @@ export interface components {
             passed: number;
             /** Rejected */
             rejected: number;
+        };
+        /**
+         * DefinitionDTO
+         * @description A definition a regulation gives itself (its begripsbepalingen), as its text has it.
+         */
+        DefinitionDTO: {
+            /**
+             * Ref
+             * @description What a span names it by: article and letter.
+             */
+            ref: string;
+            /** Term */
+            term: string;
+            /** Text */
+            text: string;
+            /** Article Key */
+            article_key: string;
+            /** Article Number */
+            article_number?: string | null;
+            /**
+             * Place
+             * @description The letter of its onderdeel: `a`.
+             */
+            place?: string | null;
+            /** Jci */
+            jci?: string | null;
+            /**
+             * Scope
+             * @description Where it holds: `kind` (`wet`, `besluit`, `hoofdstuk`, …) and `path` (that part, empty for the whole regulation).
+             */
+            scope?: {
+                [key: string]: string;
+            };
+            /**
+             * Refers To
+             * @description The BWB id of the regulation the definition is (`wet`: de Zorgverzekeringswet).
+             */
+            refers_to?: string | null;
         };
         /** DocumentFacetCountDTO */
         DocumentFacetCountDTO: {
@@ -3591,6 +3832,11 @@ export interface components {
              * @description Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text.
              */
             dictum?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DocumentListResponse
@@ -3933,6 +4179,11 @@ export interface components {
              * @description The dossiers this one revises, accompanies or is related to, and those that revise, accompany or relate to it: by relation, then outgoing before incoming, then in the order of their numbers. All dossiers of its own number are ``GET /api/dossiers?number=``.
              */
             relations?: components["schemas"]["DossierRelationDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DossierDocumentDTO
@@ -3991,6 +4242,11 @@ export interface components {
             sender?: components["schemas"]["SenderDTO"] | null;
             /** Display Name */
             display_name?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DossierDocumentsResponse
@@ -4164,6 +4420,11 @@ export interface components {
              * @enum {string}
              */
             kind: "mutation" | "explanation";
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DossierMutationsResponse
@@ -4237,6 +4498,11 @@ export interface components {
              * @description The name it goes by, as ``/api/dossiers`` gives it.
              */
             short_title?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DossierRelationDTO
@@ -4418,6 +4684,11 @@ export interface components {
              * @description The key of the cabinet in office when that document was signed.
              */
             cabinet?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DossierTimelineResponse
@@ -4882,6 +5153,11 @@ export interface components {
              * @default 0
              */
             member_count: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * FactionDetailDTO
@@ -4967,6 +5243,11 @@ export interface components {
              * @description Of the coalition of the cabinet in office that day (`cabinet`): its party held a post in it; a faction split off a coalition party is opposition. Null when no cabinet was in office.
              */
             coalition?: boolean | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * FeedCommencementDTO
@@ -5068,6 +5349,11 @@ export interface components {
              * @description Where ``short_title`` comes from: ``title``, ``citation``, ``case`` or ``amended_law`` (then it names the law changed, not the bill).
              */
             short_title_basis?: ("title" | "citation" | "case" | "amended_law") | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * FeedFacetsDTO
@@ -5099,6 +5385,11 @@ export interface components {
              * @description Its abbreviation: ``VVD``.
              */
             short?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * FeedHeadlineDTO
@@ -5201,6 +5492,11 @@ export interface components {
             publication?: components["schemas"]["FeedPublicationDTO"] | null;
             commencement?: components["schemas"]["FeedCommencementDTO"] | null;
             judgment?: components["schemas"]["FeedJudgmentDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * FeedJudgmentDTO
@@ -5244,6 +5540,11 @@ export interface components {
             advocate_general?: string | null;
             /** Advocate General Role */
             advocate_general_role?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * FeedNodeDTO
@@ -5289,6 +5590,11 @@ export interface components {
             role: "indiener" | "medeindiener" | "bewindspersoon";
             /** @description The faction a Kamerlid signed for; null for a bewindspersoon. */
             faction?: components["schemas"]["FeedFactionDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * FeedPublicationDTO
@@ -5728,6 +6034,11 @@ export interface components {
             last_article_number?: string | null;
             /** Text Preview */
             text_preview?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * InstrumentArticleVersionDTO
@@ -5823,6 +6134,16 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["InstrumentArticleNodeDTO"][];
+        };
+        /**
+         * InstrumentDefinitionsResponse
+         * @description The definitions an instrument gives itself.
+         */
+        InstrumentDefinitionsResponse: {
+            /** Key */
+            key: string;
+            /** Definitions */
+            definitions?: components["schemas"]["DefinitionDTO"][];
         };
         /**
          * InstrumentDetailDTO
@@ -5953,6 +6274,11 @@ export interface components {
             same_treaty?: components["schemas"]["LinkedInstrumentDTO"][];
             /** @description Of a treaty of the Verdragenbank: where it was signed, its Tractatenblad publications, its parties with their dates, the parts of the Kingdom, the dossiers of its approval and the treaties it belongs to or that belong to it. Null for any other instrument. */
             treaty?: components["schemas"]["TreatyRegisterDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * InstrumentDossierItem
@@ -5993,6 +6319,11 @@ export interface components {
              * @description Identifier (e.g. ``stb-2019-33``) of the newest amending publication linking the dossier; only set when ``via`` is ``amending_publication``.
              */
             publication?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * InstrumentDossiersResponse
@@ -6153,6 +6484,11 @@ export interface components {
              * @description Articles of the focal instrument that this judgment cites.
              */
             cited_articles?: components["schemas"]["CitedArticleRef"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * InstrumentJudgmentsResponse
@@ -6233,6 +6569,11 @@ export interface components {
              * @description The official text: wetten.overheid.nl for a BWB regulation, EUR-Lex for an EU act, the Verdragenbank for a treaty, zoek.officielebekendmakingen.nl for a publication from 1995; null for none.
              */
             official_url?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * InstrumentListResponse
@@ -6364,6 +6705,11 @@ export interface components {
              * @description Not counted here: see `GET /api/instruments/{identifier}`.
              */
             outbound_citation_count?: number | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * InstrumentVersionDTO
@@ -6649,6 +6995,11 @@ export interface components {
              * @description The parties the kop of the judgment names, in its order. Null when the judgment was normalized before parties were read; empty when the kop names none.
              */
             parties?: components["schemas"]["JudgmentParty"][] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * JudgmentDetailResponse
@@ -6804,6 +7155,11 @@ export interface components {
             series_id?: string | null;
             /** Series Size */
             series_size?: number | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * JudgmentListResponse
@@ -6917,6 +7273,11 @@ export interface components {
             display_name: string | null;
             /** Ecli */
             ecli: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * LegalAreaDTO
@@ -7084,6 +7445,11 @@ export interface components {
             kind: string | null;
             /** Jurisdiction */
             jurisdiction: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * LookupResponse
@@ -7121,6 +7487,11 @@ export interface components {
             props?: {
                 [key: string]: unknown;
             };
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * MemberCommitteeDTO
@@ -7256,6 +7627,11 @@ export interface components {
              * @description The last day, inclusive (the Kamer's TotEnMet); null while open.
              */
             to_date?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * MemberDetailDTO
@@ -7350,6 +7726,11 @@ export interface components {
              * @description The committees they sat on, of either chamber, with their seat and role: those they sit on now first, then by name.
              */
             committees?: components["schemas"]["MemberCommitteeDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * MemberVoteDTO
@@ -7549,6 +7930,11 @@ export interface components {
             meta: {
                 [key: string]: unknown;
             } | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * NextActivityDTO
@@ -7923,6 +8309,11 @@ export interface components {
              * @description The name they go by: Sophie Hermans.
              */
             name?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * PolicyDomainDTO
@@ -8030,6 +8421,11 @@ export interface components {
             ecli: string | null;
             /** Links */
             links?: components["schemas"]["RelatedLinkDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * RelatedLinkDTO
@@ -8255,6 +8651,11 @@ export interface components {
             extra?: {
                 [key: string]: unknown;
             };
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * SeatStretchDTO
@@ -8272,6 +8673,12 @@ export interface components {
             coalition: number;
             /** Opposition */
             opposition: number;
+            /**
+             * Vacant
+             * @description Seats that neither a member nor a vacancy of a faction accounts for; a vacant seat of a faction (FractieZetelVacature) counts among its seats, and for the coalition or the opposition. `coalition`, `opposition` and `vacant` add up to the Kamer.
+             * @default 0
+             */
+            vacant: number;
             /**
              * Factions
              * @description The coalition first, then by seats.
@@ -8509,6 +8916,25 @@ export interface components {
              * @enum {string}
              */
             role: "indiener" | "medeindiener";
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * TermSpanDTO
+         * @description Where the text of an article uses a term its regulation defines.
+         */
+        TermSpanDTO: {
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+            /** Term */
+            term: string;
+            /** Definition Ref */
+            definition_ref: string;
         };
         /**
          * Tier
@@ -8900,6 +9326,11 @@ export interface components {
             dictum_excerpt?: string | null;
             /** Signatories */
             signatories?: components["schemas"]["TimelineSignatoryDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * TimelineSignatoryDTO
@@ -8933,6 +9364,11 @@ export interface components {
              * @description 'bewindspersoon' (a minister or staatssecretaris), 'kamerlid' (signed for a faction) or 'overig' (the griffier, the Raad van State, ...).
              */
             capacity?: ("kamerlid" | "bewindspersoon" | "overig") | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * TkDecisionDTO
@@ -9200,6 +9636,11 @@ export interface components {
              * @default 0
              */
             seats: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
     };
     responses: never;
@@ -9542,6 +9983,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstrumentDetailDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_instrument_definitions_api_instruments__identifier__definitions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                identifier: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentDefinitionsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -11231,6 +11703,8 @@ export interface operations {
                 q?: string[] | null;
                 /** @description Comma-separated faction keys, or ``all`` for every faction that voted on one: ``facets.party_votes`` says how each voted on the decisions under the filters (``voor``, ``tegen``, ``none``; in all, per kind and per year). Keeps no decision out, unlike ``party``. */
                 party_votes?: string | null;
+                /** @description Only the votes of the Tweede Kamer on which the coalition voted `together`, `split` (no wisselmeerderheid) or as a `wissel`, or which it `carried` or was `decisive` on. */
+                coalition?: ("together" | "split" | "wissel" | "carried" | "decisive") | null;
                 limit?: number;
                 offset?: number;
             };

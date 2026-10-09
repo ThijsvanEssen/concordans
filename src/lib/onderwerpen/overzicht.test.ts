@@ -24,6 +24,7 @@ const b = (
 ): Besluit => ({
 	id: `decisions/${key}`,
 	key,
+	path: null,
 	date,
 	kind,
 	passed,
