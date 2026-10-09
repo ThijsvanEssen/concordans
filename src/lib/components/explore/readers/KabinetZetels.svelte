@@ -141,12 +141,13 @@
 </script>
 
 {#if zetels?.tk?.length}
-	<Sectie titel="Zetels">
+	<!-- One section per Kamer, so either closes on its own (Thijs, 10 Oct). -->
+	<Sectie titel="Zetels in de Tweede Kamer">
 		<div class="zetels">
 			{#if tk}
 				{@const z = zijden(tk, gekozen?.s ?? null)}
 				<figure class="kamer">
-					<figcaption>Tweede Kamer, {formatLongDate(opDag)}</figcaption>
+					<figcaption>{formatLongDate(opDag)}</figcaption>
 					<div class="zaal">
 						<Hemicycle
 							data={tk}
@@ -241,11 +242,14 @@
 					</p>
 				</div>
 			{/if}
-
-			{#if ek}
-				{@const z = zijden(ek)}
+		</div>
+	</Sectie>
+	{#if ek}
+		<Sectie titel="Zetels in de Eerste Kamer">
+			{@const z = zijden(ek)}
+			<div class="zetels">
 				<figure class="kamer">
-					<figcaption>Eerste Kamer, samenstelling op {formatLongDate(ek.as_of ?? null)}</figcaption>
+					<figcaption>Samenstelling op {formatLongDate(ek.as_of ?? null)}</figcaption>
 					<div class="zaal">
 						<ZaalTegenover data={ek} voteHighlight={kantVan(ek)} />
 					</div>
@@ -261,9 +265,9 @@
 						woorden={['coalitie', 'oppositie']}
 					/>
 				</figure>
-			{/if}
-		</div>
-	</Sectie>
+			</div>
+		</Sectie>
+	{/if}
 {/if}
 
 <style>

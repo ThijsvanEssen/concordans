@@ -11,6 +11,7 @@
 	import { menu } from '$lib/actions/menu';
 	import { onControl } from '$lib/actions/outside';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import { isDicht, zetDicht } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
 	import { getCoverage, type Coverage } from '$lib/api/stats';
@@ -454,12 +455,22 @@
 			{@const all = expanded.has(g.id)}
 			{@const bars = years(g)}
 			{@const count = groupCount(g)}
+			{@const toe = isDicht(`verbonden:${g.id}`)}
 			{#if g.section && g.section !== shown[i - 1]?.section}
 				<h3 class="section">{g.section}</h3>
 			{/if}
 			<section class="group" data-group={g.id}>
 				<div class="group__head">
-					<h3 class="group__label">{g.label}</h3>
+					<!-- The heading opens and closes the group, remembered per group (Sectie's rule). -->
+					<h3 class="group__label">
+						<button
+							type="button"
+							class="group__knop"
+							aria-expanded={!toe}
+							onclick={() => zetDicht(`verbonden:${g.id}`, !toe)}
+							>{g.label}<Caret open={!toe} side /></button
+						>
+					</h3>
 					<span class="group__count">{countLabel(g)}</span>
 					{#if network && drawable(g.rows).length > 0}
 						<button
@@ -476,221 +487,223 @@
 						>
 					{/if}
 				</div>
-				{#if melding?.groep === g.id}
-					<p class="group__melding" role="status">
-						{melding.tekst}
-						{#if melding.terug}
-							<button
-								type="button"
-								class="link"
-								onclick={() => {
-									melding?.terug?.();
-									melding = null;
-								}}>Ongedaan maken</button
-							>
-						{/if}
-					</p>
-				{/if}
-				{#if g.id === 'judgments' && selection.collection === 'articles' && onRetry}
-					<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
-					<div class="group__volgorde">
-						<Keuze
-							label="Volgorde"
-							klein
-							opties={[
-								{ waarde: 'date_desc' as UitspraakVolgorde, label: 'Datum' },
-								{ waarde: 'citation_count' as UitspraakVolgorde, label: 'Meest aangehaald' }
-							]}
-							waarde={$uitspraakVolgorde}
-							onKies={(w) => {
-								if (w === $uitspraakVolgorde) return;
-								uitspraakVolgorde.set(w);
-								onRetry();
-							}}
-						/>
-					</div>
-				{/if}
-				{#if g.id === 'judgments' && selection.collection === 'instruments' && onRetry}
-					<!-- Newest first, or by the number of the law's articles they cite (BE-47). -->
-					<div class="group__volgorde">
-						<Keuze
-							label="Volgorde"
-							klein
-							opties={[
-								{ waarde: 'date' as WetVolgorde, label: 'Datum' },
-								{ waarde: 'cited' as WetVolgorde, label: 'Meeste artikelen' }
-							]}
-							waarde={$wetUitspraakVolgorde}
-							onKies={(w) => {
-								if (w === $wetUitspraakVolgorde) return;
-								wetUitspraakVolgorde.set(w);
-								onRetry();
-							}}
-						/>
-					</div>
-				{/if}
-				{#if g.order}<p class="group__caption">{g.order}</p>{/if}
-				{#if bars.length > 0}
-					<!-- Een zin en een keuzelijst in plaats van het jarendiagram. Over de geladen
+				{#if !toe}
+					{#if melding?.groep === g.id}
+						<p class="group__melding" role="status">
+							{melding.tekst}
+							{#if melding.terug}
+								<button
+									type="button"
+									class="link"
+									onclick={() => {
+										melding?.terug?.();
+										melding = null;
+									}}>Ongedaan maken</button
+								>
+							{/if}
+						</p>
+					{/if}
+					{#if g.id === 'judgments' && selection.collection === 'articles' && onRetry}
+						<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
+						<div class="group__volgorde">
+							<Keuze
+								label="Volgorde"
+								klein
+								opties={[
+									{ waarde: 'date_desc' as UitspraakVolgorde, label: 'Datum' },
+									{ waarde: 'citation_count' as UitspraakVolgorde, label: 'Meest aangehaald' }
+								]}
+								waarde={$uitspraakVolgorde}
+								onKies={(w) => {
+									if (w === $uitspraakVolgorde) return;
+									uitspraakVolgorde.set(w);
+									onRetry();
+								}}
+							/>
+						</div>
+					{/if}
+					{#if g.id === 'judgments' && selection.collection === 'instruments' && onRetry}
+						<!-- Newest first, or by the number of the law's articles they cite (BE-47). -->
+						<div class="group__volgorde">
+							<Keuze
+								label="Volgorde"
+								klein
+								opties={[
+									{ waarde: 'date' as WetVolgorde, label: 'Datum' },
+									{ waarde: 'cited' as WetVolgorde, label: 'Meeste artikelen' }
+								]}
+								waarde={$wetUitspraakVolgorde}
+								onKies={(w) => {
+									if (w === $wetUitspraakVolgorde) return;
+									wetUitspraakVolgorde.set(w);
+									onRetry();
+								}}
+							/>
+						</div>
+					{/if}
+					{#if g.order}<p class="group__caption">{g.order}</p>{/if}
+					{#if bars.length > 0}
+						<!-- Een zin en een keuzelijst in plaats van het jarendiagram. Over de geladen
 					     rijen: waar dat er minder zijn dan de telling, zegt de zin het. -->
-					{@const piek = bars.reduce((m, x) => (x.count > m.count ? x : m), bars[0])}
-					{@const geladen = !g.years?.length && g.rows.length < count ? g.rows.length : null}
-					<!-- The years that occur, not the twelve the histogram spans: the first page of an
+						{@const piek = bars.reduce((m, x) => (x.count > m.count ? x : m), bars[0])}
+						{@const geladen = !g.years?.length && g.rows.length < count ? g.rows.length : null}
+						<!-- The years that occur, not the twelve the histogram spans: the first page of an
 					     article's judgments (the newest) can all be of one year. -->
-					{@const jaren = bars.filter((x) => x.count > 0)}
-					{@const eerste = jaren[0]?.year}
-					{@const laatste = jaren.at(-1)?.year}
-					<p class="group__jaren">
-						{geladen
-							? `De ${formatCount(geladen)} geladen van ${formatCount(count)}: `
-							: ''}{eerste === laatste
-							? `${geladen ? 'alle' : 'Alle'} uit ${eerste}.`
-							: `${geladen ? 'van' : 'Van'} ${eerste} tot ${laatste}; de meeste in ${piek.year} (${formatCount(piek.count)}).`}
-					</p>
-					<!-- The filters of the judgments on one line: the year and the court. -->
-					<div class="group__jaren group__filters">
-						<label
-							>Jaar <select
-								value={filter.jaar ?? ''}
-								onchange={(e) => {
-									const v = e.currentTarget.value;
-									onFilter({ ...filter, jaar: v ? Number(v) : null });
-								}}
+						{@const jaren = bars.filter((x) => x.count > 0)}
+						{@const eerste = jaren[0]?.year}
+						{@const laatste = jaren.at(-1)?.year}
+						<p class="group__jaren">
+							{geladen
+								? `De ${formatCount(geladen)} geladen van ${formatCount(count)}: `
+								: ''}{eerste === laatste
+								? `${geladen ? 'alle' : 'Alle'} uit ${eerste}.`
+								: `${geladen ? 'van' : 'Van'} ${eerste} tot ${laatste}; de meeste in ${piek.year} (${formatCount(piek.count)}).`}
+						</p>
+						<!-- The filters of the judgments on one line: the year and the court. -->
+						<div class="group__jaren group__filters">
+							<label
+								>Jaar <select
+									value={filter.jaar ?? ''}
+									onchange={(e) => {
+										const v = e.currentTarget.value;
+										onFilter({ ...filter, jaar: v ? Number(v) : null });
+									}}
+								>
+									<option value="">alle</option>
+									{#each [...bars].reverse().filter((x) => x.count) as x (x.year)}<option
+											value={x.year}>{x.year} ({x.count})</option
+										>{/each}
+								</select></label
 							>
-								<option value="">alle</option>
-								{#each [...bars].reverse().filter((x) => x.count) as x (x.year)}<option
-										value={x.year}>{x.year} ({x.count})</option
-									>{/each}
-							</select></label
-						>
-						<label
-							>Rechter <select
-								value={filter.rechter ?? ''}
-								onchange={(e) => {
-									const v = e.currentTarget.value as Rechter | '';
-									onFilter({ ...filter, rechter: v || null });
-								}}
+							<label
+								>Rechter <select
+									value={filter.rechter ?? ''}
+									onchange={(e) => {
+										const v = e.currentTarget.value as Rechter | '';
+										onFilter({ ...filter, rechter: v || null });
+									}}
+								>
+									<option value="">alle</option>
+									{#each RECHTERS as r (r.id)}<option value={r.id}>{r.label}</option>{/each}
+								</select></label
 							>
-								<option value="">alle</option>
-								{#each RECHTERS as r (r.id)}<option value={r.id}>{r.label}</option>{/each}
-							</select></label
-						>
-					</div>
-				{/if}
-				<ul class="rows">
-					{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
-						{@const id = rowId(row)}
-						{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
-						{@const open = openRow === id}
-						<li class="row" class:is-open={open}>
-							<!-- A click beside the title opens the row too, for the mouse; the
+						</div>
+					{/if}
+					<ul class="rows">
+						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
+							{@const id = rowId(row)}
+							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
+							{@const open = openRow === id}
+							<li class="row" class:is-open={open}>
+								<!-- A click beside the title opens the row too, for the mouse; the
 							     keyboard has the toggle at the end of the row. -->
-							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-							<div
-								class="row__main"
-								onclick={(e) => {
-									if (!onControl(e) && !row.missing) openRow = open ? null : id;
-								}}
-							>
-								<KindGlyph
-									collection={row.ref.collection}
-									vorm={row.kind === 'wetsvoorstellen' ? 'voorstel' : undefined}
-									size={11}
-								/>
-								<span class="row__text">
-									{#if row.missing}
-										<span class="row__title row__title--missing">{row.title}</span>
-									{:else}
-										<a
-											class="row__title"
-											href={openHref(g, row)}
-											data-sveltekit-noscroll
-											onclick={(e) => terPlekke(e, () => (openRow = open ? null : id))}
-											>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
-										>
-									{/if}
-									<span class="row__meta">
-										{#each metaParts(row) as part, k (k)}
-											{#if k > 0}<span class="row__sep">,</span>{/if}
-											<span class="row__part row__part--{part.kind}">{part.text}</span>
-										{/each}
-										{#if row.proposed && onProposedText}
-											<span class="row__sep">,</span>
-											<button type="button" class="link" onclick={() => onProposedText(row)}
-												>toon voorgestelde tekst</button
+								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+								<div
+									class="row__main"
+									onclick={(e) => {
+										if (!onControl(e) && !row.missing) openRow = open ? null : id;
+									}}
+								>
+									<KindGlyph
+										collection={row.ref.collection}
+										vorm={row.kind === 'wetsvoorstellen' ? 'voorstel' : undefined}
+										size={11}
+									/>
+									<span class="row__text">
+										{#if row.missing}
+											<span class="row__title row__title--missing">{row.title}</span>
+										{:else}
+											<a
+												class="row__title"
+												href={openHref(g, row)}
+												data-sveltekit-noscroll
+												onclick={(e) => terPlekke(e, () => (openRow = open ? null : id))}
+												>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
 											>
 										{/if}
+										<span class="row__meta">
+											{#each metaParts(row) as part, k (k)}
+												{#if k > 0}<span class="row__sep">,</span>{/if}
+												<span class="row__part row__part--{part.kind}">{part.text}</span>
+											{/each}
+											{#if row.proposed && onProposedText}
+												<span class="row__sep">,</span>
+												<button type="button" class="link" onclick={() => onProposedText(row)}
+													>toon voorgestelde tekst</button
+												>
+											{/if}
+										</span>
 									</span>
-								</span>
-								{#if !row.missing && onAddToNetwerk}
-									{@const al = inNetwerk?.(row) ?? false}
-									<button
-										type="button"
-										class="row__plus"
-										class:is-in={al}
-										aria-pressed={al}
-										aria-label={al
-											? `${row.title} staat in het netwerk`
-											: `${row.title} aan het netwerk toevoegen`}
-										title={al ? 'Staat in het netwerk' : 'Aan het netwerk toevoegen'}
-										onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</button
-									>
-								{/if}
-								{#if !row.missing}
-									<button
-										type="button"
-										class="row__toggle"
-										aria-expanded={open}
-										aria-controls="open-{id}"
-										aria-label={open ? 'Verberg passage' : 'Toon passage'}
-										onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
-									>
-								{/if}
-							</div>
-							{#if open}
-								<div class="row__open" id="open-{id}">
-									<RowOpen
-										{row}
-										openHref={openHref(g, row)}
-										openLabel={openLabelOf(row, g.inPlace)}
-										networkHref={inNetworkHref(row)}
-										{onShowInNetwork}
-										{onNaarNetwerk}
-										{onVerbinding}
-										onAdd={onAddToNetwerk && !row.missing ? () => onAddToNetwerk(row) : undefined}
-										added={inNetwerk?.(row) ?? false}
-									/>
+									{#if !row.missing && onAddToNetwerk}
+										{@const al = inNetwerk?.(row) ?? false}
+										<button
+											type="button"
+											class="row__plus"
+											class:is-in={al}
+											aria-pressed={al}
+											aria-label={al
+												? `${row.title} staat in het netwerk`
+												: `${row.title} aan het netwerk toevoegen`}
+											title={al ? 'Staat in het netwerk' : 'Aan het netwerk toevoegen'}
+											onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</button
+										>
+									{/if}
+									{#if !row.missing}
+										<button
+											type="button"
+											class="row__toggle"
+											aria-expanded={open}
+											aria-controls="open-{id}"
+											aria-label={open ? 'Verberg passage' : 'Toon passage'}
+											onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
+										>
+									{/if}
 								</div>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-				{#if g.rows.length > PREVIEW}
-					<button
-						type="button"
-						class="group__more"
-						onclick={() => {
-							if (!all && (g.total ?? 0) > g.rows.length) onMeer?.(g.id);
-							expanded = toggle(expanded, g.id);
-						}}
-					>
-						{all ? 'Minder' : `Alle ${formatCount(count)} ${g.noun ?? 'verbindingen'}`}
-					</button>
-				{/if}
-				{#if all && count > g.rows.length}
-					<p class="group__caption">
-						{formatCount(g.rows.length)} van {formatCount(count)} geladen.
-						<a href={tableHref} class="link">Alle in een tabel</a>
-					</p>
-				{/if}
-				{#if span && g.id === coverageGroup}
-					<p class="group__caption">
-						Het netwerk bevat {formatCount(span.count)}
-						{span.of}{#if span.first && span.last}, van {span.first.slice(0, 4)} tot {longDate(
-								span.last
-							)}{/if}.
-						<a href="/bronnen#dekking" class="link">Dekking</a>
-					</p>
+								{#if open}
+									<div class="row__open" id="open-{id}">
+										<RowOpen
+											{row}
+											openHref={openHref(g, row)}
+											openLabel={openLabelOf(row, g.inPlace)}
+											networkHref={inNetworkHref(row)}
+											{onShowInNetwork}
+											{onNaarNetwerk}
+											{onVerbinding}
+											onAdd={onAddToNetwerk && !row.missing ? () => onAddToNetwerk(row) : undefined}
+											added={inNetwerk?.(row) ?? false}
+										/>
+									</div>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+					{#if g.rows.length > PREVIEW}
+						<button
+							type="button"
+							class="group__more"
+							onclick={() => {
+								if (!all && (g.total ?? 0) > g.rows.length) onMeer?.(g.id);
+								expanded = toggle(expanded, g.id);
+							}}
+						>
+							{all ? 'Minder' : `Alle ${formatCount(count)} ${g.noun ?? 'verbindingen'}`}
+						</button>
+					{/if}
+					{#if all && count > g.rows.length}
+						<p class="group__caption">
+							{formatCount(g.rows.length)} van {formatCount(count)} geladen.
+							<a href={tableHref} class="link">Alle in een tabel</a>
+						</p>
+					{/if}
+					{#if span && g.id === coverageGroup}
+						<p class="group__caption">
+							Het netwerk bevat {formatCount(span.count)}
+							{span.of}{#if span.first && span.last}, van {span.first.slice(0, 4)} tot {longDate(
+									span.last
+								)}{/if}.
+							<a href="/bronnen#dekking" class="link">Dekking</a>
+						</p>
+					{/if}
 				{/if}
 			</section>
 		{/each}
@@ -889,6 +902,20 @@
 		font-size: var(--t-body-2);
 		font-weight: 600;
 		color: var(--ink);
+	}
+	.group__knop {
+		display: inline-flex;
+		align-items: center;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		text-align: left;
+	}
+	.group__knop:hover {
+		color: var(--accent);
 	}
 	.group__count {
 		color: var(--ink-3);
