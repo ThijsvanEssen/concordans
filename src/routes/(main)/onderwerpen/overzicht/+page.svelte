@@ -569,7 +569,7 @@
 
 {#snippet cel(n: number, patch: Patch, bezig = false)}
 	{#if n > 0}
-		<a href="{hrefMet(patch)}#t-lijst">{getal(n)}</a>
+		<a href="{hrefMet(patch)}#t-lijst" title="De besluiten achter dit getal">{getal(n)}</a>
 	{:else}
 		<span class="nul">{bezig ? '…' : '0'}</span>
 	{/if}
@@ -632,15 +632,8 @@
 	<h1 class="titel">{naam || 'Overzicht'}</h1>
 
 	{#if !termen.length}
-		<p class="status">
-			Geen onderwerp gekozen. Een overzicht opent vanuit <a href="/onderwerpen">Onderwerpen</a>.
-		</p>
+		<p class="status">Geen onderwerp gekozen.</p>
 	{:else}
-		<p class="uitleg">
-			Besluiten van de Kamers over moties, amendementen en wetsvoorstellen met deze woorden in de
-			titel. Elk getal opent de lijst die het telt.
-		</p>
-
 		<div class="keuzes">
 			<Keuze
 				label="Kamer"
@@ -923,8 +916,7 @@
 		font-family: var(--font-sans);
 		font-size: var(--t-meta);
 	}
-	.terug a,
-	.status a {
+	.terug a {
 		color: var(--ink-2);
 		text-decoration: underline;
 		text-underline-offset: 2px;
@@ -935,12 +927,6 @@
 		font-size: var(--t-h1);
 		font-weight: 500;
 		overflow-wrap: anywhere;
-	}
-	.uitleg {
-		margin: 0 0 var(--s-4);
-		color: var(--ink-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
 	}
 	.keuzes {
 		display: flex;
