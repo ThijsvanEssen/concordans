@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import type { PageData } from './$types';
 	import type { EndpointDoc } from './+page';
 	import { RELATIONS, RELATION_LABEL } from '$lib/vocabulary';
@@ -25,9 +26,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>API-referentie, Concordans</title>
-</svelte:head>
+<RouteKop pad="/api" />
 
 <div class="page-wrap">
 	<div class="container">

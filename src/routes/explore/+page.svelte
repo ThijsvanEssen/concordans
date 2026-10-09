@@ -35,6 +35,7 @@
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
+	import { serverKop } from '$lib/seo/kop.svelte';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import StatusBar from '$lib/components/explore/StatusBar.svelte';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
@@ -1205,7 +1206,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
-	<title>{pageTitle}</title>
+	{#if !serverKop.actief}<title>{pageTitle}</title>{/if}
 	{#if nietGevonden}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
 

@@ -1,9 +1,8 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 </script>
 
-<svelte:head>
-	<title>Privacyverklaring, Concordans</title>
-</svelte:head>
+<RouteKop pad="/privacy" />
 
 <div class="page-wrap">
 	<div class="container">

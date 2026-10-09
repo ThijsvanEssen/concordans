@@ -1,9 +1,8 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 </script>
 
-<svelte:head>
-	<title>Gebruiksvoorwaarden, Concordans</title>
-</svelte:head>
+<RouteKop pad="/voorwaarden" />
 
 <div class="page-wrap">
 	<div class="container">

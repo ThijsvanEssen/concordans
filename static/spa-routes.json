@@ -1,0 +1,67 @@
+[
+	{
+		"path": "/",
+		"title": "Concordans",
+		"description": "Wetten, uitspraken en Kamerstukken uit officiële bronnen, met hun onderlinge verbindingen."
+	},
+	{
+		"path": "/explore",
+		"title": "Verkenner, Concordans",
+		"description": "Het netwerk van wetten, uitspraken, Kamerstukken en stemmingen, per bron met de verbonden bronnen."
+	},
+	{
+		"path": "/actueel",
+		"title": "Actueel, Concordans",
+		"description": "Nieuwe wetten, uitspraken, Kamerstukken en stemmingen, per dag."
+	},
+	{
+		"path": "/onderwerpen",
+		"title": "Onderwerpen, Concordans",
+		"description": "Moties, amendementen, wetsvoorstellen en uitspraken per onderwerp, met een Atom-feed per onderwerp."
+	},
+	{
+		"path": "/onderwerpen/overzicht",
+		"title": "Overzicht, Concordans",
+		"description": "De besluiten van de Kamers over een onderwerp, per soort, uitkomst, jaar en fractie."
+	},
+	{
+		"path": "/docs",
+		"title": "Documentatie, Concordans",
+		"description": "Werking van Concordans: bronnen, verbindingen, de Verkenner en de lezers."
+	},
+	{
+		"path": "/docs/methode",
+		"title": "Methode, Concordans",
+		"description": "Hoe Concordans de bronnen verzamelt en verbindt, en waar de grenzen liggen."
+	},
+	{
+		"path": "/docs/sneltoetsen",
+		"title": "Sneltoetsen, Concordans",
+		"description": "De sneltoetsen van de Verkenner en de lezers."
+	},
+	{
+		"path": "/api",
+		"title": "API-referentie, Concordans",
+		"description": "De openbare API van Concordans: routes, parameters en limieten."
+	},
+	{
+		"path": "/over",
+		"title": "Over Concordans",
+		"description": "Concordans als onafhankelijk onderzoeksproject naar de structuur van het Nederlandse recht."
+	},
+	{
+		"path": "/bronnen",
+		"title": "Bronnen en hergebruik, Concordans",
+		"description": "De bronnen van Concordans, hun licentie en de dekking per bron."
+	},
+	{
+		"path": "/voorwaarden",
+		"title": "Gebruiksvoorwaarden, Concordans",
+		"description": "De gebruiksvoorwaarden van Concordans."
+	},
+	{
+		"path": "/privacy",
+		"title": "Privacyverklaring, Concordans",
+		"description": "Welke gegevens Concordans verwerkt: geen analytics, geen account."
+	}
+]

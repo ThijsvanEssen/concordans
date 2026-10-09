@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import { onMount } from 'svelte';
 	import { getStats, type Stats } from '$lib/api/stats';
 	import { modKey } from '$lib/utils/platform';
@@ -17,9 +18,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Documentatie, Concordans</title>
-</svelte:head>
+<RouteKop pad="/docs" />
 
 <div class="page-wrap">
 	<div class="container">

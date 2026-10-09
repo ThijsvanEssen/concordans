@@ -1,6 +1,8 @@
-<svelte:head>
-	<title>Methode, Concordans</title>
-</svelte:head>
+<script lang="ts">
+	import RouteKop from '$lib/seo/RouteKop.svelte';
+</script>
+
+<RouteKop pad="/docs/methode" />
 
 <div class="page-wrap">
 	<div class="container">
