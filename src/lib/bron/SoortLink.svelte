@@ -25,7 +25,7 @@
 {#if isIndexCategory(lijst)}<a
 		class="soort"
 		href={indexHref(lijst)}
-		title="Alle {categoryLabel(lijst).toLowerCase()} in Bladeren"
+		title="Alle {categoryLabel(lijst).toLowerCase()} onder Bronnen"
 		><KindGlyph {collection} />{@render children()}</a
 	>{:else}<KindGlyph {collection} />{@render children()}{/if}
 

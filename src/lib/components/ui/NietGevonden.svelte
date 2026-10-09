@@ -43,7 +43,7 @@
 		</div>
 		<div class="acties">
 			<a href="/" class="knop knop--hoofd">Naar de startpagina</a>
-			<a href="/explore" class="knop">Open de Verkenner</a>
+			<a href="/explore" class="knop">Open Samenhang</a>
 		</div>
 	</div>
 </div>

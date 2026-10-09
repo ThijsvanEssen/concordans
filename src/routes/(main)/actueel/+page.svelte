@@ -525,7 +525,7 @@
 					<button
 						type="button"
 						class="actie-knop"
-						title="Volg deze woorden in Onderwerpen"
+						title="Volg deze woorden onder Gevolgd"
 						onclick={volgQ}>Volg als onderwerp</button
 					>
 				{/if}

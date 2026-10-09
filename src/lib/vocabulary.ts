@@ -262,7 +262,7 @@ export const statusLabel = (status: string | null | undefined) =>
 export const MODES = [
 	{ id: 'read', label: 'Lezen' },
 	{ id: 'graph', label: 'Netwerk' },
-	{ id: 'index', label: 'Bladeren' }
+	{ id: 'index', label: 'Bronnen' }
 ] as const;
 
 export type Mode = (typeof MODES)[number]['id'];

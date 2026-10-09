@@ -939,12 +939,12 @@
 	);
 
 	const pageTitle = $derived.by(() => {
-		if (mode === 'index') return 'Bladeren, Concordans';
+		if (mode === 'index') return 'Bronnen, Concordans';
 		if (nietGevonden) return 'Niet gevonden, Concordans';
 		const name = selectedNode ? tabTitle(selectedNode) : null;
 		if (name) return `${name}, Concordans`;
 		if (netwerkActive) return 'Netwerk, Concordans';
-		return 'Verkenner, Concordans';
+		return 'Samenhang, Concordans';
 	});
 
 	// The ← of the network goes back inside Concordans; a bron opened from a link

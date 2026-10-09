@@ -90,7 +90,7 @@
 			<li><span class="kteken"><KindGlyph vorm={st.vorm} size={12} /></span>{st.tekst}</li>
 		{/each}
 	</ol>
-	<a class="toon" href={schets.verkenner}>Toon in de Verkenner →</a>
+	<a class="toon" href={schets.verkenner}>Toon in Samenhang →</a>
 
 	<figure class="schets">
 		<div class="veld" bind:this={root} style:--kolommen={schets.kolommen.length}>
@@ -135,7 +135,7 @@
 				>
 				<a href={gekozen.href}>{gekozen.groep ? 'Open de lijst' : 'Open de bron'} →</a>
 			{/if}
-			<a class="verkenner" href={schets.verkenner}>Open in de Verkenner →</a>
+			<a class="verkenner" href={schets.verkenner}>Open in Samenhang →</a>
 		</figcaption>
 	</figure>
 </section>

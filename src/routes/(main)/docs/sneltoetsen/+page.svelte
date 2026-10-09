@@ -22,7 +22,7 @@
 				<span class="shortcut-keys"><kbd>Esc</kbd></span>
 			</div>
 			<div class="shortcut-row">
-				<span class="shortcut-desc">In de Verkenner: wissel tussen netwerk en tekst</span>
+				<span class="shortcut-desc">In Samenhang: wissel tussen netwerk en tekst</span>
 				<span class="shortcut-keys"><kbd>L</kbd></span>
 			</div>
 			<div class="shortcut-row">
@@ -35,7 +35,7 @@
 			</div>
 			<div class="shortcut-row">
 				<span class="shortcut-desc"
-					>Volgende of vorige rij in Bladeren en Verbonden; Enter opent haar</span
+					>Volgende of vorige rij onder Bronnen en in Verbonden; Enter opent haar</span
 				>
 				<span class="shortcut-keys"><kbd>J</kbd> <kbd>K</kbd> <kbd>Enter</kbd></span>
 			</div>
