@@ -199,7 +199,21 @@ const UITKOMST: Record<Uitkomst, string> = {
 	overig: ''
 };
 
-export function naarCsv(
+/** Per decision of a motie: the researcher's direction, the dictum, indieners and fracties. */
+export type MotieVelden = ReadonlyMap<
+	string,
+	{ richting?: string; dictum?: string | null; indieners?: string; fracties?: string }
+>;
+
+/** The column of the researcher's direction, in the CSV and in the table that counts it. */
+export const KOLOM_RICHTING = 'richting (eigen codering)';
+export const kolomStem = (fractie: string) => `stem ${fractie}`;
+
+export type CsvCel = string | number | null | undefined;
+/** The export as rows of cells under a head: what the CSV writes and the Richting table counts. */
+export type CsvTabel = { kop: string[]; rijen: CsvCel[][] };
+
+export function csvTabel(
 	lijst: readonly Besluit[],
 	origin: string,
 	fractie: string | null,
@@ -210,11 +224,8 @@ export function naarCsv(
 	 * Per decision of a motie: the researcher's direction, and from the motie's text the dictum,
 	 * its indieners and their fracties, where those were asked (stance-voorstel, 10 Oct).
 	 */
-	motie?: ReadonlyMap<
-		string,
-		{ richting?: string; dictum?: string | null; indieners?: string; fracties?: string }
-	>
-): string {
+	motie?: MotieVelden
+): CsvTabel {
 	const kop = [
 		'datum',
 		'kamer',
@@ -226,35 +237,60 @@ export function naarCsv(
 		'besluit',
 		'stemmen voor',
 		'stemmen tegen',
-		...(fractie ? [`stem ${fractie}`] : []),
-		...(motie ? ['richting (eigen codering)', 'dictum', 'indieners', 'fracties indieners'] : []),
+		...(fractie ? [kolomStem(fractie)] : []),
+		...(motie ? [KOLOM_RICHTING, 'dictum', 'indieners', 'fracties indieners'] : []),
 		'link'
 	];
-	const regels = lijst.map((d) =>
-		[
-			d.date,
-			d.chamber,
-			soortVan(d),
-			(d.subject ?? '').trim(),
-			(d.dossier_numbers ?? []).join(', '),
-			(d.dossier_numbers ?? []).flatMap((n) => namen.get(n) ?? []).join('; '),
-			UITKOMST[uitkomstVan(d)],
-			d.decision_kind,
-			d.tally?.Voor,
-			d.tally?.Tegen,
-			...(fractie ? [stemmen.get(d.key) ?? ''] : []),
-			...(motie
-				? [
-						motie.get(d.key)?.richting ?? '',
-						motie.get(d.key)?.dictum ?? '',
-						motie.get(d.key)?.indieners ?? '',
-						motie.get(d.key)?.fracties ?? ''
-					]
-				: []),
-			`${origin}${buildBronHref(null, { collection: 'decisions', key: d.key })}`
-		]
-			.map(cell)
-			.join(SEP)
-	);
-	return BOM + [kop.join(SEP), ...regels].join('\r\n');
+	const rijen = lijst.map((d) => [
+		d.date,
+		d.chamber,
+		soortVan(d),
+		(d.subject ?? '').trim(),
+		(d.dossier_numbers ?? []).join(', '),
+		(d.dossier_numbers ?? []).flatMap((n) => namen.get(n) ?? []).join('; '),
+		UITKOMST[uitkomstVan(d)],
+		d.decision_kind,
+		d.tally?.Voor,
+		d.tally?.Tegen,
+		...(fractie ? [stemmen.get(d.key) ?? ''] : []),
+		...(motie
+			? [
+					motie.get(d.key)?.richting ?? '',
+					motie.get(d.key)?.dictum ?? '',
+					motie.get(d.key)?.indieners ?? '',
+					motie.get(d.key)?.fracties ?? ''
+				]
+			: []),
+		`${origin}${buildBronHref(null, { collection: 'decisions', key: d.key })}`
+	]);
+	return { kop, rijen };
+}
+
+export const csvTekst = (t: CsvTabel) =>
+	BOM + [t.kop.join(SEP), ...t.rijen.map((r) => r.map(cell).join(SEP))].join('\r\n');
+
+export const naarCsv = (...args: Parameters<typeof csvTabel>) => csvTekst(csvTabel(...args));
+
+// ── Richting counted from the export ────────────────────────────────────────
+// The table Richting counts the rows of the CSV, by their columns richting, uitkomst and the
+// fractie's stem: what the table shows is what the file holds (Thijs, 10 Oct: "dubbelop").
+
+/** A row of the table: a direction, or `geen` for a motie not coded. */
+export type RichtingRij = 'positief' | 'negatief' | 'neutraal' | 'geen';
+export const RICHTING_RIJEN: readonly RichtingRij[] = ['positief', 'negatief', 'neutraal', 'geen'];
+
+export function richtingTabel(t: CsvTabel, fractie: string | null): [RichtingRij, Telling][] {
+	const i = (k: string) => t.kop.indexOf(k);
+	const [ri, ui, si] = [i(KOLOM_RICHTING), i('uitkomst'), fractie ? i(kolomStem(fractie)) : -1];
+	const m = new Map(RICHTING_RIJEN.map((r) => [r, leeg()] as const));
+	for (const rij of t.rijen) {
+		const r = String(rij[ri] ?? '');
+		const tel = m.get(RICHTING_RIJEN.includes(r as RichtingRij) ? (r as RichtingRij) : 'geen')!;
+		const u = String(rij[ui] ?? '');
+		tel.totaal++;
+		tel[u === 'aangenomen' || u === 'verworpen' ? u : 'overig']++;
+		const s = si >= 0 ? String(rij[si] ?? '') : '';
+		if (s === 'voor' || s === 'tegen') tel[s]++;
+	}
+	return [...m];
 }

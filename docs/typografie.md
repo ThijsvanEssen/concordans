@@ -39,6 +39,7 @@ Every reader has the same lines (`ReaderFrame.svelte`; Thijs, 9 Oct 2026: "strak
   - Bladeren's column heads and the label over a group of tabs.
 - A head over a group moved to rung 3 (`--t-meta`, 600, `ink`): the facet groups of Bladeren (Stand, Soort, Fase, Ministerie), with their note at rung 6, and the first level of DocumentToc. CommitteeReader had no `--t-label`.
 - `/onderwerpen/overzicht` (9 Oct 2026): the column heads of its tables at rung 6, the fractie over its voor and tegen columns at rung 3.
+- `/onderwerpen/overzicht` again (10 Oct 2026): Per soort, Per jaar, Richting and Besluiten as sections at rung 2, one table form for all three tables, column heads whole words (no hyphenation), the core figures as one line at the size of rung 2, the richting of a motie as three quiet words on its outcome line.
 - Actueel checked (9 Oct 2026), nothing to change: its day heads stand at rung 2, its facet heads at rung 3, a title at rung 4, the kind and meta line at rungs 5 and 6.
 - The band "Behoort bij" above every reader: the legal term at rung 6, a bron at rung 4.
 
