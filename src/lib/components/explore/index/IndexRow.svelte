@@ -164,7 +164,7 @@
 	/* No tabular figures: the column holds words too, and they would give a comma or a
 	   full stop the width of a figure ("Wetsvoorstel , aangenomen"). */
 	.row-id {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		line-height: 1.4;
@@ -190,7 +190,7 @@
 	}
 	.row--emphasis .row-title {
 		font-size: var(--t-body);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: 1.3;
 	}
 	a.row-title:hover {

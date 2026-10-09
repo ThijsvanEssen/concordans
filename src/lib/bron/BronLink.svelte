@@ -174,8 +174,8 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: var(--paper);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		text-decoration: none;
@@ -189,14 +189,14 @@
 		color: var(--paper);
 	}
 	.card__kicker {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
 	.card__title {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: var(--lh-snug);
 		color: var(--ink);
 	}

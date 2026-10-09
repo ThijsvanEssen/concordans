@@ -609,7 +609,7 @@
 	.whole-title {
 		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
-		font-weight: 500;
+		font-weight: 600;
 		font-size: var(--t-h1);
 		line-height: var(--lh-tight);
 		color: var(--ink);
@@ -617,7 +617,7 @@
 
 	.whole-count {
 		margin: var(--s-2) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -657,7 +657,7 @@
 		border-radius: 0;
 		background: none;
 		font: inherit;
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		cursor: pointer;
 	}
@@ -673,7 +673,7 @@
 		outline-offset: 2px;
 	}
 	.whole-peil-note {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -683,7 +683,7 @@
 		padding: var(--s-2) var(--s-3);
 		background: var(--accent-soft);
 		border-radius: var(--r-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 	}
@@ -701,7 +701,7 @@
 	}
 	.whole-art-note {
 		margin-left: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -721,7 +721,7 @@
 	}
 	.whole-section-title {
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: var(--lh-snug);
 	}
 	/* The outer layer: a rule above, the heading larger. */
@@ -799,9 +799,9 @@
 	.whole-more {
 		display: block;
 		margin: var(--s-6) auto 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 		background: none;
 		border: 1px solid var(--rule-strong);

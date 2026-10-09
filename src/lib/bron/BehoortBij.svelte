@@ -206,7 +206,7 @@
 		margin: 0 0 var(--s-4);
 		padding: 0 0 var(--s-3);
 		border-bottom: 1px solid var(--rule);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

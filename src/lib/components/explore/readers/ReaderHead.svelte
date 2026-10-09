@@ -74,7 +74,7 @@
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -106,7 +106,7 @@
 	.reader-title {
 		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
-		font-weight: 500;
+		font-weight: 600;
 		font-size: var(--t-h1);
 		line-height: 1.15;
 		color: var(--ink);

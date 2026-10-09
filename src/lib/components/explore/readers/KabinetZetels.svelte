@@ -279,7 +279,7 @@
 		gap: var(--s-3);
 	}
 	figcaption {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -319,7 +319,7 @@
 		justify-content: center;
 		gap: var(--s-1) var(--s-3);
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -338,7 +338,7 @@
 		margin: 0 0 var(--s-1);
 		padding-bottom: var(--s-1);
 		border-bottom: 1px solid var(--rule);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink);
@@ -357,7 +357,7 @@
 		align-items: center;
 		gap: var(--s-2);
 		padding: 2px 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
@@ -388,7 +388,7 @@
 		position: absolute;
 		right: 0;
 		transform: translateY(-115%);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--accent);
 	}
@@ -423,7 +423,7 @@
 		justify-content: space-between;
 		gap: var(--s-3);
 		margin: var(--s-1) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

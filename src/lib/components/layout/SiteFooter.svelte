@@ -114,7 +114,7 @@
 
 	.foot-blurb p {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.55;
 		color: var(--ink-3);
@@ -123,9 +123,9 @@
 
 	.foot-col h4 {
 		margin: 0 0 14px;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 
@@ -139,7 +139,7 @@
 	}
 
 	.foot-col a {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 		transition: color var(--dur-1) var(--ease);
@@ -154,7 +154,7 @@
 		justify-content: flex-start;
 		align-items: center;
 		padding: 20px var(--s-6);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

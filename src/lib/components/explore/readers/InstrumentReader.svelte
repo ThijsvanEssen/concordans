@@ -38,7 +38,7 @@
 <style>
 	.publication {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}

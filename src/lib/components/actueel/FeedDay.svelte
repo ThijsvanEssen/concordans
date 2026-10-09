@@ -61,10 +61,10 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 800;
 	}
 	.day-meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

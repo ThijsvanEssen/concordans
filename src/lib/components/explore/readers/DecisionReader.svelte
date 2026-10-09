@@ -289,9 +289,9 @@
 		gap: var(--s-2);
 	}
 	.kicker {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
@@ -306,12 +306,12 @@
 		grid-template-columns: max-content minmax(0, 1fr);
 		gap: var(--s-2) var(--s-4);
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 	}
 	.ek-factions dt {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.ek-factions dd {
@@ -320,14 +320,14 @@
 	}
 	.source {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
@@ -343,9 +343,9 @@
 	.result-chip,
 	.case-chip,
 	:global(.dossier-chip) {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		text-decoration: none;
 	}
 	.result-chip--passed,
@@ -397,14 +397,14 @@
 	}
 	.vote-totals {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.vote-total--for,
 	.vote-total--against {
 		color: var(--ink-2);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.vote-total--other {
 		color: var(--ink-3);
@@ -430,7 +430,7 @@
 	}
 	/* The stem in shape, colour and word (Stem), as on a member's page. */
 	.voter-choice {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.voter-name {
@@ -447,13 +447,13 @@
 		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 50px) 1fr auto 3.5em;
 	}
 	.voter-kabinet {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.coalitie {
 		margin: var(--s-2) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 		display: flex;
@@ -477,7 +477,7 @@
 		color: var(--ink);
 	}
 	.voter-seats {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);

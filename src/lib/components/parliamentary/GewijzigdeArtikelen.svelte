@@ -79,7 +79,7 @@
 <style>
 	.samen {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -95,7 +95,7 @@
 		margin: var(--s-2) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.artikelen {
@@ -118,7 +118,7 @@
 		color: var(--ink);
 	}
 	.wijziging {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -127,9 +127,9 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		cursor: pointer;
 	}

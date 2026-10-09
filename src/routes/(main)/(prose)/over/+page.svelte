@@ -47,9 +47,9 @@
 	}
 
 	.stub-eyebrow {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		margin-bottom: var(--s-4);
 	}
@@ -57,7 +57,7 @@
 	.stub-title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: var(--lh-tight);
 		color: var(--ink);
 		margin: 0 0 var(--s-4);
@@ -78,7 +78,7 @@
 	.section-title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 800;
 		color: var(--ink);
 		margin: 0 0 var(--s-3);
 	}
@@ -106,7 +106,7 @@
 	}
 
 	.meta-link {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 		text-decoration: none;

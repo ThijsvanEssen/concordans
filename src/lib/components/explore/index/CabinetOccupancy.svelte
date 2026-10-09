@@ -286,7 +286,7 @@
 		--label: 240px;
 		--lane: 24px;
 		margin: 0 0 var(--s-5);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 	}
 	.occ-row {
 		display: grid;
@@ -311,7 +311,7 @@
 		padding: var(--s-4) 0 var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.occ-seat {
@@ -351,7 +351,7 @@
 		padding-left: var(--s-1);
 		border-left: 1px dotted var(--accent);
 		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--accent);
 		white-space: nowrap;
 	}
@@ -410,7 +410,7 @@
 	/* Phone: text. */
 	.occ-text {
 		margin: 0 0 var(--s-5);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 	}
 	.occ-phases {
 		margin: 0;
@@ -457,7 +457,7 @@
 	}
 	.holder-note,
 	.holder-period {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -471,7 +471,7 @@
 
 	.occ-note {
 		margin: 0 0 var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}

@@ -25,7 +25,7 @@
 
 <style>
 	.leeg {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}

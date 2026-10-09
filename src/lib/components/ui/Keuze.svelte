@@ -58,8 +58,8 @@
 		border: 0;
 		background: var(--paper);
 		font: inherit;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
@@ -67,7 +67,7 @@
 	.klein button {
 		height: var(--veld-h-klein);
 		padding: 0 var(--s-2);
-		font-size: var(--t-micro);
+		font-size: var(--t-ui-micro);
 	}
 	/* Equal where the words fit, a word that needs more takes it: no empty tail, no word
 	   cut (Kwartaal in a 240px column). */

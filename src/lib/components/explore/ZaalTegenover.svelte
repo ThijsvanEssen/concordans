@@ -192,7 +192,7 @@
 	}
 	/* The Kamer's number of a place, without a disc, as in the Tweede Kamer's hall. */
 	.nr-t {
-		font: 600 var(--t-glyph) var(--font-sans);
+		font: 600 var(--t-glyph) var(--font-serif);
 		fill: var(--ink-3);
 	}
 	/* As in the hall of the Tweede Kamer: the first side (voor, coalitie) a seat in its
@@ -217,14 +217,14 @@
 		opacity: 0.18;
 	}
 	.hover-naam {
-		font: 500 var(--t-h3) var(--font-serif);
+		font: 600 var(--t-h3) var(--font-serif);
 	}
 	/* A long name (a one-member fractie) in a smaller size, to stay inside the aisle. */
 	.hover-naam.lang {
 		font-size: var(--t-micro);
 	}
 	.hover-zetels {
-		font: var(--t-micro) var(--font-sans);
+		font: var(--t-micro) var(--font-serif);
 		fill: var(--ink-3);
 	}
 	a:focus-visible .stoel {

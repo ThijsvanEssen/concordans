@@ -163,7 +163,10 @@
 
 		/* Typography: one text face, one interface face. Identifiers are set in the sans. */
 		--font-serif: 'Newsreader', Georgia, serif;
-		--font-sans: 'Schibsted Grotesk', system-ui, sans-serif;
+		/* One serif for all text, in 400, 600 and 800; the sans only for controls: buttons,
+		   choice rows, fields, keys and menus (Thijs, 10 Oct: "typografie is goed").
+		   docs/typografie.md. */
+		--font-ui: 'Schibsted Grotesk', system-ui, sans-serif;
 
 		/* Type scale */
 		--t-display: 44px;
@@ -172,8 +175,10 @@
 		--t-h3: 20px;
 		--t-body: 17.5px; /* reading text, line-height 1.6 */
 		--t-body-2: 16px; /* titles of bronnen in lists and rows */
-		--t-meta: 13px; /* interface text: 12.5 to 13px */
-		--t-micro: 12px; /* captions and counts, in --ink-3 */
+		--t-meta: 14px; /* a group, meta: one pixel over the sans, for the serif's x-height */
+		--t-micro: 13px; /* captions and counts, in --ink-3 */
+		--t-ui: 13px; /* a control's text, in the sans */
+		--t-ui-micro: 12px; /* a small control's text */
 		--t-label: 11px; /* labels over a group: the sans at 500, as written, without spacing */
 		--t-glyph: 10px; /* a mark inside a box: a tick, a caret, a badge */
 		--t-input: 16px; /* text fields: below 16px a phone zooms in on focus */
@@ -228,12 +233,16 @@
 	}
 
 	/* ─── Global base ────────────────────────────────────────────────────────── */
+	/* A control reads in the sans, unless its own style says otherwise (a link-like button). */
+	:global(button, input, select, textarea, kbd) {
+		font-family: var(--font-ui);
+	}
 	:global(html, body) {
 		height: 100%;
 		margin: 0;
 		background: var(--paper);
 		color: var(--ink);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 		font-optical-sizing: auto;
@@ -271,8 +280,8 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		line-height: 16px;
 		color: var(--ink-2);
@@ -352,7 +361,7 @@
 		padding: var(--s-2) var(--s-4);
 		border: 1px solid var(--rule-strong);
 		border-top: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		text-decoration: none;
 	}

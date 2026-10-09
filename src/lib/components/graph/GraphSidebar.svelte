@@ -454,7 +454,7 @@
 		padding: 20px 18px;
 		border-right: 1px solid var(--rule);
 		background: var(--paper);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		scrollbar-width: thin;
@@ -471,7 +471,7 @@
 		margin: 0 0 var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.block__head .block__title {
@@ -482,7 +482,7 @@
 		justify-content: space-between;
 		margin-bottom: 6px;
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	/* The presets of the filter: a plain control, not a summary in the accent. */
@@ -516,6 +516,7 @@
 		border: 0;
 		background: none;
 		font: inherit;
+		font-family: var(--font-ui);
 		color: var(--ink);
 		text-align: left;
 		cursor: pointer;

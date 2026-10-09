@@ -123,7 +123,7 @@
 	/* Where the text would begin: the frame's own margins, no more. */
 	.reader-error {
 		padding: var(--s-5) 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}

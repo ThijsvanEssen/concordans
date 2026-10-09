@@ -90,6 +90,44 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /class="(box|opt|check__box)"/.test(t))).toEqual([]);
 	});
 
+	it('sets text in the serif and only controls in the sans (docs/typografie.md, 10 Oct 2026)', () => {
+		// The rules of each style block, comments left out: a control is a rule whose subject
+		// is a button, a field, a key, a choice row, a tab or a menu item.
+		const CTL_EL = /(^|[\s>+~(,])(button|input|select|textarea|kbd|option|summary)(?=$|[.:[\s#)])/;
+		const CTL_CLS =
+			/\.(?:[\w-]*(?:btn|knop|keuze|toggle|switch|segment|trigger|veld|field|input|menu__item|menuitem|kbd|nav-link)[\w-]*|(?:[\w-]*-)?tabs?(?:[-_][\w-]*)?|act(?:--[\w-]+|__[\w-]+)?)(?=$|[.:[\s#)>+~,])/;
+		const isControl = (selector: string) =>
+			selector.split(',').every((part) => {
+				const p = part.replace(/:global\(([^)]*)\)/g, '$1').trim();
+				const subject = p.split(/\s*[>+~]\s*|\s+/).at(-1) ?? p;
+				return CTL_EL.test(' ' + subject) || CTL_CLS.test(subject);
+			});
+		const rules = (text: string) => {
+			const css = /<style>([\s\S]*?)<\/style>/.exec(text)?.[1] ?? '';
+			return [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(
+				(m) => ({ selector: m[1].trim(), body: m[2] })
+			);
+		};
+		expect(offenders((t) => t.includes('var(--font-sans)'))).toEqual([]);
+		// The sans only where a control is styled.
+		expect(
+			offenders(
+				(t) => rules(t).some((r) => r.body.includes('var(--font-ui)') && !isControl(r.selector)),
+				['lib/components/layout/AppShell.svelte']
+			)
+		).toEqual([]);
+		// Text in three weights: 400, 600, 800. The wordmark is a logo, not a rung.
+		expect(
+			offenders(
+				(t) =>
+					rules(t).some(
+						(r) => !isControl(r.selector) && /font-weight:\s*(?!400|600|800)\d+/.test(r.body)
+					),
+				['lib/components/layout/Wordmark.svelte']
+			)
+		).toEqual([]);
+	});
+
 	it('separates with a comma, not a middle dot (Thijs, 2 October 2026)', () => {
 		// "Motie, nr. 21", "Dossier, Kamerstuk 36799", and the browser tab: "Actueel, Concordans".
 		expect(offenders((t) => t.includes('\u00b7'))).toEqual([]);
