@@ -253,17 +253,6 @@ const FASE_PLAATS: Record<string, number> = {
 	'Nota van wijziging / Amendement': 2,
 	Stemmingen: 4
 };
-const MEERVOUD: Record<string, string> = {
-	amendement: 'amendementen',
-	motie: 'moties',
-	'brief regering': 'brieven van de regering',
-	procedurevergadering: 'procedurevergaderingen',
-	'regeling van werkzaamheden': 'regelingen van werkzaamheden',
-	'technische briefing': 'technische briefings',
-	'plenair debat': 'plenaire debatten',
-	'inbreng verslag': 'inbrengen voor het verslag'
-};
-
 /**
  * The outcome of a vote as the source gives it: aangenomen (true), verworpen (false), or
  * none (null) for a vote that was postponed or has no result yet. The Tweede Kamer gives
@@ -279,11 +268,6 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const st = stand(d);
 	const procedureEntries = entries.filter((e) => metOverig || isProcedure(e));
 	const overig = entries.filter((e) => !isProcedure(e));
-	const telling = Map.groupBy(overig, (e) => (e.kind ?? '').replace(/ \(.*\)$/, ''));
-	const overigZin = [...telling]
-		.sort((a, b) => b[1].length - a[1].length)
-		.map(([k, v]) => `${v.length} ${v.length > 1 ? (MEERVOUD[lower(k)] ?? lower(k)) : lower(k)}`)
-		.join(', ');
 
 	const per = Map.groupBy(procedureEntries, instantie);
 	const groepen: TijdGroep[] = [];
@@ -330,8 +314,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	groepen.push({
 		id: 'tk',
 		titel: 'Tweede Kamer',
-		regels: tk,
-		noot: overig.length && !metOverig ? `Ook in de gegevens: ${overigZin}.` : null
+		regels: tk
 	});
 
 	const ek = regelsVan(per.get('ek') ?? [], 'ek', d.number);

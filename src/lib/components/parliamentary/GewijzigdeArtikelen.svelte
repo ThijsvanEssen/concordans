@@ -13,7 +13,6 @@
 		byArticle,
 		sharedEnactment,
 		stageLead,
-		summary,
 		type ChangedArticles
 	} from './changed-articles';
 
@@ -25,7 +24,6 @@
 </script>
 
 <Sectie titel="Gewijzigde artikelen" soort="articles" aantal={data.articles}>
-	<p class="samen">{summary(data)}</p>
 	{#each data.laws as l, i (l.law.id ?? `buiten-${i}`)}
 		{@const artikelen = byArticle(l.changes)}
 		{@const key = l.law.id ?? `buiten-${i}`}
@@ -77,12 +75,6 @@
 </Sectie>
 
 <style>
-	.samen {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
 	.wet {
 		display: flex;
 		flex-direction: column;
