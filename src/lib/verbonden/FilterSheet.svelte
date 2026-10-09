@@ -363,9 +363,6 @@
 					onClose();
 				}}>Toon {formatCount(count)} {count === 1 ? 'verbinding' : 'verbindingen'}</button
 			>
-			<span class="muted"
-				>De keuze staat in de link en geldt voor het paneel, de kantlijn, het netwerk en de tabel.</span
-			>
 		</div>
 	</div>
 {/if}

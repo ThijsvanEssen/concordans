@@ -54,9 +54,7 @@
 	<div class="reader-frame__col">
 		{#if bron && status !== 'empty'}<BehoortBij node={bron()} />{/if}
 		{#if status === 'empty'}
-			<div class="reader-empty">
-				<p>Selecteer een artikel, uitspraak of parlementaire bron om de inhoud hier te lezen.</p>
-			</div>
+			<!-- No bron yet: an empty column, no instruction (the UI shows itself, Thijs 9 Oct). -->
 		{:else if status === 'loading'}
 			<div class="reader-loading">
 				<div class="skeleton-h"></div>
@@ -112,19 +110,6 @@
 		min-height: 100%;
 		margin-left: var(--reader-col-left, 0);
 		margin-right: auto;
-	}
-
-	.reader-empty {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: var(--t-body);
-		color: var(--ink-3);
-		text-align: center;
-		padding: var(--s-6);
 	}
 
 	/* Where the text would begin: the frame's own margins, no more. */

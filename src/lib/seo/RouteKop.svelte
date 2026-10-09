@@ -1,5 +1,5 @@
 <script lang="ts">
-	// The title and description of a page from static/spa-routes.json, the list the server
+	// The title and description of a page from spa-routes.json, the list the server
 	// serves the same head from. `title` replaces the fixed title where the page has a
 	// name of its own (the topic of the Overzicht).
 	import { routeKop } from './routes';

@@ -1332,10 +1332,7 @@
 		{:else if nietGevonden}
 			<NietGevonden titel="Bron niet gevonden" kop={false}>
 				<p>{padMissing ?? focusError}</p>
-				<p>
-					Het netwerk bevat een selectie van bronnen. Zie
-					<a href="/bronnen#dekking" class="link">bronnen en dekking</a>.
-				</p>
+				<p><a href="/bronnen#dekking" class="link">Bronnen en dekking</a></p>
 			</NietGevonden>
 		{:else if padMissing && !selectedNode && !netwerkActive}
 			<p class="explore-empty">{padMissing}</p>
