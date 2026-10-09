@@ -649,6 +649,15 @@ export function isKernGroep(
 	);
 }
 
+/**
+ * Groups that are the bron's own content, not its context: a law's articles are its table
+ * of contents and its text (Thijs, 9 Oct: "overdreven als we al een inhoudsopgave hebben").
+ * Verbonden leaves them out; the table and an export keep them.
+ */
+export const INHOUD: Partial<Record<Collection, string[]>> = { instruments: ['articles'] };
+export const isInhoudGroep = (collection: Collection, g: { id: string }) =>
+	INHOUD[collection]?.includes(g.id) ?? false;
+
 /** Whether a band has anything to show. */
 export const heeftIets = (b: Behoort) => b.regels.length + b.naast.length + b.onder.length > 0;
 

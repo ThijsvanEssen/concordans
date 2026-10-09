@@ -54,7 +54,7 @@
 		type WetVolgorde
 	} from './volgorde';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
-	import { isKernGroep, lazeKernIds } from '$lib/bron/behoort';
+	import { isInhoudGroep, isKernGroep, lazeKernIds } from '$lib/bron/behoort';
 	import { get } from 'svelte/store';
 	import {
 		GROUPINGS,
@@ -196,7 +196,9 @@
 	);
 	const groepen = $derived(
 		verbonden.groups
-			.filter((g) => !isKernGroep(selection.collection, g))
+			.filter(
+				(g) => !isKernGroep(selection.collection, g) && !isInhoudGroep(selection.collection, g)
+			)
 			.map((g) => {
 				const rows = g.rows.filter(
 					(r) => !kernIds.has(refId(r.ref)) && !kernIds.has(vertalingVan(r) ?? '')
@@ -207,7 +209,11 @@
 	);
 	const alleenKern = $derived(
 		groepen.every((g) => g.rows.length === 0) &&
-			verbonden.groups.some((g) => g.rows.length > 0 && isKernGroep(selection.collection, g))
+			verbonden.groups.some(
+				(g) =>
+					g.rows.length > 0 &&
+					(isKernGroep(selection.collection, g) || isInhoudGroep(selection.collection, g))
+			)
 	);
 	const filtered = $derived(filterGroups(groepen, filter));
 	const shown = $derived(regroup(filtered, grouping, selection.collection));
