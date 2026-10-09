@@ -6,8 +6,10 @@ export type TijdRegel = {
 	/** ISO-datum; leeg bij wat nog kan volgen. */
 	datum: string | null;
 	teken: Teken;
-	/** De soort bron, voor het teken bij het label. */
+	/** De soort bron, voor het teken op de lijn (vormen.ts). */
 	soort?: import('$lib/vocabulary').Collection | null;
+	/** Het teken zelf, waar de soort het niet zegt: een wetsvoorstel, een bundel stemmingen. */
+	vorm?: import('$lib/bron/vormen').Vorm | null;
 	/** Klein boven de zin: wie of welke soort. */
 	label?: string | null;
 	zin: string;

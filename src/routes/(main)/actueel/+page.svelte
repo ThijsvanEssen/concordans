@@ -384,16 +384,18 @@
 		const factionCounts = [...factionMap];
 		return [
 			{
-				// First, as the concept has it. TODO(backend): a facet per chamber, to count them.
+				// First, as the concept has it; one of three, as Kamer is everywhere (docs/bediening.md).
 				id: 'kamer',
 				label: 'Kamer',
-				kind: 'list',
-				options: (['TK', 'EK'] as const).map((c) => ({
-					id: c,
-					label: c === 'TK' ? 'Tweede Kamer' : 'Eerste Kamer',
-					on: chamber === c,
-					onClick: () => patchUrl({ kamer: chamber === c ? null : c })
-				}))
+				kind: 'keuze',
+				value: chamber || 'beide',
+				geen: 'beide',
+				options: [
+					{ value: 'beide', label: 'Beide' },
+					{ value: 'TK', label: 'Tweede', titel: 'Tweede Kamer' },
+					{ value: 'EK', label: 'Eerste', titel: 'Eerste Kamer' }
+				],
+				onChange: (v: string) => patchUrl({ kamer: v === 'beide' ? null : v })
 			},
 			{
 				id: 'soort',

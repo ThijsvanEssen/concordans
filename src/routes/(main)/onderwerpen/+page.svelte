@@ -176,6 +176,7 @@
 							: h.major
 								? 'stuk'
 								: 'activiteit',
+					vorm: h.vorm,
 					label: isNieuw(i.date, vorige) ? `${h.label}, nieuw` : h.label,
 					zin: h.title,
 					href: bronHref(ref, { keepMode: false, mode: 'graph' }),

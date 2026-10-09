@@ -122,6 +122,26 @@ describe('one form for each thing', () => {
 		);
 	});
 
+	it('marks a line of a timeline with the shape of its kind (vormen.ts), as Verbonden and the network do', () => {
+		// The Tijdlijn draws only from VORMEN, no circle or square of its own.
+		const tijdlijn = sources.find((s) => s.path === 'lib/components/tijdlijn/Tijdlijn.svelte')!;
+		expect(tijdlijn.text).toMatch(/VORMEN\[/);
+		expect(tijdlijn.text).not.toMatch(/class="teken"|border-radius:\s*50%/);
+		// Required on Actueel's line, so the compiler holds every builder to it.
+		const actueel = sources.find((s) => s.path === 'lib/components/actueel/timeline.ts')!;
+		expect(actueel.text).toMatch(/\n\tvorm: Vorm;/);
+	});
+
+	it('chooses a Kamer with a Keuze, never with boxes (docs/bediening.md)', () => {
+		expect(
+			offenders(
+				(t) =>
+					/kind: 'list',[^}]{0,300}Tweede Kamer/.test(t) ||
+					/\[\{ c: 'TK', label: 'Tweede Kamer' \}[^\n]*\n[^\n]*<FilterOptie/.test(t)
+			)
+		).toEqual([]);
+	});
+
 	it('draws every option of a filter with FilterOptie', () => {
 		expect(offenders((t) => /class="(box|opt|check__box)"/.test(t))).toEqual([]);
 	});

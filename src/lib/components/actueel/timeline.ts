@@ -1,5 +1,6 @@
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
+import type { Vorm } from '$lib/bron/vormen';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 import { describe } from '$lib/verbonden/rows';
@@ -33,6 +34,8 @@ export type TimelineLine = {
 	date: string;
 	/** `Stemming, aangenomen`, `Moties`: small capitals above the headline. */
 	label: string;
+	/** The shape of its kind, as everywhere (vormen.ts): a vote, a paper, a bill, a toezegging. */
+	vorm: Vorm;
 	title: string;
 	context: string | null;
 	/** The bron of a line on its own, or the day in Actueel a bundle opens. */
@@ -160,6 +163,7 @@ function voteLine(i: FeedItem, noun: string): TimelineLine {
 		id: i.id,
 		date: i.date,
 		label: `Stemming, ${passed ? 'aangenomen' : 'verworpen'}`,
+		vorm: 'besluit',
 		title: cut(
 			`${KAMER[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} ${paper}${passed ? ' aan' : ''}${subject ? ` over ${subject}` : ''}`
 		),
@@ -187,6 +191,7 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 				id: `bills/${date}/${chamber}/${passed}`,
 				date,
 				label: `${chamber === 'EK' ? 'Eerste Kamer' : one ? 'Wetsvoorstel' : 'Wetsvoorstellen'}, ${passed ? 'aangenomen' : 'verworpen'}`,
+				vorm: 'besluit',
 				title: one
 					? `${who} ${verb} wetsvoorstel${passed ? ' aan' : ''}: ${names[0]}`
 					: `${who} ${verb} ${inWords(those.length)} wetsvoorstellen${passed ? ' aan' : ''}`,
@@ -259,6 +264,7 @@ function voteBundleLine(day: SummaryDay): TimelineLine[] {
 			id: `votes/${day.date}`,
 			date: day.date,
 			label: 'Stemmingen',
+			vorm: 'besluit',
 			title:
 				count === 1
 					? `Tweede Kamer ${passed ? 'neemt' : 'verwerpt'} een ${noun[0]}${passed ? ' aan' : ''}`
@@ -306,6 +312,7 @@ function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 			id: first.id,
 			date,
 			label: 'Toezegging',
+			vorm: 'toezegging',
 			title: commitmentTitle(first),
 			context: context || null,
 			href: more ? actueelDayHref(date, ['toezegging'], first.dossier?.number) : hrefOf(first),
@@ -323,6 +330,7 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			id: b.id,
 			date,
 			label: 'Wetsvoorstel',
+			vorm: 'voorstel',
 			title: `Wetsvoorstel ingediend: ${name(b)}`,
 			context: b.dossier ? `Dossier ${b.dossier.number}` : null,
 			href: hrefOf(b),
@@ -333,6 +341,7 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			id: `bills-in/${date}`,
 			date,
 			label: 'Wetsvoorstellen',
+			vorm: 'voorstel',
 			title: `${bills.length} wetsvoorstellen ingediend`,
 			context: listLine(bills.map(name), 3),
 			href: actueelDayHref(date, ['Voorstel van wet']),
@@ -348,6 +357,7 @@ function commencementLine(i: FeedItem): TimelineLine {
 		id: i.id,
 		date: i.date,
 		label: 'Inwerkingtreding',
+		vorm: 'regel',
 		title: `${law}: gewijzigde tekst in werking`,
 		context:
 			c?.changed_articles != null && c.article_count != null
@@ -401,6 +411,7 @@ function kamerstukLine(day: SummaryDay): TimelineLine[] {
 				present.length === 1
 					? headSurname(present[0].noun[present[0].count === 1 ? 0 : 1])
 					: 'Kamerstukken',
+			vorm: 'stuk',
 			title: present.length === 1 ? `${counted} ingediend` : `Ingediend: ${counted}`,
 			context: dossiers.length ? listLine(dossiers, 3, ['ander dossier', 'andere dossiers']) : null,
 			href: actueelDayHref(
@@ -426,6 +437,7 @@ function countedLine(
 			id: `${kind}/${day.date}`,
 			date: day.date,
 			label,
+			vorm: kind === 'publicatie' ? 'regel' : 'stuk',
 			title: plural(count, noun[0], noun[1]),
 			context: null,
 			href: actueelDayHref(day.date, [kind]),
@@ -496,7 +508,26 @@ export function timelineOf(summary: Schema<'FeedSummaryResponse'>, limit: number
 	return lines;
 }
 
-export type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'failed'>;
+export type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'failed' | 'vorm'>;
+
+/** The shape of an event's kind, as the network and Verbonden draw it (vormen.ts). */
+export function vormVanFeed(i: Pick<FeedItem, 'kind'>): Vorm {
+	switch (i.kind) {
+		case 'stemming':
+			return 'besluit';
+		case 'toezegging':
+			return 'toezegging';
+		case 'Voorstel van wet':
+			return 'voorstel';
+		case 'uitspraak':
+			return 'uitspraak';
+		case 'publicatie':
+		case 'inwerkingtreding':
+			return 'regel';
+		default:
+			return 'stuk';
+	}
+}
 
 /**
  * One event as Actueel heads it, in the words of the homepage: a vote as the Kamer's
@@ -504,7 +535,9 @@ export type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'failed'
  * matters (a bill, a close vote, a law in force) is major; a toezegging stands at the size of
  * a motie beside it (Thijs, 10 Oct: two things at one level do not differ).
  */
-export function headlineOf(i: FeedItem): Headline {
+export const headlineOf = (i: FeedItem): Headline => ({ ...kopVan(i), vorm: vormVanFeed(i) });
+
+function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 	switch (i.kind) {
 		case 'stemming': {
 			const passed = !!i.vote?.passed;

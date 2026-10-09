@@ -1,16 +1,18 @@
 <script lang="ts">
 	import BronLink from '$lib/bron/BronLink.svelte';
 	// De gedeelde tijdlijn. Datum links in een vaste
-	// kolom, een teken op een doorlopende lijn, dan de zin. Een besluit krijgt het vakje van
-	// Uitkomst (vorm en kleur); wat nog kan volgen staat gestippeld en zegt dat het kan volgen.
-	import { dagMaand, type TijdGroep } from './tijdlijn';
+	// kolom, een teken op een doorlopende lijn, dan de zin. Het teken is dat van de soort,
+	// zoals in het netwerk en Verbonden: een stemming een driehoek, gevuld in mos als ze is
+	// aangenomen, open in het accent als ze is verworpen; wat nog kan volgen staat gestippeld.
+	import { dagMaand, type TijdGroep, type TijdRegel } from './tijdlijn';
 	import { vandaag } from '$lib/text/datum';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
-	// Het teken op de lijn is het bronteken zelf; de uitkomst zit in vulling en kleur.
-	const vormVanSoort = (s: string | null | undefined) =>
-		s ? VORMEN[VORM_VAN[s as keyof typeof VORM_VAN] ?? 'overig'] : null;
+	// Het teken op de lijn is het bronteken zelf, uit dezelfde tabel als KindGlyph en het
+	// canvas (vormen.ts); de uitkomst zit in vulling en kleur. Geen teken van zichzelf.
+	const vormVan = (r: TijdRegel) =>
+		VORMEN[r.vorm ?? (r.soort ? VORM_VAN[r.soort] : null) ?? 'overig'];
 
 	let {
 		groepen,
@@ -52,25 +54,21 @@
 			{#if open}
 				<ol class="regels">
 					{#each g.regels as r (r.id)}
-						{@const v = vormVanSoort(r.soort)}
+						{@const v = vormVan(r)}
 						<li class="regel regel--{r.teken}" class:groot={r.groot}>
 							<span class="datum"
 								>{r.datum ? dagMaand(r.datum) : ''}{#if r.datum && metJaar(r.datum)}<span class="j"
 										>{r.datum.slice(0, 4)}</span
 									>{/if}</span
 							>
-							{#if v}
-								<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
-									><path
-										d={v.d}
-										fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
-										class:vol={v.wijze !== 'lijn' &&
-											(r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
-									/></svg
-								>
-							{:else}
-								<span class="teken" aria-hidden="true"></span>
-							{/if}
+							<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
+								><path
+									d={v.d}
+									fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+									class:vol={v.wijze !== 'lijn' &&
+										(r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
+								/></svg
+							>
 							<span class="tekst">
 								{#if r.label}<span class="label">{r.label}</span>{/if}
 								{#if r.ref}<BronLink ref={r.ref} class="zin">{r.zin}</BronLink>{:else if r.href}<a
@@ -160,10 +158,6 @@
 		--gat-van: calc(var(--s-2) + 1px);
 		--gat-tot: calc(var(--s-2) + 19px);
 	}
-	.regel:has(.teken) {
-		--gat-van: calc(var(--s-2) + 3px);
-		--gat-tot: calc(var(--s-2) + 18px);
-	}
 	/* De doorlopende lijn door de tekens, open waar het teken staat. */
 	.regel::before {
 		content: '';
@@ -198,18 +192,6 @@
 		display: block;
 		color: var(--ink-3);
 	}
-	.teken {
-		position: relative;
-		z-index: 1;
-		justify-self: center;
-		margin-top: calc(var(--s-2) + 5px);
-		width: 9px;
-		height: 9px;
-		box-sizing: border-box;
-		background: transparent;
-		border: 1.5px solid var(--ink-2);
-		border-radius: 50%;
-	}
 	/* Het bronteken op de lijn: gevuld in inkt; aangenomen of afgedaan in mos; verworpen als
 	   omtrek in het accent; openstaand of verwacht als gestippelde omtrek. */
 	.bteken {
@@ -239,33 +221,6 @@
 	.regel--verwacht .bteken path {
 		stroke-dasharray: 2 1.5;
 		stroke: var(--ink-2);
-	}
-	.regel--stuk .teken {
-		background: var(--ink-2);
-	}
-	.regel--ja .teken {
-		border-radius: 0;
-		width: 11px;
-		height: 11px;
-		border: 0;
-		background: var(--uitkomst-ja);
-	}
-	.regel--nee .teken {
-		border-radius: 0;
-		width: 11px;
-		height: 11px;
-		border: 2px solid var(--uitkomst-nee);
-	}
-	/* Openstaand: het vakje van Uitkomst (gestippeld), de tekst gewoon. */
-	.regel--open .teken {
-		border-radius: 0;
-		width: 11px;
-		height: 11px;
-		border: 1.5px dashed var(--ink-2);
-	}
-	.regel--verwacht .teken {
-		border-radius: 0;
-		border: 1.5px dashed var(--ink-3);
 	}
 	.tekst {
 		display: flex;

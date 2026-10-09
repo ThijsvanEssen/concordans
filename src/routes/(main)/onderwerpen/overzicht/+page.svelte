@@ -10,6 +10,7 @@
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import KeuzeRij from '$lib/components/ui/Keuze.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
@@ -908,13 +909,18 @@
 				<div class="facet-lijst" id="overzicht-facetten" class:open={verfijnenOpen}>
 					<section class="facet" aria-labelledby="f-kamer">
 						<h2 class="facet__kop" id="f-kamer">Kamer</h2>
-						{#each [{ c: 'TK', label: 'Tweede Kamer' }, { c: 'EK', label: 'Eerste Kamer' }] as k (k.c)}
-							<FilterOptie
-								label={k.label}
-								on={kamer === k.c}
-								onToggle={() => zet({ kamer: kamer === k.c ? null : k.c, cel: null })}
-							/>
-						{/each}
+						<!-- One of three, as Kamer is everywhere (docs/bediening.md). -->
+						<KeuzeRij
+							vol
+							label="Kamer"
+							waarde={kamer || 'beide'}
+							opties={[
+								{ waarde: 'beide', label: 'Beide' },
+								{ waarde: 'TK', label: 'Tweede', titel: 'Tweede Kamer' },
+								{ waarde: 'EK', label: 'Eerste', titel: 'Eerste Kamer' }
+							]}
+							onKies={(v) => zet({ kamer: v === 'beide' ? null : v, cel: null })}
+						/>
 					</section>
 					<section class="facet" aria-labelledby="f-fractie">
 						<h2 class="facet__kop" id="f-fractie">Fractie</h2>

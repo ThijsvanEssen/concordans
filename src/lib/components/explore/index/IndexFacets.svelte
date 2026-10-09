@@ -58,7 +58,10 @@
 				/** One of a few, always one chosen: a choice, not a filter (the Kamer). */
 				kind: 'keuze';
 				value: string;
-				options: { value: string; label: string }[];
+				/** The value that filters nothing (`beide`): any other is a filter that is on. */
+				geen?: string;
+				/** `titel` names the option in full where its label is short (Tweede: Tweede Kamer). */
+				options: { value: string; label: string; titel?: string }[];
 				onChange: (v: string) => void;
 		  }
 	);
@@ -99,8 +102,11 @@
 					return g.value
 						? [{ id: g.id, label: `${g.label}: ${g.value}`, onRemove: () => g.onChange('') }]
 						: [];
-				case 'keuze':
-					return [];
+				case 'keuze': {
+					const on = g.geen !== undefined && g.value !== g.geen;
+					const label = g.options.find((o) => o.value === g.value)?.label ?? g.value;
+					return on ? [{ id: g.id, label, onRemove: () => g.onChange(g.geen!) }] : [];
+				}
 			}
 		});
 	}
@@ -222,10 +228,11 @@
 			{:else if g.kind === 'keuze'}
 				{@const k = g}
 				<Keuze
+					vol
 					label={k.label}
 					waarde={k.value}
 					onKies={k.onChange}
-					opties={k.options.map((o) => ({ waarde: o.value, label: o.label }))}
+					opties={k.options.map((o) => ({ waarde: o.value, label: o.label, titel: o.titel }))}
 				/>
 			{:else if g.kind === 'text'}
 				{@const t = g}
