@@ -56,7 +56,7 @@
 		type VerbondenFilter
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
-	import { laatstOpen } from '$lib/stores/zwevend';
+	import { laatstOpen, opzij, passenSamen, type Zwevend } from '$lib/stores/zwevend';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 
 	// ── Camera persistence across mounts ──────────────────────────────────────
@@ -182,11 +182,10 @@
 	$effect(() => {
 		if (compactFiltersOpen) laatstOpen.set('legenda');
 	});
-	// On a phone the panel Netwerk opened folds the legend: there is room for one.
+	// On a phone the panel Netwerk opened folds the compact legend: there is room for one.
 	$effect(() =>
 		laatstOpen.subscribe((wie) => {
 			if (wie !== 'netwerk' || !window.matchMedia('(max-width: 768px)').matches) return;
-			legendaOpen = false;
 			compactFiltersOpen = false;
 		})
 	);
@@ -203,8 +202,23 @@
 			legendaOpen = false;
 		}
 	});
+	/** Folded for want of room, not by a click: it opens again once there is room. */
+	let legendaOpzij = false;
+	$effect(() =>
+		opzij.subscribe((wie) => {
+			if (wie === 'legenda' && legendaOpen) {
+				legendaOpen = false;
+				legendaOpzij = true;
+			} else if (wie !== 'legenda' && legendaOpzij) {
+				legendaOpzij = false;
+				legendaOpen = true;
+			}
+		})
+	);
 	const zetLegenda = (v: boolean) => {
 		legendaOpen = v;
+		legendaOpzij = false;
+		if (v && get(opzij) === 'legenda') opzij.set(null);
 		if (v) laatstOpen.set('legenda');
 		try {
 			localStorage.setItem(LEGENDA, v ? 'open' : 'dicht');
@@ -1252,6 +1266,73 @@
 
 	// The panel floating over the canvas, measured so that hull labels keep clear of it.
 	let overlayHost = $state<HTMLDivElement | null>(null);
+	// The legend under the panel Netwerk, as wide as it (Thijs, 10 Oct: "legenda en netwerk
+	// onder elkaar"): placed from the panel's measured box, and the two weighed against the
+	// height of the canvas. Both open while they fit; the one opened last stays, the other
+	// folds (zwevend.ts) and comes back once there is room.
+	let legendaEl = $state<HTMLDivElement | null>(null);
+	let legendaPlek = $state<{ top: number; left: number | null; width: number | null; max: number }>(
+		{
+			top: 12,
+			left: null,
+			width: null,
+			max: 0
+		}
+	);
+	/** The height of each card when it last stood open, to know whether it fits again. */
+	const hoogteOpen: Partial<Record<Zwevend, number>> = {};
+	function schik() {
+		const host = overlayHost;
+		if (!host) return;
+		const H = host.clientHeight;
+		const nw = host.querySelector<HTMLElement>('.netwerk:not(.netwerk--start)');
+		const top = nw ? nw.offsetTop + nw.offsetHeight + 8 : 12;
+		legendaPlek = {
+			top,
+			left: nw ? nw.offsetLeft : null,
+			width: nw ? nw.offsetWidth : null,
+			max: Math.max(0, H - top - 12)
+		};
+		const nwOpen = !!nw && !nw.classList.contains('netwerk--dicht');
+		const nwH = nw ? nw.scrollHeight : 0;
+		const lgH = legendaEl ? legendaEl.scrollHeight : 0;
+		if (nwOpen) hoogteOpen.netwerk = nwH;
+		if (legendaOpen) hoogteOpen.legenda = lgH;
+		const zij = get(opzij);
+		if (nwOpen && legendaOpen && !passenSamen(nwH, lgH, H)) {
+			opzij.set(get(laatstOpen) === 'legenda' ? 'netwerk' : 'legenda');
+			return;
+		}
+		if (zij === 'legenda' && passenSamen(nwH, hoogteOpen.legenda ?? Infinity, H)) opzij.set(null);
+		if (zij === 'netwerk' && passenSamen(hoogteOpen.netwerk ?? Infinity, lgH, H)) opzij.set(null);
+	}
+	$effect(() => {
+		const host = overlayHost;
+		const lg = legendaEl;
+		if (!host) return;
+		const kijk = new ResizeObserver(() => schik());
+		kijk.observe(host);
+		if (lg) kijk.observe(lg);
+		const nw = host.querySelector<HTMLElement>('.netwerk');
+		if (nw) kijk.observe(nw);
+		// The panel's content changes without a change of its own box (a chip added).
+		const verandert = new MutationObserver(() => schik());
+		verandert.observe(host, {
+			childList: true,
+			subtree: true,
+			attributes: true,
+			attributeFilter: ['class']
+		});
+		schik();
+		return () => {
+			kijk.disconnect();
+			verandert.disconnect();
+		};
+	});
+	$effect(() => {
+		void legendaOpen;
+		queueMicrotask(schik);
+	});
 	let overlayRect = $state<{ x: number; y: number; width: number; height: number } | null>(null);
 	$effect(() => {
 		const host = overlayHost;
@@ -1507,7 +1588,15 @@
 			<!-- De legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
 			     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
 			{#if !compact && canvasCounts.nodes > 0}
-				<div class="legenda" class:open={legendaOpen}>
+				<div
+					class="legenda"
+					class:open={legendaOpen}
+					bind:this={legendaEl}
+					style:top="{legendaPlek.top}px"
+					style:left={legendaPlek.left != null ? `${legendaPlek.left}px` : null}
+					style:width={legendaPlek.width != null ? `${legendaPlek.width}px` : null}
+					style:max-height="{legendaPlek.max}px"
+				>
 					<button
 						type="button"
 						class="legenda-kop"
@@ -1651,8 +1740,6 @@
 		pointer-events: auto;
 	}
 
-	/* De legenda links onder, overal op dezelfde plek: dicht zijn kop, open erboven wat hij
-	   uitlegt, de kop blijft staan. */
 	/* A cluster bron's card: beside it, as an opened row (RowOpen) in its buttons. */
 	.cluster-kaart {
 		position: absolute;
@@ -1719,14 +1806,14 @@
 		color: var(--paper);
 	}
 
+	/* Under the panel Netwerk, as wide as it; where there is no panel, at the top right. */
 	.legenda {
 		position: absolute;
-		bottom: var(--s-3);
-		left: var(--s-3);
+		right: var(--s-3);
+		width: 280px;
 		z-index: var(--z-float);
-		max-height: calc(100% - 7rem);
 		display: flex;
-		flex-direction: column-reverse;
+		flex-direction: column;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);

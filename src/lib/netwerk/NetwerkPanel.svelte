@@ -8,7 +8,8 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { laatstOpen } from '$lib/stores/zwevend';
+	import { laatstOpen, opzij } from '$lib/stores/zwevend';
+	import { get } from 'svelte/store';
 	import type { NetwerkEntry } from './netwerk';
 	import { formatCount } from '$lib/verbonden/filter';
 
@@ -82,8 +83,12 @@
 			open = !telefoon;
 		}
 	});
+	/** Folded for want of room, not by a click: it opens again once there is room. */
+	let opzijGezet = false;
 	const zetOpen = (v: boolean) => {
 		open = v;
+		opzijGezet = false;
+		if (v && get(opzij) === 'netwerk') opzij.set(null);
 		if (v) laatstOpen.set('netwerk');
 		try {
 			localStorage.setItem(PANEEL, v ? 'open' : 'dicht');
@@ -92,10 +97,17 @@
 		}
 	};
 
-	// On a phone, the legend opened folds this panel: there is room for one.
+	// The legend opened under it where both do not fit: this panel gives way, and comes back
+	// once there is room (GraphView measures, zwevend.ts).
 	$effect(() =>
-		laatstOpen.subscribe((wie) => {
-			if (telefoon && wie === 'legenda' && open) open = false;
+		opzij.subscribe((wie) => {
+			if (wie === 'netwerk' && open) {
+				open = false;
+				opzijGezet = true;
+			} else if (wie !== 'netwerk' && opzijGezet) {
+				opzijGezet = false;
+				open = true;
+			}
 		})
 	);
 
