@@ -243,7 +243,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-6);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 	}
 	.group-head {
 		display: flex;
@@ -274,9 +274,9 @@
 		border: 0;
 		background: none;
 		font: inherit;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		cursor: pointer;
 	}
@@ -288,7 +288,7 @@
 		justify-content: space-between;
 		padding: var(--s-2) 0 2px;
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.subhead:first-child {

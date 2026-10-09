@@ -63,14 +63,14 @@
 		gap: var(--s-3);
 	}
 	.code {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	h1 {
 		font-family: var(--font-serif);
-		font-weight: 500;
+		font-weight: 600;
 		font-size: var(--t-h1);
 		line-height: var(--lh-tight);
 		margin: 0;
@@ -95,8 +95,8 @@
 		flex-wrap: wrap;
 	}
 	.knop {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		padding: var(--s-2) var(--s-4);
 		border-radius: var(--r-1);

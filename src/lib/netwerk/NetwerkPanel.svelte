@@ -287,8 +287,8 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		color: var(--ink-2);
 		cursor: pointer;
 	}
@@ -301,7 +301,7 @@
 	.titel {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.laden {
@@ -315,7 +315,7 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		text-decoration: underline;
@@ -369,7 +369,7 @@
 		border: 1px solid var(--ink);
 		border-radius: 999px;
 		background: var(--paper);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 	}
@@ -461,7 +461,7 @@
 		align-items: center;
 		gap: var(--s-2);
 		margin-top: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		cursor: pointer;
@@ -487,7 +487,7 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		background: var(--paper);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		line-height: 1.4;
 		color: var(--ink-2);
@@ -499,7 +499,7 @@
 		color: var(--ink);
 	}
 	.voorbeeld-kop {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.netwerk {
@@ -510,7 +510,7 @@
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 		width: 280px;
@@ -542,7 +542,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	/* Also the button inside ConfirmButton, a component of its own. */

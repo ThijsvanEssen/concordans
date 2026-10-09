@@ -110,7 +110,7 @@
 	}
 	.zin {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 	}
@@ -151,7 +151,7 @@
 		overflow: hidden;
 	}
 	.meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -165,13 +165,13 @@
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 3px;
 		cursor: pointer;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.dekking {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

@@ -294,7 +294,7 @@
 		align-items: baseline;
 		gap: var(--s-2);
 		margin-bottom: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -326,7 +326,7 @@
 		align-items: baseline;
 		gap: var(--s-3);
 		padding-top: 2px;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -397,7 +397,7 @@
 		opacity: 0;
 		justify-content: flex-end;
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.part:hover:not(:has(.part--onderdeel:hover)) > .part__actions,

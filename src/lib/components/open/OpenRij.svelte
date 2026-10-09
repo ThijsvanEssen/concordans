@@ -84,7 +84,7 @@
 	}
 	.opmerking {
 		margin: calc(-1 * var(--s-2)) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -99,7 +99,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -121,8 +121,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		padding: var(--s-2) var(--s-3);
 		border: 1px solid var(--rule-strong);

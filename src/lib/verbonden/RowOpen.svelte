@@ -70,7 +70,7 @@
 	.open {
 		padding: var(--s-3);
 		border-left: 2px solid var(--rule-strong);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 	}
 	.where {
 		margin: 0 0 var(--s-1);
@@ -105,7 +105,8 @@
 		border-radius: var(--r-1);
 		background: var(--paper);
 		font: inherit;
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		text-decoration: none;

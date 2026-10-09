@@ -229,7 +229,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.what {
 		margin: calc(-1 * var(--s-3)) 0 0;
@@ -256,8 +256,8 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: var(--paper);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
@@ -271,7 +271,7 @@
 		gap: 3px;
 	}
 	.blader {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 	}
@@ -291,7 +291,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 800;
 	}
 	.actueel h2 a {
 		color: var(--ink);
@@ -313,7 +313,7 @@
 		align-self: flex-start;
 		margin-top: var(--s-5);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		text-decoration: none;
 		border-bottom: 1px solid var(--ink);

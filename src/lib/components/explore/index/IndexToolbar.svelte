@@ -139,9 +139,9 @@
 		background: transparent;
 		cursor: pointer;
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		min-height: 24px;
 		padding: 2px 6px;
 		border-radius: var(--r-1);
@@ -155,12 +155,12 @@
 		display: inline-flex;
 		align-items: baseline;
 		gap: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.sort-lbl {
-		font-weight: 500;
+		font-weight: 600;
 	}
 	/* The list reads as the other menus of the app: interface type, the one chevron. */
 	.sort-select {
@@ -174,8 +174,8 @@
 		padding: 2px var(--s-4) 2px 0;
 		border: 0;
 		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
@@ -194,7 +194,7 @@
 		background: transparent;
 		cursor: pointer;
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		min-width: 24px;
 		min-height: 24px;

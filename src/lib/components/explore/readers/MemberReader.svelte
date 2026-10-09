@@ -391,9 +391,9 @@
 		gap: var(--s-2);
 	}
 	.kicker {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.member-head-row {
@@ -426,7 +426,7 @@
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
@@ -442,9 +442,9 @@
 	/* The faction is a word, not a tag. */
 	/* Also on the link NameLink renders. */
 	.r-member :global(.party-chip) {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 
@@ -468,7 +468,7 @@
 		opacity: 0.4;
 	}
 	.career-years {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
@@ -488,7 +488,7 @@
 	/* Also on the link NameLink renders. */
 	.r-member :global(.career-role) {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -541,12 +541,12 @@
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.vote-outcome {
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.vote-outcome--passed,
 	.vote-outcome--failed {
@@ -566,7 +566,7 @@
 		gap: var(--s-2);
 		padding-bottom: var(--s-1);
 		border-bottom: 1px solid var(--rule);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.vote-group-count {
@@ -584,13 +584,13 @@
 	}
 	/* Also on the link NameLink renders. */
 	.r-member :global(.party-name) {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
 	}
 	.party-total {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -598,8 +598,8 @@
 	/* A text button: no border, the hover as a paper-2 field. */
 	.more-btn {
 		align-self: flex-start;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		color: var(--ink-2);
 		background: none;
@@ -620,13 +620,13 @@
 
 	.ek-source {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.laden {
 		margin: var(--s-4) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}

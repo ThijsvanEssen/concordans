@@ -54,7 +54,7 @@ const FALLBACK: Tokens = {
 	groepCommissie: '#438365',
 	groepDossier: '#d3762d',
 	fontSerif: "'Newsreader', Georgia, serif",
-	fontSans: "'Schibsted Grotesk', system-ui, sans-serif"
+	fontSans: "'Newsreader', Georgia, serif"
 };
 
 const NAMES: Record<keyof Tokens, string> = {
@@ -76,7 +76,9 @@ const NAMES: Record<keyof Tokens, string> = {
 	groepCommissie: '--groep-commissie',
 	groepDossier: '--groep-dossier',
 	fontSerif: '--font-serif',
-	fontSans: '--font-sans'
+	// The labels on the canvas are text: the serif too, since the sans is for controls only
+	// (docs/typografie.md). The key keeps its name for the places that read it.
+	fontSans: '--font-serif'
 };
 
 let cached: Tokens | null = null;

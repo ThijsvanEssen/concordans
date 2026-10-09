@@ -502,7 +502,7 @@
 					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
 						<button
 							type="button"
-							class="head__version"
+							class="head__version-knop"
 							class:is-old={!!shown}
 							aria-haspopup={wordings.length > 1 ? 'menu' : undefined}
 							aria-expanded={wordings.length > 1 ? versionMenu : undefined}
@@ -695,7 +695,7 @@
 		display: grid;
 		gap: var(--s-2);
 		margin-bottom: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -711,23 +711,24 @@
 		justify-content: flex-start;
 		min-height: 26px;
 	}
-	.head__version {
+	.head__version-knop {
 		padding: 0;
 		border: 0;
 		background: none;
 		font: inherit;
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
 	}
-	.head__version.is-old {
+	.head__version-knop.is-old {
 		color: var(--ink-2);
 	}
-	.head__version:hover:not(:disabled) {
+	.head__version-knop:hover:not(:disabled) {
 		color: var(--accent);
 	}
-	.head__version:disabled {
+	.head__version-knop:disabled {
 		cursor: default;
 	}
 	.head__compare {
@@ -751,7 +752,7 @@
 	}
 	.head__mvt.is-open {
 		color: var(--ink);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.head__origin a:hover {
 		color: var(--accent);
@@ -825,7 +826,7 @@
 		min-width: 0;
 	}
 	.pop__row .pop__item[aria-checked='true'] {
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.pop__change {
 		flex: none;
@@ -846,7 +847,7 @@
 
 	.note {
 		margin: 0 0 var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -886,7 +887,7 @@
 		display: flex;
 		gap: var(--s-3);
 		margin-left: auto;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		white-space: nowrap;
 	}
@@ -897,7 +898,7 @@
 		margin-top: 40px;
 		padding-top: var(--s-4);
 		border-top: 1px solid var(--rule);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.reader-nav-footer .reader-nav-link--next {

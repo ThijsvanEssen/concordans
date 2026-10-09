@@ -416,7 +416,7 @@
 		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.nieuw {
 		display: flex;
@@ -447,8 +447,8 @@
 		border-radius: var(--r-2);
 		background: var(--paper);
 		color: var(--ink);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		cursor: pointer;
 	}
 	button:disabled {
@@ -475,7 +475,7 @@
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.acties a,
@@ -498,7 +498,7 @@
 	}
 	.naar-overzicht {
 		color: var(--ink-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		text-decoration: underline;
 		text-underline-offset: 2px;
@@ -521,7 +521,7 @@
 		padding: var(--s-1) var(--s-3);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	button.weg {
@@ -543,21 +543,21 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
 	.sinds {
 		flex: 1;
 		margin: 0;
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.status,
 	.verder {
 		margin: var(--s-3) 0;
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.verder {

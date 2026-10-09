@@ -86,7 +86,7 @@
 		overflow-y: auto;
 		padding-top: var(--s-5);
 		background: var(--paper-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 
@@ -104,7 +104,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: 1.2;
 		color: var(--ink);
 	}
@@ -142,7 +142,7 @@
 
 	/* Heads a group of the contents: rung 3 of docs/typografie.md. */
 	.row.level-1 {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
@@ -151,7 +151,7 @@
 
 	.row.level-2 {
 		font-family: var(--font-serif);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 

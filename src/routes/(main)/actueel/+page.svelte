@@ -671,13 +671,13 @@
 		align-self: start;
 		max-height: calc(100vh - var(--s-6));
 		overflow-y: auto;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 	}
 	.title {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.stand {
 		margin: 0 0 var(--s-5);
@@ -695,7 +695,7 @@
 		align-items: baseline;
 		gap: var(--s-2) var(--s-3);
 		margin: 0 0 var(--s-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 	}
 	.count {
 		margin: 0;
@@ -704,7 +704,7 @@
 	}
 	.noun {
 		margin-left: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -760,7 +760,7 @@
 		border-radius: var(--r-2);
 		background: var(--paper);
 		color: var(--ink);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		cursor: pointer;
 	}
@@ -797,7 +797,7 @@
 	.status,
 	.empty {
 		margin: var(--s-5) 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -817,8 +817,8 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		color: var(--ink);
 		cursor: pointer;
 	}
@@ -835,7 +835,7 @@
 		gap: var(--s-2) var(--s-3);
 		margin: var(--s-5) 0;
 		color: var(--ink-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.doorzocht button {
@@ -845,6 +845,7 @@
 		background: transparent;
 		color: var(--ink);
 		font: inherit;
+		font-family: var(--font-ui);
 		cursor: pointer;
 	}
 	.more {
@@ -857,8 +858,8 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		color: var(--ink);
 		cursor: pointer;
 	}
@@ -911,7 +912,8 @@
 			border-bottom: 1px solid var(--rule);
 			background: transparent;
 			font: inherit;
-			font-size: var(--t-meta);
+			font-family: var(--font-ui);
+			font-size: var(--t-ui);
 			font-weight: 500;
 			text-align: left;
 			color: var(--ink);

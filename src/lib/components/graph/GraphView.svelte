@@ -1628,7 +1628,7 @@
 		height: 32px;
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-ui);
 		font-size: var(--t-body-2);
 		color: var(--ink-2);
 		cursor: pointer;
@@ -1704,7 +1704,8 @@
 		border-radius: var(--r-1);
 		background: var(--paper);
 		font: inherit;
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
@@ -1738,7 +1739,7 @@
 		padding: var(--s-2) var(--s-3);
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		cursor: pointer;
@@ -1749,7 +1750,7 @@
 	.legenda-titel {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin-right: var(--s-1);
 	}
@@ -1839,7 +1840,7 @@
 			gap: var(--s-1) var(--s-2);
 			margin: 0;
 			padding: var(--s-2) var(--s-3);
-			font-family: var(--font-sans);
+			font-family: var(--font-serif);
 			font-size: var(--t-meta);
 			background: var(--paper);
 			border: 1px solid var(--rule-strong);

@@ -354,7 +354,7 @@
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 	}
@@ -369,7 +369,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.toolbar__count,
 	.toolbar__back {
@@ -402,6 +402,7 @@
 		border: 0;
 		background: none;
 		font: inherit;
+		font-family: var(--font-ui);
 		color: var(--ink);
 		text-align: left;
 		cursor: pointer;
@@ -453,7 +454,7 @@
 		background: none;
 		font: inherit;
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		cursor: pointer;
 	}
@@ -488,7 +489,7 @@
 	}
 	.bron__sub {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -498,7 +499,7 @@
 		padding: 2px var(--s-1);
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		cursor: pointer;
