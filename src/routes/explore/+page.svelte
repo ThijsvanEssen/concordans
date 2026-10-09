@@ -1160,6 +1160,14 @@
 				);
 			return;
 		}
+		// O: only the surroundings of the selected bron, in place of the network, as a double
+		// click on it does (Thijs, 10 Oct: the row's Alleen de omgeving moved here).
+		if (e.key.toLowerCase() === 'o' && selectedNode && mode !== 'index') {
+			e.preventDefault();
+			kiesPaneel('graph');
+			handleNodeReplace(selectedNode);
+			return;
+		}
 		if (e.key.toLowerCase() !== 'l' || !readAction) return;
 		e.preventDefault();
 		setReading(readAction === 'read');
@@ -1284,8 +1292,6 @@
 				{network}
 				onFilter={applyFilter}
 				onOpenFilter={() => (filterOpen = true)}
-				onVerbinding={openRowCard}
-				onShowInNetwork={showInNetwork}
 				onNaarNetwerk={() => (mobilePanel = 'graph')}
 				onAddToNetwerk={(row) => {
 					const id = focusOf(row.ref);
@@ -1411,6 +1417,10 @@
 								start={!focus && !netwerkActive}
 								{telefoon}
 								onPick={addIdToNetwerk}
+								omgeving={selectedNode && !selectedNode.stub
+									? bronNaam(selectedNode, $instrumentMetaStore)
+									: null}
+								onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
 								onVoorbeeld={() => {
 									keepCanvas = true;
 									setNetwerk(

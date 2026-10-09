@@ -30,6 +30,10 @@
 				<span class="shortcut-keys"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span>
 			</div>
 			<div class="shortcut-row">
+				<span class="shortcut-desc">Bij een bron: alleen de omgeving in het netwerk</span>
+				<span class="shortcut-keys"><kbd>O</kbd></span>
+			</div>
+			<div class="shortcut-row">
 				<span class="shortcut-desc"
 					>Volgende of vorige rij in Bladeren en Verbonden; Enter opent haar</span
 				>

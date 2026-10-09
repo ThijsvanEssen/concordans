@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
-	import { terPlekke } from '$lib/actions/klik';
+	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
-	import RowOpen from './RowOpen.svelte';
-	import { isEscape } from '$lib/actions/keys';
+	import { hoeVan } from './hoe';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
@@ -41,7 +40,6 @@
 		longDate,
 		mentionRows,
 		metaParts,
-		openLabelOf,
 		repeatedTitles,
 		rowKey,
 		type Row
@@ -78,8 +76,6 @@
 		network = false,
 		onFilter,
 		onOpenFilter,
-		onVerbinding,
-		onShowInNetwork,
 		onNaarNetwerk,
 		onAddToNetwerk,
 		inNetwerk,
@@ -97,10 +93,7 @@
 		network?: boolean;
 		onFilter: (f: VerbondenFilter) => void;
 		onOpenFilter: () => void;
-		/** Opens the card Verbinding for a row. */
-		onVerbinding: (row: Row) => void;
-		onShowInNetwork?: (row: Row) => void;
-		/** A row's Alleen de omgeving was followed (on a phone: to the Netwerk tab). */
+		/** A group was drawn in the network (on a phone: to the Netwerk tab). */
 		onNaarNetwerk?: () => void;
 		/** Één bron uit de rij in het netwerk zetten. */
 		onAddToNetwerk?: (row: Row) => void;
@@ -121,7 +114,6 @@
 
 	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
-	let openRow = $state<string | null>(null);
 	let openMenu = $state<'bronnen' | 'grouping' | null>(null);
 	/** What Verzamel did, for the button and the live region. */
 
@@ -162,7 +154,7 @@
 	$effect(() => {
 		void bronId;
 		expanded = new Set();
-		openRow = null;
+		toon = null;
 	});
 
 	// The kern of the bron (Procesgang, Ingediend bij, Wet, Fractie) stands above its text in
@@ -289,8 +281,16 @@
 		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
 	}
 
+	// A row opens its bron in Netwerk (Thijs, 10 Oct: "laten we standaard navigeren naar
+	// Netwerk"); a group read beside the text opens it there.
 	const openHref = (g: Group, row: Row) =>
-		g.inPlace ? inPlaceHref(row) : bronHref(row.ref, { at: row.at });
+		g.inPlace
+			? inPlaceHref(row)
+			: bronHref(row.ref, { at: row.at, keepMode: false, mode: 'graph' });
+
+	/** The row whose provenance a tap shows, on touch. */
+	let toon = $state<string | null>(null);
+	const aanraking = () => typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches;
 
 	// The years of all the group's judgments where the API counts them (a wet, BE-47);
 	// else of the rows loaded, which the sentence then says.
@@ -320,8 +320,6 @@
 		);
 	}
 
-	const inNetworkHref = (row: Row) => bronHref(row.ref, { keepMode: false, mode: 'graph' });
-
 	// Under a short list of judgments: how many the network holds of the rechter the
 	// filter names, and since when, so that a small number reads as a property of the
 	// selection, not of the case law. Only the first such list carries the line.
@@ -336,17 +334,7 @@
 			.catch(() => {});
 	});
 	const span = $derived(coverage ? coverageFor(coverage, filter.rechter) : null);
-
-	// Escape closes the row opened under itself.
-	function onKey(e: KeyboardEvent) {
-		if (openRow && isEscape(e)) {
-			e.preventDefault();
-			openRow = null;
-		}
-	}
 </script>
-
-<svelte:window onkeydown={onKey} />
 
 <aside class="verbonden" aria-label="Verbonden" bind:this={root}>
 	<div class="head">
@@ -593,15 +581,19 @@
 						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
 							{@const id = rowId(row)}
 							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
-							{@const open = openRow === id}
-							<li class="row" class:is-open={open}>
-								<!-- A click beside the title opens the row too, for the mouse; the
-							     keyboard has the toggle at the end of the row. -->
+							{@const hoe = hoeVan(row, selection.collection)}
+							{@const href = openHref(g, row)}
+							<li class="row" class:toont={toon === id}>
+								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
+								     Netwerk, as its title does. On touch a tap beside the title shows where
+								     the verbinding comes from. -->
 								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 								<div
 									class="row__main"
 									onclick={(e) => {
-										if (!onControl(e) && !row.missing) openRow = open ? null : id;
+										if (onControl(e) || row.missing) return;
+										if (aanraking()) toon = toon === id ? null : id;
+										else goto(href, { noScroll: true });
 									}}
 								>
 									<KindGlyph
@@ -613,16 +605,25 @@
 										{#if row.missing}
 											<span class="row__title row__title--missing">{row.title}</span>
 										{:else}
-											<a
-												class="row__title"
-												href={openHref(g, row)}
-												data-sveltekit-noscroll
-												onclick={(e) => terPlekke(e, () => (openRow = open ? null : id))}
+											<a class="row__title" {href} data-sveltekit-noscroll
 												>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
 											>
 										{/if}
+										{#if hoe && (hoe.werkwoord || hoe.rest)}
+											<span class="row__hoe" class:is-afgeleid={hoe.afgeleid}
+												>{#if hoe.werkwoord}<b>{hoe.werkwoord}</b
+													>{/if}{#if hoe.rest}{hoe.werkwoord && !/^[,:]/.test(hoe.rest)
+														? ' '
+														: ''}{hoe.rest}{/if}{#if hoe.afgeleid}, afgeleid{/if}</span
+											>
+										{/if}
+										{#if hoe?.citaat}
+											<span class="row__citaat"
+												>{hoe.citaat.before}<mark>{hoe.citaat.mark}</mark>{hoe.citaat.after}</span
+											>
+										{/if}
 										<span class="row__meta">
-											{#each metaParts(row) as part, k (k)}
+											{#each metaParts(row, !!hoe) as part, k (k)}
 												{#if k > 0}<span class="row__sep">,</span>{/if}
 												<span class="row__part row__part--{part.kind}">{part.text}</span>
 											{/each}
@@ -633,6 +634,9 @@
 												>
 											{/if}
 										</span>
+										{#if hoe?.herkomst}
+											<span class="row__herkomst">{hoe.herkomst}</span>
+										{/if}
 									</span>
 									{#if !row.missing && onAddToNetwerk}
 										{@const al = inNetwerk?.(row) ?? false}
@@ -648,32 +652,7 @@
 											onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</button
 										>
 									{/if}
-									{#if !row.missing}
-										<button
-											type="button"
-											class="row__toggle"
-											aria-expanded={open}
-											aria-controls="open-{id}"
-											aria-label={open ? 'Verberg passage' : 'Toon passage'}
-											onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
-										>
-									{/if}
 								</div>
-								{#if open}
-									<div class="row__open" id="open-{id}">
-										<RowOpen
-											{row}
-											openHref={openHref(g, row)}
-											openLabel={openLabelOf(row, g.inPlace)}
-											networkHref={inNetworkHref(row)}
-											{onShowInNetwork}
-											{onNaarNetwerk}
-											{onVerbinding}
-											onAdd={onAddToNetwerk && !row.missing ? () => onAddToNetwerk(row) : undefined}
-											added={inNetwerk?.(row) ?? false}
-										/>
-									</div>
-								{/if}
 							</li>
 						{/each}
 					</ul>
@@ -1008,6 +987,7 @@
 		padding: 0 var(--s-1);
 	}
 	.row__main {
+		position: relative;
 		display: flex;
 		align-items: flex-start;
 		gap: var(--s-3);
@@ -1020,9 +1000,6 @@
 	.row__main:hover,
 	.row__main:focus-within {
 		background: var(--paper-2);
-	}
-	.row.is-open .row__main {
-		background: var(--accent-soft);
 	}
 	/* + zet de bron in het netwerk; zichtbaar bij hover en focus, en als hij er al in staat. */
 	.row__plus {
@@ -1047,6 +1024,12 @@
 	.row__plus.is-in {
 		opacity: 1;
 	}
+	/* Without hover (a phone) the + is always there. */
+	@media (hover: none) {
+		.row__plus {
+			opacity: 1;
+		}
+	}
 	.row__plus.is-in {
 		border-color: var(--ink);
 		background: var(--ink);
@@ -1055,26 +1038,6 @@
 	}
 	.row__plus:hover:not(.is-in) {
 		border-color: var(--ink);
-		color: var(--ink);
-	}
-	.row__toggle {
-		flex: none;
-		display: grid;
-		place-items: center;
-		width: 24px;
-		height: 24px;
-		margin: -2px calc(-1 * var(--s-2)) 0 0;
-		padding: 0;
-		border: 0;
-		border-radius: var(--r-1);
-		background: none;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.row__toggle :global(.caret) {
-		margin-left: 0;
-	}
-	.row__toggle:hover {
 		color: var(--ink);
 	}
 	.row__text {
@@ -1120,8 +1083,63 @@
 	.row__part--derived {
 		font-style: italic;
 	}
-	.row__open {
-		margin: 0 var(--s-4) var(--s-2) calc(var(--s-4) + 21px);
+	/* The verbinding in words: the verb in weight, the rest as the source gives it. */
+	.row__hoe {
+		margin-top: 2px;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		line-height: 1.35;
+		color: var(--ink-2);
+	}
+	.row__hoe b {
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.row__hoe.is-afgeleid {
+		font-style: italic;
+	}
+	/* The passage that carries the verbinding, the words that name the bron marked. */
+	.row__citaat {
+		margin-top: var(--s-1);
+		padding-left: var(--s-2);
+		border-left: 2px solid var(--rule-strong);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		line-height: 1.45;
+		color: var(--ink-2);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.row__citaat mark {
+		background: var(--accent-soft);
+		color: var(--ink);
+	}
+	/* Where the verbinding comes from: on hover and focus, on a phone after a tap (Thijs). */
+	.row__herkomst {
+		display: none;
+		position: absolute;
+		top: calc(100% - var(--s-1));
+		left: calc(var(--s-4) + 21px);
+		z-index: var(--z-float);
+		max-width: calc(100% - var(--s-4) * 2 - 21px);
+		padding: var(--s-1) var(--s-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		box-shadow: var(--shadow-modal);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		line-height: 1.35;
+		color: var(--ink-2);
+		pointer-events: none;
+	}
+	.row__main:hover .row__herkomst,
+	.row__main:focus-within .row__herkomst,
+	.row.toont .row__herkomst {
+		display: block;
 	}
 	.link {
 		padding: 0;

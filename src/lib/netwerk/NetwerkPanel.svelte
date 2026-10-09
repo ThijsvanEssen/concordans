@@ -30,7 +30,9 @@
 		telefoon = false,
 		deelLabel = 'Deel',
 		deelMelding = '',
-		onDeel
+		onDeel,
+		omgeving = null,
+		onOmgeving
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
@@ -45,6 +47,9 @@
 		/** Read out once copied. */
 		deelMelding?: string;
 		onDeel?: () => void;
+		/** The selected bron whose surroundings alone the line below shows (O; Thijs, 10 Oct). */
+		omgeving?: string | null;
+		onOmgeving?: () => void;
 		/** The API ran out of time looking for paths: these are the ones it found (`partial`). */
 		deels?: boolean;
 		/** Adds a bron found by the search, by the name a link uses. */
@@ -255,6 +260,12 @@
 					{/if}
 				</li>
 			</ul>
+			{#if omgeving && onOmgeving}
+				<button type="button" class="omgeving-knop" onclick={onOmgeving}
+					><span class="omgeving-knop__naam">Alleen de omgeving van {omgeving}</span><kbd>O</kbd
+					></button
+				>
+			{/if}
 			{#if entries.length > 1}
 				<label class="tussen">
 					<input type="checkbox" id="netwerk-tussen" checked={tussen} onchange={onTussen} />
@@ -270,6 +281,41 @@
 </section>
 
 <style>
+	/* Only the surroundings of the selected bron: a line, as Toon de bronnen ertussen. */
+	.omgeving-knop {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		margin-top: var(--s-2);
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink-2);
+		text-align: left;
+		cursor: pointer;
+	}
+	.omgeving-knop__naam {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+	.omgeving-knop {
+		max-width: 100%;
+	}
+	.omgeving-knop:hover {
+		color: var(--ink);
+		text-decoration: underline;
+	}
+	.omgeving-knop kbd {
+		padding: 0 var(--s-1);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		font-size: var(--t-ui-micro);
+		color: var(--ink-3);
+	}
 	.deels {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
