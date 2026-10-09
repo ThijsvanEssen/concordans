@@ -5,4 +5,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-# Sitemap: https://concordans.nl/sitemap.xml (added once the sitemap is served)
+Sitemap: https://concordans.nl/sitemap.xml
