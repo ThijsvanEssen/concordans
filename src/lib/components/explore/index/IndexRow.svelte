@@ -7,15 +7,11 @@
 	// toggle is a button under the row's content, the size of the row: it is what the
 	// keyboard stops on.
 	//
-	// With `acties` (Bladeren, Thijs 10 Oct: "knoppen aan het eind van de rij om direct te
-	// navigeren"): no detail beneath. The title opens the bron, a click on the row does the
-	// same, and at the end of the row its ways on in one click: Lezen and Netwerk for a bron
-	// with a text of its own, Openen for one read beside the network.
+	// With `acties` (Bladeren): no detail beneath. The title opens the bron in Netwerk and a
+	// click on the row does the same; Lezen is one step from there (docs/bediening.md, Thijs
+	// 10 Oct: a row has no buttons of its own, a click on the row does it).
 	import type { Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { bronHref, isReadable } from '$lib/bron/href';
-	import type { Collection } from '$lib/vocabulary';
-	import Picto from '$lib/components/ui/Picto.svelte';
 
 	let {
 		title,
@@ -54,10 +50,6 @@
 
 	const uid = $props.id();
 
-	const collection = $derived((bron?.split('/')[0] ?? '') as Collection);
-	const leesbaar = $derived(!!bron && isReadable(collection));
-	const lezen = $derived(bron ? bronHref(bron, { keepMode: false, mode: 'read' }) : null);
-	const netwerk = $derived(bron ? bronHref(bron, { keepMode: false, mode: 'graph' }) : null);
 	const direct = $derived(acties && !!href);
 
 	// A click after selecting text selects; a click on another control is that control's.
@@ -100,20 +92,6 @@
 			{@render body?.()}
 		</div>
 		<div class="row-aside">{@render aside?.()}</div>
-		{#if acties === true && bron}
-			<div class="row-acties">
-				{#if leesbaar}
-					<a class="act" href={lezen} aria-label="{title} lezen"
-						><Picto naam="tekst" size={13} />Lezen</a
-					>
-					<a class="act" href={netwerk} aria-label="{title} in het netwerk"
-						><Picto naam="netwerk" size={13} />Netwerk</a
-					>
-				{:else}
-					<a class="act" href={netwerk} aria-label="{title} openen">Openen</a>
-				{/if}
-			</div>
-		{/if}
 	</div>
 	{#if open && detail && !acties}
 		<div class="detail" id="{uid}-detail">{@render detail()}</div>
@@ -212,37 +190,6 @@
 		padding-top: 2px;
 	}
 
-	/* The ways on: a fourth column, quiet words in the sans, the same on every row. */
-	.row:has(.row-acties) {
-		grid-template-columns:
-			var(--row-lead, 120px) minmax(0, 1fr) var(--row-aside, 190px)
-			auto;
-	}
-	.row-acties {
-		position: relative;
-		display: flex;
-		gap: var(--s-3);
-		align-items: baseline;
-		padding-top: 2px;
-		white-space: nowrap;
-	}
-	.act {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		color: var(--ink-2);
-		text-decoration: none;
-	}
-	.act:hover,
-	.act:focus-visible {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-
 	/* Inline detail */
 	.detail {
 		background: var(--paper-2);
@@ -269,12 +216,6 @@
 		.row-aside {
 			justify-content: flex-start;
 			padding-top: 6px;
-		}
-		.row:has(.row-acties) {
-			grid-template-columns: 1fr;
-		}
-		.row-acties {
-			padding-top: var(--s-1);
 		}
 		.detail {
 			padding-left: 0;

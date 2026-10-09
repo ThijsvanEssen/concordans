@@ -3637,11 +3637,12 @@
 	.skelet-rij span:last-child {
 		width: 70%;
 	}
+	/* One heavy rule per list, the count's above it (docs/bediening.md); the heads of the
+	   columns hang under it on a thin rule of their own. */
 	.list {
 		list-style: none;
 		padding: 0;
 		margin: 0;
-		border-top: 2px solid var(--ink);
 	}
 	/* What identifies the row (a number, a date, a kind): small and grey; the title is
 	   what is read. */
@@ -3897,10 +3898,6 @@
 		/* Without number columns the head holds only its rule, under the count's: it goes. */
 		.list-head:not(:has(.nums)) {
 			display: none;
-		}
-		/* The count's rule opens the list; the list's own would stand right under it. */
-		.list-head:not(:has(.nums)) + .list {
-			border-top: 0;
 		}
 	}
 
