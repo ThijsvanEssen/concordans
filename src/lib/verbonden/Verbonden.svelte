@@ -3,7 +3,9 @@
 	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
 	import { hoeVan } from './hoe';
-	import { createCopier } from '$lib/components/ui/copy.svelte';
+	import Bewaar from '$lib/map/Bewaar.svelte';
+	import { kaart } from '$lib/map/map.svelte';
+	import { itemVanRij } from '$lib/map/rij';
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
 	// bronnen on the canvas or take them off.
@@ -36,7 +38,7 @@
 		type VerbondenFilter
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
-	import { csvName, download, rowsToCsv, rowsToText } from './export';
+	import { csvName, download, rowsToCsv } from './export';
 	import { caseNumberOf, mentionRows, metaParts, repeatedTitles, rowKey, type Row } from './rows';
 	import type { VerbondenState } from './source';
 	import { groupRequest } from './open-group';
@@ -108,7 +110,6 @@
 
 	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
-	/** What Verzamel did, for the button and the live region. */
 
 	let onCanvas = $state(new Set<string>());
 	$effect(() => store.nodes.subscribe((ns) => (onCanvas = new Set(ns.map((n) => n.id)))));
@@ -299,14 +300,8 @@
 					? yearHistogram(g.rows)
 					: [];
 
-	const copier = createCopier();
-	// A copy and an export hold every row: those not loaded yet are asked first.
-	const copyAll = async () => {
-		await onAlles?.();
-		await tick();
-		copier.copy(rowsToText(allRows(shown)), 'all');
-	};
-
+	// An export holds every row: those not loaded yet are asked first. Verzamel gave way to
+	// Gemarkeerd: a row's box keeps it in the map (src/lib/map).
 	async function exportCsv() {
 		await onAlles?.();
 		await tick();
@@ -591,6 +586,12 @@
 											<span class="row__herkomst">{hoe.herkomst}</span>
 										{/if}
 									</span>
+									{#if itemVanRij(row)}
+										{@const item = itemVanRij(row)!}
+										<span class="row__bewaar" class:aan={kaart.heeft(item)}
+											><Bewaar kaal {item} /></span
+										>
+									{/if}
 									{#if !row.missing && onAddToNetwerk}
 										{@const al = inNetwerk?.(row) ?? false}
 										<IconKnop
@@ -662,11 +663,9 @@
 		{#if verbonden.groups.length > 0}
 			<div class="foot">
 				<TekstLink href={tableHref}>Alle {formatCount(total)} in een tabel</TekstLink>
-				<TekstLink onclick={copyAll}>{copier.label('all', 'Verzamel')}</TekstLink>
 				<TekstLink onclick={exportCsv}>Exporteer</TekstLink>
 			</div>
 		{/if}
-		<p class="sr-only" aria-live="polite">{copier.announcement}</p>
 	</div>
 </aside>
 
@@ -1053,16 +1052,26 @@
 
 	/* The + (IconKnop) puts the bron among the chosen ones: on hover and focus, and when it is
 	   there already; on a phone always. */
-	.row__main :global(.row__plus) {
+	.row__main :global(.row__plus),
+	.row__bewaar {
 		opacity: 0;
 	}
 	.row__main:hover :global(.row__plus),
 	.row__main:focus-within :global(.row__plus),
-	.row__main :global(.row__plus.aan) {
+	.row__main :global(.row__plus.aan),
+	.row__main:hover .row__bewaar,
+	.row__main:focus-within .row__bewaar,
+	.row__bewaar.aan {
 		opacity: 1;
 	}
+	/* Gemarkeerd (the map) beside the +: the same box as beside a lid. */
+	.row__bewaar {
+		display: inline-grid;
+		place-items: center;
+	}
 	@media (hover: none) {
-		.row__main :global(.row__plus) {
+		.row__main :global(.row__plus),
+		.row__bewaar {
 			opacity: 1;
 		}
 	}

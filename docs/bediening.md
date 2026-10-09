@@ -59,6 +59,15 @@ Kamer is one choice, never a set of boxes (Thijs, 10 Oct 2026: "Dit is raar ten 
 
 Netwerk and the Legenda stand in one column on the canvas, Netwerk on top and the Legenda under it, as wide as each other (Thijs, 10 Oct 2026: "legenda en netwerk onder elkaar"). Both may stand open while the canvas has the height. When the one opened last leaves no room for the other, the other folds, and opens again by itself once there is room, unless someone closed it (`src/lib/stores/zwevend.ts`). Each remembers open or closed per browser.
 
+## Gemarkeerd
+
+What a reader keeps while reading goes into the map (`src/lib/map`; concept ux-voorstel/13-map, variant 7; step 1, one map).
+
+- **Keeping:** a box (Vinkje, `map/Bewaar.svelte`) beside each lid and each overweging, beside their Citeer. In the head of a reader, Bewaar follows the place chosen (`Bewaar lid 3`). In each row of Verbonden, beside the +; it replaced Verzamel.
+- **The map:** one entry, the menu item Gemarkeerd with its count. It opens the panel at the right under the top bar: its heading, Kopieer link, Citaten and CSV, then the items per law, dossier or judgment, each a link to its place and an × to take it out, and Wis de map.
+- **Sharing:** a link (`?map=`) opens the same set in the panel, to add to one's own.
+- **Storage:** the map lives in this browser, without an account.
+
 ## Marks on a timeline
 
 A line of a timeline (Actueel on the home page, Onderwerpen, a dossier's procedure) carries the mark of its kind from `src/lib/bron/vormen.ts`, the table KindGlyph and the network draw from (Thijs, 10 Oct 2026: "Dit hebben we toch al door de rest van de site?"). A vote is the triangle of a decision, a paper the sheet, a bill the sheet with its window, a toezegging the flag, a law in force the square of a law. A bundle has the mark of its kind (Stemmingen the triangle). The outcome is in the fill: aangenomen or afgedaan filled in moss, verworpen open in the accent, open or still to come dashed. The Tijdlijn has no circle or square of its own.

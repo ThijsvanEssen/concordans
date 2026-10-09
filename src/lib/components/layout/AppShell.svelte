@@ -3,6 +3,10 @@
 	import TopBar from './TopBar.svelte';
 	import SearchOverlay from './SearchOverlay.svelte';
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
+	import { page } from '$app/state';
+	import MapPaneel from '$lib/map/MapPaneel.svelte';
+	import { kaart } from '$lib/map/map.svelte';
+	import { uitParam } from '$lib/map/map';
 
 	let { children }: { children?: Snippet } = $props();
 
@@ -20,6 +24,15 @@
 		}
 	}
 	provideSearchOpener(openSearch);
+
+	// A map shared as a link (?map=) opens in the panel, to add to one's own or put aside.
+	const gedeeldeMap = $derived(page.url.searchParams.get('map'));
+	$effect(() => {
+		const items = uitParam(gedeeldeMap);
+		if (!items.length) return;
+		kaart.gedeeld = items;
+		kaart.open = true;
+	});
 </script>
 
 <div class="app-shell">
@@ -30,6 +43,7 @@
 	</main>
 </div>
 
+<MapPaneel />
 <SearchOverlay open={searchOpen} query={searchQuery} onClose={() => (searchOpen = false)} />
 
 <style>

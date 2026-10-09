@@ -6,6 +6,7 @@
 	// verbindingen of that lid and, on hover, Citeer and Kopieer tekst. An onderdeel, at
 	// any depth, shows the same two actions in that column, level with its own text.
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
+	import Bewaar from '$lib/map/Bewaar.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { page } from '$app/state';
 	import { permalink } from '$lib/bron/anchor';
@@ -31,7 +32,8 @@
 		proposed = null,
 		onCloseProposed,
 		lidNotes = new Map(),
-		mark = '.'
+		mark = '.',
+		bewaar = null
 	}: {
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
@@ -56,6 +58,8 @@
 		lidNotes?: Map<string, { label: string; href: string }>;
 		/** The mark after an onderdeel's letter or number: `a.` in Dutch law, `a)` in EU law. */
 		mark?: '.' | ')';
+		/** The article as Gemarkeerd keeps it: its id and its law; each lid then has Bewaar. */
+		bewaar?: { id: string; groep: string } | null;
 	} = $props();
 
 	const source = $derived(text ?? '');
@@ -103,6 +107,17 @@
 				name={forms.kort}
 				buttonClass="btn act__btn"
 				onToggle={(open) => (menuFor = open ? key : menuFor === key ? null : menuFor)}
+			/>
+		{/if}
+		{#if bewaar && forms && part.id}
+			<Bewaar
+				item={{
+					id: bewaar.id,
+					at: part.id,
+					kort: forms.kort,
+					voluit: forms.voluit,
+					groep: bewaar.groep
+				}}
 			/>
 		{/if}
 		<button type="button" class="btn act__btn" onclick={() => copy(fullText(part), `text:${key}`)}

@@ -4,6 +4,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
+	import Bewaar from '$lib/map/Bewaar.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
@@ -24,7 +25,7 @@
 	import { goto } from '$app/navigation';
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
 	import { refId } from '$lib/bron/href';
-	import { citeArticle } from '$lib/text/cite';
+	import { citeArticle, partOfAnchor } from '$lib/text/cite';
 	import { articleName } from '$lib/text/bw';
 	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
@@ -384,6 +385,24 @@
 			: null
 	);
 
+	// Bewaar in the head follows the place chosen (#lid-3): that lid, else the whole article.
+	const bewaarHier = $derived.by(() => {
+		if (!selection || !citation || !forms) return null;
+		const deel = anchor ? partOfAnchor(anchor) : null;
+		const plaats = deel && (deel.lid || deel.onderdelen?.length) ? anchor! : '';
+		const f = plaats ? citeArticle({ ...citation, ...deel }) : forms;
+		return {
+			item: {
+				id: selection.id,
+				at: plaats,
+				kort: f.kort,
+				voluit: f.voluit,
+				groep: citation.citationTitle
+			},
+			wat: deel?.lid ? `lid ${deel.lid}` : ''
+		};
+	});
+
 	const withParams = (params: Record<string, string | null>) => {
 		const url = new URL(page.url);
 		for (const [k, v] of Object.entries(params)) {
@@ -571,6 +590,9 @@
 						{#if officialUrl}
 							<a class="btn" href={officialUrl} target="_blank" rel="noopener">{officialName} ↗</a>
 						{/if}
+						{#if bewaarHier}
+							<Bewaar item={bewaarHier.item} wat={bewaarHier.wat} />
+						{/if}
 						{#if forms}
 							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret />
 						{/if}
@@ -677,6 +699,9 @@
 					tellend={!shown && lidTellend}
 					{lidHref}
 					{citation}
+					bewaar={selection && citation
+						? { id: selection.id, groep: citation.citationTitle }
+						: null}
 					{proposed}
 					{onCloseProposed}
 					{lidNotes}

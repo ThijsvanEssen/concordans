@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { kaart } from '$lib/map/map.svelte';
 	import { page } from '$app/stores';
 	import { isVerkenner } from '$lib/bron/leesbaar';
 	import { goto } from '$app/navigation';
@@ -84,6 +85,16 @@
 			class:is-active={isOnderwerpen}
 			aria-current={isOnderwerpen ? 'page' : undefined}>Gevolgd</a
 		>
+		<!-- Gemarkeerd: the map, one entry, its count beside it; it opens the panel. -->
+		<button
+			type="button"
+			class="nav-link nav-knop"
+			class:is-active={kaart.open}
+			aria-expanded={kaart.open}
+			onclick={() => (kaart.open = !kaart.open)}
+			>Gemarkeerd{#if kaart.items.length}<span class="nav-tel">{kaart.items.length}</span
+				>{/if}</button
+		>
 	</nav>
 
 	<button
@@ -160,6 +171,10 @@
 			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bronnen</a>
 			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
 			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}>Gevolgd</a>
+			<button type="button" class="mobile-nav-link nav-knop" onclick={() => (kaart.open = true)}
+				>Gemarkeerd{#if kaart.items.length}<span class="nav-tel">{kaart.items.length}</span
+					>{/if}</button
+			>
 		</div>
 	{/if}
 
@@ -230,6 +245,17 @@
 
 	.nav-link:hover {
 		color: var(--accent);
+	}
+	/* Gemarkeerd is a button that opens the panel, set as the links beside it. */
+	.nav-knop {
+		border: 0;
+		background: none;
+		cursor: pointer;
+		text-align: left;
+	}
+	.nav-tel {
+		margin-left: var(--s-1);
+		color: var(--ink-3);
 	}
 
 	.nav-link.is-active {
