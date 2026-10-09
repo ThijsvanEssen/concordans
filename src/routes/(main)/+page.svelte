@@ -58,6 +58,12 @@
 	const LINES_SHOWN = 10;
 	/** The days the summary spans: enough for the lines on a quiet week. */
 	const SUMMARY_DAYS = 14;
+	/**
+	 * Events the summary gives one by one: three for each line shown, room for a busy day
+	 * whose lines fold several. Its counts per day come whatever this is; the band of the
+	 * law network asks older votes itself where these hold no passed bill (laadWetsnetwerk).
+	 */
+	const SUMMARY_ITEMS = 3 * LINES_SHOWN;
 
 	const today = new Date().toISOString().slice(0, 10);
 
@@ -80,7 +86,15 @@
 	async function loadLines(signal: AbortSignal) {
 		const summary = await unwrap(
 			api.GET('/api/feed/summary', {
-				params: { query: { until: today, days: SUMMARY_DAYS, margin: CLOSE_VOTE, few: FEW_VOTES } },
+				params: {
+					query: {
+						until: today,
+						days: SUMMARY_DAYS,
+						margin: CLOSE_VOTE,
+						few: FEW_VOTES,
+						limit: SUMMARY_ITEMS
+					}
+				},
 				signal
 			})
 		);
