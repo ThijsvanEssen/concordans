@@ -558,6 +558,7 @@
 		</label>
 		<div class="periode">
 			<Periode
+				klein={false}
 				van={since}
 				tot={until}
 				onChange={(van, tot) => patchUrl({ van: van || null, tot: tot || null })}

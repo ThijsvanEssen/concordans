@@ -2101,6 +2101,17 @@
 					: 'NL';
 
 	const fmtDay = (iso: string) => weekdag(iso);
+	/** The numbered places of each hall, as the Kamers' own plans name them. */
+	const PLAATSEN_EK = ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie'];
+	const PLAATSEN_TK = [
+		'Voorzitter',
+		'Griffier',
+		'Kabinet (vak-K)',
+		'Verslag en redactie',
+		'Spreekgestoelte',
+		'Interruptiemicrofoons',
+		'Bodedienst'
+	];
 
 	const openSearch = useSearchOpener();
 
@@ -2164,6 +2175,7 @@
 					{#if periode}
 						<div class="periode">
 							<Periode
+								klein={false}
 								van={periode.from}
 								tot={periode.to}
 								label={periode.label}
@@ -2230,17 +2242,8 @@
 													href: seats.seating_plan.page ?? seats.seating_plan.url ?? ''
 												}
 											: null}
-									plaatsen={seats.chamber === 'EK'
-										? ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie']
-										: [
-												'Voorzitter',
-												'Griffier',
-												'Kabinet (vak-K)',
-												'Verslag en redactie',
-												'Spreekgestoelte',
-												'Interruptiemicrofoons',
-												'Bodedienst'
-											]}
+									plaatsen={seats.chamber === 'EK' ? PLAATSEN_EK : PLAATSEN_TK}
+									ruimte={seats.chamber === 'EK' ? PLAATSEN_TK : PLAATSEN_EK}
 								/>
 							</div>
 						</div>

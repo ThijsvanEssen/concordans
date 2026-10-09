@@ -13,6 +13,7 @@
 		bron = null,
 		kolommen = 3,
 		rijen = 0,
+		ruimte = null,
 		coalitie = null
 	}: {
 		data: Seats;
@@ -24,6 +25,11 @@
 		kolommen?: number;
 		/** At least this many rows, so the legends of both Kamers stand equally high. */
 		rijen?: number;
+		/**
+		 * The places of the other Kamer, where they take more lines: the line keeps their
+		 * height, unseen, so the legends of both Kamers stand equally high at every width.
+		 */
+		ruimte?: string[] | null;
 		/** The cabinet in office and its fracties: one line to the cabinet, where its seats are. */
 		coalitie?: { naam: string; href: string; fracties: string[] } | null;
 	} = $props();
@@ -45,9 +51,15 @@
 			</li>
 		{/each}
 	</ol>
-	<p class="pl">
-		{#each plaatsen as p, i (p)}<span><b>{i + 1}</b>{p}</span>{/each}
-	</p>
+	{#snippet regel(lijst: string[], verborgen = false)}
+		<p class="pl" class:verborgen aria-hidden={verborgen || undefined}>
+			{#each lijst as p, i (p)}<span><b>{i + 1}</b>{p}</span>{/each}
+		</p>
+	{/snippet}
+	<div class="pl-cel">
+		{@render regel(plaatsen)}
+		{#if ruimte && ruimte.length > plaatsen.length}{@render regel(ruimte, true)}{/if}
+	</div>
 	{#if coalitie}
 		<p class="coalitie">
 			Coalitie: <a href={coalitie.href}>{coalitie.naam}</a>{coalitie.fracties.length
@@ -108,6 +120,16 @@
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
+	}
+	/* The places and, unseen, the longer list of the other Kamer in one cell. */
+	.pl-cel {
+		display: grid;
+	}
+	.pl-cel > .pl {
+		grid-area: 1 / 1;
+	}
+	.pl.verborgen {
+		visibility: hidden;
 	}
 	.pl {
 		margin: 0;
