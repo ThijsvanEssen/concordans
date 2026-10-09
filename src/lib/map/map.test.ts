@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { citaten, csv, groepen, naarParam, samen, sleutelVan, uitParam, type MapItem } from './map';
+import {
+	citaten,
+	csv,
+	groepen,
+	naarParam,
+	samen,
+	sleutelVan,
+	uitParam,
+	verschuif,
+	type MapItem
+} from './map';
 
 const lid2: MapItem = {
 	id: 'articles/bwbr0005289_162',
@@ -51,7 +61,36 @@ describe('the map', () => {
 
 	it('writes a CSV as Excel reads it', () => {
 		const t = csv([ro], (i) => `/x#${i.at}`);
-		expect(t.startsWith('﻿volgorde;groep;citaat;vindplaats;adres\r\n')).toBe(true);
+		expect(t.startsWith('﻿volgorde;groep;citaat;vindplaats;aantekening;adres\r\n')).toBe(true);
 		expect(t).toContain('"HR 20 december 2019 (Urgenda); a~b"');
+	});
+
+	it('carries a note in the link, the citations and the CSV', () => {
+		const met = { ...lid2, notitie: 'Drie categorieën; ~ en ; erin' };
+		expect(uitParam(naarParam([met]))[0].notitie).toBe(met.notitie);
+		expect(citaten([met])).toContain('\n   Drie categorieën; ~ en ; erin');
+		expect(csv([met], () => '')).toContain('Drie categorieën');
+	});
+
+	it('cites in the own order of the reader, without groups', () => {
+		expect(citaten([ro, lid2], 'eigen')).toBe(
+			'1. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1\n2. artikel 6:162 lid 2 Burgerlijk Wetboek'
+		);
+	});
+
+	it('moves an item within its group, or among all in its own order', () => {
+		const lid3 = { ...lid2, at: 'lid-3', kort: 'lid 3' };
+		const lijst = [lid2, ro, lid3];
+		expect(verschuif(lijst, sleutelVan(lid3), -1, 'groep').map((i) => i.at)).toEqual([
+			'lid-3',
+			'rov-5.7.1',
+			'lid-2'
+		]);
+		expect(verschuif(lijst, sleutelVan(lid3), -1, 'eigen').map((i) => i.at)).toEqual([
+			'lid-2',
+			'lid-3',
+			'rov-5.7.1'
+		]);
+		expect(verschuif(lijst, sleutelVan(lid2), -1, 'eigen')).toEqual(lijst);
 	});
 });

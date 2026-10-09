@@ -131,7 +131,8 @@
 		left: auto;
 		right: 0;
 	}
-	.tekstmenu__item {
+	/* Global: a step under the rule (`onder`) is an item as the options are. */
+	:global(.tekstmenu__item) {
 		display: block;
 		width: 100%;
 		padding: var(--s-1) var(--s-3);
@@ -143,8 +144,8 @@
 		text-align: left;
 		cursor: pointer;
 	}
-	.tekstmenu__item:hover,
-	.tekstmenu__item:focus-visible {
+	:global(.tekstmenu__item:hover),
+	:global(.tekstmenu__item:focus-visible) {
 		background: var(--paper-2);
 		outline: none;
 	}

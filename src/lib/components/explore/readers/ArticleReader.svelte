@@ -591,7 +591,7 @@
 							<a class="btn" href={officialUrl} target="_blank" rel="noopener">{officialName} ↗</a>
 						{/if}
 						{#if bewaarHier}
-							<Bewaar item={bewaarHier.item} wat={bewaarHier.wat} />
+							<Bewaar item={bewaarHier.item} wat={bewaarHier.wat} metMap />
 						{/if}
 						{#if forms}
 							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret />

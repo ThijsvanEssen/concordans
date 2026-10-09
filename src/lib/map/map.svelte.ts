@@ -1,67 +1,187 @@
-// The map as the page holds it: its items in this browser, the panel open or not, and a map
-// someone shared (?map=) until it is added or put aside. One map for now (step 1); named maps
-// follow.
-import { samen, sleutelVan, type MapItem } from './map';
+// The maps as the page holds them, in this browser: each with a name, one active, where a box
+// keeps what is chosen; the panel open or not; a map someone shared (?map=) until it is kept
+// or put aside. The one map of step 1 (concordans:map) becomes the first map, untouched.
+import { samen, sleutelVan, verschuif, type Map, type MapItem } from './map';
 
-const OPSLAG = 'concordans:map';
+const OPSLAG = 'concordans:mappen';
+const OUD = 'concordans:map';
+const EERSTE = 'Gemarkeerd';
 
-function lees(): MapItem[] {
+type Stand = { mappen: Map[]; actief: string };
+
+const nu = () => new Date().toISOString();
+const nieuwId = () => Math.random().toString(36).slice(2, 10);
+const leeg = (naam: string): Map => ({
+	id: nieuwId(),
+	naam,
+	items: [],
+	volgorde: 'groep',
+	gewijzigd: nu()
+});
+
+const isItem = (i: unknown): i is MapItem =>
+	!!i &&
+	typeof (i as MapItem).id === 'string' &&
+	typeof (i as MapItem).kort === 'string' &&
+	typeof (i as MapItem).groep === 'string';
+
+function lees(): Stand {
 	try {
-		const raw = JSON.parse(localStorage.getItem(OPSLAG) ?? '[]');
-		return Array.isArray(raw)
-			? raw.filter(
-					(i): i is MapItem =>
-						typeof i?.id === 'string' && typeof i?.kort === 'string' && typeof i?.groep === 'string'
-				)
-			: [];
+		const raw = JSON.parse(localStorage.getItem(OPSLAG) ?? 'null');
+		if (raw && Array.isArray(raw.mappen) && raw.mappen.length) {
+			const mappen: Map[] = raw.mappen.map((m: Map) => ({
+				id: String(m.id),
+				naam: String(m.naam || EERSTE),
+				items: Array.isArray(m.items) ? m.items.filter(isItem) : [],
+				volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
+				gewijzigd: String(m.gewijzigd || nu())
+			}));
+			const actief = mappen.some((m) => m.id === raw.actief) ? raw.actief : mappen[0].id;
+			return { mappen, actief };
+		}
+		// Step 1 kept one map: it is the first, with all it holds.
+		const oud = JSON.parse(localStorage.getItem(OUD) ?? '[]');
+		const eerste = { ...leeg(EERSTE), items: Array.isArray(oud) ? oud.filter(isItem) : [] };
+		return { mappen: [eerste], actief: eerste.id };
 	} catch {
-		return [];
+		const eerste = leeg(EERSTE);
+		return { mappen: [eerste], actief: eerste.id };
 	}
 }
 
-function bewaar(items: MapItem[]) {
-	try {
-		if (items.length) localStorage.setItem(OPSLAG, JSON.stringify(items));
-		else localStorage.removeItem(OPSLAG);
-	} catch {
-		/* geen opslag */
-	}
-}
-
-class Kaart {
-	items = $state<MapItem[]>(typeof window === 'undefined' ? [] : lees());
+class Kaarten {
+	#stand = $state<Stand>(
+		typeof window === 'undefined'
+			? (() => {
+					const m = leeg(EERSTE);
+					return { mappen: [m], actief: m.id };
+				})()
+			: lees()
+	);
 	/** The panel over the page, opened from the menu item Gemarkeerd. */
 	open = $state(false);
-	/** A map from a link, shown in the panel until it is added or put aside. */
-	gedeeld = $state<MapItem[] | null>(null);
+	/** A map from a link, shown in the panel until it is kept or put aside. */
+	gedeeld = $state<{ naam: string | null; items: MapItem[] } | null>(null);
+	/** The active map's name open to change, in the panel's heading (a new map starts so). */
+	naamgeven = $state(false);
+
+	mappen = $derived(this.#stand.mappen);
+	actief = $derived(
+		this.#stand.mappen.find((m) => m.id === this.#stand.actief) ?? this.#stand.mappen[0]
+	);
+	items = $derived(this.actief.items);
 	sleutels = $derived(new Set(this.items.map(sleutelVan)));
 
 	heeft = (i: Pick<MapItem, 'id' | 'at'>) => this.sleutels.has(sleutelVan(i));
+	/** The item as the active map holds it, with its note. */
+	vind = (i: Pick<MapItem, 'id' | 'at'>) =>
+		this.items.find((x) => sleutelVan(x) === sleutelVan(i)) ?? null;
 
+	#bewaar() {
+		try {
+			localStorage.setItem(OPSLAG, JSON.stringify(this.#stand));
+			localStorage.removeItem(OUD);
+		} catch {
+			/* geen opslag */
+		}
+	}
+	/** Changes the active map and remembers. */
+	#werk(f: (m: Map) => Partial<Map>) {
+		const id = this.actief.id;
+		this.#stand = {
+			...this.#stand,
+			mappen: this.#stand.mappen.map((m) => (m.id === id ? { ...m, ...f(m), gewijzigd: nu() } : m))
+		};
+		this.#bewaar();
+	}
+
+	// ── Items in the active map ───────────────────────────────────────────────
 	/** Kept, or no longer: what a box beside a lid or a row does. */
 	wissel(i: MapItem) {
 		const k = sleutelVan(i);
-		this.items = this.sleutels.has(k)
-			? this.items.filter((x) => sleutelVan(x) !== k)
-			: [...this.items, i];
-		bewaar(this.items);
+		this.#werk((m) => ({
+			items: m.items.some((x) => sleutelVan(x) === k)
+				? m.items.filter((x) => sleutelVan(x) !== k)
+				: [...m.items, i]
+		}));
 	}
 	weg(i: Pick<MapItem, 'id' | 'at'>) {
 		const k = sleutelVan(i);
-		this.items = this.items.filter((x) => sleutelVan(x) !== k);
-		bewaar(this.items);
+		this.#werk((m) => ({ items: m.items.filter((x) => sleutelVan(x) !== k) }));
 	}
 	wis() {
-		this.items = [];
-		bewaar(this.items);
+		this.#werk(() => ({ items: [] }));
 	}
-	/** A shared map into this one, without doubles. */
-	neemOver() {
+	notitie(i: Pick<MapItem, 'id' | 'at'>, tekst: string) {
+		const k = sleutelVan(i);
+		const t = tekst.trim();
+		this.#werk((m) => ({
+			items: m.items.map((x) => (sleutelVan(x) === k ? { ...x, notitie: t || null } : x))
+		}));
+	}
+	schuif(i: Pick<MapItem, 'id' | 'at'>, richting: -1 | 1) {
+		this.#werk((m) => ({ items: verschuif(m.items, sleutelVan(i), richting, m.volgorde) }));
+	}
+	ordening(v: Map['volgorde']) {
+		this.#werk(() => ({ volgorde: v }));
+	}
+
+	// ── Maps ─────────────────────────────────────────────────────────────────
+	kies(id: string) {
+		if (!this.#stand.mappen.some((m) => m.id === id)) return;
+		this.#stand = { ...this.#stand, actief: id };
+		this.#bewaar();
+	}
+	/** A new map, active from now on; its name the next free `Map 2`, `Map 3` where none given. */
+	nieuw(naam?: string, items: MapItem[] = []): Map {
+		const namen = new Set(this.#stand.mappen.map((m) => m.naam));
+		let n = this.#stand.mappen.length + 1;
+		while (!naam && namen.has(`Map ${n}`)) n++;
+		const m = { ...leeg(naam?.trim() || `Map ${n}`), items };
+		this.#stand = { mappen: [...this.#stand.mappen, m], actief: m.id };
+		this.#bewaar();
+		return m;
+	}
+	hernoem(id: string, naam: string) {
+		const t = naam.trim();
+		if (!t) return;
+		this.#stand = {
+			...this.#stand,
+			mappen: this.#stand.mappen.map((m) => (m.id === id ? { ...m, naam: t, gewijzigd: nu() } : m))
+		};
+		this.#bewaar();
+	}
+	/** Gone for good; the last map stays, emptied. */
+	verwijder(id: string) {
+		const rest = this.#stand.mappen.filter((m) => m.id !== id);
+		const mappen = rest.length ? rest : [leeg(EERSTE)];
+		const actief = mappen.some((m) => m.id === this.#stand.actief)
+			? this.#stand.actief
+			: mappen[0].id;
+		this.#stand = { mappen, actief };
+		this.#bewaar();
+	}
+
+	/** Kept in another map (`in …` beside Bewaar): that map active from now on, the item in it. */
+	bewaarIn(id: string, i: MapItem) {
+		this.kies(id);
+		if (!this.heeft(i)) this.wissel(i);
+	}
+
+	// ── A shared map ────────────────────────────────────────────────────────
+	/** Into the active map, without doubles. */
+	voegToe() {
 		if (!this.gedeeld) return;
-		this.items = samen(this.items, this.gedeeld);
-		bewaar(this.items);
+		const extra = this.gedeeld.items;
+		this.#werk((m) => ({ items: samen(m.items, extra) }));
+		this.gedeeld = null;
+	}
+	/** As a map of its own, under its name. */
+	bewaarAlsMap() {
+		if (!this.gedeeld) return;
+		this.nieuw(this.gedeeld.naam ?? undefined, this.gedeeld.items);
 		this.gedeeld = null;
 	}
 }
 
-export const kaart = new Kaart();
+export const kaart = new Kaarten();
