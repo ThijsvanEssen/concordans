@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	// The netwerk of chosen bronnen, over the canvas: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
@@ -266,11 +267,16 @@
 				</p>
 			{/if}
 			{#if entries.length > 1}
-				<label class="tussen">
-					<input type="checkbox" id="netwerk-tussen" checked={tussen} onchange={onTussen} />
-					{#if tussen}<b>{joiningCount}</b>
-						{joiningCount === 1 ? 'bron' : 'bronnen'} ertussen{:else}Toon de bronnen ertussen{/if}
-				</label>
+				<p class="tussen">
+					<FilterOptie
+						inline
+						on={tussen}
+						onToggle={onTussen}
+						label={tussen
+							? `${joiningCount} ${joiningCount === 1 ? 'bron' : 'bronnen'} ertussen`
+							: 'Toon de bronnen ertussen'}
+					/>
+				</p>
 				{#if tussen && deels}
 					<p class="deels">Niet alle paden gevonden; de zoektocht duurde te lang.</p>
 				{/if}
@@ -466,21 +472,7 @@
 		min-width: 14rem;
 	}
 	.tussen {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin-top: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.tussen input {
-		accent-color: var(--ink);
-	}
-	.tussen b {
-		color: var(--ink);
-		font-weight: 600;
+		margin: var(--s-2) 0 0;
 	}
 	.zoek--start {
 		margin-top: var(--s-3);

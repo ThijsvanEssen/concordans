@@ -4,13 +4,13 @@ How a control looks and where it stands, on every page and in every panel (Thijs
 
 ## Five forms
 
-| Form      | For                                                       | Component                                              | Looks                                                                                 |
-| --------- | --------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| Knop      | doing something: Citeer, Vergelijken, CSV, Deel, Volg     | a `button` with a frame                                | Schibsted, `--t-ui`, 500; `--veld-h` (32) on a page, `--veld-h-klein` (24) in a panel |
-| Keuze     | one of 2 to 5 visible options: Periode, Netwerk/Tekst     | `ui/Keuze.svelte`                                      | joined boxes, the chosen one filled in ink                                            |
-| Tekstmenu | one of many, or a setting: Alle bronnen, Nieuwste eerst   | `ui/TekstMenu.svelte`                                  | the word of its value with a caret, no frame; the chosen option in weight             |
-| Vinkje    | switching a thing on or off in a list: facets, in netwerk | `ui/FilterOptie.svelte` (`inline` beside other things) | the box, the label, a count at the right; chosen in weight                            |
-| Tekstlink | going somewhere: Alle 244 uitspraken, Wis alle filters    | `ui/TekstLink.svelte`, `ui/AlleN.svelte`               | the serif in ink, underlined; red only on hover and focus                             |
+| Form      | For                                                       | Component                                              | Looks                                                                                                         |
+| --------- | --------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Knop      | doing something: Citeer, Vergelijken, CSV, Deel, Volg     | a `button` with a frame                                | Schibsted, `--t-ui`, 500; `--veld-h` (32) on a page, `--veld-h-klein` (24) in a panel                         |
+| Keuze     | one of 2 to 5 visible options: Periode, Netwerk/Tekst     | `ui/Keuze.svelte`                                      | joined boxes, the chosen one filled in ink                                                                    |
+| Tekstmenu | one of many, or a setting: Alle bronnen, Nieuwste eerst   | `ui/TekstMenu.svelte`                                  | the word of its value with a caret, no frame; the chosen option in weight                                     |
+| Vinkje    | switching a thing on or off in a list: facets, in netwerk | `ui/FilterOptie.svelte` (`inline` beside other things) | the box (`ui/Vinkje.svelte`: 12 px, `--r-1`, a drawn tick), the label, a count at the right; chosen in weight |
+| Tekstlink | going somewhere: Alle 244 uitspraken, Wis alle filters    | `ui/TekstLink.svelte`, `ui/AlleN.svelte`               | the serif in ink, underlined; red only on hover and focus                                                     |
 
 And one icon button, `ui/IconKnop.svelte`, 24 px, for +, ×, zoom and ⋯; it names what it does.
 

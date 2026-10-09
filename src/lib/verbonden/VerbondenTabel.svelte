@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Vinkje from '$lib/components/ui/Vinkje.svelte';
 	import { terPlekke } from '$lib/actions/klik';
 	// All verbindingen of the selected bron as a table, under the same bronfilter:
 	// bron, verbinding, plaats in de bron, plaats in dit artikel, aard, status,
@@ -221,8 +222,7 @@
 							role="menuitemcheckbox"
 							aria-checked={on}
 							class="menu__item"
-							onclick={() => toggleColumn(c.id)}
-							><span class="menu__box" aria-hidden="true">{on ? '✓' : ''}</span>{c.label}</button
+							onclick={() => toggleColumn(c.id)}><Vinkje aan={on} />{c.label}</button
 						>
 					{/each}
 				</div>
@@ -412,22 +412,6 @@
 	}
 	.menu__item.is-active {
 		font-weight: 600;
-	}
-	.menu__box {
-		width: 14px;
-		height: 14px;
-		display: grid;
-		place-items: center;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-size: var(--t-glyph);
-		line-height: 1;
-		color: var(--paper);
-		flex: none;
-	}
-	.menu__item[aria-checked='true'] .menu__box {
-		background: var(--ink);
-		border-color: var(--ink);
 	}
 	.scroll {
 		flex: 1;

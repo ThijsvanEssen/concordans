@@ -152,6 +152,10 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('draws a ticked box with Vinkje: no tick glyph, no native checkbox', () => {
+		expect(offenders((t) => /✓|type="checkbox"/.test(t))).toEqual([]);
+	});
+
 	it('chooses a Kamer with a Keuze, never with boxes (docs/bediening.md)', () => {
 		expect(
 			offenders(
