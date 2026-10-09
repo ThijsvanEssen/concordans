@@ -7,7 +7,7 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
-	import { dagMaand } from '$lib/text/datum';
+	import { dagMaand, korteDatum } from '$lib/text/datum';
 	import { getAmendementen, kolomVan, type Dienstregeling, type Rij } from './amendementen';
 
 	let {
@@ -61,6 +61,8 @@
 			)
 	);
 	const kop = (k: string) => (weken ? `week ${dagMaand(k)}` : dagMaand(k));
+	/** The day of a stop in full, where it stands alone (the folded table). */
+	const dagVol = (k: string) => (weken ? `week van ${korteDatum(k)}` : korteDatum(k));
 	const geteld = $derived.by(() => {
 		const r = regeling?.rijen ?? [];
 		const gestemd = r.filter((x) => x.uitslag);
@@ -70,6 +72,17 @@
 		};
 	});
 
+	// The full timetable wherever it fits: a name column, a column a day, the vote at the end.
+	// Folded only below that, by the dossier's own number of columns (Thijs, 10 Oct: the
+	// normal width gave the folded one).
+	const NAAM = 124;
+	const DAG = 46;
+	const EIND = 100;
+	let breedte = $state(0);
+	const smal = $derived(
+		!!regeling && breedte > 0 && breedte < NAAM + regeling.kolommen.length * DAG + EIND
+	);
+
 	/** What the section holds, in one line under its heading. */
 	const standRegel = $derived.by(() => {
 		if (!regeling) return '';
@@ -77,10 +90,7 @@
 		const delen = [
 			`${regeling.metVervanging ? `${n} ${n === 1 ? 'amendement' : 'amendementen'} in ` : ''}${stukken} ${stukken === 1 ? 'stuk' : 'stukken'}, ${geteld.gestemd} in stemming, ${geteld.aangenomen} aangenomen.`
 		];
-		if (!regeling.metVervanging)
-			delen.push(
-				'Welk stuk een ander vervangt staat nog niet in de gegevens: elk stuk staat apart.'
-			);
+		if (!regeling.metVervanging) delen.push('Vervangingen niet in de gegevens.');
 		if (regeling.afgekapt) delen.push('Niet alle stukken passen in één overzicht.');
 		return delen.join(' ');
 	});
@@ -102,7 +112,7 @@
 				: { soort: 'nee' as const, woord: 'verworpen' };
 </script>
 
-<div class="amendementen" use:inBeeld>
+<div class="amendementen" class:smal bind:clientWidth={breedte} use:inBeeld>
 	<Sectie titel="Amendementen" soort="documents" aantal={regeling?.rijen.length ?? null}>
 		{#if fout}
 			<p class="stand">De amendementen konden niet worden geladen.</p>
@@ -111,10 +121,19 @@
 		{:else}
 			<p class="stand">{standRegel}</p>
 			<table class="regeling">
+				{#if !smal}
+					<colgroup>
+						<col />
+						{#each regeling.kolommen as k (k)}<col style:width="{DAG}px" />{/each}
+						<col style:width="{EIND}px" />
+					</colgroup>
+				{/if}
 				<thead>
 					<tr>
 						<th scope="col" class="naam">Amendement</th>
-						{#each regeling.kolommen as k (k)}<th scope="col" class="dag">{kop(k)}</th>{/each}
+						{#each regeling.kolommen as k (k)}<th scope="col" class="dag"
+								>{kop(k)}<span class="jaar">{k.slice(0, 4)}</span></th
+							>{/each}
 						<th scope="col" class="eind">Stemming</th>
 					</tr>
 				</thead>
@@ -136,10 +155,10 @@
 							</th>
 							{#each regeling.kolommen as k (k)}
 								{@const s = stand(r, k)}
-								<td class="dag {s}" data-dag={kop(k)}>
+								<td class="dag {s}" data-dag={dagVol(k)}>
 									{#if s.startsWith('halte')}
 										{#each r.haltes.filter((h) => kolomVan(regeling!, h.datum) === k) as h (h.id)}
-											<BronLink ref={h.id} class="nr" title={h.titel}>{h.nummer}</BronLink>
+											<BronLink ref={h.id} class="nr" title={h.titel}>nr. {h.nummer}</BronLink>
 										{/each}
 									{/if}
 								</td>
@@ -167,10 +186,6 @@
 </div>
 
 <style>
-	/* The table folds by the width of its own column (beside the network or on a phone). */
-	.amendementen {
-		container-type: inline-size;
-	}
 	/* A state line under the heading, at rung 6. */
 	.stand {
 		margin: 0;
@@ -180,9 +195,16 @@
 	}
 	.regeling {
 		width: 100%;
+		table-layout: fixed;
 		border-collapse: collapse;
 		font-family: var(--font-sans);
 		font-size: var(--t-micro);
+	}
+	/* The year under the day of each column, so a column reads as a date. */
+	thead .jaar {
+		display: block;
+		color: var(--ink-3);
+		opacity: 0.8;
 	}
 	thead th {
 		padding: var(--s-1) 2px;
@@ -201,8 +223,7 @@
 	}
 	/* The amendment: its first signer at rung 4, its title under it at rung 5. */
 	tbody th.naam {
-		width: 40%;
-		padding: var(--s-2) var(--s-3) var(--s-2) 0;
+		padding: var(--s-2) var(--s-2) var(--s-2) 0;
 		text-align: left;
 		font-weight: 400;
 		vertical-align: top;
@@ -231,7 +252,6 @@
 	/* The line of a row: solid while it runs, dotted from its last paper to the vote. */
 	td.dag {
 		position: relative;
-		min-width: 40px;
 		height: 44px;
 		padding: 0 2px;
 		text-align: center;
@@ -262,8 +282,9 @@
 		position: relative;
 		z-index: 1;
 		display: inline-block;
-		min-width: 28px;
-		padding: 0 5px;
+		white-space: nowrap;
+		padding: 0 4px;
+		font-size: var(--t-label);
 		border: 1.5px solid var(--ink);
 		border-radius: 999px;
 		background: var(--paper);
@@ -278,8 +299,7 @@
 		color: var(--paper);
 	}
 	td.eind {
-		padding: var(--s-2) 0 var(--s-2) var(--s-3);
-		white-space: nowrap;
+		padding: var(--s-2) 0 var(--s-2) var(--s-2);
 		vertical-align: middle;
 		color: var(--ink-2);
 	}
@@ -297,56 +317,57 @@
 	}
 
 	/* In a narrow column: each row its own short timetable, the days of its papers under each other. */
-	@container (max-width: 600px) {
-		thead {
-			display: none;
-		}
-		.regeling,
-		.regeling tbody,
-		.regeling tr,
-		.regeling th,
-		.regeling td {
-			display: block;
-		}
-		tbody tr {
-			padding: var(--s-2) 0;
-		}
-		tbody th.naam {
-			width: auto;
-			padding: 0 0 var(--s-1);
-		}
-		td.dag {
-			height: auto;
-			min-width: 0;
-			text-align: left;
-		}
-		td.dag.voor,
-		td.dag.loopt,
-		td.dag.na {
-			display: none;
-		}
-		.regeling td.dag.halte {
-			display: flex;
-			gap: var(--s-1);
-			align-items: center;
-			margin-left: var(--s-2);
-			padding: 2px 0 2px var(--s-3);
-			border-left: 1.5px solid var(--ink);
-		}
-		.regeling td.dag.halte::before,
-		.regeling td.dag.halte.eerste::before {
-			content: attr(data-dag);
-			right: auto;
-			position: static;
-			width: 64px;
-			border: 0;
-			color: var(--ink-3);
-		}
-		.regeling td.dag.halte::after {
-			content: none;
-		}
-		td.eind {
-			padding: var(--s-1) 0 0;
-		}
+	/* Folded, where the timetable does not fit its column (measured, by its own number of
+	   columns): each amendment its own short timetable, a dated stop a line. */
+	.smal thead {
+		display: none;
+	}
+	.smal .regeling,
+	.smal .regeling tbody,
+	.smal .regeling tr,
+	.smal .regeling th,
+	.smal .regeling td {
+		display: block;
+	}
+	.smal tbody tr {
+		padding: var(--s-2) 0;
+	}
+	.smal tbody th.naam {
+		width: auto;
+		padding: 0 0 var(--s-1);
+	}
+	.smal td.dag {
+		height: auto;
+		min-width: 0;
+		text-align: left;
+	}
+	.smal td.dag.voor,
+	.smal td.dag.loopt,
+	.smal td.dag.na {
+		display: none;
+	}
+	.smal .regeling td.dag.halte {
+		display: flex;
+		gap: var(--s-1);
+		align-items: center;
+		margin-left: var(--s-2);
+		padding: 2px 0 2px var(--s-3);
+		border-left: 1.5px solid var(--ink);
+	}
+	.smal .regeling td.dag.halte::before,
+	.smal .regeling td.dag.halte.eerste::before {
+		content: attr(data-dag);
+		right: auto;
+		position: static;
+		width: 92px;
+		border: 0;
+		color: var(--ink-3);
+	}
+	.smal .regeling td.dag.halte::after {
+		content: none;
+	}
+	.smal td.eind {
+		width: auto;
+		padding: var(--s-1) 0 0;
 	}
 </style>
