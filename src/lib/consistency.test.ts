@@ -162,9 +162,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 	it('chooses one of many with TekstMenu, not a native select', () => {
 		const selects: Uitzonderingen = {
 			'lib/components/ui/TekstMenu.svelte': 'the one form',
-			'lib/components/explore/index/IndexFacets.svelte':
-				"its 'select' facets, until TekstMenu replaces them (step 3, Bladeren)",
-			'lib/components/explore/index/IndexToolbar.svelte': 'the order of a list (step 3, Bladeren)',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'Fractie (step 4, Overzicht)'
 		};
 		expect(offenders((t) => /<select\b/.test(t), buiten(selects))).toEqual([]);
@@ -173,7 +170,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 	it('shows a choice in the control itself, without chips', () => {
 		const chips: Uitzonderingen = {
 			'lib/netwerk/NetwerkPanel.svelte': 'the chosen bronnen: content, not a filter',
-			'lib/components/explore/IndexView.svelte': 'step 3, Bladeren',
 			'lib/components/graph/GraphSidebar.svelte': 'step 5, the network',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'step 4, Overzicht'
 		};
@@ -187,9 +183,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 				m[1].split(/\s+/).some((c) => /(^|[_-])(more|meer)($|[_-])/.test(c))
 			);
 		const eigen: Uitzonderingen = {
-			'lib/components/explore/IndexView.svelte': 'step 3, Bladeren',
-			'lib/components/explore/index/IndexFacets.svelte': 'step 3, Bladeren',
-			'routes/(main)/actueel/+page.svelte': 'Meer laden (step 3, with Bladeren)',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'step 4, Overzicht',
 			'routes/(main)/onderwerpen/+page.svelte': 'step 5, Onderwerpen',
 			'lib/netwerk/NetwerkPanel.svelte': 'step 5, the panel Netwerk',
@@ -206,7 +199,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 				(m) => !/^(var\(--veld-h(-klein)?\)|auto|100%)$/.test(m[1].trim())
 			);
 		const anders: Uitzonderingen = {
-			'lib/components/explore/index/IndexToolbar.svelte': 'the field, 28 px (step 3, Bladeren)',
 			'routes/(main)/onderwerpen/+page.svelte': '48 px (step 5, Onderwerpen)'
 		};
 		expect(

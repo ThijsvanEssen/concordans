@@ -117,6 +117,8 @@
 		left: 0;
 		z-index: var(--z-float);
 		min-width: 200px;
+		max-height: 60vh;
+		overflow-y: auto;
 		padding: var(--s-1) 0;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);

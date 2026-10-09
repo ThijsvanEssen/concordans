@@ -16,9 +16,7 @@
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
-	import { onMount, tick } from 'svelte';
-	import { getCoverage, type Coverage } from '$lib/api/stats';
-	import { coverageFor } from './coverage';
+	import { tick } from 'svelte';
 	import { bronHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphStore } from '$lib/graph/graph-store';
@@ -39,15 +37,7 @@
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, rowsToCsv, rowsToText } from './export';
-	import {
-		caseNumberOf,
-		longDate,
-		mentionRows,
-		metaParts,
-		repeatedTitles,
-		rowKey,
-		type Row
-	} from './rows';
+	import { caseNumberOf, mentionRows, metaParts, repeatedTitles, rowKey, type Row } from './rows';
 	import type { VerbondenState } from './source';
 	import { groupRequest } from './open-group';
 	import {
@@ -325,21 +315,6 @@
 			rowsToCsv(mentionRows(allRows(shown)), selection.collection, page.url.origin)
 		);
 	}
-
-	// Under a short list of judgments: how many the network holds of the rechter the
-	// filter names, and since when, so that a small number reads as a property of the
-	// selection, not of the case law. Only the first such list carries the line.
-	const FEW = 50;
-	const coverageGroup = $derived(
-		shown.find((g) => g.noun === 'uitspraken' && groupCount(g) < FEW)?.id ?? null
-	);
-	let coverage = $state<Coverage | null>(null);
-	onMount(() => {
-		getCoverage()
-			.then((c) => (coverage = c))
-			.catch(() => {});
-	});
-	const span = $derived(coverage ? coverageFor(coverage, filter.rechter) : null);
 </script>
 
 <aside class="verbonden" aria-label="Verbonden" bind:this={root}>
@@ -647,15 +622,6 @@
 					{#if all && count > g.rows.length}
 						<p class="group__alle">
 							<TekstLink href={tableHref}>Alle {formatCount(count)} in een tabel</TekstLink>
-						</p>
-					{/if}
-					{#if span && g.id === coverageGroup}
-						<p class="group__caption">
-							Het netwerk bevat {formatCount(span.count)}
-							{span.of}{#if span.first && span.last}, van {span.first.slice(0, 4)} tot {longDate(
-									span.last
-								)}{/if}.
-							<TekstLink href="/bronnen#dekking">Dekking</TekstLink>
 						</p>
 					{/if}
 				{/if}
