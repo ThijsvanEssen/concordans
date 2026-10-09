@@ -16,6 +16,8 @@
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import { procedure } from '$lib/components/parliamentary/procedure';
 	import GewijzigdeArtikelen from '$lib/components/parliamentary/GewijzigdeArtikelen.svelte';
+	import AmendementenDienstregeling from '$lib/components/parliamentary/AmendementenDienstregeling.svelte';
+	import { aantalAmendementen } from '$lib/components/parliamentary/amendementen';
 	import {
 		getChangedArticles,
 		type ChangedArticles
@@ -182,6 +184,12 @@
 						>
 					{/if}
 				</Sectie>
+			{/if}
+
+			<!-- The amendments as a timetable, asked once in view; only where the dossier counts any. -->
+			{@const amendementen = aantalAmendementen(d.documents_by_kind)}
+			{#if amendementen > 0}
+				<AmendementenDienstregeling dossierKey={node.key} stukken={amendementen} />
 			{/if}
 
 			{#if changed && changed.total > 0}
