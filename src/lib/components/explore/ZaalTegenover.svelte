@@ -20,21 +20,25 @@
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 	} = $props();
 
-	// In the units of the Tweede Kamer's hall (Hemicycle): a seat as large, the hall as high
-	// (291), so both stand at one scale in the same frame (Thijs, 9 Oct: "dezelfde styling
-	// en de hoogte gelijk"). A member faces the aisle: the seat is deep toward it and wide
-	// along the bench, which runs from the regering to the Voorzitter.
-	const S_X = 11.2; // diepte naar het middenpad (SEAT_D)
-	const S_Y = 12.25; // breedte langs de bank (SEAT_W)
-	const COL = 16; // plaats per kolom
-	const ROW = 17; // rij
-	const PAIR = 7; // gang na elke twee rijen
-	const AISLE = 110; // middenpad
-	const TOP = 50;
-	const blockW = 3 * COL + S_X;
-	const W = 2 * blockW + AISLE;
-	const rowY = (r: number) => TOP + r * ROW + Math.floor(r / 2) * PAIR;
+	// In the frame of the Tweede Kamer's hall (Hemicycle, 440 by 291), filled as that hall
+	// fills it (Thijs, 10 Oct: "de EK mag zelf ook wel iets groter om beter te matchen bij
+	// de TK"): half the members, so each seat larger, as large as ten rows allow in the
+	// height (K); the width goes to the space between the places of a bench and to the
+	// middle aisle with its table. A member faces the aisle: the seat is deep toward it and
+	// wide along the bench, which runs from the regering to the Voorzitter.
+	const K = 1.268;
+	const S_X = 11.2 * K; // diepte naar het middenpad (SEAT_D)
+	const S_Y = 12.25 * K; // breedte langs de bank (SEAT_W)
+	const COL = 22; // plaats per kolom, de gang tussen twee plaatsen als die tussen twee rijen
+	const ROW = 17 * K; // rij
+	const PAIR = 7 * K; // gang na elke twee rijen
+	const W = 440;
 	const H = 291;
+	const RAND = 5;
+	const TOP = 32;
+	const blockW = 3 * COL + S_X;
+	const AISLE = W - 2 * RAND - 2 * blockW; // middenpad
+	const rowY = (r: number) => TOP + r * ROW + Math.floor(r / 2) * PAIR;
 
 	const byName = $derived(
 		new Map(data.factions.map((f) => [f.abbreviation ?? f.name ?? f.key, f]))
@@ -57,7 +61,7 @@
 		(data.hall?.seats ?? []).map((s) => {
 			const name = s.abbreviation ?? s.faction;
 			if (s.block === 'chair') return { x: W / 2 - S_X / 2, y: rowY(9), name };
-			const x = s.block === 'left' ? s.column * COL : blockW + AISLE + s.column * COL;
+			const x = RAND + (s.block === 'left' ? s.column * COL : blockW + AISLE + s.column * COL);
 			return { x, y: rowY(s.row), name };
 		})
 	);
@@ -88,9 +92,9 @@
 		<!-- The front as in the Tweede Kamer's hall: quiet benches, the numbers of the legend.
 		     3 Regering at the head, 4 Verslag en redactie at the table in the middle. -->
 		<g aria-hidden="true">
-			<line x1={W / 2 - 44} y1="24" x2={W / 2 + 44} y2="24" class="bank" />
-			<rect x={W / 2 - 9} y={rowY(4)} width="18" height={2 * ROW} rx="4" class="tafel" />
-			<text x={W / 2} y="14" text-anchor="middle" class="nr-t">3</text>
+			<line x1={W / 2 - 60} y1="20" x2={W / 2 + 60} y2="20" class="bank" />
+			<rect x={W / 2 - 13} y={rowY(4)} width="26" height={2 * ROW} rx="4" class="tafel" />
+			<text x={W / 2} y="10" text-anchor="middle" class="nr-t">3</text>
 			<text x={W / 2} y={rowY(4) + ROW + 3} text-anchor="middle" class="nr-t">4</text>
 		</g>
 		<!-- One link per fractie, as the sectors of the hemicycle: its seats and the cells
@@ -154,16 +158,16 @@
 		     of the griffie, and their numbers under them. -->
 		<g aria-hidden="true">
 			<rect
-				x={W / 2 - S_X / 2 - 8 - S_X}
+				x={W / 2 - S_X / 2 - 10 - S_X}
 				y={rowY(9)}
 				width={S_X}
 				height={S_Y}
 				rx="2"
 				class="tafel"
 			/>
-			<rect x={W / 2 + S_X / 2 + 8} y={rowY(9)} width={S_X} height={S_Y} rx="2" class="tafel" />
-			<text x={W / 2} y={rowY(9) + S_Y + 17} text-anchor="middle" class="nr-t">1</text>
-			<text x={W / 2 - S_X - 8} y={rowY(9) + S_Y + 17} text-anchor="middle" class="nr-t">2</text>
+			<rect x={W / 2 + S_X / 2 + 10} y={rowY(9)} width={S_X} height={S_Y} rx="2" class="tafel" />
+			<text x={W / 2} y={rowY(9) + S_Y + 12} text-anchor="middle" class="nr-t">1</text>
+			<text x={W / 2 - S_X - 10} y={rowY(9) + S_Y + 12} text-anchor="middle" class="nr-t">2</text>
 		</g>
 	</svg>
 </figure>
