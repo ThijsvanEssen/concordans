@@ -4,6 +4,7 @@ import {
 	byArticle,
 	sharedEnactment,
 	stageLead,
+	zonderArtikelen,
 	type DossierChange
 } from './changed-articles';
 
@@ -67,5 +68,26 @@ describe('changed articles', () => {
 		};
 		expect(sharedEnactment(law)?.source.id).toBe('instruments/stb_2026_154');
 		expect(sharedEnactment({ ...law, changes: [a, change('3', 'proposed', 'd')] })).toBeNull();
+	});
+});
+
+describe('zonderArtikelen', () => {
+	it('names the laws the dossier changes that hold no changed article', () => {
+		const data = {
+			number: '36496',
+			total: 2,
+			articles: 2,
+			enacted: 2,
+			proposed: 0,
+			laws: [
+				{ law: { id: 'instruments/bwbr0005290', bwb_id: 'BWBR0005290' }, total: 2, changes: [] }
+			]
+		};
+		const wijzigt = [
+			{ key: 'bwbr0005290', name: 'Burgerlijk Wetboek Boek 7', bwb_id: 'BWBR0005290' },
+			{ key: 'bwbr0045775', name: 'Wet goed verhuurderschap', bwb_id: 'BWBR0045775' }
+		];
+		expect(zonderArtikelen(data, wijzigt).map((w) => w.name)).toEqual(['Wet goed verhuurderschap']);
+		expect(zonderArtikelen(data, [])).toEqual([]);
 	});
 });

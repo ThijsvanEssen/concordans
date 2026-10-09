@@ -27,6 +27,7 @@ export type Loader =
 	| 'dossier-committees'
 	| 'dossier-documents-tk'
 	| 'dossier-documents-ek'
+	| 'dossier-decisions-tk'
 	| 'dossier-international'
 	| 'article-explanatory'
 	| 'article-judgments'
@@ -150,7 +151,7 @@ export const EUROPEAN: GroupDef = {
 
 export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 	dossiers: [
-		{ id: 'laws', label: 'Wetten die dit dossier raakt', noun: 'wetten', load: 'dossier-laws' },
+		{ id: 'laws', label: 'Wet uit dit dossier', noun: 'wetten', load: 'dossier-laws' },
 		{
 			id: 'same-number',
 			label: 'Dossiers onder hetzelfde nummer',
@@ -209,25 +210,18 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'documents-tk',
-			label: 'Memorie van toelichting en andere stukken',
+			label: 'Kamerstukken',
 			noun: 'stukken',
 			section: 'Tweede Kamer',
 			load: 'dossier-documents-tk'
 		},
 		{
 			id: 'decisions',
-			label: 'Stemmingen over dit dossier',
+			// Named by the Kamer: the section heading alone does not tell the two apart.
+			label: 'Stemmingen in de Tweede Kamer',
 			noun: 'stemmingen',
 			section: 'Tweede Kamer',
-			match: [
-				{
-					relation: 'ABOUT',
-					direction: 'inbound',
-					collection: 'decisions',
-					where: votedIn('TK'),
-					split: true
-				}
-			]
+			load: 'dossier-decisions-tk'
 		},
 		{
 			id: 'commitments',
@@ -245,7 +239,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'decisions-ek',
-			label: 'Stemmingen over dit dossier',
+			label: 'Stemmingen in de Eerste Kamer',
 			noun: 'stemmingen',
 			section: 'Eerste Kamer',
 			match: [

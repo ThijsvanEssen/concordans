@@ -15,10 +15,21 @@
 		byArticle,
 		sharedEnactment,
 		stageLead,
-		type ChangedArticles
+		zonderArtikelen,
+		type ChangedArticles,
+		type LegalEffectLaw
 	} from './changed-articles';
 
-	let { data }: { data: ChangedArticles } = $props();
+	let {
+		data,
+		wijzigt = []
+	}: {
+		data: ChangedArticles;
+		/** The laws the dossier changes, as the band names them: each one stands here too. */
+		wijzigt?: readonly LegalEffectLaw[];
+	} = $props();
+
+	const zonder = $derived(zonderArtikelen(data, wijzigt));
 
 	/** Articles shown per law before Alle. */
 	const PREVIEW = 8;
@@ -89,6 +100,15 @@
 			{/if}
 		</div>
 	{/each}
+	{#each zonder as w (w.key)}
+		<div class="wet">
+			<h4 class="wet-naam">
+				<KindGlyph collection="instruments" size={12} />
+				<BronLink ref={`instruments/${w.key}`}>{w.name ?? w.short ?? w.key}</BronLink>
+			</h4>
+			<p class="samen">Geen gewijzigde artikelen in de gegevens.</p>
+		</div>
+	{/each}
 </Sectie>
 
 <style>
@@ -121,6 +141,13 @@
 		font-size: var(--t-body-2);
 		font-weight: 600;
 		color: var(--ink);
+	}
+	/* The publication a law's changes share, or that it has none in the data: a state line. */
+	.samen {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 	.artikelen {
 		margin: 0;

@@ -264,6 +264,14 @@ export function uitslagVan(b: { passed?: unknown; result?: unknown }): boolean |
 	return null;
 }
 
+/**
+ * The kinds of dossier that run the procedure of a bill, as the API names them from the
+ * dossier's zaak (`kind`; the phases exist for these alone). Another dossier, a verzameldossier
+ * such as Huurbeleid, has no steps to come: no advice, no Eerste Kamer.
+ */
+const WETSVOORSTEL = new Set(['Wetgeving', 'Initiatiefwetgeving', 'Begroting']);
+export const isWetsvoorstel = (d: Pick<Detail, 'kind'>) => WETSVOORSTEL.has(d.kind ?? '');
+
 export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const st = stand(d);
 	const procedureEntries = entries.filter((e) => metOverig || isProcedure(e));
@@ -271,26 +279,29 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 
 	const per = Map.groupBy(procedureEntries, instantie);
 	const groepen: TijdGroep[] = [];
-	const state = st?.bodies.map((b) => b.state) ?? ['open', 'now', 'open'];
+	const wetsvoorstel = isWetsvoorstel(d);
+	// Without a bill nothing is to come: no state per Kamer, so no line of what can follow.
+	const state = st?.bodies.map((b) => b.state) ?? (wetsvoorstel ? ['open', 'now', 'open'] : []);
 
 	const rvs = regelsVan(per.get('rvs') ?? [], 'rvs', d.number);
-	groepen.push({
-		id: 'rvs',
-		titel: 'Raad van State',
-		regels: rvs.length
-			? rvs
-			: [
-					{
-						id: 'rvs-nog',
-						datum: null,
-						teken: 'verwacht',
-						zin:
-							d.kind === 'Initiatiefwetgeving'
-								? 'Het advies kan nog volgen.'
-								: 'Geen advies in de gegevens.'
-					}
-				]
-	});
+	if (rvs.length || wetsvoorstel)
+		groepen.push({
+			id: 'rvs',
+			titel: 'Raad van State',
+			regels: rvs.length
+				? rvs
+				: [
+						{
+							id: 'rvs-nog',
+							datum: null,
+							teken: 'verwacht',
+							zin:
+								d.kind === 'Initiatiefwetgeving'
+									? 'Het advies kan nog volgen.'
+									: 'Geen advies in de gegevens.'
+						}
+					]
+		});
 
 	const tk = regelsVan(per.get('tk') ?? [], 'tk', d.number);
 	// De wijze staat in tk_decision, niet in het besluit zelf.

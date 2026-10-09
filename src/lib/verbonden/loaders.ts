@@ -243,7 +243,45 @@ async function actorDossiers(
 const AARD_PAGES = 5;
 
 export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = {
-	'dossier-laws': async (ctx) => ({ rows: (await abortable(hubOf(ctx), ctx.signal)).laws }),
+	// The wet that came from the dossier and its publication. The laws it changes stand once,
+	// above the reader (Wijzigt) and under Gewijzigde artikelen (Thijs, 10 Oct: "single count").
+	'dossier-laws': async (ctx) => ({
+		rows: (await abortable(hubOf(ctx), ctx.signal)).laws.filter(
+			(r) => r.relation === 'LEGISLATED_IN'
+		)
+	}),
+	// The votes of the Tweede Kamer on the dossier's zaken but its amendementen: the reader
+	// lists those with their votes (Amendementen). One page of the decision browser, newest
+	// first; its count per kind gives the total (Thijs, 10 Oct: "everything other then
+	// amendments can stay, if it is only amendments: remove").
+	'dossier-decisions-tk': async ({ node, signal }) => {
+		const label = str(node.props?.label);
+		if (!label) return { rows: [] };
+		const page = await unwrap(
+			api.GET('/api/decisions', {
+				params: { query: { dossier: label, chamber: 'TK', limit: 100 } },
+				signal
+			})
+		);
+		const amendement = (kind: string | null | undefined) => /^amendement/i.test(kind ?? '');
+		const rows = page.items
+			.filter((d) => !amendement(d.kind))
+			.map(
+				(d): Row => ({
+					ref: { collection: 'decisions', key: d.key },
+					...describe('decisions', d.key, d.display_name, { ...d }),
+					kind: bronKindOf('decisions', d.key, { ...d }),
+					relation: 'ABOUT',
+					direction: 'inbound',
+					props: { ...d }
+				})
+			);
+		const kinds = page.facets?.kind;
+		const total = kinds
+			? kinds.filter((k) => !amendement(k.value)).reduce((n, k) => n + k.count, 0)
+			: rows.length;
+		return { rows, total };
+	},
 	'dossier-committees': async (ctx) => ({
 		rows: (await abortable(hubOf(ctx), ctx.signal)).committees
 	}),
