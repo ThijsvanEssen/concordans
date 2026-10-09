@@ -142,7 +142,7 @@
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);
 	}
-	.items li :global(.bronlink > a) {
+	.items li > :global(a) {
 		text-decoration: none;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
