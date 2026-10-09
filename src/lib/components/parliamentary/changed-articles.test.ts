@@ -13,7 +13,8 @@ const change = (nr: string, stage: DossierChange['stage'], source: string): Doss
 		id: `articles/bwbr0001854_${nr}`,
 		key: `bwbr0001854_${nr}`,
 		article_number: nr,
-		stub: false
+		stub: false,
+		judgment_total: 0
 	},
 	relation: 'amends',
 	stage,
@@ -37,13 +38,13 @@ describe('changed articles', () => {
 		expect(
 			articleLabel(
 				{ id: 'x', bwb_id: 'BWBR0001854' },
-				{ id: 'a', key: 'k', article_number: '21b', stub: false }
+				{ id: 'a', key: 'k', article_number: '21b', stub: false, judgment_total: 0 }
 			)
 		).toBe('Artikel 21b');
 		expect(
 			articleLabel(
 				{ id: 'x', bwb_id: 'BWBR0005289' },
-				{ id: 'a', key: 'k', article_number: '162', stub: false }
+				{ id: 'a', key: 'k', article_number: '162', stub: false, judgment_total: 0 }
 			)
 		).toBe('Artikel 6:162');
 	});

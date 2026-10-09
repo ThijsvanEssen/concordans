@@ -607,7 +607,8 @@
 					passed: passed === undefined ? undefined : passed === 'true',
 					from: dateFrom || undefined,
 					to: dateTo || undefined,
-					q: q || undefined,
+					// One q, as the API takes several since 0.79.30 (all of them must match).
+					q: q ? [q] : undefined,
 					dossier: dossierFilter || undefined,
 					party: party || undefined,
 					limit: 200

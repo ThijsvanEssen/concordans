@@ -143,7 +143,8 @@
 		dossier: dossier || undefined,
 		member: member || undefined,
 		faction: faction || undefined,
-		q: q || undefined,
+		// API 0.79.30 takes several q; one as before (Front-end #2 widens it).
+		q: q ? [q] : undefined,
 		chamber: chamber || undefined,
 		limit: 100
 	});
@@ -183,8 +184,8 @@
 		error = null;
 		teLang = false;
 		doorzocht = null;
-		if ((q.q ?? '') !== gezocht) {
-			gezocht = q.q ?? '';
+		if ((q.q ?? []).join(' ') !== gezocht) {
+			gezocht = (q.q ?? []).join(' ');
 			items = [];
 			cursor = null;
 		}
