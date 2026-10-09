@@ -863,7 +863,7 @@
 	title={naam ? `${naam}, overzicht, Concordans` : undefined}
 />
 
-<div class="overzicht">
+<div class="overzicht blad">
 	<p class="terug"><a href="/onderwerpen">Onderwerpen</a></p>
 	<!-- The heading with its action at the right (docs/bediening.md). -->
 	<header class="kop">
@@ -894,8 +894,8 @@
 				onChange={(v, t) => zet({ van: v || null, tot: t || null, cel: null })}
 			/>
 		</div>
-		<div class="indeling">
-			<aside class="facetten" aria-label="Verfijnen">
+		<div class="indeling blad__indeling">
+			<aside class="facetten blad__facetten" aria-label="Verfijnen">
 				<button
 					type="button"
 					class="verfijnen-knop"
@@ -1207,11 +1207,7 @@
 <style>
 	/* Rungs of docs/typografie.md: the topic at 1, a section at 2, a row's title at 4, the
 	   meta lines at 5 and the labels beside a heading at 6. */
-	.overzicht {
-		max-width: 1180px;
-		margin: 0 auto;
-		padding: var(--s-6) var(--s-6) var(--s-8);
-	}
+	/* The frame and grid of Bladeren (AppShell): .blad, and .blad__indeling below. */
 	.terug {
 		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
@@ -1412,9 +1408,6 @@
 	}
 
 	@media (max-width: 640px) {
-		.overzicht {
-			padding: var(--s-4) var(--s-4) var(--s-7);
-		}
 		.rij {
 			grid-template-columns: minmax(0, 1fr);
 			gap: var(--s-1);
@@ -1457,18 +1450,8 @@
 		margin-bottom: var(--s-5);
 	}
 	/* The facets at the left of the figures and the list, as Actueel and Bladeren. */
-	.indeling {
-		display: grid;
-		grid-template-columns: 200px minmax(0, 1fr);
-		column-gap: var(--s-7);
-		align-items: start;
-	}
 	.inhoud {
 		min-width: 0;
-	}
-	.facetten {
-		position: sticky;
-		top: var(--s-4);
 	}
 	.facet {
 		margin-bottom: var(--s-5);
@@ -1529,9 +1512,6 @@
 		text-align: center;
 	}
 	@media (max-width: 767px) {
-		.indeling {
-			grid-template-columns: minmax(0, 1fr);
-		}
 		.regel {
 			max-width: none;
 			margin-bottom: var(--s-3);

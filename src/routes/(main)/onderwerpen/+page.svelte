@@ -283,9 +283,12 @@
 
 <RouteKop pad="/onderwerpen" />
 
-<div class="onderwerpen">
+<div class="onderwerpen blad blad__indeling">
 	<header class="kop">
 		<h1 class="titel">Onderwerpen</h1>
+	</header>
+	<!-- The page's own controls in the facet column, as Bladeren has its filters. -->
+	<aside class="opzij" aria-label="Volgen">
 		{#if gedeeld.length}
 			<div class="acties">
 				{#if alGevolgd}
@@ -311,103 +314,105 @@
 				</div>
 			{/if}
 		{/if}
-	</header>
+	</aside>
 
-	{#if geladen && !lijst.length}
-		<p class="status">Nog geen onderwerpen.</p>
-	{/if}
+	<div class="inhoud">
+		{#if geladen && !lijst.length}
+			<p class="status">Nog geen onderwerpen.</p>
+		{/if}
 
-	{#each lijst as o, n (sleutel(o))}
-		{@const s = standen[vak(o)]}
-		<section class="onderwerp" aria-labelledby="onderwerp-{n}">
-			<div class="onderwerp__kop">
-				<h2 id="onderwerp-{n}">{o.termen.join('; ')}</h2>
-				<p class="sinds">
-					{telRegel(o, s)}
-				</p>
-				{#if !gedeeld.length}
-					<TekstLink
-						aria-expanded={bewerkt === sleutel(o)}
-						onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}
-						>Woorden</TekstLink
-					>
-					<TekstLink onclick={() => verwijder(o)}>Niet meer volgen</TekstLink>
-				{/if}
-				<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>
-			</div>
-			{#if bewerkt === sleutel(o) && !gedeeld.length}
-				<div class="woorden">
-					<ul>
-						{#each o.termen as term (term)}
-							<li>
-								{term}{#if o.termen.length > 1}<button
-										type="button"
-										class="weg"
-										aria-label="‘{term}’ weghalen"
-										onclick={() => haalWeg(o, term)}>×</button
-									>{/if}
-							</li>
-						{/each}
-					</ul>
-					<form class="nieuw nieuw--klein" onsubmit={(e) => voegWoordToe(e, o)}>
-						<input
-							type="text"
-							aria-label="Woord toevoegen aan dit onderwerp"
-							bind:value={erbij}
-							placeholder="Woord of synoniem"
-						/>
-						<button type="submit" disabled={!normaal(erbij)}>Toevoegen</button>
-					</form>
+		{#each lijst as o, n (sleutel(o))}
+			{@const s = standen[vak(o)]}
+			<section class="onderwerp" aria-labelledby="onderwerp-{n}">
+				<div class="onderwerp__kop">
+					<h2 id="onderwerp-{n}">{o.termen.join('; ')}</h2>
+					<p class="sinds">
+						{telRegel(o, s)}
+					</p>
+					{#if !gedeeld.length}
+						<TekstLink
+							aria-expanded={bewerkt === sleutel(o)}
+							onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}
+							>Woorden</TekstLink
+						>
+						<TekstLink onclick={() => verwijder(o)}>Niet meer volgen</TekstLink>
+					{/if}
+					<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>
 				</div>
-			{/if}
-			{#if !s || s.status === 'laden'}
-				<p class="status">Laden…</p>
-			{:else if s.status === 'fout'}
-				<p class="status status--fout">Dit onderwerp kon niet worden geladen.</p>
-			{:else if !s.items.length}
-				<p class="status">Niets {periodeVan(o)}.</p>
-			{:else}
-				{@const alle = uitgeklapt[vak(o)] || s.items.length <= EERST + 2}
-				<Tijdlijn
-					groepen={groepenVan(alle ? s.items : s.items.slice(0, EERST), o.vorige)}
-					datums={false}
-				/>
-				{#if !alle}
-					<p class="alle">
-						<TekstLink onclick={() => (uitgeklapt[vak(o)] = true)}
-							>Alle {s.items.length} tonen</TekstLink
+				{#if bewerkt === sleutel(o) && !gedeeld.length}
+					<div class="woorden">
+						<ul>
+							{#each o.termen as term (term)}
+								<li>
+									{term}{#if o.termen.length > 1}<button
+											type="button"
+											class="weg"
+											aria-label="‘{term}’ weghalen"
+											onclick={() => haalWeg(o, term)}>×</button
+										>{/if}
+								</li>
+							{/each}
+						</ul>
+						<form class="nieuw nieuw--klein" onsubmit={(e) => voegWoordToe(e, o)}>
+							<input
+								type="text"
+								aria-label="Woord toevoegen aan dit onderwerp"
+								bind:value={erbij}
+								placeholder="Woord of synoniem"
+							/>
+							<button type="submit" disabled={!normaal(erbij)}>Toevoegen</button>
+						</form>
+					</div>
+				{/if}
+				{#if !s || s.status === 'laden'}
+					<p class="status">Laden…</p>
+				{:else if s.status === 'fout'}
+					<p class="status status--fout">Dit onderwerp kon niet worden geladen.</p>
+				{:else if !s.items.length}
+					<p class="status">Niets {periodeVan(o)}.</p>
+				{:else}
+					{@const alle = uitgeklapt[vak(o)] || s.items.length <= EERST + 2}
+					<Tijdlijn
+						groepen={groepenVan(alle ? s.items : s.items.slice(0, EERST), o.vorige)}
+						datums={false}
+					/>
+					{#if !alle}
+						<p class="alle">
+							<TekstLink onclick={() => (uitgeklapt[vak(o)] = true)}
+								>Alle {s.items.length} tonen</TekstLink
+							>
+						</p>
+					{/if}
+				{/if}
+				{#if s?.status === 'klaar' && s.doorzocht}
+					<p class="status">
+						Doorzocht vanaf {shortDate(s.doorzocht)}.
+						<TekstLink disabled={verderBezig === vak(o)} onclick={() => verderTerug(o)}
+							>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</TekstLink
 						>
 					</p>
 				{/if}
-			{/if}
-			{#if s?.status === 'klaar' && s.doorzocht}
-				<p class="status">
-					Doorzocht vanaf {shortDate(s.doorzocht)}.
-					<TekstLink disabled={verderBezig === vak(o)} onclick={() => verderTerug(o)}
-						>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</TekstLink
-					>
+				<p class="verder">
+					{#each o.termen as term (term)}
+						<a href={actueelHref(term)}>‘{term}’ in Actueel</a>
+					{/each}
+					<!-- The topic as a feed of its own, all its words in one (API 0.79.30). -->
+					<a href={atomHref(o.termen)} rel="alternate" type="application/atom+xml">Atom-feed</a>
 				</p>
-			{/if}
-			<p class="verder">
-				{#each o.termen as term (term)}
-					<a href={actueelHref(term)}>‘{term}’ in Actueel</a>
-				{/each}
-				<!-- The topic as a feed of its own, all its words in one (API 0.79.30). -->
-				<a href={atomHref(o.termen)} rel="alternate" type="application/atom+xml">Atom-feed</a>
-			</p>
-		</section>
-	{/each}
+			</section>
+		{/each}
+	</div>
 </div>
 
 <style>
 	/* The column's width, not its content's: without a paragraph under the title the page
 	   would shrink to the field and stand off-centre. */
-	.onderwerpen {
-		width: 100%;
-		box-sizing: border-box;
-		max-width: 760px;
-		margin: 0 auto;
-		padding: var(--s-6) var(--s-6) var(--s-8);
+	/* The frame and grid of Bladeren (AppShell): the heading over both columns. */
+	.kop {
+		grid-column: 1 / -1;
+	}
+	.inhoud {
+		min-width: 0;
 	}
 	.titel {
 		margin: 0 0 var(--s-2);

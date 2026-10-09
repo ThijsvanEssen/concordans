@@ -523,7 +523,7 @@
 {/snippet}
 <svelte:window onkeydown={onKey} />
 
-<div class="actueel">
+<div class="actueel blad blad__indeling">
 	<header class="kop">
 		<div>
 			<h1 class="title">Actueel</h1>
@@ -568,7 +568,7 @@
 		</div>
 	</div>
 
-	<aside class="filters" aria-label="Verfijnen">
+	<aside class="filters blad__facetten" aria-label="Verfijnen">
 		<button
 			type="button"
 			class="verfijnen-knop"
@@ -645,13 +645,8 @@
 </div>
 
 <style>
+	/* The frame and grid of Bladeren (AppShell). */
 	.actueel {
-		display: grid;
-		grid-template-columns: 240px minmax(0, 1fr);
-		column-gap: var(--s-7);
-		max-width: 1320px;
-		margin: 0 auto;
-		padding: var(--s-6) var(--s-6) var(--s-8);
 		--row-lead: 132px;
 		--row-aside: 150px;
 	}
@@ -718,13 +713,6 @@
 	.regel .periode {
 		flex: 0 1 380px;
 		min-width: 0;
-	}
-	.filters {
-		position: sticky;
-		top: var(--s-4);
-		align-self: start;
-		max-height: calc(100vh - var(--s-6));
-		overflow-y: auto;
 	}
 	.verfijnen-knop {
 		display: none;
@@ -845,10 +833,6 @@
 	}
 
 	@media (max-width: 767px) {
-		.actueel {
-			grid-template-columns: minmax(0, 1fr);
-			padding: var(--s-4) var(--s-4) var(--s-7);
-		}
 		.kop {
 			flex-direction: column;
 		}

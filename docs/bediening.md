@@ -40,6 +40,17 @@ This holds for Bladeren too (Thijs, 10 October 2026, choice (a)): a row's title 
 
 Two things at one level do not differ in size. In a timeline (Actueel, Onderwerpen, the home page, a dossier's procedure) the large line is kept for the bill, its own decisions, and a close vote, where the size carries meaning (decided by a narrow margin). A toezegging, a motie or a brief stands at the size of the lines beside it (`major` in `src/lib/components/actueel/timeline.ts`).
 
+## Layout
+
+Two kinds of page, no third (Thijs, 10 Oct 2026: "Houd de bladeren pagina's aan voor breedte van hele breedte dingen").
+
+- **Full width**: lists, overviews, timelines and text: the home page, Bladeren and each of its categories, Actueel, Onderwerpen and its Overzicht, the API reference, /docs, /over, /bronnen, /voorwaarden, /privacy.
+  - Every one sits in the frame of Bladeren: `.blad` (at most 1440 px, gutter `--s-6`; on a phone `--s-4`), with `.blad__indeling` for a facet column of 240 px, a gap of 40 px and the rest.
+  - The facet column is `.blad__facetten`: sticky, a quiet scroll bar clear of the counts, one right edge for controls and counts.
+  - A text page keeps a reading width of 720 px inside the frame, on the same left edge (`.blad--tekst`).
+  - The classes live in AppShell; no page sets a width of its own. The footer stands on the same edge.
+- **Panels**: the Verkenner and its readers beside Netwerk and Verbonden, each column its own measure (`--reader-*`). Unchanged.
+
 ## Kamer
 
 Kamer is one choice, never a set of boxes (Thijs, 10 Oct 2026: "Dit is raar ten opzichte van de rest van de TK/EK selectors"): a Keuze in the facet column under its heading Kamer, on a phone under Verfijnen. Where both may stand, Beide | Tweede Kamer | Eerste Kamer, Beide filtering nothing (Actueel, the Overzicht); where one must, Tweede Kamer | Eerste Kamer (the halls, Bladeren's Kamerleden and Fracties).

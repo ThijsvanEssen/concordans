@@ -5,7 +5,7 @@
 <RouteKop pad="/voorwaarden" />
 
 <div class="page-wrap">
-	<div class="container">
+	<div class="container blad blad--tekst">
 		<div class="stub-eyebrow">Over Concordans</div>
 		<h1 class="stub-title">Gebruiksvoorwaarden</h1>
 		<p class="stub-lede">
@@ -52,16 +52,6 @@
 </div>
 
 <style>
-	.page-wrap {
-		padding: 80px 0 120px;
-	}
-
-	.container {
-		max-width: 720px;
-		margin: 0 auto;
-		padding: 0 var(--s-5);
-	}
-
 	.stub-eyebrow {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);

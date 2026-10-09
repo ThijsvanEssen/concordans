@@ -66,7 +66,7 @@
 	{/if}
 	{#if voor}<span class="voor">{@render voor()}</span>{/if}
 	<span class="label" class:wrap>{label}</span>
-	{#if bezig}<span class="aantal" aria-label="wordt geteld">…</span>{:else if count != null}<span
+	{#if bezig}<span class="aantal" aria-label="wordt geteld"></span>{:else if count != null}<span
 			class="aantal">{formatCount(count)}</span
 		>{/if}
 </button>

@@ -132,6 +132,26 @@ describe('one form for each thing', () => {
 		expect(actueel.text).toMatch(/\n\tvorm: Vorm;/);
 	});
 
+	it('lays a full-width page in the frame of Bladeren, with no width of its own (docs/bediening.md, Layout)', () => {
+		// A page-wide max-width (600 px or more) only in AppShell's .blad and the footer.
+		const breed = /(?<!@media \(|@container [\w ]*\()max-width:\s*(\d{3,4})px/g;
+		const eigen = sources
+			.filter(
+				({ path }) => path.startsWith('routes/(main)') || path.endsWith('IndexOverzicht.svelte')
+			)
+			.flatMap(({ path, text }) =>
+				[...text.matchAll(breed)].filter((m) => Number(m[1]) >= 600).map(() => path)
+			);
+		expect(eigen).toEqual([]);
+		const paginas = sources.filter(
+			({ path }) =>
+				/^routes\/\(main\)\/.*\+page\.svelte$/.test(path) || path.endsWith('IndexView.svelte')
+		);
+		expect(
+			paginas.filter(({ text }) => !/class="[^"]*\bblad\b/.test(text)).map((p) => p.path)
+		).toEqual([]);
+	});
+
 	it('chooses a Kamer with a Keuze, never with boxes (docs/bediening.md)', () => {
 		expect(
 			offenders(

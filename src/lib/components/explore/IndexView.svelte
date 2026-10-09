@@ -2157,7 +2157,7 @@
 
 	<div class="stage">
 		<div class="stage-scroll" bind:this={scroller}>
-			<div class="page">
+			<div class="page blad blad__indeling">
 				<!-- The page names itself for a screen reader; the tabs above show it. -->
 				<h1 class="sr-only">Bladeren: {categoryLabel(category)}</h1>
 				<!-- The choose-line (docs/bediening.md): the field of the list and its period, over
@@ -2184,7 +2184,7 @@
 						</div>
 					{/if}
 				</div>
-				<aside class="facet-col" aria-label="Verfijnen">
+				<aside class="facet-col blad__facetten" aria-label="Verfijnen">
 					<!-- On a phone the facets behind one quiet line, opened in place. -->
 					<button
 						type="button"
@@ -3174,30 +3174,12 @@
 		/* The filter column measures its height against this box, not the window. */
 		container-type: size;
 	}
-	/* The filters in a column beside the list; on a narrow screen above it. */
-	.page {
-		max-width: 1440px;
-		margin: 0 auto;
-		padding: var(--s-6) var(--s-6) var(--s-8);
-		display: grid;
-		grid-template-columns: 240px minmax(0, 1fr);
-		column-gap: 40px;
-		align-items: start;
-	}
+	/* The filters in a column beside the list, on a narrow screen above it: the frame and
+	   its grid are the shared .blad and .blad__indeling (AppShell). */
+	/* The shared .blad__facetten (AppShell), as high as this scrolling box rather than the
+	   window, so its last filter can be reached. */
 	.facet-col {
-		position: sticky;
-		/* As far from the top as the page padding, so it does not jump when it sticks;
-		   as high as the scrolling box, so its last filter can be reached. */
-		top: var(--s-6);
 		max-height: calc(100cqh - var(--s-6));
-		overflow-y: auto;
-		scrollbar-gutter: stable;
-		/* Een smalle, stille schuifbalk die de aantallen niet raakt. */
-		scrollbar-width: thin;
-		scrollbar-color: var(--rule) transparent;
-		/* Room for the focus ring: the column scrolls, so it clips what reaches its edge. */
-		margin: 0 calc(-1 * var(--s-2));
-		padding: var(--s-1) var(--s-2) var(--s-5);
 	}
 	.results {
 		min-width: 0;
@@ -3853,10 +3835,6 @@
 		}
 		.catgroup__label {
 			padding: 0 var(--s-4);
-		}
-		.page {
-			padding: var(--s-4) var(--s-4) 60px;
-			grid-template-columns: minmax(0, 1fr);
 		}
 		/* The filters scroll along on a phone: their bar stays at the top of the list, so a
 		   filter is one tap away wherever one is (Thijs, 9 Oct). Open, they scroll on their own

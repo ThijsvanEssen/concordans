@@ -8,7 +8,7 @@
 	import { collectionOf, INDEX_TABS } from './categories';
 </script>
 
-<div class="overzicht">
+<div class="overzicht blad blad__indeling">
 	<aside class="side">
 		<h1>Bladeren</h1>
 	</aside>
@@ -30,16 +30,7 @@
 </div>
 
 <style>
-	/* The content column starts where it does on the start page (240 + 40): 248 + 32. */
-	.overzicht {
-		max-width: 1440px;
-		margin: 0 auto;
-		padding: var(--s-6) var(--s-6) var(--s-8);
-		display: grid;
-		grid-template-columns: 248px minmax(0, 1fr);
-		column-gap: var(--s-6);
-		align-items: start;
-	}
+	/* The frame and grid of Bladeren (AppShell). */
 	h1 {
 		margin: 0;
 		font-family: var(--font-serif);
@@ -73,13 +64,14 @@
 		text-decoration: underline;
 	}
 	@media (max-width: 860px) {
-		.overzicht,
 		.groepen {
 			grid-template-columns: minmax(0, 1fr);
 			row-gap: var(--s-5);
 		}
+	}
+	@media (max-width: 768px) {
 		.overzicht {
-			padding: var(--s-5) var(--s-4) var(--s-7);
+			row-gap: var(--s-5);
 		}
 	}
 </style>
