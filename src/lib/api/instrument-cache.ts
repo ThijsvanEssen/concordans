@@ -1,5 +1,5 @@
 // Names of instruments by id, filled as responses pass by. Anything that prints
-// a law name (status bar, citation formats, graph labels) reads it through
+// a law name (citation formats, graph labels) reads it through
 // `instrumentMetaStore` or `getInstrumentMeta`.
 
 import { writable, type Readable } from 'svelte/store';

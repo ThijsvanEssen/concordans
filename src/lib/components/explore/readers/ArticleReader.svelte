@@ -133,7 +133,7 @@
 		getArticleDetail(bwbId, articleNumber)
 			.then((data) => {
 				if (stale) return;
-				// The status bar and the citation panel read the law name from this cache.
+				// The citation panel reads the law name from this cache.
 				if (data.instrument) {
 					recordInstrument({ bwb_id: bwbId, display_name: data.instrument.display_name });
 				}
