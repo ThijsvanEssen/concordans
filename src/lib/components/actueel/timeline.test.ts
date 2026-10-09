@@ -291,6 +291,7 @@ describe('headlineOf', () => {
 	it('heads one event as the homepage does, major when it matters', () => {
 		expect(headlineOf(schilder)).toEqual({
 			label: 'Stemming, verworpen',
+			vorm: 'besluit',
 			title: 'Tweede Kamer verwerpt motie-Schilder over strafverzwaring',
 			major: true,
 			failed: true
@@ -322,6 +323,7 @@ describe('headlineOf', () => {
 			headlineOf(item({ kind: 'Brief regering', title: 'Voortgang waterstofbeleid' }))
 		).toEqual({
 			label: 'Brief regering',
+			vorm: 'stuk',
 			title: 'Voortgang waterstofbeleid',
 			major: false
 		});
@@ -355,7 +357,12 @@ describe('a judgment in the feed', () => {
 			}) as unknown as FeedItem;
 		expect(
 			headlineOf(item({ court: 'RVS', tier: 'raad_van_state', decided_on: '2026-09-15' }))
-		).toEqual({ label: 'Uitspraak', title: 'Raad van State, 15 september 2026', major: false });
+		).toEqual({
+			label: 'Uitspraak',
+			title: 'Raad van State, 15 september 2026',
+			major: false,
+			vorm: 'uitspraak'
+		});
 		const conclusie = headlineOf(
 			item({
 				court: 'PHR',
@@ -367,6 +374,7 @@ describe('a judgment in the feed', () => {
 		);
 		expect(conclusie).toEqual({
 			label: 'Conclusie',
+			vorm: 'uitspraak',
 			title: 'Conclusie A-G Niessen, 2 augustus 2018',
 			major: true
 		});

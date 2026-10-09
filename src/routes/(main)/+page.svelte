@@ -123,6 +123,7 @@
 						: l.major
 							? 'stuk'
 							: 'activiteit',
+				vorm: l.vorm,
 				label: l.label,
 				zin: l.title,
 				meta: l.context,

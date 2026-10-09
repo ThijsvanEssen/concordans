@@ -257,6 +257,7 @@ function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 			id: 'ek-nu',
 			datum: null,
 			teken: 'verwacht',
+			soort: 'activities',
 			zin: [nu ? `Nu: ${stapNaam(nu)}.` : '', nog.length ? `Kan nog volgen: ${reeks(nog)}.` : '']
 				.filter(Boolean)
 				.join(' ')
@@ -323,6 +324,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 							id: 'rvs-nog',
 							datum: null,
 							teken: 'verwacht',
+							soort: 'activities',
 							zin:
 								d.kind === 'Initiatiefwetgeving'
 									? 'Het advies kan nog volgen.'
@@ -347,6 +349,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			id: 'tk-nog',
 			datum: null,
 			teken: 'verwacht',
+			soort: 'activities',
 			zin: `Kan nog volgen: ${reeks(nog)}.`
 		});
 	}
@@ -364,6 +367,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			id: 'ek-nog',
 			datum: null,
 			teken: 'verwacht',
+			soort: 'activities',
 			zin: 'Kan nog volgen: verslag of plenaire behandeling, en stemming.'
 		});
 	if (state[2] === 'open')
@@ -371,6 +375,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			id: 'ek-open',
 			datum: null,
 			teken: 'verwacht',
+			soort: 'activities',
 			zin: 'Aan de orde na aanneming door de Tweede Kamer.'
 		});
 	if (ek.length) groepen.push({ id: 'ek', titel: 'Eerste Kamer', regels: ek });
