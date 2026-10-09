@@ -145,6 +145,10 @@
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: var(--s-1);
+		/* The text and the bars at the column's edges (Thijs: "de hele beschikbare breedte"):
+		   the padding of each block hangs in the margin, where the plate of the stage that
+		   runs now needs it. */
+		margin: 0 calc(-1 * var(--s-3));
 	}
 	.vak {
 		display: flex;

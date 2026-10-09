@@ -50,18 +50,6 @@ export function articleLabel(law: ChangedLaw['law'], a: ChangedArticle): string 
 	return a.display_name ?? a.id;
 }
 
-/** "24 artikelen in 1 wet. 24 wijzigingen in werking." The counts that are zero go. */
-export function summary(d: ChangedArticles): string {
-	const n = (count: number, one: string, more: string) => `${count} ${count === 1 ? one : more}`;
-	const laws = d.laws.length;
-	const first = `${n(d.articles, 'artikel', 'artikelen')} in ${n(laws, 'wet', 'wetten')}.`;
-	const stages = [
-		d.enacted ? `${n(d.enacted, 'wijziging', 'wijzigingen')} in werking` : null,
-		d.proposed ? `${n(d.proposed, 'wijziging', 'wijzigingen')} voorgesteld` : null
-	].filter(Boolean);
-	return stages.length ? `${first} ${stages.join(', ')}.` : first;
-}
-
 /** What stands before the publication or paper on a change's line, its own spaces included. */
 export function stageLead(c: DossierChange): string {
 	if (c.stage === 'proposed') return 'voorgesteld in ';

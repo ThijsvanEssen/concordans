@@ -1,39 +1,47 @@
-// Which sections are closed, per kind of section (Thijs, 10 Oct: "de verschillende kopjes
-// inklapbaar, zodat ik de EK of TK dicht kan klappen, of de amendementen"). A section is
-// open unless it was closed; closed, it stays closed on every bron of its kind, in this
-// browser. One key per kind: `Procedure`, `Zetels in de Eerste Kamer`, `verbonden:judgments`.
+// Which headings stand open, per kind (Thijs, 10 Oct: "de verschillende kopjes inklapbaar,
+// zodat ik de EK of TK dicht kan klappen, of de amendementen"; and later: "Maak de
+// standaard van kopjes dicht in de reader en sub kopjes ook collapsable"). A section of a
+// reader starts closed, a heading inside it starts open; what the reader opens or closes is
+// kept for every bron of its kind, in this browser. One key per kind: `Procedure`,
+// `Zetels in de Eerste Kamer`, `verbonden:judgments`, `sub:Tweede Kamer`.
 
-const SLEUTEL = 'concordans:dicht';
+const SLEUTEL = 'concordans:kopjes';
 
-function lees(): Set<string> {
+function lees(): Record<string, boolean> {
 	try {
-		const ruw = JSON.parse(localStorage.getItem(SLEUTEL) ?? '[]') as unknown;
-		return new Set(Array.isArray(ruw) ? ruw.filter((x): x is string => typeof x === 'string') : []);
+		const ruw = JSON.parse(localStorage.getItem(SLEUTEL) ?? '{}') as unknown;
+		if (!ruw || typeof ruw !== 'object' || Array.isArray(ruw)) return {};
+		return Object.fromEntries(
+			Object.entries(ruw as Record<string, unknown>).filter(
+				(e): e is [string, boolean] => typeof e[1] === 'boolean'
+			)
+		);
 	} catch {
-		return new Set();
+		return {};
 	}
 }
 
 // Read once in the browser, as the module loads: a first read inside a template would write
 // state during rendering.
-const dicht = $state<{ sleutels: Set<string> }>({
-	sleutels: typeof window === 'undefined' ? new Set() : lees()
+const keuzes = $state<{ open: Record<string, boolean> }>({
+	open: typeof window === 'undefined' ? {} : lees()
 });
 
-const sleutels = () => dicht.sleutels;
+/** Whether the heading of this kind stands open: as chosen, else its default. */
+export const isOpen = (sleutel: string, standaard: boolean) => keuzes.open[sleutel] ?? standaard;
 
-/** Whether the section of this kind is closed. */
-export const isDicht = (sleutel: string) => sleutels().has(sleutel);
+/** Whether the section of this kind is closed; a section starts closed. */
+export const isDicht = (sleutel: string) => !isOpen(sleutel, false);
 
-/** Open or close the sections of this kind, and keep it. */
-export function zetDicht(sleutel: string, toe: boolean) {
-	const nieuw = new Set(sleutels());
-	if (toe) nieuw.add(sleutel);
-	else nieuw.delete(sleutel);
-	dicht.sleutels = nieuw;
+/** Open or close the headings of this kind, and keep it. */
+export function zetOpen(sleutel: string, open: boolean) {
+	keuzes.open = { ...keuzes.open, [sleutel]: open };
 	try {
-		localStorage.setItem(SLEUTEL, JSON.stringify([...nieuw]));
+		localStorage.setItem(SLEUTEL, JSON.stringify(keuzes.open));
 	} catch {
-		// A browser that keeps nothing: the section stays as chosen for this page.
+		// A browser that keeps nothing: the heading stays as chosen for this page.
 	}
 }
+
+/** Close or open a section (`toe`: close it). */
+export const zetDicht = (sleutel: string, toe: boolean) => zetOpen(sleutel, !toe);

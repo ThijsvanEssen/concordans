@@ -177,7 +177,7 @@
 								: 'activiteit',
 					label: isNieuw(i.date, vorige) ? `${h.label}, nieuw` : h.label,
 					zin: h.title,
-					href: bronHref(ref),
+					href: bronHref(ref, { keepMode: false, mode: 'graph' }),
 					ref,
 					groot: h.major
 				};

@@ -2076,7 +2076,9 @@
 	// ── Opening a source ────────────────────────────────────────────────────
 	// The title of a row opens the bron as Lezen in the detail does: a text of its own at
 	// full width, the rest beside the network.
-	const hrefOf = (bron: string) => bronHref(bron, { keepMode: false, mode: 'read' });
+	// A row opens its bron in the network (Thijs, 10 Oct: "laten we standaard navigeren naar
+	// Netwerk"); Lezen at the end of the row is the way to the text.
+	const hrefOf = (bron: string) => bronHref(bron, { keepMode: false, mode: 'graph' });
 
 	// A wet that amends others is known from its Staatsblad number only: its own text
 	// was not downloaded, but the articles it changed point to it.
