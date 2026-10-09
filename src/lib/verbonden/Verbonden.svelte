@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { terPlekke } from '$lib/actions/klik';
+	import { rijen } from '$lib/actions/rijen';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
@@ -421,7 +422,7 @@
 		<button type="button" class="btn is-text" onclick={onOpenFilter}>Filter</button>
 	</div>
 
-	<div class="body" aria-busy={verbonden.loading}>
+	<div class="body" use:rijen={'a.row__title'} aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
 			<p class="note">
 				De verbindingen konden niet worden geladen.

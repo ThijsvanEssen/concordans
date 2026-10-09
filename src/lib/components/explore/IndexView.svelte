@@ -7,6 +7,7 @@
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { isEscape } from '$lib/actions/keys';
+	import { rijen } from '$lib/actions/rijen';
 	// Index: browse one category at a time. Beside the list a column of filters, each
 	// option with the number of bronnen it holds under the other filters. A row's title
 	// links to the bron; the rest of the row expands inline with its metadata and the
@@ -2174,6 +2175,7 @@
 				</aside>
 				<div
 					class="results"
+					use:rijen={'a.row-title'}
 					aria-busy={loading}
 					style:--row-lead="{columns.leadW}px"
 					style:--row-aside="{columns.asideW}px"
