@@ -27,7 +27,10 @@
 		onClearContext,
 		onClear,
 		onVoorbeeld,
-		telefoon = false
+		telefoon = false,
+		deelLabel = 'Deel',
+		deelMelding = '',
+		onDeel
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
@@ -37,6 +40,11 @@
 		start?: boolean;
 		tussen: boolean;
 		joiningCount: number;
+		/** Deel: the address of this view, the netwerk and its filters in it ("Gekopieerd" once copied). */
+		deelLabel?: string;
+		/** Read out once copied. */
+		deelMelding?: string;
+		onDeel?: () => void;
 		/** The API ran out of time looking for paths: these are the ones it found (`partial`). */
 		deels?: boolean;
 		/** Adds a bron found by the search, by the name a link uses. */
@@ -143,6 +151,12 @@
 				<Caret {open} />
 			</button>
 			<span class="ruimte"></span>
+			<!-- Deel moved here from the status bar (Thijs, 10 Oct): what it gives beyond the
+			     bron's own address is this netwerk. -->
+			{#if onDeel}
+				<button type="button" class="wis" onclick={onDeel}>{deelLabel}</button>
+				<span class="sr-only" aria-live="polite">{deelMelding}</span>
+			{/if}
 			{#if open && entries.length > 0}
 				<button
 					type="button"
