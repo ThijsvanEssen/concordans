@@ -14,6 +14,7 @@
 	import { indexHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { achtergrondVan, kamerKleuren } from '../partijkleuren.svelte';
 	import { formatLongDate } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
@@ -89,7 +90,11 @@
 					<span class="parties">
 						{#each c.parties ?? [] as p, i (i)}
 							<span class="party"
-								><span class="party-dot" style:background={partyColor(p.short ?? p.faction ?? '')}
+								><span
+									class="party-dot"
+									style:background={kamerKleuren(p.short ?? '')
+										? achtergrondVan(p.short ?? '')
+										: partyColor(p.short ?? p.faction ?? '')}
 								></span><NameLink
 									collection="factions"
 									name={p.short ?? p.faction ?? ''}

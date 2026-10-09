@@ -5,7 +5,8 @@
 	// gelezen uit "Wie zit waar" op eerstekamer.nl.
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
-	import { kleurVan } from './partijkleuren.svelte';
+	import { kleurVan, vullingVan } from './partijkleuren.svelte';
+	import FractiePatronen from './FractiePatronen.svelte';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 
@@ -64,6 +65,7 @@
 	// As in the hemicycle of the Tweede Kamer: a fractie under the pointer stands out, the
 	// others dim, and the aisle says its name and seats.
 	let hovered = $state<string | null>(null);
+	const uid = $props.id();
 	const seatsOf = (name: string) =>
 		byName.get(name)?.seats ?? stoelen.filter((s) => s.name === name).length;
 
@@ -82,14 +84,13 @@
 
 <figure class="zaal">
 	<svg viewBox="0 0 {W} {H}" role="group" aria-label="Plattegrond van de Eerste Kamer, 75 zetels">
+		<FractiePatronen prefix={uid} namen={fractieStoelen.map(([naam]) => naam)} />
 		<!-- The front as in the Tweede Kamer's hall: quiet benches, the numbers of the legend.
 		     3 Regering at the head, 4 Verslag en redactie at the table in the middle. -->
 		<g aria-hidden="true">
 			<line x1={W / 2 - 44} y1="24" x2={W / 2 + 44} y2="24" class="bank" />
 			<rect x={W / 2 - 9} y={rowY(4)} width="18" height={2 * ROW} rx="4" class="tafel" />
-			<circle cx={W / 2} cy="24" r="7" class="nr" />
-			<text x={W / 2} y="27" text-anchor="middle" class="nr-t">3</text>
-			<circle cx={W / 2} cy={rowY(4) + ROW} r="7" class="nr" />
+			<text x={W / 2} y="14" text-anchor="middle" class="nr-t">3</text>
 			<text x={W / 2} y={rowY(4) + ROW + 3} text-anchor="middle" class="nr-t">4</text>
 		</g>
 		<!-- One link per fractie, as the sectors of the hemicycle: its seats and the cells
@@ -125,7 +126,7 @@
 						class:tegen={v === 'tegen'}
 						class:overig={v === 'other'}
 						class:dim={hovered !== null && hovered !== name}
-						fill={v === 'tegen' ? undefined : kleurVan('EK', name, i, fillOf.get(name) ?? null)}
+						fill={v === 'tegen' ? undefined : vullingVan(uid, name, i, fillOf.get(name) ?? null)}
 						style:stroke={v === 'tegen'
 							? kleurVan('EK', name, i, fillOf.get(name) ?? null)
 							: undefined}><title>{name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
@@ -161,9 +162,7 @@
 				class="tafel"
 			/>
 			<rect x={W / 2 + S_X / 2 + 8} y={rowY(9)} width={S_X} height={S_Y} rx="2" class="tafel" />
-			<circle cx={W / 2} cy={rowY(9) + S_Y + 14} r="7" class="nr" />
 			<text x={W / 2} y={rowY(9) + S_Y + 17} text-anchor="middle" class="nr-t">1</text>
-			<circle cx={W / 2 - S_X - 8} cy={rowY(9) + S_Y + 14} r="7" class="nr" />
 			<text x={W / 2 - S_X - 8} y={rowY(9) + S_Y + 17} text-anchor="middle" class="nr-t">2</text>
 		</g>
 	</svg>
@@ -191,12 +190,10 @@
 	.tafel {
 		fill: var(--rule);
 	}
-	.nr {
-		fill: var(--ink);
-	}
+	/* The Kamer's number of a place, without a disc, as in the Tweede Kamer's hall. */
 	.nr-t {
 		font: 600 var(--t-glyph) var(--font-sans);
-		fill: var(--paper);
+		fill: var(--ink-3);
 	}
 	/* As in the hall of the Tweede Kamer: the first side (voor, coalitie) a seat in its
 	   fractie's colour, the second (tegen, oppositie) open, a contour in that colour. */
