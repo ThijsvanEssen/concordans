@@ -55,6 +55,7 @@
 	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import KabinetOpen from '$lib/components/open/KabinetOpen.svelte';
 	import ZaalLegenda from './ZaalLegenda.svelte';
+	import Meerderheid from './Meerderheid.svelte';
 	import { kleurVan } from './partijkleuren.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
@@ -449,6 +450,32 @@
 
 	let pages = $state<Pages>({});
 	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
+	// Coalition and opposition per fractie on the day of the hall (API, Back-end #3): the
+	// cabinet in office and `coalition` per fractie, where the API gives them.
+	type MetCoalitie = { cabinet?: { key: string; name: string } | null };
+	type FractieCoalitie = { key: string; seats: number; coalition?: boolean | null };
+	const kabinetOpZaal = $derived((seats as MetCoalitie | null)?.cabinet ?? null);
+	const coalitieKant = $derived.by(() => {
+		if (!seats || !kabinetOpZaal) return null;
+		const fr = seats.factions as FractieCoalitie[];
+		if (!fr.some((f) => typeof f.coalition === 'boolean')) return null;
+		return Object.fromEntries(
+			fr.map((f) => [
+				f.key,
+				f.coalition === true ? 'voor' : f.coalition === false ? 'tegen' : 'other'
+			])
+		) as Record<string, 'voor' | 'tegen' | 'other'>;
+	});
+	const coalitieZetels = $derived.by(() => {
+		if (!seats || !coalitieKant) return null;
+		const fr = seats.factions as FractieCoalitie[];
+		const som = (k: string) =>
+			fr.filter((f) => coalitieKant[f.key] === k).reduce((n, f) => n + f.seats, 0);
+		return { ja: som('voor'), nee: som('tegen') };
+	});
+	/** The hall by fractie, or by coalition and opposition. */
+	let zaalKleur = $state<'fracties' | 'coalitie'>('fracties');
+	const zaalKant = $derived(zaalKleur === 'coalitie' ? coalitieKant : null);
 	/** The sitting factions, to filter members by, with their seats. */
 	let parties = $state<{ abbreviation: string; seats: number | null }[]>([]);
 	// The counts per filter option the API gives with a list, under the other filters.
@@ -2181,14 +2208,40 @@
 					{#if category === 'factions' && seats && seats.chamber === kamer}
 						<div class="hemi-card">
 							<div class="hemi-svg-wrap">
+								{#if coalitieKant && kabinetOpZaal}
+									<Keuze
+										klein
+										label="Zaal"
+										opties={[
+											{ waarde: 'fracties', label: 'Fracties' },
+											{
+												waarde: 'coalitie',
+												label: 'Coalitie',
+												titel: `Coalitie en oppositie van ${kabinetOpZaal.name}`
+											}
+										]}
+										waarde={zaalKleur}
+										onKies={(w) => (zaalKleur = w)}
+									/>
+								{/if}
 								{#if seats.chamber === 'EK'}
-									<ZaalTegenover data={seats} />
+									<ZaalTegenover data={seats} voteHighlight={zaalKant} />
 								{:else}
 									<Hemicycle
 										data={seats}
 										meubels
+										voteHighlight={zaalKant}
+										woorden={['coalitie', 'oppositie']}
 										colorOf={(f, i) =>
 											kleurVan('TK', f.abbreviation ?? f.name ?? f.key, i, f.color ?? null)}
+									/>
+								{/if}
+								{#if zaalKant && coalitieZetels}
+									<Meerderheid
+										ja={coalitieZetels.ja}
+										nee={coalitieZetels.nee}
+										totaal={seats.total_seats}
+										woorden={['coalitie', 'oppositie']}
 									/>
 								{/if}
 								<ZaalLegenda
@@ -2218,7 +2271,9 @@
 												'Griffier',
 												'Kabinet (vak-K)',
 												'Verslag en redactie',
-												'Spreekgestoelte'
+												'Spreekgestoelte',
+												'Interruptiemicrofoons',
+												'Bodedienst'
 											]}
 								/>
 							</div>
@@ -3675,6 +3730,15 @@
 		.hemi-svg-wrap {
 			grid-template-columns: minmax(0, 1fr);
 			row-gap: var(--s-4);
+		}
+	}
+	/* On a phone the hall as wide as the column, as high as that makes it: no empty band. */
+	@media (max-width: 520px) {
+		.hemi-svg-wrap :global(.hemicycle svg),
+		.hemi-svg-wrap :global(.zaal svg) {
+			width: 100%;
+			height: auto;
+			max-height: 300px;
 		}
 	}
 	.hemi-svg-wrap :global(.hemicycle) {

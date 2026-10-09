@@ -12,6 +12,7 @@
 		data,
 		hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' }),
 		voteHighlight = null,
+		woorden = ['voor', 'tegen'],
 		colorOf = null,
 		meubels = false
 	}: {
@@ -25,6 +26,8 @@
 		/** Faction key → side on one stemming. Set to light up the seats by vote instead
 		 * of by party; a faction with no entry did not take part. */
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
+		/** The two sides of `voteHighlight` as words: voor and tegen, or coalitie and oppositie. */
+		woorden?: [string, string];
 	} = $props();
 
 	// The factions as they sit in the plenary hall, from the chair's left: the order of the
@@ -43,24 +46,38 @@
 	});
 
 	// Fixed row capacities: 150 seats for the Tweede Kamer, 75 for the Eerste. Radii scale
-	// linearly inner→outer.
-	const ROWS_150 = [14, 17, 19, 21, 24, 26, 29];
+	// linearly inner→outer; each row holds what its six blocks hold without seats touching.
+	const ROWS_150 = [16, 18, 20, 22, 23, 25, 26];
 	const ROWS_75 = [8, 10, 11, 13, 15, 18];
 	const ROW_CAPS = $derived(data.total_seats <= 75 ? ROWS_75 : ROWS_150);
 	const kamer = $derived(chamberName(data.chamber));
+	// As the Kamer draws its plenaire zaal ("Zetelverdeling plenaire zaal", tweedekamer.nl,
+	// Wie zit waar): seen from the public tribune, the front with the Voorzitter, the
+	// spreekgestoelte and vak-K at the top, the rows of seats opening toward it below, in
+	// six blocks between five aisles. The fracties from the Voorzitter's left (`order`)
+	// start on the right of the picture. docs/hierarchie.md, Parlement.
 	const VIEW_W = 440;
-	const VIEW_H = $derived(meubels ? 292 : 230);
 	const CX = VIEW_W / 2;
-	const CY = 210;
-	const R_INNER = 90;
+	const FRONT = $derived(meubels ? 78 : 12);
+	const CY = $derived(FRONT);
+	const R_INNER = 110;
 	const R_OUTER = 200;
-	// SEAT_R 7 (was 6): aangrenzende stoelen raken elkaar net, zodat een
-	// fractie als een aaneengesloten band leest in plaats van losse puntjes.
 	const SEAT_R = $derived(data.total_seats <= 75 ? 9 : 7);
+	/** A seat's width along its row and its depth toward the front. */
+	const SEAT_W = $derived(SEAT_R * 1.75);
+	const SEAT_D = $derived(SEAT_R * 1.6);
+	const VIEW_H = $derived(CY + R_OUTER + SEAT_R + 6);
+	const BLOCKS = 6;
+	/** The width of an aisle, the same in every row: the aisles run straight to the front. */
+	const AISLE = 18;
 	// Hitbox per fractie: a wedge from the gap before its first seat to the gap after
 	// its last, and from the inner to the outer row. Seats are dealt out by angle, so
 	// every faction holds one angular band and the wedges tile without overlap.
 	const HIT_R_PAD = $derived(SEAT_R + 2);
+	const polar = (a: number, r: number): [number, number] => [
+		CX + r * Math.cos(a),
+		CY + r * Math.sin(a)
+	];
 
 	type Seat = {
 		x: number;
@@ -70,25 +87,26 @@
 	};
 
 	const seats = $derived.by<Seat[]>(() => {
-		// Build raw positions, ordered left→right across all rows.
+		// The seats of each row over six blocks; an aisle takes the same width in every row.
 		const raw: { x: number; y: number; angle: number }[] = [];
 		for (let i = 0; i < ROW_CAPS.length; i++) {
 			const cap = ROW_CAPS[i];
 			const r = R_INNER + (i * (R_OUTER - R_INNER)) / (ROW_CAPS.length - 1);
-			for (let j = 0; j < cap; j++) {
-				const t = cap === 1 ? 0.5 : j / (cap - 1);
-				const angle = Math.PI - t * Math.PI; // π → 0
-				raw.push({
-					x: CX + r * Math.cos(angle),
-					y: CY - r * Math.sin(angle),
-					angle
-				});
+			const gap = AISLE / r;
+			const block = (Math.PI - (BLOCKS - 1) * gap) / BLOCKS;
+			for (let b = 0; b < BLOCKS; b++) {
+				const n = Math.round(((b + 1) * cap) / BLOCKS) - Math.round((b * cap) / BLOCKS);
+				const start = b * (block + gap);
+				for (let k = 0; k < n; k++) {
+					const angle = start + ((k + 0.5) / n) * block;
+					const [x, y] = polar(angle, r);
+					raw.push({ x, y, angle });
+				}
 			}
 		}
-		// Leftmost first.
-		raw.sort((a, b) => b.angle - a.angle);
+		// From the right of the picture, the Voorzitter's left, as `order` counts.
+		raw.sort((a, b) => a.angle - b.angle);
 
-		// Assign factions in order.
 		const out: Seat[] = [];
 		let idx = 0;
 		for (const f of seated) {
@@ -103,28 +121,23 @@
 	// neighbouring faction's, so the hover area follows the seats themselves.
 	type Sector = { faction: SeatFaction; path: string };
 	const sectors = $derived.by<Sector[]>(() => {
-		const bands: { faction: SeatFaction; hi: number; lo: number }[] = [];
+		const bands: { faction: SeatFaction; lo: number; hi: number }[] = [];
 		for (const s of seats) {
 			const last = bands.at(-1);
-			if (last && last.faction.id === s.faction.id) last.lo = s.angle;
-			else bands.push({ faction: s.faction, hi: s.angle, lo: s.angle });
+			if (last && last.faction.id === s.faction.id) last.hi = s.angle;
+			else bands.push({ faction: s.faction, lo: s.angle, hi: s.angle });
 		}
 		const rIn = R_INNER - HIT_R_PAD;
 		const rOut = R_OUTER + HIT_R_PAD;
-		const polar = (a: number, r: number): [number, number] => [
-			CX + r * Math.cos(a),
-			CY - r * Math.sin(a)
-		];
-		// The outer edges of the first and last band reach the floor of the chamber.
 		const edgePad = HIT_R_PAD / R_INNER;
 		return bands.map((band, i) => {
-			const aMax = i === 0 ? band.hi + edgePad : (bands[i - 1].lo + band.hi) / 2;
-			const aMin = i === bands.length - 1 ? band.lo - edgePad : (band.lo + bands[i + 1].hi) / 2;
-			const [x1, y1] = polar(aMax, rIn);
-			const [x2, y2] = polar(aMax, rOut);
-			const [x3, y3] = polar(aMin, rOut);
-			const [x4, y4] = polar(aMin, rIn);
-			// Outer arc runs clockwise on screen (sweep 1), the inner arc back (sweep 0).
+			const a0 = i === 0 ? band.lo - edgePad : (bands[i - 1].hi + band.lo) / 2;
+			const a1 = i === bands.length - 1 ? band.hi + edgePad : (band.hi + bands[i + 1].lo) / 2;
+			const [x1, y1] = polar(a0, rIn);
+			const [x2, y2] = polar(a0, rOut);
+			const [x3, y3] = polar(a1, rOut);
+			const [x4, y4] = polar(a1, rIn);
+			// With the bowl below the front, a growing angle runs clockwise on screen.
 			const path = [
 				`M ${x1} ${y1}`,
 				`L ${x2} ${y2}`,
@@ -136,6 +149,9 @@
 			return { faction: band.faction, path };
 		});
 	});
+
+	/** The middle of the bowl, under the front: where the count and a fractie's name stand. */
+	const MID = $derived(CY + (meubels ? 72 : 50));
 
 	let hovered = $state<SeatFaction | null>(null);
 </script>
@@ -161,11 +177,15 @@
 		{#each seats as s, i (s.faction.id + ':' + s.x + ':' + s.y)}
 			{@const side = voteHighlight?.[s.faction.key]}
 			{@const kleur = colorOf ? colorOf(s.faction, i) : s.faction.color}
-			<circle
+			<!-- A seat as the Kamer draws it: a small block along its row, not a dot. -->
+			<rect
 				aria-hidden="true"
-				cx={s.x}
-				cy={s.y}
-				r={SEAT_R}
+				x={-SEAT_W / 2}
+				y={-SEAT_D / 2}
+				width={SEAT_W}
+				height={SEAT_D}
+				rx="2"
+				transform="translate({s.x} {s.y}) rotate({(s.angle * 180) / Math.PI + 90})"
 				fill={side === 'tegen' ? undefined : kleur}
 				style:stroke={side === 'tegen' ? kleur : undefined}
 				class="seat"
@@ -180,44 +200,45 @@
 			{#if hovered}
 				<text
 					x={CX}
-					y={CY - 6}
+					y={MID - 6}
 					text-anchor="middle"
 					class="center-num center-num--party"
 					style:fill={hovered.color}
 				>
 					{hovered.abbreviation ?? hovered.key}
 				</text>
-				<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
+				<text x={CX} y={MID + 10} text-anchor="middle" class="center-lbl">
 					{hovered.seats}
 					{hovered.seats === 1 ? 'zetel' : 'zetels'}
 				</text>
 			{:else if voteTotals}
-				<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">
+				<text x={CX} y={MID - 6} text-anchor="middle" class="center-num">
 					{voteTotals.voor}
 				</text>
-				<text x={CX} y={CY + 10} text-anchor="middle" class="center-lbl">
-					voor, {voteTotals.tegen} tegen
+				<text x={CX} y={MID + 10} text-anchor="middle" class="center-lbl">
+					{woorden[0]}, {voteTotals.tegen}
+					{woorden[1]}
 				</text>
 			{:else if !meubels}
-				<text x={CX} y={CY - 6} text-anchor="middle" class="center-num">
+				<text x={CX} y={MID - 6} text-anchor="middle" class="center-num">
 					{data.assigned_seats}
 				</text>
-				<text x={CX} y={CY + 8} text-anchor="middle" class="center-lbl">zetels</text>
+				<text x={CX} y={MID + 8} text-anchor="middle" class="center-lbl">zetels</text>
 			{/if}
 		</g>
 		{#if meubels}
-			{@const y = CY + 30}
+			<!-- The front as on the Kamer's plan: 1 Voorzitter, 2 Griffier, 3 Kabinet (vak-K),
+			     4 Medewerkers Verslag en Redactie, 5 Spreekgestoelte, 6 Interruptiemicrofoons,
+			     7 Bodedienst. Quiet: the seats are what the picture is about. -->
 			<g aria-hidden="true">
-				<!-- Zoals de zetelverdeling van de Tweede Kamer: 1 Voorzitter, 2 Griffier,
-			     3 Kabinet (vak-K), 4 Verslag en redactie, 5 Spreekgestoelte. -->
 				<g class="meubel">
-					<rect x={CX - 118} {y} width="56" height="14" rx="2" />
-					<rect x={CX - 56} {y} width="36" height="14" rx="2" />
-					<rect x={CX - 12} y={y + 22} width="24" height="12" rx="2" />
-					<rect x={CX + 22} {y} width="96" height="14" rx="2" />
-					<rect x={CX + 126} {y} width="44" height="14" rx="2" />
+					<line x1={CX - 14} y1="20" x2={CX - 104} y2="62" />
+					<line x1={CX + 14} y1="20" x2={CX + 104} y2="62" />
+					<line x1={CX - 172} y1="50" x2={CX - 156} y2="62" />
+					<line x1={CX + 156} y1="50" x2={CX + 172} y2="62" />
+					<polyline points="{CX - 40},{CY + 4} {CX},{CY + 16} {CX + 40},{CY + 4}" />
 				</g>
-				{#each [[CX - 90, y + 7, '1'], [CX - 38, y + 7, '2'], [CX + 70, y + 7, '3'], [CX + 148, y + 7, '4'], [CX, y + 28, '5']] as [x, yy, n] (n)}
+				{#each [[CX - 50, 32, '1'], [CX - 80, 52, '2'], [CX + 62, 46, '3'], [CX + 164, 40, '4'], [CX, 9, '5'], [CX + 54, CY + 6, '6'], [CX - 164, 40, '7']] as [x, yy, n] (n)}
 					<circle cx={x} cy={yy} r="7" class="nr" />
 					<text {x} y={Number(yy) + 3} text-anchor="middle" class="nr-t">{n}</text>
 				{/each}
@@ -246,9 +267,16 @@
 </figure>
 
 <style>
-	.meubel rect {
-		fill: var(--paper-2);
-		stroke: var(--rule-strong);
+	.meubel line,
+	.meubel polyline {
+		fill: none;
+		stroke: var(--rule);
+		stroke-width: 9;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+	.meubel polyline {
+		stroke-width: 5;
 	}
 	.nr {
 		fill: var(--ink);
