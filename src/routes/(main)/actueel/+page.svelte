@@ -729,6 +729,7 @@
 	}
 	.wis {
 		margin: var(--s-3) 0 0;
+		font-size: var(--t-meta);
 	}
 
 	/* The count above the list, on the ink rule that opens it. */

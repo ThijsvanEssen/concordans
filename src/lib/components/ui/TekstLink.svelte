@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Going somewhere, in the text's own letter: Alle 244 uitspraken, Wis alle filters, Vorige
-	// (docs/bediening.md). Ink, underlined on hover; red only on hover and focus. A link where
-	// it leads to an address, a button where it acts on the page.
+	// (docs/bediening.md). Ink, underlined; red only on hover and focus; the size of the text
+	// around it. A link where it leads to an address, a button where it acts on the page.
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -30,7 +30,6 @@
 		background: none;
 		font: inherit;
 		font-family: var(--font-serif);
-		font-size: var(--t-meta);
 		color: var(--ink);
 		text-align: left;
 		text-decoration: underline;

@@ -1,6 +1,9 @@
 <script lang="ts">
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { BRON_KIND_VORM } from '$lib/bron/vormen';
 	// The filter sheet: bronnen, verbindingen, lid, rechter, periode, betrouwbaarheid and
@@ -106,8 +109,13 @@
 
 	const setBetrouwbaarheid = (b: Betrouwbaarheid | null) =>
 		(draft = { ...draft, betrouwbaarheid: b });
-	const setStatus = (s: Status | null) =>
-		(draft = { ...draft, status: draft.status === s ? null : s });
+	// Two switches, at least one on: both (null), or one of them.
+	const statusAan = (s: Status) => draft.status === null || draft.status === s;
+	const andere = (s: Status): Status => (s === 'vastgesteld' ? 'voorgesteld' : 'vastgesteld');
+	function toggleStatus(s: Status) {
+		if (!statusAan(s)) draft = { ...draft, status: null };
+		else if (draft.status === null) draft = { ...draft, status: andere(s) };
+	}
 
 	/** The year field that holds no year, until it does. */
 	/** The period, as every list with dates has it ($lib/components/ui/Periode). */
@@ -154,10 +162,8 @@
 			<h2 class="sheet__title" id="{uid}-title">Filter</h2>
 			<span class="sheet__count">{formatCount(count)} van {formatCount(total)}</span>
 			<span class="sheet__space"></span>
-			<button type="button" class="link" onclick={() => (draft = EMPTY_FILTER)}>Wis alles</button>
-			<button type="button" class="btn is-text sheet__close" aria-label="Sluiten" onclick={onClose}
-				>×</button
-			>
+			<TekstLink onclick={() => (draft = EMPTY_FILTER)}>Wis alles</TekstLink>
+			<IconKnop label="Sluiten" onclick={onClose}>×</IconKnop>
 		</div>
 
 		<div class="sheet__body">
@@ -190,38 +196,30 @@
 								})}
 						/>
 						<span class="muted">of</span>
-						<button
-							type="button"
-							class="link"
+						<TekstLink
 							onclick={() => {
 								dateMode = false;
 								draft = { ...draft, geldendOp: null };
-							}}>een periode</button
+							}}>een periode</TekstLink
 						>
 					</div>
 				{:else}
 					<Periode van={draft.van ?? ''} tot={draft.tot ?? ''} onChange={periode} />
 					<p class="period">
-						<button type="button" class="link" onclick={() => (dateMode = true)}
-							>Of geldend op een datum</button
-						>
+						<TekstLink onclick={() => (dateMode = true)}>Of geldend op een datum</TekstLink>
 					</p>
 				{/if}
 			</div>
 
 			<div class="block">
 				<div class="block__label">Snel</div>
-				<div class="chips">
-					{#each PRESETS as p (p.id)}
-						<button
-							type="button"
-							class="btn"
-							class:is-primary={activePreset(draft)?.id === p.id}
-							aria-pressed={activePreset(draft)?.id === p.id}
-							onclick={() => (draft = withPreset(draft, p))}>{p.label}</button
-						>
-					{/each}
-				</div>
+				{#each PRESETS as p (p.id)}
+					<FilterOptie
+						label={p.label}
+						on={activePreset(draft)?.id === p.id}
+						onToggle={() => (draft = withPreset(draft, p))}
+					/>
+				{/each}
 			</div>
 
 			<div class="block">
@@ -257,100 +255,69 @@
 			{#if lids.length > 0}
 				<div class="block">
 					<div class="block__label">Lid</div>
-					<div class="chips">
-						<button
-							type="button"
-							class="btn"
-							class:is-primary={draft.lid === null}
-							aria-pressed={draft.lid === null}
-							onclick={() => (draft = { ...draft, lid: null })}>Alle</button
-						>
-						{#each lids as [lid, n] (lid)}
-							<button
-								type="button"
-								class="btn"
-								class:is-primary={draft.lid === lid}
-								aria-pressed={draft.lid === lid}
-								title="{n} verbindingen"
-								onclick={() => (draft = { ...draft, lid: draft.lid === lid ? null : lid })}
-								>{lid}</button
-							>
-						{/each}
-						{#if noLid > 0}
-							<button
-								type="button"
-								class="btn"
-								class:is-primary={draft.lid === 'geen'}
-								aria-pressed={draft.lid === 'geen'}
-								onclick={() => (draft = { ...draft, lid: draft.lid === 'geen' ? null : 'geen' })}
-								>niet genoemd</button
-							>
-						{/if}
-					</div>
+					<FilterOptie
+						label="Alle leden"
+						on={draft.lid === null}
+						onToggle={() => (draft = { ...draft, lid: null })}
+					/>
+					{#each lids as [lid, n] (lid)}
+						<FilterOptie
+							label="lid {lid}"
+							count={n}
+							on={draft.lid === lid}
+							onToggle={() => (draft = { ...draft, lid: draft.lid === lid ? null : lid })}
+						/>
+					{/each}
+					{#if noLid > 0}
+						<FilterOptie
+							label="Geen lid genoemd"
+							count={noLid}
+							on={draft.lid === 'geen'}
+							onToggle={() => (draft = { ...draft, lid: draft.lid === 'geen' ? null : 'geen' })}
+						/>
+					{/if}
 				</div>
 			{/if}
 
 			<div class="block">
 				<div class="block__label">Rechter</div>
-				<div class="chips">
-					{#each RECHTERS as r (r.id)}
-						<button
-							type="button"
-							class="btn"
-							class:is-primary={draft.rechter === r.id}
-							aria-pressed={draft.rechter === r.id}
-							onclick={() => (draft = { ...draft, rechter: draft.rechter === r.id ? null : r.id })}
-							>{r.label}</button
-						>
-					{/each}
-				</div>
+				{#each RECHTERS as r (r.id)}
+					<FilterOptie
+						label={r.label}
+						on={draft.rechter === r.id}
+						onToggle={() => (draft = { ...draft, rechter: draft.rechter === r.id ? null : r.id })}
+					/>
+				{/each}
 			</div>
 
 			<div class="block">
 				<div class="block__label">Betrouwbaarheid</div>
-				<div class="chips">
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={draft.betrouwbaarheid === null}
-						aria-pressed={draft.betrouwbaarheid === null}
-						onclick={() => setBetrouwbaarheid(null)}>Alles</button
-					>
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={draft.betrouwbaarheid === 'bron'}
-						aria-pressed={draft.betrouwbaarheid === 'bron'}
-						onclick={() => setBetrouwbaarheid('bron')}>Alleen hoog</button
-					>
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={draft.betrouwbaarheid === 'afgeleid'}
-						aria-pressed={draft.betrouwbaarheid === 'afgeleid'}
-						onclick={() => setBetrouwbaarheid('afgeleid')}>Alleen matig of laag</button
-					>
-				</div>
+				<Keuze
+					klein
+					vol
+					label="Betrouwbaarheid"
+					opties={[
+						{ waarde: 'alles', label: 'Alles' },
+						{ waarde: 'bron', label: 'Alleen hoog' },
+						{ waarde: 'afgeleid', label: 'Matig of laag' }
+					]}
+					waarde={draft.betrouwbaarheid ?? 'alles'}
+					onKies={(w) => setBetrouwbaarheid(w === 'alles' ? null : (w as Betrouwbaarheid))}
+				/>
 			</div>
 
 			<div class="block">
 				<div class="block__label">Status</div>
-				<div class="chips">
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={draft.status === null || draft.status === 'vastgesteld'}
-						aria-pressed={draft.status === null || draft.status === 'vastgesteld'}
-						onclick={() => setStatus('vastgesteld')}>Vastgesteld</button
-					>
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={draft.status === null || draft.status === 'voorgesteld'}
-						aria-pressed={draft.status === null || draft.status === 'voorgesteld'}
-						onclick={() => setStatus('voorgesteld')}>Voorgesteld</button
-					>
-				</div>
+				<FilterOptie
+					label="Vastgesteld"
+					on={statusAan('vastgesteld')}
+					onToggle={() => toggleStatus('vastgesteld')}
+				/>
+				<FilterOptie
+					label="Voorgesteld"
+					on={statusAan('voorgesteld')}
+					onToggle={() => toggleStatus('voorgesteld')}
+				/>
 			</div>
 		</div>
 
@@ -410,11 +377,6 @@
 	.sheet__space {
 		flex: 1;
 	}
-	.sheet__close {
-		font-size: var(--t-body-2);
-		line-height: 1;
-		padding: 0 var(--s-1);
-	}
 	.sheet__body {
 		flex: 1;
 		overflow-y: auto;
@@ -445,11 +407,6 @@
 	}
 	.search::placeholder {
 		color: var(--ink-3);
-	}
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 5px;
 	}
 	.check__name {
 		flex: 1;
@@ -490,18 +447,6 @@
 	}
 	.muted {
 		color: var(--ink-3);
-	}
-	.link {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.link:hover {
-		color: var(--accent);
 	}
 	.sheet__foot {
 		display: flex;

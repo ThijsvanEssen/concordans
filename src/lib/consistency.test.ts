@@ -164,7 +164,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			'lib/components/ui/TekstMenu.svelte': 'the one form',
 			'lib/components/explore/index/IndexFacets.svelte':
 				"its 'select' facets, until TekstMenu replaces them (step 3, Bladeren)",
-			'lib/verbonden/Verbonden.svelte': 'Jaar and Rechter (step 2, Verbonden)',
 			'lib/components/articles/VersionCompare.svelte': 'the versions (step 2, the reader head)',
 			'lib/components/explore/WholeLawReader.svelte': 'the whole law (step 2, the reader head)',
 			'lib/components/explore/index/IndexToolbar.svelte': 'the order of a list (step 3, Bladeren)',
@@ -181,7 +180,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			'lib/components/explore/readers/DecisionReader.svelte': 'step 2, the readers',
 			'lib/components/explore/readers/FactionReader.svelte': 'step 2, the readers',
 			'lib/components/explore/readers/MemberReader.svelte': 'step 2, the readers',
-			'lib/verbonden/FilterSheet.svelte': 'step 2, Verbonden',
 			'lib/components/graph/GraphSidebar.svelte': 'step 5, the network',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'step 4, Overzicht'
 		};
@@ -201,7 +199,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			'lib/components/explore/readers/JudgmentReader.svelte': 'step 2, the readers',
 			'lib/components/explore/readers/MemberReader.svelte': 'step 2, the readers',
 			'lib/components/parliamentary/GewijzigdeArtikelen.svelte': 'step 2, the readers',
-			'lib/verbonden/Verbonden.svelte': 'step 2, Verbonden',
 			'lib/components/explore/IndexView.svelte': 'step 3, Bladeren',
 			'lib/components/explore/index/IndexFacets.svelte': 'step 3, Bladeren',
 			'routes/(main)/actueel/+page.svelte': 'Meer laden (step 3, with Bladeren)',
