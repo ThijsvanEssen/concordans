@@ -864,6 +864,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cabinets/{key}/seats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cabinet seats
+         * @description The seats of the cabinet's coalition in each Kamer over its period, a stretch per change. The coalition on a day is the factions whose party held a post in the cabinet that day (Rijksoverheid): a party that leaves the cabinet leaves the coalition, a faction that splits off a coalition party is opposition. The seats are those the members held (FractieZetelPersoon).
+         */
+        get: operations["get_cabinet_seats_api_cabinets__key__seats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/commitments": {
         parameters: {
             query?: never;
@@ -2501,6 +2521,37 @@ export interface components {
             posts: components["schemas"]["CabinetPostDTO"][];
         };
         /**
+         * CabinetSeatsResponse
+         * @description The seats of a cabinet's coalition in each Kamer over its period.
+         */
+        CabinetSeatsResponse: {
+            /** Key */
+            key: string;
+            /** Name */
+            name?: string | null;
+            /** From Date */
+            from_date?: string | null;
+            /** To Date */
+            to_date?: string | null;
+            /**
+             * Majority
+             * @description The seats a majority takes: `TK` 76 of 150, `EK` 38 of 75.
+             */
+            majority: {
+                [key: string]: number;
+            };
+            /**
+             * Tk
+             * @description The Tweede Kamer, a stretch per change (a split, a party leaving the cabinet, a seat changing hands); null for a cabinet that began before 30 November 2006, from when every seat is known.
+             */
+            tk?: components["schemas"]["SeatStretchDTO"][] | null;
+            /**
+             * Ek
+             * @description The Eerste Kamer on the day its composition was read, when the cabinet was in office then; null otherwise (it has no seats per day).
+             */
+            ek?: components["schemas"]["SeatStretchDTO"][] | null;
+        };
+        /**
          * CabinetSummaryDTO
          * @description A cabinet in the list, with its counts.
          */
@@ -2719,6 +2770,23 @@ export interface components {
              * @description The judgments that cite it, or another publication of the same decision, each once (as in `/api/judgments`): a standard judgment has many.
              */
             inbound_citation_count?: number | null;
+        };
+        /**
+         * CoalitionFactionSeatsDTO
+         * @description A faction's seats in a stretch of a cabinet, and whether it is of the coalition.
+         */
+        CoalitionFactionSeatsDTO: {
+            /** Key */
+            key: string;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /** Seats */
+            seats: number;
+            /**
+             * Coalition
+             * @description Its party held a post in the cabinet that day; a faction split off a coalition party holds none: opposition.
+             */
+            coalition: boolean;
         };
         /**
          * ColorSourceDTO
@@ -3247,6 +3315,11 @@ export interface components {
             };
             /** Votes */
             votes?: components["schemas"]["VoteDTO"][];
+            /**
+             * Dictum
+             * @description Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text.
+             */
+            dictum?: string | null;
         };
         /**
          * DecisionDayCount
@@ -3423,6 +3496,11 @@ export interface components {
             voters?: {
                 [key: string]: number;
             };
+            /**
+             * Dictum
+             * @description Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text.
+             */
+            dictum?: string | null;
         };
         /**
          * DecisionYearCount
@@ -3508,6 +3586,11 @@ export interface components {
             session_year?: string | null;
             /** @description Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature. */
             sender?: components["schemas"]["SenderDTO"] | null;
+            /**
+             * Dictum
+             * @description Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text.
+             */
+            dictum?: string | null;
         };
         /**
          * DocumentListResponse
@@ -3598,6 +3681,11 @@ export interface components {
             file_url?: string | null;
             /** Text */
             text?: string | null;
+            /**
+             * Dictum
+             * @description Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text.
+             */
+            dictum?: string | null;
             /** Submitters */
             submitters?: components["schemas"]["SubmitterDTO"][];
             /** Dossier Numbers */
@@ -4874,6 +4962,11 @@ export interface components {
              * @description Left-to-right position in the chamber.
              */
             order: number;
+            /**
+             * Coalition
+             * @description Of the coalition of the cabinet in office that day (`cabinet`): its party held a post in it; a faction split off a coalition party is opposition. Null when no cabinet was in office.
+             */
+            coalition?: boolean | null;
         };
         /**
          * FeedCommencementDTO
@@ -5992,6 +6085,11 @@ export interface components {
              * @description The government themes of `scw_bwb_themas`, most first. Counted without the `policy_domain` filter.
              */
             policy_domain?: components["schemas"]["RegisterConceptDTO"][];
+            /**
+             * Kind
+             * @description Per kind (`wet`, `verdrag`, `multilateraalverdrag`, …), most first. Counted without the `kind` filter, over the list without a kind (no publications).
+             */
+            kind?: components["schemas"]["FacetCountDTO"][];
         };
         /**
          * InstrumentJudgmentFacets
@@ -7483,6 +7581,23 @@ export interface components {
         NodeGraphResponse: {
             node: components["schemas"]["BaseNodeDTO"];
             neighbors: components["schemas"]["NodeNeighborsDTO"];
+            /**
+             * Title
+             * @description The title of the node as its page has it (``Artikel 6:162 BW: onrechtmatige daad``), without the name of the site.
+             * @default
+             */
+            title: string;
+            /**
+             * Description
+             * @description The description of its page.
+             * @default
+             */
+            description: string;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a node without one.
+             */
+            path?: string | null;
         };
         /**
          * NodeNeighborhoodEdge
@@ -7535,6 +7650,13 @@ export interface components {
              * @enum {string}
              */
             chamber: "TK" | "EK";
+            /**
+             * Cabinet
+             * @description The cabinet in office on `as_of` (`key`, `name`), whose coalition `coalition` marks; null when none was.
+             */
+            cabinet?: {
+                [key: string]: string | null;
+            } | null;
             /** Total Seats */
             total_seats: number;
             /** Assigned Seats */
@@ -8133,6 +8255,28 @@ export interface components {
             extra?: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * SeatStretchDTO
+         * @description A stretch of days in which neither the coalition nor any faction's seats changed.
+         */
+        SeatStretchDTO: {
+            /** From Date */
+            from_date: string;
+            /** To Date */
+            to_date: string;
+            /**
+             * Coalition
+             * @description The seats of the coalition.
+             */
+            coalition: number;
+            /** Opposition */
+            opposition: number;
+            /**
+             * Factions
+             * @description The coalition first, then by seats.
+             */
+            factions?: components["schemas"]["CoalitionFactionSeatsDTO"][];
         };
         /**
          * SeatingPlanDTO
@@ -9336,7 +9480,8 @@ export interface operations {
                 offset?: number;
                 /** @description Free-text match */
                 q?: string | null;
-                jurisdiction?: ("nl" | "eu") | null;
+                /** @description ``nl``, ``eu``, or ``int``: the treaties of the Verdragenbank (``Internationaal``). */
+                jurisdiction?: ("nl" | "eu" | "int") | null;
                 kind?: string | null;
                 article_count_min?: number | null;
                 /** @description A legal area by TOOI id (`c_e49bce03`) or slug (`familierecht`). */
@@ -10598,6 +10743,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CabinetDetailDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_cabinet_seats_api_cabinets__key__seats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CabinetSeatsResponse"];
                 };
             };
             /** @description Validation Error */

@@ -12,7 +12,8 @@
 		peil = null,
 		bron = null,
 		kolommen = 3,
-		rijen = 0
+		rijen = 0,
+		coalitie = null
 	}: {
 		data: Seats;
 		plaatsen: string[];
@@ -23,6 +24,8 @@
 		kolommen?: number;
 		/** At least this many rows, so the legends of both Kamers stand equally high. */
 		rijen?: number;
+		/** The cabinet in office and its fracties: one line to the cabinet, where its seats are. */
+		coalitie?: { naam: string; href: string; fracties: string[] } | null;
 	} = $props();
 	const fracties = $derived([...data.factions].sort((a, b) => b.seats - a.seats));
 	const naam = (f: Seats['factions'][number]) => f.abbreviation ?? f.name ?? f.key;
@@ -51,6 +54,13 @@
 	<p class="pl">
 		{#each plaatsen as p, i (p)}<span><b>{i + 1}</b>{p}</span>{/each}
 	</p>
+	{#if coalitie}
+		<p class="coalitie">
+			Coalitie: <a href={coalitie.href}>{coalitie.naam}</a>{coalitie.fracties.length
+				? ` (${coalitie.fracties.join(', ')})`
+				: ''}
+		</p>
+	{/if}
 	{#if peil}
 		<p class="peil">
 			{peil}{#if bron}. <a href={bron.href} rel="external">{bron.label}</a>{/if}
@@ -143,5 +153,14 @@
 	}
 	.peil a {
 		color: inherit;
+	}
+	.coalitie {
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+	}
+	.coalitie a {
+		color: var(--ink);
 	}
 </style>

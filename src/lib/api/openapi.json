@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.30"
+		"version": "0.79.33"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -135,10 +135,10 @@
 									"type": "null"
 								}
 							],
-							"description": "The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, \u2026",
+							"description": "The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …",
 							"title": "Tier"
 						},
-						"description": "The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, \u2026"
+						"description": "The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …"
 					},
 					{
 						"name": "lid",
@@ -251,7 +251,7 @@
 			"get": {
 				"tags": ["articles", "articles"],
 				"summary": "Legislative history of an article",
-				"description": "The dossiers that introduced, amended or repealed this article, or propose to: one entry per change and dossier, with the amending publication (enacted, `canoniek`) or the bill (proposed, `voorgesteld`) that carries it; proposed first, then newest first. What only cites the article (a judgment, another article) is not history. The explanatory documents are at `explained-by`. Returns an empty list when there is no history \u2014 never a 404.",
+				"description": "The dossiers that introduced, amended or repealed this article, or propose to: one entry per change and dossier, with the amending publication (enacted, `canoniek`) or the bill (proposed, `voorgesteld`) that carries it; proposed first, then newest first. What only cites the article (a judgment, another article) is not history. The explanatory documents are at `explained-by`. Returns an empty list when there is no history — never a 404.",
 				"operationId": "get_legislative_history_api_articles__bwb_id___article_number__legislative_history_get",
 				"parameters": [
 					{
@@ -301,7 +301,7 @@
 			"get": {
 				"tags": ["articles", "articles"],
 				"summary": "Explanatory documents of an article",
-				"description": "The documents that explain this article: every EXPLAINS edge that points at the article (`target` `article`) or at one of its versions (`target` `article_version`); an explanation of the law as a whole is no evidence about this article and is not listed. Newest first. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article \u2014 never a 404.",
+				"description": "The documents that explain this article: every EXPLAINS edge that points at the article (`target` `article`) or at one of its versions (`target` `article_version`); an explanation of the law as a whole is no evidence about this article and is not listed. Newest first. An explanation of `scope` `dossier` is written per dossier: the memorandum explains all the changes of the dossier; of `scope` `article` the memorandum names the section about this article in `section_anchor` (the `id` of a section of the document; `GET /api/documents/{key}/passages` gives its text). One document appears once per level. `total` counts all explanations, independent of `limit` and `offset`. Returns an empty list for an unknown article — never a 404.",
 				"operationId": "get_explained_by_api_articles__bwb_id___article_number__explained_by_get",
 				"parameters": [
 					{
@@ -374,7 +374,7 @@
 			"get": {
 				"tags": ["judgments", "judgments"],
 				"summary": "Paginated list of judgments",
-				"description": "A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, \u2026), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, \u2026), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter). `facets=false` leaves them out (null): the pages after the first need none.",
+				"description": "A paginated list of judgments with filters on court (the ECLI court code), tier (the Type of the court in the Instanties value list of the Rechtspraak: hoge_raad, raad_van_state, gerechtshof, rechtbank, tuchtcollege, andere_instantie, koninkrijksinstantie, …), court_kind (the kind of court within the tier: ambtenarengerecht, raad_van_beroep, gerecht_in_eerste_aanleg, …), area of law (`subject`), source, date range and a minimum citation count. `facets` counts the judgments under the filters per `tier` (without the tier and court_kind filters), per `court_kind` (without its own filter), per `source` (without the source filter), per year of `date` (without `from` and `to`), per area of law (`subjects`, without `subject`) and per `procedure` (without its filter). `facets=false` leaves them out (null): the pages after the first need none.",
 				"operationId": "list_judgments_api_judgments_get",
 				"parameters": [
 					{
@@ -461,10 +461,10 @@
 									"type": "null"
 								}
 							],
-							"description": "The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, \u2026",
+							"description": "The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …",
 							"title": "Tier"
 						},
-						"description": "The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, \u2026"
+						"description": "The tier: `hoge_raad`, `gerechtshof`, `andere_instantie`, …"
 					},
 					{
 						"name": "court_kind",
@@ -479,10 +479,10 @@
 									"type": "null"
 								}
 							],
-							"description": "The kind of court: `ambtenarengerecht`, `raad_van_beroep`, `hoge_raad`, \u2026",
+							"description": "The kind of court: `ambtenarengerecht`, `raad_van_beroep`, `hoge_raad`, …",
 							"title": "Court Kind"
 						},
-						"description": "The kind of court: `ambtenarengerecht`, `raad_van_beroep`, `hoge_raad`, \u2026"
+						"description": "The kind of court: `ambtenarengerecht`, `raad_van_beroep`, `hoge_raad`, …"
 					},
 					{
 						"name": "source",
@@ -753,15 +753,17 @@
 						"schema": {
 							"anyOf": [
 								{
-									"enum": ["nl", "eu"],
+									"enum": ["nl", "eu", "int"],
 									"type": "string"
 								},
 								{
 									"type": "null"
 								}
 							],
+							"description": "``nl``, ``eu``, or ``int``: the treaties of the Verdragenbank (``Internationaal``).",
 							"title": "Jurisdiction"
-						}
+						},
+						"description": "``nl``, ``eu``, or ``int``: the treaties of the Verdragenbank (``Internationaal``)."
 					},
 					{
 						"name": "kind",
@@ -1562,7 +1564,7 @@
 			"get": {
 				"tags": ["nodes", "nodes"],
 				"summary": "Bulk in-flux count per node",
-				"description": "A map of node id \u2192 number of open proposed changes. Only nodes with at least one open change are included. Use it to render the in-flux ring on graph nodes.",
+				"description": "A map of node id → number of open proposed changes. Only nodes with at least one open change are included. Use it to render the in-flux ring on graph nodes.",
 				"operationId": "bulk_in_flux_api_nodes_in_flux_get",
 				"responses": {
 					"200": {
@@ -1588,7 +1590,7 @@
 			"get": {
 				"tags": ["nodes", "nodes"],
 				"summary": "Bulk activity score per node (heat layer)",
-				"description": "A map of node id \u2192 activity count over the past N months, where activity is the number of incoming edges created in that window. Pass months=3 for a 90-day window. `ids` (comma-separated node ids, at most 500) counts those nodes alone, the ones a view draws; without it the `limit` nodes with the highest counts (the whole graph has 1.85 million), as `semantic graph-heat` last counted them; 503 until it has.",
+				"description": "A map of node id → activity count over the past N months, where activity is the number of incoming edges created in that window. Pass months=3 for a 90-day window. `ids` (comma-separated node ids, at most 500) counts those nodes alone, the ones a view draws; without it the `limit` nodes with the highest counts (the whole graph has 1.85 million), as `semantic graph-heat` last counted them; 503 until it has.",
 				"operationId": "bulk_heat_api_nodes_heat_get",
 				"parameters": [
 					{
@@ -2327,7 +2329,7 @@
 			"get": {
 				"tags": ["dossiers", "dossiers"],
 				"summary": "Dossier documents",
-				"description": "The documents in this dossier \u2014 linked directly or through a case \u2014 newest first. ``total`` is the absolute count.",
+				"description": "The documents in this dossier — linked directly or through a case — newest first. ``total`` is the absolute count.",
 				"operationId": "list_dossier_documents_api_dossiers__number__documents_get",
 				"parameters": [
 					{
@@ -2668,7 +2670,7 @@
 			"get": {
 				"tags": ["committees", "committees"],
 				"summary": "Committee detail",
-				"description": "One committee with its members and a page of the dossiers it leads, newest first; ``dossier_total`` is the absolute count. By default only current members are returned \u2014 a seat with no end date, or an end date still ahead. Pass ``?current_only=false`` for every member the committee ever had. ``limit``, ``offset`` and ``status`` page and filter the dossiers.",
+				"description": "One committee with its members and a page of the dossiers it leads, newest first; ``dossier_total`` is the absolute count. By default only current members are returned — a seat with no end date, or an end date still ahead. Pass ``?current_only=false`` for every member the committee ever had. ``limit``, ``offset`` and ``status`` page and filter the dossiers.",
 				"operationId": "get_committee_api_committees__slug__get",
 				"parameters": [
 					{
@@ -3752,6 +3754,47 @@
 				}
 			}
 		},
+		"/api/cabinets/{key}/seats": {
+			"get": {
+				"tags": ["cabinets", "government"],
+				"summary": "Cabinet seats",
+				"description": "The seats of the cabinet's coalition in each Kamer over its period, a stretch per change. The coalition on a day is the factions whose party held a post in the cabinet that day (Rijksoverheid): a party that leaves the cabinet leaves the coalition, a faction that splits off a coalition party is opposition. The seats are those the members held (FractieZetelPersoon).",
+				"operationId": "get_cabinet_seats_api_cabinets__key__seats_get",
+				"parameters": [
+					{
+						"name": "key",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"title": "Key"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CabinetSeatsResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPValidationError"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/commitments": {
 			"get": {
 				"tags": ["commitments", "government"],
@@ -4752,7 +4795,7 @@
 			"get": {
 				"tags": ["decisions", "decisions"],
 				"summary": "Decision browser",
-				"description": "A page of decisions \u2014 one per Besluit \u2014 newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter; with how many carried and did not), per outcome ``passed`` (without the passed filter), per day and per year (under all filters), and with ``party_votes`` how the factions asked voted on them.",
+				"description": "A page of decisions — one per Besluit — newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter; with how many carried and did not), per outcome ``passed`` (without the passed filter), per day and per year (under all filters), and with ``party_votes`` how the factions asked voted on them.",
 				"operationId": "list_decisions_api_decisions_get",
 				"parameters": [
 					{
@@ -4994,7 +5037,7 @@
 			"get": {
 				"tags": ["decisions", "decisions"],
 				"summary": "Decision detail",
-				"description": "One decision with every vote cast on it \u2014 per member on a roll-call, per faction otherwise.",
+				"description": "One decision with every vote cast on it — per member on a roll-call, per faction otherwise.",
 				"operationId": "get_decision_api_decisions__key__get",
 				"parameters": [
 					{
@@ -5076,7 +5119,7 @@
 			"get": {
 				"tags": ["parliament", "parliament"],
 				"summary": "Seat composition of the Tweede Kamer",
-				"description": "The seated parties with their seat counts, in the order they sit in the plenary hall from the chair's left (the plan of the Tweede Kamer, kept with `lawgraph curated set seating`; a faction it does not place sits at the right end) \u2014 enough to render a hemicycle. `seating_plan` names the plan. With `date`, the seats on that day: those the members held (FractieZetelPersoon, every seat from the Kamer installed on 30 November 2006; before it only the seats of members who also sat later), in the order of today's plan.",
+				"description": "The seated parties with their seat counts, in the order they sit in the plenary hall from the chair's left (the plan of the Tweede Kamer, kept with `lawgraph curated set seating`; a faction it does not place sits at the right end) — enough to render a hemicycle. `seating_plan` names the plan. With `date`, the seats on that day: those the members held (FractieZetelPersoon, every seat from the Kamer installed on 30 November 2006; before it only the seats of members who also sat later), in the order of today's plan.",
 				"operationId": "get_seats_api_parliament_seats_get",
 				"parameters": [
 					{
@@ -6257,7 +6300,7 @@
 			"get": {
 				"tags": ["root"],
 				"summary": "Health",
-				"description": "Health check \u2014 verifies database connectivity; ``version`` the version of the API\n(what a deploy checks against its tag). ``warm``: the answers every visitor\nasks are computed for the data as it is now (null when the API does not warm up); a\ndeploy waits for true before its smoke test. ``warm_version`` the data version they\nwere last computed for (the answers a request gets while a newer one computes, null\nbefore the first warm-up), ``data_version`` the version now, ``computing`` whether a\nwarm-up or an answer of a newer version is being computed. ``pools``: per connection\npool its size, the free connections and the reads waiting for one; ``busy`` what the\nthreads of the shared pools and of the background (the cache, the warm-up) run now,\nand how long.",
+				"description": "Health check — verifies database connectivity; ``version`` the version of the API\n(what a deploy checks against its tag). ``warm``: the answers every visitor\nasks are computed for the data as it is now (null when the API does not warm up); a\ndeploy waits for true before its smoke test. ``warm_version`` the data version they\nwere last computed for (the answers a request gets while a newer one computes, null\nbefore the first warm-up), ``data_version`` the version now, ``computing`` whether a\nwarm-up or an answer of a newer version is being computed. ``pools``: per connection\npool its size, the free connections and the reads waiting for one; ``busy`` what the\nthreads of the shared pools and of the background (the cache, the warm-up) run now,\nand how long.",
 				"operationId": "health_api_health_get",
 				"responses": {
 					"200": {
@@ -7533,7 +7576,7 @@
 							}
 						],
 						"title": "Number",
-						"description": "The number as printed: `2`, `2a`, `a`, `1\u00b0`; null for an aanhef or an item without one."
+						"description": "The number as printed: `2`, `2a`, `a`, `1°`; null for an aanhef or an item without one."
 					},
 					"text": {
 						"type": "string",
@@ -7815,7 +7858,7 @@
 							}
 						],
 						"title": "Semantic Pattern",
-						"description": "The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, \u2026"
+						"description": "The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …"
 					},
 					"start": {
 						"anyOf": [
@@ -8238,7 +8281,7 @@
 							}
 						],
 						"title": "From Date",
-						"description": "The day of its be\u00ebdiging."
+						"description": "The day of its beëdiging."
 					},
 					"to_date": {
 						"anyOf": [
@@ -8250,7 +8293,7 @@
 							}
 						],
 						"title": "To Date",
-						"description": "The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts. For a cabinet: the day of the be\u00ebdiging of the next one."
+						"description": "The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts. For a cabinet: the day of the beëdiging of the next one."
 					},
 					"previous": {
 						"anyOf": [
@@ -8605,7 +8648,7 @@
 							}
 						],
 						"title": "Acting Basis",
-						"description": "What the page says, as it says it: `a.i.`, `tijdelijke voorziening: \u2026`, `beheer portefeuille overgenomen door de minister van \u2026`."
+						"description": "What the page says, as it says it: `a.i.`, `tijdelijke voorziening: …`, `beheer portefeuille overgenomen door de minister van …`."
 					},
 					"acting_other_seat": {
 						"anyOf": [
@@ -8766,6 +8809,90 @@
 				"title": "CabinetSeatDTO",
 				"description": "One seat and its holders in order of start: a successor is the next post, a\nstand-in a post with ``acting``."
 			},
+			"CabinetSeatsResponse": {
+				"properties": {
+					"key": {
+						"type": "string",
+						"title": "Key"
+					},
+					"name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Name"
+					},
+					"from_date": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "From Date"
+					},
+					"to_date": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "To Date"
+					},
+					"majority": {
+						"additionalProperties": {
+							"type": "integer"
+						},
+						"type": "object",
+						"title": "Majority",
+						"description": "The seats a majority takes: `TK` 76 of 150, `EK` 38 of 75."
+					},
+					"tk": {
+						"anyOf": [
+							{
+								"items": {
+									"$ref": "#/components/schemas/SeatStretchDTO"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Tk",
+						"description": "The Tweede Kamer, a stretch per change (a split, a party leaving the cabinet, a seat changing hands); null for a cabinet that began before 30 November 2006, from when every seat is known."
+					},
+					"ek": {
+						"anyOf": [
+							{
+								"items": {
+									"$ref": "#/components/schemas/SeatStretchDTO"
+								},
+								"type": "array"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Ek",
+						"description": "The Eerste Kamer on the day its composition was read, when the cabinet was in office then; null otherwise (it has no seats per day)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "majority"],
+				"title": "CabinetSeatsResponse",
+				"description": "The seats of a cabinet's coalition in each Kamer over its period."
+			},
 			"CabinetSummaryDTO": {
 				"properties": {
 					"key": {
@@ -8788,7 +8915,7 @@
 							}
 						],
 						"title": "From Date",
-						"description": "The day of its be\u00ebdiging."
+						"description": "The day of its beëdiging."
 					},
 					"to_date": {
 						"anyOf": [
@@ -8800,7 +8927,7 @@
 							}
 						],
 						"title": "To Date",
-						"description": "The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts. For a cabinet: the day of the be\u00ebdiging of the next one."
+						"description": "The day it ended, as Rijksoverheid gives it: the day of the change, on which the next cabinet (holder, phase) takes office; so the period runs from ``from_date`` up to, not including, ``to_date``, and ``to_date`` is the ``from_date`` of what follows. Null while it lasts. For a cabinet: the day of the beëdiging of the next one."
 					},
 					"previous": {
 						"anyOf": [
@@ -9197,7 +9324,7 @@
 							}
 						],
 						"title": "Tier",
-						"description": "The tier, the Type of the court in the Instanties value list: `hoge_raad`, `raad_van_state`, `parket`, `gerechtshof`, `rechtbank`, `andere_instantie`, \u2026 (`/api/stats/coverage` lists those present)."
+						"description": "The tier, the Type of the court in the Instanties value list: `hoge_raad`, `raad_van_state`, `parket`, `gerechtshof`, `rechtbank`, `andere_instantie`, … (`/api/stats/coverage` lists those present)."
 					},
 					"court_kind": {
 						"anyOf": [
@@ -9252,6 +9379,39 @@
 				"required": ["id", "key", "ecli", "court", "tier", "date", "display_name"],
 				"title": "CitedByJudgment",
 				"description": "The judgment of a passage that cites an article."
+			},
+			"CoalitionFactionSeatsDTO": {
+				"properties": {
+					"key": {
+						"type": "string",
+						"title": "Key"
+					},
+					"abbreviation": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Abbreviation"
+					},
+					"seats": {
+						"type": "integer",
+						"title": "Seats"
+					},
+					"coalition": {
+						"type": "boolean",
+						"title": "Coalition",
+						"description": "Its party held a post in the cabinet that day; a faction split off a coalition party holds none: opposition."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "seats", "coalition"],
+				"title": "CoalitionFactionSeatsDTO",
+				"description": "A faction's seats in a stretch of a cabinet, and whether it is of the coalition."
 			},
 			"ColorSourceDTO": {
 				"properties": {
@@ -9785,7 +9945,7 @@
 							}
 						],
 						"title": "Kind",
-						"description": "`vast`, `algemeen`, `tijdelijk`, `enquete` (enqu\u00eate or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`."
+						"description": "`vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`."
 					},
 					"started_on": {
 						"anyOf": [
@@ -9919,7 +10079,7 @@
 							}
 						],
 						"title": "Kind",
-						"description": "`vast`, `algemeen`, `tijdelijk`, `enquete` (enqu\u00eate or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`."
+						"description": "`vast`, `algemeen`, `tijdelijk`, `enquete` (enquête or ondervraging), `delegatie` (contact groups and international assemblies) or `overig`."
 					},
 					"started_on": {
 						"anyOf": [
@@ -10085,7 +10245,7 @@
 							}
 						],
 						"title": "Tier",
-						"description": "The Type of the court in the Instanties value list: `hoge_raad`, `parket` (the conclusions of the Parket bij de Hoge Raad), `raad_van_state`, `gerechtshof`, `rechtbank`, `andere_instantie`, \u2026 (``core.courts.TIERS``)."
+						"description": "The Type of the court in the Instanties value list: `hoge_raad`, `parket` (the conclusions of the Parket bij de Hoge Raad), `raad_van_state`, `gerechtshof`, `rechtbank`, `andere_instantie`, … (``core.courts.TIERS``)."
 					},
 					"court_kind": {
 						"anyOf": [
@@ -10484,13 +10644,25 @@
 						},
 						"type": "array",
 						"title": "Votes"
+					},
+					"dictum": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Dictum",
+						"description": "Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["id", "key"],
 				"title": "DecisionDTO",
-				"description": "One decision with every vote cast on it.\n\n``vote_kind`` says who the votes come from: ``member`` for a roll-call\n(``hoofdelijke stemming``), ``faction`` otherwise. ``tally`` is seats per\nchoice \u2014 members per choice on a roll-call \u2014 and ``voters`` is how many\ncast each choice."
+				"description": "One decision with every vote cast on it.\n\n``vote_kind`` says who the votes come from: ``member`` for a roll-call\n(``hoofdelijke stemming``), ``faction`` otherwise. ``tally`` is seats per\nchoice — members per choice on a roll-call — and ``voters`` is how many\ncast each choice."
 			},
 			"DecisionDayCount": {
 				"properties": {
@@ -10844,13 +11016,25 @@
 						},
 						"type": "object",
 						"title": "Voters"
+					},
+					"dictum": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Dictum",
+						"description": "Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["id", "key"],
 				"title": "DecisionSummaryDTO",
-				"description": "One row in the decision browser.\n\n``tally`` sums the seats behind each choice \u2014 the number to show for a\nresult \u2014 and ``voters`` counts how many factions (or members) made it.\n``subject`` is that of the case the vote decided; a vote without a case of its own\non an agenda item of several shares the item's subject with its siblings, and\n``display_name`` (``Motie 2024Z17945: \u2026``) and ``external_id`` tell them apart."
+				"description": "One row in the decision browser.\n\n``tally`` sums the seats behind each choice — the number to show for a\nresult — and ``voters`` counts how many factions (or members) made it.\n``subject`` is that of the case the vote decided; a vote without a case of its own\non an agenda item of several shares the item's subject with its siblings, and\n``display_name`` (``Motie 2024Z17945: …``) and ``external_id`` tell them apart."
 			},
 			"DecisionYearCount": {
 				"properties": {
@@ -11059,6 +11243,18 @@
 							}
 						],
 						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
+					},
+					"dictum": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Dictum",
+						"description": "Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text."
 					}
 				},
 				"additionalProperties": false,
@@ -11267,6 +11463,18 @@
 							}
 						],
 						"title": "Text"
+					},
+					"dictum": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Dictum",
+						"description": "Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text."
 					},
 					"submitters": {
 						"items": {
@@ -12523,7 +12731,7 @@
 				"type": "object",
 				"required": ["relation", "direction", "dossier"],
 				"title": "DossierRelationDTO",
-				"description": "A relation between this dossier and another, and which way it points.\n\n* ``revises``: a supplementary budget or a slotwet revises the budget of its chapter\n  and year; ``rule`` says which (``begrotingswijziging`` or ``slotwet``).\n* ``accompanies``: a budget change is submitted with the ``nota`` its title names\n  (``voorjaarsnota``, ``najaarsnota``, ``miljoenennota``).\n* ``related_to``: the Kamer relates a case of the one dossier to a case of the other\n  (``Zaak.GerelateerdNaar``), mostly a letter of the government to the motion it\n  answers. ``cases`` counts the pairs of cases, ``case_kinds`` names their kinds\n  (``Brief regering \u2192 Motie``).\n* ``second_reading_of``: a change in the Grondwet in its second reading and the dossier of\n  its first reading, whose papers explain it: the memorandum of 35785 only refers to those\n  of 35418 and 35419.\n\n``outgoing`` means this dossier is the subject: 37035-XXII revises 36800-XXII and\naccompanies 37020. On 36800-XXII the same ``revises`` is ``incoming``."
+				"description": "A relation between this dossier and another, and which way it points.\n\n* ``revises``: a supplementary budget or a slotwet revises the budget of its chapter\n  and year; ``rule`` says which (``begrotingswijziging`` or ``slotwet``).\n* ``accompanies``: a budget change is submitted with the ``nota`` its title names\n  (``voorjaarsnota``, ``najaarsnota``, ``miljoenennota``).\n* ``related_to``: the Kamer relates a case of the one dossier to a case of the other\n  (``Zaak.GerelateerdNaar``), mostly a letter of the government to the motion it\n  answers. ``cases`` counts the pairs of cases, ``case_kinds`` names their kinds\n  (``Brief regering → Motie``).\n* ``second_reading_of``: a change in the Grondwet in its second reading and the dossier of\n  its first reading, whose papers explain it: the memorandum of 35785 only refers to those\n  of 35418 and 35419.\n\n``outgoing`` means this dossier is the subject: 37035-XXII revises 36800-XXII and\naccompanies 37020. On 36800-XXII the same ``revises`` is ``incoming``."
 			},
 			"DossierSenateDTO": {
 				"properties": {
@@ -13113,7 +13321,7 @@
 							}
 						],
 						"title": "Faction",
-						"description": "The key of its faction (``ek_\u2026``)."
+						"description": "The key of its faction (``ek_…``)."
 					},
 					"abbreviation": {
 						"anyOf": [
@@ -13136,7 +13344,7 @@
 							}
 						],
 						"title": "Seniority Days",
-						"description": "``Anci\u00ebnniteit``: the days served in the Eerste Kamer, earlier terms included; no start date."
+						"description": "``Anciënniteit``: the days served in the Eerste Kamer, earlier terms included; no start date."
 					},
 					"residence": {
 						"anyOf": [
@@ -13872,7 +14080,7 @@
 				"type": "object",
 				"required": ["id", "key", "type", "labels"],
 				"title": "FactionDetailDTO",
-				"description": "Response for GET /api/factions/{key} \u2014 the node as stored."
+				"description": "Response for GET /api/factions/{key} — the node as stored."
 			},
 			"FactionMembershipDTO": {
 				"properties": {
@@ -14015,6 +14223,18 @@
 						"type": "integer",
 						"title": "Order",
 						"description": "Left-to-right position in the chamber."
+					},
+					"coalition": {
+						"anyOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Coalition",
+						"description": "Of the coalition of the cabinet in office that day (`cabinet`): its party held a post in it; a faction split off a coalition party is opposition. Null when no cabinet was in office."
 					}
 				},
 				"additionalProperties": false,
@@ -15308,7 +15528,7 @@
 					"faction": {
 						"type": "string",
 						"title": "Faction",
-						"description": "The key of the faction (``ek_\u2026``)."
+						"description": "The key of the faction (``ek_…``)."
 					},
 					"abbreviation": {
 						"anyOf": [
@@ -15689,7 +15909,7 @@
 				"type": "object",
 				"required": ["id", "key", "bwb_id", "address", "display_name"],
 				"title": "InstrumentArticleNodeDTO",
-				"description": "Lightweight article shape for the graph-loader.\n\nNo full ``text`` field \u2014 that would balloon the payload when loading\nhundreds of articles for a single instrument. ``text_preview`` carries\nthe first few characters so the FE has something to render on the node;\nuse /api/articles/{bwb_id}/{article_number} for full content."
+				"description": "Lightweight article shape for the graph-loader.\n\nNo full ``text`` field — that would balloon the payload when loading\nhundreds of articles for a single instrument. ``text_preview`` carries\nthe first few characters so the FE has something to render on the node;\nuse /api/articles/{bwb_id}/{article_number} for full content."
 			},
 			"InstrumentArticleVersionDTO": {
 				"properties": {
@@ -15860,7 +16080,7 @@
 					"total": {
 						"type": "integer",
 						"title": "Total",
-						"description": "Absolute count of articles matching the request, independent of ``limit`` \u2014 use to render a '+N more' badge."
+						"description": "Absolute count of articles matching the request, independent of ``limit`` — use to render a '+N more' badge."
 					},
 					"items": {
 						"items": {
@@ -16423,6 +16643,14 @@
 						"type": "array",
 						"title": "Policy Domain",
 						"description": "The government themes of `scw_bwb_themas`, most first. Counted without the `policy_domain` filter."
+					},
+					"kind": {
+						"items": {
+							"$ref": "#/components/schemas/FacetCountDTO"
+						},
+						"type": "array",
+						"title": "Kind",
+						"description": "Per kind (`wet`, `verdrag`, `multilateraalverdrag`, …), most first. Counted without the `kind` filter, over the list without a kind (no publications)."
 					}
 				},
 				"additionalProperties": false,
@@ -16501,7 +16729,7 @@
 							}
 						],
 						"title": "Tier",
-						"description": "The tier, the Type of the court in the Instanties value list: `hoge_raad`, `raad_van_state`, `gerechtshof`, `rechtbank`, \u2026 (as in `/api/judgments`)."
+						"description": "The tier, the Type of the court in the Instanties value list: `hoge_raad`, `raad_van_state`, `gerechtshof`, `rechtbank`, … (as in `/api/judgments`)."
 					},
 					"court_kind": {
 						"anyOf": [
@@ -17542,7 +17770,7 @@
 									"uitspraak",
 									"beslissing",
 									"conclusie",
-									"prejudici\u00eble beslissing"
+									"prejudiciële beslissing"
 								]
 							},
 							{
@@ -17550,7 +17778,7 @@
 							}
 						],
 						"title": "Decision Kind",
-						"description": "What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudici\u00eble beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does."
+						"description": "What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does."
 					},
 					"series_id": {
 						"anyOf": [
@@ -17733,7 +17961,7 @@
 						},
 						"type": "array",
 						"title": "Related To",
-						"description": "The connected cases (`RELATED_TO`, as between dossiers), both ways: those its summary names (\"Samenhang met 24/03860 E\", \"Zie ook: ECLI:\u2026\") and those whose summary names it, each found by its exact ECLI or case number, with the sentence that names it (`links`). Empty for most."
+						"description": "The connected cases (`RELATED_TO`, as between dossiers), both ways: those its summary names (\"Samenhang met 24/03860 E\", \"Zie ook: ECLI:…\") and those whose summary names it, each found by its exact ECLI or case number, with the sentence that names it (`links`). Empty for most."
 					},
 					"series": {
 						"items": {
@@ -17908,7 +18136,7 @@
 							}
 						],
 						"title": "Tier",
-						"description": "The coarse tier: the Type of the court in the Instanties value list of the Rechtspraak (`hoge_raad`, `gerechtshof`, `rechtbank`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, \u2026), or `kroon`, `hvj_eu`, `ehrm`."
+						"description": "The coarse tier: the Type of the court in the Instanties value list of the Rechtspraak (`hoge_raad`, `gerechtshof`, `rechtbank`, `tuchtcollege`, `andere_instantie`, `koninkrijksinstantie`, …), or `kroon`, `hvj_eu`, `ehrm`."
 					},
 					"court_kind": {
 						"anyOf": [
@@ -17920,7 +18148,7 @@
 							}
 						],
 						"title": "Court Kind",
-						"description": "The kind of court within the tier, from its official name (`ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, \u2026); a tier of one kind of court is its own kind (`hoge_raad`)."
+						"description": "The kind of court within the tier, from its official name (`ambtenarengerecht`, `raad_van_beroep`, `gerecht_in_eerste_aanleg`, …); a tier of one kind of court is its own kind (`hoge_raad`)."
 					},
 					"date": {
 						"anyOf": [
@@ -17963,7 +18191,7 @@
 									"uitspraak",
 									"beslissing",
 									"conclusie",
-									"prejudici\u00eble beslissing"
+									"prejudiciële beslissing"
 								]
 							},
 							{
@@ -17971,7 +18199,7 @@
 							}
 						],
 						"title": "Decision Kind",
-						"description": "What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudici\u00eble beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does."
+						"description": "What the decision is: `arrest`, `vonnis`, `beschikking`, `uitspraak`, `beslissing` (the kantonrechter on an appeal against a traffic fine), `conclusie` or `prejudiciële beslissing`. From the metadata and the kop where they tell, else from the court and the area of law; null when nothing does."
 					},
 					"source": {
 						"anyOf": [
@@ -18156,7 +18384,7 @@
 					"role": {
 						"type": "string",
 						"title": "Role",
-						"description": "`Verdachte`, `Betrokkene`, `Klager`, `Veroordeelde`, `Eiser`, `Gedaagde`, `Verzoeker`, `Verweerder`, `Appellant`, `Ge\u00efntimeerde`, `Belanghebbende`, `Opposant`, `Wederpartij`; `Partij` when none applies."
+						"description": "`Verdachte`, `Betrokkene`, `Klager`, `Veroordeelde`, `Eiser`, `Gedaagde`, `Verzoeker`, `Verweerder`, `Appellant`, `Geïntimeerde`, `Belanghebbende`, `Opposant`, `Wederpartij`; `Partij` when none applies."
 					},
 					"roles": {
 						"items": {
@@ -18164,7 +18392,7 @@
 						},
 						"type": "array",
 						"title": "Roles",
-						"description": "Every role the judgment names for the party, in its order: `Ge\u00efntimeerde` and `Appellant` for one that is ge\u00efntimeerde in principaal and appellante in incidenteel hoger beroep. `[role]` when it names none."
+						"description": "Every role the judgment names for the party, in its order: `Geïntimeerde` and `Appellant` for one that is geïntimeerde in principaal and appellante in incidenteel hoger beroep. `[role]` when it names none."
 					},
 					"role_stated": {
 						"type": "boolean",
@@ -18187,7 +18415,7 @@
 							}
 						],
 						"title": "Alias",
-						"description": "What the judgment calls the party: `EBN` for \"hierna: EBN\", `KLM` for \"ge\u00efntimeerden worden hierna KLM respectievelijk VNV genoemd\"."
+						"description": "What the judgment calls the party: `EBN` for \"hierna: EBN\", `KLM` for \"geïntimeerden worden hierna KLM respectievelijk VNV genoemd\"."
 					},
 					"representatives": {
 						"items": {
@@ -19043,7 +19271,7 @@
 				"type": "object",
 				"required": ["id", "key"],
 				"title": "MemberDTO",
-				"description": "A member of parliament or a minister.\n\n``active`` means they hold an open faction membership \u2014 currently seated.\n``party`` comes from that same membership, so the two always agree.\n\n``from_date`` / ``to_date`` are only filled when the member is returned\nas part of a committee, where they carry that committee seat's period."
+				"description": "A member of parliament or a minister.\n\n``active`` means they hold an open faction membership — currently seated.\n``party`` comes from that same membership, so the two always agree.\n\n``from_date`` / ``to_date`` are only filled when the member is returned\nas part of a committee, where they carry that committee seat's period."
 			},
 			"MemberDetailDTO": {
 				"properties": {
@@ -19315,7 +19543,7 @@
 					"choice": {
 						"type": "string",
 						"title": "Choice",
-						"description": "The vote as the source wrote it: Voor, Tegen, Onthouden, \u2026"
+						"description": "The vote as the source wrote it: Voor, Tegen, Onthouden, …"
 					},
 					"seats": {
 						"anyOf": [
@@ -19815,7 +20043,7 @@
 							}
 						],
 						"title": "Kind",
-						"description": "``Activiteit.Soort``: ``Commissiedebat``, ``Plenair debat``, ``Stemmingen``, \u2026"
+						"description": "``Activiteit.Soort``: ``Commissiedebat``, ``Plenair debat``, ``Stemmingen``, …"
 					},
 					"agenda_title": {
 						"anyOf": [
@@ -19855,6 +20083,30 @@
 					},
 					"neighbors": {
 						"$ref": "#/components/schemas/NodeNeighborsDTO"
+					},
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "The title of the node as its page has it (``Artikel 6:162 BW: onrechtmatige daad``), without the name of the site.",
+						"default": ""
+					},
+					"description": {
+						"type": "string",
+						"title": "Description",
+						"description": "The description of its page.",
+						"default": ""
+					},
+					"path": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a node without one."
 					}
 				},
 				"additionalProperties": false,
@@ -19971,6 +20223,28 @@
 						"enum": ["TK", "EK"],
 						"title": "Chamber",
 						"default": "TK"
+					},
+					"cabinet": {
+						"anyOf": [
+							{
+								"additionalProperties": {
+									"anyOf": [
+										{
+											"type": "string"
+										},
+										{
+											"type": "null"
+										}
+									]
+								},
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Cabinet",
+						"description": "The cabinet in office on `as_of` (`key`, `name`), whose coalition `coalition` marks; null when none was."
 					},
 					"total_seats": {
 						"type": "integer",
@@ -20340,7 +20614,7 @@
 						},
 						"type": "object",
 						"title": "Via",
-						"description": "Per end that is a group the path goes through a child of (`expand=members`): the child (`factions/vvd`: `members/\u2026`)."
+						"description": "Per end that is a group the path goes through a child of (`expand=members`): the child (`factions/vvd`: `members/…`)."
 					}
 				},
 				"additionalProperties": false,
@@ -20894,7 +21168,7 @@
 							}
 						],
 						"title": "Semantic Pattern",
-						"description": "The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, \u2026"
+						"description": "The pattern that gave `semantic_type` and where its phrase stood: `limiting_exception_adjacent`, `definitional_reference_window`, `cross_reference_fallback`, …"
 					},
 					"source_article": {
 						"anyOf": [
@@ -21258,6 +21532,40 @@
 				"title": "SearchResultItem",
 				"description": "One search hit, typed by collection."
 			},
+			"SeatStretchDTO": {
+				"properties": {
+					"from_date": {
+						"type": "string",
+						"title": "From Date"
+					},
+					"to_date": {
+						"type": "string",
+						"title": "To Date"
+					},
+					"coalition": {
+						"type": "integer",
+						"title": "Coalition",
+						"description": "The seats of the coalition."
+					},
+					"opposition": {
+						"type": "integer",
+						"title": "Opposition"
+					},
+					"factions": {
+						"items": {
+							"$ref": "#/components/schemas/CoalitionFactionSeatsDTO"
+						},
+						"type": "array",
+						"title": "Factions",
+						"description": "The coalition first, then by seats."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["from_date", "to_date", "coalition", "opposition"],
+				"title": "SeatStretchDTO",
+				"description": "A stretch of days in which neither the coalition nor any faction's seats changed."
+			},
 			"SeatingPlanDTO": {
 				"properties": {
 					"title": {
@@ -21409,7 +21717,7 @@
 							}
 						],
 						"title": "Function",
-						"description": "The function they signed in: 'minister van Financi\u00ebn', 'Tweede Kamerlid'; null when the source gives none."
+						"description": "The function they signed in: 'minister van Financiën', 'Tweede Kamerlid'; null when the source gives none."
 					},
 					"faction": {
 						"anyOf": [
@@ -21559,7 +21867,7 @@
 						},
 						"type": "object",
 						"title": "Data As Of",
-						"description": "Per source (`tk`, `eerstekamer`, `rechtspraak`, `staatsblad`, `staatscourant`, `bwb`, `eurlex`, \u2026): how current the graph is."
+						"description": "Per source (`tk`, `eerstekamer`, `rechtspraak`, `staatsblad`, `staatscourant`, `bwb`, `eurlex`, …): how current the graph is."
 					}
 				},
 				"additionalProperties": false,
@@ -21912,7 +22220,7 @@
 							}
 						],
 						"title": "Status",
-						"description": "The Toezegging.Status of the Tweede Kamer: `Openstaand`, \u2026"
+						"description": "The Toezegging.Status of the Tweede Kamer: `Openstaand`, …"
 					},
 					"expected_resolution": {
 						"anyOf": [
@@ -22974,7 +23282,7 @@
 							}
 						],
 						"title": "Consent",
-						"description": "How it consented, the register's code (`R`, `T`, `A`, \u2026)."
+						"description": "How it consented, the register's code (`R`, `T`, `A`, …)."
 					},
 					"provisional": {
 						"anyOf": [
@@ -23305,7 +23613,7 @@
 					"choice": {
 						"type": "string",
 						"title": "Choice",
-						"description": "The vote as the source wrote it: Voor, Tegen, Onthouden, \u2026"
+						"description": "The vote as the source wrote it: Voor, Tegen, Onthouden, …"
 					},
 					"seats": {
 						"type": "integer",
@@ -23317,7 +23625,7 @@
 				"type": "object",
 				"required": ["voter_id", "voter_key", "choice"],
 				"title": "VoteDTO",
-				"description": "One vote cast on a decision, by a faction or \u2014 on a roll-call \u2014 a member."
+				"description": "One vote cast on a decision, by a faction or — on a roll-call — a member."
 			}
 		}
 	}
