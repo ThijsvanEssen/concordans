@@ -640,11 +640,15 @@
 		{#if hidden.length > 0}
 			<!-- What the bronfilter leaves out, as a quiet line of links: each shows its group. -->
 			<p class="hidden">
-				Ook {#each hidden as h, k (h.kind)}{#if k > 0}{', '}{/if}<TekstLink
-						title="Toon ook de {BRON_KIND_NOUN[h.kind]}"
-						onclick={() => onFilter(withKind(filter, h.kind))}
-						>{kindCount(h.count, h.kind)}</TekstLink
-					>{/each}
+				Ook <span class="ook"
+					>{#each hidden as h (h.kind)}<span
+							><TekstLink
+								title="Toon ook de {BRON_KIND_NOUN[h.kind]}"
+								onclick={() => onFilter(withKind(filter, h.kind))}
+								>{kindCount(h.count, h.kind)}</TekstLink
+							></span
+						>{/each}</span
+				>
 			</p>
 		{/if}
 
@@ -961,6 +965,10 @@
 	.row__main:focus-within .row__herkomst,
 	.row.toont .row__herkomst {
 		display: block;
+	}
+	/* The counts of the line, a comma between them. */
+	.ook > span + span::before {
+		content: ', ';
 	}
 	.foot {
 		display: flex;
