@@ -6,7 +6,7 @@ import { korteDatum, langeDatum } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import { articleTitle } from '$lib/text/bw';
-import { authorCite } from '$lib/text/judgment-cite';
+import { authorCite, paragraphCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { dossierLabel, type DossierNaamBron } from '$lib/bron/dossier-naam';
@@ -56,6 +56,8 @@ export type Row = {
 	court?: string | null;
 	/** Props the canvas needs to draw a bron not on it yet. */
 	props?: Record<string, unknown>;
+	/** The meta of the edge, as the API gives it: what the row's line reads (`hoe.ts`). */
+	edge?: Record<string, unknown>;
 	/** One row per place the bron names the selected one, when there are several. */
 	mentions?: Row[];
 };
@@ -322,9 +324,18 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		(Array.isArray(meta.leden) && text(meta.leden[0])) ||
 		text(meta.lid) ||
 		(n.direction === 'inbound' ? lidOfMatch(match) : null);
+	// The overwegingen of a judgment where it cites (API: `paragraphs` on the edge).
+	const paragraphs = Array.isArray(meta.paragraphs)
+		? meta.paragraphs.filter((x): x is string => typeof x === 'string' && !!x)
+		: [];
+	// They are the row's own where it is the citing judgment; else the selected one's (`r.o.`).
+	const ecli = n.collection === 'judgments' ? (text(props.ecli) ?? n.key) : null;
 	return {
 		ref: refOf(n.collection, n.key, props),
 		...describe(n.collection, n.key, n.display_name, props),
+		...(paragraphs.length
+			? { position: positionsLabel(paragraphs.map((nr) => paragraphCite(ecli, nr))) }
+			: {}),
 		kind: bronKindOf(n.collection, n.key, props, n.relation),
 		lid,
 		derived: n.confidence != null && n.confidence < 1,
@@ -340,7 +351,8 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		// An appeal link names its remedy: `Cassatie`, `Hoger beroep`.
 		aard:
 			n.relation === 'APPEAL_OF' ? (text(meta.procedure_type)?.toLowerCase() ?? null) : undefined,
-		props
+		props,
+		edge: meta
 	};
 }
 
@@ -432,7 +444,6 @@ export function bundleMentions(mentions: Row[]): Row {
 /** The rows with every mention as a row of its own, as the table and the export list them. */
 export const mentionRows = (rows: Row[]): Row[] => rows.flatMap((r) => r.mentions ?? [r]);
 
-/** The meta line of a row, as separate words; the panel joins them. */
 /**
  * A row's key in a list: the bron, the place it points at, and the verbinding. One article
  * can refer twice (two aarden), so the bron alone is not unique. A row without an edge (a
@@ -453,10 +464,28 @@ export function uniqueRows(rows: Row[]): Row[] {
 	});
 }
 
+/**
+ * The meta line of a row, as separate words; the panel joins them. With `verbinding`, the row
+ * has its line of the verbinding (`hoe.ts`), which says the lid, the place, the aard and
+ * whether it is derived: the meta line leaves them out, and a vote's outcome.
+ */
 export function metaParts(
-	row: Row
+	row: Row,
+	verbinding = false
 ): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
 	const parts: { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] = [];
+	if (verbinding) {
+		if (row.missing) parts.push({ text: 'niet in de gegevens', kind: 'plain' });
+		if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });
+		if (row.context && row.ref.collection !== 'decisions')
+			parts.push({ text: row.context, kind: 'plain' });
+		if (row.period) parts.push({ text: periodLabel(row.period), kind: 'plain' });
+		if (row.function && row.function !== 'Tweede Kamerlid')
+			parts.push({ text: `als ${row.function}`, kind: 'plain' });
+		const when = row.identifier ?? shortDate(row.date ?? null);
+		if (when) parts.push({ text: when, kind: 'plain' });
+		return parts;
+	}
 	if (row.lid) parts.push({ text: `lid ${row.lid}`, kind: 'lid' });
 	if (row.missing) parts.push({ text: 'niet in de gegevens', kind: 'plain' });
 	if (row.proposed) parts.push({ text: 'voorgesteld', kind: 'proposed' });

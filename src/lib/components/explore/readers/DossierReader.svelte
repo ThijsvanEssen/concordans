@@ -16,6 +16,8 @@
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import { procedure } from '$lib/components/parliamentary/procedure';
 	import GewijzigdeArtikelen from '$lib/components/parliamentary/GewijzigdeArtikelen.svelte';
+	import AmendementenDienstregeling from '$lib/components/parliamentary/AmendementenDienstregeling.svelte';
+	import { aantalAmendementen } from '$lib/components/parliamentary/amendementen';
 	import {
 		getChangedArticles,
 		type ChangedArticles
@@ -126,7 +128,9 @@
 
 			<header class="head">
 				<span class="kicker">
-					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink>, Kamerstuk {d.number}
+					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink><span
+						>, Kamerstuk {d.number}</span
+					>
 				</span>
 				<h2 class="title">{d.short_title ?? d.title ?? d.number}</h2>
 				{#if d.short_title && d.title && d.title.trim() !== d.short_title}
@@ -175,7 +179,7 @@
 			{:else if timeline}
 				{@const p = procedure(d, timeline.entries, metOverig)}
 				<Sectie titel="Procedure">
-					<Tijdlijn groepen={p.groepen} />
+					<Tijdlijn groepen={p.groepen} inklapbaar />
 					{#if p.overig}
 						<button type="button" class="overig" onclick={() => (metOverig = !metOverig)}
 							>{metOverig ? 'Alleen de procedure' : `Toon ook de ${p.overig} andere items`}</button
@@ -184,8 +188,14 @@
 				</Sectie>
 			{/if}
 
+			<!-- The amendments as a timetable, asked once in view; only where the dossier counts any. -->
+			{@const amendementen = aantalAmendementen(d.documents_by_kind)}
+			{#if amendementen > 0}
+				<AmendementenDienstregeling dossierKey={node.key} />
+			{/if}
+
 			{#if changed && changed.total > 0}
-				<GewijzigdeArtikelen data={changed} />
+				<GewijzigdeArtikelen data={changed} wijzigt={d.legal_effect?.amends ?? []} />
 			{/if}
 		{/if}
 	</div>
@@ -195,9 +205,9 @@
 	.overig {
 		align-self: flex-start;
 		margin-top: var(--s-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		padding: var(--s-1) var(--s-3);
 		border: 1px solid var(--rule-strong);
@@ -206,8 +216,8 @@
 		cursor: pointer;
 	}
 	.full-title summary {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		color: var(--ink-2);
 		cursor: pointer;
 	}
@@ -235,25 +245,28 @@
 		gap: var(--s-2);
 	}
 	.kicker {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
+		/* The comma stands against the kind before it: no gap but the glyph's own. */
 		display: flex;
 		align-items: baseline;
+	}
+	.kicker :global(.soort) {
 		gap: 6px;
 	}
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
 
 	.reading {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		margin: 0;
@@ -270,7 +283,7 @@
 	/* Where the Eerste Kamer's outcome comes from: its site, named as its terms ask. */
 	.source {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -285,7 +298,7 @@
 	}
 	.laden {
 		margin: var(--s-4) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}

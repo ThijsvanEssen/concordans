@@ -62,6 +62,13 @@ describe('a readable address', () => {
 			key: 'decision_6312'
 		});
 		expect(focusOfPad({ soort: 'stemming', key: 'decision_6312' })).toBe('decisions/decision_6312');
+		// A dossier's node key is its number made a key; the label gives the number back.
+		expect(padOfFocus('dossiers/36496')).toBe('/dossiers/36496');
+		expect(padOfFocus('dossiers/36600_viii', { label: '36600-VIII' })).toBe('/dossiers/36600-VIII');
+		expect(padOfFocus('dossiers/36455_r2188', { label: '36455-(R2188)' })).toBe(
+			'/dossiers/36455-(R2188)'
+		);
+		expect(padOfFocus('dossiers/36600_viii')).toBeNull();
 	});
 
 	it('reads a lid by its slug, and gives a lid its address from its slug', () => {

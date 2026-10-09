@@ -1146,9 +1146,29 @@
 			return;
 		}
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
-		if (e.key.toLowerCase() !== 'l' || !readAction) return;
 		const el = document.activeElement as HTMLElement | null;
 		if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return;
+		// 1, 2 and 3: the layers of a bron, Tekst, Netwerk and Verbonden (Thijs, 10 Oct), as the
+		// tabs on a phone; 3 puts the focus on Verbonden's first row, for J and K.
+		const laag = { '1': 'reader', '2': 'graph', '3': 'verbonden' } as const;
+		if (e.key in laag && selectedNode && mode !== 'index') {
+			e.preventDefault();
+			kiesPaneel(laag[e.key as keyof typeof laag]);
+			if (e.key === '3')
+				requestAnimationFrame(() =>
+					document.querySelector<HTMLElement>('.verbonden a.row__title')?.focus()
+				);
+			return;
+		}
+		// O: only the surroundings of the selected bron, in place of the network, as a double
+		// click on it does (Thijs, 10 Oct: the row's Alleen de omgeving moved here).
+		if (e.key.toLowerCase() === 'o' && selectedNode && mode !== 'index') {
+			e.preventDefault();
+			kiesPaneel('graph');
+			handleNodeReplace(selectedNode);
+			return;
+		}
+		if (e.key.toLowerCase() !== 'l' || !readAction) return;
 		e.preventDefault();
 		setReading(readAction === 'read');
 	}
@@ -1272,8 +1292,6 @@
 				{network}
 				onFilter={applyFilter}
 				onOpenFilter={() => (filterOpen = true)}
-				onVerbinding={openRowCard}
-				onShowInNetwork={showInNetwork}
 				onNaarNetwerk={() => (mobilePanel = 'graph')}
 				onAddToNetwerk={(row) => {
 					const id = focusOf(row.ref);
@@ -1399,6 +1417,10 @@
 								start={!focus && !netwerkActive}
 								{telefoon}
 								onPick={addIdToNetwerk}
+								omgeving={selectedNode && !selectedNode.stub
+									? bronNaam(selectedNode, $instrumentMetaStore)
+									: null}
+								onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
 								onVoorbeeld={() => {
 									keepCanvas = true;
 									setNetwerk(
@@ -1742,7 +1764,7 @@
 		top: 6px;
 		right: 10px;
 		z-index: 2;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		line-height: 1;
 		color: var(--ink-3);
@@ -1851,8 +1873,8 @@
 		}
 		.explore-read .mobile-tab {
 			flex: 1;
-			font-family: var(--font-sans);
-			font-size: var(--t-micro);
+			font-family: var(--font-ui);
+			font-size: var(--t-ui-micro);
 			color: var(--ink-3);
 			background: none;
 			border: 0;
@@ -1909,7 +1931,7 @@
 		.toc-sheet__title {
 			font-family: var(--font-serif);
 			font-size: var(--t-body-2);
-			font-weight: 500;
+			font-weight: 600;
 			color: var(--ink);
 		}
 		.toc-sheet__close {
@@ -1974,8 +1996,8 @@
 		}
 		.mobile-tab {
 			flex: 1;
-			font-family: var(--font-sans);
-			font-size: var(--t-micro);
+			font-family: var(--font-ui);
+			font-size: var(--t-ui-micro);
 			color: var(--ink-3);
 			background: none;
 			border: 0;

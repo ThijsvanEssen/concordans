@@ -102,7 +102,7 @@
 		background: var(--ink);
 		color: var(--paper);
 		border-radius: var(--r-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		line-height: 1.4;
 		box-shadow: var(--shadow-pop);
@@ -123,7 +123,7 @@
 		transform: translateY(0);
 	}
 	.glossary-pop__full {
-		font-weight: 500;
+		font-weight: 600;
 		font-size: var(--t-micro);
 	}
 	.glossary-pop__plain {

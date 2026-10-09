@@ -1,19 +1,22 @@
 <script lang="ts">
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
-	import { terPlekke } from '$lib/actions/klik';
-	import RowOpen from './RowOpen.svelte';
-	import { isEscape } from '$lib/actions/keys';
+	import { goto } from '$app/navigation';
+	import { rijen } from '$lib/actions/rijen';
+	import { hoeVan } from './hoe';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
 	// bronnen on the canvas or take them off.
-	import { menu } from '$lib/actions/menu';
 	import { onControl } from '$lib/actions/outside';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
-	import { onMount, tick } from 'svelte';
-	import { getCoverage, type Coverage } from '$lib/api/stats';
-	import { coverageFor } from './coverage';
+	import { tick } from 'svelte';
 	import { bronHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphStore } from '$lib/graph/graph-store';
@@ -34,16 +37,7 @@
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, rowsToCsv, rowsToText } from './export';
-	import {
-		caseNumberOf,
-		longDate,
-		mentionRows,
-		metaParts,
-		openLabelOf,
-		repeatedTitles,
-		rowKey,
-		type Row
-	} from './rows';
+	import { caseNumberOf, mentionRows, metaParts, repeatedTitles, rowKey, type Row } from './rows';
 	import type { VerbondenState } from './source';
 	import { groupRequest } from './open-group';
 	import {
@@ -76,8 +70,6 @@
 		network = false,
 		onFilter,
 		onOpenFilter,
-		onVerbinding,
-		onShowInNetwork,
 		onNaarNetwerk,
 		onAddToNetwerk,
 		inNetwerk,
@@ -95,10 +87,7 @@
 		network?: boolean;
 		onFilter: (f: VerbondenFilter) => void;
 		onOpenFilter: () => void;
-		/** Opens the card Verbinding for a row. */
-		onVerbinding: (row: Row) => void;
-		onShowInNetwork?: (row: Row) => void;
-		/** A row's Alleen de omgeving was followed (on a phone: to the Netwerk tab). */
+		/** A group was drawn in the network (on a phone: to the Netwerk tab). */
 		onNaarNetwerk?: () => void;
 		/** Één bron uit de rij in het netwerk zetten. */
 		onAddToNetwerk?: (row: Row) => void;
@@ -119,8 +108,6 @@
 
 	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
-	let openRow = $state<string | null>(null);
-	let openMenu = $state<'bronnen' | 'grouping' | null>(null);
 	/** What Verzamel did, for the button and the live region. */
 
 	let onCanvas = $state(new Set<string>());
@@ -138,10 +125,13 @@
 			groupRequest.set(null);
 			if (!best || count(best) === 0) return;
 			expanded = new Set([...expanded, best.id]);
-			requestAnimationFrame(() =>
+			// A group closed in this browser opens for it.
+			zetOpen(`verbonden:${best.id}`, true);
+			// Once its rows are drawn: a smooth scroll is cut off while they render.
+			void tick().then(() =>
 				root
 					?.querySelector(`[data-group="${CSS.escape(best.id)}"]`)
-					?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+					?.scrollIntoView({ block: 'start' })
 			);
 		})
 	);
@@ -160,7 +150,7 @@
 	$effect(() => {
 		void bronId;
 		expanded = new Set();
-		openRow = null;
+		toon = null;
 	});
 
 	// The kern of the bron (Procesgang, Ingediend bij, Wet, Fractie) stands above its text in
@@ -287,8 +277,16 @@
 		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
 	}
 
+	// A row opens its bron in Netwerk (Thijs, 10 Oct: "laten we standaard navigeren naar
+	// Netwerk"); a group read beside the text opens it there.
 	const openHref = (g: Group, row: Row) =>
-		g.inPlace ? inPlaceHref(row) : bronHref(row.ref, { at: row.at });
+		g.inPlace
+			? inPlaceHref(row)
+			: bronHref(row.ref, { at: row.at, keepMode: false, mode: 'graph' });
+
+	/** The row whose provenance a tap shows, on touch. */
+	let toon = $state<string | null>(null);
+	const aanraking = () => typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches;
 
 	// The years of all the group's judgments where the API counts them (a wet, BE-47);
 	// else of the rows loaded, which the sentence then says.
@@ -317,34 +315,7 @@
 			rowsToCsv(mentionRows(allRows(shown)), selection.collection, page.url.origin)
 		);
 	}
-
-	const inNetworkHref = (row: Row) => bronHref(row.ref, { keepMode: false, mode: 'graph' });
-
-	// Under a short list of judgments: how many the network holds of the rechter the
-	// filter names, and since when, so that a small number reads as a property of the
-	// selection, not of the case law. Only the first such list carries the line.
-	const FEW = 50;
-	const coverageGroup = $derived(
-		shown.find((g) => g.noun === 'uitspraken' && groupCount(g) < FEW)?.id ?? null
-	);
-	let coverage = $state<Coverage | null>(null);
-	onMount(() => {
-		getCoverage()
-			.then((c) => (coverage = c))
-			.catch(() => {});
-	});
-	const span = $derived(coverage ? coverageFor(coverage, filter.rechter) : null);
-
-	// Escape closes the row opened under itself.
-	function onKey(e: KeyboardEvent) {
-		if (openRow && isEscape(e)) {
-			e.preventDefault();
-			openRow = null;
-		}
-	}
 </script>
-
-<svelte:window onkeydown={onKey} />
 
 <aside class="verbonden" aria-label="Verbonden" bind:this={root}>
 	<div class="head">
@@ -352,76 +323,43 @@
 		{#if verbonden.groups.length > 0}
 			<span class="head__count">{countLine(groepen, filter)}</span>
 		{/if}
-		<span class="head__space"></span>
-		<div class="menu" use:menu={{ open: openMenu === 'bronnen', close: () => (openMenu = null) }}>
-			<button
-				type="button"
-				class="btn is-text"
-				aria-haspopup="menu"
-				aria-expanded={openMenu === 'bronnen'}
-				onclick={() => (openMenu = openMenu === 'bronnen' ? null : 'bronnen')}
-				>{bronnenLabel(filter)}<Caret open={openMenu === 'bronnen'} /></button
-			>
-			{#if openMenu === 'bronnen'}
-				<div class="menu__list" role="menu">
-					{#each PRESETS as p (p.id)}
-						<button
-							type="button"
-							role="menuitemradio"
-							aria-checked={activePreset(filter)?.id === p.id}
-							class="menu__item"
-							class:is-active={activePreset(filter)?.id === p.id}
-							onclick={() => {
-								onFilter(withPreset(filter, p));
-								openMenu = null;
-							}}>{p.label}</button
-						>
-					{/each}
-					<button
-						type="button"
-						role="menuitem"
-						class="menu__item menu__item--more"
-						onclick={() => {
-							openMenu = null;
-							onOpenFilter();
-						}}>Kies bronnen en verbindingen</button
-					>
-				</div>
-			{/if}
-		</div>
-		<div class="menu" use:menu={{ open: openMenu === 'grouping', close: () => (openMenu = null) }}>
-			<button
-				type="button"
-				class="btn is-text"
-				aria-haspopup="menu"
-				aria-expanded={openMenu === 'grouping'}
-				onclick={() => (openMenu = openMenu === 'grouping' ? null : 'grouping')}
-				>{GROUPINGS.find((g) => g.id === grouping)?.label}<Caret
-					open={openMenu === 'grouping'}
-				/></button
-			>
-			{#if openMenu === 'grouping'}
-				<div class="menu__list" role="menu">
-					{#each GROUPINGS as g (g.id)}
-						<button
-							type="button"
-							role="menuitemradio"
-							aria-checked={grouping === g.id}
-							class="menu__item"
-							class:is-active={grouping === g.id}
-							onclick={() => {
-								grouping = g.id;
-								openMenu = null;
-							}}>{g.label}</button
-						>
-					{/each}
-				</div>
-			{/if}
-		</div>
-		<button type="button" class="btn is-text" onclick={onOpenFilter}>Filter</button>
+	</div>
+	<!-- The choose-line of the panel (docs/bediening.md): which bronnen, how grouped, the filter. -->
+	<div class="regel">
+		<TekstMenu
+			klein
+			label="Bronnen"
+			tekst={bronnenLabel(filter)}
+			waarde={activePreset(filter)?.id ?? null}
+			opties={PRESETS.map((p) => ({ waarde: p.id, label: p.label }))}
+			onKies={(id) => {
+				const p = PRESETS.find((x) => x.id === id);
+				if (p) onFilter(withPreset(filter, p));
+			}}
+		>
+			{#snippet onder(sluit)}
+				<button
+					type="button"
+					role="menuitem"
+					class="regel__menuitem"
+					onclick={() => {
+						sluit();
+						onOpenFilter();
+					}}>Kies bronnen en verbindingen</button
+				>
+			{/snippet}
+		</TekstMenu>
+		<TekstMenu
+			klein
+			label="Indeling"
+			waarde={grouping}
+			opties={GROUPINGS.map((g) => ({ waarde: g.id, label: g.label }))}
+			onKies={(id) => (grouping = id)}
+		/>
+		<button type="button" class="regel__knop" onclick={onOpenFilter}>Filter</button>
 	</div>
 
-	<div class="body" aria-busy={verbonden.loading}>
+	<div class="body" use:rijen={'a.row__title'} aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
 			<p class="note">
 				De verbindingen konden niet worden geladen.
@@ -453,243 +391,239 @@
 			{@const all = expanded.has(g.id)}
 			{@const bars = years(g)}
 			{@const count = groupCount(g)}
+			{@const toe = !isOpen(`verbonden:${g.id}`, true)}
 			{#if g.section && g.section !== shown[i - 1]?.section}
 				<h3 class="section">{g.section}</h3>
 			{/if}
 			<section class="group" data-group={g.id}>
 				<div class="group__head">
-					<h3 class="group__label">{g.label}</h3>
-					<span class="group__count">{countLabel(g)}</span>
-					{#if network && drawable(g.rows).length > 0}
+					<!-- The heading opens and closes the group, remembered per group (Sectie's rule). -->
+					<h3 class="group__label">
 						<button
 							type="button"
-							class="layer"
-							class:is-on={isLayerOn(g)}
-							role="checkbox"
-							aria-checked={isLayerOn(g)}
-							aria-label="{g.label} in het netwerk"
-							title={isLayerOn(g) ? 'Uit het netwerk halen' : 'In het netwerk tonen'}
-							onclick={() => toggleLayer(g)}
-							><span class="layer__box" aria-hidden="true">{isLayerOn(g) ? '✓' : ''}</span>toon in
-							netwerk</button
+							class="group__knop"
+							aria-expanded={!toe}
+							onclick={() => zetOpen(`verbonden:${g.id}`, toe)}
+							>{g.label}<Caret open={!toe} side /></button
 						>
+					</h3>
+					<span class="group__count">{countLabel(g)}</span>
+					{#if network && drawable(g.rows).length > 0}
+						<span class="group__laag">
+							<FilterOptie
+								inline
+								label="in netwerk"
+								title={isLayerOn(g) ? 'Uit het netwerk halen' : 'In het netwerk tonen'}
+								on={isLayerOn(g)}
+								onToggle={() => toggleLayer(g)}
+							/>
+						</span>
 					{/if}
 				</div>
-				{#if melding?.groep === g.id}
-					<p class="group__melding" role="status">
-						{melding.tekst}
-						{#if melding.terug}
-							<button
-								type="button"
-								class="link"
-								onclick={() => {
-									melding?.terug?.();
-									melding = null;
-								}}>Ongedaan maken</button
-							>
-						{/if}
-					</p>
-				{/if}
-				{#if g.id === 'judgments' && selection.collection === 'articles' && onRetry}
-					<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
-					<div class="group__volgorde">
-						<Keuze
-							label="Volgorde"
-							klein
-							opties={[
-								{ waarde: 'date_desc' as UitspraakVolgorde, label: 'Datum' },
-								{ waarde: 'citation_count' as UitspraakVolgorde, label: 'Meest aangehaald' }
-							]}
-							waarde={$uitspraakVolgorde}
-							onKies={(w) => {
-								if (w === $uitspraakVolgorde) return;
-								uitspraakVolgorde.set(w);
-								onRetry();
-							}}
-						/>
-					</div>
-				{/if}
-				{#if g.id === 'judgments' && selection.collection === 'instruments' && onRetry}
-					<!-- Newest first, or by the number of the law's articles they cite (BE-47). -->
-					<div class="group__volgorde">
-						<Keuze
-							label="Volgorde"
-							klein
-							opties={[
-								{ waarde: 'date' as WetVolgorde, label: 'Datum' },
-								{ waarde: 'cited' as WetVolgorde, label: 'Meeste artikelen' }
-							]}
-							waarde={$wetUitspraakVolgorde}
-							onKies={(w) => {
-								if (w === $wetUitspraakVolgorde) return;
-								wetUitspraakVolgorde.set(w);
-								onRetry();
-							}}
-						/>
-					</div>
-				{/if}
-				{#if g.order}<p class="group__caption">{g.order}</p>{/if}
-				{#if bars.length > 0}
-					<!-- Een zin en een keuzelijst in plaats van het jarendiagram. Over de geladen
-					     rijen: waar dat er minder zijn dan de telling, zegt de zin het. -->
-					{@const piek = bars.reduce((m, x) => (x.count > m.count ? x : m), bars[0])}
-					{@const geladen = !g.years?.length && g.rows.length < count ? g.rows.length : null}
-					<!-- The years that occur, not the twelve the histogram spans: the first page of an
-					     article's judgments (the newest) can all be of one year. -->
-					{@const jaren = bars.filter((x) => x.count > 0)}
-					{@const eerste = jaren[0]?.year}
-					{@const laatste = jaren.at(-1)?.year}
-					<p class="group__jaren">
-						{geladen
-							? `De ${formatCount(geladen)} geladen van ${formatCount(count)}: `
-							: ''}{eerste === laatste
-							? `${geladen ? 'alle' : 'Alle'} uit ${eerste}.`
-							: `${geladen ? 'van' : 'Van'} ${eerste} tot ${laatste}; de meeste in ${piek.year} (${formatCount(piek.count)}).`}
-					</p>
-					<!-- The filters of the judgments on one line: the year and the court. -->
-					<div class="group__jaren group__filters">
-						<label
-							>Jaar <select
-								value={filter.jaar ?? ''}
-								onchange={(e) => {
-									const v = e.currentTarget.value;
-									onFilter({ ...filter, jaar: v ? Number(v) : null });
-								}}
-							>
-								<option value="">alle</option>
-								{#each [...bars].reverse().filter((x) => x.count) as x (x.year)}<option
-										value={x.year}>{x.year} ({x.count})</option
-									>{/each}
-							</select></label
-						>
-						<label
-							>Rechter <select
-								value={filter.rechter ?? ''}
-								onchange={(e) => {
-									const v = e.currentTarget.value as Rechter | '';
-									onFilter({ ...filter, rechter: v || null });
-								}}
-							>
-								<option value="">alle</option>
-								{#each RECHTERS as r (r.id)}<option value={r.id}>{r.label}</option>{/each}
-							</select></label
-						>
-					</div>
-				{/if}
-				<ul class="rows">
-					{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
-						{@const id = rowId(row)}
-						{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
-						{@const open = openRow === id}
-						<li class="row" class:is-open={open}>
-							<!-- A click beside the title opens the row too, for the mouse; the
-							     keyboard has the toggle at the end of the row. -->
-							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-							<div
-								class="row__main"
-								onclick={(e) => {
-									if (!onControl(e) && !row.missing) openRow = open ? null : id;
-								}}
-							>
-								<KindGlyph
-									collection={row.ref.collection}
-									vorm={row.kind === 'wetsvoorstellen' ? 'voorstel' : undefined}
-									size={11}
+				{#if !toe}
+					{#if melding?.groep === g.id}
+						<p class="group__melding" role="status">
+							{melding.tekst}
+							{#if melding.terug}
+								<TekstLink
+									onclick={() => {
+										melding?.terug?.();
+										melding = null;
+									}}>Ongedaan maken</TekstLink
+								>
+							{/if}
+						</p>
+					{/if}
+					{@const volgorde =
+						g.id === 'judgments' && onRetry
+							? selection.collection === 'articles'
+								? 'artikel'
+								: selection.collection === 'instruments'
+									? 'wet'
+									: null
+							: null}
+					{#if volgorde || bars.length > 0}
+						<!-- One line of controls under the heading (docs/bediening.md): the order of the
+						     judgments, and the year and the court behind one text menu. -->
+						<div class="group__regel">
+							{#if volgorde === 'artikel'}
+								<!-- Newest first, or the most cited first: the standard judgments on top (UX-15). -->
+								<Keuze
+									label="Volgorde"
+									klein
+									opties={[
+										{ waarde: 'date_desc' as UitspraakVolgorde, label: 'Datum' },
+										{ waarde: 'citation_count' as UitspraakVolgorde, label: 'Meest aangehaald' }
+									]}
+									waarde={$uitspraakVolgorde}
+									onKies={(w) => {
+										if (w === $uitspraakVolgorde) return;
+										uitspraakVolgorde.set(w);
+										onRetry?.();
+									}}
 								/>
-								<span class="row__text">
-									{#if row.missing}
-										<span class="row__title row__title--missing">{row.title}</span>
-									{:else}
-										<a
-											class="row__title"
-											href={openHref(g, row)}
-											data-sveltekit-noscroll
-											onclick={(e) => terPlekke(e, () => (openRow = open ? null : id))}
-											>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
-										>
-									{/if}
-									<span class="row__meta">
-										{#each metaParts(row) as part, k (k)}
-											{#if k > 0}<span class="row__sep">,</span>{/if}
-											<span class="row__part row__part--{part.kind}">{part.text}</span>
-										{/each}
-										{#if row.proposed && onProposedText}
-											<span class="row__sep">,</span>
-											<button type="button" class="link" onclick={() => onProposedText(row)}
-												>toon voorgestelde tekst</button
+							{:else if volgorde === 'wet'}
+								<!-- Newest first, or by the number of the law's articles they cite (BE-47). -->
+								<Keuze
+									label="Volgorde"
+									klein
+									opties={[
+										{ waarde: 'date' as WetVolgorde, label: 'Datum' },
+										{ waarde: 'cited' as WetVolgorde, label: 'Meeste artikelen' }
+									]}
+									waarde={$wetUitspraakVolgorde}
+									onKies={(w) => {
+										if (w === $wetUitspraakVolgorde) return;
+										wetUitspraakVolgorde.set(w);
+										onRetry?.();
+									}}
+								/>
+							{/if}
+							{#if bars.length > 0}
+								{@const rechter = RECHTERS.find((r) => r.id === filter.rechter)}
+								<TekstMenu
+									klein
+									rechts
+									label="Jaar en rechter"
+									tekst="{filter.jaar ?? 'Alle jaren'}, {rechter?.label.toLowerCase() ??
+										'alle rechters'}"
+								>
+									{#snippet inhoud(sluit)}
+										<div class="jaar-rechter">
+											<div class="jaar-rechter__lijst" role="group" aria-label="Jaar">
+												{#each [{ year: null, count: null }, ...[...bars]
+														.reverse()
+														.filter((x) => x.count)] as x (x.year ?? 'alle')}
+													<button
+														type="button"
+														role="menuitemradio"
+														class="jaar-rechter__menuitem"
+														aria-checked={(filter.jaar ?? null) === x.year}
+														onclick={() => {
+															sluit();
+															onFilter({ ...filter, jaar: x.year });
+														}}
+														>{x.year ?? 'Alle jaren'}{#if x.count}<span class="jaar-rechter__tel"
+																>{formatCount(x.count)}</span
+															>{/if}</button
+													>
+												{/each}
+											</div>
+											<div class="jaar-rechter__lijst" role="group" aria-label="Rechter">
+												{#each [{ id: null, label: 'Alle rechters' }, ...RECHTERS] as r (r.id ?? 'alle')}
+													<button
+														type="button"
+														role="menuitemradio"
+														class="jaar-rechter__menuitem"
+														aria-checked={(filter.rechter ?? null) === r.id}
+														onclick={() => {
+															sluit();
+															onFilter({ ...filter, rechter: (r.id as Rechter | null) ?? null });
+														}}>{r.label}</button
+													>
+												{/each}
+											</div>
+										</div>
+									{/snippet}
+								</TekstMenu>
+							{/if}
+						</div>
+					{/if}
+					{#if g.order}<p class="group__caption">{g.order}</p>{/if}
+					<ul class="rows">
+						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
+							{@const id = rowId(row)}
+							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
+							{@const hoe = hoeVan(row, selection.collection)}
+							{@const href = openHref(g, row)}
+							<li class="row" class:toont={toon === id}>
+								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
+								     Netwerk, as its title does. On touch a tap beside the title shows where
+								     the verbinding comes from. -->
+								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+								<div
+									class="row__main"
+									onclick={(e) => {
+										if (onControl(e) || row.missing) return;
+										if (aanraking()) toon = toon === id ? null : id;
+										else goto(href, { noScroll: true });
+									}}
+								>
+									<KindGlyph
+										collection={row.ref.collection}
+										vorm={row.kind === 'wetsvoorstellen' ? 'voorstel' : undefined}
+										size={11}
+									/>
+									<span class="row__text">
+										{#if row.missing}
+											<span class="row__title row__title--missing">{row.title}</span>
+										{:else}
+											<a class="row__title" {href} data-sveltekit-noscroll
+												>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
 											>
 										{/if}
+										{#if hoe && (hoe.werkwoord || hoe.rest)}
+											<span class="row__hoe" class:is-afgeleid={hoe.afgeleid}
+												>{#if hoe.werkwoord}<b>{hoe.werkwoord}</b
+													>{/if}{#if hoe.rest}{hoe.werkwoord && !/^[,:]/.test(hoe.rest)
+														? ' '
+														: ''}{hoe.rest}{/if}{#if hoe.afgeleid}, afgeleid{/if}</span
+											>
+										{/if}
+										{#if hoe?.citaat}
+											<span class="row__citaat"
+												>{hoe.citaat.before}<mark>{hoe.citaat.mark}</mark>{hoe.citaat.after}</span
+											>
+										{/if}
+										<span class="row__meta">
+											{#each metaParts(row, !!hoe) as part, k (k)}
+												{#if k > 0}<span class="row__sep">,</span>{/if}
+												<span class="row__part row__part--{part.kind}">{part.text}</span>
+											{/each}
+											{#if row.proposed && onProposedText}
+												<span class="row__sep">,</span>
+												<TekstLink onclick={() => onProposedText(row)}
+													>toon voorgestelde tekst</TekstLink
+												>
+											{/if}
+										</span>
+										{#if hoe?.herkomst}
+											<span class="row__herkomst">{hoe.herkomst}</span>
+										{/if}
 									</span>
-								</span>
-								{#if !row.missing && onAddToNetwerk}
-									{@const al = inNetwerk?.(row) ?? false}
-									<button
-										type="button"
-										class="row__plus"
-										class:is-in={al}
-										aria-pressed={al}
-										aria-label={al
-											? `${row.title} staat in het netwerk`
-											: `${row.title} aan het netwerk toevoegen`}
-										title={al ? 'Staat in het netwerk' : 'Aan het netwerk toevoegen'}
-										onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</button
-									>
-								{/if}
-								{#if !row.missing}
-									<button
-										type="button"
-										class="row__toggle"
-										aria-expanded={open}
-										aria-controls="open-{id}"
-										aria-label={open ? 'Verberg passage' : 'Toon passage'}
-										onclick={() => (openRow = open ? null : id)}><Caret {open} /></button
-									>
-								{/if}
-							</div>
-							{#if open}
-								<div class="row__open" id="open-{id}">
-									<RowOpen
-										{row}
-										openHref={openHref(g, row)}
-										openLabel={openLabelOf(row, g.inPlace)}
-										networkHref={inNetworkHref(row)}
-										{onShowInNetwork}
-										{onNaarNetwerk}
-										{onVerbinding}
-										onAdd={onAddToNetwerk && !row.missing ? () => onAddToNetwerk(row) : undefined}
-										added={inNetwerk?.(row) ?? false}
-									/>
+									{#if !row.missing && onAddToNetwerk}
+										{@const al = inNetwerk?.(row) ?? false}
+										<IconKnop
+											class="row__plus"
+											aan={al}
+											label={al
+												? `${row.title} staat in het netwerk`
+												: `${row.title} aan het netwerk toevoegen`}
+											onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</IconKnop
+										>
+									{/if}
 								</div>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-				{#if g.rows.length > PREVIEW}
-					<button
-						type="button"
-						class="group__more"
-						onclick={() => {
-							if (!all && (g.total ?? 0) > g.rows.length) onMeer?.(g.id);
-							expanded = toggle(expanded, g.id);
-						}}
-					>
-						{all ? 'Minder' : `Alle ${formatCount(count)} ${g.noun ?? 'verbindingen'}`}
-					</button>
-				{/if}
-				{#if all && count > g.rows.length}
-					<p class="group__caption">
-						{formatCount(g.rows.length)} van {formatCount(count)} geladen.
-						<a href={tableHref} class="link">Alle in een tabel</a>
-					</p>
-				{/if}
-				{#if span && g.id === coverageGroup}
-					<p class="group__caption">
-						Het netwerk bevat {formatCount(span.count)}
-						{span.of}{#if span.first && span.last}, van {span.first.slice(0, 4)} tot {longDate(
-								span.last
-							)}{/if}.
-						<a href="/bronnen#dekking" class="link">Dekking</a>
-					</p>
+							</li>
+						{/each}
+					</ul>
+					{#if g.rows.length > PREVIEW}
+						<p class="group__alle">
+							<AlleN
+								aantal={count}
+								noun={g.noun ?? 'verbindingen'}
+								open={all}
+								onclick={() => {
+									if (!all && (g.total ?? 0) > g.rows.length) onMeer?.(g.id);
+									expanded = toggle(expanded, g.id);
+								}}
+							/>
+						</p>
+					{/if}
+					{#if all && count > g.rows.length}
+						<p class="group__alle">
+							<TekstLink href={tableHref}>Alle {formatCount(count)} in een tabel</TekstLink>
+						</p>
+					{/if}
 				{/if}
 			</section>
 		{/each}
@@ -720,13 +654,9 @@
 
 		{#if verbonden.groups.length > 0}
 			<div class="foot">
-				<a href={tableHref} class="link is-accent" data-sveltekit-noscroll
-					>Alle {formatCount(total)} in een tabel</a
-				>
-				<button type="button" class="link" onclick={copyAll}
-					>{copier.label('all', 'Verzamel')}</button
-				>
-				<button type="button" class="link" onclick={exportCsv}>Exporteer</button>
+				<TekstLink href={tableHref}>Alle {formatCount(total)} in een tabel</TekstLink>
+				<TekstLink onclick={copyAll}>{copier.label('all', 'Verzamel')}</TekstLink>
+				<TekstLink onclick={exportCsv}>Exporteer</TekstLink>
 			</div>
 		{/if}
 		<p class="sr-only" aria-live="polite">{copier.announcement}</p>
@@ -738,7 +668,7 @@
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.head {
@@ -746,60 +676,56 @@
 		align-items: baseline;
 		flex-wrap: wrap;
 		gap: var(--s-2);
-		padding: var(--s-4) var(--s-4) var(--s-3);
+		padding: var(--s-4) var(--s-4) 0;
+	}
+	/* The choose-line: one height (24 px), one baseline, under the heading. */
+	.regel {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0 var(--s-4);
+		padding: var(--s-1) var(--s-4) var(--s-2);
 		border-bottom: 1px solid var(--rule);
+	}
+	.regel__knop,
+	.regel__menuitem {
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.regel__knop {
+		height: var(--veld-h-klein);
+	}
+	.regel__knop:hover,
+	.regel__knop:focus-visible {
+		color: var(--accent);
+	}
+	.regel__menuitem {
+		display: block;
+		width: 100%;
+		padding: var(--s-1) var(--s-3);
+		color: var(--ink-2);
+		text-align: left;
+	}
+	.regel__menuitem:hover,
+	.regel__menuitem:focus-visible {
+		background: var(--paper-2);
+		outline: none;
 	}
 	.head__title {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.head__count {
 		color: var(--ink-3);
-	}
-	.head__space {
-		flex: 1;
-	}
-	.menu {
-		position: relative;
-	}
-	.menu__list {
-		position: absolute;
-		top: calc(100% + 4px);
-		right: 0;
-		z-index: var(--z-float);
-		min-width: 200px;
-		padding: var(--s-1) 0;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
-	}
-	.menu__item {
-		display: block;
-		width: 100%;
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--ink);
-		text-align: left;
-		cursor: pointer;
-	}
-	.menu__item:hover {
-		background: var(--paper-2);
-	}
-	.menu__item.is-active {
-		font-weight: 600;
-	}
-	.menu__item--more {
-		margin-top: var(--s-1);
-		border-top: 1px solid var(--rule);
-		padding-top: var(--s-2);
-		color: var(--ink-2);
 	}
 	.body {
 		flex: 1;
@@ -824,7 +750,7 @@
 		color: var(--ink-2);
 	}
 	.voorlopig-aantal {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -871,7 +797,7 @@
 		padding: 0 var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		font-style: italic;
 		color: var(--ink-3);
 	}
@@ -885,60 +811,28 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
+	}
+	/* Inline, so the caret follows the label's last word, also on a second line. */
+	.group__knop {
+		display: inline;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		text-align: left;
+	}
+	.group__knop:hover {
+		color: var(--accent);
 	}
 	.group__count {
 		color: var(--ink-3);
 	}
 	/* Whether the group is drawn on the canvas, said in words beside its box. */
-	.layer {
-		position: relative;
-		margin-left: auto;
-		align-self: center;
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		cursor: pointer;
-		white-space: nowrap;
-	}
-	.layer::before {
-		content: '';
-		position: absolute;
-		inset: -5px;
-	}
-	.layer:hover {
-		color: var(--ink-2);
-	}
-	.layer__box {
-		width: 12px;
-		height: 12px;
-		display: grid;
-		place-items: center;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-size: var(--t-glyph);
-		line-height: 1;
-		color: var(--paper);
-	}
-	.layer.is-on {
-		color: var(--ink);
-	}
-	.layer.is-on .layer__box {
-		background: var(--ink);
-		border-color: var(--ink);
-	}
 	/* On the margin of the group's head and caption. */
-	.group__volgorde {
-		margin: var(--s-1) 0 var(--s-2);
-		padding: 0 var(--s-4);
-	}
 	.group__melding {
 		margin: 0;
 		padding: 0 var(--s-4) var(--s-1);
@@ -956,28 +850,8 @@
 		margin: 0;
 		padding: 0;
 	}
-	.group__jaren {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-1) var(--s-3);
-		margin: 0;
-		padding: var(--s-1) var(--s-4);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-	}
-	.group__jaren select {
-		height: var(--veld-h-klein);
-		margin-left: var(--s-1);
-		font: inherit;
-		color: var(--ink);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		padding: 0 var(--s-1);
-	}
 	.row__main {
+		position: relative;
 		display: flex;
 		align-items: flex-start;
 		gap: var(--s-3);
@@ -990,62 +864,6 @@
 	.row__main:hover,
 	.row__main:focus-within {
 		background: var(--paper-2);
-	}
-	.row.is-open .row__main {
-		background: var(--accent-soft);
-	}
-	/* + zet de bron in het netwerk; zichtbaar bij hover en focus, en als hij er al in staat. */
-	.row__plus {
-		flex: none;
-		display: grid;
-		place-items: center;
-		width: 22px;
-		height: 22px;
-		margin-top: -1px;
-		padding: 0;
-		border: 1px solid var(--rule-strong);
-		border-radius: 50%;
-		background: var(--paper);
-		color: var(--ink-2);
-		font: 600 var(--t-meta) var(--font-sans);
-		line-height: 1;
-		cursor: pointer;
-		opacity: 0;
-	}
-	.row__main:hover .row__plus,
-	.row__main:focus-within .row__plus,
-	.row__plus.is-in {
-		opacity: 1;
-	}
-	.row__plus.is-in {
-		border-color: var(--ink);
-		background: var(--ink);
-		color: var(--paper);
-		cursor: default;
-	}
-	.row__plus:hover:not(.is-in) {
-		border-color: var(--ink);
-		color: var(--ink);
-	}
-	.row__toggle {
-		flex: none;
-		display: grid;
-		place-items: center;
-		width: 24px;
-		height: 24px;
-		margin: -2px calc(-1 * var(--s-2)) 0 0;
-		padding: 0;
-		border: 0;
-		border-radius: var(--r-1);
-		background: none;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.row__toggle :global(.caret) {
-		margin-left: 0;
-	}
-	.row__toggle:hover {
-		color: var(--ink);
 	}
 	.row__text {
 		flex: 1;
@@ -1065,7 +883,7 @@
 	}
 	/* The case number that tells sister cases apart, in the title where the eye looks. */
 	.row__case {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -1081,7 +899,7 @@
 		line-height: 1.35;
 	}
 	.row__part--lid {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.row__part--proposed {
@@ -1090,33 +908,63 @@
 	.row__part--derived {
 		font-style: italic;
 	}
-	.row__open {
-		margin: 0 var(--s-4) var(--s-2) calc(var(--s-4) + 21px);
+	/* The verbinding in words: the verb in weight, the rest as the source gives it. */
+	.row__hoe {
+		margin-top: 2px;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		line-height: 1.35;
+		color: var(--ink-2);
 	}
-	.link {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
+	.row__hoe b {
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.row__hoe.is-afgeleid {
+		font-style: italic;
+	}
+	/* The passage that carries the verbinding, the words that name the bron marked. */
+	.row__citaat {
+		margin-top: var(--s-1);
+		padding-left: var(--s-2);
+		border-left: 2px solid var(--rule-strong);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		line-height: 1.45;
+		color: var(--ink-2);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.row__citaat mark {
+		background: var(--accent-soft);
+		color: var(--ink);
+	}
+	/* Where the verbinding comes from: on hover and focus, on a phone after a tap (Thijs). */
+	.row__herkomst {
+		display: none;
+		position: absolute;
+		top: calc(100% - var(--s-1));
+		left: calc(var(--s-4) + 21px);
+		z-index: var(--z-float);
+		max-width: calc(100% - var(--s-4) * 2 - 21px);
+		padding: var(--s-1) var(--s-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		box-shadow: var(--shadow-modal);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		color: var(--ink-3);
-		cursor: pointer;
+		line-height: 1.35;
+		color: var(--ink-2);
+		pointer-events: none;
 	}
-	.link:hover {
-		color: var(--accent);
-	}
-	.link.is-accent {
-		color: var(--accent);
-	}
-	.group__more {
+	.row__main:hover .row__herkomst,
+	.row__main:focus-within .row__herkomst,
+	.row.toont .row__herkomst {
 		display: block;
-		padding: var(--s-1) var(--s-4) 2px;
-		border: 0;
-		background: none;
-		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--accent);
-		cursor: pointer;
 	}
 	.foot {
 		display: flex;
@@ -1131,5 +979,77 @@
 		overflow: hidden;
 		clip: rect(0 0 0 0);
 		white-space: nowrap;
+	}
+
+	/* "in netwerk" at the right of a group's heading: the vinkje of FilterOptie. */
+	.group__laag {
+		margin-left: auto;
+		flex: none;
+	}
+	/* One line of controls under a group's heading: the order, the year and the court. */
+	.group__regel {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--s-2) var(--s-4);
+		padding: 0 var(--s-4) var(--s-2);
+	}
+	.jaar-rechter {
+		display: grid;
+		grid-template-columns: auto auto;
+		gap: 0 var(--s-2);
+		max-height: 60vh;
+		overflow-y: auto;
+	}
+	.jaar-rechter__lijst {
+		display: flex;
+		flex-direction: column;
+	}
+	.jaar-rechter__menuitem {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--s-3);
+		padding: var(--s-1) var(--s-3);
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink);
+		text-align: left;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+	.jaar-rechter__menuitem:hover,
+	.jaar-rechter__menuitem:focus-visible {
+		background: var(--paper-2);
+		outline: none;
+	}
+	.jaar-rechter__menuitem[aria-checked='true'] {
+		font-weight: 600;
+	}
+	.jaar-rechter__tel {
+		color: var(--ink-3);
+	}
+
+	/* The + (IconKnop) puts the bron among the chosen ones: on hover and focus, and when it is
+	   there already; on a phone always. */
+	.row__main :global(.row__plus) {
+		opacity: 0;
+	}
+	.row__main:hover :global(.row__plus),
+	.row__main:focus-within :global(.row__plus),
+	.row__main :global(.row__plus.aan) {
+		opacity: 1;
+	}
+	@media (hover: none) {
+		.row__main :global(.row__plus) {
+			opacity: 1;
+		}
+	}
+	.group__alle {
+		margin: 0;
+		padding: var(--s-1) var(--s-4) var(--s-3);
+		font-size: var(--t-meta);
 	}
 </style>

@@ -22,7 +22,6 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow">Documentatie</div>
 		<h1 class="stub-title">Documentatie</h1>
 		<p class="stub-lede">
 			Concordans toont wetten, uitspraken en parlementaire stukken uit officiële bronnen, met de
@@ -44,7 +43,10 @@
 				tekst op volle breedte (<strong>Tekst</strong>) of naast het netwerk (<strong
 					>Netwerk</strong
 				>). Elke andere bron staat naast het netwerk. Verbonden, rechts, somt de verbindingen van de
-				bron op per groep. Het netwerk tekent dezelfde verbindingen.
+				bron op per groep. Elke rij zegt hoe de bron verbonden is: wat ze aanhaalt of wijzigt, in
+				welk lid of welke overweging, met de passage. Een verbinding die afgeleid is, staat schuin.
+				Hover of focus toont waar de verbinding vandaan komt. Een klik op de rij opent de bron in
+				het netwerk. Het netwerk tekent dezelfde verbindingen.
 			</p>
 		</div>
 
@@ -294,18 +296,10 @@
 		padding: 0 var(--s-5);
 	}
 
-	.stub-eyebrow {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-3);
-		margin-bottom: var(--s-4);
-	}
-
 	.stub-title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: var(--lh-tight);
 		color: var(--ink);
 		margin: 0 0 var(--s-4);
@@ -326,7 +320,7 @@
 	.section-title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 800;
 		color: var(--ink);
 		margin: 0 0 var(--s-3);
 	}
@@ -350,7 +344,7 @@
 
 	code,
 	kbd {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: 0.85em;
 		color: var(--ink-2);
 		background: var(--paper-2);
@@ -370,7 +364,7 @@
 		display: flex;
 		gap: var(--s-4);
 		padding: var(--s-2) var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 		border-top: 1px solid var(--rule);
@@ -410,7 +404,7 @@
 	}
 
 	.meta-link {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 		text-decoration: none;

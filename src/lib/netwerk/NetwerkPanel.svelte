@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	// The netwerk of chosen bronnen, over the canvas: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
 	// that join them shown or not, and the context around them cleared. On an empty
@@ -30,7 +31,9 @@
 		telefoon = false,
 		deelLabel = 'Deel',
 		deelMelding = '',
-		onDeel
+		onDeel,
+		omgeving = null,
+		onOmgeving
 	}: {
 		entries: NetwerkEntry[];
 		loading?: boolean;
@@ -45,6 +48,9 @@
 		/** Read out once copied. */
 		deelMelding?: string;
 		onDeel?: () => void;
+		/** The selected bron whose surroundings alone the line below shows (O; Thijs, 10 Oct). */
+		omgeving?: string | null;
+		onOmgeving?: () => void;
 		/** The API ran out of time looking for paths: these are the ones it found (`partial`). */
 		deels?: boolean;
 		/** Adds a bron found by the search, by the name a link uses. */
@@ -214,16 +220,12 @@
 					</li>
 				{/each}
 				{#if gevouwen}
-					<li>
-						<button type="button" class="chip chip--meer" onclick={() => (alles = true)}
-							>en {entries.length - KORT} andere</button
-						>
+					<li class="verder">
+						<TekstLink onclick={() => (alles = true)}>en {entries.length - KORT} andere</TekstLink>
 					</li>
 				{:else if entries.length > KORT + 1}
-					<li>
-						<button type="button" class="chip chip--meer" onclick={() => (alles = false)}
-							>minder</button
-						>
+					<li class="verder">
+						<TekstLink onclick={() => (alles = false)}>minder</TekstLink>
 					</li>
 				{/if}
 				{#if selection}
@@ -255,6 +257,12 @@
 					{/if}
 				</li>
 			</ul>
+			{#if omgeving && onOmgeving}
+				<button type="button" class="omgeving-knop" onclick={onOmgeving}
+					><span class="omgeving-knop__naam">Alleen de omgeving van {omgeving}</span><kbd>O</kbd
+					></button
+				>
+			{/if}
 			{#if entries.length > 1}
 				<label class="tussen">
 					<input type="checkbox" id="netwerk-tussen" checked={tussen} onchange={onTussen} />
@@ -270,6 +278,47 @@
 </section>
 
 <style>
+	/* Only the surroundings of the selected bron: a line, as Toon de bronnen ertussen. */
+	.omgeving-knop {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		margin-top: var(--s-2);
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink-2);
+		text-align: left;
+		cursor: pointer;
+	}
+	.omgeving-knop__naam {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+	.omgeving-knop {
+		max-width: 100%;
+	}
+	.omgeving-knop:hover {
+		color: var(--ink);
+		text-decoration: underline;
+	}
+	.omgeving-knop kbd {
+		padding: 0 var(--s-1);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		font-size: var(--t-ui-micro);
+		color: var(--ink-3);
+	}
+	/* A key says nothing without a keyboard. */
+	@media (hover: none) {
+		.omgeving-knop kbd {
+			display: none;
+		}
+	}
 	.deels {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);
@@ -287,8 +336,8 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		color: var(--ink-2);
 		cursor: pointer;
 	}
@@ -301,7 +350,7 @@
 	.titel {
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.laden {
@@ -315,7 +364,7 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		text-decoration: underline;
@@ -369,7 +418,7 @@
 		border: 1px solid var(--ink);
 		border-radius: 999px;
 		background: var(--paper);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 	}
@@ -441,17 +490,9 @@
 		border-color: var(--ink);
 		color: var(--ink);
 	}
-	.chip--meer {
-		padding: var(--s-1) var(--s-2);
-		border-color: transparent;
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.chip--meer:hover {
-		color: var(--ink);
+	.verder {
+		align-self: center;
+		font-size: var(--t-micro);
 	}
 	.zoek {
 		min-width: 14rem;
@@ -461,7 +502,7 @@
 		align-items: center;
 		gap: var(--s-2);
 		margin-top: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		cursor: pointer;
@@ -487,7 +528,7 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		background: var(--paper);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		line-height: 1.4;
 		color: var(--ink-2);
@@ -499,7 +540,7 @@
 		color: var(--ink);
 	}
 	.voorbeeld-kop {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.netwerk {
@@ -510,7 +551,7 @@
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 		width: 280px;
@@ -528,6 +569,16 @@
 		width: auto;
 		padding-bottom: var(--s-2);
 	}
+	/* On a phone the full width at the top of the canvas, open or folded: no empty strip
+	   beside it (sweep at 375, 10 Oct). */
+	@media (max-width: 767px) {
+		.netwerk:not(.netwerk--start) {
+			left: var(--s-3);
+			right: var(--s-3);
+			width: auto;
+			max-width: none;
+		}
+	}
 	.netwerk--start {
 		top: 18%;
 		left: 50%;
@@ -542,7 +593,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	/* Also the button inside ConfirmButton, a component of its own. */

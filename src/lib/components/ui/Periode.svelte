@@ -81,7 +81,7 @@
 		grid-template-columns: auto minmax(0, 1fr);
 		align-items: center;
 		gap: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -100,7 +100,8 @@
 		border-radius: var(--r-1);
 		background: var(--paper);
 		font: inherit;
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		color: var(--ink);
 	}
 	/* One colour for the whole field, digits and dashes alike: ink when filled, the quiet

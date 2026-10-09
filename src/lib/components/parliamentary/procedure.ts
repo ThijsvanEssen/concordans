@@ -10,6 +10,7 @@ import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { withoutKamerstuk } from './kamerstuk';
 
 type Detail = Schema<'DossierDetailResponse'>;
+import { naarAmendementen, naarStemmingen } from './naar';
 type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
 type Body = Record<string, unknown>;
 
@@ -95,8 +96,29 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdR
 	};
 }
 
+/**
+ * The votes of one day on what is not the bill itself (amendementen, moties) as one line:
+ * "Stemmingen: 33 besluiten" (Thijs, 10 Oct). It leads to the amendementen in the reader
+ * where the day has any, else to the votes in Verbonden. The vote on the bill keeps its line.
+ */
+function stemdagen(decisions: Entry[]): TijdRegel[] {
+	const perDag = Map.groupBy(decisions, (e) => e.date?.slice(0, 10) ?? '');
+	return [...perDag].map(([dag, besluiten]) => ({
+		id: `stemmingen-${dag}`,
+		datum: dag || null,
+		teken: 'activiteit',
+		soort: 'decisions',
+		label: null,
+		zin: `Stemmingen: ${besluiten.length} ${besluiten.length === 1 ? 'besluit' : 'besluiten'}`,
+		actie: besluiten.some((e) => /^amendement/i.test(e.kind ?? ''))
+			? naarAmendementen
+			: naarStemmingen
+	}));
+}
+
 function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel[] {
 	const out: TijdRegel[] = [];
+	const overig: Entry[] = [];
 	const asc = [...entries].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
 	// The papers of the bill of one day on one line: they carry the bill's title, their kind and
 	// number tell them apart. Any other paper (a brief, a motie) on a line of its own, by its title.
@@ -106,6 +128,11 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 		(e) => e.date?.slice(0, 10) ?? ''
 	);
 	for (const e of asc) {
+		// A decision on what the dossier's kind is not (a motie, an amendement) counts per day.
+		if (e.node_type === 'decision' && e.kind && !WETSVOORSTEL.has(e.kind)) {
+			overig.push(e);
+			continue;
+		}
 		if (e.node_type === 'decision') {
 			const b = bodyOf(e);
 			const uitslag = uitslagVan(b);
@@ -179,6 +206,7 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 	// After the bill's papers, so on one day the bill comes first (the sort keeps the order).
 	for (const e of docs.filter((e) => !draagtWetstitel(e.kind)))
 		out.push(eigenStuk(e, groep, dossier));
+	out.push(...stemdagen(overig));
 	return out.sort((a, b) => (a.datum ?? '').localeCompare(b.datum ?? ''));
 }
 
@@ -253,17 +281,6 @@ const FASE_PLAATS: Record<string, number> = {
 	'Nota van wijziging / Amendement': 2,
 	Stemmingen: 4
 };
-const MEERVOUD: Record<string, string> = {
-	amendement: 'amendementen',
-	motie: 'moties',
-	'brief regering': 'brieven van de regering',
-	procedurevergadering: 'procedurevergaderingen',
-	'regeling van werkzaamheden': 'regelingen van werkzaamheden',
-	'technische briefing': 'technische briefings',
-	'plenair debat': 'plenaire debatten',
-	'inbreng verslag': 'inbrengen voor het verslag'
-};
-
 /**
  * The outcome of a vote as the source gives it: aangenomen (true), verworpen (false), or
  * none (null) for a vote that was postponed or has no result yet. The Tweede Kamer gives
@@ -275,38 +292,44 @@ export function uitslagVan(b: { passed?: unknown; result?: unknown }): boolean |
 	return null;
 }
 
+/**
+ * The kinds of dossier that run the procedure of a bill, as the API names them from the
+ * dossier's zaak (`kind`; the phases exist for these alone). Another dossier, a verzameldossier
+ * such as Huurbeleid, has no steps to come: no advice, no Eerste Kamer.
+ */
+const WETSVOORSTEL = new Set(['Wetgeving', 'Initiatiefwetgeving', 'Begroting']);
+export const isWetsvoorstel = (d: Pick<Detail, 'kind'>) => WETSVOORSTEL.has(d.kind ?? '');
+
 export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const st = stand(d);
 	const procedureEntries = entries.filter((e) => metOverig || isProcedure(e));
 	const overig = entries.filter((e) => !isProcedure(e));
-	const telling = Map.groupBy(overig, (e) => (e.kind ?? '').replace(/ \(.*\)$/, ''));
-	const overigZin = [...telling]
-		.sort((a, b) => b[1].length - a[1].length)
-		.map(([k, v]) => `${v.length} ${v.length > 1 ? (MEERVOUD[lower(k)] ?? lower(k)) : lower(k)}`)
-		.join(', ');
 
 	const per = Map.groupBy(procedureEntries, instantie);
 	const groepen: TijdGroep[] = [];
-	const state = st?.bodies.map((b) => b.state) ?? ['open', 'now', 'open'];
+	const wetsvoorstel = isWetsvoorstel(d);
+	// Without a bill nothing is to come: no state per Kamer, so no line of what can follow.
+	const state = st?.bodies.map((b) => b.state) ?? (wetsvoorstel ? ['open', 'now', 'open'] : []);
 
 	const rvs = regelsVan(per.get('rvs') ?? [], 'rvs', d.number);
-	groepen.push({
-		id: 'rvs',
-		titel: 'Raad van State',
-		regels: rvs.length
-			? rvs
-			: [
-					{
-						id: 'rvs-nog',
-						datum: null,
-						teken: 'verwacht',
-						zin:
-							d.kind === 'Initiatiefwetgeving'
-								? 'Het advies kan nog volgen.'
-								: 'Geen advies in de gegevens.'
-					}
-				]
-	});
+	if (rvs.length || wetsvoorstel)
+		groepen.push({
+			id: 'rvs',
+			titel: 'Raad van State',
+			regels: rvs.length
+				? rvs
+				: [
+						{
+							id: 'rvs-nog',
+							datum: null,
+							teken: 'verwacht',
+							zin:
+								d.kind === 'Initiatiefwetgeving'
+									? 'Het advies kan nog volgen.'
+									: 'Geen advies in de gegevens.'
+						}
+					]
+		});
 
 	const tk = regelsVan(per.get('tk') ?? [], 'tk', d.number);
 	// De wijze staat in tk_decision, niet in het besluit zelf.
@@ -330,8 +353,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	groepen.push({
 		id: 'tk',
 		titel: 'Tweede Kamer',
-		regels: tk,
-		noot: overig.length && !metOverig ? `Ook in de gegevens: ${overigZin}.` : null
+		regels: tk
 	});
 
 	const ek = regelsVan(per.get('ek') ?? [], 'ek', d.number);

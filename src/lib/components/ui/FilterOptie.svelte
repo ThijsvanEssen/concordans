@@ -18,6 +18,7 @@
 		bezig = false,
 		wrap = false,
 		gedimd = false,
+		inline = false,
 		title
 	}: {
 		label: string;
@@ -39,6 +40,8 @@
 		wrap?: boolean;
 		/** On, but nothing of it shown for another switch (its grouping off): all of it grey. */
 		gedimd?: boolean;
+		/** On a line with other things, as wide as its label: "in netwerk" in a group's heading. */
+		inline?: boolean;
 		title?: string;
 	} = $props();
 </script>
@@ -51,6 +54,7 @@
 	class:gedimd
 	class:in={indent}
 	class:diep={indent === 'deep'}
+	class:inline
 	aria-pressed={on}
 	title={title ?? label}
 	onclick={onToggle}
@@ -78,7 +82,7 @@
 		border: 0;
 		background: transparent;
 		font: inherit;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 		text-align: left;
@@ -91,9 +95,14 @@
 		outline: 2px solid var(--accent);
 		outline-offset: 1px;
 	}
+	.optie.inline {
+		width: auto;
+		min-height: 0;
+		font-size: var(--t-micro);
+	}
 	.aan {
 		color: var(--ink);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.leeg {
 		color: var(--ink-3);

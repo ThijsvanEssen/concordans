@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { authorCite, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
@@ -270,11 +271,8 @@
 									>
 								{/each}
 								{#if named.length < g.named.length}
-									<button
-										type="button"
-										class="reader-parties-more"
-										onclick={() => (showAllParties = true)}
-										>en {g.named.length - named.length} meer</button
+									<TekstLink onclick={() => (showAllParties = true)}
+										>en {g.named.length - named.length} meer</TekstLink
 									>
 								{/if}
 								{#if g.anonymous.length > 0}
@@ -402,7 +400,7 @@
 	}
 
 	.reader-meta-item {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -426,7 +424,7 @@
 		color: var(--ink);
 	}
 	.samenhang-meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -443,7 +441,7 @@
 		color: var(--ink-2);
 	}
 	.samenhang-zin footer {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -452,14 +450,14 @@
 		margin: var(--s-6) 0 0;
 		padding-top: var(--s-3);
 		border-top: 1px solid var(--rule);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.reader-source-link {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 		text-decoration: none;
 		border: 1px solid var(--rule-strong);
@@ -507,9 +505,9 @@
 	}
 
 	.reader-parties-role {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		text-align: left;
 		white-space: nowrap;
@@ -532,14 +530,14 @@
 	}
 	.reader-parties-count {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
 
 	.reader-parties-party {
 		margin-left: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
@@ -560,7 +558,7 @@
 		gap: var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: var(--lh-snug);
 		color: var(--ink);
 		margin: 2.2em 0 0.5em;
@@ -594,7 +592,7 @@
 		padding: 2px var(--s-2);
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
@@ -706,7 +704,7 @@
 		opacity: 0;
 		display: flex;
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 
@@ -726,12 +724,12 @@
 
 	:global(.reader-para-btn) {
 		padding: 2px var(--s-2);
-		font-size: var(--t-micro);
+		font-size: var(--t-ui-micro);
 	}
 
 	.reader-para-subtitle {
 		font-family: var(--font-serif);
-		font-weight: 500;
+		font-weight: 600;
 		font-size: var(--t-body-2);
 		color: var(--ink-2);
 		margin: 0 0 0.5em;
@@ -750,14 +748,14 @@
 	/* The lines the Parket signs a conclusion with, under the text. */
 	.reader-signature {
 		margin: var(--s-6) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
 
 	.reader-translation {
 		margin: var(--s-2) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -767,15 +765,5 @@
 		font-weight: 400;
 		font-style: italic;
 		color: var(--ink-3);
-	}
-	.reader-parties-more {
-		margin: var(--s-1) 0 var(--s-3);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--accent);
-		cursor: pointer;
 	}
 </style>

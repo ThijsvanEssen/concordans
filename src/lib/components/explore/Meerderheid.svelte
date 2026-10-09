@@ -55,7 +55,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}

@@ -20,7 +20,7 @@ src/routes/
 src/lib/
   vocabulary.ts               collections, relations, node ids, BRON_LABEL, MODES
   bron/                       bronHref (every link to a bron), leesbaar (readable addresses), anchor,
-                              BronLink (the card a click opens), names, tab titles, KindGlyph
+                              BronLink (opens in Netwerk, card on hover), names, tab titles, KindGlyph
   api/                        client, generated types, records (once), helpers
   graph/                      GraphNode/GraphEdge types, GraphStore (store/*), hulls, anchors
   netwerk/                    the composed netwerk: chosen bronnen, clusters, the panel Netwerk

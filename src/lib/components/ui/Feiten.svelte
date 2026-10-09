@@ -25,7 +25,7 @@
 		margin: 0;
 	}
 	.feiten :global(dt) {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -40,7 +40,7 @@
 		line-height: var(--lh-snug);
 	}
 	.klein :global(dd) {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 </style>

@@ -119,7 +119,7 @@
 	}
 	.wanneer {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -128,7 +128,7 @@
 		display: grid;
 		grid-template-columns: minmax(var(--reader-term, var(--s-8)), max-content) minmax(0, 1fr);
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 		color: var(--ink-2);

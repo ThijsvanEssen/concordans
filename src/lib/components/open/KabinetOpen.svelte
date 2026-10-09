@@ -97,6 +97,5 @@
 			]
 		: []}
 	lezen={bronHref(bron, { keepMode: false, mode: 'read' })}
-	lezenLabel="Kabinet lezen"
-	netwerk={bronHref(bron, { keepMode: false, mode: 'graph' })}
+	lezenLabel={naam}
 />

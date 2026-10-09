@@ -5,6 +5,8 @@
 	// Uitkomst (vorm en kleur); wat nog kan volgen staat gestippeld en zegt dat het kan volgen.
 	import { dagMaand, type TijdGroep } from './tijdlijn';
 	import { vandaag } from '$lib/text/datum';
+	import Caret from '$lib/components/ui/Caret.svelte';
+	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
 	// Het teken op de lijn is het bronteken zelf; de uitkomst zit in vulling en kleur.
 	const vormVanSoort = (s: string | null | undefined) =>
@@ -13,12 +15,16 @@
 	let {
 		groepen,
 		jaar = 'anders',
-		datums = true
+		datums = true,
+		inklapbaar = false
 	}: {
 		groepen: TijdGroep[];
 		/** The year under the day: always, never, or only when it is not this year. */
 		jaar?: boolean | 'anders';
 		/** Zonder datumkolom als de kop de dag al noemt. */ datums?: boolean;
+		/** Each group's heading opens and closes it (the procedure of a dossier: the Raad van
+		 *  State, the Tweede and the Eerste Kamer); open until closed, kept per heading. */
+		inklapbaar?: boolean;
 	} = $props();
 	const ditJaar = vandaag().slice(0, 4);
 	const metJaar = (iso: string) =>
@@ -27,49 +33,81 @@
 
 <div class="tl" class:zonder={!datums}>
 	{#each groepen as g (g.id)}
+		{@const sleutel = `sub:${g.titel}`}
+		{@const open = !inklapbaar || isOpen(sleutel, true)}
 		<section class="groep">
 			<h4 class="kop">
-				{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}
+				{#if inklapbaar}
+					<button
+						type="button"
+						class="kop-knop"
+						aria-expanded={open}
+						onclick={() => zetOpen(sleutel, !open)}
+						>{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}<Caret {open} side /></button
+					>
+				{:else}
+					{g.titel}{#if g.sub}<span class="sub">{g.sub}</span>{/if}
+				{/if}
 			</h4>
-			<ol class="regels">
-				{#each g.regels as r (r.id)}
-					{@const v = vormVanSoort(r.soort)}
-					<li class="regel regel--{r.teken}" class:groot={r.groot}>
-						<span class="datum"
-							>{r.datum ? dagMaand(r.datum) : ''}{#if r.datum && metJaar(r.datum)}<span class="j"
-									>{r.datum.slice(0, 4)}</span
-								>{/if}</span
-						>
-						{#if v}
-							<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
-								><path
-									d={v.d}
-									fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
-									class:vol={v.wijze !== 'lijn' &&
-										(r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
-								/></svg
+			{#if open}
+				<ol class="regels">
+					{#each g.regels as r (r.id)}
+						{@const v = vormVanSoort(r.soort)}
+						<li class="regel regel--{r.teken}" class:groot={r.groot}>
+							<span class="datum"
+								>{r.datum ? dagMaand(r.datum) : ''}{#if r.datum && metJaar(r.datum)}<span class="j"
+										>{r.datum.slice(0, 4)}</span
+									>{/if}</span
 							>
-						{:else}
-							<span class="teken" aria-hidden="true"></span>
-						{/if}
-						<span class="tekst">
-							{#if r.label}<span class="label">{r.label}</span>{/if}
-							{#if r.ref}<BronLink ref={r.ref} class="zin">{r.zin}</BronLink>{:else if r.href}<a
-									href={r.href}
-									rel={/^https?:/.test(r.href) ? 'external' : undefined}
-									class="zin">{r.zin}</a
-								>{:else}<span class="zin">{r.zin}</span>{/if}
-							{#if r.meta}<span class="meta">{r.meta}</span>{/if}
-						</span>
-					</li>
-				{/each}
-			</ol>
-			{#if g.noot}<p class="noot">{g.noot}</p>{/if}
+							{#if v}
+								<svg class="bteken" width="14" height="14" viewBox="-1 -1 18 18" aria-hidden="true"
+									><path
+										d={v.d}
+										fill-rule={v.wijze === 'gat' ? 'evenodd' : 'nonzero'}
+										class:vol={v.wijze !== 'lijn' &&
+											(r.teken === 'ja' || r.teken === 'stuk' || r.teken === 'activiteit')}
+									/></svg
+								>
+							{:else}
+								<span class="teken" aria-hidden="true"></span>
+							{/if}
+							<span class="tekst">
+								{#if r.label}<span class="label">{r.label}</span>{/if}
+								{#if r.ref}<BronLink ref={r.ref} class="zin">{r.zin}</BronLink>{:else if r.href}<a
+										href={r.href}
+										rel={/^https?:/.test(r.href) ? 'external' : undefined}
+										class="zin">{r.zin}</a
+									>{:else if r.actie}<button type="button" class="zin zin--actie" onclick={r.actie}
+										>{r.zin}</button
+									>{:else}<span class="zin">{r.zin}</span>{/if}
+								{#if r.meta}<span class="meta">{r.meta}</span>{/if}
+							</span>
+						</li>
+					{/each}
+				</ol>
+				{#if g.noot}<p class="noot">{g.noot}</p>{/if}
+			{/if}
 		</section>
 	{/each}
 </div>
 
 <style>
+	/* A line that leads to a list on the page: read as the other lines, underlined as a link. */
+	.zin--actie {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		text-align: left;
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.zin--actie:hover {
+		text-decoration-color: currentColor;
+	}
 	.tl {
 		display: flex;
 		flex-direction: column;
@@ -79,13 +117,29 @@
 		margin: 0;
 		padding-bottom: var(--s-2);
 		border-bottom: 2px solid var(--ink);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
 		display: flex;
 		gap: var(--s-2);
 		align-items: baseline;
+	}
+	/* The heading is the button: its own letter, no frame. */
+	.kop-knop {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		text-align: left;
+	}
+	.kop-knop:hover {
+		color: var(--accent);
 	}
 	.sub {
 		font-weight: 400;
@@ -134,7 +188,7 @@
 	}
 	.datum {
 		padding: var(--s-2) 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		text-align: right;
@@ -225,9 +279,9 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.regel--ja .label {
@@ -251,7 +305,7 @@
 	.groot .zin,
 	.groot :global(a.zin) {
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.regel--verwacht .zin,
 	.regel--verwacht :global(a.zin) {
@@ -259,13 +313,13 @@
 		font-style: italic;
 	}
 	.meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.noot {
 		margin: var(--s-2) 0 0 calc(4rem + 20px + var(--s-4));
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

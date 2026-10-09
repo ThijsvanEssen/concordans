@@ -6,9 +6,12 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
-	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
+	import UitkomstTeken from '$lib/components/parliamentary/Uitkomst.svelte';
 	import { buildBronHref } from '$lib/bron/href';
 	import { korteDatum } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
@@ -26,13 +29,15 @@
 		onderwerpSleutel,
 		samen,
 		schrijfCodering,
-		telRichting,
 		type Codering,
 		type Richting
 	} from '$lib/onderwerpen/richting';
 	import {
+		RICHTING_RIJEN,
+		csvTabel,
+		csvTekst,
 		filter,
-		naarCsv,
+		richtingTabel,
 		opOnderwerp,
 		perJaar,
 		perSoort,
@@ -44,6 +49,7 @@
 		type Besluit,
 		type Filter,
 		type Getelden,
+		type RichtingRij,
 		type Stem,
 		type Telling,
 		type Uitkomst
@@ -73,6 +79,8 @@
 		...(t ? { to: t } : {})
 	});
 	const fractie = $derived(params.get('fractie') ?? '');
+	/** On a phone the facets behind Verfijnen (N), opened in place. */
+	let verfijnenOpen = $state(false);
 	const f = $derived<Filter>({
 		soort: params.get('soort') || undefined,
 		uitkomst: (['aangenomen', 'verworpen', 'overig'] as const).find(
@@ -81,8 +89,11 @@
 		jaar: params.get('jaar') || undefined,
 		stem: (['voor', 'tegen'] as const).find((s) => s === params.get('stem'))
 	});
+	/** A direction as filter: the list is then the moties of the table Richting. */
+	const richtingF = $derived(RICHTING_RIJEN.find((r) => r === params.get('richting')));
 
-	const FILTERS = ['soort', 'uitkomst', 'jaar', 'stem'];
+	const RIJ_LABEL: Record<RichtingRij, string> = { ...RICHTING_LABEL, geen: 'Niet gecodeerd' };
+	const FILTERS = ['soort', 'uitkomst', 'jaar', 'stem', 'richting'];
 	type Patch = Record<string, string | null>;
 	/** A number's list: its own filters only, the others off. */
 	function hrefMet(patch: Patch, alleen = true) {
@@ -173,7 +184,7 @@
 		)
 	);
 	$effect(() => {
-		if (bron !== 'api' || !termenSleutel) return;
+		if (bron !== 'api' || !termenSleutel || richtingF) return;
 		const query = lijstVraag;
 		const ac = new AbortController();
 		apiLijst = [];
@@ -242,6 +253,22 @@
 			for (let t = rij.shift(); t !== undefined; t = rij.shift()) await doe(t);
 		};
 		await Promise.all([werk(), werk()]);
+	}
+
+	/** Every decision of one question, page after page, CSV_MAX at most. */
+	async function alle(query: Record<string, unknown>, signal?: AbortSignal) {
+		const uit: Besluit[] = [];
+		for (let offset = 0; offset < CSV_MAX; offset += PAGINA) {
+			const r = await unwrap(
+				api.GET('/api/decisions', {
+					params: { query: { ...query, limit: PAGINA, offset } },
+					signal
+				})
+			);
+			uit.push(...r.items);
+			if (r.items.length < PAGINA || offset + PAGINA >= r.total) break;
+		}
+		return uit;
 	}
 
 	$effect(() => {
@@ -344,22 +371,10 @@
 	const alles = $derived(api_ ? getelden!.alles : totaal(besluiten, stemmen));
 	const soorten = $derived(api_ ? getelden!.soorten : perSoort(besluiten, stemmen));
 	const jaren = $derived(api_ ? getelden!.jaren : perJaar(besluiten, stemmen));
-	const lijst = $derived(bron === 'api' ? apiLijst : filter(besluiten, f, stemmen));
-	/** How many the list holds, also where only a page of it is loaded. */
-	const lijstAantal = $derived(bron === 'api' ? (lijstTotaal ?? 0) : lijst.length);
 	const bezig = $derived(bron === 'zelf' ? laden : bron === null || tellenLaden);
 	const leegte = $derived(
 		bron === 'zelf' ? !laden && !besluiten.length : bron === 'api' && apiTotaal === 0
 	);
-	/** A fractie's vote on a row: known per row where the page counted, else from the filter. */
-	const stemVan = (d: Besluit): Stem | undefined =>
-		!fractie ? undefined : bron === 'api' ? f.stem : stemmen.get(d.key);
-	// Another list starts at its first rows again.
-	let getoond = $derived.by(() => {
-		void lijst;
-		return STAP;
-	});
-
 	const KOLOMMEN: { uitkomst: Uitkomst; label: string }[] = [
 		{ uitkomst: 'aangenomen', label: 'Aangenomen' },
 		{ uitkomst: 'verworpen', label: 'Verworpen' }
@@ -376,7 +391,8 @@
 			f.soort && { k: 'soort', label: f.soort },
 			f.uitkomst && { k: 'uitkomst', label: UITKOMST_LABEL[f.uitkomst] },
 			f.jaar && { k: 'jaar', label: f.jaar },
-			f.stem && { k: 'stem', label: `${fractie} stemde ${f.stem}` }
+			f.stem && { k: 'stem', label: `${fractie} stemde ${f.stem}` },
+			richtingF && { k: 'richting', label: RIJ_LABEL[richtingF] }
 		].filter((x): x is { k: string; label: string } => !!x)
 	);
 
@@ -389,22 +405,28 @@
 	/** The whole list behind the number for the CSV, CSV_MAX at most. */
 	const CSV_MAX = 2000;
 	async function heleLijst(): Promise<Besluit[]> {
-		if (bron !== 'api') return lijst;
-		const alle: Besluit[] = [];
-		for (let offset = 0; offset < Math.min(lijstAantal, CSV_MAX); offset += PAGINA) {
-			const r = await unwrap(
-				api.GET('/api/decisions', {
-					params: { query: { ...lijstVraag, limit: PAGINA, offset } }
+		return hier ? lijst : alle(lijstVraag);
+	}
+	/** The fractie's vote per decision of the list: where the API counted, asked as two lists. */
+	async function stemmenVan(rijen: Besluit[]): Promise<ReadonlyMap<string, Stem>> {
+		if (!fractie) return new Map();
+		if (richtingF) return motieStemmenAlle;
+		if (bron !== 'api') return stemmen;
+		if (f.stem) return new Map(rijen.map((d) => [d.key, f.stem!] as const));
+		const m = new Map<string, Stem>();
+		await Promise.all(
+			(['voor', 'tegen'] as const).map((vote) =>
+				alle({ ...lijstVraag, party: fractie, vote }).then((xs) => {
+					for (const d of xs) m.set(d.key, vote);
 				})
-			);
-			alle.push(...r.items);
-			if (r.items.length < PAGINA) break;
-		}
-		return alle;
+			)
+		);
+		return m;
 	}
 	async function exporteer() {
 		exporteren = true;
 		const lijst = await heleLijst().catch(() => [] as Besluit[]);
+		const stemmenLijst = await stemmenVan(lijst).catch(() => new Map<string, Stem>());
 		// The names the decisions carry (API 0.79.30); asked by number only where they do not.
 		const namen = new Map<string, string>();
 		for (const d of lijst)
@@ -424,23 +446,25 @@
 		);
 		const motie = await motieVelden(lijst);
 		exporteren = false;
-		const veilig =
-			naam
-				.replace(/[\\/:*?"<>|]+/g, ' ')
-				.slice(0, 80)
-				.trim() || 'onderwerp';
 		download(
-			`Overzicht ${veilig}.csv`,
-			naarCsv(
-				lijst,
-				page.url.origin,
-				fractie || null,
-				bron === 'api' && f.stem ? new Map(lijst.map((d) => [d.key, f.stem!] as const)) : stemmen,
-				namen,
-				lijst.some(isMotie) ? motie : undefined
+			`Overzicht ${bestandsnaam()}.csv`,
+			csvTekst(
+				csvTabel(
+					lijst,
+					page.url.origin,
+					fractie || null,
+					stemmenLijst,
+					namen,
+					lijst.some(isMotie) ? motie : undefined
+				)
 			)
 		);
 	}
+	const bestandsnaam = () =>
+		naam
+			.replace(/[\\/:*?"<>|]+/g, ' ')
+			.slice(0, 80)
+			.trim() || 'onderwerp';
 
 	// ── Richting: the researcher's own coding of a motie (stance-voorstel, 10 Oct) ──────
 	// Positief, negatief or neutraal with respect to this topic, kept in this browser per
@@ -490,34 +514,121 @@
 		dictumOpen = open;
 	}
 
-	/** Counted over the moties on the page that are coded. */
-	const richtingTelling = $derived(
-		telRichting(
-			lijst
-				.filter(isMotie)
-				.flatMap((d) =>
-					mijn[d.key]
-						? [{ richting: mijn[d.key], uitkomst: uitkomstVan(d), stem: stemVan(d) ?? null }]
-						: []
-				)
-		)
+	// ── All moties of the selection, for the table Richting ───────────────
+	// Counted over every motie within the Kamer and the period, not only the rows of the list:
+	// asked once the table is in view, per kind of motie, with the fractie's voor and tegen as
+	// two more lists. The table counts the rows of the CSV (csvTabel), so the two agree.
+	let moties = $state<Besluit[] | null>(null);
+	let motieStemmen = $state<Map<string, Stem>>(new Map());
+	let motiesLaden = $state(false);
+	let richtingZien = $state(false);
+	const motieSoorten = $derived(
+		soorten
+			.map(([k]) => k)
+			.filter((k) => /^motie/i.test(k))
+			.join('|')
 	);
-	const motiesOpPagina = $derived(lijst.filter(isMotie).length);
-	const hoofdletter = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
-	const deel = (t: { positief: number; negatief: number; neutraal: number }) =>
-		RICHTINGEN.filter((r) => t[r] > 0)
-			.map((r) => `${getal(t[r])} ${r}`)
-			.join(', ');
+	$effect(() => {
+		if (bron !== 'api' || !(richtingZien || richtingF) || !motieSoorten || !termenSleutel) return;
+		const basis = basisVan(termenSleutel.split('|'), kamer, van, tot);
+		const wie = fractie;
+		const ac = new AbortController();
+		moties = null;
+		motieStemmen = new Map();
+		motiesLaden = true;
+		const taken = motieSoorten
+			.split('|')
+			.flatMap((kind) => [
+				{ kind, vote: null },
+				...(wie ? (['voor', 'tegen'] as const).map((vote) => ({ kind, vote })) : [])
+			]);
+		const gezien = new Map<string, Besluit>();
+		const st = new Map<string, Stem>();
+		tweeTegelijk(taken, ({ kind, vote }) =>
+			alle({ ...basis, kind, ...(vote ? { party: wie, vote } : {}) }, ac.signal).then((xs) => {
+				for (const d of xs) {
+					if (vote) st.set(d.key, vote);
+					else gezien.set(d.key, d);
+				}
+			})
+		)
+			.then(() => {
+				moties = [...gezien.values()].sort(
+					(a, b) => (b.date ?? '').localeCompare(a.date ?? '') || a.key.localeCompare(b.key)
+				);
+				motieStemmen = st;
+			})
+			.catch(() => {})
+			.finally(() => {
+				if (!ac.signal.aborted) motiesLaden = false;
+			});
+		return () => ac.abort();
+	});
+	const alleMoties = $derived(bron === 'zelf' ? besluiten.filter(isMotie) : moties);
+	const motieStemmenAlle = $derived(bron === 'zelf' ? stemmen : motieStemmen);
+	const heeftMoties = $derived(soorten.some(([k, t]) => /^motie/i.test(k) && t.totaal > 0));
+	const richtingRijen = $derived(
+		alleMoties
+			? richtingTabel(
+					csvTabel(
+						alleMoties,
+						'',
+						fractie || null,
+						motieStemmenAlle,
+						new Map(),
+						new Map(alleMoties.map((d) => [d.key, { richting: mijn[d.key] ?? '' }] as const))
+					),
+					fractie || null
+				)
+			: null
+	);
+	const gecodeerd = $derived((alleMoties ?? []).filter((d) => mijn[d.key]).length);
+
+	/** The list on this page: asked of the API page by page, or filtered here where all is here. */
+	const hier = $derived(bron !== 'api' || !!richtingF);
+	const lijst = $derived(
+		richtingF
+			? filter(alleMoties ?? [], f, motieStemmenAlle).filter((d) =>
+					richtingF === 'geen' ? !mijn[d.key] : mijn[d.key] === richtingF
+				)
+			: bron === 'api'
+				? apiLijst
+				: filter(besluiten, f, stemmen)
+	);
+	/** How many the list holds, also where only a page of it is loaded. */
+	const lijstAantal = $derived(hier ? lijst.length : (lijstTotaal ?? 0));
+	/** A fractie's vote on a row: known per row where the page counted, else from the filter. */
+	const stemVan = (d: Besluit): Stem | undefined =>
+		!fractie
+			? undefined
+			: richtingF
+				? motieStemmenAlle.get(d.key)
+				: bron === 'api'
+					? (f.stem ?? motieStemmen.get(d.key))
+					: stemmen.get(d.key);
+	// Another list starts at its first rows again.
+	let getoond = $derived.by(() => {
+		void lijst;
+		return STAP;
+	});
+
+	/** Once in view, the table Richting asks for its moties. */
+	function inBeeld(el: HTMLElement) {
+		const kijk = new IntersectionObserver(([e]) => {
+			if (!e.isIntersecting) return;
+			richtingZien = true;
+			kijk.disconnect();
+		});
+		kijk.observe(el);
+		return { destroy: () => kijk.disconnect() };
+	}
 
 	/** The coding of this topic as a file, and a file read back into it. */
 	function bewaarCodering() {
-		const titels = new Map(lijst.map((d) => [d.key, d.subject?.trim() ?? ''] as const));
-		const veilig =
-			naam
-				.replace(/[\\/:*?"<>|]+/g, ' ')
-				.slice(0, 80)
-				.trim() || 'onderwerp';
-		download(`Richting ${veilig}.csv`, coderingNaarCsv(onderwerp, mijn, titels));
+		const titels = new Map(
+			[...(alleMoties ?? []), ...lijst].map((d) => [d.key, d.subject?.trim() ?? ''] as const)
+		);
+		download(`Richting ${bestandsnaam()}.csv`, coderingNaarCsv(onderwerp, mijn, titels));
 	}
 	let importFout = $state(false);
 	async function laadCodering(e: Event) {
@@ -575,342 +686,350 @@
 	{/if}
 {/snippet}
 
+<!-- One form for every table of the page: a row per kind, year or direction; all, aangenomen,
+     verworpen, and the chosen fractie's voor and tegen. Every number opens its list. -->
 {#snippet tabel(
-	titel: string,
 	kolom: string,
 	rijen: [string, Telling][],
-	patchVan: (k: string) => Patch
+	patchVan: (k: string) => Patch,
+	labelVan: (k: string) => string = (k) => k,
+	wacht = false
 )}
-	<section class="tabel" aria-labelledby="t-{kolom}">
-		<h2 id="t-{kolom}">{titel}</h2>
-		<table>
-			<thead>
+	<table>
+		<thead>
+			{#if fractie}
+				<!-- The fractie's name once above its two columns: short headers fit a phone. -->
+				<tr class="boven">
+					<td colspan="4"></td>
+					<th scope="colgroup" colspan="2" class="getal">{fractie}</th>
+				</tr>
+			{/if}
+			<tr>
+				<th scope="col">{kolom}</th>
+				<th scope="col" class="getal">Alle</th>
+				{#each KOLOMMEN as k (k.uitkomst)}<th scope="col" class="getal">{k.label}</th>{/each}
 				{#if fractie}
-					<!-- The fractie's name once above its two columns: short headers fit a phone. -->
-					<tr class="boven">
-						<td colspan="4"></td>
-						<th scope="colgroup" colspan="2" class="getal">{fractie}</th>
-					</tr>
+					<th scope="col" class="getal">voor</th>
+					<th scope="col" class="getal">tegen</th>
 				{/if}
+			</tr>
+		</thead>
+		<tbody>
+			{#each rijen as [k, t] (k)}
 				<tr>
-					<th scope="col">{kolom}</th>
-					<th scope="col" class="getal">Besluiten</th>
-					{#each KOLOMMEN as k (k.uitkomst)}<th scope="col" class="getal">{k.label}</th>{/each}
+					<th scope="row">{labelVan(k)}</th>
+					<td class="getal">{@render cel(t.totaal, patchVan(k), wacht)}</td>
+					{#each KOLOMMEN as c (c.uitkomst)}
+						<td class="getal"
+							>{@render cel(t[c.uitkomst], { ...patchVan(k), uitkomst: c.uitkomst }, wacht)}</td
+						>
+					{/each}
 					{#if fractie}
-						<th scope="col" class="getal heel">voor</th>
-						<th scope="col" class="getal heel">tegen</th>
+						<td class="getal"
+							>{@render cel(t.voor, { ...patchVan(k), stem: 'voor' }, wacht || stemmenLaden)}</td
+						>
+						<td class="getal"
+							>{@render cel(t.tegen, { ...patchVan(k), stem: 'tegen' }, wacht || stemmenLaden)}</td
+						>
 					{/if}
 				</tr>
-			</thead>
-			<tbody>
-				{#each rijen as [k, t] (k)}
-					<tr>
-						<th scope="row">{k}</th>
-						<td class="getal">{@render cel(t.totaal, patchVan(k))}</td>
-						{#each KOLOMMEN as c (c.uitkomst)}
-							<td class="getal"
-								>{@render cel(t[c.uitkomst], { ...patchVan(k), uitkomst: c.uitkomst })}</td
-							>
-						{/each}
-						{#if fractie}
-							<td class="getal"
-								>{@render cel(t.voor, { ...patchVan(k), stem: 'voor' }, stemmenLaden)}</td
-							>
-							<td class="getal"
-								>{@render cel(t.tegen, { ...patchVan(k), stem: 'tegen' }, stemmenLaden)}</td
-							>
-						{/if}
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</section>
+			{/each}
+		</tbody>
+	</table>
 {/snippet}
 
 <div class="overzicht">
 	<p class="terug"><a href="/onderwerpen">Onderwerpen</a></p>
-	<h1 class="titel">{naam || 'Overzicht'}</h1>
+	<!-- The heading with its action at the right (docs/bediening.md). -->
+	<header class="kop">
+		<h1 class="titel">{naam || 'Overzicht'}</h1>
+		{#if termen.length}
+			<button
+				type="button"
+				class="actie-knop"
+				onclick={exporteer}
+				disabled={!lijst.length || exporteren}>{exporteren ? 'Ophalen…' : 'CSV'}</button
+			>
+		{/if}
+	</header>
 
 	{#if !termen.length}
 		<p class="status">Geen onderwerp gekozen.</p>
 	{:else}
-		<div class="keuzes">
-			<Keuze
-				label="Kamer"
-				klein
-				waarde={kamer || 'beide'}
-				onKies={(w) => zet({ kamer: w === 'beide' ? null : w })}
-				opties={[
-					{ waarde: 'beide', label: 'Beide' },
-					{ waarde: 'TK', label: 'Tweede Kamer' },
-					{ waarde: 'EK', label: 'Eerste Kamer' }
-				]}
-			/>
-			<label class="fractie">
-				<span>Fractie</span>
-				<select
-					value={fractie}
-					onchange={(e) => zet({ fractie: e.currentTarget.value || null, stem: null })}
-				>
-					<option value="">Geen</option>
-					{#if fractie && !fractieKeuze.some((x) => x.naam === fractie)}
-						<option value={fractie}>{fractie}</option>
-					{/if}
-					<optgroup label="Huidige fracties">
-						{#each fractieKeuze.filter((x) => x.active) as x (x.key)}
-							<option value={x.naam}>{x.naam}</option>
-						{/each}
-					</optgroup>
-					<optgroup label="Eerdere fracties">
-						{#each fractieKeuze.filter((x) => !x.active) as x (x.key)}
-							<option value={x.naam}>{x.naam}</option>
-						{/each}
-					</optgroup>
-				</select>
-			</label>
-		</div>
-		<div class="periode">
+		<!-- The choose-line: the period, nothing else. -->
+		<div class="regel">
 			<Periode {van} {tot} onChange={(v, t) => zet({ van: v || null, tot: t || null })} />
 		</div>
-
-		<p class="stand">
-			{#each bron === 'zelf' ? perTerm : [] as p (p.term)}
-				<span>
-					‘{p.term}’:
-					{#if p.api === null}
-						laden…
-					{:else if p.api > p.nagelopen}
-						de nieuwste {getal(p.nagelopen)} van {getal(p.api)} besluiten nagelopen, terug tot {korteDatum(
-							p.tot
-						)}{laden ? ', laden…' : ''}
-					{:else}
-						{getal(p.api)} besluiten nagelopen{laden && p.nagelopen < p.api ? ', laden…' : ''}
-					{/if}
-				</span>
-			{/each}
-		</p>
-
-		{#if fout && !besluiten.length && bron === 'zelf'}
-			<p class="status status--fout">Het overzicht kon niet worden geladen.</p>
-		{:else if leegte}
-			<p class="status">Geen besluiten met deze woorden in de titel.</p>
-		{:else}
-			<p class="totaal">
-				{@render cel(alles.totaal, {}, bezig)}
-				{alles.totaal === 1 ? 'besluit' : 'besluiten'}{bezig ? ', tellen…' : ''}
-			</p>
-			<div class="tabellen" class:tabellen--fractie={!!fractie}>
-				{@render tabel('Per soort', 'Soort', soorten, (k) => ({ soort: k }))}
-				{@render tabel('Per jaar', 'Jaar', jaren, (k) => ({ jaar: k }))}
-			</div>
-
-			<section class="lijst" aria-labelledby="t-lijst">
-				<div class="lijst__kop">
-					<h2 id="t-lijst">
-						{getal(lijstAantal)}
-						{lijstAantal === 1 ? 'besluit' : 'besluiten'}
-					</h2>
-					{#each filterLabels as c (c.k)}
-						<a class="chip" href={hrefMet({ [c.k]: null }, false)}
-							>{c.label}<span class="chip-x" aria-hidden="true">×</span></a
-						>
-					{/each}
-					{#if filterLabels.length}
-						<a class="wis" href={hrefMet({})}>Alle besluiten</a>
-					{/if}
-					<button
-						type="button"
-						class="csv"
-						onclick={exporteer}
-						disabled={!lijst.length || exporteren}>{exporteren ? 'Namen ophalen…' : 'CSV'}</button
-					>
-				</div>
-				{#if motiesOpPagina > 0}
-					<!-- The researcher's own coding of the moties: counted, kept as a file. -->
-					<div class="richting-kop">
-						<p class="richting-telling">
-							{getal(richtingTelling.alles.totaal)} van {getal(motiesOpPagina)} gecodeerd{#if richtingTelling.alles.totaal}:
-								{deel(richtingTelling.alles)}{/if}.
-							{#each ['aangenomen', 'verworpen'] as const as u (u)}
-								{#if richtingTelling.perUitkomst[u].totaal}
-									{hoofdletter(UITKOMST_LABEL[u])}: {deel(richtingTelling.perUitkomst[u])}.
-								{/if}
-							{/each}
-							{#if fractie}
-								{#each ['voor', 'tegen'] as const as st (st)}
-									{#if richtingTelling.perStem[st].totaal}
-										{fractie} stemde {st}: {deel(richtingTelling.perStem[st])}.
-									{/if}
-								{/each}
-							{/if}
-						</p>
-						<div class="richting-acties">
-							<button
-								type="button"
-								class="link"
-								onclick={bewaarCodering}
-								disabled={!Object.keys(mijn).length}>Codering bewaren</button
-							>
-							<label class="link">
-								Codering laden
-								<input
-									type="file"
-									accept=".csv,text/csv"
-									class="verborgen"
-									onchange={laadCodering}
-								/>
-							</label>
-							{#if importFout}<span class="stil">Geen codering in dit bestand.</span>{/if}
-						</div>
-					</div>
-				{/if}
-				<ol class="rijen">
-					{#each bron === 'api' ? lijst : lijst.slice(0, getoond) as d (d.key)}
-						{@const s = stemVan(d)}
-						<li class="rij">
-							<span class="rij__datum">{korteDatum(d.date)}</span>
-							<div class="rij__tekst">
-								<span class="rij__soort"
-									>{soortVan(d)}, {d.chamber === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer'}</span
-								>
-								<a
-									class="rij__titel"
-									href={buildBronHref(null, { collection: 'decisions', key: d.key })}
-									>{d.subject?.trim() || soortVan(d)}</a
-								>
-								<span class="rij__uitkomst"
-									>{UITKOMST_LABEL[uitkomstVan(d)]}{tally(d) ? `, ${tally(d)}` : ''}{#if s}<span
-											class="rij__stem">{fractie} <StemTeken keuze={s} /></span
-										>{/if}</span
-								>
-								{#if isMotie(d)}
-									{@const st = stukken[d.key]}
-									<div class="rij__richting">
-										<Keuze
-											klein
-											label={`Richting ten opzichte van ${naam}`}
-											opties={RICHTINGEN.map((r) => ({ waarde: r, label: RICHTING_LABEL[r] }))}
-											waarde={mijn[d.key] ?? null}
-											onKies={(r) => kies(d, r)}
-										/>
-										{#if mijn[d.key]}<button
+		<div class="indeling">
+			<aside class="facetten" aria-label="Verfijnen">
+				<button
+					type="button"
+					class="verfijnen-knop"
+					aria-expanded={verfijnenOpen}
+					aria-controls="overzicht-facetten"
+					onclick={() => (verfijnenOpen = !verfijnenOpen)}
+					>Verfijnen{(kamer ? 1 : 0) + (fractie ? 1 : 0)
+						? ` (${(kamer ? 1 : 0) + (fractie ? 1 : 0)})`
+						: ''}</button
+				>
+				<div class="facet-lijst" id="overzicht-facetten" class:open={verfijnenOpen}>
+					<section class="facet" aria-labelledby="f-kamer">
+						<h2 class="facet__kop" id="f-kamer">Kamer</h2>
+						{#each [{ c: 'TK', label: 'Tweede Kamer' }, { c: 'EK', label: 'Eerste Kamer' }] as k (k.c)}
+							<FilterOptie
+								label={k.label}
+								on={kamer === k.c}
+								onToggle={() => zet({ kamer: kamer === k.c ? null : k.c })}
+							/>
+						{/each}
+					</section>
+					<section class="facet" aria-labelledby="f-fractie">
+						<h2 class="facet__kop" id="f-fractie">Fractie</h2>
+						<TekstMenu klein label="Fractie" tekst={fractie || 'Geen fractie'}>
+							{#snippet inhoud(sluit)}
+								<div class="fractie-lijst">
+									<button
+										type="button"
+										role="menuitemradio"
+										class="fractie-menuitem"
+										aria-checked={!fractie}
+										onclick={() => {
+											sluit();
+											zet({ fractie: null, stem: null });
+										}}>Geen fractie</button
+									>
+									{#each [{ kop: 'Huidige fracties', actief: true }, { kop: 'Eerdere fracties', actief: false }] as groep (groep.kop)}
+										<span class="fractie-kop" aria-hidden="true">{groep.kop}</span>
+										{#each fractieKeuze.filter((x) => !!x.active === groep.actief) as x (x.key)}
+											<button
 												type="button"
-												class="link"
-												onclick={() => kies(d, null)}>Wis</button
-											>{/if}
-										<button
-											type="button"
-											class="link"
-											aria-expanded={dictumOpen.has(d.key)}
-											onclick={() => toonDictum(d.key)}>Dictum</button
-										>
-									</div>
-									{#if dictumOpen.has(d.key)}
-										<p class="rij__dictum">
-											{#if st === 'laden' || st === undefined}Laden…{:else if st === 'fout'}Kon niet
-												worden geladen.{:else if st.dictum}{st.dictum}{:else if !st.metTekst}Tekst
-												niet in de gegevens.{:else}Geen dictum in de tekst.{/if}
-										</p>
-									{/if}
+												role="menuitemradio"
+												class="fractie-menuitem"
+												aria-checked={fractie === x.naam}
+												onclick={() => {
+													sluit();
+													zet({ fractie: x.naam, stem: null });
+												}}>{x.naam}</button
+											>
+										{/each}
+									{/each}
+								</div>
+							{/snippet}
+						</TekstMenu>
+					</section>
+				</div>
+			</aside>
+			<div class="inhoud">
+				{#if bron === 'zelf'}
+					<p class="stand">
+						{#each perTerm as p (p.term)}
+							<span>
+								‘{p.term}’:
+								{#if p.api === null}
+									laden…
+								{:else if p.api > p.nagelopen}
+									de nieuwste {getal(p.nagelopen)} van {getal(p.api)} besluiten nagelopen, terug tot {korteDatum(
+										p.tot
+									)}{laden ? ', laden…' : ''}
+								{:else}
+									{getal(p.api)} besluiten nagelopen{laden && p.nagelopen < p.api ? ', laden…' : ''}
 								{/if}
-							</div>
-						</li>
-					{/each}
-				</ol>
-				{#if bron === 'api' && lijst.length < lijstAantal}
-					<button type="button" class="meer" onclick={meerLaden} disabled={lijstLaden}
-						>{lijstLaden ? 'Laden…' : `Meer tonen (${getal(lijstAantal - lijst.length)})`}</button
-					>
-				{:else if bron !== 'api' && lijst.length > getoond}
-					<button type="button" class="meer" onclick={() => (getoond += STAP)}
-						>Meer tonen ({getal(lijst.length - getoond)})</button
-					>
+							</span>
+						{/each}
+					</p>
 				{/if}
-			</section>
-		{/if}
+
+				{#if fout && !besluiten.length && bron === 'zelf'}
+					<p class="status status--fout">Het overzicht kon niet worden geladen.</p>
+				{:else if leegte}
+					<p class="status">Geen besluiten met deze woorden in de titel.</p>
+				{:else}
+					<!-- The core figures in one line, every number a list. -->
+					<p class="kern">
+						{@render cel(alles.totaal, {}, bezig)}
+						{alles.totaal === 1 ? 'besluit' : 'besluiten'}{#if bezig}, tellen…{:else}:
+							{@render cel(alles.aangenomen, { uitkomst: 'aangenomen' })} aangenomen,
+							{@render cel(alles.verworpen, { uitkomst: 'verworpen' })}
+							verworpen{#if fractie};
+								<span class="kern__fractie"
+									>{fractie}
+									{@render cel(alles.voor, { stem: 'voor' }, stemmenLaden)} voor, {@render cel(
+										alles.tegen,
+										{ stem: 'tegen' },
+										stemmenLaden
+									)} tegen</span
+								>{/if}{/if}
+					</p>
+
+					<div class="tabellen" class:tabellen--fractie={!!fractie}>
+						<div class="tabellen__kolom">
+							<section class="sectie" aria-labelledby="t-soort">
+								<h2 id="t-soort">Per soort</h2>
+								{@render tabel('Soort', soorten, (k) => ({ soort: k }))}
+							</section>
+							{#if heeftMoties}
+								<section class="sectie" aria-labelledby="t-richting" use:inBeeld>
+									<h2 id="t-richting">Richting</h2>
+									<div class="sectie__regel">
+										<span
+											>{#if alleMoties}{getal(gecodeerd)} van {getal(alleMoties.length)} moties gecodeerd{:else if motiesLaden || !richtingZien}Moties
+												laden…{:else}De moties konden niet worden geladen.{/if}</span
+										>
+										<!-- Bewaren and laden behind one quiet word (docs/bediening.md). -->
+										<TekstMenu klein rechts label="Codering" tekst="Codering">
+											{#snippet inhoud(sluit)}
+												<button
+													type="button"
+													role="menuitem"
+													class="codering-menuitem"
+													disabled={!Object.keys(mijn).length}
+													onclick={() => {
+														sluit();
+														bewaarCodering();
+													}}>Bewaren als CSV</button
+												>
+												<label class="codering-menuitem">
+													Laden uit CSV
+													<input
+														type="file"
+														accept=".csv,text/csv"
+														class="verborgen"
+														onchange={(e) => {
+															sluit();
+															laadCodering(e);
+														}}
+													/>
+												</label>
+											{/snippet}
+										</TekstMenu>
+										{#if importFout}<span class="stil">Geen codering in dit bestand.</span>{/if}
+									</div>
+									{@render tabel(
+										'Richting',
+										richtingRijen ??
+											RICHTING_RIJEN.map((r) => [
+												r,
+												{ totaal: 0, aangenomen: 0, verworpen: 0, overig: 0, voor: 0, tegen: 0 }
+											]),
+										(k) => ({ richting: k }),
+										(k) => RIJ_LABEL[k as RichtingRij],
+										!richtingRijen
+									)}
+								</section>
+							{/if}
+						</div>
+						<section class="sectie" aria-labelledby="t-jaar">
+							<h2 id="t-jaar">Per jaar</h2>
+							{@render tabel('Jaar', jaren, (k) => ({ jaar: k }))}
+						</section>
+					</div>
+
+					<section class="lijst" aria-labelledby="t-lijst">
+						<div class="lijst__kop">
+							<h2 id="t-lijst">Besluiten</h2>
+							<span class="aantal">{lijstLaden && !hier ? '…' : getal(lijstAantal)}</span>
+							{#if filterLabels.length}
+								<!-- What is chosen stands in ink in the tables above; the way back is one link. -->
+								<span class="wis"><TekstLink href={hrefMet({})}>Alle besluiten</TekstLink></span>
+							{/if}
+						</div>
+						<ol class="rijen">
+							{#each hier ? lijst.slice(0, getoond) : lijst as d (d.key)}
+								{@const s = stemVan(d)}
+								{@const u = uitkomstVan(d)}
+								<li class="rij">
+									<span class="rij__datum">{korteDatum(d.date)}</span>
+									<div class="rij__tekst">
+										<span class="rij__soort"
+											>{soortVan(d)}, {d.chamber === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer'}</span
+										>
+										<a
+											class="rij__titel"
+											href={buildBronHref(
+												null,
+												{ collection: 'decisions', key: d.key },
+												{ mode: 'graph' }
+											)}>{d.subject?.trim() || soortVan(d)}</a
+										>
+										<div class="rij__regel">
+											<span class="rij__uitkomst"
+												><UitkomstTeken
+													soort={u === 'aangenomen' ? 'ja' : u === 'verworpen' ? 'nee' : 'open'}
+													woord={UITKOMST_LABEL[u]}
+												/>{tally(d) ? `, ${tally(d)}` : ''}{#if s}<span class="rij__stem"
+														>{fractie} <StemTeken keuze={s} /></span
+													>{/if}</span
+											>
+											{#if isMotie(d)}
+												<!-- The researcher's coding, quiet: three words, the chosen one in ink; a
+										     second click clears it. -->
+												<span
+													class="rij__richting"
+													role="group"
+													aria-label={`Richting ten opzichte van ${naam}`}
+												>
+													{#each RICHTINGEN as r (r)}
+														<button
+															type="button"
+															class="keus"
+															aria-pressed={mijn[d.key] === r}
+															onclick={() => kies(d, mijn[d.key] === r ? null : r)}
+															>{RICHTING_LABEL[r]}</button
+														>
+													{/each}
+													<button
+														type="button"
+														class="keus keus--dictum"
+														aria-expanded={dictumOpen.has(d.key)}
+														onclick={() => toonDictum(d.key)}>Dictum</button
+													>
+												</span>
+											{/if}
+										</div>
+										{#if isMotie(d) && dictumOpen.has(d.key)}
+											{@const st = stukken[d.key]}
+											<p class="rij__dictum">
+												{#if st === 'laden' || st === undefined}Laden…{:else if st === 'fout'}Kon
+													niet worden geladen.{:else if st.dictum}{st.dictum}{:else if !st.metTekst}Tekst
+													niet in de gegevens.{:else}Geen dictum in de tekst.{/if}
+											</p>
+										{/if}
+									</div>
+								</li>
+							{/each}
+						</ol>
+						{#if !hier && lijst.length < lijstAantal}
+							<p class="volgende">
+								{#if lijstLaden}Laden…{:else}<TekstLink onclick={meerLaden}
+										>Volgende besluiten, nog {getal(lijstAantal - lijst.length)}</TekstLink
+									>{/if}
+							</p>
+						{:else if hier && lijst.length > getoond}
+							<p class="volgende">
+								<TekstLink onclick={() => (getoond += STAP)}
+									>Volgende besluiten, nog {getal(lijst.length - getoond)}</TekstLink
+								>
+							</p>
+						{/if}
+						{#if richtingF && !alleMoties}<p class="status">Moties laden…</p>{/if}
+					</section>
+				{/if}
+			</div>
+		</div>
 	{/if}
 </div>
 
 <style>
-	/* The researcher's coding of a motie: its count above the list, its choice in the row. */
-	.richting-kop {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--s-1) var(--s-4);
-		margin: 0 0 var(--s-3);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-	}
-	.richting-telling {
-		margin: 0;
-		flex: 1 1 20rem;
-	}
-	.richting-acties {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-3);
-	}
-	.verborgen {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-	}
-	.rij__richting {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--s-1) var(--s-3);
-		margin-top: var(--s-1);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-	}
-	.rij__dictum {
-		margin: var(--s-1) 0 0;
-		padding-left: var(--s-3);
-		border-left: 2px solid var(--rule);
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	.stil {
-		color: var(--ink-3);
-	}
-	/* Quiet text actions beside the choice: no frame of their own. */
-	.rij__richting .link,
-	.richting-acties .link {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 2px;
-		cursor: pointer;
-	}
-	.rij__richting .link:hover,
-	.richting-acties .link:hover {
-		color: var(--ink);
-	}
-	.richting-acties .link:disabled {
-		color: var(--ink-3);
-		text-decoration: none;
-		cursor: default;
-	}
+	/* Rungs of docs/typografie.md: the topic at 1, a section at 2, a row's title at 4, the
+	   meta lines at 5 and the labels beside a heading at 6. */
 	.overzicht {
-		max-width: 960px;
+		max-width: 1180px;
 		margin: 0 auto;
 		padding: var(--s-6) var(--s-6) var(--s-8);
 	}
 	.terug {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.terug a {
@@ -919,40 +1038,11 @@
 		text-underline-offset: 2px;
 	}
 	.titel {
-		margin: 0 0 var(--s-2);
+		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 		overflow-wrap: anywhere;
-	}
-	.keuzes {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--s-3) var(--s-5);
-		margin-bottom: var(--s-3);
-	}
-	.fractie {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	.fractie select {
-		height: var(--s-6);
-		padding: 0 var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		color: var(--ink);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-	}
-	.periode {
-		max-width: 520px;
-		margin-bottom: var(--s-4);
 	}
 	.stand {
 		display: flex;
@@ -960,13 +1050,18 @@
 		gap: var(--s-1);
 		margin: 0 0 var(--s-5);
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
-	.totaal {
-		margin: 0 0 var(--s-4);
+	/* The core figures: one sentence at the size of a section heading. */
+	.kern {
+		margin: 0 0 var(--s-6);
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
+		color: var(--ink-2);
+	}
+	.kern__fractie {
+		white-space: nowrap;
 	}
 	.tabellen {
 		display: grid;
@@ -974,22 +1069,50 @@
 		gap: var(--s-6);
 		align-items: start;
 	}
+	.tabellen__kolom {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-6);
+		min-width: 0;
+	}
 	/* With a fractie's two columns a table needs the width of the page. */
 	.tabellen--fractie {
 		grid-template-columns: minmax(0, 1fr);
 	}
-	.tabel h2,
+	.sectie h2,
 	.lijst h2 {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		font-weight: 600;
+		font-family: var(--font-serif);
+		font-size: var(--t-h3);
+		font-weight: 800;
 		color: var(--ink);
+	}
+	/* A state line under a heading, with its quiet actions (rung 6). */
+	.sectie__regel {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--s-1) var(--s-4);
+		margin: 0 0 var(--s-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.verborgen {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+	.stil {
+		color: var(--ink-3);
 	}
 	table {
 		width: 100%;
 		border-collapse: collapse;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	th,
@@ -999,16 +1122,12 @@
 		text-align: left;
 		font-weight: 400;
 	}
-	/* Column heads at rung 6, the fractie over its two columns at rung 3 (docs/typografie.md). */
+	/* Column heads at rung 6, whole words; the fractie over its two columns at rung 3. */
 	thead th {
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		border-bottom-color: var(--rule-strong);
-		hyphens: auto;
-		overflow-wrap: break-word;
-	}
-	thead th.heel {
-		hyphens: manual;
+		white-space: nowrap;
 	}
 	thead .boven th,
 	thead .boven td {
@@ -1020,21 +1139,21 @@
 	}
 	tbody th {
 		color: var(--ink);
-		overflow-wrap: break-word;
+		overflow-wrap: anywhere;
 	}
 	.getal {
 		text-align: right;
 		font-variant-numeric: tabular-nums;
 	}
 	td a,
-	.totaal a {
+	.kern a {
 		color: var(--ink);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 2px;
 	}
 	td a:hover,
-	.totaal a:hover {
+	.kern a:hover {
 		text-decoration-color: var(--ink);
 	}
 	.nul {
@@ -1048,51 +1167,22 @@
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: var(--s-2) var(--s-3);
-		margin-bottom: var(--s-3);
+		margin-bottom: var(--s-2);
+		padding-bottom: var(--s-2);
+		border-bottom: 1px solid var(--rule-strong);
 	}
 	.lijst__kop h2 {
 		margin: 0;
 	}
-	.chip {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		color: var(--ink);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		text-decoration: none;
-	}
-	.chip-x {
+	.aantal {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.wis {
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-	}
-	.csv,
-	.meer {
-		padding: var(--s-1) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		color: var(--ink);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		cursor: pointer;
-	}
-	.csv {
-		margin-left: auto;
-	}
-	.csv:disabled {
-		color: var(--ink-3);
-		cursor: default;
-	}
-	.meer {
-		margin-top: var(--s-3);
 	}
 	.rijen {
 		margin: 0;
@@ -1107,14 +1197,13 @@
 		border-bottom: 1px solid var(--rule);
 	}
 	.rij__datum,
-	.rij__soort,
-	.rij__stem {
-		margin-left: var(--s-3);
-	}
-	.rij__uitkomst {
+	.rij__soort {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
 		color: var(--ink-3);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+	}
+	.rij__datum {
+		padding-top: 2px;
 	}
 	.rij__tekst {
 		display: flex;
@@ -1132,9 +1221,67 @@
 	.rij__titel:hover {
 		text-decoration: underline;
 	}
+	/* The outcome left, the coding right on the same line; it wraps under on a phone. */
+	.rij__regel {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-4);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.rij__uitkomst :global(.uk) {
+		font-weight: 600;
+	}
+	.rij__stem {
+		margin-left: var(--s-3);
+	}
+	.rij__richting {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-3);
+		margin-left: auto;
+	}
+	.keus {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+	.keus:hover {
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+	.keus[aria-pressed='true'] {
+		color: var(--ink);
+		font-weight: 600;
+		text-decoration: underline;
+		text-decoration-thickness: 2px;
+		text-underline-offset: 3px;
+	}
+	.keus--dictum {
+		margin-left: var(--s-2);
+		color: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 2px;
+	}
+	.rij__dictum {
+		margin: var(--s-1) 0 0;
+		padding-left: var(--s-3);
+		border-left: 2px solid var(--rule);
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
 	.status {
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.status--fout {
@@ -1149,9 +1296,153 @@
 			grid-template-columns: minmax(0, 1fr);
 			gap: var(--s-1);
 		}
+		.rij__richting {
+			margin-left: 0;
+		}
 		th,
 		td {
-			padding: var(--s-1);
+			padding: var(--s-1) 2px;
+		}
+		th:first-child {
+			padding-left: 0;
+		}
+	}
+
+	/* The heading: the topic, its action at the right. */
+	.kop {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--s-3);
+		margin-bottom: var(--s-4);
+	}
+	.actie-knop {
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		font-weight: 500;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.actie-knop:hover:not(:disabled) {
+		border-color: var(--ink);
+	}
+	.actie-knop:disabled {
+		color: var(--rule-strong);
+		cursor: default;
+	}
+	.regel {
+		max-width: 380px;
+		margin-bottom: var(--s-5);
+	}
+	/* The facets at the left of the figures and the list, as Actueel and Bladeren. */
+	.indeling {
+		display: grid;
+		grid-template-columns: 200px minmax(0, 1fr);
+		column-gap: var(--s-7);
+		align-items: start;
+	}
+	.inhoud {
+		min-width: 0;
+	}
+	.facetten {
+		position: sticky;
+		top: var(--s-4);
+	}
+	.facet {
+		margin-bottom: var(--s-5);
+	}
+	.facet__kop {
+		margin: 0 0 var(--s-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.verfijnen-knop {
+		display: none;
+	}
+	.fractie-lijst {
+		display: flex;
+		flex-direction: column;
+	}
+	.fractie-kop {
+		padding: var(--s-2) var(--s-3) var(--s-1);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		color: var(--ink-3);
+	}
+	.fractie-menuitem,
+	.codering-menuitem {
+		display: block;
+		padding: var(--s-1) var(--s-3);
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink);
+		text-align: left;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+	.fractie-menuitem:hover,
+	.fractie-menuitem:focus-visible,
+	.codering-menuitem:hover,
+	.codering-menuitem:focus-within {
+		background: var(--paper-2);
+		outline: none;
+	}
+	.fractie-menuitem[aria-checked='true'] {
+		font-weight: 600;
+	}
+	.codering-menuitem:disabled {
+		color: var(--rule-strong);
+		cursor: default;
+	}
+	.volgende {
+		margin: var(--s-4) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+		text-align: center;
+	}
+	@media (max-width: 767px) {
+		.indeling {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.regel {
+			max-width: none;
+			margin-bottom: var(--s-3);
+		}
+		.facetten {
+			position: static;
+			margin-bottom: var(--s-4);
+		}
+		.verfijnen-knop {
+			display: inline;
+			padding: 0;
+			border: 0;
+			background: none;
+			font-family: var(--font-ui);
+			font-size: var(--t-ui);
+			color: var(--ink);
+			text-decoration: underline;
+			text-decoration-color: var(--rule-strong);
+			text-underline-offset: 4px;
+			cursor: pointer;
+		}
+		.facet-lijst {
+			display: none;
+			padding-top: var(--s-3);
+		}
+		.facet-lijst.open {
+			display: block;
 		}
 	}
 </style>

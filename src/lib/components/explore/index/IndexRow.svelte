@@ -6,13 +6,19 @@
 	// cmd-click and a middle click open the bron in a new tab and it can be copied. The
 	// toggle is a button under the row's content, the size of the row: it is what the
 	// keyboard stops on.
+	//
+	// With `acties` (Bladeren): no detail beneath. The title opens the bron in Netwerk and a
+	// click on the row does the same; Lezen is one step from there (docs/bediening.md, Thijs
+	// 10 Oct: a row has no buttons of its own, a click on the row does it).
 	import type { Snippet } from 'svelte';
+	import { goto } from '$app/navigation';
 
 	let {
 		title,
 		href,
-		open,
-		onToggle,
+		open = false,
+		onToggle = () => {},
+		acties = false,
 		bron,
 		member = false,
 		emphasis = false,
@@ -24,8 +30,11 @@
 		title: string;
 		/** Without a link the title is text, and the whole row is the toggle. */
 		href?: string;
-		open: boolean;
-		onToggle: () => void;
+		open?: boolean;
+		onToggle?: () => void;
+		/** The ways on at the end of the row instead of a detail beneath it; `titel` where the
+		 *  title is the one way on (a kabinet, read only in the network). */
+		acties?: boolean | 'titel';
 		/** What the row stands for (`judgments/<key>`), to find it again in the list. */
 		bron?: string;
 		/** A dossier under its number, indented beneath it. */
@@ -41,29 +50,38 @@
 
 	const uid = $props.id();
 
+	const direct = $derived(acties && !!href);
+
 	// A click after selecting text selects; a click on another control is that control's.
 	function onRowClick(e: MouseEvent) {
 		if (onControl(e)) return;
 		if (window.getSelection()?.toString()) return;
-		onToggle();
+		if (direct) void goto(href!);
+		else onToggle();
 	}
 
-	/** A plain click on the title opens the row; with a modifier it is the link's. */
-	const onTitleClick = (e: MouseEvent) => terPlekke(e, onToggle);
+	/** A plain click on the title opens the row; with a modifier it is the link's. With
+	 *  `acties` the title is a plain link: it opens the bron. */
+	const onTitleClick = (e: MouseEvent) => {
+		if (direct) return;
+		terPlekke(e, onToggle);
+	};
 </script>
 
 <li class="row-wrap" class:row-wrap--member={member} data-bron={bron}>
 	<!-- The button below is the keyboard's way in; this only widens its target. -->
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 	<div class="row" class:row--on={open} class:row--emphasis={emphasis} onclick={onRowClick}>
-		<button
-			type="button"
-			class="row-toggle"
-			aria-expanded={open}
-			aria-controls={open && detail ? `${uid}-detail` : undefined}
-			aria-label="Details van {title}"
-			onclick={onToggle}
-		></button>
+		{#if !direct}
+			<button
+				type="button"
+				class="row-toggle"
+				aria-expanded={open}
+				aria-controls={open && detail ? `${uid}-detail` : undefined}
+				aria-label="Details van {title}"
+				onclick={onToggle}
+			></button>
+		{/if}
 		<div class="row-id">{@render lead?.()}</div>
 		<div class="row-body">
 			{#if href}
@@ -75,7 +93,7 @@
 		</div>
 		<div class="row-aside">{@render aside?.()}</div>
 	</div>
-	{#if open && detail}
+	{#if open && detail && !acties}
 		<div class="detail" id="{uid}-detail">{@render detail()}</div>
 	{/if}
 </li>
@@ -125,7 +143,7 @@
 	/* No tabular figures: the column holds words too, and they would give a comma or a
 	   full stop the width of a figure ("Wetsvoorstel , aangenomen"). */
 	.row-id {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		line-height: 1.4;
@@ -151,7 +169,7 @@
 	}
 	.row--emphasis .row-title {
 		font-size: var(--t-body);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: 1.3;
 	}
 	a.row-title:hover {

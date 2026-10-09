@@ -1575,7 +1575,7 @@
 		padding: 1px 6px;
 		border-radius: 999px;
 		background: var(--paper);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label);
 		color: var(--link-color);
 		white-space: nowrap;
@@ -1597,7 +1597,7 @@
 		border-radius: 999px;
 		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);
 		border: 1px solid var(--hull-color);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label);
 		font-weight: 600;
 		/* The name in ink: the lighter groups (Dossier, 3.1:1) are too faint for text. */
@@ -1649,7 +1649,7 @@
 		color: var(--paper);
 		border: 1.5px solid var(--paper);
 		box-shadow: 0 0 0 1px var(--accent);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-glyph);
 		font-weight: 600;
 		line-height: 11px;

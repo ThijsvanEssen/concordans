@@ -176,3 +176,58 @@ describe('procedure: a paper that is not one of the bill’s', () => {
 		]);
 	});
 });
+
+describe('procedure: a dossier without a bill', () => {
+	type Detail = Parameters<typeof procedure>[0];
+	// 27926 Huurbeleid: no kind from its zaak, no phases, no decision on a bill.
+	const huurbeleid = {
+		number: '27926',
+		kind: null,
+		closed: false,
+		current_phase: null,
+		tk_decision: null,
+		ek_outcome: null,
+		phases: null
+	} as unknown as Detail;
+
+	it('shows no steps of a bill to come: no advice, no Eerste Kamer', () => {
+		const { groepen } = procedure(huurbeleid, [], false);
+		expect(groepen.map((g) => g.id)).toEqual(['tk']);
+		const zinnen = groepen.flatMap((g) => g.regels.map((r) => r.zin));
+		expect(zinnen.join(' ')).not.toMatch(/Kan nog volgen|Geen advies|Aan de orde na/);
+	});
+
+	it('keeps them for a bill without a phase yet', () => {
+		const wet = { ...huurbeleid, kind: 'Wetgeving' } as unknown as Detail;
+		const ids = procedure(wet, [], false).groepen.map((g) => g.id);
+		expect(ids).toEqual(['rvs', 'tk', 'ek']);
+	});
+});
+
+describe('procedure: the votes of a day', () => {
+	type Detail = Parameters<typeof procedure>[0];
+	type Entry = Parameters<typeof procedure>[1][number];
+	const besluit = (id: string, kind: string, passed: boolean) =>
+		({
+			node_id: `decisions/${id}`,
+			node_type: 'decision',
+			date: '2024-04-25',
+			kind,
+			title: kind,
+			body: { chamber: 'TK', passed }
+		}) as unknown as Entry;
+	const wet = { number: '36496', kind: 'Wetgeving', phases: [] } as unknown as Detail;
+
+	it('counts the amendementen and moties of one day on one line, the bill on its own', () => {
+		const entries = [
+			besluit('a1', 'Amendement', false),
+			besluit('a2', 'Amendement', true),
+			besluit('m1', 'Motie', true),
+			besluit('w', 'Wetgeving', true)
+		];
+		const tk = procedure(wet, entries, true).groepen.find((g) => g.id === 'tk')!;
+		const zinnen = tk.regels.filter((r) => r.datum === '2024-04-25').map((r) => r.zin);
+		expect(zinnen).toEqual(['Aangenomen', 'Stemmingen: 3 besluiten']);
+		expect(tk.regels.find((r) => r.zin.startsWith('Stemmingen'))?.actie).toBeTypeOf('function');
+	});
+});

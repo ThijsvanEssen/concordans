@@ -16,7 +16,7 @@
 		links = [],
 		lezen,
 		lezenLabel,
-		netwerk,
+		netwerk = null,
 		boven,
 		opmerkingen = []
 	}: {
@@ -28,7 +28,8 @@
 		links?: { label: string; href?: string | null; ref?: string | null }[];
 		lezen: string;
 		lezenLabel: string;
-		netwerk: string;
+		/** In het netwerk; left out where reading the bron is seeing it in the network (a kabinet). */
+		netwerk?: string | null;
 		/** Iets dat boven de tijdlijn hoort, zoals de standbalk van een dossier. */
 		boven?: Snippet;
 		/** Korte kanttekeningen onder de zin, zoals waarom iemand waarnam. */
@@ -47,14 +48,22 @@
 	{/if}
 	{#if links.length}
 		<p class="links">
-			{#each links as l, i (l.label)}{#if i > 0}<span class="sep">,</span>{/if}{#if l.ref}<BronLink
-						ref={l.ref}>{l.label}</BronLink
-					>{:else if l.href}<a href={l.href}>{l.label}</a>{:else}<span>{l.label}</span>{/if}{/each}
+			<!-- The comma inside the item before it, so the gap between items never falls before it. -->
+			{#each links as l, i (l.label)}<span class="item"
+					>{#if l.ref}<BronLink ref={l.ref}>{l.label}</BronLink>{:else if l.href}<a href={l.href}
+							>{l.label}</a
+						>{:else}<span>{l.label}</span>{/if}{#if i < links.length - 1}<span class="sep">,</span
+						>{/if}</span
+				>{/each}
 		</p>
 	{/if}
 	<div class="acts">
-		<a class="act act--pri" href={lezen}><Picto naam="tekst" size={13} />{lezenLabel}</a>
-		<a class="act" href={netwerk}><Picto naam="netwerk" size={13} />In het netwerk</a>
+		<!-- The text picture only beside In het netwerk: a bron read only there (a kabinet) has none. -->
+		<a class="act act--pri" href={lezen}
+			>{#if netwerk}<Picto naam="tekst" size={13} />{/if}{lezenLabel}</a
+		>
+		{#if netwerk}<a class="act" href={netwerk}><Picto naam="netwerk" size={13} />In het netwerk</a
+			>{/if}
 	</div>
 </div>
 
@@ -75,7 +84,7 @@
 	}
 	.opmerking {
 		margin: calc(-1 * var(--s-2)) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -90,7 +99,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -112,8 +121,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		padding: var(--s-2) var(--s-3);
 		border: 1px solid var(--rule-strong);

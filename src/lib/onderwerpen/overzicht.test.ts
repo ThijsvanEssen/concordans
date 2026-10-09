@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+	csvTabel,
 	filter,
 	lijstQuery,
 	naarCsv,
 	opOnderwerp,
 	perJaar,
 	perSoort,
+	richtingTabel,
 	totaal,
 	uitFacets,
 	type Besluit,
@@ -22,6 +24,7 @@ const b = (
 ): Besluit => ({
 	id: `decisions/${key}`,
 	key,
+	path: null,
 	date,
 	kind,
 	passed,
@@ -90,6 +93,32 @@ describe('overzicht', () => {
 			'2026-07-02;TK;Motie;Motie over stikstof;35334;Problematiek rondom stikstof en PFAS;aangenomen'
 		);
 		expect(rij).toContain(';voor;https://concordans.nl/');
+	});
+});
+
+describe('Richting uit de CSV', () => {
+	it('telt de rijen van de export per richting, uitkomst en stem', () => {
+		const motie = new Map([
+			['a', { richting: 'positief' }],
+			['b', { richting: 'positief' }]
+		]);
+		const t = csvTabel(lijst.slice(0, 2), '', 'VVD', stemmen, new Map(), motie);
+		const r = new Map(richtingTabel(t, 'VVD'));
+		expect(r.get('positief')).toMatchObject({
+			totaal: 2,
+			aangenomen: 1,
+			verworpen: 1,
+			voor: 1,
+			tegen: 1
+		});
+		expect(r.get('negatief')?.totaal).toBe(0);
+	});
+
+	it('een motie zonder codering telt als niet gecodeerd', () => {
+		const t = csvTabel(lijst.slice(0, 2), '', null, new Map(), new Map(), new Map());
+		const r = new Map(richtingTabel(t, null));
+		expect(r.get('geen')).toMatchObject({ totaal: 2, aangenomen: 1, verworpen: 1, voor: 0 });
+		expect([...r.keys()]).toEqual(['positief', 'negatief', 'neutraal', 'geen']);
 	});
 });
 

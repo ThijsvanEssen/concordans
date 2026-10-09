@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SoortLink from '$lib/bron/SoortLink.svelte';
-	import { getDecision, getDecisionDocument } from '$lib/api/records';
+	import { getDecision, getDecisionDocument, getParliamentSeats } from '$lib/api/records';
+	import { coalitieRegel, coalitieVan } from '$lib/components/parliamentary/coalitie';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
@@ -53,6 +54,41 @@
 		return () => ac.abort();
 	});
 
+	// What the coalition did (API 0.79.34, `coalition`; Thijs, 10 Oct). Only in the Tweede
+	// Kamer, and only where the API gives the block: before 0.79.34 nothing shows.
+	const coalitie = $derived(
+		view.kind === 'loaded' && (view.decision.chamber ?? 'TK') !== 'EK'
+			? coalitieVan(view.decision)
+			: null
+	);
+	/** The hall of the day of the vote: the cabinet's name and which fractie is of it. */
+	let zaal = $state<{ naam: string; van: Map<string, boolean | null> } | null>(null);
+	$effect(() => {
+		const c = coalitie;
+		const dag = view.kind === 'loaded' ? view.decision.date?.slice(0, 10) : null;
+		zaal = null;
+		if (!c || !dag) return;
+		let weg = false;
+		getParliamentSeats('TK', dag)
+			.then((z) => {
+				if (weg || z.cabinet?.key !== c.cabinet) return;
+				zaal = {
+					naam: z.cabinet.name ?? c.cabinet,
+					van: new Map(z.factions.map((f) => [f.key, f.coalition ?? null]))
+				};
+			})
+			.catch(() => {});
+		return () => {
+			weg = true;
+		};
+	});
+	/** Coalitie or oppositie for a fractie that voted, from the hall of that day. */
+	const kabinetVan = (id: string) => {
+		if (!zaal || !id.startsWith('factions/')) return null;
+		const c = zaal.van.get(id.slice('factions/'.length));
+		return c === true ? 'coalitie' : c === false ? 'oppositie' : null;
+	};
+
 	const side = (choice: string) =>
 		choice === 'Voor' ? 'for' : choice === 'Tegen' ? 'against' : 'other';
 
@@ -96,32 +132,31 @@
 					: []
 			)}
 
+			{@const uitkomst = decisionOutcome(d)}
+			{@const eigen = uniqueBy(dossiers, (x) => x.number).slice(0, 3)}
 			<header class="head">
 				<span class="kicker">
-					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink>
-					{chamberName(chamber)}
-					{#if d.date}<span class="komma">,</span>{formatLongDate(d.date)}{/if}
+					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink><span
+						>, {chamberName(chamber)}{d.date ? `, ${formatLongDate(d.date)}` : ''}</span
+					>
 				</span>
 				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}</h2>
-				<div class="chips">
-					{#if decisionOutcome(d)}
-						<!-- A hamerstuk is passed without a vote; a postponed decision is no outcome. -->
-						<span
-							class="result-chip"
-							class:result-chip--passed={d.passed === true}
-							class:result-chip--failed={d.passed === false}
-						>
-							{decisionOutcome(d)}
-						</span>
-					{/if}
-					<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
-					{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
-					{#each uniqueBy(dossiers, (x) => x.number).slice(0, 3) as dossier (dossier.number)}
-						<BronLink ref={`dossiers/${dossier.number}`} class="dossier-chip"
+				<!-- The outcome, what was voted on and the dossier: words, separated by commas. -->
+				<p class="woorden">
+					{#if uitkomst}<span
+							class="uitslag"
+							class:uitslag--passed={d.passed === true}
+							class:uitslag--failed={d.passed === false}>{uitkomst}</span
+						>{/if}{#if d.primary_case_kind}{uitkomst ? ', ' : ''}<span class="zaaksoort"
+							>{d.primary_case_kind}</span
+						>{/if}{#each eigen as dossier, i (dossier.number)}{uitkomst ||
+						d.primary_case_kind ||
+						i > 0
+							? ', '
+							: ''}<BronLink ref={`dossiers/${dossier.number}`} class="dossier-woord"
 							><DossierNaam {dossier} /></BronLink
-						>
-					{/each}
-				</div>
+						>{/each}
+				</p>
 			</header>
 
 			{#if doc?.text}
@@ -154,6 +189,34 @@
 				<p class="vote-totals">{d.decision_kind}</p>
 			{/if}
 
+			{#if coalitie}
+				{@const r = coalitieRegel(
+					coalitie,
+					voters,
+					zaal ? (k: string) => zaal?.van.get(k) ?? null : null
+				)}
+				<!-- The coalition on this vote, in words and the shape of a stem; seats where the
+				     names of its fracties are not known (a vote by member). -->
+				<p class="coalitie">
+					<span class="coalitie-kop">Coalitie{zaal ? ` (${zaal.naam})` : ''} {r.stand}</span>
+					{#if r.kant}
+						<span class="zijde"
+							><Stem keuze={r.kant} />
+							<span class="coalitie-n">{r.kant === 'voor' ? r.voor : r.tegen} zetels</span></span
+						>
+					{:else}
+						{#each [['voor', r.fractiesVoor, r.voor], ['tegen', r.fractiesTegen, r.tegen]] as const as [kant, fracties, zetels] (kant)}
+							<span class="zijde"
+								><Stem keuze={kant} />
+								{#if fracties.length}<span class="coalitie-f"
+										>{fracties.map((f) => f.name).join(', ')}</span
+									>{:else}<span class="coalitie-n">{zetels} zetels</span>{/if}</span
+							>
+						{/each}
+					{/if}
+				</p>
+			{/if}
+
 			{#if chamber === 'EK'}
 				{@const groups = ekFactionGroups(d)}
 				{#if groups.length > 0}
@@ -181,7 +244,7 @@
 				<Sectie
 					titel={d.vote_kind === 'member' ? 'Stemverdeling per lid' : 'Stemverdeling per fractie'}
 				>
-					<ul class="voter-list">
+					<ul class="voter-list" class:met-kabinet={!!zaal && d.vote_kind !== 'member'}>
 						{#each voters as v (v.id)}
 							{@const href = voterHref(v.id)}
 							<li class="voter-row voter-row--{side(v.choice)}">
@@ -191,6 +254,9 @@
 								{:else}
 									<span class="voter-name">{v.name}</span>
 								{/if}
+								{#if zaal && d.vote_kind !== 'member'}<span class="voter-kabinet"
+										>{kabinetVan(v.id) ?? ''}</span
+									>{/if}
 								{#if v.seats !== null}<span class="voter-seats">{v.seats}</span>{/if}
 							</li>
 						{/each}
@@ -222,29 +288,28 @@
 		gap: var(--s-2);
 	}
 	.kicker {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
+	}
+	.kicker :global(.soort) {
 		gap: 6px;
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
-	.komma {
-		margin-left: calc(-1 * 6px);
-	}
 	.ek-factions {
 		display: grid;
 		grid-template-columns: max-content minmax(0, 1fr);
 		gap: var(--s-2) var(--s-4);
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 	}
 	.ek-factions dt {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.ek-factions dd {
@@ -253,45 +318,45 @@
 	}
 	.source {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
-	.chips {
-		display: flex;
-		gap: var(--s-3);
-		flex-wrap: wrap;
-		align-items: baseline;
+	.woorden {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
 	/* The outcome, the kind of case and the dossier numbers are words, not tags. */
-	.result-chip,
-	.case-chip,
-	:global(.dossier-chip) {
-		font-family: var(--font-sans);
+	.uitslag,
+	.zaaksoort,
+	:global(.dossier-woord) {
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		text-decoration: none;
 	}
-	.result-chip--passed,
-	.result-chip--failed {
+	.uitslag--passed,
+	.uitslag--failed {
 		color: var(--ink-2);
 	}
-	.case-chip {
+	.zaaksoort {
 		color: var(--ink-3);
 	}
-	:global(.dossier-chip) {
+	:global(.dossier-woord) {
 		color: var(--ink-3);
 	}
-	:global(.dossier-chip:hover) {
+	:global(.dossier-woord:hover) {
 		color: var(--accent);
 	}
 
@@ -330,14 +395,14 @@
 	}
 	.vote-totals {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.vote-total--for,
 	.vote-total--against {
 		color: var(--ink-2);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.vote-total--other {
 		color: var(--ink-3);
@@ -363,7 +428,7 @@
 	}
 	/* The stem in shape, colour and word (Stem), as on a member's page. */
 	.voter-choice {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.voter-name {
@@ -375,8 +440,42 @@
 	a.voter-name:hover {
 		color: var(--accent);
 	}
+	/* Coalitie or oppositie: a column of its own, as quiet as the seats beside it. */
+	.met-kabinet .voter-row {
+		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 50px) 1fr auto 3.5em;
+	}
+	.voter-kabinet {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.coalitie {
+		margin: var(--s-2) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-2);
+	}
+	.coalitie-kop {
+		font-weight: 600;
+		color: var(--ink);
+	}
+	/* A side: its stem and the coalition fracties on it, kept together on a narrow screen. */
+	.zijde {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--s-2);
+	}
+	.coalitie-f {
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		color: var(--ink);
+	}
 	.voter-seats {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);

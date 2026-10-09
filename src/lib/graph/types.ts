@@ -391,7 +391,8 @@ export function syntheticNode(
 			type: NODE_TYPES[collection],
 			display_name: displayName ?? null,
 			labels: [],
-			props
+			props,
+			path: null
 		},
 		collection
 	);

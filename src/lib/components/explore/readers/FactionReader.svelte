@@ -8,7 +8,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { str } from '$lib/components/parliamentary/data';
-	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
+	import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
 	import { formatDate, formatLongDate } from './_shared';
 	import { ekVoteLine } from './voters';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
@@ -132,26 +132,24 @@
 				? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
 				: ''}
 			<header class="head">
+				<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
 				<span class="kicker"
-					><SoortLink collection="factions">{bronLabel('factions')}</SoortLink>, {chamberName(
-						chamber
-					)}</span
+					><SoortLink collection="factions">{bronLabel('factions')}</SoortLink></span
 				>
 				<h2 class="title">{abbreviation ?? name ?? f.key}</h2>
 				{#if name && abbreviation && name !== abbreviation}
 					<p class="sub">{name}</p>
 				{/if}
 				{#if typeof seats === 'number'}
-					<div class="chips">
-						<span class="seats-chip"
+					<p class="woorden">
+						<span class="zetels"
 							>{seats}
 							{seats === 1 ? 'zetel' : 'zetels'}{ek && read
 								? ` op ${formatLongDate(read)}`
 								: ''}</span
-						>
-						{#if sinds && !ek}<span class="since-chip">fractie sinds {formatLongDate(sinds)}</span
+						>{#if sinds && !ek}, <span class="sinds">fractie sinds {formatLongDate(sinds)}</span
 							>{/if}
-					</div>
+					</p>
 				{/if}
 			</header>
 
@@ -258,9 +256,9 @@
 		gap: var(--s-2);
 	}
 	.kicker {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
@@ -269,7 +267,7 @@
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
@@ -280,16 +278,15 @@
 		color: var(--ink-3);
 		margin: 0;
 	}
-	.chips {
-		display: flex;
-		gap: var(--s-1);
+	.woorden {
+		margin: 0;
 	}
 	.board {
 		display: grid;
 		grid-template-columns: max-content minmax(0, 1fr);
 		gap: var(--s-2) var(--s-4);
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 	}
@@ -308,7 +305,7 @@
 	}
 	.vote-line {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -328,9 +325,9 @@
 	}
 	.vote-choice {
 		grid-row: span 2;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.vote-choice--tegen {
@@ -343,24 +340,24 @@
 		color: var(--ink);
 	}
 	.vote-meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.source {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	/* The seat count is a word, not a tag. */
-	.seats-chip {
-		font-family: var(--font-sans);
+	.zetels {
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
-	.since-chip {
-		font-family: var(--font-sans);
+	.sinds {
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -371,7 +368,7 @@
 		padding: 0;
 		columns: 2 12rem;
 		column-gap: var(--s-6);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: var(--lh-body);
 	}

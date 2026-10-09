@@ -326,7 +326,7 @@
 	}
 	.derived {
 		margin-left: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
@@ -351,9 +351,9 @@
 		min-width: 0;
 	}
 	.heading--lvl1 .heading__text {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.heading--lvl2 .heading__text {
@@ -382,7 +382,7 @@
 		padding: 2px var(--s-2);
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		cursor: pointer;
@@ -420,16 +420,16 @@
 	}
 	.kicker {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
@@ -437,7 +437,7 @@
 	/* Who submitted a motie or amendement, under its title. */
 	.submitted {
 		margin: var(--s-2) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -470,7 +470,7 @@
 		gap: var(--s-4);
 	}
 	.full-link {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		text-decoration: none;

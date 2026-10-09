@@ -11,6 +11,25 @@ export type ChangeSource = Schema<'ChangeSource'>;
 export type DossierChange = Schema<'DossierChange'>;
 export type ChangedLaw = Schema<'DossierChangedLaw'>;
 export type ChangedArticles = Schema<'DossierChangedArticlesResponse'>;
+export type LegalEffectLaw = NonNullable<Schema<'LegalEffectDTO'>['amends']>[number];
+
+/**
+ * The laws the dossier changes (`legal_effect.amends`, the band's Wijzigt) that hold no
+ * changed article in the data: named under Gewijzigde artikelen too, so the reader counts the
+ * laws once (Thijs, 10 Oct: "single count").
+ */
+export function zonderArtikelen(data: ChangedArticles, wijzigt: readonly LegalEffectLaw[]) {
+	const bekend = new Set(
+		data.laws.flatMap((l) =>
+			[l.law.id?.replace(/^instruments\//, ''), l.law.bwb_id, l.law.celex]
+				.filter((x): x is string => !!x)
+				.map((x) => x.toLowerCase())
+		)
+	);
+	return wijzigt.filter(
+		(w) => ![w.key, w.bwb_id, w.celex].some((x) => x && bekend.has(x.toLowerCase()))
+	);
+}
 
 /** The changes of a dossier, or null where the API has none to give (an older API: 404). */
 export const getChangedArticles = (number: string): Promise<ChangedArticles | null> =>
@@ -48,18 +67,6 @@ export function articleLabel(law: ChangedLaw['law'], a: ChangedArticle): string 
 	const nr = a.article_number?.trim();
 	if (nr && !/\s/.test(nr)) return `Artikel ${bookNumber(law.bwb_id ?? law.celex, nr)}`;
 	return a.display_name ?? a.id;
-}
-
-/** "24 artikelen in 1 wet. 24 wijzigingen in werking." The counts that are zero go. */
-export function summary(d: ChangedArticles): string {
-	const n = (count: number, one: string, more: string) => `${count} ${count === 1 ? one : more}`;
-	const laws = d.laws.length;
-	const first = `${n(d.articles, 'artikel', 'artikelen')} in ${n(laws, 'wet', 'wetten')}.`;
-	const stages = [
-		d.enacted ? `${n(d.enacted, 'wijziging', 'wijzigingen')} in werking` : null,
-		d.proposed ? `${n(d.proposed, 'wijziging', 'wijzigingen')} voorgesteld` : null
-	].filter(Boolean);
-	return stages.length ? `${first} ${stages.join(', ')}.` : first;
 }
 
 /** What stands before the publication or paper on a change's line, its own spaces included. */

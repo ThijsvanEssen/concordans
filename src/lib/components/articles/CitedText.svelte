@@ -1,24 +1,32 @@
 <script lang="ts">
 	// Inline text in which the spans the API found are links to the cited bron, at the
-	// lid or onderdeel the source names.
+	// lid or onderdeel the source names. A term the regulation defines is a reference too:
+	// its card says the definition, a click opens the article that gives it (begrippen.ts).
 	import type { Schema } from '$lib/api/types';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { refOf } from '$lib/bron/href';
 	import { anchorOf, parseQualifier, qualifierOfSpan } from '$lib/text/qualifier';
 	import { isCollection } from '$lib/vocabulary';
+	import { definitieKaart, definitieRegel, type Begrip, type Definitie } from '$lib/text/begrippen';
 
-	type Span = Schema<'ArticleCitationSpan'>;
+	type Span = Schema<'ArticleCitationSpan'> & { definition_ref?: string | null };
 
 	let {
 		text,
-		citations = []
+		citations = [],
+		begrippen = [],
+		definities = new Map()
 	}: {
 		text: string;
 		/** Offsets are relative to `text`. */
 		citations?: Span[];
+		/** The defined terms the text uses, offsets relative to `text`. */
+		begrippen?: Begrip[];
+		/** The definitions by their `ref`. */
+		definities?: Map<string, Definitie>;
 	} = $props();
 
-	type Segment = { content: string; span?: Span; at?: string | null };
+	type Segment = { content: string; span?: Span; at?: string | null; begrip?: Definitie };
 
 	/** How much of what follows a span is read for a qualifier ("…, tweede lid,"). */
 	const FOLLOWING = 80;
@@ -26,12 +34,22 @@
 	const segments = $derived.by<Segment[]>(() => {
 		const out: Segment[] = [];
 		let cursor = 0;
-		const sorted = citations
-			.filter((c) => c.start != null && c.end != null)
-			.sort((a, b) => a.start! - b.start!);
-		for (const span of sorted) {
-			if (span.start! < cursor) continue;
-			if (span.start! > cursor) out.push({ content: text.slice(cursor, span.start!) });
+		// A term inside a citation is no span of its own (the API leaves it out); where both
+		// start at one place the citation goes first.
+		const sorted = [
+			...citations.filter((c) => c.start != null && c.end != null),
+			...begrippen.map((b) => ({ ...b, begrip: definities.get(b.definition_ref) }))
+		].sort((a, b) => a.start! - b.start! || ('begrip' in a ? 1 : 0) - ('begrip' in b ? 1 : 0));
+		for (const item of sorted) {
+			if (item.start! < cursor) continue;
+			if (item.start! > cursor) out.push({ content: text.slice(cursor, item.start!) });
+			if ('begrip' in item) {
+				if (!item.begrip) continue;
+				out.push({ content: text.slice(item.start, item.end), begrip: item.begrip });
+				cursor = item.end;
+				continue;
+			}
+			const span = item;
 			const content = text.slice(span.start!, span.end!);
 			// The API names the lid on the span (0.5); before that it is read from the text.
 			const at =
@@ -55,13 +73,33 @@
 	};
 </script>
 
-{#each segments as seg, i (i)}{#if seg.span && refOfSpan(seg)}<BronLink
+{#each segments as seg, i (i)}{#if seg.begrip}<BronLink
+			ref={`articles/${seg.begrip.article_key}`}
+			voorbeeld={definitieKaart(seg.begrip)}
+			class="begrip">{seg.content}</BronLink
+		>{:else if seg.span && refOfSpan(seg)}<BronLink
 			ref={refOfSpan(seg)!}
 			at={seg.at}
+			extra={seg.span.definition_ref && definities.get(seg.span.definition_ref)
+				? definitieRegel(definities.get(seg.span.definition_ref)!)
+				: null}
 			class="cited">{seg.content}</BronLink
 		>{:else}{seg.content}{/if}{/each}
 
 <style>
+	/* A defined term: quieter than a citation, the text's own colour on a dotted line. */
+	:global(a.begrip) {
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-style: dotted;
+		text-decoration-color: var(--ink-3);
+		text-underline-offset: 3px;
+	}
+	:global(a.begrip:hover),
+	:global(a.begrip:focus-visible) {
+		text-decoration-color: var(--ink);
+		outline: none;
+	}
 	/* The link lives in BronLink; its look is the text's own. */
 	:global(a.cited) {
 		color: var(--accent);

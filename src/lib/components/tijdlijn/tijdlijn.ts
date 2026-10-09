@@ -17,6 +17,8 @@ export type TijdRegel = {
 	ref?: import('$lib/bron/href').BronRef | string | null;
 	/** Een besluit of een wetsvoorstel: groter gezet. */
 	groot?: boolean;
+	/** A line that leads elsewhere on the page (a day of votes to its list), not to a bron. */
+	actie?: (() => void) | null;
 };
 export type TijdGroep = {
 	id: string;

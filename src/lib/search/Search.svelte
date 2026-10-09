@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import { heeftParameter } from '$lib/api/heeft';
 	import { kamerLinks, kamerOf } from './kamer';
@@ -590,25 +591,23 @@
 	>
 		{#if outsideLaw}
 			<p class="state" role="status">
-				"{q}" staat niet in Concordans. Het netwerk bevat een selectie van wetten;
+				"{q}" staat niet in Concordans.
 				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="noopener"
-					>zoek de regeling op wetten.overheid.nl</a
-				>.
-				{#if hits.length}De treffers hieronder noemen haar.{/if}
+					>wetten.overheid.nl</a
+				>
 			</p>
 		{/if}
 		{#if kamer}
 			<p class="state" role="status">
-				De {kamer === 'EK' ? 'Eerste' : 'Tweede'} Kamer is geen bron in het netwerk. Bekijk haar
-				{#each kamerLinks(kamer) as link, i (link.href)}{i > 0 ? (i === 2 ? ' en ' : ', ') : ''}<a
-						href={link.href}>{link.label}</a
-					>{/each}.
+				{kamer === 'EK' ? 'Eerste' : 'Tweede'} Kamer:
+				{#each kamerLinks(kamer) as link, i (link.href)}{i > 0 ? ', ' : ''}<a href={link.href}
+						>{link.label}</a
+					>{/each}
 			</p>
 		{/if}
 		{#if notFound}
 			<p class="state" role="status">
-				"{q}" staat niet in de gegevens. Het netwerk bevat een selectie van bronnen;
-				<a href="/bronnen#dekking">zie de dekking</a>.
+				"{q}" staat niet in de gegevens. <a href="/bronnen#dekking">Dekking</a>
 			</p>
 		{/if}
 		{#if keuzes.length > 0}
@@ -616,7 +615,7 @@
 			<div class="group" role="group" aria-labelledby="{uid}-keuzes">
 				<div class="group-label" id="{uid}-keuzes">
 					<KindGlyph collection="articles" />
-					Kies een artikel
+					Artikelen met dit nummer
 				</div>
 				{#each keuzes as keuze, i (keuze.ref.key)}
 					<a
@@ -754,9 +753,11 @@
 				{/each}
 				{#if meerKinds.has(group.kind)}
 					<!-- The live mode answered within its time and left more out: the full answer on asking. -->
-					<button type="button" class="meer-uitspraken" onclick={() => (volVoor = q)}
-						>Meer {groupLabel(group.kind).toLowerCase()}</button
-					>
+					<p class="volledig">
+						<TekstLink onclick={() => (volVoor = q)}
+							>Meer {groupLabel(group.kind).toLowerCase()}</TekstLink
+						>
+					</p>
 				{/if}
 			</div>
 		{/each}
@@ -843,8 +844,8 @@
 	}
 
 	.kbd {
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		color: var(--ink-3);
 		border: 1px solid var(--rule);
@@ -892,9 +893,9 @@
 		align-items: center;
 		gap: var(--s-2);
 		padding: var(--s-2) var(--s-4) var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 
@@ -920,9 +921,9 @@
 		align-items: center;
 		gap: var(--s-2);
 		flex-shrink: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 
@@ -944,7 +945,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -970,7 +971,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -978,26 +979,14 @@
 	.state {
 		margin: 0;
 		padding: var(--s-3) var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
 
-	.meer-uitspraken {
+	.volledig {
 		margin: 0 var(--s-4) var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-sans);
 		font-size: var(--t-meta);
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.meer-uitspraken:hover {
-		color: var(--ink);
 	}
 	.group-label .laden {
 		margin-left: var(--s-2);

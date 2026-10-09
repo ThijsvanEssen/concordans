@@ -16,11 +16,14 @@
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
 	import { citationsWithin } from './citations';
+	import { begrippenWithin, definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
 
 	let {
 		text,
 		parts: apiParts = null,
 		citations = [],
+		begrippen = [],
+		definities = [],
 		counts = new Map(),
 		tellend = false,
 		lidHref,
@@ -34,6 +37,10 @@
 		/** The parts the API delivers (0.5); without them they are read from the text. */
 		parts?: Schema<'ArticlePartDTO'>[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
+		/** The terms the text uses that its regulation defines (`term_spans`). */
+		begrippen?: Begrip[];
+		/** The definitions they name (`definitions`). */
+		definities?: Definitie[];
 		/** Verbindingen per lid; a lid without an entry shows no count. */
 		counts?: Map<string, number>;
 		/** The counts are still on their way: each lid says "…". */
@@ -52,6 +59,7 @@
 	} = $props();
 
 	const source = $derived(text ?? '');
+	const perRef = $derived(definitiesOp(definities));
 	const parts = $derived(apiParts?.length ? partsFromApi(apiParts) : parseArticleParts(source));
 
 	const own = (part: ArticlePart) => {
@@ -60,7 +68,8 @@
 		const body = raw.trim();
 		return {
 			body,
-			citations: citationsWithin(citations, part.textStart + lead, body.length)
+			citations: citationsWithin(citations, part.textStart + lead, body.length),
+			begrippen: begrippenWithin(begrippen, part.textStart + lead, body.length)
 		};
 	};
 
@@ -127,7 +136,7 @@
 {/snippet}
 
 {#snippet render(part: ArticlePart, top: boolean)}
-	{@const { body, citations: spans } = own(part)}
+	{@const { body, citations: spans, begrippen: termen } = own(part)}
 	{@const showProposed = proposed && part.kind === 'lid' && proposed.lid === part.number}
 	{#if top}
 		<div class="lid lid--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
@@ -140,7 +149,9 @@
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
 				<div class="lid__text">
-					{#if body}<p><CitedText text={body} citations={spans} /></p>{/if}
+					{#if body}<p>
+							<CitedText text={body} citations={spans} begrippen={termen} definities={perRef} />
+						</p>{/if}
 					{#each part.children as child (child.start)}
 						{@render render(child, false)}
 					{/each}
@@ -171,7 +182,9 @@
 				<a class="part__number" href="#{part.id}">{part.number}{mark}</a>
 			{/if}
 			<div class="part__body">
-				{#if body}<p><CitedText text={body} citations={spans} /></p>{/if}
+				{#if body}<p>
+						<CitedText text={body} citations={spans} begrippen={termen} definities={perRef} />
+					</p>{/if}
 				{#each part.children as child (child.start)}
 					{@render render(child, false)}
 				{/each}
@@ -294,7 +307,7 @@
 		align-items: baseline;
 		gap: var(--s-2);
 		margin-bottom: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -326,7 +339,7 @@
 		align-items: baseline;
 		gap: var(--s-3);
 		padding-top: 2px;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -397,7 +410,7 @@
 		opacity: 0;
 		justify-content: flex-end;
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.part:hover:not(:has(.part--onderdeel:hover)) > .part__actions,

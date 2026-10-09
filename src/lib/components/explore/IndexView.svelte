@@ -1,16 +1,17 @@
 <script lang="ts">
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { axisLabels } from './index/years-axis';
-	import { korteDatum, langeDatum, weekdag } from '$lib/text/datum';
+	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { isEscape } from '$lib/actions/keys';
+	import { rijen } from '$lib/actions/rijen';
 	// Index: browse one category at a time. Beside the list a column of filters, each
-	// option with the number of bronnen it holds under the other filters. A row's title
-	// links to the bron; the rest of the row expands inline with its metadata and the
-	// ways on to the bron (… lezen, In het netwerk).
+	// option with the number of bronnen it holds under the other filters. A row says what
+	// the bron is in its own lines; its title opens it, and at its end stand the ways on in
+	// one click (Lezen, Netwerk; Openen for a bron read beside the network). No panel
+	// opens beneath a row (Thijs, 10 Oct).
 	//
 	// Every filter, the sort and the open row are in the URL, so a view can be shared.
 	// What the API can filter or sort is passed on as a query; the rest is done
@@ -51,13 +52,12 @@
 	import { stand, datum } from '$lib/components/parliamentary/stand';
 	import Hemicycle from './Hemicycle.svelte';
 	import ZaalTegenover from './ZaalTegenover.svelte';
-	import DossierOpen from '$lib/components/open/DossierOpen.svelte';
-	import OpenRij from '$lib/components/open/OpenRij.svelte';
-	import KabinetOpen from '$lib/components/open/KabinetOpen.svelte';
 	import ZaalLegenda from './ZaalLegenda.svelte';
-	import Meerderheid from './Meerderheid.svelte';
 	import { kleurVan } from './partijkleuren.svelte';
-	import IndexToolbar from './index/IndexToolbar.svelte';
+	import Periode from '$lib/components/ui/Periode.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
 	import {
 		NO_DECISION_KIND,
@@ -92,7 +92,6 @@
 	import { COURT_GROUPS, MIXED_TIERS } from './index/courts';
 	import { pannable } from './index/pannable';
 	import CabinetOccupancy from './index/CabinetOccupancy.svelte';
-	import IndexDetail from './index/IndexDetail.svelte';
 	import IndexRow from './index/IndexRow.svelte';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
@@ -439,32 +438,22 @@
 
 	let pages = $state<Pages>({});
 	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
-	// Coalition and opposition per fractie on the day of the hall (API, Back-end #3): the
-	// cabinet in office and `coalition` per fractie, where the API gives them.
-	type MetCoalitie = { cabinet?: { key: string; name: string } | null };
-	type FractieCoalitie = { key: string; seats: number; coalition?: boolean | null };
-	const kabinetOpZaal = $derived((seats as MetCoalitie | null)?.cabinet ?? null);
-	const coalitieKant = $derived.by(() => {
-		if (!seats || !kabinetOpZaal) return null;
-		const fr = seats.factions as FractieCoalitie[];
-		if (!fr.some((f) => typeof f.coalition === 'boolean')) return null;
-		return Object.fromEntries(
-			fr.map((f) => [
-				f.key,
-				f.coalition === true ? 'voor' : f.coalition === false ? 'tegen' : 'other'
-			])
-		) as Record<string, 'voor' | 'tegen' | 'other'>;
+	// The cabinet in office on the day of the hall and its fracties (API 0.79.33): one line
+	// to the cabinet, whose reader shows its seats (Thijs, 10 Oct: the coalition is the
+	// cabinet's, not the Kamer's).
+	const coalitieRegel = $derived.by(() => {
+		const kabinet = seats?.cabinet;
+		if (!seats || !kabinet?.key) return null;
+		const fracties = [...seats.factions]
+			.filter((f) => f.coalition === true)
+			.sort((a, b) => b.seats - a.seats)
+			.map((f) => f.abbreviation ?? f.name ?? f.key);
+		return {
+			naam: kabinet.name ?? kabinet.key,
+			href: bronHref(`cabinets/${kabinet.key}`, { keepMode: false, mode: 'read' }),
+			fracties
+		};
 	});
-	const coalitieZetels = $derived.by(() => {
-		if (!seats || !coalitieKant) return null;
-		const fr = seats.factions as FractieCoalitie[];
-		const som = (k: string) =>
-			fr.filter((f) => coalitieKant[f.key] === k).reduce((n, f) => n + f.seats, 0);
-		return { ja: som('voor'), nee: som('tegen') };
-	});
-	/** The hall by fractie, or by coalition and opposition. */
-	let zaalKleur = $state<'fracties' | 'coalitie'>('fracties');
-	const zaalKant = $derived(zaalKleur === 'coalitie' ? coalitieKant : null);
 	/** The sitting factions, to filter members by, with their seats. */
 	let parties = $state<{ abbreviation: string; seats: number | null }[]>([]);
 	// The counts per filter option the API gives with a list, under the other filters.
@@ -2084,12 +2073,19 @@
 	const facetGroups = $derived(
 		CHAMBER_CATEGORIES.includes(category) ? [kamerGroup, ...facetGroupsAll] : facetGroupsAll
 	);
+	// The period stands in the choose-line, the other groups in the facet column.
+	const periode = $derived(
+		facetGroups.find((g): g is Extract<FacetGroup, { kind: 'range' }> => g.kind === 'range') ?? null
+	);
+	const facetten = $derived(facetGroups.filter((g) => g.kind !== 'range'));
 	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
 
 	// ── Opening a source ────────────────────────────────────────────────────
 	// The title of a row opens the bron as Lezen in the detail does: a text of its own at
 	// full width, the rest beside the network.
-	const hrefOf = (bron: string) => bronHref(bron, { keepMode: false, mode: 'read' });
+	// A row opens its bron in the network (Thijs, 10 Oct: "laten we standaard navigeren naar
+	// Netwerk"); Lezen at the end of the row is the way to the text.
+	const hrefOf = (bron: string) => bronHref(bron, { keepMode: false, mode: 'graph' });
 
 	// A wet that amends others is known from its Staatsblad number only: its own text
 	// was not downloaded, but the articles it changed point to it.
@@ -2153,38 +2149,49 @@
 			<div class="page">
 				<!-- The page names itself for a screen reader; the tabs above show it. -->
 				<h1 class="sr-only">Bladeren: {categoryLabel(category)}</h1>
-				<aside class="facet-col" aria-label="Filters">
-					<!-- On a phone the Kamer stands outside the folded filters, one tap away (Thijs,
-					     9 Oct: to switch, one had to know it was among them). -->
-					{#if CHAMBER_CATEGORIES.includes(category)}
-						<div class="kamer-snel">
-							<Keuze
-								label="Kamer"
-								klein
-								waarde={kamer}
-								onKies={kiesKamer}
-								opties={CHAMBERS.map((c) => ({ waarde: c, label: CHAMBER_NAME[c] }))}
+				<!-- The choose-line (docs/bediening.md): the field of the list and its period, over
+				     the facets and the list. -->
+				<div class="regel">
+					<label class="search">
+						<span class="visually-hidden">Zoek in {labelOf(category)}</span>
+						<input
+							type="search"
+							value={qDraft ?? q}
+							placeholder={PLACEHOLDER[category]}
+							oninput={(e) => typeQuery(e.currentTarget.value)}
+						/>
+					</label>
+					{#if periode}
+						<div class="periode">
+							<Periode
+								van={periode.from}
+								tot={periode.to}
+								label={periode.label}
+								onChange={periode.onChange}
 							/>
 						</div>
 					{/if}
-					<!-- On a narrow screen the filters fold away above the list. -->
+				</div>
+				<aside class="facet-col" aria-label="Verfijnen">
+					<!-- On a phone the facets behind one quiet line, opened in place. -->
 					<button
 						type="button"
-						class="facet-toggle"
+						class="verfijnen-knop"
 						aria-expanded={filtersOpen}
+						aria-controls="bladeren-facetten"
 						onclick={() => (filtersOpen = !filtersOpen)}
-						>Filters{chips.length ? ` (${chips.length})` : ''}<span
-							class="chevron"
-							class:chevron--open={filtersOpen}
-							aria-hidden="true">›</span
-						></button
+						>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
 					>
-					<div class="facet-body" class:facet-body--open={filtersOpen}>
-						<IndexFacets groups={facetGroups} pending={!pages[category] && !error} />
+					<div class="facet-body" id="bladeren-facetten" class:facet-body--open={filtersOpen}>
+						<IndexFacets groups={facetten} pending={!pages[category] && !error} />
+						{#if chips.length}
+							<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
+						{/if}
 					</div>
 				</aside>
 				<div
 					class="results"
+					use:rijen={'a.row-title'}
 					aria-busy={loading}
 					style:--row-lead="{columns.leadW}px"
 					style:--row-aside="{columns.asideW}px"
@@ -2192,46 +2199,21 @@
 					{#if category === 'factions' && seats && seats.chamber === kamer}
 						<div class="hemi-card">
 							<div class="hemi-svg-wrap">
-								{#if coalitieKant && kabinetOpZaal}
-									<Keuze
-										klein
-										label="Zaal"
-										opties={[
-											{ waarde: 'fracties', label: 'Fracties' },
-											{
-												waarde: 'coalitie',
-												label: 'Coalitie',
-												titel: `Coalitie en oppositie van ${kabinetOpZaal.name}`
-											}
-										]}
-										waarde={zaalKleur}
-										onKies={(w) => (zaalKleur = w)}
-									/>
-								{/if}
 								{#if seats.chamber === 'EK'}
-									<ZaalTegenover data={seats} voteHighlight={zaalKant} />
+									<ZaalTegenover data={seats} />
 								{:else}
 									<Hemicycle
 										data={seats}
 										meubels
-										voteHighlight={zaalKant}
-										woorden={['coalitie', 'oppositie']}
 										colorOf={(f, i) =>
 											kleurVan('TK', f.abbreviation ?? f.name ?? f.key, i, f.color ?? null)}
-									/>
-								{/if}
-								{#if zaalKant && coalitieZetels}
-									<Meerderheid
-										ja={coalitieZetels.ja}
-										nee={coalitieZetels.nee}
-										totaal={seats.total_seats}
-										woorden={['coalitie', 'oppositie']}
 									/>
 								{/if}
 								<ZaalLegenda
 									data={seats}
 									kolommen={2}
 									rijen={10}
+									coalitie={coalitieRegel}
 									peil={seats.chamber === 'EK'
 										? `Eerste Kamer, samenstelling op ${formatLongDate(composition?.composition_date ?? seats.as_of ?? null)}`
 										: `Tweede Kamer, stand op ${formatLongDate(seats.as_of ?? null)}`}
@@ -2276,30 +2258,29 @@
 							<!-- The count's own height before it is known, so nothing below it moves. -->
 							<p class="result-count" aria-hidden="true">&nbsp;</p>
 						{/if}
-						{#each chips as chip (chip.id)}
-							<button type="button" class="chip" onclick={chip.onRemove}>
-								{chip.label}<span class="chip-x" aria-hidden="true">×</span>
-								<span class="visually-hidden">(verwijder)</span>
-							</button>
-						{/each}
-						{#if chips.length > 1}
-							<button type="button" class="chips-clear" onclick={clearFilters}
-								>Wis alle filters</button
-							>
+						{#if sorts.length > 1}
+							<!-- The order of the list: one line under its count (docs/bediening.md). -->
+							<span class="volgorde">
+								<TekstMenu
+									klein
+									rechts
+									label="Volgorde"
+									waarde={sortDef.id}
+									opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
+									onKies={(v) => patchUrl({ sort: v || null })}
+								/>
+								{#if dir}
+									<IconKnop
+										label={dir === 'asc'
+											? 'Oplopend; sorteer aflopend'
+											: 'Aflopend; sorteer oplopend'}
+										onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
+										>{dir === 'asc' ? '↑' : '↓'}</IconKnop
+									>
+								{/if}
+							</span>
 						{/if}
 					</div>
-
-					<IndexToolbar
-						query={qDraft ?? q}
-						onQueryChange={typeQuery}
-						searchPlaceholder={PLACEHOLDER[category]}
-						searchLabel="Zoek in {labelOf(category)}"
-						sortOptions={sorts.length > 1 ? sorts : []}
-						sort={sortDef.id}
-						onSortChange={(v) => patchUrl({ sort: v || null })}
-						{dir}
-						onDirToggle={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-					/>
 
 					{#if category === 'judgments' && judgmentYears.length > 1}
 						{@const max = Math.max(...judgmentYears.map((y) => y.count))}
@@ -2465,8 +2446,7 @@
 												{bron}
 												title={w.citation_title ?? w.short_title ?? w.title ?? w.key}
 												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
+												acties
 											>
 												{#snippet lead()}
 													<span class="row-id-main"
@@ -2490,9 +2470,6 @@
 														{jurisdictionTag(w)}
 													</span>
 												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="instruments" record={w} {bron} />
-												{/snippet}
 											</IndexRow>
 										{/each}
 									</ul>
@@ -2505,13 +2482,7 @@
 									<ul class="list">
 										{#each pages.judgments.items as j (j.id)}
 											{@const bron = `judgments/${j.key}`}
-											<IndexRow
-												{bron}
-												title={judgmentRowTitle(j)}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={judgmentRowTitle(j)} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={fmtDateShort(j.date)} /></span>
 													<span class="row-id-sub"
@@ -2542,9 +2513,6 @@
 															></span
 														>
 													{/if}
-												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="judgments" record={j} {bron} />
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -2626,13 +2594,7 @@
 													<span>Zonder lopende dossiers</span>
 												</li>
 											{/if}
-											<IndexRow
-												{bron}
-												title={c.name ?? c.key}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={c.name ?? c.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={c.abbreviation} /></span>
 												{/snippet}
@@ -2652,9 +2614,6 @@
 														<span class="num-strong">{count}</span>
 													{/if}
 												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="committees" record={c} {bron} />
-												{/snippet}
 											</IndexRow>
 										{/each}
 									</ul>
@@ -2666,13 +2625,7 @@
 									<ul class="list">
 										{#each membersShown as m (m.id)}
 											{@const bron = `members/${m.key}`}
-											<IndexRow
-												{bron}
-												title={m.name ?? m.key}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={m.name ?? m.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<!-- An Eerste Kamer member's fractie is the one it sits in there. -->
 													{@const ek = kamer === 'EK' ? m.ek : null}
@@ -2691,9 +2644,6 @@
 															/>{/if}
 													</span>
 												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="members" record={m} {bron} chamber={kamer} />
-												{/snippet}
 											</IndexRow>
 										{/each}
 									</ul>
@@ -2706,13 +2656,7 @@
 									<ul class="list">
 										{#each factionsShown as f (f.id)}
 											{@const bron = `factions/${f.key}`}
-											<IndexRow
-												{bron}
-												title={f.name ?? f.key}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={f.name ?? f.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main row-id-main--inline">
 														<span
@@ -2723,11 +2667,20 @@
 													</span>
 												{/snippet}
 												{#snippet body()}
-													{#if f.seats != null && totalSeats > 0}
+													{#if (f.seats != null && totalSeats > 0) || f.member_count}
 														<span class="row-sub"
-															>{((f.seats / totalSeats) * 100).toLocaleString('nl-NL', {
-																maximumFractionDigits: 1
-															})}% van de zetels</span
+															>{[
+																f.seats != null && totalSeats > 0
+																	? `${((f.seats / totalSeats) * 100).toLocaleString('nl-NL', {
+																			maximumFractionDigits: 1
+																		})}% van de zetels`
+																	: null,
+																f.member_count
+																	? `${f.member_count} ${f.member_count === 1 ? 'lid' : 'leden'}`
+																	: null
+															]
+																.filter(Boolean)
+																.join(', ')}</span
 														>
 													{/if}
 												{/snippet}
@@ -2739,9 +2692,6 @@
 															></span
 														>
 													{/if}
-												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="factions" record={f} {bron} />
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -2780,8 +2730,7 @@
 													{bron}
 													title={stemmingNaam(s.subject, s.dossiers?.[0] ?? s.dossier_numbers?.[0])}
 													href={hrefOf(bron)}
-													open={openId === bron}
-													onToggle={() => toggleOpen(bron)}
+													acties
 												>
 													{#snippet lead()}
 														{#if !day.date || kindLabel}
@@ -2841,9 +2790,6 @@
 															</span>
 														{/if}
 													{/snippet}
-													{#snippet detail()}
-														<IndexDetail category="decisions" record={s} {bron} />
-													{/snippet}
 												</IndexRow>
 											{/each}
 										</ul>
@@ -2864,13 +2810,7 @@
 										{#each cabinetsShown as c (c.key)}
 											{@const bron = `cabinets/${c.key}`}
 											{@const parties = c.parties ?? []}
-											<IndexRow
-												{bron}
-												title={c.name}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={c.name} href={hrefOf(bron)} acties="titel">
 												{#snippet lead()}
 													<span class="row-id-main"
 														>{period(c.from_date, c.to_date, isOpen(c))}</span
@@ -2911,15 +2851,6 @@
 														>{c.members}<span class="num-lbl">bewindspersonen</span></span
 													>
 												{/snippet}
-												{#snippet detail()}
-													<KabinetOpen
-														cabinetKey={c.key}
-														naam={c.name}
-														inFunctie={isOpen(c)}
-														{bron}
-														ministersHref={tabHref('ministers') + `&cabinet=${c.key}`}
-													/>
-												{/snippet}
 											</IndexRow>
 										{/each}
 									</ul>
@@ -2936,8 +2867,7 @@
 												{bron}
 												title={doc.title ?? doc.kind ?? doc.key}
 												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
+												acties
 											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={label} /></span>
@@ -2955,9 +2885,6 @@
 												{/snippet}
 												{#snippet aside()}
 													{#if doc.date}<span class="row-sub">{fmtDateShort(doc.date)}</span>{/if}
-												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="documents" record={doc} {bron} />
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -2979,8 +2906,7 @@
 												{bron}
 												title={t.text ?? 'Toezegging zonder tekst'}
 												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
+												acties
 											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={fmtDateShort(t.date)} /></span>
@@ -3009,39 +2935,6 @@
 															{fmtDateShort(t.expected_resolution)}</span
 														>
 													{/if}
-												{/snippet}
-												{#snippet detail()}
-													<OpenRij
-														zin={t.status
-															? `${t.status}${t.expected_resolution ? `, verwacht ${langeDatum(t.expected_resolution)}` : ''}.`
-															: null}
-														links={[
-															...(t.member
-																? [
-																		{
-																			label: t.member.name ?? 'Bewindspersoon',
-																			ref: `members/${t.member.key}`
-																		}
-																	]
-																: []),
-															...uniqueBy(t.dossiers ?? [], (d) => d.key).map((d) => ({
-																label: `${d.number}${d.title ? `: ${d.title}` : ''}`,
-																ref: `dossiers/${d.number ?? d.key}`
-															})),
-															...(t.activity
-																? [
-																		{
-																			label:
-																				`Gedaan in activiteit ${t.activity.number ?? ''}`.trim(),
-																			ref: `activities/${t.activity.key}`
-																		}
-																	]
-																: [])
-														]}
-														lezen={bronHref(bron, { keepMode: false, mode: 'read' })}
-														lezenLabel="Toezegging lezen"
-														netwerk={bronHref(bron, { keepMode: false, mode: 'graph' })}
-													/>
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -3078,8 +2971,7 @@
 		{member}
 		title={member && d.title ? chapterTitle(d.title) : (d.short_title ?? d.title ?? d.number)}
 		href={hrefOf(bron)}
-		open={openId === bron}
-		onToggle={() => toggleOpen(bron)}
+		acties
 	>
 		{#snippet lead()}
 			<span class="row-id-main">{d.number}</span>
@@ -3118,9 +3010,6 @@
 				</span>
 			{/if}
 		{/snippet}
-		{#snippet detail()}
-			<DossierOpen {d} />
-		{/snippet}
 	</IndexRow>
 {/snippet}
 
@@ -3145,17 +3034,15 @@
 {#snippet loadMoreButton(loaded: AnyPage | undefined, noun: string)}
 	{#if loaded?.more}
 		{@const remaining = (loaded.total ?? 0) - loaded.items.length}
-		<div class="load-more">
+		<div class="volgende">
 			{#if loadMoreFailed}
-				<p class="load-more-error" role="alert">De volgende {noun} konden niet worden geladen.</p>
+				<p class="volgende-fout" role="alert">De volgende {noun} konden niet worden geladen.</p>
 			{/if}
-			<button type="button" class="load-more-btn" onclick={loadMore} disabled={loadingMore}>
-				{loadingMore
-					? 'Laden…'
-					: loadMoreFailed
+			{#if loadingMore}<span>Laden…</span>{:else}<TekstLink onclick={loadMore}
+					>{loadMoreFailed
 						? 'Opnieuw'
-						: `Meer ${noun} laden${remaining > 0 ? ` (${remaining.toLocaleString('nl-NL')} resterend)` : ''}`}
-			</button>
+						: `Volgende ${noun}${remaining > 0 ? `, nog ${formatCount(remaining)}` : ''}`}</TekstLink
+				>{/if}
 		</div>
 	{/if}
 {/snippet}
@@ -3210,7 +3097,7 @@
 	}
 	.catgroup__label {
 		padding: 0 var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		white-space: nowrap;
@@ -3245,7 +3132,7 @@
 	}
 	.cat--on .cat-name {
 		color: var(--ink);
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	/* From a tablet up the groups wrap to a second line instead of scrolling: every tab
@@ -3312,26 +3199,6 @@
 	.results {
 		min-width: 0;
 	}
-	.kamer-snel {
-		display: none;
-	}
-	.facet-toggle {
-		display: none;
-		align-items: center;
-		gap: var(--s-2);
-		width: 100%;
-		min-height: 44px;
-		padding: 0;
-		border: 0;
-		border-top: 1px solid var(--rule);
-		border-bottom: 1px solid var(--rule);
-		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
 
 	/* The filters that are on, above the list; a click takes one off. */
 	/* Uitspraken per year: a column per year, the chosen one in ink, the ones outside the
@@ -3372,7 +3239,7 @@
 		display: flex;
 		gap: 2px;
 		margin-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		color: var(--ink-3);
 	}
@@ -3389,13 +3256,13 @@
 	}
 
 	.row-method {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.list-source {
 		margin: var(--s-4) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -3407,17 +3274,20 @@
 		align-items: baseline;
 		gap: var(--s-2) var(--s-3);
 		margin: 0 0 var(--s-3);
+		padding-bottom: var(--s-2);
+		border-bottom: 2px solid var(--ink);
 	}
 	.result-count {
 		margin: 0 var(--s-2) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
+		font-weight: 800;
 		line-height: 1.1;
 		color: var(--ink);
 	}
 	.result-noun {
 		margin-left: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -3429,7 +3299,7 @@
 		gap: var(--s-5);
 		padding: 0 var(--s-2) var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
@@ -3451,39 +3321,6 @@
 		font-size: var(--t-body-2);
 		color: var(--ink);
 	}
-	.chip {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		min-height: 24px;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--ink);
-		border-radius: var(--r-1);
-		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.chip:hover {
-		background: var(--paper-2);
-	}
-	.chip-x {
-		color: var(--ink-3);
-	}
-	.chips-clear {
-		min-height: 24px;
-		border: 0;
-		background: transparent;
-		padding: var(--s-1);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.chips-clear:hover {
-		color: var(--accent);
-	}
 	.visually-hidden {
 		position: absolute;
 		width: 1px;
@@ -3503,7 +3340,7 @@
 		justify-content: flex-end;
 		gap: var(--s-2);
 		margin-bottom: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -3513,7 +3350,7 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: transparent;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: 1;
 		color: var(--ink);
@@ -3576,7 +3413,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 	}
 	/* An end no source gives: the bar fades out. */
@@ -3597,7 +3434,7 @@
 		position: relative;
 		height: 16px;
 		margin-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		color: var(--ink-3);
 	}
@@ -3610,7 +3447,7 @@
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-3);
 		margin-top: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
@@ -3625,7 +3462,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.gov-title a {
 		color: var(--ink);
@@ -3636,7 +3473,7 @@
 	}
 	.gov-sub {
 		margin: var(--s-1) 0 var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -3659,13 +3496,13 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 800;
 	}
 	.day-title::first-letter {
 		text-transform: uppercase;
 	}
 	.day-meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -3716,13 +3553,17 @@
 			row-gap: var(--s-4);
 		}
 	}
-	/* On a phone the hall as wide as the column, as high as that makes it: no empty band. */
+	/* On a phone both halls in the box of the Tweede Kamer's (440 by 291) as wide as the
+	   column: as high as each other, at one scale, no empty band. */
 	@media (max-width: 520px) {
 		.hemi-svg-wrap :global(.hemicycle svg),
 		.hemi-svg-wrap :global(.zaal svg) {
 			width: 100%;
 			height: auto;
-			max-height: 300px;
+			aspect-ratio: 440 / 291;
+		}
+		.hemi-svg-wrap :global(.zaal) {
+			justify-self: stretch;
 		}
 	}
 	.hemi-svg-wrap :global(.hemicycle) {
@@ -3758,10 +3599,10 @@
 		background: transparent;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-style: normal;
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 		cursor: pointer;
 	}
@@ -3796,11 +3637,12 @@
 	.skelet-rij span:last-child {
 		width: 70%;
 	}
+	/* One heavy rule per list, the count's above it (docs/bediening.md); the heads of the
+	   columns hang under it on a thin rule of their own. */
 	.list {
 		list-style: none;
 		padding: 0;
 		margin: 0;
-		border-top: 2px solid var(--ink);
 	}
 	/* What identifies the row (a number, a date, a kind): small and grey; the title is
 	   what is read. */
@@ -3814,7 +3656,7 @@
 	}
 	.row-id-sub {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		margin-top: 2px;
@@ -3832,14 +3674,14 @@
 	.row-sub {
 		display: block;
 		margin-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	/* The inhoudsindicatie of a judgment, two lines at most. */
 	.row-summary {
 		margin: var(--s-1) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.45;
 		color: var(--ink-2);
@@ -3851,7 +3693,7 @@
 	}
 	.row-zin {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 		line-height: var(--lh-snug);
@@ -3861,7 +3703,7 @@
 		display: inline-grid;
 		grid-template-columns: repeat(3, var(--s-7));
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.stand-body {
@@ -3896,7 +3738,7 @@
 		display: inline-flex;
 		align-items: baseline;
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		white-space: nowrap;
@@ -3908,7 +3750,7 @@
 	.tag--passed,
 	.tag--rejected {
 		color: var(--ink-2);
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	.num-strong {
@@ -3919,7 +3761,7 @@
 		line-height: 1;
 	}
 	.num-lbl {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		margin-left: var(--s-1);
@@ -3940,7 +3782,7 @@
 		grid-template-columns: 32px 140px 32px auto;
 		gap: var(--s-2);
 		align-items: center;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		margin-top: var(--s-2);
@@ -3948,15 +3790,15 @@
 	.stem-mini__v {
 		color: var(--ink-2);
 		text-align: right;
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.stem-mini__t {
 		color: var(--ink-2);
 		text-align: left;
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.stem-mini__unit {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -3975,7 +3817,7 @@
 	}
 
 	.chevron {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: 1;
 		color: var(--ink-3);
@@ -3989,51 +3831,14 @@
 	.group-divider {
 		list-style: none;
 		padding: var(--s-4) var(--s-2) var(--s-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		border-bottom: 1px solid var(--rule);
 	}
 
 	/* Load more */
-	.load-more {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-5) 0 var(--s-3);
-	}
-	.load-more-error {
-		margin: 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-	}
-	.load-more-btn {
-		height: 32px;
-		padding: 0 var(--s-4);
-		background: transparent;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-2);
-		cursor: pointer;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease),
-			border-color var(--dur-1) var(--ease);
-	}
-	.load-more-btn:hover:not(:disabled) {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-	.load-more-btn:disabled {
-		opacity: 0.6;
-		cursor: wait;
-	}
 
 	/* Narrow viewports: the columns stack. */
 	@media (max-width: 768px) {
@@ -4063,17 +3868,6 @@
 			padding: 0 var(--s-4);
 			background: var(--paper);
 		}
-		.facet-toggle {
-			display: flex;
-		}
-		.kamer-snel {
-			display: block;
-			padding: var(--s-2) 0;
-		}
-		/* The Kamer is above; the folded filters leave it out. */
-		.facet-body :global(section:has(#facet-kamer)) {
-			display: none;
-		}
 		.facet-body {
 			display: none;
 			padding-top: var(--s-3);
@@ -4100,6 +3894,94 @@
 		}
 		.list-head > span:not(.nums) {
 			display: none;
+		}
+		/* Without number columns the head holds only its rule, under the count's: it goes. */
+		.list-head:not(:has(.nums)) {
+			display: none;
+		}
+	}
+
+	/* The choose-line over both columns: the field and the period, without rules. */
+	.regel {
+		grid-column: 1 / -1;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: var(--s-2) var(--s-4);
+		margin-bottom: var(--s-5);
+	}
+	.regel .search {
+		flex: 1 1 320px;
+		min-width: 0;
+	}
+	.regel .periode {
+		flex: 0 1 380px;
+		min-width: 0;
+	}
+	.regel .search input {
+		width: 100%;
+		box-sizing: border-box;
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		color: var(--ink);
+	}
+	.regel .search input::placeholder {
+		color: var(--ink-3);
+	}
+	.verfijnen-knop {
+		display: none;
+	}
+	.wis {
+		margin: var(--s-3) 0 0;
+		font-size: var(--t-meta);
+	}
+	/* The order at the right of the count, on the ink rule that opens the list. */
+	.volgorde {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		margin-left: auto;
+	}
+	.volgende {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--s-2);
+		padding: var(--s-5) 0 var(--s-3);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.volgende-fout {
+		margin: 0;
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+	}
+	@media (max-width: 767px) {
+		.regel {
+			margin-bottom: var(--s-3);
+		}
+		.regel .search,
+		.regel .periode {
+			flex: 1 1 100%;
+		}
+		.verfijnen-knop {
+			display: inline;
+			padding: var(--s-2) 0;
+			border: 0;
+			background: none;
+			font-family: var(--font-ui);
+			font-size: var(--t-ui);
+			color: var(--ink);
+			text-decoration: underline;
+			text-decoration-color: var(--rule-strong);
+			text-underline-offset: 4px;
+			cursor: pointer;
 		}
 	}
 </style>

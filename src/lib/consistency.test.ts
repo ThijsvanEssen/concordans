@@ -21,6 +21,32 @@ const sources = files(ROOT)
 const offenders = (test: (text: string) => boolean, allowed: string[] = []) =>
 	sources.filter(({ path, text }) => !allowed.includes(path) && test(text)).map((s) => s.path);
 
+// The rules of each style block, comments left out: a control is a rule whose subject is a
+// button, a field, a key, a choice row, a tab or a menu item.
+const CTL_EL = /(^|[\s>+~(,])(button|input|select|textarea|kbd|option|summary)(?=$|[.:[\s#)])/;
+const CTL_CLS =
+	/\.(?:[\w-]*(?:btn|knop|keuze|toggle|switch|segment|trigger|veld|field|input|menu__item|menuitem|kbd|nav-link)[\w-]*|(?:[\w-]*-)?tabs?(?:[-_][\w-]*)?|act(?:--[\w-]+|__[\w-]+)?)(?=$|[.:[\s#)>+~,])/;
+const isControl = (selector: string) =>
+	selector.split(',').every((part) => {
+		const p = part.replace(/:global\(([^)]*)\)/g, '$1').trim();
+		const subject = p.split(/\s*[>+~]\s*|\s+/).at(-1) ?? p;
+		return CTL_EL.test(' ' + subject) || CTL_CLS.test(subject);
+	});
+const rules = (text: string) => {
+	const css = /<style>([\s\S]*?)<\/style>/.exec(text)?.[1] ?? '';
+	return [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+		selector: m[1].trim(),
+		body: m[2]
+	}));
+};
+
+/**
+ * The places that keep an older form, each named with why and until when: an entry comes
+ * out when its page is rebuilt to docs/bediening.md (the steps of 9-bediening, Thijs, 10 Oct).
+ */
+type Uitzonderingen = Record<string, string>;
+const buiten = (u: Uitzonderingen) => Object.keys(u);
+
 describe('one form for each thing', () => {
 	it('formats a date only in $lib/text/datum.ts', () => {
 		const dateFormat = /toLocaleDateString|Intl\.DateTimeFormat|\btoLocaleTimeString\b/;
@@ -76,18 +102,48 @@ describe('one form for each thing', () => {
 	});
 
 	it('opens a row in place on one click, through the shared rule', () => {
-		// A row whose title is a link to the bron (Bladeren, Verbonden, the table) takes the
-		// click through terPlekke ($lib/actions/klik), so a plain click opens the row and a
-		// cmd-click goes to the bron.
+		// A row whose title is a link to the bron (Actueel, the table) takes the click through
+		// terPlekke ($lib/actions/klik), so a plain click opens the row and a cmd-click goes to
+		// the bron. A row of Verbonden has no panel (Thijs, 10 Oct): its title and the row
+		// itself go to the bron in Netwerk.
 		const rows = sources.filter(({ text }) =>
-			/class="(row-title|row__title)"[\s\S]{0,80}href=/.test(text)
+			/class="(row-title|row__title)"[\s\S]{0,80}(href=|\{href\})/.test(text)
 		);
 		expect(rows.length).toBeGreaterThan(0);
-		expect(rows.filter(({ text }) => !text.includes('terPlekke')).map((s) => s.path)).toEqual([]);
+		const verbonden = (path: string) => path.endsWith('verbonden/Verbonden.svelte');
+		expect(
+			rows
+				.filter(({ text, path }) => !verbonden(path) && !text.includes('terPlekke'))
+				.map((s) => s.path)
+		).toEqual([]);
+		expect(rows.filter(({ text, path }) => verbonden(path) && text.includes('terPlekke'))).toEqual(
+			[]
+		);
 	});
 
 	it('draws every option of a filter with FilterOptie', () => {
 		expect(offenders((t) => /class="(box|opt|check__box)"/.test(t))).toEqual([]);
+	});
+
+	it('sets text in the serif and only controls in the sans (docs/typografie.md, 10 Oct 2026)', () => {
+		expect(offenders((t) => t.includes('var(--font-sans)'))).toEqual([]);
+		// The sans only where a control is styled.
+		expect(
+			offenders(
+				(t) => rules(t).some((r) => r.body.includes('var(--font-ui)') && !isControl(r.selector)),
+				['lib/components/layout/AppShell.svelte']
+			)
+		).toEqual([]);
+		// Text in three weights: 400, 600, 800. The wordmark is a logo, not a rung.
+		expect(
+			offenders(
+				(t) =>
+					rules(t).some(
+						(r) => !isControl(r.selector) && /font-weight:\s*(?!400|600|800)\d+/.test(r.body)
+					),
+				['lib/components/layout/Wordmark.svelte']
+			)
+		).toEqual([]);
 	});
 
 	it('separates with a comma, not a middle dot (Thijs, 2 October 2026)', () => {
@@ -98,6 +154,44 @@ describe('one form for each thing', () => {
 	it('has no prototype switches or study folders left', () => {
 		expect(
 			offenders((t) => /searchParams\.get\('(ontwerp|contrast)'\)|components\/r[0-9]\//.test(t))
+		).toEqual([]);
+	});
+});
+
+describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () => {
+	it('chooses one of many with TekstMenu, not a native select', () => {
+		const selects: Uitzonderingen = {
+			'lib/components/ui/TekstMenu.svelte': 'the one form'
+		};
+		expect(offenders((t) => /<select\b/.test(t), buiten(selects))).toEqual([]);
+	});
+
+	it('shows a choice in the control itself, without chips', () => {
+		const chips: Uitzonderingen = {
+			'lib/netwerk/NetwerkPanel.svelte': 'the chosen bronnen: content, not a filter'
+		};
+		expect(offenders((t) => /class="[^"]*\bchip\b/.test(t), buiten(chips))).toEqual([]);
+	});
+
+	it('leads on from a list with AlleN, not a "meer" of its own', () => {
+		// A class token named more or meer: `group__more`, `load-more-btn`, `chip--meer`.
+		const meer = (t: string) =>
+			[...t.matchAll(/class="([^"]*)"/g)].some((m) =>
+				m[1].split(/\s+/).some((c) => /(^|[_-])(more|meer)($|[_-])/.test(c))
+			);
+		const eigen: Uitzonderingen = {};
+		expect(offenders(meer, buiten(eigen))).toEqual([]);
+	});
+
+	it('sizes a control at the height of a page or of a panel', () => {
+		// 32 px on a page (--veld-h), 24 px in a panel or a group (--veld-h-klein).
+		const hoog = (body: string) =>
+			[...body.matchAll(/(?<![-\w])height:\s*([^;]+);/g)].some(
+				(m) => !/^(var\(--veld-h(-klein)?\)|auto|100%)$/.test(m[1].trim())
+			);
+		const anders: Uitzonderingen = {};
+		expect(
+			offenders((t) => rules(t).some((r) => isControl(r.selector) && hoog(r.body)), buiten(anders))
 		).toEqual([]);
 	});
 });

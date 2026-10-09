@@ -156,6 +156,22 @@ export const getCabinet = (key: string) =>
 		unwrap(api.GET('/api/cabinets/{key}', { params: { path: { key } } }))
 	);
 
+/** A cabinet's coalition seats in each Kamer over its period, a stretch per change. */
+export const getCabinetSeats = (key: string) =>
+	once(`cabinets/${key}/seats`, () =>
+		unwrap(api.GET('/api/cabinets/{key}/seats', { params: { path: { key } } }))
+	);
+
+/** The hall of a Kamer on a day (today without one), with the cabinet then in office. */
+export const getParliamentSeats = (chamber: 'TK' | 'EK', date?: string) =>
+	once(`parliament/seats/${chamber}/${date ?? ''}`, () =>
+		unwrap(
+			api.GET('/api/parliament/seats', {
+				params: { query: { chamber, ...(date ? { date } : {}) } }
+			})
+		)
+	);
+
 export const getDossierTimeline = (number: string, limit: number) =>
 	once(`dossiers/${number}/timeline/${limit}`, () =>
 		unwrap(

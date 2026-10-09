@@ -1,7 +1,10 @@
-// A party's colour as the API gives it (`/api/parties/colors`, the colours parties use
-// themselves). A party it does not list, such as KVP or ARP, is grey: a colour made up
-// from the name looked alike for VVD, D66 and CU and meant nothing.
+// A party's colour as the API gives it (`/api/parties/colors`). First the colour the
+// Tweede Kamer draws it in, else the Eerste Kamer's (Thijs, 10 Oct: one colour per fractie
+// everywhere, the hall's; $lib/components/explore/partijkleuren), and only for a party
+// neither Kamer has (an earlier cabinet's) the colour the party uses itself. A party none of
+// them lists, such as KVP or ARP, is grey: a colour made up from the name meant nothing.
 import { api } from '$lib/api/client';
+import { kamerKleuren } from '$lib/components/explore/partijkleuren.svelte';
 
 /** The colour of a party the API does not list. */
 export const NO_PARTY_COLOR = 'var(--ink-3)';
@@ -44,5 +47,6 @@ export function partyColor(abbr: string): string {
 				// Grey stays: the colour is an aid, the abbreviation names the party.
 			});
 	}
-	return colorFor(abbr, colors, aliases);
+	const kamer = kamerKleuren(abbr) ?? kamerKleuren(aliases[abbr.trim()] ?? '');
+	return kamer?.[0] ?? colorFor(abbr, colors, aliases);
 }

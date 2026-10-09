@@ -43,14 +43,31 @@
       "path": "/wetten/BWBR0005290/artikel/7:658"
     },
     {
-      "focus": "dossiers/36600-VIII",
+      "focus": "dossiers/36496",
       "props": {},
+      "path": "/dossiers/36496"
+    },
+    {
+      "focus": "dossiers/36600_viii",
+      "props": {
+        "label": "36600-VIII"
+      },
       "path": "/dossiers/36600-VIII"
     },
     {
-      "focus": "dossiers/36455-(R2188)",
-      "props": {},
+      "focus": "dossiers/36455_r2188",
+      "props": {
+        "label": "36455-(R2188)"
+      },
       "path": "/dossiers/36455-(R2188)"
+    },
+    {
+      "focus": "dossiers/36600_viii",
+      "props": {
+        "number": "36600",
+        "suffix": "VIII"
+      },
+      "path": "/dossiers/36600-VIII"
     },
     {
       "focus": "documents/kst_36799_31",
@@ -135,6 +152,18 @@
       "props": {
         "dossier_number": "36799"
       }
+    },
+    {
+      "focus": "activities/a1",
+      "props": {}
+    },
+    {
+      "focus": "annexes/x1",
+      "props": {}
+    },
+    {
+      "focus": "dossiers/36600_viii",
+      "props": {}
     }
   ],
   "parse": [

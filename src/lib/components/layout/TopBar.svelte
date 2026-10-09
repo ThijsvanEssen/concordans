@@ -13,7 +13,6 @@
 		$page.url.pathname.startsWith('/explore') && $page.url.searchParams.get('mode') === 'index'
 	);
 	const isExplore = $derived(isVerkenner($page.url.pathname) && !isIndex);
-	const isDocs = $derived($page.url.pathname.startsWith('/docs'));
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
 	const isOnderwerpen = $derived($page.url.pathname.startsWith('/onderwerpen'));
 
@@ -84,12 +83,6 @@
 			class="nav-link"
 			class:is-active={isOnderwerpen}
 			aria-current={isOnderwerpen ? 'page' : undefined}>Onderwerpen</a
-		>
-		<a
-			href="/docs"
-			class="nav-link"
-			class:is-active={isDocs}
-			aria-current={isDocs ? 'page' : undefined}>Documentatie</a
 		>
 	</nav>
 
@@ -167,7 +160,6 @@
 			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bladeren</a>
 			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
 			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}>Onderwerpen</a>
-			<a href="/docs" class="mobile-nav-link" class:is-active={isDocs}>Documentatie</a>
 		</div>
 	{/if}
 
@@ -223,13 +215,14 @@
 	.topbar-nav {
 		display: flex;
 		gap: 20px;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		font-weight: 500;
 		color: var(--ink-3);
 	}
 
+	/* The navigation is a menu: the sans of the controls. */
 	.nav-link {
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		font-weight: 500;
 		color: inherit;
 		/* One pixel lower than centred, so the capitals sit on the bar's middle. */
 		padding: 21px 0 19px;
@@ -259,14 +252,14 @@
 		width: 340px;
 		max-width: 100%;
 		min-width: 0;
-		height: 32px;
+		height: var(--veld-h);
 		padding: 0 10px;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		cursor: text;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		color: var(--ink-3);
 		transition: border-color var(--dur-1) var(--ease);
 	}
@@ -314,7 +307,7 @@
 	}
 
 	.mobile-nav-link {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink-2);
 		padding: 14px var(--s-5);
@@ -327,13 +320,14 @@
 		background: var(--paper-2);
 	}
 
-	@media (max-width: 1000px) {
+	/* Four links and the logo take about 500 px: the search field narrows first. */
+	@media (max-width: 900px) {
 		.search-trigger {
 			width: 220px;
 		}
 	}
-	/* The five links keep their room: the search field folds to its icon first. */
-	@media (max-width: 900px) {
+	/* Then it folds to its icon, and the four links keep their room. */
+	@media (max-width: 780px) {
 		.search-trigger {
 			width: auto;
 		}
@@ -343,8 +337,8 @@
 		}
 	}
 
-	/* Five links and the search icon need about 650 px: below that, the menu. */
-	@media (max-width: 720px) {
+	/* Four links and the search icon need about 600 px: below that, the menu. */
+	@media (max-width: 620px) {
 		/* Without the links there is no baseline to share. */
 		.topbar {
 			align-items: center;

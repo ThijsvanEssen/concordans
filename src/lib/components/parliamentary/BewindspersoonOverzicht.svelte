@@ -110,7 +110,7 @@
 	}
 	.zin {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 	}
@@ -142,7 +142,7 @@
 		font-size: var(--t-body-2);
 		line-height: var(--lh-snug);
 	}
-	.items li :global(.bronlink > a) {
+	.items li > :global(a) {
 		text-decoration: none;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
@@ -151,7 +151,7 @@
 		overflow: hidden;
 	}
 	.meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -165,13 +165,13 @@
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 3px;
 		cursor: pointer;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.dekking {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

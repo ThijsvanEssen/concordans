@@ -4,6 +4,8 @@
 	import { seatCount } from '$lib/verbonden/filter';
 	import { formatLongDate } from './readers/_shared';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
+	import FractiePatronen from './FractiePatronen.svelte';
+	import { patroonId, patroonVan } from './partijkleuren.svelte';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 	type SeatFaction = Seats['factions'][number];
@@ -13,6 +15,7 @@
 		hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' }),
 		voteHighlight = null,
 		woorden = ['voor', 'tegen'],
+		telling = true,
 		colorOf = null,
 		meubels = false
 	}: {
@@ -28,6 +31,8 @@
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 		/** The two sides of `voteHighlight` as words: voor and tegen, or coalitie and oppositie. */
 		woorden?: [string, string];
+		/** The count of the two sides in the middle; off where a bar under the hall says it. */
+		telling?: boolean;
 	} = $props();
 
 	// The factions as they sit in the plenary hall, from the chair's left: the order of the
@@ -47,8 +52,9 @@
 
 	// Fixed row capacities: 150 seats for the Tweede Kamer, 75 for the Eerste. Radii scale
 	// linearly inner→outer; each row holds what its six blocks hold without seats touching.
-	const ROWS_150 = [16, 18, 20, 22, 23, 25, 26];
-	const ROWS_75 = [8, 10, 11, 13, 15, 18];
+	// Every block holds as many seats in a row as the others: even rows (Thijs, 10 Oct).
+	const ROWS_150 = [12, 18, 18, 24, 24, 24, 30];
+	const ROWS_75 = [6, 12, 12, 12, 15, 18];
 	const ROW_CAPS = $derived(data.total_seats <= 75 ? ROWS_75 : ROWS_150);
 	const kamer = $derived(chamberName(data.chamber));
 	// As the Kamer draws its plenaire zaal ("Zetelverdeling plenaire zaal", tweedekamer.nl,
@@ -154,10 +160,13 @@
 	const MID = $derived(CY + (meubels ? 72 : 50));
 
 	let hovered = $state<SeatFaction | null>(null);
+	const uid = $props.id();
+	const naamVan = (f: SeatFaction) => f.abbreviation ?? f.name ?? f.key;
 </script>
 
 <figure class="hemicycle" class:kaal={meubels} aria-label="Zetelverdeling {kamer}">
 	<svg viewBox="0 0 {VIEW_W} {VIEW_H}" role="group" aria-label="Zetels per fractie">
+		<FractiePatronen prefix={uid} namen={seated.map(naamVan)} />
 		<!-- Sectoren eerst (onder de stoelen) zodat ze de pointer-events
          opvangen zonder over de stoelen te tekenen. -->
 		{#each sectors as sec (sec.faction.id)}
@@ -177,6 +186,10 @@
 		{#each seats as s, i (s.faction.id + ':' + s.x + ':' + s.y)}
 			{@const side = voteHighlight?.[s.faction.key]}
 			{@const kleur = colorOf ? colorOf(s.faction, i) : s.faction.color}
+			{@const vulling =
+				patroonVan(naamVan(s.faction)) !== 'vol'
+					? `url(#${patroonId(uid, naamVan(s.faction))})`
+					: kleur}
 			<!-- A seat as the Kamer draws it: a small block along its row, not a dot. -->
 			<rect
 				aria-hidden="true"
@@ -186,7 +199,7 @@
 				height={SEAT_D}
 				rx="2"
 				transform="translate({s.x} {s.y}) rotate({(s.angle * 180) / Math.PI + 90})"
-				fill={side === 'tegen' ? undefined : kleur}
+				fill={side === 'tegen' ? undefined : vulling}
 				style:stroke={side === 'tegen' ? kleur : undefined}
 				class="seat"
 				class:seat--dim={hovered !== null && hovered.id !== s.faction.id}
@@ -211,7 +224,7 @@
 					{hovered.seats}
 					{hovered.seats === 1 ? 'zetel' : 'zetels'}
 				</text>
-			{:else if voteTotals}
+			{:else if voteTotals && telling}
 				<text x={CX} y={MID - 6} text-anchor="middle" class="center-num">
 					{voteTotals.voor}
 				</text>
@@ -239,7 +252,6 @@
 					<polyline points="{CX - 40},{CY + 4} {CX},{CY + 16} {CX + 40},{CY + 4}" />
 				</g>
 				{#each [[CX - 50, 32, '1'], [CX - 80, 52, '2'], [CX + 62, 46, '3'], [CX + 164, 40, '4'], [CX, 9, '5'], [CX + 54, CY + 6, '6'], [CX - 164, 40, '7']] as [x, yy, n] (n)}
-					<circle cx={x} cy={yy} r="7" class="nr" />
 					<text {x} y={Number(yy) + 3} text-anchor="middle" class="nr-t">{n}</text>
 				{/each}
 			</g>
@@ -267,23 +279,23 @@
 </figure>
 
 <style>
+	/* The front quiet: the seats are what the picture is about (Thijs, 10 Oct). */
 	.meubel line,
 	.meubel polyline {
 		fill: none;
 		stroke: var(--rule);
-		stroke-width: 9;
+		stroke-opacity: 0.7;
+		stroke-width: 7;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
 	.meubel polyline {
-		stroke-width: 5;
+		stroke-width: 4;
 	}
-	.nr {
-		fill: var(--ink);
-	}
+	/* The Kamer's number of a place, without a disc: the key under the hall names it. */
 	.nr-t {
-		font: 600 var(--t-glyph) var(--font-sans);
-		fill: var(--paper);
+		font: 600 var(--t-glyph) var(--font-serif);
+		fill: var(--ink-3);
 	}
 	/* Zonder kader en vlak, zoals de zaal van de Eerste Kamer. */
 	.hemicycle.kaal {
@@ -358,17 +370,17 @@
 	   inline style. */
 	.center-num--party {
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.center-lbl {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		fill: var(--ink-3);
 	}
 	.hemicycle-caption {
 		margin: 0;
 		padding-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		text-align: center;

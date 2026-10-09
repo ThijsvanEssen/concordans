@@ -57,7 +57,7 @@
 			</span>
 			<h2 class="title">{name}</h2>
 			{#if abbreviation && abbreviation !== name}
-				<div class="chips"><span class="afk-chip">{abbreviation}</span></div>
+				<div class="woorden"><span class="afk">{abbreviation}</span></div>
 			{/if}
 		</header>
 
@@ -138,9 +138,9 @@
 		gap: var(--s-2);
 	}
 	.kicker {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
@@ -155,7 +155,7 @@
 		grid-template-columns: max-content minmax(0, 1fr);
 		gap: var(--s-2) var(--s-4);
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: var(--lh-snug);
 	}
@@ -174,25 +174,25 @@
 	}
 	.source {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
-	.chips {
+	.woorden {
 		display: flex;
 		gap: var(--s-1);
 	}
 	/* The abbreviation: a word, not a tag. */
-	.afk-chip {
-		font-family: var(--font-sans);
+	.afk {
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -216,13 +216,13 @@
 		border-radius: var(--r-1);
 	}
 	.stat-num {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.stat-label {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

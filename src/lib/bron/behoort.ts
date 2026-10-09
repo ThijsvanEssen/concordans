@@ -654,7 +654,13 @@ export function isKernGroep(
  * of contents and its text (Thijs, 9 Oct: "overdreven als we al een inhoudsopgave hebben").
  * Verbonden leaves them out; the table and an export keep them.
  */
-export const INHOUD: Partial<Record<Collection, string[]>> = { instruments: ['articles'] };
+export const INHOUD: Partial<Record<Collection, string[]>> = {
+	instruments: ['articles'],
+	// A fractie's reader lists all its leden (Thijs, 10 Oct: "Leden is hier nu ook dubbelop").
+	// A commissie names only its officers and a kabinet counts its bewindspersonen: their
+	// lists stay in Verbonden.
+	factions: ['members']
+};
 export const isInhoudGroep = (collection: Collection, g: { id: string }) =>
 	INHOUD[collection]?.includes(g.id) ?? false;
 

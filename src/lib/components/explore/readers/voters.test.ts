@@ -35,7 +35,8 @@ const vote = (name: string, choice: string, seats: number) => ({
 	voter_key: name || 'x',
 	name,
 	choice,
-	seats
+	seats,
+	path: null
 });
 
 describe('votersOf', () => {

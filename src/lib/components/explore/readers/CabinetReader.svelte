@@ -8,11 +8,13 @@
 	// Reader for a cabinet: its period, minister-president and coalition, and what it did,
 	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
 	import ReaderFrame from './ReaderFrame.svelte';
+	import KabinetZetels from './KabinetZetels.svelte';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { indexHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
 	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { achtergrondVan, kamerKleuren } from '../partijkleuren.svelte';
 	import { formatLongDate } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
@@ -88,7 +90,11 @@
 					<span class="parties">
 						{#each c.parties ?? [] as p, i (i)}
 							<span class="party"
-								><span class="party-dot" style:background={partyColor(p.short ?? p.faction ?? '')}
+								><span
+									class="party-dot"
+									style:background={kamerKleuren(p.short ?? '')
+										? achtergrondVan(p.short ?? '')
+										: partyColor(p.short ?? p.faction ?? '')}
 								></span><NameLink
 									collection="factions"
 									name={p.short ?? p.faction ?? ''}
@@ -111,6 +117,8 @@
 					>
 				</Veld>
 			</Feiten>
+
+			<KabinetZetels kabinet={c.key} />
 		{/if}
 	</div>
 </ReaderFrame>
@@ -135,9 +143,9 @@
 		gap: var(--s-2);
 	}
 	.kicker {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
@@ -146,7 +154,7 @@
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-snug);

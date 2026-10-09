@@ -14,7 +14,7 @@
 	</aside>
 	<div class="groepen">
 		{#each INDEX_TABS as groep (groep.label)}
-			<Sectie titel={groep.label} niveau={2}>
+			<Sectie titel={groep.label} niveau={2} inklapbaar={false}>
 				<ul>
 					{#each groep.categories as cat (cat.key)}
 						<li>
@@ -44,7 +44,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.groepen {
 		display: grid;

@@ -4,8 +4,8 @@
 	// (with counts and the preset), the verbindingen per relation with a line sample,
 	// the depth from the focus, the lid, and one line with what is on the canvas and
 	// what the filter hides. The overlays are under Meer.
-	import { menu } from '$lib/actions/menu';
-	import Caret from '$lib/components/ui/Caret.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { HEAT_PERIODS, type Overlay } from '$lib/stores/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
 	import {
@@ -79,9 +79,6 @@
 		/** How far the last neighbourhood reached, and whether the API cut it off. */
 		reach?: NeighborhoodReach | null;
 	} = $props();
-
-	let presetMenu = $state(false);
-	let lidMenu = $state(false);
 
 	// With nothing selected, the kinds count what is on the canvas; with a selection, its
 	// verbindingen. While those load the counts say so ("…"), not a column of zeros.
@@ -179,42 +176,30 @@
 		<section class="block">
 			<div class="block__head">
 				<h3 class="block__title">Bronnen</h3>
-				<div class="menu" use:menu={{ open: presetMenu, close: () => (presetMenu = false) }}>
-					<button
-						type="button"
-						class="btn is-text preset"
-						aria-haspopup="menu"
-						aria-expanded={presetMenu}
-						title={bronnenLabel(filter)}
-						onclick={() => (presetMenu = !presetMenu)}>Voorkeuze<Caret open={presetMenu} /></button
-					>
-					{#if presetMenu}
-						<div class="menu__list" role="menu">
-							{#each PRESETS as p (p.id)}
-								<button
-									type="button"
-									role="menuitemradio"
-									aria-checked={activePreset(filter)?.id === p.id}
-									class="menu__item"
-									class:is-active={activePreset(filter)?.id === p.id}
-									onclick={() => {
-										onFilter(withPreset(filter, p));
-										presetMenu = false;
-									}}>{p.label}</button
-								>
-							{/each}
-							<button
-								type="button"
-								role="menuitem"
-								class="menu__item menu__item--more"
-								onclick={() => {
-									presetMenu = false;
-									onOpenFilter();
-								}}>Kies bronnen en verbindingen</button
-							>
-						</div>
-					{/if}
-				</div>
+				<TekstMenu
+					klein
+					rechts
+					label="Voorkeuze"
+					tekst={bronnenLabel(filter)}
+					waarde={activePreset(filter)?.id ?? null}
+					opties={PRESETS.map((p) => ({ waarde: p.id, label: p.label }))}
+					onKies={(id) => {
+						const p = PRESETS.find((x) => x.id === id);
+						if (p) onFilter(withPreset(filter, p));
+					}}
+				>
+					{#snippet onder(sluit)}
+						<button
+							type="button"
+							role="menuitem"
+							class="legenda-menuitem"
+							onclick={() => {
+								sluit();
+								onOpenFilter();
+							}}>Kies bronnen en verbindingen</button
+						>
+					{/snippet}
+				</TekstMenu>
 			</div>
 			<!-- Articles are switched with their wet, under Groepering (Thijs, 9 Oct). -->
 			{#each BRON_KINDS.filter((b) => b !== 'artikelen') as k (k)}
@@ -307,134 +292,88 @@
 			>
 				{netwerkActive ? 'Buren' : 'Diepte'}
 			</div>
-			<div class="chips">
-				{#each DEPTHS as d (d)}
-					{@const reden =
+			<Keuze
+				klein
+				label={netwerkActive ? 'Buren' : 'Diepte'}
+				waarde={netwerkActive ? null : String(depth)}
+				opties={DEPTHS.map((d) => {
+					const reden =
 						netwerkActive && !selectionCollection
 							? NO_SELECTION_REASON
 							: beyondCap(d)
 								? CAPPED_REASON
-								: null}
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={!netwerkActive && depth === d}
-						aria-pressed={!netwerkActive && depth === d}
-						disabled={!!reden}
-						title={reden ?? undefined}
-						onclick={() => onDepth(d)}>{d}</button
-					>
-				{/each}
-			</div>
+								: null;
+					return { waarde: String(d), label: String(d), uit: !!reden, titel: reden ?? undefined };
+				})}
+				onKies={(d) => onDepth(Number(d))}
+			/>
 		</section>
 
 		{#if lids.length > 0}
 			<section class="block">
 				<div class="block__label">Lid van het artikel</div>
-				<div class="menu" use:menu={{ open: lidMenu, close: () => (lidMenu = false) }}>
-					<button
-						type="button"
-						class="btn"
-						aria-haspopup="menu"
-						aria-expanded={lidMenu}
-						onclick={() => (lidMenu = !lidMenu)}
-						>{filter.lid === null
-							? 'Alle leden'
-							: filter.lid === 'geen'
-								? 'Lid niet genoemd'
-								: `Lid ${filter.lid}`}<Caret open={lidMenu} /></button
-					>
-					{#if lidMenu}
-						<div class="menu__list menu__list--left" role="menu">
-							<button
-								type="button"
-								role="menuitemradio"
-								aria-checked={filter.lid === null}
-								class="menu__item"
-								onclick={() => {
-									onFilter({ ...filter, lid: null });
-									lidMenu = false;
-								}}>Alle leden</button
-							>
-							{#each lids as lid (lid)}
-								<button
-									type="button"
-									role="menuitemradio"
-									aria-checked={filter.lid === lid}
-									class="menu__item"
-									onclick={() => {
-										onFilter({ ...filter, lid });
-										lidMenu = false;
-									}}>Lid {lid}</button
-								>
-							{/each}
-							<button
-								type="button"
-								role="menuitemradio"
-								aria-checked={filter.lid === 'geen'}
-								class="menu__item"
-								onclick={() => {
-									onFilter({ ...filter, lid: 'geen' });
-									lidMenu = false;
-								}}>Lid niet genoemd</button
-							>
-						</div>
-					{/if}
-				</div>
+				<TekstMenu
+					klein
+					label="Lid van het artikel"
+					waarde={filter.lid ?? ''}
+					opties={[
+						{ waarde: '', label: 'Alle leden' },
+						...lids.map((lid) => ({ waarde: lid, label: `Lid ${lid}` })),
+						{ waarde: 'geen', label: 'Lid niet genoemd' }
+					]}
+					onKies={(v) => onFilter({ ...filter, lid: v === '' ? null : v })}
+				/>
 			</section>
 		{/if}
 
 		<section class="block">
 			<div class="block__label">Overlay</div>
 			<div class="block">
-				<div class="chips">
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={!mutOn && !heatOn}
-						aria-pressed={!mutOn && !heatOn}
-						onclick={() => {
+				<TekstMenu
+					klein
+					label="Overlay"
+					waarde={mutOn ? 'mut' : heatOn ? 'heat' : 'geen'}
+					opties={[
+						{ waarde: 'geen', label: 'Geen' },
+						{
+							waarde: 'mut',
+							label: `Open dossiers${mutOn && inFluxCount > 0 ? ` (${inFluxCount})` : ''}`,
+							uit: !onToggleMutatie,
+							titel: 'Een ring om de bronnen die een wetsvoorstel wil wijzigen'
+						},
+						{
+							waarde: 'heat',
+							label: 'Verwijzingen per maand',
+							uit: !onToggleHeat,
+							titel: 'Hoe vaak een bron in de gekozen periode is aangehaald'
+						}
+					]}
+					onKies={(w) => {
+						if (w === 'geen') {
 							if (mutOn) onToggleMutatie?.();
 							else if (heatOn) onToggleHeat?.();
-						}}>Geen</button
-					>
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={mutOn}
-						aria-pressed={mutOn}
-						disabled={!onToggleMutatie}
-						title="Een ring om de bronnen die een wetsvoorstel wil wijzigen"
-						onclick={() => {
+						} else if (w === 'mut') {
+							if (heatOn) onToggleHeat?.();
 							if (!mutOn) onToggleMutatie?.();
-						}}
-						>Open dossiers{#if mutOn && inFluxCount > 0}
-							({inFluxCount}){/if}</button
-					>
-					<button
-						type="button"
-						class="btn"
-						class:is-primary={heatOn}
-						aria-pressed={heatOn}
-						disabled={!onToggleHeat}
-						title="Hoe vaak een bron in de gekozen periode is aangehaald"
-						onclick={() => {
+						} else {
+							if (mutOn) onToggleMutatie?.();
 							if (!heatOn) onToggleHeat?.();
-						}}>Verwijzingen per maand</button
-					>
-				</div>
+						}
+					}}
+				/>
 				{#if heatOn}
-					<div class="chips chips--sub" role="group" aria-label="Periode">
-						{#each HEAT_PERIODS as m (m)}
-							<button
-								type="button"
-								class="btn"
-								class:is-primary={overlay.kind === 'heat' && overlay.months === m}
-								aria-pressed={overlay.kind === 'heat' && overlay.months === m}
-								onclick={() => onHeatPeriodChange?.(m)}
-								disabled={!onHeatPeriodChange}>{m} maanden</button
-							>
-						{/each}
+					<div class="sub">
+						<Keuze
+							klein
+							label="Periode"
+							waarde={overlay.kind === 'heat' ? String(overlay.months) : null}
+							opties={HEAT_PERIODS.map((m) => ({
+								waarde: String(m),
+								label: `${m} maanden`,
+								uit: !onHeatPeriodChange
+							}))}
+							onKies={(m) => onHeatPeriodChange?.(Number(m))}
+						/>
 					</div>
 				{/if}
 			</div>
@@ -454,7 +393,7 @@
 		padding: 20px 18px;
 		border-right: 1px solid var(--rule);
 		background: var(--paper);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		scrollbar-width: thin;
@@ -471,7 +410,7 @@
 		margin: 0 0 var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.block__head .block__title {
@@ -482,64 +421,8 @@
 		justify-content: space-between;
 		margin-bottom: 6px;
 		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-3);
-	}
-	/* The presets of the filter: a plain control, not a summary in the accent. */
-	.preset {
-		font-size: var(--t-label);
-		color: var(--ink-2);
-	}
-	.menu {
-		position: relative;
-	}
-	.menu__list {
-		position: absolute;
-		top: calc(100% + 4px);
-		right: 0;
-		z-index: var(--z-float);
-		min-width: 200px;
-		padding: 6px 0;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-modal);
-	}
-	.menu__list--left {
-		right: auto;
-		left: 0;
-	}
-	.menu__item {
-		display: block;
-		width: 100%;
-		padding: 6px var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink);
-		text-align: left;
-		cursor: pointer;
-	}
-	.menu__item:hover {
-		background: var(--paper-2);
-	}
-	.menu__item.is-active {
 		font-weight: 600;
-	}
-	.menu__item--more {
-		margin-top: var(--s-1);
-		padding-top: var(--s-2);
-		border-top: 1px solid var(--rule);
-		color: var(--ink-2);
-	}
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 5px;
-	}
-	.chips--sub {
-		margin-top: 6px;
+		color: var(--ink-3);
 	}
 	.empty {
 		margin: 0;
@@ -548,4 +431,24 @@
 		line-height: 1.4;
 	}
 	/* One line that says what a control does, or why it is off. */
+	.sub {
+		margin-top: var(--s-2);
+	}
+	.legenda-menuitem {
+		display: block;
+		width: 100%;
+		padding: var(--s-1) var(--s-3);
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink-2);
+		text-align: left;
+		cursor: pointer;
+	}
+	.legenda-menuitem:hover,
+	.legenda-menuitem:focus-visible {
+		background: var(--paper-2);
+		outline: none;
+	}
 </style>

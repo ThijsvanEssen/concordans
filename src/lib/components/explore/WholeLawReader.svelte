@@ -12,6 +12,8 @@
 	import { formatLongDate } from './readers/_shared';
 	import type { Schema } from '$lib/api/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 
 	import { bronHref } from '$lib/bron/href';
@@ -405,30 +407,44 @@
 			{#if versions.length > 0}
 				<!-- The peildatum: the versions of the law by year, the text of today first. -->
 				<div class="whole-peil">
-					<label for="peildatum-{bwbId}">Tekst geldend op</label>
-					<select
-						id="peildatum-{bwbId}"
-						class="whole-peil-pick"
-						value={peildatum ?? ''}
-						onchange={(e) => choose(e.currentTarget.value)}
-					>
-						<option value="">{formatLongDate(today)}</option>
-						{#if peildatum && !versions.some((v) => v.valid_from === peildatum)}
-							<option value={peildatum}>{formatLongDate(peildatum)}</option>
-						{/if}
-						{#each versionsByYear(versions) as [year, list] (year)}
-							<optgroup label={year}>
-								{#each list as v (v.valid_from)}
-									<option value={v.valid_from}
-										>{formatLongDate(v.valid_from ?? null)}{v.current ? ', geldend' : ''}</option
-									>
+					<span>Tekst geldend op</span>
+					<TekstMenu label="Tekst geldend op" tekst={formatLongDate(peildatum ?? today)}>
+						{#snippet inhoud(sluit)}
+							<div class="peil-lijst">
+								<span class="peil-noot"
+									>{formatCount(versions.length)} versies sinds {formatLongDate(
+										oldest ?? null
+									)}</span
+								>
+								<button
+									type="button"
+									role="menuitemradio"
+									class="peil-menuitem"
+									aria-checked={!peildatum}
+									onclick={() => {
+										sluit();
+										choose('');
+									}}>{formatLongDate(today)}, vandaag</button
+								>
+								{#each versionsByYear(versions) as [year, list] (year)}
+									<span class="peil-jaar" aria-hidden="true">{year}</span>
+									{#each list as v (v.valid_from)}
+										<button
+											type="button"
+											role="menuitemradio"
+											class="peil-menuitem"
+											aria-checked={peildatum === v.valid_from}
+											onclick={() => {
+												sluit();
+												choose(v.valid_from ?? '');
+											}}
+											>{formatLongDate(v.valid_from ?? null)}{v.current ? ', geldend' : ''}</button
+										>
+									{/each}
 								{/each}
-							</optgroup>
-						{/each}
-					</select>
-					<span class="whole-peil-note"
-						>{formatCount(versions.length)} versies sinds {formatLongDate(oldest ?? null)}</span
-					>
+							</div>
+						{/snippet}
+					</TekstMenu>
 				</div>
 			{/if}
 			{#if peildatum && !(versionsLoaded && versions.length === 0)}
@@ -530,16 +546,11 @@
 		{/each}
 
 		{#if articles.length < total}
-			<button
-				type="button"
-				class="whole-more"
-				disabled={status === 'loading-more'}
-				onclick={loadMore}
-			>
-				{status === 'loading-more'
-					? 'Laden…'
-					: `Volgende artikelen (${total - articles.length} resterend)`}
-			</button>
+			<p class="whole-volgende">
+				{#if status === 'loading-more'}Laden…{:else}<TekstLink onclick={loadMore}
+						>Volgende artikelen, nog {formatCount(total - articles.length)}</TekstLink
+					>{/if}
+			</p>
 		{/if}
 	</article>
 {/if}
@@ -609,7 +620,7 @@
 	.whole-title {
 		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
-		font-weight: 500;
+		font-weight: 600;
 		font-size: var(--t-h1);
 		line-height: var(--lh-tight);
 		color: var(--ink);
@@ -617,7 +628,7 @@
 
 	.whole-count {
 		margin: var(--s-2) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -649,33 +660,41 @@
 		font-size: var(--t-body-2);
 		color: var(--ink-2);
 	}
-	.whole-peil-pick {
-		max-width: 100%;
-		padding: 0 var(--s-1);
-		border: 0;
-		border-bottom: 1px solid var(--ink-3);
-		border-radius: 0;
-		background: none;
-		font: inherit;
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
+	.peil-lijst {
+		display: flex;
+		flex-direction: column;
+		max-height: 60vh;
+		overflow-y: auto;
 	}
-	/* Below 16 px a phone zooms in on the list. */
-	@media (max-width: 768px) {
-		.whole-peil-pick {
-			font-size: var(--t-input);
-			min-height: var(--s-6);
-		}
-	}
-	.whole-peil-pick:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 2px;
-	}
-	.whole-peil-note {
-		font-family: var(--font-sans);
+	.peil-noot,
+	.peil-jaar {
+		padding: var(--s-1) var(--s-3);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	.peil-jaar {
+		padding-top: var(--s-2);
+		font-weight: 600;
+	}
+	.peil-menuitem {
+		padding: var(--s-1) var(--s-3);
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink);
+		text-align: left;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+	.peil-menuitem:hover,
+	.peil-menuitem:focus-visible {
+		background: var(--paper-2);
+		outline: none;
+	}
+	.peil-menuitem[aria-checked='true'] {
+		font-weight: 600;
 	}
 	/* A text of an earlier day says so, with the way back. */
 	.whole-hist {
@@ -683,7 +702,7 @@
 		padding: var(--s-2) var(--s-3);
 		background: var(--accent-soft);
 		border-radius: var(--r-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
 	}
@@ -701,7 +720,7 @@
 	}
 	.whole-art-note {
 		margin-left: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -721,7 +740,7 @@
 	}
 	.whole-section-title {
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: var(--lh-snug);
 	}
 	/* The outer layer: a rule above, the heading larger. */
@@ -796,28 +815,12 @@
 		white-space: pre-line;
 	}
 
-	.whole-more {
-		display: block;
-		margin: var(--s-6) auto 0;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
-		font-weight: 500;
-		color: var(--ink-2);
-		background: none;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		padding: var(--s-1) var(--s-4);
-		cursor: pointer;
-	}
-
-	.whole-more:hover:not(:disabled) {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-
-	.whole-more:disabled {
-		opacity: 0.5;
-		cursor: default;
+	.whole-volgende {
+		margin: var(--s-6) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+		text-align: center;
 	}
 
 	.whole-empty-text {
