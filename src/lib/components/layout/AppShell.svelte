@@ -248,6 +248,7 @@
 
 	:global(#svelte) {
 		min-height: 100vh;
+		min-height: 100dvh;
 	}
 
 	/* Links: ink at rest, the accent on hover. */
@@ -364,6 +365,7 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 100vh;
+		min-height: 100dvh;
 		background: var(--paper);
 	}
 
