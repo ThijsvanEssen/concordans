@@ -226,8 +226,15 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 				? padHref({ soort: 'uitspraak', ecli: ecli.toUpperCase() })
 				: null;
 		}
-		case 'dossiers':
-			return DOSSIER.test(target.key) ? padHref({ soort: 'dossier', nummer: target.key }) : null;
+		case 'dossiers': {
+			// The number as the Kamer writes it (36600-VIII). The front end names a dossier by
+			// it; a node key is that number made a key (36600_viii), which only the label
+			// (`number` on the dossier DTOs) gives back (Back-end #2, readable-paths.json).
+			const nummer = [target.key, text(props?.label), text(props?.number)].find(
+				(n): n is string => !!n && DOSSIER.test(n)
+			);
+			return nummer ? padHref({ soort: 'dossier', nummer: nummer.toUpperCase() }) : null;
+		}
 		case 'articles': {
 			const wet = text(props?.bwb_id) ?? text(props?.celex);
 			const nummer = text(props?.article_number);
