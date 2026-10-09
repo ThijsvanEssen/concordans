@@ -2,16 +2,17 @@
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { axisLabels } from './index/years-axis';
-	import { korteDatum, langeDatum, weekdag } from '$lib/text/datum';
+	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import { rijen } from '$lib/actions/rijen';
 	// Index: browse one category at a time. Beside the list a column of filters, each
-	// option with the number of bronnen it holds under the other filters. A row's title
-	// links to the bron; the rest of the row expands inline with its metadata and the
-	// ways on to the bron (… lezen, In het netwerk).
+	// option with the number of bronnen it holds under the other filters. A row says what
+	// the bron is in its own lines; its title opens it, and at its end stand the ways on in
+	// one click (Lezen, Netwerk; Openen for a bron read beside the network). No panel
+	// opens beneath a row (Thijs, 10 Oct).
 	//
 	// Every filter, the sort and the open row are in the URL, so a view can be shared.
 	// What the API can filter or sort is passed on as a query; the rest is done
@@ -52,9 +53,6 @@
 	import { stand, datum } from '$lib/components/parliamentary/stand';
 	import Hemicycle from './Hemicycle.svelte';
 	import ZaalTegenover from './ZaalTegenover.svelte';
-	import DossierOpen from '$lib/components/open/DossierOpen.svelte';
-	import OpenRij from '$lib/components/open/OpenRij.svelte';
-	import KabinetOpen from '$lib/components/open/KabinetOpen.svelte';
 	import ZaalLegenda from './ZaalLegenda.svelte';
 	import { kleurVan } from './partijkleuren.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
@@ -92,7 +90,6 @@
 	import { COURT_GROUPS, MIXED_TIERS } from './index/courts';
 	import { pannable } from './index/pannable';
 	import CabinetOccupancy from './index/CabinetOccupancy.svelte';
-	import IndexDetail from './index/IndexDetail.svelte';
 	import IndexRow from './index/IndexRow.svelte';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
@@ -2431,8 +2428,7 @@
 												{bron}
 												title={w.citation_title ?? w.short_title ?? w.title ?? w.key}
 												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
+												acties
 											>
 												{#snippet lead()}
 													<span class="row-id-main"
@@ -2456,9 +2452,6 @@
 														{jurisdictionTag(w)}
 													</span>
 												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="instruments" record={w} {bron} />
-												{/snippet}
 											</IndexRow>
 										{/each}
 									</ul>
@@ -2471,13 +2464,7 @@
 									<ul class="list">
 										{#each pages.judgments.items as j (j.id)}
 											{@const bron = `judgments/${j.key}`}
-											<IndexRow
-												{bron}
-												title={judgmentRowTitle(j)}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={judgmentRowTitle(j)} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={fmtDateShort(j.date)} /></span>
 													<span class="row-id-sub"
@@ -2508,9 +2495,6 @@
 															></span
 														>
 													{/if}
-												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="judgments" record={j} {bron} />
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -2592,13 +2576,7 @@
 													<span>Zonder lopende dossiers</span>
 												</li>
 											{/if}
-											<IndexRow
-												{bron}
-												title={c.name ?? c.key}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={c.name ?? c.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={c.abbreviation} /></span>
 												{/snippet}
@@ -2618,9 +2596,6 @@
 														<span class="num-strong">{count}</span>
 													{/if}
 												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="committees" record={c} {bron} />
-												{/snippet}
 											</IndexRow>
 										{/each}
 									</ul>
@@ -2632,13 +2607,7 @@
 									<ul class="list">
 										{#each membersShown as m (m.id)}
 											{@const bron = `members/${m.key}`}
-											<IndexRow
-												{bron}
-												title={m.name ?? m.key}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={m.name ?? m.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<!-- An Eerste Kamer member's fractie is the one it sits in there. -->
 													{@const ek = kamer === 'EK' ? m.ek : null}
@@ -2657,9 +2626,6 @@
 															/>{/if}
 													</span>
 												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="members" record={m} {bron} chamber={kamer} />
-												{/snippet}
 											</IndexRow>
 										{/each}
 									</ul>
@@ -2672,13 +2638,7 @@
 									<ul class="list">
 										{#each factionsShown as f (f.id)}
 											{@const bron = `factions/${f.key}`}
-											<IndexRow
-												{bron}
-												title={f.name ?? f.key}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={f.name ?? f.key} href={hrefOf(bron)} acties>
 												{#snippet lead()}
 													<span class="row-id-main row-id-main--inline">
 														<span
@@ -2689,11 +2649,20 @@
 													</span>
 												{/snippet}
 												{#snippet body()}
-													{#if f.seats != null && totalSeats > 0}
+													{#if (f.seats != null && totalSeats > 0) || f.member_count}
 														<span class="row-sub"
-															>{((f.seats / totalSeats) * 100).toLocaleString('nl-NL', {
-																maximumFractionDigits: 1
-															})}% van de zetels</span
+															>{[
+																f.seats != null && totalSeats > 0
+																	? `${((f.seats / totalSeats) * 100).toLocaleString('nl-NL', {
+																			maximumFractionDigits: 1
+																		})}% van de zetels`
+																	: null,
+																f.member_count
+																	? `${f.member_count} ${f.member_count === 1 ? 'lid' : 'leden'}`
+																	: null
+															]
+																.filter(Boolean)
+																.join(', ')}</span
 														>
 													{/if}
 												{/snippet}
@@ -2705,9 +2674,6 @@
 															></span
 														>
 													{/if}
-												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="factions" record={f} {bron} />
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -2746,8 +2712,7 @@
 													{bron}
 													title={stemmingNaam(s.subject, s.dossiers?.[0] ?? s.dossier_numbers?.[0])}
 													href={hrefOf(bron)}
-													open={openId === bron}
-													onToggle={() => toggleOpen(bron)}
+													acties
 												>
 													{#snippet lead()}
 														{#if !day.date || kindLabel}
@@ -2807,9 +2772,6 @@
 															</span>
 														{/if}
 													{/snippet}
-													{#snippet detail()}
-														<IndexDetail category="decisions" record={s} {bron} />
-													{/snippet}
 												</IndexRow>
 											{/each}
 										</ul>
@@ -2830,13 +2792,7 @@
 										{#each cabinetsShown as c (c.key)}
 											{@const bron = `cabinets/${c.key}`}
 											{@const parties = c.parties ?? []}
-											<IndexRow
-												{bron}
-												title={c.name}
-												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
-											>
+											<IndexRow {bron} title={c.name} href={hrefOf(bron)} acties="titel">
 												{#snippet lead()}
 													<span class="row-id-main"
 														>{period(c.from_date, c.to_date, isOpen(c))}</span
@@ -2877,15 +2833,6 @@
 														>{c.members}<span class="num-lbl">bewindspersonen</span></span
 													>
 												{/snippet}
-												{#snippet detail()}
-													<KabinetOpen
-														cabinetKey={c.key}
-														naam={c.name}
-														inFunctie={isOpen(c)}
-														{bron}
-														ministersHref={tabHref('ministers') + `&cabinet=${c.key}`}
-													/>
-												{/snippet}
 											</IndexRow>
 										{/each}
 									</ul>
@@ -2902,8 +2849,7 @@
 												{bron}
 												title={doc.title ?? doc.kind ?? doc.key}
 												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
+												acties
 											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={label} /></span>
@@ -2921,9 +2867,6 @@
 												{/snippet}
 												{#snippet aside()}
 													{#if doc.date}<span class="row-sub">{fmtDateShort(doc.date)}</span>{/if}
-												{/snippet}
-												{#snippet detail()}
-													<IndexDetail category="documents" record={doc} {bron} />
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -2945,8 +2888,7 @@
 												{bron}
 												title={t.text ?? 'Toezegging zonder tekst'}
 												href={hrefOf(bron)}
-												open={openId === bron}
-												onToggle={() => toggleOpen(bron)}
+												acties
 											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={fmtDateShort(t.date)} /></span>
@@ -2975,39 +2917,6 @@
 															{fmtDateShort(t.expected_resolution)}</span
 														>
 													{/if}
-												{/snippet}
-												{#snippet detail()}
-													<OpenRij
-														zin={t.status
-															? `${t.status}${t.expected_resolution ? `, verwacht ${langeDatum(t.expected_resolution)}` : ''}.`
-															: null}
-														links={[
-															...(t.member
-																? [
-																		{
-																			label: t.member.name ?? 'Bewindspersoon',
-																			ref: `members/${t.member.key}`
-																		}
-																	]
-																: []),
-															...uniqueBy(t.dossiers ?? [], (d) => d.key).map((d) => ({
-																label: `${d.number}${d.title ? `: ${d.title}` : ''}`,
-																ref: `dossiers/${d.number ?? d.key}`
-															})),
-															...(t.activity
-																? [
-																		{
-																			label:
-																				`Gedaan in activiteit ${t.activity.number ?? ''}`.trim(),
-																			ref: `activities/${t.activity.key}`
-																		}
-																	]
-																: [])
-														]}
-														lezen={bronHref(bron, { keepMode: false, mode: 'read' })}
-														lezenLabel="Toezegging lezen"
-														netwerk={bronHref(bron, { keepMode: false, mode: 'graph' })}
-													/>
 												{/snippet}
 											</IndexRow>
 										{/each}
@@ -3044,8 +2953,7 @@
 		{member}
 		title={member && d.title ? chapterTitle(d.title) : (d.short_title ?? d.title ?? d.number)}
 		href={hrefOf(bron)}
-		open={openId === bron}
-		onToggle={() => toggleOpen(bron)}
+		acties
 	>
 		{#snippet lead()}
 			<span class="row-id-main">{d.number}</span>
@@ -3083,9 +2991,6 @@
 					{/each}
 				</span>
 			{/if}
-		{/snippet}
-		{#snippet detail()}
-			<DossierOpen {d} />
 		{/snippet}
 	</IndexRow>
 {/snippet}
