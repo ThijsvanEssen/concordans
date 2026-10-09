@@ -20,7 +20,7 @@
 		onKies: (w: T) => void;
 		/** What is chosen, for a screen reader: `Weergave`, `Kamer`. */
 		label: string;
-		/** In a bar (the status bar): a step smaller. */
+		/** In a tight spot (the switch beside the band): a step smaller. */
 		klein?: boolean;
 		/** The full width of its column, every option as wide as the others (a period). */
 		vol?: boolean;
