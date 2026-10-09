@@ -34,6 +34,7 @@ import {
 	citedLine,
 	describe,
 	lidOfMatch,
+	positionsLabel,
 	rowOfNeighbor,
 	unresolvedRows,
 	type Neighbor,
@@ -678,10 +679,18 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			buren([{ relation: 'REFERS_TO', direction: 'outbound', collection: 'articles' }])
 		]);
 		const fromSpans = new Map<string, string>();
+		// Where the judgment cites each article: its overwegingen, from the detail asked anyway
+		// (Thijs, 10 Oct: the r.o. in the row). The edge's `paragraphs` take over once the API
+		// gives them.
+		const overwegingen = new Map<string, string[]>();
 		for (const p of detail?.judgment.paragraphs ?? []) {
 			for (const c of p.citations ?? []) {
-				if (c.target.collection !== 'articles' || fromSpans.has(c.target.key) || c.end == null)
-					continue;
+				if (c.target.collection !== 'articles') continue;
+				if (p.number) {
+					const of = overwegingen.get(c.target.key) ?? [];
+					if (!of.includes(p.number)) overwegingen.set(c.target.key, [...of, p.number]);
+				}
+				if (fromSpans.has(c.target.key) || c.end == null) continue;
 				const anchor = anchorOf(parseQualifier(c.text ?? '', p.text.slice(c.end, c.end + 80)));
 				if (anchor) fromSpans.set(c.target.key, anchor);
 			}
@@ -717,6 +726,9 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				if (lid) row.lid = lid[1];
 				if (!stub) row.derived = true;
 			}
+			const ro = overwegingen.get(n.key);
+			if (ro?.length && !row.edge?.paragraphs)
+				row.position = positionsLabel(ro.map((nr) => paragraphCite(ecli, nr)));
 			const id = `${key}#${at ?? ''}`;
 			if (!rows.has(id)) rows.set(id, row);
 		}

@@ -76,14 +76,23 @@ describe('one form for each thing', () => {
 	});
 
 	it('opens a row in place on one click, through the shared rule', () => {
-		// A row whose title is a link to the bron (Bladeren, Verbonden, the table) takes the
-		// click through terPlekke ($lib/actions/klik), so a plain click opens the row and a
-		// cmd-click goes to the bron.
+		// A row whose title is a link to the bron (Actueel, the table) takes the click through
+		// terPlekke ($lib/actions/klik), so a plain click opens the row and a cmd-click goes to
+		// the bron. A row of Verbonden has no panel (Thijs, 10 Oct): its title and the row
+		// itself go to the bron in Netwerk.
 		const rows = sources.filter(({ text }) =>
-			/class="(row-title|row__title)"[\s\S]{0,80}href=/.test(text)
+			/class="(row-title|row__title)"[\s\S]{0,80}(href=|\{href\})/.test(text)
 		);
 		expect(rows.length).toBeGreaterThan(0);
-		expect(rows.filter(({ text }) => !text.includes('terPlekke')).map((s) => s.path)).toEqual([]);
+		const verbonden = (path: string) => path.endsWith('verbonden/Verbonden.svelte');
+		expect(
+			rows
+				.filter(({ text, path }) => !verbonden(path) && !text.includes('terPlekke'))
+				.map((s) => s.path)
+		).toEqual([]);
+		expect(rows.filter(({ text, path }) => verbonden(path) && text.includes('terPlekke'))).toEqual(
+			[]
+		);
 	});
 
 	it('draws every option of a filter with FilterOptie', () => {
