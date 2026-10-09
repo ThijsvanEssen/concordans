@@ -8,19 +8,26 @@
 		href,
 		onclick,
 		class: className = '',
-		children
+		children,
+		...rest
 	}: {
 		href?: string;
 		onclick?: (e: MouseEvent) => void;
 		class?: string;
 		children: Snippet;
+		/** What else the element carries: `aria-expanded`, `disabled`, `rel`. */
+		[attr: string]: unknown;
 	} = $props();
 </script>
 
 {#if href}
-	<a class="tekstlink {className}" {href} data-sveltekit-noscroll {onclick}>{@render children()}</a>
+	<a class="tekstlink {className}" {href} data-sveltekit-noscroll {onclick} {...rest}
+		>{@render children()}</a
+	>
 {:else}
-	<button type="button" class="tekstlink {className}" {onclick}>{@render children()}</button>
+	<button type="button" class="tekstlink {className}" {onclick} {...rest}
+		>{@render children()}</button
+	>
 {/if}
 
 <style>
@@ -37,7 +44,12 @@
 		text-underline-offset: 3px;
 		cursor: pointer;
 	}
-	.tekstlink:hover,
+	.tekstlink:disabled {
+		color: var(--ink-3);
+		text-decoration: none;
+		cursor: default;
+	}
+	.tekstlink:hover:not(:disabled),
 	.tekstlink:focus-visible {
 		color: var(--accent);
 		text-decoration-color: currentColor;
