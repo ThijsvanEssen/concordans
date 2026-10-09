@@ -8,7 +8,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { str } from '$lib/components/parliamentary/data';
-	import { EK_SOURCE, chamberName } from '$lib/components/parliamentary/chamber';
+	import { EK_SOURCE } from '$lib/components/parliamentary/chamber';
 	import { formatDate, formatLongDate } from './_shared';
 	import { ekVoteLine } from './voters';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
@@ -132,10 +132,9 @@
 				? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
 				: ''}
 			<header class="head">
+				<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
 				<span class="kicker"
-					><SoortLink collection="factions">{bronLabel('factions')}</SoortLink>, {chamberName(
-						chamber
-					)}</span
+					><SoortLink collection="factions">{bronLabel('factions')}</SoortLink></span
 				>
 				<h2 class="title">{abbreviation ?? name ?? f.key}</h2>
 				{#if name && abbreviation && name !== abbreviation}
