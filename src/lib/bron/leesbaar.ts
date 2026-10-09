@@ -12,6 +12,7 @@
 //   /fracties/d66                        a fractie, by its key (ek_democraten_1966 in the EK)
 //   /commissies/szw                      a commissie, by its slug
 //   /toezeggingen/TZ202609-124           a toezegging, by its number
+//   /stemmingen/decision_154df5db_…      a stemming (a besluit), by its key
 //
 // Each is a second address of the Verkenner (`reroute` in src/hooks.ts serves /explore);
 // the API ids stay as they are. The rest of the view stays in the query: ?lezen=1,
@@ -33,7 +34,8 @@ export type Pad =
 	| { soort: 'kabinet'; key: string }
 	| { soort: 'fractie'; key: string }
 	| { soort: 'commissie'; slug: string }
-	| { soort: 'toezegging'; nummer: string };
+	| { soort: 'toezegging'; nummer: string }
+	| { soort: 'stemming'; key: string };
 
 /** The series of officielebekendmakingen.nl a publication appears in. */
 export type Reeks = 'stb' | 'stcrt' | 'trb';
@@ -81,6 +83,8 @@ export function parsePad(pathname: string): Pad | null {
 		return { soort: 'commissie', slug: a };
 	if (first === 'toezeggingen' && parts.length === 2 && TOEZEGGING.test(a))
 		return { soort: 'toezegging', nummer: a.toUpperCase() };
+	if (first === 'stemmingen' && parts.length === 2 && SLEUTEL.test(a))
+		return { soort: 'stemming', key: a };
 	if (REEKSEN.includes(first) && parts.length === 3 && /^\d{4}$/.test(a) && /^\d+$/.test(b))
 		return { soort: 'publicatie', reeks: first as Reeks, jaar: a, nummer: b };
 	if (first === 'kamerstukken' && parts.length === 3 && DOSSIER.test(a) && STUK.test(b))
@@ -120,6 +124,8 @@ export function padHref(pad: Pad): string {
 			return `/commissies/${pad.slug}`;
 		case 'toezegging':
 			return `/toezeggingen/${pad.nummer}`;
+		case 'stemming':
+			return `/stemmingen/${pad.key}`;
 	}
 }
 
@@ -152,6 +158,7 @@ export function focusOfPad(pad: Pad): string | null {
 	if (pad.soort === 'wet') return `instruments/${pad.wet.toLowerCase()}`;
 	if (pad.soort === 'kabinet') return `cabinets/${pad.key}`;
 	if (pad.soort === 'fractie') return `factions/${pad.key}`;
+	if (pad.soort === 'stemming') return `decisions/${pad.key}`;
 	return focusVan.get(padHref(pad)) ?? null;
 }
 
@@ -185,6 +192,9 @@ function lookupQuery(pad: Pad) {
 			return { kind: 'committee', id: pad.slug } as const;
 		case 'toezegging':
 			return { kind: 'commitment', number: pad.nummer } as const;
+		case 'stemming':
+			// Never asked: its key is its id (focusOfPad), and /api/lookup has no such kind.
+			throw new Error('Een stemming heeft geen lookup');
 	}
 }
 
@@ -229,10 +239,15 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 		case 'dossiers': {
 			// The number as the Kamer writes it (36600-VIII). The front end names a dossier by
 			// it; a node key is that number made a key (36600_viii), which only the label
-			// (`number` on the dossier DTOs) gives back (Back-end #2, readable-paths.json).
-			const nummer = [target.key, text(props?.label), text(props?.number)].find(
-				(n): n is string => !!n && DOSSIER.test(n)
-			);
+			// (`number` on the dossier DTOs) gives back (Back-end #2, readable-paths.json); a DTO
+			// that gives the suffix apart (`number` 36600, `suffix` VIII) is joined.
+			const deel = text(props?.number);
+			const achter = text(props?.suffix);
+			const nummer = [
+				target.key,
+				text(props?.label),
+				deel && achter ? `${deel}-${achter}` : deel
+			].find((n): n is string => !!n && DOSSIER.test(n));
 			return nummer ? padHref({ soort: 'dossier', nummer: nummer.toUpperCase() }) : null;
 		}
 		case 'articles': {
@@ -261,6 +276,8 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 		}
 		case 'cabinets':
 			return SLEUTEL.test(target.key) ? padHref({ soort: 'kabinet', key: target.key }) : null;
+		case 'decisions':
+			return SLEUTEL.test(target.key) ? padHref({ soort: 'stemming', key: target.key }) : null;
 		case 'factions':
 			return SLEUTEL.test(target.key) ? padHref({ soort: 'fractie', key: target.key }) : null;
 		case 'committees': {
