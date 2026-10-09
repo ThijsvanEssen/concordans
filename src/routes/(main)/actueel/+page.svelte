@@ -1,6 +1,6 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import Periode from '$lib/components/ui/Periode.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import { volg, volgt } from '$lib/onderwerpen/onderwerpen';
 	// Actueel: what happened in the Kamer and the government, newest first, per day. Every
@@ -19,6 +19,9 @@
 		activeFilters,
 		type FacetGroup
 	} from '$lib/components/explore/index/IndexFacets.svelte';
+	// Filters v2 (Thijs, 10 Oct: "ziet er goed uit"; ux-voorstel/filters/v2): the field and
+	// Periode on one line above the list, the facets with their counts on the left, a chosen
+	// option in bold where it is chosen and nowhere else; on a phone behind Verfijnen (N).
 	import {
 		getCabinets,
 		getMinistries,
@@ -380,20 +383,7 @@
 		const factionCounts = [...factionMap];
 		return [
 			{
-				id: 'soort',
-				label: 'Soort',
-				kind: 'list',
-				options: FEED_KINDS.map((k) => ({
-					id: k,
-					label: KIND_LABEL[k].one,
-					// While counting, "…" beside each kind (IndexFacets `pending`).
-					count: facets ? (kindCounts.get(k) ?? 0) : tellen ? 0 : undefined,
-					on: kinds.includes(k),
-					onClick: () => toggleKind(k)
-				}))
-			},
-			{
-				// TODO(backend): a facet per chamber, to count them.
+				// First, as the concept has it. TODO(backend): a facet per chamber, to count them.
 				id: 'kamer',
 				label: 'Kamer',
 				kind: 'list',
@@ -405,39 +395,17 @@
 				}))
 			},
 			{
-				id: 'periode',
-				label: 'Periode',
-				kind: 'range',
-				unit: 'date',
-				from: since,
-				to: until,
-				onChange: (from, to) => patchUrl({ van: from || null, tot: to || null })
-			},
-			{
-				id: 'kabinet',
-				label: 'Kabinet',
-				kind: 'select',
-				value: cabinet,
-				all: 'Alle kabinetten',
-				options: [...facetMap(facets?.cabinet)].map(([key, count]) => ({
-					value: key,
-					label: cabinetName(key),
-					count
-				})),
-				onChange: (v) => patchUrl({ kabinet: v || null })
-			},
-			{
-				id: 'ministerie',
-				label: 'Ministerie',
-				kind: 'select',
-				value: ministry,
-				all: 'Alle ministeries',
-				options: [...facetMap(facets?.ministry)].map(([key, count]) => ({
-					value: key,
-					label: ministryName(key),
-					count
-				})),
-				onChange: (v) => patchUrl({ ministerie: v || null })
+				id: 'soort',
+				label: 'Soort',
+				kind: 'list',
+				options: FEED_KINDS.map((k) => ({
+					id: k,
+					label: KIND_LABEL[k].one,
+					// While counting, "…" beside each kind (IndexFacets `pending`).
+					count: facets ? (kindCounts.get(k) ?? 0) : tellen ? 0 : undefined,
+					on: kinds.includes(k),
+					onClick: () => toggleKind(k)
+				}))
 			},
 			{
 				id: 'fractie',
@@ -454,6 +422,32 @@
 						onClick: () => patchUrl({ fractie: faction === key ? null : key })
 					};
 				})
+			},
+			{
+				id: 'ministerie',
+				label: 'Ministerie',
+				kind: 'select',
+				value: ministry,
+				all: 'Alle ministeries',
+				options: [...facetMap(facets?.ministry)].map(([key, count]) => ({
+					value: key,
+					label: ministryName(key),
+					count
+				})),
+				onChange: (v) => patchUrl({ ministerie: v || null })
+			},
+			{
+				id: 'kabinet',
+				label: 'Kabinet',
+				kind: 'select',
+				value: cabinet,
+				all: 'Alle kabinetten',
+				options: [...facetMap(facets?.cabinet)].map(([key, count]) => ({
+					value: key,
+					label: cabinetName(key),
+					count
+				})),
+				onChange: (v) => patchUrl({ kabinet: v || null })
 			},
 			{
 				id: 'dossier',
@@ -527,37 +521,63 @@
 <svelte:window onkeydown={onKey} />
 
 <div class="actueel">
-	<aside class="filters" aria-label="Filters">
-		<h1 class="title">Actueel</h1>
-		{#if stand}
-			<p class="stand">{standLine(stand)}</p>
-		{/if}
-		<!-- On a phone: the Kamer one tap away outside the folded filters, and the bar scrolls
-		     along under the top bar (Thijs, 9 Oct). -->
-		<div class="filterbalk">
-			<div class="kamer-snel">
-				<Keuze
-					label="Kamer"
-					klein
-					waarde={chamber || 'beide'}
-					onKies={(w) => patchUrl({ kamer: w === 'beide' ? null : w })}
-					opties={[
-						{ waarde: 'beide', label: 'Beide' },
-						{ waarde: 'TK', label: 'Tweede Kamer' },
-						{ waarde: 'EK', label: 'Eerste Kamer' }
-					]}
-				/>
-			</div>
-			<button
-				type="button"
-				class="filters-toggle"
-				aria-expanded={filtersOpen}
-				onclick={() => (filtersOpen = !filtersOpen)}
-				>Filters{chips.length ? ` (${chips.length})` : ''}</button
+	<header class="kop">
+		<div>
+			<h1 class="title">Actueel</h1>
+			{#if stand}<p class="stand">{standLine(stand)}</p>{/if}
+		</div>
+		<div class="acties">
+			<a class="actie-knop" href={atomHref} rel="alternate" type="application/atom+xml">Atom-feed</a
 			>
-			<div class="filters-body" class:filters-body--open={filtersOpen}>
-				<IndexFacets {groups} pending={tellen} />
-			</div>
+			{#if q}
+				{#if gevolgd}
+					<a class="actie-knop" href="/onderwerpen">Gevolgd als onderwerp</a>
+				{:else}
+					<button
+						type="button"
+						class="actie-knop"
+						title="Volg deze woorden in Onderwerpen"
+						onclick={volgQ}>Volg als onderwerp</button
+					>
+				{/if}
+			{/if}
+		</div>
+	</header>
+
+	<!-- The one line above the list: the page's field and the period, nothing else. -->
+	<div class="regel">
+		<label class="search">
+			<span class="visually-hidden">Zoek in Actueel</span>
+			<input
+				type="search"
+				placeholder="Zoek in titels en dossiertitels"
+				value={qDraft ?? q}
+				oninput={(e) => typeQuery(e.currentTarget.value)}
+			/>
+		</label>
+		<div class="periode">
+			<Periode
+				van={since}
+				tot={until}
+				onChange={(van, tot) => patchUrl({ van: van || null, tot: tot || null })}
+			/>
+		</div>
+	</div>
+
+	<aside class="filters" aria-label="Verfijnen">
+		<button
+			type="button"
+			class="verfijnen-knop"
+			aria-expanded={filtersOpen}
+			aria-controls="actueel-facetten"
+			onclick={() => (filtersOpen = !filtersOpen)}
+			>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
+		>
+		<div class="filters-body" id="actueel-facetten" class:filters-body--open={filtersOpen}>
+			<IndexFacets {groups} pending={tellen} />
+			{#if chips.length}
+				<button type="button" class="wis-knop" onclick={clearFilters}>Wis alle filters</button>
+			{/if}
 		</div>
 	</aside>
 
@@ -570,39 +590,6 @@
 				</p>
 			{:else if tellen}
 				<p class="count"><span class="noun">tellen…</span></p>
-			{/if}
-			{#each chips as chip (chip.id)}
-				<button type="button" class="chip" onclick={chip.onRemove}
-					>{chip.label}<span class="chip-x" aria-hidden="true">×</span></button
-				>
-			{/each}
-			{#if chips.length > 1}
-				<button type="button" class="clear" onclick={clearFilters}>Wis alle filters</button>
-			{/if}
-			<a class="atom" href={atomHref} rel="alternate" type="application/atom+xml">Atom-feed</a>
-		</div>
-
-		<div class="zoekregel">
-			<label class="search">
-				<span class="visually-hidden">Zoek in Actueel</span>
-				<input
-					type="search"
-					placeholder="Zoek in titels en dossiertitels"
-					value={qDraft ?? q}
-					oninput={(e) => typeQuery(e.currentTarget.value)}
-				/>
-			</label>
-			{#if q}
-				{#if gevolgd}
-					<a class="volg volg--aan" href="/onderwerpen">Gevolgd</a>
-				{:else}
-					<button
-						type="button"
-						class="volg"
-						title="Volg deze woorden in Onderwerpen"
-						onclick={volgQ}>Volg</button
-					>
-				{/if}
 			{/if}
 		</div>
 
@@ -658,20 +645,24 @@
 	.actueel {
 		display: grid;
 		grid-template-columns: 240px minmax(0, 1fr);
-		gap: var(--s-7);
+		column-gap: var(--s-7);
 		max-width: 1320px;
 		margin: 0 auto;
 		padding: var(--s-6) var(--s-6) var(--s-8);
 		--row-lead: 132px;
 		--row-aside: 150px;
 	}
-	.filters {
-		position: sticky;
-		top: var(--s-4);
-		align-self: start;
-		max-height: calc(100vh - var(--s-6));
-		overflow-y: auto;
-		font-family: var(--font-serif);
+	.kop,
+	.regel {
+		grid-column: 1 / -1;
+	}
+	.kop {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--s-3);
+		margin-bottom: var(--s-4);
 	}
 	.title {
 		margin: 0;
@@ -680,115 +671,112 @@
 		font-weight: 600;
 	}
 	.stand {
-		margin: 0 0 var(--s-5);
+		margin: var(--s-1) 0 0;
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.filters-toggle,
-	.kamer-snel {
-		display: none;
-	}
-
-	.head {
+	.acties {
 		display: flex;
 		flex-wrap: wrap;
+		gap: var(--s-2);
+	}
+	/* The page's actions beside its heading: Atom-feed, Volg als onderwerp. */
+	.actie-knop {
+		display: inline-flex;
+		align-items: center;
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		font-weight: 500;
+		color: var(--ink);
+		text-decoration: none;
+		cursor: pointer;
+	}
+	.actie-knop:hover {
+		border-color: var(--ink);
+	}
+	/* The field and the period on one line, without rules around it. */
+	.regel {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: var(--s-2) var(--s-4);
+		margin-bottom: var(--s-5);
+	}
+	.regel .search {
+		flex: 1 1 320px;
+		min-width: 0;
+	}
+	.regel .periode {
+		flex: 0 1 380px;
+		min-width: 0;
+	}
+	.filters {
+		position: sticky;
+		top: var(--s-4);
+		align-self: start;
+		max-height: calc(100vh - var(--s-6));
+		overflow-y: auto;
+	}
+	.verfijnen-knop {
+		display: none;
+	}
+	.wis-knop {
+		margin-top: var(--s-3);
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink-3);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.wis-knop:hover {
+		color: var(--ink);
+	}
+
+	/* The count above the list, on the ink rule that opens it. */
+	.head {
+		display: flex;
 		align-items: baseline;
-		gap: var(--s-2) var(--s-3);
 		margin: 0 0 var(--s-3);
-		font-family: var(--font-serif);
+		padding-bottom: var(--s-2);
+		border-bottom: 2px solid var(--ink);
 	}
 	.count {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
+		font-weight: 800;
 	}
 	.noun {
-		margin-left: var(--s-1);
+		margin-left: var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
+		font-weight: 400;
 		color: var(--ink-3);
-	}
-	.chip {
-		display: inline-flex;
-		gap: var(--s-1);
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--ink);
-		border-radius: var(--r-1);
-		background: transparent;
-		font: inherit;
-		font-size: var(--t-micro);
-		cursor: pointer;
-	}
-	.chip:hover {
-		background: var(--paper-2);
-	}
-	.chip-x {
-		color: var(--ink-3);
-	}
-	.clear,
-	.atom {
-		border: 0;
-		background: transparent;
-		padding: 0;
-		font: inherit;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		cursor: pointer;
-		text-decoration: none;
-	}
-	.atom {
-		margin-left: auto;
-	}
-	.clear:hover,
-	.atom:hover {
-		color: var(--accent);
-	}
-	.zoekregel {
-		display: flex;
-		gap: var(--s-2);
-		align-items: center;
-	}
-	.zoekregel .search {
-		flex: 1;
-		min-width: 0;
-	}
-	.volg {
-		flex: none;
-		height: var(--s-7);
-		padding: 0 var(--s-4);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		background: var(--paper);
-		color: var(--ink);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		cursor: pointer;
-	}
-	.volg--aan {
-		display: inline-flex;
-		align-items: center;
-		box-sizing: border-box;
-		color: var(--ink-2);
-		text-decoration: none;
-	}
-	.volg--aan:hover {
-		color: var(--ink);
 	}
 	.search input {
 		width: 100%;
 		box-sizing: border-box;
-		height: var(--s-7);
+		height: var(--veld-h);
 		padding: 0 var(--s-3);
 		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
+		border-radius: var(--r-1);
 		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		color: var(--ink);
 	}
 	.search input::placeholder {
 		color: var(--ink-3);
-		font-style: italic;
 	}
 
 	.days--stale {
@@ -878,45 +866,36 @@
 	@media (max-width: 767px) {
 		.actueel {
 			grid-template-columns: minmax(0, 1fr);
-			gap: var(--s-4);
 			padding: var(--s-4) var(--s-4) var(--s-7);
 		}
-		/* The column dissolves into the page, so its bar can stick the whole length of the feed
-		   (a sticky box never leaves its parent). */
+		.kop {
+			flex-direction: column;
+		}
+		.regel {
+			margin-bottom: var(--s-3);
+		}
+		.regel .search,
+		.regel .periode {
+			flex: 1 1 100%;
+		}
 		.filters {
-			display: contents;
+			position: static;
+			max-height: none;
+			overflow: visible;
+			margin-bottom: var(--s-4);
 		}
-		/* Under the sticky top bar (60px), so it stays one tap away while scrolling. */
-		.filterbalk {
-			position: sticky;
-			top: 60px;
-			z-index: 2;
-			margin: 0 calc(-1 * var(--s-4));
-			padding: 0 var(--s-4);
-			background: var(--paper);
-		}
-		.kamer-snel {
-			display: block;
-			padding: var(--s-2) 0;
-		}
-		.filters-body :global(section:has(#facet-kamer)) {
-			display: none;
-		}
-		.filters-toggle {
-			display: block;
-			width: 100%;
-			min-height: 44px;
+		/* The facets behind one quiet line: Verfijnen, with how many are chosen. */
+		.verfijnen-knop {
+			display: inline-block;
 			padding: 0;
 			border: 0;
-			border-top: 1px solid var(--rule);
-			border-bottom: 1px solid var(--rule);
-			background: transparent;
-			font: inherit;
+			background: none;
 			font-family: var(--font-ui);
 			font-size: var(--t-ui);
-			font-weight: 500;
-			text-align: left;
 			color: var(--ink);
+			text-decoration: underline;
+			text-decoration-color: var(--rule-strong);
+			text-underline-offset: 4px;
 			cursor: pointer;
 		}
 		.filters-body {
@@ -925,17 +904,6 @@
 		}
 		.filters-body--open {
 			display: block;
-			max-height: 60dvh;
-			overflow-y: auto;
-			overscroll-behavior: contain;
-			scrollbar-gutter: stable;
-			scrollbar-width: thin;
-			padding-right: var(--s-2);
-			padding-bottom: var(--s-3);
-			border-bottom: 1px solid var(--rule);
-		}
-		.atom {
-			margin-left: 0;
 		}
 	}
 </style>
