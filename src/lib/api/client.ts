@@ -38,9 +38,15 @@ export class ApiError extends Error {
 	}
 }
 
+let gelezen: ((data: unknown) => void) | null = null;
+
+/** Who reads every answer as it arrives: the readable addresses in it (`$lib/bron/leesbaar`). */
+export const leesAntwoorden = (fn: (data: unknown) => void) => (gelezen = fn);
+
 /** The body of a successful call; any other status throws an ApiError. */
 export async function unwrap<T>(call: Promise<{ data?: T; response: Response }>): Promise<T> {
 	const { data, response } = await call;
 	if (!response.ok) throw new ApiError(response.status, response.url);
+	gelezen?.(data);
 	return data as T;
 }

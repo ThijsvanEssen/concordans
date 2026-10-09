@@ -3,6 +3,7 @@ import {
 	focusIn,
 	focusOfPad,
 	isVerkenner,
+	onthoudPaden,
 	padHref,
 	padOfFocus,
 	parsePad,
@@ -180,5 +181,20 @@ describe('the address of a focus', () => {
 			'documents/1501fbca'
 		);
 		expect(padOfFocus('documents/1501fbca')).toBe('/kamerstukken/36799/31');
+	});
+
+	it('takes the address the API gives beside an id, anywhere in an answer', () => {
+		onthoudPaden({
+			node: { id: 'articles/abc123', path: '/wetten/BWBR0005289/artikel/6:162' },
+			neighbors: [{ id: 'documents/9f8e', path: '/kamerstukken/36600-VIII/12' }],
+			dossier: { id: 'dossiers/k1', path: '/dossiers/36600-VIII' },
+			stemming: { id: 'decisions/x1', path: null },
+			committees: [{ id: 'committees/ek_ocw', key: 'ek_ocw', slug: 'ek-ocw' }]
+		});
+		expect(padOfFocus('committees/ek_ocw')).toBe('/commissies/ek-ocw');
+		expect(padOfFocus('articles/abc123')).toBe('/wetten/BWBR0005289/artikel/6:162');
+		expect(padOfFocus('documents/9f8e')).toBe('/kamerstukken/36600-VIII/12');
+		// A dossier is named by its number; its key is not a focus.
+		expect(padOfFocus('dossiers/k1')).toBeNull();
 	});
 });
