@@ -27,6 +27,8 @@ Every page and panel, from top to bottom:
 
 A row has no buttons of its own: a click on the row does it; the + shows on hover (always on a phone).
 
+This holds for Bladeren too (Thijs, 10 October 2026, choice (a)): a row's title opens the bron in Netwerk, Lezen is one step from there. It replaces the earlier wish of the same day for buttons at the end of the row (Lezen, Netwerk, Openen). Those buttons do not come back.
+
 ## Measure, letter, colour, words
 
 - Height: 32 on a page, 24 in a panel or group; one line of controls has one height. On the 4 px grid; `--s-2` between controls, `--s-4` between groups.
