@@ -136,10 +136,11 @@
 						rx="3"
 						class="stoel"
 						class:tegen={v === 'tegen'}
-						class:voor={v === 'voor'}
 						class:dim={hovered !== null && hovered !== name}
-						fill={voteHighlight ? undefined : kleurVan('EK', name, i, fillOf.get(name) ?? null)}
-						><title>{name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
+						fill={v === 'tegen' ? undefined : kleurVan('EK', name, i, fillOf.get(name) ?? null)}
+						style:stroke={v === 'tegen'
+							? kleurVan('EK', name, i, fillOf.get(name) ?? null)
+							: undefined}><title>{name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
 					>
 				{/each}
 			</a>
@@ -219,12 +220,10 @@
 		font: 600 var(--t-glyph) var(--font-sans);
 		fill: var(--paper);
 	}
-	rect.voor {
-		fill: var(--ink-2);
-	}
+	/* As in the hall of the Tweede Kamer: the first side (voor, coalitie) a seat in its
+	   fractie's colour, the second (tegen, oppositie) open, a contour in that colour. */
 	rect.tegen {
 		fill: var(--paper);
-		stroke: var(--accent);
 		stroke-width: 2;
 	}
 	.stoel {
