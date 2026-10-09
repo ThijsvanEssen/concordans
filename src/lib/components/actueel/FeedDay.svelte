@@ -12,7 +12,8 @@
 		colorOf,
 		ministryName,
 		filterHref,
-		summary
+		summary,
+		nieuwSinds = null
 	}: {
 		day: Day;
 		today: string;
@@ -23,6 +24,8 @@
 		filterHref: (patch: Record<string, string>) => string;
 		/** The day as `/api/feed/summary` counts it, under the same filters. */
 		summary?: DaySummary;
+		/** A followed topic's visit before this one (Onderwerpen). */
+		nieuwSinds?: string | null;
 	} = $props();
 
 	const counts = $derived(summary ? summaryCounts(summary) : day.counts);
@@ -43,6 +46,7 @@
 				{ministryName}
 				{filterHref}
 				votes={summary?.votes}
+				{nieuwSinds}
 			/>
 		{/each}
 	</ul>

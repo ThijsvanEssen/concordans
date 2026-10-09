@@ -18,7 +18,8 @@
 		type FeedItem,
 		type VoteCount
 	} from './feed';
-	import { headlineOf, voteHow } from './timeline';
+	import { headlineOf, voteHow, vormVanFeed } from './timeline';
+	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import { bewindspersoonVan, fromFeed } from '$lib/bron/submitters';
@@ -35,7 +36,8 @@
 		colorOf,
 		ministryName,
 		filterHref,
-		votes
+		votes,
+		nieuwSinds = null
 	}: {
 		entry: Entry;
 		openId: string | null;
@@ -46,8 +48,12 @@
 		filterHref: (patch: Record<string, string>) => string;
 		/** The day's votes counted by the summary: the fold of votes names them all. */
 		votes?: VoteCount[];
+		/** A followed topic's visit before this one: what is newer says so (Onderwerpen). */
+		nieuwSinds?: string | null;
 	} = $props();
 
+	const nieuw = (date: string | undefined) =>
+		nieuwSinds && date && date > nieuwSinds ? ', nieuw' : '';
 	const refOf = (i: FeedItem) => `${i.node.collection}/${i.node.key}`;
 	const tally = (i: FeedItem) => {
 		const t = (i.vote?.tally ?? {}) as Record<string, number>;
@@ -65,7 +71,10 @@
 		onToggle={() => onToggle(f.id)}
 	>
 		{#snippet lead()}
-			<span class="kind">{many.charAt(0).toUpperCase()}{many.slice(1)}</span>
+			<span class="kind"
+				><KindGlyph vorm={vormVanFeed({ kind: f.kind })} size={11} />
+				{many.charAt(0).toUpperCase()}{many.slice(1)}{nieuw(f.items[0]?.date)}</span
+			>
 		{/snippet}
 		{#snippet detail()}
 			<ul class="fold-items">
@@ -109,7 +118,9 @@
 		emphasis={h.major}
 	>
 		{#snippet lead()}
-			<span class="kind" class:kind--failed={h.failed}>{h.label}</span>
+			<span class="kind" class:kind--failed={h.failed}
+				><KindGlyph vorm={h.vorm} size={11} /> {h.label}{nieuw(i.date)}</span
+			>
 			{#if i.publication}<span class="kind-sub">{publicationCite(i.publication)}</span>{/if}
 		{/snippet}
 		{#snippet body()}
