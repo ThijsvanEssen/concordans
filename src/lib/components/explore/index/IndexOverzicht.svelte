@@ -14,7 +14,7 @@
 	</aside>
 	<div class="groepen">
 		{#each INDEX_TABS as groep (groep.label)}
-			<Sectie titel={groep.label} niveau={2}>
+			<Sectie titel={groep.label} niveau={2} inklapbaar={false}>
 				<ul>
 					{#each groep.categories as cat (cat.key)}
 						<li>

@@ -1,9 +1,13 @@
 <script lang="ts">
 	// A section of a reader under one heading: a rule in ink, the title in the serif with
 	// the glyph of what it lists, and its count. The one form for every section (Loopbaan,
-	// Toezeggingen, Dossiers, Stemgeschiedenis).
+	// Toezeggingen, Dossiers, Stemgeschiedenis). The heading opens and closes it (Thijs, 10
+	// Oct), remembered per kind of section; closed, its content is not drawn, so what it
+	// would load is not asked. docs/typografie.md.
 	import type { Snippet } from 'svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import Caret from './Caret.svelte';
+	import { isDicht, zetDicht } from './dicht.svelte';
 	import type { Collection } from '$lib/vocabulary';
 
 	let {
@@ -13,6 +17,9 @@
 		id,
 		naast,
 		niveau = 3,
+		inklapbaar = true,
+		sleutel,
+		open = $bindable(true),
 		children
 	}: {
 		titel: string;
@@ -24,18 +31,45 @@
 		naast?: Snippet;
 		/** The level of the heading: 3 in a reader under its title, 2 on a page of sections. */
 		niveau?: 2 | 3;
+		/** Whether the heading opens and closes it; off for a page of sections (Bladeren). */
+		inklapbaar?: boolean;
+		/** The kind of section whose state it shares; its title where none is given. */
+		sleutel?: string;
+		/** Open or closed, for a parent that loads only for an open section. */
+		open?: boolean;
 		children: Snippet;
 	} = $props();
+
+	const soortSleutel = $derived(sleutel ?? titel);
+	/** Drawn from the first paint as it was left: a closed section never draws its content. */
+	const isOpen = $derived(!inklapbaar || !isDicht(soortSleutel));
+	$effect(() => {
+		open = isOpen;
+	});
+	const uid = $props.id();
 </script>
 
-<section class="sectie" {id}>
+<section class="sectie" class:is-dicht={!isOpen} {id}>
 	<svelte:element this={`h${niveau}`} class="kop">
-		{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
-				class="aantal">{aantal.toLocaleString('nl-NL')}</span
-			>{/if}
-		{#if naast}<span class="naast">{@render naast()}</span>{/if}
+		{#if inklapbaar}
+			<button
+				type="button"
+				class="kop-knop"
+				aria-expanded={isOpen}
+				aria-controls="{uid}-inhoud"
+				onclick={() => zetDicht(soortSleutel, isOpen)}
+				>{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
+						class="aantal">{aantal.toLocaleString('nl-NL')}</span
+					>{/if}<Caret open={isOpen} side /></button
+			>
+		{:else}
+			{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
+					class="aantal">{aantal.toLocaleString('nl-NL')}</span
+				>{/if}
+		{/if}
+		{#if naast && isOpen}<span class="naast">{@render naast()}</span>{/if}
 	</svelte:element>
-	{@render children()}
+	{#if isOpen}<div class="inhoud" id="{uid}-inhoud">{@render children()}</div>{/if}
 </section>
 
 <style>
@@ -55,6 +89,30 @@
 		font-size: var(--t-h3);
 		font-weight: 800;
 		color: var(--ink);
+	}
+	/* The heading itself is the button: the heading's letter, no frame, the caret quiet. */
+	.kop-knop {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		cursor: pointer;
+		text-align: left;
+	}
+	.kop-knop:hover {
+		color: var(--accent);
+	}
+	.inhoud {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+	}
+	.is-dicht {
+		padding-bottom: var(--s-1);
 	}
 	.aantal {
 		font-family: var(--font-serif);
