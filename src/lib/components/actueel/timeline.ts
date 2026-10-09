@@ -309,7 +309,8 @@ function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 			title: commitmentTitle(first),
 			context: context || null,
 			href: more ? actueelDayHref(date, ['toezegging'], first.dossier?.number) : hrefOf(first),
-			major: true
+			// At the size of a motie beside it: large is the bill and its decisions (Thijs, 10 Oct).
+			major: false
 		};
 	});
 }
@@ -500,7 +501,8 @@ export type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'failed'
 /**
  * One event as Actueel heads it, in the words of the homepage: a vote as the Kamer's
  * decision, a toezegging with its bewindspersoon, a bill brought in by its name. What
- * matters (a bill, a close vote, a toezegging, a law in force) is major.
+ * matters (a bill, a close vote, a law in force) is major; a toezegging stands at the size of
+ * a motie beside it (Thijs, 10 Oct: two things at one level do not differ).
  */
 export function headlineOf(i: FeedItem): Headline {
 	switch (i.kind) {
@@ -523,7 +525,7 @@ export function headlineOf(i: FeedItem): Headline {
 			return { label, title, major: voteMargin(i) <= CLOSE_VOTE, failed };
 		}
 		case 'toezegging':
-			return { label: 'Toezegging', title: commitmentTitle(i), major: true };
+			return { label: 'Toezegging', title: commitmentTitle(i), major: false };
 		case 'Voorstel van wet': {
 			const name = i.dossier ? dossierName(i.dossier) : (i.title ?? 'Wetsvoorstel');
 			return { label: 'Wetsvoorstel', title: `Wetsvoorstel ingediend: ${name}`, major: true };
