@@ -21,6 +21,32 @@ const sources = files(ROOT)
 const offenders = (test: (text: string) => boolean, allowed: string[] = []) =>
 	sources.filter(({ path, text }) => !allowed.includes(path) && test(text)).map((s) => s.path);
 
+// The rules of each style block, comments left out: a control is a rule whose subject is a
+// button, a field, a key, a choice row, a tab or a menu item.
+const CTL_EL = /(^|[\s>+~(,])(button|input|select|textarea|kbd|option|summary)(?=$|[.:[\s#)])/;
+const CTL_CLS =
+	/\.(?:[\w-]*(?:btn|knop|keuze|toggle|switch|segment|trigger|veld|field|input|menu__item|menuitem|kbd|nav-link)[\w-]*|(?:[\w-]*-)?tabs?(?:[-_][\w-]*)?|act(?:--[\w-]+|__[\w-]+)?)(?=$|[.:[\s#)>+~,])/;
+const isControl = (selector: string) =>
+	selector.split(',').every((part) => {
+		const p = part.replace(/:global\(([^)]*)\)/g, '$1').trim();
+		const subject = p.split(/\s*[>+~]\s*|\s+/).at(-1) ?? p;
+		return CTL_EL.test(' ' + subject) || CTL_CLS.test(subject);
+	});
+const rules = (text: string) => {
+	const css = /<style>([\s\S]*?)<\/style>/.exec(text)?.[1] ?? '';
+	return [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+		selector: m[1].trim(),
+		body: m[2]
+	}));
+};
+
+/**
+ * The places that keep an older form, each named with why and until when: an entry comes
+ * out when its page is rebuilt to docs/bediening.md (the steps of 9-bediening, Thijs, 10 Oct).
+ */
+type Uitzonderingen = Record<string, string>;
+const buiten = (u: Uitzonderingen) => Object.keys(u);
+
 describe('one form for each thing', () => {
 	it('formats a date only in $lib/text/datum.ts', () => {
 		const dateFormat = /toLocaleDateString|Intl\.DateTimeFormat|\btoLocaleTimeString\b/;
@@ -100,23 +126,6 @@ describe('one form for each thing', () => {
 	});
 
 	it('sets text in the serif and only controls in the sans (docs/typografie.md, 10 Oct 2026)', () => {
-		// The rules of each style block, comments left out: a control is a rule whose subject
-		// is a button, a field, a key, a choice row, a tab or a menu item.
-		const CTL_EL = /(^|[\s>+~(,])(button|input|select|textarea|kbd|option|summary)(?=$|[.:[\s#)])/;
-		const CTL_CLS =
-			/\.(?:[\w-]*(?:btn|knop|keuze|toggle|switch|segment|trigger|veld|field|input|menu__item|menuitem|kbd|nav-link)[\w-]*|(?:[\w-]*-)?tabs?(?:[-_][\w-]*)?|act(?:--[\w-]+|__[\w-]+)?)(?=$|[.:[\s#)>+~,])/;
-		const isControl = (selector: string) =>
-			selector.split(',').every((part) => {
-				const p = part.replace(/:global\(([^)]*)\)/g, '$1').trim();
-				const subject = p.split(/\s*[>+~]\s*|\s+/).at(-1) ?? p;
-				return CTL_EL.test(' ' + subject) || CTL_CLS.test(subject);
-			});
-		const rules = (text: string) => {
-			const css = /<style>([\s\S]*?)<\/style>/.exec(text)?.[1] ?? '';
-			return [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(
-				(m) => ({ selector: m[1].trim(), body: m[2] })
-			);
-		};
 		expect(offenders((t) => t.includes('var(--font-sans)'))).toEqual([]);
 		// The sans only where a control is styled.
 		expect(
@@ -145,6 +154,79 @@ describe('one form for each thing', () => {
 	it('has no prototype switches or study folders left', () => {
 		expect(
 			offenders((t) => /searchParams\.get\('(ontwerp|contrast)'\)|components\/r[0-9]\//.test(t))
+		).toEqual([]);
+	});
+});
+
+describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () => {
+	it('chooses one of many with TekstMenu, not a native select', () => {
+		const selects: Uitzonderingen = {
+			'lib/components/ui/TekstMenu.svelte': 'the one form',
+			'lib/components/explore/index/IndexFacets.svelte':
+				"its 'select' facets, until TekstMenu replaces them (step 3, Bladeren)",
+			'lib/verbonden/Verbonden.svelte': 'Jaar and Rechter (step 2, Verbonden)',
+			'lib/components/articles/VersionCompare.svelte': 'the versions (step 2, the reader head)',
+			'lib/components/explore/WholeLawReader.svelte': 'the whole law (step 2, the reader head)',
+			'lib/components/explore/index/IndexToolbar.svelte': 'the order of a list (step 3, Bladeren)',
+			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'Fractie (step 4, Overzicht)'
+		};
+		expect(offenders((t) => /<select\b/.test(t), buiten(selects))).toEqual([]);
+	});
+
+	it('shows a choice in the control itself, without chips', () => {
+		const chips: Uitzonderingen = {
+			'lib/netwerk/NetwerkPanel.svelte': 'the chosen bronnen: content, not a filter',
+			'lib/components/explore/IndexView.svelte': 'step 3, Bladeren',
+			'lib/components/explore/readers/CommitteeReader.svelte': 'step 2, the readers',
+			'lib/components/explore/readers/DecisionReader.svelte': 'step 2, the readers',
+			'lib/components/explore/readers/FactionReader.svelte': 'step 2, the readers',
+			'lib/components/explore/readers/MemberReader.svelte': 'step 2, the readers',
+			'lib/verbonden/FilterSheet.svelte': 'step 2, Verbonden',
+			'lib/components/graph/GraphSidebar.svelte': 'step 5, the network',
+			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'step 4, Overzicht'
+		};
+		expect(offenders((t) => /class="[^"]*\bchip\b/.test(t), buiten(chips))).toEqual([]);
+	});
+
+	it('leads on from a list with AlleN, not a "meer" of its own', () => {
+		// A class token named more or meer: `group__more`, `load-more-btn`, `chip--meer`.
+		const meer = (t: string) =>
+			[...t.matchAll(/class="([^"]*)"/g)].some((m) =>
+				m[1].split(/\s+/).some((c) => /(^|[_-])(more|meer)($|[_-])/.test(c))
+			);
+		const eigen: Uitzonderingen = {
+			'lib/bron/BehoortBij.svelte': 'step 2, the band',
+			'lib/components/explore/WholeLawReader.svelte': 'step 2, the readers',
+			'lib/components/explore/readers/CommitmentReader.svelte': 'step 2, the readers',
+			'lib/components/explore/readers/JudgmentReader.svelte': 'step 2, the readers',
+			'lib/components/explore/readers/MemberReader.svelte': 'step 2, the readers',
+			'lib/components/parliamentary/GewijzigdeArtikelen.svelte': 'step 2, the readers',
+			'lib/verbonden/Verbonden.svelte': 'step 2, Verbonden',
+			'lib/components/explore/IndexView.svelte': 'step 3, Bladeren',
+			'lib/components/explore/index/IndexFacets.svelte': 'step 3, Bladeren',
+			'routes/(main)/actueel/+page.svelte': 'Meer laden (step 3, with Bladeren)',
+			'routes/(main)/onderwerpen/overzicht/+page.svelte': 'step 4, Overzicht',
+			'routes/(main)/onderwerpen/+page.svelte': 'step 5, Onderwerpen',
+			'lib/netwerk/NetwerkPanel.svelte': 'step 5, the panel Netwerk',
+			'lib/components/graph/GraphSidebar.svelte': 'step 5, the network',
+			'lib/search/Search.svelte': 'step 5, the search'
+		};
+		expect(offenders(meer, buiten(eigen))).toEqual([]);
+	});
+
+	it('sizes a control at the height of a page or of a panel', () => {
+		// 32 px on a page (--veld-h), 24 px in a panel or a group (--veld-h-klein).
+		const hoog = (body: string) =>
+			[...body.matchAll(/(?<![-\w])height:\s*([^;]+);/g)].some(
+				(m) => !/^(var\(--veld-h(-klein)?\)|auto|100%)$/.test(m[1].trim())
+			);
+		const anders: Uitzonderingen = {
+			'lib/components/articles/VersionCompare.svelte': '26 and 28 px (step 2, the reader head)',
+			'lib/components/explore/index/IndexToolbar.svelte': 'the field, 28 px (step 3, Bladeren)',
+			'routes/(main)/onderwerpen/+page.svelte': '48 px (step 5, Onderwerpen)'
+		};
+		expect(
+			offenders((t) => rules(t).some((r) => isControl(r.selector) && hoog(r.body)), buiten(anders))
 		).toEqual([]);
 	});
 });

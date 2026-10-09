@@ -3888,7 +3888,7 @@
 		color: var(--ink-2);
 	}
 	.load-more-btn {
-		height: 32px;
+		height: var(--veld-h);
 		padding: 0 var(--s-4);
 		background: transparent;
 		border: 1px solid var(--rule-strong);

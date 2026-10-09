@@ -1625,7 +1625,7 @@
 	}
 	.zoom__btn {
 		width: 32px;
-		height: 32px;
+		height: var(--veld-h);
 		border: 0;
 		background: none;
 		font-family: var(--font-ui);
