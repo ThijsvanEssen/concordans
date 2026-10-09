@@ -146,7 +146,7 @@
 	/>
 </svelte:head>
 
-<div class="home">
+<div class="home blad blad__indeling">
 	<aside class="side">
 		<h1>Concordans</h1>
 		<p class="what">Wetten, uitspraken en Kamerstukken met hun onderlinge verbindingen.</p>
@@ -211,16 +211,7 @@
 </div>
 
 <style>
-	/* The same edge and columns as Bladeren (1440, 240 and the rest, gutter 40). */
-	.home {
-		max-width: 1440px;
-		margin: 0 auto;
-		padding: var(--s-6) var(--s-6) var(--s-8);
-		display: grid;
-		grid-template-columns: 240px minmax(0, 1fr);
-		column-gap: 40px;
-		align-items: start;
-	}
+	/* The frame and grid of Bladeren (AppShell). */
 	.side {
 		display: flex;
 		flex-direction: column;
@@ -301,9 +292,8 @@
 		color: var(--ink);
 		text-decoration: none;
 	}
-	@media (max-width: 860px) {
+	@media (max-width: 768px) {
 		.home {
-			grid-template-columns: 1fr;
 			row-gap: var(--s-6);
 		}
 	}
@@ -331,9 +321,6 @@
 	}
 
 	@media (max-width: 640px) {
-		.home {
-			padding: var(--s-5) var(--s-4) var(--s-8);
-		}
 		.all {
 			padding: var(--s-2) 0;
 		}

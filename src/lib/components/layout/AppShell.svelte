@@ -273,6 +273,52 @@
 	/* Buttons: 1px rule-strong border, 3px radius, no fill. `is-primary` is ink on paper;
 	   `is-text` has no border. */
 	/* A knop in a panel, a group or a reader's head: the panel's height (docs/bediening.md). */
+	/* The one frame of a full-width page (docs/bediening.md, Layout; Thijs, 10 Oct 2026): the
+	   width, gutters, facet column and grid of Bladeren. A list or overview page is .blad with
+	   .blad__indeling (facets left, the rest right); a text page keeps a reading width inside
+	   it, on the same left edge (.blad--tekst: each child at most 720 px). The panels of the Verkenner have their own. */
+	:global(.blad) {
+		box-sizing: border-box;
+		width: 100%;
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: var(--s-6) var(--s-6) var(--s-8);
+	}
+	:global(.blad__indeling) {
+		display: grid;
+		grid-template-columns: 240px minmax(0, 1fr);
+		column-gap: 40px;
+		align-items: start;
+	}
+	:global(.blad--tekst > *) {
+		max-width: 720px;
+	}
+	/* The facet column of such a page, as Bladeren's: it stays in view, scrolls on its own
+	   with a quiet bar that keeps clear of the counts, and leaves room for a focus ring. */
+	:global(.blad__facetten) {
+		position: sticky;
+		top: var(--s-6);
+		max-height: calc(100vh - var(--s-6));
+		overflow-y: auto;
+		scrollbar-gutter: stable;
+		scrollbar-width: thin;
+		scrollbar-color: var(--rule) transparent;
+		margin: 0 calc(-1 * var(--s-2));
+		padding: var(--s-1) var(--s-2) var(--s-5);
+	}
+	@media (max-width: 768px) {
+		:global(.blad__facetten) {
+			position: static;
+			max-height: none;
+			overflow: visible;
+		}
+		:global(.blad) {
+			padding: var(--s-4) var(--s-4) 60px;
+		}
+		:global(.blad__indeling) {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
 	:global(.btn) {
 		display: inline-flex;
 		align-items: center;

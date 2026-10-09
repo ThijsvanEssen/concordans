@@ -21,7 +21,7 @@
 <RouteKop pad="/docs" />
 
 <div class="page-wrap">
-	<div class="container">
+	<div class="container blad blad--tekst">
 		<h1 class="stub-title">Documentatie</h1>
 		<p class="stub-lede">
 			Concordans toont wetten, uitspraken en parlementaire stukken uit officiële bronnen, met de
@@ -286,16 +286,6 @@
 </div>
 
 <style>
-	.page-wrap {
-		padding: var(--s-8) 0 calc(2 * var(--s-8));
-	}
-
-	.container {
-		max-width: 720px;
-		margin: 0 auto;
-		padding: 0 var(--s-5);
-	}
-
 	.stub-title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);

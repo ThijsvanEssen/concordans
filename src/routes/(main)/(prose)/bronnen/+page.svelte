@@ -149,7 +149,7 @@
 <RouteKop pad="/bronnen" />
 
 <div class="page-wrap">
-	<div class="container">
+	<div class="container blad blad--tekst">
 		<div class="stub-eyebrow">Over Concordans</div>
 		<h1 class="stub-title">Bronnen en hergebruik</h1>
 		<p class="stub-lede">
@@ -258,16 +258,6 @@
 </div>
 
 <style>
-	.page-wrap {
-		padding: var(--s-8) 0 calc(2 * var(--s-8));
-	}
-
-	.container {
-		max-width: 720px;
-		margin: 0 auto;
-		padding: 0 var(--s-5);
-	}
-
 	.stub-eyebrow {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);

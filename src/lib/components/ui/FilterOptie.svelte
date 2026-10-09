@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Vinkje from './Vinkje.svelte';
 	// One option of a filter, the same in Bladeren, Actueel, the legend of the network and
 	// the filter sheet of Verbonden: a box (or a colour swatch), what it shows before the
 	// label (a glyph, a line), the label, and its count at the right edge. Every option of
@@ -62,11 +63,11 @@
 	{#if swatch}
 		<span class="kleur" style:background={swatch} aria-hidden="true"></span>
 	{:else}
-		<span class="vak" aria-hidden="true">{on ? '✓' : ''}</span>
+		<Vinkje aan={on} {gedimd} />
 	{/if}
 	{#if voor}<span class="voor">{@render voor()}</span>{/if}
 	<span class="label" class:wrap>{label}</span>
-	{#if bezig}<span class="aantal" aria-label="wordt geteld">…</span>{:else if count != null}<span
+	{#if bezig}<span class="aantal" aria-label="wordt geteld"></span>{:else if count != null}<span
 			class="aantal">{formatCount(count)}</span
 		>{/if}
 </button>
@@ -112,10 +113,6 @@
 		color: var(--ink-3);
 		font-weight: 400;
 	}
-	.gedimd .vak {
-		background: var(--rule-strong);
-		border-color: var(--rule-strong);
-	}
 	.gedimd .voor {
 		opacity: 0.5;
 	}
@@ -124,23 +121,6 @@
 	}
 	.diep {
 		padding-left: var(--s-5);
-	}
-	.vak {
-		display: grid;
-		place-items: center;
-		width: var(--s-3);
-		height: var(--s-3);
-		flex: none;
-		box-sizing: border-box;
-		border: 1px solid var(--rule-strong);
-		border-radius: 2px;
-		font-size: var(--t-glyph);
-		line-height: 1;
-		color: var(--paper);
-	}
-	.aan .vak {
-		background: var(--ink);
-		border-color: var(--ink);
 	}
 	.kleur {
 		width: var(--s-3);
@@ -168,6 +148,14 @@
 	.label.wrap {
 		white-space: normal;
 		line-height: var(--lh-snug);
+	}
+	/* A label of more lines: the box and the swatch on its first line, not in its middle. */
+	.optie:has(.label.wrap) {
+		align-items: flex-start;
+	}
+	.optie:has(.label.wrap) > :global(.vinkje),
+	.optie:has(.label.wrap) > .kleur {
+		margin-top: calc((var(--lh-snug) * 1em - var(--s-3)) / 2);
 	}
 	.aantal {
 		margin-left: auto;

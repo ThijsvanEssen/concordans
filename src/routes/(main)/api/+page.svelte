@@ -29,7 +29,7 @@
 <RouteKop pad="/api" />
 
 <div class="page-wrap">
-	<div class="container">
+	<div class="container blad blad__indeling">
 		<header class="page-header">
 			<div class="eyebrow">OpenAPI {data.version}, {data.totalEndpoints} routes</div>
 			<h1 class="page-title">API-referentie</h1>
@@ -206,16 +206,8 @@
 </div>
 
 <style>
-	.page-wrap {
-		padding: 72px 0 96px;
-	}
+	/* The frame and grid of Bladeren (AppShell): the contents in the facet column. */
 	.container {
-		max-width: 1080px;
-		margin: 0 auto;
-		padding: 0 var(--s-6);
-		display: grid;
-		grid-template-columns: 220px 1fr;
-		column-gap: var(--s-7);
 		row-gap: var(--s-7);
 	}
 
@@ -516,9 +508,6 @@
 	}
 
 	@media (max-width: 820px) {
-		.container {
-			grid-template-columns: minmax(0, 1fr);
-		}
 		.toc {
 			position: static;
 			grid-column: 1;

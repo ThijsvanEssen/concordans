@@ -5,7 +5,7 @@
 <RouteKop pad="/docs/sneltoetsen" />
 
 <div class="page-wrap">
-	<div class="container">
+	<div class="container blad blad--tekst">
 		<div class="stub-eyebrow"><a href="/docs">Documentatie</a>, Sneltoetsen</div>
 		<h1 class="stub-title">Sneltoetsen</h1>
 		<div class="shortcut-table">
@@ -78,16 +78,6 @@
 </div>
 
 <style>
-	.page-wrap {
-		padding: 80px 0 120px;
-	}
-
-	.container {
-		max-width: 720px;
-		margin: 0 auto;
-		padding: 0 var(--s-5);
-	}
-
 	.stub-eyebrow {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);

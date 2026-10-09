@@ -1,6 +1,6 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	import Periode from '$lib/components/ui/Periode.svelte';
+	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import { volg, volgt } from '$lib/onderwerpen/onderwerpen';
@@ -384,20 +384,6 @@
 		const factionCounts = [...factionMap];
 		return [
 			{
-				// First, as the concept has it; one of three, as Kamer is everywhere (docs/bediening.md).
-				id: 'kamer',
-				label: 'Kamer',
-				kind: 'keuze',
-				value: chamber || 'beide',
-				geen: 'beide',
-				options: [
-					{ value: 'beide', label: 'Beide' },
-					{ value: 'TK', label: 'Tweede', titel: 'Tweede Kamer' },
-					{ value: 'EK', label: 'Eerste', titel: 'Eerste Kamer' }
-				],
-				onChange: (v: string) => patchUrl({ kamer: v === 'beide' ? null : v })
-			},
-			{
 				id: 'soort',
 				label: 'Soort',
 				kind: 'list',
@@ -523,7 +509,7 @@
 {/snippet}
 <svelte:window onkeydown={onKey} />
 
-<div class="actueel">
+<div class="actueel blad blad__indeling">
 	<header class="kop">
 		<div>
 			<h1 class="title">Actueel</h1>
@@ -549,26 +535,31 @@
 
 	<!-- The one line above the list: the page's field and the period, nothing else. -->
 	<div class="regel">
-		<label class="search">
-			<span class="visually-hidden">Zoek in Actueel</span>
-			<input
-				type="search"
-				placeholder="Zoek in titels en dossiertitels"
-				value={qDraft ?? q}
-				oninput={(e) => typeQuery(e.currentTarget.value)}
-			/>
-		</label>
-		<div class="periode">
-			<Periode
-				klein={false}
-				van={since}
-				tot={until}
-				onChange={(van, tot) => patchUrl({ van: van || null, tot: tot || null })}
-			/>
-		</div>
+		<Bepaalregel
+			zoek={{
+				waarde: qDraft ?? q,
+				placeholder: 'Zoek in titels en dossiertitels',
+				naam: 'Zoek in Actueel',
+				onInput: typeQuery
+			}}
+			periode={{
+				van: since,
+				tot: until,
+				onChange: (van, tot) => patchUrl({ van: van || null, tot: tot || null })
+			}}
+			kamer={{
+				waarde: chamber || 'beide',
+				opties: [
+					{ waarde: 'beide', label: 'Beide' },
+					{ waarde: 'TK', label: 'Tweede Kamer' },
+					{ waarde: 'EK', label: 'Eerste Kamer' }
+				],
+				onKies: (v) => patchUrl({ kamer: v === 'beide' ? null : v })
+			}}
+		/>
 	</div>
 
-	<aside class="filters" aria-label="Verfijnen">
+	<aside class="filters blad__facetten" aria-label="Verfijnen">
 		<button
 			type="button"
 			class="verfijnen-knop"
@@ -645,13 +636,8 @@
 </div>
 
 <style>
+	/* The frame and grid of Bladeren (AppShell). */
 	.actueel {
-		display: grid;
-		grid-template-columns: 240px minmax(0, 1fr);
-		column-gap: var(--s-7);
-		max-width: 1320px;
-		margin: 0 auto;
-		padding: var(--s-6) var(--s-6) var(--s-8);
 		--row-lead: 132px;
 		--row-aside: 150px;
 	}
@@ -705,26 +691,7 @@
 	}
 	/* The field and the period on one line, without rules around it. */
 	.regel {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
-		gap: var(--s-2) var(--s-4);
 		margin-bottom: var(--s-5);
-	}
-	.regel .search {
-		flex: 1 1 320px;
-		min-width: 0;
-	}
-	.regel .periode {
-		flex: 0 1 380px;
-		min-width: 0;
-	}
-	.filters {
-		position: sticky;
-		top: var(--s-4);
-		align-self: start;
-		max-height: calc(100vh - var(--s-6));
-		overflow-y: auto;
 	}
 	.verfijnen-knop {
 		display: none;
@@ -753,21 +720,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 400;
-		color: var(--ink-3);
-	}
-	.search input {
-		width: 100%;
-		box-sizing: border-box;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink);
-	}
-	.search input::placeholder {
 		color: var(--ink-3);
 	}
 
@@ -835,29 +787,13 @@
 		color: var(--ink-3);
 		text-align: center;
 	}
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
 
 	@media (max-width: 767px) {
-		.actueel {
-			grid-template-columns: minmax(0, 1fr);
-			padding: var(--s-4) var(--s-4) var(--s-7);
-		}
 		.kop {
 			flex-direction: column;
 		}
 		.regel {
 			margin-bottom: var(--s-3);
-		}
-		.regel .search,
-		.regel .periode {
-			flex: 1 1 100%;
 		}
 		.filters {
 			position: static;

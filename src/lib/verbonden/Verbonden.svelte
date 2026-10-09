@@ -599,7 +599,14 @@
 											label={al
 												? `${row.title} staat in het netwerk`
 												: `${row.title} aan het netwerk toevoegen`}
-											onclick={() => !al && onAddToNetwerk(row)}>{al ? '✓' : '+'}</IconKnop
+											onclick={() => !al && onAddToNetwerk(row)}
+											>{#if al}<svg
+													class="vink"
+													viewBox="0 0 12 12"
+													width="12"
+													height="12"
+													aria-hidden="true"><path d="M3.1 6.3 5.2 8.4 8.9 4" /></svg
+												>{:else}+{/if}</IconKnop
 										>
 									{/if}
 								</div>
@@ -969,6 +976,14 @@
 	/* The counts of the line, a comma between them. */
 	.ook > span + span::before {
 		content: ', ';
+	}
+	/* The tick of a bron in the network, drawn as in Vinkje. */
+	.vink path {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.5;
+		stroke-linecap: round;
+		stroke-linejoin: round;
 	}
 	.foot {
 		display: flex;
