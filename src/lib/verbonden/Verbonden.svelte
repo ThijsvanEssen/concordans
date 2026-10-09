@@ -11,7 +11,7 @@
 	import { menu } from '$lib/actions/menu';
 	import { onControl } from '$lib/actions/outside';
 	import Caret from '$lib/components/ui/Caret.svelte';
-	import { isDicht, zetDicht } from '$lib/components/ui/dicht.svelte';
+	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
 	import { getCoverage, type Coverage } from '$lib/api/stats';
@@ -455,7 +455,7 @@
 			{@const all = expanded.has(g.id)}
 			{@const bars = years(g)}
 			{@const count = groupCount(g)}
-			{@const toe = isDicht(`verbonden:${g.id}`)}
+			{@const toe = !isOpen(`verbonden:${g.id}`, true)}
 			{#if g.section && g.section !== shown[i - 1]?.section}
 				<h3 class="section">{g.section}</h3>
 			{/if}
@@ -467,7 +467,7 @@
 							type="button"
 							class="group__knop"
 							aria-expanded={!toe}
-							onclick={() => zetDicht(`verbonden:${g.id}`, !toe)}
+							onclick={() => zetOpen(`verbonden:${g.id}`, toe)}
 							>{g.label}<Caret open={!toe} side /></button
 						>
 					</h3>
