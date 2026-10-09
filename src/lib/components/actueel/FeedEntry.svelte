@@ -103,7 +103,7 @@
 	<IndexRow
 		bron={i.id}
 		title={h.title}
-		href={bronHref(refOf(i))}
+		href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}
 		open={openId === i.id}
 		onToggle={() => onToggle(i.id)}
 		emphasis={h.major}

@@ -906,8 +906,11 @@
 								>
 								<a
 									class="rij__titel"
-									href={buildBronHref(null, { collection: 'decisions', key: d.key })}
-									>{d.subject?.trim() || soortVan(d)}</a
+									href={buildBronHref(
+										null,
+										{ collection: 'decisions', key: d.key },
+										{ mode: 'graph' }
+									)}>{d.subject?.trim() || soortVan(d)}</a
 								>
 								<div class="rij__regel">
 									<span class="rij__uitkomst"
