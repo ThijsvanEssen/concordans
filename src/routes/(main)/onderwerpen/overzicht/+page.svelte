@@ -1,8 +1,11 @@
 <script lang="ts">
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	// Overzicht of a topic: the decisions of the Kamers on moties, amendementen and bills with
-	// its words in the title, by kind, outcome and year, and for one fractie by its vote. Every
-	// number is a link to the list it counts, on this page; the list goes out as a CSV.
+	// Overzicht of a topic: its events in the Kruiswoord (concept ux-voorstel/1f), the kinds as
+	// columns and the months as rows, and under it the list of a chosen cell. The stemmingen are
+	// counted by /api/decisions per day (facets.days), with one fractie's voor and tegen where a
+	// fractie is chosen; moties, brieven and toezeggingen are the feed's events, counted from its
+	// pages; an amendment counts once per chain of replacing papers (REVISES), in the month of
+	// its first paper. Richting lays the researcher's coding over the moties' cells.
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
@@ -12,12 +15,14 @@
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
 	import UitkomstTeken from '$lib/components/parliamentary/Uitkomst.svelte';
+	import Kruiswoord, { type KolomKop } from '$lib/onderwerpen/Kruiswoord.svelte';
 	import { buildBronHref } from '$lib/bron/href';
-	import { korteDatum } from '$lib/text/datum';
+	import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
-	import { uitParams } from '$lib/onderwerpen/onderwerpen';
+	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierName, naamVanNummer } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';
+	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
 	import {
 		RICHTINGEN,
 		RICHTING_LABEL,
@@ -33,34 +38,45 @@
 		type Richting
 	} from '$lib/onderwerpen/richting';
 	import {
-		RICHTING_RIJEN,
 		csvTabel,
 		csvTekst,
-		filter,
-		richtingTabel,
-		opOnderwerp,
-		perJaar,
-		perSoort,
 		soortVan,
-		totaal,
 		uitFacets,
 		lijstQuery,
 		uitkomstVan,
 		type Besluit,
 		type Filter,
 		type Getelden,
-		type RichtingRij,
 		type Stem,
-		type Telling,
 		type Uitkomst
 	} from '$lib/onderwerpen/overzicht';
+	import {
+		FEED_KOLOM,
+		amendementKetens,
+		grenzenVan,
+		kolomVanKind,
+		leesKeuze,
+		schrijfKeuze,
+		tel,
+		vakVan,
+		vakken as vakkenVan,
+		type Aandeel,
+		type Amendement,
+		type Dag,
+		type Keuze,
+		type Kolom,
+		type Telbaar,
+		type Vak
+	} from '$lib/onderwerpen/kruiswoord';
 
 	/** Decisions the API gives in one page. */
 	const PAGINA = 200;
-	/** Per word at most this many, the newest: five requests. */
-	const MAX = 1000;
-	/** Rows of the list before `Meer tonen`. */
+	/** Rows of a list before `Volgende`. */
 	const STAP = 50;
+	/** Pages of the feed counted at most (200 events each), the newest first. */
+	const FEED_PAGINAS = 5;
+	/** Dossiers whose amendments are followed at most (one request each, cached). */
+	const DOSSIERS_MAX = 20;
 
 	// ── The URL ─────────────────────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
@@ -81,6 +97,11 @@
 	const fractie = $derived(params.get('fractie') ?? '');
 	/** On a phone the facets behind Verfijnen (N), opened in place. */
 	let verfijnenOpen = $state(false);
+	/** The chosen cell (`cel=moties:2026-10`), Richting and the weeks as rows. */
+	const keuze = $derived(leesKeuze(params.get('cel')));
+	const richtingAan = $derived(params.get('richting') === 'aan');
+	const week = $derived(params.get('per') === 'week');
+	/** The filters of an older address, read for its list (soort, uitkomst, jaar, stem). */
 	const f = $derived<Filter>({
 		soort: params.get('soort') || undefined,
 		uitkomst: (['aangenomen', 'verworpen', 'overig'] as const).find(
@@ -89,14 +110,10 @@
 		jaar: params.get('jaar') || undefined,
 		stem: (['voor', 'tegen'] as const).find((s) => s === params.get('stem'))
 	});
-	/** A direction as filter: the list is then the moties of the table Richting. */
-	const richtingF = $derived(RICHTING_RIJEN.find((r) => r === params.get('richting')));
 
-	const RIJ_LABEL: Record<RichtingRij, string> = { ...RICHTING_LABEL, geen: 'Niet gecodeerd' };
-	const FILTERS = ['soort', 'uitkomst', 'jaar', 'stem', 'richting'];
 	type Patch = Record<string, string | null>;
-	/** A number's list: its own filters only, the others off. */
-	function hrefMet(patch: Patch, alleen = true) {
+	const FILTERS = ['soort', 'uitkomst', 'jaar', 'stem', 'cel'];
+	function hrefMet(patch: Patch, alleen = false) {
 		const url = new URL(page.url);
 		if (alleen) for (const k of FILTERS) url.searchParams.delete(k);
 		for (const [k, v] of Object.entries(patch)) {
@@ -105,18 +122,18 @@
 		}
 		return url.pathname + url.search;
 	}
-	const zet = (patch: Patch) =>
-		goto(hrefMet(patch, false), { replaceState: true, keepFocus: true, noScroll: true });
+	const zet = (patch: Patch, alleen = false) =>
+		goto(hrefMet(patch, alleen), { replaceState: true, keepFocus: true, noScroll: true });
+	const kies = (k: Keuze | null) => zet({ cel: k ? schrijfKeuze(k) : null }, true);
 
-	// ── Counted by the API (0.79.30) ────────────────────────────────────────
-	// One question with all the words (repeated q) gives the counts per kind and year, and
-	// one fractie's voor and tegen (party_votes): every decision, no cap. The list behind a
-	// number is a question of its own. Without those facets (an API before 0.79.30) the page
-	// counts the decisions itself, as before (`bron = 'zelf'`).
-	let bron = $state<'api' | 'zelf' | null>(null);
+	// ── The stemmingen, counted by the API (first paint) ─────────────────────
+	// One question with all the words: the decisions per day with how many passed, the
+	// counts per kind (for Richting's moties) and the total. The cheapest call of the page.
 	let getelden = $state<Getelden | null>(null);
+	let dagen = $state<Dag[]>([]);
 	let apiTotaal = $state<number | null>(null);
 	let tellenLaden = $state(false);
+	let tellenFout = $state(false);
 	/** The words, the Kamer and the period as /api/decisions takes them. */
 	const basisVan = (woorden: string[], k: string, v: string, t: string) => ({
 		q: woorden,
@@ -126,65 +143,416 @@
 	$effect(() => {
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
 		const basis = basisVan(woorden, kamer, van, tot);
-		const wie = fractie;
 		const ac = new AbortController();
 		getelden = null;
+		dagen = [];
 		apiTotaal = null;
+		tellenFout = false;
+		tellenLaden = !!woorden.length;
 		if (!woorden.length) return;
-		tellenLaden = true;
-		stemmenLaden = !!wie;
-		let opnieuw: ReturnType<typeof setTimeout> | undefined;
-		let poging = 0;
-		const vraag = (): Promise<void> =>
-			unwrap(
-				api.GET('/api/decisions', {
-					params: { query: { ...basis, ...(wie ? { party_votes: wie } : {}), limit: 1 } },
-					signal: ac.signal
-				})
-			)
-				.then((r) => {
-					if (!r.facets?.years) {
-						bron = 'zelf';
-						tellenLaden = false;
-						return;
-					}
-					bron = 'api';
-					getelden = uitFacets(r.facets, wie || null);
-					apiTotaal = r.total;
-					tellenLaden = false;
-					// party_votes counted for longer than 3 s: asked again a few seconds later.
-					if (wie && r.partial && !(r.facets.party_votes ?? []).length && poging++ < 3) {
-						opnieuw = setTimeout(vraag, 3000);
-						return;
-					}
-					stemmenLaden = false;
-				})
-				.catch(() => {
-					if (ac.signal.aborted) return;
-					tellenLaden = false;
-					stemmenLaden = false;
-					if (bron === null) bron = 'zelf';
-				});
-		void vraag();
+		unwrap(
+			api.GET('/api/decisions', { params: { query: { ...basis, limit: 1 } }, signal: ac.signal })
+		)
+			.then((r) => {
+				getelden = r.facets?.years ? uitFacets(r.facets, null) : null;
+				dagen = (r.facets?.days ?? []).flatMap((d) =>
+					d.date ? [{ date: d.date, count: d.count, passed: d.passed ?? 0 }] : []
+				);
+				apiTotaal = r.total;
+			})
+			.catch(() => {
+				if (!ac.signal.aborted) tellenFout = true;
+			})
+			.finally(() => {
+				if (!ac.signal.aborted) tellenLaden = false;
+			});
 		return () => {
-			clearTimeout(opnieuw);
 			ac.abort();
+			tellenLaden = false;
 		};
 	});
 
-	// The list behind a number, STAP at a time.
+	// One fractie's voor and tegen per day: two more counted questions, no list.
+	let fractieDagen = $state<{ voor: Dag[]; tegen: Dag[] } | null>(null);
+	let fractieLaden = $state(false);
+	$effect(() => {
+		const woorden = termenSleutel ? termenSleutel.split('|') : [];
+		const basis = basisVan(woorden, kamer, van, tot);
+		const wie = fractie;
+		const ac = new AbortController();
+		fractieDagen = null;
+		const vragen = !!wie && !!woorden.length;
+		fractieLaden = vragen;
+		if (!vragen) return;
+		const vraag = (vote: Stem) =>
+			unwrap(
+				api.GET('/api/decisions', {
+					params: { query: { ...basis, party: wie, vote, limit: 1 } },
+					signal: ac.signal
+				})
+			).then((r) =>
+				(r.facets?.days ?? []).flatMap((d) => (d.date ? [{ date: d.date, count: d.count }] : []))
+			);
+		Promise.all([vraag('voor'), vraag('tegen')])
+			.then(([voor, tegen]) => (fractieDagen = { voor, tegen }))
+			.catch(() => {})
+			.finally(() => {
+				if (!ac.signal.aborted) fractieLaden = false;
+			});
+		return () => {
+			ac.abort();
+			fractieLaden = false;
+		};
+	});
+
+	// ── The feed's events: moties, amendments, brieven, toezeggingen ─────────
+	// Page after page, the newest first, FEED_PAGINAS at most; each page fills the grid as it
+	// comes. Where the pages run out first, the months before the last event counted are not
+	// counted, and the page says so. The feed's own fractie (what its members signed) is not
+	// the fractie's vote: these columns stay unfiltered by fractie.
+	type FeedItem = {
+		id: string;
+		kind: string;
+		date: string;
+		title: string;
+		node: string | null;
+		dossier: { key: string; number: string | null; title: string | null } | null;
+		path: string | null;
+	};
+	let feed = $state<FeedItem[]>([]);
+	let feedLaden = $state(false);
+	/** The day of the last event counted, where the feed has more than was asked. */
+	let feedGrens = $state<string | null>(null);
+	let dataTot = $state<string | null>(null);
+	const KINDS = Object.values(FEED_KOLOM).join(',');
+	const naarItem = (i: {
+		id: string;
+		kind: string;
+		date: string;
+		title?: string | null;
+		node?: { collection: string; key: string } | null;
+		dossier?: { key: string; number?: string | null; title?: string | null } | null;
+		path?: string | null;
+	}): FeedItem => ({
+		id: i.id,
+		kind: i.kind,
+		date: i.date,
+		title: i.title ?? '',
+		node: i.node ? `${i.node.collection}/${i.node.key}` : null,
+		dossier: i.dossier
+			? { key: i.dossier.key, number: i.dossier.number ?? null, title: i.dossier.title ?? null }
+			: null,
+		path: i.path ?? null
+	});
+	$effect(() => {
+		const woorden = termenSleutel ? termenSleutel.split('|') : [];
+		const k = kamer;
+		const v = van;
+		const t = tot;
+		const ac = new AbortController();
+		feed = [];
+		feedGrens = null;
+		feedLaden = !!woorden.length;
+		if (!woorden.length) return;
+		(async () => {
+			let cursor: string | undefined;
+			for (let n = 0; n < FEED_PAGINAS; n++) {
+				const r = await unwrap(
+					api.GET('/api/feed', {
+						params: {
+							query: {
+								q: woorden,
+								kind: KINDS,
+								limit: PAGINA,
+								facets: false,
+								...(k ? { chamber: k } : {}),
+								...(v ? { since: v } : {}),
+								...(t ? { until: t } : {}),
+								...(cursor ? { cursor } : {})
+							}
+						},
+						signal: ac.signal
+					})
+				);
+				feed = [...feed, ...r.items.map(naarItem)];
+				// The newest day of the sources the feed reads: the grid's last month.
+				dataTot ??=
+					Object.values(r.data_as_of ?? {})
+						.map((x) => x.newest?.slice(0, 10) ?? '')
+						.sort()
+						.at(-1) || null;
+				cursor = r.next_cursor ?? undefined;
+				if (!cursor) return;
+			}
+			feedGrens = feed.at(-1)?.date ?? null;
+		})()
+			.catch(() => {})
+			.finally(() => {
+				if (!ac.signal.aborted) feedLaden = false;
+			});
+		return () => {
+			ac.abort();
+			feedLaden = false;
+		};
+	});
+
+	// An amendment once per chain: the timetable of each dossier holding a paper of the topic
+	// (getAmendementen: one neighbourhood, cached), its chains that hold such a paper. Asked
+	// once the feed is counted, two at a time.
+	let amendementen = $state<Amendement[]>([]);
+	let ketensLaden = $state(false);
+	let ketenDossiers = $state<{ gedaan: number; totaal: number }>({ gedaan: 0, totaal: 0 });
+	$effect(() => {
+		if (feedLaden) return;
+		const papieren = feed.filter((i) => i.kind === FEED_KOLOM.amendementen && i.node);
+		const ids = new Set(papieren.map((i) => i.node!));
+		const dossiers = [
+			...new Map(papieren.flatMap((i) => (i.dossier ? [[i.dossier.key, i.dossier]] : []))).values()
+		];
+		const ac = new AbortController();
+		amendementen = [];
+		ketenDossiers = { gedaan: 0, totaal: dossiers.length };
+		ketensLaden = !!dossiers.length;
+		if (!dossiers.length) return;
+		const rij = dossiers.slice(0, DOSSIERS_MAX);
+		const gevonden = new Map<string, Amendement>();
+		const werk = async () => {
+			for (let d = rij.shift(); d; d = rij.shift()) {
+				if (ac.signal.aborted) return;
+				const tr = await getAmendementen(d.key).catch(() => null);
+				if (ac.signal.aborted) return;
+				for (const a of amendementKetens(tr?.rijen ?? [], ids, d.number))
+					if (!gevonden.has(a.id)) gevonden.set(a.id, a);
+				amendementen = [...gevonden.values()].sort((a, b) => b.datum.localeCompare(a.datum));
+				ketenDossiers = { ...ketenDossiers, gedaan: ketenDossiers.gedaan + 1 };
+			}
+		};
+		Promise.all([werk(), werk()]).finally(() => {
+			if (!ac.signal.aborted) ketensLaden = false;
+		});
+		return () => {
+			ac.abort();
+			ketensLaden = false;
+		};
+	});
+
+	// ── The grid ────────────────────────────────────────────────────────────
+	/** The visit before this one, where the topic is followed: what is newer is marked. */
+	const vorige = $derived.by(() => {
+		if (!termen.length) return null;
+		const lijst = lees();
+		const i = vindIndex(lijst, termen[0]);
+		return i >= 0 ? lijst[i].vorige : null;
+	});
+	const indeling = $derived(week ? 'week' : 'maand');
+	const telbaar = $derived.by<Telbaar[]>(() => {
+		const uit: Telbaar[] = [];
+		for (const i of feed) {
+			const k = kolomVanKind(i.kind);
+			if (k && k !== 'amendementen') uit.push({ date: i.date, kolom: k });
+		}
+		for (const a of amendementen) uit.push({ date: a.datum, kolom: 'amendementen' });
+		if (fractieDagen) {
+			for (const d of fractieDagen.voor)
+				uit.push({ date: d.date, kolom: 'aangenomen', count: d.count });
+			for (const d of fractieDagen.tegen)
+				uit.push({ date: d.date, kolom: 'verworpen', count: d.count });
+		}
+		return uit;
+	});
+	const rijen = $derived(tel(fractie ? [] : dagen, telbaar, indeling, vorige));
+	/** From the first event (or the period's start) to the period's end or the data's day. */
+	const eerste = $derived(
+		[...dagen.map((d) => d.date), ...telbaar.map((t) => t.date)].reduce<string | null>(
+			(a, d) => (d && (!a || d < a) ? d : a),
+			null
+		)
+	);
+	const vakken = $derived(vakkenVan(van || eerste || '', tot || dataTot || vandaag(), indeling));
+	const ongeteld = $derived.by<Partial<Record<Kolom, Vak | null>>>(() => {
+		if (!feedGrens) return {};
+		// The month of the last event counted is counted in part; the ones before not at all.
+		const grens = vakVan(feedGrens, indeling);
+		const voor = vakken.find((v) => v < grens) ?? null;
+		return { moties: voor, amendementen: voor, brieven: voor, toezeggingen: voor };
+	});
+	const bezig = $derived<Partial<Record<Kolom, boolean>>>({
+		moties: feedLaden,
+		amendementen: feedLaden || ketensLaden,
+		brieven: feedLaden,
+		toezeggingen: feedLaden,
+		aangenomen: fractie ? fractieLaden : tellenLaden,
+		verworpen: fractie ? fractieLaden : tellenLaden
+	});
+	const alleFracties = $derived(
+		fractie ? ' Alle fracties: de fractie geldt alleen voor de stemmingen.' : ''
+	);
+	const kolommen = $derived<KolomKop[]>([
+		{
+			k: 'moties',
+			label: 'Moties',
+			titel: `Ingediende moties met een woord van het onderwerp in de titel of de titel van het dossier.${alleFracties}`
+		},
+		{
+			k: 'amendementen',
+			label: 'Amendementen',
+			titel: `Een amendement één keer per keten van vervanging, in de maand van zijn eerste stuk; de uitkomst staat in de lijst.${alleFracties}`
+		},
+		...(fractie
+			? ([
+					{
+						k: 'aangenomen',
+						label: 'Voor',
+						groep: fractie,
+						titel: `Stemmingen waarin ${fractie} voor stemde.`
+					},
+					{
+						k: 'verworpen',
+						label: 'Tegen',
+						groep: fractie,
+						titel: `Stemmingen waarin ${fractie} tegen stemde.`
+					}
+				] as KolomKop[])
+			: ([
+					{
+						k: 'aangenomen',
+						label: 'Aangenomen',
+						groep: 'Stemmingen',
+						vorm: 'ja',
+						titel:
+							'Stemmingen over moties, amendementen en wetsvoorstellen met een woord van het onderwerp in de titel: aangenomen.'
+					},
+					{
+						k: 'verworpen',
+						label: 'Verworpen',
+						groep: 'Stemmingen',
+						vorm: 'nee',
+						titel:
+							'Stemmingen over moties, amendementen en wetsvoorstellen met een woord van het onderwerp in de titel: verworpen.'
+					}
+				] as KolomKop[])),
+		{
+			k: 'brieven',
+			label: 'Brieven',
+			titel: `Brieven van de regering met een woord van het onderwerp in de titel of de titel van het dossier.${alleFracties}`
+		},
+		{
+			k: 'toezeggingen',
+			label: 'Toezeggingen',
+			titel: `Toezeggingen van bewindspersonen met een woord van het onderwerp in de tekst of de titel van het dossier.${alleFracties}`
+		}
+	]);
+	const leegte = $derived(
+		!tellenLaden && !feedLaden && apiTotaal === 0 && !feed.length && !fractieLaden
+	);
+
+	// ── Richting: the researcher's own coding of a motie (stance-voorstel, 10 Oct) ──────
+	// Positief, negatief or neutraal with respect to this topic, kept in this browser per
+	// topic, per motie as voted (its decision). With Richting on, the moties voted in the
+	// period are asked, and each month's share of each direction lies as a bar in the cell of
+	// the moties. Until a decision names its motie, the bar counts the votes of the month.
+	let codering = $state<Codering>(leesCodering());
+	const onderwerp = $derived(onderwerpSleutel(termen));
+	const mijn = $derived(codering[onderwerp] ?? {});
+	const isMotie = (d: Besluit) => /^motie/i.test(soortVan(d));
+	function kiesRichting(d: Besluit, r: Richting | null) {
+		codering = metRichting(codering, onderwerp, d.key, r);
+		schrijfCodering(codering);
+	}
+	let moties = $state<Besluit[] | null>(null);
+	let motiesLaden = $state(false);
+	const motieSoorten = $derived(
+		(getelden?.soorten ?? [])
+			.map(([k]) => k)
+			.filter((k) => /^motie/i.test(k))
+			.join('|')
+	);
+	/** Every decision of one question, page after page, CSV_MAX at most. */
+	async function alle(query: Record<string, unknown>, signal?: AbortSignal) {
+		const uit: Besluit[] = [];
+		for (let offset = 0; offset < CSV_MAX; offset += PAGINA) {
+			const r = await unwrap(
+				api.GET('/api/decisions', {
+					params: { query: { ...query, limit: PAGINA, offset } },
+					signal
+				})
+			);
+			uit.push(...r.items);
+			if (r.items.length < PAGINA || offset + PAGINA >= r.total) break;
+		}
+		return uit;
+	}
+	$effect(() => {
+		motiesLaden = false;
+		if (!richtingAan || !motieSoorten || !termenSleutel) return;
+		const basis = basisVan(termenSleutel.split('|'), kamer, van, tot);
+		const ac = new AbortController();
+		moties = null;
+		motiesLaden = true;
+		Promise.all(motieSoorten.split('|').map((kind) => alle({ ...basis, kind }, ac.signal)))
+			.then((lijsten) => (moties = lijsten.flat()))
+			.catch(() => {})
+			.finally(() => {
+				if (!ac.signal.aborted) motiesLaden = false;
+			});
+		return () => {
+			ac.abort();
+			motiesLaden = false;
+		};
+	});
+	const aandeel = $derived.by<Map<Vak, Aandeel> | null>(() => {
+		if (!richtingAan || !moties) return null;
+		const m = new Map<Vak, Aandeel>();
+		for (const d of moties) {
+			if (!d.date) continue;
+			const v = vakVan(d.date, indeling);
+			const a = m.get(v) ?? { positief: 0, negatief: 0, neutraal: 0, geen: 0 };
+			a[mijn[d.key] ?? 'geen']++;
+			m.set(v, a);
+		}
+		return m;
+	});
+
+	// ── The list under the grid ─────────────────────────────────────────────
+	// Without a chosen cell, and for a cell of the stemmingen: the decisions, as /api/decisions
+	// gives them, with their outcome, the fractie's vote and the coding of a motie. For a cell
+	// of the feed: its events of that month; for the amendments: their chains.
+	const binnen = (a: string, b: string, max: boolean) => (!a ? b : !b ? a : max === a > b ? a : b);
+	const celPeriode = $derived.by(() => {
+		if (!keuze) return { v: van, t: tot };
+		const g = grenzenVan(keuze.vak);
+		return { v: binnen(van, g.van, true), t: binnen(tot, g.tot, false) };
+	});
+	const lijstSoort = $derived<'besluiten' | 'feed' | 'amendementen'>(
+		!keuze || keuze.kolom === 'aangenomen' || keuze.kolom === 'verworpen'
+			? 'besluiten'
+			: keuze.kolom === 'amendementen'
+				? 'amendementen'
+				: 'feed'
+	);
+	const celFilter = $derived<Filter>(
+		keuze?.kolom === 'aangenomen'
+			? fractie
+				? { stem: 'voor' }
+				: { uitkomst: 'aangenomen' }
+			: keuze?.kolom === 'verworpen'
+				? fractie
+					? { stem: 'tegen' }
+					: { uitkomst: 'verworpen' }
+				: keuze
+					? {}
+					: f
+	);
+	const lijstVraag = $derived(
+		lijstQuery(basisVan(termen, kamer, celPeriode.v, celPeriode.t), celFilter, fractie || null)
+	);
+
 	let apiLijst = $state<Besluit[]>([]);
 	let lijstTotaal = $state<number | null>(null);
 	let lijstLaden = $state(false);
-	const lijstVraag = $derived(
-		lijstQuery(
-			basisVan(termenSleutel ? termenSleutel.split('|') : [], kamer, van, tot),
-			f,
-			fractie || null
-		)
-	);
 	$effect(() => {
-		if (bron !== 'api' || !termenSleutel || richtingF) return;
+		lijstLaden = false;
+		if (lijstSoort !== 'besluiten' || !termenSleutel) return;
 		const query = lijstVraag;
 		const ac = new AbortController();
 		apiLijst = [];
@@ -204,7 +572,10 @@
 			.finally(() => {
 				if (!ac.signal.aborted) lijstLaden = false;
 			});
-		return () => ac.abort();
+		return () => {
+			ac.abort();
+			lijstLaden = false;
+		};
 	});
 	async function meerLaden() {
 		if (lijstLaden) return;
@@ -221,130 +592,93 @@
 		}
 	}
 
-	// ── The decisions ───────────────────────────────────────────────────────
-	type PerTerm = { term: string; api: number | null; nagelopen: number; tot: string | null };
-	let besluiten = $state<Besluit[]>([]);
-	let perTerm = $state<PerTerm[]>([]);
-	let laden = $state(false);
-	let fout = $state(false);
-
-	/** All pages of one question, up to MAX, each handed on as it comes. */
-	async function pagina(
-		query: Record<string, string | number>,
-		signal: AbortSignal,
-		elk: (items: Besluit[], total: number) => void
-	) {
-		for (let offset = 0; offset < MAX; offset += PAGINA) {
-			const r = await unwrap(
-				api.GET('/api/decisions', {
-					params: { query: { ...query, limit: PAGINA, offset } },
-					signal
-				})
-			);
-			elk(r.items, r.total);
-			if (offset + PAGINA >= r.total) break;
-		}
-	}
-
-	/** One word after another, two at a time (the API's limit per address). */
-	async function tweeTegelijk<T>(taken: T[], doe: (t: T) => Promise<void>) {
-		const rij = [...taken];
-		const werk = async () => {
-			for (let t = rij.shift(); t !== undefined; t = rij.shift()) await doe(t);
-		};
-		await Promise.all([werk(), werk()]);
-	}
-
-	/** Every decision of one question, page after page, CSV_MAX at most. */
-	async function alle(query: Record<string, unknown>, signal?: AbortSignal) {
-		const uit: Besluit[] = [];
-		for (let offset = 0; offset < CSV_MAX; offset += PAGINA) {
-			const r = await unwrap(
-				api.GET('/api/decisions', {
-					params: { query: { ...query, limit: PAGINA, offset } },
-					signal
-				})
-			);
-			uit.push(...r.items);
-			if (r.items.length < PAGINA || offset + PAGINA >= r.total) break;
-		}
-		return uit;
-	}
-
-	$effect(() => {
-		// Counted here only where the API does not count (bron 'zelf').
-		if (bron !== 'zelf') return;
-		const woorden = termenSleutel ? termenSleutel.split('|') : [];
-		const k = kamer;
-		const p = periode(van, tot);
-		const ac = new AbortController();
-		besluiten = [];
-		perTerm = woorden.map((term) => ({ term, api: null, nagelopen: 0, tot: null }));
-		fout = false;
-		if (!woorden.length) return;
-		laden = true;
-		const gezien = new Map<string, Besluit>();
-		tweeTegelijk(woorden, (term) =>
-			pagina({ q: term, ...(k ? { chamber: k } : {}), ...p }, ac.signal, (items, total) => {
-				for (const d of items) if (opOnderwerp(d, woorden)) gezien.set(d.key, d);
-				besluiten = [...gezien.values()].sort(
-					(a, b) => (b.date ?? '').localeCompare(a.date ?? '') || a.key.localeCompare(b.key)
-				);
-				perTerm = perTerm.map((p) =>
-					p.term === term
-						? {
-								...p,
-								api: total,
-								nagelopen: p.nagelopen + items.length,
-								tot: items.at(-1)?.date ?? p.tot
-							}
-						: p
-				);
-			})
-		)
-			.catch(() => {
-				if (!ac.signal.aborted) fout = true;
-			})
-			.finally(() => {
-				if (!ac.signal.aborted) laden = false;
-			});
-		return () => ac.abort();
-	});
-
-	// ── One fractie's vote ──────────────────────────────────────────────────
-	let stemmen = $state<Map<string, Stem>>(new Map());
-	let stemmenLaden = $state(false);
-	$effect(() => {
-		if (bron !== 'zelf') return;
-		const woorden = termenSleutel ? termenSleutel.split('|') : [];
-		const k = kamer;
-		const p = periode(van, tot);
-		const wie = fractie;
-		const ac = new AbortController();
-		stemmen = new Map();
-		if (!wie || !woorden.length) return;
-		stemmenLaden = true;
-		const m = new Map<string, Stem>();
-		const taken = woorden.flatMap((term) =>
-			(['voor', 'tegen'] as const).map((stem) => ({ term, stem }))
-		);
-		tweeTegelijk(taken, ({ term, stem }) =>
-			pagina(
-				{ q: term, party: wie, vote: stem, ...(k ? { chamber: k } : {}), ...p },
-				ac.signal,
-				(items) => {
-					for (const d of items) m.set(d.key, stem);
-					stemmen = new Map(m);
+	// A cell of the feed: its kind in that month, page by page.
+	let feedLijst = $state<FeedItem[]>([]);
+	let feedCursor = $state<string | null>(null);
+	let feedLijstLaden = $state(false);
+	const feedVraag = $derived(
+		keuze && lijstSoort === 'feed'
+			? {
+					q: termen,
+					kind: FEED_KOLOM[keuze.kolom]!,
+					limit: STAP,
+					facets: false,
+					...(kamer ? { chamber: kamer as 'TK' | 'EK' } : {}),
+					...(celPeriode.v ? { since: celPeriode.v } : {}),
+					...(celPeriode.t ? { until: celPeriode.t } : {})
 				}
-			)
-		)
+			: null
+	);
+	$effect(() => {
+		const query = feedVraag;
+		const ac = new AbortController();
+		feedLijst = [];
+		feedCursor = null;
+		feedLijstLaden = !!query;
+		if (!query) return;
+		unwrap(api.GET('/api/feed', { params: { query }, signal: ac.signal }))
+			.then((r) => {
+				feedLijst = r.items.map(naarItem);
+				feedCursor = r.next_cursor ?? null;
+			})
 			.catch(() => {})
 			.finally(() => {
-				if (!ac.signal.aborted) stemmenLaden = false;
+				if (!ac.signal.aborted) feedLijstLaden = false;
 			});
-		return () => ac.abort();
+		return () => {
+			ac.abort();
+			feedLijstLaden = false;
+		};
+	});
+	async function meerFeed() {
+		if (feedLijstLaden || !feedVraag || !feedCursor) return;
+		feedLijstLaden = true;
+		try {
+			const r = await unwrap(
+				api.GET('/api/feed', { params: { query: { ...feedVraag, cursor: feedCursor } } })
+			);
+			feedLijst = [...feedLijst, ...r.items.map(naarItem)];
+			feedCursor = r.next_cursor ?? null;
+		} finally {
+			feedLijstLaden = false;
+		}
+	}
+	const celAmendementen = $derived(
+		keuze?.kolom === 'amendementen'
+			? amendementen.filter((a) => vakVan(a.datum, indeling) === keuze.vak)
+			: []
+	);
+	let amendementenGetoond = $derived.by(() => {
+		void keuze;
+		return STAP;
 	});
 
+	/** How many the list holds, also where only a page of it is loaded. */
+	const lijstAantal = $derived(
+		lijstSoort === 'besluiten'
+			? (lijstTotaal ?? 0)
+			: lijstSoort === 'amendementen'
+				? celAmendementen.length
+				: (rijen.get(keuze!.vak)?.[keuze!.kolom].n ?? feedLijst.length)
+	);
+	const lijstLaadt = $derived(lijstSoort === 'besluiten' ? lijstLaden : feedLijstLaden);
+	/** A fractie's vote on a row, where the cell or an older address says it. */
+	const stemVan = (): Stem | undefined => (fractie ? celFilter.stem : undefined);
+	const UITKOMST_LABEL: Record<Uitkomst, string> = {
+		aangenomen: 'aangenomen',
+		verworpen: 'verworpen',
+		overig: 'zonder uitkomst'
+	};
+	const SOORT_LABEL: Record<string, string> = {
+		Motie: 'Motie',
+		'Brief regering': 'Brief regering',
+		toezegging: 'Toezegging'
+	};
+	const getal = (n: number) => n.toLocaleString('nl-NL');
+	const naam = $derived(termen.join('; '));
+	const oudeFilters = $derived(!keuze && !!(f.soort || f.uitkomst || f.jaar || f.stem));
+
+	// ── Fracties for the facet ──────────────────────────────────────────────
 	type Fractie = { key: string; naam: string; chamber: string | null; active: boolean };
 	let fracties = $state<Fractie[]>([]);
 	$effect(() => {
@@ -366,53 +700,23 @@
 		fracties.filter((x) => !kamer || !x.chamber || x.chamber === kamer)
 	);
 
-	// ── Counted ─────────────────────────────────────────────────────────────
-	const api_ = $derived(bron === 'api' && getelden !== null);
-	const alles = $derived(api_ ? getelden!.alles : totaal(besluiten, stemmen));
-	const soorten = $derived(api_ ? getelden!.soorten : perSoort(besluiten, stemmen));
-	const jaren = $derived(api_ ? getelden!.jaren : perJaar(besluiten, stemmen));
-	const bezig = $derived(bron === 'zelf' ? laden : bron === null || tellenLaden);
-	const leegte = $derived(
-		bron === 'zelf' ? !laden && !besluiten.length : bron === 'api' && apiTotaal === 0
-	);
-	const KOLOMMEN: { uitkomst: Uitkomst; label: string }[] = [
-		{ uitkomst: 'aangenomen', label: 'Aangenomen' },
-		{ uitkomst: 'verworpen', label: 'Verworpen' }
-	];
-	const getal = (n: number) => n.toLocaleString('nl-NL');
-
-	const UITKOMST_LABEL: Record<Uitkomst, string> = {
-		aangenomen: 'aangenomen',
-		verworpen: 'verworpen',
-		overig: 'zonder uitkomst'
-	};
-	const filterLabels = $derived(
-		[
-			f.soort && { k: 'soort', label: f.soort },
-			f.uitkomst && { k: 'uitkomst', label: UITKOMST_LABEL[f.uitkomst] },
-			f.jaar && { k: 'jaar', label: f.jaar },
-			f.stem && { k: 'stem', label: `${fractie} stemde ${f.stem}` },
-			richtingF && { k: 'richting', label: RIJ_LABEL[richtingF] }
-		].filter((x): x is { k: string; label: string } => !!x)
-	);
-
-	const naam = $derived(termen.join('; '));
-
-	// The dossiers' names for the CSV, asked at export: one request per number not asked
-	// before (naamVanNummer), at most CSV_NAMEN of them.
+	// ── CSV: the decisions of the list ──────────────────────────────────────
 	const CSV_NAMEN = 100;
-	let exporteren = $state(false);
-	/** The whole list behind the number for the CSV, CSV_MAX at most. */
 	const CSV_MAX = 2000;
-	async function heleLijst(): Promise<Besluit[]> {
-		return hier ? lijst : alle(lijstVraag);
+	let exporteren = $state(false);
+	/** One request each, two at a time (the API's limit per address). */
+	async function tweeTegelijk<T>(taken: T[], doe: (t: T) => Promise<void>) {
+		const rij = [...taken];
+		const werk = async () => {
+			for (let t = rij.shift(); t !== undefined; t = rij.shift()) await doe(t);
+		};
+		await Promise.all([werk(), werk()]);
 	}
-	/** The fractie's vote per decision of the list: where the API counted, asked as two lists. */
+	/** The fractie's vote per decision of the list: from the cell, or asked as two lists. */
 	async function stemmenVan(rijen: Besluit[]): Promise<ReadonlyMap<string, Stem>> {
 		if (!fractie) return new Map();
-		if (richtingF) return motieStemmenAlle;
-		if (bron !== 'api') return stemmen;
-		if (f.stem) return new Map(rijen.map((d) => [d.key, f.stem!] as const));
+		const s = celFilter.stem;
+		if (s) return new Map(rijen.map((d) => [d.key, s] as const));
 		const m = new Map<string, Stem>();
 		await Promise.all(
 			(['voor', 'tegen'] as const).map((vote) =>
@@ -425,7 +729,7 @@
 	}
 	async function exporteer() {
 		exporteren = true;
-		const lijst = await heleLijst().catch(() => [] as Besluit[]);
+		const lijst = await alle(lijstVraag).catch(() => [] as Besluit[]);
 		const stemmenLijst = await stemmenVan(lijst).catch(() => new Map<string, Stem>());
 		// The names the decisions carry (API 0.79.30); asked by number only where they do not.
 		const namen = new Map<string, string>();
@@ -466,21 +770,6 @@
 			.slice(0, 80)
 			.trim() || 'onderwerp';
 
-	// ── Richting: the researcher's own coding of a motie (stance-voorstel, 10 Oct) ──────
-	// Positief, negatief or neutraal with respect to this topic, kept in this browser per
-	// topic, counted over the moties on the page, and in the CSV with the dictum, the
-	// indieners and their fracties. The dictum is the motie's own sentence, asked per motie
-	// when it is opened (one request each), until the API gives it with the list.
-	// Read at once in the browser; the server renders no coding (leesCodering keeps to {}).
-	let codering = $state<Codering>(leesCodering());
-	const onderwerp = $derived(onderwerpSleutel(termen));
-	const mijn = $derived(codering[onderwerp] ?? {});
-	const isMotie = (d: Besluit) => /^motie/i.test(soortVan(d));
-	function kies(d: Besluit, r: Richting | null) {
-		codering = metRichting(codering, onderwerp, d.key, r);
-		schrijfCodering(codering);
-	}
-
 	type Stuk = { dictum: string | null; metTekst: boolean; indieners: string; fracties: string };
 	let stukken = $state<Record<string, Stuk | 'laden' | 'fout'>>({});
 	const uitStuk = (doc: Awaited<ReturnType<typeof getDecisionDocument>>): Stuk => ({
@@ -513,135 +802,6 @@
 		}
 		dictumOpen = open;
 	}
-
-	// ── All moties of the selection, for the table Richting ───────────────
-	// Counted over every motie within the Kamer and the period, not only the rows of the list:
-	// asked once the table is in view, per kind of motie, with the fractie's voor and tegen as
-	// two more lists. The table counts the rows of the CSV (csvTabel), so the two agree.
-	let moties = $state<Besluit[] | null>(null);
-	let motieStemmen = $state<Map<string, Stem>>(new Map());
-	let motiesLaden = $state(false);
-	let richtingZien = $state(false);
-	const motieSoorten = $derived(
-		soorten
-			.map(([k]) => k)
-			.filter((k) => /^motie/i.test(k))
-			.join('|')
-	);
-	$effect(() => {
-		if (bron !== 'api' || !(richtingZien || richtingF) || !motieSoorten || !termenSleutel) return;
-		const basis = basisVan(termenSleutel.split('|'), kamer, van, tot);
-		const wie = fractie;
-		const ac = new AbortController();
-		moties = null;
-		motieStemmen = new Map();
-		motiesLaden = true;
-		const taken = motieSoorten
-			.split('|')
-			.flatMap((kind) => [
-				{ kind, vote: null },
-				...(wie ? (['voor', 'tegen'] as const).map((vote) => ({ kind, vote })) : [])
-			]);
-		const gezien = new Map<string, Besluit>();
-		const st = new Map<string, Stem>();
-		tweeTegelijk(taken, ({ kind, vote }) =>
-			alle({ ...basis, kind, ...(vote ? { party: wie, vote } : {}) }, ac.signal).then((xs) => {
-				for (const d of xs) {
-					if (vote) st.set(d.key, vote);
-					else gezien.set(d.key, d);
-				}
-			})
-		)
-			.then(() => {
-				moties = [...gezien.values()].sort(
-					(a, b) => (b.date ?? '').localeCompare(a.date ?? '') || a.key.localeCompare(b.key)
-				);
-				motieStemmen = st;
-			})
-			.catch(() => {})
-			.finally(() => {
-				if (!ac.signal.aborted) motiesLaden = false;
-			});
-		return () => ac.abort();
-	});
-	const alleMoties = $derived(bron === 'zelf' ? besluiten.filter(isMotie) : moties);
-	const motieStemmenAlle = $derived(bron === 'zelf' ? stemmen : motieStemmen);
-	const heeftMoties = $derived(soorten.some(([k, t]) => /^motie/i.test(k) && t.totaal > 0));
-	const richtingRijen = $derived(
-		alleMoties
-			? richtingTabel(
-					csvTabel(
-						alleMoties,
-						'',
-						fractie || null,
-						motieStemmenAlle,
-						new Map(),
-						new Map(alleMoties.map((d) => [d.key, { richting: mijn[d.key] ?? '' }] as const))
-					),
-					fractie || null
-				)
-			: null
-	);
-	const gecodeerd = $derived((alleMoties ?? []).filter((d) => mijn[d.key]).length);
-
-	/** The list on this page: asked of the API page by page, or filtered here where all is here. */
-	const hier = $derived(bron !== 'api' || !!richtingF);
-	const lijst = $derived(
-		richtingF
-			? filter(alleMoties ?? [], f, motieStemmenAlle).filter((d) =>
-					richtingF === 'geen' ? !mijn[d.key] : mijn[d.key] === richtingF
-				)
-			: bron === 'api'
-				? apiLijst
-				: filter(besluiten, f, stemmen)
-	);
-	/** How many the list holds, also where only a page of it is loaded. */
-	const lijstAantal = $derived(hier ? lijst.length : (lijstTotaal ?? 0));
-	/** A fractie's vote on a row: known per row where the page counted, else from the filter. */
-	const stemVan = (d: Besluit): Stem | undefined =>
-		!fractie
-			? undefined
-			: richtingF
-				? motieStemmenAlle.get(d.key)
-				: bron === 'api'
-					? (f.stem ?? motieStemmen.get(d.key))
-					: stemmen.get(d.key);
-	// Another list starts at its first rows again.
-	let getoond = $derived.by(() => {
-		void lijst;
-		return STAP;
-	});
-
-	/** Once in view, the table Richting asks for its moties. */
-	function inBeeld(el: HTMLElement) {
-		const kijk = new IntersectionObserver(([e]) => {
-			if (!e.isIntersecting) return;
-			richtingZien = true;
-			kijk.disconnect();
-		});
-		kijk.observe(el);
-		return { destroy: () => kijk.disconnect() };
-	}
-
-	/** The coding of this topic as a file, and a file read back into it. */
-	function bewaarCodering() {
-		const titels = new Map(
-			[...(alleMoties ?? []), ...lijst].map((d) => [d.key, d.subject?.trim() ?? ''] as const)
-		);
-		download(`Richting ${bestandsnaam()}.csv`, coderingNaarCsv(onderwerp, mijn, titels));
-	}
-	let importFout = $state(false);
-	async function laadCodering(e: Event) {
-		const file = (e.currentTarget as HTMLInputElement).files?.[0];
-		(e.currentTarget as HTMLInputElement).value = '';
-		if (!file) return;
-		const gelezen = coderingUitCsv(await file.text());
-		importFout = !Object.keys(gelezen).length;
-		if (importFout) return;
-		codering = samen(codering, gelezen);
-		schrijfCodering(codering);
-	}
-
 	/** At the CSV: the coded moties' dictum and indieners, two at a time, at most this many. */
 	const CSV_STUKKEN = 300;
 	async function motieVelden(lijst: Besluit[]) {
@@ -667,76 +827,40 @@
 		);
 	}
 
+	/** The coding of this topic as a file, and a file read back into it. */
+	function bewaarCodering() {
+		const titels = new Map(
+			[...(moties ?? []), ...apiLijst].map((d) => [d.key, d.subject?.trim() ?? ''] as const)
+		);
+		download(`Richting ${bestandsnaam()}.csv`, coderingNaarCsv(onderwerp, mijn, titels));
+	}
+	let importFout = $state(false);
+	async function laadCodering(e: Event) {
+		const file = (e.currentTarget as HTMLInputElement).files?.[0];
+		(e.currentTarget as HTMLInputElement).value = '';
+		if (!file) return;
+		const gelezen = coderingUitCsv(await file.text());
+		importFout = !Object.keys(gelezen).length;
+		if (importFout) return;
+		codering = samen(codering, gelezen);
+		schrijfCodering(codering);
+	}
+
 	const tally = (d: Besluit) =>
 		d.tally?.Voor != null && d.tally?.Tegen != null
 			? `${d.tally.Voor} voor, ${d.tally.Tegen} tegen`
 			: null;
+	const feedHref = (i: FeedItem) => {
+		if (i.path) return i.path;
+		const [collection, key] = (i.node ?? '').split('/');
+		return collection && key ? buildBronHref(null, `${collection}/${key}`, { mode: 'graph' }) : '#';
+	};
 </script>
 
 <RouteKop
 	pad="/onderwerpen/overzicht"
 	title={naam ? `${naam}, overzicht, Concordans` : undefined}
 />
-
-{#snippet cel(n: number, patch: Patch, bezig = false)}
-	{#if n > 0}
-		<a href="{hrefMet(patch)}#t-lijst" title="De besluiten achter dit getal">{getal(n)}</a>
-	{:else}
-		<span class="nul">{bezig ? '…' : '0'}</span>
-	{/if}
-{/snippet}
-
-<!-- One form for every table of the page: a row per kind, year or direction; all, aangenomen,
-     verworpen, and the chosen fractie's voor and tegen. Every number opens its list. -->
-{#snippet tabel(
-	kolom: string,
-	rijen: [string, Telling][],
-	patchVan: (k: string) => Patch,
-	labelVan: (k: string) => string = (k) => k,
-	wacht = false
-)}
-	<table>
-		<thead>
-			{#if fractie}
-				<!-- The fractie's name once above its two columns: short headers fit a phone. -->
-				<tr class="boven">
-					<td colspan="4"></td>
-					<th scope="colgroup" colspan="2" class="getal">{fractie}</th>
-				</tr>
-			{/if}
-			<tr>
-				<th scope="col">{kolom}</th>
-				<th scope="col" class="getal">Alle</th>
-				{#each KOLOMMEN as k (k.uitkomst)}<th scope="col" class="getal">{k.label}</th>{/each}
-				{#if fractie}
-					<th scope="col" class="getal">voor</th>
-					<th scope="col" class="getal">tegen</th>
-				{/if}
-			</tr>
-		</thead>
-		<tbody>
-			{#each rijen as [k, t] (k)}
-				<tr>
-					<th scope="row">{labelVan(k)}</th>
-					<td class="getal">{@render cel(t.totaal, patchVan(k), wacht)}</td>
-					{#each KOLOMMEN as c (c.uitkomst)}
-						<td class="getal"
-							>{@render cel(t[c.uitkomst], { ...patchVan(k), uitkomst: c.uitkomst }, wacht)}</td
-						>
-					{/each}
-					{#if fractie}
-						<td class="getal"
-							>{@render cel(t.voor, { ...patchVan(k), stem: 'voor' }, wacht || stemmenLaden)}</td
-						>
-						<td class="getal"
-							>{@render cel(t.tegen, { ...patchVan(k), stem: 'tegen' }, wacht || stemmenLaden)}</td
-						>
-					{/if}
-				</tr>
-			{/each}
-		</tbody>
-	</table>
-{/snippet}
 
 <div class="overzicht">
 	<p class="terug"><a href="/onderwerpen">Onderwerpen</a></p>
@@ -747,8 +871,12 @@
 			<button
 				type="button"
 				class="actie-knop"
+				title={lijstSoort === 'besluiten'
+					? 'De besluiten van de lijst als CSV'
+					: 'Alleen de besluiten gaan als CSV: kies geen cel of een cel van de stemmingen'}
 				onclick={exporteer}
-				disabled={!lijst.length || exporteren}>{exporteren ? 'Ophalen…' : 'CSV'}</button
+				disabled={lijstSoort !== 'besluiten' || !apiLijst.length || exporteren}
+				>{exporteren ? 'Ophalen…' : 'CSV'}</button
 			>
 		{/if}
 	</header>
@@ -762,7 +890,7 @@
 				{van}
 				{tot}
 				klein={false}
-				onChange={(v, t) => zet({ van: v || null, tot: t || null })}
+				onChange={(v, t) => zet({ van: v || null, tot: t || null, cel: null })}
 			/>
 		</div>
 		<div class="indeling">
@@ -784,7 +912,7 @@
 							<FilterOptie
 								label={k.label}
 								on={kamer === k.c}
-								onToggle={() => zet({ kamer: kamer === k.c ? null : k.c })}
+								onToggle={() => zet({ kamer: kamer === k.c ? null : k.c, cel: null })}
 							/>
 						{/each}
 					</section>
@@ -800,7 +928,7 @@
 										aria-checked={!fractie}
 										onclick={() => {
 											sluit();
-											zet({ fractie: null, stem: null });
+											zet({ fractie: null, stem: null, cel: null });
 										}}>Geen fractie</button
 									>
 									{#each [{ kop: 'Huidige fracties', actief: true }, { kop: 'Eerdere fracties', actief: false }] as groep (groep.kop)}
@@ -813,7 +941,7 @@
 												aria-checked={fractie === x.naam}
 												onclick={() => {
 													sluit();
-													zet({ fractie: x.naam, stem: null });
+													zet({ fractie: x.naam, stem: null, cel: null });
 												}}>{x.naam}</button
 											>
 										{/each}
@@ -825,198 +953,244 @@
 				</div>
 			</aside>
 			<div class="inhoud">
-				{#if bron === 'zelf'}
-					<p class="stand">
-						{#each perTerm as p (p.term)}
-							<span>
-								‘{p.term}’:
-								{#if p.api === null}
-									laden…
-								{:else if p.api > p.nagelopen}
-									de nieuwste {getal(p.nagelopen)} van {getal(p.api)} besluiten nagelopen, terug tot {korteDatum(
-										p.tot
-									)}{laden ? ', laden…' : ''}
-								{:else}
-									{getal(p.api)} besluiten nagelopen{laden && p.nagelopen < p.api ? ', laden…' : ''}
-								{/if}
-							</span>
-						{/each}
-					</p>
-				{/if}
-
-				{#if fout && !besluiten.length && bron === 'zelf'}
+				{#if tellenFout && !feed.length}
 					<p class="status status--fout">Het overzicht kon niet worden geladen.</p>
 				{:else if leegte}
-					<p class="status">Geen besluiten met deze woorden in de titel.</p>
-				{:else}
-					<!-- The core figures in one line, every number a list. -->
-					<p class="kern">
-						{@render cel(alles.totaal, {}, bezig)}
-						{alles.totaal === 1 ? 'besluit' : 'besluiten'}{#if bezig}, tellen…{:else}:
-							{@render cel(alles.aangenomen, { uitkomst: 'aangenomen' })} aangenomen,
-							{@render cel(alles.verworpen, { uitkomst: 'verworpen' })}
-							verworpen{#if fractie};
-								<span class="kern__fractie"
-									>{fractie}
-									{@render cel(alles.voor, { stem: 'voor' }, stemmenLaden)} voor, {@render cel(
-										alles.tegen,
-										{ stem: 'tegen' },
-										stemmenLaden
-									)} tegen</span
-								>{/if}{/if}
+					<p class="status">
+						Geen gebeurtenissen met deze woorden in de titel{van || tot ? ' in deze periode' : ''}.
 					</p>
-
-					<div class="tabellen" class:tabellen--fractie={!!fractie}>
-						<div class="tabellen__kolom">
-							<section class="sectie" aria-labelledby="t-soort">
-								<h2 id="t-soort">Per soort</h2>
-								{@render tabel('Soort', soorten, (k) => ({ soort: k }))}
-							</section>
-							{#if heeftMoties}
-								<section class="sectie" aria-labelledby="t-richting" use:inBeeld>
-									<h2 id="t-richting">Richting</h2>
-									<div class="sectie__regel">
-										<span
-											>{#if alleMoties}{getal(gecodeerd)} van {getal(alleMoties.length)} moties gecodeerd{:else if motiesLaden || !richtingZien}Moties
-												laden…{:else}De moties konden niet worden geladen.{/if}</span
-										>
-										<!-- Bewaren and laden behind one quiet word (docs/bediening.md). -->
-										<TekstMenu klein rechts label="Codering" tekst="Codering">
-											{#snippet inhoud(sluit)}
-												<button
-													type="button"
-													role="menuitem"
-													class="codering-menuitem"
-													disabled={!Object.keys(mijn).length}
-													onclick={() => {
-														sluit();
-														bewaarCodering();
-													}}>Bewaren als CSV</button
-												>
-												<label class="codering-menuitem">
-													Laden uit CSV
-													<input
-														type="file"
-														accept=".csv,text/csv"
-														class="verborgen"
-														onchange={(e) => {
-															sluit();
-															laadCodering(e);
-														}}
-													/>
-												</label>
-											{/snippet}
-										</TekstMenu>
-										{#if importFout}<span class="stil">Geen codering in dit bestand.</span>{/if}
-									</div>
-									{@render tabel(
-										'Richting',
-										richtingRijen ??
-											RICHTING_RIJEN.map((r) => [
-												r,
-												{ totaal: 0, aangenomen: 0, verworpen: 0, overig: 0, voor: 0, tegen: 0 }
-											]),
-										(k) => ({ richting: k }),
-										(k) => RIJ_LABEL[k as RichtingRij],
-										!richtingRijen
-									)}
-								</section>
-							{/if}
+				{:else}
+					<section class="sectie" aria-labelledby="t-verloop">
+						<div class="sectie__kop">
+							<h2 id="t-verloop">Verloop</h2>
+							<span class="schakels">
+								<FilterOptie
+									inline
+									label="Richting"
+									title="Per maand het aandeel van de eigen codering in de cellen van de moties"
+									on={richtingAan}
+									onToggle={() => zet({ richting: richtingAan ? null : 'aan' })}
+								/>
+								<FilterOptie
+									inline
+									label="Per week"
+									on={week}
+									onToggle={() => zet({ per: week ? null : 'week', cel: null })}
+								/>
+							</span>
 						</div>
-						<section class="sectie" aria-labelledby="t-jaar">
-							<h2 id="t-jaar">Per jaar</h2>
-							{@render tabel('Jaar', jaren, (k) => ({ jaar: k }))}
-						</section>
-					</div>
+						{#if feedGrens || ketenDossiers.totaal > DOSSIERS_MAX || (richtingAan && motiesLaden) || importFout}
+							<p class="sectie__regel">
+								{#if feedGrens}<span
+										>Moties, amendementen, brieven en toezeggingen geteld tot {langeDatum(
+											feedGrens
+										)}.</span
+									>{/if}
+								{#if ketenDossiers.totaal > DOSSIERS_MAX}<span
+										>Amendementen in {DOSSIERS_MAX} van {getal(ketenDossiers.totaal)} dossiers nagelopen.</span
+									>{/if}
+								{#if richtingAan && motiesLaden}<span>Moties laden…</span>{/if}
+								{#if importFout}<span>Geen codering in dit bestand.</span>{/if}
+							</p>
+						{/if}
+						<Kruiswoord
+							{kolommen}
+							{vakken}
+							{rijen}
+							{keuze}
+							onKies={kies}
+							{bezig}
+							{ongeteld}
+							{aandeel}
+							nieuwSinds={vorige}
+							{week}
+						/>
+					</section>
 
 					<section class="lijst" aria-labelledby="t-lijst">
 						<div class="lijst__kop">
-							<h2 id="t-lijst">Besluiten</h2>
-							<span class="aantal">{lijstLaden && !hier ? '…' : getal(lijstAantal)}</span>
-							{#if filterLabels.length}
-								<!-- What is chosen stands in ink in the tables above; the way back is one link. -->
-								<span class="wis"><TekstLink href={hrefMet({})}>Alle besluiten</TekstLink></span>
+							<h2 id="t-lijst">Stukken</h2>
+							<span class="aantal">{lijstLaadt && !lijstAantal ? '…' : getal(lijstAantal)}</span>
+							{#if richtingAan}
+								<!-- Bewaren and laden behind one quiet word, where the coding is done. -->
+								<span class="lijst__rechts">
+									<TekstMenu klein rechts label="Codering" tekst="Codering">
+										{#snippet inhoud(sluit)}
+											<button
+												type="button"
+												role="menuitem"
+												class="codering-menuitem"
+												disabled={!Object.keys(mijn).length}
+												onclick={() => {
+													sluit();
+													bewaarCodering();
+												}}>Bewaren als CSV</button
+											>
+											<label class="codering-menuitem">
+												Laden uit CSV
+												<input
+													type="file"
+													accept=".csv,text/csv"
+													class="verborgen"
+													onchange={(e) => {
+														sluit();
+														laadCodering(e);
+													}}
+												/>
+											</label>
+										{/snippet}
+									</TekstMenu>
+								</span>
 							{/if}
 						</div>
+						{#if keuze}
+							<p class="selectie">
+								{getal(lijstAantal)} in de selectie
+								<TekstLink onclick={() => kies(null)}>Selectie wissen</TekstLink>
+							</p>
+						{:else if oudeFilters}
+							<p class="selectie">
+								<TekstLink href={hrefMet({}, true)}>Alle besluiten</TekstLink>
+							</p>
+						{/if}
 						<ol class="rijen">
-							{#each hier ? lijst.slice(0, getoond) : lijst as d (d.key)}
-								{@const s = stemVan(d)}
-								{@const u = uitkomstVan(d)}
-								<li class="rij">
-									<span class="rij__datum">{korteDatum(d.date)}</span>
-									<div class="rij__tekst">
-										<span class="rij__soort"
-											>{soortVan(d)}, {d.chamber === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer'}</span
-										>
-										<a
-											class="rij__titel"
-											href={buildBronHref(
-												null,
-												{ collection: 'decisions', key: d.key },
-												{ mode: 'graph' }
-											)}>{d.subject?.trim() || soortVan(d)}</a
-										>
-										<div class="rij__regel">
-											<span class="rij__uitkomst"
-												><UitkomstTeken
-													soort={u === 'aangenomen' ? 'ja' : u === 'verworpen' ? 'nee' : 'open'}
-													woord={UITKOMST_LABEL[u]}
-												/>{tally(d) ? `, ${tally(d)}` : ''}{#if s}<span class="rij__stem"
-														>{fractie} <StemTeken keuze={s} /></span
-													>{/if}</span
+							{#if lijstSoort === 'besluiten'}
+								{#each apiLijst as d (d.key)}
+									{@const s = stemVan()}
+									{@const u = uitkomstVan(d)}
+									<li class="rij">
+										<span class="rij__datum">{korteDatum(d.date)}</span>
+										<div class="rij__tekst">
+											<span class="rij__soort"
+												>{soortVan(d)}, {d.chamber === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer'}</span
 											>
-											{#if isMotie(d)}
-												<!-- The researcher's coding, quiet: three words, the chosen one in ink; a
-										     second click clears it. -->
-												<span
-													class="rij__richting"
-													role="group"
-													aria-label={`Richting ten opzichte van ${naam}`}
+											<a
+												class="rij__titel"
+												href={buildBronHref(
+													null,
+													{ collection: 'decisions', key: d.key },
+													{ mode: 'graph' }
+												)}>{d.subject?.trim() || soortVan(d)}</a
+											>
+											<div class="rij__regel">
+												<span class="rij__uitkomst"
+													><UitkomstTeken
+														soort={u === 'aangenomen' ? 'ja' : u === 'verworpen' ? 'nee' : 'open'}
+														woord={UITKOMST_LABEL[u]}
+													/>{tally(d) ? `, ${tally(d)}` : ''}{#if s}<span class="rij__stem"
+															>{fractie} <StemTeken keuze={s} /></span
+														>{/if}</span
 												>
-													{#each RICHTINGEN as r (r)}
+												{#if isMotie(d)}
+													<!-- The researcher's coding, quiet: three words, the chosen one in ink; a
+													     second click clears it. -->
+													<span
+														class="rij__richting"
+														role="group"
+														aria-label={`Richting ten opzichte van ${naam}`}
+													>
+														{#each RICHTINGEN as r (r)}
+															<button
+																type="button"
+																class="keus"
+																aria-pressed={mijn[d.key] === r}
+																onclick={() => kiesRichting(d, mijn[d.key] === r ? null : r)}
+																>{RICHTING_LABEL[r]}</button
+															>
+														{/each}
 														<button
 															type="button"
-															class="keus"
-															aria-pressed={mijn[d.key] === r}
-															onclick={() => kies(d, mijn[d.key] === r ? null : r)}
-															>{RICHTING_LABEL[r]}</button
+															class="keus keus--dictum"
+															aria-expanded={dictumOpen.has(d.key)}
+															onclick={() => toonDictum(d.key)}>Dictum</button
 														>
-													{/each}
-													<button
-														type="button"
-														class="keus keus--dictum"
-														aria-expanded={dictumOpen.has(d.key)}
-														onclick={() => toonDictum(d.key)}>Dictum</button
-													>
-												</span>
+													</span>
+												{/if}
+											</div>
+											{#if isMotie(d) && dictumOpen.has(d.key)}
+												{@const st = stukken[d.key]}
+												<p class="rij__dictum">
+													{#if st === 'laden' || st === undefined}Laden…{:else if st === 'fout'}Kon
+														niet worden geladen.{:else if st.dictum}{st.dictum}{:else if !st.metTekst}Tekst
+														niet in de gegevens.{:else}Geen dictum in de tekst.{/if}
+												</p>
 											{/if}
 										</div>
-										{#if isMotie(d) && dictumOpen.has(d.key)}
-											{@const st = stukken[d.key]}
-											<p class="rij__dictum">
-												{#if st === 'laden' || st === undefined}Laden…{:else if st === 'fout'}Kon
-													niet worden geladen.{:else if st.dictum}{st.dictum}{:else if !st.metTekst}Tekst
-													niet in de gegevens.{:else}Geen dictum in de tekst.{/if}
-											</p>
-										{/if}
-									</div>
-								</li>
-							{/each}
+									</li>
+								{/each}
+							{:else if lijstSoort === 'amendementen'}
+								{#each celAmendementen.slice(0, amendementenGetoond) as a (a.id)}
+									{@const [collection, key] = a.id.split('/')}
+									<li class="rij">
+										<span class="rij__datum">{korteDatum(a.datum)}</span>
+										<div class="rij__tekst">
+											<span class="rij__soort"
+												>Amendement{a.dossier ? `, ${a.dossier}` : ''}{a.papieren.length > 1
+													? `, ${a.papieren.length} stukken`
+													: ''}</span
+											>
+											<a
+												class="rij__titel"
+												href={buildBronHref(null, `${collection}/${key}`, { mode: 'graph' })}
+												>{a.titel || `Amendement nr. ${a.nummer}`}</a
+											>
+											{#if a.uitkomst}
+												<div class="rij__regel">
+													<span class="rij__uitkomst"
+														><UitkomstTeken
+															soort={a.uitkomst === 'aangenomen'
+																? 'ja'
+																: a.uitkomst === 'verworpen'
+																	? 'nee'
+																	: 'open'}
+															woord={a.uitkomst}
+														/></span
+													>
+												</div>
+											{/if}
+										</div>
+									</li>
+								{/each}
+							{:else}
+								{#each feedLijst as i (i.id)}
+									<li class="rij">
+										<span class="rij__datum">{korteDatum(i.date)}</span>
+										<div class="rij__tekst">
+											<span class="rij__soort"
+												>{SOORT_LABEL[i.kind] ?? i.kind}{i.dossier?.number
+													? `, ${i.dossier.number}${i.dossier.title ? ` ${i.dossier.title}` : ''}`
+													: ''}</span
+											>
+											<a class="rij__titel" href={feedHref(i)}>{i.title}</a>
+										</div>
+									</li>
+								{/each}
+							{/if}
 						</ol>
-						{#if !hier && lijst.length < lijstAantal}
+						{#if lijstSoort === 'besluiten' && apiLijst.length < (lijstTotaal ?? 0)}
 							<p class="volgende">
 								{#if lijstLaden}Laden…{:else}<TekstLink onclick={meerLaden}
-										>Volgende besluiten, nog {getal(lijstAantal - lijst.length)}</TekstLink
+										>Volgende besluiten, nog {getal(
+											(lijstTotaal ?? 0) - apiLijst.length
+										)}</TekstLink
 									>{/if}
 							</p>
-						{:else if hier && lijst.length > getoond}
+						{:else if lijstSoort === 'feed' && feedCursor}
 							<p class="volgende">
-								<TekstLink onclick={() => (getoond += STAP)}
-									>Volgende besluiten, nog {getal(lijst.length - getoond)}</TekstLink
+								{#if feedLijstLaden}Laden…{:else}<TekstLink onclick={meerFeed}
+										>Volgende stukken</TekstLink
+									>{/if}
+							</p>
+						{:else if lijstSoort === 'amendementen' && celAmendementen.length > amendementenGetoond}
+							<p class="volgende">
+								<TekstLink onclick={() => (amendementenGetoond += STAP)}
+									>Volgende amendementen, nog {getal(
+										celAmendementen.length - amendementenGetoond
+									)}</TekstLink
 								>
 							</p>
 						{/if}
-						{#if richtingF && !alleMoties}<p class="status">Moties laden…</p>{/if}
+						{#if lijstLaadt && !lijstAantal}<p class="status">Laden…</p>{/if}
 					</section>
 				{/if}
 			</div>
@@ -1049,41 +1223,6 @@
 		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
-	.stand {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-		margin: 0 0 var(--s-5);
-		color: var(--ink-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-	}
-	/* The core figures: one sentence at the size of a section heading. */
-	.kern {
-		margin: 0 0 var(--s-6);
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		color: var(--ink-2);
-	}
-	.kern__fractie {
-		white-space: nowrap;
-	}
-	.tabellen {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
-		gap: var(--s-6);
-		align-items: start;
-	}
-	.tabellen__kolom {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-6);
-		min-width: 0;
-	}
-	/* With a fractie's two columns a table needs the width of the page. */
-	.tabellen--fractie {
-		grid-template-columns: minmax(0, 1fr);
-	}
 	.sectie h2,
 	.lijst h2 {
 		margin: 0 0 var(--s-2);
@@ -1111,61 +1250,39 @@
 		overflow: hidden;
 		clip: rect(0 0 0 0);
 	}
-	.stil {
-		color: var(--ink-3);
-	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-	}
-	th,
-	td {
-		padding: var(--s-1) var(--s-2);
-		border-bottom: 1px solid var(--rule);
-		text-align: left;
-		font-weight: 400;
-	}
-	/* Column heads at rung 6, whole words; the fractie over its two columns at rung 3. */
-	thead th {
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		border-bottom-color: var(--rule-strong);
-		white-space: nowrap;
-	}
-	thead .boven th,
-	thead .boven td {
-		border-bottom: 0;
-		padding-bottom: 0;
-		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	tbody th {
-		color: var(--ink);
-		overflow-wrap: anywhere;
-	}
-	.getal {
-		text-align: right;
-		font-variant-numeric: tabular-nums;
-	}
-	td a,
-	.kern a {
-		color: var(--ink);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 2px;
-	}
-	td a:hover,
-	.kern a:hover {
-		text-decoration-color: var(--ink);
-	}
-	.nul {
-		color: var(--ink-3);
-	}
 	.lijst {
 		margin-top: var(--s-7);
+	}
+	/* The section's head: its title at the left, its two switches at the right. */
+	.sectie__kop {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--s-1) var(--s-4);
+		padding-top: var(--s-3);
+		border-top: 2px solid var(--ink);
+	}
+	.sectie__kop h2 {
+		margin: 0 0 var(--s-2);
+	}
+	.schakels {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-4);
+	}
+	.lijst__rechts {
+		margin-left: auto;
+	}
+	/* What is chosen in the grid, and the way back: one line over the list. */
+	.selectie {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-3);
+		margin: 0 0 var(--s-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 	.lijst__kop {
 		display: flex;
@@ -1183,11 +1300,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.wis {
-		color: var(--ink-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
 	}
 	.rijen {
 		margin: 0;
@@ -1303,13 +1415,6 @@
 		}
 		.rij__richting {
 			margin-left: 0;
-		}
-		th,
-		td {
-			padding: var(--s-1) 2px;
-		}
-		th:first-child {
-			padding-left: 0;
 		}
 	}
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SEARCH_TIMEOUT_MS, TIMEOUT_MS, api, isTimeout, zoekApi } from './client';
+import { SEARCH_TIMEOUT_MS, TIMEOUT_MS, api, isTimeout, teller, zoekApi } from './client';
 
 describe('api timeouts', () => {
 	afterEach(() => vi.restoreAllMocks());
@@ -27,5 +27,20 @@ describe('api timeouts', () => {
 	it('tells a timeout from an abort', () => {
 		expect(isTimeout(new DOMException('', 'TimeoutError'))).toBe(true);
 		expect(isTimeout(new DOMException('', 'AbortError'))).toBe(false);
+	});
+});
+
+describe('the guard against a loop of requests', () => {
+	it('refuses the request past the limit within the window, and lets them through again after', () => {
+		let t = 0;
+		const bewaak = teller(3, 1000, () => t);
+		const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+		bewaak('/a');
+		bewaak('/a');
+		bewaak('/a');
+		expect(() => bewaak('/a')).toThrow(/Meer dan 3 verzoeken/);
+		t = 1500;
+		expect(() => bewaak('/a')).not.toThrow();
+		err.mockRestore();
 	});
 });
