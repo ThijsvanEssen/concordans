@@ -22,6 +22,7 @@ import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
 import { uitspraakVolgorde, wetUitspraakJaar, wetUitspraakVolgorde } from './volgorde';
 import { paragraphCite } from '$lib/text/judgment-cite';
+import { articleName } from '$lib/text/bw';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
 	aardOf,
@@ -850,6 +851,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			rows: found.items.slice(0, ARTICLES_SHOWN).map((a) => ({
 				ref: refOf('articles', a.key, a),
 				...describe('articles', a.key, a.display_name, a),
+				// Within its law an article is "Artikel 1", not the law's title again (Thijs, 9 Oct).
+				title:
+					articleName(law, a.article_number, a.label) ??
+					describe('articles', a.key, a.display_name, a).title,
 				kind: 'artikelen' as const,
 				relation: 'PART_OF' as const,
 				direction: 'inbound' as const

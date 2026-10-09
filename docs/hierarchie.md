@@ -118,6 +118,8 @@ One pattern for every reader: the band "Behoort bij" **is** the kern block. It d
 
 For a Kamerstuk (Front-end #2, 9 October 2026): "Bij wetsvoorstel" is kern for a paper that changes or explains a bill (nota van wijziging, memorie van toelichting, nader rapport, nota naar aanleiding van het verslag). "Biedt aan" is kern for a geleidende brief or aanbiedingsbrief: the stukken it offers. The line lists them side by side ("Biedt aan: Voorstel van wet, Kamerstuk 37027, nr. 2; Memorie van toelichting, …"), and Verbonden leaves them out of "Stukken van dezelfde zaak" (`naastHetStuk` in `$lib/bron/zaak.ts`). "In dezelfde zaak" is context: a stuk reads without the other papers of its zaak, so it is in Verbonden only.
 
+A bron's own content is neither kern nor context: a law's articles are its table of contents and its text, so they are not a group in Verbonden (Thijs, 9 October 2026: "overdreven als we al een inhoudsopgave hebben"; `INHOUD` and `isInhoudGroep` in `src/lib/bron/behoort.ts`). The table keeps them, and within its law an article reads "Artikel 1", not the law's title again.
+
 A relation in the kern does not come back as a group in Verbonden (Thijs, 9 October 2026: "dubbelop"). `KERN` in `src/lib/bron/behoort.ts` lists the buckets the kern lines read, per kind of bron. `isKernGroep` tells Verbonden which of its groups read only those, and it leaves them out of its list and its count. The table keeps every connection.
 
 - Its switch "toon in netwerk" goes with the group. A uitspraak's eerdere aanleg, conclusie and hoger beroep are on the network by default. The wet of an artikel, the dossier of a stuk and the fractie of a lid have their switch under Groepering in the legend.
