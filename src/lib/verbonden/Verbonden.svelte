@@ -848,9 +848,9 @@
 		font-weight: 600;
 		color: var(--ink);
 	}
+	/* Inline, so the caret follows the label's last word, also on a second line. */
 	.group__knop {
-		display: inline-flex;
-		align-items: center;
+		display: inline;
 		padding: 0;
 		border: 0;
 		background: none;

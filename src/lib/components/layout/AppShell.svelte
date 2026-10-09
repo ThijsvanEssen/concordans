@@ -272,11 +272,14 @@
 
 	/* Buttons: 1px rule-strong border, 3px radius, no fill. `is-primary` is ink on paper;
 	   `is-text` has no border. */
+	/* A knop in a panel, a group or a reader's head: the panel's height (docs/bediening.md). */
 	:global(.btn) {
 		display: inline-flex;
 		align-items: center;
-		gap: 5px;
-		padding: var(--s-1) var(--s-2);
+		gap: var(--s-1);
+		box-sizing: border-box;
+		height: var(--veld-h-klein);
+		padding: 0 var(--s-2);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: transparent;

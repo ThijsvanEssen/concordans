@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -168,12 +169,12 @@
 						<div class="member-meta">
 							<h2 class="title">{m.name ?? m.key}</h2>
 							{#if m.party}
-								<div class="chips">
-									<NameLink collection="factions" name={m.party} class="party-chip" />
+								<div class="woorden">
+									<NameLink collection="factions" name={m.party} class="fractie-woord" />
 								</div>
 							{:else if ek?.faction && ek.abbreviation}
-								<div class="chips">
-									<BronLink ref={{ collection: 'factions', key: ek.faction }} class="party-chip"
+								<div class="woorden">
+									<BronLink ref={{ collection: 'factions', key: ek.faction }} class="fractie-woord"
 										>{ek.abbreviation}</BronLink
 									>
 								</div>
@@ -360,9 +361,9 @@
 						{/each}
 					{/each}
 					{#if alle.length > VOTES_PREVIEW && !showAllVotes}
-						<button type="button" class="more-btn" onclick={() => (showAllVotes = true)}>
-							+{alle.length - VOTES_PREVIEW} meer stemmen
-						</button>
+						<p class="alle">
+							<AlleN aantal={alle.length} noun="stemmen" onclick={() => (showAllVotes = true)} />
+						</p>
 					{/if}
 				</Sectie>
 			{/if}
@@ -432,7 +433,7 @@
 		line-height: var(--lh-snug);
 		overflow-wrap: anywhere;
 	}
-	.chips {
+	.woorden {
 		display: flex;
 		gap: var(--s-3);
 		flex-wrap: wrap;
@@ -441,7 +442,7 @@
 
 	/* The faction is a word, not a tag. */
 	/* Also on the link NameLink renders. */
-	.r-member :global(.party-chip) {
+	.r-member :global(.fractie-woord) {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 600;
@@ -596,27 +597,6 @@
 	}
 
 	/* A text button: no border, the hover as a paper-2 field. */
-	.more-btn {
-		align-self: flex-start;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		color: var(--ink-2);
-		background: none;
-		border: none;
-		border-radius: var(--r-1);
-		padding: var(--s-1);
-		margin-left: calc(-1 * var(--s-1));
-		cursor: pointer;
-		text-align: left;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
-	}
-	.more-btn:hover {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
 
 	.ek-source {
 		margin: 0;
@@ -629,5 +609,9 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
+	}
+	.alle {
+		margin: var(--s-3) 0 0;
+		font-size: var(--t-meta);
 	}
 </style>

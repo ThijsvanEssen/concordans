@@ -498,82 +498,83 @@
 			<div class="head">
 				<!-- What is on screen, and what to do with it. The head stays the same while
 				     comparing: Vergelijken unfolds the choice under it and closes it again. -->
+				<!-- What is on screen at the left (the status, the text menu of the versions), what to
+				     do with it at the right (docs/bediening.md: a head's three buttons). -->
 				<div class="head__status">
-					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
-						<button
-							type="button"
-							class="head__version-knop"
-							class:is-old={!!shown}
-							aria-haspopup={wordings.length > 1 ? 'menu' : undefined}
-							aria-expanded={wordings.length > 1 ? versionMenu : undefined}
-							disabled={wordings.length <= 1}
-							onclick={() => (versionMenu = !versionMenu)}
-							>{versionLabel}{#if wordings.length > 1}<span class="head__count"
-									>{wordings.length} tekstversies</span
-								><Caret open={versionMenu} />{/if}</button
-						>
-						{#if versionMenu}
-							<!-- One place for the versions: a row reads that text, its change
-								     opens the comparison with the text before it. -->
-							<div class="pop pop--versions" role="menu" aria-label="Tekstversies">
-								<div class="pop__cols" aria-hidden="true">
-									<span>Lezen</span><span>Wat veranderde</span>
-								</div>
-								{#each [...wordings].reverse() as w (w.index)}
-									<div class="pop__row">
-										<button
-											type="button"
-											role="menuitemradio"
-											aria-checked={(shownIndex ?? (current ?? lapse)?.index) === w.index}
-											class="pop__item"
-											onclick={() => {
-												shownIndex = w === current || w === lapse ? null : w.index;
-												versionMenu = false;
-												// Reading one text folds the comparison away; a text chosen here
-												// is no longer that of the peildatum.
-												if (comparing || peildatum)
-													go({ versies: null, weergave: null, peildatum: null });
-											}}
-											>{w.lapsed
-												? `Vervallen per ${longDate(w.from)}`
-												: `${w === current ? 'Geldend, sinds ' : ''}${longDate(w.from)}${w.until ? ` tot ${longDate(w.until)}` : ''}`}</button
-										>
-										{#if w.index > 0}
-											<a
-												class="pop__change"
-												role="menuitem"
-												href={compareHref(w.index - 1, w.index)}
-												data-sveltekit-noscroll
-												title="Vergelijk met de tekst ervoor"
-												onclick={() => (versionMenu = false)}>{w.summary} →</a
-											>
-										{:else}
-											<span class="pop__change pop__change--none">oudste tekst</span>
-										{/if}
-									</div>
-								{/each}
-							</div>
-						{/if}
-					</span>
+					<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
 					{#if wordings.length > 1}
-						<a
-							class="btn head__compare"
-							class:is-on={comparing}
-							aria-expanded={comparing}
-							href={comparing
-								? closeCompareHref
-								: compareHref(Math.max(0, wordings.length - 2), wordings.length - 1)}
-							data-sveltekit-noscroll>Vergelijken<Caret open={comparing} /></a
-						>
-					{/if}
-					{#if officialUrl}
-						<a class="btn" href={officialUrl} target="_blank" rel="noopener">{officialName} ↗</a>
-					{/if}
-					{#if forms}
-						<span class="head__acts">
-							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret />
+						<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
+							<button
+								type="button"
+								class="head__version-knop"
+								aria-haspopup="menu"
+								aria-expanded={versionMenu}
+								onclick={() => (versionMenu = !versionMenu)}
+								>{wordings.length} tekstversies<Caret open={versionMenu} /></button
+							>
+							{#if versionMenu}
+								<!-- One place for the versions: a row reads that text, its change
+								     opens the comparison with the text before it. -->
+								<div class="pop pop--versions" role="menu" aria-label="Tekstversies">
+									<div class="pop__cols" aria-hidden="true">
+										<span>Lezen</span><span>Wat veranderde</span>
+									</div>
+									{#each [...wordings].reverse() as w (w.index)}
+										<div class="pop__row">
+											<button
+												type="button"
+												role="menuitemradio"
+												aria-checked={(shownIndex ?? (current ?? lapse)?.index) === w.index}
+												class="pop__item"
+												onclick={() => {
+													shownIndex = w === current || w === lapse ? null : w.index;
+													versionMenu = false;
+													// Reading one text folds the comparison away; a text chosen here
+													// is no longer that of the peildatum.
+													if (comparing || peildatum)
+														go({ versies: null, weergave: null, peildatum: null });
+												}}
+												>{w.lapsed
+													? `Vervallen per ${longDate(w.from)}`
+													: `${w === current ? 'Geldend, sinds ' : ''}${longDate(w.from)}${w.until ? ` tot ${longDate(w.until)}` : ''}`}</button
+											>
+											{#if w.index > 0}
+												<a
+													class="pop__change"
+													role="menuitem"
+													href={compareHref(w.index - 1, w.index)}
+													data-sveltekit-noscroll
+													title="Vergelijk met de tekst ervoor"
+													onclick={() => (versionMenu = false)}>{w.summary} →</a
+												>
+											{:else}
+												<span class="pop__change pop__change--none">oudste tekst</span>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							{/if}
 						</span>
 					{/if}
+					<span class="head__knoppen">
+						{#if wordings.length > 1}
+							<a
+								class="btn head__compare"
+								class:is-on={comparing}
+								aria-expanded={comparing}
+								href={comparing
+									? closeCompareHref
+									: compareHref(Math.max(0, wordings.length - 2), wordings.length - 1)}
+								data-sveltekit-noscroll>Vergelijken<Caret open={comparing} /></a
+							>
+						{/if}
+						{#if officialUrl}
+							<a class="btn" href={officialUrl} target="_blank" rel="noopener">{officialName} ↗</a>
+						{/if}
+						{#if forms}
+							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret />
+						{/if}
+					</span>
 				</div>
 
 				<!-- Where the text came from: the wet that made it, its toelichting, the
@@ -713,25 +714,46 @@
 		justify-content: flex-start;
 		min-height: 26px;
 	}
+	/* The text on screen: Geldend recht, tekst sinds 1 juli 2024. */
+	.head__stand {
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink);
+	}
+	.head__stand.is-old {
+		color: var(--ink-2);
+	}
+	/* The versions as a text menu: the words, a caret, no frame. */
 	.head__version-knop {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-1);
+		height: var(--veld-h-klein);
 		padding: 0;
 		border: 0;
 		background: none;
-		font: inherit;
 		font-family: var(--font-ui);
-		font-size: var(--t-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
 	}
-	.head__version-knop.is-old {
-		color: var(--ink-2);
-	}
-	.head__version-knop:hover:not(:disabled) {
+	.head__version-knop:hover {
 		color: var(--accent);
 	}
-	.head__version-knop:disabled {
-		cursor: default;
+	.head__knoppen {
+		display: inline-flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--s-2);
+		margin-left: auto;
+	}
+	/* On a phone the buttons start at the text's edge, on a line of their own. */
+	@media (max-width: 767px) {
+		.head__knoppen {
+			margin-left: 0;
+			flex-basis: 100%;
+		}
 	}
 	.head__compare {
 		text-decoration: none;
@@ -741,9 +763,6 @@
 		background: var(--paper-2);
 		border-color: var(--ink-3);
 		color: var(--ink);
-	}
-	.head__acts {
-		margin-left: auto;
 	}
 	.head__origin a {
 		color: var(--ink-2);
@@ -766,11 +785,6 @@
 		align-items: center;
 		gap: var(--s-2);
 		color: var(--ink);
-	}
-	.head__count {
-		margin-left: var(--s-3);
-		font-weight: 400;
-		color: var(--ink-3);
 	}
 	/* A popup hangs under its row, from the row's start, so it never runs off the reader. */
 	.head .menu {

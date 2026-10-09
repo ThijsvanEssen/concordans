@@ -125,8 +125,11 @@
 
 {#snippet meer()}
 	{#if verborgen > 0}
-		<button type="button" class="meer btn is-text" aria-expanded={uit} onclick={() => (uit = !uit)}
-			>{knop}<Caret open={uit} /></button
+		<button
+			type="button"
+			class="uitklap-knop btn is-text"
+			aria-expanded={uit}
+			onclick={() => (uit = !uit)}>{knop}<Caret open={uit} /></button
 		>
 	{/if}
 {/snippet}
@@ -279,7 +282,7 @@
 	.kort {
 		display: none;
 	}
-	.meer {
+	.uitklap-knop {
 		display: none;
 		margin-left: auto;
 		flex: none;
@@ -334,7 +337,7 @@
 		.behoort.zonder-kern {
 			display: none;
 		}
-		.meer {
+		.uitklap-knop {
 			display: inline-flex;
 		}
 		.behoort:not(.uit) .groepen,

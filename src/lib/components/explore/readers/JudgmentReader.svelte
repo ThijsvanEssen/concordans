@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { authorCite, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
@@ -270,11 +271,8 @@
 									>
 								{/each}
 								{#if named.length < g.named.length}
-									<button
-										type="button"
-										class="reader-parties-more"
-										onclick={() => (showAllParties = true)}
-										>en {g.named.length - named.length} meer</button
+									<TekstLink onclick={() => (showAllParties = true)}
+										>en {g.named.length - named.length} meer</TekstLink
 									>
 								{/if}
 								{#if g.anonymous.length > 0}
@@ -767,15 +765,5 @@
 		font-weight: 400;
 		font-style: italic;
 		color: var(--ink-3);
-	}
-	.reader-parties-more {
-		margin: var(--s-1) 0 var(--s-3);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--accent);
-		cursor: pointer;
 	}
 </style>
