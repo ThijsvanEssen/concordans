@@ -34,6 +34,7 @@
 	import GraphView from '$lib/components/graph/GraphView.svelte';
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
+	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import StatusBar from '$lib/components/explore/StatusBar.svelte';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
@@ -124,6 +125,8 @@
 	// What the data lacks is said, not opened as a neighbour (a dossier for its stuk).
 	const pad = $derived(parsePad(page.url.pathname));
 	let padMissing = $state<string | null>(null);
+	/** The address names a bron the data lacks: a 404, as the server gives it. */
+	let padOnbekend = $state(false);
 	const padName = (p: Pad) =>
 		p.soort === 'artikel'
 			? `Artikel ${p.nummer} van ${p.wet}`
@@ -142,11 +145,14 @@
 	$effect(() => {
 		const p = pad;
 		padMissing = null;
+		padOnbekend = false;
 		if (!p || untrack(() => param('focus'))) return;
 		const ac = new AbortController();
 		lookUp(p, ac.signal)
 			.then((found) => {
-				if (!found && !ac.signal.aborted) padMissing = `${padName(p)} staat niet in de gegevens.`;
+				if (found || ac.signal.aborted) return;
+				padMissing = `${padName(p)} staat niet in de gegevens.`;
+				padOnbekend = true;
 			})
 			.catch(() => {
 				if (!ac.signal.aborted) padMissing = `${padName(p)} kon niet worden geladen.`;
@@ -871,8 +877,14 @@
 	}
 
 	// The tab names what is open, so that tabs, bookmarks and history tell bronnen apart.
+	/** A bron the data lacks, and nothing else to show: the 404 page. */
+	const nietGevonden = $derived(
+		mode !== 'index' && (focusMissing || padOnbekend) && !selectedNode && !netwerkActive
+	);
+
 	const pageTitle = $derived.by(() => {
 		if (mode === 'index') return 'Bladeren, Concordans';
+		if (nietGevonden) return 'Niet gevonden, Concordans';
 		const name = selectedNode ? tabTitle(selectedNode) : null;
 		if (name) return `${name}, Concordans`;
 		if (netwerkActive) return 'Netwerk, Concordans';
@@ -1194,6 +1206,7 @@
 
 <svelte:head>
 	<title>{pageTitle}</title>
+	{#if nietGevonden}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
 
 {#snippet reader()}
@@ -1315,14 +1328,16 @@
 			{:else}
 				<IndexView category={indexKind} onResultCountChange={(count) => (reportedCount = count)} />
 			{/if}
-		{:else if (focusMissing || padMissing) && !selectedNode && !netwerkActive}
-			<div class="explore-empty">
+		{:else if nietGevonden}
+			<NietGevonden titel="Bron niet gevonden" kop={false}>
 				<p>{padMissing ?? focusError}</p>
 				<p>
 					Het netwerk bevat een selectie van bronnen. Zie
 					<a href="/bronnen#dekking" class="link">bronnen en dekking</a>.
 				</p>
-			</div>
+			</NietGevonden>
+		{:else if padMissing && !selectedNode && !netwerkActive}
+			<p class="explore-empty">{padMissing}</p>
 		{:else if mode === 'graph'}
 			<div
 				class="explore-graph"

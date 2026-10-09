@@ -1,3 +1,8 @@
-# allow crawling everything by default
+# Concordans: every page may be crawled, the readable addresses of bronnen
+# (/wetten/…, /uitspraken/…, /kamerstukken/…, /dossiers/…) first of all.
+# The JSON API under /api/ is not a page; its documentation at /api is.
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /api/
+
+# Sitemap: https://concordans.nl/sitemap.xml (added once the sitemap is served)
