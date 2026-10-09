@@ -3176,7 +3176,7 @@
 	}
 	.catgroup__label {
 		padding: 0 var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		white-space: nowrap;
@@ -3211,7 +3211,7 @@
 	}
 	.cat--on .cat-name {
 		color: var(--ink);
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	/* From a tablet up the groups wrap to a second line instead of scrolling: every tab
@@ -3292,8 +3292,8 @@
 		border-top: 1px solid var(--rule);
 		border-bottom: 1px solid var(--rule);
 		background: transparent;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		cursor: pointer;
@@ -3338,7 +3338,7 @@
 		display: flex;
 		gap: 2px;
 		margin-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		color: var(--ink-3);
 	}
@@ -3355,13 +3355,13 @@
 	}
 
 	.row-method {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.list-source {
 		margin: var(--s-4) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -3383,7 +3383,7 @@
 	}
 	.result-noun {
 		margin-left: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -3395,7 +3395,7 @@
 		gap: var(--s-5);
 		padding: 0 var(--s-2) var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
@@ -3426,7 +3426,7 @@
 		border: 1px solid var(--ink);
 		border-radius: var(--r-1);
 		background: transparent;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 		cursor: pointer;
@@ -3442,7 +3442,7 @@
 		border: 0;
 		background: transparent;
 		padding: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		cursor: pointer;
@@ -3469,7 +3469,7 @@
 		justify-content: flex-end;
 		gap: var(--s-2);
 		margin-bottom: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -3479,7 +3479,7 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: transparent;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: 1;
 		color: var(--ink);
@@ -3542,7 +3542,7 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 	}
 	/* An end no source gives: the bar fades out. */
@@ -3563,7 +3563,7 @@
 		position: relative;
 		height: 16px;
 		margin-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		color: var(--ink-3);
 	}
@@ -3576,7 +3576,7 @@
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-3);
 		margin-top: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
@@ -3591,7 +3591,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.gov-title a {
 		color: var(--ink);
@@ -3602,7 +3602,7 @@
 	}
 	.gov-sub {
 		margin: var(--s-1) 0 var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -3625,13 +3625,13 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 800;
 	}
 	.day-title::first-letter {
 		text-transform: uppercase;
 	}
 	.day-meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -3728,10 +3728,10 @@
 		background: transparent;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-style: normal;
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 		cursor: pointer;
 	}
@@ -3784,7 +3784,7 @@
 	}
 	.row-id-sub {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		margin-top: 2px;
@@ -3802,14 +3802,14 @@
 	.row-sub {
 		display: block;
 		margin-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	/* The inhoudsindicatie of a judgment, two lines at most. */
 	.row-summary {
 		margin: var(--s-1) 0 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.45;
 		color: var(--ink-2);
@@ -3821,7 +3821,7 @@
 	}
 	.row-zin {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 		line-height: var(--lh-snug);
@@ -3831,7 +3831,7 @@
 		display: inline-grid;
 		grid-template-columns: repeat(3, var(--s-7));
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.stand-body {
@@ -3866,7 +3866,7 @@
 		display: inline-flex;
 		align-items: baseline;
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		white-space: nowrap;
@@ -3878,7 +3878,7 @@
 	.tag--passed,
 	.tag--rejected {
 		color: var(--ink-2);
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	.num-strong {
@@ -3889,7 +3889,7 @@
 		line-height: 1;
 	}
 	.num-lbl {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		margin-left: var(--s-1);
@@ -3910,7 +3910,7 @@
 		grid-template-columns: 32px 140px 32px auto;
 		gap: var(--s-2);
 		align-items: center;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		margin-top: var(--s-2);
@@ -3918,15 +3918,15 @@
 	.stem-mini__v {
 		color: var(--ink-2);
 		text-align: right;
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.stem-mini__t {
 		color: var(--ink-2);
 		text-align: left;
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.stem-mini__unit {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -3945,7 +3945,7 @@
 	}
 
 	.chevron {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		line-height: 1;
 		color: var(--ink-3);
@@ -3959,9 +3959,9 @@
 	.group-divider {
 		list-style: none;
 		padding: var(--s-4) var(--s-2) var(--s-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		border-bottom: 1px solid var(--rule);
 	}
@@ -3976,7 +3976,7 @@
 	}
 	.load-more-error {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
@@ -3986,8 +3986,8 @@
 		background: transparent;
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		color: var(--ink-2);
 		cursor: pointer;

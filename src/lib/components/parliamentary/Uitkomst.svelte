@@ -64,6 +64,6 @@
 	}
 	.uk--open .w {
 		color: var(--ink-3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 </style>

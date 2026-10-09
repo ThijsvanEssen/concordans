@@ -44,7 +44,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.groepen {
 		display: grid;

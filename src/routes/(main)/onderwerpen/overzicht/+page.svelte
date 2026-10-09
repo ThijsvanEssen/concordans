@@ -981,7 +981,7 @@
 	}
 	.terug {
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.terug a {
@@ -993,7 +993,7 @@
 		margin: 0 0 var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 		overflow-wrap: anywhere;
 	}
 	.filters {
@@ -1013,7 +1013,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -1024,8 +1024,8 @@
 		border-radius: var(--r-1);
 		background: var(--paper);
 		color: var(--ink);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 	}
 	.stand {
 		display: flex;
@@ -1033,7 +1033,7 @@
 		gap: var(--s-1);
 		margin: 0 0 var(--s-5);
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	/* The core figures: one sentence at the size of a section heading. */
@@ -1067,7 +1067,7 @@
 		margin: 0 0 var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 800;
 		color: var(--ink);
 	}
 	/* A state line under a heading, with its quiet actions (rung 6). */
@@ -1078,7 +1078,7 @@
 		justify-content: space-between;
 		gap: var(--s-1) var(--s-4);
 		margin: 0 0 var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -1118,7 +1118,7 @@
 	table {
 		width: 100%;
 		border-collapse: collapse;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	th,
@@ -1181,7 +1181,7 @@
 		margin: 0;
 	}
 	.aantal {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -1193,7 +1193,7 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		color: var(--ink);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		text-decoration: none;
 	}
@@ -1202,7 +1202,7 @@
 	}
 	.wis {
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.csv,
@@ -1212,7 +1212,7 @@
 		border-radius: var(--r-1);
 		background: transparent;
 		color: var(--ink);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		cursor: pointer;
 	}
@@ -1240,7 +1240,7 @@
 	}
 	.rij__datum,
 	.rij__soort {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -1269,12 +1269,12 @@
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: var(--s-1) var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.rij__uitkomst :global(.uk) {
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.rij__stem {
 		margin-left: var(--s-3);
@@ -1323,7 +1323,7 @@
 	}
 	.status {
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.status--fout {

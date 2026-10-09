@@ -204,9 +204,9 @@
 	}
 
 	.kind {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 
@@ -221,7 +221,7 @@
 	.title {
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: var(--lh-snug);
 		color: var(--ink);
 		margin: 0;
@@ -238,7 +238,7 @@
 	.cite-loading {
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		padding: var(--s-2) var(--s-3);
 		display: block;
 	}
@@ -259,8 +259,8 @@
 		gap: var(--s-1);
 		background: none;
 		border: none;
-		font-family: var(--font-sans);
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		color: var(--ink-2);
 		cursor: pointer;

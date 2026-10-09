@@ -228,15 +228,15 @@
 		border-bottom: 1px solid var(--rule);
 	}
 	.eyebrow {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.page-title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 		margin: 0;
 		line-height: var(--lh-tight);
@@ -256,12 +256,12 @@
 		row-gap: var(--s-1);
 		margin: var(--s-2) 0 0;
 		max-width: 72ch;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.55;
 	}
 	.api-terms dt {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.api-terms dd {
@@ -269,7 +269,7 @@
 		color: var(--ink-2);
 	}
 	.api-terms code {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 		background: var(--paper-2);
@@ -286,9 +286,9 @@
 		top: 90px;
 	}
 	.toc-title {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		margin-bottom: var(--s-2);
 	}
@@ -306,7 +306,7 @@
 		padding: var(--s-1) 0;
 		color: var(--ink-2);
 		text-decoration: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		border-bottom: 1px dotted transparent;
 	}
@@ -318,7 +318,7 @@
 		flex: 1;
 	}
 	.toc-count {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-variant-numeric: tabular-nums;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -350,12 +350,12 @@
 	.api-tag-title {
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
-		font-weight: 500;
+		font-weight: 800;
 		color: var(--ink);
 		margin: 0;
 	}
 	.api-tag-desc {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.55;
 		color: var(--ink-3);
@@ -388,16 +388,16 @@
 	}
 
 	.api-method {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 		flex-shrink: 0;
 		min-width: 48px;
 	}
 
 	.api-path {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-variant-numeric: tabular-nums;
 		font-size: var(--t-meta);
 		color: var(--ink);
@@ -435,7 +435,7 @@
 		gap: var(--s-4);
 	}
 	.api-desc {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		line-height: 1.6;
 		color: var(--ink-2);
@@ -448,16 +448,16 @@
 		gap: var(--s-2);
 	}
 	.api-block-head {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	table.api-params,
 	table.api-responses {
 		border-collapse: collapse;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		width: 100%;
 	}
@@ -472,13 +472,13 @@
 	}
 	.api-params th,
 	.api-responses th {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		font-size: var(--t-micro);
 	}
 	.api-params code,
 	.api-responses code {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-variant-numeric: tabular-nums;
 		font-size: var(--t-micro);
 		color: var(--ink);
@@ -487,7 +487,7 @@
 		border-radius: var(--r-1);
 	}
 	.api-in {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -500,7 +500,7 @@
 		margin-top: var(--s-5);
 		padding-top: var(--s-5);
 		border-top: 1px solid var(--rule);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 		line-height: 1.65;

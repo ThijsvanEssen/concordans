@@ -739,7 +739,7 @@
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	.head {
@@ -754,7 +754,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.head__count {
@@ -785,7 +785,8 @@
 		border: 0;
 		background: none;
 		font: inherit;
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		color: var(--ink);
 		text-align: left;
 		cursor: pointer;
@@ -825,7 +826,7 @@
 		color: var(--ink-2);
 	}
 	.voorlopig-aantal {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -872,7 +873,7 @@
 		padding: 0 var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		font-style: italic;
 		color: var(--ink-3);
 	}
@@ -886,7 +887,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.group__count {
@@ -903,7 +904,7 @@
 		padding: 0;
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		cursor: pointer;
@@ -964,7 +965,7 @@
 		gap: var(--s-1) var(--s-3);
 		margin: 0;
 		padding: var(--s-1) var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
@@ -972,6 +973,7 @@
 		height: var(--veld-h-klein);
 		margin-left: var(--s-1);
 		font: inherit;
+		font-family: var(--font-ui);
 		color: var(--ink);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
@@ -1008,7 +1010,7 @@
 		border-radius: 50%;
 		background: var(--paper);
 		color: var(--ink-2);
-		font: 600 var(--t-meta) var(--font-sans);
+		font: 600 var(--t-meta) var(--font-serif);
 		line-height: 1;
 		cursor: pointer;
 		opacity: 0;
@@ -1066,7 +1068,7 @@
 	}
 	/* The case number that tells sister cases apart, in the title where the eye looks. */
 	.row__case {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -1082,7 +1084,7 @@
 		line-height: 1.35;
 	}
 	.row__part--lid {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.row__part--proposed {

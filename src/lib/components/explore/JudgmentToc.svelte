@@ -104,7 +104,7 @@
 		overflow-y: auto;
 		padding-top: var(--s-5);
 		background: var(--paper-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 
@@ -122,7 +122,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: 1.2;
 		color: var(--ink);
 	}
@@ -153,7 +153,7 @@
 
 	.row--summary,
 	.row--parties {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 400;
 		color: var(--ink-3);
@@ -161,7 +161,7 @@
 
 	.row--heading {
 		font-family: var(--font-serif);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 </style>

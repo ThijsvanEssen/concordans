@@ -240,9 +240,9 @@
 	/* The kind by weight, as on the homepage; a vote lost in the accent. */
 	.kind {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.kind--failed {
@@ -259,7 +259,7 @@
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-3);
 		margin-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
@@ -284,7 +284,7 @@
 		margin-left: var(--s-1);
 	}
 	.outcome {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -294,7 +294,7 @@
 	}
 	.aside-note {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -311,7 +311,7 @@
 		list-style: none;
 		margin: var(--s-2) 0;
 		padding: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.people li,
@@ -346,8 +346,8 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: var(--paper);
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		font-weight: 500;
 		color: var(--ink);
 		text-decoration: none;
@@ -365,7 +365,7 @@
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-4);
 		margin: var(--s-2) 0 var(--s-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	.links a,

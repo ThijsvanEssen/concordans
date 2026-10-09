@@ -215,13 +215,14 @@
 	.topbar-nav {
 		display: flex;
 		gap: 20px;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
-		font-weight: 500;
 		color: var(--ink-3);
 	}
 
+	/* The navigation is a menu: the sans of the controls. */
 	.nav-link {
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		font-weight: 500;
 		color: inherit;
 		/* One pixel lower than centred, so the capitals sit on the bar's middle. */
 		padding: 21px 0 19px;
@@ -257,8 +258,8 @@
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		cursor: text;
-		font-family: var(--font-sans);
-		font-size: var(--t-meta);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		color: var(--ink-3);
 		transition: border-color var(--dur-1) var(--ease);
 	}
@@ -306,7 +307,7 @@
 	}
 
 	.mobile-nav-link {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink-2);
 		padding: 14px var(--s-5);

@@ -146,7 +146,7 @@
 		align-items: baseline;
 		gap: var(--s-2);
 		margin: 0 0 var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -154,7 +154,7 @@
 		margin: 0 0 var(--s-3);
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 800;
 		line-height: var(--lh-snug);
 	}
 	.keten,
@@ -196,7 +196,7 @@
 	}
 	.kop {
 		margin-bottom: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -209,14 +209,14 @@
 	.wet,
 	.na {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 		text-decoration: none;
 	}
 	.wet {
 		margin-bottom: var(--s-1);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.na {
 		margin-top: var(--s-2);
@@ -243,7 +243,7 @@
 		padding: var(--s-1) 0;
 		border: 0;
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		text-align: left;
 		color: var(--ink);
 		cursor: pointer;
@@ -277,7 +277,7 @@
 		margin-top: var(--s-4);
 		padding-top: var(--s-3);
 		border-top: 1px solid var(--rule);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
 	figcaption a {
@@ -285,7 +285,7 @@
 	}
 	.verkenner {
 		margin-left: auto;
-		font-weight: 500;
+		font-weight: 600;
 	}
 
 	/* A phone: the chain one step a line, and a link to the same network in the Verkenner. */
@@ -312,7 +312,7 @@
 			margin: 0 0 var(--s-3);
 			padding: 0;
 			list-style: none;
-			font-family: var(--font-sans);
+			font-family: var(--font-serif);
 			font-size: var(--t-meta);
 			color: var(--ink-2);
 		}
@@ -347,7 +347,7 @@
 			border: 1px solid var(--rule-strong);
 			border-radius: var(--r-1);
 			background: var(--paper);
-			font-family: var(--font-sans);
+			font-family: var(--font-serif);
 			font-size: var(--t-meta);
 			color: var(--ink);
 			text-decoration: none;

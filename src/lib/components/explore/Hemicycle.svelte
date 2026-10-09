@@ -294,7 +294,7 @@
 	}
 	/* The Kamer's number of a place, without a disc: the key under the hall names it. */
 	.nr-t {
-		font: 600 var(--t-glyph) var(--font-sans);
+		font: 600 var(--t-glyph) var(--font-serif);
 		fill: var(--ink-3);
 	}
 	/* Zonder kader en vlak, zoals de zaal van de Eerste Kamer. */
@@ -370,17 +370,17 @@
 	   inline style. */
 	.center-num--party {
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.center-lbl {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		fill: var(--ink-3);
 	}
 	.hemicycle-caption {
 		margin: 0;
 		padding-top: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		text-align: center;

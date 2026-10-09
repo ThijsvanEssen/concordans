@@ -79,7 +79,7 @@
 		margin: 0;
 		padding-bottom: var(--s-2);
 		border-bottom: 2px solid var(--ink);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
@@ -134,7 +134,7 @@
 	}
 	.datum {
 		padding: var(--s-2) 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 		text-align: right;
@@ -225,9 +225,9 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-1);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.regel--ja .label {
@@ -251,7 +251,7 @@
 	.groot .zin,
 	.groot :global(a.zin) {
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.regel--verwacht .zin,
 	.regel--verwacht :global(a.zin) {
@@ -259,13 +259,13 @@
 		font-style: italic;
 	}
 	.meta {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	.noot {
 		margin: var(--s-2) 0 0 calc(4rem + 20px + var(--s-4));
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

@@ -1754,7 +1754,7 @@
 		top: 6px;
 		right: 10px;
 		z-index: 2;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		line-height: 1;
 		color: var(--ink-3);
@@ -1863,8 +1863,8 @@
 		}
 		.explore-read .mobile-tab {
 			flex: 1;
-			font-family: var(--font-sans);
-			font-size: var(--t-micro);
+			font-family: var(--font-ui);
+			font-size: var(--t-ui-micro);
 			color: var(--ink-3);
 			background: none;
 			border: 0;
@@ -1921,7 +1921,7 @@
 		.toc-sheet__title {
 			font-family: var(--font-serif);
 			font-size: var(--t-body-2);
-			font-weight: 500;
+			font-weight: 600;
 			color: var(--ink);
 		}
 		.toc-sheet__close {
@@ -1986,8 +1986,8 @@
 		}
 		.mobile-tab {
 			flex: 1;
-			font-family: var(--font-sans);
-			font-size: var(--t-micro);
+			font-family: var(--font-ui);
+			font-size: var(--t-ui-micro);
 			color: var(--ink-3);
 			background: none;
 			border: 0;

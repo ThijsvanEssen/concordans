@@ -164,22 +164,22 @@
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.title {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
-		font-weight: 500;
+		font-weight: 600;
 		line-height: 1.25;
 		color: var(--ink);
 	}
 	.law {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -205,9 +205,9 @@
 	}
 	.law-name {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.law-items {
@@ -222,17 +222,17 @@
 	/* A law whose entries follow: set apart as the head of its part of the list. */
 	.text .heading {
 		margin-top: var(--s-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.entries summary,
 	.refs h2 {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 		cursor: pointer;
 	}

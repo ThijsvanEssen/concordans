@@ -78,7 +78,7 @@
 		border: 0;
 		background: transparent;
 		font: inherit;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 		text-align: left;
@@ -93,7 +93,7 @@
 	}
 	.aan {
 		color: var(--ink);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.leeg {
 		color: var(--ink-3);

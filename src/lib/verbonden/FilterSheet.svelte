@@ -387,7 +387,7 @@
 		background: var(--paper);
 		border-left: 1px solid var(--rule-strong);
 		box-shadow: var(--shadow-modal);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink);
 	}
@@ -401,7 +401,7 @@
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.sheet__count {
 		font-size: var(--t-micro);
@@ -430,7 +430,7 @@
 	.block__label {
 		margin-bottom: 6px;
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.search {

@@ -638,7 +638,7 @@
 	   the component's own width. */
 	.vc {
 		container: vc / inline-size;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
@@ -710,7 +710,8 @@
 		border: 0;
 		background: none;
 		font: inherit;
-		font-size: var(--t-micro);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
 		font-weight: 500;
 		color: var(--ink-2);
 		cursor: pointer;
@@ -781,7 +782,7 @@
 		cursor: default;
 	}
 	.line__year {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-2);
 	}
 	.line__what {
@@ -829,7 +830,7 @@
 		border: 2px solid var(--paper-2);
 		border-radius: 50%;
 		background: var(--ink);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label);
 		font-weight: 600;
 		line-height: 1;
@@ -873,7 +874,7 @@
 	}
 	.history__what {
 		color: var(--ink);
-		font-weight: 500;
+		font-weight: 600;
 	}
 	.history__source {
 		display: flex;
@@ -946,7 +947,7 @@
 		white-space: nowrap;
 	}
 	.ab__date {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.ab__period {
@@ -1014,7 +1015,7 @@
 		font-size: var(--t-micro);
 	}
 	.tools__keys .text {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 	}
 	.tools__acts {
 		display: flex;
@@ -1044,9 +1045,9 @@
 	.row--head {
 		padding: 0 0 var(--s-1);
 		border-bottom: 1px solid var(--rule);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.row__no {
@@ -1054,9 +1055,9 @@
 		flex-direction: column;
 		align-items: flex-end;
 		padding-top: 7px;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		line-height: 1.3;
 	}
@@ -1073,7 +1074,7 @@
 	}
 	.row__aside {
 		padding-top: 7px;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		text-align: right;
@@ -1088,9 +1089,9 @@
 	}
 	.row__label {
 		display: block;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-label);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 	}
 	.row--same .text {
@@ -1127,7 +1128,7 @@
 	}
 	.text--none {
 		padding-top: 7px;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-style: italic;
 		color: var(--ink-3);
@@ -1163,7 +1164,7 @@
 		align-items: center;
 		gap: var(--s-2);
 		margin-bottom: 2px;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -1177,7 +1178,7 @@
 		border-top: 1px dashed var(--rule);
 		border-bottom: 1px dashed var(--rule);
 		background: none;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		text-align: left;
@@ -1210,7 +1211,7 @@
 		margin: var(--s-2) 0 var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
-		font-weight: 500;
+		font-weight: 800;
 		color: var(--ink);
 	}
 	.empty {
@@ -1247,7 +1248,7 @@
 		color: var(--ink-3);
 	}
 	.formulation__when {
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.formulation__cite {
@@ -1301,7 +1302,7 @@
 		padding: 0 var(--s-2) var(--s-1) 0;
 		border-bottom: 1px solid var(--rule-strong);
 		font-size: var(--t-micro);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink-3);
 		text-align: left;
 	}
@@ -1378,7 +1379,7 @@
 	}
 	.unchanged {
 		margin: 0 0 var(--s-3);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}

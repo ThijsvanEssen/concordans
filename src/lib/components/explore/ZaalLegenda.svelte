@@ -104,7 +104,7 @@
 		color: var(--ink);
 	}
 	.z {
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-variant-numeric: tabular-nums;
 		color: var(--ink-3);
@@ -114,7 +114,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-4);
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}
@@ -141,7 +141,7 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -150,7 +150,7 @@
 	}
 	.coalitie {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
 	}

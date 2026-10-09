@@ -189,7 +189,7 @@
 	/* A state line under the heading, at rung 6. */
 	.stand {
 		margin: 0;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
@@ -197,7 +197,7 @@
 		width: 100%;
 		table-layout: fixed;
 		border-collapse: collapse;
-		font-family: var(--font-sans);
+		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 	}
 	/* The year under the day of each column, so a column reads as a date. */
@@ -232,7 +232,7 @@
 		display: block;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--ink);
 	}
 	.titel {
