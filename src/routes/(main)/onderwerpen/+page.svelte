@@ -110,7 +110,7 @@
 							api.GET('/api/feed', {
 								params: {
 									query: {
-										q: t.term,
+										q: [t.term],
 										since: vanaf(t.o),
 										...(verder ? { until: verder.tot } : {}),
 										limit: PER_TERM,

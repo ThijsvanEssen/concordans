@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.6"
+		"version": "0.79.30"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -844,6 +844,82 @@
 							"default": "title",
 							"title": "Sort"
 						}
+					},
+					{
+						"name": "from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Came into force on or after this day, YYYY-MM-DD.",
+							"title": "From"
+						},
+						"description": "Came into force on or after this day, YYYY-MM-DD."
+					},
+					{
+						"name": "to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Came into force on or before this day, YYYY-MM-DD.",
+							"title": "To"
+						},
+						"description": "Came into force on or before this day, YYYY-MM-DD."
+					},
+					{
+						"name": "published_from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Published on or after this day, YYYY-MM-DD.",
+							"title": "Published From"
+						},
+						"description": "Published on or after this day, YYYY-MM-DD."
+					},
+					{
+						"name": "published_to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Published on or before this day, YYYY-MM-DD.",
+							"title": "Published To"
+						},
+						"description": "Published on or before this day, YYYY-MM-DD."
 					}
 				],
 				"responses": {
@@ -1512,7 +1588,7 @@
 			"get": {
 				"tags": ["nodes", "nodes"],
 				"summary": "Bulk activity score per node (heat layer)",
-				"description": "A map of node id \u2192 activity count over the past N months, where activity is the number of incoming edges created in that window. Pass months=3 for a 90-day window. `ids` (comma-separated node ids, at most 500) counts those nodes alone, the ones a view draws; without it the `limit` nodes with the highest counts (the whole graph has 1.85 million).",
+				"description": "A map of node id \u2192 activity count over the past N months, where activity is the number of incoming edges created in that window. Pass months=3 for a 90-day window. `ids` (comma-separated node ids, at most 500) counts those nodes alone, the ones a view draws; without it the `limit` nodes with the highest counts (the whole graph has 1.85 million), as `semantic graph-heat` last counted them; 503 until it has.",
 				"operationId": "bulk_heat_api_nodes_heat_get",
 				"parameters": [
 					{
@@ -1657,6 +1733,19 @@
 							"title": "Offset"
 						},
 						"description": "Neighbors to skip in every bucket."
+					},
+					{
+						"name": "props",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["full", "canvas"],
+							"type": "string",
+							"description": "`canvas`: of a neighbour only the props the canvas of the explorer draws, per collection, and of its edge only the `meta` it reads (null when none); `full` (the default) every prop but the text",
+							"default": "full",
+							"title": "Props"
+						},
+						"description": "`canvas`: of a neighbour only the props the canvas of the explorer draws, per collection, and of its edge only the `meta` it reads (null when none); `full` (the default) every prop but the text"
 					},
 					{
 						"name": "relations",
@@ -2507,6 +2596,44 @@
 							"title": "Chamber"
 						},
 						"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``)."
+					},
+					{
+						"name": "active_from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Active on or after this day (a period that overlaps), YYYY-MM-DD.",
+							"title": "Active From"
+						},
+						"description": "Active on or after this day (a period that overlaps), YYYY-MM-DD."
+					},
+					{
+						"name": "active_to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Active on or before this day (a period that overlaps), YYYY-MM-DD.",
+							"title": "Active To"
+						},
+						"description": "Active on or before this day (a period that overlaps), YYYY-MM-DD."
 					}
 				],
 				"responses": {
@@ -2756,10 +2883,10 @@
 									"type": "null"
 								}
 							],
-							"description": "Name substring.",
+							"description": "A part of the name, in any case, with or without accents.",
 							"title": "Q"
 						},
-						"description": "Name substring."
+						"description": "A part of the name, in any case, with or without accents."
 					},
 					{
 						"name": "include_all",
@@ -2874,6 +3001,44 @@
 							"title": "Chamber"
 						},
 						"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``)."
+					},
+					{
+						"name": "active_from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Active on or after this day (a period that overlaps), YYYY-MM-DD.",
+							"title": "Active From"
+						},
+						"description": "Active on or after this day (a period that overlaps), YYYY-MM-DD."
+					},
+					{
+						"name": "active_to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Active on or before this day (a period that overlaps), YYYY-MM-DD.",
+							"title": "Active To"
+						},
+						"description": "Active on or before this day (a period that overlaps), YYYY-MM-DD."
 					}
 				],
 				"responses": {
@@ -3153,10 +3318,10 @@
 									"type": "null"
 								}
 							],
-							"description": "Name or abbreviation.",
+							"description": "A part of the name or abbreviation, in any case, with or without accents.",
 							"title": "Q"
 						},
-						"description": "Name or abbreviation."
+						"description": "A part of the name or abbreviation, in any case, with or without accents."
 					},
 					{
 						"name": "chamber",
@@ -3170,6 +3335,44 @@
 							"title": "Chamber"
 						},
 						"description": "``EK``: the Eerste Kamer, as eerstekamer.nl shows it today (periods as observed: ``observed_from``, ``observed_until``)."
+					},
+					{
+						"name": "active_from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Active on or after this day (a period that overlaps), YYYY-MM-DD.",
+							"title": "Active From"
+						},
+						"description": "Active on or after this day (a period that overlaps), YYYY-MM-DD."
+					},
+					{
+						"name": "active_to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Active on or before this day (a period that overlaps), YYYY-MM-DD.",
+							"title": "Active To"
+						},
+						"description": "Active on or before this day (a period that overlaps), YYYY-MM-DD."
 					}
 				],
 				"responses": {
@@ -3672,6 +3875,44 @@
 							"default": false,
 							"title": "Overdue"
 						}
+					},
+					{
+						"name": "from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Made on or after this day, YYYY-MM-DD.",
+							"title": "From"
+						},
+						"description": "Made on or after this day, YYYY-MM-DD."
+					},
+					{
+						"name": "to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Made on or before this day, YYYY-MM-DD.",
+							"title": "To"
+						},
+						"description": "Made on or before this day, YYYY-MM-DD."
 					},
 					{
 						"name": "q",
@@ -4262,7 +4503,7 @@
 			"get": {
 				"tags": ["resolve", "resolve"],
 				"summary": "Resolve a citation, identifier or law name to one node",
-				"description": "Reads `q` as a citation (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`), an identifier (ECLI, BWB id, CELEX id), a Kamerstuk (`36327`, `36327-3`, `Kamerstukken II 2020/21, 36327, nr. 3`) or the name of a law, and answers with the one best match (`id`, `key`, `collection`) and up to five alternatives. `confidence` says how sure the match is. Nothing that fits answers 200 with kind `none` and no match: the query is then words for `/api/search`.",
+				"description": "Reads `q` as a citation (`art. 6:162 BW`, `artikel 287 Sr`, `Sr 287`), an identifier (ECLI, BWB id, CELEX id), a Kamerstuk (`36327`, `36327-3`, `Kamerstukken II 2020/21, 36327, nr. 3`) or the name of a law, and answers with the one best match (`id`, `key`, `collection`) and up to five alternatives. A citation that leaves the book of the Burgerlijk Wetboek open (`art. 3 BW`) has no match: its alternatives are the article in every book, in book order. `confidence` says how sure the match is. Nothing that fits answers 200 with kind `none` and no match: the query is then words for `/api/search`.",
 				"operationId": "resolve_api_resolve_get",
 				"parameters": [
 					{
@@ -4390,6 +4631,57 @@
 							"title": "Resolve"
 						},
 						"description": "Also resolve `q`, as `/api/resolve` does"
+					},
+					{
+						"name": "mode",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["full", "live"],
+							"type": "string",
+							"description": "`live` while typing: all types within 250 ms, cut off types in `partial`, nothing ranked by its words (a word, or the start of a word of a name or title), the judgments by ECLI, name and display name (court, date, case number), the most cited first, and only from three characters; `full` (the default) ranks everything, a type within 3 s: past it, its `live` hits and the type in `partial`",
+							"default": "full",
+							"title": "Mode"
+						},
+						"description": "`live` while typing: all types within 250 ms, cut off types in `partial`, nothing ranked by its words (a word, or the start of a word of a name or title), the judgments by ECLI, name and display name (court, date, case number), the most cited first, and only from three characters; `full` (the default) ranks everything, a type within 3 s: past it, its `live` hits and the type in `partial`"
+					},
+					{
+						"name": "from",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Hits dated on or after this day, YYYY-MM-DD: each by a date of its own; a type without one finds nothing with a period.",
+							"title": "From"
+						},
+						"description": "Hits dated on or after this day, YYYY-MM-DD: each by a date of its own; a type without one finds nothing with a period."
+					},
+					{
+						"name": "to",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
+									"type": "string",
+									"format": "date"
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Hits dated on or before this day, YYYY-MM-DD.",
+							"title": "To"
+						},
+						"description": "Hits dated on or before this day, YYYY-MM-DD."
 					}
 				],
 				"responses": {
@@ -4460,7 +4752,7 @@
 			"get": {
 				"tags": ["decisions", "decisions"],
 				"summary": "Decision browser",
-				"description": "A page of decisions \u2014 one per Besluit \u2014 newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter), per outcome ``passed`` (without the passed filter) and per day (under all filters).",
+				"description": "A page of decisions \u2014 one per Besluit \u2014 newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter; with how many carried and did not), per outcome ``passed`` (without the passed filter), per day and per year (under all filters), and with ``party_votes`` how the factions asked voted on them.",
 				"operationId": "list_decisions_api_decisions_get",
 				"parameters": [
 					{
@@ -4618,16 +4910,37 @@
 						"schema": {
 							"anyOf": [
 								{
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
+								},
+								{
+									"type": "null"
+								}
+							],
+							"description": "Words of the subject, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it for decisions that hold any of them (``q=AI&q=kunstmatige intelligentie``).",
+							"title": "Q"
+						},
+						"description": "Words of the subject, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it for decisions that hold any of them (``q=AI&q=kunstmatige intelligentie``)."
+					},
+					{
+						"name": "party_votes",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{
 									"type": "string"
 								},
 								{
 									"type": "null"
 								}
 							],
-							"description": "A part of the subject, in any case.",
-							"title": "Q"
+							"description": "Comma-separated faction keys, or ``all`` for every faction that voted on one: ``facets.party_votes`` says how each voted on the decisions under the filters (``voor``, ``tegen``, ``none``; in all, per kind and per year). Keeps no decision out, unlike ``party``.",
+							"title": "Party Votes"
 						},
-						"description": "A part of the subject, in any case."
+						"description": "Comma-separated faction keys, or ``all`` for every faction that voted on one: ``facets.party_votes`` says how each voted on the decisions under the filters (``voor``, ``tegen``, ``none``; in all, per kind and per year). Keeps no decision out, unlike ``party``."
 					},
 					{
 						"name": "limit",
@@ -5024,17 +5337,19 @@
 						"schema": {
 							"anyOf": [
 								{
-									"type": "string",
-									"maxLength": 200
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
 								},
 								{
 									"type": "null"
 								}
 							],
-							"description": "Words of the title, or of the title of the event's dossier, in any case.",
+							"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them.",
 							"title": "Q"
 						},
-						"description": "Words of the title, or of the title of the event's dossier, in any case."
+						"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them."
 					},
 					{
 						"name": "chamber",
@@ -5294,17 +5609,19 @@
 						"schema": {
 							"anyOf": [
 								{
-									"type": "string",
-									"maxLength": 200
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
 								},
 								{
 									"type": "null"
 								}
 							],
-							"description": "Words of the title, or of the title of the event's dossier, in any case.",
+							"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them.",
 							"title": "Q"
 						},
-						"description": "Words of the title, or of the title of the event's dossier, in any case."
+						"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them."
 					},
 					{
 						"name": "chamber",
@@ -5427,6 +5744,33 @@
 							"title": "Through Laws"
 						},
 						"description": "Let a path pass through a law by its articles."
+					},
+					{
+						"name": "expand",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["none", "members"],
+							"type": "string",
+							"description": "`members`: a group of `ids` (a law, a faction, a committee, a cabinet, a dossier) is joined through its children too (articles, members, bewindspersonen, cases and papers).",
+							"default": "none",
+							"title": "Expand"
+						},
+						"description": "`members`: a group of `ids` (a law, a faction, a committee, a cabinet, a dossier) is joined through its children too (articles, members, bewindspersonen, cases and papers)."
+					},
+					{
+						"name": "expand_cap",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 1000,
+							"minimum": 1,
+							"description": "The children of a group, at most.",
+							"default": 200,
+							"title": "Expand Cap"
+						},
+						"description": "The children of a group, at most."
 					}
 				],
 				"responses": {
@@ -5809,17 +6153,19 @@
 						"schema": {
 							"anyOf": [
 								{
-									"type": "string",
-									"maxLength": 200
+									"type": "array",
+									"items": {
+										"type": "string"
+									}
 								},
 								{
 									"type": "null"
 								}
 							],
-							"description": "Words of the title, or of the title of the event's dossier, in any case.",
+							"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them.",
 							"title": "Q"
 						},
-						"description": "Words of the title, or of the title of the event's dossier, in any case."
+						"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them."
 					},
 					{
 						"name": "chamber",
@@ -5911,7 +6257,7 @@
 			"get": {
 				"tags": ["root"],
 				"summary": "Health",
-				"description": "Health check \u2014 verifies database connectivity; ``version`` the version of the API\n(what a deploy checks against its tag). ``warm``: the answers every visitor\nasks are computed for the data as it is now (null when the API does not warm up); a\ndeploy waits for true before its smoke test. ``warm_version`` the data version they\nwere last computed for (the answers a request gets while a newer one computes, null\nbefore the first warm-up), ``data_version`` the version now, ``computing`` whether a\nwarm-up or an answer of a newer version is being computed. ``pools``: per connection\npool its size, the free connections and the reads waiting for one; ``busy`` what the\nthreads of the shared pools run now, and how long.",
+				"description": "Health check \u2014 verifies database connectivity; ``version`` the version of the API\n(what a deploy checks against its tag). ``warm``: the answers every visitor\nasks are computed for the data as it is now (null when the API does not warm up); a\ndeploy waits for true before its smoke test. ``warm_version`` the data version they\nwere last computed for (the answers a request gets while a newer one computes, null\nbefore the first warm-up), ``data_version`` the version now, ``computing`` whether a\nwarm-up or an answer of a newer version is being computed. ``pools``: per connection\npool its size, the free connections and the reads waiting for one; ``busy`` what the\nthreads of the shared pools and of the background (the cache, the warm-up) run now,\nand how long.",
 				"operationId": "health_api_health_get",
 				"responses": {
 					"200": {
@@ -8612,6 +8958,42 @@
 						],
 						"title": "Official Id",
 						"description": "Of a publication, its id on officielebekendmakingen.nl (`stb-2026-154`); null for a paper."
+					},
+					"kind": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Kind",
+						"description": "Its kind as its source writes it: of a paper `Amendement`, `Voorstel van wet`; of a publication `publicatie`."
+					},
+					"sequence": {
+						"anyOf": [
+							{
+								"type": "integer"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Sequence",
+						"description": "Of a Tweede Kamer paper its nr. in its dossier."
+					},
+					"number": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Number",
+						"description": "Of a paper its number as its chamber cites it: the nr. (`12`), the letter of an Eerste Kamer paper (`A`); null for a publication."
 					}
 				},
 				"additionalProperties": false,
@@ -8665,6 +9047,12 @@
 						"type": "boolean",
 						"title": "Stub",
 						"default": false
+					},
+					"judgment_total": {
+						"type": "integer",
+						"title": "Judgment Total",
+						"description": "The judgments that cite the article (as in `/cited-by`).",
+						"default": 0
 					}
 				},
 				"additionalProperties": false,
@@ -9092,6 +9480,18 @@
 							}
 						],
 						"title": "Title"
+					},
+					"short_title": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Short Title",
+						"description": "The name it goes by, as ``/api/dossiers`` gives it."
 					}
 				},
 				"additionalProperties": false,
@@ -9273,6 +9673,14 @@
 						"type": "array",
 						"title": "Dossier Numbers",
 						"description": "Dossiers on the agenda of the activity."
+					},
+					"dossiers": {
+						"items": {
+							"$ref": "#/components/schemas/DossierNameDTO"
+						},
+						"type": "array",
+						"title": "Dossiers",
+						"description": "The names of ``dossier_numbers``, in their order: ``number``, ``short_title``, ``title`` as ``/api/dossiers`` gives them."
 					}
 				},
 				"additionalProperties": false,
@@ -9928,6 +10336,14 @@
 						"title": "Dossier Numbers",
 						"description": "The dossiers of the cases it decided (``36774``, ``37020-XV``)."
 					},
+					"dossiers": {
+						"items": {
+							"$ref": "#/components/schemas/DossierNameDTO"
+						},
+						"type": "array",
+						"title": "Dossiers",
+						"description": "The names of ``dossier_numbers``, in their order: ``number``, ``short_title``, ``title`` as ``/api/dossiers`` gives them."
+					},
 					"chamber": {
 						"anyOf": [
 							{
@@ -10129,6 +10545,22 @@
 						"type": "array",
 						"title": "Days",
 						"description": "Per date of the vote, oldest first."
+					},
+					"years": {
+						"items": {
+							"$ref": "#/components/schemas/DecisionYearCount"
+						},
+						"type": "array",
+						"title": "Years",
+						"description": "Per year of the vote, oldest first."
+					},
+					"party_votes": {
+						"items": {
+							"$ref": "#/components/schemas/PartyVotes"
+						},
+						"type": "array",
+						"title": "Party Votes",
+						"description": "With ``party_votes``: per faction asked, by key, how it voted."
 					}
 				},
 				"additionalProperties": false,
@@ -10152,13 +10584,23 @@
 					"count": {
 						"type": "integer",
 						"title": "Count"
+					},
+					"passed": {
+						"type": "integer",
+						"title": "Passed",
+						"default": 0
+					},
+					"rejected": {
+						"type": "integer",
+						"title": "Rejected",
+						"default": 0
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["value", "count"],
 				"title": "DecisionKindCount",
-				"description": "How many of the decisions are of one kind."
+				"description": "How many of the decisions are of one kind, and how many of those carried and did\nnot (the rest have no outcome)."
 			},
 			"DecisionListResponse": {
 				"properties": {
@@ -10176,6 +10618,12 @@
 					},
 					"facets": {
 						"$ref": "#/components/schemas/DecisionFacets"
+					},
+					"partial": {
+						"type": "boolean",
+						"title": "Partial",
+						"description": "``party_votes`` was asked for but is still being counted (every vote on every decision: seconds, once per change of the data): ``[]`` now; ask again.",
+						"default": false
 					}
 				},
 				"additionalProperties": false,
@@ -10240,6 +10688,18 @@
 						],
 						"title": "Subject"
 					},
+					"display_name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Display Name",
+						"description": "The heading of the vote, distinct per sibling on an agenda item: ``Motie 2024Z17945: <subject>``, the subject alone when it names its kind."
+					},
 					"external_id": {
 						"anyOf": [
 							{
@@ -10258,6 +10718,14 @@
 						"type": "array",
 						"title": "Dossier Numbers"
 					},
+					"dossiers": {
+						"items": {
+							"$ref": "#/components/schemas/DossierNameDTO"
+						},
+						"type": "array",
+						"title": "Dossiers",
+						"description": "The names of ``dossier_numbers``, in their order: ``number``, ``short_title``, ``title`` as ``/api/dossiers`` gives them."
+					},
 					"kind": {
 						"anyOf": [
 							{
@@ -10269,6 +10737,18 @@
 						],
 						"title": "Kind",
 						"description": "What was decided on: the ``Zaak.Soort`` of the case it decided (``primary_case_kind``), or the one Soort of the cases on its agenda item, as the Kamer writes it: ``Motie``, ``Amendement``, ``Wetgeving``, ``Begroting``, ...; null when neither tells."
+					},
+					"primary_case_kind": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Primary Case Kind",
+						"description": "The ``Zaak.Soort`` of the case the vote singled out (``Motie``, ``Amendement``, ``Wetgeving``); null when it singled out none."
 					},
 					"decision_kind": {
 						"anyOf": [
@@ -10370,7 +10850,39 @@
 				"type": "object",
 				"required": ["id", "key"],
 				"title": "DecisionSummaryDTO",
-				"description": "One row in the decision browser.\n\n``tally`` sums the seats behind each choice \u2014 the number to show for a\nresult \u2014 and ``voters`` counts how many factions (or members) made it.\n``external_id`` identifies the motion within a debate; use it rather than\n``subject``, which is shared by every motion on the same agenda item."
+				"description": "One row in the decision browser.\n\n``tally`` sums the seats behind each choice \u2014 the number to show for a\nresult \u2014 and ``voters`` counts how many factions (or members) made it.\n``subject`` is that of the case the vote decided; a vote without a case of its own\non an agenda item of several shares the item's subject with its siblings, and\n``display_name`` (``Motie 2024Z17945: \u2026``) and ``external_id`` tell them apart."
+			},
+			"DecisionYearCount": {
+				"properties": {
+					"year": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Year"
+					},
+					"count": {
+						"type": "integer",
+						"title": "Count"
+					},
+					"passed": {
+						"type": "integer",
+						"title": "Passed"
+					},
+					"rejected": {
+						"type": "integer",
+						"title": "Rejected"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["year", "count", "passed", "rejected"],
+				"title": "DecisionYearCount",
+				"description": "The decisions of one year: how many, how many carried, how many did not."
 			},
 			"DocumentFacetCountDTO": {
 				"properties": {
@@ -10483,6 +10995,14 @@
 						"title": "Dossier Numbers",
 						"description": "Every dossier it is part of, as labels."
 					},
+					"dossiers": {
+						"items": {
+							"$ref": "#/components/schemas/DossierNameDTO"
+						},
+						"type": "array",
+						"title": "Dossiers",
+						"description": "The names of ``dossier_numbers`` (or of ``dossier_number`` without them), in their order: ``number``, ``short_title``, ``title`` as ``/api/dossiers`` gives them."
+					},
 					"number": {
 						"anyOf": [
 							{
@@ -10528,6 +11048,17 @@
 						],
 						"title": "Session Year",
 						"description": "The session year as the source writes it (``2025-2026``): with the chamber, dossier and number the citation, Kamerstukken I 2025/26, 36791, C."
+					},
+					"sender": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/SenderDTO"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
 					}
 				},
 				"additionalProperties": false,
@@ -10668,6 +11199,17 @@
 						],
 						"title": "Number",
 						"description": "Its number in its dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``)."
+					},
+					"sender": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/SenderDTO"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
 					},
 					"date": {
 						"anyOf": [
@@ -11212,6 +11754,10 @@
 						"title": "Instruments",
 						"description": "Instruments legislated in, amended, introduced or repealed by the dossier, one item per instrument with every link."
 					},
+					"legal_effect": {
+						"$ref": "#/components/schemas/LegalEffectDTO",
+						"description": "What the dossier's law changes and implements: from its bills (proposed) and its publications and act (enacted), the order its title names them."
+					},
 					"laws_named": {
 						"items": {
 							"$ref": "#/components/schemas/DossierLawNamedDTO"
@@ -11397,6 +11943,17 @@
 							}
 						],
 						"title": "Tk Url"
+					},
+					"sender": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/SenderDTO"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
 					},
 					"display_name": {
 						"anyOf": [
@@ -11790,6 +12347,42 @@
 				"title": "DossierMutationsResponse",
 				"description": "The pending-change subgraph of a dossier, shaped like the graph endpoint."
 			},
+			"DossierNameDTO": {
+				"properties": {
+					"number": {
+						"type": "string",
+						"title": "Number"
+					},
+					"short_title": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Short Title",
+						"description": "The name it goes by: ``Begroting Defensie 2027``, the short title of a bill (``Wet betaalbare huur``)."
+					},
+					"title": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Title"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["number"],
+				"title": "DossierNameDTO",
+				"description": "The names of a dossier next to its bare number, as ``/api/dossiers`` gives them;\nnull when no dossier has the number."
+			},
 			"DossierPhaseDTO": {
 				"properties": {
 					"name": {
@@ -11848,6 +12441,18 @@
 							}
 						],
 						"title": "Title"
+					},
+					"short_title": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Short Title",
+						"description": "The name it goes by, as ``/api/dossiers`` gives it."
 					}
 				},
 				"additionalProperties": false,
@@ -12390,6 +12995,14 @@
 						"type": "array",
 						"title": "Dossier Numbers",
 						"default": []
+					},
+					"dossiers": {
+						"items": {
+							"$ref": "#/components/schemas/DossierNameDTO"
+						},
+						"type": "array",
+						"title": "Dossiers",
+						"description": "The names of ``dossier_numbers``, in their order: ``number``, ``short_title``, ``title`` as ``/api/dossiers`` gives them."
 					},
 					"result": {
 						"anyOf": [
@@ -14297,6 +14910,24 @@
 						],
 						"description": "Null without facets."
 					},
+					"partial": {
+						"type": "boolean",
+						"title": "Partial",
+						"description": "Part of the answer is still to come: ``total`` and ``facets`` were asked for but are still being counted (under a filter not counted before, that takes a minute or more): null now, ask again; or, with ``searched_from``, the search for ``q`` did not reach the first event.",
+						"default": false
+					},
+					"searched_from": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Searched From",
+						"description": "With ``q`` and no ``since``: the first day searched when the search stopped before the first event (YYYY-MM-DD). The events found are those from that day on; ask with ``until`` the day before (and no ``cursor``) for older ones. Null when every day was searched."
+					},
 					"data_as_of": {
 						"additionalProperties": {
 							"$ref": "#/components/schemas/DataAsOfDTO"
@@ -14604,6 +15235,23 @@
 				"type": "object",
 				"title": "GovernmentFunctionDTO",
 				"description": "A post held in a cabinet, as Rijksoverheid names it, and normalised."
+			},
+			"GroupExpandedDTO": {
+				"properties": {
+					"used": {
+						"type": "integer",
+						"title": "Used"
+					},
+					"total": {
+						"type": "integer",
+						"title": "Total"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["used", "total"],
+				"title": "GroupExpandedDTO",
+				"description": "How many children of a group a path search started from."
 			},
 			"HTTPValidationError": {
 				"properties": {
@@ -16938,7 +17586,7 @@
 							}
 						],
 						"title": "Same As",
-						"description": "For a publication of a decision that another publication replaces (the Rechtspraak published many old arresten again under a new ECLI), the ECLI of the one kept; the lists show the decision by that one. Null otherwise."
+						"description": "For a publication of a decision that another publication replaces (the Rechtspraak published many old arresten again under a new ECLI), the ECLI of the one kept; for a language version of an ECHR decision without an ECLI, the HUDOC item id of the version kept. The lists show the decision by that one. Null otherwise."
 					},
 					"replaced_by": {
 						"anyOf": [
@@ -17081,11 +17729,11 @@
 					},
 					"related_to": {
 						"items": {
-							"$ref": "#/components/schemas/JudgmentSummaryDTO"
+							"$ref": "#/components/schemas/RelatedJudgmentDTO"
 						},
 						"type": "array",
 						"title": "Related To",
-						"description": "The connected cases (`RELATED_TO`, as between dossiers), both ways: those its summary names (\"Samenhang met 24/03860 E\", \"Zie ook: ECLI:\u2026\") and those whose summary names it, each found by its exact ECLI or case number. Empty for most."
+						"description": "The connected cases (`RELATED_TO`, as between dossiers), both ways: those its summary names (\"Samenhang met 24/03860 E\", \"Zie ook: ECLI:\u2026\") and those whose summary names it, each found by its exact ECLI or case number, with the sentence that names it (`links`). Empty for most."
 					},
 					"series": {
 						"items": {
@@ -17755,6 +18403,97 @@
 				"required": ["label", "count"],
 				"title": "LegalAreaFacetDTO",
 				"description": "A main legal area and its specific areas."
+			},
+			"LegalEffectDTO": {
+				"properties": {
+					"amends": {
+						"items": {
+							"$ref": "#/components/schemas/LegalEffectItemDTO"
+						},
+						"type": "array",
+						"title": "Amends",
+						"description": "The laws it amends, adds to or repeals from (never its own new act)."
+					},
+					"implements": {
+						"items": {
+							"$ref": "#/components/schemas/LegalEffectItemDTO"
+						},
+						"type": "array",
+						"title": "Implements",
+						"description": "The EU acts it implements."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "LegalEffectDTO",
+				"description": "What the dossier's law changes and implements, in the order its title names them."
+			},
+			"LegalEffectItemDTO": {
+				"properties": {
+					"key": {
+						"type": "string",
+						"title": "Key"
+					},
+					"name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Name",
+						"description": "The citation title, else the title: `Wet op het financieel toezicht`."
+					},
+					"short": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Short",
+						"description": "The short title the source gives (the WTI afkorting: `Wft`); null where it gives none."
+					},
+					"bwb_id": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Bwb Id"
+					},
+					"celex": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Celex"
+					},
+					"basis": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"title": "Basis",
+						"description": "Where it shows: `voorstel` (a bill of the dossier proposes the change), `staatsblad` (an amending publication of the dossier enacted it), `wet` (the act of the dossier implements it)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key"],
+				"title": "LegalEffectItemDTO",
+				"description": "An instrument the dossier changes or implements."
 			},
 			"LegislativeHistoryEntry": {
 				"properties": {
@@ -18889,6 +19628,21 @@
 						],
 						"title": "Next Offset"
 					},
+					"lid_counts": {
+						"anyOf": [
+							{
+								"additionalProperties": {
+									"type": "integer"
+								},
+								"type": "object"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Lid Counts",
+						"description": "Of an article: per lid the edges of the whole bucket cite, how many do (\"\" for those that cite none; an edge that cites two counts for each); null when none of them cites a lid."
+					},
 					"items": {
 						"items": {
 							"$ref": "#/components/schemas/NeighborDTO"
@@ -19340,6 +20094,121 @@
 				"title": "PartyRefDTO",
 				"description": "A party as the source writes it (``VVD``, ``partijloos``), and its faction."
 			},
+			"PartyVoteKindCount": {
+				"properties": {
+					"voor": {
+						"type": "integer",
+						"title": "Voor"
+					},
+					"tegen": {
+						"type": "integer",
+						"title": "Tegen"
+					},
+					"none": {
+						"type": "integer",
+						"title": "None"
+					},
+					"value": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Value",
+						"description": "The kind, as in ``kind``."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["voor", "tegen", "none"],
+				"title": "PartyVoteKindCount"
+			},
+			"PartyVoteYearCount": {
+				"properties": {
+					"voor": {
+						"type": "integer",
+						"title": "Voor"
+					},
+					"tegen": {
+						"type": "integer",
+						"title": "Tegen"
+					},
+					"none": {
+						"type": "integer",
+						"title": "None"
+					},
+					"year": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Year"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["voor", "tegen", "none"],
+				"title": "PartyVoteYearCount"
+			},
+			"PartyVotes": {
+				"properties": {
+					"voor": {
+						"type": "integer",
+						"title": "Voor"
+					},
+					"tegen": {
+						"type": "integer",
+						"title": "Tegen"
+					},
+					"none": {
+						"type": "integer",
+						"title": "None"
+					},
+					"party": {
+						"type": "string",
+						"title": "Party",
+						"description": "The key of the faction."
+					},
+					"name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Name",
+						"description": "Its abbreviation, else its name."
+					},
+					"kind": {
+						"items": {
+							"$ref": "#/components/schemas/PartyVoteKindCount"
+						},
+						"type": "array",
+						"title": "Kind"
+					},
+					"years": {
+						"items": {
+							"$ref": "#/components/schemas/PartyVoteYearCount"
+						},
+						"type": "array",
+						"title": "Years"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["voor", "tegen", "none", "party"],
+				"title": "PartyVotes",
+				"description": "How one faction voted on the decisions under every filter: in all, per kind (most\ndecisions first) and per year (oldest first)."
+			},
 			"PassageDTO": {
 				"properties": {
 					"section_id": {
@@ -19456,6 +20325,22 @@
 						"type": "array",
 						"title": "Edge Ids",
 						"description": "Its edges, in that order."
+					},
+					"membership_edge_ids": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"title": "Membership Edge Ids",
+						"description": "Of `edge_ids`, those that make a child of a group the path starts or ends at (`expand=members`)."
+					},
+					"via": {
+						"additionalProperties": {
+							"type": "string"
+						},
+						"type": "object",
+						"title": "Via",
+						"description": "Per end that is a group the path goes through a child of (`expand=members`): the child (`factions/vvd`: `members/\u2026`)."
 					}
 				},
 				"additionalProperties": false,
@@ -19527,6 +20412,26 @@
 						"type": "boolean",
 						"title": "Capped",
 						"description": "A level of a search reached its cap (5,000 nodes): a longer way around a hub may have been missed."
+					},
+					"expand": {
+						"type": "string",
+						"enum": ["none", "members"],
+						"title": "Expand",
+						"default": "none"
+					},
+					"expanded": {
+						"additionalProperties": {
+							"$ref": "#/components/schemas/GroupExpandedDTO"
+						},
+						"type": "object",
+						"title": "Expanded",
+						"description": "Per group of `ids` (`expand=members`): how many of its children the search started from (`used`, at most `expand_cap`) of how many it has (`total`)."
+					},
+					"partial": {
+						"type": "boolean",
+						"title": "Partial",
+						"description": "The search ran past its time: the paths found by then; another pair may have one.",
+						"default": false
 					}
 				},
 				"additionalProperties": false,
@@ -19776,6 +20681,91 @@
 				"title": "RegisterConceptDTO",
 				"description": "A concept of a register with the instruments under the filters filed under it."
 			},
+			"RelatedJudgmentDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id"
+					},
+					"key": {
+						"type": "string",
+						"title": "Key"
+					},
+					"display_name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Display Name"
+					},
+					"ecli": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Ecli"
+					},
+					"links": {
+						"items": {
+							"$ref": "#/components/schemas/RelatedLinkDTO"
+						},
+						"type": "array",
+						"title": "Links"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "display_name", "ecli"],
+				"title": "RelatedJudgmentDTO",
+				"description": "A connected case, with the edges that connect it (one each way at most)."
+			},
+			"RelatedLinkDTO": {
+				"properties": {
+					"direction": {
+						"type": "string",
+						"enum": ["outbound", "inbound"],
+						"title": "Direction",
+						"description": "`outbound`: this judgment's summary names the other; `inbound`: the other's summary names this one."
+					},
+					"basis": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Basis",
+						"description": "Where the link was read: `summary_text` (the inhoudsindicatie)."
+					},
+					"text": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Text",
+						"description": "The sentence that names the case: \"Samenhang met 24/03860 E\"."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["direction"],
+				"title": "RelatedLinkDTO",
+				"description": "One RELATED_TO edge between two judgments: which summary names which, and how."
+			},
 			"RelatedTreatyDTO": {
 				"properties": {
 					"id": {
@@ -19978,7 +20968,16 @@
 					},
 					"kind": {
 						"type": "string",
-						"enum": ["article", "instrument", "judgment", "dossier", "document", "commitment"],
+						"enum": [
+							"article",
+							"instrument",
+							"judgment",
+							"dossier",
+							"document",
+							"commitment",
+							"faction",
+							"member"
+						],
 						"title": "Kind"
 					},
 					"display_name": {
@@ -19997,7 +20996,7 @@
 						"maximum": 1.0,
 						"minimum": 0.0,
 						"title": "Confidence",
-						"description": "1: an identifier (ECLI, BWB id, CELEX); 0.95: a citation read whole; 0.9: a law by exact abbreviation or name; lower for partial names, an article without a law, or several equally good nodes (at most 0.5)"
+						"description": "1: an identifier (ECLI, BWB id, CELEX); 0.95: a citation read whole; 0.9: a law, faction or member by exact abbreviation or name; lower for partial names, an article without a law, or several equally good nodes (at most 0.5)"
 					}
 				},
 				"additionalProperties": false,
@@ -20016,7 +21015,16 @@
 						"anyOf": [
 							{
 								"type": "string",
-								"enum": ["article", "instrument", "judgment", "dossier", "document", "commitment"]
+								"enum": [
+									"article",
+									"instrument",
+									"judgment",
+									"dossier",
+									"document",
+									"commitment",
+									"faction",
+									"member"
+								]
 							},
 							{
 								"type": "string",
@@ -20030,7 +21038,7 @@
 						"maximum": 1.0,
 						"minimum": 0.0,
 						"title": "Confidence",
-						"description": "Confidence of `match`; 0 for `none`"
+						"description": "Confidence of `match`; 0 for `none`; at most 0.5 for a choice"
 					},
 					"match": {
 						"anyOf": [
@@ -20047,7 +21055,15 @@
 							"$ref": "#/components/schemas/ResolveMatch"
 						},
 						"type": "array",
-						"title": "Alternatives"
+						"title": "Alternatives",
+						"description": "The others that fit, best first; for a citation that leaves the book of a code open (`art. 3 BW`): `match` null, `kind` `article`, and the articles it may mean, in the order of the books (at most 10)"
+					},
+					"alternatives_total": {
+						"type": "integer",
+						"minimum": 0.0,
+						"title": "Alternatives Total",
+						"description": "How many alternatives were found (`alternatives` lists the first)",
+						"default": 0
 					},
 					"qualifier": {
 						"anyOf": [
@@ -20156,6 +21172,14 @@
 						},
 						"type": "object",
 						"title": "Results"
+					},
+					"partial": {
+						"additionalProperties": {
+							"type": "boolean"
+						},
+						"type": "object",
+						"title": "Partial",
+						"description": "With `mode=live`: the types cut off at their budget, `true` each (their results may be empty or short; the full search has more). A type that was not cut off is not in it."
 					},
 					"resolved": {
 						"anyOf": [
@@ -20360,6 +21384,86 @@
 				"required": ["id", "heading", "level", "kind", "char_start", "char_end"],
 				"title": "SectionDTO",
 				"description": "One heading of a paper with the text under it: `text[char_start:char_end]`."
+			},
+			"SenderDTO": {
+				"properties": {
+					"name": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Name",
+						"description": "As the source writes it."
+					},
+					"function": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Function",
+						"description": "The function they signed in: 'minister van Financi\u00ebn', 'Tweede Kamerlid'; null when the source gives none."
+					},
+					"faction": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Faction",
+						"description": "Of a Kamerlid: the faction."
+					},
+					"capacity": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": ["kamerlid", "bewindspersoon", "overig"]
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Capacity",
+						"description": "'bewindspersoon' (a letter of the government), 'kamerlid' or 'overig' (the griffier, the Raad van State, ...)."
+					},
+					"member_key": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"title": "Member Key",
+						"description": "Their Member node, if named."
+					},
+					"ministry": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/MinistryKey"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Of a bewindspersoon the ministry their function names."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "SenderDTO",
+				"description": "Who sent a Tweede Kamer paper: its first signatory, else the signature the source\ncalls its sender (``Afzender``), as the source gives it."
 			},
 			"SourceRefDTO": {
 				"properties": {
@@ -21246,6 +22350,17 @@
 							}
 						],
 						"title": "Url"
+					},
+					"sender": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/SenderDTO"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
 					}
 				},
 				"additionalProperties": false,
@@ -21455,6 +22570,17 @@
 							}
 						],
 						"title": "Tk Url"
+					},
+					"sender": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/SenderDTO"
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
 					},
 					"dictum_excerpt": {
 						"anyOf": [
