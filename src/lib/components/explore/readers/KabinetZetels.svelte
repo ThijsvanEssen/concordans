@@ -11,7 +11,7 @@
 	import Hemicycle from '../Hemicycle.svelte';
 	import ZaalTegenover from '../ZaalTegenover.svelte';
 	import Meerderheid from '../Meerderheid.svelte';
-	import { kleurVan } from '../partijkleuren.svelte';
+	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
 	import { getCabinetSeats, getParliamentSeats } from '$lib/api/records';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { formatLongDate } from './_shared';
@@ -157,17 +157,24 @@
 							colorOf={(f, i) => kleurVan('TK', naam(f), i, f.color ?? null)}
 						/>
 					</div>
+					<!-- The Kamer's numbers of the front, quiet under the hall. -->
+					<p class="sleutel">
+						{#each ['Voorzitter', 'Griffier', 'Kabinet (vak-K)', 'Verslag en redactie', 'Spreekgestoelte', 'Interruptiemicrofoons', 'Bodedienst'] as plaats, i (plaats)}<span
+								><b>{i + 1}</b> {plaats}</span
+							>{/each}
+					</p>
 					<div class="zijden">
 						{#each [['Coalitie', z.ja, z.jaZetels], ['Oppositie', z.nee, z.neeZetels]] as const as [kop, lijst, totaal] (kop)}
-							<div class="zijde">
+							<div class="zijde" class:zijde--lang={lijst.length > 6}>
 								<h4>{kop} <span class="aantal">{totaal}</span></h4>
 								<ol>
-									{#each lijst as f, i (f.key)}
+									{#each lijst as f (f.key)}
 										<li>
 											<span
 												class="stip"
 												class:open={kop === 'Oppositie'}
-												style:--kleur={kleurVan('TK', naam(f), i, f.color ?? null)}
+												style:--kleur={kleurVan('TK', naam(f), 0, f.color ?? null)}
+												style:--achter={achtergrondVan(naam(f), f.color ?? null)}
 											></span>
 											<span class="n">{naam(f)}</span><span class="z">{f.seats}</span>
 										</li>
@@ -242,6 +249,11 @@
 					<div class="zaal">
 						<ZaalTegenover data={ek} voteHighlight={kantVan(ek)} />
 					</div>
+					<p class="sleutel">
+						{#each ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie'] as plaats, i (plaats)}<span
+								><b>{i + 1}</b> {plaats}</span
+							>{/each}
+					</p>
 					<Meerderheid
 						ja={z.jaZetels}
 						nee={z.neeZetels}
@@ -275,22 +287,50 @@
 		display: flex;
 		justify-content: center;
 	}
+	/* Both halls in the box of the Tweede Kamer's (440 by 291): one scale, one height. */
 	.zaal :global(svg) {
 		width: 100%;
 		max-width: 456px;
 		height: auto;
-		max-height: 300px;
+		aspect-ratio: 440 / 291;
 	}
 	.zaal :global(.hemicycle) {
 		padding: 0;
 		border: 0;
 		background: transparent;
 	}
-	/* The two sides side by side, each a list of its fracties by seats. */
+	/* The two sides side by side, each a list of its fracties by seats; a long side (the
+	   opposition, mostly) in two columns, so the lists stand about as high (Thijs, 10 Oct). */
 	.zijden {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
 		gap: var(--s-5);
+	}
+	.zijde--lang ol {
+		columns: 2;
+		column-gap: var(--s-5);
+	}
+	.zijde--lang li {
+		break-inside: avoid;
+	}
+	.sleutel {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--s-1) var(--s-3);
+		margin: 0;
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+	.sleutel b {
+		font-weight: 600;
+		color: var(--ink-2);
+	}
+	@media (max-width: 520px) {
+		.zijden {
+			grid-template-columns: minmax(0, 1fr);
+		}
 	}
 	h4 {
 		display: flex;
@@ -334,7 +374,7 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 2px;
-		background: var(--kleur);
+		background: var(--achter, var(--kleur));
 	}
 	.stip.open {
 		background: var(--paper);

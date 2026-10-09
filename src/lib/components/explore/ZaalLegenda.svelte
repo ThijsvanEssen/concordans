@@ -3,7 +3,7 @@
 	// fractie een stip in de kleur van de zaal, de naam en de zetels, op grootte, in kolommen;
 	// daaronder de genummerde plaatsen op één regel. Gelijk voor beide Kamers.
 	import type { Schema } from '$lib/api/types';
-	import { kleurenVan } from './partijkleuren.svelte';
+	import { achtergrondVan } from './partijkleuren.svelte';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 	let {
@@ -39,14 +39,8 @@
 		style:grid-template-columns="repeat({kolommen}, minmax(0, 1fr))"
 	>
 		{#each fracties as f (f.key)}
-			{@const k = kleurenVan(data.chamber, naam(f), f.color ?? null)}
 			<li>
-				<span
-					class="stip"
-					style:background={k.length > 1
-						? `linear-gradient(90deg, ${k[0]} 50%, ${k[1]} 50%)`
-						: k[0]}
-				></span>
+				<span class="stip" style:background={achtergrondVan(naam(f), f.color ?? null)}></span>
 				<span class="n">{naam(f)}</span><span class="z">{f.seats}</span>
 			</li>
 		{/each}
