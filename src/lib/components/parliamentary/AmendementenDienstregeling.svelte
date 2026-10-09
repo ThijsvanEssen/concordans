@@ -1,20 +1,22 @@
 <script lang="ts">
-	// The amendments of a bill, each with its route in one line (amendementen.ts): submitted
-	// on a day (nr. 22), changed on the next (nr. 30), voted on a day, and its outcome. The
-	// days written out, so it can be told at a glance when something happened (Thijs, 10 Oct:
-	// "De datum is nog niet echt duidelijk, omdat de schaal zo fragiel is"); the columns of
-	// days that stood here before said nothing of the time between them. Asked once the
-	// section comes into view: one request, the dossier's neighbourhood.
+	// The amendments of a bill as a timetable (amendementen.ts; Thijs, 10 Oct: "schematisch
+	// als spoorboekje wel beter, omdat het info communiceert zonder al die tekst, dus een
+	// tussenweg"). A row per amendment as it came to the vote; a column per day on which a
+	// paper appeared (the days cluster, so not to scale), each with its day written out, the
+	// month above the days it holds, a rule where the month changes and a dotted one where
+	// the week does, so the distance can be read. A stop is the paper's number in a ring; the
+	// card on it says the rest. At the end the outcome as a shape and the tally. Where the
+	// column is narrower than the timetable, it scrolls in its own box, the names standing.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
-	import { dagMaand, korteDatum } from '$lib/text/datum';
+	import { maandNaam } from '$lib/text/datum';
 	import {
 		getAmendementen,
-		stappen,
+		kolomVan,
+		maandagVan,
 		type Dienstregeling,
-		type Rij,
-		type Stuk
+		type Rij
 	} from './amendementen';
 
 	let { dossierKey }: { dossierKey: string } = $props();
@@ -54,25 +56,53 @@
 		return { destroy: () => kijk.disconnect() };
 	}
 
-	/** The day in full where the route begins or the year changes; else day and month. */
-	const dag = (iso: string, vorige: string | null) =>
-		!vorige || vorige.slice(0, 4) !== iso.slice(0, 4) ? korteDatum(iso) : dagMaand(iso);
+	/** The columns are weeks where the days are too many (amendementen.ts). */
+	const weken = $derived(
+		!!regeling &&
+			regeling.kolommen.some(
+				(k) => !regeling!.rijen.some((r) => r.haltes.some((h) => h.datum === k))
+			)
+	);
+	/** The months over the columns: the whole name over three days or more, else short; the
+	 *  year where it changes (the first year stands at the start of the row). */
+	const maanden = $derived.by(() => {
+		const uit: { maand: string; span: number }[] = [];
+		for (const k of regeling?.kolommen ?? []) {
+			const vorige = uit.at(-1);
+			if (vorige?.maand === k.slice(0, 7)) vorige.span++;
+			else uit.push({ maand: k.slice(0, 7), span: 1 });
+		}
+		return uit.map((m, i) => {
+			const kort = maandNaam(`${m.maand}-01`, m.span < 3);
+			const jaar = i > 0 && uit[i - 1].maand.slice(0, 4) !== m.maand.slice(0, 4);
+			return { ...m, label: jaar ? `${kort} ${m.maand.slice(0, 4)}` : kort };
+		});
+	});
+	/** Where a column starts a new month or a new week: the rule that shows the distance. */
+	const grens = (i: number) => {
+		const k = regeling!.kolommen;
+		if (i === 0) return '';
+		if (k[i].slice(0, 7) !== k[i - 1].slice(0, 7)) return 'maandgrens';
+		return !weken && maandagVan(k[i]) !== maandagVan(k[i - 1]) ? 'weekgrens' : '';
+	};
 
+	/** Where a row stands at a column: before its first paper, at a stop, running, or after its last. */
+	function stand(r: Rij, k: string): string {
+		const eerste = kolomVan(regeling!, r.haltes[0].datum);
+		const laatste = kolomVan(regeling!, r.haltes.at(-1)!.datum);
+		if (k < eerste) return 'voor';
+		// Without a vote the line stops at the last paper: it goes nowhere.
+		if (r.haltes.some((h) => kolomVan(regeling!, h.datum) === k))
+			return `halte${k === eerste ? ' eerste' : ''}${k === laatste ? (r.uitslag ? ' laatste' : ' laatste stil') : ''}`;
+		return k < laatste ? 'loopt' : r.uitslag ? 'na' : 'voor';
+	}
 	const uitkomst = (r: Rij) =>
 		!r.uitslag || r.uitslag.aangenomen === null
-			? { soort: 'open' as const, woord: r.uitslag ? 'gestemd' : 'geen stemming' }
+			? { soort: 'open' as const, titel: r.uitslag ? 'gestemd' : 'geen stemming' }
 			: r.uitslag.aangenomen
-				? { soort: 'ja' as const, woord: 'aangenomen' }
-				: { soort: 'nee' as const, woord: 'verworpen' };
+				? { soort: 'ja' as const, titel: 'aangenomen' }
+				: { soort: 'nee' as const, titel: 'verworpen' };
 </script>
-
-{#snippet nummers(lijst: Stuk[])}
-	({lijst.length === 1 ? 'nr.' : 'nrs.'}
-	{#each lijst as h, i (h.id)}{#if i > 0}{i === lijst.length - 1 ? ' en ' : ', '}{/if}<BronLink
-			ref={h.id}
-			title={h.titel}>{h.nummer}</BronLink
-		>{/each})
-{/snippet}
 
 <div class="amendementen" use:inBeeld>
 	<Sectie titel="Amendementen" soort="documents" aantal={regeling?.rijen.length ?? null}>
@@ -81,111 +111,257 @@
 		{:else if !regeling}
 			<p class="stand">Amendementen laden…</p>
 		{:else}
-			<ol class="lijst">
-				{#each regeling.rijen as r (r.stuk.id)}
-					{@const route = stappen(r)}
-					{@const u = uitkomst(r)}
-					<li class="am">
-						{#if r.indiener}
-							<span class="indiener"
-								>{r.indiener.naam}{r.indiener.fractie ? ` (${r.indiener.fractie})` : ''}{r.indiener
-									.anderen > 0
-									? ' c.s.'
-									: ''}</span
-							>
-						{/if}
-						<span class="titel">{r.stuk.titel}</span>
-						<p class="route">
-							{#each route as s, i (s.datum + s.wat)}
-								{#if i > 0}<span class="pijl" aria-hidden="true">›</span>{/if}<span class="stap"
-									>{s.wat}
-									<time datetime={s.datum}>{dag(s.datum, i > 0 ? route[i - 1].datum : null)}</time>
-									{@render nummers(s.stukken)}</span
+			<div class="rol" data-zijscroll>
+				<table class="regeling" style:--dagen={regeling.kolommen.length}>
+					<colgroup>
+						<col class="c-naam" />
+						{#each regeling.kolommen as k (k)}<col class="c-dag" />{/each}
+						<col class="c-eind" />
+					</colgroup>
+					<thead>
+						<tr class="maanden">
+							<th class="naam" scope="col">{regeling.kolommen[0]?.slice(0, 4)}</th>
+							{#each maanden as m, i (m.maand)}
+								<th scope="colgroup" colspan={m.span} class:maandgrens={i > 0}>{m.label}</th>
+							{/each}
+							<th class="eind"></th>
+						</tr>
+						<tr class="dagen">
+							<th class="naam" scope="col">Amendement</th>
+							{#each regeling.kolommen as k, i (k)}
+								<th scope="col" class="dag {grens(i)}"
+									>{weken ? `wk ${Number(k.slice(8))}` : Number(k.slice(8))}<span class="nr"
+										>nr.</span
+									></th
 								>
 							{/each}
-							{#if r.uitslag}
-								<span class="pijl" aria-hidden="true">›</span><span class="stap"
-									>gestemd
-									<time datetime={r.uitslag.datum}
-										>{dag(r.uitslag.datum, route.at(-1)?.datum ?? null)}</time
-									>:
-									<BronLink ref={r.uitslag.id} class="uitslag" preview={false}
-										><Uitkomst soort={u.soort} woord={u.woord} /></BronLink
-									>{#if r.uitslag.voor != null && r.uitslag.tegen != null}, {r.uitslag.voor} voor,
-										{r.uitslag.tegen} tegen{/if}</span
-								>
-							{:else if regeling.metVervanging}
-								<!-- Not replaced and never voted: withdrawn or still open. Without the
-								     chains a paper without a vote may have been replaced: nothing said. -->
-								<span class="pijl" aria-hidden="true">›</span><span class="stap"
-									><Uitkomst soort={u.soort} woord={u.woord} /></span
-								>
-							{/if}
-						</p>
-					</li>
-				{/each}
-			</ol>
+							<th scope="col" class="eind">Stemming</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each regeling.rijen as r (r.stuk.id)}
+							{@const u = uitkomst(r)}
+							<tr>
+								<th scope="row" class="naam">
+									{#if r.indiener}
+										<span class="indiener"
+											>{r.indiener.naam}{r.indiener.fractie ? ` (${r.indiener.fractie})` : ''}{r
+												.indiener.anderen > 0
+												? ' c.s.'
+												: ''}</span
+										>
+									{/if}
+									<span class="titel" title={r.stuk.titel}>{r.stuk.titel}</span>
+								</th>
+								{#each regeling.kolommen as k, i (k)}
+									{@const s = stand(r, k)}
+									<td class="dag {s} {grens(i)}">
+										{#if s.startsWith('halte')}
+											{#each r.haltes.filter((h) => kolomVan(regeling!, h.datum) === k) as h (h.id)}
+												<BronLink ref={h.id} class="nr-ring">{h.nummer}</BronLink>
+											{/each}
+										{/if}
+									</td>
+								{/each}
+								<td class="eind">
+									{#if r.uitslag}
+										<BronLink ref={r.uitslag.id} class="uitslag"
+											><Uitkomst
+												soort={u.soort}
+												titel={u.titel}
+											/>{#if r.uitslag.voor != null && r.uitslag.tegen != null}<span
+													>{r.uitslag.voor}–{r.uitslag.tegen}</span
+												>{/if}</BronLink
+										>
+									{:else if regeling.metVervanging}
+										<!-- Not replaced and never voted: withdrawn or still open. Without the
+										     chains a paper without a vote may have been replaced: nothing said. -->
+										<Uitkomst soort={u.soort} titel={u.titel} />
+									{/if}
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
 		{/if}
 	</Sectie>
 </div>
 
 <style>
-	/* A state line under the heading, at rung 6. */
 	.stand {
 		margin: 0;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.lijst {
-		margin: 0;
-		padding: 0;
-		list-style: none;
+	/* The timetable scrolls in its own box where its column is narrower; never the page. */
+	.rol {
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
 	}
-	.am {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		padding: var(--s-3) 0;
+	.regeling {
+		--naam: 150px;
+		--dag: 48px;
+		--eind: 84px;
+		width: 100%;
+		min-width: calc(var(--naam) + var(--dagen) * var(--dag) + var(--eind));
+		table-layout: fixed;
+		border-collapse: collapse;
+		font-size: var(--t-micro);
+	}
+	.c-dag {
+		width: var(--dag);
+	}
+	.c-eind {
+		width: var(--eind);
+	}
+	/* The months over their days, the days under them: what a column means, readable. */
+	thead th {
+		padding: 2px;
+		font-weight: 400;
+		color: var(--ink-3);
+		text-align: center;
+		white-space: nowrap;
+	}
+	.maanden th {
+		padding-left: 6px;
+		text-align: left;
+		font-weight: 600;
+		color: var(--ink-2);
+	}
+	/* The day under its month: the number large enough to find at a glance. */
+	.dagen th {
+		border-bottom: 1px solid var(--rule-strong);
+		color: var(--ink);
+		font-size: var(--t-meta);
+		font-weight: 600;
+		line-height: 1.2;
+	}
+	.dagen .nr {
+		display: block;
+		font-weight: 400;
+		color: var(--ink-3);
+	}
+	thead .naam,
+	thead .eind {
+		text-align: left;
+	}
+	.dagen .naam,
+	.dagen .eind {
+		font-weight: 400;
+		color: var(--ink-3);
+		vertical-align: bottom;
+	}
+	/* A rule where the month changes, a dotted one where the week does. */
+	.maandgrens {
+		border-left: 1px solid var(--rule-strong);
+	}
+	.weekgrens {
+		border-left: 1px dotted var(--rule);
+	}
+	tbody tr {
 		border-bottom: 1px solid var(--rule);
 	}
-	/* The amendment: its first signer at rung 4, its title under it at rung 5. */
+	/* The name stays while the days scroll. */
+	.naam {
+		position: sticky;
+		left: 0;
+		z-index: 2;
+		background: var(--paper);
+		box-shadow: 1px 0 0 var(--rule);
+	}
+	tbody th.naam {
+		padding: var(--s-2) var(--s-2) var(--s-2) 0;
+		text-align: left;
+		font-weight: 400;
+		vertical-align: middle;
+	}
 	.indiener {
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
-	}
-	.titel {
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
-		-webkit-box-orient: vertical;
+		display: block;
 		overflow: hidden;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		line-height: 1.35;
-	}
-	/* The route: each step a word, its day (what the eye looks for, in the deciding weight)
-	   and its papers; the vote and its outcome at the end. */
-	.route {
-		margin: var(--s-1) 0 0;
 		font-size: var(--t-meta);
-		color: var(--ink-3);
-		line-height: 1.6;
-	}
-	.route time {
 		font-weight: 600;
 		color: var(--ink);
 		white-space: nowrap;
+		text-overflow: ellipsis;
 	}
-	.pijl {
-		margin: 0 0.35em;
+	.titel {
+		display: block;
+		overflow: hidden;
 		color: var(--ink-3);
+		white-space: nowrap;
+		text-overflow: ellipsis;
 	}
-	.route :global(.uitslag) {
-		color: inherit;
+	/* The line of a row: solid while it runs, dotted from its last paper to the vote. */
+	td.dag {
+		position: relative;
+		height: 44px;
+		padding: 0;
+		text-align: center;
+	}
+	td.loopt::before,
+	td.na::before,
+	td.halte:not(.eerste)::before,
+	td.halte::after {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 0;
+		right: 0;
+		border-top: 1.5px solid var(--ink);
+	}
+	td.halte:not(.eerste)::before {
+		right: 50%;
+	}
+	td.halte::after {
+		left: 50%;
+	}
+	td.na::before,
+	td.halte.laatste::after {
+		border-top-style: dotted;
+	}
+	td.halte.stil::after {
+		content: none;
+	}
+	/* A stop: the paper's number in a ring; its card tells the rest. */
+	td.dag :global(.nr-ring) {
+		position: relative;
+		z-index: 1;
+		display: inline-block;
+		min-width: 26px;
+		margin: 1px 0;
+		padding: 0 4px;
+		border: 1.5px solid var(--ink);
+		border-radius: 999px;
+		background: var(--paper);
+		color: var(--ink);
+		font-weight: 600;
+		line-height: 18px;
 		text-decoration: none;
 	}
-	.route :global(.uitslag:hover) {
-		text-decoration: underline;
+	td.dag :global(.nr-ring:hover),
+	td.dag :global(.nr-ring:focus-visible) {
+		background: var(--ink);
+		color: var(--paper);
+	}
+	/* The outcome: the shape, and the votes for and against. */
+	td.eind {
+		padding: 0 0 0 var(--s-2);
+		white-space: nowrap;
+		vertical-align: middle;
+	}
+	td.eind :global(.uitslag) {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--s-1);
+		color: var(--ink-2);
+		text-decoration: none;
+	}
+	@media (max-width: 640px) {
+		.regeling {
+			--naam: 120px;
+			--dag: 44px;
+			--eind: 76px;
+		}
 	}
 </style>
