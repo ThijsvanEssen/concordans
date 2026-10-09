@@ -43,8 +43,11 @@
 </div>
 
 <style>
+	/* The frame counts in the height: a Keuze stands as high as a field beside it. */
 	.keuze {
+		box-sizing: border-box;
 		display: inline-flex;
+		height: var(--veld-h);
 		border: 1px solid var(--ink);
 		border-radius: var(--r-1);
 		overflow: hidden;
@@ -53,7 +56,6 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-1);
-		height: var(--veld-h);
 		padding: 0 var(--s-3);
 		border: 0;
 		background: var(--paper);
@@ -64,8 +66,10 @@
 		color: var(--ink);
 		cursor: pointer;
 	}
-	.klein button {
+	.keuze.klein {
 		height: var(--veld-h-klein);
+	}
+	.klein button {
 		padding: 0 var(--s-2);
 		font-size: var(--t-ui-micro);
 	}

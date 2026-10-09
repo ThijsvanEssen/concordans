@@ -13,13 +13,16 @@
 		van,
 		tot,
 		onChange,
-		label = 'Periode'
+		label = 'Periode',
+		klein = true
 	}: {
 		van: string;
 		tot: string;
 		onChange: (van: string, tot: string) => void;
 		/** For the row of choices, where no heading names it. */
 		label?: string;
+		/** 24 px in a panel; false on a page's choose-line, at the height of its field (32). */
+		klein?: boolean;
 	} = $props();
 
 	const uid = $props.id();
@@ -41,8 +44,8 @@
 	}
 </script>
 
-<div class="periode">
-	<Keuze klein vol {label} {opties} waarde={toon} onKies={kies} />
+<div class="periode" class:groot={!klein}>
+	<Keuze {klein} vol {label} {opties} waarde={toon} onKies={kies} />
 	{#if toon === 'eigen'}
 		<div class="range">
 			<label for="{uid}-van">van</label>
@@ -120,6 +123,9 @@
 	input.leeg::-webkit-datetime-edit-month-field,
 	input.leeg::-webkit-datetime-edit-year-field {
 		color: var(--ink-3);
+	}
+	.groot input {
+		height: var(--veld-h);
 	}
 	input:hover,
 	input:focus-visible {

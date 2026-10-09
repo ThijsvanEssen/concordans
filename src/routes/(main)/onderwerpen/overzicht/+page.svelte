@@ -758,7 +758,12 @@
 	{:else}
 		<!-- The choose-line: the period, nothing else. -->
 		<div class="regel">
-			<Periode {van} {tot} onChange={(v, t) => zet({ van: v || null, tot: t || null })} />
+			<Periode
+				{van}
+				{tot}
+				klein={false}
+				onChange={(v, t) => zet({ van: v || null, tot: t || null })}
+			/>
 		</div>
 		<div class="indeling">
 			<aside class="facetten" aria-label="Verfijnen">
