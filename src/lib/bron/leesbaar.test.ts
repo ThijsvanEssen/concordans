@@ -55,7 +55,13 @@ describe('a readable address', () => {
 		expect(padOfFocus('commitments/6149', { number: 'TZ202609-124' })).toBe(
 			'/toezeggingen/TZ202609-124'
 		);
-		expect(padOfFocus('decisions/decision_6312')).toBeNull();
+		// A stemming by its key (Back-end #2, SEO PR 2): /stemmingen/<key>.
+		expect(padOfFocus('decisions/decision_6312')).toBe('/stemmingen/decision_6312');
+		expect(parsePad('/stemmingen/decision_6312')).toEqual({
+			soort: 'stemming',
+			key: 'decision_6312'
+		});
+		expect(focusOfPad({ soort: 'stemming', key: 'decision_6312' })).toBe('decisions/decision_6312');
 	});
 
 	it('reads a lid by its slug, and gives a lid its address from its slug', () => {
