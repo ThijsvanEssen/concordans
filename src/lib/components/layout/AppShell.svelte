@@ -28,10 +28,13 @@
 	// A map shared as a link (?map=) opens in the panel, to add to one's own or put aside.
 	const gedeeldeMap = $derived(page.url.searchParams.get('map'));
 	const gedeeldeNaam = $derived(page.url.searchParams.get('mapnaam'));
+	const gedeeldeVolgorde = $derived(
+		page.url.searchParams.get('mapvolgorde') === 'eigen' ? 'eigen' : 'groep'
+	);
 	$effect(() => {
 		const items = uitParam(gedeeldeMap);
 		if (!items.length) return;
-		kaart.gedeeld = { naam: gedeeldeNaam, items };
+		kaart.gedeeld = { naam: gedeeldeNaam, items, volgorde: gedeeldeVolgorde };
 		kaart.open = true;
 	});
 </script>

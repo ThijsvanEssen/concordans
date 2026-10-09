@@ -61,7 +61,9 @@ class Kaarten {
 	/** The panel over the page, opened from the menu item Gemarkeerd. */
 	open = $state(false);
 	/** A map from a link, shown in the panel until it is kept or put aside. */
-	gedeeld = $state<{ naam: string | null; items: MapItem[] } | null>(null);
+	gedeeld = $state<{ naam: string | null; items: MapItem[]; volgorde: Map['volgorde'] } | null>(
+		null
+	);
 	/** The active map's name open to change, in the panel's heading (a new map starts so). */
 	naamgeven = $state(false);
 
@@ -180,6 +182,7 @@ class Kaarten {
 	bewaarAlsMap() {
 		if (!this.gedeeld) return;
 		this.nieuw(this.gedeeld.naam ?? undefined, this.gedeeld.items);
+		if (this.gedeeld.volgorde === 'eigen') this.ordening('eigen');
 		this.gedeeld = null;
 	}
 }
