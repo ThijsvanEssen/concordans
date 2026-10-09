@@ -19,7 +19,7 @@
 // ?netwerk=…, the bronfilter. `/explore?focus=…` keeps working and is replaced by the
 // readable address once the bron is known.
 import { SvelteMap } from 'svelte/reactivity';
-import { api } from '$lib/api/client';
+import { api, leesAntwoorden } from '$lib/api/client';
 import { bookNumber } from '$lib/text/bw';
 import { parseNodeId } from '$lib/vocabulary';
 
@@ -147,6 +147,36 @@ export function remember(path: string, focus: string) {
 	focusVan.set(path, focus);
 	padVan.set(focus, path);
 }
+
+/**
+ * The addresses the API gives (`path` beside `id`, on every bron it returns), kept as if
+ * seen: a link to that bron is the API's address, not one built here. A dossier is left
+ * out, since the front end names it by its number, not its key.
+ */
+export function onthoudPaden(data: unknown, diepte = 0) {
+	if (!data || typeof data !== 'object' || diepte > 8) return;
+	if (Array.isArray(data)) {
+		for (const item of data) onthoudPaden(item, diepte + 1);
+		return;
+	}
+	const { id, path, slug } = data as { id?: unknown; path?: unknown; slug?: unknown };
+	// A dossier's commissies come with their slug but no path yet; the slug is their address.
+	const adres =
+		typeof path === 'string'
+			? path
+			: path === undefined && typeof id === 'string' && id.startsWith('committees/')
+				? padOfFocus(id, { slug })
+				: null;
+	if (typeof id === 'string' && adres && padVan.get(id) !== adres) {
+		const target = parseNodeId(id);
+		const pad = parsePad(adres);
+		if (target && pad && target.collection !== 'dossiers') remember(padHref(pad), id);
+	}
+	for (const value of Object.values(data)) {
+		if (value && typeof value === 'object') onthoudPaden(value, diepte + 1);
+	}
+}
+leesAntwoorden(onthoudPaden);
 
 /**
  * The focus an address names without a request: a judgment, a dossier, a cabinet and a
