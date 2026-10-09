@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { api, unwrap } from '$lib/api/client';
+	import { API_BASE_URL } from '$lib/api/base-url';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { bronHref } from '$lib/bron/href';
@@ -33,20 +34,13 @@
 		vensterVan,
 		voegTermenToe,
 		volg,
-		woordIn,
 		zetGezien,
 		type Onderwerp
 	} from '$lib/onderwerpen/onderwerpen';
 	import { vandaag } from '$lib/text/datum';
 
-	/** Per word and page, as the feed gives at most. */
-	const PER_TERM = 100;
-	/**
-	 * The API matches any part of a title (`ai` in `Raijer`): pages on until this many hit
-	 * the word itself, or MAX_PAGINAS.
-	 */
-	const GENOEG = 30;
-	const MAX_PAGINAS = 3;
+	/** Lines per topic, as the feed gives at most in one page. */
+	const PER_ONDERWERP = 100;
 	/** Lines shown of a topic before `Alle … tonen`. */
 	const EERST = 10;
 	/** The API's own limit on a slow query. */
@@ -89,74 +83,54 @@
 		/** Further back: up to this day, on top of the lines already there. */
 		verder?: { tot: string; items: FeedItem[] }
 	) {
-		const taken = onderwerpen.flatMap((o) => o.termen.map((term) => ({ o, term })));
-		const per = new Map<string, Map<string, FeedItem>>(
-			verder ? onderwerpen.map((o) => [vak(o), new Map(verder.items.map((i) => [i.id, i]))]) : []
-		);
-		const doorzocht = new Map<string, string>();
-		const open = new Map(onderwerpen.map((o) => [vak(o), o.termen.length]));
-		const fout = new Set<string>();
-		const meer = new Set<string>();
+		// One question per topic with all its words (repeated q, API 0.79.30): the API finds
+		// a line that holds any of them, once, by the same word rule as woordIn here.
+		const taken = [...onderwerpen];
 		const werk = async () => {
-			for (let t = taken.shift(); t && !signal.aborted; t = taken.shift()) {
-				const k = vak(t.o);
+			for (let o = taken.shift(); o && !signal.aborted; o = taken.shift()) {
+				const k = vak(o);
+				const items = new Map((verder?.items ?? []).map((i) => [i.id, i]));
+				let meer = false;
+				let doorzocht: string | null = null;
+				let gelukt = true;
 				try {
-					const items = per.get(k) ?? new Map<string, FeedItem>();
-					per.set(k, items);
-					let cursor: string | undefined;
-					let raak = 0;
-					for (let p = 0; p < MAX_PAGINAS; p++) {
-						const r = await unwrap(
-							api.GET('/api/feed', {
-								params: {
-									query: {
-										q: [t.term],
-										since: vanaf(t.o),
-										...(verder ? { until: verder.tot } : {}),
-										limit: PER_TERM,
-										facets: false,
-										...(cursor ? { cursor } : {})
-									}
-								},
-								signal: AbortSignal.any([signal, AbortSignal.timeout(WACHT)])
-							})
-						);
-						for (const raw of r.items) {
-							const i = normalizeItem(raw);
-							if ([i.title, i.dossier?.title, i.summary].some((x) => woordIn(t.term, x))) {
-								items.set(i.id, i);
-								raak++;
-							}
-						}
-						if (p === 0 && !verder) {
-							const stand = feedStand(r.data_as_of);
-							if (stand && !gedeeld.length) zetGezien(t.term, stand.newest);
-						}
-						cursor = r.next_cursor ?? undefined;
-						// Searched only from a day on: the rest is a question further back.
-						const tot = doorzochtVanaf(r);
-						if (tot) {
-							if (tot > (doorzocht.get(k) ?? '')) doorzocht.set(k, tot);
-							cursor = undefined;
-						}
-						if (!cursor || raak >= GENOEG) break;
+					const r = await unwrap(
+						api.GET('/api/feed', {
+							params: {
+								query: {
+									q: o.termen,
+									since: vanaf(o),
+									...(verder ? { until: verder.tot } : {}),
+									limit: PER_ONDERWERP,
+									facets: false
+								}
+							},
+							signal: AbortSignal.any([signal, AbortSignal.timeout(WACHT)])
+						})
+					);
+					for (const raw of r.items) {
+						const i = normalizeItem(raw);
+						items.set(i.id, i);
 					}
-					if (cursor) meer.add(k);
+					if (!verder) {
+						const stand = feedStand(r.data_as_of);
+						if (stand && !gedeeld.length) zetGezien(o.termen[0], stand.newest);
+					}
+					// Searched only from a day on: the rest is a question further back.
+					doorzocht = doorzochtVanaf(r);
+					meer = !doorzocht && !!r.next_cursor;
 				} catch {
 					if (signal.aborted) return;
-					fout.add(k);
+					gelukt = false;
 				}
-				const rest = (open.get(k) ?? 1) - 1;
-				open.set(k, rest);
-				if (rest === 0)
-					standen[k] = {
-						status: fout.has(k) && !per.get(k)?.size ? 'fout' : 'klaar',
-						items: [...(per.get(k)?.values() ?? [])].sort(
-							(a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
-						),
-						meer: meer.has(k),
-						doorzocht: doorzocht.get(k) ?? null
-					};
+				standen[k] = {
+					status: !gelukt && !items.size ? 'fout' : 'klaar',
+					items: [...items.values()].sort(
+						(a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id)
+					),
+					meer,
+					doorzocht
+				};
 			}
 		};
 		await Promise.all([werk(), werk()]);
@@ -238,9 +212,16 @@
 		return `${minNieuw}${nieuw} ${sinds}; ${min}${s.items.length} ${periode}`;
 	}
 
-	// A word without a period took the API over 30 s (9 Oct): Actueel opens on a year.
-	const actueelHref = (term: string) =>
-		`/actueel?${new URLSearchParams({ q: term, van: dagenTerug(365) })}`;
+	/** The topic as an Atom feed: every word as a q of its own, any of them counts. */
+	const atomHref = (termen: string[]) => {
+		const p = new URLSearchParams();
+		for (const t of termen) p.append('q', t);
+		return `${API_BASE_URL}/api/feed.atom?${p}`;
+	};
+
+	// The whole of Actueel for a word: the API searches its titles fast since 0.79.30, and says
+	// how far back it searched where it stopped short (Doorzocht vanaf).
+	const actueelHref = (term: string) => `/actueel?${new URLSearchParams({ q: term })}`;
 
 	const overzichtHref = (o: Pick<Onderwerp, 'termen'>) =>
 		`/onderwerpen/overzicht?${new URLSearchParams({ onderwerp: naarParam(o.termen) })}`;
@@ -424,8 +405,10 @@
 			{/if}
 			<p class="verder">
 				{#each o.termen as term (term)}
-					<a href={actueelHref(term)}>‘{term}’ in Actueel, het afgelopen jaar</a>
+					<a href={actueelHref(term)}>‘{term}’ in Actueel</a>
 				{/each}
+				<!-- The topic as a feed of its own, all its words in one (API 0.79.30). -->
+				<a href={atomHref(o.termen)} rel="alternate" type="application/atom+xml">Atom-feed</a>
 			</p>
 		</section>
 	{/each}

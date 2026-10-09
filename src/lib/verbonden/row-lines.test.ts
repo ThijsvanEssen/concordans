@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { activityLine, citedLine, historyRow, rolesLine } from './rows';
+import { activityLine, citedLine, describe as beschrijf, historyRow, rolesLine } from './rows';
+import { stemmingNaam } from '$lib/components/parliamentary/stemming';
 
 describe('rolesLine', () => {
 	it('names the role, a function other than Kamerlid and the stukken', () => {
@@ -60,6 +61,28 @@ describe('activityLine', () => {
 			})
 		).toBe('Commissiedebat, geannuleerd, over 22112 en 21501-04');
 		expect(activityLine({})).toBeNull();
+	});
+
+	it('names a dossier by number and name where the API gives it (0.79.30)', () => {
+		expect(
+			activityLine({
+				kind: 'Commissiedebat',
+				dossier_numbers: ['36496'],
+				dossiers: [{ number: '36496', short_title: 'Wet betaalbare huur', title: null }]
+			})
+		).toBe('Commissiedebat, over 36496 Wet betaalbare huur');
+		expect(stemmingNaam(null, { number: '29665', title: 'Evaluatie Schipholbeleid' })).toBe(
+			'Stemming over 29665 Evaluatie Schipholbeleid'
+		);
+		expect(stemmingNaam(null, '36496')).toBe('Stemming over 36496');
+		const brief = beschrijf('documents', 'b', null, {
+			kind: 'Brief regering',
+			title: 'Kabinetsreactie op het advies',
+			dossier_number: '36496',
+			sequence: 12,
+			dossier_short_title: 'Wet betaalbare huur'
+		});
+		expect(brief.context).toBe('Brief regering, Kamerstuk 36496, nr. 12, Wet betaalbare huur');
 	});
 });
 

@@ -9,6 +9,7 @@ import { articleTitle } from '$lib/text/bw';
 import { authorCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
+import { dossierLabel, type DossierNaamBron } from '$lib/bron/dossier-naam';
 import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
 
@@ -125,17 +126,22 @@ function documentName(
 	const nr = sequence ? `nr. ${sequence}` : letter;
 	const stuk = dossier ? `Kamerstuk${ek ? ' I' : ''} ${dossier}${nr ? `, ${nr}` : ''}` : nr;
 	if (!kind && !title) return { title: name, context: null };
+	// The dossier's name on the line under it (API 0.79.30), where the title does not carry
+	// it already: the number in the title is how a Kamerstuk is cited.
+	const dossierNaam = text(props.dossier_short_title);
+	const naamOnder = dossierNaam && !(title ?? '').includes(dossierNaam) ? dossierNaam : null;
 	// A paper of a bill by its kind and number: its title is the bill's, the same for all.
 	// `Blanco verslag` says more than the kind `Verslag`.
 	if (draagtWetstitel(kind) && stuk)
 		return {
 			title: join(title && isGeneriek(title, kind) ? title : shortKind, stuk)!,
-			context: null
+			context: naamOnder
 		};
-	if (title && !isGeneriek(title, kind)) return { title, context: join(shortKind, stuk) };
+	if (title && !isGeneriek(title, kind))
+		return { title, context: join(shortKind, stuk, naamOnder) };
 	const lead = title ?? shortKind!;
 	const where = stuk ?? longDate(text(props.date));
-	return { title: join(lead, where) ?? lead, context: null };
+	return { title: join(lead, where) ?? lead, context: naamOnder };
 }
 
 /**
@@ -534,10 +540,15 @@ export function activityLine(a: {
 	kind?: string | null;
 	status?: string | null;
 	dossier_numbers?: readonly string[] | null;
+	/** The dossiers by number and name (API 0.79.30), where the response has them. */
+	dossiers?: readonly DossierNaamBron[] | null;
 }): string | null {
 	const usual = new Set(['gepland', 'uitgevoerd', 'vrijgegeven']);
 	const status = a.status && !usual.has(a.status.toLowerCase()) ? a.status.toLowerCase() : null;
-	const numbers = a.dossier_numbers ?? [];
+	// A dossier by its number and name: "over 22112 Nieuwe Commissievoorstellen …".
+	const numbers = a.dossiers?.length
+		? a.dossiers.map((d) => dossierLabel(d))
+		: (a.dossier_numbers ?? []);
 	const over = numbers.length
 		? `over ${numbers.length > 1 ? `${numbers.slice(0, -1).join(', ')} en ${numbers.at(-1)}` : numbers[0]}`
 		: null;

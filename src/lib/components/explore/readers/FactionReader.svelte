@@ -212,7 +212,7 @@
 									>{CHOICE[v.choice] ?? v.choice}</span
 								>
 								<BronLink ref={`decisions/${v.decision_key}`} class="vote-subject"
-									>{stemmingNaam(v.subject, v.dossier_numbers?.[0])}</BronLink
+									>{stemmingNaam(v.subject, v.dossiers?.[0] ?? v.dossier_numbers?.[0])}</BronLink
 								>
 								<span class="vote-meta"
 									>{v.date ? formatDate(v.date) : ''}{v.result

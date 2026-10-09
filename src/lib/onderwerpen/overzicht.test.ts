@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
 	filter,
+	lijstQuery,
 	naarCsv,
 	opOnderwerp,
 	perJaar,
 	perSoort,
 	totaal,
+	uitFacets,
 	type Besluit,
+	type Facets,
 	type Stem
 } from './overzicht';
 
@@ -87,5 +90,68 @@ describe('overzicht', () => {
 			'2026-07-02;TK;Motie;Motie over stikstof;35334;Problematiek rondom stikstof en PFAS;aangenomen'
 		);
 		expect(rij).toContain(';voor;https://concordans.nl/');
+	});
+});
+
+describe('de API telt (0.79.30)', () => {
+	const facets = {
+		kind: [
+			{ value: 'Motie', count: 61, passed: 45, rejected: 16 },
+			{ value: 'Amendement', count: 1, passed: 1, rejected: 0 }
+		],
+		passed: [],
+		days: [],
+		years: [
+			{ year: '2024', count: 8, passed: 4, rejected: 4 },
+			{ year: '2026', count: 23, passed: 20, rejected: 3 }
+		],
+		party_votes: [
+			{
+				party: 'vvd',
+				name: 'VVD',
+				voor: 43,
+				tegen: 19,
+				none: 0,
+				kind: [{ value: 'Motie', voor: 42, tegen: 19, none: 0 }],
+				years: [{ year: '2026', voor: 15, tegen: 5, none: 0 }]
+			}
+		]
+	} as unknown as Facets;
+
+	it('zet de tellingen per soort en jaar om, met de stem van de fractie', () => {
+		const g = uitFacets(facets, 'VVD');
+		expect(g.alles).toMatchObject({
+			totaal: 62,
+			aangenomen: 46,
+			verworpen: 16,
+			voor: 43,
+			tegen: 19
+		});
+		expect(g.soorten[0]).toEqual([
+			'Motie',
+			{ totaal: 61, aangenomen: 45, verworpen: 16, overig: 0, voor: 42, tegen: 19 }
+		]);
+		expect(g.jaren.map(([j, t]) => [j, t.totaal, t.voor])).toEqual([
+			['2026', 23, 15],
+			['2025', 0, 0],
+			['2024', 8, 0]
+		]);
+		expect(uitFacets(facets, null).alles.voor).toBe(0);
+	});
+
+	it('vraagt de lijst achter een getal met precies zijn filters', () => {
+		const basis = { q: ['AI', 'kunstmatige intelligentie'], from: '2025-06-01' };
+		expect(lijstQuery(basis, { soort: 'Motie', uitkomst: 'verworpen' }, null)).toEqual({
+			...basis,
+			kind: 'Motie',
+			passed: false
+		});
+		expect(lijstQuery(basis, { jaar: '2025', stem: 'tegen' }, 'VVD')).toEqual({
+			...basis,
+			from: '2025-06-01',
+			to: '2025-12-31',
+			party: 'VVD',
+			vote: 'tegen'
+		});
 	});
 });

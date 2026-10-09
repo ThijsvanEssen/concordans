@@ -91,6 +91,98 @@ export function perJaar(lijst: readonly Besluit[], stemmen: ReadonlyMap<string, 
 	return rij;
 }
 
+// ── Counted by the API (0.79.30) ───────────────────────────────────────────
+// With repeated q, facets.kind and facets.years and party_votes the API counts what the page
+// counted itself: every decision, no cap of the newest 1,000, the word rule applied there.
+
+export type Facets = Schema<'DecisionFacets'>;
+export type Getelden = { alles: Telling; soorten: [string, Telling][]; jaren: [string, Telling][] };
+
+/** The API counts per kind and per year, with one fractie's voor and tegen where asked. */
+export function uitFacets(f: Facets, fractie: string | null): Getelden {
+	const pv = fractie
+		? (f.party_votes ?? []).find(
+				(p) => p.name === fractie || p.party.toLowerCase() === fractie.toLowerCase()
+			)
+		: undefined;
+	const telling = (
+		count: number,
+		passed: number,
+		rejected: number,
+		v?: { voor: number; tegen: number }
+	): Telling => ({
+		totaal: count,
+		aangenomen: passed,
+		verworpen: rejected,
+		overig: Math.max(0, count - passed - rejected),
+		voor: v?.voor ?? 0,
+		tegen: v?.tegen ?? 0
+	});
+	const soorten = (f.kind ?? [])
+		.map((k): [string, Telling] => [
+			k.value?.trim() || NO_DECISION_KIND,
+			telling(
+				k.count,
+				(k as { passed?: number }).passed ?? 0,
+				(k as { rejected?: number }).rejected ?? 0,
+				pv?.kind?.find((x) => (x.value ?? null) === (k.value ?? null))
+			)
+		])
+		.sort((a, b) => b[1].totaal - a[1].totaal || a[0].localeCompare(b[0]));
+	const perJaar = new Map(
+		(f.years ?? []).flatMap((y) =>
+			y.year
+				? [
+						[
+							y.year,
+							telling(
+								y.count,
+								y.passed,
+								y.rejected,
+								pv?.years?.find((x) => x.year === y.year)
+							)
+						] as const
+					]
+				: []
+		)
+	);
+	const jaren: [string, Telling][] = [];
+	const nummers = [...perJaar.keys()].map(Number);
+	if (nummers.length)
+		for (let j = Math.max(...nummers); j >= Math.min(...nummers); j--)
+			jaren.push([String(j), perJaar.get(String(j)) ?? leeg()]);
+	const alles = soorten.reduce((t, [, x]) => {
+		for (const k of ['totaal', 'aangenomen', 'verworpen', 'overig'] as const) t[k] += x[k];
+		return t;
+	}, leeg());
+	alles.voor = pv?.voor ?? 0;
+	alles.tegen = pv?.tegen ?? 0;
+	return { alles, soorten, jaren };
+}
+
+/** The list behind a number, as /api/decisions takes it; a year narrows the period. */
+export function lijstQuery(
+	basis: { q: string[]; chamber?: string; from?: string; to?: string },
+	f: Filter,
+	fractie: string | null
+) {
+	const binnen = (a: string | undefined, b: string | undefined, max: boolean) =>
+		!a ? b : !b ? a : (max ? a > b : a < b) ? a : b;
+	return {
+		...basis,
+		...(f.soort && f.soort !== NO_DECISION_KIND ? { kind: f.soort } : {}),
+		...(f.uitkomst === 'aangenomen' ? { passed: true } : {}),
+		...(f.uitkomst === 'verworpen' ? { passed: false } : {}),
+		...(f.jaar
+			? {
+					from: binnen(basis.from, `${f.jaar}-01-01`, true),
+					to: binnen(basis.to, `${f.jaar}-12-31`, false)
+				}
+			: {}),
+		...(f.stem && fractie ? { party: fractie, vote: f.stem } : {})
+	};
+}
+
 // ── CSV ─────────────────────────────────────────────────────────────────────
 // As the CSV of Verbonden: semicolons and a byte order mark, as Excel with Dutch settings
 // reads it.

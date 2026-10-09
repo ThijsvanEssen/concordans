@@ -12,7 +12,7 @@
 	import { korteDatum } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { uitParams } from '$lib/onderwerpen/onderwerpen';
-	import { naamVanNummer } from '$lib/bron/dossier-naam';
+	import { dossierName, naamVanNummer } from '$lib/bron/dossier-naam';
 	import {
 		filter,
 		naarCsv,
@@ -21,9 +21,12 @@
 		perSoort,
 		soortVan,
 		totaal,
+		uitFacets,
+		lijstQuery,
 		uitkomstVan,
 		type Besluit,
 		type Filter,
+		type Getelden,
 		type Stem,
 		type Telling,
 		type Uitkomst
@@ -77,6 +80,119 @@
 	const zet = (patch: Patch) =>
 		goto(hrefMet(patch, false), { replaceState: true, keepFocus: true, noScroll: true });
 
+	// ── Counted by the API (0.79.30) ────────────────────────────────────────
+	// One question with all the words (repeated q) gives the counts per kind and year, and
+	// one fractie's voor and tegen (party_votes): every decision, no cap. The list behind a
+	// number is a question of its own. Without those facets (an API before 0.79.30) the page
+	// counts the decisions itself, as before (`bron = 'zelf'`).
+	let bron = $state<'api' | 'zelf' | null>(null);
+	let getelden = $state<Getelden | null>(null);
+	let apiTotaal = $state<number | null>(null);
+	let tellenLaden = $state(false);
+	/** The words, the Kamer and the period as /api/decisions takes them. */
+	const basisVan = (woorden: string[], k: string, v: string, t: string) => ({
+		q: woorden,
+		...(k ? { chamber: k } : {}),
+		...periode(v, t)
+	});
+	$effect(() => {
+		const woorden = termenSleutel ? termenSleutel.split('|') : [];
+		const basis = basisVan(woorden, kamer, van, tot);
+		const wie = fractie;
+		const ac = new AbortController();
+		getelden = null;
+		apiTotaal = null;
+		if (!woorden.length) return;
+		tellenLaden = true;
+		stemmenLaden = !!wie;
+		let opnieuw: ReturnType<typeof setTimeout> | undefined;
+		let poging = 0;
+		const vraag = (): Promise<void> =>
+			unwrap(
+				api.GET('/api/decisions', {
+					params: { query: { ...basis, ...(wie ? { party_votes: wie } : {}), limit: 1 } },
+					signal: ac.signal
+				})
+			)
+				.then((r) => {
+					if (!r.facets?.years) {
+						bron = 'zelf';
+						tellenLaden = false;
+						return;
+					}
+					bron = 'api';
+					getelden = uitFacets(r.facets, wie || null);
+					apiTotaal = r.total;
+					tellenLaden = false;
+					// party_votes counted for longer than 3 s: asked again a few seconds later.
+					if (wie && r.partial && !(r.facets.party_votes ?? []).length && poging++ < 3) {
+						opnieuw = setTimeout(vraag, 3000);
+						return;
+					}
+					stemmenLaden = false;
+				})
+				.catch(() => {
+					if (ac.signal.aborted) return;
+					tellenLaden = false;
+					stemmenLaden = false;
+					if (bron === null) bron = 'zelf';
+				});
+		void vraag();
+		return () => {
+			clearTimeout(opnieuw);
+			ac.abort();
+		};
+	});
+
+	// The list behind a number, STAP at a time.
+	let apiLijst = $state<Besluit[]>([]);
+	let lijstTotaal = $state<number | null>(null);
+	let lijstLaden = $state(false);
+	const lijstVraag = $derived(
+		lijstQuery(
+			basisVan(termenSleutel ? termenSleutel.split('|') : [], kamer, van, tot),
+			f,
+			fractie || null
+		)
+	);
+	$effect(() => {
+		if (bron !== 'api' || !termenSleutel) return;
+		const query = lijstVraag;
+		const ac = new AbortController();
+		apiLijst = [];
+		lijstTotaal = null;
+		lijstLaden = true;
+		unwrap(
+			api.GET('/api/decisions', {
+				params: { query: { ...query, limit: STAP, offset: 0 } },
+				signal: ac.signal
+			})
+		)
+			.then((r) => {
+				apiLijst = r.items;
+				lijstTotaal = r.total;
+			})
+			.catch(() => {})
+			.finally(() => {
+				if (!ac.signal.aborted) lijstLaden = false;
+			});
+		return () => ac.abort();
+	});
+	async function meerLaden() {
+		if (lijstLaden) return;
+		lijstLaden = true;
+		try {
+			const r = await unwrap(
+				api.GET('/api/decisions', {
+					params: { query: { ...lijstVraag, limit: STAP, offset: apiLijst.length } }
+				})
+			);
+			apiLijst = [...apiLijst, ...r.items];
+		} finally {
+			lijstLaden = false;
+		}
+	}
+
 	// ── The decisions ───────────────────────────────────────────────────────
 	type PerTerm = { term: string; api: number | null; nagelopen: number; tot: string | null };
 	let besluiten = $state<Besluit[]>([]);
@@ -112,6 +228,8 @@
 	}
 
 	$effect(() => {
+		// Counted here only where the API does not count (bron 'zelf').
+		if (bron !== 'zelf') return;
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
 		const k = kamer;
 		const p = periode(van, tot);
@@ -153,6 +271,7 @@
 	let stemmen = $state<Map<string, Stem>>(new Map());
 	let stemmenLaden = $state(false);
 	$effect(() => {
+		if (bron !== 'zelf') return;
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
 		const k = kamer;
 		const p = periode(van, tot);
@@ -204,10 +323,20 @@
 	);
 
 	// ── Counted ─────────────────────────────────────────────────────────────
-	const alles = $derived(totaal(besluiten, stemmen));
-	const soorten = $derived(perSoort(besluiten, stemmen));
-	const jaren = $derived(perJaar(besluiten, stemmen));
-	const lijst = $derived(filter(besluiten, f, stemmen));
+	const api_ = $derived(bron === 'api' && getelden !== null);
+	const alles = $derived(api_ ? getelden!.alles : totaal(besluiten, stemmen));
+	const soorten = $derived(api_ ? getelden!.soorten : perSoort(besluiten, stemmen));
+	const jaren = $derived(api_ ? getelden!.jaren : perJaar(besluiten, stemmen));
+	const lijst = $derived(bron === 'api' ? apiLijst : filter(besluiten, f, stemmen));
+	/** How many the list holds, also where only a page of it is loaded. */
+	const lijstAantal = $derived(bron === 'api' ? (lijstTotaal ?? 0) : lijst.length);
+	const bezig = $derived(bron === 'zelf' ? laden : bron === null || tellenLaden);
+	const leegte = $derived(
+		bron === 'zelf' ? !laden && !besluiten.length : bron === 'api' && apiTotaal === 0
+	);
+	/** A fractie's vote on a row: known per row where the page counted, else from the filter. */
+	const stemVan = (d: Besluit): Stem | undefined =>
+		!fractie ? undefined : bron === 'api' ? f.stem : stemmen.get(d.key);
 	// Another list starts at its first rows again.
 	let getoond = $derived.by(() => {
 		void lijst;
@@ -240,10 +369,35 @@
 	// before (naamVanNummer), at most CSV_NAMEN of them.
 	const CSV_NAMEN = 100;
 	let exporteren = $state(false);
+	/** The whole list behind the number for the CSV, CSV_MAX at most. */
+	const CSV_MAX = 2000;
+	async function heleLijst(): Promise<Besluit[]> {
+		if (bron !== 'api') return lijst;
+		const alle: Besluit[] = [];
+		for (let offset = 0; offset < Math.min(lijstAantal, CSV_MAX); offset += PAGINA) {
+			const r = await unwrap(
+				api.GET('/api/decisions', {
+					params: { query: { ...lijstVraag, limit: PAGINA, offset } }
+				})
+			);
+			alle.push(...r.items);
+			if (r.items.length < PAGINA) break;
+		}
+		return alle;
+	}
 	async function exporteer() {
 		exporteren = true;
-		const nummers = [...new Set(lijst.flatMap((d) => d.dossier_numbers ?? []))].slice(0, CSV_NAMEN);
+		const lijst = await heleLijst().catch(() => [] as Besluit[]);
+		// The names the decisions carry (API 0.79.30); asked by number only where they do not.
 		const namen = new Map<string, string>();
+		for (const d of lijst)
+			for (const x of d.dossiers ?? []) {
+				const n = dossierName(x);
+				if (n !== x.number) namen.set(x.number, n);
+			}
+		const nummers = [...new Set(lijst.flatMap((d) => d.dossier_numbers ?? []))]
+			.filter((n) => !namen.has(n))
+			.slice(0, CSV_NAMEN);
 		await Promise.all(
 			nummers.map((n) =>
 				naamVanNummer(n).then((naam) => {
@@ -259,7 +413,13 @@
 				.trim() || 'onderwerp';
 		download(
 			`Overzicht ${veilig}.csv`,
-			naarCsv(lijst, page.url.origin, fractie || null, stemmen, namen)
+			naarCsv(
+				lijst,
+				page.url.origin,
+				fractie || null,
+				bron === 'api' && f.stem ? new Map(lijst.map((d) => [d.key, f.stem!] as const)) : stemmen,
+				namen
+			)
 		);
 	}
 
@@ -385,7 +545,7 @@
 		</div>
 
 		<p class="stand">
-			{#each perTerm as p (p.term)}
+			{#each bron === 'zelf' ? perTerm : [] as p (p.term)}
 				<span>
 					‘{p.term}’:
 					{#if p.api === null}
@@ -401,14 +561,14 @@
 			{/each}
 		</p>
 
-		{#if fout && !besluiten.length}
+		{#if fout && !besluiten.length && bron === 'zelf'}
 			<p class="status status--fout">Het overzicht kon niet worden geladen.</p>
-		{:else if !laden && !besluiten.length}
+		{:else if leegte}
 			<p class="status">Geen besluiten met deze woorden in de titel.</p>
 		{:else}
 			<p class="totaal">
-				{@render cel(alles.totaal, {}, laden)}
-				{alles.totaal === 1 ? 'besluit' : 'besluiten'}{laden ? ', tellen…' : ''}
+				{@render cel(alles.totaal, {}, bezig)}
+				{alles.totaal === 1 ? 'besluit' : 'besluiten'}{bezig ? ', tellen…' : ''}
 			</p>
 			<div class="tabellen" class:tabellen--fractie={!!fractie}>
 				{@render tabel('Per soort', 'Soort', soorten, (k) => ({ soort: k }))}
@@ -418,8 +578,8 @@
 			<section class="lijst" aria-labelledby="t-lijst">
 				<div class="lijst__kop">
 					<h2 id="t-lijst">
-						{getal(lijst.length)}
-						{lijst.length === 1 ? 'besluit' : 'besluiten'}
+						{getal(lijstAantal)}
+						{lijstAantal === 1 ? 'besluit' : 'besluiten'}
 					</h2>
 					{#each filterLabels as c (c.k)}
 						<a class="chip" href={hrefMet({ [c.k]: null }, false)}
@@ -437,8 +597,8 @@
 					>
 				</div>
 				<ol class="rijen">
-					{#each lijst.slice(0, getoond) as d (d.key)}
-						{@const s = fractie ? stemmen.get(d.key) : undefined}
+					{#each bron === 'api' ? lijst : lijst.slice(0, getoond) as d (d.key)}
+						{@const s = stemVan(d)}
 						<li class="rij">
 							<span class="rij__datum">{korteDatum(d.date)}</span>
 							<div class="rij__tekst">
@@ -459,7 +619,11 @@
 						</li>
 					{/each}
 				</ol>
-				{#if lijst.length > getoond}
+				{#if bron === 'api' && lijst.length < lijstAantal}
+					<button type="button" class="meer" onclick={meerLaden} disabled={lijstLaden}
+						>{lijstLaden ? 'Laden…' : `Meer tonen (${getal(lijstAantal - lijst.length)})`}</button
+					>
+				{:else if bron !== 'api' && lijst.length > getoond}
 					<button type="button" class="meer" onclick={() => (getoond += STAP)}
 						>Meer tonen ({getal(lijst.length - getoond)})</button
 					>

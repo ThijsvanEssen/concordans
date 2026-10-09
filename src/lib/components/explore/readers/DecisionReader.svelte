@@ -82,7 +82,10 @@
 			{@const others = Object.entries(tally).filter(
 				([choice]) => choice !== 'Voor' && choice !== 'Tegen'
 			)}
-			{@const dossierNumbers = (node.raw?.props?.dossier_numbers ?? []) as string[]}
+			<!-- The dossiers by number and name (API 0.79.30); the node's numbers before it. -->
+			{@const dossiers = d.dossiers?.length
+				? d.dossiers
+				: ((node.raw?.props?.dossier_numbers ?? []) as string[]).map((number) => ({ number }))}
 			{@const chamber = d.chamber ?? 'TK'}
 			<!-- The Eerste Kamer's fracties stand once, in its own lists (complete, also a fractie
 			     without a node); its votes[] (#369) only link the names they share. -->
@@ -113,9 +116,9 @@
 					{/if}
 					<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
 					{#if d.primary_case_kind}<span class="case-chip">{d.primary_case_kind}</span>{/if}
-					{#each uniqueBy(dossierNumbers, (n) => n).slice(0, 3) as number (number)}
-						<BronLink ref={`dossiers/${number}`} class="dossier-chip"
-							><DossierNaam dossier={number} /></BronLink
+					{#each uniqueBy(dossiers, (x) => x.number).slice(0, 3) as dossier (dossier.number)}
+						<BronLink ref={`dossiers/${dossier.number}`} class="dossier-chip"
+							><DossierNaam {dossier} /></BronLink
 						>
 					{/each}
 				</div>

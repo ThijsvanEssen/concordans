@@ -95,6 +95,7 @@
 	import IndexRow from './index/IndexRow.svelte';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
+	import { dossierLabel, dossierName } from '$lib/bron/dossier-naam';
 	import {
 		INDEX_CATEGORIES,
 		INDEX_TABS,
@@ -2706,7 +2707,7 @@
 													s.kind ?? (s.chamber === 'EK' ? null : NO_DECISION_KIND)}
 												<IndexRow
 													{bron}
-													title={stemmingNaam(s.subject, s.dossier_numbers?.[0])}
+													title={stemmingNaam(s.subject, s.dossiers?.[0] ?? s.dossier_numbers?.[0])}
 													href={hrefOf(bron)}
 													open={openId === bron}
 													onToggle={() => toggleOpen(bron)}
@@ -2718,11 +2719,20 @@
 																	value={day.date ? kindLabel : fmtDateShort(s.date)}
 																/></span
 															>
-															{#if s.dossier_numbers?.[0]}
-																<span class="row-id-sub">{s.dossier_numbers[0]}</span>
+															{#if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
+																{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
+																<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
+																	>{dossierLabel(d)}</span
+																>
 															{/if}
-														{:else if s.dossier_numbers?.[0]}
-															<span class="row-id-main">{s.dossier_numbers[0]}</span>
+														{:else if s.dossiers?.[0] ?? s.dossier_numbers?.[0]}
+															{@const d = s.dossiers?.[0] ?? { number: s.dossier_numbers![0] }}
+															<span class="row-id-main">{d.number}</span>
+															{#if dossierName(d) !== d.number}
+																<span class="row-id-sub row-id-naam" title={d.title ?? undefined}
+																	>{dossierName(d)}</span
+																>
+															{/if}
 														{/if}
 													{/snippet}
 													{#snippet body()}
@@ -2860,6 +2870,14 @@
 											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={label} /></span>
+													<!-- The dossier by name under its number (API 0.79.30). -->
+													{#if doc.dossiers?.[0] && dossierName(doc.dossiers[0]) !== doc.dossiers[0].number}
+														<span
+															class="row-id-sub row-id-naam"
+															title={doc.dossiers[0].title ?? undefined}
+															>{dossierName(doc.dossiers[0])}</span
+														>
+													{/if}
 												{/snippet}
 												{#snippet body()}
 													{#if doc.kind}<span class="row-sub">{doc.kind}</span>{/if}
@@ -2909,8 +2927,8 @@
 															/>{t.member.function ? `, ${t.member.function}` : ''}
 														{:else if t.minister_name}
 															{t.minister_name}
-														{/if}<!-- A dossier by number and name, the name asked once in view; no space before the comma. -->{#each t.dossiers?.flatMap( (d) => (d.number ? [d.number] : []) ) ?? [] as nr (nr)},
-															<DossierNaam dossier={nr} />{/each}
+														{/if}<!-- A dossier by number and name, the name asked once in view; no space before the comma. -->{#each t.dossiers?.flatMap( (d) => (d.number ? [{ ...d, number: d.number }] : []) ) ?? [] as d (d.number)},
+															<DossierNaam dossier={d} />{/each}
 													</span>
 												{/snippet}
 												{#snippet aside()}
@@ -3723,6 +3741,15 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 		margin-top: 2px;
+	}
+	/* A dossier by name in the narrow lead: two lines at most, the whole on hover. */
+	.row-id-naam {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow: hidden;
+		overflow-wrap: break-word;
 	}
 
 	.row-sub {
