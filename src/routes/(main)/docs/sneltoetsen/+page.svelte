@@ -26,6 +26,16 @@
 				<span class="shortcut-keys"><kbd>L</kbd></span>
 			</div>
 			<div class="shortcut-row">
+				<span class="shortcut-desc">Bij een bron: Tekst, Netwerk of Verbonden</span>
+				<span class="shortcut-keys"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></span>
+			</div>
+			<div class="shortcut-row">
+				<span class="shortcut-desc"
+					>Volgende of vorige rij in Bladeren en Verbonden; Enter opent haar</span
+				>
+				<span class="shortcut-keys"><kbd>J</kbd> <kbd>K</kbd> <kbd>Enter</kbd></span>
+			</div>
+			<div class="shortcut-row">
 				<span class="shortcut-desc"
 					>Terug of vooruit naar de vorige bron, als het netwerk de focus heeft</span
 				>

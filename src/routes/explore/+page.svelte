@@ -1146,9 +1146,21 @@
 			return;
 		}
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
-		if (e.key.toLowerCase() !== 'l' || !readAction) return;
 		const el = document.activeElement as HTMLElement | null;
 		if (el?.tagName === 'INPUT' || el?.tagName === 'TEXTAREA' || el?.isContentEditable) return;
+		// 1, 2 and 3: the layers of a bron, Tekst, Netwerk and Verbonden (Thijs, 10 Oct), as the
+		// tabs on a phone; 3 puts the focus on Verbonden's first row, for J and K.
+		const laag = { '1': 'reader', '2': 'graph', '3': 'verbonden' } as const;
+		if (e.key in laag && selectedNode && mode !== 'index') {
+			e.preventDefault();
+			kiesPaneel(laag[e.key as keyof typeof laag]);
+			if (e.key === '3')
+				requestAnimationFrame(() =>
+					document.querySelector<HTMLElement>('.verbonden a.row__title')?.focus()
+				);
+			return;
+		}
+		if (e.key.toLowerCase() !== 'l' || !readAction) return;
 		e.preventDefault();
 		setReading(readAction === 'read');
 	}
