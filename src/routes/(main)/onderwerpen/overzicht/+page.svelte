@@ -13,6 +13,22 @@
 	import { download } from '$lib/verbonden/export';
 	import { uitParams } from '$lib/onderwerpen/onderwerpen';
 	import { dossierName, naamVanNummer } from '$lib/bron/dossier-naam';
+	import { getDecisionDocument } from '$lib/api/records';
+	import {
+		RICHTINGEN,
+		RICHTING_LABEL,
+		coderingNaarCsv,
+		coderingUitCsv,
+		dictumUit,
+		leesCodering,
+		metRichting,
+		onderwerpSleutel,
+		samen,
+		schrijfCodering,
+		telRichting,
+		type Codering,
+		type Richting
+	} from '$lib/onderwerpen/richting';
 	import {
 		filter,
 		naarCsv,
@@ -405,6 +421,7 @@
 				})
 			)
 		);
+		const motie = await motieVelden(lijst);
 		exporteren = false;
 		const veilig =
 			naam
@@ -418,8 +435,123 @@
 				page.url.origin,
 				fractie || null,
 				bron === 'api' && f.stem ? new Map(lijst.map((d) => [d.key, f.stem!] as const)) : stemmen,
-				namen
+				namen,
+				lijst.some(isMotie) ? motie : undefined
 			)
+		);
+	}
+
+	// ── Richting: the researcher's own coding of a motie (stance-voorstel, 10 Oct) ──────
+	// Positief, negatief or neutraal with respect to this topic, kept in this browser per
+	// topic, counted over the moties on the page, and in the CSV with the dictum, the
+	// indieners and their fracties. The dictum is the motie's own sentence, asked per motie
+	// when it is opened (one request each), until the API gives it with the list.
+	// Read at once in the browser; the server renders no coding (leesCodering keeps to {}).
+	let codering = $state<Codering>(leesCodering());
+	const onderwerp = $derived(onderwerpSleutel(termen));
+	const mijn = $derived(codering[onderwerp] ?? {});
+	const isMotie = (d: Besluit) => /^motie/i.test(soortVan(d));
+	function kies(d: Besluit, r: Richting | null) {
+		codering = metRichting(codering, onderwerp, d.key, r);
+		schrijfCodering(codering);
+	}
+
+	type Stuk = { dictum: string | null; metTekst: boolean; indieners: string; fracties: string };
+	let stukken = $state<Record<string, Stuk | 'laden' | 'fout'>>({});
+	const uitStuk = (doc: Awaited<ReturnType<typeof getDecisionDocument>>): Stuk => ({
+		dictum: dictumUit(doc?.text),
+		metTekst: !!doc?.text?.trim(),
+		indieners: (doc?.submitters ?? []).map((x) => x.name).join('; '),
+		fracties: [
+			...new Set((doc?.submitters ?? []).flatMap((x) => (x.faction ? [x.faction] : [])))
+		].join('; ')
+	});
+	async function laadStuk(key: string) {
+		if (stukken[key] && stukken[key] !== 'fout') return;
+		stukken = { ...stukken, [key]: 'laden' };
+		try {
+			// The answer first, then the current state: a spread before the await would write
+			// back an older copy over a load that ended in between.
+			const stuk = uitStuk(await getDecisionDocument(key));
+			stukken = { ...stukken, [key]: stuk };
+		} catch {
+			stukken = { ...stukken, [key]: 'fout' };
+		}
+	}
+	let dictumOpen = $state<Set<string>>(new Set());
+	function toonDictum(key: string) {
+		const open = new Set(dictumOpen);
+		if (open.has(key)) open.delete(key);
+		else {
+			open.add(key);
+			void laadStuk(key);
+		}
+		dictumOpen = open;
+	}
+
+	/** Counted over the moties on the page that are coded. */
+	const richtingTelling = $derived(
+		telRichting(
+			lijst
+				.filter(isMotie)
+				.flatMap((d) =>
+					mijn[d.key]
+						? [{ richting: mijn[d.key], uitkomst: uitkomstVan(d), stem: stemVan(d) ?? null }]
+						: []
+				)
+		)
+	);
+	const motiesOpPagina = $derived(lijst.filter(isMotie).length);
+	const hoofdletter = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+	const deel = (t: { positief: number; negatief: number; neutraal: number }) =>
+		RICHTINGEN.filter((r) => t[r] > 0)
+			.map((r) => `${getal(t[r])} ${r}`)
+			.join(', ');
+
+	/** The coding of this topic as a file, and a file read back into it. */
+	function bewaarCodering() {
+		const titels = new Map(lijst.map((d) => [d.key, d.subject?.trim() ?? ''] as const));
+		const veilig =
+			naam
+				.replace(/[\\/:*?"<>|]+/g, ' ')
+				.slice(0, 80)
+				.trim() || 'onderwerp';
+		download(`Richting ${veilig}.csv`, coderingNaarCsv(onderwerp, mijn, titels));
+	}
+	let importFout = $state(false);
+	async function laadCodering(e: Event) {
+		const file = (e.currentTarget as HTMLInputElement).files?.[0];
+		(e.currentTarget as HTMLInputElement).value = '';
+		if (!file) return;
+		const gelezen = coderingUitCsv(await file.text());
+		importFout = !Object.keys(gelezen).length;
+		if (importFout) return;
+		codering = samen(codering, gelezen);
+		schrijfCodering(codering);
+	}
+
+	/** At the CSV: the coded moties' dictum and indieners, two at a time, at most this many. */
+	const CSV_STUKKEN = 300;
+	async function motieVelden(lijst: Besluit[]) {
+		const gecodeerd = lijst.filter((d) => isMotie(d) && mijn[d.key]);
+		await tweeTegelijk(
+			gecodeerd.slice(0, CSV_STUKKEN).map((d) => d.key),
+			(k) => laadStuk(k)
+		);
+		return new Map(
+			lijst.filter(isMotie).map((d) => {
+				const st = stukken[d.key];
+				const stuk = st && st !== 'laden' && st !== 'fout' ? st : null;
+				return [
+					d.key,
+					{
+						richting: mijn[d.key] ?? '',
+						dictum: stuk?.dictum ?? '',
+						indieners: stuk?.indieners ?? '',
+						fracties: stuk?.fracties ?? ''
+					}
+				] as const;
+			})
 		);
 	}
 
@@ -596,6 +728,48 @@
 						disabled={!lijst.length || exporteren}>{exporteren ? 'Namen ophalen…' : 'CSV'}</button
 					>
 				</div>
+				{#if motiesOpPagina > 0}
+					<!-- The researcher's own coding of the moties: counted, kept as a file. -->
+					<div class="richting-kop">
+						<p class="richting-telling">
+							Richting, eigen codering: {getal(richtingTelling.alles.totaal)} van {getal(
+								motiesOpPagina
+							)}
+							{motiesOpPagina === 1 ? 'motie' : 'moties'} op deze pagina gecodeerd{#if richtingTelling.alles.totaal}:
+								{deel(richtingTelling.alles)}{/if}.
+							{#each ['aangenomen', 'verworpen'] as const as u (u)}
+								{#if richtingTelling.perUitkomst[u].totaal}
+									{hoofdletter(UITKOMST_LABEL[u])}: {deel(richtingTelling.perUitkomst[u])}.
+								{/if}
+							{/each}
+							{#if fractie}
+								{#each ['voor', 'tegen'] as const as st (st)}
+									{#if richtingTelling.perStem[st].totaal}
+										{fractie} stemde {st}: {deel(richtingTelling.perStem[st])}.
+									{/if}
+								{/each}
+							{/if}
+						</p>
+						<div class="richting-acties">
+							<button
+								type="button"
+								class="link"
+								onclick={bewaarCodering}
+								disabled={!Object.keys(mijn).length}>Codering bewaren</button
+							>
+							<label class="link">
+								Codering laden
+								<input
+									type="file"
+									accept=".csv,text/csv"
+									class="verborgen"
+									onchange={laadCodering}
+								/>
+							</label>
+							{#if importFout}<span class="stil">Geen codering in dit bestand.</span>{/if}
+						</div>
+					</div>
+				{/if}
 				<ol class="rijen">
 					{#each bron === 'api' ? lijst : lijst.slice(0, getoond) as d (d.key)}
 						{@const s = stemVan(d)}
@@ -615,6 +789,36 @@
 											class="rij__stem">{fractie} <StemTeken keuze={s} /></span
 										>{/if}</span
 								>
+								{#if isMotie(d)}
+									{@const st = stukken[d.key]}
+									<div class="rij__richting">
+										<Keuze
+											klein
+											label={`Richting ten opzichte van ${naam}`}
+											opties={RICHTINGEN.map((r) => ({ waarde: r, label: RICHTING_LABEL[r] }))}
+											waarde={mijn[d.key] ?? null}
+											onKies={(r) => kies(d, r)}
+										/>
+										{#if mijn[d.key]}<button
+												type="button"
+												class="link"
+												onclick={() => kies(d, null)}>Wis</button
+											>{/if}
+										<button
+											type="button"
+											class="link"
+											aria-expanded={dictumOpen.has(d.key)}
+											onclick={() => toonDictum(d.key)}>Dictum</button
+										>
+									</div>
+									{#if dictumOpen.has(d.key)}
+										<p class="rij__dictum">
+											{#if st === 'laden' || st === undefined}Laden…{:else if st === 'fout'}Kon niet
+												worden geladen.{:else if st.dictum}{st.dictum}{:else if !st.metTekst}Tekst
+												niet in de gegevens.{:else}Geen dictum in de tekst.{/if}
+										</p>
+									{/if}
+								{/if}
 							</div>
 						</li>
 					{/each}
@@ -634,6 +838,77 @@
 </div>
 
 <style>
+	/* The researcher's coding of a motie: its count above the list, its choice in the row. */
+	.richting-kop {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--s-1) var(--s-4);
+		margin: 0 0 var(--s-3);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+	}
+	.richting-telling {
+		margin: 0;
+		flex: 1 1 20rem;
+	}
+	.richting-acties {
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-3);
+	}
+	.verborgen {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+	.rij__richting {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--s-1) var(--s-3);
+		margin-top: var(--s-1);
+		font-family: var(--font-sans);
+		font-size: var(--t-micro);
+	}
+	.rij__dictum {
+		margin: var(--s-1) 0 0;
+		padding-left: var(--s-3);
+		border-left: 2px solid var(--rule);
+		font-family: var(--font-serif);
+		font-style: italic;
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.stil {
+		color: var(--ink-3);
+	}
+	/* Quiet text actions beside the choice: no frame of their own. */
+	.rij__richting .link,
+	.richting-acties .link {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-2);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 2px;
+		cursor: pointer;
+	}
+	.rij__richting .link:hover,
+	.richting-acties .link:hover {
+		color: var(--ink);
+	}
+	.richting-acties .link:disabled {
+		color: var(--ink-3);
+		text-decoration: none;
+		cursor: default;
+	}
 	.overzicht {
 		max-width: 960px;
 		margin: 0 auto;

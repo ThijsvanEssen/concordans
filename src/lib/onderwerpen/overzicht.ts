@@ -205,7 +205,15 @@ export function naarCsv(
 	fractie: string | null,
 	stemmen: ReadonlyMap<string, Stem>,
 	/** A dossier's name by its number, where it was found. */
-	namen: ReadonlyMap<string, string> = new Map()
+	namen: ReadonlyMap<string, string> = new Map(),
+	/**
+	 * Per decision of a motie: the researcher's direction, and from the motie's text the dictum,
+	 * its indieners and their fracties, where those were asked (stance-voorstel, 10 Oct).
+	 */
+	motie?: ReadonlyMap<
+		string,
+		{ richting?: string; dictum?: string | null; indieners?: string; fracties?: string }
+	>
 ): string {
 	const kop = [
 		'datum',
@@ -219,6 +227,7 @@ export function naarCsv(
 		'stemmen voor',
 		'stemmen tegen',
 		...(fractie ? [`stem ${fractie}`] : []),
+		...(motie ? ['richting (eigen codering)', 'dictum', 'indieners', 'fracties indieners'] : []),
 		'link'
 	];
 	const regels = lijst.map((d) =>
@@ -234,6 +243,14 @@ export function naarCsv(
 			d.tally?.Voor,
 			d.tally?.Tegen,
 			...(fractie ? [stemmen.get(d.key) ?? ''] : []),
+			...(motie
+				? [
+						motie.get(d.key)?.richting ?? '',
+						motie.get(d.key)?.dictum ?? '',
+						motie.get(d.key)?.indieners ?? '',
+						motie.get(d.key)?.fracties ?? ''
+					]
+				: []),
 			`${origin}${buildBronHref(null, { collection: 'decisions', key: d.key })}`
 		]
 			.map(cell)
