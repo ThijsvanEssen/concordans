@@ -11,3 +11,6 @@ bun.lockb
 # Generated from the API schema (npm run sync:api)
 /src/lib/api/openapi.json
 /src/lib/api/generated/
+
+# The contract with the API (tests/data/readable-paths.json there), byte for byte.
+src/lib/bron/readable-paths.json
