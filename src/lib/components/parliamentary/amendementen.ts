@@ -14,7 +14,15 @@ export type GraphEdge = { source: string; target: string; relation: string };
 export type Graph = { nodes: GraphNode[]; edges: GraphEdge[] };
 
 /** A paper of an amendment: a stop in its route. `nieuw` where it replaces no other. */
-export type Stuk = { id: string; nummer: string; datum: string; titel: string; nieuw?: boolean };
+export type Stuk = {
+	id: string;
+	nummer: string;
+	datum: string;
+	titel: string;
+	nieuw?: boolean;
+	/** The number of the paper that replaced it (REVISES), for its stop. */
+	vervangenDoor?: string | null;
+};
 
 export type Uitslag = {
 	id: string;
@@ -23,6 +31,8 @@ export type Uitslag = {
 	aangenomen: boolean | null;
 	voor: number | null;
 	tegen: number | null;
+	/** Without a vote: what the Kamer decided instead, from its BesluitSoort (`ingetrokken`). */
+	soort: string | null;
 };
 
 /** One amendment as it came to the vote, with the papers it grew from. */
@@ -36,6 +46,8 @@ export type Rij = {
 	/** Several papers merged into this one (more than one chain leads here). */
 	samengevoegd: boolean;
 	uitslag: Uitslag | null;
+	/** No decision, and the zaak not done (`done: false`): not voted yet. */
+	nogNiet: boolean;
 };
 
 export type Dienstregeling = {
@@ -79,6 +91,39 @@ function indienerVan(n: GraphNode): Rij['indiener'] {
 	};
 }
 
+/**
+ * What a decision without a vote says, from the TK's BesluitSoort as the API gives it
+ * (`decision_kind`): `Stemmen - ingetrokken`, `Aanhouden`, `Uitstellen`, `Vervallen`. The
+ * word, never "gestemd"; another kind by the part after its dash, lowercased.
+ */
+export function besluitSoort(kind: unknown): string | null {
+	const k = str(kind).trim().toLowerCase();
+	if (!k) return null;
+	if (/ingetrokken|intrekken/.test(k)) return 'ingetrokken';
+	if (/aangehouden|aanhouden/.test(k)) return 'aangehouden';
+	if (/uitgesteld|uitstellen/.test(k)) return 'uitgesteld';
+	if (/vervallen|vervalt/.test(k)) return 'vervallen';
+	if (/aangenomen|verworpen/.test(k)) return null;
+	const deel =
+		k
+			.split(/\s+-\s+/)
+			.at(-1)
+			?.trim() ?? '';
+	return deel && !/gestemd|stemmen/.test(deel) ? deel : null;
+}
+
+/**
+ * The decision of a zaak that has several (postponed, then voted): the latest with an
+ * outcome (`passed` set); without one, the latest by date.
+ */
+export function kiesBesluit(besluiten: GraphNode[]): GraphNode | null {
+	const datum = (n: GraphNode) => str(n.props?.date);
+	const laatste = (ns: GraphNode[]) =>
+		ns.reduce<GraphNode | null>((a, n) => (!a || datum(n) >= datum(a) ? n : a), null);
+	const met = besluiten.filter((n) => typeof n.props?.passed === 'boolean');
+	return laatste(met.length ? met : besluiten);
+}
+
 const vroeger = (a: Stuk, b: Stuk) =>
 	a.datum.localeCompare(b.datum) || Number(a.nummer) - Number(b.nummer);
 
@@ -106,29 +151,38 @@ export function dienstregeling(g: Graph, cap = CAP): Dienstregeling {
 		volgende.set(e.target, [...(volgende.get(e.target) ?? []), e.source]);
 	}
 
-	// The decision on a case, by the case it singles out (`primary_case_id`).
-	const besluit = new Map<string, GraphNode>();
+	// The decisions on a case, by the case they single out (`primary_case_id`).
+	const besluiten = new Map<string, GraphNode[]>();
 	for (const n of g.nodes)
 		if (n.id.startsWith('decisions/')) {
 			const c = str(n.props?.primary_case_id);
-			if (c) besluit.set(c, n);
+			if (c) besluiten.set(c, [...(besluiten.get(c) ?? []), n]);
 		}
 	const uitslagVan = (n: GraphNode): Uitslag | null => {
 		for (const c of lijst(n.props?.case_ids)) {
-			const b = besluit.get(str(c));
+			const b = kiesBesluit(besluiten.get(str(c)) ?? []);
 			if (!b) continue;
 			const tally = (b.props?.tally ?? {}) as Props;
 			const passed = b.props?.passed;
+			const aangenomen = typeof passed === 'boolean' ? passed : null;
 			return {
 				id: b.id,
 				datum: str(b.props?.date),
-				aangenomen: typeof passed === 'boolean' ? passed : null,
+				aangenomen,
 				voor: num(tally.Voor),
-				tegen: num(tally.Tegen)
+				tegen: num(tally.Tegen),
+				soort: aangenomen === null ? besluitSoort(b.props?.decision_kind) : null
 			};
 		}
 		return null;
 	};
+	// A zaak the API marks not done (`done: false`), by its external id.
+	const nietKlaar = new Set(
+		g.nodes
+			.filter((n) => n.id.startsWith('cases/') && n.props?.done === false)
+			.map((n) => str(n.props?.external_id) || n.key)
+	);
+	const nummer = (id: string) => stukVan(nodes.get(id)!).nummer;
 
 	const rijen: Rij[] = stukken
 		.filter((n) => !volgende.has(n.id))
@@ -142,15 +196,21 @@ export function dienstregeling(g: Graph, cap = CAP): Dienstregeling {
 				rij.push(...(vorige.get(id) ?? []));
 			}
 			const haltes = [...gezien]
-				.map((id) => ({ ...stukVan(nodes.get(id)!), nieuw: !vorige.has(id) }))
+				.map((id) => ({
+					...stukVan(nodes.get(id)!),
+					nieuw: !vorige.has(id),
+					vervangenDoor: volgende.has(id) ? nummer(volgende.get(id)![0]) : null
+				}))
 				.sort(vroeger);
 			const begin = haltes.filter((h) => !vorige.has(h.id)).length;
+			const uitslag = uitslagVan(n);
 			return {
 				stuk: stukVan(n),
 				haltes,
 				indiener: indienerVan(n),
 				samengevoegd: begin > 1,
-				uitslag: uitslagVan(n)
+				uitslag,
+				nogNiet: !uitslag && lijst(n.props?.case_ids).some((c) => nietKlaar.has(str(c)))
 			};
 		})
 		.sort((a, b) => vroeger(a.haltes[0], b.haltes[0]));

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
 	aantalAmendementen,
+	besluitSoort,
 	dienstregeling,
+	kiesBesluit,
 	kolomVan,
 	maandagVan,
 	stappen,
@@ -134,5 +136,70 @@ describe('dienstregeling van de amendementen', () => {
 			})
 		).toBe(51);
 		expect(aantalAmendementen(null)).toBe(0);
+	});
+});
+
+describe('besluiten zonder stemming (gap 2, BesluitSoort)', () => {
+	const b = (id: string, date: string, passed: boolean | null, decision_kind: string) => ({
+		id: `decisions/${id}`,
+		key: id,
+		props: { primary_case_id: 'k', date, passed, decision_kind }
+	});
+
+	it('noemt de soort zoals de Kamer besloot, nooit "gestemd"', () => {
+		expect(besluitSoort('Stemmen - ingetrokken')).toBe('ingetrokken');
+		expect(besluitSoort('Aanhouden')).toBe('aangehouden');
+		expect(besluitSoort('Stemmen - aangehouden')).toBe('aangehouden');
+		expect(besluitSoort('Uitstellen')).toBe('uitgesteld');
+		expect(besluitSoort('Vervallen')).toBe('vervallen');
+		expect(besluitSoort('Stemmen - aangenomen')).toBeNull();
+		expect(besluitSoort('Stemmen')).toBeNull();
+		expect(besluitSoort(null)).toBeNull();
+	});
+
+	it('kiest bij meer besluiten het laatste met een uitslag, anders het laatste', () => {
+		const uitgesteld = b('u', '2024-04-18', null, 'Uitstellen');
+		const gestemd = b('g', '2024-04-23', true, 'Stemmen - aangenomen');
+		const aangehouden = b('a', '2024-04-25', null, 'Stemmen - aangehouden');
+		expect(kiesBesluit([uitgesteld, aangehouden, gestemd])?.id).toBe('decisions/g');
+		expect(kiesBesluit([uitgesteld, aangehouden])?.id).toBe('decisions/a');
+		expect(kiesBesluit([])).toBeNull();
+	});
+
+	it('geeft een ingetrokken amendement zijn woord, en een vervangen stuk zijn opvolger', () => {
+		const g: Graph = {
+			nodes: [
+				...graaf.nodes,
+				{
+					id: 'decisions/b-k60',
+					key: 'b-k60',
+					props: {
+						primary_case_id: 'k60',
+						date: '2024-04-25',
+						passed: null,
+						decision_kind: 'Stemmen - ingetrokken'
+					}
+				}
+			],
+			edges: graaf.edges
+		};
+		const d = dienstregeling(g);
+		expect(d.rijen.find((r) => r.stuk.nummer === '60')!.uitslag).toMatchObject({
+			aangenomen: null,
+			soort: 'ingetrokken'
+		});
+		const r40 = d.rijen.find((r) => r.stuk.nummer === '40')!;
+		expect(r40.haltes.map((h) => h.vervangenDoor)).toEqual(['30', '40', null]);
+	});
+
+	it('zegt nog niet gestemd waar de zaak niet af is en geen besluit heeft', () => {
+		const g: Graph = {
+			nodes: [
+				...graaf.nodes,
+				{ id: 'cases/k60', key: 'k60', props: { external_id: 'k60', done: false } }
+			],
+			edges: graaf.edges
+		};
+		expect(dienstregeling(g).rijen.find((r) => r.stuk.nummer === '60')!.nogNiet).toBe(true);
 	});
 });
