@@ -97,12 +97,17 @@
 			return `halte${k === eerste ? ' eerste' : ''}${k === laatste ? (r.uitslag ? ' laatste' : ' laatste stil') : ''}`;
 		return k < laatste ? 'loopt' : r.uitslag ? 'na' : 'voor';
 	}
+	// Without a vote the word of the decision (ingetrokken, aangehouden), never "gestemd".
 	const uitkomst = (r: Rij) =>
 		!r.uitslag || r.uitslag.aangenomen === null
-			? { soort: 'open' as const, titel: r.uitslag ? 'gestemd' : 'geen stemming' }
+			? {
+					soort: 'open' as const,
+					woord: r.uitslag?.soort ?? (r.nogNiet ? 'nog niet gestemd' : null),
+					titel: r.uitslag ? 'geen uitslag in de gegevens' : 'geen stemming'
+				}
 			: r.uitslag.aangenomen
-				? { soort: 'ja' as const, titel: 'aangenomen' }
-				: { soort: 'nee' as const, titel: 'verworpen' };
+				? { soort: 'ja' as const, woord: null, titel: 'aangenomen' }
+				: { soort: 'nee' as const, woord: null, titel: 'verworpen' };
 </script>
 
 <div class="amendementen" use:inBeeld>
@@ -164,7 +169,13 @@
 									<td class="dag {s} {grens(i)}">
 										{#if s.startsWith('halte')}
 											{#each r.haltes.filter((h) => kolomVan(regeling!, h.datum) === k) as h (h.id)}
-												<BronLink ref={h.id} class="nr-ring">{h.nummer}</BronLink>
+												<BronLink
+													ref={h.id}
+													class="nr-ring"
+													title={h.vervangenDoor
+														? `Vervangen door nr. ${h.vervangenDoor}`
+														: undefined}>{h.nummer}</BronLink
+												>
 											{/each}
 										{/if}
 									</td>
@@ -174,15 +185,16 @@
 										<BronLink ref={r.uitslag.id} class="uitslag"
 											><Uitkomst
 												soort={u.soort}
+												woord={u.woord}
 												titel={u.titel}
 											/>{#if r.uitslag.voor != null && r.uitslag.tegen != null}<span
 													>{r.uitslag.voor}–{r.uitslag.tegen}</span
 												>{/if}</BronLink
 										>
-									{:else if regeling.metVervanging}
+									{:else if regeling.metVervanging || r.nogNiet}
 										<!-- Not replaced and never voted: withdrawn or still open. Without the
 										     chains a paper without a vote may have been replaced: nothing said. -->
-										<Uitkomst soort={u.soort} titel={u.titel} />
+										<Uitkomst soort={u.soort} woord={u.woord} titel={u.titel} />
 									{/if}
 								</td>
 							</tr>
