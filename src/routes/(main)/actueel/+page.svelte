@@ -638,7 +638,8 @@
 <style>
 	/* The frame and grid of Bladeren (AppShell). */
 	.actueel {
-		--row-lead: 132px;
+		/* The lead column of Bladeren's rows (140 in every category), so titles start alike. */
+		--row-lead: 140px;
 		--row-aside: 150px;
 	}
 	.kop,
