@@ -1299,11 +1299,13 @@
 		padding: 0;
 		list-style: none;
 	}
+	/* As a row of Bladeren (IndexRow): its lead column, gap and inset, so the titles start
+	   where they start in every list. */
 	.rij {
 		display: grid;
-		grid-template-columns: 96px minmax(0, 1fr);
-		gap: var(--s-3);
-		padding: var(--s-3) 0;
+		grid-template-columns: 140px minmax(0, 1fr);
+		gap: 20px;
+		padding: var(--s-3) var(--s-2);
 		border-bottom: 1px solid var(--rule);
 	}
 	.rij__datum,
