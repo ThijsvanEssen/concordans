@@ -1,6 +1,5 @@
 <script lang="ts">
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { axisLabels } from './index/years-axis';
 	import { korteDatum, weekdag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
@@ -55,7 +54,10 @@
 	import ZaalTegenover from './ZaalTegenover.svelte';
 	import ZaalLegenda from './ZaalLegenda.svelte';
 	import { kleurVan } from './partijkleuren.svelte';
-	import IndexToolbar from './index/IndexToolbar.svelte';
+	import Periode from '$lib/components/ui/Periode.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
 	import {
 		NO_DECISION_KIND,
@@ -2071,6 +2073,11 @@
 	const facetGroups = $derived(
 		CHAMBER_CATEGORIES.includes(category) ? [kamerGroup, ...facetGroupsAll] : facetGroupsAll
 	);
+	// The period stands in the choose-line, the other groups in the facet column.
+	const periode = $derived(
+		facetGroups.find((g): g is Extract<FacetGroup, { kind: 'range' }> => g.kind === 'range') ?? null
+	);
+	const facetten = $derived(facetGroups.filter((g) => g.kind !== 'range'));
 	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
 
 	// ── Opening a source ────────────────────────────────────────────────────
@@ -2142,34 +2149,44 @@
 			<div class="page">
 				<!-- The page names itself for a screen reader; the tabs above show it. -->
 				<h1 class="sr-only">Bladeren: {categoryLabel(category)}</h1>
-				<aside class="facet-col" aria-label="Filters">
-					<!-- On a phone the Kamer stands outside the folded filters, one tap away (Thijs,
-					     9 Oct: to switch, one had to know it was among them). -->
-					{#if CHAMBER_CATEGORIES.includes(category)}
-						<div class="kamer-snel">
-							<Keuze
-								label="Kamer"
-								klein
-								waarde={kamer}
-								onKies={kiesKamer}
-								opties={CHAMBERS.map((c) => ({ waarde: c, label: CHAMBER_NAME[c] }))}
+				<!-- The choose-line (docs/bediening.md): the field of the list and its period, over
+				     the facets and the list. -->
+				<div class="regel">
+					<label class="search">
+						<span class="visually-hidden">Zoek in {labelOf(category)}</span>
+						<input
+							type="search"
+							value={qDraft ?? q}
+							placeholder={PLACEHOLDER[category]}
+							oninput={(e) => typeQuery(e.currentTarget.value)}
+						/>
+					</label>
+					{#if periode}
+						<div class="periode">
+							<Periode
+								van={periode.from}
+								tot={periode.to}
+								label={periode.label}
+								onChange={periode.onChange}
 							/>
 						</div>
 					{/if}
-					<!-- On a narrow screen the filters fold away above the list. -->
+				</div>
+				<aside class="facet-col" aria-label="Verfijnen">
+					<!-- On a phone the facets behind one quiet line, opened in place. -->
 					<button
 						type="button"
-						class="facet-toggle"
+						class="verfijnen-knop"
 						aria-expanded={filtersOpen}
+						aria-controls="bladeren-facetten"
 						onclick={() => (filtersOpen = !filtersOpen)}
-						>Filters{chips.length ? ` (${chips.length})` : ''}<span
-							class="chevron"
-							class:chevron--open={filtersOpen}
-							aria-hidden="true">›</span
-						></button
+						>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
 					>
-					<div class="facet-body" class:facet-body--open={filtersOpen}>
-						<IndexFacets groups={facetGroups} pending={!pages[category] && !error} />
+					<div class="facet-body" id="bladeren-facetten" class:facet-body--open={filtersOpen}>
+						<IndexFacets groups={facetten} pending={!pages[category] && !error} />
+						{#if chips.length}
+							<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
+						{/if}
 					</div>
 				</aside>
 				<div
@@ -2241,30 +2258,29 @@
 							<!-- The count's own height before it is known, so nothing below it moves. -->
 							<p class="result-count" aria-hidden="true">&nbsp;</p>
 						{/if}
-						{#each chips as chip (chip.id)}
-							<button type="button" class="chip" onclick={chip.onRemove}>
-								{chip.label}<span class="chip-x" aria-hidden="true">×</span>
-								<span class="visually-hidden">(verwijder)</span>
-							</button>
-						{/each}
-						{#if chips.length > 1}
-							<button type="button" class="chips-clear" onclick={clearFilters}
-								>Wis alle filters</button
-							>
+						{#if sorts.length > 1}
+							<!-- The order of the list: one line under its count (docs/bediening.md). -->
+							<span class="volgorde">
+								<TekstMenu
+									klein
+									rechts
+									label="Volgorde"
+									waarde={sortDef.id}
+									opties={sorts.map((o) => ({ waarde: o.id, label: o.label }))}
+									onKies={(v) => patchUrl({ sort: v || null })}
+								/>
+								{#if dir}
+									<IconKnop
+										label={dir === 'asc'
+											? 'Oplopend; sorteer aflopend'
+											: 'Aflopend; sorteer oplopend'}
+										onclick={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
+										>{dir === 'asc' ? '↑' : '↓'}</IconKnop
+									>
+								{/if}
+							</span>
 						{/if}
 					</div>
-
-					<IndexToolbar
-						query={qDraft ?? q}
-						onQueryChange={typeQuery}
-						searchPlaceholder={PLACEHOLDER[category]}
-						searchLabel="Zoek in {labelOf(category)}"
-						sortOptions={sorts.length > 1 ? sorts : []}
-						sort={sortDef.id}
-						onSortChange={(v) => patchUrl({ sort: v || null })}
-						{dir}
-						onDirToggle={() => patchUrl({ dir: dir === 'asc' ? 'desc' : 'asc' })}
-					/>
 
 					{#if category === 'judgments' && judgmentYears.length > 1}
 						{@const max = Math.max(...judgmentYears.map((y) => y.count))}
@@ -3018,17 +3034,15 @@
 {#snippet loadMoreButton(loaded: AnyPage | undefined, noun: string)}
 	{#if loaded?.more}
 		{@const remaining = (loaded.total ?? 0) - loaded.items.length}
-		<div class="load-more">
+		<div class="volgende">
 			{#if loadMoreFailed}
-				<p class="load-more-error" role="alert">De volgende {noun} konden niet worden geladen.</p>
+				<p class="volgende-fout" role="alert">De volgende {noun} konden niet worden geladen.</p>
 			{/if}
-			<button type="button" class="load-more-btn" onclick={loadMore} disabled={loadingMore}>
-				{loadingMore
-					? 'Laden…'
-					: loadMoreFailed
+			{#if loadingMore}<span>Laden…</span>{:else}<TekstLink onclick={loadMore}
+					>{loadMoreFailed
 						? 'Opnieuw'
-						: `Meer ${noun} laden${remaining > 0 ? ` (${remaining.toLocaleString('nl-NL')} resterend)` : ''}`}
-			</button>
+						: `Volgende ${noun}${remaining > 0 ? `, nog ${formatCount(remaining)}` : ''}`}</TekstLink
+				>{/if}
 		</div>
 	{/if}
 {/snippet}
@@ -3185,26 +3199,6 @@
 	.results {
 		min-width: 0;
 	}
-	.kamer-snel {
-		display: none;
-	}
-	.facet-toggle {
-		display: none;
-		align-items: center;
-		gap: var(--s-2);
-		width: 100%;
-		min-height: 44px;
-		padding: 0;
-		border: 0;
-		border-top: 1px solid var(--rule);
-		border-bottom: 1px solid var(--rule);
-		background: transparent;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
 
 	/* The filters that are on, above the list; a click takes one off. */
 	/* Uitspraken per year: a column per year, the chosen one in ink, the ones outside the
@@ -3280,11 +3274,14 @@
 		align-items: baseline;
 		gap: var(--s-2) var(--s-3);
 		margin: 0 0 var(--s-3);
+		padding-bottom: var(--s-2);
+		border-bottom: 2px solid var(--ink);
 	}
 	.result-count {
 		margin: 0 var(--s-2) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h2);
+		font-weight: 800;
 		line-height: 1.1;
 		color: var(--ink);
 	}
@@ -3323,39 +3320,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink);
-	}
-	.chip {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		min-height: 24px;
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--ink);
-		border-radius: var(--r-1);
-		background: transparent;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.chip:hover {
-		background: var(--paper-2);
-	}
-	.chip-x {
-		color: var(--ink-3);
-	}
-	.chips-clear {
-		min-height: 24px;
-		border: 0;
-		background: transparent;
-		padding: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.chips-clear:hover {
-		color: var(--accent);
 	}
 	.visually-hidden {
 		position: absolute;
@@ -3874,43 +3838,6 @@
 	}
 
 	/* Load more */
-	.load-more {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-5) 0 var(--s-3);
-	}
-	.load-more-error {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-	}
-	.load-more-btn {
-		height: var(--veld-h);
-		padding: 0 var(--s-4);
-		background: transparent;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		color: var(--ink-2);
-		cursor: pointer;
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease),
-			border-color var(--dur-1) var(--ease);
-	}
-	.load-more-btn:hover:not(:disabled) {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-	.load-more-btn:disabled {
-		opacity: 0.6;
-		cursor: wait;
-	}
 
 	/* Narrow viewports: the columns stack. */
 	@media (max-width: 768px) {
@@ -3940,17 +3867,6 @@
 			padding: 0 var(--s-4);
 			background: var(--paper);
 		}
-		.facet-toggle {
-			display: flex;
-		}
-		.kamer-snel {
-			display: block;
-			padding: var(--s-2) 0;
-		}
-		/* The Kamer is above; the folded filters leave it out. */
-		.facet-body :global(section:has(#facet-kamer)) {
-			display: none;
-		}
 		.facet-body {
 			display: none;
 			padding-top: var(--s-3);
@@ -3977,6 +3893,94 @@
 		}
 		.list-head > span:not(.nums) {
 			display: none;
+		}
+		/* Without number columns the head holds only its rule, under the count's: it goes. */
+		.list-head:not(:has(.nums)) {
+			display: none;
+		}
+	}
+
+	/* The choose-line over both columns: the field and the period, without rules. */
+	.regel {
+		grid-column: 1 / -1;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: var(--s-2) var(--s-4);
+		margin-bottom: var(--s-5);
+	}
+	.regel .search {
+		flex: 1 1 320px;
+		min-width: 0;
+	}
+	.regel .periode {
+		flex: 0 1 380px;
+		min-width: 0;
+	}
+	.regel .search input {
+		width: 100%;
+		box-sizing: border-box;
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		background: var(--paper);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		color: var(--ink);
+	}
+	.regel .search input::placeholder {
+		color: var(--ink-3);
+	}
+	.verfijnen-knop {
+		display: none;
+	}
+	.wis {
+		margin: var(--s-3) 0 0;
+		font-size: var(--t-meta);
+	}
+	/* The order at the right of the count, on the ink rule that opens the list. */
+	.volgorde {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		margin-left: auto;
+	}
+	.volgende {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--s-2);
+		padding: var(--s-5) 0 var(--s-3);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
+	.volgende-fout {
+		margin: 0;
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+	}
+	@media (max-width: 767px) {
+		.regel {
+			margin-bottom: var(--s-3);
+		}
+		.regel .search,
+		.regel .periode {
+			flex: 1 1 100%;
+		}
+		.verfijnen-knop {
+			display: inline;
+			padding: var(--s-2) 0;
+			border: 0;
+			background: none;
+			font-family: var(--font-ui);
+			font-size: var(--t-ui);
+			color: var(--ink);
+			text-decoration: underline;
+			text-decoration-color: var(--rule-strong);
+			text-underline-offset: 4px;
+			cursor: pointer;
 		}
 	}
 </style>

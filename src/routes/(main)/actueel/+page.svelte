@@ -632,11 +632,10 @@
 			</div>
 			{@render verder()}
 			{#if cursor && !doorzocht}
-				<div class="more">
-					<button type="button" onclick={loadMore} disabled={loadingMore}
-						>{loadingMore ? 'Laden…' : 'Meer laden'}</button
-					>
-				</div>
+				<p class="volgende">
+					{#if loadingMore}Laden…{:else}<TekstLink onclick={loadMore}>Volgende dagen</TekstLink
+						>{/if}
+				</p>
 			{/if}
 		{/if}
 	</main>
@@ -826,23 +825,12 @@
 		font-family: var(--font-ui);
 		cursor: pointer;
 	}
-	.more {
-		display: flex;
-		justify-content: center;
+	.volgende {
 		padding: var(--s-5) 0;
-	}
-	.more button {
-		padding: var(--s-2) var(--s-4);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.more button:hover:not(:disabled) {
-		background: var(--paper-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+		text-align: center;
 	}
 	.visually-hidden {
 		position: absolute;

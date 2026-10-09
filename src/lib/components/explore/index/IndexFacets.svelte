@@ -110,6 +110,8 @@
 	import { formatCount } from '$lib/verbonden/filter';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 
 	let {
 		groups,
@@ -174,13 +176,11 @@
 					{/each}
 				</ul>
 				{#if g.preview && counted(g) > g.preview}
-					<button
-						type="button"
-						class="meer"
-						aria-expanded={alle[g.id] ?? false}
-						onclick={() => (alle = { ...alle, [g.id]: !alle[g.id] })}
-						>{alle[g.id] ? 'Minder' : `Alle ${formatCount(counted(g))}`}</button
-					>
+					<p class="alle">
+						<TekstLink onclick={() => (alle = { ...alle, [g.id]: !alle[g.id] })}
+							>{alle[g.id] ? 'Minder' : `Alle ${formatCount(counted(g))}`}</TekstLink
+						>
+					</p>
 				{/if}
 			{:else if g.kind === 'steps'}
 				<!-- De fasen als rijen, zoals elk ander filter; geen staafjes. -->
@@ -199,19 +199,23 @@
 				</ul>
 			{:else if g.kind === 'select'}
 				{@const sel = g}
-				<select
-					class="text select"
-					value={sel.value}
-					aria-label={sel.label}
-					onchange={(e) => sel.onChange(e.currentTarget.value)}
-				>
-					<option value="">{sel.all}</option>
-					{#each sel.options as o (o.value)}
-						<option value={o.value}
-							>{o.label}{o.count !== undefined ? ` (${formatCount(o.count)})` : ''}</option
-						>
-					{/each}
-				</select>
+				<!-- One of many: a text menu (docs/bediening.md), the count beside each option. -->
+				<TekstMenu
+					klein
+					label={sel.label}
+					waarde={sel.value}
+					opties={[
+						{ waarde: '', label: sel.all },
+						...sel.options.map((o) => ({
+							waarde: o.value,
+							label: `${o.label}${o.count !== undefined ? ` (${formatCount(o.count)})` : ''}`
+						}))
+					]}
+					tekst={sel.value
+						? (sel.options.find((o) => o.value === sel.value)?.label ?? sel.value)
+						: sel.all}
+					onKies={(v) => sel.onChange(v)}
+				/>
 			{:else if g.kind === 'range'}
 				<!-- The same period in every list with dates ($lib/components/ui/Periode). -->
 				<Periode van={g.from} tot={g.to} label={g.label} onChange={g.onChange} />
@@ -268,20 +272,9 @@
 		margin: 0;
 		padding: 0;
 	}
-	.meer {
-		margin-top: var(--s-1);
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		font-family: var(--font-serif);
+	.alle {
+		margin: var(--s-1) 0 0;
 		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.meer:hover {
-		color: var(--accent);
 	}
 	.subhead {
 		display: flex;
@@ -314,9 +307,6 @@
 		font: inherit;
 		font-size: var(--t-meta);
 		color: var(--ink);
-	}
-	.select {
-		cursor: pointer;
 	}
 	.text::placeholder {
 		color: var(--ink-3);
