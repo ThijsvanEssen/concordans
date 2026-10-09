@@ -8,6 +8,7 @@
 	// Reader for a cabinet: its period, minister-president and coalition, and what it did,
 	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
 	import ReaderFrame from './ReaderFrame.svelte';
+	import KabinetZetels from './KabinetZetels.svelte';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { indexHref } from '$lib/bron/href';
@@ -111,6 +112,8 @@
 					>
 				</Veld>
 			</Feiten>
+
+			<KabinetZetels kabinet={c.key} />
 		{/if}
 	</div>
 </ReaderFrame>

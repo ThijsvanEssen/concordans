@@ -13,6 +13,7 @@
 		hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' }),
 		voteHighlight = null,
 		woorden = ['voor', 'tegen'],
+		telling = true,
 		colorOf = null,
 		meubels = false
 	}: {
@@ -28,6 +29,8 @@
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 		/** The two sides of `voteHighlight` as words: voor and tegen, or coalitie and oppositie. */
 		woorden?: [string, string];
+		/** The count of the two sides in the middle; off where a bar under the hall says it. */
+		telling?: boolean;
 	} = $props();
 
 	// The factions as they sit in the plenary hall, from the chair's left: the order of the
@@ -211,7 +214,7 @@
 					{hovered.seats}
 					{hovered.seats === 1 ? 'zetel' : 'zetels'}
 				</text>
-			{:else if voteTotals}
+			{:else if voteTotals && telling}
 				<text x={CX} y={MID - 6} text-anchor="middle" class="center-num">
 					{voteTotals.voor}
 				</text>

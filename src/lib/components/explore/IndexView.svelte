@@ -55,7 +55,6 @@
 	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import KabinetOpen from '$lib/components/open/KabinetOpen.svelte';
 	import ZaalLegenda from './ZaalLegenda.svelte';
-	import Meerderheid from './Meerderheid.svelte';
 	import { kleurVan } from './partijkleuren.svelte';
 	import IndexToolbar from './index/IndexToolbar.svelte';
 	import IndexFacets, { activeFilters, type FacetGroup } from './index/IndexFacets.svelte';
@@ -439,32 +438,22 @@
 
 	let pages = $state<Pages>({});
 	let seats = $state<Schema<'ParliamentSeatsResponse'> | null>(null);
-	// Coalition and opposition per fractie on the day of the hall (API, Back-end #3): the
-	// cabinet in office and `coalition` per fractie, where the API gives them.
-	type MetCoalitie = { cabinet?: { key: string; name: string } | null };
-	type FractieCoalitie = { key: string; seats: number; coalition?: boolean | null };
-	const kabinetOpZaal = $derived((seats as MetCoalitie | null)?.cabinet ?? null);
-	const coalitieKant = $derived.by(() => {
-		if (!seats || !kabinetOpZaal) return null;
-		const fr = seats.factions as FractieCoalitie[];
-		if (!fr.some((f) => typeof f.coalition === 'boolean')) return null;
-		return Object.fromEntries(
-			fr.map((f) => [
-				f.key,
-				f.coalition === true ? 'voor' : f.coalition === false ? 'tegen' : 'other'
-			])
-		) as Record<string, 'voor' | 'tegen' | 'other'>;
+	// The cabinet in office on the day of the hall and its fracties (API 0.79.33): one line
+	// to the cabinet, whose reader shows its seats (Thijs, 10 Oct: the coalition is the
+	// cabinet's, not the Kamer's).
+	const coalitieRegel = $derived.by(() => {
+		const kabinet = seats?.cabinet;
+		if (!seats || !kabinet?.key) return null;
+		const fracties = [...seats.factions]
+			.filter((f) => f.coalition === true)
+			.sort((a, b) => b.seats - a.seats)
+			.map((f) => f.abbreviation ?? f.name ?? f.key);
+		return {
+			naam: kabinet.name ?? kabinet.key,
+			href: bronHref(`cabinets/${kabinet.key}`, { keepMode: false, mode: 'read' }),
+			fracties
+		};
 	});
-	const coalitieZetels = $derived.by(() => {
-		if (!seats || !coalitieKant) return null;
-		const fr = seats.factions as FractieCoalitie[];
-		const som = (k: string) =>
-			fr.filter((f) => coalitieKant[f.key] === k).reduce((n, f) => n + f.seats, 0);
-		return { ja: som('voor'), nee: som('tegen') };
-	});
-	/** The hall by fractie, or by coalition and opposition. */
-	let zaalKleur = $state<'fracties' | 'coalitie'>('fracties');
-	const zaalKant = $derived(zaalKleur === 'coalitie' ? coalitieKant : null);
 	/** The sitting factions, to filter members by, with their seats. */
 	let parties = $state<{ abbreviation: string; seats: number | null }[]>([]);
 	// The counts per filter option the API gives with a list, under the other filters.
@@ -2192,46 +2181,21 @@
 					{#if category === 'factions' && seats && seats.chamber === kamer}
 						<div class="hemi-card">
 							<div class="hemi-svg-wrap">
-								{#if coalitieKant && kabinetOpZaal}
-									<Keuze
-										klein
-										label="Zaal"
-										opties={[
-											{ waarde: 'fracties', label: 'Fracties' },
-											{
-												waarde: 'coalitie',
-												label: 'Coalitie',
-												titel: `Coalitie en oppositie van ${kabinetOpZaal.name}`
-											}
-										]}
-										waarde={zaalKleur}
-										onKies={(w) => (zaalKleur = w)}
-									/>
-								{/if}
 								{#if seats.chamber === 'EK'}
-									<ZaalTegenover data={seats} voteHighlight={zaalKant} />
+									<ZaalTegenover data={seats} />
 								{:else}
 									<Hemicycle
 										data={seats}
 										meubels
-										voteHighlight={zaalKant}
-										woorden={['coalitie', 'oppositie']}
 										colorOf={(f, i) =>
 											kleurVan('TK', f.abbreviation ?? f.name ?? f.key, i, f.color ?? null)}
-									/>
-								{/if}
-								{#if zaalKant && coalitieZetels}
-									<Meerderheid
-										ja={coalitieZetels.ja}
-										nee={coalitieZetels.nee}
-										totaal={seats.total_seats}
-										woorden={['coalitie', 'oppositie']}
 									/>
 								{/if}
 								<ZaalLegenda
 									data={seats}
 									kolommen={2}
 									rijen={10}
+									coalitie={coalitieRegel}
 									peil={seats.chamber === 'EK'
 										? `Eerste Kamer, samenstelling op ${formatLongDate(composition?.composition_date ?? seats.as_of ?? null)}`
 										: `Tweede Kamer, stand op ${formatLongDate(seats.as_of ?? null)}`}
