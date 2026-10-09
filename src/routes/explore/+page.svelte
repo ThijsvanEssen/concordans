@@ -1,4 +1,9 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import { useSearchOpener } from '$lib/stores/search-trigger';
+	import { laadWetsnetwerk } from '$lib/components/actueel/wetsnetwerk';
+	import { vandaag } from '$lib/text/datum';
 	import { get } from 'svelte/store';
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import {
@@ -222,7 +227,52 @@
 	const telefoon = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
 	// "Bronnen ertussen" is on by default, on a phone too (Thijs, 9 Oct, from an iPhone): the
 	// clusters, the faint bronnen between and the cap of 100 keep it light there.
-	const netwerk = $derived<Netwerk>(parseNetwerk(new URLSearchParams(netwerkQuery)));
+	// ── The example, where nothing is chosen ─────────────────────────────────
+	// The Verkenner without a focus, a netwerk or one remembered opens on the home page's
+	// own example (Thijs, 10 Oct: "kies dan het voorbeeld dat van de homepage komt"): the
+	// network of the newest passed bill, as laadWetsnetwerk gives it there. Shown, not
+	// written: the address stays /explore. A line above says it is an example.
+	let voorbeeld = $state<{ query: string; naam: string } | null>(null);
+	const VOORBEELD_WEG = 'concordans:voorbeeld-regel';
+	let voorbeeldRegelWeg = $state(false);
+	$effect(() => {
+		try {
+			voorbeeldRegelWeg = localStorage.getItem(VOORBEELD_WEG) === 'weg';
+		} catch {
+			/* geen opslag */
+		}
+	});
+	const zonderKeuze = $derived(!focus && !pad && !netwerkQuery && mode !== 'index');
+	$effect(() => {
+		if (!zonderKeuze || voorbeeld) return;
+		try {
+			if (localStorage.getItem(NETWERK_KEY)) return;
+		} catch {
+			/* storage blocked */
+		}
+		const ac = new AbortController();
+		laadWetsnetwerk([], vandaag(), ac.signal)
+			.then((schets) => {
+				if (!schets || ac.signal.aborted) return;
+				const query = new URL(schets.verkenner, 'https://concordans.nl').searchParams.toString();
+				voorbeeld = { query, naam: schets.kandidaat.naam };
+			})
+			.catch(() => {});
+		return () => ac.abort();
+	});
+	const voorbeeldAan = $derived(zonderKeuze && !!voorbeeld);
+	const zoekOpen = useSearchOpener();
+	function voorbeeldRegelSluit() {
+		voorbeeldRegelWeg = true;
+		try {
+			localStorage.setItem(VOORBEELD_WEG, 'weg');
+		} catch {
+			/* geen opslag */
+		}
+	}
+	const netwerk = $derived<Netwerk>(
+		parseNetwerk(new URLSearchParams(netwerkQuery || (voorbeeldAan ? voorbeeld!.query : '')))
+	);
 	const netwerkActive = $derived(netwerk.ids.length > 0);
 
 	// ── The bronfilter ───────────────────────────────────────────────────────
@@ -575,10 +625,15 @@
 	function handleNodeClick(node: GraphNode) {
 		const end = perfStart(`click ${node.id}`);
 		if (!node.id.startsWith('synth:')) {
-			void goto(bronHref(refOf(node.collection, node.key, node.raw?.props)), {
-				noScroll: true,
-				keepFocus: true
-			});
+			let href = bronHref(refOf(node.collection, node.key, node.raw?.props));
+			// A bron chosen in the example: the example's network comes along into the address,
+			// the canvas stays as it is.
+			if (voorbeeldAan) {
+				const url = new URL(href, page.url);
+				for (const [k, v] of new URLSearchParams(voorbeeld!.query)) url.searchParams.set(k, v);
+				href = url.pathname + url.search + url.hash;
+			}
+			void goto(href, { noScroll: true, keepFocus: true });
 		}
 		end();
 	}
@@ -808,7 +863,7 @@
 		}
 	}
 	$effect(() => {
-		if (netwerk.ids.length > 0) remember(netwerkQuery);
+		if (netwerkQuery && netwerk.ids.length > 0) remember(netwerkQuery);
 	});
 	$effect(() => {
 		// A readable address names its bron, also while it is looked up (a Kamerstuk, an
@@ -1342,6 +1397,17 @@
 		{:else if padMissing && !selectedNode && !netwerkActive}
 			<p class="explore-empty">{padMissing}</p>
 		{:else if mode === 'graph'}
+			{#if voorbeeldAan && !voorbeeldRegelWeg}
+				<!-- One quiet line: the network is an example, and how to choose another. -->
+				<p class="voorbeeld-regel">
+					<span
+						>Voorbeeld: {voorbeeld!.naam}. Kies een andere bron via het <TekstLink
+							onclick={() => zoekOpen()}>zoekveld</TekstLink
+						> (⌘K).</span
+					>
+					<IconKnop label="Deze regel verbergen" onclick={voorbeeldRegelSluit}>×</IconKnop>
+				</p>
+			{/if}
 			<div
 				class="explore-graph"
 				class:explore-graph--with-reader={!!selectedNode}
@@ -1589,6 +1655,18 @@
 		overflow: hidden;
 	}
 
+	.voorbeeld-regel {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--s-3);
+		margin: 0;
+		padding: var(--s-2) var(--s-4);
+		border-bottom: 1px solid var(--rule);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
 	.explore-content {
 		flex: 1;
 		overflow: hidden;
