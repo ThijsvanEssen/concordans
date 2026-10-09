@@ -863,7 +863,7 @@
 />
 
 <div class="overzicht blad">
-	<p class="terug"><a href="/onderwerpen">Onderwerpen</a></p>
+	<p class="terug"><a href="/onderwerpen">Gevolgd</a></p>
 	<!-- The heading with its action at the right (docs/bediening.md). -->
 	<header class="kop">
 		<h1 class="titel">{naam || 'Overzicht'}</h1>

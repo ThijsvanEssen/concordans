@@ -10,7 +10,7 @@
 
 <div class="overzicht blad blad__indeling">
 	<aside class="side">
-		<h1>Bladeren</h1>
+		<h1>Bronnen</h1>
 	</aside>
 	<div class="groepen">
 		{#each INDEX_TABS as groep (groep.label)}

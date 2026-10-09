@@ -2150,7 +2150,7 @@
 		<div class="stage-scroll" bind:this={scroller}>
 			<div class="page blad blad__indeling">
 				<!-- The page names itself for a screen reader; the tabs above show it. -->
-				<h1 class="sr-only">Bladeren: {categoryLabel(category)}</h1>
+				<h1 class="sr-only">Bronnen: {categoryLabel(category)}</h1>
 				<!-- The choose-line (docs/bediening.md): the field of the list and its period, over
 				     the facets and the list. -->
 				<div class="regel">

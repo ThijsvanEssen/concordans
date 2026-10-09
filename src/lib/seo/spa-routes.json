@@ -6,7 +6,7 @@
 	},
 	{
 		"path": "/explore",
-		"title": "Verkenner, Concordans",
+		"title": "Samenhang, Concordans",
 		"description": "Het netwerk van wetten, uitspraken, Kamerstukken en stemmingen, per bron met de verbonden bronnen."
 	},
 	{
@@ -16,7 +16,7 @@
 	},
 	{
 		"path": "/onderwerpen",
-		"title": "Onderwerpen, Concordans",
+		"title": "Gevolgde onderwerpen, Concordans",
 		"description": "Moties, amendementen, wetsvoorstellen en uitspraken per onderwerp, met een Atom-feed per onderwerp."
 	},
 	{
@@ -27,7 +27,7 @@
 	{
 		"path": "/docs",
 		"title": "Documentatie, Concordans",
-		"description": "Werking van Concordans: bronnen, verbindingen, de Verkenner en de lezers."
+		"description": "Werking van Concordans: bronnen, verbindingen, Samenhang en de lezers."
 	},
 	{
 		"path": "/docs/methode",
@@ -37,7 +37,7 @@
 	{
 		"path": "/docs/sneltoetsen",
 		"title": "Sneltoetsen, Concordans",
-		"description": "De sneltoetsen van de Verkenner en de lezers."
+		"description": "De sneltoetsen van Samenhang en de lezers."
 	},
 	{
 		"path": "/api",

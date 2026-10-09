@@ -64,13 +64,13 @@
 			href="/explore"
 			class="nav-link"
 			class:is-active={isExplore}
-			aria-current={isExplore ? 'page' : undefined}>Verkenner</a
+			aria-current={isExplore ? 'page' : undefined}>Samenhang</a
 		>
 		<a
 			href="/explore?mode=index"
 			class="nav-link"
 			class:is-active={isIndex}
-			aria-current={isIndex ? 'page' : undefined}>Bladeren</a
+			aria-current={isIndex ? 'page' : undefined}>Bronnen</a
 		>
 		<a
 			href="/actueel"
@@ -82,7 +82,7 @@
 			href="/onderwerpen"
 			class="nav-link"
 			class:is-active={isOnderwerpen}
-			aria-current={isOnderwerpen ? 'page' : undefined}>Onderwerpen</a
+			aria-current={isOnderwerpen ? 'page' : undefined}>Gevolgd</a
 		>
 	</nav>
 
@@ -156,10 +156,10 @@
 			class="mobile-nav"
 			onclick={() => closeMobileMenu()}
 		>
-			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Verkenner</a>
-			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bladeren</a>
+			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Samenhang</a>
+			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bronnen</a>
 			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
-			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}>Onderwerpen</a>
+			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}>Gevolgd</a>
 		</div>
 	{/if}
 

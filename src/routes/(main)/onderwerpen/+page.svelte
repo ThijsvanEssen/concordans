@@ -256,7 +256,7 @@
 <div class="onderwerpen blad blad__indeling">
 	<!-- The heading with its actions at the right, as Actueel (docs/bediening.md). -->
 	<header class="kop">
-		<h1 class="titel">Onderwerpen</h1>
+		<h1 class="titel">Gevolgde onderwerpen</h1>
 		{#if gedeeld.length}
 			<div class="acties">
 				{#if alGevolgd}
@@ -288,7 +288,7 @@
 		</div>
 	{/if}
 	<!-- The topics of the page, as a facet column holds its groups: a way to each. -->
-	<nav class="opzij" aria-label="Onderwerpen op deze pagina">
+	<nav class="opzij" aria-label="Gevolgde onderwerpen op deze pagina">
 		{#if lijst.length > 1}
 			<h2 class="opzij__kop">Gevolgd</h2>
 			<ul>
