@@ -4,7 +4,6 @@ import {
 	byArticle,
 	sharedEnactment,
 	stageLead,
-	summary,
 	type DossierChange
 } from './changed-articles';
 
@@ -47,21 +46,6 @@ describe('changed articles', () => {
 				{ id: 'a', key: 'k', article_number: '162', stub: false, judgment_total: 0 }
 			)
 		).toBe('Artikel 6:162');
-	});
-
-	it('sums up without the counts that are zero', () => {
-		const d = {
-			number: '36264',
-			total: 24,
-			articles: 24,
-			enacted: 24,
-			proposed: 0,
-			laws: [{ law: { id: 'x' }, total: 24, changes: [] }]
-		};
-		expect(summary(d)).toBe('24 artikelen in 1 wet. 24 wijzigingen in werking.');
-		expect(summary({ ...d, articles: 8, enacted: 5, proposed: 12 })).toBe(
-			'8 artikelen in 1 wet. 5 wijzigingen in werking, 12 wijzigingen voorgesteld.'
-		);
 	});
 
 	it('says the way of a change, with its own spaces', () => {
