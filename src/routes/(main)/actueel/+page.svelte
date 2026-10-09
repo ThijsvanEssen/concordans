@@ -209,9 +209,7 @@
 				teLang =
 					(e instanceof ApiError && (e.status === 503 || e.status === 504)) ||
 					(e instanceof DOMException && e.name === 'TimeoutError');
-				error = teLang
-					? 'Zoeken in Actueel duurt te lang. Een kortere periode gaat sneller.'
-					: 'Actueel kon niet worden geladen.';
+				error = teLang ? 'Zoeken duurt te lang.' : 'Actueel kon niet worden geladen.';
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
@@ -597,7 +595,12 @@
 				{#if gevolgd}
 					<a class="volg volg--aan" href="/onderwerpen">Gevolgd</a>
 				{:else}
-					<button type="button" class="volg" onclick={volgQ}>Volg</button>
+					<button
+						type="button"
+						class="volg"
+						title="Volg deze woorden in Onderwerpen"
+						onclick={volgQ}>Volg</button
+					>
 				{/if}
 			{/if}
 		</div>

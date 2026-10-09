@@ -284,9 +284,6 @@
 	<header class="kop">
 		<h1 class="titel">Onderwerpen</h1>
 		{#if gedeeld.length}
-			<p class="uitleg">
-				Gedeelde onderwerpen, de afgelopen {RECENT_DAGEN} dagen in Actueel.
-			</p>
 			<div class="acties">
 				{#if alGevolgd}
 					<a href="/onderwerpen">Gevolgd. Naar de eigen onderwerpen</a>
@@ -295,18 +292,12 @@
 				{/if}
 			</div>
 		{:else}
-			<p class="uitleg">
-				Stukken, stemmingen en toezeggingen in Actueel met deze woorden in de titel, de afgelopen
-				{RECENT_DAGEN} dagen. Nieuw is wat dateert van na het vorige bezoek. Synoniemen horen bij één
-				onderwerp: AI; kunstmatige intelligentie. Een stuk dat meer woorden raakt, telt één keer. De onderwerpen
-				staan alleen in deze browser.
-			</p>
 			<form class="nieuw" onsubmit={voegToe}>
 				<input
 					type="text"
 					aria-label="Onderwerp volgen"
 					bind:value={invoer}
-					placeholder="Woorden of synoniemen, gescheiden door ; of ,"
+					placeholder="AI; kunstmatige intelligentie"
 				/>
 				<button type="submit" disabled={!normaal(invoer)}>Volg</button>
 			</form>
@@ -322,11 +313,7 @@
 	</header>
 
 	{#if geladen && !lijst.length}
-		<p class="status">
-			Nog geen onderwerpen. Volg er een hierboven, of met Volg naast het zoekveld in <a
-				href="/actueel">Actueel</a
-			>.
-		</p>
+		<p class="status">Nog geen onderwerpen.</p>
 	{/if}
 
 	{#each lijst as o, n (sleutel(o))}
@@ -415,7 +402,11 @@
 </div>
 
 <style>
+	/* The column's width, not its content's: without a paragraph under the title the page
+	   would shrink to the field and stand off-centre. */
 	.onderwerpen {
+		width: 100%;
+		box-sizing: border-box;
 		max-width: 760px;
 		margin: 0 auto;
 		padding: var(--s-6) var(--s-6) var(--s-8);
@@ -425,12 +416,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-h1);
 		font-weight: 500;
-	}
-	.uitleg {
-		margin: 0 0 var(--s-4);
-		color: var(--ink-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
 	}
 	.nieuw {
 		display: flex;
@@ -493,8 +478,7 @@
 		font-size: var(--t-meta);
 	}
 	.acties a,
-	.verder a,
-	.status a {
+	.verder a {
 		color: var(--ink-2);
 		text-decoration: underline;
 		text-underline-offset: 2px;
