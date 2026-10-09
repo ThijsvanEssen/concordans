@@ -132,10 +132,13 @@
 			groupRequest.set(null);
 			if (!best || count(best) === 0) return;
 			expanded = new Set([...expanded, best.id]);
-			requestAnimationFrame(() =>
+			// A group closed in this browser opens for it.
+			zetOpen(`verbonden:${best.id}`, true);
+			// Once its rows are drawn: a smooth scroll is cut off while they render.
+			void tick().then(() =>
 				root
 					?.querySelector(`[data-group="${CSS.escape(best.id)}"]`)
-					?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+					?.scrollIntoView({ block: 'start' })
 			);
 		})
 	);
