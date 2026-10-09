@@ -6,6 +6,7 @@
 // arrest are "vrij cruciale info", not extra data.
 import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getNodeFirst } from '$lib/api/records';
+import { getDossier } from '$lib/components/parliamentary/data';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
 import { deelIds, layersOf } from '$lib/text/division';
@@ -376,12 +377,42 @@ export function behoort(
 				onder: groep('bijlagen', 'Bijlagen', 'ACCOMPANIES', 'inbound', 'documents')
 			};
 		}
-		case 'dossiers':
+		case 'dossiers': {
+			// What the bill does to the law, from the dossier's detail (API 0.79.30,
+			// `legal_effect`), which the dossier reader asks already (cached): "Wijzigt: Wft,
+			// Wta; Implementeert: Richtlijn (EU) 2023/2864" (Thijs, 9 Oct). Shown once it is in.
+			const nummer = text(props.number) ?? text(props.label) ?? light?.node.key ?? null;
+			const effect = (soort: 'amends' | 'implements') => async () => {
+				if (!nummer) return [];
+				const d = await getDossier(nummer).catch(() => null);
+				return (d?.legal_effect?.[soort] ?? []).map(
+					(w): Laag => ({
+						soort: soort === 'amends' ? 'Wet' : 'EU-handeling',
+						naam: w.name ?? w.short ?? w.key,
+						kort: w.short ?? undefined,
+						ref: { collection: 'instruments', key: w.key },
+						vol: (w.basis ?? []).includes('staatsblad')
+							? `${w.name ?? w.key}, in het Staatsblad`
+							: `${w.name ?? w.key}, volgens het wetsvoorstel`
+					})
+				);
+			};
 			return {
-				regels: regel('kamer', 'Behandeld in', kamer()),
+				regels: [
+					...regel('kamer', 'Behandeld in', kamer()),
+					{ id: 'wijzigt', label: 'Wijzigt', lagen: [], los: true, laad: effect('amends') },
+					{
+						id: 'implementeert',
+						label: 'Implementeert',
+						lagen: [],
+						los: true,
+						laad: effect('implements')
+					}
+				],
 				naast: [],
 				onder: []
 			};
+		}
 		case 'cases':
 			return {
 				regels: regel('dossier', 'Dossier', eerste('PART_OF', 'outbound', 'dossiers', 'Dossier')),
@@ -545,6 +576,24 @@ export async function procesgangIds(key: string): Promise<string[]> {
 	if (!eerder) return [];
 	const keten = await eerdereAanleg(eerder.key);
 	return keten.flatMap((l) => (l.ref ? [`${l.ref.collection}/${l.ref.key}`] : []));
+}
+
+/**
+ * The ids the band's lazy kern lines name, for Verbonden not to list them again: the
+ * procesgang of a uitspraak, what a dossier's bill amends and implements (`legal_effect`,
+ * from the detail the reader asks already).
+ */
+export async function lazeKernIds(
+	collection: Collection,
+	key: string,
+	props: Record<string, unknown>
+): Promise<string[]> {
+	if (collection === 'judgments') return procesgangIds(key);
+	if (collection !== 'dossiers') return [];
+	const nummer = text(props.number) ?? text(props.label) ?? key;
+	const d = await getDossier(nummer).catch(() => null);
+	const e = d?.legal_effect;
+	return [...(e?.amends ?? []), ...(e?.implements ?? [])].map((w) => `instruments/${w.key}`);
 }
 
 /**

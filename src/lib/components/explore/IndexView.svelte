@@ -192,6 +192,8 @@
 		committees: heeftParameter('/api/committees', 'active_from', 'active_to')
 	};
 	const dateFrom = $derived(params.get('from') ?? '');
+	/** Whether a list has a period chosen that its route takes. */
+	const metPeriode = (k: keyof typeof PERIODE) => PERIODE[k] && !!(dateFrom || dateTo);
 	const dateTo = $derived(params.get('to') ?? '');
 	const dossierFilter = $derived(params.get('dossier') ?? '');
 	const party = $derived(params.get('party') ?? '');
@@ -571,13 +573,14 @@
 					chamber: kamer,
 					q: q || undefined,
 					party: party || undefined,
-					active: includeInactive ? undefined : true,
-					include_all: includeInactive,
+					// With a period the period says who, not the seat of today.
+					active: includeInactive || metPeriode('members') ? undefined : true,
+					include_all: includeInactive || metPeriode('members'),
 					...(PERIODE.members
 						? { active_from: dateFrom || undefined, active_to: dateTo || undefined }
 						: {}),
 					sort: oneOf(sortDef.id, ['family_name', 'name'] as const),
-					limit: includeInactive ? limit : SEATED
+					limit: includeInactive || metPeriode('members') ? limit : SEATED
 				};
 				return async (offset, signal) => {
 					const items = await unwrap(
@@ -590,7 +593,7 @@
 				const query = {
 					chamber: kamer,
 					q: q || undefined,
-					active: includeInactive ? undefined : true,
+					active: includeInactive || metPeriode('factions') ? undefined : true,
 					...(PERIODE.factions
 						? { active_from: dateFrom || undefined, active_to: dateTo || undefined }
 						: {})
