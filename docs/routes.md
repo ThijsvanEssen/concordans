@@ -62,6 +62,8 @@ The key `L` switches between Netwerk and Tekst. Bladeren opens from the top nav.
 
 `bronHref(ref, { at, keepMode, mode, keepNetwerk })` in `src/lib/bron/href.ts` builds every link to a bron, as its readable address where it has one. It keeps the view it stands in: Tekst stays Tekst, and `KEPT_PARAMS` (overlay, bronfilter, `diepte`, `netwerk`, `uit`, `tussen`) travel along. `lid`, `jaar`, `zoek` and `tabel` stay behind. From outside the Verkenner, or from Bladeren, a readable bron opens in Tekst and any other in Netwerk. `indexHref` builds a link into Bladeren.
 
+`BronLink` (`src/lib/bron/BronLink.svelte`) is the reference to a bron in a reader, a list or a timeline. A click opens the bron in the Verkenner in Netwerk (`keepMode: false, mode: 'graph'`; Thijs, 10 Oct), Lees one step from there; a position (`at`) in the bron on screen is a jump within the page. Hover or focus shows a card after 350 ms, from `loadPreview` (`preview.ts`): the kind, the name and a date, and per kind what places it: a stuk its dossier and indieners with their fractie, a motie or amendement the vote on its zaak (`Aangenomen, 137 voor en 13 tegen`, one request more), a judgment the first sentence of its summary, an article its first lid or the part named. The card has no buttons and stands in the top layer (`popover="manual"`), below the link or above it where the screen ends; a scroll closes it. On touch a tap opens the bron without a card.
+
 A dossier is linked by its number: a `BronRef` of a dossier carries `number` next to its key (`refOf` reads it from `props.label`).
 
 ## Adding a query parameter

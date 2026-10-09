@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { PREVIEW_CHARS, previewFromNode } from './preview';
+import { PREVIEW_CHARS, eersteZin, indieners, previewFromNode, uitslagVan } from './preview';
 
 describe('previewFromNode', () => {
-	it('shows a judgment by its court, date and summary', () => {
+	it('shows a judgment by its court, date and the first sentence of its summary', () => {
 		const p = previewFromNode('judgments', 'Hoge Raad 2019-07-19 / 18/04298', {
 			court_code: 'HR',
 			date: '2019-07-19',
@@ -10,7 +10,7 @@ describe('previewFromNode', () => {
 		});
 		expect(p.kicker).toBe('Uitspraak, Hoge Raad');
 		expect(p.date).toBe('19 juli 2019');
-		expect(p.lines).toContain('Aardbevingsschade');
+		expect(p.lines).toBe('Prejudiciële vraag (art. 392 Rv).');
 	});
 
 	it('names a judgment as its heading does, without an ISO date', () => {
@@ -66,5 +66,48 @@ describe('previewFromNode', () => {
 		);
 		const long = previewFromNode('judgments', 'x', { summary: 'a'.repeat(PREVIEW_CHARS + 50) });
 		expect(long.lines!.length).toBe(PREVIEW_CHARS + 1);
+	});
+
+	it('places a stuk by its dossier and its indieners', () => {
+		const p = previewFromNode('documents', null, {
+			kind: 'Amendement (gewijzigd/nader/vervangend)',
+			number: '66',
+			title: 'Gewijzigd amendement van het lid Madlener',
+			date: '2024-04-24',
+			dossier_number: '36496',
+			dossier_title: 'Wijziging van de Wet goed verhuurderschap (Wet betaalbare huur)',
+			actors: [
+				{ name: 'H. de Jong', faction: 'GL-PvdA', role: 'Medeondertekenaar' },
+				{ name: 'B. Madlener', faction: 'PVV', role: 'Eerste ondertekenaar' }
+			]
+		});
+		expect(p.kicker).toBe('Amendement, nr. 66');
+		expect(p.date).toBe('24 april 2024');
+		expect(p.dossier).toMatch(/^Dossier 36496, /);
+		expect(p.wie).toBe('Ingediend door B. Madlener (PVV), mede namens H. de Jong (GL-PvdA)');
+	});
+});
+
+describe('preview helpers', () => {
+	it('takes the first sentence past the usual abbreviations', () => {
+		expect(eersteZin('Onrechtmatige daad (art. 6:162 BW). Causaal verband.')).toBe(
+			'Onrechtmatige daad (art. 6:162 BW).'
+		);
+		expect(eersteZin('Zie r.o. 4.3 en mr. Jansen. Tweede zin.')).toBe(
+			'Zie r.o. 4.3 en mr. Jansen.'
+		);
+		expect(eersteZin('Eén zin zonder punt')).toBe('Eén zin zonder punt');
+	});
+
+	it('names the indieners and the vote as the source gives them', () => {
+		expect(indieners([{ name: 'B. Madlener', faction: 'PVV', role: 'Eerste ondertekenaar' }])).toBe(
+			'Ingediend door B. Madlener (PVV)'
+		);
+		expect(indieners([])).toBeNull();
+		expect(uitslagVan({ decision_text: 'Aangenomen.', tally: { Voor: 137, Tegen: 13 } })).toBe(
+			'Aangenomen, 137 voor en 13 tegen'
+		);
+		expect(uitslagVan({ passed: false })).toBe('Verworpen');
+		expect(uitslagVan({})).toBeNull();
 	});
 });
