@@ -4,6 +4,7 @@ import {
 	dienstregeling,
 	kolomVan,
 	maandagVan,
+	stappen,
 	type Graph
 } from './amendementen';
 
@@ -25,6 +26,7 @@ const besluit = (kast: string, passed: boolean, voor: number, tegen: number) => 
 	props: {
 		primary_case_id: kast,
 		passed,
+		date: '2024-04-25',
 		tally: { Voor: voor, Tegen: tegen },
 		case_ids: ['x', kast]
 	}
@@ -76,7 +78,7 @@ describe('dienstregeling van de amendementen', () => {
 
 	it('de uitslag is het besluit op de zaak van het laatste stuk, niets uit de titel', () => {
 		const r = d.rijen.find((x) => x.stuk.nummer === '40')!;
-		expect(r.uitslag).toMatchObject({ aangenomen: true, voor: 92, tegen: 58 });
+		expect(r.uitslag).toMatchObject({ aangenomen: true, voor: 92, tegen: 58, datum: '2024-04-25' });
 		expect(d.rijen.find((x) => x.stuk.nummer === '60')!.uitslag).toBeNull();
 	});
 
@@ -104,6 +106,17 @@ describe('dienstregeling van de amendementen', () => {
 		]);
 		expect(maandagVan('2024-04-25')).toBe('2024-04-22');
 		expect(kolomVan(d, '2024-04-22')).toBe('2024-04-22');
+	});
+
+	it('de route: ingediend, gewijzigd, en samengevoegd waar ketens samenkomen', () => {
+		const r40 = d.rijen.find((x) => x.stuk.nummer === '40')!;
+		expect(stappen(r40).map((s) => `${s.wat} ${s.stukken.map((h) => h.nummer).join('+')}`)).toEqual(
+			['ingediend 22', 'gewijzigd 30', 'gewijzigd 40']
+		);
+		const r48 = d.rijen.find((x) => x.stuk.nummer === '48')!;
+		expect(stappen(r48).map((s) => `${s.wat} ${s.stukken.map((h) => h.nummer).join('+')}`)).toEqual(
+			['ingediend 26+38', 'samengevoegd 48']
+		);
 	});
 
 	it('zonder REVISES staat elk stuk apart', () => {

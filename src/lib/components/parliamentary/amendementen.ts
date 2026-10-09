@@ -13,11 +13,13 @@ export type GraphNode = { id: string; key: string; props?: Props | null };
 export type GraphEdge = { source: string; target: string; relation: string };
 export type Graph = { nodes: GraphNode[]; edges: GraphEdge[] };
 
-/** A paper of an amendment: a stop in the timetable. */
-export type Stuk = { id: string; nummer: string; datum: string; titel: string };
+/** A paper of an amendment: a stop in its route. `nieuw` where it replaces no other. */
+export type Stuk = { id: string; nummer: string; datum: string; titel: string; nieuw?: boolean };
 
 export type Uitslag = {
 	id: string;
+	/** The day of the vote. */
+	datum: string;
 	aangenomen: boolean | null;
 	voor: number | null;
 	tegen: number | null;
@@ -119,6 +121,7 @@ export function dienstregeling(g: Graph, cap = CAP): Dienstregeling {
 			const passed = b.props?.passed;
 			return {
 				id: b.id,
+				datum: str(b.props?.date),
 				aangenomen: typeof passed === 'boolean' ? passed : null,
 				voor: num(tally.Voor),
 				tegen: num(tally.Tegen)
@@ -138,7 +141,9 @@ export function dienstregeling(g: Graph, cap = CAP): Dienstregeling {
 				gezien.add(id);
 				rij.push(...(vorige.get(id) ?? []));
 			}
-			const haltes = [...gezien].map((id) => stukVan(nodes.get(id)!)).sort(vroeger);
+			const haltes = [...gezien]
+				.map((id) => ({ ...stukVan(nodes.get(id)!), nieuw: !vorige.has(id) }))
+				.sort(vroeger);
 			const begin = haltes.filter((h) => !vorige.has(h.id)).length;
 			return {
 				stuk: stukVan(n),
@@ -181,3 +186,31 @@ export const aantalAmendementen = (perSoort: Record<string, number> | null | und
 	Object.entries(perSoort ?? {})
 		.filter(([k]) => /^amendement/i.test(k))
 		.reduce((n, [, v]) => n + v, 0);
+
+/** One step of an amendment's route: what happened on a day, and the papers of it. */
+export type Stap = {
+	wat: 'ingediend' | 'gewijzigd' | 'samengevoegd';
+	datum: string;
+	stukken: Stuk[];
+};
+
+/**
+ * The route of an amendment, a step a day and a kind: the papers that replace none were
+ * submitted, those that replace another changed it, and the last paper of chains that
+ * meet merged them. Read from REVISES (`nieuw`), not from a title.
+ */
+export function stappen(r: Rij): Stap[] {
+	const uit: Stap[] = [];
+	const laatste = r.haltes.at(-1)?.id;
+	for (const h of r.haltes) {
+		const wat: Stap['wat'] = h.nieuw
+			? 'ingediend'
+			: h.id === laatste && r.samengevoegd
+				? 'samengevoegd'
+				: 'gewijzigd';
+		const vorige = uit.at(-1);
+		if (vorige && vorige.datum === h.datum && vorige.wat === wat) vorige.stukken.push(h);
+		else uit.push({ wat, datum: h.datum, stukken: [h] });
+	}
+	return uit;
+}
