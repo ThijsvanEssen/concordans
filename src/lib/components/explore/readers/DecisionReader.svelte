@@ -132,32 +132,31 @@
 					: []
 			)}
 
+			{@const uitkomst = decisionOutcome(d)}
+			{@const eigen = uniqueBy(dossiers, (x) => x.number).slice(0, 3)}
 			<header class="head">
 				<span class="kicker">
-					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink>
-					{chamberName(chamber)}
-					{#if d.date}<span class="komma">,</span>{formatLongDate(d.date)}{/if}
+					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink><span
+						>, {chamberName(chamber)}{d.date ? `, ${formatLongDate(d.date)}` : ''}</span
+					>
 				</span>
 				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}</h2>
-				<div class="woorden">
-					{#if decisionOutcome(d)}
-						<!-- A hamerstuk is passed without a vote; a postponed decision is no outcome. -->
-						<span
+				<!-- The outcome, what was voted on and the dossier: words, separated by commas. -->
+				<p class="woorden">
+					{#if uitkomst}<span
 							class="uitslag"
 							class:uitslag--passed={d.passed === true}
-							class:uitslag--failed={d.passed === false}
-						>
-							{decisionOutcome(d)}
-						</span>
-					{/if}
-					<!-- What was voted on, in the source's words: Wetgeving (the bill itself), Amendement, Motie. -->
-					{#if d.primary_case_kind}<span class="zaaksoort">{d.primary_case_kind}</span>{/if}
-					{#each uniqueBy(dossiers, (x) => x.number).slice(0, 3) as dossier (dossier.number)}
-						<BronLink ref={`dossiers/${dossier.number}`} class="dossier-woord"
+							class:uitslag--failed={d.passed === false}>{uitkomst}</span
+						>{/if}{#if d.primary_case_kind}{uitkomst ? ', ' : ''}<span class="zaaksoort"
+							>{d.primary_case_kind}</span
+						>{/if}{#each eigen as dossier, i (dossier.number)}{uitkomst ||
+						d.primary_case_kind ||
+						i > 0
+							? ', '
+							: ''}<BronLink ref={`dossiers/${dossier.number}`} class="dossier-woord"
 							><DossierNaam {dossier} /></BronLink
-						>
-					{/each}
-				</div>
+						>{/each}
+				</p>
 			</header>
 
 			{#if doc?.text}
@@ -295,12 +294,11 @@
 		color: var(--ink-3);
 		display: flex;
 		align-items: baseline;
+	}
+	.kicker :global(.soort) {
 		gap: 6px;
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
-	.komma {
-		margin-left: calc(-1 * 6px);
-	}
 	.ek-factions {
 		display: grid;
 		grid-template-columns: max-content minmax(0, 1fr);
@@ -333,10 +331,10 @@
 		line-height: var(--lh-snug);
 	}
 	.woorden {
-		display: flex;
-		gap: var(--s-3);
-		flex-wrap: wrap;
-		align-items: baseline;
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 
 	/* The outcome, the kind of case and the dossier numbers are words, not tags. */

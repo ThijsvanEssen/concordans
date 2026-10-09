@@ -141,15 +141,15 @@
 					<p class="sub">{name}</p>
 				{/if}
 				{#if typeof seats === 'number'}
-					<div class="woorden">
+					<p class="woorden">
 						<span class="zetels"
 							>{seats}
 							{seats === 1 ? 'zetel' : 'zetels'}{ek && read
 								? ` op ${formatLongDate(read)}`
 								: ''}</span
-						>
-						{#if sinds && !ek}<span class="sinds">fractie sinds {formatLongDate(sinds)}</span>{/if}
-					</div>
+						>{#if sinds && !ek}, <span class="sinds">fractie sinds {formatLongDate(sinds)}</span
+							>{/if}
+					</p>
 				{/if}
 			</header>
 
@@ -279,8 +279,7 @@
 		margin: 0;
 	}
 	.woorden {
-		display: flex;
-		gap: var(--s-1);
+		margin: 0;
 	}
 	.board {
 		display: grid;

@@ -128,7 +128,9 @@
 
 			<header class="head">
 				<span class="kicker">
-					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink>, Kamerstuk {d.number}
+					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink><span
+						>, Kamerstuk {d.number}</span
+					>
 				</span>
 				<h2 class="title">{d.short_title ?? d.title ?? d.number}</h2>
 				{#if d.short_title && d.title && d.title.trim() !== d.short_title}
@@ -247,8 +249,11 @@
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
+		/* The comma stands against the kind before it: no gap but the glyph's own. */
 		display: flex;
 		align-items: baseline;
+	}
+	.kicker :global(.soort) {
 		gap: 6px;
 	}
 	.title {

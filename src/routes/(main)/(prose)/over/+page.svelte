@@ -6,7 +6,6 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow">Over Concordans</div>
 		<h1 class="stub-title">Over Concordans</h1>
 		<p class="stub-lede">
 			Concordans is een onafhankelijk onderzoeksproject naar de structuur van het Nederlandse recht.
@@ -44,14 +43,6 @@
 		max-width: 720px;
 		margin: 0 auto;
 		padding: 0 var(--s-5);
-	}
-
-	.stub-eyebrow {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		margin-bottom: var(--s-4);
 	}
 
 	.stub-title {
