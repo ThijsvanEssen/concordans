@@ -1310,7 +1310,8 @@
 	<div class="explore-content">
 		{#if mode === 'index'}
 			{#if param('kind') === null}
-				<IndexOverzicht />
+				<!-- The overview scrolls in its own field: the shell does not scroll. -->
+				<div class="index-rol"><IndexOverzicht /></div>
 			{:else}
 				<IndexView category={indexKind} onResultCountChange={(count) => (reportedCount = count)} />
 			{/if}
@@ -1572,10 +1573,14 @@
 {/if}
 
 <style>
+	/* The visible height: on iOS Safari 100vh is the height without its toolbar, taller than
+	   the screen, so the page under the top bar shifted and Bladeren's end was out of reach
+	   (Thijs, iPhone, 10 Oct). dvh where the browser has it, vh before it. */
 	.explore-shell {
 		display: flex;
 		flex-direction: column;
 		height: calc(100vh - 60px);
+		height: calc(100dvh - 60px);
 		overflow: hidden;
 	}
 
@@ -1584,6 +1589,12 @@
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
+	}
+	.index-rol {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.explore-graph,
