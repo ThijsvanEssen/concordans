@@ -31,6 +31,7 @@ let n = 0;
 const item = (date: string, kind: FeedItem['kind'], dossier: string | null): FeedItem =>
 	({
 		id: `x/${++n}`,
+		path: null,
 		kind,
 		date,
 		title: `${kind} ${n}`,

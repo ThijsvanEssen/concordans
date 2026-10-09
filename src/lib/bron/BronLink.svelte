@@ -17,6 +17,8 @@
 		ref,
 		at = null,
 		preview = true,
+		voorbeeld = null,
+		extra = null,
 		class: className = '',
 		title,
 		children
@@ -26,6 +28,10 @@
 		at?: string | null;
 		/** No card on hover where the reference itself already says all (a list of names). */
 		preview?: boolean;
+		/** The card itself, where the reference is not a bron's own (a defined term). */
+		voorbeeld?: Preview | null;
+		/** One line more on the card: the definition a citation's words name. */
+		extra?: string | null;
 		class?: string;
 		title?: string;
 		children: Snippet;
@@ -52,8 +58,8 @@
 		if (!preview || tast) return;
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(async () => {
-			const loaded = await loadPreview(ref, at);
-			if (timer) card = loaded;
+			const loaded = voorbeeld ?? (await loadPreview(ref, at));
+			if (timer) card = loaded && extra ? { ...loaded, extra } : loaded;
 		}, HOVER_MS);
 	}
 
@@ -135,6 +141,7 @@
 		>{#if card.dossier}<span class="card__regel">{card.dossier}</span>{/if}{#if card.wie}<span
 				class="card__regel">{card.wie}</span
 			>{/if}{#if card.uitslag}<span class="card__uitslag">{card.uitslag}</span
+			>{/if}{#if card.extra}<span class="card__regel card__extra">{card.extra}</span
 			>{/if}{#if card.lines}<span class="card__lines">{card.lines}</span>{/if}</span
 	>{/if}
 

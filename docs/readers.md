@@ -55,6 +55,8 @@ The parliamentary readers share request helpers in `src/lib/components/parliamen
 
 **Citations.** `CitedText` turns the citation spans of an article or judgment into links, at the lid or onderdeel the source names: the qualifier comes from the span (`qualifierOfSpan`) or from the text around it (`parseQualifier` in `src/lib/text/qualifier.ts`). A link to the article on screen is a jump within the page. Hovering shows the cited part.
 
+**Defined terms.** Where an article uses a term its regulation defines (`term_spans` and `definitions` on `/api/articles/{bwb_id}/{article_number}`, API 0.79.35), `CitedText` makes the term a reference too, with a quiet dotted underline (`a.begrip`). Its card is the hover card of every reference (BronLink `voorbeeld`): `Begrip, art. 1, onder b`, the term, the definition as the regulation writes it; a click opens the article that gives it, in Netwerk. A citation whose words are such a term (`definition_ref`: "artikel 11 van de wet") carries the definition as one line more on its card (BronLink `extra`). The terms come with the article, so no request more. Helpers in `src/lib/text/begrippen.ts`.
+
 **Overwegingen.** `JudgmentReader` gives each numbered paragraph the id `paragraph_id` from the API or `rov-{number}`, with a permalink. An unnumbered paragraph keeps its `paragraph_id` (positional, `p-21`), so a citation of it lands.
 
 **Passages.** `DocumentReader` opened beside an article lands on the passage for it: from `/api/documents/{key}/passages`, or a heading found in the text (`findPassage` in `src/lib/text/find-passage.ts`, marked as derived).

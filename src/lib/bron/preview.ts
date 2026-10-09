@@ -31,6 +31,8 @@ export type Preview = {
 	wie?: string | null;
 	/** The vote on a motie or amendement: `Aangenomen, 137 voor en 13 tegen`. */
 	uitslag?: string | null;
+	/** A line the reference adds: the definition a citation's words name. */
+	extra?: string | null;
 };
 
 /** How much text a card shows. */
