@@ -193,7 +193,7 @@
 			{/if}
 
 			{#if changed && changed.total > 0}
-				<GewijzigdeArtikelen data={changed} />
+				<GewijzigdeArtikelen data={changed} wijzigt={d.legal_effect?.amends ?? []} />
 			{/if}
 		{/if}
 	</div>

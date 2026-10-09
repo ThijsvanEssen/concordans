@@ -176,3 +176,30 @@ describe('procedure: a paper that is not one of the bill’s', () => {
 		]);
 	});
 });
+
+describe('procedure: a dossier without a bill', () => {
+	type Detail = Parameters<typeof procedure>[0];
+	// 27926 Huurbeleid: no kind from its zaak, no phases, no decision on a bill.
+	const huurbeleid = {
+		number: '27926',
+		kind: null,
+		closed: false,
+		current_phase: null,
+		tk_decision: null,
+		ek_outcome: null,
+		phases: null
+	} as unknown as Detail;
+
+	it('shows no steps of a bill to come: no advice, no Eerste Kamer', () => {
+		const { groepen } = procedure(huurbeleid, [], false);
+		expect(groepen.map((g) => g.id)).toEqual(['tk']);
+		const zinnen = groepen.flatMap((g) => g.regels.map((r) => r.zin));
+		expect(zinnen.join(' ')).not.toMatch(/Kan nog volgen|Geen advies|Aan de orde na/);
+	});
+
+	it('keeps them for a bill without a phase yet', () => {
+		const wet = { ...huurbeleid, kind: 'Wetgeving' } as unknown as Detail;
+		const ids = procedure(wet, [], false).groepen.map((g) => g.id);
+		expect(ids).toEqual(['rvs', 'tk', 'ek']);
+	});
+});

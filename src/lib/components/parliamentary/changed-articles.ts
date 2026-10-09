@@ -11,6 +11,25 @@ export type ChangeSource = Schema<'ChangeSource'>;
 export type DossierChange = Schema<'DossierChange'>;
 export type ChangedLaw = Schema<'DossierChangedLaw'>;
 export type ChangedArticles = Schema<'DossierChangedArticlesResponse'>;
+export type LegalEffectLaw = NonNullable<Schema<'LegalEffectDTO'>['amends']>[number];
+
+/**
+ * The laws the dossier changes (`legal_effect.amends`, the band's Wijzigt) that hold no
+ * changed article in the data: named under Gewijzigde artikelen too, so the reader counts the
+ * laws once (Thijs, 10 Oct: "single count").
+ */
+export function zonderArtikelen(data: ChangedArticles, wijzigt: readonly LegalEffectLaw[]) {
+	const bekend = new Set(
+		data.laws.flatMap((l) =>
+			[l.law.id?.replace(/^instruments\//, ''), l.law.bwb_id, l.law.celex]
+				.filter((x): x is string => !!x)
+				.map((x) => x.toLowerCase())
+		)
+	);
+	return wijzigt.filter(
+		(w) => ![w.key, w.bwb_id, w.celex].some((x) => x && bekend.has(x.toLowerCase()))
+	);
+}
 
 /** The changes of a dossier, or null where the API has none to give (an older API: 404). */
 export const getChangedArticles = (number: string): Promise<ChangedArticles | null> =>

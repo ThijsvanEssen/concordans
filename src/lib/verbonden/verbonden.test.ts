@@ -112,8 +112,10 @@ describe('mergeExplanatory', () => {
 describe('buildGroups', () => {
 	it('fills the groups of a dossier that the node response knows', () => {
 		const groups = buildGroups('dossiers', neighbors(node36327));
+		// The Tweede Kamer's votes come from their own loader, without the amendementen.
 		const decisions = groups.find((g) => g.id === 'decisions')!;
-		expect(decisions.rows.length).toBeGreaterThan(0);
+		expect(decisions.rows).toEqual([]);
+		expect(groups.find((g) => g.id === 'commitments')!.rows.length).toBeGreaterThan(0);
 		expect(groups.find((g) => g.id === 'laws')!.rows).toEqual([]);
 	});
 
@@ -150,7 +152,8 @@ describe('buildGroups', () => {
 			vote('ek_2026_09_22_36901_1', 'EK'),
 			vote('ek_2026_09_29_36791_1')
 		]);
-		expect(groups.find((g) => g.id === 'decisions')!.rows).toHaveLength(1);
+		// The Tweede Kamer's come from the decision browser (dossier-decisions-tk).
+		expect(groups.find((g) => g.id === 'decisions')!.rows).toHaveLength(0);
 		const ek = groups.find((g) => g.id === 'decisions-ek')!;
 		expect(ek.section).toBe('Eerste Kamer');
 		expect(ek.rows).toHaveLength(2);
