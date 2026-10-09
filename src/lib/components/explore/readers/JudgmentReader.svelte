@@ -203,6 +203,7 @@
 					<!-- Bewaar follows the overweging chosen (#rov-5.7.1), else the whole judgment. -->
 					<span class="reader-meta-item reader-meta-bewaar"
 						><Bewaar
+							metMap
 							wat={ro ? `r.o. ${ro}` : ''}
 							item={{
 								id: selection.id,

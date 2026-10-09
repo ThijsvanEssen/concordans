@@ -20,6 +20,11 @@
 		"description": "Moties, amendementen, wetsvoorstellen en uitspraken per onderwerp, met een Atom-feed per onderwerp."
 	},
 	{
+		"path": "/gemarkeerd",
+		"title": "Gemarkeerd, Concordans",
+		"description": "De mappen met bewaarde artikelleden, overwegingen en bronnen, met aantekeningen, als citaten of CSV."
+	},
+	{
 		"path": "/onderwerpen/overzicht",
 		"title": "Overzicht, Concordans",
 		"description": "De besluiten van de Kamers over een onderwerp, per soort, uitkomst, jaar en fractie."
