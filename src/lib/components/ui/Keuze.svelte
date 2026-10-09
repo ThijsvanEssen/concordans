@@ -12,6 +12,7 @@
 		onKies,
 		label,
 		klein = false,
+		vol = false,
 		voor
 	}: {
 		opties: Optie[];
@@ -21,12 +22,14 @@
 		label: string;
 		/** In a bar (the status bar): a step smaller. */
 		klein?: boolean;
+		/** The full width of its column, every option as wide as the others (a period). */
+		vol?: boolean;
 		/** Something before the label of an option, such as a Picto. */
 		voor?: Snippet<[T]>;
 	} = $props();
 </script>
 
-<div class="keuze" class:klein role="group" aria-label={label}>
+<div class="keuze" class:klein class:vol role="group" aria-label={label}>
 	{#each opties as o (o.waarde)}
 		<button
 			type="button"
@@ -65,6 +68,18 @@
 		height: var(--veld-h-klein);
 		padding: 0 var(--s-2);
 		font-size: var(--t-micro);
+	}
+	/* Equal where the words fit, a word that needs more takes it: no empty tail, no word
+	   cut (Kwartaal in a 240px column). */
+	.vol {
+		display: flex;
+		width: 100%;
+	}
+	.vol button {
+		flex: 1 1 0;
+		min-width: max-content;
+		justify-content: center;
+		padding: 0 var(--s-1);
 	}
 	button + button {
 		border-left: 1px solid var(--ink);

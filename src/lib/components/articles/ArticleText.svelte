@@ -442,13 +442,16 @@
 		.article-text {
 			margin-left: 0;
 		}
+		/* minmax(0, …): the count and the actions under a lid wrap, not widen the column
+		   past the screen (art. 7:248 BW at 375). */
 		.lid {
-			grid-template-columns: 28px 1fr;
+			grid-template-columns: 28px minmax(0, 1fr);
 		}
 		.lid__side {
 			grid-column: 2;
 			flex-direction: row;
-			gap: var(--s-3);
+			flex-wrap: wrap;
+			gap: var(--s-1) var(--s-3);
 			padding-top: 2px;
 		}
 		.lid__body--pair {
