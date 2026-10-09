@@ -199,6 +199,9 @@
 	const dossierFilter = $derived(params.get('dossier') ?? '');
 	const party = $derived(params.get('party') ?? '');
 	const jurisdiction = $derived(oneOf(params.get('jurisdiction'), ['nl', 'eu'] as const));
+	// A kind of wet as the source names it; the treaties for now (Thijs, 10 Oct: "ook
+	// verdragen een plekje"): the BWBV and the Verdragenbank, kind `verdrag`.
+	const instrumentSoort = $derived(oneOf(params.get('soort'), ['verdrag'] as const));
 	const court = $derived(params.get('court') ?? '');
 	// TODO(backend G14): the lists hold records without text or articles; until they can
 	// be left out by a parameter, a wet needs an article and a judgment a source.
@@ -455,6 +458,8 @@
 	let documentKinds = $state<Map<string, number>>(new Map());
 	let judgmentFacets = $state<Schema<'JudgmentFacets'> | null>(null);
 	let instrumentFacets = $state<Schema<'InstrumentFacets'> | null>(null);
+	/** The treaties under the filters chosen: asked apart, as the API counts no kinds yet. */
+	let verdragTotaal = $state<number | null>(null);
 	// The EHRM judgments under the same search and period: the EHRM is its own source, so
 	// the facet of the list does not count them.
 	let echrTotal = $state<number | null>(null);
@@ -479,6 +484,7 @@
 				const query = {
 					q: q || undefined,
 					jurisdiction,
+					kind: instrumentSoort,
 					article_count_min: withEmpty ? undefined : 1,
 					legal_area: legalArea || undefined,
 					policy_domain: policyDomain || undefined,
@@ -492,6 +498,19 @@
 					);
 					if (!offset) instrumentFacets = r.facets ?? null;
 					pages.instruments = toPage(pages.instruments, r.items, offset, r.total);
+					if (offset) return;
+					// The count beside Verdragen: this list's own total where it is the treaties,
+					// else one row asked under the same filters.
+					if (instrumentSoort) verdragTotaal = r.total;
+					else
+						verdragTotaal = await unwrap(
+							api.GET('/api/instruments', {
+								params: { query: { ...query, kind: 'verdrag', limit: 1, offset: 0 } },
+								signal
+							})
+						)
+							.then((v) => v.total)
+							.catch(() => null);
 				};
 			}
 			case 'judgments': {
@@ -1433,6 +1452,20 @@
 								label: 'Europese Unie',
 								on: jurisdiction === 'eu',
 								onClick: toggle('jurisdiction', jurisdiction, 'eu')
+							}
+						]
+					},
+					{
+						id: 'soort',
+						label: 'Soort',
+						kind: 'list',
+						options: [
+							{
+								id: 'verdrag',
+								label: 'Verdragen',
+								count: verdragTotaal ?? undefined,
+								on: instrumentSoort === 'verdrag',
+								onClick: toggle('soort', instrumentSoort, 'verdrag')
 							}
 						]
 					},
