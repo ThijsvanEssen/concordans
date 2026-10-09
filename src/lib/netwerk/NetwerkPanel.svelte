@@ -258,10 +258,12 @@
 				</li>
 			</ul>
 			{#if omgeving && onOmgeving}
-				<button type="button" class="omgeving-knop" onclick={onOmgeving}
-					><span class="omgeving-knop__naam">Alleen de omgeving van {omgeving}</span><kbd>O</kbd
-					></button
-				>
+				<!-- The chosen bron stands in the panel already: its name and the key on hover. -->
+				<p class="omgeving">
+					<TekstLink onclick={onOmgeving} title="Alleen de omgeving van {omgeving} (toets O)"
+						>Alleen de omgeving</TekstLink
+					>
+				</p>
 			{/if}
 			{#if entries.length > 1}
 				<label class="tussen">
@@ -279,45 +281,11 @@
 
 <style>
 	/* Only the surroundings of the selected bron: a line, as Toon de bronnen ertussen. */
-	.omgeving-knop {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		margin-top: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink-2);
-		text-align: left;
-		cursor: pointer;
-	}
-	.omgeving-knop__naam {
-		min-width: 0;
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-	}
-	.omgeving-knop {
-		max-width: 100%;
-	}
-	.omgeving-knop:hover {
-		color: var(--ink);
-		text-decoration: underline;
-	}
-	.omgeving-knop kbd {
-		padding: 0 var(--s-1);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-size: var(--t-ui-micro);
-		color: var(--ink-3);
-	}
-	/* A key says nothing without a keyboard. */
-	@media (hover: none) {
-		.omgeving-knop kbd {
-			display: none;
-		}
+	/* One quiet line under the chips, in the text's letter. */
+	.omgeving {
+		margin: var(--s-2) 0 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
 	}
 	.deels {
 		margin: var(--s-1) 0 0;

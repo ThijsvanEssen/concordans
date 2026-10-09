@@ -638,17 +638,13 @@
 		{/if}
 
 		{#if hidden.length > 0}
+			<!-- What the bronfilter leaves out, as a quiet line of links: each shows its group. -->
 			<p class="hidden">
-				{hidden.map((h) => kindCount(h.count, h.kind)).join(', ')} verborgen.
-				{#each hidden as h, k (h.kind)}
-					{#if k > 0}<span class="row__sep">,</span>{/if}
-					<button
-						type="button"
-						class="link is-accent"
+				Ook {#each hidden as h, k (h.kind)}{#if k > 0}{', '}{/if}<TekstLink
+						title="Toon ook de {BRON_KIND_NOUN[h.kind]}"
 						onclick={() => onFilter(withKind(filter, h.kind))}
-						>Toon ook {BRON_KIND_NOUN[h.kind]}</button
-					>
-				{/each}
+						>{kindCount(h.count, h.kind)}</TekstLink
+					>{/each}
 			</p>
 		{/if}
 
