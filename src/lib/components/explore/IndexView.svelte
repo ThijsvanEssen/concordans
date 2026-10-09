@@ -54,7 +54,7 @@
 	import ZaalTegenover from './ZaalTegenover.svelte';
 	import ZaalLegenda from './ZaalLegenda.svelte';
 	import { kleurVan } from './partijkleuren.svelte';
-	import Periode from '$lib/components/ui/Periode.svelte';
+	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
@@ -2062,17 +2062,8 @@
 	/** Another Kamer: its own list, without the filters that belonged to the other. */
 	const kiesKamer = (c: Chamber) =>
 		patchUrl({ kamer: c === 'TK' ? null : c, open: null, party: null });
-	const kamerGroup = $derived<FacetGroup>({
-		id: 'kamer',
-		label: 'Kamer',
-		kind: 'keuze',
-		value: kamer,
-		options: CHAMBERS.map((c) => ({ value: c, label: CHAMBER_NAME[c] })),
-		onChange: (c) => kiesKamer(c as Chamber)
-	});
-	const facetGroups = $derived(
-		CHAMBER_CATEGORIES.includes(category) ? [kamerGroup, ...facetGroupsAll] : facetGroupsAll
-	);
+	// Kamer stands in the choose-line (Bepaalregel), with the search and the period.
+	const facetGroups = $derived(facetGroupsAll);
 	// The period stands in the choose-line, the other groups in the facet column.
 	const periode = $derived(
 		facetGroups.find((g): g is Extract<FacetGroup, { kind: 'range' }> => g.kind === 'range') ?? null
@@ -2163,26 +2154,29 @@
 				<!-- The choose-line (docs/bediening.md): the field of the list and its period, over
 				     the facets and the list. -->
 				<div class="regel">
-					<label class="search">
-						<span class="visually-hidden">Zoek in {labelOf(category)}</span>
-						<input
-							type="search"
-							value={qDraft ?? q}
-							placeholder={PLACEHOLDER[category]}
-							oninput={(e) => typeQuery(e.currentTarget.value)}
-						/>
-					</label>
-					{#if periode}
-						<div class="periode">
-							<Periode
-								klein={false}
-								van={periode.from}
-								tot={periode.to}
-								label={periode.label}
-								onChange={periode.onChange}
-							/>
-						</div>
-					{/if}
+					<Bepaalregel
+						zoek={{
+							waarde: qDraft ?? q,
+							placeholder: PLACEHOLDER[category],
+							naam: `Zoek in ${labelOf(category)}`,
+							onInput: typeQuery
+						}}
+						periode={periode
+							? {
+									label: periode.label,
+									van: periode.from,
+									tot: periode.to,
+									onChange: periode.onChange
+								}
+							: null}
+						kamer={CHAMBER_CATEGORIES.includes(category)
+							? {
+									waarde: kamer,
+									opties: CHAMBERS.map((c) => ({ waarde: c, label: CHAMBER_NAME[c] })),
+									onKies: (c) => kiesKamer(c as Chamber)
+								}
+							: null}
+					/>
 				</div>
 				<aside class="facet-col blad__facetten" aria-label="Verfijnen">
 					<!-- On a phone the facets behind one quiet line, opened in place. -->
@@ -3885,34 +3879,7 @@
 	/* The choose-line over both columns: the field and the period, without rules. */
 	.regel {
 		grid-column: 1 / -1;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
-		gap: var(--s-2) var(--s-4);
 		margin-bottom: var(--s-5);
-	}
-	.regel .search {
-		flex: 1 1 320px;
-		min-width: 0;
-	}
-	.regel .periode {
-		flex: 0 1 380px;
-		min-width: 0;
-	}
-	.regel .search input {
-		width: 100%;
-		box-sizing: border-box;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink);
-	}
-	.regel .search input::placeholder {
-		color: var(--ink-3);
 	}
 	.verfijnen-knop {
 		display: none;
@@ -3946,10 +3913,6 @@
 	@media (max-width: 767px) {
 		.regel {
 			margin-bottom: var(--s-3);
-		}
-		.regel .search,
-		.regel .periode {
-			flex: 1 1 100%;
 		}
 		.verfijnen-knop {
 			display: inline;

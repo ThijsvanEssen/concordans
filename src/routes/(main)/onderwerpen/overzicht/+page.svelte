@@ -10,10 +10,9 @@
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
-	import KeuzeRij from '$lib/components/ui/Keuze.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import Periode from '$lib/components/ui/Periode.svelte';
+	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
 	import UitkomstTeken from '$lib/components/parliamentary/Uitkomst.svelte';
 	import Kruiswoord, { type KolomKop } from '$lib/onderwerpen/Kruiswoord.svelte';
@@ -887,11 +886,21 @@
 	{:else}
 		<!-- The choose-line: the period, nothing else. -->
 		<div class="regel">
-			<Periode
-				{van}
-				{tot}
-				klein={false}
-				onChange={(v, t) => zet({ van: v || null, tot: t || null, cel: null })}
+			<Bepaalregel
+				periode={{
+					van,
+					tot,
+					onChange: (v, t) => zet({ van: v || null, tot: t || null, cel: null })
+				}}
+				kamer={{
+					waarde: kamer || 'beide',
+					opties: [
+						{ waarde: 'beide', label: 'Beide' },
+						{ waarde: 'TK', label: 'Tweede Kamer' },
+						{ waarde: 'EK', label: 'Eerste Kamer' }
+					],
+					onKies: (v) => zet({ kamer: v === 'beide' ? null : v, cel: null })
+				}}
 			/>
 		</div>
 		<div class="indeling blad__indeling">
@@ -901,27 +910,9 @@
 					class="verfijnen-knop"
 					aria-expanded={verfijnenOpen}
 					aria-controls="overzicht-facetten"
-					onclick={() => (verfijnenOpen = !verfijnenOpen)}
-					>Verfijnen{(kamer ? 1 : 0) + (fractie ? 1 : 0)
-						? ` (${(kamer ? 1 : 0) + (fractie ? 1 : 0)})`
-						: ''}</button
+					onclick={() => (verfijnenOpen = !verfijnenOpen)}>Verfijnen{fractie ? ' (1)' : ''}</button
 				>
 				<div class="facet-lijst" id="overzicht-facetten" class:open={verfijnenOpen}>
-					<section class="facet" aria-labelledby="f-kamer">
-						<h2 class="facet__kop" id="f-kamer">Kamer</h2>
-						<!-- One of three, as Kamer is everywhere (docs/bediening.md). -->
-						<KeuzeRij
-							vol
-							label="Kamer"
-							waarde={kamer || 'beide'}
-							opties={[
-								{ waarde: 'beide', label: 'Beide' },
-								{ waarde: 'TK', label: 'Tweede', titel: 'Tweede Kamer' },
-								{ waarde: 'EK', label: 'Eerste', titel: 'Eerste Kamer' }
-							]}
-							onKies={(v) => zet({ kamer: v === 'beide' ? null : v, cel: null })}
-						/>
-					</section>
 					<section class="facet" aria-labelledby="f-fractie">
 						<h2 class="facet__kop" id="f-fractie">Fractie</h2>
 						<TekstMenu klein label="Fractie" tekst={fractie || 'Geen fractie'}>
@@ -1446,7 +1437,6 @@
 		cursor: default;
 	}
 	.regel {
-		max-width: 380px;
 		margin-bottom: var(--s-5);
 	}
 	/* The facets at the left of the figures and the list, as Actueel and Bladeren. */
@@ -1513,7 +1503,6 @@
 	}
 	@media (max-width: 767px) {
 		.regel {
-			max-width: none;
 			margin-bottom: var(--s-3);
 		}
 		.facetten {

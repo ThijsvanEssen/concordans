@@ -152,6 +152,17 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('sets the choose-line of a list page with Bepaalregel (docs/bediening.md)', () => {
+		const lijsten = [
+			'lib/components/explore/IndexView.svelte',
+			'routes/(main)/actueel/+page.svelte',
+			'routes/(main)/onderwerpen/overzicht/+page.svelte'
+		];
+		expect(
+			lijsten.filter((p) => !sources.find((s) => s.path === p)?.text.includes('<Bepaalregel'))
+		).toEqual([]);
+	});
+
 	it('draws a ticked box with Vinkje: no tick glyph, no native checkbox', () => {
 		expect(offenders((t) => /✓|type="checkbox"/.test(t))).toEqual([]);
 	});
