@@ -19,16 +19,21 @@
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 	} = $props();
 
-	const S = 22; // stoel
-	const COL = 28; // plaats per kolom
-	const ROW = 26; // rij
-	const PAIR = 10; // gang na elke twee rijen
-	const AISLE = 120; // middenpad
-	const TOP = 44;
-	const blockW = 3 * COL + S;
+	// In the units of the Tweede Kamer's hall (Hemicycle): a seat as large, the hall as high
+	// (291), so both stand at one scale in the same frame (Thijs, 9 Oct: "dezelfde styling
+	// en de hoogte gelijk"). A member faces the aisle: the seat is deep toward it and wide
+	// along the bench, which runs from the regering to the Voorzitter.
+	const S_X = 11.2; // diepte naar het middenpad (SEAT_D)
+	const S_Y = 12.25; // breedte langs de bank (SEAT_W)
+	const COL = 16; // plaats per kolom
+	const ROW = 17; // rij
+	const PAIR = 7; // gang na elke twee rijen
+	const AISLE = 110; // middenpad
+	const TOP = 50;
+	const blockW = 3 * COL + S_X;
 	const W = 2 * blockW + AISLE;
 	const rowY = (r: number) => TOP + r * ROW + Math.floor(r / 2) * PAIR;
-	const H = rowY(9) + S + 56;
+	const H = 291;
 
 	const byName = $derived(
 		new Map(data.factions.map((f) => [f.abbreviation ?? f.name ?? f.key, f]))
@@ -50,7 +55,7 @@
 	const stoelen = $derived.by<Stoel[]>(() =>
 		(data.hall?.seats ?? []).map((s) => {
 			const name = s.abbreviation ?? s.faction;
-			if (s.block === 'chair') return { x: W / 2 - S / 2, y: rowY(9), name };
+			if (s.block === 'chair') return { x: W / 2 - S_X / 2, y: rowY(9), name };
 			const x = s.block === 'left' ? s.column * COL : blockW + AISLE + s.column * COL;
 			return { x, y: rowY(s.row), name };
 		})
@@ -77,34 +82,16 @@
 
 <figure class="zaal">
 	<svg viewBox="0 0 {W} {H}" role="group" aria-label="Plattegrond van de Eerste Kamer, 75 zetels">
-		<path
-			d="M{W / 2 - 46} 8 H{W / 2 + 46} L{W / 2 + 40} 26 H{W / 2 - 40} Z"
-			class="meubel"
-			aria-hidden="true"
-		/>
-		<circle cx={W / 2} cy="17" r="7" class="nr" aria-hidden="true" /><text
-			x={W / 2}
-			y="20"
-			text-anchor="middle"
-			class="nr-t"
-			aria-hidden="true">3</text
-		>
-		<rect
-			x={W / 2 - 22}
-			y={rowY(4)}
-			width="44"
-			height={2 * ROW - 4}
-			rx="2"
-			class="meubel"
-			aria-hidden="true"
-		/>
-		<circle cx={W / 2} cy={rowY(4) + ROW - 2} r="7" class="nr" aria-hidden="true" /><text
-			x={W / 2}
-			y={rowY(4) + ROW + 1}
-			text-anchor="middle"
-			class="nr-t"
-			aria-hidden="true">4</text
-		>
+		<!-- The front as in the Tweede Kamer's hall: quiet benches, the numbers of the legend.
+		     3 Regering at the head, 4 Verslag en redactie at the table in the middle. -->
+		<g aria-hidden="true">
+			<line x1={W / 2 - 44} y1="24" x2={W / 2 + 44} y2="24" class="bank" />
+			<rect x={W / 2 - 9} y={rowY(4)} width="18" height={2 * ROW} rx="4" class="tafel" />
+			<circle cx={W / 2} cy="24" r="7" class="nr" />
+			<text x={W / 2} y="27" text-anchor="middle" class="nr-t">3</text>
+			<circle cx={W / 2} cy={rowY(4) + ROW} r="7" class="nr" />
+			<text x={W / 2} y={rowY(4) + ROW + 3} text-anchor="middle" class="nr-t">4</text>
+		</g>
 		<!-- One link per fractie, as the sectors of the hemicycle: its seats and the cells
 		     around them are one target, so the pointer need not land on a seat itself. -->
 		{#each fractieStoelen as [name, eigen] (name)}
@@ -121,8 +108,8 @@
 				{#each eigen as { s } (s.x + ':' + s.y)}
 					<rect
 						class="cel"
-						x={s.x - (COL - S) / 2}
-						y={s.y - (ROW - S) / 2 - PAIR / 2}
+						x={s.x - (COL - S_X) / 2}
+						y={s.y - (ROW - S_Y) / 2 - PAIR / 2}
 						width={COL}
 						height={ROW + PAIR}
 					/>
@@ -131,11 +118,12 @@
 					<rect
 						x={s.x}
 						y={s.y}
-						width={S}
-						height={S}
-						rx="3"
+						width={S_X}
+						height={S_Y}
+						rx="2"
 						class="stoel"
 						class:tegen={v === 'tegen'}
+						class:overig={v === 'other'}
 						class:dim={hovered !== null && hovered !== name}
 						fill={v === 'tegen' ? undefined : kleurVan('EK', name, i, fillOf.get(name) ?? null)}
 						style:stroke={v === 'tegen'
@@ -161,38 +149,23 @@
 				>{seatsOf(hovered)} {seatsOf(hovered) === 1 ? 'zetel' : 'zetels'}</text
 			>
 		{/if}
-		<rect
-			x={W / 2 - S / 2 - 10 - S}
-			y={rowY(9)}
-			width={S}
-			height={S}
-			rx="3"
-			class="meubel"
-			aria-hidden="true"
-		/>
-		<rect
-			x={W / 2 + S / 2 + 10}
-			y={rowY(9)}
-			width={S}
-			height={S}
-			rx="3"
-			class="meubel"
-			aria-hidden="true"
-		/>
-		<circle cx={W / 2} cy={rowY(9) + S + 14} r="7" class="nr" aria-hidden="true" /><text
-			x={W / 2}
-			y={rowY(9) + S + 17}
-			text-anchor="middle"
-			class="nr-t"
-			aria-hidden="true">1</text
-		>
-		<circle cx={W / 2 - S - 10} cy={rowY(9) + S + 14} r="7" class="nr" aria-hidden="true" /><text
-			x={W / 2 - S - 10}
-			y={rowY(9) + S + 17}
-			text-anchor="middle"
-			class="nr-t"
-			aria-hidden="true">2</text
-		>
+		<!-- At the foot: the Voorzitter (a member, in the fractie's colour) between two places
+		     of the griffie, and their numbers under them. -->
+		<g aria-hidden="true">
+			<rect
+				x={W / 2 - S_X / 2 - 8 - S_X}
+				y={rowY(9)}
+				width={S_X}
+				height={S_Y}
+				rx="2"
+				class="tafel"
+			/>
+			<rect x={W / 2 + S_X / 2 + 8} y={rowY(9)} width={S_X} height={S_Y} rx="2" class="tafel" />
+			<circle cx={W / 2} cy={rowY(9) + S_Y + 14} r="7" class="nr" />
+			<text x={W / 2} y={rowY(9) + S_Y + 17} text-anchor="middle" class="nr-t">1</text>
+			<circle cx={W / 2 - S_X - 8} cy={rowY(9) + S_Y + 14} r="7" class="nr" />
+			<text x={W / 2 - S_X - 8} y={rowY(9) + S_Y + 17} text-anchor="middle" class="nr-t">2</text>
+		</g>
 	</svg>
 </figure>
 
@@ -203,15 +176,20 @@
 		gap: var(--s-3);
 		justify-items: center;
 	}
-	/* Even hoog als het halfrond van de Tweede Kamer (Hemicycle, max 320). */
+	/* As high as the hall of the Tweede Kamer (Hemicycle); IndexView sets both to 300px. */
 	svg {
 		width: auto;
 		max-width: 100%;
 		height: 320px;
 	}
-	.meubel {
-		fill: var(--paper-2);
-		stroke: var(--rule-strong);
+	/* The furniture as in the Tweede Kamer's hall: in the rule's tone, without contour. */
+	.bank {
+		stroke: var(--rule);
+		stroke-width: 9;
+		stroke-linecap: round;
+	}
+	.tafel {
+		fill: var(--rule);
 	}
 	.nr {
 		fill: var(--ink);
@@ -236,6 +214,10 @@
 	}
 	rect.dim {
 		opacity: 0.22;
+	}
+	/* A fractie with neither side (no vote, no cabinet): faded, as in the other hall. */
+	rect.overig {
+		opacity: 0.18;
 	}
 	.hover-naam {
 		font: 500 var(--t-h3) var(--font-serif);

@@ -3716,13 +3716,17 @@
 			row-gap: var(--s-4);
 		}
 	}
-	/* On a phone the hall as wide as the column, as high as that makes it: no empty band. */
+	/* On a phone both halls in the box of the Tweede Kamer's (440 by 291) as wide as the
+	   column: as high as each other, at one scale, no empty band. */
 	@media (max-width: 520px) {
 		.hemi-svg-wrap :global(.hemicycle svg),
 		.hemi-svg-wrap :global(.zaal svg) {
 			width: 100%;
 			height: auto;
-			max-height: 300px;
+			aspect-ratio: 440 / 291;
+		}
+		.hemi-svg-wrap :global(.zaal) {
+			justify-self: stretch;
 		}
 	}
 	.hemi-svg-wrap :global(.hemicycle) {
