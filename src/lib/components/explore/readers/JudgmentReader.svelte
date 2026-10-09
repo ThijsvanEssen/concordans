@@ -3,6 +3,7 @@
 	import { authorCite, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
+	import Bewaar from '$lib/map/Bewaar.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
@@ -67,6 +68,10 @@
 			link: permalink(page.url, id)
 		};
 	}
+
+	/** A judgment as Gemarkeerd groups under it: as its heading cites it, with its names. */
+	const zaakNaam = (kort: string, namen: string[] | null | undefined) =>
+		namen?.length ? `${kort} (${namen.join(', ')})` : kort;
 
 	/** The articles outside the dataset named in the head; the rest are counted. */
 	const OUTSIDE_SHOWN = 6;
@@ -185,6 +190,28 @@
 				{#if deeplink}
 					<a href={deeplink} target="_blank" rel="noopener noreferrer" class="reader-source-link"
 						>{sourceName(deeplink) ?? 'Officiële tekst'} ↗</a
+					>
+				{/if}
+				{#if selection && j.ecli}
+					{@const kop = judgmentCite(
+						j.ecli,
+						textProp(j.props?.date),
+						textProp(j.props?.court),
+						author
+					)}
+					{@const ro = anchor?.startsWith('rov-') ? anchor.slice(4) : null}
+					<!-- Bewaar follows the overweging chosen (#rov-5.7.1), else the whole judgment. -->
+					<span class="reader-meta-item reader-meta-bewaar"
+						><Bewaar
+							wat={ro ? `r.o. ${ro}` : ''}
+							item={{
+								id: selection.id,
+								at: ro ? anchor! : '',
+								kort: ro ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : kop.short,
+								voluit: ro ? `${kop.full}, ${paragraphCite(j.ecli, ro)}` : kop.full,
+								groep: zaakNaam(kop.short, j.names)
+							}}
+						/></span
 					>
 				{/if}
 			</div>
@@ -342,6 +369,26 @@
 							<span>{item.num}</span>
 							{#if forms}
 								<span class="reader-para-actions">
+									{#if selection && j.ecli}
+										<Bewaar
+											kaal
+											item={{
+												id: selection.id,
+												at: item.id,
+												kort: forms.kort,
+												voluit: forms.voluit,
+												groep: zaakNaam(
+													judgmentCite(
+														j.ecli,
+														textProp(j.props?.date),
+														textProp(j.props?.court),
+														author
+													).short,
+													j.names
+												)
+											}}
+										/>
+									{/if}
 									<CiteMenu
 										items={citeItems(forms, forms.link)}
 										name="{conclusion ? 'punt' : 'overweging'} {item.num}"
