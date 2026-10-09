@@ -1313,10 +1313,6 @@
 		{tableMode}
 		indexCategory={mode === 'index' && param('kind') !== null ? indexKind : null}
 		indexResultCount={mode === 'index' ? indexResultCount : null}
-		shareLabel={shareCopier.label('share', 'Deel')}
-		shareAnnouncement={shareCopier.announcement}
-		onShareView={handleShareView}
-		onGoBack={goBack}
 		{readAction}
 		onRead={setReading}
 	/>
@@ -1346,13 +1342,6 @@
 			>
 				{#if selectedNode}
 					<nav class="mobile-tabs" aria-label="Panelen">
-						<!-- On a phone the status bar goes for a bron: its ← and Deel stand here. -->
-						<button
-							type="button"
-							class="mobile-tab mobile-tab--actie"
-							aria-label="Terug"
-							onclick={goBack}>←</button
-						>
 						{#each [['reader', 'Tekst'], ['graph', 'Netwerk'], ['verbonden', 'Verbonden']] as [id, label] (id)}
 							<button
 								type="button"
@@ -1362,9 +1351,6 @@
 								onclick={() => kiesPaneel(id as typeof mobilePanel)}>{label}</button
 							>
 						{/each}
-						<button type="button" class="mobile-tab mobile-tab--actie" onclick={handleShareView}
-							>{shareCopier.label('share', 'Deel')}</button
-						>
 					</nav>
 				{/if}
 				<!-- The text and Verbonden come before the network in the page, so a screen reader
@@ -1448,6 +1434,9 @@
 								onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
 								onClearContext={() => store.clearContext()}
 								onClear={wisAlles}
+								deelLabel={shareCopier.label('share', 'Deel')}
+								deelMelding={shareCopier.announcement}
+								onDeel={handleShareView}
 							/>
 						{/snippet}
 					</GraphView>
@@ -1497,13 +1486,6 @@
 				style:--panel-w={panelDragged ? `${panelW}px` : undefined}
 			>
 				<nav class="mobile-tabs" aria-label="Panelen">
-					<!-- On a phone the status bar goes for a bron: its ← and Deel stand here. -->
-					<button
-						type="button"
-						class="mobile-tab mobile-tab--actie"
-						aria-label="Terug"
-						onclick={goBack}>←</button
-					>
 					{#each [['reader', 'Tekst'], ['graph', 'Netwerk'], ['verbonden', 'Verbonden']] as [id, label] (id)}
 						<button
 							type="button"
@@ -1523,9 +1505,6 @@
 							onclick={() => (tocOpen = true)}>Inhoud</button
 						>
 					{/if}
-					<button type="button" class="mobile-tab mobile-tab--actie" onclick={handleShareView}
-						>{shareCopier.label('share', 'Deel')}</button
-					>
 				</nav>
 				{#if withNav}
 					<div class="col col--nav toc-column">
@@ -1850,20 +1829,6 @@
 	@media (max-width: 768px) {
 		.explore-read .mobile-tab--phone {
 			display: block;
-		}
-	}
-
-	/* ← and Deel in the tabs: only on a phone, where the status bar goes. */
-	.mobile-tab--actie {
-		display: none;
-	}
-	@media (max-width: 768px) {
-		.mobile-tabs .mobile-tab--actie {
-			display: block;
-			flex: none;
-			padding-left: var(--s-3);
-			padding-right: var(--s-3);
-			color: var(--ink-2);
 		}
 	}
 
