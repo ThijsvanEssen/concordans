@@ -281,10 +281,13 @@
 		gap: var(--s-6);
 		min-width: 0;
 	}
+	/* The heading and how far the data goes; on a narrow screen the line under the heading. */
 	.actueel header {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: baseline;
 		justify-content: space-between;
+		gap: var(--s-1) var(--s-3);
 		margin-bottom: var(--s-3);
 	}
 	.actueel h2 {
@@ -305,6 +308,9 @@
 	}
 
 	.stand {
+		/* Whole, or on its own line: never squeezed beside the heading. */
+		flex: 0 1 auto;
+		min-width: 16rem;
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}

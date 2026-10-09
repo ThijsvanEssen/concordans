@@ -34,6 +34,10 @@ A row has no buttons of its own: a click on the row does it; the + shows on hove
 - Colour: ink for everything; chosen is filled (Keuze) or in weight. Red (`--accent`) only on hover and focus, and for the outcome "nee".
 - Words: a text menu shows its value ("Alle bronnen"), not a label with a colon; a button is a verb or a destination; counts stand in the control ("Alle 244 uitspraken"), not in a sentence; no explanatory sentences between controls.
 
+## Size in a timeline
+
+Two things at one level do not differ in size. In a timeline (Actueel, Onderwerpen, the home page, a dossier's procedure) the large line is kept for the bill, its own decisions, and a close vote, where the size carries meaning (decided by a narrow margin). A toezegging, a motie or a brief stands at the size of the lines beside it (`major` in `src/lib/components/actueel/timeline.ts`).
+
 ## Rules
 
 `src/lib/consistency.test.ts`, "controls in five forms": no native `select` outside TekstMenu, no chips outside the panel Netwerk, no "meer" of its own beside AlleN, no control height but `--veld-h` or `--veld-h-klein`. A place that keeps an older form is a named entry with its reason and the step that rebuilds it; the entry comes out with that step.

@@ -22,7 +22,6 @@
 
 <div class="page-wrap">
 	<div class="container">
-		<div class="stub-eyebrow">Documentatie</div>
 		<h1 class="stub-title">Documentatie</h1>
 		<p class="stub-lede">
 			Concordans toont wetten, uitspraken en parlementaire stukken uit officiële bronnen, met de
@@ -295,14 +294,6 @@
 		max-width: 720px;
 		margin: 0 auto;
 		padding: 0 var(--s-5);
-	}
-
-	.stub-eyebrow {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		margin-bottom: var(--s-4);
 	}
 
 	.stub-title {

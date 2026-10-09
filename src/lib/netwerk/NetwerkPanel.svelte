@@ -313,6 +313,12 @@
 		font-size: var(--t-ui-micro);
 		color: var(--ink-3);
 	}
+	/* A key says nothing without a keyboard. */
+	@media (hover: none) {
+		.omgeving-knop kbd {
+			display: none;
+		}
+	}
 	.deels {
 		margin: var(--s-1) 0 0;
 		font-size: var(--t-micro);

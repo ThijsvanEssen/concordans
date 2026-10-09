@@ -3898,6 +3898,10 @@
 		.list-head:not(:has(.nums)) {
 			display: none;
 		}
+		/* The count's rule opens the list; the list's own would stand right under it. */
+		.list-head:not(:has(.nums)) + .list {
+			border-top: 0;
+		}
 	}
 
 	/* The choose-line over both columns: the field and the period, without rules. */
