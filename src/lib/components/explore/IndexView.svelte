@@ -108,18 +108,7 @@
 	import { heeftParameter } from '$lib/api/heeft';
 	import { formatCount } from '$lib/verbonden/filter';
 
-	let {
-		category,
-		onResultCountChange
-	}: {
-		category: IndexCategory;
-		/** Reports what is shown and how many there are, for the status bar. */
-		onResultCountChange?: (info: {
-			filtered: number;
-			total: number | null;
-			category: IndexCategory;
-		}) => void;
-	} = $props();
+	let { category }: { category: IndexCategory } = $props();
 
 	const oneOf = <T extends string>(value: string | null, allowed: readonly T[]): T | undefined =>
 		allowed.find((a) => a === value);
@@ -2004,7 +1993,7 @@
 		if (isEscape(e) && openId) patchUrl({ open: null }, true);
 	}
 
-	// ── Result count for the status bar and above the list ──────────────────
+	// ── Result count above the list ──────────────────
 	const resultRows = $derived.by(
 		() =>
 			({
@@ -2031,11 +2020,6 @@
 		if (!resultRows) return null;
 		const clientFiltered = ['committees', 'cabinets', 'ministers'].includes(category);
 		return clientFiltered ? resultRows.length : listTotal(resultRows);
-	});
-	$effect(() => {
-		const rows = resultRows;
-		if (!rows) return;
-		onResultCountChange?.({ filtered: rows.length, total: listTotal(rows), category });
 	});
 
 	// ── Columns ─────────────────────────────────────────────────────────────

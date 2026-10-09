@@ -9,7 +9,8 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import BehoortBij from '$lib/bron/BehoortBij.svelte';
 	import { BEHOORT_KEY } from '$lib/bron/behoort';
-	import { kop } from '$lib/stores/kop.svelte';
+	import WeergaveSchakelaar from '../WeergaveSchakelaar.svelte';
+	import { WEERGAVE_KEY, type Weergave } from '../weergave';
 
 	let {
 		status = 'ready',
@@ -27,31 +28,19 @@
 	// Where the bron stands, above its text and before it loads (docs/hierarchie.md).
 	const bron = getContext<(() => GraphNode) | undefined>(BEHOORT_KEY);
 
-	// The title of the reader scrolled above the frame: the status bar names the bron then.
-	let frame = $state<HTMLElement | null>(null);
-	$effect(() => {
-		kop.uitBeeld = false;
-		if (status !== 'ready' || !frame) return;
-		const titel = [...frame.querySelectorAll<HTMLElement>('h1, h2')].find(
-			(h) => !h.closest('.behoort')
-		);
-		if (!titel) return;
-		const kijk = new IntersectionObserver(
-			([e]) => {
-				kop.uitBeeld = !e.isIntersecting && e.boundingClientRect.top < (e.rootBounds?.top ?? 0);
-			},
-			{ root: frame }
-		);
-		kijk.observe(titel);
-		return () => {
-			kijk.disconnect();
-			kop.uitBeeld = false;
-		};
-	});
+	// Netwerk / Tekst, top right beside the band: only for the bron the band is for, not
+	// for a document opened beside it.
+	const weergave = getContext<(() => Weergave | null) | undefined>(WEERGAVE_KEY);
+	const w = $derived(bron ? (weergave?.() ?? null) : null);
 </script>
 
-<div class="reader-frame" bind:this={frame}>
+<div class="reader-frame">
 	<div class="reader-frame__col">
+		{#if w && status !== 'empty'}
+			<div class="weergave">
+				<WeergaveSchakelaar stand={w.stand} onKies={w.onKies} tekstMogelijk={w.tekstMogelijk} />
+			</div>
+		{/if}
 		{#if bron && status !== 'empty'}<BehoortBij node={bron()} />{/if}
 		{#if status === 'empty'}
 			<!-- No bron yet: an empty column, no instruction (the UI shows itself, Thijs 9 Oct). -->
@@ -110,6 +99,25 @@
 		min-height: 100%;
 		margin-left: var(--reader-col-left, 0);
 		margin-right: auto;
+	}
+
+	/* The switch floats at the column's right edge: the band beside it takes the rest of
+	   the width (its own block formatting context, so its rule stops short of the switch),
+	   and without a band the title wraps around it. No row of its own. */
+	.weergave {
+		float: right;
+		margin: 0 0 var(--s-2) var(--s-4);
+	}
+	@media (min-width: 769px) {
+		.reader-frame__col > :global(.behoort) {
+			display: flow-root;
+		}
+	}
+	/* On a phone the tabs (Tekst, Netwerk, Verbonden) are the one control. */
+	@media (max-width: 768px) {
+		.weergave {
+			display: none;
+		}
 	}
 
 	/* Where the text would begin: the frame's own margins, no more. */

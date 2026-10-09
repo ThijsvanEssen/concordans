@@ -19,7 +19,7 @@
 	//
 	// A click on the canvas selects a bron: the reader follows, the canvas stays. A double
 	// click replaces the canvas with the bron's own neighbourhood.
-	import { onDestroy, onMount, untrack } from 'svelte';
+	import { onDestroy, onMount, setContext, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { tabTitle } from '$lib/bron/tab-title';
@@ -37,7 +37,7 @@
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
 	import { serverKop } from '$lib/seo/kop.svelte';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
-	import StatusBar from '$lib/components/explore/StatusBar.svelte';
+	import { WEERGAVE_KEY, type Weergave } from '$lib/components/explore/weergave';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
@@ -892,7 +892,7 @@
 		return 'Verkenner, Concordans';
 	});
 
-	// The ← of the status bar goes back inside Concordans; a bron opened from a link
+	// The ← of the network goes back inside Concordans; a bron opened from a link
 	// elsewhere (a new tab, a shared link) has no step to go back to, so it goes home.
 	let steppedIn = $state(false);
 	// A replaced entry (a filter) is no step; a link, Back itself, or a change of bron or
@@ -1163,7 +1163,7 @@
 		mobilePanel = id;
 	}
 
-	/** What the button in the status bar does: read the bron, or go back to the network. */
+	/** What the switch Netwerk / Tekst does: read the bron, or go back to the network. */
 	const readAction = $derived<'read' | 'network' | null>(
 		// The table has its own way back to the text.
 		tableMode
@@ -1175,22 +1175,24 @@
 					: null
 	);
 
+	// The switch stands in the reader's frame, beside the band (ReaderFrame). A bron without
+	// a text of its own shows it with Tekst out of reach.
+	const weergave = $derived<Weergave | null>(
+		readAction
+			? {
+					stand: readAction === 'read' ? 'netwerk' : 'tekst',
+					onKies: (k) => setReading(k === 'tekst'),
+					tekstMogelijk: true
+				}
+			: mode === 'graph' && selectedNode && !tableMode
+				? { stand: 'netwerk', onKies: () => {}, tekstMogelijk: false }
+				: null
+	);
+	setContext(WEERGAVE_KEY, () => weergave);
+
 	// ── Bladeren ─────────────────────────────────────────────────────────────
 	const indexKind = $derived<IndexCategory>(
 		isIndexCategory(param('kind')) ? (param('kind') as IndexCategory) : 'dossiers'
-	);
-
-	// The count the list reported, kept with its category: shown only for the category on
-	// screen, so a count of the previous one never stands beside the next.
-	let reportedCount = $state<{
-		filtered: number;
-		total: number | null;
-		category: string;
-	} | null>(null);
-	const indexResultCount = $derived(
-		reportedCount?.category === indexKind
-			? { filtered: reportedCount.filtered, total: reportedCount.total }
-			: null
 	);
 
 	const besideArticle = $derived(
@@ -1306,24 +1308,13 @@
 {/snippet}
 
 <div class="explore-shell">
-	<StatusBar
-		node={selectedNode}
-		focusError={padMissing ?? focusError}
-		{mode}
-		{tableMode}
-		indexCategory={mode === 'index' && param('kind') !== null ? indexKind : null}
-		indexResultCount={mode === 'index' ? indexResultCount : null}
-		{readAction}
-		onRead={setReading}
-	/>
-
 	<div class="explore-content">
 		{#if mode === 'index'}
 			{#if param('kind') === null}
 				<!-- The overview scrolls in its own field: the shell does not scroll. -->
 				<div class="index-rol"><IndexOverzicht /></div>
 			{:else}
-				<IndexView category={indexKind} onResultCountChange={(count) => (reportedCount = count)} />
+				<IndexView category={indexKind} />
 			{/if}
 		{:else if nietGevonden}
 			<NietGevonden titel="Bron niet gevonden" kop={false}>
