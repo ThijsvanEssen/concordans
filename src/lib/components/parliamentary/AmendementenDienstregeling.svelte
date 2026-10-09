@@ -17,14 +17,7 @@
 		type Stuk
 	} from './amendementen';
 
-	let {
-		dossierKey,
-		stukken
-	}: {
-		dossierKey: string;
-		/** The papers of amendments the dossier counts (its own counts per kind). */
-		stukken: number;
-	} = $props();
+	let { dossierKey }: { dossierKey: string } = $props();
 
 	let regeling = $state<Dienstregeling | null>(null);
 	let fout = $state(false);
@@ -61,27 +54,6 @@
 		return { destroy: () => kijk.disconnect() };
 	}
 
-	const geteld = $derived.by(() => {
-		const r = regeling?.rijen ?? [];
-		const gestemd = r.filter((x) => x.uitslag);
-		return {
-			gestemd: gestemd.length,
-			aangenomen: gestemd.filter((x) => x.uitslag?.aangenomen).length
-		};
-	});
-
-	/** What the section holds, in one line under its heading. */
-	const standRegel = $derived.by(() => {
-		if (!regeling) return '';
-		const n = regeling.rijen.length;
-		const delen = [
-			`${regeling.metVervanging ? `${n} ${n === 1 ? 'amendement' : 'amendementen'} in ` : ''}${stukken} ${stukken === 1 ? 'stuk' : 'stukken'}, ${geteld.gestemd} in stemming, ${geteld.aangenomen} aangenomen.`
-		];
-		if (!regeling.metVervanging) delen.push('Vervangingen niet in de gegevens.');
-		if (regeling.afgekapt) delen.push('Niet alle stukken passen in één overzicht.');
-		return delen.join(' ');
-	});
-
 	/** The day in full where the route begins or the year changes; else day and month. */
 	const dag = (iso: string, vorige: string | null) =>
 		!vorige || vorige.slice(0, 4) !== iso.slice(0, 4) ? korteDatum(iso) : dagMaand(iso);
@@ -109,7 +81,6 @@
 		{:else if !regeling}
 			<p class="stand">Amendementen laden…</p>
 		{:else}
-			<p class="stand">{standRegel}</p>
 			<ol class="lijst">
 				{#each regeling.rijen as r (r.stuk.id)}
 					{@const route = stappen(r)}
@@ -126,14 +97,14 @@
 						<span class="titel">{r.stuk.titel}</span>
 						<p class="route">
 							{#each route as s, i (s.datum + s.wat)}
-								{#if i > 0}<span class="pijl" aria-hidden="true"> › </span>{/if}<span class="stap"
+								{#if i > 0}<span class="pijl" aria-hidden="true">›</span>{/if}<span class="stap"
 									>{s.wat}
 									<time datetime={s.datum}>{dag(s.datum, i > 0 ? route[i - 1].datum : null)}</time>
 									{@render nummers(s.stukken)}</span
 								>
 							{/each}
 							{#if r.uitslag}
-								<span class="pijl" aria-hidden="true"> › </span><span class="stap"
+								<span class="pijl" aria-hidden="true">›</span><span class="stap"
 									>gestemd
 									<time datetime={r.uitslag.datum}
 										>{dag(r.uitslag.datum, route.at(-1)?.datum ?? null)}</time
@@ -146,7 +117,7 @@
 							{:else if regeling.metVervanging}
 								<!-- Not replaced and never voted: withdrawn or still open. Without the
 								     chains a paper without a vote may have been replaced: nothing said. -->
-								<span class="pijl" aria-hidden="true"> › </span><span class="stap"
+								<span class="pijl" aria-hidden="true">›</span><span class="stap"
 									><Uitkomst soort={u.soort} woord={u.woord} /></span
 								>
 							{/if}
@@ -207,6 +178,7 @@
 		white-space: nowrap;
 	}
 	.pijl {
+		margin: 0 0.35em;
 		color: var(--ink-3);
 	}
 	.route :global(.uitslag) {
