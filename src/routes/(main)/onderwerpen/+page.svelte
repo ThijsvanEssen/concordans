@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Gevolgde onderwerpen: per topic what came into Actueel since the visit before. The topics
 	// are kept in this browser; an address with `?onderwerp=` shows someone else's without
@@ -305,9 +306,7 @@
 			{#if eigen.length}
 				<div class="acties">
 					<a href={deelAdres(eigen)}>Adres van deze onderwerpen</a>
-					<button type="button" class="stil" onclick={kopieer}
-						>{gekopieerd ? 'Gekopieerd' : 'Kopieer'}</button
-					>
+					<TekstLink onclick={kopieer}>{gekopieerd ? 'Gekopieerd' : 'Kopieer'}</TekstLink>
 				</div>
 			{/if}
 		{/if}
@@ -326,13 +325,12 @@
 					{telRegel(o, s)}
 				</p>
 				{#if !gedeeld.length}
-					<button
-						type="button"
-						class="stil"
+					<TekstLink
 						aria-expanded={bewerkt === sleutel(o)}
-						onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}>Woorden</button
+						onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}
+						>Woorden</TekstLink
 					>
-					<button type="button" class="stil" onclick={() => verwijder(o)}>Niet meer volgen</button>
+					<TekstLink onclick={() => verwijder(o)}>Niet meer volgen</TekstLink>
 				{/if}
 				<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>
 			</div>
@@ -374,20 +372,18 @@
 					datums={false}
 				/>
 				{#if !alle}
-					<button type="button" class="stil meer" onclick={() => (uitgeklapt[vak(o)] = true)}
-						>Alle {s.items.length} tonen</button
-					>
+					<p class="alle">
+						<TekstLink onclick={() => (uitgeklapt[vak(o)] = true)}
+							>Alle {s.items.length} tonen</TekstLink
+						>
+					</p>
 				{/if}
 			{/if}
 			{#if s?.status === 'klaar' && s.doorzocht}
 				<p class="status">
 					Doorzocht vanaf {shortDate(s.doorzocht)}.
-					<button
-						type="button"
-						class="stil"
-						disabled={verderBezig === vak(o)}
-						onclick={() => verderTerug(o)}
-						>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</button
+					<TekstLink disabled={verderBezig === vak(o)} onclick={() => verderTerug(o)}
+						>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</TekstLink
 					>
 				</p>
 			{/if}
@@ -427,24 +423,25 @@
 		flex: 1;
 		min-width: 0;
 		box-sizing: border-box;
-		height: var(--s-7);
+		height: var(--veld-h);
 		padding: 0 var(--s-3);
 		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
+		border-radius: var(--r-1);
 		background: var(--paper);
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
 		color: var(--ink);
 	}
 	.nieuw input::placeholder {
 		color: var(--ink-3);
-		font-style: italic;
 	}
+	/* A knop on a page: 32 px (docs/bediening.md). */
 	button {
-		height: var(--s-7);
-		padding: 0 var(--s-4);
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
 		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
+		border-radius: var(--r-1);
+		font-weight: 500;
 		background: var(--paper);
 		color: var(--ink);
 		font-family: var(--font-ui);
@@ -455,20 +452,9 @@
 		color: var(--ink-3);
 		cursor: default;
 	}
-	button.stil {
-		height: auto;
-		padding: 0;
-		border: 0;
-		background: none;
-		color: var(--ink-3);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-	}
-	button.meer {
-		margin-top: var(--s-2);
-	}
-	button.stil:hover {
-		color: var(--ink);
+	.alle {
+		margin: var(--s-2) 0 0;
+		font-size: var(--t-meta);
 	}
 	.acties {
 		display: flex;

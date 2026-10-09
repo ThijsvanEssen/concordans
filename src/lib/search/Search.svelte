@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import { heeftParameter } from '$lib/api/heeft';
 	import { kamerLinks, kamerOf } from './kamer';
@@ -752,9 +753,11 @@
 				{/each}
 				{#if meerKinds.has(group.kind)}
 					<!-- The live mode answered within its time and left more out: the full answer on asking. -->
-					<button type="button" class="meer-uitspraken" onclick={() => (volVoor = q)}
-						>Meer {groupLabel(group.kind).toLowerCase()}</button
-					>
+					<p class="volledig">
+						<TekstLink onclick={() => (volVoor = q)}
+							>Meer {groupLabel(group.kind).toLowerCase()}</TekstLink
+						>
+					</p>
 				{/if}
 			</div>
 		{/each}
@@ -981,21 +984,9 @@
 		color: var(--ink-3);
 	}
 
-	.meer-uitspraken {
+	.volledig {
 		margin: 0 var(--s-4) var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.meer-uitspraken:hover {
-		color: var(--ink);
 	}
 	.group-label .laden {
 		margin-left: var(--s-2);

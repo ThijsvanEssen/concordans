@@ -8,7 +8,8 @@
 	import { menu } from '$lib/actions/menu';
 	import Caret from './Caret.svelte';
 
-	type Optie = { waarde: T; label: string; titel?: string };
+	/** `uit`: shown, not to be chosen now (its reason in `titel`). */
+	type Optie = { waarde: T; label: string; titel?: string; uit?: boolean };
 
 	let {
 		label,
@@ -69,6 +70,7 @@
 						class="tekstmenu__item"
 						aria-checked={o.waarde === waarde}
 						title={o.titel}
+						disabled={o.uit}
 						onclick={() => {
 							sluit();
 							if (o.waarde !== waarde) onKies?.(o.waarde);
@@ -145,6 +147,10 @@
 	.tekstmenu__item:focus-visible {
 		background: var(--paper-2);
 		outline: none;
+	}
+	.tekstmenu__item:disabled {
+		color: var(--rule-strong);
+		cursor: default;
 	}
 	.tekstmenu__item[aria-checked='true'] {
 		font-weight: 600;

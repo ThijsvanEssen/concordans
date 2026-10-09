@@ -168,8 +168,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 
 	it('shows a choice in the control itself, without chips', () => {
 		const chips: Uitzonderingen = {
-			'lib/netwerk/NetwerkPanel.svelte': 'the chosen bronnen: content, not a filter',
-			'lib/components/graph/GraphSidebar.svelte': 'step 5, the network'
+			'lib/netwerk/NetwerkPanel.svelte': 'the chosen bronnen: content, not a filter'
 		};
 		expect(offenders((t) => /class="[^"]*\bchip\b/.test(t), buiten(chips))).toEqual([]);
 	});
@@ -180,12 +179,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			[...t.matchAll(/class="([^"]*)"/g)].some((m) =>
 				m[1].split(/\s+/).some((c) => /(^|[_-])(more|meer)($|[_-])/.test(c))
 			);
-		const eigen: Uitzonderingen = {
-			'routes/(main)/onderwerpen/+page.svelte': 'step 5, Onderwerpen',
-			'lib/netwerk/NetwerkPanel.svelte': 'step 5, the panel Netwerk',
-			'lib/components/graph/GraphSidebar.svelte': 'step 5, the network',
-			'lib/search/Search.svelte': 'step 5, the search'
-		};
+		const eigen: Uitzonderingen = {};
 		expect(offenders(meer, buiten(eigen))).toEqual([]);
 	});
 
@@ -195,9 +189,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			[...body.matchAll(/(?<![-\w])height:\s*([^;]+);/g)].some(
 				(m) => !/^(var\(--veld-h(-klein)?\)|auto|100%)$/.test(m[1].trim())
 			);
-		const anders: Uitzonderingen = {
-			'routes/(main)/onderwerpen/+page.svelte': '48 px (step 5, Onderwerpen)'
-		};
+		const anders: Uitzonderingen = {};
 		expect(
 			offenders((t) => rules(t).some((r) => isControl(r.selector) && hoog(r.body)), buiten(anders))
 		).toEqual([]);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	// The netwerk of chosen bronnen, over the canvas: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
 	// that join them shown or not, and the context around them cleared. On an empty
@@ -219,16 +220,12 @@
 					</li>
 				{/each}
 				{#if gevouwen}
-					<li>
-						<button type="button" class="chip chip--meer" onclick={() => (alles = true)}
-							>en {entries.length - KORT} andere</button
-						>
+					<li class="verder">
+						<TekstLink onclick={() => (alles = true)}>en {entries.length - KORT} andere</TekstLink>
 					</li>
 				{:else if entries.length > KORT + 1}
-					<li>
-						<button type="button" class="chip chip--meer" onclick={() => (alles = false)}
-							>minder</button
-						>
+					<li class="verder">
+						<TekstLink onclick={() => (alles = false)}>minder</TekstLink>
 					</li>
 				{/if}
 				{#if selection}
@@ -487,17 +484,9 @@
 		border-color: var(--ink);
 		color: var(--ink);
 	}
-	.chip--meer {
-		padding: var(--s-1) var(--s-2);
-		border-color: transparent;
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.chip--meer:hover {
-		color: var(--ink);
+	.verder {
+		align-self: center;
+		font-size: var(--t-micro);
 	}
 	.zoek {
 		min-width: 14rem;
