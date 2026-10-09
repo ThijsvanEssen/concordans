@@ -77,6 +77,8 @@
 										href={r.href}
 										rel={/^https?:/.test(r.href) ? 'external' : undefined}
 										class="zin">{r.zin}</a
+									>{:else if r.actie}<button type="button" class="zin zin--actie" onclick={r.actie}
+										>{r.zin}</button
 									>{:else}<span class="zin">{r.zin}</span>{/if}
 								{#if r.meta}<span class="meta">{r.meta}</span>{/if}
 							</span>
@@ -90,6 +92,22 @@
 </div>
 
 <style>
+	/* A line that leads to a list on the page: read as the other lines, underlined as a link. */
+	.zin--actie {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		text-align: left;
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+	.zin--actie:hover {
+		text-decoration-color: currentColor;
+	}
 	.tl {
 		display: flex;
 		flex-direction: column;

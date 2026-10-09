@@ -10,6 +10,7 @@ import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { withoutKamerstuk } from './kamerstuk';
 
 type Detail = Schema<'DossierDetailResponse'>;
+import { naarAmendementen, naarStemmingen } from './naar';
 type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
 type Body = Record<string, unknown>;
 
@@ -95,8 +96,29 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdR
 	};
 }
 
+/**
+ * The votes of one day on what is not the bill itself (amendementen, moties) as one line:
+ * "Stemmingen: 33 besluiten" (Thijs, 10 Oct). It leads to the amendementen in the reader
+ * where the day has any, else to the votes in Verbonden. The vote on the bill keeps its line.
+ */
+function stemdagen(decisions: Entry[]): TijdRegel[] {
+	const perDag = Map.groupBy(decisions, (e) => e.date?.slice(0, 10) ?? '');
+	return [...perDag].map(([dag, besluiten]) => ({
+		id: `stemmingen-${dag}`,
+		datum: dag || null,
+		teken: 'activiteit',
+		soort: 'decisions',
+		label: null,
+		zin: `Stemmingen: ${besluiten.length} ${besluiten.length === 1 ? 'besluit' : 'besluiten'}`,
+		actie: besluiten.some((e) => /^amendement/i.test(e.kind ?? ''))
+			? naarAmendementen
+			: naarStemmingen
+	}));
+}
+
 function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel[] {
 	const out: TijdRegel[] = [];
+	const overig: Entry[] = [];
 	const asc = [...entries].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
 	// The papers of the bill of one day on one line: they carry the bill's title, their kind and
 	// number tell them apart. Any other paper (a brief, a motie) on a line of its own, by its title.
@@ -106,6 +128,11 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 		(e) => e.date?.slice(0, 10) ?? ''
 	);
 	for (const e of asc) {
+		// A decision on what the dossier's kind is not (a motie, an amendement) counts per day.
+		if (e.node_type === 'decision' && e.kind && !WETSVOORSTEL.has(e.kind)) {
+			overig.push(e);
+			continue;
+		}
 		if (e.node_type === 'decision') {
 			const b = bodyOf(e);
 			const uitslag = uitslagVan(b);
@@ -179,6 +206,7 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 	// After the bill's papers, so on one day the bill comes first (the sort keeps the order).
 	for (const e of docs.filter((e) => !draagtWetstitel(e.kind)))
 		out.push(eigenStuk(e, groep, dossier));
+	out.push(...stemdagen(overig));
 	return out.sort((a, b) => (a.datum ?? '').localeCompare(b.datum ?? ''));
 }
 

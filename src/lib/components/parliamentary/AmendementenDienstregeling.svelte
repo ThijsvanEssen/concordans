@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { AMENDEMENTEN_ID } from './naar';
 	// The amendments of a bill as a timetable (amendementen.ts; Thijs, 10 Oct: "schematisch
 	// als spoorboekje wel beter, omdat het info communiceert zonder al die tekst, dus een
 	// tussenweg"). A row per amendment as it came to the vote; a column per day on which a
@@ -105,7 +106,12 @@
 </script>
 
 <div class="amendementen" use:inBeeld>
-	<Sectie titel="Amendementen" soort="documents" aantal={regeling?.rijen.length ?? null}>
+	<Sectie
+		id={AMENDEMENTEN_ID}
+		titel="Amendementen"
+		soort="documents"
+		aantal={regeling?.rijen.length ?? null}
+	>
 		{#if fout}
 			<p class="stand">De amendementen konden niet worden geladen.</p>
 		{:else if !regeling}
