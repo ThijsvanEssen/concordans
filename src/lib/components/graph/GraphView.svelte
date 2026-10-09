@@ -1313,10 +1313,13 @@
 			attributes: true,
 			attributeFilter: ['class']
 		});
+		// The window too: a canvas that grows with it is measured again.
+		window.addEventListener('resize', schik);
 		schik();
 		return () => {
 			kijk.disconnect();
 			verandert.disconnect();
+			window.removeEventListener('resize', schik);
 		};
 	});
 	$effect(() => {

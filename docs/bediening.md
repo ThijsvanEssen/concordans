@@ -55,6 +55,10 @@ Two kinds of page, no third (Thijs, 10 Oct 2026: "Houd de bladeren pagina's aan 
 
 Kamer is one choice, never a set of boxes (Thijs, 10 Oct 2026: "Dit is raar ten opzichte van de rest van de TK/EK selectors"): a Keuze in the choose-line under its label Kamer (Bepaalregel), on a phone under the period. Where both may stand, Beide | Tweede Kamer | Eerste Kamer, Beide filtering nothing (Actueel, the Overzicht); where one must, Tweede Kamer | Eerste Kamer (the halls, Bladeren's Kamerleden and Fracties).
 
+## Cards over the network
+
+Netwerk and the Legenda stand in one column on the canvas, Netwerk on top and the Legenda under it, as wide as each other (Thijs, 10 Oct 2026: "legenda en netwerk onder elkaar"). Both may stand open while the canvas has the height. When the one opened last leaves no room for the other, the other folds, and opens again by itself once there is room, unless someone closed it (`src/lib/stores/zwevend.ts`). Each remembers open or closed per browser.
+
 ## Marks on a timeline
 
 A line of a timeline (Actueel on the home page, Onderwerpen, a dossier's procedure) carries the mark of its kind from `src/lib/bron/vormen.ts`, the table KindGlyph and the network draw from (Thijs, 10 Oct 2026: "Dit hebben we toch al door de rest van de site?"). A vote is the triangle of a decision, a paper the sheet, a bill the sheet with its window, a toezegging the flag, a law in force the square of a law. A bundle has the mark of its kind (Stemmingen the triangle). The outcome is in the fill: aangenomen or afgedaan filled in moss, verworpen open in the accent, open or still to come dashed. The Tijdlijn has no circle or square of its own.
