@@ -7,6 +7,7 @@
 	// any depth, shows the same two actions in that column, level with its own text.
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import Bewaar from '$lib/map/Bewaar.svelte';
+	import { kaart } from '$lib/map/map.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { page } from '$app/state';
 	import { permalink } from '$lib/bron/anchor';
@@ -100,17 +101,36 @@
 {#snippet actions(part: ArticlePart, className: string)}
 	{@const key = keyOf(part)}
 	{@const forms = formsOf(part)}
+	<!-- Quiet words, no frames (Thijs, 10 Oct: "druk met al de mogelijke klikken"): Citeer
+	     holds Kopieer tekst; Bewaar is the word. -->
 	<span class={className}>
 		{#if forms}
 			<CiteMenu
 				items={citeItems(forms, permalink(page.url, part.id!))}
 				name={forms.kort}
-				buttonClass="btn act__btn"
+				buttonClass="plaats-woord"
 				onToggle={(open) => (menuFor = open ? key : menuFor === key ? null : menuFor)}
-			/>
+			>
+				{#snippet onder(dicht)}
+					<button
+						type="button"
+						role="menuitem"
+						onclick={() => {
+							copy(fullText(part), `text:${key}`);
+							dicht();
+						}}>{copyLabel(`text:${key}`, 'Kopieer tekst')}</button
+					>
+				{/snippet}
+			</CiteMenu>
+		{:else}
+			<button type="button" class="plaats-woord" onclick={() => copy(fullText(part), `text:${key}`)}
+				>{copyLabel(`text:${key}`, 'Kopieer tekst')}</button
+			>
 		{/if}
 		{#if bewaar && forms && part.id}
+			<span class="sep">,</span>
 			<Bewaar
+				tekst
 				item={{
 					id: bewaar.id,
 					at: part.id,
@@ -120,9 +140,6 @@
 				}}
 			/>
 		{/if}
-		<button type="button" class="btn act__btn" onclick={() => copy(fullText(part), `text:${key}`)}
-			>{copyLabel(`text:${key}`, 'Kopieer tekst')}</button
-		>
 	</span>
 {/snippet}
 
@@ -146,6 +163,7 @@
 				title="Geschiedenis van lid {lid}">{note.label}</a
 			>
 		{/if}
+		{#if (lid && count != null && lidHref) || note}<span class="sep lid__sep">,</span>{/if}
 		{@render actions(part, 'lid__actions')}
 	</div>
 {/snippet}
@@ -154,7 +172,12 @@
 	{@const { body, citations: spans, begrippen: termen } = own(part)}
 	{@const showProposed = proposed && part.kind === 'lid' && proposed.lid === part.number}
 	{#if top}
-		<div class="lid lid--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
+		<div
+			class="lid lid--{part.kind}"
+			id={part.id}
+			class:is-open={menuFor === keyOf(part)}
+			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
+		>
 			<span class="lid__no"
 				>{part.kind === 'lid'
 					? `${part.number}.`
@@ -192,7 +215,12 @@
 			{@render aside(part)}
 		</div>
 	{:else}
-		<div class="part part--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
+		<div
+			class="part part--{part.kind}"
+			id={part.id}
+			class:is-open={menuFor === keyOf(part)}
+			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
+		>
 			{#if part.number && part.id}
 				<a class="part__number" href="#{part.id}">{part.number}{mark}</a>
 			{/if}
@@ -381,10 +409,25 @@
 	.lid.is-open > .lid__side {
 		z-index: var(--z-float);
 	}
-	:global(.act__btn) {
-		padding: 2px var(--s-2);
-		font-size: var(--t-label);
-		white-space: nowrap;
+	/* The words of a lid's line: quiet, underlined lightly, as the count beside them. */
+	/* Words with a comma after each, no space before it. */
+	.lid__side,
+	.lid__actions,
+	.part__actions {
+		gap: 0;
+	}
+	.sep {
+		margin-right: var(--s-1);
+		color: var(--ink-3);
+	}
+	/* The comma after the count stands with the words it leads to. */
+	.lid__sep {
+		opacity: 0;
+	}
+	.lid:hover:not(:has(.part--onderdeel:hover)) .lid__sep,
+	.lid__side:focus-within .lid__sep,
+	.lid.is-open > .lid__side .lid__sep {
+		opacity: 1;
 	}
 	/* Onderdelen inside a lid keep their number in the text. */
 	.part {
@@ -435,6 +478,7 @@
 	}
 	/* Without hover, as on a touch screen, the actions are always there. */
 	@media (hover: none) {
+		.lid__sep,
 		.lid__actions,
 		.part__actions {
 			opacity: 1;
@@ -479,7 +523,7 @@
 			grid-column: 2;
 			flex-direction: row;
 			flex-wrap: wrap;
-			gap: var(--s-1) var(--s-3);
+			gap: var(--s-1) 0;
 			padding-top: 2px;
 		}
 		.lid__body--pair {

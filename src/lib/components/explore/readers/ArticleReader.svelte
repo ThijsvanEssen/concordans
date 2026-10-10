@@ -3,8 +3,8 @@
 	import { getExplainedBy } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
-	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
-	import Bewaar from '$lib/map/Bewaar.svelte';
+	import Toelichting from './Toelichting.svelte';
+	import KopActies from './KopActies.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
@@ -587,15 +587,16 @@
 								data-sveltekit-noscroll>Vergelijken<Caret open={comparing} /></a
 							>
 						{/if}
-						{#if officialUrl}
-							<a class="btn" href={officialUrl} target="_blank" rel="noopener">{officialName} ↗</a>
-						{/if}
-						{#if bewaarHier}
-							<Bewaar item={bewaarHier.item} wat={bewaarHier.wat} metMap />
-						{/if}
-						{#if forms}
-							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret />
-						{/if}
+						<!-- Two actions, framed, the same on every reader (KopActies): Bewaar and
+						     Citeer, with Kopieer tekst and the official text inside Citeer. -->
+						<KopActies
+							bewaar={bewaarHier?.item ?? null}
+							wat={bewaarHier?.wat ?? ''}
+							cite={forms ? citeItems(forms, readLink) : []}
+							naam={forms?.kort ?? ''}
+							bron={officialUrl && officialName ? { label: officialName, href: officialUrl } : null}
+							tekst={() => a.text ?? ''}
+						/>
 					</span>
 				</div>
 
@@ -710,6 +711,22 @@
 			{/if}
 		</div>
 
+		<!-- What the memorie says about this text, read in place (Thijs, 10 Oct); the memorie
+		     itself opens under the article from the head, as before. -->
+		{#if explanatory && !comparing}
+			<Toelichting
+				memorie={{
+					key: explanatory.key,
+					kind: explanatory.kind,
+					dossier: explanatory.dossier
+				}}
+				{bwbId}
+				artikel={articleNumber}
+				href={explanatoryHref}
+				perDossier={explanatory.basis === 'wijziging'}
+			/>
+		{/if}
+
 		{#if prevHref || nextHref}
 			<nav class="reader-nav-footer" aria-label="Artikelen">{@render steps(' artikel')}</nav>
 		{/if}
@@ -789,8 +806,11 @@
 		border-color: var(--ink-3);
 		color: var(--ink);
 	}
+	/* Where the text came from, in ink: the wetsgeschiedenis is read, not passed over
+	   (Thijs, 10 Oct: the memorie "valt weg"). */
+	.head__origin,
 	.head__origin a {
-		color: var(--ink-2);
+		color: var(--ink);
 	}
 	.head__mvt-mark {
 		margin-left: var(--s-1);

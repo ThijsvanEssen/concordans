@@ -71,6 +71,16 @@ What a reader keeps while reading goes into a map (`src/lib/map`; concept ux-voo
 - **Sharing:** a link (`?map=`, with `mapnaam=` and, in the own order, `mapvolgorde=eigen`) opens `/gemarkeerd` with the shared map as the first group, `Gedeelde map: <naam>`, its actions at the right of its heading: Bewaar als map, Voeg toe aan the active map, or Niet bewaren; after the choice the link leaves the address. A link of before (`/explore?map=`) goes there too (AppShell). Fields per item `id~at~kort~groep~notitie`, items separated by `;`; only `%`, `~` and `;` are escaped.
 - **Storage:** the maps live in this browser (`concordans:mappen`), without an account. The one map of step 1 (`concordans:map`) became the first map.
 
+## Lezers
+
+Every reader alike (concept ux-voorstel/21-lezers-rustiger, variant A with B's Toelichting; Thijs, 10 Oct: "nog wat druk met al de mogelijke klikken", and "zo eigenstandig mogelijk lezen").
+
+- **The band:** one line at meta size, a chain of more than two layers folded to `first › … › last` (the "…" opens it). One rule under the band and Netwerk/Tekst together, over the full width (ReaderFrame `.kop-rij`).
+- **The head:** two actions, framed, at the right of the status line (`KopActies`). Bewaar is the box that keeps at once, with the map choice on a caret joined to it. Citeer holds the forms, Kopieer tekst and the official text (`bron ↗`). No other buttons in the head.
+- **Where the text came from:** in ink under the status line ("Ingevoerd bij …", "Memorie van toelichting ↓"); the memorie opens under the article.
+- **A place** (lid, onderdeel, sub, overweging, at any depth): its count of verbindingen, and on hover or focus the quiet words `Citeer, Bewaar` (`PlaatsActies`, `.plaats-woord`); Kopieer tekst is in Citeer. A kept place has a thin ink bar in the margin (`.plaats-bewaard`), the parent of a kept sub-onderdeel none.
+- **Read in place:** what belongs to the text comes to it. A cited article or lid shows its own text in the card; a defined term its definition; the memorie's passage on the article stands under the text in Toelichting (open until closed; lazily loaded). Going to the source is one step further, never the only way. Verbonden keeps the relations: nothing moves from it into the reader.
+
 ## Bronregels
 
 Lines about how current the data is, and the dates that belong to what a page shows (Thijs, 10 Oct: "een gelijke ervaring op de hele website"; inventory in ux-voorstel/20-bronregels).
