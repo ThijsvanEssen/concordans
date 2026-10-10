@@ -4,9 +4,7 @@
 	import SearchOverlay from './SearchOverlay.svelte';
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
 	import { page } from '$app/state';
-	import MapPaneel from '$lib/map/MapPaneel.svelte';
-	import { kaart } from '$lib/map/map.svelte';
-	import { uitParam } from '$lib/map/map';
+	import { goto } from '$app/navigation';
 
 	let { children }: { children?: Snippet } = $props();
 
@@ -25,17 +23,17 @@
 	}
 	provideSearchOpener(openSearch);
 
-	// A map shared as a link (?map=) opens in the panel, to add to one's own or put aside.
-	const gedeeldeMap = $derived(page.url.searchParams.get('map'));
-	const gedeeldeNaam = $derived(page.url.searchParams.get('mapnaam'));
-	const gedeeldeVolgorde = $derived(
-		page.url.searchParams.get('mapvolgorde') === 'eigen' ? 'eigen' : 'groep'
-	);
+	// A map shared as a link (?map=) opens on Gemarkeerd, with the choice to keep it; a link
+	// of before (/explore?map=) goes there too.
 	$effect(() => {
-		const items = uitParam(gedeeldeMap);
-		if (!items.length) return;
-		kaart.gedeeld = { naam: gedeeldeNaam, items, volgorde: gedeeldeVolgorde };
-		kaart.open = true;
+		const url = page.url;
+		if (!url.searchParams.has('map') || url.pathname.startsWith('/gemarkeerd')) return;
+		const doel = new URLSearchParams();
+		for (const k of ['map', 'mapnaam', 'mapvolgorde']) {
+			const v = url.searchParams.get(k);
+			if (v !== null) doel.set(k, v);
+		}
+		void goto(`/gemarkeerd?${doel}`, { replaceState: true });
 	});
 </script>
 
@@ -47,7 +45,6 @@
 	</main>
 </div>
 
-<MapPaneel />
 <SearchOverlay open={searchOpen} query={searchQuery} onClose={() => (searchOpen = false)} />
 
 <style>
