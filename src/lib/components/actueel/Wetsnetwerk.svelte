@@ -263,7 +263,7 @@
 		color: var(--ink-2);
 	}
 	li button[aria-pressed='true'] .naam {
-		box-shadow: inset 0 -2px 0 var(--accent);
+		box-shadow: inset 0 -2px 0 var(--ink);
 	}
 	.sub {
 		grid-column: 2;

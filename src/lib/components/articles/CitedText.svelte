@@ -102,7 +102,7 @@
 	}
 	/* The link lives in BronLink; its look is the text's own. */
 	:global(a.cited) {
-		color: var(--accent);
+		color: var(--ink);
 		text-decoration: underline;
 		text-decoration-style: dotted;
 		text-underline-offset: 3px;

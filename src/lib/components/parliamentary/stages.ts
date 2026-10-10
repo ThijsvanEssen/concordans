@@ -34,18 +34,6 @@ export const PHASES = [
 	'Eindtekst'
 ] as const;
 
-/** A phase in the width of one step of the bar; the full name is its title. */
-export const PHASE_SHORT: Record<string, string> = {
-	'Voorstel van wet': 'Voorstel',
-	'Memorie van toelichting': 'MvT',
-	'Advies Raad van State': 'Advies RvS',
-	Verslag: 'Verslag',
-	'Nota n.a.v. het verslag': 'Nota',
-	'Nota van wijziging / Amendement': 'Wijziging',
-	Stemmingen: 'Stemmingen',
-	Eindtekst: 'Eindtekst'
-};
-
 export const OUTCOME_LABEL: Record<Outcome, string> = {
 	aangenomen: 'Aangenomen',
 	verworpen: 'Verworpen'
@@ -96,21 +84,3 @@ export const dossierStatus = (d: {
 }): string | null => (d.outcome ? OUTCOME_LABEL[d.outcome] : (d.current_phase ?? null));
 
 export type StepState = 'done' | 'active' | 'open';
-
-/**
- * How the bar draws a phase: the current one active, another done when a record marks it,
- * the rest open. A phase nothing marks is open, whatever lies after it: no phase is
- * assumed passed.
- */
-export const stepState = (phase: Phase, current: string | null | undefined): StepState =>
-	phase.name === current ? 'active' : phase.done ? 'done' : 'open';
-
-/** What a dossier's opening date is the date of (API 0.67), as its tooltip says it. */
-const OPENED_ON_BASIS: Record<string, string> = {
-	first_paper: 'Datum van nr. 1 van het dossier',
-	royal_message: 'Datum van de Koninklijke boodschap',
-	earliest_record: 'Datum van het eerste stuk of de eerste activiteit'
-};
-
-export const openedOnBasis = (basis: string | null | undefined): string | undefined =>
-	basis ? OPENED_ON_BASIS[basis] : undefined;

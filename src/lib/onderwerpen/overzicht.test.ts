@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
 	csvTabel,
+	KOLOM_RICHTING,
+	kolomStem,
 	filter,
 	lijstQuery,
-	naarCsv,
-	opOnderwerp,
 	perJaar,
 	perSoort,
-	richtingTabel,
 	totaal,
 	uitFacets,
 	type Besluit,
@@ -72,53 +71,16 @@ describe('overzicht', () => {
 		expect(filter(lijst, { stem: 'voor' }, stemmen).map((d) => d.key)).toEqual(['a']);
 		expect(filter(lijst, { jaar: '2024' }, stemmen)).toHaveLength(2);
 	});
-
-	it('een woord moet als woord in de titel staan', () => {
-		expect(opOnderwerp({ subject: 'Motie over stikstof' }, ['PFAS', 'stikstof'])).toBe(true);
-		expect(opOnderwerp({ subject: 'Motie over universitaire aanstelling' }, ['AI'])).toBe(false);
-	});
-
-	it('de CSV leest in Excel met Nederlandse instellingen', () => {
-		const csv = naarCsv(
-			lijst.slice(0, 1),
-			'https://concordans.nl',
-			'VVD',
-			stemmen,
-			new Map([['35334', 'Problematiek rondom stikstof en PFAS']])
-		);
-		expect(csv.startsWith('﻿')).toBe(true);
-		const [kop, rij] = csv.slice(1).split('\r\n');
-		expect(kop.split(';')).toContain('stem VVD');
-		expect(rij).toContain(
-			'2026-07-02;TK;Motie;Motie over stikstof;35334;Problematiek rondom stikstof en PFAS;aangenomen'
-		);
-		expect(rij).toContain(';voor;https://concordans.nl/');
-	});
 });
 
-describe('Richting uit de CSV', () => {
-	it('telt de rijen van de export per richting, uitkomst en stem', () => {
-		const motie = new Map([
-			['a', { richting: 'positief' }],
-			['b', { richting: 'positief' }]
-		]);
+describe('de tabel van de export', () => {
+	it('zet de stem van de fractie en de eigen richting in hun kolommen', () => {
+		const motie = new Map([['a', { richting: 'positief' }]]);
 		const t = csvTabel(lijst.slice(0, 2), '', 'VVD', stemmen, new Map(), motie);
-		const r = new Map(richtingTabel(t, 'VVD'));
-		expect(r.get('positief')).toMatchObject({
-			totaal: 2,
-			aangenomen: 1,
-			verworpen: 1,
-			voor: 1,
-			tegen: 1
-		});
-		expect(r.get('negatief')?.totaal).toBe(0);
-	});
-
-	it('een motie zonder codering telt als niet gecodeerd', () => {
-		const t = csvTabel(lijst.slice(0, 2), '', null, new Map(), new Map(), new Map());
-		const r = new Map(richtingTabel(t, null));
-		expect(r.get('geen')).toMatchObject({ totaal: 2, aangenomen: 1, verworpen: 1, voor: 0 });
-		expect([...r.keys()]).toEqual(['positief', 'negatief', 'neutraal', 'geen']);
+		const stem = t.kop.indexOf(kolomStem('VVD'));
+		const richting = t.kop.indexOf(KOLOM_RICHTING);
+		expect(t.rijen.map((r) => r[stem])).toEqual(['voor', 'tegen']);
+		expect(t.rijen.map((r) => r[richting])).toEqual(['positief', '']);
 	});
 });
 

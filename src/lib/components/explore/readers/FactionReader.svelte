@@ -327,7 +327,7 @@
 		color: var(--ink-2);
 	}
 	.vote-choice--tegen {
-		color: var(--accent);
+		color: var(--uitkomst-nee);
 	}
 	.votes :global(.vote-subject) {
 		font-family: var(--font-serif);

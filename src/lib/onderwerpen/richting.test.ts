@@ -5,8 +5,7 @@ import {
 	dictumUit,
 	metRichting,
 	onderwerpSleutel,
-	samen,
-	telRichting
+	samen
 } from './richting';
 
 describe('richting', () => {
@@ -34,17 +33,6 @@ describe('richting', () => {
 		expect(c).toEqual({ [o]: { d1: 'positief', d2: 'negatief' } });
 		c = metRichting(metRichting(c, o, 'd1', null), o, 'd2', null);
 		expect(c).toEqual({});
-	});
-
-	it('counts all, per outcome and per vote of the chosen fractie', () => {
-		const t = telRichting([
-			{ richting: 'positief', uitkomst: 'aangenomen', stem: 'voor' },
-			{ richting: 'negatief', uitkomst: 'verworpen', stem: 'tegen' },
-			{ richting: 'positief', uitkomst: 'verworpen', stem: null }
-		]);
-		expect(t.alles).toEqual({ positief: 2, negatief: 1, neutraal: 0, totaal: 3 });
-		expect(t.perUitkomst.verworpen.totaal).toBe(2);
-		expect(t.perStem.voor.positief).toBe(1);
 	});
 
 	it('writes a coding as a file and reads it back, with quotes and commas', () => {

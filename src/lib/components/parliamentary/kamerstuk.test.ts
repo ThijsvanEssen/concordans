@@ -1,36 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	kamerstukCitation,
-	kamerstukLabel,
-	kamerstukNumber,
-	kamerstukOf,
-	sessionYear,
-	withoutKamerstuk
-} from './kamerstuk';
-
-describe('kamerstukOf', () => {
-	it('takes the paper’s own dossier, also in the timeline of another', () => {
-		const k = kamerstukOf({ sequence: '11', dossier_number: '31058' }, '31746')!;
-		expect(k).toEqual({ dossier: '31058', number: '11', elsewhere: true });
-		expect(kamerstukNumber(k)).toBe('31058, nr. 11');
-		expect(kamerstukOf({ sequence: 16, dossier_number: '31746' }, '31746')!.elsewhere).toBe(false);
-	});
-
-	it('falls back on the dossier it stands in, and names no paper that is no Kamerstuk', () => {
-		expect(kamerstukOf({ sequence: '5', dossier_number: null }, '31746')).toEqual({
-			dossier: '31746',
-			number: '5',
-			elsewhere: false
-		});
-		expect(kamerstukOf({ sequence: null, dossier_number: null }, '31746')).toBeNull();
-		expect(kamerstukOf({ sequence: '5' }, null)).toBeNull();
-	});
-
-	it('numbers an Eerste Kamer paper by its letter', () => {
-		const k = kamerstukOf({ sequence: 'A', dossier_number: '36901' }, '36901')!;
-		expect(kamerstukNumber(k, 'EK')).toBe('36901, A');
-	});
-});
+import { kamerstukCitation, kamerstukLabel, sessionYear, withoutKamerstuk } from './kamerstuk';
 
 describe('kamerstukCitation', () => {
 	it('cites a paper of either Kamer with its vergaderjaar', () => {

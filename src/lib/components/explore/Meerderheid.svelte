@@ -92,7 +92,7 @@
 		bottom: calc(-1 * var(--s-1));
 		width: 2px;
 		margin-left: -1px;
-		background: var(--accent);
+		background: var(--ink);
 	}
 	.schaal {
 		position: relative;

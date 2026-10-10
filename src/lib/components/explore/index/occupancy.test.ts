@@ -5,7 +5,6 @@ import {
 	at,
 	bandsOf,
 	lanesOf,
-	seatLabel,
 	termOf,
 	ticksOf,
 	type Seat,
@@ -79,23 +78,6 @@ describe('lanesOf', () => {
 			schoof
 		);
 		expect(lanes).toHaveLength(2);
-	});
-});
-
-describe('seatLabel', () => {
-	it('names the post, the portfolio and a minister voor', () => {
-		expect(seatLabel(seat([]))).toBe('Minister');
-		expect(seatLabel(seat([], { post: 'staatssecretaris', portfolio: 'Rechtsbescherming' }))).toBe(
-			'Staatssecretaris, Rechtsbescherming'
-		);
-		expect(
-			seatLabel(
-				seat([], {
-					post: 'minister_zonder_portefeuille',
-					portfolio: 'Buitenlandse Handel en Ontwikkelingshulp'
-				})
-			)
-		).toBe('Minister voor Buitenlandse Handel en Ontwikkelingshulp');
 	});
 });
 

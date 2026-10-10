@@ -79,12 +79,14 @@
 {/if}
 
 {#if dossiers && dossiers.total > 0}
-	<Sectie titel="Dossiers" soort="dossiers" id="dossiers">
+	<!-- The heading says what is listed, the count beside it (Thijs, 10 Oct: no sentence). -->
+	<Sectie
+		titel="Dossiers met ondertekende stukken"
+		soort="dossiers"
+		aantal={dossiers.total}
+		id="dossiers"
+	>
 		<div class="ov" class:ruim>
-			<p class="zin">
-				{dossiers.total}
-				{dossiers.total === 1 ? 'dossier' : 'dossiers'} met stukken die deze bewindspersoon ondertekende.
-			</p>
 			<ol class="items">
 				{#each dossiers.items as d (d.key)}
 					{@const st = stand(d)}

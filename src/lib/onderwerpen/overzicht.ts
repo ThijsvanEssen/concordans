@@ -1,11 +1,8 @@
 // The overview of a topic: the decisions of the Kamers on moties, amendementen and bills with
 // its words in their title, counted by kind, outcome and year, and for one fractie by its vote.
-// Counted here from the decisions themselves, as the API counts any part of a title (`AI` in
-// `universitaire`): every number is the length of a list on the same page.
 import { buildBronHref } from '$lib/bron/href';
 import type { Schema } from '$lib/api/types';
 import { NO_DECISION_KIND } from '$lib/components/explore/index/decision-kind';
-import { woordIn } from './onderwerpen';
 
 export type Besluit = Schema<'DecisionSummaryDTO'>;
 export type Uitkomst = 'aangenomen' | 'verworpen' | 'overig';
@@ -18,10 +15,6 @@ export const uitkomstVan = (d: Pick<Besluit, 'passed'>): Uitkomst =>
 export const soortVan = (d: Pick<Besluit, 'kind'>) => d.kind?.trim() || NO_DECISION_KIND;
 
 export const jaarVan = (d: Pick<Besluit, 'date'>) => (d.date ?? '').slice(0, 4);
-
-/** A decision is on the topic when one of its words stands in the title as a word. */
-export const opOnderwerp = (d: Pick<Besluit, 'subject'>, termen: string[]) =>
-	termen.some((t) => woordIn(t, d.subject));
 
 export type Filter = { soort?: string; uitkomst?: Uitkomst; jaar?: string; stem?: Stem };
 
@@ -268,29 +261,3 @@ export function csvTabel(
 
 export const csvTekst = (t: CsvTabel) =>
 	BOM + [t.kop.join(SEP), ...t.rijen.map((r) => r.map(cell).join(SEP))].join('\r\n');
-
-export const naarCsv = (...args: Parameters<typeof csvTabel>) => csvTekst(csvTabel(...args));
-
-// ── Richting counted from the export ────────────────────────────────────────
-// The table Richting counts the rows of the CSV, by their columns richting, uitkomst and the
-// fractie's stem: what the table shows is what the file holds (Thijs, 10 Oct: "dubbelop").
-
-/** A row of the table: a direction, or `geen` for a motie not coded. */
-export type RichtingRij = 'positief' | 'negatief' | 'neutraal' | 'geen';
-export const RICHTING_RIJEN: readonly RichtingRij[] = ['positief', 'negatief', 'neutraal', 'geen'];
-
-export function richtingTabel(t: CsvTabel, fractie: string | null): [RichtingRij, Telling][] {
-	const i = (k: string) => t.kop.indexOf(k);
-	const [ri, ui, si] = [i(KOLOM_RICHTING), i('uitkomst'), fractie ? i(kolomStem(fractie)) : -1];
-	const m = new Map(RICHTING_RIJEN.map((r) => [r, leeg()] as const));
-	for (const rij of t.rijen) {
-		const r = String(rij[ri] ?? '');
-		const tel = m.get(RICHTING_RIJEN.includes(r as RichtingRij) ? (r as RichtingRij) : 'geen')!;
-		const u = String(rij[ui] ?? '');
-		tel.totaal++;
-		tel[u === 'aangenomen' || u === 'verworpen' ? u : 'overig']++;
-		const s = si >= 0 ? String(rij[si] ?? '') : '';
-		if (s === 'voor' || s === 'tegen') tel[s]++;
-	}
-	return [...m];
-}

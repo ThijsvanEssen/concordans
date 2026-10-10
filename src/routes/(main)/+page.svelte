@@ -2,6 +2,8 @@
 	import { vandaag } from '$lib/text/datum';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import Keuze from '$lib/components/ui/Keuze.svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import Search from '$lib/search/Search.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import { API_BASE_URL } from '$lib/api/base-url';
@@ -54,6 +56,8 @@
 	];
 	let scope = $state<string | null>(null);
 	const chosen = $derived(SCOPES.find((x) => x.id === scope) ?? null);
+	/** On a phone the scopes a step smaller and without their marks: five words fit. */
+	const smal = new MediaQuery('width <= 600px');
 
 	/** The lines of Actueel shown; the rest is in Actueel. */
 	const LINES_SHOWN = 10;
@@ -166,19 +170,26 @@
 	</aside>
 	<div class="main">
 		<div class="search">
-			<div class="scopes" role="group" aria-label="Zoek in">
-				{#each SCOPES as sc (sc.id)}
-					<button
-						type="button"
-						aria-pressed={scope === sc.id}
-						onclick={() => (scope = scope === sc.id ? null : sc.id)}
-					>
-						<span class="glyphs"
-							>{#each sc.tekens as c (c)}<KindGlyph collection={c} size={14} />{/each}</span
-						>
-						{sc.label}
-					</button>
-				{/each}
+			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alles
+			     searches all of it. -->
+			<div class="scopes">
+				<Keuze
+					label="Zoek in"
+					opties={[
+						{ waarde: 'alles', label: 'Alles' },
+						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
+					]}
+					waarde={scope ?? 'alles'}
+					onKies={(w) => (scope = w === 'alles' ? null : w)}
+					klein={smal.current}
+				>
+					{#snippet voor(w)}
+						{@const sc = SCOPES.find((x) => x.id === w)}
+						{#if sc && !smal.current}<span class="glyphs"
+								>{#each sc.tekens as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
+							>{/if}
+					{/snippet}
+				</Keuze>
 			</div>
 			{#key scope}
 				<Search
@@ -242,27 +253,7 @@
 		gap: var(--s-3);
 	}
 	.scopes {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-2);
-	}
-	.scopes button {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-2) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.scopes button[aria-pressed='true'] {
-		border-color: var(--ink);
-		box-shadow: inset 0 -3px 0 var(--ink);
+		max-width: 100%;
 	}
 	.glyphs {
 		display: inline-flex;

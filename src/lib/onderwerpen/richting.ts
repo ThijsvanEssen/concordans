@@ -4,8 +4,6 @@
 // the coding, counts it and exports it, and shows the dictum as the sentence it rests on.
 // Stored in this browser only (no account, no server), and as a file to share.
 
-import type { Stem, Uitkomst } from './overzicht';
-
 export type Richting = 'positief' | 'negatief' | 'neutraal';
 export const RICHTINGEN: readonly Richting[] = ['positief', 'negatief', 'neutraal'];
 export const RICHTING_LABEL: Record<Richting, string> = {
@@ -80,31 +78,6 @@ export function dictumUit(tekst: string | null | undefined): string | null {
 	const eind = /,?\s*en gaat over tot de orde van de dag/i.exec(rest);
 	const zin = (eind ? rest.slice(0, eind.index) : rest).trim().replace(/[,;]$/, '');
 	return zin ? (zin.length > 600 ? `${zin.slice(0, 597).trimEnd()}…` : zin) : null;
-}
-
-export type Gecodeerd = { richting: Richting; uitkomst: Uitkomst; stem: Stem | null };
-
-export type RichtingTelling = Record<Richting, number> & { totaal: number };
-
-const leeg = (): RichtingTelling => ({ positief: 0, negatief: 0, neutraal: 0, totaal: 0 });
-
-/** The coded moties counted, all and per outcome, and per vote of the chosen fractie. */
-export function telRichting(rijen: readonly Gecodeerd[]) {
-	const alles = leeg();
-	const perUitkomst: Record<Uitkomst, RichtingTelling> = {
-		aangenomen: leeg(),
-		verworpen: leeg(),
-		overig: leeg()
-	};
-	const perStem: Record<Stem, RichtingTelling> = { voor: leeg(), tegen: leeg() };
-	for (const r of rijen) {
-		for (const t of [alles, perUitkomst[r.uitkomst], r.stem ? perStem[r.stem] : null]) {
-			if (!t) continue;
-			t[r.richting]++;
-			t.totaal++;
-		}
-	}
-	return { alles, perUitkomst, perStem };
 }
 
 const veld = (v: string) => (/[",;\n]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v);

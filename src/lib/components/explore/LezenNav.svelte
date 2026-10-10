@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NavKolom from './NavKolom.svelte';
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
 	import { lawArticles, type LawArticle } from '$lib/api/law-articles';
@@ -112,7 +113,7 @@
 		void selectedKey;
 		if (!navEl) return;
 		requestAnimationFrame(() => {
-			const active = navEl?.querySelector('.row.is-active');
+			const active = navEl?.querySelector('.is-active');
 			active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 		});
 	});
@@ -127,7 +128,7 @@
 {#snippet itemRow(item: Item)}
 	<li>
 		<a
-			class="row"
+			class="nav-kolom__rij"
 			class:is-active={item.key === selectedKey}
 			aria-current={item.key === selectedKey ? 'page' : undefined}
 			href={bronHref({ collection: 'articles', key: item.key })}
@@ -162,20 +163,21 @@
 	</details>
 {/snippet}
 
-<aside class="lezen-nav" aria-label="Overzicht" bind:this={navEl}>
-	{#if currentBwb}
-		<header class="head">
-			<h3 class="head__title">{lawName}</h3>
-			<!-- The law only: the place of an article is in the line above its title. -->
-			{#if selection?.collection !== 'articles' && items.length > 0}
-				<div class="head__section">{items.length} artikelen</div>
-			{/if}
-		</header>
-
+{#if currentBwb}
+	<!-- Under the name the count for the law only: the place of an article is in the line
+	     above its title. -->
+	<NavKolom
+		label="Overzicht"
+		titel={lawName}
+		onder={selection?.collection !== 'articles' && items.length > 0
+			? `${items.length} artikelen`
+			: null}
+		bind:el={navEl}
+	>
 		{#if loading && items.length === 0}
-			<p class="note">Laden</p>
+			<p class="nav-kolom__note">Laden</p>
 		{:else if error}
-			<p class="note">{error}</p>
+			<p class="nav-kolom__note">{error}</p>
 		{:else if groups}
 			<div class="tree">
 				{#each groups as g, i (i)}
@@ -189,44 +191,10 @@
 				{/each}
 			</ol>
 		{/if}
-	{/if}
-</aside>
+	</NavKolom>
+{/if}
 
 <style>
-	.lezen-nav {
-		height: 100%;
-		overflow-y: auto;
-		padding-top: var(--s-5);
-		background: var(--paper-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-	}
-
-	.note {
-		margin: 0;
-		padding: var(--s-4);
-		color: var(--ink-3);
-	}
-
-	.head {
-		padding: 0 var(--s-4) var(--s-3);
-	}
-
-	.head__title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		line-height: 1.2;
-		color: var(--ink);
-	}
-
-	.head__section {
-		margin-top: var(--s-1);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-
 	.list {
 		list-style: none;
 		margin: 0;
@@ -307,24 +275,11 @@
 		padding-left: var(--s-3);
 	}
 
-	.row {
-		display: block;
-		padding: var(--s-1) var(--s-4);
-		color: var(--ink-2);
-		line-height: 1.3;
-		border-left: 2px solid transparent;
-	}
-
-	.row:hover {
-		background: var(--paper);
-		color: var(--ink);
-	}
-
-	.row.is-active {
+	.is-active {
 		background: var(--paper);
 		color: var(--ink);
 		font-weight: 600;
-		border-left-color: var(--accent);
+		border-left-color: var(--ink);
 		padding-left: var(--s-4);
 	}
 </style>

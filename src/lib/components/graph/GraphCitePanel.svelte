@@ -138,7 +138,7 @@
 		{#if !node.stub}
 			<!-- A link, so a middle click or cmd-click opens the bron in a new tab. -->
 			<a
-				class="act act--primary"
+				class="btn is-text lezen"
 				href={bronHref(refOf(node.collection, node.key, node.raw?.props))}
 				data-sveltekit-noscroll
 				onclick={(e) => {
@@ -150,15 +150,15 @@
 			>
 		{/if}
 		{#if onOmgeving && !node.stub}
-			<button type="button" class="act" onclick={() => onOmgeving(node)}
+			<button type="button" class="btn is-text" onclick={() => onOmgeving(node)}
 				><Picto naam="omgeving" size={13} />Omgeving tonen</button
 			>
 		{/if}
 		{#if onToggleChosen && !node.stub}
 			<button
 				type="button"
-				class="act act--netwerk"
-				class:act--chosen={isChosen}
+				class="btn is-text netwerk"
+				class:gekozen={isChosen}
 				aria-pressed={isChosen}
 				onclick={() => onToggleChosen(node)}
 				><Picto naam="plus" size={13} />{isChosen ? 'Uit netwerk' : 'In netwerk'}</button
@@ -251,33 +251,8 @@
 		margin-top: var(--s-1);
 	}
 
-	/* Text buttons: no border, the hover as a paper-2 field. */
-	.act {
-		white-space: nowrap;
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-		background: none;
-		border: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		color: var(--ink-2);
-		cursor: pointer;
-		padding: 3px var(--s-2);
-		border-radius: var(--r-1);
-		transition:
-			color var(--dur-1) var(--ease),
-			background var(--dur-1) var(--ease);
-	}
-
-	.act--primary {
-		color: var(--ink);
-		text-decoration: none;
-	}
-
-	.act:hover {
-		background: var(--paper-2);
+	/* The way to the text in ink, the others a step quieter (Knop, is-text). */
+	.lezen {
 		color: var(--ink);
 	}
 
@@ -285,11 +260,11 @@
 		right: auto;
 		bottom: auto;
 	}
-	.act--netwerk {
+	.netwerk {
 		color: var(--ink-3);
 		margin-left: auto;
 	}
-	.act--chosen {
+	.netwerk.gekozen {
 		color: var(--ink);
 	}
 </style>

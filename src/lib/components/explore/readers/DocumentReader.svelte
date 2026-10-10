@@ -410,7 +410,7 @@
 		bottom: 0;
 		left: -14px;
 		width: 2px;
-		background: var(--accent);
+		background: var(--ink);
 	}
 	.in-passage--cont::before {
 		top: calc(-1 * var(--s-4));

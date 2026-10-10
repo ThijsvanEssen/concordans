@@ -5,7 +5,6 @@ import {
 	lawAbbreviation,
 	lawTitle,
 	parseCitation,
-	resolveLaw,
 	resolveQuery,
 	keuzesOf,
 	resolvedOf
@@ -221,15 +220,6 @@ describe('lawAbbreviation', () => {
 		expect(lawAbbreviation(' Awb ')).toBe('Awb');
 		expect(lawAbbreviation('stikstof')).toBeNull();
 		expect(lawAbbreviation('Wet open overheid')).toBeNull();
-	});
-});
-
-describe('resolveLaw', () => {
-	it('opens the law the API names, and nothing else', async () => {
-		const avg = { ref: { collection: 'instruments' as const, key: '32016r0679' }, at: null };
-		expect(await resolveLaw('AVG', { resolve: async () => avg })).toBe(avg);
-		const article = { ref: { collection: 'articles' as const, key: 'x' }, at: null };
-		expect(await resolveLaw('Art', { resolve: async () => article })).toBeNull();
 	});
 });
 

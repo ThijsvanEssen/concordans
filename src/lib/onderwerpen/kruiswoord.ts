@@ -186,13 +186,6 @@ export function amendementKetens(
 
 export const somVan = (r: Rij | undefined) => (r ? KOLOMMEN.reduce((s, k) => s + r[k].n, 0) : 0);
 
-/** The totals of a set of rows, per column. */
-export function totalen(rijen: Iterable<Rij>): Record<Kolom, number> {
-	const t = Object.fromEntries(KOLOMMEN.map((k) => [k, 0])) as Record<Kolom, number>;
-	for (const r of rijen) for (const k of KOLOMMEN) t[k] += r[k].n;
-	return t;
-}
-
 /** A cell chosen, as the URL holds it: `moties:2026-10`. */
 export type Keuze = { kolom: Kolom; vak: Vak };
 export function leesKeuze(v: string | null): Keuze | null {

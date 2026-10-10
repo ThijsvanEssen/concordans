@@ -1642,10 +1642,10 @@
 		height: 14px;
 		padding: 0 3px;
 		border-radius: var(--r-rond);
-		background: var(--accent);
+		background: var(--ink);
 		color: var(--paper);
 		border: 1.5px solid var(--paper);
-		box-shadow: 0 0 0 1px var(--accent);
+		box-shadow: 0 0 0 1px var(--ink);
 		font-family: var(--font-serif);
 		font-size: var(--t-glyph);
 		font-weight: 600;

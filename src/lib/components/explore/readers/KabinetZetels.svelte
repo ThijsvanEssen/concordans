@@ -397,7 +397,7 @@
 		transform: translateY(-115%);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		color: var(--accent);
+		color: var(--ink);
 	}
 	.verloop svg {
 		display: block;
@@ -421,7 +421,7 @@
 		stroke-width: 1;
 	}
 	.lijn {
-		stroke: var(--accent);
+		stroke: var(--ink);
 		stroke-width: 2;
 		vector-effect: non-scaling-stroke;
 	}

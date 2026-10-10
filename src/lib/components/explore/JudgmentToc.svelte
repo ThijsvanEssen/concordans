@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NavKolom from './NavKolom.svelte';
 	import { judgmentCite } from '$lib/text/judgment-cite';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
@@ -73,84 +74,28 @@
 </script>
 
 {#if ecli}
-	<aside class="judgment-toc" aria-label="Inhoud">
-		<header class="head">
-			<h3 class="head__title">{ecliLabel}</h3>
-		</header>
-
+	<NavKolom label="Inhoud" titel={ecliLabel}>
 		{#if loading && items.length === 0}
-			<p class="note">Laden…</p>
+			<p class="nav-kolom__note">Laden…</p>
 		{:else if error}
-			<p class="note">{error}</p>
+			<p class="nav-kolom__note">{error}</p>
 		{:else if items.length > 0}
-			<ol class="list">
+			<ol class="nav-kolom__lijst">
 				{#each items as it, i (i)}
 					<li>
-						<a class="row row--{it.kind}" href="#{it.id}" onclick={(e) => jump(e, it.id)}
+						<a class="nav-kolom__rij row--{it.kind}" href="#{it.id}" onclick={(e) => jump(e, it.id)}
 							>{it.label}</a
 						>
 					</li>
 				{/each}
 			</ol>
 		{:else if !loading}
-			<p class="note">Geen indeling.</p>
+			<p class="nav-kolom__note">Geen indeling.</p>
 		{/if}
-	</aside>
+	</NavKolom>
 {/if}
 
 <style>
-	.judgment-toc {
-		height: 100%;
-		overflow-y: auto;
-		padding-top: var(--s-5);
-		background: var(--paper-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-	}
-
-	.note {
-		margin: 0;
-		padding: var(--s-4);
-		color: var(--ink-3);
-	}
-
-	.head {
-		padding: 0 var(--s-4) var(--s-3);
-	}
-
-	.head__title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		line-height: 1.2;
-		color: var(--ink);
-	}
-
-	.list {
-		list-style: none;
-		margin: 0;
-		padding: 0 0 var(--s-5);
-	}
-
-	.row {
-		display: block;
-		width: 100%;
-		padding: var(--s-1) var(--s-4);
-		border: 0;
-		background: none;
-		text-align: left;
-		color: var(--ink-2);
-		line-height: 1.3;
-		cursor: pointer;
-		text-decoration: none;
-	}
-
-	.row:hover {
-		background: var(--paper);
-		color: var(--ink);
-	}
-
 	.row--summary,
 	.row--parties {
 		font-family: var(--font-serif);
