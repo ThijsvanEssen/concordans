@@ -203,6 +203,13 @@ describe('one form for each thing', () => {
 		expect(thuis).toMatch(/\{:else if wetsnetwerkLaden\}/);
 	});
 
+	it('starts every reader at one title column where no network stands beside it', () => {
+		const verkenner = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		expect(verkenner).toMatch(
+			/\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{\s*--reader-col-left: calc\(var\(--nav-w\) \+ 5px\);/
+		);
+	});
+
 	it('styles the parts of a text page once, in AppShell (.blad--tekst)', () => {
 		const delen =
 			/^\.(stub-eyebrow|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;
