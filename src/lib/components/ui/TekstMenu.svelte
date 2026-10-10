@@ -142,9 +142,15 @@
 		height: var(--veld-h-klein);
 		font-size: var(--t-ui-micro);
 	}
-	.tekstmenu__knop:hover,
-	.tekstmenu__knop:focus-visible {
+	/* Red on a hover only: the button has the focus back after a choice, and would stay red
+	   at rest (the Legenda's Bronnen, Thijs, 10 Oct). The focus is underlined in ink. */
+	.tekstmenu__knop:hover {
 		color: var(--accent);
+	}
+	.tekstmenu__knop:focus-visible {
+		outline: none;
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 	.tekstmenu__lijst {
 		position: absolute;

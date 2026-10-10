@@ -315,6 +315,19 @@ describe('one form for each thing', () => {
 		expect(offenders(rust, buiten(eigen))).toEqual([]);
 	});
 
+	it('keeps red off a menu button that has the focus back after a choice', () => {
+		// The guard above lets :focus be red; a TekstMenu button gets the focus back after a
+		// choice and stood red at rest (the Legenda's Bronnen, Thijs, 10 Oct).
+		const css = (t: string) =>
+			(/<style>([\s\S]*?)<\/style>/.exec(t)?.[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
+		const rood = (t: string) =>
+			[...css(t).matchAll(/([^{}]+)\{([^{}]*)\}/g)].some(
+				([, selector, body]) =>
+					/tekstmenu__knop[^,{]*:focus/.test(selector) && /var\(--accent\)/.test(body)
+			);
+		expect(offenders(rood)).toEqual([]);
+	});
+
 	it('opens a row of a list on the bron’s content, with Bewaar on the row (Thijs, 10 Oct)', () => {
 		// One row for Actueel, Gevolgd and Bladeren (IndexRow): what opens is the content
 		// (RijInhoud), the actions are RijActies on the row; no Lees or In het netwerk buttons.
