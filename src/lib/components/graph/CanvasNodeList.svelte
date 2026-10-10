@@ -8,7 +8,8 @@
 	import { bronLabel, isCollection } from '$lib/vocabulary';
 	import { moveIndex } from './canvas-keys';
 	import { articleTitle } from '$lib/text/bw';
-	import { stemmingNaam } from '$lib/bron/naam';
+	import { bronNaam, stemmingNaam } from '$lib/bron/naam';
+	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { isClusterId } from '$lib/netwerk/cluster';
 
 	let {
@@ -16,7 +17,9 @@
 		isChosen,
 		onFocusNode,
 		onToggleChosen,
-		onOpenCluster
+		onOpenCluster,
+		onTab,
+		houdt
 	}: {
 		/** In reading order: the selected bron first. */
 		nodes: GraphNode[];
@@ -26,6 +29,10 @@
 		onToggleChosen?: (node: GraphNode) => void;
 		/** A cluster bron ("250 uitspraken"): Enter opens its card, as a click does. */
 		onOpenCluster?: (node: GraphNode, opener: HTMLElement) => void;
+		/** Tab from a bron: true where the focus went into its card. */
+		onTab?: (opener: HTMLElement) => boolean;
+		/** An element the focus may go to and the bron keep its card (the card itself). */
+		houdt?: (el: Node | null) => boolean;
 	} = $props();
 
 	let active = $state(0);
@@ -39,16 +46,20 @@
 
 	const kindOf = (n: GraphNode) =>
 		isClusterId(n.id) ? 'groep' : isCollection(n.collection) ? bronLabel(n.collection) : '';
-	/** The full name, where the canvas shows a short one (`2011-07, Memorie`); a BW article as cited (Artikel 6:162 BW); a vote as the dossier's text names it. */
+	/**
+	 * The full name, where the canvas shows a short one (`2011-07, Memorie`): the name the
+	 * chips and Verbonden give (bronNaam: "Hoge Raad, 20 december 2019", an article with its
+	 * law, UX test 10 Oct, #23); a BW article as cited (Artikel 6:162 BW); a vote as the
+	 * dossier's text names it.
+	 */
 	const nameOf = (n: GraphNode) =>
 		isClusterId(n.id)
 			? n.label
 			: n.collection === 'decisions'
 				? stemmingNaam(n)
-				: articleTitle(
-						n.raw?.display_name ?? n.label,
-						n.collection === 'articles' ? n.raw?.props : null
-					);
+				: n.collection === 'articles' && n.raw?.props?.instrument_abbreviation
+					? articleTitle(n.raw?.display_name ?? n.label, n.raw.props)
+					: bronNaam(n, $instrumentMetaStore);
 
 	function focusAt(i: number) {
 		active = i;
@@ -65,10 +76,15 @@
 	}
 
 	function onfocusout(e: FocusEvent) {
-		if (!list?.contains(e.relatedTarget as Node | null)) onFocusNode(null);
+		const naar = e.relatedTarget as Node | null;
+		if (!list?.contains(naar) && !houdt?.(naar)) onFocusNode(null);
 	}
 
 	function onkeydown(e: KeyboardEvent) {
+		if (e.key === 'Tab' && !e.shiftKey && onTab?.(e.currentTarget as HTMLElement)) {
+			e.preventDefault();
+			return;
+		}
 		const next = moveIndex(e.key, active, nodes.length);
 		if (next !== null) {
 			e.preventDefault();
