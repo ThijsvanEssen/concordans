@@ -12958,6 +12958,26 @@
 				"title": "NeighborDTO",
 				"description": "A neighbour with the edge that leads to it, used by the generic node explorer."
 			},
+			"NeighborhoodCollectionDTO": {
+				"properties": {
+					"collection": { "type": "string", "title": "Collection" },
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Its neighbours there along the edges walked, of the types asked (from the edges: one that is gone counts too)."
+					},
+					"kept": {
+						"type": "integer",
+						"title": "Kept",
+						"description": "Of those, the ones in `nodes`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["collection", "total", "kept"],
+				"title": "NeighborhoodCollectionDTO",
+				"description": "Of the focal node's own neighbours in one collection: how many, and how many the\nneighbourhood holds under its cap."
+			},
 			"NextActivityDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
@@ -13046,6 +13066,12 @@
 						"items": { "$ref": "#/components/schemas/NodeNeighborhoodEdge" },
 						"type": "array",
 						"title": "Edges"
+					},
+					"buckets": {
+						"items": { "$ref": "#/components/schemas/NeighborhoodCollectionDTO" },
+						"type": "array",
+						"title": "Buckets",
+						"description": "Per collection of the focal node's own neighbours (the first level), by name: `total` and `kept`; where `kept` is less, the cap left the rest out (`GET /api/nodes/{collection}/{key}` lists them all)."
 					}
 				},
 				"additionalProperties": false,

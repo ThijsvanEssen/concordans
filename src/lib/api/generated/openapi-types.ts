@@ -8337,6 +8337,25 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * NeighborhoodCollectionDTO
+         * @description Of the focal node's own neighbours in one collection: how many, and how many the
+         *     neighbourhood holds under its cap.
+         */
+        NeighborhoodCollectionDTO: {
+            /** Collection */
+            collection: string;
+            /**
+             * Total
+             * @description Its neighbours there along the edges walked, of the types asked (from the edges: one that is gone counts too).
+             */
+            total: number;
+            /**
+             * Kept
+             * @description Of those, the ones in `nodes`.
+             */
+            kept: number;
+        };
+        /**
          * NextActivityDTO
          * @description An activity the Tweede Kamer has planned.
          */
@@ -8415,6 +8434,11 @@ export interface components {
             nodes: components["schemas"]["BaseNodeDTO"][];
             /** Edges */
             edges: components["schemas"]["NodeNeighborhoodEdge"][];
+            /**
+             * Buckets
+             * @description Per collection of the focal node's own neighbours (the first level), by name: `total` and `kept`; where `kept` is less, the cap left the rest out (`GET /api/nodes/{collection}/{key}` lists them all).
+             */
+            buckets?: components["schemas"]["NeighborhoodCollectionDTO"][];
         };
         /**
          * NodeNeighborsDTO
