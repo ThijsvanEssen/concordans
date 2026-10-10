@@ -10,12 +10,19 @@
 
 	let previousFocus: HTMLElement | null = null;
 
-	$effect(() => {
+	// Where the focus was before the dialog: held before it is drawn (`pre`), since its field
+	// takes the focus as it mounts; given back when it closes (audit 3: it fell to the body).
+	$effect.pre(() => {
 		if (!open) return;
 		previousFocus = document.activeElement as HTMLElement | null;
 		return () => {
-			previousFocus?.focus();
+			const terug = previousFocus;
 			previousFocus = null;
+			// After the dialog has gone; a place that went with it leaves the focus on the page.
+			queueMicrotask(() => {
+				if (terug?.isConnected) terug.focus();
+				else document.getElementById('main-content')?.focus();
+			});
 		};
 	});
 
