@@ -99,4 +99,13 @@
 <AppShell>
 	{@render children()}
 </AppShell>
-<p class="sr-only" aria-live="polite" aria-atomic="true">{aankondiging}</p>
+<!-- Fixed at the top: after the shell it stood below the screen's height and the page scrolled (#35). -->
+<p class="sr-only aankondiging" aria-live="polite" aria-atomic="true">{aankondiging}</p>
+
+<style>
+	.aankondiging {
+		position: fixed;
+		top: 0;
+		left: 0;
+	}
+</style>
