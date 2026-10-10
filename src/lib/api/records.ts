@@ -220,6 +220,19 @@ export const getAmendedBy = (bwb: string) =>
 
 /** The stukken that explain an article, the first fifty; null when the API has none. The
  *  reader and the panel Verbonden share it. */
+/**
+ * The papers that explain an article, each with its passages about it (API 0.79.41, #478):
+ * one request where the reader asked every paper's `/passages` in turn.
+ */
+export const getExplanations = (bwb: string, number: string) =>
+	once(`articles/${bwb}/${number}/explanations`, () =>
+		api
+			.GET('/api/articles/{bwb_id}/{article_number}/explanations', {
+				params: { path: { bwb_id: bwb, article_number: number } }
+			})
+			.then(({ data }) => data ?? null)
+	);
+
 export const getExplainedBy = (bwb: string, number: string) =>
 	once(`articles/${bwb}/${number}/explained-by`, () =>
 		api

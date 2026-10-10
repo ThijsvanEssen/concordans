@@ -25,7 +25,7 @@
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
 	import { getCabinet } from '$lib/api/records';
-	import { besluiten, nogTeTellen, telling } from '$lib/api/decisions';
+	import { besluiten, geteld, nogTeTellen } from '$lib/api/decisions';
 	import type { Schema } from '$lib/api/types';
 	import {
 		COURT_KINDS,
@@ -490,6 +490,8 @@
 				if (!signal.aborted) facettenLaden = false;
 			});
 	}
+	/** The stemmingen counted under the filters, from the facets asked apart (API 0.79.41). */
+	let decisionTotal = $state<number | null>(null);
 	/** The number of commitments in each state, under the other filters. */
 	let statusCounts = $state<Map<string, number> | null>(null);
 	let cabinets = $state<Cabinet[]>([]);
@@ -520,10 +522,25 @@
 					limit
 				};
 				return async (offset, signal) => {
+					// The rows without the facets (API 0.79.41), the facets beside them.
+					if (!offset)
+						facettenApart(
+							() =>
+								unwrap(
+									api.GET('/api/instruments', {
+										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
+										signal
+									})
+								),
+							(f) => (instrumentFacets = f.facets ?? null),
+							signal
+						);
 					const r = await unwrap(
-						api.GET('/api/instruments', { params: { query: { ...query, offset } }, signal })
+						api.GET('/api/instruments', {
+							params: { query: { ...query, offset, facets: false } },
+							signal
+						})
 					);
-					if (!offset) instrumentFacets = r.facets ?? null;
 					pages.instruments = toPage(pages.instruments, r.items, offset, r.total);
 					if (offset) return;
 					// The count beside Verdragen: this list's own total where it is the treaties,
@@ -532,7 +549,9 @@
 					else
 						verdragTotaal = await unwrap(
 							api.GET('/api/instruments', {
-								params: { query: { ...query, kind: 'verdrag', limit: 1, offset: 0 } },
+								params: {
+									query: { ...query, kind: 'verdrag', limit: 1, offset: 0, facets: false }
+								},
 								signal
 							})
 						)
@@ -608,11 +627,25 @@
 					limit
 				};
 				return async (offset, signal) => {
+					if (!offset)
+						facettenApart(
+							() =>
+								unwrap(
+									api.GET('/api/dossiers', {
+										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
+										signal
+									})
+								),
+							(f) => (dossierFacets = f.facets ?? null),
+							signal
+						);
 					const r = await unwrap(
-						api.GET('/api/dossiers', { params: { query: { ...query, offset } }, signal })
+						api.GET('/api/dossiers', {
+							params: { query: { ...query, offset, facets: false } },
+							signal
+						})
 					);
 					pages.dossiers = toPage(pages.dossiers, r.items, offset, r.total);
-					if (!offset) dossierFacets = r.facets ?? null;
 				};
 			}
 			case 'committees': {
@@ -676,20 +709,38 @@
 					limit: 200
 				};
 				return async (offset, signal) => {
-					const r = await besluiten({ ...query, offset }, signal);
-					pages.decisions = toPage(pages.decisions, r.items, offset, r.total ?? undefined);
-					if (offset) return;
-					// The total and facets still being counted (API 0.79.41): the page stands, the
-					// counts come from the same question asked once more.
-					const t = await telling(r, { ...query, offset }, signal).catch(() => null);
-					// Still counting after the last wait: the facets stay as they were, the total quiet.
-					if (!t || !nogTeTellen(t)) decisionFacets = (t ?? r).facets ?? null;
-					if (t && t.total !== null && pages.decisions)
-						pages.decisions = {
-							...pages.decisions,
-							total: t.total,
-							more: pages.decisions.items.length < t.total
-						};
+					// The rows without counting (facets=false: total null); the total and facets
+					// from one row asked beside them, again later while still being counted.
+					const zetTotaal = () => {
+						if (decisionTotal !== null && pages.decisions)
+							pages.decisions = {
+								...pages.decisions,
+								total: decisionTotal,
+								more: pages.decisions.items.length < decisionTotal
+							};
+					};
+					if (!offset) {
+						decisionTotal = null;
+						facettenApart(
+							() => geteld({ ...query, offset: 0, limit: 1, facets: true }, signal),
+							(t) => {
+								// Still counting after the last wait: the facets stay, the total quiet.
+								if (!nogTeTellen(t)) decisionFacets = t.facets ?? null;
+								if (t.total !== null) {
+									decisionTotal = t.total;
+									zetTotaal();
+								}
+							},
+							signal
+						);
+					}
+					const r = await besluiten({ ...query, offset, facets: false }, signal);
+					pages.decisions = toPage(
+						pages.decisions,
+						r.items,
+						offset,
+						r.total ?? decisionTotal ?? undefined
+					);
 				};
 			}
 			case 'cabinets':
@@ -777,17 +828,31 @@
 					limit
 				};
 				return async (offset, signal) => {
+					// The number in each state under the other filters, from the facet asked apart.
+					if (!offset)
+						facettenApart(
+							() =>
+								unwrap(
+									api.GET('/api/commitments', {
+										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
+										signal
+									})
+								),
+							(f) =>
+								(statusCounts = new Map(
+									(f.facets?.status ?? []).flatMap((x) =>
+										x.value ? [[x.value, x.count] as const] : []
+									)
+								)),
+							signal
+						);
 					const r = await unwrap(
-						api.GET('/api/commitments', { params: { query: { ...query, offset } }, signal })
+						api.GET('/api/commitments', {
+							params: { query: { ...query, offset, facets: false } },
+							signal
+						})
 					);
 					pages.commitments = toPage(pages.commitments, r.items, offset, r.total);
-					// The number in each state under the other filters, from the list's facet.
-					if (!offset)
-						statusCounts = new Map(
-							(r.facets?.status ?? []).flatMap((f) =>
-								f.value ? [[f.value, f.count] as const] : []
-							)
-						);
 				};
 			}
 		}
