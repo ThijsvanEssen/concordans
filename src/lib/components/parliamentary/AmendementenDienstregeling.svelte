@@ -220,7 +220,8 @@
 	.regeling {
 		--naam: 150px;
 		--dag: 48px;
-		--eind: 84px;
+		/* The vote, or the word of the decision without one: `ingetrokken` beside its box. */
+		--eind: 104px;
 		width: 100%;
 		min-width: calc(var(--naam) + var(--dagen) * var(--dag) + var(--eind));
 		table-layout: fixed;
@@ -379,7 +380,7 @@
 		.regeling {
 			--naam: 120px;
 			--dag: 44px;
-			--eind: 76px;
+			--eind: 104px;
 		}
 	}
 </style>
