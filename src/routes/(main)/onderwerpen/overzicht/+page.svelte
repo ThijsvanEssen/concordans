@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Overzicht of a topic: its events in the Kruiswoord (concept ux-voorstel/1f), the kinds as
@@ -799,7 +800,7 @@
 					(fracties = fs
 						.map((x) => ({
 							key: x.key,
-							naam: x.abbreviation ?? x.name ?? x.key,
+							naam: x.abbreviation ?? x.name ?? naamVan('factions', x),
 							chamber: x.chamber ?? null,
 							active: !!x.active
 						}))

@@ -149,8 +149,8 @@
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
 	}
+	/* The ink ring of every control (AppShell), with the underline of a hover. */
 	.tekstmenu__knop:focus-visible {
-		outline: none;
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
@@ -227,5 +227,11 @@
 		margin-top: var(--s-1);
 		padding-top: var(--s-1);
 		border-top: 1px solid var(--rule);
+	}
+	/* A menu of actions alone (no options): no rule above its first. */
+	.tekstmenu__onder:first-child {
+		margin-top: 0;
+		padding-top: 0;
+		border-top: 0;
 	}
 </style>

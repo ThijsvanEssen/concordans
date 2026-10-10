@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
@@ -36,7 +37,7 @@
 	import { getDossierKey, getMemberVotes } from '$lib/components/parliamentary/data';
 	import { createGraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
-	import GraphView from '$lib/components/graph/GraphView.svelte';
+	import type GraphView from '$lib/components/graph/GraphView.svelte';
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
@@ -46,7 +47,7 @@
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
-	import IndexView from '$lib/components/explore/IndexView.svelte';
+	import type IndexView from '$lib/components/explore/IndexView.svelte';
 	import IndexOverzicht from '$lib/components/explore/index/IndexOverzicht.svelte';
 	import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
@@ -813,7 +814,7 @@
 			const node = nodeToGraphNode(response.node);
 			return {
 				id,
-				label: node?.label ?? response.node.display_name ?? id,
+				label: node?.label ?? naamVanId(id, response.node.display_name),
 				node: node ?? undefined,
 				collection: response.node.collection as NetwerkEntry['collection'],
 				on: isOn(n, id),
@@ -1033,6 +1034,18 @@
 	const overlay = $derived<Overlay>(parseOverlay(overlayParam));
 
 	let graphView = $state<GraphView | null>(null);
+	// The canvas and the lists of Bronnen are chunks of their own, asked at once beside the
+	// bron's first requests: the Verkenner's own chunk was 213 kB gz with them, and every
+	// request waited for it (first visit after a deploy, 10 Oct: the first request at 2.6 s).
+	let GraphViewC = $state<typeof GraphView | null>(null);
+	let IndexViewC = $state<typeof IndexView | null>(null);
+	$effect(() => {
+		void import('$lib/components/graph/GraphView.svelte').then((m) => (GraphViewC = m.default));
+	});
+	$effect(() => {
+		if (mode === 'index' && !IndexViewC)
+			void import('$lib/components/explore/IndexView.svelte').then((m) => (IndexViewC = m.default));
+	});
 	let inFluxMap = $state<NodeCounts>(new Map());
 	let heatMap = $state<NodeCounts>(new Map());
 
@@ -1135,6 +1148,8 @@
 	// A width the reader dragged is kept and wins; until then the columns follow the
 	// screen (--graph-w-auto, --panel-w-auto in the style below).
 	let navW = $state(220);
+	/** The contents column dragged: else it follows the screen (--nav-w-auto). */
+	let navDragged = $state(false);
 	let panelW = $state(400);
 	let graphW = $state(360);
 	let panelDragged = $state(false);
@@ -1145,7 +1160,7 @@
 			const raw = localStorage.getItem(WIDTHS_KEY);
 			if (raw) {
 				const p = JSON.parse(raw) as Record<string, number>;
-				if (p.navW) navW = p.navW;
+				if (p.navW) [navW, navDragged] = [p.navW, true];
 				if (p.panelW) [panelW, panelDragged] = [p.panelW, true];
 				if (p.graphW) [graphW, graphDragged] = [p.graphW, true];
 			}
@@ -1159,7 +1174,7 @@
 			localStorage.setItem(
 				WIDTHS_KEY,
 				JSON.stringify({
-					navW,
+					navW: navDragged ? navW : undefined,
 					panelW: panelDragged ? panelW : undefined,
 					graphW: graphDragged ? graphW : undefined
 				})
@@ -1177,9 +1192,11 @@
 		// From the width on screen: a column that follows the screen is not at its default.
 		const column = (e.currentTarget as HTMLElement)
 			.closest('.explore-graph, .explore-read')
-			?.querySelector<HTMLElement>(handle === 'panel' ? '.col--panel' : '.col--graph');
+			?.querySelector<HTMLElement>(
+				handle === 'panel' ? '.col--panel' : handle === 'nav' ? '.col--nav' : '.col--graph'
+			);
 		const shown = column?.getBoundingClientRect().width;
-		const startW = handle === 'nav' ? navW : (shown ?? (handle === 'panel' ? panelW : graphW));
+		const startW = shown ?? (handle === 'nav' ? navW : handle === 'panel' ? panelW : graphW);
 		drag = { handle, startX: e.clientX, startW };
 		(e.target as HTMLElement).setPointerCapture(e.pointerId);
 	}
@@ -1187,8 +1204,10 @@
 	function onResizeMove(e: PointerEvent) {
 		if (!drag) return;
 		const delta = e.clientX - drag.startX;
-		if (drag.handle === 'nav') navW = Math.max(140, Math.min(320, drag.startW + delta));
-		else if (drag.handle === 'graph') {
+		if (drag.handle === 'nav') {
+			navW = Math.max(140, Math.min(480, drag.startW + delta));
+			navDragged = true;
+		} else if (drag.handle === 'graph') {
 			graphW = Math.max(200, Math.min(1400, drag.startW + delta));
 			graphDragged = true;
 		} else {
@@ -1397,9 +1416,12 @@
 			{#if param('kind') === null}
 				<!-- The overview scrolls in its own field: the shell does not scroll. -->
 				<div class="index-rol"><IndexOverzicht /></div>
-			{:else}
-				<IndexView category={indexKind} />
-			{/if}
+			{:else if IndexViewC}<IndexViewC category={indexKind} />{:else}<p
+					class="explore-empty stil"
+					role="status"
+				>
+					Laden…
+				</p>{/if}
 		{:else if nietGevonden}
 			<NietGevonden titel="Bron niet gevonden" kop={false}>
 				<p>{padMissing ?? focusError}</p>
@@ -1452,84 +1474,88 @@
 					{@render handle('graph')}
 				{/if}
 				<div class="col col--graph" class:mobile-hidden={selectedNode && mobilePanel !== 'graph'}>
-					<GraphView
-						bind:this={graphView}
-						{store}
-						compact={!!selectedNode}
-						{filter}
-						{verbonden}
-						{depth}
-						{reach}
-						selectedEdgeId={card?.edgeId ?? null}
-						{inFluxMap}
-						{heatMap}
-						{overlay}
-						onNodeClick={(n) => {
-							handleNodeClick(n);
-							mobilePanel = 'reader';
-						}}
-						onNodeDoubleClick={handleNodeReplace}
-						onMetGroep={(m) => (metGroep = m)}
-						onToggleChosen={toggleChosen}
-						{netwerkActive}
-						onEdgeClick={openEdgeCard}
-						onClear={() => (card = null)}
-						onGoBack={goBack}
-						onGoForward={() => history.forward()}
-						onFilter={applyFilter}
-						onOpenFilter={() => (filterOpen = true)}
-						onDepth={setDepth}
-						onToggleHeat={toggleHeat}
-						onHeatPeriodChange={setHeatPeriod}
-						onToggleMutatie={toggleMutatie}
-					>
-						{#snippet canvasOverlay()}
-							<NetwerkPanel
-								entries={netwerkActive
-									? netwerkEntries.map((e) =>
-											e.node ? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) } : e
-										)
-									: []}
-								loading={netwerkLoading}
-								start={!focus && !netwerkActive}
-								{telefoon}
-								onPick={addIdToNetwerk}
-								omgeving={selectedNode && !selectedNode.stub
-									? bronNaam(selectedNode, $instrumentMetaStore)
-									: null}
-								onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
-								onVoorbeeld={() => {
-									keepCanvas = true;
-									setNetwerk(
-										withAdded(
-											withAdded(netwerk, 'articles/bwbr0005537_3_4'),
-											'articles/bwbr0005537_3_2'
-										)
-									);
-								}}
-								selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
-									? { label: bronNaam(selectedNode, $instrumentMetaStore) }
-									: null}
-								tussen={netwerk.tussen}
-								onGroepAan={(kind) => {
-									const uit = new Set(get(store.filters).hiddenGroups);
-									uit.delete(kind);
-									store.setFilters({ hiddenGroups: uit });
-								}}
-								{joiningCount}
-								deels={padenDeels}
-								onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
-								onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
-								onAdd={() => selectedNode && addToNetwerk(selectedNode)}
-								onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
-								onClearContext={() => store.clearContext()}
-								onClear={wisAlles}
-								deelLabel={shareCopier.label('share', 'Deel')}
-								deelMelding={shareCopier.announcement}
-								onDeel={handleShareView}
-							/>
-						{/snippet}
-					</GraphView>
+					{#if GraphViewC}
+						<GraphViewC
+							bind:this={graphView}
+							{store}
+							compact={!!selectedNode}
+							{filter}
+							{verbonden}
+							{depth}
+							{reach}
+							selectedEdgeId={card?.edgeId ?? null}
+							{inFluxMap}
+							{heatMap}
+							{overlay}
+							onNodeClick={(n) => {
+								handleNodeClick(n);
+								mobilePanel = 'reader';
+							}}
+							onNodeDoubleClick={handleNodeReplace}
+							onMetGroep={(m) => (metGroep = m)}
+							onToggleChosen={toggleChosen}
+							{netwerkActive}
+							onEdgeClick={openEdgeCard}
+							onClear={() => (card = null)}
+							onGoBack={goBack}
+							onGoForward={() => history.forward()}
+							onFilter={applyFilter}
+							onOpenFilter={() => (filterOpen = true)}
+							onDepth={setDepth}
+							onToggleHeat={toggleHeat}
+							onHeatPeriodChange={setHeatPeriod}
+							onToggleMutatie={toggleMutatie}
+						>
+							{#snippet canvasOverlay()}
+								<NetwerkPanel
+									entries={netwerkActive
+										? netwerkEntries.map((e) =>
+												e.node
+													? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) }
+													: e
+											)
+										: []}
+									loading={netwerkLoading}
+									start={!focus && !netwerkActive}
+									{telefoon}
+									onPick={addIdToNetwerk}
+									omgeving={selectedNode && !selectedNode.stub
+										? bronNaam(selectedNode, $instrumentMetaStore)
+										: null}
+									onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
+									onVoorbeeld={() => {
+										keepCanvas = true;
+										setNetwerk(
+											withAdded(
+												withAdded(netwerk, 'articles/bwbr0005537_3_4'),
+												'articles/bwbr0005537_3_2'
+											)
+										);
+									}}
+									selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
+										? { label: bronNaam(selectedNode, $instrumentMetaStore) }
+										: null}
+									tussen={netwerk.tussen}
+									onGroepAan={(kind) => {
+										const uit = new Set(get(store.filters).hiddenGroups);
+										uit.delete(kind);
+										store.setFilters({ hiddenGroups: uit });
+									}}
+									{joiningCount}
+									deels={padenDeels}
+									onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
+									onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
+									onAdd={() => selectedNode && addToNetwerk(selectedNode)}
+									onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
+									onClearContext={() => store.clearContext()}
+									onClear={wisAlles}
+									deelLabel={shareCopier.label('share', 'Deel')}
+									deelMelding={shareCopier.announcement}
+									onDeel={handleShareView}
+								/>
+							{/snippet}
+						</GraphViewC>
+					{/if}
 					{#if card}
 						<VerbindingCard
 							verbinding={card.verbinding}
@@ -1572,7 +1598,7 @@
 				class="explore-read"
 				class:explore-read--with-nav={withNav}
 				class:is-resizing={!!drag}
-				style:--nav-w="{navW}px"
+				style:--nav-w={navDragged ? `${navW}px` : undefined}
 				style:--panel-w={panelDragged ? `${panelW}px` : undefined}
 			>
 				<nav class="mobile-tabs" aria-label="Panelen">
@@ -1739,6 +1765,7 @@
 	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
 	.explore-graph,
 	.explore-read {
+		--nav-w-auto: 220px;
 		--graph-w-auto: 360px;
 		--panel-w-auto: clamp(340px, calc(100vw - 872px), 408px);
 		--panel: var(--panel-w, var(--panel-w-auto));
@@ -1754,6 +1781,13 @@
 		.explore-read {
 			--graph-w-auto: 328px;
 			--panel-w-auto: 432px;
+		}
+		/* One title column for every reader (Thijs, 10 Oct, "Voor Thijs" 4): the contents
+		   take the network's width less the difference in the reader's left margin (64 for
+		   the hanging numbers of the leden, 32 beside the network), so a title starts where
+		   it does beside the network (365 at 1440) and the article keeps 590 px. */
+		.explore-read {
+			--nav-w-auto: calc(var(--graph-w-auto) + var(--s-6) - 64px);
 		}
 	}
 	@media (min-width: 1600px) {
@@ -1792,7 +1826,7 @@
 	}
 
 	.explore-read--with-nav {
-		grid-template-columns: var(--nav-w) 5px minmax(0, 1fr) 5px var(--panel);
+		grid-template-columns: var(--nav-w, var(--nav-w-auto)) 5px minmax(0, 1fr) 5px var(--panel);
 	}
 
 	.col {
@@ -1879,11 +1913,12 @@
 	/* The measure of every reader, set by the column it stands in (ReaderFrame reads
 	   it). A toelichting opened under the text inherits the same measure, so opening
 	   it moves nothing. Lezen leaves room at the left for the numbers of the leden. */
-	/* Beside the network the text stands in the middle of its column: wider than the
-	   measure (Verbonden narrow, a wide screen), the space falls on both sides. */
+	/* At the column's left edge, not in its middle: one title column for every reader, with
+	   contents or beside the network (Thijs, 10 Oct); wider than the measure, the room
+	   falls to the right. */
 	.col--reader {
 		--reader-max: 700px;
-		--reader-col-left: auto;
+		--reader-col-left: 0;
 	}
 	.col--measure {
 		--reader-pad-top: 40px;
@@ -1896,7 +1931,7 @@
 	   past the width the contents would take, not in the middle of its wider column. */
 	@media (min-width: 769px) {
 		.explore-read:not(.explore-read--with-nav) .col--measure {
-			--reader-col-left: calc(var(--nav-w) + 5px);
+			--reader-col-left: calc(var(--nav-w, var(--nav-w-auto)) + 5px);
 		}
 	}
 

@@ -4,6 +4,7 @@
 // docs/hierarchie.md ("Kern of context"); a layer the data lacks is left out without a word.
 // Thijs, 9 Oct: "maak het consistent en klikbaar", and the conclusie and eerdere aanleg of an
 // arrest are "vrij cruciale info", not extra data.
+import { naamVan } from '$lib/bron/menselijk';
 import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getNodeFirst } from '$lib/api/records';
 import { getDossier } from '$lib/components/parliamentary/data';
@@ -98,7 +99,7 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 	if (n.collection === 'dossiers') {
 		// A dossier by its number and the name of its bill, "36496 Wet betaalbare huur"; its
 		// title runs to three lines.
-		const nummer = text(props.number) ?? n.key;
+		const nummer = text(props.number) ?? text(props.label) ?? naamVan('dossiers', n);
 		const titel = shortDossierTitle(vol.replace(/^Kamerstukdossier\s+[^:]+:\s*/, ''));
 		return { soort, naam: titel && titel !== nummer ? `${nummer} ${titel}` : nummer, ref, vol };
 	}

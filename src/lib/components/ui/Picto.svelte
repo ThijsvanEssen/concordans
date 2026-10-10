@@ -2,6 +2,7 @@
 	// Kleine beelden voor de verkenner, in inkt.
 	export type PictoNaam =
 		| 'netwerk'
+		| 'netwerk-o'
 		| 'netwerk-plus'
 		| 'bewaar'
 		| 'bewaard'
@@ -28,12 +29,13 @@
 	stroke-linejoin="round"
 	aria-hidden="true"
 >
-	{#if naam === 'netwerk'}
-		<!-- Drie bronnen en hun verbindingen, met de tekens van regel en uitspraak. -->
+	{#if naam === 'netwerk' || naam === 'netwerk-o'}
+		<!-- Drie bronnen en hun verbindingen, met de tekens van regel en uitspraak; open (-o)
+		     as a bookmark is open: not yet in the network. -->
 		<path d="M7 6.4 4.4 10.6M9 6.4l2.6 4.2M5.6 12.6h4.8" fill="none" stroke-width="1.2" />
-		<rect x="6.1" y="1.6" width="3.8" height="3.8" class="vol" />
-		<circle cx="3.4" cy="12.6" r="2" class="vol" />
-		<circle cx="12.6" cy="12.6" r="2" class="vol" />
+		<rect x="6.1" y="1.6" width="3.8" height="3.8" class:vol={naam === 'netwerk'} />
+		<circle cx="3.4" cy="12.6" r="2" class:vol={naam === 'netwerk'} />
+		<circle cx="12.6" cy="12.6" r="2" class:vol={naam === 'netwerk'} />
 	{:else if naam === 'netwerk-plus'}
 		<!-- The network, smaller, with a + at its foot: into the network. -->
 		<g transform="scale(0.72)">

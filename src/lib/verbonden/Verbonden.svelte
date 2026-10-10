@@ -148,7 +148,6 @@
 	$effect(() => {
 		void bronId;
 		expanded = new Set();
-		toon = null;
 	});
 
 	// The kern of the bron (Procesgang, Ingediend bij, Wet, Fractie) stands above its text in
@@ -312,8 +311,9 @@
 			: bronHref(row.ref, { at: row.at, keepMode: false, mode: 'graph' });
 
 	/** The row whose provenance a tap shows, on touch. */
-	let toon = $state<string | null>(null);
-	const aanraking = () => typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches;
+	/** `Herkend in de tekst` in the meta line: `herkend in de tekst`; `ECLI …` stays. */
+	const kleineLetter = (s: string) =>
+		/^[A-Z][a-z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s;
 
 	// The years of all the group's judgments where the API counts them (a wet, BE-47);
 	// else of the rows loaded, which the sentence then says.
@@ -558,22 +558,19 @@
 					{/if}
 					<ul class="rows">
 						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
-							{@const id = rowId(row)}
 							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
 							{@const hoe = hoeVan(row, selection.collection)}
 							{@const href = openHref(g, row)}
-							<li class="row" class:toont={toon === id}>
+							<li class="row">
 								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
-								     Netwerk, as its title does. On touch a tap beside the title shows where
-								     the verbinding comes from. -->
+								     Netwerk, as its title does. -->
 								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 								<div
 									class="row__main"
 									data-rij
 									onclick={(e) => {
 										if (onControl(e) || row.missing) return;
-										if (aanraking()) toon = toon === id ? null : id;
-										else goto(href, { noScroll: true });
+										goto(href, { noScroll: true });
 									}}
 								>
 									<KindGlyph
@@ -603,7 +600,9 @@
 											>
 										{/if}
 										<span class="row__meta">
-											{#each metaParts(row, !!hoe) as part, k (k)}
+											<!-- Where the verbinding comes from, in the line's own words (Thijs, 10 Oct:
+											     the box over the next row was "out of place"). -->
+											{#each [...metaParts(row, !!hoe), ...(hoe?.herkomst ? [{ kind: 'herkomst', text: metaParts(row, !!hoe).length ? kleineLetter(hoe.herkomst) : hoe.herkomst }] : [])] as part, k (k)}
 												{#if k > 0}<span class="row__sep">,</span>{/if}
 												<span class="row__part row__part--{part.kind}">{part.text}</span>
 											{/each}
@@ -614,9 +613,6 @@
 												>
 											{/if}
 										</span>
-										{#if hoe?.herkomst}
-											<span class="row__herkomst">{hoe.herkomst}</span>
-										{/if}
 									</span>
 									<RijActies
 										naam={row.title}
@@ -955,30 +951,6 @@
 	.row__citaat mark {
 		background: var(--wassing);
 		color: var(--ink);
-	}
-	/* Where the verbinding comes from: on hover and focus, on a phone after a tap (Thijs). */
-	.row__herkomst {
-		display: none;
-		position: absolute;
-		top: calc(100% - var(--s-1));
-		left: calc(var(--s-4) + 21px);
-		z-index: var(--z-float);
-		max-width: calc(100% - var(--s-4) * 2 - 21px);
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		box-shadow: var(--shadow-modal);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		line-height: 1.35;
-		color: var(--ink-2);
-		pointer-events: none;
-	}
-	.row__main:hover .row__herkomst,
-	.row__main:focus-within .row__herkomst,
-	.row.toont .row__herkomst {
-		display: block;
 	}
 	/* The counts of the line, a comma between them. */
 	.ook > span + span::before {

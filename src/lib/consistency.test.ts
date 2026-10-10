@@ -206,7 +206,7 @@ describe('one form for each thing', () => {
 	it('starts every reader at one title column where no network stands beside it', () => {
 		const verkenner = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
 		expect(verkenner).toMatch(
-			/\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{\s*--reader-col-left: calc\(var\(--nav-w\) \+ 5px\);/
+			/\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{\s*--reader-col-left: calc\(var\(--nav-w, var\(--nav-w-auto\)\) \+ 5px\);/
 		);
 	});
 
@@ -226,6 +226,22 @@ describe('one form for each thing', () => {
 					(r) => /\.(loading|leeg|empty|explore-empty)\b/.test(r.selector) && /italic/.test(r.body)
 				)
 			)
+		).toEqual([]);
+	});
+
+	it('names the page a subpage belongs to as a crumb: one link, as a reader’s band', () => {
+		const kruimels = sources.flatMap(({ path, text }) =>
+			[...text.matchAll(/<(\w+) class="stub-eyebrow"[^>]*>([\s\S]*?)<\/\1>/g)].map((m) => ({
+				path,
+				tag: m[1],
+				inhoud: m[2]
+			}))
+		);
+		expect(kruimels.length).toBeGreaterThan(0);
+		expect(
+			kruimels
+				.filter((k) => k.tag !== 'nav' || !/^<a href="[^"]+">[^<]+<\/a>$/.test(k.inhoud.trim()))
+				.map((k) => k.path)
 		).toEqual([]);
 	});
 
@@ -377,6 +393,19 @@ describe('one form for each thing', () => {
 				['lib/components/open/OpenRij.svelte']
 			)
 		).toEqual([]);
+	});
+
+	it('gives the actions of a row one look: two fixed places, a glyph without a frame', () => {
+		// Thijs, 10 Oct: "toch wat raar met de verschillen in hoe ze weergegeven worden".
+		const t = sources.find((s) => s.path === 'lib/components/ui/RijActies.svelte')!.text;
+		expect(t).not.toMatch(/IconKnop/);
+		expect(t.match(/<span class="plek">/g)).toHaveLength(2);
+		expect(rules(t).some((r) => /(?<![-\w])border:\s*(?!\s|0)/.test(r.body))).toBe(false);
+		// Where a verbinding comes from is words in the row's meta line, not a box over the
+		// next row ("Herkend in de tekst" was "out of place").
+		const verbonden = sources.find((s) => s.path === 'lib/verbonden/Verbonden.svelte')!.text;
+		expect(verbonden).not.toMatch(/row__herkomst/);
+		expect(verbonden).toMatch(/kind: 'herkomst'/);
 	});
 
 	it('draws a mark in a Keuze in the colour of its option', () => {
@@ -624,6 +653,101 @@ describe('canvas cards and halls', () => {
 		).toEqual([]);
 	});
 
+	it('gives the cards over the network the controls of the rest of the site', () => {
+		// A menu is TekstMenu, an action in a card is text (btn is-text, TekstLink), a filter a
+		// FilterOptie or a Keuze: no menu of their own (<details>), no filled button.
+		const kaarten = (path: string) => /^lib\/(components\/graph|netwerk)\//.test(path);
+		expect(
+			sources
+				.filter((s) => kaarten(s.path) && /<details\b|class="btn is-primary"/.test(s.text))
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+
+	it('lets a Tab reach the cards over the network before the canvas (keyboard audit)', () => {
+		const t = sources.find((s) => s.path === 'lib/components/graph/GraphView.svelte')!.text;
+		const opmaak = t.slice(t.indexOf('<div class="graph-view">'));
+		const plek = (c: string) => opmaak.indexOf(c);
+		expect(plek('class="canvas-overlay"')).toBeGreaterThan(-1);
+		expect(plek('class="canvas-overlay"')).toBeLessThan(plek('class="graph-canvas-wrap"'));
+		expect(plek('class="legenda"')).toBeLessThan(plek('<CanvasNodeList'));
+		expect(plek('<CanvasNodeList')).toBeLessThan(plek('class="graph-canvas-wrap"'));
+		// The list of bronnen is visible where it has the focus: the canvas takes its outline.
+		expect(t).toMatch(/\.buhne:has\(\.canvas-node-list :focus-visible\) \.graph-canvas-wrap/);
+	});
+
+	it('gives the contents the network’s width from 1440, so every reader title starts in one column', () => {
+		const t = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		expect(t).toMatch(/--nav-w-auto: calc\(var\(--graph-w-auto\) \+ var\(--s-6\) - 64px\);/);
+		expect(t).toMatch(/\.col--reader \{[^}]*--reader-col-left: 0;/);
+	});
+
+	it('puts the actions of a reader on a row of their own, and keeps the line of a late phrase', () => {
+		// Thijs, 10 Oct (approved suggestion 5): the status words have the column's width; a
+		// phrase that comes after the text (the bills of an article) stands on a line kept from
+		// the start, so it moves nothing (Sv 147: 22 px before, 0 at 375 and 1440 after).
+		const kop = sources.find(
+			(s) => s.path === 'lib/components/explore/readers/ReaderHead.svelte'
+		)!.text;
+		expect(kop).toMatch(/\.reader-status \{[^}]*flex-direction: column;/);
+		expect(kop).toMatch(/class="reader-status__later"/);
+		const artikel = sources.find(
+			(s) => s.path === 'lib/components/explore/readers/ArticleReader.svelte'
+		)!.text;
+		expect(artikel).toMatch(/\{#snippet later\(\)\}[\s\S]*?billCount/);
+		expect(artikel).toMatch(/\n\t*laterPlek\n/);
+	});
+
+	it('gives a page with a list a second skip link, through AppShell, and one main', () => {
+		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
+		expect(shell).toMatch(/class="skip-link">Naar de lijst<\/a>/);
+		for (const pad of [
+			'routes/(main)/actueel/+page.svelte',
+			'lib/components/explore/IndexView.svelte'
+		])
+			expect(sources.find((s) => s.path === pad)!.text).toMatch(/use:lijstDoel/);
+		// One main on a page: AppShell's.
+		const zonderUitleg = (t: string) =>
+			t.replace(/<!--[\s\S]*?-->/g, '').replace(/^\s*\/\/.*$/gm, '');
+		expect(
+			offenders((t) => /<main\b/.test(zonderUitleg(t)), ['lib/components/layout/AppShell.svelte'])
+		).toEqual([]);
+	});
+
+	it('keeps the canvas and the lists of Bronnen out of the Verkenner’s own chunk', () => {
+		// A reader's first request waits for the Verkenner's chunk: the canvas (GraphView with
+		// graphology) and IndexView come as chunks of their own (213 → 145 kB gz, 10 Oct).
+		const t = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		expect(t).not.toMatch(/^\s*import (GraphView|IndexView) from/m);
+		expect(t).toMatch(/import\('\$lib\/components\/graph\/GraphView\.svelte'\)/);
+		expect(t).toMatch(/import\('\$lib\/components\/explore\/IndexView\.svelte'\)/);
+	});
+
+	it('draws every card over the network with CanvasKaart: one frame, one width', () => {
+		// Thijs, 10 Oct: "Deze mogen even breed zijn en hetzelfde soort component zijn". The
+		// folded Netwerk took its content's width (`width: auto`).
+		const graph = sources.find((s) => s.path === 'lib/components/graph/GraphView.svelte')!.text;
+		const netwerk = sources.find((s) => s.path === 'lib/netwerk/NetwerkPanel.svelte')!.text;
+		expect(graph).toMatch(/<CanvasKaart[^>]*klasse="legenda"/);
+		expect(graph).toMatch(/<CanvasKaart[^>]*klasse="cluster-kaart"/);
+		expect(netwerk).toMatch(/<CanvasKaart[^>]*klasse="netwerk"/);
+		const eigenKader = (t: string) =>
+			rules(t).some(
+				(r) =>
+					/\.(netwerk|legenda|cluster-kaart)(?![-\w])/.test(r.selector) &&
+					!/netwerk--start/.test(r.selector) &&
+					/(?<![-\w])(border|background|box-shadow):|(?<![-\w])width:\s*(?!\s|auto)/.test(r.body)
+			);
+		expect(
+			[
+				['lib/components/graph/GraphView.svelte', graph],
+				['lib/netwerk/NetwerkPanel.svelte', netwerk]
+			]
+				.filter(([, t]) => eigenKader(t))
+				.map(([p]) => p)
+		).toEqual([]);
+	});
+
 	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
 		expect(
 			offenders(
@@ -640,5 +764,63 @@ describe('canvas cards and halls', () => {
 				.filter((s) => /margin:[^;]*\bauto\b|text-align:\s*center/.test(s.text))
 				.map((s) => s.path)
 		).toEqual([]);
+	});
+});
+
+describe('the keyboard', () => {
+	it('lets no focus pass without a mark: every outline taken away is named (audit 3)', () => {
+		// The ink ring stands on every focus (AppShell, :focus-visible). A rule that takes the
+		// outline away gives the focus another mark that is as plain, and says so here.
+		const eigen: Record<string, string> = {
+			'lib/search/Search.svelte input': 'its field carries the ring (.field:focus-within)',
+			'lib/components/graph/GraphView.svelte .graph-canvas-wrap:focus':
+				'a click on the canvas; :focus-visible has the ring',
+			'lib/components/ui/TekstMenu.svelte :global(.tekstmenu__item:hover:not(:disabled)), :global(.tekstmenu__item:focus-visible), :global(.tekstmenu__item:focus-within)':
+				'an item of an open menu: the wash of the row, as every menu',
+			'lib/components/explore/Hemicycle.svelte a': 'a seat of the hall: its sector in ink',
+			'lib/components/explore/readers/KamerZetels.svelte .doel': 'a seat: its stroke in ink',
+			'lib/onderwerpen/Kruiswoord.svelte .cel.vol:hover, .cel.vol:focus-visible':
+				'a cell of the grid: an inset line in ink',
+			"lib/components/layout/AppShell.svelte :global([tabindex='-1']:focus:not(:focus-visible))":
+				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring'
+		};
+		const zonder = sources.flatMap(({ path, text }) =>
+			rules(text)
+				.filter((r) => /outline:\s*(none|0)\b/.test(r.body))
+				.map((r) => `${path} ${r.selector.replace(/\s+/g, ' ')}`)
+		);
+		expect(zonder.filter((k) => !(k in eigen))).toEqual([]);
+	});
+});
+
+describe('names, not keys', () => {
+	it('falls back to the name of a bron, never to its key or id ($lib/bron/menselijk)', () => {
+		// "x ?? y.key" put "bwbr0005537_2022_05_01" and uuids on the screen. A name that may be
+		// missing falls back to menselijkeNaam (naamVan, naamVanId); a key or id used as a key
+		// (an href, a lookup, a version's id) is named here with what it is for.
+		const techniek: Record<string, string> = {
+			'lib/components/articles/VersionCompare.svelte': 'the id of a wording, not shown',
+			'lib/components/graph/GraphView.svelte': 'node ids for focus and hover',
+			'lib/components/explore/IndexView.svelte':
+				'the key of a concept for the URL; a fraction key for its colour',
+			'lib/components/explore/JudgmentToc.svelte': 'the ECLI asked of the API',
+			'lib/components/explore/readers/JudgmentReader.svelte': 'the ECLI asked of the API',
+			'lib/components/explore/WholeLawReader.svelte': 'the id of a version, not shown',
+			'lib/components/explore/readers/CommitmentReader.svelte': 'the number in a dossier ref',
+			'lib/components/actueel/wetsnetwerk.ts': 'the key of an href',
+			'lib/components/parliamentary/amendementen.ts': 'the ids of the zaken not done',
+			'lib/api/law-articles.ts': 'the address of an article, not its name',
+			'lib/text/version-diff.ts': 'the id of a version, not shown'
+		};
+		const fallback = /(\?\?|\|\|)\s*[A-Za-z_$][\w.?$]*\.(key|id)\b(?!\s*\.|\s*[!=]==|\s*\()/;
+		const zonder = sources
+			.filter(({ path }) => !path.endsWith('.test.ts') && !(path in techniek))
+			.flatMap(({ path, text }) =>
+				text
+					.split('\n')
+					.filter((l) => fallback.test(l))
+					.map((l) => `${path}: ${l.trim()}`)
+			);
+		expect(zonder).toEqual([]);
 	});
 });

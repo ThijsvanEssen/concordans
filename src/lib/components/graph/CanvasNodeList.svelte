@@ -96,7 +96,7 @@
 
 {#if nodes.length > 0}
 	<ul
-		class="sr-only nodes"
+		class="sr-only nodes canvas-node-list"
 		bind:this={list}
 		aria-label="Bronnen in het netwerk, {nodes.length}. Pijl omhoog en omlaag: volgende bron. Enter: openen.{onToggleChosen
 			? ' N: voeg toe aan of haal uit netwerk.'

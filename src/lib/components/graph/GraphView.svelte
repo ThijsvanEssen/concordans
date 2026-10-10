@@ -11,6 +11,7 @@
 	import GraphCanvas from './GraphCanvas.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import GraphCitePanel from './GraphCitePanel.svelte';
+	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder } from './canvas-keys';
 	import GraphSidebar from './GraphSidebar.svelte';
@@ -33,7 +34,6 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import Caret from '$lib/components/ui/Caret.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron, type Vorm } from '$lib/bron/vormen';
 	import {
@@ -708,7 +708,7 @@
 				const r = el.getBoundingClientRect();
 				return { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height };
 			};
-			const obstacles = [...canvasWrap.querySelectorAll(FLOATING)]
+			const obstacles = [...(buhne ?? canvasWrap).querySelectorAll(FLOATING)]
 				.map(boxOf)
 				.filter((b) => b.w > 0 && b.h > 0);
 			const place = placeCard(
@@ -1271,11 +1271,13 @@
 
 	// The panel floating over the canvas, measured so that hull labels keep clear of it.
 	let overlayHost = $state<HTMLDivElement | null>(null);
+	/** The canvas and the cards over it (see the markup). */
+	let buhne = $state<HTMLDivElement | null>(null);
 	// The legend under the panel Netwerk, as wide as it (Thijs, 10 Oct: "legenda en netwerk
 	// onder elkaar"): placed from the panel's measured box, and the two weighed against the
 	// height of the canvas. Both open while they fit; the one opened last stays, the other
 	// folds (zwevend.ts) and comes back once there is room.
-	let legendaEl = $state<HTMLDivElement | null>(null);
+	let legendaEl = $state<HTMLElement | null>(null);
 	let legendaPlek = $state<{ top: number; right: number; width: number; max: number }>({
 		top: 12,
 		right: 12,
@@ -1305,8 +1307,8 @@
 		const nwOpen = !!nw && !nw.classList.contains('netwerk--dicht');
 		const nwH = nw ? nw.scrollHeight : 0;
 		// The legend scrolls inside its content: its whole height is its head and that content.
-		const kop = legendaEl?.querySelector<HTMLElement>('.legenda-kop');
-		const inhoud = legendaEl?.querySelector<HTMLElement>('.legenda-inhoud');
+		const kop = legendaEl?.querySelector<HTMLElement>('.canvas-kaart__kop');
+		const inhoud = legendaEl?.querySelector<HTMLElement>('.canvas-kaart__inhoud');
 		const lgH = legendaEl ? (kop?.offsetHeight ?? 0) + (inhoud?.scrollHeight ?? 0) + 2 : 0;
 		if (nwOpen) hoogteOpen.netwerk = nwH;
 		if (legendaOpen) hoogteOpen.legenda = lgH;
@@ -1427,182 +1429,27 @@
 
 <div class="graph-view">
 	<div class="graph-main">
-		<!-- The bronnen on the canvas, for the keyboard: outside the canvas, so ← and →
-		     keep stepping through the history there. -->
-		<CanvasNodeList
-			nodes={listNodes}
-			isChosen={(id) => pinnedIds.has(id)}
-			onFocusNode={onKeyNode}
-			{onToggleChosen}
-			onOpenCluster={(n, opener) => openCluster(n.id, opener)}
-		/>
-		<!-- The canvas takes the focus so that ← and → act on it, and only then. -->
-		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-		<div
-			class="graph-canvas-wrap"
-			bind:this={canvasWrap}
-			role="application"
-			aria-label="Netwerk. Pijl links en rechts: vorige en volgende bron."
-			tabindex="0"
-			onpointerenter={() => (fitFollows = false)}
-			onpointerdown={() => canvasWrap?.focus({ preventScroll: true })}
-			onwheel={() => (fitFollows = false)}
-		>
-			<div class="zoom" role="group" aria-label="Zoomen">
-				<IconKnop label="Inzoomen" onclick={() => canvas?.zoom(1.5)}>+</IconKnop>
-				<IconKnop label="Uitzoomen" onclick={() => canvas?.zoom(1 / 1.5)}>−</IconKnop>
-				<IconKnop label="Alles in beeld" onclick={() => canvas?.fit()}>⤢</IconKnop>
-			</div>
+		<!-- The stage: the cards over the network first, so a Tab reaches Netwerk, Deel and
+		     the Legenda before the canvas and its zoom (keyboard audit, 10 Oct); they float
+		     over the canvas where they stood, outside it, so ← and → typed in them stay theirs. -->
+		<div class="buhne" bind:this={buhne}>
 			{#if canvasOverlay}
 				<div class="canvas-overlay" bind:this={overlayHost}>
 					{@render canvasOverlay()}
 				</div>
 			{/if}
-			<GraphCanvas
-				avoid={overlayRect}
-				graph={g}
-				focusedId={selection && !isContainerKind(selection.kind) ? selection.id : null}
-				{filters}
-				{hiddenKinds}
-				{pinnedIds}
-				{coreIds}
-				{containerGroups}
-				{focusContainerId}
-				{groupPeriod}
-				{yearPeriod}
-				rechter={filter.rechter}
-				{selectedEdgeId}
-				{inFluxMap}
-				{heatMap}
-				heatActive={overlay.kind === 'heat'}
-				heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
-				mutatieActive={overlay.kind === 'open' || overlay.kind === 'dossier'}
-				externalHoveredId={gemarkeerd?.id ?? hoverNode?.id ?? null}
-				onNodeClick={(id) => {
-					if (isClusterId(id)) return openCluster(id);
-					const n = lookup.get(id);
-					if (n) markeer(n);
-				}}
-				onNodeDoubleClick={(id) => {
-					// The second click: the bron opens. "Omgeving tonen" on its card draws its own
-					// neighbourhood, as a double click did before.
-					if (isClusterId(id)) return;
-					const n = lookup.get(id);
-					if (n) open(n);
-				}}
-				onEdgeClick={(id) => {
-					const e = store.getEdgeById(id);
-					if (e) onEdgeClick?.(e);
-				}}
-				onNodeHover={handleNodeHover}
-				onNodeLeave={handleNodeLeave}
-				onStageClick={() => {
-					ontmarkeer();
-					onClear?.();
-				}}
-				onReady={(api) => {
-					canvas = api;
-					canvas.refresh();
-					const camKey = compact ? 'compact' : 'full';
-					if (skipNextFit && _cam[camKey]) {
-						canvas.restoreCamera(_cam[camKey]!);
-						skipNextFit = false;
-					} else {
-						canvas.fit();
-					}
-				}}
-				onCameraChange={(state) => {
-					_cam[compact ? 'compact' : 'full'] = state;
-				}}
-			/>
-
-			{#if clusterCard}
-				{@const c = clusterCard.cluster}
-				<div
-					class="cluster-kaart"
-					role="dialog"
-					aria-label={clusterLabel(c)}
-					tabindex="-1"
-					style="left:{clusterCard.x}px; top:{clusterCard.y}px"
-					onkeydown={(e) => {
-						if (!isEscape(e)) return;
-						e.preventDefault();
-						clusterCard = null;
-						if (clusterOpener?.isConnected) clusterOpener.focus();
-					}}
-				>
-					<p class="cluster-naam">
-						<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
-					</p>
-					{#each clusterZinnen( c, c.ends ? null : groupOf(c), (c.ends ?? []).flatMap((e) => {
-							const n = lookup.get(e.id);
-							return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
-						}) ) as zin (zin)}
-						<p class="cluster-zin">{zin}</p>
-					{/each}
-					<div class="cluster-knoppen">
-						<button type="button" class="btn is-primary" onclick={() => showCluster(c)}
-							>Toon alle {formatCount(c.members.length)} in het netwerk</button
-						>
-						{#if !c.ends}
-							<button
-								type="button"
-								class="btn"
-								onclick={() => {
-									openGroup(c.collection);
-									clusterCard = null;
-								}}>Bekijk in Verbonden</button
-							>
-						{/if}
-					</div>
-				</div>
-			{/if}
-			{#if foldable.length > 0}
-				<div class="vouw">
-					{#each foldable as c (c.id)}
-						<button type="button" class="btn" onclick={() => foldCluster(c)}
-							><KindGlyph collection={c.collection} size={12} />{bronPlural(c.collection)} samenvouwen</button
-						>
-					{/each}
-				</div>
-			{/if}
-
-			<!-- On a phone, what the last action on the network did, with the way back: the
-			     place it was done from (Verbonden) is out of sight on the Netwerk tab. -->
-			{#if $netwerkMelding}
-				<p class="netwerk-melding" role="status">
-					{$netwerkMelding.tekst}
-					{#if $netwerkMelding.terug}
-						<button
-							type="button"
-							class="btn is-text"
-							onclick={() => {
-								$netwerkMelding?.terug?.();
-								netwerkMelding.set(null);
-							}}>Ongedaan maken</button
-						>
-					{/if}
-				</p>
-			{/if}
 			<!-- De legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
-			     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
+		     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
 			{#if canvasCounts.nodes > 0}
-				<div
-					class="legenda"
-					class:open={legendaOpen}
-					bind:this={legendaEl}
-					style:top="{legendaPlek.top}px"
-					style:right="{legendaPlek.right}px"
-					style:width="{legendaPlek.width}px"
-					style:max-height="{legendaPlek.max}px"
+				<CanvasKaart
+					klasse="legenda"
+					titel="Legenda"
+					open={legendaOpen}
+					onToggle={() => zetLegenda(!legendaOpen)}
+					bind:el={legendaEl}
+					stijl="top:{legendaPlek.top}px; right:{legendaPlek.right}px; max-height:{legendaPlek.max}px"
 				>
-					<button
-						type="button"
-						class="legenda-kop"
-						aria-expanded={legendaOpen}
-						onclick={() => zetLegenda(!legendaOpen)}
-					>
-						<span class="legenda-titel">Legenda</span>
+					{#snippet samenvatting()}
 						{#if !legendaOpen}
 							{#each VORM_VOLGORDE.filter((v) => (canvasCounts.vormen[v] ?? 0) > 0) as v (v)}
 								<span class="teken" title="{VORM_LABEL[v]}: {canvasCounts.vormen[v]}"
@@ -1610,36 +1457,189 @@
 								>
 							{/each}
 						{/if}
-						<Caret open={legendaOpen} />
-					</button>
-					{#if legendaOpen}
-						<div class="legenda-inhoud">{@render sidebar()}</div>
-					{/if}
-				</div>
+					{/snippet}
+					<div class="legenda-inhoud">{@render sidebar()}</div>
+				</CanvasKaart>
 			{/if}
-
-			{#if hoverNode && (!compact || keyNode || gemarkeerd)}
-				<GraphCitePanel
-					node={hoverNode}
-					isChosen={pinnedIds.has(hoverNode.id)}
-					at={keyNode ? null : hoverAt}
-					onOpen={() => {
-						ontmarkeer();
+			<!-- The bronnen on the canvas, for the keyboard: outside the canvas, so ← and →
+		     keep stepping through the history there. -->
+			<CanvasNodeList
+				nodes={listNodes}
+				isChosen={(id) => pinnedIds.has(id)}
+				onFocusNode={onKeyNode}
+				{onToggleChosen}
+				onOpenCluster={(n, opener) => openCluster(n.id, opener)}
+			/>
+			<!-- The canvas takes the focus so that ← and → act on it, and only then. -->
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<div
+				class="graph-canvas-wrap"
+				bind:this={canvasWrap}
+				role="application"
+				aria-label="Netwerk. Pijl links en rechts: vorige en volgende bron."
+				tabindex="0"
+				onpointerenter={() => (fitFollows = false)}
+				onpointerdown={() => canvasWrap?.focus({ preventScroll: true })}
+				onwheel={() => (fitFollows = false)}
+			>
+				<div class="zoom" role="group" aria-label="Zoomen">
+					<IconKnop label="Inzoomen" onclick={() => canvas?.zoom(1.5)}>+</IconKnop>
+					<IconKnop label="Uitzoomen" onclick={() => canvas?.zoom(1 / 1.5)}>−</IconKnop>
+					<IconKnop label="Alles in beeld" onclick={() => canvas?.fit()}>⤢</IconKnop>
+				</div>
+				<GraphCanvas
+					avoid={overlayRect}
+					graph={g}
+					focusedId={selection && !isContainerKind(selection.kind) ? selection.id : null}
+					{filters}
+					{hiddenKinds}
+					{pinnedIds}
+					{coreIds}
+					{containerGroups}
+					{focusContainerId}
+					{groupPeriod}
+					{yearPeriod}
+					rechter={filter.rechter}
+					{selectedEdgeId}
+					{inFluxMap}
+					{heatMap}
+					heatActive={overlay.kind === 'heat'}
+					heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
+					mutatieActive={overlay.kind === 'open' || overlay.kind === 'dossier'}
+					externalHoveredId={gemarkeerd?.id ?? hoverNode?.id ?? null}
+					onNodeClick={(id) => {
+						if (isClusterId(id)) return openCluster(id);
+						const n = lookup.get(id);
+						if (n) markeer(n);
 					}}
-					onLezen={open}
-					{onToggleChosen}
-					onOmgeving={onNodeDoubleClick
-						? (n) => {
-								ontmarkeer();
-								onNodeDoubleClick?.(n);
-							}
-						: undefined}
-					onMouseEnter={cancelHide}
-					onMouseLeave={() => {
-						if (!gemarkeerd) hoverNode = null;
+					onNodeDoubleClick={(id) => {
+						// The second click: the bron opens. "Omgeving tonen" on its card draws its own
+						// neighbourhood, as a double click did before.
+						if (isClusterId(id)) return;
+						const n = lookup.get(id);
+						if (n) open(n);
+					}}
+					onEdgeClick={(id) => {
+						const e = store.getEdgeById(id);
+						if (e) onEdgeClick?.(e);
+					}}
+					onNodeHover={handleNodeHover}
+					onNodeLeave={handleNodeLeave}
+					onStageClick={() => {
+						ontmarkeer();
+						onClear?.();
+					}}
+					onReady={(api) => {
+						canvas = api;
+						canvas.refresh();
+						const camKey = compact ? 'compact' : 'full';
+						if (skipNextFit && _cam[camKey]) {
+							canvas.restoreCamera(_cam[camKey]!);
+							skipNextFit = false;
+						} else {
+							canvas.fit();
+						}
+					}}
+					onCameraChange={(state) => {
+						_cam[compact ? 'compact' : 'full'] = state;
 					}}
 				/>
-			{/if}
+
+				{#if clusterCard}
+					{@const c = clusterCard.cluster}
+					<CanvasKaart
+						klasse="cluster-kaart"
+						titel={clusterLabel(c)}
+						role="dialog"
+						tabindex="-1"
+						stijl="left:{clusterCard.x}px; top:{clusterCard.y}px"
+						onkeydown={(e: KeyboardEvent) => {
+							if (!isEscape(e)) return;
+							e.preventDefault();
+							clusterCard = null;
+							if (clusterOpener?.isConnected) clusterOpener.focus();
+						}}
+					>
+						{#snippet kop()}
+							<p class="cluster-naam">
+								<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
+							</p>
+						{/snippet}
+						{#each clusterZinnen( c, c.ends ? null : groupOf(c), (c.ends ?? []).flatMap((e) => {
+								const n = lookup.get(e.id);
+								return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
+							}) ) as zin (zin)}
+							<p class="cluster-zin">{zin}</p>
+						{/each}
+						<div class="cluster-knoppen">
+							<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
+							<button type="button" class="btn is-text" onclick={() => showCluster(c)}
+								>Toon alle {formatCount(c.members.length)} in het netwerk</button
+							>
+							{#if !c.ends}
+								<button
+									type="button"
+									class="btn is-text"
+									onclick={() => {
+										openGroup(c.collection);
+										clusterCard = null;
+									}}>Bekijk in Verbonden</button
+								>
+							{/if}
+						</div>
+					</CanvasKaart>
+				{/if}
+				{#if foldable.length > 0}
+					<div class="vouw">
+						{#each foldable as c (c.id)}
+							<button type="button" class="btn" onclick={() => foldCluster(c)}
+								><KindGlyph collection={c.collection} size={12} />{bronPlural(c.collection)} samenvouwen</button
+							>
+						{/each}
+					</div>
+				{/if}
+
+				<!-- On a phone, what the last action on the network did, with the way back: the
+			     place it was done from (Verbonden) is out of sight on the Netwerk tab. -->
+				{#if $netwerkMelding}
+					<p class="netwerk-melding" role="status">
+						{$netwerkMelding.tekst}
+						{#if $netwerkMelding.terug}
+							<button
+								type="button"
+								class="btn is-text"
+								onclick={() => {
+									$netwerkMelding?.terug?.();
+									netwerkMelding.set(null);
+								}}>Ongedaan maken</button
+							>
+						{/if}
+					</p>
+				{/if}
+
+				{#if hoverNode && (!compact || keyNode || gemarkeerd)}
+					<GraphCitePanel
+						node={hoverNode}
+						isChosen={pinnedIds.has(hoverNode.id)}
+						at={keyNode ? null : hoverAt}
+						onOpen={() => {
+							ontmarkeer();
+						}}
+						onLezen={open}
+						{onToggleChosen}
+						onOmgeving={onNodeDoubleClick
+							? (n) => {
+									ontmarkeer();
+									onNodeDoubleClick?.(n);
+								}
+							: undefined}
+						onMouseEnter={cancelHide}
+						onMouseLeave={() => {
+							if (!gemarkeerd) hoverNode = null;
+						}}
+					/>
+				{/if}
+			</div>
 		</div>
 	</div>
 </div>
@@ -1663,10 +1663,23 @@
 		overflow: hidden;
 	}
 
+	.buhne {
+		flex: 1;
+		min-height: 0;
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
 	.graph-canvas-wrap {
 		flex: 1;
 		position: relative;
 		overflow: hidden;
+	}
+	/* The list of bronnen holds the focus for the keyboard: the canvas shows it. */
+	:global(.buhne:has(.canvas-node-list :focus-visible) .graph-canvas-wrap) {
+		outline: 2px solid var(--focus);
+		outline-offset: -2px;
 	}
 
 	.graph-canvas-wrap:focus {
@@ -1698,17 +1711,6 @@
 		pointer-events: auto;
 	}
 
-	/* A cluster bron's card: beside it, as an opened row (RowOpen) in its buttons. */
-	.cluster-kaart {
-		position: absolute;
-		z-index: var(--z-float);
-		width: var(--paneel-breed);
-		padding: var(--s-3);
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-pop);
-	}
 	.cluster-naam {
 		display: flex;
 		align-items: center;
@@ -1730,6 +1732,9 @@
 		gap: var(--s-2);
 	}
 	.cluster-knoppen {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-3);
 		margin-top: var(--s-3);
 	}
 	.vouw {
@@ -1741,42 +1746,6 @@
 		white-space: nowrap;
 	}
 
-	/* Under the panel Netwerk, as wide as it; where there is no panel, at the top right. */
-	.legenda {
-		position: absolute;
-		right: var(--paneel-rand);
-		width: var(--paneel-breed);
-		max-width: calc(100% - 2 * var(--paneel-rand));
-		z-index: var(--z-float);
-		display: flex;
-		flex-direction: column;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-pop);
-	}
-	.legenda-kop {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-2) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.legenda-kop:hover {
-		color: var(--ink);
-	}
-	.legenda-titel {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
-		margin-right: var(--s-1);
-	}
 	.teken {
 		display: inline-flex;
 		color: var(--ink);
@@ -1805,6 +1774,14 @@
 		padding-top: var(--s-3);
 	}
 
+	/* On a phone the full width, as the Netwerk card above it: one width, one right edge. */
+	@media (max-width: 767px) {
+		:global(.canvas-kaart.legenda) {
+			left: var(--paneel-rand);
+			width: auto;
+			max-width: none;
+		}
+	}
 	.netwerk-melding {
 		display: none;
 	}
@@ -1830,7 +1807,7 @@
 		}
 		/* Narrow: the Netwerk panel takes the top; the legend stays at the bottom left and
 		   leaves room for it. */
-		.legenda {
+		:global(.canvas-kaart.legenda) {
 			max-height: calc(100% - 12rem);
 		}
 		.legenda-inhoud :global(.legend) {

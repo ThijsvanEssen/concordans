@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lijstSprong } from '$lib/stores/sprong';
 	import type { Snippet } from 'svelte';
 	import TopBar from './TopBar.svelte';
 	import SearchOverlay from './SearchOverlay.svelte';
@@ -39,6 +40,7 @@
 
 <div class="app-shell">
 	<a href="#main-content" class="skip-link">Naar inhoud</a>
+	{#if $lijstSprong}<a href="#{$lijstSprong}" class="skip-link">Naar de lijst</a>{/if}
 	<TopBar onSearchOpen={() => openSearch()} />
 	<main id="main-content" tabindex="-1" class="app-shell__content">
 		{@render children?.()}
@@ -373,12 +375,24 @@
 	/* The parts of a text page (/over, /bronnen, /privacy, /voorwaarden, /docs and its pages):
 	   the line over the title, the title, the lede, a section with its heading, a citation,
 	   and the line of links or the date at its foot. */
+	/* The page a subpage belongs to, as a reader's band names its place (ReaderFrame
+	   .kop-rij): one line over the title, its rule under it, the parent a link in ink
+	   (Thijs, 10 Oct: "als kruimel, zoals de band van een lezer"). */
 	:global(.blad--tekst .stub-eyebrow) {
-		margin-bottom: var(--s-4);
+		margin: 0 0 var(--s-4);
+		padding-bottom: var(--s-2);
+		border-bottom: 1px solid var(--rule);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 600;
 		color: var(--ink-3);
+	}
+	:global(.blad--tekst .stub-eyebrow a) {
+		color: var(--ink);
+		text-decoration: none;
+	}
+	:global(.blad--tekst .stub-eyebrow a:hover) {
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 	:global(.blad--tekst .stub-lede) {
 		margin-bottom: var(--s-7);
@@ -618,6 +632,10 @@
 	}
 	.skip-link:focus {
 		top: 0;
+	}
+	/* Where a list is jumped to, it shows the focus as any target would: no ring of its own. */
+	:global([tabindex='-1']:focus:not(:focus-visible)) {
+		outline: none;
 	}
 
 	/* ─── Shell ──────────────────────────────────────────────────────────────── */

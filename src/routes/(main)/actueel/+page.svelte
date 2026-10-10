@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { lijstDoel } from '$lib/stores/sprong';
+	import { naamVan } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -361,7 +363,7 @@
 			.then(
 				(f) =>
 					(factionNames = Object.fromEntries(
-						f.map((x) => [x.key, x.abbreviation ?? x.name ?? x.key])
+						f.map((x) => [x.key, x.abbreviation ?? x.name ?? naamVan('factions', x)])
 					))
 			)
 			.catch(() => {});
@@ -578,7 +580,8 @@
 		</div>
 	</aside>
 
-	<main class="feed" aria-busy={loading}>
+	<!-- A div: the page has one main, AppShell's. -->
+	<div class="feed" aria-busy={loading} use:lijstDoel>
 		<div class="head">
 			{#if total !== null}
 				<p class="count">
@@ -637,7 +640,7 @@
 				</p>
 			{/if}
 		{/if}
-	</main>
+	</div>
 </div>
 
 <style>

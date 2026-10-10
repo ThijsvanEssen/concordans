@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVanId } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import { onderdeelMark } from '$lib/text/article-parts';
@@ -528,7 +529,7 @@
 
 			{@const address = a.address}
 			{@const detail = address && !peildatum ? detailByNumber.get(address) : undefined}
-			{@const name = articleName(bwbId, a.article_number, a.label) ?? a.id}
+			{@const name = articleName(bwbId, a.article_number, a.label) ?? naamVanId(a.id)}
 			<section
 				class="whole-article"
 				id="article-{address}"

@@ -1,4 +1,5 @@
 import { judgmentCite } from '$lib/text/judgment-cite';
+import { menselijkeNaam } from '$lib/bron/menselijk';
 // How a search result reads: a title that tells it from its neighbours, the context a
 // lawyer checks it by, and where the API gives one, a line of the text with the words
 // searched for marked. Stukken of one dossier stand under that dossier.
@@ -34,6 +35,15 @@ export function chamberOfHit(hit: Hit): Chamber | undefined {
 /** The heading of a group of hits. Leden: a group holds members of both Kamers and bewindspersonen. */
 export const groupLabel = (kind: Collection): string =>
 	kind === 'members' ? 'Leden' : bronPlural(kind);
+
+/** The hit's name, never its key ($lib/bron/menselijk). */
+const naamVan = (hit: Hit): string =>
+	menselijkeNaam({
+		collection: hit.collection,
+		key: hit.key,
+		display_name: hit.display_name,
+		props: (hit.extra ?? {}) as Record<string, unknown>
+	});
 
 const extra = (hit: Hit, name: string): string => {
 	const value = hit.extra?.[name];
@@ -154,7 +164,7 @@ export function presentHit(hit: Hit, query: string): Presented {
 				current_phase: typeof current_phase === 'string' ? current_phase : null
 			});
 			const kort = citeertitel(hit);
-			const lang = hit.display_name ?? hit.key;
+			const lang = naamVan(hit);
 			return {
 				title: kort ?? lang,
 				context: [extra(hit, 'number'), status].filter(Boolean).join(', '),
@@ -166,7 +176,7 @@ export function presentHit(hit: Hit, query: string): Presented {
 			// The name of a Kamerstuk is its dossier's title, the heading it stands under; its
 			// kind and number tell stukken apart. A stuk outside a dossier (a stenogram) has
 			// its own name: `Stikstof en natuur`, with its kind beside it.
-			const kind = extra(hit, 'kind') || (hit.display_name ?? hit.key);
+			const kind = extra(hit, 'kind') || naamVan(hit);
 			const chamber = chamberOfHit(hit);
 			// The day it was published (BE-1): stukken of one kind differ by it.
 			const date = korteDatum(extra(hit, 'date'));
@@ -188,15 +198,15 @@ export function presentHit(hit: Hit, query: string): Presented {
 			};
 		}
 		case 'instruments':
-			return { title: hit.display_name ?? hit.key, context: extra(hit, 'bwb_id'), snippet: null };
+			return { title: naamVan(hit), context: extra(hit, 'bwb_id'), snippet: null };
 		case 'members':
-			return { title: hit.display_name ?? hit.key, context: extra(hit, 'party'), snippet: null };
+			return { title: naamVan(hit), context: extra(hit, 'party'), snippet: null };
 		case 'commitments': {
 			// A toezegging by its text, with its number and the day it was made: "TZ202609-117,
 			// 29 sep. 2026", and its status where it is not open.
 			const status = extra(hit, 'status');
 			return {
-				title: hit.display_name ?? hit.key,
+				title: naamVan(hit),
 				context: [
 					extra(hit, 'number'),
 					korteDatum(extra(hit, 'made_on')),
@@ -210,7 +220,7 @@ export function presentHit(hit: Hit, query: string): Presented {
 		case 'decisions': {
 			// A vote by what it was about, with its outcome and day as the source has them:
 			// "Wet toekomstbestendige huurcommissie (36.791)", "aangenomen, 29 sep. 2026".
-			const name = hit.display_name ?? hit.key;
+			const name = naamVan(hit);
 			const subject = extra(hit, 'subject') || name.replace(/^[^:]*\d{4}-\d{2}-\d{2}:\s*/, '');
 			const passed = hit.extra?.passed;
 			return {
@@ -230,13 +240,13 @@ export function presentHit(hit: Hit, query: string): Presented {
 			const from = korteDatum(extra(hit, 'from_date'));
 			const to = korteDatum(extra(hit, 'to_date'));
 			return {
-				title: hit.display_name ?? hit.key,
+				title: naamVan(hit),
 				context: from ? (to ? `${from} tot ${to}` : `sinds ${from}`) : '',
 				snippet: null
 			};
 		}
 	}
-	return { title: hit.display_name ?? hit.key, context: '', snippet: null };
+	return { title: naamVan(hit), context: '', snippet: null };
 }
 
 /** The dossier a stuk belongs to, as its heading reads: `32621 Wet nadeelcompensatie …`. */

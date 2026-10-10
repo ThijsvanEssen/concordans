@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import { getDocument } from '$lib/api/records';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -265,7 +266,7 @@
 				dossier_suffix: tekstVan(lichtProps.dossier_suffix),
 				number: doc.number
 			})}
-			{@const naam = cite ?? doc.title ?? doc.key}
+			{@const naam = cite ?? doc.title ?? naamVan('documents', doc)}
 			<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
 			     a case of the kind Motie, which "Motie, 7 sep. 2026, Motie" said twice. -->
 			{@const caseKinds = (doc.case_kinds ?? []).filter(
@@ -273,7 +274,7 @@
 			)}
 			<ReaderHead
 				collection="documents"
-				title={doc.title ?? doc.key}
+				title={doc.title ?? naamVan('documents', doc)}
 				acties={{
 					bewaar: {
 						id: `documents/${doc.key}`,

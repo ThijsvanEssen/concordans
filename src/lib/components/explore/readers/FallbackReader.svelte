@@ -6,11 +6,38 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate, textProp } from './_shared';
+	import { menselijkeNaam } from '$lib/bron/menselijk';
+	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 
 	let { node }: { node: GraphNode } = $props();
 
 	const p = $derived(node.raw?.props ?? {});
-	const title = $derived(textProp(p.title) ?? node.raw?.display_name ?? node.label);
+	// A version of a law is named by its law, asked by its BWB id (the cached head of the law).
+	const bwb = $derived(textProp(p.bwb_id));
+	let wet = $state<{ bwb: string; naam: string | null } | null>(null);
+	$effect(() => {
+		const b = bwb;
+		if (!b || p.citation_title || p.instrument_citation_title) return;
+		let stale = false;
+		getInstrumentDetail(b)
+			.then((d) => {
+				if (!stale) wet = { bwb: b, naam: d.citation_title ?? d.display_name ?? d.title ?? null };
+			})
+			.catch(() => {});
+		return () => (stale = true);
+	});
+	// Never the key ($lib/bron/menselijk): "Algemene wet bestuursrecht, versie van 1 mei 2022".
+	const title = $derived(
+		menselijkeNaam(
+			{
+				collection: node.collection,
+				key: node.key,
+				display_name: textProp(p.title) ?? node.raw?.display_name,
+				props: p
+			},
+			(b) => (wet?.bwb === b ? wet.naam : null)
+		)
+	);
 	const facts = $derived(
 		[
 			textProp(p.kind),

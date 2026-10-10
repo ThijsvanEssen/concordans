@@ -6,7 +6,7 @@
 
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
-		<div class="stub-eyebrow"><a href="/docs">Documentatie</a>, Sneltoetsen</div>
+		<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/docs">Documentatie</a></nav>
 		<header class="blad__kop"><h1 class="blad__titel">Sneltoetsen</h1></header>
 		<div class="shortcut-table">
 			<div class="shortcut-row">
@@ -78,17 +78,6 @@
 </div>
 
 <style>
-	.stub-eyebrow a {
-		color: inherit;
-		text-decoration: none;
-		border-bottom: none;
-	}
-
-	.stub-eyebrow a:hover {
-		color: var(--ink);
-		border-bottom: none;
-	}
-
 	.shortcut-table {
 		border: 1px solid var(--rule);
 		border-radius: var(--r-2);

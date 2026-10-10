@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { lijstDoel } from '$lib/stores/sprong';
+	import { naamVan } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { formatDecimal } from '$lib/text/getal';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
@@ -452,9 +454,9 @@
 		const fracties = [...seats.factions]
 			.filter((f) => f.coalition === true)
 			.sort((a, b) => b.seats - a.seats)
-			.map((f) => f.abbreviation ?? f.name ?? f.key ?? '');
+			.map((f) => f.abbreviation ?? f.name ?? naamVan('factions', f));
 		return {
-			naam: kabinet.name ?? kabinet.key,
+			naam: kabinet.name ?? naamVan('cabinets', kabinet),
 			href: bronHref(`cabinets/${kabinet.key}`, { keepMode: false, mode: 'read' }),
 			fracties
 		};
@@ -545,9 +547,11 @@
 					if (offset) return;
 					// The count beside Verdragen: this list's own total where it is the treaties,
 					// else one row asked under the same filters.
+					// Beside the rows, not before them: the rows stood waiting for it (live, 10 Oct:
+					// rows in at 1.7 s, on screen at 4.1 s).
 					if (instrumentSoort) verdragTotaal = r.total;
 					else
-						verdragTotaal = await unwrap(
+						void unwrap(
 							api.GET('/api/instruments', {
 								params: {
 									query: { ...query, kind: 'verdrag', limit: 1, offset: 0, facets: false }
@@ -555,8 +559,10 @@
 								signal
 							})
 						)
-							.then((v) => v.total)
-							.catch(() => null);
+							.then((v) => {
+								if (!signal.aborted) verdragTotaal = v.total;
+							})
+							.catch(() => {});
 				};
 			}
 			case 'judgments': {
@@ -873,7 +879,7 @@
 		loadMoreFailed = false;
 		load(0, ac.signal)
 			.catch(() => {
-				if (!ac.signal.aborted) error = `${labelOf(category)} konden niet worden geladen.`;
+				if (!ac.signal.aborted) error = `De ${labelOf(category)} konden niet worden geladen.`;
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
@@ -2327,6 +2333,7 @@
 				</aside>
 				<div
 					class="results"
+					use:lijstDoel
 					use:rijen={'a.row-title'}
 					aria-busy={loading}
 					style:--row-lead="{columns.leadW}px"
@@ -2569,7 +2576,10 @@
 											{@const bron = `instruments/${w.key}`}
 											<IndexRow
 												{bron}
-												title={w.citation_title ?? w.short_title ?? w.title ?? w.key}
+												title={w.citation_title ??
+													w.short_title ??
+													w.title ??
+													naamVan('instruments', w)}
 												href={hrefOf(bron)}
 												acties
 											>
@@ -2719,7 +2729,12 @@
 													<span>Zonder lopende dossiers</span>
 												</li>
 											{/if}
-											<IndexRow {bron} title={c.name ?? c.key} href={hrefOf(bron)} acties>
+											<IndexRow
+												{bron}
+												title={c.name ?? naamVan('committees', c)}
+												href={hrefOf(bron)}
+												acties
+											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={c.abbreviation} /></span>
 												{/snippet}
@@ -2750,7 +2765,12 @@
 									<ul class="list">
 										{#each membersShown as m (m.id)}
 											{@const bron = `members/${m.key}`}
-											<IndexRow {bron} title={m.name ?? m.key} href={hrefOf(bron)} acties>
+											<IndexRow
+												{bron}
+												title={m.name ?? naamVan('members', m)}
+												href={hrefOf(bron)}
+												acties
+											>
 												{#snippet lead()}
 													<!-- An Eerste Kamer member's fractie is the one it sits in there. -->
 													{@const ek = kamer === 'EK' ? m.ek : null}
@@ -2781,7 +2801,12 @@
 									<ul class="list">
 										{#each factionsShown as f (f.id)}
 											{@const bron = `factions/${f.key}`}
-											<IndexRow {bron} title={f.name ?? f.key} href={hrefOf(bron)} acties>
+											<IndexRow
+												{bron}
+												title={f.name ?? naamVan('factions', f)}
+												href={hrefOf(bron)}
+												acties
+											>
 												{#snippet lead()}
 													<span class="row-id-main row-id-main--inline">
 														<span
@@ -2988,7 +3013,7 @@
 											{@const label = kamerstukLabel(doc)}
 											<IndexRow
 												{bron}
-												title={doc.title ?? doc.kind ?? doc.key}
+												title={doc.title ?? doc.kind ?? naamVan('documents', doc)}
 												href={hrefOf(bron)}
 												acties
 											>

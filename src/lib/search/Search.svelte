@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
 	import { heeftParameter } from '$lib/api/heeft';
@@ -659,7 +660,9 @@
 						}}
 						onpointermove={(e) => onpointermove(e, i)}
 					>
-						<span class="row-title">{keuze.label ?? keuze.ref.key}</span>
+						<span class="row-title"
+							>{keuze.label ?? naamVanId(`${keuze.ref.collection}/${keuze.ref.key}`)}</span
+						>
 						{#if active === i}<span class="kbd" aria-hidden="true">↵</span>{/if}
 					</a>
 				{/each}
@@ -846,8 +849,14 @@
 		color: var(--ink-3);
 		flex-shrink: 0;
 	}
+	/* The field carries the ink ring of its input (the input itself has none); in the
+	   dialog the field is its one stop and the caret says enough. */
 	.field:focus-within {
 		border-color: var(--ink-3);
+	}
+	.search:not(.search--overlay) .field:focus-within {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
 	}
 	.search--overlay .field {
 		border: 0;
