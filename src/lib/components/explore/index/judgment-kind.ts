@@ -1,4 +1,5 @@
 // A judgment in a list: its name, its case number and its court, from its display name.
+import { keyEcli } from '$lib/bron/leesbaar';
 
 /** "Raad van State 2026-09-23 / 202406462/1/R2" in its parts: the court in full, the case number. */
 function parts(displayName: string | null | undefined) {
@@ -18,7 +19,9 @@ export function judgmentRowTitle(j: {
 	key: string;
 }): string {
 	if (j.names?.length) return j.names.join(', ');
-	return j.ecli ?? parts(j.display_name).caseNumber ?? j.display_name ?? j.key;
+	return (
+		j.ecli ?? parts(j.display_name).caseNumber ?? j.display_name ?? keyEcli(j.key) ?? 'Uitspraak'
+	);
 }
 
 /** The case number of a judgment, from its display name; null where it has none. */

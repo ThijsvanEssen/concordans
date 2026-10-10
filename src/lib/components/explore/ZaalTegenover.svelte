@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	// De vergaderzaal van de Eerste Kamer. Twee blokken
 	// banken tegenover elkaar, elk vier plaatsen breed en tien rijen diep; de regering aan de
 	// kop, de Voorzitter aan het andere eind. Wie waar zit geeft de API in `hall` (0.73, BE-4),
@@ -46,7 +47,7 @@
 	const DY = (H - (ONDER - BOVEN) * K) / 2 - BOVEN * K;
 
 	const byName = $derived(
-		new Map(data.factions.map((f) => [f.abbreviation ?? f.name ?? f.key ?? '', f]))
+		new Map(data.factions.map((f) => [f.abbreviation ?? f.name ?? naamVan('factions', f), f]))
 	);
 	// Een fractie zonder kleur in de gegevens krijgt een grijstint, en haar naam in de legenda.
 	const GREYS = ['#b7b1a5', '#a39d90', '#8f897c', '#cbc5b9', '#7d776b', '#d8d3c8'];
@@ -54,7 +55,7 @@
 		const m = new Map<string, string>();
 		let g = 0;
 		for (const f of data.factions) {
-			const name = f.abbreviation ?? f.name ?? f.key ?? '';
+			const name = f.abbreviation ?? f.name ?? naamVan('factions', f);
 			m.set(name, f.color ?? GREYS[g++ % GREYS.length]);
 		}
 		return m;

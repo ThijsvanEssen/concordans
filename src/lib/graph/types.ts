@@ -1,5 +1,6 @@
 import { eersteIndiener } from '$lib/bron/submitters';
 import type { Schema } from '$lib/api/types';
+import { menselijkeNaam } from '$lib/bron/menselijk';
 import { articleName } from '$lib/text/bw';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { maandJaar } from '$lib/text/datum';
@@ -286,17 +287,25 @@ function leadSignatory(actors: unknown): { name: string; faction: string | null 
 
 export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 	const props = node.props ?? {};
+	// Where the data gives no name, the reader's name of the bron, never its key ($lib/bron/menselijk).
+	const mens = () =>
+		menselijkeNaam({
+			collection: node.collection,
+			key: node.key,
+			display_name: node.display_name,
+			props
+		});
 	switch (kind) {
 		case 'dossier': {
-			const number = text(props.label) ?? node.key;
+			const number = text(props.label) ?? text(props.number) ?? mens();
 			const title = shortDossierTitle(text(props.title));
 			return title ? `${number}, ${title}` : number;
 		}
 		case 'committee':
 		case 'faction':
-			return text(props.abbreviation) ?? text(props.name) ?? node.display_name ?? node.key;
+			return text(props.abbreviation) ?? text(props.name) ?? mens();
 		case 'member': {
-			const name = text(props.name) ?? node.display_name ?? node.key;
+			const name = text(props.name) ?? mens();
 			const party = text(props.party);
 			return party ? `${name} (${party})` : name;
 		}
@@ -304,7 +313,7 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 			// "Art. 6:162"; an article of a bijlage by its label, an article without a number by
 			// its heading: "Algemene bepaling".
 			const name = articleName(text(props.bwb_id), text(props.article_number), text(props.label));
-			return name?.replace(/^Artikel /, 'Art. ') ?? node.display_name ?? node.key;
+			return name?.replace(/^Artikel /, 'Art. ') ?? mens();
 		}
 		case 'document': {
 			const label = stukLabel(props);
@@ -313,7 +322,8 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 		}
 		case 'activity': {
 			const documentKind = text(props.kind);
-			if (!documentKind) break;
+			// An activity of the Eerste Kamer has no kind: its agenda title and day.
+			if (!documentKind) return mens();
 			const firstWord = documentKind.split(/[\s(]/)[0];
 			const lead = /amendement|motie/i.test(documentKind) ? leadSignatory(props.actors) : null;
 			if (lead) {
@@ -327,10 +337,10 @@ export function buildNodeLabel(node: BaseNode, kind: GraphNodeKind): string {
 		}
 		case 'judgment': {
 			const ecli = text(props.ecli) ?? node.display_name;
-			return ecli ? formatEcliLabel(ecli) : node.key;
+			return ecli ? formatEcliLabel(ecli) : mens();
 		}
 	}
-	return node.display_name ?? node.key;
+	return mens();
 }
 
 function buildGraphNode(node: BaseNode, collection: Collection): GraphNode {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import { korteDatum, maandJaar } from '$lib/text/datum';
 	import PostOpen from '$lib/components/open/PostOpen.svelte';
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
@@ -132,7 +133,7 @@
 		};
 	}
 
-	const nameOf = (p: SeatPost) => p.member.name ?? p.member.key;
+	const nameOf = (p: SeatPost) => p.member.name ?? naamVan('members', p.member);
 	const label = (p: SeatPost) =>
 		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodOf(p.from_date, p.to_date, day)}${p.acting ? ', waarnemend' : ''}`;
 </script>

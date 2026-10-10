@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan as bronNaamVan } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import { seatCount } from '$lib/verbonden/filter';
@@ -163,7 +164,7 @@
 
 	let hovered = $state<SeatFaction | null>(null);
 	const uid = $props.id();
-	const naamVan = (f: SeatFaction) => f.abbreviation ?? f.name ?? f.key ?? '';
+	const naamVan = (f: SeatFaction) => f.abbreviation ?? f.name ?? bronNaamVan('factions', f);
 </script>
 
 <figure class="hemicycle" class:kaal={meubels} aria-label="Zetelverdeling {kamer}">
@@ -175,7 +176,7 @@
 			<!-- A fractie is a bron: its sector is a link, as its name is everywhere else. -->
 			<a
 				href={sec.faction.key ? hrefOf(sec.faction.key) : undefined}
-				aria-label={`${sec.faction.abbreviation ?? sec.faction.key}, ${sec.faction.name ?? ''}, ${seatCount(sec.faction.seats)}`}
+				aria-label={`${naamVan(sec.faction)}, ${sec.faction.name ?? ''}, ${seatCount(sec.faction.seats)}`}
 				data-sveltekit-noscroll
 				onmouseenter={() => (hovered = sec.faction)}
 				onmouseleave={() => (hovered = null)}
@@ -220,7 +221,7 @@
 					class="center-num center-num--party"
 					style:fill={hovered.color}
 				>
-					{hovered.abbreviation ?? hovered.key}
+					{naamVan(hovered)}
 				</text>
 				<text x={CX} y={MID + 10} text-anchor="middle" class="center-lbl">
 					{hovered.seats}

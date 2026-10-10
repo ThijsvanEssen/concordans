@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
@@ -172,7 +173,8 @@
 													: ', '
 												: ''}<a
 												href={bronHref({ collection: 'instruments', key: w.key })}
-												title={w.name ?? w.key}>{w.name ?? w.short ?? w.key}</a
+												title={w.name ?? naamVan('instruments', w)}
+												>{w.name ?? w.short ?? naamVan('instruments', w)}</a
 											>{/each}</span
 									>{/if}
 							{/each}
