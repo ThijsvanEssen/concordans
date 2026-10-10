@@ -215,7 +215,9 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'documents-tk',
-			label: 'Kamerstukken',
+			// Named by the Kamer, as the stemmingen: "Kamerstukken" and "Stukken" under the two
+			// headings read as two kinds of papers (UX-toets 10 Oct).
+			label: 'Kamerstukken in de Tweede Kamer',
 			noun: 'stukken',
 			section: 'Tweede Kamer',
 			load: 'dossier-documents-tk'
@@ -237,7 +239,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'documents-ek',
-			label: 'Stukken',
+			label: 'Kamerstukken in de Eerste Kamer',
 			noun: 'stukken',
 			section: 'Eerste Kamer',
 			load: 'dossier-documents-ek'

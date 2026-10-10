@@ -123,6 +123,19 @@
 </li>
 
 <style>
+	/* The links in a row's lines (indieners, a dossier) a finger can hit: the shared target of
+	   AppShell (.raakvlak), on a touch screen only. */
+	@media (pointer: coarse) {
+		.row-body :global(a:not(.row-title)) {
+			position: relative;
+		}
+		.row-body :global(a:not(.row-title)::after) {
+			content: '';
+			position: absolute;
+			inset: calc(-1 * var(--s-2)) calc(-1 * var(--s-1));
+		}
+	}
+
 	.row-wrap {
 		display: flex;
 		flex-direction: column;
