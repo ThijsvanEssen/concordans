@@ -97,8 +97,7 @@ describe('one form for each thing', () => {
 			'lib/onderwerpen/Kruiswoord.svelte',
 			'routes/(main)/api/+page.svelte',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte',
-			'routes/(main)/(prose)/bronnen/+page.svelte',
-			'lib/map/AlleMappen.svelte'
+			'routes/(main)/(prose)/bronnen/+page.svelte'
 		];
 		expect(offenders((t) => /tabular-nums/.test(t), columns)).toEqual([]);
 	});
