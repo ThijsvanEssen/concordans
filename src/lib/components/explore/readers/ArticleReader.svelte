@@ -5,6 +5,7 @@
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import Bewaar from '$lib/map/Bewaar.svelte';
+	import Toelichting from './Toelichting.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
@@ -587,14 +588,29 @@
 								data-sveltekit-noscroll>Vergelijken<Caret open={comparing} /></a
 							>
 						{/if}
-						{#if officialUrl}
-							<a class="btn" href={officialUrl} target="_blank" rel="noopener">{officialName} ↗</a>
-						{/if}
+						<!-- Two actions, framed, the same on every reader (Thijs, 10 Oct): Bewaar and
+						     Citeer; the official text and Kopieer tekst are inside Citeer. -->
 						{#if bewaarHier}
-							<Bewaar item={bewaarHier.item} wat={bewaarHier.wat} metMap />
+							<Bewaar item={bewaarHier.item} wat={bewaarHier.wat} metMap knop />
 						{/if}
 						{#if forms}
-							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret />
+							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret>
+								{#snippet onder(dicht)}
+									<button
+										type="button"
+										role="menuitem"
+										onclick={() => {
+											void navigator.clipboard?.writeText(a.text ?? '');
+											dicht();
+										}}>Kopieer tekst</button
+									>
+									{#if officialUrl}
+										<a role="menuitem" href={officialUrl} target="_blank" rel="noopener"
+											>{officialName} ↗</a
+										>
+									{/if}
+								{/snippet}
+							</CiteMenu>
 						{/if}
 					</span>
 				</div>
@@ -710,6 +726,22 @@
 			{/if}
 		</div>
 
+		<!-- What the memorie says about this text, read in place (Thijs, 10 Oct); the memorie
+		     itself opens under the article from the head, as before. -->
+		{#if explanatory && !comparing}
+			<Toelichting
+				document={{
+					key: explanatory.key,
+					kind: explanatory.kind,
+					dossier: explanatory.dossier
+				}}
+				{bwbId}
+				artikel={articleNumber}
+				href={explanatoryHref}
+				perDossier={explanatory.basis === 'wijziging'}
+			/>
+		{/if}
+
 		{#if prevHref || nextHref}
 			<nav class="reader-nav-footer" aria-label="Artikelen">{@render steps(' artikel')}</nav>
 		{/if}
@@ -789,8 +821,11 @@
 		border-color: var(--ink-3);
 		color: var(--ink);
 	}
+	/* Where the text came from, in ink: the wetsgeschiedenis is read, not passed over
+	   (Thijs, 10 Oct: the memorie "valt weg"). */
+	.head__origin,
 	.head__origin a {
-		color: var(--ink-2);
+		color: var(--ink);
 	}
 	.head__mvt-mark {
 		margin-left: var(--s-1);
