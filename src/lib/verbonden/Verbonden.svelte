@@ -356,7 +356,9 @@
 <aside class="verbonden" aria-label="Verbonden" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
-		{#if verbonden.groups.length > 0}
+		<!-- A bron without verbindingen says so by its count, not by a sentence (R7, UX-toets
+		     0.79.43: "Deze bron heeft geen verbindingen in de gegevens."). -->
+		{#if verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id)}
 			<span class="head__count">{countLine(verbonden.groups, filter)}</span>
 		{/if}
 	</div>
@@ -671,9 +673,6 @@
 			<p class="note stil">Geen verbindingen buiten wat boven de tekst staat.</p>
 		{:else if !verbonden.loading && !verbonden.failed && shown.length === 0 && groepen.length > 0}
 			<p class="note stil">Geen verbindingen binnen de gekozen bronnen en filters.</p>
-		{/if}
-		{#if !verbonden.loading && !verbonden.failed && verbonden.groups.length === 0 && verbonden.id}
-			<p class="note stil">Deze bron heeft geen verbindingen in de gegevens.</p>
 		{/if}
 
 		{#if hidden.length > 0}
