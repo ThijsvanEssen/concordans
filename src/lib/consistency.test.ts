@@ -395,6 +395,19 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('gives the actions of a row one look: two fixed places, a glyph without a frame', () => {
+		// Thijs, 10 Oct: "toch wat raar met de verschillen in hoe ze weergegeven worden".
+		const t = sources.find((s) => s.path === 'lib/components/ui/RijActies.svelte')!.text;
+		expect(t).not.toMatch(/IconKnop/);
+		expect(t.match(/<span class="plek">/g)).toHaveLength(2);
+		expect(rules(t).some((r) => /(?<![-\w])border:\s*(?!\s|0)/.test(r.body))).toBe(false);
+		// Where a verbinding comes from is words in the row's meta line, not a box over the
+		// next row ("Herkend in de tekst" was "out of place").
+		const verbonden = sources.find((s) => s.path === 'lib/verbonden/Verbonden.svelte')!.text;
+		expect(verbonden).not.toMatch(/row__herkomst/);
+		expect(verbonden).toMatch(/kind: 'herkomst'/);
+	});
+
 	it('draws a mark in a Keuze in the colour of its option', () => {
 		// On the chosen option (ink) an ink mark vanished: the mark follows the text.
 		const keuze = sources.find((s) => s.path === 'lib/components/ui/Keuze.svelte')!;

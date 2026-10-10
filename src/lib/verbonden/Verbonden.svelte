@@ -558,7 +558,6 @@
 					{/if}
 					<ul class="rows">
 						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
-							{@const id = rowId(row)}
 							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
 							{@const hoe = hoeVan(row, selection.collection)}
 							{@const href = openHref(g, row)}
@@ -601,15 +600,12 @@
 											>
 										{/if}
 										<span class="row__meta">
-											{#each metaParts(row, !!hoe) as part, k (k)}
+											<!-- Where the verbinding comes from, in the line's own words (Thijs, 10 Oct:
+											     the box over the next row was "out of place"). -->
+											{#each [...metaParts(row, !!hoe), ...(hoe?.herkomst ? [{ kind: 'herkomst', text: metaParts(row, !!hoe).length ? kleineLetter(hoe.herkomst) : hoe.herkomst }] : [])] as part, k (k)}
 												{#if k > 0}<span class="row__sep">,</span>{/if}
 												<span class="row__part row__part--{part.kind}">{part.text}</span>
 											{/each}
-											<!-- Where the verbinding comes from, in the line's own words (Thijs, 10 Oct:
-											     the box over the next row was "out of place"). -->
-											{#if hoe?.herkomst}<span class="row__sep">,</span><span
-													class="row__part row__part--herkomst">{kleineLetter(hoe.herkomst)}</span
-												>{/if}
 											{#if row.proposed && onProposedText}
 												<span class="row__sep">,</span>
 												<TekstLink onclick={() => onProposedText(row)}
