@@ -4,6 +4,7 @@
 	// opens under the article as before. The passages are asked once the section is open
 	// (`/api/documents/{key}/passages`), in document order, each under its heading.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import type { Schema } from '$lib/api/types';
 
@@ -82,10 +83,8 @@
 				{#if p.heading}<h3>{p.heading}</h3>{/if}
 				<p class="tekst">{lang ? `${(p.text ?? '').slice(0, KORT).trimEnd()}…` : p.text}</p>
 				{#if lang}
-					<button
-						type="button"
-						class="meer"
-						onclick={() => (heel = { ...heel, [p.section_id]: true })}>Hele passage</button
+					<TekstLink onclick={() => (heel = { ...heel, [p.section_id]: true })}
+						>Hele passage</TekstLink
 					>
 				{/if}
 			</section>
@@ -130,20 +129,5 @@
 		line-height: var(--lh-body);
 		color: var(--ink-2);
 		white-space: pre-line;
-	}
-	.meer {
-		margin-top: var(--s-1);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-		cursor: pointer;
-	}
-	.meer:hover {
-		color: var(--accent);
 	}
 </style>
