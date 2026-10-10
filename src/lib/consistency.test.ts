@@ -267,6 +267,21 @@ describe('one form for each thing', () => {
 		expect(
 			offenders((t) => /<KopActies\b/.test(t), ['lib/components/explore/readers/ReaderHead.svelte'])
 		).toEqual([]);
+		// Every branch of a reader too (a bewindspersoon has its own lines): no reader file draws
+		// a head of its own, and one that holds a title heads it with ReaderHead (Hosten, 10 Oct:
+		// /leden/rob-jetten had no Bewaar).
+		const map = sources.filter(({ path }) => path.startsWith('lib/components/explore/readers/'));
+		expect(map.filter(({ text }) => /<header\b/.test(text)).map((s) => s.path)).toEqual([]);
+		expect(
+			map
+				.filter(
+					({ path, text }) =>
+						!path.endsWith('ReaderHead.svelte') &&
+						/<h[12]\b/.test(text) &&
+						!/<ReaderHead\b/.test(text)
+				)
+				.map((s) => s.path)
+		).toEqual([]);
 		// The head ends without a rule of its own: the first section's rule is the one line.
 		const kop = sources.find((s) => s.path === 'lib/components/explore/readers/ReaderHead.svelte')!;
 		expect(
