@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.40"
+		"version": "0.79.41"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -288,6 +288,46 @@
 				}
 			}
 		},
+		"/api/articles/{bwb_id}/{article_number}/explanations": {
+			"get": {
+				"tags": ["articles", "articles"],
+				"summary": "Passages that explain an article",
+				"description": "The papers that explain this article in a passage, each with the text of its passages: the sections `semantic tk-mvt-articles` linked to the article or to one of its versions (of `scope` `article` in `explained-by`). Per paper the version it explains; the newest version first, the article itself (no version) last; of one version the memoranda before the amendments. A section is listed once, with its surest match, in the order of the paper. An explanation of a whole dossier has no passage and is not listed (`explained-by` lists it). Empty for an unknown article \u2014 never a 404.",
+				"operationId": "get_explanations_api_articles__bwb_id___article_number__explanations_get",
+				"parameters": [
+					{
+						"name": "bwb_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Bwb Id" }
+					},
+					{
+						"name": "article_number",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Article Number" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ArticlePassagesResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/judgments": {
 			"get": {
 				"tags": ["judgments", "judgments"],
@@ -526,7 +566,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Paginated list of instruments",
-				"description": "A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter.",
+				"description": "A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter. `facets=false` leaves them out (null): the pages after the first need none.",
 				"operationId": "list_instruments_api_instruments_get",
 				"parameters": [
 					{
@@ -546,6 +586,18 @@
 						"in": "query",
 						"required": false,
 						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					},
+					{
+						"name": "facets",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Count per legal area, theme and kind.",
+							"default": true,
+							"title": "Facets"
+						},
+						"description": "Count per legal area, theme and kind."
 					},
 					{
 						"name": "q",
@@ -1489,6 +1541,19 @@
 						}
 					},
 					{
+						"name": "props",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["full", "canvas"],
+							"type": "string",
+							"description": "`canvas`: of a node but the focal one only the props the canvas of the explorer draws, per collection, as the neighbours of a node with `props=canvas`; `full` (the default) every prop a neighbour carries",
+							"default": "full",
+							"title": "Props"
+						},
+						"description": "`canvas`: of a node but the focal one only the props the canvas of the explorer draws, per collection, as the neighbours of a node with `props=canvas`; `full` (the default) every prop a neighbour carries"
+					},
+					{
 						"name": "relations",
 						"in": "query",
 						"required": false,
@@ -1557,7 +1622,7 @@
 			"get": {
 				"tags": ["dossiers", "dossiers"],
 				"summary": "Dossiers",
-				"description": "Every dossier, open and closed, filtered by status, outcome, track, the start of its number, committee, subject (a number, a dossier, or words of the title, such as its short title), stage, ministry, initiative and the day it opened. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter.",
+				"description": "Every dossier, open and closed, filtered by status, outcome, track, the start of its number, committee, subject (a number, a dossier, or words of the title, such as its short title), stage, ministry, initiative and the day it opened. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter; ``facets=false`` leaves them out (null): the pages after the first need none.",
 				"operationId": "list_dossiers_api_dossiers_get",
 				"parameters": [
 					{
@@ -1732,6 +1797,18 @@
 						"in": "query",
 						"required": false,
 						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					},
+					{
+						"name": "facets",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Count per status, outcome, track, stage and ministry.",
+							"default": true,
+							"title": "Facets"
+						},
+						"description": "Count per status, outcome, track, stage and ministry."
 					}
 				],
 				"responses": {
@@ -2976,7 +3053,7 @@
 			"get": {
 				"tags": ["commitments", "government"],
 				"summary": "Commitments",
-				"description": "Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``status`` is the Toezegging.Status of the Tweede Kamer (`Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`). ``overdue`` keeps the `Openstaand` ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters.",
+				"description": "Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``status`` is the Toezegging.Status of the Tweede Kamer (`Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`). ``overdue`` keeps the `Openstaand` ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters; ``facets=false`` leaves them out (null): the pages after the first need none.",
 				"operationId": "list_commitments_api_commitments_get",
 				"parameters": [
 					{
@@ -3112,6 +3189,18 @@
 						"in": "query",
 						"required": false,
 						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					},
+					{
+						"name": "facets",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Count per status, cabinet and ministry.",
+							"default": true,
+							"title": "Facets"
+						},
+						"description": "Count per status, cabinet and ministry."
 					}
 				],
 				"responses": {
@@ -3735,7 +3824,7 @@
 			"get": {
 				"tags": ["decisions", "decisions"],
 				"summary": "Decision browser",
-				"description": "A page of decisions \u2014 one per Besluit \u2014 newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter; with how many carried and did not), per outcome ``passed`` (without the passed filter), per day and per year (under all filters), and with ``party_votes`` how the factions asked voted on them.",
+				"description": "A page of decisions \u2014 one per Besluit \u2014 newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter; with how many carried and did not), per outcome ``passed`` (without the passed filter), per day and per year (under all filters), and with ``party_votes`` how the factions asked voted on them. ``facets=false`` gives null for ``total`` and ``facets`` and counts nothing: the pages after the first need neither.",
 				"operationId": "list_decisions_api_decisions_get",
 				"parameters": [
 					{
@@ -3897,6 +3986,18 @@
 						"in": "query",
 						"required": false,
 						"schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Offset" }
+					},
+					{
+						"name": "facets",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Count the total and the facets.",
+							"default": true,
+							"title": "Facets"
+						},
+						"description": "Count the total and the facets."
 					}
 				],
 				"responses": {
@@ -5730,6 +5831,55 @@
 				"title": "ArticlePartDTO",
 				"description": "A lid, an onderdeel, an aanhef or a tekst of an article, as a span of its `text`.\n\nThe parts and the printed numbers between them cover the whole text."
 			},
+			"ArticlePassagesDTO": {
+				"properties": {
+					"document": { "$ref": "#/components/schemas/DocumentEntryDTO" },
+					"target": {
+						"type": "string",
+						"enum": ["article", "article_version"],
+						"title": "Target",
+						"description": "What the paper explains: one of the versions of the article ('article_version'), or the article itself ('article')."
+					},
+					"target_id": { "type": "string", "title": "Target Id" },
+					"article_version_key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article Version Key",
+						"description": "Null unless target is 'article_version'."
+					},
+					"valid_from": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Valid From",
+						"description": "From when the version applies; null for the article."
+					},
+					"passages": {
+						"items": { "$ref": "#/components/schemas/PassageDTO" },
+						"type": "array",
+						"title": "Passages",
+						"description": "The sections that explain the article, in the order of the paper, each with its text."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["document", "target", "target_id", "passages"],
+				"title": "ArticlePassagesDTO",
+				"description": "A paper that explains an article in a passage, and its passages."
+			},
+			"ArticlePassagesResponse": {
+				"properties": {
+					"article_id": { "type": "string", "title": "Article Id" },
+					"total": { "type": "integer", "title": "Total" },
+					"items": {
+						"items": { "$ref": "#/components/schemas/ArticlePassagesDTO" },
+						"type": "array",
+						"title": "Items"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["article_id", "total", "items"],
+				"title": "ArticlePassagesResponse",
+				"description": "Response for GET /api/articles/{bwb_id}/{article_number}/explanations."
+			},
 			"ArticleRefDTO": {
 				"properties": {
 					"number": {
@@ -6869,7 +7019,9 @@
 						"type": "array",
 						"title": "Items"
 					},
-					"facets": { "$ref": "#/components/schemas/CommitmentFacetsDTO" }
+					"facets": {
+						"anyOf": [{ "$ref": "#/components/schemas/CommitmentFacetsDTO" }, { "type": "null" }]
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -7522,14 +7674,16 @@
 					"total": {
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
 						"title": "Total",
-						"description": "Matching decisions, independent of ``limit``; null while they are still being counted (``partial``)."
+						"description": "Matching decisions, independent of ``limit``; null while they are still being counted (``partial``) or not asked for (``facets=false``)."
 					},
 					"items": {
 						"items": { "$ref": "#/components/schemas/DecisionSummaryDTO" },
 						"type": "array",
 						"title": "Items"
 					},
-					"facets": { "$ref": "#/components/schemas/DecisionFacets" },
+					"facets": {
+						"anyOf": [{ "$ref": "#/components/schemas/DecisionFacets" }, { "type": "null" }]
+					},
 					"partial": {
 						"type": "boolean",
 						"title": "Partial",
@@ -7714,6 +7868,67 @@
 				"required": ["ref", "term", "text", "article_key"],
 				"title": "DefinitionDTO",
 				"description": "A definition a regulation gives itself (its begripsbepalingen), as its text has it."
+			},
+			"DocumentEntryDTO": {
+				"properties": {
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber",
+						"description": "'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication."
+					},
+					"source": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Source",
+						"description": "Source, e.g. 'tk', 'eerstekamer', 'staatsblad'."
+					},
+					"is_explanatory": {
+						"type": "boolean",
+						"title": "Is Explanatory",
+						"description": "An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.",
+						"default": false
+					},
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"sequence": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Sequence",
+						"description": "The number of the paper in ``dossier_number``."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "Its number in the dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``)."
+					},
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number",
+						"description": "The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill."
+					},
+					"session_year": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Session Year",
+						"description": "Parliamentary year."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"tk_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Tk Url" },
+					"sender": {
+						"anyOf": [{ "$ref": "#/components/schemas/SenderDTO" }, { "type": "null" }],
+						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "DocumentEntryDTO",
+				"description": "A document as it is named from another node: identity and paper number, never text."
 			},
 			"DocumentFacetCountDTO": {
 				"properties": {
@@ -8421,7 +8636,9 @@
 						"type": "array",
 						"title": "Items"
 					},
-					"facets": { "$ref": "#/components/schemas/DossierFacetsDTO" }
+					"facets": {
+						"anyOf": [{ "$ref": "#/components/schemas/DossierFacetsDTO" }, { "type": "null" }]
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -11017,7 +11234,9 @@
 						"title": "Items"
 					},
 					"total": { "type": "integer", "title": "Total" },
-					"facets": { "$ref": "#/components/schemas/InstrumentFacets" }
+					"facets": {
+						"anyOf": [{ "$ref": "#/components/schemas/InstrumentFacets" }, { "type": "null" }]
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -12327,6 +12546,17 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Birth Date"
 					},
+					"death_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Death Date",
+						"description": "The day they died, as the TK gives it (``Overlijdensdatum``)."
+					},
+					"has_role": {
+						"type": "boolean",
+						"title": "Has Role",
+						"description": "Whether the sources give them a role: a seat in a faction of either chamber or a post in a cabinet. False for a person of the TK's records whose seat the data does not hold: their page is not indexed and search lists them last.",
+						"default": false
+					},
 					"government_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Government Name",
@@ -12919,7 +13149,7 @@
 					"match_type": {
 						"type": "string",
 						"title": "Match Type",
-						"description": "How the section names the article: `heading_target`, `body_named_law`, `own_number` or `inferred_law`."
+						"description": "How the section names the article: `heading_target`, `body_named_law`, `own_number`, `inferred_law`, `bill_part` (an onderdeel of the bill) or `amendment` (the Toelichting of an adopted amendment)."
 					},
 					"changed": {
 						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
@@ -13725,6 +13955,12 @@
 					"instruments": {
 						"$ref": "#/components/schemas/InstrumentStatsDTO",
 						"default": { "by_kind": {}, "by_jurisdiction": {} }
+					},
+					"lists": {
+						"additionalProperties": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+						"type": "object",
+						"title": "Lists",
+						"description": "Per list of the explorer the ``total`` its endpoint gives without a filter, as its first page answers it (the count each row of Bronnen shows): ``instruments``, ``judgments``, ``dossiers``, ``documents``, ``members`` (who held a seat), ``bewindspersonen`` (``/api/members?government=true``), ``factions``, ``committees``, ``cabinets``, ``commitments`` and ``decisions`` as the list opens (``chamber=TK``). ``decisions`` is null while it is still being counted (after a change of the decisions; the warm-up counts it): show nothing then, not 0."
 					},
 					"data_as_of": {
 						"additionalProperties": { "$ref": "#/components/schemas/DataAsOfDTO" },

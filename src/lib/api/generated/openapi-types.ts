@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/articles/{bwb_id}/{article_number}/explanations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Passages that explain an article
+         * @description The papers that explain this article in a passage, each with the text of its passages: the sections `semantic tk-mvt-articles` linked to the article or to one of its versions (of `scope` `article` in `explained-by`). Per paper the version it explains; the newest version first, the article itself (no version) last; of one version the memoranda before the amendments. A section is listed once, with its surest match, in the order of the paper. An explanation of a whole dossier has no passage and is not listed (`explained-by` lists it). Empty for an unknown article — never a 404.
+         */
+        get: operations["get_explanations_api_articles__bwb_id___article_number__explanations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/judgments": {
         parameters: {
             query?: never;
@@ -153,7 +173,7 @@ export interface paths {
         };
         /**
          * Paginated list of instruments
-         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter.
+         * @description A paginated list of statutes, regulations and EU instruments. Supports free-text search (`q`), a jurisdiction filter (`nl`/`eu`), a kind filter, a minimum article count, and the registers of the BWB: a legal area (`legal_area`, a main area includes its specific areas) and a government theme (`policy_domain`), each by TOOI id or slug; an unknown value finds nothing. `facets` counts the instruments under the filters per legal area (a tree) and per theme, each without its own filter. `facets=false` leaves them out (null): the pages after the first need none.
          */
         get: operations["list_instruments_api_instruments_get"];
         put?: never;
@@ -453,7 +473,7 @@ export interface paths {
         };
         /**
          * Dossiers
-         * @description Every dossier, open and closed, filtered by status, outcome, track, the start of its number, committee, subject (a number, a dossier, or words of the title, such as its short title), stage, ministry, initiative and the day it opened. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter.
+         * @description Every dossier, open and closed, filtered by status, outcome, track, the start of its number, committee, subject (a number, a dossier, or words of the title, such as its short title), stage, ministry, initiative and the day it opened. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the dossiers per status, outcome, track, current stage and ministry under the other filters, each dimension without its own filter; ``facets=false`` leaves them out (null): the pages after the first need none.
          */
         get: operations["list_dossiers_api_dossiers_get"];
         put?: never;
@@ -913,7 +933,7 @@ export interface paths {
         };
         /**
          * Commitments
-         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``status`` is the Toezegging.Status of the Tweede Kamer (`Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`). ``overdue`` keeps the `Openstaand` ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters.
+         * @description Commitments (toezeggingen) of bewindspersonen, paged; ``total`` counts every match. ``status`` is the Toezegging.Status of the Tweede Kamer (`Openstaand`, `Afgedaan`, `Nagekomen`, `Niet nagekomen`, `Deels Afgedaan`, `Vervallen`). ``overdue`` keeps the `Openstaand` ones whose expected date has passed. ``facets`` counts per ``status``, ``cabinet`` and ``ministry`` the commitments under the other filters; ``facets=false`` leaves them out (null): the pages after the first need none.
          */
         get: operations["list_commitments_api_commitments_get"];
         put?: never;
@@ -1170,7 +1190,7 @@ export interface paths {
         };
         /**
          * Decision browser
-         * @description A page of decisions — one per Besluit — newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter; with how many carried and did not), per outcome ``passed`` (without the passed filter), per day and per year (under all filters), and with ``party_votes`` how the factions asked voted on them.
+         * @description A page of decisions — one per Besluit — newest first, optionally filtered by kind, outcome, party (and how it voted), chamber, dossier, date and subject. ``total`` is the absolute count, independent of ``limit``. ``facets`` counts the decisions under the filters: per ``kind`` (without the kind filter; with how many carried and did not), per outcome ``passed`` (without the passed filter), per day and per year (under all filters), and with ``party_votes`` how the factions asked voted on them. ``facets=false`` gives null for ``total`` and ``facets`` and counts nothing: the pages after the first need neither.
          */
         get: operations["list_decisions_api_decisions_get"];
         put?: never;
@@ -2073,6 +2093,48 @@ export interface components {
             start: number;
             /** End */
             end: number;
+        };
+        /**
+         * ArticlePassagesDTO
+         * @description A paper that explains an article in a passage, and its passages.
+         */
+        ArticlePassagesDTO: {
+            document: components["schemas"]["DocumentEntryDTO"];
+            /**
+             * Target
+             * @description What the paper explains: one of the versions of the article ('article_version'), or the article itself ('article').
+             * @enum {string}
+             */
+            target: "article" | "article_version";
+            /** Target Id */
+            target_id: string;
+            /**
+             * Article Version Key
+             * @description Null unless target is 'article_version'.
+             */
+            article_version_key?: string | null;
+            /**
+             * Valid From
+             * @description From when the version applies; null for the article.
+             */
+            valid_from?: string | null;
+            /**
+             * Passages
+             * @description The sections that explain the article, in the order of the paper, each with its text.
+             */
+            passages: components["schemas"]["PassageDTO"][];
+        };
+        /**
+         * ArticlePassagesResponse
+         * @description Response for GET /api/articles/{bwb_id}/{article_number}/explanations.
+         */
+        ArticlePassagesResponse: {
+            /** Article Id */
+            article_id: string;
+            /** Total */
+            total: number;
+            /** Items */
+            items: components["schemas"]["ArticlePassagesDTO"][];
         };
         /**
          * ArticleRefDTO
@@ -3077,7 +3139,7 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["CommitmentDTO"][];
-            facets?: components["schemas"]["CommitmentFacetsDTO"];
+            facets?: components["schemas"]["CommitmentFacetsDTO"] | null;
         };
         /**
          * CommitmentMemberDTO
@@ -3649,12 +3711,12 @@ export interface components {
         DecisionListResponse: {
             /**
              * Total
-             * @description Matching decisions, independent of ``limit``; null while they are still being counted (``partial``).
+             * @description Matching decisions, independent of ``limit``; null while they are still being counted (``partial``) or not asked for (``facets=false``).
              */
             total: number | null;
             /** Items */
             items: components["schemas"]["DecisionSummaryDTO"][];
-            facets?: components["schemas"]["DecisionFacets"];
+            facets?: components["schemas"]["DecisionFacets"] | null;
             /**
              * Partial
              * @description Something is still being counted; ask again for it. ``total`` and ``facets``: a filter not counted since the decisions last changed (a request waits 3 s for them, then gets the page with ``total`` null and empty facets); ``party_votes``, when asked for (every vote on every decision): ``[]`` now. The page itself is always whole.
@@ -3827,6 +3889,67 @@ export interface components {
              * @description The BWB id of the regulation the definition is (`wet`: de Zorgverzekeringswet).
              */
             refers_to?: string | null;
+        };
+        /**
+         * DocumentEntryDTO
+         * @description A document as it is named from another node: identity and paper number, never text.
+         */
+        DocumentEntryDTO: {
+            /**
+             * Chamber
+             * @description 'TK' or 'EK'; null for a document that belongs to neither chamber, such as a Staatsblad or Staatscourant publication.
+             */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Source
+             * @description Source, e.g. 'tk', 'eerstekamer', 'staatsblad'.
+             */
+            source?: string | null;
+            /**
+             * Is Explanatory
+             * @description An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.
+             * @default false
+             */
+            is_explanatory: boolean;
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Kind */
+            kind?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Sequence
+             * @description The number of the paper in ``dossier_number``.
+             */
+            sequence?: number | null;
+            /**
+             * Number
+             * @description Its number in the dossier as its chamber numbers it: the nr. of a Tweede Kamer paper (``12``), the letter of an Eerste Kamer one (``A``).
+             */
+            number?: string | null;
+            /**
+             * Dossier Number
+             * @description The dossier the paper is numbered in (``31058``, ``37020-XV``): a paper is part of every dossier of its cases and a Kamerstuk of one. Null for a paper that is no Kamerstuk, such as a nader rapport sent along with a bill.
+             */
+            dossier_number?: string | null;
+            /**
+             * Session Year
+             * @description Parliamentary year.
+             */
+            session_year?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Tk Url */
+            tk_url?: string | null;
+            /** @description Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature. */
+            sender?: components["schemas"]["SenderDTO"] | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /** DocumentFacetCountDTO */
         DocumentFacetCountDTO: {
@@ -4460,7 +4583,7 @@ export interface components {
             total: number;
             /** Items */
             items: components["schemas"]["DossierSummaryDTO"][];
-            facets: components["schemas"]["DossierFacetsDTO"];
+            facets: components["schemas"]["DossierFacetsDTO"] | null;
         };
         /**
          * DossierMutationEdge
@@ -6771,7 +6894,7 @@ export interface components {
             items: components["schemas"]["InstrumentListItemDTO"][];
             /** Total */
             total: number;
-            facets?: components["schemas"]["InstrumentFacets"];
+            facets?: components["schemas"]["InstrumentFacets"] | null;
         };
         /**
          * InstrumentRelatedItem
@@ -7914,6 +8037,17 @@ export interface components {
             /** Birth Date */
             birth_date?: string | null;
             /**
+             * Death Date
+             * @description The day they died, as the TK gives it (``Overlijdensdatum``).
+             */
+            death_date?: string | null;
+            /**
+             * Has Role
+             * @description Whether the sources give them a role: a seat in a faction of either chamber or a post in a cabinet. False for a person of the TK's records whose seat the data does not hold: their page is not indexed and search lists them last.
+             * @default false
+             */
+            has_role: boolean;
+            /**
              * Government Name
              * @description The name as Rijksoverheid writes it: S.Th.M. Hermans.
              */
@@ -8374,7 +8508,7 @@ export interface components {
             confidence: number;
             /**
              * Match Type
-             * @description How the section names the article: `heading_target`, `body_named_law`, `own_number` or `inferred_law`.
+             * @description How the section names the article: `heading_target`, `body_named_law`, `own_number`, `inferred_law`, `bill_part` (an onderdeel of the bill) or `amendment` (the Toelichting of an adopted amendment).
              */
             match_type: string;
             /**
@@ -9086,6 +9220,13 @@ export interface components {
              *     }
              */
             instruments: components["schemas"]["InstrumentStatsDTO"];
+            /**
+             * Lists
+             * @description Per list of the explorer the ``total`` its endpoint gives without a filter, as its first page answers it (the count each row of Bronnen shows): ``instruments``, ``judgments``, ``dossiers``, ``documents``, ``members`` (who held a seat), ``bewindspersonen`` (``/api/members?government=true``), ``factions``, ``committees``, ``cabinets``, ``commitments`` and ``decisions`` as the list opens (``chamber=TK``). ``decisions`` is null while it is still being counted (after a change of the decisions; the warm-up counts it): show nothing then, not 0.
+             */
+            lists?: {
+                [key: string]: number | null;
+            };
             /**
              * Data As Of
              * @description Per source (`tk`, `eerstekamer`, `rechtspraak`, `staatsblad`, `staatscourant`, `bwb`, `eurlex`, …): how current the graph is.
@@ -10074,6 +10215,38 @@ export interface operations {
             };
         };
     };
+    get_explanations_api_articles__bwb_id___article_number__explanations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticlePassagesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_judgments_api_judgments_get: {
         parameters: {
             query?: {
@@ -10168,6 +10341,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                /** @description Count per legal area, theme and kind. */
+                facets?: boolean;
                 /** @description Free-text match */
                 q?: string | null;
                 /** @description ``nl``, ``eu``, or ``int``: the treaties of the Verdragenbank (``Internationaal``). */
@@ -10670,6 +10845,8 @@ export interface operations {
             query?: {
                 depth?: number;
                 cap?: number;
+                /** @description `canvas`: of a node but the focal one only the props the canvas of the explorer draws, per collection, as the neighbours of a node with `props=canvas`; `full` (the default) every prop a neighbour carries */
+                props?: "full" | "canvas";
                 /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
                 relations?: string | null;
                 /** @description Comma-separated node types to keep (`article,judgment`). */
@@ -10738,6 +10915,8 @@ export interface operations {
                 sort?: ("number" | "opened_on" | "last_activity" | "closed_on" | "title") | null;
                 limit?: number;
                 offset?: number;
+                /** @description Count per status, outcome, track, stage and ministry. */
+                facets?: boolean;
             };
             header?: never;
             path?: never;
@@ -11533,6 +11712,8 @@ export interface operations {
                 sort?: "date" | "expected_resolution";
                 limit?: number;
                 offset?: number;
+                /** @description Count per status, cabinet and ministry. */
+                facets?: boolean;
             };
             header?: never;
             path?: never;
@@ -11958,6 +12139,8 @@ export interface operations {
                 unvoted?: boolean;
                 limit?: number;
                 offset?: number;
+                /** @description Count the total and the facets. */
+                facets?: boolean;
             };
             header?: never;
             path?: never;
