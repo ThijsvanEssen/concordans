@@ -147,7 +147,11 @@
 							? `Commissie ${p.slug}`
 							: p.soort === 'toezegging'
 								? `Toezegging ${p.nummer}`
-								: padHref(p);
+								: p.soort === 'zaak'
+									? `Zaak ${p.nummer}`
+									: p.soort === 'bijlage'
+										? `Bijlage ${p.label} van ${p.wet}`
+										: padHref(p);
 	const REEKS_NAAM = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
 	$effect(() => {
 		const p = pad;
