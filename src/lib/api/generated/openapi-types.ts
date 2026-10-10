@@ -8200,6 +8200,11 @@ export interface components {
             count: number;
             /** Votes */
             votes: components["schemas"]["MemberVoteDTO"][];
+            /**
+             * Next Offset
+             * @description The ``offset`` of the next page; null when this page was not full (the last one).
+             */
+            next_offset?: number | null;
         };
         /**
          * MinistryDTO
@@ -11454,6 +11459,10 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
+                /** @description Skip the newest that many votes. */
+                offset?: number;
+                /** @description Only the votes cast while the member held a post of the government (``in_office`` not empty), before the page is cut. */
+                in_office?: boolean;
             };
             header?: never;
             path: {
