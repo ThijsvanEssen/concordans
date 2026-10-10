@@ -155,7 +155,7 @@
 			{@const ekSitting = !!ek && !ek.observed_until}
 
 			{#if (m.government_functions ?? []).length > 0}
-				<BewindspersoonKop {m} />
+				<BewindspersoonKop {m} id={node.id} />
 			{:else}
 				{@const titel = m.name ?? m.key}
 				<ReaderHead

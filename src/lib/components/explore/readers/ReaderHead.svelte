@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { opsomming } from '$lib/text/opsomming';
 	// The head of every reader, one form (Thijs, 10 Oct: "gelijke experience op gelijke
 	// pagina's"): the line of the kind or the place of the bron, the title, what stands under
 	// the title, and the status line with the actions at its right, in that order and with the
@@ -67,8 +68,9 @@
 			</div>
 		{:else}
 			<div class="reader-kind">
-				<SoortLink {collection}><span>{kind ?? bronLabel(collection)}</span></SoortLink>
-				{#if juris}<span class="reader-juris komma">, {juris}</span>{/if}
+				<!-- One run of words: the kind as a link, the jurisdiction after its comma. -->
+				<SoortLink {collection}><span>{kind ?? bronLabel(collection)}</span></SoortLink
+				>{#if opsomming([juris])}<span class="reader-juris">, {opsomming([juris])}</span>{/if}
 			</div>
 		{/if}
 		{@render nav?.()}
@@ -110,17 +112,23 @@
 		margin-bottom: var(--s-2);
 	}
 
+	/* One run of words ("Uitspraak, Hoge Raad"): text, not a row of items with gaps; a mark
+	   in it (KindGlyph) keeps a step to the word after it. */
 	.reader-kind {
 		flex: 1;
 		min-width: 0;
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
 	/* The place of an article in its law, in the letter of the law. */
+	.reader-kind :global(.soort) {
+		display: inline;
+	}
+	.reader-kind :global(.kind-glyph) {
+		margin-right: var(--s-1);
+		vertical-align: -1px;
+	}
 	.reader-place {
 		flex: 1;
 		min-width: 0;
@@ -207,9 +215,5 @@
 		display: grid;
 		gap: var(--s-2);
 		margin-top: var(--s-2);
-	}
-	/* The jurisdiction after a comma, against the kind: the line's gap only after it. */
-	.komma {
-		margin-left: calc(-1 * var(--s-2));
 	}
 </style>

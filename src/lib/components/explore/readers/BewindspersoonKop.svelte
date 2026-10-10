@@ -4,9 +4,10 @@
 	import type { Schema } from '$lib/api/types';
 	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import ReaderHead from './ReaderHead.svelte';
 	import { datum } from '$lib/components/parliamentary/stand';
 
-	let { m }: { m: Schema<'MemberDetailDTO'> } = $props();
+	let { m, id }: { m: Schema<'MemberDetailDTO'>; id: string } = $props();
 	const fns = $derived(
 		[...(m.government_functions ?? [])].sort((a, b) =>
 			(b.from_date ?? '').localeCompare(a.from_date ?? '')
@@ -39,22 +40,37 @@
 	});
 </script>
 
-<header class="kop">
-	<span class="soort"
-		><KindGlyph collection="members" />Bewindspersoon{partij ? `, ${partij}` : ''}</span
-	>
-	<h2 class="naam">{m.name ?? m.key}</h2>
-	{#if laatst}
-		<p class="zin">
-			{#if nu.length}
-				{nu.map((f) => f.function).join(' en ')} sinds {datum(nu[0].from_date)}, {nu[0].cabinet}.
-			{:else}
-				Laatst {laatst.function?.charAt(0).toLowerCase()}{laatst.function?.slice(1)}, tot {datum(
-					laatst.to_date
-				)} ({laatst.cabinet}).
-			{/if}
-		</p>
-	{/if}
+<!-- The head of a bewindspersoon is the head of every reader (ReaderHead): what they are and
+     since when in the status line, the ways into the overview under it. -->
+<ReaderHead
+	collection="members"
+	title={m.name ?? m.key}
+	acties={{
+		bewaar: {
+			id,
+			at: '',
+			kort: m.name ?? m.key,
+			voluit: partij ? `${m.name ?? m.key} (${partij})` : (m.name ?? m.key),
+			groep: 'Bewindspersonen'
+		}
+	}}
+>
+	{#snippet soort()}
+		<KindGlyph collection="members" />Bewindspersoon{partij ? `, ${partij}` : ''}
+	{/snippet}
+	{#snippet status()}
+		{#if laatst}
+			<p class="zin">
+				{#if nu.length}
+					{nu.map((f) => f.function).join(' en ')} sinds {datum(nu[0].from_date)}, {nu[0].cabinet}.
+				{:else}
+					Laatst {laatst.function?.charAt(0).toLowerCase()}{laatst.function?.slice(1)}, tot {datum(
+						laatst.to_date
+					)} ({laatst.cabinet}).
+				{/if}
+			</p>
+		{/if}
+	{/snippet}
 	<ul class="ing">
 		{#if tz?.total !== 0}
 			<li>
@@ -73,36 +89,11 @@
 			>
 		</li>
 	</ul>
-</header>
+</ReaderHead>
 
 <style>
-	.kop {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.soort {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-2);
-	}
-	.naam {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-	}
 	.zin {
 		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: var(--lh-snug);
-		color: var(--ink);
 	}
 	.ing {
 		list-style: none;

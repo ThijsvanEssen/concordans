@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -64,9 +65,11 @@
 			}}
 		>
 			{#snippet soort()}
-				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>
-				<span class="komma">,</span>{chamberName(chamber)}
-				{#if kind}<span class="komma">,</span>{kind}{/if}
+				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>{opsomming([
+					'',
+					chamberName(chamber),
+					kind
+				]) && `, ${opsomming([chamberName(chamber), kind])}`}
 			{/snippet}
 			{#snippet status()}
 				{#if abbreviation && abbreviation !== name}<span class="afk">{abbreviation}</span>{/if}
@@ -151,9 +154,6 @@
 		gap: var(--s-2);
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
-	.komma {
-		margin-left: calc(-1 * var(--s-2));
-	}
 	.officers {
 		display: grid;
 		grid-template-columns: max-content minmax(0, 1fr);

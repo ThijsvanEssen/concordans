@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
 	// Reader for an activity: a committee debate, plenary debate or procedural
 	// meeting. There is no endpoint for one activity; the node's own props are shown.
@@ -41,8 +42,10 @@
 		>
 			{#snippet soort()}
 				<KindGlyph collection="activities" />
-				{attrs.kind ?? bronLabel('activities')}
-				{#if attrs.date}<span class="komma">,</span>{formatLongDate(attrs.date)}{/if}
+				{opsomming([
+					attrs.kind ?? bronLabel('activities'),
+					attrs.date ? formatLongDate(attrs.date) : null
+				])}
 			{/snippet}
 		</ReaderHead>
 
@@ -66,9 +69,6 @@
 		color: var(--ink-2);
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
-	.komma {
-		margin-left: calc(-1 * 5px);
-	}
 
 	.foot {
 		display: flex;
