@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { authorCite, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
+	import { authorCite, conclusieNaam, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import PlaatsMenu from '$lib/components/articles/PlaatsMenu.svelte';
@@ -144,8 +144,8 @@
 		return () => (stale = true);
 	});
 
-	// The conclusie of the A-G or P-G, for the status line: from the light node the band has
-	// asked already (one request for both).
+	// The conclusie of the A-G or P-G before API 0.79.43 gave it in the detail: from the light
+	// node the band has asked already (one request for both).
 	// Kept per judgment: the reader's node is replaced under the same id (its head, its light
 	// node, the canvas's), and the line would lose it and get it back each time.
 	let conclusieVoor = $state<{ id: string; laag: Laag | null } | null>(null);
@@ -215,6 +215,16 @@
 			judgmentDate,
 			caseNumber
 		].filter(Boolean)}
+		<!-- The conclusies by their A-G or P-G and day from the judgment's own detail, so they
+		     stand with the text (API 0.79.43, #507); before it, from the light node. -->
+		{@const conclusies = view.data.conclusions
+			? view.data.conclusions.map((c) => ({
+					ref: { collection: 'judgments' as const, key: ecliKey(c.ecli) },
+					naam: conclusieNaam(c)
+				}))
+			: conclusie
+				? [conclusie]
+				: []}
 		{@const kop = j.ecli
 			? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author)
 			: null}
@@ -247,12 +257,14 @@
 			}}
 		>
 			{#snippet status()}
-				{#if statusWoorden.length || conclusie}
+				{#if statusWoorden.length || conclusies.length}
 					<p>
 						{#if statusWoorden.length}{statusWoorden.join(', ')}.{/if}
-						{#if conclusie}Conclusie: {#if conclusie.ref}<BronLink ref={conclusie.ref}
-									>{conclusie.naam}</BronLink
-								>{:else}{conclusie.naam}{/if}{/if}
+						{#if conclusies.length}{conclusies.length > 1 ? 'Conclusies' : 'Conclusie'}: {#each conclusies as c, i (c.naam)}{i >
+								0
+									? '; '
+									: ''}{#if c.ref}<BronLink ref={c.ref}>{c.naam}</BronLink
+									>{:else}{c.naam}{/if}{/each}{/if}
 					</p>
 				{/if}
 			{/snippet}
