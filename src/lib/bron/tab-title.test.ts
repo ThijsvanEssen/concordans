@@ -35,6 +35,10 @@ describe('tabTitle', () => {
 		).toBe('Art. 419 Wetboek van Burgerlijke Rechtsvordering');
 	});
 
+	it('names a bijlage as the reader does, not by the data\'s "Annex"', () => {
+		expect(tabTitle(node('annexes', 'Annex II', 'Annex II', { label: 'II' }))).toBe('Bijlage II');
+	});
+
 	it('names a translation as such: it shares the date and name of its original', () => {
 		const props = {
 			ecli: 'ECLI:NL:HR:2019:2007',
