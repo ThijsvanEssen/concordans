@@ -98,7 +98,7 @@
 		/** Loads the verbindingen again after a failed load; without it no Opnieuw is offered. */
 		onRetry?: () => void;
 		/** A group is opened: its rows beyond the first few are asked now. */
-		onMeer?: (groupId: string) => void;
+		onMeer?: (groupId: string) => void | Promise<void>;
 		/** Every row, before a copy or an export. */
 		onAlles?: () => Promise<void>;
 	} = $props();
@@ -217,10 +217,30 @@
 	}
 
 	const drawable = (rows: Row[]) => rows.filter((r) => r.relation && r.direction);
+	/** Whether a group holds all its rows, not the first five of Verbonden's first request. */
+	const heel = (g: Group) => g.rows.length >= (g.total ?? 0) || opgehaald.has(g.id);
+	/** The groups whose own buckets were asked for a drawing: as whole as the API gives. */
+	let opgehaald = $state(new Set<string>());
+	$effect(() => {
+		void selection.id;
+		opgehaald = new Set();
+	});
+	// On, off and undo act on the whole group, not on the rows loaded (kabinet-Jetten, 10 Oct:
+	// 5 of 28 bewindspersonen).
 	const isLayerOn = (g: Group) => {
 		const rows = drawable(g.rows);
-		return rows.length > 0 && rows.every((r) => onCanvas.has(refId(r.ref)));
+		return heel(g) && rows.length > 0 && rows.every((r) => onCanvas.has(refId(r.ref)));
 	};
+	/** The group with all its rows, asked first where it holds only the first few. */
+	async function heleGroep(g: Group): Promise<Group> {
+		if (heel(g) || !onMeer) return g;
+		const voor = selection.id;
+		await onMeer(g.id);
+		await tick();
+		if (voor !== selection.id) return g;
+		opgehaald = new Set(opgehaald).add(g.id);
+		return groepen.find((x) => x.id === g.id) ?? g;
+	}
 
 	/**
 	 * What the last "toon in netwerk" did, under its group: how many were drawn or taken off,
@@ -247,9 +267,13 @@
 		meldNetwerk(tekst, terug, MELDING_MS);
 	}
 
-	function toggleLayer(g: Group) {
+	async function toggleLayer(eerst: Group) {
+		const aan = isLayerOn(eerst);
+		const voor = selection.id;
+		const g = aan ? eerst : await heleGroep(eerst);
+		if (voor !== selection.id) return;
 		const rows = drawable(g.rows);
-		if (isLayerOn(g)) {
+		if (aan) {
 			const ids = rows.map((r) => refId(r.ref));
 			store.hideRows(ids);
 			meld(g.id, `${telling(rows)} uit het netwerk gehaald.`, () =>

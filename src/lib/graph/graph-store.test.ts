@@ -37,16 +37,32 @@ const awb = {
 	}
 };
 
-const getNodeGraph = vi.fn(async (_c: string, _k: string, opts: { limit?: number } = {}) =>
-	opts.limit === 1
-		? {
-				...awb,
-				neighbors: {
-					...awb.neighbors,
-					buckets: awb.neighbors.buckets.map((b) => ({ ...b, items: b.items.slice(0, 1) }))
+// A cabinet, without neighbours: its bewindspersonen come from Verbonden (showRows).
+const jetten = {
+	node: {
+		id: 'cabinets/jetten',
+		key: 'jetten',
+		collection: 'cabinets',
+		type: 'cabinet',
+		display_name: 'kabinet-Jetten',
+		labels: [],
+		props: {}
+	},
+	neighbors: { total: 0, buckets: [] }
+};
+
+const getNodeGraph = vi.fn(async (c: string, _k: string, opts: { limit?: number } = {}) =>
+	c === 'cabinets'
+		? jetten
+		: opts.limit === 1
+			? {
+					...awb,
+					neighbors: {
+						...awb.neighbors,
+						buckets: awb.neighbors.buckets.map((b) => ({ ...b, items: b.items.slice(0, 1) }))
+					}
 				}
-			}
-		: awb
+			: awb
 );
 vi.mock('$lib/api/nodes', async (original) => ({
 	...(await original<typeof import('$lib/api/nodes')>()),
@@ -81,5 +97,32 @@ describe('the bron before its neighbours', () => {
 			neighborLimit: Number.POSITIVE_INFINITY
 		});
 		expect(nodes().length).toBeGreaterThan(1);
+	});
+});
+
+describe('rows shown on a cabinet', () => {
+	it('go into its hull with their seat, not out of it on a verbinding', async () => {
+		const { getContainerGroup } = await import('./container-membership');
+		const store = createGraphStore();
+		const focus = await store.expandNode('cabinets', 'jetten');
+		expect(focus?.id).toBe('cabinets/jetten');
+		const rows = ['a', 'b', 'c'].map((key, i) => ({
+			ref: { collection: 'members' as const, key },
+			title: key,
+			relation: 'SERVED_IN' as const,
+			direction: 'inbound' as const,
+			period: { from: '2026-02-23', to: i === 2 ? '2026-06-01' : null }
+		}));
+		expect(store.showRows('cabinets/jetten', rows)).toBe(true);
+		let edges: { source: string; target: string }[] = [];
+		store.edges.subscribe((es) => (edges = es))();
+		expect(
+			edges.filter((e) => e.target === 'cabinets/jetten' || e.source === 'cabinets/jetten')
+		).toEqual([]);
+		const group = getContainerGroup('cabinets/jetten');
+		expect([...(group?.members ?? [])]).toEqual(
+			expect.arrayContaining(['members/a', 'members/b', 'members/c'])
+		);
+		expect(group?.periods.get('members/c')).toEqual({ from: '2026-02-23', to: '2026-06-01' });
 	});
 });

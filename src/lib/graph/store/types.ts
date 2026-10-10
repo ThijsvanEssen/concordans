@@ -2,7 +2,7 @@ import type { Readable } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
 import type { Collection, Relation } from '$lib/vocabulary';
 import type { GraphNode, GraphEdge } from '../types';
-import type { ContainerKind } from '../container-membership';
+import type { ContainerKind, Period } from '../container-membership';
 
 /** A chosen bron of a netwerk that is on, with its node response. */
 /** The API's defaults for a neighbourhood: three steps, at most 200 bronnen. */
@@ -35,6 +35,8 @@ export type CanvasRow = {
 	direction: 'inbound' | 'outbound';
 	proposed?: boolean;
 	props?: Record<string, unknown>;
+	/** The seat the verbinding records (a member's term, a bewindspersoon's posts). */
+	period?: Period | null;
 };
 
 export type GraphFilters = {
