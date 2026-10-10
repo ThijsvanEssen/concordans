@@ -3,6 +3,16 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- With scripts the server's text stays hidden: the paper and the bar, then the app,
+		     not a page that is shown and then replaced (Thijs, 10 Oct: "erg afleidend"). If
+		     the app has not mounted after 4 s (a chunk that fails), the text shows after all;
+		     the root layout stops the timer. Without scripts, and for a crawler, it is there. -->
+		<script>
+			document.documentElement.classList.add('js');
+			window.__seoTerug = setTimeout(function () {
+				document.documentElement.classList.remove('js');
+			}, 4000);
+		</script>
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
 		<meta
@@ -70,6 +80,9 @@
 				display: block;
 				height: 60px;
 				border-bottom: 1px solid var(--rule);
+			}
+			.js #seo {
+				display: none;
 			}
 			/* .blad with a reading width (.blad--tekst). */
 			#seo {

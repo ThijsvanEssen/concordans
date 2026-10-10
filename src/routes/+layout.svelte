@@ -14,7 +14,12 @@
 	// (title, description, canonical, og:*, JSON-LD), each tag marked data-seo
 	// (~/Development/seo-html-ontwerp.md). The content goes before the app's first paint:
 	// the app shows the same, and the page has it once.
-	if (browser) document.getElementById('seo')?.remove();
+	if (browser) {
+		// The app is here: the server's text goes, and so does the timer that would show it
+		// when the app did not come (app.html).
+		clearTimeout(window.__seoTerug);
+		document.getElementById('seo')?.remove();
+	}
 	// Without a head from the server (the plain index.html, when the API is down) the fixed
 	// description of app.html gives way to the page's own.
 	if (browser && !serverKop.actief)
