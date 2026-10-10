@@ -11,6 +11,7 @@
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
+	import { isEscape } from '$lib/actions/keys';
 
 	let {
 		node,
@@ -21,7 +22,11 @@
 		onOmgeving,
 		at = null,
 		onMouseEnter,
-		onMouseLeave
+		onMouseLeave,
+		onSluit,
+		onVerder,
+		onTerug,
+		el = $bindable(null)
 	}: {
 		node: GraphNode;
 		isChosen?: boolean;
@@ -36,7 +41,33 @@
 		at?: { x: number; y: number } | null;
 		onMouseEnter?: () => void;
 		onMouseLeave?: () => void;
+		/** Escape in the card (reached from the keyboard's list of bronnen). */
+		onSluit?: () => void;
+		/** Tab past its last action, and Shift+Tab before its first. */
+		onVerder?: () => void;
+		onTerug?: () => void;
+		el?: HTMLElement | null;
 	} = $props();
+
+	// The card is reached from the list of bronnen with Tab; it hands the focus on to the
+	// canvas after its last action and back to the list before its first (UX test, #14).
+	function onkeydown(e: KeyboardEvent) {
+		if (isEscape(e) && onSluit) {
+			e.preventDefault();
+			onSluit();
+			return;
+		}
+		if (e.key !== 'Tab' || !el) return;
+		const acties = [...el.querySelectorAll<HTMLElement>('a[href], button')];
+		const hier = acties.indexOf(e.target as HTMLElement);
+		if (!e.shiftKey && hier === acties.length - 1 && onVerder) {
+			e.preventDefault();
+			onVerder();
+		} else if (e.shiftKey && hier === 0 && onTerug) {
+			e.preventDefault();
+			onTerug();
+		}
+	}
 
 	const W = 360;
 
@@ -118,6 +149,8 @@
 	style="width:min({W}px, calc(100% - var(--s-4)));{at ? `left:${at.x}px;top:${at.y}px;` : ''}"
 	onmouseenter={onMouseEnter}
 	onmouseleave={onMouseLeave}
+	{onkeydown}
+	bind:this={el}
 >
 	<div class="head">
 		<KindGlyph collection={node.collection} />
@@ -244,8 +277,10 @@
 		display: block;
 	}
 
+	/* In a narrow network the actions take a second line rather than leave the card. */
 	.foot {
 		display: flex;
+		flex-wrap: wrap;
 		gap: var(--s-2);
 		padding-top: var(--s-1);
 		border-top: 1px solid var(--rule);
