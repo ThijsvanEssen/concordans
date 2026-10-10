@@ -176,6 +176,15 @@
 		--groep-commissie: #438365; /* dash and dot */
 		--groep-dossier: #d3762d; /* dashed */
 
+		/* The network's own colours. No red: in the network red only says no, and nothing
+		   there says no yet (Thijs, 10 Oct: "de kleur mag alleen blijven zolang het een doel
+		   dient"). A stuk and its dossier in the dossier's hue, a change to a wet in the wet's,
+		   the focus and a chosen verbinding in ink. */
+		--netwerk-stuk: var(--groep-dossier);
+		--netwerk-dossier: var(--groep-dossier);
+		--netwerk-wijziging: var(--groep-wet);
+		--netwerk-focus: var(--ink);
+
 		/* Typography: one text face, one interface face. Identifiers are set in the sans. */
 		--font-serif: 'Newsreader', Georgia, serif;
 		/* One serif for all text, in 400, 600 and 800; the sans only for controls: buttons,
@@ -248,6 +257,11 @@
 		--z-panel: 30;
 		--z-float: 40;
 		--z-modal: 50;
+
+		/* The cards over the network (Netwerk, Legenda, a cluster's card): one width, one right
+		   edge (Thijs, 10 Oct). */
+		--paneel-breed: 280px;
+		--paneel-rand: var(--s-3);
 	}
 
 	/* ─── Global base ────────────────────────────────────────────────────────── */

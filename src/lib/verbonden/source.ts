@@ -62,8 +62,11 @@ export type VerbondenSource = Readable<VerbondenState> & {
 	load: (selection: GraphNode | null) => void;
 	/** Load the same bron again, after a failed request. */
 	reload: () => void;
-	/** The rows of one group, when it is opened: its own buckets, up to 200 each. */
-	groep: (id: string) => void;
+	/**
+	 * The rows of one group, when it is opened or drawn: its own buckets, up to 200 each.
+	 * Settles once they are in the groups.
+	 */
+	groep: (id: string) => Promise<void>;
 	/** Every row, for a filter, the table or an export: the whole node. */
 	volledig: () => Promise<void>;
 	destroy: () => void;
@@ -86,7 +89,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		totals: Map<string, number>;
 		signal: AbortSignal;
 		volledig: boolean;
-		geopend: Set<string>;
+		geopend: Map<string, Promise<void>>;
 	} | null = null;
 	let groups: Group[] = [];
 	// A loader's rest, asked when its group is opened, the table or an export (`Loaded.meer`).
@@ -184,7 +187,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					totals,
 					signal: ac.signal,
 					volledig: !lui,
-					geopend: new Set()
+					geopend: new Map()
 				};
 				groups = bouw(basis);
 				const pending = new Set(groups.filter((g) => g.load).map((g) => g.id));
@@ -254,25 +257,30 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			load(last);
 		},
 		groep: (id) => {
-			if (vervolg.has(id)) {
-				void vervolgVan(id);
-				return;
-			}
+			if (vervolg.has(id)) return vervolgVan(id);
 			const b = basis;
-			if (!b || b.volledig || b.geopend.has(id)) return;
+			if (!b || b.volledig) return Promise.resolve();
+			const bezig = b.geopend.get(id);
+			if (bezig) return bezig;
 			const def = (GROUPS[b.collection] ?? []).find((d) => d.id === id);
-			if (!def?.match) return;
-			b.geopend.add(id);
-			getBuckets(b.collection, b.key, def.match, b.signal).then((found) => {
-				if (b !== basis) return;
-				const seen = new Set(b.neighbors.map(neighborKey));
-				for (const n of found) {
-					if (seen.has(neighborKey(n))) continue;
-					seen.add(neighborKey(n));
-					b.neighbors.push(n);
-				}
-				herbouw();
-			});
+			if (!def?.match) return Promise.resolve();
+			const klaar = getBuckets(b.collection, b.key, def.match, b.signal)
+				.then((found) => {
+					if (b !== basis) return;
+					const seen = new Set(b.neighbors.map(neighborKey));
+					for (const n of found) {
+						if (seen.has(neighborKey(n))) continue;
+						seen.add(neighborKey(n));
+						b.neighbors.push(n);
+					}
+					herbouw();
+				})
+				.catch(() => {
+					// Asked again the next time.
+					if (b === basis) b.geopend.delete(id);
+				});
+			b.geopend.set(id, klaar);
+			return klaar;
 		},
 		volledig: () => {
 			const rest = Promise.all([...vervolg.keys()].map(vervolgVan));

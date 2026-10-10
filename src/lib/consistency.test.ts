@@ -328,6 +328,16 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('draws a mark in a Keuze in the colour of its option', () => {
+		// On the chosen option (ink) an ink mark vanished: the mark follows the text.
+		const keuze = sources.find((s) => s.path === 'lib/components/ui/Keuze.svelte')!;
+		expect(
+			rules(keuze.text).some(
+				(r) => r.selector.includes(':global(.kind-glyph)') && /color:\s*currentColor/.test(r.body)
+			)
+		).toBe(true);
+	});
+
 	it('takes every colour in a style from the tokens in AppShell', () => {
 		// A hex or rgb() value in a component is a colour beside the palette. A mask's `black`
 		// is not a colour; the canvas and the fracties' own colours live in TypeScript.
@@ -532,5 +542,52 @@ describe('effects that end', () => {
 		});`;
 		const [e] = effecten(fout);
 		expect([...schrijft(e.cleanup)].filter((n) => leest(e.body, n))).toEqual(['laden']);
+	});
+});
+
+// The cards over the network stand at one width on one right edge (Thijs, 10 Oct); the halls'
+// text and bars at the left edge of the frame, the hall alone centred.
+describe('canvas cards and halls', () => {
+	it('sizes every card over the network with --paneel-breed and --paneel-rand', () => {
+		const kaart = /^\.(netwerk|legenda|cluster-kaart)$/;
+		expect(
+			offenders((t) =>
+				rules(t).some(
+					(r) =>
+						kaart.test(r.selector.trim()) &&
+						(/(?<![-\w])width:\s*\d/.test(r.body) || /(?<![-\w])right:\s*var\(--s-/.test(r.body))
+				)
+			)
+		).toEqual([]);
+	});
+
+	it('keeps red out of the network: its colours are --netwerk-* tokens (Thijs, 10 Oct)', () => {
+		// Red in the network would only say no; the kinds, the focus and a chosen verbinding
+		// take the tokens in AppShell.
+		const netwerk = (path: string) =>
+			/^lib\/(components\/graph|netwerk|graph)\//.test(path) && !/\.test\.ts$/.test(path);
+		expect(
+			sources
+				.filter((s) => netwerk(s.path) && /--accent|\baccent\b|accentSoft|#8c2f28/i.test(s.text))
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+
+	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
+		expect(
+			offenders(
+				(t) => /<p class="(sleutel|pl)"/.test(t) && /Voorzitter/.test(t),
+				['lib/components/explore/ZaalPlaatsen.svelte']
+			)
+		).toEqual([]);
+		const zaal = ['Meerderheid', 'ZaalLegenda', 'ZaalPlaatsen', 'Hemicycle'].map(
+			(n) => `lib/components/explore/${n}.svelte`
+		);
+		expect(
+			sources
+				.filter((s) => zaal.includes(s.path))
+				.filter((s) => /margin:[^;]*\bauto\b|text-align:\s*center/.test(s.text))
+				.map((s) => s.path)
+		).toEqual([]);
 	});
 });

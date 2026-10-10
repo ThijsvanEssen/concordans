@@ -1,6 +1,12 @@
 import { nodeId } from '$lib/vocabulary';
 import { get } from 'svelte/store';
-import { isContainerMember } from '../container-membership';
+import {
+	containerIdFor,
+	containerKindOf,
+	isContainerMember,
+	isContainerMembership,
+	recordContainerMember
+} from '../container-membership';
 import { syntheticNode } from '../types';
 import type { GraphContext } from './context';
 import type { GraphStore } from './types';
@@ -43,13 +49,24 @@ export function createViewActions(
 		focusNode: (nodeId) => focusInternal(nodeId),
 
 		showRows: (focusId, rows) => {
-			if (!nodes.has(focusId)) return false;
+			const focus = nodes.get(focusId);
+			if (!focus) return false;
+			// A cabinet, commissie, fractie, dossier or wet holds its members in its hull, as
+			// mergeInto does: no verbinding drawn out of it (Kabinet-Jetten, 10 Oct: five
+			// bewindspersonen hung outside the hull after Ongedaan maken).
+			const raw = focus.raw;
+			const kind = raw ? containerKindOf(raw.collection) : null;
+			const container = raw && kind ? containerIdFor(raw) : null;
 			for (const row of rows) {
 				const id = nodeId(row.ref.collection, row.ref.key);
 				if (!nodes.has(id)) {
 					const node = syntheticNode(row.ref.collection, row.ref.key, row.title, row.props ?? {});
 					insertedAt.set(id, ++state.seq);
 					nodes.set(id, node);
+				}
+				if (kind && container && isContainerMembership(kind, row.relation)) {
+					recordContainerMember(kind, container, id, row.relation, row.period ?? null);
+					continue;
 				}
 				const [source, target] = row.direction === 'inbound' ? [id, focusId] : [focusId, id];
 				addEdge(source, target, row.relation, { status: row.proposed ? 'voorgesteld' : null });

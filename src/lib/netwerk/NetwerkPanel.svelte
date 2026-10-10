@@ -498,8 +498,8 @@
 	}
 	.netwerk {
 		position: absolute;
-		top: var(--s-3);
-		right: var(--s-3);
+		top: var(--paneel-rand);
+		right: var(--paneel-rand);
 		z-index: var(--z-float);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
@@ -507,9 +507,9 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink);
-		width: 280px;
-		max-width: calc(100% - 2 * var(--s-3));
-		max-height: calc(100% - 2 * var(--s-3));
+		width: var(--paneel-breed);
+		max-width: calc(100% - 2 * var(--paneel-rand));
+		max-height: calc(100% - 2 * var(--paneel-rand));
 		overflow-y: auto;
 		padding: var(--s-2) var(--s-3) var(--s-3);
 		display: grid;
@@ -526,8 +526,8 @@
 	   beside it (sweep at 375, 10 Oct). */
 	@media (max-width: 767px) {
 		.netwerk:not(.netwerk--start) {
-			left: var(--s-3);
-			right: var(--s-3);
+			left: var(--paneel-rand);
+			right: var(--paneel-rand);
 			width: auto;
 			max-width: none;
 		}

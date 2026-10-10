@@ -13,6 +13,7 @@
 	import type { BronKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
+	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { metGroepVerborgen } from '$lib/graph/met-groep';
 	import { centroid, exitPoint, hullOutline, type Point } from '$lib/graph/hull';
 	import {
@@ -163,6 +164,11 @@
 	let latestMutatieActive = false;
 	let latestContainerGroups: Map<string, ContainerGroup> = new Map();
 	let latestFocusMembers: ReadonlySet<string> = new Set();
+	/**
+	 * Members of the focused hull whose seat in it has ended, with its last day: drawn in the
+	 * hull but quiet, "tot <datum>" on a hover, never as a line out of it (Orchestrator, 10 Oct).
+	 */
+	let latestGewezen: ReadonlyMap<string, string> = new Map();
 	// Which group(s) each bron belongs to, so two members of the same hull can be
 	// told apart from a connection that actually crosses into or out of it.
 	let nodeGroupIds: Map<string, Set<string>> = new Map();
@@ -343,8 +349,20 @@
 	}
 
 	$effect(() => {
-		latestFocusMembers =
-			(focusContainerId && containerGroups.get(focusContainerId)?.members) || new Set();
+		const focusGroup = focusContainerId ? containerGroups.get(focusContainerId) : undefined;
+		latestFocusMembers = focusGroup?.members ?? new Set();
+		// Ended before the hull's own last day: a cabinet that has ended does not make all its
+		// bewindspersonen former ones, only those who left before it did.
+		const zetels = [...(focusGroup?.periods ?? [])];
+		const eind = zetels.some(([, p]) => p.to === null)
+			? vandaag()
+			: (zetels
+					.map(([, p]) => p.to as string)
+					.sort()
+					.at(-1) ?? '');
+		latestGewezen = new Map(
+			zetels.filter(([, p]) => p.to !== null && p.to < eind).map(([id, p]) => [id, p.to as string])
+		);
 		renderer?.refresh();
 	});
 
@@ -1145,6 +1163,21 @@
 
 				const inHover = hoveredId !== null;
 				const inFocusGroup = !inHover || id === hoveredId || hoveredNeighbours.has(id);
+				const gewezen = latestGewezen.get(id);
+				if (gewezen && id !== focusedId) {
+					const zelf = id === hoveredId;
+					return {
+						...data,
+						hidden: false,
+						label: zelf ? `${data.label as string}, tot ${korteDatum(gewezen)}` : '',
+						forceLabel: zelf,
+						color: t.paper2,
+						borderColor: dimColor(0.38),
+						image:
+							data.type === 'image' ? spriteForVorm(data.vorm as Vorm, true, false) : data.image,
+						selectionColor: 'rgba(0,0,0,0)'
+					};
+				}
 				if (inHover && !inFocusGroup) {
 					return {
 						...data,
@@ -1198,7 +1231,7 @@
 						hidden: false,
 						label,
 						forceLabel,
-						selectionColor: t.accent,
+						selectionColor: t.focus,
 						size: focusBoost,
 						zIndex: 2
 					};
@@ -1244,7 +1277,7 @@
 						...data,
 						hidden: false,
 						type: edgeType,
-						color: t.accent,
+						color: t.focus,
 						size: restSize * 2.4,
 						label: edgeLabel(data, sourceCollection, src),
 						forceLabel: true,

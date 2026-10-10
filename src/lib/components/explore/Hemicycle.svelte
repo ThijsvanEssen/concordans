@@ -385,7 +385,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-		text-align: center;
 	}
 	/* Where the order comes from: a line of its own under the count. */
 	.hemicycle-source {
