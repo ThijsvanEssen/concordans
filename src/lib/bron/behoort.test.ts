@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { behoort, conclusieVan, heeftIets } from './behoort';
+import { behoort, conclusieVan, dossierNummer, heeftIets } from './behoort';
 
 type Item = {
 	key: string;
@@ -321,5 +321,14 @@ describe('a translation and a dossier', () => {
 			// What the bill amends and implements stands in the reader, under the title.
 			['Behandeld in', 'Tweede Kamer', false]
 		]);
+	});
+});
+
+describe('the number of a dossier', () => {
+	it('keeps its suffix, from the label or from number and suffix', () => {
+		expect(dossierNummer({ number: '36600', suffix: 'VII', label: '36600-VII' })).toBe('36600-VII');
+		expect(dossierNummer({ number: '36600', suffix: 'VII' })).toBe('36600-VII');
+		expect(dossierNummer({ number: '36496' })).toBe('36496');
+		expect(dossierNummer({})).toBeNull();
 	});
 });
