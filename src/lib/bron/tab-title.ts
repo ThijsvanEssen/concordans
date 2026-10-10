@@ -53,5 +53,16 @@ export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>):
 		}
 	}
 	const name = text(node.raw?.display_name);
-	return cut(name ? articleTitle(name, node.collection === 'articles' ? props : null) : node.label);
+	if (node.collection === 'articles') {
+		// An article names its law: "Artikel 8 EVRM", else the law's citation title, never
+		// "Art. 419" alone (UX test 10 Oct, #23).
+		const titel = articleTitle(name ?? node.label, props);
+		const wet = text(props.instrument_citation_title);
+		return cut(
+			text(props.instrument_abbreviation) || !wet || titel.includes(wet) || / BW$/.test(titel)
+				? titel
+				: `${titel} ${wet}`
+		);
+	}
+	return cut(name ?? node.label);
 }

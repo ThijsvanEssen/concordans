@@ -62,6 +62,9 @@
 	});
 	$effect(() => {
 		const voor = id;
+		// Asked once the light node is in: a line built before it (no Kamer from its label yet)
+		// would stand for a moment with an answer the band then replaces.
+		if (!lichtHier) return;
 		const controller = new AbortController();
 		for (const r of band.regels) {
 			if (!r.laad) continue;
@@ -180,6 +183,7 @@
 									{#if gevouwen(r) && j === 1}
 										<li class="vouw">
 											<button
+												class="raakvlak"
 												type="button"
 												title={r.lagen
 													.slice(1, -1)
@@ -308,10 +312,13 @@
 		color: var(--ink-2);
 	}
 	/* Folded: one line, the last layer cut at the right rather than wrapping. */
+	/* Cut at the side only (clip): a finger's target of the "…" stands above and below the
+	   line (.raakvlak), and `hidden` would cut it there too. */
 	.lagen.gevouwen {
 		flex-wrap: nowrap;
 		white-space: nowrap;
-		overflow: hidden;
+		overflow-x: clip;
+		overflow-y: visible;
 	}
 	.lagen.gevouwen .laatst {
 		min-width: 0;

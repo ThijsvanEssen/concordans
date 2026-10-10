@@ -25,6 +25,16 @@ describe('tabTitle', () => {
 		);
 	});
 
+	it('names an article by its law where it has no abbreviation', () => {
+		expect(
+			tabTitle(
+				node('articles', 'Art. 419', null, {
+					instrument_citation_title: 'Wetboek van Burgerlijke Rechtsvordering'
+				})
+			)
+		).toBe('Art. 419 Wetboek van Burgerlijke Rechtsvordering');
+	});
+
 	it('names a translation as such: it shares the date and name of its original', () => {
 		const props = {
 			ecli: 'ECLI:NL:HR:2019:2007',

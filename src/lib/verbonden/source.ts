@@ -6,6 +6,7 @@ import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
 import {
+	bucketKey,
 	bucketTotals,
 	getBuckets,
 	lidCountsByCollection,
@@ -56,6 +57,12 @@ export type VerbondenState = {
 	lidPerBak?: Map<string, Map<string, number>> | null;
 	/** Whether the groups hold every row, not the first five per bucket. */
 	volledig?: boolean;
+	/**
+	 * The groups whose loader is still under way and may have rows: each keeps its place in
+	 * the order of the group table with "laden…", so nothing is put in above what stands
+	 * (UX-toets 10 Oct: the judgments of 6:162 BW came after 10 s at the top).
+	 */
+	wachtend?: string[];
 };
 
 export type VerbondenSource = Readable<VerbondenState> & {
@@ -80,6 +87,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	let current: string | null = null;
 	let last: GraphNode | null = null;
 	// What the groups of the current bron are built from, so a group opened adds its rows.
+	/** The whole node was asked for before `basis` stood. */
+	let wilVolledig = false;
 	let basis: {
 		id: string;
 		collection: Collection;
@@ -163,6 +172,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			})
 			.catch(() => {});
 		basis = null;
+		wilVolledig = false;
 		groups = [];
 		vervolg.clear();
 		let lui = true;
@@ -191,17 +201,33 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				};
 				groups = bouw(basis);
 				const pending = new Set(groups.filter((g) => g.load).map((g) => g.id));
+				// A loader whose buckets the node counts empty will bring nothing: no place for it.
+				const kanRijen = (id: string) => {
+					const bakken = (GROUPS[collection] ?? []).find((d) => d.id === id)?.bakken;
+					if (!bakken) return true;
+					return bakken.some(
+						(b) => (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 1) > 0
+					);
+				};
 				const zet = () =>
 					state.set({
 						id: selection.id,
 						groups,
 						loading: pending.size > 0,
+						wachtend: [...pending].filter(kanRijen),
 						failed: false,
 						lidTellingen: perBak ? sumLidCounts(perBak) : null,
 						lidPerBak: perBak,
 						volledig: basis?.volledig ?? false
 					});
 				zet();
+				// The node now; a loader's further rows (`meer`) once the loaders are in.
+				const alsGevraagd = () => {
+					if (!wilVolledig) return;
+					if (pending.size === 0) wilVolledig = false;
+					void volledig();
+				};
+				alsGevraagd();
 				const ctx = {
 					node: response.node,
 					neighbors,
@@ -240,6 +266,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 							if (ac.signal.aborted) return;
 							pending.delete(def.id);
 							zet();
+							alsGevraagd();
 						});
 				}
 			})
@@ -248,6 +275,27 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					state.set({ id: selection.id, groups: [], loading: false, failed: true });
 			});
 	};
+
+	function volledig(): Promise<void> {
+		const rest = Promise.all([...vervolg.keys()].map(vervolgVan));
+		const b = basis;
+		// Asked before the first rows are in (an address with ?tabel=1): asked again then.
+		if (!b) wilVolledig = true;
+		if (!b || b.volledig) return rest.then(() => {});
+		b.volledig = true;
+		const node = store
+			.nodeResponse(b.collection, b.key)
+			.then((response) => {
+				if (b !== basis) return;
+				b.neighbors = neighborsOf(response);
+				b.totals = bucketTotals(response);
+				herbouw();
+			})
+			.catch(() => {
+				b.volledig = false;
+			});
+		return Promise.all([rest, node]).then(() => {});
+	}
 
 	return {
 		subscribe: state.subscribe,
@@ -282,24 +330,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			b.geopend.set(id, klaar);
 			return klaar;
 		},
-		volledig: () => {
-			const rest = Promise.all([...vervolg.keys()].map(vervolgVan));
-			const b = basis;
-			if (!b || b.volledig) return rest.then(() => {});
-			b.volledig = true;
-			const node = store
-				.nodeResponse(b.collection, b.key)
-				.then((response) => {
-					if (b !== basis) return;
-					b.neighbors = neighborsOf(response);
-					b.totals = bucketTotals(response);
-					herbouw();
-				})
-				.catch(() => {
-					b.volledig = false;
-				});
-			return Promise.all([rest, node]).then(() => {});
-		},
+		volledig,
 		destroy: () => controller?.abort()
 	};
 }

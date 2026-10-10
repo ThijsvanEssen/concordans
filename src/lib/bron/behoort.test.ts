@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { behoort, conclusieVan, heeftIets } from './behoort';
+import { behoort, conclusieVan, dossierNummer, heeftIets, metEersteKamer } from './behoort';
 
 type Item = {
 	key: string;
@@ -321,5 +321,28 @@ describe('a translation and a dossier', () => {
 			// What the bill amends and implements stands in the reader, under the title.
 			['Behandeld in', 'Tweede Kamer', false]
 		]);
+	});
+});
+
+describe('the number of a dossier', () => {
+	it('keeps its suffix, from the label or from number and suffix', () => {
+		expect(dossierNummer({ number: '36600', suffix: 'VII', label: '36600-VII' })).toBe('36600-VII');
+		expect(dossierNummer({ number: '36600', suffix: 'VII' })).toBe('36600-VII');
+		expect(dossierNummer({ number: '36496' })).toBe('36496');
+		expect(dossierNummer({})).toBeNull();
+	});
+});
+
+describe('the Kamers that dealt with a dossier', () => {
+	const tk = [{ soort: 'Kamer', naam: 'Tweede Kamer' }];
+	it('adds the Eerste Kamer where the detail holds its papers or its outcome there', () => {
+		expect(metEersteKamer(tk, { senate: { document_count: 14 } })).toEqual([
+			{ soort: 'Kamer', naam: 'Tweede Kamer en Eerste Kamer' }
+		]);
+		expect(metEersteKamer(tk, { ek_outcome: { outcome: 'Aangenomen' } })[0].naam).toBe(
+			'Tweede Kamer en Eerste Kamer'
+		);
+		expect(metEersteKamer(tk, { senate: { document_count: 0 }, ek_outcome: null })).toEqual(tk);
+		expect(metEersteKamer([], { senate: { document_count: 3 } })[0].naam).toBe('Eerste Kamer');
 	});
 });

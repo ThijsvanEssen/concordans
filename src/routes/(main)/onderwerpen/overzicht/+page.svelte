@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -138,7 +139,9 @@
 	let getelden = $state<Getelden | null>(null);
 	let dagen = $state<Dag[]>([]);
 	let apiTotaal = $state<number | null>(null);
-	let tellenLaden = $state(false);
+	// Busy from the first draw where the address names a topic: its counts are asked in an
+	// effect, after it; until then the totals read "…", not 0 (UX-toets 10 Oct, #26).
+	let tellenLaden = $state(untrack(() => !!termenSleutel));
 	let tellenFout = $state(false);
 	/** The words, the Kamer and the period as /api/decisions takes them. */
 	const basisVan = (woorden: string[], k: string, v: string, t: string) => ({
@@ -229,7 +232,7 @@
 	/** The amendments counted by their chains in /api/feed/periods: the feed is asked for them
 	 *  only when a cell of the column opens, and only for its period. */
 	let ketensGeteld = $state(false);
-	let feedLaden = $state(false);
+	let feedLaden = $state(untrack(() => !!termenSleutel));
 	/** The day of the last event counted, where the feed has more than was asked. */
 	let feedGrens = $state<string | null>(null);
 	let dataTot = $state<string | null>(null);
@@ -659,7 +662,8 @@
 
 	let apiLijst = $state<Besluit[]>([]);
 	let lijstTotaal = $state<number | null>(null);
-	let lijstLaden = $state(false);
+	// Busy from the first draw where the address names a topic, as the counts above.
+	let lijstLaden = $state(untrack(() => !!termenSleutel));
 	$effect(() => {
 		lijstLaden = false;
 		if (lijstSoort !== 'besluiten' || !termenSleutel) return;
@@ -704,7 +708,7 @@
 	// A cell of the feed: its kind in that month, page by page.
 	let feedLijst = $state<FeedItem[]>([]);
 	let feedCursor = $state<string | null>(null);
-	let feedLijstLaden = $state(false);
+	let feedLijstLaden = $state(untrack(() => !!termenSleutel));
 	const feedVraag = $derived(
 		keuze && lijstSoort === 'feed'
 			? {
@@ -905,13 +909,11 @@
 		}
 	}
 	let dictumOpen = $state<Set<string>>(new Set());
+	/** The dictum of a row opens in place, from the decision itself: no request. */
 	function toonDictum(key: string) {
 		const open = new Set(dictumOpen);
 		if (open.has(key)) open.delete(key);
-		else {
-			open.add(key);
-			void laadStuk(key);
-		}
+		else open.add(key);
 		dictumOpen = open;
 	}
 	/** At the CSV: the coded moties' dictum and indieners, two at a time, at most this many. */
@@ -930,7 +932,7 @@
 					d.key,
 					{
 						richting: mijn[d.key] ?? '',
-						dictum: stuk?.dictum ?? '',
+						dictum: d.dictum ?? stuk?.dictum ?? '',
 						indieners: stuk?.indieners ?? '',
 						fracties: stuk?.fracties ?? ''
 					}
@@ -1206,22 +1208,21 @@
 																>{RICHTING_LABEL[r]}</button
 															>
 														{/each}
-														<button
-															type="button"
-															class="keus keus--dictum"
-															aria-expanded={dictumOpen.has(d.key)}
-															onclick={() => toonDictum(d.key)}>Dictum</button
-														>
+														<!-- Only where the motie has a dictum (the decision's own `dictum`, null
+														     for a motie without text): the rule of Actueel (UX-toets 10 Oct). -->
+														{#if d.dictum}
+															<button
+																type="button"
+																class="keus keus--dictum"
+																aria-expanded={dictumOpen.has(d.key)}
+																onclick={() => toonDictum(d.key)}>Dictum</button
+															>
+														{/if}
 													</span>
 												{/if}
 											</div>
-											{#if isMotie(d) && dictumOpen.has(d.key)}
-												{@const st = stukken[d.key]}
-												<p class="rij__dictum">
-													{#if st === 'laden' || st === undefined}Laden…{:else if st === 'fout'}Kon
-														niet worden geladen.{:else if st.dictum}{st.dictum}{:else if !st.metTekst}Tekst
-														niet in de gegevens.{:else}Geen dictum in de tekst.{/if}
-												</p>
+											{#if isMotie(d) && d.dictum && dictumOpen.has(d.key)}
+												<p class="rij__dictum">{d.dictum}</p>
 											{/if}
 										</div>
 									</li>

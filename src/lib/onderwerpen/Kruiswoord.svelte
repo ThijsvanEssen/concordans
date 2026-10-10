@@ -76,6 +76,8 @@
 
 	const totaal = (vs: Vak[], k: Kolom) => vs.reduce((n, v) => n + (rijen.get(v)?.[k].n ?? 0), 0);
 	const alle = (vs: Vak[]) => vs.reduce((n, v) => n + somVan(rijen.get(v)), 0);
+	/** A column still counting: the totals of the row wait with it instead of reading 0. */
+	const telt = $derived(Object.values(bezig).some(Boolean));
 	const isOngeteld = (k: Kolom, v: Vak) => {
 		const grens = ongeteld[k];
 		return !!grens && v <= grens;
@@ -137,14 +139,17 @@
 
 		<div class="rij kern" role="row">
 			<span class="per" role="rowheader"
-				>{getal(alle(vakken))} <span class="lang">gebeurtenissen</span></span
+				>{telt && !alle(vakken) ? '…' : getal(alle(vakken))}
+				<span class="lang">gebeurtenissen</span></span
 			>
 			{#each kolommen as c (c.k)}
 				<span class="som-groot" role="gridcell"
 					>{bezig[c.k] && !totaal(vakken, c.k) ? '…' : getal(totaal(vakken, c.k))}</span
 				>
 			{/each}
-			<span class="som-groot" role="gridcell">{getal(alle(vakken))}</span>
+			<span class="som-groot" role="gridcell"
+				>{telt && !alle(vakken) ? '…' : getal(alle(vakken))}</span
+			>
 		</div>
 
 		{#each jaren as j (j)}

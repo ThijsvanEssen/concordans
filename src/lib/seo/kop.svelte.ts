@@ -5,3 +5,6 @@
 export const serverKop = $state({
 	actief: typeof document !== 'undefined' && !!document.head.querySelector('title[data-seo]')
 });
+
+/** The title of a page whose bron is still on its way; the page's own name follows. */
+export const LADEN_TITEL = 'Laden…, Concordans';

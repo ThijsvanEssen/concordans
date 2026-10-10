@@ -1,6 +1,7 @@
 import { korteDatum, weekdag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { isGeneriek } from '$lib/bron/generiek';
+import { padHref, parsePad, remember } from '$lib/bron/leesbaar';
 
 // Actueel: what happened, newest first, per day. A day's many items of one kind on one
 // dossier (the moties of a debate) fold into one line that opens.
@@ -11,11 +12,37 @@ export type FeedPerson = Schema<'FeedPersonDTO'>;
 export type FeedItem = Omit<RawFeedItem, 'persons' | 'id'> & { id: string; persons: FeedPerson[] };
 export type FeedKind = FeedItem['kind'];
 
-export const normalizeItem = (raw: RawFeedItem): FeedItem => ({
-	...raw,
-	id: raw.id ?? `${raw.node.collection}/${raw.node.key}`,
-	persons: raw.persons ?? []
-});
+export function normalizeItem(raw: RawFeedItem): FeedItem {
+	const item = {
+		...raw,
+		id: raw.id ?? `${raw.node.collection}/${raw.node.key}`,
+		persons: raw.persons ?? []
+	};
+	onthoudAdres(item);
+	return item;
+}
+
+/**
+ * The readable address of an item, kept with its bron so every link to it (the row's title,
+ * Lees verder, a card) is that address and not /explore?focus= (UX-toets 10 Oct, finding 3):
+ * the API's `path` where it gives one, else a Kamerstuk by its dossier and number as the feed
+ * gives them ("37022", "13"). A paper without either (a motie, a brief: no number in the feed)
+ * keeps the Verkenner's address until the API gives its `path`.
+ */
+function onthoudAdres(i: FeedItem) {
+	const focus = `${i.node.collection}/${i.node.key}`;
+	const pad = i.path ? parsePad(i.path) : null;
+	if (pad) {
+		remember(padHref(pad), focus);
+		return;
+	}
+	const dossier = i.dossier?.number?.trim();
+	const nummer = i.number?.trim();
+	if (i.node.collection === 'documents' && dossier && nummer) {
+		const kamerstuk = parsePad(`/kamerstukken/${dossier}/${nummer}`);
+		if (kamerstuk) remember(padHref(kamerstuk), focus);
+	}
+}
 
 /**
  * Each kind as a row labels it and a day's heading counts it. A paper of the Kamer by the

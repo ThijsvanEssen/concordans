@@ -356,6 +356,14 @@
 		void runLayout(movable);
 	}
 
+	// A new focus from outside the canvas (a link in a reader, Back) frames the network as
+	// a first load does; one chosen on the canvas keeps the view under the hand (UX test 10
+	// Oct, #25: from a kabinet to HR 2019:2006 the netwerk kept the kabinet's camera).
+	let handOpCanvas = false;
+	export function inBeeld() {
+		if (!handOpCanvas) fitWhenSettled();
+	}
+
 	/** Lift the suppression and fit once the layout has stopped. */
 	export function fitWhenSettled() {
 		// An explicit request: it overrides the viewport an additive sync kept.
@@ -392,9 +400,52 @@
 		)
 	);
 	function onKeyNode(n: GraphNode | null) {
+		if (n && stilNa === n.id) {
+			// Back from its card with Escape: the bron has the focus, its card stays closed.
+			stilNa = null;
+			keyNode = n;
+			return;
+		}
+		stilNa = null;
 		keyNode = n;
 		hoverAt = null;
 		hoverNode = n;
+	}
+	// The card of the bron in the keyboard's list: Tab goes into it, Escape and Shift+Tab back
+	// to that bron, Tab past its last action on to the canvas (UX test 10 Oct, #14).
+	let citeEl = $state<HTMLElement | null>(null);
+	let keyOpener: HTMLElement | null = null;
+	let stilNa: string | null = null;
+	function kaartIn(opener: HTMLElement) {
+		const eerste = citeEl?.querySelector<HTMLElement>('a[href], button');
+		const kaart = citeEl;
+		if (!keyNode || !kaart || !eerste) return false;
+		keyOpener = opener;
+		// Focus that leaves card and list elsewhere (a click on the page) closes the card.
+		const weg = (e: FocusEvent) => {
+			const naar = e.relatedTarget as Node | null;
+			if (naar && kaart.contains(naar)) return;
+			kaart.removeEventListener('focusout', weg);
+			if (naar && opener.closest('ul')?.contains(naar)) return;
+			if (keyNode) {
+				keyNode = null;
+				hoverNode = null;
+			}
+		};
+		kaart.addEventListener('focusout', weg);
+		eerste.focus();
+		return true;
+	}
+	function kaartUit(focus: 'lijst' | 'canvas', sluit = false) {
+		if (sluit) stilNa = keyNode?.id ?? null;
+		if (focus === 'canvas') {
+			keyNode = null;
+			hoverNode = null;
+			canvasWrap?.focus({ preventScroll: true });
+		} else {
+			if (sluit) hoverNode = null;
+			keyOpener?.focus();
+		}
 	}
 
 	// One click marks a bron: it lights up with its own lines, its card beside it. The reader
@@ -1327,13 +1378,24 @@
 		const kijk = new ResizeObserver(() => schik());
 		kijk.observe(host);
 		if (lg) kijk.observe(lg);
-		const nw = host.querySelector<HTMLElement>('.netwerk');
-		if (nw) kijk.observe(nw);
+		// The panel Netwerk is watched as it is now: after a step to another bron it can be a
+		// new element, whose chips wrap later (Legenda over Netwerk, UX test 10 Oct, #10).
+		const volg = () => {
+			const nw = host.querySelector<HTMLElement>('.netwerk');
+			if (nw) kijk.observe(nw);
+		};
+		volg();
 		// The panel's content changes without a change of its own box (a chip added).
-		const verandert = new MutationObserver(() => schik());
+		const verandert = new MutationObserver(() => {
+			volg();
+			schik();
+		});
+		// A chip's new name is a change of its text alone (kabinet → uitspraak: the chips took a
+		// second line and the Legenda stayed 19 px over the panel, UX test 10 Oct, #10).
 		verandert.observe(host, {
 			childList: true,
 			subtree: true,
+			characterData: true,
 			attributes: true,
 			attributeFilter: ['class']
 		});
@@ -1467,6 +1529,8 @@
 				nodes={listNodes}
 				isChosen={(id) => pinnedIds.has(id)}
 				onFocusNode={onKeyNode}
+				onTab={kaartIn}
+				houdt={(el) => !!el && !!citeEl?.contains(el)}
 				{onToggleChosen}
 				onOpenCluster={(n, opener) => openCluster(n.id, opener)}
 			/>
@@ -1478,7 +1542,11 @@
 				role="application"
 				aria-label="Netwerk. Pijl links en rechts: vorige en volgende bron."
 				tabindex="0"
-				onpointerenter={() => (fitFollows = false)}
+				onpointerenter={() => {
+					fitFollows = false;
+					handOpCanvas = true;
+				}}
+				onpointerleave={() => (handOpCanvas = false)}
 				onpointerdown={() => canvasWrap?.focus({ preventScroll: true })}
 				onwheel={() => (fitFollows = false)}
 			>
@@ -1637,6 +1705,10 @@
 						onMouseLeave={() => {
 							if (!gemarkeerd) hoverNode = null;
 						}}
+						bind:el={citeEl}
+						onSluit={keyNode ? () => kaartUit('lijst', true) : undefined}
+						onVerder={keyNode ? () => kaartUit('canvas') : undefined}
+						onTerug={keyNode ? () => kaartUit('lijst') : undefined}
 					/>
 				{/if}
 			</div>
