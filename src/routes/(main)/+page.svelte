@@ -7,7 +7,7 @@
 	import Search from '$lib/search/Search.svelte';
 	import { api, unwrap } from '$lib/api/client';
 	import { API_BASE_URL } from '$lib/api/base-url';
-	import { bronHref, indexHref } from '$lib/bron/href';
+	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
 	import { dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
 	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
@@ -23,35 +23,30 @@
 		label: string;
 		kinds: string[];
 		tekens: Collection[];
-		href: string;
 	}[] = [
 		{
 			id: 'wetten',
 			label: 'Wetten',
 			kinds: ['instruments', 'articles'],
-			tekens: ['instruments', 'articles'],
-			href: indexHref('instruments')
+			tekens: ['instruments', 'articles']
 		},
 		{
 			id: 'uitspraken',
 			label: 'Uitspraken',
 			kinds: ['judgments'],
-			tekens: ['judgments'],
-			href: indexHref('judgments')
+			tekens: ['judgments']
 		},
 		{
 			id: 'parlement',
 			label: 'Parlement',
 			kinds: ['dossiers', 'documents', 'decisions', 'members', 'factions', 'committees'],
-			tekens: ['dossiers', 'documents', 'decisions', 'members'],
-			href: indexHref('dossiers', { track: 'Wetgeving' })
+			tekens: ['dossiers', 'documents', 'decisions', 'members']
 		},
 		{
 			id: 'kabinet',
 			label: 'Kabinet',
 			kinds: ['cabinets', 'members', 'commitments'],
-			tekens: ['cabinets', 'members', 'commitments'],
-			href: indexHref('cabinets')
+			tekens: ['cabinets', 'members', 'commitments']
 		}
 	];
 	let scope = $state<string | null>(null);
@@ -199,9 +194,6 @@
 						: 'Zoek een wet, uitspraak of dossier'}
 				/>
 			{/key}
-			{#if chosen}
-				<a class="blader" href={chosen.href}>Of blader door {chosen.label.toLowerCase()} →</a>
-			{/if}
 		</div>
 		{#if wetsnetwerk}<Wetsnetwerk schets={wetsnetwerk} />{/if}
 		<section class="actueel" aria-labelledby="actueel-heading">
@@ -258,11 +250,6 @@
 	.glyphs {
 		display: inline-flex;
 		gap: 3px;
-	}
-	.blader {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink);
 	}
 	.main {
 		display: flex;

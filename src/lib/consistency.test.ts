@@ -327,6 +327,16 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('draws a mark in a Keuze in the colour of its option', () => {
+		// On the chosen option (ink) an ink mark vanished: the mark follows the text.
+		const keuze = sources.find((s) => s.path === 'lib/components/ui/Keuze.svelte')!;
+		expect(
+			rules(keuze.text).some(
+				(r) => r.selector.includes(':global(.kind-glyph)') && /color:\s*currentColor/.test(r.body)
+			)
+		).toBe(true);
+	});
+
 	it('takes every colour in a style from the tokens in AppShell', () => {
 		// A hex or rgb() value in a component is a colour beside the palette. A mask's `black`
 		// is not a colour; the canvas and the fracties' own colours live in TypeScript.

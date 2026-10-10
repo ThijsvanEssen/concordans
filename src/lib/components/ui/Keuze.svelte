@@ -66,6 +66,12 @@
 		color: var(--ink);
 		cursor: pointer;
 	}
+	/* A mark in an option (a KindGlyph) is in the option's own colour: paper on the chosen
+	   one, which is filled in ink (Thijs, 10 Oct: the marks vanished there). */
+	button :global(.kind-glyph),
+	button :global(.picto) {
+		color: currentColor;
+	}
 	.keuze.klein {
 		height: var(--veld-h-klein);
 	}
