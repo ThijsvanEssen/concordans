@@ -10,6 +10,7 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { collectionOf, INDEX_TABS } from './categories';
 	import { getStats } from '$lib/api/stats';
+	import { formatCount } from '$lib/text/getal';
 
 	// Each kind with the total its own list gives without a filter (`/api/stats` `lists`,
 	// API 0.79.41): the number the list shows when opened. Empty while it is not there.
@@ -48,7 +49,7 @@
 						<li>
 							<a href={indexHref(cat.key)} title={cat.about}
 								><KindGlyph collection={collectionOf(cat.key)} size={14} /><span>{cat.label}</span
-								>{#if n !== null}<span class="tel">{n.toLocaleString('nl-NL')}</span>{/if}</a
+								>{#if n !== null}<span class="tel">{formatCount(n)}</span>{/if}</a
 							>
 						</li>
 					{/each}
