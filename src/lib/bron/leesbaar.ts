@@ -20,6 +20,7 @@
 // readable address once the bron is known.
 import { SvelteMap } from 'svelte/reactivity';
 import { api, leesAntwoorden } from '$lib/api/client';
+import { getArticleDetail } from '$lib/api/articles';
 import { bookNumber } from '$lib/text/bw';
 import { parseNodeId } from '$lib/vocabulary';
 
@@ -234,6 +235,10 @@ function lookupQuery(pad: Pad) {
  * data lacks it (404 `not_in_data`); another failure is thrown, to be said as such.
  */
 export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | null> {
+	// An article's address names its text: asked at once, beside the lookup and the node,
+	// so the reader finds it waiting (once() shares the request; Thijs, 10 Oct: lazy, the
+	// text first).
+	if (pad.soort === 'artikel') getArticleDetail(pad.wet.toUpperCase(), pad.nummer).catch(() => {});
 	const known = focusOfPad(pad);
 	if (known) return known;
 	const { data, response } = await api.GET('/api/lookup', {

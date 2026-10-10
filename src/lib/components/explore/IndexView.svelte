@@ -473,6 +473,23 @@
 	// The EHRM judgments under the same search and period: the EHRM is its own source, so
 	// the facet of the list does not count them.
 	let echrTotal = $state<number | null>(null);
+	/** The facets of the list asked apart from its first page, still on their way. */
+	let facettenLaden = $state(false);
+	/**
+	 * The facets of a first page asked on their own, beside it (one row, the same filters):
+	 * counting them can take seconds, and the list does not wait for it (Thijs, 10 Oct: lazy).
+	 */
+	function facettenApart<T>(vraag: () => Promise<T>, zet: (r: T) => void, signal: AbortSignal) {
+		facettenLaden = true;
+		vraag()
+			.then((r) => {
+				if (!signal.aborted) zet(r);
+			})
+			.catch(() => {})
+			.finally(() => {
+				if (!signal.aborted) facettenLaden = false;
+			});
+	}
 	/** The number of commitments in each state, under the other filters. */
 	let statusCounts = $state<Map<string, number> | null>(null);
 	let cabinets = $state<Cabinet[]>([]);
@@ -540,22 +557,34 @@
 					limit
 				};
 				return async (offset, signal) => {
-					// Only the first page asks for the facets (API 0.79.2); a further page, or
-					// "meer laden", only for its rows and the total, which the API keeps.
+					// The rows without the facets (API 0.79.2: counting them took ~10 s uncached);
+					// the facets of the first page in a request of their own, beside it.
+					if (!offset)
+						facettenApart(
+							() =>
+								unwrap(
+									api.GET('/api/judgments', {
+										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
+										signal
+									})
+								),
+							(f) => {
+								judgmentFacets = f.facets ?? null;
+								// The source facet counts every source, whichever the list shows.
+								echrTotal =
+									query.q || query.from || query.to
+										? (f.facets?.source?.find((x) => x.value === 'echr')?.count ?? 0)
+										: null;
+							},
+							signal
+						);
 					const r = await unwrap(
 						api.GET('/api/judgments', {
-							params: { query: { ...query, offset, facets: !offset } },
+							params: { query: { ...query, offset, facets: false } },
 							signal
 						})
 					);
 					pages.judgments = toPage(pages.judgments, r.items, offset, r.total);
-					if (!offset) judgmentFacets = r.facets ?? null;
-					// The source facet counts every source, whichever the list shows.
-					if (!offset)
-						echrTotal =
-							query.q || query.from || query.to
-								? (r.facets?.source?.find((f) => f.value === 'echr')?.count ?? 0)
-								: null;
 				};
 			}
 			case 'dossiers': {
@@ -710,11 +739,26 @@
 					limit
 				};
 				return async (offset, signal) => {
+					// The kinds counted in a request of their own, as for the judgments.
+					if (!offset)
+						facettenApart(
+							() =>
+								unwrap(
+									api.GET('/api/documents', {
+										params: { query: { ...query, offset: 0, limit: 1, facets: true } },
+										signal
+									})
+								),
+							(f) => (documentKinds = facetMap(f.facets?.kind)),
+							signal
+						);
 					const r = await unwrap(
-						api.GET('/api/documents', { params: { query: { ...query, offset } }, signal })
+						api.GET('/api/documents', {
+							params: { query: { ...query, offset, facets: false } },
+							signal
+						})
 					);
 					pages.documents = toPage(pages.documents, r.items, offset, r.total ?? undefined);
-					if (!offset) documentKinds = facetMap(r.facets?.kind);
 				};
 			}
 			case 'commitments': {
@@ -758,6 +802,8 @@
 		const ac = new AbortController();
 		loadAbort = ac;
 		loading = true;
+		// A list whose facets come apart says so itself (facettenApart).
+		facettenLaden = false;
 		error = null;
 		loadMoreFailed = false;
 		load(0, ac.signal)
@@ -2205,7 +2251,10 @@
 						>Verfijnen{chips.length ? ` (${chips.length})` : ''}</button
 					>
 					<div class="facet-body" id="bladeren-facetten" class:facet-body--open={filtersOpen}>
-						<IndexFacets groups={facetten} pending={!pages[category] && !error} />
+						<IndexFacets
+							groups={facetten}
+							pending={(!pages[category] && !error) || facettenLaden}
+						/>
 						{#if chips.length}
 							<p class="wis"><TekstLink onclick={clearFilters}>Wis alle filters</TekstLink></p>
 						{/if}
