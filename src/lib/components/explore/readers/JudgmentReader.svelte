@@ -206,12 +206,7 @@
 		)}
 		{@const alsoAs = view.data.same_as ?? []}
 		{@const outside = j.unresolved_citations ?? []}
-		<!-- The status in one sentence: kind, date, case number; the conclusie after it, by
-		     the ECLI its detail names (`conclusion_eclis`, from the Rechtspraak), so it stands
-		     with the text; its name from the light node only as the link's title. -->
-		{@const conclusieEclis = (
-			Array.isArray(j.props?.conclusion_eclis) ? (j.props.conclusion_eclis as unknown[]) : []
-		).filter((e): e is string => typeof e === 'string' && e.trim() !== '')}
+		<!-- The status in one sentence: kind, date, case number; the conclusie after it. -->
 		{@const statusWoorden = [
 			j.decision_kind && !conclusion
 				? j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)
@@ -251,17 +246,11 @@
 			}}
 		>
 			{#snippet status()}
-				{#if statusWoorden.length || conclusieEclis.length || conclusie}
+				{#if statusWoorden.length || conclusie}
 					<p>
 						{#if statusWoorden.length}{statusWoorden.join(', ')}.{/if}
-						{#if conclusieEclis.length}Conclusie: {#each conclusieEclis as e, i (e)}{i > 0
-									? ', '
-									: ''}<BronLink
-									ref={{ collection: 'judgments', key: ecliKey(e) }}
-									title={conclusie?.ref?.key === ecliKey(e) ? conclusie.naam : undefined}
-									>{e}</BronLink
-								>{/each}{:else if conclusie}Conclusie: {#if conclusie.ref}<BronLink
-									ref={conclusie.ref}>{conclusie.naam}</BronLink
+						{#if conclusie}Conclusie: {#if conclusie.ref}<BronLink ref={conclusie.ref}
+									>{conclusie.naam}</BronLink
 								>{:else}{conclusie.naam}{/if}{/if}
 					</p>
 				{/if}
