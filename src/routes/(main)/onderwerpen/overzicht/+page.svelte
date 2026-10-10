@@ -22,6 +22,7 @@
 	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierName, naamVanNummer } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';
+	import { besluiten, geteld, telling } from '$lib/api/decisions';
 	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
 	import {
 		RICHTINGEN,
@@ -150,9 +151,8 @@
 		tellenFout = false;
 		tellenLaden = !!woorden.length;
 		if (!woorden.length) return;
-		unwrap(
-			api.GET('/api/decisions', { params: { query: { ...basis, limit: 1 } }, signal: ac.signal })
-		)
+		// Only counts: the counted answer (API 0.79.41, decisions.ts).
+		geteld({ ...basis, limit: 1 }, ac.signal)
 			.then((r) => {
 				getelden = r.facets?.years ? uitFacets(r.facets, null) : null;
 				dagen = (r.facets?.days ?? []).flatMap((d) =>
@@ -185,12 +185,7 @@
 		fractieLaden = vragen;
 		if (!vragen) return;
 		const vraag = (vote: Stem) =>
-			unwrap(
-				api.GET('/api/decisions', {
-					params: { query: { ...basis, party: wie, vote, limit: 1 } },
-					signal: ac.signal
-				})
-			).then((r) =>
+			geteld({ ...basis, party: wie, vote, limit: 1 }, ac.signal).then((r) =>
 				(r.facets?.days ?? []).flatMap((d) => (d.date ? [{ date: d.date, count: d.count }] : []))
 			);
 		Promise.all([vraag('voor'), vraag('tegen')])
@@ -478,7 +473,8 @@
 				})
 			);
 			uit.push(...r.items);
-			if (r.items.length < PAGINA || offset + PAGINA >= r.total) break;
+			// A total still being counted (null) says nothing: a short page ends it.
+			if (r.items.length < PAGINA || (r.total !== null && offset + PAGINA >= r.total)) break;
 		}
 		return uit;
 	}
@@ -558,15 +554,14 @@
 		apiLijst = [];
 		lijstTotaal = null;
 		lijstLaden = true;
-		unwrap(
-			api.GET('/api/decisions', {
-				params: { query: { ...query, limit: STAP, offset: 0 } },
-				signal: ac.signal
-			})
-		)
-			.then((r) => {
+		besluiten({ ...query, limit: STAP, offset: 0 }, ac.signal)
+			.then(async (r) => {
 				apiLijst = r.items;
 				lijstTotaal = r.total;
+				lijstLaden = false;
+				// The total still being counted: the list stands, its number comes after ('…').
+				const t = await telling(r, { ...query, limit: STAP, offset: 0 }, ac.signal);
+				if (t) lijstTotaal = t.total;
 			})
 			.catch(() => {})
 			.finally(() => {
@@ -653,10 +648,12 @@
 		return STAP;
 	});
 
-	/** How many the list holds, also where only a page of it is loaded. */
+	/** How many the list holds, also where only a page of it is loaded; null while counted. */
 	const lijstAantal = $derived(
 		lijstSoort === 'besluiten'
-			? (lijstTotaal ?? 0)
+			? apiLijst.length && lijstTotaal === null
+				? null
+				: (lijstTotaal ?? 0)
 			: lijstSoort === 'amendementen'
 				? celAmendementen.length
 				: (rijen.get(keuze!.vak)?.[keuze!.kolom].n ?? feedLijst.length)
@@ -674,7 +671,8 @@
 		'Brief regering': 'Brief regering',
 		toezegging: 'Toezegging'
 	};
-	const getal = (n: number) => n.toLocaleString('nl-NL');
+	/** A number; '…' for one still being counted (null). */
+	const getal = (n: number | null) => (n === null ? '…' : n.toLocaleString('nl-NL'));
 	const naam = $derived(termen.join('; '));
 	const oudeFilters = $derived(!keuze && !!(f.soort || f.uitkomst || f.jaar || f.stem));
 

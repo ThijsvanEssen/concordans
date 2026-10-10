@@ -2,6 +2,7 @@
 // function per `Loader` of the group table; each returns rows, and a total where
 // the API gives one.
 import { api, unwrap } from '$lib/api/client';
+import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
 import { getCommittee, str } from '$lib/components/parliamentary/data';
 import { numberOf } from '$lib/components/parliamentary/dossier-number';
@@ -258,12 +259,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 	'dossier-decisions-tk': async ({ node, signal }) => {
 		const label = str(node.props?.label);
 		if (!label) return { rows: [] };
-		const page = await unwrap(
-			api.GET('/api/decisions', {
-				params: { query: { dossier: label, chamber: 'TK', limit: 100 } },
-				signal
-			})
-		);
+		// Its total is the count per kind: the counted answer (API 0.79.41, decisions.ts).
+		const page = await geteld({ dossier: label, chamber: 'TK', limit: 100 }, signal);
 		const amendement = (kind: string | null | undefined) => /^amendement/i.test(kind ?? '');
 		const rows = page.items
 			.filter((d) => !amendement(d.kind))
