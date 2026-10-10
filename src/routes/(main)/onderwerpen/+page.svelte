@@ -40,6 +40,7 @@
 		type Onderwerp
 	} from '$lib/onderwerpen/onderwerpen';
 	import { vandaag } from '$lib/text/datum';
+	import { getMinistries } from '$lib/components/explore/index/government';
 
 	/** Lines per topic, as the feed gives at most in one page. */
 	const PER_ONDERWERP = 100;
@@ -156,6 +157,17 @@
 
 	/** The row opened in place, as on Actueel. */
 	let openId = $state<string | null>(null);
+
+	// The ministry of a row by its name, as Actueel shows it (UX-toets 10 Oct: "venw", "fin").
+	// One request for both pages (getMinistries is asked once).
+	let ministries = $state<{ key: string; name?: string | null }[]>([]);
+	$effect(() => {
+		getMinistries()
+			.then((m) => (ministries = m))
+			.catch(() => {});
+	});
+	const ministryName = (key: string | null | undefined) =>
+		(key && ministries.find((m) => m.key === key)?.name) || key || '';
 
 	let verderBezig = $state<string | null>(null);
 	async function verderTerug(o: Onderwerp) {
@@ -377,7 +389,7 @@
 								{openId}
 								onToggle={(id) => (openId = openId === id ? null : id)}
 								colorOf={(short) => (short ? partyColor(short) : 'var(--rule-strong)')}
-								ministryName={(key) => key ?? ''}
+								{ministryName}
 								filterHref={(patch) => `/actueel?${new URLSearchParams(patch)}`}
 								nieuwSinds={o.vorige}
 							/>
