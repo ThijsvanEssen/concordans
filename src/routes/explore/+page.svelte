@@ -29,7 +29,8 @@
 	import { onDestroy, onMount, setContext, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { tabTitle } from '$lib/bron/tab-title';
+	import { cut, tabTitle } from '$lib/bron/tab-title';
+	import { titelVan } from '$lib/bron/titels.svelte';
 	import { api, ApiError } from '$lib/api/client';
 	import { getNodeCanvas, getNodeFirst, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/kop';
@@ -961,7 +962,10 @@
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).
 		if (wachtOp || (pad && !focus && !padMissing)) return LADEN_TITEL;
-		const name = selectedNode ? tabTitle(selectedNode) : null;
+		// The title the API gives the bron, as the server's page has it (#529); the name made
+		// here until its node is in. Cut at a word for the tab only.
+		const api = selectedNode ? titelVan(selectedNode.id) : null;
+		const name = api ? cut(api) : selectedNode ? tabTitle(selectedNode) : null;
 		if (name) return `${name}, Concordans`;
 		if (netwerkActive) return 'Netwerk, Concordans';
 		return 'Samenhang, Concordans';
