@@ -427,7 +427,8 @@
 		// Focus that leaves card and list elsewhere (a click on the page) closes the card.
 		const weg = (e: FocusEvent) => {
 			const naar = e.relatedTarget as Node | null;
-			if (naar && kaart.contains(naar)) return;
+			// Nowhere: a tap on an iPhone, whose click is still to come (see below).
+			if (!naar || kaart.contains(naar)) return;
 			kaart.removeEventListener('focusout', weg);
 			if (naar && opener.closest('ul')?.contains(naar)) return;
 			if (keyNode) {
@@ -439,6 +440,24 @@
 		eerste.focus();
 		return true;
 	}
+	// A click or tap outside the card and the list of bronnen closes the card of the keyboard's
+	// bron, as a menu does (actions/menu.ts): in the capture phase, only watched, never stopped.
+	$effect(() => {
+		if (!keyNode) return;
+		const onClick = (e: MouseEvent) => {
+			const t = e.target as Node | null;
+			if (
+				t &&
+				(citeEl?.contains(t) ||
+					canvasWrap?.parentElement?.querySelector('.canvas-node-list')?.contains(t))
+			)
+				return;
+			keyNode = null;
+			hoverNode = null;
+		};
+		document.addEventListener('click', onClick, true);
+		return () => document.removeEventListener('click', onClick, true);
+	});
 	function kaartUit(focus: 'lijst' | 'canvas', sluit = false) {
 		if (sluit) stilNa = keyNode?.id ?? null;
 		if (focus === 'canvas') {

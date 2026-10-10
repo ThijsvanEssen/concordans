@@ -30,10 +30,13 @@
 
 	// Raised by Opnieuw, to load the bron again after an error.
 	let attempt = $state(0);
+	// The key, not the node: a new node of the same bron (its light node, then the full one)
+	// does not load it again and empty the reader for a moment (UX-toets 0.79.43, #33).
+	const bronKey = $derived(node.key);
 
 	$effect(() => {
 		void attempt;
-		const key = node.key;
+		const key = bronKey;
 		const ac = new AbortController();
 		view = { kind: 'loading' };
 		unwrap(api.GET('/api/factions/{key}', { params: { path: { key } }, signal: ac.signal }))

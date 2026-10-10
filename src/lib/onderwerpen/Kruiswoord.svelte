@@ -77,6 +77,8 @@
 	const totaal = (vs: Vak[], k: Kolom) => vs.reduce((n, v) => n + (rijen.get(v)?.[k].n ?? 0), 0);
 	const alle = (vs: Vak[]) => vs.reduce((n, v) => n + somVan(rijen.get(v)), 0);
 	/** A column still counting: the totals of the row wait with it instead of reading 0. */
+	// While a column counts, a total over it waits with "…": a part of the sum is no total
+	// (UX-toets 0.79.43, #26: "608" before "3.478").
 	const telt = $derived(Object.values(bezig).some(Boolean));
 	const isOngeteld = (k: Kolom, v: Vak) => {
 		const grens = ongeteld[k];
@@ -139,17 +141,15 @@
 
 		<div class="rij kern" role="row">
 			<span class="per" role="rowheader"
-				>{telt && !alle(vakken) ? '…' : getal(alle(vakken))}
+				>{telt ? '…' : getal(alle(vakken))}
 				<span class="lang">gebeurtenissen</span></span
 			>
 			{#each kolommen as c (c.k)}
 				<span class="som-groot" role="gridcell"
-					>{bezig[c.k] && !totaal(vakken, c.k) ? '…' : getal(totaal(vakken, c.k))}</span
+					>{bezig[c.k] ? '…' : getal(totaal(vakken, c.k))}</span
 				>
 			{/each}
-			<span class="som-groot" role="gridcell"
-				>{telt && !alle(vakken) ? '…' : getal(alle(vakken))}</span
-			>
+			<span class="som-groot" role="gridcell">{telt ? '…' : getal(alle(vakken))}</span>
 		</div>
 
 		{#each jaren as j (j)}
@@ -168,10 +168,10 @@
 						{#if vs.every((v) => isOngeteld(c.k, v))}
 							<span class="t" role="gridcell" title="Niet geteld" aria-label="Niet geteld"></span>
 						{:else}
-							<span class="t" role="gridcell">{getal(totaal(vs, c.k))}</span>
+							<span class="t" role="gridcell">{bezig[c.k] ? '…' : getal(totaal(vs, c.k))}</span>
 						{/if}
 					{/each}
-					<span class="t" role="gridcell">{getal(alle(vs))}</span>
+					<span class="t" role="gridcell">{telt ? '…' : getal(alle(vs))}</span>
 				{/if}
 			</div>
 			{#if open.has(j)}

@@ -217,7 +217,14 @@
 	);
 	// A group whose loader is under way keeps its place with "laden…" (VerbondenState.wachtend).
 	const filtered = $derived(filterGroups(groepen, filter, new Set(verbonden.wachtend ?? [])));
-	const shown = $derived(regroup(filtered, grouping, selection.collection));
+	// A group whose loader the light node cannot foretell (no counted buckets: Toelichting,
+	// Wijzigingen) stands below the counted ones, always, so it never comes in above what stands
+	// (UX-toets 0.79.43, #1). One order per page; a group under a heading of its own keeps it.
+	const onvoorspelbaar = (g: Group) => !!g.load && !g.bakken && !g.section;
+	const shown = $derived.by(() => {
+		const r = regroup(filtered, grouping, selection.collection);
+		return [...r.filter((g) => !onvoorspelbaar(g)), ...r.filter(onvoorspelbaar)];
+	});
 	const hidden = $derived(hiddenLine(groepen, filter));
 	// What the table lists: the bronfilter applied, as its own count line does.
 	const total = $derived(shownLabel(verbonden.groups, filter));
@@ -356,7 +363,9 @@
 <aside class="verbonden" aria-label="Verbonden" bind:this={root}>
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
-		{#if verbonden.groups.length > 0}
+		<!-- A bron without verbindingen says so by its count, not by a sentence (R7, UX-toets
+		     0.79.43: "Deze bron heeft geen verbindingen in de gegevens."). -->
+		{#if verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id)}
 			<span class="head__count">{countLine(verbonden.groups, filter)}</span>
 		{/if}
 	</div>
@@ -463,7 +472,28 @@
 					{/if}
 				</div>
 				{#if !toe}
-					{#if g.laden}
+					{#if g.laden && verbonden.verwacht?.[g.id]}
+						<!-- Its place as it will be: blank rows as many as it will show, so the rows
+						     that come do not push down what stands below (#1). -->
+						<ul
+							class="rows rows--wacht"
+							class:rows--wacht-uitspraken={g.noun === 'uitspraken'}
+							aria-hidden="true"
+						>
+							{#each { length: Math.min(verbonden.verwacht[g.id], PREVIEW) } as _, k (k)}
+								<li class="row row--wacht"><span class="wacht-regel"></span></li>
+							{/each}
+						</ul>
+						{#if verbonden.verwacht[g.id] > PREVIEW}<p
+								class="group__alle wacht-alle"
+								aria-hidden="true"
+							>
+								&nbsp;
+							</p>{/if}
+						<p class="sr-only">
+							{g.noun ? `${g.noun.charAt(0).toUpperCase()}${g.noun.slice(1)} laden…` : 'Laden…'}
+						</p>
+					{:else if g.laden}
 						<p class="note stil group__laden">
 							{g.noun ? `${g.noun.charAt(0).toUpperCase()}${g.noun.slice(1)} laden…` : 'Laden…'}
 						</p>
@@ -672,9 +702,6 @@
 		{:else if !verbonden.loading && !verbonden.failed && shown.length === 0 && groepen.length > 0}
 			<p class="note stil">Geen verbindingen binnen de gekozen bronnen en filters.</p>
 		{/if}
-		{#if !verbonden.loading && !verbonden.failed && verbonden.groups.length === 0 && verbonden.id}
-			<p class="note stil">Deze bron heeft geen verbindingen in de gegevens.</p>
-		{/if}
 
 		{#if hidden.length > 0}
 			<!-- What the bronfilter leaves out, as a quiet line of links: each shows its group. -->
@@ -877,6 +904,24 @@
 		list-style: none;
 		margin: 0;
 		padding: 0;
+	}
+	/* A waiting row: the height of a row with a title over two lines and its meta line, a
+	   quiet bar where the title will be. */
+	/* The heights measured on 6:162 BW: a judgment's row holds its passage (142 to 163 px),
+	   another row a title and a meta line (77 to 140 px). */
+	.row--wacht {
+		height: 112px;
+		padding: var(--s-2) var(--s-4);
+	}
+	.rows--wacht-uitspraken .row--wacht {
+		height: 142px;
+	}
+	.wacht-regel {
+		display: block;
+		width: 70%;
+		height: var(--s-2);
+		margin-top: var(--s-2);
+		background: var(--paper-2);
 	}
 	.row__main {
 		position: relative;

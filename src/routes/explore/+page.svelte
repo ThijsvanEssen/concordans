@@ -1508,7 +1508,11 @@
 					<div
 						class="col col--panel"
 						class:mobile-hidden={mobilePanel !== 'verbonden'}
-						use:sprongDoel={{ id: 'verbonden', label: 'Naar Verbonden', aan: !telefoon }}
+						use:sprongDoel={{
+							id: 'verbonden',
+							label: 'Naar Verbonden',
+							naast: '(min-width: 769px)'
+						}}
 					>
 						{@render panel(true)}
 					</div>
@@ -1520,7 +1524,8 @@
 					use:sprongDoel={{
 						id: 'netwerk',
 						label: 'Naar het netwerk',
-						aan: !telefoon && !!selectedNode
+						aan: !!selectedNode,
+						naast: '(min-width: 769px)'
 					}}
 				>
 					{#if GraphViewC}
@@ -1687,7 +1692,11 @@
 				<div
 					class="col col--panel"
 					class:mobile-hidden={mobilePanel !== 'verbonden'}
-					use:sprongDoel={{ id: 'verbonden', label: 'Naar Verbonden', aan: !telefoon }}
+					use:sprongDoel={{
+						id: 'verbonden',
+						label: 'Naar Verbonden',
+						naast: '(min-width: 1101px)'
+					}}
 				>
 					{@render panel(false)}
 				</div>

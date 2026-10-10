@@ -155,7 +155,7 @@
 		{ start: number; end: number; possible: boolean; why: string | null } | null | undefined
 	>();
 	$effect(() => {
-		const key = node.key;
+		const key = bronKey;
 		const wanted = article;
 		apiPassage = undefined;
 		if (!wanted) return;
