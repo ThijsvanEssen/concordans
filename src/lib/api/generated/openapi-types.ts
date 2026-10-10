@@ -1281,6 +1281,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/feed/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * News feed per period
+         * @description The events of ``GET /api/feed`` under the same filters, counted per month (``per=month``) or day (``per=day``, at most 400 days from ``since``), per kind: each kind as the feed's ``kind`` facet counts it over those days. Every kind is counted unless ``kind`` names some. From the events as ``lawgraph feed-events`` last wrote them (``written_at``: after every poll and every night), not the live graph; not ``member`` and not ``tier``.
+         */
+        get: operations["get_feed_periods_route_api_feed_periods_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/paths": {
         parameters: {
             query?: never;
@@ -1442,7 +1462,12 @@ export interface components {
              */
             short_title?: string | null;
             /** Title Source */
-            title_source?: ("dossier" | "document" | "activiteit") | null;
+            title_source?: ("dossier" | "document" | "activiteit" | "eerstekamer") | null;
+            /**
+             * Source
+             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer; null as ``tk`` for a dossier not normalized since this field came.
+             */
+            source?: ("tk" | "eerstekamer") | null;
             /**
              * Kind
              * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
@@ -1624,6 +1649,31 @@ export interface components {
              * @description Earliest effective date over the edges.
              */
             first_effective_date?: string | null;
+        };
+        /**
+         * AmendmentChainsDTO
+         * @description The amendments of a period as the Kamer handles them: each chain of papers that
+         *     replace each other once, by its outcome.
+         */
+        AmendmentChainsDTO: {
+            /** Count */
+            count: number;
+            /**
+             * Aangenomen
+             * @default 0
+             */
+            aangenomen: number;
+            /**
+             * Verworpen
+             * @default 0
+             */
+            verworpen: number;
+            /**
+             * Other
+             * @description Withdrawn, held, postponed, lapsed, or not voted yet.
+             * @default 0
+             */
+            other: number;
         };
         /**
          * AnnexDTO
@@ -2607,7 +2657,7 @@ export interface components {
             tk?: components["schemas"]["SeatStretchDTO"][] | null;
             /**
              * Ek
-             * @description The Eerste Kamer on the day its composition was read, when the cabinet was in office then; null otherwise (it has no seats per day).
+             * @description The Eerste Kamer, a stretch per change, from the Kiesraad's result of each election through the changes its own pages tell (``checked`` per term); null when none of its stretches overlaps the cabinet.
              */
             ek?: components["schemas"]["SeatStretchDTO"][] | null;
         };
@@ -2846,8 +2896,11 @@ export interface components {
          * @description A faction's seats in a stretch of a cabinet, and whether it is of the coalition.
          */
         CoalitionFactionSeatsDTO: {
-            /** Key */
-            key: string;
+            /**
+             * Key
+             * @description The key of the faction; null for a faction of the Eerste Kamer of the past, which only its name (``abbreviation``) is known by.
+             */
+            key?: string | null;
             /** Abbreviation */
             abbreviation?: string | null;
             /**
@@ -2889,7 +2942,7 @@ export interface components {
             opposition_against: number;
             /**
              * Pattern
-             * @description `together`: every coalition seat on one side; `split`: on both; `wissel`: split, and the side that won holds coalition and opposition seats.
+             * @description `together`: every coalition seat on one side; `split`: on both; `wissel`: split, and the side with the most coalition seats lost (a wisselmeerderheid).
              * @enum {string}
              */
             pattern: "together" | "split" | "wissel";
@@ -2900,7 +2953,7 @@ export interface components {
             carried: boolean;
             /**
              * Decisive
-             * @description Had the whole coalition voted against the outcome, it would have turned.
+             * @description The opposition alone would have decided otherwise: the coalition's votes made the outcome.
              */
             decisive: boolean;
         };
@@ -3501,6 +3554,8 @@ export interface components {
              * @description Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text.
              */
             dictum?: string | null;
+            /** @description The motion or amendment the decision was taken on: the oldest paper of the case the vote singled out (``primary_case_kind`` ``Motie`` or ``Amendement``), as its dictum and ``/api/decisions/{key}/document``; else the Kamerstuk it is about (a vote of the Eerste Kamer on a motion). Null for anything else, and for a case without a paper. */
+            motion?: components["schemas"]["DecisionMotionDTO"] | null;
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -3606,6 +3661,18 @@ export interface components {
             partial: boolean;
         };
         /**
+         * DecisionMotionDTO
+         * @description The paper a decision was taken on: its node and readable address.
+         */
+        DecisionMotionDTO: {
+            /** Collection */
+            collection: string;
+            /** Key */
+            key: string;
+            /** Path */
+            path?: string | null;
+        };
+        /**
          * DecisionOutcomeCount
          * @description How many of the decisions carried (``true``), did not, or have no outcome (null).
          */
@@ -3697,6 +3764,8 @@ export interface components {
              * @description Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text.
              */
             dictum?: string | null;
+            /** @description The motion or amendment the decision was taken on: the oldest paper of the case the vote singled out (``primary_case_kind`` ``Motie`` or ``Amendement``), as its dictum and ``/api/decisions/{key}/document``; else the Kamerstuk it is about (a vote of the Eerste Kamer on a motion). Null for anything else, and for a case without a paper. */
+            motion?: components["schemas"]["DecisionMotionDTO"] | null;
             /** @description What the coalition did on the vote, as on the detail. */
             coalition?: components["schemas"]["CoalitionVoteDTO"] | null;
             /**
@@ -4016,14 +4085,18 @@ export interface components {
          * @description A committee that leads an activity about a dossier.
          */
         DossierCommitteeDTO: {
+            /**
+             * Id
+             * @description Its node: ``committees/<key>``.
+             * @default
+             */
+            id: string;
             /** Key */
             key: string;
             /** Slug */
             slug?: string | null;
             /** Name */
             name?: string | null;
-            /** Id */
-            id: string;
             /** Abbreviation */
             abbreviation?: string | null;
             /**
@@ -4032,6 +4105,11 @@ export interface components {
              * @constant
              */
             role: "lead";
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DossierDetailResponse
@@ -4066,7 +4144,12 @@ export interface components {
              */
             short_title?: string | null;
             /** Title Source */
-            title_source?: ("dossier" | "document" | "activiteit") | null;
+            title_source?: ("dossier" | "document" | "activiteit" | "eerstekamer") | null;
+            /**
+             * Source
+             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer; null as ``tk`` for a dossier not normalized since this field came.
+             */
+            source?: ("tk" | "eerstekamer") | null;
             /**
              * Kind
              * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
@@ -4623,7 +4706,12 @@ export interface components {
              */
             short_title?: string | null;
             /** Title Source */
-            title_source?: ("dossier" | "document" | "activiteit") | null;
+            title_source?: ("dossier" | "document" | "activiteit" | "eerstekamer") | null;
+            /**
+             * Source
+             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer; null as ``tk`` for a dossier not normalized since this field came.
+             */
+            source?: ("tk" | "eerstekamer") | null;
             /**
              * Kind
              * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
@@ -4730,6 +4818,36 @@ export interface components {
              * @default Eerste Kamer der Staten-Generaal, www.eerstekamer.nl
              */
             attribution: string;
+        };
+        /**
+         * EkFactionMembershipDTO
+         * @description One stretch of a member's membership of a faction of the Eerste Kamer, as their page
+         *     on eerstekamer.nl says it (``normalize eerstekamer-persons``).
+         */
+        EkFactionMembershipDTO: {
+            /**
+             * Faction Id
+             * @description Null for a faction gone before the composition was first read (no node; its votes are not in the graph).
+             */
+            faction_id?: string | null;
+            /** Faction Key */
+            faction_key?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /** From Date */
+            from_date: string;
+            /**
+             * To Date
+             * @description The last day, inclusive; null while they sit in it.
+             */
+            to_date?: string | null;
+            /**
+             * Chamber
+             * @default EK
+             */
+            chamber: string;
         };
         /**
          * EkFactionVoteDTO
@@ -5213,10 +5331,13 @@ export interface components {
          * @description A party's seats, and where it sits in the hemicycle.
          */
         FactionSeatsDTO: {
-            /** Id */
-            id: string;
+            /**
+             * Id
+             * @description Null for a faction of the Eerste Kamer of the past (``date``), which only its name is known by.
+             */
+            id?: string | null;
             /** Key */
-            key: string;
+            key?: string | null;
             /** Abbreviation */
             abbreviation: string | null;
             /** Name */
@@ -5555,6 +5676,66 @@ export interface components {
             collection: string;
             /** Key */
             key: string;
+        };
+        /**
+         * FeedPeriodDTO
+         * @description The events of one month or day.
+         */
+        FeedPeriodDTO: {
+            /**
+             * Period
+             * @description Its first day: ``2026-09-01`` for September.
+             */
+            period: string;
+            /** Total */
+            total: number;
+            /**
+             * Counts
+             * @description Per kind of event (as ``kind`` of ``GET /api/feed``), those it has.
+             */
+            counts?: {
+                [key: string]: number;
+            };
+            /** @description The chains of amendment papers (REVISES) of which any paper is an event under the filters, each once in the period of its first paper, by the outcome of its last (the latest decision with an outcome on its case, else the latest); null when ``kind`` leaves the amendments out. */
+            amendment_chains?: components["schemas"]["AmendmentChainsDTO"] | null;
+        };
+        /**
+         * FeedPeriodsResponse
+         * @description The events of the feed per month or day.
+         */
+        FeedPeriodsResponse: {
+            /**
+             * Per
+             * @enum {string}
+             */
+            per: "month" | "day";
+            /** Since */
+            since?: string | null;
+            /** Until */
+            until?: string | null;
+            /**
+             * Periods
+             * @description Oldest first; a period without events is left out.
+             */
+            periods?: components["schemas"]["FeedPeriodDTO"][];
+            /**
+             * Partial
+             * @description The counts took past the budget of the request, or the events were never written: ``periods`` is then empty.
+             * @default false
+             */
+            partial: boolean;
+            /**
+             * Written At
+             * @description When the events were last written (``lawgraph feed-events``): the counts lag the feed by at most the time since.
+             */
+            written_at?: string | null;
+            /**
+             * Data As Of
+             * @description Per source: how current the graph is, as in `GET /api/stats`.
+             */
+            data_as_of?: {
+                [key: string]: components["schemas"]["DataAsOfDTO"];
+            };
         };
         /**
          * FeedPersonDTO
@@ -7599,6 +7780,11 @@ export interface components {
              */
             faction_memberships: components["schemas"]["FactionMembershipDTO"][];
             /**
+             * Ek Faction Memberships
+             * @description Their periods in the factions of the Eerste Kamer, the current first, as their page on eerstekamer.nl says them; empty for none read.
+             */
+            ek_faction_memberships?: components["schemas"]["EkFactionMembershipDTO"][];
+            /**
              * Government Functions
              * @description The posts held in a cabinet (from Rijksoverheid), oldest first.
              */
@@ -7685,6 +7871,11 @@ export interface components {
              * @default []
              */
             faction_memberships: components["schemas"]["FactionMembershipDTO"][];
+            /**
+             * Ek Faction Memberships
+             * @description Their periods in the factions of the Eerste Kamer, the current first, as their page on eerstekamer.nl says them; empty for none read.
+             */
+            ek_faction_memberships?: components["schemas"]["EkFactionMembershipDTO"][];
             /**
              * Government Functions
              * @description The posts held in a cabinet (from Rijksoverheid), oldest first.
@@ -7952,13 +8143,8 @@ export interface components {
             kind?: string | null;
             /** Agenda Title */
             agenda_title?: string | null;
-            /**
-             * Committee
-             * @description Its lead committee (``key``, ``slug``, ``name``); null in plenary.
-             */
-            committee?: {
-                [key: string]: unknown;
-            } | null;
+            /** @description Its lead committee (``key``, ``slug``, ``name``, ``path``); null in plenary. */
+            committee?: components["schemas"]["TimelineCommitteeDTO"] | null;
         };
         /**
          * NodeGraphResponse
@@ -8057,6 +8243,11 @@ export interface components {
             source?: components["schemas"]["EkSourceDTO"] | null;
             /** @description Of the Eerste Kamer: who sits where in its plenary hall; null for the Tweede Kamer, and when no plan was read. */
             hall?: components["schemas"]["HallDTO"] | null;
+            /**
+             * Checked
+             * @description Of the Eerste Kamer on a ``date``: whether the term of that day added up (its seats walked from the Kiesraad's result through the changes the Kamer's pages tell); when false, show the seats as uncertain. Null otherwise.
+             */
+            checked?: boolean | null;
         };
         /**
          * PartyColorsResponse
@@ -8658,6 +8849,36 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * SeatEventDTO
+         * @description What began a stretch: a change of the seats or of the coalition.
+         */
+        SeatEventDTO: {
+            /**
+             * Kind
+             * @description Eerste Kamer, read from its own pages: ``beëdiging``, ``vertrek``, ``overstap``, ``afsplitsing``, ``hernoeming``, ``samenvoeging``. Tweede Kamer, derived from the periods of its seats (it gives no reason): ``verkiezing``, ``afsplitsing``, ``overstap``, ``vacature``, ``opvolging``, ``coalitie``.
+             */
+            kind: string;
+            /** Date */
+            date: string;
+            /**
+             * Words
+             * @description The source's own words (Eerste Kamer: the headline of its news item, or the sentence of a faction's page), verbatim; null for the Tweede Kamer, whose kind is derived.
+             */
+            words?: string | null;
+            /**
+             * Basis
+             * @description ``tekst``: the kind is read from the source's words (show the words); ``afgeleid``: derived from the periods of the seats (show the kind as a label).
+             */
+            basis?: string | null;
+            /** Factions */
+            factions?: string[];
+            /**
+             * Members
+             * @description Tweede Kamer: member keys; Eerste Kamer: the name the text gives.
+             */
+            members?: string[];
+        };
+        /**
          * SeatStretchDTO
          * @description A stretch of days in which neither the coalition nor any faction's seats changed.
          */
@@ -8684,6 +8905,16 @@ export interface components {
              * @description The coalition first, then by seats.
              */
             factions?: components["schemas"]["CoalitionFactionSeatsDTO"][];
+            /**
+             * Events
+             * @description What began the stretch (none for one that began before the cabinet).
+             */
+            events?: components["schemas"]["SeatEventDTO"][];
+            /**
+             * Checked
+             * @description Eerste Kamer: whether its term added up (every change's faction known, no faction below zero, no more than 75 seats; the current term also equal to today's composition); when false, show the stretch as uncertain. Null for the Tweede Kamer, whose seats are the source's own.
+             */
+            checked?: boolean | null;
         };
         /**
          * SeatingPlanDTO
@@ -9079,15 +9310,27 @@ export interface components {
         };
         /**
          * TimelineCommitteeDTO
-         * @description The committee that leads an activity.
+         * @description The committee that leads an activity, with its node (``id``) and its address
+         *     (``/commissies/<slug>``).
          */
         TimelineCommitteeDTO: {
+            /**
+             * Id
+             * @description Its node: ``committees/<key>``.
+             * @default
+             */
+            id: string;
             /** Key */
             key: string;
             /** Slug */
             slug?: string | null;
             /** Name */
             name?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * TimelineDecisionBody
@@ -11705,6 +11948,8 @@ export interface operations {
                 party_votes?: string | null;
                 /** @description Only the votes of the Tweede Kamer on which the coalition voted `together`, `split` (no wisselmeerderheid) or as a `wissel`, or which it `carried` or was `decisive` on. */
                 coalition?: ("together" | "split" | "wissel" | "carried" | "decisive") | null;
+                /** @description Also the decisions that never came to a vote (withdrawn, postponed, held, lapsed: ``passed`` null, the reason in ``decision_kind``); without it only those with an outcome, and the facets count those. */
+                unvoted?: boolean;
                 limit?: number;
                 offset?: number;
             };
@@ -11801,7 +12046,7 @@ export interface operations {
             query?: {
                 /** @description The day, YYYY-MM-DD; today when left out. */
                 date?: string | null;
-                /** @description ``EK``: the seats of the Eerste Kamer as eerstekamer.nl shows them on the day it was last read, in the order of their size (no plan); without ``date``. */
+                /** @description ``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003). */
                 chamber?: "TK" | "EK";
             };
             header?: never;
@@ -11930,6 +12175,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeedSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_feed_periods_route_api_feed_periods_get: {
+        parameters: {
+            query?: {
+                /** @description On or after this day. */
+                since?: string | null;
+                /** @description On or before this day. */
+                until?: string | null;
+                per?: "month" | "day";
+                /** @description Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak. */
+                kind?: string | null;
+                /** @description Cabinet key: the events of its period (``jetten``). */
+                cabinet?: string | null;
+                ministry?: components["schemas"]["MinistryKey"] | null;
+                /** @description A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020. */
+                dossier?: string | null;
+                /** @description Member key: what they signed, the commitments they made. */
+                member?: string | null;
+                /** @description Faction key: what its Kamerleden signed for it. */
+                faction?: string | null;
+                /** @description Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them. */
+                q?: string[] | null;
+                /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
+                chamber?: ("TK" | "EK") | null;
+                /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
+                tier?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedPeriodsResponse"];
                 };
             };
             /** @description Validation Error */

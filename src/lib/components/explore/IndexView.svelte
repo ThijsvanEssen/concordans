@@ -447,7 +447,7 @@
 		const fracties = [...seats.factions]
 			.filter((f) => f.coalition === true)
 			.sort((a, b) => b.seats - a.seats)
-			.map((f) => f.abbreviation ?? f.name ?? f.key);
+			.map((f) => f.abbreviation ?? f.name ?? f.key ?? '');
 		return {
 			naam: kabinet.name ?? kabinet.key,
 			href: bronHref(`cabinets/${kabinet.key}`, { keepMode: false, mode: 'read' }),
@@ -2212,7 +2212,7 @@
 										data={seats}
 										meubels
 										colorOf={(f, i) =>
-											kleurVan('TK', f.abbreviation ?? f.name ?? f.key, i, f.color ?? null)}
+											kleurVan('TK', f.abbreviation ?? f.name ?? f.key ?? '', i, f.color ?? null)}
 									/>
 								{/if}
 								<ZaalLegenda

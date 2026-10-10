@@ -34,7 +34,7 @@
 		coalitie?: { naam: string; href: string; fracties: string[] } | null;
 	} = $props();
 	const fracties = $derived([...data.factions].sort((a, b) => b.seats - a.seats));
-	const naam = (f: Seats['factions'][number]) => f.abbreviation ?? f.name ?? f.key;
+	const naam = (f: Seats['factions'][number]) => f.abbreviation ?? f.name ?? f.key ?? '';
 </script>
 
 <div class="leg">
@@ -44,7 +44,7 @@
 		style:grid-template-rows="repeat({Math.max(rijen, Math.ceil(fracties.length / kolommen))}, auto)"
 		style:grid-template-columns="repeat({kolommen}, minmax(0, 1fr))"
 	>
-		{#each fracties as f (f.key)}
+		{#each fracties as f (naam(f))}
 			<li>
 				<span class="stip" style:background={achtergrondVan(naam(f), f.color ?? null)}></span>
 				<span class="n">{naam(f)}</span><span class="z">{f.seats}</span>
