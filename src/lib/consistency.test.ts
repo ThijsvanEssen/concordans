@@ -206,7 +206,7 @@ describe('one form for each thing', () => {
 	it('starts every reader at one title column where no network stands beside it', () => {
 		const verkenner = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
 		expect(verkenner).toMatch(
-			/\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{\s*--reader-col-left: calc\(var\(--nav-w\) \+ 5px\);/
+			/\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{\s*--reader-col-left: calc\(var\(--nav-w, var\(--nav-w-auto\)\) \+ 5px\);/
 		);
 	});
 
@@ -661,6 +661,12 @@ describe('canvas cards and halls', () => {
 		expect(plek('<CanvasNodeList')).toBeLessThan(plek('class="graph-canvas-wrap"'));
 		// The list of bronnen is visible where it has the focus: the canvas takes its outline.
 		expect(t).toMatch(/\.buhne:has\(\.canvas-node-list :focus-visible\) \.graph-canvas-wrap/);
+	});
+
+	it('gives the contents the network’s width from 1440, so every reader title starts in one column', () => {
+		const t = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		expect(t).toMatch(/--nav-w-auto: calc\(var\(--graph-w-auto\) \+ var\(--s-6\) - 64px\);/);
+		expect(t).toMatch(/\.col--reader \{[^}]*--reader-col-left: 0;/);
 	});
 
 	it('keeps the canvas and the lists of Bronnen out of the Verkenner’s own chunk', () => {

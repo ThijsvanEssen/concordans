@@ -1148,6 +1148,8 @@
 	// A width the reader dragged is kept and wins; until then the columns follow the
 	// screen (--graph-w-auto, --panel-w-auto in the style below).
 	let navW = $state(220);
+	/** The contents column dragged: else it follows the screen (--nav-w-auto). */
+	let navDragged = $state(false);
 	let panelW = $state(400);
 	let graphW = $state(360);
 	let panelDragged = $state(false);
@@ -1158,7 +1160,7 @@
 			const raw = localStorage.getItem(WIDTHS_KEY);
 			if (raw) {
 				const p = JSON.parse(raw) as Record<string, number>;
-				if (p.navW) navW = p.navW;
+				if (p.navW) [navW, navDragged] = [p.navW, true];
 				if (p.panelW) [panelW, panelDragged] = [p.panelW, true];
 				if (p.graphW) [graphW, graphDragged] = [p.graphW, true];
 			}
@@ -1172,7 +1174,7 @@
 			localStorage.setItem(
 				WIDTHS_KEY,
 				JSON.stringify({
-					navW,
+					navW: navDragged ? navW : undefined,
 					panelW: panelDragged ? panelW : undefined,
 					graphW: graphDragged ? graphW : undefined
 				})
@@ -1190,9 +1192,11 @@
 		// From the width on screen: a column that follows the screen is not at its default.
 		const column = (e.currentTarget as HTMLElement)
 			.closest('.explore-graph, .explore-read')
-			?.querySelector<HTMLElement>(handle === 'panel' ? '.col--panel' : '.col--graph');
+			?.querySelector<HTMLElement>(
+				handle === 'panel' ? '.col--panel' : handle === 'nav' ? '.col--nav' : '.col--graph'
+			);
 		const shown = column?.getBoundingClientRect().width;
-		const startW = handle === 'nav' ? navW : (shown ?? (handle === 'panel' ? panelW : graphW));
+		const startW = shown ?? (handle === 'nav' ? navW : handle === 'panel' ? panelW : graphW);
 		drag = { handle, startX: e.clientX, startW };
 		(e.target as HTMLElement).setPointerCapture(e.pointerId);
 	}
@@ -1200,8 +1204,10 @@
 	function onResizeMove(e: PointerEvent) {
 		if (!drag) return;
 		const delta = e.clientX - drag.startX;
-		if (drag.handle === 'nav') navW = Math.max(140, Math.min(320, drag.startW + delta));
-		else if (drag.handle === 'graph') {
+		if (drag.handle === 'nav') {
+			navW = Math.max(140, Math.min(480, drag.startW + delta));
+			navDragged = true;
+		} else if (drag.handle === 'graph') {
 			graphW = Math.max(200, Math.min(1400, drag.startW + delta));
 			graphDragged = true;
 		} else {
@@ -1592,7 +1598,7 @@
 				class="explore-read"
 				class:explore-read--with-nav={withNav}
 				class:is-resizing={!!drag}
-				style:--nav-w="{navW}px"
+				style:--nav-w={navDragged ? `${navW}px` : undefined}
 				style:--panel-w={panelDragged ? `${panelW}px` : undefined}
 			>
 				<nav class="mobile-tabs" aria-label="Panelen">
@@ -1759,6 +1765,7 @@
 	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
 	.explore-graph,
 	.explore-read {
+		--nav-w-auto: 220px;
 		--graph-w-auto: 360px;
 		--panel-w-auto: clamp(340px, calc(100vw - 872px), 408px);
 		--panel: var(--panel-w, var(--panel-w-auto));
@@ -1774,6 +1781,13 @@
 		.explore-read {
 			--graph-w-auto: 328px;
 			--panel-w-auto: 432px;
+		}
+		/* One title column for every reader (Thijs, 10 Oct, "Voor Thijs" 4): the contents
+		   take the network's width less the difference in the reader's left margin (64 for
+		   the hanging numbers of the leden, 32 beside the network), so a title starts where
+		   it does beside the network (365 at 1440) and the article keeps 590 px. */
+		.explore-read {
+			--nav-w-auto: calc(var(--graph-w-auto) + var(--s-6) - 64px);
 		}
 	}
 	@media (min-width: 1600px) {
@@ -1812,7 +1826,7 @@
 	}
 
 	.explore-read--with-nav {
-		grid-template-columns: var(--nav-w) 5px minmax(0, 1fr) 5px var(--panel);
+		grid-template-columns: var(--nav-w, var(--nav-w-auto)) 5px minmax(0, 1fr) 5px var(--panel);
 	}
 
 	.col {
@@ -1899,11 +1913,12 @@
 	/* The measure of every reader, set by the column it stands in (ReaderFrame reads
 	   it). A toelichting opened under the text inherits the same measure, so opening
 	   it moves nothing. Lezen leaves room at the left for the numbers of the leden. */
-	/* Beside the network the text stands in the middle of its column: wider than the
-	   measure (Verbonden narrow, a wide screen), the space falls on both sides. */
+	/* At the column's left edge, not in its middle: one title column for every reader, with
+	   contents or beside the network (Thijs, 10 Oct); wider than the measure, the room
+	   falls to the right. */
 	.col--reader {
 		--reader-max: 700px;
-		--reader-col-left: auto;
+		--reader-col-left: 0;
 	}
 	.col--measure {
 		--reader-pad-top: 40px;
@@ -1916,7 +1931,7 @@
 	   past the width the contents would take, not in the middle of its wider column. */
 	@media (min-width: 769px) {
 		.explore-read:not(.explore-read--with-nav) .col--measure {
-			--reader-col-left: calc(var(--nav-w) + 5px);
+			--reader-col-left: calc(var(--nav-w, var(--nav-w-auto)) + 5px);
 		}
 	}
 
