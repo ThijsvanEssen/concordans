@@ -3,7 +3,6 @@
 	import { getExplainedBy } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
-	import Toelichting from './Toelichting.svelte';
 	import KopActies from './KopActies.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { onderdeelMark } from '$lib/text/article-parts';
@@ -229,11 +228,29 @@
 				firstReading: FIRST_READING.test(mvt.title ?? '')
 			};
 		};
-		find().catch(() => {
-			// No button without a confirmed toelichting.
-		});
+		find()
+			.then(() => passage(ac.signal))
+			.catch(() => {
+				// No button without a confirmed toelichting.
+			});
 		return () => ac.abort();
 	});
+
+	/** The memorie's passage on this article, where the data has one: the place it opens at
+	 *  (Thijs, 10 Oct: the memorie reader is the place, scrolled to the passage). */
+	async function passage(signal: AbortSignal) {
+		const e = explanatory;
+		if (!e || e.at || !bwbId || !articleNumber) return;
+		const r = await unwrap(
+			api.GET('/api/documents/{key}/passages', {
+				params: { path: { key: e.key }, query: { bwb_id: bwbId, article: articleNumber } },
+				signal
+			})
+		).catch(() => null);
+		const eerste = r?.items[0]?.section_id;
+		if (eerste && !signal.aborted && explanatory?.key === e.key)
+			explanatory = { ...explanatory, at: eerste };
+	}
 
 	// The toelichting opens under the article (`?naast=`), at its passage for the article
 	// when the document reader finds one; the same link closes it again.
@@ -710,22 +727,6 @@
 				/>
 			{/if}
 		</div>
-
-		<!-- What the memorie says about this text, read in place (Thijs, 10 Oct); the memorie
-		     itself opens under the article from the head, as before. -->
-		{#if explanatory && !comparing}
-			<Toelichting
-				memorie={{
-					key: explanatory.key,
-					kind: explanatory.kind,
-					dossier: explanatory.dossier
-				}}
-				{bwbId}
-				artikel={articleNumber}
-				href={explanatoryHref}
-				perDossier={explanatory.basis === 'wijziging'}
-			/>
-		{/if}
 
 		{#if prevHref || nextHref}
 			<nav class="reader-nav-footer" aria-label="Artikelen">{@render steps(' artikel')}</nav>

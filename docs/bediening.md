@@ -75,11 +75,11 @@ What a reader keeps while reading goes into a map (`src/lib/map`; concept ux-voo
 
 Every reader alike (concept ux-voorstel/21-lezers-rustiger, variant A with B's Toelichting; Thijs, 10 Oct: "nog wat druk met al de mogelijke klikken", and "zo eigenstandig mogelijk lezen").
 
-- **The band:** one line at meta size, a chain of more than two layers folded to `first › … › last` (the "…" opens it). One rule under the band and Netwerk/Tekst together, over the full width (ReaderFrame `.kop-rij`).
+- **The band:** one line at meta size, the term in ink-3 straight before what it names (no column of terms), a chain of more than two layers folded to `first › … › last` (the "…" opens it). One rule under the band and Netwerk/Tekst together, over the full width (ReaderFrame `.kop-rij`).
 - **The head:** two actions, framed, at the right of the status line (`KopActies`). Bewaar is the box that keeps at once, with the map choice on a caret joined to it. Citeer holds the forms, Kopieer tekst and the official text (`bron ↗`). No other buttons in the head.
-- **Where the text came from:** in ink under the status line ("Ingevoerd bij …", "Memorie van toelichting ↓"); the memorie opens under the article.
-- **A place** (lid, onderdeel, sub, overweging, at any depth): its count of verbindingen, and on hover or focus the quiet words `Citeer, Bewaar` (`PlaatsActies`, `.plaats-woord`); Kopieer tekst is in Citeer. A kept place has a thin ink bar in the margin (`.plaats-bewaard`), the parent of a kept sub-onderdeel none.
-- **Read in place:** what belongs to the text comes to it. A cited article or lid shows its own text in the card; a defined term its definition; the memorie's passage on the article stands under the text in Toelichting (open until closed; lazily loaded). Going to the source is one step further, never the only way. Verbonden keeps the relations: nothing moves from it into the reader.
+- **Where the text came from:** in ink under the status line ("Ingevoerd bij …", "Memorie van toelichting ↓"); the memorie opens under the article, at its passage on the article where the data has one (`passages`), else at its start. No separate Toelichting section: the memorie's reader is the place.
+- **A place** (lid, onderdeel, sub, overweging, at any depth): its words stand in the right margin beside its first line, so the text runs uninterrupted (Thijs, 10 Oct: "netjes rustig aan de zijkant"): the count of verbindingen always, `Citeer, Bewaar` on hover or focus (`PlaatsActies`, `.plaats-woord`); Kopieer tekst is in Citeer. On a phone, without a margin, a tap on the place's number shows them under it. A kept place has a thin ink bar in the left margin (`.plaats-bewaard`), the parent of a kept sub-onderdeel none.
+- **Read in place:** what belongs to the text comes to it. A cited article or lid shows its own text in the card; a defined term its definition; the memorie opens at its passage. Going to the source is one step further, never the only way. Verbonden keeps the relations: nothing moves from it into the reader.
 
 ## Bronregels
 
