@@ -91,6 +91,19 @@ function stukLaag(r: Row, soort: string, gedeeld: Set<string>): Laag {
 	return { soort, naam, ref: r.ref, vol: naam === r.title ? undefined : r.title };
 }
 
+/**
+ * A dossier's number as the Kamer writes it, with its suffix: "36600-VII". The source gives
+ * it as `label`; else `number` and `suffix` apart ("36600", "VII"); `number` alone dropped the
+ * suffix (UX-toets 10 Oct: "Over 36600 Vaststelling van de begrotingsstaten …" for 36600-VII).
+ */
+export function dossierNummer(props: Record<string, unknown>): string | null {
+	const label = text(props.label);
+	if (label) return label;
+	const nummer = text(props.number);
+	const suffix = text(props.suffix);
+	return nummer ? (suffix ? `${nummer}-${suffix}` : nummer) : null;
+}
+
 /** A neighbour as a layer: its kind in the source's word, its name, its ref. */
 export function laagVan(n: Neighbor, soort: string): Laag {
 	const props = (n.props ?? {}) as Record<string, unknown>;
@@ -99,7 +112,7 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 	if (n.collection === 'dossiers') {
 		// A dossier by its number and the name of its bill, "36496 Wet betaalbare huur"; its
 		// title runs to three lines.
-		const nummer = text(props.number) ?? text(props.label) ?? naamVan('dossiers', n);
+		const nummer = dossierNummer(props) ?? naamVan('dossiers', n);
 		const titel = shortDossierTitle(vol.replace(/^Kamerstukdossier\s+[^:]+:\s*/, ''));
 		return { soort, naam: titel && titel !== nummer ? `${nummer} ${titel}` : nummer, ref, vol };
 	}
@@ -584,7 +597,7 @@ export async function lazeKernIds(
 ): Promise<string[]> {
 	if (collection === 'judgments') return procesgangIds(key);
 	if (collection !== 'dossiers') return [];
-	const nummer = text(props.number) ?? text(props.label) ?? key;
+	const nummer = dossierNummer(props) ?? key;
 	const d = await getDossier(nummer).catch(() => null);
 	const e = d?.legal_effect;
 	return [...(e?.amends ?? []), ...(e?.implements ?? [])].map((w) => `instruments/${w.key}`);
