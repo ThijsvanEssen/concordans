@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import NavKolom from './NavKolom.svelte';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
@@ -29,7 +30,7 @@
 		error = null;
 		getDocument(k)
 			.then((doc) => {
-				title = doc.title ?? doc.key;
+				title = doc.title ?? naamVan('documents', doc);
 				kind = doc.kind ?? null;
 				sections = doc.sections ?? [];
 			})

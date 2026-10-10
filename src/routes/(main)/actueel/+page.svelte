@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -361,7 +362,7 @@
 			.then(
 				(f) =>
 					(factionNames = Object.fromEntries(
-						f.map((x) => [x.key, x.abbreviation ?? x.name ?? x.key])
+						f.map((x) => [x.key, x.abbreviation ?? x.name ?? naamVan('factions', x)])
 					))
 			)
 			.catch(() => {});

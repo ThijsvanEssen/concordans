@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	// The seats of a cabinet in one Kamer (concept 16, variant B; Thijs, 10 Oct): the coalition's
 	// seats as the head figure, their course over the cabinet's period, then the hall on the day
 	// chosen, its two sides and the majority. Text and bars at the frame's left edge, the hall
@@ -103,7 +104,7 @@
 			z.factions.map((f) => [f.key, c(f) === true ? 'voor' : c(f) === false ? 'tegen' : 'other'])
 		) as Record<string, 'voor' | 'tegen' | 'other'>;
 	};
-	const naam = (f: Zaal['factions'][number]) => f.abbreviation ?? f.name ?? f.key ?? '';
+	const naam = (f: Zaal['factions'][number]) => f.abbreviation ?? f.name ?? naamVan('factions', f);
 	const zijden = (z: Zaal, stuk: Stuk | null) => {
 		const c = vanKabinet(stuk);
 		const fr = [...z.factions].sort((a, b) => b.seats - a.seats);

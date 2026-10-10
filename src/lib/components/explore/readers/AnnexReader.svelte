@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import { page } from '$app/state';
 	import { permalink } from '$lib/bron/anchor';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -73,7 +74,7 @@
 			{@const a = view.detail.annex}
 			{@const entries = a.entries ?? []}
 			{@const refs = view.detail.referenced_by ?? []}
-			{@const titel = a.title ?? a.display_name ?? a.key}
+			{@const titel = a.title ?? naamVan('annexes', a)}
 			{@const kort =
 				[a.label ? `${bronLabel('annexes')} ${a.label}` : null, a.bwb_id ? lawName(a.bwb_id) : null]
 					.filter(Boolean)
@@ -118,7 +119,7 @@
 						{#each uniqueBy(refs, (r) => r.article.id) as r (r.article.id)}
 							<li>
 								<BronLink ref={{ collection: 'articles', key: r.article.key }}
-									>{r.article.display_name ?? r.article.key}</BronLink
+									>{naamVan('articles', r.article)}</BronLink
 								>{#if r.explanation}<span class="entry-note">{r.explanation}</span>{/if}
 							</li>
 						{/each}

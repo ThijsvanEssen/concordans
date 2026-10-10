@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { naamVanId } from '$lib/bron/menselijk';
+	import { naamVan } from '$lib/bron/menselijk';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	// The articles a bill changes, per law in the order of the law: each article once, with
 	// a line per change, what it does and where it stands: in force since a day, by its
@@ -49,10 +51,8 @@
 		<div class="wet">
 			<h4 class="wet-naam">
 				<KindGlyph collection="instruments" size={12} />
-				{#if l.law.id}<BronLink ref={l.law.id}>{l.law.display_name ?? l.law.id}</BronLink>{:else}{l
-						.law.display_name ??
-						l.law.bwb_id ??
-						l.law.celex}{/if}
+				{#if l.law.id}<BronLink ref={l.law.id}>{naamVanId(l.law.id, l.law.display_name)}</BronLink
+					>{:else}{l.law.display_name ?? l.law.bwb_id ?? l.law.celex}{/if}
 				<button
 					type="button"
 					class="wet-knop"
@@ -68,7 +68,7 @@
 				{#if gedeeld}
 					<p class="samen">
 						<BronLink ref={gedeeld.source.id}
-							>{gedeeld.source.display_name ?? gedeeld.source.id}</BronLink
+							>{naamVanId(gedeeld.source.id, gedeeld.source.display_name)}</BronLink
 						>{gedeeld.effective_date
 							? `, in werking sinds ${langeDatum(gedeeld.effective_date)}.`
 							: '.'}
@@ -86,7 +86,8 @@
 								<span class="wijziging">
 									{#if gedeeld}{RELATION_WORD[c.relation]}{:else}{RELATION_WORD[c.relation]}, {stageLead(
 											c
-										)}<BronLink ref={c.source.id}>{c.source.display_name ?? c.source.id}</BronLink
+										)}<BronLink ref={c.source.id}
+											>{naamVanId(c.source.id, c.source.display_name)}</BronLink
 										>{/if}
 								</span>
 							{/each}
@@ -110,7 +111,9 @@
 		<div class="wet">
 			<h4 class="wet-naam">
 				<KindGlyph collection="instruments" size={12} />
-				<BronLink ref={`instruments/${w.key}`}>{w.name ?? w.short ?? w.key}</BronLink>
+				<BronLink ref={`instruments/${w.key}`}
+					>{w.name ?? w.short ?? naamVan('instruments', w)}</BronLink
+				>
 			</h4>
 			<p class="samen">Geen gewijzigde artikelen in de gegevens.</p>
 		</div>

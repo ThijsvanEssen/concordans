@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	// Een kleine legenda in de stijl van Concordans. Per
 	// fractie een stip in de kleur van de zaal, de naam en de zetels, op grootte, in kolommen;
 	// daaronder de genummerde plaatsen op één regel. Gelijk voor beide Kamers.
@@ -35,7 +36,7 @@
 		coalitie?: { naam: string; href: string; fracties: string[] } | null;
 	} = $props();
 	const fracties = $derived([...data.factions].sort((a, b) => b.seats - a.seats));
-	const naam = (f: Seats['factions'][number]) => f.abbreviation ?? f.name ?? f.key ?? '';
+	const naam = (f: Seats['factions'][number]) => f.abbreviation ?? f.name ?? naamVan('factions', f);
 </script>
 
 <div class="leg">

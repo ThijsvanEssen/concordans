@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	// De kop van een bewindspersoon. Wie en wat in één
 	// zin; dan drie ingangen met aantallen, zodat duidelijk is waar te beginnen.
 	import type { Schema } from '$lib/api/types';
@@ -44,13 +45,15 @@
      since when in the status line, the ways into the overview under it. -->
 <ReaderHead
 	collection="members"
-	title={m.name ?? m.key}
+	title={m.name ?? naamVan('members', m)}
 	acties={{
 		bewaar: {
 			id,
 			at: '',
-			kort: m.name ?? m.key,
-			voluit: partij ? `${m.name ?? m.key} (${partij})` : (m.name ?? m.key),
+			kort: m.name ?? naamVan('members', m),
+			voluit: partij
+				? `${m.name ?? naamVan('members', m)} (${partij})`
+				: (m.name ?? naamVan('members', m)),
 			groep: 'Bewindspersonen'
 		}
 	}}

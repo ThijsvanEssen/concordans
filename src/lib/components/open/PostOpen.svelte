@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVanId } from '$lib/bron/menselijk';
 	// Een geopende post in Bewindspersonen, in de vorm
 	// van OpenRij. Wat de bewindspersoon deed staat er meteen: de laatste toezeggingen (met
 	// hun stand), de laatste stukken die hij of zij ondertekende, en de dossiers.
@@ -95,7 +96,7 @@
 						teken: 'stuk',
 						soort: (x.id.split('/')[0] as import('$lib/vocabulary').Collection) ?? 'documents',
 						label: 'Ondertekend',
-						zin: x.display_name ?? x.id,
+						zin: naamVanId(x.id, x.display_name),
 						href: bronHref(x.id, { keepMode: false, mode: 'read' }),
 						ref: x.id
 					});

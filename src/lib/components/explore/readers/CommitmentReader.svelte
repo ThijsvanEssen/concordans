@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import { vandaag } from '$lib/text/datum';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -103,7 +104,9 @@
 			<Feiten>
 				<Veld label="Bewindspersoon" value={c.member ?? c.minister_name} nodig>
 					{#if c.member}
-						<BronLink ref={`members/${c.member.key}`}>{c.member.name ?? c.member.key}</BronLink>
+						<BronLink ref={`members/${c.member.key}`}
+							>{c.member.name ?? naamVan('members', c.member)}</BronLink
+						>
 					{:else}
 						{c.minister_name}
 					{/if}

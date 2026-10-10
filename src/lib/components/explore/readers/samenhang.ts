@@ -1,6 +1,7 @@
 // The connected cases of a judgment (API 0.78, `related_to`): those its inhoudsindicatie
 // names and those whose inhoudsindicatie names it. The node response carries the sentence
 // that says so on each RELATED_TO edge (`meta.text`), as the judge wrote it.
+import { keyEcli } from '$lib/bron/leesbaar';
 import type { Neighbor } from '$lib/api/nodes';
 
 export type Zin = {
@@ -29,7 +30,7 @@ export function samenhangVan(
 	for (const r of related)
 		rows.set(r.key, {
 			key: r.key,
-			titel: r.ecli ?? r.key,
+			titel: r.ecli ?? keyEcli(r.key) ?? 'Uitspraak',
 			instantie: null,
 			datum: null,
 			zinnen: []
@@ -47,7 +48,9 @@ export function samenhangVan(
 			datum: null,
 			zinnen: []
 		};
-		row.titel = names.length ? names.join(', ') : (text(props.ecli) ?? (row.titel || n.key));
+		row.titel = names.length
+			? names.join(', ')
+			: (text(props.ecli) ?? (row.titel || keyEcli(n.key) || 'Uitspraak'));
 		row.instantie = text(props.court) ?? row.instantie;
 		row.datum = text(props.date) ?? row.datum;
 		const meta = (n.meta ?? {}) as Record<string, unknown>;
