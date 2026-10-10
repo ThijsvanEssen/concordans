@@ -191,6 +191,23 @@ describe('the panel under the filter', () => {
 		expect(filterGroups(groups, none)).toEqual([]);
 	});
 
+	it('keeps a group whose loader is still under way in its place, unless a filter cuts rows', () => {
+		const wachtend = [
+			{ id: 'judgments', label: 'Uitspraken die dit artikel aanhalen', rows: [], capped: false },
+			groups[1]
+		];
+		const shown = filterGroups(wachtend, EMPTY_FILTER, new Set(['judgments']));
+		expect(shown.map((g) => [g.id, !!g.laden])).toEqual([
+			['judgments', true],
+			['cited-by', false]
+		]);
+		expect(filterGroups(wachtend, EMPTY_FILTER).map((g) => g.id)).toEqual(['cited-by']);
+		const f = { ...EMPTY_FILTER, bronnen: new Set(['artikelen'] as const) };
+		expect(filterGroups(wachtend, f, new Set(['judgments'])).map((g) => g.id)).toEqual([
+			'cited-by'
+		]);
+	});
+
 	it('regroups per lid, the rest under Hele artikel', () => {
 		const perLid = regroup(
 			[
