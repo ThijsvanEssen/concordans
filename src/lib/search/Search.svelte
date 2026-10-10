@@ -8,7 +8,7 @@
 	// Netwerk, where a result is picked instead of opened.
 	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { api, isTimeout, unwrap } from '$lib/api/client';
+	import { isTimeout, unwrap, zoekApi } from '$lib/api/client';
 	import { DEBOUNCE_MS, LANEN as ALLE_LANEN, LIVE, type Laan as LaanDef } from './lanen';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
@@ -134,6 +134,8 @@
 	let answered = $state('');
 	let loading = $state(false);
 	let failed = $state(false);
+	/** The first request gave up on its own time (30 s), not on an error of the API. */
+	let traag = $state(false);
 	/** Per lane: what it last answered (it stays while the next query runs), and how it stands. */
 	let laanHits = $state<Record<string, Partial<Record<Kind, Hit[]>>>>({});
 	/** `traag`: it gave up on its own time (`zoekApi`, 30 s), not on an error of the API. */
@@ -261,11 +263,23 @@
 			!loading &&
 			!failed &&
 			lanenBezig.length === 0 &&
+			// Never "Geen resultaten" while the live mode left kinds out.
+			meerKinds.size === 0 &&
 			hits.length === 0 &&
 			!citation &&
 			!bare &&
 			!outsideLaw
 	);
+
+	/**
+	 * A live answer that left kinds out and found nothing in them is no answer yet: the query
+	 * is asked once more in full, by itself, as "Meer …" would (Thijs, 10 Oct: "126ffa"). With
+	 * hits, the hits stand and "Meer …" asks for the rest.
+	 */
+	function vraagVolAls(term: string, afgekapt: Kind[], gevonden: Partial<Record<Kind, Hit[]>>) {
+		if (!LIVE || volVoor === term || term !== q || afgekapt.length === 0) return;
+		if (afgekapt.every((k) => !(gevonden[k] ?? []).length)) volVoor = term;
+	}
 
 	// The first request per query: the fast kinds and what the query cites; the lanes below
 	// run beside it. The timer waits for the typing to pause, and a newer query aborts the
@@ -276,7 +290,10 @@
 		void periodeTot;
 		// "Meer …" asks the whole query again in full, the fast kinds too.
 		if (LIVE) void volVoor;
+		// "Probeer opnieuw" after a first request that failed or took too long.
+		void opnieuw.snel;
 		failed = false;
+		traag = false;
 		if (term.length < SNEL_MIN) {
 			results = {};
 			answered = '';
@@ -303,8 +320,10 @@
 			// the moment its hits are there, so Enter cannot open a hit before the law is known.
 			if (snel.length === 0) loading = false;
 			else
+				// The search client waits as long as the API may (30 s): a cold path took longer
+				// than the 10 s of the others, and the first try failed (Thijs, 10 Oct).
 				unwrap(
-					api.GET('/api/search', {
+					zoekApi.GET('/api/search', {
 						params: {
 							query: zoekVraag(term, snel, true, LIVE ? (volVoor === term ? 'full' : 'live') : null)
 						},
@@ -324,14 +343,16 @@
 						results = r.results;
 						const partial = (r as { partial?: Partial<Record<Kind, boolean>> }).partial ?? {};
 						snelMeer = { term, kinds: snel.filter((k) => partial[k]) };
+						vraagVolAls(term, snelMeer.kinds, r.results as Partial<Record<Kind, Hit[]>>);
 						answered = term;
 						loading = false;
 					})
-					.catch(() => {
+					.catch((e) => {
 						if (controller.signal.aborted) return;
 						results = {};
 						answered = term;
 						failed = true;
+						traag = isTimeout(e);
 						loading = false;
 					});
 		}, DEBOUNCE_MS);
@@ -381,6 +402,11 @@
 				// The live mode names the kinds it cut off at its time: more on "Meer uitspraken".
 				const partial = (r as { partial?: Partial<Record<Kind, boolean>> }).partial ?? {};
 				laanMeer[laan.id] = types.some((k) => partial[k]) ? term : '';
+				vraagVolAls(
+					term,
+					types.filter((k) => partial[k]),
+					r.results as Partial<Record<Kind, Hit[]>>
+				);
 				if (eerste) {
 					resolvedWith = { term, target: resolvedOf(r.resolved) };
 					keuzesVoor = { term, ...keuzesOf(r.resolved) };
@@ -788,7 +814,14 @@
 		{/each}
 
 		{#if failed}
-			<p class="state" role="status">Zoeken mislukt</p>
+			<p class="state" role="status">
+				{traag ? 'Zoeken duurt lang.' : 'Zoeken mislukt.'}
+				<button
+					type="button"
+					class="opnieuw"
+					onclick={() => (opnieuw.snel = (opnieuw.snel ?? 0) + 1)}>Probeer opnieuw</button
+				>
+			</p>
 		{:else if empty}
 			<p class="state" role="status">Geen resultaten</p>
 		{/if}
