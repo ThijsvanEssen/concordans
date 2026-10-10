@@ -23,7 +23,7 @@
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
 	import { getCabinet } from '$lib/api/records';
-	import { besluiten, telling } from '$lib/api/decisions';
+	import { besluiten, nogTeTellen, telling } from '$lib/api/decisions';
 	import type { Schema } from '$lib/api/types';
 	import {
 		COURT_KINDS,
@@ -651,8 +651,8 @@
 					// The total and facets still being counted (API 0.79.41): the page stands, the
 					// counts come from the same question asked once more.
 					const t = await telling(r, { ...query, offset }, signal).catch(() => null);
-					const geteld = t ?? r;
-					decisionFacets = geteld.facets ?? null;
+					// Still counting after the last wait: the facets stay as they were, the total quiet.
+					if (!t || !nogTeTellen(t)) decisionFacets = (t ?? r).facets ?? null;
 					if (t && t.total !== null && pages.decisions)
 						pages.decisions = {
 							...pages.decisions,

@@ -38,6 +38,24 @@ describe('decisions still being counted', () => {
 		expect(GET).toHaveBeenCalledTimes(2);
 	});
 
+	it('asks again, later each time, until the counts come', async () => {
+		antwoorden.push(pagina(null, true), pagina(null, true), pagina(null, true), pagina(40, false));
+		const r = geteld({ q: ['algoritme'] });
+		await vi.advanceTimersByTimeAsync(1500 + 3000 + 6000);
+		expect((await r).total).toBe(40);
+		expect(GET).toHaveBeenCalledTimes(4);
+	});
+
+	it('stops asking when the filter changes', async () => {
+		antwoorden.push(pagina(null, true), pagina(null, true));
+		const ac = new AbortController();
+		const r = geteld({ q: ['a'] }, ac.signal);
+		await vi.advanceTimersByTimeAsync(1500);
+		ac.abort();
+		await expect(r).rejects.toBeDefined();
+		expect(GET).toHaveBeenCalledTimes(2);
+	});
+
 	it('asks only once where the counts came with the page', async () => {
 		antwoorden.push(pagina(7, false));
 		expect((await geteld({ limit: 1 })).total).toBe(7);
