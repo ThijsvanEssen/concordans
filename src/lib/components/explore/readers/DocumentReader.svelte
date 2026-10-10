@@ -18,6 +18,14 @@
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import StemmingUitslag from '$lib/components/parliamentary/StemmingUitslag.svelte';
 	import { fromDocument } from '$lib/bron/submitters';
+	import KopActies from './KopActies.svelte';
+	import Bijlagen from './Bijlagen.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import BronLink from '$lib/bron/BronLink.svelte';
+	import { getNodeFirst } from '$lib/api/records';
+	import type { NodeGraph } from '$lib/api/nodes';
+	import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
+	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 
 	let {
 		node,
@@ -40,6 +48,49 @@
 	// The key, not the node: the node is drawn anew with the same key once its
 	// neighbourhood loads, and the record is not asked again for that.
 	const bronKey = $derived(node.key);
+
+	// The light node (the band asks it too, one request): the vergaderjaar and the dossier for
+	// the citation, the count of the bijlagen.
+	let licht = $state<NodeGraph | null>(null);
+	$effect(() => {
+		const key = bronKey;
+		licht = null;
+		let stale = false;
+		getNodeFirst('documents', key)
+			.then((r) => {
+				if (!stale) licht = r;
+			})
+			.catch(() => {});
+		return () => (stale = true);
+	});
+	const lichtProps = $derived((licht?.node.props ?? {}) as Record<string, unknown>);
+	const tekstVan = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+	const bijlagen = $derived(
+		licht?.neighbors.buckets?.find(
+			(b) =>
+				b.relation === 'ACCOMPANIES' && b.direction === 'inbound' && b.collection === 'documents'
+		)?.total ?? 0
+	);
+
+	// The articles a memorie explains (`explains`), per law: the reverse of the Toelichting on
+	// an article (concept 21). The laws' names are asked once each.
+	const toegelicht = $derived.by(() => {
+		if (view.kind !== 'loaded') return [];
+		const perWet = new Map<string, { key: string; nummer: string }[]>();
+		for (const e of view.document.explains ?? []) {
+			if (e.collection !== 'articles' || !e.bwb_id || !e.article_number) continue;
+			const rij = perWet.get(e.bwb_id) ?? [];
+			rij.push({ key: e.key, nummer: e.article_number });
+			perWet.set(e.bwb_id, rij);
+		}
+		// In the order of the law: 54a before 138c.
+		const op = (a: { nummer: string }, b: { nummer: string }) =>
+			a.nummer.localeCompare(b.nummer, 'nl', { numeric: true });
+		return [...perWet].map(([bwbId, artikelen]) => ({ bwbId, artikelen: artikelen.sort(op) }));
+	});
+	$effect(() => {
+		for (const w of toegelicht) ensureInstrumentName(w.bwbId);
+	});
 
 	$effect(() => {
 		void attempt;
@@ -207,6 +258,14 @@
 		{:else}
 			{@const doc = view.document}
 			{@const term = glossaryTerm(doc.kind)}
+			{@const cite = kamerstukCitation({
+				chamber: doc.chamber,
+				session_year: tekstVan(lichtProps.session_year),
+				dossier_number: tekstVan(lichtProps.dossier_number) ?? doc.dossier_numbers?.[0],
+				dossier_suffix: tekstVan(lichtProps.dossier_suffix),
+				number: doc.number
+			})}
+			{@const naam = cite ?? doc.title ?? doc.key}
 			<!-- The kind of the case the stuk is in, where it adds to the stuk's own: a motie is in
 			     a case of the kind Motie, which "Motie, 7 sep. 2026, Motie" said twice. -->
 			{@const caseKinds = (doc.case_kinds ?? []).filter(
@@ -224,7 +283,55 @@
 				{#if doc.submitters?.length}
 					<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
 				{/if}
+				<!-- The status line: the stuk as it is cited and its bijlagen, the head's two actions
+				     beside it (KopActies), the official page inside Citeer. -->
+				<div class="status-rij">
+					{#if cite || bijlagen > 0}
+						<div class="status">
+							{#if cite}{cite}.{/if}
+							{#if bijlagen > 0}<Bijlagen
+									collection="documents"
+									bronKey={doc.key}
+									aantal={bijlagen}
+								/>{/if}
+						</div>
+					{/if}
+					<KopActies
+						bewaar={{
+							id: `documents/${doc.key}`,
+							at: '',
+							kort: naam,
+							voluit: cite && doc.kind ? `${cite} (${doc.kind})` : naam,
+							groep: doc.dossier_numbers?.[0] ? `Kamerstukken ${doc.dossier_numbers[0]}` : naam
+						}}
+						cite={cite
+							? citeItems(
+									{ kort: cite, voluit: doc.title ? `${cite}, ${doc.title}` : cite },
+									permalink(page.url, '')
+								)
+							: []}
+						{naam}
+						bron={doc.tk_url ? { label: 'tweedekamer.nl', href: doc.tk_url } : null}
+						tekst={doc.text ? () => doc.text ?? '' : undefined}
+					/>
+				</div>
 			</header>
+
+			{#if toegelicht.length > 0}
+				<Sectie titel="Licht toe" soort="articles" aantal={doc.explains?.length ?? 0}>
+					<ul class="toegelicht">
+						{#each toegelicht as w (w.bwbId)}
+							{@const wet = $instrumentMetaStore.get(w.bwbId)}
+							<li>
+								<span class="wet">{wet?.shortTitle ?? wet?.title ?? w.bwbId}</span>
+								{#each w.artikelen as a, i (a.key)}{i > 0 ? ', ' : ' art. '}<BronLink
+										ref={{ collection: 'articles', key: a.key }}>{a.nummer}</BronLink
+									>{/each}
+							</li>
+						{/each}
+					</ul>
+				</Sectie>
+			{/if}
 
 			<StemmingUitslag decisions={doc.decisions ?? []} />
 
@@ -273,13 +380,9 @@
 				<p class="empty">Tekst niet in de gegevens.</p>
 			{/if}
 
-			{#if doc.tk_url || doc.file_url}
+			{#if doc.file_url}
+				<!-- The page at the Tweede Kamer is in Citeer; the file the text came from here. -->
 				<footer class="foot">
-					{#if doc.tk_url}
-						<a href={doc.tk_url} target="_blank" rel="noopener noreferrer" class="full-link">
-							tweedekamer.nl ↗
-						</a>
-					{/if}
 					{#if doc.file_url}
 						<a href={doc.file_url} target="_blank" rel="noopener noreferrer" class="full-link">
 							Origineel bestand ↗
@@ -440,6 +543,39 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		color: var(--ink-2);
+	}
+	/* As the article's status line, the two actions beside its first line. */
+	.status-rij {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: var(--s-2) var(--s-4);
+	}
+	.status {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--s-1) var(--s-3);
+		flex: 1 1 16em;
+		min-width: 0;
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink);
+	}
+	.toegelicht {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.toegelicht li {
+		padding: 2px 0;
+	}
+	.wet {
+		color: var(--ink);
 	}
 	.submitted :global(a) {
 		color: var(--ink);

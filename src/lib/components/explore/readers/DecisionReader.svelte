@@ -8,6 +8,7 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import ReaderFrame from './ReaderFrame.svelte';
+	import KopActies from './KopActies.svelte';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
@@ -136,6 +137,8 @@
 
 			{@const uitkomst = decisionOutcome(d)}
 			{@const eigen = uniqueBy(dossiers, (x) => x.number).slice(0, 3)}
+			{@const verder = eigen.slice(1)}
+			{@const onderwerp = (d.subject ?? doc?.title ?? '').trim()}
 			<header class="head">
 				<span class="kicker">
 					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink><span
@@ -143,22 +146,35 @@
 					>
 				</span>
 				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}</h2>
-				<!-- The outcome, what was voted on and the dossier: words, separated by commas. -->
-				<p class="woorden">
-					{#if uitkomst}<span
-							class="uitslag"
-							class:uitslag--passed={d.passed === true}
-							class:uitslag--failed={d.passed === false}>{uitkomst}</span
-						>{/if}{#if d.primary_case_kind}{uitkomst ? ', ' : ''}<span class="zaaksoort"
-							>{d.primary_case_kind}</span
-						>{/if}{#each eigen as dossier, i (dossier.number)}{uitkomst ||
-						d.primary_case_kind ||
-						i > 0
-							? ', '
-							: ''}<BronLink ref={`dossiers/${dossier.number}`} class="dossier-woord"
-							><DossierNaam {dossier} /></BronLink
-						>{/each}
-				</p>
+				<!-- The status line: the outcome and what was voted on, words separated by commas;
+				     the dossier is in the band ("Over 34372 …"), a second one here. One action,
+				     Bewaar: a stemming is cited through what was voted on (concept 21). -->
+				<div class="status-rij">
+					<p class="woorden">
+						{#if uitkomst}<span
+								class="uitslag"
+								class:uitslag--passed={d.passed === true}
+								class:uitslag--failed={d.passed === false}>{uitkomst}</span
+							>{/if}{#if d.primary_case_kind}{uitkomst ? ', ' : ''}<span class="zaaksoort"
+								>{d.primary_case_kind}</span
+							>{/if}{#each verder as dossier, i (dossier.number)}{uitkomst ||
+							d.primary_case_kind ||
+							i > 0
+								? ', '
+								: ''}<BronLink ref={`dossiers/${dossier.number}`} class="dossier-woord"
+								><DossierNaam {dossier} /></BronLink
+							>{/each}
+					</p>
+					<KopActies
+						bewaar={{
+							id: node.id,
+							at: '',
+							kort: `Stemming${d.date ? ` ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
+							voluit: `Stemming ${chamberName(chamber)}${d.date ? `, ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
+							groep: eigen[0] ? `Kamerstukken ${eigen[0].number}` : 'Stemmingen'
+						}}
+					/>
+				</div>
 			</header>
 
 			{#if doc?.text}
@@ -289,6 +305,17 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
+	.status-rij {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--s-2) var(--s-4);
+	}
+	.status-rij .woorden {
+		flex: 1 1 16em;
+		min-width: 0;
+	}
 	.kicker {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
@@ -332,11 +359,12 @@
 		margin: 0;
 		line-height: var(--lh-snug);
 	}
+	/* As the article's status line: t-meta, in ink. */
 	.woorden {
 		margin: 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+		font-size: var(--t-meta);
+		color: var(--ink);
 	}
 
 	/* The outcome, the kind of case and the dossier numbers are words, not tags. */
