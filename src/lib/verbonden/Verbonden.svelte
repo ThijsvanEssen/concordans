@@ -56,7 +56,7 @@
 		filterGroups,
 		hiddenLine,
 		regroup,
-		totalCount,
+		shownLabel,
 		yearHistogram,
 		type Grouping
 	} from './view';
@@ -152,7 +152,9 @@
 
 	// The kern of the bron (Procesgang, Ingediend bij, Wet, Fractie) stands above its text in
 	// the band; Verbonden is the context and leaves those groups out (Thijs, 9 Oct: "dubbelop";
-	// docs/hierarchie.md, Kern of context). Its count is what it lists; the table keeps all.
+	// docs/hierarchie.md, Kern of context). The table keeps all, and the count is the table's:
+	// one number for the head, the link and the table (UX-toets 10 Oct, #15: "0 verbindingen"
+	// over "Alle 79 in een tabel" on a fractie).
 	// A bron in the kern is not listed again by another relation either: the Rechtbank of a
 	// procesgang is no "uitspraak die hier wordt aangehaald" (Thijs, 9 Oct). The instances
 	// before the eerdere aanleg come with the band's own cached light nodes.
@@ -206,7 +208,8 @@
 	const filtered = $derived(filterGroups(groepen, filter, new Set(verbonden.wachtend ?? [])));
 	const shown = $derived(regroup(filtered, grouping, selection.collection));
 	const hidden = $derived(hiddenLine(groepen, filter));
-	const total = $derived(totalCount(verbonden.groups));
+	// What the table lists: the bronfilter applied, as its own count line does.
+	const total = $derived(shownLabel(verbonden.groups, filter));
 
 	const rowId = rowKey;
 
@@ -343,7 +346,7 @@
 	<div class="head">
 		<h2 class="head__title">Verbonden</h2>
 		{#if verbonden.groups.length > 0}
-			<span class="head__count">{countLine(groepen, filter)}</span>
+			<span class="head__count">{countLine(verbonden.groups, filter)}</span>
 		{/if}
 	</div>
 	<!-- The choose-line of the panel (docs/bediening.md): which bronnen, how grouped, the filter. -->
@@ -679,7 +682,7 @@
 
 		{#if verbonden.groups.length > 0}
 			<div class="foot">
-				<TekstLink href={tableHref}>Alle {formatCount(total)} in een tabel</TekstLink>
+				<TekstLink href={tableHref}>Alle {total} in een tabel</TekstLink>
 				<TekstLink onclick={exportCsv}>Exporteer</TekstLink>
 			</div>
 		{/if}

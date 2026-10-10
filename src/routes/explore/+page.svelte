@@ -328,6 +328,8 @@
 			(f.bronnen &&
 				selectedNode?.collection === 'articles' &&
 				!(verbonden.lidPerBak && lidTellingenOnder(verbonden.lidPerBak, f.bronnen)));
+		// Asked again for each bron Verbonden starts on: a readable address names it later.
+		void verbonden.id;
 		if (tableMode || opRijen) void source.volledig();
 	});
 
