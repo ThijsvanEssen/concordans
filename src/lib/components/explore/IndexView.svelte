@@ -830,8 +830,8 @@
 	// Leaving Bladeren, for a bron or another page, keeps the list.
 	beforeNavigate(({ from, to }) => {
 		const staying =
-			to?.url.pathname === from?.url.pathname && to?.url.searchParams.get('mode') === 'index';
-		if (from && !staying) keep(from.url);
+			to?.url?.pathname === from?.url?.pathname && to?.url?.searchParams.get('mode') === 'index';
+		if (from?.url && !staying) keep(from.url);
 	});
 
 	// Mounting by Back or Forward takes the kept list in place of the first page.
