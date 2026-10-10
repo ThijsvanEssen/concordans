@@ -545,9 +545,11 @@
 					if (offset) return;
 					// The count beside Verdragen: this list's own total where it is the treaties,
 					// else one row asked under the same filters.
+					// Beside the rows, not before them: the rows stood waiting for it (live, 10 Oct:
+					// rows in at 1.7 s, on screen at 4.1 s).
 					if (instrumentSoort) verdragTotaal = r.total;
 					else
-						verdragTotaal = await unwrap(
+						void unwrap(
 							api.GET('/api/instruments', {
 								params: {
 									query: { ...query, kind: 'verdrag', limit: 1, offset: 0, facets: false }
@@ -555,8 +557,10 @@
 								signal
 							})
 						)
-							.then((v) => v.total)
-							.catch(() => null);
+							.then((v) => {
+								if (!signal.aborted) verdragTotaal = v.total;
+							})
+							.catch(() => {});
 				};
 			}
 			case 'judgments': {
@@ -873,7 +877,7 @@
 		loadMoreFailed = false;
 		load(0, ac.signal)
 			.catch(() => {
-				if (!ac.signal.aborted) error = `${labelOf(category)} konden niet worden geladen.`;
+				if (!ac.signal.aborted) error = `De ${labelOf(category)} konden niet worden geladen.`;
 			})
 			.finally(() => {
 				if (!ac.signal.aborted) loading = false;
