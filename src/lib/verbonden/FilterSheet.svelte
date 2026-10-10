@@ -339,7 +339,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: calc(var(--z-modal) - 1);
-		background: rgba(28, 27, 25, 0.12);
+		background: var(--scherm);
 	}
 	.sheet {
 		position: fixed;

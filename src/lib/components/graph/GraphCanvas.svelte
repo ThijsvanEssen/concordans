@@ -1573,7 +1573,7 @@
 		position: absolute;
 		transform: translate(-50%, -50%);
 		padding: 1px 6px;
-		border-radius: 999px;
+		border-radius: var(--r-rond);
 		background: var(--paper);
 		font-family: var(--font-serif);
 		font-size: var(--t-label);
@@ -1594,7 +1594,7 @@
 		position: absolute;
 		transform: translate(-50%, -100%);
 		padding: 2px var(--s-2);
-		border-radius: 999px;
+		border-radius: var(--r-rond);
 		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);
 		border: 1px solid var(--hull-color);
 		font-family: var(--font-serif);
@@ -1644,7 +1644,7 @@
 		min-width: 14px;
 		height: 14px;
 		padding: 0 3px;
-		border-radius: 7px;
+		border-radius: var(--r-rond);
 		background: var(--accent);
 		color: var(--paper);
 		border: 1.5px solid var(--paper);

@@ -351,7 +351,7 @@
 		margin: 1px 0;
 		padding: 0 4px;
 		border: 1.5px solid var(--ink);
-		border-radius: 999px;
+		border-radius: var(--r-rond);
 		background: var(--paper);
 		color: var(--ink);
 		font-weight: 600;

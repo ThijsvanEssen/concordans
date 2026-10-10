@@ -202,6 +202,49 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('takes every colour in a style from the tokens in AppShell', () => {
+		// A hex or rgb() value in a component is a colour beside the palette. A mask's `black`
+		// is not a colour; the canvas and the fracties' own colours live in TypeScript.
+		const css = (t: string) =>
+			(/<style>([\s\S]*?)<\/style>/.exec(t)?.[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
+		const eigen: Uitzonderingen = {
+			'lib/components/layout/AppShell.svelte': 'the tokens themselves',
+			'routes/explore/+page.svelte':
+				'the scrim of the phone sheet; left alone while its column widths are reworked'
+		};
+		expect(
+			offenders((t) => /#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?)\(/.test(css(t)), buiten(eigen))
+		).toEqual([]);
+	});
+
+	it('rounds a corner with a radius token', () => {
+		const vrij = /^((var\(--r-[\w-]+\)|0)(\s+(var\(--r-[\w-]+\)|0))*|50%|inherit)$/;
+		expect(
+			offenders(
+				(t) =>
+					rules(t).some((r) =>
+						[...r.body.matchAll(/border-radius:\s*([^;]+);/g)].some((m) => !vrij.test(m[1].trim()))
+					),
+				['lib/components/explore/readers/KabinetZetels.svelte']
+			)
+		).toEqual([]);
+	});
+
+	it('names a face only through its token', () => {
+		expect(
+			offenders(
+				(t) =>
+					rules(t).some((r) =>
+						[...r.body.matchAll(/font-family:\s*([^;]+);/g)].some(
+							(m) => !/^var\(--font-(serif|ui)\)$/.test(m[1].trim())
+						)
+					),
+				// The wordmark is a logo in its own face.
+				['lib/components/layout/AppShell.svelte', 'lib/components/layout/Wordmark.svelte']
+			)
+		).toEqual([]);
+	});
+
 	it('separates with a comma, not a middle dot (Thijs, 2 October 2026)', () => {
 		// "Motie, nr. 21", "Dossier, Kamerstuk 36799", and the browser tab: "Actueel, Concordans".
 		expect(offenders((t) => t.includes('\u00b7'))).toEqual([]);

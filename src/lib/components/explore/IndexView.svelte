@@ -3085,8 +3085,8 @@
 		mask-image: linear-gradient(
 			to right,
 			transparent 0,
-			#000 var(--fade-left),
-			#000 calc(100% - var(--fade-right)),
+			black var(--fade-left),
+			black calc(100% - var(--fade-right)),
 			transparent 100%
 		);
 	}

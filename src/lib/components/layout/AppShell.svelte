@@ -223,6 +223,7 @@
 		--r-1: 3px; /* buttons, inputs */
 		--r-2: 4px; /* menus, cards */
 		--r-3: 8px;
+		--r-rond: 999px; /* a pill or a dot: a count badge, a chip */
 
 		/* Shadows, almost none */
 		--shadow-pop: 0 1px 0 rgba(28, 27, 25, 0.04), 0 8px 24px -12px rgba(28, 27, 25, 0.18);
@@ -230,6 +231,8 @@
 			0 1px 0 rgba(28, 27, 25, 0.05), 0 4px 12px -4px rgba(28, 27, 25, 0.12),
 			0 16px 32px -16px rgba(28, 27, 25, 0.16);
 		--shadow-modal: 0 6px 24px rgba(28, 27, 25, 0.1);
+		/* The page behind a modal or a sheet. */
+		--scherm: rgba(28, 27, 25, 0.18);
 
 		/* Motion */
 		--ease: cubic-bezier(0.2, 0.6, 0.2, 1);

@@ -402,7 +402,7 @@
 		display: inline-flex;
 		align-items: center;
 		border: 1px solid var(--ink);
-		border-radius: 999px;
+		border-radius: var(--r-rond);
 		background: var(--paper);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
