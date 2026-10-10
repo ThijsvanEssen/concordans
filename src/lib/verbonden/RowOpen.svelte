@@ -64,7 +64,7 @@
 		white-space: normal;
 	}
 	.passage mark {
-		background: var(--accent-soft);
+		background: var(--wassing);
 		color: inherit;
 	}
 	.acts {

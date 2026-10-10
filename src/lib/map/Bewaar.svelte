@@ -171,10 +171,12 @@
 		color: var(--ink-3);
 	}
 	.kies :global(.tekstmenu__knop:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.kaal:focus-visible {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}
 </style>

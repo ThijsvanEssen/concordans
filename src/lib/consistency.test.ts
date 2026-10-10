@@ -298,21 +298,17 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
-	it('keeps red at rest for "nee" and an error (Thijs, 10 Oct 2026)', () => {
-		// The accent on hover and focus is every link's; at rest only in these places.
-		const css = (t: string) =>
-			(/<style>([\s\S]*?)<\/style>/.exec(t)?.[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
-		const rust = (t: string) =>
-			[...css(t).matchAll(/([^{}]+)\{([^{}]*)\}/g)].some(
-				([, selector, body]) =>
-					/var\(--accent\)/.test(body) && !/:hover|:focus|is-landed/.test(selector)
-			);
+	it('keeps red for "nee" and an error, never for a hover or a focus (Thijs, 10 Oct 2026)', () => {
+		// "De kleur mag alleen blijven zolang het een doel dient": red says no. A hover, the
+		// focus ring and a wash are ink or neutral.
 		const eigen: Uitzonderingen = {
-			'lib/components/layout/AppShell.svelte': 'the tokens, --uitkomst-nee among them',
+			'lib/components/layout/AppShell.svelte': 'the tokens: --accent and --uitkomst-nee',
 			'lib/components/layout/Wordmark.svelte': 'the § of the name',
 			'routes/(main)/actueel/+page.svelte': 'an error'
 		};
-		expect(offenders(rust, buiten(eigen))).toEqual([]);
+		expect(offenders((t) => /var\(--accent\)|--accent-soft/.test(t), buiten(eigen))).toEqual([]);
+		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
+		expect(shell.match(/var\(--accent\)/g)).toHaveLength(1);
 	});
 
 	it('keeps red off a menu button that has the focus back after a choice', () => {

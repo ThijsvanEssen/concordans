@@ -3,8 +3,13 @@
 // shader, then compounds it with EdgeArrowHeadProgram for the arrowhead.
 // The `v_positionCoef` varying (0 = source, 1 = target) drives the dash logic.
 
-import { EdgeProgram, EdgeArrowHeadProgram, createEdgeCompoundProgram } from 'sigma/rendering';
+import {
+	EdgeProgram,
+	createEdgeArrowHeadProgram,
+	createEdgeCompoundProgram
+} from 'sigma/rendering';
 import { floatColor } from 'sigma/utils';
+import { PIJL_BREED } from './nodeSprites';
 import type { RenderParams } from 'sigma/types';
 import type { NodeDisplayData, EdgeDisplayData } from 'sigma/types';
 
@@ -114,7 +119,7 @@ const UNIFORMS = [
 type Uniform = (typeof UNIFORMS)[number];
 
 // ── Program class ─────────────────────────────────────────────────────────────
-function createBodyProgram(dashes: number, on: number) {
+function createBodyProgram(dashes: number, on: number, pijl: number) {
 	return class DashedEdgeBodyProgram extends EdgeProgram<Uniform> {
 		getDefinition() {
 			return {
@@ -199,19 +204,23 @@ function createBodyProgram(dashes: number, on: number) {
 			gl.uniform1f(uniformLocations['u_pixelRatio'], params.pixelRatio);
 			gl.uniform1f(uniformLocations['u_feather'], params.antiAliasingFeather);
 			gl.uniform1f(uniformLocations['u_minEdgeThickness'], params.minEdgeThickness);
-			gl.uniform1f(uniformLocations['u_lengthToThicknessRatio'], 2.5);
+			gl.uniform1f(uniformLocations['u_lengthToThicknessRatio'], pijl);
 		}
 	};
 }
 
-/** Six dashes per edge: a proposed change, a vote. */
-export const DashedEdgeArrowProgram = createEdgeCompoundProgram([
-	createBodyProgram(6, 0.75) as never,
-	EdgeArrowHeadProgram
-]);
-
-/** Sixteen short dashes per edge: PART_OF. */
-export const DottedEdgeArrowProgram = createEdgeCompoundProgram([
-	createBodyProgram(16, 0.4) as never,
-	EdgeArrowHeadProgram
-]);
+/**
+ * The dashed and dotted programs with an arrowhead of `pijl` times the line's thickness
+ * long (--netwerk-pijl), as the solid one (GraphCanvas): six dashes for a proposed change
+ * or a vote, sixteen short ones for PART_OF.
+ */
+export function stippelProgrammas(pijl: number) {
+	const kop = createEdgeArrowHeadProgram({
+		lengthToThicknessRatio: pijl,
+		widenessToThicknessRatio: pijl * PIJL_BREED
+	});
+	return {
+		dashed: createEdgeCompoundProgram([createBodyProgram(6, 0.75, pijl) as never, kop]),
+		dotted: createEdgeCompoundProgram([createBodyProgram(16, 0.4, pijl) as never, kop])
+	};
+}

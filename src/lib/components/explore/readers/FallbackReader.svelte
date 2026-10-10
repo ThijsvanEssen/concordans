@@ -77,6 +77,8 @@
 		color: var(--ink-2);
 	}
 	.source:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 </style>

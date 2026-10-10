@@ -4,9 +4,12 @@
 	// Overzicht of a topic: its events in the Kruiswoord (concept ux-voorstel/1f), the kinds as
 	// columns and the months as rows, and under it the list of a chosen cell. The stemmingen are
 	// counted by /api/decisions per day (facets.days), with one fractie's voor and tegen where a
-	// fractie is chosen; moties, brieven and toezeggingen are the feed's events, counted from its
-	// pages; an amendment counts once per chain of replacing papers (REVISES), in the month of
-	// its first paper. Richting lays the researcher's coding over the moties' cells.
+	// fractie is chosen; moties, brieven and toezeggingen are the feed's events, counted per
+	// period by /api/feed/periods (#444); an amendment counts once per chain of replacing papers
+	// (REVISES), in the period of its first paper, as its `amendment_chains` give (#451). A cell
+	// of the amendments asks the feed for its own period when it opens. Where the counts are not
+	// whole, the feed's pages count as before. Richting lays the researcher's coding over the
+	// moties' cells.
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
@@ -216,6 +219,15 @@
 		path: string | null;
 	};
 	let feed = $state<FeedItem[]>([]);
+	/**
+	 * Moties, brieven and toezeggingen counted per period by /api/feed/periods (#444), in one
+	 * call, and the amendments once per chain (`amendment_chains`, #451); null where it has no
+	 * complete answer (partial, or it failed), and the feed's pages count them as before.
+	 */
+	let perioden = $state<Telbaar[] | null>(null);
+	/** The amendments counted by their chains in /api/feed/periods: the feed is asked for them
+	 *  only when a cell of the column opens, and only for its period. */
+	let ketensGeteld = $state(false);
 	let feedLaden = $state(false);
 	/** The day of the last event counted, where the feed has more than was asked. */
 	let feedGrens = $state<string | null>(null);
@@ -246,24 +258,67 @@
 		const v = van;
 		const t = tot;
 		const ac = new AbortController();
+		const perWeek = week;
 		feed = [];
+		perioden = null;
+		ketensGeteld = false;
 		feedGrens = null;
 		feedLaden = !!woorden.length;
 		if (!woorden.length) return;
+		const filters = {
+			q: woorden,
+			...(k ? { chamber: k as 'TK' | 'EK' } : {}),
+			...(v ? { since: v } : {}),
+			...(t ? { until: t } : {})
+		};
+		// Per day for weeks, which the API allows over at most 400 days from a first day.
+		const dagen400 = !!v && (Date.parse(t || vandaag()) - Date.parse(v)) / 864e5 <= 400;
+		const per = perWeek ? (dagen400 ? 'day' : null) : 'month';
 		(async () => {
+			if (per) {
+				const r = await unwrap(
+					api.GET('/api/feed/periods', {
+						params: { query: { ...filters, per } },
+						signal: ac.signal
+					})
+				).catch(() => null);
+				if (r && !r.partial) {
+					const ketens = (r.periods ?? []).every((p) => p.amendment_chains != null);
+					perioden = (r.periods ?? []).flatMap((p) => [
+						...Object.entries(p.counts ?? {}).flatMap(([kind, count]) => {
+							const kolom = kolomVanKind(kind);
+							return kolom && kolom !== 'amendementen' ? [{ date: p.period, kolom, count }] : [];
+						}),
+						...(ketens && p.amendment_chains?.count
+							? [
+									{
+										date: p.period,
+										kolom: 'amendementen' as Kolom,
+										count: p.amendment_chains.count
+									}
+								]
+							: [])
+					]);
+					ketensGeteld = ketens;
+					dataTot =
+						Object.values(r.data_as_of ?? {})
+							.map((x) => x.newest?.slice(0, 10) ?? '')
+							.sort()
+							.at(-1) || null;
+				}
+			}
+			// Everything counted: the feed waits for a cell of the amendments (below).
+			if (ketensGeteld) return;
 			let cursor: string | undefined;
 			for (let n = 0; n < FEED_PAGINAS; n++) {
 				const r = await unwrap(
 					api.GET('/api/feed', {
 						params: {
 							query: {
-								q: woorden,
-								kind: KINDS,
+								...filters,
+								kind: perioden ? FEED_KOLOM.amendementen : KINDS,
 								limit: PAGINA,
 								facets: false,
-								...(k ? { chamber: k } : {}),
-								...(v ? { since: v } : {}),
-								...(t ? { until: t } : {}),
 								...(cursor ? { cursor } : {})
 							}
 						},
@@ -277,6 +332,54 @@
 						.map((x) => x.newest?.slice(0, 10) ?? '')
 						.sort()
 						.at(-1) || null;
+				cursor = r.next_cursor ?? undefined;
+				if (!cursor) return;
+			}
+			feedGrens = feed.at(-1)?.date ?? null;
+		})()
+			.catch(() => {})
+			.finally(() => {
+				if (!ac.signal.aborted) feedLaden = false;
+			});
+		return () => {
+			ac.abort();
+			feedLaden = false;
+		};
+	});
+
+	// Counted by their chains, the amendments of one cell are asked when it opens: the feed's
+	// amendment papers of its period, whose chains the effect below finds.
+	$effect(() => {
+		const cel = keuze?.kolom === 'amendementen' ? keuze.vak : null;
+		if (!ketensGeteld || !cel) return;
+		const woorden = termenSleutel ? termenSleutel.split('|') : [];
+		const { van: sinds, tot: totEnMet } = grenzenVan(cel);
+		const k = kamer;
+		const ac = new AbortController();
+		feed = [];
+		feedGrens = null;
+		feedLaden = true;
+		(async () => {
+			let cursor: string | undefined;
+			for (let n = 0; n < FEED_PAGINAS; n++) {
+				const r = await unwrap(
+					api.GET('/api/feed', {
+						params: {
+							query: {
+								q: woorden,
+								...(k ? { chamber: k as 'TK' | 'EK' } : {}),
+								since: sinds,
+								until: totEnMet,
+								kind: FEED_KOLOM.amendementen,
+								limit: PAGINA,
+								facets: false,
+								...(cursor ? { cursor } : {})
+							}
+						},
+						signal: ac.signal
+					})
+				);
+				feed = [...feed, ...r.items.map(naarItem)];
 				cursor = r.next_cursor ?? undefined;
 				if (!cursor) return;
 			}
@@ -343,11 +446,14 @@
 	const indeling = $derived(week ? 'week' : 'maand');
 	const telbaar = $derived.by<Telbaar[]>(() => {
 		const uit: Telbaar[] = [];
-		for (const i of feed) {
-			const k = kolomVanKind(i.kind);
-			if (k && k !== 'amendementen') uit.push({ date: i.date, kolom: k });
-		}
-		for (const a of amendementen) uit.push({ date: a.datum, kolom: 'amendementen' });
+		if (perioden) uit.push(...perioden);
+		else
+			for (const i of feed) {
+				const k = kolomVanKind(i.kind);
+				if (k && k !== 'amendementen') uit.push({ date: i.date, kolom: k });
+			}
+		if (!ketensGeteld)
+			for (const a of amendementen) uit.push({ date: a.datum, kolom: 'amendementen' });
 		if (fractieDagen) {
 			for (const d of fractieDagen.voor)
 				uit.push({ date: d.date, kolom: 'aangenomen', count: d.count });
@@ -370,11 +476,17 @@
 		// The month of the last event counted is counted in part; the ones before not at all.
 		const grens = vakVan(feedGrens, indeling);
 		const voor = vakken.find((v) => v < grens) ?? null;
-		return { moties: voor, amendementen: voor, brieven: voor, toezeggingen: voor };
+		// Counted per month by the API, the moties, brieven and toezeggingen are whole.
+		// Counted by the API, the columns are whole; the amendments too where their chains are.
+		if (ketensGeteld) return {};
+		return perioden
+			? { amendementen: voor }
+			: { moties: voor, amendementen: voor, brieven: voor, toezeggingen: voor };
 	});
 	const bezig = $derived<Partial<Record<Kolom, boolean>>>({
 		moties: feedLaden,
-		amendementen: feedLaden || ketensLaden,
+		// Counted by their chains, the column stands; only an opened cell's list is asked.
+		amendementen: !ketensGeteld && (feedLaden || ketensLaden),
 		brieven: feedLaden,
 		toezeggingen: feedLaden,
 		aangenomen: fractie ? fractieLaden : tellenLaden,
@@ -978,9 +1090,8 @@
 						{#if feedGrens || ketenDossiers.totaal > DOSSIERS_MAX || (richtingAan && motiesLaden) || importFout}
 							<p class="sectie__regel">
 								{#if feedGrens}<span
-										>Moties, amendementen, brieven en toezeggingen doorzocht vanaf {langeDatum(
-											feedGrens
-										)}.</span
+										>{perioden ? 'Amendementen' : 'Moties, amendementen, brieven en toezeggingen'} doorzocht
+										vanaf {langeDatum(feedGrens)}.</span
 									>{/if}
 								{#if ketenDossiers.totaal > DOSSIERS_MAX}<span
 										>Amendementen in {DOSSIERS_MAX} van {getal(ketenDossiers.totaal)} dossiers nagelopen.</span

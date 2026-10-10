@@ -24,6 +24,8 @@ export type Tokens = {
 	dossier: string;
 	wijziging: string;
 	focus: string;
+	lijn: string;
+	pijl: string;
 	indigo: string;
 	moss: string;
 	plum: string;
@@ -49,6 +51,8 @@ const FALLBACK: Tokens = {
 	dossier: '#d3762d',
 	wijziging: '#00487c',
 	focus: '#161513',
+	lijn: '3',
+	pijl: '3.2',
 	indigo: '#2f3e5e',
 	moss: '#456247',
 	plum: '#5e3a55',
@@ -73,6 +77,8 @@ const NAMES: Record<keyof Tokens, string> = {
 	dossier: '--netwerk-dossier',
 	wijziging: '--netwerk-wijziging',
 	focus: '--netwerk-focus',
+	lijn: '--netwerk-lijn',
+	pijl: '--netwerk-pijl',
 	indigo: '--indigo',
 	moss: '--moss',
 	plum: '--plum',
@@ -191,6 +197,13 @@ export function edgeColorFor(relation: Relation, sourceKind: GraphNodeKind): str
 			return t.ink3;
 	}
 }
+
+/** The thickness of a verbinding at rest: its weight (EDGE_WEIGHT) times --netwerk-lijn. */
+export const lijnDikte = (gewicht: number): number => gewicht * (parseFloat(tokens().lijn) || 3);
+/** An arrowhead's length in thicknesses of its line (--netwerk-pijl). */
+export const pijlLengte = (): number => parseFloat(tokens().pijl) || 3.2;
+/** An arrowhead's width to its length. */
+export const PIJL_BREED = 0.8;
 
 const HEX = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
 

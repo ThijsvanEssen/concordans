@@ -28,7 +28,10 @@
 		dimColor,
 		towardPaper,
 		withAlpha,
-		tokens
+		tokens,
+		lijnDikte,
+		pijlLengte,
+		PIJL_BREED
 	} from './nodeSprites';
 
 	export type GraphCanvasApi = {
@@ -1032,11 +1035,11 @@
 
 		const [
 			{ default: Sigma },
-			{ EdgeArrowProgram, drawDiscNodeHover },
+			{ createEdgeArrowProgram, drawDiscNodeHover },
 			{ createNodeBorderProgram },
 			{ NodeSquareProgram },
 			{ createNodeImageProgram },
-			{ DashedEdgeArrowProgram, DottedEdgeArrowProgram }
+			{ stippelProgrammas }
 		] = await Promise.all([
 			import('sigma'),
 			import('sigma/rendering'),
@@ -1075,10 +1078,14 @@
 				image: NodeImageProgram
 			},
 			edgeProgramClasses: {
-				arrow: EdgeArrowProgram,
-				dashed: DashedEdgeArrowProgram,
-				dotted: DottedEdgeArrowProgram
+				arrow: createEdgeArrowProgram({
+					lengthToThicknessRatio: pijlLengte(),
+					widenessToThicknessRatio: pijlLengte() * PIJL_BREED
+				}),
+				...stippelProgrammas(pijlLengte())
 			},
+			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 4.5 px long.
+			minEdgeThickness: 1.4,
 			defaultNodeType: 'border',
 			defaultEdgeType: 'arrow',
 			zIndex: true,
@@ -1269,7 +1276,7 @@
 				const style = edgeStyleFor(relation, data.status as string | null);
 				const renderColor = edgeColorFor(relation, sourceKind);
 				const edgeType = style === 'solid' ? 'arrow' : style;
-				const restSize = Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0);
+				const restSize = lijnDikte(Math.max(EDGE_WEIGHT[relation], style === 'dashed' ? 0.7 : 0));
 				const sourceCollection = srcAttrs.collection as Collection;
 
 				if (edge === latestSelectedEdge) {

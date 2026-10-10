@@ -112,7 +112,7 @@
 	}
 	:global(a.cited:hover),
 	:global(a.cited:focus-visible) {
-		background: var(--accent-soft);
+		background: var(--wassing);
 		text-decoration-style: solid;
 		outline: none;
 	}

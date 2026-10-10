@@ -292,8 +292,10 @@
 		border-bottom: 1px solid var(--ink);
 	}
 	.all:hover {
-		color: var(--accent);
-		border-color: var(--accent);
+		color: var(--ink);
+		border-color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 
 	@media (max-width: 640px) {

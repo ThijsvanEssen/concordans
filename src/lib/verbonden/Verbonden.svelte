@@ -723,7 +723,9 @@
 	}
 	.regel__knop:hover,
 	.regel__knop:focus-visible {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.head__title {
 		margin: 0;
@@ -838,7 +840,9 @@
 		text-align: left;
 	}
 	.group__knop:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.group__slot {
 		white-space: nowrap;
@@ -951,7 +955,7 @@
 		overflow: hidden;
 	}
 	.row__citaat mark {
-		background: var(--accent-soft);
+		background: var(--wassing);
 		color: var(--ink);
 	}
 	/* Where the verbinding comes from: on hover and focus, on a phone after a tap (Thijs). */
