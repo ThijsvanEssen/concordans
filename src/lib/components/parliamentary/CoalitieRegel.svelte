@@ -13,12 +13,12 @@
 		fracties = []
 	}: {
 		coalitie: Schema<'CoalitionVoteDTO'>;
-		fracties?: Schema<'FeedCoalitionFactionDTO'>[];
+		fracties?: Schema<'CoalitionFactionDTO'>[];
 	} = $props();
 
 	const eensgezind = $derived(coalitie.pattern === 'together');
 	const kant = $derived(coalitie.coalition_for > 0 ? 'voor' : 'tegen');
-	const naam = (f: Schema<'FeedCoalitionFactionDTO'>) => f.short ?? naamVanId(`factions/${f.key}`);
+	const naam = (f: Schema<'CoalitionFactionDTO'>) => f.short ?? naamVanId(`factions/${f.key}`);
 	const zijden = $derived(
 		(
 			[

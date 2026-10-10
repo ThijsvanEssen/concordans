@@ -1,5 +1,6 @@
 <script lang="ts">
 	import BronLink from '$lib/bron/BronLink.svelte';
+	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	// De gedeelde tijdlijn. Datum links in een vaste
 	// kolom, een teken op een doorlopende lijn, dan de zin. Het teken is dat van de soort,
 	// zoals in het netwerk en Verbonden: een stemming een driehoek, gevuld in mos als ze is
@@ -76,6 +77,10 @@
 										>{r.zin}</button
 									>{:else}<span class="zin">{r.zin}</span>{/if}
 								{#if r.meta}<span class="meta">{r.meta}</span>{/if}
+								{#if r.coalitie}<CoalitieRegel
+										coalitie={r.coalitie.blok}
+										fracties={r.coalitie.fracties}
+									/>{/if}
 							</span>
 						</li>
 					{/each}

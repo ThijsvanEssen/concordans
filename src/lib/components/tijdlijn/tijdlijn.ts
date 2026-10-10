@@ -21,6 +21,11 @@ export type TijdRegel = {
 	groot?: boolean;
 	/** A line that leads elsewhere on the page (a day of votes to its list), not to a bron. */
 	actie?: (() => void) | null;
+	/** A vote of the Tweede Kamer: what the coalition did, as a line under it (CoalitieRegel). */
+	coalitie?: {
+		blok: import('$lib/api/types').Schema<'CoalitionVoteDTO'>;
+		fracties: import('$lib/api/types').Schema<'CoalitionFactionDTO'>[];
+	} | null;
 };
 export type TijdGroep = {
 	id: string;

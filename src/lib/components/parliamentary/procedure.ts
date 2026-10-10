@@ -12,6 +12,15 @@ import { withoutKamerstuk } from './kamerstuk';
 type Detail = Schema<'DossierDetailResponse'>;
 import { naarAmendementen, naarStemmingen } from './naar';
 type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
+
+/** The coalition block of a decision entry and its fracties, where the timeline gives it. */
+function coalitieVan(e: Entry): TijdRegel['coalitie'] {
+	const b = e.body as {
+		coalition?: Schema<'CoalitionVoteDTO'> | null;
+		coalition_factions?: Schema<'CoalitionFactionDTO'>[] | null;
+	} | null;
+	return b?.coalition ? { blok: b.coalition, fracties: b.coalition_factions ?? [] } : null;
+}
 type Body = Record<string, unknown>;
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -158,7 +167,9 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 						: `${uitslag ? 'Aangenomen' : 'Verworpen'}${how}`,
 				href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 				ref: e.node_id,
-				groot: true
+				groot: true,
+				// What the coalition did on it (API 0.79.45, #559; Thijs, 10 Oct): the Tweede Kamer only.
+				coalitie: coalitieVan(e)
 			});
 		} else if (e.node_type === 'activity') {
 			const b = bodyOf(e);
