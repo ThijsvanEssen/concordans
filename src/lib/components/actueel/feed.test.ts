@@ -1,5 +1,7 @@
+import { padOfFocus } from '$lib/bron/leesbaar';
 import { describe, expect, it } from 'vitest';
 import {
+	normalizeItem,
 	dagVoor,
 	doorzochtVanaf,
 	countLine,
@@ -219,5 +221,37 @@ describe('doorzochtVanaf', () => {
 		expect(doorzochtVanaf({ partial: false })).toBeNull();
 		expect(doorzochtVanaf({})).toBeNull();
 		expect(dagVoor('2026-03-01')).toBe('2026-02-28');
+	});
+});
+
+describe('the address of an item', () => {
+	it('keeps a Kamerstuk by its dossier and number, so a link to it is readable', () => {
+		normalizeItem({
+			kind: 'Amendement',
+			date: '2026-10-09',
+			title: 'Amendement van het lid Keijzer',
+			node: { collection: 'documents', key: 'adres_test_1' },
+			dossier: { key: '37022', number: '37022', title: 'Belastingplan 2027' },
+			number: '13'
+		} as never);
+		expect(padOfFocus('documents/adres_test_1')).toBe('/kamerstukken/37022/13');
+	});
+
+	it('keeps the path the API gives, and nothing for a paper without one', () => {
+		normalizeItem({
+			kind: 'Motie',
+			date: '2026-10-09',
+			title: 'Motie',
+			node: { collection: 'documents', key: 'adres_test_2' },
+			path: '/kamerstukken/36600-VII/12'
+		} as never);
+		expect(padOfFocus('documents/adres_test_2')).toBe('/kamerstukken/36600-VII/12');
+		normalizeItem({
+			kind: 'Motie',
+			date: '2026-10-09',
+			title: 'Motie',
+			node: { collection: 'documents', key: 'adres_test_3' }
+		} as never);
+		expect(padOfFocus('documents/adres_test_3')).toBeNull();
 	});
 });

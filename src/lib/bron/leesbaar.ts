@@ -148,6 +148,9 @@ const padVan = new SvelteMap<string, string>();
 
 /** Keep an address and its focus together. */
 export function remember(path: string, focus: string) {
+	// A pair already kept is not written again: a list that remembers its rows on every load
+	// would otherwise wake whatever reads the maps.
+	if (focusVan.get(path) === focus && padVan.get(focus) === path) return;
 	focusVan.set(path, focus);
 	padVan.set(focus, path);
 }
