@@ -25,25 +25,48 @@ export function lijstDoel(el: HTMLElement, id = 'de-lijst') {
  */
 export const paneelSprongen = writable<{ id: string; label: string }[]>([]);
 
-/** On a pane: it gets its id, can take the focus, and has a skip link while `aan`. */
-export function sprongDoel(el: HTMLElement, opts: { id: string; label: string; aan?: boolean }) {
+type Sprong = {
+	id: string;
+	label: string;
+	aan?: boolean;
+	/**
+	 * The widths at which the pane stands beside the text (a media query). Narrower it is a tab
+	 * of its own, hidden until chosen, and a link to it would lead nowhere (UX-toets 10 Oct, #34).
+	 */
+	naast?: string;
+};
+
+/** On a pane: it gets its id, can take the focus, and has a skip link while `aan` and `naast`. */
+export function sprongDoel(el: HTMLElement, opts: Sprong) {
 	let huidig = opts;
+	let mq: MediaQueryList | null = null;
+	const weg = () => paneelSprongen.update((l) => l.filter((s) => s.id !== huidig.id));
 	const zet = () => {
 		el.id = huidig.id;
 		el.tabIndex = -1;
 		paneelSprongen.update((l) => {
 			const zonder = l.filter((s) => s.id !== huidig.id);
-			return huidig.aan === false ? zonder : [...zonder, { id: huidig.id, label: huidig.label }];
+			const zichtbaar = huidig.aan !== false && (mq?.matches ?? true);
+			return zichtbaar ? [...zonder, { id: huidig.id, label: huidig.label }] : zonder;
 		});
 	};
-	const weg = () => paneelSprongen.update((l) => l.filter((s) => s.id !== huidig.id));
+	const kijk = () => {
+		mq?.removeEventListener('change', zet);
+		mq = huidig.naast ? window.matchMedia(huidig.naast) : null;
+		mq?.addEventListener('change', zet);
+	};
+	kijk();
 	zet();
 	return {
-		update(next: typeof opts) {
+		update(next: Sprong) {
 			weg();
 			huidig = next;
+			kijk();
 			zet();
 		},
-		destroy: weg
+		destroy() {
+			mq?.removeEventListener('change', zet);
+			weg();
+		}
 	};
 }
