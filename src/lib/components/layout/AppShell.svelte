@@ -357,6 +357,37 @@
 			color var(--dur-1) var(--ease),
 			border-color var(--dur-1) var(--ease);
 	}
+	/* A place's quiet words in a reader (a lid, an onderdeel, an overweging): "Citeer",
+	   "Bewaar", lightly underlined, no frame (Thijs, 10 Oct). */
+	:global(.plaats-woord) {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-3);
+		text-decoration: underline;
+		text-decoration-color: var(--rule);
+		text-underline-offset: 2px;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+	:global(.plaats-woord:hover) {
+		color: var(--accent);
+	}
+	:global(.plaats-woord[aria-pressed='true']) {
+		color: var(--ink);
+	}
+	/* A kept place: a thin ink bar in the margin, always there (concept 13-map, 1). The place
+	   is its containing block (position: relative). */
+	:global(.plaats-bewaard::before) {
+		content: '';
+		position: absolute;
+		left: -10px;
+		top: var(--s-2);
+		bottom: var(--s-2);
+		width: 3px;
+		background: var(--ink);
+	}
 	:global(.btn:hover) {
 		color: var(--ink);
 		background: var(--paper-2);

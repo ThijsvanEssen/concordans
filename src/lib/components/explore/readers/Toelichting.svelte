@@ -8,14 +8,14 @@
 	import type { Schema } from '$lib/api/types';
 
 	let {
-		document: doc,
+		memorie,
 		bwbId,
 		artikel,
 		href,
 		perDossier
 	}: {
 		/** The memorie: its key, its kind and its dossier. */
-		document: { key: string; kind: string | null; dossier: string | null };
+		memorie: { key: string; kind: string | null; dossier: string | null };
 		bwbId: string;
 		artikel: string;
 		/** Where the memorie opens in full, under the article. */
@@ -33,7 +33,7 @@
 	let heel = $state<Record<string, boolean>>({});
 
 	$effect(() => {
-		const key = doc.key;
+		const key = memorie.key;
 		const bwb = bwbId;
 		const art = artikel;
 		passages = [];
@@ -57,13 +57,13 @@
 			});
 		return () => ac.abort();
 	});
-	const naam = $derived(doc.kind ?? 'Memorie van toelichting');
+	const naam = $derived(memorie.kind ?? 'Memorie van toelichting');
 </script>
 
 <Sectie titel="Toelichting" id="toelichting" sleutel="Toelichting" standaardOpen bind:open>
 	<p class="bron">
-		{#if href}<a {href} data-sveltekit-noscroll>{naam}</a>{:else}{naam}{/if}{doc.dossier
-			? `, Kamerstukken ${doc.dossier}`
+		{#if href}<a {href} data-sveltekit-noscroll>{naam}</a>{:else}{naam}{/if}{memorie.dossier
+			? `, Kamerstukken ${memorie.dossier}`
 			: ''}
 	</p>
 	{#if stand === 'laden'}

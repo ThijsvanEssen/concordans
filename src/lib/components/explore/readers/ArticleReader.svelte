@@ -3,9 +3,8 @@
 	import { getExplainedBy } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
-	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
-	import Bewaar from '$lib/map/Bewaar.svelte';
 	import Toelichting from './Toelichting.svelte';
+	import KopActies from './KopActies.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
@@ -588,30 +587,16 @@
 								data-sveltekit-noscroll>Vergelijken<Caret open={comparing} /></a
 							>
 						{/if}
-						<!-- Two actions, framed, the same on every reader (Thijs, 10 Oct): Bewaar and
-						     Citeer; the official text and Kopieer tekst are inside Citeer. -->
-						{#if bewaarHier}
-							<Bewaar item={bewaarHier.item} wat={bewaarHier.wat} metMap knop />
-						{/if}
-						{#if forms}
-							<CiteMenu items={citeItems(forms, readLink)} name={forms.kort} align="right" caret>
-								{#snippet onder(dicht)}
-									<button
-										type="button"
-										role="menuitem"
-										onclick={() => {
-											void navigator.clipboard?.writeText(a.text ?? '');
-											dicht();
-										}}>Kopieer tekst</button
-									>
-									{#if officialUrl}
-										<a role="menuitem" href={officialUrl} target="_blank" rel="noopener"
-											>{officialName} ↗</a
-										>
-									{/if}
-								{/snippet}
-							</CiteMenu>
-						{/if}
+						<!-- Two actions, framed, the same on every reader (KopActies): Bewaar and
+						     Citeer, with Kopieer tekst and the official text inside Citeer. -->
+						<KopActies
+							bewaar={bewaarHier?.item ?? null}
+							wat={bewaarHier?.wat ?? ''}
+							cite={forms ? citeItems(forms, readLink) : []}
+							naam={forms?.kort ?? ''}
+							bron={officialUrl && officialName ? { label: officialName, href: officialUrl } : null}
+							tekst={() => a.text ?? ''}
+						/>
 					</span>
 				</div>
 
@@ -730,7 +715,7 @@
 		     itself opens under the article from the head, as before. -->
 		{#if explanatory && !comparing}
 			<Toelichting
-				document={{
+				memorie={{
 					key: explanatory.key,
 					kind: explanatory.kind,
 					dossier: explanatory.dossier

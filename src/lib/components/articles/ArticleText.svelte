@@ -108,7 +108,7 @@
 			<CiteMenu
 				items={citeItems(forms, permalink(page.url, part.id!))}
 				name={forms.kort}
-				buttonClass="act__woord"
+				buttonClass="plaats-woord"
 				onToggle={(open) => (menuFor = open ? key : menuFor === key ? null : menuFor)}
 			>
 				{#snippet onder(dicht)}
@@ -123,7 +123,7 @@
 				{/snippet}
 			</CiteMenu>
 		{:else}
-			<button type="button" class="act__woord" onclick={() => copy(fullText(part), `text:${key}`)}
+			<button type="button" class="plaats-woord" onclick={() => copy(fullText(part), `text:${key}`)}
 				>{copyLabel(`text:${key}`, 'Kopieer tekst')}</button
 			>
 		{/if}
@@ -176,7 +176,7 @@
 			class="lid lid--{part.kind}"
 			id={part.id}
 			class:is-open={menuFor === keyOf(part)}
-			class:bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
+			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
 		>
 			<span class="lid__no"
 				>{part.kind === 'lid'
@@ -215,7 +215,12 @@
 			{@render aside(part)}
 		</div>
 	{:else}
-		<div class="part part--{part.kind}" id={part.id} class:is-open={menuFor === keyOf(part)}>
+		<div
+			class="part part--{part.kind}"
+			id={part.id}
+			class:is-open={menuFor === keyOf(part)}
+			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
+		>
 			{#if part.number && part.id}
 				<a class="part__number" href="#{part.id}">{part.number}{mark}</a>
 			{/if}
@@ -405,28 +410,14 @@
 		z-index: var(--z-float);
 	}
 	/* The words of a lid's line: quiet, underlined lightly, as the count beside them. */
+	/* Words with a comma after each, no space before it. */
 	.lid__side,
 	.lid__actions,
 	.part__actions {
-		gap: 0 var(--s-1);
-	}
-	:global(.act__woord) {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-3);
-		text-decoration: underline;
-		text-decoration-color: var(--rule);
-		text-underline-offset: 2px;
-		white-space: nowrap;
-		cursor: pointer;
-	}
-	:global(.act__woord:hover) {
-		color: var(--accent);
+		gap: 0;
 	}
 	.sep {
-		margin-left: -2px;
+		margin-right: var(--s-1);
 		color: var(--ink-3);
 	}
 	/* The comma after the count stands with the words it leads to. */
@@ -437,16 +428,6 @@
 	.lid__side:focus-within .lid__sep,
 	.lid.is-open > .lid__side .lid__sep {
 		opacity: 1;
-	}
-	/* A kept lid: a thin ink bar in the margin, always there (concept 13-map, 1). */
-	.lid.bewaard::before {
-		content: '';
-		position: absolute;
-		left: -10px;
-		top: var(--s-2);
-		bottom: var(--s-2);
-		width: 3px;
-		background: var(--ink);
 	}
 	/* Onderdelen inside a lid keep their number in the text. */
 	.part {

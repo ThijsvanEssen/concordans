@@ -42,7 +42,7 @@
 {#if tekst}
 	<button
 		type="button"
-		class="woord"
+		class="plaats-woord"
 		aria-pressed={aan}
 		aria-label="{aan ? 'Bewaard' : 'Bewaar'} {item.kort}"
 		title={titel}
@@ -169,24 +169,6 @@
 	}
 	.kies :global(.tekstmenu__knop:hover) {
 		color: var(--accent);
-	}
-	/* A word among the quiet words under a lid. */
-	.woord {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		text-decoration: underline;
-		text-decoration-color: var(--rule);
-		text-underline-offset: 2px;
-		cursor: pointer;
-	}
-	.woord:hover {
-		color: var(--accent);
-	}
-	.woord[aria-pressed='true'] {
-		color: var(--ink);
 	}
 	.kaal:focus-visible {
 		outline: 2px solid var(--accent);
