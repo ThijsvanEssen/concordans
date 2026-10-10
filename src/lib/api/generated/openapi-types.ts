@@ -1465,9 +1465,11 @@ export interface components {
             title_source?: ("dossier" | "document" | "activiteit" | "eerstekamer") | null;
             /**
              * Source
-             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer; null as ``tk`` for a dossier not normalized since this field came.
+             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer. A dossier without one in the graph (written before this field) is ``tk``: only those of the Eerste Kamer's papers carry ``eerstekamer``.
+             * @default tk
+             * @enum {string}
              */
-            source?: ("tk" | "eerstekamer") | null;
+            source: "tk" | "eerstekamer";
             /**
              * Kind
              * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
@@ -4147,9 +4149,11 @@ export interface components {
             title_source?: ("dossier" | "document" | "activiteit" | "eerstekamer") | null;
             /**
              * Source
-             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer; null as ``tk`` for a dossier not normalized since this field came.
+             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer. A dossier without one in the graph (written before this field) is ``tk``: only those of the Eerste Kamer's papers carry ``eerstekamer``.
+             * @default tk
+             * @enum {string}
              */
-            source?: ("tk" | "eerstekamer") | null;
+            source: "tk" | "eerstekamer";
             /**
              * Kind
              * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
@@ -4709,9 +4713,11 @@ export interface components {
             title_source?: ("dossier" | "document" | "activiteit" | "eerstekamer") | null;
             /**
              * Source
-             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer; null as ``tk`` for a dossier not normalized since this field came.
+             * @description Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer. A dossier without one in the graph (written before this field) is ``tk``: only those of the Eerste Kamer's papers carry ``eerstekamer``.
+             * @default tk
+             * @enum {string}
              */
-            source?: ("tk" | "eerstekamer") | null;
+            source: "tk" | "eerstekamer";
             /**
              * Kind
              * @description ``Zaak.Soort`` as the Kamer writes it: ``Wetgeving``, ``Initiatiefwetgeving``, ``Begroting``, ``Verdrag``, ``Initiatiefnota``, ``PKB/Structuurvisie``; null for none.
