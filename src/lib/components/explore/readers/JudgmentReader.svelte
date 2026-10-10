@@ -4,6 +4,7 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import Bewaar from '$lib/map/Bewaar.svelte';
+	import KopActies from './KopActies.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
@@ -187,11 +188,6 @@
 				{#if caseNumber}
 					<span class="reader-meta-item">{caseNumber}</span>
 				{/if}
-				{#if deeplink}
-					<a href={deeplink} target="_blank" rel="noopener noreferrer" class="reader-source-link"
-						>{sourceName(deeplink) ?? 'Officiële tekst'} ↗</a
-					>
-				{/if}
 				{#if selection && j.ecli}
 					{@const kop = judgmentCite(
 						j.ecli,
@@ -200,19 +196,26 @@
 						author
 					)}
 					{@const ro = anchor?.startsWith('rov-') ? anchor.slice(4) : null}
-					<!-- Bewaar follows the overweging chosen (#rov-5.7.1), else the whole judgment. -->
-					<span class="reader-meta-item reader-meta-bewaar"
-						><Bewaar
-							metMap
-							wat={ro ? `r.o. ${ro}` : ''}
-							item={{
-								id: selection.id,
-								at: ro ? anchor! : '',
-								kort: ro ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : kop.short,
-								voluit: ro ? `${kop.full}, ${paragraphCite(j.ecli, ro)}` : kop.full,
-								groep: zaakNaam(kop.short, j.names)
-							}}
-						/></span
+					<!-- The two framed actions (KopActies): Bewaar follows the overweging chosen
+					     (#rov-5.7.1), else the whole judgment; the official site inside Citeer. -->
+					<KopActies
+						wat={ro ? `r.o. ${ro}` : ''}
+						bewaar={{
+							id: selection.id,
+							at: ro ? anchor! : '',
+							kort: ro ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : kop.short,
+							voluit: ro ? `${kop.full}, ${paragraphCite(j.ecli, ro)}` : kop.full,
+							groep: zaakNaam(kop.short, j.names)
+						}}
+						cite={citeItems({ kort: kop.short, voluit: kop.full }, permalink(page.url, ''))}
+						naam={kop.short}
+						bron={deeplink
+							? { label: sourceName(deeplink) ?? 'Officiële tekst', href: deeplink }
+							: null}
+					/>
+				{:else if deeplink}
+					<a href={deeplink} target="_blank" rel="noopener noreferrer" class="reader-source-link"
+						>{sourceName(deeplink) ?? 'Officiële tekst'} ↗</a
 					>
 				{/if}
 			</div>
