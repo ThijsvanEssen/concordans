@@ -9,7 +9,6 @@
 	// Verkenner it is the start of the page, in the middle of the canvas.
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
-	import Caret from '$lib/components/ui/Caret.svelte';
 	import { laatstOpen, opzij } from '$lib/stores/zwevend';
 	import { get } from 'svelte/store';
 	import type { NetwerkEntry } from './netwerk';

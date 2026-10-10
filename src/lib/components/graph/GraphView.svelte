@@ -34,7 +34,6 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import Caret from '$lib/components/ui/Caret.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron, type Vorm } from '$lib/bron/vormen';
 	import {
