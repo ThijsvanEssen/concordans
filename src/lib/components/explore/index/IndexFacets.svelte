@@ -133,16 +133,26 @@
 	// An indented option stands under a chosen one (the specific areas of a rechtsgebied):
 	// it is shown with it and not counted against the preview.
 	const shown = (g: FacetGroup & { kind: 'list' }) => {
-		if (!g.preview || alle[g.id]) return g.options;
+		const n = voorproef(g);
+		if (!n || alle[g.id]) return g.options;
 		let rank = 0;
 		return g.options.filter((o) => {
 			if (!isHeading(o) && o.indent) return true;
-			return rank++ < g.preview! || (!isHeading(o) && o.on);
+			return rank++ < n || (!isHeading(o) && o.on);
 		});
 	};
 	/** The options a preview counts: all but the indented ones. */
 	const counted = (g: FacetGroup & { kind: 'list' }) =>
 		g.options.filter((o) => isHeading(o) || !o.indent).length;
+	/**
+	 * A list longer than LANG shows VOORPROEF, then Alle N, where its page set no `preview`:
+	 * the fifty fracties of Actueel were fifty stops of the keyboard before the first event
+	 * (audit 3).
+	 */
+	const LANG = 12;
+	const VOORPROEF = 8;
+	const voorproef = (g: FacetGroup & { kind: 'list' }) =>
+		g.preview ?? (counted(g) > LANG ? VOORPROEF : undefined);
 
 	// A year field holds `2020`; the URL holds the first or last day of it.
 </script>
@@ -181,7 +191,7 @@
 						{/if}
 					{/each}
 				</ul>
-				{#if g.preview && counted(g) > g.preview}
+				{#if voorproef(g) && counted(g) > voorproef(g)!}
 					<p class="alle">
 						<TekstLink onclick={() => (alle = { ...alle, [g.id]: !alle[g.id] })}
 							>{alle[g.id] ? 'Minder' : `Alle ${formatCount(counted(g))}`}</TekstLink
