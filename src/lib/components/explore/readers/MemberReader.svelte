@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { formatCount } from '$lib/text/getal';
+	import { vandaag } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
@@ -32,7 +34,7 @@
 
 	let { node }: { node: GraphNode } = $props();
 
-	const today = new Date().toISOString().slice(0, 10);
+	const today = vandaag();
 
 	type Vote = Schema<'MemberVoteDTO'>;
 
@@ -155,7 +157,7 @@
 				<BewindspersoonKop {m} />
 			{:else}
 				<header class="head">
-					<span class="kicker"
+					<span class="lezer-soort"
 						><SoortLink
 							collection="members"
 							lijst={(m.government_functions ?? []).length > 0 ? 'ministers' : 'members'}
@@ -167,7 +169,7 @@
 					<div class="member-head-row">
 						<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
 						<div class="member-meta">
-							<h2 class="title">{m.name ?? m.key}</h2>
+							<h2 class="lezer-titel">{m.name ?? m.key}</h2>
 							{#if m.party}
 								<div class="woorden">
 									<NameLink collection="factions" name={m.party} class="fractie-woord" />
@@ -193,7 +195,7 @@
 							>
 						</Veld>
 						<Veld label="Anciënniteit" value={ek.seniority_days}>
-							{ek.seniority_days?.toLocaleString('nl-NL')} dagen
+							{ek.seniority_days != null ? formatCount(ek.seniority_days) : ''} dagen
 						</Veld>
 						<Veld label="Woonplaats" value={ek.residence} />
 					</Feiten>
@@ -391,12 +393,6 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
-	.kicker {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
 	.member-head-row {
 		display: flex;
 		align-items: flex-start;
@@ -423,15 +419,6 @@
 		flex-direction: column;
 		gap: var(--s-2);
 		padding-top: 2px;
-	}
-	.title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-snug);
-		overflow-wrap: anywhere;
 	}
 	.woorden {
 		display: flex;

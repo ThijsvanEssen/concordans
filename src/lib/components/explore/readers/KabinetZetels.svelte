@@ -380,7 +380,7 @@
 	.stip {
 		width: 8px;
 		height: 8px;
-		border-radius: 2px;
+		border-radius: var(--r-1);
 		background: var(--achter, var(--kleur));
 	}
 	.stip.open {

@@ -76,7 +76,11 @@
 			<div class="pop pop--{side} pop--{drop}" role="menu" aria-label="Citeer {name}">
 				<div class="pop__label">Kopieer als</div>
 				{#each items as item (item.kind)}
-					<button type="button" role="menuitem" class="pop__item" onclick={() => copy(item.text)}
+					<button
+						type="button"
+						role="menuitem"
+						class="tekstmenu__item tekstmenu__item--paar"
+						onclick={() => copy(item.text)}
 						><span class:pop__link={item.kind === 'link'}>{item.text}</span><span class="pop__k"
 							>{item.kind}</span
 						></button
@@ -129,32 +133,6 @@
 		margin-top: var(--s-1);
 		padding-top: var(--s-1);
 		border-top: 1px solid var(--rule);
-	}
-	/* A step under the rule is an item as the forms are; a link to elsewhere too. */
-	.pop__item,
-	.pop__onder > :global(*) {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-3);
-		width: 100%;
-		padding: var(--s-2) var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink);
-		text-align: left;
-		cursor: pointer;
-	}
-	.pop__onder > :global(*) {
-		box-sizing: border-box;
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.pop__onder > :global(*:hover),
-	.pop__onder > :global(*:focus-visible),
-	.pop__item:hover,
-	.pop__item:focus-visible {
-		background: var(--paper-2);
 	}
 	.pop__k {
 		flex: none;

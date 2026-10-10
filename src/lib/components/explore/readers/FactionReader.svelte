@@ -133,10 +133,10 @@
 				: ''}
 			<header class="head">
 				<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
-				<span class="kicker"
+				<span class="lezer-soort"
 					><SoortLink collection="factions">{bronLabel('factions')}</SoortLink></span
 				>
-				<h2 class="title">{abbreviation ?? name ?? f.key}</h2>
+				<h2 class="lezer-titel">{abbreviation ?? name ?? f.key}</h2>
 				{#if name && abbreviation && name !== abbreviation}
 					<p class="sub">{name}</p>
 				{/if}
@@ -255,22 +255,10 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
-	.kicker {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
+	.lezer-soort {
 		display: flex;
 		align-items: baseline;
-		gap: 6px;
-	}
-	.title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-snug);
+		gap: var(--s-1);
 	}
 	.sub {
 		font-family: var(--font-serif);

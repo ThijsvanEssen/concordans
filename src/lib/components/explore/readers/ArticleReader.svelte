@@ -561,7 +561,7 @@
 												type="button"
 												role="menuitemradio"
 												aria-checked={(shownIndex ?? (current ?? lapse)?.index) === w.index}
-												class="pop__item"
+												class="tekstmenu__item"
 												onclick={() => {
 													shownIndex = w === current || w === lapse ? null : w.index;
 													versionMenu = false;
@@ -850,23 +850,6 @@
 		box-shadow: var(--shadow-modal);
 		font-size: var(--t-micro);
 	}
-	.pop__item {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-3);
-		width: 100%;
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink);
-		text-align: left;
-		cursor: pointer;
-	}
-	.pop__item:hover {
-		background: var(--paper-2);
-	}
-
 	.pop--versions {
 		width: 440px;
 	}
@@ -883,12 +866,9 @@
 		justify-content: space-between;
 		gap: var(--s-3);
 	}
-	.pop__row .pop__item {
+	.pop__row .tekstmenu__item {
 		flex: 1;
 		min-width: 0;
-	}
-	.pop__row .pop__item[aria-checked='true'] {
-		font-weight: 600;
 	}
 	.pop__change {
 		flex: none;
@@ -957,7 +937,7 @@
 	.reader-nav-footer {
 		display: flex;
 		gap: var(--s-3);
-		margin-top: 40px;
+		margin-top: var(--s-6);
 		padding-top: var(--s-4);
 		border-top: 1px solid var(--rule);
 		font-family: var(--font-serif);

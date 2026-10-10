@@ -50,12 +50,12 @@
 	<div class="r-committee">
 		<!-- The header comes from the node, so a failed detail request costs the counts only. -->
 		<header class="head">
-			<span class="kicker">
+			<span class="lezer-soort">
 				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>
 				<span class="komma">,</span>{chamberName(chamber)}
 				{#if kind}<span class="komma">,</span>{kind}{/if}
 			</span>
-			<h2 class="title">{name}</h2>
+			<h2 class="lezer-titel">{name}</h2>
 			{#if abbreviation && abbreviation !== name}
 				<div class="woorden"><span class="afk">{abbreviation}</span></div>
 			{/if}
@@ -137,11 +137,7 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
-	.kicker {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
+	.lezer-soort {
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
@@ -177,14 +173,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-snug);
 	}
 	.woorden {
 		display: flex;

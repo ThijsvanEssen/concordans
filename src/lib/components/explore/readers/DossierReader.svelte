@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
@@ -129,12 +130,12 @@
 			{@const d = view.dossier}
 
 			<header class="head">
-				<span class="kicker">
+				<span class="lezer-soort">
 					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink><span
 						>, Kamerstuk {d.number}</span
 					>
 				</span>
-				<h2 class="title">{d.short_title ?? d.title ?? d.number}</h2>
+				<h2 class="lezer-titel">{d.short_title ?? d.title ?? d.number}</h2>
 				{#if d.short_title && d.title && d.title.trim() !== d.short_title}
 					<details class="full-title">
 						<summary>Volledige titel</summary>
@@ -220,9 +221,13 @@
 				<Sectie titel="Procedure">
 					<Tijdlijn groepen={p.groepen} inklapbaar />
 					{#if p.overig}
-						<button type="button" class="overig" onclick={() => (metOverig = !metOverig)}
-							>{metOverig ? 'Alleen de procedure' : `Toon ook de ${p.overig} andere items`}</button
-						>
+						<p class="overig">
+							<TekstLink onclick={() => (metOverig = !metOverig)}
+								>{metOverig
+									? 'Alleen de procedure'
+									: `Toon ook de ${p.overig} andere items`}</TekstLink
+							>
+						</p>
 					{/if}
 				</Sectie>
 			{/if}
@@ -242,17 +247,9 @@
 
 <style>
 	.overig {
-		align-self: flex-start;
-		margin-top: var(--s-3);
+		margin: var(--s-3) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		font-weight: 600;
-		color: var(--ink);
-		padding: var(--s-1) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		cursor: pointer;
 	}
 	.full-title summary {
 		font-family: var(--font-ui);
@@ -283,25 +280,13 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
-	.kicker {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
+	.lezer-soort {
 		/* The comma stands against the kind before it: no gap but the glyph's own. */
 		display: flex;
 		align-items: baseline;
 	}
-	.kicker :global(.soort) {
-		gap: 6px;
-	}
-	.title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-snug);
+	.lezer-soort :global(.soort) {
+		gap: var(--s-1);
 	}
 
 	/* What the bill amends and implements: one line under the title, the laws as links. */

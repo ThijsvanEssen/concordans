@@ -274,12 +274,12 @@
 			<header class="head">
 				<!-- Running text, the comma against the word before it: as flex items they stood
 				     apart on a phone ("Amendement (…) , 25 apr. 2024 , Amendement"). -->
-				<span class="kicker"
+				<span class="lezer-soort"
 					>{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
 							'Document'}{/if}{#if doc.date}, {formatDate(doc.date)}{/if}{#if caseKinds.length},
 						{caseKinds.join(', ')}{/if}</span
 				>
-				<h2 class="title">{doc.title ?? doc.key}</h2>
+				<h2 class="lezer-titel">{doc.title ?? doc.key}</h2>
 				{#if doc.submitters?.length}
 					<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
 				{/if}
@@ -395,14 +395,6 @@
 </ReaderFrame>
 
 <style>
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
 	.body-para--passage {
 		scroll-margin: 20vh;
 	}
@@ -521,22 +513,10 @@
 		flex-direction: column;
 		gap: var(--s-1);
 	}
-	.kicker {
+	.lezer-soort {
 		display: block;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
-	.title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-snug);
-	}
 	/* Who submitted a motie or amendement, under its title. */
 	.submitted {
 		margin: var(--s-2) 0 0;

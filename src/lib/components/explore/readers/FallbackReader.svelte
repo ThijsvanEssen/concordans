@@ -25,10 +25,10 @@
 
 <ReaderFrame>
 	<article class="r-simple">
-		<span class="kicker"
+		<span class="lezer-soort"
 			><SoortLink collection={node.collection}>{bronLabel(node.collection)}</SoortLink></span
 		>
-		<h2 class="title">{title}</h2>
+		<h2 class="lezer-titel">{title}</h2>
 		{#if facts.length > 0}
 			<p class="facts">{facts.join(', ')}</p>
 		{/if}
@@ -47,20 +47,6 @@
 		flex-direction: column;
 		gap: var(--s-2);
 		color: var(--ink-2);
-	}
-	.kicker {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
-	.title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		line-height: var(--lh-snug);
-		color: var(--ink);
 	}
 	.facts {
 		margin: 0;

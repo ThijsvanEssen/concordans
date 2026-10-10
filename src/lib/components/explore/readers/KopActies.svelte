@@ -43,6 +43,7 @@
 					<button
 						type="button"
 						role="menuitem"
+						class="tekstmenu__item"
 						onclick={() => {
 							void copier.copy(tekst(), 'tekst');
 							dicht();
@@ -50,7 +51,9 @@
 					>
 				{/if}
 				{#if bron}
-					<a role="menuitem" href={bron.href} target="_blank" rel="noopener">{bron.label} ↗</a>
+					<a role="menuitem" class="tekstmenu__item" href={bron.href} target="_blank" rel="noopener"
+						>{bron.label} ↗</a
+					>
 				{/if}
 			{/snippet}
 		</CiteMenu>

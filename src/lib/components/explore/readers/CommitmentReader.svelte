@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getCommitment } from '$lib/api/records';
@@ -68,7 +69,7 @@
 		(key && ministries.find((m) => m.key === key)?.name) || null;
 	const cabinetName = (key: string) => cabinets.find((c) => c.key === key)?.name ?? key;
 
-	const today = new Date().toISOString().slice(0, 10);
+	const today = vandaag();
 </script>
 
 <ReaderFrame>
@@ -85,7 +86,7 @@
 			{@const late =
 				c.status === OPEN_STATUS && !!c.expected_resolution && c.expected_resolution < today}
 			<header class="head">
-				<span class="kicker"
+				<span class="lezer-soort"
 					><SoortLink collection="commitments">{bronLabel('commitments')}</SoortLink></span
 				>
 				<h2 class="text">{c.text ?? 'Toezegging zonder tekst'}</h2>
@@ -160,14 +161,10 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
-	.kicker {
+	.lezer-soort {
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
 	}
 	/* The toezegging is its text: set as the reading text, not as a title. */
 	.text {
