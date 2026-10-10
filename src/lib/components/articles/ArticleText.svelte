@@ -1,12 +1,9 @@
 <script lang="ts">
-	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// The text of an article as its aanhef, leden and onderdelen. Every part has an
-	// anchor, so a reference can point at it and the address can be shared. A lid is a
-	// row of a grid: the number, the text, and a column at the right with the number of
-	// verbindingen of that lid and, on hover, Citeer and Kopieer tekst. An onderdeel, at
-	// any depth, shows the same two actions in that column, level with its own text.
-	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
-	import Bewaar from '$lib/map/Bewaar.svelte';
+	// anchor, so a reference can point at it and the address can be shared. Nothing stands
+	// beside the text: a place's own marker ("1.", "a.") is its menu (PlaatsMenu), and so is
+	// a click on its text, the innermost place clicked (concept 21, variant B, Thijs 10 Oct).
+	import PlaatsMenu from './PlaatsMenu.svelte';
 	import { kaart } from '$lib/map/map.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { page } from '$app/state';
@@ -14,7 +11,6 @@
 	import type { Schema } from '$lib/api/types';
 	import { parseArticleParts, partsFromApi, type ArticlePart } from '$lib/text/article-parts';
 	import { citeArticle, partOfAnchor, type Citation } from '$lib/text/cite';
-	import { formatCount } from '$lib/verbonden/filter';
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
 	import { citationsWithin } from './citations';
@@ -46,7 +42,7 @@
 		definities?: Definitie[];
 		/** Verbindingen per lid; a lid without an entry shows no count. */
 		counts?: Map<string, number>;
-		/** The counts are still on their way: each lid says "…". */
+		/** The counts are still on their way: a lid's menu says so. */
 		tellend?: boolean;
 		/** The address that filters the panel Verbonden to a lid. */
 		lidHref?: (lid: string) => string;
@@ -84,91 +80,34 @@
 	/** A part without an anchor (an article without leden) is keyed by its offset. */
 	const keyOf = (part: ArticlePart) => part.id ?? `tekst-${part.start}`;
 
-	let menuFor = $state<string | null>(null);
-	/** On a phone: the lid whose words a tap on its number shows. */
-	let getoond = $state<string | null>(null);
-	const copier = createCopier();
-	function copy(what: string, key: string) {
-		void copier.copy(what, key);
-		menuFor = null;
+	/** The place whose menu is open, and the marker it hangs from. */
+	let menu = $state<{ part: ArticlePart; anker: HTMLElement } | null>(null);
+	const menuFor = $derived(menu ? keyOf(menu.part) : null);
+	function openMenu(part: ArticlePart, anker: HTMLElement) {
+		menu = menu && keyOf(menu.part) === keyOf(part) ? null : { part, anker };
 	}
-	const copyLabel = (key: string, idle: string) => copier.label(key, idle);
+	/** A click on a place's text opens its menu, at its marker: not on a link or a control,
+	 *  not when text is being selected, and only for the innermost place. */
+	function opTekst(e: MouseEvent, part: ArticlePart) {
+		const t = e.target as HTMLElement;
+		if (t.closest('a, button, input, textarea, summary')) return;
+		if (window.getSelection()?.toString()) return;
+		e.stopPropagation();
+		const plaats = (e.currentTarget as HTMLElement).closest('.lid, .part');
+		const anker =
+			plaats?.querySelector<HTMLElement>(':scope > .plaats-marker') ?? (plaats as HTMLElement);
+		if (anker) openMenu(part, anker);
+	}
+	/** The place as the menu names it: its short citation, else `Lid 2`. */
+	const naamVan = (part: ArticlePart) =>
+		formsOf(part)?.kort ??
+		(part.kind === 'lid' ? `Lid ${part.number}` : part.number ? `Onder ${part.number}` : 'Tekst');
 
 	const formsOf = (part: ArticlePart) => {
 		if (!citation || !part.id) return null;
 		return citeArticle({ ...citation, ...partOfAnchor(part.id) });
 	};
 </script>
-
-{#snippet actions(part: ArticlePart, className: string)}
-	{@const key = keyOf(part)}
-	{@const forms = formsOf(part)}
-	<!-- Quiet words, no frames (Thijs, 10 Oct: "druk met al de mogelijke klikken"): Citeer
-	     holds Kopieer tekst; Bewaar is the word. -->
-	<span class={className}>
-		{#if forms}
-			<CiteMenu
-				items={citeItems(forms, permalink(page.url, part.id!))}
-				name={forms.kort}
-				buttonClass="plaats-woord"
-				onToggle={(open) => (menuFor = open ? key : menuFor === key ? null : menuFor)}
-			>
-				{#snippet onder(dicht)}
-					<button
-						type="button"
-						role="menuitem"
-						onclick={() => {
-							copy(fullText(part), `text:${key}`);
-							dicht();
-						}}>{copyLabel(`text:${key}`, 'Kopieer tekst')}</button
-					>
-				{/snippet}
-			</CiteMenu>
-		{:else}
-			<button type="button" class="plaats-woord" onclick={() => copy(fullText(part), `text:${key}`)}
-				>{copyLabel(`text:${key}`, 'Kopieer tekst')}</button
-			>
-		{/if}
-		{#if bewaar && forms && part.id}
-			<span class="sep">,</span>
-			<Bewaar
-				tekst
-				item={{
-					id: bewaar.id,
-					at: part.id,
-					kort: forms.kort,
-					voluit: forms.voluit,
-					groep: bewaar.groep
-				}}
-			/>
-		{/if}
-	</span>
-{/snippet}
-
-{#snippet aside(part: ArticlePart)}
-	{@const lid = part.kind === 'lid' ? part.number : null}
-	{@const count = lid ? counts.get(lid) : undefined}
-	{@const note = lid ? lidNotes.get(lid) : undefined}
-	<div class="lid__side">
-		{#if lid && count != null && lidHref}
-			<a class="lid__count" href={lidHref(lid)} data-sveltekit-noscroll
-				>{formatCount(count)} {count === 1 ? 'verbinding' : 'verbindingen'}</a
-			>
-		{:else if lid && tellend}
-			<span class="lid__count" aria-label="wordt geteld">…</span>
-		{/if}
-		{#if note}
-			<a
-				class="lid__count"
-				href={note.href}
-				data-sveltekit-noscroll
-				title="Geschiedenis van lid {lid}">{note.label}</a
-			>
-		{/if}
-		{#if (lid && count != null && lidHref) || note}<span class="sep lid__sep">,</span>{/if}
-		{@render actions(part, 'lid__actions')}
-	</div>
-{/snippet}
 
 {#snippet render(part: ArticlePart, top: boolean)}
 	{@const { body, citations: spans, begrippen: termen } = own(part)}
@@ -178,16 +117,16 @@
 			class="lid lid--{part.kind}"
 			id={part.id}
 			class:is-open={menuFor === keyOf(part)}
-			class:toont={getoond === keyOf(part)}
 			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
 		>
-			<!-- The number; on a phone, with no margin, a tap on it shows the lid's words. -->
+			<!-- The number is the lid's menu: citeren, bewaren, verbindingen. -->
 			<button
 				type="button"
-				class="lid__no"
-				aria-expanded={getoond === keyOf(part)}
-				title="Citeren, bewaren, verbindingen"
-				onclick={() => (getoond = getoond === keyOf(part) ? null : keyOf(part))}
+				class="lid__no plaats-marker"
+				aria-haspopup="menu"
+				aria-expanded={menuFor === keyOf(part)}
+				aria-label="{naamVan(part)}: citeren, bewaren"
+				onclick={(e) => openMenu(part, e.currentTarget)}
 				>{part.kind === 'lid'
 					? `${part.number}.`
 					: part.number
@@ -195,7 +134,8 @@
 						: ''}</button
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
-				<div class="lid__text">
+				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+				<div class="lid__text" onclick={(e) => opTekst(e, part)}>
 					{#if body}<p>
 							<CitedText text={body} citations={spans} begrippen={termen} definities={perRef} />
 						</p>{/if}
@@ -221,7 +161,6 @@
 					</div>
 				{/if}
 			</div>
-			{@render aside(part)}
 		</div>
 	{:else}
 		<div
@@ -231,9 +170,17 @@
 			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
 		>
 			{#if part.number && part.id}
-				<a class="part__number" href="#{part.id}">{part.number}{mark}</a>
+				<button
+					type="button"
+					class="part__number plaats-marker"
+					aria-haspopup="menu"
+					aria-expanded={menuFor === keyOf(part)}
+					aria-label="{naamVan(part)}: citeren, bewaren"
+					onclick={(e) => openMenu(part, e.currentTarget)}>{part.number}{mark}</button
+				>
 			{/if}
-			<div class="part__body">
+			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+			<div class="part__body" onclick={(e) => opTekst(e, part)}>
 				{#if body}<p>
 						<CitedText text={body} citations={spans} begrippen={termen} definities={perRef} />
 					</p>{/if}
@@ -241,7 +188,6 @@
 					{@render render(child, false)}
 				{/each}
 			</div>
-			{#if part.id && part.kind !== 'aanhef'}{@render actions(part, 'part__actions')}{/if}
 		</div>
 	{/if}
 {/snippet}
@@ -283,9 +229,29 @@
 		</div>
 	</div>
 {/if}
-<p class="visually-hidden" aria-live="polite">
-	{copier.announcement}
-</p>
+
+{#if menu}
+	{@const p = menu.part}
+	{@const forms = formsOf(p)}
+	{@const lid = p.kind === 'lid' ? p.number : null}
+	{@const count = lid ? counts.get(lid) : undefined}
+	<PlaatsMenu
+		anker={menu.anker}
+		titel={naamVan(p)}
+		cite={forms ? citeItems(forms, permalink(page.url, p.id!)) : []}
+		tekst={() => fullText(p)}
+		bewaar={bewaar && forms && p.id
+			? { id: bewaar.id, at: p.id, kort: forms.kort, voluit: forms.voluit, groep: bewaar.groep }
+			: null}
+		verbindingen={lid && count != null && lidHref
+			? { n: count, href: lidHref(lid) }
+			: lid && tellend
+				? 'tellend'
+				: null}
+		geschiedenis={lid ? (lidNotes.get(lid) ?? null) : null}
+		onClose={() => (menu = null)}
+	/>
+{/if}
 
 <style>
 	.visually-hidden {
@@ -312,13 +278,11 @@
 	/* A lid: 36px for the number (in the frame's margin), the text to the column's right
 	   edge, its count and actions under it (Thijs, 9 Oct: "de artikelen oprekken" to the
 	   width of the reader). */
-	/* The text runs uninterrupted; a place's words stand in the right margin beside its
-	   first line (Thijs, 10 Oct: "netjes rustig aan de zijkant"). */
+	/* Nothing beside the text: the number is the lid's menu (variant B, Thijs 10 Oct). */
 	.lid {
-		--marge: 112px;
 		position: relative;
 		display: grid;
-		grid-template-columns: 36px minmax(0, 1fr) var(--marge);
+		grid-template-columns: 36px minmax(0, 1fr);
 		gap: 0 var(--s-3);
 		align-items: start;
 		padding: var(--s-1) var(--s-3) var(--s-1) 0;
@@ -326,8 +290,8 @@
 		scroll-margin: 20vh;
 		transition: background var(--dur-2) var(--ease);
 	}
-	.lid:hover,
-	.lid:focus-within,
+	.lid:hover:not(:has(.part--onderdeel:hover)),
+	.lid:has(> .lid__no:focus-visible),
 	.lid.is-open {
 		background: var(--paper-2);
 	}
@@ -389,71 +353,11 @@
 		color: var(--ink-3);
 		cursor: pointer;
 	}
-	/* Above the onderdelen's hover area (`.part::before`), so the count stays a link. */
-	.lid__side {
-		position: relative;
-		z-index: 2;
-		grid-column: 3;
-		grid-row: 1;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 2px;
-		padding-top: 6px;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.lid__count {
-		color: var(--ink-3);
-		white-space: nowrap;
-	}
-	.lid__count:hover {
-		color: var(--accent);
-	}
-	/* Hidden by opacity, not visibility: Tab still reaches the actions, and shows them. */
-	.lid__actions {
-		opacity: 0;
-		display: flex;
-		gap: var(--s-1);
-	}
-	/* The lid's actions, unless the pointer is on one of its onderdelen. A lid's aanhef
-	   counts as the lid's own text: it is cited with the lid. */
-	.lid:hover:not(:has(.part--onderdeel:hover)) .lid__actions,
-	.lid__side:focus-within .lid__actions,
-	.lid.is-open > .lid__side .lid__actions {
-		opacity: 1;
-	}
-	.lid.is-open > .lid__side {
-		z-index: var(--z-float);
-	}
-	/* The words of a lid's line: quiet, underlined lightly, as the count beside them. */
-	/* Words with a comma after each, no space before it. */
-	.lid__actions,
-	.part__actions {
-		gap: 0;
-	}
-	/* In the margin the count stands on its own line: no comma after it. */
-	.lid__sep {
-		display: none;
-	}
-	.sep {
-		margin-right: var(--s-1);
-		color: var(--ink-3);
-	}
-	/* The comma after the count stands with the words it leads to. */
-	.lid__sep {
-		opacity: 0;
-	}
-	.lid:hover:not(:has(.part--onderdeel:hover)) .lid__sep,
-	.lid__side:focus-within .lid__sep,
-	.lid.is-open > .lid__side .lid__sep {
-		opacity: 1;
-	}
 	/* Onderdelen inside a lid keep their number in the text. */
 	.part {
 		position: relative;
 		display: flex;
+		align-items: baseline;
 		gap: 0.6em;
 		margin: 0.4em 0 0;
 		scroll-margin: 20vh;
@@ -475,38 +379,43 @@
 	.part.is-open > .part__number {
 		color: var(--accent);
 	}
-	/* Over the end of the onderdeel's last line, so the text keeps the
-	   column's width and nothing moves when the actions appear. */
-	/* In the lid's margin, beside the onderdeel's first line. */
-	.part__actions {
-		position: absolute;
-		left: calc(100% + var(--s-3));
-		top: 4px;
-		z-index: 3;
-		width: var(--marge, 112px);
-		display: flex;
-		flex-wrap: wrap;
-		opacity: 0;
-		justify-content: flex-end;
-		gap: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
+	/* A place's marker is its menu: a quiet button, underlined with ▾ while the place is
+	   pointed at or focused, so it is clear what the menu acts on. */
+	.plaats-marker {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		text-align: inherit;
+		cursor: pointer;
 	}
-	.part:hover:not(:has(.part--onderdeel:hover)) > .part__actions,
-	.part__actions:focus-within,
-	.part.is-open > .part__actions {
-		opacity: 1;
+	.lid:hover:not(:has(.part--onderdeel:hover)) > .lid__no,
+	.lid.is-open > .lid__no,
+	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number,
+	.part.is-open > .part__number,
+	.plaats-marker:focus-visible {
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
-	/* Without hover, as on a touch screen, the actions are always there. */
-	@media (hover: none) {
-		.lid__sep,
-		.lid__actions,
-		.part__actions {
-			opacity: 1;
-		}
+	.lid:hover:not(:has(.part--onderdeel:hover)) > .lid__no::after,
+	.lid.is-open > .lid__no::after,
+	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number::after,
+	.part.is-open > .part__number::after,
+	.plaats-marker:focus-visible::after {
+		content: ' ▾';
+		font-size: 0.7em;
+		color: var(--ink-3);
+		text-decoration: none;
 	}
-	.part.is-open > .part__actions {
-		z-index: var(--z-float);
+	.plaats-marker:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+	/* The text of a place opens its menu too. */
+	.lid__text,
+	.part__body {
+		cursor: pointer;
 	}
 	.part__number {
 		flex: none;
@@ -535,56 +444,13 @@
 		.article-text {
 			margin-left: 0;
 		}
-		/* minmax(0, …): the count and the actions under a lid wrap, not widen the column
-		   past the screen (art. 7:248 BW at 375). */
+		/* minmax(0, …): the text wraps, not widens the column past the screen. A tap on the
+		   number (or the text) opens the place's menu, as a click does. */
 		.lid {
 			grid-template-columns: 28px minmax(0, 1fr);
 		}
-		/* No margin: the words under the lid, shown by a tap on its number. */
-		.lid__side {
-			grid-column: 2;
-			grid-row: auto;
-			display: none;
-			flex-direction: row;
-			flex-wrap: wrap;
-			gap: var(--s-1) 0;
-			padding-top: 2px;
-		}
-		.lid.toont > .lid__side,
-		.lid.is-open > .lid__side,
-		.lid__side:focus-within {
-			display: flex;
-		}
-		.lid.toont .lid__actions {
-			opacity: 1;
-		}
-		.lid__sep {
-			display: inline;
-		}
-		.lid__no {
-			cursor: pointer;
-		}
-		.lid__no:hover,
-		.lid.toont > .lid__no {
-			color: var(--ink);
-		}
 		.lid__body--pair {
 			grid-template-columns: 1fr;
-		}
-		/* No right column: the actions follow the onderdeel's text while it is touched. */
-		.part {
-			flex-wrap: wrap;
-		}
-		.part__actions {
-			position: static;
-			display: none;
-			width: 100%;
-			margin-top: 2px;
-		}
-		.part:hover:not(:has(.part--onderdeel:hover)) > .part__actions,
-		.part__actions:focus-within,
-		.part.is-open > .part__actions {
-			display: flex;
 		}
 	}
 </style>
