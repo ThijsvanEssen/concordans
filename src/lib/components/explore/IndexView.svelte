@@ -2232,9 +2232,11 @@
 									kolommen={2}
 									rijen={10}
 									coalitie={coalitieRegel}
-									peil={seats.chamber === 'EK'
-										? `Eerste Kamer, samenstelling op ${formatLongDate(composition?.composition_date ?? seats.as_of ?? null)}`
-										: `Tweede Kamer, stand op ${formatLongDate(seats.as_of ?? null)}`}
+									peil={`Samenstelling op ${formatLongDate(
+										(seats.chamber === 'EK' ? composition?.composition_date : null) ??
+											seats.as_of ??
+											null
+									)}`}
 									bron={seats.chamber === 'EK'
 										? composition
 											? {

@@ -69,7 +69,9 @@
 	{/if}
 	{#if peil}
 		<p class="peil">
-			{peil}{#if bron}. <a href={bron.href} rel="external">{bron.label}</a>{/if}
+			<!-- The fixed caption of a date that belongs to what is shown (docs/bediening.md,
+			     Bronregels): `Samenstelling op …. Bron: ….` -->
+			{peil}. {#if bron}Bron: <a href={bron.href} rel="external">{bron.label}</a>.{/if}
 		</p>
 	{/if}
 </div>

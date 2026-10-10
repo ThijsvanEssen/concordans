@@ -150,16 +150,17 @@
 					{@const ek = d.ek_outcome}
 					<!-- The Eerste Kamer's decision stands in the bar; its source is named here. -->
 					<p class="source">
-						Eerste Kamer: <a href={ek.source_url} rel="external">{ek.attribution}</a
-						>{ek.retrieved_on ? `, geraadpleegd op ${formatLongDate(ek.retrieved_on)}` : ''}
+						Bron: <a href={ek.source_url} rel="external">{ek.attribution}</a>{ek.retrieved_on
+							? `, geraadpleegd op ${formatLongDate(ek.retrieved_on)}`
+							: ''}.
 					</p>
 				{:else if d.senate?.source?.url}
 					{@const bill = d.senate.source}
 					<!-- Where the Eerste Kamer's progress in the bar and the procedure comes from. -->
 					<p class="source">
-						Eerste Kamer: <a href={bill.url} rel="external">{bill.attribution}</a>{bill.read_on
+						Bron: <a href={bill.url} rel="external">{bill.attribution}</a>{bill.read_on
 							? `, geraadpleegd op ${formatLongDate(bill.read_on)}`
-							: ''}
+							: ''}.
 					</p>
 				{/if}
 				{#if readings.first.length > 0}

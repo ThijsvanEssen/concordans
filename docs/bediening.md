@@ -71,6 +71,17 @@ What a reader keeps while reading goes into a map (`src/lib/map`; concept ux-voo
 - **Sharing:** a link (`?map=`, with `mapnaam=` and, in the own order, `mapvolgorde=eigen`) opens `/gemarkeerd` with the shared map as the first group, `Gedeelde map: <naam>`, its actions at the right of its heading: Bewaar als map, Voeg toe aan the active map, or Niet bewaren; after the choice the link leaves the address. A link of before (`/explore?map=`) goes there too (AppShell). Fields per item `id~at~kort~groep~notitie`, items separated by `;`; only `%`, `~` and `;` are escaped.
 - **Storage:** the maps live in this browser (`concordans:mappen`), without an account. The one map of step 1 (`concordans:map`) became the first map.
 
+## Bronregels
+
+Lines about how current the data is, and the dates that belong to what a page shows (Thijs, 10 Oct: "een gelijke ervaring op de hele website"; inventory in ux-voorstel/20-bronregels).
+
+- **How current the data is:** one line in the footer of every page, `Stukken van de Kamers tot en met 9 okt. 2026, opgehaald op 10 okt. 2026` (`data_as_of` of `/api/stats`, asked when the footer comes into view). Not in the head of a page. Two exceptions: the empty list of Actueel, where it says why nothing shows, and Bronnen en hergebruik, whose subject it is (per source, `tot en met …, opgehaald op …`).
+- **A date of what is shown:** a caption under the object, serif, `--t-micro`, `--ink-3`, in one of these words:
+  - a composition or a hall: `Samenstelling op 8 oktober 2026[, gegevens sinds …]. Bron: <bron>.`;
+  - a page of a source read for this bron: `Bron: <bron>, geraadpleegd op 9 oktober 2026.`;
+  - a search that stopped short: `Doorzocht vanaf 1 september 2026.`
+- A text in force on a day (`Tekst geldend op …`) is the content itself, not a source date.
+
 ## Marks on a timeline
 
 A line of a timeline (Actueel on the home page, Onderwerpen, a dossier's procedure) carries the mark of its kind from `src/lib/bron/vormen.ts`, the table KindGlyph and the network draw from (Thijs, 10 Oct 2026: "Dit hebben we toch al door de rest van de site?"). A vote is the triangle of a decision, a paper the sheet, a bill the sheet with its window, a toezegging the flag, a law in force the square of a law. A bundle has the mark of its kind (Stemmingen the triangle). The outcome is in the fill: aangenomen or afgedaan filled in moss, verworpen open in the accent, open or still to come dashed. The Tijdlijn has no circle or square of its own.
