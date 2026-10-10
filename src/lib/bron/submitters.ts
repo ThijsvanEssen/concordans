@@ -14,12 +14,24 @@ export type Submitter = {
 	role: 'indiener' | 'medeindiener';
 };
 
+/**
+ * A faction named after the member (a group of one: "Lid Keijzer", "Groep Markuszower")
+ * says their name again: left out (UX-toets 10 Oct, #32: "Mona Keijzer (Lid Keijzer)").
+ */
+export function eigenFractie(name: string, faction: string | null): string | null {
+	if (!faction) return null;
+	const achternaam = name.trim().split(/\s+/).at(-1)?.toLowerCase();
+	if (!achternaam) return faction;
+	const woorden = faction.toLowerCase().split(/[\s-]+/);
+	return woorden.includes(achternaam) ? null : faction;
+}
+
 /** From `/api/documents/{key}`. */
 export const fromDocument = (list: Schema<'SubmitterDTO'>[] | null | undefined): Submitter[] =>
 	(list ?? []).map((s) => ({
 		name: s.name,
 		memberKey: s.member_key ?? null,
-		faction: s.faction ?? null,
+		faction: eigenFractie(s.name, s.faction ?? null),
 		factionKey: null,
 		role: s.role
 	}));
@@ -32,7 +44,7 @@ export const fromFeed = (list: Schema<'FeedPersonDTO'>[] | null | undefined): Su
 					{
 						name: p.name,
 						memberKey: p.key ?? null,
-						faction: p.faction?.short ?? null,
+						faction: eigenFractie(p.name, p.faction?.short ?? null),
 						factionKey: p.faction?.key ?? null,
 						role: p.role
 					}
