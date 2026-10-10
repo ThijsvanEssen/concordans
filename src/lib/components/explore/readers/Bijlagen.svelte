@@ -110,7 +110,7 @@
 		list-style: none;
 	}
 	li {
-		padding: 2px 0;
+		padding: var(--s-1) 0;
 	}
 	li a {
 		color: var(--ink);

@@ -572,7 +572,7 @@
 		color: var(--ink-2);
 	}
 	.toegelicht li {
-		padding: 2px 0;
+		padding: var(--s-1) 0;
 	}
 	.wet {
 		color: var(--ink);
