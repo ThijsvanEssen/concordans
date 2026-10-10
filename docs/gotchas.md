@@ -27,6 +27,10 @@ The API sends `max-age=60` with an ETag that changes after every migration ([`ap
 - `{@const}` must be the direct child of `{#if}`, `{#each}`, `{:else}`, `{#snippet}`, `<svelte:fragment>` or a component. Inside a plain element it does not compile.
 - A variable named `state` or `props` makes the compiler read `$state` and `$props` as store subscriptions of that variable, and everything derived from it degrades to `any`. Name it `view`, `status` or `nodeProps`. The readers use `view` for their load state.
 
+## Navigation callbacks
+
+`afterNavigate` and `beforeNavigate` can get a `from` or `to` without a url: on the first page `from.url` is null. Read it as `from?.url` and work with that value. A callback that throws on the first page stops SvelteKit's start before the router runs, and from then on every link loads the whole page, with the server HTML first. This shows only in a production build; `npm run dev` navigates as usual (10 Oct 2026). `eerste-verf.test.ts` rejects `from.url` and `to.url` in a file with such a callback.
+
 ## Narrow screens
 
 Nothing scrolls sideways on a phone. A flex or grid child that holds text gets `min-width: 0`. A long word gets `overflow-wrap: anywhere`, and an ECLI may break after a colon (`<wbr>`). Text also must not run past its box: a label that overflows its cell still makes the column wider than the screen.

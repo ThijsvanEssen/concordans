@@ -25,9 +25,9 @@
 	// app keeps title, description and canonical itself; a filter or ?lezen=1 is the same
 	// address.
 	afterNavigate(({ from, to }) => {
-		if (dev && to) meldZijscroll(to.url.pathname + to.url.search);
 		const van = from?.url;
 		const naar = to?.url;
+		if (dev && naar) meldZijscroll(naar.pathname + naar.search);
 		if (!van || !naar || canonical(van) === canonical(naar)) return;
 		if (serverKop.actief) {
 			for (const el of document.head.querySelectorAll('[data-seo]')) el.remove();

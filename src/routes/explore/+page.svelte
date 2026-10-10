@@ -956,8 +956,10 @@
 	// navigation never ended and SvelteKit never took over the links (every click a full
 	// load, 10 Oct 2026).
 	afterNavigate((nav) => {
-		const from = nav.from?.url ? verkennerUrl(nav.from.url).searchParams : null;
-		const to = nav.to?.url ? verkennerUrl(nav.to.url).searchParams : null;
+		const van = nav.from?.url;
+		const naar = nav.to?.url;
+		const from = van ? verkennerUrl(van).searchParams : null;
+		const to = naar ? verkennerUrl(naar).searchParams : null;
 		const changed = (name: string) => (from?.get(name) ?? null) !== (to?.get(name) ?? null);
 		if (nav.type === 'link' || nav.type === 'popstate' || changed('focus') || changed('lezen'))
 			steppedIn = true;
