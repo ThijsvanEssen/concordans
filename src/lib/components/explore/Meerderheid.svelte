@@ -50,8 +50,6 @@
 	.meerderheid {
 		align-self: stretch;
 		width: 100%;
-		max-width: 420px;
-		margin: 0 auto;
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-1);

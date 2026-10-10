@@ -3,14 +3,15 @@
 	// not the Kamer's): the Tweede Kamer on a day of its period, the coalition filled and the
 	// opposition open, the two sides as lists and against the majority; under it the
 	// coalition's seats over the period, a step per change, each step the day the hall shows;
-	// the Eerste Kamer where the API has it (a cabinet in office on the day of its
-	// composition). A cabinet from before 30 November 2006 has no seats per day: no section.
+	// the Eerste Kamer where its current composition is this cabinet's, else its heading with a
+	// line that says so (partial over waiting). A cabinet from before 30 November 2006 has no seats per day: no section.
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Hemicycle from '../Hemicycle.svelte';
 	import ZaalTegenover from '../ZaalTegenover.svelte';
 	import Meerderheid from '../Meerderheid.svelte';
+	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
 	import { getCabinetSeats, getParliamentSeats } from '$lib/api/records';
 	import { korteDatum, vandaag } from '$lib/text/datum';
@@ -24,7 +25,8 @@
 
 	let zetels = $state<Schema<'CabinetSeatsResponse'> | null>(null);
 	let tk = $state<Zaal | null>(null);
-	let ek = $state<Zaal | null>(null);
+	/** The Eerste Kamer's composition; `elders` when it is another cabinet's or not there. */
+	let ek = $state<Zaal | 'laden' | 'elders'>('laden');
 
 	const dag = vandaag();
 	/** The cabinet's last day, or today while it is in office. */
@@ -39,20 +41,21 @@
 		const key = kabinet;
 		let weg = false;
 		zetels = null;
-		ek = null;
+		ek = 'laden';
 		getCabinetSeats(key)
 			.then((z) => {
-				if (weg) return;
-				zetels = z;
-				// The Eerste Kamer only where the API gives this cabinet a stretch there.
-				if (z.ek?.length)
-					getParliamentSeats('EK')
-						.then((e) => {
-							if (!weg && e.cabinet?.key === key) ek = e;
-						})
-						.catch(() => {});
+				if (!weg) zetels = z;
 			})
 			.catch(() => {});
+		// Asked whatever the cabinet's own `ek` says: that is null until the EK history is
+		// filled, while the current composition already names its cabinet.
+		getParliamentSeats('EK')
+			.then((e) => {
+				if (!weg) ek = e.cabinet?.key === key ? e : 'elders';
+			})
+			.catch(() => {
+				if (!weg) ek = 'elders';
+			});
 		return () => {
 			weg = true;
 		};
@@ -160,11 +163,17 @@
 					</div>
 					<p class="onderschrift">Samenstelling op {formatLongDate(opDag)}.</p>
 					<!-- The Kamer's numbers of the front, quiet under the hall. -->
-					<p class="sleutel">
-						{#each ['Voorzitter', 'Griffier', 'Kabinet (vak-K)', 'Verslag en redactie', 'Spreekgestoelte', 'Interruptiemicrofoons', 'Bodedienst'] as plaats, i (plaats)}<span
-								><b>{i + 1}</b> {plaats}</span
-							>{/each}
-					</p>
+					<ZaalPlaatsen
+						plaatsen={[
+							'Voorzitter',
+							'Griffier',
+							'Kabinet (vak-K)',
+							'Verslag en redactie',
+							'Spreekgestoelte',
+							'Interruptiemicrofoons',
+							'Bodedienst'
+						]}
+					/>
 					<div class="zijden">
 						{#each [['Coalitie', z.ja, z.jaZetels], ['Oppositie', z.nee, z.neeZetels]] as const as [kop, lijst, totaal] (kop)}
 							<div class="zijde" class:zijde--lang={lijst.length > 6}>
@@ -196,7 +205,6 @@
 
 			{#if stukken.length > 1}
 				<div class="verloop">
-					<span class="drempel" style:top="{(yMeerderheid / H) * 100}%">{MEERDERHEID}</span>
 					<svg
 						viewBox="0 0 {W} {H}"
 						preserveAspectRatio="none"
@@ -229,24 +237,32 @@
 							>
 						{/each}
 					</svg>
+					<!-- The period's ends under its ends; what the strip shows as a caption at the left
+					     edge, as under the hall. -->
 					<p class="as">
 						<span>{zetels.from_date ? korteDatum(zetels.from_date) : ''}</span>
-						{#if gekozen}
-							<span class="nu"
+						<span>{zetels.to_date ? korteDatum(zetels.to_date) : 'nu'}</span>
+					</p>
+					<p class="onderschrift">
+						{#if gekozen}<b
 								>{gekozen.s.coalition} zetels, {korteDatum(gekozen.s.from_date)}{gekozen.s
 									.to_date && gekozen.s.to_date !== gekozen.s.from_date
 									? ` tot ${korteDatum(gekozen.s.to_date)}`
-									: ''}</span
-							>
-						{/if}
-						<span>{zetels.to_date ? korteDatum(zetels.to_date) : 'nu'}</span>
+									: ''}.</b
+							>{/if}De lijn is de meerderheid van {MEERDERHEID} zetels.
 					</p>
 				</div>
 			{/if}
 		</div>
 	</Sectie>
-	{#if ek}
-		<Sectie titel="Zetels in de Eerste Kamer">
+	<Sectie titel="Zetels in de Eerste Kamer">
+		{#if ek === 'laden'}
+			<p class="onderschrift">Laden…</p>
+		{:else if ek === 'elders'}
+			<p class="onderschrift">
+				Geen samenstelling van de Eerste Kamer voor dit kabinet in de gegevens.
+			</p>
+		{:else}
 			{@const z = zijden(ek)}
 			<div class="zetels">
 				<figure class="kamer">
@@ -254,11 +270,7 @@
 						<ZaalTegenover data={ek} voteHighlight={kantVan(ek)} />
 					</div>
 					<p class="onderschrift">Samenstelling op {formatLongDate(ek.as_of ?? null)}.</p>
-					<p class="sleutel">
-						{#each ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie'] as plaats, i (plaats)}<span
-								><b>{i + 1}</b> {plaats}</span
-							>{/each}
-					</p>
+					<ZaalPlaatsen plaatsen={['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie']} />
 					<Meerderheid
 						ja={z.jaZetels}
 						nee={z.neeZetels}
@@ -267,8 +279,8 @@
 					/>
 				</figure>
 			</div>
-		</Sectie>
-	{/if}
+		{/if}
+	</Sectie>
 {/if}
 
 <style>
@@ -319,20 +331,6 @@
 	}
 	.zijde--lang li {
 		break-inside: avoid;
-	}
-	.sleutel {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: var(--s-1) var(--s-3);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.sleutel b {
-		font-weight: 600;
-		color: var(--ink-2);
 	}
 	@media (max-width: 520px) {
 		.zijden {
@@ -388,16 +386,8 @@
 		box-shadow: inset 0 0 0 1.5px var(--kleur);
 	}
 	.verloop {
-		position: relative;
-	}
-	/* The majority's number above the end of its line, inside the column. */
-	.drempel {
-		position: absolute;
-		right: 0;
-		transform: translateY(-115%);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink);
+		display: flex;
+		flex-direction: column;
 	}
 	.verloop svg {
 		display: block;
@@ -434,7 +424,8 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.nu {
+	.onderschrift b {
+		font-weight: 400;
 		color: var(--ink);
 	}
 </style>

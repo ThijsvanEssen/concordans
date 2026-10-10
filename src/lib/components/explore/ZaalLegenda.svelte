@@ -4,6 +4,7 @@
 	// daaronder de genummerde plaatsen op één regel. Gelijk voor beide Kamers.
 	import type { Schema } from '$lib/api/types';
 	import { achtergrondVan } from './partijkleuren.svelte';
+	import ZaalPlaatsen from './ZaalPlaatsen.svelte';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 	let {
@@ -51,14 +52,9 @@
 			</li>
 		{/each}
 	</ol>
-	{#snippet regel(lijst: string[], verborgen = false)}
-		<p class="pl" class:verborgen aria-hidden={verborgen || undefined}>
-			{#each lijst as p, i (p)}<span><b>{i + 1}</b>{p}</span>{/each}
-		</p>
-	{/snippet}
 	<div class="pl-cel">
-		{@render regel(plaatsen)}
-		{#if ruimte && ruimte.length > plaatsen.length}{@render regel(ruimte, true)}{/if}
+		<ZaalPlaatsen {plaatsen} />
+		{#if ruimte && ruimte.length > plaatsen.length}<ZaalPlaatsen plaatsen={ruimte} verborgen />{/if}
 	</div>
 	{#if coalitie}
 		<p class="coalitie">
@@ -83,7 +79,7 @@
 		gap: var(--s-3);
 		width: 100%;
 		max-width: 720px;
-		margin: var(--s-4) auto 0;
+		margin: var(--s-4) 0 0;
 	}
 	.fr {
 		list-style: none;
@@ -127,37 +123,8 @@
 	.pl-cel {
 		display: grid;
 	}
-	.pl-cel > .pl {
+	.pl-cel > :global(.zaal-plaatsen) {
 		grid-area: 1 / 1;
-	}
-	.pl.verborgen {
-		visibility: hidden;
-	}
-	.pl {
-		margin: 0;
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-1) var(--s-4);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-	}
-	.pl span {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-1);
-	}
-	/* Hetzelfde nummer als in de zaal: een klein rondje in inkt. */
-	.pl b {
-		display: inline-grid;
-		place-items: center;
-		width: 14px;
-		height: 14px;
-		border-radius: 50%;
-		background: var(--ink);
-		color: var(--paper);
-		font-size: var(--t-glyph);
-		font-weight: 600;
 	}
 	/* One line, so it takes the same height under either Kamer. */
 	.peil {

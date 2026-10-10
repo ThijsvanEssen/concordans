@@ -543,3 +543,38 @@ describe('effects that end', () => {
 		expect([...schrijft(e.cleanup)].filter((n) => leest(e.body, n))).toEqual(['laden']);
 	});
 });
+
+// The cards over the network stand at one width on one right edge (Thijs, 10 Oct); the halls'
+// text and bars at the left edge of the frame, the hall alone centred.
+describe('canvas cards and halls', () => {
+	it('sizes every card over the network with --paneel-breed and --paneel-rand', () => {
+		const kaart = /^\.(netwerk|legenda|cluster-kaart)$/;
+		expect(
+			offenders((t) =>
+				rules(t).some(
+					(r) =>
+						kaart.test(r.selector.trim()) &&
+						(/(?<![-\w])width:\s*\d/.test(r.body) || /(?<![-\w])right:\s*var\(--s-/.test(r.body))
+				)
+			)
+		).toEqual([]);
+	});
+
+	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
+		expect(
+			offenders(
+				(t) => /<p class="(sleutel|pl)"/.test(t) && /Voorzitter/.test(t),
+				['lib/components/explore/ZaalPlaatsen.svelte']
+			)
+		).toEqual([]);
+		const zaal = ['Meerderheid', 'ZaalLegenda', 'ZaalPlaatsen', 'Hemicycle'].map(
+			(n) => `lib/components/explore/${n}.svelte`
+		);
+		expect(
+			sources
+				.filter((s) => zaal.includes(s.path))
+				.filter((s) => /margin:[^;]*\bauto\b|text-align:\s*center/.test(s.text))
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+});
