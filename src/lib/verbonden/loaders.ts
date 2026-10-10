@@ -421,7 +421,6 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						rows,
 						total: data.judgment_total,
 						mentions: data.total,
-						order: sort === 'citation_count' ? 'Eerst de meest aangehaalde uitspraken.' : undefined,
 						judgmentsOf
 					};
 				};
@@ -945,11 +944,6 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		if (!found) return fromNode();
 		return {
 			total: found.total,
-			// Newest first, or (sort=cited) by the number of the law's articles they cite.
-			order:
-				sort === 'cited'
-					? 'Eerst de uitspraken die de meeste artikelen van de wet aanhalen.'
-					: undefined,
 			// Every citing judgment per year (BE-47), not the page; the oldest first.
 			years: (found.facets?.year ?? [])
 				.filter((f) => f.value)

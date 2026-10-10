@@ -1,11 +1,12 @@
 <script lang="ts">
-	import Picto from '$lib/components/ui/Picto.svelte';
+	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import { inhoudVan } from '$lib/components/open/rij-inhoud';
 	import { uniqueBy } from '$lib/util/unique';
 	// One line of Actueel: an item, or a fold of many items of one kind on one dossier. The
 	// title of an item links to the bron; the rest of the line opens its details beneath it.
 	// Names of persons and dossiers are links, as everywhere.
 	import BronLink from '$lib/bron/BronLink.svelte';
-	import { bronHref, indexHref } from '$lib/bron/href';
+	import { bronHref } from '$lib/bron/href';
 	import IndexRow from '$lib/components/explore/index/IndexRow.svelte';
 	import {
 		KIND_LABEL,
@@ -20,9 +21,8 @@
 	} from './feed';
 	import { headlineOf, voteHow, vormVanFeed } from './timeline';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { langeDatum } from '$lib/text/datum';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
-	import { bewindspersoonVan, fromFeed } from '$lib/bron/submitters';
+	import { fromFeed } from '$lib/bron/submitters';
 
 	/** Medeindieners named in a row; the rest are counted. */
 	const SUBMITTERS_SHOWN = 2;
@@ -109,13 +109,17 @@
 {:else}
 	{@const i = entry.item}
 	{@const h = headlineOf(i)}
+	<!-- Opened, the bron's own content (RijInhoud); a kind with none beyond the row does not
+	     open, and its title goes to the reader. -->
+	{#snippet inhoud()}<RijInhoud item={i} />{/snippet}
 	<IndexRow
 		bron={i.id}
 		title={h.title}
 		href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}
 		open={openId === i.id}
-		onToggle={() => onToggle(i.id)}
+		onToggle={inhoudVan(i) ? () => onToggle(i.id) : undefined}
 		emphasis={h.major}
+		detail={inhoudVan(i) ? inhoud : undefined}
 	>
 		{#snippet lead()}
 			<span class="kind" class:kind--failed={h.failed}
@@ -162,59 +166,6 @@
 					>{i.commencement.changed_articles ?? 0} van {i.commencement.article_count ?? 0} artikelen</span
 				>
 			{/if}
-		{/snippet}
-		{#snippet detail()}
-			{#if i.judgment}
-				<!-- Published on the day of the row; decided earlier, as the court dates it. -->
-				<p class="summary">
-					Gepubliceerd op {langeDatum(i.date)}{i.judgment.decided_on
-						? `, beslist op ${langeDatum(i.judgment.decided_on)}`
-						: ''}.
-				</p>
-			{/if}
-			{#if i.summary && i.kind !== 'toezegging' && !i.vote}
-				<p class="summary">{i.summary}</p>
-			{/if}
-			{#if i.persons.length}
-				<ul class="people">
-					{#each i.persons as p, n (`${p.key ?? p.name}/${n}`)}
-						<li>
-							{#if p.key}<BronLink ref={`members/${p.key}`}>{p.name}</BronLink>{:else}{p.name}{/if}
-							<span class="role"
-								>{p.role === 'medeindiener' ? 'medeindiener' : p.role}{p.faction?.short
-									? `, ${p.faction.short}`
-									: ''}</span
-							>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-			<!-- The same two buttons as every opened row (OpenRij); the rest as links. -->
-			<p class="acts">
-				<a
-					class="btn is-groot is-primary"
-					href={bronHref(refOf(i), { keepMode: false, mode: 'read' })}
-					><Picto naam="tekst" size={13} />Lees</a
-				>
-				<a class="btn is-groot" href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}
-					><Picto naam="netwerk" size={13} />In het netwerk</a
-				>
-			</p>
-			<p class="links">
-				{#if i.official_url}<a href={i.official_url} rel="external"
-						>{i.judgment ? 'Op rechtspraak.nl' : 'Officiële publicatie'}</a
-					>{/if}
-				{#if i.tk_url}<a href={i.tk_url} rel="external">Op tweedekamer.nl</a>{/if}
-				{#if i.dossier}<a href={filterHref({ dossier: i.dossier.number })}
-						>Alles over dit dossier in Actueel</a
-					>{/if}
-				{#if i.kind === 'toezegging' && bewindspersoonVan(i.persons)?.key}
-					{@const wie = bewindspersoonVan(i.persons)!}
-					<a href={indexHref('commitments', { member: wie.key! })}
-						>Alle toezeggingen van {wie.name}</a
-					>
-				{/if}
-			</p>
 		{/snippet}
 	</IndexRow>
 {/if}
@@ -289,12 +240,8 @@
 		border-left: 3px solid var(--party);
 	}
 	.faction,
-	.ministry,
-	.role {
+	.ministry {
 		color: var(--ink-3);
-	}
-	.role {
-		margin-left: var(--s-1);
 	}
 	.outcome {
 		font-family: var(--font-serif);
@@ -312,14 +259,6 @@
 		color: var(--ink-3);
 	}
 
-	.summary {
-		margin: var(--s-2) 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		line-height: 1.5;
-		max-width: 68ch;
-	}
-	.people,
 	.fold-items {
 		list-style: none;
 		margin: var(--s-2) 0;
@@ -327,7 +266,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
-	.people li,
 	.fold-items li {
 		padding: var(--s-1) 0;
 	}
@@ -343,12 +281,6 @@
 	}
 	.fold-items :global(a.fold-title:hover) {
 		text-decoration: underline;
-	}
-	.acts {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--s-2);
-		margin: var(--s-3) 0 0;
 	}
 	.links {
 		display: flex;
