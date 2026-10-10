@@ -1556,6 +1556,7 @@
 							onFilter={applyFilter}
 							onOpenFilter={() => (filterOpen = true)}
 							onDepth={setDepth}
+							allesGrens={{ grens: ALLES_GRENS, geladen: alles }}
 							onAllesLaden={alles
 								? undefined
 								: () => setUrl({ alles: '1', diepte: null }, { push: true })}

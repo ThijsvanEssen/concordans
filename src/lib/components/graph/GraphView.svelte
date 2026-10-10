@@ -97,6 +97,7 @@
 		onOpenFilter,
 		onDepth,
 		onAllesLaden,
+		allesGrens,
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
@@ -131,6 +132,7 @@
 		onDepth: (d: number) => void;
 		/** Load all the focus's direct neighbours (?alles=1); absent once they are asked. */
 		onAllesLaden?: () => void;
+		allesGrens?: { grens: number; geladen: boolean } | null;
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
@@ -1527,6 +1529,7 @@
 		{reach}
 		{onDepth}
 		{onAllesLaden}
+		{allesGrens}
 		hiddenRelations={filters.hiddenRelations}
 		onToggleRelation={toggleRelation}
 		hiddenGroups={filters.hiddenGroups}

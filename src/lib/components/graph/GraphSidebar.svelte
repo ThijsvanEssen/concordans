@@ -48,6 +48,7 @@
 		depth,
 		onDepth,
 		onAllesLaden,
+		allesGrens = null,
 		hiddenRelations,
 		onToggleRelation,
 		hiddenGroups = new Set(),
@@ -70,6 +71,8 @@
 		depth: number;
 		onDepth: (d: number) => void;
 		onAllesLaden?: () => void;
+		/** The most "Alles laden" asks at once; set once it has (the cap then stands as a label). */
+		allesGrens?: { grens: number; geladen: boolean } | null;
 		hiddenRelations: Set<Relation>;
 		onToggleRelation: (r: Relation) => void;
 		/** Groupings switched off: no hull around their bronnen. */
@@ -113,6 +116,7 @@
 			? []
 			: (reach?.buckets ?? []).filter((b) => b.kept < b.total && isCollection(b.collection))
 	);
+	const uitsnedeTotaal = $derived(uitsnede.reduce((n, b) => n + b.total, 0));
 	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
 	// Never drawn as an edge on the canvas, so not a togglable line here either.
 	// PART_OF, MEMBER_OF and LED_BY always point at a container (a wet, fractie,
@@ -260,12 +264,18 @@
 						</li>
 					{/each}
 				</ul>
+				<!-- What the link loads, the API's cap in its words where the whole is more; once
+				     loaded and still cut, the cap as a label (UX-toets 0.79.44, #43). -->
 				{#if onAllesLaden}
 					<p class="uitsnede__actie">
 						<TekstLink onclick={onAllesLaden}
-							>Alle {formatCount(uitsnede.reduce((n, b) => n + b.total, 0))} laden</TekstLink
+							>{allesGrens && uitsnedeTotaal > allesGrens.grens
+								? `${formatCount(allesGrens.grens)} van ${formatCount(uitsnedeTotaal)} laden`
+								: `Alle ${formatCount(uitsnedeTotaal)} laden`}</TekstLink
 						>
 					</p>
+				{:else if allesGrens?.geladen}
+					<p class="uitsnede__actie stil">Grens bereikt: {formatCount(allesGrens.grens)}</p>
 				{/if}
 			</section>
 		{/if}
