@@ -105,7 +105,7 @@
 	.foot {
 		background: var(--paper);
 		border-top: 1px solid var(--rule);
-		padding: 56px 0 0;
+		padding: var(--s-8) 0 0;
 		margin-top: auto;
 	}
 
@@ -145,7 +145,7 @@
 	}
 
 	.foot-col h4 {
-		margin: 0 0 14px;
+		margin: 0 0 var(--s-4);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		font-weight: 600;
@@ -178,7 +178,7 @@
 		gap: var(--s-1) var(--s-5);
 		justify-content: flex-start;
 		align-items: center;
-		padding: 20px var(--s-6);
+		padding: var(--s-5) var(--s-6);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -193,7 +193,7 @@
 
 	@media (max-width: 640px) {
 		.container {
-			padding: 0 20px;
+			padding: 0 var(--s-5);
 		}
 		.foot-grid {
 			grid-template-columns: 1fr;

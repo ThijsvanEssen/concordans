@@ -1,4 +1,4 @@
-import { maandJaar } from '$lib/text/datum';
+import { maandJaar, vandaag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 import { POST_LABEL } from './government';
 
@@ -23,7 +23,7 @@ export type Term = { start: number; end: number; open: boolean };
  */
 export function termOf(
 	cabinet: Pick<CabinetDetail, 'from_date' | 'to_date' | 'ministries'>,
-	today = new Date().toISOString().slice(0, 10)
+	today = vandaag()
 ): Term | null {
 	if (!cabinet.from_date) return null;
 	const start = parse(cabinet.from_date);

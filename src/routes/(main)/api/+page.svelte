@@ -323,7 +323,7 @@
 		grid-row: 2;
 		display: flex;
 		flex-direction: column;
-		gap: 56px;
+		gap: var(--s-8);
 	}
 
 	.api-tag {

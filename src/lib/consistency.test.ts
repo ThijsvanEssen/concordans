@@ -56,6 +56,22 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('formats a figure only in $lib/text/getal.ts, and takes today from datum.ts', () => {
+		const eigen: Uitzonderingen = {
+			'lib/text/getal.ts': 'the one place',
+			'lib/components/explore/readers/MemberReader.svelte': 'being reworked (Front-end #1)'
+		};
+		expect(offenders((t) => /\.toLocaleString\(/.test(t), buiten(eigen))).toEqual([]);
+		// The UTC day is yesterday between midnight and two; vandaag() is the reader's own day.
+		const utc: Uitzonderingen = {
+			'lib/components/explore/readers/CommitmentReader.svelte': 'being reworked (Front-end #1)',
+			'lib/components/explore/readers/MemberReader.svelte': 'being reworked (Front-end #1)'
+		};
+		expect(
+			offenders((t) => /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/.test(t), buiten(utc))
+		).toEqual([]);
+	});
+
 	it('fills no missing value with a sign: Waarde leaves it empty, Veld drops the row', () => {
 		// "—" or "–" as a value reads as a fact ("unknown") where the data only lacks it.
 		const sign = /['"`>][—–]['"`<]/;
@@ -152,6 +168,19 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('styles the parts of a text page once, in AppShell (.blad--tekst)', () => {
+		const delen =
+			/^\.(stub-eyebrow|stub-title|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;
+		expect(
+			sources
+				.filter(({ path }) => path.startsWith('routes/(main)'))
+				.filter(({ text }) =>
+					rules(text).some((r) => r.selector.split(',').some((s) => delen.test(s.trim())))
+				)
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+
 	it('sets the choose-line of a list page with Bepaalregel (docs/bediening.md)', () => {
 		const lijsten = [
 			'lib/components/explore/IndexView.svelte',
@@ -202,9 +231,77 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('takes every colour in a style from the tokens in AppShell', () => {
+		// A hex or rgb() value in a component is a colour beside the palette. A mask's `black`
+		// is not a colour; the canvas and the fracties' own colours live in TypeScript.
+		const css = (t: string) =>
+			(/<style>([\s\S]*?)<\/style>/.exec(t)?.[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
+		const eigen: Uitzonderingen = {
+			'lib/components/layout/AppShell.svelte': 'the tokens themselves',
+			'routes/explore/+page.svelte':
+				'the scrim of the phone sheet; left alone while its column widths are reworked'
+		};
+		expect(
+			offenders((t) => /#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?)\(/.test(css(t)), buiten(eigen))
+		).toEqual([]);
+	});
+
+	it('rounds a corner with a radius token', () => {
+		const vrij = /^((var\(--r-[\w-]+\)|0)(\s+(var\(--r-[\w-]+\)|0))*|50%|inherit)$/;
+		expect(
+			offenders(
+				(t) =>
+					rules(t).some((r) =>
+						[...r.body.matchAll(/border-radius:\s*([^;]+);/g)].some((m) => !vrij.test(m[1].trim()))
+					),
+				['lib/components/explore/readers/KabinetZetels.svelte']
+			)
+		).toEqual([]);
+	});
+
+	it('names a face only through its token', () => {
+		expect(
+			offenders(
+				(t) =>
+					rules(t).some((r) =>
+						[...r.body.matchAll(/font-family:\s*([^;]+);/g)].some(
+							(m) => !/^var\(--font-(serif|ui)\)$/.test(m[1].trim())
+						)
+					),
+				// The wordmark is a logo in its own face.
+				['lib/components/layout/AppShell.svelte', 'lib/components/layout/Wordmark.svelte']
+			)
+		).toEqual([]);
+	});
+
+	it('hides text for a screen reader with the one .sr-only', () => {
+		const eigen: Uitzonderingen = {
+			'lib/components/layout/AppShell.svelte': 'the one rule',
+			'lib/components/articles/ArticleText.svelte': 'being reworked (Front-end #1)',
+			'lib/components/explore/readers/DocumentReader.svelte': 'being reworked (Front-end #1)'
+		};
+		expect(
+			offenders((t) => rules(t).some((r) => /clip:\s*rect\(0/.test(r.body)), buiten(eigen))
+		).toEqual([]);
+	});
+
 	it('separates with a comma, not a middle dot (Thijs, 2 October 2026)', () => {
 		// "Motie, nr. 21", "Dossier, Kamerstuk 36799", and the browser tab: "Actueel, Concordans".
 		expect(offenders((t) => t.includes('\u00b7'))).toEqual([]);
+	});
+
+	it('keeps no component that nothing uses', () => {
+		const componenten = sources.filter(
+			({ path }) => path.startsWith('lib/') && path.endsWith('.svelte')
+		);
+		expect(
+			componenten
+				.filter(({ path }) => {
+					const naam = `/${path.split('/').at(-1)}'`;
+					return !sources.some((s) => s.path !== path && s.text.includes(naam));
+				})
+				.map((c) => c.path)
+		).toEqual([]);
 	});
 
 	it('has no prototype switches or study folders left', () => {
@@ -237,6 +334,55 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			);
 		const eigen: Uitzonderingen = {};
 		expect(offenders(meer, buiten(eigen))).toEqual([]);
+	});
+
+	it('frames a button only as the Knop (.btn, is-groot) or the IconKnop', () => {
+		// A frame in the control's face, or a frame and a pointer, is a button (a field aside);
+		// its one form is in AppShell and IconKnop.
+		const knop = (r: { selector: string; body: string }) =>
+			/border:\s*1px solid/.test(r.body) &&
+			/var\(--font-ui\)|cursor:\s*pointer/.test(r.body) &&
+			!/(input|textarea|select|kbd)\b[^,]*$/.test(r.selector);
+		const eigen: Uitzonderingen = {
+			'lib/components/layout/AppShell.svelte': 'the Knop itself',
+			'lib/components/ui/IconKnop.svelte': 'the one icon button',
+			'lib/components/layout/TopBar.svelte': 'the search in the bar looks as the field it opens',
+			'lib/netwerk/NetwerkPanel.svelte': 'the example in an empty netwerk is a card, not a button',
+			'lib/components/explore/readers/DossierReader.svelte':
+				'the other papers of a dossier; the readers are being reworked (Front-end #1)',
+			'routes/(main)/+page.svelte':
+				'the scopes of the home search, pressed or not: a Keuze once the home page is rebuilt'
+		};
+		expect(offenders((t) => rules(t).some(knop), buiten(eigen))).toEqual([]);
+	});
+
+	it('draws an item of a menu with tekstmenu__item', () => {
+		// An item's hover is TekstMenu's: a menu of its own adds a class for its layout only.
+		const item = (r: { selector: string; body: string }) =>
+			/menu-?item|__item\b|-item\b/.test(r.selector) &&
+			/background:\s*var\(--paper-2\)/.test(r.body);
+		const eigen: Uitzonderingen = {
+			'lib/components/ui/TekstMenu.svelte': 'the one item',
+			'lib/components/ui/CiteMenu.svelte': 'being reworked with the readers (Front-end #1)',
+			'lib/components/articles/PlaatsMenu.svelte':
+				'the place menu of the readers, new; being reworked (Front-end #1)',
+			'lib/components/explore/readers/ArticleReader.svelte':
+				'the versions menu; being reworked with the readers (Front-end #1)'
+		};
+		expect(offenders((t) => rules(t).some(item), buiten(eigen))).toEqual([]);
+	});
+
+	it('styles Verfijnen once, in AppShell', () => {
+		expect(
+			offenders(
+				(t) =>
+					rules(t).some(
+						(r) =>
+							/\.verfijnen-knop\b/.test(r.selector) && /font-family|text-decoration/.test(r.body)
+					),
+				['lib/components/layout/AppShell.svelte']
+			)
+		).toEqual([]);
 	});
 
 	it('sizes a control at the height of a page or of a panel', () => {

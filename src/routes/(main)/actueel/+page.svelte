@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
+	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -49,7 +51,7 @@
 		type FeedKind
 	} from '$lib/components/actueel/feed';
 
-	const today = new Date().toISOString().slice(0, 10);
+	const today = vandaag();
 	/** The days one summary spans at most, as the API allows. */
 	const SUMMARY_DAYS_MAX = 31;
 
@@ -501,7 +503,7 @@
 	{#if doorzocht}
 		<p class="doorzocht">
 			Doorzocht vanaf {shortDate(doorzocht)}.
-			<button type="button" onclick={verderTerug} disabled={verderLaden}
+			<button type="button" class="btn is-groot" onclick={verderTerug} disabled={verderLaden}
 				>{verderLaden ? 'Laden…' : 'Zoek verder terug'}</button
 			>
 		</p>
@@ -515,15 +517,16 @@
 			<h1 class="title">Actueel</h1>
 		</div>
 		<div class="acties">
-			<a class="actie-knop" href={atomHref} rel="alternate" type="application/atom+xml">Atom-feed</a
+			<a class="btn is-groot" href={atomHref} rel="alternate" type="application/atom+xml"
+				>Atom-feed</a
 			>
 			{#if q}
 				{#if gevolgd}
-					<a class="actie-knop" href="/onderwerpen">Gevolgd als onderwerp</a>
+					<a class="btn is-groot" href="/onderwerpen">Gevolgd als onderwerp</a>
 				{:else}
 					<button
 						type="button"
-						class="actie-knop"
+						class="btn is-groot"
 						title="Volg deze woorden onder Gevolgd"
 						onclick={volgQ}>Volg als onderwerp</button
 					>
@@ -579,7 +582,7 @@
 		<div class="head">
 			{#if total !== null}
 				<p class="count">
-					{total.toLocaleString('nl-NL')}
+					{formatCount(total)}
 					<span class="noun">{total === 1 ? 'gebeurtenis' : 'gebeurtenissen'}</span>
 				</p>
 			{:else if tellen}
@@ -595,8 +598,10 @@
 				{#if teLang && korter.length}
 					<p class="korter">
 						{#each korter as k (k.dagen)}
-							<button type="button" onclick={() => patchUrl({ van: dagenTerug(k.dagen) })}
-								>{k.label}</button
+							<button
+								type="button"
+								class="btn is-groot"
+								onclick={() => patchUrl({ van: dagenTerug(k.dagen) })}>{k.label}</button
 							>
 						{/each}
 					</p>
@@ -671,31 +676,9 @@
 		flex-wrap: wrap;
 		gap: var(--s-2);
 	}
-	/* The page's actions beside its heading: Atom-feed, Volg als onderwerp. */
-	.actie-knop {
-		display: inline-flex;
-		align-items: center;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		text-decoration: none;
-		cursor: pointer;
-	}
-	.actie-knop:hover {
-		border-color: var(--ink);
-	}
 	/* The field and the period on one line, without rules around it. */
 	.regel {
 		margin-bottom: var(--s-5);
-	}
-	.verfijnen-knop {
-		display: none;
 	}
 	.wis {
 		margin: var(--s-3) 0 0;
@@ -745,19 +728,6 @@
 		flex-wrap: wrap;
 		gap: var(--s-2);
 	}
-	.korter button {
-		padding: var(--s-2) var(--s-4);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.korter button:hover {
-		background: var(--paper-2);
-	}
 	.empty p {
 		margin: 0 0 var(--s-1);
 	}
@@ -770,16 +740,6 @@
 		color: var(--ink-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-	}
-	.doorzocht button {
-		padding: var(--s-1) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		color: var(--ink);
-		font: inherit;
-		font-family: var(--font-ui);
-		cursor: pointer;
 	}
 	.volgende {
 		padding: var(--s-5) 0;
@@ -801,20 +761,6 @@
 			max-height: none;
 			overflow: visible;
 			margin-bottom: var(--s-4);
-		}
-		/* The facets behind one quiet line: Verfijnen, with how many are chosen. */
-		.verfijnen-knop {
-			display: inline-block;
-			padding: 0;
-			border: 0;
-			background: none;
-			font-family: var(--font-ui);
-			font-size: var(--t-ui);
-			color: var(--ink);
-			text-decoration: underline;
-			text-decoration-color: var(--rule-strong);
-			text-underline-offset: 4px;
-			cursor: pointer;
 		}
 		.filters-body {
 			display: none;

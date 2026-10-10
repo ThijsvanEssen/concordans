@@ -215,7 +215,7 @@
 		/* The wordmark and the links share a baseline; the controls on the right are centred. */
 		align-items: baseline;
 		gap: var(--s-6);
-		padding: 0 28px;
+		padding: 0 var(--s-6);
 		flex-shrink: 0;
 		width: 100%;
 	}
@@ -227,7 +227,7 @@
 
 	.topbar-nav {
 		display: flex;
-		gap: 20px;
+		gap: var(--s-5);
 		color: var(--ink-3);
 	}
 
@@ -270,7 +270,7 @@
 		max-width: 100%;
 		min-width: 0;
 		height: var(--veld-h);
-		padding: 0 10px;
+		padding: 0 var(--s-3);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
@@ -305,7 +305,7 @@
 		background: none;
 		border: 0;
 		cursor: pointer;
-		padding: 6px var(--s-2);
+		padding: var(--s-2);
 		color: var(--ink-2);
 		line-height: 1;
 	}
@@ -327,7 +327,7 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink-2);
-		padding: 14px var(--s-5);
+		padding: var(--s-4) var(--s-5);
 		border-top: 1px solid var(--rule);
 	}
 

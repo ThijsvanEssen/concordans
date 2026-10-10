@@ -339,7 +339,7 @@
 		position: fixed;
 		inset: 0;
 		z-index: calc(var(--z-modal) - 1);
-		background: rgba(28, 27, 25, 0.12);
+		background: var(--scherm);
 	}
 	.sheet {
 		position: fixed;
@@ -362,7 +362,7 @@
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
-		padding: 18px 18px var(--s-3);
+		padding: var(--s-4) var(--s-4) var(--s-3);
 	}
 	.sheet__title {
 		margin: 0;
@@ -382,7 +382,7 @@
 		overflow-y: auto;
 	}
 	.block {
-		padding: 14px 18px;
+		padding: var(--s-4);
 		border-top: 1px solid var(--rule);
 	}
 	.block:first-child {
@@ -390,7 +390,7 @@
 		padding-top: 0;
 	}
 	.block__label {
-		margin-bottom: 6px;
+		margin-bottom: var(--s-2);
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
@@ -398,7 +398,7 @@
 	.search {
 		width: 100%;
 		height: 32px;
-		padding: 0 10px;
+		padding: 0 var(--s-3);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-1);
 		background: var(--paper);
@@ -421,7 +421,7 @@
 	}
 	.list__row {
 		display: flex;
-		gap: 10px;
+		gap: var(--s-3);
 		padding: var(--s-1) 0;
 		color: var(--ink-2);
 	}
@@ -452,7 +452,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--s-2);
-		padding: var(--s-4) 18px;
+		padding: var(--s-4);
 		border-top: 1px solid var(--rule);
 		font-size: var(--t-micro);
 	}

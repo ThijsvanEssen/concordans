@@ -6,7 +6,7 @@ How a control looks and where it stands, on every page and in every panel (Thijs
 
 | Form      | For                                                     | Component                                              | Looks                                                                                                         |
 | --------- | ------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Knop      | doing something: Citeer, Vergelijken, CSV, Deel, Volg   | a `button` with a frame                                | Schibsted, `--t-ui`, 500; `--veld-h` (32) on a page, `--veld-h-klein` (24) in a panel                         |
+| Knop      | doing something: Citeer, Vergelijken, CSV, Deel, Volg   | `.btn` (24), `.btn is-groot` (32), in AppShell         | Schibsted, `--t-ui`, 500; `--veld-h` (32) on a page, `--veld-h-klein` (24) in a panel                         |
 | Keuze     | one of 2 to 5 visible options: Periode, Netwerk/Tekst   | `ui/Keuze.svelte`                                      | joined boxes, the chosen one filled in ink                                                                    |
 | Tekstmenu | one of many, or a setting: Alle bronnen, Nieuwste eerst | `ui/TekstMenu.svelte`                                  | the word of its value with a caret, no frame; the chosen option in weight                                     |
 | Vinkje    | switching a thing on or off in a list: facets, columns  | `ui/FilterOptie.svelte` (`inline` beside other things) | the box (`ui/Vinkje.svelte`: 12 px, `--r-1`, a drawn tick), the label, a count at the right; chosen in weight |
@@ -98,4 +98,4 @@ A line of a timeline (Actueel on the home page, Onderwerpen, a dossier's procedu
 
 ## Rules
 
-`src/lib/consistency.test.ts`, "controls in five forms": no native `select` outside TekstMenu, no chips outside the panel Netwerk, no "meer" of its own beside AlleN, no control height but `--veld-h` or `--veld-h-klein`. A place that keeps an older form is a named entry with its reason and the step that rebuilds it; the entry comes out with that step.
+`src/lib/consistency.test.ts`, "controls in five forms": no native `select` outside TekstMenu, no chips outside the panel Netwerk, no "meer" of its own beside AlleN, no control height but `--veld-h` or `--veld-h-klein`, no framed button but `.btn` and IconKnop, no menu item but `tekstmenu__item` (a menu of its own adds a class for its layout only), Verfijnen styled once in AppShell. "One form for each thing" holds the tokens: no hex or `rgb()` in a style outside AppShell, a radius only from `--r-*`, a face only through `--font-serif` or `--font-ui`. A place that keeps an older form is a named entry with its reason and the step that rebuilds it; the entry comes out with that step.

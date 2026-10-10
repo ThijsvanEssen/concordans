@@ -243,7 +243,7 @@
 		white-space: nowrap;
 	}
 	.maanden th {
-		padding-left: 6px;
+		padding-left: var(--s-2);
 		text-align: left;
 		font-weight: 600;
 		color: var(--ink-2);
@@ -349,9 +349,9 @@
 		display: inline-block;
 		min-width: 26px;
 		margin: 1px 0;
-		padding: 0 4px;
+		padding: 0 var(--s-1);
 		border: 1.5px solid var(--ink);
-		border-radius: 999px;
+		border-radius: var(--r-rond);
 		background: var(--paper);
 		color: var(--ink);
 		font-weight: 600;

@@ -171,7 +171,9 @@
 		margin: 0;
 		color: inherit;
 	}
-	/* Global: a step under the rule (`onder`) is an item as the options are. */
+	/* Global: the one item of every menu, a step under the rule (`onder`) and the items of a
+	   menu with its own `inhoud` or of a menu of its own (a ⋯, the versions of an article). A
+	   menu that lays an item out otherwise (a count at the right) adds a class for that only. */
 	:global(.tekstmenu__item) {
 		display: block;
 		width: 100%;
@@ -184,16 +186,17 @@
 		text-align: left;
 		cursor: pointer;
 	}
-	:global(.tekstmenu__item:hover),
-	:global(.tekstmenu__item:focus-visible) {
+	:global(.tekstmenu__item:hover:not(:disabled)),
+	:global(.tekstmenu__item:focus-visible),
+	:global(.tekstmenu__item:focus-within) {
 		background: var(--paper-2);
 		outline: none;
 	}
-	.tekstmenu__item:disabled {
+	:global(.tekstmenu__item:disabled) {
 		color: var(--rule-strong);
 		cursor: default;
 	}
-	.tekstmenu__item[aria-checked='true'] {
+	:global(.tekstmenu__item[aria-checked='true']) {
 		font-weight: 600;
 	}
 	.tekstmenu__onder {

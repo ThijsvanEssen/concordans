@@ -63,7 +63,6 @@
 		onEdgeClick,
 		onStageClick,
 		onReady,
-		onZoomChange,
 		onCameraChange,
 		externalHoveredId = null as string | null,
 		avoid = null as Rect | null
@@ -105,7 +104,6 @@
 		onEdgeClick?: (id: string) => void;
 		onStageClick?: () => void;
 		onReady?: (api: GraphCanvasApi) => void;
-		onZoomChange?: (ratio: number) => void;
 		onCameraChange?: (state: { x: number; y: number; ratio: number }) => void;
 		/** Keeps the dim/highlight pass alive while the hover panel is open. */
 		externalHoveredId?: string | null;
@@ -1377,7 +1375,6 @@
 		let cameraChangeTimer: ReturnType<typeof setTimeout> | null = null;
 		renderer.getCamera().on('updated', () => {
 			const state = renderer!.getCamera().getState();
-			onZoomChange?.(state.ratio);
 			if (onCameraChange) {
 				if (cameraChangeTimer) clearTimeout(cameraChangeTimer);
 				cameraChangeTimer = setTimeout(() => {
@@ -1572,8 +1569,8 @@
 	.hull-link-label {
 		position: absolute;
 		transform: translate(-50%, -50%);
-		padding: 1px 6px;
-		border-radius: 999px;
+		padding: 1px var(--s-2);
+		border-radius: var(--r-rond);
 		background: var(--paper);
 		font-family: var(--font-serif);
 		font-size: var(--t-label);
@@ -1594,7 +1591,7 @@
 		position: absolute;
 		transform: translate(-50%, -100%);
 		padding: 2px var(--s-2);
-		border-radius: 999px;
+		border-radius: var(--r-rond);
 		background: color-mix(in srgb, var(--paper) 88%, var(--hull-color) 12%);
 		border: 1px solid var(--hull-color);
 		font-family: var(--font-serif);
@@ -1644,7 +1641,7 @@
 		min-width: 14px;
 		height: 14px;
 		padding: 0 3px;
-		border-radius: 7px;
+		border-radius: var(--r-rond);
 		background: var(--accent);
 		color: var(--paper);
 		border: 1.5px solid var(--paper);

@@ -1,5 +1,6 @@
 import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
+import { vandaag } from '$lib/text/datum';
 
 // The words for the government's side of the index: the posts in a cabinet, the state of a
 // commitment, and the cabinets and ministries, each asked for once per page load.
@@ -7,7 +8,6 @@ import type { Schema } from '$lib/api/types';
 export type Cabinet = Schema<'CabinetSummaryDTO'>;
 export type Ministry = Schema<'MinistryDTO'>;
 export type Post = NonNullable<Schema<'CabinetPostDTO'>['post']>;
-export type CommitmentStatus = NonNullable<Schema<'CommitmentDTO'>['status']>;
 
 export const POST_LABEL: Record<Post, string> = {
 	'minister-president': 'Minister-president',
@@ -97,7 +97,7 @@ export function period(
  */
 export function laterPosts<
 	T extends { member: { key: string }; from_date?: string | null; to_date?: string | null }
->(rows: readonly T[], today = new Date().toISOString().slice(0, 10)): Set<T> {
+>(rows: readonly T[], today = vandaag()): Set<T> {
 	const days = (r: T) =>
 		(Date.parse(r.to_date ?? today) - Date.parse(r.from_date ?? r.to_date ?? today)) / 86_400_000;
 	const longest = new Map<string, T>();

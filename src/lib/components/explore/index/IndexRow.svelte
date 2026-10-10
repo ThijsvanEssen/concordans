@@ -109,8 +109,8 @@
 		position: relative;
 		display: grid;
 		grid-template-columns: var(--row-lead, 120px) minmax(0, 1fr) var(--row-aside, 190px);
-		gap: 20px;
-		padding: 10px var(--s-2);
+		gap: var(--s-5);
+		padding: var(--s-3) var(--s-2);
 		border-bottom: 1px solid var(--rule);
 		cursor: pointer;
 		align-items: baseline;
@@ -194,12 +194,12 @@
 	.detail {
 		background: var(--paper-2);
 		border-bottom: 1px solid var(--rule);
-		padding: 0 8px 0 calc(var(--row-lead, 120px) + 28px);
+		padding: 0 var(--s-2) 0 calc(var(--row-lead, 120px) + var(--s-5) + var(--s-2));
 	}
 
 	/* Dossiers under one number: the rows of the opened number stand indented beneath it. */
 	.row-wrap--member .row {
-		padding-left: 20px;
+		padding-left: var(--s-5);
 	}
 	.row-wrap--member .row-id :global(.row-id-main)::before {
 		content: '↳ ';
@@ -211,11 +211,11 @@
 		.row {
 			grid-template-columns: 1fr;
 			gap: var(--s-1);
-			padding: 14px var(--s-2);
+			padding: var(--s-3) var(--s-2);
 		}
 		.row-aside {
 			justify-content: flex-start;
-			padding-top: 6px;
+			padding-top: var(--s-2);
 		}
 		.detail {
 			padding-left: 0;

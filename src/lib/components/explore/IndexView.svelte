@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
+	import { formatDecimal } from '$lib/text/getal';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import { axisLabels } from './index/years-axis';
 	import { korteDatum, weekdag } from '$lib/text/datum';
@@ -2365,19 +2367,15 @@
 						     fit; a cabinet opens its bewindspersonen. -->
 						<div class="cab-strip">
 							<div class="cab-tools">
-								<button
-									type="button"
-									class="cab-zoom"
+								<IconKnop
+									label="Uitzoomen"
 									onclick={() => zoomCabinets(-1)}
-									disabled={yearWidth === YEAR_WIDTHS[0]}
-									aria-label="Uitzoomen">−</button
+									disabled={yearWidth === YEAR_WIDTHS[0]}>−</IconKnop
 								>
-								<button
-									type="button"
-									class="cab-zoom"
+								<IconKnop
+									label="Inzoomen"
 									onclick={() => zoomCabinets(1)}
-									disabled={yearWidth === YEAR_WIDTHS.at(-1)}
-									aria-label="Inzoomen">+</button
+									disabled={yearWidth === YEAR_WIDTHS.at(-1)}>+</IconKnop
 								>
 							</div>
 							<div
@@ -2425,7 +2423,7 @@
 					<!-- While the next result loads, the previous one stays, dimmed. -->
 					{#if loading && !pages[category]}
 						<!-- The shape of a list while it loads: rows where rows will stand. -->
-						<p class="visually-hidden" role="status">Laden…</p>
+						<p class="sr-only" role="status">Laden…</p>
 						<ul class="list skelet" aria-hidden="true">
 							{#each { length: 8 } as _, i (i)}
 								<li class="skelet-rij"><span></span><span></span></li>
@@ -2684,9 +2682,7 @@
 														<span class="row-sub"
 															>{[
 																f.seats != null && totalSeats > 0
-																	? `${((f.seats / totalSeats) * 100).toLocaleString('nl-NL', {
-																			maximumFractionDigits: 1
-																		})}% van de zetels`
+																	? `${formatDecimal((f.seats / totalSeats) * 100)}% van de zetels`
 																	: null,
 																f.member_count
 																	? `${f.member_count} ${f.member_count === 1 ? 'lid' : 'leden'}`
@@ -2914,7 +2910,7 @@
 											{@const late =
 												t.status === OPEN_STATUS &&
 												!!t.expected_resolution &&
-												t.expected_resolution < new Date().toISOString().slice(0, 10)}
+												t.expected_resolution < vandaag()}
 											<IndexRow
 												{bron}
 												title={t.text ?? 'Toezegging zonder tekst'}
@@ -3032,12 +3028,12 @@
 	<div class="empty">
 		<p>Geen {noun}{chips.length || q ? ' met deze filters' : ''}.</p>
 		{#if category === 'dossiers' && dossierScope === 'open'}
-			<button type="button" class="empty-act" onclick={() => patchUrl({ stand: 'all' })}
+			<button type="button" class="btn is-groot" onclick={() => patchUrl({ stand: 'all' })}
 				>Zoek ook in afgehandelde dossiers</button
 			>
 		{/if}
 		{#if q}
-			<button type="button" class="empty-act" onclick={() => openSearch(q)}
+			<button type="button" class="btn is-groot" onclick={() => openSearch(q)}
 				>Zoek "{q}" in alle bronnen</button
 			>
 		{/if}
@@ -3085,8 +3081,8 @@
 		mask-image: linear-gradient(
 			to right,
 			transparent 0,
-			#000 var(--fade-left),
-			#000 calc(100% - var(--fade-right)),
+			black var(--fade-left),
+			black calc(100% - var(--fade-right)),
 			transparent 100%
 		);
 	}
@@ -3316,14 +3312,6 @@
 		font-size: var(--t-body-2);
 		color: var(--ink);
 	}
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
 
 	/* Kabinetten: each cabinet a bar on one line of years; the one in office in the accent. */
 	.cab-strip {
@@ -3338,25 +3326,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.cab-zoom {
-		width: 28px;
-		height: 28px;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		line-height: 1;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.cab-zoom:hover:not(:disabled) {
-		background: var(--paper-2);
-	}
-	.cab-zoom:disabled {
-		color: var(--ink-4, var(--rule-strong));
-		cursor: default;
 	}
 	.cab-scroll {
 		overflow-x: auto;
@@ -3577,7 +3546,7 @@
 		color: var(--ink-2);
 	}
 	.empty {
-		padding: 80px 40px;
+		padding: var(--s-8) var(--s-7);
 		text-align: center;
 		font-family: var(--font-serif);
 		font-style: italic;
@@ -3587,23 +3556,9 @@
 	.empty p {
 		margin: 0;
 	}
-	.empty-act {
+	.empty .btn {
 		margin-top: var(--s-4);
-		min-height: 32px;
-		padding: 0 var(--s-4);
-		background: transparent;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-serif);
 		font-style: normal;
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.empty-act:hover {
-		background: var(--paper-2);
-		color: var(--ink);
 	}
 	/* The previous result while the next one loads. */
 	.shown--stale {
@@ -3721,11 +3676,6 @@
 	}
 	.stand-body--none {
 		border-top-style: dotted;
-	}
-	.stage-aside {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
 	}
 
 	/* Qualities on a row are words: the outcome of a vote in ink-2, the rest in ink-3. */
@@ -3875,9 +3825,6 @@
 			padding-bottom: var(--s-3);
 			border-bottom: 1px solid var(--rule);
 		}
-		.stage-aside {
-			align-items: flex-start;
-		}
 		/* The rows stack on a phone (IndexRow): the head keeps only the heads of the
 		   number columns, over the numbers at full width. */
 		.list-head {
@@ -3896,9 +3843,6 @@
 	.regel {
 		grid-column: 1 / -1;
 		margin-bottom: var(--s-5);
-	}
-	.verfijnen-knop {
-		display: none;
 	}
 	.wis {
 		margin: var(--s-3) 0 0;
@@ -3931,17 +3875,7 @@
 			margin-bottom: var(--s-3);
 		}
 		.verfijnen-knop {
-			display: inline;
 			padding: var(--s-2) 0;
-			border: 0;
-			background: none;
-			font-family: var(--font-ui);
-			font-size: var(--t-ui);
-			color: var(--ink);
-			text-decoration: underline;
-			text-decoration-color: var(--rule-strong);
-			text-underline-offset: 4px;
-			cursor: pointer;
 		}
 	}
 </style>

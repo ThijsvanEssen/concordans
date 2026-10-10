@@ -4,6 +4,7 @@
 	// button: chosen, it stands in ink and the list under the grid holds its events. Richting
 	// lays a bar of four shapes in the cells of the moties; a cell with an event after the
 	// visit before this one has a corner in ink. On a phone the grid pans, its labels stay.
+	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { maandNaam, langeDatum } from '$lib/text/datum';
 	import {
@@ -56,7 +57,7 @@
 		week?: boolean;
 	} = $props();
 
-	const getal = (n: number) => n.toLocaleString('nl-NL');
+	const getal = formatCount;
 	const jaren = $derived([...new Set(vakken.map(jaarVanVak))]);
 	/** The newest year open; the others folded under their totals, until opened. */
 	let open = $state<Set<string>>(new Set());
@@ -275,7 +276,7 @@
 		display: inline-block;
 		width: 10px;
 		height: 10px;
-		margin-right: 5px;
+		margin-right: var(--s-1);
 		vertical-align: -1px;
 	}
 	.vorm--ja {
@@ -440,7 +441,7 @@
 	}
 	.nieuwteken {
 		display: inline-block;
-		margin-right: 6px;
+		margin-right: var(--s-2);
 		border-style: solid;
 		border-width: 0 9px 9px 0;
 		border-color: transparent var(--ink) transparent transparent;

@@ -8,7 +8,6 @@ type Dossier = Schema<'DossierSummaryDTO'>;
 
 export type Phase = Schema<'DossierPhaseDTO'>;
 export type Outcome = NonNullable<Dossier['outcome']>;
-export type TkDecision = Schema<'TkDecisionDTO'>;
 
 /** The kinds of dossier, as the Kamer writes them, in the order the filter lists them. */
 export const DOSSIER_KINDS = [

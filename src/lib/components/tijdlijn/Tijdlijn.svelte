@@ -16,21 +16,18 @@
 
 	let {
 		groepen,
-		jaar = 'anders',
 		datums = true,
 		inklapbaar = false
 	}: {
 		groepen: TijdGroep[];
-		/** The year under the day: always, never, or only when it is not this year. */
-		jaar?: boolean | 'anders';
 		/** Zonder datumkolom als de kop de dag al noemt. */ datums?: boolean;
 		/** Each group's heading opens and closes it (the procedure of a dossier: the Raad van
 		 *  State, the Tweede and the Eerste Kamer); open until closed, kept per heading. */
 		inklapbaar?: boolean;
 	} = $props();
 	const ditJaar = vandaag().slice(0, 4);
-	const metJaar = (iso: string) =>
-		jaar === true || (jaar === 'anders' && iso.slice(0, 4) !== ditJaar);
+	/** The year under the day only when it is not this year. */
+	const metJaar = (iso: string) => iso.slice(0, 4) !== ditJaar;
 </script>
 
 <div class="tl" class:zonder={!datums}>

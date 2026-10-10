@@ -123,14 +123,6 @@
 </div>
 
 <style>
-	.stub-eyebrow {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		margin-bottom: var(--s-4);
-	}
-
 	.stub-eyebrow a {
 		color: inherit;
 		text-decoration: none;
@@ -138,35 +130,6 @@
 
 	.stub-eyebrow a:hover {
 		color: var(--ink);
-	}
-
-	.stub-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-		line-height: var(--lh-tight);
-		color: var(--ink);
-		margin: 0 0 var(--s-4);
-	}
-
-	.stub-lede {
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: var(--lh-body);
-		color: var(--ink-2);
-		margin-bottom: var(--s-7);
-	}
-
-	.section {
-		margin-bottom: var(--s-6);
-	}
-
-	.section-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 800;
-		color: var(--ink);
-		margin: 0 0 var(--s-3);
 	}
 
 	p {
@@ -179,11 +142,6 @@
 
 	p:last-child {
 		margin-bottom: 0;
-	}
-
-	.cite {
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
 	}
 
 	.list {
@@ -212,26 +170,6 @@
 		flex: none;
 		width: 10em;
 		color: var(--ink-3);
-	}
-
-	.meta-row {
-		display: flex;
-		gap: var(--s-5);
-		flex-wrap: wrap;
-		margin-top: var(--s-7);
-		padding-top: var(--s-5);
-		border-top: 1px solid var(--rule);
-	}
-
-	.meta-link {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-
-	.meta-link:hover {
-		color: var(--ink);
 	}
 
 	@media (max-width: 560px) {

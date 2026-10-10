@@ -23,7 +23,6 @@ export const NODE_TYPES = {
 } as const;
 
 export type Collection = keyof typeof NODE_TYPES;
-export type NodeType = (typeof NODE_TYPES)[Collection];
 
 export const RELATIONS = [
 	'PART_OF',
@@ -266,6 +265,3 @@ export const MODES = [
 ] as const;
 
 export type Mode = (typeof MODES)[number]['id'];
-
-export const isMode = (value: string | null | undefined): value is Mode =>
-	MODES.some((m) => m.id === value);

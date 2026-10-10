@@ -192,7 +192,7 @@
 						<button
 							type="button"
 							role="menuitem"
-							class="legenda-menuitem"
+							class="tekstmenu__item"
 							onclick={() => {
 								sluit();
 								onOpenFilter();
@@ -389,8 +389,8 @@
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
-		gap: 18px;
-		padding: 20px 18px;
+		gap: var(--s-4);
+		padding: var(--s-5) var(--s-4);
 		border-right: 1px solid var(--rule);
 		background: var(--paper);
 		font-family: var(--font-serif);
@@ -402,7 +402,7 @@
 	.block__head {
 		display: flex;
 		align-items: baseline;
-		gap: 6px;
+		gap: var(--s-2);
 		margin-bottom: var(--s-1);
 	}
 	.block__title {
@@ -419,7 +419,7 @@
 	.block__label {
 		display: flex;
 		justify-content: space-between;
-		margin-bottom: 6px;
+		margin-bottom: var(--s-2);
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
@@ -433,22 +433,5 @@
 	/* One line that says what a control does, or why it is off. */
 	.sub {
 		margin-top: var(--s-2);
-	}
-	.legenda-menuitem {
-		display: block;
-		width: 100%;
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink-2);
-		text-align: left;
-		cursor: pointer;
-	}
-	.legenda-menuitem:hover,
-	.legenda-menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
 	}
 </style>

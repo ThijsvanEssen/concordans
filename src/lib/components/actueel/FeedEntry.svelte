@@ -191,10 +191,12 @@
 			{/if}
 			<!-- The same two buttons as every opened row (OpenRij); the rest as links. -->
 			<p class="acts">
-				<a class="act act--pri" href={bronHref(refOf(i), { keepMode: false, mode: 'read' })}
+				<a
+					class="btn is-groot is-primary"
+					href={bronHref(refOf(i), { keepMode: false, mode: 'read' })}
 					><Picto naam="tekst" size={13} />Lees</a
 				>
-				<a class="act" href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}
+				<a class="btn is-groot" href={bronHref(refOf(i), { keepMode: false, mode: 'graph' })}
 					><Picto naam="netwerk" size={13} />In het netwerk</a
 				>
 			</p>
@@ -347,29 +349,6 @@
 		flex-wrap: wrap;
 		gap: var(--s-2);
 		margin: var(--s-3) 0 0;
-	}
-	.act {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.act:hover {
-		border-color: var(--ink);
-	}
-	.act--pri {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
 	}
 	.links {
 		display: flex;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { api, unwrap } from '$lib/api/client';
@@ -184,7 +185,7 @@
 			.filter(Boolean)
 			.sort()[0]
 	);
-	const today = new Date().toISOString().slice(0, 10);
+	const today = vandaag();
 
 	// Tekst zoals geldend op 1 januari 2015, versie van 1 januari 2015 tot 1 april 2015.
 	const histLine = $derived.by(() => {
@@ -419,7 +420,7 @@
 								<button
 									type="button"
 									role="menuitemradio"
-									class="peil-menuitem"
+									class="tekstmenu__item peil-menuitem"
 									aria-checked={!peildatum}
 									onclick={() => {
 										sluit();
@@ -432,7 +433,7 @@
 										<button
 											type="button"
 											role="menuitemradio"
-											class="peil-menuitem"
+											class="tekstmenu__item peil-menuitem"
 											aria-checked={peildatum === v.valid_from}
 											onclick={() => {
 												sluit();
@@ -678,23 +679,7 @@
 		font-weight: 600;
 	}
 	.peil-menuitem {
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink);
-		text-align: left;
 		white-space: nowrap;
-		cursor: pointer;
-	}
-	.peil-menuitem:hover,
-	.peil-menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
-	}
-	.peil-menuitem[aria-checked='true'] {
-		font-weight: 600;
 	}
 	/* A text of an earlier day says so, with the way back. */
 	.whole-hist {

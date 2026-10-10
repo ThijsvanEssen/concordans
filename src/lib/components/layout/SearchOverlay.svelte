@@ -45,7 +45,7 @@
 	.overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(28, 27, 25, 0.18);
+		background: var(--scherm);
 		display: flex;
 		justify-content: center;
 		align-items: flex-start;

@@ -59,62 +59,11 @@
 </div>
 
 <style>
-	.stub-eyebrow {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		margin-bottom: var(--s-4);
-	}
-
-	.stub-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-		line-height: var(--lh-tight);
-		color: var(--ink);
-		margin: 0 0 var(--s-4);
-	}
-
-	.stub-lede {
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: var(--lh-body);
-		color: var(--ink-2);
-		margin-bottom: var(--s-7);
-	}
-
-	.section {
-		margin-bottom: 36px;
-	}
-
-	.section-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 800;
-		color: var(--ink);
-		margin: 0 0 var(--s-3);
-	}
-
 	p {
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
 		color: var(--ink);
 		margin: 0;
-	}
-
-	.cite {
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-	}
-
-	.updated {
-		margin-top: var(--s-7);
-		padding-top: var(--s-5);
-		border-top: 1px solid var(--rule);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 </style>

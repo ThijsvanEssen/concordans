@@ -59,10 +59,11 @@
 	{/if}
 	<div class="acts">
 		<!-- The text picture only beside In het netwerk: a bron read only there (a kabinet) has none. -->
-		<a class="act act--pri" href={lezen}
+		<a class="btn is-groot is-primary" href={lezen}
 			>{#if netwerk}<Picto naam="tekst" size={13} />{/if}{lezenLabel}</a
 		>
-		{#if netwerk}<a class="act" href={netwerk}><Picto naam="netwerk" size={13} />In het netwerk</a
+		{#if netwerk}<a class="btn is-groot" href={netwerk}
+				><Picto naam="netwerk" size={13} />In het netwerk</a
 			>{/if}
 	</div>
 </div>
@@ -116,23 +117,5 @@
 		display: flex;
 		gap: var(--s-2);
 		flex-wrap: wrap;
-	}
-	.act {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		padding: var(--s-2) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		color: var(--ink);
-		text-decoration: none;
-	}
-	.act--pri {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
 	}
 </style>

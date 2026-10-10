@@ -168,26 +168,6 @@ export function edgeCategory(relation: Relation, sourceKind: GraphNodeKind): Edg
 		: CATEGORY_OF_RELATION[relation];
 }
 
-// ── Judgment court-tier helpers ───────────────────────────────────────────────
-// Cassation  — Hoge Raad (HR) and its Parket (PHR): most authoritative
-// Appeal     — Gerechtshoven (GH*), Raad van State (RVS), Centrale Raad van Beroep (CRVB),
-//              College van Beroep voor het bedrijfsleven (CBB)
-// First      — Rechtbanken (RB*)
-// Unknown    — anything else (EU, foreign, etc.)
-export type JudgmentTier = 'cassation' | 'appeal' | 'first' | 'unknown';
-
-export function judgmentTier(ecli: string | null | undefined): JudgmentTier {
-	if (!ecli) return 'unknown';
-	// Extract the court-code segment: ECLI:NL:<CODE>:... or ECLI:<CC>:<CODE>:...
-	const parts = ecli.replace(/^ECLI:/i, '').split(':');
-	// parts[0] = country code (NL, EU, …), parts[1] = court code for NL
-	const code = (parts.length >= 3 ? parts[1] : (parts[0] ?? '')).toUpperCase();
-	if (code === 'HR' || code === 'PHR') return 'cassation';
-	if (code.startsWith('GH') || code === 'RVS' || code === 'CRVB' || code === 'CBB') return 'appeal';
-	if (code.startsWith('RB')) return 'first';
-	return 'unknown';
-}
-
 // Compress verbose court codes to short readable labels for graph nodes.
 // "RBNHO 2014/12958" → "Rb 2014/12958"; "GHAMS 2020/3" → "GH 2020/3"
 export function shortenCourtCode(code: string): string {
@@ -396,18 +376,6 @@ export function syntheticNode(
 		},
 		collection
 	);
-}
-
-export function dossierToGraphNode(d: Schema<'DossierSummaryDTO'>): GraphNode {
-	return syntheticNode('dossiers', d.key, d.title ?? d.number, { ...d });
-}
-
-export function committeeToGraphNode(c: Schema<'CommitteeDTO'>): GraphNode {
-	return syntheticNode('committees', c.key, c.name, { ...c });
-}
-
-export function factionToGraphNode(f: Schema<'FactionDTO'>): GraphNode {
-	return syntheticNode('factions', f.key, f.abbreviation ?? f.name, { ...f });
 }
 
 export function memberToGraphNode(m: Schema<'MemberDTO'>): GraphNode {

@@ -173,20 +173,17 @@
 			<!-- Deel moved here from the status bar (Thijs, 10 Oct): what it gives beyond the
 			     bron's own address is this netwerk. -->
 			{#if onDeel}
-				<button type="button" class="wis" onclick={onDeel}>{deelLabel}</button>
+				<TekstLink onclick={onDeel}>{deelLabel}</TekstLink>
 				<span class="sr-only" aria-live="polite">{deelMelding}</span>
 			{/if}
 			{#if open && entries.length > 0}
-				<button
-					type="button"
-					class="wis"
-					onclick={onClear}
-					title="Leeg het netwerk en het canvas; Terug zet het terug">Wissen</button
+				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
+					>Wissen</TekstLink
 				>
 				<details class="menu">
 					<summary aria-label="Meer">⋯</summary>
 					<div class="menu-lijst">
-						<button type="button" class="link" onclick={onClearContext}
+						<button type="button" class="tekstmenu__item" onclick={onClearContext}
 							>Alleen de gekozen bronnen tonen</button
 						>
 					</div>
@@ -346,21 +343,6 @@
 	.ruimte {
 		flex: 1;
 	}
-	.wis {
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.wis:hover {
-		color: var(--ink);
-	}
 	.menu {
 		position: relative;
 		font-size: var(--t-micro);
@@ -382,8 +364,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: var(--s-2);
-		padding: var(--s-3);
+		padding: var(--s-1) 0;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
@@ -402,7 +383,7 @@
 		display: inline-flex;
 		align-items: center;
 		border: 1px solid var(--ink);
-		border-radius: 999px;
+		border-radius: var(--r-rond);
 		background: var(--paper);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
@@ -567,6 +548,7 @@
 		font-size: var(--t-h3);
 		font-weight: 600;
 	}
-
-	/* Also the button inside ConfirmButton, a component of its own. */
+	.kop :global(.tekstlink) {
+		font-size: var(--t-micro);
+	}
 </style>

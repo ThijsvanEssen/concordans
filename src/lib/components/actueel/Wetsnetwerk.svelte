@@ -3,6 +3,7 @@
 	// Lines are drawn between the measured places. A click on a bron chooses it here (its
 	// verbindingen dark, the rest faint); the line under the sketch opens it. On a phone the
 	// chain stands one step a line, and the sketch is the Verkenner's.
+	import { formatCount } from '$lib/text/getal';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { langeDatum } from '$lib/text/datum';
 	import { onMount, tick } from 'svelte';
@@ -14,7 +15,7 @@
 	const k = $derived(schets.kandidaat);
 	const keten = $derived(schets.keten);
 	const telwoord = (n: number, een: string, meer: string) =>
-		`${n.toLocaleString('nl-NL')} ${n === 1 ? een : meer}`;
+		`${formatCount(n)} ${n === 1 ? een : meer}`;
 
 	/** The chain in counts, one step a line: what a phone shows before the sketch. */
 	const stappen = $derived(

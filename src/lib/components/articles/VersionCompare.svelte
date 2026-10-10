@@ -274,7 +274,7 @@
 						<button
 							type="button"
 							role="menuitemradio"
-							class="ab__menuitem"
+							class="tekstmenu__item ab__menuitem"
 							aria-checked={option.index === w.index}
 							disabled={option.index === other}
 							onclick={() => {
@@ -633,14 +633,6 @@
 		font-size: var(--t-meta);
 		color: var(--ink-2);
 	}
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
 
 	/* ── The bar of a lid's history: back, and the other leden ── */
 	.bar {
@@ -732,7 +724,7 @@
 		display: flex;
 		flex-direction: column;
 		min-width: 0;
-		padding: 0 var(--s-2) 6px 6px;
+		padding: 0 var(--s-2) var(--s-2) var(--s-2);
 		border: 0;
 		border-left: 1px solid var(--rule-strong);
 		background: none;
@@ -898,27 +890,7 @@
 		color: var(--ink-3);
 	}
 	.ab__menuitem {
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink);
-		text-align: left;
 		white-space: nowrap;
-		cursor: pointer;
-	}
-	.ab__menuitem:hover:not(:disabled),
-	.ab__menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
-	}
-	.ab__menuitem[aria-checked='true'] {
-		font-weight: 600;
-	}
-	.ab__menuitem:disabled {
-		color: var(--rule-strong);
-		cursor: default;
 	}
 	.ab__ruil {
 		fill: none;
@@ -968,11 +940,11 @@
 		display: grid;
 		grid-template-columns: 36px 1fr 150px;
 		gap: 0 var(--s-3);
-		padding: 6px 10px 6px 0;
+		padding: var(--s-2) var(--s-3) var(--s-2) 0;
 	}
 	.compare--naast .row {
 		grid-template-columns: 36px 1fr 1fr;
-		gap: 0 20px;
+		gap: 0 var(--s-5);
 	}
 	.row--head {
 		padding: 0 0 var(--s-1);

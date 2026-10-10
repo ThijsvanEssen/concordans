@@ -12,13 +12,13 @@
 
 	let {
 		data,
-		hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' }),
 		voteHighlight = null
 	}: {
 		data: Seats;
-		hrefOf?: (key: string) => string;
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
 	} = $props();
+
+	const hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' });
 
 	// In the units of the Tweede Kamer's hall (Hemicycle): a seat as large, the hall as high
 	// (291), so both stand at one scale in the same frame (Thijs, 9 Oct: "dezelfde styling
