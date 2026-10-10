@@ -30,14 +30,15 @@
 
 <div class="page-wrap">
 	<div class="container blad blad__indeling">
-		<header class="page-header">
-			<div class="eyebrow">OpenAPI {data.version}, {data.totalEndpoints} routes</div>
-			<h1 class="page-title">API-referentie</h1>
+		<header class="blad__kop"><h1 class="blad__titel">API-referentie</h1></header>
+		<div class="page-header">
 			<p class="page-lede">
 				De routes van de API achter Concordans. Elke route is een GET-verzoek zonder sleutel. De
 				beschrijving per route komt uit het OpenAPI-schema en is Engels.
 			</p>
 			<dl class="api-terms">
+				<dt>Versie</dt>
+				<dd>OpenAPI {data.version}, {data.totalEndpoints} routes</dd>
 				<dt>Adres</dt>
 				<dd><code>https://concordans.nl</code>; elke route begint met <code>/api</code>.</dd>
 				<dt>Limiet</dt>
@@ -52,7 +53,7 @@
 				<dt>Techniek</dt>
 				<dd>Een FastAPI-service (LawGraph); de site is gebouwd met SvelteKit.</dd>
 			</dl>
-		</header>
+		</div>
 
 		<aside class="toc" aria-label="Inhoudsopgave">
 			<div class="toc-title">Inhoud</div>
@@ -211,27 +212,16 @@
 		row-gap: var(--s-7);
 	}
 
+	/* Under the one head at its own distance (AppShell), not the grid's row gap. */
 	.page-header {
 		grid-column: 1 / -1;
+		grid-row: 2;
+		margin-top: calc(-1 * var(--s-7));
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-3);
 		padding-bottom: var(--s-5);
 		border-bottom: 1px solid var(--rule);
-	}
-	.eyebrow {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
-	.page-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-tight);
 	}
 	.page-lede {
 		font-family: var(--font-serif);
@@ -272,7 +262,7 @@
 	/* ── TOC ──────────────────────────────────────────────────────────────── */
 	.toc {
 		grid-column: 1;
-		grid-row: 2;
+		grid-row: 3;
 		align-self: start;
 		position: sticky;
 		top: 90px;
@@ -322,7 +312,7 @@
 	/* ── Endpoint sections ────────────────────────────────────────────────── */
 	.api-doc {
 		grid-column: 2;
-		grid-row: 2;
+		grid-row: 3;
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-8);
