@@ -2,6 +2,9 @@
 	// Kleine beelden voor de verkenner, in inkt.
 	export type PictoNaam =
 		| 'netwerk'
+		| 'netwerk-plus'
+		| 'bewaar'
+		| 'bewaard'
 		| 'tekst'
 		| 'klik'
 		| 'dubbelklik'
@@ -31,6 +34,18 @@
 		<rect x="6.1" y="1.6" width="3.8" height="3.8" class="vol" />
 		<circle cx="3.4" cy="12.6" r="2" class="vol" />
 		<circle cx="12.6" cy="12.6" r="2" class="vol" />
+	{:else if naam === 'netwerk-plus'}
+		<!-- The network, smaller, with a + at its foot: into the network. -->
+		<g transform="scale(0.72)">
+			<path d="M7 6.4 4.4 10.6M9 6.4l2.6 4.2M5.6 12.6h4.8" fill="none" stroke-width="1.6" />
+			<rect x="6.1" y="1.6" width="3.8" height="3.8" class="vol" />
+			<circle cx="3.4" cy="12.6" r="2" class="vol" />
+			<circle cx="12.6" cy="12.6" r="2" class="vol" />
+		</g>
+		<path d="M12.5 9.5v5M10 12h5" fill="none" stroke-width="1.5" />
+	{:else if naam === 'bewaar' || naam === 'bewaard'}
+		<!-- A bookmark: open to keep, filled once kept. -->
+		<path d="M4.5 1.8h7v12.4L8 11.3l-3.5 2.9z" class:vol={naam === 'bewaard'} />
 	{:else if naam === 'tekst'}
 		<!-- Een blad met een omgevouwen hoek en drie regels. -->
 		<path d="M3.5 1.5h6l3 3v10h-9z" fill="none" />

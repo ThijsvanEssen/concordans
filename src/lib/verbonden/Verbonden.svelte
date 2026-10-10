@@ -3,8 +3,6 @@
 	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
 	import { hoeVan } from './hoe';
-	import Bewaar from '$lib/map/Bewaar.svelte';
-	import { kaart } from '$lib/map/map.svelte';
 	import { itemVanRij } from '$lib/map/rij';
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
@@ -15,7 +13,7 @@
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import IconKnop from '$lib/components/ui/IconKnop.svelte';
+	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { tick } from 'svelte';
@@ -544,6 +542,7 @@
 								<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 								<div
 									class="row__main"
+									data-rij
 									onclick={(e) => {
 										if (onControl(e) || row.missing) return;
 										if (aanraking()) toon = toon === id ? null : id;
@@ -592,30 +591,13 @@
 											<span class="row__herkomst">{hoe.herkomst}</span>
 										{/if}
 									</span>
-									{#if itemVanRij(row)}
-										{@const item = itemVanRij(row)!}
-										<span class="row__bewaar" class:aan={kaart.heeft(item)}
-											><Bewaar kaal {item} /></span
-										>
-									{/if}
-									{#if !row.missing && onAddToNetwerk}
-										{@const al = inNetwerk?.(row) ?? false}
-										<IconKnop
-											class="row__plus"
-											aan={al}
-											label={al
-												? `${row.title} staat in het netwerk`
-												: `${row.title} aan het netwerk toevoegen`}
-											onclick={() => !al && onAddToNetwerk(row)}
-											>{#if al}<svg
-													class="vink"
-													viewBox="0 0 12 12"
-													width="12"
-													height="12"
-													aria-hidden="true"><path d="M3.1 6.3 5.2 8.4 8.9 4" /></svg
-												>{:else}+{/if}</IconKnop
-										>
-									{/if}
+									<RijActies
+										naam={row.title}
+										item={itemVanRij(row)}
+										netwerk={!row.missing && onAddToNetwerk
+											? { aan: inNetwerk?.(row) ?? false, voegToe: () => onAddToNetwerk(row) }
+											: null}
+									/>
 								</div>
 							</li>
 						{/each}
@@ -990,14 +972,6 @@
 	.ook > span + span::before {
 		content: ', ';
 	}
-	/* The tick of a bron in the network, drawn as in Vinkje. */
-	.vink path {
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 1.5;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
 	.foot {
 		display: flex;
 		gap: var(--s-4);
@@ -1064,31 +1038,6 @@
 		color: var(--ink-3);
 	}
 
-	/* The + (IconKnop) puts the bron among the chosen ones: on hover and focus, and when it is
-	   there already; on a phone always. */
-	.row__main :global(.row__plus),
-	.row__bewaar {
-		opacity: 0;
-	}
-	.row__main:hover :global(.row__plus),
-	.row__main:focus-within :global(.row__plus),
-	.row__main :global(.row__plus.aan),
-	.row__main:hover .row__bewaar,
-	.row__main:focus-within .row__bewaar,
-	.row__bewaar.aan {
-		opacity: 1;
-	}
-	/* Gemarkeerd (the map) beside the +: the same box as beside a lid. */
-	.row__bewaar {
-		display: inline-grid;
-		place-items: center;
-	}
-	@media (hover: none) {
-		.row__main :global(.row__plus),
-		.row__bewaar {
-			opacity: 1;
-		}
-	}
 	.group__alle {
 		margin: 0;
 		padding: var(--s-1) var(--s-4) var(--s-3);
