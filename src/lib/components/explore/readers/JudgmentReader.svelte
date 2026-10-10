@@ -399,14 +399,15 @@
 				{#if item.kind === 'subheading'}
 					<p class="reader-subheading">{item.text}</p>
 				{:else if item.kind === 'heading'}
-					<h3 class="reader-heading" id={item.id}>
-						<span class="reader-heading__text">{item.text}</span>
+					<!-- Citeer beside the heading, not in it: its name is its words (UX-toets 10 Oct, #21). -->
+					<div class="reader-heading" id={item.id}>
+						<h3 class="reader-heading__text">{item.text}</h3>
 						<CiteMenu
 							items={citeItems(null, permalink(page.url, item.id))}
 							name={item.text}
 							buttonClass="reader-heading__link"
 						/>
-					</h3>
+					</div>
 				{:else if item.kind === 'rov'}
 					{@const forms = citeOverweging(
 						item.num,
@@ -666,6 +667,9 @@
 	.reader-heading__text {
 		flex: 1;
 		min-width: 0;
+		/* A heading element with the line's own type: no margin or size of its own. */
+		margin: 0;
+		font: inherit;
 	}
 
 	/* Hidden by opacity, not visibility: Tab still reaches the link, and shows it. */

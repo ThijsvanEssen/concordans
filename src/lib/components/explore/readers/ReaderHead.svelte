@@ -84,9 +84,10 @@
 		{@render nav?.()}
 	</div>
 	<!-- A break may fall after a colon (an ECLI); copying keeps the text as it is. -->
-	<h2 class="reader-title">
+	<!-- The page's one h1: the bron (UX-toets 10 Oct, #21). -->
+	<h1 class="reader-title">
 		{#each title.split(/(?<=:)/) as part, i (i)}{#if i}<wbr />{/if}{part}{/each}
-	</h2>
+	</h1>
 	{#if onderTitel}<div class="reader-onder">{@render onderTitel()}</div>{/if}
 	<!-- The status, then the actions on a row of their own: the words have the column's width,
 	     so a phrase that comes late (the memorie, the bill) does not push the actions or wrap
