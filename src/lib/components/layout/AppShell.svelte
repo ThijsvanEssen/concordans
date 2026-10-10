@@ -308,6 +308,30 @@
 	:global(.blad--tekst > *) {
 		max-width: 720px;
 	}
+	/* The head of every page in the frame: its title and, at its right, the page's actions.
+	   What follows starts one step under it, on every page the same; no page spaces its title
+	   or what comes after it itself (Thijs, 10 Oct: "een andere verticale uitlijning na de
+	   titel"). */
+	:global(.blad__kop) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		justify-content: space-between;
+		/* Actions that wrap under the title (a phone) stand where the next row would. */
+		gap: var(--s-4) var(--s-3);
+		margin: 0 0 var(--s-4);
+	}
+	:global(.blad__indeling > .blad__kop) {
+		grid-column: 1 / -1;
+	}
+	:global(.blad__titel) {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-h1);
+		font-weight: 600;
+		line-height: var(--lh-snug);
+		color: var(--ink);
+	}
 	/* The parts of a text page (/over, /bronnen, /privacy, /voorwaarden, /docs and its pages):
 	   the line over the title, the title, the lede, a section with its heading, a citation,
 	   and the line of links or the date at its foot. */
@@ -317,14 +341,6 @@
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
-	}
-	:global(.blad--tekst .stub-title) {
-		margin: 0 0 var(--s-4);
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-		line-height: var(--lh-tight);
-		color: var(--ink);
 	}
 	:global(.blad--tekst .stub-lede) {
 		margin-bottom: var(--s-7);

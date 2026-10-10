@@ -187,8 +187,8 @@
 {/snippet}
 
 <div class="gemarkeerd blad blad__indeling">
-	<header class="kop">
-		<h1 class="titel">Gemarkeerd</h1>
+	<header class="blad__kop">
+		<h1 class="blad__titel">Gemarkeerd</h1>
 	</header>
 
 	<!-- The maps, as Gevolgd lists its topics: a way to each; the active one in weight. -->
@@ -366,16 +366,6 @@
 
 <style>
 	/* The frame and grid of Bladeren (AppShell), as Gevolgd: the heading over both columns. */
-	.kop {
-		grid-column: 1 / -1;
-		margin-bottom: var(--s-4);
-	}
-	.titel {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-	}
 	/* The column's first heading on the line of the first group's heading, as on Gevolgd. */
 	.opzij {
 		padding-top: calc(var(--s-3) + 2px);

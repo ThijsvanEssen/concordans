@@ -256,8 +256,8 @@
 
 <div class="onderwerpen blad blad__indeling">
 	<!-- The heading with its actions at the right, as Actueel (docs/bediening.md). -->
-	<header class="kop">
-		<h1 class="titel">Gevolgde onderwerpen</h1>
+	<header class="blad__kop">
+		<h1 class="blad__titel">Gevolgde onderwerpen</h1>
 		{#if gedeeld.length}
 			<div class="acties">
 				{#if alGevolgd}
@@ -416,15 +416,6 @@
 	   would shrink to the field and stand off-centre. */
 	/* The frame and grid of Bladeren (AppShell): the heading and the choose-line over both
 	   columns. */
-	.kop {
-		grid-column: 1 / -1;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: var(--s-3);
-		margin-bottom: var(--s-4);
-	}
 	.regel {
 		grid-column: 1 / -1;
 		margin-bottom: var(--s-5);
@@ -471,12 +462,6 @@
 	.dagen {
 		--row-lead: 140px;
 		--row-aside: 150px;
-	}
-	.titel {
-		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
 	}
 	.nieuw {
 		display: flex;

@@ -7,7 +7,7 @@
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
 		<div class="stub-eyebrow"><a href="/docs">Documentatie</a>, Methode</div>
-		<h1 class="stub-title">Methode</h1>
+		<header class="blad__kop"><h1 class="blad__titel">Methode</h1></header>
 		<p class="stub-lede">
 			Concordans haalt elke bron op bij de officiële uitgever en legt de verbindingen ertussen vast.
 			Een verbinding komt uit de gegevens van de bron zelf, zoals een artikel en zijn wet of een
