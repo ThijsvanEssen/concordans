@@ -31,10 +31,12 @@ import { LOADERS, type Loaded } from './loaders';
  * Whether Verbonden of a bron can start from five per bucket: a group's rows are asked when
  * it is opened, a loader's buckets when it needs them (Thijs, 9 Oct: "alles zo lazy mogelijk").
  * An article only where the API counts its leden (`lid_counts`, API 0.79.17): five rows per
- * bucket cannot count them.
+ * bucket cannot count them. Counts still being counted (`lid_counts_pending`, API 0.79.44)
+ * come with the full node: the API counts them, so it stays lazy.
  */
 export const luiTeLaden = (collection: Collection, first: NodeGraph | null): boolean =>
-	collection !== 'articles' || (first != null && lidCountsOf(first) != null);
+	collection !== 'articles' ||
+	(first != null && (first.lid_counts_pending === true || lidCountsOf(first) != null));
 
 const neighborKey = (n: Neighbor) => `${n.relation}|${n.direction}|${n.collection}/${n.key}`;
 
@@ -175,6 +177,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			})
 			.then((response) => {
 				if (ac.signal.aborted) return;
+				// Counts the light node did not have yet (pending) are in the full one.
+				perBak ??= lidCountsByCollection(response);
 				const neighbors = neighborsOf(response);
 				const totals = bucketTotals(response);
 				const props = (response.node.props ?? {}) as Record<string, unknown>;
