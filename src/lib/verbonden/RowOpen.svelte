@@ -4,6 +4,7 @@
 	// double click on the canvas), and what the verbinding is.
 	import { passageOf, type Row } from './rows';
 	import Picto from '$lib/components/ui/Picto.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 
 	let {
 		row,
@@ -38,9 +39,7 @@
 			><Picto naam="omgeving" size={13} />Alleen de omgeving</a
 		>
 		{#if row.relation}
-			<button type="button" class="link" onclick={() => onVerbinding(row)}
-				>Over deze verbinding</button
-			>
+			<TekstLink onclick={() => onVerbinding(row)}>Over deze verbinding</TekstLink>
 		{/if}
 	</div>
 </div>
@@ -75,17 +74,8 @@
 		gap: var(--s-2);
 		margin-top: var(--s-3);
 	}
-	.link {
+	.acts :global(.tekstlink) {
 		margin-left: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
 		font-size: var(--t-micro);
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.link:hover {
-		color: var(--accent);
 	}
 </style>

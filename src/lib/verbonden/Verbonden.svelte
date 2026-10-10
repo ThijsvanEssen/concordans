@@ -361,7 +361,7 @@
 			<p class="note">
 				De verbindingen konden niet worden geladen.
 				{#if onRetry}
-					<button type="button" class="link is-accent" onclick={onRetry}>Opnieuw</button>
+					<TekstLink onclick={onRetry}>Opnieuw</TekstLink>
 				{/if}
 			</p>
 		{:else if verbonden.loading && verbonden.groups.length === 0}
