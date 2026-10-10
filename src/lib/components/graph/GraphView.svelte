@@ -309,10 +309,18 @@
 		if (fitSuppressed || (skipNextFit && !fitFollows)) return;
 		if (fitScheduled) return;
 		fitScheduled = true;
-		requestAnimationFrame(() => {
+		// The next frame, or a moment later where no frame comes (a hidden or background tab):
+		// a frame that never came kept fitScheduled set, and no fit followed again (UX-toets
+		// e7a2f95, #37: after kabinet → uitspraak 5 of 9 hull labels outside the canvas).
+		let gedaan = false;
+		const pas = () => {
+			if (gedaan) return;
+			gedaan = true;
 			fitScheduled = false;
 			canvas?.fit();
-		});
+		};
+		requestAnimationFrame(pas);
+		setTimeout(pas, 150);
 	}
 
 	/** Tell the view to swallow scheduleFit calls until `fitWhenSettled` runs. */
