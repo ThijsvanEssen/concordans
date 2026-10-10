@@ -135,7 +135,7 @@
 		color: var(--ink-3);
 	}
 	input:focus-visible {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}
 	@media (max-width: 768px) {

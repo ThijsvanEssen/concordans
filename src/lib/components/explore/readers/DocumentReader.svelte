@@ -439,7 +439,7 @@
 	}
 	.heading:global(.is-landed),
 	.heading--active {
-		background: var(--accent-soft);
+		background: var(--paper-2);
 	}
 	.heading__text {
 		flex: 1;
@@ -483,7 +483,9 @@
 		cursor: pointer;
 	}
 	:global(.heading__link):hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.heading:hover :global(.heading__link),
 	.heading:focus-within :global(.heading__link) {
@@ -537,7 +539,9 @@
 		border-bottom: 1px solid var(--rule-strong);
 	}
 	.submitted :global(a:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.body {
 		font-family: var(--font-serif);
@@ -566,6 +570,8 @@
 		text-decoration: none;
 	}
 	.full-link:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 </style>

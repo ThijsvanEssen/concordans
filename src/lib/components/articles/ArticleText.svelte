@@ -288,7 +288,7 @@
 		background: var(--paper-2);
 	}
 	.lid:global(.is-landed) {
-		background: var(--accent-soft);
+		background: var(--wassing);
 	}
 	/* The number as the law prints it (1.), in the letter and on the line of the text. */
 	.lid__no {
@@ -315,7 +315,7 @@
 	}
 	.lid__proposed {
 		padding-left: var(--s-3);
-		border-left: 2px solid var(--accent-soft);
+		border-left: 2px solid var(--wassing);
 	}
 	.lid__proposed-head {
 		display: flex;
@@ -358,20 +358,22 @@
 		border-radius: var(--r-1);
 	}
 	.part:global(.is-landed) {
-		background: var(--accent-soft);
+		background: var(--wassing);
 	}
 	/* The onderdeel the pointer is on, and not one inside it. */
 	/* A tinted block with a bar at the left, a few pixels beyond the text on every side. */
 	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)),
 	.part.is-open {
-		background: var(--accent-soft);
+		background: var(--paper-2);
 		box-shadow:
-			0 0 0 4px var(--accent-soft),
-			-3px 0 0 3px var(--accent);
+			0 0 0 4px var(--paper-2),
+			-3px 0 0 3px var(--ink);
 	}
 	.part--onderdeel:hover:not(:has(.part--onderdeel:hover)) > .part__number,
 	.part.is-open > .part__number {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	/* A place's marker is its menu: a quiet button, underlined with ▾ while the place is
 	   pointed at or focused, so it is clear what the menu acts on. */
@@ -403,7 +405,7 @@
 		text-decoration: none;
 	}
 	.plaats-marker:focus-visible {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}
 	/* The text of a place opens its menu too. */
@@ -417,7 +419,9 @@
 		color: var(--ink-3);
 	}
 	.part__number:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.part__body {
 		flex: 1;

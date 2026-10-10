@@ -576,7 +576,9 @@
 		cursor: pointer;
 	}
 	.voet :global(.wis:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	/* On a phone the maps stand above the groups: the column holds Nieuwe map. */
 	@media (max-width: 768px) {

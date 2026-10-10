@@ -25,3 +25,15 @@ describe('vormen', () => {
 		expect(vormVanBron('dossiers', { kind: 'Voorstel van wet' })).toBe('dossier');
 	});
 });
+
+describe('a European or international regeling', () => {
+	it('has a square with a hole of its own, on the canvas and in the bronfilter', () => {
+		expect(vormVanBron('instruments', { jurisdiction: 'eu' }, 'celex_32016r0679')).toBe(
+			'regel-int'
+		);
+		expect(vormVanBron('instruments', { jurisdiction: 'nl' }, 'bwbr0005289')).toBe('regel');
+		expect(BRON_KIND_VORM.internationaal).toBe('regel-int');
+		expect(BRON_KIND_VORM.internationaal).not.toBe(BRON_KIND_VORM.wetten);
+		expect(VORMEN['regel-int'].wijze).toBe('gat');
+	});
+});

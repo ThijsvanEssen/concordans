@@ -440,7 +440,9 @@
 		color: inherit;
 	}
 	.career-what :global(a:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	/* Also on the link NameLink renders. */
 	.r-member :global(.career-role) {
@@ -476,7 +478,9 @@
 		background: var(--paper-2);
 	}
 	.vote-list :global(.vote-link:hover .vote-subject) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.vote-mark {
 		grid-row: 1;

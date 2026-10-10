@@ -232,7 +232,7 @@
 		text-decoration: none;
 	}
 	.meta :global(a:hover) {
-		color: var(--accent);
+		color: var(--ink);
 		text-decoration: underline;
 	}
 	.person {
@@ -298,6 +298,8 @@
 	}
 	.links a:hover,
 	.links :global(a:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 </style>

@@ -225,7 +225,7 @@
 		line-height: 1.5;
 	}
 	.passage mark {
-		background: var(--accent-soft);
+		background: var(--wassing);
 		color: inherit;
 	}
 	.kv {

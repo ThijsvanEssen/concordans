@@ -242,7 +242,9 @@
 	}
 
 	.nav-link:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.nav-tel {
 		margin-left: var(--s-1);

@@ -773,7 +773,9 @@
 		cursor: pointer;
 	}
 	.head__version-knop:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.head__compare {
 		text-decoration: none;
@@ -799,7 +801,9 @@
 		font-weight: 600;
 	}
 	.head__origin a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	/* The status voorgesteld is the one use of the accent outside links. */
 	/* Information, not a warning: in ink, with the sign of a wetsvoorstel (UX 8 Oct). */
@@ -859,7 +863,9 @@
 		color: var(--ink-2);
 	}
 	.pop__change:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.pop__change--none {
 		color: var(--ink-3);

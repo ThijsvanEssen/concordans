@@ -303,8 +303,10 @@
 		border-bottom: 1px dotted transparent;
 	}
 	.toc-list a:hover {
-		color: var(--accent);
+		color: var(--ink);
 		border-bottom-color: var(--rule);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.toc-name {
 		flex: 1;
@@ -503,8 +505,10 @@
 		text-decoration: none;
 	}
 	.api-footer a:hover {
-		color: var(--accent);
-		border-bottom-color: var(--accent);
+		color: var(--ink);
+		border-bottom-color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 
 	@media (max-width: 820px) {

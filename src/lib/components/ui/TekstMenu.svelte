@@ -145,7 +145,9 @@
 	/* Red on a hover only: the button has the focus back after a choice, and would stay red
 	   at rest (the Legenda's Bronnen, Thijs, 10 Oct). The focus is underlined in ink. */
 	.tekstmenu__knop:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.tekstmenu__knop:focus-visible {
 		outline: none;
