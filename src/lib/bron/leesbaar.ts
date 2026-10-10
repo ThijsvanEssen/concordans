@@ -260,17 +260,36 @@ function lookupQuery(pad: Pad) {
 	}
 }
 
+// The focus the server gave the page, with the address it gave it for: read once, used
+// once. After a step in the app location.pathname is the new address while the meta still
+// names the first page's bron (UX test 0.79.43, #28: HR 2019:2006, then a Kamerstuk, showed
+// the judgment until a reload). The address is the document's own (its navigation entry),
+// not the one of the moment.
+let paginaFocus: { href: string; focus: string } | null | undefined;
+function leesPaginaFocus(): { href: string; focus: string } | null {
+	const meta = document.querySelector('meta[name="focus"]');
+	const focus = meta?.getAttribute('content') ?? null;
+	meta?.remove();
+	if (!focus || !parseNodeId(focus)) return null;
+	const nav = performance.getEntriesByType?.('navigation')[0] as
+		| PerformanceNavigationTiming
+		| undefined;
+	return { href: new URL(nav?.name || location.href).pathname, focus };
+}
+
 /**
  * The focus the server's page names (`<meta name="focus" content="documents/…">`, API
  * 0.79.43, #502): after the 301 from /explore?focus=… the key is no longer in the address,
  * and the page says it without a request (cold, the lookup took 1.8 s). Only for the address
  * the page was served for.
  */
-function focusUitPagina(pad: Pad): string | null {
+export function focusUitPagina(pad: Pad): string | null {
 	if (typeof document === 'undefined') return null;
-	const focus = document.querySelector('meta[name="focus"]')?.getAttribute('content') ?? null;
+	if (paginaFocus === undefined) paginaFocus = leesPaginaFocus();
 	const href = padHref(pad);
-	if (!focus || !parseNodeId(focus) || location.pathname !== href) return null;
+	if (!paginaFocus || paginaFocus.href !== href) return null;
+	const { focus } = paginaFocus;
+	paginaFocus = null;
 	remember(href, focus);
 	const target = parseNodeId(focus)!;
 	// What the lookup would have set going: a Kamerstuk's text beside its node.
