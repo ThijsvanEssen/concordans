@@ -186,11 +186,27 @@
 		text-align: left;
 		cursor: pointer;
 	}
+	/* A link as an item (an official site), and an item with a value at its right: the form
+	   of a citation and its kind ("kort", "link"). */
+	:global(a.tekstmenu__item) {
+		text-decoration: none;
+	}
+	:global(.tekstmenu__item--paar) {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--s-3);
+	}
 	:global(.tekstmenu__item:hover:not(:disabled)),
 	:global(.tekstmenu__item:focus-visible),
 	:global(.tekstmenu__item:focus-within) {
 		background: var(--paper-2);
 		outline: none;
+	}
+	/* A finger's row on a touch screen. */
+	@media (pointer: coarse) {
+		:global(.tekstmenu__item) {
+			padding-block: var(--s-2);
+		}
 	}
 	:global(.tekstmenu__item:disabled) {
 		color: var(--rule-strong);

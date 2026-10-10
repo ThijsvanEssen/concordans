@@ -58,18 +58,11 @@ describe('one form for each thing', () => {
 
 	it('formats a figure only in $lib/text/getal.ts, and takes today from datum.ts', () => {
 		const eigen: Uitzonderingen = {
-			'lib/text/getal.ts': 'the one place',
-			'lib/components/explore/readers/MemberReader.svelte': 'being reworked (Front-end #1)'
+			'lib/text/getal.ts': 'the one place'
 		};
 		expect(offenders((t) => /\.toLocaleString\(/.test(t), buiten(eigen))).toEqual([]);
 		// The UTC day is yesterday between midnight and two; vandaag() is the reader's own day.
-		const utc: Uitzonderingen = {
-			'lib/components/explore/readers/CommitmentReader.svelte': 'being reworked (Front-end #1)',
-			'lib/components/explore/readers/MemberReader.svelte': 'being reworked (Front-end #1)'
-		};
-		expect(
-			offenders((t) => /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/.test(t), buiten(utc))
-		).toEqual([]);
+		expect(offenders((t) => /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/.test(t))).toEqual([]);
 	});
 
 	it('fills no missing value with a sign: Waarde leaves it empty, Veld drops the row', () => {
@@ -231,15 +224,23 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('sets a reader’s title and kind with the shared lezer-titel and lezer-soort', () => {
+		// ReaderFrame holds their form; a reader adds only what differs (Front-end #1, 10 Oct).
+		expect(
+			offenders(
+				(t) => /class="(title|kicker)[" ]/.test(t),
+				sources.map((s) => s.path).filter((p) => !p.startsWith('lib/components/explore/readers/'))
+			)
+		).toEqual([]);
+	});
+
 	it('takes every colour in a style from the tokens in AppShell', () => {
 		// A hex or rgb() value in a component is a colour beside the palette. A mask's `black`
 		// is not a colour; the canvas and the fracties' own colours live in TypeScript.
 		const css = (t: string) =>
 			(/<style>([\s\S]*?)<\/style>/.exec(t)?.[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
 		const eigen: Uitzonderingen = {
-			'lib/components/layout/AppShell.svelte': 'the tokens themselves',
-			'routes/explore/+page.svelte':
-				'the scrim of the phone sheet; left alone while its column widths are reworked'
+			'lib/components/layout/AppShell.svelte': 'the tokens themselves'
 		};
 		expect(
 			offenders((t) => /#[0-9a-fA-F]{3,8}\b|\b(rgba?|hsla?)\(/.test(css(t)), buiten(eigen))
@@ -249,12 +250,10 @@ describe('one form for each thing', () => {
 	it('rounds a corner with a radius token', () => {
 		const vrij = /^((var\(--r-[\w-]+\)|0)(\s+(var\(--r-[\w-]+\)|0))*|50%|inherit)$/;
 		expect(
-			offenders(
-				(t) =>
-					rules(t).some((r) =>
-						[...r.body.matchAll(/border-radius:\s*([^;]+);/g)].some((m) => !vrij.test(m[1].trim()))
-					),
-				['lib/components/explore/readers/KabinetZetels.svelte']
+			offenders((t) =>
+				rules(t).some((r) =>
+					[...r.body.matchAll(/border-radius:\s*([^;]+);/g)].some((m) => !vrij.test(m[1].trim()))
+				)
 			)
 		).toEqual([]);
 	});
@@ -276,9 +275,7 @@ describe('one form for each thing', () => {
 
 	it('hides text for a screen reader with the one .sr-only', () => {
 		const eigen: Uitzonderingen = {
-			'lib/components/layout/AppShell.svelte': 'the one rule',
-			'lib/components/articles/ArticleText.svelte': 'being reworked (Front-end #1)',
-			'lib/components/explore/readers/DocumentReader.svelte': 'being reworked (Front-end #1)'
+			'lib/components/layout/AppShell.svelte': 'the one rule'
 		};
 		expect(
 			offenders((t) => rules(t).some((r) => /clip:\s*rect\(0/.test(r.body)), buiten(eigen))
@@ -348,8 +345,6 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			'lib/components/ui/IconKnop.svelte': 'the one icon button',
 			'lib/components/layout/TopBar.svelte': 'the search in the bar looks as the field it opens',
 			'lib/netwerk/NetwerkPanel.svelte': 'the example in an empty netwerk is a card, not a button',
-			'lib/components/explore/readers/DossierReader.svelte':
-				'the other papers of a dossier; the readers are being reworked (Front-end #1)',
 			'routes/(main)/+page.svelte':
 				'the scopes of the home search, pressed or not: a Keuze once the home page is rebuilt'
 		};
@@ -362,12 +357,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			/menu-?item|__item\b|-item\b/.test(r.selector) &&
 			/background:\s*var\(--paper-2\)/.test(r.body);
 		const eigen: Uitzonderingen = {
-			'lib/components/ui/TekstMenu.svelte': 'the one item',
-			'lib/components/ui/CiteMenu.svelte': 'being reworked with the readers (Front-end #1)',
-			'lib/components/articles/PlaatsMenu.svelte':
-				'the place menu of the readers, new; being reworked (Front-end #1)',
-			'lib/components/explore/readers/ArticleReader.svelte':
-				'the versions menu; being reworked with the readers (Front-end #1)'
+			'lib/components/ui/TekstMenu.svelte': 'the one item'
 		};
 		expect(offenders((t) => rules(t).some(item), buiten(eigen))).toEqual([]);
 	});

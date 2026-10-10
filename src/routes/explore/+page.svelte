@@ -1929,8 +1929,28 @@
 		background: var(--rule-strong);
 	}
 
+	/* The tabs of a phone and of the narrow read view: shown by the media rules below. */
 	.mobile-tabs {
 		display: none;
+		border-bottom: 1px solid var(--rule);
+		background: var(--paper-2);
+	}
+	.mobile-tabs .mobile-tab {
+		flex: 1;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui-micro);
+		color: var(--ink-3);
+		background: none;
+		border: 0;
+		border-bottom: 2px solid transparent;
+		padding: var(--s-2) var(--s-1) var(--s-2);
+		cursor: pointer;
+		margin-bottom: -1px;
+	}
+	.mobile-tabs .mobile-tab.active {
+		color: var(--ink);
+		border-bottom-color: var(--ink);
+		font-weight: 500;
 	}
 
 	/* Netwerk in the tabs of Tekst: on a phone the tabs replace the switch in the bar. */
@@ -1966,25 +1986,6 @@
 			display: flex;
 			grid-column: 1;
 			grid-row: 1;
-			border-bottom: 1px solid var(--rule);
-			background: var(--paper-2);
-		}
-		.explore-read .mobile-tab {
-			flex: 1;
-			font-family: var(--font-ui);
-			font-size: var(--t-ui-micro);
-			color: var(--ink-3);
-			background: none;
-			border: 0;
-			border-bottom: 2px solid transparent;
-			padding: var(--s-2) var(--s-1) 9px;
-			cursor: pointer;
-			margin-bottom: -1px;
-		}
-		.explore-read .mobile-tab.active {
-			color: var(--ink);
-			border-bottom-color: var(--ink);
-			font-weight: 500;
 		}
 		.explore-read .col {
 			grid-row: 2;
@@ -2005,7 +2006,7 @@
 			z-index: var(--z-modal);
 			align-items: flex-end;
 			justify-content: center;
-			background: rgba(28, 27, 25, 0.32);
+			background: var(--scherm);
 		}
 		.toc-sheet {
 			display: flex;
@@ -2022,7 +2023,7 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			padding: 14px 18px;
+			padding: var(--s-3) var(--s-4);
 			border-bottom: 1px solid var(--rule);
 			flex-shrink: 0;
 		}
@@ -2089,25 +2090,6 @@
 			display: flex;
 			grid-column: 1;
 			grid-row: 1;
-			border-bottom: 1px solid var(--rule);
-			background: var(--paper-2);
-		}
-		.mobile-tab {
-			flex: 1;
-			font-family: var(--font-ui);
-			font-size: var(--t-ui-micro);
-			color: var(--ink-3);
-			background: none;
-			border: 0;
-			border-bottom: 2px solid transparent;
-			padding: var(--s-2) var(--s-1) 9px;
-			cursor: pointer;
-			margin-bottom: -1px;
-		}
-		.mobile-tab.active {
-			color: var(--ink);
-			border-bottom-color: var(--ink);
-			font-weight: 500;
 		}
 		.col {
 			grid-row: 2;

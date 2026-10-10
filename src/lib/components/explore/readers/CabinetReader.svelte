@@ -71,10 +71,10 @@
 			{@const from = when(c.from_date)}
 			{@const to = when(c.to_date)}
 			<header class="head">
-				<span class="kicker"
+				<span class="lezer-soort"
 					><SoortLink collection="cabinets">{bronLabel('cabinets')}</SoortLink></span
 				>
-				<h2 class="title">{c.name}</h2>
+				<h2 class="lezer-titel">{c.name}</h2>
 			</header>
 
 			<Feiten>
@@ -142,22 +142,10 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
-	.kicker {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
+	.lezer-soort {
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
-	}
-	.title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-snug);
 	}
 	.nums {
 		font-variant-numeric: tabular-nums;

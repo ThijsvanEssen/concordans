@@ -23,12 +23,12 @@
 <ReaderFrame>
 	<div class="r-activity">
 		<header class="head">
-			<span class="kicker">
+			<span class="lezer-soort">
 				<KindGlyph collection="activities" />
 				{attrs.kind ?? bronLabel('activities')}
 				{#if attrs.date}<span class="komma">,</span>{formatLongDate(attrs.date)}{/if}
 			</span>
-			<h2 class="title">{attrs.agenda_title || node.label}</h2>
+			<h2 class="lezer-titel">{attrs.agenda_title || node.label}</h2>
 		</header>
 
 		{#if attrs.tk_url}
@@ -53,26 +53,14 @@
 		flex-direction: column;
 		gap: var(--s-1);
 	}
-	.kicker {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
+	.lezer-soort {
 		display: flex;
-		gap: 5px;
+		gap: var(--s-1);
 		align-items: baseline;
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
 	.komma {
 		margin-left: calc(-1 * 5px);
-	}
-	.title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-snug);
 	}
 
 	.foot {

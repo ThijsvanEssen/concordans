@@ -70,12 +70,12 @@
 			{@const entries = a.entries ?? []}
 			{@const refs = view.detail.referenced_by ?? []}
 			<header class="head">
-				<span class="kicker"
+				<span class="lezer-soort"
 					><KindGlyph collection="annexes" />{bronLabel('annexes')}{a.label
 						? ` ${a.label}`
 						: ''}</span
 				>
-				<h1 class="title">{a.title ?? a.display_name ?? a.key}</h1>
+				<h1 class="lezer-titel">{a.title ?? a.display_name ?? a.key}</h1>
 				{#if a.bwb_id}
 					<p class="law">
 						<BronLink ref={{ collection: 'instruments', key: a.bwb_id.toLowerCase() }}
@@ -160,22 +160,14 @@
 		flex-direction: column;
 		gap: var(--s-2);
 	}
-	.kicker {
+	.lezer-soort {
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
 	}
-	.title {
-		margin: 0;
-		font-family: var(--font-serif);
+	.lezer-titel {
 		font-size: var(--t-h1);
-		font-weight: 600;
 		line-height: 1.25;
-		color: var(--ink);
 	}
 	.law {
 		margin: 0;

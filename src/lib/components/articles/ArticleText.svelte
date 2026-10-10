@@ -254,14 +254,6 @@
 {/if}
 
 <style>
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
 	.article-text-box {
 		container-type: inline-size;
 	}
@@ -272,7 +264,7 @@
 		color: var(--ink);
 		/* The number of a lid hangs in the frame's margin, its text at the column's edge
 		   (ReaderFrame); a narrow column takes it in (below). */
-		margin-left: -48px;
+		margin-left: calc(-1 * var(--s-7));
 	}
 
 	/* A lid: 36px for the number (in the frame's margin), the text to the column's right

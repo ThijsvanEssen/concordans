@@ -40,7 +40,7 @@
 	let lijst = $state<HTMLElement | null>(null);
 	const aan = $derived(!!bewaar && kaart.heeft(bewaar));
 
-	const items = () => [...(lijst?.querySelectorAll<HTMLElement>('.menuitem') ?? [])];
+	const items = () => [...(lijst?.querySelectorAll<HTMLElement>('.tekstmenu__item') ?? [])];
 	function sluit(focus = true) {
 		// Held before closing: once the menu is gone its props are too.
 		const marker = anker;
@@ -137,20 +137,27 @@
 	{#if cite.length}
 		<p class="label">Kopieer als</p>
 		{#each cite as c (c.kind)}
-			<button type="button" class="menuitem" role="menuitem" onclick={() => kopieer(c.text, c.kind)}
+			<button
+				type="button"
+				class="tekstmenu__item tekstmenu__item--paar"
+				role="menuitem"
+				onclick={() => kopieer(c.text, c.kind)}
 				><span class="vorm" class:link={c.kind === 'link'}>{copier.label(c.kind, c.text)}</span
 				><span class="soort">{c.kind}</span></button
 			>
 		{/each}
 	{/if}
-	<button type="button" class="menuitem" role="menuitem" onclick={() => kopieer(tekst(), 'tekst')}
-		>{copier.label('tekst', 'Kopieer tekst')}</button
+	<button
+		type="button"
+		class="tekstmenu__item"
+		role="menuitem"
+		onclick={() => kopieer(tekst(), 'tekst')}>{copier.label('tekst', 'Kopieer tekst')}</button
 	>
 	{#if bewaar}
 		<div class="regel">
 			<button
 				type="button"
-				class="menuitem"
+				class="tekstmenu__item"
 				role="menuitemcheckbox"
 				aria-checked={aan}
 				onclick={() => {
@@ -166,7 +173,7 @@
 				<p class="tellend">Verbindingen tellen…</p>
 			{:else if verbindingen}
 				<a
-					class="menuitem"
+					class="tekstmenu__item"
 					role="menuitem"
 					href={verbindingen.href}
 					data-sveltekit-noscroll
@@ -177,7 +184,7 @@
 			{/if}
 			{#if geschiedenis}
 				<a
-					class="menuitem"
+					class="tekstmenu__item"
 					role="menuitem"
 					href={geschiedenis.href}
 					data-sveltekit-noscroll
@@ -221,33 +228,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-label);
 		color: var(--ink-3);
-	}
-	.menuitem {
-		box-sizing: border-box;
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-3);
-		width: 100%;
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		font-family: var(--font-ui);
-		color: var(--ink);
-		text-align: left;
-		text-decoration: none;
-		cursor: pointer;
-	}
-	.menuitem:hover,
-	.menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
-	}
-	/* A finger's row on a touch screen. */
-	@media (pointer: coarse) {
-		.menuitem {
-			padding-block: var(--s-2);
-		}
 	}
 	.vorm {
 		min-width: 0;

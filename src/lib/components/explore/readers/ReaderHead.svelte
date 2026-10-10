@@ -65,7 +65,7 @@
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-4);
-		margin-bottom: 10px;
+		margin-bottom: var(--s-2);
 	}
 
 	.reader-kind {

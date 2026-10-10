@@ -140,12 +140,12 @@
 			{@const verder = eigen.slice(1)}
 			{@const onderwerp = (d.subject ?? doc?.title ?? '').trim()}
 			<header class="head">
-				<span class="kicker">
+				<span class="lezer-soort">
 					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink><span
 						>, {chamberName(chamber)}{d.date ? `, ${formatLongDate(d.date)}` : ''}</span
 					>
 				</span>
-				<h2 class="title">{d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}</h2>
+				<h2 class="lezer-titel">{d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}</h2>
 				<!-- The status line: the outcome and what was voted on, words separated by commas;
 				     the dossier is in the band ("Over 34372 …"), a second one here. One action,
 				     Bewaar: a stemming is cited through what was voted on (concept 21). -->
@@ -316,16 +316,12 @@
 		flex: 1 1 16em;
 		min-width: 0;
 	}
-	.kicker {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
+	.lezer-soort {
 		display: flex;
 		align-items: baseline;
 	}
-	.kicker :global(.soort) {
-		gap: 6px;
+	.lezer-soort :global(.soort) {
+		gap: var(--s-1);
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
 	.ek-factions {
@@ -350,14 +346,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		color: var(--ink);
-		margin: 0;
-		line-height: var(--lh-snug);
 	}
 	/* As the article's status line: t-meta, in ink. */
 	.woorden {
