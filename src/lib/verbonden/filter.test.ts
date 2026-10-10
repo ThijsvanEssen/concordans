@@ -179,6 +179,12 @@ describe('the panel under the filter', () => {
 		expect(countLine(groups, EMPTY_FILTER)).toBe('1.098 verbindingen');
 		const f = { ...EMPTY_FILTER, bronnen: new Set(['artikelen'] as const) };
 		expect(countLine(groups, f)).toBe('34 van 1.098 verbindingen');
+		// A group the API cut off without a total: the sum is at least.
+		const afgekapt = [
+			...groups,
+			{ ...groups[groups.length - 1], id: 'x', total: undefined, capped: true }
+		];
+		expect(countLine(afgekapt, EMPTY_FILTER)).toBe('1.099+ verbindingen');
 		expect(filterGroups(groups, f).map((g) => g.id)).toEqual(['cited-by']);
 		expect(
 			hiddenByKind(

@@ -87,6 +87,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 	let current: string | null = null;
 	let last: GraphNode | null = null;
 	// What the groups of the current bron are built from, so a group opened adds its rows.
+	/** The whole node was asked for before `basis` stood. */
+	let wilVolledig = false;
 	let basis: {
 		id: string;
 		collection: Collection;
@@ -170,6 +172,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			})
 			.catch(() => {});
 		basis = null;
+		wilVolledig = false;
 		groups = [];
 		vervolg.clear();
 		let lui = true;
@@ -218,6 +221,13 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						volledig: basis?.volledig ?? false
 					});
 				zet();
+				// The node now; a loader's further rows (`meer`) once the loaders are in.
+				const alsGevraagd = () => {
+					if (!wilVolledig) return;
+					if (pending.size === 0) wilVolledig = false;
+					void volledig();
+				};
+				alsGevraagd();
 				const ctx = {
 					node: response.node,
 					neighbors,
@@ -256,6 +266,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 							if (ac.signal.aborted) return;
 							pending.delete(def.id);
 							zet();
+							alsGevraagd();
 						});
 				}
 			})
@@ -264,6 +275,27 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					state.set({ id: selection.id, groups: [], loading: false, failed: true });
 			});
 	};
+
+	function volledig(): Promise<void> {
+		const rest = Promise.all([...vervolg.keys()].map(vervolgVan));
+		const b = basis;
+		// Asked before the first rows are in (an address with ?tabel=1): asked again then.
+		if (!b) wilVolledig = true;
+		if (!b || b.volledig) return rest.then(() => {});
+		b.volledig = true;
+		const node = store
+			.nodeResponse(b.collection, b.key)
+			.then((response) => {
+				if (b !== basis) return;
+				b.neighbors = neighborsOf(response);
+				b.totals = bucketTotals(response);
+				herbouw();
+			})
+			.catch(() => {
+				b.volledig = false;
+			});
+		return Promise.all([rest, node]).then(() => {});
+	}
 
 	return {
 		subscribe: state.subscribe,
@@ -298,24 +330,7 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			b.geopend.set(id, klaar);
 			return klaar;
 		},
-		volledig: () => {
-			const rest = Promise.all([...vervolg.keys()].map(vervolgVan));
-			const b = basis;
-			if (!b || b.volledig) return rest.then(() => {});
-			b.volledig = true;
-			const node = store
-				.nodeResponse(b.collection, b.key)
-				.then((response) => {
-					if (b !== basis) return;
-					b.neighbors = neighborsOf(response);
-					b.totals = bucketTotals(response);
-					herbouw();
-				})
-				.catch(() => {
-					b.volledig = false;
-				});
-			return Promise.all([rest, node]).then(() => {});
-		},
+		volledig,
 		destroy: () => controller?.abort()
 	};
 }
