@@ -30,6 +30,12 @@ export function normalizeItem(raw: RawFeedItem): FeedItem {
  * keeps the Verkenner's address until the API gives its `path`.
  */
 function onthoudAdres(i: FeedItem) {
+	// Its persons by their own address ("/leden/simon-ceulemans"): a name in the row links there,
+	// not to /explore?focus=members/… and its 301 (UX-toets 0.79.44, #47: 86 links).
+	for (const p of i.persons) {
+		const lid = p.key && p.path ? parsePad(p.path) : null;
+		if (lid) remember(padHref(lid), `members/${p.key}`);
+	}
 	const focus = `${i.node.collection}/${i.node.key}`;
 	const pad = i.path ? parsePad(i.path) : null;
 	if (pad) {
