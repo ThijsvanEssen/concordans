@@ -149,8 +149,8 @@
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
 	}
+	/* The ink ring of every control (AppShell), with the underline of a hover. */
 	.tekstmenu__knop:focus-visible {
-		outline: none;
 		text-decoration: underline;
 		text-underline-offset: 3px;
 	}
