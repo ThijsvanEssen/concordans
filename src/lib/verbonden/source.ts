@@ -63,6 +63,8 @@ export type VerbondenState = {
 	 * (UX-toets 10 Oct: the judgments of 6:162 BW came after 10 s at the top).
 	 */
 	wachtend?: string[];
+	/** Per waiting group, the rows the light node counts in its buckets: its place's height. */
+	verwacht?: Record<string, number>;
 };
 
 export type VerbondenSource = Readable<VerbondenState> & {
@@ -209,12 +211,25 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						(b) => (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 1) > 0
 					);
 				};
+				// What a waiting group will hold, where its buckets are counted (UX-toets 0.79.43, #1).
+				const verwacht = Object.fromEntries(
+					[...pending].flatMap((id) => {
+						const bakken = (GROUPS[collection] ?? []).find((d) => d.id === id)?.bakken;
+						if (!bakken) return [];
+						const n = bakken.reduce(
+							(som, b) => som + (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 0),
+							0
+						);
+						return n > 0 ? [[id, n]] : [];
+					})
+				);
 				const zet = () =>
 					state.set({
 						id: selection.id,
 						groups,
 						loading: pending.size > 0,
 						wachtend: [...pending].filter(kanRijen),
+						verwacht,
 						failed: false,
 						lidTellingen: perBak ? sumLidCounts(perBak) : null,
 						lidPerBak: perBak,
