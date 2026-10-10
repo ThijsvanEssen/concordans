@@ -39,6 +39,13 @@
 	let list = $state<HTMLUListElement | null>(null);
 	let said = $state('');
 
+	// Another bron at the head of the list (a step to another page): its line is the old page's.
+	let eerste: string | undefined;
+	$effect(() => {
+		const id = nodes[0]?.id;
+		if (id !== eerste) said = '';
+		eerste = id;
+	});
 	// The list changes as the canvas does: the tab stop stays on a bron that exists.
 	$effect(() => {
 		if (active > nodes.length - 1) active = Math.max(0, nodes.length - 1);
@@ -77,7 +84,10 @@
 
 	function onfocusout(e: FocusEvent) {
 		const naar = e.relatedTarget as Node | null;
-		if (!list?.contains(naar) && !houdt?.(naar)) onFocusNode(null);
+		if (list?.contains(naar)) return;
+		// Its line goes with the focus, so it is not read on the next page (UX test 0.79.43, #13).
+		said = '';
+		if (!houdt?.(naar)) onFocusNode(null);
 	}
 
 	function onkeydown(e: KeyboardEvent) {
