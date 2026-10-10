@@ -36,7 +36,7 @@
 	import { getDossierKey, getMemberVotes } from '$lib/components/parliamentary/data';
 	import { createGraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
-	import GraphView from '$lib/components/graph/GraphView.svelte';
+	import type GraphView from '$lib/components/graph/GraphView.svelte';
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
@@ -46,7 +46,7 @@
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
 	import JudgmentToc from '$lib/components/explore/JudgmentToc.svelte';
-	import IndexView from '$lib/components/explore/IndexView.svelte';
+	import type IndexView from '$lib/components/explore/IndexView.svelte';
 	import IndexOverzicht from '$lib/components/explore/index/IndexOverzicht.svelte';
 	import { isIndexCategory, type IndexCategory } from '$lib/components/explore/index/categories';
 	import Verbonden from '$lib/verbonden/Verbonden.svelte';
@@ -1033,6 +1033,18 @@
 	const overlay = $derived<Overlay>(parseOverlay(overlayParam));
 
 	let graphView = $state<GraphView | null>(null);
+	// The canvas and the lists of Bronnen are chunks of their own, asked at once beside the
+	// bron's first requests: the Verkenner's own chunk was 213 kB gz with them, and every
+	// request waited for it (first visit after a deploy, 10 Oct: the first request at 2.6 s).
+	let GraphViewC = $state<typeof GraphView | null>(null);
+	let IndexViewC = $state<typeof IndexView | null>(null);
+	$effect(() => {
+		void import('$lib/components/graph/GraphView.svelte').then((m) => (GraphViewC = m.default));
+	});
+	$effect(() => {
+		if (mode === 'index' && !IndexViewC)
+			void import('$lib/components/explore/IndexView.svelte').then((m) => (IndexViewC = m.default));
+	});
 	let inFluxMap = $state<NodeCounts>(new Map());
 	let heatMap = $state<NodeCounts>(new Map());
 
@@ -1397,9 +1409,12 @@
 			{#if param('kind') === null}
 				<!-- The overview scrolls in its own field: the shell does not scroll. -->
 				<div class="index-rol"><IndexOverzicht /></div>
-			{:else}
-				<IndexView category={indexKind} />
-			{/if}
+			{:else if IndexViewC}<IndexViewC category={indexKind} />{:else}<p
+					class="explore-empty stil"
+					role="status"
+				>
+					Laden…
+				</p>{/if}
 		{:else if nietGevonden}
 			<NietGevonden titel="Bron niet gevonden" kop={false}>
 				<p>{padMissing ?? focusError}</p>
@@ -1452,84 +1467,88 @@
 					{@render handle('graph')}
 				{/if}
 				<div class="col col--graph" class:mobile-hidden={selectedNode && mobilePanel !== 'graph'}>
-					<GraphView
-						bind:this={graphView}
-						{store}
-						compact={!!selectedNode}
-						{filter}
-						{verbonden}
-						{depth}
-						{reach}
-						selectedEdgeId={card?.edgeId ?? null}
-						{inFluxMap}
-						{heatMap}
-						{overlay}
-						onNodeClick={(n) => {
-							handleNodeClick(n);
-							mobilePanel = 'reader';
-						}}
-						onNodeDoubleClick={handleNodeReplace}
-						onMetGroep={(m) => (metGroep = m)}
-						onToggleChosen={toggleChosen}
-						{netwerkActive}
-						onEdgeClick={openEdgeCard}
-						onClear={() => (card = null)}
-						onGoBack={goBack}
-						onGoForward={() => history.forward()}
-						onFilter={applyFilter}
-						onOpenFilter={() => (filterOpen = true)}
-						onDepth={setDepth}
-						onToggleHeat={toggleHeat}
-						onHeatPeriodChange={setHeatPeriod}
-						onToggleMutatie={toggleMutatie}
-					>
-						{#snippet canvasOverlay()}
-							<NetwerkPanel
-								entries={netwerkActive
-									? netwerkEntries.map((e) =>
-											e.node ? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) } : e
-										)
-									: []}
-								loading={netwerkLoading}
-								start={!focus && !netwerkActive}
-								{telefoon}
-								onPick={addIdToNetwerk}
-								omgeving={selectedNode && !selectedNode.stub
-									? bronNaam(selectedNode, $instrumentMetaStore)
-									: null}
-								onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
-								onVoorbeeld={() => {
-									keepCanvas = true;
-									setNetwerk(
-										withAdded(
-											withAdded(netwerk, 'articles/bwbr0005537_3_4'),
-											'articles/bwbr0005537_3_2'
-										)
-									);
-								}}
-								selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
-									? { label: bronNaam(selectedNode, $instrumentMetaStore) }
-									: null}
-								tussen={netwerk.tussen}
-								onGroepAan={(kind) => {
-									const uit = new Set(get(store.filters).hiddenGroups);
-									uit.delete(kind);
-									store.setFilters({ hiddenGroups: uit });
-								}}
-								{joiningCount}
-								deels={padenDeels}
-								onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
-								onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
-								onAdd={() => selectedNode && addToNetwerk(selectedNode)}
-								onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
-								onClearContext={() => store.clearContext()}
-								onClear={wisAlles}
-								deelLabel={shareCopier.label('share', 'Deel')}
-								deelMelding={shareCopier.announcement}
-								onDeel={handleShareView}
-							/>
-						{/snippet}
-					</GraphView>
+					{#if GraphViewC}
+						<GraphViewC
+							bind:this={graphView}
+							{store}
+							compact={!!selectedNode}
+							{filter}
+							{verbonden}
+							{depth}
+							{reach}
+							selectedEdgeId={card?.edgeId ?? null}
+							{inFluxMap}
+							{heatMap}
+							{overlay}
+							onNodeClick={(n) => {
+								handleNodeClick(n);
+								mobilePanel = 'reader';
+							}}
+							onNodeDoubleClick={handleNodeReplace}
+							onMetGroep={(m) => (metGroep = m)}
+							onToggleChosen={toggleChosen}
+							{netwerkActive}
+							onEdgeClick={openEdgeCard}
+							onClear={() => (card = null)}
+							onGoBack={goBack}
+							onGoForward={() => history.forward()}
+							onFilter={applyFilter}
+							onOpenFilter={() => (filterOpen = true)}
+							onDepth={setDepth}
+							onToggleHeat={toggleHeat}
+							onHeatPeriodChange={setHeatPeriod}
+							onToggleMutatie={toggleMutatie}
+						>
+							{#snippet canvasOverlay()}
+								<NetwerkPanel
+									entries={netwerkActive
+										? netwerkEntries.map((e) =>
+												e.node
+													? { ...chipNaam(e, e.node), verborgenMet: metGroep.get(e.node.id) }
+													: e
+											)
+										: []}
+									loading={netwerkLoading}
+									start={!focus && !netwerkActive}
+									{telefoon}
+									onPick={addIdToNetwerk}
+									omgeving={selectedNode && !selectedNode.stub
+										? bronNaam(selectedNode, $instrumentMetaStore)
+										: null}
+									onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
+									onVoorbeeld={() => {
+										keepCanvas = true;
+										setNetwerk(
+											withAdded(
+												withAdded(netwerk, 'articles/bwbr0005537_3_4'),
+												'articles/bwbr0005537_3_2'
+											)
+										);
+									}}
+									selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
+										? { label: bronNaam(selectedNode, $instrumentMetaStore) }
+										: null}
+									tussen={netwerk.tussen}
+									onGroepAan={(kind) => {
+										const uit = new Set(get(store.filters).hiddenGroups);
+										uit.delete(kind);
+										store.setFilters({ hiddenGroups: uit });
+									}}
+									{joiningCount}
+									deels={padenDeels}
+									onToggle={(id) => setNetwerk(withToggled(netwerk, id))}
+									onRemove={(id) => setNetwerk(withRemoved(netwerk, id))}
+									onAdd={() => selectedNode && addToNetwerk(selectedNode)}
+									onTussen={() => setNetwerk({ ...netwerk, tussen: !netwerk.tussen })}
+									onClearContext={() => store.clearContext()}
+									onClear={wisAlles}
+									deelLabel={shareCopier.label('share', 'Deel')}
+									deelMelding={shareCopier.announcement}
+									onDeel={handleShareView}
+								/>
+							{/snippet}
+						</GraphViewC>
+					{/if}
 					{#if card}
 						<VerbindingCard
 							verbinding={card.verbinding}
