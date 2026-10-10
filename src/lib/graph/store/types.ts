@@ -135,8 +135,9 @@ export type GraphStore = {
 	releaseNetwerk: () => void;
 	setSelection: (nodeId: string | null) => void;
 	focusNode: (nodeId: string) => GraphNode | null;
-	/** Draws bronnen next to `focusId`, each with the verbinding that ties it to the focus. */
-	showRows: (focusId: string, rows: CanvasRow[]) => void;
+	/** Draws bronnen next to `focusId`, each with the verbinding that ties it to the focus;
+	 * false when the focus is not on the canvas (yet), and nothing was drawn. */
+	showRows: (focusId: string, rows: CanvasRow[]) => boolean;
 	/** Takes bronnen off the canvas; the selected and the pinned ones stay. */
 	hideRows: (ids: string[]) => void;
 	reset: () => void;

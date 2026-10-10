@@ -43,7 +43,7 @@ export function createViewActions(
 		focusNode: (nodeId) => focusInternal(nodeId),
 
 		showRows: (focusId, rows) => {
-			if (!nodes.has(focusId)) return;
+			if (!nodes.has(focusId)) return false;
 			for (const row of rows) {
 				const id = nodeId(row.ref.collection, row.ref.key);
 				if (!nodes.has(id)) {
@@ -55,6 +55,7 @@ export function createViewActions(
 				addEdge(source, target, row.relation, { status: row.proposed ? 'voorgesteld' : null });
 			}
 			emit();
+			return true;
 		},
 		hideRows: (ids) => {
 			const selectedId = get(selectionStore)?.id;

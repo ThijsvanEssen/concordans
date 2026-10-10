@@ -385,7 +385,10 @@
 	}
 	function showInNetwork(row: Row) {
 		if (selectedNode && row.relation && row.direction) {
-			store.showRows(selectedNode.id, [row as CanvasRow]);
+			if (!store.showRows(selectedNode.id, [row as CanvasRow])) {
+				meldNetwerk('Het netwerk laadt nog; niets getekend.', null);
+				return;
+			}
 			const id = refId(row.ref);
 			meldNetwerk(`${row.title} getekend in het netwerk.`, () => store.hideRows([id]));
 		}

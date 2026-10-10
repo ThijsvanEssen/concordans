@@ -258,7 +258,12 @@
 			return;
 		}
 		const nieuw = rows.filter((r) => !onCanvas.has(refId(r.ref)));
-		store.showRows(selection.id, rows as CanvasRow[]);
+		// Before the network has drawn the bron itself there is nothing to draw beside; say so
+		// rather than claim it was drawn.
+		if (!store.showRows(selection.id, rows as CanvasRow[])) {
+			meld(g.id, 'Het netwerk laadt nog; niets getekend.', null);
+			return;
+		}
 		onNaarNetwerk?.();
 		if (nieuw.length)
 			meld(g.id, `${telling(nieuw)} getekend in het netwerk.`, () =>
