@@ -1709,35 +1709,47 @@
 
 	/* The network gives way before the text does: the reader keeps 610px, enough for a
 	   measure of some 60 characters, and the canvas takes what is left up to its width.
-	   At 1280px: network 320, reader 610, Verbonden 340. */
+	   At 1280px: network 252, reader 610, Verbonden 408. */
 	.explore-graph--with-reader {
 		grid-template-columns:
 			max(200px, min(var(--graph-w, var(--graph-w-auto)), calc(100vw - var(--panel) - 620px)))
 			5px minmax(0, 1fr) 5px var(--panel);
 	}
 
-	/* The widths that follow the screen, until a column is dragged. Below 1440 Verbonden is
-	   narrower so the network keeps some 320px beside a readable text. From 1600 the room
-	   goes to the network: the reader keeps some 850px (a measure of 700 in the middle),
-	   Verbonden grows a little, from 400 to at most 460 at 2200 (Thijs: "niet te veel").
-	   At 1920: network 620, reader 850, Verbonden 432; at 2560: 1250, 850, 460. */
+	/* The widths that follow the screen, until a column is dragged. Verbonden is as wide as
+	   a group's heading with its count and its box on one line ("Uitspraken die dit artikel
+	   aanhalen 127", Thijs 10 Oct: "het kader zelf sowieso iets breder altijd"); the room
+	   comes from the network, never from the reader. Below 1440 Verbonden grows with the
+	   screen to 408, so the network keeps 252 at 1280 and the reader 610 down to 1172. At
+	   1440 Verbonden 432 and the network 328, so the reader keeps 670 and its lid numbers
+	   in the margin (ArticleText's container query at 600). From 1600 the room goes to the
+	   network (at least 328): the reader keeps some 850px (a measure of 700 in the middle),
+	   Verbonden grows a little, from 432 to at most 480 at 2080 (Thijs: "niet te veel").
+	   At 1920: network 606, reader 840, Verbonden 464; at 2560: 1220, 850, 480. */
 	.explore-graph,
 	.explore-read {
 		--graph-w-auto: 360px;
-		--panel-w-auto: 340px;
+		--panel-w-auto: clamp(340px, calc(100vw - 872px), 408px);
 		--panel: var(--panel-w, var(--panel-w-auto));
+	}
+	/* Beside the reader's contents (220) Verbonden leaves the reader 670 at 1280. */
+	@media (max-width: 1439px) {
+		.explore-read--with-nav {
+			--panel-w-auto: clamp(340px, calc(100vw - 900px), 408px);
+		}
 	}
 	@media (min-width: 1440px) {
 		.explore-graph,
 		.explore-read {
-			--panel-w-auto: 400px;
+			--graph-w-auto: 328px;
+			--panel-w-auto: 432px;
 		}
 	}
 	@media (min-width: 1600px) {
 		.explore-graph,
 		.explore-read {
-			--panel-w-auto: clamp(400px, calc(400px + (100vw - 1600px) / 10), 460px);
-			--graph-w-auto: max(360px, calc(100vw - var(--panel) - 850px));
+			--panel-w-auto: clamp(432px, calc(432px + (100vw - 1600px) / 10), 480px);
+			--graph-w-auto: max(328px, calc(100vw - var(--panel) - 850px));
 		}
 	}
 
