@@ -29,6 +29,17 @@ describe('the server HTML before the app', () => {
 		for (const [name, value] of vooraf) expect([name, app.get(name)]).toEqual([name, value]);
 	});
 
+	it('stays hidden while the app comes, and shows when it does not', () => {
+		const head = read('app.html').split('</head>')[0];
+		const script = head.indexOf("classList.add('js')");
+		expect(script).toBeGreaterThan(-1);
+		// Before the first style, so nothing paints the text first.
+		expect(script).toBeLessThan(head.indexOf('<style>'));
+		expect(head).toMatch(/setTimeout\([\s\S]*?classList\.remove\('js'\)/);
+		expect(head).toMatch(/\.js #seo \{\s*display: none;/);
+		expect(read('routes/+layout.svelte')).toContain('clearTimeout(window.__seoTerug)');
+	});
+
 	it('loads its font from the head, before any script', () => {
 		const head = read('app.html').split('</head>')[0];
 		expect(head).toMatch(/rel="preload"[\s\S]*?Newsreader-Variable\.woff2/);
