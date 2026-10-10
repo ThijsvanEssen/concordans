@@ -8,6 +8,7 @@
 	import { anchorOf, parseQualifier, qualifierOfSpan } from '$lib/text/qualifier';
 	import { isCollection } from '$lib/vocabulary';
 	import { definitieKaart, definitieRegel, type Begrip, type Definitie } from '$lib/text/begrippen';
+	import { splitsOpNummers } from '$lib/text/meervoud';
 
 	type Span = Schema<'ArticleCitationSpan'> & { definition_ref?: string | null };
 
@@ -27,6 +28,10 @@
 	} = $props();
 
 	type Segment = { content: string; span?: Span; at?: string | null; begrip?: Definitie };
+
+	/** Each article once, where the API gives a span twice for it. */
+	const uniekeDoelen = (spans: Span[]) =>
+		spans.filter((c, i) => spans.findIndex((d) => d.target.id === c.target.id) === i);
 
 	/** How much of what follows a span is read for a qualifier ("…, tweede lid,"). */
 	const FOLLOWING = 80;
@@ -51,6 +56,28 @@
 			}
 			const span = item;
 			const content = text.slice(span.start!, span.end!);
+			// One span for several articles ("art. 2 en 8 EVRM"): a link at each number.
+			const zelfde = citations.filter(
+				(c) =>
+					c.start === span.start &&
+					c.end === span.end &&
+					c.target.collection === 'articles' &&
+					c.target.id !== span.target.id
+			);
+			const delen =
+				zelfde.length > 0 && span.target.collection === 'articles'
+					? splitsOpNummers(content, [span, ...uniekeDoelen(zelfde)])
+					: null;
+			if (delen) {
+				for (const d of delen)
+					out.push({
+						content: content.slice(d.van, d.tot),
+						span: d.span ?? undefined,
+						at: d.span ? anchorOf(qualifierOfSpan(d.span)) : null
+					});
+				cursor = span.end!;
+				continue;
+			}
 			// The API names the lid on the span (0.5); before that it is read from the text.
 			const at =
 				span.target.collection === 'articles'
