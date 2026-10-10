@@ -32,6 +32,17 @@
 		toggleBtnEl?.focus();
 	}
 
+	/**
+	 * The focus leaves the sheet (Tab past Gemarkeerd, a click outside): it closes and the
+	 * focus goes on where it went, as a menu does (actions/menu.ts). It stood over the page
+	 * while Tab went on behind it (audit 3).
+	 */
+	function focusUitBlad(e: FocusEvent) {
+		const naar = e.relatedTarget as Node | null;
+		if (naar && (mobileNavEl?.contains(naar) || toggleBtnEl?.contains(naar))) return;
+		mobileMenuOpen = false;
+	}
+
 	function handleKeydown(e: KeyboardEvent) {
 		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
 			e.preventDefault();
@@ -165,6 +176,7 @@
 			bind:this={mobileNavEl}
 			class="mobile-nav"
 			onclick={() => closeMobileMenu()}
+			onfocusout={focusUitBlad}
 		>
 			<a href="/explore" class="mobile-nav-link" class:is-active={isExplore}>Samenhang</a>
 			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bronnen</a>
