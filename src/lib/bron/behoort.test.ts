@@ -269,10 +269,8 @@ describe('a translation and a dossier', () => {
 		const l = { node: { labels: ['TK'] }, neighbors: { total: 0, buckets: [] } } as never;
 		const regels = behoort('dossiers', {}, l).regels;
 		expect(regels.map((r) => [r.label, r.lagen[0]?.naam ?? null, !!r.laad])).toEqual([
-			['Behandeld in', 'Tweede Kamer', false],
-			// What the bill amends and implements comes with the detail (legal_effect, 0.79.30).
-			['Wijzigt', null, true],
-			['Implementeert', null, true]
+			// What the bill amends and implements stands in the reader, under the title.
+			['Behandeld in', 'Tweede Kamer', false]
 		]);
 	});
 });
