@@ -62,6 +62,9 @@
 	});
 	$effect(() => {
 		const voor = id;
+		// Asked once the light node is in: a line built before it (no Kamer from its label yet)
+		// would stand for a moment with an answer the band then replaces.
+		if (!lichtHier) return;
 		const controller = new AbortController();
 		for (const r of band.regels) {
 			if (!r.laad) continue;
