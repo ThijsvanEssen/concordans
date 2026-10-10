@@ -212,7 +212,7 @@
 						{#each asOf as a (a.source)}
 							<div class="list-row">
 								<span class="list-k">{a.source}</span><span
-									>{a.newest ? `tot en met ${longDate(a.newest)}, ` : ''}opgehaald {longDate(
+									>{a.newest ? `tot en met ${longDate(a.newest)}, ` : ''}opgehaald op {longDate(
 										a.fetched
 									)}</span
 								>

@@ -6,7 +6,7 @@
 	import { API_BASE_URL } from '$lib/api/base-url';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
-	import { dayLabel, feedStand, CLOSE_VOTE, shortDate } from '$lib/components/actueel/feed';
+	import { dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
 	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import Wetsnetwerk from '$lib/components/actueel/Wetsnetwerk.svelte';
@@ -68,7 +68,6 @@
 	const today = new Date().toISOString().slice(0, 10);
 
 	let lines = $state<TimelineLine[]>([]);
-	let stand = $state<ReturnType<typeof feedStand>>(null);
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */
 	let actueelStaat = $state<'laden' | 'klaar' | 'fout'>('laden');
 	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
@@ -82,7 +81,7 @@
 		return () => ac.abort();
 	});
 
-	/** The last days in one answer: their counts, the events that stand alone, how current. */
+	/** The last days in one answer: their counts and the events that stand alone. */
 	async function loadLines(signal: AbortSignal) {
 		const summary = await unwrap(
 			api.GET('/api/feed/summary', {
@@ -99,7 +98,6 @@
 			})
 		);
 		lines = timelineOf(summary, LINES_SHOWN);
-		stand = feedStand(summary.data_as_of);
 		actueelStaat = 'klaar';
 		// The network waits until Actueel is drawn and the browser is idle.
 		await tick();
@@ -197,13 +195,6 @@
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>
-				<!-- How far the Kamers' data goes, and when it was fetched: a date days back is then
-				     the source's, not a page left standing. -->
-				{#if stand}<span class="stand"
-						>tot en met {shortDate(stand.newest)}{stand.retrievedAt
-							? `, opgehaald ${shortDate(stand.retrievedAt.slice(0, 10))}`
-							: ''}</span
-					>{/if}
 			</header>
 			{#if actueelStaat === 'laden'}
 				<div class="laden" aria-hidden="true">
@@ -310,14 +301,6 @@
 		.home {
 			row-gap: var(--s-6);
 		}
-	}
-
-	.stand {
-		/* Whole, or on its own line: never squeezed beside the heading. */
-		flex: 0 1 auto;
-		min-width: 16rem;
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 
 	.all {

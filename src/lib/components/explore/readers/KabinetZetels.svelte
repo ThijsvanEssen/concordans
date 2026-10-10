@@ -148,7 +148,6 @@
 			{#if tk}
 				{@const z = zijden(tk, gekozen?.s ?? null)}
 				<figure class="kamer">
-					<figcaption>{formatLongDate(opDag)}</figcaption>
 					<div class="zaal">
 						<Hemicycle
 							data={tk}
@@ -159,6 +158,7 @@
 							colorOf={(f, i) => kleurVan('TK', naam(f), i, f.color ?? null)}
 						/>
 					</div>
+					<p class="onderschrift">Samenstelling op {formatLongDate(opDag)}.</p>
 					<!-- The Kamer's numbers of the front, quiet under the hall. -->
 					<p class="sleutel">
 						{#each ['Voorzitter', 'Griffier', 'Kabinet (vak-K)', 'Verslag en redactie', 'Spreekgestoelte', 'Interruptiemicrofoons', 'Bodedienst'] as plaats, i (plaats)}<span
@@ -250,10 +250,10 @@
 			{@const z = zijden(ek)}
 			<div class="zetels">
 				<figure class="kamer">
-					<figcaption>Samenstelling op {formatLongDate(ek.as_of ?? null)}</figcaption>
 					<div class="zaal">
 						<ZaalTegenover data={ek} voteHighlight={kantVan(ek)} />
 					</div>
+					<p class="onderschrift">Samenstelling op {formatLongDate(ek.as_of ?? null)}.</p>
 					<p class="sleutel">
 						{#each ['Voorzitter', 'Griffie', 'Regering', 'Verslag en redactie'] as plaats, i (plaats)}<span
 								><b>{i + 1}</b> {plaats}</span
@@ -283,7 +283,9 @@
 		flex-direction: column;
 		gap: var(--s-3);
 	}
-	figcaption {
+	/* The date of the hall, under it (docs/bediening.md, Bronregels). */
+	.onderschrift {
+		margin: var(--s-1) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);

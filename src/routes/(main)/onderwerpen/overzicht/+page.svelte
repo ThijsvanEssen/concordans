@@ -977,7 +977,7 @@
 						{#if feedGrens || ketenDossiers.totaal > DOSSIERS_MAX || (richtingAan && motiesLaden) || importFout}
 							<p class="sectie__regel">
 								{#if feedGrens}<span
-										>Moties, amendementen, brieven en toezeggingen geteld tot {langeDatum(
+										>Moties, amendementen, brieven en toezeggingen doorzocht vanaf {langeDatum(
 											feedGrens
 										)}.</span
 									>{/if}

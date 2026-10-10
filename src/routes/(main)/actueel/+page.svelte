@@ -513,7 +513,6 @@
 	<header class="kop">
 		<div>
 			<h1 class="title">Actueel</h1>
-			{#if stand}<p class="stand">{standLine(stand)}</p>{/if}
 		</div>
 		<div class="acties">
 			<a class="actie-knop" href={atomHref} rel="alternate" type="application/atom+xml">Atom-feed</a
@@ -606,6 +605,7 @@
 		{:else if !items.length}
 			<div class="empty">
 				<p>Geen gebeurtenissen{chips.length ? ' met deze filters' : ''}.</p>
+				<!-- Here how far the data goes says why nothing shows; elsewhere it is the footer's. -->
 				{#if stand}<p class="stand">{standLine(stand)}</p>{/if}
 				{@render verder()}
 			</div>
