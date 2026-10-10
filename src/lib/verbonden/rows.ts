@@ -250,7 +250,8 @@ export function describe(
 			};
 		case 'committees':
 		case 'factions':
-			return { title: text(props.name) ?? name, context: text(props.abbreviation) };
+			// Its abbreviation is its name again ("D66" under "Democraten 66", UX-toets #16).
+			return { title: text(props.name) ?? name, context: null };
 		case 'instruments':
 			return {
 				title: text(props.citation_title) ?? text(props.title) ?? name,
@@ -475,6 +476,28 @@ export function uniqueRows(rows: Row[]): Row[] {
 export function metaParts(
 	row: Row,
 	verbinding = false
+): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
+	return zonderNaam(row.title, metaPartsVan(row, verbinding));
+}
+
+/**
+ * The meta line does not say the name again: "D66" under "D66-fractie" (UX-toets 10 Oct,
+ * #16). A plain part the title already holds, as a word, is left out.
+ */
+function zonderNaam<P extends { text: string; kind: string }>(title: string, parts: P[]): P[] {
+	const t = title.toLowerCase();
+	return parts.filter((p) => {
+		if (p.kind !== 'plain') return true;
+		const w = p.text.trim().toLowerCase();
+		if (!w) return false;
+		const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		return !new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}($|[^\\p{L}\\p{N}])`, 'u').test(t);
+	});
+}
+
+function metaPartsVan(
+	row: Row,
+	verbinding: boolean
 ): { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] {
 	const parts: { text: string; kind: 'lid' | 'proposed' | 'derived' | 'plain' }[] = [];
 	if (verbinding) {
