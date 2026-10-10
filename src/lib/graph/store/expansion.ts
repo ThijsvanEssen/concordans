@@ -255,7 +255,13 @@ export function createExpansion(
 		neighborhood: { subscribe: neighborhoodStore.subscribe },
 
 		expandNeighborhood: async (collection, key, opts = {}) => {
-			const response = await getNodeNeighborhood(collection, key, { ...opts, signal: signal() });
+			// The canvas draws only its nodes' names and kinds: the light props (CANVAS_PROPS, audited
+			// 10 Oct). The amendments timetable asks the same route with every prop.
+			const response = await getNodeNeighborhood(collection, key, {
+				...opts,
+				props: 'canvas',
+				signal: signal()
+			});
 			const additive = !!opts.relations || !!opts.additive;
 			// The API gives one more than the cap when it cut the neighbourhood off: a step
 			// further then gives the same bronnen (art. 3:7 Awb is full at two steps).
