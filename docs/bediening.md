@@ -61,14 +61,14 @@ Netwerk and the Legenda stand in one column on the canvas, Netwerk on top and th
 
 ## Gemarkeerd
 
-What a reader keeps while reading goes into a map (`src/lib/map`; concept ux-voorstel/13-map, variant 7, steps 1 and 2).
+What a reader keeps while reading goes into a map (`src/lib/map`; concept ux-voorstel/13-map, variant 7, steps 1 and 2). Gemarkeerd is a page, as every item of the menu (Thijs, 10 Oct: one behaviour for every menu item); there is no panel.
 
-- **Keeping:** a box (Vinkje, `map/Bewaar.svelte`) beside each lid and each overweging, beside their Citeer. In the head of a reader, Bewaar follows the place chosen (`Bewaar lid 3`), with `in <map>` beside it: a menu of the maps and Nieuwe map. A map chosen there becomes the active map and holds the item. In each row of Verbonden, beside the +; it replaced Verzamel.
-- **The panel:** the menu item Gemarkeerd with the active map's count opens it at the right under the top bar. Its heading is the map's name, a menu to switch maps, Nieuwe map, Hernoem and Verwijder map. Then Kopieer link, Citaten and CSV; the order (Per wet of dossier, or Eigen volgorde) and Alle mappen; the items, each a link to its place, with ↑ ↓ and × on hover; and Wis de map.
+- **Keeping:** a box (Vinkje, `map/Bewaar.svelte`) beside each lid and each overweging, beside their Citeer. In the head of a reader, Bewaar follows the place chosen (`Bewaar lid 3`), with `in <map>` beside it: a menu of the maps and Nieuwe map. A map chosen there becomes the active map and holds the item; Nieuwe map starts a map with the item, named Map 2, Map 3, and renamed on the page. The count beside Gemarkeerd in the menu follows each box at once. In each row of Verbonden, beside the +; it replaced Verzamel.
+- **The page:** `/gemarkeerd`, the menu item with the active map's count, underlined there as the others. In the frame of a page of text (`.blad--tekst`): the heading is the active map's name, a menu to switch maps, Nieuwe map, Hernoem and Verwijder map, with Kopieer link, Citaten and CSV at its right. Under it the number of bronnen and the order (Per wet of dossier, or Eigen volgorde); the items, each a link to its place, with Aantekening, ↑ ↓ and × on hover; and Wis de map.
 - **Notes:** Aantekening beside an item opens a field in place; Enter keeps it, Escape leaves it. The note stands in italics under the item and goes into the link, the citations and the CSV.
 - **Order:** per law, dossier or judgment, or the reader's own. ↑ and ↓ move an item within its group, or among all items in the own order.
-- **Alle mappen:** `/gemarkeerd`, a table of the maps by name, number of bronnen and last change, the active one in weight. A name makes its map active and opens the panel.
-- **Sharing:** a link (`?map=`, with `mapnaam=` and, in the own order, `mapvolgorde=eigen`) opens the set in the panel under its name: Bewaar als map, Voeg toe aan the active map, or Niet bewaren. Fields per item `id~at~kort~groep~notitie`, items separated by `;`; only `%`, `~` and `;` are escaped.
+- **Alle mappen:** a section under the active map (`map/AlleMappen.svelte`), a table of the maps by name, number of bronnen and last change, the active one in weight, with Verwijder per map. A name makes its map active, shown above.
+- **Sharing:** a link (`?map=`, with `mapnaam=` and, in the own order, `mapvolgorde=eigen`) opens `/gemarkeerd` with the shared map framed above the own one, under its name: Bewaar als map, Voeg toe aan the active map, or Niet bewaren; after the choice the link leaves the address. A link of before (`/explore?map=`) goes there too (AppShell). Fields per item `id~at~kort~groep~notitie`, items separated by `;`; only `%`, `~` and `;` are escaped.
 - **Storage:** the maps live in this browser (`concordans:mappen`), without an account. The one map of step 1 (`concordans:map`) became the first map.
 
 ## Marks on a timeline
