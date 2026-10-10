@@ -4,6 +4,7 @@
 	// Toezeggingen, Dossiers, Stemgeschiedenis). The heading opens and closes it (Thijs, 10
 	// Oct), remembered per kind of section; closed, its content is not drawn, so what it
 	// would load is not asked. docs/typografie.md.
+	import { formatCount } from '$lib/text/getal';
 	import type { Snippet } from 'svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Caret from './Caret.svelte';
@@ -63,12 +64,12 @@
 				aria-controls="{uid}-inhoud"
 				onclick={() => zetOpen(soortSleutel, !isOpen)}
 				>{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
-						class="aantal">{aantal.toLocaleString('nl-NL')}</span
+						class="aantal">{formatCount(aantal)}</span
 					>{/if}<Caret open={isOpen} side /></button
 			>
 		{:else}
 			{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
-					class="aantal">{aantal.toLocaleString('nl-NL')}</span
+					class="aantal">{formatCount(aantal)}</span
 				>{/if}
 		{/if}
 		{#if naast && isOpen}<span class="naast">{@render naast()}</span>{/if}

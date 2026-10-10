@@ -2,6 +2,7 @@
 // stukken that change a law, the articles they change and the judgments on the most
 // changed one. Chosen by a rule, not by hand: the newest passed bill that changes articles.
 // Its links are made as from outside the Verkenner, where the band stands.
+import { formatCount } from '$lib/text/getal';
 import { api } from '$lib/api/client';
 import { once } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
@@ -234,7 +235,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 			us.push({
 				id: 'groep/uitspraken',
 				vorm: 'uitspraak',
-				label: `${cb.judgment_total.toLocaleString('nl-NL')} uitspraken`,
+				label: `${formatCount(cb.judgment_total)} uitspraken`,
 				sub: `noemen ${artLabel.toLowerCase()}`,
 				href: buildBronHref(null, { collection: 'articles', key: art.key ?? art.id }),
 				groep: true

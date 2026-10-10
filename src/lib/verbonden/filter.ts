@@ -4,6 +4,7 @@
 // (`?bronnen=artikelen,wetten`; absent means all) and is parsed once, in
 // explore/+page.svelte, into one `VerbondenFilter` that the panel, the margin of the
 // reader, the canvas, the legend and the table read.
+import { formatCount } from '$lib/text/getal';
 import { alsDag } from '$lib/text/periode';
 import { isExplanatory } from './chamber';
 import type { Row } from './rows';
@@ -386,5 +387,4 @@ export function hiddenByKind(
 		.filter((h) => h.count > 0);
 }
 
-/** `1.104` in Dutch notation. */
-export const formatCount = (n: number) => n.toLocaleString('nl-NL');
+export { formatCount };

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { api, unwrap } from '$lib/api/client';
@@ -184,7 +185,7 @@
 			.filter(Boolean)
 			.sort()[0]
 	);
-	const today = new Date().toISOString().slice(0, 10);
+	const today = vandaag();
 
 	// Tekst zoals geldend op 1 januari 2015, versie van 1 januari 2015 tot 1 april 2015.
 	const histLine = $derived.by(() => {

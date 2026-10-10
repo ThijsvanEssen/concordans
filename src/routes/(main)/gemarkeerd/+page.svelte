@@ -5,6 +5,7 @@
 	// (Sectie), its name the heading that opens and closes it, its ways to share it at the right,
 	// what it holds under it, its items as the rows of Bladeren. A map shared as a link (?map=)
 	// stands at the top as a group of its own until it is kept or put aside.
+	import { formatCount } from '$lib/text/getal';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { tick } from 'svelte';
@@ -70,7 +71,7 @@
 		return url.toString();
 	};
 	const bestand = (m: Map) => m.naam.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'Gemarkeerd';
-	const tel = (n: number) => `${n.toLocaleString('nl-NL')} ${n === 1 ? 'bron' : 'bronnen'}`;
+	const tel = (n: number) => `${formatCount(n)} ${n === 1 ? 'bron' : 'bronnen'}`;
 	const dag = (iso: string) => korteDatum(vandaag(new Date(iso)));
 	const anker = (m: Map) => `map-${m.id}`;
 

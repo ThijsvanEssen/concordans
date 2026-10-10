@@ -2,6 +2,7 @@
 // drawn as hundreds of signs: past CLUSTER_MIN, the bronnen of a kind that hang on the
 // focus alone stand on the canvas as one cluster bron, "250 uitspraken". One click on it
 // opens a card that shows them all, or the group in Verbonden; shown, they fold back.
+import { formatCount } from '$lib/text/getal';
 import { bronPlural, type Collection } from '$lib/vocabulary';
 
 /** More than this many bronnen of one kind make a cluster. */
@@ -33,7 +34,7 @@ type Edge = { source: string; target: string; relation: string };
 
 /** "250 uitspraken": the count and the kind, as the cluster is named. */
 export const clusterLabel = (c: Pick<Cluster, 'collection' | 'members'>) =>
-	`${c.members.length.toLocaleString('nl-NL')} ${bronPlural(c.collection).toLowerCase()}`;
+	`${formatCount(c.members.length)} ${bronPlural(c.collection).toLowerCase()}`;
 
 /**
  * The clusters around `focus`: per kind, the neighbours tied to nothing but the focus and
@@ -184,7 +185,7 @@ export function clusterZinnen(
 	group: { label: string; total?: number } | null,
 	namen: string[] = []
 ): string[] {
-	const n = (v: number) => v.toLocaleString('nl-NL');
+	const n = formatCount;
 	if (c.ends)
 		return [
 			namen.length > 0

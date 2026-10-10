@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
+	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -49,7 +51,7 @@
 		type FeedKind
 	} from '$lib/components/actueel/feed';
 
-	const today = new Date().toISOString().slice(0, 10);
+	const today = vandaag();
 	/** The days one summary spans at most, as the API allows. */
 	const SUMMARY_DAYS_MAX = 31;
 
@@ -580,7 +582,7 @@
 		<div class="head">
 			{#if total !== null}
 				<p class="count">
-					{total.toLocaleString('nl-NL')}
+					{formatCount(total)}
 					<span class="noun">{total === 1 ? 'gebeurtenis' : 'gebeurtenissen'}</span>
 				</p>
 			{:else if tellen}

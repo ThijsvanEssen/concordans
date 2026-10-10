@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Overzicht of a topic: its events in the Kruiswoord (concept ux-voorstel/1f), the kinds as
 	// columns and the months as rows, and under it the list of a chosen cell. The stemmingen are
@@ -672,7 +673,7 @@
 		toezegging: 'Toezegging'
 	};
 	/** A number; '…' for one still being counted (null). */
-	const getal = (n: number | null) => (n === null ? '…' : n.toLocaleString('nl-NL'));
+	const getal = (n: number | null) => (n === null ? '…' : formatCount(n));
 	const naam = $derived(termen.join('; '));
 	const oudeFilters = $derived(!keuze && !!(f.soort || f.uitkomst || f.jaar || f.stem));
 

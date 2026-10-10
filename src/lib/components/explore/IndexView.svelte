@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
+	import { formatDecimal } from '$lib/text/getal';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import { axisLabels } from './index/years-axis';
 	import { korteDatum, weekdag } from '$lib/text/datum';
@@ -2680,9 +2682,7 @@
 														<span class="row-sub"
 															>{[
 																f.seats != null && totalSeats > 0
-																	? `${((f.seats / totalSeats) * 100).toLocaleString('nl-NL', {
-																			maximumFractionDigits: 1
-																		})}% van de zetels`
+																	? `${formatDecimal((f.seats / totalSeats) * 100)}% van de zetels`
 																	: null,
 																f.member_count
 																	? `${f.member_count} ${f.member_count === 1 ? 'lid' : 'leden'}`
@@ -2910,7 +2910,7 @@
 											{@const late =
 												t.status === OPEN_STATUS &&
 												!!t.expected_resolution &&
-												t.expected_resolution < new Date().toISOString().slice(0, 10)}
+												t.expected_resolution < vandaag()}
 											<IndexRow
 												{bron}
 												title={t.text ?? 'Toezegging zonder tekst'}

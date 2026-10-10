@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
@@ -65,7 +66,7 @@
 	 */
 	const SUMMARY_ITEMS = 3 * LINES_SHOWN;
 
-	const today = new Date().toISOString().slice(0, 10);
+	const today = vandaag();
 
 	let lines = $state<TimelineLine[]>([]);
 	/** Actueel's first answer: under way, in, or failed. A phone waits seconds for it. */

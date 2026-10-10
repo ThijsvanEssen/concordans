@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { vandaag } from '$lib/text/datum';
+	import { formatCount } from '$lib/text/getal';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
 	import { onDestroy, onMount, tick } from 'svelte';
 	import { isEscape } from '$lib/actions/keys';
@@ -171,8 +173,7 @@
 			: null
 	);
 	const groupPeriod = $derived<Period | null>(
-		yearPeriod ??
-			momentOf(focusNodeId, containerGroups.values(), new Date().toISOString().slice(0, 10))
+		yearPeriod ?? momentOf(focusNodeId, containerGroups.values(), vandaag())
 	);
 
 	const hiddenKinds = $derived<ReadonlySet<BronKind>>(
@@ -1521,7 +1522,7 @@
 					{/each}
 					<div class="cluster-knoppen">
 						<button type="button" class="btn is-primary" onclick={() => showCluster(c)}
-							>Toon alle {c.members.length.toLocaleString('nl-NL')} in het netwerk</button
+							>Toon alle {formatCount(c.members.length)} in het netwerk</button
 						>
 						{#if !c.ends}
 							<button

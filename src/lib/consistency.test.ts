@@ -56,6 +56,22 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('formats a figure only in $lib/text/getal.ts, and takes today from datum.ts', () => {
+		const eigen: Uitzonderingen = {
+			'lib/text/getal.ts': 'the one place',
+			'lib/components/explore/readers/MemberReader.svelte': 'being reworked (Front-end #1)'
+		};
+		expect(offenders((t) => /\.toLocaleString\(/.test(t), buiten(eigen))).toEqual([]);
+		// The UTC day is yesterday between midnight and two; vandaag() is the reader's own day.
+		const utc: Uitzonderingen = {
+			'lib/components/explore/readers/CommitmentReader.svelte': 'being reworked (Front-end #1)',
+			'lib/components/explore/readers/MemberReader.svelte': 'being reworked (Front-end #1)'
+		};
+		expect(
+			offenders((t) => /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/.test(t), buiten(utc))
+		).toEqual([]);
+	});
+
 	it('fills no missing value with a sign: Waarde leaves it empty, Veld drops the row', () => {
 		// "—" or "–" as a value reads as a fact ("unknown") where the data only lacks it.
 		const sign = /['"`>][—–]['"`<]/;
