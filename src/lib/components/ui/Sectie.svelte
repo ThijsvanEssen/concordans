@@ -26,7 +26,8 @@
 		titel: string;
 		/** The glyph before the title: what the section lists. */
 		soort?: Collection;
-		aantal?: number | null;
+		/** The count beside the heading; a string as given (`25+`). */
+		aantal?: number | string | null;
 		id?: string;
 		/** Beside the title, at the right: a link or a control. */
 		naast?: Snippet;
@@ -58,12 +59,12 @@
 				aria-controls="{uid}-inhoud"
 				onclick={() => zetOpen(soortSleutel, !isOpen)}
 				>{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
-						class="aantal">{formatCount(aantal)}</span
+						class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
 					>{/if}<Caret open={isOpen} side /></button
 			>
 		{:else}
 			{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
-					class="aantal">{formatCount(aantal)}</span
+					class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
 				>{/if}
 		{/if}
 		{#if naast && isOpen}<span class="naast">{@render naast()}</span>{/if}
