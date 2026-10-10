@@ -8,7 +8,7 @@
 	import type { GraphFilters } from '$lib/graph/graph-store';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
-	import { plaatsLabel, type Rect as LabelRect } from './label-place';
+	import { hoverPlaats, lijnLabelPlaats, plaatsLabel, type Rect as LabelRect } from './label-place';
 	import { relationLabel, type Collection, type Relation } from '$lib/vocabulary';
 	import type { BronKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
@@ -141,6 +141,8 @@
 	let destroyed = false;
 	/** The names drawn in this frame, so the next one stands beside them, not over them. */
 	let labelsTaken: LabelRect[] = [];
+	/** Where each name stands in this frame: its hover stands there too, not beside it. */
+	let labelsAt = new Map<string, LabelRect>();
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
 	let renderer: SigmaType | null = null;
@@ -1035,7 +1037,7 @@
 
 		const [
 			{ default: Sigma },
-			{ createEdgeArrowProgram, drawDiscNodeHover },
+			{ createEdgeArrowProgram },
 			{ createNodeBorderProgram },
 			{ NodeSquareProgram },
 			{ createNodeImageProgram },
@@ -1051,6 +1053,35 @@
 		// Left before sigma had loaded (a quick step to the next bron): no container to draw in.
 		if (destroyed) return;
 		const t = tokens();
+		/**
+		 * The name of a verbinding: level, at the middle of its line, on paper, the same for
+		 * every line (Thijs, 10 Oct: a solid line's name ran along it, a dashed one's lay level).
+		 */
+		const tekenLijnLabel = (
+			context: CanvasRenderingContext2D,
+			data: { label?: string | null },
+			source: { x: number; y: number },
+			target: { x: number; y: number },
+			settings: { edgeLabelSize: number; edgeLabelWeight: string; edgeLabelFont: string }
+		) => {
+			if (!data.label) return;
+			const size = settings.edgeLabelSize;
+			context.font = `${settings.edgeLabelWeight} ${size}px ${settings.edgeLabelFont}`;
+			const w = context.measureText(data.label).width + 6;
+			const h = size + 4;
+			const room = context.canvas.width / (window.devicePixelRatio || 1);
+			const p = lijnLabelPlaats(source.x, source.y, target.x, target.y, w, h, room);
+			context.fillStyle = t.paper;
+			context.fillRect(p.x, p.y, w, h);
+			context.fillStyle = t.ink;
+			context.fillText(data.label, p.x + 3, p.y + h / 2 + size / 3);
+		};
+		/** A program of sigma's with that one name for its lines. */
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const metLijnLabel = <P extends new (...a: any[]) => object>(Program: P): P =>
+			class extends Program {
+				drawLabel = tekenLijnLabel;
+			};
 		const NodeImageProgram = createNodeImageProgram({
 			keepWithinCircle: true,
 			drawingMode: 'background',
@@ -1071,6 +1102,7 @@
 			]
 		});
 
+		const stippel = stippelProgrammas(pijlLengte());
 		renderer = new Sigma(graph, wrap, {
 			nodeProgramClasses: {
 				border: NodeBorderProgram,
@@ -1078,12 +1110,16 @@
 				image: NodeImageProgram
 			},
 			edgeProgramClasses: {
-				arrow: createEdgeArrowProgram({
-					lengthToThicknessRatio: pijlLengte(),
-					widenessToThicknessRatio: pijlLengte() * PIJL_BREED
-				}),
-				...stippelProgrammas(pijlLengte())
+				arrow: metLijnLabel(
+					createEdgeArrowProgram({
+						lengthToThicknessRatio: pijlLengte(),
+						widenessToThicknessRatio: pijlLengte() * PIJL_BREED
+					}) as never
+				),
+				dashed: metLijnLabel(stippel.dashed as never),
+				dotted: metLijnLabel(stippel.dotted as never)
 			},
+			defaultDrawEdgeLabel: tekenLijnLabel as never,
 			// The thinnest a line gets, dimmed or zoomed out: its arrowhead stays 4.5 px long.
 			minEdgeThickness: 1.4,
 			defaultNodeType: 'border',
@@ -1133,6 +1169,12 @@
 				);
 				if (!at) return;
 				labelsTaken.push({ x: at.x, y: at.y, w: w + 4, h: size + 4 });
+				labelsAt.set((data as { key?: string }).key ?? '', {
+					x: at.x,
+					y: at.y,
+					w: w + 4,
+					h: size + 4
+				});
 				const x = at.x + 2;
 				const y = at.y + 2 + size / 2;
 				context.save();
@@ -1147,8 +1189,36 @@
 					: (settings.labelColor.color ?? t.ink);
 				context.fillText(data.label, x, y + size / 3);
 			},
+			// A hovered or focused bron's name, once: where its name stands, raised (a frame and a
+			// shadow), else beside the bron on the side that keeps it inside the canvas and clear
+			// of the Netwerk card (Thijs, 10 Oct: the name stood twice, the second one cut off).
 			defaultDrawNodeHover: (context, data, settings) => {
-				if (!data.anchor) drawDiscNodeHover(context, data, settings);
+				if (data.anchor || !data.label) return;
+				const size = settings.labelSize;
+				context.font = `${settings.labelWeight} ${size}px ${settings.labelFont}`;
+				const w = context.measureText(data.label).width + 4;
+				const h = size + 4;
+				const room = context.canvas.width / (window.devicePixelRatio || 1);
+				const kaart = avoid ? { x: avoid.x, y: avoid.y, w: avoid.width, h: avoid.height } : null;
+				const plek = labelsAt.get((data as { key?: string }).key ?? '') ?? {
+					...hoverPlaats(data.x, data.y, data.size, w, h, room, kaart),
+					w,
+					h
+				};
+				context.save();
+				context.shadowColor = 'rgba(0, 0, 0, 0.18)';
+				context.shadowBlur = 6;
+				context.fillStyle = t.paper;
+				context.beginPath();
+				context.arc(data.x, data.y, data.size + 2, 0, Math.PI * 2);
+				context.fill();
+				context.fillRect(plek.x - 2, plek.y - 1, plek.w + 4, plek.h + 2);
+				context.restore();
+				context.strokeStyle = t.ruleStrong;
+				context.lineWidth = 1;
+				context.strokeRect(plek.x - 1.5, plek.y - 0.5, plek.w + 3, plek.h + 1);
+				context.fillStyle = t.ink;
+				context.fillText(data.label, plek.x + 2, plek.y + 2 + size / 2 + size / 3);
 			},
 
 			nodeReducer: (id, data) => {
@@ -1423,7 +1493,10 @@
 			}
 		});
 
-		renderer.on('beforeRender', () => (labelsTaken = []));
+		renderer.on('beforeRender', () => {
+			labelsTaken = [];
+			labelsAt = new Map();
+		});
 		renderer.on('afterRender', updateViewportLabels);
 
 		renderer.on('clickNode', ({ node }) => onNodeClick?.(node));

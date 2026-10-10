@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { labelX, plaatsLabel } from './label-place';
+import { hoverPlaats, labelX, lijnLabelPlaats, plaatsLabel } from './label-place';
 
 describe('labelX', () => {
 	it('puts a name right of its bron where it fits', () => {
@@ -34,5 +34,26 @@ describe('plaatsLabel', () => {
 		const all = [{ x: 0, y: 0, w: 400, h: 400 }];
 		expect(plaatsLabel(100, 100, 8, 80, 16, 400, all)).toBeNull();
 		expect(plaatsLabel(100, 100, 8, 80, 16, 400, all, true)).toEqual({ x: 111, y: 92 });
+	});
+});
+
+describe('hoverPlaats', () => {
+	it('stands right of the bron where it fits, left where a card covers the right', () => {
+		expect(hoverPlaats(100, 50, 5, 80, 16, 400)).toEqual({ x: 108, y: 42 });
+		const kaart = { x: 200, y: 0, w: 200, h: 300 };
+		expect(hoverPlaats(150, 50, 5, 80, 16, 400, kaart)).toEqual({ x: 62, y: 42 });
+	});
+
+	it('stays inside the canvas where neither side has room', () => {
+		const p = hoverPlaats(30, 50, 5, 380, 16, 400);
+		expect(p.x).toBeGreaterThanOrEqual(2);
+		expect(p.x + 380).toBeLessThanOrEqual(398);
+	});
+});
+
+describe('lijnLabelPlaats', () => {
+	it('centres the name on the middle of the line, level, inside the canvas', () => {
+		expect(lijnLabelPlaats(0, 0, 200, 100, 60, 14, 400)).toEqual({ x: 70, y: 43 });
+		expect(lijnLabelPlaats(380, 0, 400, 0, 60, 14, 400).x).toBe(338);
 	});
 });
