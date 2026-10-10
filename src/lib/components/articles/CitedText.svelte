@@ -98,7 +98,6 @@
 	:global(a.begrip:hover),
 	:global(a.begrip:focus-visible) {
 		text-decoration-color: var(--ink);
-		outline: none;
 	}
 	/* The link lives in BronLink; its look is the text's own. */
 	:global(a.cited) {
@@ -114,6 +113,5 @@
 	:global(a.cited:focus-visible) {
 		background: var(--wassing);
 		text-decoration-style: solid;
-		outline: none;
 	}
 </style>

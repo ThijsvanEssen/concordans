@@ -846,8 +846,14 @@
 		color: var(--ink-3);
 		flex-shrink: 0;
 	}
+	/* The field carries the ink ring of its input (the input itself has none); in the
+	   dialog the field is its one stop and the caret says enough. */
 	.field:focus-within {
 		border-color: var(--ink-3);
+	}
+	.search:not(.search--overlay) .field:focus-within {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
 	}
 	.search--overlay .field {
 		border: 0;

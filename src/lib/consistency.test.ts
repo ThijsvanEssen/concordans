@@ -653,3 +653,27 @@ describe('canvas cards and halls', () => {
 		).toEqual([]);
 	});
 });
+
+describe('the keyboard', () => {
+	it('lets no focus pass without a mark: every outline taken away is named (audit 3)', () => {
+		// The ink ring stands on every focus (AppShell, :focus-visible). A rule that takes the
+		// outline away gives the focus another mark that is as plain, and says so here.
+		const eigen: Record<string, string> = {
+			'lib/search/Search.svelte input': 'its field carries the ring (.field:focus-within)',
+			'lib/components/graph/GraphView.svelte .graph-canvas-wrap:focus':
+				'a click on the canvas; :focus-visible has the ring',
+			'lib/components/ui/TekstMenu.svelte :global(.tekstmenu__item:hover:not(:disabled)), :global(.tekstmenu__item:focus-visible), :global(.tekstmenu__item:focus-within)':
+				'an item of an open menu: the wash of the row, as every menu',
+			'lib/components/explore/Hemicycle.svelte a': 'a seat of the hall: its sector in ink',
+			'lib/components/explore/readers/KamerZetels.svelte .doel': 'a seat: its stroke in ink',
+			'lib/onderwerpen/Kruiswoord.svelte .cel.vol:hover, .cel.vol:focus-visible':
+				'a cell of the grid: an inset line in ink'
+		};
+		const zonder = sources.flatMap(({ path, text }) =>
+			rules(text)
+				.filter((r) => /outline:\s*(none|0)\b/.test(r.body))
+				.map((r) => `${path} ${r.selector.replace(/\s+/g, ' ')}`)
+		);
+		expect(zonder.filter((k) => !(k in eigen))).toEqual([]);
+	});
+});
