@@ -1,6 +1,5 @@
 import { maandJaar, vandaag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
-import { POST_LABEL } from './government';
 
 // Who held which post in a cabinet, laid out on the cabinet's term: per ministry its seats,
 // per seat the holders one after the other, a stand-in among them. A position is a fraction
@@ -68,14 +67,6 @@ export function lanesOf(seat: Seat, term: Term): Block[][] {
 		else lanes.push([block]);
 	}
 	return lanes;
-}
-
-/** What a seat is called: its post, with the portfolio where the post has one. */
-export function seatLabel(seat: Seat): string {
-	const post = seat.post ? POST_LABEL[seat.post] : (seat.function ?? 'Post');
-	if (seat.post === 'minister_zonder_portefeuille' && seat.portfolio)
-		return `Minister voor ${seat.portfolio}`;
-	return seat.portfolio ? `${post}, ${seat.portfolio}` : post;
 }
 
 /** The phases that change how a cabinet governs, within its term: demissionair and after. */

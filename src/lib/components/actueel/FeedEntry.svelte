@@ -259,7 +259,7 @@
 		color: var(--ink-3);
 	}
 	.kind--failed {
-		color: var(--accent);
+		color: var(--uitkomst-nee);
 	}
 	.kind-sub {
 		display: block;
@@ -303,7 +303,7 @@
 	}
 	/* What deviates stands out: a rejected vote in the accent. */
 	.outcome--failed {
-		color: var(--accent);
+		color: var(--uitkomst-nee);
 	}
 	.aside-note {
 		display: block;

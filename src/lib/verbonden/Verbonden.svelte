@@ -896,7 +896,9 @@
 		color: var(--ink-2);
 	}
 	.row__part--proposed {
-		color: var(--accent);
+		color: var(--ink);
+		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
+		font-weight: 600;
 	}
 	.row__part--derived {
 		font-style: italic;

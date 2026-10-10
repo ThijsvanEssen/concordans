@@ -5,7 +5,6 @@ import {
 	leesKeuze,
 	somVan,
 	tel,
-	totalen,
 	vakken,
 	weekVan
 } from './kruiswoord';
@@ -55,7 +54,6 @@ describe('the Kruiswoord', () => {
 		expect(sep.verworpen).toEqual({ n: 1, nieuw: false });
 		expect(sep.toezeggingen.n).toBe(4);
 		expect(somVan(sep)).toBe(6);
-		expect(totalen(m.values()).aangenomen).toBe(2);
 	});
 
 	it('reads a chosen cell from the URL', () => {

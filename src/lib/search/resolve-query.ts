@@ -301,15 +301,3 @@ export async function resolveQuery(
 		return null;
 	}
 }
-
-/**
- * The law an abbreviation stands for ("AVG" → Verordening (EU) 2016/679), as `/api/resolve`
- * knows it (API 0.70: the curated abbreviations), or null.
- */
-export async function resolveLaw(
-	query: string,
-	deps: Pick<ResolveDeps, 'resolve'> = apiDeps
-): Promise<Resolved | null> {
-	const found = await deps.resolve(query).catch(() => null);
-	return found?.ref.collection === 'instruments' ? found : null;
-}

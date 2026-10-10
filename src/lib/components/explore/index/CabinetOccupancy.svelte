@@ -349,17 +349,17 @@
 		position: absolute;
 		top: 0;
 		padding-left: var(--s-1);
-		border-left: 1px dotted var(--accent);
+		border-left: 1px dotted var(--ink);
 		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
 		font-weight: 600;
-		color: var(--accent);
+		color: var(--ink);
 		white-space: nowrap;
 	}
 	.phase-line {
 		position: absolute;
 		top: 0;
 		bottom: 0;
-		border-left: 1px dotted var(--accent);
+		border-left: 1px dotted var(--ink);
 		opacity: 0.6;
 	}
 
@@ -415,7 +415,7 @@
 	.occ-phases {
 		margin: 0;
 		font-size: var(--t-micro);
-		color: var(--accent);
+		color: var(--ink);
 	}
 	.occ-text .occ-seat {
 		margin: var(--s-2) 0 0;

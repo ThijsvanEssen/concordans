@@ -167,7 +167,9 @@
 		color: var(--ink-3);
 	}
 	.late {
-		color: var(--accent) !important;
+		color: var(--ink) !important;
+		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
+		font-weight: 600;
 	}
 	.nums {
 		font-variant-numeric: tabular-nums;

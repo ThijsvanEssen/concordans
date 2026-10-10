@@ -689,7 +689,7 @@
 		color: var(--ink);
 	}
 	.whole-hist a {
-		color: var(--accent);
+		color: var(--ink);
 	}
 	.whole-before {
 		margin: var(--s-5) 0 0;
@@ -698,7 +698,7 @@
 		color: var(--ink-2);
 	}
 	.whole-before a {
-		color: var(--accent);
+		color: var(--ink);
 	}
 	.whole-art-note {
 		margin-left: var(--s-2);

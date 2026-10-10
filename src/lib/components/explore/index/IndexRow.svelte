@@ -178,7 +178,7 @@
 		text-underline-offset: 3px;
 	}
 	.row--on .row-title {
-		color: var(--accent);
+		color: var(--ink);
 	}
 	.row-aside {
 		display: flex;

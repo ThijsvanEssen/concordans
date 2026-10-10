@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import Vinkje from '$lib/components/ui/Vinkje.svelte';
 	import { terPlekke } from '$lib/actions/klik';
 	// All verbindingen of the selected bron as a table, under the same bronfilter:
@@ -98,7 +99,6 @@
 	let hiddenColumns = $state(new Set<string>());
 	let shown = $state(PAGE);
 	let columnsOpen = $state(false);
-	let sortOpen = $state(false);
 
 	const rows = $derived(mentionRows(allRows(filterGroups(verbonden.groups, filter))));
 	const mentions = $derived(mentionLine(filterGroups(verbonden.groups, filter)));
@@ -131,6 +131,19 @@
 		if (!next.delete(id)) next.add(id);
 		hiddenColumns = next;
 	}
+
+	/** The directions under the columns, in the words of the column chosen. */
+	const richtingen = $derived<{ dir: 'asc' | 'desc'; label: string }[]>(
+		sortBy === 'datum'
+			? [
+					{ dir: 'desc', label: 'Nieuwste eerst' },
+					{ dir: 'asc', label: 'Oudste eerst' }
+				]
+			: [
+					{ dir: 'asc', label: 'Oplopend' },
+					{ dir: 'desc', label: 'Aflopend' }
+				]
+	);
 
 	const sortLabel = $derived.by(() => {
 		const col = COLUMNS.find((c) => c.id === sortBy);
@@ -179,31 +192,33 @@
 		<span class="toolbar__space"></span>
 		<a href={backHref} class="toolbar__back" data-sveltekit-noscroll>← Terug naar de tekst</a>
 		<button type="button" class="btn" onclick={onOpenFilter}>Filter</button>
-		<div class="menu" use:menu={{ open: sortOpen, close: () => (sortOpen = false) }}>
-			<button
-				type="button"
-				class="btn"
-				aria-haspopup="menu"
-				aria-expanded={sortOpen}
-				onclick={() => (sortOpen = !sortOpen)}>{sortLabel}<Caret open={sortOpen} /></button
-			>
-			{#if sortOpen}
-				<div class="menu__list" role="menu">
-					{#each COLUMNS as c (c.id)}
-						<button
-							type="button"
-							role="menuitemradio"
-							aria-checked={sortBy === c.id}
-							class="tekstmenu__item"
-							onclick={() => {
-								sortOn(c.id);
-								sortOpen = false;
-							}}>{c.label}</button
-						>
-					{/each}
-				</div>
-			{/if}
-		</div>
+		<!-- The order: one TekstMenu, the columns as its options and the direction under the
+		     rule (Thijs, 10 Oct); choosing the same column again changes nothing. -->
+		<TekstMenu
+			label="Volgorde"
+			tekst={sortLabel}
+			opties={COLUMNS.map((c) => ({ waarde: c.id, label: c.label }))}
+			waarde={sortBy}
+			onKies={(id) => {
+				sortBy = id;
+				sortDir = id === 'datum' ? 'desc' : 'asc';
+			}}
+		>
+			{#snippet onder(dicht)}
+				{#each richtingen as r (r.dir)}
+					<button
+						type="button"
+						role="menuitemradio"
+						class="tekstmenu__item"
+						aria-checked={sortDir === r.dir}
+						onclick={() => {
+							sortDir = r.dir;
+							dicht();
+						}}>{r.label}</button
+					>
+				{/each}
+			{/snippet}
+		</TekstMenu>
 		<div class="menu" use:menu={{ open: columnsOpen, close: () => (columnsOpen = false) }}>
 			<button
 				type="button"
@@ -486,7 +501,9 @@
 		}
 	}
 	td.is-proposed {
-		color: var(--accent);
+		color: var(--ink);
+		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
+		font-weight: 600;
 	}
 	.conf {
 		display: inline-block;

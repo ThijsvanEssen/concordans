@@ -297,6 +297,23 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('keeps red at rest for "nee" and an error (Thijs, 10 Oct 2026)', () => {
+		// The accent on hover and focus is every link's; at rest only in these places.
+		const css = (t: string) =>
+			(/<style>([\s\S]*?)<\/style>/.exec(t)?.[1] ?? '').replace(/\/\*[\s\S]*?\*\//g, '');
+		const rust = (t: string) =>
+			[...css(t).matchAll(/([^{}]+)\{([^{}]*)\}/g)].some(
+				([, selector, body]) =>
+					/var\(--accent\)/.test(body) && !/:hover|:focus|is-landed/.test(selector)
+			);
+		const eigen: Uitzonderingen = {
+			'lib/components/layout/AppShell.svelte': 'the tokens, --uitkomst-nee among them',
+			'lib/components/layout/Wordmark.svelte': 'the § of the name',
+			'routes/(main)/actueel/+page.svelte': 'an error'
+		};
+		expect(offenders(rust, buiten(eigen))).toEqual([]);
+	});
+
 	it('takes every colour in a style from the tokens in AppShell', () => {
 		// A hex or rgb() value in a component is a colour beside the palette. A mask's `black`
 		// is not a colour; the canvas and the fracties' own colours live in TypeScript.
@@ -407,9 +424,7 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 			'lib/components/layout/AppShell.svelte': 'the Knop itself',
 			'lib/components/ui/IconKnop.svelte': 'the one icon button',
 			'lib/components/layout/TopBar.svelte': 'the search in the bar looks as the field it opens',
-			'lib/netwerk/NetwerkPanel.svelte': 'the example in an empty netwerk is a card, not a button',
-			'routes/(main)/+page.svelte':
-				'the scopes of the home search, pressed or not: a Keuze once the home page is rebuilt'
+			'lib/netwerk/NetwerkPanel.svelte': 'the example in an empty netwerk is a card, not a button'
 		};
 		expect(offenders((t) => rules(t).some(knop), buiten(eigen))).toEqual([]);
 	});

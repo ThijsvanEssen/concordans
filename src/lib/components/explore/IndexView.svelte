@@ -3434,7 +3434,7 @@
 		background: linear-gradient(to right, var(--ink) 40%, transparent);
 	}
 	.cab--now .cab-bar {
-		background: var(--accent);
+		background: var(--ink);
 	}
 	.cab:hover .cab-bar,
 	.cab:focus-visible .cab-bar {
@@ -3491,7 +3491,9 @@
 		color: var(--ink-2);
 	}
 	.row-sub--late {
-		color: var(--accent);
+		color: var(--ink);
+		/* In ink, as everything at rest but "nee" (Thijs, 10 Oct); the weight keeps it seen. */
+		font-weight: 600;
 	}
 
 	/* Stemmingen: the sitting day over its votes, with the share that passed. */

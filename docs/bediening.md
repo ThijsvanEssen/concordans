@@ -33,7 +33,7 @@ This holds for Bladeren too (Thijs, 10 October 2026, choice (a)): a row's title 
 
 - Height: 32 on a page, 24 in a panel or group; one line of controls has one height. On the 4 px grid; `--s-2` between controls, `--s-4` between groups.
 - Letter: a control in Schibsted at `--t-ui` or `--t-ui-micro`, 500. A text link and a facet's label are text, in the serif.
-- Colour: ink for everything; chosen is filled (Keuze) or in weight. Red (`--accent`) only on hover and focus, and for the outcome "nee".
+- Colour: ink for everything; chosen is filled (Keuze) or in weight. Red (`--accent`) only on hover and focus, for the outcome "nee" (`--uitkomst-nee`) and for an error (Thijs, 10 Oct 2026). What was red at rest is ink: te laat and voorgesteld in weight, nu, the majority, a chosen or active row, a cited link.
 - Words: a text menu shows its value ("Alle bronnen"), not a label with a colon; a button is a verb or a destination; counts stand in the control ("Alle 244 uitspraken"), not in a sentence; no explanatory sentences between controls.
 
 ## Size in a timeline
