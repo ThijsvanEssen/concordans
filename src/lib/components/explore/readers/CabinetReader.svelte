@@ -15,7 +15,7 @@
 	import { bronLabel } from '$lib/vocabulary';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { achtergrondVan, kamerKleuren } from '../partijkleuren.svelte';
-	import { formatLongDate } from './_shared';
+	import { formatLongDate, textProp } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -53,14 +53,48 @@
 	// Since API 0.26 every cabinet is dated to the day.
 	const when = (date: string | null | undefined) => (date ? formatLongDate(date) : null);
 
+	// The head, the period and the seats from the light node at once; the rest when the
+	// cabinet's record comes (/api/cabinets/{key} takes seconds cold: Rutte IV 2 s, live
+	// 10 Oct, where the light node takes 0.2 s).
+	const p = $derived(node.raw?.props ?? {});
+	const naam = $derived(
+		view.kind === 'loaded' ? view.cabinet.name : (textProp(p.name) ?? node.label)
+	);
+	const van = $derived(view.kind === 'loaded' ? view.cabinet.from_date : textProp(p.from_date));
+	const tot = $derived(view.kind === 'loaded' ? view.cabinet.to_date : textProp(p.to_date));
+
 	const listHref = (kind: 'ministers' | 'commitments', key: string) =>
 		indexHref(kind, { cabinet: key });
 </script>
 
 <ReaderFrame>
 	<div class="r-cabinet">
+		<ReaderHead
+			collection="cabinets"
+			title={naam}
+			acties={{
+				bewaar: {
+					id: node.id,
+					at: '',
+					kort: naam,
+					voluit: naam,
+					groep: bronLabel('cabinets')
+				}
+			}}
+		/>
 		{#if view.kind === 'loading'}
-			<p class="loading stil">Laden…</p>
+			<!-- The period from the light node; the other rows wait for the record, each with
+			     its label in place so nothing under them moves when they come. -->
+			<Feiten>
+				<Veld label="Periode" value={when(van)} nodig>
+					<span class="nums"
+						>{#if tot}{when(van)} tot {when(tot)}{:else}sinds {when(van)}{/if}</span
+					>
+				</Veld>
+				{#each ['Minister-president', 'Coalitie', 'Bewindspersonen', 'Wetsvoorstellen', 'Toezeggingen'] as label (label)}
+					<Veld {label} value="…"><span class="stil">…</span></Veld>
+				{/each}
+			</Feiten>
 		{:else if view.kind === 'error'}
 			<p class="error">
 				{view.message}
@@ -70,20 +104,6 @@
 			{@const c = view.cabinet}
 			{@const from = when(c.from_date)}
 			{@const to = when(c.to_date)}
-			<ReaderHead
-				collection="cabinets"
-				title={c.name}
-				acties={{
-					bewaar: {
-						id: node.id,
-						at: '',
-						kort: c.name,
-						voluit: c.name,
-						groep: bronLabel('cabinets')
-					}
-				}}
-			/>
-
 			<Feiten>
 				<Veld label="Periode" value={from} nodig>
 					<span class="nums"
@@ -124,9 +144,8 @@
 					>
 				</Veld>
 			</Feiten>
-
-			<KabinetZetels kabinet={c.key} />
 		{/if}
+		<KabinetZetels kabinet={node.key} />
 	</div>
 </ReaderFrame>
 
@@ -139,7 +158,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.loading,
 	.error {
 		margin: 0;
 	}
