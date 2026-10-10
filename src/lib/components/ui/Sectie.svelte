@@ -7,7 +7,7 @@
 	import type { Snippet } from 'svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Caret from './Caret.svelte';
-	import { isDicht, zetDicht } from './dicht.svelte';
+	import { isOpen as staatOpen, zetOpen } from './dicht.svelte';
 	import type { Collection } from '$lib/vocabulary';
 
 	let {
@@ -19,6 +19,7 @@
 		niveau = 3,
 		inklapbaar = true,
 		sleutel,
+		standaardOpen = false,
 		open = $bindable(true),
 		children
 	}: {
@@ -35,6 +36,9 @@
 		inklapbaar?: boolean;
 		/** The kind of section whose state it shares; its title where none is given. */
 		sleutel?: string;
+		/** Open until closed: a page of groups (Gevolgd), not a reader's section, which starts
+		 *  closed. */
+		standaardOpen?: boolean;
 		/** Open or closed, for a parent that loads only for an open section. */
 		open?: boolean;
 		children: Snippet;
@@ -42,7 +46,7 @@
 
 	const soortSleutel = $derived(sleutel ?? titel);
 	/** Drawn from the first paint as it was left: a closed section never draws its content. */
-	const isOpen = $derived(!inklapbaar || !isDicht(soortSleutel));
+	const isOpen = $derived(!inklapbaar || staatOpen(soortSleutel, standaardOpen));
 	$effect(() => {
 		open = isOpen;
 	});
@@ -57,7 +61,7 @@
 				class="kop-knop"
 				aria-expanded={isOpen}
 				aria-controls="{uid}-inhoud"
-				onclick={() => zetDicht(soortSleutel, isOpen)}
+				onclick={() => zetOpen(soortSleutel, !isOpen)}
 				>{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
 						class="aantal">{aantal.toLocaleString('nl-NL')}</span
 					>{/if}<Caret open={isOpen} side /></button
