@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ReaderHead from './ReaderHead.svelte';
 	// Reader for an activity: a committee debate, plenary debate or procedural
 	// meeting. There is no endpoint for one activity; the node's own props are shown.
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -18,18 +19,32 @@
 			tk_url?: string;
 		}
 	);
+	const titel = $derived(attrs.agenda_title || node.label);
 </script>
 
 <ReaderFrame>
 	<div class="r-activity">
-		<header class="head">
-			<span class="lezer-soort">
+		<ReaderHead
+			collection="activities"
+			title={titel}
+			acties={{
+				bewaar: {
+					id: node.id,
+					at: '',
+					kort: titel,
+					voluit: [attrs.kind, attrs.date ? formatLongDate(attrs.date) : null, titel]
+						.filter(Boolean)
+						.join(', '),
+					groep: attrs.kind ?? bronLabel('activities')
+				}
+			}}
+		>
+			{#snippet soort()}
 				<KindGlyph collection="activities" />
 				{attrs.kind ?? bronLabel('activities')}
 				{#if attrs.date}<span class="komma">,</span>{formatLongDate(attrs.date)}{/if}
-			</span>
-			<h2 class="lezer-titel">{attrs.agenda_title || node.label}</h2>
-		</header>
+			{/snippet}
+		</ReaderHead>
 
 		{#if attrs.tk_url}
 			<footer class="foot">
@@ -45,18 +60,10 @@
 	.r-activity {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-4);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
-	}
-	.head {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-	}
-	.lezer-soort {
-		display: flex;
-		gap: var(--s-1);
-		align-items: baseline;
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
 	.komma {

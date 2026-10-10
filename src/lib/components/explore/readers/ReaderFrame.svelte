@@ -70,23 +70,6 @@
 </div>
 
 <style>
-	/* The title and the kind above it in every reader: one form (they stood eight and four
-	   times); a reader adds only what differs (an h1, its layout for glyphs and commas). */
-	:global(.lezer-titel) {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h2);
-		font-weight: 600;
-		line-height: var(--lh-snug);
-		color: var(--ink);
-		overflow-wrap: anywhere;
-	}
-	:global(.lezer-soort) {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-	}
 	.reader-frame {
 		height: 100%;
 		overflow-y: auto;

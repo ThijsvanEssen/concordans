@@ -5,7 +5,6 @@
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import PlaatsMenu from '$lib/components/articles/PlaatsMenu.svelte';
 	import { kaart } from '$lib/map/map.svelte';
-	import KopActies from './KopActies.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	// Reader for judgments: header, summary, participants and the numbered body.
 	// Text restructuring lives in judgment-text.ts.
@@ -203,63 +202,55 @@
 		)}
 		{@const alsoAs = view.data.same_as ?? []}
 		{@const outside = j.unresolved_citations ?? []}
+		<!-- The status in one sentence: kind, date, case number; the conclusie after it. -->
+		{@const statusWoorden = [
+			j.decision_kind && !conclusion
+				? j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)
+				: null,
+			judgmentDate,
+			caseNumber
+		].filter(Boolean)}
+		{@const kop = j.ecli
+			? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author)
+			: null}
+		{@const ro = anchor?.startsWith('rov-') ? anchor.slice(4) : null}
+		{@const naamKort = kop?.short ?? j.display_name ?? 'Uitspraak'}
 		<ReaderHead
 			collection="judgments"
 			kind={conclusion ? 'Conclusie' : null}
 			juris={textProp(j.props?.court)}
-			title={(j.ecli
-				? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author).full
-				: (j.display_name ?? 'Uitspraak')) + (j.names?.length ? ` (${j.names.join(', ')})` : '')}
-		>
-			<!-- The status line in one sentence: kind, date, case number; the conclusie after it. -->
-			{@const status = [
-				j.decision_kind && !conclusion
-					? j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)
+			title={(kop ? kop.full : (j.display_name ?? 'Uitspraak')) +
+				(j.names?.length ? ` (${j.names.join(', ')})` : '')}
+			acties={{
+				// Bewaar follows the overweging chosen (#rov-5.7.1), else the whole judgment.
+				bewaar: selection
+					? {
+							id: selection.id,
+							at: ro && kop && j.ecli ? anchor! : '',
+							kort: ro && kop && j.ecli ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : naamKort,
+							voluit:
+								ro && kop && j.ecli
+									? `${kop.full}, ${paragraphCite(j.ecli, ro)}`
+									: (kop?.full ?? naamKort),
+							groep: zaakNaam(naamKort, j.names)
+						}
 					: null,
-				judgmentDate,
-				caseNumber
-			].filter(Boolean)}
-			<!-- The status line, with the head's two actions beside it (KopActies). -->
-			<div class="reader-meta-row">
-				{#if status.length || conclusie}
-					<p class="reader-status">
-						{#if status.length}{status.join(', ')}.{/if}
+				wat: ro && kop ? `r.o. ${ro}` : '',
+				cite: kop ? citeItems({ kort: kop.short, voluit: kop.full }, permalink(page.url, '')) : [],
+				naam: naamKort,
+				bron: deeplink ? { label: sourceName(deeplink) ?? 'Officiële tekst', href: deeplink } : null
+			}}
+		>
+			{#snippet status()}
+				{#if statusWoorden.length || conclusie}
+					<p>
+						{#if statusWoorden.length}{statusWoorden.join(', ')}.{/if}
 						{#if conclusie}Conclusie: {#if conclusie.ref}<BronLink ref={conclusie.ref}
 									>{conclusie.naam}</BronLink
 								>{:else}{conclusie.naam}{/if}{/if}
 					</p>
 				{/if}
-				{#if selection && j.ecli}
-					{@const kop = judgmentCite(
-						j.ecli,
-						textProp(j.props?.date),
-						textProp(j.props?.court),
-						author
-					)}
-					{@const ro = anchor?.startsWith('rov-') ? anchor.slice(4) : null}
-					<!-- The two framed actions (KopActies): Bewaar follows the overweging chosen
-					     (#rov-5.7.1), else the whole judgment; the official site inside Citeer. -->
-					<KopActies
-						wat={ro ? `r.o. ${ro}` : ''}
-						bewaar={{
-							id: selection.id,
-							at: ro ? anchor! : '',
-							kort: ro ? `${kop.short}, ${paragraphCite(j.ecli, ro)}` : kop.short,
-							voluit: ro ? `${kop.full}, ${paragraphCite(j.ecli, ro)}` : kop.full,
-							groep: zaakNaam(kop.short, j.names)
-						}}
-						cite={citeItems({ kort: kop.short, voluit: kop.full }, permalink(page.url, ''))}
-						naam={kop.short}
-						bron={deeplink
-							? { label: sourceName(deeplink) ?? 'Officiële tekst', href: deeplink }
-							: null}
-					/>
-				{:else if deeplink}
-					<a href={deeplink} target="_blank" rel="noopener noreferrer" class="reader-source-link"
-						>{sourceName(deeplink) ?? 'Officiële tekst'} ↗</a
-					>
-				{/if}
-			</div>
+			{/snippet}
 			{#if j.translation_of}
 				<p class="reader-translation">
 					Vertaling van
@@ -499,25 +490,6 @@
 </ReaderFrame>
 
 <style>
-	.reader-meta-row {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
-		gap: var(--s-2) var(--s-4);
-		margin-bottom: var(--s-3);
-	}
-
-	/* As the article's status line: Geldend recht, tekst sinds 1 juli 2024. */
-	.reader-status {
-		/* It wraps in its own column; the two actions stay beside its first line. */
-		flex: 1 1 16em;
-		min-width: 0;
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink);
-	}
-
 	.samenhang {
 		margin: 0 0 var(--s-6);
 		padding: 0;
@@ -566,26 +538,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.reader-source-link {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-2);
-		text-decoration: none;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		padding: 2px var(--s-2);
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
-		white-space: nowrap;
-		margin-left: auto;
-	}
-
-	.reader-source-link:hover {
-		background: var(--paper-2);
-		color: var(--ink);
 	}
 
 	/* Summary */

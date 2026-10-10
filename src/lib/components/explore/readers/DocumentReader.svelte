@@ -18,7 +18,7 @@
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import StemmingUitslag from '$lib/components/parliamentary/StemmingUitslag.svelte';
 	import { fromDocument } from '$lib/bron/submitters';
-	import KopActies from './KopActies.svelte';
+	import ReaderHead from './ReaderHead.svelte';
 	import Bijlagen from './Bijlagen.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -271,51 +271,51 @@
 			{@const caseKinds = (doc.case_kinds ?? []).filter(
 				(k) => !doc.kind?.toLowerCase().startsWith(k.toLowerCase())
 			)}
-			<header class="head">
-				<!-- Running text, the comma against the word before it: as flex items they stood
-				     apart on a phone ("Amendement (…) , 25 apr. 2024 , Amendement"). -->
-				<span class="lezer-soort"
-					>{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
-							'Document'}{/if}{#if doc.date}, {formatDate(doc.date)}{/if}{#if caseKinds.length},
-						{caseKinds.join(', ')}{/if}</span
-				>
-				<h2 class="lezer-titel">{doc.title ?? doc.key}</h2>
-				{#if doc.submitters?.length}
-					<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
-				{/if}
-				<!-- The status line: the stuk as it is cited and its bijlagen, the head's two actions
-				     beside it (KopActies), the official page inside Citeer. -->
-				<div class="status-rij">
-					{#if cite || bijlagen > 0}
-						<div class="status">
-							{#if cite}{cite}.{/if}
-							{#if bijlagen > 0}<Bijlagen
-									collection="documents"
-									bronKey={doc.key}
-									aantal={bijlagen}
-								/>{/if}
-						</div>
+			<ReaderHead
+				collection="documents"
+				title={doc.title ?? doc.key}
+				acties={{
+					bewaar: {
+						id: `documents/${doc.key}`,
+						at: '',
+						kort: naam,
+						voluit: cite && doc.kind ? `${cite} (${doc.kind})` : naam,
+						groep: doc.dossier_numbers?.[0] ? `Kamerstukken ${doc.dossier_numbers[0]}` : naam
+					},
+					cite: cite
+						? citeItems(
+								{ kort: cite, voluit: doc.title ? `${cite}, ${doc.title}` : cite },
+								permalink(page.url, '')
+							)
+						: [],
+					naam,
+					bron: doc.tk_url ? { label: 'tweedekamer.nl', href: doc.tk_url } : null,
+					tekst: doc.text ? () => doc.text ?? '' : undefined
+				}}
+			>
+				{#snippet soort()}
+					<!-- Running text, the comma against the word before it. -->
+					<span
+						>{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
+								'Document'}{/if}{#if doc.date}, {formatDate(doc.date)}{/if}{#if caseKinds.length},
+							{caseKinds.join(', ')}{/if}</span
+					>
+				{/snippet}
+				{#snippet onderTitel()}
+					{#if doc.submitters?.length}
+						<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
 					{/if}
-					<KopActies
-						bewaar={{
-							id: `documents/${doc.key}`,
-							at: '',
-							kort: naam,
-							voluit: cite && doc.kind ? `${cite} (${doc.kind})` : naam,
-							groep: doc.dossier_numbers?.[0] ? `Kamerstukken ${doc.dossier_numbers[0]}` : naam
-						}}
-						cite={cite
-							? citeItems(
-									{ kort: cite, voluit: doc.title ? `${cite}, ${doc.title}` : cite },
-									permalink(page.url, '')
-								)
-							: []}
-						{naam}
-						bron={doc.tk_url ? { label: 'tweedekamer.nl', href: doc.tk_url } : null}
-						tekst={doc.text ? () => doc.text ?? '' : undefined}
-					/>
-				</div>
-			</header>
+				{/snippet}
+				<!-- The stuk as it is cited and its bijlagen. -->
+				{#snippet status()}
+					{#if cite}<span>{cite}.</span>{/if}
+					{#if bijlagen > 0}<Bijlagen
+							collection="documents"
+							bronKey={doc.key}
+							aantal={bijlagen}
+						/>{/if}
+				{/snippet}
+			</ReaderHead>
 
 			{#if toegelicht.length > 0}
 				<Sectie titel="Licht toe" soort="articles" aantal={doc.explains?.length ?? 0}>
@@ -497,7 +497,9 @@
 	.r-document {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-3);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-3);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
 	.loading,
@@ -508,40 +510,12 @@
 		color: var(--ink-3);
 		margin: 0;
 	}
-	.head {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-	}
-	.lezer-soort {
-		display: block;
-	}
-	/* A comma against the word before it: the kicker's gap only after it. */
 	/* Who submitted a motie or amendement, under its title. */
 	.submitted {
-		margin: var(--s-2) 0 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-	/* As the article's status line, the two actions beside its first line. */
-	.status-rij {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
-		gap: var(--s-2) var(--s-4);
-	}
-	.status {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-1) var(--s-3);
-		flex: 1 1 16em;
-		min-width: 0;
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-		color: var(--ink);
+		color: var(--ink-2);
 	}
 	.toegelicht {
 		margin: 0;

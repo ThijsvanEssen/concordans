@@ -22,6 +22,9 @@
 	import { deelIds, layersOf } from '$lib/text/division';
 	import { articleName } from '$lib/text/bw';
 	import { page } from '$app/state';
+	import ReaderHead from './readers/ReaderHead.svelte';
+	import { citeItems } from '$lib/components/ui/cite';
+	import { permalink } from '$lib/bron/anchor';
 	import { goto } from '$app/navigation';
 	import { atArticles, isDay, versionOn, versionsByYear } from './peildatum';
 	import { lawFullTitle, lawHeadLine, lawKind, sourceName, treatyLink } from './law-head';
@@ -380,74 +383,91 @@
 {:else if status === 'error'}
 	<div class="whole-error">De wet kon niet worden geladen.</div>
 {:else}
+	{@const naam = lawName ?? bwbId ?? 'Regeling'}
 	<article class="whole-law">
-		<header class="whole-head">
-			<span class="whole-kind">{kindLabel}</span>
-			<h1 class="whole-title">{lawName}</h1>
-			{#if fullTitle}
-				<p class="whole-official">{fullTitle}</p>
-			{/if}
-			<p class="whole-count">
-				{headLine}
-				{#if officialUrl}<a href={officialUrl} rel="external"
-						>{sourceName(officialUrl) ?? 'Officiële tekst'}</a
-					>{/if}
-			</p>
-			{#if treaty}
-				<p class="whole-count">
-					{#if treaty.target.kind === 'bron'}
-						<a
-							href={bronHref({ collection: 'instruments', key: treaty.target.key })}
-							data-sveltekit-noscroll>{treaty.label}</a
-						>
-					{:else}
-						<a href={treaty.target.url} rel="external">{treaty.label}</a>
-					{/if}
-				</p>
-			{/if}
-			{#if versions.length > 0}
-				<!-- The peildatum: the versions of the law by year, the text of today first. -->
-				<div class="whole-peil">
-					<span>Tekst geldend op</span>
-					<TekstMenu label="Tekst geldend op" tekst={formatLongDate(peildatum ?? today)}>
-						{#snippet inhoud(sluit)}
-							<div class="peil-lijst">
-								<span class="peil-noot"
-									>{formatCount(versions.length)} versies sinds {formatLongDate(
-										oldest ?? null
-									)}</span
-								>
-								<button
-									type="button"
-									role="menuitemradio"
-									class="tekstmenu__item peil-menuitem"
-									aria-checked={!peildatum}
-									onclick={() => {
-										sluit();
-										choose('');
-									}}>{formatLongDate(today)}, vandaag</button
-								>
-								{#each versionsByYear(versions) as [year, list] (year)}
-									<span class="peil-jaar" aria-hidden="true">{year}</span>
-									{#each list as v (v.valid_from)}
-										<button
-											type="button"
-											role="menuitemradio"
-											class="tekstmenu__item peil-menuitem"
-											aria-checked={peildatum === v.valid_from}
-											onclick={() => {
-												sluit();
-												choose(v.valid_from ?? '');
-											}}
-											>{formatLongDate(v.valid_from ?? null)}{v.current ? ', geldend' : ''}</button
-										>
+		<ReaderHead
+			collection="instruments"
+			title={naam}
+			acties={{
+				bewaar: {
+					id: `instruments/${(bwbId ?? naam).toLowerCase()}`,
+					at: '',
+					kort: naam,
+					voluit: fullTitle ?? naam,
+					groep: naam
+				},
+				cite: citeItems({ kort: naam, voluit: fullTitle ?? lawName }, permalink(page.url, '')),
+				naam,
+				bron: officialUrl
+					? { label: sourceName(officialUrl) ?? 'Officiële tekst', href: officialUrl }
+					: null
+			}}
+		>
+			{#snippet soort()}<span>{kindLabel}</span>{/snippet}
+			{#snippet onderTitel()}
+				{#if fullTitle}<p class="whole-official">{fullTitle}</p>{/if}
+			{/snippet}
+			<!-- What is on screen and which text: the count, a treaty, the peildatum. -->
+			{#snippet status()}
+				<span>{headLine}</span>
+				{#if treaty}
+					<p class="whole-count">
+						{#if treaty.target.kind === 'bron'}
+							<a
+								href={bronHref({ collection: 'instruments', key: treaty.target.key })}
+								data-sveltekit-noscroll>{treaty.label}</a
+							>
+						{:else}
+							<a href={treaty.target.url} rel="external">{treaty.label}</a>
+						{/if}
+					</p>
+				{/if}
+				{#if versions.length > 0}
+					<!-- The peildatum: the versions of the law by year, the text of today first. -->
+					<div class="whole-peil">
+						<span>Tekst geldend op</span>
+						<TekstMenu label="Tekst geldend op" tekst={formatLongDate(peildatum ?? today)}>
+							{#snippet inhoud(sluit)}
+								<div class="peil-lijst">
+									<span class="peil-noot"
+										>{formatCount(versions.length)} versies sinds {formatLongDate(
+											oldest ?? null
+										)}</span
+									>
+									<button
+										type="button"
+										role="menuitemradio"
+										class="tekstmenu__item peil-menuitem"
+										aria-checked={!peildatum}
+										onclick={() => {
+											sluit();
+											choose('');
+										}}>{formatLongDate(today)}, vandaag</button
+									>
+									{#each versionsByYear(versions) as [year, list] (year)}
+										<span class="peil-jaar" aria-hidden="true">{year}</span>
+										{#each list as v (v.valid_from)}
+											<button
+												type="button"
+												role="menuitemradio"
+												class="tekstmenu__item peil-menuitem"
+												aria-checked={peildatum === v.valid_from}
+												onclick={() => {
+													sluit();
+													choose(v.valid_from ?? '');
+												}}
+												>{formatLongDate(v.valid_from ?? null)}{v.current
+													? ', geldend'
+													: ''}</button
+											>
+										{/each}
 									{/each}
-								{/each}
-							</div>
-						{/snippet}
-					</TekstMenu>
-				</div>
-			{/if}
+								</div>
+							{/snippet}
+						</TekstMenu>
+					</div>
+				{/if}
+			{/snippet}
 			{#if peildatum && !(versionsLoaded && versions.length === 0)}
 				<p class="whole-hist">
 					{histLine}
@@ -456,7 +476,7 @@
 					>
 				</p>
 			{/if}
-		</header>
+		</ReaderHead>
 
 		{#if peildatum && articles.length === 0}
 			{#if firstVersionFrom && peildatum < firstVersionFrom}
@@ -604,29 +624,6 @@
 		width: 100%;
 	}
 
-	.whole-head {
-		margin-bottom: var(--s-7);
-		padding-bottom: var(--s-4);
-		border-bottom: 1px solid var(--rule);
-	}
-
-	.whole-kind {
-		display: block;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink-3);
-		margin-bottom: var(--s-1);
-	}
-
-	.whole-title {
-		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
-		font-weight: 600;
-		font-size: var(--t-h1);
-		line-height: var(--lh-tight);
-		color: var(--ink);
-	}
-
 	.whole-count {
 		margin: var(--s-2) 0 0;
 		font-family: var(--font-serif);
@@ -733,6 +730,11 @@
 		margin-top: var(--s-8);
 		padding-top: var(--s-5);
 		border-top: 1px solid var(--rule);
+	}
+	/* The first right under the head: its rule is the one line between head and text, with
+	   the head's own step above it (Thijs, 10 Oct: "Deze dubbele lijn is ook niet top"). */
+	.whole-law > .whole-section--depth-0:first-of-type {
+		margin-top: 0;
 	}
 	.whole-section--depth-0 .whole-section-label {
 		font-size: var(--t-body);

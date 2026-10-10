@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SoortLink from '$lib/bron/SoortLink.svelte';
+	import ReaderHead from './ReaderHead.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -131,27 +131,38 @@
 			{@const composed = read
 				? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
 				: ''}
-			<header class="head">
-				<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
-				<span class="lezer-soort"
-					><SoortLink collection="factions">{bronLabel('factions')}</SoortLink></span
-				>
-				<h2 class="lezer-titel">{abbreviation ?? name ?? f.key}</h2>
-				{#if name && abbreviation && name !== abbreviation}
-					<p class="sub">{name}</p>
-				{/if}
-				{#if typeof seats === 'number'}
-					<p class="woorden">
-						<span class="zetels"
-							>{seats}
-							{seats === 1 ? 'zetel' : 'zetels'}{ek && read
-								? ` op ${formatLongDate(read)}`
-								: ''}</span
-						>{#if sinds && !ek}, <span class="sinds">fractie sinds {formatLongDate(sinds)}</span
-							>{/if}
-					</p>
-				{/if}
-			</header>
+			{@const titel = abbreviation ?? name ?? f.key}
+			<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
+			<ReaderHead
+				collection="factions"
+				title={titel}
+				acties={{
+					bewaar: {
+						id: node.id,
+						at: '',
+						kort: titel,
+						voluit: name ?? titel,
+						groep: bronLabel('factions')
+					}
+				}}
+			>
+				{#snippet onderTitel()}
+					{#if name && abbreviation && name !== abbreviation}<p class="sub">{name}</p>{/if}
+				{/snippet}
+				{#snippet status()}
+					{#if typeof seats === 'number'}
+						<p class="woorden">
+							<span class="zetels"
+								>{seats}
+								{seats === 1 ? 'zetel' : 'zetels'}{ek && read
+									? ` op ${formatLongDate(read)}`
+									: ''}</span
+							>{#if sinds && !ek}, <span class="sinds">fractie sinds {formatLongDate(sinds)}</span
+								>{/if}
+						</p>
+					{/if}
+				{/snippet}
+			</ReaderHead>
 
 			{#if board.length > 0}
 				<Sectie titel="Fractiebestuur" soort="members">
@@ -239,7 +250,9 @@
 	.r-faction {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-4);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
 	.loading,
@@ -254,11 +267,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-	}
-	.lezer-soort {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-1);
 	}
 	.sub {
 		font-family: var(--font-serif);

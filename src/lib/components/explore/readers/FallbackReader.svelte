@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SoortLink from '$lib/bron/SoortLink.svelte';
+	import ReaderHead from './ReaderHead.svelte';
 	// Reader for the kinds without a text of their own (toezegging, zaak, ...): what the
 	// bron is, when, and where the source keeps it. Its verbindingen are in the panel.
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -25,13 +25,23 @@
 
 <ReaderFrame>
 	<article class="r-simple">
-		<span class="lezer-soort"
-			><SoortLink collection={node.collection}>{bronLabel(node.collection)}</SoortLink></span
+		<ReaderHead
+			collection={node.collection}
+			{title}
+			acties={{
+				bewaar: {
+					id: node.id,
+					at: '',
+					kort: title,
+					voluit: title,
+					groep: bronLabel(node.collection)
+				}
+			}}
 		>
-		<h2 class="lezer-titel">{title}</h2>
-		{#if facts.length > 0}
-			<p class="facts">{facts.join(', ')}</p>
-		{/if}
+			{#snippet status()}
+				{#if facts.length > 0}<span>{facts.join(', ')}</span>{/if}
+			{/snippet}
+		</ReaderHead>
 		{#if textProp(p.text)}
 			<p class="text">{textProp(p.text)}</p>
 		{/if}
@@ -45,14 +55,10 @@
 	.r-simple {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-2);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-2);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
-	}
-	.facts {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	.text {
 		margin: var(--s-3) 0 0;
