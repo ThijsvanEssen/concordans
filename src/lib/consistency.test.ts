@@ -98,7 +98,7 @@ describe('one form for each thing', () => {
 			'routes/(main)/api/+page.svelte',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte',
 			'routes/(main)/(prose)/bronnen/+page.svelte',
-			'routes/(main)/gemarkeerd/+page.svelte'
+			'lib/map/AlleMappen.svelte'
 		];
 		expect(offenders((t) => /tabular-nums/.test(t), columns)).toEqual([]);
 	});

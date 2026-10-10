@@ -66,9 +66,8 @@
 						class="tekstmenu__item"
 						onclick={() => {
 							dicht();
+							// A new map with the item, active from now on; named on Gemarkeerd.
 							kaart.nieuw(undefined, [item]);
-							kaart.naamgeven = true;
-							kaart.open = true;
 						}}>Nieuwe map</button
 					>
 				{/snippet}

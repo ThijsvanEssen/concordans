@@ -15,6 +15,7 @@
 	);
 	const isExplore = $derived(isVerkenner($page.url.pathname) && !isIndex);
 	const isActueel = $derived($page.url.pathname.startsWith('/actueel'));
+	const isGemarkeerd = $derived($page.url.pathname.startsWith('/gemarkeerd'));
 	const isOnderwerpen = $derived($page.url.pathname.startsWith('/onderwerpen'));
 
 	let mobileMenuOpen = $state(false);
@@ -85,15 +86,13 @@
 			class:is-active={isOnderwerpen}
 			aria-current={isOnderwerpen ? 'page' : undefined}>Gevolgd</a
 		>
-		<!-- Gemarkeerd: the map, one entry, its count beside it; it opens the panel. -->
-		<button
-			type="button"
-			class="nav-link nav-knop"
-			class:is-active={kaart.open}
-			aria-expanded={kaart.open}
-			onclick={() => (kaart.open = !kaart.open)}
-			>Gemarkeerd{#if kaart.items.length}<span class="nav-tel">{kaart.items.length}</span
-				>{/if}</button
+		<!-- Gemarkeerd: a page as the others, the active map's count beside it, kept live. -->
+		<a
+			href="/gemarkeerd"
+			class="nav-link"
+			class:is-active={isGemarkeerd}
+			aria-current={isGemarkeerd ? 'page' : undefined}
+			>Gemarkeerd{#if kaart.items.length}<span class="nav-tel">{kaart.items.length}</span>{/if}</a
 		>
 	</nav>
 
@@ -171,9 +170,8 @@
 			<a href="/explore?mode=index" class="mobile-nav-link" class:is-active={isIndex}>Bronnen</a>
 			<a href="/actueel" class="mobile-nav-link" class:is-active={isActueel}>Actueel</a>
 			<a href="/onderwerpen" class="mobile-nav-link" class:is-active={isOnderwerpen}>Gevolgd</a>
-			<button type="button" class="mobile-nav-link nav-knop" onclick={() => (kaart.open = true)}
-				>Gemarkeerd{#if kaart.items.length}<span class="nav-tel">{kaart.items.length}</span
-					>{/if}</button
+			<a href="/gemarkeerd" class="mobile-nav-link" class:is-active={isGemarkeerd}
+				>Gemarkeerd{#if kaart.items.length}<span class="nav-tel">{kaart.items.length}</span>{/if}</a
 			>
 		</div>
 	{/if}
@@ -245,13 +243,6 @@
 
 	.nav-link:hover {
 		color: var(--accent);
-	}
-	/* Gemarkeerd is a button that opens the panel, set as the links beside it. */
-	.nav-knop {
-		border: 0;
-		background: none;
-		cursor: pointer;
-		text-align: left;
 	}
 	.nav-tel {
 		margin-left: var(--s-1);

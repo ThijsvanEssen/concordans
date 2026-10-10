@@ -8,6 +8,8 @@ const OUD = 'concordans:map';
 const EERSTE = 'Gemarkeerd';
 
 type Stand = { mappen: Map[]; actief: string };
+/** A map from a link: its name, items and order as the link gives them. */
+export type Gedeeld = { naam: string | null; items: MapItem[]; volgorde: Map['volgorde'] };
 
 const nu = () => new Date().toISOString();
 const nieuwId = () => Math.random().toString(36).slice(2, 10);
@@ -58,15 +60,6 @@ class Kaarten {
 				})()
 			: lees()
 	);
-	/** The panel over the page, opened from the menu item Gemarkeerd. */
-	open = $state(false);
-	/** A map from a link, shown in the panel until it is kept or put aside. */
-	gedeeld = $state<{ naam: string | null; items: MapItem[]; volgorde: Map['volgorde'] } | null>(
-		null
-	);
-	/** The active map's name open to change, in the panel's heading (a new map starts so). */
-	naamgeven = $state(false);
-
 	mappen = $derived(this.#stand.mappen);
 	actief = $derived(
 		this.#stand.mappen.find((m) => m.id === this.#stand.actief) ?? this.#stand.mappen[0]
@@ -170,20 +163,15 @@ class Kaarten {
 		if (!this.heeft(i)) this.wissel(i);
 	}
 
-	// ── A shared map ────────────────────────────────────────────────────────
+	// ── A shared map (a link, ?map=) ─────────────────────────────────────────
 	/** Into the active map, without doubles. */
-	voegToe() {
-		if (!this.gedeeld) return;
-		const extra = this.gedeeld.items;
-		this.#werk((m) => ({ items: samen(m.items, extra) }));
-		this.gedeeld = null;
+	voegToe(g: Gedeeld) {
+		this.#werk((m) => ({ items: samen(m.items, g.items) }));
 	}
-	/** As a map of its own, under its name. */
-	bewaarAlsMap() {
-		if (!this.gedeeld) return;
-		this.nieuw(this.gedeeld.naam ?? undefined, this.gedeeld.items);
-		if (this.gedeeld.volgorde === 'eigen') this.ordening('eigen');
-		this.gedeeld = null;
+	/** As a map of its own, under its name, in its order. */
+	bewaarAlsMap(g: Gedeeld) {
+		this.nieuw(g.naam ?? undefined, g.items);
+		if (g.volgorde === 'eigen') this.ordening('eigen');
 	}
 }
 
