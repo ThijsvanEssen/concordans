@@ -707,6 +707,29 @@ describe('canvas cards and halls', () => {
 		expect(artikel).toMatch(/\n\t*laterPlek\n/);
 	});
 
+	it('says the chain of an amended stuk in the status line, where every reader has its status', () => {
+		// "Vervangt nr. 10", "Vervangen door nr. 47": words of the status line through ReaderHead,
+		// not a row or a section of their own, on one reader for amendementen and moties alike.
+		const lezer = sources.find(
+			(s) => s.path === 'lib/components/explore/readers/DocumentReader.svelte'
+		)!.text;
+		const status = /\{#snippet status\(\)\}([\s\S]*?)\{\/snippet\}/.exec(lezer)?.[1] ?? '';
+		expect(status).toMatch(/<Vervanging zinnen=\{vervanging\(doc\)\} \/>/);
+		expect(lezer.match(/<Vervanging\b/g)).toHaveLength(1);
+		expect(
+			offenders(
+				(t) => /<Vervanging\b/.test(t),
+				['lib/components/explore/readers/DocumentReader.svelte']
+			)
+		).toEqual([]);
+		// Its numbers are BronLinks, inline in the run of words.
+		const zin = sources.find(
+			(s) => s.path === 'lib/components/parliamentary/Vervanging.svelte'
+		)!.text;
+		expect(zin).toMatch(/<BronLink\b/);
+		expect(zin).not.toMatch(/<(p|div|section|Sectie)\b/);
+	});
+
 	it('gives a page with a list a second skip link, through AppShell, and one main', () => {
 		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
 		expect(shell).toMatch(/class="skip-link">Naar de lijst<\/a>/);

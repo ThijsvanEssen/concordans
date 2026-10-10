@@ -18,6 +18,8 @@
 	import { formatDate } from './_shared';
 	import SubmitterLine from '$lib/bron/SubmitterLine.svelte';
 	import StemmingUitslag from '$lib/components/parliamentary/StemmingUitslag.svelte';
+	import Vervanging from '$lib/components/parliamentary/Vervanging.svelte';
+	import { eigenUitslag, vervanging } from '$lib/components/parliamentary/vervanging';
 	import { fromDocument } from '$lib/bron/submitters';
 	import ReaderHead from './ReaderHead.svelte';
 	import Bijlagen from './Bijlagen.svelte';
@@ -307,9 +309,11 @@
 						<p class="submitted"><SubmitterLine submitters={fromDocument(doc.submitters)} /></p>
 					{/if}
 				{/snippet}
-				<!-- The stuk as it is cited and its bijlagen. -->
+				<!-- The stuk as it is cited, the chain of an amended amendment or motion (from the
+				     document's replaces and replaced_by, the direct step only) and its bijlagen. -->
 				{#snippet status()}
 					{#if cite}<span>{cite}.</span>{/if}
+					<Vervanging zinnen={vervanging(doc)} />
 					{#if bijlagen > 0}<Bijlagen
 							collection="documents"
 							bronKey={doc.key}
@@ -334,7 +338,8 @@
 				</Sectie>
 			{/if}
 
-			<StemmingUitslag decisions={doc.decisions ?? []} />
+			<!-- A replaced stuk has no outcome of its own: the stuk that replaced it came to the vote. -->
+			<StemmingUitslag decisions={eigenUitslag(doc) ? (doc.decisions ?? []) : []} />
 
 			{#if doc.text}
 				<div class="body" bind:this={root}>
