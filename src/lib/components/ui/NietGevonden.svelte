@@ -42,8 +42,8 @@
 			{/if}
 		</div>
 		<div class="acties">
-			<a href="/" class="knop knop--hoofd">Naar de startpagina</a>
-			<a href="/explore" class="knop">Open Samenhang</a>
+			<a href="/" class="btn is-groot is-primary">Naar de startpagina</a>
+			<a href="/explore" class="btn is-groot">Open Samenhang</a>
 		</div>
 	</div>
 </div>
@@ -90,35 +90,8 @@
 	}
 	.acties {
 		display: flex;
-		gap: var(--s-3);
+		gap: var(--s-2);
 		margin-top: var(--s-2);
 		flex-wrap: wrap;
-	}
-	.knop {
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		font-weight: 500;
-		padding: var(--s-2) var(--s-4);
-		border-radius: var(--r-1);
-		text-decoration: none;
-		border: 1px solid var(--rule-strong);
-		color: var(--ink-2);
-		transition:
-			background var(--dur-1) var(--ease),
-			color var(--dur-1) var(--ease);
-	}
-	.knop:hover {
-		background: var(--paper-2);
-		color: var(--ink);
-	}
-	.knop--hoofd {
-		background: var(--ink);
-		color: var(--paper);
-		border-color: var(--ink);
-	}
-	.knop--hoofd:hover {
-		background: var(--ink-2);
-		color: var(--paper);
-		border-color: var(--ink-2);
 	}
 </style>

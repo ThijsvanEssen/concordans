@@ -192,7 +192,7 @@
 						<button
 							type="button"
 							role="menuitem"
-							class="legenda-menuitem"
+							class="tekstmenu__item"
 							onclick={() => {
 								sluit();
 								onOpenFilter();
@@ -433,22 +433,5 @@
 	/* One line that says what a control does, or why it is off. */
 	.sub {
 		margin-top: var(--s-2);
-	}
-	.legenda-menuitem {
-		display: block;
-		width: 100%;
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink-2);
-		text-align: left;
-		cursor: pointer;
-	}
-	.legenda-menuitem:hover,
-	.legenda-menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
 	}
 </style>

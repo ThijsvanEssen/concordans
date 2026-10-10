@@ -802,11 +802,8 @@
 					<p class="state state--group" role="status">
 						{naam}
 						{laan.stand === 'traag' ? 'duren lang.' : 'konden niet worden geladen.'}
-						<button
-							type="button"
-							class="opnieuw"
-							onclick={() => (opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1)}
-							>Probeer opnieuw</button
+						<TekstLink onclick={() => (opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1)}
+							>Probeer opnieuw</TekstLink
 						>
 					</p>
 				{/if}
@@ -816,10 +813,8 @@
 		{#if failed}
 			<p class="state" role="status">
 				{traag ? 'Zoeken duurt lang.' : 'Zoeken mislukt.'}
-				<button
-					type="button"
-					class="opnieuw"
-					onclick={() => (opnieuw.snel = (opnieuw.snel ?? 0) + 1)}>Probeer opnieuw</button
+				<TekstLink onclick={() => (opnieuw.snel = (opnieuw.snel ?? 0) + 1)}
+					>Probeer opnieuw</TekstLink
 				>
 			</p>
 		{:else if empty}
@@ -1027,20 +1022,6 @@
 	}
 	.state--group {
 		padding-top: 0;
-	}
-	.opnieuw {
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-2);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-	}
-	.opnieuw:hover {
-		color: var(--ink);
 	}
 
 	.search--compact .field {

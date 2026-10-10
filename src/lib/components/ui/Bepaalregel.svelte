@@ -55,7 +55,7 @@
 					value={zoek.waarde}
 					oninput={(e) => zoek.onInput(e.currentTarget.value)}
 				/>
-				{#if zoek.knop}<button type="submit" class="knop" disabled={zoek.knop.disabled}
+				{#if zoek.knop}<button type="submit" class="btn is-groot" disabled={zoek.knop.disabled}
 						>{zoek.knop.label}</button
 					>{/if}
 			</form>
@@ -137,27 +137,6 @@
 	input:focus-visible {
 		outline: 2px solid var(--accent);
 		outline-offset: 1px;
-	}
-	/* A knop on a page: 32 px (docs/bediening.md). */
-	.knop {
-		flex: none;
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.knop:hover:not(:disabled) {
-		border-color: var(--ink);
-	}
-	.knop:disabled {
-		color: var(--rule-strong);
-		cursor: default;
 	}
 	@media (max-width: 768px) {
 		.vak {

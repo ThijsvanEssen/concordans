@@ -338,7 +338,7 @@
 				<button
 					type="button"
 					role="menuitem"
-					class="regel__menuitem"
+					class="tekstmenu__item"
 					onclick={() => {
 						sluit();
 						onOpenFilter();
@@ -500,7 +500,7 @@
 													<button
 														type="button"
 														role="menuitemradio"
-														class="jaar-rechter__menuitem"
+														class="tekstmenu__item jaar-rechter__item"
 														aria-checked={(filter.jaar ?? null) === x.year}
 														onclick={() => {
 															sluit();
@@ -517,7 +517,7 @@
 													<button
 														type="button"
 														role="menuitemradio"
-														class="jaar-rechter__menuitem"
+														class="tekstmenu__item jaar-rechter__item"
 														aria-checked={(filter.rechter ?? null) === r.id}
 														onclick={() => {
 															sluit();
@@ -685,8 +685,7 @@
 		padding: var(--s-1) var(--s-4) var(--s-2);
 		border-bottom: 1px solid var(--rule);
 	}
-	.regel__knop,
-	.regel__menuitem {
+	.regel__knop {
 		padding: 0;
 		border: 0;
 		background: none;
@@ -702,18 +701,6 @@
 	.regel__knop:hover,
 	.regel__knop:focus-visible {
 		color: var(--accent);
-	}
-	.regel__menuitem {
-		display: block;
-		width: 100%;
-		padding: var(--s-1) var(--s-3);
-		color: var(--ink-2);
-		text-align: left;
-	}
-	.regel__menuitem:hover,
-	.regel__menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
 	}
 	.head__title {
 		margin: 0;
@@ -1016,27 +1003,11 @@
 		display: flex;
 		flex-direction: column;
 	}
-	.jaar-rechter__menuitem {
+	.jaar-rechter__item {
 		display: flex;
 		justify-content: space-between;
 		gap: var(--s-3);
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink);
-		text-align: left;
 		white-space: nowrap;
-		cursor: pointer;
-	}
-	.jaar-rechter__menuitem:hover,
-	.jaar-rechter__menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
-	}
-	.jaar-rechter__menuitem[aria-checked='true'] {
-		font-weight: 600;
 	}
 	.jaar-rechter__tel {
 		color: var(--ink-3);

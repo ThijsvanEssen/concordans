@@ -2365,19 +2365,15 @@
 						     fit; a cabinet opens its bewindspersonen. -->
 						<div class="cab-strip">
 							<div class="cab-tools">
-								<button
-									type="button"
-									class="cab-zoom"
+								<IconKnop
+									label="Uitzoomen"
 									onclick={() => zoomCabinets(-1)}
-									disabled={yearWidth === YEAR_WIDTHS[0]}
-									aria-label="Uitzoomen">−</button
+									disabled={yearWidth === YEAR_WIDTHS[0]}>−</IconKnop
 								>
-								<button
-									type="button"
-									class="cab-zoom"
+								<IconKnop
+									label="Inzoomen"
 									onclick={() => zoomCabinets(1)}
-									disabled={yearWidth === YEAR_WIDTHS.at(-1)}
-									aria-label="Inzoomen">+</button
+									disabled={yearWidth === YEAR_WIDTHS.at(-1)}>+</IconKnop
 								>
 							</div>
 							<div
@@ -3032,12 +3028,12 @@
 	<div class="empty">
 		<p>Geen {noun}{chips.length || q ? ' met deze filters' : ''}.</p>
 		{#if category === 'dossiers' && dossierScope === 'open'}
-			<button type="button" class="empty-act" onclick={() => patchUrl({ stand: 'all' })}
+			<button type="button" class="btn is-groot" onclick={() => patchUrl({ stand: 'all' })}
 				>Zoek ook in afgehandelde dossiers</button
 			>
 		{/if}
 		{#if q}
-			<button type="button" class="empty-act" onclick={() => openSearch(q)}
+			<button type="button" class="btn is-groot" onclick={() => openSearch(q)}
 				>Zoek "{q}" in alle bronnen</button
 			>
 		{/if}
@@ -3339,25 +3335,6 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.cab-zoom {
-		width: 28px;
-		height: 28px;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: transparent;
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		line-height: 1;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.cab-zoom:hover:not(:disabled) {
-		background: var(--paper-2);
-	}
-	.cab-zoom:disabled {
-		color: var(--ink-4, var(--rule-strong));
-		cursor: default;
-	}
 	.cab-scroll {
 		overflow-x: auto;
 		overscroll-behavior-x: contain;
@@ -3587,23 +3564,9 @@
 	.empty p {
 		margin: 0;
 	}
-	.empty-act {
+	.empty .btn {
 		margin-top: var(--s-4);
-		min-height: 32px;
-		padding: 0 var(--s-4);
-		background: transparent;
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-serif);
 		font-style: normal;
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.empty-act:hover {
-		background: var(--paper-2);
-		color: var(--ink);
 	}
 	/* The previous result while the next one loads. */
 	.shown--stale {
@@ -3897,9 +3860,6 @@
 		grid-column: 1 / -1;
 		margin-bottom: var(--s-5);
 	}
-	.verfijnen-knop {
-		display: none;
-	}
 	.wis {
 		margin: var(--s-3) 0 0;
 		font-size: var(--t-meta);
@@ -3931,17 +3891,7 @@
 			margin-bottom: var(--s-3);
 		}
 		.verfijnen-knop {
-			display: inline;
 			padding: var(--s-2) 0;
-			border: 0;
-			background: none;
-			font-family: var(--font-ui);
-			font-size: var(--t-ui);
-			color: var(--ink);
-			text-decoration: underline;
-			text-decoration-color: var(--rule-strong);
-			text-underline-offset: 4px;
-			cursor: pointer;
 		}
 	}
 </style>

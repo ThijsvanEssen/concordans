@@ -274,7 +274,7 @@
 						<button
 							type="button"
 							role="menuitemradio"
-							class="ab__menuitem"
+							class="tekstmenu__item ab__menuitem"
 							aria-checked={option.index === w.index}
 							disabled={option.index === other}
 							onclick={() => {
@@ -898,27 +898,7 @@
 		color: var(--ink-3);
 	}
 	.ab__menuitem {
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink);
-		text-align: left;
 		white-space: nowrap;
-		cursor: pointer;
-	}
-	.ab__menuitem:hover:not(:disabled),
-	.ab__menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
-	}
-	.ab__menuitem[aria-checked='true'] {
-		font-weight: 600;
-	}
-	.ab__menuitem:disabled {
-		color: var(--rule-strong);
-		cursor: default;
 	}
 	.ab__ruil {
 		fill: none;

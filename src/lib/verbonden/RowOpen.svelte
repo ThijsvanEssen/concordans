@@ -43,18 +43,18 @@
 		</p>
 	{/if}
 	<div class="acts">
-		<a href={openHref} data-sveltekit-noscroll class="act act--pri"
+		<a href={openHref} data-sveltekit-noscroll class="btn is-primary"
 			><Picto naam="tekst" size={13} />{openLabel}</a
 		>
-		<a href={networkHref} data-sveltekit-noscroll class="act" onclick={() => onNaarNetwerk?.()}
+		<a href={networkHref} data-sveltekit-noscroll class="btn" onclick={() => onNaarNetwerk?.()}
 			><Picto naam="omgeving" size={13} />Alleen de omgeving</a
 		>
 		{#if onAdd}
-			<button type="button" class="act" disabled={added} onclick={onAdd}
+			<button type="button" class="btn" disabled={added} onclick={onAdd}
 				><Picto naam="plus" size={13} />{added ? 'Staat in netwerk' : 'In netwerk'}</button
 			>
 		{:else if onShowInNetwork}
-			<button type="button" class="act" onclick={() => onShowInNetwork(row)}
+			<button type="button" class="btn" onclick={() => onShowInNetwork(row)}
 				><Picto naam="plus" size={13} />In netwerk</button
 			>
 		{/if}
@@ -95,34 +95,6 @@
 		align-items: center;
 		gap: var(--s-2);
 		margin-top: var(--s-3);
-	}
-	.act {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-1) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font: inherit;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		text-decoration: none;
-		cursor: pointer;
-	}
-	.act:hover {
-		border-color: var(--ink);
-	}
-	.act:disabled {
-		color: var(--ink-3);
-		cursor: default;
-	}
-	.act--pri {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
 	}
 	.link {
 		margin-left: var(--s-2);

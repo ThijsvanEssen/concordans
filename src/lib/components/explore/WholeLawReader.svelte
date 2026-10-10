@@ -419,7 +419,7 @@
 								<button
 									type="button"
 									role="menuitemradio"
-									class="peil-menuitem"
+									class="tekstmenu__item peil-menuitem"
 									aria-checked={!peildatum}
 									onclick={() => {
 										sluit();
@@ -432,7 +432,7 @@
 										<button
 											type="button"
 											role="menuitemradio"
-											class="peil-menuitem"
+											class="tekstmenu__item peil-menuitem"
 											aria-checked={peildatum === v.valid_from}
 											onclick={() => {
 												sluit();
@@ -678,23 +678,7 @@
 		font-weight: 600;
 	}
 	.peil-menuitem {
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink);
-		text-align: left;
 		white-space: nowrap;
-		cursor: pointer;
-	}
-	.peil-menuitem:hover,
-	.peil-menuitem:focus-visible {
-		background: var(--paper-2);
-		outline: none;
-	}
-	.peil-menuitem[aria-checked='true'] {
-		font-weight: 600;
 	}
 	/* A text of an earlier day says so, with the way back. */
 	.whole-hist {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
+	import AlleN from '$lib/components/ui/AlleN.svelte';
 	// Wat een bewindspersoon toezegde en ondertekende,
 	// bovenaan de lezer. Tellingen per stand zijn links naar Bladeren met het filter gezet.
 	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
@@ -94,9 +95,7 @@
 				{/each}
 			</ol>
 			{#if !alleDossiers && dossiers.total > dossiers.items.length}
-				<button type="button" class="alle" onclick={() => (alleDossiers = true)}
-					>Alle {dossiers.total} dossiers</button
-				>
+				<AlleN aantal={dossiers.total} noun="dossiers" onclick={() => (alleDossiers = true)} />
 			{/if}
 		</div>
 	</Sectie>
@@ -107,6 +106,9 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
+	}
+	.ov :global(.alle-n) {
+		align-self: flex-start;
 	}
 	.zin {
 		margin: 0;
@@ -154,20 +156,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.alle {
-		align-self: flex-start;
-		padding: 0;
-		border: 0;
-		background: none;
-		color: var(--ink);
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
-		text-underline-offset: 3px;
-		cursor: pointer;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-weight: 600;
 	}
 	.dekking {
 		margin: 0;

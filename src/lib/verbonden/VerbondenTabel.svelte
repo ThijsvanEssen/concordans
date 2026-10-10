@@ -194,8 +194,7 @@
 							type="button"
 							role="menuitemradio"
 							aria-checked={sortBy === c.id}
-							class="menu__item"
-							class:is-active={sortBy === c.id}
+							class="tekstmenu__item"
 							onclick={() => {
 								sortOn(c.id);
 								sortOpen = false;
@@ -221,7 +220,7 @@
 							type="button"
 							role="menuitemcheckbox"
 							aria-checked={on}
-							class="menu__item"
+							class="tekstmenu__item menu__vink"
 							onclick={() => toggleColumn(c.id)}><Vinkje aan={on} />{c.label}</button
 						>
 					{/each}
@@ -383,35 +382,20 @@
 	}
 	.menu__list {
 		position: absolute;
-		top: calc(100% + 4px);
+		top: calc(100% + var(--s-1));
 		right: 0;
 		z-index: var(--z-float);
-		min-width: 180px;
-		padding: 6px 0;
+		min-width: 200px;
+		padding: var(--s-1) 0;
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		box-shadow: var(--shadow-modal);
 	}
-	.menu__item {
+	.menu__vink {
 		display: flex;
 		align-items: center;
 		gap: var(--s-2);
-		width: 100%;
-		padding: 6px var(--s-3);
-		border: 0;
-		background: none;
-		font: inherit;
-		font-family: var(--font-ui);
-		color: var(--ink);
-		text-align: left;
-		cursor: pointer;
-	}
-	.menu__item:hover {
-		background: var(--paper-2);
-	}
-	.menu__item.is-active {
-		font-weight: 600;
 	}
 	.scroll {
 		flex: 1;

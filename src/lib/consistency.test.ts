@@ -282,6 +282,55 @@ describe('controls in five forms (docs/bediening.md, Thijs, 10 Oct 2026)', () =>
 		expect(offenders(meer, buiten(eigen))).toEqual([]);
 	});
 
+	it('frames a button only as the Knop (.btn, is-groot) or the IconKnop', () => {
+		// A frame in the control's face, or a frame and a pointer, is a button (a field aside);
+		// its one form is in AppShell and IconKnop.
+		const knop = (r: { selector: string; body: string }) =>
+			/border:\s*1px solid/.test(r.body) &&
+			/var\(--font-ui\)|cursor:\s*pointer/.test(r.body) &&
+			!/(input|textarea|select|kbd)\b[^,]*$/.test(r.selector);
+		const eigen: Uitzonderingen = {
+			'lib/components/layout/AppShell.svelte': 'the Knop itself',
+			'lib/components/ui/IconKnop.svelte': 'the one icon button',
+			'lib/components/layout/TopBar.svelte': 'the search in the bar looks as the field it opens',
+			'lib/netwerk/NetwerkPanel.svelte': 'the example in an empty netwerk is a card, not a button',
+			'lib/components/explore/readers/DossierReader.svelte':
+				'the other papers of a dossier; the readers are being reworked (Front-end #1)',
+			'routes/(main)/+page.svelte':
+				'the scopes of the home search, pressed or not: a Keuze once the home page is rebuilt'
+		};
+		expect(offenders((t) => rules(t).some(knop), buiten(eigen))).toEqual([]);
+	});
+
+	it('draws an item of a menu with tekstmenu__item', () => {
+		// An item's hover is TekstMenu's: a menu of its own adds a class for its layout only.
+		const item = (r: { selector: string; body: string }) =>
+			/menu-?item|__item\b|-item\b/.test(r.selector) &&
+			/background:\s*var\(--paper-2\)/.test(r.body);
+		const eigen: Uitzonderingen = {
+			'lib/components/ui/TekstMenu.svelte': 'the one item',
+			'lib/components/ui/CiteMenu.svelte': 'being reworked with the readers (Front-end #1)',
+			'lib/components/articles/PlaatsMenu.svelte':
+				'the place menu of the readers, new; being reworked (Front-end #1)',
+			'lib/components/explore/readers/ArticleReader.svelte':
+				'the versions menu; being reworked with the readers (Front-end #1)'
+		};
+		expect(offenders((t) => rules(t).some(item), buiten(eigen))).toEqual([]);
+	});
+
+	it('styles Verfijnen once, in AppShell', () => {
+		expect(
+			offenders(
+				(t) =>
+					rules(t).some(
+						(r) =>
+							/\.verfijnen-knop\b/.test(r.selector) && /font-family|text-decoration/.test(r.body)
+					),
+				['lib/components/layout/AppShell.svelte']
+			)
+		).toEqual([]);
+	});
+
 	it('sizes a control at the height of a page or of a panel', () => {
 		// 32 px on a page (--veld-h), 24 px in a panel or a group (--veld-h-klein).
 		const hoog = (body: string) =>

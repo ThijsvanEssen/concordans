@@ -868,7 +868,7 @@
 		{#if termen.length}
 			<button
 				type="button"
-				class="actie-knop"
+				class="btn is-groot"
 				title={lijstSoort === 'besluiten'
 					? 'De besluiten van de lijst als CSV'
 					: 'Alleen de besluiten gaan als CSV: kies geen cel of een cel van de stemmingen'}
@@ -919,7 +919,7 @@
 									<button
 										type="button"
 										role="menuitemradio"
-										class="fractie-menuitem"
+										class="tekstmenu__item menu-regel"
 										aria-checked={!fractie}
 										onclick={() => {
 											sluit();
@@ -932,7 +932,7 @@
 											<button
 												type="button"
 												role="menuitemradio"
-												class="fractie-menuitem"
+												class="tekstmenu__item menu-regel"
 												aria-checked={fractie === x.naam}
 												onclick={() => {
 													sluit();
@@ -1014,14 +1014,14 @@
 											<button
 												type="button"
 												role="menuitem"
-												class="codering-menuitem"
+												class="tekstmenu__item menu-regel"
 												disabled={!Object.keys(mijn).length}
 												onclick={() => {
 													sluit();
 													bewaarCodering();
 												}}>Bewaren als CSV</button
 											>
-											<label class="codering-menuitem">
+											<label class="tekstmenu__item menu-regel">
 												Laden uit CSV
 												<input
 													type="file"
@@ -1417,25 +1417,6 @@
 		gap: var(--s-3);
 		margin-bottom: var(--s-4);
 	}
-	.actie-knop {
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.actie-knop:hover:not(:disabled) {
-		border-color: var(--ink);
-	}
-	.actie-knop:disabled {
-		color: var(--rule-strong);
-		cursor: default;
-	}
 	.regel {
 		margin-bottom: var(--s-5);
 	}
@@ -1453,9 +1434,6 @@
 		font-weight: 600;
 		color: var(--ink);
 	}
-	.verfijnen-knop {
-		display: none;
-	}
 	.fractie-lijst {
 		display: flex;
 		flex-direction: column;
@@ -1467,32 +1445,8 @@
 		font-weight: 600;
 		color: var(--ink-3);
 	}
-	.fractie-menuitem,
-	.codering-menuitem {
-		display: block;
-		padding: var(--s-1) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink);
-		text-align: left;
+	.menu-regel {
 		white-space: nowrap;
-		cursor: pointer;
-	}
-	.fractie-menuitem:hover,
-	.fractie-menuitem:focus-visible,
-	.codering-menuitem:hover,
-	.codering-menuitem:focus-within {
-		background: var(--paper-2);
-		outline: none;
-	}
-	.fractie-menuitem[aria-checked='true'] {
-		font-weight: 600;
-	}
-	.codering-menuitem:disabled {
-		color: var(--rule-strong);
-		cursor: default;
 	}
 	.volgende {
 		margin: var(--s-4) 0 0;
@@ -1508,19 +1462,6 @@
 		.facetten {
 			position: static;
 			margin-bottom: var(--s-4);
-		}
-		.verfijnen-knop {
-			display: inline;
-			padding: 0;
-			border: 0;
-			background: none;
-			font-family: var(--font-ui);
-			font-size: var(--t-ui);
-			color: var(--ink);
-			text-decoration: underline;
-			text-decoration-color: var(--rule-strong);
-			text-underline-offset: 4px;
-			cursor: pointer;
 		}
 		.facet-lijst {
 			display: none;

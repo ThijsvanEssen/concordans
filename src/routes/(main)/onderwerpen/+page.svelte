@@ -263,7 +263,9 @@
 				{#if alGevolgd}
 					<a href="/onderwerpen">Gevolgd. Naar de eigen onderwerpen</a>
 				{:else}
-					<button type="button" onclick={volgGedeeld}>Volg deze onderwerpen</button>
+					<button type="button" class="btn is-groot" onclick={volgGedeeld}
+						>Volg deze onderwerpen</button
+					>
 				{/if}
 			</div>
 		{:else if eigen.length}
@@ -338,7 +340,7 @@
 								<li>
 									{term}{#if o.termen.length > 1}<button
 											type="button"
-											class="weg"
+											class="weg-knop"
 											aria-label="‘{term}’ weghalen"
 											onclick={() => haalWeg(o, term)}>×</button
 										>{/if}
@@ -352,7 +354,9 @@
 								bind:value={erbij}
 								placeholder="Woord of synoniem"
 							/>
-							<button type="submit" disabled={!normaal(erbij)}>Toevoegen</button>
+							<button type="submit" class="btn is-groot" disabled={!normaal(erbij)}
+								>Toevoegen</button
+							>
 						</form>
 					</div>
 				{/if}
@@ -495,23 +499,6 @@
 	.nieuw input::placeholder {
 		color: var(--ink-3);
 	}
-	/* A knop on a page: 32 px (docs/bediening.md). */
-	button {
-		height: var(--veld-h);
-		padding: 0 var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-weight: 500;
-		background: var(--paper);
-		color: var(--ink);
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		cursor: pointer;
-	}
-	button:disabled {
-		color: var(--ink-3);
-		cursor: default;
-	}
 	.alle {
 		margin: var(--s-2) 0 0;
 		font-size: var(--t-meta);
@@ -568,14 +555,17 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 	}
-	button.weg {
-		height: auto;
+	.weg-knop {
 		padding: 0 0 0 var(--s-1);
 		border: 0;
 		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		font-weight: 500;
 		color: var(--ink-3);
+		cursor: pointer;
 	}
-	button.weg:hover {
+	.weg-knop:hover {
 		color: var(--ink);
 	}
 	.nieuw--klein {

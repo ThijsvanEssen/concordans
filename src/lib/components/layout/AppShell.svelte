@@ -288,9 +288,6 @@
 		color: var(--accent);
 	}
 
-	/* Buttons: 1px rule-strong border, 3px radius, no fill. `is-primary` is ink on paper;
-	   `is-text` has no border. */
-	/* A knop in a panel, a group or a reader's head: the panel's height (docs/bediening.md). */
 	/* The one frame of a full-width page (docs/bediening.md, Layout; Thijs, 10 Oct 2026): the
 	   width, gutters, facet column and grid of Bladeren. A list or overview page is .blad with
 	   .blad__indeling (facets left, the rest right); a text page keeps a reading width inside
@@ -337,6 +334,9 @@
 			grid-template-columns: minmax(0, 1fr);
 		}
 	}
+	/* The Knop (docs/bediening.md): a 1px rule-strong frame, 3px radius, no fill; ink on hover.
+	   `.btn` alone is the panel's (24 px: a panel, a group, a reader's head); `is-groot` the
+	   page's (32 px). `is-primary` is ink on paper; `is-text` has no frame. */
 	:global(.btn) {
 		display: inline-flex;
 		align-items: center;
@@ -391,16 +391,25 @@
 		width: 3px;
 		background: var(--ink);
 	}
-	:global(.btn:hover) {
+	:global(.btn:hover:not(:disabled)),
+	:global(.btn:focus-visible) {
 		color: var(--ink);
-		background: var(--paper-2);
+		border-color: var(--ink);
+	}
+	:global(.btn.is-groot) {
+		height: var(--veld-h);
+		padding: 0 var(--s-3);
+		gap: var(--s-2);
+		background: var(--paper);
+		font-size: var(--t-ui);
+		color: var(--ink);
 	}
 	:global(.btn.is-primary) {
 		background: var(--ink);
 		color: var(--paper);
 		border-color: var(--ink);
 	}
-	:global(.btn.is-primary:hover) {
+	:global(.btn.is-primary:hover:not(:disabled)) {
 		background: var(--ink-2);
 		border-color: var(--ink-2);
 		color: var(--paper);
@@ -409,13 +418,35 @@
 		border-color: transparent;
 		padding: var(--s-1);
 	}
-	:global(.btn.is-text:hover) {
-		background: transparent;
+	:global(.btn.is-text:hover:not(:disabled)),
+	:global(.btn.is-text:focus-visible) {
+		border-color: transparent;
 		color: var(--accent);
 	}
 	:global(.btn:disabled) {
 		opacity: 0.45;
 		cursor: default;
+	}
+	/* Verfijnen (N): on a phone the facets of a list page wait behind this one line, opened in
+	   place (docs/bediening.md, layer 3); on a wider screen they stand beside the list. */
+	:global(.verfijnen-knop) {
+		display: none;
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-ui);
+		font-size: var(--t-ui);
+		font-weight: 500;
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 4px;
+		cursor: pointer;
+	}
+	@media (max-width: 767px) {
+		:global(.verfijnen-knop) {
+			display: inline-block;
+		}
 	}
 	/* Text for a screen reader only: a live region, a full name behind a short one. */
 	:global(.sr-only) {

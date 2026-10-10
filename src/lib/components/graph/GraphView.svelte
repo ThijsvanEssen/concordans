@@ -31,6 +31,7 @@
 	import { bronNaam } from '$lib/bron/naam';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Caret from '$lib/components/ui/Caret.svelte';
+	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron, type Vorm } from '$lib/bron/vormen';
 	import {
 		containerIdFor,
@@ -1427,25 +1428,9 @@
 			onwheel={() => (fitFollows = false)}
 		>
 			<div class="zoom" role="group" aria-label="Zoomen">
-				<button
-					type="button"
-					class="zoom__btn"
-					aria-label="Inzoomen"
-					onclick={() => canvas?.zoom(1.5)}>+</button
-				>
-				<button
-					type="button"
-					class="zoom__btn"
-					aria-label="Uitzoomen"
-					onclick={() => canvas?.zoom(1 / 1.5)}>−</button
-				>
-				<button
-					type="button"
-					class="zoom__btn"
-					aria-label="Alles in beeld"
-					title="Alles in beeld"
-					onclick={() => canvas?.fit()}>⤢</button
-				>
+				<IconKnop label="Inzoomen" onclick={() => canvas?.zoom(1.5)}>+</IconKnop>
+				<IconKnop label="Uitzoomen" onclick={() => canvas?.zoom(1 / 1.5)}>−</IconKnop>
+				<IconKnop label="Alles in beeld" onclick={() => canvas?.fit()}>⤢</IconKnop>
 			</div>
 			{#if canvasOverlay}
 				<div class="canvas-overlay" bind:this={overlayHost}>
@@ -1535,13 +1520,13 @@
 						<p class="cluster-zin">{zin}</p>
 					{/each}
 					<div class="cluster-knoppen">
-						<button type="button" class="act act--pri" onclick={() => showCluster(c)}
+						<button type="button" class="btn is-primary" onclick={() => showCluster(c)}
 							>Toon alle {c.members.length.toLocaleString('nl-NL')} in het netwerk</button
 						>
 						{#if !c.ends}
 							<button
 								type="button"
-								class="act"
+								class="btn"
 								onclick={() => {
 									openGroup(c.collection);
 									clusterCard = null;
@@ -1554,7 +1539,7 @@
 			{#if foldable.length > 0}
 				<div class="vouw">
 					{#each foldable as c (c.id)}
-						<button type="button" class="act" onclick={() => foldCluster(c)}
+						<button type="button" class="btn" onclick={() => foldCluster(c)}
 							><KindGlyph collection={c.collection} size={12} />{bronPlural(c.collection)} samenvouwen</button
 						>
 					{/each}
@@ -1679,27 +1664,7 @@
 		z-index: var(--z-float);
 		display: flex;
 		flex-direction: column;
-		border: 1px solid var(--rule);
-		border-radius: var(--r-2);
-		background: var(--paper);
-		overflow: hidden;
-	}
-	.zoom__btn {
-		width: 32px;
-		height: var(--veld-h);
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-body-2);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.zoom__btn + .zoom__btn {
-		border-top: 1px solid var(--rule);
-	}
-	.zoom__btn:hover {
-		background: var(--paper-2);
-		color: var(--ink);
+		gap: var(--s-1);
 	}
 
 	/* Takes the canvas's place for the panel it holds; only the panel takes the pointer. */
@@ -1753,29 +1718,6 @@
 		transform: translateX(-50%);
 		z-index: var(--z-float);
 		white-space: nowrap;
-	}
-	.act {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-1) var(--s-3);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		background: var(--paper);
-		font: inherit;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui);
-		font-weight: 500;
-		color: var(--ink);
-		cursor: pointer;
-	}
-	.act:hover {
-		border-color: var(--ink);
-	}
-	.act--pri {
-		background: var(--ink);
-		border-color: var(--ink);
-		color: var(--paper);
 	}
 
 	/* Under the panel Netwerk, as wide as it; where there is no panel, at the top right. */
