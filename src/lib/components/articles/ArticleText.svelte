@@ -264,7 +264,9 @@
 		color: var(--ink);
 		/* The number of a lid hangs in the frame's margin, its text at the column's edge
 		   (ReaderFrame); a narrow column takes it in (below). */
-		margin-left: calc(-1 * var(--s-7));
+		/* No further than the frame's margin: beside the network it is 32, not 64 (the
+		   numbers were cut off there), as the judgment's numbers do (--rov-hang). */
+		margin-left: calc(-1 * min(var(--s-7), var(--reader-pad-left, var(--s-6))));
 	}
 
 	/* A lid: 36px for the number (in the frame's margin), the text to the column's right
@@ -438,7 +440,10 @@
 		font-size: var(--t-body);
 	}
 
-	@container (max-width: 600px) {
+	/* Narrow: the numbers inside the text column. From 580 they hang in the reader's margin:
+	   the article column is 590 at 1440 since the contents take the network's width (one
+	   title column, 10 Oct), and its numbers hang there as at 1920. */
+	@container (max-width: 579px) {
 		.article-text {
 			margin-left: 0;
 		}
