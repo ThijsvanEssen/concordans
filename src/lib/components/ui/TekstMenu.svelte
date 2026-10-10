@@ -46,6 +46,39 @@
 	const sluit = () => (open = false);
 	const gekozen = $derived(opties.find((o) => o.waarde === waarde));
 	const woorden = $derived(tekst ?? gekozen?.label ?? label);
+
+	/**
+	 * The list in the top layer (the popover API, as BronLink's card), so that no column that
+	 * scrolls on its own (the facets of Bladeren, the Overzicht) cuts it off: fixed under its
+	 * button, at its left edge or (`rechts`) its right, kept there while the page scrolls, and
+	 * inside the window. It stays in the menu's element, so its keys and clicks are as before.
+	 * Without the popover API it stands under the button as it did.
+	 */
+	function toplaag(lijst: HTMLElement, rechtsUit: boolean) {
+		const knop = lijst.parentElement?.querySelector<HTMLElement>('.tekstmenu__knop');
+		if (!knop || typeof lijst.showPopover !== 'function') return;
+		lijst.setAttribute('popover', 'manual');
+		lijst.showPopover();
+		const RAND = 8;
+		const zet = () => {
+			const r = knop.getBoundingClientRect();
+			const top = r.bottom + 4;
+			lijst.style.top = `${top}px`;
+			lijst.style.maxHeight = `${Math.max(120, Math.min(innerHeight * 0.6, innerHeight - top - RAND))}px`;
+			const breed = lijst.offsetWidth;
+			const links = rechtsUit ? r.right - breed : r.left;
+			lijst.style.left = `${Math.max(RAND, Math.min(links, innerWidth - breed - RAND))}px`;
+		};
+		zet();
+		addEventListener('scroll', zet, true);
+		addEventListener('resize', zet);
+		return {
+			destroy() {
+				removeEventListener('scroll', zet, true);
+				removeEventListener('resize', zet);
+			}
+		};
+	}
 </script>
 
 <div class="tekstmenu" class:klein use:menu={{ open, close: sluit }}>
@@ -59,7 +92,7 @@
 		>{#if knop}{@render knop()}{:else}{woorden}{/if}<Caret {open} /></button
 	>
 	{#if open}
-		<div class="tekstmenu__lijst" class:rechts role="menu" aria-label={label}>
+		<div class="tekstmenu__lijst" class:rechts role="menu" aria-label={label} use:toplaag={rechts}>
 			{#if inhoud}
 				{@render inhoud(sluit)}
 			{:else}
@@ -130,6 +163,13 @@
 	.tekstmenu__lijst.rechts {
 		left: auto;
 		right: 0;
+	}
+	/* In the top layer: fixed where toplaag puts it, not the popover's centre of the window. */
+	.tekstmenu__lijst:popover-open {
+		position: fixed;
+		inset: auto;
+		margin: 0;
+		color: inherit;
 	}
 	/* Global: a step under the rule (`onder`) is an item as the options are. */
 	:global(.tekstmenu__item) {
