@@ -20,7 +20,8 @@
 		wrap = false,
 		gedimd = false,
 		inline = false,
-		title
+		title,
+		naam
 	}: {
 		label: string;
 		on: boolean;
@@ -41,9 +42,11 @@
 		wrap?: boolean;
 		/** On, but nothing of it shown for another switch (its grouping off): all of it grey. */
 		gedimd?: boolean;
-		/** On a line with other things, as wide as its label: "in netwerk" in a group's heading. */
+		/** On a line with other things, as wide as its label: "netwerk" in a group's heading. */
 		inline?: boolean;
 		title?: string;
+		/** The name a screen reader says, when the label is short for it: "netwerk". */
+		naam?: string;
 	} = $props();
 </script>
 
@@ -57,6 +60,7 @@
 	class:diep={indent === 'deep'}
 	class:inline
 	aria-pressed={on}
+	aria-label={naam}
 	title={title ?? label}
 	onclick={onToggle}
 >

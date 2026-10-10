@@ -23,7 +23,7 @@ Every page and panel, from top to bottom:
 1. **Heading**: the title at the left, its actions at the right, at most three buttons (more in ⋯).
 2. **Choose-line**: what is shown, in `ui/Bepaalregel.svelte`: Zoeken, Periode and Kamer where the list has them, each labelled above its left edge, all 32 px on one line (Thijs, 10 Oct 2026: "Dan hebben we overal netjes een zelfde soort zoekbalk"); on a phone under each other. Nothing else.
 3. **Refine**: on a page the facets at the left with their counts; in a narrow panel behind one text menu or Filter; on a phone behind Verfijnen (N), opened in place.
-4. **List**: a group's heading is its fold; at most one switch at its right (in netwerk); at most one line of controls under it (order, refine); one text link at the foot, Alle N.
+4. **List**: a group's heading is its fold; at most one switch at its right (netwerk, named "Toon in het netwerk"); at most one line of controls under it (order, refine); one text link at the foot, Alle N.
 
 A row has no buttons of its own: a click on the row does it; the + shows on hover (always on a phone).
 

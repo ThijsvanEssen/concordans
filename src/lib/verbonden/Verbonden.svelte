@@ -387,19 +387,24 @@
 			{@const bars = years(g)}
 			{@const count = groupCount(g)}
 			{@const toe = !isOpen(`verbonden:${g.id}`, true)}
+			{@const begin = g.label.replace(/\S+$/, '')}
+			{@const slot = g.label.match(/\S+$/)?.[0] ?? ''}
 			{#if g.section && g.section !== shown[i - 1]?.section}
 				<h3 class="section">{g.section}</h3>
 			{/if}
 			<section class="group" data-group={g.id}>
 				<div class="group__head">
 					<!-- The heading opens and closes the group, remembered per group (Sectie's rule). -->
+					<!-- The last word keeps the caret with it: an SVG after text wraps alone (Thijs,
+					     10 Oct: "de nieuwe regel hier is niet mooi"). The count follows the heading;
+					     when the heading wraps, it stands on the first line's right, by the box. -->
 					<h3 class="group__label">
 						<button
 							type="button"
 							class="group__knop"
 							aria-expanded={!toe}
 							onclick={() => zetOpen(`verbonden:${g.id}`, toe)}
-							>{g.label}<Caret open={!toe} side /></button
+							>{begin}<span class="group__slot">{slot}<Caret open={!toe} side /></span></button
 						>
 					</h3>
 					<span class="group__count">{countLabel(g)}</span>
@@ -407,8 +412,9 @@
 						<span class="group__laag">
 							<FilterOptie
 								inline
-								label="in netwerk"
-								title={isLayerOn(g) ? 'Uit het netwerk halen' : 'In het netwerk tonen'}
+								label="netwerk"
+								title="Toon in het netwerk"
+								naam="Toon in het netwerk: {g.label}"
 								on={isLayerOn(g)}
 								onToggle={() => toggleLayer(g)}
 							/>
@@ -814,15 +820,19 @@
 		padding: var(--s-4) var(--s-4) var(--s-1);
 	}
 	.group__label {
+		flex: 0 1 auto;
+		min-width: 0;
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		font-weight: 600;
 		color: var(--ink);
 	}
-	/* Inline, so the caret follows the label's last word, also on a second line. */
+	/* A block, not inline: a button inline is an inline-block, whose baseline is its last
+	   line, and the count and the box would follow a wrapped heading down to it. The caret
+	   follows the last word in the slot. */
 	.group__knop {
-		display: inline;
+		display: block;
 		padding: 0;
 		border: 0;
 		background: none;
@@ -834,7 +844,11 @@
 	.group__knop:hover {
 		color: var(--accent);
 	}
+	.group__slot {
+		white-space: nowrap;
+	}
 	.group__count {
+		flex: none;
 		color: var(--ink-3);
 	}
 	/* Whether the group is drawn on the canvas, said in words beside its box. */
@@ -999,7 +1013,7 @@
 		white-space: nowrap;
 	}
 
-	/* "in netwerk" at the right of a group's heading: the vinkje of FilterOptie. */
+	/* "netwerk" at the right of a group's heading: the vinkje of FilterOptie. */
 	.group__laag {
 		margin-left: auto;
 		flex: none;
