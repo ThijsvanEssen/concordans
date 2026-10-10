@@ -210,6 +210,25 @@ describe('one form for each thing', () => {
 		);
 	});
 
+	it('says a state where content would be in one quiet line (.stil)', () => {
+		// Round 2 of the consistency pass: "Laden…" was italic in the readers and roman on the
+		// pages. A row, a caption or the nav column keeps its own smaller line.
+		const eigen = /\b(stil|nav-kolom__note|onderschrift|laden|sr-only)\b/;
+		const zonder = sources.flatMap(({ path, text }) =>
+			[...text.matchAll(/<p class="([^"]*)"[^>]*>\s*Laden…/g)]
+				.filter((m) => !eigen.test(m[1]))
+				.map(() => path)
+		);
+		expect(zonder).toEqual([]);
+		expect(
+			offenders((t) =>
+				rules(t).some(
+					(r) => /\.(loading|leeg|empty|explore-empty)\b/.test(r.selector) && /italic/.test(r.body)
+				)
+			)
+		).toEqual([]);
+	});
+
 	it('styles the parts of a text page once, in AppShell (.blad--tekst)', () => {
 		const delen =
 			/^\.(stub-eyebrow|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;

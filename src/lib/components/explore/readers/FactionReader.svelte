@@ -111,7 +111,7 @@
 <ReaderFrame>
 	<div class="r-faction">
 		{#if view.kind === 'loading'}
-			<p class="loading">Laden…</p>
+			<p class="loading stil">Laden…</p>
 		{:else if view.kind === 'error'}
 			<p class="error">
 				{view.message}
@@ -196,11 +196,11 @@
 					aantal={leden.staat === 'klaar' ? leden.lijst.length : null}
 				>
 					{#if leden.staat === 'laden'}
-						<p class="loading">Laden…</p>
+						<p class="loading stil">Laden…</p>
 					{:else if leden.staat === 'fout'}
 						<p class="error">Leden konden niet worden geladen.</p>
 					{:else if leden.lijst.length === 0}
-						<p class="loading">Geen leden in de gegevens.</p>
+						<p class="loading stil">Geen leden in de gegevens.</p>
 					{:else}
 						<ul class="leden">
 							{#each leden.lijst as m (m.key)}
@@ -257,9 +257,6 @@
 	}
 	.loading,
 	.error {
-		font-family: var(--font-serif);
-		font-style: italic;
-		color: var(--ink-3);
 		margin: 0;
 	}
 

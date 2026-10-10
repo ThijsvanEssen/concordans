@@ -179,7 +179,7 @@
 <aside class="legend">
 	<!-- Nothing on the canvas: nothing to filter, group or count yet. -->
 	{#if !hasNodes}
-		<p class="empty">Nog geen bronnen in het netwerk.</p>
+		<p class="empty stil">Nog geen bronnen in het netwerk.</p>
 	{:else}
 		<section class="block">
 			<div class="block__head">
@@ -442,9 +442,6 @@
 	}
 	.empty {
 		margin: 0;
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-		line-height: 1.4;
 	}
 	/* One line that says what a control does, or why it is off. */
 	.sub {

@@ -132,7 +132,7 @@
 <ReaderFrame>
 	<div class="r-member">
 		{#if view.kind === 'loading'}
-			<p class="loading">Laden…</p>
+			<p class="loading stil">Laden…</p>
 		{:else if view.kind === 'error'}
 			<p class="error">
 				{view.message}
@@ -390,9 +390,6 @@
 	}
 	.loading,
 	.error {
-		font-family: var(--font-serif);
-		font-style: italic;
-		color: var(--ink-3);
 		margin: 0;
 	}
 

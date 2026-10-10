@@ -350,6 +350,17 @@
 	:global(.blad__indeling > .blad__kop) {
 		grid-column: 1 / -1;
 	}
+	/* A state where content would be: loading, nothing, could not. One quiet line everywhere
+	   (round 2 of the consistency pass: italic in the readers, roman on the pages); a row's
+	   own line keeps its smaller size. */
+	:global(.stil) {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-style: normal;
+		line-height: var(--lh-snug);
+		color: var(--ink-3);
+	}
 	:global(.blad__titel) {
 		margin: 0;
 		font-family: var(--font-serif);

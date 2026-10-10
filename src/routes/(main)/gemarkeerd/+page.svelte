@@ -346,7 +346,7 @@
 					{/if}
 				</p>
 				{#if !m.items.length}
-					<p class="leeg">Nog niets bewaard.</p>
+					<p class="leeg stil">Nog niets bewaard.</p>
 				{:else}
 					{@render lijst(m.items, m.volgorde, m)}
 					<p class="voet">
@@ -441,7 +441,6 @@
 	}
 	.leeg {
 		margin: 0;
-		color: var(--ink-3);
 	}
 	/* A law, dossier or judgment over its rows, as a day over Actueel's. */
 	.groep {

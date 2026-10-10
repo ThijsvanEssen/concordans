@@ -1406,7 +1406,7 @@
 				<p><a href="/bronnen#dekking" class="link">Bronnen en dekking</a></p>
 			</NietGevonden>
 		{:else if padMissing && !selectedNode && !netwerkActive}
-			<p class="explore-empty">{padMissing}</p>
+			<p class="explore-empty stil">{padMissing}</p>
 		{:else if mode === 'graph'}
 			{#if voorbeeldAan && !voorbeeldRegelWeg}
 				<!-- One quiet line: the network is an example, and how to choose another. -->
@@ -1634,10 +1634,10 @@
 				</div>
 			{/if}
 		{:else if focusError}
-			<p class="explore-empty">{focusError}</p>
+			<p class="explore-empty stil">{focusError}</p>
 		{:else if focus || pad}
 			<!-- The bron is on its way: said, not left as an empty page. -->
-			<p class="explore-empty" role="status">Laden…</p>
+			<p class="explore-empty stil" role="status">Laden…</p>
 		{/if}
 	</div>
 </div>
@@ -1902,9 +1902,6 @@
 
 	.explore-empty {
 		margin: var(--s-6);
-		font-family: var(--font-serif);
-		font-style: italic;
-		color: var(--ink-3);
 	}
 
 	/* A hairline until touched, not a constant grey bar: the 5px track is the hit

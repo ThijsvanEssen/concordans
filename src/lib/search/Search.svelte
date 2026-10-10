@@ -616,7 +616,7 @@
 		bind:this={listEl}
 	>
 		{#if outsideLaw}
-			<p class="state" role="status">
+			<p class="state stil" role="status">
 				"{q}" staat niet in Concordans.
 				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="noopener"
 					>wetten.overheid.nl</a
@@ -624,7 +624,7 @@
 			</p>
 		{/if}
 		{#if kamer}
-			<p class="state" role="status">
+			<p class="state stil" role="status">
 				{kamer === 'EK' ? 'Eerste' : 'Tweede'} Kamer:
 				{#each kamerLinks(kamer) as link, i (link.href)}{i > 0 ? ', ' : ''}<a href={link.href}
 						>{link.label}</a
@@ -632,7 +632,7 @@
 			</p>
 		{/if}
 		{#if notFound}
-			<p class="state" role="status">
+			<p class="state stil" role="status">
 				"{q}" staat niet in de gegevens. <a href="/bronnen#dekking">Dekking</a>
 			</p>
 		{/if}
@@ -664,7 +664,7 @@
 					</a>
 				{/each}
 				{#if keuzesMeer > 0}
-					<p class="state state--group">
+					<p class="state state--group stil">
 						en {keuzesMeer}
 						{keuzesMeer === 1 ? 'ander artikel' : 'andere artikelen'}
 					</p>
@@ -797,9 +797,9 @@
 					{naam}
 				</div>
 				{#if laan.stand === 'laden'}
-					<p class="state state--group" role="status">Laden…</p>
+					<p class="state state--group stil" role="status">Laden…</p>
 				{:else}
-					<p class="state state--group" role="status">
+					<p class="state state--group stil" role="status">
 						{naam}
 						{laan.stand === 'traag' ? 'duren lang.' : 'konden niet worden geladen.'}
 						<TekstLink onclick={() => (opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1)}
@@ -811,14 +811,14 @@
 		{/each}
 
 		{#if failed}
-			<p class="state" role="status">
+			<p class="state stil" role="status">
 				{traag ? 'Zoeken duurt lang.' : 'Zoeken mislukt.'}
 				<TekstLink onclick={() => (opnieuw.snel = (opnieuw.snel ?? 0) + 1)}
 					>Probeer opnieuw</TekstLink
 				>
 			</p>
 		{:else if empty}
-			<p class="state" role="status">Geen resultaten</p>
+			<p class="state stil" role="status">Geen resultaten</p>
 		{/if}
 	</div>
 </div>
@@ -1007,9 +1007,6 @@
 	.state {
 		margin: 0;
 		padding: var(--s-3) var(--s-4);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
 	}
 
 	.volledig {
