@@ -584,6 +584,21 @@
 			display: inline-block;
 		}
 	}
+	/* A finger's target around a small control or a link in a line of text (UX-toets 10 Oct:
+	   "Verfijnen" 55 × 16, the band's "…" 13 × 19, names in a row 13 high): an invisible
+	   border of the target, at least 24 px high, that moves nothing. On a touch screen only. */
+	@media (pointer: coarse) {
+		:global(.verfijnen-knop),
+		:global(.raakvlak) {
+			position: relative;
+		}
+		:global(.verfijnen-knop::after),
+		:global(.raakvlak::after) {
+			content: '';
+			position: absolute;
+			inset: calc(-1 * var(--s-2)) calc(-1 * var(--s-1));
+		}
+	}
 	/* Text for a screen reader only: a live region, a full name behind a short one. */
 	:global(.sr-only) {
 		position: absolute;

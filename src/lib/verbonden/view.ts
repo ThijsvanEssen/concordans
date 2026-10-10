@@ -27,8 +27,15 @@ export const cutsRows = (f: VerbondenFilter) =>
 /** The kind a group counts for: that of its rows. */
 export const kindOfGroup = (g: Group): BronKind | null => g.rows[0]?.kind ?? null;
 
-/** The groups with the rows that pass the filter; a group without rows is left out. */
-export function filterGroups(groups: Group[], f: VerbondenFilter): Group[] {
+/**
+ * The groups with the rows that pass the filter; a group without rows is left out, unless
+ * its loader is still under way (`wachtend`, and no filter that cuts rows): it keeps its place.
+ */
+export function filterGroups(
+	groups: Group[],
+	f: VerbondenFilter,
+	wachtend: ReadonlySet<string> = new Set()
+): Group[] {
 	const cut = cutsRows(f);
 	// The year alone, where the API asked for that year (a wet's judgments, BE-51): its total
 	// is the year's, and holds.
@@ -44,10 +51,16 @@ export function filterGroups(groups: Group[], f: VerbondenFilter): Group[] {
 				label,
 				rows,
 				total: holds ? g.total : undefined,
-				capped: holds ? g.capped : false
+				capped: holds ? g.capped : false,
+				// A group still loading has no rows to tell its kind by: its noun names it.
+				laden:
+					rows.length === 0 &&
+					!cut &&
+					wachtend.has(g.id) &&
+					(!f.bronnen || f.bronnen.has(g.noun as BronKind))
 			};
 		})
-		.filter((g) => g.rows.length > 0);
+		.filter((g) => g.rows.length > 0 || g.laden);
 }
 
 export const allRows = (groups: Group[]): Row[] => groups.flatMap((g) => g.rows);
@@ -80,10 +93,19 @@ export function countLine(groups: Group[], f: VerbondenFilter): string {
 	const total = totalCount(groups);
 	const shown = shownCount(groups, f);
 	const noun = total === 1 ? 'verbinding' : 'verbindingen';
-	return shown === total
-		? `${formatCount(total)} ${noun}`
-		: `${formatCount(shown)} van ${formatCount(total)} ${noun}`;
+	const heel = `${formatCount(total)}${minstens(groups)}`;
+	return shown === total ? `${heel} ${noun}` : `${shownLabel(groups, f)} van ${heel} ${noun}`;
 }
+
+// A group the API cut off counts what it holds: the sum is at least, as its own `30+`.
+const minstens = (gs: Group[]) => (gs.some(afgekapt) ? '+' : '');
+
+/** The number after the filter as the count line writes it: `164`, or `164+`. */
+export const shownLabel = (groups: Group[], f: VerbondenFilter) =>
+	`${formatCount(shownCount(groups, f))}${minstens(filterGroups(groups, f))}`;
+
+/** A group with more rows than it holds and no total from the API (`30+`). */
+const afgekapt = (g: Group) => !!g.capped && !(g.total != null && g.total >= g.rows.length);
 
 /** Per kind of bron, the number of verbindingen, the API's totals where they hold. */
 export function kindTotals(groups: Group[]): Partial<Record<BronKind, number>> {

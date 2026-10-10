@@ -41,7 +41,7 @@
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
-	import { serverKop } from '$lib/seo/kop.svelte';
+	import { LADEN_TITEL, serverKop } from '$lib/seo/kop.svelte';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '$lib/components/explore/weergave';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
@@ -332,6 +332,8 @@
 			(f.bronnen &&
 				selectedNode?.collection === 'articles' &&
 				!(verbonden.lidPerBak && lidTellingenOnder(verbonden.lidPerBak, f.bronnen)));
+		// Asked again for each bron Verbonden starts on: a readable address names it later.
+		void verbonden.id;
 		if (tableMode || opRijen) void source.volledig();
 	});
 
@@ -571,13 +573,16 @@
 			}
 			if (!replace && onCanvas && (withNetwerk || deepenedId)) {
 				store.focusNode(onCanvas.id);
+				if (withNetwerk) graphView?.inBeeld();
 				return;
 			}
 			if (!replace && withNetwerk && inGraph) {
 				const node = await store.expandNode(target.collection, target.key, { neighborLimit: 0 });
 				if (id !== loadedFocus) return;
-				if (node) store.focusNode(node.id);
-				else missing(target.key);
+				if (node) {
+					store.focusNode(node.id);
+					graphView?.inBeeld();
+				} else missing(target.key);
 				return;
 			}
 			// A wet, fractie, commissie or dossier is a hull, not a scattered handful of
@@ -952,6 +957,9 @@
 	const pageTitle = $derived.by(() => {
 		if (mode === 'index') return 'Bronnen, Concordans';
 		if (nietGevonden) return 'Niet gevonden, Concordans';
+		// While the next bron is on its way the reader still holds the previous one: its name
+		// would be the new page's (a screen reader announces the title after each step).
+		if (wachtOp || (pad && !focus && !padMissing)) return LADEN_TITEL;
 		const name = selectedNode ? tabTitle(selectedNode) : null;
 		if (name) return `${name}, Concordans`;
 		if (netwerkActive) return 'Netwerk, Concordans';
@@ -987,10 +995,17 @@
 			if (v === null) url.searchParams.delete(k);
 			else url.searchParams.set(k, v);
 		}
-		// The readable address of the focus where it has one: /dossiers/36799?lezen=1.
+		// The readable address of the focus where it has one: /dossiers/36799?lezen=1. An
+		// address still looked up has no focus yet: it keeps its path, or a step (?paneel
+		// dropped) would land on the empty /explore or the remembered netwerk.
 		const f = url.searchParams.get('focus');
 		const props = selectedNode && selectedNode.id === f ? selectedNode.raw?.props : null;
-		void goto(verkennerHref(url.searchParams, page.url.hash, props), {
+		const rest = url.searchParams.toString();
+		const href =
+			!f && pad
+				? `${page.url.pathname}${rest ? `?${rest}` : ''}${page.url.hash}`
+				: verkennerHref(url.searchParams, page.url.hash, props);
+		void goto(href, {
 			replaceState: !push,
 			noScroll: true,
 			keepFocus: true
@@ -1433,6 +1448,10 @@
 			</NietGevonden>
 		{:else if padMissing && !selectedNode && !netwerkActive}
 			<p class="explore-empty stil">{padMissing}</p>
+		{:else if mode === 'graph' && (focus || pad) && !selectedNode && !netwerkActive && !focusError}
+			<!-- A bron on its way: its place, not the empty network with its start card (UX test
+			     10 Oct, #24). -->
+			<p class="explore-empty stil">Laden…</p>
 		{:else if mode === 'graph'}
 			{#if voorbeeldAan && !voorbeeldRegelWeg}
 				<!-- One quiet line: the network is an example, and how to choose another. -->

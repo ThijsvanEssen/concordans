@@ -179,6 +179,12 @@ describe('the panel under the filter', () => {
 		expect(countLine(groups, EMPTY_FILTER)).toBe('1.098 verbindingen');
 		const f = { ...EMPTY_FILTER, bronnen: new Set(['artikelen'] as const) };
 		expect(countLine(groups, f)).toBe('34 van 1.098 verbindingen');
+		// A group the API cut off without a total: the sum is at least.
+		const afgekapt = [
+			...groups,
+			{ ...groups[groups.length - 1], id: 'x', total: undefined, capped: true }
+		];
+		expect(countLine(afgekapt, EMPTY_FILTER)).toBe('1.099+ verbindingen');
 		expect(filterGroups(groups, f).map((g) => g.id)).toEqual(['cited-by']);
 		expect(
 			hiddenByKind(
@@ -189,6 +195,23 @@ describe('the panel under the filter', () => {
 		).toEqual([{ kind: 'uitspraken', count: 1064 }]);
 		const none = { ...EMPTY_FILTER, bronnen: new Set(['dossiers'] as const) };
 		expect(filterGroups(groups, none)).toEqual([]);
+	});
+
+	it('keeps a group whose loader is still under way in its place, unless a filter cuts rows', () => {
+		const wachtend = [
+			{ id: 'judgments', label: 'Uitspraken die dit artikel aanhalen', rows: [], capped: false },
+			groups[1]
+		];
+		const shown = filterGroups(wachtend, EMPTY_FILTER, new Set(['judgments']));
+		expect(shown.map((g) => [g.id, !!g.laden])).toEqual([
+			['judgments', true],
+			['cited-by', false]
+		]);
+		expect(filterGroups(wachtend, EMPTY_FILTER).map((g) => g.id)).toEqual(['cited-by']);
+		const f = { ...EMPTY_FILTER, bronnen: new Set(['artikelen'] as const) };
+		expect(filterGroups(wachtend, f, new Set(['judgments'])).map((g) => g.id)).toEqual([
+			'cited-by'
+		]);
 	});
 
 	it('regroups per lid, the rest under Hele artikel', () => {
