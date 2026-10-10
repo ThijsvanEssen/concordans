@@ -27,6 +27,7 @@ import {
 	type Match
 } from './groups';
 import { LOADERS, type Loaded } from './loaders';
+import { isInhoudGroep, isKernGroep } from '$lib/bron/behoort';
 
 /**
  * Whether Verbonden of a bron can start from five per bucket: a group's rows are asked when
@@ -52,7 +53,14 @@ export type VerbondenState = {
 	 * The groups to come, with their counts, from the light node while the full one is on
 	 * its way: the panel shows their heads before their rows (the Awb's full node is 4.9 MB).
 	 */
-	preview?: { id: string; label: string; count: number | null }[];
+	preview?: {
+		id: string;
+		label: string;
+		count: number | null;
+		/** The kind of its rows (a judgment's row is taller) and its section head, as drawn. */
+		noun?: string;
+		section?: string;
+	}[];
 	/** The verbindingen per lid of an article, as the API counts them (`lid_counts`). */
 	lidTellingen?: Map<string, number> | null;
 	/** The same per collection of the buckets, for the bronfilter (`lidTellingenOnder`). */
@@ -158,12 +166,38 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 		first
 			.then((first) => {
 				if (ac.signal.aborted || get(state).groups.length > 0) return;
-				const preview = naarSoort(
-					buildGroups(collection, neighborsOf(first), bucketTotals(first)),
-					first.node.props as Record<string, unknown>
-				)
-					.filter((g) => g.load || g.rows.length > 0)
-					.map((g) => ({ id: g.id, label: g.label, count: g.load ? null : groupCount(g) }));
+				// The groups as they will stand, from the first paint (UX-toets e7a2f95, #1): a
+				// loader's group by the buckets it reads, counted by the light node; a group the
+				// node cannot foretell (its own endpoint: Toelichting, Wijzigingen) and an empty one
+				// left out, as the full list puts them last or not at all.
+				const tel = bucketTotals(first);
+				const eigen = (first.node.props ?? {}) as Record<string, unknown>;
+				const gebouwd = buildGroups(collection, neighborsOf(first), tel);
+				const groepVan = new Map(gebouwd.map((g) => [g.id, g]));
+				const preview = naarSoort(gebouwd, eigen)
+					.map((g) => ({
+						id: g.id,
+						label: g.label,
+						noun: g.noun,
+						section: g.section,
+						onvoorspelbaar: !!g.load && !g.bakken && !g.section,
+						count: g.load
+							? g.bakken
+								? g.bakken.reduce(
+										(som, b) =>
+											som + (tel.get(bucketKey(b.relation, b.collection, b.direction)) ?? 0),
+										0
+									)
+								: null
+							: groupCount(g)
+					}))
+					.filter((p) => !p.onvoorspelbaar && p.count !== 0)
+					// What Verbonden leaves to the band and the reader (kern, inhoud) is not in it either.
+					.filter((p) => {
+						const g = groepVan.get(p.id);
+						return !g || (!isKernGroep(collection, g) && !isInhoudGroep(collection, g, eigen));
+					})
+					.map(({ onvoorspelbaar: _, ...p }) => p);
 				state.set({
 					id: selection.id,
 					groups: [],
@@ -212,7 +246,9 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 					const bakken = (GROUPS[collection] ?? []).find((d) => d.id === id)?.bakken;
 					if (!bakken) return true;
 					return bakken.some(
-						(b) => (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 1) > 0
+						// The node lists every bucket it has: one it does not list is empty (#36: on
+						// HR 2019:2007 "Artikelen" stood 100 ms and went).
+						(b) => (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 0) > 0
 					);
 				};
 				// What a waiting group will hold, where its buckets are counted (UX-toets 0.79.43, #1).

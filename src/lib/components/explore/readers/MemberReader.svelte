@@ -33,6 +33,7 @@
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
 	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
+	import { ambtZin } from '$lib/components/parliamentary/ambt';
 	import StemOpen from '$lib/components/open/StemOpen.svelte';
 	import { bronHref } from '$lib/bron/href';
 	import { terPlekke } from '$lib/actions/klik';
@@ -165,18 +166,7 @@
 	};
 	/** The posts of a vote in the source's words, oldest first: "minister van … (kabinet-…)". */
 	// In running text a post is lower case, as the status line writes it: "als minister-president".
-	const ambtVan = (v: Vote) =>
-		(v.in_office ?? [])
-			.map((o) =>
-				[
-					o.function ? o.function.charAt(0).toLowerCase() + o.function.slice(1) : null,
-					o.cabinet ? `(${o.cabinet})` : null
-				]
-					.filter(Boolean)
-					.join(' ')
-			)
-			.filter(Boolean)
-			.join(' en ') || null;
+	const ambtVan = (v: Vote) => ambtZin(v.in_office);
 	const groepSleutel = (v: Vote) => `${v.party ?? ''}\u0000${ambtVan(v) ?? ''}`;
 	/** The groups of the votes shown; each counts its votes among `alle`, not the preview's
 	 *  (UX-toets 0.79.43, #29: "20 stemmen" of 50). */

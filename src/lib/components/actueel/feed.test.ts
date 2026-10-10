@@ -254,4 +254,24 @@ describe('the address of an item', () => {
 		} as never);
 		expect(padOfFocus('documents/adres_test_3')).toBeNull();
 	});
+
+	it('keeps its persons by their own address (UX-toets 0.79.44, #47)', () => {
+		normalizeItem({
+			kind: 'Motie',
+			date: '2026-10-09',
+			title: 'Motie',
+			node: { collection: 'documents', key: 'adres_test_4' },
+			persons: [
+				{
+					key: 'lid_adres_1',
+					name: 'Simon Ceulemans',
+					role: 'indiener',
+					path: '/leden/simon-ceulemans'
+				},
+				{ key: 'lid_adres_2', name: 'Zonder adres', role: 'medeindiener' }
+			]
+		} as never);
+		expect(padOfFocus('members/lid_adres_1')).toBe('/leden/simon-ceulemans');
+		expect(padOfFocus('members/lid_adres_2')).toBeNull();
+	});
 });

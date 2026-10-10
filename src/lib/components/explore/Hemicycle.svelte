@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { stemVanStoel } from './stoel';
 	import { naamVan as bronNaamVan } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
@@ -193,7 +194,8 @@
 			</a>
 		{/each}
 		{#each seats as s, i (s.faction.id + ':' + s.x + ':' + s.y)}
-			{@const side = s.faction.key ? voteHighlight?.[s.faction.key] : undefined}
+			{@const stem = stemVanStoel(s, voteHighlight)}
+			{@const side = stem === 'niet' ? undefined : stem}
 			{@const kleur = colorOf ? colorOf(s.faction, i) : s.faction.color}
 			{@const vulling =
 				patroonVan(naamVan(s.faction)) !== 'vol'
@@ -215,7 +217,7 @@
 				class:seat--dim={hovered !== null && hovered.id !== s.faction.id}
 				class:seat--hi={hovered?.id === s.faction.id}
 				class:seat--vote-tegen={side === 'tegen'}
-				class:seat--vote-other={voteHighlight != null && side == null}
+				class:seat--vote-other={stem === 'niet'}
 			/>
 		{/each}
 		<!-- What the middle says, the sector's link says already: not read twice. -->
