@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import type { NeighborhoodReach } from '$lib/graph/store/types';
-	import { onDestroy, onMount, tick } from 'svelte';
+	import { onDestroy, onMount, tick, untrack } from 'svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import { get } from 'svelte/store';
 	import Graph from 'graphology';
@@ -276,6 +277,21 @@
 		void filters;
 		countCanvas();
 		canvas?.refresh();
+	});
+
+	// A filter that changes what is drawn frames what is left, as ⤢ does (zicht.ts).
+	let vorigeZicht: string | null = null;
+	$effect(() => {
+		const nu = zichtSleutel({
+			verborgen: hiddenKinds,
+			rechter: filter.rechter,
+			van: filter.van,
+			tot: filter.tot
+		});
+		const passen = naFilter(vorigeZicht, nu);
+		vorigeZicht = nu;
+		// After the refresh above has hidden what the filter leaves out.
+		if (passen && !untrack(() => fitSuppressed)) void tick().then(() => canvas?.fit());
 	});
 
 	// ── camera ────────────────────────────────────────────────────────────────
