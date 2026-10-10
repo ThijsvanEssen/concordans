@@ -258,6 +258,24 @@ function lookupQuery(pad: Pad) {
 }
 
 /**
+ * The focus the server's page names (`<meta name="focus" content="documents/…">`, API
+ * 0.79.43, #502): after the 301 from /explore?focus=… the key is no longer in the address,
+ * and the page says it without a request (cold, the lookup took 1.8 s). Only for the address
+ * the page was served for.
+ */
+function focusUitPagina(pad: Pad): string | null {
+	if (typeof document === 'undefined') return null;
+	const focus = document.querySelector('meta[name="focus"]')?.getAttribute('content') ?? null;
+	const href = padHref(pad);
+	if (!focus || !parseNodeId(focus) || location.pathname !== href) return null;
+	remember(href, focus);
+	const target = parseNodeId(focus)!;
+	// What the lookup would have set going: a Kamerstuk's text beside its node.
+	if (target.collection === 'documents') getDocument(target.key).catch(() => {});
+	return focus;
+}
+
+/**
  * The focus of an address that needs the API, by /api/lookup: exact or nothing. A
  * Kamerstuk that is not in the data does not open its dossier instead. Null when the
  * data lacks it (404 `not_in_data`); another failure is thrown, to be said as such.
@@ -294,7 +312,7 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 		lawArticleList(artikel.wet).catch(() => {});
 		getExplainedBy(artikel.wet, artikel.nummer).catch(() => {});
 	}
-	const known = focusOfPad(pad);
+	const known = focusOfPad(pad) ?? focusUitPagina(pad);
 	if (known) {
 		const target = parseNodeId(known);
 		if (artikel && target) onthoudArtikel(target.key, artikel.wet, artikel.nummer);
