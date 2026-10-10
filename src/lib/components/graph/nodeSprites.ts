@@ -20,8 +20,10 @@ export type Tokens = {
 	ink: string;
 	ink2: string;
 	ink3: string;
-	accent: string;
-	accentSoft: string;
+	stuk: string;
+	dossier: string;
+	wijziging: string;
+	focus: string;
 	indigo: string;
 	moss: string;
 	plum: string;
@@ -43,8 +45,10 @@ const FALLBACK: Tokens = {
 	ink: '#161513',
 	ink2: '#3b3834',
 	ink3: '#5d5951',
-	accent: '#8c2f28',
-	accentSoft: '#f3e4e2',
+	stuk: '#d3762d',
+	dossier: '#d3762d',
+	wijziging: '#00487c',
+	focus: '#161513',
 	indigo: '#2f3e5e',
 	moss: '#456247',
 	plum: '#5e3a55',
@@ -65,8 +69,10 @@ const NAMES: Record<keyof Tokens, string> = {
 	ink: '--ink',
 	ink2: '--ink-2',
 	ink3: '--ink-3',
-	accent: '--accent',
-	accentSoft: '--accent-soft',
+	stuk: '--netwerk-stuk',
+	dossier: '--netwerk-dossier',
+	wijziging: '--netwerk-wijziging',
+	focus: '--netwerk-focus',
 	indigo: '--indigo',
 	moss: '--moss',
 	plum: '--plum',
@@ -100,8 +106,8 @@ export function tokens(): Tokens {
 
 export type NodeShape = 'circle' | 'diamond' | 'roundedRect' | 'hexagon';
 
-// Articles: open ink circle. Judgments: indigo disc. Documents: accent hexagon.
-// Instruments: ink diamond. Dossiers: open accent diamond. Committees and
+// Articles: open ink circle. Judgments: indigo disc. Documents: a hexagon in the dossier hue.
+// Instruments: ink diamond. Dossiers: open diamond in the same hue. Committees and
 // activities: grey. Factions and members: plum, in a badge shape for members.
 export function fillFor(kind: GraphNodeKind): string {
 	const t = tokens();
@@ -115,7 +121,7 @@ export function fillFor(kind: GraphNodeKind): string {
 		case 'judgment':
 			return t.indigo;
 		case 'document':
-			return t.accent;
+			return t.stuk;
 		case 'committee':
 		case 'activity':
 			return t.ink3;
@@ -134,8 +140,11 @@ export function strokeFor(kind: GraphNodeKind): string {
 		case 'judgment':
 			return t.indigo;
 		case 'dossier':
+			return t.dossier;
+		// The dossier hue is 3.1:1 against the paper and 2.9:1 in a dossier's wash: the edge
+		// in ink-3 keeps the stuk apart from both (6:1).
 		case 'document':
-			return t.accent;
+			return t.ink3;
 		case 'committee':
 		case 'activity':
 		case 'other':
@@ -149,7 +158,7 @@ export function strokeFor(kind: GraphNodeKind): string {
 /**
  * Edge colours by relation: references between articles and the structure of the
  * law in moss, appeals and gedaan-in in slate, toelichting and ingediend-door
- * in plum, changes in the accent, the rest (gaat over, geleid door) in grey.
+ * in plum, changes to a wet in the wet's hue, the rest (gaat over, geleid door) in grey.
  */
 export function edgeColorFor(relation: Relation, sourceKind: GraphNodeKind): string {
 	const t = tokens();
@@ -169,7 +178,7 @@ export function edgeColorFor(relation: Relation, sourceKind: GraphNodeKind): str
 		case 'AMENDS':
 		case 'INTRODUCES':
 		case 'REPEALS':
-			return t.accent;
+			return t.wijziging;
 		case 'APPEAL_OF':
 		case 'ADVISES_ON':
 		case 'ANSWERS':
@@ -341,8 +350,8 @@ function buildSprite(kind: GraphNodeKind, variant: Variant): string {
 	const t = tokens();
 	// A stub (referenced, not loaded yet) keeps a paper fill and the stroke of its kind.
 	if (variant === 'stub') return drawSprite(shape, t.paper, strokeFor(kind), 1.5);
-	// The focused bron takes the accent as an outer stroke.
-	if (variant === 'focused') return drawSprite(shape, fillFor(kind), t.accent, 2.8);
+	// The focused bron takes an outer stroke in ink.
+	if (variant === 'focused') return drawSprite(shape, fillFor(kind), t.focus, 2.8);
 	const isOpen = fillFor(kind) === t.paper;
 	return drawSprite(shape, fillFor(kind), strokeFor(kind), isOpen ? 2.4 : 1);
 }

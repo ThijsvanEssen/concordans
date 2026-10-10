@@ -560,6 +560,18 @@ describe('canvas cards and halls', () => {
 		).toEqual([]);
 	});
 
+	it('keeps red out of the network: its colours are --netwerk-* tokens (Thijs, 10 Oct)', () => {
+		// Red in the network would only say no; the kinds, the focus and a chosen verbinding
+		// take the tokens in AppShell.
+		const netwerk = (path: string) =>
+			/^lib\/(components\/graph|netwerk|graph)\//.test(path) && !/\.test\.ts$/.test(path);
+		expect(
+			sources
+				.filter((s) => netwerk(s.path) && /--accent|\baccent\b|accentSoft|#8c2f28/i.test(s.text))
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+
 	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
 		expect(
 			offenders(

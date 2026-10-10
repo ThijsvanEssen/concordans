@@ -1231,7 +1231,7 @@
 						hidden: false,
 						label,
 						forceLabel,
-						selectionColor: t.accent,
+						selectionColor: t.focus,
 						size: focusBoost,
 						zIndex: 2
 					};
@@ -1277,7 +1277,7 @@
 						...data,
 						hidden: false,
 						type: edgeType,
-						color: t.accent,
+						color: t.focus,
 						size: restSize * 2.4,
 						label: edgeLabel(data, sourceCollection, src),
 						forceLabel: true,
