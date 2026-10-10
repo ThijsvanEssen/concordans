@@ -1026,7 +1026,7 @@
 												<input
 													type="file"
 													accept=".csv,text/csv"
-													class="verborgen"
+													class="sr-only"
 													onchange={(e) => {
 														sluit();
 														laadCodering(e);
@@ -1233,13 +1233,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.verborgen {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
 	}
 	.lijst {
 		margin-top: var(--s-7);

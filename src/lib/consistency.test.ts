@@ -258,6 +258,17 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('hides text for a screen reader with the one .sr-only', () => {
+		const eigen: Uitzonderingen = {
+			'lib/components/layout/AppShell.svelte': 'the one rule',
+			'lib/components/articles/ArticleText.svelte': 'being reworked (Front-end #1)',
+			'lib/components/explore/readers/DocumentReader.svelte': 'being reworked (Front-end #1)'
+		};
+		expect(
+			offenders((t) => rules(t).some((r) => /clip:\s*rect\(0/.test(r.body)), buiten(eigen))
+		).toEqual([]);
+	});
+
 	it('separates with a comma, not a middle dot (Thijs, 2 October 2026)', () => {
 		// "Motie, nr. 21", "Dossier, Kamerstuk 36799", and the browser tab: "Actueel, Concordans".
 		expect(offenders((t) => t.includes('\u00b7'))).toEqual([]);

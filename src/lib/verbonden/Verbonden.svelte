@@ -969,14 +969,6 @@
 		padding: var(--s-4);
 		font-size: var(--t-micro);
 	}
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
 
 	/* The network glyph at the right of a group's heading (RijActies). */
 	.group__laag {

@@ -2421,7 +2421,7 @@
 					<!-- While the next result loads, the previous one stays, dimmed. -->
 					{#if loading && !pages[category]}
 						<!-- The shape of a list while it loads: rows where rows will stand. -->
-						<p class="visually-hidden" role="status">Laden…</p>
+						<p class="sr-only" role="status">Laden…</p>
 						<ul class="list skelet" aria-hidden="true">
 							{#each { length: 8 } as _, i (i)}
 								<li class="skelet-rij"><span></span><span></span></li>
@@ -3312,14 +3312,6 @@
 		font-size: var(--t-body-2);
 		color: var(--ink);
 	}
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
 
 	/* Kabinetten: each cabinet a bar on one line of years; the one in office in the accent. */
 	.cab-strip {
@@ -3685,11 +3677,6 @@
 	.stand-body--none {
 		border-top-style: dotted;
 	}
-	.stage-aside {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-	}
 
 	/* Qualities on a row are words: the outcome of a vote in ink-2, the rest in ink-3. */
 	.tag {
@@ -3837,9 +3824,6 @@
 			padding-right: var(--s-2);
 			padding-bottom: var(--s-3);
 			border-bottom: 1px solid var(--rule);
-		}
-		.stage-aside {
-			align-items: flex-start;
 		}
 		/* The rows stack on a phone (IndexRow): the head keeps only the heads of the
 		   number columns, over the numbers at full width. */
