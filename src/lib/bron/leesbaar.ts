@@ -22,6 +22,7 @@
 // readable address once the bron is known.
 import { SvelteMap } from 'svelte/reactivity';
 import { api, leesAntwoorden } from '$lib/api/client';
+import { onthoudTitel } from './titels.svelte';
 import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
 import { lawArticleList } from '$lib/api/law-articles';
 import { getDocument, getDossierPapers, getExplainedBy } from '$lib/api/records';
@@ -204,7 +205,10 @@ export function onthoudPaden(data: unknown, diepte = 0) {
 		if (value && typeof value === 'object') onthoudPaden(value, diepte + 1);
 	}
 }
-leesAntwoorden(onthoudPaden);
+leesAntwoorden((data) => {
+	onthoudPaden(data);
+	onthoudTitel(data);
+});
 
 /**
  * The focus an address names without a request: a judgment, a dossier, a cabinet and a

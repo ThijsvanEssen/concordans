@@ -197,4 +197,25 @@ describe('the address of a focus', () => {
 		// A dossier is named by its number; its key is not a focus.
 		expect(padOfFocus('dossiers/k1')).toBeNull();
 	});
+
+	it("takes a feed item's address: Actueel links to the paper, not /explore?focus (#523)", () => {
+		onthoudPaden({
+			items: [
+				{
+					id: 'documents/feed01',
+					kind: 'motie',
+					node: { collection: 'documents', key: 'feed01' },
+					path: '/kamerstukken/37022/13'
+				},
+				{
+					id: 'documents/feed02',
+					kind: 'brief',
+					node: { collection: 'documents', key: 'feed02' },
+					path: null
+				}
+			]
+		});
+		expect(padOfFocus('documents/feed01')).toBe('/kamerstukken/37022/13');
+		expect(padOfFocus('documents/feed02')).toBeNull();
+	});
 });

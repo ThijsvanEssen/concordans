@@ -13,7 +13,7 @@ const text = (value: unknown): string | null =>
 	typeof value === 'string' && value.trim() ? value.trim() : null;
 
 /** A name cut at a word within `MAX` characters. */
-function cut(name: string): string {
+export function cut(name: string): string {
 	if (name.length <= MAX) return name;
 	const head = name.slice(0, MAX);
 	return `${head.slice(0, head.lastIndexOf(' ') > 40 ? head.lastIndexOf(' ') : MAX).trimEnd()}…`;

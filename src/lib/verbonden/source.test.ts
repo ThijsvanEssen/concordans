@@ -16,4 +16,13 @@ describe('luiTeLaden', () => {
 			true
 		);
 	});
+
+	it('stays lazy for an article whose counts are still being counted', () => {
+		const pending = {
+			node: {},
+			neighbors: { total: 0, buckets: [{ relation: 'REFERS_TO', lid_counts: null }] },
+			lid_counts_pending: true
+		} as never;
+		expect(luiTeLaden('articles', pending)).toBe(true);
+	});
 });

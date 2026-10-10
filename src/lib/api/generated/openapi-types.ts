@@ -4137,6 +4137,16 @@ export interface components {
             /** Sections */
             sections?: components["schemas"]["SectionDTO"][];
             /**
+             * Replaces
+             * @description The papers this amended amendment or motion replaces ("ter vervanging van nr. 8", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most.
+             */
+            replaces?: components["schemas"]["PaperRefDTO"][];
+            /**
+             * Replaced By
+             * @description The papers that replace this one (an amended amendment or motion with a new number); empty for most.
+             */
+            replaced_by?: components["schemas"]["PaperRefDTO"][];
+            /**
              * Decisions
              * @description The votes taken on this document, oldest first, each with how every faction (or, on a roll-call, every member) voted: of a motion or an amendment the vote on it, of a bill the votes on the bill. A decision is about the case of an agenda item it names; the document it was taken on is the oldest of that case, as the timeline of a dossier shows it. Empty for any other paper.
              */
@@ -4452,6 +4462,16 @@ export interface components {
             sender?: components["schemas"]["SenderDTO"] | null;
             /** Display Name */
             display_name?: string | null;
+            /**
+             * Replaces
+             * @description The papers this amended amendment or motion replaces ("ter vervanging van nr. 8", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most.
+             */
+            replaces?: components["schemas"]["PaperRefDTO"][];
+            /**
+             * Replaced By
+             * @description The papers that replace this one (an amended amendment or motion with a new number); empty for most.
+             */
+            replaced_by?: components["schemas"]["PaperRefDTO"][];
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -5471,8 +5491,17 @@ export interface components {
             abbreviation: string | null;
             /** Name */
             name: string | null;
-            /** Seats */
+            /**
+             * Seats
+             * @description Its seats: with ``date`` those its members held that day, else the number the Kamer gives.
+             */
             seats: number;
+            /**
+             * Vacant
+             * @description With ``date`` (Tweede Kamer): its seats no member held that day (FractieZetelVacature); with ``seats`` its seats as a cabinet's stretches count them (``/api/cabinets/{key}/seats``). 0 otherwise.
+             * @default 0
+             */
+            vacant: number;
             /**
              * Color
              * @description The colour this Kamer draws the faction in (the first of `colors`), else the party's house colour; null for none.
@@ -8171,6 +8200,11 @@ export interface components {
             count: number;
             /** Votes */
             votes: components["schemas"]["MemberVoteDTO"][];
+            /**
+             * Next Offset
+             * @description The ``offset`` of the next page; null when this page was not full (the last one).
+             */
+            next_offset?: number | null;
         };
         /**
          * MinistryDTO
@@ -8308,6 +8342,25 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * NeighborhoodCollectionDTO
+         * @description Of the focal node's own neighbours in one collection: how many, and how many the
+         *     neighbourhood holds under its cap.
+         */
+        NeighborhoodCollectionDTO: {
+            /** Collection */
+            collection: string;
+            /**
+             * Total
+             * @description Its neighbours there along the edges walked, of the types asked (from the edges: one that is gone counts too).
+             */
+            total: number;
+            /**
+             * Kept
+             * @description Of those, the ones in `nodes`.
+             */
+            kept: number;
+        };
+        /**
          * NextActivityDTO
          * @description An activity the Tweede Kamer has planned.
          */
@@ -8350,6 +8403,12 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a node without one.
              */
             path?: string | null;
+            /**
+             * Lid Counts Pending
+             * @description Of an article asked with ``limit=1``: its lid counts are being counted, so every ``lid_counts`` is null; a request with a larger ``limit`` waits for them and has them. False otherwise.
+             * @default false
+             */
+            lid_counts_pending: boolean;
         };
         /**
          * NodeNeighborhoodEdge
@@ -8380,6 +8439,11 @@ export interface components {
             nodes: components["schemas"]["BaseNodeDTO"][];
             /** Edges */
             edges: components["schemas"]["NodeNeighborhoodEdge"][];
+            /**
+             * Buckets
+             * @description Per collection of the focal node's own neighbours (the first level), by name: `total` and `kept`; where `kept` is less, the cap left the rest out (`GET /api/nodes/{collection}/{key}` lists them all).
+             */
+            buckets?: components["schemas"]["NeighborhoodCollectionDTO"][];
         };
         /**
          * NodeNeighborsDTO
@@ -8390,6 +8454,18 @@ export interface components {
             total: number;
             /** Buckets */
             buckets?: components["schemas"]["NeighborBucketDTO"][];
+        };
+        /**
+         * PaperRefDTO
+         * @description Another paper, by its id and its number in its dossier.
+         */
+        PaperRefDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Sequence */
+            sequence?: number | null;
         };
         /**
          * ParliamentSeatsResponse
@@ -9069,17 +9145,26 @@ export interface components {
             to_date: string;
             /**
              * Coalition
-             * @description The seats of the coalition.
+             * @description The seats of the coalition's parties, their vacant ones included (a vacant seat of a faction, FractieZetelVacature, is still its faction's): what a majority is counted in.
              */
             coalition: number;
-            /** Opposition */
+            /**
+             * Opposition
+             * @description The seats of the other parties, their vacant ones included.
+             */
             opposition: number;
             /**
              * Vacant
-             * @description Seats that neither a member nor a vacancy of a faction accounts for; a vacant seat of a faction (FractieZetelVacature) counts among its seats, and for the coalition or the opposition. `coalition`, `opposition` and `vacant` add up to the Kamer.
+             * @description Every seat no member held: the vacant seats of the factions and any seat neither a member nor a vacancy accounts for. The seats held are the Kamer's but these.
              * @default 0
              */
             vacant: number;
+            /**
+             * Coalition Vacant
+             * @description Of `coalition`, the seats no member held (Tweede Kamer).
+             * @default 0
+             */
+            coalition_vacant: number;
             /**
              * Factions
              * @description The coalition first, then by seats.
@@ -11374,6 +11459,10 @@ export interface operations {
         parameters: {
             query?: {
                 limit?: number;
+                /** @description Skip the newest that many votes. */
+                offset?: number;
+                /** @description Only the votes cast while the member held a post of the government (``in_office`` not empty), before the page is cut. */
+                in_office?: boolean;
             };
             header?: never;
             path: {

@@ -44,6 +44,20 @@ export const getMemberVotes = (key: string) =>
 		)
 	);
 
+/**
+ * The votes a member cast while holding a post of the government (`in_office=true`, API
+ * 0.79.44, #534), a page of 200 from `offset`; `next_offset` null after the last. No total:
+ * the API does not count them (UX-toets 0.79.43, #29).
+ */
+export const getMemberVotesInOffice = (key: string, offset = 0) =>
+	shared(`votes/${key}/in-office/${offset}`, () =>
+		unwrap(
+			zoekApi.GET('/api/members/{key}/votes', {
+				params: { path: { key }, query: { limit: 200, offset, in_office: true } }
+			})
+		)
+	);
+
 /** Node props are untyped in the schema; this is a string prop, or null. */
 export const str = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 

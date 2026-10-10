@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.42"
+		"version": "0.79.43"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -2526,6 +2526,32 @@
 							"default": 50,
 							"title": "Limit"
 						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 100000,
+							"minimum": 0,
+							"description": "Skip the newest that many votes.",
+							"default": 0,
+							"title": "Offset"
+						},
+						"description": "Skip the newest that many votes."
+					},
+					{
+						"name": "in_office",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Only the votes cast while the member held a post of the government (``in_office`` not empty), before the page is cut.",
+							"default": false,
+							"title": "In Office"
+						},
+						"description": "Only the votes cast while the member held a post of the government (``in_office`` not empty), before the page is cut."
 					}
 				],
 				"responses": {
@@ -8145,6 +8171,18 @@
 						"type": "array",
 						"title": "Sections"
 					},
+					"replaces": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaces",
+						"description": "The papers this amended amendment or motion replaces (\"ter vervanging van nr. 8\", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most."
+					},
+					"replaced_by": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaced By",
+						"description": "The papers that replace this one (an amended amendment or motion with a new number); empty for most."
+					},
 					"decisions": {
 						"items": { "$ref": "#/components/schemas/DecisionDTO" },
 						"type": "array",
@@ -8489,6 +8527,18 @@
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
+					},
+					"replaces": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaces",
+						"description": "The papers this amended amendment or motion replaces (\"ter vervanging van nr. 8\", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most."
+					},
+					"replaced_by": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaced By",
+						"description": "The papers that replace this one (an amended amendment or motion with a new number); empty for most."
 					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9589,7 +9639,17 @@
 						"title": "Abbreviation"
 					},
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
-					"seats": { "type": "integer", "title": "Seats" },
+					"seats": {
+						"type": "integer",
+						"title": "Seats",
+						"description": "Its seats: with ``date`` those its members held that day, else the number the Kamer gives."
+					},
+					"vacant": {
+						"type": "integer",
+						"title": "Vacant",
+						"description": "With ``date`` (Tweede Kamer): its seats no member held that day (FractieZetelVacature); with ``seats`` its seats as a cabinet's stretches count them (``/api/cabinets/{key}/seats``). 0 otherwise.",
+						"default": 0
+					},
 					"color": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Color",
@@ -12697,6 +12757,11 @@
 						"items": { "$ref": "#/components/schemas/MemberVoteDTO" },
 						"type": "array",
 						"title": "Votes"
+					},
+					"next_offset": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Next Offset",
+						"description": "The ``offset`` of the next page; null when this page was not full (the last one)."
 					}
 				},
 				"additionalProperties": false,
@@ -12924,6 +12989,26 @@
 				"title": "NeighborDTO",
 				"description": "A neighbour with the edge that leads to it, used by the generic node explorer."
 			},
+			"NeighborhoodCollectionDTO": {
+				"properties": {
+					"collection": { "type": "string", "title": "Collection" },
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Its neighbours there along the edges walked, of the types asked (from the edges: one that is gone counts too)."
+					},
+					"kept": {
+						"type": "integer",
+						"title": "Kept",
+						"description": "Of those, the ones in `nodes`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["collection", "total", "kept"],
+				"title": "NeighborhoodCollectionDTO",
+				"description": "Of the focal node's own neighbours in one collection: how many, and how many the\nneighbourhood holds under its cap."
+			},
 			"NextActivityDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
@@ -12968,6 +13053,12 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Path",
 						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a node without one."
+					},
+					"lid_counts_pending": {
+						"type": "boolean",
+						"title": "Lid Counts Pending",
+						"description": "Of an article asked with ``limit=1``: its lid counts are being counted, so every ``lid_counts`` is null; a request with a larger ``limit`` waits for them and has them. False otherwise.",
+						"default": false
 					}
 				},
 				"additionalProperties": false,
@@ -13006,6 +13097,12 @@
 						"items": { "$ref": "#/components/schemas/NodeNeighborhoodEdge" },
 						"type": "array",
 						"title": "Edges"
+					},
+					"buckets": {
+						"items": { "$ref": "#/components/schemas/NeighborhoodCollectionDTO" },
+						"type": "array",
+						"title": "Buckets",
+						"description": "Per collection of the focal node's own neighbours (the first level), by name: `total` and `kept`; where `kept` is less, the cap left the rest out (`GET /api/nodes/{collection}/{key}` lists them all)."
 					}
 				},
 				"additionalProperties": false,
@@ -13028,6 +13125,18 @@
 				"required": ["total"],
 				"title": "NodeNeighborsDTO",
 				"description": "Neighbors returned by /api/nodes/{collection}/{key}."
+			},
+			"PaperRefDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"sequence": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Sequence" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key"],
+				"title": "PaperRefDTO",
+				"description": "Another paper, by its id and its number in its dossier."
 			},
 			"ParliamentSeatsResponse": {
 				"properties": {
@@ -13811,13 +13920,23 @@
 					"coalition": {
 						"type": "integer",
 						"title": "Coalition",
-						"description": "The seats of the coalition."
+						"description": "The seats of the coalition's parties, their vacant ones included (a vacant seat of a faction, FractieZetelVacature, is still its faction's): what a majority is counted in."
 					},
-					"opposition": { "type": "integer", "title": "Opposition" },
+					"opposition": {
+						"type": "integer",
+						"title": "Opposition",
+						"description": "The seats of the other parties, their vacant ones included."
+					},
 					"vacant": {
 						"type": "integer",
 						"title": "Vacant",
-						"description": "Seats that neither a member nor a vacancy of a faction accounts for; a vacant seat of a faction (FractieZetelVacature) counts among its seats, and for the coalition or the opposition. `coalition`, `opposition` and `vacant` add up to the Kamer.",
+						"description": "Every seat no member held: the vacant seats of the factions and any seat neither a member nor a vacancy accounts for. The seats held are the Kamer's but these.",
+						"default": 0
+					},
+					"coalition_vacant": {
+						"type": "integer",
+						"title": "Coalition Vacant",
+						"description": "Of `coalition`, the seats no member held (Tweede Kamer).",
 						"default": 0
 					},
 					"factions": {

@@ -93,6 +93,8 @@
 		y: number;
 		angle: number;
 		faction: SeatFaction;
+		/** A vacant seat of the fractie (`vacant`, API 0.79.44, #526): drawn empty. */
+		leeg?: boolean;
 	};
 
 	const seats = $derived.by<Seat[]>(() => {
@@ -121,6 +123,10 @@
 		for (const f of seated) {
 			for (let k = 0; k < f.seats && idx < raw.length; k++, idx++) {
 				out.push({ ...raw[idx], faction: f });
+			}
+			// Its vacant seats beside its own, empty (UX test 10 Oct, #12).
+			for (let k = 0; k < (f.vacant ?? 0) && idx < raw.length; k++, idx++) {
+				out.push({ ...raw[idx], faction: f, leeg: true });
 			}
 		}
 		return out;
@@ -202,9 +208,10 @@
 				height={SEAT_D}
 				rx="2"
 				transform="translate({s.x} {s.y}) rotate({(s.angle * 180) / Math.PI + 90})"
-				fill={side === 'tegen' ? undefined : vulling}
-				style:stroke={side === 'tegen' ? kleur : undefined}
+				fill={side === 'tegen' || s.leeg ? undefined : vulling}
+				style:stroke={side === 'tegen' || s.leeg ? kleur : undefined}
 				class="seat"
+				class:seat--leeg={s.leeg}
 				class:seat--dim={hovered !== null && hovered.id !== s.faction.id}
 				class:seat--hi={hovered?.id === s.faction.id}
 				class:seat--vote-tegen={side === 'tegen'}
@@ -334,6 +341,12 @@
 			opacity var(--dur-1) var(--ease),
 			fill var(--dur-2) var(--ease),
 			stroke var(--dur-2) var(--ease);
+	}
+	/* A vacant seat: its fractie's outline, empty. */
+	.seat--leeg {
+		fill: var(--paper-2);
+		stroke-width: 1;
+		stroke-dasharray: 2 1.5;
 	}
 	.seat--dim {
 		opacity: 0.22;
