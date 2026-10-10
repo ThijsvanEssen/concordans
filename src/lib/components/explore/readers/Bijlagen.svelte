@@ -117,7 +117,9 @@
 		text-decoration: none;
 	}
 	li a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.stil {
 		margin: 0;

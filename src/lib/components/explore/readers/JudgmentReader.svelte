@@ -642,7 +642,7 @@
 	}
 
 	.reader-heading:global(.is-landed) {
-		background: var(--accent-soft);
+		background: var(--wassing);
 	}
 
 	.reader-heading__text {
@@ -665,7 +665,9 @@
 	}
 
 	:global(.reader-heading__link):hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 
 	.reader-heading:hover :global(.reader-heading__link),
@@ -752,10 +754,10 @@
 	}
 
 	.reader-para-block:global(.is-landed) {
-		background: var(--accent-soft);
+		background: var(--wassing);
 		box-shadow:
-			-6px 0 0 var(--accent-soft),
-			6px 0 0 var(--accent-soft);
+			-6px 0 0 var(--wassing),
+			6px 0 0 var(--wassing);
 	}
 
 	/* The number, and under it Citeer. */
@@ -805,7 +807,7 @@
 		text-decoration: none;
 	}
 	.plaats-marker:focus-visible {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}
 	.is-klikbaar {

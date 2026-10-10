@@ -103,7 +103,9 @@
 		text-align: left;
 	}
 	.kop-knop:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.inhoud {
 		display: flex;

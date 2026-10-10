@@ -2,10 +2,11 @@
 // is; alle tekens staan in inkt, er is geen kleur te onthouden. Eén tabel voor de tekens
 // in de tekst (KindGlyph) en op het canvas (nodeSprites), getekend in een vak van 16.
 import type { Collection } from '$lib/vocabulary';
-import { BILL_KIND, type BronKind } from '$lib/verbonden/filter';
+import { BILL_KIND, isInternational, type BronKind } from '$lib/verbonden/filter';
 
 export type Vorm =
 	| 'regel'
+	| 'regel-int'
 	| 'regel-o'
 	| 'uitspraak'
 	| 'stuk'
@@ -30,6 +31,9 @@ const CIRKEL = (cx: number, cy: number, r: number) =>
 
 export const VORMEN: Record<Vorm, { d: string; wijze: Wijze; naam: string }> = {
 	regel: { d: 'M2 2h12v12H2z', wijze: 'vul', naam: 'regel' },
+	// A European or international regel: the square with a square hole, 5 of 16 wide, so at
+	// 12 px it still reads as a hole (3.75 px).
+	'regel-int': { d: 'M2 2h12v12H2zM5.5 5.5v5h5v-5z', wijze: 'gat', naam: 'internationaal' },
 	'regel-o': { d: 'M3 3h10v10H3z', wijze: 'lijn', naam: 'artikel' },
 	uitspraak: { d: CIRKEL(8, 8, 6.5), wijze: 'vul', naam: 'uitspraak' },
 	stuk: { d: 'M3.5 1h6.5l3 3v11H3.5z', wijze: 'vul', naam: 'stuk' },
@@ -86,12 +90,20 @@ export const BRON_KIND_VORM: Record<BronKind, Vorm> = {
 	wetsvoorstellen: 'voorstel',
 	dossiers: 'dossier',
 	leden: 'persoon',
-	internationaal: 'regel'
+	internationaal: 'regel-int'
 };
 
-/** De vorm van één bron: een stuk dat een wetsvoorstel is, krijgt het eigen teken. */
-export function vormVanBron(collection: string, props?: Record<string, unknown> | null): Vorm {
+/**
+ * De vorm van één bron: een stuk dat een wetsvoorstel is, krijgt het eigen teken; een
+ * Europese of internationale regeling het vierkant met een gat.
+ */
+export function vormVanBron(
+	collection: string,
+	props?: Record<string, unknown> | null,
+	key = ''
+): Vorm {
 	const vorm = VORM_VAN[collection as Collection] ?? 'overig';
+	if (vorm === 'regel' && isInternational({ key, props })) return 'regel-int';
 	if (collection === 'documents' && typeof props?.kind === 'string' && BILL_KIND.test(props.kind))
 		return 'voorstel';
 	return vorm;
@@ -100,6 +112,7 @@ export function vormVanBron(collection: string, props?: Record<string, unknown> 
 /** The order of the shapes in a legend: law, the parliament, people and bodies, the rest. */
 export const VORM_VOLGORDE: Vorm[] = [
 	'regel',
+	'regel-int',
 	'regel-o',
 	'uitspraak',
 	'dossier',
@@ -118,6 +131,7 @@ export const VORM_VOLGORDE: Vorm[] = [
 /** What a shape stands for, as a legend names it. */
 export const VORM_LABEL: Record<Vorm, string> = {
 	regel: 'Wet of verdrag',
+	'regel-int': 'Europese of internationale regeling',
 	'regel-o': 'Artikel',
 	uitspraak: 'Uitspraak',
 	dossier: 'Dossier',

@@ -134,7 +134,9 @@
 		text-align: left;
 	}
 	.kop-knop:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.sub {
 		font-weight: 400;
@@ -252,7 +254,9 @@
 		text-wrap: pretty;
 	}
 	.tekst :global(a.zin:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.groot .zin,
 	.groot :global(a.zin) {

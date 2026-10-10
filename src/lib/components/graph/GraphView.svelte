@@ -809,7 +809,7 @@
 			if (!isCanvasNode(n)) continue;
 			const { color, borderColor } = nodeColors(n);
 			// Elke bron als teken uit vormen.ts.
-			const vorm = vormVanBron(n.collection, n.raw?.props);
+			const vorm = vormVanBron(n.collection, n.raw?.props, n.key);
 			const useImage = true;
 			const stub = !!n.stub;
 			const rawSize = nodeSize(n.id);

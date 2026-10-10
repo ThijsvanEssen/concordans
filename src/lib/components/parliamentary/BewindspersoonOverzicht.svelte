@@ -125,7 +125,9 @@
 		text-underline-offset: 3px;
 	}
 	a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.items {
 		list-style: none;

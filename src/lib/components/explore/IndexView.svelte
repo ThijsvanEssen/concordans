@@ -3337,7 +3337,7 @@
 		opacity: 1;
 	}
 	.years-bar:focus-visible {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}
 	.years-axis {
@@ -3503,7 +3503,7 @@
 	}
 	.cab:hover .cab-bar,
 	.cab:focus-visible .cab-bar {
-		background: var(--accent);
+		background: var(--ink-2);
 	}
 	.cab:hover .cab-name {
 		color: var(--ink);
@@ -3547,7 +3547,9 @@
 		text-decoration: none;
 	}
 	.gov-title a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.gov-sub {
 		margin: var(--s-1) 0 var(--s-4);

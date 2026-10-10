@@ -358,8 +358,8 @@
 		outline: none;
 	}
 	a:focus-visible .sector {
-		fill: var(--accent-soft);
-		stroke: var(--accent);
+		fill: var(--paper-2);
+		stroke: var(--ink);
 		stroke-width: 0.8;
 		stroke-dasharray: 3 2;
 	}
@@ -396,6 +396,8 @@
 		border-bottom: 1px solid var(--rule-strong);
 	}
 	.hemicycle-source a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 </style>

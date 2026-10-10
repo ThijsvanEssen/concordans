@@ -360,7 +360,9 @@
 		color: var(--ink-3);
 	}
 	:global(.dossier-woord:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 
 	.document-text {
@@ -441,7 +443,9 @@
 		text-decoration: none;
 	}
 	a.voter-name:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	/* Coalitie or oppositie: a column of its own, as quiet as the seats beside it. */
 	.met-kabinet .voter-row {

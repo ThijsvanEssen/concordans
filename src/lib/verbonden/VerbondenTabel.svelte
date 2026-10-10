@@ -489,7 +489,9 @@
 		opacity: 0;
 	}
 	.bron__card:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	tr:hover .bron__card,
 	tr:focus-within .bron__card {

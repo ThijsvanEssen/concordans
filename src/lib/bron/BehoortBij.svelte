@@ -305,7 +305,9 @@
 	}
 	.vouw button:hover,
 	.vouw button:focus-visible {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.lagen li + li::before {
 		content: '›';

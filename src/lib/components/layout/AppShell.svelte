@@ -142,10 +142,15 @@
 		--ink-2: #3b3834;
 		--ink-3: #5d5951; /* captions; 6.6:1 on paper */
 
-		/* The accent: a link on hover, the status voorgesteld, and an outcome that says no
-		   (--uitkomst-nee). Nothing else is red. */
+		/* The accent says no: an outcome that says no (--uitkomst-nee), an error, and the § of
+		   the name. Nothing else is red (Thijs, 10 Oct: "de kleur mag alleen blijven zolang het
+		   een doel dient"): a hover and the focus are ink. */
 		--accent: #8c2f28;
-		--accent-soft: #f3e4e2;
+		/* The focus ring: ink, 2 px, 2 px off the element, so it stands on paper, on paper-2
+		   (14.8:1) and around an ink button with the paper between them. */
+		--focus: var(--ink);
+		/* Selected text, a passage found, a place landed on: a neutral wash. */
+		--wassing: color-mix(in srgb, var(--rule) 45%, var(--paper));
 
 		/* Text an amendment inserted, in a comparison of versions. Deleted text is struck
 		   through in ink, so the two differ by more than colour. */
@@ -184,6 +189,11 @@
 		--netwerk-dossier: var(--groep-dossier);
 		--netwerk-wijziging: var(--groep-wet);
 		--netwerk-focus: var(--ink);
+		/* A verbinding at rest: its weight (0.6 to 1) times this, in pixels at the default zoom
+		   (1.8 to 3 px; dimmed at least 1.4); its arrowhead this many thicknesses long, 0.8 of that
+		   wide. Below the bronnen in weight; a hover 1.8 and a choice 2.4 times as thick. */
+		--netwerk-lijn: 3;
+		--netwerk-pijl: 3.2;
 
 		/* Typography: one text face, one interface face. Identifiers are set in the sans. */
 		--font-serif: 'Newsreader', Georgia, serif;
@@ -299,7 +309,9 @@
 		transition: color var(--dur-1) var(--ease);
 	}
 	:global(a:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 
 	/* The one frame of a full-width page (docs/bediening.md, Layout; Thijs, 10 Oct 2026): the
@@ -469,7 +481,9 @@
 		cursor: pointer;
 	}
 	:global(.plaats-woord:hover) {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	:global(.plaats-woord[aria-pressed='true']) {
 		color: var(--ink);
@@ -515,7 +529,9 @@
 	:global(.btn.is-text:hover:not(:disabled)),
 	:global(.btn.is-text:focus-visible) {
 		border-color: transparent;
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	:global(.btn:disabled) {
 		opacity: 0.45;
@@ -557,12 +573,12 @@
 	}
 
 	:global(::selection) {
-		background: var(--accent-soft);
+		background: var(--wassing);
 		color: var(--ink);
 	}
 
 	:global(:focus-visible) {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--focus);
 		outline-offset: 2px;
 	}
 
