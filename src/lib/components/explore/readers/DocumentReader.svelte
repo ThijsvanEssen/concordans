@@ -348,11 +348,12 @@
 								class:in-passage--cont={passageEntries.has(i) && i > passageFirst}
 								id={s.id}
 							>
-								<span class="heading__text"
+								<!-- A heading for a screen reader, Citeer beside it (UX-toets 10 Oct, #21). -->
+								<svelte:element this={`h${Math.min(s.level, 3) + 2}`} class="heading__text"
 									>{s.heading}{#if s.kind === 'article' && s.article_refs?.length}
 										<span class="heading__badge"
 											>{s.article_refs.map((r) => r.number).join(', ')}</span
-										>{/if}</span
+										>{/if}</svelte:element
 								>
 								<CiteMenu
 									items={citeItems(null, permalink(page.url, s.id))}
@@ -445,6 +446,9 @@
 	.heading__text {
 		flex: 1;
 		min-width: 0;
+		/* A heading element with the line's own type: no margin or size of its own. */
+		margin: 0;
+		font: inherit;
 	}
 	.heading--lvl1 .heading__text {
 		font-family: var(--font-serif);
