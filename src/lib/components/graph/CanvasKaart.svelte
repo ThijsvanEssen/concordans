@@ -1,0 +1,130 @@
+<script lang="ts">
+	// A card over the network: Netwerk, the Legenda, a cluster's card (Thijs, 10 Oct: "Deze
+	// mogen even breed zijn en hetzelfde soort component zijn"). One frame, one width in every
+	// state (--paneel-breed, folded or open), a head row (the title, what it holds while folded,
+	// the caret, an action at the right) and its content. Where it stands is its user's
+	// (`klasse`, `stijl`); what it looks like is this.
+	import type { Snippet } from 'svelte';
+	import Caret from '$lib/components/ui/Caret.svelte';
+
+	let {
+		titel,
+		open = true,
+		onToggle,
+		samenvatting,
+		kop,
+		actie,
+		children,
+		klasse = '',
+		stijl = '',
+		label,
+		el = $bindable(null),
+		...rest
+	}: {
+		titel: string;
+		/** Open: the content shows. A card without `onToggle` is always open. */
+		open?: boolean;
+		onToggle?: () => void;
+		/** What it holds, beside the title while folded (a count, the signs of the legend). */
+		samenvatting?: Snippet;
+		/** A head of its own instead of the title (a cluster: its sign and name). */
+		kop?: Snippet;
+		/** At the right of the head (Deel, Wissen, Meer). */
+		actie?: Snippet;
+		children?: Snippet;
+		klasse?: string;
+		stijl?: string;
+		label?: string;
+		el?: HTMLElement | null;
+		/** What the frame carries besides (a dialog's role, its key handler). */
+		[attribuut: string]: unknown;
+	} = $props();
+</script>
+
+<section
+	{...rest}
+	class="canvas-kaart {klasse}"
+	style={stijl}
+	aria-label={label ?? titel}
+	bind:this={el}
+>
+	<div class="canvas-kaart__kop">
+		{#if kop}
+			{@render kop()}
+		{:else if onToggle}
+			<button type="button" class="canvas-kaart__knop" aria-expanded={open} onclick={onToggle}>
+				<span class="canvas-kaart__titel">{titel}</span>
+				{#if samenvatting}{@render samenvatting()}{/if}
+				<Caret {open} />
+			</button>
+		{:else}
+			<span class="canvas-kaart__titel">{titel}</span>
+		{/if}
+		{#if actie}<span class="canvas-kaart__actie">{@render actie()}</span>{/if}
+	</div>
+	{#if open && children}
+		<div class="canvas-kaart__inhoud">{@render children()}</div>
+	{/if}
+</section>
+
+<style>
+	.canvas-kaart {
+		position: absolute;
+		z-index: var(--z-float);
+		box-sizing: border-box;
+		width: var(--paneel-breed);
+		max-width: calc(100% - 2 * var(--paneel-rand));
+		display: flex;
+		flex-direction: column;
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		box-shadow: var(--shadow-pop);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink);
+	}
+	.canvas-kaart__kop {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		min-height: var(--veld-h);
+		padding: var(--s-1) var(--s-3);
+	}
+	.canvas-kaart__knop {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		min-width: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
+		cursor: pointer;
+	}
+	.canvas-kaart__knop:hover {
+		color: var(--ink);
+	}
+	.canvas-kaart__titel {
+		font-family: var(--font-serif);
+		font-size: var(--t-body-2);
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.canvas-kaart__actie {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+		margin-left: auto;
+	}
+	.canvas-kaart__actie :global(.tekstlink) {
+		font-size: var(--t-micro);
+	}
+	.canvas-kaart__inhoud {
+		min-height: 0;
+		overflow-y: auto;
+		padding: 0 var(--s-3) var(--s-3);
+	}
+</style>

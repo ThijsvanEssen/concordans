@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import CanvasKaart from '$lib/components/graph/CanvasKaart.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	// The netwerk of chosen bronnen, over the canvas: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
@@ -8,7 +9,6 @@
 	// Verkenner it is the start of the page, in the middle of the canvas.
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
-	import Caret from '$lib/components/ui/Caret.svelte';
 	import { laatstOpen, opzij } from '$lib/stores/zwevend';
 	import { get } from 'svelte/store';
 	import type { NetwerkEntry } from './netwerk';
@@ -140,13 +140,8 @@
 	} as const;
 </script>
 
-<section
-	class="netwerk"
-	class:netwerk--start={start}
-	class:netwerk--dicht={!start && !open}
-	aria-label="Netwerk"
->
-	{#if start}
+{#if start}
+	<section class="netwerk netwerk--start" aria-label="Netwerk">
 		<h2 class="start__title">Netwerk</h2>
 		<!-- The field itself, not steps that explain it (Thijs, 9 Oct: "de UI moet zichzelf
 		     wijzen"). -->
@@ -159,18 +154,17 @@
 				<span>Art. 3:2 en 3:4 Awb, en de uitspraken die beide aanhalen</span>
 			</button>
 		{/if}
-	{:else}
-		<!-- De gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
-		     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
-		<div class="kop">
-			<button type="button" class="kop-knop" aria-expanded={open} onclick={() => zetOpen(!open)}>
-				<span class="titel">Netwerk</span>
-				{#if loading}<span class="laden">laden</span>{:else if !open && entries.length > 0}<span
-						class="aantal">{entries.length} {entries.length === 1 ? 'bron' : 'bronnen'}</span
-					>{/if}
-				<Caret {open} />
-			</button>
-			<span class="ruimte"></span>
+	</section>
+{:else}
+	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
+	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
+	<CanvasKaart titel="Netwerk" klasse="netwerk" {open} onToggle={() => zetOpen(!open)}>
+		{#snippet samenvatting()}
+			{#if loading}<span class="laden">laden</span>{:else if !open && entries.length > 0}<span
+					class="aantal">{entries.length} {entries.length === 1 ? 'bron' : 'bronnen'}</span
+				>{/if}
+		{/snippet}
+		{#snippet actie()}
 			<!-- Deel moved here from the status bar (Thijs, 10 Oct): what it gives beyond the
 			     bron's own address is this netwerk. -->
 			{#if onDeel}
@@ -196,112 +190,144 @@
 					{/snippet}
 				</TekstMenu>
 			{/if}
-		</div>
-		{#if open}
-			<ul class="chips">
-				{#each getoond as e (e.id)}
-					<li class="chip" class:uit={!e.on} class:mist={e.missing} class:gedimd={!!e.verborgenMet}>
-						<button
-							type="button"
-							class="chip-naam"
-							aria-pressed={e.on}
-							disabled={e.missing}
-							title={e.missing
-								? 'Niet gevonden'
-								: e.verborgenMet
-									? `Aan met ${GROEP[e.verborgenMet]}`
-									: e.on
-										? `${e.titel ?? e.label}: verbergen`
-										: `${e.titel ?? e.label}: tonen`}
-							onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
-							><KindGlyph collection={e.collection} size={11} /><span
-								>{e.label}{#if e.alone}<span
-										class="los"
-										title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
-									>{:else if e.via}<span
-										class="los"
-										title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {ledenVan(
-											e.collection
-										)}"
-										>, via {formatCount(e.via.used)} van {formatCount(e.via.total)}
-										{ledenVan(e.collection)}</span
-									>{/if}</span
-							></button
-						>
-						<button
-							type="button"
-							class="chip-weg"
-							onclick={() => onRemove(e.id)}
-							aria-label="Haal {e.label} uit netwerk">×</button
-						>
-					</li>
-				{/each}
-				{#if gevouwen}
-					<li class="verder">
-						<TekstLink onclick={() => (alles = true)}>en {entries.length - KORT} andere</TekstLink>
-					</li>
-				{:else if entries.length > KORT + 1}
-					<li class="verder">
-						<TekstLink onclick={() => (alles = false)}>minder</TekstLink>
-					</li>
-				{/if}
-				{#if selection}
-					<li>
-						<button
-							type="button"
-							class="chip chip--voorstel"
-							onclick={onAdd}
-							aria-label="Voeg {selection.label} toe aan netwerk">+ {selection.label}</button
-						>
-					</li>
-				{/if}
-				<li>
-					{#if zoeken}
-						<div class="zoek">
-							<Search
-								compact
-								placeholder="Bron toevoegen"
-								onPick={(id) => {
-									onPick(id);
-									zoeken = false;
-								}}
-							/>
-						</div>
-					{:else}
-						<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
-							>+ bron</button
-						>
-					{/if}
-				</li>
-			</ul>
-			{#if omgeving && onOmgeving}
-				<!-- The chosen bron stands in the panel already: its name and the key on hover. -->
-				<p class="omgeving">
-					<TekstLink onclick={onOmgeving} title="Alleen de omgeving van {omgeving} (toets O)"
-						>Alleen de omgeving</TekstLink
+		{/snippet}
+		<ul class="chips">
+			{#each getoond as e (e.id)}
+				<li class="chip" class:uit={!e.on} class:mist={e.missing} class:gedimd={!!e.verborgenMet}>
+					<button
+						type="button"
+						class="chip-naam"
+						aria-pressed={e.on}
+						disabled={e.missing}
+						title={e.missing
+							? 'Niet gevonden'
+							: e.verborgenMet
+								? `Aan met ${GROEP[e.verborgenMet]}`
+								: e.on
+									? `${e.titel ?? e.label}: verbergen`
+									: `${e.titel ?? e.label}: tonen`}
+						onclick={() => (e.verborgenMet ? onGroepAan?.(e.verborgenMet) : onToggle(e.id))}
+						><KindGlyph collection={e.collection} size={11} /><span
+							>{e.label}{#if e.alone}<span
+									class="los"
+									title="Geen verbinding met de andere gekozen bronnen">, zonder verbinding</span
+								>{:else if e.via}<span
+									class="los"
+									title="De verbindingen lopen via de eerste {formatCount(e.via.used)} {ledenVan(
+										e.collection
+									)}"
+									>, via {formatCount(e.via.used)} van {formatCount(e.via.total)}
+									{ledenVan(e.collection)}</span
+								>{/if}</span
+						></button
 					>
-				</p>
+					<button
+						type="button"
+						class="chip-weg"
+						onclick={() => onRemove(e.id)}
+						aria-label="Haal {e.label} uit netwerk">×</button
+					>
+				</li>
+			{/each}
+			{#if gevouwen}
+				<li class="verder">
+					<TekstLink onclick={() => (alles = true)}>en {entries.length - KORT} andere</TekstLink>
+				</li>
+			{:else if entries.length > KORT + 1}
+				<li class="verder">
+					<TekstLink onclick={() => (alles = false)}>minder</TekstLink>
+				</li>
 			{/if}
-			{#if entries.length > 1}
-				<p class="tussen">
-					<FilterOptie
-						inline
-						on={tussen}
-						onToggle={onTussen}
-						label={tussen
-							? `${joiningCount} ${joiningCount === 1 ? 'bron' : 'bronnen'} ertussen`
-							: 'Toon de bronnen ertussen'}
-					/>
-				</p>
-				{#if tussen && deels}
-					<p class="deels">Niet alle paden gevonden; de zoektocht duurde te lang.</p>
+			{#if selection}
+				<li>
+					<button
+						type="button"
+						class="chip chip--voorstel"
+						onclick={onAdd}
+						aria-label="Voeg {selection.label} toe aan netwerk">+ {selection.label}</button
+					>
+				</li>
+			{/if}
+			<li>
+				{#if zoeken}
+					<div class="zoek">
+						<Search
+							compact
+							placeholder="Bron toevoegen"
+							onPick={(id) => {
+								onPick(id);
+								zoeken = false;
+							}}
+						/>
+					</div>
+				{:else}
+					<button type="button" class="chip chip--plus" onclick={() => (zoeken = true)}
+						>+ bron</button
+					>
 				{/if}
+			</li>
+		</ul>
+		{#if omgeving && onOmgeving}
+			<!-- The chosen bron stands in the panel already: its name and the key on hover. -->
+			<p class="omgeving">
+				<TekstLink onclick={onOmgeving} title="Alleen de omgeving van {omgeving} (toets O)"
+					>Alleen de omgeving</TekstLink
+				>
+			</p>
+		{/if}
+		{#if entries.length > 1}
+			<p class="tussen">
+				<FilterOptie
+					inline
+					on={tussen}
+					onToggle={onTussen}
+					label={tussen
+						? `${joiningCount} ${joiningCount === 1 ? 'bron' : 'bronnen'} ertussen`
+						: 'Toon de bronnen ertussen'}
+				/>
+			</p>
+			{#if tussen && deels}
+				<p class="deels">Niet alle paden gevonden; de zoektocht duurde te lang.</p>
 			{/if}
 		{/if}
-	{/if}
-</section>
+	</CanvasKaart>
+{/if}
 
 <style>
+	/* Its place over the canvas, top right; its frame and width are CanvasKaart's. */
+	:global(.canvas-kaart.netwerk) {
+		top: var(--paneel-rand);
+		right: var(--paneel-rand);
+		max-height: calc(100% - 2 * var(--paneel-rand));
+	}
+	/* On a phone the full width at the top of the canvas, open or folded: no empty strip
+	   beside it (sweep at 375, 10 Oct). */
+	@media (max-width: 767px) {
+		:global(.canvas-kaart.netwerk) {
+			left: var(--paneel-rand);
+			width: auto;
+			max-width: none;
+		}
+	}
+	/* An empty network: the field in the middle of the canvas, a card of its own. */
+	.netwerk--start {
+		position: absolute;
+		top: 18%;
+		left: 50%;
+		z-index: var(--z-float);
+		transform: translateX(-50%);
+		box-sizing: border-box;
+		width: min(440px, calc(100% - 2 * var(--s-3)));
+		display: grid;
+		gap: var(--s-3);
+		padding: var(--s-5);
+		background: var(--paper);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink);
+	}
 	/* Only the surroundings of the selected bron: a line, as Toon de bronnen ertussen. */
 	/* One quiet line under the chips, in the text's letter. */
 	.omgeving {
@@ -314,41 +340,12 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.kop {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-	}
-	.kop-knop {
-		display: inline-flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.kop-knop:hover {
-		color: var(--ink);
-	}
 	.aantal {
 		color: var(--ink-2);
-	}
-	.titel {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
 	}
 	.laden {
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.ruimte {
-		flex: 1;
 	}
 	.chips {
 		list-style: none;
@@ -475,59 +472,11 @@
 		font-weight: 600;
 		color: var(--ink);
 	}
-	.netwerk {
-		position: absolute;
-		top: var(--paneel-rand);
-		right: var(--paneel-rand);
-		z-index: var(--z-float);
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink);
-		width: var(--paneel-breed);
-		max-width: calc(100% - 2 * var(--paneel-rand));
-		max-height: calc(100% - 2 * var(--paneel-rand));
-		overflow-y: auto;
-		padding: var(--s-2) var(--s-3) var(--s-3);
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		gap: var(--s-2);
-		align-content: start;
-	}
 
-	.netwerk--dicht {
-		width: auto;
-		padding-bottom: var(--s-2);
-	}
-	/* On a phone the full width at the top of the canvas, open or folded: no empty strip
-	   beside it (sweep at 375, 10 Oct). */
-	@media (max-width: 767px) {
-		.netwerk:not(.netwerk--start) {
-			left: var(--paneel-rand);
-			right: var(--paneel-rand);
-			width: auto;
-			max-width: none;
-		}
-	}
-	.netwerk--start {
-		top: 18%;
-		left: 50%;
-		right: auto;
-		transform: translateX(-50%);
-		width: min(440px, calc(100% - 2 * var(--s-3)));
-		max-width: none;
-		padding: var(--s-5);
-		gap: var(--s-3);
-	}
 	.start__title {
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-h3);
 		font-weight: 600;
-	}
-	.kop :global(.tekstlink) {
-		font-size: var(--t-micro);
 	}
 </style>
