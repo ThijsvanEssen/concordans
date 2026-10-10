@@ -75,6 +75,14 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => /class="sec-title"|\.sec-title\b/.test(t))).toEqual([]);
 	});
 
+	it('reads what is hidden without taking room: no margin on .sr-only, the live region fixed (#35)', () => {
+		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
+		expect(shell).toMatch(/:global\(\.sr-only\) \{[^}]*margin: 0;/);
+		const layout = sources.find((s) => s.path === 'routes/+layout.svelte')!.text;
+		expect(layout).toMatch(/class="sr-only aankondiging"/);
+		expect(layout).toMatch(/\.aankondiging \{\s*position: fixed;/);
+	});
+
 	it('scrolls sideways only where it says so: data-zijscroll (lib/dev/zijscroll.ts)', () => {
 		// On a phone nothing scrolls sideways; an area that pans on purpose is marked, so the
 		// check in development passes it by.

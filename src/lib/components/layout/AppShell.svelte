@@ -601,10 +601,15 @@
 		}
 	}
 	/* Text for a screen reader only: a live region, a full name behind a short one. */
+	/* Read, not seen, and taking no room: no margin of its own (a <p> had 14 px, which made every
+	   reader 827 px high on an 812 px phone, UX-toets 10 Oct, #35). */
 	:global(.sr-only) {
 		position: absolute;
 		width: 1px;
 		height: 1px;
+		margin: 0;
+		padding: 0;
+		border: 0;
 		overflow: hidden;
 		clip: rect(0 0 0 0);
 		white-space: nowrap;
