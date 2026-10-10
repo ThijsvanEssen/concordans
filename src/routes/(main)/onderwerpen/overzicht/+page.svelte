@@ -976,8 +976,8 @@
 <div class="overzicht blad">
 	<p class="terug"><a href="/onderwerpen">Gevolgd</a></p>
 	<!-- The heading with its action at the right (docs/bediening.md). -->
-	<header class="kop">
-		<h1 class="titel">{naam || 'Overzicht'}</h1>
+	<header class="blad__kop">
+		<h1 class="blad__titel">{naam || 'Overzicht'}</h1>
 		{#if termen.length}
 			<button
 				type="button"
@@ -1319,13 +1319,6 @@
 		text-decoration: underline;
 		text-underline-offset: 2px;
 	}
-	.titel {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-		overflow-wrap: anywhere;
-	}
 	.sectie h2,
 	.lijst h2 {
 		margin: 0 0 var(--s-2);
@@ -1514,14 +1507,6 @@
 	}
 
 	/* The heading: the topic, its action at the right. */
-	.kop {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: var(--s-3);
-		margin-bottom: var(--s-4);
-	}
 	.regel {
 		margin-bottom: var(--s-5);
 	}

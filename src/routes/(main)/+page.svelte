@@ -72,11 +72,17 @@
 	let actueelStaat = $state<'laden' | 'klaar' | 'fout'>('laden');
 	/** The network of the last passed bill: after Actueel is on screen; none on an error. */
 	let wetsnetwerk = $state<Schets | null>(null);
+	/** Its place stands while it is asked, so Actueel under it does not drop (0.16 of layout
+	 *  shift live, 10 Oct); it closes only where there is no bill to show. */
+	let wetsnetwerkLaden = $state(true);
 
 	$effect(() => {
 		const ac = new AbortController();
 		loadLines(ac.signal).catch(() => {
-			if (!ac.signal.aborted) actueelStaat = 'fout';
+			if (!ac.signal.aborted) {
+				actueelStaat = 'fout';
+				wetsnetwerkLaden = false;
+			}
 		});
 		return () => ac.abort();
 	});
@@ -104,6 +110,7 @@
 		await idle();
 		if (signal.aborted) return;
 		wetsnetwerk = await laadWetsnetwerk(summary.items ?? [], today, signal).catch(() => null);
+		if (!signal.aborted) wetsnetwerkLaden = false;
 	}
 
 	const idle = () =>
@@ -195,7 +202,10 @@
 				/>
 			{/key}
 		</div>
-		{#if wetsnetwerk}<Wetsnetwerk schets={wetsnetwerk} />{/if}
+		{#if wetsnetwerk}<Wetsnetwerk schets={wetsnetwerk} />{:else if wetsnetwerkLaden}<div
+				class="wetsnetwerk-plek"
+				aria-hidden="true"
+			></div>{/if}
 		<section class="actueel" aria-labelledby="actueel-heading">
 			<header>
 				<h2 id="actueel-heading"><a href="/actueel">Actueel</a></h2>
@@ -220,6 +230,17 @@
 </div>
 
 <style>
+	/* The band's height while it is asked (1440: 366 px; a phone: 274 px), its frame quiet. */
+	.wetsnetwerk-plek {
+		min-height: 366px;
+		border-radius: var(--r-1);
+		background: var(--paper-2);
+	}
+	@media (max-width: 640px) {
+		.wetsnetwerk-plek {
+			min-height: 274px;
+		}
+	}
 	/* The frame and grid of Bladeren (AppShell). */
 	.side {
 		display: flex;
