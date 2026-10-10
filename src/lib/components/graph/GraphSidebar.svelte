@@ -5,6 +5,7 @@
 	// the depth from the focus, the lid, and one line with what is on the canvas and
 	// what the filter hides. The overlays are under Meer.
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Keuze from '$lib/components/ui/Keuze.svelte';
 	import { HEAT_PERIODS, type Overlay } from '$lib/stores/overlay';
 	import type { Collection, Relation } from '$lib/vocabulary';
@@ -32,6 +33,8 @@
 	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import { kindOfCollection } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
+	import { BRON_LABEL, isCollection } from '$lib/vocabulary';
+	import { formatCount } from '$lib/text/getal';
 	import { BRON_KIND_VORM } from '$lib/bron/vormen';
 	import type { ContainerKind } from '$lib/graph/container-membership';
 	import { NEIGHBORHOOD_CAP, type NeighborhoodReach } from '$lib/graph/store/types';
@@ -44,6 +47,7 @@
 		onOpenFilter,
 		depth,
 		onDepth,
+		onAllesLaden,
 		hiddenRelations,
 		onToggleRelation,
 		hiddenGroups = new Set(),
@@ -65,6 +69,7 @@
 		onOpenFilter: () => void;
 		depth: number;
 		onDepth: (d: number) => void;
+		onAllesLaden?: () => void;
 		hiddenRelations: Set<Relation>;
 		onToggleRelation: (r: Relation) => void;
 		/** Groupings switched off: no hull around their bronnen. */
@@ -101,6 +106,13 @@
 		`Grens van ${grens} bronnen bereikt; een stap verder voegt niets toe.`
 	);
 	const beyondCap = (d: number) => !netwerkActive && !!reach?.capped && d > reach.depth;
+	// What the network shows of the focus's direct neighbours, per kind the API cut off: "32 van
+	// 1.483" as a label, not a sentence (Thijs, 10 Oct: "maak duidelijk dat we niet alles zien").
+	const uitsnede = $derived(
+		netwerkActive
+			? []
+			: (reach?.buckets ?? []).filter((b) => b.kept < b.total && isCollection(b.collection))
+	);
 	const NO_SELECTION_REASON = 'Kies eerst een bron in het netwerk.';
 	// Never drawn as an edge on the canvas, so not a togglable line here either.
 	// PART_OF, MEMBER_OF and LED_BY always point at a container (a wet, fractie,
@@ -231,6 +243,32 @@
 				</FilterOptie>
 			{/each}
 		</section>
+
+		{#if uitsnede.length}
+			<!-- The focus's direct neighbours the network shows, of those there are. -->
+			<section class="block">
+				<h3 class="block__title">Getoond</h3>
+				<ul class="uitsnede">
+					{#each uitsnede as b (b.collection)}
+						<li>
+							<KindGlyph collection={b.collection as Collection} size={11} /><span
+								class="uitsnede__soort">{BRON_LABEL[b.collection as Collection][1]}</span
+							><span class="uitsnede__aantal"
+								>{formatCount(b.kept)}
+								<span class="uitsnede__van">van {formatCount(b.total)}</span></span
+							>
+						</li>
+					{/each}
+				</ul>
+				{#if onAllesLaden}
+					<p class="uitsnede__actie">
+						<TekstLink onclick={onAllesLaden}
+							>Alle {formatCount(uitsnede.reduce((n, b) => n + b.total, 0))} laden</TekstLink
+						>
+					</p>
+				{/if}
+			</section>
+		{/if}
 
 		<section class="block">
 			<h3 class="block__title">Groepering</h3>
@@ -428,6 +466,32 @@
 		font-size: var(--t-body-2);
 		font-weight: 600;
 		color: var(--ink);
+	}
+	.uitsnede {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.uitsnede li {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: var(--s-2);
+		padding: 2px 0;
+	}
+	.uitsnede__aantal {
+		font-variant-numeric: tabular-nums;
+		color: var(--ink);
+	}
+	.uitsnede__actie {
+		margin: var(--s-1) 0 0;
+		font-size: var(--t-meta);
+	}
+	.uitsnede__van {
+		color: var(--ink-3);
 	}
 	.block__head .block__title {
 		margin: 0;

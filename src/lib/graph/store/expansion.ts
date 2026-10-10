@@ -279,7 +279,8 @@ export function createExpansion(
 					focal: response.focal_id,
 					depth: opts.depth ?? NEIGHBORHOOD_DEPTH,
 					capped: response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP),
-					cap: opts.cap ?? NEIGHBORHOOD_CAP
+					cap: opts.cap ?? NEIGHBORHOOD_CAP,
+					buckets: response.buckets ?? []
 				});
 
 			// A full neighbourhood without the detour through a law (`withoutLawHops`); one

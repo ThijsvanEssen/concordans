@@ -96,6 +96,7 @@
 		onFilter,
 		onOpenFilter,
 		onDepth,
+		onAllesLaden,
 		onToggleHeat,
 		onHeatPeriodChange,
 		onToggleMutatie,
@@ -128,6 +129,8 @@
 		onFilter: (f: VerbondenFilter) => void;
 		onOpenFilter: () => void;
 		onDepth: (d: number) => void;
+		/** Load all the focus's direct neighbours (?alles=1); absent once they are asked. */
+		onAllesLaden?: () => void;
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
 		onToggleMutatie?: () => void;
@@ -1329,6 +1332,8 @@
 	// height of the canvas. Both open while they fit; the one opened last stays, the other
 	// folds (zwevend.ts) and comes back once there is room.
 	let legendaEl = $state<HTMLElement | null>(null);
+	/** The API cut the focus's direct neighbours off (reach.buckets, #528). */
+	const deels = $derived(!netwerkActive && !!reach?.buckets?.some((b) => b.kept < b.total));
 	let legendaPlek = $state<{ top: number; right: number; width: number; max: number }>({
 		top: 12,
 		right: 12,
@@ -1337,6 +1342,17 @@
 	});
 	/** The height of each card when it last stood open, to know whether it fits again. */
 	const hoogteOpen: Partial<Record<Zwevend, number>> = {};
+	const SPEELRUIMTE = 48;
+	// A last guard: no more than a few folds a second, whatever the measures say.
+	let wissels: number[] = [];
+	function wissel(wie: Zwevend | null) {
+		if (get(opzij) === wie) return;
+		const nu = performance.now();
+		wissels = wissels.filter((t) => nu - t < 1000);
+		if (wissels.length >= 4) return;
+		wissels.push(nu);
+		opzij.set(wie);
+	}
 	function schik() {
 		const host = overlayHost;
 		if (!host) return;
@@ -1365,11 +1381,17 @@
 		if (legendaOpen) hoogteOpen.legenda = lgH;
 		const zij = get(opzij);
 		if (nwOpen && legendaOpen && !passenSamen(nwH, lgH, H)) {
-			opzij.set(get(laatstOpen) === 'legenda' ? 'netwerk' : 'legenda');
+			wissel(get(laatstOpen) === 'legenda' ? 'netwerk' : 'legenda');
 			return;
 		}
-		if (zij === 'legenda' && passenSamen(nwH, hoogteOpen.legenda ?? Infinity, H)) opzij.set(null);
-		if (zij === 'netwerk' && passenSamen(hoogteOpen.netwerk ?? Infinity, lgH, H)) opzij.set(null);
+		// A folded card opens again only with room to spare: measured open and remembered, the
+		// heights differ by a few pixels, and without that margin the cards folded and opened
+		// each other without end (the page hung once the Legenda grew, 10 Oct).
+		const ruim = H - SPEELRUIMTE;
+		if (zij === 'legenda' && passenSamen(nwH, hoogteOpen.legenda ?? Infinity, ruim))
+			opzij.set(null);
+		if (zij === 'netwerk' && passenSamen(hoogteOpen.netwerk ?? Infinity, lgH, ruim))
+			opzij.set(null);
 	}
 	$effect(() => {
 		const host = overlayHost;
@@ -1401,7 +1423,9 @@
 		});
 		// The window too: a canvas that grows with it is measured again.
 		window.addEventListener('resize', schik);
-		schik();
+		// Untracked: schik reads legendaOpen and may fold a card, which changes it; this effect
+		// is for the elements, not for what they show (an effect loop once the Legenda grew).
+		untrack(schik);
 		return () => {
 			kijk.disconnect();
 			verandert.disconnect();
@@ -1474,6 +1498,7 @@
 		{depth}
 		{reach}
 		{onDepth}
+		{onAllesLaden}
 		hiddenRelations={filters.hiddenRelations}
 		onToggleRelation={toggleRelation}
 		hiddenGroups={filters.hiddenGroups}
@@ -1518,6 +1543,9 @@
 									><KindGlyph vorm={v} size={11} /></span
 								>
 							{/each}
+							<!-- Not all of the focus's direct neighbours are on the canvas: the Legenda,
+							     open, says per kind how many (Getoond). -->
+							{#if deels}<span class="deels">deels</span>{/if}
 						{/if}
 					{/snippet}
 					<div class="legenda-inhoud">{@render sidebar()}</div>
@@ -1839,6 +1867,11 @@
 	}
 	.legenda-inhoud :global(.menu:has(.menu__list)) {
 		flex-basis: 100%;
+	}
+	.deels {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	.legenda-inhoud :global(.legend) {
 		height: auto;
