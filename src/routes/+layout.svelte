@@ -34,6 +34,7 @@
 		const van = from?.url;
 		const naar = to?.url;
 		if (dev && naar) meldZijscroll(naar.pathname + naar.search);
+		void tick().then(stilAnnouncer);
 		if (!van || !naar || canonical(van) === canonical(naar)) return;
 		if (serverKop.actief) {
 			for (const el of document.head.querySelectorAll('[data-seo]')) el.remove();
@@ -44,28 +45,41 @@
 		void kondigAan();
 	});
 
-	// SvelteKit announces the title right after a step, before a bron's name has come (the
-	// reader says Laden… then). The name that follows is announced here, once (UX test 10
-	// Oct, #13: the previous page's name was read out).
+	// The page's name after a step is said here, once, when it has settled (UX test 10 Oct
+	// and 0.79.43, #13). SvelteKit's own announcer reads the title right after the step, while a
+	// bron is still on its way ("Laden…, Concordans" at every step): it is made silent, and
+	// this region says every page, also one whose title was final before the first read
+	// (a kabinet, a judgment).
+	const stilAnnouncer = () =>
+		document.getElementById('svelte-announcer')?.setAttribute('aria-live', 'off');
+	// SvelteKit adds it at the first step: silent from the moment it is there.
+	if (browser) {
+		const komt = new MutationObserver(() => {
+			if (!document.getElementById('svelte-announcer')) return;
+			stilAnnouncer();
+			komt.disconnect();
+		});
+		komt.observe(document.body, { childList: true, subtree: true });
+	}
 	let aankondiging = $state('');
 	let stop: (() => void) | null = null;
 	async function kondigAan() {
 		stop?.();
 		aankondiging = '';
 		await tick();
-		const gezegd = document.title;
 		// The name settles first: the light node's, then the full node's ("Rob Jetten", then
-		// "Rob Jetten (D66)").
+		// "Rob Jetten (D66)"); what stands half a second unchanged is said.
 		let rust: ReturnType<typeof setTimeout> | undefined;
-		const kijk = new MutationObserver(() => {
+		const wacht = () => {
 			clearTimeout(rust);
 			const t = document.title;
-			if (t === gezegd || t === LADEN_TITEL) return;
+			if (!t || t === LADEN_TITEL) return;
 			rust = setTimeout(() => {
 				aankondiging = t;
 				stop?.();
 			}, 500);
-		});
+		};
+		const kijk = new MutationObserver(wacht);
 		const klaar = setTimeout(() => stop?.(), 30_000);
 		stop = () => {
 			kijk.disconnect();
@@ -74,6 +88,7 @@
 			stop = null;
 		};
 		kijk.observe(document.head, { subtree: true, childList: true, characterData: true });
+		wacht();
 	}
 </script>
 
