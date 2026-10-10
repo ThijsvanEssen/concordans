@@ -635,6 +635,27 @@ describe('canvas cards and halls', () => {
 		).toEqual([]);
 	});
 
+	it('lets a Tab reach the cards over the network before the canvas (keyboard audit)', () => {
+		const t = sources.find((s) => s.path === 'lib/components/graph/GraphView.svelte')!.text;
+		const opmaak = t.slice(t.indexOf('<div class="graph-view">'));
+		const plek = (c: string) => opmaak.indexOf(c);
+		expect(plek('class="canvas-overlay"')).toBeGreaterThan(-1);
+		expect(plek('class="canvas-overlay"')).toBeLessThan(plek('class="graph-canvas-wrap"'));
+		expect(plek('class="legenda"')).toBeLessThan(plek('<CanvasNodeList'));
+		expect(plek('<CanvasNodeList')).toBeLessThan(plek('class="graph-canvas-wrap"'));
+		// The list of bronnen is visible where it has the focus: the canvas takes its outline.
+		expect(t).toMatch(/\.buhne:has\(\.canvas-node-list :focus-visible\) \.graph-canvas-wrap/);
+	});
+
+	it('keeps the canvas and the lists of Bronnen out of the Verkenner’s own chunk', () => {
+		// A reader's first request waits for the Verkenner's chunk: the canvas (GraphView with
+		// graphology) and IndexView come as chunks of their own (213 → 145 kB gz, 10 Oct).
+		const t = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		expect(t).not.toMatch(/^\s*import (GraphView|IndexView) from/m);
+		expect(t).toMatch(/import\('\$lib\/components\/graph\/GraphView\.svelte'\)/);
+		expect(t).toMatch(/import\('\$lib\/components\/explore\/IndexView\.svelte'\)/);
+	});
+
 	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
 		expect(
 			offenders(
