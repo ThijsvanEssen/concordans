@@ -176,6 +176,12 @@ describe('one form for each thing', () => {
 				menu.includes(path) && !/class="blad__kop"[\s\S]*?class="blad__titel"/.test(text)
 		);
 		expect(zonderKop.map((s) => s.path)).toEqual([]);
+		// Every h1 of a page is the one title (the home page's is the name of the site).
+		const anders = offenders(
+			(t) => [...t.matchAll(/<h1\b[^>]*>/g)].some((m) => !/class="blad__titel"/.test(m[0])),
+			['routes/(main)/+page.svelte']
+		).filter((p) => p.startsWith('routes/'));
+		expect(anders).toEqual([]);
 		const eigen = offenders(
 			(t) =>
 				t.includes('blad__kop') &&
@@ -185,6 +191,16 @@ describe('one form for each thing', () => {
 			['lib/components/layout/AppShell.svelte']
 		);
 		expect(eigen).toEqual([]);
+	});
+
+	it('keeps the footer under the fold and a late band in its place (no layout shift)', () => {
+		// Live, 10 Oct: the footer jumped into view on every page when the server's page gave
+		// way to the app (0.22 to 0.37 of layout shift), and Actueel dropped under the
+		// Wetsnetwerk band on the home page (0.16).
+		const laag = sources.find((s) => s.path === 'routes/(main)/+layout.svelte')!.text;
+		expect(laag).toMatch(/class="blad-hoogte"[\s\S]*min-height: 100dvh/);
+		const thuis = sources.find((s) => s.path === 'routes/(main)/+page.svelte')!.text;
+		expect(thuis).toMatch(/\{:else if wetsnetwerkLaden\}/);
 	});
 
 	it('styles the parts of a text page once, in AppShell (.blad--tekst)', () => {

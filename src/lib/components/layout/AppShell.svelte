@@ -357,6 +357,7 @@
 		font-weight: 600;
 		line-height: var(--lh-snug);
 		color: var(--ink);
+		overflow-wrap: anywhere;
 	}
 	/* The parts of a text page (/over, /bronnen, /privacy, /voorwaarden, /docs and its pages):
 	   the line over the title, the title, the lede, a section with its heading, a citation,
