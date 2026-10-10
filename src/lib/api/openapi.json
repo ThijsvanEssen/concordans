@@ -6891,6 +6891,28 @@
 				"title": "CitedByJudgment",
 				"description": "The judgment of a passage that cites an article."
 			},
+			"CoalitionFactionDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"short": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short",
+						"description": "Its abbreviation, else its name."
+					},
+					"choice": {
+						"anyOf": [{ "type": "string", "enum": ["Voor", "Tegen"] }, { "type": "null" }],
+						"title": "Choice",
+						"description": "``Voor`` or ``Tegen``; null when its seats went both ways (a roll call)."
+					},
+					"seats_for": { "type": "integer", "title": "Seats For" },
+					"seats_against": { "type": "integer", "title": "Seats Against" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "seats_for", "seats_against"],
+				"title": "CoalitionFactionDTO",
+				"description": "A faction of the coalition on a vote: how its seats went."
+			},
 			"CoalitionFactionSeatsDTO": {
 				"properties": {
 					"key": {
@@ -9742,28 +9764,6 @@
 				"title": "FactionSeatsDTO",
 				"description": "A party's seats, and where it sits in the hemicycle."
 			},
-			"FeedCoalitionFactionDTO": {
-				"properties": {
-					"key": { "type": "string", "title": "Key" },
-					"short": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Short",
-						"description": "Its abbreviation, else its name."
-					},
-					"choice": {
-						"anyOf": [{ "type": "string", "enum": ["Voor", "Tegen"] }, { "type": "null" }],
-						"title": "Choice",
-						"description": "``Voor`` or ``Tegen``; null when its seats went both ways (a roll call)."
-					},
-					"seats_for": { "type": "integer", "title": "Seats For" },
-					"seats_against": { "type": "integer", "title": "Seats Against" }
-				},
-				"additionalProperties": false,
-				"type": "object",
-				"required": ["key", "seats_for", "seats_against"],
-				"title": "FeedCoalitionFactionDTO",
-				"description": "A faction of the coalition on a vote: how its seats went."
-			},
 			"FeedCommencementDTO": {
 				"properties": {
 					"instrument": {
@@ -10453,7 +10453,7 @@
 						"description": "Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer."
 					},
 					"coalition_factions": {
-						"items": { "$ref": "#/components/schemas/FeedCoalitionFactionDTO" },
+						"items": { "$ref": "#/components/schemas/CoalitionFactionDTO" },
 						"type": "array",
 						"title": "Coalition Factions",
 						"description": "Of the Tweede Kamer: each coalition faction that cast a seat, with its choice, most seats first; empty where ``coalition`` is null."
@@ -12829,6 +12829,16 @@
 						"type": "array",
 						"title": "In Office",
 						"description": "The posts in a cabinet (``government_functions``) the member held on ``date``, oldest first: a vote as (demissionary) bewindspersoon and Kamerlid; empty when none."
+					},
+					"coalition": {
+						"anyOf": [{ "$ref": "#/components/schemas/CoalitionVoteDTO" }, { "type": "null" }],
+						"description": "Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer."
+					},
+					"coalition_factions": {
+						"items": { "$ref": "#/components/schemas/CoalitionFactionDTO" },
+						"type": "array",
+						"title": "Coalition Factions",
+						"description": "Each coalition faction that cast a seat, with its choice, most seats first (as on the feed); empty where ``coalition`` is null."
 					}
 				},
 				"additionalProperties": false,
@@ -14565,6 +14575,16 @@
 							{ "$ref": "#/components/schemas/TimelineDocumentSummaryDTO" },
 							{ "type": "null" }
 						]
+					},
+					"coalition": {
+						"anyOf": [{ "$ref": "#/components/schemas/CoalitionVoteDTO" }, { "type": "null" }],
+						"description": "Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer."
+					},
+					"coalition_factions": {
+						"items": { "$ref": "#/components/schemas/CoalitionFactionDTO" },
+						"type": "array",
+						"title": "Coalition Factions",
+						"description": "Each coalition faction that cast a seat, with its choice, most seats first (as on the feed); empty where ``coalition`` is null."
 					}
 				},
 				"additionalProperties": false,

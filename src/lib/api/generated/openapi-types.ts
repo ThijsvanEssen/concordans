@@ -2956,6 +2956,28 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * CoalitionFactionDTO
+         * @description A faction of the coalition on a vote: how its seats went.
+         */
+        CoalitionFactionDTO: {
+            /** Key */
+            key: string;
+            /**
+             * Short
+             * @description Its abbreviation, else its name.
+             */
+            short?: string | null;
+            /**
+             * Choice
+             * @description ``Voor`` or ``Tegen``; null when its seats went both ways (a roll call).
+             */
+            choice?: ("Voor" | "Tegen") | null;
+            /** Seats For */
+            seats_for: number;
+            /** Seats Against */
+            seats_against: number;
+        };
+        /**
          * CoalitionFactionSeatsDTO
          * @description A faction's seats in a stretch of a cabinet, and whether it is of the coalition.
          */
@@ -5529,28 +5551,6 @@ export interface components {
             readonly path: string | null;
         };
         /**
-         * FeedCoalitionFactionDTO
-         * @description A faction of the coalition on a vote: how its seats went.
-         */
-        FeedCoalitionFactionDTO: {
-            /** Key */
-            key: string;
-            /**
-             * Short
-             * @description Its abbreviation, else its name.
-             */
-            short?: string | null;
-            /**
-             * Choice
-             * @description ``Voor`` or ``Tegen``; null when its seats went both ways (a roll call).
-             */
-            choice?: ("Voor" | "Tegen") | null;
-            /** Seats For */
-            seats_for: number;
-            /** Seats Against */
-            seats_against: number;
-        };
-        /**
          * FeedCommencementDTO
          * @description An ``inwerkingtreding``: a new version of a law in force from ``date``.
          */
@@ -6121,7 +6121,7 @@ export interface components {
              * Coalition Factions
              * @description Of the Tweede Kamer: each coalition faction that cast a seat, with its choice, most seats first; empty where ``coalition`` is null.
              */
-            coalition_factions?: components["schemas"]["FeedCoalitionFactionDTO"][];
+            coalition_factions?: components["schemas"]["CoalitionFactionDTO"][];
         };
         /**
          * GovernmentFunctionDTO
@@ -8216,6 +8216,13 @@ export interface components {
              * @description The posts in a cabinet (``government_functions``) the member held on ``date``, oldest first: a vote as (demissionary) bewindspersoon and Kamerlid; empty when none.
              */
             in_office?: components["schemas"]["VoteOfficeDTO"][];
+            /** @description Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer. */
+            coalition?: components["schemas"]["CoalitionVoteDTO"] | null;
+            /**
+             * Coalition Factions
+             * @description Each coalition faction that cast a seat, with its choice, most seats first (as on the feed); empty where ``coalition`` is null.
+             */
+            coalition_factions?: components["schemas"]["CoalitionFactionDTO"][];
         };
         /**
          * MemberVotesResponse
@@ -9696,6 +9703,13 @@ export interface components {
              */
             primary_case_kind?: string | null;
             document?: components["schemas"]["TimelineDocumentSummaryDTO"] | null;
+            /** @description Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer. */
+            coalition?: components["schemas"]["CoalitionVoteDTO"] | null;
+            /**
+             * Coalition Factions
+             * @description Each coalition faction that cast a seat, with its choice, most seats first (as on the feed); empty where ``coalition`` is null.
+             */
+            coalition_factions?: components["schemas"]["CoalitionFactionDTO"][];
         };
         /**
          * TimelineDecisionEntry
