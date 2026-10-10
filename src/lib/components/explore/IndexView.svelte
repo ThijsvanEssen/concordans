@@ -829,9 +829,10 @@
 
 	// Leaving Bladeren, for a bron or another page, keeps the list.
 	beforeNavigate(({ from, to }) => {
-		const staying =
-			to?.url?.pathname === from?.url?.pathname && to?.url?.searchParams.get('mode') === 'index';
-		if (from?.url && !staying) keep(from.url);
+		const van = from?.url;
+		const naar = to?.url;
+		const staying = naar?.pathname === van?.pathname && naar?.searchParams.get('mode') === 'index';
+		if (van && !staying) keep(van);
 	});
 
 	// Mounting by Back or Forward takes the kept list in place of the first page.
@@ -839,7 +840,8 @@
 	afterNavigate(({ type, to }) => {
 		if (mounted) return;
 		mounted = true;
-		const kept = type === 'popstate' && to && readKept().find((k) => k.url === keptUrl(to.url));
+		const naar = to?.url;
+		const kept = type === 'popstate' && naar && readKept().find((k) => k.url === keptUrl(naar));
 		if (!kept || kept.category !== category) {
 			revealOpen = !!openId;
 			return;
