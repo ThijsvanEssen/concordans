@@ -22,7 +22,7 @@ import { SvelteMap } from 'svelte/reactivity';
 import { api, leesAntwoorden } from '$lib/api/client';
 import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
 import { lawArticleList } from '$lib/api/law-articles';
-import { getDossierPapers, getExplainedBy } from '$lib/api/records';
+import { getDocument, getDossierPapers, getExplainedBy } from '$lib/api/records';
 import { wordingsOf } from '$lib/text/version-diff';
 import { apiNumber, bookNumber } from '$lib/text/bw';
 import { parseNodeId } from '$lib/vocabulary';
@@ -287,6 +287,9 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 	if (response.status === 404) return null;
 	if (!data) throw new Error(`lookup ${response.status}`);
 	const focus = `${data.collection}/${data.key}`;
+	// A Kamerstuk's text is asked as soon as its key is known, beside its node, not after it
+	// (live, 10 Oct: the reader asked it only once the light node was in).
+	if (data.collection === 'documents') getDocument(data.key).catch(() => {});
 	// The reader stands on the article's detail, asked above, while its node is on its way.
 	if (artikel) onthoudArtikel(data.key, artikel.wet, artikel.nummer);
 	remember(padHref(pad), focus);
