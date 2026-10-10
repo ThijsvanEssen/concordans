@@ -8,7 +8,13 @@
 	import type { GraphFilters } from '$lib/graph/graph-store';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
-	import { hoverPlaats, lijnLabelPlaats, plaatsLabel, type Rect as LabelRect } from './label-place';
+	import {
+		hoverPlaats,
+		labelX,
+		lijnLabelPlaats,
+		plaatsLabel,
+		type Rect as LabelRect
+	} from './label-place';
 	import { relationLabel, type Collection, type Relation } from '$lib/vocabulary';
 	import type { BronKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
@@ -143,6 +149,44 @@
 	let labelsTaken: LabelRect[] = [];
 	/** Where each name stands in this frame: its hover stands there too, not beside it. */
 	let labelsAt = new Map<string, LabelRect>();
+	/** Where the focus's name stands this frame, reserved before the others (voorbehouden). */
+	let focusPlek: { x: number; y: number } | null = null;
+	/**
+	 * The places taken before the names are drawn (UX test 10 Oct, #25: names over one another):
+	 * the hulls' labels, a layer of their own drawn after sigma's names, as they stand, and the
+	 * focus's name, which always stands beside its bron. The other names find a free place
+	 * around them.
+	 */
+	function voorbehouden(): LabelRect[] {
+		const taken: LabelRect[] = [];
+		focusPlek = null;
+		if (!renderer || !wrap) return taken;
+		const box = wrap.getBoundingClientRect();
+		for (const el of wrap.querySelectorAll<HTMLElement>('.hull-label, .hull-link-label')) {
+			const r = el.getBoundingClientRect();
+			if (r.width > 0)
+				taken.push({ x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height });
+		}
+		if (focusedId && graph.hasNode(focusedId)) {
+			// The name as drawn, after the reducers (short on the canvas).
+			const data = renderer.getNodeDisplayData(focusedId);
+			const label = data?.label ?? '';
+			if (label && data && !data.hidden) {
+				const { x, y } = renderer.framedGraphToViewport(data);
+				const size = renderer.getSetting('labelSize');
+				labelMeasure ??= document.createElement('canvas').getContext('2d');
+				if (labelMeasure) {
+					labelMeasure.font = `${renderer.getSetting('labelWeight')} ${size}px ${renderer.getSetting('labelFont')}`;
+					const w = labelMeasure.measureText(label).width + 4;
+					const h = size + 4;
+					const grootte = renderer.scaleSize(data.size);
+					focusPlek = { x: labelX(x, grootte, w, box.width), y: y - h / 2 };
+					taken.push({ ...focusPlek, w, h });
+				}
+			}
+		}
+		return taken;
+	}
 	/** Zoomed in past this camera ratio, a hull of a netwerk without a chosen bron is named. */
 	const HULL_LABEL_ZOOM = 0.6;
 	let renderer: SigmaType | null = null;
@@ -524,6 +568,14 @@
 		}
 		type Drawn = Hull & { polygon: Point[]; center: Point; members: Set<string> };
 		const drawn = new Map<string, Drawn>();
+		// The labels placed so far, and the focus's name: a hull's label takes a free place
+		// (UX test 10 Oct, #25: "Verdrag tot bescherming…" over "Richtlijn (EU) 2019/1023",
+		// the focus's name covered). The labels lie over the canvas, so they decide.
+		const bezet: LabelRect[] = [];
+		const focusNaam = focusedId ? labelsAt.get(focusedId) : undefined;
+		if (focusNaam) bezet.push(focusNaam);
+		const raakt = (a: LabelRect, b: LabelRect) =>
+			a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 		/** Per anchor, the hull drawn for it. */
 		const anchorHull = new Map<string, Drawn>();
 		for (const group of latestContainerGroups.values()) {
@@ -586,15 +638,29 @@
 				Math.max(top.y - LABEL_GAP, lines * LABEL_HEIGHT + EDGE_GAP),
 				half
 			);
+			// Its own place, or a step down into its hull; with none free it waits for a hover,
+			// as a bron's name does. Under the pointer it stands regardless.
+			const hoog = lines * LABEL_HEIGHT;
+			let plek: { x: number; y: number } | null = null;
+			for (let stap = 0; stap < 4 && shown; stap++) {
+				const y = at.y + stap * (LABEL_HEIGHT + 4);
+				const r = { x: at.x - half, y: y - hoog, w: half * 2, h: hoog };
+				if (!bezet.some((b) => raakt(r, b))) {
+					plek = { x: at.x, y };
+					bezet.push(r);
+					break;
+				}
+			}
+			if (!plek && inHover) plek = at;
 			drawn.set(group.id, {
 				id: group.id,
 				path,
 				color: hullColorFor(group.kind),
 				dash: hullDashFor(group.kind),
-				label: shown,
+				label: plek ? shown : '',
 				long: lines > 1,
-				labelX: at.x,
-				labelY: at.y,
+				labelX: (plek ?? at).x,
+				labelY: (plek ?? at).y,
 				dim: false,
 				polygon,
 				center: centroid(points),
@@ -1157,18 +1223,12 @@
 				// focus always ($lib label-place). A name with no free place waits for a hover.
 				const room = context.canvas.width / (window.devicePixelRatio || 1);
 				const focus = ((data as { zIndex?: number }).zIndex ?? 0) >= 2;
-				const at = plaatsLabel(
-					data.x,
-					data.y,
-					data.size,
-					w + 4,
-					size + 4,
-					room,
-					labelsTaken,
-					focus
-				);
+				const eigen = (data as { key?: string }).key === focusedId ? focusPlek : null;
+				const at =
+					eigen ??
+					plaatsLabel(data.x, data.y, data.size, w + 4, size + 4, room, labelsTaken, focus);
 				if (!at) return;
-				labelsTaken.push({ x: at.x, y: at.y, w: w + 4, h: size + 4 });
+				if (!eigen) labelsTaken.push({ x: at.x, y: at.y, w: w + 4, h: size + 4 });
 				labelsAt.set((data as { key?: string }).key ?? '', {
 					x: at.x,
 					y: at.y,
@@ -1494,7 +1554,7 @@
 		});
 
 		renderer.on('beforeRender', () => {
-			labelsTaken = [];
+			labelsTaken = voorbehouden();
 			labelsAt = new Map();
 		});
 		renderer.on('afterRender', updateViewportLabels);
