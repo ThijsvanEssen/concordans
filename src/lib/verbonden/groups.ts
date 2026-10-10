@@ -658,6 +658,20 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Stemmingen over deze zaak',
 			noun: 'stemmingen',
 			match: [{ relation: 'ABOUT', direction: 'inbound', collection: 'decisions' }]
+		},
+		// Who brought it in (an amendement, a motie) and the zaak it goes with: the wetsvoorstel
+		// of an amendement (`RELATED_TO`); the API gave them, Verbonden left them out.
+		{
+			id: 'authors',
+			label: 'Indieners',
+			noun: 'indieners',
+			match: [{ relation: 'AUTHORED', direction: 'inbound', collection: ['members', 'factions'] }]
+		},
+		{
+			id: 'related',
+			label: 'Samenhangende zaken',
+			noun: 'zaken',
+			match: [{ relation: 'RELATED_TO', collection: 'cases' }]
 		}
 	]
 };
