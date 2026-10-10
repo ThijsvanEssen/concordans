@@ -48,3 +48,46 @@ export function plaatsLabel(
 	const free = candidates.find((c) => !taken.some((t) => overlaps({ ...c, w, h }, t)));
 	return free ?? (always ? side : null);
 }
+
+/**
+ * Where a hovered bron's name stands when it has no place of its own yet: beside the bron, on
+ * the side that keeps it inside the canvas (`room`) and clear of a card over it (`avoid`),
+ * else as far in as the canvas lets it. The top left of the name.
+ */
+export function hoverPlaats(
+	x: number,
+	y: number,
+	size: number,
+	w: number,
+	h: number,
+	room: number,
+	avoid: Rect | null = null
+): { x: number; y: number } {
+	const top = y - h / 2;
+	const vrij = (lx: number) =>
+		lx >= EDGE && lx + w <= room - EDGE && !(avoid && overlaps({ x: lx, y: top, w, h }, avoid));
+	const right = x + size + GAP;
+	const left = x - size - GAP - w;
+	if (vrij(right)) return { x: right, y: top };
+	if (vrij(left)) return { x: left, y: top };
+	const binnen = avoid && right + w > avoid.x ? avoid.x - w - EDGE : room - w - EDGE;
+	return { x: Math.max(EDGE, Math.min(right, binnen)), y: top };
+}
+
+/**
+ * Where a verbinding's name stands: level, at the middle of its line, inside the canvas. The
+ * top left of the name (Thijs, 10 Oct: one rule for every line, level text reads easier).
+ */
+export function lijnLabelPlaats(
+	sx: number,
+	sy: number,
+	tx: number,
+	ty: number,
+	w: number,
+	h: number,
+	room: number
+): { x: number; y: number } {
+	const mx = (sx + tx) / 2;
+	const my = (sy + ty) / 2;
+	return { x: Math.max(EDGE, Math.min(mx - w / 2, room - w - EDGE)), y: my - h / 2 };
+}
