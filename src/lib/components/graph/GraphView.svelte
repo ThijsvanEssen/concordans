@@ -11,6 +11,7 @@
 	import GraphCanvas from './GraphCanvas.svelte';
 	import type { GraphCanvasApi } from './GraphCanvas.svelte';
 	import GraphCitePanel from './GraphCitePanel.svelte';
+	import CanvasKaart from './CanvasKaart.svelte';
 	import CanvasNodeList from './CanvasNodeList.svelte';
 	import { readingOrder } from './canvas-keys';
 	import GraphSidebar from './GraphSidebar.svelte';
@@ -1277,7 +1278,7 @@
 	// onder elkaar"): placed from the panel's measured box, and the two weighed against the
 	// height of the canvas. Both open while they fit; the one opened last stays, the other
 	// folds (zwevend.ts) and comes back once there is room.
-	let legendaEl = $state<HTMLDivElement | null>(null);
+	let legendaEl = $state<HTMLElement | null>(null);
 	let legendaPlek = $state<{ top: number; right: number; width: number; max: number }>({
 		top: 12,
 		right: 12,
@@ -1307,8 +1308,8 @@
 		const nwOpen = !!nw && !nw.classList.contains('netwerk--dicht');
 		const nwH = nw ? nw.scrollHeight : 0;
 		// The legend scrolls inside its content: its whole height is its head and that content.
-		const kop = legendaEl?.querySelector<HTMLElement>('.legenda-kop');
-		const inhoud = legendaEl?.querySelector<HTMLElement>('.legenda-inhoud');
+		const kop = legendaEl?.querySelector<HTMLElement>('.canvas-kaart__kop');
+		const inhoud = legendaEl?.querySelector<HTMLElement>('.canvas-kaart__inhoud');
 		const lgH = legendaEl ? (kop?.offsetHeight ?? 0) + (inhoud?.scrollHeight ?? 0) + 2 : 0;
 		if (nwOpen) hoogteOpen.netwerk = nwH;
 		if (legendaOpen) hoogteOpen.legenda = lgH;
@@ -1441,22 +1442,15 @@
 			<!-- De legenda zweeft boven het canvas, zoals het netwerkpaneel en de gids.
 		     Dicht: de tekens van wat er staat. Open: filter, groepering en verbindingen. -->
 			{#if canvasCounts.nodes > 0}
-				<div
-					class="legenda"
-					class:open={legendaOpen}
-					bind:this={legendaEl}
-					style:top="{legendaPlek.top}px"
-					style:right="{legendaPlek.right}px"
-					style:width="{legendaPlek.width}px"
-					style:max-height="{legendaPlek.max}px"
+				<CanvasKaart
+					klasse="legenda"
+					titel="Legenda"
+					open={legendaOpen}
+					onToggle={() => zetLegenda(!legendaOpen)}
+					bind:el={legendaEl}
+					stijl="top:{legendaPlek.top}px; right:{legendaPlek.right}px; max-height:{legendaPlek.max}px"
 				>
-					<button
-						type="button"
-						class="legenda-kop"
-						aria-expanded={legendaOpen}
-						onclick={() => zetLegenda(!legendaOpen)}
-					>
-						<span class="legenda-titel">Legenda</span>
+					{#snippet samenvatting()}
 						{#if !legendaOpen}
 							{#each VORM_VOLGORDE.filter((v) => (canvasCounts.vormen[v] ?? 0) > 0) as v (v)}
 								<span class="teken" title="{VORM_LABEL[v]}: {canvasCounts.vormen[v]}"
@@ -1464,12 +1458,9 @@
 								>
 							{/each}
 						{/if}
-						<Caret open={legendaOpen} />
-					</button>
-					{#if legendaOpen}
-						<div class="legenda-inhoud">{@render sidebar()}</div>
-					{/if}
-				</div>
+					{/snippet}
+					<div class="legenda-inhoud">{@render sidebar()}</div>
+				</CanvasKaart>
 			{/if}
 			<!-- The bronnen on the canvas, for the keyboard: outside the canvas, so ← and →
 		     keep stepping through the history there. -->
@@ -1557,22 +1548,24 @@
 
 				{#if clusterCard}
 					{@const c = clusterCard.cluster}
-					<div
-						class="cluster-kaart"
+					<CanvasKaart
+						klasse="cluster-kaart"
+						titel={clusterLabel(c)}
 						role="dialog"
-						aria-label={clusterLabel(c)}
 						tabindex="-1"
-						style="left:{clusterCard.x}px; top:{clusterCard.y}px"
-						onkeydown={(e) => {
+						stijl="left:{clusterCard.x}px; top:{clusterCard.y}px"
+						onkeydown={(e: KeyboardEvent) => {
 							if (!isEscape(e)) return;
 							e.preventDefault();
 							clusterCard = null;
 							if (clusterOpener?.isConnected) clusterOpener.focus();
 						}}
 					>
-						<p class="cluster-naam">
-							<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
-						</p>
+						{#snippet kop()}
+							<p class="cluster-naam">
+								<KindGlyph collection={c.collection} size={14} />{clusterLabel(c)}
+							</p>
+						{/snippet}
 						{#each clusterZinnen( c, c.ends ? null : groupOf(c), (c.ends ?? []).flatMap((e) => {
 								const n = lookup.get(e.id);
 								return n ? [kort(bronNaam(n, $instrumentMetaStore))] : [];
@@ -1595,7 +1588,7 @@
 								>
 							{/if}
 						</div>
-					</div>
+					</CanvasKaart>
 				{/if}
 				{#if foldable.length > 0}
 					<div class="vouw">
@@ -1719,17 +1712,6 @@
 		pointer-events: auto;
 	}
 
-	/* A cluster bron's card: beside it, as an opened row (RowOpen) in its buttons. */
-	.cluster-kaart {
-		position: absolute;
-		z-index: var(--z-float);
-		width: var(--paneel-breed);
-		padding: var(--s-3);
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-pop);
-	}
 	.cluster-naam {
 		display: flex;
 		align-items: center;
@@ -1765,42 +1747,6 @@
 		white-space: nowrap;
 	}
 
-	/* Under the panel Netwerk, as wide as it; where there is no panel, at the top right. */
-	.legenda {
-		position: absolute;
-		right: var(--paneel-rand);
-		width: var(--paneel-breed);
-		max-width: calc(100% - 2 * var(--paneel-rand));
-		z-index: var(--z-float);
-		display: flex;
-		flex-direction: column;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-pop);
-	}
-	.legenda-kop {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: var(--s-2) var(--s-3);
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-2);
-		cursor: pointer;
-	}
-	.legenda-kop:hover {
-		color: var(--ink);
-	}
-	.legenda-titel {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		font-weight: 600;
-		color: var(--ink);
-		margin-right: var(--s-1);
-	}
 	.teken {
 		display: inline-flex;
 		color: var(--ink);
@@ -1829,6 +1775,14 @@
 		padding-top: var(--s-3);
 	}
 
+	/* On a phone the full width, as the Netwerk card above it: one width, one right edge. */
+	@media (max-width: 767px) {
+		:global(.canvas-kaart.legenda) {
+			left: var(--paneel-rand);
+			width: auto;
+			max-width: none;
+		}
+	}
 	.netwerk-melding {
 		display: none;
 	}
@@ -1854,7 +1808,7 @@
 		}
 		/* Narrow: the Netwerk panel takes the top; the legend stays at the bottom left and
 		   leaves room for it. */
-		.legenda {
+		:global(.canvas-kaart.legenda) {
 			max-height: calc(100% - 12rem);
 		}
 		.legenda-inhoud :global(.legend) {

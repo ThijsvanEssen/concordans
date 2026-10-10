@@ -678,6 +678,31 @@ describe('canvas cards and halls', () => {
 		expect(t).toMatch(/import\('\$lib\/components\/explore\/IndexView\.svelte'\)/);
 	});
 
+	it('draws every card over the network with CanvasKaart: one frame, one width', () => {
+		// Thijs, 10 Oct: "Deze mogen even breed zijn en hetzelfde soort component zijn". The
+		// folded Netwerk took its content's width (`width: auto`).
+		const graph = sources.find((s) => s.path === 'lib/components/graph/GraphView.svelte')!.text;
+		const netwerk = sources.find((s) => s.path === 'lib/netwerk/NetwerkPanel.svelte')!.text;
+		expect(graph).toMatch(/<CanvasKaart[^>]*klasse="legenda"/);
+		expect(graph).toMatch(/<CanvasKaart[^>]*klasse="cluster-kaart"/);
+		expect(netwerk).toMatch(/<CanvasKaart[^>]*klasse="netwerk"/);
+		const eigenKader = (t: string) =>
+			rules(t).some(
+				(r) =>
+					/\.(netwerk|legenda|cluster-kaart)(?![-\w])/.test(r.selector) &&
+					!/netwerk--start/.test(r.selector) &&
+					/(?<![-\w])(border|background|box-shadow):|(?<![-\w])width:\s*(?!\s|auto)/.test(r.body)
+			);
+		expect(
+			[
+				['lib/components/graph/GraphView.svelte', graph],
+				['lib/netwerk/NetwerkPanel.svelte', netwerk]
+			]
+				.filter(([, t]) => eigenKader(t))
+				.map(([p]) => p)
+		).toEqual([]);
+	});
+
 	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
 		expect(
 			offenders(
