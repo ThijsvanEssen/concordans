@@ -5,6 +5,8 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
+	import KopActies from './KopActies.svelte';
+	import { bronHref } from '$lib/bron/href';
 	import { getDossierTimeline } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -139,12 +141,48 @@
 						<p>{d.title}</p>
 					</details>
 				{/if}
-				{#if d.submitted_on_tk}
-					<!-- The day the bill reached the Kamer (API 0.75), before any stage below it. -->
-					<p class="reading">
-						Ingediend bij de Tweede Kamer op {formatLongDate(d.submitted_on_tk)}.
+				<!-- What the bill does to the law, under its title (concept 21, Thijs 10 Oct): the laws
+				     it amends and the EU acts it implements (`legal_effect`), as links. -->
+				{#if (d.legal_effect?.amends ?? []).length || (d.legal_effect?.implements ?? []).length}
+					<p class="effect">
+						{#each [['Wijzigt', d.legal_effect?.amends ?? []], ['Implementeert', d.legal_effect?.implements ?? []]] as const as [term, wetten], i (term)}
+							{#if wetten.length}<span class="effect__regel"
+									>{i > 0 && (d.legal_effect?.amends ?? []).length ? '; ' : ''}<span
+										class="effect__term"
+										>{i > 0 && (d.legal_effect?.amends ?? []).length
+											? term.toLowerCase()
+											: term}</span
+									>
+									{#each wetten as w, j (w.key)}{j > 0
+											? j === wetten.length - 1
+												? ' en '
+												: ', '
+											: ''}<a
+											href={bronHref({ collection: 'instruments', key: w.key })}
+											title={w.name ?? w.key}>{w.name ?? w.short ?? w.key}</a
+										>{/each}</span
+								>{/if}
+						{/each}
 					</p>
 				{/if}
+				<!-- The status line with the head's one action, Bewaar (KopActies). -->
+				<div class="status-rij">
+					{#if d.submitted_on_tk}
+						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it. -->
+						<p class="reading">
+							Ingediend bij de Tweede Kamer op {formatLongDate(d.submitted_on_tk)}.
+						</p>
+					{/if}
+					<KopActies
+						bewaar={{
+							id: node.id,
+							at: '',
+							kort: `Kamerstukken ${d.number}`,
+							voluit: `Kamerstukken ${d.number}${d.title ? ` (${d.short_title ?? d.title})` : ''}`,
+							groep: d.short_title ?? d.title ?? `Dossier ${d.number}`
+						}}
+					/>
+				</div>
 				<StandBalk {d} />
 				{#if d.ek_outcome}
 					{@const ek = d.ek_outcome}
@@ -266,6 +304,31 @@
 		line-height: var(--lh-snug);
 	}
 
+	/* What the bill amends and implements: one line under the title, the laws as links. */
+	.effect {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	.effect__term {
+		color: var(--ink-3);
+	}
+	.effect a {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 2px;
+	}
+	.effect a:hover {
+		color: var(--accent);
+	}
+	.status-rij {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--s-2) var(--s-4);
+	}
 	.reading {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);

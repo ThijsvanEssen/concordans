@@ -378,40 +378,9 @@ export function behoort(
 			};
 		}
 		case 'dossiers': {
-			// What the bill does to the law, from the dossier's detail (API 0.79.30,
-			// `legal_effect`), which the dossier reader asks already (cached): "Wijzigt: Wft,
-			// Wta; Implementeert: Richtlijn (EU) 2023/2864" (Thijs, 9 Oct). Shown once it is in.
-			const nummer = text(props.number) ?? text(props.label) ?? light?.node.key ?? null;
-			const effect = (soort: 'amends' | 'implements') => async () => {
-				if (!nummer) return [];
-				const d = await getDossier(nummer).catch(() => null);
-				return (d?.legal_effect?.[soort] ?? []).map(
-					(w): Laag => ({
-						soort: soort === 'amends' ? 'Wet' : 'EU-handeling',
-						naam: w.name ?? w.short ?? w.key,
-						kort: w.short ?? undefined,
-						ref: { collection: 'instruments', key: w.key },
-						vol: (w.basis ?? []).includes('staatsblad')
-							? `${w.name ?? w.key}, in het Staatsblad`
-							: `${w.name ?? w.key}, volgens het wetsvoorstel`
-					})
-				);
-			};
-			return {
-				regels: [
-					...regel('kamer', 'Behandeld in', kamer()),
-					{ id: 'wijzigt', label: 'Wijzigt', lagen: [], los: true, laad: effect('amends') },
-					{
-						id: 'implementeert',
-						label: 'Implementeert',
-						lagen: [],
-						los: true,
-						laad: effect('implements')
-					}
-				],
-				naast: [],
-				onder: []
-			};
+			// The Kamer it is in. What the bill amends and implements stands in the reader, under
+			// the title, from the dossier's detail (concept 21, Thijs 10 Oct: not above the title).
+			return { regels: [...regel('kamer', 'Behandeld in', kamer())], naast: [], onder: [] };
 		}
 		case 'cases':
 			return {
