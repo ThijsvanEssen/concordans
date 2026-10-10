@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import { bronLabel } from '$lib/vocabulary';
 	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
@@ -157,7 +158,7 @@
 			{#if (m.government_functions ?? []).length > 0}
 				<BewindspersoonKop {m} id={node.id} />
 			{:else}
-				{@const titel = m.name ?? m.key}
+				{@const titel = m.name ?? naamVan('members', m)}
 				<ReaderHead
 					collection="members"
 					title={titel}
@@ -287,7 +288,7 @@
 								<span class="career-years">{yearsOf(c.from_date ?? null, c.to_date ?? null)}</span>
 								<span class="career-what">
 									<BronLink ref={{ collection: 'committees', key: c.key }}
-										>{c.name ?? c.key}</BronLink
+										>{c.name ?? naamVan('committees', c)}</BronLink
 									>{seatWord(c.role, c.substitute)
 										? `, ${seatWord(c.role, c.substitute)}`
 										: ''}{c.chamber === 'EK' ? ', Eerste Kamer' : ''}

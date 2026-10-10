@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
@@ -813,7 +814,7 @@
 			const node = nodeToGraphNode(response.node);
 			return {
 				id,
-				label: node?.label ?? response.node.display_name ?? id,
+				label: node?.label ?? naamVanId(id, response.node.display_name),
 				node: node ?? undefined,
 				collection: response.node.collection as NetwerkEntry['collection'],
 				on: isOn(n, id),

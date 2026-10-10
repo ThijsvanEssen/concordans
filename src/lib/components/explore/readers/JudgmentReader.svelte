@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { keyEcli } from '$lib/bron/leesbaar';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { authorCite, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -281,7 +282,8 @@
 			{:else if alsoAs.length > 0}
 				<p class="reader-translation">
 					Ook gepubliceerd als {#each alsoAs as other, i (other.key)}{i > 0 ? ', ' : ''}<BronLink
-							ref={{ collection: 'judgments', key: other.key }}>{other.ecli ?? other.key}</BronLink
+							ref={{ collection: 'judgments', key: other.key }}
+							>{other.ecli ?? keyEcli(other.key) ?? 'Uitspraak'}</BronLink
 						>{/each}.
 				</p>
 			{/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVanId } from '$lib/bron/menselijk';
 	// The hover panel of the canvas: what the bron is, a preview, and two actions: open
 	// it, and add it to the netwerk or take it out.
 	import type { GraphNode } from '$lib/graph/types';
@@ -54,7 +55,7 @@
 			case 'member':
 				return text(nodeProps?.['party']);
 			case 'dossier':
-				return text(nodeProps?.['number']) ?? node.key;
+				return text(nodeProps?.['number']) ?? text(nodeProps?.['label']) ?? naamVanId(node.id);
 			case 'committee':
 			case 'faction':
 				return text(nodeProps?.['abbreviation']);

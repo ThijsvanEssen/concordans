@@ -714,3 +714,35 @@ describe('the keyboard', () => {
 		expect(zonder.filter((k) => !(k in eigen))).toEqual([]);
 	});
 });
+
+describe('names, not keys', () => {
+	it('falls back to the name of a bron, never to its key or id ($lib/bron/menselijk)', () => {
+		// "x ?? y.key" put "bwbr0005537_2022_05_01" and uuids on the screen. A name that may be
+		// missing falls back to menselijkeNaam (naamVan, naamVanId); a key or id used as a key
+		// (an href, a lookup, a version's id) is named here with what it is for.
+		const techniek: Record<string, string> = {
+			'lib/components/articles/VersionCompare.svelte': 'the id of a wording, not shown',
+			'lib/components/graph/GraphView.svelte': 'node ids for focus and hover',
+			'lib/components/explore/IndexView.svelte':
+				'the key of a concept for the URL; a fraction key for its colour',
+			'lib/components/explore/JudgmentToc.svelte': 'the ECLI asked of the API',
+			'lib/components/explore/readers/JudgmentReader.svelte': 'the ECLI asked of the API',
+			'lib/components/explore/WholeLawReader.svelte': 'the id of a version, not shown',
+			'lib/components/explore/readers/CommitmentReader.svelte': 'the number in a dossier ref',
+			'lib/components/actueel/wetsnetwerk.ts': 'the key of an href',
+			'lib/components/parliamentary/amendementen.ts': 'the ids of the zaken not done',
+			'lib/api/law-articles.ts': 'the address of an article, not its name',
+			'lib/text/version-diff.ts': 'the id of a version, not shown'
+		};
+		const fallback = /(\?\?|\|\|)\s*[A-Za-z_$][\w.?$]*\.(key|id)\b(?!\s*\.|\s*[!=]==|\s*\()/;
+		const zonder = sources
+			.filter(({ path }) => !path.endsWith('.test.ts') && !(path in techniek))
+			.flatMap(({ path, text }) =>
+				text
+					.split('\n')
+					.filter((l) => fallback.test(l))
+					.map((l) => `${path}: ${l.trim()}`)
+			);
+		expect(zonder).toEqual([]);
+	});
+});

@@ -3,6 +3,7 @@
 // before that they are joined here from the dossier's node (LEGISLATED_IN, the
 // activities' raw `committee_id`), its mutations and the list of committees.
 // TODO(backend B1, B3): the join goes when every dossier carries the fields.
+import { naamVan } from '$lib/bron/menselijk';
 import { api, unwrap } from '$lib/api/client';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
 import type { Schema } from '$lib/api/types';
@@ -56,7 +57,7 @@ export function buildDossierHub(
 	for (const i of detail?.instruments ?? []) {
 		laws.set(i.key, {
 			ref: { collection: 'instruments', key: i.key },
-			title: i.display_name ?? i.bwb_id ?? i.celex ?? i.key,
+			title: naamVan('instruments', i),
 			context: null,
 			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id, celex: i.celex }),
 			identifier: i.bwb_id ?? i.celex ?? null,
@@ -129,7 +130,7 @@ export function buildDossierHub(
 	)
 		.map<Row>((c) => ({
 			ref: { collection: 'committees', key: c.key },
-			title: c.name ?? c.abbreviation ?? c.key,
+			title: c.name ?? c.abbreviation ?? naamVan('committees', c),
 			context: c.abbreviation || null,
 			kind: 'dossiers',
 			relation: 'LED_BY',

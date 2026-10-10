@@ -2,6 +2,7 @@
 // stukken that change a law, the articles they change and the judgments on the most
 // changed one. Chosen by a rule, not by hand: the newest passed bill that changes articles.
 // Its links are made as from outside the Verkenner, where the band stands.
+import { naamVanId } from '$lib/bron/menselijk';
 import { formatCount } from '$lib/text/getal';
 import { api } from '$lib/api/client';
 import { once } from '$lib/api/records';
@@ -127,7 +128,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 				id: c.source.id,
 				nr,
 				vorm: /^voorstel van wet/i.test(soort) ? 'voorstel' : 'stuk',
-				label: soort || (c.source.display_name ?? c.source.id),
+				label: soort || naamVanId(c.source.id, c.source.display_name),
 				sub: nr ? `nr. ${nr}` : null,
 				href: buildBronHref(null, { collection: 'documents', key: c.source.key ?? c.source.id })
 			});
@@ -221,7 +222,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		const us: SchetsBron[] = uniek.map((j) => ({
 			id: j.id,
 			vorm: 'uitspraak',
-			label: j.ecli ?? j.display_name ?? j.id,
+			label: j.ecli ?? naamVanId(j.id, j.display_name),
 			sub: [
 				// `Hoge Raad 2009-10-27 / 08/03895`: the college and the day, the day in words.
 				j.display_name?.split(' / ')[0].replace(/\d{4}-\d{2}-\d{2}/, (d) => langeDatum(d)),
@@ -261,7 +262,8 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 	};
 }
 
-const lawName = (l: ChangedLaw) => l.law.display_name ?? l.law.bwb_id ?? l.law.id ?? '';
+const lawName = (l: ChangedLaw) =>
+	l.law.display_name ?? l.law.bwb_id ?? (l.law.id ? naamVanId(l.law.id) : 'Wet');
 const lawKey = (l: ChangedLaw) =>
 	(l.law.id ?? l.law.bwb_id ?? '').replace(/^instruments\//, '').toLowerCase();
 const lawNodeId = (l: ChangedLaw) => `instruments/${lawKey(l)}`;

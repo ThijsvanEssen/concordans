@@ -1,6 +1,7 @@
 // The groups of the panel Verbonden that no edge of the selected bron fills. One
 // function per `Loader` of the group table; each returns rows, and a total where
 // the API gives one.
+import { naamVan, naamVanId } from '$lib/bron/menselijk';
 import { api, unwrap } from '$lib/api/client';
 import { geteld } from '$lib/api/decisions';
 import type { Schema } from '$lib/api/types';
@@ -206,7 +207,7 @@ async function touched(
 	return {
 		rows: found.items.map((i) => ({
 			ref: { collection: 'instruments', key: i.key },
-			title: i.citation_title ?? i.title ?? i.display_name ?? i.key,
+			title: i.citation_title ?? i.title ?? naamVan('instruments', i),
 			context: `${i.count} stukken`,
 			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id })
 		}))
@@ -499,7 +500,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			const t = rel.target_article;
 			const row = byKey.get(t.key) ?? {
 				ref: { collection: 'articles' as const, key: t.key },
-				title: t.display_name ?? t.key,
+				title: naamVan('articles', t),
 				context: null,
 				kind: bronKindOf('articles', t.key, { bwb_id: t.bwb_id, celex: t.celex }),
 				relation: 'REFERS_TO' as const,
@@ -603,7 +604,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				const i = link.instrument;
 				add({
 					ref: { collection: 'instruments', key: i.key },
-					title: i.citation_title ?? i.title ?? i.key,
+					title: i.citation_title ?? i.title ?? naamVan('instruments', i),
 					// The other way round (a directive and the laws that implement it), this law's
 					// AMENDS publications are not the ones to test: the measures stand as EUR-Lex has them.
 					context: implementationLine(
@@ -622,7 +623,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				const i = link.instrument;
 				add({
 					ref: { collection: 'instruments', key: i.key },
-					title: i.citation_title ?? i.title ?? i.key,
+					title: i.citation_title ?? i.title ?? naamVan('instruments', i),
 					context: 'alleen genoemd',
 					kind: 'internationaal',
 					derived: link.confidence != null && link.confidence < 1,
@@ -634,7 +635,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				if (link.instrument) {
 					add({
 						ref: { collection: 'instruments', key: link.instrument.key },
-						title: link.instrument.citation_title ?? link.instrument.title ?? link.instrument.key,
+						title:
+							link.instrument.citation_title ??
+							link.instrument.title ??
+							naamVan('instruments', link.instrument),
 						context: null,
 						kind: 'internationaal',
 						derived: link.confidence != null && link.confidence < 1
@@ -770,9 +774,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				: null;
 			rows.set(r.edge_id, {
 				ref: { collection: 'articles', key: from.key },
-				title: from.article_number
-					? `Artikel ${from.article_number}`
-					: (from.display_name ?? from.key),
+				title: from.article_number ? `Artikel ${from.article_number}` : naamVan('articles', from),
 				context: target ? `verwijst naar ${target}` : null,
 				kind: 'artikelen',
 				// The aard says how sure it is; the reference itself is in the BWB (1.0).
@@ -812,7 +814,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			rows: found.items
 				.map((i) => ({
 					ref: { collection: 'instruments' as const, key: i.key },
-					title: i.citation_title ?? i.display_name ?? i.bwb_id ?? i.celex ?? i.key,
+					title: i.citation_title ?? naamVan('instruments', i),
 					context:
 						[
 							// outbound: from this law to the other; inbound: from the other to this one.
@@ -862,7 +864,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			// display name: `Stb. 2026, 94`. Its identifier is its key, not a second name.
 			rows: found.items.slice(0, AMENDED_SHOWN).map((d) => ({
 				ref: refOf(parseNodeId(d.id)?.collection ?? 'instruments', d.key, {}),
-				title: d.display_name ?? d.identifier ?? d.key,
+				title: d.display_name ?? d.identifier ?? naamVanId(d.id),
 				context: null,
 				kind: 'wetten' as const,
 				identifier: d.identifier && d.identifier !== d.key ? d.identifier : null,

@@ -2,6 +2,7 @@
 // (Thijs, 9 Oct). From the lid's own `faction_memberships`, one record per role and term as
 // the source gives them; records that follow on from each other (a new role the next day) are
 // one period. The years only: the days are in the reader.
+import { naamVan } from '$lib/bron/menselijk';
 
 export type Lidmaatschap = {
 	faction_key?: string | null;
@@ -64,7 +65,7 @@ export function fractiePeriodes(list: unknown): FractiePeriode[] {
 		const m = sorted[0];
 		uit.push({
 			key,
-			naam: m.abbreviation?.trim() || m.name?.trim() || key,
+			naam: m.abbreviation?.trim() || m.name?.trim() || naamVan('factions', { key }),
 			periode,
 			tot: spans.at(-1)?.to ?? null
 		});

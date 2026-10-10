@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { naamVan } from '$lib/bron/menselijk';
 	import ReaderHead from './ReaderHead.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
@@ -131,7 +132,7 @@
 			{@const composed = read
 				? `Samenstelling op ${formatLongDate(read)}${since ? `, gegevens sinds ${formatLongDate(since)}` : ''}. `
 				: ''}
-			{@const titel = abbreviation ?? name ?? f.key}
+			{@const titel = abbreviation ?? name ?? naamVan('factions', f)}
 			<!-- The Kamer stands in the band (Kamer: Tweede Kamer), not again here (Thijs, 10 Oct). -->
 			<ReaderHead
 				collection="factions"

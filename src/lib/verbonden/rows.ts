@@ -2,6 +2,8 @@
 // title and one meta line: the lid it names, the position in the source, the
 // identifier or the date, and the betrouwbaarheid when it is not hoog. The passage
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
+import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
+import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel, parseQualifier } from '$lib/text/qualifier';
@@ -182,7 +184,12 @@ export function describe(
 	displayName: string | null | undefined,
 	props: Record<string, unknown> = {}
 ): Pick<Row, 'title' | 'context' | 'identifier' | 'date' | 'court'> {
-	const name = text(displayName) ?? key;
+	// Never the key: the reader's name of the bron where the data gives none ($lib/bron/menselijk).
+	const eigen = text(displayName);
+	const name =
+		eigen && !isRauw(eigen)
+			? eigen
+			: menselijkeNaam({ collection, key, display_name: displayName, props });
 	const date = text(props.date);
 	switch (collection) {
 		case 'judgments': {
@@ -325,7 +332,7 @@ export function rowOfNeighbor(n: Neighbor): Row | null {
 		? meta.paragraphs.filter((x): x is string => typeof x === 'string' && !!x)
 		: [];
 	// They are the row's own where it is the citing judgment; else the selected one's (`r.o.`).
-	const ecli = n.collection === 'judgments' ? (text(props.ecli) ?? n.key) : null;
+	const ecli = n.collection === 'judgments' ? (text(props.ecli) ?? keyEcli(n.key)) : null;
 	return {
 		ref: refOf(n.collection, n.key, props),
 		...describe(n.collection, n.key, n.display_name, props),
@@ -638,7 +645,8 @@ export function historyRow(e: {
 	const proposed = e.status === 'voorgesteld';
 	return {
 		ref,
-		title: e.dossier_title ?? e.summary ?? e.dossier_number ?? ref.key,
+		title:
+			e.dossier_title ?? e.summary ?? e.dossier_number ?? naamVanId(`${ref.collection}/${ref.key}`),
 		identifier: e.summary ?? null,
 		context:
 			[
