@@ -682,6 +682,22 @@ describe('canvas cards and halls', () => {
 		expect(t).toMatch(/\.col--reader \{[^}]*--reader-col-left: 0;/);
 	});
 
+	it('puts the actions of a reader on a row of their own, and keeps the line of a late phrase', () => {
+		// Thijs, 10 Oct (approved suggestion 5): the status words have the column's width; a
+		// phrase that comes after the text (the bills of an article) stands on a line kept from
+		// the start, so it moves nothing (Sv 147: 22 px before, 0 at 375 and 1440 after).
+		const kop = sources.find(
+			(s) => s.path === 'lib/components/explore/readers/ReaderHead.svelte'
+		)!.text;
+		expect(kop).toMatch(/\.reader-status \{[^}]*flex-direction: column;/);
+		expect(kop).toMatch(/class="reader-status__later"/);
+		const artikel = sources.find(
+			(s) => s.path === 'lib/components/explore/readers/ArticleReader.svelte'
+		)!.text;
+		expect(artikel).toMatch(/\{#snippet later\(\)\}[\s\S]*?billCount/);
+		expect(artikel).toMatch(/\n\t*laterPlek\n/);
+	});
+
 	it('keeps the canvas and the lists of Bronnen out of the Verkenner’s own chunk', () => {
 		// A reader's first request waits for the Verkenner's chunk: the canvas (GraphView with
 		// graphology) and IndexView come as chunks of their own (213 → 145 kB gz, 10 Oct).

@@ -23,6 +23,8 @@
 		soort,
 		onderTitel,
 		status,
+		later,
+		laterPlek = false,
 		acties,
 		extra,
 		children
@@ -44,6 +46,12 @@
 		onderTitel?: Snippet;
 		/** The words of the status line: `Geldend recht, tekst sinds 1 maart 2019`. */
 		status?: Snippet;
+		/** A phrase that comes after the text (the bills that touch an article, from
+		 * Verbonden): on a line of its own under the status. */
+		later?: Snippet;
+		/** That line kept from the start, empty or not, so its phrase moves nothing when it
+		 * comes (Sv 147: 22 px, 10 Oct). */
+		laterPlek?: boolean;
 		/** The actions of the head: Bewaar always, Citeer where the kind is cited. */
 		acties: Acties;
 		/** A control only this kind has, before the actions: Vergelijken. */
@@ -80,9 +88,12 @@
 		{#each title.split(/(?<=:)/) as part, i (i)}{#if i}<wbr />{/if}{part}{/each}
 	</h2>
 	{#if onderTitel}<div class="reader-onder">{@render onderTitel()}</div>{/if}
-	<!-- The status at the left, the actions at its right: on every reader in this place. -->
+	<!-- The status, then the actions on a row of their own: the words have the column's width,
+	     so a phrase that comes late (the memorie, the bill) does not push the actions or wrap
+	     beside them (Thijs, 10 Oct, approved suggestion 5). On every reader in this place. -->
 	<div class="reader-status">
 		<div class="reader-status__woorden">{@render status?.()}</div>
+		{#if later || laterPlek}<div class="reader-status__later">{@render later?.()}</div>{/if}
 		<span class="reader-status__acties">
 			{@render extra?.()}
 			<KopActies
@@ -140,6 +151,8 @@
 		min-width: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
+		/* Its own height, whatever face stands in while the italic loads (1.5 px, Sv 147). */
+		line-height: var(--lh-snug);
 		color: var(--ink-3);
 		white-space: nowrap;
 		overflow: hidden;
@@ -192,20 +205,32 @@
 		/* A popup of the status (the versions of an article) hangs from the line's start. */
 		position: relative;
 		display: flex;
-		flex-wrap: wrap;
+		flex-direction: column;
 		align-items: flex-start;
-		gap: var(--s-2) var(--s-4);
-		min-height: var(--veld-h-klein);
+		gap: var(--s-2);
 	}
 	.reader-status__woorden {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: var(--s-1) var(--s-3);
-		flex: 1 1 16em;
+		align-self: stretch;
 		min-width: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
+		color: var(--ink);
+	}
+	/* A row, so an inline-flex phrase (a mark and its words) keeps the line's own height. */
+	.reader-status__later {
+		align-self: stretch;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--s-1) var(--s-3);
+		min-height: calc(var(--t-meta) * var(--lh-snug));
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		line-height: var(--lh-snug);
 		color: var(--ink);
 	}
 	.reader-status__woorden :global(p) {
@@ -216,12 +241,6 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--s-2);
-		margin-left: auto;
-	}
-	@media (max-width: 767px) {
-		.reader-status__acties {
-			margin-left: 0;
-		}
 	}
 	.reader-rijen {
 		display: grid;
