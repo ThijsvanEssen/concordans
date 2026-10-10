@@ -289,6 +289,14 @@ export function behoort(
 				.filter((l) => l.kort);
 			return { regels: regel('wet', 'Wet', [...wet, ...deel]), naast: [], onder: [] };
 		}
+		case 'annexes': {
+			// A bijlage belongs to its law, as an article does (UX-toets 0.79.43, #30).
+			const afk = text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation);
+			const wet = eerste('PART_OF', 'outbound', 'instruments', 'Wet').map((l) =>
+				afk ? { ...l, kort: afk } : l
+			);
+			return { regels: regel('wet', 'Wet', wet), naast: [], onder: [] };
+		}
 		case 'judgments': {
 			// The procesgang: eerdere aanleg › this uitspraak › hoger beroep or cassatie, the
 			// instances before the eerdere aanleg asked one by one. A conclusie names the arrest

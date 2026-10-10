@@ -92,7 +92,9 @@ export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | u
 		case 'annexes': {
 			// "Bijlage 2" with its title where the data gives them.
 			const label = naam(p.label);
-			const titel = naam(p.title) ?? naam(b.display_name);
+			// "Annex II" is the data's word for the bijlage, not a heading of its own (#30).
+			const eigen = (t: string | null) => (t && !/^annex\b/i.test(t) ? t : null);
+			const titel = naam(p.title) ?? eigen(naam(b.display_name));
 			const kop = label ? `Bijlage ${label}` : 'Bijlage';
 			return titel ? `${kop}: ${titel}` : kop;
 		}

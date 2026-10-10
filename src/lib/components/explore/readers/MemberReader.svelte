@@ -114,22 +114,34 @@
 		byChoice: [string, Vote[]][];
 	};
 	/** The posts of a vote in the source's words, oldest first: "minister van … (kabinet-…)". */
+	// In running text a post is lower case, as the status line writes it: "als minister-president".
 	const ambtVan = (v: Vote) =>
 		(v.in_office ?? [])
-			.map((o) => [o.function, o.cabinet ? `(${o.cabinet})` : null].filter(Boolean).join(' '))
+			.map((o) =>
+				[
+					o.function ? o.function.charAt(0).toLowerCase() + o.function.slice(1) : null,
+					o.cabinet ? `(${o.cabinet})` : null
+				]
+					.filter(Boolean)
+					.join(' ')
+			)
 			.filter(Boolean)
 			.join(' en ') || null;
-	function groupVotes(votes: Vote[]): PartyGroup[] {
-		const byParty = Map.groupBy(votes, (v) => `${v.party ?? ''}\u0000${ambtVan(v) ?? ''}`);
+	const groepSleutel = (v: Vote) => `${v.party ?? ''}\u0000${ambtVan(v) ?? ''}`;
+	/** The groups of the votes shown; each counts its votes among `alle`, not the preview's
+	 *  (UX-toets 0.79.43, #29: "20 stemmen" of 50). */
+	function groupVotes(votes: Vote[], alle: Vote[] = votes): PartyGroup[] {
+		const tel = Map.groupBy(alle, groepSleutel);
+		const byParty = Map.groupBy(votes, groepSleutel);
 		const rank = (choice: string) => {
 			const i = CHOICE_ORDER.indexOf(choice);
 			return i === -1 ? CHOICE_ORDER.length : i;
 		};
 		return [...byParty]
-			.map(([, rows]) => ({
+			.map(([sleutel, rows]) => ({
 				party: rows[0].party ?? null,
 				ambt: ambtVan(rows[0]),
-				total: rows.length,
+				total: tel.get(sleutel)?.length ?? rows.length,
 				byChoice: [...Map.groupBy(rows, (v) => v.choice)].sort(
 					([a], [b]) => rank(a) - rank(b) || a.localeCompare(b)
 				)
@@ -330,7 +342,7 @@
 				<p class="laden">Stemmen laden…</p>
 			{:else if votes && votes.votes.length > 0}
 				{@const alle = votes.votes}
-				{@const groups = groupVotes(showAllVotes ? alle : alle.slice(0, VOTES_PREVIEW))}
+				{@const groups = groupVotes(showAllVotes ? alle : alle.slice(0, VOTES_PREVIEW), alle)}
 				<!-- Their own votes on a roll-call, and their faction's while they sat in it (API
 				     0.75, BE-43); a bewindspersoon's are what they voted as a Kamerlid. -->
 				<Sectie
