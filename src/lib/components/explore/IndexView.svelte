@@ -2544,7 +2544,7 @@
 							{/each}
 						</ul>
 					{:else if error}
-						<p class="status-line status-line--error">{error}</p>
+						<p class="status-line status-line--error stil">{error}</p>
 					{:else}
 						<div class="shown" class:shown--stale={loading}>
 							{#if resultRows?.length && category !== 'ministers'}
@@ -3140,7 +3140,7 @@
      for in all bronnen. -->
 {#snippet empty(noun: string)}
 	<div class="empty">
-		<p>Geen {noun}{chips.length || q ? ' met deze filters' : ''}.</p>
+		<p class="stil">Geen {noun}{chips.length || q ? ' met deze filters' : ''}.</p>
 		{#if category === 'dossiers' && dossierScope === 'open'}
 			<button type="button" class="btn is-groot" onclick={() => patchUrl({ stand: 'all' })}
 				>Zoek ook in afgehandelde dossiers</button
@@ -3654,29 +3654,17 @@
 
 	/* ── Status and empty states ─────────────────────────────────────── */
 	.status-line {
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: var(--t-body-2);
-		color: var(--ink-3);
 		margin: var(--s-3) 0;
 	}
 	.status-line--error {
 		color: var(--ink-2);
 	}
+	/* Nothing to show: the quiet line (.stil) where the rows would begin, its way on under it. */
 	.empty {
-		padding: var(--s-8) var(--s-7);
-		text-align: center;
-		font-family: var(--font-serif);
-		font-style: italic;
-		font-size: var(--t-body-2);
-		color: var(--ink-3);
-	}
-	.empty p {
-		margin: 0;
+		padding: var(--s-3) 0;
 	}
 	.empty .btn {
 		margin-top: var(--s-4);
-		font-style: normal;
 	}
 	/* The previous result while the next one loads. */
 	.shown--stale {

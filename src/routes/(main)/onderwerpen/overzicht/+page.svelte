@@ -993,7 +993,7 @@
 	</header>
 
 	{#if !termen.length}
-		<p class="status">Geen onderwerp gekozen.</p>
+		<p class="status stil">Geen onderwerp gekozen.</p>
 	{:else}
 		<!-- The choose-line: the period, nothing else. -->
 		<div class="regel">
@@ -1062,9 +1062,9 @@
 			</aside>
 			<div class="inhoud">
 				{#if tellenFout && !feed.length}
-					<p class="status status--fout">Het overzicht kon niet worden geladen.</p>
+					<p class="status status--fout stil">Het overzicht kon niet worden geladen.</p>
 				{:else if leegte}
-					<p class="status">
+					<p class="status stil">
 						Geen gebeurtenissen met deze woorden in de titel{van || tot ? ' in deze periode' : ''}.
 					</p>
 				{:else}
@@ -1297,7 +1297,7 @@
 								>
 							</p>
 						{/if}
-						{#if lijstLaadt && !lijstAantal}<p class="status">Laden…</p>{/if}
+						{#if lijstLaadt && !lijstAantal}<p class="status stil">Laden…</p>{/if}
 					</section>
 				{/if}
 			</div>
@@ -1486,11 +1486,6 @@
 		font-style: italic;
 		font-size: var(--t-meta);
 		color: var(--ink-2);
-	}
-	.status {
-		color: var(--ink-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
 	}
 	.status--fout {
 		color: var(--ink-2);

@@ -504,7 +504,9 @@
 					>
 				</p>
 			{:else}
-				<p class="whole-empty-text">Geen tekst van deze regeling op {formatLongDate(peildatum)}.</p>
+				<p class="whole-empty-text stil">
+					Geen tekst van deze regeling op {formatLongDate(peildatum)}.
+				</p>
 			{/if}
 		{/if}
 
@@ -569,7 +571,9 @@
 						{a.text_preview}{a.text_preview.length >= PREVIEW_CHARS ? '…' : ''}
 					</p>
 				{:else}
-					<p class="whole-text"><span class="whole-empty-text">Tekst niet in de gegevens.</span></p>
+					<p class="whole-text">
+						<span class="whole-empty-text stil">Tekst niet in de gegevens.</span>
+					</p>
 				{/if}
 			</section>
 		{/each}
@@ -822,8 +826,5 @@
 
 	.whole-empty-text {
 		margin: 0;
-		font-family: var(--font-serif);
-		font-style: italic;
-		color: var(--ink-3);
 	}
 </style>
