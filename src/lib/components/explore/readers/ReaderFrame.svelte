@@ -36,12 +36,18 @@
 
 <div class="reader-frame">
 	<div class="reader-frame__col">
-		{#if w && status !== 'empty'}
-			<div class="weergave">
-				<WeergaveSchakelaar stand={w.stand} onKies={w.onKies} tekstMogelijk={w.tekstMogelijk} />
+		<!-- The band and Netwerk/Tekst on one row, one rule under both over the full width
+		     (Thijs, 10 Oct: the rule stopped short of the toggle). -->
+		{#if (w || bron) && status !== 'empty'}
+			<div class="kop-rij">
+				{#if bron}<div class="kop-rij__band"><BehoortBij node={bron()} /></div>{/if}
+				{#if w}
+					<div class="weergave">
+						<WeergaveSchakelaar stand={w.stand} onKies={w.onKies} tekstMogelijk={w.tekstMogelijk} />
+					</div>
+				{/if}
 			</div>
 		{/if}
-		{#if bron && status !== 'empty'}<BehoortBij node={bron()} />{/if}
 		{#if status === 'empty'}
 			<!-- No bron yet: an empty column, no instruction (the UI shows itself, Thijs 9 Oct). -->
 		{:else if status === 'loading'}
@@ -104,14 +110,27 @@
 	/* The switch floats at the column's right edge: the band beside it takes the rest of
 	   the width (its own block formatting context, so its rule stops short of the switch),
 	   and without a band the title wraps around it. No row of its own. */
-	.weergave {
-		float: right;
-		margin: 0 0 var(--s-2) var(--s-4);
+	.kop-rij {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--s-4);
+		margin: 0 0 var(--s-4);
+		padding-bottom: var(--s-2);
+		border-bottom: 1px solid var(--rule);
 	}
-	@media (min-width: 769px) {
-		.reader-frame__col > :global(.behoort) {
-			display: flow-root;
-		}
+	.kop-rij__band {
+		flex: 1;
+		min-width: 0;
+	}
+	/* The rule is the row's; the band keeps none of its own. */
+	.kop-rij__band :global(.behoort) {
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+	.weergave {
+		flex: none;
+		margin-left: auto;
 	}
 	/* On a phone the tabs (Tekst, Netwerk, Verbonden) are the one control. */
 	@media (max-width: 768px) {
