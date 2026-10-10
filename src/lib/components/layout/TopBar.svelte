@@ -39,9 +39,26 @@
 	 */
 	function focusUitBlad(e: FocusEvent) {
 		const naar = e.relatedTarget as Node | null;
-		if (naar && (mobileNavEl?.contains(naar) || toggleBtnEl?.contains(naar))) return;
+		// Focus that goes nowhere is a tap, not Tab: on an iPhone a tapped link takes no focus,
+		// and closing here took the sheet away before the tap's click (Thijs, 10 Oct: "op mobiel
+		// werken de menuknoppen niet"). A tap elsewhere closes it by its click (below).
+		if (!naar) return;
+		if (mobileNavEl?.contains(naar) || toggleBtnEl?.contains(naar)) return;
 		mobileMenuOpen = false;
 	}
+
+	// A click or tap outside the sheet and its button closes it, as a menu does
+	// (actions/menu.ts): in the capture phase, only watched, never stopped.
+	$effect(() => {
+		if (!mobileMenuOpen) return;
+		const onClick = (e: MouseEvent) => {
+			const t = e.target as Node | null;
+			if (t && (mobileNavEl?.contains(t) || toggleBtnEl?.contains(t))) return;
+			mobileMenuOpen = false;
+		};
+		document.addEventListener('click', onClick, true);
+		return () => document.removeEventListener('click', onClick, true);
+	});
 
 	function handleKeydown(e: KeyboardEvent) {
 		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
