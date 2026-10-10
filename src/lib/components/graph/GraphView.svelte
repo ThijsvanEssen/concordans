@@ -1288,15 +1288,19 @@
 		const host = overlayHost;
 		if (!host) return;
 		const H = host.clientHeight;
+		// The cards' width and edge from the tokens (--paneel-breed, --paneel-rand).
+		const stijl = getComputedStyle(host);
+		const breed = parseFloat(stijl.getPropertyValue('--paneel-breed')) || 280;
+		const rand = parseFloat(stijl.getPropertyValue('--paneel-rand')) || 12;
 		const nw = host.querySelector<HTMLElement>('.netwerk:not(.netwerk--start)');
-		const top = nw ? nw.offsetTop + nw.offsetHeight + 8 : 12;
+		const top = nw ? nw.offsetTop + nw.offsetHeight + 8 : rand;
 		// As wide as the panel open, its right edge on the panel's: a folded panel is narrower.
-		const right = nw ? host.clientWidth - (nw.offsetLeft + nw.offsetWidth) : 12;
+		const right = nw ? host.clientWidth - (nw.offsetLeft + nw.offsetWidth) : rand;
 		legendaPlek = {
 			top,
 			right,
-			width: Math.min(Math.max(nw?.offsetWidth ?? 0, 280), host.clientWidth - 2 * right),
-			max: Math.max(0, H - top - 12)
+			width: Math.min(Math.max(nw?.offsetWidth ?? 0, breed), host.clientWidth - 2 * right),
+			max: Math.max(0, H - top - rand)
 		};
 		const nwOpen = !!nw && !nw.classList.contains('netwerk--dicht');
 		const nwH = nw ? nw.scrollHeight : 0;
@@ -1698,7 +1702,7 @@
 	.cluster-kaart {
 		position: absolute;
 		z-index: var(--z-float);
-		width: 280px;
+		width: var(--paneel-breed);
 		padding: var(--s-3);
 		background: var(--paper);
 		border: 1px solid var(--rule-strong);
@@ -1740,8 +1744,9 @@
 	/* Under the panel Netwerk, as wide as it; where there is no panel, at the top right. */
 	.legenda {
 		position: absolute;
-		right: var(--s-3);
-		width: 280px;
+		right: var(--paneel-rand);
+		width: var(--paneel-breed);
+		max-width: calc(100% - 2 * var(--paneel-rand));
 		z-index: var(--z-float);
 		display: flex;
 		flex-direction: column;

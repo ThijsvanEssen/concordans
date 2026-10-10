@@ -248,6 +248,11 @@
 		--z-panel: 30;
 		--z-float: 40;
 		--z-modal: 50;
+
+		/* The cards over the network (Netwerk, Legenda, a cluster's card): one width, one right
+		   edge (Thijs, 10 Oct). */
+		--paneel-breed: 280px;
+		--paneel-rand: var(--s-3);
 	}
 
 	/* ─── Global base ────────────────────────────────────────────────────────── */
