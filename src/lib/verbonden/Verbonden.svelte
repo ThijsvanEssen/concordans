@@ -10,7 +10,6 @@
 	import { onControl } from '$lib/actions/outside';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
-	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
@@ -391,7 +390,7 @@
 				<h3 class="section">{g.section}</h3>
 			{/if}
 			<section class="group" data-group={g.id}>
-				<div class="group__head">
+				<div class="group__head" data-rij>
 					<!-- The heading opens and closes the group, remembered per group (Sectie's rule). -->
 					<!-- The last word keeps the caret with it: an SVG after text wraps alone (Thijs,
 					     10 Oct: "de nieuwe regel hier is niet mooi"). The count follows the heading;
@@ -408,13 +407,13 @@
 					<span class="group__count">{countLabel(g)}</span>
 					{#if network && drawable(g.rows).length > 0}
 						<span class="group__laag">
-							<FilterOptie
-								inline
-								label="netwerk"
-								title="Toon in het netwerk"
-								naam="Toon in het netwerk: {g.label}"
-								on={isLayerOn(g)}
-								onToggle={() => toggleLayer(g)}
+							<RijActies
+								naam={g.label}
+								netwerk={{
+									aan: isLayerOn(g),
+									voegToe: () => toggleLayer(g),
+									haalWeg: () => toggleLayer(g)
+								}}
 							/>
 						</span>
 					{/if}
@@ -987,7 +986,7 @@
 		white-space: nowrap;
 	}
 
-	/* "netwerk" at the right of a group's heading: the vinkje of FilterOptie. */
+	/* The network glyph at the right of a group's heading (RijActies). */
 	.group__laag {
 		margin-left: auto;
 		flex: none;
