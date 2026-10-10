@@ -624,6 +624,17 @@ describe('canvas cards and halls', () => {
 		).toEqual([]);
 	});
 
+	it('gives the cards over the network the controls of the rest of the site', () => {
+		// A menu is TekstMenu, an action in a card is text (btn is-text, TekstLink), a filter a
+		// FilterOptie or a Keuze: no menu of their own (<details>), no filled button.
+		const kaarten = (path: string) => /^lib\/(components\/graph|netwerk)\//.test(path);
+		expect(
+			sources
+				.filter((s) => kaarten(s.path) && /<details\b|class="btn is-primary"/.test(s.text))
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+
 	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
 		expect(
 			offenders(

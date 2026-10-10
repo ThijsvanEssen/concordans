@@ -228,4 +228,10 @@
 		padding-top: var(--s-1);
 		border-top: 1px solid var(--rule);
 	}
+	/* A menu of actions alone (no options): no rule above its first. */
+	.tekstmenu__onder:first-child {
+		margin-top: 0;
+		padding-top: 0;
+		border-top: 0;
+	}
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	// The netwerk of chosen bronnen, over the canvas: a search that adds a bron, the
 	// selected bron added, each chosen one on or off, taken out, or opened, the bronnen
@@ -180,14 +181,20 @@
 				<TekstLink onclick={onClear} title="Leeg het netwerk en het canvas; Terug zet het terug"
 					>Wissen</TekstLink
 				>
-				<details class="menu">
-					<summary aria-label="Meer">⋯</summary>
-					<div class="menu-lijst">
-						<button type="button" class="tekstmenu__item" onclick={onClearContext}
-							>Alleen de gekozen bronnen tonen</button
+				<!-- One more action, in the one menu of the site (TekstMenu), not a menu of its own. -->
+				<TekstMenu klein rechts label="Meer" tekst="Meer">
+					{#snippet onder(sluit)}
+						<button
+							type="button"
+							role="menuitem"
+							class="tekstmenu__item"
+							onclick={() => {
+								sluit();
+								onClearContext();
+							}}>Alleen de gekozen bronnen tonen</button
 						>
-					</div>
-				</details>
+					{/snippet}
+				</TekstMenu>
 			{/if}
 		</div>
 		{#if open}
@@ -342,34 +349,6 @@
 	}
 	.ruimte {
 		flex: 1;
-	}
-	.menu {
-		position: relative;
-		font-size: var(--t-micro);
-	}
-	.menu summary {
-		list-style: none;
-		cursor: pointer;
-		padding: 0 var(--s-1);
-		color: var(--ink-2);
-	}
-	.menu summary::-webkit-details-marker {
-		display: none;
-	}
-	.menu-lijst {
-		position: absolute;
-		right: 0;
-		top: 100%;
-		z-index: 2;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		padding: var(--s-1) 0;
-		background: var(--paper);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-2);
-		box-shadow: var(--shadow-pop);
-		white-space: nowrap;
 	}
 	.chips {
 		list-style: none;
