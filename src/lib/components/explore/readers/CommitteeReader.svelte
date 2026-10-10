@@ -77,7 +77,7 @@
 		</ReaderHead>
 
 		{#if view.kind === 'loading'}
-			<p class="loading">Laden…</p>
+			<p class="loading stil">Laden…</p>
 		{:else if view.kind === 'loaded'}
 			{@const c = view.committee}
 			{@const dossiers = c.dossiers ?? []}

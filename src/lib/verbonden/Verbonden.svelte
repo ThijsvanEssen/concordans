@@ -382,7 +382,7 @@
 
 	<div class="body" use:rijen={'a.row__title'} aria-busy={verbonden.loading}>
 		{#if verbonden.failed}
-			<p class="note">
+			<p class="note stil">
 				De verbindingen konden niet worden geladen.
 				{#if onRetry}
 					<TekstLink onclick={onRetry}>Opnieuw</TekstLink>
@@ -652,12 +652,12 @@
 		{/each}
 
 		{#if !verbonden.loading && !verbonden.failed && alleenKern}
-			<p class="note">Geen verbindingen buiten wat boven de tekst staat.</p>
+			<p class="note stil">Geen verbindingen buiten wat boven de tekst staat.</p>
 		{:else if !verbonden.loading && !verbonden.failed && shown.length === 0 && groepen.length > 0}
-			<p class="note">Geen verbindingen binnen de gekozen bronnen en filters.</p>
+			<p class="note stil">Geen verbindingen binnen de gekozen bronnen en filters.</p>
 		{/if}
 		{#if !verbonden.loading && !verbonden.failed && verbonden.groups.length === 0 && verbonden.id}
-			<p class="note">Deze bron heeft geen verbindingen in de gegevens.</p>
+			<p class="note stil">Deze bron heeft geen verbindingen in de gegevens.</p>
 		{/if}
 
 		{#if hidden.length > 0}
@@ -795,8 +795,6 @@
 	.hidden {
 		margin: 0;
 		padding: var(--s-4);
-		color: var(--ink-3);
-		line-height: 1.4;
 	}
 	.hidden {
 		margin-top: var(--s-2);

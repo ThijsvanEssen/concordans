@@ -304,7 +304,7 @@
 
 	<div class="inhoud">
 		{#if geladen && !lijst.length}
-			<p class="status">Nog geen onderwerpen.</p>
+			<p class="status stil">Nog geen onderwerpen.</p>
 		{/if}
 
 		{#each lijst as o, n (sleutel(o))}
@@ -361,11 +361,11 @@
 					</div>
 				{/if}
 				{#if !s || s.status === 'laden'}
-					<p class="status">Laden…</p>
+					<p class="status stil">Laden…</p>
 				{:else if s.status === 'fout'}
-					<p class="status status--fout">Dit onderwerp kon niet worden geladen.</p>
+					<p class="status status--fout stil">Dit onderwerp kon niet worden geladen.</p>
 				{:else if !s.items.length}
-					<p class="status">Niets {periodeVan(o)}.</p>
+					<p class="status stil">Niets {periodeVan(o)}.</p>
 				{:else}
 					{@const alle = uitgeklapt[vak(o)] || s.items.length <= EERST + 2}
 					<!-- The rows of Actueel, day by day: both read the same. -->
@@ -392,7 +392,7 @@
 					{/if}
 				{/if}
 				{#if s?.status === 'klaar' && s.doorzocht}
-					<p class="status">
+					<p class="status stil">
 						Doorzocht vanaf {shortDate(s.doorzocht)}.
 						<TekstLink disabled={verderBezig === vak(o)} onclick={() => verderTerug(o)}
 							>{verderBezig === vak(o) ? 'Laden…' : 'Zoek verder terug'}</TekstLink
@@ -565,9 +565,6 @@
 	.status,
 	.verder {
 		margin: var(--s-3) 0;
-		color: var(--ink-3);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
 	}
 	.verder {
 		display: flex;

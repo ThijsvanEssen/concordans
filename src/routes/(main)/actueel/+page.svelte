@@ -591,9 +591,9 @@
 		</div>
 
 		{#if loading && !items.length}
-			<p class="status">Laden…</p>
+			<p class="status stil">Laden…</p>
 		{:else if error && !items.length}
-			<div class="status status--error">
+			<div class="status status--error stil">
 				<p>{error}</p>
 				{#if teLang && korter.length}
 					<p class="korter">
@@ -698,9 +698,6 @@
 	.status,
 	.empty {
 		margin: var(--s-5) 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
 	}
 	.status--error {
 		color: var(--accent);
