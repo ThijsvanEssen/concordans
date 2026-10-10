@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Citeer, the same everywhere: a button that opens a menu of the forms to copy (kort,
 	// voluit, met datum, link), with the keys of a menu, and Gekopieerd on the button.
+	import type { Snippet } from 'svelte';
 	import { menu } from '$lib/actions/menu';
 	import Caret from './Caret.svelte';
 	import { createCopier } from './copy.svelte';
@@ -13,7 +14,8 @@
 		drop = 'down',
 		buttonClass = 'btn',
 		caret = false,
-		onToggle
+		onToggle,
+		onder
 	}: {
 		items: CiteItem[];
 		/** What is cited, for the menu's label: `artikel 6:162 BW`, `overweging 4.2`. */
@@ -26,6 +28,9 @@
 		caret?: boolean;
 		/** Told when the menu opens or closes: the row it belongs to can stay raised. */
 		onToggle?: (open: boolean) => void;
+		/** Under the forms, after a rule: Kopieer tekst, the official text (Thijs, 10 Oct: two
+		 *  actions in the head, the rest inside them). Given the function that closes it. */
+		onder?: Snippet<[() => void]>;
 	} = $props();
 
 	let open = $state(false);
@@ -77,6 +82,9 @@
 						></button
 					>
 				{/each}
+				{#if onder}
+					<div class="pop__onder">{@render onder(() => setOpen(false))}</div>
+				{/if}
 			</div>
 		{/if}
 	</span>
@@ -117,7 +125,14 @@
 		font-size: var(--t-label);
 		color: var(--ink-3);
 	}
-	.pop__item {
+	.pop__onder {
+		margin-top: var(--s-1);
+		padding-top: var(--s-1);
+		border-top: 1px solid var(--rule);
+	}
+	/* A step under the rule is an item as the forms are; a link to elsewhere too. */
+	.pop__item,
+	.pop__onder > :global(*) {
 		display: flex;
 		justify-content: space-between;
 		gap: var(--s-3);
@@ -130,6 +145,13 @@
 		text-align: left;
 		cursor: pointer;
 	}
+	.pop__onder > :global(*) {
+		box-sizing: border-box;
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.pop__onder > :global(*:hover),
+	.pop__onder > :global(*:focus-visible),
 	.pop__item:hover,
 	.pop__item:focus-visible {
 		background: var(--paper-2);

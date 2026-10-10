@@ -98,6 +98,16 @@
 			});
 	}
 
+	// A chain of more than two layers shows its first and last, the middle as "…" until it
+	// is opened (Thijs, 10 Oct: the band "te groot", over three lines).
+	let ontvouwd = $state<Record<string, boolean>>({});
+	$effect(() => {
+		void id;
+		ontvouwd = {};
+	});
+	const gevouwen = (r: { id: string; los?: boolean; lagen: Laag[] }) =>
+		!r.los && r.lagen.length > 2 && !ontvouwd[r.id];
+
 	// On a phone the band is its first line until it is opened.
 	let uit = $state(false);
 	$effect(() => {
@@ -142,14 +152,32 @@
 					<div class="regel">
 						<dt class="term">{r.label}</dt>
 						<dd>
-							<ol class="lagen" class:los={r.los}>
+							<ol class="lagen" class:los={r.los} class:gevouwen={gevouwen(r)}>
 								{#each r.lagen as laag, j (j)}
-									<li class:huidig={laag.huidig}>
-										{#if laag.ref}<a
-												href={bronHref(laag.ref, { at: laag.at })}
-												title={`${laag.soort}: ${laag.vol ?? laag.naam}`}>{@render naam(laag)}</a
-											>{:else}<span title={laag.soort}>{@render naam(laag)}</span>{/if}
-									</li>
+									{#if gevouwen(r) && j === 1}
+										<li class="vouw">
+											<button
+												type="button"
+												title={r.lagen
+													.slice(1, -1)
+													.map((l) => l.naam)
+													.join(' › ')}
+												aria-label="Alle lagen tonen: {r.lagen
+													.slice(1, -1)
+													.map((l) => l.naam)
+													.join(', ')}"
+												onclick={() => (ontvouwd = { ...ontvouwd, [r.id]: true })}>…</button
+											>
+										</li>
+									{/if}
+									{#if !gevouwen(r) || j === 0 || j === r.lagen.length - 1}
+										<li class:huidig={laag.huidig} class:laatst={j === r.lagen.length - 1}>
+											{#if laag.ref}<a
+													href={bronHref(laag.ref, { at: laag.at })}
+													title={`${laag.soort}: ${laag.vol ?? laag.naam}`}>{@render naam(laag)}</a
+												>{:else}<span title={laag.soort}>{@render naam(laag)}</span>{/if}
+										</li>
+									{/if}
 								{/each}
 							</ol>
 							{#if i === 0}{@render meer()}{/if}
@@ -247,8 +275,31 @@
 		list-style: none;
 		min-width: 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
+	}
+	/* Folded: one line, the last layer cut at the right rather than wrapping. */
+	.lagen.gevouwen {
+		flex-wrap: nowrap;
+		white-space: nowrap;
+		overflow: hidden;
+	}
+	.lagen.gevouwen .laatst {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.vouw button {
+		padding: 0 2px;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+	.vouw button:hover,
+	.vouw button:focus-visible {
+		color: var(--accent);
 	}
 	.lagen li + li::before {
 		content: '›';
@@ -269,7 +320,7 @@
 	}
 	.lagen a,
 	.rijen a {
-		color: var(--ink);
+		color: var(--ink-2);
 		text-decoration: underline;
 		text-decoration-color: var(--rule-strong);
 		text-underline-offset: 2px;
