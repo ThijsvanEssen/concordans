@@ -8350,6 +8350,12 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a node without one.
              */
             path?: string | null;
+            /**
+             * Lid Counts Pending
+             * @description Of an article asked with ``limit=1``: its lid counts are being counted, so every ``lid_counts`` is null; a request with a larger ``limit`` waits for them and has them. False otherwise.
+             * @default false
+             */
+            lid_counts_pending: boolean;
         };
         /**
          * NodeNeighborhoodEdge

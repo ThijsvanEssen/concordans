@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.42"
+		"version": "0.79.43"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -12968,6 +12968,12 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Path",
 						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a node without one."
+					},
+					"lid_counts_pending": {
+						"type": "boolean",
+						"title": "Lid Counts Pending",
+						"description": "Of an article asked with ``limit=1``: its lid counts are being counted, so every ``lid_counts`` is null; a request with a larger ``limit`` waits for them and has them. False otherwise.",
+						"default": false
 					}
 				},
 				"additionalProperties": false,
