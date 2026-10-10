@@ -532,6 +532,7 @@
 				bron: officialUrl && officialName ? { label: officialName, href: officialUrl } : null,
 				tekst: () => a.text ?? ''
 			}}
+			laterPlek
 		>
 			{#snippet nav()}
 				{#if prevHref || nextHref}
@@ -594,7 +595,7 @@
 						{/if}
 					</span>
 				{/if}
-				<!-- Its toelichting and what is coming, as the last phrases of the status: they come
+				<!-- Its toelichting, as the last phrase of the status: it comes
 				     after the text and fill in without moving it (Orchestrator, 10 Oct). -->
 				{#if explanatory && explanatoryHref}
 					<a
@@ -615,6 +616,10 @@
 						></a
 					>
 				{/if}
+			{/snippet}
+			<!-- What is coming comes with Verbonden, after the text: on its own line, kept from
+			     the start (ReaderHead laterPlek), so it moves nothing. -->
+			{#snippet later()}
 				{#if billCount > 0}
 					<a class="head__pending" href={billsHref} data-sveltekit-noscroll
 						><KindGlyph vorm="voorstel" size={12} />{billCount}
