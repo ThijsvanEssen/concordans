@@ -202,7 +202,8 @@
 					(isKernGroep(selection.collection, g) || isInhoudGroep(selection.collection, g))
 			)
 	);
-	const filtered = $derived(filterGroups(groepen, filter));
+	// A group whose loader is under way keeps its place with "laden…" (VerbondenState.wachtend).
+	const filtered = $derived(filterGroups(groepen, filter, new Set(verbonden.wachtend ?? [])));
 	const shown = $derived(regroup(filtered, grouping, selection.collection));
 	const hidden = $derived(hiddenLine(groepen, filter));
 	const total = $derived(totalCount(verbonden.groups));
@@ -433,7 +434,7 @@
 							>{begin}<span class="group__slot">{slot}<Caret open={!toe} side /></span></button
 						>
 					</h3>
-					<span class="group__count">{countLabel(g)}</span>
+					<span class="group__count">{g.laden ? '…' : countLabel(g)}</span>
 					{#if network && drawable(g.rows).length > 0}
 						<span class="group__laag">
 							<RijActies
@@ -448,6 +449,11 @@
 					{/if}
 				</div>
 				{#if !toe}
+					{#if g.laden}
+						<p class="note stil group__laden">
+							{g.noun ? `${g.noun.charAt(0).toUpperCase()}${g.noun.slice(1)} laden…` : 'Laden…'}
+						</p>
+					{/if}
 					{#if melding?.groep === g.id}
 						<p class="group__melding" role="status">
 							{melding.tekst}

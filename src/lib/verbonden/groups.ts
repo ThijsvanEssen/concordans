@@ -59,6 +59,11 @@ export type GroupDef = {
 	load?: Loader;
 	/** A row opens beside the selected bron instead of replacing it. */
 	inPlace?: boolean;
+	/**
+	 * The buckets a loader reads, where the light node counts them: a group whose buckets are
+	 * empty keeps no place while its loader runs, one that may have rows does (`wachtend`).
+	 */
+	bakken?: { relation: string; direction: 'inbound' | 'outbound'; collection: string }[];
 	/** A name that follows the rows shown: the functions a lid signed in. */
 	labelOf?: (rows: Row[]) => string;
 };
@@ -73,6 +78,8 @@ export type Group = GroupDef & {
 	years?: { year: number; count: number }[];
 	/** The API caps a bucket without saying how many there are: shown as `30+`. */
 	capped: boolean;
+	/** Its loader is still under way: the group keeps its place with "laden…". */
+	laden?: boolean;
 };
 
 const national = (n: Neighbor) => !isInternational(n);
@@ -311,13 +318,18 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'judgments',
 			label: 'Uitspraken die dit artikel aanhalen',
 			noun: 'uitspraken',
-			load: 'article-judgments'
+			load: 'article-judgments',
+			bakken: [{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }]
 		},
 		{
 			id: 'cited-by',
 			label: 'Artikelen die naar dit artikel verwijzen',
 			noun: 'artikelen',
-			load: 'article-cited-by'
+			load: 'article-cited-by',
+			bakken: [
+				{ relation: 'REFERS_TO', direction: 'inbound', collection: 'articles' },
+				{ relation: 'BASED_ON', direction: 'inbound', collection: 'articles' }
+			]
 		},
 		{
 			id: 'explanatory',

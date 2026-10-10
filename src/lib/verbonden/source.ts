@@ -6,6 +6,7 @@ import type { GraphNode } from '$lib/graph/types';
 import { get, writable, type Readable } from 'svelte/store';
 import { getNodeFirst, getNodeVerbonden } from '$lib/api/records';
 import {
+	bucketKey,
 	bucketTotals,
 	getBuckets,
 	lidCountsByCollection,
@@ -56,6 +57,12 @@ export type VerbondenState = {
 	lidPerBak?: Map<string, Map<string, number>> | null;
 	/** Whether the groups hold every row, not the first five per bucket. */
 	volledig?: boolean;
+	/**
+	 * The groups whose loader is still under way and may have rows: each keeps its place in
+	 * the order of the group table with "laden…", so nothing is put in above what stands
+	 * (UX-toets 10 Oct: the judgments of 6:162 BW came after 10 s at the top).
+	 */
+	wachtend?: string[];
 };
 
 export type VerbondenSource = Readable<VerbondenState> & {
@@ -191,11 +198,20 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 				};
 				groups = bouw(basis);
 				const pending = new Set(groups.filter((g) => g.load).map((g) => g.id));
+				// A loader whose buckets the node counts empty will bring nothing: no place for it.
+				const kanRijen = (id: string) => {
+					const bakken = (GROUPS[collection] ?? []).find((d) => d.id === id)?.bakken;
+					if (!bakken) return true;
+					return bakken.some(
+						(b) => (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 1) > 0
+					);
+				};
 				const zet = () =>
 					state.set({
 						id: selection.id,
 						groups,
 						loading: pending.size > 0,
+						wachtend: [...pending].filter(kanRijen),
 						failed: false,
 						lidTellingen: perBak ? sumLidCounts(perBak) : null,
 						lidPerBak: perBak,

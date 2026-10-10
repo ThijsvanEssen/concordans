@@ -27,8 +27,15 @@ export const cutsRows = (f: VerbondenFilter) =>
 /** The kind a group counts for: that of its rows. */
 export const kindOfGroup = (g: Group): BronKind | null => g.rows[0]?.kind ?? null;
 
-/** The groups with the rows that pass the filter; a group without rows is left out. */
-export function filterGroups(groups: Group[], f: VerbondenFilter): Group[] {
+/**
+ * The groups with the rows that pass the filter; a group without rows is left out, unless
+ * its loader is still under way (`wachtend`, and no filter that cuts rows): it keeps its place.
+ */
+export function filterGroups(
+	groups: Group[],
+	f: VerbondenFilter,
+	wachtend: ReadonlySet<string> = new Set()
+): Group[] {
 	const cut = cutsRows(f);
 	// The year alone, where the API asked for that year (a wet's judgments, BE-51): its total
 	// is the year's, and holds.
@@ -44,10 +51,16 @@ export function filterGroups(groups: Group[], f: VerbondenFilter): Group[] {
 				label,
 				rows,
 				total: holds ? g.total : undefined,
-				capped: holds ? g.capped : false
+				capped: holds ? g.capped : false,
+				// A group still loading has no rows to tell its kind by: its noun names it.
+				laden:
+					rows.length === 0 &&
+					!cut &&
+					wachtend.has(g.id) &&
+					(!f.bronnen || f.bronnen.has(g.noun as BronKind))
 			};
 		})
-		.filter((g) => g.rows.length > 0);
+		.filter((g) => g.rows.length > 0 || g.laden);
 }
 
 export const allRows = (groups: Group[]): Row[] => groups.flatMap((g) => g.rows);
