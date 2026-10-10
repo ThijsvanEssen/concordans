@@ -78,14 +78,6 @@
 </div>
 
 <style>
-	.stub-eyebrow {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		margin-bottom: var(--s-4);
-	}
-
 	.stub-eyebrow a {
 		color: inherit;
 		text-decoration: none;
@@ -95,15 +87,6 @@
 	.stub-eyebrow a:hover {
 		color: var(--ink);
 		border-bottom: none;
-	}
-
-	.stub-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-		line-height: var(--lh-tight);
-		color: var(--ink);
-		margin: 0 0 var(--s-6);
 	}
 
 	.shortcut-table {

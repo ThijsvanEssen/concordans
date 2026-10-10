@@ -308,6 +308,70 @@
 	:global(.blad--tekst > *) {
 		max-width: 720px;
 	}
+	/* The parts of a text page (/over, /bronnen, /privacy, /voorwaarden, /docs and its pages):
+	   the line over the title, the title, the lede, a section with its heading, a citation,
+	   and the line of links or the date at its foot. */
+	:global(.blad--tekst .stub-eyebrow) {
+		margin-bottom: var(--s-4);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		font-weight: 600;
+		color: var(--ink-3);
+	}
+	:global(.blad--tekst .stub-title) {
+		margin: 0 0 var(--s-4);
+		font-family: var(--font-serif);
+		font-size: var(--t-h1);
+		font-weight: 600;
+		line-height: var(--lh-tight);
+		color: var(--ink);
+	}
+	:global(.blad--tekst .stub-lede) {
+		margin-bottom: var(--s-7);
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		line-height: var(--lh-body);
+		color: var(--ink-2);
+	}
+	:global(.blad--tekst .section) {
+		margin-bottom: var(--s-6);
+	}
+	:global(.blad--tekst .section-title) {
+		margin: 0 0 var(--s-3);
+		font-family: var(--font-serif);
+		font-size: var(--t-h3);
+		font-weight: 800;
+		color: var(--ink);
+	}
+	:global(.blad--tekst .cite) {
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+	}
+	:global(.blad--tekst .meta-row),
+	:global(.blad--tekst .updated) {
+		margin-top: var(--s-7);
+		padding-top: var(--s-5);
+		border-top: 1px solid var(--rule);
+	}
+	:global(.blad--tekst .meta-row) {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-5);
+	}
+	:global(.blad--tekst .meta-link) {
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+		text-decoration: none;
+	}
+	:global(.blad--tekst .meta-link:hover) {
+		color: var(--ink);
+	}
+	:global(.blad--tekst .updated) {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
 	/* The facet column of such a page, as Bladeren's: it stays in view, scrolls on its own
 	   with a quiet bar that keeps clear of the counts, and leaves room for a focus ring. */
 	:global(.blad__facetten) {

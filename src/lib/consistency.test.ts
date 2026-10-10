@@ -152,6 +152,19 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('styles the parts of a text page once, in AppShell (.blad--tekst)', () => {
+		const delen =
+			/^\.(stub-eyebrow|stub-title|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;
+		expect(
+			sources
+				.filter(({ path }) => path.startsWith('routes/(main)'))
+				.filter(({ text }) =>
+					rules(text).some((r) => r.selector.split(',').some((s) => delen.test(s.trim())))
+				)
+				.map((s) => s.path)
+		).toEqual([]);
+	});
+
 	it('sets the choose-line of a list page with Bepaalregel (docs/bediening.md)', () => {
 		const lijsten = [
 			'lib/components/explore/IndexView.svelte',

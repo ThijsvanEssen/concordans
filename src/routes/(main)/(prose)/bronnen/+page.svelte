@@ -258,43 +258,6 @@
 </div>
 
 <style>
-	.stub-eyebrow {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-weight: 600;
-		color: var(--ink-3);
-		margin-bottom: var(--s-4);
-	}
-
-	.stub-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-		line-height: var(--lh-tight);
-		color: var(--ink);
-		margin: 0 0 var(--s-4);
-	}
-
-	.stub-lede {
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: var(--lh-body);
-		color: var(--ink-2);
-		margin-bottom: var(--s-7);
-	}
-
-	.section {
-		margin-bottom: var(--s-6);
-	}
-
-	.section-title {
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 800;
-		color: var(--ink);
-		margin: 0 0 var(--s-3);
-	}
-
 	p {
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
@@ -319,11 +282,6 @@
 		margin-top: var(--s-1);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-
-	.cite {
-		text-decoration: underline;
-		text-decoration-color: var(--rule-strong);
 	}
 
 	.list {
@@ -352,26 +310,6 @@
 		width: 11em;
 		color: var(--ink-3);
 		font-variant-numeric: tabular-nums;
-	}
-
-	.meta-row {
-		display: flex;
-		gap: var(--s-5);
-		flex-wrap: wrap;
-		margin-top: var(--s-7);
-		padding-top: var(--s-5);
-		border-top: 1px solid var(--rule);
-	}
-
-	.meta-link {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-
-	.meta-link:hover {
-		color: var(--ink);
 	}
 
 	/* A phone: the name of the bron above its line, not in a narrow column beside it. */
