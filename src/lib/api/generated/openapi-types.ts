@@ -3649,15 +3649,15 @@ export interface components {
         DecisionListResponse: {
             /**
              * Total
-             * @description Matching decisions, independent of ``limit``.
+             * @description Matching decisions, independent of ``limit``; null while they are still being counted (``partial``).
              */
-            total: number;
+            total: number | null;
             /** Items */
             items: components["schemas"]["DecisionSummaryDTO"][];
             facets?: components["schemas"]["DecisionFacets"];
             /**
              * Partial
-             * @description ``party_votes`` was asked for but is still being counted (every vote on every decision: seconds, once per change of the data): ``[]`` now; ask again.
+             * @description Something is still being counted; ask again for it. ``total`` and ``facets``: a filter not counted since the decisions last changed (a request waits 3 s for them, then gets the page with ``total`` null and empty facets); ``party_votes``, when asked for (every vote on every decision): ``[]`` now. The page itself is always whole.
              * @default false
              */
             partial: boolean;

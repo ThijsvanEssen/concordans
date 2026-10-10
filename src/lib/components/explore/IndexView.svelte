@@ -23,6 +23,7 @@
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
 	import { getCabinet } from '$lib/api/records';
+	import { besluiten, telling } from '$lib/api/decisions';
 	import type { Schema } from '$lib/api/types';
 	import {
 		COURT_KINDS,
@@ -432,7 +433,9 @@
 	): Page<T> {
 		// A page can repeat an item of the page before when the order has ties.
 		const all = offset && previous ? uniqueBy([...previous.items, ...items], idOf) : items;
-		const more = total === undefined ? items.length === PAGE : all.length < total;
+		// Without a total (one still being counted), a full page says there is more; a list can
+		// ask more than PAGE at a time (stemmingen: 200).
+		const more = total === undefined ? items.length >= PAGE : all.length < total;
 		return { items: all, total: total ?? (more ? null : all.length), more };
 	}
 
@@ -642,11 +645,20 @@
 					limit: 200
 				};
 				return async (offset, signal) => {
-					const r = await unwrap(
-						api.GET('/api/decisions', { params: { query: { ...query, offset } }, signal })
-					);
-					pages.decisions = toPage(pages.decisions, r.items, offset, r.total);
-					if (!offset) decisionFacets = r.facets ?? null;
+					const r = await besluiten({ ...query, offset }, signal);
+					pages.decisions = toPage(pages.decisions, r.items, offset, r.total ?? undefined);
+					if (offset) return;
+					// The total and facets still being counted (API 0.79.41): the page stands, the
+					// counts come from the same question asked once more.
+					const t = await telling(r, { ...query, offset }, signal).catch(() => null);
+					const geteld = t ?? r;
+					decisionFacets = geteld.facets ?? null;
+					if (t && t.total !== null && pages.decisions)
+						pages.decisions = {
+							...pages.decisions,
+							total: t.total,
+							more: pages.decisions.items.length < t.total
+						};
 				};
 			}
 			case 'cabinets':
