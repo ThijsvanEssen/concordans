@@ -82,6 +82,9 @@ const norm = (x: string) => x.replace(/\s+/g, ' ').trim().toLowerCase();
  * its title is the one its zaak shares (the bill's, on every paper of it): that says nothing
  * of what it is. A letter with a title of its own keeps it. The title in full on hover.
  */
+/** "Voorstel van wet, Kamerstuk 34372, nr. 2" as "Voorstel van wet, nr. 2", after its dossier. */
+const zonderKamerstuk = (naam: string) => naam.replace(/,\s*Kamerstuk\s+[^,]+,\s*/, ', ');
+
 function stukLaag(r: Row, soort: string, gedeeld: Set<string>): Laag {
 	const naam = r.context && gedeeld.has(norm(r.title)) ? r.context : r.title;
 	return { soort, naam, ref: r.ref, vol: naam === r.title ? undefined : r.title };
@@ -360,27 +363,42 @@ export function behoort(
 		case 'documents': {
 			// A motie or amendement is ingediend bij its dossier, another stuk is in it; a
 			// stenogram records its debat and a bijlage goes with its brief once the data has
-			// them (#351: MADE_IN, ACCOMPANIES).
+			// them (#351: MADE_IN, ACCOMPANIES). A stuk at a bill stands in one chain with it,
+			// "Dossier: 34372 … › Voorstel van wet, nr. 2" (concept 21, Thijs 10 Oct); its own
+			// bijlagen are in the reader's status line, not in the band.
 			const ingediend = /motie|amendement/i.test(text(props.kind) ?? '');
+			const dossier = eerste('PART_OF', 'outbound', 'dossiers', 'Dossier');
+			const wetsvoorstel = bijWetsvoorstel()[0];
+			const label = ingediend ? 'Ingediend bij' : 'Dossier';
+			const metWetsvoorstel: Regel[] =
+				dossier.length && wetsvoorstel?.laad
+					? [
+							{
+								id: 'dossier',
+								label,
+								lagen: dossier,
+								laad: (signal) =>
+									wetsvoorstel.laad!(signal).then((ls) => [
+										...dossier,
+										// After its dossier the bill needs no dossier number of its own.
+										...ls.map((l) => ({ ...l, naam: zonderKamerstuk(l.naam) }))
+									])
+							}
+						]
+					: [...regel('dossier', label, dossier), ...(wetsvoorstel ? [wetsvoorstel] : [])];
 			return {
 				regels: [
-					...regel(
-						'dossier',
-						ingediend ? 'Ingediend bij' : 'Dossier',
-						eerste('PART_OF', 'outbound', 'dossiers', 'Dossier')
-					),
+					...metWetsvoorstel,
 					...regel(
 						'debat',
 						'Verslag van',
 						eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')
 					),
 					...regel('brief', 'Bijlage bij', eerste('ACCOMPANIES', 'outbound', 'documents', 'Brief')),
-					...bijWetsvoorstel(),
 					...biedtAan()
 				],
 				naast: [],
-				// The bijlagen of a brief are its kern: a brief is read with them.
-				onder: groep('bijlagen', 'Bijlagen', 'ACCOMPANIES', 'inbound', 'documents')
+				onder: []
 			};
 		}
 		case 'dossiers': {

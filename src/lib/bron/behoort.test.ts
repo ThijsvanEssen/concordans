@@ -28,6 +28,32 @@ const light = (
 	}) as never;
 
 describe('behoort', () => {
+	it('keeps a stuk’s bijlagen out of the band (they are in its status line)', () => {
+		const b = behoort(
+			'documents',
+			{ kind: 'Memorie van toelichting' },
+			light([
+				{
+					relation: 'PART_OF',
+					direction: 'outbound',
+					collection: 'dossiers',
+					total: 1,
+					items: [
+						{
+							key: '34372',
+							collection: 'dossiers',
+							display_name: 'Kamerstukdossier 34372: computercriminaliteit III',
+							props: { number: '34372' }
+						}
+					]
+				},
+				{ relation: 'ACCOMPANIES', direction: 'inbound', collection: 'documents', total: 15 }
+			])
+		);
+		expect(b.regels.map((r) => r.label)).toEqual(['Dossier']);
+		expect(b.onder).toEqual([]);
+	});
+
 	it('puts an article under its law and the law’s division, the law itself not twice', () => {
 		const b = behoort(
 			'articles',
