@@ -242,14 +242,19 @@
 		color: var(--ink-3);
 	}
 	/* The term at rung 6, the bronnen at rung 4 (docs/typografie.md). */
+	/* Each line: its term in ink-3 straight before what it names, no column of terms
+	   (Thijs, 10 Oct: "onnodig veel ruimte na 'Wet'"). */
 	.regels {
-		display: grid;
-		grid-template-columns: minmax(var(--reader-term, 0px), max-content) minmax(0, 1fr);
-		gap: var(--s-1) 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-1);
 		margin: 0;
 	}
 	.regel {
-		display: contents;
+		display: flex;
+		align-items: baseline;
+		gap: var(--s-2);
+		min-width: 0;
 	}
 	.regels > .regel > dt,
 	.regels > .regel > dd {
@@ -257,11 +262,12 @@
 		min-width: 0;
 	}
 	.term {
-		padding: 2px var(--s-1) 0 0;
+		padding: 0;
 		white-space: nowrap;
 		color: var(--ink-3);
 	}
 	.regels dd {
+		flex: 1;
 		display: flex;
 		align-items: baseline;
 		gap: var(--s-2);

@@ -85,6 +85,8 @@
 	const keyOf = (part: ArticlePart) => part.id ?? `tekst-${part.start}`;
 
 	let menuFor = $state<string | null>(null);
+	/** On a phone: the lid whose words a tap on its number shows. */
+	let getoond = $state<string | null>(null);
 	const copier = createCopier();
 	function copy(what: string, key: string) {
 		void copier.copy(what, key);
@@ -176,14 +178,21 @@
 			class="lid lid--{part.kind}"
 			id={part.id}
 			class:is-open={menuFor === keyOf(part)}
+			class:toont={getoond === keyOf(part)}
 			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
 		>
-			<span class="lid__no"
+			<!-- The number; on a phone, with no margin, a tap on it shows the lid's words. -->
+			<button
+				type="button"
+				class="lid__no"
+				aria-expanded={getoond === keyOf(part)}
+				title="Citeren, bewaren, verbindingen"
+				onclick={() => (getoond = getoond === keyOf(part) ? null : keyOf(part))}
 				>{part.kind === 'lid'
 					? `${part.number}.`
 					: part.number
 						? `${part.number}${mark}`
-						: ''}</span
+						: ''}</button
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
 				<div class="lid__text">
@@ -303,10 +312,13 @@
 	/* A lid: 36px for the number (in the frame's margin), the text to the column's right
 	   edge, its count and actions under it (Thijs, 9 Oct: "de artikelen oprekken" to the
 	   width of the reader). */
+	/* The text runs uninterrupted; a place's words stand in the right margin beside its
+	   first line (Thijs, 10 Oct: "netjes rustig aan de zijkant"). */
 	.lid {
+		--marge: 112px;
 		position: relative;
 		display: grid;
-		grid-template-columns: 36px minmax(0, 1fr);
+		grid-template-columns: 36px minmax(0, 1fr) var(--marge);
 		gap: 0 var(--s-3);
 		align-items: start;
 		padding: var(--s-1) var(--s-3) var(--s-1) 0;
@@ -324,6 +336,10 @@
 	}
 	/* The number as the law prints it (1.), in the letter and on the line of the text. */
 	.lid__no {
+		padding: 0;
+		border: 0;
+		background: none;
+		cursor: default;
 		font-family: var(--font-serif);
 		font-size: var(--t-body);
 		line-height: var(--lh-body);
@@ -377,11 +393,13 @@
 	.lid__side {
 		position: relative;
 		z-index: 2;
-		grid-column: 2;
+		grid-column: 3;
+		grid-row: 1;
 		display: flex;
-		align-items: baseline;
-		gap: var(--s-3);
-		padding-top: 2px;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 2px;
+		padding-top: 6px;
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
@@ -411,10 +429,13 @@
 	}
 	/* The words of a lid's line: quiet, underlined lightly, as the count beside them. */
 	/* Words with a comma after each, no space before it. */
-	.lid__side,
 	.lid__actions,
 	.part__actions {
 		gap: 0;
+	}
+	/* In the margin the count stands on its own line: no comma after it. */
+	.lid__sep {
+		display: none;
 	}
 	.sep {
 		margin-right: var(--s-1);
@@ -456,15 +477,15 @@
 	}
 	/* Over the end of the onderdeel's last line, so the text keeps the
 	   column's width and nothing moves when the actions appear. */
+	/* In the lid's margin, beside the onderdeel's first line. */
 	.part__actions {
 		position: absolute;
-		right: 0;
-		bottom: 0;
+		left: calc(100% + var(--s-3));
+		top: 4px;
 		z-index: 3;
-		padding-left: var(--s-2);
-		/* The onderdeel's own tint while it is pointed at, so the actions sit on it. */
-		background: inherit;
+		width: var(--marge, 112px);
 		display: flex;
+		flex-wrap: wrap;
 		opacity: 0;
 		justify-content: flex-end;
 		gap: var(--s-1);
@@ -519,12 +540,33 @@
 		.lid {
 			grid-template-columns: 28px minmax(0, 1fr);
 		}
+		/* No margin: the words under the lid, shown by a tap on its number. */
 		.lid__side {
 			grid-column: 2;
+			grid-row: auto;
+			display: none;
 			flex-direction: row;
 			flex-wrap: wrap;
 			gap: var(--s-1) 0;
 			padding-top: 2px;
+		}
+		.lid.toont > .lid__side,
+		.lid.is-open > .lid__side,
+		.lid__side:focus-within {
+			display: flex;
+		}
+		.lid.toont .lid__actions {
+			opacity: 1;
+		}
+		.lid__sep {
+			display: inline;
+		}
+		.lid__no {
+			cursor: pointer;
+		}
+		.lid__no:hover,
+		.lid.toont > .lid__no {
+			color: var(--ink);
 		}
 		.lid__body--pair {
 			grid-template-columns: 1fr;
@@ -537,6 +579,7 @@
 			position: static;
 			display: none;
 			width: 100%;
+			margin-top: 2px;
 		}
 		.part:hover:not(:has(.part--onderdeel:hover)) > .part__actions,
 		.part__actions:focus-within,
