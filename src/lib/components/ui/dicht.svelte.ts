@@ -30,9 +30,6 @@ const keuzes = $state<{ open: Record<string, boolean> }>({
 /** Whether the heading of this kind stands open: as chosen, else its default. */
 export const isOpen = (sleutel: string, standaard: boolean) => keuzes.open[sleutel] ?? standaard;
 
-/** Whether the section of this kind is closed; a section starts closed. */
-export const isDicht = (sleutel: string) => !isOpen(sleutel, false);
-
 /** Open or close the headings of this kind, and keep it. */
 export function zetOpen(sleutel: string, open: boolean) {
 	keuzes.open = { ...keuzes.open, [sleutel]: open };
@@ -42,6 +39,3 @@ export function zetOpen(sleutel: string, open: boolean) {
 		// A browser that keeps nothing: the heading stays as chosen for this page.
 	}
 }
-
-/** Close or open a section (`toe`: close it). */
-export const zetDicht = (sleutel: string, toe: boolean) => zetOpen(sleutel, !toe);

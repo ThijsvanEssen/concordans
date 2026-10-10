@@ -1,8 +1,7 @@
 <script lang="ts">
-	// A row opened under itself, the same in Verbonden and in the table: the passage that
-	// names the bron, then the ways on: Lees (the bron itself), Alleen de omgeving (the bron
-	// with what it touches, as a double click on the canvas), In netwerk (one of the chosen
-	// bronnen), and what the verbinding is.
+	// A row of the table opened under itself: the passage that names the bron, then the ways
+	// on: Lees (the bron itself), Alleen de omgeving (the bron with what it touches, as a
+	// double click on the canvas), and what the verbinding is.
 	import { passageOf, type Row } from './rows';
 	import Picto from '$lib/components/ui/Picto.svelte';
 
@@ -11,25 +10,14 @@
 		openHref,
 		openLabel,
 		networkHref,
-		onNaarNetwerk,
-		onShowInNetwork,
-		onVerbinding,
-		onAdd,
-		added = false
+		onVerbinding
 	}: {
 		row: Row;
 		openHref: string;
 		openLabel: string;
 		/** Where Alleen de omgeving goes: the bron with what it touches. */
 		networkHref: string;
-		/** Alleen de omgeving was followed: on a phone, the Netwerk tab shows it. */
-		onNaarNetwerk?: () => void;
-		onShowInNetwork?: (row: Row) => void;
 		onVerbinding: (row: Row) => void;
-		/** Put the bron among the chosen bronnen of the netwerk. */
-		onAdd?: () => void;
-		/** It is there already. */
-		added?: boolean;
 	} = $props();
 
 	const p = $derived(passageOf(row));
@@ -46,18 +34,9 @@
 		<a href={openHref} data-sveltekit-noscroll class="btn is-primary"
 			><Picto naam="tekst" size={13} />{openLabel}</a
 		>
-		<a href={networkHref} data-sveltekit-noscroll class="btn" onclick={() => onNaarNetwerk?.()}
+		<a href={networkHref} data-sveltekit-noscroll class="btn"
 			><Picto naam="omgeving" size={13} />Alleen de omgeving</a
 		>
-		{#if onAdd}
-			<button type="button" class="btn" disabled={added} onclick={onAdd}
-				><Picto naam="plus" size={13} />{added ? 'Staat in netwerk' : 'In netwerk'}</button
-			>
-		{:else if onShowInNetwork}
-			<button type="button" class="btn" onclick={() => onShowInNetwork(row)}
-				><Picto naam="plus" size={13} />In netwerk</button
-			>
-		{/if}
 		{#if row.relation}
 			<button type="button" class="link" onclick={() => onVerbinding(row)}
 				>Over deze verbinding</button

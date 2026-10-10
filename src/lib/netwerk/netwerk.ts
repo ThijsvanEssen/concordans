@@ -41,8 +41,6 @@ export type NetwerkEntry = {
 export const deelVan = (e: { used: number; total: number } | undefined) =>
 	e && e.used < e.total ? e : undefined;
 
-export const EMPTY_NETWERK: Netwerk = { ids: [], uit: new Set(), tussen: true };
-
 const list = (value: string | null) =>
 	(value ?? '')
 		.split(',')

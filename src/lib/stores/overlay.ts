@@ -26,16 +26,3 @@ export function parseOverlay(param: string | null): Overlay {
 	}
 	return { kind: 'none' };
 }
-
-export function serializeOverlay(o: Overlay): string | null {
-	switch (o.kind) {
-		case 'none':
-			return null;
-		case 'heat':
-			return `heat:${o.months}`;
-		case 'open':
-			return 'open';
-		case 'dossier':
-			return `dossier:${o.id}`;
-	}
-}

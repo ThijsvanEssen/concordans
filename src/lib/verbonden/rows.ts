@@ -4,7 +4,7 @@
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { korteDatum, langeDatum } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
-import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
+import { anchorLabel, parseQualifier } from '$lib/text/qualifier';
 import { articleTitle } from '$lib/text/bw';
 import { authorCite, paragraphCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
@@ -268,10 +268,6 @@ export function lidOfMatch(match: string | null | undefined): string | null {
 	const q = parseQualifier(match);
 	return q?.lid ?? null;
 }
-
-/** The anchor a lid and onderdeel name: `lid-2`, `lid-2-onder-a`. */
-export const anchorOfMatch = (match: string | null | undefined) =>
-	match ? anchorOf(parseQualifier(match)) : null;
 
 /** The aard of a reference as a word: the API's `semantic_type` codes in Dutch. */
 const AARD: Record<string, string> = {

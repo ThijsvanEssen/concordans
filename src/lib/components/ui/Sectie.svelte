@@ -21,7 +21,6 @@
 		inklapbaar = true,
 		sleutel,
 		standaardOpen = false,
-		open = $bindable(true),
 		children
 	}: {
 		titel: string;
@@ -40,17 +39,12 @@
 		/** Open until closed: a page of groups (Gevolgd), not a reader's section, which starts
 		 *  closed. */
 		standaardOpen?: boolean;
-		/** Open or closed, for a parent that loads only for an open section. */
-		open?: boolean;
 		children: Snippet;
 	} = $props();
 
 	const soortSleutel = $derived(sleutel ?? titel);
 	/** Drawn from the first paint as it was left: a closed section never draws its content. */
 	const isOpen = $derived(!inklapbaar || staatOpen(soortSleutel, standaardOpen));
-	$effect(() => {
-		open = isOpen;
-	});
 	const uid = $props.id();
 </script>
 

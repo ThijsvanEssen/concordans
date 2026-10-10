@@ -101,34 +101,3 @@ export function stand(d: Dossier): Stand | null {
 	}
 	return { bodies, zin, group };
 }
-
-export const GROUP_LABEL: Record<StandGroup, string> = {
-	ek: 'Bij de Eerste Kamer',
-	tk: 'Bij de Tweede Kamer',
-	ingediend: 'Ingediend, nog geen verslag',
-	afgehandeld: 'Afgehandeld',
-	geen: 'Zonder wetgevingsfase'
-};
-export const GROUP_ORDER: StandGroup[] = ['ek', 'tk', 'ingediend', 'afgehandeld', 'geen'];
-
-/** What a dossier is, in words, for the grey line of a row. */
-export function soortZin(d: Dossier, who: string): string {
-	const kind = d.kind;
-	const van = who ? ` ${d.initiative ? 'van Kamerleden' : `van ${who}`}` : '';
-	switch (kind) {
-		case 'Wetgeving':
-			return `Wetsvoorstel${van}`;
-		case 'Initiatiefwetgeving':
-			return 'Initiatiefwetsvoorstel';
-		case 'Begroting':
-			return `Begroting${van}`;
-		case 'Verdrag':
-			return `Verdrag${van}`;
-		case 'Initiatiefnota':
-			return 'Initiatiefnota';
-		case 'PKB/Structuurvisie':
-			return 'Structuurvisie';
-		default:
-			return `Dossier${van}`;
-	}
-}

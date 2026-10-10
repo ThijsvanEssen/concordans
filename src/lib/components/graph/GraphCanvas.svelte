@@ -63,7 +63,6 @@
 		onEdgeClick,
 		onStageClick,
 		onReady,
-		onZoomChange,
 		onCameraChange,
 		externalHoveredId = null as string | null,
 		avoid = null as Rect | null
@@ -105,7 +104,6 @@
 		onEdgeClick?: (id: string) => void;
 		onStageClick?: () => void;
 		onReady?: (api: GraphCanvasApi) => void;
-		onZoomChange?: (ratio: number) => void;
 		onCameraChange?: (state: { x: number; y: number; ratio: number }) => void;
 		/** Keeps the dim/highlight pass alive while the hover panel is open. */
 		externalHoveredId?: string | null;
@@ -1377,7 +1375,6 @@
 		let cameraChangeTimer: ReturnType<typeof setTimeout> | null = null;
 		renderer.getCamera().on('updated', () => {
 			const state = renderer!.getCamera().getState();
-			onZoomChange?.(state.ratio);
 			if (onCameraChange) {
 				if (cameraChangeTimer) clearTimeout(cameraChangeTimer);
 				cameraChangeTimer = setTimeout(() => {

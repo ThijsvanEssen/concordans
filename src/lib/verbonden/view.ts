@@ -3,7 +3,6 @@
 import { relationLabel, type Collection } from '$lib/vocabulary';
 import { sumLidCounts } from '$lib/api/nodes';
 import {
-	BRON_KINDS,
 	formatCount,
 	hiddenByKind,
 	rowPasses,
@@ -250,5 +249,3 @@ export function yearHistogram(rows: Row[], years = 12): { year: number; count: n
 		return { year, count: counts.get(year) ?? 0 };
 	});
 }
-
-export const KINDS_IN_ORDER = BRON_KINDS;

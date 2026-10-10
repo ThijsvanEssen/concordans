@@ -122,7 +122,3 @@ export function termOfKind(kind: string | null | undefined): string | null {
 export function lookupGlossary(term: string): GlossaryEntry | null {
 	return ENTRIES[term] ?? ENTRIES[term.trim()] ?? null;
 }
-
-export function hasGlossary(term: string): boolean {
-	return lookupGlossary(term) !== null;
-}

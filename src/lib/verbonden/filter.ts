@@ -163,18 +163,6 @@ export function filterParams(f: VerbondenFilter): Record<string, string | null> 
 	};
 }
 
-export const isFiltering = (f: VerbondenFilter) =>
-	f.bronnen !== null ||
-	f.lid !== null ||
-	f.rechter !== null ||
-	f.van !== null ||
-	f.tot !== null ||
-	f.geldendOp !== null ||
-	f.betrouwbaarheid !== null ||
-	f.status !== null ||
-	f.jaar !== null ||
-	f.zoek !== '';
-
 // ── Presets ───────────────────────────────────────────────────────────────
 
 export type Preset = {

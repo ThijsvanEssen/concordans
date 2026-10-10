@@ -8,7 +8,6 @@ import { vandaag } from '$lib/text/datum';
 export type Cabinet = Schema<'CabinetSummaryDTO'>;
 export type Ministry = Schema<'MinistryDTO'>;
 export type Post = NonNullable<Schema<'CabinetPostDTO'>['post']>;
-export type CommitmentStatus = NonNullable<Schema<'CommitmentDTO'>['status']>;
 
 export const POST_LABEL: Record<Post, string> = {
 	'minister-president': 'Minister-president',

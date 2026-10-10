@@ -12,7 +12,6 @@
 
 	let {
 		data,
-		hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' }),
 		voteHighlight = null,
 		woorden = ['voor', 'tegen'],
 		telling = true,
@@ -24,8 +23,6 @@
 		/** Voorzitter, griffier, kabinet (vak-K), verslag en spreekgestoelte tekenen. */
 		meubels?: boolean;
 		data: Seats;
-		/** Where a fractie's sector links: its reader, unless the page says otherwise. */
-		hrefOf?: (key: string) => string;
 		/** Faction key → side on one stemming. Set to light up the seats by vote instead
 		 * of by party; a faction with no entry did not take part. */
 		voteHighlight?: Record<string, 'voor' | 'tegen' | 'other'> | null;
@@ -34,6 +31,9 @@
 		/** The count of the two sides in the middle; off where a bar under the hall says it. */
 		telling?: boolean;
 	} = $props();
+
+	/** Where a fractie's sector links: its reader. */
+	const hrefOf = (key: string) => bronHref(`factions/${key}`, { keepMode: false, mode: 'read' });
 
 	// The factions as they sit in the plenary hall, from the chair's left: the order of the
 	// Kamer's own plan (`seating_plan`), which the API gives per faction.
