@@ -7,6 +7,8 @@ import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
 import { langeDatum } from '$lib/text/datum';
 
+const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+
 export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	const p = n.raw?.props ?? undefined;
 	if (n.kind === 'instrument') {
@@ -27,7 +29,11 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
 	}
 	const bwb = lawIdOf(p);
 	const shortTitle = bwb ? meta.get(bwb)?.shortTitle : null;
-	return shortTitle ? `${n.label} ${shortTitle}` : n.label;
+	if (shortTitle) return `${n.label} ${shortTitle}`;
+	// Until its law's short title is in, the abbreviation or citation title the article itself
+	// carries: never "Art. 419" without its law (UX test 10 Oct, #23).
+	const wet = text(p?.['instrument_abbreviation']) ?? text(p?.['instrument_citation_title']);
+	return wet && !n.label.includes(wet) ? `${n.label} ${wet}` : n.label;
 }
 
 /**
@@ -37,7 +43,6 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): strin
  */
 export function stemmingNaam(n: Pick<GraphNode, 'id' | 'label' | 'raw'>): string {
 	const p = n.raw?.props ?? {};
-	const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 	const kamer = isEkDecision(n.id) || p['chamber'] === 'EK' ? 'Eerste Kamer' : 'Tweede Kamer';
 	const uitslag = decisionOutcome({
 		kind: text(p['kind']),

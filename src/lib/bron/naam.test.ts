@@ -30,6 +30,21 @@ describe('bronNaam', () => {
 		expect(bronNaam(art, meta)).toBe('Art. 1');
 	});
 
+	it('names an article by the law it carries until the short title is in', () => {
+		const art = node({
+			collection: 'articles',
+			kind: 'article',
+			label: 'Art. 419',
+			raw: {
+				props: {
+					bwb_id: 'BWBR0001827',
+					instrument_citation_title: 'Wetboek van Burgerlijke Rechtsvordering'
+				}
+			} as unknown as GraphNode['raw']
+		});
+		expect(bronNaam(art, meta)).toBe('Art. 419 Wetboek van Burgerlijke Rechtsvordering');
+	});
+
 	it('names a law by its short title', () => {
 		const law = node({
 			collection: 'instruments',
