@@ -1,5 +1,6 @@
 <script lang="ts">
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	// Gevolgde onderwerpen: per topic what came into Actueel since the visit before. The topics
@@ -306,22 +307,23 @@
 
 		{#each lijst as o, n (sleutel(o))}
 			{@const s = standen[vak(o)]}
-			<section class="onderwerp" aria-labelledby="onderwerp-{n}">
-				<div class="onderwerp__kop">
-					<h2 id="onderwerp-{n}">{o.termen.join('; ')}</h2>
-					<p class="sinds">
-						{telRegel(o, s)}
-					</p>
-					{#if !gedeeld.length}
-						<TekstLink
-							aria-expanded={bewerkt === sleutel(o)}
-							onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}
-							>Woorden</TekstLink
-						>
-						<TekstLink onclick={() => verwijder(o)}>Niet meer volgen</TekstLink>
-					{/if}
-					<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>
-				</div>
+			<!-- A topic as a group of the page (Sectie): the ink rule, its words as the heading with
+			     its actions at the right on the same line, what is new under it. -->
+			<Sectie titel={o.termen.join('; ')} id="onderwerp-{n}" niveau={2} inklapbaar={false}>
+				{#snippet naast()}
+					<span class="acties">
+						{#if !gedeeld.length}
+							<TekstLink
+								aria-expanded={bewerkt === sleutel(o)}
+								onclick={() => (bewerkt = bewerkt === sleutel(o) ? null : sleutel(o))}
+								>Woorden</TekstLink
+							>
+							<TekstLink onclick={() => verwijder(o)}>Niet meer volgen</TekstLink>
+						{/if}
+						<a class="naar-overzicht" href={overzichtHref(o)}>Overzicht</a>
+					</span>
+				{/snippet}
+				<p class="sinds">{telRegel(o, s)}</p>
 				{#if bewerkt === sleutel(o) && !gedeeld.length}
 					<div class="woorden">
 						<ul>
@@ -393,7 +395,7 @@
 					<!-- The topic as a feed of its own, all its words in one (API 0.79.30). -->
 					<a href={atomHref(o.termen)} rel="alternate" type="application/atom+xml">Atom-feed</a>
 				</p>
-			</section>
+			</Sectie>
 		{/each}
 	</div>
 </div>
@@ -415,6 +417,11 @@
 	.regel {
 		grid-column: 1 / -1;
 		margin-bottom: var(--s-5);
+	}
+	/* The column's first heading on the line of the first topic's heading, under its rule
+	   (Sectie: 2 px and --s-3), as Bladeren's facets stand beside its list. */
+	.opzij {
+		padding-top: calc(var(--s-3) + 2px);
 	}
 	.opzij__kop {
 		margin: 0 0 var(--s-2);
@@ -516,17 +523,15 @@
 		text-decoration: underline;
 		text-underline-offset: 2px;
 	}
-	.onderwerp {
+	/* The topics as groups of the page; the first on the top line of the facet column. */
+	.inhoud > :global(.sectie + .sectie) {
 		margin-top: var(--s-7);
-		padding-top: var(--s-4);
-		border-top: 1px solid var(--rule);
 	}
-	.onderwerp__kop {
-		display: flex;
+	.acties {
+		display: inline-flex;
 		flex-wrap: wrap;
-		align-items: baseline;
-		gap: var(--s-2) var(--s-4);
-		margin-bottom: var(--s-3);
+		gap: var(--s-1) var(--s-4);
+		font-size: var(--t-meta);
 	}
 	.naar-overzicht {
 		color: var(--ink-2);
@@ -569,17 +574,7 @@
 	.nieuw--klein {
 		max-width: 420px;
 	}
-	.onderwerp__kop h2 {
-		/* The words above, what is new and the actions on a line below. */
-		flex-basis: 100%;
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h3);
-		font-weight: 600;
-		overflow-wrap: anywhere;
-	}
 	.sinds {
-		flex: 1;
 		margin: 0;
 		color: var(--ink-3);
 		font-family: var(--font-serif);
@@ -602,10 +597,6 @@
 	}
 
 	@media (max-width: 640px) {
-		/* The count on a line of its own, the actions below it. */
-		.sinds {
-			flex-basis: 100%;
-		}
 		.onderwerpen {
 			padding: var(--s-4) var(--s-4) var(--s-7);
 		}
