@@ -523,7 +523,7 @@
 			grid-column: 2;
 			flex-direction: row;
 			flex-wrap: wrap;
-			gap: var(--s-1) var(--s-3);
+			gap: var(--s-1) 0;
 			padding-top: 2px;
 		}
 		.lid__body--pair {
