@@ -389,8 +389,8 @@
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
-		gap: 18px;
-		padding: 20px 18px;
+		gap: var(--s-4);
+		padding: var(--s-5) var(--s-4);
 		border-right: 1px solid var(--rule);
 		background: var(--paper);
 		font-family: var(--font-serif);
@@ -402,7 +402,7 @@
 	.block__head {
 		display: flex;
 		align-items: baseline;
-		gap: 6px;
+		gap: var(--s-2);
 		margin-bottom: var(--s-1);
 	}
 	.block__title {
@@ -419,7 +419,7 @@
 	.block__label {
 		display: flex;
 		justify-content: space-between;
-		margin-bottom: 6px;
+		margin-bottom: var(--s-2);
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);

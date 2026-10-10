@@ -1296,7 +1296,7 @@
 	.rij {
 		display: grid;
 		grid-template-columns: 140px minmax(0, 1fr);
-		gap: 20px;
+		gap: var(--s-5);
 		padding: var(--s-3) var(--s-2);
 		border-bottom: 1px solid var(--rule);
 	}

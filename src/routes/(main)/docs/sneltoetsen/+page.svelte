@@ -99,7 +99,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: var(--s-3) 20px;
+		padding: var(--s-3) var(--s-5);
 		background: var(--paper);
 	}
 
@@ -129,6 +129,6 @@
 		background: var(--paper-2);
 		border: 1px solid var(--rule);
 		border-radius: var(--r-1);
-		padding: 2px 7px;
+		padding: 2px var(--s-2);
 	}
 </style>

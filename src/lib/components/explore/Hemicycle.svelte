@@ -315,7 +315,7 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		gap: 6px;
+		gap: var(--s-2);
 	}
 	.hemicycle svg {
 		display: block;

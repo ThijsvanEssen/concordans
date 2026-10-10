@@ -724,7 +724,7 @@
 		display: flex;
 		flex-direction: column;
 		min-width: 0;
-		padding: 0 var(--s-2) 6px 6px;
+		padding: 0 var(--s-2) var(--s-2) var(--s-2);
 		border: 0;
 		border-left: 1px solid var(--rule-strong);
 		background: none;
@@ -940,11 +940,11 @@
 		display: grid;
 		grid-template-columns: 36px 1fr 150px;
 		gap: 0 var(--s-3);
-		padding: 6px 10px 6px 0;
+		padding: var(--s-2) var(--s-3) var(--s-2) 0;
 	}
 	.compare--naast .row {
 		grid-template-columns: 36px 1fr 1fr;
-		gap: 0 20px;
+		gap: 0 var(--s-5);
 	}
 	.row--head {
 		padding: 0 0 var(--s-1);

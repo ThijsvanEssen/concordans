@@ -276,7 +276,7 @@
 		display: inline-block;
 		width: 10px;
 		height: 10px;
-		margin-right: 5px;
+		margin-right: var(--s-1);
 		vertical-align: -1px;
 	}
 	.vorm--ja {
@@ -441,7 +441,7 @@
 	}
 	.nieuwteken {
 		display: inline-block;
-		margin-right: 6px;
+		margin-right: var(--s-2);
 		border-style: solid;
 		border-width: 0 9px 9px 0;
 		border-color: transparent var(--ink) transparent transparent;

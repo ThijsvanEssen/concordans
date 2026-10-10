@@ -192,7 +192,7 @@
 	.head {
 		display: flex;
 		align-items: center;
-		gap: 7px;
+		gap: var(--s-2);
 	}
 
 	.title--stub {

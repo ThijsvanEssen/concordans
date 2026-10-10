@@ -3546,7 +3546,7 @@
 		color: var(--ink-2);
 	}
 	.empty {
-		padding: 80px 40px;
+		padding: var(--s-8) var(--s-7);
 		text-align: center;
 		font-family: var(--font-serif);
 		font-style: italic;

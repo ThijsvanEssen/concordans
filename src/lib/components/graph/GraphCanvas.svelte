@@ -1569,7 +1569,7 @@
 	.hull-link-label {
 		position: absolute;
 		transform: translate(-50%, -50%);
-		padding: 1px 6px;
+		padding: 1px var(--s-2);
 		border-radius: var(--r-rond);
 		background: var(--paper);
 		font-family: var(--font-serif);
