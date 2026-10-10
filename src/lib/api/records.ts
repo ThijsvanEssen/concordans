@@ -233,6 +233,20 @@ export const getExplanations = (bwb: string, number: string) =>
 			.then(({ data }) => data ?? null)
 	);
 
+/**
+ * The first hundred papers of a dossier, once: where an article's memorie is found when no
+ * EXPLAINS edge names it (the dossier of the wet that gave its text). Its status kept, so a
+ * dossier the data lacks (404) is said as such.
+ */
+export const getDossierPapers = (number: string) =>
+	once(`dossiers/${number}/documents?limit=100`, () =>
+		api
+			.GET('/api/dossiers/{number}/documents', {
+				params: { path: { number }, query: { limit: 100 } }
+			})
+			.then(({ data, response }) => ({ status: response.status, data: data ?? null }))
+	);
+
 export const getExplainedBy = (bwb: string, number: string) =>
 	once(`articles/${bwb}/${number}/explained-by`, () =>
 		api
