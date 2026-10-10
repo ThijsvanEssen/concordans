@@ -104,6 +104,20 @@
 	} = $props();
 
 	const PREVIEW = 3;
+	/**
+	 * The height a waiting row keeps, as its rows measure (UX-toets e7a2f95, #1 and #36): a
+	 * judgment citing an article or a law holds its passage (142 px), one beside a judgment
+	 * none (95), an article cited by a judgment a title and a line (77); the rest a title over
+	 * two lines and its meta (112).
+	 */
+	const wachtSoort = (noun?: string) =>
+		noun === 'uitspraken'
+			? selection.collection === 'articles' || selection.collection === 'instruments'
+				? 'passage'
+				: 'uitspraak'
+			: noun === 'artikelen' && selection.collection === 'judgments'
+				? 'artikel'
+				: 'stuk';
 
 	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
@@ -440,11 +454,7 @@
 								<!-- The line of the judgments' order and years, as it will stand. -->
 								<div class="group__regel regel--wacht" aria-hidden="true"></div>
 							{/if}
-							<ul
-								class="rows rows--wacht"
-								class:rows--wacht-uitspraken={p.noun === 'uitspraken'}
-								aria-hidden="true"
-							>
+							<ul class="rows rows--wacht" data-wacht={wachtSoort(p.noun)} aria-hidden="true">
 								{#each { length: Math.min(p.count, PREVIEW) } as _, k (k)}
 									<li class="row row--wacht"><span class="wacht-regel"></span></li>
 								{/each}
@@ -508,11 +518,7 @@
 					{#if g.laden && verbonden.verwacht?.[g.id]}
 						<!-- Its place as it will be: blank rows as many as it will show, so the rows
 						     that come do not push down what stands below (#1). -->
-						<ul
-							class="rows rows--wacht"
-							class:rows--wacht-uitspraken={g.noun === 'uitspraken'}
-							aria-hidden="true"
-						>
+						<ul class="rows rows--wacht" data-wacht={wachtSoort(g.noun)} aria-hidden="true">
 							{#each { length: Math.min(verbonden.verwacht[g.id], PREVIEW) } as _, k (k)}
 								<li class="row row--wacht"><span class="wacht-regel"></span></li>
 							{/each}
@@ -932,8 +938,14 @@
 		height: 112px;
 		padding: var(--s-2) var(--s-4);
 	}
-	.rows--wacht-uitspraken .row--wacht {
+	.rows--wacht[data-wacht='passage'] .row--wacht {
 		height: 142px;
+	}
+	.rows--wacht[data-wacht='uitspraak'] .row--wacht {
+		height: 95px;
+	}
+	.rows--wacht[data-wacht='artikel'] .row--wacht {
+		height: 77px;
 	}
 	.wacht-regel {
 		display: block;

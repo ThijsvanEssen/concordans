@@ -392,7 +392,10 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'articles',
 			label: 'Artikelen die hier worden aangehaald',
 			noun: 'artikelen',
-			load: 'judgment-articles'
+			load: 'judgment-articles',
+			// The bucket its loader reads: counted by the light node, so it keeps its place from
+			// the first paint and an empty one never shows (UX-toets e7a2f95, #36).
+			bakken: [{ relation: 'REFERS_TO', direction: 'outbound', collection: 'articles' }]
 		},
 		{
 			id: 'conclusion',
