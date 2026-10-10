@@ -32,6 +32,14 @@ export function bookNumber(bwbId: string | null | undefined, number: string | nu
 	return book && !number.includes(':') ? `${book}:${number}` : number;
 }
 
+/** The number the API gives an article: `162` for `6:162` in Boek 6, else as it is. */
+export function apiNumber(bwbId: string, number: string): string {
+	const book = BOOK_OF[bwbId.toUpperCase()];
+	return book && number.toUpperCase().startsWith(`${book}:`)
+		? number.slice(book.length + 1)
+		: number;
+}
+
 /**
  * An article by its number, a BW one with its book: "Artikel 6:162". A number that is a
  * place ("bijlage 2 artikel 4") goes by the label of the API: "Artikel 4 van bijlage 2".
