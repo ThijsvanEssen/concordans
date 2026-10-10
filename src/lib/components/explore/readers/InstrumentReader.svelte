@@ -8,6 +8,9 @@
 	import WholeLawReader from '../WholeLawReader.svelte';
 	import { formatLongDate, textProp } from './_shared';
 	import { publicationName } from '../law-head';
+	import { citeItems } from '$lib/components/ui/cite';
+	import { permalink } from '$lib/bron/anchor';
+	import { page } from '$app/state';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -18,28 +21,27 @@
 
 <ReaderFrame>
 	{#if publication}
+		{@const titel = textProp(p.display_name) ?? node.label}
 		<ReaderHead
 			collection="instruments"
-			title={textProp(p.display_name) ?? node.label}
+			title={titel}
 			place={[publicationName(publication)]}
+			acties={{
+				bewaar: { id: node.id, at: '', kort: titel, voluit: titel, groep: titel },
+				cite: citeItems({ kort: titel, voluit: titel }, permalink(page.url, '')),
+				naam: titel
+			}}
 		>
-			<p class="publication">
-				{#if textProp(p.date_signed)}Ondertekend {formatLongDate(textProp(p.date_signed))}.{/if}
-				{#if textProp(p.date_published)}Gepubliceerd {formatLongDate(
-						textProp(p.date_published)
-					)}.{/if}
-			</p>
+			{#snippet status()}
+				{#if textProp(p.date_signed)}<span
+						>Ondertekend {formatLongDate(textProp(p.date_signed))}.</span
+					>{/if}
+				{#if textProp(p.date_published)}<span
+						>Gepubliceerd {formatLongDate(textProp(p.date_published))}.</span
+					>{/if}
+			{/snippet}
 		</ReaderHead>
 	{:else}
 		<WholeLawReader {bwbId} />
 	{/if}
 </ReaderFrame>
-
-<style>
-	.publication {
-		margin: 0 0 var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-2);
-	}
-</style>

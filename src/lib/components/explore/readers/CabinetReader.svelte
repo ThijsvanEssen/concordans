@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SoortLink from '$lib/bron/SoortLink.svelte';
+	import ReaderHead from './ReaderHead.svelte';
 	import { getCabinet } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
@@ -70,12 +70,19 @@
 			{@const c = view.cabinet}
 			{@const from = when(c.from_date)}
 			{@const to = when(c.to_date)}
-			<header class="head">
-				<span class="lezer-soort"
-					><SoortLink collection="cabinets">{bronLabel('cabinets')}</SoortLink></span
-				>
-				<h2 class="lezer-titel">{c.name}</h2>
-			</header>
+			<ReaderHead
+				collection="cabinets"
+				title={c.name}
+				acties={{
+					bewaar: {
+						id: node.id,
+						at: '',
+						kort: c.name,
+						voluit: c.name,
+						groep: bronLabel('cabinets')
+					}
+				}}
+			/>
 
 			<Feiten>
 				<Veld label="Periode" value={from} nodig>
@@ -127,7 +134,9 @@
 	.r-cabinet {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-5);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-5);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
 	.loading,
@@ -136,16 +145,6 @@
 		font-style: italic;
 		color: var(--ink-3);
 		margin: 0;
-	}
-	.head {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.lezer-soort {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
 	}
 	.nums {
 		font-variant-numeric: tabular-nums;

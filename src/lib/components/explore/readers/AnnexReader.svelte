@@ -1,4 +1,8 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import { permalink } from '$lib/bron/anchor';
+	import { citeItems } from '$lib/components/ui/cite';
+	import ReaderHead from './ReaderHead.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a bijlage: its title, the law it belongs to, its text, its entries in order
 	// and the articles that refer to it.
@@ -69,21 +73,39 @@
 			{@const a = view.detail.annex}
 			{@const entries = a.entries ?? []}
 			{@const refs = view.detail.referenced_by ?? []}
-			<header class="head">
-				<span class="lezer-soort"
-					><KindGlyph collection="annexes" />{bronLabel('annexes')}{a.label
-						? ` ${a.label}`
-						: ''}</span
-				>
-				<h1 class="lezer-titel">{a.title ?? a.display_name ?? a.key}</h1>
-				{#if a.bwb_id}
-					<p class="law">
-						<BronLink ref={{ collection: 'instruments', key: a.bwb_id.toLowerCase() }}
-							>{lawName(a.bwb_id)}</BronLink
-						>
-					</p>
-				{/if}
-			</header>
+			{@const titel = a.title ?? a.display_name ?? a.key}
+			{@const kort =
+				[a.label ? `${bronLabel('annexes')} ${a.label}` : null, a.bwb_id ? lawName(a.bwb_id) : null]
+					.filter(Boolean)
+					.join(', ') || titel}
+			<ReaderHead
+				collection="annexes"
+				title={titel}
+				acties={{
+					bewaar: {
+						id: node.id,
+						at: '',
+						kort,
+						voluit: `${kort}: ${titel}`,
+						groep: a.bwb_id ? lawName(a.bwb_id) : kort
+					},
+					cite: citeItems({ kort, voluit: `${kort}: ${titel}` }, permalink(page.url, '')),
+					naam: kort
+				}}
+			>
+				{#snippet soort()}
+					<KindGlyph collection="annexes" />{bronLabel('annexes')}{a.label ? ` ${a.label}` : ''}
+				{/snippet}
+				{#snippet onderTitel()}
+					{#if a.bwb_id}
+						<p class="law">
+							<BronLink ref={{ collection: 'instruments', key: a.bwb_id.toLowerCase() }}
+								>{lawName(a.bwb_id)}</BronLink
+							>
+						</p>
+					{/if}
+				{/snippet}
+			</ReaderHead>
 
 			{#if a.stub}
 				<p class="empty">Van deze bijlage staat alleen de naam in de gegevens.</p>
@@ -144,7 +166,9 @@
 	.r-annex {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-5);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-5);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
 	.loading,
@@ -154,20 +178,6 @@
 		font-family: var(--font-serif);
 		font-style: italic;
 		color: var(--ink-3);
-	}
-	.head {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.lezer-soort {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-	}
-	.lezer-titel {
-		font-size: var(--t-h1);
-		line-height: 1.25;
 	}
 	.law {
 		margin: 0;

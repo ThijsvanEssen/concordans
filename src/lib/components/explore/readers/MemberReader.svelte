@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { bronLabel } from '$lib/vocabulary';
+	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
 	import { vandaag } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
@@ -23,7 +25,6 @@
 	} from '$lib/components/parliamentary/career';
 	import { parseFilter } from '$lib/verbonden/filter';
 	import { page } from '$app/state';
-	import { initials } from '$lib/util/initials';
 	import { formatDate, formatLongDate } from './_shared';
 	import BewindspersoonOverzicht from '$lib/components/parliamentary/BewindspersoonOverzicht.svelte';
 	import BewindspersoonKop from './BewindspersoonKop.svelte';
@@ -156,34 +157,39 @@
 			{#if (m.government_functions ?? []).length > 0}
 				<BewindspersoonKop {m} />
 			{:else}
-				<header class="head">
-					<span class="lezer-soort"
-						><SoortLink
+				{@const titel = m.name ?? m.key}
+				<ReaderHead
+					collection="members"
+					title={titel}
+					acties={{
+						bewaar: {
+							id: node.id,
+							at: '',
+							kort: titel,
+							voluit: m.party ? `${titel} (${m.party})` : titel,
+							groep: bronLabel('members')
+						}
+					}}
+				>
+					{#snippet soort()}
+						<SoortLink
 							collection="members"
 							lijst={(m.government_functions ?? []).length > 0 ? 'ministers' : 'members'}
 							>{ekSitting && !sitting
 								? 'Lid van de Eerste Kamer'
 								: currentTitle(career, sitting)}</SoortLink
-						></span
-					>
-					<div class="member-head-row">
-						<span class="member-avatar" aria-hidden="true">{initials(m.name)}</span>
-						<div class="member-meta">
-							<h2 class="lezer-titel">{m.name ?? m.key}</h2>
-							{#if m.party}
-								<div class="woorden">
-									<NameLink collection="factions" name={m.party} class="fractie-woord" />
-								</div>
-							{:else if ek?.faction && ek.abbreviation}
-								<div class="woorden">
-									<BronLink ref={{ collection: 'factions', key: ek.faction }} class="fractie-woord"
-										>{ek.abbreviation}</BronLink
-									>
-								</div>
-							{/if}
-						</div>
-					</div>
-				</header>
+						>
+					{/snippet}
+					{#snippet status()}
+						{#if m.party}
+							<NameLink collection="factions" name={m.party} class="fractie-woord" />
+						{:else if ek?.faction && ek.abbreviation}
+							<BronLink ref={{ collection: 'factions', key: ek.faction }} class="fractie-woord"
+								>{ek.abbreviation}</BronLink
+							>
+						{/if}
+					{/snippet}
+				</ReaderHead>
 			{/if}
 
 			{#if ek}
@@ -377,7 +383,9 @@
 	.r-member {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-4);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
 	.loading,
@@ -386,45 +394,6 @@
 		font-style: italic;
 		color: var(--ink-3);
 		margin: 0;
-	}
-
-	.head {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.member-head-row {
-		display: flex;
-		align-items: flex-start;
-		gap: var(--s-3);
-	}
-	.member-avatar {
-		width: 44px;
-		height: 44px;
-		border-radius: 50%;
-		background: var(--paper-2);
-		border: 1px solid var(--rule);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		color: var(--ink-3);
-		flex-shrink: 0;
-	}
-	.member-meta {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-		padding-top: 2px;
-	}
-	.woorden {
-		display: flex;
-		gap: var(--s-3);
-		flex-wrap: wrap;
-		align-items: baseline;
 	}
 
 	/* The faction is a word, not a tag. */

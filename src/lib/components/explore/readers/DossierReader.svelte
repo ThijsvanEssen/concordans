@@ -6,7 +6,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
-	import KopActies from './KopActies.svelte';
+	import ReaderHead from './ReaderHead.svelte';
 	import { bronHref } from '$lib/bron/href';
 	import { getDossierTimeline } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
@@ -129,61 +129,64 @@
 		{:else}
 			{@const d = view.dossier}
 
-			<header class="head">
-				<span class="lezer-soort">
+			<ReaderHead
+				collection="dossiers"
+				title={d.short_title ?? d.title ?? d.number}
+				acties={{
+					bewaar: {
+						id: node.id,
+						at: '',
+						kort: `Kamerstukken ${d.number}`,
+						voluit: `Kamerstukken ${d.number}${d.title ? ` (${d.short_title ?? d.title})` : ''}`,
+						groep: d.short_title ?? d.title ?? `Dossier ${d.number}`
+					}
+				}}
+			>
+				{#snippet soort()}
 					<SoortLink collection="dossiers">{bronLabel('dossiers')}</SoortLink><span
 						>, Kamerstuk {d.number}</span
 					>
-				</span>
-				<h2 class="lezer-titel">{d.short_title ?? d.title ?? d.number}</h2>
-				{#if d.short_title && d.title && d.title.trim() !== d.short_title}
-					<details class="full-title">
-						<summary>Volledige titel</summary>
-						<p>{d.title}</p>
-					</details>
-				{/if}
-				<!-- What the bill does to the law, under its title (concept 21, Thijs 10 Oct): the laws
+				{/snippet}
+				{#snippet onderTitel()}
+					{#if d.short_title && d.title && d.title.trim() !== d.short_title}
+						<details class="full-title">
+							<summary>Volledige titel</summary>
+							<p>{d.title}</p>
+						</details>
+					{/if}
+					<!-- What the bill does to the law, under its title (concept 21, Thijs 10 Oct): the laws
 				     it amends and the EU acts it implements (`legal_effect`), as links. -->
-				{#if (d.legal_effect?.amends ?? []).length || (d.legal_effect?.implements ?? []).length}
-					<p class="effect">
-						{#each [['Wijzigt', d.legal_effect?.amends ?? []], ['Implementeert', d.legal_effect?.implements ?? []]] as const as [term, wetten], i (term)}
-							{#if wetten.length}<span class="effect__regel"
-									>{i > 0 && (d.legal_effect?.amends ?? []).length ? '; ' : ''}<span
-										class="effect__term"
-										>{i > 0 && (d.legal_effect?.amends ?? []).length
-											? term.toLowerCase()
-											: term}</span
-									>
-									{#each wetten as w, j (w.key)}{j > 0
-											? j === wetten.length - 1
-												? ' en '
-												: ', '
-											: ''}<a
-											href={bronHref({ collection: 'instruments', key: w.key })}
-											title={w.name ?? w.key}>{w.name ?? w.short ?? w.key}</a
-										>{/each}</span
-								>{/if}
-						{/each}
-					</p>
-				{/if}
-				<!-- The status line with the head's one action, Bewaar (KopActies). -->
-				<div class="status-rij">
+					{#if (d.legal_effect?.amends ?? []).length || (d.legal_effect?.implements ?? []).length}
+						<p class="effect">
+							{#each [['Wijzigt', d.legal_effect?.amends ?? []], ['Implementeert', d.legal_effect?.implements ?? []]] as const as [term, wetten], i (term)}
+								{#if wetten.length}<span class="effect__regel"
+										>{i > 0 && (d.legal_effect?.amends ?? []).length ? '; ' : ''}<span
+											class="effect__term"
+											>{i > 0 && (d.legal_effect?.amends ?? []).length
+												? term.toLowerCase()
+												: term}</span
+										>
+										{#each wetten as w, j (w.key)}{j > 0
+												? j === wetten.length - 1
+													? ' en '
+													: ', '
+												: ''}<a
+												href={bronHref({ collection: 'instruments', key: w.key })}
+												title={w.name ?? w.key}>{w.name ?? w.short ?? w.key}</a
+											>{/each}</span
+									>{/if}
+							{/each}
+						</p>
+					{/if}
+				{/snippet}
+				{#snippet status()}
 					{#if d.submitted_on_tk}
 						<!-- The day the bill reached the Kamer (API 0.75), before any stage below it. -->
 						<p class="reading">
 							Ingediend bij de Tweede Kamer op {formatLongDate(d.submitted_on_tk)}.
 						</p>
 					{/if}
-					<KopActies
-						bewaar={{
-							id: node.id,
-							at: '',
-							kort: `Kamerstukken ${d.number}`,
-							voluit: `Kamerstukken ${d.number}${d.title ? ` (${d.short_title ?? d.title})` : ''}`,
-							groep: d.short_title ?? d.title ?? `Dossier ${d.number}`
-						}}
-					/>
-				</div>
+				{/snippet}
 				<StandBalk {d} />
 				{#if d.ek_outcome}
 					{@const ek = d.ek_outcome}
@@ -212,7 +215,7 @@
 						Eerste lezing. Tweede lezing in {@render dossierLinks(readings.second)}
 					</p>
 				{/if}
-			</header>
+			</ReaderHead>
 
 			{#if timelineLaden}
 				<p class="laden">Procedure laden…</p>
@@ -265,7 +268,9 @@
 	.r-dossier {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-4);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
 	.loading,
@@ -274,19 +279,6 @@
 		font-style: italic;
 		color: var(--ink-3);
 		margin: 0;
-	}
-	.head {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.lezer-soort {
-		/* The comma stands against the kind before it: no gap but the glyph's own. */
-		display: flex;
-		align-items: baseline;
-	}
-	.lezer-soort :global(.soort) {
-		gap: var(--s-1);
 	}
 
 	/* What the bill amends and implements: one line under the title, the laws as links. */
@@ -307,12 +299,6 @@
 	}
 	.effect a:hover {
 		color: var(--accent);
-	}
-	.status-rij {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--s-2) var(--s-4);
 	}
 	.reading {
 		font-family: var(--font-serif);

@@ -161,9 +161,34 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('heads every page in the frame with the one head, spaced only by AppShell', () => {
+		// Thijs, 10 Oct: "een andere verticale uitlijning na de titel". The menu pages and the
+		// text pages use .blad__kop and .blad__titel; none styles its h1, its title or its head.
+		const menu = [
+			'routes/(main)/actueel/+page.svelte',
+			'routes/(main)/onderwerpen/+page.svelte',
+			'routes/(main)/gemarkeerd/+page.svelte',
+			'lib/components/explore/index/IndexOverzicht.svelte'
+		];
+		const zonderKop = sources.filter(
+			({ path, text }) =>
+				menu.includes(path) && !/class="blad__kop"[\s\S]*?class="blad__titel"/.test(text)
+		);
+		expect(zonderKop.map((s) => s.path)).toEqual([]);
+		const eigen = offenders(
+			(t) =>
+				t.includes('blad__kop') &&
+				rules(t).some((r) =>
+					/(^|[\s,>])(h1|\.blad__kop|\.blad__titel|\.kop|\.titel|\.title)$/.test(r.selector.trim())
+				),
+			['lib/components/layout/AppShell.svelte']
+		);
+		expect(eigen).toEqual([]);
+	});
+
 	it('styles the parts of a text page once, in AppShell (.blad--tekst)', () => {
 		const delen =
-			/^\.(stub-eyebrow|stub-title|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;
+			/^\.(stub-eyebrow|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;
 		expect(
 			sources
 				.filter(({ path }) => path.startsWith('routes/(main)'))
@@ -224,13 +249,36 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
-	it('sets a reader’s title and kind with the shared lezer-titel and lezer-soort', () => {
-		// ReaderFrame holds their form; a reader adds only what differs (Front-end #1, 10 Oct).
+	it('heads every reader with ReaderHead, Bewaar in its place (Thijs, 10 Oct: gelijke pagina’s)', () => {
+		// The head of a reader is one form: kind or place, title, status, and the actions at its
+		// right (KopActies through ReaderHead, Bewaar always). No reader lays out actions itself.
+		const lezers = sources.filter(
+			({ path }) =>
+				(/^lib\/components\/explore\/readers\/\w+Reader\.svelte$/.test(path) &&
+					!path.endsWith('ReaderHead.svelte')) ||
+				path === 'lib/components/explore/WholeLawReader.svelte'
+		);
+		expect(lezers.length).toBeGreaterThan(10);
 		expect(
-			offenders(
-				(t) => /class="(title|kicker)[" ]/.test(t),
-				sources.map((s) => s.path).filter((p) => !p.startsWith('lib/components/explore/readers/'))
-			)
+			lezers
+				.filter(({ text }) => !/<ReaderHead[\s\S]*?acties=\{\{[\s\S]*?bewaar:/.test(text))
+				.map((s) => s.path)
+		).toEqual([]);
+		expect(
+			offenders((t) => /<KopActies\b/.test(t), ['lib/components/explore/readers/ReaderHead.svelte'])
+		).toEqual([]);
+		// The head ends without a rule of its own: the first section's rule is the one line.
+		const kop = sources.find((s) => s.path === 'lib/components/explore/readers/ReaderHead.svelte')!;
+		expect(
+			[...lezers, kop]
+				.filter(({ text }) =>
+					rules(text).some(
+						(r) =>
+							/reader-head|whole-head|(^|\s)\.head$/.test(r.selector) &&
+							/border-bottom/.test(r.body)
+					)
+				)
+				.map((s) => s.path)
 		).toEqual([]);
 	});
 

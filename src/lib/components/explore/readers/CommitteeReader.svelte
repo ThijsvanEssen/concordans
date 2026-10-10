@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ReaderHead from './ReaderHead.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
@@ -49,17 +50,28 @@
 <ReaderFrame>
 	<div class="r-committee">
 		<!-- The header comes from the node, so a failed detail request costs the counts only. -->
-		<header class="head">
-			<span class="lezer-soort">
+		<ReaderHead
+			collection="committees"
+			title={name}
+			acties={{
+				bewaar: {
+					id: node.id,
+					at: '',
+					kort: abbreviation ?? name,
+					voluit: `${name}, ${chamberName(chamber)}`,
+					groep: bronLabel('committees')
+				}
+			}}
+		>
+			{#snippet soort()}
 				<SoortLink collection="committees">{bronLabel('committees')}</SoortLink>
 				<span class="komma">,</span>{chamberName(chamber)}
 				{#if kind}<span class="komma">,</span>{kind}{/if}
-			</span>
-			<h2 class="lezer-titel">{name}</h2>
-			{#if abbreviation && abbreviation !== name}
-				<div class="woorden"><span class="afk">{abbreviation}</span></div>
-			{/if}
-		</header>
+			{/snippet}
+			{#snippet status()}
+				{#if abbreviation && abbreviation !== name}<span class="afk">{abbreviation}</span>{/if}
+			{/snippet}
+		</ReaderHead>
 
 		{#if view.kind === 'loading'}
 			<p class="loading">Laden…</p>
@@ -128,18 +140,14 @@
 	.r-committee {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-4);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	.loading,
-	.head {
+	.loading {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.lezer-soort {
-		display: flex;
-		align-items: baseline;
 		gap: var(--s-2);
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
@@ -173,10 +181,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.woorden {
-		display: flex;
-		gap: var(--s-1);
 	}
 	/* The abbreviation: a word, not a tag. */
 	.afk {

@@ -3,7 +3,6 @@
 	import { getExplainedBy } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
-	import KopActies from './KopActies.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	// Reader for articles: the place of the article, its title, one line with the version
@@ -525,144 +524,135 @@
 			title={title(a)}
 			place={[]}
 			placeTitle={placeLine?.title}
+			acties={{
+				bewaar: bewaarHier?.item ?? null,
+				wat: bewaarHier?.wat ?? '',
+				cite: forms ? citeItems(forms, readLink) : [],
+				naam: forms?.kort ?? '',
+				bron: officialUrl && officialName ? { label: officialName, href: officialUrl } : null,
+				tekst: () => a.text ?? ''
+			}}
 		>
 			{#snippet nav()}
 				{#if prevHref || nextHref}
 					<nav class="reader-nav" aria-label="Artikelen">{@render steps('')}</nav>
 				{/if}
 			{/snippet}
-			<div class="head">
-				<!-- What is on screen, and what to do with it. The head stays the same while
-				     comparing: Vergelijken unfolds the choice under it and closes it again. -->
-				<!-- What is on screen at the left (the status, the text menu of the versions), what to
-				     do with it at the right (docs/bediening.md: a head's three buttons). -->
-				<div class="head__status">
-					<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
-					{#if wordings.length > 1}
-						<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
-							<button
-								type="button"
-								class="head__version-knop"
-								aria-haspopup="menu"
-								aria-expanded={versionMenu}
-								onclick={() => (versionMenu = !versionMenu)}
-								>{wordings.length} tekstversies<Caret open={versionMenu} /></button
-							>
-							{#if versionMenu}
-								<!-- One place for the versions: a row reads that text, its change
-								     opens the comparison with the text before it. -->
-								<div class="pop pop--versions" role="menu" aria-label="Tekstversies">
-									<div class="pop__cols" aria-hidden="true">
-										<span>Lezen</span><span>Wat veranderde</span>
-									</div>
-									{#each [...wordings].reverse() as w (w.index)}
-										<div class="pop__row">
-											<button
-												type="button"
-												role="menuitemradio"
-												aria-checked={(shownIndex ?? (current ?? lapse)?.index) === w.index}
-												class="tekstmenu__item"
-												onclick={() => {
-													shownIndex = w === current || w === lapse ? null : w.index;
-													versionMenu = false;
-													// Reading one text folds the comparison away; a text chosen here
-													// is no longer that of the peildatum.
-													if (comparing || peildatum)
-														go({ versies: null, weergave: null, peildatum: null });
-												}}
-												>{w.lapsed
-													? `Vervallen per ${longDate(w.from)}`
-													: `${w === current ? 'Geldend, sinds ' : ''}${longDate(w.from)}${w.until ? ` tot ${longDate(w.until)}` : ''}`}</button
-											>
-											{#if w.index > 0}
-												<a
-													class="pop__change"
-													role="menuitem"
-													href={compareHref(w.index - 1, w.index)}
-													data-sveltekit-noscroll
-													title="Vergelijk met de tekst ervoor"
-													onclick={() => (versionMenu = false)}>{w.summary} →</a
-												>
-											{:else}
-												<span class="pop__change pop__change--none">oudste tekst</span>
-											{/if}
-										</div>
-									{/each}
-								</div>
-							{/if}
-						</span>
-					{/if}
-					<span class="head__knoppen">
-						{#if wordings.length > 1}
-							<a
-								class="btn head__compare"
-								class:is-on={comparing}
-								aria-expanded={comparing}
-								href={comparing
-									? closeCompareHref
-									: compareHref(Math.max(0, wordings.length - 2), wordings.length - 1)}
-								data-sveltekit-noscroll>Vergelijken<Caret open={comparing} /></a
-							>
-						{/if}
-						<!-- Two actions, framed, the same on every reader (KopActies): Bewaar and
-						     Citeer, with Kopieer tekst and the official text inside Citeer. -->
-						<KopActies
-							bewaar={bewaarHier?.item ?? null}
-							wat={bewaarHier?.wat ?? ''}
-							cite={forms ? citeItems(forms, readLink) : []}
-							naam={forms?.kort ?? ''}
-							bron={officialUrl && officialName ? { label: officialName, href: officialUrl } : null}
-							tekst={() => a.text ?? ''}
-						/>
-					</span>
-				</div>
-
-				<!-- Where the text came from: the wet that made it, its toelichting, the
-					     earlier texts. -->
-				{#if versionDossiers.length > 0 || explanatory}
-					<div class="head__origin">
-						{#if versionDossiers.length > 0}
-							<span class="head__item"
-								>{originVerb}
-								{#each versionDossiers as dossier, i (dossier.key)}{#if i > 0},
-									{/if}<DossierLink
-										{dossier}
-										missing={missingDossiers.has(dossier.number)}
-									/>{/each}</span
-							>
-						{/if}
-						{#if explanatory && explanatoryHref}
-							<a
-								class="head__item head__mvt"
-								class:is-open={explanatoryOpen}
-								href={explanatoryHref}
-								data-sveltekit-noscroll
-								aria-expanded={explanatoryOpen}
-								title={explanatoryOpen
-									? 'Sluiten'
-									: `${explanatory.title ?? explanatory.kind ?? 'Toelichting'}: onder het artikel lezen`}
-								>{explanatory.basis === 'wijziging'
-									? 'Memorie van toelichting'
-									: (explanatory.kind ?? 'Toelichting')}{explanatory.firstReading
-									? ', eerste lezing'
-									: ''}<span class="head__mvt-mark" aria-hidden="true"
-									>{explanatoryOpen ? '×' : '↓'}</span
-								></a
-							>
-						{/if}
-					</div>
-				{/if}
-
-				<!-- What is coming: wetsvoorstellen that would change the text. -->
-				{#if billCount > 0}
-					<div class="head__pending">
-						<a href={billsHref} data-sveltekit-noscroll
-							><KindGlyph vorm="voorstel" size={12} />{billCount}
-							{billCount === 1 ? 'wetsvoorstel raakt' : 'wetsvoorstellen raken'} dit artikel</a
+			{#snippet status()}
+				<span class="head__stand" class:is-old={!!shown}>{versionLabel}</span>
+				{#if wordings.length > 1}
+					<span class="menu" use:menu={{ open: versionMenu, close: () => (versionMenu = false) }}>
+						<button
+							type="button"
+							class="head__version-knop"
+							aria-haspopup="menu"
+							aria-expanded={versionMenu}
+							onclick={() => (versionMenu = !versionMenu)}
+							>{wordings.length} tekstversies<Caret open={versionMenu} /></button
 						>
-					</div>
+						{#if versionMenu}
+							<!-- One place for the versions: a row reads that text, its change
+						     opens the comparison with the text before it. -->
+							<div class="pop pop--versions" role="menu" aria-label="Tekstversies">
+								<div class="pop__cols" aria-hidden="true">
+									<span>Lezen</span><span>Wat veranderde</span>
+								</div>
+								{#each [...wordings].reverse() as w (w.index)}
+									<div class="pop__row">
+										<button
+											type="button"
+											role="menuitemradio"
+											aria-checked={(shownIndex ?? (current ?? lapse)?.index) === w.index}
+											class="tekstmenu__item"
+											onclick={() => {
+												shownIndex = w === current || w === lapse ? null : w.index;
+												versionMenu = false;
+												// Reading one text folds the comparison away; a text chosen here
+												// is no longer that of the peildatum.
+												if (comparing || peildatum)
+													go({ versies: null, weergave: null, peildatum: null });
+											}}
+											>{w.lapsed
+												? `Vervallen per ${longDate(w.from)}`
+												: `${w === current ? 'Geldend, sinds ' : ''}${longDate(w.from)}${w.until ? ` tot ${longDate(w.until)}` : ''}`}</button
+										>
+										{#if w.index > 0}
+											<a
+												class="pop__change"
+												role="menuitem"
+												href={compareHref(w.index - 1, w.index)}
+												data-sveltekit-noscroll
+												title="Vergelijk met de tekst ervoor"
+												onclick={() => (versionMenu = false)}>{w.summary} →</a
+											>
+										{:else}
+											<span class="pop__change pop__change--none">oudste tekst</span>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</span>
 				{/if}
-			</div>
+			{/snippet}
+			{#snippet extra()}
+				{#if wordings.length > 1}
+					<a
+						class="btn head__compare"
+						class:is-on={comparing}
+						aria-expanded={comparing}
+						href={comparing
+							? closeCompareHref
+							: compareHref(Math.max(0, wordings.length - 2), wordings.length - 1)}
+						data-sveltekit-noscroll>Vergelijken<Caret open={comparing} /></a
+					>
+				{/if}
+			{/snippet}
+			<!-- Where the text came from: the wet that made it, its toelichting, the
+				     earlier texts. -->
+			{#if versionDossiers.length > 0 || explanatory}
+				<div class="head__origin">
+					{#if versionDossiers.length > 0}
+						<span class="head__item"
+							>{originVerb}
+							{#each versionDossiers as dossier, i (dossier.key)}{#if i > 0},
+								{/if}<DossierLink
+									{dossier}
+									missing={missingDossiers.has(dossier.number)}
+								/>{/each}</span
+						>
+					{/if}
+					{#if explanatory && explanatoryHref}
+						<a
+							class="head__item head__mvt"
+							class:is-open={explanatoryOpen}
+							href={explanatoryHref}
+							data-sveltekit-noscroll
+							aria-expanded={explanatoryOpen}
+							title={explanatoryOpen
+								? 'Sluiten'
+								: `${explanatory.title ?? explanatory.kind ?? 'Toelichting'}: onder het artikel lezen`}
+							>{explanatory.basis === 'wijziging'
+								? 'Memorie van toelichting'
+								: (explanatory.kind ?? 'Toelichting')}{explanatory.firstReading
+								? ', eerste lezing'
+								: ''}<span class="head__mvt-mark" aria-hidden="true"
+								>{explanatoryOpen ? '×' : '↓'}</span
+							></a
+						>
+					{/if}
+				</div>
+			{/if}
+
+			<!-- What is coming: wetsvoorstellen that would change the text. -->
+			{#if billCount > 0}
+				<div class="head__pending">
+					<a href={billsHref} data-sveltekit-noscroll
+						><KindGlyph vorm="voorstel" size={12} />{billCount}
+						{billCount === 1 ? 'wetsvoorstel raakt' : 'wetsvoorstellen raken'} dit artikel</a
+					>
+				</div>
+			{/if}
 		</ReaderHead>
 
 		{#if proposedMissing && proposedRow}
@@ -735,27 +725,18 @@
 </ReaderFrame>
 
 <style>
-	/* Three layers under the title: the text on screen and Citeer; where it came from;
-	   what is coming. Each quieter than the one before. */
-	.head {
-		display: grid;
-		gap: var(--s-2);
-		margin-bottom: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.head__status,
-	.head__origin {
+	/* Under the status (ReaderHead): where the text came from, what is coming, each quieter
+	   than the one before. */
+	.head__origin,
+	.head__pending {
 		position: relative;
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-4);
-	}
-	.head__status {
-		justify-content: flex-start;
-		min-height: 26px;
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
 	}
 	/* The text on screen: Geldend recht, tekst sinds 1 juli 2024. */
 	.head__stand {
@@ -783,20 +764,6 @@
 	}
 	.head__version-knop:hover {
 		color: var(--accent);
-	}
-	.head__knoppen {
-		display: inline-flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--s-2);
-		margin-left: auto;
-	}
-	/* On a phone the buttons start at the text's edge, on a line of their own. */
-	@media (max-width: 767px) {
-		.head__knoppen {
-			margin-left: 0;
-			flex-basis: 100%;
-		}
 	}
 	.head__compare {
 		text-decoration: none;
@@ -833,7 +800,8 @@
 		color: var(--ink);
 	}
 	/* A popup hangs under its row, from the row's start, so it never runs off the reader. */
-	.head .menu {
+	/* The versions' popup hangs from the status line (ReaderHead), not from its words. */
+	.menu {
 		position: static;
 	}
 	.pop {

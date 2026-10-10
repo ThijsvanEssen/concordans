@@ -1,7 +1,7 @@
 <script lang="ts">
+	import ReaderHead from './ReaderHead.svelte';
 	import { vandaag } from '$lib/text/datum';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getCommitment } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	// Reader for a toezegging: its text, who made it in which post, the ministry and cabinet,
@@ -85,12 +85,20 @@
 			{@const c = view.commitment}
 			{@const late =
 				c.status === OPEN_STATUS && !!c.expected_resolution && c.expected_resolution < today}
-			<header class="head">
-				<span class="lezer-soort"
-					><SoortLink collection="commitments">{bronLabel('commitments')}</SoortLink></span
-				>
-				<h2 class="text">{c.text ?? 'Toezegging zonder tekst'}</h2>
-			</header>
+			{@const tekst = c.text ?? 'Toezegging zonder tekst'}
+			<ReaderHead
+				collection="commitments"
+				title={tekst}
+				acties={{
+					bewaar: {
+						id: node.id,
+						at: '',
+						kort: c.number ? `Toezegging ${c.number}` : tekst,
+						voluit: c.number ? `Toezegging ${c.number}: ${tekst}` : tekst,
+						groep: bronLabel('commitments')
+					}
+				}}
+			/>
 
 			<Feiten>
 				<Veld label="Bewindspersoon" value={c.member ?? c.minister_name} nodig>
@@ -146,7 +154,9 @@
 	.r-commitment {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-5);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-5);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
 	.loading,
@@ -155,25 +165,6 @@
 		font-family: var(--font-serif);
 		font-style: italic;
 		color: var(--ink-3);
-	}
-	.head {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.lezer-soort {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-	}
-	/* The toezegging is its text: set as the reading text, not as a title. */
-	.text {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: 1.6;
-		color: var(--ink);
-		max-width: 68ch;
 	}
 	.late {
 		color: var(--accent) !important;

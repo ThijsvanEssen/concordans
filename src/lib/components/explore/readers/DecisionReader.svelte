@@ -8,7 +8,7 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import ReaderFrame from './ReaderFrame.svelte';
-	import KopActies from './KopActies.svelte';
+	import ReaderHead from './ReaderHead.svelte';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
@@ -139,17 +139,27 @@
 			{@const eigen = uniqueBy(dossiers, (x) => x.number).slice(0, 3)}
 			{@const verder = eigen.slice(1)}
 			{@const onderwerp = (d.subject ?? doc?.title ?? '').trim()}
-			<header class="head">
-				<span class="lezer-soort">
+			<ReaderHead
+				collection="decisions"
+				title={d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}
+				acties={{
+					bewaar: {
+						id: node.id,
+						at: '',
+						kort: `Stemming${d.date ? ` ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
+						voluit: `Stemming ${chamberName(chamber)}${d.date ? `, ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
+						groep: eigen[0] ? `Kamerstukken ${eigen[0].number}` : 'Stemmingen'
+					}
+				}}
+			>
+				{#snippet soort()}
 					<SoortLink collection="decisions">{bronLabel('decisions')}</SoortLink><span
 						>, {chamberName(chamber)}{d.date ? `, ${formatLongDate(d.date)}` : ''}</span
 					>
-				</span>
-				<h2 class="lezer-titel">{d.subject ?? doc?.title ?? 'Onderwerp niet in de gegevens'}</h2>
-				<!-- The status line: the outcome and what was voted on, words separated by commas;
-				     the dossier is in the band ("Over 34372 …"), a second one here. One action,
-				     Bewaar: a stemming is cited through what was voted on (concept 21). -->
-				<div class="status-rij">
+				{/snippet}
+				<!-- The outcome and what was voted on; the dossier is in the band ("Over 34372 …"), a
+				     second one here. A stemming is cited through what was voted on (KOP_ACTIES). -->
+				{#snippet status()}
 					<p class="woorden">
 						{#if uitkomst}<span
 								class="uitslag"
@@ -165,17 +175,8 @@
 								><DossierNaam {dossier} /></BronLink
 							>{/each}
 					</p>
-					<KopActies
-						bewaar={{
-							id: node.id,
-							at: '',
-							kort: `Stemming${d.date ? ` ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
-							voluit: `Stemming ${chamberName(chamber)}${d.date ? `, ${formatLongDate(d.date)}` : ''}: ${onderwerp}`,
-							groep: eigen[0] ? `Kamerstukken ${eigen[0].number}` : 'Stemmingen'
-						}}
-					/>
-				</div>
-			</header>
+				{/snippet}
+			</ReaderHead>
 
 			{#if doc?.text}
 				<Sectie titel={doc.kind ?? 'Document'} soort="documents">
@@ -289,7 +290,9 @@
 	.r-decision {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-4);
+		/* Its step between blocks, which the head subtracts from its own (ReaderHead). */
+		--lezer-stap: var(--s-4);
+		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
 	.loading,
@@ -304,24 +307,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-	}
-	.status-rij {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: var(--s-2) var(--s-4);
-	}
-	.status-rij .woorden {
-		flex: 1 1 16em;
-		min-width: 0;
-	}
-	.lezer-soort {
-		display: flex;
-		align-items: baseline;
-	}
-	.lezer-soort :global(.soort) {
-		gap: var(--s-1);
 	}
 	/* A comma against the word before it: the kicker's gap only after it. */
 	.ek-factions {
