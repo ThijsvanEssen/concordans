@@ -61,6 +61,26 @@ export function authorCite(
 }
 
 /**
+ * A conclusion as an arrest's status line names it, from the judgment's own detail
+ * (`conclusions`, API 0.79.43): "P-G Langemeijer en Wissink, 13 september 2019". The role
+ * says A-G or P-G; one the graph lacks is its ECLI alone.
+ */
+export function conclusieNaam(c: {
+	ecli: string;
+	author?: string | null;
+	role?: string | null;
+	date?: string | null;
+}): string {
+	const wie = authorCite(
+		c.author,
+		/procureur-generaal/i.test(c.role ?? '') ? ['procureur-generaal'] : []
+	);
+	if (!wie) return c.ecli.trim().toUpperCase();
+	const wanneer = longDate(c.date);
+	return wanneer ? `${wie}, ${wanneer}` : wie;
+}
+
+/**
  * `HR 19 juli 2019` and `HR 19 juli 2019, ECLI:NL:HR:2019:1278`; a conclusion with its
  * author: `Conclusie A-G Hartlief 8 mei 2020`.
  */

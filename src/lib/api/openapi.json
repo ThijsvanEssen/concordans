@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.41"
+		"version": "0.79.42"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -4780,7 +4780,7 @@
 			"get": {
 				"tags": ["lookup", "lookup"],
 				"summary": "The node a readable URL names, exactly",
-				"description": "No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).",
+				"description": "No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `annex` (`law` BWB id and `label`, `II`), `case` (a zaak of the Tweede Kamer: its `number`, `2025Z15468`), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).",
 				"operationId": "get_lookup_api_lookup_get",
 				"parameters": [
 					{
@@ -4792,11 +4792,13 @@
 								"document",
 								"dossier",
 								"article",
+								"annex",
 								"law",
 								"judgment",
 								"publication",
 								"official",
 								"commitment",
+								"case",
 								"faction",
 								"committee",
 								"cabinet",
@@ -4823,6 +4825,12 @@
 						"in": "query",
 						"required": false,
 						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Law" }
+					},
+					{
+						"name": "label",
+						"in": "query",
+						"required": false,
+						"schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Label" }
 					},
 					{
 						"name": "ecli",
@@ -11549,6 +11557,27 @@
 				"title": "JudgmentCitedArticle",
 				"description": "An article a judgment cites, with where and how: the strongest of its mentions."
 			},
+			"JudgmentConclusionDTO": {
+				"properties": {
+					"ecli": { "type": "string", "title": "Ecli" },
+					"author": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Author",
+						"description": "The advocaat-generaal or procureur-generaal, as written."
+					},
+					"role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Role",
+						"description": "``advocaat-generaal`` or ``procureur-generaal``; null unknown."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["ecli"],
+				"title": "JudgmentConclusionDTO",
+				"description": "A conclusion a judgment names (``conclusion_eclis``), as its light node names it."
+			},
 			"JudgmentCoverageResponse": {
 				"properties": {
 					"total": { "type": "integer", "title": "Total" },
@@ -11767,6 +11796,12 @@
 						"type": "array",
 						"title": "Related To",
 						"description": "The connected cases (`RELATED_TO`, as between dossiers), both ways: those its summary names (\"Samenhang met 24/03860 E\", \"Zie ook: ECLI:\u2026\") and those whose summary names it, each found by its exact ECLI or case number, with the sentence that names it (`links`). Empty for most."
+					},
+					"conclusions": {
+						"items": { "$ref": "#/components/schemas/JudgmentConclusionDTO" },
+						"type": "array",
+						"title": "Conclusions",
+						"description": "The conclusions its metadata names (``conclusion_eclis``), in that order, each with the A-G or P-G and the date its light node gives; one the graph lacks is its ECLI alone."
 					},
 					"series": {
 						"items": { "$ref": "#/components/schemas/JudgmentSummaryDTO" },
@@ -12291,7 +12326,7 @@
 					"kind": {
 						"type": "string",
 						"title": "Kind",
-						"description": "What the node is: `document`, `dossier`, `article`, `instrument`, `judgment`, `commitment`, `faction`, `committee`, `cabinet`."
+						"description": "What the node is: `document`, `dossier`, `article`, `annex`, `instrument`, `judgment`, `commitment`, `case`, `faction`, `committee`, `cabinet`."
 					},
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -12312,7 +12347,7 @@
 						"additionalProperties": true,
 						"type": "object",
 						"title": "Props",
-						"description": "The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication."
+						"description": "The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `bwb_id` and `label` of an annex; `number` of a zaak; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication."
 					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -12632,6 +12667,12 @@
 						"title": "Vote Source",
 						"description": "``member``: their own vote, on a roll-call (hoofdelijke stemming); ``faction``: their faction's, cast while they belonged to it (``faction_key``).",
 						"default": "member"
+					},
+					"in_office": {
+						"items": { "$ref": "#/components/schemas/VoteOfficeDTO" },
+						"type": "array",
+						"title": "In Office",
+						"description": "The posts in a cabinet (``government_functions``) the member held on ``date``, oldest first: a vote as (demissionary) bewindspersoon and Kamerlid; empty when none."
 					}
 				},
 				"additionalProperties": false,
@@ -14863,6 +14904,29 @@
 				"required": ["voter_id", "voter_key", "choice", "path"],
 				"title": "VoteDTO",
 				"description": "One vote cast on a decision, by a faction or \u2014 on a roll-call \u2014 a member."
+			},
+			"VoteOfficeDTO": {
+				"properties": {
+					"function": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Function",
+						"description": "The post as Rijksoverheid names it."
+					},
+					"cabinet_key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Cabinet Key",
+						"description": "Key of the cabinet node."
+					},
+					"cabinet": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Cabinet",
+						"description": "The cabinet: ``kabinet-Rutte IV``."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"title": "VoteOfficeDTO",
+				"description": "A post in a cabinet a member held on the day of a vote."
 			}
 		}
 	}

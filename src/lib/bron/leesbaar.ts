@@ -13,6 +13,8 @@
 //   /commissies/szw                      a commissie, by its slug
 //   /toezeggingen/TZ202609-124           a toezegging, by its number
 //   /stemmingen/decision_154df5db_…      a stemming (a besluit), by its key
+//   /zaken/2025Z15468                    a zaak, by its number (API 0.79.43, #502)
+//   /wetten/BWBR0002741/bijlage/II       a bijlage of a law, by its label
 //
 // Each is a second address of the Verkenner (`reroute` in src/hooks.ts serves /explore);
 // the API ids stay as they are. The rest of the view stays in the query: ?lezen=1,
@@ -39,7 +41,9 @@ export type Pad =
 	| { soort: 'fractie'; key: string }
 	| { soort: 'commissie'; slug: string }
 	| { soort: 'toezegging'; nummer: string }
-	| { soort: 'stemming'; key: string };
+	| { soort: 'stemming'; key: string }
+	| { soort: 'zaak'; nummer: string }
+	| { soort: 'bijlage'; wet: string; label: string };
 
 /** The series of officielebekendmakingen.nl a publication appears in. */
 export type Reeks = 'stb' | 'stcrt' | 'trb';
@@ -61,6 +65,10 @@ const BWB = /^BWBR\d{7}$/i;
 const SLEUTEL = /^[a-z0-9]+(?:[-_][a-z0-9]+)*$/;
 /** The number of a toezegging: `TZ202609-124`. */
 const TOEZEGGING = /^TZ\d+-\d+$/i;
+/** The number of a zaak: `2025Z15468`. */
+const ZAAK = /^\d{4}Z\d+$/i;
+/** The label of a bijlage: `II`, `1`, `2.A`, `B-1`. */
+const BIJLAGE = /^[A-Z0-9]+(?:[.-][A-Z0-9]+)*$/i;
 /** The number of a stuk: a figure in the Tweede Kamer, letters in the Eerste (`A`, `AB`). */
 const STUK = /^(\d+|[A-Z]{1,3})$/i;
 
@@ -73,6 +81,10 @@ export function parsePad(pathname: string): Pad | null {
 		return { soort: 'uitspraak', ecli: a.toUpperCase() };
 	if (first === 'wetten' && parts.length === 2 && BWB.test(a))
 		return { soort: 'wet', wet: a.toUpperCase() };
+	if (first === 'wetten' && parts.length === 4 && b === 'bijlage' && BWB.test(a) && BIJLAGE.test(c))
+		return { soort: 'bijlage', wet: a.toUpperCase(), label: c.toUpperCase() };
+	if (first === 'zaken' && parts.length === 2 && ZAAK.test(a))
+		return { soort: 'zaak', nummer: a.toUpperCase() };
 	if (first === 'wetten' && parts.length === 4 && b === 'artikel' && a && c)
 		return { soort: 'artikel', wet: a.toUpperCase(), nummer: c };
 	if (first === 'dossiers' && parts.length === 2 && DOSSIER.test(a))
@@ -130,6 +142,10 @@ export function padHref(pad: Pad): string {
 			return `/toezeggingen/${pad.nummer}`;
 		case 'stemming':
 			return `/stemmingen/${pad.key}`;
+		case 'zaak':
+			return `/zaken/${pad.nummer}`;
+		case 'bijlage':
+			return `/wetten/${e(pad.wet)}/bijlage/${e(pad.label)}`;
 	}
 }
 
@@ -234,10 +250,32 @@ function lookupQuery(pad: Pad) {
 			return { kind: 'committee', id: pad.slug } as const;
 		case 'toezegging':
 			return { kind: 'commitment', number: pad.nummer } as const;
+		case 'zaak':
+			return { kind: 'case', number: pad.nummer } as const;
+		case 'bijlage':
+			return { kind: 'annex', law: pad.wet, label: pad.label } as const;
 		case 'stemming':
 			// Never asked: its key is its id (focusOfPad), and /api/lookup has no such kind.
 			throw new Error('Een stemming heeft geen lookup');
 	}
+}
+
+/**
+ * The focus the server's page names (`<meta name="focus" content="documents/…">`, API
+ * 0.79.43, #502): after the 301 from /explore?focus=… the key is no longer in the address,
+ * and the page says it without a request (cold, the lookup took 1.8 s). Only for the address
+ * the page was served for.
+ */
+function focusUitPagina(pad: Pad): string | null {
+	if (typeof document === 'undefined') return null;
+	const focus = document.querySelector('meta[name="focus"]')?.getAttribute('content') ?? null;
+	const href = padHref(pad);
+	if (!focus || !parseNodeId(focus) || location.pathname !== href) return null;
+	remember(href, focus);
+	const target = parseNodeId(focus)!;
+	// What the lookup would have set going: a Kamerstuk's text beside its node.
+	if (target.collection === 'documents') getDocument(target.key).catch(() => {});
+	return focus;
 }
 
 /**
@@ -277,7 +315,7 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 		lawArticleList(artikel.wet).catch(() => {});
 		getExplainedBy(artikel.wet, artikel.nummer).catch(() => {});
 	}
-	const known = focusOfPad(pad);
+	const known = focusOfPad(pad) ?? focusUitPagina(pad);
 	if (known) {
 		const target = parseNodeId(known);
 		if (artikel && target) onthoudArtikel(target.key, artikel.wet, artikel.nummer);
@@ -371,6 +409,20 @@ export function padOfFocus(focus: string, props?: Record<string, unknown> | null
 			const nummer = text(props?.number);
 			return nummer && TOEZEGGING.test(nummer)
 				? padHref({ soort: 'toezegging', nummer: nummer.toUpperCase() })
+				: null;
+		}
+		case 'cases': {
+			const nummer = text(props?.number);
+			return nummer && ZAAK.test(nummer)
+				? padHref({ soort: 'zaak', nummer: nummer.toUpperCase() })
+				: null;
+		}
+		case 'annexes': {
+			// A bijlage without a label has no address of its own.
+			const wet = text(props?.bwb_id);
+			const label = text(props?.label);
+			return wet && BWB.test(wet) && label && BIJLAGE.test(label)
+				? padHref({ soort: 'bijlage', wet: wet.toUpperCase(), label: label.toUpperCase() })
 				: null;
 		}
 		case 'documents': {

@@ -86,4 +86,26 @@ describe('the name of a bron for a reader', () => {
 			})
 		).toBe('Bijlage 2: Bevoegdheidsregeling bestuursrechtspraak');
 	});
+
+	it('names a version, a zaak and a bijlage by what props=canvas gives (API 0.79.43)', () => {
+		const versie = (props: Record<string, unknown>) =>
+			menselijkeNaam({ collection: 'instrument_versions', key: 'bwbr0005537_2022_05_01', props });
+		const awb = { bwb_id: 'BWBR0005537', instrument_citation_title: 'Awb' };
+		expect(versie({ ...awb, valid_from: '2022-05-01', current: true })).toBe(
+			'Awb, geldende versie sinds 1 mei 2022'
+		);
+		expect(
+			versie({ ...awb, valid_from: '2021-01-01', valid_until: '2022-04-30', current: false })
+		).toBe('Awb, versie van 1 januari 2021 tot 30 april 2022');
+		expect(
+			menselijkeNaam({ collection: 'cases', key: '81311fd5_88d6', props: { number: '2025Z15468' } })
+		).toBe('Zaak 2025Z15468');
+		expect(
+			menselijkeNaam({
+				collection: 'annexes',
+				key: 'bwbr0002741_annex_ii',
+				props: { bwb_id: 'BWBR0002741', label: 'II', title: 'Lijst van gevaarlijke stoffen' }
+			})
+		).toBe('Bijlage II: Lijst van gevaarlijke stoffen');
+	});
 });

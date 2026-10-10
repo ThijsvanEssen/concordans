@@ -56,10 +56,23 @@ export function menselijkeNaam(b: Bron, wet?: (bwb: string) => string | null | u
 
 	switch (b.collection) {
 		case 'instrument_versions': {
-			// "Algemene wet bestuursrecht, versie van 1 mei 2022".
+			// "Algemene wet bestuursrecht, versie van 1 mei 2022"; the one in force says so,
+			// one that ended says until when (props=canvas, API 0.79.43: current, valid_until).
 			const van = dag(p.valid_from);
+			const tot = dag(p.valid_until);
 			const w = wetNaam() ?? 'Wet';
-			return van ? `${w}, versie van ${van}` : `${w}, versie`;
+			if (p.current === true)
+				return van ? `${w}, geldende versie sinds ${van}` : `${w}, geldende versie`;
+			if (!van) return `${w}, versie`;
+			return tot ? `${w}, versie van ${van} tot ${tot}` : `${w}, versie van ${van}`;
+		}
+		case 'cases': {
+			// A zaak of the Kamer by its title where the data gives one, else by its number
+			// ("Zaak 2025Z15468", props=canvas, API 0.79.43).
+			const eigen = naam(b.display_name) ?? naam(p.title) ?? naam(p.onderwerp);
+			if (eigen) return eigen;
+			const nummer = naam(p.number);
+			return nummer ? `Zaak ${nummer}` : withDay(soort, p);
 		}
 		case 'article_versions': {
 			const artikel =

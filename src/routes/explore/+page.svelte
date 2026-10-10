@@ -147,7 +147,11 @@
 							? `Commissie ${p.slug}`
 							: p.soort === 'toezegging'
 								? `Toezegging ${p.nummer}`
-								: padHref(p);
+								: p.soort === 'zaak'
+									? `Zaak ${p.nummer}`
+									: p.soort === 'bijlage'
+										? `Bijlage ${p.label} van ${p.wet}`
+										: padHref(p);
 	const REEKS_NAAM = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' } as const;
 	$effect(() => {
 		const p = pad;
@@ -1992,8 +1996,12 @@
 	}
 
 	/* The tabs of a phone and of the narrow read view: shown by the media rules below. */
+	/* A height in whole pixels: the tabs' own grew 32 → 32.5 px when the UI font came, and
+	   moved the text under them half a pixel (FE2, 10 Oct: 0 px after the first paint). */
 	.mobile-tabs {
 		display: none;
+		height: var(--veld-h);
+		box-sizing: border-box;
 		border-bottom: 1px solid var(--rule);
 		background: var(--paper-2);
 	}
