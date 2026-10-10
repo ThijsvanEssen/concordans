@@ -26,7 +26,7 @@
 		bodyItems,
 		splitSummary
 	} from './judgment-text';
-	import { formatDate, textProp } from './_shared';
+	import { formatLongDate, textProp } from './_shared';
 	import { sourceName } from '../law-head';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
@@ -178,7 +178,7 @@
 		{@const j = view.data.judgment}
 		{@const paragraphs = j.paragraphs ?? []}
 		{@const caseNumber = textProp(j.props?.case_number)}
-		{@const judgmentDate = formatDate(textProp(j.props?.date))}
+		{@const judgmentDate = formatLongDate(textProp(j.props?.date))}
 		<!-- The judgment on its official site, named by it as a law is (API 0.71):
 		     uitspraken.rechtspraak.nl, hudoc.echr.coe.int. -->
 		{@const deeplink =
@@ -417,12 +417,8 @@
 									kort: forms.kort,
 									voluit: forms.voluit,
 									groep: zaakNaam(
-										judgmentCite(
-											j.ecli,
-											textProp(j.props?.date),
-											textProp(j.props?.court),
-											author
-										).short,
+										judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author)
+											.short,
 										j.names
 									)
 								}
@@ -506,13 +502,16 @@
 	.reader-meta-row {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
+		align-items: flex-start;
 		gap: var(--s-2) var(--s-4);
 		margin-bottom: var(--s-3);
 	}
 
 	/* As the article's status line: Geldend recht, tekst sinds 1 juli 2024. */
 	.reader-status {
+		/* It wraps in its own column; the two actions stay beside its first line. */
+		flex: 1 1 16em;
+		min-width: 0;
 		margin: 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
@@ -744,16 +743,23 @@
 		--rov-gap: var(--s-3);
 	}
 	/* On a desktop the number hangs in the frame's margin and the text of an overweging
-	   starts at the column's edge, like all running text (ReaderFrame). */
+	   starts at the column's edge, like all running text (ReaderFrame); as far as the margin
+	   reaches: in a narrow frame (32 px) the text gives way, so "2.3.2" is never cut off. */
 	@media (min-width: 769px) {
 		.reader-body {
-			--rov-num: 2.6em;
+			--rov-num: 3em;
+			--rov-hang: min(var(--rov-num) + var(--rov-gap), var(--reader-pad-left, var(--s-6)));
 		}
 		.reader-body.reader-body--numbered .reader-para--prose {
 			margin-left: 0;
 		}
+		/* What continues an overweging keeps to its text, also where the number cannot hang
+		   all the way. */
+		.reader-body.reader-body--numbered .reader-para--within {
+			margin-left: calc(var(--rov-num) + var(--rov-gap) - var(--rov-hang));
+		}
 		.reader-body .reader-para-block {
-			margin-left: calc(-1 * (var(--rov-num) + var(--rov-gap)));
+			margin-left: calc(-1 * var(--rov-hang));
 		}
 	}
 	.reader-body--numbered .reader-para--prose {
@@ -777,8 +783,14 @@
 	}
 
 	.reader-para-block {
+		position: relative;
 		scroll-margin: 20vh;
 		border-radius: var(--r-1);
+	}
+	/* A kept overweging: the ink bar at the block's own edge, inside the frame even where the
+	   number hangs in its margin. */
+	.reader-para-block.plaats-bewaard::before {
+		left: 0;
 	}
 
 	.reader-para-block:hover,
