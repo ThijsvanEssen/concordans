@@ -1541,13 +1541,14 @@
 						<p class="cluster-zin">{zin}</p>
 					{/each}
 					<div class="cluster-knoppen">
-						<button type="button" class="btn is-primary" onclick={() => showCluster(c)}
+						<!-- Actions are text, as in the cite card (concept 21: never boxes). -->
+						<button type="button" class="btn is-text" onclick={() => showCluster(c)}
 							>Toon alle {formatCount(c.members.length)} in het netwerk</button
 						>
 						{#if !c.ends}
 							<button
 								type="button"
-								class="btn"
+								class="btn is-text"
 								onclick={() => {
 									openGroup(c.collection);
 									clusterCard = null;
@@ -1730,6 +1731,9 @@
 		gap: var(--s-2);
 	}
 	.cluster-knoppen {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-3);
 		margin-top: var(--s-3);
 	}
 	.vouw {
