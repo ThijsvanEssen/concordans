@@ -46,7 +46,7 @@
 	const DY = (H - (ONDER - BOVEN) * K) / 2 - BOVEN * K;
 
 	const byName = $derived(
-		new Map(data.factions.map((f) => [f.abbreviation ?? f.name ?? f.key, f]))
+		new Map(data.factions.map((f) => [f.abbreviation ?? f.name ?? f.key ?? '', f]))
 	);
 	// Een fractie zonder kleur in de gegevens krijgt een grijstint, en haar naam in de legenda.
 	const GREYS = ['#b7b1a5', '#a39d90', '#8f897c', '#cbc5b9', '#7d776b', '#d8d3c8'];
@@ -54,7 +54,7 @@
 		const m = new Map<string, string>();
 		let g = 0;
 		for (const f of data.factions) {
-			const name = f.abbreviation ?? f.name ?? f.key;
+			const name = f.abbreviation ?? f.name ?? f.key ?? '';
 			m.set(name, f.color ?? GREYS[g++ % GREYS.length]);
 		}
 		return m;
@@ -87,7 +87,7 @@
 
 	const side = (name: string) => {
 		const f = byName.get(name);
-		return voteHighlight && f ? voteHighlight[f.key] : null;
+		return voteHighlight && f?.key ? voteHighlight[f.key] : null;
 	};
 </script>
 
@@ -113,7 +113,7 @@
 				{@const f = byName.get(name)}
 				{@const v = side(name)}
 				<a
-					href={f ? hrefOf(f.key) : undefined}
+					href={f?.key ? hrefOf(f.key) : undefined}
 					aria-label="{name}, {seatsOf(name)} {seatsOf(name) === 1 ? 'zetel' : 'zetels'}"
 					onmouseenter={() => (hovered = name)}
 					onmouseleave={() => (hovered = null)}

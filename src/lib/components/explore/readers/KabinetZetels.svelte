@@ -79,7 +79,8 @@
 	 */
 	const vanKabinet = (z: Zaal, stuk: Stuk | null) => {
 		const m = stuk?.factions ? new Map(stuk.factions.map((f) => [f.key, f.coalition])) : null;
-		return (f: Zaal['factions'][number]) => (m ? (m.get(f.key) ?? null) : (f.coalition ?? null));
+		return (f: Zaal['factions'][number]) =>
+			m && f.key ? (m.get(f.key) ?? null) : (f.coalition ?? null);
 	};
 	/** Coalition, opposition or neither per fractie, as the hall marks them. */
 	const kantVan = (z: Zaal, stuk: Stuk | null = null) => {
@@ -88,7 +89,7 @@
 			z.factions.map((f) => [f.key, c(f) === true ? 'voor' : c(f) === false ? 'tegen' : 'other'])
 		) as Record<string, 'voor' | 'tegen' | 'other'>;
 	};
-	const naam = (f: Zaal['factions'][number]) => f.abbreviation ?? f.name ?? f.key;
+	const naam = (f: Zaal['factions'][number]) => f.abbreviation ?? f.name ?? f.key ?? '';
 	const zijden = (z: Zaal, stuk: Stuk | null = null) => {
 		const c = vanKabinet(z, stuk);
 		const fr = [...z.factions].sort((a, b) => b.seats - a.seats);
@@ -169,7 +170,7 @@
 							<div class="zijde" class:zijde--lang={lijst.length > 6}>
 								<h4>{kop} <span class="aantal">{totaal}</span></h4>
 								<ol>
-									{#each lijst as f (f.key)}
+									{#each lijst as f (naam(f))}
 										<li>
 											<span
 												class="stip"

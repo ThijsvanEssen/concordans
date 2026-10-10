@@ -44,8 +44,10 @@
 		let voor = 0;
 		let tegen = 0;
 		for (const f of seated) {
-			if (voteHighlight[f.key] === 'voor') voor += f.seats;
-			else if (voteHighlight[f.key] === 'tegen') tegen += f.seats;
+			const k = f.key;
+			if (!k) continue;
+			if (voteHighlight[k] === 'voor') voor += f.seats;
+			else if (voteHighlight[k] === 'tegen') tegen += f.seats;
 		}
 		return { voor, tegen };
 	});
@@ -161,7 +163,7 @@
 
 	let hovered = $state<SeatFaction | null>(null);
 	const uid = $props.id();
-	const naamVan = (f: SeatFaction) => f.abbreviation ?? f.name ?? f.key;
+	const naamVan = (f: SeatFaction) => f.abbreviation ?? f.name ?? f.key ?? '';
 </script>
 
 <figure class="hemicycle" class:kaal={meubels} aria-label="Zetelverdeling {kamer}">
@@ -172,7 +174,7 @@
 		{#each sectors as sec (sec.faction.id)}
 			<!-- A fractie is a bron: its sector is a link, as its name is everywhere else. -->
 			<a
-				href={hrefOf(sec.faction.key)}
+				href={sec.faction.key ? hrefOf(sec.faction.key) : undefined}
 				aria-label={`${sec.faction.abbreviation ?? sec.faction.key}, ${sec.faction.name ?? ''}, ${seatCount(sec.faction.seats)}`}
 				data-sveltekit-noscroll
 				onmouseenter={() => (hovered = sec.faction)}
@@ -184,7 +186,7 @@
 			</a>
 		{/each}
 		{#each seats as s, i (s.faction.id + ':' + s.x + ':' + s.y)}
-			{@const side = voteHighlight?.[s.faction.key]}
+			{@const side = s.faction.key ? voteHighlight?.[s.faction.key] : undefined}
 			{@const kleur = colorOf ? colorOf(s.faction, i) : s.faction.color}
 			{@const vulling =
 				patroonVan(naamVan(s.faction)) !== 'vol'

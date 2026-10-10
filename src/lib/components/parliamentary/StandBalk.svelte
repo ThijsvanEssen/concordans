@@ -109,7 +109,13 @@
 	});
 </script>
 
-{#if st}
+{#if d.source === 'eerstekamer'}
+	<!-- A dossier from before the Tweede Kamer's data (about 2005), written from the Eerste
+	     Kamer's papers: no procedure of the Tweede Kamer to show, so a mark, not empty boxes. -->
+	<p class="alleen-ek" title="Geen procedure van de Tweede Kamer in de bron">
+		Alleen stukken van de Eerste Kamer
+	</p>
+{:else if st}
 	<section class="stand" aria-label="Stand van zaken">
 		{#if kop}<p class="zin">{st.zin}</p>{/if}
 		<ol class="balk">
@@ -126,6 +132,11 @@
 {/if}
 
 <style>
+	.alleen-ek {
+		margin: var(--s-2) 0 0;
+		font-size: var(--t-meta);
+		color: var(--ink-3);
+	}
 	.stand {
 		display: flex;
 		flex-direction: column;

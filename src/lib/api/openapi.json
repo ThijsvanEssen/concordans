@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.34"
+		"version": "0.79.40"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -3869,6 +3869,18 @@
 						"description": "Only the votes of the Tweede Kamer on which the coalition voted `together`, `split` (no wisselmeerderheid) or as a `wissel`, or which it `carried` or was `decisive` on."
 					},
 					{
+						"name": "unvoted",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Also the decisions that never came to a vote (withdrawn, postponed, held, lapsed: ``passed`` null, the reason in ``decision_kind``); without it only those with an outcome, and the facets count those.",
+							"default": false,
+							"title": "Unvoted"
+						},
+						"description": "Also the decisions that never came to a vote (withdrawn, postponed, held, lapsed: ``passed`` null, the reason in ``decision_kind``); without it only those with an outcome, and the facets count those."
+					},
+					{
 						"name": "limit",
 						"in": "query",
 						"required": false,
@@ -3998,11 +4010,11 @@
 						"schema": {
 							"enum": ["TK", "EK"],
 							"type": "string",
-							"description": "``EK``: the seats of the Eerste Kamer as eerstekamer.nl shows them on the day it was last read, in the order of their size (no plan); without ``date``.",
+							"description": "``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003).",
 							"default": "TK",
 							"title": "Chamber"
 						},
-						"description": "``EK``: the seats of the Eerste Kamer as eerstekamer.nl shows them on the day it was last read, in the order of their size (no plan); without ``date``."
+						"description": "``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003)."
 					}
 				],
 				"responses": {
@@ -4389,6 +4401,167 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/FeedSummaryResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/feed/periods": {
+			"get": {
+				"tags": ["feed", "feed"],
+				"summary": "News feed per period",
+				"description": "The events of ``GET /api/feed`` under the same filters, counted per month (``per=month``) or day (``per=day``, at most 400 days from ``since``), per kind: each kind as the feed's ``kind`` facet counts it over those days. Every kind is counted unless ``kind`` names some. From the events as ``lawgraph feed-events`` last wrote them (``written_at``: after every poll and every night), not the live graph; not ``member`` and not ``tier``.",
+				"operationId": "get_feed_periods_route_api_feed_periods_get",
+				"parameters": [
+					{
+						"name": "since",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or after this day.",
+							"title": "Since"
+						},
+						"description": "On or after this day."
+					},
+					{
+						"name": "until",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+							"description": "On or before this day.",
+							"title": "Until"
+						},
+						"description": "On or before this day."
+					},
+					{
+						"name": "per",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["month", "day"],
+							"type": "string",
+							"default": "month",
+							"title": "Per"
+						}
+					},
+					{
+						"name": "kind",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak.",
+							"title": "Kind"
+						},
+						"description": "Comma-separated: toezegging, Voorstel van wet, Nota van wijziging, Amendement, Motie, stemming, publicatie, inwerkingtreding, Brief regering, uitspraak."
+					},
+					{
+						"name": "cabinet",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Cabinet key: the events of its period (``jetten``).",
+							"title": "Cabinet"
+						},
+						"description": "Cabinet key: the events of its period (``jetten``)."
+					},
+					{
+						"name": "ministry",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "$ref": "#/components/schemas/MinistryKey" }, { "type": "null" }],
+							"title": "Ministry"
+						}
+					},
+					{
+						"name": "dossier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^\\d+(-[A-Za-z0-9()]*)?$" },
+								{ "type": "null" }
+							],
+							"description": "A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020.",
+							"title": "Dossier"
+						},
+						"description": "A dossier label or its start: ``36600`` holds ``36600-VII``, ``37020-`` the chapters of 37020."
+					},
+					{
+						"name": "member",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Member key: what they signed, the commitments they made.",
+							"title": "Member"
+						},
+						"description": "Member key: what they signed, the commitments they made."
+					},
+					{
+						"name": "faction",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Faction key: what its Kamerleden signed for it.",
+							"title": "Faction"
+						},
+						"description": "Faction key: what its Kamerleden signed for it."
+					},
+					{
+						"name": "q",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }],
+							"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them.",
+							"title": "Q"
+						},
+						"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them."
+					},
+					{
+						"name": "chamber",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "enum": ["TK", "EK"], "type": "string" }, { "type": "null" }],
+							"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither.",
+							"title": "Chamber"
+						},
+						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
+					},
+					{
+						"name": "tier",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string" }, { "type": "null" }],
+							"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket.",
+							"title": "Tier"
+						},
+						"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/FeedPeriodsResponse" }
 							}
 						}
 					},
@@ -4842,10 +5015,17 @@
 					},
 					"title_source": {
 						"anyOf": [
-							{ "type": "string", "enum": ["dossier", "document", "activiteit"] },
+							{ "type": "string", "enum": ["dossier", "document", "activiteit", "eerstekamer"] },
 							{ "type": "null" }
 						],
 						"title": "Title Source"
+					},
+					"source": {
+						"type": "string",
+						"enum": ["tk", "eerstekamer"],
+						"title": "Source",
+						"description": "Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer. A dossier without one in the graph (written before this field) is ``tk``: only those of the Eerste Kamer's papers carry ``eerstekamer``.",
+						"default": "tk"
 					},
 					"kind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -5068,6 +5248,24 @@
 				"required": ["id", "key", "identifier"],
 				"title": "AmendingInstrumentDTO",
 				"description": "An amending publication (Stb, Trb, ...) and what it did to a regulation."
+			},
+			"AmendmentChainsDTO": {
+				"properties": {
+					"count": { "type": "integer", "title": "Count" },
+					"aangenomen": { "type": "integer", "title": "Aangenomen", "default": 0 },
+					"verworpen": { "type": "integer", "title": "Verworpen", "default": 0 },
+					"other": {
+						"type": "integer",
+						"title": "Other",
+						"description": "Withdrawn, held, postponed, lapsed, or not voted yet.",
+						"default": 0
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["count"],
+				"title": "AmendmentChainsDTO",
+				"description": "The amendments of a period as the Kamer handles them: each chain of papers that\nreplace each other once, by its outcome."
 			},
 			"AnnexDTO": {
 				"properties": {
@@ -6193,7 +6391,7 @@
 							{ "type": "null" }
 						],
 						"title": "Ek",
-						"description": "The Eerste Kamer on the day its composition was read, when the cabinet was in office then; null otherwise (it has no seats per day)."
+						"description": "The Eerste Kamer, a stretch per change, from the Kiesraad's result of each election through the changes its own pages tell (``checked`` per term); null when none of its stretches overlaps the cabinet."
 					}
 				},
 				"additionalProperties": false,
@@ -6453,7 +6651,11 @@
 			},
 			"CoalitionFactionSeatsDTO": {
 				"properties": {
-					"key": { "type": "string", "title": "Key" },
+					"key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Key",
+						"description": "The key of the faction; null for a faction of the Eerste Kamer of the past, which only its name (``abbreviation``) is known by."
+					},
 					"abbreviation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Abbreviation"
@@ -6477,7 +6679,7 @@
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["key", "seats", "coalition"],
+				"required": ["seats", "coalition"],
 				"title": "CoalitionFactionSeatsDTO",
 				"description": "A faction's seats in a stretch of a cabinet, and whether it is of the coalition."
 			},
@@ -6496,7 +6698,7 @@
 						"type": "string",
 						"enum": ["together", "split", "wissel"],
 						"title": "Pattern",
-						"description": "`together`: every coalition seat on one side; `split`: on both; `wissel`: split, and the side that won holds coalition and opposition seats."
+						"description": "`together`: every coalition seat on one side; `split`: on both; `wissel`: split, and the side with the most coalition seats lost (a wisselmeerderheid)."
 					},
 					"carried": {
 						"type": "boolean",
@@ -6506,7 +6708,7 @@
 					"decisive": {
 						"type": "boolean",
 						"title": "Decisive",
-						"description": "Had the whole coalition voted against the outcome, it would have turned."
+						"description": "The opposition alone would have decided otherwise: the coalition's votes made the outcome."
 					}
 				},
 				"additionalProperties": false,
@@ -7223,6 +7425,10 @@
 						"title": "Dictum",
 						"description": "Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept \u2026 op``, ``spreekt uit``, ``draagt \u2026 op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text."
 					},
+					"motion": {
+						"anyOf": [{ "$ref": "#/components/schemas/DecisionMotionDTO" }, { "type": "null" }],
+						"description": "The motion or amendment the decision was taken on: the oldest paper of the case the vote singled out (``primary_case_kind`` ``Motie`` or ``Amendement``), as its dictum and ``/api/decisions/{key}/document``; else the Kamerstuk it is about (a vote of the Eerste Kamer on a motion). Null for anything else, and for a case without a paper."
+					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Path",
@@ -7337,6 +7543,18 @@
 				"title": "DecisionListResponse",
 				"description": "A page of decisions."
 			},
+			"DecisionMotionDTO": {
+				"properties": {
+					"collection": { "type": "string", "title": "Collection" },
+					"key": { "type": "string", "title": "Key" },
+					"path": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Path" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["collection", "key"],
+				"title": "DecisionMotionDTO",
+				"description": "The paper a decision was taken on: its node and readable address."
+			},
 			"DecisionOutcomeCount": {
 				"properties": {
 					"value": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Value" },
@@ -7424,6 +7642,10 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Dictum",
 						"description": "Of a vote on a motion, what the motion asks or says, as it writes it: the lines from ``verzoekt``, ``roept \u2026 op``, ``spreekt uit``, ``draagt \u2026 op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other vote and for a motion without text."
+					},
+					"motion": {
+						"anyOf": [{ "$ref": "#/components/schemas/DecisionMotionDTO" }, { "type": "null" }],
+						"description": "The motion or amendment the decision was taken on: the oldest paper of the case the vote singled out (``primary_case_kind`` ``Motie`` or ``Amendement``), as its dictum and ``/api/decisions/{key}/document``; else the Kamerstuk it is about (a vote of the Eerste Kamer on a motion). Null for anything else, and for a case without a paper."
 					},
 					"coalition": {
 						"anyOf": [{ "$ref": "#/components/schemas/CoalitionVoteDTO" }, { "type": "null" }],
@@ -7793,19 +8015,30 @@
 			},
 			"DossierCommitteeDTO": {
 				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "Its node: ``committees/<key>``.",
+						"default": ""
+					},
 					"key": { "type": "string", "title": "Key" },
 					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" },
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
-					"id": { "type": "string", "title": "Id" },
 					"abbreviation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Abbreviation"
 					},
-					"role": { "type": "string", "const": "lead", "title": "Role", "default": "lead" }
+					"role": { "type": "string", "const": "lead", "title": "Role", "default": "lead" },
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["key", "id"],
+				"required": ["key", "path"],
 				"title": "DossierCommitteeDTO",
 				"description": "A committee that leads an activity about a dossier."
 			},
@@ -7837,10 +8070,17 @@
 					},
 					"title_source": {
 						"anyOf": [
-							{ "type": "string", "enum": ["dossier", "document", "activiteit"] },
+							{ "type": "string", "enum": ["dossier", "document", "activiteit", "eerstekamer"] },
 							{ "type": "null" }
 						],
 						"title": "Title Source"
+					},
+					"source": {
+						"type": "string",
+						"enum": ["tk", "eerstekamer"],
+						"title": "Source",
+						"description": "Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer. A dossier without one in the graph (written before this field) is ``tk``: only those of the Eerste Kamer's papers carry ``eerstekamer``.",
+						"default": "tk"
 					},
 					"kind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -8416,10 +8656,17 @@
 					},
 					"title_source": {
 						"anyOf": [
-							{ "type": "string", "enum": ["dossier", "document", "activiteit"] },
+							{ "type": "string", "enum": ["dossier", "document", "activiteit", "eerstekamer"] },
 							{ "type": "null" }
 						],
 						"title": "Title Source"
+					},
+					"source": {
+						"type": "string",
+						"enum": ["tk", "eerstekamer"],
+						"title": "Source",
+						"description": "Where the dossier comes from: ``tk`` the Tweede Kamer's data, ``eerstekamer`` written from the papers of the Eerste Kamer because the Tweede Kamer's data has none (its OData begins about 2005), with the title they give (``title_source`` ``eerstekamer``) and no kind, phases or procedure of the Tweede Kamer. A dossier without one in the graph (written before this field) is ``tk``: only those of the Eerste Kamer's papers carry ``eerstekamer``.",
+						"default": "tk"
 					},
 					"kind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -8573,6 +8820,36 @@
 				"type": "object",
 				"title": "EkBillSourceDTO",
 				"description": "The page of the bill on eerstekamer.nl."
+			},
+			"EkFactionMembershipDTO": {
+				"properties": {
+					"faction_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Faction Id",
+						"description": "Null for a faction gone before the composition was first read (no node; its votes are not in the graph)."
+					},
+					"faction_key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Faction Key"
+					},
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation"
+					},
+					"from_date": { "type": "string", "title": "From Date" },
+					"to_date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "To Date",
+						"description": "The last day, inclusive; null while they sit in it."
+					},
+					"chamber": { "type": "string", "title": "Chamber", "default": "EK" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["from_date"],
+				"title": "EkFactionMembershipDTO",
+				"description": "One stretch of a member's membership of a faction of the Eerste Kamer, as their page\non eerstekamer.nl says it (``normalize eerstekamer-persons``)."
 			},
 			"EkFactionVoteDTO": {
 				"properties": {
@@ -9076,8 +9353,12 @@
 			},
 			"FactionSeatsDTO": {
 				"properties": {
-					"id": { "type": "string", "title": "Id" },
-					"key": { "type": "string", "title": "Key" },
+					"id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Id",
+						"description": "Null for a faction of the Eerste Kamer of the past (``date``), which only its name is known by."
+					},
+					"key": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Key" },
 					"abbreviation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Abbreviation"
@@ -9114,7 +9395,7 @@
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["id", "key", "abbreviation", "name", "seats", "order", "path"],
+				"required": ["abbreviation", "name", "seats", "order", "path"],
 				"title": "FactionSeatsDTO",
 				"description": "A party's seats, and where it sits in the hemicycle."
 			},
@@ -9516,6 +9797,66 @@
 				"required": ["collection", "key"],
 				"title": "FeedNodeDTO",
 				"description": "The node an event is: ``/api/nodes/{collection}/{key}`` shows it."
+			},
+			"FeedPeriodDTO": {
+				"properties": {
+					"period": {
+						"type": "string",
+						"title": "Period",
+						"description": "Its first day: ``2026-09-01`` for September."
+					},
+					"total": { "type": "integer", "title": "Total" },
+					"counts": {
+						"additionalProperties": { "type": "integer" },
+						"type": "object",
+						"title": "Counts",
+						"description": "Per kind of event (as ``kind`` of ``GET /api/feed``), those it has."
+					},
+					"amendment_chains": {
+						"anyOf": [{ "$ref": "#/components/schemas/AmendmentChainsDTO" }, { "type": "null" }],
+						"description": "The chains of amendment papers (REVISES) of which any paper is an event under the filters, each once in the period of its first paper, by the outcome of its last (the latest decision with an outcome on its case, else the latest); null when ``kind`` leaves the amendments out."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["period", "total"],
+				"title": "FeedPeriodDTO",
+				"description": "The events of one month or day."
+			},
+			"FeedPeriodsResponse": {
+				"properties": {
+					"per": { "type": "string", "enum": ["month", "day"], "title": "Per" },
+					"since": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Since" },
+					"until": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Until" },
+					"periods": {
+						"items": { "$ref": "#/components/schemas/FeedPeriodDTO" },
+						"type": "array",
+						"title": "Periods",
+						"description": "Oldest first; a period without events is left out."
+					},
+					"partial": {
+						"type": "boolean",
+						"title": "Partial",
+						"description": "The counts took past the budget of the request, or the events were never written: ``periods`` is then empty.",
+						"default": false
+					},
+					"written_at": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Written At",
+						"description": "When the events were last written (``lawgraph feed-events``): the counts lag the feed by at most the time since."
+					},
+					"data_as_of": {
+						"additionalProperties": { "$ref": "#/components/schemas/DataAsOfDTO" },
+						"type": "object",
+						"title": "Data As Of",
+						"description": "Per source: how current the graph is, as in `GET /api/stats`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["per"],
+				"title": "FeedPeriodsResponse",
+				"description": "The events of the feed per month or day."
 			},
 			"FeedPersonDTO": {
 				"properties": {
@@ -11852,6 +12193,12 @@
 						"title": "Faction Memberships",
 						"default": []
 					},
+					"ek_faction_memberships": {
+						"items": { "$ref": "#/components/schemas/EkFactionMembershipDTO" },
+						"type": "array",
+						"title": "Ek Faction Memberships",
+						"description": "Their periods in the factions of the Eerste Kamer, the current first, as their page on eerstekamer.nl says them; empty for none read."
+					},
 					"government_functions": {
 						"items": { "$ref": "#/components/schemas/GovernmentFunctionDTO" },
 						"type": "array",
@@ -11935,6 +12282,12 @@
 						"type": "array",
 						"title": "Faction Memberships",
 						"default": []
+					},
+					"ek_faction_memberships": {
+						"items": { "$ref": "#/components/schemas/EkFactionMembershipDTO" },
+						"type": "array",
+						"title": "Ek Faction Memberships",
+						"description": "Their periods in the factions of the Eerste Kamer, the current first, as their page on eerstekamer.nl says them; empty for none read."
 					},
 					"government_functions": {
 						"items": { "$ref": "#/components/schemas/GovernmentFunctionDTO" },
@@ -12304,9 +12657,8 @@
 						"title": "Agenda Title"
 					},
 					"committee": {
-						"anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
-						"title": "Committee",
-						"description": "Its lead committee (``key``, ``slug``, ``name``); null in plenary."
+						"anyOf": [{ "$ref": "#/components/schemas/TimelineCommitteeDTO" }, { "type": "null" }],
+						"description": "Its lead committee (``key``, ``slug``, ``name``, ``path``); null in plenary."
 					}
 				},
 				"additionalProperties": false,
@@ -12434,6 +12786,11 @@
 					"hall": {
 						"anyOf": [{ "$ref": "#/components/schemas/HallDTO" }, { "type": "null" }],
 						"description": "Of the Eerste Kamer: who sits where in its plenary hall; null for the Tweede Kamer, and when no plan was read."
+					},
+					"checked": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Checked",
+						"description": "Of the Eerste Kamer on a ``date``: whether the term of that day added up (its seats walked from the Kiesraad's result through the changes the Kamer's pages tell); when false, show the seats as uncertain. Null otherwise."
 					}
 				},
 				"additionalProperties": false,
@@ -13134,6 +13491,38 @@
 				"title": "SearchResultItem",
 				"description": "One search hit, typed by collection."
 			},
+			"SeatEventDTO": {
+				"properties": {
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "Eerste Kamer, read from its own pages: ``be\u00ebdiging``, ``vertrek``, ``overstap``, ``afsplitsing``, ``hernoeming``, ``samenvoeging``. Tweede Kamer, derived from the periods of its seats (it gives no reason): ``verkiezing``, ``afsplitsing``, ``overstap``, ``vacature``, ``opvolging``, ``coalitie``."
+					},
+					"date": { "type": "string", "title": "Date" },
+					"words": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Words",
+						"description": "The source's own words (Eerste Kamer: the headline of its news item, or the sentence of a faction's page), verbatim; null for the Tweede Kamer, whose kind is derived."
+					},
+					"basis": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Basis",
+						"description": "``tekst``: the kind is read from the source's words (show the words); ``afgeleid``: derived from the periods of the seats (show the kind as a label)."
+					},
+					"factions": { "items": { "type": "string" }, "type": "array", "title": "Factions" },
+					"members": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Members",
+						"description": "Tweede Kamer: member keys; Eerste Kamer: the name the text gives."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["kind", "date"],
+				"title": "SeatEventDTO",
+				"description": "What began a stretch: a change of the seats or of the coalition."
+			},
 			"SeatStretchDTO": {
 				"properties": {
 					"from_date": { "type": "string", "title": "From Date" },
@@ -13155,6 +13544,17 @@
 						"type": "array",
 						"title": "Factions",
 						"description": "The coalition first, then by seats."
+					},
+					"events": {
+						"items": { "$ref": "#/components/schemas/SeatEventDTO" },
+						"type": "array",
+						"title": "Events",
+						"description": "What began the stretch (none for one that began before the cabinet)."
+					},
+					"checked": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Checked",
+						"description": "Eerste Kamer: whether its term added up (every change's faction known, no faction below zero, no more than 75 seats; the current term also equal to today's composition); when false, show the stretch as uncertain. Null for the Tweede Kamer, whose seats are the source's own."
 					}
 				},
 				"additionalProperties": false,
@@ -13583,15 +13983,27 @@
 			},
 			"TimelineCommitteeDTO": {
 				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "Its node: ``committees/<key>``.",
+						"default": ""
+					},
 					"key": { "type": "string", "title": "Key" },
 					"slug": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Slug" },
-					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" }
+					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["key"],
+				"required": ["key", "path"],
 				"title": "TimelineCommitteeDTO",
-				"description": "The committee that leads an activity."
+				"description": "The committee that leads an activity, with its node (``id``) and its address\n(``/commissies/<slug>``)."
 			},
 			"TimelineDecisionBody": {
 				"properties": {

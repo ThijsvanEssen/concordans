@@ -74,7 +74,9 @@
 				if (weg || z.cabinet?.key !== c.cabinet) return;
 				zaal = {
 					naam: z.cabinet.name ?? c.cabinet,
-					van: new Map(z.factions.map((f) => [f.key, f.coalition ?? null]))
+					van: new Map(
+						z.factions.flatMap((f) => (f.key ? [[f.key, f.coalition ?? null] as const] : []))
+					)
 				};
 			})
 			.catch(() => {});
