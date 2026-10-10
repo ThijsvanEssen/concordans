@@ -706,6 +706,11 @@ describe('canvas cards and halls', () => {
 			'lib/components/explore/IndexView.svelte'
 		])
 			expect(sources.find((s) => s.path === pad)!.text).toMatch(/use:lijstDoel/);
+		// A bron's panes beside its text, past the text's own tab stops (UX-toets 10 Oct, #22).
+		expect(shell).toMatch(/\$paneelSprongen as s/);
+		const explore = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		expect(explore).toMatch(/label: 'Naar Verbonden'/);
+		expect(explore).toMatch(/label: 'Naar het netwerk'/);
 		// One main on a page: AppShell's.
 		const zonderUitleg = (t: string) =>
 			t.replace(/<!--[\s\S]*?-->/g, '').replace(/^\s*\/\/.*$/gm, '');
