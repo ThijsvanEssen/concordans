@@ -414,20 +414,53 @@
 			</p>
 		{:else if verbonden.loading && verbonden.groups.length === 0}
 			<!-- The heads of the groups to come, with their counts, and rows still being read. -->
+			<!-- Each group in its place, with blank rows as many as it will show (#1): what
+			     comes fills them in, and nothing below moves. -->
 			{#each verbonden.preview?.length ? verbonden.preview : [null] as p, i (p?.id ?? i)}
-				<div class="voorlopig" aria-hidden={p ? undefined : 'true'}>
-					{#if p}
-						<p class="voorlopig-kop">
-							{p.label}{#if p.count != null}<span class="voorlopig-aantal"
-									>{formatCount(p.count)}</span
-								>{/if}
-						</p>
-					{:else}
+				{#if p?.section && p.section !== verbonden.preview?.[i - 1]?.section}
+					<h3 class="section">{p.section}</h3>
+				{/if}
+				{#if p}
+					<!-- As the group will stand: its head, and its rows as blank rows (#1). -->
+					<section class="group group--voorlopig" aria-hidden="true">
+						<div class="group__head">
+							<!-- The head as the group's own (heading, button, caret), so its text stands
+							     where the group's will. -->
+							<h3 class="group__label">
+								<button type="button" class="group__knop" tabindex="-1"
+									>{p.label.replace(/\S+$/, '')}<span class="group__slot"
+										>{p.label.match(/\S+$/)?.[0] ?? ''}<Caret open side /></span
+									></button
+								>
+							</h3>
+							<span class="group__count">{p.count != null ? formatCount(p.count) : '…'}</span>
+						</div>
+						{#if p.count && isOpen(`verbonden:${p.id}`, true)}
+							{#if p.noun === 'uitspraken' && (p.count > 5 || (p.id === 'judgments' && onRetry && (selection.collection === 'articles' || selection.collection === 'instruments')))}
+								<!-- The line of the judgments' order and years, as it will stand. -->
+								<div class="group__regel regel--wacht" aria-hidden="true"></div>
+							{/if}
+							<ul
+								class="rows rows--wacht"
+								class:rows--wacht-uitspraken={p.noun === 'uitspraken'}
+								aria-hidden="true"
+							>
+								{#each { length: Math.min(p.count, PREVIEW) } as _, k (k)}
+									<li class="row row--wacht"><span class="wacht-regel"></span></li>
+								{/each}
+							</ul>
+							{#if p.count > PREVIEW}<p class="group__alle wacht-alle" aria-hidden="true">
+									&nbsp;
+								</p>{/if}
+						{/if}
+					</section>
+				{:else}
+					<div class="voorlopig" aria-hidden="true">
 						<span class="balk balk--kop"></span>
-					{/if}
-					<span class="balk"></span>
-					<span class="balk balk--kort"></span>
-				</div>
+						<span class="balk"></span>
+						<span class="balk balk--kort"></span>
+					</div>
+				{/if}
 			{/each}
 			<p class="sr-only" role="status">Verbindingen laden</p>
 		{/if}
@@ -793,20 +826,6 @@
 		padding: var(--s-3) var(--s-4);
 		border-bottom: 1px solid var(--rule);
 	}
-	.voorlopig-kop {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-2);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		color: var(--ink-2);
-	}
-	.voorlopig-aantal {
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-	}
 	.balk {
 		display: block;
 		height: 12px;
@@ -1032,8 +1051,15 @@
 	.group__laag {
 		margin-left: auto;
 		flex: none;
+		/* Outside the line: the head keeps one height with or without it, so the rows below do
+		   not move when it appears with the group's rows (UX-toets e7a2f95, #1: 9 px). */
+		align-self: center;
+		margin-block: calc(-1 * var(--s-2));
 	}
 	/* One line of controls under a group's heading: the order, the year and the court. */
+	.regel--wacht {
+		height: 32px;
+	}
 	.group__regel {
 		display: flex;
 		flex-wrap: wrap;
