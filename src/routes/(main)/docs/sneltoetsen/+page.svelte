@@ -7,7 +7,7 @@
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
 		<div class="stub-eyebrow"><a href="/docs">Documentatie</a>, Sneltoetsen</div>
-		<h1 class="stub-title">Sneltoetsen</h1>
+		<header class="blad__kop"><h1 class="blad__titel">Sneltoetsen</h1></header>
 		<div class="shortcut-table">
 			<div class="shortcut-row">
 				<span class="shortcut-desc">Zoeken</span>

@@ -512,9 +512,9 @@
 <svelte:window onkeydown={onKey} />
 
 <div class="actueel blad blad__indeling">
-	<header class="kop">
+	<header class="blad__kop">
 		<div>
-			<h1 class="title">Actueel</h1>
+			<h1 class="blad__titel">Actueel</h1>
 		</div>
 		<div class="acties">
 			<a class="btn is-groot" href={atomHref} rel="alternate" type="application/atom+xml"
@@ -647,23 +647,8 @@
 		--row-lead: 140px;
 		--row-aside: 150px;
 	}
-	.kop,
 	.regel {
 		grid-column: 1 / -1;
-	}
-	.kop {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: var(--s-3);
-		margin-bottom: var(--s-4);
-	}
-	.title {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
 	}
 	.stand {
 		margin: var(--s-1) 0 0;
@@ -750,9 +735,6 @@
 	}
 
 	@media (max-width: 767px) {
-		.kop {
-			flex-direction: column;
-		}
 		.regel {
 			margin-bottom: var(--s-3);
 		}

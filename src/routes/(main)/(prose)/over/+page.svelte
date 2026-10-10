@@ -6,7 +6,7 @@
 
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
-		<h1 class="stub-title">Over Concordans</h1>
+		<header class="blad__kop"><h1 class="blad__titel">Over Concordans</h1></header>
 		<p class="stub-lede">
 			Concordans is een onafhankelijk onderzoeksproject naar de structuur van het Nederlandse recht.
 		</p>

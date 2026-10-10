@@ -14,8 +14,8 @@
 </script>
 
 <div class="overzicht blad blad__indeling">
-	<header class="kop">
-		<h1 class="titel">Bronnen</h1>
+	<header class="blad__kop">
+		<h1 class="blad__titel">Bronnen</h1>
 	</header>
 
 	<!-- The groups of the page, as a facet column holds its groups: a way to each. -->
@@ -46,17 +46,6 @@
 </div>
 
 <style>
-	/* The frame and grid of Bladeren (AppShell): the heading over both columns. */
-	.kop {
-		grid-column: 1 / -1;
-		margin-bottom: var(--s-4);
-	}
-	.titel {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-h1);
-		font-weight: 600;
-	}
 	/* The column's first line on the line of the first group's heading, under its rule
 	   (Sectie: 2 px and --s-3), as on Gevolgd. */
 	.opzij {

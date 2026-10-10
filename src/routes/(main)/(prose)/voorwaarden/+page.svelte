@@ -7,7 +7,7 @@
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
 		<div class="stub-eyebrow">Over Concordans</div>
-		<h1 class="stub-title">Gebruiksvoorwaarden</h1>
+		<header class="blad__kop"><h1 class="blad__titel">Gebruiksvoorwaarden</h1></header>
 		<p class="stub-lede">
 			Gebruik van Concordans impliceert instemming met onderstaande voorwaarden.
 		</p>

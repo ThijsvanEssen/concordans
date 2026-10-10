@@ -22,7 +22,7 @@
 
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
-		<h1 class="stub-title">Documentatie</h1>
+		<header class="blad__kop"><h1 class="blad__titel">Documentatie</h1></header>
 		<p class="stub-lede">
 			Concordans toont wetten, uitspraken en parlementaire stukken uit officiële bronnen, met de
 			verbindingen ertussen. Waar de gegevens vandaan komen en wat ermee mag, staat bij

@@ -7,7 +7,7 @@
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
 		<div class="stub-eyebrow">Over Concordans</div>
-		<h1 class="stub-title">Privacyverklaring</h1>
+		<header class="blad__kop"><h1 class="blad__titel">Privacyverklaring</h1></header>
 		<p class="stub-lede">
 			Concordans verwerkt zo min mogelijk persoonsgegevens. Deze pagina zegt welke en waarom.
 		</p>

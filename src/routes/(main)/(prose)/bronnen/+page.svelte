@@ -151,7 +151,7 @@
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
 		<div class="stub-eyebrow">Over Concordans</div>
-		<h1 class="stub-title">Bronnen en hergebruik</h1>
+		<header class="blad__kop"><h1 class="blad__titel">Bronnen en hergebruik</h1></header>
 		<p class="stub-lede">
 			Concordans gebruikt alleen officiële bronnen. Deze pagina zegt welke, hoe ver de gegevens gaan
 			en wat er met de teksten en met de verbindingen mag.
