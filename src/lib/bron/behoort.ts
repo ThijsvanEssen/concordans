@@ -104,6 +104,21 @@ export function dossierNummer(props: Record<string, unknown>): string | null {
 	return nummer ? (suffix ? `${nummer}-${suffix}` : nummer) : null;
 }
 
+/**
+ * The Kamers that dealt with a dossier: those of its label, and the Eerste Kamer where its
+ * detail holds papers there (`senate.document_count`) or an outcome there (`ek_outcome`).
+ */
+export function metEersteKamer(
+	kamers: Laag[],
+	d: { senate?: { document_count?: number | null } | null; ek_outcome?: unknown }
+): Laag[] {
+	const ek = (d.senate?.document_count ?? 0) > 0 || !!d.ek_outcome;
+	if (!ek || kamers.some((k) => k.naam === 'Eerste Kamer')) return kamers;
+	return kamers.some((k) => k.naam === 'Tweede Kamer')
+		? [{ soort: 'Kamer', naam: 'Tweede Kamer en Eerste Kamer' }]
+		: [{ soort: 'Kamer', naam: 'Eerste Kamer' }];
+}
+
 /** A neighbour as a layer: its kind in the source's word, its name, its ref. */
 export function laagVan(n: Neighbor, soort: string): Laag {
 	const props = (n.props ?? {}) as Record<string, unknown>;
@@ -418,7 +433,31 @@ export function behoort(
 		case 'dossiers': {
 			// The Kamer it is in. What the bill amends and implements stands in the reader, under
 			// the title, from the dossier's detail (concept 21, Thijs 10 Oct: not above the title).
-			return { regels: [...regel('kamer', 'Behandeld in', kamer())], naast: [], onder: [] };
+			// The label names the Kamer whose data holds the dossier (`TK`); the Eerste Kamer
+			// dealt with it too where the dossier's own detail says so, by its papers there
+			// (`senate`) or its outcome there (`ek_outcome`), source values (UX-toets 10 Oct:
+			// 36600-VII "Behandeld in: Tweede Kamer" while the Eerste Kamer adopted it).
+			const kamers = kamer();
+			// The dossier to ask: its number, else its key (a lookup, not a name).
+			const sleutel = light?.node.key ?? null;
+			const nummer = dossierNummer(props) ?? sleutel;
+			return {
+				regels: [
+					{
+						id: 'kamer',
+						label: 'Behandeld in',
+						lagen: kamers,
+						laad: nummer
+							? () =>
+									getDossier(nummer)
+										.then((d) => metEersteKamer(kamers, d))
+										.catch(() => kamers)
+							: undefined
+					}
+				],
+				naast: [],
+				onder: []
+			};
 		}
 		case 'cases':
 			return {
