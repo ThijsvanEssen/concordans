@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lijstSprong } from '$lib/stores/sprong';
 	import type { Snippet } from 'svelte';
 	import TopBar from './TopBar.svelte';
 	import SearchOverlay from './SearchOverlay.svelte';
@@ -39,6 +40,7 @@
 
 <div class="app-shell">
 	<a href="#main-content" class="skip-link">Naar inhoud</a>
+	{#if $lijstSprong}<a href="#{$lijstSprong}" class="skip-link">Naar de lijst</a>{/if}
 	<TopBar onSearchOpen={() => openSearch()} />
 	<main id="main-content" tabindex="-1" class="app-shell__content">
 		{@render children?.()}
@@ -630,6 +632,10 @@
 	}
 	.skip-link:focus {
 		top: 0;
+	}
+	/* Where a list is jumped to, it shows the focus as any target would: no ring of its own. */
+	:global([tabindex='-1']:focus:not(:focus-visible)) {
+		outline: none;
 	}
 
 	/* ─── Shell ──────────────────────────────────────────────────────────────── */

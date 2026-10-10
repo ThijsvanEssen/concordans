@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lijstDoel } from '$lib/stores/sprong';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
@@ -579,7 +580,8 @@
 		</div>
 	</aside>
 
-	<main class="feed" aria-busy={loading}>
+	<!-- A div: the page has one main, AppShell's. -->
+	<div class="feed" aria-busy={loading} use:lijstDoel>
 		<div class="head">
 			{#if total !== null}
 				<p class="count">
@@ -638,7 +640,7 @@
 				</p>
 			{/if}
 		{/if}
-	</main>
+	</div>
 </div>
 
 <style>

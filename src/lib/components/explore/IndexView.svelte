@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { lijstDoel } from '$lib/stores/sprong';
 	import { naamVan } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { formatDecimal } from '$lib/text/getal';
@@ -2332,6 +2333,7 @@
 				</aside>
 				<div
 					class="results"
+					use:lijstDoel
 					use:rijen={'a.row-title'}
 					aria-busy={loading}
 					style:--row-lead="{columns.leadW}px"
