@@ -155,11 +155,11 @@
 	const zetelsVanKamer = $derived(kamer === 'TK' ? 150 : 75);
 	/** The head figure: the coalition's seats on the day, of the Kamer's. */
 	/**
-	 * The coalition's vacant seats on the stretch (`coalition_vacant`, API 0.79.44, #526); before
-	 * it, the sum of its fracties' own (`factions[].vacant`).
+	 * The coalition's vacant seats on the stretch (`coalition_vacant`, API 0.79.44, #526); an
+	 * API before it gives none, and then the sum of its fracties' own (`factions[].vacant`).
 	 */
 	const coalitieVacant = (s: Stuk) =>
-		(s as Stuk & { coalition_vacant?: number | null }).coalition_vacant ??
+		s.coalition_vacant ??
 		(s.factions ?? []).reduce((n, f) => n + (f.coalition ? (f.vacant ?? 0) : 0), 0);
 	const kop = $derived.by(() => {
 		if (gekozen)
