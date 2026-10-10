@@ -87,24 +87,22 @@
 						id: node.id,
 						at: '',
 						kort,
-						voluit: `${kort}: ${titel}`,
+						voluit: a.title ? `${kort}: ${a.title}` : kort,
 						groep: a.bwb_id ? lawName(a.bwb_id) : kort
 					},
-					cite: citeItems({ kort, voluit: `${kort}: ${titel}` }, permalink(page.url, '')),
+					cite: citeItems(
+						{ kort, voluit: a.title ? `${kort}: ${a.title}` : kort },
+						permalink(page.url, '')
+					),
 					naam: kort
 				}}
 			>
+				<!-- The bijlage names itself once (UX-toets 0.79.43, #30): its number in the kind line
+				     only where the title is a heading of its own; its law stands in the band. -->
 				{#snippet soort()}
-					<KindGlyph collection="annexes" />{bronLabel('annexes')}{a.label ? ` ${a.label}` : ''}
-				{/snippet}
-				{#snippet onderTitel()}
-					{#if a.bwb_id}
-						<p class="law">
-							<BronLink ref={{ collection: 'instruments', key: a.bwb_id.toLowerCase() }}
-								>{lawName(a.bwb_id)}</BronLink
-							>
-						</p>
-					{/if}
+					<KindGlyph collection="annexes" />{bronLabel('annexes')}{a.title && a.label
+						? ` ${a.label}`
+						: ''}
 				{/snippet}
 			</ReaderHead>
 
@@ -176,12 +174,6 @@
 	.error,
 	.empty {
 		margin: 0;
-	}
-	.law {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
 	}
 	.text {
 		display: flex;
