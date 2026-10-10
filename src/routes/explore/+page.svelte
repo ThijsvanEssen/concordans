@@ -1888,6 +1888,14 @@
 		--reader-pad-right: 48px;
 		--reader-max: 790px;
 	}
+	/* One title column for every reader (round 2 of the consistency pass, 10 Oct): a reader
+	   without contents (a dossier, a lid, a stemming) starts where one with contents does,
+	   past the width the contents would take, not in the middle of its wider column. */
+	@media (min-width: 769px) {
+		.explore-read:not(.explore-read--with-nav) .col--measure {
+			--reader-col-left: calc(var(--nav-w) + 5px);
+		}
+	}
 
 	.explore-empty {
 		margin: var(--s-6);
