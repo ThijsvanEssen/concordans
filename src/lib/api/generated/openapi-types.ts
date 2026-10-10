@@ -4137,6 +4137,16 @@ export interface components {
             /** Sections */
             sections?: components["schemas"]["SectionDTO"][];
             /**
+             * Replaces
+             * @description The papers this amended amendment or motion replaces ("ter vervanging van nr. 8", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most.
+             */
+            replaces?: components["schemas"]["PaperRefDTO"][];
+            /**
+             * Replaced By
+             * @description The papers that replace this one (an amended amendment or motion with a new number); empty for most.
+             */
+            replaced_by?: components["schemas"]["PaperRefDTO"][];
+            /**
              * Decisions
              * @description The votes taken on this document, oldest first, each with how every faction (or, on a roll-call, every member) voted: of a motion or an amendment the vote on it, of a bill the votes on the bill. A decision is about the case of an agenda item it names; the document it was taken on is the oldest of that case, as the timeline of a dossier shows it. Empty for any other paper.
              */
@@ -4452,6 +4462,16 @@ export interface components {
             sender?: components["schemas"]["SenderDTO"] | null;
             /** Display Name */
             display_name?: string | null;
+            /**
+             * Replaces
+             * @description The papers this amended amendment or motion replaces ("ter vervanging van nr. 8", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most.
+             */
+            replaces?: components["schemas"]["PaperRefDTO"][];
+            /**
+             * Replaced By
+             * @description The papers that replace this one (an amended amendment or motion with a new number); empty for most.
+             */
+            replaced_by?: components["schemas"]["PaperRefDTO"][];
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -5471,8 +5491,17 @@ export interface components {
             abbreviation: string | null;
             /** Name */
             name: string | null;
-            /** Seats */
+            /**
+             * Seats
+             * @description Its seats: with ``date`` those its members held that day, else the number the Kamer gives.
+             */
             seats: number;
+            /**
+             * Vacant
+             * @description With ``date`` (Tweede Kamer): its seats no member held that day (FractieZetelVacature); with ``seats`` its seats as a cabinet's stretches count them (``/api/cabinets/{key}/seats``). 0 otherwise.
+             * @default 0
+             */
+            vacant: number;
             /**
              * Color
              * @description The colour this Kamer draws the faction in (the first of `colors`), else the party's house colour; null for none.
@@ -8398,6 +8427,18 @@ export interface components {
             buckets?: components["schemas"]["NeighborBucketDTO"][];
         };
         /**
+         * PaperRefDTO
+         * @description Another paper, by its id and its number in its dossier.
+         */
+        PaperRefDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Sequence */
+            sequence?: number | null;
+        };
+        /**
          * ParliamentSeatsResponse
          * @description The seat composition of the Tweede Kamer or the Eerste Kamer.
          */
@@ -9075,17 +9116,26 @@ export interface components {
             to_date: string;
             /**
              * Coalition
-             * @description The seats of the coalition.
+             * @description The seats of the coalition's parties, their vacant ones included (a vacant seat of a faction, FractieZetelVacature, is still its faction's): what a majority is counted in.
              */
             coalition: number;
-            /** Opposition */
+            /**
+             * Opposition
+             * @description The seats of the other parties, their vacant ones included.
+             */
             opposition: number;
             /**
              * Vacant
-             * @description Seats that neither a member nor a vacancy of a faction accounts for; a vacant seat of a faction (FractieZetelVacature) counts among its seats, and for the coalition or the opposition. `coalition`, `opposition` and `vacant` add up to the Kamer.
+             * @description Every seat no member held: the vacant seats of the factions and any seat neither a member nor a vacancy accounts for. The seats held are the Kamer's but these.
              * @default 0
              */
             vacant: number;
+            /**
+             * Coalition Vacant
+             * @description Of `coalition`, the seats no member held (Tweede Kamer).
+             * @default 0
+             */
+            coalition_vacant: number;
             /**
              * Factions
              * @description The coalition first, then by seats.

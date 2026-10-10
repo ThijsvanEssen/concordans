@@ -8145,6 +8145,18 @@
 						"type": "array",
 						"title": "Sections"
 					},
+					"replaces": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaces",
+						"description": "The papers this amended amendment or motion replaces (\"ter vervanging van nr. 8\", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most."
+					},
+					"replaced_by": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaced By",
+						"description": "The papers that replace this one (an amended amendment or motion with a new number); empty for most."
+					},
 					"decisions": {
 						"items": { "$ref": "#/components/schemas/DecisionDTO" },
 						"type": "array",
@@ -8489,6 +8501,18 @@
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
+					},
+					"replaces": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaces",
+						"description": "The papers this amended amendment or motion replaces (\"ter vervanging van nr. 8\", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most."
+					},
+					"replaced_by": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaced By",
+						"description": "The papers that replace this one (an amended amendment or motion with a new number); empty for most."
 					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9589,7 +9613,17 @@
 						"title": "Abbreviation"
 					},
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
-					"seats": { "type": "integer", "title": "Seats" },
+					"seats": {
+						"type": "integer",
+						"title": "Seats",
+						"description": "Its seats: with ``date`` those its members held that day, else the number the Kamer gives."
+					},
+					"vacant": {
+						"type": "integer",
+						"title": "Vacant",
+						"description": "With ``date`` (Tweede Kamer): its seats no member held that day (FractieZetelVacature); with ``seats`` its seats as a cabinet's stretches count them (``/api/cabinets/{key}/seats``). 0 otherwise.",
+						"default": 0
+					},
 					"color": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Color",
@@ -13035,6 +13069,18 @@
 				"title": "NodeNeighborsDTO",
 				"description": "Neighbors returned by /api/nodes/{collection}/{key}."
 			},
+			"PaperRefDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"sequence": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Sequence" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key"],
+				"title": "PaperRefDTO",
+				"description": "Another paper, by its id and its number in its dossier."
+			},
 			"ParliamentSeatsResponse": {
 				"properties": {
 					"chamber": {
@@ -13817,13 +13863,23 @@
 					"coalition": {
 						"type": "integer",
 						"title": "Coalition",
-						"description": "The seats of the coalition."
+						"description": "The seats of the coalition's parties, their vacant ones included (a vacant seat of a faction, FractieZetelVacature, is still its faction's): what a majority is counted in."
 					},
-					"opposition": { "type": "integer", "title": "Opposition" },
+					"opposition": {
+						"type": "integer",
+						"title": "Opposition",
+						"description": "The seats of the other parties, their vacant ones included."
+					},
 					"vacant": {
 						"type": "integer",
 						"title": "Vacant",
-						"description": "Seats that neither a member nor a vacancy of a faction accounts for; a vacant seat of a faction (FractieZetelVacature) counts among its seats, and for the coalition or the opposition. `coalition`, `opposition` and `vacant` add up to the Kamer.",
+						"description": "Every seat no member held: the vacant seats of the factions and any seat neither a member nor a vacancy accounts for. The seats held are the Kamer's but these.",
+						"default": 0
+					},
+					"coalition_vacant": {
+						"type": "integer",
+						"title": "Coalition Vacant",
+						"description": "Of `coalition`, the seats no member held (Tweede Kamer).",
 						"default": 0
 					},
 					"factions": {
