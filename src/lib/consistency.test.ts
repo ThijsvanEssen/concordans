@@ -698,6 +698,22 @@ describe('canvas cards and halls', () => {
 		expect(artikel).toMatch(/\n\t*laterPlek\n/);
 	});
 
+	it('gives a page with a list a second skip link, through AppShell, and one main', () => {
+		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
+		expect(shell).toMatch(/class="skip-link">Naar de lijst<\/a>/);
+		for (const pad of [
+			'routes/(main)/actueel/+page.svelte',
+			'lib/components/explore/IndexView.svelte'
+		])
+			expect(sources.find((s) => s.path === pad)!.text).toMatch(/use:lijstDoel/);
+		// One main on a page: AppShell's.
+		const zonderUitleg = (t: string) =>
+			t.replace(/<!--[\s\S]*?-->/g, '').replace(/^\s*\/\/.*$/gm, '');
+		expect(
+			offenders((t) => /<main\b/.test(zonderUitleg(t)), ['lib/components/layout/AppShell.svelte'])
+		).toEqual([]);
+	});
+
 	it('keeps the canvas and the lists of Bronnen out of the Verkenner’s own chunk', () => {
 		// A reader's first request waits for the Verkenner's chunk: the canvas (GraphView with
 		// graphology) and IndexView come as chunks of their own (213 → 145 kB gz, 10 Oct).
@@ -764,7 +780,9 @@ describe('the keyboard', () => {
 			'lib/components/explore/Hemicycle.svelte a': 'a seat of the hall: its sector in ink',
 			'lib/components/explore/readers/KamerZetels.svelte .doel': 'a seat: its stroke in ink',
 			'lib/onderwerpen/Kruiswoord.svelte .cel.vol:hover, .cel.vol:focus-visible':
-				'a cell of the grid: an inset line in ink'
+				'a cell of the grid: an inset line in ink',
+			"lib/components/layout/AppShell.svelte :global([tabindex='-1']:focus:not(:focus-visible))":
+				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring'
 		};
 		const zonder = sources.flatMap(({ path, text }) =>
 			rules(text)
