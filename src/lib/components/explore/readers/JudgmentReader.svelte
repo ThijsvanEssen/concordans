@@ -3,7 +3,8 @@
 	import { authorCite, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
-	import Bewaar from '$lib/map/Bewaar.svelte';
+	import PlaatsMenu from '$lib/components/articles/PlaatsMenu.svelte';
+	import { kaart } from '$lib/map/map.svelte';
 	import KopActies from './KopActies.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
 	// Reader for judgments: header, summary, participants and the numbered body.
@@ -29,7 +30,8 @@
 	import { sourceName } from '../law-head';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
-	import { once } from '$lib/api/records';
+	import { getNodeFirst, once } from '$lib/api/records';
+	import { conclusieVan, type Laag } from '$lib/bron/behoort';
 	import { korteDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './samenhang';
 
@@ -77,7 +79,22 @@
 	/** The articles outside the dataset named in the head; the rest are counted. */
 	const OUTSIDE_SHOWN = 6;
 
-	let menuFor = $state<string | null>(null);
+	// The menu of an overweging (concept 21, variant B, as a lid's): its number opens it, and a
+	// click on its text, not on a link or a selection.
+	let menu = $state<{ id: string; anker: HTMLElement } | null>(null);
+	const menuFor = $derived(menu?.id ?? null);
+	function openMenu(id: string, anker: HTMLElement) {
+		menu = menu?.id === id ? null : { id, anker };
+	}
+	function opTekst(e: MouseEvent, id: string) {
+		const t = e.target as HTMLElement;
+		if (t.closest('a, button, input, textarea, summary, [role="button"]')) return;
+		if (window.getSelection()?.toString()) return;
+		const anker = (e.currentTarget as HTMLElement)
+			.closest('.reader-para-block')
+			?.querySelector<HTMLElement>('.plaats-marker');
+		if (anker) openMenu(id, anker);
+	}
 
 	let root = $state<HTMLElement | null>(null);
 	const anchor = $derived(anchorOfHash(page.url.hash));
@@ -122,6 +139,22 @@
 		once(`nodes/judgments/${j.key}`, () => getNodeGraph('judgments', j.key, { limit: 50 }))
 			.then((response) => {
 				if (!stale) samenhang = samenhangVan(neighborsOf(response), related);
+			})
+			.catch(() => {});
+		return () => (stale = true);
+	});
+
+	// The conclusie of the A-G or P-G, for the status line: from the light node the band has
+	// asked already (one request for both).
+	let conclusie = $state<Laag | null>(null);
+	$effect(() => {
+		conclusie = null;
+		if (!selection) return;
+		const { collection, key } = selection;
+		let stale = false;
+		getNodeFirst(collection, key)
+			.then((r) => {
+				if (!stale) conclusie = conclusieVan(r);
 			})
 			.catch(() => {});
 		return () => (stale = true);
@@ -178,15 +211,23 @@
 				? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author).full
 				: (j.display_name ?? 'Uitspraak')) + (j.names?.length ? ` (${j.names.join(', ')})` : '')}
 		>
+			<!-- The status line in one sentence: kind, date, case number; the conclusie after it. -->
+			{@const status = [
+				j.decision_kind && !conclusion
+					? j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)
+					: null,
+				judgmentDate,
+				caseNumber
+			].filter(Boolean)}
+			<!-- The status line, with the head's two actions beside it (KopActies). -->
 			<div class="reader-meta-row">
-				{#if j.decision_kind && !conclusion}
-					<span class="reader-meta-item"
-						>{j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)}</span
-					>
-				{/if}
-				{#if judgmentDate}<span class="reader-meta-item">{judgmentDate}</span>{/if}
-				{#if caseNumber}
-					<span class="reader-meta-item">{caseNumber}</span>
+				{#if status.length || conclusie}
+					<p class="reader-status">
+						{#if status.length}{status.join(', ')}.{/if}
+						{#if conclusie}Conclusie: {#if conclusie.ref}<BronLink ref={conclusie.ref}
+									>{conclusie.naam}</BronLink
+								>{:else}{conclusie.naam}{/if}{/if}
+					</p>
 				{/if}
 				{#if selection && j.ecli}
 					{@const kop = judgmentCite(
@@ -368,42 +409,62 @@
 					)}
 					<!-- Every number in one column, whatever its depth; Citeer under it, so the
 					     text of an overweging is as wide as the prose around it. -->
-					<div id={item.id} class="reader-para-block" class:is-open={menuFor === item.id}>
+					{@const bewaarItem =
+						forms && selection && j.ecli
+							? {
+									id: selection.id,
+									at: item.id,
+									kort: forms.kort,
+									voluit: forms.voluit,
+									groep: zaakNaam(
+										judgmentCite(
+											j.ecli,
+											textProp(j.props?.date),
+											textProp(j.props?.court),
+											author
+										).short,
+										j.names
+									)
+								}
+							: null}
+					<!-- Every number in one column, whatever its depth; the number is the
+					     overweging's menu, so the text is as wide as the prose around it. -->
+					<div
+						id={item.id}
+						class="reader-para-block"
+						class:is-open={menuFor === item.id}
+						class:plaats-bewaard={!!bewaarItem && kaart.heeft(bewaarItem)}
+					>
 						<div class="reader-para-num">
-							<span>{item.num}</span>
 							{#if forms}
-								<span class="reader-para-actions">
-									{#if selection && j.ecli}
-										<Bewaar
-											kaal
-											item={{
-												id: selection.id,
-												at: item.id,
-												kort: forms.kort,
-												voluit: forms.voluit,
-												groep: zaakNaam(
-													judgmentCite(
-														j.ecli,
-														textProp(j.props?.date),
-														textProp(j.props?.court),
-														author
-													).short,
-													j.names
-												)
-											}}
-										/>
-									{/if}
-									<CiteMenu
-										items={citeItems(forms, forms.link)}
-										name="{conclusion ? 'punt' : 'overweging'} {item.num}"
-										buttonClass="btn reader-para-btn"
-										onToggle={(open) =>
-											(menuFor = open ? item.id : menuFor === item.id ? null : menuFor)}
-									/>
-								</span>
+								<button
+									type="button"
+									class="plaats-marker"
+									aria-haspopup="menu"
+									aria-expanded={menuFor === item.id}
+									aria-label="{conclusion ? 'Punt' : 'Overweging'} {item.num}: citeren, bewaren"
+									onclick={(e) => openMenu(item.id, e.currentTarget)}>{item.num}</button
+								>
+							{:else}
+								<span>{item.num}</span>
 							{/if}
 						</div>
-						<div class="reader-para-inner">
+						{#if menu && menu.id === item.id && forms}
+							<PlaatsMenu
+								anker={menu.anker}
+								titel={forms.kort}
+								cite={citeItems(forms, forms.link)}
+								tekst={() => item.body}
+								bewaar={bewaarItem}
+								onClose={() => (menu = null)}
+							/>
+						{/if}
+						<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+						<div
+							class="reader-para-inner"
+							class:is-klikbaar={!!forms}
+							onclick={(e) => forms && opTekst(e, item.id)}
+						>
 							{#if item.subTitle}
 								<p class="reader-para-subtitle">{item.subTitle}</p>
 							{/if}
@@ -450,10 +511,12 @@
 		margin-bottom: var(--s-3);
 	}
 
-	.reader-meta-item {
+	/* As the article's status line: Geldend recht, tekst sinds 1 juli 2024. */
+	.reader-status {
+		margin: 0;
 		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+		font-size: var(--t-meta);
+		color: var(--ink);
 	}
 
 	.samenhang {
@@ -751,31 +814,43 @@
 		min-width: 0;
 	}
 
-	.reader-para-actions {
-		opacity: 0;
-		display: flex;
-		gap: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
+	/* The number is the overweging's menu: underlined with ▾ while the overweging is pointed
+	   at or focused (as a lid's number, ArticleText). */
+	.plaats-marker {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		text-align: inherit;
+		cursor: pointer;
 	}
-
-	.reader-para-block:hover .reader-para-actions,
-	.reader-para-block:focus-within .reader-para-actions,
-	.reader-para-block.is-open .reader-para-actions {
-		opacity: 1;
+	.reader-para-block:hover .plaats-marker,
+	.reader-para-block.is-open .plaats-marker,
+	.plaats-marker:focus-visible {
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
-
-	/* Without hover, as on a touch screen, the actions are always there. */
+	.reader-para-block:hover .plaats-marker::after,
+	.reader-para-block.is-open .plaats-marker::after,
+	.plaats-marker:focus-visible::after {
+		content: ' ▾';
+		font-size: 0.7em;
+		color: var(--ink-3);
+		text-decoration: none;
+	}
+	.plaats-marker:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+	.is-klikbaar {
+		cursor: pointer;
+	}
 	@media (hover: none) {
-		:global(.reader-heading__link),
-		.reader-para-actions {
+		:global(.reader-heading__link) {
 			opacity: 1;
 		}
-	}
-
-	:global(.reader-para-btn) {
-		padding: 2px var(--s-2);
-		font-size: var(--t-ui-micro);
 	}
 
 	.reader-para-subtitle {
