@@ -238,7 +238,15 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 	// An article's address names its text: asked at once, beside the lookup and the node,
 	// so the reader finds it waiting (once() shares the request; Thijs, 10 Oct: lazy, the
 	// text first).
-	if (pad.soort === 'artikel') getArticleDetail(pad.wet.toUpperCase(), pad.nummer).catch(() => {});
+	// It names the article's node key too: where it comes before the lookup, the reader
+	// stands on it at once ($lib/bron/kop).
+	if (pad.soort === 'artikel')
+		getArticleDetail(pad.wet.toUpperCase(), pad.nummer)
+			.then((d) => {
+				const href = padHref(pad);
+				if (d.article?.id && !focusVan.has(href)) remember(href, d.article.id);
+			})
+			.catch(() => {});
 	const known = focusOfPad(pad);
 	if (known) return known;
 	const { data, response } = await api.GET('/api/lookup', {
