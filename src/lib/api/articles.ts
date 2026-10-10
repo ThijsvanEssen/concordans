@@ -13,10 +13,14 @@ export const getArticleDetail = (bwbId: string, articleNumber: string) =>
 				params: { path: { bwb_id: bwbId, article_number: articleNumber } }
 			})
 		).then((d) => {
-			if (d.article?.key) adresVan.set(d.article.key.toLowerCase(), { bwbId, articleNumber });
+			if (d.article?.key) onthoudArtikel(d.article.key, bwbId, articleNumber);
 			return d;
 		})
 	);
+
+/** Keep the address of an article under its node key, as a lookup gives it. */
+export const onthoudArtikel = (key: string, bwbId: string, articleNumber: string) =>
+	adresVan.set(key.toLowerCase(), { bwbId, articleNumber });
 
 /**
  * The detail of an article by its node key, where an earlier detail named that key (the

@@ -20,7 +20,7 @@
 // readable address once the bron is known.
 import { SvelteMap } from 'svelte/reactivity';
 import { api, leesAntwoorden } from '$lib/api/client';
-import { getArticleDetail } from '$lib/api/articles';
+import { getArticleDetail, onthoudArtikel } from '$lib/api/articles';
 import { bookNumber } from '$lib/text/bw';
 import { parseNodeId } from '$lib/vocabulary';
 
@@ -248,7 +248,12 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 			})
 			.catch(() => {});
 	const known = focusOfPad(pad);
-	if (known) return known;
+	if (known) {
+		const target = parseNodeId(known);
+		if (pad.soort === 'artikel' && target)
+			onthoudArtikel(target.key, pad.wet.toUpperCase(), pad.nummer);
+		return known;
+	}
 	const { data, response } = await api.GET('/api/lookup', {
 		params: { query: lookupQuery(pad) },
 		signal
@@ -256,6 +261,8 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 	if (response.status === 404) return null;
 	if (!data) throw new Error(`lookup ${response.status}`);
 	const focus = `${data.collection}/${data.key}`;
+	// The reader stands on the article's detail, asked above, while its node is on its way.
+	if (pad.soort === 'artikel') onthoudArtikel(data.key, pad.wet.toUpperCase(), pad.nummer);
 	remember(padHref(pad), focus);
 	return focus;
 }
