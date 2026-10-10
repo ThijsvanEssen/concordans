@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.42"
+		"version": "0.79.44"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -1400,13 +1400,13 @@
 						"required": false,
 						"schema": {
 							"type": "integer",
-							"maximum": 200,
+							"maximum": 500,
 							"minimum": 1,
-							"description": "Neighbors per bucket, not per response.",
+							"description": "Neighbors per bucket, not per response: at most 200 with every prop, 500 with ``props=canvas``.",
 							"default": 30,
 							"title": "Limit"
 						},
-						"description": "Neighbors per bucket, not per response."
+						"description": "Neighbors per bucket, not per response: at most 200 with every prop, 500 with ``props=canvas``."
 					},
 					{
 						"name": "offset",
@@ -1534,11 +1534,13 @@
 						"required": false,
 						"schema": {
 							"type": "integer",
-							"maximum": 1000,
+							"maximum": 2000,
 							"minimum": 1,
+							"description": "The nodes kept: at most 1000, and 2000 with ``depth=1`` (every direct neighbour, \"alles laden\").",
 							"default": 200,
 							"title": "Cap"
-						}
+						},
+						"description": "The nodes kept: at most 1000, and 2000 with ``depth=1`` (every direct neighbour, \"alles laden\")."
 					},
 					{
 						"name": "props",
@@ -2526,6 +2528,32 @@
 							"default": 50,
 							"title": "Limit"
 						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"maximum": 100000,
+							"minimum": 0,
+							"description": "Skip the newest that many votes.",
+							"default": 0,
+							"title": "Offset"
+						},
+						"description": "Skip the newest that many votes."
+					},
+					{
+						"name": "in_office",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean",
+							"description": "Only the votes cast while the member held a post of the government (``in_office`` not empty), before the page is cut.",
+							"default": false,
+							"title": "In Office"
+						},
+						"description": "Only the votes cast while the member held a post of the government (``in_office`` not empty), before the page is cut."
 					}
 				],
 				"responses": {
@@ -4292,6 +4320,20 @@
 						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
 					},
 					{
+						"name": "coalition",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "enum": ["together", "split", "wissel", "decisive"], "type": "string" },
+								{ "type": "null" }
+							],
+							"description": "What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone.",
+							"title": "Coalition"
+						},
+						"description": "What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone."
+					},
+					{
 						"name": "tier",
 						"in": "query",
 						"required": false,
@@ -4485,6 +4527,20 @@
 						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
 					},
 					{
+						"name": "coalition",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "enum": ["together", "split", "wissel", "decisive"], "type": "string" },
+								{ "type": "null" }
+							],
+							"description": "What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone.",
+							"title": "Coalition"
+						},
+						"description": "What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone."
+					},
+					{
 						"name": "tier",
 						"in": "query",
 						"required": false,
@@ -4644,6 +4700,20 @@
 							"title": "Chamber"
 						},
 						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
+					},
+					{
+						"name": "coalition",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "enum": ["together", "split", "wissel", "decisive"], "type": "string" },
+								{ "type": "null" }
+							],
+							"description": "What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone.",
+							"title": "Coalition"
+						},
+						"description": "What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone."
 					},
 					{
 						"name": "tier",
@@ -5015,6 +5085,20 @@
 							"title": "Chamber"
 						},
 						"description": "``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither."
+					},
+					{
+						"name": "coalition",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "enum": ["together", "split", "wissel", "decisive"], "type": "string" },
+								{ "type": "null" }
+							],
+							"description": "What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone.",
+							"title": "Coalition"
+						},
+						"description": "What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone."
 					},
 					{
 						"name": "tier",
@@ -8145,6 +8229,18 @@
 						"type": "array",
 						"title": "Sections"
 					},
+					"replaces": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaces",
+						"description": "The papers this amended amendment or motion replaces (\"ter vervanging van nr. 8\", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most."
+					},
+					"replaced_by": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaced By",
+						"description": "The papers that replace this one (an amended amendment or motion with a new number); empty for most."
+					},
 					"decisions": {
 						"items": { "$ref": "#/components/schemas/DecisionDTO" },
 						"type": "array",
@@ -8489,6 +8585,18 @@
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
+					},
+					"replaces": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaces",
+						"description": "The papers this amended amendment or motion replaces (\"ter vervanging van nr. 8\", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most."
+					},
+					"replaced_by": {
+						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
+						"type": "array",
+						"title": "Replaced By",
+						"description": "The papers that replace this one (an amended amendment or motion with a new number); empty for most."
 					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -9589,7 +9697,17 @@
 						"title": "Abbreviation"
 					},
 					"name": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Name" },
-					"seats": { "type": "integer", "title": "Seats" },
+					"seats": {
+						"type": "integer",
+						"title": "Seats",
+						"description": "Its seats: with ``date`` those its members held that day, else the number the Kamer gives."
+					},
+					"vacant": {
+						"type": "integer",
+						"title": "Vacant",
+						"description": "With ``date`` (Tweede Kamer): its seats no member held that day (FractieZetelVacature); with ``seats`` its seats as a cabinet's stretches count them (``/api/cabinets/{key}/seats``). 0 otherwise.",
+						"default": 0
+					},
 					"color": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Color",
@@ -9623,6 +9741,28 @@
 				"required": ["abbreviation", "name", "seats", "order", "path"],
 				"title": "FactionSeatsDTO",
 				"description": "A party's seats, and where it sits in the hemicycle."
+			},
+			"FeedCoalitionFactionDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"short": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short",
+						"description": "Its abbreviation, else its name."
+					},
+					"choice": {
+						"anyOf": [{ "type": "string", "enum": ["Voor", "Tegen"] }, { "type": "null" }],
+						"title": "Choice",
+						"description": "``Voor`` or ``Tegen``; null when its seats went both ways (a roll call)."
+					},
+					"seats_for": { "type": "integer", "title": "Seats For" },
+					"seats_against": { "type": "integer", "title": "Seats Against" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "seats_for", "seats_against"],
+				"title": "FeedCoalitionFactionDTO",
+				"description": "A faction of the coalition on a vote: how its seats went."
 			},
 			"FeedCommencementDTO": {
 				"properties": {
@@ -9792,6 +9932,12 @@
 						"type": "array",
 						"title": "Chamber",
 						"description": "``TK``, ``EK``; null for a publication or a commencement."
+					},
+					"coalition": {
+						"items": { "$ref": "#/components/schemas/FacetCountDTO" },
+						"type": "array",
+						"title": "Coalition",
+						"description": "What the coalition did on the votes of the Tweede Kamer: ``together``, ``split`` (with ``wissel``), ``wissel``, ``decisive``; a vote counts for each that holds, an event without a coalition vote for none."
 					}
 				},
 				"additionalProperties": false,
@@ -10301,6 +10447,16 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Decision Kind",
 						"description": "Of the Tweede Kamer: its ``BesluitSoort`` as the Kamer writes it (``Stemmen - aangenomen``, ``Stemmen - zonder stemming aannemen``: a hamerstuk, no votes)."
+					},
+					"coalition": {
+						"anyOf": [{ "$ref": "#/components/schemas/CoalitionVoteDTO" }, { "type": "null" }],
+						"description": "Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer."
+					},
+					"coalition_factions": {
+						"items": { "$ref": "#/components/schemas/FeedCoalitionFactionDTO" },
+						"type": "array",
+						"title": "Coalition Factions",
+						"description": "Of the Tweede Kamer: each coalition faction that cast a seat, with its choice, most seats first; empty where ``coalition`` is null."
 					}
 				},
 				"additionalProperties": false,
@@ -12697,6 +12853,11 @@
 						"items": { "$ref": "#/components/schemas/MemberVoteDTO" },
 						"type": "array",
 						"title": "Votes"
+					},
+					"next_offset": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Next Offset",
+						"description": "The ``offset`` of the next page; null when this page was not full (the last one)."
 					}
 				},
 				"additionalProperties": false,
@@ -12849,6 +13010,14 @@
 						"title": "Lid Counts",
 						"description": "Of an article: per lid the edges of the whole bucket cite, how many do (\"\" for those that cite none; an edge that cites two counts for each); null when none of them cites a lid."
 					},
+					"capacity_counts": {
+						"anyOf": [
+							{ "additionalProperties": { "type": "integer" }, "type": "object" },
+							{ "type": "null" }
+						],
+						"title": "Capacity Counts",
+						"description": "Of a member's ``AUTHORED`` (outbound): per capacity they signed in (``meta.capacity``: ``kamerlid``, ``bewindspersoon``, ``overig``; \"\" for none), how many of the whole bucket, not only of its page. Null for every other bucket, with a ``status`` filter, and before the signatures are kept with their capacity."
+					},
 					"items": {
 						"items": { "$ref": "#/components/schemas/NeighborDTO" },
 						"type": "array",
@@ -12924,6 +13093,26 @@
 				"title": "NeighborDTO",
 				"description": "A neighbour with the edge that leads to it, used by the generic node explorer."
 			},
+			"NeighborhoodCollectionDTO": {
+				"properties": {
+					"collection": { "type": "string", "title": "Collection" },
+					"total": {
+						"type": "integer",
+						"title": "Total",
+						"description": "Its neighbours there along the edges walked, of the types asked (from the edges: one that is gone counts too)."
+					},
+					"kept": {
+						"type": "integer",
+						"title": "Kept",
+						"description": "Of those, the ones in `nodes`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["collection", "total", "kept"],
+				"title": "NeighborhoodCollectionDTO",
+				"description": "Of the focal node's own neighbours in one collection: how many, and how many the\nneighbourhood holds under its cap."
+			},
 			"NextActivityDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
@@ -12968,6 +13157,12 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Path",
 						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a node without one."
+					},
+					"lid_counts_pending": {
+						"type": "boolean",
+						"title": "Lid Counts Pending",
+						"description": "Of an article asked with ``limit=1``: its lid counts are being counted, so every ``lid_counts`` is null; a request with a larger ``limit`` waits for them and has them. False otherwise.",
+						"default": false
 					}
 				},
 				"additionalProperties": false,
@@ -13006,6 +13201,12 @@
 						"items": { "$ref": "#/components/schemas/NodeNeighborhoodEdge" },
 						"type": "array",
 						"title": "Edges"
+					},
+					"buckets": {
+						"items": { "$ref": "#/components/schemas/NeighborhoodCollectionDTO" },
+						"type": "array",
+						"title": "Buckets",
+						"description": "Per collection of the focal node's own neighbours (the first level), by name: `total` and `kept`; where `kept` is less, the cap left the rest out (`GET /api/nodes/{collection}/{key}` lists them all)."
 					}
 				},
 				"additionalProperties": false,
@@ -13028,6 +13229,18 @@
 				"required": ["total"],
 				"title": "NodeNeighborsDTO",
 				"description": "Neighbors returned by /api/nodes/{collection}/{key}."
+			},
+			"PaperRefDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"sequence": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Sequence" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key"],
+				"title": "PaperRefDTO",
+				"description": "Another paper, by its id and its number in its dossier."
 			},
 			"ParliamentSeatsResponse": {
 				"properties": {
@@ -13811,13 +14024,23 @@
 					"coalition": {
 						"type": "integer",
 						"title": "Coalition",
-						"description": "The seats of the coalition."
+						"description": "The seats of the coalition's parties, their vacant ones included (a vacant seat of a faction, FractieZetelVacature, is still its faction's): what a majority is counted in."
 					},
-					"opposition": { "type": "integer", "title": "Opposition" },
+					"opposition": {
+						"type": "integer",
+						"title": "Opposition",
+						"description": "The seats of the other parties, their vacant ones included."
+					},
 					"vacant": {
 						"type": "integer",
 						"title": "Vacant",
-						"description": "Seats that neither a member nor a vacancy of a faction accounts for; a vacant seat of a faction (FractieZetelVacature) counts among its seats, and for the coalition or the opposition. `coalition`, `opposition` and `vacant` add up to the Kamer.",
+						"description": "Every seat no member held: the vacant seats of the factions and any seat neither a member nor a vacancy accounts for. The seats held are the Kamer's but these.",
+						"default": 0
+					},
+					"coalition_vacant": {
+						"type": "integer",
+						"title": "Coalition Vacant",
+						"description": "Of `coalition`, the seats no member held (Tweede Kamer).",
 						"default": 0
 					},
 					"factions": {
