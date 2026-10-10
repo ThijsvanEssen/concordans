@@ -14,7 +14,7 @@
 	import CitedText from '$lib/components/articles/CitedText.svelte';
 	import { page } from '$app/state';
 	import { anchorOfHash, landOn, permalink } from '$lib/bron/anchor';
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
 	import {
@@ -145,19 +145,23 @@
 
 	// The conclusie of the A-G or P-G, for the status line: from the light node the band has
 	// asked already (one request for both).
-	let conclusie = $state<Laag | null>(null);
+	// Kept per judgment: the reader's node is replaced under the same id (its head, its light
+	// node, the canvas's), and the line would lose it and get it back each time.
+	let conclusieVoor = $state<{ id: string; laag: Laag | null } | null>(null);
+	const selectieId = $derived(selection?.id ?? null);
 	$effect(() => {
-		conclusie = null;
-		if (!selection) return;
-		const { collection, key } = selection;
+		const id = selectieId;
+		if (!id) return;
+		const { collection, key } = untrack(() => selection!);
 		let stale = false;
 		getNodeFirst(collection, key)
 			.then((r) => {
-				if (!stale) conclusie = conclusieVan(r);
+				if (!stale) conclusieVoor = { id, laag: conclusieVan(r) };
 			})
 			.catch(() => {});
 		return () => (stale = true);
 	});
+	const conclusie = $derived(conclusieVoor?.id === selectieId ? conclusieVoor.laag : null);
 
 	// The participants table shows this many rows before "Alle N partijen tonen".
 	const PARTIES_PREVIEW = 6;

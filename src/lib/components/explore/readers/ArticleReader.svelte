@@ -1,6 +1,6 @@
 <script lang="ts">
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { getExplainedBy, getExplanations } from '$lib/api/records';
+	import { getDossierPapers, getExplainedBy, getExplanations } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -127,31 +127,28 @@
 		}
 
 		let stale = false;
-		const controller = new AbortController();
 		view = { kind: 'loading' };
-		getArticleDetail(bwbId, articleNumber)
-			.then((data) => {
+		// The text and its tekstversies come together, both asked by the address at once: the
+		// status line ("tekst sinds …") stands with the text instead of growing over it after.
+		// Without versions the picker shows the current text alone.
+		const versies = getArticleHistory(bwbId, articleNumber)
+			.then((r) => r.versions ?? [])
+			.catch(() => []);
+		Promise.all([getArticleDetail(bwbId, articleNumber), versies])
+			.then(([data, vs]) => {
 				if (stale) return;
 				// The citation panel reads the law name from this cache.
 				if (data.instrument) {
 					recordInstrument({ bwb_id: bwbId, display_name: data.instrument.display_name });
 				}
+				versions = vs;
 				view = { kind: 'loaded', data };
 			})
 			.catch(() => {
 				if (!stale) view = { kind: 'error', message: 'Artikel kon niet worden geladen.' };
 			});
-		// The versions of the text, for the picker. Empty until the pipeline has run.
-		getArticleHistory(bwbId, articleNumber)
-			.then((r) => {
-				if (!stale) versions = r.versions ?? [];
-			})
-			.catch(() => {
-				// Without versions the picker shows the current text alone.
-			});
 		return () => {
 			stale = true;
-			controller.abort();
 		};
 	});
 
@@ -201,11 +198,9 @@
 				return;
 			}
 			if (!dossier) return;
-			const r = await api.GET('/api/dossiers/{number}/documents', {
-				params: { path: { number: dossier }, query: { limit: 100 } },
-				signal: ac.signal
-			});
-			if (r.response.status === 404) {
+			const r = await getDossierPapers(dossier);
+			if (ac.signal.aborted) return;
+			if (r.status === 404) {
 				missingDossiers = new Set([...missingDossiers, dossier]);
 				return;
 			}
@@ -599,6 +594,33 @@
 						{/if}
 					</span>
 				{/if}
+				<!-- Its toelichting and what is coming, as the last phrases of the status: they come
+				     after the text and fill in without moving it (Orchestrator, 10 Oct). -->
+				{#if explanatory && explanatoryHref}
+					<a
+						class="head__mvt"
+						class:is-open={explanatoryOpen}
+						href={explanatoryHref}
+						data-sveltekit-noscroll
+						aria-expanded={explanatoryOpen}
+						title={explanatoryOpen
+							? 'Sluiten'
+							: `${explanatory.title ?? explanatory.kind ?? 'Toelichting'}: onder het artikel lezen`}
+						>{explanatory.basis === 'wijziging'
+							? 'Memorie van toelichting'
+							: (explanatory.kind ?? 'Toelichting')}{explanatory.firstReading
+							? ', eerste lezing'
+							: ''}<span class="head__mvt-mark" aria-hidden="true"
+							>{explanatoryOpen ? '×' : '↓'}</span
+						></a
+					>
+				{/if}
+				{#if billCount > 0}
+					<a class="head__pending" href={billsHref} data-sveltekit-noscroll
+						><KindGlyph vorm="voorstel" size={12} />{billCount}
+						{billCount === 1 ? 'wetsvoorstel raakt' : 'wetsvoorstellen raken'} dit artikel</a
+					>
+				{/if}
 			{/snippet}
 			{#snippet extra()}
 				{#if wordings.length > 1}
@@ -615,7 +637,7 @@
 			{/snippet}
 			<!-- Where the text came from: the wet that made it, its toelichting, the
 				     earlier texts. -->
-			{#if versionDossiers.length > 0 || explanatory}
+			{#if versionDossiers.length > 0}
 				<div class="head__origin">
 					{#if versionDossiers.length > 0}
 						<span class="head__item"
@@ -627,35 +649,6 @@
 								/>{/each}</span
 						>
 					{/if}
-					{#if explanatory && explanatoryHref}
-						<a
-							class="head__item head__mvt"
-							class:is-open={explanatoryOpen}
-							href={explanatoryHref}
-							data-sveltekit-noscroll
-							aria-expanded={explanatoryOpen}
-							title={explanatoryOpen
-								? 'Sluiten'
-								: `${explanatory.title ?? explanatory.kind ?? 'Toelichting'}: onder het artikel lezen`}
-							>{explanatory.basis === 'wijziging'
-								? 'Memorie van toelichting'
-								: (explanatory.kind ?? 'Toelichting')}{explanatory.firstReading
-								? ', eerste lezing'
-								: ''}<span class="head__mvt-mark" aria-hidden="true"
-								>{explanatoryOpen ? '×' : '↓'}</span
-							></a
-						>
-					{/if}
-				</div>
-			{/if}
-
-			<!-- What is coming: wetsvoorstellen that would change the text. -->
-			{#if billCount > 0}
-				<div class="head__pending">
-					<a href={billsHref} data-sveltekit-noscroll
-						><KindGlyph vorm="voorstel" size={12} />{billCount}
-						{billCount === 1 ? 'wetsvoorstel raakt' : 'wetsvoorstellen raken'} dit artikel</a
-					>
 				</div>
 			{/if}
 		</ReaderHead>
@@ -732,8 +725,7 @@
 <style>
 	/* Under the status (ReaderHead): where the text came from, what is coming, each quieter
 	   than the one before. */
-	.head__origin,
-	.head__pending {
+	.head__origin {
 		position: relative;
 		display: flex;
 		align-items: center;
@@ -787,6 +779,18 @@
 	.head__origin a {
 		color: var(--ink);
 	}
+	/* The toelichting and the bills in the status line: phrases in its letter, in ink. */
+	.head__mvt,
+	.head__pending {
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink);
+	}
+	.head__mvt:hover,
+	.head__pending:hover {
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
+	}
 	.head__mvt-mark {
 		margin-left: var(--s-1);
 		color: var(--ink-3);
@@ -802,11 +806,10 @@
 	}
 	/* The status voorgesteld is the one use of the accent outside links. */
 	/* Information, not a warning: in ink, with the sign of a wetsvoorstel (UX 8 Oct). */
-	.head__pending a {
+	.head__pending {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--s-2);
-		color: var(--ink);
 	}
 	/* A popup hangs under its row, from the row's start, so it never runs off the reader. */
 	/* The versions' popup hangs from the status line (ReaderHead), not from its words. */

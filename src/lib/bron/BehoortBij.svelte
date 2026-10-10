@@ -8,6 +8,7 @@
 	// group asks its rows only when it is opened. On a phone the first line shows, the rest
 	// folds open, in the short names of its bronnen (Awb, Rb. Den Haag 2015), wrapping rather
 	// than cut. Type follows docs/typografie.md: the term rung 6, a bron rung 4.
+	import { untrack } from 'svelte';
 	import { getNodeFirst } from '$lib/api/records';
 	import { getBuckets, type NodeGraph } from '$lib/api/nodes';
 	import type { GraphNode } from '$lib/graph/types';
@@ -19,24 +20,38 @@
 	let { node }: { node: GraphNode } = $props();
 
 	const id = $derived(node.id);
-	let light = $state<NodeGraph | null>(null);
+	// The light node of this bron, kept while the reader's node is replaced under the same id
+	// (its head, its light node, the canvas's): the band stands once, in its final form, not
+	// first without its law and unfolded over two lines. `null` as answer: asked, none came.
+	let light = $state<{ id: string; r: NodeGraph | null } | null>(null);
 	$effect(() => {
-		const { collection, key } = node;
-		void id;
-		light = null;
+		const voor = id;
+		const { collection, key } = untrack(() => node);
 		let gone = false;
 		getNodeFirst(collection, key)
 			.then((r) => {
-				if (!gone) light = r;
+				if (!gone) light = { id: voor, r };
 			})
-			.catch(() => {});
+			.catch(() => {
+				if (!gone) light = { id: voor, r: null };
+			});
 		return () => {
 			gone = true;
 		};
 	});
+	const lichtHier = $derived(light?.id === id ? light : null);
 
+	// The props of the light node under those of the reader's node: a head built from the
+	// bron's detail lacks some (an article's breadcrumb).
 	const band = $derived(
-		behoort(node.collection, (node.raw?.props ?? {}) as Record<string, unknown>, light)
+		behoort(
+			node.collection,
+			{
+				...((lichtHier?.r?.node.props ?? {}) as Record<string, unknown>),
+				...((node.raw?.props ?? {}) as Record<string, unknown>)
+			},
+			lichtHier?.r ?? null
+		)
 	);
 
 	// A line that needs more than the light node: its full form once it has come.
@@ -54,10 +69,16 @@
 				.then((lagen) => {
 					if (voor === id) vol = { ...vol, [r.id]: lagen };
 				})
-				.catch(() => {});
+				.catch(() => {
+					// Failed: the line as the light node gives it.
+					if (voor === id && !controller.signal.aborted) vol = { ...vol, [r.id]: r.lagen };
+				});
 		}
 		return () => controller.abort();
 	});
+	// The band waits for its lines in full (the instances before the eerdere aanleg), so it
+	// stands once, folded, instead of two layers over two lines first.
+	const wacht = $derived(band.regels.some((r) => r.laad && !(r.id in vol)));
 	// A line that waits on its `laad` (Bij wetsvoorstel) stands once it has a layer.
 	const regels = $derived(
 		band.regels.map((r) => ({ ...r, lagen: vol[r.id] ?? r.lagen })).filter((r) => r.lagen.length)
@@ -144,7 +165,9 @@
 	{/if}
 {/snippet}
 
-{#if heeftIets(band)}
+<!-- Drawn once its light node and its lines have answered: the reader keeps a line for it
+     (ReaderFrame). -->
+{#if lichtHier && !wacht && heeftIets(band)}
 	<nav class="behoort" class:uit class:zonder-kern={regels.length === 0} aria-label="Behoort bij">
 		{#if regels.length > 0}
 			<dl class="regels">

@@ -22,7 +22,8 @@ import { SvelteMap } from 'svelte/reactivity';
 import { api, leesAntwoorden } from '$lib/api/client';
 import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
 import { lawArticleList } from '$lib/api/law-articles';
-import { getExplainedBy } from '$lib/api/records';
+import { getDossierPapers, getExplainedBy } from '$lib/api/records';
+import { wordingsOf } from '$lib/text/version-diff';
 import { apiNumber, bookNumber } from '$lib/text/bw';
 import { parseNodeId } from '$lib/vocabulary';
 
@@ -261,7 +262,15 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 				if (d.article?.id && !focusVan.has(href)) remember(href, d.article.id);
 			})
 			.catch(() => {});
-		getArticleHistory(artikel.wet, artikel.nummer).catch(() => {});
+		// Where no EXPLAINS edge names its memorie, the reader looks in the dossier of the wet
+		// that gave its text in force: asked as soon as the tekstversies name it.
+		getArticleHistory(artikel.wet, artikel.nummer)
+			.then((h) => {
+				const w = wordingsOf(h.versions ?? []).at(-1);
+				const dossier = w && w.until === null ? w.first.amended_by?.dossiers?.[0]?.number : null;
+				if (dossier) getDossierPapers(dossier).catch(() => {});
+			})
+			.catch(() => {});
 		lawArticleList(artikel.wet).catch(() => {});
 		getExplainedBy(artikel.wet, artikel.nummer).catch(() => {});
 	}

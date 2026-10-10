@@ -154,7 +154,10 @@
 		padOnbekend = false;
 		if (!p || untrack(() => param('focus'))) return;
 		const ac = new AbortController();
-		lookUp(p, ac.signal)
+		// Untracked: lookUp reads what is remembered (focusOfPad), and a list that comes in
+		// remembers hundreds of addresses; that is no reason to ask again (Sv 143 was asked
+		// twice, 10 Oct).
+		untrack(() => lookUp(p, ac.signal))
 			.then((found) => {
 				if (found || ac.signal.aborted) return;
 				padMissing = `${padName(p)} staat niet in de gegevens.`;
