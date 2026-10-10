@@ -41,7 +41,7 @@
 	import KindReader from '$lib/components/explore/KindReader.svelte';
 	import ReaderFrame from '$lib/components/explore/readers/ReaderFrame.svelte';
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
-	import { serverKop } from '$lib/seo/kop.svelte';
+	import { LADEN_TITEL, serverKop } from '$lib/seo/kop.svelte';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
 	import { WEERGAVE_KEY, type Weergave } from '$lib/components/explore/weergave';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
@@ -948,6 +948,9 @@
 	const pageTitle = $derived.by(() => {
 		if (mode === 'index') return 'Bronnen, Concordans';
 		if (nietGevonden) return 'Niet gevonden, Concordans';
+		// While the next bron is on its way the reader still holds the previous one: its name
+		// would be the new page's (a screen reader announces the title after each step).
+		if (wachtOp || (pad && !focus && !padMissing)) return LADEN_TITEL;
 		const name = selectedNode ? tabTitle(selectedNode) : null;
 		if (name) return `${name}, Concordans`;
 		if (netwerkActive) return 'Netwerk, Concordans';
@@ -983,10 +986,17 @@
 			if (v === null) url.searchParams.delete(k);
 			else url.searchParams.set(k, v);
 		}
-		// The readable address of the focus where it has one: /dossiers/36799?lezen=1.
+		// The readable address of the focus where it has one: /dossiers/36799?lezen=1. An
+		// address still looked up has no focus yet: it keeps its path, or a step (?paneel
+		// dropped) would land on the empty /explore or the remembered netwerk.
 		const f = url.searchParams.get('focus');
 		const props = selectedNode && selectedNode.id === f ? selectedNode.raw?.props : null;
-		void goto(verkennerHref(url.searchParams, page.url.hash, props), {
+		const rest = url.searchParams.toString();
+		const href =
+			!f && pad
+				? `${page.url.pathname}${rest ? `?${rest}` : ''}${page.url.hash}`
+				: verkennerHref(url.searchParams, page.url.hash, props);
+		void goto(href, {
 			replaceState: !push,
 			noScroll: true,
 			keepFocus: true
