@@ -314,6 +314,19 @@ describe('one form for each thing', () => {
 		expect(offenders(rust, buiten(eigen))).toEqual([]);
 	});
 
+	it('opens a row of a list on the bron’s content, with Bewaar on the row (Thijs, 10 Oct)', () => {
+		// One row for Actueel, Gevolgd and Bladeren (IndexRow): what opens is the content
+		// (RijInhoud), the actions are RijActies on the row; no Lees or In het netwerk buttons.
+		const rij = sources.find((s) => s.path === 'lib/components/explore/index/IndexRow.svelte')!;
+		expect(rij.text).toContain('<RijActies');
+		expect(
+			offenders(
+				(t) => /\/>Lees<\/a|>In het netwerk<\/a/.test(t),
+				['lib/components/open/OpenRij.svelte']
+			)
+		).toEqual([]);
+	});
+
 	it('takes every colour in a style from the tokens in AppShell', () => {
 		// A hex or rgb() value in a component is a colour beside the palette. A mask's `black`
 		// is not a colour; the canvas and the fracties' own colours live in TypeScript.

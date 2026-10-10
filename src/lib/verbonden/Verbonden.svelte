@@ -532,7 +532,6 @@
 							{/if}
 						</div>
 					{/if}
-					{#if g.order}<p class="group__caption">{g.order}</p>{/if}
 					<ul class="rows">
 						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
 							{@const id = rowId(row)}
@@ -831,12 +830,6 @@
 		padding: 0 var(--s-4) var(--s-1);
 		font-size: var(--t-micro);
 		color: var(--ink-2);
-	}
-	.group__caption {
-		margin: 0;
-		padding: 0 var(--s-4) var(--s-1);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 	.rows {
 		list-style: none;

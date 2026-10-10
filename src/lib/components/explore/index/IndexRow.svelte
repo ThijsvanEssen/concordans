@@ -12,12 +12,14 @@
 	// 10 Oct: a row has no buttons of its own, a click on the row does it).
 	import type { Snippet } from 'svelte';
 	import { goto } from '$app/navigation';
+	import RijActies from '$lib/components/ui/RijActies.svelte';
+	import { bronLabel, parseNodeId } from '$lib/vocabulary';
 
 	let {
 		title,
 		href,
 		open = false,
-		onToggle = () => {},
+		onToggle,
 		acties = false,
 		bron,
 		member = false,
@@ -25,7 +27,8 @@
 		lead,
 		body,
 		aside,
-		detail
+		detail,
+		bewaar = true
 	}: {
 		title: string;
 		/** Without a link the title is text, and the whole row is the toggle. */
@@ -45,33 +48,52 @@
 		/** Under the title. */
 		body?: Snippet;
 		aside?: Snippet;
+		/** What opens beneath the row: the bron's content. A row with nothing to open passes no
+		 *  `onToggle`, and a click on it goes to the bron (Thijs, 10 Oct). */
 		detail?: Snippet;
+		/** Bewaar on the row (RijActies, as in Verbonden); not where the list is the map itself. */
+		bewaar?: boolean;
 	} = $props();
 
 	const uid = $props.id();
 
-	const direct = $derived(acties && !!href);
+	// Without a toggle the row has nothing to open: a click on it goes to the bron.
+	const direct = $derived((acties || !onToggle) && !!href);
+
+	// The row's Bewaar: the bron it stands for, by its title, under its kind.
+	const item = $derived.by(() => {
+		const doel = bron ? parseNodeId(bron) : null;
+		return bewaar && bron && doel
+			? { id: bron, at: '', kort: title, voluit: title, groep: bronLabel(doel.collection) }
+			: null;
+	});
 
 	// A click after selecting text selects; a click on another control is that control's.
 	function onRowClick(e: MouseEvent) {
 		if (onControl(e)) return;
 		if (window.getSelection()?.toString()) return;
 		if (direct) void goto(href!);
-		else onToggle();
+		else onToggle?.();
 	}
 
 	/** A plain click on the title opens the row; with a modifier it is the link's. With
 	 *  `acties` the title is a plain link: it opens the bron. */
 	const onTitleClick = (e: MouseEvent) => {
 		if (direct) return;
-		terPlekke(e, onToggle);
+		terPlekke(e, () => onToggle?.());
 	};
 </script>
 
 <li class="row-wrap" class:row-wrap--member={member} data-bron={bron}>
 	<!-- The button below is the keyboard's way in; this only widens its target. -->
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-	<div class="row" class:row--on={open} class:row--emphasis={emphasis} onclick={onRowClick}>
+	<div
+		class="row"
+		class:row--on={open}
+		class:row--emphasis={emphasis}
+		data-rij
+		onclick={onRowClick}
+	>
 		{#if !direct}
 			<button
 				type="button"
@@ -91,7 +113,9 @@
 			{/if}
 			{@render body?.()}
 		</div>
-		<div class="row-aside">{@render aside?.()}</div>
+		<div class="row-aside">
+			{@render aside?.()}{#if item}<RijActies naam={title} {item} />{/if}
+		</div>
 	</div>
 	{#if open && detail && !acties}
 		<div class="detail" id="{uid}-detail">{@render detail()}</div>
