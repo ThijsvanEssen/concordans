@@ -229,6 +229,22 @@ describe('one form for each thing', () => {
 		).toEqual([]);
 	});
 
+	it('names the page a subpage belongs to as a crumb: one link, as a reader’s band', () => {
+		const kruimels = sources.flatMap(({ path, text }) =>
+			[...text.matchAll(/<(\w+) class="stub-eyebrow"[^>]*>([\s\S]*?)<\/\1>/g)].map((m) => ({
+				path,
+				tag: m[1],
+				inhoud: m[2]
+			}))
+		);
+		expect(kruimels.length).toBeGreaterThan(0);
+		expect(
+			kruimels
+				.filter((k) => k.tag !== 'nav' || !/^<a href="[^"]+">[^<]+<\/a>$/.test(k.inhoud.trim()))
+				.map((k) => k.path)
+		).toEqual([]);
+	});
+
 	it('styles the parts of a text page once, in AppShell (.blad--tekst)', () => {
 		const delen =
 			/^\.(stub-eyebrow|stub-lede|section|section-title|cite|meta-row|meta-link|updated)(:hover)?$/;

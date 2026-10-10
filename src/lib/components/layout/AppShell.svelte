@@ -373,12 +373,24 @@
 	/* The parts of a text page (/over, /bronnen, /privacy, /voorwaarden, /docs and its pages):
 	   the line over the title, the title, the lede, a section with its heading, a citation,
 	   and the line of links or the date at its foot. */
+	/* The page a subpage belongs to, as a reader's band names its place (ReaderFrame
+	   .kop-rij): one line over the title, its rule under it, the parent a link in ink
+	   (Thijs, 10 Oct: "als kruimel, zoals de band van een lezer"). */
 	:global(.blad--tekst .stub-eyebrow) {
-		margin-bottom: var(--s-4);
+		margin: 0 0 var(--s-4);
+		padding-bottom: var(--s-2);
+		border-bottom: 1px solid var(--rule);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
-		font-weight: 600;
 		color: var(--ink-3);
+	}
+	:global(.blad--tekst .stub-eyebrow a) {
+		color: var(--ink);
+		text-decoration: none;
+	}
+	:global(.blad--tekst .stub-eyebrow a:hover) {
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 	:global(.blad--tekst .stub-lede) {
 		margin-bottom: var(--s-7);
