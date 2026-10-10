@@ -28,7 +28,8 @@
 	import { sourceName } from '../law-head';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { getNodeGraph, neighborsOf } from '$lib/api/nodes';
-	import { once } from '$lib/api/records';
+	import { getNodeFirst, once } from '$lib/api/records';
+	import { conclusieVan, type Laag } from '$lib/bron/behoort';
 	import { korteDatum } from '$lib/text/datum';
 	import { samenhangVan, type Samenhang } from './samenhang';
 
@@ -126,6 +127,22 @@
 		return () => (stale = true);
 	});
 
+	// The conclusie of the A-G or P-G, for the status line: from the light node the band has
+	// asked already (one request for both).
+	let conclusie = $state<Laag | null>(null);
+	$effect(() => {
+		conclusie = null;
+		if (!selection) return;
+		const { collection, key } = selection;
+		let stale = false;
+		getNodeFirst(collection, key)
+			.then((r) => {
+				if (!stale) conclusie = conclusieVan(r);
+			})
+			.catch(() => {});
+		return () => (stale = true);
+	});
+
 	// The participants table shows this many rows before "Alle N partijen tonen".
 	const PARTIES_PREVIEW = 6;
 	let showAllParties = $state(false);
@@ -177,16 +194,23 @@
 				? judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author).full
 				: (j.display_name ?? 'Uitspraak')) + (j.names?.length ? ` (${j.names.join(', ')})` : '')}
 		>
+			<!-- The status line in one sentence: kind, date, case number; the conclusie after it. -->
+			{@const status = [
+				j.decision_kind && !conclusion
+					? j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)
+					: null,
+				judgmentDate,
+				caseNumber
+			].filter(Boolean)}
+			{#if status.length || conclusie}
+				<p class="reader-status">
+					{#if status.length}{status.join(', ')}.{/if}
+					{#if conclusie}Conclusie: {#if conclusie.ref}<BronLink ref={conclusie.ref}
+								>{conclusie.naam}</BronLink
+							>{:else}{conclusie.naam}{/if}{/if}
+				</p>
+			{/if}
 			<div class="reader-meta-row">
-				{#if j.decision_kind && !conclusion}
-					<span class="reader-meta-item"
-						>{j.decision_kind.charAt(0).toUpperCase() + j.decision_kind.slice(1)}</span
-					>
-				{/if}
-				{#if judgmentDate}<span class="reader-meta-item">{judgmentDate}</span>{/if}
-				{#if caseNumber}
-					<span class="reader-meta-item">{caseNumber}</span>
-				{/if}
 				{#if deeplink}
 					<a href={deeplink} target="_blank" rel="noopener noreferrer" class="reader-source-link"
 						>{sourceName(deeplink) ?? 'Officiële tekst'} ↗</a
@@ -450,6 +474,13 @@
 	.reader-meta-item {
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
+
+	.reader-status {
+		margin: 0 0 var(--s-2);
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
 

@@ -123,6 +123,19 @@ function instantie(naam: string): string | undefined {
 }
 
 /**
+ * The conclusie of the A-G or P-G on a judgment (`ADVISES_ON` inbound), from its light node:
+ * "P-G Langemeijer en Wissink, 13 september 2019", for the status line of the reader.
+ */
+export function conclusieVan(light: NodeGraph | null): Laag | null {
+	const n = light?.neighbors.buckets?.find(
+		(b) => b.relation === 'ADVISES_ON' && b.direction === 'inbound' && b.collection === 'judgments'
+	)?.items?.[0];
+	if (!n) return null;
+	const l = laagVan(n, 'Conclusie');
+	return { ...l, naam: l.naam.replace(/^Conclusie\s+/i, '') };
+}
+
+/**
  * The band of a bron from its light node (`limit=1`: every bucket with its total and its
  * first row), which the reader has asked already. A layer above is the first row of a
  * bucket that holds one; a group is a bucket with its total, its rows asked when opened.
@@ -246,8 +259,8 @@ export function behoort(
 		}
 		case 'judgments': {
 			// The procesgang: eerdere aanleg › this uitspraak › hoger beroep or cassatie, the
-			// instances before the eerdere aanleg asked one by one; and the conclusie of the A-G
-			// or P-G. A conclusie names the arrest it is for.
+			// instances before the eerdere aanleg asked one by one. A conclusie names the arrest
+			// it is for.
 			// An eerdere aanleg the source names but the data lacks (`unresolved_appeal_targets`)
 			// stands in the line as text: "Rechtbank Gelderland, 9 juli 2025, 24/6811".
 			const nietInGegevens: Laag[] = (
@@ -332,16 +345,9 @@ export function behoort(
 						'Conclusie bij',
 						eerste('ADVISES_ON', 'outbound', 'judgments', 'Arrest')
 					),
-					...procesgang,
-					...regel(
-						'conclusie',
-						'Conclusie',
-						eerste('ADVISES_ON', 'inbound', 'judgments', 'Conclusie').map((l) => ({
-							...l,
-							// "Conclusie P-G Langemeijer en Wissink" after the term Conclusie.
-							naam: l.naam.replace(/^Conclusie\s+/i, '')
-						}))
-					)
+					// The conclusie of the A-G or P-G stands in the reader's status line
+					// (conclusieVan), not in the band (concept 21, Thijs 10 Oct).
+					...procesgang
 				],
 				naast: [],
 				// More than one appeal against it: the line names the first, the group all.
