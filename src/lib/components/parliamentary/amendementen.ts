@@ -223,6 +223,14 @@ export function dienstregeling(g: Graph, cap = CAP): Dienstregeling {
 	return { rijen, kolommen, metVervanging: vorige.size > 0, afgekapt: g.nodes.length >= cap };
 }
 
+/**
+ * The stop that came to the vote: the paper the decision is about (the last of its row, by
+ * the case of its paper), where the decision has an outcome. A row withdrawn, postponed or
+ * not voted yet has none; its stops all stay open rings.
+ */
+export const inStemming = (r: Rij): string | null =>
+	r.uitslag && r.uitslag.aangenomen !== null ? r.stuk.id : null;
+
 /** The column of a day: the day itself, or its week where the columns are weeks. */
 export const kolomVan = (d: Dienstregeling, dag: string) =>
 	d.kolommen.includes(dag) ? dag : maandagVan(dag);

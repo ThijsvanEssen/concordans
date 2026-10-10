@@ -3,6 +3,7 @@ import {
 	aantalAmendementen,
 	besluitSoort,
 	dienstregeling,
+	inStemming,
 	kiesBesluit,
 	kolomVan,
 	maandagVan,
@@ -82,6 +83,39 @@ describe('dienstregeling van de amendementen', () => {
 		const r = d.rijen.find((x) => x.stuk.nummer === '40')!;
 		expect(r.uitslag).toMatchObject({ aangenomen: true, voor: 92, tegen: 58, datum: '2024-04-25' });
 		expect(d.rijen.find((x) => x.stuk.nummer === '60')!.uitslag).toBeNull();
+	});
+
+	it('de halte die in stemming kwam wordt gevuld, de andere blijven open', () => {
+		const gevuld = (nummer: string) => {
+			const r = d.rijen.find((x) => x.stuk.nummer === nummer)!;
+			return r.haltes.filter((h) => h.id === inStemming(r)).map((h) => h.nummer);
+		};
+		// 22 → 30 → 40, voted as 40: only 40 is filled.
+		expect(gevuld('40')).toEqual(['40']);
+		expect(gevuld('48')).toEqual(['48']);
+		expect(gevuld('6')).toEqual(['6']);
+		// Never voted: every stop open.
+		expect(gevuld('60')).toEqual([]);
+	});
+
+	it('een besluit zonder uitslag (ingetrokken) vult geen halte', () => {
+		const ingetrokken = dienstregeling({
+			nodes: [
+				stuk('70', '2024-04-24', 'k70'),
+				{
+					id: 'decisions/b-k70',
+					key: 'b-k70',
+					props: {
+						primary_case_id: 'k70',
+						date: '2024-04-25',
+						decision_kind: 'Stemmen - ingetrokken'
+					}
+				}
+			],
+			edges: []
+		});
+		expect(ingetrokken.rijen[0].uitslag?.soort).toBe('ingetrokken');
+		expect(inStemming(ingetrokken.rijen[0])).toBeNull();
 	});
 
 	it('samengevoegd waar twee ketens in één stuk uitkomen', () => {

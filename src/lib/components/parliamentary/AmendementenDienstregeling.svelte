@@ -6,14 +6,16 @@
 	// paper appeared (the days cluster, so not to scale), each with its day written out, the
 	// month above the days it holds, a rule where the month changes and a dotted one where
 	// the week does, so the distance can be read. A stop is the paper's number in a ring; the
-	// card on it says the rest. At the end the outcome as a shape and the tally. Where the
-	// column is narrower than the timetable, it scrolls in its own box, the names standing.
+	// card on it says the rest; the stop that came to the vote is filled. At the end the
+	// outcome as a shape and the tally. Where the column is narrower than the timetable, it
+	// scrolls in its own box, the names standing.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Uitkomst from './Uitkomst.svelte';
 	import { maandNaam } from '$lib/text/datum';
 	import {
 		getAmendementen,
+		inStemming,
 		kolomVan,
 		maandagVan,
 		type Dienstregeling,
@@ -152,6 +154,7 @@
 					<tbody>
 						{#each regeling.rijen as r (r.stuk.id)}
 							{@const u = uitkomst(r)}
+							{@const gestemd = inStemming(r)}
 							<tr>
 								<th scope="row" class="naam">
 									{#if r.indiener}
@@ -171,7 +174,7 @@
 											{#each r.haltes.filter((h) => kolomVan(regeling!, h.datum) === k) as h (h.id)}
 												<BronLink
 													ref={h.id}
-													class="nr-ring"
+													class={h.id === gestemd ? 'nr-ring nr-ring--gestemd' : 'nr-ring'}
 													title={h.vervangenDoor
 														? `Vervangen door nr. ${h.vervangenDoor}`
 														: undefined}>{h.nummer}</BronLink
@@ -358,6 +361,8 @@
 		line-height: 18px;
 		text-decoration: none;
 	}
+	/* The stop that came to the vote: filled in ink, the others open rings. */
+	td.dag :global(.nr-ring--gestemd),
 	td.dag :global(.nr-ring:hover),
 	td.dag :global(.nr-ring:focus-visible) {
 		background: var(--ink);
