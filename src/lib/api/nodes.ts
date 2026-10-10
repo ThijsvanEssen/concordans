@@ -133,6 +133,9 @@ export const getNodeNeighborhood = (
 		cap?: number;
 		relations?: string[];
 		nodeTypes?: string[];
+		/** `canvas`: the other nodes with only what the canvas draws (API 0.79.41, #472); an
+		 *  API that does not know it gives every prop, as `full`. */
+		props?: 'full' | 'canvas';
 		signal?: AbortSignal;
 	} = {}
 ) =>
@@ -144,7 +147,8 @@ export const getNodeNeighborhood = (
 					depth: opts.depth ?? 3,
 					cap: opts.cap ?? 200,
 					relations: opts.relations?.join(','),
-					node_types: opts.nodeTypes?.join(',')
+					node_types: opts.nodeTypes?.join(','),
+					props: opts.props
 				}
 			},
 			signal: opts.signal

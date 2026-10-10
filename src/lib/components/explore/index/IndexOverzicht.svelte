@@ -9,6 +9,19 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { collectionOf, INDEX_TABS } from './categories';
+	import { getStats } from '$lib/api/stats';
+	import { formatCount } from '$lib/text/getal';
+
+	// Each kind with the total its own list gives without a filter (`/api/stats` `lists`,
+	// API 0.79.41): the number the list shows when opened. Empty while it is not there.
+	let lijsten = $state<Record<string, number | null>>({});
+	$effect(() => {
+		getStats()
+			.then((s) => (lijsten = (s as { lists?: Record<string, number | null> }).lists ?? {}))
+			.catch(() => {});
+	});
+	/** The key of a kind in `lists`: the bewindspersonen are its name for the ministers. */
+	const telVan = (kind: string) => lijsten[kind === 'ministers' ? 'bewindspersonen' : kind] ?? null;
 
 	const anker = (label: string) => `groep-${label.toLowerCase().replace(/\s+/g, '-')}`;
 </script>
@@ -32,10 +45,11 @@
 			<Sectie titel={groep.label} id={anker(groep.label)} niveau={2} inklapbaar={false}>
 				<ul class="rijen">
 					{#each groep.categories as cat (cat.key)}
+						{@const n = telVan(cat.key)}
 						<li>
 							<a href={indexHref(cat.key)} title={cat.about}
 								><KindGlyph collection={collectionOf(cat.key)} size={14} /><span>{cat.label}</span
-								></a
+								>{#if n !== null}<span class="tel">{formatCount(n)}</span>{/if}</a
 							>
 						</li>
 					{/each}
@@ -94,8 +108,15 @@
 		color: var(--ink);
 		text-decoration: none;
 	}
-	.rijen a:hover span {
+	.rijen a:hover span:not(.tel) {
 		text-decoration: underline;
+	}
+	/* The count at the row's right, a column of figures. */
+	.tel {
+		margin-left: auto;
+		font-size: var(--t-meta);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-3);
 	}
 	@media (max-width: 768px) {
 		.opzij {

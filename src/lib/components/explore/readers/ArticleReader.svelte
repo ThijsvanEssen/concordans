@@ -1,6 +1,6 @@
 <script lang="ts">
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { getExplainedBy } from '$lib/api/records';
+	import { getExplainedBy, getExplanations } from '$lib/api/records';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -240,6 +240,16 @@
 	async function passage(signal: AbortSignal) {
 		const e = explanatory;
 		if (!e || e.at || !bwbId || !articleNumber) return;
+		// The article's own explanations first (one request for every paper); a paper they
+		// do not list is asked on its own.
+		const uitleg = await getExplanations(bwbId, articleNumber).catch(() => null);
+		const hier = uitleg?.items.find((i) => i.document.key === e.key)?.passages[0]?.section_id;
+		if (signal.aborted || explanatory?.key !== e.key) return;
+		if (hier) {
+			explanatory = { ...explanatory, at: hier };
+			return;
+		}
+		if (uitleg) return;
 		const r = await unwrap(
 			api.GET('/api/documents/{key}/passages', {
 				params: { path: { key: e.key }, query: { bwb_id: bwbId, article: articleNumber } },
