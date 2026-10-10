@@ -118,9 +118,12 @@
 		padding-bottom: var(--s-2);
 		border-bottom: 1px solid var(--rule);
 	}
+	/* One line of the band from the start: it comes with the light node, after the text
+	   (where there is no Netwerk/Tekst to hold the row, on a phone). */
 	.kop-rij__band {
 		flex: 1;
 		min-width: 0;
+		min-height: calc(var(--t-meta) * var(--lh-snug));
 	}
 	/* The rule is the row's; the band keeps none of its own. */
 	.kop-rij__band :global(.behoort) {
