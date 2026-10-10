@@ -1350,7 +1350,7 @@ export interface paths {
         };
         /**
          * The node a readable URL names, exactly
-         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).
+         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `annex` (`law` BWB id and `label`, `II`), `case` (a zaak of the Tweede Kamer: its `number`, `2025Z15468`), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).
          */
         get: operations["get_lookup_api_lookup_get"];
         put?: never;
@@ -7172,6 +7172,26 @@ export interface components {
             mention_count: number;
         };
         /**
+         * JudgmentConclusionDTO
+         * @description A conclusion a judgment names (``conclusion_eclis``), as its light node names it.
+         */
+        JudgmentConclusionDTO: {
+            /** Ecli */
+            ecli: string;
+            /**
+             * Author
+             * @description The advocaat-generaal or procureur-generaal, as written.
+             */
+            author?: string | null;
+            /**
+             * Role
+             * @description ``advocaat-generaal`` or ``procureur-generaal``; null unknown.
+             */
+            role?: string | null;
+            /** Date */
+            date?: string | null;
+        };
+        /**
          * JudgmentCoverageResponse
          * @description Which judgments the graph holds: a count of case law is a count of this selection.
          *
@@ -7349,6 +7369,11 @@ export interface components {
              * @description The connected cases (`RELATED_TO`, as between dossiers), both ways: those its summary names ("Samenhang met 24/03860 E", "Zie ook: ECLI:…") and those whose summary names it, each found by its exact ECLI or case number, with the sentence that names it (`links`). Empty for most.
              */
             related_to?: components["schemas"]["RelatedJudgmentDTO"][];
+            /**
+             * Conclusions
+             * @description The conclusions its metadata names (``conclusion_eclis``), in that order, each with the A-G or P-G and the date its light node gives; one the graph lacks is its ECLI alone.
+             */
+            conclusions?: components["schemas"]["JudgmentConclusionDTO"][];
             /**
              * Series
              * @description The other judgments of its series (`judgment.series_id`), in the order of their ECLI numbers; empty outside a series.
@@ -7784,7 +7809,7 @@ export interface components {
             collection: string;
             /**
              * Kind
-             * @description What the node is: `document`, `dossier`, `article`, `instrument`, `judgment`, `commitment`, `faction`, `committee`, `cabinet`.
+             * @description What the node is: `document`, `dossier`, `article`, `annex`, `instrument`, `judgment`, `commitment`, `case`, `faction`, `committee`, `cabinet`.
              */
             kind: string;
             /** Display Name */
@@ -7802,7 +7827,7 @@ export interface components {
             stub: boolean;
             /**
              * Props
-             * @description The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication.
+             * @description The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `bwb_id` and `label` of an annex; `number` of a zaak; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication.
              */
             props?: {
                 [key: string]: unknown;
@@ -8123,6 +8148,11 @@ export interface components {
              * @enum {string}
              */
             vote_source: "member" | "faction";
+            /**
+             * In Office
+             * @description The posts in a cabinet (``government_functions``) the member held on ``date``, oldest first: a vote as (demissionary) bewindspersoon and Kamerlid; empty when none.
+             */
+            in_office?: components["schemas"]["VoteOfficeDTO"][];
         };
         /**
          * MemberVotesResponse
@@ -10041,6 +10071,27 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * VoteOfficeDTO
+         * @description A post in a cabinet a member held on the day of a vote.
+         */
+        VoteOfficeDTO: {
+            /**
+             * Function
+             * @description The post as Rijksoverheid names it.
+             */
+            function?: string | null;
+            /**
+             * Cabinet Key
+             * @description Key of the cabinet node.
+             */
+            cabinet_key?: string | null;
+            /**
+             * Cabinet
+             * @description The cabinet: ``kabinet-Rutte IV``.
+             */
+            cabinet?: string | null;
         };
     };
     responses: never;
@@ -12483,10 +12534,11 @@ export interface operations {
     get_lookup_api_lookup_get: {
         parameters: {
             query: {
-                kind: "document" | "dossier" | "article" | "law" | "judgment" | "publication" | "official" | "commitment" | "faction" | "committee" | "cabinet" | "member";
+                kind: "document" | "dossier" | "article" | "annex" | "law" | "judgment" | "publication" | "official" | "commitment" | "case" | "faction" | "committee" | "cabinet" | "member";
                 dossier?: string | null;
                 number?: string | null;
                 law?: string | null;
+                label?: string | null;
                 ecli?: string | null;
                 series?: string | null;
                 year?: string | null;
