@@ -13,7 +13,6 @@
 		BRON_KIND_LABEL,
 		PRESETS,
 		activePreset,
-		bronnenLabel,
 		toggleKind,
 		withPreset,
 		type BronKind,
@@ -180,7 +179,7 @@
 					klein
 					rechts
 					label="Voorkeuze"
-					tekst={bronnenLabel(filter)}
+					tekst="Voorkeuze"
 					waarde={activePreset(filter)?.id ?? null}
 					opties={PRESETS.map((p) => ({ waarde: p.id, label: p.label }))}
 					onKies={(id) => {
