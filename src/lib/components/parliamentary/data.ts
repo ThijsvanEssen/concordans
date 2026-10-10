@@ -44,21 +44,6 @@ export const getMemberVotes = (key: string) =>
 		)
 	);
 
-/**
- * The votes a member cast while holding a post in a cabinet, all of them page by page
- * (`in_office=true`, `offset`, `next_offset`: API 0.79.44, #534), not those among the
- * newest 50. An API before it ignores `in_office`: the reader keeps only the votes that
- * carry one.
- */
-export const getMemberVotesInOffice = (key: string, offset = 0) =>
-	shared(`votes-in-office/${key}/${offset}`, () =>
-		unwrap(
-			zoekApi.GET('/api/members/{key}/votes', {
-				params: { path: { key }, query: { limit: 200, in_office: true, offset } }
-			})
-		)
-	);
-
 /** Node props are untyped in the schema; this is a string prop, or null. */
 export const str = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 

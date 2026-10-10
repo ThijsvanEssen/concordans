@@ -5,7 +5,6 @@
 	import { formatCount } from '$lib/text/getal';
 	import { vandaag } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
-	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -16,7 +15,7 @@
 	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { getMemberVotes, getMemberVotesInOffice } from '$lib/components/parliamentary/data';
+	import { getMemberVotes } from '$lib/components/parliamentary/data';
 	import {
 		careerOf,
 		currentTitle,
@@ -58,24 +57,6 @@
 	// the person: the reader stands as soon as the person is in, and these fill in.
 	let votes = $state<Schema<'MemberVotesResponse'> | null>(null);
 	let votesLaden = $state(true);
-	/** The votes cast in a post, all pages so far (#534), and the next page's offset. */
-	let ambtStemmen = $state<Vote[]>([]);
-	let ambtVolgende = $state<number | null>(null);
-	let ambtLaden = $state(false);
-	const inAmbt = (v: Vote) => (v.in_office ?? []).length > 0;
-	function laadAmbt(key: string, offset: number, signal?: AbortSignal) {
-		ambtLaden = true;
-		getMemberVotesInOffice(key, offset)
-			.then((r) => {
-				if (signal?.aborted) return;
-				ambtStemmen = [...ambtStemmen, ...r.votes.filter(inAmbt)];
-				ambtVolgende = r.next_offset ?? null;
-			})
-			.catch(() => {})
-			.finally(() => {
-				if (!signal?.aborted) ambtLaden = false;
-			});
-	}
 	/** What the person signed stukken as, and when (AUTHORED meta). */
 	let signatures = $state<Signature[]>([]);
 	let showAllVotes = $state(false);
@@ -107,9 +88,6 @@
 				if (!ac.signal.aborted)
 					view = { kind: 'error', message: 'Persoon kon niet worden geladen.' };
 			});
-		ambtStemmen = [];
-		ambtVolgende = null;
-		laadAmbt(key, 0, ac.signal);
 		getMemberVotes(key)
 			.catch(() => null)
 			.then((v) => {
@@ -363,14 +341,8 @@
 			{#if votesLaden}
 				<p class="laden">Stemmen laden…</p>
 			{:else if votes && votes.votes.length > 0}
-				<!-- The votes as a Kamerlid from the newest 50; those cast in a post all, from their
-				     own request (#534), in blocks of their own after them. -->
-				{@const alle = votes.votes.filter((v) => !inAmbt(v))}
-				{@const ambt = ambtStemmen.length ? ambtStemmen : votes.votes.filter(inAmbt)}
-				{@const groups = [
-					...groupVotes(showAllVotes ? alle : alle.slice(0, VOTES_PREVIEW), alle),
-					...groupVotes(showAllVotes ? ambt : ambt.slice(0, VOTES_PREVIEW), ambt)
-				]}
+				{@const alle = votes.votes}
+				{@const groups = groupVotes(showAllVotes ? alle : alle.slice(0, VOTES_PREVIEW), alle)}
 				<!-- Their own votes on a roll-call, and their faction's while they sat in it (API
 				     0.75, BE-43); a bewindspersoon's are what they voted as a Kamerlid. -->
 				<Sectie
@@ -460,21 +432,9 @@
 							</div>
 						{/each}
 					{/each}
-					{#if (alle.length > VOTES_PREVIEW || ambt.length > VOTES_PREVIEW) && !showAllVotes}
+					{#if alle.length > VOTES_PREVIEW && !showAllVotes}
 						<p class="alle">
-							<AlleN
-								aantal={alle.length + ambt.length}
-								noun="stemmen"
-								onclick={() => (showAllVotes = true)}
-							/>
-						</p>
-					{/if}
-					{#if showAllVotes && ambtVolgende != null}
-						<p class="alle">
-							{#if ambtLaden}<span class="stil">Laden…</span>{:else}<TekstLink
-									onclick={() => laadAmbt(bronKey, ambtVolgende!)}
-									>Meer stemmen in een ambt</TekstLink
-								>{/if}
+							<AlleN aantal={alle.length} noun="stemmen" onclick={() => (showAllVotes = true)} />
 						</p>
 					{/if}
 				</Sectie>
