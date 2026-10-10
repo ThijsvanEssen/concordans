@@ -307,9 +307,16 @@
 
 		{#each lijst as o, n (sleutel(o))}
 			{@const s = standen[vak(o)]}
-			<!-- A topic as a group of the page (Sectie): the ink rule, its words as the heading with
-			     its actions at the right on the same line, what is new under it. -->
-			<Sectie titel={o.termen.join('; ')} id="onderwerp-{n}" niveau={2} inklapbaar={false}>
+			<!-- A topic as a group of the page (Sectie): the ink rule, its words as the heading that
+			     opens and closes it, remembered per topic in this browser (Thijs, 10 Oct), its
+			     actions at the right on the same line, what is new under it. -->
+			<Sectie
+				titel={o.termen.join('; ')}
+				id="onderwerp-{n}"
+				niveau={2}
+				sleutel="onderwerp:{sleutel(o)}"
+				standaardOpen
+			>
 				{#snippet naast()}
 					<span class="acties">
 						{#if !gedeeld.length}
