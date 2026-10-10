@@ -31,6 +31,10 @@
 	import BewindspersoonKop from './BewindspersoonKop.svelte';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
+	import StemOpen from '$lib/components/open/StemOpen.svelte';
+	import { bronHref } from '$lib/bron/href';
+	import { terPlekke } from '$lib/actions/klik';
+	import { onControl } from '$lib/actions/outside';
 	import Feiten from '$lib/components/ui/Feiten.svelte';
 	import Veld from '$lib/components/ui/Veld.svelte';
 
@@ -56,6 +60,9 @@
 	/** What the person signed stukken as, and when (AUTHORED meta). */
 	let signatures = $state<Signature[]>([]);
 	let showAllVotes = $state(false);
+	/** The vote opened in place, by its stemming's key. */
+	let openStem = $state<string | null>(null);
+	const toggleStem = (key: string) => (openStem = openStem === key ? null : key);
 
 	// Raised by Opnieuw, to load the bron again after an error.
 	let attempt = $state(0);
@@ -355,14 +362,36 @@
 								</div>
 								<ul class="vote-list">
 									{#each uniqueBy(rows, (v) => v.decision_id) as v (v.decision_id)}
-										<li class="vote-row">
-											<BronLink
-												ref={{ collection: 'decisions', key: v.decision_key }}
+										{@const open = openStem === v.decision_key}
+										<!-- A vote opens in place with its bar, as a row of Actueel does (UX-toets
+										     10 Oct, #20); the title stays a link, the stemming one step further. -->
+										<li class="vote-row" class:vote-row--open={open}>
+											<!-- The button is the keyboard's way in; this only widens its target. -->
+											<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+											<div
 												class="vote-link"
+												data-rij
+												onclick={(e) => {
+													if (onControl(e) || window.getSelection()?.toString()) return;
+													toggleStem(v.decision_key);
+												}}
 											>
+												<button
+													type="button"
+													class="vote-toggle"
+													aria-expanded={open}
+													aria-label="Details van {stemmingNaam(v.subject)}"
+													onclick={() => toggleStem(v.decision_key)}
+												></button>
 												<!-- The stem beside each row as well: a long group scrolls its head away. -->
 												<span class="vote-mark"><Stem keuze={choice} woord={false} /></span>
-												<span class="vote-subject">{stemmingNaam(v.subject)}</span>
+												<a
+													class="vote-subject"
+													href={bronHref({ collection: 'decisions', key: v.decision_key })}
+													data-sveltekit-noscroll
+													onclick={(e) => terPlekke(e, () => toggleStem(v.decision_key))}
+													>{stemmingNaam(v.subject)}</a
+												>
 												<span class="vote-meta">
 													{#if v.vote_source === 'faction'}<span class="vote-seats"
 															>stem van de fractie{v.party ? ` (${v.party})` : ''}{(v.seats ?? 0) >
@@ -381,7 +410,10 @@
 													{/if}
 													{#if v.date}<span class="vote-date">{formatDate(v.date)}</span>{/if}
 												</span>
-											</BronLink>
+											</div>
+											{#if open}
+												<div class="vote-open"><StemOpen decisionKey={v.decision_key} /></div>
+											{/if}
 										</li>
 									{/each}
 								</ul>
@@ -481,7 +513,8 @@
 	.vote-row {
 		padding: 0;
 	}
-	.vote-list :global(.vote-link) {
+	.vote-link {
+		position: relative;
 		display: grid;
 		grid-template-columns: var(--s-4) minmax(0, 1fr);
 		column-gap: var(--s-2);
@@ -489,15 +522,41 @@
 		padding: var(--s-1);
 		margin: 0 calc(-1 * var(--s-1));
 		border-radius: var(--r-1);
-		text-decoration: none;
+		cursor: pointer;
 	}
-	.vote-list :global(.vote-link:hover) {
+	.vote-link:hover,
+	.vote-row--open .vote-link {
 		background: var(--paper-2);
 	}
-	.vote-list :global(.vote-link:hover .vote-subject) {
-		color: var(--ink);
+	.vote-link:hover .vote-subject {
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
+	}
+	/* The size of the row, under its content: what the keyboard stops on. */
+	.vote-toggle {
+		position: absolute;
+		inset: 0;
+		padding: 0;
+		border: 0;
+		border-radius: inherit;
+		background: transparent;
+		cursor: pointer;
+	}
+	.vote-toggle:focus-visible {
+		outline: 2px solid var(--ink);
+		outline-offset: -2px;
+	}
+	.vote-mark,
+	.vote-subject,
+	.vote-meta {
+		position: relative;
+	}
+	/* Opened: the bar under the row, at the subject's edge. */
+	.vote-open {
+		padding: var(--s-2) var(--s-1) var(--s-3) calc(var(--s-4) + var(--s-2));
+		margin: 0 calc(-1 * var(--s-1));
+		background: var(--paper-2);
+		border-radius: 0 0 var(--r-1) var(--r-1);
 	}
 	.vote-mark {
 		grid-row: 1;
@@ -507,6 +566,7 @@
 	}
 	.vote-subject {
 		grid-column: 2;
+		text-decoration: none;
 		font-family: var(--font-serif);
 		font-size: var(--t-body-2);
 		color: var(--ink);
