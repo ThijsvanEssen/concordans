@@ -186,7 +186,13 @@
 	const groepen = $derived(
 		verbonden.groups
 			.filter(
-				(g) => !isKernGroep(selection.collection, g) && !isInhoudGroep(selection.collection, g)
+				(g) =>
+					!isKernGroep(selection.collection, g) &&
+					!isInhoudGroep(
+						selection.collection,
+						g,
+						(selection.raw?.props ?? {}) as Record<string, unknown>
+					)
 			)
 			.map((g) => {
 				const rows = g.rows.filter(
@@ -201,7 +207,12 @@
 			verbonden.groups.some(
 				(g) =>
 					g.rows.length > 0 &&
-					(isKernGroep(selection.collection, g) || isInhoudGroep(selection.collection, g))
+					(isKernGroep(selection.collection, g) ||
+						isInhoudGroep(
+							selection.collection,
+							g,
+							(selection.raw?.props ?? {}) as Record<string, unknown>
+						))
 			)
 	);
 	// A group whose loader is under way keeps its place with "laden…" (VerbondenState.wachtend).
