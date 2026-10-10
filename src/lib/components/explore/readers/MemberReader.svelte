@@ -97,17 +97,31 @@
 	});
 
 	// Votes are grouped by the faction the member belonged to at the time, so a
-	// switch of faction reads as separate blocks, and then by choice.
-	type PartyGroup = { party: string | null; total: number; byChoice: [string, Vote[]][] };
+	// switch of faction reads as separate blocks, and then by choice. A vote cast while the
+	// member also held a post in a cabinet (`in_office`, API 0.79.43, #508) stands in a block
+	// of its own: "VVD, als minister van Justitie en Veiligheid (kabinet-Rutte IV) en Kamerlid".
+	type PartyGroup = {
+		party: string | null;
+		ambt: string | null;
+		total: number;
+		byChoice: [string, Vote[]][];
+	};
+	/** The posts of a vote in the source's words, oldest first: "minister van … (kabinet-…)". */
+	const ambtVan = (v: Vote) =>
+		(v.in_office ?? [])
+			.map((o) => [o.function, o.cabinet ? `(${o.cabinet})` : null].filter(Boolean).join(' '))
+			.filter(Boolean)
+			.join(' en ') || null;
 	function groupVotes(votes: Vote[]): PartyGroup[] {
-		const byParty = Map.groupBy(votes, (v) => v.party ?? null);
+		const byParty = Map.groupBy(votes, (v) => `${v.party ?? ''}\u0000${ambtVan(v) ?? ''}`);
 		const rank = (choice: string) => {
 			const i = CHOICE_ORDER.indexOf(choice);
 			return i === -1 ? CHOICE_ORDER.length : i;
 		};
 		return [...byParty]
-			.map(([party, rows]) => ({
-				party,
+			.map(([, rows]) => ({
+				party: rows[0].party ?? null,
+				ambt: ambtVan(rows[0]),
 				total: rows.length,
 				byChoice: [...Map.groupBy(rows, (v) => v.choice)].sort(
 					([a], [b]) => rank(a) - rank(b) || a.localeCompare(b)
@@ -317,14 +331,19 @@
 					soort="decisions"
 					aantal={votes.count}
 				>
-					{#each groups as group (group.party)}
-						{#if groups.length > 1}
+					{#each groups as group (`${group.party}|${group.ambt}`)}
+						{#if groups.length > 1 || group.ambt}
 							<div class="party-head">
-								{#if group.party}<NameLink
-										collection="factions"
-										name={group.party}
-										class="party-name"
-									/>{:else}<span class="party-name">Zonder fractie</span>{/if}
+								<span class="party-wie"
+									>{#if group.party}<NameLink
+											collection="factions"
+											name={group.party}
+											class="party-name"
+										/>{:else}<span class="party-name">Zonder fractie</span
+										>{/if}{#if group.ambt}<span class="party-ambt"
+											>, als {group.ambt} en Kamerlid</span
+										>{/if}</span
+								>
 								<span class="party-total">{group.total} stemmen</span>
 							</div>
 						{/if}
@@ -547,6 +566,15 @@
 		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
+	}
+	.party-wie {
+		min-width: 0;
+	}
+	/* The post beside the fraction: in the letter of the line, quieter than the name. */
+	.party-ambt {
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		color: var(--ink-2);
 	}
 	.party-total {
 		font-family: var(--font-serif);
