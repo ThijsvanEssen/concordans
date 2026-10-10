@@ -653,7 +653,9 @@
 		color: var(--ink-2);
 	}
 	.bar__back:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	/* ── The choice: the line through time between two arrows; it stays in view ── */
 	/* ── The choice: the line through time over A and B; it stays in view ── */
@@ -749,7 +751,9 @@
 	}
 	.line__label:hover:not(:disabled) .line__year,
 	.line__label:hover:not(:disabled) .line__what {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.line__label.is-on .line__year,
 	.line__label.is-on .line__what {
@@ -804,7 +808,9 @@
 		color: var(--ink-2);
 	}
 	.formulation__head a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 
 	.history {
@@ -846,7 +852,9 @@
 	}
 	.history__source a:hover,
 	.history__step:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.history__step {
 		padding: 0;
@@ -969,7 +977,9 @@
 		color: var(--ink-2);
 	}
 	.row__no a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	/* Level with the old wording, under its date. */
 	.compare--een .row--rewritten .row__no,
@@ -1166,7 +1176,9 @@
 		cursor: pointer;
 	}
 	.formulation__cite:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.formulation .text {
 		font-family: var(--font-serif);
@@ -1191,7 +1203,9 @@
 		cursor: pointer;
 	}
 	.bwb summary:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.bwb__note {
 		margin: 0 0 var(--s-3);

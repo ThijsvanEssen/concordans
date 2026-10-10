@@ -644,7 +644,9 @@
 		border-bottom: 1px solid var(--rule-strong);
 	}
 	.whole-count a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 
 	/* The peildatum: a list that reads as a line of the head. */
@@ -682,7 +684,7 @@
 	.whole-hist {
 		margin: var(--s-3) 0 0;
 		padding: var(--s-2) var(--s-3);
-		background: var(--accent-soft);
+		background: var(--paper-2);
 		border-radius: var(--r-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
@@ -789,7 +791,7 @@
 	}
 
 	.whole-article-jump:hover .whole-art-num {
-		color: var(--accent);
+		color: var(--ink);
 		text-decoration: underline;
 	}
 

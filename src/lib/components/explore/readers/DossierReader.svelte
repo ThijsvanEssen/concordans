@@ -298,7 +298,9 @@
 		text-underline-offset: 2px;
 	}
 	.effect a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.reading {
 		font-family: var(--font-serif);
@@ -329,7 +331,9 @@
 		text-underline-offset: 2px;
 	}
 	.source a:hover {
-		color: var(--accent);
+		color: var(--ink);
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.laden {
 		margin: var(--s-4) 0 0;

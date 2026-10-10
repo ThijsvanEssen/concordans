@@ -51,7 +51,7 @@
 	}
 	.tekstlink:hover:not(:disabled),
 	.tekstlink:focus-visible {
-		color: var(--accent);
+		color: var(--ink);
 		text-decoration-color: currentColor;
 	}
 </style>

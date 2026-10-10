@@ -20,7 +20,16 @@
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
 	import { allRows, kindTotals, lidCounts, relationCounts } from '$lib/verbonden/view';
-	import { edgeColorFor, edgeStyleFor, hullColorFor, hullDashFor } from './nodeSprites';
+	import {
+		edgeColorFor,
+		edgeStyleFor,
+		hullColorFor,
+		hullDashFor,
+		lijnDikte,
+		pijlLengte,
+		PIJL_BREED
+	} from './nodeSprites';
+	import { EDGE_WEIGHT } from '$lib/graph/types';
 	import { kindOfCollection } from '$lib/graph/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { BRON_KIND_VORM } from '$lib/bron/vormen';
@@ -264,15 +273,23 @@
 					{@const rel = r.relation as Relation}
 					{@const on = !hiddenRelations.has(rel)}
 					<FilterOptie label={r.label} {on} onToggle={() => onToggleRelation(rel)} count={r.count}>
-						{#snippet voor()}<svg width="26" height="8" viewBox="0 0 26 8" aria-hidden="true"
+						{#snippet voor()}
+							<!-- As thick as on the canvas at the default zoom, with its arrowhead. -->
+							{@const dik = Math.max(lijnDikte(EDGE_WEIGHT[rel]), 1.4)}
+							{@const kop = dik * pijlLengte()}
+							<svg width="28" height="12" viewBox="0 0 28 12" aria-hidden="true"
 								><line
 									x1="1"
-									y1="4"
-									x2="25"
-									y2="4"
+									y1="6"
+									x2={27 - kop}
+									y2="6"
 									stroke={edgeColorFor(rel, sourceKind(rel))}
-									stroke-width="1.6"
+									stroke-width={dik}
 									stroke-dasharray={dash(rel)}
+								/><polygon
+									points="{27 - kop},{6 - (kop * PIJL_BREED) / 2} 27,6 {27 - kop},{6 +
+										(kop * PIJL_BREED) / 2}"
+									fill={edgeColorFor(rel, sourceKind(rel))}
 								/></svg
 							>{/snippet}
 					</FilterOptie>

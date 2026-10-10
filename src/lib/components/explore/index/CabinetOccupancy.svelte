@@ -383,7 +383,7 @@
 		background: var(--rule);
 	}
 	.blk:focus-visible {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}
 	.blk--acting {
@@ -448,7 +448,7 @@
 		border-left-style: dotted;
 	}
 	.holder:focus-visible {
-		outline: 2px solid var(--accent);
+		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}
 	.holder-name {
