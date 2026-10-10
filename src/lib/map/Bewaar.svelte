@@ -1,11 +1,12 @@
 <script lang="ts">
-	// Kept in the map, or not: the box of a choice (FilterOptie, docs/bediening.md) beside a lid,
-	// an overweging, a row of Verbonden or in the head of a reader. "Bewaar lid 3" where it
-	// names a place; "Bewaard" once kept. In a reader's head (`metMap`) one control: the box
-	// keeps it at once, the caret beside it the choice of map (Thijs, 10 Oct: not a second
-	// menu beside it). In a lid's quiet line (`tekst`) the word alone.
+	// Kept in the map, or not. As a button (the head of a reader, `knop`; an overweging, `kaal`)
+	// its glyph is the bookmark of RijActies, open or filled: an action, not a box (Thijs, 10
+	// Oct). "Bewaar lid 3" where it names a place; "Bewaard" once kept. In a reader's head
+	// (`metMap`) one control: the button keeps it at once, the caret beside it the choice of
+	// map (Thijs, 10 Oct: not a second menu beside it). As a word among words (`tekst`) the
+	// word alone.
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
-	import Vinkje from '$lib/components/ui/Vinkje.svelte';
+	import Picto from '$lib/components/ui/Picto.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import { kaart } from './map.svelte';
 	import type { MapItem } from './map';
@@ -56,7 +57,9 @@
 			aria-pressed={aan}
 			title={titel}
 			onclick={() => kaart.wissel(item)}
-			><Vinkje {aan} />{aan ? 'Bewaard' : 'Bewaar'}{wat ? ` ${wat}` : ''}</button
+			><Picto naam={aan ? 'bewaard' : 'bewaar'} />{aan ? 'Bewaard' : 'Bewaar'}{wat
+				? ` ${wat}`
+				: ''}</button
 		>
 		{#if metMap}
 			<TekstMenu
@@ -89,7 +92,7 @@
 		aria-pressed={aan}
 		aria-label="{aan ? 'Bewaard' : 'Bewaar'} {item.kort}"
 		title={titel}
-		onclick={() => kaart.wissel(item)}><Vinkje {aan} /></button
+		onclick={() => kaart.wissel(item)}><Picto naam={aan ? 'bewaard' : 'bewaar'} /></button
 	>
 {:else}
 	<FilterOptie
