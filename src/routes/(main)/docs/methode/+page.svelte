@@ -6,7 +6,7 @@
 
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
-		<div class="stub-eyebrow"><a href="/docs">Documentatie</a>, Methode</div>
+		<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/docs">Documentatie</a></nav>
 		<header class="blad__kop"><h1 class="blad__titel">Methode</h1></header>
 		<p class="stub-lede">
 			Concordans haalt elke bron op bij de officiële uitgever en legt de verbindingen ertussen vast.
@@ -123,15 +123,6 @@
 </div>
 
 <style>
-	.stub-eyebrow a {
-		color: inherit;
-		text-decoration: none;
-	}
-
-	.stub-eyebrow a:hover {
-		color: var(--ink);
-	}
-
 	p {
 		font-family: var(--font-serif);
 		font-size: var(--t-body);

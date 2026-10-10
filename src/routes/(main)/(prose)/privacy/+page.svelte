@@ -6,7 +6,7 @@
 
 <div class="page-wrap">
 	<div class="container blad blad--tekst">
-		<div class="stub-eyebrow">Over Concordans</div>
+		<nav class="stub-eyebrow" aria-label="Hoort bij"><a href="/over">Over Concordans</a></nav>
 		<header class="blad__kop"><h1 class="blad__titel">Privacyverklaring</h1></header>
 		<p class="stub-lede">
 			Concordans verwerkt zo min mogelijk persoonsgegevens. Deze pagina zegt welke en waarom.
