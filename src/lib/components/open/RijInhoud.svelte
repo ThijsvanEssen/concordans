@@ -3,8 +3,9 @@
 	// place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
 	// toevoegen"). Nothing the row says already comes back. A motie its dictum, an amendement
 	// its toelichting, another stuk the opening of its text, a stemming its bar, a uitspraak its
-	// inhoudsindicatie; asked when the row opens (one request, shared with the reader). The
-	// reader stays one step further: the title, or Lees verder.
+	// inhoudsindicatie; asked when the row opens (one request, shared with the reader), a motie's
+	// dictum from the feed itself where it has one. A paper the feed says has no text yet does
+	// not open (inhoudVan). The reader stays one step further: the title, or Lees verder.
 	import { getDocument } from '$lib/api/records';
 	import { bronHref } from '$lib/bron/href';
 	import { dictumUit } from '$lib/onderwerpen/richting';
@@ -22,6 +23,12 @@
 		const key = item.node.key;
 		tekst = null;
 		if (s !== 'dictum' && s !== 'toelichting' && s !== 'opening') return;
+		// A motion's dictum as the feed gives it: no request (API 0.79.42).
+		const dictum = s === 'dictum' ? item.dictum?.trim() : null;
+		if (dictum) {
+			tekst = dictum;
+			return;
+		}
 		tekst = 'laden';
 		let stale = false;
 		getDocument(key)

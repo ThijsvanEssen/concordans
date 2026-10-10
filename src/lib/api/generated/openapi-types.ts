@@ -5702,6 +5702,16 @@ export interface components {
              */
             summary?: string | null;
             /**
+             * Has Text
+             * @description Of a paper: whether its text is in the data, so that it can be opened (a new paper's text follows its PDF by days); null for the other kinds.
+             */
+            has_text?: boolean | null;
+            /**
+             * Dictum
+             * @description Of a motion: what it asks or says (``verzoekt de regering …``), as ``GET /api/documents/{key}`` gives it; null for the other kinds and a motion without text.
+             */
+            dictum?: string | null;
+            /**
              * Subkind
              * @description What the source calls it: the document kind (``Motie (gewijzigd/nader)``), for a vote what was voted on (the ``Zaak.Soort``: ``Motie``, ``Amendement``, ``Wetgeving``, ...); null for the other kinds.
              */

@@ -18,6 +18,18 @@ describe('what an opened row shows', () => {
 		expect(inhoudVan(item('toezegging'))).toBeNull();
 	});
 
+	it('does not open a paper whose text is not in the data yet, unless the feed has its dictum', () => {
+		expect(inhoudVan(item('Amendement', { has_text: false }))).toBeNull();
+		expect(inhoudVan(item('Brief regering', { has_text: false }))).toBeNull();
+		expect(inhoudVan(item('Motie', { has_text: false }))).toBeNull();
+		expect(inhoudVan(item('Motie', { has_text: false, dictum: 'verzoekt de regering …' }))).toBe(
+			'dictum'
+		);
+		// null: another kind or not filled yet; it opens as before.
+		expect(inhoudVan(item('Amendement', { has_text: null }))).toBe('toelichting');
+		expect(inhoudVan(item('Motie', { has_text: true }))).toBe('dictum');
+	});
+
 	it('opens a stemming only with a tally, a uitspraak only with its indicatie', () => {
 		expect(inhoudVan(item('stemming'))).toBeNull();
 		expect(inhoudVan(item('stemming', { vote: { tally: { Voor: 80, Tegen: 70 } } as never }))).toBe(
