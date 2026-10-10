@@ -435,8 +435,9 @@
 		// Focus that leaves card and list elsewhere (a click on the page) closes the card.
 		const weg = (e: FocusEvent) => {
 			const naar = e.relatedTarget as Node | null;
-			// Nowhere: a tap on an iPhone, whose click is still to come (see below).
-			if (!naar || kaart.contains(naar)) return;
+			// Nowhere: a tap on an iPhone, whose click is still to come; the canvas: a press on
+			// it, whose click closes the card itself (see below, #38).
+			if (!naar || kaart.contains(naar) || naar === canvasWrap) return;
 			kaart.removeEventListener('focusout', weg);
 			if (naar && opener.closest('ul')?.contains(naar)) return;
 			if (keyNode) {
@@ -1585,7 +1586,7 @@
 				isChosen={(id) => pinnedIds.has(id)}
 				onFocusNode={onKeyNode}
 				onTab={kaartIn}
-				houdt={(el) => !!el && !!citeEl?.contains(el)}
+				houdt={(el) => !!el && (!!citeEl?.contains(el) || el === canvasWrap)}
 				{onToggleChosen}
 				onOpenCluster={(n, opener) => openCluster(n.id, opener)}
 			/>
@@ -1602,7 +1603,12 @@
 					handOpCanvas = true;
 				}}
 				onpointerleave={() => (handOpCanvas = false)}
-				onpointerdown={() => canvasWrap?.focus({ preventScroll: true })}
+				onpointerdown={(e) => {
+					// Not from the card of a bron: its own buttons take the press, and the focus
+					// leaving the list for the canvas closed the card before their click (#38).
+					if ((e.target as Element | null)?.closest?.('.citepanel')) return;
+					canvasWrap?.focus({ preventScroll: true });
+				}}
 				onwheel={() => (fitFollows = false)}
 			>
 				<div class="zoom" role="group" aria-label="Zoomen">
