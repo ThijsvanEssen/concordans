@@ -501,7 +501,12 @@
 					{/each}
 					{#if !showAllVotes && (ambt.length > VOTES_PREVIEW || eigen.length > VOTES_PREVIEW)}
 						<p class="alle">
-							<AlleN aantal={alle.length} noun="stemmen" onclick={() => (showAllVotes = true)} />
+							<!-- No number while more pages follow: the heading says "200+" (FE1, live 0.79.44). -->
+							<AlleN
+								aantal={apart && inOffice!.next != null ? null : alle.length}
+								noun="stemmen"
+								onclick={() => (showAllVotes = true)}
+							/>
 						</p>
 					{:else if showAllVotes && apart && inOffice!.next != null}
 						<p class="alle">
