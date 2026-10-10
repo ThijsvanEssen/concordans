@@ -229,54 +229,67 @@
 
 		{#if stappen.length}
 			<div class="verloop" id="verloop-{kamer}" tabindex="-1">
-				<svg
-					viewBox="0 0 {W} {H}"
-					preserveAspectRatio="none"
-					role="group"
-					aria-label="Zetels van de coalitie in de {kamer === 'TK' ? 'Tweede' : 'Eerste'} Kamer"
-				>
-					{#each stappen as k (k.s.from_date)}
-						<rect
-							x={k.x0}
-							y={k.y}
-							width={k.x1 - k.x0}
-							height={H - PAD - k.y}
-							class="stap"
-							class:gekozen={gekozen === k.s}
-							class:onzeker={k.s.checked === false}
-						/>
-					{/each}
-					<!-- The majority over the steps, so a coalition above it does not hide it. -->
-					<line x1="0" x2={W} y1={yMeerderheid} y2={yMeerderheid} class="lijn" />
-					{#each stappen as k (k.s.from_date)}
-						<!-- A step is the day of the hall below: the whole height is the target. -->
-						<rect
-							x={k.x0}
-							y="0"
-							width={k.x1 - k.x0}
-							height={H}
-							class="doel"
-							role="button"
-							tabindex="0"
-							aria-label="{k.s.coalition} zetels, {formatLongDate(k.s.from_date)}"
-							onclick={() => onKies(k.s)}
-							onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onKies(k.s)}
-							><title>{k.s.coalition} zetels vanaf {formatLongDate(k.s.from_date)}</title></rect
-						>
-					{/each}
-				</svg>
+				<div class="strook">
+					<svg
+						viewBox="0 0 {W} {H}"
+						preserveAspectRatio="none"
+						role="group"
+						aria-label="Zetels van de coalitie in de {kamer === 'TK'
+							? 'Tweede'
+							: 'Eerste'} Kamer, met een lijn op de meerderheid van {meerderheid}"
+					>
+						{#each stappen as k (k.s.from_date)}
+							<rect
+								x={k.x0}
+								y={k.y}
+								width={k.x1 - k.x0}
+								height={H - PAD - k.y}
+								class="stap"
+								class:gekozen={gekozen === k.s}
+								class:onzeker={k.s.checked === false}
+							/>
+						{/each}
+						<!-- The majority over the steps, so a coalition above it does not hide it. -->
+						<line x1="0" x2={W} y1={yMeerderheid} y2={yMeerderheid} class="lijn" />
+						{#each stappen as k (k.s.from_date)}
+							<!-- A step is the day of the hall below: the whole height is the target. -->
+							<rect
+								x={k.x0}
+								y="0"
+								width={k.x1 - k.x0}
+								height={H}
+								class="doel"
+								role="button"
+								tabindex="0"
+								aria-label="{k.s.coalition} zetels, {formatLongDate(k.s.from_date)}"
+								onclick={() => onKies(k.s)}
+								onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onKies(k.s)}
+								><title>{k.s.coalition} zetels vanaf {formatLongDate(k.s.from_date)}</title></rect
+							>
+						{/each}
+					</svg>
+					<!-- The majority named at its line, not in a sentence under it (UX-toets 10 Oct, #17). -->
+					<span class="lijn-naam" style:top="{(yMeerderheid / H) * 100}%" aria-hidden="true"
+						>meerderheid {meerderheid}</span
+					>
+				</div>
 				<!-- The period's ends under its ends; what the strip shows as a caption at the left
 				     edge, as under the hall. -->
 				<p class="as">
 					<span>{van ? korteDatum(van) : ''}</span>
 					<span>{eind === vandaag() ? 'nu' : korteDatum(eind)}</span>
 				</p>
-				<p class="onderschrift">
-					{#if gekozen}<b>{stapZin(gekozen)}</b>{#each wijzigingen as w, i (i)}{i ? '; ' : ' '}<span
+				{#if gekozen}
+					<p class="onderschrift">
+						<b>{stapZin(gekozen)}</b>{#each wijzigingen as w, i (i)}{i ? '; ' : ' '}<span
 								class="wijziging">{w.woorden ?? w.soort}</span
-							>{#if w.wie}{` ${w.wie}`}{/if}{/each}{`${wijzigingen.length ? (gekozen.checked === false ? ' (onzeker).' : '.') : ''} `}{/if}De
-					lijn is de meerderheid van {meerderheid} zetels.
-				</p>
+							>{#if w.wie}{` ${w.wie}`}{/if}{/each}{wijzigingen.length
+							? gekozen.checked === false
+								? ' (onzeker).'
+								: '.'
+							: ''}
+					</p>
+				{/if}
 				{#if onzeker}
 					<p class="onderschrift">
 						De telling van deze termijn sloot niet; de zetels zijn onzeker.
@@ -500,6 +513,22 @@
 		display: block;
 		width: 100%;
 		height: 72px;
+	}
+	.strook {
+		position: relative;
+	}
+	/* The majority's name at the right end, just above its line. */
+	.lijn-naam {
+		position: absolute;
+		right: 0;
+		transform: translateY(calc(-100% - 2px));
+		padding-left: var(--s-1);
+		background: var(--paper);
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		line-height: 1;
+		color: var(--ink);
+		pointer-events: none;
 	}
 	/* Edge to edge: no seam between two stretches. */
 	.stap {

@@ -275,6 +275,19 @@ describe('metaParts', () => {
 			'betrouwbaarheid matig'
 		]);
 	});
+
+	it('does not say the name again under it', () => {
+		const fractie: Row = {
+			ref: { collection: 'factions', key: 'd66' },
+			title: 'D66-fractie',
+			context: 'D66',
+			kind: 'leden'
+		};
+		expect(metaParts(fractie).map((p) => p.text)).toEqual([]);
+		expect(metaParts(fractie, true).map((p) => p.text)).toEqual([]);
+		// Part of a word is no repeat: "D6" under "D66-fractie" stays.
+		expect(metaParts({ ...fractie, context: 'D6' }).map((p) => p.text)).toEqual(['D6']);
+	});
 });
 
 describe('conclusion in the same case', () => {

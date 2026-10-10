@@ -78,17 +78,20 @@
 		{#if tz?.total !== 0}
 			<li>
 				<a href="#toezeggingen"><b>{tz?.open ?? '…'}</b> openstaande toezeggingen</a>
-				<span class="s">van {tz?.total ?? '…'} in de gegevens</span>
+				<span class="s">van {tz?.total ?? '…'}</span>
 			</li>
 		{/if}
 		<li>
-			<a href="#dossiers"><b>{dossiers ?? '…'}</b> {dossiers === 1 ? 'dossier' : 'dossiers'}</a>
-			<span class="s">met stukken die deze persoon ondertekende</span>
+			<!-- Named as the section it leads to (UX-toets 10 Oct, #17: no sentence under it). -->
+			<a href="#dossiers"
+				><b>{dossiers ?? '…'}</b>
+				{dossiers === 1 ? 'dossier' : 'dossiers'} met ondertekende stukken</a
+			>
 		</li>
 		<li>
 			<a href="#loopbaan"><b>{fns.length}</b> {fns.length === 1 ? 'post' : 'posten'}</a>
 			<span class="s"
-				>in {kabinetten.length === 1 ? kabinetten[0] : `${kabinetten.length} kabinetten`}</span
+				>{kabinetten.length === 1 ? kabinetten[0] : `${kabinetten.length} kabinetten`}</span
 			>
 		</li>
 	</ul>

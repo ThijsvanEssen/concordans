@@ -38,9 +38,15 @@
 			(b) => (wet?.bwb === b ? wet.naam : null)
 		)
 	);
+	// A kind that is a group of kinds ("Brief van lid/fractie/commissie") says nothing of this
+	// one beyond its title: left out (UX-toets 0.79.43, #31).
+	const soort = $derived.by(() => {
+		const k = textProp(p.kind);
+		return k && !k.includes('/') ? k : null;
+	});
 	const facts = $derived(
 		[
-			textProp(p.kind),
+			soort,
 			textProp(p.number) ?? textProp(p.activity_number),
 			formatLongDate(textProp(p.date) ?? textProp(p.made_on)),
 			textProp(p.minister_role),

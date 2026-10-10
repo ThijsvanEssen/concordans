@@ -289,6 +289,14 @@ export function behoort(
 				.filter((l) => l.kort);
 			return { regels: regel('wet', 'Wet', [...wet, ...deel]), naast: [], onder: [] };
 		}
+		case 'annexes': {
+			// A bijlage belongs to its law, as an article does (UX-toets 0.79.43, #30).
+			const afk = text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation);
+			const wet = eerste('PART_OF', 'outbound', 'instruments', 'Wet').map((l) =>
+				afk ? { ...l, kort: afk } : l
+			);
+			return { regels: regel('wet', 'Wet', wet), naast: [], onder: [] };
+		}
 		case 'judgments': {
 			// The procesgang: eerdere aanleg › this uitspraak › hoger beroep or cassatie, the
 			// instances before the eerdere aanleg asked one by one. A conclusie names the arrest
@@ -705,10 +713,27 @@ export const INHOUD: Partial<Record<Collection, string[]>> = {
 	// A fractie's reader lists all its leden (Thijs, 10 Oct: "Leden is hier nu ook dubbelop").
 	// A commissie names only its officers and a kabinet counts its bewindspersonen: their
 	// lists stay in Verbonden.
-	factions: ['members']
+	factions: ['members'],
+	// A lid's reader lists its commissies; a bewindspersoon's also the dossiers it signed in
+	// (BewindspersoonOverzicht). UX-toets 10 Oct, #16: "Commissies 20" stood twice.
+	members: ['committees']
 };
-export const isInhoudGroep = (collection: Collection, g: { id: string }) =>
-	INHOUD[collection]?.includes(g.id) ?? false;
+/** Groups the reader lists only where its props say so: a lid with a post in a kabinet. */
+const INHOUD_ALS: Partial<
+	Record<Collection, Record<string, (props: Record<string, unknown>) => boolean>>
+> = {
+	members: {
+		dossiers: (props) =>
+			Array.isArray(props.government_functions) && props.government_functions.length > 0
+	}
+};
+export const isInhoudGroep = (
+	collection: Collection,
+	g: { id: string },
+	props: Record<string, unknown> = {}
+) =>
+	(INHOUD[collection]?.includes(g.id) ?? false) ||
+	(INHOUD_ALS[collection]?.[g.id]?.(props) ?? false);
 
 /** Whether a band has anything to show. */
 export const heeftIets = (b: Behoort) => b.regels.length + b.naast.length + b.onder.length > 0;

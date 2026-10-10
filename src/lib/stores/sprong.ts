@@ -17,3 +17,33 @@ export function lijstDoel(el: HTMLElement, id = 'de-lijst') {
 		}
 	};
 }
+
+/**
+ * The panes of a page a skip link leads to beside its text: Verbonden and the network on a
+ * bron (UX-toets 10 Oct, #22: Verbonden was the 237th tab stop, the network the 278th). In
+ * the page's order; a pane on its own tab (a phone) has its tab instead.
+ */
+export const paneelSprongen = writable<{ id: string; label: string }[]>([]);
+
+/** On a pane: it gets its id, can take the focus, and has a skip link while `aan`. */
+export function sprongDoel(el: HTMLElement, opts: { id: string; label: string; aan?: boolean }) {
+	let huidig = opts;
+	const zet = () => {
+		el.id = huidig.id;
+		el.tabIndex = -1;
+		paneelSprongen.update((l) => {
+			const zonder = l.filter((s) => s.id !== huidig.id);
+			return huidig.aan === false ? zonder : [...zonder, { id: huidig.id, label: huidig.label }];
+		});
+	};
+	const weg = () => paneelSprongen.update((l) => l.filter((s) => s.id !== huidig.id));
+	zet();
+	return {
+		update(next: typeof opts) {
+			weg();
+			huidig = next;
+			zet();
+		},
+		destroy: weg
+	};
+}

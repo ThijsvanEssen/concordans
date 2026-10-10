@@ -107,5 +107,14 @@ describe('the name of a bron for a reader', () => {
 				props: { bwb_id: 'BWBR0002741', label: 'II', title: 'Lijst van gevaarlijke stoffen' }
 			})
 		).toBe('Bijlage II: Lijst van gevaarlijke stoffen');
+		// "Annex II" is the data's word, not a heading: the bijlage by its number alone (#30).
+		expect(
+			menselijkeNaam({
+				collection: 'annexes',
+				key: 'bwbr0002741_annex_ii',
+				display_name: 'Annex II',
+				props: { bwb_id: 'BWBR0002741', label: 'II', title: null }
+			} as never)
+		).toBe('Bijlage II');
 	});
 });

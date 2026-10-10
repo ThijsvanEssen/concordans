@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { sprongDoel } from '$lib/stores/sprong';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
@@ -1491,12 +1492,24 @@
 						{@render reader()}
 					</div>
 					{@render handle('panel')}
-					<div class="col col--panel" class:mobile-hidden={mobilePanel !== 'verbonden'}>
+					<div
+						class="col col--panel"
+						class:mobile-hidden={mobilePanel !== 'verbonden'}
+						use:sprongDoel={{ id: 'verbonden', label: 'Naar Verbonden', aan: !telefoon }}
+					>
 						{@render panel(true)}
 					</div>
 					{@render handle('graph')}
 				{/if}
-				<div class="col col--graph" class:mobile-hidden={selectedNode && mobilePanel !== 'graph'}>
+				<div
+					class="col col--graph"
+					class:mobile-hidden={selectedNode && mobilePanel !== 'graph'}
+					use:sprongDoel={{
+						id: 'netwerk',
+						label: 'Naar het netwerk',
+						aan: !telefoon && !!selectedNode
+					}}
+				>
 					{#if GraphViewC}
 						<GraphViewC
 							bind:this={graphView}
@@ -1655,7 +1668,11 @@
 					{@render reader()}
 				</div>
 				{@render handle('panel')}
-				<div class="col col--panel" class:mobile-hidden={mobilePanel !== 'verbonden'}>
+				<div
+					class="col col--panel"
+					class:mobile-hidden={mobilePanel !== 'verbonden'}
+					use:sprongDoel={{ id: 'verbonden', label: 'Naar Verbonden', aan: !telefoon }}
+				>
 					{@render panel(false)}
 				</div>
 			</div>

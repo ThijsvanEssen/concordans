@@ -182,20 +182,24 @@
 	}
 
 	const periodeVan = (o: Onderwerp) =>
-		vanaf(o) === recent ? `de afgelopen ${RECENT_DAGEN} dagen` : `sinds ${shortDate(vanaf(o))}`;
-	/** `2 nieuw sinds 8 okt. 2026; 25 de afgelopen 30 dagen` */
+		vanaf(o) === recent ? `Afgelopen ${RECENT_DAGEN} dagen` : `Sinds ${shortDate(vanaf(o))}`;
+	/** The count beside the topic's heading: `25`, or `25+` where the search stopped short. */
+	function telling(s: Stand | undefined): string | null {
+		if (s?.status !== 'klaar') return null;
+		return `${s.items.length}${s.meer || s.doorzocht ? '+' : ''}`;
+	}
+	/**
+	 * What the count is of, as a label (UX-toets 10 Oct, #17: no sentence):
+	 * `Afgelopen 30 dagen; 2 nieuw sinds 8 okt. 2026`.
+	 */
 	function telRegel(o: Onderwerp, s: Stand | undefined): string {
+		if (o.vorige && vanaf(o) === o.vorige) return `Nieuw sinds ${shortDate(o.vorige)}`;
 		const periode = periodeVan(o);
-		if (s?.status !== 'klaar') return periode;
-		const min = s.meer || s.doorzocht ? 'ten minste ' : '';
-		if (!o.vorige) return `${min}${s.items.length} ${periode}`;
+		if (s?.status !== 'klaar' || !o.vorige) return periode;
 		const nieuw = s.items.filter((i) => isNieuw(i.date, o.vorige)).length;
-		const sinds = `nieuw sinds ${shortDate(o.vorige)}`;
-		// Shown from the visit before: all of it is new.
-		if (vanaf(o) === o.vorige) return `${min}${nieuw} ${sinds}`;
 		// Searched only from after the visit before: what is new may be more too.
-		const minNieuw = s.doorzocht && s.doorzocht > o.vorige ? 'ten minste ' : '';
-		return `${minNieuw}${nieuw} ${sinds}; ${min}${s.items.length} ${periode}`;
+		const minNieuw = s.doorzocht && s.doorzocht > o.vorige ? '+' : '';
+		return `${periode}; ${nieuw}${minNieuw} nieuw sinds ${shortDate(o.vorige)}`;
 	}
 
 	/** The topic as an Atom feed: every word as a q of its own, any of them counts. */
@@ -328,6 +332,7 @@
 				titel={o.termen.join('; ')}
 				id="onderwerp-{n}"
 				niveau={2}
+				aantal={telling(s)}
 				sleutel="onderwerp:{sleutel(o)}"
 				standaardOpen
 			>
