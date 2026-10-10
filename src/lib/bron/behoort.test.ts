@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { behoort, heeftIets } from './behoort';
+import { behoort, conclusieVan, heeftIets } from './behoort';
 
 type Item = {
 	key: string;
@@ -69,7 +69,7 @@ describe('behoort', () => {
 		expect(wet[2].ref).toEqual({ collection: 'instruments', key: 'bwbr0005537' });
 	});
 
-	it('gives a judgment its procesgang and its conclusie as kern, more appeals as a group', () => {
+	it('gives a judgment its procesgang as kern, more appeals as a group', () => {
 		const b = behoort(
 			'judgments',
 			{},
@@ -109,7 +109,7 @@ describe('behoort', () => {
 				}
 			])
 		);
-		expect(b.regels.map((r) => r.label)).toEqual(['Procesgang', 'Conclusie']);
+		expect(b.regels.map((r) => r.label)).toEqual(['Procesgang']);
 		expect(b.regels[0].lagen.map((l) => [l.soort, !!l.huidig])).toEqual([
 			['Eerdere aanleg', false],
 			['Deze uitspraak', true],
@@ -133,6 +133,29 @@ describe('behoort', () => {
 			])
 		);
 		expect(conclusie.regels.map((r) => r.label)).toEqual(['Conclusie bij']);
+	});
+
+	it('gives the conclusie of a judgment for its status line, without the word Conclusie', () => {
+		const g = light([
+			{
+				relation: 'ADVISES_ON',
+				direction: 'inbound',
+				collection: 'judgments',
+				total: 1,
+				items: [
+					{
+						key: 'ecli_nl_phr_2019_887',
+						collection: 'judgments',
+						display_name: 'Conclusie P-G Langemeijer en Wissink, 13 september 2019'
+					}
+				]
+			}
+		]);
+		const c = conclusieVan(g);
+		expect(c?.naam).toBe('P-G Langemeijer en Wissink, 13 september 2019');
+		expect(c?.ref?.key).toBe('ecli_nl_phr_2019_887');
+		expect(conclusieVan(light([]))).toBeNull();
+		expect(conclusieVan(null)).toBeNull();
 	});
 
 	it('puts a stuk in its dossier, a lid in its one fractie, and leaves out what is missing', () => {
