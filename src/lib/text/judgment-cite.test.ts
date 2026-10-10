@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { authorCite, courtCite, judgmentCite, paragraphCite } from './judgment-cite';
+import { authorCite, conclusieNaam, courtCite, judgmentCite, paragraphCite } from './judgment-cite';
 
 describe('judgmentCite', () => {
 	it('cites the Hoge Raad as lawyers do', () => {
@@ -62,5 +62,26 @@ describe('authorCite', () => {
 		expect(judgmentCite('ECLI:NL:PHR:2020:453', '2020-05-08', null, 'A-G Hartlief').full).toBe(
 			'Conclusie A-G Hartlief 8 mei 2020, ECLI:NL:PHR:2020:453'
 		);
+	});
+});
+
+describe('a conclusion in the status line', () => {
+	it('names it by its A-G or P-G and its day, from the detail', () => {
+		expect(
+			conclusieNaam({
+				ecli: 'ECLI:NL:PHR:2019:887',
+				author: 'mr. Langemeijer en Wissink',
+				role: 'procureur-generaal',
+				date: '2019-09-13'
+			})
+		).toBe('P-G Langemeijer en Wissink, 13 september 2019');
+		expect(
+			conclusieNaam({
+				ecli: 'ECLI:NL:PHR:2020:1',
+				author: 'F.F. Hartlief',
+				role: 'advocaat-generaal'
+			})
+		).toBe('A-G Hartlief');
+		expect(conclusieNaam({ ecli: 'ecli:nl:phr:2019:887' })).toBe('ECLI:NL:PHR:2019:887');
 	});
 });
