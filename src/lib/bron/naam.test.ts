@@ -45,6 +45,16 @@ describe('bronNaam', () => {
 		expect(bronNaam(art, meta)).toBe('Art. 419 Wetboek van Burgerlijke Rechtsvordering');
 	});
 
+	it('names a bijlage as the reader does: chip, canvas and list (#30)', () => {
+		const bijlage = node({
+			collection: 'annexes',
+			kind: 'other' as GraphNode['kind'],
+			label: 'Annex II',
+			raw: { display_name: 'Annex II', props: { label: 'II' } } as unknown as GraphNode['raw']
+		});
+		expect(bronNaam(bijlage, meta)).toBe('Bijlage II');
+	});
+
 	it('names a law by its short title', () => {
 		const law = node({
 			collection: 'instruments',

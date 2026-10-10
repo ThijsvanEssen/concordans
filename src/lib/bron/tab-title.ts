@@ -5,6 +5,7 @@ import { shortDossierTitle, type GraphNode } from '$lib/graph/types';
 import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
 import { articleTitle } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
+import { menselijkeNaam } from './menselijk';
 
 const MAX = 80;
 
@@ -52,6 +53,11 @@ export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>):
 			);
 		}
 	}
+	// A bijlage as the reader names it: "Bijlage II", not the data's "Annex II" (#30).
+	if (node.collection === 'annexes')
+		return cut(
+			menselijkeNaam({ collection: 'annexes', display_name: node.raw?.display_name, props })
+		);
 	const name = text(node.raw?.display_name);
 	if (node.collection === 'articles') {
 		// An article names its law: "Artikel 8 EVRM", else the law's citation title, never

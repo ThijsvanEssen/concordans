@@ -186,8 +186,9 @@ export function describe(
 ): Pick<Row, 'title' | 'context' | 'identifier' | 'date' | 'court'> {
 	// Never the key: the reader's name of the bron where the data gives none ($lib/bron/menselijk).
 	const eigen = text(displayName);
+	// A bijlage by the reader's name ("Bijlage II"), not the data's "Annex II" (#30).
 	const name =
-		eigen && !isRauw(eigen)
+		eigen && !isRauw(eigen) && collection !== 'annexes'
 			? eigen
 			: menselijkeNaam({ collection, key, display_name: displayName, props });
 	const date = text(props.date);
@@ -261,6 +262,8 @@ export function describe(
 		// An article of the BW by its book: "Artikel 6:162 BW".
 		case 'articles':
 			return { title: articleTitle(name, props), context: null };
+		case 'annexes':
+			return { title: name, context: null };
 		default:
 			return { title: text(displayName) ?? UNNAMED, context: null };
 	}
