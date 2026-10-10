@@ -117,7 +117,14 @@ export function partOfAnchor(anchor: string | null): {
 	aanhef: boolean;
 } {
 	if (!anchor) return { lid: null, onderdelen: [], aanhef: false };
+	// An anchor tells two parts of the same number apart (`onder-q_2`, the second onderdeel q
+	// of Wft 1:1); the citation names them as the law prints them: `onder q`.
+	const gedrukt = (x: string) => x.replace(/_\d+$/, '');
 	const lid = /^lid-([^-]+)/.exec(anchor)?.[1] ?? null;
-	const onderdelen = [...anchor.matchAll(/onder-([^-]+)/g)].map((m) => m[1]);
-	return { lid, onderdelen, aanhef: /(^|-)aanhef$/.test(anchor) };
+	const onderdelen = [...anchor.matchAll(/onder-([^-]+)/g)].map((m) => gedrukt(m[1]));
+	return {
+		lid: lid === null ? null : gedrukt(lid),
+		onderdelen,
+		aanhef: /(^|-)aanhef$/.test(anchor)
+	};
 }

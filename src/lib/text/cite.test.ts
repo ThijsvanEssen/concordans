@@ -63,6 +63,12 @@ describe('citeArticle', () => {
 			aanhef: false
 		});
 		expect(partOfAnchor('lid-3-aanhef')).toEqual({ lid: '3', onderdelen: [], aanhef: true });
+		// The anchor's `_2` (a second onderdeel q) is not printed.
+		expect(partOfAnchor('onder-q_2-onder-1')).toEqual({
+			lid: null,
+			onderdelen: ['q', '1'],
+			aanhef: false
+		});
 		expect(partOfAnchor('aanhef')).toEqual({ lid: null, onderdelen: [], aanhef: true });
 	});
 
