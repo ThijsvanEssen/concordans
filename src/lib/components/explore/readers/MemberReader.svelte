@@ -5,6 +5,7 @@
 	import { formatCount } from '$lib/text/getal';
 	import { vandaag } from '$lib/text/datum';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import { getMember, getMemberAuthored } from '$lib/api/records';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -15,7 +16,7 @@
 	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
-	import { getMemberVotes } from '$lib/components/parliamentary/data';
+	import { getMemberVotes, getMemberVotesInOffice } from '$lib/components/parliamentary/data';
 	import {
 		careerOf,
 		currentTitle,
@@ -61,6 +62,8 @@
 	/** What the person signed stukken as, and when (AUTHORED meta). */
 	let signatures = $state<Signature[]>([]);
 	let showAllVotes = $state(false);
+	/** A bewindspersoon's votes in a post, asked on their own and paged (#534); null: not asked. */
+	let inOffice = $state<{ votes: Vote[]; next: number | null; laden: boolean } | null>(null);
 	/** The vote opened in place, by its stemming's key. */
 	let openStem = $state<string | null>(null);
 	const toggleStem = (key: string) => (openStem = openStem === key ? null : key);
@@ -78,6 +81,7 @@
 		const ac = new AbortController();
 		view = { kind: 'loading' };
 		showAllVotes = false;
+		inOffice = null;
 		votes = null;
 		votesLaden = true;
 		signatures = [];
@@ -104,6 +108,49 @@
 		return () => ac.abort();
 	});
 
+	// A bewindspersoon's votes in a post: all of them, page by page, not those among the newest
+	// 50 (UX-toets 0.79.43, #29: "20 stemmen" of 50).
+	const bewindspersoon = $derived(
+		view.kind === 'loaded' && (view.member.government_functions ?? []).length > 0
+	);
+	$effect(() => {
+		if (!bewindspersoon) return;
+		const key = bronKey;
+		let weg = false;
+		inOffice = { votes: [], next: 0, laden: true };
+		getMemberVotesInOffice(key)
+			.then((v) => {
+				// Only votes in a post, also from an API before 0.79.44 that ignores `in_office`.
+				if (!weg) inOffice = { votes: inPost(v.votes), next: v.next_offset ?? null, laden: false };
+			})
+			.catch(() => {
+				if (!weg) inOffice = null;
+			});
+		return () => {
+			weg = true;
+		};
+	});
+	const inPost = (vs: Vote[]) => vs.filter((v) => (v.in_office ?? []).length > 0);
+	/** The next page of votes in a post. */
+	function meerInOffice() {
+		const nu = inOffice;
+		if (!nu || nu.next == null || nu.laden) return;
+		const key = bronKey;
+		inOffice = { ...nu, laden: true };
+		getMemberVotesInOffice(key, nu.next)
+			.then((v) => {
+				if (key !== bronKey) return;
+				inOffice = {
+					votes: [...nu.votes, ...inPost(v.votes)],
+					next: v.next_offset ?? null,
+					laden: false
+				};
+			})
+			.catch(() => {
+				if (key === bronKey) inOffice = { ...nu, laden: false };
+			});
+	}
+
 	// Votes are grouped by the faction the member belonged to at the time, so a
 	// switch of faction reads as separate blocks, and then by choice. A vote cast while the
 	// member also held a post in a cabinet (`in_office`, API 0.79.43, #508) stands in a block
@@ -112,6 +159,8 @@
 		party: string | null;
 		ambt: string | null;
 		total: number;
+		/** More votes than counted: a post's votes have another page (`next_offset`). */
+		meer: boolean;
 		byChoice: [string, Vote[]][];
 	};
 	/** The posts of a vote in the source's words, oldest first: "minister van … (kabinet-…)". */
@@ -131,7 +180,7 @@
 	const groepSleutel = (v: Vote) => `${v.party ?? ''}\u0000${ambtVan(v) ?? ''}`;
 	/** The groups of the votes shown; each counts its votes among `alle`, not the preview's
 	 *  (UX-toets 0.79.43, #29: "20 stemmen" of 50). */
-	function groupVotes(votes: Vote[], alle: Vote[] = votes): PartyGroup[] {
+	function groupVotes(votes: Vote[], alle: Vote[] = votes, ambtMeer = false): PartyGroup[] {
 		const tel = Map.groupBy(alle, groepSleutel);
 		const byParty = Map.groupBy(votes, groepSleutel);
 		const rank = (choice: string) => {
@@ -143,6 +192,7 @@
 				party: rows[0].party ?? null,
 				ambt: ambtVan(rows[0]),
 				total: tel.get(sleutel)?.length ?? rows.length,
+				meer: ambtMeer && !!ambtVan(rows[0]),
 				byChoice: [...Map.groupBy(rows, (v) => v.choice)].sort(
 					([a], [b]) => rank(a) - rank(b) || a.localeCompare(b)
 				)
@@ -342,14 +392,23 @@
 			{#if votesLaden}
 				<p class="laden">Stemmen laden…</p>
 			{:else if votes && votes.votes.length > 0}
-				{@const alle = votes.votes}
-				{@const groups = groupVotes(showAllVotes ? alle : alle.slice(0, VOTES_PREVIEW), alle)}
+				<!-- A bewindspersoon's votes in a post come on their own, all of them (#534); the
+				     newest 50 give the rest. Until the first page is in, the 50 give both. -->
+				{@const apart = !!inOffice && !(inOffice.laden && inOffice.votes.length === 0)}
+				{@const ambt = apart ? inOffice!.votes : []}
+				{@const eigen = apart ? votes.votes.filter((v) => !v.in_office?.length) : votes.votes}
+				{@const alle = [...ambt, ...eigen]}
+				{@const groups = groupVotes(
+					showAllVotes ? alle : [...ambt.slice(0, VOTES_PREVIEW), ...eigen.slice(0, VOTES_PREVIEW)],
+					alle,
+					apart && inOffice!.next != null
+				)}
 				<!-- Their own votes on a roll-call, and their faction's while they sat in it (API
 				     0.75, BE-43); a bewindspersoon's are what they voted as a Kamerlid. -->
 				<Sectie
 					titel={(m.government_functions ?? []).length > 0 ? 'Als Kamerlid' : 'Stemgeschiedenis'}
 					soort="decisions"
-					aantal={votes.count}
+					aantal={apart ? `${alle.length}${inOffice!.next != null ? '+' : ''}` : votes.count}
 				>
 					{#each groups as group (`${group.party}|${group.ambt}`)}
 						{#if groups.length > 1 || group.ambt}
@@ -364,7 +423,7 @@
 											>, als {group.ambt} en Kamerlid</span
 										>{/if}</span
 								>
-								<span class="party-total">{group.total} stemmen</span>
+								<span class="party-total">{group.total}{group.meer ? '+' : ''} stemmen</span>
 							</div>
 						{/if}
 						{#each group.byChoice as [choice, rows] (choice)}
@@ -440,9 +499,15 @@
 							</div>
 						{/each}
 					{/each}
-					{#if alle.length > VOTES_PREVIEW && !showAllVotes}
+					{#if !showAllVotes && (ambt.length > VOTES_PREVIEW || eigen.length > VOTES_PREVIEW)}
 						<p class="alle">
 							<AlleN aantal={alle.length} noun="stemmen" onclick={() => (showAllVotes = true)} />
+						</p>
+					{:else if showAllVotes && apart && inOffice!.next != null}
+						<p class="alle">
+							<TekstLink onclick={meerInOffice}
+								>{inOffice!.laden ? 'Laden…' : 'Meer stemmen als bewindspersoon'}</TekstLink
+							>
 						</p>
 					{/if}
 				</Sectie>

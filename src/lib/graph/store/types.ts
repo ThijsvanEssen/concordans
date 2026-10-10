@@ -23,6 +23,11 @@ export type NeighborhoodReach = {
 	capped: boolean;
 	/** The cap the request was made with. */
 	cap: number;
+	/**
+	 * The focus's direct neighbours per collection: how many there are and how many came
+	 * (`buckets`, API 0.79.44, #528). Empty from an API before it.
+	 */
+	buckets: { collection: string; total: number; kept: number }[];
 };
 
 export type NetwerkParticipant = { response: Schema<'NodeGraphResponse'> };

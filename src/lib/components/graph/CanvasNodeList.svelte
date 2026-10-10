@@ -84,7 +84,10 @@
 
 	function onfocusout(e: FocusEvent) {
 		const naar = e.relatedTarget as Node | null;
-		if (list?.contains(naar)) return;
+		// Focus that goes nowhere is a tap, not Tab: on an iPhone a tapped button takes no
+		// focus, and closing here took the card away before the tap's click ("Omgeving tonen").
+		// A tap or click elsewhere closes it (GraphView).
+		if (!naar || list?.contains(naar)) return;
 		// Its line goes with the focus, so it is not read on the next page (UX test 0.79.43, #13).
 		said = '';
 		if (!houdt?.(naar)) onFocusNode(null);

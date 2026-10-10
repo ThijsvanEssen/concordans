@@ -32,10 +32,12 @@ import { LOADERS, type Loaded } from './loaders';
  * Whether Verbonden of a bron can start from five per bucket: a group's rows are asked when
  * it is opened, a loader's buckets when it needs them (Thijs, 9 Oct: "alles zo lazy mogelijk").
  * An article only where the API counts its leden (`lid_counts`, API 0.79.17): five rows per
- * bucket cannot count them.
+ * bucket cannot count them. Counts still being counted (`lid_counts_pending`, API 0.79.44)
+ * come with the full node: the API counts them, so it stays lazy.
  */
 export const luiTeLaden = (collection: Collection, first: NodeGraph | null): boolean =>
-	collection !== 'articles' || (first != null && lidCountsOf(first) != null);
+	collection !== 'articles' ||
+	(first != null && (first.lid_counts_pending === true || lidCountsOf(first) != null));
 
 const neighborKey = (n: Neighbor) => `${n.relation}|${n.direction}|${n.collection}/${n.key}`;
 
@@ -63,6 +65,8 @@ export type VerbondenState = {
 	 * (UX-toets 10 Oct: the judgments of 6:162 BW came after 10 s at the top).
 	 */
 	wachtend?: string[];
+	/** Per waiting group, the rows the light node counts in its buckets: its place's height. */
+	verwacht?: Record<string, number>;
 };
 
 export type VerbondenSource = Readable<VerbondenState> & {
@@ -185,6 +189,8 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 			})
 			.then((response) => {
 				if (ac.signal.aborted) return;
+				// Counts the light node did not have yet (pending) are in the full one.
+				perBak ??= lidCountsByCollection(response);
 				const neighbors = neighborsOf(response);
 				const totals = bucketTotals(response);
 				const props = (response.node.props ?? {}) as Record<string, unknown>;
@@ -209,12 +215,25 @@ export function createVerbondenSource(store: GraphStore): VerbondenSource {
 						(b) => (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 1) > 0
 					);
 				};
+				// What a waiting group will hold, where its buckets are counted (UX-toets 0.79.43, #1).
+				const verwacht = Object.fromEntries(
+					[...pending].flatMap((id) => {
+						const bakken = (GROUPS[collection] ?? []).find((d) => d.id === id)?.bakken;
+						if (!bakken) return [];
+						const n = bakken.reduce(
+							(som, b) => som + (totals.get(bucketKey(b.relation, b.collection, b.direction)) ?? 0),
+							0
+						);
+						return n > 0 ? [[id, n]] : [];
+					})
+				);
 				const zet = () =>
 					state.set({
 						id: selection.id,
 						groups,
 						loading: pending.size > 0,
 						wachtend: [...pending].filter(kanRijen),
+						verwacht,
 						failed: false,
 						lidTellingen: perBak ? sumLidCounts(perBak) : null,
 						lidPerBak: perBak,

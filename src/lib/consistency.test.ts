@@ -103,6 +103,7 @@ describe('one form for each thing', () => {
 			'lib/components/explore/readers/DecisionReader.svelte',
 			'lib/components/explore/readers/MemberReader.svelte',
 			'lib/components/ui/FilterOptie.svelte',
+			'lib/components/graph/GraphSidebar.svelte',
 			'lib/onderwerpen/Kruiswoord.svelte',
 			'routes/(main)/api/+page.svelte',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte',

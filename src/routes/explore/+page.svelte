@@ -29,7 +29,8 @@
 	import { onDestroy, onMount, setContext, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { tabTitle } from '$lib/bron/tab-title';
+	import { cut, tabTitle } from '$lib/bron/tab-title';
+	import { titelVan } from '$lib/bron/titels.svelte';
 	import { api, ApiError } from '$lib/api/client';
 	import { getNodeCanvas, getNodeFirst, getNodeHull } from '$lib/api/records';
 	import { kopNode } from '$lib/bron/kop';
@@ -219,7 +220,13 @@
 	const explicitDepth = $derived(
 		depthParam ? Math.min(3, Math.max(1, Number(depthParam) || 2)) : null
 	);
-	const depthFor = (kind: GraphNodeKind) => explicitDepth ?? (isContainerKind(kind) ? 1 : 2);
+	// All the focus's direct neighbours (?alles=1, Thijs 10 Oct: "maak het mogelijk om alles te
+	// laden, misschien zonder het tweede en derde niveau"): one step, up to ALLES_GRENS.
+	const alles = $derived(param('alles') === '1');
+	// The API's most at one step (1.000 up to 0.79.44; 2.000 with Back-end #2's change).
+	const ALLES_GRENS = 1000;
+	const depthFor = (kind: GraphNodeKind) =>
+		alles ? 1 : (explicitDepth ?? (isContainerKind(kind) ? 1 : 2));
 	// The bron the canvas is drawn around; a click selects another without moving it.
 	let anchorKind = $state<GraphNodeKind>('other');
 	const depth = $derived(depthFor(anchorKind));
@@ -468,7 +475,7 @@
 		if (node.id.startsWith('synth:')) return;
 		await store.expandNeighborhood(node.collection, node.key, {
 			depth: depthFor(node.kind),
-			cap: omgevingGrens
+			cap: alles ? ALLES_GRENS : omgevingGrens
 		});
 		if (epoch !== focusEpoch) return;
 		// A dossier's stukken change wetten two steps away (dossier, stuk, wet): the one
@@ -492,6 +499,7 @@
 	let loadedFocus = '';
 	let deepenedId = '';
 	let deepenedDepth = 0;
+	let deepenedAlles = false;
 	let replaceNext: string | null = null;
 	// A focus loaded without the canvas (reading, or a phone's text tab): its light node only;
 	// the full node and its neighbourhood wait until the canvas is shown.
@@ -501,6 +509,7 @@
 		// Read here, not only inside `deepen`: that branch does not run on the first pass,
 		// so a change of ?diepte would otherwise not rerun the effect until a reload.
 		void explicitDepth;
+		void alles;
 		const withNetwerk = netwerkActive;
 		if (!focus) {
 			focusError = null;
@@ -626,9 +635,10 @@
 	// Expand around `node` once per depth, or again when `force`d.
 	async function deepen(node: GraphNode, force = false) {
 		const d = depthFor(node.kind);
-		if (!force && deepenedId === node.id && deepenedDepth === d) return;
+		if (!force && deepenedId === node.id && deepenedDepth === d && deepenedAlles === alles) return;
 		deepenedId = node.id;
 		deepenedDepth = d;
+		deepenedAlles = alles;
 		anchorKind = node.kind;
 		graphView?.suppressFit();
 		const epoch = ++focusEpoch;
@@ -961,7 +971,10 @@
 		// While the next bron is on its way the reader still holds the previous one: its name
 		// would be the new page's (a screen reader announces the title after each step).
 		if (wachtOp || (pad && !focus && !padMissing)) return LADEN_TITEL;
-		const name = selectedNode ? tabTitle(selectedNode) : null;
+		// The title the API gives the bron, as the server's page has it (#529); the name made
+		// here until its node is in. Cut at a word for the tab only.
+		const api = selectedNode ? titelVan(selectedNode.id) : null;
+		const name = api ? cut(api) : selectedNode ? tabTitle(selectedNode) : null;
 		if (name) return `${name}, Concordans`;
 		if (netwerkActive) return 'Netwerk, Concordans';
 		return 'Samenhang, Concordans';
@@ -1543,6 +1556,9 @@
 							onFilter={applyFilter}
 							onOpenFilter={() => (filterOpen = true)}
 							onDepth={setDepth}
+							onAllesLaden={alles
+								? undefined
+								: () => setUrl({ alles: '1', diepte: null }, { push: true })}
 							onToggleHeat={toggleHeat}
 							onHeatPeriodChange={setHeatPeriod}
 							onToggleMutatie={toggleMutatie}
