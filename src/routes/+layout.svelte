@@ -3,10 +3,11 @@
 	import type { Snippet } from 'svelte';
 	import { browser, dev } from '$app/environment';
 	import { afterNavigate } from '$app/navigation';
+	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { meldZijscroll } from '$lib/dev/zijscroll';
 	import { canonical } from '$lib/seo/routes';
-	import { serverKop } from '$lib/seo/kop.svelte';
+	import { LADEN_TITEL, serverKop } from '$lib/seo/kop.svelte';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -40,7 +41,40 @@
 		}
 		// An English judgment of the EHRM is served as lang="en"; the next page is Dutch.
 		document.documentElement.lang = 'nl';
+		void kondigAan();
 	});
+
+	// SvelteKit announces the title right after a step, before a bron's name has come (the
+	// reader says Laden… then). The name that follows is announced here, once (UX test 10
+	// Oct, #13: the previous page's name was read out).
+	let aankondiging = $state('');
+	let stop: (() => void) | null = null;
+	async function kondigAan() {
+		stop?.();
+		aankondiging = '';
+		await tick();
+		const gezegd = document.title;
+		// The name settles first: the light node's, then the full node's ("Rob Jetten", then
+		// "Rob Jetten (D66)").
+		let rust: ReturnType<typeof setTimeout> | undefined;
+		const kijk = new MutationObserver(() => {
+			clearTimeout(rust);
+			const t = document.title;
+			if (t === gezegd || t === LADEN_TITEL) return;
+			rust = setTimeout(() => {
+				aankondiging = t;
+				stop?.();
+			}, 500);
+		});
+		const klaar = setTimeout(() => stop?.(), 30_000);
+		stop = () => {
+			kijk.disconnect();
+			clearTimeout(klaar);
+			clearTimeout(rust);
+			stop = null;
+		};
+		kijk.observe(document.head, { subtree: true, childList: true, characterData: true });
+	}
 </script>
 
 <svelte:head>
@@ -50,3 +84,4 @@
 <AppShell>
 	{@render children()}
 </AppShell>
+<p class="sr-only" aria-live="polite" aria-atomic="true">{aankondiging}</p>
