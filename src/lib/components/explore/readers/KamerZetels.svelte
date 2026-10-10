@@ -63,16 +63,28 @@
 
 	/** The hall of the day; `geen` where the data has none for it. */
 	let zaal = $state<Zaal | 'laden' | 'geen'>('laden');
+	/**
+	 * The day the hall is asked for: the day shown, within the stretch it falls in (a past
+	 * cabinet's last day is its successor's first). Always with a date: only then does the
+	 * hall give its vacancies (API 0.79.44, #526).
+	 */
+	const zaalDag = $derived.by(() => {
+		const s =
+			stukken.find((t) => dag >= t.from_date && dag <= (t.to_date ?? eind)) ?? stukken.at(-1);
+		if (!s) return vandaag();
+		const tot = s.to_date ?? eind;
+		return dag < s.from_date ? s.from_date : dag > tot ? tot : dag;
+	});
 	$effect(() => {
 		const k = kamer;
-		const d = dag;
+		const d = zaalDag;
 		const metStukken = stukken.length > 0;
 		const sleutel = kabinet;
 		let weg = false;
 		zaal = 'laden';
 		// With stretches the hall of the day chosen; without, the hall of today, when it is
 		// this cabinet's.
-		getParliamentSeats(k, metStukken && d !== vandaag() ? d : undefined)
+		getParliamentSeats(k, d)
 			.then((z) => {
 				if (weg) return;
 				zaal = metStukken || z.cabinet?.key === sleutel ? z : 'geen';
@@ -104,12 +116,36 @@
 			z.factions.map((f) => [f.key, c(f) === true ? 'voor' : c(f) === false ? 'tegen' : 'other'])
 		) as Record<string, 'voor' | 'tegen' | 'other'>;
 	};
-	const naam = (f: Zaal['factions'][number]) => f.abbreviation ?? f.name ?? naamVan('factions', f);
+	const naam = (f: { key?: string | null; abbreviation?: string | null; name?: string | null }) =>
+		f.abbreviation ?? f.name ?? naamVan('factions', f);
+	type Rij = { key: string; naam: string; seats: number; vacant: number; color: string | null };
+	/**
+	 * The two sides as the head figure counts them (UX test 10 Oct, #12: "41" above, "37" in
+	 * the list): from the stretch, its fracties' seats with their vacancies; the hall gives the
+	 * colours. Without a stretch, from the hall.
+	 */
 	const zijden = (z: Zaal, stuk: Stuk | null) => {
-		const c = vanKabinet(stuk);
-		const fr = [...z.factions].sort((a, b) => b.seats - a.seats);
-		const ja = fr.filter((f) => c(f) === true);
-		const nee = fr.filter((f) => c(f) === false);
+		const kleur = new Map(z.factions.map((f) => [f.key, f.color ?? null]));
+		const rijen: (Rij & { ja: boolean | null })[] = stuk?.factions?.length
+			? stuk.factions.map((f) => ({
+					key: f.key ?? naam(f),
+					naam: naam(f),
+					seats: f.seats,
+					vacant: f.vacant ?? 0,
+					color: kleur.get(f.key) ?? null,
+					ja: f.coalition ?? null
+				}))
+			: z.factions.map((f) => ({
+					key: f.key ?? naam(f),
+					naam: naam(f),
+					seats: f.seats,
+					vacant: 0,
+					color: f.color ?? null,
+					ja: f.coalition ?? null
+				}));
+		const fr = rijen.sort((a, b) => b.seats - a.seats);
+		const ja = fr.filter((f) => f.ja === true);
+		const nee = fr.filter((f) => f.ja === false);
 		const som = (l: typeof fr) => l.reduce((n, f) => n + f.seats, 0);
 		return { ja, nee, jaZetels: som(ja), neeZetels: som(nee) };
 	};
@@ -118,9 +154,16 @@
 	 *  seat changes hands (Schoof, 25 July 2025: 152). */
 	const zetelsVanKamer = $derived(kamer === 'TK' ? 150 : 75);
 	/** The head figure: the coalition's seats on the day, of the Kamer's. */
+	/**
+	 * The coalition's vacant seats on the stretch (`coalition_vacant`, API 0.79.44, #526); before
+	 * it, the sum of its fracties' own (`factions[].vacant`).
+	 */
+	const coalitieVacant = (s: Stuk) =>
+		(s as Stuk & { coalition_vacant?: number | null }).coalition_vacant ??
+		(s.factions ?? []).reduce((n, f) => n + (f.coalition ? (f.vacant ?? 0) : 0), 0);
 	const kop = $derived.by(() => {
 		if (gekozen)
-			return { ja: gekozen.coalition, totaal: zetelsVanKamer, vacant: gekozen.vacant ?? 0 };
+			return { ja: gekozen.coalition, totaal: zetelsVanKamer, vacant: coalitieVacant(gekozen) };
 		if (typeof zaal === 'object')
 			return { ja: zijden(zaal, null).jaZetels, totaal: zetelsVanKamer, vacant: 0 };
 		return null;
@@ -171,18 +214,21 @@
 	<div class="zetels">
 		{#if kop}
 			<!-- The head figure (concept 16, B): the coalition's seats on the day shown. -->
+			<!-- The latest count first, one step from its course (Thijs, 10 Oct): the figure
+			     leads to the step strip under it. -->
 			<p class="kopgetal">
-				<b>{kop.ja}</b>
+				{#if stappen.length}<a class="kopgetal__getal" href="#verloop-{kamer}">{kop.ja}</a>{:else}<b
+						>{kop.ja}</b
+					>{/if}
 				<span
-					>coalitiezetels van {kop.totaal}, {@render meerderheidWoord(kop.ja)} ({meerderheid}){kop.vacant
-						? `; ${kop.vacant} ${kop.vacant === 1 ? 'zetel' : 'zetels'} vacant`
-						: ''}</span
+					>coalitiezetels{kop.vacant ? `, waarvan ${kop.vacant} vacant` : ''}, van {kop.totaal},
+					{@render meerderheidWoord(kop.ja)} ({meerderheid})</span
 				>
 			</p>
 		{/if}
 
 		{#if stappen.length}
-			<div class="verloop">
+			<div class="verloop" id="verloop-{kamer}" tabindex="-1">
 				<svg
 					viewBox="0 0 {W} {H}"
 					preserveAspectRatio="none"
@@ -272,15 +318,18 @@
 						<div class="zijde" class:zijde--lang={lijst.length > 6}>
 							<h4>{kopje} <span class="aantal">{totaal}</span></h4>
 							<ol>
-								{#each lijst as f (naam(f))}
+								{#each lijst as f (f.key)}
 									<li>
 										<span
 											class="stip"
 											class:open={kopje === 'Oppositie'}
-											style:--kleur={kleurVan(kamer, naam(f), 0, f.color ?? null)}
-											style:--achter={achtergrondVan(naam(f), f.color ?? null)}
+											style:--kleur={kleurVan(kamer, f.naam, 0, f.color)}
+											style:--achter={achtergrondVan(f.naam, f.color)}
 										></span>
-										<span class="n">{naam(f)}</span><span class="z">{f.seats}</span>
+										<span class="n"
+											>{f.naam}{#if f.vacant}<span class="vacant">, {f.vacant} vacant</span
+												>{/if}</span
+										><span class="z">{f.seats}</span>
 									</li>
 								{/each}
 							</ol>
@@ -416,6 +465,20 @@
 	}
 	.z {
 		color: var(--ink-3);
+	}
+	.vacant {
+		color: var(--ink-3);
+	}
+	/* The head figure leads to the course: ink, underlined on hover as every link. */
+	.kopgetal__getal {
+		font-size: var(--t-h2);
+		font-weight: 800;
+		line-height: var(--lh-tight);
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.kopgetal__getal:hover {
+		text-decoration: underline;
 	}
 	/* Filled for the coalition, open for the opposition, as the seats in the hall. */
 	.stip {
