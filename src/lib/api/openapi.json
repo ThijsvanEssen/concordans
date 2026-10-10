@@ -9883,6 +9883,16 @@
 						"title": "Summary",
 						"description": "The whole text of a commitment, the decision of a vote (``Aangenomen.``), the inhoudsindicatie of a judgment; null for the other kinds."
 					},
+					"has_text": {
+						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
+						"title": "Has Text",
+						"description": "Of a paper: whether its text is in the data, so that it can be opened (a new paper's text follows its PDF by days); null for the other kinds."
+					},
+					"dictum": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dictum",
+						"description": "Of a motion: what it asks or says (``verzoekt de regering \u2026``), as ``GET /api/documents/{key}`` gives it; null for the other kinds and a motion without text."
+					},
 					"subkind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Subkind",
