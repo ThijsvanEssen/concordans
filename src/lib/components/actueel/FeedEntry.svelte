@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import { inhoudVan } from '$lib/components/open/rij-inhoud';
 	import { uniqueBy } from '$lib/util/unique';
 	// One line of Actueel: an item, or a fold of many items of one kind on one dossier. The
@@ -88,6 +89,12 @@
 									>{/if}{@render persons(i)}</span
 							>
 						{/if}
+						{#if i.vote?.coalition}
+							<CoalitieRegel
+								coalitie={i.vote.coalition}
+								fracties={i.vote.coalition_factions ?? []}
+							/>
+						{/if}
 					</li>
 				{/each}
 			</ul>
@@ -147,6 +154,9 @@
 					<BronLink ref={`instruments/${w.key}`}>{w.title}</BronLink>
 				{/each}
 			</span>
+			{#if i.vote?.coalition}
+				<CoalitieRegel coalitie={i.vote.coalition} fracties={i.vote.coalition_factions ?? []} />
+			{/if}
 		{/snippet}
 		{#snippet aside()}
 			{#if i.vote}

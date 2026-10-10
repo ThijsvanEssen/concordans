@@ -57,6 +57,13 @@
 	/** The days one summary spans at most, as the API allows. */
 	const SUMMARY_DAYS_MAX = 31;
 
+	const COALITIE = {
+		eensgezind: { api: 'together', label: 'Eensgezind' },
+		verdeeld: { api: 'split', label: 'Verdeeld' },
+		wisselmeerderheid: { api: 'wissel', label: 'Wisselmeerderheid' },
+		doorslaggevend: { api: 'decisive', label: 'Doorslaggevend' }
+	} as const;
+
 	// ── The URL ─────────────────────────────────────────────────────────────
 	const params = $derived(page.url.searchParams);
 	// A link from before API 0.48 names a kind the old way (`motie`): read as the TK word.
@@ -70,6 +77,11 @@
 	const dossier = $derived(params.get('dossier') ?? '');
 	const member = $derived(params.get('persoon') ?? '');
 	const faction = $derived(params.get('fractie') ?? '');
+	// What the coalition did on a vote (API 0.79.45, #546), in the site's words: the address
+	// says `coalitie=verdeeld`, the API `coalition=split` (concept 24, variant A).
+	const coalitie = $derived(
+		((v) => (v && v in COALITIE ? (v as keyof typeof COALITIE) : ''))(params.get('coalitie'))
+	);
 	const q = $derived(params.get('q') ?? '');
 	// Which Kamer (API 0.59): the Tweede with its papers, votes and toezeggingen, or the
 	// Eerste with the votes that decided a bill. Publications belong to neither.
@@ -87,6 +99,7 @@
 		'dossier',
 		'persoon',
 		'fractie',
+		'coalitie',
 		'q',
 		'kamer',
 		'komend'
@@ -152,6 +165,7 @@
 		dossier: dossier || undefined,
 		member: member || undefined,
 		faction: faction || undefined,
+		coalition: coalitie ? COALITIE[coalitie].api : undefined,
 		// API 0.79.30 takes several q; one as before (Front-end #2 widens it).
 		q: q ? [q] : undefined,
 		chamber: chamber || undefined,
@@ -313,7 +327,7 @@
 	});
 	$effect(() => {
 		const s = span;
-		const { kind, cabinet, ministry, dossier, member, faction, q, chamber } = query;
+		const { kind, cabinet, ministry, dossier, member, faction, coalition, q, chamber } = query;
 		if (!s) return;
 		const ac = new AbortController();
 		unwrap(
@@ -327,6 +341,7 @@
 						dossier,
 						member,
 						faction,
+						coalition,
 						q,
 						chamber,
 						margin: CLOSE_VOTE,
@@ -380,6 +395,7 @@
 	const facetMap = (list: { value?: string | null; count: number }[] | undefined) =>
 		new Map((list ?? []).flatMap((f) => (f.value ? [[f.value, f.count] as const] : [])));
 
+	const coalitieTellingen = $derived(facetMap(facets?.coalition));
 	const groups = $derived.by<FacetGroup[]>(() => {
 		const kindCounts = facetMap(facets?.kind);
 		// Every fraction, as on Kamerleden; the chosen one also when this view has none of it.
@@ -416,6 +432,24 @@
 					};
 				})
 			},
+			// Only where the votes of the view have a coalition (the Tweede Kamer, a cabinet in
+			// office); a chosen value stays to be undone.
+			...(coalitieTellingen.size || coalitie
+				? [
+						{
+							id: 'coalitie',
+							label: 'Coalitie',
+							kind: 'list' as const,
+							options: (Object.keys(COALITIE) as (keyof typeof COALITIE)[]).map((k) => ({
+								id: k,
+								label: COALITIE[k].label,
+								count: coalitieTellingen.get(COALITIE[k].api) ?? 0,
+								on: coalitie === k,
+								onClick: () => patchUrl({ coalitie: coalitie === k ? null : k })
+							}))
+						}
+					]
+				: []),
 			{
 				id: 'ministerie',
 				label: 'Ministerie',
