@@ -1,5 +1,25 @@
 <script lang="ts">
 	import Wordmark from './Wordmark.svelte';
+	import { getStats } from '$lib/api/stats';
+	import { feedStand, standLine } from '$lib/components/actueel/feed';
+
+	// How current the data is, one line on every page (Thijs, 10 Oct: out of the page heads,
+	// docs/bediening.md, Bronregels): from /api/stats, asked once the footer comes into view.
+	let stand = $state<ReturnType<typeof feedStand>>(null);
+	function inBeeld(el: HTMLElement) {
+		const kijk = new IntersectionObserver(
+			([e]) => {
+				if (!e.isIntersecting) return;
+				kijk.disconnect();
+				getStats()
+					.then((s) => (stand = feedStand(s.data_as_of)))
+					.catch(() => {});
+			},
+			{ rootMargin: '200px' }
+		);
+		kijk.observe(el);
+		return { destroy: () => kijk.disconnect() };
+	}
 </script>
 
 <footer class="foot">
@@ -75,8 +95,9 @@
 		</div>
 	</div>
 
-	<div class="container foot-bottom">
+	<div class="container foot-bottom" use:inBeeld>
 		<span>© 2026 Concordans</span>
+		{#if stand}<span class="stand">{standLine(stand)}</span>{/if}
 	</div>
 </footer>
 
@@ -153,6 +174,8 @@
 
 	.foot-bottom {
 		display: flex;
+		flex-wrap: wrap;
+		gap: var(--s-1) var(--s-5);
 		justify-content: flex-start;
 		align-items: center;
 		padding: 20px var(--s-6);
