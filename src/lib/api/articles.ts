@@ -18,6 +18,16 @@ export const getArticleDetail = (bwbId: string, articleNumber: string) =>
 		})
 	);
 
+/** The tekstversies of an article, once per session: its address asks them beside its text. */
+export const getArticleHistory = (bwbId: string, articleNumber: string) =>
+	once(`articles/${bwbId}/${articleNumber}/history`, () =>
+		unwrap(
+			api.GET('/api/articles/{bwb_id}/{article_number}/history', {
+				params: { path: { bwb_id: bwbId, article_number: articleNumber } }
+			})
+		)
+	);
+
 /** Keep the address of an article under its node key, as a lookup gives it. */
 export const onthoudArtikel = (key: string, bwbId: string, articleNumber: string) =>
 	adresVan.set(key.toLowerCase(), { bwbId, articleNumber });

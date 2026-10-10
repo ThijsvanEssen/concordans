@@ -20,8 +20,10 @@
 // readable address once the bron is known.
 import { SvelteMap } from 'svelte/reactivity';
 import { api, leesAntwoorden } from '$lib/api/client';
-import { getArticleDetail, onthoudArtikel } from '$lib/api/articles';
-import { bookNumber } from '$lib/text/bw';
+import { getArticleDetail, getArticleHistory, onthoudArtikel } from '$lib/api/articles';
+import { lawArticleList } from '$lib/api/law-articles';
+import { getExplainedBy } from '$lib/api/records';
+import { apiNumber, bookNumber } from '$lib/text/bw';
 import { parseNodeId } from '$lib/vocabulary';
 
 export type Pad =
@@ -171,7 +173,12 @@ export function onthoudPaden(data: unknown, diepte = 0) {
 	if (typeof id === 'string' && adres && padVan.get(id) !== adres) {
 		const target = parseNodeId(id);
 		const pad = parsePad(adres);
-		if (target && pad && target.collection !== 'dossiers') remember(padHref(pad), id);
+		if (target && pad && target.collection !== 'dossiers') {
+			remember(padHref(pad), id);
+			// The text of an article named here can stand in the reader before its node.
+			if (pad.soort === 'artikel')
+				onthoudArtikel(target.key, pad.wet.toUpperCase(), apiNumber(pad.wet, pad.nummer));
+		}
 	}
 	for (const value of Object.values(data)) {
 		if (value && typeof value === 'object') onthoudPaden(value, diepte + 1);
@@ -237,21 +244,31 @@ function lookupQuery(pad: Pad) {
 export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | null> {
 	// An article's address names its text: asked at once, beside the lookup and the node,
 	// so the reader finds it waiting (once() shares the request; Thijs, 10 Oct: lazy, the
-	// text first).
-	// It names the article's node key too: where it comes before the lookup, the reader
-	// stands on it at once ($lib/bron/kop).
-	if (pad.soort === 'artikel')
-		getArticleDetail(pad.wet.toUpperCase(), pad.nummer)
+	// text first). The text names the article's node key too: where it comes before the
+	// lookup, the reader stands on it at once ($lib/bron/kop). Its tekstversies date the
+	// status line ("tekst sinds …"), the list of its law gives the place line and Vorig,
+	// Volgend, its explanations the line of the memorie: asked with it, so the head does not
+	// grow over the text when they come. By the API's own number (162 for BW 6:162), as the
+	// reader asks them.
+	const artikel =
+		pad.soort === 'artikel'
+			? { wet: pad.wet.toUpperCase(), nummer: apiNumber(pad.wet, pad.nummer) }
+			: null;
+	if (artikel) {
+		getArticleDetail(artikel.wet, artikel.nummer)
 			.then((d) => {
 				const href = padHref(pad);
 				if (d.article?.id && !focusVan.has(href)) remember(href, d.article.id);
 			})
 			.catch(() => {});
+		getArticleHistory(artikel.wet, artikel.nummer).catch(() => {});
+		lawArticleList(artikel.wet).catch(() => {});
+		getExplainedBy(artikel.wet, artikel.nummer).catch(() => {});
+	}
 	const known = focusOfPad(pad);
 	if (known) {
 		const target = parseNodeId(known);
-		if (pad.soort === 'artikel' && target)
-			onthoudArtikel(target.key, pad.wet.toUpperCase(), pad.nummer);
+		if (artikel && target) onthoudArtikel(target.key, artikel.wet, artikel.nummer);
 		return known;
 	}
 	const { data, response } = await api.GET('/api/lookup', {
@@ -262,7 +279,7 @@ export async function lookUp(pad: Pad, signal?: AbortSignal): Promise<string | n
 	if (!data) throw new Error(`lookup ${response.status}`);
 	const focus = `${data.collection}/${data.key}`;
 	// The reader stands on the article's detail, asked above, while its node is on its way.
-	if (pad.soort === 'artikel') onthoudArtikel(data.key, pad.wet.toUpperCase(), pad.nummer);
+	if (artikel) onthoudArtikel(data.key, artikel.wet, artikel.nummer);
 	remember(padHref(pad), focus);
 	return focus;
 }

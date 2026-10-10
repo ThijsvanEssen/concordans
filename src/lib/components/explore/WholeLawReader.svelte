@@ -373,13 +373,19 @@
 	}
 </script>
 
-{#if status === 'idle'}
-	<div class="whole-empty"></div>
-{:else if status === 'loading'}
+{#snippet laden()}
 	<div class="whole-loading">
 		<div class="spinner" aria-hidden="true"></div>
 		<span>Laden…</span>
 	</div>
+{/snippet}
+
+<!-- The head stands on the law's own detail, the cheapest call; the list of its articles
+     follows under it (lazy: the text of the head first, Orchestrator 10 Oct). -->
+{#if status === 'idle'}
+	<div class="whole-empty"></div>
+{:else if status === 'loading' && !lawDetail}
+	{@render laden()}
 {:else if status === 'error'}
 	<div class="whole-error">De wet kon niet worden geladen.</div>
 {:else}
@@ -478,7 +484,9 @@
 			{/if}
 		</ReaderHead>
 
-		{#if peildatum && articles.length === 0}
+		{#if status === 'loading'}
+			{@render laden()}
+		{:else if peildatum && articles.length === 0}
 			{#if firstVersionFrom && peildatum < firstVersionFrom}
 				<!-- Before the first toestand: the BWB holds no text of that day. -->
 				<p class="whole-before">
@@ -566,7 +574,7 @@
 			</section>
 		{/each}
 
-		{#if articles.length < total}
+		{#if status !== 'loading' && articles.length < total}
 			<p class="whole-volgende">
 				{#if status === 'loading-more'}Laden…{:else}<TekstLink onclick={loadMore}
 						>Volgende artikelen, nog {formatCount(total - articles.length)}</TekstLink

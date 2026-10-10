@@ -13,7 +13,7 @@
 	// comparison; a lid changed since the oldest tekstversie says so in the margin.
 	import { menu } from '$lib/actions/menu';
 	import { api, unwrap } from '$lib/api/client';
-	import { getArticleDetail } from '$lib/api/articles';
+	import { getArticleDetail, getArticleHistory } from '$lib/api/articles';
 	import { instrumentMetaStore, recordInstrument } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
@@ -142,12 +142,7 @@
 				if (!stale) view = { kind: 'error', message: 'Artikel kon niet worden geladen.' };
 			});
 		// The versions of the text, for the picker. Empty until the pipeline has run.
-		unwrap(
-			api.GET('/api/articles/{bwb_id}/{article_number}/history', {
-				params: { path: { bwb_id: bwbId, article_number: articleNumber } },
-				signal: controller.signal
-			})
-		)
+		getArticleHistory(bwbId, articleNumber)
 			.then((r) => {
 				if (!stale) versions = r.versions ?? [];
 			})

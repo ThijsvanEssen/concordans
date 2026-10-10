@@ -56,7 +56,7 @@
 </script>
 
 <div class="reader-head">
-	<div class="reader-line">
+	<div class="reader-line" class:reader-line--plaats={collection === 'articles'}>
 		{#if soort}
 			<div class="reader-kind">{@render soort()}</div>
 		{:else if place.length > 0 || placeTitle}
@@ -112,6 +112,12 @@
 		margin-bottom: var(--s-2);
 	}
 
+	/* An article's line becomes its place (Begunstiging, ← Vorig) when the list of its law
+	   comes, which may be after its text: the line keeps that height from the start. */
+	.reader-line--plaats {
+		min-height: calc(var(--t-body-2) * var(--lh-snug));
+	}
+
 	/* One run of words ("Uitspraak, Hoge Raad"): text, not a row of items with gaps; a mark
 	   in it (KindGlyph) keeps a step to the word after it. */
 	.reader-kind {
@@ -146,6 +152,12 @@
 		.reader-line {
 			flex-wrap: wrap;
 			row-gap: var(--s-2);
+		}
+		/* On a phone the place and Vorig, Volgend stand on two rows. */
+		.reader-line--plaats {
+			min-height: calc(
+				var(--t-body-2) * var(--lh-snug) + var(--s-2) + var(--t-micro) * var(--lh-snug)
+			);
 		}
 		.reader-place {
 			flex-basis: 100%;

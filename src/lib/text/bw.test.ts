@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { articleName, articleTitle, bookNumber, withBook } from './bw';
+import { apiNumber, articleName, articleTitle, bookNumber, withBook } from './bw';
 
 describe('BW article numbers', () => {
+	it('gives the number the API gives a BW article, without its book', () => {
+		expect(apiNumber('BWBR0005289', '6:162')).toBe('162');
+		expect(apiNumber('BWBR0006000', '7a:1576')).toBe('1576');
+		expect(apiNumber('BWBR0005289', '162')).toBe('162');
+		expect(apiNumber('BWBR0001854', '126ffa')).toBe('126ffa');
+	});
+
 	it('puts the book before the number of a BW article', () => {
 		expect(bookNumber('BWBR0005289', '162')).toBe('6:162');
 		expect(bookNumber('bwbr0006000', '1576')).toBe('7A:1576');
