@@ -1327,13 +1327,24 @@
 		const kijk = new ResizeObserver(() => schik());
 		kijk.observe(host);
 		if (lg) kijk.observe(lg);
-		const nw = host.querySelector<HTMLElement>('.netwerk');
-		if (nw) kijk.observe(nw);
+		// The panel Netwerk is watched as it is now: after a step to another bron it can be a
+		// new element, whose chips wrap later (Legenda over Netwerk, UX test 10 Oct, #10).
+		const volg = () => {
+			const nw = host.querySelector<HTMLElement>('.netwerk');
+			if (nw) kijk.observe(nw);
+		};
+		volg();
 		// The panel's content changes without a change of its own box (a chip added).
-		const verandert = new MutationObserver(() => schik());
+		const verandert = new MutationObserver(() => {
+			volg();
+			schik();
+		});
+		// A chip's new name is a change of its text alone (kabinet → uitspraak: the chips took a
+		// second line and the Legenda stayed 19 px over the panel, UX test 10 Oct, #10).
 		verandert.observe(host, {
 			childList: true,
 			subtree: true,
+			characterData: true,
 			attributes: true,
 			attributeFilter: ['class']
 		});
