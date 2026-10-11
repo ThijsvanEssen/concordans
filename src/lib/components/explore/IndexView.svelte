@@ -2458,16 +2458,17 @@
 						<h2 class="gov-title">
 							<a href={hrefOf(`cabinets/${shownCabinet.key}`)}>{shownCabinet.name}</a>
 						</h2>
+						<!-- "sinds 2026, minister-president Rob Jetten, 28 bewindspersonen": no space before a comma. -->
 						<p class="gov-sub">
-							{period(shownCabinet.from_date, shownCabinet.to_date, isOpen(shownCabinet))}
-							{#if shownCabinet.prime_minister?.name}
-								, minister-president <NameLink
+							{period(
+								shownCabinet.from_date,
+								shownCabinet.to_date,
+								isOpen(shownCabinet)
+							)}{#if shownCabinet.prime_minister?.name}, minister-president <NameLink
 									collection="members"
 									name={shownCabinet.prime_minister.name}
 									key={shownCabinet.prime_minister.key}
-								/>
-							{/if}
-							, {shownCabinet.members}
+								/>{/if}, {shownCabinet.members}
 							{shownCabinet.members === 1 ? 'bewindspersoon' : 'bewindspersonen'}
 						</p>
 						{#if !ministersShown?.length && !loading}
