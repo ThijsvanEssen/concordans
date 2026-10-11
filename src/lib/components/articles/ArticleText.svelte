@@ -9,7 +9,12 @@
 	import { page } from '$app/state';
 	import { permalink } from '$lib/bron/anchor';
 	import type { Schema } from '$lib/api/types';
-	import { parseArticleParts, partsFromApi, type ArticlePart } from '$lib/text/article-parts';
+	import {
+		parseArticleParts,
+		partsFromApi,
+		placeOf,
+		type ArticlePart
+	} from '$lib/text/article-parts';
 	import { citeArticle, partOfAnchor, type Citation } from '$lib/text/cite';
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
@@ -74,17 +79,20 @@
 		};
 	};
 
-	/** The part's text with its onderdelen, as Kopieer tekst puts it on the clipboard. */
-	const fullText = (part: ArticlePart) => source.slice(part.textStart, part.end).trim();
+	/** The place's text with its onderdelen, as Kopieer tekst puts it on the clipboard; the
+	 *  article's whole text when the place is the article. */
+	const fullText = (part: ArticlePart | null) =>
+		part ? source.slice(part.textStart, part.end).trim() : source.trim();
 
-	/** A part without an anchor (an article without leden) is keyed by its offset. */
-	const keyOf = (part: ArticlePart) => part.id ?? `tekst-${part.start}`;
+	/** A part is keyed by the place it is cited as: text without an anchor of its own is its
+	 *  lid's, or the article's (an article without leden). */
+	const keyOf = (part: ArticlePart) => placeOf(parts, part)?.id ?? 'artikel';
 
-	/** The place whose menu is open, and the marker it hangs from. */
-	let menu = $state<{ part: ArticlePart; anker: HTMLElement } | null>(null);
-	const menuFor = $derived(menu ? keyOf(menu.part) : null);
+	/** The place whose menu is open (null: the article), and the marker it hangs from. */
+	let menu = $state<{ part: ArticlePart | null; anker: HTMLElement } | null>(null);
+	const menuFor = $derived(menu ? (menu.part?.id ?? 'artikel') : null);
 	function openMenu(part: ArticlePart, anker: HTMLElement) {
-		menu = menu && keyOf(menu.part) === keyOf(part) ? null : { part, anker };
+		menu = menuFor === keyOf(part) ? null : { part: placeOf(parts, part), anker };
 	}
 	/** A click on a place's text opens its menu, at its marker: not on a link or a control,
 	 *  not when text is being selected, and only for the innermost place. */
@@ -99,14 +107,17 @@
 		if (anker) openMenu(part, anker);
 	}
 	/** The place as the menu names it: its short citation, else `Lid 2`. */
-	const naamVan = (part: ArticlePart) =>
+	const naamVan = (part: ArticlePart | null) =>
 		formsOf(part)?.kort ??
-		(part.kind === 'lid' ? `Lid ${part.number}` : part.number ? `Onder ${part.number}` : 'Tekst');
+		(part?.kind === 'lid'
+			? `Lid ${part.number}`
+			: part?.number
+				? `Onder ${part.number}`
+				: 'Artikel');
 
-	const formsOf = (part: ArticlePart) => {
-		if (!citation || !part.id) return null;
-		return citeArticle({ ...citation, ...partOfAnchor(part.id) });
-	};
+	/** The citation of a place; null is the article itself. */
+	const formsOf = (part: ArticlePart | null) =>
+		citation ? citeArticle({ ...citation, ...partOfAnchor(part?.id ?? null) }) : null;
 </script>
 
 {#snippet render(part: ArticlePart, top: boolean)}
@@ -125,7 +136,7 @@
 				class="lid__no plaats-marker"
 				aria-haspopup="menu"
 				aria-expanded={menuFor === keyOf(part)}
-				aria-label="{naamVan(part)}: citeren, bewaren"
+				aria-label="{naamVan(placeOf(parts, part))}: citeren, bewaren"
 				onclick={(e) => openMenu(part, e.currentTarget)}
 				>{part.kind === 'lid'
 					? `${part.number}.`
@@ -166,7 +177,7 @@
 		<div
 			class="part part--{part.kind}"
 			id={part.id}
-			class:is-open={menuFor === keyOf(part)}
+			class:is-open={!!part.id && menuFor === part.id}
 			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
 		>
 			{#if part.number && part.id}
@@ -174,7 +185,7 @@
 					type="button"
 					class="part__number plaats-marker"
 					aria-haspopup="menu"
-					aria-expanded={menuFor === keyOf(part)}
+					aria-expanded={menuFor === part.id}
 					aria-label="{naamVan(part)}: citeren, bewaren"
 					onclick={(e) => openMenu(part, e.currentTarget)}>{part.number}{mark}</button
 				>
@@ -233,15 +244,21 @@
 {#if menu}
 	{@const p = menu.part}
 	{@const forms = formsOf(p)}
-	{@const lid = p.kind === 'lid' ? p.number : null}
+	{@const lid = p?.kind === 'lid' ? p.number : null}
 	{@const count = lid ? counts.get(lid) : undefined}
 	<PlaatsMenu
 		anker={menu.anker}
 		titel={naamVan(p)}
-		cite={forms ? citeItems(forms, permalink(page.url, p.id!)) : []}
+		cite={forms ? citeItems(forms, permalink(page.url, p?.id ?? '')) : []}
 		tekst={() => fullText(p)}
-		bewaar={bewaar && forms && p.id
-			? { id: bewaar.id, at: p.id, kort: forms.kort, voluit: forms.voluit, groep: bewaar.groep }
+		bewaar={bewaar && forms
+			? {
+					id: bewaar.id,
+					at: p?.id ?? '',
+					kort: forms.kort,
+					voluit: forms.voluit,
+					groep: bewaar.groep
+				}
 			: null}
 		verbindingen={lid && count != null && lidHref
 			? { n: count, href: lidHref(lid) }
