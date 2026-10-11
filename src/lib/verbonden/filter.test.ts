@@ -4,7 +4,6 @@ import {
 	PRESETS,
 	activePreset,
 	bronKindOf,
-	bronnenLabel,
 	filterParams,
 	hiddenByKind,
 	kindCount,
@@ -59,18 +58,13 @@ describe('parseFilter', () => {
 });
 
 describe('presets', () => {
-	it('names the active preset in the head of the panel', () => {
-		expect(bronnenLabel(EMPTY_FILTER)).toBe('Alle bronnen');
-		const f = withPreset(EMPTY_FILTER, PRESETS[2]);
-		expect(activePreset(f)?.id).toBe('wetteksten');
-		expect(bronnenLabel(f)).toBe('Wetteksten en toelichting');
+	it('knows the active preset, by its bronnen and rechter', () => {
+		expect(activePreset(EMPTY_FILTER)?.id).toBe('alles');
+		expect(activePreset(withPreset(EMPTY_FILTER, PRESETS[2]))?.id).toBe('wetteksten');
 		expect(activePreset(withPreset(EMPTY_FILTER, PRESETS[4]))?.id).toBe('hoge-raad');
-	});
-
-	it('never lists the kinds of a choice of its own', () => {
 		const f = toggleKind(toggleKind(EMPTY_FILTER, 'toelichtingen'), 'internationaal');
-		expect(bronnenLabel(f)).toBe('Eigen keuze');
-		expect(bronnenLabel({ ...EMPTY_FILTER, rechter: 'hr' })).toBe('Alle bronnen');
+		expect(activePreset(f)).toBeNull();
+		expect(activePreset({ ...EMPTY_FILTER, rechter: 'hr' })).toBeNull();
 	});
 
 	it('toggles one kind and returns to all when every kind is on', () => {

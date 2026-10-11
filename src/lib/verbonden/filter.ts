@@ -195,17 +195,6 @@ const sameKinds = (a: ReadonlySet<BronKind> | null, b: readonly BronKind[] | nul
 export const activePreset = (f: VerbondenFilter): Preset | null =>
 	PRESETS.find((p) => sameKinds(f.bronnen, p.bronnen) && (p.rechter ?? null) === f.rechter) ?? null;
 
-/**
- * What the button in the head of the panel says: `Alle bronnen`, the preset, or `Eigen
- * keuze`. Never the kinds themselves: the legend and the filter show those, and the line
- * `Ook …` under the groups names what is left out (Thijs, 11 Oct: that line of kinds "hoeft
- * er nooit te staan").
- */
-export function bronnenLabel(f: VerbondenFilter): string {
-	if (f.bronnen === null) return 'Alle bronnen';
-	return activePreset(f)?.label ?? 'Eigen keuze';
-}
-
 export const withPreset = (f: VerbondenFilter, p: Preset): VerbondenFilter => ({
 	...f,
 	bronnen: p.bronnen ? new Set(p.bronnen) : null,
