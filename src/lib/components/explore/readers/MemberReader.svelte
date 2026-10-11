@@ -13,6 +13,7 @@
 	import { uniqueBy } from '$lib/util/unique';
 	import NameLink from '$lib/bron/NameLink.svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
+	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import type { Neighbor } from '$lib/api/nodes';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
@@ -23,6 +24,7 @@
 		inYears,
 		seatWord,
 		yearsOf,
+		type CareerEntry,
 		type Signature
 	} from '$lib/components/parliamentary/career';
 	import { parseFilter } from '$lib/verbonden/filter';
@@ -199,6 +201,10 @@
 		};
 	};
 
+	/** A step of the career, the same in Loopbaan and in what it opens. */
+	const stapId = (step: CareerEntry) =>
+		step.kind + (step.kind === 'seat' ? step.factionKey : step.function) + step.from;
+
 	// The years of the bronfilter: a step of the career outside them steps back.
 	const years = $derived(parseFilter(page.url.searchParams));
 </script>
@@ -293,49 +299,49 @@
 			{/if}
 
 			{#if career.length > 0}
+				<!-- A function's cabinet and stukken, by link, under it. -->
+				{#snippet ambtOnder(id: string)}
+					{@const step = career.find((c) => stapId(c) === id)}
+					{#if step?.kind === 'function'}
+						{#if step.cabinet}<NameLink
+								collection="cabinets"
+								name={step.cabinet}
+							/>{/if}{#if step.count > 0}{`${step.cabinet ? ', ' : ''}${step.count} ${step.count === 1 ? 'stuk' : 'stukken'} ondertekend`}{/if}
+					{/if}
+				{/snippet}
 				<Sectie titel="Loopbaan" id="loopbaan">
-					<ul class="career">
-						{#each career as step (step.kind + (step.kind === 'seat' ? step.factionKey : step.function) + step.from)}
-							<li
-								class="career-step"
-								class:is-out={!inYears(step.from, step.to, years.van, years.tot)}
-							>
-								<span class="career-years">{yearsOf(step.from, step.to)}</span>
-								{#if step.kind === 'seat'}
-									<span class="career-what">
-										Kamerlid,
-										<BronLink ref={{ collection: 'factions', key: step.factionKey }}
-											>{step.faction}</BronLink
-										>
-										{#each uniqueBy(step.roles, (r) => r.role + r.from) as r (r.role + r.from)}
-											<span class="career-role">{r.role.toLowerCase()} {yearsOf(r.from, r.to)}</span
-											>
-										{/each}
-									</span>
-								{:else}
-									<span
-										class="career-what"
-										title={step.cabinet
-											? undefined
-											: 'Bekend uit ondertekende stukken; de jaren zijn die van de stukken'}
-									>
-										{step.function.charAt(0).toUpperCase() + step.function.slice(1)}
-										{#if step.cabinet}<NameLink
-												collection="cabinets"
-												name={step.cabinet}
-												class="career-role"
-											/>{/if}
-										{#if step.count > 0}
-											<span class="career-role"
-												>{step.count}
-												{step.count === 1 ? 'stuk' : 'stukken'} ondertekend</span
-											>
-										{/if}
-									</span>
-								{/if}
-							</li>
-						{/each}
-					</ul>
+					<Tijdlijn
+						perioden
+						groepen={[
+							{
+								id: 'loopbaan',
+								titel: '',
+								regels: career.map((step) => ({
+									id: stapId(step),
+									datum: null,
+									periode: { van: step.from, tot: step.to },
+									teken: 'stuk' as const,
+									gedimd: !inYears(step.from, step.to, years.van, years.tot),
+									...(step.kind === 'seat'
+										? {
+												zin: `Kamerlid, ${step.faction}`,
+												ref: { collection: 'factions' as const, key: step.factionKey },
+												meta:
+													uniqueBy(step.roles, (r) => r.role + r.from)
+														.map((r) => `${r.role.toLowerCase()} ${yearsOf(r.from, r.to)}`)
+														.join(', ') || null
+											}
+										: {
+												zin: step.function.charAt(0).toUpperCase() + step.function.slice(1),
+												onder: step.cabinet || step.count > 0 ? ambtOnder : null,
+												hint: step.cabinet
+													? null
+													: 'Bekend uit ondertekende stukken; de jaren zijn die van de stukken'
+											})
+								}))
+							}
+						]}
+					/>
 				</Sectie>
 			{/if}
 
@@ -344,37 +350,32 @@
 				     seat that stands for them, its role where it is more than a seat, and the other
 				     periods beside it, as Loopbaan names a role. -->
 				<Sectie titel="Commissies" soort="committees" aantal={m.committees?.length}>
-					<ul class="career">
-						{#each m.committees ?? [] as c (c.key)}
-							{@const others = (c.periods ?? []).filter(
-								(p) => p.from_date !== c.from_date || p.to_date !== c.to_date
-							)}
-							<li
-								class="career-step"
-								class:is-out={!inYears(
-									c.from_date ?? null,
-									c.to_date ?? null,
-									years.van,
-									years.tot
-								)}
-							>
-								<span class="career-years">{yearsOf(c.from_date ?? null, c.to_date ?? null)}</span>
-								<span class="career-what">
-									<BronLink ref={{ collection: 'committees', key: c.key }}
-										>{c.name ?? naamVan('committees', c)}</BronLink
-									>{seatWord(c.role, c.substitute)
-										? `, ${seatWord(c.role, c.substitute)}`
-										: ''}{c.chamber === 'EK' ? ', Eerste Kamer' : ''}
-									{#each others as p ((p.from_date ?? '') + (p.role ?? '') + (p.substitute ? 'v' : ''))}
-										<span class="career-role"
-											>{seatWord(p.role, p.substitute) ?? 'lid'}
-											{yearsOf(p.from_date ?? null, p.to_date ?? null)}</span
-										>
-									{/each}
-								</span>
-							</li>
-						{/each}
-					</ul>
+					<Tijdlijn
+						perioden
+						groepen={[
+							{
+								id: 'commissies',
+								titel: '',
+								regels: (m.committees ?? []).map((c) => ({
+									id: c.key,
+									datum: null,
+									periode: { van: c.from_date ?? null, tot: c.to_date ?? null },
+									teken: 'stuk' as const,
+									gedimd: !inYears(c.from_date ?? null, c.to_date ?? null, years.van, years.tot),
+									zin: `${c.name ?? naamVan('committees', c)}${seatWord(c.role, c.substitute) ? `, ${seatWord(c.role, c.substitute)}` : ''}${c.chamber === 'EK' ? ', Eerste Kamer' : ''}`,
+									ref: { collection: 'committees' as const, key: c.key },
+									meta:
+										(c.periods ?? [])
+											.filter((p) => p.from_date !== c.from_date || p.to_date !== c.to_date)
+											.map(
+												(p) =>
+													`${seatWord(p.role, p.substitute) ?? 'lid'} ${yearsOf(p.from_date ?? null, p.to_date ?? null)}`
+											)
+											.join(', ') || null
+								}))
+							}
+						]}
+					/>
 				</Sectie>
 			{/if}
 
@@ -519,53 +520,6 @@
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-2);
-	}
-
-	/* ── Loopbaan: newest first, the years in the margin ── */
-	.career {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-	}
-	.career-step {
-		display: grid;
-		grid-template-columns: max(calc(var(--reader-term, 0px) - var(--s-2)), 5.5em) minmax(0, 1fr);
-		gap: var(--s-2);
-		align-items: baseline;
-		transition: opacity var(--dur-1) var(--ease);
-	}
-	.career-step.is-out {
-		opacity: 0.4;
-	}
-	.career-years {
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		font-variant-numeric: tabular-nums;
-		color: var(--ink-3);
-	}
-	.career-what {
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		color: var(--ink);
-		overflow-wrap: anywhere;
-	}
-	.career-what :global(a) {
-		color: inherit;
-	}
-	.career-what :global(a:hover) {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
-	}
-	/* Also on the link NameLink renders. */
-	.r-member :global(.career-role) {
-		display: block;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
 	}
 
 	/* ── Votes ──

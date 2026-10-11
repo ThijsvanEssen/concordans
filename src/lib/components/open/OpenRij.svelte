@@ -44,7 +44,7 @@
 	{#if laden}
 		<p class="laden">Laden…</p>
 	{:else if groepen.some((g) => g.regels.length)}
-		<Tijdlijn {groepen} />
+		<Tijdlijn {groepen} volgorde="aflopend" />
 	{/if}
 	{#if links.length}
 		<p class="links">

@@ -501,6 +501,12 @@
 
 <RouteKop pad="/actueel" />
 
+<!-- Under the last day, in the text column of the timeline. -->
+{#snippet volgende()}
+	{#if loadingMore}<span class="stil">Laden…</span>{:else}<TekstLink onclick={loadMore}
+			>Volgende dagen</TekstLink
+		>{/if}
+{/snippet}
 {#snippet verder()}
 	{#if doorzocht}
 		<p class="doorzocht">
@@ -619,7 +625,7 @@
 			</div>
 		{:else}
 			<div class="days" class:days--stale={loading}>
-				{#each days as day (day.date)}
+				{#each days as day, n (day.date)}
 					<FeedDay
 						{day}
 						{today}
@@ -629,27 +635,17 @@
 						{ministryName}
 						{filterHref}
 						summary={summaries.get(day.date)}
+						meer={n === days.length - 1 && cursor && !doorzocht ? volgende : undefined}
 					/>
 				{/each}
 			</div>
 			{@render verder()}
-			{#if cursor && !doorzocht}
-				<p class="volgende">
-					{#if loadingMore}Laden…{:else}<TekstLink onclick={loadMore}>Volgende dagen</TekstLink
-						>{/if}
-				</p>
-			{/if}
 		{/if}
 	</div>
 </div>
 
 <style>
 	/* The frame and grid of Bladeren (AppShell). */
-	.actueel {
-		/* The lead column of Bladeren's rows (140 in every category), so titles start alike. */
-		--row-lead: 140px;
-		--row-aside: 150px;
-	}
 	.regel {
 		grid-column: 1 / -1;
 	}
@@ -725,13 +721,6 @@
 		color: var(--ink-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
-	}
-	.volgende {
-		padding: var(--s-5) 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		color: var(--ink-3);
-		text-align: center;
 	}
 
 	@media (max-width: 767px) {

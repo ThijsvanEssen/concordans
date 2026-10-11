@@ -5,7 +5,13 @@
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { stand } from './stand';
-import type { TijdGroep, TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
+import {
+	enigJaar,
+	sorteer,
+	type TijdGroep,
+	type TijdRegel
+} from '$lib/components/tijdlijn/tijdlijn';
+import type { MetInhoud } from '$lib/components/open/rij-inhoud';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { withoutKamerstuk } from './kamerstuk';
 
@@ -13,6 +19,16 @@ type Detail = Schema<'DossierDetailResponse'>;
 import { naarAmendementen, naarStemmingen } from './naar';
 type Entry = Schema<'DossierTimelineResponse'>['entries'][number];
 type Body = Record<string, unknown>;
+
+/**
+ * What a line of the procedure opens in place (Tijdlijn `inhoud`): a paper its opening, the
+ * vote on the bill its bar, a day's papers of the bill the papers by kind and number. A line
+ * not in the map (an activity, the Eerste Kamer's own page) has none: its title is the bron.
+ */
+export type ProcedureInhoud =
+	| { soort: 'opening' | 'stemming'; item: MetInhoud }
+	| { soort: 'stukken'; stukken: { ref: string; zin: string }[] };
+type Inhouden = Map<string, ProcedureInhoud>;
 
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const bodyOf = (e: Entry) => (e.body ?? {}) as Body;
@@ -76,6 +92,16 @@ function activiteitZin(e: Entry, b: Body): string {
  * over …`), its kind small above it, its number under it. A title that only names the kind
  * gives way to the kind; the number and the day still tell it apart.
  */
+const opening = (e: Entry): ProcedureInhoud => ({
+	soort: 'opening',
+	item: {
+		kind: 'Brief regering',
+		node: { collection: 'documents', key: e.node_id.split('/')[1] ?? '' },
+		summary: null,
+		vote: null
+	}
+});
+
 function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel {
 	const kind = (e.kind ?? '').replace(/\s*\(.*\)\s*$/, '');
 	const title = e.title ? withoutKamerstuk(e.title).trim() : '';
@@ -116,7 +142,12 @@ function stemdagen(decisions: Entry[]): TijdRegel[] {
 	}));
 }
 
-function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdRegel[] {
+function regelsVan(
+	entries: Entry[],
+	groep: 'rvs' | 'tk' | 'ek',
+	dossier: string,
+	inhoud: Inhouden
+): TijdRegel[] {
 	const out: TijdRegel[] = [];
 	const overig: Entry[] = [];
 	const asc = [...entries].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
@@ -136,6 +167,17 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 		if (e.node_type === 'decision') {
 			const b = bodyOf(e);
 			const uitslag = uitslagVan(b);
+			const tally = (b.tally ?? {}) as Record<string, number>;
+			if ((tally['Voor'] ?? 0) + (tally['Tegen'] ?? 0) > 0)
+				inhoud.set(e.node_id, {
+					soort: 'stemming',
+					item: {
+						kind: 'stemming',
+						node: { collection: 'decisions', key: e.node_id.split('/')[1] ?? '' },
+						summary: null,
+						vote: { chamber: groep === 'ek' ? 'EK' : 'TK', passed: uitslag, tally }
+					}
+				});
 			const method = typeof b.method === 'string' ? b.method : '';
 			const how =
 				method === 'Hamerstuk'
@@ -189,8 +231,32 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 		);
 		const first = docs.find((d) => nrOf(d)) ?? docs[0];
 		const zin = reeks(kinds.map(naam));
+		const id = `d-${groep}-${day}`;
+		// One paper opens its text; several open as a list, each by its kind and number.
+		const eigen = docs
+			.filter((d) => d.kind !== 'Bijgewerkte tekst')
+			.sort((a, b) => {
+				const [x, y] = [nrOf(a) ?? '', nrOf(b) ?? ''];
+				return Number(x) - Number(y) || x.localeCompare(y);
+			});
+		inhoud.set(
+			id,
+			eigen.length === 1
+				? opening(eigen[0])
+				: {
+						soort: 'stukken',
+						stukken: eigen.map((d) => {
+							const nr = nrOf(d);
+							const k = naam(d.kind ?? '');
+							return {
+								ref: d.node_id,
+								zin: `${k.charAt(0).toUpperCase()}${k.slice(1)}${nr ? `, ${groep === 'ek' ? nr : `nr. ${nr}`}` : ''}`
+							};
+						})
+					}
+		);
 		out.push({
-			id: `d-${groep}-${day}`,
+			id,
 			datum: day,
 			teken: 'stuk',
 			soort: 'documents',
@@ -204,8 +270,10 @@ function regelsVan(entries: Entry[], groep: 'rvs' | 'tk' | 'ek', dossier: string
 		});
 	}
 	// After the bill's papers, so on one day the bill comes first (the sort keeps the order).
-	for (const e of docs.filter((e) => !draagtWetstitel(e.kind)))
+	for (const e of docs.filter((e) => !draagtWetstitel(e.kind))) {
 		out.push(eigenStuk(e, groep, dossier));
+		inhoud.set(e.node_id, opening(e));
+	}
 	out.push(...stemdagen(overig));
 	return out.sort((a, b) => (a.datum ?? '').localeCompare(b.datum ?? ''));
 }
@@ -307,12 +375,13 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const overig = entries.filter((e) => !isProcedure(e));
 
 	const per = Map.groupBy(procedureEntries, instantie);
+	const inhoud: Inhouden = new Map();
 	const groepen: TijdGroep[] = [];
 	const wetsvoorstel = isWetsvoorstel(d);
 	// Without a bill nothing is to come: no state per Kamer, so no line of what can follow.
 	const state = st?.bodies.map((b) => b.state) ?? (wetsvoorstel ? ['open', 'now', 'open'] : []);
 
-	const rvs = regelsVan(per.get('rvs') ?? [], 'rvs', d.number);
+	const rvs = regelsVan(per.get('rvs') ?? [], 'rvs', d.number, inhoud);
 	if (rvs.length || wetsvoorstel)
 		groepen.push({
 			id: 'rvs',
@@ -333,7 +402,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 					]
 		});
 
-	const tk = regelsVan(per.get('tk') ?? [], 'tk', d.number);
+	const tk = regelsVan(per.get('tk') ?? [], 'tk', d.number, inhoud);
 	// De wijze staat in tk_decision, niet in het besluit zelf.
 	if (d.tk_decision?.kind?.includes('zonder stemming'))
 		for (const r of tk)
@@ -359,9 +428,10 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 		regels: tk
 	});
 
-	const ek = regelsVan(per.get('ek') ?? [], 'ek', d.number);
+	let ek = regelsVan(per.get('ek') ?? [], 'ek', d.number, inhoud);
 	const voortgang = ekVoortgang(d, ek);
-	if (voortgang) ek.push(...voortgang);
+	// The papers of the Eerste Kamer's own page between the others, by their day.
+	if (voortgang) ek = sorteer([...ek, ...voortgang], 'oplopend');
 	else if (state[2] === 'now')
 		ek.push({
 			id: 'ek-nog',
@@ -380,12 +450,13 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 		});
 	if (ek.length) groepen.push({ id: 'ek', titel: 'Eerste Kamer', regels: ek });
 
-	// Het jaar staat in de kop van de groep, niet bij elke datum.
+	// Het jaar staat in de kop van de groep, en niet nog eens onder elke dag.
 	for (const g of groepen) {
 		const jaren = [
 			...new Set(g.regels.flatMap((r) => (r.datum ? [r.datum.slice(0, 4)] : [])))
 		].sort();
 		g.sub = jaren.length ? (jaren.length > 1 ? `${jaren[0]}–${jaren.at(-1)}` : jaren[0]) : null;
+		g.jaar = enigJaar(g.regels);
 	}
-	return { groepen, overig: overig.length };
+	return { groepen, overig: overig.length, inhoud };
 }
