@@ -16,32 +16,7 @@ export const soortVan = (d: Pick<Besluit, 'kind'>) => d.kind?.trim() || NO_DECIS
 
 export const jaarVan = (d: Pick<Besluit, 'date'>) => (d.date ?? '').slice(0, 4);
 
-/** The coalition and the opposition of the cabinet in office on the day of a vote. */
-export type Kant = 'coalitie' | 'oppositie';
-export const KANTEN: readonly Kant[] = ['coalitie', 'oppositie'];
-
-/**
- * How the coalition or the opposition voted: the side with most of its seats; none where it
- * split evenly, and none without a coalition vote (the Eerste Kamer, a day without a cabinet).
- */
-export function kantVan(d: Pick<Besluit, 'coalition'>, kant: Kant): Stem | undefined {
-	const c = d.coalition;
-	if (!c) return undefined;
-	const [voor, tegen] =
-		kant === 'coalitie'
-			? [c.coalition_for, c.coalition_against]
-			: [c.opposition_for, c.opposition_against];
-	return voor > tegen ? 'voor' : tegen > voor ? 'tegen' : undefined;
-}
-
-export type Filter = {
-	soort?: string;
-	uitkomst?: Uitkomst;
-	jaar?: string;
-	stem?: Stem;
-	coalitie?: Stem;
-	oppositie?: Stem;
-};
+export type Filter = { soort?: string; uitkomst?: Uitkomst; jaar?: string; stem?: Stem };
 
 export function filter(
 	lijst: readonly Besluit[],
@@ -53,8 +28,7 @@ export function filter(
 			(!f.soort || soortVan(d) === f.soort) &&
 			(!f.uitkomst || uitkomstVan(d) === f.uitkomst) &&
 			(!f.jaar || jaarVan(d) === f.jaar) &&
-			(!f.stem || stemmen.get(d.key) === f.stem) &&
-			KANTEN.every((k) => !f[k] || kantVan(d, k) === f[k])
+			(!f.stem || stemmen.get(d.key) === f.stem)
 	);
 }
 
@@ -68,6 +42,47 @@ const leeg = (): Telling => ({
 	voor: 0,
 	tegen: 0
 });
+
+function tel(t: Telling, d: Besluit, stemmen: ReadonlyMap<string, Stem>) {
+	t.totaal++;
+	t[uitkomstVan(d)]++;
+	const s = stemmen.get(d.key);
+	if (s) t[s]++;
+}
+
+export const totaal = (lijst: readonly Besluit[], stemmen: ReadonlyMap<string, Stem>) => {
+	const t = leeg();
+	for (const d of lijst) tel(t, d, stemmen);
+	return t;
+};
+
+function bij(m: Map<string, Telling>, k: string): Telling {
+	let t = m.get(k);
+	if (!t) m.set(k, (t = leeg()));
+	return t;
+}
+
+/** Per kind, the most first. */
+export function perSoort(lijst: readonly Besluit[], stemmen: ReadonlyMap<string, Stem>) {
+	const m = new Map<string, Telling>();
+	for (const d of lijst) tel(bij(m, soortVan(d)), d, stemmen);
+	return [...m].sort((a, b) => b[1].totaal - a[1].totaal || a[0].localeCompare(b[0]));
+}
+
+/** Per year, the newest first, a year without decisions between two others included. */
+export function perJaar(lijst: readonly Besluit[], stemmen: ReadonlyMap<string, Stem>) {
+	const m = new Map<string, Telling>();
+	for (const d of lijst) {
+		const j = jaarVan(d);
+		if (j) tel(bij(m, j), d, stemmen);
+	}
+	const jaren = [...m.keys()].map(Number);
+	if (!jaren.length) return [];
+	const rij: [string, Telling][] = [];
+	for (let j = Math.max(...jaren); j >= Math.min(...jaren); j--)
+		rij.push([String(j), m.get(String(j)) ?? leeg()]);
+	return rij;
+}
 
 // ── Counted by the API (0.79.30) ───────────────────────────────────────────
 // With repeated q, facets.kind and facets.years and party_votes the API counts what the page
@@ -186,8 +201,6 @@ export type MotieVelden = ReadonlyMap<
 /** The column of the researcher's direction, in the CSV and in the table that counts it. */
 export const KOLOM_RICHTING = 'richting (eigen codering)';
 export const kolomStem = (fractie: string) => `stem ${fractie}`;
-/** The columns of the coalition's and the opposition's side, where the decisions carry them. */
-export const KOLOM_KANT: Record<Kant, string> = { coalitie: 'coalitie', oppositie: 'oppositie' };
 
 export type CsvCel = string | number | null | undefined;
 /** The export as rows of cells under a head: what the CSV writes and the Richting table counts. */
@@ -206,7 +219,6 @@ export function csvTabel(
 	 */
 	motie?: MotieVelden
 ): CsvTabel {
-	const kanten = lijst.some((d) => d.coalition) ? KANTEN : [];
 	const kop = [
 		'datum',
 		'kamer',
@@ -219,7 +231,6 @@ export function csvTabel(
 		'stemmen voor',
 		'stemmen tegen',
 		...(fractie ? [kolomStem(fractie)] : []),
-		...kanten.map((k) => KOLOM_KANT[k]),
 		...(motie ? [KOLOM_RICHTING, 'dictum', 'indieners', 'fracties indieners'] : []),
 		'link'
 	];
@@ -235,7 +246,6 @@ export function csvTabel(
 		d.tally?.Voor,
 		d.tally?.Tegen,
 		...(fractie ? [stemmen.get(d.key) ?? ''] : []),
-		...kanten.map((k) => kantVan(d, k) ?? ''),
 		...(motie
 			? [
 					motie.get(d.key)?.richting ?? '',
@@ -251,46 +261,3 @@ export function csvTabel(
 
 export const csvTekst = (t: CsvTabel) =>
 	BOM + [t.kop.join(SEP), ...t.rijen.map((r) => r.map(cell).join(SEP))].join('\r\n');
-
-// ── Richting counted from the export ────────────────────────────────────────
-// The table Richting counts the rows of the CSV, by their columns richting, uitkomst, the
-// fractie's stem and the side of the coalition and the opposition: what the table shows is
-// what the file holds (overzicht-ux-schets, "Eén bron voor tabel en CSV").
-
-/** A row of the table: a direction, or `geen` for a motie not coded. */
-export type RichtingRij = 'positief' | 'negatief' | 'neutraal' | 'geen';
-export const RICHTING_RIJEN: readonly RichtingRij[] = ['positief', 'negatief', 'neutraal', 'geen'];
-
-/** A row's counts: all, per outcome, the fractie's voor and tegen, and per side voor and tegen. */
-export type RichtingTelling = Telling & Record<Kant, Record<Stem, number>>;
-
-const alsStem = (v: CsvCel): Stem | null => (v === 'voor' || v === 'tegen' ? v : null);
-
-export function richtingTabel(
-	t: CsvTabel,
-	fractie: string | null
-): [RichtingRij, RichtingTelling][] {
-	const i = (k: string) => t.kop.indexOf(k);
-	const [ri, ui, si] = [i(KOLOM_RICHTING), i('uitkomst'), fractie ? i(kolomStem(fractie)) : -1];
-	const ki = KANTEN.map((k) => [k, i(KOLOM_KANT[k])] as const);
-	const m = new Map<RichtingRij, RichtingTelling>(
-		RICHTING_RIJEN.map((r) => [
-			r,
-			{ ...leeg(), coalitie: { voor: 0, tegen: 0 }, oppositie: { voor: 0, tegen: 0 } }
-		])
-	);
-	for (const rij of t.rijen) {
-		const r = String(rij[ri] ?? '');
-		const tel = m.get(RICHTING_RIJEN.includes(r as RichtingRij) ? (r as RichtingRij) : 'geen')!;
-		const u = String(rij[ui] ?? '');
-		tel.totaal++;
-		tel[u === 'aangenomen' || u === 'verworpen' ? u : 'overig']++;
-		const s = si >= 0 ? alsStem(rij[si]) : null;
-		if (s) tel[s]++;
-		for (const [k, ix] of ki) {
-			const ks = ix >= 0 ? alsStem(rij[ix]) : null;
-			if (ks) tel[k][ks]++;
-		}
-	}
-	return [...m];
-}

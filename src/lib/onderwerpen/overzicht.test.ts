@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
 	csvTabel,
-	KOLOM_KANT,
 	KOLOM_RICHTING,
-	kantVan,
 	kolomStem,
 	filter,
 	lijstQuery,
-	richtingTabel,
+	perJaar,
+	perSoort,
+	totaal,
 	uitFacets,
 	type Besluit,
 	type Facets,
@@ -45,36 +45,31 @@ const stemmen = new Map<string, Stem>([
 	['b', 'tegen']
 ]);
 
-const coalitie = (cf: number, ca: number, of: number, oa: number) => ({
-	cabinet: 'schoof',
-	coalition_for: cf,
-	coalition_against: ca,
-	opposition_for: of,
-	opposition_against: oa,
-	pattern: 'together' as const,
-	carried: false,
-	decisive: false
-});
-/** The moties of `lijst` with a coalition vote: a the coalition for, b the coalition split. */
-const moties: Besluit[] = [
-	{ ...lijst[0], coalition: coalitie(88, 0, 10, 52) },
-	{ ...lijst[1], coalition: coalitie(44, 44, 30, 32) }
-];
-
 describe('overzicht', () => {
-	it('filtert op soort, uitkomst, jaar, de stem van een fractie en een kant', () => {
-		expect(filter(lijst, { soort: 'Motie', uitkomst: 'verworpen' }, stemmen)).toHaveLength(1);
-		expect(filter(lijst, { stem: 'voor' }, stemmen).map((d) => d.key)).toEqual(['a']);
-		expect(filter(lijst, { jaar: '2024' }, stemmen)).toHaveLength(2);
-		expect(filter(moties, { coalitie: 'voor' }, stemmen).map((d) => d.key)).toEqual(['a']);
-		expect(filter(moties, { oppositie: 'tegen' }, stemmen).map((d) => d.key)).toEqual(['a', 'b']);
+	it('telt per soort, met de stem van een fractie', () => {
+		expect(perSoort(lijst, stemmen)[0]).toEqual([
+			'Motie',
+			{ totaal: 2, aangenomen: 1, verworpen: 1, overig: 0, voor: 1, tegen: 1 }
+		]);
+		expect(perSoort(lijst, stemmen).map(([k]) => k)).toContain('Overig');
+		expect(totaal(lijst, stemmen).totaal).toBe(4);
 	});
 
-	it('leest de kant van de coalitie en de oppositie uit de meeste zetels', () => {
-		expect(kantVan(moties[0], 'coalitie')).toBe('voor');
-		expect(kantVan(moties[0], 'oppositie')).toBe('tegen');
-		expect(kantVan(moties[1], 'coalitie')).toBeUndefined();
-		expect(kantVan(lijst[2], 'coalitie')).toBeUndefined();
+	it('telt per jaar, ook een jaar zonder besluiten ertussen', () => {
+		expect(perJaar(lijst, stemmen).map(([j, t]) => [j, t.totaal])).toEqual([
+			['2026', 2],
+			['2025', 0],
+			['2024', 2]
+		]);
+	});
+
+	it('een getal en zijn lijst zijn even lang', () => {
+		const [, motie] = perSoort(lijst, stemmen)[0];
+		expect(filter(lijst, { soort: 'Motie', uitkomst: 'verworpen' }, stemmen)).toHaveLength(
+			motie.verworpen
+		);
+		expect(filter(lijst, { stem: 'voor' }, stemmen).map((d) => d.key)).toEqual(['a']);
+		expect(filter(lijst, { jaar: '2024' }, stemmen)).toHaveLength(2);
 	});
 });
 
@@ -86,60 +81,6 @@ describe('de tabel van de export', () => {
 		const richting = t.kop.indexOf(KOLOM_RICHTING);
 		expect(t.rijen.map((r) => r[stem])).toEqual(['voor', 'tegen']);
 		expect(t.rijen.map((r) => r[richting])).toEqual(['positief', '']);
-		expect(t.kop).not.toContain(KOLOM_KANT.coalitie);
-	});
-
-	it('zet de kant van de coalitie en de oppositie erbij waar de besluiten die hebben', () => {
-		const t = csvTabel(moties, '', null, new Map(), new Map(), new Map());
-		const c = t.kop.indexOf(KOLOM_KANT.coalitie);
-		const o = t.kop.indexOf(KOLOM_KANT.oppositie);
-		expect(t.rijen.map((r) => [r[c], r[o]])).toEqual([
-			['voor', 'tegen'],
-			['', 'tegen']
-		]);
-	});
-});
-
-describe('Richting telt de rijen van de export', () => {
-	it('per richting, uitkomst, de stem van de fractie en de kant', () => {
-		const motie = new Map([
-			['a', { richting: 'positief' }],
-			['b', { richting: 'positief' }]
-		]);
-		const t = csvTabel(moties, '', 'VVD', stemmen, new Map(), motie);
-		const r = new Map(richtingTabel(t, 'VVD'));
-		expect(r.get('positief')).toMatchObject({
-			totaal: 2,
-			aangenomen: 1,
-			verworpen: 1,
-			voor: 1,
-			tegen: 1,
-			coalitie: { voor: 1, tegen: 0 },
-			oppositie: { voor: 0, tegen: 2 }
-		});
-		expect(r.get('negatief')?.totaal).toBe(0);
-	});
-
-	it('een motie zonder codering telt als niet gecodeerd', () => {
-		const t = csvTabel(lijst.slice(0, 2), '', null, new Map(), new Map(), new Map());
-		const r = new Map(richtingTabel(t, null));
-		expect(r.get('geen')).toMatchObject({ totaal: 2, aangenomen: 1, verworpen: 1, voor: 0 });
-		expect([...r.keys()]).toEqual(['positief', 'negatief', 'neutraal', 'geen']);
-	});
-
-	it('een getal en zijn lijst zijn even lang', () => {
-		const motie = new Map([['a', { richting: 'positief' }]]);
-		const t = csvTabel(moties, '', 'VVD', stemmen, new Map(), motie);
-		const positief = new Map(richtingTabel(t, 'VVD')).get('positief')!;
-		const lijstVan = (f: Parameters<typeof filter>[1]) =>
-			filter(
-				moties.filter((d) => motie.get(d.key)?.richting === 'positief'),
-				f,
-				stemmen
-			);
-		expect(lijstVan({ uitkomst: 'aangenomen' })).toHaveLength(positief.aangenomen);
-		expect(lijstVan({ stem: 'voor' })).toHaveLength(positief.voor);
-		expect(lijstVan({ coalitie: 'voor' })).toHaveLength(positief.coalitie.voor);
 	});
 });
 

@@ -113,7 +113,6 @@ describe('one form for each thing', () => {
 			'lib/components/ui/FilterOptie.svelte',
 			'lib/components/graph/GraphSidebar.svelte',
 			'lib/onderwerpen/Kruiswoord.svelte',
-			'lib/onderwerpen/RichtingTabel.svelte',
 			'routes/(main)/api/+page.svelte',
 			'routes/(main)/onderwerpen/overzicht/+page.svelte',
 			'routes/(main)/(prose)/bronnen/+page.svelte',
@@ -832,8 +831,6 @@ describe('the keyboard', () => {
 			'lib/components/explore/readers/KamerZetels.svelte .doel': 'a seat: its stroke in ink',
 			'lib/onderwerpen/Kruiswoord.svelte .cel.vol:hover, .cel.vol:focus-visible':
 				'a cell of the grid: an inset line in ink',
-			'lib/onderwerpen/RichtingTabel.svelte .cel.vol:hover, .cel.vol:focus-visible':
-				'a cell of the table Richting: an inset line in ink, as the grid',
 			"lib/components/layout/AppShell.svelte :global([tabindex='-1']:focus:not(:focus-visible))":
 				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring'
 		};
