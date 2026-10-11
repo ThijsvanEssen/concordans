@@ -1979,12 +1979,12 @@
 	/* The measure of every reader, set by the column it stands in (ReaderFrame reads
 	   it). A toelichting opened under the text inherits the same measure, so opening
 	   it moves nothing. Lezen leaves room at the left for the numbers of the leden. */
-	/* At the column's left edge, not in its middle: one title column for every reader, with
-	   contents or beside the network (Thijs, 10 Oct); wider than the measure, the room
-	   falls to the right. */
+	/* In the middle between the two side columns (Thijs, 11 Oct: "gecentreerd tussen de twee
+	   zijpanelen"): wider than the measure, the room falls to both sides alike, beside the
+	   network as beside the contents. Narrower, the text fills the column as before. */
 	.col--reader {
 		--reader-max: 700px;
-		--reader-col-left: 0;
+		--reader-col-left: auto;
 	}
 	.col--measure {
 		--reader-pad-top: 40px;
