@@ -417,6 +417,19 @@ describe('one form for each thing', () => {
 		expect(verbonden).toMatch(/kind: 'herkomst'/);
 	});
 
+	it('keeps the choice of bronnen in the filter, not in the head of Verbonden', () => {
+		// Thijs, 11 Oct: the groups below already are the kinds chosen; the menu Bronnen in the
+		// choose-line went. The presets and the kinds stay reachable in the filter sheet.
+		const text = (path: string) => sources.find((s) => s.path === path)!.text;
+		const verbonden = text('lib/verbonden/Verbonden.svelte');
+		expect(verbonden).not.toMatch(/label="Bronnen"/);
+		expect(verbonden).not.toMatch(/\bPRESETS\b/);
+		expect(verbonden).toMatch(/onclick=\{onOpenFilter\}>Filter</);
+		const sheet = text('lib/verbonden/FilterSheet.svelte');
+		expect(sheet).toMatch(/#each PRESETS as p/);
+		expect(sheet).toMatch(/#each BRON_KINDS as k/);
+	});
+
 	it('draws a mark in a Keuze in the colour of its option', () => {
 		// On the chosen option (ink) an ink mark vanished: the mark follows the text.
 		const keuze = sources.find((s) => s.path === 'lib/components/ui/Keuze.svelte')!;

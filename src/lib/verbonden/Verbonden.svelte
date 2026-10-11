@@ -26,12 +26,8 @@
 		type Rechter,
 		kindCount,
 		BRON_KIND_NOUN,
-		PRESETS,
-		activePreset,
-		bronnenLabel,
 		formatCount,
 		withKind,
-		withPreset,
 		type VerbondenFilter
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
@@ -383,31 +379,10 @@
 			<span class="head__count">{countLine(verbonden.groups, filter)}</span>
 		{/if}
 	</div>
-	<!-- The choose-line of the panel (docs/bediening.md): which bronnen, how grouped, the filter. -->
+	<!-- The choose-line of the panel (docs/bediening.md): how grouped, the filter. No menu of
+	     the bronnen: the groups below are the kinds chosen, and the presets and kinds are in
+	     the filter (Thijs, 11 Oct). -->
 	<div class="regel">
-		<TekstMenu
-			klein
-			label="Bronnen"
-			tekst={bronnenLabel(filter)}
-			waarde={activePreset(filter)?.id ?? null}
-			opties={PRESETS.map((p) => ({ waarde: p.id, label: p.label }))}
-			onKies={(id) => {
-				const p = PRESETS.find((x) => x.id === id);
-				if (p) onFilter(withPreset(filter, p));
-			}}
-		>
-			{#snippet onder(sluit)}
-				<button
-					type="button"
-					role="menuitem"
-					class="tekstmenu__item"
-					onclick={() => {
-						sluit();
-						onOpenFilter();
-					}}>Kies bronnen en verbindingen</button
-				>
-			{/snippet}
-		</TekstMenu>
 		<TekstMenu
 			klein
 			label="Indeling"
