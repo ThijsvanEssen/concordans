@@ -89,6 +89,7 @@ export const BRON_KIND_VORM: Record<BronKind, Vorm> = {
 	toelichtingen: 'stuk',
 	wetsvoorstellen: 'voorstel',
 	dossiers: 'dossier',
+	stemmingen: 'besluit',
 	leden: 'persoon',
 	internationaal: 'regel-int'
 };

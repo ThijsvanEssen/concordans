@@ -67,10 +67,16 @@ describe('presets', () => {
 		expect(activePreset(withPreset(EMPTY_FILTER, PRESETS[4]))?.id).toBe('hoge-raad');
 	});
 
+	it('never lists the kinds of a choice of its own', () => {
+		const f = toggleKind(toggleKind(EMPTY_FILTER, 'toelichtingen'), 'internationaal');
+		expect(bronnenLabel(f)).toBe('Eigen keuze');
+		expect(bronnenLabel({ ...EMPTY_FILTER, rechter: 'hr' })).toBe('Alle bronnen');
+	});
+
 	it('toggles one kind and returns to all when every kind is on', () => {
 		const one = toggleKind(EMPTY_FILTER, 'uitspraken');
 		expect(one.bronnen!.has('uitspraken')).toBe(false);
-		expect(one.bronnen!.size).toBe(7);
+		expect(one.bronnen!.size).toBe(8);
 		expect(toggleKind(one, 'uitspraken').bronnen).toBeNull();
 	});
 });
@@ -95,7 +101,7 @@ describe('bronKindOf', () => {
 		expect(bronKindOf('factions', 'f1', {})).toBe('leden');
 		expect(bronKindOf('committees', 'c1', {})).toBe('leden');
 		expect(bronKindOf('activities', 'a1', {})).toBe('dossiers');
-		expect(bronKindOf('decisions', 'b1', {})).toBe('dossiers');
+		expect(bronKindOf('decisions', 'b1', {})).toBe('stemmingen');
 	});
 });
 
