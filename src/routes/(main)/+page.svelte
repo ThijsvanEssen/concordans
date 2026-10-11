@@ -49,10 +49,15 @@
 			tekens: ['cabinets', 'members', 'commitments']
 		}
 	];
+	/** Alle bronnen: the first mark of each way in, in the same order. */
+	const ALLE: Collection[] = SCOPES.map((sc) => sc.tekens[0]);
 	let scope = $state<string | null>(null);
 	const chosen = $derived(SCOPES.find((x) => x.id === scope) ?? null);
-	/** On a phone the scopes a step smaller and without their marks: five words fit. */
+	/** On a phone the scopes a step smaller and without their marks: five words fit, as wide
+	 *  as the field under them. */
 	const smal = new MediaQuery('width <= 600px');
+	/** Below a phone of 360: Alles for Alle bronnen, so Kabinet keeps its place in the row. */
+	const smalst = new MediaQuery('width < 360px');
 
 	/** The lines of Actueel shown; the rest is in Actueel. */
 	const LINES_SHOWN = 10;
@@ -172,13 +177,14 @@
 	</aside>
 	<div class="main">
 		<div class="search">
-			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alles
-			     searches all of it. -->
+			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alle
+			     bronnen searches all of it, with a mark of each. As wide as the field under it. -->
 			<div class="scopes">
 				<Keuze
 					label="Zoek in"
+					vol
 					opties={[
-						{ waarde: 'alles', label: 'Alles' },
+						{ waarde: 'alles', label: smalst.current ? 'Alles' : 'Alle bronnen' },
 						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
 					]}
 					waarde={scope ?? 'alles'}
@@ -186,9 +192,9 @@
 					klein={smal.current}
 				>
 					{#snippet voor(w)}
-						{@const sc = SCOPES.find((x) => x.id === w)}
-						{#if sc && !smal.current}<span class="glyphs"
-								>{#each sc.tekens as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
+						{@const tekens = w === 'alles' ? ALLE : SCOPES.find((x) => x.id === w)?.tekens}
+						{#if tekens && !smal.current}<span class="glyphs"
+								>{#each tekens as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
 							>{/if}
 					{/snippet}
 				</Keuze>
