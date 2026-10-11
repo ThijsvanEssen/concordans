@@ -14,7 +14,7 @@
 	import { getParliamentSeats } from '$lib/api/records';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { formatLongDate } from './_shared';
-	import { wijzigingenVan } from './zetels';
+	import { vacantZonderFractie, wijzigingenVan } from './zetels';
 	import type { Schema } from '$lib/api/types';
 
 	type Zaal = Schema<'ParliamentSeatsResponse'>;
@@ -147,7 +147,9 @@
 		const ja = fr.filter((f) => f.ja === true);
 		const nee = fr.filter((f) => f.ja === false);
 		const som = (l: typeof fr) => l.reduce((n, f) => n + f.seats, 0);
-		return { ja, nee, jaZetels: som(ja), neeZetels: som(nee) };
+		// The vacant seats no fractie holds: of neither side (UX #48).
+		const los = stuk ? vacantZonderFractie(stuk) : 0;
+		return { ja, nee, jaZetels: som(ja), neeZetels: som(nee), los };
 	};
 
 	/** The seats of the Kamer (Grondwet art. 51): the stretches' sums run over it on a day a
@@ -316,6 +318,7 @@
 							data={zaal}
 							meubels
 							telling={false}
+							vacant={z.los}
 							voteHighlight={kantVan(zaal, gekozen)}
 							woorden={['coalitie', 'oppositie']}
 							colorOf={(f, i) => kleurVan('TK', naam(f), i, f.color ?? null)}
@@ -348,6 +351,15 @@
 							</ol>
 						</div>
 					{/each}
+					{#if z.los}
+						<!-- The vacant seats no fractie holds: a row of neither side (UX #48). -->
+						<ol class="los">
+							<li>
+								<span class="stip stip--leeg"></span>
+								<span class="n">Vacant</span><span class="z">{z.los}</span>
+							</li>
+						</ol>
+					{/if}
 				</div>
 				<Meerderheid
 					ja={z.jaZetels}
@@ -503,6 +515,11 @@
 	.stip.open {
 		background: var(--paper);
 		box-shadow: inset 0 0 0 1.5px var(--kleur);
+	}
+	/* Empty and dotted, as a vacant seat in the hall. */
+	.stip--leeg {
+		background: transparent;
+		border: 1px dashed var(--ink-3);
 	}
 	.verloop {
 		display: flex;

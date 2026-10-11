@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { stemVanStoel } from './stoel';
+	import { RIJEN_150, RIJEN_75, deelStoelen, stemVanStoel } from './stoel';
 	import { naamVan as bronNaamVan } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
@@ -18,8 +18,11 @@
 		woorden = ['voor', 'tegen'],
 		telling = true,
 		colorOf = null,
-		meubels = false
+		meubels = false,
+		vacant = 0
 	}: {
+		/** The vacant seats no fractie holds (UX #48): empty seats after all fracties. */
+		vacant?: number;
 		/** De kleur van een stoel (fractie, volgnummer), zoals de Kamer haar tekent. */
 		colorOf?: ((f: SeatFaction, i: number) => string) | null;
 		/** Voorzitter, griffier, kabinet (vak-K), verslag en spreekgestoelte tekenen. */
@@ -57,9 +60,7 @@
 	// Fixed row capacities: 150 seats for the Tweede Kamer, 75 for the Eerste. Radii scale
 	// linearly inner→outer; each row holds what its six blocks hold without seats touching.
 	// Every block holds as many seats in a row as the others: even rows (Thijs, 10 Oct).
-	const ROWS_150 = [12, 18, 18, 24, 24, 24, 30];
-	const ROWS_75 = [6, 12, 12, 12, 15, 18];
-	const ROW_CAPS = $derived(data.total_seats <= 75 ? ROWS_75 : ROWS_150);
+	const ROW_CAPS = $derived(data.total_seats <= 75 ? RIJEN_75 : RIJEN_150);
 	const kamer = $derived(chamberName(data.chamber));
 	// As the Kamer draws its plenaire zaal ("Zetelverdeling plenaire zaal", tweedekamer.nl,
 	// Wie zit waar): seen from the public tribune, the front with the Voorzitter, the
@@ -93,8 +94,9 @@
 		x: number;
 		y: number;
 		angle: number;
-		faction: SeatFaction;
-		/** A vacant seat of the fractie (`vacant`, API 0.79.44, #526): drawn empty. */
+		/** Null for a vacant seat no fractie holds (UX #48). */
+		faction: SeatFaction | null;
+		/** A vacant seat (`vacant`, API 0.79.44, #526): drawn empty. */
 		leeg?: boolean;
 	};
 
@@ -118,19 +120,7 @@
 		}
 		// From the right of the picture, the Voorzitter's left, as `order` counts.
 		raw.sort((a, b) => a.angle - b.angle);
-
-		const out: Seat[] = [];
-		let idx = 0;
-		for (const f of seated) {
-			for (let k = 0; k < f.seats && idx < raw.length; k++, idx++) {
-				out.push({ ...raw[idx], faction: f });
-			}
-			// Its vacant seats beside its own, empty (UX test 10 Oct, #12).
-			for (let k = 0; k < (f.vacant ?? 0) && idx < raw.length; k++, idx++) {
-				out.push({ ...raw[idx], faction: f, leeg: true });
-			}
-		}
-		return out;
+		return deelStoelen(raw, seated, vacant);
 	});
 
 	// One wedge per faction, bounded halfway between its outer seats and the
@@ -139,6 +129,7 @@
 	const sectors = $derived.by<Sector[]>(() => {
 		const bands: { faction: SeatFaction; lo: number; hi: number }[] = [];
 		for (const s of seats) {
+			if (!s.faction) continue;
 			const last = bands.at(-1);
 			if (last && last.faction.id === s.faction.id) last.hi = s.angle;
 			else bands.push({ faction: s.faction, lo: s.angle, hi: s.angle });
@@ -193,12 +184,17 @@
 				<path d={sec.path} class="sector" />
 			</a>
 		{/each}
-		{#each seats as s, i (s.faction.id + ':' + s.x + ':' + s.y)}
+		{#each seats as s, i ((s.faction?.id ?? 'vacant') + ':' + s.x + ':' + s.y)}
 			{@const stem = stemVanStoel(s, voteHighlight)}
 			{@const side = stem === 'niet' ? undefined : stem}
-			{@const kleur = colorOf ? colorOf(s.faction, i) : s.faction.color}
+			<!-- A seat no fractie holds: an empty outline in the quiet ink. -->
+			{@const kleur = !s.faction
+				? 'var(--ink-3)'
+				: colorOf
+					? colorOf(s.faction, i)
+					: s.faction.color}
 			{@const vulling =
-				patroonVan(naamVan(s.faction)) !== 'vol'
+				s.faction && patroonVan(naamVan(s.faction)) !== 'vol'
 					? `url(#${patroonId(uid, naamVan(s.faction))})`
 					: kleur}
 			<!-- A seat as the Kamer draws it: a small block along its row, not a dot. -->
@@ -214,8 +210,8 @@
 				style:stroke={side === 'tegen' || s.leeg ? kleur : undefined}
 				class="seat"
 				class:seat--leeg={s.leeg}
-				class:seat--dim={hovered !== null && hovered.id !== s.faction.id}
-				class:seat--hi={hovered?.id === s.faction.id}
+				class:seat--dim={hovered !== null && hovered.id !== s.faction?.id}
+				class:seat--hi={hovered !== null && hovered.id === s.faction?.id}
 				class:seat--vote-tegen={side === 'tegen'}
 				class:seat--vote-other={stem === 'niet'}
 			/>
