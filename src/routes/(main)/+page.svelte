@@ -10,7 +10,14 @@
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
 	import { dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
-	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
+	import {
+		FEW_VOTES,
+		tekenVan,
+		timelineOf,
+		type TimelineLine
+	} from '$lib/components/actueel/timeline';
+	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import { inhoudVan } from '$lib/components/open/rij-inhoud';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import Wetsnetwerk from '$lib/components/actueel/Wetsnetwerk.svelte';
 	import { laadWetsnetwerk, type Schets } from '$lib/components/actueel/wetsnetwerk';
@@ -49,10 +56,15 @@
 			tekens: ['cabinets', 'members', 'commitments']
 		}
 	];
+	/** Alle bronnen: the first mark of each way in, in the same order. */
+	const ALLE: Collection[] = SCOPES.map((sc) => sc.tekens[0]);
 	let scope = $state<string | null>(null);
 	const chosen = $derived(SCOPES.find((x) => x.id === scope) ?? null);
-	/** On a phone the scopes a step smaller and without their marks: five words fit. */
+	/** On a phone the scopes a step smaller and without their marks: five words fit, as wide
+	 *  as the field under them. */
 	const smal = new MediaQuery('width <= 600px');
+	/** Below a phone of 360: Alles for Alle bronnen, so Kabinet keeps its place in the row. */
+	const smalst = new MediaQuery('width < 360px');
 
 	/** The lines of Actueel shown; the rest is in Actueel. */
 	const LINES_SHOWN = 10;
@@ -135,26 +147,27 @@
 			regels: ls.map((l) => ({
 				id: l.id,
 				datum: null,
-				teken: l.failed
-					? 'nee'
-					: /aangenomen/i.test(l.label)
-						? 'ja'
-						: l.major
-							? 'stuk'
-							: 'activiteit',
+				teken: tekenVan(l),
 				vorm: l.vorm,
 				label: l.label,
 				zin: l.title,
 				meta: l.context,
 				href: typeof l.href === 'string' ? l.href : bronHref(l.href),
 				ref: typeof l.href === 'string' ? null : l.href,
-				groot: l.major
+				groot: l.major,
+				// A line of one event with content of its own opens it in place, as in Actueel.
+				inhoud: l.item && inhoudVan(l.item) ? inhoud : null
 			}))
 		}))
 	);
 </script>
 
 <RouteKop pad="/" />
+
+{#snippet inhoud(id: string)}
+	{@const item = lines.find((l) => l.id === id)?.item}
+	{#if item}<RijInhoud {item} />{/if}
+{/snippet}
 
 <svelte:head>
 	<link
@@ -172,13 +185,14 @@
 	</aside>
 	<div class="main">
 		<div class="search">
-			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alles
-			     searches all of it. -->
+			<!-- Where to search: one choice of five, a Keuze as everywhere (Thijs, 10 Oct); Alle
+			     bronnen searches all of it, with a mark of each. As wide as the field under it. -->
 			<div class="scopes">
 				<Keuze
 					label="Zoek in"
+					vol
 					opties={[
-						{ waarde: 'alles', label: 'Alles' },
+						{ waarde: 'alles', label: smalst.current ? 'Alles' : 'Alle bronnen' },
 						...SCOPES.map((sc) => ({ waarde: sc.id, label: sc.label }))
 					]}
 					waarde={scope ?? 'alles'}
@@ -186,9 +200,9 @@
 					klein={smal.current}
 				>
 					{#snippet voor(w)}
-						{@const sc = SCOPES.find((x) => x.id === w)}
-						{#if sc && !smal.current}<span class="glyphs"
-								>{#each sc.tekens as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
+						{@const tekens = w === 'alles' ? ALLE : SCOPES.find((x) => x.id === w)?.tekens}
+						{#if tekens && !smal.current}<span class="glyphs"
+								>{#each tekens as c (c)}<KindGlyph collection={c} size={12} />{/each}</span
 							>{/if}
 					{/snippet}
 				</Keuze>

@@ -201,6 +201,25 @@ export function partText(text: string, parts: ArticlePart[], id: string): string
 	return null;
 }
 
+/**
+ * The place a part is cited as: itself when it has an anchor, else the nearest part around
+ * it that has one (the closing words of a lid are the lid), else null: the article itself,
+ * as with an article without leden.
+ */
+export function placeOf(parts: ArticlePart[], part: ArticlePart): ArticlePart | null {
+	if (part.id) return part;
+	const path = (within: ArticlePart[]): ArticlePart[] | null => {
+		for (const p of within) {
+			if (p === part) return [p];
+			const below = path(p.children);
+			if (below) return [p, ...below];
+		}
+		return null;
+	};
+	const around = (path(parts) ?? []).filter((p) => p.id !== null);
+	return around.at(-1) ?? null;
+}
+
 /** How an onderdeel is numbered in print: `a.` in Dutch law (a BWB id), `a)` in EU law. */
 export const onderdeelMark = (lawId: string | null | undefined): '.' | ')' =>
 	lawId && !/^BWB/i.test(lawId) ? ')' : '.';

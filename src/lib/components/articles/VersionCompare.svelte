@@ -2,6 +2,7 @@
 	import { korteDatum } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import DossierLink from '$lib/bron/DossierLink.svelte';
+	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import { createCopier } from '$lib/components/ui/copy.svelte';
 	// Two tekstversies of an article compared, for research into how its text came to be.
 	// A tekstversie is a wording: the BWB versions that only moved the text are folded
@@ -336,10 +337,10 @@
 						</p>
 					</li>
 				{/each}
+				{#if history.removedIn}
+					<li class="formulations__end">Vervallen per {date(history.removedIn.from)}.</li>
+				{/if}
 			</ol>
-			{#if history.removedIn}
-				<p class="formulations__end">Vervallen per {date(history.removedIn.from)}.</p>
-			{/if}
 		{/if}
 	{:else}
 		<!-- ── The choice folds out under the head of the article, in a panel of its own;
@@ -406,42 +407,42 @@
 				</span>
 			</div>
 
-			<!-- ── The history between A and B: a row per change, the publication that made it ── -->
-			<div class="history">
-				<p class="history__head">
-					{between.length === 1 ? 'Eén wijziging' : `${between.length} wijzigingen`}
-					{reversed ? 'tussen B en A; A is de latere tekst, B de eerdere' : 'tussen A en B'}
-				</p>
-				<table class="history__table">
-					<tbody>
-						{#each between as w (w.index)}
-							{@const pub = publication(w.first.amended_by)}
-							{@const inForce = publication(w.first.commencement)}
-							<tr>
-								<td class="history__when">
-									{#if adjacent}{date(w.from)}{:else}<button
-											type="button"
-											class="history__step"
-											title="Alleen deze wijziging tonen"
-											onclick={() => showChange(w.index)}>{date(w.from)}</button
-										>{/if}
-								</td>
-								<td class="history__what">{capital(w.summary)}</td>
-								<td class="history__source">
-									{#if pub}<span title={signedAndPublished(w.first.amended_by)}>{pub}</span>{/if}
-									{#if inForce && inForce !== pub}<span
-											title={signedAndPublished(w.first.commencement)}
-											>in werking bij {inForce}</span
-										>{/if}
-									{#each uniqueBy(w.first.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}
-										<DossierLink {dossier} missing={missingDossiers.has(dossier.number)} />
-									{/each}
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
+			<!-- ── The history between A and B: the shared timeline, oldest first, the publication
+			     that made each change under it; the day shows only that change. ── -->
+			{#snippet bron(id: string)}
+				{@const w = wordings[Number(id)]}
+				{@const pub = publication(w.first.amended_by)}
+				{@const inForce = publication(w.first.commencement)}
+				<span class="bron"
+					>{#if pub}<span title={signedAndPublished(w.first.amended_by)}>{pub}</span
+						>{/if}{#if inForce && inForce !== pub}<span
+							title={signedAndPublished(w.first.commencement)}>in werking bij {inForce}</span
+						>{/if}{#each uniqueBy(w.first.amended_by?.dossiers ?? [], (d) => d.key) as dossier (dossier.key)}<span
+							><DossierLink {dossier} missing={missingDossiers.has(dossier.number)} /></span
+						>{/each}</span
+				>
+			{/snippet}
+			<Tijdlijn
+				volgorde="oplopend"
+				groepen={[
+					{
+						id: 'wijzigingen',
+						titel: reversed ? 'Wijzigingen tussen B en A' : 'Wijzigingen tussen A en B',
+						sub: String(between.length),
+						regels: between.map((w) => ({
+							id: String(w.index),
+							datum: w.from,
+							teken: 'stuk' as const,
+							vorm: 'regel' as const,
+							zin: capital(w.summary),
+							onder: bron,
+							datumKnop: adjacent
+								? null
+								: { titel: 'Alleen deze wijziging tonen', actie: () => showChange(w.index) }
+						}))
+					}
+				]}
+			/>
 
 			<!-- ── How it is shown ── -->
 			<div class="tools">
@@ -813,57 +814,17 @@
 		text-underline-offset: 3px;
 	}
 
-	.history {
-		margin: 0;
+	/* The publication under a change: its parts with a comma between them. */
+	.bron > span:not(:last-child)::after {
+		content: ', ';
 	}
-	.history__head {
-		margin: 0 0 var(--s-1);
-		color: var(--ink-3);
-	}
-	.history__table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-	.history__table td {
-		padding: var(--s-1) var(--s-3) var(--s-1) 0;
-		border-top: 1px solid var(--rule);
-		vertical-align: baseline;
-	}
-	.history__when {
-		width: 1%;
-		white-space: nowrap;
-		color: var(--ink);
-		font-variant-numeric: tabular-nums;
-	}
-	.history__what {
-		color: var(--ink);
-		font-weight: 600;
-	}
-	.history__source {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: flex-end;
-		gap: 0 var(--s-3);
-		color: var(--ink-3);
-		text-align: right;
-	}
-	.history__source a {
+	.bron :global(a) {
 		color: var(--ink-2);
 	}
-	.history__source a:hover,
-	.history__step:hover {
+	.bron :global(a:hover) {
 		color: var(--ink);
 		text-decoration-line: underline;
 		text-underline-offset: 3px;
-	}
-	.history__step {
-		padding: 0;
-		border: 0;
-		border-bottom: 1px solid var(--rule-strong);
-		background: none;
-		font: inherit;
-		color: inherit;
-		cursor: pointer;
 	}
 
 	/* The controls of the choice read as the buttons of the app: 28px high, a hairline
@@ -1133,35 +1094,28 @@
 	}
 	/* The measure of the article text: the line through time hangs in the gutter, the
 	   margin of 150px stays free, so the text stands where the article's does. */
+	/* Wetstekst, no timeline: each formulation under its period, a heading at rung 3 as a
+	   group of the Tijdlijn has, the text to the column's measure. */
 	.formulations {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-5);
 		margin: 0 172px 0 31px;
 		padding: 0;
 		list-style: none;
-		border-left: 1px solid var(--rule-strong);
-	}
-	.formulation {
-		position: relative;
-		padding: 0 0 var(--s-5) var(--s-4);
-	}
-	.formulation::before {
-		content: '';
-		position: absolute;
-		left: -4px;
-		top: 5px;
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
-		background: var(--ink);
 	}
 	.formulation__head {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: 2px var(--s-3);
-		margin-bottom: var(--s-1);
+		gap: var(--s-1) var(--s-3);
+		margin-bottom: var(--s-2);
+		padding-bottom: var(--s-2);
+		border-bottom: 2px solid var(--ink);
 		color: var(--ink-3);
 	}
 	.formulation__when {
+		font-size: var(--t-meta);
 		font-weight: 600;
 		color: var(--ink);
 	}
@@ -1187,8 +1141,6 @@
 		color: var(--ink);
 	}
 	.formulations__end {
-		margin: 0;
-		padding-left: var(--s-4);
 		color: var(--ink-3);
 	}
 
@@ -1278,17 +1230,6 @@
 		}
 		.line__period {
 			min-width: 44px;
-		}
-		.history__source {
-			justify-content: flex-start;
-			text-align: left;
-		}
-		.history__table tr {
-			display: grid;
-			grid-template-columns: auto 1fr;
-		}
-		.history__source {
-			grid-column: 1 / -1;
 		}
 		.compare--naast .row {
 			grid-template-columns: 28px 1fr 1fr;

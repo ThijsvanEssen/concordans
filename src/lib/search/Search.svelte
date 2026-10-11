@@ -842,7 +842,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--s-3);
-		padding: var(--s-4);
+		padding: var(--s-3) var(--s-4);
 		border: 1px solid var(--rule-strong);
 		border-radius: var(--r-2);
 		background: var(--paper);

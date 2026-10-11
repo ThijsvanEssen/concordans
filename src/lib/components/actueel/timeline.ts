@@ -1,6 +1,7 @@
 import { bewindspersoonVan, eersteIndiener } from '$lib/bron/submitters';
 import type { BronRef } from '$lib/bron/href';
 import type { Vorm } from '$lib/bron/vormen';
+import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 import { describe } from '$lib/verbonden/rows';
@@ -44,6 +45,8 @@ export type TimelineLine = {
 	major: boolean;
 	/** A vote lost: its label in the accent. */
 	failed?: boolean;
+	/** The event of a line on its own, for what it opens in place (RijInhoud). */
+	item?: FeedItem;
 };
 
 /** Close votes shown on their own per day, the closest first. */
@@ -170,7 +173,8 @@ function voteLine(i: FeedItem, noun: string): TimelineLine {
 		context: voteContext(i),
 		href: hrefOf(i),
 		major: true,
-		failed: !passed
+		failed: !passed,
+		item: i
 	};
 }
 
@@ -202,7 +206,8 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 					: listLine(names, BILLS_NAMED),
 				href: one ? hrefOf(those[0]) : actueelDayHref(date, ['stemming']),
 				major: true,
-				failed: !passed
+				failed: !passed,
+				...(one ? { item: those[0] } : {})
 			}
 		];
 	});
@@ -317,7 +322,8 @@ function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 			context: context || null,
 			href: more ? actueelDayHref(date, ['toezegging'], first.dossier?.number) : hrefOf(first),
 			// At the size of a motie beside it: large is the bill and its decisions (Thijs, 10 Oct).
-			major: false
+			major: false,
+			...(more ? {} : { item: first })
 		};
 	});
 }
@@ -334,7 +340,8 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			title: `Wetsvoorstel ingediend: ${name(b)}`,
 			context: b.dossier ? `Dossier ${b.dossier.number}` : null,
 			href: hrefOf(b),
-			major: true
+			major: true,
+			item: b
 		}));
 	return [
 		{
@@ -364,7 +371,8 @@ function commencementLine(i: FeedItem): TimelineLine {
 				? `${c.changed_articles} van ${c.article_count} artikelen gewijzigd`
 				: null,
 		href: c?.instrument ? { collection: 'instruments', key: c.instrument.key } : hrefOf(i),
-		major: true
+		major: true,
+		item: i
 	};
 }
 
@@ -536,6 +544,26 @@ export function vormVanFeed(i: Pick<FeedItem, 'kind'>): Vorm {
  * a motie beside it (Thijs, 10 Oct: two things at one level do not differ).
  */
 export const headlineOf = (i: FeedItem): Headline => ({ ...kopVan(i), vorm: vormVanFeed(i) });
+
+/**
+ * How the teken of an event is drawn on the line (Tijdlijn), on the homepage and in Actueel
+ * alike: a vote filled in mos when it passed, an outline in the accent when it failed; a
+ * toezegging dashed while it is open, filled when it is done; the rest filled in ink.
+ */
+export function tekenVan(l: Pick<TimelineLine, 'label' | 'failed'>): Teken {
+	if (l.failed) return 'nee';
+	if (/aangenomen/i.test(l.label)) return 'ja';
+	if (/^toezegging/i.test(l.label)) return 'open';
+	return 'stuk';
+}
+export const tekenVanFeed = (i: FeedItem, h: Headline): Teken =>
+	i.kind === 'toezegging'
+		? i.commitment?.status === 'Afgedaan'
+			? 'ja'
+			: i.commitment?.status === 'Vervallen'
+				? 'nee'
+				: 'open'
+		: tekenVan(h);
 
 function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 	switch (i.kind) {

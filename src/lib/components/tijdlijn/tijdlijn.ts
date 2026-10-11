@@ -1,10 +1,14 @@
 // Één vorm voor elke tijdlijn in Concordans. Een groep
-// (dag, instantie of maand) met regels; elke regel heeft een datum, een teken en een zin.
+// (dag, jaar, instantie) met regels; elke regel heeft een datum, een teken en een zin.
+import type { Snippet } from 'svelte';
+
 export type Teken = 'ja' | 'nee' | 'stuk' | 'activiteit' | 'verwacht' | 'open';
 export type TijdRegel = {
 	id: string;
 	/** ISO-datum; leeg bij wat nog kan volgen. */
 	datum: string | null;
+	/** Een termijn in plaats van een dag (Loopbaan, Commissies): de jaren in de datumkolom. */
+	periode?: { van: string | null; tot: string | null } | null;
 	teken: Teken;
 	/** De soort bron, voor het teken op de lijn (vormen.ts). */
 	soort?: import('$lib/vocabulary').Collection | null;
@@ -14,6 +18,9 @@ export type TijdRegel = {
 	label?: string | null;
 	zin: string;
 	meta?: string | null;
+	/** Under the zin, after the meta: what has links of its own (indieners, a dossier). It
+	 *  gets the line's id, as `inhoud` does. */
+	onder?: Snippet<[string]> | null;
 	href?: string | null;
 	/** The bron the line names: a click opens it in place (BronLink), as everywhere. */
 	ref?: import('$lib/bron/href').BronRef | string | null;
@@ -26,13 +33,48 @@ export type TijdRegel = {
 		blok: import('$lib/api/types').Schema<'CoalitionVoteDTO'>;
 		fracties: import('$lib/api/types').Schema<'CoalitionFactionDTO'>[];
 	} | null;
+	/** Wat één klik onder de regel opent: de inhoud van de bron zelf (RijInhoud). De bron
+	 *  staat dan een stap verder, in die inhoud; cmd-klik op de zin opent hem meteen. Het
+	 *  krijgt de id van de regel, zodat één snippet de regels van een lijst kan dienen. */
+	inhoud?: Snippet<[string]> | null;
+	/** De datum als knop, waar hij iets op de pagina kiest (alleen deze wijziging). */
+	datumKnop?: { titel: string; actie: () => void } | null;
+	/** What Bewaar keeps (`documents/<key>`), where the Tijdlijn has Bewaar. */
+	bron?: string | null;
+	/** Buiten de gekozen jaren: stiller gezet. */
+	gedimd?: boolean;
+	/** Bij hover, wat de regel zelf niet zegt. */
+	hint?: string | null;
 };
 export type TijdGroep = {
 	id: string;
 	titel: string;
 	sub?: string | null;
+	/** Het jaar dat de kop al noemt: dan staat het niet nog eens onder elke dag. */
+	jaar?: string | null;
 	regels: TijdRegel[];
 	noot?: string | null;
 };
+
+/** Een verloop (procedure, wijzigingen) loopt van oud naar nieuw, een overzicht andersom. */
+export type Volgorde = 'oplopend' | 'aflopend';
+
+/**
+ * De regels van een groep op datum, stabiel: regels van één dag houden hun volgorde. Wat
+ * nog kan volgen (zonder datum) staat achteraan.
+ */
+export function sorteer(regels: readonly TijdRegel[], volgorde: Volgorde): TijdRegel[] {
+	const richting = volgorde === 'oplopend' ? 1 : -1;
+	return [...regels].sort((a, b) => {
+		if (!a.datum || !b.datum) return (a.datum ? 0 : 1) - (b.datum ? 0 : 1);
+		return richting * a.datum.slice(0, 10).localeCompare(b.datum.slice(0, 10));
+	});
+}
+
+/** The one year a group's lines fall in, for its heading; null where they span more. */
+export function enigJaar(regels: readonly TijdRegel[]): string | null {
+	const jaren = new Set(regels.flatMap((r) => (r.datum ? [r.datum.slice(0, 4)] : [])));
+	return jaren.size === 1 ? [...jaren][0] : null;
+}
 
 export { dagMaand } from '$lib/text/datum';

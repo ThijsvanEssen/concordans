@@ -65,7 +65,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: 2px var(--s-3);
+		gap: var(--s-1) var(--s-3);
 		margin: var(--s-1) 0 0;
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
@@ -86,7 +86,7 @@
 	.zijde {
 		display: inline-flex;
 		align-items: baseline;
-		gap: 6px;
+		gap: var(--s-1);
 	}
 	.label {
 		font-size: var(--t-micro);
