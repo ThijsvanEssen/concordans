@@ -1,4 +1,4 @@
-import { getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
+import { getNodeGraph, getNodeNeighborhood, neighborsOf } from '$lib/api/nodes';
 import { inPool } from '$lib/api/pool';
 import {
 	abortable,
@@ -34,7 +34,13 @@ export function createExpansion(
 	ctx: GraphContext
 ): Pick<
 	GraphStore,
-	'peekNode' | 'expandNode' | 'expandNeighborhood' | 'nodeResponse' | 'mergePaths' | 'neighborhood'
+	| 'peekNode'
+	| 'expandNode'
+	| 'expandNeighborhood'
+	| 'nodeResponse'
+	| 'mergePaths'
+	| 'neighborhood'
+	| 'laadSoort'
 > {
 	const {
 		nodes,
@@ -261,6 +267,41 @@ export function createExpansion(
 		},
 
 		neighborhood: { subscribe: neighborhoodStore.subscribe },
+
+		laadSoort: async (collection, key, soort, opts = {}) => {
+			const grens = opts.grens ?? 5000;
+			const focus = nodeId(collection, key.toLowerCase());
+			const ids = new Set<string>();
+			let offset = 0;
+			for (;;) {
+				const response = await getNodeGraph(collection, key, {
+					limit: 500,
+					offset,
+					nodeTypes: NODE_TYPES[soort],
+					props: 'canvas',
+					signal: opts.signal ?? signal()
+				});
+				for (const n of neighborsOf(response)) ids.add(nodeId(n.collection as Collection, n.key));
+				// The same bronnen as the neighbourhood's on their id: drawn once.
+				mergeResponse(response);
+				neighborhoodStore.update((r) =>
+					r && r.focal === focus
+						? {
+								...r,
+								buckets: r.buckets.map((b) =>
+									b.collection === soort ? { ...b, kept: Math.max(b.kept, ids.size) } : b
+								)
+							}
+						: r
+				);
+				const volgende = (response.neighbors.buckets ?? [])
+					.map((b) => (b as { next_offset?: number | null }).next_offset)
+					.filter((n): n is number => typeof n === 'number');
+				if (!volgende.length || ids.size >= grens) break;
+				offset = Math.min(...volgende);
+			}
+			return ids.size;
+		},
 
 		expandNeighborhood: async (collection, key, opts = {}) => {
 			// The canvas draws only its nodes' names and kinds: the light props (CANVAS_PROPS, audited

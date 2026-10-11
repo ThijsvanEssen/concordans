@@ -32,6 +32,7 @@
 	import BewindspersoonKop from './BewindspersoonKop.svelte';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
 	import Stem from '$lib/components/parliamentary/Stem.svelte';
+	import CoalitieRegel from '$lib/components/parliamentary/CoalitieRegel.svelte';
 	import { ambtZin } from '$lib/components/parliamentary/ambt';
 	import StemOpen from '$lib/components/open/StemOpen.svelte';
 	import { bronHref } from '$lib/bron/href';
@@ -471,6 +472,13 @@
 													{/if}
 													{#if v.date}<span class="vote-date">{formatDate(v.date)}</span>{/if}
 												</span>
+												<!-- What the coalition did (API 0.79.45, #559; Thijs, 10 Oct). -->
+												{#if v.coalition}<div class="vote-coal">
+														<CoalitieRegel
+															coalitie={v.coalition}
+															fracties={v.coalition_factions ?? []}
+														/>
+													</div>{/if}
 											</div>
 											{#if open}
 												<div class="vote-open"><StemOpen decisionKey={v.decision_key} /></div>
@@ -483,7 +491,12 @@
 					{/each}
 					{#if !showAllVotes && (ambt.length > VOTES_PREVIEW || eigen.length > VOTES_PREVIEW)}
 						<p class="alle">
-							<AlleN aantal={alle.length} noun="stemmen" onclick={() => (showAllVotes = true)} />
+							<!-- No number while more pages follow: the heading says "200+" (FE1, live 0.79.44). -->
+							<AlleN
+								aantal={apart && inOffice!.next != null ? null : alle.length}
+								noun="stemmen"
+								onclick={() => (showAllVotes = true)}
+							/>
 						</p>
 					{:else if showAllVotes && apart && inOffice!.next != null}
 						<p class="alle">
@@ -615,8 +628,12 @@
 	}
 	.vote-mark,
 	.vote-subject,
-	.vote-meta {
+	.vote-meta,
+	.vote-coal {
 		position: relative;
+	}
+	.vote-coal {
+		grid-column: 2;
 	}
 	/* Opened: the bar under the row, at the subject's edge. */
 	.vote-open {

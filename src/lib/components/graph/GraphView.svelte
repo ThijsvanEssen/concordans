@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Collection } from '$lib/vocabulary';
 	import { naFilter, zichtSleutel } from '$lib/graph/zicht';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
@@ -97,6 +98,8 @@
 		onOpenFilter,
 		onDepth,
 		onAllesLaden,
+		onLaadSoort,
+		laadtSoort,
 		allesGrens,
 		onToggleHeat,
 		onHeatPeriodChange,
@@ -132,6 +135,8 @@
 		onDepth: (d: number) => void;
 		/** Load all the focus's direct neighbours (?alles=1); absent once they are asked. */
 		onAllesLaden?: () => void;
+		onLaadSoort?: (collection: Collection) => void;
+		laadtSoort?: ReadonlySet<string>;
 		allesGrens?: { grens: number; geladen: boolean } | null;
 		onToggleHeat?: () => void;
 		onHeatPeriodChange?: (months: number) => void;
@@ -1529,6 +1534,8 @@
 		{reach}
 		{onDepth}
 		{onAllesLaden}
+		{onLaadSoort}
+		{laadtSoort}
 		{allesGrens}
 		hiddenRelations={filters.hiddenRelations}
 		onToggleRelation={toggleRelation}

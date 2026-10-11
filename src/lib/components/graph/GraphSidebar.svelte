@@ -48,6 +48,8 @@
 		depth,
 		onDepth,
 		onAllesLaden,
+		onLaadSoort,
+		laadtSoort = new Set<string>(),
 		allesGrens = null,
 		hiddenRelations,
 		onToggleRelation,
@@ -71,6 +73,10 @@
 		depth: number;
 		onDepth: (d: number) => void;
 		onAllesLaden?: () => void;
+		/** All the focus's direct neighbours of one kind (the per-kind step). */
+		onLaadSoort?: (collection: Collection) => void;
+		/** The kinds being loaded so. */
+		laadtSoort?: ReadonlySet<string>;
 		/** The most "Alles laden" asks at once; set once it has (the cap then stands as a label). */
 		allesGrens?: { grens: number; geladen: boolean } | null;
 		hiddenRelations: Set<Relation>;
@@ -260,7 +266,15 @@
 							><span class="uitsnede__aantal"
 								>{formatCount(b.kept)}
 								<span class="uitsnede__van">van {formatCount(b.total)}</span></span
-							>
+							>{#if onLaadSoort}<span class="uitsnede__laad"
+									>{#if laadtSoort.has(b.collection)}<span class="stil">Laden…</span
+										>{:else}<TekstLink
+											onclick={() => onLaadSoort(b.collection as Collection)}
+											aria-label="Alle {formatCount(b.total)} {BRON_LABEL[
+												b.collection as Collection
+											][1].toLowerCase()} laden">Alle laden</TekstLink
+										>{/if}</span
+								>{/if}
 						</li>
 					{/each}
 				</ul>
@@ -487,7 +501,7 @@
 	}
 	.uitsnede li {
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-columns: auto minmax(0, 1fr) auto auto;
 		align-items: center;
 		gap: var(--s-2);
 		padding: 2px 0;
@@ -495,6 +509,9 @@
 	.uitsnede__aantal {
 		font-variant-numeric: tabular-nums;
 		color: var(--ink);
+	}
+	.uitsnede__laad {
+		font-size: var(--t-micro);
 	}
 	.uitsnede__actie {
 		margin: var(--s-1) 0 0;

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -223,8 +224,24 @@
 	// All the focus's direct neighbours (?alles=1, Thijs 10 Oct: "maak het mogelijk om alles te
 	// laden, misschien zonder het tweede en derde niveau"): one step, up to ALLES_GRENS.
 	const alles = $derived(param('alles') === '1');
-	// The API's most at one step (1.000 up to 0.79.44; 2.000 with Back-end #2's change).
-	const ALLES_GRENS = 1000;
+	// The API's most at one step (2.000 from 0.79.45, #545).
+	const ALLES_GRENS = 2000;
+	// The per-kind step: all of one kind of the focus's direct neighbours, page by page (500,
+	// /api/nodes props=canvas), up to SOORT_GRENS; the Legenda's row says how many came.
+	const SOORT_GRENS = 5000;
+	let laadtSoort = $state(new Set<string>());
+	async function laadSoort(soort: Collection) {
+		const target = parseNodeId(reach?.focal ?? '');
+		if (!target || laadtSoort.has(soort)) return;
+		laadtSoort = new Set([...laadtSoort, soort]);
+		try {
+			await store.laadSoort(target.collection, target.key, soort, { grens: SOORT_GRENS });
+		} catch {
+			/* the row keeps its count; Alle laden stays */
+		} finally {
+			laadtSoort = new Set([...laadtSoort].filter((c) => c !== soort));
+		}
+	}
 	const depthFor = (kind: GraphNodeKind) =>
 		alles ? 1 : (explicitDepth ?? (isContainerKind(kind) ? 1 : 2));
 	// The bron the canvas is drawn around; a click selects another without moving it.
@@ -1556,6 +1573,8 @@
 							onFilter={applyFilter}
 							onOpenFilter={() => (filterOpen = true)}
 							onDepth={setDepth}
+							onLaadSoort={netwerkActive ? undefined : laadSoort}
+							{laadtSoort}
 							allesGrens={{ grens: ALLES_GRENS, geladen: alles }}
 							onAllesLaden={alles
 								? undefined

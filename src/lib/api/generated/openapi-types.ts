@@ -2956,6 +2956,28 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * CoalitionFactionDTO
+         * @description A faction of the coalition on a vote: how its seats went.
+         */
+        CoalitionFactionDTO: {
+            /** Key */
+            key: string;
+            /**
+             * Short
+             * @description Its abbreviation, else its name.
+             */
+            short?: string | null;
+            /**
+             * Choice
+             * @description ``Voor`` or ``Tegen``; null when its seats went both ways (a roll call).
+             */
+            choice?: ("Voor" | "Tegen") | null;
+            /** Seats For */
+            seats_for: number;
+            /** Seats Against */
+            seats_against: number;
+        };
+        /**
          * CoalitionFactionSeatsDTO
          * @description A faction's seats in a stretch of a cabinet, and whether it is of the coalition.
          */
@@ -5654,6 +5676,11 @@ export interface components {
              * @description ``TK``, ``EK``; null for a publication or a commencement.
              */
             chamber?: components["schemas"]["FacetCountDTO"][];
+            /**
+             * Coalition
+             * @description What the coalition did on the votes of the Tweede Kamer: ``together``, ``split`` (with ``wissel``), ``wissel``, ``decisive``; a vote counts for each that holds, an event without a coalition vote for none.
+             */
+            coalition?: components["schemas"]["FacetCountDTO"][];
         };
         /** FeedFactionDTO */
         FeedFactionDTO: {
@@ -6088,6 +6115,13 @@ export interface components {
              * @description Of the Tweede Kamer: its ``BesluitSoort`` as the Kamer writes it (``Stemmen - aangenomen``, ``Stemmen - zonder stemming aannemen``: a hamerstuk, no votes).
              */
             decision_kind?: string | null;
+            /** @description Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer. */
+            coalition?: components["schemas"]["CoalitionVoteDTO"] | null;
+            /**
+             * Coalition Factions
+             * @description Of the Tweede Kamer: each coalition faction that cast a seat, with its choice, most seats first; empty where ``coalition`` is null.
+             */
+            coalition_factions?: components["schemas"]["CoalitionFactionDTO"][];
         };
         /**
          * GovernmentFunctionDTO
@@ -8182,6 +8216,13 @@ export interface components {
              * @description The posts in a cabinet (``government_functions``) the member held on ``date``, oldest first: a vote as (demissionary) bewindspersoon and Kamerlid; empty when none.
              */
             in_office?: components["schemas"]["VoteOfficeDTO"][];
+            /** @description Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer. */
+            coalition?: components["schemas"]["CoalitionVoteDTO"] | null;
+            /**
+             * Coalition Factions
+             * @description Each coalition faction that cast a seat, with its choice, most seats first (as on the feed); empty where ``coalition`` is null.
+             */
+            coalition_factions?: components["schemas"]["CoalitionFactionDTO"][];
         };
         /**
          * MemberVotesResponse
@@ -8292,6 +8333,13 @@ export interface components {
              * @description Of an article: per lid the edges of the whole bucket cite, how many do ("" for those that cite none; an edge that cites two counts for each); null when none of them cites a lid.
              */
             lid_counts?: {
+                [key: string]: number;
+            } | null;
+            /**
+             * Capacity Counts
+             * @description Of a member's ``AUTHORED`` (outbound): per capacity they signed in (``meta.capacity``: ``kamerlid``, ``bewindspersoon``, ``overig``; "" for none), how many of the whole bucket, not only of its page. Null for every other bucket, with a ``status`` filter, and before the signatures are kept with their capacity.
+             */
+            capacity_counts?: {
                 [key: string]: number;
             } | null;
             /** Items */
@@ -9655,6 +9703,13 @@ export interface components {
              */
             primary_case_kind?: string | null;
             document?: components["schemas"]["TimelineDocumentSummaryDTO"] | null;
+            /** @description Of the Tweede Kamer: what the coalition of the cabinet in office did, as ``GET /api/decisions/{key}`` gives it; null without a cabinet or a coalition vote, and of the Eerste Kamer. */
+            coalition?: components["schemas"]["CoalitionVoteDTO"] | null;
+            /**
+             * Coalition Factions
+             * @description Each coalition faction that cast a seat, with its choice, most seats first (as on the feed); empty where ``coalition`` is null.
+             */
+            coalition_factions?: components["schemas"]["CoalitionFactionDTO"][];
         };
         /**
          * TimelineDecisionEntry
@@ -10942,7 +10997,7 @@ export interface operations {
     get_node_graph_api_nodes__collection___key__get: {
         parameters: {
             query?: {
-                /** @description Neighbors per bucket, not per response. */
+                /** @description Neighbors per bucket, not per response: at most 200 with every prop, 500 with ``props=canvas``. */
                 limit?: number;
                 /** @description Neighbors to skip in every bucket. */
                 offset?: number;
@@ -10990,6 +11045,7 @@ export interface operations {
         parameters: {
             query?: {
                 depth?: number;
+                /** @description The nodes kept: at most 1000, and 2000 with ``depth=1`` (every direct neighbour, "alles laden"). */
                 cap?: number;
                 /** @description `canvas`: of a node but the focal one only the props the canvas of the explorer draws, per collection, as the neighbours of a node with `props=canvas`; `full` (the default) every prop a neighbour carries */
                 props?: "full" | "canvas";
@@ -12441,6 +12497,8 @@ export interface operations {
                 q?: string[] | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
+                /** @description What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone. */
+                coalition?: ("together" | "split" | "wissel" | "decisive") | null;
                 /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
                 tier?: string | null;
             };
@@ -12498,6 +12556,8 @@ export interface operations {
                 q?: string[] | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
+                /** @description What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone. */
+                coalition?: ("together" | "split" | "wissel" | "decisive") | null;
                 /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
                 tier?: string | null;
             };
@@ -12550,6 +12610,8 @@ export interface operations {
                 q?: string[] | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
+                /** @description What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone. */
+                coalition?: ("together" | "split" | "wissel" | "decisive") | null;
                 /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
                 tier?: string | null;
             };
@@ -12684,6 +12746,8 @@ export interface operations {
                 q?: string[] | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
+                /** @description What the coalition did on a vote of the Tweede Kamer: ``together`` (every coalition seat on one side), ``split`` (on both, a wisselmeerderheid too), ``wissel`` (split, and the side with the most coalition seats lost), ``decisive`` (the opposition alone would have decided otherwise). Keeps votes alone. */
+                coalition?: ("together" | "split" | "wissel" | "decisive") | null;
                 /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
                 tier?: string | null;
             };

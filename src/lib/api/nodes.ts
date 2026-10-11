@@ -15,6 +15,10 @@ export const getNodeGraph = (
 		relations?: string;
 		nodeTypes?: string;
 		direction?: 'inbound' | 'outbound';
+		/** Neighbours to skip in every bucket (a next page, `next_offset`). */
+		offset?: number;
+		/** `canvas`: the neighbours with only what the canvas draws (500 a page, API 0.79.45). */
+		props?: 'full' | 'canvas';
 	} = {}
 ) =>
 	// A full node can take a cold API more than 10 s (art. 3:2 Awb, 651 kB, prod 9 Oct): it
@@ -27,7 +31,9 @@ export const getNodeGraph = (
 					limit: opts.limit,
 					relations: opts.relations,
 					node_types: opts.nodeTypes,
-					direction: opts.direction
+					direction: opts.direction,
+					offset: opts.offset,
+					props: opts.props
 				}
 			},
 			signal: opts.signal
