@@ -2,12 +2,12 @@
 	// The patterns of the fracties in one hall, as SVG <defs>: the colour of the fractie with
 	// white hatching, dots or lines over it (partijkleuren: patroonVan). A seat takes one with
 	// `fill="url(#…)"`, through `vullingVan`.
-	import { kamerKleuren, patroonVan, patroonId } from './partijkleuren.svelte';
+	import { fractieKleuren, patroonVan, patroonId } from './partijkleuren.svelte';
 
 	let { prefix, namen }: { prefix: string; namen: readonly string[] } = $props();
 	const met = $derived(
 		[...new Set(namen)]
-			.map((naam) => ({ naam, patroon: patroonVan(naam), kleur: kamerKleuren(naam)?.[0] }))
+			.map((naam) => ({ naam, patroon: patroonVan(naam), kleur: fractieKleuren(naam)?.[0] }))
 			.filter((p) => p.patroon !== 'vol' && p.kleur)
 	);
 </script>

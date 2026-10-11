@@ -10,6 +10,7 @@
 	import { committeeSlug, getCommittee, str } from '$lib/components/parliamentary/data';
 	import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 	import { chamberName } from '$lib/components/parliamentary/chamber';
+	import { seatWord } from '$lib/components/parliamentary/career';
 	import { formatLongDate } from './_shared';
 
 	let { node }: { node: GraphNode } = $props();
@@ -18,6 +19,14 @@
 	const name = $derived(str(p.name) ?? node.raw?.display_name ?? node.label);
 	const abbreviation = $derived(str(p.abbreviation));
 	const kind = $derived(str(p.kind));
+
+	/** A seat's role as a label: `PlvLid` and `Plv. lid` alike "Plaatsvervangend lid". */
+	const zetelVan = (role: string | null | undefined) => {
+		const w = seatWord(role) ?? 'lid';
+		return w.charAt(0).toUpperCase() + w.slice(1);
+	};
+	const RANG: Record<string, number> = { Voorzitter: 0, Ondervoorzitter: 1, Lid: 2 };
+	const rang = (zetel: string) => RANG[zetel] ?? 3;
 
 	type State =
 		| { kind: 'loading' }
@@ -84,10 +93,12 @@
 			{@const openDossiers = dossiers.filter((d) => !d.closed)}
 			{@const outcomes = Object.keys(OUTCOME_LABEL) as Outcome[]}
 			{@const ek = c.chamber === 'EK'}
-			<!-- The members with a role, as the Eerste Kamer names it: voorzitter, ondervoorzitter. -->
+			<!-- The members with a role, in the word of a member's page (seatWord): the
+			     voorzitter first, then the ondervoorzitter, the leden and the plaatsvervangers. -->
 			{@const officers = (c.members ?? [])
 				.filter((m) => m.role)
-				.sort((a, b) => Number(b.role === 'voorzitter') - Number(a.role === 'voorzitter'))}
+				.map((m) => ({ ...m, zetel: zetelVan(m.role) }))
+				.sort((a, b) => rang(a.zetel) - rang(b.zetel))}
 			{@const source = c.source}
 
 			<ul class="stats">
@@ -119,7 +130,7 @@
 			{#if officers.length > 0}
 				<dl class="officers">
 					{#each officers as m (m.key)}
-						<dt>{m.role}</dt>
+						<dt>{m.zetel}</dt>
 						<dd>
 							<BronLink ref={`members/${m.key}`}>{m.name}</BronLink>{#if m.ek?.abbreviation}<span
 									class="faction">, {m.ek.abbreviation}</span

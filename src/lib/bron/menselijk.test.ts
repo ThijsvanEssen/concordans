@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BRON_LABEL } from '$lib/vocabulary';
-import { isRauw, menselijkeNaam } from './menselijk';
+import { fractieNaam, isRauw, menselijkeNaam } from './menselijk';
 
 describe('the name of a bron for a reader', () => {
 	it('knows a key, an id and a slug when it sees one', () => {
@@ -116,5 +116,25 @@ describe('the name of a bron for a reader', () => {
 				props: { bwb_id: 'BWBR0002741', label: 'II', title: null }
 			} as never)
 		).toBe('Bijlage II');
+	});
+});
+
+describe('fractieNaam', () => {
+	it('names a fractie by its abbreviation, its name where it has none, never its key', () => {
+		expect(
+			fractieNaam({
+				key: 'nieuw_sociaal_contract',
+				abbreviation: 'NSC',
+				name: 'Nieuw Sociaal Contract'
+			})
+		).toBe('NSC');
+		expect(
+			fractieNaam({
+				key: 'nieuw_sociaal_contract',
+				abbreviation: ' ',
+				name: 'Nieuw Sociaal Contract'
+			})
+		).toBe('Nieuw Sociaal Contract');
+		expect(fractieNaam({ key: 'nieuw_sociaal_contract' })).not.toContain('nieuw_sociaal_contract');
 	});
 });

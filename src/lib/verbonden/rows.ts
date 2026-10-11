@@ -13,6 +13,7 @@ import { isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
 import { dossierLabel, type DossierNaamBron } from '$lib/bron/dossier-naam';
 import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
+import { seatWord } from '$lib/components/parliamentary/career';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
 
 export type { Neighbor } from '$lib/api/nodes';
@@ -388,7 +389,10 @@ function periodOf(meta: Record<string, unknown>): Row['period'] {
 	}
 	const from = text(meta.from_date)?.slice(0, 10) ?? null;
 	const to = text(meta.to_date)?.slice(0, 10) ?? null;
-	return from || to ? { from, to, role: text(meta.role) } : null;
+	// A seat's role in the word of a member's page: `PlvLid` and `Plv. lid` alike (UX #50).
+	return from || to
+		? { from, to, role: seatWord(text(meta.role), meta.substitute === true) }
+		: null;
 }
 
 /**

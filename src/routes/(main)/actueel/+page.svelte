@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { lijstDoel } from '$lib/stores/sprong';
-	import { naamVan } from '$lib/bron/menselijk';
+	import { fractieNaam } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
@@ -30,7 +30,6 @@
 	import {
 		getCabinets,
 		getMinistries,
-		getPartyColors,
 		type Cabinet,
 		type Ministry
 	} from '$lib/components/explore/index/government';
@@ -270,8 +269,9 @@
 		};
 	});
 
-	// The API searches words for a while and then answers with what it found, from the day it
-	// reached (0.79.28): further back is the same question up to the day before.
+	// The API searches words (0.79.28) or a fractie (0.79.48, #581) for a while and then answers
+	// with what it found, from the day it reached: further back is the same question up to the
+	// day before. A next page can stop short too.
 	let doorzocht = $state<string | null>(null);
 	let verderLaden = $state(false);
 	async function verderTerug() {
@@ -303,6 +303,7 @@
 			);
 			items = uniqueBy([...items, ...r.items.map(normalizeItem)], (i) => i.id);
 			cursor = r.next_cursor ?? null;
+			doorzocht = doorzochtVanaf(r);
 		} catch {
 			error = 'De volgende dagen konden niet worden geladen.';
 		} finally {
@@ -362,7 +363,6 @@
 	// ── Names for the filters ───────────────────────────────────────────────
 	let cabinets = $state<Cabinet[]>([]);
 	let ministries = $state<Ministry[]>([]);
-	let colors = $state<Record<string, string>>({});
 	let factionNames = $state<Record<string, string>>({});
 	$effect(() => {
 		getCabinets()
@@ -371,20 +371,12 @@
 		getMinistries()
 			.then((m) => (ministries = m))
 			.catch(() => {});
-		getPartyColors()
-			.then((c) => (colors = c))
-			.catch(() => {});
 		unwrap(api.GET('/api/factions'))
-			.then(
-				(f) =>
-					(factionNames = Object.fromEntries(
-						f.map((x) => [x.key, x.abbreviation ?? x.name ?? naamVan('factions', x)])
-					))
-			)
+			.then((f) => (factionNames = Object.fromEntries(f.map((x) => [x.key, fractieNaam(x)]))))
 			.catch(() => {});
 	});
 	const colorOf = (short: string | null | undefined) =>
-		short ? (colors[short] ?? partyColor(short)) : 'var(--rule-strong)';
+		short ? partyColor(short) : 'var(--rule-strong)';
 	const ministryName = (key: string | null | undefined) =>
 		(key && ministries.find((m) => m.key === key)?.name) || key || '';
 	const cabinetName = (key: string) => cabinets.find((c) => c.key === key)?.name ?? key;

@@ -64,10 +64,6 @@ export const getCabinets = once(() => unwrap(api.GET('/api/cabinets')));
 export const getMinistries = once(() => unwrap(api.GET('/api/ministries')));
 
 /** The colours of the parties the API knows, by short name. */
-export const getPartyColors = once(() =>
-	unwrap(api.GET('/api/parties/colors')).then((r) => r.colors as Record<string, string>)
-);
-
 /**
  * The cabinet in office: the newest one without an end. An older cabinet without an end
  * has one the sources do not give (most before 1945), and is not in office.

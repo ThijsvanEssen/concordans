@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { naamVan } from '$lib/bron/menselijk';
+	import { fractieNaam } from '$lib/bron/menselijk';
 	// The seats of a cabinet in one Kamer (concept 16, variant B; Thijs, 10 Oct): the coalition's
 	// seats as the head figure, their course over the cabinet's period, then the hall on the day
 	// chosen, its two sides and the majority. Text and bars at the frame's left edge, the hall
@@ -117,7 +117,7 @@
 		) as Record<string, 'voor' | 'tegen' | 'other'>;
 	};
 	const naam = (f: { key?: string | null; abbreviation?: string | null; name?: string | null }) =>
-		f.abbreviation ?? f.name ?? naamVan('factions', f);
+		fractieNaam(f);
 	type Rij = { key: string; naam: string; seats: number; vacant: number; color: string | null };
 	/**
 	 * The two sides as the head figure counts them (UX test 10 Oct, #12: "41" above, "37" in

@@ -143,6 +143,19 @@ export const naamVan = (
 		props: o as Record<string, unknown>
 	});
 
+/**
+ * A fractie by its abbreviation (UX #57): the one name for its chip, its seats and its
+ * colour, as the votes name it (NSC, not "Nieuw Sociaal Contract"); its name where it has none.
+ */
+export const fractieNaam = (
+	f: {
+		key?: string | null;
+		abbreviation?: string | null;
+		name?: string | null;
+		display_name?: string | null;
+	} & object
+): string => text(f.abbreviation) ?? text(f.name) ?? naamVan('factions', f);
+
 /** The name of a bron known only by its id (`collection/key`) and perhaps a name. */
 export function naamVanId(id: string, displayName?: string | null): string {
 	const slash = id.indexOf('/');

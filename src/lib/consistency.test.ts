@@ -529,6 +529,21 @@ describe('one form for each thing', () => {
 		expect(offenders((t) => t.includes('\u00b7'))).toEqual([]);
 	});
 
+	it('colours a fractie only through partijkleuren: one colour per fractie everywhere (UX #57)', () => {
+		expect(
+			offenders(
+				(t) => t.includes(`'/api/parties/colors'`),
+				['lib/components/explore/partijkleuren.svelte.ts']
+			)
+		).toEqual([]);
+	});
+
+	it('names a fractie by its abbreviation through fractieNaam (UX #57)', () => {
+		const eigen =
+			/\babbreviation \?\? (?:\w+\.(?:faction|faction_key)\b|(?:\w+\.name \?\? )?\w*[nN]aamVan\('factions')/;
+		expect(offenders((t) => eigen.test(t))).toEqual([]);
+	});
+
 	it('keeps no component that nothing uses', () => {
 		const componenten = sources.filter(
 			({ path }) => path.startsWith('lib/') && path.endsWith('.svelte')

@@ -4,6 +4,7 @@
 // Kamerlid). A function known only from stukken has no term, only the dates of the
 // stukken signed in it; one that falls in a post is counted with that post.
 import type { Schema } from '$lib/api/types';
+import { fractieNaam } from '$lib/bron/menselijk';
 
 type Membership = Schema<'FactionMembershipDTO'>;
 export type GovernmentFunction = Schema<'GovernmentFunctionDTO'>;
@@ -68,7 +69,7 @@ export function careerOf(
 			? last
 			: {
 					kind: 'seat' as const,
-					faction: m.abbreviation ?? m.name ?? m.faction_key,
+					faction: fractieNaam({ key: m.faction_key, abbreviation: m.abbreviation, name: m.name }),
 					factionKey: m.faction_key,
 					from: m.from_date ?? null,
 					to: m.to_date ?? null,

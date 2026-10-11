@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { naamVan } from '$lib/bron/menselijk';
+	import { fractieNaam } from '$lib/bron/menselijk';
 	// De vergaderzaal van de Eerste Kamer. Twee blokken
 	// banken tegenover elkaar, elk vier plaatsen breed en tien rijen diep; de regering aan de
 	// kop, de Voorzitter aan het andere eind. Wie waar zit geeft de API in `hall` (0.73, BE-4),
@@ -46,16 +46,14 @@
 	const ONDER = 265;
 	const DY = (H - (ONDER - BOVEN) * K) / 2 - BOVEN * K;
 
-	const byName = $derived(
-		new Map(data.factions.map((f) => [f.abbreviation ?? f.name ?? naamVan('factions', f), f]))
-	);
+	const byName = $derived(new Map(data.factions.map((f) => [fractieNaam(f), f])));
 	// Een fractie zonder kleur in de gegevens krijgt een grijstint, en haar naam in de legenda.
 	const GREYS = ['#b7b1a5', '#a39d90', '#8f897c', '#cbc5b9', '#7d776b', '#d8d3c8'];
 	const fillOf = $derived.by(() => {
 		const m = new Map<string, string>();
 		let g = 0;
 		for (const f of data.factions) {
-			const name = f.abbreviation ?? f.name ?? naamVan('factions', f);
+			const name = fractieNaam(f);
 			m.set(name, f.color ?? GREYS[g++ % GREYS.length]);
 		}
 		return m;
@@ -65,7 +63,7 @@
 	// Rij 0 bij de regering, kolom 0 aan de buitenkant; de Voorzitter aan het andere eind.
 	const stoelen = $derived.by<Stoel[]>(() =>
 		(data.hall?.seats ?? []).map((s) => {
-			const name = s.abbreviation ?? s.faction;
+			const name = fractieNaam({ key: s.faction, abbreviation: s.abbreviation });
 			if (s.block === 'chair') return { x: W / 2 - S_X / 2, y: rowY(9), name };
 			const x = s.block === 'left' ? s.column * COL : blockW + AISLE + s.column * COL;
 			return { x, y: rowY(s.row), name };

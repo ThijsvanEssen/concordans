@@ -8,7 +8,7 @@
 	// block opens its details beneath its line: by click, Enter or Space, and by `?open=`.
 	// On a narrow screen the lines become text: per seat the holders one under the other.
 	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { POST_LABEL, getPartyColors, laterPosts } from './government';
+	import { POST_LABEL, laterPosts } from './government';
 	import {
 		actingReason,
 		bandsOf,
@@ -35,14 +35,8 @@
 		commitmentsHref: (memberKey: string) => string;
 	} = $props();
 
-	let colors = $state<Record<string, string>>({});
-	$effect(() => {
-		getPartyColors()
-			.then((c) => (colors = c))
-			.catch(() => {});
-	});
 	const colorOf = (short: string | null | undefined) =>
-		short ? (colors[short] ?? partyColor(short)) : 'var(--rule-strong)';
+		short ? partyColor(short) : 'var(--rule-strong)';
 
 	// Text instead of a timeline below the width at which a line can hold names.
 	let narrow = $state(false);

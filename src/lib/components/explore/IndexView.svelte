@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { lijstDoel } from '$lib/stores/sprong';
-	import { naamVan } from '$lib/bron/menselijk';
+	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
 	import { formatDecimal } from '$lib/text/getal';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
@@ -454,7 +454,7 @@
 		const fracties = [...seats.factions]
 			.filter((f) => f.coalition === true)
 			.sort((a, b) => b.seats - a.seats)
-			.map((f) => f.abbreviation ?? f.name ?? naamVan('factions', f));
+			.map((f) => fractieNaam(f));
 		return {
 			naam: kabinet.name ?? naamVan('cabinets', kabinet),
 			href: bronHref(`cabinets/${kabinet.key}`, { keepMode: false, mode: 'read' }),
@@ -2348,8 +2348,7 @@
 									<Hemicycle
 										data={seats}
 										meubels
-										colorOf={(f, i) =>
-											kleurVan('TK', f.abbreviation ?? f.name ?? f.key ?? '', i, f.color ?? null)}
+										colorOf={(f, i) => kleurVan('TK', fractieNaam(f), i, f.color ?? null)}
 									/>
 								{/if}
 								<ZaalLegenda
