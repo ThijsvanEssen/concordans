@@ -25,6 +25,7 @@ export const BRON_KINDS = [
 	'toelichtingen',
 	'wetsvoorstellen',
 	'dossiers',
+	'stemmingen',
 	'leden',
 	'internationaal'
 ] as const;
@@ -38,6 +39,7 @@ export const BRON_KIND_LABEL: Record<BronKind, string> = {
 	toelichtingen: 'Toelichtingen',
 	wetsvoorstellen: 'Wetsvoorstellen',
 	dossiers: 'Dossiers',
+	stemmingen: 'Stemmingen',
 	leden: 'Leden en fracties',
 	internationaal: 'Europees en internationaal'
 };
@@ -50,6 +52,7 @@ export const BRON_KIND_NOUN: Record<BronKind, string> = {
 	toelichtingen: 'toelichting',
 	wetsvoorstellen: 'wetsvoorstellen',
 	dossiers: 'dossiers',
+	stemmingen: 'stemmingen',
 	leden: 'leden en fracties',
 	internationaal: 'Europese en internationale bronnen'
 };
@@ -62,6 +65,7 @@ const BRON_KIND_ONE: Record<BronKind, string> = {
 	toelichtingen: 'toelichting',
 	wetsvoorstellen: 'wetsvoorstel',
 	dossiers: 'dossier',
+	stemmingen: 'stemming',
 	leden: 'lid of fractie',
 	internationaal: 'Europese of internationale bron'
 };
@@ -191,15 +195,15 @@ const sameKinds = (a: ReadonlySet<BronKind> | null, b: readonly BronKind[] | nul
 export const activePreset = (f: VerbondenFilter): Preset | null =>
 	PRESETS.find((p) => sameKinds(f.bronnen, p.bronnen) && (p.rechter ?? null) === f.rechter) ?? null;
 
-/** What the button in the head of the panel says: `Alle bronnen` or the preset. */
+/**
+ * What the button in the head of the panel says: `Alle bronnen`, the preset, or `Eigen
+ * keuze`. Never the kinds themselves: the legend and the filter show those, and the line
+ * `Ook …` under the groups names what is left out (Thijs, 11 Oct: that line of kinds "hoeft
+ * er nooit te staan").
+ */
 export function bronnenLabel(f: VerbondenFilter): string {
-	if (f.bronnen === null && f.rechter === null) return 'Alle bronnen';
-	const preset = activePreset(f);
-	if (preset) return preset.label;
 	if (f.bronnen === null) return 'Alle bronnen';
-	return BRON_KINDS.filter((k) => f.bronnen!.has(k))
-		.map((k) => BRON_KIND_NOUN[k])
-		.join(', ');
+	return activePreset(f)?.label ?? 'Eigen keuze';
 }
 
 export const withPreset = (f: VerbondenFilter, p: Preset): VerbondenFilter => ({
@@ -242,8 +246,10 @@ const CHANGE_RELATIONS: ReadonlySet<string> = new Set(['AMENDS', 'INTRODUCES', '
  * toelichtingen (`is_explanatory`, or the kind memorie or nota van toelichting) and
  * wetsvoorstellen (the relations AMENDS, INTRODUCES and REPEALS, or the kind of the
  * document). Kamerleden, fracties and commissies are leden: who is involved, not what
- * a dossier holds. Activiteiten, besluiten and toezeggingen stay dossiers: what a
- * dossier's process produced, not a person or a group of them.
+ * a dossier holds. Besluiten are stemmingen: what the Kamer decided, not a paper in the
+ * dossier (Thijs, 11 Oct: "zijn toch echt anders"); a motie or amendement is a paper and
+ * stays with the documents. Activiteiten and toezeggingen stay dossiers: what a dossier's
+ * process produced, not a person or a group of them.
  */
 export function bronKindOf(
 	collection: string,
@@ -270,6 +276,8 @@ export function bronKindOf(
 				return 'wetsvoorstellen';
 			return 'dossiers';
 		}
+		case 'decisions':
+			return 'stemmingen';
 		case 'members':
 		case 'factions':
 		case 'committees':
