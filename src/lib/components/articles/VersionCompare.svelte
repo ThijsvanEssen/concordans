@@ -153,6 +153,22 @@
 	/** The changes between A and B, oldest first, whichever way round they are held. */
 	const between = $derived(wordings.slice(older.index + 1, newer.index + 1));
 
+	// A line wider than its track (a phone, or beside the network) opens on A and B, not on
+	// the oldest text: the track scrolls itself, never the page, to centre A to B.
+	let lineEl = $state<HTMLOListElement | null>(null);
+	$effect(() => {
+		const track = lineEl;
+		const marks = [older.index, newer.index];
+		if (!track || track.scrollWidth <= track.clientWidth) return;
+		const periods = [...track.children] as HTMLElement[];
+		const [a, b] = marks.map((i) => periods[i]);
+		if (!a || !b) return;
+		const left = track.getBoundingClientRect().left - track.scrollLeft;
+		const start = a.getBoundingClientRect().left - left;
+		const end = b.getBoundingClientRect().right - left;
+		track.scrollLeft = Math.max(0, (start + end - track.clientWidth) / 2);
+	});
+
 	// ── The leden ────────────────────────────────────────────────────────────────
 
 	let showSame = $state(false);
@@ -362,7 +378,7 @@
 			</div>
 
 			<div class="pick">
-				<ol class="line" aria-label="Tekstversies" data-zijscroll>
+				<ol class="line" aria-label="Tekstversies" data-zijscroll bind:this={lineEl}>
 					{#each wordings as w (w.index)}
 						{@const isA = w.index === from.index}
 						{@const isB = w.index === to.index}
