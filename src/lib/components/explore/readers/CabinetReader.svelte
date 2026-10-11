@@ -16,6 +16,7 @@
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { achtergrondVan, kamerKleuren } from '../partijkleuren.svelte';
 	import { formatLongDate, textProp } from './_shared';
+	import { formatCount } from '$lib/text/getal';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -132,15 +133,16 @@
 					</span>
 				</Veld>
 				<Veld label="Bewindspersonen" value={c.members}>
-					<a class="nums" href={listHref('ministers', c.key)} data-sveltekit-noscroll>{c.members}</a
+					<a class="nums" href={listHref('ministers', c.key)} data-sveltekit-noscroll
+						>{formatCount(c.members)}</a
 					>
 				</Veld>
 				<Veld label="Wetsvoorstellen" value={c.bills}>
-					<span class="nums">{c.bills}</span>
+					<span class="nums">{formatCount(c.bills)}</span>
 				</Veld>
 				<Veld label="Toezeggingen" value={c.commitments}>
 					<a class="nums" href={listHref('commitments', c.key)} data-sveltekit-noscroll
-						>{c.commitments}</a
+						>{formatCount(c.commitments)}</a
 					>
 				</Veld>
 			</Feiten>

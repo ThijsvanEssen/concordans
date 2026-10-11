@@ -183,7 +183,15 @@ export function onthoudPaden(data: unknown, diepte = 0) {
 		for (const item of data) onthoudPaden(item, diepte + 1);
 		return;
 	}
-	const { id, path, slug } = data as { id?: unknown; path?: unknown; slug?: unknown };
+	const { path, slug, key, member_key } = data as Record<string, unknown>;
+	// A person is named by the key of the lid beside their address, without an id: a cabinet's
+	// bewindspersonen, a stuk's indieners, the lid of a toezegging (UX-toets 0.79.47, #51).
+	const lidKey = member_key ?? key;
+	const id =
+		(data as { id?: unknown }).id ??
+		(typeof path === 'string' && path.startsWith('/leden/') && typeof lidKey === 'string'
+			? `members/${lidKey}`
+			: undefined);
 	// A dossier's commissies come with their slug but no path yet; the slug is their address.
 	const adres =
 		typeof path === 'string'
