@@ -109,8 +109,8 @@ describe('one form for each thing', () => {
 			'lib/components/explore/readers/CabinetReader.svelte',
 			'lib/components/explore/readers/CommitmentReader.svelte',
 			'lib/components/explore/readers/DecisionReader.svelte',
-			'lib/components/explore/readers/MemberReader.svelte',
 			'lib/components/ui/FilterOptie.svelte',
+			'lib/components/tijdlijn/Tijdlijn.svelte',
 			'lib/components/graph/GraphSidebar.svelte',
 			'lib/onderwerpen/Kruiswoord.svelte',
 			'lib/onderwerpen/RichtingTabel.svelte',
@@ -150,6 +150,42 @@ describe('one form for each thing', () => {
 		// Required on Actueel's line, so the compiler holds every builder to it.
 		const actueel = sources.find((s) => s.path === 'lib/components/actueel/timeline.ts')!;
 		expect(actueel.text).toMatch(/\n\tvorm: Vorm;/);
+	});
+
+	it('shows every series of dated lines in the one Tijdlijn (tijdlijn-voorstel, Thijs 11 Oct: "Ja, beide")', () => {
+		// Actueel and a followed topic, the homepage, the procedure of a dossier, a post in
+		// Bladeren, the toezeggingen, Loopbaan and Commissies of a lid, and the changes of an
+		// article between A and B: one form, gelijke pagina's, gelijke ervaring.
+		const tonen = [
+			'lib/components/actueel/FeedDay.svelte',
+			'lib/components/parliamentary/BewindspersoonOverzicht.svelte',
+			'lib/components/explore/readers/MemberReader.svelte',
+			'lib/components/articles/VersionCompare.svelte',
+			'lib/components/open/OpenRij.svelte',
+			'lib/components/explore/readers/DossierReader.svelte',
+			'routes/(main)/+page.svelte'
+		];
+		const tekst = (path: string) => sources.find((s) => s.path === path)!.text;
+		expect(
+			tonen.filter((p) => !tekst(p).includes("import Tijdlijn from '$lib/components/tijdlijn/"))
+		).toEqual([]);
+		// The forms they had of their own are gone.
+		expect(
+			offenders((t) => /class="career"|history__table|\.formulation::before|<FeedEntry/.test(t))
+		).toEqual([]);
+		// No list draws a line with dots of its own beside the Tijdlijn.
+		const stippen = (t: string) =>
+			rules(t).some(
+				(r) =>
+					/(li|item|step|regel|formulation)[\w-]*::before/.test(r.selector) &&
+					/border-radius:\s*50%/.test(r.body)
+			);
+		expect(offenders(stippen, ['lib/components/tijdlijn/Tijdlijn.svelte'])).toEqual([]);
+		// Its date column holds a day and month (the year under it) or a term's years, no more.
+		const tl = tekst('lib/components/tijdlijn/Tijdlijn.svelte');
+		expect(tl).toMatch(/dagMaand\(/);
+		expect(tl).toMatch(/yearsOf\(/);
+		expect(tl).not.toMatch(/korteDatum|langeDatum|longDate|formatDate|formatLongDate|maandJaar/);
 	});
 
 	it('lays a full-width page in the frame of Bladeren, with no width of its own (docs/bediening.md, Layout)', () => {

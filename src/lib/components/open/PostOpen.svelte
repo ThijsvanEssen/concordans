@@ -8,6 +8,9 @@
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { datum } from '$lib/components/parliamentary/stand';
 	import OpenRij from './OpenRij.svelte';
+	import RijInhoud from './RijInhoud.svelte';
+	import ToezeggingInhoud from './ToezeggingInhoud.svelte';
+	import type { Schema } from '$lib/api/types';
 	import type { TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 
 	let {
@@ -39,6 +42,8 @@
 	} = $props();
 
 	let regels = $state<TijdRegel[] | null>(null);
+	/** The toezeggingen of the lines, for what a line opens. */
+	let toezeggingen = $state<Schema<'CommitmentDTO'>[]>([]);
 	let tz = $state<{ total: number; open: number } | null>(null);
 	let stukken = $state(0);
 
@@ -70,6 +75,7 @@
 					total: c.total,
 					open: c.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0
 				};
+				toezeggingen = c.items;
 				for (const t of c.items)
 					out.push({
 						id: t.key,
@@ -79,7 +85,8 @@
 						label: `Toezegging, ${(t.status ?? '').toLowerCase()}`,
 						zin: t.text ?? '',
 						href: bronHref(`commitments/${t.key}`, { keepMode: false, mode: 'read' }),
-						ref: `commitments/${t.key}`
+						ref: `commitments/${t.key}`,
+						inhoud
 					});
 			}
 			if (n) {
@@ -98,7 +105,9 @@
 						label: 'Ondertekend',
 						zin: naamVanId(x.id, x.display_name),
 						href: bronHref(x.id, { keepMode: false, mode: 'read' }),
-						ref: x.id
+						ref: x.id,
+						// A paper opens its text in place; another bron (a besluit) is its title.
+						inhoud: x.id.startsWith('documents/') ? inhoud : null
 					});
 			}
 			regels = out.sort((a, b) => (b.datum ?? '').localeCompare(a.datum ?? '')).slice(0, 5);
@@ -111,6 +120,20 @@
 		`${naam}${partij ? ` (${partij})` : ''}: ${functie.charAt(0).toLowerCase()}${functie.slice(1)}, ${tot ? `van ${datum(van)} tot ${datum(tot)}` : `sinds ${datum(van)}`}.`
 	);
 </script>
+
+<!-- What a line opens in place: a toezegging its facts, a paper its opening. -->
+{#snippet inhoud(id: string)}
+	{@const t = toezeggingen.find((c) => c.key === id)}
+	{#if t}<ToezeggingInhoud toezegging={t} />{:else}<RijInhoud
+			item={{
+				kind: 'Brief regering',
+				node: { collection: 'documents', key: id.split('/')[1] ?? '' },
+				summary: null,
+				vote: null
+			}}
+			als="opening"
+		/>{/if}
+{/snippet}
 
 <OpenRij
 	{zin}

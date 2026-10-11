@@ -10,7 +10,14 @@
 	import { bronHref } from '$lib/bron/href';
 	import type { Collection } from '$lib/vocabulary';
 	import { dayLabel, CLOSE_VOTE } from '$lib/components/actueel/feed';
-	import { FEW_VOTES, timelineOf, type TimelineLine } from '$lib/components/actueel/timeline';
+	import {
+		FEW_VOTES,
+		tekenVan,
+		timelineOf,
+		type TimelineLine
+	} from '$lib/components/actueel/timeline';
+	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import { inhoudVan } from '$lib/components/open/rij-inhoud';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import Wetsnetwerk from '$lib/components/actueel/Wetsnetwerk.svelte';
 	import { laadWetsnetwerk, type Schets } from '$lib/components/actueel/wetsnetwerk';
@@ -135,26 +142,27 @@
 			regels: ls.map((l) => ({
 				id: l.id,
 				datum: null,
-				teken: l.failed
-					? 'nee'
-					: /aangenomen/i.test(l.label)
-						? 'ja'
-						: l.major
-							? 'stuk'
-							: 'activiteit',
+				teken: tekenVan(l),
 				vorm: l.vorm,
 				label: l.label,
 				zin: l.title,
 				meta: l.context,
 				href: typeof l.href === 'string' ? l.href : bronHref(l.href),
 				ref: typeof l.href === 'string' ? null : l.href,
-				groot: l.major
+				groot: l.major,
+				// A line of one event with content of its own opens it in place, as in Actueel.
+				inhoud: l.item && inhoudVan(l.item) ? inhoud : null
 			}))
 		}))
 	);
 </script>
 
 <RouteKop pad="/" />
+
+{#snippet inhoud(id: string)}
+	{@const item = lines.find((l) => l.id === id)?.item}
+	{#if item}<RijInhoud {item} />{/if}
+{/snippet}
 
 <svelte:head>
 	<link

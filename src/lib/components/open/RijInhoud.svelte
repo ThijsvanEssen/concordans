@@ -10,11 +10,18 @@
 	import { bronHref } from '$lib/bron/href';
 	import { dictumUit } from '$lib/onderwerpen/richting';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { inhoudVan, openingVan, toelichtingVan, type MetInhoud } from './rij-inhoud';
+	import { inhoudVan, openingVan, toelichtingVan, type Inhoud, type MetInhoud } from './rij-inhoud';
 
-	let { item }: { item: MetInhoud } = $props();
+	let {
+		item,
+		als = null
+	}: {
+		item: MetInhoud;
+		/** What to show where the item's kind does not say it (a paper of a procedure). */
+		als?: Inhoud;
+	} = $props();
 
-	const soort = $derived(inhoudVan(item));
+	const soort = $derived(als ?? inhoudVan(item));
 	const ref = $derived(`${item.node.collection}/${item.node.key}`);
 
 	let tekst = $state<string | null | 'laden'>(null);
