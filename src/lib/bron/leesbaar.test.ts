@@ -240,4 +240,14 @@ describe('the address of a focus', () => {
 		expect(padOfFocus('members/lid_pad_2')).toBe('/leden/esmah-lahlah');
 		expect(padOfFocus('members/lid_pad_0')).toBeNull();
 	});
+
+	it('links the minister-president by `prime_minister.path` (API 0.79.48, #580)', () => {
+		onthoudPaden({
+			key: 'kabinet_pm',
+			path: '/kabinetten/kabinet_pm',
+			prime_minister: { key: 'lid_pm_1', name: 'Met adres', path: '/leden/met-adres' },
+			ministries: []
+		});
+		expect(padOfFocus('members/lid_pm_1')).toBe('/leden/met-adres');
+	});
 });

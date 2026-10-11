@@ -13,8 +13,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { indexHref } from '$lib/bron/href';
 	import { bronLabel } from '$lib/vocabulary';
-	import { partyColor } from '$lib/utils/party-color.svelte';
-	import { achtergrondVan, kamerKleuren } from '../partijkleuren.svelte';
+	import { achtergrondVan } from '../partijkleuren.svelte';
 	import { formatLongDate, textProp } from './_shared';
 	import { formatCount } from '$lib/text/getal';
 
@@ -111,6 +110,8 @@
 						>{#if to}{from} tot {to}{:else}sinds {from}{/if}</span
 					>
 				</Veld>
+				<!-- The link takes the person's address from the answer (onthoudPaden):
+				     `prime_minister.path` since API 0.79.48 (#580), before it the post in `ministries`. -->
 				<Veld label="Minister-president" value={c.prime_minister}>
 					<BronLink ref={`members/${c.prime_minister?.key}`}>{c.prime_minister?.name}</BronLink>
 				</Veld>
@@ -120,9 +121,7 @@
 							<span class="party"
 								><span
 									class="party-dot"
-									style:background={kamerKleuren(p.short ?? '')
-										? achtergrondVan(p.short ?? '')
-										: partyColor(p.short ?? p.faction ?? '')}
+									style:background={achtergrondVan(p.short ?? p.faction ?? '')}
 								></span><NameLink
 									collection="factions"
 									name={p.short ?? p.faction ?? ''}

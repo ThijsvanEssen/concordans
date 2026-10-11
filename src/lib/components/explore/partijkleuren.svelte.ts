@@ -1,8 +1,10 @@
 // Fractiekleuren zoals de Kamers ze zelf tekenen, uit de API (0.73, BE-5): de Tweede Kamer
 // in de legenda van haar zetelverdeling, de Eerste Kamer in "Wie zit waar". Een fractie
 // krijgt overal de kleur van de Tweede Kamer, en waar die er geen heeft (eenmansfracties,
-// OPNL) die van de Eerste Kamer (Thijs, 1 en 10 okt). De bron per Kamer geeft de API mee
-// (`chambers.TK.source`). Eén bron voor de zaal, de legenda, de lijsten en de stippen.
+// OPNL) die van de Eerste Kamer (Thijs, 1 en 10 okt); een fractie die geen van beide Kamers
+// nog tekent (NSC, een fractie van een eerder kabinet) de kleur die de partij zelf voert. De
+// bron per Kamer geeft de API mee (`chambers.TK.source`). Eén bron voor de zaal, de legenda,
+// de lijsten, de stippen en de filters, elke fractie op haar afkorting (`fractieNaam`).
 //
 // Kleuren die op elkaar lijken krijgen een patroon (Thijs, 10 okt: "zelf iets
 // onderscheidends toevoegen qua patroon"): in de volgorde van de legenda van de Tweede Kamer
@@ -15,6 +17,11 @@ const kamers = $state<{ TK: Record<string, string[]>; EK: Record<string, string[
 	TK: {},
 	EK: {}
 });
+/** De kleur die een partij zelf voert, en de afkortingen die naar haar sleutel leiden. */
+const eigen = $state<{ kleuren: Record<string, string>; aliassen: Record<string, string> }>({
+	kleuren: {},
+	aliassen: {}
+});
 let gevraagd = false;
 
 function laad() {
@@ -25,23 +32,57 @@ function laad() {
 		.then(({ data }) => {
 			kamers.TK = data?.chambers?.TK?.colors ?? {};
 			kamers.EK = data?.chambers?.EK?.colors ?? {};
+			eigen.kleuren = data?.colors ?? {};
+			eigen.aliassen = data?.aliases ?? {};
 		})
 		.catch(() => {
 			// De terugvalkleur blijft: de naam van de fractie staat erbij.
 		});
 }
 
-const zoek = (map: Record<string, string[]>, naam: string) => {
-	const k = Object.keys(map).find((x) => x.toLowerCase() === naam.toLowerCase());
+const zoek = <T>(map: Record<string, T>, naam: string): T | undefined => {
+	const k = Object.keys(map).find((x) => x.toLowerCase() === naam.trim().toLowerCase());
 	return k ? map[k] : undefined;
 };
-/** De kleuren van een fractie: die van de Tweede Kamer, anders die van de Eerste Kamer. */
+
+/**
+ * De kleuren van een fractie bij een Kamer, op haar naam of de alias daarvan (`CU` naar
+ * `ChristenUnie`): die van de Tweede Kamer, anders die van de Eerste Kamer.
+ */
 export const kamerKleuren = (naam: string): string[] | undefined => {
 	laad();
-	const k = zoek(kamers.TK, naam) ?? zoek(kamers.EK, naam);
+	const alias = zoek(eigen.aliassen, naam);
+	const k =
+		zoek(kamers.TK, naam) ??
+		zoek(kamers.EK, naam) ??
+		(alias ? (zoek(kamers.TK, alias) ?? zoek(kamers.EK, alias)) : undefined);
 	return k?.length ? k : undefined;
 };
-const kleur = kamerKleuren;
+
+/**
+ * De kleur die een partij zelf voert, op haar afkorting of de alias daarvan, zonder op
+ * hoofdletters te letten; undefined voor een partij die de API niet kent, zoals KVP of ARP:
+ * een kleur bij de naam verzonnen zei niets.
+ */
+export function eigenKleur(
+	naam: string,
+	kleuren: Record<string, string>,
+	aliassen: Record<string, string> = {}
+): string | undefined {
+	if (!naam.trim()) return undefined;
+	return zoek(kleuren, zoek(aliassen, naam) ?? naam);
+}
+
+/** De kleuren van een fractie: die van een Kamer, anders die van de partij zelf. */
+export const fractieKleuren = (naam: string): string[] | undefined => {
+	const k = kamerKleuren(naam);
+	if (k) return k;
+	const e = eigenKleur(naam, eigen.kleuren, eigen.aliassen);
+	return e ? [e] : undefined;
+};
+
+/** Een stoel of stip zonder kleur in de gegevens. */
+const GRIJS = '#a39d90';
 
 export type Patroon = 'vol' | 'arcering' | 'stippen' | 'strepen';
 
@@ -90,10 +131,17 @@ export function patronen(legenda: Record<string, string[]>): Map<string, Patroon
 	return uit;
 }
 
+// Na de legenda van de Kamers de partijen die geen Kamer tekent, in hun eigen kleur: NSC
+// naast de PVV in de zaal van kabinet-Schoof krijgt zo zijn patroon.
 const allePatronen = $derived(
 	patronen({
 		...kamers.TK,
-		...Object.fromEntries(Object.entries(kamers.EK).filter(([n]) => !zoek(kamers.TK, n)))
+		...Object.fromEntries(Object.entries(kamers.EK).filter(([n]) => !zoek(kamers.TK, n))),
+		...Object.fromEntries(
+			Object.entries(eigen.kleuren)
+				.filter(([n]) => !kamerKleuren(n))
+				.map(([n, k]) => [n, [k]])
+		)
 	})
 );
 /** Het patroon van een fractie: vol, of een patroon tegen een gelijkende kleur. */
@@ -110,9 +158,20 @@ const CSS_PATROON: Record<Patroon, string | null> = {
 	stippen: 'radial-gradient(circle, rgba(255,255,255,0.85) 0 1px, transparent 1.3px) 0 0 / 4px 4px',
 	strepen: 'repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,255,255,0.75) 2px 3.5px)'
 };
+/**
+ * De kleuren van een fractie: die van een Kamer, dan de kleur die de zetels zelf meegeven,
+ * dan die van de partij zelf, dan grijs.
+ */
+function kleurenOf(naam: string, fallback: string | null): string[] {
+	const k = kamerKleuren(naam);
+	if (k) return k;
+	if (fallback) return [fallback];
+	return fractieKleuren(naam) ?? [GRIJS];
+}
+
 /** De achtergrond van een stip of vlak: kleur, twee kleuren naast elkaar, met het patroon. */
 export function achtergrondVan(naam: string, fallback: string | null = null): string {
-	const k = kleur(naam) ?? [fallback ?? '#a39d90'];
+	const k = kleurenOf(naam, fallback);
 	const basis = k.length > 1 ? `linear-gradient(90deg, ${k[0]} 50%, ${k[1]} 50%)` : k[0];
 	const laag = CSS_PATROON[patroonVan(naam)];
 	return laag ? `${laag}, ${basis}` : basis;
@@ -129,13 +188,13 @@ export function vullingVan(
 	i: number,
 	fallback: string | null
 ): string {
-	return patroonVan(naam) !== 'vol' && kamerKleuren(naam)
+	return patroonVan(naam) !== 'vol' && fractieKleuren(naam)
 		? `url(#${patroonId(prefix, naam)})`
 		: kleurVan('', naam, i, fallback);
 }
 
 /** De kleur van een stoel; een fractie met twee kleuren wisselt per stoel. */
 export function kleurVan(_kamer: string, naam: string, i: number, fallback: string | null): string {
-	const k = kleur(naam);
-	return k ? k[i % k.length] : (fallback ?? '#a39d90');
+	const k = kleurenOf(naam, fallback);
+	return k[i % k.length];
 }

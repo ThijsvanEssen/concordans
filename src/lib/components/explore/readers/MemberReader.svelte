@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { naamVan } from '$lib/bron/menselijk';
+	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import { bronLabel } from '$lib/vocabulary';
 	import ReaderHead from './ReaderHead.svelte';
 	import { formatCount } from '$lib/text/getal';
@@ -278,7 +278,7 @@
 					<Feiten klein>
 						<Veld label="Fractie" value={ek.faction}>
 							<BronLink ref={{ collection: 'factions', key: ek.faction ?? '' }}
-								>{ek.abbreviation ?? ek.faction}</BronLink
+								>{fractieNaam({ key: ek.faction, abbreviation: ek.abbreviation })}</BronLink
 							>
 						</Veld>
 						<Veld label="Anciënniteit" value={ek.seniority_days}>

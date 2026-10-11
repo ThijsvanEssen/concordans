@@ -35,6 +35,12 @@ describe('partijkleuren', () => {
 		expect(p.get('groep markuszower')).toBe('arcering');
 	});
 
+	it('gives a party no Kamer draws, after the legend, a pattern against a like colour', () => {
+		const p = patronen({ ...TK, NSC: ['#1B4F72'] });
+		expect(p.get('pvv')).toBe('vol');
+		expect(p.get('nsc')).not.toBe('vol');
+	});
+
 	it('leaves a fractie of two colours, and its alias, full', () => {
 		const p = patronen(TK);
 		expect(p.get('groenlinks-pvda')).toBe('vol');

@@ -85,6 +85,25 @@ describe('a bewindspersoon of a cabinet', () => {
 	});
 });
 
+describe('a seat on a commissie', () => {
+	const seat = (role: string) =>
+		rowOfNeighbor({
+			id: 'members/b',
+			key: 'b',
+			collection: 'members',
+			display_name: 'Stientje van Veldhoven',
+			relation: 'MEMBER_OF',
+			direction: 'inbound',
+			meta: { role, from_date: '2012-11-01', to_date: '2015-03-01' }
+		} as unknown as Neighbor)!;
+
+	it('names its role in one spelling, a plain seat not at all (UX #50)', () => {
+		expect(periodLabel(seat('PlvLid').period!)).toBe('plaatsvervangend lid, 2012–2015');
+		expect(periodLabel(seat('Plv. lid').period!)).toBe('plaatsvervangend lid, 2012–2015');
+		expect(periodLabel(seat('Lid').period!)).toBe('2012–2015');
+	});
+});
+
 describe('the name of a Kamerstuk', () => {
 	const doc = (props: Record<string, unknown>) =>
 		describeBron('documents', 'k', 'Kamerstuk 36547', props);

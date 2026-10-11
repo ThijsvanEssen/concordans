@@ -148,6 +148,8 @@ describe('seatWord', () => {
 		expect(seatWord('Voorzitter')).toBe('voorzitter');
 		expect(seatWord('OnderVz')).toBe('ondervoorzitter');
 		expect(seatWord('Plv. lid')).toBe('plaatsvervangend lid');
+		// The Kamer's spelling since 2025, and the API's for every seat from 0.79.48 (#579).
+		expect(seatWord('PlvLid')).toBe('plaatsvervangend lid');
 		expect(seatWord('Lid', true)).toBe('plaatsvervangend lid');
 		expect(seatWord('ondervoorzitter')).toBe('ondervoorzitter');
 	});

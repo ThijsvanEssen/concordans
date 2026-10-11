@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { RIJEN_150, RIJEN_75, deelStoelen, stemVanStoel } from './stoel';
-	import { naamVan as bronNaamVan } from '$lib/bron/menselijk';
+	import { fractieNaam } from '$lib/bron/menselijk';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref } from '$lib/bron/href';
 	import { seatCount } from '$lib/verbonden/filter';
@@ -162,7 +162,7 @@
 
 	let hovered = $state<SeatFaction | null>(null);
 	const uid = $props.id();
-	const naamVan = (f: SeatFaction) => f.abbreviation ?? f.name ?? bronNaamVan('factions', f);
+	const naamVan = (f: SeatFaction) => fractieNaam(f);
 </script>
 
 <figure class="hemicycle" class:kaal={meubels} aria-label="Zetelverdeling {kamer}">

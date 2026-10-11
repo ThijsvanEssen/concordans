@@ -2,7 +2,7 @@
 // for the changes). The Eerste Kamer's own words verbatim, once per headline; a change the
 // API derives (the Tweede Kamer gives no reason) by its kind as a plain label, with its
 // fracties. No direction: the source gives none, the number beside it shows what happened.
-import { naamVan } from '$lib/bron/menselijk';
+import { fractieNaam } from '$lib/bron/menselijk';
 import type { Schema } from '$lib/api/types';
 
 type Stuk = Schema<'SeatStretchDTO'>;
@@ -40,9 +40,7 @@ export type Wijziging =
  * all their fracties by the names the stretch gives them.
  */
 export function wijzigingenVan(stuk: Pick<Stuk, 'events' | 'factions'>): Wijziging[] {
-	const naam = new Map(
-		(stuk.factions ?? []).map((f) => [f.key, f.abbreviation ?? naamVan('factions', f)])
-	);
+	const naam = new Map((stuk.factions ?? []).map((f) => [f.key, fractieNaam(f)]));
 	const per = new Map<string, { e: Gebeurtenis; fracties: Set<string> }>();
 	for (const e of stuk.events ?? []) {
 		const sleutel = e.words?.trim() ? `w:${e.words.trim()}` : `s:${e.kind}`;
