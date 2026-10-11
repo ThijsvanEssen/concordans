@@ -153,6 +153,22 @@
 	/** The changes between A and B, oldest first, whichever way round they are held. */
 	const between = $derived(wordings.slice(older.index + 1, newer.index + 1));
 
+	// A line wider than its track (a phone, or beside the network) opens on A and B, not on
+	// the oldest text: the track scrolls itself, never the page, to centre A to B.
+	let lineEl = $state<HTMLOListElement | null>(null);
+	$effect(() => {
+		const track = lineEl;
+		const marks = [older.index, newer.index];
+		if (!track || track.scrollWidth <= track.clientWidth) return;
+		const periods = [...track.children] as HTMLElement[];
+		const [a, b] = marks.map((i) => periods[i]);
+		if (!a || !b) return;
+		const left = track.getBoundingClientRect().left - track.scrollLeft;
+		const start = a.getBoundingClientRect().left - left;
+		const end = b.getBoundingClientRect().right - left;
+		track.scrollLeft = Math.max(0, (start + end - track.clientWidth) / 2);
+	});
+
 	// ── The leden ────────────────────────────────────────────────────────────────
 
 	let showSame = $state(false);
@@ -265,7 +281,9 @@
 	<TekstMenu label="Tekstversie {which}" tekst="Tekst sinds {date(w.from)}">
 		{#snippet knop()}<span class="badge badge--{which.toLowerCase()}">{which}</span><span
 				class="ab__text"
-				>Tekst sinds {date(w.from)}, {w.until ? `tot ${date(w.until)}` : 'geldend recht'}</span
+				>Tekst sinds {optionLabel(w)}, {w.until
+					? `tot ${korteDatum(w.until)}`
+					: 'geldend recht'}</span
 			>{/snippet}
 		{#snippet inhoud(sluit)}
 			<div class="ab__lijst">
@@ -360,7 +378,7 @@
 			</div>
 
 			<div class="pick">
-				<ol class="line" aria-label="Tekstversies" data-zijscroll>
+				<ol class="line" aria-label="Tekstversies" data-zijscroll bind:this={lineEl}>
 					{#each wordings as w (w.index)}
 						{@const isA = w.index === from.index}
 						{@const isB = w.index === to.index}
@@ -836,11 +854,21 @@
 		align-items: center;
 		gap: var(--s-2);
 	}
-	/* The A and B choosers are text menus: the badge, the dates, a caret. */
-	.ab :global(.tekstmenu) {
+	/* The A and B choosers are text menus: the badge, the dates, a caret. Each stays in its
+	   column; the dates end in an ellipsis before they reach the swap (live, 11 Oct). */
+	.ab :global(.tekstmenu),
+	.ab :global(.tekstmenu__knop) {
 		min-width: 0;
+		max-width: 100%;
+	}
+	.ab :global(.tekstmenu__knop > *) {
+		flex-shrink: 0;
+	}
+	.ab :global(.tekstmenu__knop > .ab__text) {
+		flex-shrink: 1;
 	}
 	.ab__text {
+		min-width: 0;
 		margin-left: var(--s-2);
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1215,6 +1243,17 @@
 		.compare--naast .row {
 			grid-template-columns: 28px 1fr 1fr;
 			gap: 0 var(--s-3);
+		}
+	}
+	/* A over B, the swap beside both, where the two do not fit side by side in full. */
+	@container vc (max-width: 640px) {
+		.ab {
+			grid-template-columns: minmax(0, max-content) auto;
+			justify-content: start;
+		}
+		.ab > :global(.iconknop) {
+			grid-row: 1 / span 2;
+			grid-column: 2;
 		}
 	}
 	@container vc (max-width: 560px) {

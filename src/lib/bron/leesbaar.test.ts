@@ -218,4 +218,26 @@ describe('the address of a focus', () => {
 		expect(padOfFocus('documents/feed01')).toBe('/kamerstukken/37022/13');
 		expect(padOfFocus('documents/feed02')).toBeNull();
 	});
+
+	it('takes a person’s address beside the key of the lid (UX-toets 0.79.47, #51)', () => {
+		onthoudPaden({
+			key: 'kabinet_test',
+			path: '/kabinetten/kabinet_test',
+			prime_minister: { key: 'lid_pad_0', name: 'Zonder adres', path: null },
+			ministries: [
+				{ seats: [{ posts: [{ member: { key: 'lid_pad_1', path: '/leden/rob-jetten' } }] }] }
+			],
+			submitters: [
+				{
+					name: 'A. Lahlah',
+					member_key: 'lid_pad_2',
+					role: 'medeindiener',
+					path: '/leden/esmah-lahlah'
+				}
+			]
+		});
+		expect(padOfFocus('members/lid_pad_1')).toBe('/leden/rob-jetten');
+		expect(padOfFocus('members/lid_pad_2')).toBe('/leden/esmah-lahlah');
+		expect(padOfFocus('members/lid_pad_0')).toBeNull();
+	});
 });
