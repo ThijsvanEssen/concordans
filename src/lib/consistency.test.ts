@@ -737,7 +737,26 @@ describe('canvas cards and halls', () => {
 	it('gives the contents the network’s width from 1440, so every reader title starts in one column', () => {
 		const t = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
 		expect(t).toMatch(/--nav-w-auto: calc\(var\(--graph-w-auto\) \+ var\(--s-6\) - 64px\);/);
-		expect(t).toMatch(/\.col--reader \{[^}]*--reader-col-left: 0;/);
+	});
+
+	it('centres every reader between the side columns on a wide screen, through ReaderFrame', () => {
+		// Thijs, 11 Oct: "De reader mag wel gecentreerd worden tussen de twee zijpanelen". The
+		// column sets the margin for every reader alike; no reader frames itself.
+		const t = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
+		expect(t).toMatch(/\.col--reader \{[^}]*--reader-col-left: auto;/);
+		const frame = sources.find(
+			(s) => s.path === 'lib/components/explore/readers/ReaderFrame.svelte'
+		)!.text;
+		expect(frame).toMatch(
+			/\.reader-frame__col \{[^}]*margin-left: var\(--reader-col-left, 0\);[^}]*margin-right: auto;/
+		);
+		const lezers = sources.filter(({ path }) =>
+			/^lib\/components\/explore\/readers\/\w+Reader\.svelte$/.test(path)
+		);
+		expect(lezers.length).toBeGreaterThan(10);
+		expect(lezers.filter(({ text }) => !/<ReaderFrame\b/.test(text)).map((s) => s.path)).toEqual(
+			[]
+		);
 	});
 
 	it('puts the actions of a reader on a row of their own, and keeps the line of a late phrase', () => {
