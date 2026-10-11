@@ -2,12 +2,14 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
+	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
+	import ToezeggingInhoud from '$lib/components/open/ToezeggingInhoud.svelte';
 	// Wat een bewindspersoon toezegde en ondertekende,
 	// bovenaan de lezer. Tellingen per stand zijn links naar Bladeren met het filter gezet.
 	import { getMemberCommitments, getMemberDossiers } from '$lib/api/records';
 	import type { Schema } from '$lib/api/types';
-	import { indexHref } from '$lib/bron/href';
-	import { stand, datum } from './stand';
+	import { bronHref, indexHref } from '$lib/bron/href';
+	import { stand } from './stand';
 
 	let { memberKey, ruim = false }: { memberKey: string; ruim?: boolean } = $props();
 
@@ -55,21 +57,41 @@
 					>{/each}.
 			</p>
 			{#if open && open.items.length}
-				<ol class="items">
-					{#each open.items as c (c.key)}
-						<li>
-							<BronLink ref={`commitments/${c.key}`}>{c.text}</BronLink>
-							<span class="meta"
-								>{c.number}, toegezegd {datum(c.date)}{c.expected_resolution
-									? `, verwacht ${datum(c.expected_resolution)}`
-									: ''}</span
-							>
-						</li>
-					{/each}
-				</ol>
-				{#if open.total > open.items.length}
-					<a class="alle" href={href('Openstaand')}>Alle {open.total} openstaande toezeggingen</a>
-				{/if}
+				{@const items = open.items}
+				<!-- The open ones as in a post in Bladeren (PostOpen): the shared timeline, newest
+				     first, a line opening in place. -->
+				{#snippet inhoud(id: string)}
+					{@const t = items.find((c) => c.key === id)}
+					{#if t}<ToezeggingInhoud toezegging={t} />{/if}
+				{/snippet}
+				<Tijdlijn
+					groepen={[
+						{
+							id: 'openstaand',
+							titel: 'Openstaand',
+							regels: items.map((c) => ({
+								id: c.key,
+								datum: c.date ?? null,
+								teken: 'open',
+								soort: 'commitments',
+								zin: c.text ?? c.number ?? 'Toezegging',
+								meta: c.number ?? null,
+								ref: `commitments/${c.key}`,
+								href: bronHref(`commitments/${c.key}`, { keepMode: false, mode: 'read' }),
+								inhoud
+							}))
+						}
+					]}
+					volgorde="aflopend"
+				>
+					{#snippet meer()}
+						{#if open && open.total > items.length}<AlleN
+								aantal={open.total}
+								noun="openstaande toezeggingen"
+								href={href('Openstaand')}
+							/>{/if}
+					{/snippet}
+				</Tijdlijn>
 			{/if}
 			<p class="dekking">
 				Toezeggingen in de gegevens: kabinet-Rutte IV (2), kabinet-Schoof en kabinet-Jetten.
@@ -141,7 +163,7 @@
 	.items li {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: var(--s-1);
 		padding: var(--s-2) 0;
 		border-bottom: 1px solid var(--rule);
 		font-family: var(--font-serif);

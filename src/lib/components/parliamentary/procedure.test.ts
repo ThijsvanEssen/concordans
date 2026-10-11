@@ -113,6 +113,75 @@ describe('procedure: the Eerste Kamer as eerstekamer.nl shows it', () => {
 		expect(g.regels.map((r) => r.zin)).toEqual(['Verslag', 'Nu: afkondiging.']);
 	});
 
+	it('puts the papers of its page between the others by their day (36496: a verslag of 2025 stood before the papers of 2024)', () => {
+		const d = {
+			...base,
+			number: '36496',
+			closed: true,
+			ek_outcome: { outcome: 'Aangenomen', date: '2024-06-25', method: 'Stemming bij zitten' },
+			senate: senate([
+				{
+					phase: 'Schriftelijke voorbereiding',
+					state: 'vol',
+					papers: [
+						paper('gewijzigd voorstel van wet', '2024-04-25', 'EK, D'),
+						paper('verslag', '2024-05-31', 'EK, E'),
+						paper('tweede verslag', '2024-06-14', 'EK, H')
+					]
+				},
+				{
+					phase: 'Plenair',
+					state: 'vol',
+					papers: [paper('behandeling', '2024-06-18', null)]
+				}
+			])
+		};
+		const entries = [
+			{
+				node_id: 'decisions/w',
+				node_type: 'decision',
+				date: '2024-06-25',
+				kind: 'Wetgeving',
+				title: 'Wet betaalbare huur',
+				body: { chamber: 'EK', result: 'Aangenomen' }
+			},
+			{
+				node_id: 'documents/x',
+				node_type: 'document',
+				date: '2025-12-12',
+				kind: 'Verslag',
+				title: 'Kamerstuk I 36496, X: Verslag van een schriftelijk overleg over de huurmarkt',
+				body: { chamber: 'EK', number: 'X' }
+			}
+		] as unknown as Entry[];
+		const datums = ekGroup(d, entries)!.regels.map((r) => r.datum);
+		expect(datums).toEqual([
+			'2024-04-25',
+			'2024-05-31',
+			'2024-06-14',
+			'2024-06-18',
+			'2024-06-25',
+			'2025-12-12'
+		]);
+	});
+
+	it('names the year once, in the heading, where all its lines fall in it', () => {
+		const d = { ...base, senate: senate([]) };
+		const entries = [
+			{
+				node_id: 'documents/v',
+				node_type: 'document',
+				date: '2026-09-08',
+				kind: 'Verslag',
+				title: 'Verslag',
+				body: { chamber: 'EK', number: 'A' }
+			}
+		] as unknown as Entry[];
+		const g = ekGroup(d, entries)!;
+		expect(g.sub).toBe('2026');
+		expect(g.jaar).toBe('2026');
+	});
+
 	it('keeps the general line without a page', () => {
 		const g = ekGroup({ ...base, senate: senate([]) })!;
 		expect(g.regels.map((r) => r.zin)).toEqual([
