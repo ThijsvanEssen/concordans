@@ -18,6 +18,7 @@
 
 	import StandBalk from '$lib/components/parliamentary/StandBalk.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
+	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { procedure } from '$lib/components/parliamentary/procedure';
 	import GewijzigdeArtikelen from '$lib/components/parliamentary/GewijzigdeArtikelen.svelte';
 	import AmendementenDienstregeling from '$lib/components/parliamentary/AmendementenDienstregeling.svelte';
@@ -223,17 +224,35 @@
 				<p class="laden">Procedure laden…</p>
 			{:else if timeline}
 				{@const p = procedure(d, timeline.entries, metOverig)}
-				<Sectie titel="Procedure">
-					<Tijdlijn groepen={p.groepen} inklapbaar />
-					{#if p.overig}
-						<p class="overig">
-							<TekstLink onclick={() => (metOverig = !metOverig)}
-								>{metOverig
-									? 'Alleen de procedure'
-									: `Toon ook de ${p.overig} andere items`}</TekstLink
-							>
-						</p>
+				<!-- A paper opens its text in place, the vote on the bill its bar, a day's papers of
+				     the bill their list; the bron is one step further (Thijs, 11 Oct). -->
+				{#snippet inhoud(id: string)}
+					{@const i = p.inhoud.get(id)}
+					{#if i?.soort === 'stukken'}
+						<ul class="stukken">
+							{#each i.stukken as s (s.ref)}<li><BronLink ref={s.ref}>{s.zin}</BronLink></li>{/each}
+						</ul>
+					{:else if i}
+						<RijInhoud item={i.item} als={i.soort} />
 					{/if}
+				{/snippet}
+				<Sectie titel="Procedure">
+					<Tijdlijn
+						groepen={p.groepen.map((g) => ({
+							...g,
+							regels: g.regels.map((r) => (p.inhoud.has(r.id) ? { ...r, inhoud } : r))
+						}))}
+						volgorde="oplopend"
+						inklapbaar
+					>
+						{#snippet meer()}
+							{#if p.overig}<TekstLink onclick={() => (metOverig = !metOverig)}
+									>{metOverig
+										? 'Alleen de procedure'
+										: `Toon ook de ${p.overig} andere items`}</TekstLink
+								>{/if}
+						{/snippet}
+					</Tijdlijn>
 				</Sectie>
 			{/if}
 
@@ -251,10 +270,22 @@
 </ReaderFrame>
 
 <style>
-	.overig {
-		margin: var(--s-3) 0 0;
+	/* The papers of one day, each by its kind and number, a link onward. */
+	.stukken {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-1);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
+	}
+	.stukken :global(a) {
+		color: var(--ink);
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
 	}
 	.full-title summary {
 		font-family: var(--font-ui);
