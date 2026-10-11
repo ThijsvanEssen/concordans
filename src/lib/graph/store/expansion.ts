@@ -29,6 +29,7 @@ import {
 	type GraphStore,
 	type NeighborhoodReach
 } from './types';
+import { behoudenBuckets, behoudenIds, meldSoort, type SoortenGeladen } from './soorten';
 
 export function createExpansion(
 	ctx: GraphContext
@@ -62,6 +63,9 @@ export function createExpansion(
 	} = ctx;
 
 	const neighborhoodStore = writable<NeighborhoodReach | null>(null);
+	// The kinds of the focus loaded in full ("Alle laden"): a neighbourhood around the same
+	// focus keeps them (soorten.ts).
+	let soortenGeladen: SoortenGeladen | null = null;
 
 	// One request per bron serves the canvas, the panel Verbonden and a reader (`getNode`:
 	// 200 per bucket, the most API 0.5 allows; every bucket comes with its total).
@@ -282,6 +286,7 @@ export function createExpansion(
 					signal: opts.signal ?? signal()
 				});
 				for (const n of neighborsOf(response)) ids.add(nodeId(n.collection as Collection, n.key));
+				soortenGeladen = meldSoort(soortenGeladen, focus, soort, ids);
 				// The same bronnen as the neighbourhood's on their id: drawn once.
 				mergeResponse(response);
 				neighborhoodStore.update((r) =>
@@ -321,7 +326,7 @@ export function createExpansion(
 					depth: opts.depth ?? NEIGHBORHOOD_DEPTH,
 					capped: response.nodes.length > (opts.cap ?? NEIGHBORHOOD_CAP),
 					cap: opts.cap ?? NEIGHBORHOOD_CAP,
-					buckets: response.buckets ?? []
+					buckets: behoudenBuckets(response.buckets ?? [], soortenGeladen, response.focal_id)
 				});
 
 			// A full neighbourhood without the detour through a law (`withoutLawHops`); one
@@ -348,6 +353,8 @@ export function createExpansion(
 			const keep = new Set(drawn);
 			keep.add(response.focal_id);
 			for (const id of pinned) keep.add(id);
+			for (const id of behoudenIds(soortenGeladen, response.focal_id))
+				if (nodes.has(id)) keep.add(id);
 			const selectedId = get(selectionStore)?.id;
 			if (selectedId) keep.add(selectedId);
 			// This request's own edges share one cap across every relation, so a focal

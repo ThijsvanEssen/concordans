@@ -501,16 +501,20 @@
 	}
 	.uitsnede li {
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto auto;
+		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
-		gap: var(--s-2);
+		gap: 0 var(--s-2);
 		padding: 2px 0;
 	}
 	.uitsnede__aantal {
 		font-variant-numeric: tabular-nums;
 		color: var(--ink);
 	}
+	/* "Alle laden" on its own line under the count, at every width: beside it, it squeezed
+	   the kind's name into the count (Thijs, 11 Oct, variant A). */
 	.uitsnede__laad {
+		grid-column: 3;
+		justify-self: end;
 		font-size: var(--t-micro);
 	}
 	.uitsnede__actie {
