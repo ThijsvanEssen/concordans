@@ -22,6 +22,15 @@ export const SOORT: Record<string, string> = {
 	samenvoeging: 'Samenvoeging'
 };
 
+/**
+ * The vacant seats of a stretch that no fractie holds (UX #48): its `vacant` counts every seat
+ * no member held, the fracties' own vacancies among them. Neither coalition nor opposition.
+ */
+export function vacantZonderFractie(stuk: Pick<Stuk, 'vacant' | 'factions'>): number {
+	const vanFracties = (stuk.factions ?? []).reduce((n, f) => n + (f.vacant ?? 0), 0);
+	return Math.max(0, (stuk.vacant ?? 0) - vanFracties);
+}
+
 export type Wijziging =
 	| { woorden: string; soort?: undefined; wie?: undefined }
 	| { soort: string; wie: string; woorden?: undefined };
