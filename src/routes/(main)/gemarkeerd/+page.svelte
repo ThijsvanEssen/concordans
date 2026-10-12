@@ -37,6 +37,8 @@
 		type MapItem
 	} from '$lib/map/map';
 	import { kaart } from '$lib/map/map.svelte';
+	import MapInhoud from '$lib/map/MapInhoud.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	const copier = createCopier();
 
@@ -77,6 +79,23 @@
 		kaart.kies(m.id);
 		await tick();
 		document.getElementById(anker(m))?.scrollIntoView({ block: 'start' });
+	}
+
+	// ── An item's content: a click on its row opens it in place ───────────────
+	/** The rows open, by map and item (`<map>:<sleutel>`, `gedeeld:<sleutel>`). */
+	const geopend = new SvelteSet<string>();
+	const rijSleutel = (m: Map | null, i: MapItem) => `${m?.id ?? 'gedeeld'}:${sleutelVan(i)}`;
+	function wisselOpen(k: string) {
+		if (!geopend.delete(k)) geopend.add(k);
+	}
+	const allesOpen = (m: Map | null, items: MapItem[]) =>
+		items.length > 0 && items.every((i) => geopend.has(rijSleutel(m, i)));
+	function allesWissel(m: Map | null, items: MapItem[]) {
+		const open = !allesOpen(m, items);
+		for (const i of items) {
+			if (open) geopend.add(rijSleutel(m, i));
+			else geopend.delete(rijSleutel(m, i));
+		}
 	}
 
 	// ── A name: renamed in place; a new map is named at once ───────────────────
@@ -153,7 +172,7 @@
 
 {#snippet rij(i: MapItem, m: Map | null)}
 	{@const k = (m?.id ?? 'gedeeld') + ':' + sleutelVan(i)}
-	<IndexRow title={i.kort} href={adres(i)} acties>
+	<IndexRow title={i.kort} href={adres(i)} open={geopend.has(k)} onToggle={() => wisselOpen(k)}>
 		{#snippet lead()}
 			<span class="row-id-main"
 				><KindGlyph collection={collectieVan(i)} size={12} />{bronLabel(collectieVan(i))}</span
@@ -209,7 +228,16 @@
 				</span>
 			{/if}
 		{/snippet}
+		{#snippet detail()}
+			<MapInhoud item={i} href={adres(i)} />
+		{/snippet}
 	</IndexRow>
+{/snippet}
+
+{#snippet alles(m: Map | null, items: MapItem[])}
+	<TekstLink onclick={() => allesWissel(m, items)} aria-pressed={allesOpen(m, items)}
+		>{allesOpen(m, items) ? 'Alles inklappen' : 'Alles uitklappen'}</TekstLink
+	>
 {/snippet}
 
 {#snippet lijst(alle: MapItem[], v: Map['volgorde'], m: Map | null, notities: GroepNotities)}
@@ -291,7 +319,10 @@
 					</span>
 				{/snippet}
 				{#if gedeeld.notitie}<p class="map-notitie">{gedeeld.notitie}</p>{/if}
-				<p class="meta">{tel(gedeeld.items.length)}</p>
+				<p class="meta">
+					<span>{tel(gedeeld.items.length)}</span>
+					{@render alles(null, gedeeld.items)}
+				</p>
 				{@render lijst(gedeeld.items, gedeeld.volgorde, null, gedeeld.groepNotities)}
 			</Sectie>
 		{/if}
@@ -446,6 +477,7 @@
 							onKies={(v) => op(m, () => kaart.ordening(v))}
 						/>
 					{/if}
+					{#if m.items.length}{@render alles(m, m.items)}{/if}
 				</p>
 				{#if !m.items.length}
 					<p class="leeg stil">Nog niets bewaard.</p>
