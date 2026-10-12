@@ -8,6 +8,7 @@
 	import { bronHref } from '$lib/bron/href';
 	import { kleurVan, vullingVan } from './partijkleuren.svelte';
 	import FractiePatronen from './FractiePatronen.svelte';
+	import { plaatsenOpVolgorde } from './zaaltegenover';
 
 	type Seats = Schema<'ParliamentSeatsResponse'>;
 
@@ -59,12 +60,22 @@
 		return m;
 	});
 
-	type Stoel = { x: number; y: number; name: string };
+	type Stoel = { x: number; y: number; name: string; voorzitter?: boolean };
+	// Who sits where as the Kamer shows it now; on a day without that plan, the seats of the
+	// day by fractie (zaaltegenover.ts).
+	const plaatsen = $derived(
+		data.hall?.seats?.length
+			? data.hall.seats.map((s) => ({
+					...s,
+					name: fractieNaam({ key: s.faction, abbreviation: s.abbreviation })
+				}))
+			: plaatsenOpVolgorde(data.factions.map((f) => ({ name: fractieNaam(f), seats: f.seats })))
+	);
 	// Rij 0 bij de regering, kolom 0 aan de buitenkant; de Voorzitter aan het andere eind.
 	const stoelen = $derived.by<Stoel[]>(() =>
-		(data.hall?.seats ?? []).map((s) => {
-			const name = fractieNaam({ key: s.faction, abbreviation: s.abbreviation });
-			if (s.block === 'chair') return { x: W / 2 - S_X / 2, y: rowY(9), name };
+		plaatsen.map((s) => {
+			const name = s.name;
+			if (s.block === 'chair') return { x: W / 2 - S_X / 2, y: rowY(9), name, voorzitter: true };
 			const x = s.block === 'left' ? s.column * COL : blockW + AISLE + s.column * COL;
 			return { x, y: rowY(s.row), name };
 		})
@@ -86,7 +97,8 @@
 
 	const side = (name: string) => {
 		const f = byName.get(name);
-		return voteHighlight && f?.key ? voteHighlight[f.key] : null;
+		// A fractie of the past has no key: its name stands for it (KamerZetels.kantVan).
+		return voteHighlight ? (voteHighlight[f?.key ?? name] ?? null) : null;
 	};
 </script>
 
@@ -142,8 +154,7 @@
 							fill={v === 'tegen' ? undefined : vullingVan(uid, name, i, fillOf.get(name) ?? null)}
 							style:stroke={v === 'tegen'
 								? kleurVan('EK', name, i, fillOf.get(name) ?? null)
-								: undefined}
-							><title>{name}{s === stoelen.at(-1) ? ' (Voorzitter)' : ''}</title></rect
+								: undefined}><title>{name}{s.voorzitter ? ' (Voorzitter)' : ''}</title></rect
 						>
 					{/each}
 				</a>

@@ -7,6 +7,35 @@ import type { Schema } from '$lib/api/types';
 
 type Stuk = Schema<'SeatStretchDTO'>;
 type Gebeurtenis = Schema<'SeatEventDTO'>;
+type Zaal = Schema<'ParliamentSeatsResponse'>;
+
+/**
+ * The height of `n` seats in the step chart: on the Kamer's whole scale, from none at the
+ * foot to all its seats at the top, so the majority's line stands at its true height and a
+ * coalition under it stays under it (Thijs, 12 Oct: "uitlijning klopt niet").
+ */
+export function zetelHoogte(n: number, zetels: number, hoogte: number, rand: number): number {
+	const deel = Math.min(1, Math.max(0, n / zetels));
+	return rand + (1 - deel) * (hoogte - 2 * rand);
+}
+
+/**
+ * The hall of the Eerste Kamer for a day: the API reads who sits where only as the Kamer
+ * shows it now (`hall` without a `date`; with one it is null). On today the hall of the day
+ * takes that plan; on another day there is none, and no hall is drawn.
+ */
+export function zaalMetPlan(opDag: Zaal, nu: Zaal | null): Zaal {
+	return opDag.hall?.seats?.length || !nu?.hall?.seats?.length
+		? opDag
+		: { ...opDag, hall: nu.hall };
+}
+
+/** The Kamer's own words as a clause: no space before a stop, no stop of their own. */
+const zinsdeel = (t: string) =>
+	t
+		.replace(/\s+([.,;:])/g, '$1')
+		.trim()
+		.replace(/[.;,:]+$/, '');
 
 /** A kind as a label, as the API names it (SeatEventDTO.kind). */
 export const SOORT: Record<string, string> = {
@@ -43,14 +72,15 @@ export function wijzigingenVan(stuk: Pick<Stuk, 'events' | 'factions'>): Wijzigi
 	const naam = new Map((stuk.factions ?? []).map((f) => [f.key, fractieNaam(f)]));
 	const per = new Map<string, { e: Gebeurtenis; fracties: Set<string> }>();
 	for (const e of stuk.events ?? []) {
-		const sleutel = e.words?.trim() ? `w:${e.words.trim()}` : `s:${e.kind}`;
+		const woorden = e.words ? zinsdeel(e.words) : '';
+		const sleutel = woorden ? `w:${woorden}` : `s:${e.kind}`;
 		const v = per.get(sleutel) ?? { e, fracties: new Set<string>() };
 		for (const f of e.factions ?? []) v.fracties.add(naam.get(f) ?? f);
 		per.set(sleutel, v);
 	}
 	return [...per.values()].map(({ e, fracties }) =>
-		e.words?.trim()
-			? { woorden: e.words.trim() }
+		e.words && zinsdeel(e.words)
+			? { woorden: zinsdeel(e.words) }
 			: { soort: SOORT[e.kind] ?? e.kind, wie: [...fracties].join(', ') }
 	);
 }

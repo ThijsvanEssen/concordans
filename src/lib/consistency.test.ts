@@ -912,6 +912,27 @@ describe('canvas cards and halls', () => {
 		).toEqual([]);
 	});
 
+	it('says the seats of a cabinet once, on the Kamer’s whole scale (Thijs, 12 Oct)', () => {
+		const t = sources.find(
+			(s) => s.path === 'lib/components/explore/readers/KamerZetels.svelte'
+		)!.text;
+		// The majority's line on the scale of zetelHoogte, none to all seats: no scale of its own.
+		expect(t).toContain('zetelHoogte(n, zetelsVanKamer, H, PAD)');
+		expect(t).not.toMatch(/Math\.(min|max)\(\.\.\.v/);
+		// The head figure states the totals: no second sentence or bar of the two sides.
+		expect(t).not.toMatch(/<Meerderheid\b|class="aantal"/);
+		// Uncertain once, with the count.
+		expect(t.split("' (onzeker)'").length - 1).toBe(1);
+		expect(t).not.toContain('de zetels zijn onzeker');
+		// The Eerste Kamer's hall always with its seats: today's plan, else the day's by fractie.
+		expect(t).toContain('zaalMetPlan(');
+		expect(t).toContain('<ZaalTegenover data={zaal}');
+		const zaal = sources.find(
+			(s) => s.path === 'lib/components/explore/ZaalTegenover.svelte'
+		)!.text;
+		expect(zaal).toContain('plaatsenOpVolgorde(');
+	});
+
 	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {
 		expect(
 			offenders(
@@ -919,7 +940,7 @@ describe('canvas cards and halls', () => {
 				['lib/components/explore/ZaalPlaatsen.svelte']
 			)
 		).toEqual([]);
-		const zaal = ['Meerderheid', 'ZaalLegenda', 'ZaalPlaatsen', 'Hemicycle'].map(
+		const zaal = ['ZaalLegenda', 'ZaalPlaatsen', 'Hemicycle'].map(
 			(n) => `lib/components/explore/${n}.svelte`
 		);
 		expect(
