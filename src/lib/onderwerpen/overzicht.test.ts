@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	csvTabel,
-	KOLOM_RICHTING,
+	KOLOM_STREKKING,
 	kolomStem,
 	filter,
 	lijstQuery,
@@ -74,13 +74,13 @@ describe('overzicht', () => {
 });
 
 describe('de tabel van de export', () => {
-	it('zet de stem van de fractie en de eigen richting in hun kolommen', () => {
-		const motie = new Map([['a', { richting: 'positief' }]]);
+	it('zet de stem van de fractie en de eigen strekking in hun kolommen', () => {
+		const motie = new Map([['a', { strekking: 'bevorderend' }]]);
 		const t = csvTabel(lijst.slice(0, 2), '', 'VVD', stemmen, new Map(), motie);
 		const stem = t.kop.indexOf(kolomStem('VVD'));
-		const richting = t.kop.indexOf(KOLOM_RICHTING);
+		const strekking = t.kop.indexOf(KOLOM_STREKKING);
 		expect(t.rijen.map((r) => r[stem])).toEqual(['voor', 'tegen']);
-		expect(t.rijen.map((r) => r[richting])).toEqual(['positief', '']);
+		expect(t.rijen.map((r) => r[strekking])).toEqual(['bevorderend', '']);
 	});
 });
 

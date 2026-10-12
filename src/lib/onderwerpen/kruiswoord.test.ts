@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
 	amendementKetens,
+	besluitTelbaar,
 	grenzenVan,
+	inCel,
+	inVak,
 	leesKeuze,
-	somVan,
+	schrijfKeuze,
 	tel,
 	vakken,
-	weekVan
+	weekVan,
+	type Kolom
 } from './kruiswoord';
+import type { Besluit, Stem } from './overzicht';
 
 describe('the Kruiswoord', () => {
 	it('names a week as ISO does', () => {
@@ -16,7 +21,8 @@ describe('the Kruiswoord', () => {
 		expect(weekVan('2024-12-30')).toBe('2025-W01');
 	});
 
-	it('gives the days of a month and a week', () => {
+	it('gives the days of a year, a month and a week', () => {
+		expect(grenzenVan('2025')).toEqual({ van: '2025-01-01', tot: '2025-12-31' });
 		expect(grenzenVan('2026-02')).toEqual({ van: '2026-02-01', tot: '2026-02-28' });
 		expect(grenzenVan('2026-W41')).toEqual({ van: '2026-10-05', tot: '2026-10-11' });
 	});
@@ -53,13 +59,45 @@ describe('the Kruiswoord', () => {
 		const sep = m.get('2026-09')!;
 		expect(sep.verworpen).toEqual({ n: 1, nieuw: false });
 		expect(sep.toezeggingen.n).toBe(4);
-		expect(somVan(sep)).toBe(6);
 	});
 
-	it('reads a chosen cell from the URL', () => {
+	it('reads a chosen number from the URL: a cell, a year, or a column over the period', () => {
 		expect(leesKeuze('moties:2026-10')).toEqual({ kolom: 'moties', vak: '2026-10' });
 		expect(leesKeuze('brieven:2026-W41')).toEqual({ kolom: 'brieven', vak: '2026-W41' });
+		expect(leesKeuze('voor:2025')).toEqual({ kolom: 'voor', vak: '2025' });
+		expect(leesKeuze('aangenomen')).toEqual({ kolom: 'aangenomen', vak: '' });
+		expect(schrijfKeuze({ kolom: 'aangenomen', vak: '' })).toBe('aangenomen');
 		expect(leesKeuze('alles:2026-10')).toBeNull();
+		expect(inVak('2025-03', '2025')).toBe(true);
+		expect(inVak('2025-W10', '2025-W11')).toBe(false);
+		expect(inVak('2024-12', '')).toBe(true);
+	});
+
+	it('holds a number of a strekking and its list equally long', () => {
+		const m = (key: string, date: string, passed: boolean | null) =>
+			({ key, date, passed, kind: 'Motie' }) as unknown as Besluit;
+		const moties = [
+			m('a', '2025-03-04', true),
+			m('b', '2025-05-04', false),
+			m('c', '2024-11-20', false),
+			m('d', '2025-06-04', null)
+		];
+		const stemmen = new Map<string, Stem>([
+			['a', 'voor'],
+			['c', 'tegen']
+		]);
+		const rijen = tel([], besluitTelbaar(moties, stemmen), 'maand', null);
+		const kolommen: Kolom[] = ['moties', 'aangenomen', 'verworpen', 'voor', 'tegen'];
+		for (const kolom of kolommen)
+			for (const vak of ['', '2024', '2025', '2025-03', '2025-06']) {
+				const getal = [...rijen]
+					.filter(([v]) => inVak(v, vak))
+					.reduce((n, [, r]) => n + r[kolom].n, 0);
+				const lijst = moties.filter((d) => inCel(d, stemmen.get(d.key), { kolom, vak }, 'maand'));
+				expect(getal, `${kolom} ${vak}`).toBe(lijst.length);
+			}
+		expect(rijen.get('2025-06')!.moties.n).toBe(1);
+		expect(rijen.get('2025-06')!.aangenomen.n).toBe(0);
 	});
 
 	it('counts an amendment once per chain, on the day of its first paper', () => {

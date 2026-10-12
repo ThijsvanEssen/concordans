@@ -1,29 +1,22 @@
 <script lang="ts">
-	// The Kruiswoord of a topic (concept ux-voorstel/1f): the kinds of event as columns, the
-	// months (or weeks) as rows, a year folded under its totals. A cell with a count is a
-	// button: chosen, it stands in ink and the list under the grid holds its events. Richting
-	// lays a bar of four shapes in the cells of the moties; a cell with an event after the
-	// visit before this one has a corner in ink. On a phone the grid pans, its labels stay.
+	// The Kruiswoord of a topic (concept ux-voorstel/1f, ronde 6): the months (or weeks) as
+	// rows, a year folded under its totals; the columns under their heading (Stukken,
+	// Stemmingen, a fractie), the column's total at the top. Every number with a count is a
+	// button: chosen, it stands in ink and the list under the grid holds its events. A column a
+	// chosen strekking does not apply to stands empty. A cell with an event after the visit
+	// before this one has a corner in ink. On a phone the grid pans, its labels stay.
 	import { formatCount } from '$lib/text/getal';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { maandNaam, langeDatum } from '$lib/text/datum';
-	import {
-		jaarVanVak,
-		somVan,
-		type Aandeel,
-		type Keuze,
-		type Kolom,
-		type Rij,
-		type Vak
-	} from './kruiswoord';
+	import { jaarVanVak, type Keuze, type Kolom, type Rij, type Vak } from './kruiswoord';
 
 	export type KolomKop = {
 		k: Kolom;
 		label: string;
 		/** What the column counts, on hover. */
 		titel: string;
-		/** The heading over two columns: `Stemmingen`, or the fractie. */
-		groep?: string;
+		/** The heading over its columns: `Stukken`, `Stemmingen`, or the fractie. */
+		groep: string;
 		/** The outcome's shape before the label: a square in its colour, or open. */
 		vorm?: 'ja' | 'nee';
 	};
@@ -36,7 +29,7 @@
 		onKies,
 		bezig = {},
 		ongeteld = {},
-		aandeel = null,
+		uit = new Set(),
 		nieuwSinds = null,
 		week = false
 	}: {
@@ -50,8 +43,8 @@
 		bezig?: Partial<Record<Kolom, boolean>>;
 		/** Per column the last month or week not counted (the feed's pages ran out before). */
 		ongeteld?: Partial<Record<Kolom, Vak | null>>;
-		/** Richting on: the share of each direction among the moties voted in a month. */
-		aandeel?: Map<Vak, Aandeel> | null;
+		/** Columns a chosen strekking does not apply to: they stand empty. */
+		uit?: ReadonlySet<Kolom>;
 		/** The day of the visit before this one, for the legend of the corner. */
 		nieuwSinds?: string | null;
 		week?: boolean;
@@ -75,11 +68,6 @@
 	};
 
 	const totaal = (vs: Vak[], k: Kolom) => vs.reduce((n, v) => n + (rijen.get(v)?.[k].n ?? 0), 0);
-	const alle = (vs: Vak[]) => vs.reduce((n, v) => n + somVan(rijen.get(v)), 0);
-	/** A column still counting: the totals of the row wait with it instead of reading 0. */
-	// While a column counts, a total over it waits with "…": a part of the sum is no total
-	// (UX-toets 0.79.43, #26: "608" before "3.478").
-	const telt = $derived(Object.values(bezig).some(Boolean));
 	const isOngeteld = (k: Kolom, v: Vak) => {
 		const grens = ongeteld[k];
 		return !!grens && v <= grens;
@@ -87,19 +75,10 @@
 	const label = (v: Vak, kort: boolean) =>
 		v.includes('-W') ? `week ${Number(v.slice(6))}` : maandNaam(`${v}-01`, kort);
 	const gekozen = (k: Kolom, v: Vak) => keuze?.kolom === k && keuze.vak === v;
+	const kies = (k: Kolom, v: Vak) => onKies(gekozen(k, v) ? null : { kolom: k, vak: v });
 	const heeftNieuw = $derived([...rijen.values()].some((r) => kolommen.some((c) => r[c.k].nieuw)));
-	/** The four shares of a bar, as widths. */
-	const delen = (a: Aandeel) => {
-		const n = a.positief + a.negatief + a.neutraal + a.geen;
-		return n
-			? (['positief', 'negatief', 'neutraal', 'geen'] as const)
-					.filter((d) => a[d] > 0)
-					.map((d) => ({ d, w: (a[d] / n) * 100 }))
-			: [];
-	};
 	const groepen = $derived(
 		kolommen.reduce<{ label: string; van: number; n: number }[]>((g, c, i) => {
-			if (!c.groep) return g;
 			const last = g.at(-1);
 			if (last && last.label === c.groep && last.van + last.n === i) last.n++;
 			else g.push({ label: c.groep, van: i, n: 1 });
@@ -112,44 +91,49 @@
 <div class="schuif" data-zijscroll>
 	<div
 		class="kruiswoord"
-		class:richting={!!aandeel}
-		style:--n={kolommen.length + 1}
+		style:--n={kolommen.length}
 		role="grid"
 		aria-label="Verloop per {week ? 'week' : 'maand'}"
 	>
 		<div class="rij kopregel" role="row">
-			{#if groepen.length}
-				{#each groepen as g (g.label)}
-					<span class="groepkop" style:grid-column="{g.van + 2} / span {g.n}" aria-hidden="true"
-						>{g.label}</span
-					>
-				{/each}
-			{/if}
+			<!-- First, so it stands still as every row's label does on a phone. -->
 			<span class="k k--per" role="columnheader">{week ? 'Week' : 'Maand'}</span>
+			{#each groepen as g (g.label)}
+				<span class="groepkop" style:grid-column="{g.van + 2} / span {g.n}" aria-hidden="true"
+					><span class="groepkop__w">{g.label}</span></span
+				>
+			{/each}
 			{#each kolommen as c (c.k)}
-				<span class="k" role="columnheader" title={c.titel}
+				<span class="k" class:af={uit.has(c.k)} role="columnheader" title={c.titel}
 					><span class="w"
 						>{#if c.vorm}<span class="vorm vorm--{c.vorm}" aria-hidden="true"
 							></span>{/if}{c.label}</span
 					></span
 				>
 			{/each}
-			<span class="k" role="columnheader" title="Alle gebeurtenissen van de rij"
-				><span class="w">Alle</span></span
-			>
 		</div>
 
 		<div class="rij kern" role="row">
-			<span class="per" role="rowheader"
-				>{telt ? '…' : getal(alle(vakken))}
-				<span class="lang">gebeurtenissen</span></span
-			>
+			<span class="per" role="rowheader">Totaal</span>
 			{#each kolommen as c (c.k)}
-				<span class="som-groot" role="gridcell"
-					>{bezig[c.k] ? '…' : getal(totaal(vakken, c.k))}</span
-				>
+				{@const t = totaal(vakken, c.k)}
+				{#if uit.has(c.k)}
+					<span class="som-groot af" role="gridcell" aria-label="Niet van toepassing"></span>
+				{:else if bezig[c.k]}
+					<span class="som-groot" role="gridcell" aria-label="Laden">…</span>
+				{:else if t > 0}
+					<button
+						type="button"
+						role="gridcell"
+						class="som-groot knop"
+						aria-selected={gekozen(c.k, '')}
+						aria-label="{c.groep}, {c.label}, totaal: {t}"
+						onclick={() => kies(c.k, '')}>{getal(t)}</button
+					>
+				{:else}
+					<span class="som-groot" role="gridcell">0</span>
+				{/if}
 			{/each}
-			<span class="som-groot" role="gridcell">{telt ? '…' : getal(alle(vakken))}</span>
 		</div>
 
 		{#each jaren as j (j)}
@@ -165,13 +149,26 @@
 				>
 				{#if !open.has(j)}
 					{#each kolommen as c (c.k)}
-						{#if vs.every((v) => isOngeteld(c.k, v))}
+						{@const t = totaal(vs, c.k)}
+						{#if uit.has(c.k)}
+							<span class="t" role="gridcell"></span>
+						{:else if vs.every((v) => isOngeteld(c.k, v))}
 							<span class="t" role="gridcell" title="Niet geteld" aria-label="Niet geteld"></span>
+						{:else if bezig[c.k]}
+							<span class="t" role="gridcell">…</span>
+						{:else if t > 0}
+							<button
+								type="button"
+								role="gridcell"
+								class="t knop"
+								aria-selected={gekozen(c.k, j)}
+								aria-label="{c.groep}, {c.label}, {j}: {t}"
+								onclick={() => kies(c.k, j)}>{getal(t)}</button
+							>
 						{:else}
-							<span class="t" role="gridcell">{bezig[c.k] ? '…' : getal(totaal(vs, c.k))}</span>
+							<span class="t" role="gridcell">0</span>
 						{/if}
 					{/each}
-					<span class="t" role="gridcell">{telt ? '…' : getal(alle(vs))}</span>
 				{/if}
 			</div>
 			{#if open.has(j)}
@@ -184,26 +181,19 @@
 						>
 						{#each kolommen as c (c.k)}
 							{@const cel = r?.[c.k]}
-							{#if cel && cel.n > 0}
-								{@const a = c.k === 'moties' ? aandeel?.get(v) : undefined}
+							{#if uit.has(c.k)}
+								<span class="cel nvt" role="gridcell"></span>
+							{:else if cel && cel.n > 0}
 								<button
 									type="button"
 									role="gridcell"
 									class="cel vol"
 									class:nieuw={cel.nieuw}
-									class:motie={c.k === 'moties'}
 									aria-selected={gekozen(c.k, v)}
-									aria-label="{c.label}, {label(v, false)} {jaarVanVak(v)}: {cel.n}{cel.nieuw
-										? ', nieuw'
-										: ''}"
-									title={a
-										? `Richting over de ${a.positief + a.negatief + a.neutraal + a.geen} moties waarover in deze ${week ? 'week' : 'maand'} is gestemd`
-										: undefined}
-									onclick={() => onKies(gekozen(c.k, v) ? null : { kolom: c.k, vak: v })}
-									>{cel.n}{#if a}<span class="balk" aria-hidden="true"
-											>{#each delen(a) as d (d.d)}<span class="b-{d.d}" style:width="{d.w}%"
-												></span>{/each}</span
-										>{/if}</button
+									aria-label="{c.groep}, {c.label}, {label(v, false)} {jaarVanVak(
+										v
+									)}: {cel.n}{cel.nieuw ? ', nieuw' : ''}"
+									onclick={() => kies(c.k, v)}>{cel.n}</button
 								>
 							{:else if isOngeteld(c.k, v)}
 								<span class="cel ongeteld" role="gridcell" title="Niet geteld"></span>
@@ -213,26 +203,17 @@
 								<span class="cel leeg" role="gridcell" aria-label="Geen"></span>
 							{/if}
 						{/each}
-						<span class="cel som" role="gridcell">{getal(somVan(r))}</span>
 					</div>
 				{/each}
 			{/if}
 		{/each}
 	</div>
 </div>
-{#if heeftNieuw || aandeel}
+{#if heeftNieuw && nieuwSinds}
 	<p class="legenda">
-		{#if heeftNieuw && nieuwSinds}<span
-				><span class="nieuwteken" aria-hidden="true"></span>nieuw sinds {langeDatum(
-					nieuwSinds
-				)}</span
-			>{/if}
-		{#if aandeel}
-			<span><span class="sw b-positief"></span>positief</span>
-			<span><span class="sw b-negatief"></span>negatief</span>
-			<span><span class="sw b-neutraal"></span>neutraal</span>
-			<span><span class="sw b-geen"></span>niet gecodeerd</span>
-		{/if}
+		<span
+			><span class="nieuwteken" aria-hidden="true"></span>nieuw sinds {langeDatum(nieuwSinds)}</span
+		>
 	</p>
 {/if}
 
@@ -246,7 +227,7 @@
 		grid-template-columns: var(--label) repeat(var(--n), minmax(0, 1fr));
 		column-gap: var(--s-1);
 		align-items: center;
-		margin-top: 3px;
+		margin-top: var(--s-1);
 	}
 	.rij > * {
 		min-width: 0;
@@ -257,7 +238,7 @@
 	}
 	.groepkop {
 		grid-row: 1;
-		margin-bottom: 2px;
+		margin-bottom: var(--s-1);
 		border-bottom: 1px solid var(--rule-strong);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
@@ -267,7 +248,7 @@
 	}
 	.k {
 		grid-row: 2;
-		padding: 2px 0 var(--s-1);
+		padding: var(--s-1) 0;
 		border-bottom: 1px solid var(--rule-strong);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
@@ -276,6 +257,9 @@
 	}
 	.k--per {
 		text-align: left;
+	}
+	.k.af {
+		color: var(--rule-strong);
 	}
 	.vorm {
 		display: inline-block;
@@ -314,6 +298,26 @@
 		color: var(--ink);
 		text-align: center;
 		font-variant-numeric: tabular-nums lining-nums;
+	}
+	/* A total is a button as a cell is: quiet at rest, an inset line on hover, in ink chosen. */
+	.knop {
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: none;
+		cursor: pointer;
+	}
+	.t.knop {
+		height: var(--veld-h-klein);
+	}
+	.knop:hover,
+	.knop:focus-visible {
+		box-shadow: inset 0 0 0 1.5px var(--ink);
+		outline: none;
+	}
+	.knop[aria-selected='true'] {
+		background: var(--ink);
+		color: var(--paper);
 	}
 	.jaar {
 		margin-top: var(--s-3);
@@ -354,8 +358,7 @@
 	.cel.leeg {
 		background: repeating-linear-gradient(135deg, transparent 0 5px, var(--paper-2) 5px 7px);
 	}
-	.cel.wacht,
-	.cel.som {
+	.cel.wacht {
 		font-size: var(--t-meta);
 		color: var(--ink-3);
 	}
@@ -386,47 +389,6 @@
 	.cel.vol[aria-selected='true'].nieuw::after {
 		border-color: transparent var(--paper) transparent transparent;
 	}
-	/* Richting: the moties' cells a little higher, the bar along their foot. */
-	.richting .cel.vol.motie {
-		height: 36px;
-		justify-content: flex-start;
-		padding-top: 2px;
-	}
-	.balk {
-		position: absolute;
-		left: var(--s-1);
-		right: var(--s-1);
-		bottom: 3px;
-		display: flex;
-		gap: 1px;
-		height: 5px;
-	}
-	.balk span,
-	.sw {
-		display: block;
-		height: 100%;
-	}
-	.b-positief {
-		background: var(--ink);
-	}
-	.b-negatief {
-		background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px);
-	}
-	.b-neutraal {
-		box-shadow: inset 0 0 0 1px var(--ink);
-	}
-	.b-geen {
-		background: var(--paper-2);
-	}
-	.cel.vol[aria-selected='true'] .b-positief {
-		background: var(--paper);
-	}
-	.cel.vol[aria-selected='true'] .b-negatief {
-		background: repeating-linear-gradient(90deg, var(--paper) 0 2px, transparent 2px 4px);
-	}
-	.cel.vol[aria-selected='true'] .b-neutraal {
-		box-shadow: inset 0 0 0 1px var(--paper);
-	}
 	.legenda {
 		display: flex;
 		flex-wrap: wrap;
@@ -436,13 +398,6 @@
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		color: var(--ink-3);
-	}
-	.legenda .sw {
-		display: inline-block;
-		width: 10px;
-		height: 4px;
-		margin-right: var(--s-1);
-		vertical-align: 2px;
 	}
 	.nieuwteken {
 		display: inline-block;
@@ -464,7 +419,7 @@
 			min-width: 520px;
 		}
 		.rij {
-			column-gap: 2px;
+			column-gap: var(--s-1);
 		}
 		.rij > :first-child {
 			position: sticky;
@@ -481,6 +436,12 @@
 		}
 		.k--per {
 			align-items: flex-start;
+		}
+		/* A heading over panned columns keeps its name in view beside the labels. */
+		.groepkop__w {
+			display: inline-block;
+			position: sticky;
+			left: calc(var(--label) + var(--s-1));
 		}
 		.k .w {
 			writing-mode: vertical-rl;

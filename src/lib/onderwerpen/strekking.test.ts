@@ -3,12 +3,12 @@ import {
 	coderingNaarCsv,
 	coderingUitCsv,
 	dictumUit,
-	metRichting,
+	metStrekking,
 	onderwerpSleutel,
 	samen
-} from './richting';
+} from './strekking';
 
-describe('richting', () => {
+describe('strekking', () => {
 	it('takes the dictum from the text of a motie, in its own words', () => {
 		const tekst = `De Kamer,
 		gehoord de beraadslaging,
@@ -28,23 +28,23 @@ describe('richting', () => {
 	it('keeps a coding per topic, and clears it', () => {
 		const o = onderwerpSleutel(['Huur', ' huurtoeslag ']);
 		expect(o).toBe('huur|huurtoeslag');
-		let c = metRichting({}, o, 'd1', 'positief');
-		c = metRichting(c, o, 'd2', 'negatief');
-		expect(c).toEqual({ [o]: { d1: 'positief', d2: 'negatief' } });
-		c = metRichting(metRichting(c, o, 'd1', null), o, 'd2', null);
+		let c = metStrekking({}, o, 'd1', 'bevorderend');
+		c = metStrekking(c, o, 'd2', 'beperkend');
+		expect(c).toEqual({ [o]: { d1: 'bevorderend', d2: 'beperkend' } });
+		c = metStrekking(metStrekking(c, o, 'd1', null), o, 'd2', null);
 		expect(c).toEqual({});
 	});
 
 	it('writes a coding as a file and reads it back, with quotes and commas', () => {
 		const csv = coderingNaarCsv(
 			'huur',
-			{ d1: 'positief', d2: 'neutraal' },
+			{ d1: 'bevorderend', d2: 'neutraal' },
 			new Map([['d1', 'Motie over "huur", nr. 3']])
 		);
-		expect(coderingUitCsv(csv)).toEqual({ huur: { d1: 'positief', d2: 'neutraal' } });
+		expect(coderingUitCsv(csv)).toEqual({ huur: { d1: 'bevorderend', d2: 'neutraal' } });
 		expect(coderingUitCsv('kop\nhuur,d3,onzin,x')).toEqual({});
 		expect(
-			samen({ huur: { d1: 'positief' } }, { huur: { d1: 'negatief', d2: 'neutraal' } })
-		).toEqual({ huur: { d1: 'negatief', d2: 'neutraal' } });
+			samen({ huur: { d1: 'bevorderend' } }, { huur: { d1: 'beperkend', d2: 'neutraal' } })
+		).toEqual({ huur: { d1: 'beperkend', d2: 'neutraal' } });
 	});
 });
