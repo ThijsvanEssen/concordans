@@ -4,7 +4,7 @@
 // of the source (`snippet`, with `match` marked) appears when the row is opened.
 import { isRauw, menselijkeNaam, naamVanId } from '$lib/bron/menselijk';
 import { keyEcli } from '$lib/bron/leesbaar';
-import { korteDatum, langeDatum } from '$lib/text/datum';
+import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel, parseQualifier } from '$lib/text/qualifier';
 import { articleTitle } from '$lib/text/bw';
@@ -596,17 +596,25 @@ export function citedLine(articles: readonly { article_number?: string | null }[
 
 /**
  * `Commissiedebat, geannuleerd, over 22112 en 21501-04`: what an activity was, a status
- * other than the usual one, and the dossiers on its agenda.
+ * other than the usual one, and the dossiers on its agenda. One still to come says so
+ * (UX-toets 0.79.47, #59): `Commissiedebat, gepland` on 3 June 2027; a planned one whose
+ * day has passed is left as the source has it, without the word.
  */
-export function activityLine(a: {
-	kind?: string | null;
-	status?: string | null;
-	dossier_numbers?: readonly string[] | null;
-	/** The dossiers by number and name (API 0.79.30), where the response has them. */
-	dossiers?: readonly DossierNaamBron[] | null;
-}): string | null {
+export function activityLine(
+	a: {
+		kind?: string | null;
+		status?: string | null;
+		date?: string | null;
+		dossier_numbers?: readonly string[] | null;
+		/** The dossiers by number and name (API 0.79.30), where the response has them. */
+		dossiers?: readonly DossierNaamBron[] | null;
+	},
+	today: string = vandaag()
+): string | null {
 	const usual = new Set(['gepland', 'uitgevoerd', 'vrijgegeven']);
-	const status = a.status && !usual.has(a.status.toLowerCase()) ? a.status.toLowerCase() : null;
+	const s = a.status?.toLowerCase() ?? null;
+	const gepland = s === 'gepland' && !!a.date && a.date.slice(0, 10) >= today;
+	const status = gepland ? 'gepland' : s && !usual.has(s) ? s : null;
 	// A dossier by its number and name: "over 22112 Nieuwe Commissievoorstellen …".
 	const numbers = a.dossiers?.length
 		? a.dossiers.map((d) => dossierLabel(d))
