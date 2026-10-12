@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { articleCitation, citeArticle, ordinalWord, partOfAnchor } from './cite';
+import { articleCitation, citeArticle, ordinalWord, partOfAnchor, placeCitation } from './cite';
 
 describe('citeArticle', () => {
 	const base = { articleNumber: '300', shortTitle: 'Sr', citationTitle: 'Wetboek van Strafrecht' };
@@ -117,5 +117,94 @@ describe('articleCitation', () => {
 			citationTitle: 'Grondwet'
 		});
 		expect(articleCitation({ article_number: '1' }, {})).toBeNull();
+	});
+});
+
+describe('placeCitation', () => {
+	const cbw = {
+		articleNumber: '1',
+		shortTitle: 'Cbw',
+		citationTitle: 'Cyberbeveiligingswet'
+	};
+	// Cbw 1 as the API gives it: the unmarked definitions carry their term.
+	const cbwParts = [
+		{ id: 'aanhef', term: null },
+		{ id: 'onder-_38', term: 'NIS2-richtlijn' },
+		{ id: 'onder-_39', term: 'netwerk- en informatiesysteem' },
+		{ id: 'onder-_39-onder-a', term: null },
+		{ id: 'onder-_39-onder-b', term: null }
+	];
+	const cite = (anchor: string, parts: { id: string; term?: string | null }[]) =>
+		citeArticle({ ...cbw, ...placeCitation(anchor, parts) });
+
+	it('cites an onderdeel of an unmarked definition by the term it stands in', () => {
+		expect(placeCitation('onder-_39-onder-a', cbwParts)).toEqual({
+			lid: null,
+			onderdelen: ['a'],
+			aanhef: false,
+			definitie: 'netwerk- en informatiesysteem'
+		});
+		const forms = cite('onder-_39-onder-a', cbwParts);
+		expect(forms.kort).toBe("art. 1, definitie van 'netwerk- en informatiesysteem', onder a Cbw");
+		expect(forms.voluit).toBe(
+			"artikel 1, definitie van 'netwerk- en informatiesysteem', onderdeel a, van de Cyberbeveiligingswet"
+		);
+	});
+
+	it('cites the definition itself by its term', () => {
+		const forms = cite('onder-_38', cbwParts);
+		expect(forms.kort).toBe("art. 1, definitie van 'NIS2-richtlijn' Cbw");
+		expect(forms.voluit).toBe(
+			"artikel 1, definitie van 'NIS2-richtlijn', van de Cyberbeveiligingswet"
+		);
+	});
+
+	it('cites the list a definition paragraph leads (Wft 1:1), without its tekst', () => {
+		const wft = {
+			articleNumber: '1:1',
+			shortTitle: 'Wft',
+			citationTitle: 'Wet op het financieel toezicht'
+		};
+		const parts = [
+			{ id: 'aanhef', term: null },
+			{ id: 'tekst-6', term: 'adviseren' },
+			{ id: 'tekst-6-onder-a', term: null },
+			{ id: 'tekst-7', term: null }
+		];
+		const at = (anchor: string) => citeArticle({ ...wft, ...placeCitation(anchor, parts) });
+		expect(at('tekst-6-onder-a').kort).toBe("art. 1:1, definitie van 'adviseren', onder a Wft");
+		expect(at('tekst-6-onder-a').voluit).toBe(
+			"artikel 1:1, definitie van 'adviseren', onderdeel a, van de Wet op het financieel toezicht"
+		);
+		expect(at('tekst-6').kort).toBe("art. 1:1, definitie van 'adviseren' Wft");
+		// A paragraph without a term is the article's.
+		expect(at('tekst-7').kort).toBe('art. 1:1 Wft');
+	});
+
+	it('puts the definition after the lid', () => {
+		const parts = [
+			{ id: 'lid-2', term: null },
+			{ id: 'lid-2-onder-_1', term: 'netwerk' },
+			{ id: 'lid-2-onder-_1-onder-b', term: null }
+		];
+		const forms = cite('lid-2-onder-_1-onder-b', parts);
+		expect(forms.kort).toBe("art. 1 lid 2, definitie van 'netwerk', onder b Cbw");
+		expect(forms.voluit).toBe(
+			"artikel 1, tweede lid, definitie van 'netwerk', onderdeel b, van de Cyberbeveiligingswet"
+		);
+	});
+
+	it('cites as before where the API gives no term', () => {
+		const oud = cbwParts.map(({ id }) => ({ id }));
+		// A dash has no number to cite it by: from there the article is cited.
+		expect(placeCitation('onder-_39-onder-a', oud)).toEqual({
+			lid: null,
+			onderdelen: [],
+			aanhef: false,
+			definitie: null
+		});
+		expect(cite('onder-_39-onder-a', oud).kort).toBe('art. 1 Cbw');
+		expect(cite('lid-2-onder-a', oud).kort).toBe('art. 1 lid 2 onder a Cbw');
+		expect(placeCitation(null, cbwParts).definitie).toBeNull();
 	});
 });

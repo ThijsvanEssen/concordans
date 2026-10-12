@@ -23,7 +23,7 @@
 	import { goto } from '$app/navigation';
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
 	import { refId } from '$lib/bron/href';
-	import { articleCitation, citeArticle, partOfAnchor } from '$lib/text/cite';
+	import { articleCitation, citeArticle, placeCitation } from '$lib/text/cite';
 	import { articleName } from '$lib/text/bw';
 	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
@@ -391,8 +391,11 @@
 	// Bewaar in the head follows the place chosen (#lid-3): that lid, else the whole article.
 	const bewaarHier = $derived.by(() => {
 		if (!selection || !citation || !forms) return null;
-		const deel = anchor ? partOfAnchor(anchor) : null;
-		const plaats = deel && (deel.lid || deel.onderdelen?.length) ? anchor! : '';
+		// A definition without a letter is a place too, named by its term (Cbw 1).
+		const parts =
+			shownVersion?.parts ?? (view.kind === 'loaded' ? view.data.article.parts : null) ?? [];
+		const deel = anchor ? placeCitation(anchor, parts) : null;
+		const plaats = deel && (deel.lid || deel.onderdelen?.length || deel.definitie) ? anchor! : '';
 		const f = plaats ? citeArticle({ ...citation, ...deel }) : forms;
 		return {
 			item: {

@@ -14,9 +14,10 @@
 		parseArticleParts,
 		partsFromApi,
 		placeOf,
+		walkParts,
 		type ArticlePart
 	} from '$lib/text/article-parts';
-	import { citeArticle, partOfAnchor, type Citation } from '$lib/text/cite';
+	import { citeArticle, placeCitation, type ArticleCitation } from '$lib/text/cite';
 	import type { ProposedText } from '$lib/verbonden/proposed-text';
 	import CitedText from './CitedText.svelte';
 	import { citationsWithin } from './citations';
@@ -64,7 +65,7 @@
 		/** The address that filters the panel Verbonden to a lid. */
 		lidHref?: (lid: string) => string;
 		/** What is needed to cite the article; without it Citeer is not offered. */
-		citation?: Omit<Citation, 'lid' | 'onderdelen' | 'aanhef' | 'date'> | null;
+		citation?: ArticleCitation | null;
 		/** The wording a wetsvoorstel proposes for one lid, shown next to the current one. */
 		proposed?: ProposedText | null;
 		onCloseProposed?: () => void;
@@ -91,6 +92,8 @@
 		apiParts?.length ? partsFromApi(apiParts, source) : parseArticleParts(source)
 	);
 	const marker = (number: string) => markerOf(number, mark);
+	/** Every part, for the place a citation names: a definition by its term. */
+	const allParts = $derived([...walkParts(parts)]);
 	/** The place `alleen` names: a lid with its onderdelen (`lid-2-onder-a` is in `lid-2`). */
 	const bevat = (part: ArticlePart, at: string) =>
 		!!part.id && (at === part.id || at.startsWith(`${part.id}-`));
@@ -147,13 +150,16 @@
 		formsOf(part)?.kort ??
 		(part?.kind === 'lid'
 			? `Lid ${part.number}`
-			: part?.number
-				? `Onder ${part.number}`
-				: 'Artikel');
+			: part?.term
+				? `Definitie van '${part.term}'`
+				: part?.number
+					? `Onder ${part.number}`
+					: 'Artikel');
 
-	/** The citation of a place; null is the article itself. */
+	/** The citation of a place; null is the article itself. A definition without a letter
+	 *  (a dash item, a definition paragraph) is named by its term, and so is what it holds. */
 	const formsOf = (part: ArticlePart | null) =>
-		citation ? citeArticle({ ...citation, ...partOfAnchor(part?.id ?? null) }) : null;
+		citation ? citeArticle({ ...citation, ...placeCitation(part?.id ?? null, allParts) }) : null;
 </script>
 
 {#snippet render(part: ArticlePart, top: boolean)}

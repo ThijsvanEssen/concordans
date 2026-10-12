@@ -990,6 +990,14 @@ describe('canvas cards and halls', () => {
 			expect(t).toContain('<PlaatsMenu');
 			expect(t).toMatch(/cite=\{citeItems\(forms, forms\.link\)\}/);
 		}
+		// A place in an article is read with the article's parts (placeCitation), so a
+		// definition without a letter is named by its term alike in the reader, its head's
+		// Bewaar and a map; no page reads the anchor alone.
+		const tekst = src('lib/components/articles/ArticleText.svelte');
+		for (const t of [tekst, lezer]) expect(t).toContain('placeCitation(');
+		expect(
+			offenders((t) => /\bpartOfAnchor\(/.test(t), ['lib/text/cite.ts', 'lib/text/cite.test.ts'])
+		).toEqual([]);
 	});
 
 	it('shows a note of the reader in one form, an item’s, a group’s and the map’s (Thijs, 12 Oct)', () => {
