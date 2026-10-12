@@ -42,6 +42,11 @@ const HERKOMST_REDEN: Record<string, string> = {
 	ecli: 'ECLI genoemd in de tekst'
 };
 
+/** Where an edge comes from by its `basis`, where it has no `reason`. */
+const HERKOMST_BASIS: Partial<Record<string, string>> = {
+	subject: 'Onderwerp van het Kamerstuk'
+};
+
 /** The words of a change to an article, by the effect wetten.overheid.nl gives it. */
 const WIJZIGING: Record<string, string> = {
 	wijziging: 'Wijzigt',
@@ -133,12 +138,18 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 						text(edge.dossier_number) ? 'Dossiernummer in de publicatie' : null
 					)
 				: regel('Behandeld', 'in dit dossier', null);
+		case 'ANSWERS':
+			// A letter of the government and the motion its subject names: read as the
+			// reference it is. A prejudiciële beslissing says it in its group's label.
+			if (other !== 'documents' || selected !== 'documents') break;
+		// falls through
 		case 'REFERS_TO': {
 			const vaak = keer(num(edge.mention_count) ?? (row.mentions?.length || null));
 			// The words of the source, where they are not the passage under the line.
 			const woorden = !citaat && text(edge.text) ? `als ‘${text(edge.text)}’` : null;
 			const herkomst =
 				uit(reden) ??
+				HERKOMST_BASIS[text(edge.basis) ?? ''] ??
 				(text(edge.cited_ecli)
 					? HERKOMST_REDEN.ecli
 					: row.snippet || row.match
