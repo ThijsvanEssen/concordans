@@ -8,6 +8,7 @@
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Hemicycle from '../Hemicycle.svelte';
 	import ZaalTegenover from '../ZaalTegenover.svelte';
+	import { indelingMarkering } from '../zaaltegenover';
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
 	import { getParliamentSeats } from '$lib/api/records';
@@ -338,8 +339,12 @@
 			</p>
 		{:else}
 			{@const z = zijden(zaal, gekozen)}
+			<!-- A hall drawn by fractie says so beside its date (zaaltegenover.ts). -->
+			{@const markering = indelingMarkering(zaal)}
 			<figure class="kamer">
-				<p class="onderschrift">Samenstelling op {formatLongDate(zaal.as_of ?? dag)}.</p>
+				<p class="onderschrift">
+					Samenstelling op {formatLongDate(zaal.as_of ?? dag)}.{markering ? ` ${markering}.` : ''}
+				</p>
 				<div class="zaal">
 					{#if kamer === 'TK'}
 						<Hemicycle

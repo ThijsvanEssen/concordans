@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { plaatsenOpVolgorde } from './zaaltegenover';
+import { indelingMarkering, plaatsenOpVolgorde } from './zaaltegenover';
 
 describe('plaatsenOpVolgorde: the Eerste Kamer on a day without its plan', () => {
 	// kabinet-Schoof, 22 Feb 2026: no `hall` with a date (API 0.79.48).
@@ -27,5 +27,29 @@ describe('plaatsenOpVolgorde: the Eerste Kamer on a day without its plan', () =>
 			'BBB',
 			'VVD'
 		]);
+	});
+});
+
+describe('indelingMarkering: the caption of a hall drawn by fractie', () => {
+	const plan = { seats: [{ block: 'left', row: 0, column: 0 }] };
+
+	it('marks nothing where the Eerste Kamer has its plan', () => {
+		expect(indelingMarkering({ chamber: 'EK', hall: plan, hall_read_on: '2026-10-09' })).toBeNull();
+		expect(indelingMarkering({ chamber: 'EK', hall: plan })).toBeNull();
+	});
+
+	it('marks nothing for the Tweede Kamer', () => {
+		expect(indelingMarkering({ chamber: 'TK', hall: null, hall_read_on: null })).toBeNull();
+	});
+
+	it('marks a day without the plan, before the API names the day it was read', () => {
+		expect(indelingMarkering({ chamber: 'EK', hall: null })).toBe('Indeling per fractie');
+		expect(indelingMarkering({ chamber: 'EK', hall: { seats: [] } })).toBe('Indeling per fractie');
+	});
+
+	it('names the day the plan is known from where the API gives it', () => {
+		expect(indelingMarkering({ chamber: 'EK', hall: null, hall_read_on: '2026-10-09' })).toBe(
+			'Indeling per fractie; zaal bekend vanaf 9 oktober 2026'
+		);
 	});
 });

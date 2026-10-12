@@ -57,6 +57,7 @@
 	import { stand, datum } from '$lib/components/parliamentary/stand';
 	import Hemicycle from './Hemicycle.svelte';
 	import ZaalTegenover from './ZaalTegenover.svelte';
+	import { indelingMarkering } from './zaaltegenover';
 	import ZaalLegenda from './ZaalLegenda.svelte';
 	import { kleurVan } from './partijkleuren.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
@@ -2356,11 +2357,16 @@
 									kolommen={2}
 									rijen={10}
 									coalitie={coalitieRegel}
-									peil={`Samenstelling op ${formatLongDate(
-										(seats.chamber === 'EK' ? composition?.composition_date : null) ??
-											seats.as_of ??
-											null
-									)}`}
+									peil={[
+										`Samenstelling op ${formatLongDate(
+											(seats.chamber === 'EK' ? composition?.composition_date : null) ??
+												seats.as_of ??
+												null
+										)}`,
+										indelingMarkering(seats)
+									]
+										.filter(Boolean)
+										.join('. ')}
 									bron={seats.chamber === 'EK'
 										? composition
 											? {

@@ -8545,8 +8545,13 @@ export interface components {
             seating_plan?: components["schemas"]["SeatingPlanDTO"] | null;
             /** @description Of the Eerste Kamer: the page the seats were read from. */
             source?: components["schemas"]["EkSourceDTO"] | null;
-            /** @description Of the Eerste Kamer: who sits where in its plenary hall; null for the Tweede Kamer, and when no plan was read. */
+            /** @description Of the Eerste Kamer: who sits where in its plenary hall, as Wie zit waar showed it on `hall_read_on`; on a `date` before that day null (the site shows today's plan only). Null for the Tweede Kamer (its open data places no seat), and when no plan was read. */
             hall?: components["schemas"]["HallDTO"] | null;
+            /**
+             * Hall Read On
+             * @description Of the Eerste Kamer: the day Wie zit waar was read (YYYY-MM-DD), the first day whose `hall` is known. Null for the Tweede Kamer, and when no plan was read.
+             */
+            hall_read_on?: string | null;
             /**
              * Checked
              * @description Of the Eerste Kamer on a ``date``: whether the term of that day added up (its seats walked from the Kiesraad's result through the changes the Kamer's pages tell); when false, show the seats as uncertain. Null otherwise.
