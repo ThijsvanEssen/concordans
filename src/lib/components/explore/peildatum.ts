@@ -4,6 +4,7 @@
 import type { Schema } from '$lib/api/types';
 
 type Version = Pick<Schema<'InstrumentVersionDTO'>, 'valid_from' | 'valid_until' | 'current'>;
+type Part = Schema<'ArticlePartSpanDTO'>;
 type Current = Pick<Schema<'InstrumentArticleNodeDTO'>, 'key' | 'article_number'>;
 type AtItem = Pick<
 	Schema<'InstrumentArticleVersionDTO'>,
@@ -15,7 +16,9 @@ type AtItem = Pick<
 	| 'text_preview'
 	| 'valid_from'
 	| 'valid_until'
->;
+> &
+	// An API before 0.79.52 gives no parts.
+	Partial<Pick<Schema<'InstrumentArticleVersionDTO'>, 'parts'>>;
 
 /** A day as the URL and the API write it. */
 export const isDay = (s: string | null | undefined): s is string =>
@@ -55,6 +58,8 @@ export type AtArticle = {
 	/** The divisions the article stood in on that day. */
 	breadcrumb: NonNullable<AtItem['breadcrumb']>;
 	text: string | null;
+	/** Its aanhef, leden and onderdelen in that text; null from an API without them. */
+	parts: Part[] | null;
 	text_preview: string | null;
 };
 
@@ -73,6 +78,7 @@ export function atArticles(items: AtItem[], current: Current[]): AtArticle[] {
 		label: i.label ?? null,
 		breadcrumb: i.breadcrumb ?? [],
 		text: i.text ?? null,
+		parts: i.parts?.length ? i.parts : null,
 		text_preview: i.text_preview ?? null
 	}));
 }

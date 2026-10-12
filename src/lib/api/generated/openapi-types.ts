@@ -393,7 +393,7 @@ export interface paths {
         };
         /**
          * Articles as they stood on a given date
-         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of that day's toestand, each with the divisions it stood in that day (``breadcrumb``). Empty before the first toestand of the law (``first_version_from``) and when no version covers that date. ``text_preview`` is the start of the text; with ``text_preview_chars`` the whole ``text`` is left out unless ``include_text=true``. ``limit`` and ``offset`` page, ``total`` counts every article.
+         * @description The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of that day's toestand, each with the divisions it stood in that day (``breadcrumb``). Empty before the first toestand of the law (``first_version_from``) and when no version covers that date. ``text_preview`` is the start of the text; with ``text_preview_chars`` the whole ``text`` is left out unless ``include_text=true``; with the text come its ``parts`` (spans, nested by id). ``limit`` and ``offset`` page, ``total`` counts every article.
          */
         get: operations["list_articles_at_api_instruments__bwb_id__articles_at__at_date__get"];
         put?: never;
@@ -2106,9 +2106,7 @@ export interface components {
         };
         /**
          * ArticlePartDTO
-         * @description A lid, an onderdeel, an aanhef or a tekst of an article, as a span of its `text`.
-         *
-         *     The parts and the printed numbers between them cover the whole text.
+         * @description A part of an article with its content.
          */
         ArticlePartDTO: {
             /**
@@ -2127,13 +2125,43 @@ export interface components {
              */
             number: string | null;
             /**
+             * Start
+             * @description Offset of the part in the `text` of the article; a part with onderdelen spans them too.
+             */
+            start: number;
+            /** End */
+            end: number;
+            /**
              * Text
-             * @description The content without its number: `text[start:end]` of the article. A part with onderdelen spans them too.
+             * @description The content without its number: `text[start:end]` of the article.
              */
             text: string;
+        };
+        /**
+         * ArticlePartSpanDTO
+         * @description A lid, an onderdeel, an aanhef or a tekst of an article, as a span of its `text`.
+         *
+         *     The parts and the printed numbers between them cover the whole text.
+         */
+        ArticlePartSpanDTO: {
+            /**
+             * Id
+             * @description Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel), `tekst-1` (a paragraph outside the other parts, such as a line between the lists of an article of a bijlage). Unique within the article.
+             */
+            id: string;
+            /**
+             * Kind
+             * @description `aanhef`, `lid`, `onderdeel` or `tekst`.
+             */
+            kind: string;
+            /**
+             * Number
+             * @description The number as printed: `2`, `2a`, `a`, `1°`; null for an aanhef or an item without one.
+             */
+            number: string | null;
             /**
              * Start
-             * @description Offset of the part in the `text` of the article.
+             * @description Offset of the part in the `text` of the article; a part with onderdelen spans them too.
              */
             start: number;
             /** End */
@@ -6670,6 +6698,12 @@ export interface components {
              * @description The whole text; null when it was not asked for.
              */
             text?: string | null;
+            /**
+             * Parts
+             * @description The aanhef, leden and onderdelen of the text as spans of it, as the article gives them (`lid-2-onder-a`, `onder-_39-onder-a`: an onderdeel inside an unmarked one); empty when the text was not asked for.
+             * @default []
+             */
+            parts: components["schemas"]["ArticlePartSpanDTO"][];
             /**
              * Text Preview
              * @description The first ``text_preview_chars`` characters of the text.

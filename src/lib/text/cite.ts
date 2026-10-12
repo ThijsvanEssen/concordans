@@ -151,6 +151,8 @@ export function partOfAnchor(anchor: string | null): {
 	const gedrukt = (x: string) => x.replace(/_\d+$/, '');
 	const lid = /^lid-([^-]+)/.exec(anchor)?.[1] ?? null;
 	const onderdelen = [...anchor.matchAll(/onder-([^-]+)/g)].map((m) => gedrukt(m[1]));
+	// A dash has no number to cite it by (`onder-_39`, Cbw 1): from there the article is cited.
+	if (onderdelen.some((o) => !o)) return { lid: null, onderdelen: [], aanhef: false };
 	return {
 		lid: lid === null ? null : gedrukt(lid),
 		onderdelen,

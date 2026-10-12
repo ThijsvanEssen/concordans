@@ -61,4 +61,9 @@ describe('atArticles', () => {
 		expect(a.breadcrumb[0].label).toBe('Hoofdstuk 4');
 		expect(a.id).toBe('v_4:3a');
 	});
+	it('keeps the parts of the text, and none from an API without them', () => {
+		const parts = [{ id: 'onder-_1', kind: 'onderdeel', number: '–', start: 2, end: 7 }];
+		expect(atArticles([{ ...at('1:1', 'Hoofdstuk 1'), parts }], current)[0].parts).toEqual(parts);
+		expect(atArticles([at('1:1', 'Hoofdstuk 1')], current)[0].parts).toBeNull();
+	});
 });

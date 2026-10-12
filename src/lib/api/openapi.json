@@ -1232,7 +1232,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Articles as they stood on a given date",
-				"description": "The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of that day's toestand, each with the divisions it stood in that day (``breadcrumb``). Empty before the first toestand of the law (``first_version_from``) and when no version covers that date. ``text_preview`` is the start of the text; with ``text_preview_chars`` the whole ``text`` is left out unless ``include_text=true``. ``limit`` and ``offset`` page, ``total`` counts every article.",
+				"description": "The articles of a BWB instrument as they applied on ``at_date`` (YYYY-MM-DD), read from the article versions, in the order of that day's toestand, each with the divisions it stood in that day (``breadcrumb``). Empty before the first toestand of the law (``first_version_from``) and when no version covers that date. ``text_preview`` is the start of the text; with ``text_preview_chars`` the whole ``text`` is left out unless ``include_text=true``; with the text come its ``parts`` (spans, nested by id). ``limit`` and ``offset`` page, ``total`` counts every article.",
 				"operationId": "list_articles_at_api_instruments__bwb_id__articles_at__at_date__get",
 				"parameters": [
 					{
@@ -5974,22 +5974,52 @@
 						"title": "Number",
 						"description": "The number as printed: `2`, `2a`, `a`, `1\u00b0`; null for an aanhef or an item without one."
 					},
+					"start": {
+						"type": "integer",
+						"title": "Start",
+						"description": "Offset of the part in the `text` of the article; a part with onderdelen spans them too."
+					},
+					"end": { "type": "integer", "title": "End" },
 					"text": {
 						"type": "string",
 						"title": "Text",
-						"description": "The content without its number: `text[start:end]` of the article. A part with onderdelen spans them too."
+						"description": "The content without its number: `text[start:end]` of the article."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "kind", "number", "start", "end", "text"],
+				"title": "ArticlePartDTO",
+				"description": "A part of an article with its content."
+			},
+			"ArticlePartSpanDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel), `tekst-1` (a paragraph outside the other parts, such as a line between the lists of an article of a bijlage). Unique within the article."
+					},
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "`aanhef`, `lid`, `onderdeel` or `tekst`."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "The number as printed: `2`, `2a`, `a`, `1\u00b0`; null for an aanhef or an item without one."
 					},
 					"start": {
 						"type": "integer",
 						"title": "Start",
-						"description": "Offset of the part in the `text` of the article."
+						"description": "Offset of the part in the `text` of the article; a part with onderdelen spans them too."
 					},
 					"end": { "type": "integer", "title": "End" }
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["id", "kind", "number", "text", "start", "end"],
-				"title": "ArticlePartDTO",
+				"required": ["id", "kind", "number", "start", "end"],
+				"title": "ArticlePartSpanDTO",
 				"description": "A lid, an onderdeel, an aanhef or a tekst of an article, as a span of its `text`.\n\nThe parts and the printed numbers between them cover the whole text."
 			},
 			"ArticlePassagesDTO": {
@@ -11059,6 +11089,13 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Text",
 						"description": "The whole text; null when it was not asked for."
+					},
+					"parts": {
+						"items": { "$ref": "#/components/schemas/ArticlePartSpanDTO" },
+						"type": "array",
+						"title": "Parts",
+						"description": "The aanhef, leden and onderdelen of the text as spans of it, as the article gives them (`lid-2-onder-a`, `onder-_39-onder-a`: an onderdeel inside an unmarked one); empty when the text was not asked for.",
+						"default": []
 					},
 					"text_preview": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
