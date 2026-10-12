@@ -10,6 +10,7 @@
 	import { permalink } from '$lib/bron/anchor';
 	import type { Schema } from '$lib/api/types';
 	import {
+		markerOf,
 		parseArticleParts,
 		partsFromApi,
 		placeOf,
@@ -46,7 +47,7 @@
 	}: {
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
-		parts?: Schema<'ArticlePartDTO'>[] | null;
+		parts?: Schema<'ArticlePartSpanDTO'>[] | null;
 		citations?: Schema<'ArticleCitationSpan'>[];
 		/** The terms the text uses that its regulation defines (`term_spans`). */
 		begrippen?: Begrip[];
@@ -86,7 +87,10 @@
 
 	const source = $derived(text ?? '');
 	const perRef = $derived(definitiesOp(definities));
-	const parts = $derived(apiParts?.length ? partsFromApi(apiParts) : parseArticleParts(source));
+	const parts = $derived(
+		apiParts?.length ? partsFromApi(apiParts, source) : parseArticleParts(source)
+	);
+	const marker = (number: string) => markerOf(number, mark);
 	/** The place `alleen` names: a lid with its onderdelen (`lid-2-onder-a` is in `lid-2`). */
 	const bevat = (part: ArticlePart, at: string) =>
 		!!part.id && (at === part.id || at.startsWith(`${part.id}-`));
@@ -170,11 +174,7 @@
 				aria-expanded={menuFor === keyOf(part)}
 				aria-label="{naamVan(placeOf(parts, part))}: citeren, bewaren"
 				onclick={(e) => openMenu(part, e.currentTarget)}
-				>{part.kind === 'lid'
-					? `${part.number}.`
-					: part.number
-						? `${part.number}${mark}`
-						: ''}</button
+				>{part.kind === 'lid' ? `${part.number}.` : part.number ? marker(part.number) : ''}</button
 			>
 			<div class="lid__body" class:lid__body--pair={showProposed}>
 				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -226,7 +226,7 @@
 					aria-haspopup="menu"
 					aria-expanded={menuFor === part.id}
 					aria-label="{naamVan(part)}: citeren, bewaren"
-					onclick={(e) => openMenu(part, e.currentTarget)}>{part.number}{mark}</button
+					onclick={(e) => openMenu(part, e.currentTarget)}>{marker(part.number)}</button
 				>
 			{/if}
 			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->

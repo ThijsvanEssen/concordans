@@ -70,6 +70,9 @@ describe('citeArticle', () => {
 			aanhef: false
 		});
 		expect(partOfAnchor('aanhef')).toEqual({ lid: null, onderdelen: [], aanhef: true });
+		// A dash has no number to cite it by: from there the article is cited (Cbw 1).
+		for (const dash of ['onder-_39', 'onder-_39-onder-a', 'lid-2-onder-_1'])
+			expect(partOfAnchor(dash)).toEqual({ lid: null, onderdelen: [], aanhef: false });
 	});
 
 	it('cites an article without a number by its heading', () => {

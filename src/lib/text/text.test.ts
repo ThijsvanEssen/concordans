@@ -8,6 +8,7 @@ import sv67 from '$lib/fixtures/article-bwbr0001903_67.json';
 import gw10 from '$lib/fixtures/article-bwbr0001840_10.json';
 import hr1769 from '$lib/fixtures/judgment-hr-2024-1769.json';
 import {
+	markerOf,
 	onderdeelMark,
 	parseArticleParts,
 	partsFromApi,
@@ -64,6 +65,39 @@ describe('parseArticleParts', () => {
 		expect(text.slice(span.start!, span.end!)).toBe(span.text);
 	});
 
+	// Cbw 1: definitions in a dash list, one with a list of its own, one going on indented.
+	const cbw1 = [
+		'In deze wet wordt verstaan onder:',
+		'– belangrijke entiteit: een entiteit als bedoeld in artikel 12 of 13;',
+		'– CER-richtlijn:',
+		'        Richtlijn (EU) 2022/2557;',
+		'– netwerk- en informatiesysteem:',
+		'a. een elektronisch communicatienetwerk; of',
+		'b. elk apparaat; of',
+		'c. digitale gegevens;',
+		'– NIS2-richtlijn: Richtlijn (EU) 2022/2555;'
+	].join('\n');
+
+	it('reads a dash as an onderdeel, with the a., b. and c. under it nested', () => {
+		const parts = parseArticleParts(cbw1);
+		expect(parts.map((p) => [p.id, p.number])).toEqual([
+			['aanhef', null],
+			['onder-_1', '–'],
+			['onder-_2', '–'],
+			['onder-_3', '–'],
+			['onder-_4', '–']
+		]);
+		const [, , cer, nis] = parts;
+		expect(cbw1.slice(cer.textStart, cer.textEnd)).toMatch(/^CER-richtlijn:\n\s+Richtlijn/);
+		expect(nis.children.map((c) => c.id)).toEqual([
+			'onder-_3-onder-a',
+			'onder-_3-onder-b',
+			'onder-_3-onder-c'
+		]);
+		expect(cbw1.slice(nis.textStart, nis.textEnd).trim()).toBe('netwerk- en informatiesysteem:');
+		expect(partText(cbw1, parts, 'onder-_3-onder-b')).toBe('b. elk apparaat; of');
+	});
+
 	it('returns nothing for an article without text', () => {
 		expect(parseArticleParts(null)).toEqual([]);
 	});
@@ -91,6 +125,49 @@ describe('partsFromApi', () => {
 		expect(roots.map((p) => p.id)).toEqual(['lid-2', 'lid-3', 'lid-4']);
 		expect(roots[1].children.map((p) => p.id)).toEqual(['lid-3-aanhef', 'lid-3-onder-a']);
 		expect(new Set(roots.map((p) => p.start)).size).toBe(roots.length);
+	});
+});
+
+describe('partsFromApi with the text', () => {
+	// Cbw 1 as the API gives it: the dash has no aanhef of its own, its a. starts after "a. ".
+	const text = 'Onder:\n– netwerk:\na. een netwerk; of\nb. een apparaat;';
+	const at = (s: string) => text.indexOf(s);
+	const roots = partsFromApi(
+		[
+			{ id: 'aanhef', kind: 'aanhef', number: null, start: 0, end: 6 },
+			{ id: 'onder-_1', kind: 'onderdeel', number: '–', start: at('netwerk:'), end: text.length },
+			{
+				id: 'onder-_1-onder-a',
+				kind: 'onderdeel',
+				number: 'a',
+				start: at('een netwerk'),
+				end: at('een netwerk') + 15
+			},
+			{
+				id: 'onder-_1-onder-b',
+				kind: 'onderdeel',
+				number: 'b',
+				start: at('een apparaat'),
+				end: text.length
+			}
+		],
+		text
+	);
+
+	it('nests the a. and b. under the dash, and ends its own text before their number', () => {
+		expect(roots.map((p) => p.id)).toEqual(['aanhef', 'onder-_1']);
+		const dash = roots[1];
+		expect(dash.children.map((p) => p.id)).toEqual(['onder-_1-onder-a', 'onder-_1-onder-b']);
+		expect(text.slice(dash.textStart, dash.textEnd).trim()).toBe('netwerk:');
+	});
+});
+
+describe('markerOf', () => {
+	it('puts the mark after a letter or a number, never after a dash', () => {
+		expect(markerOf('a', '.')).toBe('a.');
+		expect(markerOf('1°', '.')).toBe('1°.');
+		expect(markerOf('b', ')')).toBe('b)');
+		expect(markerOf('–', '.')).toBe('–');
 	});
 });
 

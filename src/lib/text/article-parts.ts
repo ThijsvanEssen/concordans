@@ -1,7 +1,7 @@
 // An article's aanhef, leden and onderdelen. API 0.5 delivers them as `parts`
 // (`partsFromApi` nests them by id); before that they are read from the flat text,
 // in which a lid is a line that starts with `1. ` and an onderdeel one that starts
-// with `a. ` or `1°. `.
+// with `a. `, `1°. ` or a dash (`– `, the definitions of Cbw 1).
 // TODO(backend B6): `parseArticleParts` goes when every article carries `parts`.
 
 export type ArticlePartKind = 'aanhef' | 'lid' | 'onderdeel' | 'tekst';
@@ -22,7 +22,7 @@ export type ArticlePart = {
 };
 
 const LID = /^(\d+[a-z]?)\.\s+/;
-const ONDERDEEL = /^(?:([a-z]{1,2})\.|(\d+)°\.?|(\d+)\.)\s+/;
+const ONDERDEEL = /^(?:([a-z]{1,2})\.|(\d+)°\.?|(\d+)\.|([–—]))\s+/;
 
 type Line = { start: number; end: number; text: string };
 
@@ -45,6 +45,13 @@ function isNextLid(number: string, previous: string | null): boolean {
 }
 
 const slug = (number: string) => number.replace('°', '').toLowerCase();
+
+/** A dash has no number of its own: the API counts them, `onder-_1`, `onder-_2`. */
+const isDash = (number: string) => !/[\p{L}\p{N}]/u.test(number);
+const slugIn = (number: string, siblings: ArticlePart[]) =>
+	isDash(number)
+		? `_${siblings.filter((p) => p.number !== null && isDash(p.number)).length + 1}`
+		: slug(number);
 
 const leaf = (
 	kind: ArticlePartKind,
@@ -96,13 +103,14 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 		const m = ONDERDEEL.exec(line.text);
 		if (m) {
 			const style = m.slice(1).findIndex((g) => g !== undefined);
-			const number = m[1] ?? (m[2] ? `${m[2]}°` : m[3]);
+			const number = m[1] ?? (m[2] ? `${m[2]}°` : (m[3] ?? m[4]));
 			const base = lid ? `${lid.id}-onder` : 'onder';
 			const nested = onderdeel !== null && listStyle !== -1 && style !== listStyle;
 			if (nested && onderdeel) {
+				// `onder-_39-onder-a`, as the API names an onderdeel inside an onderdeel.
 				const child = leaf(
 					'onderdeel',
-					`${onderdeel.id}-${slug(number)}`,
+					`${onderdeel.id}-onder-${slugIn(number, onderdeel.children)}`,
 					number,
 					line,
 					m[0].length
@@ -114,8 +122,14 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 				continue;
 			}
 			listStyle = style;
-			onderdeel = leaf('onderdeel', `${base}-${slug(number)}`, number, line, m[0].length);
 			const siblings = lid ? lid.children : parts;
+			onderdeel = leaf(
+				'onderdeel',
+				`${base}-${slugIn(number, siblings)}`,
+				number,
+				line,
+				m[0].length
+			);
 			// What precedes the first onderdeel of an article without leden is its aanhef.
 			if (!lid && parts.length === 1 && parts[0].kind === 'tekst') {
 				parts[0].kind = 'aanhef';
@@ -123,6 +137,14 @@ export function parseArticleParts(text: string | null | undefined): ArticlePart[
 			}
 			if (lid && lid.children.length === 0) lid.textEnd = line.start;
 			siblings.push(onderdeel);
+			extend(line);
+			continue;
+		}
+
+		// An indented line goes on with the onderdeel above it (Cbw 1, `– CER-richtlijn:` and
+		// the directive's name under it).
+		if (onderdeel && onderdeel.children.length === 0 && /^\s/.test(line.text)) {
+			onderdeel.textEnd = line.end;
 			extend(line);
 			continue;
 		}
@@ -153,8 +175,16 @@ type ApiPart = {
 
 const KINDS: ReadonlySet<string> = new Set(['aanhef', 'lid', 'onderdeel', 'tekst']);
 
+/** Where a child's line begins, before its printed number (`\na. `): the parent's own text
+ *  ends there, not after the number. Without the article's text, at the child's start. */
+function lineStart(text: string | undefined, start: number): number {
+	if (!text) return start;
+	const nl = text.lastIndexOf('\n', start - 1);
+	return nl >= 0 && /^\s*\S{1,4}\s*$/.test(text.slice(nl + 1, start)) ? nl : start;
+}
+
 /** The parts the API delivers, nested: `lid-2-onder-a` is a child of `lid-2`. */
-export function partsFromApi(parts: ApiPart[]): ArticlePart[] {
+export function partsFromApi(parts: ApiPart[], text?: string): ArticlePart[] {
 	const roots: ArticlePart[] = [];
 	const byId = new Map<string, ArticlePart>();
 	for (const p of [...parts].sort((a, b) => a.start - b.start)) {
@@ -173,7 +203,8 @@ export function partsFromApi(parts: ApiPart[]): ArticlePart[] {
 		const parentId = p.id.replace(/-(?:onder-[^-]+|aanhef)$/, '');
 		const parent = parentId !== p.id ? byId.get(parentId) : undefined;
 		if (parent) {
-			if (parent.children.length === 0) parent.textEnd = p.start;
+			if (parent.children.length === 0)
+				parent.textEnd = Math.max(parent.textStart, lineStart(text, p.start));
 			parent.children.push(part);
 		} else roots.push(part);
 	}
@@ -223,3 +254,7 @@ export function placeOf(parts: ArticlePart[], part: ArticlePart): ArticlePart | 
 /** How an onderdeel is numbered in print: `a.` in Dutch law (a BWB id), `a)` in EU law. */
 export const onderdeelMark = (lawId: string | null | undefined): '.' | ')' =>
 	lawId && !/^BWB/i.test(lawId) ? ')' : '.';
+
+/** An onderdeel's marker as printed: `a.`, `1°.`, `a)`; a dash takes no mark after it. */
+export const markerOf = (number: string, mark: '.' | ')'): string =>
+	/[\p{L}\p{N}°]$/u.test(number) ? `${number}${mark}` : number;

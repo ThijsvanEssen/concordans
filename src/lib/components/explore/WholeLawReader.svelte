@@ -41,6 +41,7 @@
 
 	type Detail = Schema<'ArticleDetailResponse'>;
 	type Version = Schema<'InstrumentVersionDTO'>;
+	type Part = Schema<'ArticlePartSpanDTO'>;
 	/** An article as the list shows it, of today or of the peildatum. */
 	type Row = {
 		id: string;
@@ -52,8 +53,11 @@
 		breadcrumb: Schema<'InstrumentArticleNodeDTO'>['breadcrumb'];
 		/** The whole text of an old version, which comes with the list. */
 		text: string | null;
+		/** Its aanhef, leden and onderdelen; null from an API without them (read from the text). */
+		parts: Part[] | null;
 		/** The whole text of today, from the list of the day (`include_text`), per page. */
 		textToday?: string | null;
+		partsToday?: Part[] | null;
 		text_preview: string | null;
 	};
 
@@ -287,22 +291,35 @@
 					signal
 				})
 			)
-				.then((at) => new Map(at.items.map((a) => [a.article_number, a.text ?? null])))
-				.catch(() => new Map<string, string | null>())
+				.then(
+					(at) =>
+						new Map(
+							at.items.map((a) => [
+								a.article_number,
+								{ text: a.text ?? null, parts: a.parts?.length ? a.parts : null }
+							])
+						)
+				)
+				.catch(() => new Map<string, { text: string | null; parts: Part[] | null }>())
 		]);
 		return {
 			total: r.total,
-			items: r.items.map((a) => ({
-				textToday: a.article_number ? (texts.get(a.article_number) ?? null) : null,
-				id: a.id,
-				key: a.key,
-				article_number: a.article_number ?? null,
-				label: a.label ?? null,
-				address: a.article_number ?? a.address ?? null,
-				breadcrumb: a.breadcrumb ?? [],
-				text: null,
-				text_preview: a.text_preview ?? null
-			}))
+			items: r.items.map((a) => {
+				const own = a.article_number ? texts.get(a.article_number) : undefined;
+				return {
+					textToday: own?.text ?? null,
+					partsToday: own?.parts ?? null,
+					id: a.id,
+					key: a.key,
+					article_number: a.article_number ?? null,
+					label: a.label ?? null,
+					address: a.article_number ?? a.address ?? null,
+					breadcrumb: a.breadcrumb ?? [],
+					text: null,
+					parts: null,
+					text_preview: a.text_preview ?? null
+				};
+			})
 		};
 	}
 
@@ -552,11 +569,11 @@
 				</div>
 
 				{#if a.text}
-					<ArticleText text={a.text} parts={null} citation={null} mark={onderdeelMark(bwbId)} />
+					<ArticleText text={a.text} parts={a.parts} citation={null} mark={onderdeelMark(bwbId)} />
 				{:else if a.textToday}
 					<ArticleText
 						text={a.textToday}
-						parts={null}
+						parts={a.partsToday}
 						citation={citationOf(address, a.article_number ? null : (a.label ?? null))}
 						mark={onderdeelMark(bwbId)}
 					/>
