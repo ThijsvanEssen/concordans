@@ -108,6 +108,7 @@
 				label: `${h.label}${nieuw(i.date)}`,
 				zin: h.title,
 				ref: refOf(i),
+				heeftTekst: i.has_text,
 				bron: i.id,
 				groot: h.major,
 				onder: itemOnder,

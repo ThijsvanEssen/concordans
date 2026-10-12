@@ -27,7 +27,7 @@ Every page and panel, from top to bottom:
 
 A row has no buttons of its own: a click on the row does it. Its actions (and a group heading's In netwerk, for all its rows), Bewaar and In netwerk, are icon buttons (`ui/RijActies.svelte`: a bookmark, the network with a +) that show on hover or focus of the row (`data-rij`), always on a phone at 32 px. At rest only the state shows: a filled bookmark when kept, the network when in the network. A box is for a choice in a filter, never for an action.
 
-This holds for Bladeren too (Thijs, 10 October 2026, choice (a)): a row's title opens the bron in Netwerk, Lezen is one step from there. It replaces the earlier wish of the same day for buttons at the end of the row (Lezen, Netwerk, Openen). Those buttons do not come back.
+This holds for Bladeren too (Thijs, 10 October 2026, choice (a)): a row's title opens the bron in Netwerk, Lezen is one step from there. It replaces the earlier wish of the same day for buttons at the end of the row (Lezen, Netwerk, Openen). Those buttons do not come back. A Kamerstuk is the exception (Thijs, 12 October 2026): every click on it (a BronLink, a row of Verbonden or Bladeren, a line of a tijdlijn, a number in an amendment's chain) opens its text, and Netwerk is the step from there; one whose text is not in the data yet opens in Netwerk. One rule, `openHref` in `src/lib/bron/href.ts`; only a link that names the network (In het netwerk) builds its own.
 
 ## Measure, letter, colour, words
 

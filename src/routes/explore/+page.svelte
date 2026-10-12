@@ -1189,11 +1189,13 @@
 		untrack(() => netwerkActive) ? 'graph' : 'reader'
 	);
 	// A link to the network (In het netwerk from Actueel, a network link in Bladeren) opens
-	// the Netwerk tab on a phone; the hint is read once and dropped from the address.
+	// the Netwerk tab on a phone, a link that opens a text (a Kamerstuk, openHref) the Tekst
+	// tab, also from Verbonden; the hint is read once and dropped from the address.
 	$effect(() => {
-		if (page.url.searchParams.get('paneel') !== 'netwerk') return;
+		const paneel = page.url.searchParams.get('paneel');
+		if (paneel !== 'netwerk' && paneel !== 'tekst') return;
 		untrack(() => {
-			mobilePanel = 'graph';
+			mobilePanel = paneel === 'netwerk' ? 'graph' : 'reader';
 			setUrl({ paneel: null });
 		});
 	});

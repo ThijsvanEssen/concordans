@@ -1,7 +1,7 @@
 <script lang="ts">
 	// A reference to a bron, the same everywhere. A click opens the bron in the Verkenner with
-	// its network (Thijs, 10 Oct: "laten we standaard navigeren naar Netwerk"); Lees is one
-	// step from there (1, or the Tekst switch). Hover or focus shows a card after a moment: the
+	// its network (Thijs, 10 Oct: "laten we standaard navigeren naar Netwerk"), a Kamerstuk on
+	// its text (12 Oct); the other is one step from there, the Netwerk/Tekst switch (openHref). Hover or focus shows a card after a moment: the
 	// kind, the name, a date and what places the bron (its dossier, its indieners, the vote,
 	// a first sentence or lid). The card has no buttons and stands in the top layer, placed
 	// below the link or above it where the screen ends, so no column clips it. On touch a tap
@@ -9,7 +9,7 @@
 	import { page } from '$app/state';
 	import type { Snippet } from 'svelte';
 	import { focusIn } from './leesbaar';
-	import { bronHref, focusOf, type BronRef } from './href';
+	import { focusOf, openHref, type BronRef } from './href';
 	import { loadPreview, type Preview } from './preview';
 	import { isEscape } from '$lib/actions/keys';
 
@@ -52,7 +52,7 @@
 	// A reference into the bron on screen is a jump within the page.
 	const id = $derived(focusOf(ref));
 	const inPage = $derived(!!at && !!id && focusIn(page.url) === id);
-	const href = $derived(inPage ? `#${at}` : bronHref(ref, { at, keepMode: false, mode: 'graph' }));
+	const href = $derived(inPage ? `#${at}` : openHref(ref, { at }));
 
 	function show() {
 		if (!preview || tast) return;
