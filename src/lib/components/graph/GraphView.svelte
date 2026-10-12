@@ -63,6 +63,8 @@
 	import type { VerbondenState } from '$lib/verbonden/source';
 	import { laatstOpen, opzij, passenSamen, type Zwevend } from '$lib/stores/zwevend';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
+	import { kaart } from '$lib/map/map.svelte';
+	import { gemerkt, notitiesPerBron } from '$lib/map/notities';
 
 	// ── Camera persistence across mounts ──────────────────────────────────────
 	// GraphView is unmounted when the mode leaves Netwerk and mounted again on
@@ -404,6 +406,11 @@
 			tick();
 		}, 50);
 	}
+
+	// The reader's notes in the active map (Gemarkeerd), per bron: in its card, and a mark on
+	// the bronnen that hold one of their own. From this browser, so no request.
+	const notities = $derived(notitiesPerBron(kaart.actief));
+	const notitieIds = $derived(gemerkt(notities));
 
 	// Hover panel state (only in the full canvas)
 	let hoverNode = $state<GraphNode | null>(null);
@@ -1255,6 +1262,23 @@
 		return { x, y };
 	}
 
+	// A card taller than its place (an article's text, the reader's notes) moves up until its
+	// foot is inside the network, as its text loads too.
+	$effect(() => {
+		const el = citeEl;
+		const wrap = canvasWrap;
+		if (!el || !wrap || !hoverAt) return;
+		const past = () => {
+			const at = untrack(() => hoverAt);
+			if (!at) return;
+			const y = Math.max(8, Math.min(at.y, wrap.clientHeight - el.offsetHeight - 8));
+			if (y !== at.y) hoverAt = { x: at.x, y };
+		};
+		const ro = new ResizeObserver(past);
+		ro.observe(el);
+		return () => ro.disconnect();
+	});
+
 	function handleNodeLeave() {
 		if (compact || gemarkeerd) return;
 		if (showTimer) {
@@ -1646,6 +1670,7 @@
 					heatPeriodMonths={overlay.kind === 'heat' ? overlay.months : DEFAULT_HEAT_MONTHS}
 					mutatieActive={overlay.kind === 'open' || overlay.kind === 'dossier'}
 					externalHoveredId={gemarkeerd?.id ?? hoverNode?.id ?? null}
+					{notitieIds}
 					onNodeClick={(id) => {
 						if (isClusterId(id)) return openCluster(id);
 						const n = lookup.get(id);
@@ -1760,6 +1785,7 @@
 					<GraphCitePanel
 						node={hoverNode}
 						isChosen={pinnedIds.has(hoverNode.id)}
+						notities={notities.get(hoverNode.id) ?? []}
 						at={keyNode ? null : hoverAt}
 						onOpen={() => {
 							ontmarkeer();

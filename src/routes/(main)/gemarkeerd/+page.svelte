@@ -332,7 +332,10 @@
 				{#snippet naast()}
 					<span class="acties">
 						{#if m.items.length}
-							<TekstLink href={netwerkHref(m.items) ?? undefined}>Netwerk</TekstLink>
+							<!-- The network of a map shows its notes: it is the map worked in from now on. -->
+							<TekstLink href={netwerkHref(m.items) ?? undefined} onclick={() => kaart.kies(m.id)}
+								>Netwerk</TekstLink
+							>
 							<TekstLink onclick={() => copier.copy(link(m), `link-${m.id}`)}
 								>{copier.label(`link-${m.id}`, 'Kopieer link')}</TekstLink
 							>
