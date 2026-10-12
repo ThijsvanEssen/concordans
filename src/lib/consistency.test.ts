@@ -48,6 +48,17 @@ type Uitzonderingen = Record<string, string>;
 const buiten = (u: Uitzonderingen) => Object.keys(u);
 
 describe('one form for each thing', () => {
+	it('opens a bron from a click by one rule, $lib/bron/href.ts openHref', () => {
+		// A Kamerstuk opens on its text, the rest in the network (Thijs, 12 Oct 2026). A link
+		// forced to the network is one that says so: In het netwerk.
+		const netwerkLinks: Uitzonderingen = {
+			'lib/bron/href.ts': 'the rule itself',
+			'lib/verbonden/VerbondenTabel.svelte': 'In het netwerk of an opened row',
+			'lib/components/open/PostOpen.svelte': 'In het netwerk of a bewindspersoon'
+		};
+		expect(offenders((t) => /mode: 'graph'/.test(t), buiten(netwerkLinks))).toEqual([]);
+	});
+
 	it('formats a date only in $lib/text/datum.ts', () => {
 		const dateFormat = /toLocaleDateString|Intl\.DateTimeFormat|\btoLocaleTimeString\b/;
 		const monthNames = /['"](januari|jan\.)['"]/;

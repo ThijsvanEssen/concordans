@@ -16,7 +16,7 @@
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { tick } from 'svelte';
-	import { bronHref, refId } from '$lib/bron/href';
+	import { openHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
@@ -359,12 +359,10 @@
 		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
 	}
 
-	// A row opens its bron in Netwerk (Thijs, 10 Oct: "laten we standaard navigeren naar
-	// Netwerk"); a group read beside the text opens it there.
-	const openHref = (g: Group, row: Row) =>
-		g.inPlace
-			? inPlaceHref(row)
-			: bronHref(row.ref, { at: row.at, keepMode: false, mode: 'graph' });
+	// A row opens its bron as every link to a bron does (openHref): in Netwerk, a Kamerstuk on
+	// its text; a group read beside the text opens it there.
+	const rowHref = (g: Group, row: Row) =>
+		g.inPlace ? inPlaceHref(row) : openHref(row.ref, { at: row.at });
 
 	/** The row whose provenance a tap shows, on touch. */
 	/** `Herkend in de tekst` in the meta line: `herkend in de tekst`; `ECLI …` stays. */
@@ -651,7 +649,7 @@
 						{#each all ? g.rows : g.rows.slice(0, PREVIEW) as row (rowId(row))}
 							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
 							{@const hoe = hoeVan(row, selection.collection)}
-							{@const href = openHref(g, row)}
+							{@const href = rowHref(g, row)}
 							<li class="row">
 								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
 								     Netwerk, as its title does. -->

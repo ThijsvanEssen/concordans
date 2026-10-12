@@ -15,7 +15,7 @@
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
-	import { bronHref } from '$lib/bron/href';
+	import { openHref } from '$lib/bron/href';
 	import { terPlekke } from '$lib/actions/klik';
 	import { onControl } from '$lib/actions/outside';
 	import { bronLabel, parseNodeId } from '$lib/vocabulary';
@@ -85,7 +85,7 @@
 			: null;
 	};
 	const bronVan = (r: TijdRegel) =>
-		r.href ?? (r.ref ? bronHref(r.ref, { keepMode: false, mode: 'graph' }) : null);
+		r.href ?? (r.ref ? openHref(r.ref, { hasText: r.heeftTekst }) : null);
 	const uid = $props.id();
 </script>
 

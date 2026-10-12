@@ -7,8 +7,9 @@
 	// toggle is a button under the row's content, the size of the row: it is what the
 	// keyboard stops on.
 	//
-	// With `acties` (Bladeren): no detail beneath. The title opens the bron in Netwerk and a
-	// click on the row does the same; Lezen is one step from there (docs/bediening.md, Thijs
+	// With `acties` (Bladeren): no detail beneath. The title opens the bron in Netwerk (a
+	// Kamerstuk on its text, openHref) and a click on the row does the same; the other view
+	// is one step from there (docs/bediening.md, Thijs
 	// 10 Oct: a row has no buttons of its own, a click on the row does it).
 	import type { Snippet } from 'svelte';
 	import { goto } from '$app/navigation';

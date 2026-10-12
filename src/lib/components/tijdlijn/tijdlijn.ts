@@ -24,6 +24,9 @@ export type TijdRegel = {
 	href?: string | null;
 	/** The bron the line names: a click opens it in place (BronLink), as everywhere. */
 	ref?: import('$lib/bron/href').BronRef | string | null;
+	/** Whether the text of a Kamerstuk is in the data (`has_text`): without it, it opens in
+	 *  the network (opensOnText). */
+	heeftTekst?: boolean | null;
 	/** Een besluit of een wetsvoorstel: groter gezet. */
 	groot?: boolean;
 	/** A line that leads elsewhere on the page (a day of votes to its list), not to a bron. */

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('$app/state', () => ({ page: { url: new URL('http://x/') } }));
 
-import { buildBronHref, indexHref, refOf } from './href';
+import { buildBronHref, buildOpenHref, indexHref, refOf } from './href';
 
 const at = (path: string) => new URL(`http://localhost${path}`);
 
@@ -88,6 +88,30 @@ describe('buildBronHref', () => {
 				keepNetwerk: false
 			})
 		).toBe('/explore?focus=articles/b');
+	});
+});
+
+describe('buildOpenHref', () => {
+	const netwerk = at('/explore?focus=documents/a');
+
+	it('opens a Kamerstuk on its text, and tells a phone to open its Tekst tab', () => {
+		expect(buildOpenHref(netwerk, 'documents/kst-36764-3')).toBe(
+			'/explore?focus=documents/kst-36764-3&lezen=1&paneel=tekst'
+		);
+		expect(buildOpenHref(at('/'), 'documents/kst-36764-3', { at: 'p-2' })).toBe(
+			'/explore?focus=documents/kst-36764-3&lezen=1&paneel=tekst#p-2'
+		);
+	});
+
+	it('opens a Kamerstuk whose text is not in the data yet in the network', () => {
+		expect(buildOpenHref(netwerk, 'documents/kst-36764-3', { hasText: false })).toBe(
+			'/explore?focus=documents/kst-36764-3&paneel=netwerk'
+		);
+	});
+
+	it('opens every other bron in the network, an article and a vote too', () => {
+		expect(buildOpenHref(netwerk, 'articles/b')).toBe('/explore?focus=articles/b&paneel=netwerk');
+		expect(buildOpenHref(netwerk, 'decisions/d')).toBe('/stemmingen/d?paneel=netwerk');
 	});
 });
 

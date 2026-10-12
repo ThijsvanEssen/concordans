@@ -23,7 +23,7 @@
 	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
-	import { bronHref } from '$lib/bron/href';
+	import { bronHref, openHref } from '$lib/bron/href';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
 	import { api, unwrap } from '$lib/api/client';
 	import { getCabinet } from '$lib/api/records';
@@ -2206,11 +2206,9 @@
 	const columns = $derived(noDossiers ? { ...COLUMNS.committees, aside: '' } : COLUMNS[category]);
 
 	// ── Opening a source ────────────────────────────────────────────────────
-	// The title of a row opens the bron as Lezen in the detail does: a text of its own at
-	// full width, the rest beside the network.
-	// A row opens its bron in the network (Thijs, 10 Oct: "laten we standaard navigeren naar
-	// Netwerk"); Lezen at the end of the row is the way to the text.
-	const hrefOf = (bron: string) => bronHref(bron, { keepMode: false, mode: 'graph' });
+	// A row opens its bron as every link to a bron does (openHref): in the network (Thijs,
+	// 10 Oct: "laten we standaard navigeren naar Netwerk"), a Kamerstuk on its text (12 Oct).
+	const hrefOf = (bron: string) => openHref(bron);
 
 	// A wet that amends others is known from its Staatsblad number only: its own text
 	// was not downloaded, but the articles it changed point to it.

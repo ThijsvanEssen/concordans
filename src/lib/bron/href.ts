@@ -42,6 +42,8 @@ export type BronHrefOptions = {
 	mode?: Exclude<Mode, 'index'>;
 	/** False leaves the netwerk behind: the bron opens as the focus of a canvas of its own. */
 	keepNetwerk?: boolean;
+	/** On a phone, the tab the link opens: the text or the network. Read once and dropped. */
+	paneel?: 'tekst' | 'netwerk';
 };
 
 /**
@@ -81,7 +83,7 @@ export function focusOf(ref: BronRef | string): string | null {
 export function buildBronHref(
 	current: URL | null,
 	ref: BronRef | string,
-	{ at, keepMode = true, mode, keepNetwerk = true }: BronHrefOptions = {}
+	{ at, keepMode = true, mode, keepNetwerk = true, paneel }: BronHrefOptions = {}
 ): string {
 	const focus = focusOf(ref);
 	const target = focus && parseNodeId(focus);
@@ -101,8 +103,11 @@ export function buildBronHref(
 	params.set('focus', focus);
 	if (reading && isReadable(target.collection)) params.set('lezen', '1');
 	// A link to the network (In het netwerk, Alleen de omgeving): on a phone the Verkenner
-	// opens its Netwerk tab, not the text (Thijs, 9 Oct). Read once and dropped.
+	// opens its Netwerk tab, not the text (Thijs, 9 Oct). A link that opens a text asks for
+	// the Tekst tab, wherever on the phone it was clicked. Read once and dropped.
 	if (!within && mode === 'graph') params.set('paneel', 'netwerk');
+	else if (!within && paneel === 'tekst' && reading && isReadable(target.collection))
+		params.set('paneel', 'tekst');
 	if (inExplore && current) {
 		for (const name of KEPT_PARAMS) {
 			if (!keepNetwerk && NETWERK_PARAMS.has(name)) continue;
@@ -113,9 +118,45 @@ export function buildBronHref(
 	return verkennerHref(params, at ? `#${encodeURIComponent(at)}` : '');
 }
 
+/**
+ * A Kamerstuk opens on its text (Thijs, 12 Oct 2026: "op de tekst openen"), its network one
+ * step further, as the Netwerk/Tekst switch or tab. One whose text is not in the data yet
+ * (`has_text` false) opens in the network, as every other bron does (Thijs, 10 Oct:
+ * "standaard navigeren naar Netwerk").
+ */
+export const opensOnText = (collection: Collection, hasText?: boolean | null) =>
+	collection === 'documents' && hasText !== false;
+
+export type OpenHrefOptions = {
+	/** Position inside the text: `lid-2`, `rov-5.3`. */
+	at?: string | null;
+	/** Whether the bron's text is in the data, where the payload says (`has_text`). */
+	hasText?: boolean | null;
+};
+
+/**
+ * The one link a click on a bron follows, wherever it stands: a BronLink, a row of
+ * Verbonden, a line of a tijdlijn, a row of Bladeren. A link that names the network
+ * (In het netwerk) builds its own with `mode: 'graph'`.
+ */
+export function buildOpenHref(
+	current: URL | null,
+	ref: BronRef | string,
+	{ at, hasText }: OpenHrefOptions = {}
+): string {
+	const target = parseNodeId(focusOf(ref) ?? '');
+	return target && opensOnText(target.collection, hasText)
+		? buildBronHref(current, ref, { at, keepMode: false, mode: 'read', paneel: 'tekst' })
+		: buildBronHref(current, ref, { at, keepMode: false, mode: 'graph' });
+}
+
 /** Link to a bron from the current page. Reactive where it is read in a template. */
 export const bronHref = (ref: BronRef | string, opts?: BronHrefOptions) =>
 	buildBronHref(page.url, ref, opts);
+
+/** The link a click on a bron follows (buildOpenHref), from the current page. */
+export const openHref = (ref: BronRef | string, opts?: OpenHrefOptions) =>
+	buildOpenHref(page.url, ref, opts);
 
 /** A list in Bladeren, with its filters: `/explore?mode=index&kind=ministers&cabinet=rutte_iv`. */
 export function indexHref(kind: string, filters: Record<string, string> = {}): string {

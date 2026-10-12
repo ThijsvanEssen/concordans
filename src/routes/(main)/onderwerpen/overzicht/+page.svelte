@@ -25,7 +25,7 @@
 	import UitkomstTeken from '$lib/components/parliamentary/Uitkomst.svelte';
 	import Kruiswoord, { type KolomKop } from '$lib/onderwerpen/Kruiswoord.svelte';
 	import StrekkingTeken from '$lib/onderwerpen/StrekkingTeken.svelte';
-	import { buildBronHref } from '$lib/bron/href';
+	import { buildOpenHref } from '$lib/bron/href';
 	import { korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
@@ -232,6 +232,8 @@
 		node: string | null;
 		dossier: { key: string; number: string | null; title: string | null } | null;
 		path: string | null;
+		/** Of a paper: whether its text is in the data (openHref). */
+		has_text: boolean | null;
 	};
 	let feed = $state<FeedItem[]>([]);
 	/**
@@ -256,6 +258,7 @@
 		node?: { collection: string; key: string } | null;
 		dossier?: { key: string; number?: string | null; title?: string | null } | null;
 		path?: string | null;
+		has_text?: boolean | null;
 	}): FeedItem => ({
 		id: i.id,
 		kind: i.kind,
@@ -265,7 +268,8 @@
 		dossier: i.dossier
 			? { key: i.dossier.key, number: i.dossier.number ?? null, title: i.dossier.title ?? null }
 			: null,
-		path: i.path ?? null
+		path: i.path ?? null,
+		has_text: i.has_text ?? null
 	});
 	$effect(() => {
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
@@ -1097,7 +1101,9 @@
 	const feedHref = (i: FeedItem) => {
 		if (i.path) return i.path;
 		const [collection, key] = (i.node ?? '').split('/');
-		return collection && key ? buildBronHref(null, `${collection}/${key}`, { mode: 'graph' }) : '#';
+		return collection && key
+			? buildOpenHref(null, `${collection}/${key}`, { hasText: i.has_text })
+			: '#';
 	};
 </script>
 
@@ -1326,11 +1332,8 @@
 											>
 											<a
 												class="rij__titel"
-												href={buildBronHref(
-													null,
-													{ collection: 'decisions', key: d.key },
-													{ mode: 'graph' }
-												)}>{d.subject?.trim() || soortVan(d)}</a
+												href={buildOpenHref(null, { collection: 'decisions', key: d.key })}
+												>{d.subject?.trim() || soortVan(d)}</a
 											>
 											<div class="rij__regel">
 												<span class="rij__uitkomst"
@@ -1388,9 +1391,7 @@
 													? `, ${a.papieren.length} stukken`
 													: ''}</span
 											>
-											<a
-												class="rij__titel"
-												href={buildBronHref(null, `${collection}/${key}`, { mode: 'graph' })}
+											<a class="rij__titel" href={buildOpenHref(null, `${collection}/${key}`)}
 												>{a.titel || `Amendement nr. ${a.nummer}`}</a
 											>
 											{#if a.uitkomst}
