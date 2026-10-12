@@ -8,7 +8,7 @@
 	// not open (inhoudVan). The reader stays one step further: the title, or Lees verder.
 	import { getDocument } from '$lib/api/records';
 	import { bronHref } from '$lib/bron/href';
-	import { dictumUit } from '$lib/onderwerpen/richting';
+	import { dictumUit } from '$lib/onderwerpen/strekking';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { inhoudVan, openingVan, toelichtingVan, type Inhoud, type MetInhoud } from './rij-inhoud';
 

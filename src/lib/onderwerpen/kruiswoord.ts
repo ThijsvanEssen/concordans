@@ -1,24 +1,35 @@
-// The Kruiswoord of a topic's Overzicht (concept ux-voorstel/1f): the kinds of event as
-// columns, time as rows, a count in every cell. The stemmingen per day come counted from
-// /api/decisions (facets.days: count and passed); moties, brieven and toezeggingen are the
-// feed's events, counted here from the items as they come. A cell is new where it holds a
-// day after the visit before this one (Onderwerpen volgen).
+// The Kruiswoord of a topic's Overzicht (concept ux-voorstel/1f, ronde 6): time as rows, the
+// columns under their heading: the stukken (moties, amendementen, brieven, toezeggingen), the
+// stemmingen by outcome, and a chosen fractie's voor and tegen. The stemmingen per day come
+// counted from /api/decisions (facets.days: count and passed); moties, brieven and
+// toezeggingen are the feed's events. With a strekking chosen, every number counts the moties
+// so read, from the decisions themselves. A cell is new where it holds a day after the visit
+// before this one (Onderwerpen volgen).
+import { uitkomstVan, type Besluit, type Stem } from './overzicht';
 
 export type Kolom =
 	| 'moties'
 	| 'amendementen'
+	| 'brieven'
+	| 'toezeggingen'
 	| 'aangenomen'
 	| 'verworpen'
-	| 'brieven'
-	| 'toezeggingen';
+	| 'voor'
+	| 'tegen';
 export const KOLOMMEN: readonly Kolom[] = [
 	'moties',
 	'amendementen',
+	'brieven',
+	'toezeggingen',
 	'aangenomen',
 	'verworpen',
-	'brieven',
-	'toezeggingen'
+	'voor',
+	'tegen'
 ];
+/** The columns of the stemmingen: they count decisions, and a strekking applies to them. */
+export const STEMKOLOMMEN: readonly Kolom[] = ['aangenomen', 'verworpen', 'voor', 'tegen'];
+/** The columns a strekking applies to: the moties and the stemmingen. */
+export const metStrekking = (k: Kolom) => k === 'moties' || STEMKOLOMMEN.includes(k);
 /**
  * The columns of the feed's events, and the kind /api/feed gives them. The amendments'
  * papers come from the feed too, but an amendment counts once per chain of replacing
@@ -66,8 +77,9 @@ function maandagVan(vak: Vak): Date {
 }
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-/** The first and last day of a month or week, as the API takes them. */
+/** The first and last day of a year, month or week, as the API takes them. */
 export function grenzenVan(vak: Vak): { van: string; tot: string } {
+	if (vak.length === 4) return { van: `${vak}-01-01`, tot: `${vak}-12-31` };
 	if (vak.includes('-W')) {
 		const m = maandagVan(vak);
 		const z = new Date(m);
@@ -184,17 +196,40 @@ export function amendementKetens(
 	return [...uit.values()];
 }
 
-export const somVan = (r: Rij | undefined) => (r ? KOLOMMEN.reduce((s, k) => s + r[k].n, 0) : 0);
-
-/** A cell chosen, as the URL holds it: `moties:2026-10`. */
+/**
+ * A number chosen, as the URL holds it: a cell (`moties:2026-10`, `voor:2026-W41`), a year
+ * (`aangenomen:2025`) or a column over the whole period (`brieven`), its vak then empty.
+ */
 export type Keuze = { kolom: Kolom; vak: Vak };
+const KEUZE = new RegExp(`^(${KOLOMMEN.join('|')})(?::(\\d{4}(?:-\\d{2}|-W\\d{2})?))?$`);
 export function leesKeuze(v: string | null): Keuze | null {
-	const m = v?.match(
-		/^(moties|amendementen|aangenomen|verworpen|brieven|toezeggingen):(\d{4}-(?:\d{2}|W\d{2}))$/
-	);
-	return m ? { kolom: m[1] as Kolom, vak: m[2] } : null;
+	const m = v?.match(KEUZE);
+	return m ? { kolom: m[1] as Kolom, vak: m[2] ?? '' } : null;
 }
-export const schrijfKeuze = (k: Keuze) => `${k.kolom}:${k.vak}`;
+export const schrijfKeuze = (k: Keuze) => (k.vak ? `${k.kolom}:${k.vak}` : k.kolom);
 
-/** The share of each direction among a cell's coded and uncoded moties, for its bar. */
-export type Aandeel = { positief: number; negatief: number; neutraal: number; geen: number };
+/** Does a month or week lie in a chosen vak: itself, its year, or the whole period (''). */
+export const inVak = (v: Vak, gekozen: Vak) =>
+	!gekozen || (gekozen.length === 4 ? jaarVanVak(v) === gekozen : v === gekozen);
+
+/** The columns a decision counts in: moties for a motie, its outcome and the fractie's vote. */
+export function kolommenVan(d: Besluit, stem: Stem | undefined): Kolom[] {
+	const uit: Kolom[] = ['moties'];
+	const u = uitkomstVan(d);
+	if (u !== 'overig') uit.push(u);
+	if (stem) uit.push(stem);
+	return uit;
+}
+
+/** The moties of a strekking as counted: each in the columns it falls in, on its day. */
+export const besluitTelbaar = (
+	lijst: readonly Besluit[],
+	stemmen: ReadonlyMap<string, Stem>
+): Telbaar[] =>
+	lijst.flatMap((d) =>
+		d.date ? kolommenVan(d, stemmen.get(d.key)).map((kolom) => ({ date: d.date!, kolom })) : []
+	);
+
+/** Is a decision in a chosen number: its column and its period. */
+export const inCel = (d: Besluit, stem: Stem | undefined, k: Keuze, indeling: Indeling): boolean =>
+	!!d.date && inVak(vakVan(d.date, indeling), k.vak) && kolommenVan(d, stem).includes(k.kolom);

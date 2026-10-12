@@ -901,6 +901,8 @@ describe('the keyboard', () => {
 			'lib/components/explore/readers/KamerZetels.svelte .doel': 'a seat: its stroke in ink',
 			'lib/onderwerpen/Kruiswoord.svelte .cel.vol:hover, .cel.vol:focus-visible':
 				'a cell of the grid: an inset line in ink',
+			'lib/onderwerpen/Kruiswoord.svelte .knop:hover, .knop:focus-visible':
+				'a total of the grid: an inset line in ink, as a cell',
 			"lib/components/layout/AppShell.svelte :global([tabindex='-1']:focus:not(:focus-visible))":
 				'a list reached by its skip link (focus by a click or a script): :focus-visible keeps the ring'
 		};

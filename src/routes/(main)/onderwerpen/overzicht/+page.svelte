@@ -3,27 +3,30 @@
 	import { fractieNaam } from '$lib/bron/menselijk';
 	import { formatCount } from '$lib/text/getal';
 	import RouteKop from '$lib/seo/RouteKop.svelte';
-	// Overzicht of a topic: its events in the Kruiswoord (concept ux-voorstel/1f), the kinds as
-	// columns and the months as rows, and under it the list of a chosen cell. The stemmingen are
-	// counted by /api/decisions per day (facets.days), with one fractie's voor and tegen where a
-	// fractie is chosen; moties, brieven and toezeggingen are the feed's events, counted per
-	// period by /api/feed/periods (#444); an amendment counts once per chain of replacing papers
-	// (REVISES), in the period of its first paper, as its `amendment_chains` give (#451). A cell
-	// of the amendments asks the feed for its own period when it opens. Where the counts are not
-	// whole, the feed's pages count as before. Richting lays the researcher's coding over the
-	// moties' cells.
+	// Overzicht of a topic: its events in the Kruiswoord (concept ux-voorstel/1f, ronde 6), the
+	// months as rows and the columns under Stukken, Stemmingen and a chosen fractie, and under it
+	// the list of a chosen number. The stemmingen are counted by /api/decisions per day
+	// (facets.days), with one fractie's voor and tegen where a fractie is chosen; moties,
+	// brieven and toezeggingen are the feed's events, counted per period by /api/feed/periods
+	// (#444); an amendment counts once per chain of replacing papers (REVISES), in the period of
+	// its first paper, as its `amendment_chains` give (#451). A number of the amendments asks
+	// the feed for its own period when it opens. Where the counts are not whole, the feed's
+	// pages count as before. A strekking chosen (the researcher's own reading of a motie) makes
+	// every number count only the moties so read.
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { api, unwrap } from '$lib/api/client';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
+	import KeuzeKnoppen from '$lib/components/ui/Keuze.svelte';
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Bepaalregel from '$lib/components/ui/Bepaalregel.svelte';
 	import StemTeken from '$lib/components/parliamentary/Stem.svelte';
 	import UitkomstTeken from '$lib/components/parliamentary/Uitkomst.svelte';
 	import Kruiswoord, { type KolomKop } from '$lib/onderwerpen/Kruiswoord.svelte';
+	import StrekkingTeken from '$lib/onderwerpen/StrekkingTeken.svelte';
 	import { buildBronHref } from '$lib/bron/href';
-	import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
+	import { korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
 	import { dossierName, naamVanNummer } from '$lib/bron/dossier-naam';
@@ -31,19 +34,22 @@
 	import { besluiten, geteld, telling } from '$lib/api/decisions';
 	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
 	import {
-		RICHTINGEN,
-		RICHTING_LABEL,
+		LAAG_LABEL,
+		STREKKINGEN,
+		STREKKING_LABEL,
+		STREKKING_LAGEN,
 		coderingNaarCsv,
 		coderingUitCsv,
 		dictumUit,
 		leesCodering,
-		metRichting,
+		metStrekking as coderingMet,
 		onderwerpSleutel,
 		samen,
 		schrijfCodering,
 		type Codering,
-		type Richting
-	} from '$lib/onderwerpen/richting';
+		type Strekking,
+		type StrekkingLaag
+	} from '$lib/onderwerpen/strekking';
 	import {
 		csvTabel,
 		csvTekst,
@@ -59,15 +65,19 @@
 	} from '$lib/onderwerpen/overzicht';
 	import {
 		FEED_KOLOM,
+		STEMKOLOMMEN,
 		amendementKetens,
+		besluitTelbaar,
 		grenzenVan,
+		inCel,
+		inVak,
 		kolomVanKind,
 		leesKeuze,
+		metStrekking,
 		schrijfKeuze,
 		tel,
 		vakVan,
 		vakken as vakkenVan,
-		type Aandeel,
 		type Amendement,
 		type Dag,
 		type Keuze,
@@ -104,9 +114,10 @@
 	const fractie = $derived(params.get('fractie') ?? '');
 	/** On a phone the facets behind Verfijnen (N), opened in place. */
 	let verfijnenOpen = $state(false);
-	/** The chosen cell (`cel=moties:2026-10`), Richting and the weeks as rows. */
+	/** The chosen number (`cel=moties:2026-10`, `cel=voor:2025`, `cel=brieven`). */
 	const keuze = $derived(leesKeuze(params.get('cel')));
-	const richtingAan = $derived(params.get('richting') === 'aan');
+	/** A strekking chosen: every number counts only the moties so read. */
+	const laag = $derived(STREKKING_LAGEN.find((r) => r === params.get('strekking')) ?? null);
 	const week = $derived(params.get('per') === 'week');
 	/** The filters of an older address, read for its list (soort, uitkomst, jaar, stem). */
 	const f = $derived<Filter>({
@@ -135,7 +146,7 @@
 
 	// ── The stemmingen, counted by the API (first paint) ─────────────────────
 	// One question with all the words: the decisions per day with how many passed, the
-	// counts per kind (for Richting's moties) and the total. The cheapest call of the page.
+	// counts per kind (for the moties of a strekking) and the total. The cheapest call of the page.
 	let getelden = $state<Getelden | null>(null);
 	let dagen = $state<Dag[]>([]);
 	let apiTotaal = $state<number | null>(null);
@@ -351,13 +362,13 @@
 		};
 	});
 
-	// Counted by their chains, the amendments of one cell are asked when it opens: the feed's
-	// amendment papers of its period, whose chains the effect below finds.
+	// Counted by their chains, the amendments of one number are asked when it opens: the feed's
+	// amendment papers of its period (a month, a week, a year or the whole period), whose chains
+	// the effect below finds.
 	$effect(() => {
-		const cel = keuze?.kolom === 'amendementen' ? keuze.vak : null;
-		if (!ketensGeteld || !cel) return;
+		if (!ketensGeteld || keuze?.kolom !== 'amendementen') return;
 		const woorden = termenSleutel ? termenSleutel.split('|') : [];
-		const { van: sinds, tot: totEnMet } = grenzenVan(cel);
+		const { v: sinds, t: totEnMet } = celPeriode;
 		const k = kamer;
 		const ac = new AbortController();
 		feed = [];
@@ -372,8 +383,8 @@
 							query: {
 								q: woorden,
 								...(k ? { chamber: k as 'TK' | 'EK' } : {}),
-								since: sinds,
-								until: totEnMet,
+								...(sinds ? { since: sinds } : {}),
+								...(totEnMet ? { until: totEnMet } : {}),
 								kind: FEED_KOLOM.amendementen,
 								limit: PAGINA,
 								facets: false,
@@ -448,131 +459,25 @@
 		return i >= 0 ? lijst[i].vorige : null;
 	});
 	const indeling = $derived(week ? 'week' : 'maand');
-	const telbaar = $derived.by<Telbaar[]>(() => {
-		const uit: Telbaar[] = [];
-		if (perioden) uit.push(...perioden);
-		else
-			for (const i of feed) {
-				const k = kolomVanKind(i.kind);
-				if (k && k !== 'amendementen') uit.push({ date: i.date, kolom: k });
-			}
-		if (!ketensGeteld)
-			for (const a of amendementen) uit.push({ date: a.datum, kolom: 'amendementen' });
-		if (fractieDagen) {
-			for (const d of fractieDagen.voor)
-				uit.push({ date: d.date, kolom: 'aangenomen', count: d.count });
-			for (const d of fractieDagen.tegen)
-				uit.push({ date: d.date, kolom: 'verworpen', count: d.count });
-		}
-		return uit;
-	});
-	const rijen = $derived(tel(fractie ? [] : dagen, telbaar, indeling, vorige));
-	/** From the first event (or the period's start) to the period's end or the data's day. */
-	const eerste = $derived(
-		[...dagen.map((d) => d.date), ...telbaar.map((t) => t.date)].reduce<string | null>(
-			(a, d) => (d && (!a || d < a) ? d : a),
-			null
-		)
-	);
-	const vakken = $derived(vakkenVan(van || eerste || '', tot || dataTot || vandaag(), indeling));
-	const ongeteld = $derived.by<Partial<Record<Kolom, Vak | null>>>(() => {
-		if (!feedGrens) return {};
-		// The month of the last event counted is counted in part; the ones before not at all.
-		const grens = vakVan(feedGrens, indeling);
-		const voor = vakken.find((v) => v < grens) ?? null;
-		// Counted per month by the API, the moties, brieven and toezeggingen are whole.
-		// Counted by the API, the columns are whole; the amendments too where their chains are.
-		if (ketensGeteld) return {};
-		return perioden
-			? { amendementen: voor }
-			: { moties: voor, amendementen: voor, brieven: voor, toezeggingen: voor };
-	});
-	const bezig = $derived<Partial<Record<Kolom, boolean>>>({
-		moties: feedLaden,
-		// Counted by their chains, the column stands; only an opened cell's list is asked.
-		amendementen: !ketensGeteld && (feedLaden || ketensLaden),
-		brieven: feedLaden,
-		toezeggingen: feedLaden,
-		aangenomen: fractie ? fractieLaden : tellenLaden,
-		verworpen: fractie ? fractieLaden : tellenLaden
-	});
-	const alleFracties = $derived(
-		fractie ? ' Alle fracties: de fractie geldt alleen voor de stemmingen.' : ''
-	);
-	const kolommen = $derived<KolomKop[]>([
-		{
-			k: 'moties',
-			label: 'Moties',
-			titel: `Ingediende moties met een woord van het onderwerp in de titel of de titel van het dossier.${alleFracties}`
-		},
-		{
-			k: 'amendementen',
-			label: 'Amendementen',
-			titel: `Een amendement één keer per keten van vervanging, in de maand van zijn eerste stuk; de uitkomst staat in de lijst.${alleFracties}`
-		},
-		...(fractie
-			? ([
-					{
-						k: 'aangenomen',
-						label: 'Voor',
-						groep: fractie,
-						titel: `Stemmingen waarin ${fractie} voor stemde.`
-					},
-					{
-						k: 'verworpen',
-						label: 'Tegen',
-						groep: fractie,
-						titel: `Stemmingen waarin ${fractie} tegen stemde.`
-					}
-				] as KolomKop[])
-			: ([
-					{
-						k: 'aangenomen',
-						label: 'Aangenomen',
-						groep: 'Stemmingen',
-						vorm: 'ja',
-						titel:
-							'Stemmingen over moties, amendementen en wetsvoorstellen met een woord van het onderwerp in de titel: aangenomen.'
-					},
-					{
-						k: 'verworpen',
-						label: 'Verworpen',
-						groep: 'Stemmingen',
-						vorm: 'nee',
-						titel:
-							'Stemmingen over moties, amendementen en wetsvoorstellen met een woord van het onderwerp in de titel: verworpen.'
-					}
-				] as KolomKop[])),
-		{
-			k: 'brieven',
-			label: 'Brieven',
-			titel: `Brieven van de regering met een woord van het onderwerp in de titel of de titel van het dossier.${alleFracties}`
-		},
-		{
-			k: 'toezeggingen',
-			label: 'Toezeggingen',
-			titel: `Toezeggingen van bewindspersonen met een woord van het onderwerp in de tekst of de titel van het dossier.${alleFracties}`
-		}
-	]);
-	const leegte = $derived(
-		!tellenLaden && !feedLaden && apiTotaal === 0 && !feed.length && !fractieLaden
-	);
 
-	// ── Richting: the researcher's own coding of a motie (stance-voorstel, 10 Oct) ──────
-	// Positief, negatief or neutraal with respect to this topic, kept in this browser per
-	// topic, per motie as voted (its decision). With Richting on, the moties voted in the
-	// period are asked, and each month's share of each direction lies as a bar in the cell of
-	// the moties. Until a decision names its motie, the bar counts the votes of the month.
+	// ── Strekking: the researcher's own reading of a motie (stance-voorstel, 10 Oct) ──────
+	// Bevorderend, beperkend or neutraal with respect to this topic, kept in this browser per
+	// topic, per motie as voted (its decision). With a strekking chosen, the moties voted in the
+	// period are asked, page after page, CSV_MAX at most per kind, and every number counts only
+	// those so read: the moties by the day of their vote, their outcome and the fractie's vote.
 	let codering = $state<Codering>(leesCodering());
 	const onderwerp = $derived(onderwerpSleutel(termen));
 	const mijn = $derived(codering[onderwerp] ?? {});
 	const isMotie = (d: Besluit) => /^motie/i.test(soortVan(d));
-	function kiesRichting(d: Besluit, r: Richting | null) {
-		codering = metRichting(codering, onderwerp, d.key, r);
+	function kiesStrekking(d: Besluit, r: Strekking | null) {
+		codering = coderingMet(codering, onderwerp, d.key, r);
 		schrijfCodering(codering);
 	}
+	const strekkingVan = (d: Besluit): StrekkingLaag => mijn[d.key] ?? 'geen';
 	let moties = $state<Besluit[] | null>(null);
 	let motiesLaden = $state(false);
+	/** The day of the last motie asked, where a kind had more than CSV_MAX. */
+	let motiesGrens = $state<string | null>(null);
 	const motieSoorten = $derived(
 		(getelden?.soorten ?? [])
 			.map(([k]) => k)
@@ -597,13 +502,22 @@
 	}
 	$effect(() => {
 		motiesLaden = false;
-		if (!richtingAan || !motieSoorten || !termenSleutel) return;
+		if (!laag || !motieSoorten || !termenSleutel) return;
 		const basis = basisVan(termenSleutel.split('|'), kamer, van, tot);
 		const ac = new AbortController();
 		moties = null;
+		motiesGrens = null;
 		motiesLaden = true;
 		Promise.all(motieSoorten.split('|').map((kind) => alle({ ...basis, kind }, ac.signal)))
-			.then((lijsten) => (moties = lijsten.flat()))
+			.then((lijsten) => {
+				moties = lijsten.flat();
+				const vol = lijsten.filter((l) => l.length >= CSV_MAX);
+				motiesGrens =
+					vol
+						.map((l) => l.at(-1)?.date ?? '')
+						.sort()
+						.at(-1) || null;
+			})
 			.catch(() => {})
 			.finally(() => {
 				if (!ac.signal.aborted) motiesLaden = false;
@@ -613,49 +527,237 @@
 			motiesLaden = false;
 		};
 	});
-	const aandeel = $derived.by<Map<Vak, Aandeel> | null>(() => {
-		if (!richtingAan || !moties) return null;
-		const m = new Map<Vak, Aandeel>();
-		for (const d of moties) {
-			if (!d.date) continue;
-			const v = vakVan(d.date, indeling);
-			const a = m.get(v) ?? { positief: 0, negatief: 0, neutraal: 0, geen: 0 };
-			a[mijn[d.key] ?? 'geen']++;
-			m.set(v, a);
-		}
-		return m;
+	/** A chosen fractie's vote on each motie, where a strekking is chosen. */
+	let fractieStemmen = $state<ReadonlyMap<string, Stem>>(new Map());
+	let fractieStemmenLaden = $state(false);
+	$effect(() => {
+		const wie = fractie;
+		fractieStemmen = new Map();
+		fractieStemmenLaden = false;
+		if (!laag || !wie || !motieSoorten || !termenSleutel) return;
+		const basis = basisVan(termenSleutel.split('|'), kamer, van, tot);
+		const ac = new AbortController();
+		const st = new Map<string, Stem>();
+		fractieStemmenLaden = true;
+		Promise.all(
+			motieSoorten.split('|').flatMap((kind) =>
+				(['voor', 'tegen'] as const).map((vote) =>
+					alle({ ...basis, kind, party: wie, vote }, ac.signal).then((xs) => {
+						for (const d of xs) st.set(d.key, vote);
+					})
+				)
+			)
+		)
+			.then(() => (fractieStemmen = st))
+			.catch(() => {})
+			.finally(() => {
+				if (!ac.signal.aborted) fractieStemmenLaden = false;
+			});
+		return () => {
+			ac.abort();
+			fractieStemmenLaden = false;
+		};
 	});
+	/** The moties of the chosen strekking. */
+	const laagMoties = $derived(
+		laag && moties ? moties.filter((d) => strekkingVan(d) === laag) : null
+	);
+
+	const telbaar = $derived.by<Telbaar[]>(() => {
+		if (laag) return besluitTelbaar(laagMoties ?? [], fractieStemmen);
+		const uit: Telbaar[] = [];
+		if (perioden) uit.push(...perioden);
+		else
+			for (const i of feed) {
+				const k = kolomVanKind(i.kind);
+				if (k && k !== 'amendementen') uit.push({ date: i.date, kolom: k });
+			}
+		if (!ketensGeteld)
+			for (const a of amendementen) uit.push({ date: a.datum, kolom: 'amendementen' });
+		if (fractieDagen) {
+			for (const d of fractieDagen.voor) uit.push({ date: d.date, kolom: 'voor', count: d.count });
+			for (const d of fractieDagen.tegen)
+				uit.push({ date: d.date, kolom: 'tegen', count: d.count });
+		}
+		return uit;
+	});
+	const rijen = $derived(tel(laag ? [] : dagen, telbaar, indeling, vorige));
+	/** From the first event (or the period's start) to the period's end or the data's day. */
+	const eerste = $derived(
+		[
+			...dagen.map((d) => d.date),
+			...(perioden ?? feed).map((t) => t.date),
+			...amendementen.map((a) => a.datum)
+		].reduce<string | null>((a, d) => (d && (!a || d < a) ? d : a), null)
+	);
+	const vakken = $derived(vakkenVan(van || eerste || '', tot || dataTot || vandaag(), indeling));
+	const ongeteld = $derived.by<Partial<Record<Kolom, Vak | null>>>(() => {
+		// The period of the last event counted is counted in part; the ones before not at all.
+		const voor = (dag: string) => {
+			const grens = vakVan(dag, indeling);
+			return vakken.find((v) => v < grens) ?? null;
+		};
+		if (laag) {
+			if (!motiesGrens) return {};
+			const v = voor(motiesGrens);
+			return Object.fromEntries(['moties', ...STEMKOLOMMEN].map((k) => [k, v]));
+		}
+		// Counted by the API, the columns are whole; the amendments too where their chains are.
+		if (!feedGrens || ketensGeteld) return {};
+		const v = voor(feedGrens);
+		return perioden
+			? { amendementen: v }
+			: { moties: v, amendementen: v, brieven: v, toezeggingen: v };
+	});
+	const bezig = $derived.by<Partial<Record<Kolom, boolean>>>(() => {
+		if (laag) {
+			const b = motiesLaden || (!moties && !!motieSoorten);
+			return {
+				moties: b,
+				aangenomen: b,
+				verworpen: b,
+				voor: b || fractieStemmenLaden,
+				tegen: b || fractieStemmenLaden
+			};
+		}
+		return {
+			moties: feedLaden,
+			// Counted by their chains, the column stands; only an opened cell's list is asked.
+			amendementen: !ketensGeteld && (feedLaden || ketensLaden),
+			brieven: feedLaden,
+			toezeggingen: feedLaden,
+			aangenomen: tellenLaden,
+			verworpen: tellenLaden,
+			voor: fractieLaden,
+			tegen: fractieLaden
+		};
+	});
+	/** With a strekking, the columns it does not apply to stand empty. */
+	const uit = $derived<ReadonlySet<Kolom>>(
+		new Set(laag ? (['amendementen', 'brieven', 'toezeggingen'] as Kolom[]) : [])
+	);
+	const kolommen = $derived.by<KolomKop[]>(() => {
+		const metWoord = 'met een woord van het onderwerp in de titel';
+		const stemmingen = laag
+			? `Stemmingen over moties met de strekking ${LAAG_LABEL[laag].toLowerCase()}`
+			: `Stemmingen over moties, amendementen en wetsvoorstellen ${metWoord}`;
+		const k: KolomKop[] = [
+			{
+				k: 'moties',
+				label: 'Moties',
+				groep: 'Stukken',
+				titel: laag
+					? `Moties met de strekking ${LAAG_LABEL[laag].toLowerCase()}, op de dag van de stemming.`
+					: `Ingediende moties ${metWoord} of de titel van het dossier.`
+			},
+			{
+				k: 'amendementen',
+				label: 'Amendementen',
+				groep: 'Stukken',
+				titel:
+					'Een amendement één keer per keten van vervanging, in de maand van zijn eerste stuk; de uitkomst staat in de lijst.'
+			},
+			{
+				k: 'brieven',
+				label: 'Brieven',
+				groep: 'Stukken',
+				titel: `Brieven van de regering ${metWoord} of de titel van het dossier.`
+			},
+			{
+				k: 'toezeggingen',
+				label: 'Toezeggingen',
+				groep: 'Stukken',
+				titel:
+					'Toezeggingen van bewindspersonen met een woord van het onderwerp in de tekst of de titel van het dossier.'
+			},
+			{
+				k: 'aangenomen',
+				label: 'Aangenomen',
+				groep: 'Stemmingen',
+				vorm: 'ja',
+				titel: `${stemmingen}: aangenomen.`
+			},
+			{
+				k: 'verworpen',
+				label: 'Verworpen',
+				groep: 'Stemmingen',
+				vorm: 'nee',
+				titel: `${stemmingen}: verworpen.`
+			}
+		];
+		if (fractie)
+			k.push(
+				{
+					k: 'voor',
+					label: 'Voor',
+					groep: fractie,
+					titel: `${stemmingen}, waarin ${fractie} voor stemde.`
+				},
+				{
+					k: 'tegen',
+					label: 'Tegen',
+					groep: fractie,
+					titel: `${stemmingen}, waarin ${fractie} tegen stemde.`
+				}
+			);
+		return k;
+	});
+	const leegte = $derived(
+		!tellenLaden && !feedLaden && apiTotaal === 0 && !feed.length && !fractieLaden
+	);
 
 	// ── The list under the grid ─────────────────────────────────────────────
-	// Without a chosen cell, and for a cell of the stemmingen: the decisions, as /api/decisions
-	// gives them, with their outcome, the fractie's vote and the coding of a motie. For a cell
-	// of the feed: its events of that month; for the amendments: their chains.
+	// Without a chosen number, and for a number of the stemmingen: the decisions, as
+	// /api/decisions gives them, with their outcome, the fractie's vote and the strekking of a
+	// motie. With a strekking: its moties, counted here. For a number of the feed: its events of
+	// that period; for the amendments: their chains.
 	const binnen = (a: string, b: string, max: boolean) => (!a ? b : !b ? a : max === a > b ? a : b);
 	const celPeriode = $derived.by(() => {
-		if (!keuze) return { v: van, t: tot };
+		if (!keuze?.vak) return { v: van, t: tot };
 		const g = grenzenVan(keuze.vak);
 		return { v: binnen(van, g.van, true), t: binnen(tot, g.tot, false) };
 	});
-	const lijstSoort = $derived<'besluiten' | 'feed' | 'amendementen'>(
-		!keuze || keuze.kolom === 'aangenomen' || keuze.kolom === 'verworpen'
-			? 'besluiten'
-			: keuze.kolom === 'amendementen'
-				? 'amendementen'
-				: 'feed'
+	const lijstSoort = $derived<'besluiten' | 'lokaal' | 'feed' | 'amendementen'>(
+		laag && (!keuze || metStrekking(keuze.kolom))
+			? 'lokaal'
+			: !keuze || STEMKOLOMMEN.includes(keuze.kolom)
+				? 'besluiten'
+				: keuze.kolom === 'amendementen'
+					? 'amendementen'
+					: 'feed'
 	);
 	const celFilter = $derived<Filter>(
 		keuze?.kolom === 'aangenomen'
-			? fractie
-				? { stem: 'voor' }
-				: { uitkomst: 'aangenomen' }
+			? { uitkomst: 'aangenomen' }
 			: keuze?.kolom === 'verworpen'
-				? fractie
-					? { stem: 'tegen' }
-					: { uitkomst: 'verworpen' }
-				: keuze
-					? {}
-					: f
+				? { uitkomst: 'verworpen' }
+				: keuze?.kolom === 'voor'
+					? { stem: 'voor' }
+					: keuze?.kolom === 'tegen'
+						? { stem: 'tegen' }
+						: keuze
+							? {}
+							: f
 	);
+	/**
+	 * The list of a strekking: its moties, those of the chosen number. A row read while the list
+	 * stands keeps its place (the coding is read untracked): reading the list of Niet beoordeeld
+	 * does not pull the next row under the pointer.
+	 */
+	const lokaal = $derived.by(() => {
+		if (lijstSoort !== 'lokaal') return null;
+		// Counted, and no moties among the decisions: an empty list, not one still loading.
+		if (!moties) return getelden && !motieSoorten ? [] : null;
+		const codes = untrack(() => mijn);
+		const bron = moties.filter((d) => (codes[d.key] ?? 'geen') === laag);
+		const k = keuze;
+		return k ? bron.filter((d) => inCel(d, fractieStemmen.get(d.key), k, indeling)) : bron;
+	});
+	/** The rows of a list counted here shown, STAP more at a time; another list starts again. */
+	let lokaalGetoond = $derived.by(() => {
+		void lokaal;
+		return STAP;
+	});
 	const lijstVraag = $derived(
 		lijstQuery(basisVan(termen, kamer, celPeriode.v, celPeriode.t), celFilter, fractie || null)
 	);
@@ -758,7 +860,7 @@
 	}
 	const celAmendementen = $derived(
 		keuze?.kolom === 'amendementen'
-			? amendementen.filter((a) => vakVan(a.datum, indeling) === keuze.vak)
+			? amendementen.filter((a) => inVak(vakVan(a.datum, indeling), keuze.vak))
 			: []
 	);
 	let amendementenGetoond = $derived.by(() => {
@@ -768,17 +870,29 @@
 
 	/** How many the list holds, also where only a page of it is loaded; null while counted. */
 	const lijstAantal = $derived(
-		lijstSoort === 'besluiten'
-			? apiLijst.length && lijstTotaal === null
-				? null
-				: (lijstTotaal ?? 0)
-			: lijstSoort === 'amendementen'
-				? celAmendementen.length
-				: (rijen.get(keuze!.vak)?.[keuze!.kolom].n ?? feedLijst.length)
+		lijstSoort === 'lokaal'
+			? (lokaal?.length ?? null)
+			: lijstSoort === 'besluiten'
+				? apiLijst.length && lijstTotaal === null
+					? null
+					: (lijstTotaal ?? 0)
+				: lijstSoort === 'amendementen'
+					? celAmendementen.length
+					: vakken
+							.filter((v) => inVak(v, keuze!.vak))
+							.reduce((n, v) => n + (rijen.get(v)?.[keuze!.kolom].n ?? 0), 0)
 	);
-	const lijstLaadt = $derived(lijstSoort === 'besluiten' ? lijstLaden : feedLijstLaden);
-	/** A fractie's vote on a row, where the cell or an older address says it. */
-	const stemVan = (): Stem | undefined => (fractie ? celFilter.stem : undefined);
+	const lijstLaadt = $derived(
+		lijstSoort === 'lokaal'
+			? motiesLaden || fractieStemmenLaden
+			: lijstSoort === 'besluiten'
+				? lijstLaden
+				: feedLijstLaden
+	);
+	const besluitRijen = $derived(lokaal ? lokaal.slice(0, lokaalGetoond) : apiLijst);
+	/** A fractie's vote on a row: where the number says it, else as counted for a strekking. */
+	const stemVan = (d: Besluit): Stem | undefined =>
+		fractie ? (celFilter.stem ?? fractieStemmen.get(d.key)) : undefined;
 	const UITKOMST_LABEL: Record<Uitkomst, string> = {
 		aangenomen: 'aangenomen',
 		verworpen: 'verworpen',
@@ -792,6 +906,21 @@
 	/** A number; '…' for one still being counted (null). */
 	const getal = (n: number | null) => (n === null ? '…' : formatCount(n));
 	const naam = $derived(termen.join('; '));
+	/** What a chosen number is, in words, over the list: `Stemmingen, aangenomen, 2025`. */
+	const keuzeNaam = $derived.by(() => {
+		if (!keuze) return '';
+		const c = kolommen.find((x) => x.k === keuze.kolom);
+		const wat = !c ? '' : c.groep === 'Stukken' ? c.label : `${c.groep}, ${c.label.toLowerCase()}`;
+		const v = keuze.vak;
+		const wanneer = !v
+			? ''
+			: v.length === 4
+				? v
+				: v.includes('-W')
+					? `week ${Number(v.slice(6))} van ${v.slice(0, 4)}`
+					: `${maandNaam(`${v}-01`, false)} ${v.slice(0, 4)}`;
+		return [wat, wanneer].filter(Boolean).join(', ');
+	});
 	const oudeFilters = $derived(!keuze && !!(f.soort || f.uitkomst || f.jaar || f.stem));
 
 	// ── Fracties for the facet ──────────────────────────────────────────────
@@ -833,6 +962,7 @@
 		if (!fractie) return new Map();
 		const s = celFilter.stem;
 		if (s) return new Map(rijen.map((d) => [d.key, s] as const));
+		if (lokaal) return fractieStemmen;
 		const m = new Map<string, Stem>();
 		await Promise.all(
 			(['voor', 'tegen'] as const).map((vote) =>
@@ -845,7 +975,7 @@
 	}
 	async function exporteer() {
 		exporteren = true;
-		const lijst = await alle(lijstVraag).catch(() => [] as Besluit[]);
+		const lijst = lokaal ?? (await alle(lijstVraag).catch(() => [] as Besluit[]));
 		const stemmenLijst = await stemmenVan(lijst).catch(() => new Map<string, Stem>());
 		// The names the decisions carry (API 0.79.30); asked by number only where they do not.
 		const namen = new Map<string, string>();
@@ -931,7 +1061,7 @@
 				return [
 					d.key,
 					{
-						richting: mijn[d.key] ?? '',
+						strekking: mijn[d.key] ?? '',
 						dictum: d.dictum ?? stuk?.dictum ?? '',
 						indieners: stuk?.indieners ?? '',
 						fracties: stuk?.fracties ?? ''
@@ -946,7 +1076,7 @@
 		const titels = new Map(
 			[...(moties ?? []), ...apiLijst].map((d) => [d.key, d.subject?.trim() ?? ''] as const)
 		);
-		download(`Richting ${bestandsnaam()}.csv`, coderingNaarCsv(onderwerp, mijn, titels));
+		download(`Strekking ${bestandsnaam()}.csv`, coderingNaarCsv(onderwerp, mijn, titels));
 	}
 	let importFout = $state(false);
 	async function laadCodering(e: Event) {
@@ -985,12 +1115,13 @@
 			<button
 				type="button"
 				class="btn is-groot"
-				title={lijstSoort === 'besluiten'
+				title={lijstSoort === 'besluiten' || lijstSoort === 'lokaal'
 					? 'De besluiten van de lijst als CSV'
-					: 'Alleen de besluiten gaan als CSV: kies geen cel of een cel van de stemmingen'}
+					: 'Alleen de besluiten gaan als CSV: kies geen getal of een getal van de stemmingen'}
 				onclick={exporteer}
-				disabled={lijstSoort !== 'besluiten' || !apiLijst.length || exporteren}
-				>{exporteren ? 'Ophalen…' : 'CSV'}</button
+				disabled={(lijstSoort !== 'besluiten' && lijstSoort !== 'lokaal') ||
+					!besluitRijen.length ||
+					exporteren}>{exporteren ? 'Ophalen…' : 'CSV'}</button
 			>
 		{/if}
 	</header>
@@ -1075,13 +1206,24 @@
 						<div class="sectie__kop">
 							<h2 id="t-verloop">Verloop</h2>
 							<span class="schakels">
-								<FilterOptie
-									inline
-									label="Richting"
-									title="Per maand het aandeel van de eigen codering in de cellen van de moties"
-									on={richtingAan}
-									onToggle={() => zet({ richting: richtingAan ? null : 'aan' })}
-								/>
+								<!-- The strekking as a layer: one chosen, every number counts its moties. -->
+								<span class="as">
+									<span class="as__label" aria-hidden="true">Strekking</span>
+									<KeuzeKnoppen
+										klein
+										label="Strekking"
+										opties={[
+											{ waarde: 'alle', label: 'Alle' },
+											...STREKKING_LAGEN.map((r) => ({ waarde: r, label: LAAG_LABEL[r] }))
+										]}
+										waarde={laag ?? 'alle'}
+										onKies={(w) => zet({ strekking: w === 'alle' ? null : w, cel: null })}
+									>
+										{#snippet voor(w)}{#if w !== 'alle'}<StrekkingTeken
+													strekking={w as StrekkingLaag}
+												/>{/if}{/snippet}
+									</KeuzeKnoppen>
+								</span>
 								<FilterOptie
 									inline
 									label="Per week"
@@ -1090,16 +1232,18 @@
 								/>
 							</span>
 						</div>
-						{#if feedGrens || ketenDossiers.totaal > DOSSIERS_MAX || (richtingAan && motiesLaden) || importFout}
+						{#if (!laag && (feedGrens || ketenDossiers.totaal > DOSSIERS_MAX)) || (laag && motiesGrens) || importFout}
 							<p class="sectie__regel">
-								{#if feedGrens}<span
+								{#if feedGrens && !laag}<span
 										>{perioden ? 'Amendementen' : 'Moties, amendementen, brieven en toezeggingen'} doorzocht
 										vanaf {langeDatum(feedGrens)}.</span
 									>{/if}
-								{#if ketenDossiers.totaal > DOSSIERS_MAX}<span
+								{#if ketenDossiers.totaal > DOSSIERS_MAX && !laag}<span
 										>Amendementen in {DOSSIERS_MAX} van {getal(ketenDossiers.totaal)} dossiers nagelopen.</span
 									>{/if}
-								{#if richtingAan && motiesLaden}<span>Moties laden…</span>{/if}
+								{#if laag && motiesGrens}<span
+										>Moties doorzocht vanaf {langeDatum(motiesGrens)}.</span
+									>{/if}
 								{#if importFout}<span>Geen codering in dit bestand.</span>{/if}
 							</p>
 						{/if}
@@ -1111,7 +1255,7 @@
 							onKies={kies}
 							{bezig}
 							{ongeteld}
-							{aandeel}
+							{uit}
 							nieuwSinds={vorige}
 							{week}
 						/>
@@ -1121,42 +1265,48 @@
 						<div class="lijst__kop">
 							<h2 id="t-lijst">Stukken</h2>
 							<span class="aantal">{lijstLaadt && !lijstAantal ? '…' : getal(lijstAantal)}</span>
-							{#if richtingAan}
-								<!-- Bewaren and laden behind one quiet word, where the coding is done. -->
-								<span class="lijst__rechts">
-									<TekstMenu klein rechts label="Codering" tekst="Codering">
-										{#snippet inhoud(sluit)}
-											<button
-												type="button"
-												role="menuitem"
-												class="tekstmenu__item menu-regel"
-												disabled={!Object.keys(mijn).length}
-												onclick={() => {
+							<!-- Bewaren and laden behind one quiet word, where the coding is done. -->
+							<span class="lijst__rechts">
+								<TekstMenu klein rechts label="Codering" tekst="Codering">
+									{#snippet inhoud(sluit)}
+										<button
+											type="button"
+											role="menuitem"
+											class="tekstmenu__item menu-regel"
+											disabled={!Object.keys(mijn).length}
+											onclick={() => {
+												sluit();
+												bewaarCodering();
+											}}>Bewaren als CSV</button
+										>
+										<label class="tekstmenu__item menu-regel">
+											Laden uit CSV
+											<input
+												type="file"
+												accept=".csv,text/csv"
+												class="sr-only"
+												onchange={(e) => {
 													sluit();
-													bewaarCodering();
-												}}>Bewaren als CSV</button
-											>
-											<label class="tekstmenu__item menu-regel">
-												Laden uit CSV
-												<input
-													type="file"
-													accept=".csv,text/csv"
-													class="sr-only"
-													onchange={(e) => {
-														sluit();
-														laadCodering(e);
-													}}
-												/>
-											</label>
-										{/snippet}
-									</TekstMenu>
-								</span>
-							{/if}
+													laadCodering(e);
+												}}
+											/>
+										</label>
+									{/snippet}
+								</TekstMenu>
+							</span>
 						</div>
-						{#if keuze}
+						{#if keuze || laag}
 							<p class="selectie">
-								{getal(lijstAantal)} in de selectie
-								<TekstLink onclick={() => kies(null)}>Selectie wissen</TekstLink>
+								<span
+									>{[
+										keuze ? keuzeNaam : '',
+										laag ? `strekking ${LAAG_LABEL[laag].toLowerCase()}` : ''
+									]
+										.filter(Boolean)
+										.join(', ')
+										.replace(/^./, (c) => c.toUpperCase())}</span
+								>
+								{#if keuze}<TekstLink onclick={() => kies(null)}>Selectie wissen</TekstLink>{/if}
 							</p>
 						{:else if oudeFilters}
 							<p class="selectie">
@@ -1164,9 +1314,9 @@
 							</p>
 						{/if}
 						<ol class="rijen">
-							{#if lijstSoort === 'besluiten'}
-								{#each apiLijst as d (d.key)}
-									{@const s = stemVan()}
+							{#if lijstSoort === 'besluiten' || lijstSoort === 'lokaal'}
+								{#each besluitRijen as d (d.key)}
+									{@const s = stemVan(d)}
 									{@const u = uitkomstVan(d)}
 									<li class="rij">
 										<span class="rij__datum">{korteDatum(d.date)}</span>
@@ -1192,20 +1342,20 @@
 														>{/if}</span
 												>
 												{#if isMotie(d)}
-													<!-- The researcher's coding, quiet: three words, the chosen one in ink; a
-													     second click clears it. -->
+													<!-- The researcher's reading, quiet: three words, the chosen one in ink;
+													     a second click clears it. -->
 													<span
-														class="rij__richting"
+														class="rij__strekking"
 														role="group"
-														aria-label={`Richting ten opzichte van ${naam}`}
+														aria-label={`Strekking ten opzichte van ${naam}`}
 													>
-														{#each RICHTINGEN as r (r)}
+														{#each STREKKINGEN as r (r)}
 															<button
 																type="button"
 																class="keus"
 																aria-pressed={mijn[d.key] === r}
-																onclick={() => kiesRichting(d, mijn[d.key] === r ? null : r)}
-																>{RICHTING_LABEL[r]}</button
+																onclick={() => kiesStrekking(d, mijn[d.key] === r ? null : r)}
+																>{STREKKING_LABEL[r]}</button
 															>
 														{/each}
 														<!-- Only where the motie has a dictum (the decision's own `dictum`, null
@@ -1276,7 +1426,13 @@
 								{/each}
 							{/if}
 						</ol>
-						{#if lijstSoort === 'besluiten' && apiLijst.length < (lijstTotaal ?? 0)}
+						{#if lokaal && lokaal.length > lokaalGetoond}
+							<p class="volgende">
+								<TekstLink onclick={() => (lokaalGetoond += STAP)}
+									>Volgende besluiten, nog {getal(lokaal.length - lokaalGetoond)}</TekstLink
+								>
+							</p>
+						{:else if lijstSoort === 'besluiten' && apiLijst.length < (lijstTotaal ?? 0)}
 							<p class="volgende">
 								{#if lijstLaden}Laden…{:else}<TekstLink onclick={meerLaden}
 										>Volgende besluiten, nog {getal(
@@ -1365,6 +1521,17 @@
 	.lijst__rechts {
 		margin-left: auto;
 	}
+	/* An axis as a choice: its name before it, over it on a phone. */
+	.as {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--s-2);
+	}
+	.as__label {
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-3);
+	}
 	/* What is chosen in the grid, and the way back: one line over the list. */
 	.selectie {
 		display: flex;
@@ -1447,7 +1614,7 @@
 	.rij__stem {
 		margin-left: var(--s-3);
 	}
-	.rij__richting {
+	.rij__strekking {
 		display: inline-flex;
 		flex-wrap: wrap;
 		gap: var(--s-1) var(--s-3);
@@ -1498,8 +1665,22 @@
 			grid-template-columns: minmax(0, 1fr);
 			gap: var(--s-1);
 		}
-		.rij__richting {
+		.rij__strekking {
 			margin-left: 0;
+		}
+		/* The Strekking on a phone: its name over it, its options in words only and a step
+		   closer, so the five fit the width. */
+		.as {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: var(--s-1);
+		}
+		.as :global(.st) {
+			display: none;
+		}
+		.as :global(.keuze button) {
+			padding: 0 var(--s-1);
+			white-space: nowrap;
 		}
 	}
 

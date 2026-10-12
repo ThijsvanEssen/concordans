@@ -192,18 +192,18 @@ const UITKOMST: Record<Uitkomst, string> = {
 	overig: ''
 };
 
-/** Per decision of a motie: the researcher's direction, the dictum, indieners and fracties. */
+/** Per decision of a motie: the researcher's strekking, the dictum, indieners and fracties. */
 export type MotieVelden = ReadonlyMap<
 	string,
-	{ richting?: string; dictum?: string | null; indieners?: string; fracties?: string }
+	{ strekking?: string; dictum?: string | null; indieners?: string; fracties?: string }
 >;
 
-/** The column of the researcher's direction, in the CSV and in the table that counts it. */
-export const KOLOM_RICHTING = 'richting (eigen codering)';
+/** The column of the researcher's strekking in the CSV. */
+export const KOLOM_STREKKING = 'strekking (eigen codering)';
 export const kolomStem = (fractie: string) => `stem ${fractie}`;
 
 export type CsvCel = string | number | null | undefined;
-/** The export as rows of cells under a head: what the CSV writes and the Richting table counts. */
+/** The export as rows of cells under a head: what the CSV writes. */
 export type CsvTabel = { kop: string[]; rijen: CsvCel[][] };
 
 export function csvTabel(
@@ -214,7 +214,7 @@ export function csvTabel(
 	/** A dossier's name by its number, where it was found. */
 	namen: ReadonlyMap<string, string> = new Map(),
 	/**
-	 * Per decision of a motie: the researcher's direction, and from the motie's text the dictum,
+	 * Per decision of a motie: the researcher's strekking, and from the motie's text the dictum,
 	 * its indieners and their fracties, where those were asked (stance-voorstel, 10 Oct).
 	 */
 	motie?: MotieVelden
@@ -231,7 +231,7 @@ export function csvTabel(
 		'stemmen voor',
 		'stemmen tegen',
 		...(fractie ? [kolomStem(fractie)] : []),
-		...(motie ? [KOLOM_RICHTING, 'dictum', 'indieners', 'fracties indieners'] : []),
+		...(motie ? [KOLOM_STREKKING, 'dictum', 'indieners', 'fracties indieners'] : []),
 		'link'
 	];
 	const rijen = lijst.map((d) => [
@@ -248,7 +248,7 @@ export function csvTabel(
 		...(fractie ? [stemmen.get(d.key) ?? ''] : []),
 		...(motie
 			? [
-					motie.get(d.key)?.richting ?? '',
+					motie.get(d.key)?.strekking ?? '',
 					motie.get(d.key)?.dictum ?? '',
 					motie.get(d.key)?.indieners ?? '',
 					motie.get(d.key)?.fracties ?? ''
