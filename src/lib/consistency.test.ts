@@ -931,6 +931,12 @@ describe('canvas cards and halls', () => {
 			(s) => s.path === 'lib/components/explore/ZaalTegenover.svelte'
 		)!.text;
 		expect(zaal).toContain('plaatsenOpVolgorde(');
+		// A hall drawn by fractie is marked by its date, alike on both pages of the hall.
+		for (const pad of [
+			'lib/components/explore/readers/KamerZetels.svelte',
+			'lib/components/explore/IndexView.svelte'
+		])
+			expect(sources.find((s) => s.path === pad)!.text).toContain('indelingMarkering(');
 	});
 
 	it('sets the places of a hall on one line at the left, in ZaalPlaatsen', () => {

@@ -20,9 +20,10 @@ export function zetelHoogte(n: number, zetels: number, hoogte: number, rand: num
 }
 
 /**
- * The hall of the Eerste Kamer for a day: the API reads who sits where only as the Kamer
- * shows it now (`hall` without a `date`; with one it is null). On today the hall of the day
- * takes that plan; on another day there is none, and no hall is drawn.
+ * The hall of the Eerste Kamer for a day: the API knows who sits where from the day Wie zit
+ * waar was read (`hall_read_on`), an API before that only without a `date`. On today the hall
+ * of the day takes that plan where the dated one has none; on an earlier day the seats are
+ * placed by fractie, marked (indelingMarkering).
  */
 export function zaalMetPlan(opDag: Zaal, nu: Zaal | null): Zaal {
 	return opDag.hall?.seats?.length || !nu?.hall?.seats?.length
