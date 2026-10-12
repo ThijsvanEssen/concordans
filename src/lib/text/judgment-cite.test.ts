@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { authorCite, conclusieNaam, courtCite, judgmentCite, paragraphCite } from './judgment-cite';
+import {
+	authorCite,
+	conclusieNaam,
+	courtCite,
+	judgmentCite,
+	overwegingCitaat,
+	paragraphCite
+} from './judgment-cite';
 
 describe('judgmentCite', () => {
 	it('cites the Hoge Raad as lawyers do', () => {
@@ -83,5 +90,33 @@ describe('a conclusion in the status line', () => {
 			})
 		).toBe('A-G Hartlief');
 		expect(conclusieNaam({ ecli: 'ecli:nl:phr:2019:887' })).toBe('ECLI:NL:PHR:2019:887');
+	});
+});
+
+describe('overwegingCitaat', () => {
+	const j = {
+		ecli: 'ECLI:NL:HR:2019:2006',
+		props: { date: '2019-12-20', court: 'Hoge Raad' },
+		names: ['Urgenda']
+	};
+	it('cites an overweging and keeps it under the bron, grouped by its case', () => {
+		expect(
+			overwegingCitaat(j, '5.7.1', 'rov-5.7.1', 'https://x/#rov-5.7.1', 'judgments/k')
+		).toEqual({
+			kort: 'HR 20 december 2019, r.o. 5.7.1',
+			voluit: 'HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1',
+			link: 'https://x/#rov-5.7.1',
+			bewaar: {
+				id: 'judgments/k',
+				at: 'rov-5.7.1',
+				kort: 'HR 20 december 2019, r.o. 5.7.1',
+				voluit: 'HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1',
+				groep: 'HR 20 december 2019 (Urgenda)'
+			}
+		});
+	});
+	it('offers no Bewaar without the bron, and nothing without an ECLI', () => {
+		expect(overwegingCitaat(j, '1', 'rov-1', 'l', null)?.bewaar).toBeNull();
+		expect(overwegingCitaat({ ...j, ecli: null }, '1', 'rov-1', 'l', 'judgments/k')).toBeNull();
 	});
 });

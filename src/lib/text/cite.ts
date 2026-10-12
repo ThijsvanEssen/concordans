@@ -52,6 +52,35 @@ export type Citation = {
 
 export type CitationForms = { kort: string; voluit: string; metDatum: string };
 
+/** What an article is cited by, before the place in it: ArticleText's `citation`. */
+export type ArticleCitation = Omit<Citation, 'lid' | 'onderdelen' | 'aanhef' | 'date'>;
+
+/**
+ * What the reader cites an article by, from its detail and its law's names: the name the
+ * article gives its law (an EU act's citation title), else the law's names as known, else the
+ * name its detail carries. The reader and a map's item (MapInhoud) cite it alike.
+ */
+export function articleCitation(
+	article: { article_number?: string | null; address?: string | null; label?: string | null },
+	law: {
+		own?: string | null;
+		meta?: { citationTitle: string | null; title: string | null; shortTitle: string | null } | null;
+		displayName?: string | null;
+	}
+): ArticleCitation | null {
+	const address = article.article_number ?? article.address;
+	if (!address) return null;
+	const title = law.own ?? law.meta?.citationTitle ?? law.meta?.title ?? law.displayName ?? null;
+	if (!title) return null;
+	return {
+		articleNumber: address,
+		// An article without a number is cited by its heading: "Algemene bepaling Gw".
+		heading: article.article_number ? null : (article.label ?? null),
+		shortTitle: law.meta?.shortTitle ?? null,
+		citationTitle: title
+	};
+}
+
 const longDate = (d: Date) => langeDatum(vandaag(d));
 
 /** A book of the Burgerlijk Wetboek is cited as the code with the book before the article: `art. 7:3 BW`. */

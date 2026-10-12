@@ -41,7 +41,8 @@
 		bewaar = null,
 		gemarkeerd = null,
 		alleen = null,
-		ankers = true
+		ankers = true,
+		adres = null
 	}: {
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
@@ -78,6 +79,9 @@
 		alleen?: string | null;
 		/** Anchors on the places; off where an article stands more than once on a page. */
 		ankers?: boolean;
+		/** The article's own address, where the page is not its reader (a map): the link Citeer
+		 *  copies points there. */
+		adres?: string | null;
 	} = $props();
 
 	const source = $derived(text ?? '');
@@ -291,7 +295,9 @@
 	<PlaatsMenu
 		anker={menu.anker}
 		titel={naamVan(p)}
-		cite={forms ? citeItems(forms, permalink(page.url, p?.id ?? '')) : []}
+		cite={forms
+			? citeItems(forms, permalink(adres ? new URL(adres, page.url) : page.url, p?.id ?? ''))
+			: []}
 		tekst={() => fullText(p)}
 		bewaar={bewaar && forms
 			? {
