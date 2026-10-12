@@ -1,4 +1,4 @@
-import { maandJaar, vandaag } from '$lib/text/datum';
+import { vandaag } from '$lib/text/datum';
 import type { Schema } from '$lib/api/types';
 
 // Who held which post in a cabinet, laid out on the cabinet's term: per ministry its seats,
@@ -69,13 +69,29 @@ export function lanesOf(seat: Seat, term: Term): Block[][] {
 	return lanes;
 }
 
+const PHASE_LABEL: Record<string, string> = {
+	demissionair: 'Demissionair',
+	dubbel_demissionair: 'Dubbel demissionair',
+	missionair: 'Weer missionair'
+};
+const changes = (p: Phase) => !!p.kind && p.kind !== 'in_functie' && p.kind !== 'formatie';
+
+/** A phase's name, as the axis of the posts and of the seats writes it. */
+export const phaseLabel = (p: Phase) => PHASE_LABEL[p.kind ?? ''] ?? p.label ?? '';
+
+/** The phases that change how a cabinet governs, from their first day: for the seats. */
+export const phaseStarts = (phases: readonly Phase[]): { van: string; label: string }[] =>
+	phases
+		.filter((p) => changes(p) && p.from_date)
+		.map((p) => ({ van: p.from_date!, label: phaseLabel(p) }));
+
 /** The phases that change how a cabinet governs, within its term: demissionair and after. */
 export function bandsOf(
 	phases: readonly Phase[],
 	term: Term
 ): { phase: Phase; from: number; to: number }[] {
 	return phases
-		.filter((p) => p.kind && p.kind !== 'in_functie' && p.kind !== 'formatie')
+		.filter(changes)
 		.map((phase) => ({
 			phase,
 			from: at(term, phase.from_date, 'start'),
@@ -84,37 +100,11 @@ export function bandsOf(
 		.filter((b) => b.to > b.from);
 }
 
-/** Lines on the axis: every quarter in a short term, every year or more in a long one. */
-export function ticksOf(term: Term): { at: number; label: string }[] {
-	const years = (term.end - term.start) / (365.25 * DAY);
-	const months = years <= 3 ? 3 : years <= 8 ? 12 : 24;
-	const ticks: { at: number; label: string }[] = [];
-	const d = new Date(term.start);
-	let y = d.getUTCFullYear();
-	let m = Math.ceil(d.getUTCMonth() / months) * months;
-	for (;;) {
-		y += Math.floor(m / 12);
-		m %= 12;
-		const t = Date.UTC(y, m, 1);
-		if (t > term.end) break;
-		if (t >= term.start)
-			ticks.push({
-				at: (t - term.start) / (term.end - term.start),
-				label:
-					months === 3 && m !== 0
-						? maandJaar(`${y}-${String(m + 1).padStart(2, '0')}-01`)
-						: String(y)
-			});
-		m += months;
-	}
-	return ticks;
-}
-
 const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /**
  * Why a post was held ad interim, in words for the reader: beside which other post, or in
- * the words of Rijksoverheid.
+ * the words of Rijksoverheid. A sentence, with its one full stop.
  */
 export function actingReason(
 	post: Pick<SeatPost, 'acting_reason' | 'acting_basis' | 'acting_other_seat'>
@@ -128,22 +118,37 @@ export function actingReason(
 	if (post.acting_reason === 'source') {
 		const text = post.acting_basis?.trim();
 		if (!text || /^a\.i\.?$/i.test(text)) return 'Ad interim, volgens Rijksoverheid.';
-		return `Volgens Rijksoverheid: ${lower(text)}`;
+		// One full stop at the end, whether the source gave one or not.
+		return `Volgens Rijksoverheid: ${lower(text).replace(/\.?$/, '.')}`;
 	}
 	return null;
 }
 
-/**
- * The period of a post in words: `jan. 2022 tot nu`. Without a start the source names no
- * period, so neither does this: a missing end is "nu" only when the start is known.
- */
-export function periodOf(
-	from: string | null | undefined,
-	to: string | null | undefined,
-	fmt: (iso: string) => string
-): string {
-	const end = to ? fmt(to) : null;
-	if (!from)
-		return end ? `begindatum niet in de gegevens, tot ${end}` : 'begindatum niet in de gegevens';
-	return `${fmt(from)} tot ${end ?? 'nu'}`;
+const MISSING: Record<NonNullable<SeatPost['ministry_missing']>, string> = {
+	no_source: 'Geen officiële bron noemt het ministerie.',
+	ambiguous: 'De bronnen noemen verschillende ministeries.'
+};
+
+/** What an opened post needs said: an older name, why acting, a missing ministry, a doubt. */
+export function postNotes(
+	p: Pick<
+		SeatPost,
+		| 'also_named'
+		| 'acting'
+		| 'acting_reason'
+		| 'acting_basis'
+		| 'acting_other_seat'
+		| 'ministry_missing'
+		| 'overlaps_with'
+	>
+): string[] {
+	const reason = p.acting ? actingReason(p) : null;
+	return [
+		...(p.also_named?.length ? [`Ook genoemd: ${p.also_named.join(', ')}.`] : []),
+		...(reason ? [reason] : []),
+		...(p.ministry_missing ? [MISSING[p.ministry_missing]] : []),
+		...(p.overlaps_with?.length
+			? ['Volgens de bronnen tegelijk met een andere bekleder van deze post.']
+			: [])
+	];
 }

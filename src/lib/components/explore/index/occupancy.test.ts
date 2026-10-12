@@ -1,15 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	actingReason,
-	periodOf,
-	at,
-	bandsOf,
-	lanesOf,
-	termOf,
-	ticksOf,
-	type Seat,
-	type SeatPost
-} from './occupancy';
+import { actingReason, at, bandsOf, lanesOf, termOf, type Seat, type SeatPost } from './occupancy';
 
 const post = (name: string, from: string, to: string | null, extra: Partial<SeatPost> = {}) =>
 	({
@@ -81,7 +71,7 @@ describe('lanesOf', () => {
 	});
 });
 
-describe('bandsOf and ticksOf', () => {
+describe('bandsOf', () => {
 	it('keeps the demissionary phases within the term', () => {
 		const bands = bandsOf(
 			[
@@ -94,17 +84,6 @@ describe('bandsOf and ticksOf', () => {
 		);
 		expect(bands.map((b) => b.phase.kind)).toEqual(['demissionair', 'dubbel_demissionair']);
 		expect(bands[1].to).toBe(1);
-	});
-
-	it('marks the quarters of a short term', () => {
-		expect(ticksOf(schoof).map((t) => t.label)).toEqual([
-			'okt. 2024',
-			'2025',
-			'apr. 2025',
-			'jul. 2025',
-			'okt. 2025',
-			'2026'
-		]);
 	});
 });
 
@@ -124,21 +103,10 @@ describe('actingReason', () => {
 		);
 		expect(
 			actingReason({ acting_reason: 'source', acting_basis: 'Beheer portefeuille overgenomen (X)' })
-		).toBe('Volgens Rijksoverheid: beheer portefeuille overgenomen (X)');
-		expect(actingReason({})).toBeNull();
-	});
-});
-
-describe('periodOf', () => {
-	const fmt = (iso: string) => iso.slice(0, 7);
-	it('names a period from its start, to its end or to now', () => {
-		expect(periodOf('2022-01-10', '2024-07-02', fmt)).toBe('2022-01 tot 2024-07');
-		expect(periodOf('2026-02-23', null, fmt)).toBe('2026-02 tot nu');
-	});
-	it('says nothing of now without a start date', () => {
-		expect(periodOf(null, null, fmt)).toBe('begindatum niet in de gegevens');
-		expect(periodOf(undefined, '2024-07-02', fmt)).toBe(
-			'begindatum niet in de gegevens, tot 2024-07'
+		).toBe('Volgens Rijksoverheid: beheer portefeuille overgenomen (X).');
+		expect(actingReason({ acting_reason: 'source', acting_basis: 'Wegens ziekte.' })).toBe(
+			'Volgens Rijksoverheid: wegens ziekte.'
 		);
+		expect(actingReason({})).toBeNull();
 	});
 });

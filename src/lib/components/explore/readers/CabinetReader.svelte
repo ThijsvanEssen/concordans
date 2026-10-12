@@ -9,6 +9,7 @@
 	// linked to the lists in Bladeren that hold its bewindspersonen and toezeggingen.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import KabinetZetels from './KabinetZetels.svelte';
+	import { phaseStarts } from '../index/occupancy';
 	import type { Schema } from '$lib/api/types';
 	import type { GraphNode } from '$lib/graph/types';
 	import { indexHref } from '$lib/bron/href';
@@ -146,7 +147,10 @@
 				</Veld>
 			</Feiten>
 		{/if}
-		<KabinetZetels kabinet={node.key} />
+		<KabinetZetels
+			kabinet={node.key}
+			fasen={view.kind === 'loaded' ? phaseStarts(view.cabinet.phases ?? []) : []}
+		/>
 	</div>
 </ReaderFrame>
 

@@ -95,8 +95,9 @@
 		type Ministry
 	} from './index/government';
 	import { COURT_GROUPS, MIXED_TIERS } from './index/courts';
-	import { pannable } from './index/pannable';
 	import CabinetOccupancy from './index/CabinetOccupancy.svelte';
+	import KabinettenStrook from './index/KabinettenStrook.svelte';
+	import NaastPosten from './index/NaastPosten.svelte';
 	import IndexRow from './index/IndexRow.svelte';
 	import Waarde from '$lib/components/ui/Waarde.svelte';
 	import { stemmingNaam } from '$lib/components/parliamentary/stemming';
@@ -161,6 +162,8 @@
 	const cabinetParam = $derived(params.get('cabinet') ?? '');
 	const memberParam = $derived(params.get('member') ?? '');
 	const post = $derived(oneOf(params.get('post'), POSTS));
+	// Bewindspersonen: one cabinet's posts, or the ministers of six cabinets side by side.
+	const naast = $derived(params.get('weergave') === 'naast');
 	// A link from before API 0.48 names a state the old way (`open`): read as the Kamer's word.
 	const commitmentStatus = $derived(
 		oneOf(statusFromParam(params.get('status')), COMMITMENT_STATUSES)
@@ -249,6 +252,7 @@
 		'cabinet',
 		'member',
 		'post',
+		'weergave',
 		'status',
 		'overdue',
 		'coalition',
@@ -1156,55 +1160,19 @@
 			})
 		);
 	});
-	/** The years the cabinets span, for the strip above the list. */
-	// The cabinets on a line of years, so wide that the names can be read; it scrolls and is
-	// dragged sideways, and opens at the present.
-	const YEAR_WIDTHS = [10, 16, 28, 48, 80];
-	let yearWidth = $state(28);
-	let cabScroll = $state<HTMLElement | null>(null);
-	const thisYear = new Date().getFullYear();
-	/** A day as a year with its month as a fraction: 2024-07-02 is 2024.5. */
-	const yearOf = (iso: string | null | undefined, end: boolean) =>
-		iso ? Number(iso.slice(0, 4)) + (Number(iso.slice(5, 7)) - 1) / 12 : end ? thisYear + 1 : 0;
 	/** The cabinet in office; an older one without an end has an end no source gives. */
 	const isOpen = (c: Cabinet) => inOffice(c, cabinets);
-	// A cabinet whose end is not known is drawn as a stub of a year, its end left open.
-	const endYear = (c: Cabinet) =>
-		c.to_date ? yearOf(c.to_date, true) : isOpen(c) ? thisYear + 1 : yearOf(c.from_date, false) + 1;
-	const cabinetSpan = $derived.by(() => {
-		const year = yearOf;
-		const rows = [...(cabinetsShown ?? [])].sort((a, b) =>
-			(a.from_date ?? '').localeCompare(b.from_date ?? '')
-		);
-		if (!rows.length) return null;
-		const from = Math.floor(Math.min(...rows.map((c) => year(c.from_date, false))));
-		const to = Math.ceil(Math.max(...rows.map((c) => endYear(c))));
-		return { from, to, year, rows };
-	});
-	const cabTicks = $derived.by(() => {
-		if (!cabinetSpan) return [];
-		const step = yearWidth >= 48 ? 2 : yearWidth >= 28 ? 5 : 10;
-		const ticks = [];
-		for (let y = Math.ceil(cabinetSpan.from / step) * step; y < cabinetSpan.to; y += step)
-			ticks.push(y);
-		return ticks;
-	});
-	// Zooming keeps the year in the middle in the middle.
-	function zoomCabinets(step: number) {
-		const i = YEAR_WIDTHS.indexOf(yearWidth) + step;
-		if (i < 0 || i >= YEAR_WIDTHS.length) return;
-		const el = cabScroll;
-		const middle = el ? (el.scrollLeft + el.clientWidth / 2) / yearWidth : 0;
-		yearWidth = YEAR_WIDTHS[i];
-		if (el) tick().then(() => (el.scrollLeft = middle * yearWidth - el.clientWidth / 2));
-	}
-	// A new set of cabinets opens at its newest.
-	$effect(() => {
-		const el = cabScroll;
-		void cabinetSpan?.rows.length;
-		if (el) untrack(() => tick().then(() => (el.scrollLeft = el.scrollWidth)));
-	});
 
+	/** Side by side: six cabinets, oldest first, ending at the one chosen or the one in office. */
+	const naastKabinetten = $derived.by(() => {
+		if (!naast) return [];
+		const rows = [...cabinets]
+			.filter((c) => c.from_date)
+			.sort((a, b) => a.from_date!.localeCompare(b.from_date!));
+		const i = rows.findIndex((c) => c.key === cabinetParam);
+		const eind = i < 0 ? rows.length : i + 1;
+		return rows.slice(Math.max(0, eind - 6), eind);
+	});
 	const ministerPostCounts = $derived(countBy(pages.ministers?.items, (m) => m.post ?? ''));
 	const ministersShown = $derived(
 		pages.ministers?.items.filter(
@@ -1934,22 +1902,52 @@
 						onChange: (from, to) => patchUrl({ from: from || null, to: to || null })
 					}
 				];
-			case 'ministers':
+			case 'ministers': {
+				// Weergave first: a choice, not a filter, as the Kamer.
+				const weergave: FacetGroup = {
+					id: 'weergave',
+					label: 'Weergave',
+					kind: 'keuze',
+					value: naast ? 'naast' : 'kabinet',
+					options: [
+						{ value: 'kabinet', label: 'Eén kabinet' },
+						{ value: 'naast', label: 'Naast elkaar', titel: 'De ministers van zes kabinetten' }
+					],
+					onChange: (v) =>
+						patchUrl({ weergave: v === 'naast' ? 'naast' : null, post: null, open: null })
+				};
+				const kabinetten = cabinets
+					.filter((c) => !isOpen(c))
+					.map((c) => ({
+						value: c.key,
+						label: `${c.name}, ${period(c.from_date, c.to_date, false)}`
+					}));
+				const inFunctie = currentCabinet(cabinets)
+					? `${currentCabinet(cabinets)!.name} (in functie)`
+					: 'Kabinet in functie';
+				// Side by side the six end at the cabinet chosen: further back is an older one.
+				if (naast)
+					return [
+						weergave,
+						{
+							id: 'cabinet',
+							label: 'Tot en met',
+							kind: 'select',
+							value: cabinetParam,
+							all: inFunctie,
+							options: kabinetten,
+							onChange: (v) => patchUrl({ cabinet: v || null, open: null })
+						}
+					];
 				return [
+					weergave,
 					{
 						id: 'cabinet',
 						label: 'Kabinet',
 						kind: 'select',
 						value: cabinetParam,
-						all: currentCabinet(cabinets)
-							? `${currentCabinet(cabinets)!.name} (in functie)`
-							: 'Kabinet in functie',
-						options: cabinets
-							.filter((c) => !isOpen(c))
-							.map((c) => ({
-								value: c.key,
-								label: `${c.name}, ${period(c.from_date, c.to_date, false)}`
-							})),
+						all: inFunctie,
+						options: kabinetten,
 						onChange: (v) => patchUrl({ cabinet: v || null, post: null })
 					},
 					{
@@ -1967,6 +1965,7 @@
 						)
 					}
 				];
+			}
 			case 'commitments':
 				return [
 					{
@@ -2051,7 +2050,8 @@
 		ministers: 'In functie'
 	};
 	const facetGroupsAll = $derived.by<FacetGroup[]>(() => {
-		const label = PERIODE_LABEL[category];
+		// Side by side the cabinets are the period (Tot en met): no second one beside it.
+		const label = category === 'ministers' && naast ? undefined : PERIODE_LABEL[category];
 		return label
 			? [
 					...facetGroupsBasis,
@@ -2452,7 +2452,25 @@
 						</figure>
 					{/if}
 
-					{#if category === 'ministers' && shownCabinet && occupancyCabinet}
+					{#if category === 'ministers' && naast}
+						<!-- Side by side: the ministers of six cabinets, a row per post. -->
+						{#if naastKabinetten.length}
+							{@const eerste = naastKabinetten[0]}
+							{@const laatste = naastKabinetten.at(-1)!}
+							<h2 class="gov-title">Ministers</h2>
+							<p class="gov-sub">
+								{period(eerste.from_date, laatste.to_date, isOpen(laatste))}, {eerste.name} tot {laatste.name}
+							</p>
+							<NaastPosten
+								kabinetten={naastKabinetten}
+								{openId}
+								onToggle={toggleOpen}
+								zoek={q}
+								commitmentsHref={(key) =>
+									tabHref('commitments') + `&member=${key}&status=${OPEN_STATUS}`}
+							/>
+						{/if}
+					{:else if category === 'ministers' && shownCabinet && occupancyCabinet}
 						<!-- One title line; the chart is the list: a block opens its details. -->
 						<h2 class="gov-title">
 							<a href={hrefOf(`cabinets/${shownCabinet.key}`)}>{shownCabinet.name}</a>
@@ -2482,63 +2500,14 @@
 							/>
 						{/if}
 					{/if}
-					{#if category === 'cabinets' && cabinetSpan && sortDef.id === 'date'}
-						{@const at = (y: number) => (y - cabinetSpan.from) * yearWidth}
-						<!-- The cabinets in the time they governed, in three lanes so the names
-						     fit; a cabinet opens its bewindspersonen. -->
-						<div class="cab-strip">
-							<div class="cab-tools">
-								<IconKnop
-									label="Uitzoomen"
-									onclick={() => zoomCabinets(-1)}
-									disabled={yearWidth === YEAR_WIDTHS[0]}>−</IconKnop
-								>
-								<IconKnop
-									label="Inzoomen"
-									onclick={() => zoomCabinets(1)}
-									disabled={yearWidth === YEAR_WIDTHS.at(-1)}>+</IconKnop
-								>
-							</div>
-							<div
-								class="cab-scroll"
-								data-zijscroll
-								bind:this={cabScroll}
-								use:pannable
-								role="region"
-								aria-label="Kabinetten in de tijd"
-							>
-								<div class="cab-canvas" style:width="{at(cabinetSpan.to)}px">
-									<div class="cab-lanes">
-										{#each cabTicks as t (t)}
-											<span class="cab-tick" style:left="{at(t)}px" aria-hidden="true"></span>
-										{/each}
-										{#each cabinetSpan.rows as c, i (c.key)}
-											{@const from = at(cabinetSpan.year(c.from_date, false))}
-											{@const width = at(endYear(c)) - from}
-											<a
-												class="cab"
-												class:cab--now={isOpen(c)}
-												class:cab--unknown={!c.to_date && !isOpen(c)}
-												href={tabHref('cabinets') + `&open=cabinets/${c.key}`}
-												style:left="{from}px"
-												style:top="{(i % 3) * 30}px"
-												style:--w="{Math.max(width, 2)}px"
-												title="{c.name}, {period(c.from_date, c.to_date, isOpen(c))}"
-												draggable="false"
-											>
-												<span class="cab-bar"></span>
-												<span class="cab-name">{c.name.replace(/^kabinet-/, '')}</span>
-											</a>
-										{/each}
-									</div>
-									<div class="cab-axis" aria-hidden="true">
-										{#each cabTicks as t (t)}
-											<span style:left="{at(t)}px">{t}</span>
-										{/each}
-									</div>
-								</div>
-							</div>
-						</div>
+					{#if category === 'cabinets' && cabinetsShown?.length && sortDef.id === 'date'}
+						<!-- The cabinets in the time they governed; a cabinet opens in place. -->
+						<KabinettenStrook
+							cabinets={cabinetsShown}
+							all={cabinets}
+							openKey={openId?.startsWith('cabinets/') ? openId.slice('cabinets/'.length) : null}
+							onToggle={(key) => toggleOpen(`cabinets/${key}`)}
+						/>
 					{/if}
 
 					<!-- While the next result loads, the previous one stays, dimmed. -->
@@ -3452,99 +3421,6 @@
 		color: var(--ink);
 	}
 
-	/* Kabinetten: each cabinet a bar on one line of years; the one in office in the accent. */
-	.cab-strip {
-		margin: var(--s-1) 0 var(--s-5);
-	}
-	.cab-tools {
-		display: flex;
-		align-items: center;
-		justify-content: flex-end;
-		gap: var(--s-2);
-		margin-bottom: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
-	}
-	.cab-scroll {
-		overflow-x: auto;
-		overscroll-behavior-x: contain;
-		cursor: grab;
-		padding-bottom: var(--s-1);
-	}
-	.cab-scroll:global(.is-dragging) {
-		cursor: grabbing;
-		user-select: none;
-	}
-	.cab-scroll:global(.is-dragging) .cab {
-		pointer-events: none;
-	}
-	.cab-canvas {
-		position: relative;
-		min-width: 100%;
-	}
-	.cab-lanes {
-		position: relative;
-		height: 90px;
-		border-bottom: 1px solid var(--rule-strong);
-	}
-	.cab-tick {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		width: 1px;
-		background: var(--rule);
-	}
-	.cab {
-		position: absolute;
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-		/* The name may run under the next two cabinets, which lie in the other lanes. */
-		width: calc(var(--w) * 3);
-		text-decoration: none;
-		color: var(--ink-2);
-	}
-	.cab-bar {
-		display: block;
-		width: calc(100% / 3 - 1px);
-		min-width: 2px;
-		height: 6px;
-		background: var(--ink);
-	}
-	.cab-name {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-family: var(--font-serif);
-		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
-	}
-	/* An end no source gives: the bar fades out. */
-	.cab--unknown .cab-bar {
-		background: linear-gradient(to right, var(--ink) 40%, transparent);
-	}
-	.cab--now .cab-bar {
-		background: var(--ink);
-	}
-	.cab:hover .cab-bar,
-	.cab:focus-visible .cab-bar {
-		background: var(--ink-2);
-	}
-	.cab:hover .cab-name {
-		color: var(--ink);
-	}
-	.cab-axis {
-		position: relative;
-		height: 16px;
-		margin-top: var(--s-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
-		color: var(--ink-3);
-	}
-	.cab-axis span {
-		position: absolute;
-		transform: translateX(-50%);
-	}
 	.party-list {
 		display: flex;
 		flex-wrap: wrap;
