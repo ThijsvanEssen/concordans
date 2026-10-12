@@ -58,6 +58,19 @@ export function isContainerMembership(kind: ContainerKind, relation: Relation): 
 	return true;
 }
 
+/**
+ * Whether an edge between a bron and a container is containment: the bron stands in the
+ * container's hull and no line is drawn, wherever the edge comes from (a focus, a
+ * neighbourhood, the paths or a netwerk between chosen bronnen, a row put on the canvas).
+ * "Onderdeel van" (PART_OF) is: an article in its wet, a stuk in its dossier. Thijs, 12 Oct:
+ * "Een 'onderdeel van'-relatie voor een stuk en een dossier hoort niet getekend te worden;
+ * groeperingen moeten om de elementen heen staan." A lid's MEMBER_OF a commissie or
+ * fractie two chosen leden share stays a line to its point (`joins` in store/context).
+ */
+export function isContainment(kind: ContainerKind, relation: Relation): boolean {
+	return relation === 'PART_OF' && isContainerMembership(kind, relation);
+}
+
 export type ContainerGroup = {
 	kind: ContainerKind;
 	id: string;

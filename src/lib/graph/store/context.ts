@@ -6,6 +6,7 @@ import {
 	containerKindOf,
 	getContainerGroup,
 	isContainerMembership,
+	isContainment,
 	pruneContainerMembers,
 	recordContainerMember,
 	recordContainerMeta,
@@ -81,10 +82,26 @@ export function createGraphContext() {
 		relation: Relation,
 		extra: Partial<Pick<GraphEdge, 'label' | 'confidence' | 'status' | 'meta'>> = {}
 	) => {
+		if (intoHull(source, target, relation)) return;
 		const id = edgeId(source, target, relation);
 		// A neighbourhood edge carries no meta; it does not wipe what a node response said.
 		const meta = extra.meta ?? edges.get(id)?.meta;
 		edges.set(id, { id, source, target, relation, label: '', directed: true, ...extra, meta });
+	};
+
+	/**
+	 * A bron "onderdeel van" a container on the canvas (its anchor: a dossier shared by two
+	 * chosen stukken, a row put on the canvas) goes into the container's hull instead of on a
+	 * line to it (`isContainment`). Every edge passes here, so no loader draws one.
+	 */
+	const intoHull = (source: string, target: string, relation: Relation) => {
+		const container = nodes.get(target)?.raw;
+		const kind = container ? containerKindOf(container.collection) : null;
+		const bron = nodes.get(source)?.raw;
+		if (!container || !kind || !isContainment(kind, relation)) return false;
+		if (bron && containerKindOf(bron.collection)) return false;
+		recordContainerMember(kind, containerIdFor(container), source, relation);
+		return true;
 	};
 
 	const emit = () => {
@@ -295,7 +312,8 @@ export function createGraphContext() {
 	 * `keep` accepts by node id: a composed netwerk draws only what ties its bronnen.
 	 * A container `joins` accepts is drawn as a point with a verbinding to the centre,
 	 * not as a hull around it: a commissie two chosen bronnen share ties them, and a
-	 * hull around both would pull them onto each other.
+	 * hull around both would pull them onto each other. A bron "onderdeel van" it (a stuk
+	 * of a dossier two chosen stukken share) is in its hull all the same (`intoHull`).
 	 */
 	const mergeInto = (
 		response: Schema<'NodeGraphResponse'>,
