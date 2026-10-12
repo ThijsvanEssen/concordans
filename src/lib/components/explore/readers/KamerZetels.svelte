@@ -2,19 +2,18 @@
 	import { fractieNaam } from '$lib/bron/menselijk';
 	// The seats of a cabinet in one Kamer (concept 16, variant B; Thijs, 10 Oct): the coalition's
 	// seats as the head figure, their course over the cabinet's period, then the hall on the day
-	// chosen, its two sides and the majority. Text and bars at the frame's left edge, the hall
-	// alone centred. Where the API has no stretches yet (the Eerste Kamer before its history is
+	// chosen and its two sides. Every part at the column's width from its left edge (Thijs,
+	// 12 Oct). Where the API has no stretches yet (the Eerste Kamer before its history is
 	// filled) the hall of today, when its cabinet is this one; else a quiet line.
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import Hemicycle from '../Hemicycle.svelte';
 	import ZaalTegenover from '../ZaalTegenover.svelte';
-	import Meerderheid from '../Meerderheid.svelte';
 	import ZaalPlaatsen from '../ZaalPlaatsen.svelte';
 	import { achtergrondVan, kleurVan } from '../partijkleuren.svelte';
 	import { getParliamentSeats } from '$lib/api/records';
 	import { korteDatum, vandaag } from '$lib/text/datum';
 	import { formatLongDate } from './_shared';
-	import { vacantZonderFractie, wijzigingenVan } from './zetels';
+	import { vacantZonderFractie, wijzigingenVan, zaalMetPlan, zetelHoogte } from './zetels';
 	import type { Schema } from '$lib/api/types';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
 	import Fasen from '$lib/components/tijdlijn/Fasen.svelte';
@@ -89,11 +88,12 @@
 		let weg = false;
 		zaal = 'laden';
 		// With stretches the hall of the day chosen; without, the hall of today, when it is
-		// this cabinet's.
-		getParliamentSeats(k, d)
-			.then((z) => {
+		// this cabinet's. The Eerste Kamer's seating only comes without a date: today takes it.
+		const nu = k === 'EK' && d === vandaag() ? getParliamentSeats(k).catch(() => null) : null;
+		Promise.all([getParliamentSeats(k, d), nu])
+			.then(([z, plan]) => {
 				if (weg) return;
-				zaal = metStukken || z.cabinet?.key === sleutel ? z : 'geen';
+				zaal = metStukken || z.cabinet?.key === sleutel ? zaalMetPlan(z, plan) : 'geen';
 			})
 			.catch(() => {
 				if (!weg) zaal = 'geen';
@@ -119,7 +119,10 @@
 	const kantVan = (z: Zaal, stuk: Stuk | null) => {
 		const c = vanKabinet(stuk);
 		return Object.fromEntries(
-			z.factions.map((f) => [f.key, c(f) === true ? 'voor' : c(f) === false ? 'tegen' : 'other'])
+			z.factions.map((f) => [
+				f.key ?? naam(f),
+				c(f) === true ? 'voor' : c(f) === false ? 'tegen' : 'other'
+			])
 		) as Record<string, 'voor' | 'tegen' | 'other'>;
 	};
 	const naam = (f: { key?: string | null; abbreviation?: string | null; name?: string | null }) =>
@@ -155,7 +158,7 @@
 		const som = (l: typeof fr) => l.reduce((n, f) => n + f.seats, 0);
 		// The vacant seats no fractie holds: of neither side (UX #48).
 		const los = stuk ? vacantZonderFractie(stuk) : 0;
-		return { ja, nee, jaZetels: som(ja), neeZetels: som(nee), los };
+		return { ja, nee, jaZetels: som(ja), los };
 	};
 
 	/** The seats of the Kamer (Grondwet art. 51): the stretches' sums run over it on a day a
@@ -176,21 +179,14 @@
 			return { ja: zijden(zaal, null).jaZetels, totaal: zetelsVanKamer, vacant: 0 };
 		return null;
 	});
-	const onzeker = $derived(stukken.some((s) => s.checked === false));
 
 	// The step line: the coalition's seats over the period, the majority as a line.
 	const W = 600;
 	const H = 72;
-	const PAD = 4;
+	const PAD = 0;
 	const dagNr = (d: string) => Date.parse(`${d}T00:00:00Z`) / 864e5;
-	// The scale follows the seats around the majority, so a change of a few seats shows.
-	const schaal = $derived.by(() => {
-		const v = stukken.map((s) => s.coalition);
-		const top = zetelsVanKamer;
-		const lo = Math.max(0, Math.min(...v, meerderheid) - Math.round(top / 12));
-		const hi = Math.min(top, Math.max(...v, meerderheid) + Math.round(top / 18));
-		return (n: number) => PAD + (1 - (n - lo) / (hi - lo)) * (H - 2 * PAD);
-	});
+	// The Kamer's whole scale, none to all its seats: the majority at its true height.
+	const schaal = (n: number) => zetelHoogte(n, zetelsVanKamer, H, PAD);
 	const stappen = $derived.by(() => {
 		if (!van || stukken.length < 2) return [];
 		const a = dagNr(van);
@@ -206,12 +202,14 @@
 		});
 	});
 	const yMeerderheid = $derived(schaal(meerderheid));
+	/** A count that did not add up is marked once, with the count. */
+	const onzekerWoord = (s: Stuk) => (s.checked === false ? ' (onzeker)' : '');
 	const wijzigingen = $derived(gekozen ? wijzigingenVan(gekozen) : []);
-	/** `66 zetels, 2 sep. 2026 tot 10 okt. 2026.` */
+	/** `66 zetels, 2 sep. 2026 tot 10 okt. 2026.`, or `24 zetels, … (onzeker).` */
 	const stapZin = (s: Stuk) =>
 		`${s.coalition} zetels, ${
 			s.to_date === s.from_date ? korteDatum(s.from_date) : periodeZin(s.from_date, s.to_date)
-		}.`;
+		}${onzekerWoord(s)}.`;
 	/** The axis: the one of the posts (Tijdas), under the steps. */
 	const as = $derived(
 		van
@@ -272,6 +270,8 @@
 							? 'Tweede'
 							: 'Eerste'} Kamer, met een lijn op de meerderheid van {meerderheid}"
 					>
+						<!-- The whole Kamer, none to all its seats: the frame the majority stands in. -->
+						<rect x="0" y="0" width={W} height={H} class="vlak" />
 						{#each stappen as k (k.s.from_date)}
 							<rect
 								x={k.x0}
@@ -295,10 +295,16 @@
 								class="doel"
 								role="button"
 								tabindex="0"
-								aria-label="{k.s.coalition} zetels, {formatLongDate(k.s.from_date)}"
+								aria-label="{k.s.coalition} zetels, {formatLongDate(k.s.from_date)}{onzekerWoord(
+									k.s
+								)}"
 								onclick={() => onKies(k.s)}
 								onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onKies(k.s)}
-								><title>{k.s.coalition} zetels vanaf {formatLongDate(k.s.from_date)}</title></rect
+								><title
+									>{k.s.coalition} zetels vanaf {formatLongDate(k.s.from_date)}{onzekerWoord(
+										k.s
+									)}</title
+								></rect
 							>
 						{/each}
 					</svg>
@@ -316,16 +322,7 @@
 					<p class="onderschrift">
 						<b>{stapZin(gekozen)}</b>{#each wijzigingen as w, i (i)}{i ? '; ' : ' '}<span
 								class="wijziging">{w.woorden ?? w.soort}</span
-							>{#if w.wie}{` ${w.wie}`}{/if}{/each}{wijzigingen.length
-							? gekozen.checked === false
-								? ' (onzeker).'
-								: '.'
-							: ''}
-					</p>
-				{/if}
-				{#if onzeker}
-					<p class="onderschrift">
-						De telling van deze termijn sloot niet; de zetels zijn onzeker.
+							>{#if w.wie}{` ${w.wie}`}{/if}{/each}{wijzigingen.length ? '.' : ''}
 					</p>
 				{/if}
 			</div>
@@ -361,9 +358,9 @@
 				<!-- The Kamer's numbers of the front, quiet under the hall. -->
 				<ZaalPlaatsen plaatsen={PLAATSEN[kamer]} />
 				<div class="zijden">
-					{#each [['Coalitie', z.ja, z.jaZetels], ['Oppositie', z.nee, z.neeZetels]] as const as [kopje, lijst, totaal] (kopje)}
+					{#each [['Coalitie', z.ja], ['Oppositie', z.nee]] as const as [kopje, lijst] (kopje)}
 						<div class="zijde" class:zijde--lang={lijst.length > 6}>
-							<h4>{kopje} <span class="aantal">{totaal}</span></h4>
+							<h4>{kopje}</h4>
 							<ol>
 								{#each lijst as f (f.key)}
 									<li>
@@ -392,12 +389,6 @@
 						</ol>
 					{/if}
 				</div>
-				<Meerderheid
-					ja={z.jaZetels}
-					nee={z.neeZetels}
-					totaal={zaal.total_seats}
-					woorden={['coalitie', 'oppositie']}
-				/>
 			</figure>
 		{/if}
 	</div>
@@ -450,15 +441,15 @@
 	.wijziging {
 		color: var(--ink);
 	}
-	.zaal {
-		display: flex;
-		justify-content: center;
-	}
-	/* Both halls in the box of the Tweede Kamer's (440 by 291): one scale, one height. */
-	.zaal :global(svg) {
+	/* Both halls in the box of the Tweede Kamer's (440 by 291): one scale, one height, and
+	   the column's width, as the course above and the sides below (Thijs, 12 Oct: one edge,
+	   one measure for every part of the section). */
+	.zaal :global(svg),
+	.zaal :global(.hemicycle svg) {
+		display: block;
 		width: 100%;
-		max-width: 456px;
 		height: auto;
+		max-height: none;
 		aspect-ratio: 440 / 291;
 	}
 	.zaal :global(.hemicycle) {
@@ -495,9 +486,6 @@
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink);
-	}
-	.aantal {
-		font-weight: 600;
 	}
 	ol {
 		list-style: none;
@@ -570,13 +558,16 @@
 		position: absolute;
 		right: 0;
 		transform: translateY(calc(-100% - 2px));
-		padding-left: var(--s-1);
-		background: var(--paper);
+		padding: 0 var(--s-1);
+		background: var(--paper-2);
 		font-family: var(--font-serif);
 		font-size: var(--t-micro);
 		line-height: 1;
 		color: var(--ink);
 		pointer-events: none;
+	}
+	.vlak {
+		fill: var(--paper-2);
 	}
 	/* Edge to edge: no seam between two stretches. */
 	.stap {
@@ -586,9 +577,8 @@
 	.stap.gekozen {
 		fill: var(--ink);
 	}
-	/* A term whose count did not add up: the step dotted, not filled. */
+	/* A term whose count did not add up: the step filled as any, its edge dotted. */
 	.stap.onzeker {
-		fill: transparent;
 		stroke: var(--ink-3);
 		stroke-width: 1;
 		stroke-dasharray: 2 2;
