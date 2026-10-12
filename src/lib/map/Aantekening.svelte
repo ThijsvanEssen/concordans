@@ -4,18 +4,24 @@
 	// by a rule at its left and the label Aantekening with the sign of Bewaar, as the network
 	// marks a bron with a note; the note itself upright, in the reader's letter. Where it can
 	// be changed a click opens it in place: Enter keeps it, Escape leaves it, leaving the
-	// field keeps it.
+	// field keeps it. Read only, as on a network card, the label names its place.
 	import Picto from '$lib/components/ui/Picto.svelte';
 
 	let {
 		tekst,
 		bij,
+		waar = null,
+		compact = false,
 		open = $bindable(false),
 		onBewaar
 	}: {
 		tekst: string | null | undefined;
 		/** What it is a note on, for the field's name: `art. 21 lid 3 Cbw`, `Cyberbeveiligingswet`. */
 		bij: string;
+		/** Its place in the label, where the note stands apart from it: `lid 3`, a law, a map. */
+		waar?: string | null;
+		/** Without its own margin and measure, in a card that spaces its lines itself. */
+		compact?: boolean;
 		/** The field open; without `onBewaar` it never opens. */
 		open?: boolean;
 		/** Keeps the note; without it the note is read only (a shared map). */
@@ -45,8 +51,10 @@
 </script>
 
 {#if (open && onBewaar) || tekst}
-	<div class="aantekening">
-		<span class="label"><Picto naam="bewaard" size={10} />Aantekening</span>
+	<div class="aantekening" class:compact>
+		<span class="label"
+			><Picto naam="bewaard" size={10} />{waar ? `Aantekening bij ${waar}` : 'Aantekening'}</span
+		>
 		{#if open && onBewaar}
 			<textarea
 				class="aantekening-veld"
@@ -84,6 +92,10 @@
 		margin: var(--s-2) 0 0;
 		padding: 0 0 0 var(--s-3);
 		border-left: 2px solid var(--rule-strong);
+	}
+	.aantekening.compact {
+		max-width: none;
+		margin: 0;
 	}
 	.label {
 		display: inline-flex;

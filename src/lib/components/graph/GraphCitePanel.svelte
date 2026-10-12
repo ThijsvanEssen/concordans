@@ -13,6 +13,7 @@
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { isEscape } from '$lib/actions/keys';
 	import type { NodeNotitie } from '$lib/map/notities';
+	import Aantekening from '$lib/map/Aantekening.svelte';
 
 	let {
 		node,
@@ -172,15 +173,10 @@
 		<p class="snippet">{snippet}</p>
 	{/if}
 
-	{#if notities.length}
-		<div class="notities">
-			{#each notities as n, i (i)}
-				<p class="notitie">
-					{#if n.waar}<span class="waar">{n.waar}:</span>{/if}<span class="tekst">{n.tekst}</span>
-				</p>
-			{/each}
-		</div>
-	{/if}
+	<!-- The reader's notes, as on Gemarkeerd (Aantekening), read only: changed there. -->
+	{#each notities as n, i (i)}
+		<Aantekening tekst={n.tekst} bij={n.waar ?? 'deze bron'} waar={n.waar} compact />
+	{/each}
 
 	<div class="foot">
 		{#if !node.stub}
@@ -281,29 +277,6 @@
 		line-height: var(--lh-body);
 		color: var(--ink-2);
 		margin: 0;
-	}
-
-	/* The reader's notes, as on Gemarkeerd: italic, each with its place in roman before it. */
-	.notities {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-1);
-	}
-	.notitie {
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-style: italic;
-		line-height: var(--lh-body);
-		color: var(--ink-2);
-	}
-	.notitie .tekst {
-		white-space: pre-line;
-	}
-	.waar {
-		margin-right: var(--s-1);
-		font-style: normal;
-		color: var(--ink-3);
 	}
 
 	.cite-loading {

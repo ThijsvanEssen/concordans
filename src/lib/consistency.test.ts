@@ -1009,6 +1009,14 @@ describe('canvas cards and halls', () => {
 			/<textarea\b|class="[^"]*\b(?:map-)?notitie(?:-veld)?(?=["\s])|font-style:\s*italic/
 		);
 		expect(src('lib/map/Aantekening.svelte')).not.toMatch(/font-style:\s*italic|var\(--accent/);
+		// The network's card shows the same notes in the same form, read only (Thijs, 12 Oct).
+		const kaart = src('lib/components/graph/GraphCitePanel.svelte');
+		expect(kaart).toMatch(/\{#each notities as n\b[^}]*\}\s*<Aantekening\b[^>]*tekst=\{n\.tekst\}/);
+		expect(kaart).not.toMatch(/<Aantekening\b[^>]*onBewaar/);
+		expect(kaart).not.toMatch(/class="[^"]*\bnotitie\b|\.notitie\b|\{n\.tekst\}<\/|\.waar\s*\{/);
+		// Every note of the reader renders through Aantekening: no markup prints one itself.
+		for (const s of sources.filter((s) => s.path.endsWith('.svelte')))
+			expect(s.text, s.path).not.toMatch(/>\s*\{[\w.?]*\b(?:notitie|n\.tekst)\}/);
 	});
 
 	it('names where a map’s way on goes: here, or in the reader (Thijs, 12 Oct)', () => {
