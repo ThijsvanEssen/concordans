@@ -1,15 +1,14 @@
 // The maps as the page holds them, in this browser: each with a name, one active, where a box
 // keeps what is chosen; the panel open or not; a map someone shared (?map=) until it is kept
 // or put aside. The one map of step 1 (concordans:map) becomes the first map, untouched.
-import { samen, sleutelVan, verschuif, type Map, type MapItem } from './map';
+import { samen, sleutelVan, verschuif, type Gedeeld, type Map, type MapItem } from './map';
 
 const OPSLAG = 'concordans:mappen';
 const OUD = 'concordans:map';
 const EERSTE = 'Gemarkeerd';
 
 type Stand = { mappen: Map[]; actief: string };
-/** A map from a link: its name, items and order as the link gives them. */
-export type Gedeeld = { naam: string | null; items: MapItem[]; volgorde: Map['volgorde'] };
+export type { Gedeeld };
 
 const nu = () => new Date().toISOString();
 const nieuwId = () => Math.random().toString(36).slice(2, 10);
@@ -36,7 +35,8 @@ function lees(): Stand {
 				naam: String(m.naam || EERSTE),
 				items: Array.isArray(m.items) ? m.items.filter(isItem) : [],
 				volgorde: m.volgorde === 'eigen' ? 'eigen' : 'groep',
-				gewijzigd: String(m.gewijzigd || nu())
+				gewijzigd: String(m.gewijzigd || nu()),
+				notitie: typeof m.notitie === 'string' && m.notitie.trim() ? m.notitie : null
 			}));
 			const actief = mappen.some((m) => m.id === raw.actief) ? raw.actief : mappen[0].id;
 			return { mappen, actief };
@@ -120,6 +120,11 @@ class Kaarten {
 	ordening(v: Map['volgorde']) {
 		this.#werk(() => ({ volgorde: v }));
 	}
+	/** The note on the map as a whole; empty is none. */
+	mapNotitie(tekst: string) {
+		const t = tekst.trim();
+		this.#werk(() => ({ notitie: t || null }));
+	}
 
 	// ── Maps ─────────────────────────────────────────────────────────────────
 	kies(id: string) {
@@ -164,14 +169,15 @@ class Kaarten {
 	}
 
 	// ── A shared map (a link, ?map=) ─────────────────────────────────────────
-	/** Into the active map, without doubles. */
+	/** Into the active map, without doubles; its note where the map has none. */
 	voegToe(g: Gedeeld) {
-		this.#werk((m) => ({ items: samen(m.items, g.items) }));
+		this.#werk((m) => ({ items: samen(m.items, g.items), notitie: m.notitie || g.notitie }));
 	}
-	/** As a map of its own, under its name, in its order. */
+	/** As a map of its own, under its name, in its order, with its note. */
 	bewaarAlsMap(g: Gedeeld) {
 		this.nieuw(g.naam ?? undefined, g.items);
 		if (g.volgorde === 'eigen') this.ordening('eigen');
+		if (g.notitie) this.mapNotitie(g.notitie);
 	}
 }
 

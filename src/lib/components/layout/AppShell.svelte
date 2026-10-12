@@ -6,6 +6,7 @@
 	import { provideSearchOpener } from '$lib/stores/search-trigger';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import { MAP_PARAMS } from '$lib/map/map';
 
 	let { children }: { children?: Snippet } = $props();
 
@@ -30,7 +31,7 @@
 		const url = page.url;
 		if (!url.searchParams.has('map') || url.pathname.startsWith('/gemarkeerd')) return;
 		const doel = new URLSearchParams();
-		for (const k of ['map', 'mapnaam', 'mapvolgorde']) {
+		for (const k of MAP_PARAMS) {
 			const v = url.searchParams.get(k);
 			if (v !== null) doel.set(k, v);
 		}
