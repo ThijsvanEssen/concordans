@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { redundantAnchors } from '$lib/graph/anchor';
+	import Picto from '$lib/components/ui/Picto.svelte';
 	import type { Vorm } from '$lib/bron/vormen';
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import type SigmaType from 'sigma';
@@ -75,6 +76,7 @@
 		onReady,
 		onCameraChange,
 		externalHoveredId = null as string | null,
+		notitieIds = new Set() as ReadonlySet<string>,
 		avoid = null as Rect | null
 	}: {
 		graph: Graph;
@@ -117,6 +119,8 @@
 		onCameraChange?: (state: { x: number; y: number; ratio: number }) => void;
 		/** Keeps the dim/highlight pass alive while the hover panel is open. */
 		externalHoveredId?: string | null;
+		/** The bronnen with a note of the reader's (Gemarkeerd): a quiet mark beside each. */
+		notitieIds?: ReadonlySet<string>;
 		/** A panel floating over the canvas, in canvas pixels: hull labels keep clear of it. */
 		avoid?: Rect | null;
 	} = $props();
@@ -448,6 +452,9 @@
 
 	type MutatieBadge = { id: string; vx: number; vy: number; count: number };
 	let mutatieBadges = $state<MutatieBadge[]>([]);
+	/** A bron with a note of the reader's: its mark, in ink while it is open or in focus. */
+	type NotitieMerk = { id: string; vx: number; vy: number; open: boolean; dim: boolean };
+	let notitieMerken = $state<NotitieMerk[]>([]);
 
 	// Containment hulls: a soft outline behind a wet's artikelen, or a fractie's or
 	// commissie's leden, drawn from wherever those bronnen currently sit on canvas.
@@ -887,10 +894,32 @@
 			mutatieBadges = [];
 		}
 
+		const merken: NotitieMerk[] = [];
+		if (renderer)
+			for (const id of notitieIds) {
+				if (!graph.hasNode(id)) continue;
+				const attrs = graph.getNodeAttributes(id);
+				if (attrs.hidden || isHiddenNode(id, attrs)) continue;
+				const baseR = ((attrs.size as number) ?? 5) / sizeDivisor;
+				const vp = renderer.graphToViewport({ x: attrs.x as number, y: attrs.y as number });
+				const kindAttr = attrs.kind as GraphNodeKind | undefined;
+				// Above the bron at its left, where the badge of a change (right) does not stand.
+				const offset = baseR * (kindAttr ? badgeAxisOffset(kindAttr) : 0.707) + 2;
+				merken.push({
+					id,
+					vx: vp.x - offset,
+					vy: vp.y - offset,
+					open: id === hoveredId || id === focusedId,
+					dim: hoveredId !== null && id !== hoveredId && !hoveredNeighbours.has(id)
+				});
+			}
+		if (merken.length || notitieMerken.length) notitieMerken = merken;
+
 		computeHulls();
 	}
 
 	$effect(() => {
+		void notitieIds;
 		updateViewportLabels();
 	});
 
@@ -1686,6 +1715,18 @@
 			{/each}
 		</div>
 	{/if}
+	{#if notitieMerken.length > 0}
+		<div class="notitie-overlay" aria-hidden="true">
+			{#each notitieMerken as m (m.id)}
+				<span
+					class="notitie-merk"
+					class:is-open={m.open}
+					class:is-dim={m.dim}
+					style="left:{m.vx}px; top:{m.vy}px"><Picto naam="bewaard" size={10} /></span
+				>
+			{/each}
+		</div>
+	{/if}
 	{#if mutatieBadges.length > 0}
 		<div class="mutatie-overlay" aria-hidden="true">
 			{#each mutatieBadges as b (b.id)}
@@ -1807,6 +1848,30 @@
 		pointer-events: none;
 		overflow: hidden;
 		z-index: 6;
+	}
+	/* The mark of a bron with a note: the sign of Bewaar, small and quiet, in ink when open. */
+	.notitie-overlay {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		overflow: hidden;
+		z-index: 5;
+	}
+	.notitie-merk {
+		position: absolute;
+		transform: translate(-50%, -50%);
+		display: inline-flex;
+		padding: 1px;
+		border-radius: var(--r-1);
+		background: var(--paper);
+		color: var(--ink-3);
+		transition: opacity var(--dur-1) var(--ease);
+	}
+	.notitie-merk.is-open {
+		color: var(--ink);
+	}
+	.notitie-merk.is-dim {
+		opacity: 0.4;
 	}
 	.mutatie-badge {
 		position: absolute;

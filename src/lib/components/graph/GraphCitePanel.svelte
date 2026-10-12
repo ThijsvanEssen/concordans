@@ -12,6 +12,7 @@
 	import { bronNaam } from '$lib/bron/naam';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { isEscape } from '$lib/actions/keys';
+	import type { NodeNotitie } from '$lib/map/notities';
 
 	let {
 		node,
@@ -26,6 +27,7 @@
 		onSluit,
 		onVerder,
 		onTerug,
+		notities = [],
 		el = $bindable(null)
 	}: {
 		node: GraphNode;
@@ -46,6 +48,8 @@
 		/** Tab past its last action, and Shift+Tab before its first. */
 		onVerder?: () => void;
 		onTerug?: () => void;
+		/** The reader's notes on this bron in the active map (Gemarkeerd), under the card's lines. */
+		notities?: readonly NodeNotitie[];
 		el?: HTMLElement | null;
 	} = $props();
 
@@ -168,6 +172,16 @@
 		<p class="snippet">{snippet}</p>
 	{/if}
 
+	{#if notities.length}
+		<div class="notities">
+			{#each notities as n, i (i)}
+				<p class="notitie">
+					{#if n.waar}<span class="waar">{n.waar}:</span>{/if}<span class="tekst">{n.tekst}</span>
+				</p>
+			{/each}
+		</div>
+	{/if}
+
 	<div class="foot">
 		{#if !node.stub}
 			<!-- A link, so a middle click or cmd-click opens the bron in a new tab. -->
@@ -267,6 +281,29 @@
 		line-height: var(--lh-body);
 		color: var(--ink-2);
 		margin: 0;
+	}
+
+	/* The reader's notes, as on Gemarkeerd: italic, each with its place in roman before it. */
+	.notities {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-1);
+	}
+	.notitie {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-meta);
+		font-style: italic;
+		line-height: var(--lh-body);
+		color: var(--ink-2);
+	}
+	.notitie .tekst {
+		white-space: pre-line;
+	}
+	.waar {
+		margin-right: var(--s-1);
+		font-style: normal;
+		color: var(--ink-3);
 	}
 
 	.cite-loading {
