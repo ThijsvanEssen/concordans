@@ -8,6 +8,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate } from './_shared';
+	import { activityLine } from '$lib/verbonden/rows';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -16,6 +17,7 @@
 		(node.raw?.props ?? {}) as {
 			kind?: string;
 			date?: string;
+			status?: string;
 			agenda_title?: string;
 			tk_url?: string;
 		}
@@ -42,8 +44,13 @@
 		>
 			{#snippet soort()}
 				<KindGlyph collection="activities" />
+				<!-- One still to come says so, as its row in Verbonden does (#59). -->
 				{opsomming([
-					attrs.kind ?? bronLabel('activities'),
+					activityLine({
+						kind: attrs.kind ?? bronLabel('activities'),
+						status: attrs.status,
+						date: attrs.date
+					}),
 					attrs.date ? formatLongDate(attrs.date) : null
 				])}
 			{/snippet}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	activityLine,
 	describe as describeBron,
 	historyRow,
 	periodLabel,
@@ -202,5 +203,19 @@ describe('a translation of a judgment', () => {
 			{ ecli: 'ECLI:NL:RBDHA:2015:7196', court: 'Rechtbank Den Haag', date: '2015-06-24' }
 		);
 		expect(d.context).toBe('Engelse vertaling');
+	});
+});
+
+describe('activityLine (UX-toets 0.79.47, #59)', () => {
+	const op = (date: string, status = 'Gepland') =>
+		activityLine({ kind: 'Commissiedebat', status, date }, '2026-10-12');
+	it('says that an activity still to come is planned', () => {
+		expect(op('2027-06-03')).toBe('Commissiedebat, gepland');
+		expect(op('2026-10-12')).toBe('Commissiedebat, gepland');
+	});
+	it('leaves the word out for one held, or planned on a day that has passed', () => {
+		expect(op('2026-10-01', 'Uitgevoerd')).toBe('Commissiedebat');
+		expect(op('2026-10-01')).toBe('Commissiedebat');
+		expect(op('2027-06-03', 'Geannuleerd')).toBe('Commissiedebat, geannuleerd');
 	});
 });

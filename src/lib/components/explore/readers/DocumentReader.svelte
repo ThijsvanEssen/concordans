@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { naamVan } from '$lib/bron/menselijk';
+	import { eigenSoort, naamVan } from '$lib/bron/menselijk';
 	import { getDocument } from '$lib/api/records';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import { citeItems } from '$lib/components/ui/cite';
@@ -261,6 +261,8 @@
 		{:else}
 			{@const doc = view.document}
 			{@const term = glossaryTerm(doc.kind)}
+			<!-- Without the group of kinds the source files it under (#58): "Amendement". -->
+			{@const kind = eigenSoort(doc.kind)}
 			{@const cite = kamerstukCitation({
 				chamber: doc.chamber,
 				session_year: tekstVan(lichtProps.session_year),
@@ -282,7 +284,7 @@
 						id: `documents/${doc.key}`,
 						at: '',
 						kort: naam,
-						voluit: cite && doc.kind ? `${cite} (${doc.kind})` : naam,
+						voluit: cite && kind ? `${cite} (${kind})` : naam,
 						groep: doc.dossier_numbers?.[0] ? `Kamerstukken ${doc.dossier_numbers[0]}` : naam
 					},
 					cite: cite
@@ -299,7 +301,7 @@
 				{#snippet soort()}
 					<!-- Running text, the comma against the word before it. -->
 					<span
-						>{#if term}<GlossaryPill {term} label={doc.kind ?? term} />{:else}{doc.kind ??
+						>{#if term}<GlossaryPill {term} label={kind ?? term} />{:else}{kind ??
 								'Document'}{/if}{#if doc.date}, {formatDate(doc.date)}{/if}{#if caseKinds.length},
 							{caseKinds.join(', ')}{/if}</span
 					>

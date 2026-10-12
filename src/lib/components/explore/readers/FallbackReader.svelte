@@ -6,7 +6,7 @@
 	import type { GraphNode } from '$lib/graph/types';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate, textProp } from './_shared';
-	import { menselijkeNaam } from '$lib/bron/menselijk';
+	import { eigenSoort, menselijkeNaam } from '$lib/bron/menselijk';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 
 	let { node }: { node: GraphNode } = $props();
@@ -38,12 +38,8 @@
 			(b) => (wet?.bwb === b ? wet.naam : null)
 		)
 	);
-	// A kind that is a group of kinds ("Brief van lid/fractie/commissie") says nothing of this
-	// one beyond its title: left out (UX-toets 0.79.43, #31).
-	const soort = $derived.by(() => {
-		const k = textProp(p.kind);
-		return k && !k.includes('/') ? k : null;
-	});
+	// A group of kinds says nothing of this one beyond its title (#31, #58).
+	const soort = $derived(eigenSoort(p.kind));
 	const facts = $derived(
 		[
 			soort,

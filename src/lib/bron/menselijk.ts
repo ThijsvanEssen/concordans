@@ -156,6 +156,17 @@ export const fractieNaam = (
 	} & object
 ): string => text(f.abbreviation) ?? text(f.name) ?? naamVan('factions', f);
 
+/**
+ * A kind as a reader writes it (UX-toets #31, #58): a group of kinds the source files it under
+ * is left out, in parentheses ("Amendement (gewijzigd/nader/vervangend)" is "Amendement"; the
+ * status line says what it replaces) or as the whole kind ("Brief van lid/fractie/commissie":
+ * null, its title says what it is). Any other kind stands as the source gives it.
+ */
+export function eigenSoort(kind: unknown): string | null {
+	const k = text(kind)?.replace(/\s*\([^()]*\/[^()]*\)\s*$/, '');
+	return k && !k.includes('/') ? k : null;
+}
+
 /** The name of a bron known only by its id (`collection/key`) and perhaps a name. */
 export function naamVanId(id: string, displayName?: string | null): string {
 	const slash = id.indexOf('/');

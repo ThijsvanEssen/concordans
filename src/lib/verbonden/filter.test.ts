@@ -16,7 +16,7 @@ import {
 	type VerbondenFilter
 } from './filter';
 import type { Row } from './rows';
-import { countLine, filterGroups, regroup, yearHistogram } from './view';
+import { countLine, filterGroups, regroup, vasteGroepen, yearHistogram } from './view';
 import type { Group } from './groups';
 
 const row = (over: Partial<Row>): Row => ({
@@ -195,6 +195,23 @@ describe('the panel under the filter', () => {
 		).toEqual([{ kind: 'uitspraken', count: 1064 }]);
 		const none = { ...EMPTY_FILTER, bronnen: new Set(['dossiers'] as const) };
 		expect(filterGroups(groups, none)).toEqual([]);
+	});
+
+	it('writes one count, once it holds (UX-toets 0.79.47, #56)', () => {
+		const leden = { ...groups[1], id: 'members', total: 300 };
+		const dossiers = { id: 'dossiers', label: 'Dossiers', rows: [], capped: false };
+		const activiteiten = { id: 'activities', label: 'Activiteiten', rows: [], capped: false };
+		const alle = [leden, dossiers, activiteiten];
+		// A waiting group the node cannot foretell: no count yet.
+		expect(vasteGroepen(alle, ['dossiers', 'activities'], { activities: 4493 })).toBeNull();
+		// Dossiers in, the activities foretold: the count it will have.
+		const binnen = [leden, { ...dossiers, rows: [groups[1].rows[0]], total: 611 }, activiteiten];
+		const vast = vasteGroepen(binnen, ['activities'], { activities: 4493 })!;
+		const wacht = new Set(['activities']);
+		expect(countLine(vast, EMPTY_FILTER, wacht)).toBe('5.404 verbindingen');
+		// The same once the activities are in.
+		const klaar = [...binnen.slice(0, 2), { ...activiteiten, rows: [row({})], total: 4493 }];
+		expect(countLine(vasteGroepen(klaar)!, EMPTY_FILTER)).toBe('5.404 verbindingen');
 	});
 
 	it('keeps a group whose loader is still under way in its place, unless a filter cuts rows', () => {
