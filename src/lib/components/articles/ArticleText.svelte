@@ -35,7 +35,10 @@
 		onCloseProposed,
 		lidNotes = new Map(),
 		mark = '.',
-		bewaar = null
+		bewaar = null,
+		gemarkeerd = null,
+		alleen = null,
+		ankers = true
 	}: {
 		text: string | null | undefined;
 		/** The parts the API delivers (0.5); without them they are read from the text. */
@@ -62,11 +65,28 @@
 		mark?: '.' | ')';
 		/** The article as Gemarkeerd keeps it: its id and its law; each lid then has Bewaar. */
 		bewaar?: { id: string; groep: string } | null;
+		/** A place marked as kept, whatever the active map (Gemarkeerd shows its own items). */
+		gemarkeerd?: string | null;
+		/** Only the lid or onderdeel at this anchor, and what it holds; all where none matches. */
+		alleen?: string | null;
+		/** Anchors on the places; off where an article stands more than once on a page. */
+		ankers?: boolean;
 	} = $props();
 
 	const source = $derived(text ?? '');
 	const perRef = $derived(definitiesOp(definities));
 	const parts = $derived(apiParts?.length ? partsFromApi(apiParts) : parseArticleParts(source));
+	/** The place `alleen` names: a lid with its onderdelen (`lid-2-onder-a` is in `lid-2`). */
+	const bevat = (part: ArticlePart, at: string) =>
+		!!part.id && (at === part.id || at.startsWith(`${part.id}-`));
+	const getoond = $derived.by(() => {
+		const at = alleen;
+		const deel = at ? parts.filter((p) => bevat(p, at)) : [];
+		return deel.length ? deel : parts;
+	});
+	const isBewaard = (part: ArticlePart) =>
+		!!part.id &&
+		(part.id === gemarkeerd || (!!bewaar && kaart.heeft({ id: bewaar.id, at: part.id })));
 
 	const own = (part: ArticlePart) => {
 		const raw = source.slice(part.textStart, part.textEnd);
@@ -126,9 +146,9 @@
 	{#if top}
 		<div
 			class="lid lid--{part.kind}"
-			id={part.id}
+			id={ankers ? part.id : undefined}
 			class:is-open={menuFor === keyOf(part)}
-			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
+			class:plaats-bewaard={isBewaard(part)}
 		>
 			<!-- The number is the lid's menu: citeren, bewaren, verbindingen. -->
 			<button
@@ -176,9 +196,9 @@
 	{:else}
 		<div
 			class="part part--{part.kind}"
-			id={part.id}
+			id={ankers ? part.id : undefined}
 			class:is-open={!!part.id && menuFor === part.id}
-			class:plaats-bewaard={!!bewaar && !!part.id && kaart.heeft({ id: bewaar.id, at: part.id })}
+			class:plaats-bewaard={isBewaard(part)}
 		>
 			{#if part.number && part.id}
 				<button
@@ -210,7 +230,7 @@
 	     folds under each lid, as it does on a phone. -->
 	<div class="article-text-box">
 		<div class="article-text">
-			{#each parts as part (part.start)}
+			{#each getoond as part (part.start)}
 				{@render render(part, true)}
 			{/each}
 			{#if proposed && !parts.some((p) => p.kind === 'lid' && p.number === proposed!.lid)}
