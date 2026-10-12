@@ -32,6 +32,7 @@
 		sleutelVan,
 		uitParams,
 		type Gedeeld,
+		type GroepNotities,
 		type Map,
 		type MapItem
 	} from '$lib/map/map';
@@ -49,7 +50,7 @@
 	}
 
 	const reeksen = (lijst: MapItem[], v: Map['volgorde']) =>
-		v === 'eigen' ? [{ groep: '', items: [...lijst] }] : groepen(lijst);
+		v === 'eigen' ? [{ groep: '', sleutel: '', items: [...lijst] }] : groepen(lijst);
 	const collectieVan = (i: MapItem) => i.id.split('/')[0] as Collection;
 
 	/** The place an item opens: the bron in Samenhang, at its lid or overweging. */
@@ -102,6 +103,30 @@
 		} else if (isEscape(e)) {
 			veld.value = i.notitie ?? '';
 			notitieVan = null;
+		}
+	}
+
+	// ── A group's note: under its head, opened in place as an item's ──────────
+	let groepNotitieVan = $state<string | null>(null);
+	function groepNotitieKlaar(m: Map, sleutel: string, k: string, tekst: string) {
+		if (groepNotitieVan !== k) return;
+		op(m, () => kaart.groepNotitie(sleutel, tekst));
+		groepNotitieVan = null;
+	}
+	function groepNotitieToets(
+		e: KeyboardEvent,
+		m: Map,
+		sleutel: string,
+		k: string,
+		bij: string | undefined
+	) {
+		const veld = e.currentTarget as HTMLTextAreaElement;
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			groepNotitieKlaar(m, sleutel, k, veld.value);
+		} else if (isEscape(e)) {
+			veld.value = bij ?? '';
+			groepNotitieVan = null;
 		}
 	}
 
@@ -187,9 +212,41 @@
 	</IndexRow>
 {/snippet}
 
-{#snippet lijst(alle: MapItem[], v: Map['volgorde'], m: Map | null)}
+{#snippet lijst(alle: MapItem[], v: Map['volgorde'], m: Map | null, notities: GroepNotities)}
 	{#each reeksen(alle, v) as g (g.groep)}
-		{#if g.groep}<h3 class="groep">{g.groep}<span class="aantal">{g.items.length}</span></h3>{/if}
+		{@const k = `${m?.id ?? 'gedeeld'}:${g.sleutel}`}
+		{@const bij = notities[g.sleutel]}
+		{#if g.groep}
+			<div class="groep-kop">
+				<h3 class="groep">{g.groep}<span class="aantal">{g.items.length}</span></h3>
+				{#if m && !bij && groepNotitieVan !== k}
+					<button type="button" class="notitie-knop" onclick={() => (groepNotitieVan = k)}
+						>Aantekening</button
+					>
+				{/if}
+			</div>
+			{#if m && groepNotitieVan === k}
+				<textarea
+					class="notitie-veld"
+					rows="2"
+					aria-label="Aantekening bij {g.groep}"
+					placeholder="Aantekening bij {g.groep}"
+					value={bij ?? ''}
+					use:focus
+					onkeydown={(e) => groepNotitieToets(e, m, g.sleutel, k, bij)}
+					onblur={(e) => groepNotitieKlaar(m, g.sleutel, k, e.currentTarget.value)}
+				></textarea>
+			{:else if bij && m}
+				<button
+					type="button"
+					class="notitie groep-notitie"
+					title="Aantekening wijzigen"
+					onclick={() => (groepNotitieVan = k)}>{bij}</button
+				>
+			{:else if bij}
+				<p class="notitie groep-notitie">{bij}</p>
+			{/if}
+		{/if}
 		<ul class="rijen">
 			{#each g.items as i (sleutelVan(i))}{@render rij(i, m)}{/each}
 		</ul>
@@ -235,7 +292,7 @@
 				{/snippet}
 				{#if gedeeld.notitie}<p class="map-notitie">{gedeeld.notitie}</p>{/if}
 				<p class="meta">{tel(gedeeld.items.length)}</p>
-				{@render lijst(gedeeld.items, gedeeld.volgorde, null)}
+				{@render lijst(gedeeld.items, gedeeld.volgorde, null, gedeeld.groepNotities)}
 			</Sectie>
 		{/if}
 
@@ -249,8 +306,11 @@
 								>{copier.label(`link-${m.id}`, 'Kopieer link')}</TekstLink
 							>
 							<TekstLink
-								onclick={() => copier.copy(citaten(m.items, m.volgorde, m.notitie), `cit-${m.id}`)}
-								>{copier.label(`cit-${m.id}`, 'Citaten')}</TekstLink
+								onclick={() =>
+									copier.copy(
+										citaten(m.items, m.volgorde, m.notitie, m.groepNotities),
+										`cit-${m.id}`
+									)}>{copier.label(`cit-${m.id}`, 'Citaten')}</TekstLink
 							>
 							<TekstLink
 								onclick={() =>
@@ -390,7 +450,7 @@
 				{#if !m.items.length}
 					<p class="leeg stil">Nog niets bewaard.</p>
 				{:else}
-					{@render lijst(m.items, m.volgorde, m)}
+					{@render lijst(m.items, m.volgorde, m, m.groepNotities ?? {})}
 					<p class="voet">
 						<ConfirmButton
 							label="Wis de map"
@@ -518,12 +578,37 @@
 	}
 	/* A law, dossier or judgment over its rows, as a day over Actueel's. */
 	.groep {
-		margin: var(--s-3) 0 0;
+		margin: 0;
 		padding-bottom: var(--s-1);
-		border-bottom: 1px solid var(--rule-strong);
 		font-family: var(--font-serif);
 		font-size: var(--t-meta);
 		font-weight: 600;
+	}
+	/* The group's head with Aantekening at its right, on hover and focus; always on touch. */
+	.groep-kop {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--s-2);
+		margin: var(--s-3) 0 0;
+		border-bottom: 1px solid var(--rule-strong);
+	}
+	.groep-kop .notitie-knop {
+		margin-right: 0;
+		opacity: 0;
+	}
+	.groep-kop:hover .notitie-knop,
+	.groep-kop:focus-within .notitie-knop {
+		opacity: 1;
+	}
+	@media (hover: none) {
+		.groep-kop .notitie-knop {
+			opacity: 1;
+		}
+	}
+	.groep-notitie {
+		margin-top: var(--s-2);
+		white-space: pre-line;
 	}
 	.aantal {
 		margin-left: var(--s-2);

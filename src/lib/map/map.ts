@@ -32,7 +32,12 @@ export type Map = {
 	gewijzigd: string;
 	/** The reader's note on the map as a whole, shown at its top. */
 	notitie?: string | null;
+	/** The reader's note per group (a law, a dossier, a judgment), by the group's key. */
+	groepNotities?: GroepNotities;
 };
+
+/** Notes per group, by `groepSleutel`. */
+export type GroepNotities = Record<string, string>;
 
 /** A map from a link: its name, items, order and note as the link gives them. */
 export type Gedeeld = {
@@ -40,16 +45,34 @@ export type Gedeeld = {
 	items: MapItem[];
 	volgorde: Map['volgorde'];
 	notitie: string | null;
+	groepNotities: GroepNotities;
 };
 
 /** An item's key: the bron and its place. */
 export const sleutelVan = (i: Pick<MapItem, 'id' | 'at'>) => (i.at ? `${i.id}#${i.at}` : i.id);
 
+/**
+ * A group's key, from its bron rather than its name, so a note stays with its law when the
+ * law's name loads later: an article by its law (`wet:bwbr0052872`), a Kamerstuk by its
+ * dossier (`dossier:36764`), a judgment by itself; the rest by the group's name.
+ */
+export function groepSleutel(i: Pick<MapItem, 'id' | 'groep'>): string {
+	const [collectie, key = ''] = i.id.split('/');
+	if (collectie === 'articles' && /^bwbr\d+_/i.test(key))
+		return `wet:${key.slice(0, key.indexOf('_')).toLowerCase()}`;
+	if (collectie === 'judgments') return i.id;
+	const dossier = /\b(\d{5}(?:-[A-Z0-9]+)?)\b/.exec(i.groep)?.[1];
+	if (collectie === 'documents' && dossier) return `dossier:${dossier}`;
+	return `groep:${i.groep}`;
+}
+
 /** The groups in the order their first item was kept, each with its items in that order. */
-export function groepen(items: readonly MapItem[]): { groep: string; items: MapItem[] }[] {
+export function groepen(
+	items: readonly MapItem[]
+): { groep: string; sleutel: string; items: MapItem[] }[] {
 	const m = new Map<string, MapItem[]>();
 	for (const i of items) m.set(i.groep, [...(m.get(i.groep) ?? []), i]);
-	return [...m].map(([groep, items]) => ({ groep, items }));
+	return [...m].map(([groep, items]) => ({ groep, sleutel: groepSleutel(items[0]), items }));
 }
 
 // ── The link ────────────────────────────────────────────────────────────────
@@ -82,12 +105,35 @@ export function uitParam(v: string | null): MapItem[] {
 
 /** The address params of a map: its items, its name, its order where its own, its note. */
 export function mapParams(
-	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie'>
+	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie' | 'groepNotities'>
 ): URLSearchParams {
 	const p = new URLSearchParams({ map: naarParam(m.items), mapnaam: m.naam });
 	if (m.volgorde === 'eigen') p.set('mapvolgorde', 'eigen');
 	if (m.notitie?.trim()) p.set('mapnotitie', m.notitie.trim());
+	const groep = naarGroepParam(m.groepNotities, m.items);
+	if (groep) p.set('mapgroepen', groep);
 	return p;
+}
+
+/** The notes per group as `sleutel~notitie;…`, only of groups the map holds. */
+export function naarGroepParam(
+	notities: GroepNotities | null | undefined,
+	items: readonly MapItem[]
+): string {
+	const houdt = new Set(items.map(groepSleutel));
+	return Object.entries(notities ?? {})
+		.filter(([k, v]) => houdt.has(k) && v.trim())
+		.map(([k, v]) => `${veld(k)}~${veld(v.trim())}`)
+		.join(';');
+}
+
+export function uitGroepParam(v: string | null): GroepNotities {
+	const uit: GroepNotities = {};
+	for (const deel of (v ?? '').split(';')) {
+		const [k, n] = deel.split('~').map(terug);
+		if (k && n?.trim()) uit[k] = n.trim();
+	}
+	return uit;
 }
 
 /** A map from an address; null where it holds no item. A link without a note reads as before. */
@@ -98,12 +144,13 @@ export function uitParams(p: URLSearchParams): Gedeeld | null {
 		naam: p.get('mapnaam'),
 		items,
 		volgorde: p.get('mapvolgorde') === 'eigen' ? 'eigen' : 'groep',
-		notitie: p.get('mapnotitie')?.trim() || null
+		notitie: p.get('mapnotitie')?.trim() || null,
+		groepNotities: uitGroepParam(p.get('mapgroepen'))
 	};
 }
 
 /** The params a map's address carries, for a link that lands elsewhere first. */
-export const MAP_PARAMS = ['map', 'mapnaam', 'mapvolgorde', 'mapnotitie'] as const;
+export const MAP_PARAMS = ['map', 'mapnaam', 'mapvolgorde', 'mapnotitie', 'mapgroepen'] as const;
 
 // ── The network ─────────────────────────────────────────────────────────────
 /** The bronnen of a map, each once (two leden of one article are one bron), in its order. */
@@ -141,12 +188,13 @@ const citaat = (i: MapItem, n: number) =>
 /**
  * The map as a list of citations for a memo: numbered, the full form where kept, a note as
  * an indented line under its citation; per group, or in the reader's own order. The map's
- * own note goes above, as its first paragraph.
+ * own note goes above, as its first paragraph; a group's note under the group's name.
  */
 export function citaten(
 	items: readonly MapItem[],
 	volgorde: Map['volgorde'] = 'groep',
-	notitie?: string | null
+	notitie?: string | null,
+	groepNotities?: GroepNotities | null
 ): string {
 	const kop = notitie?.trim() ? `${notitie.trim()}\n\n` : '';
 	if (volgorde === 'eigen') return kop + items.map((i, n) => citaat(i, n + 1)).join('\n');
@@ -154,7 +202,10 @@ export function citaten(
 	return (
 		kop +
 		groepen(items)
-			.map(({ groep, items }) => [groep, ...items.map((i) => citaat(i, ++n))].join('\n'))
+			.map(({ groep, sleutel, items }) => {
+				const bij = groepNotities?.[sleutel]?.trim();
+				return [groep, ...(bij ? [bij] : []), ...items.map((i) => citaat(i, ++n))].join('\n');
+			})
 			.join('\n\n')
 	);
 }
