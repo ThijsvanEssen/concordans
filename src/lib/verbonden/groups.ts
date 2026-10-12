@@ -33,6 +33,7 @@ export type Loader =
 	| 'article-judgments'
 	| 'article-cited-by'
 	| 'article-changes'
+	| 'article-delegated'
 	| 'instrument-international'
 	| 'judgment-articles'
 	| 'instrument-dossiers'
@@ -332,6 +333,14 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 				{ relation: 'REFERS_TO', direction: 'inbound', collection: 'articles' },
 				{ relation: 'BASED_ON', direction: 'inbound', collection: 'articles' }
 			]
+		},
+		{
+			// The AMvB's and regelingen whose Gelet op names the article (Thijs, 12 Oct).
+			id: 'based-on',
+			label: 'Gebaseerd op dit artikel',
+			noun: 'regelingen',
+			load: 'article-delegated',
+			bakken: [{ relation: 'BASED_ON', direction: 'inbound', collection: 'instruments' }]
 		},
 		{
 			id: 'explanatory',

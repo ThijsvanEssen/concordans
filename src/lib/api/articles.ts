@@ -40,3 +40,18 @@ export function getArticleDetailByKey(key: string) {
 	const a = adresVan.get(key.toLowerCase());
 	return a ? getArticleDetail(a.bwbId, a.articleNumber) : null;
 }
+
+/**
+ * The regulations issued under an article (its `Gelet op` names it), and per delegation
+ * formula of its text the ones that fill it; once per article, for the formula's card and
+ * the group in Verbonden. Null where the API does not answer it (one without the route).
+ */
+export const getDelegated = (bwbId: string, articleNumber: string) =>
+	once(`articles/${bwbId}/${articleNumber}/delegated`, () =>
+		api
+			.GET('/api/articles/{bwb_id}/{article_number}/delegated', {
+				params: { path: { bwb_id: bwbId, article_number: articleNumber } }
+			})
+			.then(({ data }) => data ?? null)
+			.catch(() => null)
+	);

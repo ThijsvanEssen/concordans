@@ -124,6 +124,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/articles/{bwb_id}/{article_number}/delegated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Regulations issued under an article
+         * @description The regulations whose preamble ("Gelet op") names this article as their legal basis (`BASED_ON`), each with the leden it names and its articles that refer to this one; and the delegation formulas of the article ("bij of krachtens algemene maatregel van bestuur"), each with the regulations that fill it, or none yet. 404 when the article is unknown.
+         */
+        get: operations["get_delegated_api_articles__bwb_id___article_number__delegated_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/judgments": {
         parameters: {
             query?: never;
@@ -1942,6 +1962,26 @@ export interface components {
             echr_judgment_total: number;
         };
         /**
+         * ArticleDelegatedResponse
+         * @description Response for GET /api/articles/{bwb_id}/{article_number}/delegated.
+         */
+        ArticleDelegatedResponse: {
+            /** Article Id */
+            article_id: string;
+            /**
+             * Clauses
+             * @description The delegation formulas of the article (as `delegations` of the article), each with the regulations that fill it.
+             */
+            clauses?: components["schemas"]["DelegatedClauseDTO"][];
+            /**
+             * Items
+             * @description Every regulation issued under the article: AMvBs first, then ministerial regulations, then the others; by title.
+             */
+            items?: components["schemas"]["DelegatedRegulationDTO"][];
+            /** Total */
+            total: number;
+        };
+        /**
          * ArticleDetailResponse
          * @description Response for GET /api/articles/{bwb_id}/{article_number}.
          */
@@ -1965,6 +2005,11 @@ export interface components {
              * @description Every reference the text of the article makes, as stored on it, whether or not the target is in the graph. `citations` holds the resolved ones, one per target.
              */
             references?: components["schemas"]["ArticleReferenceDTO"][];
+            /**
+             * Delegations
+             * @description The delegation formulas in the text, in text order; empty when the article delegates nothing. `.../delegated` lists the regulations issued under the article, per formula.
+             */
+            delegations?: components["schemas"]["DelegationClauseDTO"][];
             /** Metadata */
             metadata: {
                 [key: string]: unknown;
@@ -3389,7 +3434,7 @@ export interface components {
             to_date?: string | null;
             /**
              * Role
-             * @description As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none.
+             * @description As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``PlvLid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none.
              */
             role?: string | null;
             /**
@@ -3881,7 +3926,7 @@ export interface components {
         DefinitionDTO: {
             /**
              * Ref
-             * @description What a span names it by: article and letter.
+             * @description What a span names it by: article, letter and term.
              */
             ref: string;
             /** Term */
@@ -3894,7 +3939,7 @@ export interface components {
             article_number?: string | null;
             /**
              * Place
-             * @description The letter of its onderdeel: `a`.
+             * @description The letter of its onderdeel: `a`; none in an unmarked list.
              */
             place?: string | null;
             /** Jci */
@@ -3911,6 +3956,159 @@ export interface components {
              * @description The BWB id of the regulation the definition is (`wet`: de Zorgverzekeringswet).
              */
             refers_to?: string | null;
+        };
+        /**
+         * DelegatedArticleDTO
+         * @description An article of a regulation issued under the article that refers to it, with the
+         *     leden and onderdelen of the article it names.
+         */
+        DelegatedArticleDTO: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Article Number */
+            article_number: string | null;
+            /** Display Name */
+            display_name: string | null;
+        };
+        /**
+         * DelegatedClauseDTO
+         * @description A delegation formula with the regulations that fill it.
+         */
+        DelegatedClauseDTO: {
+            /**
+             * Start
+             * @description Offset of the formula in the `text` of the article.
+             */
+            start: number;
+            /** End */
+            end: number;
+            /** Text */
+            text: string;
+            /**
+             * Kind
+             * @description `amvb` (bij algemene maatregel van bestuur) or `ministeriele_regeling` (bij ministeriële regeling, bij regeling van Onze Minister).
+             * @enum {string}
+             */
+            kind: "amvb" | "ministeriele_regeling";
+            /**
+             * Krachtens
+             * @description `bij of krachtens`: the regulation may delegate further.
+             */
+            krachtens: boolean;
+            /**
+             * Part
+             * @description The `id` of the innermost part it stands in (`lid-1`, `lid-2-onder-a`); null for an article without parts.
+             */
+            part: string | null;
+            /**
+             * Lid
+             * @description The number of the lid it stands in.
+             */
+            lid: string | null;
+            /**
+             * Instruments
+             * @description The `key` of every item that fills it: of a type the formula names (an AMvB; with `krachtens` also a ministerial regulation) and naming its lid or no lid. Empty: no regulation is issued under it yet.
+             */
+            instruments?: string[];
+        };
+        /**
+         * DelegatedRegulationDTO
+         * @description A regulation whose preamble ("Gelet op") names the article as its legal basis, with
+         *     the leden and onderdelen of the article it names (none: the whole article).
+         */
+        DelegatedRegulationDTO: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            instrument: components["schemas"]["InstrumentSummaryDTO"];
+            /**
+             * Kind
+             * @description Its BWB type: `AMvB`, `ministeriele-regeling`, `KB`, …
+             */
+            kind: string | null;
+            /**
+             * Date In Force
+             * @description When the regulation itself entered into force.
+             */
+            date_in_force?: string | null;
+            /**
+             * Text
+             * @description The reference in its preamble: `16, eerste en zevende lid`.
+             */
+            text: string | null;
+            /**
+             * Articles
+             * @description Its articles that refer to the article, in the order of the regulation.
+             */
+            articles?: components["schemas"]["DelegatedArticleDTO"][];
+        };
+        /**
+         * DelegationClauseDTO
+         * @description A delegation formula in the text of an article ("bij of krachtens algemene maatregel
+         *     van bestuur"), as a span of its `text`.
+         */
+        DelegationClauseDTO: {
+            /**
+             * Start
+             * @description Offset of the formula in the `text` of the article.
+             */
+            start: number;
+            /** End */
+            end: number;
+            /** Text */
+            text: string;
+            /**
+             * Kind
+             * @description `amvb` (bij algemene maatregel van bestuur) or `ministeriele_regeling` (bij ministeriële regeling, bij regeling van Onze Minister).
+             * @enum {string}
+             */
+            kind: "amvb" | "ministeriele_regeling";
+            /**
+             * Krachtens
+             * @description `bij of krachtens`: the regulation may delegate further.
+             */
+            krachtens: boolean;
+            /**
+             * Part
+             * @description The `id` of the innermost part it stands in (`lid-1`, `lid-2-onder-a`); null for an article without parts.
+             */
+            part: string | null;
+            /**
+             * Lid
+             * @description The number of the lid it stands in.
+             */
+            lid: string | null;
         };
         /**
          * DocumentEntryDTO
@@ -6007,13 +6205,13 @@ export interface components {
             facets?: components["schemas"]["FeedFacetsDTO"] | null;
             /**
              * Partial
-             * @description Part of the answer is still to come: ``total`` and ``facets`` were asked for but are still being counted (under a filter not counted before, that takes a minute or more): null now, ask again; or, with ``searched_from``, the search for ``q`` did not reach the first event.
+             * @description Part of the answer is still to come: ``total`` and ``facets`` were asked for but are still being counted (under a filter not counted before, that takes a minute or more): null now, ask again; or, with ``searched_from``, the search for ``q`` or ``faction`` did not reach the first event.
              * @default false
              */
             partial: boolean;
             /**
              * Searched From
-             * @description With ``q`` and no ``since``: the first day searched when the search stopped before the first event (YYYY-MM-DD). The events found are those from that day on; ask with ``until`` the day before (and no ``cursor``) for older ones. Null when every day was searched.
+             * @description With ``q`` or ``faction`` and no ``since``: the first day searched when the search stopped before the first event (YYYY-MM-DD). The events found are those from that day on; ask with ``until`` the day before (and no ``cursor``) for older ones. Null when every day was searched.
              */
             searched_from?: string | null;
             /**
@@ -7915,7 +8113,7 @@ export interface components {
             to_date?: string | null;
             /**
              * Role
-             * @description As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none.
+             * @description As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``PlvLid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none.
              */
             role?: string | null;
             /**
@@ -8020,7 +8218,7 @@ export interface components {
             ek?: components["schemas"]["EkMembershipDTO"] | null;
             /**
              * Role
-             * @description In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``).
+             * @description In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``PlvLid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``).
              */
             role?: string | null;
             /**
@@ -8112,7 +8310,7 @@ export interface components {
             ek?: components["schemas"]["EkMembershipDTO"] | null;
             /**
              * Role
-             * @description In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``).
+             * @description In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``PlvLid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``).
              */
             role?: string | null;
             /**
@@ -8200,13 +8398,19 @@ export interface components {
              * @description Seats behind this vote; 1 on a roll-call.
              */
             seats?: number | null;
-            /** Party */
+            /**
+             * Party
+             * @description The party of the faction they sat in on ``date``; of their own vote on an undated decision the one they sit for now.
+             */
             party?: string | null;
-            /** Faction Key */
+            /**
+             * Faction Key
+             * @description The faction they sat in on ``date``, also of their own vote; null where no period of theirs holds the day.
+             */
             faction_key?: string | null;
             /**
              * Vote Source
-             * @description ``member``: their own vote, on a roll-call (hoofdelijke stemming); ``faction``: their faction's, cast while they belonged to it (``faction_key``).
+             * @description ``member``: their own vote, on a roll-call (hoofdelijke stemming); ``faction``: their faction's, cast while they belonged to it.
              * @default member
              * @enum {string}
              */
@@ -10453,6 +10657,38 @@ export interface operations {
             };
         };
     };
+    get_delegated_api_articles__bwb_id___article_number__delegated_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+                article_number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArticleDelegatedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_judgments_api_judgments_get: {
         parameters: {
             query?: {
@@ -12446,7 +12682,7 @@ export interface operations {
             query?: {
                 /** @description The day, YYYY-MM-DD; today when left out. */
                 date?: string | null;
-                /** @description ``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003). */
+                /** @description ``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003), and ``hall`` from the day Wie zit waar was read (``hall_read_on``). */
                 chamber?: "TK" | "EK";
             };
             header?: never;

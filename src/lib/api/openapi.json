@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.44"
+		"version": "0.79.50"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -314,6 +314,46 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/ArticlePassagesResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/articles/{bwb_id}/{article_number}/delegated": {
+			"get": {
+				"tags": ["articles", "articles"],
+				"summary": "Regulations issued under an article",
+				"description": "The regulations whose preamble (\"Gelet op\") names this article as their legal basis (`BASED_ON`), each with the leden it names and its articles that refer to this one; and the delegation formulas of the article (\"bij of krachtens algemene maatregel van bestuur\"), each with the regulations that fill it, or none yet. 404 when the article is unknown.",
+				"operationId": "get_delegated_api_articles__bwb_id___article_number__delegated_get",
+				"parameters": [
+					{
+						"name": "bwb_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Bwb Id" }
+					},
+					{
+						"name": "article_number",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Article Number" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ArticleDelegatedResponse" }
 							}
 						}
 					},
@@ -4139,11 +4179,11 @@
 						"schema": {
 							"enum": ["TK", "EK"],
 							"type": "string",
-							"description": "``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003).",
+							"description": "``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003), and ``hall`` from the day Wie zit waar was read (``hall_read_on``).",
 							"default": "TK",
 							"title": "Chamber"
 						},
-						"description": "``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003)."
+						"description": "``EK``: the seats of the Eerste Kamer, in the order of their size (no plan): without ``date`` as eerstekamer.nl shows them on the day it was last read; with it, those of that day as walked from the Kiesraad's result through the changes the Kamer's pages tell (404 before 2003), and ``hall`` from the day Wie zit waar was read (``hall_read_on``)."
 					}
 				],
 				"responses": {
@@ -5734,6 +5774,29 @@
 				"title": "ArticleCitedByResponse",
 				"description": "Response for GET /api/articles/{bwb_id}/{article_number}/cited-by."
 			},
+			"ArticleDelegatedResponse": {
+				"properties": {
+					"article_id": { "type": "string", "title": "Article Id" },
+					"clauses": {
+						"items": { "$ref": "#/components/schemas/DelegatedClauseDTO" },
+						"type": "array",
+						"title": "Clauses",
+						"description": "The delegation formulas of the article (as `delegations` of the article), each with the regulations that fill it."
+					},
+					"items": {
+						"items": { "$ref": "#/components/schemas/DelegatedRegulationDTO" },
+						"type": "array",
+						"title": "Items",
+						"description": "Every regulation issued under the article: AMvBs first, then ministerial regulations, then the others; by title."
+					},
+					"total": { "type": "integer", "title": "Total" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["article_id", "total"],
+				"title": "ArticleDelegatedResponse",
+				"description": "Response for GET /api/articles/{bwb_id}/{article_number}/delegated."
+			},
 			"ArticleDetailResponse": {
 				"properties": {
 					"article": { "$ref": "#/components/schemas/ArticleSummaryDTO" },
@@ -5762,6 +5825,12 @@
 						"type": "array",
 						"title": "References",
 						"description": "Every reference the text of the article makes, as stored on it, whether or not the target is in the graph. `citations` holds the resolved ones, one per target."
+					},
+					"delegations": {
+						"items": { "$ref": "#/components/schemas/DelegationClauseDTO" },
+						"type": "array",
+						"title": "Delegations",
+						"description": "The delegation formulas in the text, in text order; empty when the article delegates nothing. `.../delegated` lists the regulations issued under the article, per formula."
 					},
 					"metadata": {
 						"anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
@@ -7404,7 +7473,7 @@
 					"role": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Role",
-						"description": "As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none."
+						"description": "As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``PlvLid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none."
 					},
 					"substitute": {
 						"type": "boolean",
@@ -7950,7 +8019,7 @@
 					"ref": {
 						"type": "string",
 						"title": "Ref",
-						"description": "What a span names it by: article and letter."
+						"description": "What a span names it by: article, letter and term."
 					},
 					"term": { "type": "string", "title": "Term" },
 					"text": { "type": "string", "title": "Text" },
@@ -7962,7 +8031,7 @@
 					"place": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Place",
-						"description": "The letter of its onderdeel: `a`."
+						"description": "The letter of its onderdeel: `a`; none in an unmarked list."
 					},
 					"jci": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Jci" },
 					"scope": {
@@ -7982,6 +8051,172 @@
 				"required": ["ref", "term", "text", "article_key"],
 				"title": "DefinitionDTO",
 				"description": "A definition a regulation gives itself (its begripsbepalingen), as its text has it."
+			},
+			"DelegatedArticleDTO": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"article_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article Number"
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "article_number", "display_name"],
+				"title": "DelegatedArticleDTO",
+				"description": "An article of a regulation issued under the article that refers to it, with the\nleden and onderdelen of the article it names."
+			},
+			"DelegatedClauseDTO": {
+				"properties": {
+					"start": {
+						"type": "integer",
+						"title": "Start",
+						"description": "Offset of the formula in the `text` of the article."
+					},
+					"end": { "type": "integer", "title": "End" },
+					"text": { "type": "string", "title": "Text" },
+					"kind": {
+						"type": "string",
+						"enum": ["amvb", "ministeriele_regeling"],
+						"title": "Kind",
+						"description": "`amvb` (bij algemene maatregel van bestuur) or `ministeriele_regeling` (bij ministeri\u00eble regeling, bij regeling van Onze Minister)."
+					},
+					"krachtens": {
+						"type": "boolean",
+						"title": "Krachtens",
+						"description": "`bij of krachtens`: the regulation may delegate further."
+					},
+					"part": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Part",
+						"description": "The `id` of the innermost part it stands in (`lid-1`, `lid-2-onder-a`); null for an article without parts."
+					},
+					"lid": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Lid",
+						"description": "The number of the lid it stands in."
+					},
+					"instruments": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Instruments",
+						"description": "The `key` of every item that fills it: of a type the formula names (an AMvB; with `krachtens` also a ministerial regulation) and naming its lid or no lid. Empty: no regulation is issued under it yet."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["start", "end", "text", "kind", "krachtens", "part", "lid"],
+				"title": "DelegatedClauseDTO",
+				"description": "A delegation formula with the regulations that fill it."
+			},
+			"DelegatedRegulationDTO": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"instrument": { "$ref": "#/components/schemas/InstrumentSummaryDTO" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "Its BWB type: `AMvB`, `ministeriele-regeling`, `KB`, \u2026"
+					},
+					"date_in_force": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date In Force",
+						"description": "When the regulation itself entered into force."
+					},
+					"text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Text",
+						"description": "The reference in its preamble: `16, eerste en zevende lid`."
+					},
+					"articles": {
+						"items": { "$ref": "#/components/schemas/DelegatedArticleDTO" },
+						"type": "array",
+						"title": "Articles",
+						"description": "Its articles that refer to the article, in the order of the regulation."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["instrument", "kind", "text"],
+				"title": "DelegatedRegulationDTO",
+				"description": "A regulation whose preamble (\"Gelet op\") names the article as its legal basis, with\nthe leden and onderdelen of the article it names (none: the whole article)."
+			},
+			"DelegationClauseDTO": {
+				"properties": {
+					"start": {
+						"type": "integer",
+						"title": "Start",
+						"description": "Offset of the formula in the `text` of the article."
+					},
+					"end": { "type": "integer", "title": "End" },
+					"text": { "type": "string", "title": "Text" },
+					"kind": {
+						"type": "string",
+						"enum": ["amvb", "ministeriele_regeling"],
+						"title": "Kind",
+						"description": "`amvb` (bij algemene maatregel van bestuur) or `ministeriele_regeling` (bij ministeri\u00eble regeling, bij regeling van Onze Minister)."
+					},
+					"krachtens": {
+						"type": "boolean",
+						"title": "Krachtens",
+						"description": "`bij of krachtens`: the regulation may delegate further."
+					},
+					"part": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Part",
+						"description": "The `id` of the innermost part it stands in (`lid-1`, `lid-2-onder-a`); null for an article without parts."
+					},
+					"lid": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Lid",
+						"description": "The number of the lid it stands in."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["start", "end", "text", "kind", "krachtens", "part", "lid"],
+				"title": "DelegationClauseDTO",
+				"description": "A delegation formula in the text of an article (\"bij of krachtens algemene maatregel\nvan bestuur\"), as a span of its `text`."
 			},
 			"DocumentEntryDTO": {
 				"properties": {
@@ -10327,13 +10562,13 @@
 					"partial": {
 						"type": "boolean",
 						"title": "Partial",
-						"description": "Part of the answer is still to come: ``total`` and ``facets`` were asked for but are still being counted (under a filter not counted before, that takes a minute or more): null now, ask again; or, with ``searched_from``, the search for ``q`` did not reach the first event.",
+						"description": "Part of the answer is still to come: ``total`` and ``facets`` were asked for but are still being counted (under a filter not counted before, that takes a minute or more): null now, ask again; or, with ``searched_from``, the search for ``q`` or ``faction`` did not reach the first event.",
 						"default": false
 					},
 					"searched_from": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Searched From",
-						"description": "With ``q`` and no ``since``: the first day searched when the search stopped before the first event (YYYY-MM-DD). The events found are those from that day on; ask with ``until`` the day before (and no ``cursor``) for older ones. Null when every day was searched."
+						"description": "With ``q`` or ``faction`` and no ``since``: the first day searched when the search stopped before the first event (YYYY-MM-DD). The events found are those from that day on; ask with ``until`` the day before (and no ``cursor``) for older ones. Null when every day was searched."
 					},
 					"data_as_of": {
 						"additionalProperties": { "$ref": "#/components/schemas/DataAsOfDTO" },
@@ -12532,7 +12767,7 @@
 					"role": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Role",
-						"description": "As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none."
+						"description": "As the Kamer writes it: of the Tweede Kamer the ``Functie`` of the seat (``Lid``, ``Voorzitter``, ``OnderVz``, ``PlvLid``), of the Eerste Kamer the role its page gives (``voorzitter``); null for none."
 					},
 					"substitute": {
 						"type": "boolean",
@@ -12632,7 +12867,7 @@
 					"role": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Role",
-						"description": "In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``)."
+						"description": "In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``PlvLid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``)."
 					},
 					"observed_from": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -12722,7 +12957,7 @@
 					"role": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Role",
-						"description": "In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``Plv. lid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``)."
+						"description": "In a committee: the role of the seat as the Kamer writes it, of the Tweede Kamer its ``Functie`` (``Lid``, ``Voorzitter``, ``OnderVz``, ``PlvLid``), of the Eerste Kamer the role its page gives (``voorzitter``, ``ondervoorzitter``)."
 					},
 					"observed_from": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -12812,16 +13047,21 @@
 						"title": "Seats",
 						"description": "Seats behind this vote; 1 on a roll-call."
 					},
-					"party": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Party" },
+					"party": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Party",
+						"description": "The party of the faction they sat in on ``date``; of their own vote on an undated decision the one they sit for now."
+					},
 					"faction_key": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Faction Key"
+						"title": "Faction Key",
+						"description": "The faction they sat in on ``date``, also of their own vote; null where no period of theirs holds the day."
 					},
 					"vote_source": {
 						"type": "string",
 						"enum": ["member", "faction"],
 						"title": "Vote Source",
-						"description": "``member``: their own vote, on a roll-call (hoofdelijke stemming); ``faction``: their faction's, cast while they belonged to it (``faction_key``).",
+						"description": "``member``: their own vote, on a roll-call (hoofdelijke stemming); ``faction``: their faction's, cast while they belonged to it.",
 						"default": "member"
 					},
 					"in_office": {

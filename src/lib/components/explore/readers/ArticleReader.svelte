@@ -13,7 +13,7 @@
 	// comparison; a lid changed since the oldest tekstversie says so in the margin.
 	import { menu } from '$lib/actions/menu';
 	import { api, unwrap } from '$lib/api/client';
-	import { getArticleDetail, getArticleHistory } from '$lib/api/articles';
+	import { getArticleDetail, getArticleHistory, getDelegated } from '$lib/api/articles';
 	import { instrumentMetaStore, recordInstrument } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
@@ -706,6 +706,8 @@
 					citations={shownVersion ? [] : d.citations}
 					begrippen={shownVersion ? [] : (d.term_spans ?? [])}
 					definities={d.definitions ?? []}
+					delegaties={shownVersion ? [] : (d.delegations ?? [])}
+					grondslag={() => getDelegated(bwbId, articleNumber)}
 					counts={shown ? new Map() : lidCounts}
 					tellend={!shown && lidTellend}
 					{lidHref}

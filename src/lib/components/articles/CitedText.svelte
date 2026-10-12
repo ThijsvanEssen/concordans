@@ -9,6 +9,8 @@
 	import { isCollection } from '$lib/vocabulary';
 	import { definitieKaart, definitieRegel, type Begrip, type Definitie } from '$lib/text/begrippen';
 	import { splitsOpNummers } from '$lib/text/meervoud';
+	import type { DelegatieSpan, Gedelegeerd } from '$lib/text/delegaties';
+	import GrondslagFormule from './GrondslagFormule.svelte';
 
 	type Span = Schema<'ArticleCitationSpan'> & { definition_ref?: string | null };
 
@@ -16,7 +18,9 @@
 		text,
 		citations = [],
 		begrippen = [],
-		definities = new Map()
+		definities = new Map(),
+		delegaties = [],
+		grondslag = null
 	}: {
 		text: string;
 		/** Offsets are relative to `text`. */
@@ -25,9 +29,19 @@
 		begrippen?: Begrip[];
 		/** The definitions by their `ref`. */
 		definities?: Map<string, Definitie>;
+		/** The delegation formulas in the text, offsets relative to `text`. */
+		delegaties?: DelegatieSpan[];
+		/** The regulations issued under the article; without it no formula is marked. */
+		grondslag?: (() => Promise<Gedelegeerd | null>) | null;
 	} = $props();
 
-	type Segment = { content: string; span?: Span; at?: string | null; begrip?: Definitie };
+	type Segment = {
+		content: string;
+		span?: Span;
+		at?: string | null;
+		begrip?: Definitie;
+		formule?: DelegatieSpan;
+	};
 
 	/** Each article once, where the API gives a span twice for it. */
 	const uniekeDoelen = (spans: Span[]) =>
@@ -39,15 +53,22 @@
 	const segments = $derived.by<Segment[]>(() => {
 		const out: Segment[] = [];
 		let cursor = 0;
-		// A term inside a citation is no span of its own (the API leaves it out); where both
-		// start at one place the citation goes first.
+		// A term inside a citation is no span of its own (the API leaves it out); where several
+		// start at one place the citation goes first, then a delegation formula, then a term.
+		const rang = (x: object) => ('formule' in x ? 1 : 'begrip' in x ? 2 : 0);
 		const sorted = [
 			...citations.filter((c) => c.start != null && c.end != null),
+			...(grondslag ? delegaties.map((d) => ({ start: d.start, end: d.end, formule: d })) : []),
 			...begrippen.map((b) => ({ ...b, begrip: definities.get(b.definition_ref) }))
-		].sort((a, b) => a.start! - b.start! || ('begrip' in a ? 1 : 0) - ('begrip' in b ? 1 : 0));
+		].sort((a, b) => a.start! - b.start! || rang(a) - rang(b));
 		for (const item of sorted) {
 			if (item.start! < cursor) continue;
 			if (item.start! > cursor) out.push({ content: text.slice(cursor, item.start!) });
+			if ('formule' in item) {
+				out.push({ content: text.slice(item.start, item.end), formule: item.formule });
+				cursor = item.end;
+				continue;
+			}
 			if ('begrip' in item) {
 				if (!item.begrip) continue;
 				out.push({ content: text.slice(item.start, item.end), begrip: item.begrip });
@@ -100,7 +121,10 @@
 	};
 </script>
 
-{#each segments as seg, i (i)}{#if seg.begrip}<BronLink
+{#each segments as seg, i (i)}{#if seg.formule && grondslag}<GrondslagFormule
+			formule={seg.formule}
+			laad={grondslag}>{seg.content}</GrondslagFormule
+		>{:else if seg.begrip}<BronLink
 			ref={`articles/${seg.begrip.article_key}`}
 			voorbeeld={definitieKaart(seg.begrip)}
 			class="begrip">{seg.content}</BronLink
