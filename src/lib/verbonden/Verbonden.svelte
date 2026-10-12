@@ -53,6 +53,7 @@
 		hiddenLine,
 		regroup,
 		shownLabel,
+		vasteGroepen,
 		yearHistogram,
 		type Grouping
 	} from './view';
@@ -237,7 +238,13 @@
 	});
 	const hidden = $derived(hiddenLine(groepen, filter));
 	// What the table lists: the bronfilter applied, as its own count line does.
-	const total = $derived(shownLabel(verbonden.groups, filter));
+	// One count, written once it holds (#56): a group still loading counts what the node
+	// foretells for it; while one cannot be foretold, the head waits.
+	const vast = $derived(
+		vasteGroepen(verbonden.groups, verbonden.wachtend ?? [], verbonden.verwacht ?? {})
+	);
+	const wachtSet = $derived(new Set(verbonden.wachtend ?? []));
+	const total = $derived(shownLabel(vast ?? verbonden.groups, filter, wachtSet));
 
 	const rowId = rowKey;
 
@@ -376,7 +383,7 @@
 		<!-- A bron without verbindingen says so by its count, not by a sentence (R7, UX-toets
 		     0.79.43: "Deze bron heeft geen verbindingen in de gegevens."). -->
 		{#if verbonden.groups.length > 0 || (!verbonden.loading && !verbonden.failed && verbonden.id)}
-			<span class="head__count">{countLine(verbonden.groups, filter)}</span>
+			<span class="head__count">{vast ? countLine(vast, filter, wachtSet) : ''}</span>
 		{/if}
 	</div>
 	<!-- The choose-line of the panel (docs/bediening.md): how grouped, the filter. No menu of

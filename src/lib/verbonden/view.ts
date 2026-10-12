@@ -85,24 +85,59 @@ export function mentionLine(groups: Group[]): string | null {
 export const totalCount = (groups: Group[]) => groups.reduce((sum, g) => sum + groupCount(g), 0);
 
 /** The number shown after the filter: totals where they hold, else the rows that pass. */
-export const shownCount = (groups: Group[], f: VerbondenFilter) =>
-	filterGroups(groups, f).reduce((sum, g) => sum + groupCount(g), 0);
+export const shownCount = (
+	groups: Group[],
+	f: VerbondenFilter,
+	wachtend: ReadonlySet<string> = new Set()
+) => filterGroups(groups, f, wachtend).reduce((sum, g) => sum + groupCount(g), 0);
+
+/**
+ * The groups as they will count once every loader is in (UX-toets 0.79.47, #56): a group whose
+ * loader is under way counts what the light node foretells for it (`verwacht`). Null while a
+ * waiting group has no forecast: its count is not known, and the head waits for it rather than
+ * jump ("4.793 verbindingen", then "5.404").
+ */
+export function vasteGroepen(
+	groups: Group[],
+	wachtend: readonly string[] = [],
+	verwacht: Readonly<Record<string, number>> = {}
+): Group[] | null {
+	const w = new Set(wachtend);
+	let onbekend = false;
+	const out = groups.map((g) => {
+		if (!w.has(g.id) || g.total != null) return g;
+		const n = verwacht[g.id];
+		if (n == null) onbekend = true;
+		return n == null ? g : { ...g, total: n };
+	});
+	return onbekend ? null : out;
+}
 
 /** `1.104 verbindingen`, or `39 van 1.104 verbindingen` when a filter is active. */
-export function countLine(groups: Group[], f: VerbondenFilter): string {
+export function countLine(
+	groups: Group[],
+	f: VerbondenFilter,
+	wachtend: ReadonlySet<string> = new Set()
+): string {
 	const total = totalCount(groups);
-	const shown = shownCount(groups, f);
+	const shown = shownCount(groups, f, wachtend);
 	const noun = total === 1 ? 'verbinding' : 'verbindingen';
 	const heel = `${formatCount(total)}${minstens(groups)}`;
-	return shown === total ? `${heel} ${noun}` : `${shownLabel(groups, f)} van ${heel} ${noun}`;
+	return shown === total
+		? `${heel} ${noun}`
+		: `${shownLabel(groups, f, wachtend)} van ${heel} ${noun}`;
 }
 
 // A group the API cut off counts what it holds: the sum is at least, as its own `30+`.
 const minstens = (gs: Group[]) => (gs.some(afgekapt) ? '+' : '');
 
 /** The number after the filter as the count line writes it: `164`, or `164+`. */
-export const shownLabel = (groups: Group[], f: VerbondenFilter) =>
-	`${formatCount(shownCount(groups, f))}${minstens(filterGroups(groups, f))}`;
+export const shownLabel = (
+	groups: Group[],
+	f: VerbondenFilter,
+	wachtend: ReadonlySet<string> = new Set()
+) =>
+	`${formatCount(shownCount(groups, f, wachtend))}${minstens(filterGroups(groups, f, wachtend))}`;
 
 /** A group with more rows than it holds and no total from the API (`30+`). */
 const afgekapt = (g: Group) => !!g.capped && !(g.total != null && g.total >= g.rows.length);
