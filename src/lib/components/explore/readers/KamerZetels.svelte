@@ -16,6 +16,9 @@
 	import { formatLongDate } from './_shared';
 	import { vacantZonderFractie, wijzigingenVan } from './zetels';
 	import type { Schema } from '$lib/api/types';
+	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
+	import Fasen from '$lib/components/tijdlijn/Fasen.svelte';
+	import { ms, periodeZin } from '$lib/components/tijdlijn/tijdas';
 
 	type Zaal = Schema<'ParliamentSeatsResponse'>;
 	type Stuk = Schema<'SeatStretchDTO'>;
@@ -28,7 +31,8 @@
 		eind,
 		dag,
 		kabinet,
-		onKies
+		onKies,
+		fasen = []
 	}: {
 		kamer: 'TK' | 'EK';
 		/** The cabinet's stretches in this Kamer; empty where the API has none. */
@@ -43,6 +47,8 @@
 		dag: string;
 		kabinet: string;
 		onKies: (s: Stuk) => void;
+		/** The cabinet's phases (demissionair and after), as on its posts. */
+		fasen?: { van: string; label: string }[];
 	} = $props();
 
 	const titel = $derived(
@@ -203,9 +209,29 @@
 	const wijzigingen = $derived(gekozen ? wijzigingenVan(gekozen) : []);
 	/** `66 zetels, 2 sep. 2026 tot 10 okt. 2026.` */
 	const stapZin = (s: Stuk) =>
-		`${s.coalition} zetels, ${korteDatum(s.from_date)}${
-			s.to_date && s.to_date !== s.from_date ? ` tot ${korteDatum(s.to_date)}` : ''
+		`${s.coalition} zetels, ${
+			s.to_date === s.from_date ? korteDatum(s.from_date) : periodeZin(s.from_date, s.to_date)
 		}.`;
+	/** The axis: the one of the posts (Tijdas), under the steps. */
+	const as = $derived(
+		van
+			? {
+					periode: { van: ms(van), tot: ms(eind) + 864e5, lopend: eind === vandaag() },
+					begin: korteDatum(van),
+					eind: eind === vandaag() ? 'nu' : korteDatum(eind)
+				}
+			: null
+	);
+	const fasePlek = $derived(
+		as
+			? fasen
+					.map((f) => ({
+						at: (ms(f.van) - as.periode.van) / (as.periode.tot - as.periode.van),
+						label: f.label
+					}))
+					.filter((f) => f.at > 0 && f.at < 1)
+			: []
+	);
 </script>
 
 {#snippet meerderheidWoord(n: number)}{n >= meerderheid
@@ -231,7 +257,13 @@
 
 		{#if stappen.length}
 			<div class="verloop" id="verloop-{kamer}" tabindex="-1">
+				{#if fasePlek.length}<Fasen fasen={fasePlek} />{/if}
 				<div class="strook">
+					{#each fasePlek as f (f.at)}<span
+							class="fase-lijn"
+							style:left="{f.at * 100}%"
+							aria-hidden="true"
+						></span>{/each}
 					<svg
 						viewBox="0 0 {W} {H}"
 						preserveAspectRatio="none"
@@ -277,10 +309,9 @@
 				</div>
 				<!-- The period's ends under its ends; what the strip shows as a caption at the left
 				     edge, as under the hall. -->
-				<p class="as">
-					<span>{van ? korteDatum(van) : ''}</span>
-					<span>{eind === vandaag() ? 'nu' : korteDatum(eind)}</span>
-				</p>
+				{#if as}
+					<Tijdas periode={as.periode} begin={as.begin} eind={as.eind} plaats="onder" />
+				{/if}
 				{#if gekozen}
 					<p class="onderschrift">
 						<b>{stapZin(gekozen)}</b>{#each wijzigingen as w, i (i)}{i ? '; ' : ' '}<span
@@ -578,13 +609,11 @@
 		stroke-width: 2;
 		vector-effect: non-scaling-stroke;
 	}
-	.as {
-		display: flex;
-		justify-content: space-between;
-		gap: var(--s-3);
-		margin: 0;
-		font-family: var(--font-serif);
-		font-size: var(--t-micro);
-		color: var(--ink-3);
+	.fase-lijn {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		border-left: 1px dotted var(--rule-strong);
+		pointer-events: none;
 	}
 </style>
