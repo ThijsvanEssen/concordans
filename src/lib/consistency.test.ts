@@ -991,6 +991,37 @@ describe('canvas cards and halls', () => {
 			expect(t).toMatch(/cite=\{citeItems\(forms, forms\.link\)\}/);
 		}
 	});
+
+	it('shows a note of the reader in one form, an item’s, a group’s and the map’s (Thijs, 12 Oct)', () => {
+		// Aantekening sets the reader's own words apart from the law: the page draws no note
+		// of its own, no italic and no field beside it.
+		const src = (pad: string) => sources.find((s) => s.path === pad)!.text;
+		const pagina = src('routes/(main)/gemarkeerd/+page.svelte');
+		expect(pagina.match(/<Aantekening\b/g)?.length).toBe(4);
+		for (const tekst of [
+			'tekst={i.notitie}',
+			'tekst={bij}',
+			'tekst={m.notitie}',
+			'tekst={gedeeld.notitie}'
+		])
+			expect(pagina).toContain(tekst);
+		expect(pagina).not.toMatch(
+			/<textarea\b|class="[^"]*\b(?:map-)?notitie(?:-veld)?(?=["\s])|font-style:\s*italic/
+		);
+		expect(src('lib/map/Aantekening.svelte')).not.toMatch(/font-style:\s*italic|var\(--accent/);
+	});
+
+	it('names where a map’s way on goes: here, or in the reader (Thijs, 12 Oct)', () => {
+		const src = (pad: string) => sources.find((s) => s.path === pad)!.text;
+		const inhoud = src('lib/map/MapInhoud.svelte');
+		expect(inhoud).toContain("'Heel artikel hier'");
+		expect(inhoud).toContain("'Heel artikel in de lezer'");
+		expect(inhoud).not.toMatch(/>\s*Heel artikel\s*</);
+		// The row's own way to the reader, in sight and not on hover: outside .knoppen.
+		const pagina = src('routes/(main)/gemarkeerd/+page.svelte');
+		const aside = /\{#snippet aside\(\)\}([\s\S]*?)\{\/snippet\}/.exec(pagina)![1];
+		expect(aside.slice(aside.lastIndexOf('</span>'))).toContain('>In de lezer</TekstLink');
+	});
 });
 
 describe('the keyboard', () => {
