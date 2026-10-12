@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { NODE_TYPES, RELATIONS, isCollection, isRelation, nodeId, parseNodeId } from './vocabulary';
+import {
+	NODE_TYPES,
+	RELATIONS,
+	isCollection,
+	isRelation,
+	nodeId,
+	parseNodeId,
+	relationLabel
+} from './vocabulary';
 
 describe('node ids', () => {
 	it('builds and parses collection/key', () => {
@@ -35,5 +43,13 @@ describe('vocabulary', () => {
 	it('is not fooled by properties of Object', () => {
 		expect(isCollection('toString')).toBe(false);
 		expect(isCollection('constructor')).toBe(false);
+	});
+});
+
+describe('relationLabel', () => {
+	it('names an answer by who gives it: a letter goes into a motion, a judgment answers questions', () => {
+		expect(relationLabel('ANSWERS', 'documents')).toBe('gaat in op');
+		expect(relationLabel('ANSWERS', 'judgments')).toBe('beantwoordt prejudiciële vragen van');
+		expect(relationLabel('REFERS_TO', 'documents')).toBe('haalt aan');
 	});
 });

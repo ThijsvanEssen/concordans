@@ -128,6 +128,38 @@ describe('hoeVan', () => {
 		expect(hoeVan(stuk, 'dossiers')).toBeNull();
 	});
 
+	it('names a Kamerstuk the subject names as it is written, in either direction', () => {
+		const motie = (relation: 'ANSWERS' | 'REFERS_TO', direction: 'inbound' | 'outbound') =>
+			hoeVan(
+				row({
+					ref: { collection: 'documents', key: 'm' },
+					relation,
+					direction,
+					edge: { basis: 'subject', text: 'Kamerstuk 25424-795' }
+				}),
+				'documents'
+			);
+		for (const relation of ['ANSWERS', 'REFERS_TO'] as const) {
+			const uit = motie(relation, 'outbound');
+			expect([uit?.werkwoord, uit?.rest, uit?.herkomst]).toEqual([
+				'Genoemd',
+				'als ‘Kamerstuk 25424-795’',
+				'Onderwerp van het Kamerstuk'
+			]);
+			expect(motie(relation, 'inbound')?.werkwoord).toBe('Noemt');
+		}
+	});
+
+	it('leaves a letter that fulfils a toezegging to its group', () => {
+		const brief = row({
+			ref: { collection: 'documents', key: 'b' },
+			relation: 'ANSWERS',
+			direction: 'inbound',
+			edge: {}
+		});
+		expect(hoeVan(brief, 'commitments')).toBeNull();
+	});
+
 	it('cites a publication as it is written', () => {
 		expect(publicatie('Stb.2021-162')).toBe('Stb. 2021, 162');
 	});

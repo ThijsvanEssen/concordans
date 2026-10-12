@@ -486,6 +486,39 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			noun: 'stukken',
 			load: 'document-same-case'
 		},
+		// The papers a subject names by dossier and number, "(Kamerstuk 25424-795)": a letter
+		// of the government answers the motion; any other paper names it.
+		{
+			id: 'answers',
+			label: 'Moties waarop deze brief ingaat',
+			noun: 'moties',
+			match: [{ relation: 'ANSWERS', direction: 'outbound', collection: 'documents' }]
+		},
+		{
+			id: 'answered-by',
+			label: 'Brieven van de regering over deze motie',
+			noun: 'brieven',
+			match: [{ relation: 'ANSWERS', direction: 'inbound', collection: 'documents' }]
+		},
+		{
+			id: 'fulfils',
+			label: 'Toezeggingen die deze brief nakomt',
+			noun: 'toezeggingen',
+			match: [{ relation: 'ANSWERS', direction: 'outbound', collection: 'commitments' }]
+		},
+		{
+			id: 'names',
+			// Not `die dit stuk noemt`: one letter from the group below, which is the other way.
+			label: 'Kamerstukken die hier worden genoemd',
+			noun: 'Kamerstukken',
+			match: [{ relation: 'REFERS_TO', direction: 'outbound', collection: 'documents' }]
+		},
+		{
+			id: 'named-by',
+			label: 'Kamerstukken die dit stuk noemen',
+			noun: 'Kamerstukken',
+			match: [{ relation: 'REFERS_TO', direction: 'inbound', collection: 'documents' }]
+		},
 		{
 			id: 'explains',
 			label: 'Artikelen die dit stuk toelicht',
@@ -665,6 +698,12 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			id: 'activity',
 			label: 'Activiteit waarin de toezegging is gedaan',
 			match: [{ relation: 'MADE_IN', direction: 'outbound', collection: 'activities' }]
+		},
+		{
+			id: 'fulfilled-by',
+			label: 'Brieven die deze toezegging nakomen',
+			noun: 'brieven',
+			match: [{ relation: 'ANSWERS', direction: 'inbound', collection: 'documents' }]
 		}
 	],
 	cases: [

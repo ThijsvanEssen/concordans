@@ -70,6 +70,8 @@ const IN_A: Partial<Record<string, string>> = {
 export function kindOfVerbinding(relation: Relation, sourceCollection: string): string {
 	const what = KIND_OF_RELATION[relation] ?? relationLabel(relation);
 	if (relation === 'EXPLAINS') return 'toelichting bij een artikel';
+	if (relation === 'ANSWERS' && sourceCollection === 'documents')
+		return 'beantwoording in een brief';
 	const where = IN_A[sourceCollection];
 	return where ? `${what} ${where}` : what;
 }

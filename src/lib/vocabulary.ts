@@ -139,12 +139,15 @@ export const RELATION_LABEL: Record<Relation, string> = {
 /**
  * The label of a verbinding. A reference from a judgment or a parliamentary document
  * is a citation ("haalt aan"); between two articles it is a reference in the text of
- * the law ("verwijst naar").
+ * the law ("verwijst naar"). A letter of the government answers a motion or a toezegging
+ * ("gaat in op"); a judgment answers prejudiciële vragen.
  */
 export const relationLabel = (relation: Relation, sourceCollection?: Collection | null) =>
 	relation === 'REFERS_TO' && sourceCollection && sourceCollection !== 'articles'
 		? 'haalt aan'
-		: RELATION_LABEL[relation];
+		: relation === 'ANSWERS' && sourceCollection === 'documents'
+			? 'gaat in op'
+			: RELATION_LABEL[relation];
 
 /** The college of a judgment, as the API names it (`tier`): its Type in the Rechtspraak's list of Instanties. */
 export type Tier = Schema<'Tier'>;
