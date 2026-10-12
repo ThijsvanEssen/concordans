@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { redundantAnchors } from '$lib/graph/anchor';
+	import { bundledInto, repeatsHull, telBundels, type Bundels, type Lijn } from './edge-bundles';
 	import Picto from '$lib/components/ui/Picto.svelte';
 	import type { Vorm } from '$lib/bron/vormen';
 	import { onDestroy, onMount, untrack } from 'svelte';
@@ -325,73 +326,19 @@
 		id !== focusedId &&
 		!graph.getNodeAttribute(id, 'cluster');
 
-	/** Whether `a` and `b` both belong to the same hull: an edge between them adds
-	 *  nothing a hull did not already say, so it stays out of the way at rest. */
-	/**
-	 * How many lines a bron outside every hull draws into each hull (`bron|group`): a
-	 * judgment citing five articles of one law draws five, and those repeat what the hull
-	 * says; one line into a hull is what ties that hull to the network.
-	 */
-	let linesIntoGroup = new Map<string, number>();
-	/**
-	 * Of all lines from one bron into one hull it is not in (`bron|group`, also from inside
-	 * another hull): how many, and the one that stands for them. Nine stukken of a dossier
-	 * changing 44 articles of the Sr draw one line each into the Sr, not 116.
-	 */
-	let bundles = new Map<string, { count: number; first: string }>();
+	/** Per bron and hull: how many lines it draws into that hull, and the one that stands
+	 *  for them (see edge-bundles). */
+	let bundels: Bundels = { linesIntoGroup: new Map(), bundles: new Map() };
 	function recomputeLinesIntoGroup() {
-		const counts = new Map<string, number>();
-		const bundled = new Map<string, { count: number; first: string }>();
-		graph.forEachEdge((edge, attrs, source, target) => {
-			if (attrs.layoutOnly) return;
-			// In the direction of the line: a stuk into the articles it changes, a judgment
-			// into the articles it cites. The articles are carried by their hull.
-			const own = nodeGroupIds.get(source);
-			for (const group of nodeGroupIds.get(target) ?? []) {
-				if (own?.has(group)) continue;
-				const key = `${source}|${group}`;
-				const b = bundled.get(key);
-				if (b) b.count++;
-				else bundled.set(key, { count: 1, first: edge });
-			}
-			for (const [from, to] of [
-				[source, target],
-				[target, source]
-			]) {
-				if (nodeGroupIds.has(from)) continue;
-				for (const group of nodeGroupIds.get(to) ?? [])
-					counts.set(`${from}|${group}`, (counts.get(`${from}|${group}`) ?? 0) + 1);
-			}
+		const lijnen: Lijn[] = [];
+		graph.forEachEdge((id, attrs, source, target) => {
+			if (!attrs.layoutOnly) lijnen.push({ id, source, target });
 		});
-		linesIntoGroup = counts;
-		bundles = bundled;
-	}
-	/** Whether a line is one of several from a bron into the same hull, and not the one that
-	 *  stands for them: it waits for a hover. */
-	function bundledInto(edge: string, src: string, tgt: string): boolean {
-		let bundled = false;
-		const own = nodeGroupIds.get(src);
-		for (const group of nodeGroupIds.get(tgt) ?? []) {
-			if (own?.has(group)) continue;
-			const b = bundles.get(`${src}|${group}`);
-			if (!b || b.count === 1 || b.first === edge) return false;
-			bundled = true;
-		}
-		return bundled;
-	}
-	/** Whether a line between two bronnen, neither the focus, only repeats a hull. */
-	function repeatsHull(src: string, tgt: string): boolean {
-		if (inSameGroup(src, tgt)) return true;
-		const inA = nodeGroupIds.has(src);
-		const inB = nodeGroupIds.has(tgt);
-		// Between two hulls the line says why the other one is there (art. 126uba Sv → Sr).
-		if (inA && inB) return false;
-		const [outside, inside] = inA ? [tgt, src] : [src, tgt];
-		return [...(nodeGroupIds.get(inside) ?? [])].some(
-			(group) => (linesIntoGroup.get(`${outside}|${group}`) ?? 0) > 1
-		);
+		bundels = telBundels(lijnen, nodeGroupIds);
 	}
 
+	/** Whether `a` and `b` both belong to the same hull: an edge between them adds
+	 *  nothing a hull did not already say, so it stays out of the way at rest. */
 	function inSameGroup(a: string, b: string): boolean {
 		const groupsOfA = nodeGroupIds.get(a);
 		if (!groupsOfA) return false;
@@ -1524,7 +1471,8 @@
 					// A line between two other bronnen is context. Where it only repeats a hull
 					// (inside one, or one of several from a judgment into the same law) it waits
 					// for a hover; otherwise it is a trace in its own colour.
-					if (repeatsHull(src, tgt)) return { ...data, hidden: true };
+					if (repeatsHull(src, tgt, bundels, nodeGroupIds, latestPinnedIds))
+						return { ...data, hidden: true };
 					return {
 						...data,
 						hidden: false,
@@ -1550,7 +1498,15 @@
 
 				// Without a focus, several lines from one bron into one hull are one line; the
 				// others show on a hover.
-				if (bundledInto(edge, src, tgt)) return { ...data, hidden: true };
+				if (
+					bundledInto(
+						{ id: edge, source: src, target: tgt },
+						bundels,
+						nodeGroupIds,
+						latestPinnedIds
+					)
+				)
+					return { ...data, hidden: true };
 
 				// Without a focus, a member with a hundred stukken draws a hundred lines: the
 				// fan pales by the size of its busier end, as the focus's own fan does.
