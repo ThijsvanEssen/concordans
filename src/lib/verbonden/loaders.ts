@@ -12,7 +12,9 @@ import { refOf } from '$lib/bron/href';
 import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
-import { getArticleDetail } from '$lib/api/articles';
+import { getArticleDetail, getDelegated } from '$lib/api/articles';
+import { kindName } from '$lib/components/explore/law-head';
+import type { Regeling } from '$lib/text/delegaties';
 import { abortable, getAmendedBy, getMemberDossiers } from '$lib/api/records';
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, EUROPEAN, type Loader, type Match } from './groups';
@@ -245,6 +247,28 @@ async function actorDossiers(
 /** The pages of references with an aard a law loads at most: 1000 references. */
 const AARD_PAGES = 5;
 
+/** A regulation issued under the article, as a row of Verbonden. */
+export function regelingRow(r: Regeling): Row {
+	const i = r.instrument;
+	const props = {
+		bwb_id: i.bwb_id,
+		citation_title: i.citation_title,
+		title: i.title,
+		kind: r.kind
+	};
+	return {
+		ref: { collection: 'instruments', key: i.key },
+		...describe('instruments', i.key, i.display_name, props),
+		context: kindName(r.kind),
+		date: r.date_in_force ?? null,
+		lid: r.leden?.length === 1 ? r.leden[0] : null,
+		kind: bronKindOf('instruments', i.key, props, 'BASED_ON'),
+		relation: 'BASED_ON',
+		direction: 'inbound',
+		props
+	};
+}
+
 export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = {
 	// The wet that came from the dossier and its publication. The laws it changes stand once,
 	// above the reader (Wijzigt) and under Gewijzigde artikelen (Thijs, 10 Oct: "single count").
@@ -356,6 +380,28 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				])
 		)
 	}),
+
+	// The regulations issued under an article, from `.../delegated`: its kind and the day it
+	// took effect, the lid its Gelet op names. Without that route: the node's own edges.
+	'article-delegated': async ({ node, buren }) => {
+		const bwb = bwbOf(node);
+		const number =
+			typeof node.props?.article_number === 'string' ? node.props.article_number : null;
+		const found = bwb && number ? await getDelegated(bwb, number) : null;
+		if (found) return { total: found.total, rows: (found.items ?? []).map(regelingRow) };
+		const neighbors = await buren([
+			{ relation: 'BASED_ON', direction: 'inbound', collection: 'instruments' }
+		]);
+		return {
+			rows: neighbors
+				.filter(
+					(n) =>
+						n.relation === 'BASED_ON' && n.direction === 'inbound' && n.collection === 'instruments'
+				)
+				.map(rowOfNeighbor)
+				.filter((r) => r !== null)
+		};
+	},
 
 	// The judgments that cite an article, each at the overweging that does (API 0.5,
 	// `cited-by`), counted as the API counts them: passages and judgments (`judgment_total`, 0.62).

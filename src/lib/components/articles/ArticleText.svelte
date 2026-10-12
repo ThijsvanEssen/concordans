@@ -20,6 +20,7 @@
 	import CitedText from './CitedText.svelte';
 	import { citationsWithin } from './citations';
 	import { begrippenWithin, definitiesOp, type Begrip, type Definitie } from '$lib/text/begrippen';
+	import { delegatiesWithin, type Delegatie, type Gedelegeerd } from '$lib/text/delegaties';
 
 	let {
 		text,
@@ -27,6 +28,8 @@
 		citations = [],
 		begrippen = [],
 		definities = [],
+		delegaties = [],
+		grondslag = null,
 		counts = new Map(),
 		tellend = false,
 		lidHref,
@@ -45,6 +48,10 @@
 		begrippen?: Begrip[];
 		/** The definitions they name (`definitions`). */
 		definities?: Definitie[];
+		/** The delegation formulas of the text (`delegations`). */
+		delegaties?: Delegatie[];
+		/** The regulations issued under the article, asked when a formula is first pointed at. */
+		grondslag?: (() => Promise<Gedelegeerd | null>) | null;
 		/** Verbindingen per lid; a lid without an entry shows no count. */
 		counts?: Map<string, number>;
 		/** The counts are still on their way: a lid's menu says so. */
@@ -75,7 +82,8 @@
 		return {
 			body,
 			citations: citationsWithin(citations, part.textStart + lead, body.length),
-			begrippen: begrippenWithin(begrippen, part.textStart + lead, body.length)
+			begrippen: begrippenWithin(begrippen, part.textStart + lead, body.length),
+			delegaties: delegatiesWithin(delegaties, part.textStart + lead, body.length)
 		};
 	};
 
@@ -121,7 +129,7 @@
 </script>
 
 {#snippet render(part: ArticlePart, top: boolean)}
-	{@const { body, citations: spans, begrippen: termen } = own(part)}
+	{@const { body, citations: spans, begrippen: termen, delegaties: formules } = own(part)}
 	{@const showProposed = proposed && part.kind === 'lid' && proposed.lid === part.number}
 	{#if top}
 		<div
@@ -148,7 +156,14 @@
 				<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 				<div class="lid__text" onclick={(e) => opTekst(e, part)}>
 					{#if body}<p>
-							<CitedText text={body} citations={spans} begrippen={termen} definities={perRef} />
+							<CitedText
+								text={body}
+								citations={spans}
+								begrippen={termen}
+								definities={perRef}
+								delegaties={formules}
+								{grondslag}
+							/>
 						</p>{/if}
 					{#each part.children as child (child.start)}
 						{@render render(child, false)}
@@ -193,7 +208,14 @@
 			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 			<div class="part__body" onclick={(e) => opTekst(e, part)}>
 				{#if body}<p>
-						<CitedText text={body} citations={spans} begrippen={termen} definities={perRef} />
+						<CitedText
+							text={body}
+							citations={spans}
+							begrippen={termen}
+							definities={perRef}
+							delegaties={formules}
+							{grondslag}
+						/>
 					</p>{/if}
 				{#each part.children as child (child.start)}
 					{@render render(child, false)}
