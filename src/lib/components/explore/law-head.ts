@@ -12,16 +12,39 @@ type Dates = Pick<
 	'date_in_force' | 'version_date_in_force' | 'article_count' | 'inbound_citation_count'
 >;
 
+// The kinds of regeling the BWB knows (its `soort-regeling`, as the API gives it in lower
+// case), as a lawyer names them. A kind of the Caribbean Netherlands says so.
 const KIND: Record<string, string> = {
 	wet: 'Wet',
+	rijkswet: 'Rijkswet',
+	amvb: 'AMvB',
+	rijksamvb: 'Rijks-AMvB',
+	kb: 'Koninklijk besluit',
+	rijkskb: 'Rijksbesluit',
+	'ministeriele-regeling': 'Ministeriële regeling',
+	'ministeriele-regeling-archiefselectielijst': 'Archiefselectielijst',
+	beleidsregel: 'Beleidsregel',
+	circulaire: 'Circulaire',
+	zbo: 'Regeling van een zbo',
+	pbo: 'Regeling van een pbo',
+	reglement: 'Reglement',
 	verdrag: 'Verdrag',
 	bilateraalverdrag: 'Bilateraal verdrag',
 	multilateraalverdrag: 'Multilateraal verdrag'
 };
 
-/** Wet, Verdrag; for an act of the EU the first word of its citation: Verordening, Richtlijn. */
+/** The name of a kind the BWB gives, or null for one it does not know. */
+export function kindName(kind: string | null | undefined): string | null {
+	const k = (kind ?? '').toLowerCase();
+	if (KIND[k]) return KIND[k];
+	const bes = /^(.+)-bes$/.exec(k);
+	return bes && KIND[bes[1]] ? `${KIND[bes[1]]} BES` : null;
+}
+
+/** Wet, Verdrag, Beleidsregel; for an act of the EU the first word of its citation: Verordening, Richtlijn. */
 export function lawKind(d: Detail | null): string {
-	if (d?.kind && KIND[d.kind]) return KIND[d.kind];
+	const named = kindName(d?.kind);
+	if (named) return named;
 	if (d?.jurisdiction === 'eu') {
 		const first = /^(Verordening|Richtlijn|Besluit|Kaderbesluit)\b/.exec(d.citation_title ?? '');
 		if (first) return first[1];

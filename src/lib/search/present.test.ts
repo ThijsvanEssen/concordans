@@ -29,6 +29,56 @@ const stuk = (key: string, kind: string, dossier = '32621') =>
 	});
 
 describe('presentHit', () => {
+	describe('a regeling', () => {
+		const regeling = (key: string, extra: Record<string, unknown> = {}) =>
+			hit({
+				collection: 'instruments',
+				key,
+				display_name: 'Belastingen op milieugrondslag',
+				extra: { bwb_id: key.toUpperCase(), ...extra }
+			});
+		it('is told apart by its kind and its day, not by its BWB id', () => {
+			const a = regeling('bwbr0021767', {
+				kind: 'beleidsregel',
+				version_date_in_force: '2007-04-27'
+			});
+			const b = regeling('bwbr0022916', {
+				kind: 'beleidsregel',
+				version_date_in_force: '2008-06-12'
+			});
+			expect(presentHit(a, 'belasting', [a, b])).toEqual({
+				title: 'Belastingen op milieugrondslag',
+				context: 'Beleidsregel, 27 apr. 2007',
+				snippet: null
+			});
+			expect(presentHit(b, 'belasting', [a, b]).context).toBe('Beleidsregel, 12 jun. 2008');
+		});
+		it('takes the day it was published first, then the day it came into force', () => {
+			const both = {
+				kind: 'wet',
+				date_in_force: '1994-01-01',
+				version_date_in_force: '2026-01-01'
+			};
+			expect(presentHit(regeling('bwbr0005537', both), 'x').context).toBe('Wet, 1 jan. 1994');
+			expect(
+				presentHit(regeling('bwbr0005537', { ...both, date_published: '1992-06-04' }), 'x').context
+			).toBe('Wet, 4 jun. 1992');
+		});
+		it('keeps its BWB id where kind and day say no more than its neighbour', () => {
+			const same = { kind: 'beleidsregel', version_date_in_force: '2007-04-27' };
+			const a = regeling('bwbr0021767', same);
+			const b = regeling('bwbr0022916', same);
+			expect(presentHit(a, 'belasting', [a, b]).context).toBe(
+				'Beleidsregel, 27 apr. 2007, BWBR0021767'
+			);
+			expect(presentHit(a, 'belasting', [a]).context).toBe('Beleidsregel, 27 apr. 2007');
+		});
+		it('reads as before where the API gives neither kind nor day', () => {
+			const a = regeling('bwbr0021767');
+			const b = regeling('bwbr0022916');
+			expect(presentHit(a, 'belasting', [a, b]).context).toBe('BWBR0021767');
+		});
+	});
 	it('gives an article its book number, the code it is cited by, and a line of its text', () => {
 		const shown = presentHit(
 			hit({
