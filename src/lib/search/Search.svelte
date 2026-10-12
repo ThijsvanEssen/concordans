@@ -14,14 +14,7 @@
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import {
-		besteTreffer,
-		bySection,
-		groupLabel,
-		orderGroups,
-		presentHit,
-		sectionOf
-	} from './present';
+	import { besteTreffer, bySection, groupLabel, presentHit, sectionOf, vakken } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, type Collection } from '$lib/vocabulary';
 	import {
@@ -62,7 +55,7 @@
 		onPick?: (id: string) => void;
 	} = $props();
 
-	/** The kinds the search covers; the groups appear best answer first (orderGroups). */
+	/** The kinds the search covers, in the order their groups stand (#52). */
 	const KINDS = [
 		'instruments',
 		'articles',
@@ -207,32 +200,35 @@
 	const hitName = (hit: Hit) =>
 		hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
 
-	// One request answers every kind; its groups stand best answer first (orderGroups).
+	// The groups stand in one order, the order of KINDS, whichever answer comes first (UX-toets
+	// 0.79.47, #52): a group that comes later takes its own place and moves none of the others.
+	// The best answer is the Beste treffer above them.
 	const groups = $derived(
-		orderGroups(
-			kinds
-				.map((kind) => ({
-					kind,
-					hits: bySection(hitsVan(kind) ?? [])
-				}))
-				.filter((g) => g.hits.length > 0)
-		)
+		kinds
+			.map((kind) => ({
+				kind,
+				hits: bySection(hitsVan(kind) ?? [])
+			}))
+			.filter((g) => g.hits.length > 0)
+	);
+	/** Every answer to this query is in: the first request and every lane. */
+	const allesBinnen = $derived(
+		answered === q && !loading && lanen.every((l) => laanStand[l.id] !== 'laden')
 	);
 	/**
-	 * The one hit above the groups (besteTreffer), out of its own group. Only once the lane of
-	 * articles has answered, so the top does not change under the pointer.
+	 * The one hit above the groups (besteTreffer), out of its own group. Only once every answer
+	 * is in, so the top does not change under the pointer; till then its place stands (#52).
 	 */
-	const beste = $derived((laanStand['tekst'] ?? 'klaar') === 'klaar' ? besteTreffer(groups) : null);
-	const getoond = $derived(
-		beste
-			? [
-					{ kind: beste.kind, hits: [beste.hit], beste: true },
-					...groups
-						.map((g) => ({ ...g, hits: g.hits.filter((h) => h.id !== beste.hit.id), beste: false }))
-						.filter((g) => g.hits.length > 0)
-				]
-			: groups.map((g) => ({ ...g, beste: false }))
-	);
+	let beste = $state<{ kind: Kind; hit: Hit } | null>(null);
+	$effect(() => {
+		// The one before stands while the next query is under way; a query too short for any
+		// answer clears it.
+		if (allesBinnen) beste = besteTreffer(groups);
+		else if (groups.length === 0) beste = null;
+	});
+	const besteKomt = $derived(!beste && !allesBinnen && groups.length > 0);
+	/** The groups in the one order, with the places of those still coming (#52). */
+	const getoond = $derived(vakken(kinds, groups, beste, (kind) => !!q && ladend.has(kind)));
 	const hits = $derived(getoond.flatMap((g) => g.hits));
 	const indexOf = $derived(new Map(hits.map((hit, i) => [hit.id, i])));
 
@@ -725,6 +721,14 @@
 			</a>
 		{/if}
 
+		{#if besteKomt}
+			<!-- The place of the Beste treffer, from the first answer on (#52). -->
+			<div class="group group--beste" role="group" aria-labelledby="{uid}-beste-komt">
+				<div class="group-label" id="{uid}-beste-komt">
+					Beste treffer <span class="laden">laden…</span>
+				</div>
+			</div>
+		{/if}
 		{#each getoond as group (group.beste ? 'beste' : group.kind)}
 			{@const gid = group.beste ? 'beste' : group.kind}
 			<div
@@ -791,25 +795,22 @@
 			</div>
 		{/each}
 
-		{#each lanenBezig.filter((l) => l.stand !== 'laden' || (l.laden && !l.toont)) as laan (laan.id)}
-			<!-- A lane that comes later or failed: its group says so, the other groups stand. -->
+		{#each lanenBezig.filter((l) => l.stand !== 'laden') as laan (laan.id)}
+			<!-- A lane that failed: its group says so, the other groups stand. A lane under way
+			     holds its place among the groups (vakken). -->
 			{@const naam = laan.kinds.map((k) => groupLabel(k)).join(' en ')}
 			<div class="group" role="group" aria-labelledby="{uid}-{laan.id}-stand">
 				<div class="group-label" id="{uid}-{laan.id}-stand">
 					<KindGlyph collection={laan.kinds[0]} />
 					{naam}
 				</div>
-				{#if laan.stand === 'laden'}
-					<p class="state state--group stil" role="status">Laden…</p>
-				{:else}
-					<p class="state state--group stil" role="status">
-						{naam}
-						{laan.stand === 'traag' ? 'duren lang.' : 'konden niet worden geladen.'}
-						<TekstLink onclick={() => (opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1)}
-							>Probeer opnieuw</TekstLink
-						>
-					</p>
-				{/if}
+				<p class="state state--group stil" role="status">
+					{naam}
+					{laan.stand === 'traag' ? 'duren lang.' : 'konden niet worden geladen.'}
+					<TekstLink onclick={() => (opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1)}
+						>Probeer opnieuw</TekstLink
+					>
+				</p>
 			</div>
 		{/each}
 

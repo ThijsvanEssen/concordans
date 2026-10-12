@@ -10,7 +10,8 @@ import {
 	marked,
 	orderGroups,
 	presentHit,
-	sectionOf
+	sectionOf,
+	vakken
 } from './present';
 
 type Hit = Schema<'SearchResultItem'>;
@@ -339,5 +340,45 @@ describe('citeertitel', () => {
 			display_name: 'Wijziging van de Wet op de huurtoeslag (vereenvoudiging van de huurtoeslag)'
 		});
 		expect(presentHit(beschreven, 'huur').snippet).toBeNull();
+	});
+});
+
+describe('vakken (UX-toets 0.79.47, #52)', () => {
+	const ORDER = ['instruments', 'articles', 'judgments', 'dossiers'] as const;
+	const h = (id: string) => ({ id });
+	const kinds = (v: { kind: string; beste: boolean; wacht: boolean }[]) =>
+		v.map((x) => (x.beste ? 'beste' : x.wacht ? `${x.kind}…` : x.kind));
+
+	it('keeps one order whichever answer comes first', () => {
+		const vroeg = vakken(ORDER, [{ kind: 'judgments', hits: [h('j')] }], null);
+		const laat = vakken(
+			ORDER,
+			[
+				{ kind: 'dossiers', hits: [h('d')] },
+				{ kind: 'judgments', hits: [h('j')] },
+				{ kind: 'articles', hits: [h('a')] }
+			],
+			null
+		);
+		expect(kinds(vroeg)).toEqual(['judgments']);
+		expect(kinds(laat)).toEqual(['articles', 'judgments', 'dossiers']);
+	});
+
+	it('holds the place of a group still coming', () => {
+		const v = vakken(ORDER, [{ kind: 'dossiers', hits: [h('d')] }], null, (k) => k === 'judgments');
+		expect(kinds(v)).toEqual(['judgments…', 'dossiers']);
+	});
+
+	it('puts the Beste treffer on top, out of its own group', () => {
+		const v = vakken(
+			ORDER,
+			[
+				{ kind: 'articles', hits: [h('a1'), h('a2')] },
+				{ kind: 'dossiers', hits: [h('d')] }
+			],
+			{ kind: 'articles', hit: h('a1') }
+		);
+		expect(kinds(v)).toEqual(['beste', 'articles', 'dossiers']);
+		expect(v[1].hits.map((x) => x.id)).toEqual(['a2']);
 	});
 });

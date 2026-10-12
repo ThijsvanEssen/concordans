@@ -328,3 +328,33 @@ export function besteTreffer<G extends { kind: Collection; hits: Hit[] }>(
 	if (recht && score(recht) >= top - RECHT_MARGE) return recht;
 	return first(orderGroups(groups).flatMap((g) => all.filter((x) => x.kind === g.kind)));
 }
+
+/** A place in the list of a search: a group of hits, the Beste treffer, or a group still coming. */
+export type Vak<K, H> = { kind: K; hits: H[]; beste: boolean; wacht: boolean };
+
+/**
+ * The groups of a search in one order, whichever answer comes first (UX-toets 0.79.47, #52):
+ * the Beste treffer on top (out of its own group), then each kind in `order` that has hits,
+ * or whose answer is still coming (`wacht`, an empty place with its heading). A group that
+ * comes later takes its own place and moves none of the others.
+ */
+export function vakken<K, H extends { id: string }>(
+	order: readonly K[],
+	groups: readonly { kind: K; hits: H[] }[],
+	beste: { kind: K; hit: H } | null,
+	wacht: (kind: K) => boolean = () => false
+): Vak<K, H>[] {
+	const top: Vak<K, H>[] = beste
+		? [{ kind: beste.kind, hits: [beste.hit], beste: true, wacht: false }]
+		: [];
+	return [
+		...top,
+		...order.flatMap((kind): Vak<K, H>[] => {
+			const hits = (groups.find((g) => g.kind === kind)?.hits ?? []).filter(
+				(h) => h.id !== beste?.hit.id
+			);
+			if (hits.length) return [{ kind, hits, beste: false, wacht: false }];
+			return wacht(kind) ? [{ kind, hits: [], beste: false, wacht: true }] : [];
+		})
+	];
+}
