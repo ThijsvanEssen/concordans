@@ -86,6 +86,7 @@
 	} from '$lib/bron/leesbaar';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import NetwerkPanel from '$lib/netwerk/NetwerkPanel.svelte';
+	import { focusStap } from '$lib/graph/focus-stap';
 	import {
 		deelVan,
 		isOn,
@@ -520,7 +521,9 @@
 	let replaceNext: string | null = null;
 	// A focus loaded without the canvas (reading, or a phone's text tab): its light node only;
 	// the full node and its neighbourhood wait until the canvas is shown.
-	let lichtGeladen: string | null = null;
+	// State: the light node coming in while the canvas opened (a phone's Netwerk tab on a
+	// link to another bron, ?paneel=netwerk) loads the focus again, with its neighbourhood.
+	let lichtGeladen = $state<string | null>(null);
 
 	$effect(() => {
 		// Read here, not only inside `deepen`: that branch does not run on the first pass,
@@ -534,12 +537,23 @@
 			return;
 		}
 		if (mode === 'index') return;
-		const zichtbaar = canvasZichtbaar;
-		if (focus !== loadedFocus || replaceNext === focus || (zichtbaar && lichtGeladen === focus)) {
+		const verdiept = deepenedId ? store.getNodeById(deepenedId) : undefined;
+		const stap = focusStap({
+			focus,
+			loadedFocus,
+			replaceNext,
+			zichtbaar: canvasZichtbaar,
+			lichtGeladen,
+			withNetwerk,
+			verdiept: verdiept?.id ?? null,
+			geselecteerd: () =>
+				selectedNode ? { id: selectedNode.id, linkId: linkIdOf(selectedNode) } : null
+		});
+		if (stap?.soort === 'laden') {
 			loadedFocus = focus;
 			void loadFocus(focus);
-		} else if (zichtbaar && !withNetwerk) {
-			const anchor = (deepenedId && store.getNodeById(deepenedId)) || selectedNode;
+		} else if (stap?.soort === 'verdiepen') {
+			const anchor = verdiept ?? selectedNode;
 			if (anchor) void deepen(anchor);
 		}
 	});
@@ -556,6 +570,8 @@
 		focusMissing = false;
 		const replace = replaceNext === id;
 		replaceNext = null;
+		// A light node is in the store but was never drawn: it is not on the canvas.
+		const licht = untrack(() => lichtGeladen) === id;
 		lichtGeladen = null;
 		const target = parseNodeId(id);
 		if (!target) {
@@ -581,9 +597,10 @@
 			// A link names a dossier by its number (`37020-XV`); the API gives its node key.
 			if (target.collection === 'dossiers') target.key = await getDossierKey(target.key);
 			if (id !== loadedFocus) return;
-			const onCanvas =
-				store.getNodeById(`${target.collection}/${target.key}`) ??
-				store.getNodeById(`${target.collection}/${target.key.toLowerCase()}`);
+			const onCanvas = licht
+				? undefined
+				: (store.getNodeById(`${target.collection}/${target.key}`) ??
+					store.getNodeById(`${target.collection}/${target.key.toLowerCase()}`));
 			const inGraph = untrack(() => canvasZichtbaar);
 			const withNetwerk = untrack(() => netwerkActive);
 			// Without the canvas, the light node is all the reader and the page need.
@@ -658,10 +675,13 @@
 		deepenedAlles = alles;
 		anchorKind = node.kind;
 		graphView?.suppressFit();
+		// The focus it was asked for: a link followed while the neighbourhood comes in moves
+		// the focus on, and the reader stays on the new bron (#48).
+		const voor = loadedFocus;
 		const epoch = ++focusEpoch;
 		await expandAround(node, epoch);
 		if (epoch !== focusEpoch) return;
-		store.focusNode(node.id);
+		if (loadedFocus === voor) store.focusNode(node.id);
 		graphView?.reseatAround(node.id);
 		graphView?.fitWhenSettled();
 	}
