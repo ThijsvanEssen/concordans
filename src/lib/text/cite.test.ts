@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { citeArticle, ordinalWord, partOfAnchor } from './cite';
+import { articleCitation, citeArticle, ordinalWord, partOfAnchor } from './cite';
 
 describe('citeArticle', () => {
 	const base = { articleNumber: '300', shortTitle: 'Sr', citationTitle: 'Wetboek van Strafrecht' };
@@ -83,5 +83,36 @@ describe('citeArticle', () => {
 		expect(forms.kort).toBe('Algemene bepaling Gw');
 		expect(forms.voluit).toBe('Algemene bepaling van de Grondwet');
 		expect(forms.metDatum).toBe('Algemene bepaling Gw (tekst geldend op 24 september 2026)');
+	});
+});
+
+describe('articleCitation', () => {
+	const meta = { citationTitle: 'Algemene wet bestuursrecht', title: null, shortTitle: 'Awb' };
+	it('cites by the name the article gives its law, the short title from the law', () => {
+		expect(
+			articleCitation({ article_number: '3:4' }, { own: 'Awb-titel', meta, displayName: 'x' })
+		).toEqual({
+			articleNumber: '3:4',
+			heading: null,
+			shortTitle: 'Awb',
+			citationTitle: 'Awb-titel'
+		});
+	});
+	it('falls back to the law’s names, then the detail’s; an article without a number by its heading', () => {
+		expect(articleCitation({ article_number: '3:4' }, { meta })?.citationTitle).toBe(
+			'Algemene wet bestuursrecht'
+		);
+		expect(
+			articleCitation(
+				{ article_number: null, address: 'stam_1', label: 'Algemene bepaling' },
+				{ displayName: 'Grondwet' }
+			)
+		).toEqual({
+			articleNumber: 'stam_1',
+			heading: 'Algemene bepaling',
+			shortTitle: null,
+			citationTitle: 'Grondwet'
+		});
+		expect(articleCitation({ article_number: '1' }, {})).toBeNull();
 	});
 });

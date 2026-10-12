@@ -967,6 +967,30 @@ describe('canvas cards and halls', () => {
 				.map((s) => s.path)
 		).toEqual([]);
 	});
+
+	it('offers a place in a map the reader’s own menu, from the reader’s citation (Thijs, 12 Oct)', () => {
+		const src = (pad: string) => sources.find((s) => s.path === pad)!.text;
+		const lezer = src('lib/components/explore/readers/ArticleReader.svelte');
+		const kaart = src('lib/map/MapInhoud.svelte');
+		const uitspraak = src('lib/components/explore/readers/JudgmentReader.svelte');
+		// An article: one citation (articleCitation), the law's names recorded alike, and
+		// ArticleText given the same citation props as in the reader.
+		for (const t of [lezer, kaart]) {
+			expect(t).toContain('articleCitation(');
+			expect(t).toContain('recordArticleLaw(');
+			const tekst = /<ArticleText\b[\s\S]*?\/>/.exec(t)![0];
+			expect(tekst).toMatch(/\{citation\}/);
+			expect(tekst).toMatch(
+				/bewaar=\{[^}]*citation\s*\?\s*\{\s*id: [\w.]+, groep: citation\.citationTitle \}/
+			);
+		}
+		// An overweging: one citation and one Bewaar (overwegingCitaat), in the reader's menu.
+		for (const t of [uitspraak, kaart]) {
+			expect(t).toContain('overwegingCitaat(');
+			expect(t).toContain('<PlaatsMenu');
+			expect(t).toMatch(/cite=\{citeItems\(forms, forms\.link\)\}/);
+		}
+	});
 });
 
 describe('the keyboard', () => {

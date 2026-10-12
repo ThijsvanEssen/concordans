@@ -14,7 +14,7 @@
 	import { menu } from '$lib/actions/menu';
 	import { api, unwrap } from '$lib/api/client';
 	import { getArticleDetail, getArticleHistory, getDelegated } from '$lib/api/articles';
-	import { instrumentMetaStore, recordInstrument } from '$lib/api/instrument-cache';
+	import { instrumentMetaStore, recordArticleLaw } from '$lib/api/instrument-cache';
 	import type { Schema } from '$lib/api/types';
 	import { articleOf, type GraphNode } from '$lib/graph/types';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
@@ -23,7 +23,7 @@
 	import { goto } from '$app/navigation';
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
 	import { refId } from '$lib/bron/href';
-	import { citeArticle, partOfAnchor } from '$lib/text/cite';
+	import { articleCitation, citeArticle, partOfAnchor } from '$lib/text/cite';
 	import { articleName } from '$lib/text/bw';
 	import { placeOf, type Division } from '$lib/text/division';
 	import { lidHistory, unitsOf, wordingsOf } from '$lib/text/version-diff';
@@ -137,10 +137,8 @@
 		Promise.all([getArticleDetail(bwbId, articleNumber), versies])
 			.then(([data, vs]) => {
 				if (stale) return;
-				// The citation panel reads the law name from this cache.
-				if (data.instrument) {
-					recordInstrument({ bwb_id: bwbId, display_name: data.instrument.display_name });
-				}
+				// The citation panel and the citation forms read the law's names from this cache.
+				recordArticleLaw(bwbId, data.instrument);
 				versions = vs;
 				view = { kind: 'loaded', data };
 			})
@@ -356,26 +354,15 @@
 			? selection.raw.props.instrument_citation_title
 			: null
 	);
-	const citation = $derived.by(() => {
-		if (view.kind !== 'loaded') return null;
-		const a = view.data.article;
-		const address = a.article_number ?? a.address;
-		if (!address) return null;
-		const title =
-			ownCitationTitle ??
-			law?.citationTitle ??
-			law?.title ??
-			view.data.instrument?.display_name ??
-			null;
-		if (!title) return null;
-		return {
-			articleNumber: address,
-			// An article without a number is cited by its heading: "Algemene bepaling Gw".
-			heading: a.article_number ? null : (a.label ?? null),
-			shortTitle: law?.shortTitle ?? null,
-			citationTitle: title
-		};
-	});
+	const citation = $derived(
+		view.kind === 'loaded'
+			? articleCitation(view.data.article, {
+					own: ownCitationTitle,
+					meta: law,
+					displayName: view.data.instrument?.display_name
+				})
+			: null
+	);
 	// The link opens the text, not the network: a reader who follows it wants to read.
 	const readLink = $derived.by(() => {
 		const url = new URL(page.url);

@@ -65,6 +65,27 @@ export function recordInstrument(input: {
 	flush();
 }
 
+/**
+ * The names an article's detail carries of its law, under the id the article names it by
+ * (its BWB id, an EU act's CELEX): the reader and a map's item (MapInhoud) cite it by them.
+ */
+export function recordArticleLaw(
+	lawId: string,
+	instrument:
+		| { title?: unknown; citation_title?: unknown; short_title?: unknown; display_name?: unknown }
+		| null
+		| undefined
+): void {
+	if (!instrument) return;
+	recordInstrument({
+		bwb_id: lawId,
+		title: instrument.title,
+		display_name: instrument.display_name,
+		citation_title: instrument.citation_title,
+		short_title: instrument.short_title
+	});
+}
+
 export function getInstrumentMeta(bwbId: string | null | undefined): InstrumentMeta | null {
 	return bwbId ? (cache.get(bwbId) ?? null) : null;
 }

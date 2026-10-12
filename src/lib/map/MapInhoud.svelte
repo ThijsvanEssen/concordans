@@ -6,8 +6,17 @@
 	// click further; a Kamerstuk the words its note quotes in the text around them, else the
 	// opening of its text; another bron the lines of its card. Asked when the row opens, once
 	// (the readers share the requests). The bron itself stays one step further: Lees verder.
+	// A place's menu is the reader's own (PlaatsMenu): Citeer, Kopieer tekst and Bewaar, from
+	// the same citation (articleCitation, overwegingCitaat; Thijs, 12 Oct).
 	import type { Schema } from '$lib/api/types';
 	import { getArticleDetail, getArticleDetailByKey } from '$lib/api/articles';
+	import { instrumentMetaStore, recordArticleLaw } from '$lib/api/instrument-cache';
+	import { page } from '$app/state';
+	import { permalink } from '$lib/bron/anchor';
+	import PlaatsMenu from '$lib/components/articles/PlaatsMenu.svelte';
+	import { citeItems } from '$lib/components/ui/cite';
+	import { articleCitation } from '$lib/text/cite';
+	import { overwegingCitaat, type UitspraakVoorCitaat } from '$lib/text/judgment-cite';
 	import { getJudgmentDetail } from '$lib/api/judgments';
 	import { getDocument, getNodeFirst } from '$lib/api/records';
 	import { loadPreview } from '$lib/bron/preview';
@@ -28,12 +37,19 @@
 
 	let { item, href }: { item: MapItem; href: string } = $props();
 
-	type Artikel = Schema<'ArticleDetailResponse'> & { bwb: string };
+	/** An article's detail, its law's id (a BWB id, an EU act's CELEX) and the name the
+	 *  article gives its law where its node was asked. */
+	type Artikel = Schema<'ArticleDetailResponse'> & { bwb: string; eigen: string | null };
 	type Inhoud =
 		| { soort: 'laden' }
 		| { soort: 'niets' }
 		| { soort: 'artikel'; d: Artikel }
-		| { soort: 'uitspraak'; items: BodyItem[]; samenvatting: string | null }
+		| {
+				soort: 'uitspraak';
+				j: UitspraakVoorCitaat;
+				items: BodyItem[];
+				samenvatting: string | null;
+		  }
 		| { soort: 'stuk'; tekst: string | null }
 		| { soort: 'regels'; tekst: string };
 
@@ -47,7 +63,8 @@
 		const bekend = getArticleDetailByKey(key);
 		if (bekend) {
 			const d = await bekend;
-			return { ...d, bwb: d.article.bwb_id ?? '' };
+			const bwb = d.article.bwb_id ?? d.instrument?.celex ?? d.instrument?.bwb_id ?? '';
+			return { ...d, bwb, eigen: null };
 		}
 		const props = ((await getNodeFirst('articles', key)).node.props ?? {}) as Record<
 			string,
@@ -55,7 +72,13 @@
 		>;
 		const bwb = tekstVan(props.bwb_id) ?? tekstVan(props.celex);
 		const nummer = tekstVan(props.article_number);
-		return bwb && nummer ? { ...(await getArticleDetail(bwb, nummer)), bwb } : null;
+		return bwb && nummer
+			? {
+					...(await getArticleDetail(bwb, nummer)),
+					bwb,
+					eigen: tekstVan(props.instrument_citation_title)
+				}
+			: null;
 	}
 
 	async function laad(i: MapItem): Promise<Inhoud> {
@@ -63,6 +86,8 @@
 		if (!doel) return { soort: 'niets' };
 		if (doel.collection === 'articles') {
 			const d = await artikel(doel.key);
+			// The law's names, as the reader records them: its citation reads them.
+			if (d?.bwb) recordArticleLaw(d.bwb, d.instrument);
 			return d ? { soort: 'artikel', d } : { soort: 'niets' };
 		}
 		if (doel.collection === 'judgments') {
@@ -72,6 +97,7 @@
 			const paragraphs = j.paragraphs ?? [];
 			return {
 				soort: 'uitspraak',
+				j,
 				items: bodyItems(paragraphs.slice(0, signatureStart(paragraphs))),
 				samenvatting: tekstVan(j.summary)
 			};
@@ -99,6 +125,41 @@
 	const citaat = $derived(citaatUit(item.notitie));
 	const plaats = $derived(item.at.startsWith('lid-') ? `lid ${item.at.slice(4)}` : null);
 	const ro = $derived(item.at.startsWith('rov-') ? `r.o. ${item.at.slice(4)}` : null);
+
+	/** The link Citeer copies: the place in the bron's reader at its own address (its detail's
+	 *  `path`, as the reader's page has it), not in the map. */
+	const linkNaar = (pad: string | null | undefined, anker: string) =>
+		permalink(new URL(pad || href, page.url), anker);
+
+	// An article is cited as its reader cites it (ArticleReader): the same citation, and
+	// Bewaar keeps the place under the bron's id, in the active map.
+	const citation = $derived(
+		inhoud.soort === 'artikel'
+			? articleCitation(inhoud.d.article, {
+					own: inhoud.d.eigen,
+					meta: $instrumentMetaStore.get(inhoud.d.bwb) ?? null,
+					displayName: inhoud.d.instrument?.display_name
+				})
+			: null
+	);
+
+	/** The overweging whose menu is open, and the number it hangs from. */
+	let menu = $state<{ id: string; anker: HTMLElement } | null>(null);
+	function openMenu(id: string, anker: HTMLElement) {
+		menu = menu?.id === id ? null : { id, anker };
+	}
+	/** A click on an overweging's text opens its menu, as in the reader: not on a link or a
+	 *  control, not when text is being selected. */
+	function opTekst(e: MouseEvent, id: string) {
+		const t = e.target as HTMLElement;
+		if (t.closest('a, button, input, textarea, summary, [role="button"]')) return;
+		if (window.getSelection()?.toString()) return;
+		e.stopPropagation();
+		const anker = (e.currentTarget as HTMLElement)
+			.closest('.rov')
+			?.querySelector<HTMLElement>('.plaats-marker');
+		if (anker) openMenu(id, anker);
+	}
 </script>
 
 <div class="inhoud">
@@ -117,6 +178,9 @@
 				gemarkeerd={ruim ? item.at || null : null}
 				alleen={ruim ? null : item.at || null}
 				ankers={false}
+				{citation}
+				bewaar={citation ? { id: item.id, groep: citation.citationTitle } : null}
+				adres={a.path || href}
 			/>
 		</div>
 		{#if item.at}
@@ -135,9 +199,44 @@
 			<div class="uitspraak">
 				{#each deel.items as b, k (k)}
 					{#if b.kind === 'rov'}
-						<div class="rov" class:eigen={ruim && deel.eigen.has(k)}>
-							<span class="rov-num">{b.num}</span>
-							<p><CitedText text={b.body} citations={b.citations} /></p>
+						{@const forms = overwegingCitaat(
+							inhoud.j,
+							b.num,
+							b.id,
+							linkNaar(inhoud.j.path, b.id),
+							item.id
+						)}
+						<div
+							class="rov"
+							class:eigen={ruim && deel.eigen.has(k)}
+							class:is-open={menu?.id === b.id}
+						>
+							{#if forms}
+								<button
+									type="button"
+									class="rov-num plaats-marker"
+									aria-haspopup="menu"
+									aria-expanded={menu?.id === b.id}
+									aria-label="Overweging {b.num}: citeren, bewaren"
+									onclick={(e) => openMenu(b.id, e.currentTarget)}>{b.num}</button
+								>
+							{:else}
+								<span class="rov-num">{b.num}</span>
+							{/if}
+							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+							<div class:is-klikbaar={!!forms} onclick={(e) => forms && opTekst(e, b.id)}>
+								<p><CitedText text={b.body} citations={b.citations} /></p>
+							</div>
+							{#if menu && menu.id === b.id && forms}
+								<PlaatsMenu
+									anker={menu.anker}
+									titel={forms.kort}
+									cite={citeItems(forms, forms.link)}
+									tekst={() => b.body}
+									bewaar={forms.bewaar}
+									onClose={() => (menu = null)}
+								/>
+							{/if}
 						</div>
 					{:else if b.kind === 'prose'}
 						<p class="rov-verder" class:eigen={ruim && deel.eigen.has(k)}>
@@ -228,6 +327,43 @@
 	.rov-num {
 		color: var(--ink-3);
 		text-align: right;
+	}
+	.rov:hover,
+	.rov.is-open {
+		background: var(--paper-2);
+	}
+	/* The number is the overweging's menu, as in the reader (JudgmentReader): underlined with
+	   ▾ while the overweging is pointed at, open or focused. */
+	.plaats-marker {
+		align-self: start;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: var(--ink-3);
+		cursor: pointer;
+	}
+	.rov:hover .plaats-marker,
+	.rov.is-open .plaats-marker,
+	.plaats-marker:focus-visible {
+		color: var(--ink);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	.rov:hover .plaats-marker::after,
+	.rov.is-open .plaats-marker::after,
+	.plaats-marker:focus-visible::after {
+		content: ' ▾';
+		font-size: 0.7em;
+		color: var(--ink-3);
+		text-decoration: none;
+	}
+	.plaats-marker:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
+	}
+	.is-klikbaar {
+		cursor: pointer;
 	}
 	.uitspraak .rov-verder {
 		position: relative;

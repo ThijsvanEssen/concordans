@@ -1,7 +1,14 @@
 <script lang="ts">
 	import { keyEcli } from '$lib/bron/leesbaar';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { authorCite, conclusieNaam, judgmentCite, paragraphCite } from '$lib/text/judgment-cite';
+	import {
+		authorCite,
+		conclusieNaam,
+		judgmentCite,
+		overwegingCitaat,
+		paragraphCite,
+		zaakNaam
+	} from '$lib/text/judgment-cite';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import CiteMenu from '$lib/components/ui/CiteMenu.svelte';
 	import PlaatsMenu from '$lib/components/articles/PlaatsMenu.svelte';
@@ -51,30 +58,6 @@
 	// an API paragraph, else built from its number — a later split shares one `paragraph_id`
 	// with the first and needs its own anchor.
 	const ecliKey = (e: string) => e.toLowerCase().replaceAll(':', '_');
-
-	// Citeren van een overweging, parallel aan `citeArticle` voor een lid.
-	// Kort: HR 19 juli 2019, r.o. 3.1 (EHRM …, § 9); voluit with the ECLI. The date is in both.
-	function citeOverweging(
-		num: string,
-		ecliStr: string | null,
-		date: string | null,
-		court: string | null,
-		id: string,
-		author: string | null
-	) {
-		if (!ecliStr) return null;
-		const { short, full } = judgmentCite(ecliStr, date, court, author);
-		const at = paragraphCite(ecliStr, num);
-		return {
-			kort: `${short}, ${at}`,
-			voluit: `${full}, ${at}`,
-			link: permalink(page.url, id)
-		};
-	}
-
-	/** A judgment as Gemarkeerd groups under it: as its heading cites it, with its names. */
-	const zaakNaam = (kort: string, namen: string[] | null | undefined) =>
-		namen?.length ? `${kort} (${namen.join(', ')})` : kort;
 
 	/** The articles outside the dataset named in the head; the rest are counted. */
 	const OUTSIDE_SHOWN = 6;
@@ -409,30 +392,15 @@
 						/>
 					</div>
 				{:else if item.kind === 'rov'}
-					{@const forms = citeOverweging(
+					<!-- Cited and kept as a map's item offers it too (overwegingCitaat, MapInhoud). -->
+					{@const forms = overwegingCitaat(
+						j,
 						item.num,
-						j.ecli ?? null,
-						textProp(j.props?.date),
-						textProp(j.props?.court),
 						item.id,
-						author
+						permalink(page.url, item.id),
+						selection?.id ?? null
 					)}
-					<!-- Every number in one column, whatever its depth; Citeer under it, so the
-					     text of an overweging is as wide as the prose around it. -->
-					{@const bewaarItem =
-						forms && selection && j.ecli
-							? {
-									id: selection.id,
-									at: item.id,
-									kort: forms.kort,
-									voluit: forms.voluit,
-									groep: zaakNaam(
-										judgmentCite(j.ecli, textProp(j.props?.date), textProp(j.props?.court), author)
-											.short,
-										j.names
-									)
-								}
-							: null}
+					{@const bewaarItem = forms?.bewaar ?? null}
 					<!-- Every number in one column, whatever its depth; the number is the
 					     overweging's menu, so the text is as wide as the prose around it. -->
 					<div
