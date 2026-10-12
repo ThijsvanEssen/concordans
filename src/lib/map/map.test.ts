@@ -4,6 +4,7 @@ import {
 	citaten,
 	csv,
 	groepen,
+	groepSleutel,
 	mapParams,
 	naarParam,
 	netwerkHref,
@@ -111,7 +112,8 @@ describe('the map', () => {
 			naam: m.naam,
 			items: uitParam(naarParam(m.items)),
 			volgorde: 'eigen',
-			notitie: m.notitie
+			notitie: m.notitie,
+			groepNotities: {}
 		});
 		// A link of before: no note, no order.
 		const oud = new URLSearchParams({ map: naarParam([lid2]), mapnaam: 'Oud' });
@@ -119,7 +121,8 @@ describe('the map', () => {
 			naam: 'Oud',
 			items: uitParam(naarParam([lid2])),
 			volgorde: 'groep',
-			notitie: null
+			notitie: null,
+			groepNotities: {}
 		});
 		expect(mapParams({ ...m, volgorde: 'groep', notitie: '  ' }).has('mapnotitie')).toBe(false);
 		expect(uitParams(new URLSearchParams('mapnotitie=x'))).toBeNull();
@@ -144,5 +147,39 @@ describe('the map', () => {
 		expect(n.tussen).toBe(false);
 		expect(n.uit.size).toBe(0);
 		expect(netwerkHref([])).toBeNull();
+	});
+
+	it('keys a group by its law, dossier or judgment, not by its name', () => {
+		expect(groepSleutel(lid2)).toBe('wet:bwbr0005289');
+		expect(groepSleutel({ ...lid2, groep: 'BW Boek 6' })).toBe('wet:bwbr0005289');
+		expect(groepSleutel(ro)).toBe(ro.id);
+		expect(groepSleutel({ id: 'documents/dba9b180_cb08', groep: 'Kamerstukken 36764' })).toBe(
+			'dossier:36764'
+		);
+		expect(groepSleutel({ id: 'documents/x', groep: 'Dossier 36600-XV' })).toBe('dossier:36600-XV');
+		expect(groepSleutel({ id: 'motions/x', groep: 'Motie' })).toBe('groep:Motie');
+	});
+
+	it('carries the notes per group in the address, only of groups the map holds', () => {
+		const groepNotities = {
+			'wet:bwbr0005289': 'De onrechtmatige daad; ~ en ; erin',
+			[ro.id]: 'Urgenda',
+			'wet:bwbr0000000': 'weg'
+		};
+		const p = mapParams({ naam: 'M', items: [lid2, ro], volgorde: 'groep', groepNotities });
+		const terug = uitParams(new URLSearchParams(p.toString()))!;
+		expect(terug.groepNotities).toEqual({
+			'wet:bwbr0005289': 'De onrechtmatige daad; ~ en ; erin',
+			[ro.id]: 'Urgenda'
+		});
+		expect(mapParams({ naam: 'M', items: [lid2], volgorde: 'groep' }).has('mapgroepen')).toBe(
+			false
+		);
+	});
+
+	it("puts a group's note under its name in the citations", () => {
+		expect(citaten([lid2, ro], 'groep', null, { 'wet:bwbr0005289': 'Waarom deze wet' })).toBe(
+			'Burgerlijk Wetboek Boek 6\nWaarom deze wet\n1. artikel 6:162 lid 2 Burgerlijk Wetboek\n\nHR 20 december 2019 (Urgenda); a~b\n2. HR 20 december 2019, ECLI:NL:HR:2019:2006, r.o. 5.7.1'
+		);
 	});
 });
