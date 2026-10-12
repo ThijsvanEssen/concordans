@@ -107,14 +107,21 @@
 	 * none (95), an article cited by a judgment a title and a line (77); the rest a title over
 	 * two lines and its meta (112).
 	 */
-	const wachtSoort = (noun?: string) =>
-		noun === 'uitspraken'
-			? selection.collection === 'articles' || selection.collection === 'instruments'
-				? 'passage'
-				: 'uitspraak'
-			: noun === 'artikelen' && selection.collection === 'judgments'
-				? 'artikel'
-				: 'stuk';
+	/** "Toelichtingen en wijzigingen", the first word with a capital. */
+	const zin = (woorden: string[]) => {
+		const z =
+			woorden.length > 1 ? `${woorden.slice(0, -1).join(', ')} en ${woorden.at(-1)}` : woorden[0];
+		return `${z.charAt(0).toUpperCase()}${z.slice(1)}`;
+	};
+	// The kind of a waiting row, for its height: what a row of that group holds on this page.
+	const wachtSoort = (noun?: string) => {
+		const wet = selection.collection === 'articles' || selection.collection === 'instruments';
+		if (noun === 'uitspraken') return wet ? 'passage' : 'uitspraak';
+		if (noun === 'artikelen')
+			return selection.collection === 'judgments' ? 'artikel' : wet ? 'verwijzing' : 'stuk';
+		if (wet && (noun === 'stukken' || noun === 'Kamerstukken')) return 'kamerstuk';
+		return 'stuk';
+	};
 
 	let grouping = $state<Grouping>('soort');
 	let expanded = $state(new Set<string>());
@@ -232,10 +239,20 @@
 	// Wijzigingen) stands below the counted ones, always, so it never comes in above what stands
 	// (UX-toets 0.79.43, #1). One order per page; a group under a heading of its own keeps it.
 	const onvoorspelbaar = (g: Group) => !!g.load && !g.bakken && !g.section;
+	const voorzien = (g: Group) => !g.laden || verbonden.verwacht?.[g.id] != null;
 	const shown = $derived.by(() => {
-		const r = regroup(filtered, grouping, selection.collection);
+		const r = regroup(filtered, grouping, selection.collection).filter(voorzien);
 		return [...r.filter((g) => !onvoorspelbaar(g)), ...r.filter(onvoorspelbaar)];
 	});
+	// A group still loading whose rows the node cannot foretell takes no place: it may come
+	// empty, and its place going would move what stands below it (UX-toets 0.79.47, #1: the
+	// skeleton of Wijzigingen 92 px up when Toelichting came empty). One line under the
+	// groups says what is still coming; a group that comes with rows takes its place above it.
+	const nogOnderweg = $derived(
+		regroup(filtered, grouping, selection.collection)
+			.filter((g) => !voorzien(g))
+			.map((g) => g.noun ?? g.label.toLowerCase())
+	);
 	const hidden = $derived(hiddenLine(groepen, filter));
 	// What the table lists: the bronfilter applied, as its own count line does.
 	// One count, written once it holds (#56): a group still loading counts what the node
@@ -482,7 +499,14 @@
 							>{begin}<span class="group__slot">{slot}<Caret open={!toe} side /></span></button
 						>
 					</h3>
-					<span class="group__count">{g.laden ? '…' : countLabel(g)}</span>
+					<!-- While its rows come, the count the node foretells, as the skeleton showed it (#1). -->
+					<span class="group__count"
+						>{g.laden
+							? verbonden.verwacht?.[g.id] != null
+								? formatCount(verbonden.verwacht[g.id])
+								: '…'
+							: countLabel(g)}</span
+					>
 					{#if network && drawable(g.rows).length > 0}
 						<span class="group__laag">
 							<RijActies
@@ -512,10 +536,6 @@
 								&nbsp;
 							</p>{/if}
 						<p class="sr-only">
-							{g.noun ? `${g.noun.charAt(0).toUpperCase()}${g.noun.slice(1)} laden…` : 'Laden…'}
-						</p>
-					{:else if g.laden}
-						<p class="note stil group__laden">
 							{g.noun ? `${g.noun.charAt(0).toUpperCase()}${g.noun.slice(1)} laden…` : 'Laden…'}
 						</p>
 					{/if}
@@ -718,6 +738,12 @@
 			</section>
 		{/each}
 
+		{#if nogOnderweg.length > 0}
+			<p class="note stil group__laden" role="status">
+				{zin(nogOnderweg)} laden…
+			</p>
+		{/if}
+
 		{#if !verbonden.loading && !verbonden.failed && alleenKern}
 			<p class="note stil">Geen verbindingen buiten wat boven de tekst staat.</p>
 		{:else if !verbonden.loading && !verbonden.failed && shown.length === 0 && groepen.length > 0}
@@ -915,13 +941,34 @@
 	/* A waiting row: the height of a row with a title over two lines and its meta line, a
 	   quiet bar where the title will be. */
 	/* The heights measured on 6:162 BW: a judgment's row holds its passage (142 to 163 px),
-	   another row a title and a meta line (77 to 140 px). */
+	   another row a title and a meta line (77 to 140 px). On an article (6:74, 6:98 and 7:611
+	   BW, UX-toets 0.79.47, #1): a judgment's row 142 to 163 px, an article's 77 to 119, a
+	   Kamerstuk's 163. */
 	.row--wacht {
 		height: 112px;
 		padding: var(--s-2) var(--s-4);
 	}
 	.rows--wacht[data-wacht='passage'] .row--wacht {
-		height: 142px;
+		height: 156px;
+	}
+	.rows--wacht[data-wacht='verwijzing'] .row--wacht {
+		height: 96px;
+	}
+	.rows--wacht[data-wacht='kamerstuk'] .row--wacht {
+		height: 164px;
+	}
+	/* On a phone the rows wrap more (6:98 BW at 375 px): a judgment's 188, an article's 148 to
+	   176, a Kamerstuk's 172. */
+	@media (max-width: 768px) {
+		.rows--wacht[data-wacht='passage'] .row--wacht {
+			height: 188px;
+		}
+		.rows--wacht[data-wacht='verwijzing'] .row--wacht {
+			height: 148px;
+		}
+		.rows--wacht[data-wacht='kamerstuk'] .row--wacht {
+			height: 172px;
+		}
 	}
 	.rows--wacht[data-wacht='uitspraak'] .row--wacht {
 		height: 95px;
