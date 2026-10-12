@@ -731,6 +731,8 @@
 		{/if}
 		{#each getoond as group (group.beste ? 'beste' : group.kind)}
 			{@const gid = group.beste ? 'beste' : group.kind}
+			<!-- The hits a row is told apart from: its whole group, the Beste treffer's too. -->
+			{@const buren = groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
 			<div
 				class="group"
 				class:group--beste={group.beste}
@@ -746,7 +748,7 @@
 				</div>
 				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
 					{@const i = offset + (indexOf.get(hit.id) ?? 0)}
-					{@const shown = presentHit(hit, q)}
+					{@const shown = presentHit(hit, q, buren)}
 					{@const section = sectionOf(hit)}
 					{#if section && (h === 0 || section !== sectionOf(group.hits[h - 1]))}
 						<div class="section" role="presentation">{section}</div>

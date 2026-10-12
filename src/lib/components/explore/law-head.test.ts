@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	lawFullTitle,
 	lawHeadLine,
+	kindName,
 	lawKind,
 	publicationName,
 	sourceName,
@@ -24,6 +25,16 @@ describe('the head of a law', () => {
 		expect(lawKind({ ...eu, citation_title: 'Richtlijn 95/46/EG' })).toBe('Richtlijn');
 		expect(lawKind({ ...eu, kind: 'wet', jurisdiction: 'nl' })).toBe('Wet');
 		expect(lawKind(null)).toBe('Regeling');
+	});
+	it('names a regeling of the BWB by its kind, as a lawyer does', () => {
+		const nl = { ...eu, jurisdiction: 'nl' };
+		expect(lawKind({ ...nl, kind: 'beleidsregel' })).toBe('Beleidsregel');
+		expect(lawKind({ ...nl, kind: 'ministeriele-regeling' })).toBe('Ministeriële regeling');
+		expect(lawKind({ ...nl, kind: 'amvb' })).toBe('AMvB');
+		expect(lawKind({ ...nl, kind: 'ministeriele-regeling-bes' })).toBe('Ministeriële regeling BES');
+		expect(lawKind({ ...nl, kind: 'onbekend' })).toBe('Regeling');
+		expect(kindName('AMvB')).toBe('AMvB');
+		expect(kindName(null)).toBeNull();
 	});
 	it('names a publication by where it appeared, not as a Regeling', () => {
 		expect(publicationName('Stb')).toBe('Staatsblad');

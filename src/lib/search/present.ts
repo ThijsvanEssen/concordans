@@ -5,6 +5,7 @@ import { menselijkeNaam } from '$lib/bron/menselijk';
 // searched for marked. Stukken of one dossier stand under that dossier.
 import type { Schema } from '$lib/api/types';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
+import { kindName } from '$lib/components/explore/law-head';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
@@ -120,7 +121,19 @@ export function citeertitel(hit: Hit): string | null {
 	return naam && /^\p{Lu}/u.test(naam) ? naam : null;
 }
 
-export function presentHit(hit: Hit, query: string): Presented {
+/**
+ * A regeling by its kind and its day: published, else in force, else its text in force
+ * (the BWB often gives only the last). Empty where the hit carries neither.
+ */
+export function instrumentMeta(hit: Hit): string {
+	const day = ['date_published', 'date_in_force', 'version_date_in_force']
+		.map((name) => korteDatum(extra(hit, name)))
+		.find(Boolean);
+	return [kindName(extra(hit, 'kind')), day].filter(Boolean).join(', ');
+}
+
+/** `neighbours`: the hits listed with it, which its context tells it from. */
+export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] = []): Presented {
 	const snippet = typeof hit.snippet === 'string' ? hit.snippet.trim() : '';
 	switch (hit.collection) {
 		case 'articles': {
@@ -197,8 +210,27 @@ export function presentHit(hit: Hit, query: string): Presented {
 				chamber
 			};
 		}
-		case 'instruments':
-			return { title: naamVan(hit), context: extra(hit, 'bwb_id'), snippet: null };
+		case 'instruments': {
+			// Regelingen of one title differ by their kind and day (UX-toets 0.79.47, #53):
+			// "Beleidsregel, 27 apr. 2007"; the BWB id only where those are the same too, or
+			// where the API gives neither (before 0.79.49).
+			const title = naamVan(hit);
+			const meta = instrumentMeta(hit);
+			const same =
+				meta !== '' &&
+				neighbours.some(
+					(n) =>
+						n.id !== hit.id &&
+						n.collection === 'instruments' &&
+						naamVan(n) === title &&
+						instrumentMeta(n) === meta
+				);
+			return {
+				title,
+				context: [meta, !meta || same ? extra(hit, 'bwb_id') : ''].filter(Boolean).join(', '),
+				snippet: null
+			};
+		}
 		case 'members':
 			return { title: naamVan(hit), context: extra(hit, 'party'), snippet: null };
 		case 'commitments': {
