@@ -46,6 +46,9 @@ export type Citation = {
 	onderdelen?: string[];
 	/** The aanhef of the lid, or of the article when there is no lid. */
 	aanhef?: boolean;
+	/** The term of an unmarked definition the place is (or stands in), which names it:
+	 *  `art. 1, definitie van 'netwerk- en informatiesysteem', onder a Cbw`. */
+	definitie?: string | null;
 	/** The date the citation is dated on. */
 	date?: Date;
 };
@@ -53,7 +56,10 @@ export type Citation = {
 export type CitationForms = { kort: string; voluit: string; metDatum: string };
 
 /** What an article is cited by, before the place in it: ArticleText's `citation`. */
-export type ArticleCitation = Omit<Citation, 'lid' | 'onderdelen' | 'aanhef' | 'date'>;
+export type ArticleCitation = Omit<
+	Citation,
+	'lid' | 'onderdelen' | 'aanhef' | 'definitie' | 'date'
+>;
 
 /**
  * What the reader cites an article by, from its detail and its law's names: the name the
@@ -112,20 +118,23 @@ export function citeArticle(c: Citation): CitationForms {
 	const law = shortTitle ?? citationTitle;
 	const onderdelen = c.onderdelen ?? [];
 
-	const kort = [
-		c.heading ?? `art. ${articleNumber}`,
-		c.lid ? `lid ${c.lid}` : null,
+	const head = [c.heading ?? `art. ${articleNumber}`, c.lid ? `lid ${c.lid}` : null];
+	const rest = [
 		c.aanhef ? 'aanhef' : null,
-		...onderdelen.map((o, i) => (i === 0 ? `onder ${o}` : `sub ${o}`)),
-		law
-	]
-		.filter(Boolean)
-		.join(' ');
+		...onderdelen.map((o, i) => (i === 0 ? `onder ${o}` : `sub ${o}`))
+	];
+	const words = (xs: (string | null)[]) => xs.filter(Boolean).join(' ');
+	// A definition without a letter is named by its term, set off by commas: `art. 1,
+	// definitie van 'netwerk- en informatiesysteem', onder a Cbw`.
+	const kort = c.definitie
+		? `${[words(head), `definitie van '${c.definitie}'`, words(rest)].filter(Boolean).join(', ')} ${law}`
+		: words([...head, ...rest, law]);
 
 	const ordinal = c.lid ? ordinalWord(c.lid) : null;
 	const parts = [
 		c.heading ?? `artikel ${articleNumber}`,
 		c.lid ? (ordinal ? `${ordinal} lid` : `lid ${c.lid}`) : null,
+		c.definitie ? `definitie van '${c.definitie}'` : null,
 		c.aanhef ? 'aanhef' : null,
 		...onderdelen.map((o, i) => (i === 0 ? `onderdeel ${o}` : `onder ${o}`))
 	].filter(Boolean);
@@ -157,5 +166,42 @@ export function partOfAnchor(anchor: string | null): {
 		lid: lid === null ? null : gedrukt(lid),
 		onderdelen,
 		aanhef: /(^|-)aanhef$/.test(anchor)
+	};
+}
+
+/**
+ * The place an anchor names, read with the article's parts: where the place is, or stands in,
+ * an unmarked definition (a part with a `term`: a dash item, a definition paragraph), that
+ * definition names it and the onderdelen below it follow: `onder-_39-onder-a` is
+ * `definitie van 'netwerk- en informatiesysteem', onder a`. Without a term (an API that gives
+ * none) the anchor alone, as `partOfAnchor` reads it.
+ */
+export function placeCitation(
+	anchor: string | null,
+	parts: Iterable<{ id: string | null; term?: string | null }>
+): Pick<Citation, 'lid' | 'onderdelen' | 'aanhef' | 'definitie'> {
+	if (!anchor) return { ...partOfAnchor(anchor), definitie: null };
+	const terms = new Map<string, string>();
+	for (const p of parts) if (p.id && p.term) terms.set(p.id, p.term);
+	// The nearest of the place and the parts around it that defines a term: `lid-2-onder-a`
+	// stands in `lid-2`, `tekst-6-onder-a` in `tekst-6`.
+	let at = anchor;
+	while (!terms.has(at)) {
+		const up = at.replace(/-(?:onder-[^-]+|aanhef)$/, '');
+		if (up === at) return { ...partOfAnchor(anchor), definitie: null };
+		at = up;
+	}
+	const gedrukt = (x: string) => x.replace(/_\d+$/, '');
+	const lid = /^lid-([^-]+)/.exec(anchor)?.[1] ?? null;
+	// The definition itself (`onder-_39`, `tekst-6`) has no number to cite it by: its term
+	// names it, and only the onderdelen with a number are cited.
+	const onderdelen = [...anchor.matchAll(/onder-([^-]+)/g)]
+		.map((m) => gedrukt(m[1]))
+		.filter(Boolean);
+	return {
+		lid: lid === null ? null : gedrukt(lid),
+		onderdelen,
+		aanhef: /(^|-)aanhef$/.test(anchor),
+		definitie: terms.get(at)!
 	};
 }

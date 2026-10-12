@@ -12,6 +12,9 @@ export type ArticlePart = {
 	kind: ArticlePartKind;
 	/** As the source prints it: `2`, `a`, `1°`. */
 	number: string | null;
+	/** The term an unmarked definition defines (a dash item, a definition paragraph), by which
+	 *  it is cited: `netwerk- en informatiesysteem`. Null elsewhere, and where the API gives none. */
+	term: string | null;
 	/** The whole part, number and children included, as offsets into the article text. */
 	start: number;
 	end: number;
@@ -63,6 +66,7 @@ const leaf = (
 	id,
 	kind,
 	number,
+	term: null,
 	start: line.start,
 	end: line.end,
 	textStart: line.start + prefix,
@@ -168,6 +172,7 @@ type ApiPart = {
 	id: string;
 	kind: string;
 	number?: string | null;
+	term?: string | null;
 	text?: string | null;
 	start: number;
 	end: number;
@@ -192,6 +197,7 @@ export function partsFromApi(parts: ApiPart[], text?: string): ArticlePart[] {
 			id: p.id,
 			kind: KINDS.has(p.kind) ? (p.kind as ArticlePartKind) : 'tekst',
 			number: p.number ?? null,
+			term: p.term ?? null,
 			start: p.start,
 			end: p.end,
 			textStart: p.start,

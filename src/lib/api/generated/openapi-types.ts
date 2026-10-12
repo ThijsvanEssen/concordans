@@ -2111,7 +2111,7 @@ export interface components {
         ArticlePartDTO: {
             /**
              * Id
-             * @description Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel), `tekst-1` (a paragraph outside the other parts, such as a line between the lists of an article of a bijlage). Unique within the article.
+             * @description Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel), `onder-_39-onder-a` (inside an unmarked onderdeel), `tekst-1` (a paragraph outside the other parts, such as a line between the lists of an article of a bijlage), `tekst-6-onder-a` (in the list a definition paragraph leads). Unique within the article.
              */
             id: string;
             /**
@@ -2131,6 +2131,11 @@ export interface components {
             start: number;
             /** End */
             end: number;
+            /**
+             * Term
+             * @description The term a definition without a letter or digit defines (an unmarked onderdeel, a tekst), as its `<nadruk>` gives it; it is cited by it: `art. 1, definitie van 'netwerk- en informatiesysteem', onder a`. Null elsewhere.
+             */
+            term?: string | null;
             /**
              * Text
              * @description The content without its number: `text[start:end]` of the article.
@@ -2146,7 +2151,7 @@ export interface components {
         ArticlePartSpanDTO: {
             /**
              * Id
-             * @description Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel), `tekst-1` (a paragraph outside the other parts, such as a line between the lists of an article of a bijlage). Unique within the article.
+             * @description Where the part sits: `aanhef`, `lid-2`, `lid-2-aanhef`, `lid-2-onder-a`, `onder-a` (an article without leden), `lid-2-onder-a-onder-1` (an onderdeel inside an onderdeel), `onder-_39-onder-a` (inside an unmarked onderdeel), `tekst-1` (a paragraph outside the other parts, such as a line between the lists of an article of a bijlage), `tekst-6-onder-a` (in the list a definition paragraph leads). Unique within the article.
              */
             id: string;
             /**
@@ -2166,6 +2171,11 @@ export interface components {
             start: number;
             /** End */
             end: number;
+            /**
+             * Term
+             * @description The term a definition without a letter or digit defines (an unmarked onderdeel, a tekst), as its `<nadruk>` gives it; it is cited by it: `art. 1, definitie van 'netwerk- en informatiesysteem', onder a`. Null elsewhere.
+             */
+            term?: string | null;
         };
         /**
          * ArticlePassagesDTO

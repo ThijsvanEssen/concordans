@@ -135,7 +135,14 @@ describe('partsFromApi with the text', () => {
 	const roots = partsFromApi(
 		[
 			{ id: 'aanhef', kind: 'aanhef', number: null, start: 0, end: 6 },
-			{ id: 'onder-_1', kind: 'onderdeel', number: '–', start: at('netwerk:'), end: text.length },
+			{
+				id: 'onder-_1',
+				kind: 'onderdeel',
+				number: '–',
+				term: 'netwerk',
+				start: at('netwerk:'),
+				end: text.length
+			},
 			{
 				id: 'onder-_1-onder-a',
 				kind: 'onderdeel',
@@ -159,6 +166,8 @@ describe('partsFromApi with the text', () => {
 		const dash = roots[1];
 		expect(dash.children.map((p) => p.id)).toEqual(['onder-_1-onder-a', 'onder-_1-onder-b']);
 		expect(text.slice(dash.textStart, dash.textEnd).trim()).toBe('netwerk:');
+		// The term the dash defines comes with it; its a. and b. define none.
+		expect([dash.term, ...dash.children.map((p) => p.term)]).toEqual(['netwerk', null, null]);
 	});
 });
 
