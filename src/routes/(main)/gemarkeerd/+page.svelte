@@ -38,6 +38,10 @@
 	} from '$lib/map/map';
 	import { kaart } from '$lib/map/map.svelte';
 	import MapInhoud from '$lib/map/MapInhoud.svelte';
+	import Aantekening from '$lib/map/Aantekening.svelte';
+	import MapRegelingen from '$lib/map/MapRegelingen.svelte';
+	import { bijWet, wetVanGroep } from '$lib/map/verbonden';
+	import Caret from '$lib/components/ui/Caret.svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	const copier = createCopier();
@@ -109,63 +113,11 @@
 		void tick().then(() => document.getElementById(anker(m))?.scrollIntoView());
 	}
 
-	// ── A note: opened in place, Enter keeps it, Escape leaves it ─────────────
+	// ── The notes: an item's, a group's, the map's, opened in place (Aantekening) ──
+	/** The note open, by its row's, group's or map's key. */
 	let notitieVan = $state<string | null>(null);
-	/** The field takes the focus on opening. */
-	const focus = (veld: HTMLTextAreaElement) => veld.focus();
-	function notitieToets(e: KeyboardEvent, m: Map, i: MapItem) {
-		const veld = e.currentTarget as HTMLTextAreaElement;
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			op(m, () => kaart.notitie(i, veld.value));
-			notitieVan = null;
-		} else if (isEscape(e)) {
-			veld.value = i.notitie ?? '';
-			notitieVan = null;
-		}
-	}
-
-	// ── A group's note: under its head, opened in place as an item's ──────────
 	let groepNotitieVan = $state<string | null>(null);
-	function groepNotitieKlaar(m: Map, sleutel: string, k: string, tekst: string) {
-		if (groepNotitieVan !== k) return;
-		op(m, () => kaart.groepNotitie(sleutel, tekst));
-		groepNotitieVan = null;
-	}
-	function groepNotitieToets(
-		e: KeyboardEvent,
-		m: Map,
-		sleutel: string,
-		k: string,
-		bij: string | undefined
-	) {
-		const veld = e.currentTarget as HTMLTextAreaElement;
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			groepNotitieKlaar(m, sleutel, k, veld.value);
-		} else if (isEscape(e)) {
-			veld.value = bij ?? '';
-			groepNotitieVan = null;
-		}
-	}
-
-	// ── The map's own note: at its top, opened in place as an item's ─────────
 	let mapNotitieVan = $state<string | null>(null);
-	function mapNotitieKlaar(m: Map, tekst: string) {
-		if (mapNotitieVan !== m.id) return;
-		op(m, () => kaart.mapNotitie(tekst));
-		mapNotitieVan = null;
-	}
-	function mapNotitieToets(e: KeyboardEvent, m: Map) {
-		const veld = e.currentTarget as HTMLTextAreaElement;
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			mapNotitieKlaar(m, veld.value);
-		} else if (isEscape(e)) {
-			veld.value = m.notitie ?? '';
-			mapNotitieVan = null;
-		}
-	}
 </script>
 
 <RouteKop pad="/gemarkeerd" />
@@ -180,31 +132,12 @@
 		{/snippet}
 		{#snippet body()}
 			{#if i.voluit && i.voluit !== i.kort}<span class="row-sub">{i.voluit}</span>{/if}
-			{#if m && notitieVan === k}
-				<textarea
-					class="notitie-veld"
-					rows="2"
-					aria-label="Aantekening bij {i.kort}"
-					value={i.notitie ?? ''}
-					use:focus
-					onkeydown={(e) => notitieToets(e, m, i)}
-					onblur={(e) => {
-						if (notitieVan !== k) return;
-						const tekst = e.currentTarget.value;
-						op(m, () => kaart.notitie(i, tekst));
-						notitieVan = null;
-					}}
-				></textarea>
-			{:else if i.notitie && m}
-				<button
-					type="button"
-					class="notitie"
-					title="Aantekening wijzigen"
-					onclick={() => (notitieVan = k)}>{i.notitie}</button
-				>
-			{:else if i.notitie}
-				<span class="notitie">{i.notitie}</span>
-			{/if}
+			<Aantekening
+				tekst={i.notitie}
+				bij={i.kort}
+				bind:open={() => notitieVan === k, (v) => (notitieVan = v ? k : null)}
+				onBewaar={m ? (t) => op(m, () => kaart.notitie(i, t)) : undefined}
+			/>
 		{/snippet}
 		{#snippet aside()}
 			{#if m}
@@ -227,6 +160,9 @@
 					>
 				</span>
 			{/if}
+			<TekstLink href={adres(i)} class="naar-lezer" aria-label="{i.kort} in de lezer"
+				>In de lezer</TekstLink
+			>
 		{/snippet}
 		{#snippet detail()}
 			<MapInhoud item={i} href={adres(i)} />
@@ -245,35 +181,39 @@
 		{@const k = `${m?.id ?? 'gedeeld'}:${g.sleutel}`}
 		{@const bij = notities[g.sleutel]}
 		{#if g.groep}
+			{@const wet = wetVanGroep(g.items)}
+			{@const wetOpen = !!wet && geopend.has(`wet:${k}`)}
 			<div class="groep-kop">
-				<h3 class="groep">{g.groep}<span class="aantal">{g.items.length}</span></h3>
+				<h3 class="groep">
+					{#if wet}<button
+							type="button"
+							class="groep-knop"
+							aria-expanded={wetOpen}
+							onclick={() => wisselOpen(`wet:${k}`)}>{g.groep}<Caret open={wetOpen} side /></button
+						>{:else}{g.groep}{/if}<span class="aantal">{g.items.length}</span>
+				</h3>
 				{#if m && !bij && groepNotitieVan !== k}
 					<button type="button" class="notitie-knop" onclick={() => (groepNotitieVan = k)}
 						>Aantekening</button
 					>
 				{/if}
 			</div>
-			{#if m && groepNotitieVan === k}
-				<textarea
-					class="notitie-veld"
-					rows="2"
-					aria-label="Aantekening bij {g.groep}"
-					placeholder="Aantekening bij {g.groep}"
-					value={bij ?? ''}
-					use:focus
-					onkeydown={(e) => groepNotitieToets(e, m, g.sleutel, k, bij)}
-					onblur={(e) => groepNotitieKlaar(m, g.sleutel, k, e.currentTarget.value)}
-				></textarea>
-			{:else if bij && m}
-				<button
-					type="button"
-					class="notitie groep-notitie"
-					title="Aantekening wijzigen"
-					onclick={() => (groepNotitieVan = k)}>{bij}</button
-				>
-			{:else if bij}
-				<p class="notitie groep-notitie">{bij}</p>
+			{#if wet && wetOpen}
+				<div class="wet-open">
+					<MapRegelingen titel="Verbonden regelingen" laad={() => bijWet(wet)} />
+					<p class="verder">
+						<TekstLink href={buildBronHref(null, `instruments/${wet.toLowerCase()}`)}
+							>Wet in de lezer</TekstLink
+						>
+					</p>
+				</div>
 			{/if}
+			<Aantekening
+				tekst={bij}
+				bij={g.groep}
+				bind:open={() => groepNotitieVan === k, (v) => (groepNotitieVan = v ? k : null)}
+				onBewaar={m ? (t) => op(m, () => kaart.groepNotitie(g.sleutel, t)) : undefined}
+			/>
 		{/if}
 		<ul class="rijen">
 			{#each g.items as i (sleutelVan(i))}{@render rij(i, m)}{/each}
@@ -318,7 +258,7 @@
 						<TekstLink onclick={() => gedeeldKlaar('niet')}>Niet bewaren</TekstLink>
 					</span>
 				{/snippet}
-				{#if gedeeld.notitie}<p class="map-notitie">{gedeeld.notitie}</p>{/if}
+				<Aantekening tekst={gedeeld.notitie} bij={gedeeld.naam ?? 'de map'} />
 				<p class="meta">
 					<span>{tel(gedeeld.items.length)}</span>
 					{@render alles(null, gedeeld.items)}
@@ -444,25 +384,12 @@
 					</p>
 				{/if}
 
-				{#if mapNotitieVan === m.id}
-					<textarea
-						class="map-notitie-veld"
-						rows="3"
-						aria-label="Aantekening bij {m.naam}"
-						placeholder="Aantekening bij de map"
-						value={m.notitie ?? ''}
-						use:focus
-						onkeydown={(e) => mapNotitieToets(e, m)}
-						onblur={(e) => mapNotitieKlaar(m, e.currentTarget.value)}
-					></textarea>
-				{:else if m.notitie}
-					<button
-						type="button"
-						class="map-notitie"
-						title="Aantekening wijzigen"
-						onclick={() => (mapNotitieVan = m.id)}>{m.notitie}</button
-					>
-				{/if}
+				<Aantekening
+					tekst={m.notitie}
+					bij={m.naam}
+					bind:open={() => mapNotitieVan === m.id, (v) => (mapNotitieVan = v ? m.id : null)}
+					onBewaar={(t) => op(m, () => kaart.mapNotitie(t))}
+				/>
 				<p class="meta">
 					<span
 						>{m.id === kaart.actief.id ? 'Actieve map, ' : ''}{tel(m.items.length)}, gewijzigd
@@ -579,38 +506,6 @@
 	.leeg {
 		margin: 0;
 	}
-	/* The map's own note: at its top, in the italic of an item's note, a size up. */
-	.map-notitie {
-		display: block;
-		max-width: 68ch;
-		margin: 0;
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		font-style: italic;
-		line-height: var(--lh-body);
-		color: var(--ink-2);
-		text-align: left;
-		white-space: pre-line;
-	}
-	button.map-notitie {
-		cursor: text;
-	}
-	.map-notitie-veld {
-		box-sizing: border-box;
-		width: 100%;
-		max-width: 68ch;
-		padding: var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		font-style: italic;
-		line-height: var(--lh-body);
-		resize: vertical;
-	}
 	/* A law, dossier or judgment over its rows, as a day over Actueel's. */
 	.groep {
 		margin: 0;
@@ -641,9 +536,37 @@
 			opacity: 1;
 		}
 	}
-	.groep-notitie {
-		margin-top: var(--s-2);
-		white-space: pre-line;
+	/* A law's name opens what is connected to it, in place, as a row opens. */
+	.groep-knop {
+		display: inline-flex;
+		align-items: baseline;
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		color: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+	.groep-knop:hover {
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+	}
+	.groep-knop:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
+	}
+	.wet-open {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-2);
+		padding: var(--s-2) var(--s-2) var(--s-3);
+		background: var(--paper-2);
+	}
+	.wet-open .verder {
+		margin: 0;
+		font-size: var(--t-meta);
 	}
 	.aantal {
 		margin-left: var(--s-2);
@@ -654,7 +577,7 @@
 	/* Bladeren's rows: the kind in the lead, the place as the title, the citation under it. */
 	.rijen {
 		--row-lead: 140px;
-		--row-aside: 190px;
+		--row-aside: 280px;
 		margin: 0;
 		padding: 0;
 		list-style: none;
@@ -671,42 +594,18 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	/* The reader's note: italic, under the citation; a click opens it to change. */
-	.notitie {
-		display: block;
-		margin: var(--s-1) 0 0;
-		padding: 0;
-		border: 0;
-		background: none;
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-style: italic;
-		color: var(--ink-2);
-		text-align: left;
-	}
-	button.notitie {
-		cursor: text;
-	}
-	.notitie-veld {
-		box-sizing: border-box;
-		width: 100%;
-		margin-top: var(--s-1);
-		padding: var(--s-1) var(--s-2);
-		border: 1px solid var(--rule-strong);
-		border-radius: var(--r-1);
-		font-family: var(--font-serif);
-		font-size: var(--t-meta);
-		font-style: italic;
-		resize: vertical;
-	}
 	/* Aantekening, up, down and out at the end of the row, on hover and focus; always on a
 	   touch screen. */
 	.knoppen {
 		display: inline-flex;
 		align-items: center;
 		justify-content: flex-end;
-		width: 100%;
 		opacity: 0;
+	}
+	/* The way to the reader, always in sight: the row's click opens it here. */
+	.rijen :global(.naar-lezer) {
+		font-size: var(--t-micro);
+		white-space: nowrap;
 	}
 	:global(.row-wrap:hover) .knoppen,
 	:global(.row-wrap:focus-within) .knoppen {

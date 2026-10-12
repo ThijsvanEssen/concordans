@@ -5,7 +5,10 @@
 	// a click further; a judgment its overweging (CitedText), the overwegingen around it a
 	// click further; a Kamerstuk the words its note quotes in the text around them, else the
 	// opening of its text; another bron the lines of its card. Asked when the row opens, once
-	// (the readers share the requests). The bron itself stays one step further: Lees verder.
+	// (the readers share the requests). The bron itself stays one step further, by a link that
+	// says where it goes: Heel artikel in de lezer, beside Heel artikel hier, which widens the
+	// lid to its article in place (Thijs, 12 Oct). An article opens with the regulations based
+	// on it, a law with its kind, its day and the laws connected to it (MapRegelingen).
 	// A place's menu is the reader's own (PlaatsMenu): Citeer, Kopieer tekst and Bewaar, from
 	// the same citation (articleCitation, overwegingCitaat; Thijs, 12 Oct).
 	import type { Schema } from '$lib/api/types';
@@ -31,9 +34,14 @@
 	import { openingVan } from '$lib/components/open/rij-inhoud';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { onderdeelMark } from '$lib/text/article-parts';
+	import { getInstrumentDetail } from '$lib/api/instrument-cache';
+	import { kindName } from '$lib/components/explore/law-head';
+	import { korteDatum } from '$lib/text/datum';
 	import { parseNodeId } from '$lib/vocabulary';
 	import { citaatUit, overwegingVan, rondCitaat } from './inhoud';
 	import type { MapItem } from './map';
+	import MapRegelingen from './MapRegelingen.svelte';
+	import { bijWet, opArtikel } from './verbonden';
 
 	let { item, href }: { item: MapItem; href: string } = $props();
 
@@ -51,6 +59,7 @@
 				samenvatting: string | null;
 		  }
 		| { soort: 'stuk'; tekst: string | null }
+		| { soort: 'wet'; bwb: string; titel: string | null; bij: string }
 		| { soort: 'regels'; tekst: string };
 
 	let inhoud = $state<Inhoud>({ soort: 'laden' });
@@ -100,6 +109,20 @@
 				j,
 				items: bodyItems(paragraphs.slice(0, signatureStart(paragraphs))),
 				samenvatting: tekstVan(j.summary)
+			};
+		}
+		if (doel.collection === 'instruments') {
+			const d = await getInstrumentDetail(doel.key.toUpperCase());
+			const bwb = d.bwb_id ?? d.celex ?? doel.key.toUpperCase();
+			const sinds = d.date_in_force ?? d.version_date_in_force;
+			const titel = tekstVan(d.official_title) ?? tekstVan(d.title);
+			return {
+				soort: 'wet',
+				bwb,
+				titel: titel && titel !== i.kort ? titel : null,
+				bij: [kindName(d.kind), sinds ? `in werking ${korteDatum(sinds)}` : null]
+					.filter(Boolean)
+					.join(', ')
 			};
 		}
 		if (doel.collection === 'documents')
@@ -183,16 +206,19 @@
 				adres={a.path || href}
 			/>
 		</div>
-		{#if item.at}
-			<p class="verder">
-				<TekstLink onclick={() => (ruim = !ruim)} aria-pressed={ruim}
-					>{ruim ? `Alleen ${plaats ?? 'de plaats'}` : 'Heel artikel'}</TekstLink
-				>
-				<TekstLink {href}>Lees verder</TekstLink>
-			</p>
-		{:else}
-			<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>
+		{#if inhoud.d.bwb && a.article_number}
+			{@const bwb = inhoud.d.bwb}
+			{@const nummer = a.article_number}
+			<MapRegelingen titel="Gebaseerd op dit artikel" laad={() => opArtikel(bwb, nummer)} />
 		{/if}
+		<p class="verder">
+			{#if item.at}
+				<TekstLink onclick={() => (ruim = !ruim)} aria-pressed={ruim}
+					>{ruim ? `Alleen ${plaats ?? 'de plaats'}` : 'Heel artikel hier'}</TekstLink
+				>
+			{/if}
+			<TekstLink {href}>{item.at ? 'Heel artikel in de lezer' : 'Artikel in de lezer'}</TekstLink>
+		</p>
 	{:else if inhoud.soort === 'uitspraak'}
 		{@const deel = item.at ? overwegingVan(inhoud.items, item.at, ruim) : null}
 		{#if deel}
@@ -270,6 +296,12 @@
 			<p class="stil">Tekst nog niet in de gegevens.</p>
 		{/if}
 		<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>
+	{:else if inhoud.soort === 'wet'}
+		{@const bwb = inhoud.bwb}
+		{#if inhoud.titel}<p class="tekst">{inhoud.titel}</p>{/if}
+		{#if inhoud.bij}<p class="stil">{inhoud.bij}</p>{/if}
+		<MapRegelingen titel="Verbonden regelingen" laad={() => bijWet(bwb)} />
+		<p class="verder"><TekstLink {href}>Wet in de lezer</TekstLink></p>
 	{:else if inhoud.soort === 'regels'}
 		<p class="tekst">{inhoud.tekst}</p>
 		<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>
