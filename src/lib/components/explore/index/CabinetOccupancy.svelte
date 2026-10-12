@@ -3,23 +3,28 @@
 	import { korteDatum, maandJaar } from '$lib/text/datum';
 	import PostOpen from '$lib/components/open/PostOpen.svelte';
 	// Who held which post in a cabinet, on the cabinet's term. Per ministry a line per seat;
-	// a successor is the next block on the line, a stand-in has a dotted bar and a grey name.
-	// The phases (demissionair and after) are dotted lines with their name on the axis. A
-	// block opens its details beneath its line: by click, Enter or Space, and by `?open=`.
-	// On a narrow screen the lines become text: per seat the holders one under the other.
+	// a successor is the next block on the line, a stand-in has a dotted frame (not italic).
+	// The axis is the shared Tijdas, with the phases (demissionair and after) as dotted lines
+	// named above it. A block opens its details beneath its line: by click, Enter or Space,
+	// and by `?open=`. On a narrow screen the lines become text: per seat the holders one under
+	// the other, each with its Strookje on the same scale.
 	import { partyColor } from '$lib/utils/party-color.svelte';
+	import { smalScherm } from '$lib/utils/smal.svelte';
 	import { POST_LABEL, laterPosts } from './government';
 	import {
-		actingReason,
+		postNotes,
+		at,
 		bandsOf,
+		phaseLabel,
 		lanesOf,
 		termOf,
-		ticksOf,
 		type CabinetDetail,
 		type Seat,
-		type SeatPost,
-		periodOf
+		type SeatPost
 	} from './occupancy';
+	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
+	import Strookje from '$lib/components/tijdlijn/Strookje.svelte';
+	import { periodeZin, randen } from '$lib/components/tijdlijn/tijdas';
 
 	let {
 		cabinet,
@@ -39,23 +44,18 @@
 		short ? partyColor(short) : 'var(--rule-strong)';
 
 	// Text instead of a timeline below the width at which a line can hold names.
-	let narrow = $state(false);
-	$effect(() => {
-		const query = window.matchMedia('(max-width: 767px)');
-		narrow = query.matches;
-		const change = () => (narrow = query.matches);
-		query.addEventListener('change', change);
-		return () => query.removeEventListener('change', change);
-	});
+	const scherm = smalScherm();
 
 	const term = $derived(termOf(cabinet));
-	const ticks = $derived(term ? ticksOf(term) : []);
+	const as = $derived(
+		term && cabinet.from_date
+			? {
+					periode: { van: term.start, tot: term.end, lopend: term.open },
+					...randen(cabinet.from_date, cabinet.to_date ?? null, term.open)
+				}
+			: null
+	);
 	const phases = $derived(term ? bandsOf(cabinet.phases ?? [], term) : []);
-	const PHASE_LABEL: Record<string, string> = {
-		demissionair: 'Demissionair',
-		dubbel_demissionair: 'Dubbel demissionair',
-		missionair: 'Weer missionair'
-	};
 
 	// Seats without a ministry are of two kinds: a post of none (the viceminister-president)
 	// and a post whose ministry no source names or the sources dispute. The second stands
@@ -79,11 +79,6 @@
 			row('Ministerie niet in de gegevens', loose.filter(unknown))
 		].filter((r) => r.seats.length);
 	});
-
-	const MISSING: Record<NonNullable<SeatPost['ministry_missing']>, string> = {
-		no_source: 'Geen officiële bron noemt het ministerie.',
-		ambiguous: 'De bronnen noemen verschillende ministeries.'
-	};
 
 	// The API counts dossiers and toezeggingen per person over the cabinet: they belong with
 	// the person's longest post, not with a short stand-in beside it.
@@ -116,6 +111,9 @@
 
 	const day = (iso: string) => korteDatum(iso);
 	const month = (iso: string) => maandJaar(iso);
+	/** On a phone: the post on the scale of the figure, as a Strookje. */
+	const plek = (p: SeatPost) =>
+		term ? { van: at(term, p.from_date, 'start'), tot: at(term, p.to_date, 'end') } : null;
 
 	/** The seat's name: the post grey where it is the usual one, the portfolio in ink. */
 	function seatName(seat: Seat): { post: string; portfolio: string } {
@@ -129,7 +127,7 @@
 
 	const nameOf = (p: SeatPost) => p.member.name ?? naamVan('members', p.member);
 	const label = (p: SeatPost) =>
-		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodOf(p.from_date, p.to_date, day)}${p.acting ? ', waarnemend' : ''}`;
+		`${nameOf(p)}${p.party?.short ? `, ${p.party.short}` : ''}, ${periodeZin(p.from_date, p.to_date, day)}${p.acting ? ', waarnemend' : ''}`;
 </script>
 
 {#if !term}
@@ -140,17 +138,21 @@
 	</p>
 {:else if rows.length === 0}
 	<p class="occ-note">Posten van dit kabinet staan niet in de gegevens.</p>
-{:else if narrow}
+{:else if scherm.smal}
 	<!-- Phone: per seat the holders one under the other, the phases in a line. -->
 	<div class="occ-text">
 		{#if phases.length}
 			<p class="occ-phases">
-				{#each phases as b, i (i)}{i ? ', ' : ''}{(
-						PHASE_LABEL[b.phase.kind ?? ''] ??
-						b.phase.label ??
-						''
-					).toLowerCase()}{b.phase.from_date ? ` vanaf ${day(b.phase.from_date)}` : ''}{/each}
+				{#each phases as b, i (i)}{i ? ', ' : ''}{phaseLabel(b.phase).toLowerCase()}{b.phase
+						.from_date
+						? ` vanaf ${day(b.phase.from_date)}`
+						: ''}{/each}
 			</p>
+		{/if}
+		{#if as}
+			<div class="mini-as" aria-hidden="true">
+				<span>{as.begin}</span><span>{as.eind}</span>
+			</div>
 		{/if}
 		{#each rows as ministry (ministry.name)}
 			<h3 class="occ-ministry">{ministry.name}</h3>
@@ -173,9 +175,21 @@
 								onclick={() => toggle(id)}
 							>
 								<span class="holder-name"
-									>{nameOf(p)}{#if p.acting}<span class="holder-note"> waarnemend</span>{/if}</span
+									>{nameOf(p)}{#if p.acting}<span class="holder-note">, waarnemend</span>{/if}</span
 								>
-								<span class="holder-period">{periodOf(p.from_date, p.to_date, month)}</span>
+								<span class="holder-period">{periodeZin(p.from_date, p.to_date, month)}</span>
+								{#if plek(p)}
+									{@const b = plek(p)!}
+									<span class="holder-strook"
+										><Strookje
+											van={b.van}
+											tot={b.tot}
+											kleur={colorOf(p.party?.short)}
+											open={openKey === id}
+											waarnemend={p.acting}
+										/></span
+									>
+								{/if}
 							</button>
 							{#if openKey === id}
 								{@render detail(p)}
@@ -187,20 +201,22 @@
 		{/each}
 	</div>
 {:else}
-	<div class="occ" style:--phases={phases.length}>
+	<div class="occ">
 		<!-- The axis: the years, and the phases named where they begin. -->
 		<div class="occ-row occ-row--axis" aria-hidden="true">
 			<span></span>
-			<span class="occ-track">
-				{#each phases as b, i (i)}
-					<span class="phase-label" style:left="{b.from * 100}%"
-						>{PHASE_LABEL[b.phase.kind ?? ''] ?? b.phase.label}</span
-					>
-				{/each}
-				{#each ticks as t (t.at)}
-					<span class="tick" style:left="{t.at * 100}%">{t.label}</span>
-				{/each}
-			</span>
+			{#if as}
+				<Tijdas
+					periode={as.periode}
+					begin={as.begin}
+					eind={as.eind}
+					plaats="boven"
+					fasen={phases.map((b) => ({
+						at: b.from,
+						label: phaseLabel(b.phase)
+					}))}
+				/>
+			{/if}
 		</div>
 
 		{#each rows as ministry (ministry.name)}
@@ -265,14 +281,7 @@
 		wetsvoorstellen={p.bills ?? 0}
 		geteld={counted(p)}
 		toezeggingenHref={counted(p) && p.open_commitments ? commitmentsHref(p.member.key) : null}
-		opmerkingen={[
-			...(p.also_named?.length ? [`Ook genoemd: ${p.also_named.join(', ')}.`] : []),
-			...(p.acting && actingReason(p) ? [`${actingReason(p)}.`] : []),
-			...(p.ministry_missing ? [MISSING[p.ministry_missing]] : []),
-			...(p.overlaps_with?.length
-				? ['Volgens de bronnen tegelijk met een andere bekleder van deze post.']
-				: [])
-		]}
+		opmerkingen={postNotes(p)}
 	/>
 {/snippet}
 
@@ -298,14 +307,13 @@
 		border-bottom: 1px solid var(--rule);
 	}
 	.occ-row--axis {
-		height: var(--s-7);
-		border-bottom: 1px solid var(--rule-strong);
+		align-items: end;
 	}
 	.occ-ministry {
 		margin: 0;
 		padding: var(--s-4) 0 var(--s-1);
 		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
+		font-size: var(--t-meta); /* rung 3: a group in a section (docs/typografie.md) */
 		font-weight: 600;
 		color: var(--ink);
 	}
@@ -327,35 +335,12 @@
 		display: block;
 		height: calc(var(--lanes, 1) * var(--lane));
 	}
-	.occ-row--axis .occ-track {
-		height: 100%;
-	}
 
-	.tick {
-		position: absolute;
-		bottom: var(--s-1);
-		transform: translateX(-50%);
-		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
-		color: var(--ink-3);
-		white-space: nowrap;
-	}
-	/* A phase: a dotted line through the lines, its name once, on the axis. */
-	.phase-label {
-		position: absolute;
-		top: 0;
-		padding-left: var(--s-1);
-		border-left: 1px dotted var(--ink);
-		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
-		font-weight: 600;
-		color: var(--ink);
-		white-space: nowrap;
-	}
 	.phase-line {
 		position: absolute;
 		top: 0;
 		bottom: 0;
-		border-left: 1px dotted var(--ink);
-		opacity: 0.6;
+		border-left: 1px dotted var(--rule-strong);
 	}
 
 	/* A holder: light, the party a bar at the left; the one opened in ink. */
@@ -381,11 +366,12 @@
 		outline: 2px solid var(--focus);
 		outline-offset: 1px;
 	}
+	/* Waarnemend: a dotted frame of 1px, no fill, not italic; the party stays its cap. */
 	.blk--acting {
 		background: transparent;
-		border-left-style: dotted;
-		color: var(--ink-3);
-		font-style: italic;
+		border: 1px dotted var(--ink-3);
+		border-left: 3px solid var(--party);
+		color: var(--ink-2);
 	}
 	.blk--open,
 	.blk--open:hover {
@@ -407,10 +393,11 @@
 		margin: 0 0 var(--s-5);
 		font-family: var(--font-serif);
 	}
+	/* The phases as words; ink-2, as the word that decides in a meta line. */
 	.occ-phases {
 		margin: 0;
 		font-size: var(--t-micro);
-		color: var(--ink);
+		color: var(--ink-2);
 	}
 	.occ-text .occ-seat {
 		margin: var(--s-2) 0 0;
@@ -424,23 +411,20 @@
 	}
 	.holder {
 		display: flex;
+		flex-wrap: wrap;
 		justify-content: space-between;
 		align-items: baseline;
-		gap: var(--s-2);
+		column-gap: var(--s-2);
 		width: 100%;
 		min-height: 44px;
 		margin: 0;
-		padding: 0 0 0 var(--s-2);
+		padding: var(--s-2) 0 0;
 		border: 0;
-		border-left: 3px solid var(--party);
 		background: transparent;
 		font: inherit;
 		text-align: left;
 		color: var(--ink);
 		cursor: pointer;
-	}
-	.holder--acting {
-		border-left-style: dotted;
 	}
 	.holder:focus-visible {
 		outline: 2px solid var(--focus);
@@ -456,9 +440,18 @@
 		font-size: var(--t-micro);
 		color: var(--ink-3);
 	}
-	.holder-note {
-		margin-left: var(--s-2);
-		font-style: italic;
+	.holder-strook {
+		flex-basis: 100%;
+		margin: var(--s-1) 0 var(--s-2);
+	}
+	.mini-as {
+		display: flex;
+		justify-content: space-between;
+		margin: var(--s-3) 0 0;
+		padding-bottom: var(--s-1);
+		border-bottom: 1px solid var(--rule-strong);
+		font-size: var(--t-label); /* a chart's own labels, below the ladder: docs/typografie.md */
+		color: var(--ink-3);
 	}
 	.holder-period {
 		white-space: nowrap;

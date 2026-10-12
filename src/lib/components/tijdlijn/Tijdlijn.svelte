@@ -493,15 +493,17 @@
 		--tl-teken: 0px;
 		--tl-voor: calc(var(--tl-datum) + var(--s-4));
 	}
-	.perioden .regel {
+	/* Child combinators: a Tijdlijn opened inside a line (PostOpen under a term) keeps its own
+	   form. */
+	.perioden > .groep > .regels > .regel {
 		grid-template-columns: var(--tl-datum) minmax(0, 1fr);
 		gap: 0 var(--s-4);
 	}
-	.perioden .regel::before {
+	.perioden > .groep > .regels > .regel::before {
 		display: none;
 	}
 	/* The years are a column of figures. */
-	.perioden .datum {
+	.perioden > .groep > .regels > .regel > .datum {
 		text-align: left;
 		white-space: nowrap;
 		font-variant-numeric: tabular-nums;

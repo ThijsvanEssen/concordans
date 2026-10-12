@@ -4,7 +4,8 @@
 	// course over the period, the hall of the day chosen (concept 16, variant B). One day for
 	// both Kamers (?zetels=); a step in either sets it. The Eerste Kamer always has its section,
 	// with a quiet line where the data has nothing for this cabinet (partial over waiting). A
-	// cabinet from before 30 November 2006 has no seats per day: no sections.
+	// cabinet from before 30 November 2006 has no seats per day: no sections. The phases
+	// (demissionair and after) stand over the steps, as over the posts.
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import KamerZetels from './KamerZetels.svelte';
@@ -14,7 +15,14 @@
 
 	type Stuk = Schema<'SeatStretchDTO'>;
 
-	let { kabinet }: { kabinet: string } = $props();
+	let {
+		kabinet,
+		fasen = []
+	}: {
+		kabinet: string;
+		/** The cabinet's phases from its record, once that is in (phaseStarts). */
+		fasen?: { van: string; label: string }[];
+	} = $props();
 
 	let zetels = $state<Schema<'CabinetSeatsResponse'> | null>(null);
 
@@ -61,6 +69,7 @@
 		dag={opDag}
 		kabinet={zetels.key}
 		onKies={kies}
+		{fasen}
 	/>
 	<KamerZetels
 		kamer="EK"
@@ -71,5 +80,6 @@
 		dag={opDag}
 		kabinet={zetels.key}
 		onKies={kies}
+		{fasen}
 	/>
 {/if}

@@ -187,6 +187,50 @@ describe('one form for each thing', () => {
 		expect(tl).not.toMatch(/korteDatum|langeDatum|longDate|formatDate|formatLongDate|maandJaar/);
 	});
 
+	it('draws every horizontal time figure on the one Tijdas, a period in small with Strookje (horizontaal-4, Thijs 12 Oct)', () => {
+		const tekst = (path: string) => sources.find((s) => s.path === path)!.text;
+		// The posts of a cabinet, the cabinets and the seats: one axis, one way of naming phases.
+		const figuren = [
+			'lib/components/explore/index/CabinetOccupancy.svelte',
+			'lib/components/explore/index/KabinettenStrook.svelte',
+			'lib/components/explore/readers/KamerZetels.svelte'
+		];
+		expect(
+			figuren.filter((p) => !tekst(p).includes("import Tijdas from '$lib/components/tijdlijn/"))
+		).toEqual([]);
+		expect(
+			offenders((t) => /\b(ticksOf|cabTicks)\(|class="(cab-axis|phase-label)"/.test(t))
+		).toEqual([]);
+		// A period in small (the posts on a phone, Naast elkaar) is the Strookje, no bar of its own.
+		for (const p of [
+			'lib/components/explore/index/CabinetOccupancy.svelte',
+			'lib/components/explore/index/NaastPosten.svelte'
+		])
+			expect(tekst(p)).toContain("import Strookje from '$lib/components/tijdlijn/Strookje.svelte'");
+		// In rest quiet, a stand-in dotted: no fading bar, no italics, no opacity on a line.
+		const lijnen = [
+			...figuren,
+			'lib/components/explore/index/NaastPosten.svelte',
+			'lib/components/tijdlijn/Tijdas.svelte',
+			'lib/components/tijdlijn/Fasen.svelte',
+			'lib/components/tijdlijn/Strookje.svelte'
+		];
+		expect(
+			lijnen.filter((p) =>
+				rules(tekst(p)).some((r) => /linear-gradient|font-style:\s*italic|opacity:/.test(r.body))
+			)
+		).toEqual([]);
+	});
+
+	it('styles the terms of a Tijdlijn by child combinators, so a Tijdlijn opened in a term keeps its own form', () => {
+		const tl = sources.find((s) => s.path === 'lib/components/tijdlijn/Tijdlijn.svelte')!.text;
+		const perioden = rules(tl).filter((r) => r.selector.includes('.perioden '));
+		expect(perioden.length).toBeGreaterThan(0);
+		expect(
+			perioden.filter((r) => !/^\.perioden > \.groep > \.regels > \.regel\b/.test(r.selector))
+		).toEqual([]);
+	});
+
 	it('lays a full-width page in the frame of Bladeren, with no width of its own (docs/bediening.md, Layout)', () => {
 		// A page-wide max-width (600 px or more) only in AppShell's .blad and the footer.
 		const breed = /(?<!@media \(|@container [\w ]*\()max-width:\s*(\d{3,4})px/g;
