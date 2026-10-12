@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import { parseNetwerk } from '$lib/netwerk/netwerk';
 import {
 	citaten,
 	csv,
 	groepen,
+	mapParams,
 	naarParam,
+	netwerkHref,
+	netwerkIds,
 	samen,
 	sleutelVan,
 	uitParam,
+	uitParams,
 	verschuif,
 	type MapItem
 } from './map';
@@ -92,5 +97,52 @@ describe('the map', () => {
 			'rov-5.7.1'
 		]);
 		expect(verschuif(lijst, sleutelVan(lid2), -1, 'eigen')).toEqual(lijst);
+	});
+
+	it('carries the note of the map in its address, and reads one without it as before', () => {
+		const m = {
+			naam: 'Cyberbeveiligingswet',
+			items: [lid2, ro],
+			volgorde: 'eigen' as const,
+			notitie: 'Zorgplicht en training; ~ en ; erin\nTweede regel'
+		};
+		const terug = uitParams(new URLSearchParams(mapParams(m).toString()));
+		expect(terug).toEqual({
+			naam: m.naam,
+			items: uitParam(naarParam(m.items)),
+			volgorde: 'eigen',
+			notitie: m.notitie
+		});
+		// A link of before: no note, no order.
+		const oud = new URLSearchParams({ map: naarParam([lid2]), mapnaam: 'Oud' });
+		expect(uitParams(oud)).toEqual({
+			naam: 'Oud',
+			items: uitParam(naarParam([lid2])),
+			volgorde: 'groep',
+			notitie: null
+		});
+		expect(mapParams({ ...m, volgorde: 'groep', notitie: '  ' }).has('mapnotitie')).toBe(false);
+		expect(uitParams(new URLSearchParams('mapnotitie=x'))).toBeNull();
+	});
+
+	it('puts the note of the map above its citations', () => {
+		expect(citaten([lid2], 'eigen', 'Waarom deze map')).toBe(
+			'Waarom deze map\n\n1. artikel 6:162 lid 2 Burgerlijk Wetboek'
+		);
+	});
+
+	it('seeds the network with the bronnen of the map only, each once', () => {
+		const lid3 = { ...lid2, at: 'lid-3', kort: 'art. 6:162 lid 3 BW' };
+		expect(netwerkIds([lid2, ro, lid3])).toEqual([lid2.id, ro.id]);
+		const href = netwerkHref([lid2, ro, lid3])!;
+		expect(href).toBe(
+			'/explore?netwerk=articles/bwbr0005289_162,judgments/ecli_nl_hr_2019_2006&tussen=0'
+		);
+		// As the Verkenner reads it: these bronnen on, none between them.
+		const n = parseNetwerk(new URL(href, 'https://concordans.nl').searchParams);
+		expect(n.ids).toEqual([lid2.id, ro.id]);
+		expect(n.tussen).toBe(false);
+		expect(n.uit.size).toBe(0);
+		expect(netwerkHref([])).toBeNull();
 	});
 });

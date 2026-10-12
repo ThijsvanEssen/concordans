@@ -27,26 +27,20 @@
 		citaten,
 		csv,
 		groepen,
-		naarParam,
+		mapParams,
+		netwerkHref,
 		sleutelVan,
-		uitParam,
+		uitParams,
+		type Gedeeld,
 		type Map,
 		type MapItem
 	} from '$lib/map/map';
-	import { kaart, type Gedeeld } from '$lib/map/map.svelte';
+	import { kaart } from '$lib/map/map.svelte';
 
 	const copier = createCopier();
 
 	// ── A shared map, from the address ─────────────────────────────────────────
-	const gedeeld = $derived.by<Gedeeld | null>(() => {
-		const items = uitParam(page.url.searchParams.get('map'));
-		if (!items.length) return null;
-		return {
-			naam: page.url.searchParams.get('mapnaam'),
-			items,
-			volgorde: page.url.searchParams.get('mapvolgorde') === 'eigen' ? 'eigen' : 'groep'
-		};
-	});
+	const gedeeld = $derived<Gedeeld | null>(uitParams(page.url.searchParams));
 	/** A shared map kept or put aside: its link leaves the address, a reload asks no more. */
 	function gedeeldKlaar(hoe: 'map' | 'erbij' | 'niet') {
 		if (gedeeld && hoe === 'map') kaart.bewaarAlsMap(gedeeld);
@@ -65,9 +59,7 @@
 	};
 	const link = (m: Map) => {
 		const url = new URL('/gemarkeerd', page.url.origin);
-		url.searchParams.set('map', naarParam(m.items));
-		url.searchParams.set('mapnaam', m.naam);
-		if (m.volgorde === 'eigen') url.searchParams.set('mapvolgorde', 'eigen');
+		url.search = mapParams(m).toString();
 		return url.toString();
 	};
 	const bestand = (m: Map) => m.naam.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'Gemarkeerd';
@@ -110,6 +102,24 @@
 		} else if (isEscape(e)) {
 			veld.value = i.notitie ?? '';
 			notitieVan = null;
+		}
+	}
+
+	// ── The map's own note: at its top, opened in place as an item's ─────────
+	let mapNotitieVan = $state<string | null>(null);
+	function mapNotitieKlaar(m: Map, tekst: string) {
+		if (mapNotitieVan !== m.id) return;
+		op(m, () => kaart.mapNotitie(tekst));
+		mapNotitieVan = null;
+	}
+	function mapNotitieToets(e: KeyboardEvent, m: Map) {
+		const veld = e.currentTarget as HTMLTextAreaElement;
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			mapNotitieKlaar(m, veld.value);
+		} else if (isEscape(e)) {
+			veld.value = m.notitie ?? '';
+			mapNotitieVan = null;
 		}
 	}
 </script>
@@ -215,6 +225,7 @@
 			<Sectie titel="Gedeelde map: {gedeeld.naam ?? 'zonder naam'}" niveau={2} inklapbaar={false}>
 				{#snippet naast()}
 					<span class="acties">
+						<TekstLink href={netwerkHref(gedeeld.items) ?? undefined}>Netwerk</TekstLink>
 						<TekstLink onclick={() => gedeeldKlaar('map')}>Bewaar als map</TekstLink>
 						<TekstLink onclick={() => gedeeldKlaar('erbij')}
 							>Voeg toe aan {kaart.actief.naam}</TekstLink
@@ -222,6 +233,7 @@
 						<TekstLink onclick={() => gedeeldKlaar('niet')}>Niet bewaren</TekstLink>
 					</span>
 				{/snippet}
+				{#if gedeeld.notitie}<p class="map-notitie">{gedeeld.notitie}</p>{/if}
 				<p class="meta">{tel(gedeeld.items.length)}</p>
 				{@render lijst(gedeeld.items, gedeeld.volgorde, null)}
 			</Sectie>
@@ -232,10 +244,12 @@
 				{#snippet naast()}
 					<span class="acties">
 						{#if m.items.length}
+							<TekstLink href={netwerkHref(m.items) ?? undefined}>Netwerk</TekstLink>
 							<TekstLink onclick={() => copier.copy(link(m), `link-${m.id}`)}
 								>{copier.label(`link-${m.id}`, 'Kopieer link')}</TekstLink
 							>
-							<TekstLink onclick={() => copier.copy(citaten(m.items, m.volgorde), `cit-${m.id}`)}
+							<TekstLink
+								onclick={() => copier.copy(citaten(m.items, m.volgorde, m.notitie), `cit-${m.id}`)}
 								>{copier.label(`cit-${m.id}`, 'Citaten')}</TekstLink
 							>
 							<TekstLink
@@ -267,6 +281,15 @@
 										dicht();
 										naamgeven = m.id;
 									}}>Hernoem</button
+								>
+								<button
+									type="button"
+									role="menuitem"
+									class="tekstmenu__item"
+									onclick={() => {
+										dicht();
+										mapNotitieVan = m.id;
+									}}>{m.notitie ? 'Wijzig aantekening' : 'Aantekening bij de map'}</button
 								>
 								<button
 									type="button"
@@ -327,6 +350,25 @@
 					</p>
 				{/if}
 
+				{#if mapNotitieVan === m.id}
+					<textarea
+						class="map-notitie-veld"
+						rows="3"
+						aria-label="Aantekening bij {m.naam}"
+						placeholder="Aantekening bij de map"
+						value={m.notitie ?? ''}
+						use:focus
+						onkeydown={(e) => mapNotitieToets(e, m)}
+						onblur={(e) => mapNotitieKlaar(m, e.currentTarget.value)}
+					></textarea>
+				{:else if m.notitie}
+					<button
+						type="button"
+						class="map-notitie"
+						title="Aantekening wijzigen"
+						onclick={() => (mapNotitieVan = m.id)}>{m.notitie}</button
+					>
+				{/if}
 				<p class="meta">
 					<span
 						>{m.id === kaart.actief.id ? 'Actieve map, ' : ''}{tel(m.items.length)}, gewijzigd
@@ -441,6 +483,38 @@
 	}
 	.leeg {
 		margin: 0;
+	}
+	/* The map's own note: at its top, in the italic of an item's note, a size up. */
+	.map-notitie {
+		display: block;
+		max-width: 68ch;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: none;
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		font-style: italic;
+		line-height: var(--lh-body);
+		color: var(--ink-2);
+		text-align: left;
+		white-space: pre-line;
+	}
+	button.map-notitie {
+		cursor: text;
+	}
+	.map-notitie-veld {
+		box-sizing: border-box;
+		width: 100%;
+		max-width: 68ch;
+		padding: var(--s-2);
+		border: 1px solid var(--rule-strong);
+		border-radius: var(--r-1);
+		font-family: var(--font-serif);
+		font-size: var(--t-body);
+		font-style: italic;
+		line-height: var(--lh-body);
+		resize: vertical;
 	}
 	/* A law, dossier or judgment over its rows, as a day over Actueel's. */
 	.groep {

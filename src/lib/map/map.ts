@@ -2,6 +2,8 @@
 // a lid of an article, an overweging of a judgment, a Kamerstuk, a motie, any bron. It lives
 // in this browser; a link (?map=) carries it to someone else, a list of citations to a memo,
 // a CSV to a spreadsheet. It replaces Verbonden's Verzamel.
+import { netwerkParams } from '$lib/netwerk/netwerk';
+import { parseNodeId } from '$lib/vocabulary';
 
 /** One thing kept: a bron, or a place in it (`lid-2`, `rov-5.7.1`), with how it is cited. */
 export type MapItem = {
@@ -28,6 +30,16 @@ export type Map = {
 	volgorde: 'groep' | 'eigen';
 	/** When it last changed, as an ISO time. */
 	gewijzigd: string;
+	/** The reader's note on the map as a whole, shown at its top. */
+	notitie?: string | null;
+};
+
+/** A map from a link: its name, items, order and note as the link gives them. */
+export type Gedeeld = {
+	naam: string | null;
+	items: MapItem[];
+	volgorde: Map['volgorde'];
+	notitie: string | null;
 };
 
 /** An item's key: the bron and its place. */
@@ -68,6 +80,53 @@ export function uitParam(v: string | null): MapItem[] {
 	});
 }
 
+/** The address params of a map: its items, its name, its order where its own, its note. */
+export function mapParams(
+	m: Pick<Map, 'items' | 'naam' | 'volgorde' | 'notitie'>
+): URLSearchParams {
+	const p = new URLSearchParams({ map: naarParam(m.items), mapnaam: m.naam });
+	if (m.volgorde === 'eigen') p.set('mapvolgorde', 'eigen');
+	if (m.notitie?.trim()) p.set('mapnotitie', m.notitie.trim());
+	return p;
+}
+
+/** A map from an address; null where it holds no item. A link without a note reads as before. */
+export function uitParams(p: URLSearchParams): Gedeeld | null {
+	const items = uitParam(p.get('map'));
+	if (!items.length) return null;
+	return {
+		naam: p.get('mapnaam'),
+		items,
+		volgorde: p.get('mapvolgorde') === 'eigen' ? 'eigen' : 'groep',
+		notitie: p.get('mapnotitie')?.trim() || null
+	};
+}
+
+/** The params a map's address carries, for a link that lands elsewhere first. */
+export const MAP_PARAMS = ['map', 'mapnaam', 'mapvolgorde', 'mapnotitie'] as const;
+
+// ── The network ─────────────────────────────────────────────────────────────
+/** The bronnen of a map, each once (two leden of one article are one bron), in its order. */
+export const netwerkIds = (items: readonly MapItem[]): string[] => [
+	...new Set(items.map((i) => i.id).filter((id) => parseNodeId(id) !== null))
+];
+
+/**
+ * The Verkenner's network of the map's bronnen only: the chosen bronnen of ?netwerk, the
+ * bronnen between them off (?tussen=0), so the canvas holds what the map holds and its
+ * Netwerk panel adds to it.
+ */
+export function netwerkHref(items: readonly MapItem[]): string | null {
+	const ids = netwerkIds(items);
+	if (!ids.length) return null;
+	const params = netwerkParams({ ids, uit: new Set(), tussen: false });
+	const query = Object.entries(params)
+		.filter(([, v]) => v !== null)
+		.map(([k, v]) => `${k}=${encodeURIComponent(v!).replaceAll('%2F', '/').replaceAll('%2C', ',')}`)
+		.join('&');
+	return `/explore?${query}`;
+}
+
 /** The items of `b` that `a` does not hold yet, after `a`'s. */
 export function samen(a: readonly MapItem[], b: readonly MapItem[]): MapItem[] {
 	const al = new Set(a.map(sleutelVan));
@@ -81,14 +140,23 @@ const citaat = (i: MapItem, n: number) =>
 
 /**
  * The map as a list of citations for a memo: numbered, the full form where kept, a note as
- * an indented line under its citation; per group, or in the reader's own order.
+ * an indented line under its citation; per group, or in the reader's own order. The map's
+ * own note goes above, as its first paragraph.
  */
-export function citaten(items: readonly MapItem[], volgorde: Map['volgorde'] = 'groep'): string {
-	if (volgorde === 'eigen') return items.map((i, n) => citaat(i, n + 1)).join('\n');
+export function citaten(
+	items: readonly MapItem[],
+	volgorde: Map['volgorde'] = 'groep',
+	notitie?: string | null
+): string {
+	const kop = notitie?.trim() ? `${notitie.trim()}\n\n` : '';
+	if (volgorde === 'eigen') return kop + items.map((i, n) => citaat(i, n + 1)).join('\n');
 	let n = 0;
-	return groepen(items)
-		.map(({ groep, items }) => [groep, ...items.map((i) => citaat(i, ++n))].join('\n'))
-		.join('\n\n');
+	return (
+		kop +
+		groepen(items)
+			.map(({ groep, items }) => [groep, ...items.map((i) => citaat(i, ++n))].join('\n'))
+			.join('\n\n')
+	);
 }
 
 const cel = (v: string) => (/[";\r\n]/.test(v) ? `"${v.replaceAll('"', '""')}"` : v);
