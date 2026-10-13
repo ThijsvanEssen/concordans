@@ -3,6 +3,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
+	import { kamerstukNummer } from '$lib/bron/dossier-naam';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -110,12 +111,11 @@
 
 {#snippet dossierLinks(all: Reading[])}
 	{@const dossiers = uniqueBy(all, (r) => r.key)}
-	{dossiers.length === 1 ? 'Kamerstuk' : 'Kamerstukken'}
 	{#each dossiers as r, i (r.key)}{#if i > 0}{i === dossiers.length - 1
 				? ' en '
 				: ', '}{/if}<BronLink
 			ref={{ collection: 'dossiers', key: r.key, number: r.number }}
-			title={r.title ?? undefined}><DossierNaam dossier={r} /></BronLink
+			title={r.title ?? undefined}><DossierNaam dossier={r} hover={false} /></BronLink
 		>{/each}
 {/snippet}
 
@@ -140,7 +140,7 @@
 						at: '',
 						kort: `Kamerstukken ${d.number}`,
 						voluit: `Kamerstukken ${d.number}${d.title ? ` (${d.short_title ?? d.title})` : ''}`,
-						groep: d.short_title ?? d.title ?? `Dossier ${d.number}`
+						groep: d.short_title ?? d.title ?? kamerstukNummer(d.number)
 					}
 				}}
 			>

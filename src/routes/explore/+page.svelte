@@ -2,6 +2,7 @@
 	import type { Collection } from '$lib/vocabulary';
 	import { sprongDoel } from '$lib/stores/sprong';
 	import { naamVanId } from '$lib/bron/menselijk';
+	import { kamerstukNummer } from '$lib/bron/dossier-naam';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import { useSearchOpener } from '$lib/stores/search-trigger';
@@ -142,7 +143,7 @@
 		p.soort === 'artikel'
 			? `Artikel ${p.nummer} van ${p.wet}`
 			: p.soort === 'kamerstuk'
-				? `Kamerstuk ${p.dossier}, ${/^\d/.test(p.nummer) ? 'nr. ' : ''}${p.nummer}`
+				? `${kamerstukNummer(p.dossier)}, ${/^\d/.test(p.nummer) ? 'nr. ' : ''}${p.nummer}`
 				: p.soort === 'publicatie'
 					? `${REEKS_NAAM[p.reeks]} ${p.jaar}, ${p.nummer}`
 					: p.soort === 'lid'
@@ -1620,7 +1621,7 @@
 									{telefoon}
 									onPick={addIdToNetwerk}
 									omgeving={selectedNode && !selectedNode.stub
-										? bronNaam(selectedNode, $instrumentMetaStore)
+										? bronNaam(selectedNode, $instrumentMetaStore, true)
 										: null}
 									onOmgeving={() => selectedNode && handleNodeReplace(selectedNode)}
 									onVoorbeeld={() => {
@@ -1633,7 +1634,7 @@
 										);
 									}}
 									selection={selectedNode && selectedLinkId && !netwerk.ids.includes(selectedLinkId)
-										? { label: bronNaam(selectedNode, $instrumentMetaStore) }
+										? { label: bronNaam(selectedNode, $instrumentMetaStore, true) }
 										: null}
 									tussen={netwerk.tussen}
 									onGroepAan={(kind) => {

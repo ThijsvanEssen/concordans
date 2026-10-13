@@ -8,6 +8,7 @@ import { lawIdOf } from '$lib/graph/types';
 import { rowsToText } from '$lib/verbonden/export';
 import { dossierNumbersOf, type Row } from '$lib/verbonden/rows';
 import { BRON_KIND_LABEL } from '$lib/verbonden/filter';
+import { dossierLabel } from '$lib/bron/dossier-naam';
 import type { MapItem } from './map';
 
 export function groepVanRij(r: Row): string {
@@ -21,7 +22,9 @@ export function groepVanRij(r: Row): string {
 		}
 		case 'documents': {
 			const nr = dossierNumbersOf(r.props)[0];
-			return nr ? `Dossier ${nr}` : BRON_KIND_LABEL[r.kind];
+			const p = (r.props ?? {}) as Record<string, unknown>;
+			const kort = typeof p.dossier_short_title === 'string' ? p.dossier_short_title : null;
+			return nr ? dossierLabel({ number: nr, short_title: kort }) : BRON_KIND_LABEL[r.kind];
 		}
 		case 'judgments':
 			return r.title;

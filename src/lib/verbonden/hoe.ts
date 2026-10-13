@@ -38,9 +38,11 @@ const join = (...parts: (string | null | undefined)[]) => parts.filter(Boolean).
 const erbij = (teken: string, s: string | null) => (s ? `${teken}${s}` : null);
 const groot = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** `Stb.2021-162` as it is cited: `Stb. 2021, 162`. */
+/** `Stb.2021-162` and `stb_2021_162` as they are cited: `Stb. 2021, 162`. */
 export const publicatie = (s: string | null) =>
-	s?.replace(/^(Stb|Stcrt|Trb)\.?\s*(\d{4})-(\d+)$/, '$1. $2, $3') ?? null;
+	s
+		?.replace(/^(stb|stcrt|trb)_(\d{4})_(\d+)$/i, (_, k: string, j, n) => `${groot(k)}.${j}-${n}`)
+		.replace(/^(Stb|Stcrt|Trb)\.?\s*(\d{4})-(\d+)$/, '$1. $2, $3') ?? null;
 
 const HERKOMST_REDEN: Record<string, string> = {
 	bwb_xml_ref: 'Verwijzing in de wettekst, wetten.overheid.nl',
@@ -165,14 +167,21 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 				pub ? `Wetten.overheid.nl, ${pub}` : row.proposed ? 'Voorstel van wet' : null
 			);
 		}
-		case 'LEGISLATED_IN':
-			return inbound
-				? regel(
-						'Tot stand gekomen',
-						'in dit dossier',
-						text(edge.dossier_number) ? 'Dossiernummer in de publicatie' : null
-					)
-				: regel('Behandeld', 'in dit dossier', null);
+		case 'LEGISLATED_IN': {
+			if (inbound)
+				return regel(
+					'Tot stand gekomen',
+					'in dit dossier',
+					text(edge.dossier_number) ? 'Dossiernummer in de publicatie' : null
+				);
+			// The dossiers of a wet: the bill that made it, or a bill whose publication amended
+			// it (`via`, /api/instruments/{bwb}/dossiers). What the dossier is to the wet, in the
+			// Kamer's words; its kind and number stand under it ("Kamerstuk 36764").
+			const pub = publicatie(text(edge.publication));
+			return text(edge.via) === 'amending_publication'
+				? regel('Wijzigt', join('deze wet', pub), null)
+				: regel('Wetsvoorstel', 'van deze wet', null);
+		}
 		case 'ANSWERS':
 			// A letter of the government and the motion its subject names: read as the
 			// reference it is. A prejudiciële beslissing says it in its group's label.

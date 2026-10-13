@@ -15,7 +15,8 @@
 	import { relationLabel } from '$lib/vocabulary';
 	import { csvName, download, rowsToCsv } from './export';
 	import { formatCount, type VerbondenFilter } from './filter';
-	import { mentionRows, openLabelOf, rowKey, shortDate, type Row } from './rows';
+	import { dossierVanRij, mentionRows, openLabelOf, rowKey, shortDate, type Row } from './rows';
+	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import type { VerbondenState } from './source';
@@ -302,7 +303,10 @@
 													href={bronHref(r.ref, { at: r.at })}
 													data-sveltekit-noscroll
 													onclick={(e) => terPlekke(e, () => (openRow = open ? null : id))}
-													>{r.title}</a
+													>{#if dossierVanRij(r)}<DossierNaam
+															dossier={dossierVanRij(r)!}
+															vorm="naam"
+														/>{:else}{r.title}{/if}</a
 												>
 												<button
 													type="button"

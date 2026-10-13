@@ -54,7 +54,7 @@ describe('previewFromNode', () => {
 			outcome: 'aangenomen'
 		});
 		expect([p.kicker, p.title, p.lines]).toEqual([
-			'Dossier 34372',
+			'Dossier, Kamerstuk 34372',
 			'Wijziging van het Wetboek van Strafrecht',
 			'Aangenomen'
 		]);
@@ -83,7 +83,9 @@ describe('previewFromNode', () => {
 		});
 		expect(p.kicker).toBe('Amendement, nr. 66');
 		expect(p.date).toBe('24 april 2024');
-		expect(p.dossier).toMatch(/^Dossier 36496, /);
+		expect(p.dossier).toBe(
+			'Kamerstuk 36496 Wijziging van de Wet goed verhuurderschap (Wet betaalbare huur)'
+		);
 		expect(p.wie).toBe('Ingediend door B. Madlener (PVV), mede namens H. de Jong (GL-PvdA)');
 	});
 });

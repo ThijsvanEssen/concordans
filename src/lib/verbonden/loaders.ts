@@ -234,9 +234,11 @@ async function actorDossiers(
 		rows: found.items.map((d) => ({
 			ref: { collection: 'dossiers' as const, key: d.key, number: d.number },
 			...describe('dossiers', d.key, d.title, {
-				title: d.short_title ?? d.title,
+				title: d.title,
+				short_title: d.short_title ?? null,
 				label: d.number
 			}),
+			dossier: { number: d.number, title: d.title, short_title: d.short_title ?? null },
 			context: rolesLine(d),
 			kind: 'dossiers' as const,
 			relation: 'AUTHORED' as const,
@@ -361,7 +363,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				.filter((d) => d.number !== label)
 				.map((d) => ({
 					ref: { collection: 'dossiers', key: d.key, number: d.number },
-					...describe('dossiers', d.key, d.title, { title: d.title, label: d.number }),
+					...describe('dossiers', d.key, d.title, {
+						title: d.title,
+						short_title: d.short_title ?? null,
+						label: d.number
+					}),
+					dossier: { number: d.number, title: d.title, short_title: d.short_title ?? null },
 					kind: 'dossiers' as const
 				}))
 		};
@@ -935,9 +942,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 					title: d.title,
 					label: d.dossier_number
 				}),
+				// No short title in this answer: the row asks it by number (DossierNaam).
+				dossier: { number: d.dossier_number, title: d.title },
 				kind: 'dossiers' as const,
 				relation: 'LEGISLATED_IN',
-				direction: 'outbound'
+				direction: 'outbound',
+				// The dossier that made the law, or one whose publication amended it.
+				edge: { via: d.via, publication: d.publication ?? null }
 			}))
 		};
 	},

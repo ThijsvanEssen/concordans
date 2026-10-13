@@ -32,7 +32,17 @@
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
 	import { csvName, download, rowsToCsv } from './export';
-	import { caseNumberOf, mentionRows, metaParts, repeatedTitles, rowKey, type Row } from './rows';
+	import {
+		caseNumberOf,
+		dossierVanRij,
+		mentionRows,
+		metaParts,
+		repeatedTitles,
+		rowKey,
+		type Row
+	} from './rows';
+	import DossierNaam from '$lib/bron/DossierNaam.svelte';
+	import { dossierNaamNu } from '$lib/bron/dossier-namen.svelte';
 	import type { VerbondenState } from './source';
 	import { groupRequest } from './open-group';
 	import {
@@ -659,6 +669,7 @@
 							{@const sister = repeatedTitles(g.rows).has(row.title) ? caseNumberOf(row) : null}
 							{@const hoe = hoeVan(row, selection.collection)}
 							{@const href = rowHref(g, row)}
+							{@const dossier = dossierVanRij(row)}
 							<li class="row">
 								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
 								     Netwerk, as its title does. -->
@@ -681,7 +692,12 @@
 											<span class="row__title row__title--missing">{row.title}</span>
 										{:else}
 											<a class="row__title" {href} data-sveltekit-noscroll
-												>{row.title}{#if sister}<span class="row__case">, {sister}</span>{/if}</a
+												>{#if dossier}<DossierNaam
+														{dossier}
+														vorm="naam"
+													/>{:else}{row.title}{/if}{#if sister}<span class="row__case"
+														>, {sister}</span
+													>{/if}</a
 											>
 										{/if}
 										{#if hoe && (hoe.werkwoord || hoe.rest)}
@@ -719,7 +735,7 @@
 										</span>
 									</span>
 									<RijActies
-										naam={row.title}
+										naam={dossier ? dossierNaamNu(dossier) : row.title}
 										item={itemVanRij(row)}
 										netwerk={!row.missing && onAddToNetwerk
 											? { aan: inNetwerk?.(row) ?? false, voegToe: () => onAddToNetwerk(row) }
