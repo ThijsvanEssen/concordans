@@ -40,7 +40,7 @@
 	import MapInhoud from '$lib/map/MapInhoud.svelte';
 	import Aantekening from '$lib/map/Aantekening.svelte';
 	import MapRegelingen from '$lib/map/MapRegelingen.svelte';
-	import { bijWet, wetVanGroep } from '$lib/map/verbonden';
+	import { onderWet, wetVanGroep } from '$lib/map/verbonden';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
@@ -200,7 +200,7 @@
 			</div>
 			{#if wet && wetOpen}
 				<div class="wet-open">
-					<MapRegelingen titel="Verbonden regelingen" laad={() => bijWet(wet)} />
+					<MapRegelingen laad={() => onderWet(wet)} />
 					<p class="verder">
 						<TekstLink href={buildBronHref(null, `instruments/${wet.toLowerCase()}`)}
 							>Wet in de lezer</TekstLink

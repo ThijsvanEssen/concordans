@@ -101,6 +101,11 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 				? regel(`${groot(aard)} tegen`, 'deze uitspraak', formeel)
 				: regel('Bestreden', `in ${aard} met deze uitspraak`, formeel);
 		}
+		case 'BASED_ON':
+			// A regulation under a law: the articles of the law its Gelet op names, `art. 16, 21`.
+			if (inbound && selected === 'instruments' && row.position)
+				return regel('Gebaseerd op', row.position, uit(reden));
+			break;
 		case 'ADVISES_ON':
 			return inbound
 				? regel('Conclusie bij', 'deze uitspraak', formeel)

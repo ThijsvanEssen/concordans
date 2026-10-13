@@ -55,3 +55,16 @@ export const getDelegated = (bwbId: string, articleNumber: string) =>
 			.then(({ data }) => data ?? null)
 			.catch(() => null)
 	);
+
+/**
+ * The regulations issued under a law: one per regulation whose `Gelet op` names an article of
+ * it, with those articles; once per law, for its group in Verbonden and its row in a map.
+ * Null where the API does not answer it.
+ */
+export const getLawDelegated = (bwbId: string) =>
+	once(`instruments/${bwbId}/delegated`, () =>
+		api
+			.GET('/api/instruments/{bwb_id}/delegated', { params: { path: { bwb_id: bwbId } } })
+			.then(({ data }) => data ?? null)
+			.catch(() => null)
+	);

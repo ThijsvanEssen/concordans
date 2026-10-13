@@ -133,7 +133,7 @@ export interface paths {
         };
         /**
          * Regulations issued under an article
-         * @description The regulations whose preamble ("Gelet op") names this article as their legal basis (`BASED_ON`), each with the leden it names and its articles that refer to this one; and the delegation formulas of the article ("bij of krachtens algemene maatregel van bestuur"), each with the regulations that fill it, or none yet. 404 when the article is unknown.
+         * @description The regulations in force whose preamble ("Gelet op") names this article as their legal basis (`BASED_ON`; a repealed regulation is left out), each with the leden it names and its articles that refer to this one; and the delegation formulas of the article ("bij of krachtens algemene maatregel van bestuur"), each with the regulations that fill it, or none yet. 404 when the article is unknown.
          */
         get: operations["get_delegated_api_articles__bwb_id___article_number__delegated_get"];
         put?: never;
@@ -356,6 +356,26 @@ export interface paths {
          * @description An aggregation of the REFERS_TO edges between articles of this law and articles of other laws. Each related instrument carries `outbound_count` (references from this law to the other) and `inbound_count` (references from the other law to this one). ``total`` is the absolute count, independent of ``limit``.
          */
         get: operations["get_instrument_related_route_api_instruments__bwb_id__related_instruments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/instruments/{bwb_id}/delegated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Regulations issued under a law
+         * @description The regulations in force whose preamble ("Gelet op") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names: AMvBs first, then ministerial regulations, then the others; by title. A repealed regulation or article is left out. Empty for an unknown instrument.
+         */
+        get: operations["get_instrument_delegated_route_api_instruments__bwb_id__delegated_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1975,7 +1995,7 @@ export interface components {
             clauses?: components["schemas"]["DelegatedClauseDTO"][];
             /**
              * Items
-             * @description Every regulation issued under the article: AMvBs first, then ministerial regulations, then the others; by title.
+             * @description Every regulation in force issued under the article: AMvBs first, then ministerial regulations, then the others; by title.
              */
             items?: components["schemas"]["DelegatedRegulationDTO"][];
             /** Total */
@@ -2510,6 +2530,42 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * BasisArticleDTO
+         * @description An article of the law a regulation is issued under, with the leden and onderdelen
+         *     its preamble names (none: the whole article).
+         */
+        BasisArticleDTO: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Article Number */
+            article_number: string | null;
+            /** Display Name */
+            display_name: string | null;
+            /**
+             * Text
+             * @description The reference in the preamble: `16, eerste en zevende lid`.
+             */
+            text: string | null;
         };
         /**
          * BusyCallDTO
@@ -4092,7 +4148,7 @@ export interface components {
             instrument: components["schemas"]["InstrumentSummaryDTO"];
             /**
              * Kind
-             * @description Its BWB type: `AMvB`, `ministeriele-regeling`, `KB`, …
+             * @description Its BWB type as stored: `amvb`, `ministeriele-regeling`, `kb`, …
              */
             kind: string | null;
             /**
@@ -6769,6 +6825,46 @@ export interface components {
             key: string;
             /** Definitions */
             definitions?: components["schemas"]["DefinitionDTO"][];
+        };
+        /**
+         * InstrumentDelegatedItem
+         * @description A regulation whose preamble ("Gelet op") names an article of the law.
+         */
+        InstrumentDelegatedItem: {
+            instrument: components["schemas"]["InstrumentSummaryDTO"];
+            /**
+             * Kind
+             * @description Its BWB type, lower case: `amvb`, `ministeriele-regeling`, `kb`, …
+             */
+            kind: string | null;
+            /**
+             * Date In Force
+             * @description When the regulation itself entered into force.
+             */
+            date_in_force?: string | null;
+            /**
+             * Articles
+             * @description The articles of the law it is issued under, in the order of the law.
+             */
+            articles: components["schemas"]["BasisArticleDTO"][];
+        };
+        /**
+         * InstrumentDelegatedResponse
+         * @description Response for GET /api/instruments/{bwb_id}/delegated.
+         */
+        InstrumentDelegatedResponse: {
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
+            bwb_id: string;
+            /** Total */
+            total: number;
+            /**
+             * Items
+             * @description Every regulation in force issued under an article of the law: AMvBs first, then ministerial regulations, then the others; by title.
+             */
+            items?: components["schemas"]["InstrumentDelegatedItem"][];
         };
         /**
          * InstrumentDetailDTO
@@ -11134,6 +11230,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstrumentRelatedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_instrument_delegated_route_api_instruments__bwb_id__delegated_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentDelegatedResponse"];
                 };
             };
             /** @description Validation Error */
