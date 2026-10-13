@@ -47,6 +47,8 @@
 	import NietGevonden from '$lib/components/ui/NietGevonden.svelte';
 	import { LADEN_TITEL, serverKop } from '$lib/seo/kop.svelte';
 	import DocumentReader from '$lib/components/explore/readers/DocumentReader.svelte';
+	import JudgmentReader from '$lib/components/explore/readers/JudgmentReader.svelte';
+	import { keyEcli } from '$lib/bron/leesbaar';
 	import { WEERGAVE_KEY, type Weergave } from '$lib/components/explore/weergave';
 	import LezenNav from '$lib/components/explore/LezenNav.svelte';
 	import DocumentToc from '$lib/components/explore/DocumentToc.svelte';
@@ -211,8 +213,31 @@
 		return wantsRead && readableFocus ? 'read' : 'graph';
 	});
 	const focus = $derived(param('focus') ?? '');
-	// A toelichting opened beside the article: the article stays the selected bron.
+	// A toelichting or a citing judgment opened beside the article: the article stays the
+	// selected bron.
 	const beside = $derived(parseNodeId(param('naast') ?? ''));
+	// The judgment beside it as its reader takes one: by its key, its ECLI from it.
+	const besideJudgment = $derived.by<GraphNode | null>(() => {
+		if (beside?.collection !== 'judgments') return null;
+		const ecli = keyEcli(beside.key);
+		return {
+			id: `judgments/${beside.key}`,
+			collection: 'judgments',
+			key: beside.key,
+			kind: 'judgment',
+			label: ecli ?? 'Uitspraak',
+			raw: {
+				id: `judgments/${beside.key}`,
+				key: beside.key,
+				collection: 'judgments',
+				type: 'judgment',
+				display_name: ecli,
+				labels: [],
+				props: { ecli },
+				path: null
+			}
+		};
+	});
 	// All verbindingen as a table, in Lezen.
 	const tableMode = $derived(param('tabel') === '1');
 	// Steps from the focus that the canvas shows. Unset, this defaults to 1 for a wet,
@@ -439,6 +464,15 @@
 		url.hash = row.at ?? '';
 		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
 	};
+
+	// What opens beside the article from the card Verbinding: its toelichting, or a judgment
+	// that cites it, at the r.o. (as its row in Verbonden opens it).
+	const naastHrefOf = (c: { verbinding: Verbinding; row: Row | null }) =>
+		c.row &&
+		(c.verbinding.relation === 'EXPLAINS' ||
+			(c.row.ref.collection === 'judgments' && selectedNode?.collection === 'articles'))
+			? besideHrefOf({ ...c.row, at: c.verbinding.at ?? c.row.at })
+			: null;
 
 	// A wetsvoorstel row whose proposed text the reader shows beside the current one.
 	let proposedRow = $state<Row | null>(null);
@@ -1200,6 +1234,13 @@
 			setUrl({ paneel: null });
 		});
 	});
+	// What opens beside the article (a toelichting, a citing judgment) is read in the Tekst
+	// tab on a phone: a row of Verbonden that opens it brings that tab forward.
+	const besideId = $derived(param('naast'));
+	$effect(() => {
+		if (!besideId) return;
+		untrack(() => (mobilePanel = 'reader'));
+	});
 	/** The canvas is on the screen: the network, and on a phone its tab. */
 	const canvasZichtbaar = $derived(mode === 'graph' && !(telefoon && mobilePanel !== 'graph'));
 	// Below --nav-w's own breakpoint, Lezen's table of contents opens as a sheet
@@ -1418,7 +1459,11 @@
 						data-sveltekit-noscroll
 						aria-label="Sluiten">×</a
 					>
-					<DocumentReader node={beside} article={besideArticle} />
+					{#if besideJudgment}
+						<JudgmentReader selection={besideJudgment} />
+					{:else}
+						<DocumentReader node={beside} article={besideArticle} />
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -1464,7 +1509,7 @@
 				<div class="panel__card">
 					<VerbindingCard
 						verbinding={card.verbinding}
-						besideHref={card.verbinding.relation === 'EXPLAINS' ? besideHrefOf(card.row) : null}
+						besideHref={naastHrefOf(card)}
 						onClose={() => (card = null)}
 						onShowInNetwork={card.row ? () => showInNetwork(card!.row!) : undefined}
 					/>
@@ -1661,7 +1706,7 @@
 						<VerbindingCard
 							verbinding={card.verbinding}
 							docked
-							besideHref={card.verbinding.relation === 'EXPLAINS' ? besideHrefOf(card.row) : null}
+							besideHref={naastHrefOf(card)}
 							onClose={() => (card = null)}
 						/>
 					{/if}
@@ -1682,7 +1727,7 @@
 					<div class="explore-table__card">
 						<VerbindingCard
 							verbinding={card.verbinding}
-							besideHref={card.verbinding.relation === 'EXPLAINS' ? besideHrefOf(card.row) : null}
+							besideHref={naastHrefOf(card)}
 							onClose={() => (card = null)}
 							onShowInNetwork={card.row ? () => showInNetwork(card!.row!) : undefined}
 						/>

@@ -12,6 +12,9 @@
 	import TekstMenu from '$lib/components/ui/TekstMenu.svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import BronLink from '$lib/bron/BronLink.svelte';
+	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import { terPlekke } from '$lib/actions/klik';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
@@ -383,6 +386,27 @@
 				: bronHref(row.ref, { at, keepMode: false, mode: 'read', paneel: 'tekst' })
 			: bronHref(selection.id, { at, keepMode: false, mode: 'read', paneel: 'tekst' });
 
+	// The r.o. of a passage is a reference to the judgment at it: its card is the overweging,
+	// the words that cite the article marked (OverwegingKaart). The judgment is the row's, or
+	// the selected one where it cites the row's article.
+	const plaatsRef = (row: Row) =>
+		row.ref.collection === 'judgments' ? row.ref : `judgments/${selection.key}`;
+	const plaatsDoel = (row: Row) =>
+		row.ref.collection === 'judgments'
+			? selection.collection === 'articles'
+				? selection.key
+				: null
+			: row.ref.collection === 'articles'
+				? row.ref.key
+				: null;
+
+	// A Kamerstuk opens in place under its row: its core text (a motie its dictum, an
+	// amendement its toelichting, another its opening), as in Actueel, Bronnen and Gemarkeerd
+	// (RijInhoud). The stuk is one step further: Lees verder, or the title with a modifier.
+	const opentTerPlekke = (row: Row) => row.ref.collection === 'documents' && !row.missing;
+	let openRij = $state<string | null>(null);
+	const wisselRij = (row: Row) => (openRij = openRij === rowId(row) ? null : rowId(row));
+
 	/** The row whose provenance a tap shows, on touch. */
 	/** `Herkend in de tekst` in the meta line: `herkend in de tekst`; `ECLI …` stays. */
 	const kleineLetter = (s: string) =>
@@ -677,9 +701,12 @@
 								<div
 									class="row__main"
 									data-rij
+									class:is-open={openRij === rowId(row)}
 									onclick={(e) => {
 										if (onControl(e) || row.missing) return;
-										goto(href, { noScroll: true });
+										if (window.getSelection()?.toString()) return;
+										if (opentTerPlekke(row)) wisselRij(row);
+										else goto(href, { noScroll: true });
 									}}
 								>
 									<KindGlyph
@@ -691,7 +718,12 @@
 										{#if row.missing}
 											<span class="row__title row__title--missing">{row.title}</span>
 										{:else}
-											<a class="row__title" {href} data-sveltekit-noscroll
+											<a
+												class="row__title"
+												{href}
+												data-sveltekit-noscroll
+												aria-expanded={opentTerPlekke(row) ? openRij === rowId(row) : undefined}
+												onclick={(e) => opentTerPlekke(row) && terPlekke(e, () => wisselRij(row))}
 												>{#if dossier}<DossierNaam
 														{dossier}
 														vorm="naam"
@@ -707,8 +739,12 @@
 														? ' '
 														: ''}{#if hoe.plaats}{@const i = hoe.rest.indexOf(
 															hoe.plaats.text
-														)}{hoe.rest.slice(0, i)}<TekstLink
-															href={plaatsHref(g, row, hoe.plaats.at)}>{hoe.plaats.text}</TekstLink
+														)}{hoe.rest.slice(0, i)}<BronLink
+															ref={plaatsRef(row)}
+															at={hoe.plaats.at}
+															doel={plaatsDoel(row)}
+															href={plaatsHref(g, row, hoe.plaats.at)}
+															class="row__plaats">{hoe.plaats.text}</BronLink
 														>{hoe.rest.slice(
 															i + hoe.plaats.text.length
 														)}{:else}{hoe.rest}{/if}{/if}{#if hoe.afgeleid}, afgeleid{/if}</span
@@ -742,6 +778,11 @@
 											: null}
 									/>
 								</div>
+								{#if openRij === rowId(row)}
+									<div class="row__inhoud">
+										<RijInhoud item={{ node: row.ref }} als="kern" />
+									</div>
+								{/if}
 							</li>
 						{/each}
 					</ul>
@@ -1024,7 +1065,8 @@
 		margin-top: var(--s-1);
 	}
 	.row__main:hover,
-	.row__main:focus-within {
+	.row__main:focus-within,
+	.row__main.is-open {
 		background: var(--paper-2);
 	}
 	.row__text {
@@ -1087,6 +1129,24 @@
 	.row__hoe.is-afgeleid {
 		font-style: italic;
 	}
+	/* A Kamerstuk opened under its row: its core text, in from the row's title. */
+	.row__inhoud {
+		padding: 0 var(--s-4) var(--s-3) calc(var(--s-4) + 11px + var(--s-3));
+		background: var(--paper-2);
+	}
+	/* The r.o. of the passage: a reference whose card is the overweging, in the line's ink. */
+	.row__hoe :global(a.row__plaats) {
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-color: var(--rule-strong);
+		text-underline-offset: 3px;
+	}
+	.row__hoe :global(a.row__plaats:hover),
+	.row__hoe :global(a.row__plaats:focus-visible),
+	.row__hoe :global(a.row__plaats[aria-expanded='true']) {
+		text-decoration-color: currentColor;
+	}
+
 	/* The passage that carries the verbinding, the words that name the bron marked. */
 	.row__citaat {
 		margin-top: var(--s-1);

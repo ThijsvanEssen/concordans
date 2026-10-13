@@ -1,10 +1,22 @@
-// What an opened row of Actueel shows, per kind (RijInhoud): the bron's content, or nothing,
-// and then the row does not open: its title goes to the reader.
+// What an opened row shows, per kind (RijInhoud): the bron's content, or nothing, and then
+// the row does not open: its title goes to the reader. Actueel and Gevolgd by the feed's kind;
+// a Kamerstuk in Verbonden, Bronnen and Gemarkeerd by its own (kernSoort): one core text for
+// one stuk wherever its row opens.
 import type { FeedItem } from '$lib/components/actueel/feed';
+import { dictumUit } from '$lib/onderwerpen/strekking';
 
-export type MetInhoud = Pick<FeedItem, 'kind' | 'node' | 'summary' | 'vote'> &
-	Partial<Pick<FeedItem, 'has_text' | 'dictum'>>;
-export type Inhoud = 'dictum' | 'toelichting' | 'opening' | 'stemming' | 'samenvatting' | null;
+export type MetInhoud = { node: { collection: string; key: string } } & Partial<
+	Pick<FeedItem, 'kind' | 'summary' | 'vote' | 'has_text' | 'dictum'>
+>;
+/** `kern`: a stuk's core text by its own kind (kernSoort), where the row does not know it. */
+export type Inhoud =
+	| 'dictum'
+	| 'toelichting'
+	| 'opening'
+	| 'kern'
+	| 'stemming'
+	| 'samenvatting'
+	| null;
 
 const telt = (i: MetInhoud) => {
 	const t = (i.vote?.tally ?? {}) as Record<string, number>;
@@ -68,4 +80,28 @@ export function toelichtingVan(
 		: (/\n\s*Toelichting\s*\n([\s\S]*)/i.exec(t)?.[1] ?? '');
 	const zonderKop = deel.replace(/^\s*Toelichting\s*/i, '');
 	return openingVan(zonderKop) ?? (zonderKop.trim() || null);
+}
+
+/** What a stuk opens on by its own kind (`Motie (gewijzigd/nader)`, `Amendement`, `Brief
+ *  regering`): a motie its dictum, an amendement its toelichting, another its opening. */
+export function kernSoort(kind: string | null | undefined): 'dictum' | 'toelichting' | 'opening' {
+	const k = (kind ?? '').trim();
+	if (/^motie\b/i.test(k)) return 'dictum';
+	if (/^amendement\b/i.test(k)) return 'toelichting';
+	return 'opening';
+}
+
+/** A stuk as its detail gives it, for its core text. */
+export type Stuk = {
+	text?: string | null;
+	dictum?: string | null;
+	sections?: readonly { heading: string; char_start: number; char_end: number }[] | null;
+};
+
+/** The core text of a stuk: the API's dictum before the one read from the text, the
+ *  toelichting of an amendement, the opening of another stuk. */
+export function kernVan(soort: 'dictum' | 'toelichting' | 'opening', d: Stuk): string | null {
+	if (soort === 'dictum') return d.dictum?.trim() || dictumUit(d.text ?? null);
+	if (soort === 'toelichting') return toelichtingVan(d.text, d.sections ?? []);
+	return openingVan(d.text);
 }

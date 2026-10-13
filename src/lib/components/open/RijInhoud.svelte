@@ -1,6 +1,6 @@
 <script lang="ts">
-	// What a row of Actueel or Gevolgd shows when it opens: the bron's own content, read in
-	// place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
+	// What a row shows when it opens (Actueel, Gevolgd; a Kamerstuk in Verbonden, Bronnen and
+	// Gemarkeerd): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
 	// toevoegen"). Nothing the row says already comes back. A motie its dictum, an amendement
 	// its toelichting, another stuk the opening of its text, a stemming its bar, a uitspraak its
 	// inhoudsindicatie; asked when the row opens (one request, shared with the reader), a motie's
@@ -8,9 +8,8 @@
 	// not open (inhoudVan). The reader stays one step further: the title, or Lees verder.
 	import { getDocument } from '$lib/api/records';
 	import { bronHref } from '$lib/bron/href';
-	import { dictumUit } from '$lib/onderwerpen/strekking';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
-	import { inhoudVan, openingVan, toelichtingVan, type Inhoud, type MetInhoud } from './rij-inhoud';
+	import { inhoudVan, kernSoort, kernVan, type Inhoud, type MetInhoud } from './rij-inhoud';
 
 	let {
 		item,
@@ -25,11 +24,14 @@
 	const ref = $derived(`${item.node.collection}/${item.node.key}`);
 
 	let tekst = $state<string | null | 'laden'>(null);
+	/** What the text is, once the stuk has said its kind (`kern`). */
+	let gelezen = $state<Inhoud>(null);
 	$effect(() => {
 		const s = soort;
 		const key = item.node.key;
 		tekst = null;
-		if (s !== 'dictum' && s !== 'toelichting' && s !== 'opening') return;
+		gelezen = s;
+		if (s !== 'dictum' && s !== 'toelichting' && s !== 'opening' && s !== 'kern') return;
 		// A motion's dictum as the feed gives it: no request (API 0.79.42).
 		const dictum = s === 'dictum' ? item.dictum?.trim() : null;
 		if (dictum) {
@@ -43,13 +45,9 @@
 				if (stale) return;
 				// The API's dictum before the one read from the text; the feed's summary where the
 				// stuk has no text in the data yet (the newest papers).
-				tekst =
-					(s === 'dictum'
-						? (d.dictum ?? dictumUit(d.text))
-						: s === 'toelichting'
-							? toelichtingVan(d.text, d.sections ?? [])
-							: openingVan(d.text)) ??
-					(item.summary?.trim() || null);
+				const k = s === 'kern' ? kernSoort(d.kind) : s;
+				gelezen = k;
+				tekst = kernVan(k, d) ?? (item.summary?.trim() || null);
 			})
 			.catch(() => {
 				if (!stale) tekst = null;
@@ -79,7 +77,7 @@
 	{:else if tekst === 'laden'}
 		<p class="stil">Laden…</p>
 	{:else if tekst}
-		<p class="tekst" class:dictum={soort === 'dictum'}>{tekst}</p>
+		<p class="tekst" class:dictum={gelezen === 'dictum'}>{tekst}</p>
 	{:else}
 		<p class="stil">Tekst nog niet in de gegevens.</p>
 	{/if}

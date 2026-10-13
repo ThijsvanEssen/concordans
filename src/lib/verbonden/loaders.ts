@@ -806,12 +806,13 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			const ro = overwegingen.get(n.key);
 			if (ro?.length && !row.edge?.paragraphs)
 				row.position = positionsLabel(ro.map((nr) => paragraphCite(ecli, nr)));
-			// The passage that cites it, from the paragraphs the reader has loaded (Thijs, 13 Oct).
+			// The passage that cites it, from the citations the API found in the paragraphs the reader
+			// has loaded (Thijs, 13 Oct): the words of the span, so `art. 3:305a BW` for `305a`.
 			const aangehaald = detail?.cited_articles?.find(
 				(c) => c.article.key === n.key || c.article.key === key
 			);
 			const passage = aangehaald
-				? aanhalingIn(aangehaald, detail?.judgment.paragraphs ?? [])
+				? aanhalingIn(aangehaald, detail?.judgment.paragraphs ?? [], [n.key, key])
 				: null;
 			if (passage) {
 				row.snippet = passage.snippet;

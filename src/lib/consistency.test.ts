@@ -135,21 +135,16 @@ describe('one form for each thing', () => {
 	it('opens a row in place on one click, through the shared rule', () => {
 		// A row whose title is a link to the bron (Actueel, the table) takes the click through
 		// terPlekke ($lib/actions/klik), so a plain click opens the row and a cmd-click goes to
-		// the bron. A row of Verbonden has no panel (Thijs, 10 Oct): its title and the row
-		// itself go to the bron in Netwerk.
+		// the bron. A row of Verbonden has no panel of actions (Thijs, 10 Oct): its title and the
+		// row itself go to the bron in Netwerk; only a Kamerstuk opens in place, on its core text
+		// (RijInhoud, as in Actueel and Bronnen; pakket C, 14 Oct).
 		const rows = sources.filter(({ text }) =>
-			/class="(row-title|row__title)"[\s\S]{0,80}(href=|\{href\})/.test(text)
+			/class="(row-title|row__title)"[\s\S]{0,240}(href=|\{href\})/.test(text)
 		);
 		expect(rows.length).toBeGreaterThan(0);
-		const verbonden = (path: string) => path.endsWith('verbonden/Verbonden.svelte');
-		expect(
-			rows
-				.filter(({ text, path }) => !verbonden(path) && !text.includes('terPlekke'))
-				.map((s) => s.path)
-		).toEqual([]);
-		expect(rows.filter(({ text, path }) => verbonden(path) && text.includes('terPlekke'))).toEqual(
-			[]
-		);
+		expect(rows.filter(({ text }) => !text.includes('terPlekke')).map((s) => s.path)).toEqual([]);
+		const verbonden = rows.find(({ path }) => path.endsWith('verbonden/Verbonden.svelte'))!;
+		expect(verbonden.text).toMatch(/opentTerPlekke\(row\) && terPlekke\(/);
 	});
 
 	it('marks a line of a timeline with the shape of its kind (vormen.ts), as Verbonden and the network do', () => {
@@ -984,8 +979,11 @@ describe('canvas cards and halls', () => {
 				/bewaar=\{[^}]*citation\s*\?\s*\{\s*id: [\w.]+, groep: citation\.citationTitle \}/
 			);
 		}
-		// An overweging: one citation and one Bewaar (overwegingCitaat), in the reader's menu.
-		for (const t of [uitspraak, kaart]) {
+		// An overweging: one citation and one Bewaar (overwegingCitaat), in the reader's menu; a
+		// map's item shows it with the one Overweging, with its menu (bewaar).
+		const overweging = src('lib/bron/Overweging.svelte');
+		expect(kaart).toMatch(/<Overweging[\s\S]*?bewaar=\{\{ id: item\.id/);
+		for (const t of [uitspraak, overweging]) {
 			expect(t).toContain('overwegingCitaat(');
 			expect(t).toContain('<PlaatsMenu');
 			expect(t).toMatch(/cite=\{citeItems\(forms, forms\.link\)\}/);

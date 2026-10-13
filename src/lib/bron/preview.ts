@@ -1,8 +1,8 @@
 // What a reference shows on hover or focus, for any kind of bron: its kind, its name, a
 // date, and what places it (Thijs, 10 Oct: more context per kind). Read from the light node
 // the API gives: a stuk its dossier, its indieners with their fractie and, for a motie or
-// amendement, the vote on its zaak; a judgment the first sentence of its summary; an
-// article its first lid, or the part the reference names.
+// amendement, the vote on its zaak; a judgment the first sentence of its summary, or at an
+// r.o. that overweging; an article its first lid, or the part the reference names.
 import { getDossier } from '$lib/components/parliamentary/data';
 import { getNodeFirst } from '$lib/api/records';
 import { getNodeGraph } from '$lib/api/nodes';
@@ -24,6 +24,7 @@ import { eersteIndiener, isEersteIndiener, joinerOf } from './submitters';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
 import { tabTitle } from './tab-title';
+import { isOverwegingAnker, laadUitspraak, tekstVanOverweging } from './overweging';
 
 export type Preview = {
 	/** The kind, and where it helps its place: `Uitspraak, Hoge Raad`. */
@@ -287,6 +288,13 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 			.sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')));
 		const laatste = eigen.at(-1);
 		return laatste ? { ...preview, uitslag: uitslagVan(laatste) } : preview;
+	}
+	if (collection === 'judgments' && isOverwegingAnker(at)) {
+		// At an r.o., the overweging the reference means, not the summary (the detail the
+		// reader shares).
+		const u = await laadUitspraak(key)?.catch(() => null);
+		const t = u ? tekstVanOverweging(u, at, PREVIEW_CHARS) : null;
+		return t ? { ...preview, lines: t } : preview;
 	}
 	if (collection !== 'articles') return preview;
 	// An article shows its text, or the part the reference names.
