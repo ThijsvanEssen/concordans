@@ -163,7 +163,9 @@
 		{#if cite}<span class="cite">{cite}</span>{/if}
 	</div>
 
-	<h4 class="title {node.stub ? 'title--stub' : ''}">{bronNaam(node, $instrumentMetaStore)}</h4>
+	<h4 class="title {node.stub ? 'title--stub' : ''}">
+		{bronNaam(node, $instrumentMetaStore, true)}
+	</h4>
 
 	{#if node.stub}
 		<p class="snippet stub-note">Niet in de gegevens.</p>

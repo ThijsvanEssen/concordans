@@ -4,6 +4,7 @@
 	// short title the API gives (0.79.30), else asked by number (DossierNaam).
 	import BronLink from './BronLink.svelte';
 	import DossierNaam from './DossierNaam.svelte';
+	import { kamerstukNummer } from './dossier-naam';
 
 	let {
 		dossier,
@@ -15,9 +16,10 @@
 	} = $props();
 </script>
 
-{#if missing}<span title="Dit dossier staat niet in de gegevens">Kamerstuk {dossier.number}</span
+{#if missing}<span title="Dit dossier staat niet in de gegevens"
+		>{kamerstukNummer(dossier.number)}</span
 	>{:else}<BronLink
 		ref={{ collection: 'dossiers', key: dossier.key, number: dossier.number }}
 		title={dossier.title ?? 'Het dossier van de wet die de tekst wijzigde'}
-		>Kamerstuk <DossierNaam {dossier} /></BronLink
+		><DossierNaam {dossier} hover={false} /></BronLink
 	>{/if}

@@ -6,6 +6,7 @@ import { menselijkeNaam } from '$lib/bron/menselijk';
 import type { Schema } from '$lib/api/types';
 import { formatLongDate } from '$lib/components/explore/readers/_shared';
 import { kindName } from '$lib/components/explore/law-head';
+import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { articleName } from '$lib/text/bw';
 import { korteDatum } from '$lib/text/datum';
@@ -180,7 +181,9 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 			const lang = naamVan(hit);
 			return {
 				title: kort ?? lang,
-				context: [extra(hit, 'number'), status].filter(Boolean).join(', '),
+				context: [extra(hit, 'number') && kamerstukNummer(extra(hit, 'number')), status]
+					.filter(Boolean)
+					.join(', '),
 				// The long title below the name it is known by.
 				snippet: kort && kort !== lang ? [{ text: lang, mark: false }] : null
 			};
@@ -281,11 +284,13 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 	return { title: naamVan(hit), context: '', snippet: null };
 }
 
-/** The dossier a stuk belongs to, as its heading reads: `32621 Wet nadeelcompensatie …`. */
+/** The dossier a stuk belongs to, as its heading reads: `Kamerstuk 32621 Wet nadeelcompensatie …`. */
 export function sectionOf(hit: Hit): string | null {
 	if (hit.collection !== 'documents') return null;
 	const number = extra(hit, 'dossier_number');
-	return number ? `${number} ${citeertitel(hit) ?? hit.display_name ?? ''}`.trim() : null;
+	return number
+		? `${kamerstukNummer(number)} ${citeertitel(hit) ?? hit.display_name ?? ''}`.trim()
+		: null;
 }
 
 /** Hits of one section together, in the order their sections first appear. */

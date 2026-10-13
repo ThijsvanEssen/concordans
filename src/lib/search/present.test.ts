@@ -122,7 +122,7 @@ describe('presentHit', () => {
 		const shown = presentHit(stuk('a', 'Nader rapport'), 'nadeel');
 		expect(shown.title).toBe('Nader rapport');
 		expect(shown.snippet).toBeNull();
-		expect(sectionOf(stuk('a', 'Eindtekst'))).toBe(`32621 ${TITLE}`);
+		expect(sectionOf(stuk('a', 'Eindtekst'))).toBe(`Kamerstuk 32621 ${TITLE}`);
 	});
 
 	it('gives a stuk its number in the dossier, where the API has one', () => {
@@ -383,7 +383,7 @@ describe('citeertitel', () => {
 			display_name: lang,
 			extra: { kind: 'Memorie van toelichting', dossier_number: '36496' }
 		});
-		expect(sectionOf(stuk36496)).toBe('36496 Wet betaalbare huur');
+		expect(sectionOf(stuk36496)).toBe('Kamerstuk 36496 Wet betaalbare huur');
 		const beschreven = maak({
 			collection: 'dossiers',
 			key: '36311',

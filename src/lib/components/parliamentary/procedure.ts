@@ -4,6 +4,7 @@
 // brieven en procedurevergaderingen worden geteld en staan achter één knop.
 import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
+import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { stand } from './stand';
 import {
 	enigJaar,
@@ -124,7 +125,7 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdR
 		label: eigen ? kind || null : null,
 		zin: eigen ?? (kind || title || 'Stuk'),
 		meta: nr
-			? `Kamerstuk${groep === 'ek' ? ' I' : ''} ${dossier}, ${groep === 'ek' ? nr : `nr. ${nr}`}`
+			? `${kamerstukNummer(dossier, groep === 'ek' ? 'EK' : null)}, ${groep === 'ek' ? nr : `nr. ${nr}`}`
 			: null,
 		href: bronHref(e.node_id, { keepMode: false, mode: 'read' }),
 		ref: e.node_id
@@ -274,7 +275,7 @@ function regelsVan(
 			label: null,
 			zin: zin.charAt(0).toUpperCase() + zin.slice(1),
 			meta: nummers.length
-				? `Kamerstuk${groep === 'ek' ? ' I' : ''} ${dossier}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
+				? `${kamerstukNummer(dossier, groep === 'ek' ? 'EK' : null)}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
 				: null,
 			href: bronHref(first.node_id, { keepMode: false, mode: 'read' }),
 			ref: first.node_id
@@ -325,7 +326,7 @@ function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 				soort: 'documents',
 				label: null,
 				zin: kind.charAt(0).toUpperCase() + kind.slice(1),
-				meta: letter ? `Kamerstuk I ${d.number}, ${letter}` : null,
+				meta: letter ? `${kamerstukNummer(d.number, 'EK')}, ${letter}` : null,
 				href: p.url ?? null
 			});
 		}

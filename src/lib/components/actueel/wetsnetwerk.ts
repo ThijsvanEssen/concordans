@@ -18,6 +18,7 @@ import {
 	type DossierChange
 } from '$lib/components/parliamentary/changed-articles';
 import { dossierName } from './feed';
+import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { langeDatum } from '$lib/text/datum';
 
 type FeedItem = Schema<'FeedItemDTO'>;
@@ -105,7 +106,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 		id: `dossiers/${k.number}`,
 		vorm: 'dossier',
 		label: k.naam,
-		sub: `Dossier ${k.number}`,
+		sub: kamerstukNummer(k.number),
 		href: buildBronHref(null, { collection: 'dossiers', key: k.number, number: k.number })
 	};
 	const changes = laws.flatMap((l) => l.changes);

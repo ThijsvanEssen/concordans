@@ -12,6 +12,28 @@ const row = (r: Partial<Row>): Row =>
 	}) as Row;
 
 describe('hoeVan', () => {
+	it('says what a dossier is to its wet: its bill, or a bill that amended it', () => {
+		const dossier = (edge: Record<string, unknown>) =>
+			hoeVan(
+				row({
+					ref: { collection: 'dossiers', key: '36764', number: '36764' },
+					kind: 'dossiers',
+					relation: 'LEGISLATED_IN',
+					direction: 'outbound',
+					confidence: 1,
+					edge
+				}),
+				'instruments'
+			);
+		const eigen = dossier({ via: 'instrument' });
+		expect([eigen?.werkwoord, eigen?.rest]).toEqual(['Wetsvoorstel', 'van deze wet']);
+		const wijziging = dossier({ via: 'amending_publication', publication: 'stb_2025_124' });
+		expect([wijziging?.werkwoord, wijziging?.rest]).toEqual([
+			'Wijzigt',
+			'deze wet, Stb. 2025, 124'
+		]);
+	});
+
 	it('says how the Kamer joined two dossiers, from the edge', () => {
 		const h = hoeVan(
 			row({

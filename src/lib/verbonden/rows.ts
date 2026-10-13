@@ -11,7 +11,14 @@ import { articleTitle } from '$lib/text/bw';
 import { authorCite, paragraphCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
-import { dossierLabel, type DossierNaamBron } from '$lib/bron/dossier-naam';
+import {
+	dossierLabel,
+	dossierName,
+	dossierUitProps,
+	kamerstukNummer,
+	type DossierNaamBron
+} from '$lib/bron/dossier-naam';
+import { kindName } from '$lib/components/explore/law-head';
 import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { seatWord } from '$lib/components/parliamentary/career';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
@@ -65,7 +72,20 @@ export type Row = {
 	edge?: Record<string, unknown>;
 	/** One row per place the bron names the selected one, when there are several. */
 	mentions?: Row[];
+	/** The dossier the title names, where the row is not one by its props: a change of an article. */
+	dossier?: DossierNaamBron | null;
 };
+
+/**
+ * The dossier a row's title names, for DossierNaam: a dossier, or a change named by its
+ * dossier. Null for any other row.
+ */
+export function dossierVanRij(row: Row): DossierNaamBron | null {
+	if (row.dossier) return row.dossier;
+	if (row.ref.collection !== 'dossiers') return null;
+	const d = dossierUitProps(row.props, row.ref.number);
+	return d.title || row.title === UNNAMED ? d : { ...d, title: row.title };
+}
 
 const text = (value: unknown): string | null =>
 	typeof value === 'string' && value.trim() ? value.trim() : null;
@@ -131,7 +151,7 @@ function documentName(
 	const letter = sequence ? null : text(props.number);
 	const ek = props.chamber === 'EK' || !!letter;
 	const nr = sequence ? `nr. ${sequence}` : letter;
-	const stuk = dossier ? `Kamerstuk${ek ? ' I' : ''} ${dossier}${nr ? `, ${nr}` : ''}` : nr;
+	const stuk = dossier ? join(kamerstukNummer(dossier, ek ? 'EK' : null), nr) : nr;
 	if (!kind && !title) return { title: name, context: null };
 	// The dossier's name on the line under it (API 0.79.30), where the title does not carry
 	// it already: the number in the title is how a Kamerstuk is cited.
@@ -228,13 +248,19 @@ export function describe(
 				court
 			};
 		}
-		case 'dossiers':
+		case 'dossiers': {
+			// By the name it is known by, its kind and number under it: "Cyberbeveiligingswet",
+			// "Kamerstuk 36764", never the bare number or the title of three lines (Thijs, 13 Oct).
+			// Where the props lack the short title, the row asks it (DossierNaam).
+			const d = dossierUitProps({ display_name: name, ...props }, key);
+			const naam = dossierName(d);
 			return {
-				title: text(props.title) ?? name,
+				title: naam === d.number ? name : naam,
 				context: null,
-				identifier: text(props.label),
+				identifier: d.number ? kamerstukNummer(d.number) : null,
 				date
 			};
+		}
 		case 'documents':
 			return { ...documentName(props, name), identifier: null, date };
 		case 'decisions':
@@ -256,12 +282,16 @@ export function describe(
 		case 'factions':
 			// Its abbreviation is its name again ("D66" under "Democraten 66", UX-toets #16).
 			return { title: text(props.name) ?? name, context: null };
-		case 'instruments':
+		case 'instruments': {
+			// A law by its citeertitel and its kind, "Cyberbeveiligingswet", "Wet": the kind is
+			// what tells it from the dossier of the same name. The BWB id only without a kind.
+			const soort = kindName(text(props.kind));
 			return {
 				title: text(props.citation_title) ?? text(props.title) ?? name,
-				context: null,
-				identifier: text(props.bwb_id) ?? text(props.celex)
+				context: soort,
+				identifier: soort ? null : (text(props.bwb_id) ?? text(props.celex))
 			};
+		}
 		// An article of the BW by its book: "Artikel 6:162 BW".
 		case 'articles':
 			return { title: articleTitle(name, props), context: null };
@@ -620,7 +650,7 @@ export function activityLine(
 	// A dossier by its number and name: "over 22112 Nieuwe Commissievoorstellen …".
 	const numbers = a.dossiers?.length
 		? a.dossiers.map((d) => dossierLabel(d))
-		: (a.dossier_numbers ?? []);
+		: (a.dossier_numbers ?? []).map((n) => kamerstukNummer(n));
 	const over = numbers.length
 		? `over ${numbers.length > 1 ? `${numbers.slice(0, -1).join(', ')} en ${numbers.at(-1)}` : numbers[0]}`
 		: null;
@@ -685,14 +715,18 @@ export function historyRow(e: {
 	const proposed = e.status === 'voorgesteld';
 	return {
 		ref,
-		title:
-			e.dossier_title ?? e.summary ?? e.dossier_number ?? naamVanId(`${ref.collection}/${ref.key}`),
+		title: e.dossier_number
+			? ((n) => (n === e.dossier_number ? kamerstukNummer(n) : n))(
+					dossierName({ number: e.dossier_number, title: e.dossier_title })
+				)
+			: (e.summary ?? naamVanId(`${ref.collection}/${ref.key}`)),
+		dossier: e.dossier_number ? { number: e.dossier_number, title: e.dossier_title } : null,
 		identifier: e.summary ?? null,
 		context:
 			[
 				proposed ? 'voorgesteld' : null,
 				change?.verb,
-				e.dossier_number ? `dossier ${e.dossier_number}` : null
+				e.dossier_number ? kamerstukNummer(e.dossier_number) : null
 			]
 				.filter(Boolean)
 				.join(', ') || null,

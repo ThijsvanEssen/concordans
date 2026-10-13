@@ -10,6 +10,7 @@ import { getNodeFirst } from '$lib/api/records';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
+import { dossierUitProps, kamerstukNummer } from './dossier-naam';
 import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
 import { fractiePeriodes } from './fractie-periode';
@@ -125,11 +126,14 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 	const ref = refOf(n.collection as Collection, n.key, props);
 	const vol = describe(n.collection, n.key, n.display_name, props).title;
 	if (n.collection === 'dossiers') {
-		// A dossier by its number and the name of its bill, "36496 Wet betaalbare huur"; its
-		// title runs to three lines.
-		const nummer = dossierNummer(props) ?? naamVan('dossiers', n);
-		const titel = shortDossierTitle(vol.replace(/^Kamerstukdossier\s+[^:]+:\s*/, ''));
-		return { soort, naam: titel && titel !== nummer ? `${nummer} ${titel}` : nummer, ref, vol };
+		// A dossier by its kind, number and the name of its bill, "Kamerstuk 36496 Wet
+		// betaalbare huur" (dossier-naam); its title runs to three lines.
+		const nummer = dossierNummer(props);
+		const lang = dossierUitProps({ display_name: n.display_name, ...props }).title ?? vol;
+		const titel = shortDossierTitle(lang);
+		if (!nummer) return { soort, naam: naamVan('dossiers', n), ref, vol: lang };
+		const label = kamerstukNummer(nummer);
+		return { soort, naam: titel && titel !== nummer ? `${label} ${titel}` : label, ref, vol: lang };
 	}
 	if (n.collection === 'judgments') return { soort, naam: vol, ref, kort: instantie(vol) };
 	return { soort, naam: vol, ref };

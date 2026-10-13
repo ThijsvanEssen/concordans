@@ -5,6 +5,7 @@ import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 import { describe } from '$lib/verbonden/rows';
+import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import {
 	AMENDEMENT,
 	CLOSE_VOTE,
@@ -137,7 +138,7 @@ export function voteHow(i: Pick<FeedItem, 'vote'>): string | null {
 function voteContext(i: FeedItem): string {
 	const { voor, tegen } = tallyOf(i);
 	const faction = eersteIndiener(i.persons)?.faction?.short;
-	const where = [faction, i.dossier ? `dossier ${dossierLabel(i.dossier)}` : null].filter(Boolean);
+	const where = [faction, i.dossier ? dossierLabel(i.dossier) : null].filter(Boolean);
 	return [voor + tegen ? `${voor} voor, ${tegen} tegen` : voteHow(i), where.join(', ') || null]
 		.filter(Boolean)
 		.join('. ');
@@ -200,7 +201,7 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 					? `${who} ${verb} wetsvoorstel${passed ? ' aan' : ''}: ${names[0]}`
 					: `${who} ${verb} ${inWords(those.length)} wetsvoorstellen${passed ? ' aan' : ''}`,
 				context: one
-					? [voteHow(those[0]), those[0].dossier ? `Dossier ${those[0].dossier.number}` : null]
+					? [voteHow(those[0]), those[0].dossier ? kamerstukNummer(those[0].dossier.number) : null]
 							.filter(Boolean)
 							.join('. ') || null
 					: listLine(names, BILLS_NAMED),
@@ -309,7 +310,7 @@ function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 		const more = group.length - 1;
 		const context = [
 			more ? `En ${plural(more, 'andere toezegging', 'andere toezeggingen')}` : null,
-			first.dossier ? `Dossier ${dossierLabel(first.dossier)}` : null
+			first.dossier ? dossierLabel(first.dossier) : null
 		]
 			.filter(Boolean)
 			.join('. ');
@@ -338,7 +339,7 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			label: 'Wetsvoorstel',
 			vorm: 'voorstel',
 			title: `Wetsvoorstel ingediend: ${name(b)}`,
-			context: b.dossier ? `Dossier ${b.dossier.number}` : null,
+			context: b.dossier ? kamerstukNummer(b.dossier.number) : null,
 			href: hrefOf(b),
 			major: true,
 			item: b

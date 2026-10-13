@@ -12,7 +12,14 @@ import { dossierStatus, isOutcome } from '$lib/components/parliamentary/stages';
 import { parseArticleParts, partText } from '$lib/text/article-parts';
 import { articleTitle } from '$lib/text/bw';
 import { courtName } from '$lib/verbonden/rows';
-import { shortDossierTitle } from '$lib/graph/types';
+import { kindName } from '$lib/components/explore/law-head';
+import {
+	dossierLabel,
+	dossierName,
+	dossierUitProps,
+	dossierVolledigeTitel,
+	kamerstukNummer
+} from './dossier-naam';
 import { eersteIndiener, isEersteIndiener, joinerOf } from './submitters';
 import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
@@ -122,15 +129,33 @@ export function previewFromNode(
 			};
 		}
 		case 'dossiers': {
+			// As its reader heads it: "Dossier, Kamerstuk 36764", the name it is known by, the
+			// long title under it.
 			const { outcome, current_phase } = props;
+			const d = dossierUitProps(props);
+			const naam = dossierName(d);
 			return {
-				kicker: `${kind} ${text(props.label) ?? ''}`.trim(),
-				title: text(props.title) ?? name,
+				kicker: d.number ? `${kind}, ${kamerstukNummer(d.number)}` : kind,
+				title: naam === d.number ? name : naam,
 				date: formatLongDate(text(props.opened_on)) || null,
 				lines: dossierStatus({
 					outcome: isOutcome(outcome) ? outcome : null,
 					current_phase: typeof current_phase === 'string' ? current_phase : null
-				})
+				}),
+				extra: clip(dossierVolledigeTitel(d, naam))
+			};
+		}
+		case 'instruments': {
+			// A law by its citeertitel and its kind, "Wet", the official title under it: the kind
+			// tells it from the dossier of the same name.
+			const title = text(props.citation_title) ?? text(props.title) ?? name;
+			const official = text(props.official_title);
+			return {
+				kicker: kindName(text(props.kind)) ?? kind,
+				title,
+				date: null,
+				lines: null,
+				extra: official && official !== title ? clip(official) : null
 			};
 		}
 		case 'documents': {
@@ -138,13 +163,18 @@ export function previewFromNode(
 			const number = text(props.number) ?? (props.sequence != null ? String(props.sequence) : null);
 			const nr = number ? (/^\d/.test(number) ? `nr. ${number}` : number) : null;
 			const dn = text(props.dossier_number);
-			const dt = shortDossierTitle(text(props.dossier_title));
 			return {
 				kicker: nr ? `${soort}, ${nr}` : soort,
 				title: text(props.title) ?? name,
 				date: formatLongDate(text(props.date)) || null,
 				lines: null,
-				dossier: dn ? (dt ? `Dossier ${dn}, ${dt}` : `Dossier ${dn}`) : null,
+				dossier: dn
+					? dossierLabel({
+							number: dn,
+							title: text(props.dossier_title),
+							short_title: text(props.dossier_short_title)
+						})
+					: null,
 				wie: indieners(props.actors)
 			};
 		}
@@ -224,6 +254,7 @@ async function fetchPreview(id: string, at: string | null): Promise<Preview | nu
 			? previewFromNode('dossiers', data.title ?? null, {
 					label: data.number,
 					title: data.title,
+					short_title: data.short_title ?? null,
 					opened_on: data.opened_on,
 					outcome: data.outcome,
 					current_phase: data.current_phase

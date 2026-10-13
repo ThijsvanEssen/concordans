@@ -5,6 +5,7 @@
 	// the line came from, no request. The toezegging itself is one step further.
 	import type { Schema } from '$lib/api/types';
 	import BronLink from '$lib/bron/BronLink.svelte';
+	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import { bronHref } from '$lib/bron/href';
 	import { korteDatum } from '$lib/text/datum';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
@@ -21,7 +22,7 @@
 					></span
 				>{/if}{#each t.dossiers ?? [] as d (d.key)}<span
 					><BronLink ref={{ collection: 'dossiers', key: d.key, number: d.number ?? '' }}
-						>Kamerstuk {d.number}{d.short_title ? ` ${d.short_title}` : ''}</BronLink
+						><DossierNaam dossier={{ ...d, number: d.number ?? '' }} /></BronLink
 					></span
 				>{/each}{#if t.expected_resolution}<span>verwacht {korteDatum(t.expected_resolution)}</span
 				>{/if}

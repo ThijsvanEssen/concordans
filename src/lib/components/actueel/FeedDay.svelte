@@ -213,7 +213,7 @@
 	<p class="links">
 		{#if f.dossier}
 			<BronLink ref={{ collection: 'dossiers', key: f.dossier.key, number: f.dossier.number }}
-				>Dossier {dossierLabel(f.dossier)}</BronLink
+				>{dossierLabel(f.dossier)}</BronLink
 			>
 			<a href={filterHref({ dossier: f.dossier.number })}>Alles over dit dossier in Actueel</a>
 		{:else}
