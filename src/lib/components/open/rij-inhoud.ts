@@ -6,7 +6,10 @@ import type { FeedItem } from '$lib/components/actueel/feed';
 import { dictumUit } from '$lib/onderwerpen/strekking';
 
 export type MetInhoud = { node: { collection: string; key: string } } & Partial<
-	Pick<FeedItem, 'kind' | 'summary' | 'vote' | 'has_text' | 'dictum'>
+	Pick<
+		FeedItem,
+		'kind' | 'summary' | 'vote' | 'has_text' | 'dictum' | 'date' | 'publication' | 'commencement'
+	>
 >;
 /** `kern`: a stuk's core text by its own kind (kernSoort), where the row does not know it. */
 export type Inhoud =
@@ -16,6 +19,8 @@ export type Inhoud =
 	| 'kern'
 	| 'stemming'
 	| 'samenvatting'
+	| 'wijzigingen'
+	| 'inwerkingtreding'
 	| null;
 
 const telt = (i: MetInhoud) => {
@@ -43,9 +48,13 @@ export function inhoudVan(i: MetInhoud): Inhoud {
 		case 'stemming':
 			return telt(i) ? 'stemming' : null;
 		case 'uitspraak':
-		case 'publicatie':
-		case 'inwerkingtreding':
 			return i.summary?.trim() ? 'samenvatting' : null;
+		// A publication its changes per law, an inwerkingtreding the publication that brought
+		// it, asked when the row opens (wijzigingen.ts): what the feed's row cannot say.
+		case 'publicatie':
+			return 'wijzigingen';
+		case 'inwerkingtreding':
+			return i.commencement?.instrument ? 'inwerkingtreding' : null;
 		// A toezegging is its text, and that is the row's title.
 		default:
 			return null;

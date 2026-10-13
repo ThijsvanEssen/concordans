@@ -82,6 +82,8 @@
 		((v) => (v && v in COALITIE ? (v as keyof typeof COALITIE) : ''))(params.get('coalitie'))
 	);
 	const q = $derived(params.get('q') ?? '');
+	/** The words searched for, marked in the rows that hold them (FeedDay), as in Gevolgd. */
+	const termen = $derived(q.trim() ? [q.trim()] : []);
 	// Which Kamer (API 0.59): the Tweede with its papers, votes and toezeggingen, or the
 	// Eerste with the votes that decided a bill. Publications belong to neither.
 	const chamber = $derived(((v) => (v === 'TK' || v === 'EK' ? v : ''))(params.get('kamer')));
@@ -661,6 +663,7 @@
 						{ministryName}
 						{filterHref}
 						summary={summaries.get(day.date)}
+						{termen}
 						meer={n === days.length - 1 && cursor && !doorzocht ? volgende : undefined}
 					/>
 				{/each}

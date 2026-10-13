@@ -13,6 +13,7 @@
 	import { yearsOf } from '$lib/components/parliamentary/career';
 	import Caret from '$lib/components/ui/Caret.svelte';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
+	import Markering from '$lib/components/ui/Markering.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { VORMEN, VORM_VAN } from '$lib/bron/vormen';
 	import { openHref } from '$lib/bron/href';
@@ -171,17 +172,16 @@
 										class="zin"
 										href={doel}
 										data-sveltekit-noscroll
-										onclick={(e) => terPlekke(e, () => wissel(r.id))}>{r.zin}</a
-									>{:else if r.inhoud}<span class="zin">{r.zin}</span>{:else if r.ref}<BronLink
-										ref={r.ref}
-										class="zin">{r.zin}</BronLink
+										onclick={(e) => terPlekke(e, () => wissel(r.id))}>{@render zinVan(r)}</a
+									>{:else if r.inhoud}<span class="zin">{@render zinVan(r)}</span
+									>{:else if r.ref}<BronLink ref={r.ref} class="zin">{@render zinVan(r)}</BronLink
 									>{:else if r.href}<a
 										href={r.href}
 										rel={/^https?:/.test(r.href) ? 'external' : undefined}
-										class="zin">{r.zin}</a
+										class="zin">{@render zinVan(r)}</a
 									>{:else if r.actie}<button type="button" class="zin zin--actie" onclick={r.actie}
-										>{r.zin}</button
-									>{:else}<span class="zin">{r.zin}</span>{/if}
+										>{@render zinVan(r)}</button
+									>{:else}<span class="zin">{@render zinVan(r)}</span>{/if}
 								{#if r.meta}<span class="meta">{r.meta}</span>{/if}
 								{#if r.onder}<span class="meta">{@render r.onder(r.id)}</span>{/if}
 								{#if r.coalitie}<CoalitieRegel
@@ -206,6 +206,11 @@
 	{/each}
 	{#if meer}<p class="verder">{@render meer()}</p>{/if}
 </div>
+
+<!-- The zin, with the words a reader follows marked where the line has them (Gevolgd). -->
+{#snippet zinVan(r: TijdRegel)}{#if r.zinDelen}<Markering
+			delen={r.zinDelen}
+		/>{:else}{r.zin}{/if}{/snippet}
 
 <style>
 	.tl {

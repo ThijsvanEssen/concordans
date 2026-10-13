@@ -5,7 +5,9 @@
 	// in place (RijInhoud), a fold of many items of one kind on one dossier its items; the
 	// bron is one step further. Names of persons and dossiers are links, as everywhere. The
 	// counts are the whole day's from the summary when it has come; until then, those of the
-	// lines loaded.
+	// lines loaded. The words of a followed topic or a search (`termen`) are marked where the
+	// row shows them; where it does not, a line under the headline says where they are
+	// (`In dossier: …`): the reason the row is there.
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import type { TijdRegel } from '$lib/components/tijdlijn/tijdlijn';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
@@ -17,6 +19,7 @@
 	import { fromFeed } from '$lib/bron/submitters';
 	import {
 		KIND_LABEL,
+		artikelenGewijzigd,
 		countLine,
 		dayLabel,
 		dossierLabel,
@@ -31,6 +34,9 @@
 		type FeedItem
 	} from './feed';
 	import { headlineOf, tekenVanFeed, voteHow, vormVanFeed } from './timeline';
+	import { getoondOnder, plekVan, type Plek } from './treffer';
+	import { markeer } from '$lib/text/treffer';
+	import Markering from '$lib/components/ui/Markering.svelte';
 
 	/** Medeindieners named in a line; the rest are counted. */
 	const SUBMITTERS_SHOWN = 2;
@@ -47,6 +53,7 @@
 		filterHref,
 		summary,
 		nieuwSinds = null,
+		termen,
 		meer
 	}: {
 		day: Day;
@@ -61,6 +68,8 @@
 		summary?: DaySummary;
 		/** A followed topic's visit before this one: what is newer says so (Onderwerpen). */
 		nieuwSinds?: string | null;
+		/** The words the feed was asked for (`q`): a followed topic's, Actueel's search; or none. */
+		termen: readonly string[];
 		/** Under the day, in the text column: the next days, on the last day loaded. */
 		meer?: import('svelte').Snippet;
 	} = $props();
@@ -84,17 +93,43 @@
 		new Map(day.entries.flatMap((e) => ('fold' in e ? [[e.fold.id, e.fold] as const] : [])))
 	);
 
+	/**
+	 * Where the words are, per line's id, where the line does not show them: of a fold of one
+	 * dossier its title, once for the fold; of an item its title or its dossier's.
+	 */
+	const plekken = $derived(
+		new Map(
+			day.entries.flatMap((entry): [string, Plek][] => {
+				if ('fold' in entry) {
+					const f = entry.fold;
+					const p = f.dossier
+						? plekVan(termen, { kind: f.kind, title: null, summary: null, dossier: f.dossier }, [
+								foldTitle(f, summary?.votes)
+							])
+						: null;
+					return p ? [[f.id, p]] : [];
+				}
+				const i = entry.item;
+				const p = plekVan(termen, i, [headlineOf(i).title, ...getoondOnder(i)]);
+				return p ? [[i.id, p]] : [];
+			})
+		)
+	);
+
 	const regels = $derived<TijdRegel[]>(
 		day.entries.map((entry) => {
 			if ('fold' in entry) {
 				const f = entry.fold;
+				const zin = foldTitle(f, summary?.votes);
 				return {
 					id: f.id,
 					datum: f.items[0]?.date ?? day.date,
 					teken: f.kind === 'toezegging' ? 'open' : 'stuk',
 					vorm: vormVanFeed({ kind: f.kind }),
 					label: `${hoofd(KIND_LABEL[f.kind].many)}${nieuw(f.items[0]?.date)}`,
-					zin: foldTitle(f, summary?.votes),
+					zin,
+					zinDelen: markeer(termen, zin),
+					onder: plekken.has(f.id) ? foldOnder : null,
 					inhoud: foldInhoud
 				};
 			}
@@ -107,6 +142,7 @@
 				vorm: h.vorm,
 				label: `${h.label}${nieuw(i.date)}`,
 				zin: h.title,
+				zinDelen: markeer(termen, h.title),
 				ref: refOf(i),
 				heeftTekst: i.has_text,
 				bron: i.id,
@@ -141,23 +177,27 @@
 	{@const i = items.get(id)}
 	{#if i}
 		<span class="meta">
-			{#if i.publication}<span>{publicationCite(i.publication)}</span>{/if}
+			{@render plekRegel(id)}
+			<!-- The citation where the headline is another name; a headline that is it says it once. -->
+			{#if i.publication && publicationCite(i.publication) !== titleOf(i)}<span
+					>{publicationCite(i.publication)}</span
+				>{/if}
 			{#if i.dossier}
 				<BronLink
 					ref={{ collection: 'dossiers', key: i.dossier.key, number: i.dossier.number }}
-					title={i.dossier.title ?? undefined}>{dossierLabel(i.dossier)}</BronLink
+					title={i.dossier.title ?? undefined}>{@render merk(dossierLabel(i.dossier))}</BronLink
 				>
 			{/if}
 			{#if i.persons.length}{@render persons(i)}{/if}
 			{#if i.ministry}<span class="ministry">{ministryName(i.ministry)}</span>{/if}
 			{#if i.commencement?.instrument && i.kind !== 'inwerkingtreding'}
 				<BronLink ref={`instruments/${i.commencement.instrument.key}`}
-					>{i.commencement.instrument.title}</BronLink
+					>{@render merk(i.commencement.instrument.title)}</BronLink
 				>
 			{/if}
 			{#if i.judgment?.procedure}<span class="ministry">{i.judgment.procedure}</span>{/if}
 			{#each uniqueBy(i.publication?.instruments ?? [], (w) => w.key) as w (w.key)}
-				<BronLink ref={`instruments/${w.key}`}>{w.title}</BronLink>
+				<BronLink ref={`instruments/${w.key}`}>{@render merk(w.title)}</BronLink>
 			{/each}
 			{#if i.vote}
 				<!-- The outcome is in the label; the tally beside it, or how it was decided. -->
@@ -172,13 +212,31 @@
 						? `, verwacht ${shortDate(i.commitment.expected_resolution)}`
 						: ''}</span
 				>
-			{:else if i.commencement}
-				<span
-					>{i.commencement.changed_articles ?? 0} van {i.commencement.article_count ?? 0} artikelen</span
-				>
+			{:else if artikelenGewijzigd(i.commencement)}
+				<span>{artikelenGewijzigd(i.commencement)}</span>
 			{/if}
 		</span>
 	{/if}
+{/snippet}
+
+<!-- Where the words of the topic are, when the line does not show them: `In dossier: …`. -->
+{#snippet plekRegel(id: string)}
+	{@const p = plekken.get(id)}
+	{#if p}{@render plekTekst(p)}{/if}
+{/snippet}
+
+{#snippet plekTekst(p: Plek)}
+	<span class="plek"><span class="plek-waar">{p.waar}:</span> <Markering delen={p.delen} /></span>
+{/snippet}
+
+{#snippet foldOnder(id: string)}
+	<span class="meta">{@render plekRegel(id)}</span>
+{/snippet}
+
+<!-- A name the row shows, the words of the topic marked in it. -->
+{#snippet merk(tekst: string | null | undefined)}
+	{@const delen = markeer(termen, tekst)}
+	{#if delen}<Markering {delen} />{:else}{tekst ?? ''}{/if}
 {/snippet}
 
 {#snippet itemInhoud(id: string)}
@@ -195,8 +253,12 @@
 {#snippet foldItems(f: Fold)}
 	<ul class="fold-items">
 		{#each f.items as i (i.id)}
+			{@const titel = titleOf(i)}
+			<!-- In a fold of one dossier, the fold's line says where; in the day's votes, each. -->
+			{@const p = f.dossier ? null : plekVan(termen, i, [titel])}
 			<li>
-				<BronLink ref={refOf(i)} class="fold-title">{titleOf(i)}</BronLink>
+				<BronLink ref={refOf(i)} class="fold-title">{@render merk(titel)}</BronLink>
+				{#if p}<span class="meta">{@render plekTekst(p)}</span>{/if}
 				{#if i.persons.length || i.vote}
 					<span class="meta"
 						>{#if i.vote}<span class="outcome" class:outcome--failed={!i.vote.passed}
@@ -283,6 +345,15 @@
 			position: absolute;
 			inset: calc(-1 * var(--s-2)) calc(-1 * var(--s-1));
 		}
+	}
+	/* Why the row is in a followed topic, where its line does not show the words: a line
+	   of its own under the headline. */
+	.plek {
+		flex-basis: 100%;
+		color: var(--ink-2);
+	}
+	.plek-waar {
+		color: var(--ink-3);
 	}
 	.person {
 		padding-left: var(--s-1);

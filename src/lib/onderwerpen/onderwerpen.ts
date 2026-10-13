@@ -1,3 +1,7 @@
+// The API's word rule, and the mark that shows where a row was found: $lib/text/treffer.
+import { normaal, woordIn } from '$lib/text/treffer';
+export { normaal, woordIn };
+
 // A topic followed: the words of the user, looked for in the titles of Actueel. The source has
 // no theme of its own (the TK OData has none, Back-end #3, 9 Oct), so a topic is its words.
 // Kept in this browser only; an address carries the same topics to someone else.
@@ -15,7 +19,6 @@ const SLEUTEL = 'concordans:onderwerpen';
 /** Set once a browser session: a reload in the same session keeps what was new. */
 const SESSIE = 'concordans:onderwerpen-bezocht';
 
-export const normaal = (term: string) => term.trim().replace(/\s+/g, ' ');
 const gelijk = (a: string, b: string) => normaal(a).toLowerCase() === normaal(b).toLowerCase();
 
 /** The topic is the same if one of its words is. */
@@ -157,23 +160,4 @@ export function deelAdres(lijst: Pick<Onderwerp, 'termen'>[]): string {
 	const p = new URLSearchParams();
 	for (const o of lijst) p.append('onderwerp', naarParam(o.termen));
 	return `/onderwerpen?${p}`;
-}
-
-// ── Matching ───────────────────────────────────────────────────────────────
-
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-/** Up to this length a word is an abbreviation (`AI`, `PFAS`): it has to stand whole. */
-const KORT = 4;
-
-/**
- * The API matches any part of a title: `AI` is in `universitaire`. Here a word has to start
- * where a word starts, so `algoritme` finds `algoritmes`; a short one has to end there too,
- * so `AI` finds `AI-modellen` and not `AIV-advies`.
- */
-export function woordIn(term: string, tekst: string | null | undefined): boolean {
-	if (!tekst) return false;
-	const woord = normaal(term);
-	const eind = woord.length <= KORT ? '(?![\\p{L}\\p{N}])' : '';
-	return new RegExp(`(^|[^\\p{L}\\p{N}])${escape(woord)}${eind}`, 'iu').test(tekst);
 }

@@ -863,6 +863,26 @@ describe('canvas cards and halls', () => {
 		expect(zin).not.toMatch(/<(p|div|section|Sectie)\b/);
 	});
 
+	it('says why a row of the feed is there by one rule, on Actueel and Gevolgd alike (pakket H)', () => {
+		// The words asked for (`q`) are marked where the row shows them, else the line under it
+		// says where they are (`In dossier: …`): FeedDay through $lib/text/treffer. Every page
+		// with FeedDay passes its words, so a search in Actueel reads as a followed topic does.
+		const pages = sources.filter(({ text }) => /<FeedDay\b/.test(text));
+		expect(pages.map((s) => s.path).sort()).toEqual([
+			'routes/(main)/actueel/+page.svelte',
+			'routes/(main)/onderwerpen/+page.svelte'
+		]);
+		for (const { text } of pages)
+			expect(/<FeedDay\b[\s\S]*?\/>/.exec(text)?.[0]).toMatch(/\btermen\b/);
+		const day = sources.find((s) => s.path === 'lib/components/actueel/FeedDay.svelte')!.text;
+		expect(day).toMatch(/\n\t\ttermen: readonly string\[\];/);
+		expect(day).toMatch(/plekVan\(/);
+		// One rule for the words: woordIn and markeer live in treffer.ts alone.
+		expect(
+			offenders((t) => /export function (woordIn|markeer)\b/.test(t), ['lib/text/treffer.ts'])
+		).toEqual([]);
+	});
+
 	it('gives a page with a list a second skip link, through AppShell, and one main', () => {
 		const shell = sources.find((s) => s.path === 'lib/components/layout/AppShell.svelte')!.text;
 		expect(shell).toMatch(/class="skip-link">Naar de lijst<\/a>/);

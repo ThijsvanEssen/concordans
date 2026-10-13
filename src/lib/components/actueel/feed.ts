@@ -330,6 +330,18 @@ export function standLine(stand: NonNullable<ReturnType<typeof feedStand>>): str
 /** `24 sep. 2026`, for a date in a line of text. */
 export const shortDate = (iso: string | null | undefined): string => korteDatum(iso);
 
+/**
+ * The articles a version changed, of all the law has: `8 van 11 artikelen gewijzigd`; where
+ * it changed every one (a new law, a law replaced whole), `alle 111 artikelen`. Null without
+ * both figures. The homepage and Actueel say it alike.
+ */
+export function artikelenGewijzigd(c: FeedItem['commencement']): string | null {
+	const n = c?.changed_articles;
+	const van = c?.article_count;
+	if (n == null || van == null) return null;
+	return n === van ? `alle ${van} artikelen` : `${n} van ${van} artikelen gewijzigd`;
+}
+
 /** `Stb. 2026, 204`, as a publication is cited. */
 export function publicationCite(p: NonNullable<FeedItem['publication']>): string {
 	const SERIES: Record<string, string> = { stb: 'Stb.', stcrt: 'Stcrt.', trb: 'Trb.' };

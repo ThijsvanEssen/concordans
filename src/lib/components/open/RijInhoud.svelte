@@ -3,12 +3,14 @@
 	// Gemarkeerd): the bron's own content, read in place, not a panel of actions (Thijs, 10 Oct: "doet niet zoveel behalve een extra klik
 	// toevoegen"). Nothing the row says already comes back. A motie its dictum, an amendement
 	// its toelichting, another stuk the opening of its text, a stemming its bar, a uitspraak its
-	// inhoudsindicatie; asked when the row opens (one request, shared with the reader), a motie's
+	// inhoudsindicatie, a publication its changes, an inwerkingtreding the publication that
+	// brought it (Wijzigingen); asked when the row opens (one request, shared with the reader), a motie's
 	// dictum from the feed itself where it has one. A paper the feed says has no text yet does
 	// not open (inhoudVan). The reader stays one step further: the title, or Lees verder.
 	import { getDocument } from '$lib/api/records';
 	import { bronHref } from '$lib/bron/href';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import Wijzigingen from './Wijzigingen.svelte';
 	import { inhoudVan, kernSoort, kernVan, type Inhoud, type MetInhoud } from './rij-inhoud';
 
 	let {
@@ -21,7 +23,13 @@
 	} = $props();
 
 	const soort = $derived(als ?? inhoudVan(item));
-	const ref = $derived(`${item.node.collection}/${item.node.key}`);
+	// An inwerkingtreding is read in its law; the version itself has no reader.
+	const wet = $derived(item.commencement?.instrument?.key);
+	const ref = $derived(
+		soort === 'inwerkingtreding' && wet
+			? `instruments/${wet}`
+			: `${item.node.collection}/${item.node.key}`
+	);
 
 	let tekst = $state<string | null | 'laden'>(null);
 	/** What the text is, once the stuk has said its kind (`kern`). */
@@ -74,6 +82,9 @@
 		</div>
 	{:else if soort === 'samenvatting'}
 		<p class="tekst">{item.summary}</p>
+	{:else if soort === 'wijzigingen' || soort === 'inwerkingtreding'}
+		{#if item.summary?.trim()}<p class="tekst">{item.summary}</p>{/if}
+		<Wijzigingen {item} {soort} />
 	{:else if tekst === 'laden'}
 		<p class="stil">Laden…</p>
 	{:else if tekst}

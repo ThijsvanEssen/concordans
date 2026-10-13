@@ -397,6 +397,7 @@
 								{ministryName}
 								filterHref={(patch) => `/actueel?${new URLSearchParams(patch)}`}
 								nieuwSinds={o.vorige}
+								termen={o.termen}
 							/>
 						{/each}
 					</div>

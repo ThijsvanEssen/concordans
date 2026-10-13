@@ -39,6 +39,16 @@ describe('what an opened row shows', () => {
 		expect(inhoudVan(item('uitspraak', { summary: 'Klimaatzaak.' }))).toBe('samenvatting');
 	});
 
+	it('opens a publication on its changes, an inwerkingtreding on what brought it', () => {
+		expect(inhoudVan(item('publicatie'))).toBe('wijzigingen');
+		const wet = { key: 'bwbr0053034', title: 'Cyberbeveiligingsregeling voor de zorg' };
+		expect(
+			inhoudVan(item('inwerkingtreding', { commencement: { instrument: wet } as never }))
+		).toBe('inwerkingtreding');
+		// Without the law it changes, nothing to ask.
+		expect(inhoudVan(item('inwerkingtreding'))).toBeNull();
+	});
+
 	it('takes the opening of a stuk past its letterhead, to the end of a sentence', () => {
 		const lang = 'In deze nota van wijziging wordt het wetsvoorstel op enkele punten aangepast. ';
 		const tekst = `Tweede Kamer der Staten-Generaal\n36000\nNr. 7\n${lang.repeat(12)}`;

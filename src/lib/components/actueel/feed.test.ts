@@ -1,6 +1,7 @@
 import { padOfFocus } from '$lib/bron/leesbaar';
 import { describe, expect, it } from 'vitest';
 import {
+	artikelenGewijzigd,
 	normalizeItem,
 	dagVoor,
 	doorzochtVanaf,
@@ -273,5 +274,18 @@ describe('the address of an item', () => {
 		} as never);
 		expect(padOfFocus('members/lid_adres_1')).toBe('/leden/simon-ceulemans');
 		expect(padOfFocus('members/lid_adres_2')).toBeNull();
+	});
+});
+
+describe('the articles a version changed', () => {
+	it('counts them of all, or says all', () => {
+		expect(artikelenGewijzigd({ changed_articles: 8, article_count: 11 } as never)).toBe(
+			'8 van 11 artikelen gewijzigd'
+		);
+		expect(artikelenGewijzigd({ changed_articles: 111, article_count: 111 } as never)).toBe(
+			'alle 111 artikelen'
+		);
+		expect(artikelenGewijzigd({ changed_articles: 3, article_count: null } as never)).toBeNull();
+		expect(artikelenGewijzigd(null)).toBeNull();
 	});
 });

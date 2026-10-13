@@ -11,6 +11,7 @@ import {
 	CLOSE_VOTE,
 	KIND_LABEL,
 	MOTIE,
+	artikelenGewijzigd,
 	chamberOf,
 	dossierLabel,
 	dossierName,
@@ -367,10 +368,7 @@ function commencementLine(i: FeedItem): TimelineLine {
 		label: 'Inwerkingtreding',
 		vorm: 'regel',
 		title: `${law}: gewijzigde tekst in werking`,
-		context:
-			c?.changed_articles != null && c.article_count != null
-				? `${c.changed_articles} van ${c.article_count} artikelen gewijzigd`
-				: null,
+		context: artikelenGewijzigd(c),
 		href: c?.instrument ? { collection: 'instruments', key: c.instrument.key } : hrefOf(i),
 		major: true,
 		item: i
