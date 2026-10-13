@@ -20,7 +20,8 @@
 		begrippen = [],
 		definities = new Map(),
 		delegaties = [],
-		grondslag = null
+		grondslag = null,
+		doel = null
 	}: {
 		text: string;
 		/** Offsets are relative to `text`. */
@@ -33,6 +34,9 @@
 		delegaties?: DelegatieSpan[];
 		/** The regulations issued under the article; without it no formula is marked. */
 		grondslag?: (() => Promise<Gedelegeerd | null>) | null;
+		/** The bron the text is read for (`bwbr0005291_305a`): its citations marked, as a
+		 *  passage marks the words that cite it. */
+		doel?: string | null;
 	} = $props();
 
 	type Segment = {
@@ -128,16 +132,24 @@
 			ref={`articles/${seg.begrip.article_key}`}
 			voorbeeld={definitieKaart(seg.begrip)}
 			class="begrip">{seg.content}</BronLink
-		>{:else if seg.span && refOfSpan(seg)}<BronLink
-			ref={refOfSpan(seg)!}
-			at={seg.at}
-			extra={seg.span.definition_ref && definities.get(seg.span.definition_ref)
-				? definitieRegel(definities.get(seg.span.definition_ref)!)
-				: null}
-			class="cited">{seg.content}</BronLink
-		>{:else}{seg.content}{/if}{/each}
+		>{:else if seg.span && refOfSpan(seg)}{#if doel && seg.span.target.key === doel}<mark
+				class="doel"
+				><BronLink ref={refOfSpan(seg)!} at={seg.at} class="cited">{seg.content}</BronLink></mark
+			>{:else}<BronLink
+				ref={refOfSpan(seg)!}
+				at={seg.at}
+				extra={seg.span.definition_ref && definities.get(seg.span.definition_ref)
+					? definitieRegel(definities.get(seg.span.definition_ref)!)
+					: null}
+				class="cited">{seg.content}</BronLink
+			>{/if}{:else}{seg.content}{/if}{/each}
 
 <style>
+	/* The citation of the bron the text is read for, as a passage marks it. */
+	.doel {
+		background: var(--wassing);
+		color: inherit;
+	}
 	/* A defined term: quieter than a citation, the text's own colour on a dotted line. */
 	:global(a.begrip) {
 		color: inherit;

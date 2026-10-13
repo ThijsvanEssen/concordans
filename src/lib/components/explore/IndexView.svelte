@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
@@ -2984,11 +2985,14 @@
 										{#each pages.documents.items as doc (doc.key)}
 											{@const bron = `documents/${doc.key}`}
 											{@const label = kamerstukLabel(doc)}
+											<!-- A Kamerstuk opens in place on its core text (RijInhoud), as in
+											     Actueel, Verbonden and Gemarkeerd; the stuk one step further. -->
 											<IndexRow
 												{bron}
 												title={doc.title ?? doc.kind ?? naamVan('documents', doc)}
 												href={hrefOf(bron)}
-												acties
+												open={openId === bron}
+												onToggle={() => toggleOpen(bron)}
 											>
 												{#snippet lead()}
 													<span class="row-id-main"><Waarde value={label} /></span>
@@ -3006,6 +3010,12 @@
 												{/snippet}
 												{#snippet aside()}
 													{#if doc.date}<span class="row-sub">{fmtDateShort(doc.date)}</span>{/if}
+												{/snippet}
+												{#snippet detail()}
+													<RijInhoud
+														item={{ node: { collection: 'documents', key: doc.key } }}
+														als="kern"
+													/>
 												{/snippet}
 											</IndexRow>
 										{/each}

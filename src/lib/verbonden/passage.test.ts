@@ -77,27 +77,114 @@ describe('aanhalingIn', () => {
 		paragraph_ids: ['rov-6', 'rov-7'],
 		snippet: '…in strijd met artikel 3:2 van de Awb.'
 	};
+	const span = (text: string, words: string, key = 'bwbr0005537_3_2') => ({
+		start: text.indexOf(words),
+		end: text.indexOf(words) + words.length,
+		target: { key }
+	});
 
-	it('takes the first paragraph that cites the article, from the detail (`id` on prod)', () => {
+	it('takes the first overweging whose spans cite the article, with the span’s words', () => {
+		const t7 = 'Het besluit is in strijd met artikel 3:2 van de Awb.';
 		const paragraphs = [
-			{ id: 'rov-6', number: '6', text: 'Het beroep is gegrond.' },
-			{ id: 'rov-7', number: '7', text: 'Het besluit is in strijd met artikel 3:2 van de Awb.' }
+			{ paragraph_id: 'rov-6', number: '6', text: 'Het beroep is gegrond.', citations: [] },
+			{
+				paragraph_id: 'rov-7',
+				number: '7',
+				text: t7,
+				citations: [span(t7, 'artikel 3:2 van de Awb')]
+			}
 		];
 		expect(aanhalingIn(cited, paragraphs)).toEqual({
-			snippet: 'Het besluit is in strijd met artikel 3:2 van de Awb.',
+			snippet: t7,
 			match: 'artikel 3:2 van de Awb',
 			at: 'rov-7'
 		});
 	});
 
-	it('takes a numbered overweging before the head of the judgment', () => {
+	it('finds a BW article the API numbers without its book (`305a` for 3:305a)', () => {
+		// Urgenda, HR 20 december 2019: `article_number: "305a"`, the span says `art. 3:305a BW`.
+		const t = 'Urgenda vordert op grond van art. 3:305a BW een bevel aan de Staat.';
+		const bw = {
+			article: {
+				key: 'bwbr0005291_305a',
+				article_number: '305a',
+				instrument: { abbreviation: 'BW3', title: 'Burgerlijk Wetboek Boek 3' }
+			},
+			paragraph_ids: ['p-2b2a0b8a', 'rov-2.2.1'],
+			snippet:
+				'(f) Kan deze verplichting worden ingeroepen bij een vordering op grond van art. 3:305a BW?'
+		};
 		const paragraphs = [
-			{ id: 'p-1', text: 'Tussenuitspraak met toepassing van artikel 3:2 van de Awb' },
-			{ id: 'rov-7', number: '7', text: 'Gelet op artikel 3:2 Awb is het besluit onzorgvuldig.' }
+			{
+				paragraph_id: 'p-2b2a0b8a',
+				text: bw.snippet,
+				citations: [span(bw.snippet, 'art. 3:305a BW', 'bwbr0005291_305a')]
+			},
+			{
+				paragraph_id: 'rov-2.2.1',
+				number: '2.2.1',
+				text: t,
+				citations: [span(t, 'art. 3:305a BW', 'bwbr0005291_305a')]
+			}
+		];
+		expect(aanhalingIn(bw, paragraphs)).toEqual({
+			snippet: t,
+			match: 'art. 3:305a BW',
+			at: 'rov-2.2.1'
+		});
+	});
+
+	it('takes a span to another article for no citation of this one', () => {
+		const t = 'Gelet op artikel 3:4 Awb en artikel 3:2 Awb is het besluit onzorgvuldig.';
+		const paragraphs = [
+			{
+				paragraph_id: 'rov-7',
+				number: '7',
+				text: t,
+				citations: [span(t, 'artikel 3:4 Awb', 'bwbr0005537_3_4'), span(t, 'artikel 3:2 Awb')]
+			}
+		];
+		expect(aanhalingIn({ ...cited, paragraph_ids: ['rov-7'] }, paragraphs)?.match).toBe(
+			'artikel 3:2 Awb'
+		);
+	});
+
+	it('takes a numbered overweging before the head of the judgment', () => {
+		const head = 'Tussenuitspraak met toepassing van artikel 3:2 van de Awb';
+		const t7 = 'Gelet op artikel 3:2 Awb is het besluit onzorgvuldig.';
+		const paragraphs = [
+			{ paragraph_id: 'p-1', text: head, citations: [span(head, 'artikel 3:2 van de Awb')] },
+			{ paragraph_id: 'rov-7', number: '7', text: t7, citations: [span(t7, 'artikel 3:2 Awb')] }
 		];
 		expect(aanhalingIn({ ...cited, paragraph_ids: ['p-1', 'rov-7'] }, paragraphs)?.at).toBe(
 			'rov-7'
 		);
+	});
+
+	it('reads the API’s own place of the strongest mention where it gives one (0.79.54)', () => {
+		const t = 'Ingevolge artikel 3:2 van de Awb moet het bestuursorgaan kennis vergaren.';
+		const paragraphs = [{ paragraph_id: 'p-9', text: t, citations: [] }];
+		const met = {
+			...cited,
+			paragraph_ids: ['p-9'],
+			snippet_paragraph_id: 'p-9',
+			start: t.indexOf('artikel'),
+			end: t.indexOf(' moet'),
+			text: 'artikel 3:2 van de Awb'
+		};
+		expect(aanhalingIn(met, paragraphs)).toEqual({
+			snippet: t,
+			match: 'artikel 3:2 van de Awb',
+			at: 'p-9'
+		});
+	});
+
+	it('does not read a paragraph by an `id` the API does not serve', () => {
+		const t = 'Het besluit is in strijd met artikel 3:2 van de Awb.';
+		const paragraphs = [
+			{ paragraph_id: 'p-x', text: t, citations: [span(t, 'artikel 3:2 van de Awb')] }
+		];
+		expect(aanhalingIn(cited, paragraphs)?.at).toBe('rov-6');
 	});
 
 	it('falls back on the API’s snippet', () => {

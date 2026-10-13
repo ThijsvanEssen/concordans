@@ -6,12 +6,19 @@
 	// a first sentence or lid). The card has no buttons and stands in the top layer, placed
 	// below the link or above it where the screen ends, so no column clips it. On touch a tap
 	// opens the bron at once, without a card. Escape closes the card.
+	// A reference to a judgment at an r.o. (`at` rov-…) shows the overweging itself instead
+	// (OverwegingKaart, Thijs 14 Oct): a card to read, with its words that cite `doel` marked
+	// and the way on, Open de uitspraak bij r.o. N. It stays while the pointer is on it; on
+	// touch the first tap shows it and the second follows the link; a tap outside closes it
+	// (capture phase, as a menu), a focus that leaves for nowhere does not (actions/menu.ts).
 	import { page } from '$app/state';
 	import type { Snippet } from 'svelte';
 	import { focusIn } from './leesbaar';
 	import { focusOf, openHref, type BronRef } from './href';
 	import { loadPreview, type Preview } from './preview';
 	import { isEscape } from '$lib/actions/keys';
+	import { isOverwegingRef } from './overweging';
+	import OverwegingKaart from './OverwegingKaart.svelte';
 
 	let {
 		ref,
@@ -19,6 +26,8 @@
 		preview = true,
 		voorbeeld = null,
 		extra = null,
+		doel = null,
+		href: naar = null,
 		class: className = '',
 		title,
 		children
@@ -32,6 +41,10 @@
 		voorbeeld?: Preview | null;
 		/** One line more on the card: the definition a citation's words name. */
 		extra?: string | null;
+		/** The bron an r.o.'s card is read for: its citations in the overweging marked. */
+		doel?: string | null;
+		/** Where the link goes, where not to the bron's own reader: beside the article. */
+		href?: string | null;
 		class?: string;
 		title?: string;
 		children: Snippet;
@@ -52,9 +65,78 @@
 	// A reference into the bron on screen is a jump within the page.
 	const id = $derived(focusOf(ref));
 	const inPage = $derived(!!at && !!id && focusIn(page.url) === id);
-	const href = $derived(inPage ? `#${at}` : openHref(ref, { at }));
+	const href = $derived(naar ?? (inPage ? `#${at}` : openHref(ref, { at })));
+
+	// The card of an r.o.: the overweging, a card to read rather than a glance.
+	const ro = $derived(preview && !voorbeeld && isOverwegingRef(id, at));
+	let roOpen = $state(false);
+	let roKaart = $state<HTMLElement | null>(null);
+	let sluitTimer: ReturnType<typeof setTimeout> | null = null;
+	/** The pointer went from the link to the card, or back: a moment to cross the gap. */
+	const SLUIT_MS = 250;
+	function roToon(direct = false) {
+		if (sluitTimer) clearTimeout(sluitTimer);
+		sluitTimer = null;
+		if (roOpen) return;
+		if (timer) clearTimeout(timer);
+		if (direct) {
+			roOpen = true;
+			return;
+		}
+		timer = setTimeout(() => {
+			timer = null;
+			roOpen = true;
+		}, HOVER_MS);
+	}
+	function roSluitStraks() {
+		if (timer) clearTimeout(timer);
+		timer = null;
+		if (sluitTimer) clearTimeout(sluitTimer);
+		sluitTimer = setTimeout(() => (roOpen = false), SLUIT_MS);
+	}
+	function roSluit() {
+		if (timer) clearTimeout(timer);
+		if (sluitTimer) clearTimeout(sluitTimer);
+		timer = sluitTimer = null;
+		roOpen = false;
+	}
+	const binnen = (t: EventTarget | null) =>
+		t instanceof Node && (!!anker?.contains(t) || !!roKaart?.contains(t));
+
+	// Open: a tap or click outside closes it, before what was hit reacts (capture phase); a
+	// scroll of the page moves the link away, one within the card does not.
+	$effect(() => {
+		if (!roOpen) return;
+		const buiten = (e: Event) => {
+			if (!binnen(e.target)) roSluit();
+		};
+		const weg = (e: Event) => {
+			if (!binnen(e.target)) roSluit();
+		};
+		// Escape closes it wherever the focus is: after a tap it is on neither link nor card.
+		const esc = (e: KeyboardEvent) => {
+			if (!isEscape(e)) return;
+			e.preventDefault();
+			e.stopPropagation();
+			roSluit();
+		};
+		document.addEventListener('click', buiten, true);
+		document.addEventListener('keydown', esc);
+		addEventListener('scroll', weg, { capture: true, passive: true });
+		addEventListener('resize', roSluit);
+		return () => {
+			document.removeEventListener('click', buiten, true);
+			document.removeEventListener('keydown', esc);
+			removeEventListener('scroll', weg, { capture: true });
+			removeEventListener('resize', roSluit);
+		};
+	});
 
 	function show() {
+		if (ro) {
+			if (!tast) roToon();
+			return;
+		}
 		if (!preview || tast) return;
 		if (timer) clearTimeout(timer);
 		timer = setTimeout(async () => {
@@ -74,13 +156,54 @@
 		show();
 	}
 
+	function onpointerleave() {
+		if (ro) {
+			if (!tast) roSluitStraks();
+			return;
+		}
+		hide();
+	}
+
+	/** Focus that leaves for the card stays; for nowhere (a tap on the canvas) too. */
+	function onblur(e: FocusEvent) {
+		if (!ro) return hide();
+		if (e.relatedTarget === null || binnen(e.relatedTarget)) return;
+		roSluit();
+	}
+
+	/** On touch the first tap shows the r.o.; the second, or one on the card's link, goes. */
+	function onclick(e: MouseEvent) {
+		if (ro && tast && !roOpen) {
+			e.preventDefault();
+			roToon(true);
+			return;
+		}
+		if (ro) roSluit();
+		hide();
+	}
+
 	function onkeydown(e: KeyboardEvent) {
 		tast = false;
+		if (ro && roOpen && isEscape(e)) {
+			e.preventDefault();
+			e.stopPropagation();
+			roSluit();
+			return;
+		}
 		if (card && isEscape(e)) {
 			e.preventDefault();
 			e.stopPropagation();
 			hide();
 		}
+	}
+
+	/** Escape in the card closes it and puts the focus back on the link. */
+	function kaartToets(e: KeyboardEvent) {
+		if (!isEscape(e)) return;
+		e.preventDefault();
+		e.stopPropagation();
+		roSluit();
+		anker?.focus();
 	}
 
 	/** Below the link, or above it where the screen ends below; never past a side. */
@@ -127,15 +250,34 @@
 	{title}
 	data-sveltekit-noscroll
 	aria-describedby={card ? `${uid}-card` : undefined}
+	aria-expanded={ro ? roOpen : undefined}
 	bind:this={anker}
 	{onpointerenter}
-	onpointerleave={hide}
+	{onpointerleave}
 	onpointerdown={(e) => (tast = e.pointerType === 'touch')}
 	onfocus={show}
-	onblur={hide}
-	onclick={hide}
+	{onblur}
+	{onclick}
 	{onkeydown}>{@render children()}</a
->{#if card}<span class="card" id="{uid}-card" role="tooltip" popover="manual" bind:this={kaart}
+>{#if ro && roOpen && anker && id}<OverwegingKaart
+		judgment={id.slice('judgments/'.length)}
+		at={at!}
+		{doel}
+		{href}
+		{anker}
+		bind:kaart={roKaart}
+		onpointerenter={() => roToon(true)}
+		onpointerleave={() => roSluitStraks()}
+		onkeydown={kaartToets}
+		onfocusout={(e) => {
+			if (e.relatedTarget !== null && !binnen(e.relatedTarget)) roSluit();
+		}}
+	/>{/if}{#if card}<span
+		class="card"
+		id="{uid}-card"
+		role="tooltip"
+		popover="manual"
+		bind:this={kaart}
 		><span class="card__kicker">{card.kicker}{card.date ? `, ${card.date}` : ''}</span><span
 			class="card__title">{card.title}</span
 		>{#if card.dossier}<span class="card__regel">{card.dossier}</span>{/if}{#if card.wie}<span

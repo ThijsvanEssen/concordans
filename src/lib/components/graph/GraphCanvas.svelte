@@ -6,7 +6,7 @@
 	import { onDestroy, onMount, untrack } from 'svelte';
 	import type SigmaType from 'sigma';
 	import type Graph from 'graphology';
-	import { paragraphCite } from '$lib/text/judgment-cite';
+	import { plaatsVanMeta } from '$lib/verbonden/verbinding';
 	import type { GraphFilters } from '$lib/graph/graph-store';
 	import type { NodeCounts } from '$lib/api/overlays';
 	import { EDGE_WEIGHT, type GraphNodeKind } from '$lib/graph/types';
@@ -1050,8 +1050,8 @@
 			(typeof meta.lid === 'string' && meta.lid) ||
 			null;
 		if (lid) parts.push(`lid ${lid}`);
-		if (typeof meta.paragraph_number === 'string' && meta.paragraph_number)
-			parts.push(paragraphCite(source, meta.paragraph_number));
+		const { position } = plaatsVanMeta(meta, source);
+		if (position) parts.push(position);
 		if (data.status === 'voorgesteld') parts.push('voorgesteld');
 		return parts.join(', ');
 	}

@@ -21,7 +21,7 @@
 		docked?: boolean;
 		onClose: () => void;
 		onShowInNetwork?: () => void;
-		/** For a toelichting: the address that opens it beside the article. */
+		/** For a toelichting or a citing judgment: the address that opens it beside the article. */
 		besideHref?: string | null;
 	} = $props();
 
@@ -52,14 +52,14 @@
 			: (SOURCE_OF_EDGE[v.from.ref.collection] ?? 'de gegevens van de bron')
 	);
 
-	const openHref = $derived(
-		v.relation === 'EXPLAINS' && besideHref ? besideHref : bronHref(v.from.ref, { at: v.at })
-	);
+	const openHref = $derived(besideHref ?? bronHref(v.from.ref, { at: v.at }));
+	// The first place where it names several: `r.o. 6 en 7` opens at 6.
+	const eerste = $derived(v.position?.replace(/ en .*$|, .*$/, '') ?? null);
 	const openLabel = $derived(
 		v.relation === 'EXPLAINS' && besideHref
 			? 'Lees naast het artikel'
-			: v.position
-				? `Lees bij ${v.position}`
+			: eerste
+				? `Lees bij ${eerste}`
 				: 'Lees'
 	);
 

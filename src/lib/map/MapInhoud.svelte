@@ -2,9 +2,11 @@
 	// What an item of a map shows when its row opens: the place it keeps, read in place, so a
 	// map is read without going back and forth (Thijs, 12 Oct). An article its lid in the
 	// reader's own text (ArticleText: its references and defined terms as there), Heel artikel
-	// a click further; a judgment its overweging (CitedText), the overwegingen around it a
-	// click further; a Kamerstuk the words its note quotes in the text around them, else the
-	// opening of its text; another bron the lines of its card. Asked when the row opens, once
+	// a click further; a judgment its overweging (Overweging, as a reference's card shows
+	// it), the overwegingen around it a click further; a Kamerstuk the words its note quotes
+	// in the text around them, else its core text as its row opens anywhere (kernVan: a motie
+	// its dictum, an amendement its toelichting, another its opening); another bron the lines
+	// of its card. Asked when the row opens, once
 	// (the readers share the requests). The bron itself stays one step further, by a link that
 	// says where it goes: Heel artikel in de lezer, beside Heel artikel hier, which widens the
 	// lid to its article in place (Thijs, 12 Oct). An article opens with the regulations based
@@ -18,29 +20,20 @@
 	import { instrumentMetaStore, recordArticleLaw } from '$lib/api/instrument-cache';
 	import { page } from '$app/state';
 	import { permalink } from '$lib/bron/anchor';
-	import PlaatsMenu from '$lib/components/articles/PlaatsMenu.svelte';
-	import { citeItems } from '$lib/components/ui/cite';
 	import { articleCitation } from '$lib/text/cite';
-	import { overwegingCitaat, type UitspraakVoorCitaat } from '$lib/text/judgment-cite';
-	import { getJudgmentDetail } from '$lib/api/judgments';
 	import { getDocument, getNodeFirst } from '$lib/api/records';
 	import { loadPreview } from '$lib/bron/preview';
-	import { keyEcli } from '$lib/bron/leesbaar';
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
-	import CitedText from '$lib/components/articles/CitedText.svelte';
-	import {
-		bodyItems,
-		signatureStart,
-		type BodyItem
-	} from '$lib/components/explore/readers/judgment-text';
-	import { openingVan } from '$lib/components/open/rij-inhoud';
+	import Overweging from '$lib/bron/Overweging.svelte';
+	import { heeftOverweging, laadUitspraak, type Uitspraak } from '$lib/bron/overweging';
+	import { kernSoort, kernVan } from '$lib/components/open/rij-inhoud';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	import { kindName } from '$lib/components/explore/law-head';
 	import { korteDatum } from '$lib/text/datum';
 	import { parseNodeId } from '$lib/vocabulary';
-	import { citaatUit, overwegingVan, rondCitaat } from './inhoud';
+	import { citaatUit, rondCitaat } from './inhoud';
 	import type { MapItem } from './map';
 	import MapRegelingen from './MapRegelingen.svelte';
 	import { onderWet, opArtikel } from './verbonden';
@@ -54,13 +47,13 @@
 		| { soort: 'laden' }
 		| { soort: 'niets' }
 		| { soort: 'artikel'; d: Artikel }
+		| { soort: 'uitspraak'; u: Uitspraak; samenvatting: string | null }
 		| {
-				soort: 'uitspraak';
-				j: UitspraakVoorCitaat;
-				items: BodyItem[];
-				samenvatting: string | null;
+				soort: 'stuk';
+				tekst: string | null;
+				kern: string | null;
+				als: 'dictum' | 'toelichting' | 'opening';
 		  }
-		| { soort: 'stuk'; tekst: string | null }
 		| { soort: 'wet'; bwb: string; bij: string }
 		| { soort: 'regels'; tekst: string };
 
@@ -102,16 +95,10 @@
 			return d ? { soort: 'artikel', d } : { soort: 'niets' };
 		}
 		if (doel.collection === 'judgments') {
-			const ecli = keyEcli(doel.key);
-			if (!ecli) return { soort: 'niets' };
-			const { judgment: j } = await getJudgmentDetail(ecli);
-			const paragraphs = j.paragraphs ?? [];
-			return {
-				soort: 'uitspraak',
-				j,
-				items: bodyItems(paragraphs.slice(0, signatureStart(paragraphs))),
-				samenvatting: tekstVan(j.summary)
-			};
+			const u = await laadUitspraak(doel.key);
+			return u
+				? { soort: 'uitspraak', u, samenvatting: tekstVan(u.j.summary) }
+				: { soort: 'niets' };
 		}
 		if (doel.collection === 'instruments') {
 			const d = await getInstrumentDetail(doel.key.toUpperCase());
@@ -125,8 +112,11 @@
 					.join(', ')
 			};
 		}
-		if (doel.collection === 'documents')
-			return { soort: 'stuk', tekst: (await getDocument(doel.key)).text ?? null };
+		if (doel.collection === 'documents') {
+			const d = await getDocument(doel.key);
+			const als = kernSoort(d.kind);
+			return { soort: 'stuk', tekst: d.text ?? null, kern: kernVan(als, d), als };
+		}
 		const p = await loadPreview(i.id, i.at || null);
 		return p?.lines ? { soort: 'regels', tekst: p.lines } : { soort: 'niets' };
 	}
@@ -165,24 +155,6 @@
 				})
 			: null
 	);
-
-	/** The overweging whose menu is open, and the number it hangs from. */
-	let menu = $state<{ id: string; anker: HTMLElement } | null>(null);
-	function openMenu(id: string, anker: HTMLElement) {
-		menu = menu?.id === id ? null : { id, anker };
-	}
-	/** A click on an overweging's text opens its menu, as in the reader: not on a link or a
-	 *  control, not when text is being selected. */
-	function opTekst(e: MouseEvent, id: string) {
-		const t = e.target as HTMLElement;
-		if (t.closest('a, button, input, textarea, summary, [role="button"]')) return;
-		if (window.getSelection()?.toString()) return;
-		e.stopPropagation();
-		const anker = (e.currentTarget as HTMLElement)
-			.closest('.rov')
-			?.querySelector<HTMLElement>('.plaats-marker');
-		if (anker) openMenu(id, anker);
-	}
 </script>
 
 <div class="inhoud">
@@ -220,59 +192,15 @@
 			<TekstLink {href}>{item.at ? 'Heel artikel in de lezer' : 'Artikel in de lezer'}</TekstLink>
 		</p>
 	{:else if inhoud.soort === 'uitspraak'}
-		{@const deel = item.at ? overwegingVan(inhoud.items, item.at, ruim) : null}
+		{@const u = inhoud.u}
+		{@const deel = item.at ? heeftOverweging(u, item.at) : false}
 		{#if deel}
-			<div class="uitspraak">
-				{#each deel.items as b, k (k)}
-					{#if b.kind === 'rov'}
-						{@const forms = overwegingCitaat(
-							inhoud.j,
-							b.num,
-							b.id,
-							linkNaar(inhoud.j.path, b.id),
-							item.id
-						)}
-						<div
-							class="rov"
-							class:eigen={ruim && deel.eigen.has(k)}
-							class:is-open={menu?.id === b.id}
-						>
-							{#if forms}
-								<button
-									type="button"
-									class="rov-num plaats-marker"
-									aria-haspopup="menu"
-									aria-expanded={menu?.id === b.id}
-									aria-label="Overweging {b.num}: citeren, bewaren"
-									onclick={(e) => openMenu(b.id, e.currentTarget)}>{b.num}</button
-								>
-							{:else}
-								<span class="rov-num">{b.num}</span>
-							{/if}
-							<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-							<div class:is-klikbaar={!!forms} onclick={(e) => forms && opTekst(e, b.id)}>
-								<p><CitedText text={b.body} citations={b.citations} /></p>
-							</div>
-							{#if menu && menu.id === b.id && forms}
-								<PlaatsMenu
-									anker={menu.anker}
-									titel={forms.kort}
-									cite={citeItems(forms, forms.link)}
-									tekst={() => b.body}
-									bewaar={forms.bewaar}
-									onClose={() => (menu = null)}
-								/>
-							{/if}
-						</div>
-					{:else if b.kind === 'prose'}
-						<p class="rov-verder" class:eigen={ruim && deel.eigen.has(k)}>
-							<CitedText text={b.body} citations={b.citations} />
-						</p>
-					{:else}
-						<p class="rov-kop">{b.text}</p>
-					{/if}
-				{/each}
-			</div>
+			<Overweging
+				uitspraak={u}
+				at={item.at}
+				{ruim}
+				bewaar={{ id: item.id, link: (anker) => linkNaar(u.j.path, anker) }}
+			/>
 		{:else if inhoud.samenvatting}
 			<p class="tekst">{inhoud.samenvatting}</p>
 		{:else}
@@ -290,8 +218,8 @@
 		{@const rond = citaat ? rondCitaat(inhoud.tekst, citaat) : null}
 		{#if rond}
 			<p class="tekst">{rond.voor}<mark>{rond.citaat}</mark>{rond.na}</p>
-		{:else if openingVan(inhoud.tekst)}
-			<p class="tekst">{openingVan(inhoud.tekst)}</p>
+		{:else if inhoud.kern}
+			<p class="tekst" class:dictum={inhoud.als === 'dictum'}>{inhoud.kern}</p>
 		{:else}
 			<p class="stil">Tekst nog niet in de gegevens.</p>
 		{/if}
@@ -337,81 +265,8 @@
 		background: var(--wassing);
 		color: inherit;
 	}
-	.uitspraak {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-2);
-		font-family: var(--font-serif);
-		font-size: var(--t-body);
-		line-height: var(--lh-body);
-		color: var(--ink);
-	}
-	.uitspraak p {
-		margin: 0;
-	}
-	.rov {
-		position: relative;
-		display: grid;
-		grid-template-columns: 3em minmax(0, 1fr);
-		gap: 0 var(--s-3);
-	}
-	.rov-num {
-		color: var(--ink-3);
-		text-align: right;
-	}
-	.rov:hover,
-	.rov.is-open {
-		background: var(--paper-2);
-	}
-	/* The number is the overweging's menu, as in the reader (JudgmentReader): underlined with
-	   ▾ while the overweging is pointed at, open or focused. */
-	.plaats-marker {
-		align-self: start;
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: var(--ink-3);
-		cursor: pointer;
-	}
-	.rov:hover .plaats-marker,
-	.rov.is-open .plaats-marker,
-	.plaats-marker:focus-visible {
-		color: var(--ink);
-		text-decoration: underline;
-		text-underline-offset: 3px;
-	}
-	.rov:hover .plaats-marker::after,
-	.rov.is-open .plaats-marker::after,
-	.plaats-marker:focus-visible::after {
-		content: ' ▾';
-		font-size: 0.7em;
-		color: var(--ink-3);
-		text-decoration: none;
-	}
-	.plaats-marker:focus-visible {
-		outline: 2px solid var(--focus);
-		outline-offset: 2px;
-	}
-	.is-klikbaar {
-		cursor: pointer;
-	}
-	.uitspraak .rov-verder {
-		position: relative;
-		margin-left: calc(3em + var(--s-3));
-	}
-	.rov-kop {
-		font-weight: 600;
-	}
-	/* The overweging the item keeps, among those around it: the bar of a kept place. */
-	.eigen::before {
-		content: '';
-		position: absolute;
-		left: -10px;
-		top: var(--s-1);
-		bottom: var(--s-1);
-		width: 3px;
-		background: var(--ink);
+	.dictum {
+		font-style: italic;
 	}
 	.stil {
 		margin: 0;

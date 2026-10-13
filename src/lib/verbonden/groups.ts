@@ -330,6 +330,8 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Uitspraken die dit artikel aanhalen',
 			noun: 'uitspraken',
 			load: 'article-judgments',
+			// Read beside the article, at the r.o. that cites it, as the Toelichting is.
+			inPlace: true,
 			bakken: [{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }]
 		},
 		{

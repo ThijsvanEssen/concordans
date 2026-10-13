@@ -6,7 +6,7 @@ import type { GraphEdge, GraphNode } from '$lib/graph/types';
 import { relationLabel, statusLabel, type Relation } from '$lib/vocabulary';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { confidenceWord } from './filter';
-import { describe, type Row } from './rows';
+import { describe, positionsLabel, type Row } from './rows';
 
 export type End = {
 	ref: BronRef;
@@ -127,7 +127,8 @@ export function verbindingOfRow(row: Row, selection: GraphNode): Verbinding | nu
 		kind: kindOfVerbinding(row.relation, sourceCollection),
 		lid: row.lid ?? null,
 		position: row.position ?? null,
-		at: inbound ? (row.at ?? null) : null,
+		// The place in the citing text: the row's own, or where the selected bron cites it.
+		at: row.passageAt ?? (inbound ? (row.at ?? null) : null),
 		snippet: row.snippet ?? null,
 		match: row.match ?? null,
 		confidence: row.confidence ?? null,
@@ -135,6 +136,30 @@ export function verbindingOfRow(row: Row, selection: GraphNode): Verbinding | nu
 		status: row.proposed ? 'voorgesteld' : 'vastgesteld',
 		reason: typeof row.props?.reason === 'string' ? row.props.reason : null,
 		edgeId: row.edgeId ?? null
+	};
+}
+
+/**
+ * Where an edge stands in its source, from its meta: the light meta of a node's response
+ * gives the numbers of the paragraphs (`paragraphs: ["6", "7"]`), one mention its own
+ * (`paragraph_number`, `paragraph_id`). `r.o. 6 en 7` and the anchor of the first, so the
+ * line, the card and its Lees open where the row does.
+ */
+export function plaatsVanMeta(
+	meta: Record<string, unknown> | null | undefined,
+	sourceKey: string
+): { position: string | null; at: string | null } {
+	const m = meta ?? {};
+	const nummers = Array.isArray(m.paragraphs)
+		? m.paragraphs.filter((p): p is string => typeof p === 'string' && !!p)
+		: [];
+	const een =
+		typeof m.paragraph_number === 'string' && m.paragraph_number ? m.paragraph_number : null;
+	const alle = nummers.length ? nummers : een ? [een] : [];
+	const id = typeof m.paragraph_id === 'string' && m.paragraph_id ? m.paragraph_id : null;
+	return {
+		position: positionsLabel(alle.map((nr) => paragraphCite(sourceKey, nr))),
+		at: id ?? (alle[0] ? `rov-${alle[0]}` : null)
 	};
 }
 
@@ -153,10 +178,7 @@ export function verbindingOfEdge(
 		label: relationLabel(edge.relation, source.collection),
 		kind: kindOfVerbinding(edge.relation, source.collection),
 		lid,
-		position: text(meta.paragraph_number)
-			? paragraphCite(source.key, String(meta.paragraph_number))
-			: null,
-		at: text(meta.paragraph_id),
+		...plaatsVanMeta(meta, source.key),
 		snippet: text(meta.snippet),
 		match: text(meta.raw_match),
 		confidence: edge.confidence ?? null,
