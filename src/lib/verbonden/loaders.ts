@@ -12,9 +12,9 @@ import { refOf } from '$lib/bron/href';
 import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
-import { getArticleDetail, getDelegated } from '$lib/api/articles';
+import { getArticleDetail, getDelegated, getLawDelegated } from '$lib/api/articles';
 import { kindName } from '$lib/components/explore/law-head';
-import type { Regeling } from '$lib/text/delegaties';
+import { grondslagArtikelen, type Regeling, type WetRegeling } from '$lib/text/delegaties';
 import { abortable, getAmendedBy, getMemberDossiers } from '$lib/api/records';
 import { lawArticleList } from '$lib/api/law-articles';
 import { buildGroups, EUROPEAN, type Loader, type Match } from './groups';
@@ -248,7 +248,9 @@ async function actorDossiers(
 const AARD_PAGES = 5;
 
 /** A regulation issued under the article, as a row of Verbonden. */
-export function regelingRow(r: Regeling): Row {
+export function regelingRow(
+	r: Pick<Regeling, 'instrument' | 'kind' | 'date_in_force' | 'leden'>
+): Row {
 	const i = r.instrument;
 	const props = {
 		bwb_id: i.bwb_id,
@@ -260,6 +262,8 @@ export function regelingRow(r: Regeling): Row {
 		ref: { collection: 'instruments', key: i.key },
 		...describe('instruments', i.key, i.display_name, props),
 		context: kindName(r.kind),
+		// Its day, not its BWB id: `AMvB, 15 aug. 2026` (Thijs, 13 Oct).
+		identifier: null,
 		date: r.date_in_force ?? null,
 		lid: r.leden?.length === 1 ? r.leden[0] : null,
 		kind: bronKindOf('instruments', i.key, props, 'BASED_ON'),
@@ -267,6 +271,24 @@ export function regelingRow(r: Regeling): Row {
 		direction: 'inbound',
 		props
 	};
+}
+
+/**
+ * A regulation issued under the law, as a row of Verbonden: as one under an article
+ * (regelingRow), its place the articles of the law its Gelet op names, `art. 16, 21, 24`.
+ * A map lists the same rows under a kept law (map/verbonden.ts).
+ */
+export function wetRegelingRow(r: WetRegeling): Row {
+	return {
+		...regelingRow({ instrument: r.instrument, kind: r.kind, date_in_force: r.date_in_force }),
+		position: grondslagArtikelen(r.articles)
+	};
+}
+
+/** The regulations issued under a law, as rows: empty where it has none or the API says nothing. */
+export async function wetRegelingen(bwb: string): Promise<{ total: number; rows: Row[] }> {
+	const found = await getLawDelegated(bwb);
+	return { total: found?.total ?? 0, rows: (found?.items ?? []).map(wetRegelingRow) };
 }
 
 export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = {
@@ -845,6 +867,12 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 
 	// The laws whose articles refer to this law's articles, or the other way round,
 	// counted per direction.
+	// The regulations whose Gelet op names an article of the law (`/delegated`, API 0.79.52).
+	'instrument-delegated': async ({ node, signal }) => {
+		const bwb = bwbOf(node);
+		return bwb ? abortable(wetRegelingen(bwb), signal) : { rows: [] };
+	},
+
 	'instrument-related': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
 		if (!bwb) return { rows: [] };

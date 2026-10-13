@@ -38,6 +38,7 @@ export type Loader =
 	| 'judgment-articles'
 	| 'instrument-dossiers'
 	| 'instrument-related'
+	| 'instrument-delegated'
 	| 'instrument-aard'
 	| 'instrument-amended-by'
 	| 'instrument-articles'
@@ -282,6 +283,13 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Artikelen van deze wet',
 			noun: 'artikelen',
 			load: 'instrument-articles'
+		},
+		{
+			// The AMvB's and regelingen whose Gelet op names an article of the law (Thijs, 13 Oct).
+			id: 'based-on',
+			label: 'Gebaseerd op deze wet',
+			noun: 'regelingen',
+			load: 'instrument-delegated'
 		},
 		{
 			id: 'implemented-by',

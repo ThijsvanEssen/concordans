@@ -1,21 +1,24 @@
 <script lang="ts">
 	// The regulations under an opened item or law of a map (verbonden.ts): a heading, then per
-	// regulation its name, a link to its reader, with its kind and date after it. First the
-	// names, as the list gives them; kind and date fill in after. Nothing where there are none.
+	// regulation its name, a link to its reader, with its kind and date after it and, under a
+	// law, the articles it rests on below. First the names, as the list gives them; kind and
+	// date fill in after. Nothing where there are none.
 	import { buildBronHref } from '$lib/bron/href';
 	import { korteDatum } from '$lib/text/datum';
-	import { aangevuld, type Regeling } from './verbonden';
+	import { aangevuld, type Regeling, type Regelingen } from './verbonden';
 
-	let { titel, laad }: { titel: string; laad: () => Promise<Regeling[]> } = $props();
+	let { laad }: { laad: () => Promise<Regelingen> } = $props();
 
+	let titel = $state('');
 	let lijst = $state<Regeling[]>([]);
 
 	$effect(() => {
 		let stale = false;
 		lijst = [];
 		laad()
-			.then((rs) => {
+			.then(({ titel: kop, regelingen: rs }) => {
 				if (stale) return;
+				titel = kop;
 				lijst = rs;
 				rs.forEach((r, k) =>
 					aangevuld(r)
@@ -41,6 +44,7 @@
 				<li>
 					<a href={buildBronHref(null, r.id)} data-sveltekit-noscroll>{r.naam}</a>
 					{#if bij(r)}<span class="bij">{bij(r)}</span>{/if}
+					{#if r.artikelen}<span class="op">{r.artikelen}</span>{/if}
 				</li>
 			{/each}
 		</ul>
@@ -84,8 +88,13 @@
 	a:hover {
 		text-decoration-color: currentColor;
 	}
-	.bij {
+	.bij,
+	.op {
 		font-size: var(--t-micro);
 		color: var(--ink-3);
+	}
+	/* The articles it rests on, on a line of their own under its name. */
+	.op {
+		flex-basis: 100%;
 	}
 </style>

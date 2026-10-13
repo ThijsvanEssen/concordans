@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.50"
+		"version": "0.79.52"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -332,7 +332,7 @@
 			"get": {
 				"tags": ["articles", "articles"],
 				"summary": "Regulations issued under an article",
-				"description": "The regulations whose preamble (\"Gelet op\") names this article as their legal basis (`BASED_ON`), each with the leden it names and its articles that refer to this one; and the delegation formulas of the article (\"bij of krachtens algemene maatregel van bestuur\"), each with the regulations that fill it, or none yet. 404 when the article is unknown.",
+				"description": "The regulations in force whose preamble (\"Gelet op\") names this article as their legal basis (`BASED_ON`; a repealed regulation is left out), each with the leden it names and its articles that refer to this one; and the delegation formulas of the article (\"bij of krachtens algemene maatregel van bestuur\"), each with the regulations that fill it, or none yet. 404 when the article is unknown.",
 				"operationId": "get_delegated_api_articles__bwb_id___article_number__delegated_get",
 				"parameters": [
 					{
@@ -1180,6 +1180,40 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/InstrumentRelatedResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/instruments/{bwb_id}/delegated": {
+			"get": {
+				"tags": ["instruments", "instruments"],
+				"summary": "Regulations issued under a law",
+				"description": "The regulations in force whose preamble (\"Gelet op\") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names: AMvBs first, then ministerial regulations, then the others; by title. A repealed regulation or article is left out. Empty for an unknown instrument.",
+				"operationId": "get_instrument_delegated_route_api_instruments__bwb_id__delegated_get",
+				"parameters": [
+					{
+						"name": "bwb_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Bwb Id" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/InstrumentDelegatedResponse" }
 							}
 						}
 					},
@@ -5787,7 +5821,7 @@
 						"items": { "$ref": "#/components/schemas/DelegatedRegulationDTO" },
 						"type": "array",
 						"title": "Items",
-						"description": "Every regulation issued under the article: AMvBs first, then ministerial regulations, then the others; by title."
+						"description": "Every regulation in force issued under the article: AMvBs first, then ministerial regulations, then the others; by title."
 					},
 					"total": { "type": "integer", "title": "Total" }
 				},
@@ -6395,6 +6429,48 @@
 				"required": ["id", "key", "collection", "type", "display_name", "labels", "props", "path"],
 				"title": "BaseNodeDTO",
 				"description": "Common node representation used by multiple responses."
+			},
+			"BasisArticleDTO": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"article_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article Number"
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Text",
+						"description": "The reference in the preamble: `16, eerste en zevende lid`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "article_number", "display_name", "text"],
+				"title": "BasisArticleDTO",
+				"description": "An article of the law a regulation is issued under, with the leden and onderdelen\nits preamble names (none: the whole article)."
 			},
 			"BusyCallDTO": {
 				"properties": {
@@ -8196,7 +8272,7 @@
 					"kind": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Kind",
-						"description": "Its BWB type: `AMvB`, `ministeriele-regeling`, `KB`, \u2026"
+						"description": "Its BWB type as stored: `amvb`, `ministeriele-regeling`, `kb`, \u2026"
 					},
 					"date_in_force": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -11183,6 +11259,53 @@
 				"required": ["key"],
 				"title": "InstrumentDefinitionsResponse",
 				"description": "The definitions an instrument gives itself."
+			},
+			"InstrumentDelegatedItem": {
+				"properties": {
+					"instrument": { "$ref": "#/components/schemas/InstrumentSummaryDTO" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "Its BWB type, lower case: `amvb`, `ministeriele-regeling`, `kb`, \u2026"
+					},
+					"date_in_force": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date In Force",
+						"description": "When the regulation itself entered into force."
+					},
+					"articles": {
+						"items": { "$ref": "#/components/schemas/BasisArticleDTO" },
+						"type": "array",
+						"title": "Articles",
+						"description": "The articles of the law it is issued under, in the order of the law."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["instrument", "kind", "articles"],
+				"title": "InstrumentDelegatedItem",
+				"description": "A regulation whose preamble (\"Gelet op\") names an article of the law."
+			},
+			"InstrumentDelegatedResponse": {
+				"properties": {
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
+					"total": { "type": "integer", "title": "Total" },
+					"items": {
+						"items": { "$ref": "#/components/schemas/InstrumentDelegatedItem" },
+						"type": "array",
+						"title": "Items",
+						"description": "Every regulation in force issued under an article of the law: AMvBs first, then ministerial regulations, then the others; by title."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["bwb_id", "total"],
+				"title": "InstrumentDelegatedResponse",
+				"description": "Response for GET /api/instruments/{bwb_id}/delegated."
 			},
 			"InstrumentDetailDTO": {
 				"properties": {

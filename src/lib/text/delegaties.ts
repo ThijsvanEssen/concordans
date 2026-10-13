@@ -57,3 +57,17 @@ export const regelingRegel = (r: Regeling): string | null =>
 /** An article of the regulation that refers here, as the card names it: `art. 2`. */
 export const artikelKort = (a: Schema<'DelegatedArticleDTO'>): string =>
 	a.article_number ? `art. ${a.article_number}` : naamVan('articles', a);
+
+/** A regulation issued under a law, with the articles of the law its `Gelet op` names. */
+export type WetRegeling = Schema<'InstrumentDelegatedItem'>;
+
+/**
+ * The articles of the law a regulation rests on, short and once each, in the law's order:
+ * `art. 16, 21, 24` (Thijs, 13 Oct). Null where it names none by number.
+ */
+export function grondslagArtikelen(articles: readonly Schema<'BasisArticleDTO'>[]): string | null {
+	const nummers = [
+		...new Set(articles.map((a) => a.article_number?.trim()).filter((n): n is string => !!n))
+	];
+	return nummers.length ? `art. ${nummers.join(', ')}` : null;
+}

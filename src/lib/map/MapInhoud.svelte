@@ -8,7 +8,9 @@
 	// (the readers share the requests). The bron itself stays one step further, by a link that
 	// says where it goes: Heel artikel in de lezer, beside Heel artikel hier, which widens the
 	// lid to its article in place (Thijs, 12 Oct). An article opens with the regulations based
-	// on it, a law with its kind, its day and the laws connected to it (MapRegelingen).
+	// on it, a law with its kind and its day (its name and title stand in the row: not again,
+	// Thijs, 13 Oct) and the regulations based on it, else the laws connected to it
+	// (MapRegelingen).
 	// A place's menu is the reader's own (PlaatsMenu): Citeer, Kopieer tekst and Bewaar, from
 	// the same citation (articleCitation, overwegingCitaat; Thijs, 12 Oct).
 	import type { Schema } from '$lib/api/types';
@@ -41,7 +43,7 @@
 	import { citaatUit, overwegingVan, rondCitaat } from './inhoud';
 	import type { MapItem } from './map';
 	import MapRegelingen from './MapRegelingen.svelte';
-	import { bijWet, opArtikel } from './verbonden';
+	import { onderWet, opArtikel } from './verbonden';
 
 	let { item, href }: { item: MapItem; href: string } = $props();
 
@@ -59,7 +61,7 @@
 				samenvatting: string | null;
 		  }
 		| { soort: 'stuk'; tekst: string | null }
-		| { soort: 'wet'; bwb: string; titel: string | null; bij: string }
+		| { soort: 'wet'; bwb: string; bij: string }
 		| { soort: 'regels'; tekst: string };
 
 	let inhoud = $state<Inhoud>({ soort: 'laden' });
@@ -115,11 +117,9 @@
 			const d = await getInstrumentDetail(doel.key.toUpperCase());
 			const bwb = d.bwb_id ?? d.celex ?? doel.key.toUpperCase();
 			const sinds = d.date_in_force ?? d.version_date_in_force;
-			const titel = tekstVan(d.official_title) ?? tekstVan(d.title);
 			return {
 				soort: 'wet',
 				bwb,
-				titel: titel && titel !== i.kort ? titel : null,
 				bij: [kindName(d.kind), sinds ? `in werking ${korteDatum(sinds)}` : null]
 					.filter(Boolean)
 					.join(', ')
@@ -209,7 +209,7 @@
 		{#if inhoud.d.bwb && a.article_number}
 			{@const bwb = inhoud.d.bwb}
 			{@const nummer = a.article_number}
-			<MapRegelingen titel="Gebaseerd op dit artikel" laad={() => opArtikel(bwb, nummer)} />
+			<MapRegelingen laad={() => opArtikel(bwb, nummer)} />
 		{/if}
 		<p class="verder">
 			{#if item.at}
@@ -298,9 +298,8 @@
 		<p class="verder"><TekstLink {href}>Lees verder</TekstLink></p>
 	{:else if inhoud.soort === 'wet'}
 		{@const bwb = inhoud.bwb}
-		{#if inhoud.titel}<p class="tekst">{inhoud.titel}</p>{/if}
 		{#if inhoud.bij}<p class="stil">{inhoud.bij}</p>{/if}
-		<MapRegelingen titel="Verbonden regelingen" laad={() => bijWet(bwb)} />
+		<MapRegelingen laad={() => onderWet(bwb)} />
 		<p class="verder"><TekstLink {href}>Wet in de lezer</TekstLink></p>
 	{:else if inhoud.soort === 'regels'}
 		<p class="tekst">{inhoud.tekst}</p>
