@@ -1208,10 +1208,11 @@
 		void selectedNode?.id;
 		tocOpen = false;
 	});
-	// Picking a bron closes the sheet; opening or closing a Boek/Titel group (a
-	// <summary>) must not, or the tree could never be opened inside it.
+	// Picking a bron or a division (its link) closes the sheet; opening or closing a
+	// Boek/Titel group (a <summary>) must not, or the tree could never be opened inside it.
 	function onTocBodyClick(e: MouseEvent) {
-		if ((e.target as HTMLElement).closest('summary')) return;
+		const target = e.target as HTMLElement;
+		if (target.closest('summary') && !target.closest('a')) return;
 		tocOpen = false;
 	}
 

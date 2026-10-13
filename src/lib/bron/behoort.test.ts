@@ -54,11 +54,12 @@ describe('behoort', () => {
 		expect(b.onder).toEqual([]);
 	});
 
-	it('puts an article under its law and the law’s division, the law itself not twice', () => {
+	it('puts an article under its law (at the article) and the law’s division, the law itself not twice', () => {
 		const b = behoort(
 			'articles',
 			{
 				instrument_citation_title: 'Algemene wet bestuursrecht',
+				article_number: '3:4',
 				breadcrumb: [
 					{ type: 'hoofdstuk', label: 'Hoofdstuk 3', title: 'Algemene bepalingen over besluiten' },
 					{ type: 'afdeling', label: 'Afdeling 3.2', title: 'Zorgvuldigheid en belangenafweging' }
@@ -88,7 +89,7 @@ describe('behoort', () => {
 			['afdeling', 'Afdeling 3.2 Zorgvuldigheid en belangenafweging']
 		]);
 		expect(wet.map((l) => l.at)).toEqual([
-			undefined,
+			'artikel-3:4',
 			'deel-hoofdstuk-3',
 			'deel-hoofdstuk-3-afdeling-3.2'
 		]);

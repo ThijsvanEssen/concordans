@@ -3,7 +3,9 @@
 	// The table of contents of the law in Lezen: the name of the law, the title of the
 	// current section under it, and the articles, the active one marked.
 	import { lawArticles, type LawArticle } from '$lib/api/law-articles';
-	import { layersOf } from '$lib/text/division';
+	import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
+	import { scrollInReader } from '$lib/bron/anchor';
+	import { page } from '$app/state';
 	import { instrumentMetaStore } from '$lib/api/instrument-cache';
 	import { lawIdOf, type GraphNode } from '$lib/graph/types';
 	import { bronHref } from '$lib/bron/href';
@@ -11,9 +13,12 @@
 
 	let { selection }: { selection: GraphNode | null } = $props();
 
-	type Item = LawArticle;
+	/** An article with the anchor of each layer of its place in the whole law. */
+	type Item = LawArticle & { ids: string[] };
 
 	type Group = {
+		/** Its anchor in the whole law: `deel-hoofdstuk-3`. */
+		id: string;
 		label: string;
 		title: string | null;
 		type: string;
@@ -21,7 +26,7 @@
 		children: Group[];
 	};
 
-	let items = $state<Item[]>([]);
+	let items = $state<LawArticle[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
@@ -73,11 +78,17 @@
 		const anyHasBc = flat.some((it) => it.breadcrumb.length > 0);
 		if (!anyHasBc) return null;
 
-		const root: Group = { label: '', title: null, type: 'root', items: [], children: [] };
-		const findOrAdd = (parent: Group, type: string, label: string, title: string | null): Group => {
+		const root: Group = { id: '', label: '', title: null, type: 'root', items: [], children: [] };
+		const findOrAdd = (
+			parent: Group,
+			type: string,
+			label: string,
+			title: string | null,
+			id = ''
+		): Group => {
 			let g = parent.children.find((c) => c.type === type && c.label === label);
 			if (!g) {
-				g = { label, title, type, items: [], children: [] };
+				g = { id, label, title, type, items: [], children: [] };
 				parent.children.push(g);
 			}
 			return g;
@@ -90,9 +101,15 @@
 				continue;
 			}
 			let parent = root;
-			for (const seg of bc) {
-				parent = findOrAdd(parent, seg.type ?? 'sectie', seg.label ?? '', seg.title ?? null);
-			}
+			bc.forEach((seg, i) => {
+				parent = findOrAdd(
+					parent,
+					seg.type ?? 'sectie',
+					seg.label ?? '',
+					seg.title ?? null,
+					it.ids[i]
+				);
+			});
 			parent.items.push(it);
 		}
 		return root.children;
@@ -101,7 +118,11 @@
 	// A layer that is the law itself (Boek 6 of BW Boek 6) is no group and no place; the
 	// name of the law may come after the articles, so this follows it.
 	const shaped = $derived(
-		items.map((it) => ({ ...it, breadcrumb: layersOf(it.breadcrumb, lawName) }))
+		items.map((it): Item => {
+			const layers = layersOf(it.breadcrumb, lawName);
+			const ids = deelIds(it.breadcrumb).slice(it.breadcrumb.length - layers.length);
+			return { ...it, breadcrumb: layers, ids };
+		})
 	);
 	const groups = $derived(shaped.length > 0 ? buildGroups(shaped) : null);
 
@@ -111,26 +132,70 @@
 
 	$effect(() => {
 		void selectedKey;
+		void anker;
 		if (!navEl) return;
 		requestAnimationFrame(() => {
-			const active = navEl?.querySelector('.is-active');
+			const active = navEl?.querySelector('.is-active, .is-hier');
 			active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 		});
 	});
 
+	// A division opens in the whole law at its heading: on the law itself only the anchor
+	// changes (a peildatum stays); from an article the law opens there.
+	const lawRef = $derived(
+		currentBwb ? { collection: 'instruments' as const, key: currentBwb.toLowerCase() } : null
+	);
+	const onLaw = $derived(selection?.collection === 'instruments');
+	const deelHref = (id: string) =>
+		onLaw
+			? `${page.url.pathname}${page.url.search}#${encodeURIComponent(id)}`
+			: lawRef
+				? bronHref(lawRef, { at: id })
+				: null;
+	// From an article the name of the law opens the whole law with that article in view.
+	const selectedNumber = $derived(
+		selection?.collection === 'articles'
+			? (items.find((it) => it.key === selectedKey)?.articleNumber ?? null)
+			: null
+	);
+	const lawHref = $derived(
+		lawRef && selectedNumber ? bronHref(lawRef, { at: artikelAnker(selectedNumber) }) : null
+	);
+
+	/** The group opens with its link; the anchor already in the URL scrolls there again. */
+	function openDeel(e: MouseEvent, id: string) {
+		const link = e.currentTarget as HTMLElement;
+		const group = link.closest('details');
+		if (group) group.open = true;
+		if (!onLaw || decodeURIComponent(page.url.hash.slice(1)) !== id) return;
+		e.preventDefault();
+		const heading = document.querySelector<HTMLElement>(`[data-deel="${CSS.escape(id)}"]`);
+		if (heading) scrollInReader(heading);
+	}
+
+	// On the law itself, the place its anchor names (#deel-hoofdstuk-3, #artikel-658) is
+	// marked and its groups open, as an article is from its own page.
+	const anker = $derived(onLaw ? decodeURIComponent(page.url.hash.slice(1)) : '');
+	const ankerArtikel = $derived(
+		anker.startsWith('artikel-') ? anker.slice('artikel-'.length) : null
+	);
+	const isHier = (it: LawArticle) =>
+		it.key === selectedKey || (ankerArtikel !== null && it.articleNumber === ankerArtikel);
+	const inDeel = (g: Group) => !!g.id && (anker === g.id || anker.startsWith(`${g.id}-`));
+
 	function containsSelected(g: Group): boolean {
 		if (!selectedKey) return false;
-		if (g.items.some((it) => it.key === selectedKey)) return true;
+		if (inDeel(g) || g.items.some(isHier)) return true;
 		return g.children.some(containsSelected);
 	}
 </script>
 
-{#snippet itemRow(item: Item)}
+{#snippet itemRow(item: LawArticle)}
 	<li>
 		<a
 			class="nav-kolom__rij"
-			class:is-active={item.key === selectedKey}
-			aria-current={item.key === selectedKey ? 'page' : undefined}
+			class:is-active={isHier(item)}
+			aria-current={item.key === selectedKey ? 'page' : isHier(item) ? 'location' : undefined}
 			href={bronHref({ collection: 'articles', key: item.key })}
 			data-sveltekit-noscroll>{item.label}</a
 		>
@@ -141,10 +206,22 @@
 	{@const selected = containsSelected(g)}
 	{@const shouldOpen = selectedKey ? selected : depth > 0}
 	{@const level = Math.min(depth, 3)}
+	{@const href = g.id ? deelHref(g.id) : null}
 	<details class="group depth-{level}" open={shouldOpen}>
 		<summary class="group__head">
 			<Caret side />
-			<span class="group__label">{groupLabel(g)}</span>
+			{#if href}
+				<a
+					class="group__label"
+					class:is-hier={anker === g.id}
+					aria-current={anker === g.id ? 'location' : undefined}
+					{href}
+					data-sveltekit-noscroll
+					onclick={(e) => openDeel(e, g.id)}>{groupLabel(g)}</a
+				>
+			{:else}
+				<span class="group__label">{groupLabel(g)}</span>
+			{/if}
 		</summary>
 		{#if g.items.length > 0}
 			<ol class="list">
@@ -169,6 +246,7 @@
 	<NavKolom
 		label="Overzicht"
 		titel={lawName}
+		titelHref={lawHref}
 		onder={selection?.collection !== 'articles' && items.length > 0
 			? `${items.length} artikelen`
 			: null}
@@ -269,6 +347,17 @@
 
 	.group__label {
 		line-height: 1.3;
+		color: inherit;
+		text-decoration: none;
+	}
+	/* The division the law is opened at (#deel-…), marked as the article chosen is. */
+	.group__head:has(.is-hier) {
+		background: var(--paper);
+		color: var(--ink);
+	}
+	a.group__label:hover {
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 
 	.children {

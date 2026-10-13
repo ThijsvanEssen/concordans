@@ -20,7 +20,8 @@
 
 	import { bronHref } from '$lib/bron/href';
 	import { scrollInReader } from '$lib/bron/anchor';
-	import { deelIds, layersOf } from '$lib/text/division';
+	import { deelIds, layersOf, plekVan } from '$lib/text/division';
+	import { lawArticleList } from '$lib/api/law-articles';
 	import { articleName } from '$lib/text/bw';
 	import { page } from '$app/state';
 	import ReaderHead from './readers/ReaderHead.svelte';
@@ -347,31 +348,77 @@
 		return () => controller.abort();
 	});
 
-	// A link to a division (the band Behoort bij, `#deel-hoofdstuk-3`): the pages load
-	// until its heading is there, then it scrolls into view once.
-	let deelGezien = '';
+	// A link to a place in the law: a division (`#deel-hoofdstuk-3`, from the band Behoort bij
+	// or the table of contents) or an article (`#artikel-658`, from the article itself). The
+	// pages load up to it, then it scrolls to the top once and the article is marked.
+	let doelGezien = '';
 	$effect(() => {
 		const hash = decodeURIComponent(page.url.hash.slice(1));
-		if (!hash.startsWith('deel-') || status !== 'ready' || deelGezien === hash) return;
+		if (!/^(deel|artikel)-/.test(hash)) doelGezien = '';
+		if (!/^(deel|artikel)-/.test(hash) || status !== 'ready' || doelGezien === hash) return;
 		void articles.length;
 		// Not an id: on a fresh load the browser would scroll the document itself to it.
-		const el = document.querySelector<HTMLElement>(`[data-deel="${CSS.escape(hash)}"]`);
+		const el = document.querySelector<HTMLElement>(
+			hash.startsWith('deel-')
+				? `[data-deel="${CSS.escape(hash)}"]`
+				: `[data-artikel="${CSS.escape(hash.slice('artikel-'.length))}"]`
+		);
 		if (el) {
-			deelGezien = hash;
-			scrollInReader(el);
-		} else if (articles.length < total) void loadMore();
-		else deelGezien = hash;
+			doelGezien = hash;
+			landOp(el);
+		} else if (articles.length < total) void reach(hash);
+		else doelGezien = hash;
 	});
 
-	async function loadMore() {
+	/** Scrolls a heading or an article to the top of the reader; an article is marked. */
+	function landOp(el: HTMLElement) {
+		scrollInReader(el);
+		if (!el.matches('.whole-article')) return;
+		el.classList.add('is-landed');
+		// The click that brought the reader here has passed by the time this runs.
+		setTimeout(() =>
+			window.addEventListener('click', () => el.classList.remove('is-landed'), { once: true })
+		);
+	}
+
+	/**
+	 * Loads the pages up to a place. Today's list of the law says on which page it stands, so
+	 * those pages come at once; for an earlier day the next page, until the place is there.
+	 */
+	async function reach(hash: string) {
+		const bwb = bwbId;
+		if (!bwb) return;
+		if (peildatum) return loadMore();
+		const index = await lawArticleList(bwb)
+			.then((r) => plekVan(r.items, hash))
+			.catch(() => -1);
+		if (bwb !== bwbId) return;
+		if (index < 0) {
+			doelGezien = hash;
+			return;
+		}
+		await loadMore(index + 1);
+	}
+
+	/** The next page, or every page up to `upTo` articles, two requests at a time. */
+	async function loadMore(upTo = 0) {
 		if (!bwbId || status !== 'ready') return;
 		const bwb = bwbId;
+		const day = peildatum;
+		const offsets: number[] = [];
+		const end = Math.max(Math.min(upTo, total), articles.length + 1);
+		for (let o = articles.length; o < end; o += PAGE_SIZE) offsets.push(o);
 		status = 'loading-more';
 		try {
-			const day = peildatum;
-			const next = await load(bwb, day, articles.length);
+			const pages: Row[][] = [];
+			for (let i = 0; i < offsets.length; i += 2) {
+				const batch = await Promise.all(
+					offsets.slice(i, i + 2).map((o) => load(bwb, day, o).then((r) => r.items))
+				);
+				pages.push(...batch);
+			}
 			if (bwb === bwbId && day === peildatum)
-				articles = uniqueBy([...articles, ...next.items], (a) => a.id);
+				articles = uniqueBy([...articles, ...pages.flat()], (a) => a.id);
 		} catch {
 			// The articles already shown stay; the button remains for another attempt.
 		}
@@ -550,6 +597,7 @@
 			<section
 				class="whole-article"
 				id="article-{address}"
+				data-artikel={a.article_number ?? address}
 				use:lazyLoad={peildatum || a.textToday ? null : address}
 			>
 				<div class="whole-article-head">
@@ -598,7 +646,7 @@
 
 		{#if status !== 'loading' && articles.length < total}
 			<p class="whole-volgende">
-				{#if status === 'loading-more'}Laden…{:else}<TekstLink onclick={loadMore}
+				{#if status === 'loading-more'}Laden…{:else}<TekstLink onclick={() => loadMore()}
 						>Volgende artikelen, nog {formatCount(total - articles.length)}</TekstLink
 					>{/if}
 			</p>
@@ -800,6 +848,11 @@
 
 	.whole-article-head {
 		margin-bottom: var(--s-1);
+	}
+	/* The article a link landed on (#artikel-658): its number washed until the next click. */
+	.whole-article:global(.is-landed) .whole-art-num {
+		background: var(--wassing);
+		box-shadow: 0 0 0 var(--s-1) var(--wassing);
 	}
 
 	.whole-article-jump {
