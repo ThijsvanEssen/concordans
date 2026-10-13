@@ -8,10 +8,16 @@ import { PREVIEW_CHARS, type Preview } from '$lib/bron/preview';
 export type Definitie = Schema<'DefinitionDTO'>;
 export type Begrip = Schema<'TermSpanDTO'>;
 
-/** Where the definition stands: `art. 1, onder a`; the article alone where it has no letter. */
+/**
+ * Where the definition stands: `art. 1, onder a`; the article alone where its place has no
+ * letter or digit (a dash or a bullet of the list is no place to cite).
+ */
 export function plaatsVan(d: Pick<Definitie, 'article_number' | 'place'>): string | null {
 	if (!d.article_number) return null;
-	return d.place ? `art. ${d.article_number}, onder ${d.place}` : `art. ${d.article_number}`;
+	const place = d.place?.trim();
+	return place && /[\p{L}\p{N}]/u.test(place)
+		? `art. ${d.article_number}, onder ${place}`
+		: `art. ${d.article_number}`;
 }
 
 /** The definition in one line: `wet: de Zorgverzekeringswet (art. 1, onder a)`. */

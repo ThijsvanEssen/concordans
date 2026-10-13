@@ -23,6 +23,10 @@ describe('begrippen', () => {
 		expect(definitieRegel(wet)).toBe('wet: de Zorgverzekeringswet (art. 1, onder a)');
 		expect(plaatsVan({ article_number: '1', place: null })).toBe('art. 1');
 		expect(plaatsVan({ article_number: null, place: 'a' })).toBeNull();
+		// A dash or bullet of the list is no place: the article alone.
+		for (const teken of ['–', '−', '•', '○', ' - '])
+			expect(plaatsVan({ article_number: '1', place: teken })).toBe('art. 1');
+		expect(plaatsVan({ article_number: '1', place: '2°' })).toBe('art. 1, onder 2°');
 	});
 
 	it('makes the card of a term: its place, the term, the definition', () => {
