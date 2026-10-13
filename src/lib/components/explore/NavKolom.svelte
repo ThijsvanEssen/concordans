@@ -9,6 +9,7 @@
 	let {
 		label,
 		titel,
+		titelHref = null,
 		onder = null,
 		el = $bindable(null),
 		children
@@ -16,6 +17,8 @@
 		/** What the column is, for a screen reader: `Overzicht`, `Inhoud`. */
 		label: string;
 		titel: string | null;
+		/** Where the name leads: the whole law, from one of its articles. */
+		titelHref?: string | null;
 		/** The line under the name: `128 artikelen`, the kind of a stuk. */
 		onder?: string | null;
 		/** The column itself, for a reader that scrolls it to the bron chosen. */
@@ -26,7 +29,9 @@
 
 <aside class="nav-kolom" aria-label={label} bind:this={el}>
 	<header class="kop">
-		{#if titel}<h3 class="titel">{titel}</h3>{/if}
+		{#if titel}<h3 class="titel">
+				{#if titelHref}<a href={titelHref} data-sveltekit-noscroll>{titel}</a>{:else}{titel}{/if}
+			</h3>{/if}
 		{#if onder}<div class="onder">{onder}</div>{/if}
 	</header>
 	{@render children()}
@@ -51,6 +56,14 @@
 		font-weight: 600;
 		line-height: 1.2;
 		color: var(--ink);
+	}
+	.titel a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.titel a:hover {
+		text-decoration-line: underline;
+		text-underline-offset: 3px;
 	}
 	.onder {
 		margin-top: var(--s-1);

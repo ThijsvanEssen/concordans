@@ -57,3 +57,27 @@ export function deelIds(crumbs: Division[]): string[] {
 		return `deel-${path.filter(Boolean).join('-')}`;
 	});
 }
+
+/** The anchor of an article in the whole law, by its number as the BWB has it: `artikel-658`. */
+export const artikelAnker = (number: string) => `artikel-${number}`;
+
+/** An article of the list of a law, as far as an anchor in the whole law names it. */
+type Plek = {
+	article_number?: string | null;
+	address?: string | null;
+	breadcrumb?: Division[] | null;
+};
+
+/**
+ * Where in the list of a law an anchor of the whole law stands: the article it names
+ * (`artikel-658`), or the first article of the division (`deel-hoofdstuk-3`). -1 for none.
+ */
+export function plekVan(items: Plek[], anker: string): number {
+	if (anker.startsWith('artikel-')) {
+		const nummer = anker.slice('artikel-'.length);
+		return items.findIndex((a) => (a.article_number ?? a.address) === nummer);
+	}
+	if (anker.startsWith('deel-'))
+		return items.findIndex((a) => deelIds(a.breadcrumb ?? []).includes(anker));
+	return -1;
+}

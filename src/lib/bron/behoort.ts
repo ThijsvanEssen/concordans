@@ -10,7 +10,7 @@ import { getNodeFirst } from '$lib/api/records';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { shortDossierTitle } from '$lib/graph/types';
-import { deelIds, layersOf } from '$lib/text/division';
+import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
@@ -269,9 +269,13 @@ export function behoort(
 			// Wet › hoofdstuk › titel › afdeling: the law as a bron, the division by name
 			// (in props, `breadcrumb`); a layer that is the law itself is no layer.
 			const afk = text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation);
-			const wet = eerste('PART_OF', 'outbound', 'instruments', 'Wet').map((l) =>
-				afk ? { ...l, kort: afk } : l
-			);
+			// The law opens with this article in view (WholeLawReader, `#artikel-658`).
+			const nummer = text(props.article_number);
+			const wet = eerste('PART_OF', 'outbound', 'instruments', 'Wet').map((l) => ({
+				...l,
+				...(afk ? { kort: afk } : {}),
+				...(nummer ? { at: artikelAnker(nummer) } : {})
+			}));
 			const crumbs = Array.isArray(props.breadcrumb)
 				? (props.breadcrumb as { type?: string; label?: string; title?: string }[])
 				: [];
