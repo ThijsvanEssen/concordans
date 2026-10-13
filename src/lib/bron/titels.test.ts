@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { onthoudTitel, titelVan } from './titels.svelte';
+import { onthoudTitel, titelVan, zonderKopInKapitalen } from './titels.svelte';
 
 describe('titelVan', () => {
 	it("keeps a node answer's title by the node's id, whole", () => {
@@ -13,5 +13,19 @@ describe('titelVan', () => {
 		onthoudTitel({ node: { id: 'documents/leeg' }, title: '  ' });
 		onthoudTitel({ title: 'Los' });
 		expect(titelVan('documents/leeg')).toBeNull();
+	});
+});
+
+describe('zonderKopInKapitalen', () => {
+	it('leaves a heading of the text in capitals out of the title', () => {
+		onthoudTitel({
+			node: { id: 'instruments/stb_2026_187' },
+			title: 'Stb. 2026, 187: BEGRIPSBEPALING'
+		});
+		expect(titelVan('instruments/stb_2026_187')).toBe('Stb. 2026, 187');
+		expect(zonderKopInKapitalen('Kamerstuk 36764: Memorie van toelichting')).toBe(
+			'Kamerstuk 36764: Memorie van toelichting'
+		);
+		expect(zonderKopInKapitalen('Richtlijn: NIS2')).toBe('Richtlijn: NIS2');
 	});
 });

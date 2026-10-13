@@ -109,7 +109,7 @@ describe('historyRow', () => {
 		const row = historyRow({ dossier_number: '36000', change: 'repeals', status: 'voorgesteld' });
 		expect(row?.ref).toEqual({ collection: 'dossiers', key: '36000', number: '36000' });
 		expect(row?.proposed).toBe(true);
-		expect(row?.context).toBe('voorgesteld, trekt in, Kamerstuk 36000');
+		expect(row?.context).toBe('voorgesteld, doet vervallen, Kamerstuk 36000');
 		expect(historyRow({})).toBeNull();
 	});
 });

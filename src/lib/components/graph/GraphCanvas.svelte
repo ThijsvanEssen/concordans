@@ -17,7 +17,8 @@
 		plaatsLabel,
 		type Rect as LabelRect
 	} from './label-place';
-	import { relationLabel, type Collection, type Relation } from '$lib/vocabulary';
+	import type { Collection, Relation } from '$lib/vocabulary';
+	import { relationLabel } from '$lib/verbonden/hoe';
 	import type { BronKind, Rechter } from '$lib/verbonden/filter';
 	import { getInstrumentMeta } from '$lib/api/instrument-cache';
 	import { isDrawnGroup, type ContainerGroup, type Period } from '$lib/graph/container-membership';
@@ -624,9 +625,17 @@
 		}
 
 		// One line per pair of hulls, from where it leaves the one to where it enters the other.
+		// It says every verbinding it stands for, each in the words of its own source (hoe.ts),
+		// the most frequent first: `wijzigt, licht toe, noemt` between a dossier and a wet.
 		const links = new Map<
 			string,
-			{ from: Drawn; to: Drawn; relation: Relation; status: unknown }
+			{
+				from: Drawn;
+				to: Drawn;
+				relation: Relation;
+				status: unknown;
+				words: Map<string, number>;
+			}
 		>();
 		graph.forEachEdge((_e, attrs, src, tgt) => {
 			const pair = !attrs.layoutOnly && hullLinkOf(src, tgt);
@@ -635,7 +644,21 @@
 			if (!from || !to) return;
 			const id = `${from.id}->${to.id}`;
 			if (!links.has(id))
-				links.set(id, { from, to, relation: attrs.relation as Relation, status: attrs.status });
+				links.set(id, {
+					from,
+					to,
+					relation: attrs.relation as Relation,
+					status: attrs.status,
+					words: new Map()
+				});
+			const word = relationLabel(
+				attrs.relation as Relation,
+				graph.getNodeAttribute(src, 'collection') as Collection,
+				graph.getNodeAttribute(tgt, 'collection') as Collection,
+				attrs.meta as Record<string, unknown> | null
+			);
+			const words = links.get(id)!.words;
+			words.set(word, (words.get(word) ?? 0) + 1);
 		});
 
 		// In the hover: the hulls that hold the hovered bron or one tied to it, or the
@@ -660,7 +683,7 @@
 		}
 
 		const nextLinks: HullLink[] = [];
-		for (const [id, { from, to, relation, status }] of links) {
+		for (const [id, { from, to, relation, status, words: said }] of links) {
 			const start = exitPoint(from.center, to.center, from.polygon);
 			const end = exitPoint(to.center, from.center, to.polygon);
 			const dx = end.x - start.x;
@@ -673,7 +696,10 @@
 			const arrow = `M ${end.x} ${end.y} L ${back.x - uy * 3.5} ${back.y + ux * 3.5} L ${back.x + uy * 3.5} ${back.y - ux * 3.5} Z`;
 			const lit = active !== null && active.has(from.id) && active.has(to.id);
 			const words = [
-				relationLabel(relation, 'documents'),
+				[...said]
+					.sort((a, b) => b[1] - a[1])
+					.map(([w]) => w)
+					.join(', '),
 				status === 'voorgesteld' ? 'voorgesteld' : null
 			]
 				.filter(Boolean)
@@ -750,7 +776,12 @@
 				dim: active !== null && !lit && !active.has(hull.id),
 				label: lit
 					? [
-							relationLabel(relation, graph.getNodeAttribute(src, 'collection') as Collection),
+							relationLabel(
+								relation,
+								graph.getNodeAttribute(src, 'collection') as Collection,
+								graph.getNodeAttribute(tgt, 'collection') as Collection,
+								attrs.meta as Record<string, unknown> | null
+							),
 							attrs.status === 'voorgesteld' ? 'voorgesteld' : null
 						]
 							.filter(Boolean)
@@ -1032,19 +1063,14 @@
 	function edgeLabel(
 		data: Record<string, unknown>,
 		sourceCollection: Collection,
-		source: string
+		source: string,
+		targetCollection: Collection
 	): string {
 		const relation = data.relation as Relation;
 		const meta = (data.meta ?? {}) as Record<string, unknown>;
-		// A signature says what it was signed as: "ondertekend als minister-president".
-		const signedAs =
-			relation === 'AUTHORED' &&
-			typeof meta.function === 'string' &&
-			meta.function &&
-			meta.capacity !== 'kamerlid'
-				? `ondertekend als ${meta.function}`
-				: null;
-		const parts = [signedAs ?? relationLabel(relation, sourceCollection)];
+		// In the words of hoe.ts, read from the source: a member `diende in` or `ondertekende
+		// als minister-president`; a bijlage is `bijlage bij` its letter.
+		const parts = [relationLabel(relation, sourceCollection, targetCollection, meta)];
 		const lid =
 			(Array.isArray(meta.leden) && typeof meta.leden[0] === 'string' && meta.leden[0]) ||
 			(typeof meta.lid === 'string' && meta.lid) ||
@@ -1392,7 +1418,7 @@
 						type: edgeType,
 						color: t.focus,
 						size: restSize * 2.4,
-						label: edgeLabel(data, sourceCollection, src),
+						label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection),
 						forceLabel: true,
 						zIndex: 3
 					};
@@ -1404,7 +1430,7 @@
 						type: edgeType,
 						color: renderColor,
 						size: restSize * 1.8,
-						label: edgeLabel(data, sourceCollection, src),
+						label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection),
 						forceLabel: true,
 						zIndex: 3
 					};
@@ -1419,7 +1445,7 @@
 							type: edgeType,
 							color: renderColor,
 							size: restSize * 1.3,
-							label: edgeLabel(data, sourceCollection, src),
+							label: edgeLabel(data, sourceCollection, src, tgtAttrs.collection as Collection),
 							forceLabel: true,
 							zIndex: 2
 						};

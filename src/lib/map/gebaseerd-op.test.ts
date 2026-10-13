@@ -25,8 +25,8 @@ vi.mock('$lib/api/client', async (original) => ({
 	unwrap: async (p: Promise<{ data: unknown }>) => (await p).data
 }));
 
-const { onderWet } = await import('./verbonden');
-const { LOADERS, wetRegelingRow } = await import('$lib/verbonden/loaders');
+const { onderWet, regelVanRij } = await import('./verbonden');
+const { LOADERS, regelingRow, wetRegelingRow } = await import('$lib/verbonden/loaders');
 const { hoeVan } = await import('$lib/verbonden/hoe');
 const { metaParts } = await import('$lib/verbonden/rows');
 const { grondslagArtikelen } = await import('$lib/text/delegaties');
@@ -95,8 +95,14 @@ beforeEach(() => {
 });
 
 describe('Gebaseerd op deze wet', () => {
-	it('names the articles a regulation rests on once each, short', () => {
-		expect(grondslagArtikelen(cbw.items![0].articles)).toBe('art. 16, 21, 24');
+	it('names the articles a regulation rests on once each, with their leden', () => {
+		expect(grondslagArtikelen(cbw.items![0].articles)).toBe('art. 16 lid 1 en 7, 21 lid 5, 24');
+		// A BW article with its book.
+		expect(grondslagArtikelen([artikel('719', ['2'])], 'BWBR0005290')).toBe('art. 7:719 lid 2');
+		// Never its own number as a lid.
+		expect(grondslagArtikelen([artikel('673e', ['673', '1', '4'])], 'BWBR0005290')).toBe(
+			'art. 7:673e lid 1 en 4'
+		);
 		expect(grondslagArtikelen([])).toBeNull();
 	});
 
@@ -111,14 +117,14 @@ describe('Gebaseerd op deze wet', () => {
 				r.title,
 				r.context,
 				r.date,
-				r.position
+				regelVanRij(r, 'instruments')
 			])
 		);
 		expect(kaart.regelingen[0]).toMatchObject({
 			naam: 'Cyberbeveiligingsbesluit',
-			soort: 'AMvB',
+			soort: null,
 			datum: '2026-08-15',
-			artikelen: 'art. 16, 21, 24'
+			artikelen: 'AMvB op grond van art. 16 lid 1 en 7, 21 lid 5, 24'
 		});
 		expect(related).not.toHaveBeenCalled();
 	});
@@ -126,14 +132,22 @@ describe('Gebaseerd op deze wet', () => {
 	it('says in Verbonden what the regulation rests on, then its kind and day', () => {
 		const row = wetRegelingRow(cbw.items![0]);
 		const h = hoeVan(row, 'instruments');
-		expect([h?.werkwoord, h?.rest]).toEqual(['Gebaseerd op', 'art. 16, 21, 24']);
-		expect(metaParts(row, true).map((p) => p.text)).toEqual(['AMvB', '15 aug. 2026']);
+		expect([h?.werkwoord, h?.rest]).toEqual([
+			'AMvB op grond van',
+			'art. 16 lid 1 en 7, 21 lid 5, 24'
+		]);
+		expect(metaParts(row, true).map((p) => p.text)).toEqual(['in werking 15 aug. 2026']);
+		// On the article: the same verb, its leden.
+		const opArtikel = hoeVan(regelingRow({ ...cbw.items![0], leden: ['1', '7'] }), 'articles');
+		expect([opArtikel?.werkwoord, opArtikel?.rest]).toEqual(['AMvB op grond van', 'lid 1 en 7']);
+		const zonderLid = hoeVan(regelingRow({ ...cbw.items![0], leden: [] }), 'articles');
+		expect([zonderLid?.werkwoord, zonderLid?.rest]).toEqual(['AMvB op grond van', 'dit artikel']);
 	});
 
 	it('lists the connected laws in a map where nothing is issued under the law', async () => {
 		answer.current = { bwb_id: 'BWBR0001854', total: 0, items: [] };
 		const kaart = await onderWet('BWBR0001854');
-		expect(kaart.titel).toBe('Verbonden regelingen');
+		expect(kaart.titel).toBe('Wetten die met deze wet verbonden zijn');
 		expect(related).toHaveBeenCalledWith('/api/instruments/{bwb_id}/related-instruments');
 		expect((await verbonden()).rows).toEqual([]);
 	});

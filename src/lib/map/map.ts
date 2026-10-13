@@ -61,6 +61,11 @@ export function groepSleutel(i: Pick<MapItem, 'id' | 'groep'>): string {
 	if (collectie === 'articles' && /^bwbr\d+_/i.test(key))
 		return `wet:${key.slice(0, key.indexOf('_')).toLowerCase()}`;
 	if (collectie === 'judgments') return i.id;
+	// A dossier by its number, kept whole or by one of its Kamerstukken: one group.
+	if (collectie === 'dossiers') {
+		const nr = /^(\d{5}(?:[-_][a-z0-9]+)?)/i.exec(key)?.[1];
+		if (nr) return `dossier:${nr.replace('_', '-').toUpperCase()}`;
+	}
 	const dossier = /\b(\d{5}(?:-[A-Z0-9]+)?)\b/.exec(i.groep)?.[1];
 	if (collectie === 'documents' && dossier) return `dossier:${dossier}`;
 	return `groep:${i.groep}`;
@@ -70,9 +75,19 @@ export function groepSleutel(i: Pick<MapItem, 'id' | 'groep'>): string {
 export function groepen(
 	items: readonly MapItem[]
 ): { groep: string; sleutel: string; items: MapItem[] }[] {
+	// By the group's key, so one dossier is one group whether a Kamerstuk of it or the dossier
+	// was kept ("Kamerstuk 36764", "Kamerstuk 36764 Cyberbeveiligingswet"); its name the one
+	// that says the most.
 	const m = new Map<string, MapItem[]>();
-	for (const i of items) m.set(i.groep, [...(m.get(i.groep) ?? []), i]);
-	return [...m].map(([groep, items]) => ({ groep, sleutel: groepSleutel(items[0]), items }));
+	for (const i of items) {
+		const k = groepSleutel(i);
+		m.set(k, [...(m.get(k) ?? []), i]);
+	}
+	return [...m].map(([sleutel, items]) => ({
+		groep: items.map((i) => i.groep).reduce((a, b) => (b.length > a.length ? b : a)),
+		sleutel,
+		items
+	}));
 }
 
 // ── The link ────────────────────────────────────────────────────────────────

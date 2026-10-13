@@ -3,7 +3,8 @@
 	import { onMount } from 'svelte';
 	import { getStats, type Stats } from '$lib/api/stats';
 	import { modKey } from '$lib/utils/platform';
-	import { RELATIONS, RELATION_LABEL } from '$lib/vocabulary';
+	import { RELATIONS } from '$lib/vocabulary';
+	import { relationLabel } from '$lib/verbonden/hoe';
 
 	let stats = $state<Stats | null>(null);
 
@@ -177,7 +178,7 @@
 				<div class="list list--two-col">
 					{#each relations as relation (relation)}
 						<div class="list-row">
-							<span>{RELATION_LABEL[relation]}</span>
+							<span>{relationLabel(relation)}</span>
 						</div>
 					{/each}
 				</div>

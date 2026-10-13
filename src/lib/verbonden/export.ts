@@ -1,7 +1,8 @@
 // The verbindingen as a CSV, with the columns of the table. Separated by semicolons and
 // preceded by a byte order mark, as Excel with Dutch settings reads a CSV.
 import { buildBronHref } from '$lib/bron/href';
-import { relationLabel, type Collection } from '$lib/vocabulary';
+import type { Collection } from '$lib/vocabulary';
+import { rowLabel } from './view';
 import { BRON_KIND_LABEL } from './filter';
 import type { Row } from './rows';
 import { betrouwbaarheid } from './verbinding';
@@ -31,13 +32,12 @@ const cell = (v: string | null | undefined) => {
 export function rowsToCsv(rows: Row[], selection: Collection, origin: string): string {
 	const lines = [COLUMNS.join(SEP)];
 	for (const r of rows) {
-		const source = r.direction === 'inbound' ? r.ref.collection : selection;
 		const b = betrouwbaarheid(r.confidence, !!r.derived, null);
 		lines.push(
 			[
 				r.title,
 				BRON_KIND_LABEL[r.kind],
-				r.relation ? relationLabel(r.relation, source) : '',
+				rowLabel(r, selection),
 				r.position ?? '',
 				r.lid ? `lid ${r.lid}` : '',
 				r.aard ?? '',

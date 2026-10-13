@@ -12,7 +12,6 @@
 	import { bronHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { relationLabel } from '$lib/vocabulary';
 	import { csvName, download, rowsToCsv } from './export';
 	import { formatCount, type VerbondenFilter } from './filter';
 	import { dossierVanRij, mentionRows, openLabelOf, rowKey, shortDate, type Row } from './rows';
@@ -21,7 +20,7 @@
 	import { isEscape } from '$lib/actions/keys';
 	import type { VerbondenState } from './source';
 	import { betrouwbaarheid } from './verbinding';
-	import { allRows, countLine, filterGroups, mentionLine } from './view';
+	import { allRows, countLine, filterGroups, mentionLine, rowLabel } from './view';
 
 	let {
 		verbonden,
@@ -50,15 +49,13 @@
 		sort?: (r: Row) => string | number;
 	};
 
-	const source = (r: Row) => (r.direction === 'inbound' ? r.ref.collection : selection.collection);
-
 	const COLUMNS: Column[] = [
 		{ id: 'bron', label: 'Bron', value: (r) => r.title, sort: (r) => r.title },
 		{
 			id: 'verbinding',
 			label: 'Verbinding',
-			value: (r) => (r.relation ? relationLabel(r.relation, source(r)) : ''),
-			sort: (r) => (r.relation ? relationLabel(r.relation, source(r)) : '')
+			value: (r) => rowLabel(r, selection.collection),
+			sort: (r) => rowLabel(r, selection.collection)
 		},
 		{
 			id: 'plaats',

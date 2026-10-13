@@ -3,7 +3,7 @@
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import SoortLink from '$lib/bron/SoortLink.svelte';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import { kamerstukNummer } from '$lib/bron/dossier-naam';
+	import { dossierLabel } from '$lib/bron/dossier-naam';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import { uniqueBy } from '$lib/util/unique';
 	import BronLink from '$lib/bron/BronLink.svelte';
@@ -140,7 +140,8 @@
 						at: '',
 						kort: `Kamerstukken ${d.number}`,
 						voluit: `Kamerstukken ${d.number}${d.title ? ` (${d.short_title ?? d.title})` : ''}`,
-						groep: d.short_title ?? d.title ?? kamerstukNummer(d.number)
+						// One group per dossier in a map, as a Kamerstuk of it is grouped (map.ts).
+						groep: dossierLabel(d)
 					}
 				}}
 			>

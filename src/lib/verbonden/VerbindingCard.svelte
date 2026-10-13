@@ -7,7 +7,7 @@
 	// source of the edge, and the actions open at position, show in network, citeer.
 	import { bronHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { betrouwbaarheid, citeVerbinding, type Verbinding } from './verbinding';
+	import { betrouwbaarheid, citeVerbinding, toontStatus, type Verbinding } from './verbinding';
 
 	let {
 		verbinding,
@@ -118,8 +118,10 @@
 			<span class="conf conf--{trust.word}" aria-hidden="true"></span>
 			{trust.word}: {trust.why}
 		</dd>
-		<dt>Status</dt>
-		<dd class:is-proposed={v.status === 'voorgesteld'}>{v.status}</dd>
+		{#if toontStatus(v)}
+			<dt>Status</dt>
+			<dd class:is-proposed={v.status === 'voorgesteld'}>{v.status}</dd>
+		{/if}
 		<dt>Bron van de verbinding</dt>
 		<dd>{sourceOfEdge}</dd>
 	</dl>

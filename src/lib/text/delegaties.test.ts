@@ -100,12 +100,14 @@ describe('delegation formulas', () => {
 		expect(artikelKort(besluit.articles![0])).toBe('art. 2');
 	});
 
-	it('gives a row of Verbonden: the regulation, its kind, the lid its Gelet op names', () => {
+	it('gives a row of Verbonden: the regulation, its day, the lid its Gelet op names', () => {
 		const row = regelingRow({ ...besluit, leden: ['1'] });
 		expect(row).toMatchObject({
 			ref: { collection: 'instruments', key: 'bwbr0052875' },
 			title: 'Cyberbeveiligingsbesluit',
-			context: 'AMvB',
+			// The kind stands in the line, `AMvB op grond van lid 1` (hoe.ts).
+			context: null,
+			identifier: 'in werking 15 aug. 2026',
 			date: '2026-08-15',
 			lid: '1',
 			relation: 'BASED_ON',

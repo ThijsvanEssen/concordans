@@ -10,8 +10,9 @@ import { api, unwrap } from '$lib/api/client';
 import { getDelegated } from '$lib/api/articles';
 import { getInstrumentDetail } from '$lib/api/instrument-cache';
 import { kindName } from '$lib/components/explore/law-head';
-import { regelingRow, wetRegelingen } from '$lib/verbonden/loaders';
-import { describe, type Row } from '$lib/verbonden/rows';
+import { regelingRow, wetRegelingen, wetRijVanRelated } from '$lib/verbonden/loaders';
+import type { Row } from '$lib/verbonden/rows';
+import { hoeVan } from '$lib/verbonden/hoe';
 import type { MapItem } from './map';
 
 /** A regulation as the item lists it: its name, kind and date where known, its address. */
@@ -22,7 +23,10 @@ export type Regeling = {
 	naam: string;
 	soort: string | null;
 	datum: string | null;
-	/** The articles of the law it rests on, `art. 16, 21, 24`: under a law only. */
+	/**
+	 * Its grondslag in the words of Verbonden's row (hoe.ts): `AMvB op grond van art. 16 lid 1
+	 * en 7` under a law, `AMvB op grond van lid 1 en 7` under an article.
+	 */
 	artikelen: string | null;
 };
 
@@ -34,14 +38,20 @@ export const WETTEN = 6;
 
 const tekst = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
-/** A row of Verbonden as a map lists it. */
-export const regelingVanRij = (r: Row): Regeling => ({
+/** The line of a row of Verbonden, as one string: `AMvB op grond van art. 16 lid 1 en 7`. */
+export function regelVanRij(r: Row, op: 'instruments' | 'articles'): string | null {
+	const h = hoeVan(r, op);
+	return h ? [h.werkwoord, h.rest].filter(Boolean).join(' ') || null : null;
+}
+
+/** A row of Verbonden as a map lists it, under a law or an article. */
+export const regelingVanRij = (r: Row, op: 'instruments' | 'articles'): Regeling => ({
 	id: `instruments/${r.ref.key}`,
 	ident: tekst(r.props?.bwb_id) ?? tekst(r.props?.celex),
 	naam: r.title,
 	soort: r.context,
 	datum: r.date ?? null,
-	artikelen: r.position ?? null
+	artikelen: regelVanRij(r, op)
 });
 
 /** The regulations based on an article: those its Gelet op names. Empty where none. */
@@ -49,7 +59,7 @@ export async function opArtikel(bwb: string, nummer: string): Promise<Regelingen
 	const found = await getDelegated(bwb, nummer);
 	return {
 		titel: 'Gebaseerd op dit artikel',
-		regelingen: (found?.items ?? []).map((r) => regelingVanRij(regelingRow(r)))
+		regelingen: (found?.items ?? []).map((r) => regelingVanRij(regelingRow(r), 'articles'))
 	};
 }
 
@@ -59,11 +69,18 @@ export async function opArtikel(bwb: string, nummer: string): Promise<Regelingen
  */
 export async function onderWet(bwb: string): Promise<Regelingen> {
 	const { rows } = await wetRegelingen(bwb);
-	if (rows.length) return { titel: 'Gebaseerd op deze wet', regelingen: rows.map(regelingVanRij) };
-	return { titel: 'Verbonden regelingen', regelingen: await bijWet(bwb) };
+	if (rows.length)
+		return {
+			titel: 'Gebaseerd op deze wet',
+			regelingen: rows.map((r) => regelingVanRij(r, 'instruments'))
+		};
+	return { titel: 'Wetten die met deze wet verbonden zijn', regelingen: await bijWet(bwb) };
 }
 
-/** The laws most connected to a law, by the references between their articles. */
+/**
+ * The laws most connected to a law, by the references between their articles, each with the
+ * line of its row in Verbonden (`Verwijst 23 keer naar deze wet`, wetRijVanRelated).
+ */
 export async function bijWet(bwb: string): Promise<Regeling[]> {
 	const found = await unwrap(
 		api.GET('/api/instruments/{bwb_id}/related-instruments', {
@@ -71,21 +88,15 @@ export async function bijWet(bwb: string): Promise<Regeling[]> {
 		})
 	);
 	return found.items.map((i) => ({
-		id: `instruments/${i.key}`,
-		ident: i.bwb_id ?? i.celex ?? null,
-		naam: describe('instruments', i.key, i.citation_title ?? i.display_name, {
-			bwb_id: i.bwb_id,
-			celex: i.celex
-		}).title,
-		soort: null,
-		datum: null,
-		artikelen: null
+		...regelingVanRij(wetRijVanRelated(i), 'instruments'),
+		ident: i.bwb_id ?? i.celex ?? null
 	}));
 }
 
 /** A regulation's kind and date from its detail, where the list did not give them. */
 export async function aangevuld(r: Regeling): Promise<Regeling> {
-	if ((r.soort && r.datum) || !r.ident) return r;
+	// A regulation under the law says its kind in its grondslag (`AMvB op grond van`).
+	if (r.datum || !r.ident) return r;
 	const d = await getInstrumentDetail(r.ident);
 	return {
 		...r,

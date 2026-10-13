@@ -322,6 +322,20 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Uitspraken die deze wet aanhalen',
 			noun: 'uitspraken',
 			load: 'instrument-judgments'
+		},
+		// A treaty and the Tractatenbladen the Verdragenbank lists for it: its text, its
+		// approval, its entry into force.
+		{
+			id: 'published-in',
+			label: 'Gepubliceerd in het Tractatenblad',
+			noun: 'publicaties',
+			match: [{ relation: 'PUBLISHED_IN', direction: 'outbound', collection: 'instruments' }]
+		},
+		{
+			id: 'publishes',
+			label: 'Verdragen in dit Tractatenblad',
+			noun: 'verdragen',
+			match: [{ relation: 'PUBLISHED_IN', direction: 'inbound', collection: 'instruments' }]
 		}
 	],
 	articles: [
@@ -381,7 +395,8 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'documents',
-			label: 'Kamerstukken die dit artikel aanhalen',
+			// A Kamerstuk noemt; a judgment haalt aan (hoe.ts).
+			label: 'Kamerstukken die dit artikel noemen',
 			noun: 'Kamerstukken',
 			match: [
 				{
@@ -482,6 +497,13 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Uitspraken die deze uitspraak aanhalen',
 			noun: 'uitspraken',
 			match: [{ relation: 'REFERS_TO', direction: 'inbound', collection: 'judgments' }]
+		},
+		// Cases its summary names as connected: "Samenhang met 24/03860 E".
+		{
+			id: 'related',
+			label: 'Samenhangende zaken',
+			noun: 'uitspraken',
+			match: [{ relation: 'RELATED_TO', collection: 'judgments' }]
 		}
 	],
 	documents: [
@@ -545,7 +567,7 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 		},
 		{
 			id: 'refers-to',
-			label: 'Artikelen die dit stuk aanhaalt',
+			label: 'Artikelen die dit stuk noemt',
 			noun: 'artikelen',
 			match: [
 				{ relation: 'REFERS_TO', direction: 'outbound', collection: ['articles', 'instruments'] }
@@ -556,6 +578,35 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Indieners',
 			noun: 'indieners',
 			match: [{ relation: 'AUTHORED', direction: 'inbound', collection: ['members', 'factions'] }]
+		},
+		// An amended motie or amendement and the one it replaces, "ter vervanging van nr. 19".
+		{
+			id: 'replaces',
+			label: 'Vervangt',
+			match: [{ relation: 'REVISES', direction: 'outbound', collection: 'documents' }]
+		},
+		{
+			id: 'replaced-by',
+			label: 'Vervangen door',
+			match: [{ relation: 'REVISES', direction: 'inbound', collection: 'documents' }]
+		},
+		// A bijlage and the letter it was sent with.
+		{
+			id: 'attachment-of',
+			label: 'Bijlage bij',
+			match: [{ relation: 'ACCOMPANIES', direction: 'outbound', collection: 'documents' }]
+		},
+		{
+			id: 'attachments',
+			label: 'Bijlagen bij dit stuk',
+			noun: 'bijlagen',
+			match: [{ relation: 'ACCOMPANIES', direction: 'inbound', collection: 'documents' }]
+		},
+		// A stenogram and the debate it is the record of.
+		{
+			id: 'record-of',
+			label: 'Verslag van',
+			match: [{ relation: 'MADE_IN', direction: 'outbound', collection: 'activities' }]
 		}
 	],
 	committees: [
@@ -690,6 +741,18 @@ export const GROUPS: Partial<Record<Collection, GroupDef[]>> = {
 			label: 'Stemmingen in deze activiteit',
 			noun: 'stemmingen',
 			match: [{ relation: 'MADE_IN', direction: 'inbound', collection: 'decisions' }]
+		},
+		{
+			id: 'records',
+			label: 'Verslag van deze activiteit',
+			noun: 'verslagen',
+			match: [{ relation: 'MADE_IN', direction: 'inbound', collection: 'documents' }]
+		},
+		{
+			id: 'commitments',
+			label: 'Toezeggingen gedaan in deze activiteit',
+			noun: 'toezeggingen',
+			match: [{ relation: 'MADE_IN', direction: 'inbound', collection: 'commitments' }]
 		},
 		{
 			id: 'cases',

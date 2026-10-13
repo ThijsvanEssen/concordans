@@ -3,7 +3,8 @@
 // the source of the edge. Built from a row of the panel or from an edge of the canvas.
 import { refOf, type BronRef } from '$lib/bron/href';
 import type { GraphEdge, GraphNode } from '$lib/graph/types';
-import { relationLabel, statusLabel, type Relation } from '$lib/vocabulary';
+import { statusLabel, type Collection, type Relation } from '$lib/vocabulary';
+import { HERKOMST_REDEN, kleineLetter, relationLabel, soortVan } from './hoe';
 import { paragraphCite } from '$lib/text/judgment-cite';
 import { confidenceWord } from './filter';
 import { describe, positionsLabel, type Row } from './rows';
@@ -37,44 +38,24 @@ export type Verbinding = {
 	edgeId: string | null;
 };
 
-const KIND_OF_RELATION: Partial<Record<Relation, string>> = {
-	REFERS_TO: 'verwijzing',
-	EXPLAINS: 'toelichting',
-	AMENDS: 'wijziging',
-	INTRODUCES: 'invoeging',
-	REPEALS: 'intrekking',
-	PART_OF: 'onderdeel',
-	BASED_ON: 'grondslag',
-	IMPLEMENTS: 'implementatie',
-	LEGISLATED_IN: 'behandeling',
-	APPEAL_OF: 'hoger beroep',
-	ADVISES_ON: 'conclusie',
-	ANSWERS: 'prejudiciële beslissing',
-	CONTINUES: 'vervolg',
-	REFERRED_BY: 'verwijzing',
-	SAME_AS: 'andere publicatie',
-	REVISES: 'begrotingswijziging',
-	ACCOMPANIES: 'indiening met een nota',
-	RELATED_TO: 'verband tussen zaken',
-	SECOND_READING_OF: 'tweede lezing'
-};
+/** What the verbinding is, for the head of the card: the words of hoe.ts. */
+export const kindOfVerbinding = (
+	relation: Relation,
+	sourceCollection: Collection,
+	targetCollection?: Collection | null,
+	meta?: Record<string, unknown> | null
+): string => soortVan(relation, sourceCollection, targetCollection, meta);
 
-const IN_A: Partial<Record<string, string>> = {
-	judgments: 'in een uitspraak',
-	documents: 'in een Kamerstuk',
-	articles: 'in een artikel',
-	instruments: 'in een wet',
-	dossiers: 'in een dossier'
-};
-
-export function kindOfVerbinding(relation: Relation, sourceCollection: string): string {
-	const what = KIND_OF_RELATION[relation] ?? relationLabel(relation);
-	if (relation === 'EXPLAINS') return 'toelichting bij een artikel';
-	if (relation === 'ANSWERS' && sourceCollection === 'documents')
-		return 'beantwoording in een brief';
-	const where = IN_A[sourceCollection];
-	return where ? `${what} ${where}` : what;
-}
+/**
+ * Whether the card says the status: only of a change of the law, where `voorgesteld` or
+ * `vastgesteld` says whether the wetgever enacted it. Of a citation, a stuk in its dossier or
+ * a vote it says nothing a jurist would read as such.
+ */
+export const toontStatus = (v: Pick<Verbinding, 'relation' | 'status'>): boolean =>
+	v.status === 'voorgesteld' ||
+	v.relation === 'AMENDS' ||
+	v.relation === 'INTRODUCES' ||
+	v.relation === 'REPEALS';
 
 /** `hoog`, `matig` or `laag`, with the reason. */
 export function betrouwbaarheid(
@@ -82,14 +63,19 @@ export function betrouwbaarheid(
 	derived: boolean,
 	reason: string | null
 ): { word: 'hoog' | 'matig' | 'laag'; why: string } {
+	// Where the reason is known, the words of the row's provenance (hoe.ts): a reference read
+	// from the XML of wetten.overheid.nl is no recognition.
+	const known = reason ? HERKOMST_REDEN[reason] : undefined;
 	const why =
 		reason === 'bwb_article' || reason === 'ecli'
 			? 'de verwijzing is als geheel herkend in de tekst'
-			: reason
-				? 'herkend in de tekst'
-				: derived
-					? 'afgeleid uit het dossier of uit de tekst, niet uit een verwijzing'
-					: 'gelezen uit de bron';
+			: known
+				? kleineLetter(known)
+				: reason
+					? 'herkend in de tekst'
+					: derived
+						? 'afgeleid uit het dossier of uit de tekst, niet uit een verwijzing'
+						: 'gelezen uit de bron';
 	return { word: confidenceWord(confidence, derived), why };
 }
 
@@ -102,7 +88,9 @@ const endOfNode = (node: GraphNode): End => {
 	);
 	return {
 		ref: refOf(node.collection, node.key, node.raw?.props),
-		title: node.raw?.display_name ?? d.title,
+		// An article as it is cited, a BW one with its book: "Artikel 7:658 BW", not the
+		// data's "Artikel 658 Burgerlijk Wetboek Boek 7".
+		title: node.collection === 'articles' ? d.title : (node.raw?.display_name ?? d.title),
 		sub: d.identifier ?? d.context
 	};
 };
@@ -119,12 +107,13 @@ export function verbindingOfRow(row: Row, selection: GraphNode): Verbinding | nu
 	const inbound = row.direction === 'inbound';
 	const [from, to] = inbound ? [rowEnd, selected] : [selected, rowEnd];
 	const sourceCollection = inbound ? row.ref.collection : selection.collection;
+	const targetCollection = inbound ? selection.collection : row.ref.collection;
 	return {
 		from,
 		to,
 		relation: row.relation,
-		label: relationLabel(row.relation, sourceCollection),
-		kind: kindOfVerbinding(row.relation, sourceCollection),
+		label: relationLabel(row.relation, sourceCollection, targetCollection, row.edge),
+		kind: kindOfVerbinding(row.relation, sourceCollection, targetCollection, row.edge),
 		lid: row.lid ?? null,
 		position: row.position ?? null,
 		// The place in the citing text: the row's own, or where the selected bron cites it.
@@ -134,7 +123,8 @@ export function verbindingOfRow(row: Row, selection: GraphNode): Verbinding | nu
 		confidence: row.confidence ?? null,
 		derived: !!row.derived,
 		status: row.proposed ? 'voorgesteld' : 'vastgesteld',
-		reason: typeof row.props?.reason === 'string' ? row.props.reason : null,
+		// Why the edge exists is the edge's (`row.edge`), not the bron's props.
+		reason: typeof row.edge?.reason === 'string' ? row.edge.reason : null,
 		edgeId: row.edgeId ?? null
 	};
 }
@@ -175,8 +165,8 @@ export function verbindingOfEdge(
 		from: endOfNode(source),
 		to: endOfNode(target),
 		relation: edge.relation,
-		label: relationLabel(edge.relation, source.collection),
-		kind: kindOfVerbinding(edge.relation, source.collection),
+		label: relationLabel(edge.relation, source.collection, target.collection, meta),
+		kind: kindOfVerbinding(edge.relation, source.collection, target.collection, meta),
 		lid,
 		...plaatsVanMeta(meta, source.key),
 		snippet: text(meta.snippet),

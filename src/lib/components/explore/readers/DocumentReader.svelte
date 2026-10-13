@@ -28,6 +28,7 @@
 	import { getNodeFirst } from '$lib/api/records';
 	import type { NodeGraph } from '$lib/api/nodes';
 	import { kamerstukCitation } from '$lib/components/parliamentary/kamerstuk';
+	import { dossierLabel } from '$lib/bron/dossier-naam';
 	import { ensureInstrumentName, instrumentMetaStore } from '$lib/api/instrument-cache';
 
 	let {
@@ -285,7 +286,9 @@
 						at: '',
 						kort: naam,
 						voluit: cite && kind ? `${cite} (${kind})` : naam,
-						groep: doc.dossier_numbers?.[0] ? `Kamerstukken ${doc.dossier_numbers[0]}` : naam
+						groep: doc.dossier_numbers?.[0]
+							? dossierLabel({ number: doc.dossier_numbers[0] })
+							: naam
 					},
 					cite: cite
 						? citeItems(

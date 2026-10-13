@@ -33,6 +33,7 @@ export const RELATIONS = [
 	'BASED_ON',
 	'IMPLEMENTS',
 	'LEGISLATED_IN',
+	'PUBLISHED_IN',
 	'REFERS_TO',
 	'EXPLAINS',
 	'APPEAL_OF',
@@ -100,54 +101,7 @@ export const BRON_LABEL: Record<Collection, readonly [singular: string, plural: 
 export const bronLabel = (collection: Collection) => BRON_LABEL[collection][0];
 export const bronPlural = (collection: Collection) => BRON_LABEL[collection][1];
 
-/** What a verbinding is called, as a verb in the third person, read from its source. */
-export const RELATION_LABEL: Record<Relation, string> = {
-	PART_OF: 'onderdeel van',
-	VERSION_OF: 'versie van',
-	AMENDS: 'wijzigt',
-	INTRODUCES: 'voegt toe',
-	REPEALS: 'trekt in',
-	BASED_ON: 'gebaseerd op',
-	IMPLEMENTS: 'implementeert',
-	LEGISLATED_IN: 'vastgesteld in',
-	REFERS_TO: 'verwijst naar',
-	EXPLAINS: 'licht toe',
-	APPEAL_OF: 'hoger beroep van',
-	ADVISES_ON: 'conclusie bij',
-	// A prejudiciële beslissing points to the decision that asked its questions.
-	ANSWERS: 'beantwoordt prejudiciële vragen van',
-	// The later decision points back: a final judgment continues the interim one; the
-	// decision after referral was referred by the Hoge Raad.
-	CONTINUES: 'vervolg op',
-	REFERRED_BY: 'verwezen door',
-	// A publication the Rechtspraak replaced under a new ECLI and the one it kept.
-	SAME_AS: 'zelfde uitspraak als',
-	SCOPED_BY: 'begrensd door',
-	ABOUT: 'over',
-	LED_BY: 'geleid door',
-	MADE_IN: 'gedaan in',
-	MEMBER_OF: 'lid van',
-	AUTHORED: 'ingediend door',
-	VOTED: 'stemde over',
-	REVISES: 'wijzigt de begroting',
-	ACCOMPANIES: 'ingediend met',
-	RELATED_TO: 'verbonden met',
-	SECOND_READING_OF: 'tweede lezing van',
-	SERVED_IN: 'bewindspersoon in'
-};
-
-/**
- * The label of a verbinding. A reference from a judgment or a parliamentary document
- * is a citation ("haalt aan"); between two articles it is a reference in the text of
- * the law ("verwijst naar"). A letter of the government answers a motion or a toezegging
- * ("gaat in op"); a judgment answers prejudiciële vragen.
- */
-export const relationLabel = (relation: Relation, sourceCollection?: Collection | null) =>
-	relation === 'REFERS_TO' && sourceCollection && sourceCollection !== 'articles'
-		? 'haalt aan'
-		: relation === 'ANSWERS' && sourceCollection === 'documents'
-			? 'gaat in op'
-			: RELATION_LABEL[relation];
+// What a verbinding is called (`haalt aan`, `bijlage bij`) has one source: $lib/verbonden/hoe.ts.
 
 /** The college of a judgment, as the API names it (`tier`): its Type in the Rechtspraak's list of Instanties. */
 export type Tier = Schema<'Tier'>;

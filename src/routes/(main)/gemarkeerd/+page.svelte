@@ -177,7 +177,7 @@
 {/snippet}
 
 {#snippet lijst(alle: MapItem[], v: Map['volgorde'], m: Map | null, notities: GroepNotities)}
-	{#each reeksen(alle, v) as g (g.groep)}
+	{#each reeksen(alle, v) as g (g.sleutel)}
 		{@const k = `${m?.id ?? 'gedeeld'}:${g.sleutel}`}
 		{@const bij = notities[g.sleutel]}
 		{#if g.groep}

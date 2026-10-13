@@ -2,7 +2,8 @@
 	import RouteKop from '$lib/seo/RouteKop.svelte';
 	import type { PageData } from './$types';
 	import type { EndpointDoc } from './+page';
-	import { RELATIONS, RELATION_LABEL } from '$lib/vocabulary';
+	import { RELATIONS } from '$lib/vocabulary';
+	import { relationLabel } from '$lib/verbonden/hoe';
 
 	let { data }: { data: PageData } = $props();
 
@@ -189,7 +190,7 @@
 					</thead>
 					<tbody>
 						{#each RELATIONS as relation (relation)}
-							<tr><td><code>{relation}</code></td><td>{RELATION_LABEL[relation]}</td></tr>
+							<tr><td><code>{relation}</code></td><td>{relationLabel(relation)}</td></tr>
 						{/each}
 					</tbody>
 				</table>
