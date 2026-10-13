@@ -13,6 +13,7 @@ import { shortDossierTitle } from '$lib/graph/types';
 import { dossierUitProps, kamerstukNummer } from './dossier-naam';
 import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
+import { kindName } from '$lib/components/explore/law-head';
 import { fractiePeriodes } from './fractie-periode';
 import { describe, type Row } from '$lib/verbonden/rows';
 import {
@@ -264,6 +265,13 @@ export function behoort(
 		return k ? [{ soort: 'Kamer', naam: k }] : [];
 	};
 
+	/**
+	 * The kind of the law an article or bijlage belongs to, as its own page names it: `AMvB`,
+	 * `Ministeriële regeling`, `Verdrag`; `Wet` where its node gives none.
+	 */
+	const soortVanWet = () =>
+		kindName(text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.kind)) ?? 'Wet';
+
 	/** A line where it names something. */
 	const regel = (id: string, label: string, lagen: Laag[]): Regel[] =>
 		lagen.length > 0 ? [{ id, label, lagen }] : [];
@@ -275,7 +283,8 @@ export function behoort(
 			const afk = text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation);
 			// The law opens with this article in view (WholeLawReader, `#artikel-658`).
 			const nummer = text(props.article_number);
-			const wet = eerste('PART_OF', 'outbound', 'instruments', 'Wet').map((l) => ({
+			const soort = soortVanWet();
+			const wet = eerste('PART_OF', 'outbound', 'instruments', soort).map((l) => ({
 				...l,
 				...(afk ? { kort: afk } : {}),
 				...(nummer ? { at: artikelAnker(nummer) } : {})
@@ -295,15 +304,16 @@ export function behoort(
 					at: wet[0]?.ref ? ids[i] : undefined
 				}))
 				.filter((l) => l.kort);
-			return { regels: regel('wet', 'Wet', [...wet, ...deel]), naast: [], onder: [] };
+			return { regels: regel('wet', soort, [...wet, ...deel]), naast: [], onder: [] };
 		}
 		case 'annexes': {
 			// A bijlage belongs to its law, as an article does (UX-toets 0.79.43, #30).
 			const afk = text(bak('PART_OF', 'outbound', 'instruments')?.items?.[0]?.props?.abbreviation);
-			const wet = eerste('PART_OF', 'outbound', 'instruments', 'Wet').map((l) =>
+			const soort = soortVanWet();
+			const wet = eerste('PART_OF', 'outbound', 'instruments', soort).map((l) =>
 				afk ? { ...l, kort: afk } : l
 			);
-			return { regels: regel('wet', 'Wet', wet), naast: [], onder: [] };
+			return { regels: regel('wet', soort, wet), naast: [], onder: [] };
 		}
 		case 'judgments': {
 			// The procesgang: eerdere aanleg › this uitspraak › hoger beroep or cassatie, the
@@ -673,7 +683,10 @@ export const KERN: Partial<Record<Collection, Bak[]>> = {
 	documents: [
 		{ relation: 'PART_OF', direction: 'outbound', collection: 'dossiers' },
 		{ relation: 'MADE_IN', direction: 'outbound', collection: 'activities' },
-		{ relation: 'ACCOMPANIES', direction: 'outbound', collection: 'documents' }
+		{ relation: 'ACCOMPANIES', direction: 'outbound', collection: 'documents' },
+		// The status line of a motie or amendement: "Vervangt nr. 19", "Vervangen door nr. 31".
+		{ relation: 'REVISES', direction: 'outbound', collection: 'documents' },
+		{ relation: 'REVISES', direction: 'inbound', collection: 'documents' }
 	],
 	cases: [{ relation: 'PART_OF', direction: 'outbound', collection: 'dossiers' }],
 	members: [{ relation: 'MEMBER_OF', direction: 'outbound', collection: 'factions' }],

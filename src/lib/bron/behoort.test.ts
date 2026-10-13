@@ -278,7 +278,13 @@ describe('kern of context', () => {
 			'later-instance'
 		]);
 		expect(kern('articles')).toEqual(['law']);
-		expect(kern('documents')).toEqual(['dossier']);
+		expect(kern('documents')).toEqual([
+			'dossier',
+			'replaces',
+			'replaced-by',
+			'attachment-of',
+			'record-of'
+		]);
 		expect(kern('members')).toEqual(['factions']);
 		expect(kern('instruments')).toEqual([]);
 	});

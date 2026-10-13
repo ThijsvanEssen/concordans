@@ -1,6 +1,7 @@
 // What the panel, the table and the legend derive from the groups and the filter:
 // the rows that pass, the counts, the groupings and the years of the judgments.
-import { relationLabel, type Collection } from '$lib/vocabulary';
+import type { Collection } from '$lib/vocabulary';
+import { relationLabel } from './hoe';
 import { sumLidCounts } from '$lib/api/nodes';
 import {
 	formatCount,
@@ -158,25 +159,48 @@ export function kindTotals(groups: Group[]): Partial<Record<BronKind, number>> {
 	return totals;
 }
 
-/** Per relation, the number of verbindingen and its label. */
+/**
+ * Per relation, the number of verbindingen and its label: every word its rows say, the most
+ * said first (`haalt aan, verwijst naar` on an article cited by judgments and articles alike).
+ */
 export function relationCounts(
 	groups: Group[],
 	selection: Collection
 ): { relation: string; label: string; count: number }[] {
 	const counts = new Map<string, number>();
-	const labels = new Map<string, string>();
+	const labels = new Map<string, Map<string, number>>();
 	for (const g of groups) {
 		for (const r of g.rows) {
 			if (!r.relation) continue;
-			const source = r.direction === 'inbound' ? r.ref.collection : selection;
-			const label = relationLabel(r.relation, source);
-			labels.set(r.relation, label);
+			const label = rowLabel(r, selection);
+			const per = labels.get(r.relation) ?? new Map<string, number>();
+			per.set(label, (per.get(label) ?? 0) + 1);
+			labels.set(r.relation, per);
 			counts.set(r.relation, (counts.get(r.relation) ?? 0) + 1);
 		}
 	}
 	return [...counts]
-		.map(([relation, count]) => ({ relation, label: labels.get(relation) ?? relation, count }))
+		.map(([relation, count]) => ({
+			relation,
+			label: [...(labels.get(relation) ?? new Map<string, number>())]
+				.sort((a, b) => b[1] - a[1])
+				.map(([l]) => l)
+				.join(', '),
+			count
+		}))
 		.sort((a, b) => b.count - a.count);
+}
+
+/** The label of a row's verbinding, read from its source (hoe.ts). */
+export function rowLabel(r: Row, selection: Collection): string {
+	if (!r.relation) return '';
+	const inbound = r.direction === 'inbound';
+	return relationLabel(
+		r.relation,
+		inbound ? r.ref.collection : selection,
+		inbound ? selection : r.ref.collection,
+		r.edge
+	);
 }
 
 /** What the bronnen of the filter hide: `1.064 uitspraken verborgen`. */
@@ -246,10 +270,7 @@ export function regroup(groups: Group[], by: Grouping, selection: Collection): G
 	const keyOf = (r: Row): string => {
 		if (by === 'lid') return r.lid ?? '';
 		if (by === 'aard') return r.aard ?? '';
-		if (by === 'verbinding')
-			return r.relation
-				? relationLabel(r.relation, r.direction === 'inbound' ? r.ref.collection : selection)
-				: '';
+		if (by === 'verbinding') return rowLabel(r, selection);
 		return r.date ? r.date.slice(0, 4) : '';
 	};
 	for (const r of rows) {

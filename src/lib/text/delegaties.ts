@@ -7,6 +7,7 @@ import type { Schema } from '$lib/api/types';
 import { kindName } from '$lib/components/explore/law-head';
 import { langeDatum } from '$lib/text/datum';
 import { naamVan } from '$lib/bron/menselijk';
+import { bookNumber } from '$lib/text/bw';
 
 export type Delegatie = Schema<'DelegationClauseDTO'>;
 export type Gedelegeerd = Schema<'ArticleDelegatedResponse'>;
@@ -61,13 +62,55 @@ export const artikelKort = (a: Schema<'DelegatedArticleDTO'>): string =>
 /** A regulation issued under a law, with the articles of the law its `Gelet op` names. */
 export type WetRegeling = Schema<'InstrumentDelegatedItem'>;
 
+/** `1 en 7`, `1, 2 en 3`: numbers as a list is read. */
+const opsomming = (xs: readonly string[]) =>
+	xs.length > 1 ? `${xs.slice(0, -1).join(', ')} en ${xs.at(-1)}` : (xs[0] ?? '');
+
+/** The leden a Gelet op names, `lid 1 en 7`; null where it names the article whole. */
+export function ledenTekst(leden: unknown): string | null {
+	const xs = Array.isArray(leden)
+		? leden.filter((l): l is string => typeof l === 'string' && !!l.trim())
+		: [];
+	return xs.length ? `lid ${opsomming(xs)}` : null;
+}
+
 /**
- * The articles of the law a regulation rests on, short and once each, in the law's order:
- * `art. 16, 21, 24` (Thijs, 13 Oct). Null where it names none by number.
+ * The articles of the law a regulation rests on, once each, in the law's order, with the
+ * leden and onderdelen its Gelet op names: `art. 3, 16 lid 1 en 7, 17 lid 1`; a BW article
+ * with its book, `art. 7:719` (`bwb` the law's id). An article the Gelet op names twice
+ * stands once, with the leden of both. Null where it names none by number.
  */
-export function grondslagArtikelen(articles: readonly Schema<'BasisArticleDTO'>[]): string | null {
-	const nummers = [
-		...new Set(articles.map((a) => a.article_number?.trim()).filter((n): n is string => !!n))
-	];
-	return nummers.length ? `art. ${nummers.join(', ')}` : null;
+export function grondslagArtikelen(
+	articles: readonly Schema<'BasisArticleDTO'>[],
+	bwb?: string | null
+): string | null {
+	const per = new Map<string, { leden: Set<string>; onderdelen: Set<string>; heel: boolean }>();
+	for (const a of articles) {
+		const nr = a.article_number?.trim();
+		if (!nr) continue;
+		const deel = per.get(nr) ?? { leden: new Set(), onderdelen: new Set(), heel: false };
+		// Named once whole and once by a lid: the whole article.
+		if (!a.leden?.length) deel.heel = true;
+		// A lid that is the article's own number is the API reading "673e" as a lid (BW 7:673e).
+		const stam = nr.replace(/\D+$/, '');
+		for (const l of a.leden ?? []) if (l !== stam && l !== nr) deel.leden.add(l);
+		for (const o of a.onderdelen ?? []) deel.onderdelen.add(o);
+		per.set(nr, deel);
+	}
+	const delen = [...per].map(([nr, d]) => {
+		const leden = d.heel ? null : ledenTekst([...d.leden]);
+		const onder = !d.heel && d.onderdelen.size ? `onder ${opsomming([...d.onderdelen])}` : null;
+		return [bookNumber(bwb, nr), leden, onder].filter(Boolean).join(' ');
+	});
+	return delen.length ? `art. ${delen.join(', ')}` : null;
+}
+
+/**
+ * The verb of a regulation under its grondslag, by its kind: `AMvB op grond van`,
+ * `Ministeriële regeling op grond van`; `Op grond van` where the kind is unknown. One
+ * function for the law's page and the article's (and a map), so they say it alike.
+ */
+export function grondslagWerkwoord(kind: string | null | undefined): string {
+	const soort = kindName(kind);
+	return soort ? `${soort} op grond van` : 'Op grond van';
 }

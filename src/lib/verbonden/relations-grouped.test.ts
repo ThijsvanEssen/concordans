@@ -33,6 +33,7 @@ const ENDS: Record<Relation, Ends | Ends[]> = {
 	BASED_ON: [['instruments'], ['articles']],
 	IMPLEMENTS: [['instruments'], ['instruments']],
 	LEGISLATED_IN: [['instruments'], ['dossiers']],
+	PUBLISHED_IN: [['instruments'], ['instruments']],
 	REFERS_TO: [
 		[
 			['articles', 'documents', 'judgments'],
@@ -56,13 +57,23 @@ const ENDS: Record<Relation, Ends | Ends[]> = {
 		['cases', 'dossiers']
 	],
 	LED_BY: [['activities'], ['committees']],
-	MADE_IN: [['commitments'], ['activities']],
+	MADE_IN: [['commitments', 'documents', 'decisions'], ['activities']],
 	MEMBER_OF: [['members'], ['committees', 'factions']],
 	SERVED_IN: [['members'], ['cabinets']],
 	AUTHORED: [['members'], ['documents', 'cases']],
-	RELATED_TO: [['dossiers'], ['dossiers']],
-	REVISES: [['dossiers'], ['dossiers']],
-	ACCOMPANIES: [['dossiers'], ['dossiers']],
+	RELATED_TO: [
+		[['dossiers'], ['dossiers']],
+		[['judgments'], ['judgments']],
+		[['cases'], ['cases']]
+	],
+	REVISES: [
+		[['dossiers'], ['dossiers']],
+		[['documents'], ['documents']]
+	],
+	ACCOMPANIES: [
+		[['dossiers'], ['dossiers']],
+		[['documents'], ['documents']]
+	],
 	SECOND_READING_OF: [['dossiers'], ['dossiers']],
 	VOTED: [['members', 'factions'], ['decisions']]
 };

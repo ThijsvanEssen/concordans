@@ -45,6 +45,21 @@ describe('the map', () => {
 		]);
 	});
 
+	it('keeps one dossier in one group, from the reader, from Verbonden or whole', () => {
+		const item = (id: string, groep: string) => ({ id, at: '', kort: id, groep });
+		const g = groepen([
+			item('documents/motie31', 'Kamerstuk 36764'),
+			item('documents/mvt', 'Kamerstuk 36764 Cyberbeveiligingswet'),
+			item('dossiers/36764', 'Kamerstuk 36764 Cyberbeveiligingswet'),
+			// Kept before 14 Oct, by the reader's old name and the dossier's short title.
+			item('documents/nvw', 'Kamerstukken 36764'),
+			item('dossiers/36764', 'Cyberbeveiligingswet')
+		]);
+		expect(g.map((x) => [x.groep, x.sleutel, x.items.length])).toEqual([
+			['Kamerstuk 36764 Cyberbeveiligingswet', 'dossier:36764', 5]
+		]);
+	});
+
 	it('goes into a link and comes back the same, whatever its words hold', () => {
 		const terug = uitParam(naarParam([lid2, ro]));
 		expect(terug).toEqual([

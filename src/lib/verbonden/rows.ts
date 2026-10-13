@@ -7,7 +7,7 @@ import { keyEcli } from '$lib/bron/leesbaar';
 import { korteDatum, langeDatum, vandaag } from '$lib/text/datum';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { anchorLabel, parseQualifier } from '$lib/text/qualifier';
-import { articleTitle } from '$lib/text/bw';
+import { articleTitle, bookNumber } from '$lib/text/bw';
 import { authorCite, paragraphCite } from '$lib/text/judgment-cite';
 import { isCollection, type Relation } from '$lib/vocabulary';
 import { draagtWetstitel, isGeneriek } from '$lib/bron/generiek';
@@ -22,6 +22,7 @@ import { kindName } from '$lib/components/explore/law-head';
 import { withoutKamerstuk } from '$lib/components/parliamentary/kamerstuk';
 import { seatWord } from '$lib/components/parliamentary/career';
 import { bronKindOf, confidenceWord, type BronKind } from './filter';
+import { woordenVan } from './hoe';
 
 export type { Neighbor } from '$lib/api/nodes';
 import type { Neighbor } from '$lib/api/nodes';
@@ -617,9 +618,17 @@ export const openLabelOf = (row: Pick<Row, 'position' | 'at'>, beside = false): 
 				? `Lees bij ${anchorLabel(row.at)}`
 				: 'Lees';
 
-/** `art. 4:12, 5:49 en 3 andere`: the articles of the law a judgment cites. */
-export function citedLine(articles: readonly { article_number?: string | null }[]): string | null {
-	const numbers = articles.flatMap((a) => (a.article_number ? [a.article_number] : []));
+/**
+ * `art. 4:12, 5:49 en 3 andere`: the articles of the law a judgment cites; a BW article with
+ * its book, `art. 7:225` (`bwb` the law's id).
+ */
+export function citedLine(
+	articles: readonly { article_number?: string | null }[],
+	bwb?: string | null
+): string | null {
+	const numbers = articles.flatMap((a) =>
+		a.article_number ? [bookNumber(bwb, a.article_number)] : []
+	);
 	if (!numbers.length) return null;
 	const shown = numbers.slice(0, 2).join(', ');
 	const rest = numbers.length - 2;
@@ -682,10 +691,11 @@ export function rolesLine(d: {
 	);
 }
 
-const CHANGE_VERB: Record<string, { verb: string; relation: Relation }> = {
-	amends: { verb: 'wijzigt', relation: 'AMENDS' },
-	introduces: { verb: 'voegt in', relation: 'INTRODUCES' },
-	repeals: { verb: 'trekt in', relation: 'REPEALS' }
+/** A change of the legislative history by its relation; its verb is the one of hoe.ts. */
+const CHANGE: Record<string, Relation> = {
+	amends: 'AMENDS',
+	introduces: 'INTRODUCES',
+	repeals: 'REPEALS'
 };
 
 /**
@@ -711,7 +721,7 @@ export function historyRow(e: {
 				? { collection: 'dossiers', key: e.dossier_number, number: e.dossier_number }
 				: null;
 	if (!ref) return null;
-	const change = CHANGE_VERB[e.change ?? ''];
+	const change = CHANGE[e.change ?? ''];
 	const proposed = e.status === 'voorgesteld';
 	return {
 		ref,
@@ -725,7 +735,7 @@ export function historyRow(e: {
 		context:
 			[
 				proposed ? 'voorgesteld' : null,
-				change?.verb,
+				change ? woordenVan(change, 'documents', 'articles').actief : null,
 				e.dossier_number ? kamerstukNummer(e.dossier_number) : null
 			]
 				.filter(Boolean)
@@ -733,7 +743,7 @@ export function historyRow(e: {
 		date: e.date ?? null,
 		kind: bronKindOf(ref.collection, ref.key, {}),
 		proposed,
-		relation: change?.relation,
+		relation: change,
 		direction: 'inbound'
 	};
 }

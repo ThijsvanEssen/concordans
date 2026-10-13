@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-	NODE_TYPES,
-	RELATIONS,
-	isCollection,
-	isRelation,
-	nodeId,
-	parseNodeId,
-	relationLabel
-} from './vocabulary';
+import { NODE_TYPES, RELATIONS, isCollection, isRelation, nodeId, parseNodeId } from './vocabulary';
 
 describe('node ids', () => {
 	it('builds and parses collection/key', () => {
@@ -26,10 +18,10 @@ describe('node ids', () => {
 });
 
 describe('vocabulary', () => {
-	it('knows the 16 collections and 28 relations of the API', () => {
+	it('knows the 16 collections and 29 relations of the API', () => {
 		expect(Object.keys(NODE_TYPES)).toHaveLength(16);
-		expect(RELATIONS).toHaveLength(28);
-		expect(new Set(RELATIONS).size).toBe(28);
+		expect(RELATIONS).toHaveLength(29);
+		expect(new Set(RELATIONS).size).toBe(29);
 	});
 
 	it('refuses names of the old API', () => {
@@ -43,13 +35,5 @@ describe('vocabulary', () => {
 	it('is not fooled by properties of Object', () => {
 		expect(isCollection('toString')).toBe(false);
 		expect(isCollection('constructor')).toBe(false);
-	});
-});
-
-describe('relationLabel', () => {
-	it('names an answer by who gives it: a letter goes into a motion, a judgment answers questions', () => {
-		expect(relationLabel('ANSWERS', 'documents')).toBe('gaat in op');
-		expect(relationLabel('ANSWERS', 'judgments')).toBe('beantwoordt prejudiciële vragen van');
-		expect(relationLabel('REFERS_TO', 'documents')).toBe('haalt aan');
 	});
 });

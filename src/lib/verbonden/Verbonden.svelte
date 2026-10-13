@@ -2,7 +2,7 @@
 	import { meldNetwerk } from '$lib/stores/netwerk-melding';
 	import { goto } from '$app/navigation';
 	import { rijen } from '$lib/actions/rijen';
-	import { hoeVan } from './hoe';
+	import { hoeVan, kleineLetter } from './hoe';
 	import { itemVanRij } from '$lib/map/rij';
 	// The panel Verbonden: the verbindingen of the selected bron, in the groups of the
 	// table in groups.ts, under the bronfilter. In the network each group can put its
@@ -408,9 +408,6 @@
 	const wisselRij = (row: Row) => (openRij = openRij === rowId(row) ? null : rowId(row));
 
 	/** The row whose provenance a tap shows, on touch. */
-	/** `Herkend in de tekst` in the meta line: `herkend in de tekst`; `ECLI …` stays. */
-	const kleineLetter = (s: string) =>
-		/^[A-Z][a-z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s;
 
 	// The years of all the group's judgments where the API counts them (a wet, BE-47);
 	// else of the rows loaded, which the sentence then says.

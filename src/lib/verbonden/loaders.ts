@@ -13,7 +13,6 @@ import { naastHetStuk, stukkenInDezelfdeZaak } from '$lib/bron/zaak';
 import { loadDossierHub, type DossierHub } from './dossier-hub';
 import { explanatoryDocuments } from './explanatory-documents';
 import { getArticleDetail, getDelegated, getLawDelegated } from '$lib/api/articles';
-import { kindName } from '$lib/components/explore/law-head';
 import { grondslagArtikelen, type Regeling, type WetRegeling } from '$lib/text/delegaties';
 import { abortable, getAmendedBy, getMemberDossiers } from '$lib/api/records';
 import { lawArticleList } from '$lib/api/law-articles';
@@ -27,7 +26,8 @@ import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
 import { uitspraakVolgorde, wetUitspraakJaar, wetUitspraakVolgorde } from './volgorde';
 import { paragraphCite } from '$lib/text/judgment-cite';
-import { articleName } from '$lib/text/bw';
+import { articleName, bookNumber, withBook } from '$lib/text/bw';
+import { korteDatum } from '$lib/text/datum';
 import { anchorLabel, anchorOf, parseQualifier } from '$lib/text/qualifier';
 import {
 	aardOf,
@@ -250,7 +250,10 @@ async function actorDossiers(
 /** The pages of references with an aard a law loads at most: 1000 references. */
 const AARD_PAGES = 5;
 
-/** A regulation issued under the article, as a row of Verbonden. */
+/**
+ * A regulation issued under the article, as a row of Verbonden. Its line says its kind and
+ * its grondslag (`AMvB op grond van lid 1 en 7`, hoe.ts), the meta line when it took effect.
+ */
 export function regelingRow(
 	r: Pick<Regeling, 'instrument' | 'kind' | 'date_in_force' | 'leden'>
 ): Row {
@@ -264,34 +267,61 @@ export function regelingRow(
 	return {
 		ref: { collection: 'instruments', key: i.key },
 		...describe('instruments', i.key, i.display_name, props),
-		context: kindName(r.kind),
-		// Its day, not its BWB id: `AMvB, 15 aug. 2026` (Thijs, 13 Oct).
-		identifier: null,
+		// The kind stands in the line (`AMvB op grond van`), not again under it.
+		context: null,
+		// Its day, not its BWB id: `in werking 15 aug. 2026` (Thijs, 13 Oct).
+		identifier: r.date_in_force ? `in werking ${korteDatum(r.date_in_force)}` : null,
 		date: r.date_in_force ?? null,
 		lid: r.leden?.length === 1 ? r.leden[0] : null,
 		kind: bronKindOf('instruments', i.key, props, 'BASED_ON'),
 		relation: 'BASED_ON',
 		direction: 'inbound',
-		props
+		props,
+		edge: { leden: r.leden ?? [] }
 	};
 }
 
 /**
  * A regulation issued under the law, as a row of Verbonden: as one under an article
- * (regelingRow), its place the articles of the law its Gelet op names, `art. 16, 21, 24`.
- * A map lists the same rows under a kept law (map/verbonden.ts).
+ * (regelingRow), its place the articles of the law its Gelet op names with their leden,
+ * `art. 3, 16 lid 1 en 7`, a BW article with its book (`bwb` the law's id). A map lists the
+ * same rows under a kept law (map/verbonden.ts).
  */
-export function wetRegelingRow(r: WetRegeling): Row {
+export function wetRegelingRow(r: WetRegeling, bwb?: string | null): Row {
 	return {
 		...regelingRow({ instrument: r.instrument, kind: r.kind, date_in_force: r.date_in_force }),
-		position: grondslagArtikelen(r.articles)
+		position: grondslagArtikelen(r.articles, bwb)
 	};
 }
 
 /** The regulations issued under a law, as rows: empty where it has none or the API says nothing. */
 export async function wetRegelingen(bwb: string): Promise<{ total: number; rows: Row[] }> {
 	const found = await getLawDelegated(bwb);
-	return { total: found?.total ?? 0, rows: (found?.items ?? []).map(wetRegelingRow) };
+	return {
+		total: found?.total ?? 0,
+		rows: (found?.items ?? []).map((r) => wetRegelingRow(r, bwb))
+	};
+}
+
+/**
+ * A law connected to this one by the references between their articles, as a row: which way
+ * they run, counted on its line (`Verwijst 23 keer naar deze wet`, hoe.ts), never its BWB id.
+ * Verbonden and a map list the same rows.
+ */
+export function wetRijVanRelated(i: Schema<'InstrumentRelatedItem'>): Row {
+	const props = { bwb_id: i.bwb_id, celex: i.celex, citation_title: i.citation_title };
+	return {
+		ref: { collection: 'instruments', key: i.key },
+		title: i.citation_title ?? naamVan('instruments', i),
+		context: null,
+		identifier: null,
+		kind: bronKindOf('instruments', i.key, props),
+		relation: 'REFERS_TO',
+		// The way most of its references run: to this law (inbound) or from it.
+		direction: i.inbound_count >= i.outbound_count ? 'inbound' : 'outbound',
+		edge: { inbound_count: i.inbound_count, outbound_count: i.outbound_count },
+		props
+	};
 }
 
 export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = {
@@ -701,7 +731,8 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				add({
 					ref: { collection: 'instruments', key: i.key },
 					title: i.citation_title ?? i.title ?? naamVan('instruments', i),
-					context: 'alleen genoemd',
+					// The line says it: `Genoemd`, `Noemt` (hoe.ts), not "Aangehaald" with "alleen genoemd".
+					context: null,
 					kind: 'internationaal',
 					derived: link.confidence != null && link.confidence < 1,
 					relation: 'REFERS_TO',
@@ -857,15 +888,22 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			const to = r.target_article;
 			if (!from || rows.has(r.edge_id)) continue;
 			const sameLaw = to?.bwb_id && to.bwb_id === from.bwb_id;
+			// The article it refers to as it is cited, a BW one with its book: `art. 7:50a`,
+			// `art. 6:214 BW` (hoe.ts: `Verwijst naar art. 7:50a, als voorwaarde`).
 			const target = to
-				? sameLaw
-					? `artikel ${to.article_number}`
-					: (to.display_name ?? `artikel ${to.article_number}`)
+				? sameLaw && to.article_number
+					? `art. ${bookNumber(to.bwb_id, to.article_number)}`
+					: to.display_name
+						? withBook(to.display_name).replace(/^Artikel /, 'art. ')
+						: to.article_number
+							? `art. ${bookNumber(to.bwb_id, to.article_number)}`
+							: null
 				: null;
 			rows.set(r.edge_id, {
 				ref: { collection: 'articles', key: from.key },
-				title: from.article_number ? `Artikel ${from.article_number}` : naamVan('articles', from),
-				context: target ? `verwijst naar ${target}` : null,
+				title: articleName(from.bwb_id ?? bwb, from.article_number) ?? naamVan('articles', from),
+				context: null,
+				edge: target ? { doel: target } : {},
 				kind: 'artikelen',
 				// The aard says how sure it is; the reference itself is in the BWB (1.0).
 				aard: aardOf(r.semantic_type, r.semantic_confidence),
@@ -887,45 +925,35 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 		};
 	},
 
-	// The laws whose articles refer to this law's articles, or the other way round,
-	// counted per direction.
 	// The regulations whose Gelet op names an article of the law (`/delegated`, API 0.79.52).
 	'instrument-delegated': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
 		return bwb ? abortable(wetRegelingen(bwb), signal) : { rows: [] };
 	},
 
+	// The laws whose articles refer to this law's articles, or the other way round, which way
+	// counted on the row (`Verwijst 23 keer naar deze wet`, hoe.ts). A regulation issued under
+	// the law stands under Gebaseerd op deze wet, with its grondslag, and not here again.
+	// TODO(back end, pakket-d-grondslag): `direction`, `kind`, `based_on` on the item.
 	'instrument-related': async ({ node, signal }) => {
 		const bwb = bwbOf(node);
 		if (!bwb) return { rows: [] };
-		const found = await unwrap(
-			api.GET('/api/instruments/{bwb_id}/related-instruments', {
-				params: { path: { bwb_id: bwb }, query: { limit: 50 } },
-				signal
-			})
-		);
-		const refs = (n: number) => `${n} ${n === 1 ? 'verwijzing' : 'verwijzingen'}`;
+		const [found, gedelegeerd] = await Promise.all([
+			unwrap(
+				api.GET('/api/instruments/{bwb_id}/related-instruments', {
+					params: { path: { bwb_id: bwb }, query: { limit: 50 } },
+					signal
+				})
+			),
+			getLawDelegated(bwb)
+		]);
+		const eronder = new Set((gedelegeerd?.items ?? []).map((r) => r.instrument.key));
+		const items = found.items.filter((i) => !eronder.has(i.key));
 		return {
-			total: found.total,
-			rows: found.items
-				.map((i) => ({
-					ref: { collection: 'instruments' as const, key: i.key },
-					title: i.citation_title ?? naamVan('instruments', i),
-					context:
-						[
-							// outbound: from this law to the other; inbound: from the other to this one.
-							i.inbound_count > 0 ? `${refs(i.inbound_count)} naar deze wet` : null,
-							i.outbound_count > 0 ? `${refs(i.outbound_count)} vanuit deze wet` : null
-						]
-							.filter(Boolean)
-							.join(', ') || null,
-					identifier: i.bwb_id ?? i.celex ?? null,
-					kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id, celex: i.celex }),
-					relation: 'REFERS_TO' as const,
-					count: i.inbound_count + i.outbound_count
-				}))
-				.sort((a, b) => b.count - a.count)
-				.map(({ count: _count, ...row }) => row)
+			total: found.total - (found.items.length - items.length),
+			rows: items
+				.sort((a, b) => b.inbound_count + b.outbound_count - (a.inbound_count + a.outbound_count))
+				.map(wetRijVanRelated)
 		};
 	},
 
@@ -1065,7 +1093,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 						advocate_general: j.advocate_general,
 						advocate_general_role: j.advocate_general_role
 					}),
-					context: citedLine(j.cited_articles ?? []),
+					context: citedLine(j.cited_articles ?? [], bwb),
 					kind: 'uitspraken' as const,
 					relation: 'REFERS_TO' as const,
 					direction: 'inbound' as const
