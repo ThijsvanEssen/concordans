@@ -21,6 +21,7 @@ import { buildGroups, EUROPEAN, type Loader, type Match } from './groups';
 import { bronKindOf, isInternational } from './filter';
 import { instrumentMetaStore } from '$lib/api/instrument-cache';
 import { getJudgmentDetail } from '$lib/api/judgments';
+import { aanhalingIn } from './passage';
 import { bucketKey, getBuckets } from '$lib/api/nodes';
 import { lawIdOf } from '$lib/graph/types';
 import { get } from 'svelte/store';
@@ -458,6 +459,7 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 							confidence: item.confidence,
 							snippet: item.snippet || null,
 							match: item.text || null,
+							passageAt: at,
 							relation: 'REFERS_TO',
 							direction: 'inbound',
 							props: { ...j }
@@ -775,6 +777,18 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 			const ro = overwegingen.get(n.key);
 			if (ro?.length && !row.edge?.paragraphs)
 				row.position = positionsLabel(ro.map((nr) => paragraphCite(ecli, nr)));
+			// The passage that cites it, from the paragraphs the reader has loaded (Thijs, 13 Oct).
+			const aangehaald = detail?.cited_articles?.find(
+				(c) => c.article.key === n.key || c.article.key === key
+			);
+			const passage = aangehaald
+				? aanhalingIn(aangehaald, detail?.judgment.paragraphs ?? [])
+				: null;
+			if (passage) {
+				row.snippet = passage.snippet;
+				row.match = passage.match;
+				row.passageAt = passage.at;
+			}
 			const id = `${key}#${at ?? ''}`;
 			if (!rows.has(id)) rows.set(id, row);
 		}

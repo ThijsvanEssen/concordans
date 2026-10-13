@@ -1085,7 +1085,8 @@ describe('names, not keys', () => {
 			'lib/components/actueel/wetsnetwerk.ts': 'the key of an href',
 			'lib/components/parliamentary/amendementen.ts': 'the ids of the zaken not done',
 			'lib/api/law-articles.ts': 'the address of an article, not its name',
-			'lib/text/version-diff.ts': 'the id of a version, not shown'
+			'lib/text/version-diff.ts': 'the id of a version, not shown',
+			'lib/verbonden/passage.ts': 'the anchor of a paragraph, for an href'
 		};
 		const fallback = /(\?\?|\|\|)\s*[A-Za-z_$][\w.?$]*\.(key|id)\b(?!\s*\.|\s*[!=]==|\s*\()/;
 		const zonder = sources

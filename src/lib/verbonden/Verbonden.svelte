@@ -16,7 +16,7 @@
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { page } from '$app/state';
 	import { tick } from 'svelte';
-	import { openHref, refId } from '$lib/bron/href';
+	import { bronHref, openHref, refId } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphStore } from '$lib/graph/graph-store';
 	import type { CanvasRow } from '$lib/graph/store/types';
@@ -364,6 +364,15 @@
 	const rowHref = (g: Group, row: Row) =>
 		g.inPlace ? inPlaceHref(row) : openHref(row.ref, { at: row.at });
 
+	// The r.o. of a passage opens the citing judgment's text there: the row's, or the selected
+	// one's where it cites the row's bron.
+	const plaatsHref = (g: Group, row: Row, at: string) =>
+		row.ref.collection === 'judgments'
+			? g.inPlace
+				? inPlaceHref({ ...row, at })
+				: bronHref(row.ref, { at, keepMode: false, mode: 'read', paneel: 'tekst' })
+			: bronHref(selection.id, { at, keepMode: false, mode: 'read', paneel: 'tekst' });
+
 	/** The row whose provenance a tap shows, on touch. */
 	/** `Herkend in de tekst` in the meta line: `herkend in de tekst`; `ECLI …` stays. */
 	const kleineLetter = (s: string) =>
@@ -680,7 +689,13 @@
 												>{#if hoe.werkwoord}<b>{hoe.werkwoord}</b
 													>{/if}{#if hoe.rest}{hoe.werkwoord && !/^[,:]/.test(hoe.rest)
 														? ' '
-														: ''}{hoe.rest}{/if}{#if hoe.afgeleid}, afgeleid{/if}</span
+														: ''}{#if hoe.plaats}{@const i = hoe.rest.indexOf(
+															hoe.plaats.text
+														)}{hoe.rest.slice(0, i)}<TekstLink
+															href={plaatsHref(g, row, hoe.plaats.at)}>{hoe.plaats.text}</TekstLink
+														>{hoe.rest.slice(
+															i + hoe.plaats.text.length
+														)}{:else}{hoe.rest}{/if}{/if}{#if hoe.afgeleid}, afgeleid{/if}</span
 											>
 										{/if}
 										{#if hoe?.citaat}

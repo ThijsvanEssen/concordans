@@ -55,6 +55,8 @@ export type Row = {
 	/** The passage of the source that carries the verbinding, and the phrase in it. */
 	snippet?: string | null;
 	match?: string | null;
+	/** The paragraph of the citing judgment the passage is in, `rov-3.4`: its r.o. opens the reader there. */
+	passageAt?: string | null;
 	/** The court of a judgment. */
 	court?: string | null;
 	/** Props the canvas needs to draw a bron not on it yet. */

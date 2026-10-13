@@ -7,6 +7,7 @@
 import { relationLabel, type Collection } from '$lib/vocabulary';
 import { langeDatum } from '$lib/text/datum';
 import { passageOf, type Row } from './rows';
+import { uitsnede, type Passage } from './passage';
 import { confidenceWord } from './filter';
 
 export type Hoe = {
@@ -20,7 +21,12 @@ export type Hoe = {
 	/** Derived or below full confidence: the line in italics, with "afgeleid". */
 	afgeleid: boolean;
 	/** The passage of the source with the words that name the selected bron. */
-	citaat: { before: string; mark: string; after: string } | null;
+	citaat: Passage | null;
+	/**
+	 * The words in `rest` that name the paragraph the passage is in (`r.o. 3.4`), and its
+	 * anchor: a link that opens the citing judgment there.
+	 */
+	plaats: { text: string; at: string } | null;
 	/** Where the verbinding comes from, for hover and focus. */
 	herkomst: string | null;
 };
@@ -41,6 +47,23 @@ const HERKOMST_REDEN: Record<string, string> = {
 	bwb_article: 'Herkend in de tekst',
 	ecli: 'ECLI genoemd in de tekst'
 };
+
+/**
+ * The words of `rest` that name the paragraph `at` (`rov-3.4`): `r.o. 3.4` in `in r.o. 3.4`,
+ * `5.1` in `in r.o. 3.4 en 5.1`. Null where the line does not name it.
+ */
+export function plaatsIn(
+	rest: string | null,
+	at: string | null | undefined
+): { text: string; at: string } | null {
+	if (!rest || !at?.startsWith('rov-')) return null;
+	const nr = at.slice(4);
+	const n = nr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const m =
+		new RegExp(`(?:r\\.o\\.|onder|§)\\s*${n}(?![\\w.])`).exec(rest) ??
+		new RegExp(`(?<=\\s)${n}(?![\\w.])`).exec(rest);
+	return m ? { text: m[0], at } : null;
+}
 
 /** Where an edge comes from by its `basis`, where it has no `reason`. */
 const HERKOMST_BASIS: Partial<Record<string, string>> = {
@@ -69,7 +92,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	// is high; a citation recognised in the text has 0.95).
 	const afgeleid = confidenceWord(row.confidence, !!row.derived) !== 'hoog';
 	const p = passageOf(row);
-	const citaat = p?.mark ? p : null;
+	const citaat = p?.mark ? uitsnede(p) : null;
 	const lid = row.lid ? `lid ${row.lid}` : null;
 	// The place in the citing text: `in r.o. 4.3 en 5.1`.
 	const plaats = row.position && row.position !== lid ? `in ${row.position}` : null;
@@ -77,7 +100,14 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	const uit = (s: string | null) => (s ? (HERKOMST_REDEN[s] ?? null) : null);
 	const formeel = text(edge.basis) === 'formal_relation' ? 'Rechtspraak.nl, formele relatie' : null;
 	const regel = (werkwoord: string | null, rest: string | null, herkomst: string | null) =>
-		({ werkwoord, rest, afgeleid, citaat, herkomst }) satisfies Hoe;
+		({
+			werkwoord,
+			rest,
+			afgeleid,
+			citaat,
+			plaats: citaat ? plaatsIn(rest, row.passageAt) : null,
+			herkomst
+		}) satisfies Hoe;
 
 	switch (row.relation) {
 		case 'RELATED_TO': {
