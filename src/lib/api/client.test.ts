@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SEARCH_TIMEOUT_MS, TIMEOUT_MS, api, isTimeout, teller, zoekApi } from './client';
+import {
+	SEARCH_TIMEOUT_MS,
+	TIMEOUT_MS,
+	api,
+	isTimeout,
+	teller,
+	timedFetch,
+	zoekApi
+} from './client';
 
 describe('api timeouts', () => {
 	afterEach(() => vi.restoreAllMocks());
@@ -22,6 +30,22 @@ describe('api timeouts', () => {
 			)
 		).toEqual([SEARCH_TIMEOUT_MS]);
 		expect(SEARCH_TIMEOUT_MS).toBe(30_000);
+	});
+
+	it('lets a caller shorten the wait but never lengthen it: a slow call goes to zoekApi', async () => {
+		vi.spyOn(globalThis, 'fetch').mockImplementation(
+			(input) =>
+				new Promise((_, reject) => {
+					const { signal } = input as Request;
+					signal.addEventListener('abort', () => reject(signal.reason));
+				})
+		);
+		const start = Date.now();
+		const call = timedFetch(50)(
+			new Request('http://api.test/api/feed', { signal: AbortSignal.timeout(5_000) })
+		);
+		await expect(call).rejects.toSatisfy(isTimeout);
+		expect(Date.now() - start).toBeLessThan(2_000);
 	});
 
 	it('tells a timeout from an abort', () => {
