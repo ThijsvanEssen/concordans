@@ -39,7 +39,6 @@
 	import { VORM_LABEL, VORM_VOLGORDE, vormVanBron, type Vorm } from '$lib/bron/vormen';
 	import {
 		containerIdFor,
-		containerMembershipStore,
 		isDrawnGroup,
 		momentOf,
 		type Period,
@@ -1318,7 +1317,7 @@
 				filters = f;
 				applyFilters();
 			}),
-			containerMembershipStore.subscribe((groups) => {
+			store.containers.subscribe((groups) => {
 				containerGroups = groups;
 				redraw();
 				syncContainerAnchors();

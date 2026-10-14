@@ -9,14 +9,7 @@ import {
 	getNodeHull
 } from '$lib/api/records';
 import type { Schema } from '$lib/api/types';
-import {
-	containerIdFor,
-	containerKindOf,
-	getContainerGroup,
-	isContainerMembership,
-	markLone,
-	recordContainerMember
-} from '../container-membership';
+import { containerIdFor, containerKindOf, isContainerMembership } from '../container-membership';
 import { foldVersions } from '../paths';
 import { withoutLawHops } from '../neighborhood';
 import { NODE_TYPES, nodeId, type Collection } from '$lib/vocabulary';
@@ -47,6 +40,7 @@ export function createExpansion(
 		nodes,
 		cache,
 		pinned,
+		containers,
 		selectionStore,
 		filtersStore,
 		emit,
@@ -141,7 +135,7 @@ export function createExpansion(
 			const targetNode = byId.get(e.target);
 			const targetKind = targetNode && containerKindOf(targetNode.collection);
 			if (targetKind && isContainerMembership(targetKind, relation) && drawn.has(e.source)) {
-				recordContainerMember(targetKind, containerIdFor(targetNode!), e.source, relation);
+				containers.recordMember(targetKind, containerIdFor(targetNode!), e.source, relation);
 				continue;
 			}
 			// A wet a drawn stuk changes is drawn as its anchor (`lawAnchor`).
@@ -168,7 +162,7 @@ export function createExpansion(
 			}
 			const sourceKind = sourceNode && containerKindOf(sourceNode.collection);
 			if (sourceKind && isContainerMembership(sourceKind, relation) && drawn.has(e.target)) {
-				recordContainerMember(sourceKind, containerIdFor(sourceNode!), e.target, relation);
+				containers.recordMember(sourceKind, containerIdFor(sourceNode!), e.target, relation);
 				continue;
 			}
 			if (!drawn.has(e.source) || !drawn.has(e.target)) continue;
@@ -259,8 +253,8 @@ export function createExpansion(
 					if (!dossier) return;
 					recordContainerFor(dossier as unknown as BaseNode, 'dossier');
 					const container = containerIdFor(dossier);
-					recordContainerMember('dossier', container, id, 'PART_OF');
-					markLone(container);
+					containers.recordMember('dossier', container, id, 'PART_OF');
+					containers.markLone(container);
 				},
 				{ parallel: 4, max: 12 }
 			).then(() => emit());
@@ -364,7 +358,7 @@ export function createExpansion(
 			const focalNode = byId.get(response.focal_id);
 			const focalContainerKind = focalNode && containerKindOf(focalNode.collection);
 			if (focalContainerKind) {
-				const group = getContainerGroup(containerIdFor(focalNode!) ?? '');
+				const group = containers.get(containerIdFor(focalNode!) ?? '');
 				if (group) for (const id of group.members) keep.add(id);
 			}
 			pruneToIds(keep);

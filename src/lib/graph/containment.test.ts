@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { get } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
-import { getContainerGroup, isContainment } from './container-membership';
+import { isContainment } from './container-membership';
 import { createGraphStore } from './graph-store';
 import { createGraphContext } from './store/context';
 
@@ -46,6 +46,12 @@ const response = (key: string) =>
 		}
 	}) as unknown as Schema<'NodeGraphResponse'>;
 
+/** The dossier's hull as the canvas gets it: after the microtask the store batches in. */
+const hull = async (store: ReturnType<typeof createGraphStore>) => {
+	await Promise.resolve();
+	return get(store.containers).get(dossier.id);
+};
+
 const linesToDossier = (store: ReturnType<typeof createGraphStore>) =>
 	get(store.edges).filter((e) => e.source === dossier.id || e.target === dossier.id);
 
@@ -60,7 +66,7 @@ describe('isContainment', () => {
 });
 
 describe('a stuk onderdeel van a dossier', () => {
-	it('stands in the hull when the dossier ties two chosen stukken, without a line', () => {
+	it('stands in the hull when the dossier ties two chosen stukken, without a line', async () => {
 		const store = createGraphStore();
 		store.compose({
 			participants: [{ response: response('3') }, { response: response('4') }],
@@ -68,20 +74,22 @@ describe('a stuk onderdeel van a dossier', () => {
 			fresh: true
 		});
 		expect(linesToDossier(store)).toEqual([]);
-		const group = getContainerGroup('dossiers/36764');
-		expect([...(group?.parts ?? [])]).toEqual(
-			expect.arrayContaining(['documents/3', 'documents/4'])
-		);
+		// The dossier tying them is their anchor, and stands in its own hull.
+		expect([...((await hull(store))?.parts ?? [])]).toEqual([
+			dossier.id,
+			'documents/3',
+			'documents/4'
+		]);
 	});
 
 	it('stands in the hull when the stuk is the focus', () => {
 		const ctx = createGraphContext();
 		ctx.mergeResponse(response('5'));
 		expect([...ctx.edges.values()].filter((e) => e.target === dossier.id)).toEqual([]);
-		expect(getContainerGroup('dossiers/36764')?.parts.has('documents/5')).toBe(true);
+		expect([...(ctx.containers.get(dossier.id)?.parts ?? [])]).toEqual(['documents/5']);
 	});
 
-	it('stands in the hull when its dossier is put on the canvas as a row', () => {
+	it('stands in the hull when its dossier is put on the canvas as a row', async () => {
 		const store = createGraphStore();
 		store.compose({ participants: [{ response: response('6') }], withJoining: false, fresh: true });
 		store.showRows('documents/6', [
@@ -93,7 +101,7 @@ describe('a stuk onderdeel van a dossier', () => {
 			}
 		]);
 		expect(linesToDossier(store)).toEqual([]);
-		expect(getContainerGroup('dossiers/36764')?.parts.has('documents/6')).toBe(true);
+		expect([...((await hull(store))?.parts ?? [])]).toEqual(['documents/6']);
 	});
 
 	it('stands in the hull on a path through the dossier', async () => {
@@ -116,9 +124,6 @@ describe('a stuk onderdeel van a dossier', () => {
 			]
 		} as unknown as Schema<'PathsResponse'>);
 		expect(linesToDossier(store)).toEqual([]);
-		const group = getContainerGroup('dossiers/36764');
-		expect([...(group?.parts ?? [])]).toEqual(
-			expect.arrayContaining(['documents/7', 'documents/8'])
-		);
+		expect([...((await hull(store))?.parts ?? [])]).toEqual(['documents/7', 'documents/8']);
 	});
 });

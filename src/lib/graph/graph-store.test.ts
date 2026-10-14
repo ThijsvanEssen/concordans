@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { get } from 'svelte/store';
+import type { Schema } from '$lib/api/types';
 
 // A wet with more articles than the canvas keeps (SOFT_NODE_CAP): the Awb.
 const ARTICLES = 450;
@@ -51,18 +53,55 @@ const jetten = {
 	neighbors: { total: 0, buckets: [] }
 };
 
-const getNodeGraph = vi.fn(async (c: string, _k: string, opts: { limit?: number } = {}) =>
+// A stuk in dossier 36764: the dossier is its one neighbour, by PART_OF.
+const dossier = {
+	id: 'dossiers/36764',
+	key: '36764',
+	collection: 'dossiers',
+	type: 'dossier',
+	display_name: 'Cyberbeveiligingswet',
+	labels: [],
+	props: { label: '36764', title: 'Cyberbeveiligingswet' }
+};
+const stuk = (key: string) => ({
+	node: {
+		id: `documents/${key}`,
+		key,
+		collection: 'documents',
+		type: 'document',
+		display_name: `Kamerstuk 36764, nr. ${key}`,
+		labels: [],
+		props: {}
+	},
+	neighbors: {
+		total: 1,
+		buckets: [
+			{
+				relation: 'PART_OF',
+				collection: 'dossiers',
+				direction: 'outbound',
+				type: 'dossier',
+				total: 1,
+				items: [{ ...dossier, relation: 'PART_OF', direction: 'outbound' }]
+			}
+		]
+	}
+});
+
+const getNodeGraph = vi.fn(async (c: string, k: string, opts: { limit?: number } = {}) =>
 	c === 'cabinets'
 		? jetten
-		: opts.limit === 1
-			? {
-					...awb,
-					neighbors: {
-						...awb.neighbors,
-						buckets: awb.neighbors.buckets.map((b) => ({ ...b, items: b.items.slice(0, 1) }))
+		: c === 'documents'
+			? stuk(k)
+			: opts.limit === 1
+				? {
+						...awb,
+						neighbors: {
+							...awb.neighbors,
+							buckets: awb.neighbors.buckets.map((b) => ({ ...b, items: b.items.slice(0, 1) }))
+						}
 					}
-				}
-			: awb
+				: awb
 );
 vi.mock('$lib/api/nodes', async (original) => ({
 	...(await original<typeof import('$lib/api/nodes')>()),
@@ -70,6 +109,12 @@ vi.mock('$lib/api/nodes', async (original) => ({
 }));
 
 const { createGraphStore } = await import('./graph-store');
+
+/** The hull of a container as the canvas gets it: after the microtask the store batches in. */
+const hullOf = async (store: ReturnType<typeof createGraphStore>, id: string) => {
+	await Promise.resolve();
+	return get(store.containers).get(id);
+};
 
 describe('a wet as the focus', () => {
 	it('stays on the canvas when it has more articles than the canvas keeps', async () => {
@@ -102,7 +147,6 @@ describe('the bron before its neighbours', () => {
 
 describe('rows shown on a cabinet', () => {
 	it('go into its hull with their seat, not out of it on a verbinding', async () => {
-		const { getContainerGroup } = await import('./container-membership');
 		const store = createGraphStore();
 		const focus = await store.expandNode('cabinets', 'jetten');
 		expect(focus?.id).toBe('cabinets/jetten');
@@ -119,10 +163,54 @@ describe('rows shown on a cabinet', () => {
 		expect(
 			edges.filter((e) => e.target === 'cabinets/jetten' || e.source === 'cabinets/jetten')
 		).toEqual([]);
-		const group = getContainerGroup('cabinets/jetten');
-		expect([...(group?.members ?? [])]).toEqual(
-			expect.arrayContaining(['members/a', 'members/b', 'members/c'])
-		);
+		const group = await hullOf(store, 'cabinets/jetten');
+		// The cabinet is the focus: the anchor of its own hull.
+		expect([...(group?.members ?? [])]).toEqual([
+			'cabinets/jetten',
+			'members/a',
+			'members/b',
+			'members/c'
+		]);
 		expect(group?.periods.get('members/c')).toEqual({ from: '2026-02-23', to: '2026-06-01' });
+	});
+});
+
+describe('the hulls of a canvas', () => {
+	/** A path from stuk 1 to stuk 2: the dossier of each is drawn around it alone. */
+	const path = {
+		ids: ['documents/1', 'documents/2'],
+		paths: [
+			{
+				source: 'documents/1',
+				target: 'documents/2',
+				node_ids: ['documents/1', 'documents/2'],
+				edge_ids: ['e1']
+			}
+		],
+		nodes: [stuk('1').node, stuk('2').node],
+		edges: [{ id: 'e1', source: 'documents/1', target: 'documents/2', relation: 'CITES' }]
+	} as unknown as Schema<'PathsResponse'>;
+
+	it('start afresh after a reset: a dossier on a path no longer stands around one stuk', async () => {
+		const store = createGraphStore();
+		await store.mergePaths(path);
+		await vi.waitFor(async () => expect((await hullOf(store, 'dossiers/36764'))?.lone).toBe(true));
+		store.reset();
+		expect(await hullOf(store, 'dossiers/36764')).toBeUndefined();
+		await store.expandNode('documents', '3');
+		const group = await hullOf(store, 'dossiers/36764');
+		expect([...(group?.parts ?? [])]).toEqual(['documents/3']);
+		expect(group?.lone).toBeUndefined();
+	});
+
+	it('belong to one store: another canvas does not see them', async () => {
+		const one = createGraphStore();
+		const other = createGraphStore();
+		await one.expandNode('documents', '4');
+		expect([...((await hullOf(one, 'dossiers/36764'))?.parts ?? [])]).toEqual(['documents/4']);
+		expect(await hullOf(other, 'dossiers/36764')).toBeUndefined();
+		await other.expandNode('documents', '5');
+		expect([...((await hullOf(other, 'dossiers/36764'))?.parts ?? [])]).toEqual(['documents/5']);
+		expect([...((await hullOf(one, 'dossiers/36764'))?.parts ?? [])]).toEqual(['documents/4']);
 	});
 });
