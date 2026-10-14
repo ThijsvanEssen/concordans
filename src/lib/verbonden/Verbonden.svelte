@@ -76,6 +76,7 @@
 		yearHistogram,
 		type Grouping
 	} from './view';
+	import { withParams } from '$lib/util/address';
 
 	let {
 		verbonden,
@@ -371,12 +372,8 @@
 	}
 
 	// A row of an in-place group opens beside the selected bron, which stays selected.
-	function inPlaceHref(row: Row) {
-		const url = new URL(page.url);
-		url.searchParams.set('naast', refId(row.ref));
-		url.hash = row.at ?? '';
-		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
-	}
+	const inPlaceHref = (row: Row) =>
+		withParams(page.url, { naast: refId(row.ref) }, { hash: row.at ?? '' });
 
 	// A row opens its bron as every link to a bron does (openHref): in Netwerk, a Kamerstuk on
 	// its text; a group read beside the text opens it there.

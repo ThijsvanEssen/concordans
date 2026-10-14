@@ -21,7 +21,6 @@
 	import ArticleText from '$lib/components/articles/ArticleText.svelte';
 	import VersionCompare from '$lib/components/articles/VersionCompare.svelte';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
 	import { anchorOfHash, landOn } from '$lib/bron/anchor';
 	import { refId } from '$lib/bron/href';
 	import { articleCitation, citeArticle, placeCitation } from '$lib/text/cite';
@@ -36,6 +35,7 @@
 	import { tick, untrack } from 'svelte';
 	import ReaderFrame from './ReaderFrame.svelte';
 	import ReaderHead from './ReaderHead.svelte';
+	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 
 	let {
 		selection,
@@ -259,15 +259,12 @@
 	);
 	const explanatoryHref = $derived.by(() => {
 		if (!explanatory) return null;
-		const url = new URL(page.url);
-		if (explanatoryOpen) {
-			url.searchParams.delete('naast');
-			url.hash = '';
-			return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
-		}
-		url.searchParams.set('naast', refId({ collection: 'documents', key: explanatory.key }));
-		url.hash = explanatory.at ?? '';
-		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
+		if (explanatoryOpen) return withParams(page.url, { naast: null });
+		return withParams(
+			page.url,
+			{ naast: refId({ collection: 'documents', key: explanatory.key }) },
+			{ hash: explanatory.at ?? '' }
+		);
 	});
 
 	const wordings = $derived(wordingsOf(versions));
@@ -367,11 +364,9 @@
 			: null
 	);
 	// The link opens the text, not the network: a reader who follows it wants to read.
-	const readLink = $derived.by(() => {
-		const url = new URL(page.url);
-		url.searchParams.set('lezen', '1');
-		return url.toString().replaceAll('%2F', '/');
-	});
+	const readLink = $derived(
+		page.url.origin + withParams(page.url, { lezen: '1' }, { hash: page.url.hash.slice(1) })
+	);
 
 	// The official text of the version on screen: wetten.overheid.nl, EUR-Lex or the
 	// Verdragenbank, as the API names it.
@@ -410,23 +405,14 @@
 		};
 	});
 
-	const withParams = (params: Record<string, string | null>) => {
-		const url = new URL(page.url);
-		for (const [k, v] of Object.entries(params)) {
-			if (v === null) url.searchParams.delete(k);
-			else url.searchParams.set(k, v);
-		}
-		url.hash = '';
-		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
-	};
 	const billsHref = $derived(
-		withParams({
+		withParams(page.url, {
 			...filterParams(filter ?? ({} as VerbondenFilter)),
 			bronnen: 'wetsvoorstellen',
 			lid: null
 		})
 	);
-	const lidHref = (lid: string) => withParams({ lid: filter?.lid === lid ? null : lid });
+	const lidHref = (lid: string) => withParams(page.url, { lid: filter?.lid === lid ? null : lid });
 
 	// A comparison of two tekstversies, named in the URL by the dates they took effect,
 	// so a comparison can be cited and shared.
@@ -434,10 +420,10 @@
 	const comparing = $derived(compareParam !== null && wordings.length > 1);
 	const layout = $derived(page.url.searchParams.get('weergave') === 'naast' ? 'naast' : 'een');
 	const compareHref = (from: number, to: number) =>
-		withParams({ versies: `${wordings[from].from ?? ''}..${wordings[to].from ?? ''}` });
-	const closeCompareHref = $derived(withParams({ versies: null, weergave: null }));
-	const go = (params: Record<string, string | null>) =>
-		goto(withParams(params), { replaceState: true, noScroll: true, keepFocus: true });
+		withParams(page.url, { versies: `${wordings[from].from ?? ''}..${wordings[to].from ?? ''}` });
+	const closeCompareHref = $derived(withParams(page.url, { versies: null, weergave: null }));
+	const link = (patch: ParamPatch) => withParams(page.url, patch);
+	const go = (patch: ParamPatch) => navigate(link(patch));
 
 	// In the margin of the geldende tekst: when a lid got its present wording, if that was
 	// after the oldest tekstversie, leading to that lid's history.
@@ -450,7 +436,7 @@
 			if (!latest || latest.since.index === 0) continue;
 			notes.set(unit.number, {
 				label: `${latest.kind === 'added' ? 'ingevoegd' : 'gewijzigd'} ${latest.since.from?.slice(0, 4) ?? ''}`,
-				href: withParams({ versies: `lid-${unit.number}` })
+				href: withParams(page.url, { versies: `lid-${unit.number}` })
 			});
 		}
 		return notes;
@@ -686,7 +672,7 @@
 					param={compareParam ?? ''}
 					{layout}
 					{citation}
-					link={withParams}
+					{link}
 					{go}
 					{missingDossiers}
 				/>

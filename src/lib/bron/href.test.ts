@@ -89,6 +89,12 @@ describe('buildBronHref', () => {
 			})
 		).toBe('/explore?focus=articles/b');
 	});
+
+	it('carries extra params, such as the peildatum of the law it was opened from', () => {
+		expect(
+			buildBronHref(at('/'), 'articles/bwbr0001854_287', { params: { peildatum: '2015-01-01' } })
+		).toBe('/explore?focus=articles/bwbr0001854_287&lezen=1&peildatum=2015-01-01');
+	});
 });
 
 describe('buildOpenHref', () => {

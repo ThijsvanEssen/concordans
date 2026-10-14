@@ -44,6 +44,8 @@ export type BronHrefOptions = {
 	keepNetwerk?: boolean;
 	/** On a phone, the tab the link opens: the text or the network. Read once and dropped. */
 	paneel?: 'tekst' | 'netwerk';
+	/** Params of the target's own, such as the peildatum of the law it was opened from. */
+	params?: Record<string, string>;
 };
 
 /**
@@ -83,7 +85,7 @@ export function focusOf(ref: BronRef | string): string | null {
 export function buildBronHref(
 	current: URL | null,
 	ref: BronRef | string,
-	{ at, keepMode = true, mode, keepNetwerk = true, paneel }: BronHrefOptions = {}
+	{ at, keepMode = true, mode, keepNetwerk = true, paneel, params: own }: BronHrefOptions = {}
 ): string {
 	const focus = focusOf(ref);
 	const target = focus && parseNodeId(focus);
@@ -115,6 +117,7 @@ export function buildBronHref(
 			if (value) params.set(name, value);
 		}
 	}
+	for (const [name, value] of Object.entries(own ?? {})) params.set(name, value);
 	return verkennerHref(params, at ? `#${encodeURIComponent(at)}` : '');
 }
 

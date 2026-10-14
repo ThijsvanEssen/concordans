@@ -14,7 +14,7 @@
 	// pages count as before. A strekking chosen (the researcher's own reading of a motie) makes
 	// every number count only the moties so read.
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { api, unwrap } from '$lib/api/client';
 	import FilterOptie from '$lib/components/ui/FilterOptie.svelte';
 	import KeuzeKnoppen from '$lib/components/ui/Keuze.svelte';
@@ -129,19 +129,10 @@
 		stem: (['voor', 'tegen'] as const).find((s) => s === params.get('stem'))
 	});
 
-	type Patch = Record<string, string | null>;
 	const FILTERS = ['soort', 'uitkomst', 'jaar', 'stem', 'cel'];
-	function hrefMet(patch: Patch, alleen = false) {
-		const url = new URL(page.url);
-		if (alleen) for (const k of FILTERS) url.searchParams.delete(k);
-		for (const [k, v] of Object.entries(patch)) {
-			if (v === null || v === '') url.searchParams.delete(k);
-			else url.searchParams.set(k, v);
-		}
-		return url.pathname + url.search;
-	}
-	const zet = (patch: Patch, alleen = false) =>
-		goto(hrefMet(patch, alleen), { replaceState: true, keepFocus: true, noScroll: true });
+	const hrefMet = (patch: ParamPatch, alleen = false) =>
+		withParams(page.url, patch, { clear: alleen ? FILTERS : [] });
+	const zet = (patch: ParamPatch, alleen = false) => navigate(hrefMet(patch, alleen));
 	const kies = (k: Keuze | null) => zet({ cel: k ? schrijfKeuze(k) : null }, true);
 
 	// ── The stemmingen, counted by the API (first paint) ─────────────────────

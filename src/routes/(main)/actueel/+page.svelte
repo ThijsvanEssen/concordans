@@ -14,7 +14,7 @@
 	// Atom feed. Beside it, the day of the newest event: how current the data is.
 	import { isEscape } from '$lib/actions/keys';
 	import { page } from '$app/state';
-	import { goto } from '$app/navigation';
+	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 	import { ApiError, api, isTimeout, unwrap, zoekApi } from '$lib/api/client';
 	import { untrack } from 'svelte';
 	import { API_BASE_URL } from '$lib/api/base-url';
@@ -114,26 +114,12 @@
 		'artikel'
 	];
 
-	/** A filter is a step in the history; the search text and the line opened replace it. */
-	function patchUrl(patch: Record<string, string | null>, replaceState = false) {
-		const url = new URL(page.url);
-		for (const [k, v] of Object.entries(patch)) {
-			if (v === null || v === '') url.searchParams.delete(k);
-			else url.searchParams.set(k, v);
-		}
-		if (!('open' in patch)) url.searchParams.delete('open');
-		goto(url.pathname + url.search.replaceAll('%2F', '/').replaceAll('%2C', ','), {
-			replaceState,
-			keepFocus: true,
-			noScroll: true
-		});
+	/** A filter is a step in the history and closes the open line; typing or opening replaces it. */
+	function patchUrl(patch: ParamPatch, replaceState = false) {
+		const clear = 'open' in patch ? [] : ['open'];
+		navigate(withParams(page.url, patch, { clear }), { step: !replaceState });
 	}
-	const filterHref = (patch: Record<string, string>) => {
-		const url = new URL(page.url);
-		url.searchParams.delete('open');
-		for (const [k, v] of Object.entries(patch)) url.searchParams.set(k, v);
-		return url.pathname + url.search;
-	};
+	const filterHref = (patch: ParamPatch) => withParams(page.url, patch, { clear: ['open'] });
 	const toggleOpen = (id: string) => patchUrl({ open: openId === id ? null : id }, true);
 	const clearFilters = () => patchUrl(Object.fromEntries(FILTERS.map((f) => [f, null])));
 

@@ -106,6 +106,7 @@
 		type Netwerk,
 		type NetwerkEntry
 	} from '$lib/netwerk/netwerk';
+	import { navigate, patchParams, queryHref, withParams, type ParamPatch } from '$lib/util/address';
 
 	// One store for the lifetime of this page, so it survives mode switches.
 	const store = createGraphStore();
@@ -196,11 +197,7 @@
 		const path = padOfFocus(f, props);
 		if (!path) return;
 		rememberPad(path, f);
-		void goto(verkennerHref(logisch.searchParams, page.url.hash, props), {
-			replaceState: true,
-			noScroll: true,
-			keepFocus: true
-		});
+		void navigate(verkennerHref(logisch.searchParams, page.url.hash, props));
 	});
 	// The Verkenner is the network. A bron with a text of its own is read at full width
 	// (?lezen=1, once ?mode=read); its verbindingen as a table are read so too. Bladeren
@@ -469,13 +466,8 @@
 		if (mode !== 'graph') setReading(false);
 		mobilePanel = 'graph';
 	}
-	const besideHrefOf = (row: Row | null) => {
-		if (!row) return null;
-		const url = new URL(page.url);
-		url.searchParams.set('naast', refId(row.ref));
-		url.hash = row.at ?? '';
-		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}${url.hash}`;
-	};
+	const besideHrefOf = (row: Row | null) =>
+		row && withParams(page.url, { naast: refId(row.ref) }, { hash: row.at ?? '' });
 
 	// What opens beside the article from the card Verbinding: its toelichting, or a judgment
 	// that cites it, at the r.o. (as its row in Verbonden opens it).
@@ -736,15 +728,13 @@
 	function handleNodeClick(node: GraphNode) {
 		const end = perfStart(`click ${node.id}`);
 		if (!node.id.startsWith('synth:')) {
-			let href = bronHref(refOf(node.collection, node.key, node.raw?.props));
 			// A bron chosen in the example: the example's network comes along into the address,
 			// the canvas stays as it is.
-			if (voorbeeldAan) {
-				const url = new URL(href, page.url);
-				for (const [k, v] of new URLSearchParams(voorbeeld!.query)) url.searchParams.set(k, v);
-				href = url.pathname + url.search + url.hash;
-			}
-			void goto(href, { noScroll: true, keepFocus: true });
+			const params = voorbeeldAan
+				? Object.fromEntries(new URLSearchParams(voorbeeld!.query))
+				: undefined;
+			const href = bronHref(refOf(node.collection, node.key, node.raw?.props), { params });
+			void navigate(href, { step: true });
 		}
 		end();
 	}
@@ -765,7 +755,7 @@
 			void deepen(node, true);
 			return;
 		}
-		void goto(bronHref(ref, { keepNetwerk: false }), { noScroll: true, keepFocus: true });
+		void navigate(bronHref(ref, { keepNetwerk: false }), { step: true });
 	}
 
 	// ── Composing the netwerk ─────────────────────────────────────────────────
@@ -1087,27 +1077,18 @@
 	 * A change of view that Back should undo (reading at full width, clearing the netwerk)
 	 * takes a history entry; a filter or a toggle replaces the current one.
 	 */
-	function setUrl(params: Record<string, string | null>, { push = false } = {}) {
-		const url = new URL(logisch);
-		for (const [k, v] of Object.entries(params)) {
-			if (v === null) url.searchParams.delete(k);
-			else url.searchParams.set(k, v);
-		}
+	function setUrl(patch: ParamPatch, { push = false } = {}) {
+		const params = patchParams(logisch.searchParams, patch);
 		// The readable address of the focus where it has one: /dossiers/36799?lezen=1. An
 		// address still looked up has no focus yet: it keeps its path, or a step (?paneel
 		// dropped) would land on the empty /explore or the remembered netwerk.
-		const f = url.searchParams.get('focus');
+		const f = params.get('focus');
 		const props = selectedNode && selectedNode.id === f ? selectedNode.raw?.props : null;
-		const rest = url.searchParams.toString();
 		const href =
 			!f && pad
-				? `${page.url.pathname}${rest ? `?${rest}` : ''}${page.url.hash}`
-				: verkennerHref(url.searchParams, page.url.hash, props);
-		void goto(href, {
-			replaceState: !push,
-			noScroll: true,
-			keepFocus: true
-		});
+				? queryHref(page.url.pathname, params) + page.url.hash
+				: verkennerHref(params, page.url.hash, props);
+		void navigate(href, { step: push });
 	}
 
 	// Reading at full width, or the network with the text beside it.
@@ -1133,18 +1114,8 @@
 			.then(() => graphView?.fitWhenSettled());
 	}
 
-	const tableHref = $derived.by(() => {
-		const url = new URL(page.url);
-		url.searchParams.set('tabel', '1');
-		url.searchParams.delete('mode');
-		url.searchParams.delete('naast');
-		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
-	});
-	const readHref = $derived.by(() => {
-		const url = new URL(page.url);
-		url.searchParams.delete('tabel');
-		return `${url.pathname}?${url.searchParams.toString().replaceAll('%2F', '/').replaceAll('%2C', ',')}`;
-	});
+	const tableHref = $derived(withParams(page.url, { tabel: '1', mode: null, naast: null }));
+	const readHref = $derived(withParams(page.url, { tabel: null }));
 
 	// ── Overlay (open dossiers or citations per month, never both) ────────────
 	const overlayParam = $derived(param('overlay'));
@@ -1430,11 +1401,7 @@
 	const besideArticle = $derived(
 		selectedNode?.collection === 'articles' ? articleOf(selectedNode.raw?.props) : null
 	);
-	const closeBesideHref = $derived.by(() => {
-		const url = new URL(page.url);
-		url.searchParams.delete('naast');
-		return url.pathname + url.search;
-	});
+	const closeBesideHref = $derived(withParams(page.url, { naast: null }));
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

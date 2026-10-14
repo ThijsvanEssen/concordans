@@ -312,7 +312,7 @@
 	{#if lidParam}
 		<!-- ── One lid through all its formulations ── -->
 		<div class="bar">
-			<a class="bar__back" href={link({ versies: '' })} data-sveltekit-noscroll
+			<a class="bar__back" href={link({ versies: pairParam(from, to) })} data-sveltekit-noscroll
 				>← Vergelijking van tekstversies</a
 			>
 			<nav class="leden" aria-label="Leden">
