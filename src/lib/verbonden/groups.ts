@@ -909,8 +909,6 @@ const matches = (m: Match, n: Neighbor) =>
 	(!m.direction || m.direction === n.direction) &&
 	(!m.where || m.where(n));
 
-const longDay = (day: string) => langeDatum(day) || day;
-
 /**
  * The decision a judgment says it appeals from, where the dataset lacks it
  * (`unresolved_appeal_targets`): a line under Uitspraak in eerdere aanleg, without a link.
@@ -927,7 +925,9 @@ export function withUnresolvedAppeals(groups: Group[], props: Record<string, unk
 		const number = typeof t.case_number === 'string' ? t.case_number : '';
 		return {
 			ref: { collection: 'judgments', key: `unresolved:${court}:${day}:${number}` },
-			title: [capitalize(court), day && longDay(day), number].filter(Boolean).join(', '),
+			title: [capitalize(court), day && (langeDatum(day) || day), number]
+				.filter(Boolean)
+				.join(', '),
 			context: null,
 			kind: 'uitspraken',
 			missing: true
