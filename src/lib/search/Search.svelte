@@ -2,7 +2,6 @@
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
-	import { heeftParameter } from '$lib/api/heeft';
 	import { kamerLinks, kamerOf } from './kamer';
 	import { uniqueBy } from '$lib/util/unique';
 	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
@@ -11,7 +10,13 @@
 	import { goto } from '$app/navigation';
 	import { isTimeout, unwrap, zoekApi } from '$lib/api/client';
 	import { report } from '$lib/api/errors';
-	import { DEBOUNCE_MS, LANEN as ALLE_LANEN, LIVE, type Laan as LaanDef } from './lanen';
+	import {
+		DEBOUNCE_MS,
+		LANE_MIN_CHARS,
+		LANEN as ALLE_LANEN,
+		searchMode,
+		type Laan as LaanDef
+	} from './lanen';
 	import type { Schema } from '$lib/api/types';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
@@ -83,29 +88,18 @@
 	const LANEN = ALLE_LANEN as readonly Laan[];
 	const INLAAN = new Set<Kind>(LANEN.flatMap((l) => l.kinds));
 
-	/**
-	 * The query of a request. One place for what a lane asks: the live mode of the API
-	 * (`mode: 'live'`, Back-end #1) goes here once the schema has it.
-	 */
-	const zoekVraag = (
-		term: string,
-		types: Kind[],
-		resolve: boolean,
-		mode: 'live' | 'full' | null = null
-	) => ({
+	/** The query of a request: one place for what a lane asks, in its mode and period. */
+	const zoekVraag = (term: string, types: Kind[], resolve: boolean) => ({
 		q: term,
 		types,
 		limit: LIMIT,
 		resolve: resolve || undefined,
-		// Not in the schema yet; an API without it ignores it.
-		...(mode ? ({ mode } as object) : {}),
-		// The period (Thijs, 9 Oct), once `/api/search` takes it ($lib/api/heeft).
-		...(MET_PERIODE && periodeVan ? ({ from: periodeVan } as object) : {}),
-		...(MET_PERIODE && periodeTot ? ({ to: periodeTot } as object) : {})
+		mode: searchMode(term, volVoor),
+		from: periodeVan || undefined,
+		to: periodeTot || undefined
 	});
 
-	/** The search by period: shown once the API takes `from` and `to` (Back-end #1). */
-	const MET_PERIODE = heeftParameter('/api/search', 'from', 'to');
+	/** The search by period (Thijs, 9 Oct). */
 	let periodeVan = $state('');
 	let periodeTot = $state('');
 
@@ -275,7 +269,7 @@
 	 * hits, the hits stand and "Meer …" asks for the rest.
 	 */
 	function vraagVolAls(term: string, afgekapt: Kind[], gevonden: Partial<Record<Kind, Hit[]>>) {
-		if (!LIVE || volVoor === term || term !== q || afgekapt.length === 0) return;
+		if (volVoor === term || term !== q || afgekapt.length === 0) return;
 		if (afgekapt.every((k) => !(gevonden[k] ?? []).length)) volVoor = term;
 	}
 
@@ -287,7 +281,7 @@
 		void periodeVan;
 		void periodeTot;
 		// "Meer …" asks the whole query again in full, the fast kinds too.
-		if (LIVE) void volVoor;
+		void volVoor;
 		// "Probeer opnieuw" after a first request that failed or took too long.
 		void opnieuw.snel;
 		failed = false;
@@ -322,7 +316,7 @@
 				unwrap(
 					zoekApi.GET('/api/search', {
 						params: {
-							query: zoekVraag(term, snel, true, LIVE ? (volVoor === term ? 'full' : 'live') : null)
+							query: zoekVraag(term, snel, true)
 						},
 						signal: controller.signal
 					})
@@ -381,15 +375,8 @@
 		laanStand[laan.id] = 'laden';
 		const geldt = () => term === laatste;
 		unwrap(
-			laan.client.GET('/api/search', {
-				params: {
-					query: zoekVraag(
-						term,
-						types,
-						eerste,
-						laan.live ? (volVoor === term ? 'full' : 'live') : null
-					)
-				},
+			zoekApi.GET('/api/search', {
+				params: { query: zoekVraag(term, types, eerste) },
 				signal: stopt.signal
 			})
 		)
@@ -435,16 +422,16 @@
 			void opnieuw[laan.id];
 			void periodeVan;
 			void periodeTot;
-			if (laan.live) void volVoor;
+			void volVoor;
 			const types = laan.kinds.filter((k) => kinds.includes(k));
 			volgende[laan.id] = null;
-			if (!term || types.length === 0 || term.length < laan.min) {
+			if (!term || types.length === 0 || term.length < LANE_MIN_CHARS) {
 				laanHits[laan.id] = {};
 				laanStand[laan.id] = 'klaar';
 				return;
 			}
 			const eerste = snel.length === 0 && lanen[0]?.id === laan.id;
-			const timer = setTimeout(() => vraag(laan, term, types, eerste), laan.wacht);
+			const timer = setTimeout(() => vraag(laan, term, types, eerste), DEBOUNCE_MS);
 			return () => clearTimeout(timer);
 		});
 	}
@@ -589,7 +576,7 @@
 		{#if overlay}<span class="kbd" aria-hidden="true">esc</span>{/if}
 	</div>
 
-	{#if MET_PERIODE && q.length >= SNEL_MIN}
+	{#if q.length >= SNEL_MIN}
 		<!-- The same period as every list with dates (Periode). -->
 		<div class="periode">
 			<Periode

@@ -10,7 +10,7 @@ const css = readFileSync(
 	'utf8'
 );
 const rule = (selector: string) =>
-	css.match(new RegExp(`\\n\\t${selector.replace(/[.]/g, '\\.')} \\{([^}]*)\\}`))?.[1] ?? '';
+	css.match(new RegExp(`(?:^|\\n)\\s*${selector.replace(/[.]/g, '\\.')} \\{([^}]*)\\}`))?.[1] ?? '';
 
 describe('the Legenda rows of Getoond', () => {
 	it('have three columns, so the kind keeps its width', () => {

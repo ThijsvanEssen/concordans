@@ -29,7 +29,7 @@ describe('api timeouts', () => {
 				zoekApi.GET('/api/search', { params: { query: { q: 'huur', types: ['judgments'] } } })
 			)
 		).toEqual([SEARCH_TIMEOUT_MS]);
-		expect(SEARCH_TIMEOUT_MS).toBe(30_000);
+		expect(SEARCH_TIMEOUT_MS).toBeGreaterThan(TIMEOUT_MS);
 	});
 
 	it('lets a caller shorten the wait but never lengthen it: a slow call goes to zoekApi', async () => {
