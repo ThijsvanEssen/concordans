@@ -119,7 +119,7 @@
 		type IndexCategory
 	} from './index/categories';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { heeftParameter } from '$lib/api/heeft';
+	import { PERIOD_LABEL, seatedOnly } from './index/period';
 	import { formatCount } from '$lib/verbonden/filter';
 	import { navigate, withParams, type ParamPatch } from '$lib/util/address';
 
@@ -191,17 +191,7 @@
 	);
 	const outcome = $derived(oneOf(params.get('outcome'), OUTCOMES));
 	const passed = $derived(oneOf(params.get('passed'), ['true', 'false'] as const));
-	// Which list routes take a period yet (the schema of this build).
-	const PERIODE = {
-		instruments: heeftParameter('/api/instruments', 'from', 'to'),
-		commitments: heeftParameter('/api/commitments', 'from', 'to'),
-		members: heeftParameter('/api/members', 'active_from', 'active_to'),
-		factions: heeftParameter('/api/factions', 'active_from', 'active_to'),
-		committees: heeftParameter('/api/committees', 'active_from', 'active_to')
-	};
 	const dateFrom = $derived(params.get('from') ?? '');
-	/** Whether a list has a period chosen that its route takes. */
-	const metPeriode = (k: keyof typeof PERIODE) => PERIODE[k] && !!(dateFrom || dateTo);
 	const dateTo = $derived(params.get('to') ?? '');
 	const dossierFilter = $derived(params.get('dossier') ?? '');
 	const party = $derived(params.get('party') ?? '');
@@ -537,7 +527,8 @@
 					article_count_min: withEmpty ? undefined : 1,
 					legal_area: legalArea || undefined,
 					policy_domain: policyDomain || undefined,
-					...(PERIODE.instruments ? { from: dateFrom || undefined, to: dateTo || undefined } : {}),
+					from: dateFrom || undefined,
+					to: dateTo || undefined,
 					sort: oneOf(sortDef.id, ['title', 'article_count'] as const),
 					limit
 				};
@@ -675,9 +666,8 @@
 			case 'committees': {
 				const query = {
 					chamber: kamer,
-					...(PERIODE.committees
-						? { active_from: dateFrom || undefined, active_to: dateTo || undefined }
-						: {})
+					active_from: dateFrom || undefined,
+					active_to: dateTo || undefined
 				};
 				return async (_offset, signal) => {
 					const items = await unwrap(api.GET('/api/committees', { params: { query }, signal }));
@@ -685,18 +675,17 @@
 				};
 			}
 			case 'members': {
+				const seated = seatedOnly(includeInactive, dateFrom, dateTo);
 				const query = {
 					chamber: kamer,
 					q: q || undefined,
 					party: party || undefined,
-					// With a period the period says who, not the seat of today.
-					active: includeInactive || metPeriode('members') ? undefined : true,
-					include_all: includeInactive || metPeriode('members'),
-					...(PERIODE.members
-						? { active_from: dateFrom || undefined, active_to: dateTo || undefined }
-						: {}),
+					active: seated || undefined,
+					include_all: !seated,
+					active_from: dateFrom || undefined,
+					active_to: dateTo || undefined,
 					sort: oneOf(sortDef.id, ['family_name', 'name'] as const),
-					limit: includeInactive || metPeriode('members') ? limit : SEATED
+					limit: seated ? SEATED : limit
 				};
 				return async (offset, signal) => {
 					const items = await unwrap(
@@ -709,10 +698,9 @@
 				const query = {
 					chamber: kamer,
 					q: q || undefined,
-					active: includeInactive || metPeriode('factions') ? undefined : true,
-					...(PERIODE.factions
-						? { active_from: dateFrom || undefined, active_to: dateTo || undefined }
-						: {})
+					active: seatedOnly(includeInactive, dateFrom, dateTo) || undefined,
+					active_from: dateFrom || undefined,
+					active_to: dateTo || undefined
 				};
 				return async (_offset, signal) => {
 					const items = await unwrap(api.GET('/api/factions', { params: { query }, signal }));
@@ -843,7 +831,8 @@
 					member: memberParam || undefined,
 					overdue: overdue || undefined,
 					q: q || undefined,
-					...(PERIODE.commitments ? { from: dateFrom || undefined, to: dateTo || undefined } : {})
+					from: dateFrom || undefined,
+					to: dateTo || undefined
 				};
 				const query = {
 					...filters,
@@ -2042,19 +2031,9 @@
 				];
 		}
 	});
-	// The period of a list whose route takes one only once the API has it (Back-end #2,
-	// 0.79.30+; $lib/api/heeft), and of the bewindspersonen, whose posts carry their own days.
-	const PERIODE_LABEL: Partial<Record<string, string>> = {
-		instruments: PERIODE.instruments ? 'In werking getreden' : undefined,
-		commitments: PERIODE.commitments ? 'Gedaan' : undefined,
-		members: PERIODE.members ? 'Actief' : undefined,
-		factions: PERIODE.factions ? 'Actief' : undefined,
-		committees: PERIODE.committees ? 'Actief' : undefined,
-		ministers: 'In functie'
-	};
 	const facetGroupsAll = $derived.by<FacetGroup[]>(() => {
 		// Side by side the cabinets are the period (Tot en met): no second one beside it.
-		const label = category === 'ministers' && naast ? undefined : PERIODE_LABEL[category];
+		const label = category === 'ministers' && naast ? undefined : PERIOD_LABEL[category];
 		return label
 			? [
 					...facetGroupsBasis,

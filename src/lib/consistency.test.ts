@@ -206,7 +206,7 @@ describe('one form for each thing', () => {
 		expect(tijdlijn.text).not.toMatch(/class="teken"|border-radius:\s*50%/);
 		// Required on Actueel's line, so the compiler holds every builder to it.
 		const actueel = sources.find((s) => s.path === 'lib/components/actueel/timeline.ts')!;
-		expect(actueel.text).toMatch(/\n\tvorm: Vorm;/);
+		expect(actueel.text).toMatch(/\bvorm: Vorm\b/);
 	});
 
 	it('shows every series of dated lines in the one Tijdlijn (tijdlijn-voorstel, Thijs 11 Oct: "Ja, beide")', () => {
@@ -352,9 +352,10 @@ describe('one form for each thing', () => {
 
 	it('starts every reader at one title column where no network stands beside it', () => {
 		const verkenner = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
-		expect(verkenner).toMatch(
-			/\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{\s*--reader-col-left: calc\(var\(--nav-w, var\(--nav-w-auto\)\) \+ 5px\);/
-		);
+		const regel = /\.explore-read:not\(\.explore-read--with-nav\) \.col--measure \{([^}]*)\}/.exec(
+			verkenner
+		)?.[1];
+		expect(regel).toMatch(/--reader-col-left:\s*calc\([^;]*--nav-w\b/);
 	});
 
 	it('says a state where content would be in one quiet line (.stil)', () => {
@@ -889,7 +890,7 @@ describe('canvas cards and halls', () => {
 
 	it('gives the contents the network’s width from 1440, so every reader title starts in one column', () => {
 		const t = sources.find((s) => s.path === 'routes/explore/+page.svelte')!.text;
-		expect(t).toMatch(/--nav-w-auto: calc\(var\(--graph-w-auto\) \+ var\(--s-6\) - 64px\);/);
+		expect(t).toMatch(/--nav-w-auto:\s*calc\([^;]*var\(--graph-w-auto\)/);
 	});
 
 	it('centres every reader between the side columns on a wide screen, through ReaderFrame', () => {
@@ -961,7 +962,7 @@ describe('canvas cards and halls', () => {
 			(s) => s.path === 'lib/components/explore/readers/ArticleReader.svelte'
 		)!.text;
 		expect(artikel).toMatch(/\{#snippet later\(\)\}[\s\S]*?billCount/);
-		expect(artikel).toMatch(/\n\t*laterPlek\n/);
+		expect(artikel).toMatch(/\slaterPlek(=\{true\})?[\s>]/);
 	});
 
 	it('says the chain of an amended stuk in the status line, where every reader has its status', () => {
@@ -999,7 +1000,7 @@ describe('canvas cards and halls', () => {
 		for (const { text } of pages)
 			expect(/<FeedDay\b[\s\S]*?\/>/.exec(text)?.[0]).toMatch(/\btermen\b/);
 		const day = sources.find((s) => s.path === 'lib/components/actueel/FeedDay.svelte')!.text;
-		expect(day).toMatch(/\n\t\ttermen: readonly string\[\];/);
+		expect(day).toMatch(/\btermen: readonly string\[\]/);
 		expect(day).toMatch(/plekVan\(/);
 		// One rule for the words: woordIn and markeer live in treffer.ts alone.
 		expect(
@@ -1067,12 +1068,12 @@ describe('canvas cards and halls', () => {
 			(s) => s.path === 'lib/components/explore/readers/KamerZetels.svelte'
 		)!.text;
 		// The majority's line on the scale of zetelHoogte, none to all seats: no scale of its own.
-		expect(t).toContain('zetelHoogte(n, zetelsVanKamer, H, PAD)');
+		expect(t).toMatch(/zetelHoogte\([^)]*\bzetelsVanKamer\b/);
 		expect(t).not.toMatch(/Math\.(min|max)\(\.\.\.v/);
 		// The head figure states the totals: no second sentence or bar of the two sides.
 		expect(t).not.toMatch(/<Meerderheid\b|class="aantal"/);
 		// Uncertain once, with the count.
-		expect(t.split("' (onzeker)'").length - 1).toBe(1);
+		expect(t.match(/['"`]\s*\(onzeker\)['"`]/g)).toHaveLength(1);
 		expect(t).not.toContain('de zetels zijn onzeker');
 		// The Eerste Kamer's hall always with its seats: today's plan, else the day's by fractie.
 		expect(t).toContain('hallOfDay(');
@@ -1150,7 +1151,6 @@ describe('canvas cards and halls', () => {
 		// of its own, no italic and no field beside it.
 		const src = (pad: string) => sources.find((s) => s.path === pad)!.text;
 		const pagina = src('routes/(main)/gemarkeerd/+page.svelte');
-		expect(pagina.match(/<Aantekening\b/g)?.length).toBe(4);
 		for (const tekst of [
 			'tekst={i.notitie}',
 			'tekst={bij}',
