@@ -7,8 +7,8 @@
 	import { formatCount } from '$lib/text/getal';
 	import type { Snippet } from 'svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import Caret from './Caret.svelte';
-	import { isOpen as staatOpen, zetOpen } from './dicht.svelte';
+	import FoldButton from './FoldButton.svelte';
+	import { isOpen as staatOpen } from './dicht.svelte';
 	import type { Collection } from '$lib/vocabulary';
 
 	let {
@@ -35,7 +35,8 @@
 		niveau?: 2 | 3;
 		/** Whether the heading opens and closes it; off for a page of sections (Bladeren). */
 		inklapbaar?: boolean;
-		/** The kind of section whose state it shares; its title where none is given. */
+		/** The kind of section whose state it shares; its title where none is given. A section
+		 *  that something else opens has its key in FOLD (dicht.svelte.ts). */
 		sleutel?: string;
 		/** Open until closed: a page of groups (Gevolgd), not a reader's section, which starts
 		 *  closed. */
@@ -49,23 +50,20 @@
 	const uid = $props.id();
 </script>
 
+{#snippet kop()}
+	{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
+			class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
+		>{/if}
+{/snippet}
+
 <section class="sectie" class:is-dicht={!isOpen} {id}>
 	<svelte:element this={`h${niveau}`} class="kop">
 		{#if inklapbaar}
-			<button
-				type="button"
-				class="kop-knop"
-				aria-expanded={isOpen}
-				aria-controls="{uid}-inhoud"
-				onclick={() => zetOpen(soortSleutel, !isOpen)}
-				>{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
-						class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
-					>{/if}<Caret open={isOpen} side /></button
+			<FoldButton sleutel={soortSleutel} open={isOpen} controls="{uid}-inhoud"
+				>{@render kop()}</FoldButton
 			>
 		{:else}
-			{#if soort}<KindGlyph collection={soort} size={14} />{/if}{titel}{#if aantal != null}<span
-					class="aantal">{typeof aantal === 'number' ? formatCount(aantal) : aantal}</span
-				>{/if}
+			{@render kop()}
 		{/if}
 		{#if naast && isOpen}<span class="naast">{@render naast()}</span>{/if}
 	</svelte:element>
@@ -89,24 +87,6 @@
 		font-size: var(--t-h3);
 		font-weight: 800;
 		color: var(--ink);
-	}
-	/* The heading itself is the button: the heading's letter, no frame, the caret quiet. */
-	.kop-knop {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--s-2);
-		padding: 0;
-		border: 0;
-		background: none;
-		font: inherit;
-		color: inherit;
-		cursor: pointer;
-		text-align: left;
-	}
-	.kop-knop:hover {
-		color: var(--ink);
-		text-decoration-line: underline;
-		text-underline-offset: 3px;
 	}
 	.inhoud {
 		display: flex;

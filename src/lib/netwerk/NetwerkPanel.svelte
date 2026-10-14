@@ -11,6 +11,7 @@
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import Search from '$lib/search/Search.svelte';
 	import { laatstOpen, opzij } from '$lib/stores/zwevend';
+	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { get } from 'svelte/store';
 	import type { NetwerkEntry } from './netwerk';
 	import { formatCount } from '$lib/text/getal';
@@ -73,45 +74,15 @@
 		telefoon?: boolean;
 	} = $props();
 
-	// Folded to its head, like the legend; per browser remembered. Without a choice it is
-	// open, on a phone folded.
-	const PANEEL = 'concordans:netwerkpaneel';
-	let open = $state(true);
-	$effect(() => {
-		try {
-			const v = localStorage.getItem(PANEEL);
-			open = v ? v === 'open' : !telefoon;
-		} catch {
-			open = !telefoon;
-		}
-	});
-	/** Folded for want of room, not by a click: it opens again once there is room. */
-	let opzijGezet = false;
-	const zetOpen = (v: boolean) => {
-		open = v;
-		opzijGezet = false;
+	// Folded to its head, like the legend; kept per browser (FOLD.networkPanel). Without a
+	// choice it is open, on a phone folded. Where the legend opened under it does not fit, this
+	// panel gives way, and comes back once there is room (GraphView measures, zwevend.ts).
+	const open = $derived(isOpen(FOLD.networkPanel, !telefoon) && $opzij !== 'netwerk');
+	const kiesOpen = (v: boolean) => {
 		if (v && get(opzij) === 'netwerk') opzij.set(null);
 		if (v) laatstOpen.set('netwerk');
-		try {
-			localStorage.setItem(PANEEL, v ? 'open' : 'dicht');
-		} catch {
-			/* geen opslag */
-		}
+		zetOpen(FOLD.networkPanel, v);
 	};
-
-	// The legend opened under it where both do not fit: this panel gives way, and comes back
-	// once there is room (GraphView measures, zwevend.ts).
-	$effect(() =>
-		opzij.subscribe((wie) => {
-			if (wie === 'netwerk' && open) {
-				open = false;
-				opzijGezet = true;
-			} else if (wie !== 'netwerk' && opzijGezet) {
-				opzijGezet = false;
-				open = true;
-			}
-		})
-	);
 
 	let zoeken = $state(false);
 
@@ -159,7 +130,7 @@
 {:else}
 	<!-- De gekozen bronnen als labels op één regel; zoeken pas na "+ bron";
 	     één regel voor wat ertussen ligt. Wissen is één klik, en Terug zet het terug. -->
-	<CanvasKaart titel="Netwerk" klasse="netwerk" {open} onToggle={() => zetOpen(!open)}>
+	<CanvasKaart titel="Netwerk" klasse="netwerk" {open} onToggle={() => kiesOpen(!open)}>
 		{#snippet samenvatting()}
 			{#if loading}<span class="laden">laden</span>{:else if !open && entries.length > 0}<span
 					class="aantal">{count(entries.length, 'bron', 'bronnen')}</span

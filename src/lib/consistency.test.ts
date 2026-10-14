@@ -1432,10 +1432,9 @@ describe('errors that are not swallowed', () => {
 			// that refuses (one storage helper, F32). Each gets a handler that says so.
 			'lib/components/explore/index/pannable.ts': 1,
 			'lib/components/graph/GraphCanvas.svelte': 4,
-			'lib/components/graph/GraphView.svelte': 5,
+			'lib/components/graph/GraphView.svelte': 4,
 			'lib/components/ui/dicht.svelte.ts': 1,
 			'lib/map/map.svelte.ts': 1,
-			'lib/netwerk/NetwerkPanel.svelte': 1,
 			'lib/onderwerpen/onderwerpen.ts': 1,
 			'lib/onderwerpen/strekking.ts': 1,
 			'routes/(main)/onderwerpen/+page.svelte': 1,
@@ -1583,5 +1582,20 @@ describe('one top layer, one fold, one role per collection (code-eenvoud F63–F
 
 	it('moves through a menu with the keys of actions/menu.ts (F63)', () => {
 		expect(offenders((t) => /e\.key === 'ArrowDown'\s*\?/.test(t))).toEqual([]);
+	});
+
+	it('folds a heading with FoldButton, under a key that is not its words (F64)', () => {
+		// A heading's own button and the keys of a heading inside a section are said once.
+		expect(offenders((t) => /class="(?:kop-knop|wet-knop)"/.test(t))).toEqual([]);
+		expect(offenders((t) => /[`'"]sub:/.test(t), ['lib/components/ui/dicht.svelte.ts'])).toEqual(
+			[]
+		);
+		// What opens Amendementen from elsewhere and its section share one key, its anchor too.
+		const src = (pad: string) => sources.find((s) => s.path === pad)!.text;
+		const sectie = src('lib/components/parliamentary/AmendementenDienstregeling.svelte');
+		expect(sectie).toContain('sleutel={FOLD.amendments}');
+		expect(sectie).toContain('id={FOLD.amendments}');
+		// The cards over the canvas are kept as every heading is, in dicht.svelte.ts.
+		expect(offenders((t) => /'concordans:(?:legenda|netwerkpaneel)'/.test(t))).toEqual([]);
 	});
 });

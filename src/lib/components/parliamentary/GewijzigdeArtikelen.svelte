@@ -10,8 +10,8 @@
 	import { langeDatum } from '$lib/text/datum';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import Caret from '$lib/components/ui/Caret.svelte';
-	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
+	import FoldButton from '$lib/components/ui/FoldButton.svelte';
+	import { isOpen, subKey } from '$lib/components/ui/dicht.svelte';
 	import {
 		articleLabel,
 		byArticle,
@@ -46,22 +46,20 @@
 		{@const alle = open[key] ?? false}
 		{@const gedeeld = sharedEnactment(l)}
 		<!-- A law's heading opens and closes its articles; open until closed, kept per law. -->
-		{@const wetSleutel = `sub:wet:${key}`}
+		{@const wetSleutel = subKey(`wet:${key}`)}
 		{@const wetOpen = isOpen(wetSleutel, true)}
 		<div class="wet">
 			<h4 class="wet-naam">
 				<KindGlyph collection="instruments" size={12} />
 				{#if l.law.id}<BronLink ref={l.law.id}>{naamVanId(l.law.id, l.law.display_name)}</BronLink
 					>{:else}{l.law.display_name ?? l.law.bwb_id ?? l.law.celex}{/if}
-				<button
-					type="button"
-					class="wet-knop"
-					aria-expanded={wetOpen}
-					aria-label="{wetOpen ? 'Artikelen verbergen' : 'Artikelen tonen'}: {l.law.display_name ??
+				<FoldButton
+					sleutel={wetSleutel}
+					open={wetOpen}
+					quiet
+					label="{wetOpen ? 'Artikelen verbergen' : 'Artikelen tonen'}: {l.law.display_name ??
 						l.law.bwb_id ??
-						''}"
-					onclick={() => zetOpen(wetSleutel, !wetOpen)}
-					><span class="wet-aantal">{artikelen.length}</span><Caret open={wetOpen} side /></button
+						''}">{artikelen.length}</FoldButton
 				>
 			</h4>
 			{#if wetOpen}
@@ -123,21 +121,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--s-2);
-	}
-	/* The count of a law's articles and the caret: the control that folds them. */
-	.wet-knop {
-		display: inline-flex;
-		align-items: baseline;
-		padding: 0;
-		border: 0;
-		background: none;
-		cursor: pointer;
-		font-family: var(--font-ui);
-		font-size: var(--t-ui-micro);
-		color: var(--ink-3);
-	}
-	.wet-knop:hover {
-		color: var(--ink);
 	}
 	.wet-naam {
 		display: flex;

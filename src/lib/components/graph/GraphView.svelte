@@ -64,6 +64,7 @@
 	} from '$lib/verbonden/filter';
 	import type { VerbondenState } from '$lib/verbonden/source';
 	import { laatstOpen, opzij, passenSamen, type Zwevend } from '$lib/stores/zwevend';
+	import { FOLD, isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
 	import { netwerkMelding } from '$lib/stores/netwerk-melding';
 	import { kaart } from '$lib/map/map.svelte';
 	import { gemerkt, notitiesPerBron } from '$lib/map/notities';
@@ -189,40 +190,13 @@
 		filter.bronnen ? new Set(BRON_KINDS.filter((k) => !filter.bronnen!.has(k))) : new Set()
 	);
 
-	// De zwevende legenda, dicht tot iemand hem opent; per browser onthouden.
-	const LEGENDA = 'concordans:legenda';
-	let legendaOpen = $state(false);
-	$effect(() => {
-		try {
-			// Closed until opened; where both cards do not fit, the accordion folds one.
-			legendaOpen = localStorage.getItem(LEGENDA) === 'open';
-		} catch {
-			legendaOpen = false;
-		}
-	});
-	/** Folded for want of room, not by a click: it opens again once there is room. */
-	let legendaOpzij = false;
-	$effect(() =>
-		opzij.subscribe((wie) => {
-			if (wie === 'legenda' && legendaOpen) {
-				legendaOpen = false;
-				legendaOpzij = true;
-			} else if (wie !== 'legenda' && legendaOpzij) {
-				legendaOpzij = false;
-				legendaOpen = true;
-			}
-		})
-	);
+	// The floating legend: closed until opened, kept per browser (FOLD.legend), and folded
+	// while the canvas has no room for it beside the panel Netwerk (opzij, zwevend.ts).
+	const legendaOpen = $derived(isOpen(FOLD.legend, false) && $opzij !== 'legenda');
 	const zetLegenda = (v: boolean) => {
-		legendaOpen = v;
-		legendaOpzij = false;
 		if (v && get(opzij) === 'legenda') opzij.set(null);
 		if (v) laatstOpen.set('legenda');
-		try {
-			localStorage.setItem(LEGENDA, v ? 'open' : 'dicht');
-		} catch {
-			/* geen opslag */
-		}
+		zetOpen(FOLD.legend, v);
 	};
 
 	// What the filter leaves on the canvas.
