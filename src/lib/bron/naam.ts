@@ -6,16 +6,11 @@ import { describe, UNNAMED } from '$lib/verbonden/rows';
 import { decisionOutcome } from '$lib/components/explore/index/decision-kind';
 import { isEkDecision } from '$lib/components/parliamentary/timeline-kind';
 import { langeDatum } from '$lib/text/datum';
-import { dossierUitProps, kamerstukNummer } from './dossier-naam';
-import { dossierNaamNu, vraagDossierNaam } from './dossier-namen.svelte';
+import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 
 const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 
-/**
- * `vraag`: where the props lack a dossier's short title, ask it by number (one bron in view:
- * the card, the selected bron), never for every node of the canvas.
- */
-export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>, vraag = false): string {
+export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>): string {
 	const p = n.raw?.props ?? undefined;
 	if (n.kind === 'instrument') {
 		const m = meta.get(lawIdOf(p) ?? n.key.toUpperCase());
@@ -27,12 +22,11 @@ export function bronNaam(n: GraphNode, meta: Map<string, InstrumentMeta>, vraag 
 			n.label
 		);
 	}
-	// A dossier by the name it is known by, asked by number where its props lack it, as its
-	// row in Verbonden: "Cyberbeveiligingswet", never the title of three lines.
+	// A dossier by the name it is known by (its props' short title), as its row in
+	// Verbonden: "Cyberbeveiligingswet", never the title of three lines.
 	if (n.collection === 'dossiers') {
 		const d = dossierUitProps({ display_name: n.raw?.display_name, ...p }, n.key);
-		if (vraag) vraagDossierNaam(d);
-		const naam = dossierNaamNu(d);
+		const naam = dossierName(d);
 		return naam === d.number ? kamerstukNummer(d.number) : naam;
 	}
 	// Anything else by the title Verbonden gives it: "Rechtbank Rotterdam, 2 juni 2022".

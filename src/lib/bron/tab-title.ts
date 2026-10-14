@@ -6,6 +6,7 @@ import { authorCite, judgmentCite } from '$lib/text/judgment-cite';
 import { articleTitle } from '$lib/text/bw';
 import { langeDatum } from '$lib/text/datum';
 import { menselijkeNaam } from './menselijk';
+import { dossierName, dossierUitProps } from './dossier-naam';
 
 const MAX = 80;
 
@@ -38,8 +39,8 @@ export function tabTitle(node: Pick<GraphNode, 'collection' | 'label' | 'raw'>):
 	}
 	if (node.collection === 'dossiers') {
 		const number = text(props.label) ?? node.label;
-		const short = text(props.short_title) ?? shortDossierTitle(text(props.title));
-		return short ? `${number} ${short}` : number;
+		const naam = dossierName(dossierUitProps(props, number));
+		return naam === number ? number : `${number} ${naam}`;
 	}
 	if (node.collection === 'decisions') {
 		// A stemming as its heading reads: its Kamer and day, then its subject, not the

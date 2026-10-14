@@ -45,7 +45,7 @@
 		type Row
 	} from './rows';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
-	import { dossierNaamNu } from '$lib/bron/dossier-namen.svelte';
+	import { dossierName } from '$lib/bron/dossier-naam';
 	import type { VerbondenState } from './source';
 	import { groupRequest } from './open-group';
 	import {
@@ -768,7 +768,7 @@
 										</span>
 									</span>
 									<RijActies
-										naam={dossier ? dossierNaamNu(dossier) : row.title}
+										naam={dossier ? dossierName(dossier) : row.title}
 										item={itemVanRij(row)}
 										netwerk={!row.missing && onAddToNetwerk
 											? { aan: inNetwerk?.(row) ?? false, voegToe: () => onAddToNetwerk(row) }

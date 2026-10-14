@@ -3,7 +3,8 @@
 	import { vandaag } from '$lib/text/datum';
 	import { uniqueBy } from '$lib/util/unique';
 	import { onderdeelMark } from '$lib/text/article-parts';
-	import { api, unwrap } from '$lib/api/client';
+	import { ApiError, api, unwrap } from '$lib/api/client';
+	import { untrack } from 'svelte';
 	import { getArticleDetail } from '$lib/api/articles';
 	import {
 		getInstrumentDetail,
@@ -82,6 +83,9 @@
 		});
 
 	let articles = $state<Row[]>([]);
+	/** The place in the whole list of the first article shown: a division opens there. */
+	let start = $state(0);
+	/** Every article of the law (of the peildatum), wherever the list starts. */
 	let total = $state(0);
 	/** Where the BWB text of the law begins; before it there is no text of the day. */
 	let firstVersionFrom = $state<string | null>(null);
@@ -238,12 +242,24 @@
 		return list;
 	}
 
+	type Division = Schema<'InstrumentDivisionDTO'>;
+
+	/**
+	 * A page of the list from `offset`; with `division` the articles of that division alone
+	 * (`deel-hoofdstuk-10-titel-10.2-afdeling-10.2.2`), its place in the whole list in `division`.
+	 */
 	async function load(
 		bwb: string,
 		day: string | null,
 		offset: number,
-		signal?: AbortSignal
-	): Promise<{ items: Row[]; total: number; firstVersionFrom?: string | null }> {
+		signal?: AbortSignal,
+		division?: string
+	): Promise<{
+		items: Row[];
+		total: number;
+		firstVersionFrom?: string | null;
+		division?: Division | null;
+	}> {
 		if (day) {
 			// The whole text of each old version comes with the list (include_text): there is
 			// no call per article for a version. Today's list says which article to link to.
@@ -256,7 +272,8 @@
 								text_preview_chars: PREVIEW_CHARS,
 								limit: PAGE_SIZE,
 								offset,
-								include_text: true
+								include_text: true,
+								division
 							}
 						},
 						signal
@@ -266,6 +283,7 @@
 			]);
 			return {
 				total: at.total,
+				division: at.division,
 				firstVersionFrom: at.first_version_from ?? null,
 				items: atArticles(at.items, now).map((a) => ({ ...a, address: a.article_number }))
 			};
@@ -278,7 +296,7 @@
 				api.GET('/api/instruments/{bwb_id}/articles', {
 					params: {
 						path: { bwb_id: bwb },
-						query: { text_preview_chars: PREVIEW_CHARS, limit: PAGE_SIZE, offset }
+						query: { text_preview_chars: PREVIEW_CHARS, limit: PAGE_SIZE, offset, division }
 					},
 					signal
 				})
@@ -287,7 +305,13 @@
 				api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
 					params: {
 						path: { bwb_id: bwb, at_date: today },
-						query: { text_preview_chars: 0, limit: PAGE_SIZE, offset, include_text: true }
+						query: {
+							text_preview_chars: 0,
+							limit: PAGE_SIZE,
+							offset,
+							include_text: true,
+							division
+						}
 					},
 					signal
 				})
@@ -305,6 +329,7 @@
 		]);
 		return {
 			total: r.total,
+			division: r.division,
 			items: r.items.map((a) => {
 				const own = a.article_number ? texts.get(a.article_number) : undefined;
 				return {
@@ -324,28 +349,82 @@
 		};
 	}
 
-	$effect(() => {
+	/** Every article of the law, where the list starts at a division: the count it pages to. */
+	function lawTotal(bwb: string, day: string | null, signal: AbortSignal): Promise<number> {
+		// Today's whole list is the one the table of contents reads: no request of its own.
+		if (!day) return lawArticleList(bwb).then((r) => r.total);
+		return unwrap(
+			api.GET('/api/instruments/{bwb_id}/articles/at/{at_date}', {
+				params: {
+					path: { bwb_id: bwb, at_date: day },
+					query: { text_preview_chars: 0, limit: 1 }
+				},
+				signal
+			})
+		).then((r) => r.total);
+	}
+
+	/** A division the API did not find (404): the list reads on from the start to it. */
+	const zonderDeel = new Set<string>();
+	/** The division the list opened at last: opened once, never again for the same anchor. */
+	let geopend = '';
+	let controller: AbortController | null = null;
+
+	/**
+	 * The list from its start, or from a division alone (`deel-…`), its heading first: the
+	 * reader pages on through the law from there (BE-6). A division the API does not know is
+	 * read from the start, as before.
+	 */
+	function open(bwb: string, day: string | null, deel: string | null) {
+		controller?.abort();
+		const ac = new AbortController();
+		controller = ac;
 		articles = [];
+		start = 0;
+		status = 'loading';
+		const division = deel && !zonderDeel.has(`${bwb}/${day}/${deel}`) ? deel : undefined;
+		geopend = division ? `${bwb}/${day}/${division}` : '';
+		load(bwb, day, 0, ac.signal, division)
+			.then((first) => {
+				if (ac.signal.aborted) return;
+				articles = first.items;
+				firstVersionFrom = first.firstVersionFrom ?? null;
+				const at = first.division?.offset ?? 0;
+				start = at;
+				total = at + first.total;
+				status = 'ready';
+				if (!first.division) return;
+				// The rest of the law comes after the division: its count fills in the button.
+				lawTotal(bwb, day, ac.signal)
+					.then((n) => {
+						if (!ac.signal.aborted) total = Math.max(n, total);
+					})
+					.catch(() => {});
+			})
+			.catch((e) => {
+				if (ac.signal.aborted) return;
+				if (division && e instanceof ApiError && e.status === 404) {
+					zonderDeel.add(`${bwb}/${day}/${division}`);
+					open(bwb, day, null);
+				} else status = 'error';
+			});
+	}
+
+	$effect(() => {
 		detailByNumber.clear();
 		pending.clear();
-		if (!bwbId) {
+		const bwb = bwbId;
+		const day = peildatum;
+		if (!bwb) {
+			articles = [];
 			status = 'idle';
 			return;
 		}
 		primeInstrumentNames();
-		const controller = new AbortController();
-		status = 'loading';
-		load(bwbId, peildatum, 0, controller.signal)
-			.then((first) => {
-				articles = first.items;
-				total = first.total;
-				firstVersionFrom = first.firstVersionFrom ?? null;
-				status = 'ready';
-			})
-			.catch(() => {
-				if (!controller.signal.aborted) status = 'error';
-			});
-		return () => controller.abort();
+		// The division the link names opens alone; a later anchor is the effect below.
+		const hash = untrack(() => decodeURIComponent(page.url.hash.slice(1)));
+		untrack(() => open(bwb, day, hash.startsWith('deel-') ? hash : null));
+		return () => controller?.abort();
 	});
 
 	// A link to a place in the law: a division (`#deel-hoofdstuk-3`, from the band Behoort bij
@@ -366,7 +445,16 @@
 		if (el) {
 			doelGezien = hash;
 			landOp(el);
-		} else if (articles.length < total) void reach(hash);
+		} else if (
+			bwbId &&
+			hash.startsWith('deel-') &&
+			!zonderDeel.has(`${bwbId}/${peildatum}/${hash}`) &&
+			geopend !== `${bwbId}/${peildatum}/${hash}`
+		) {
+			// Another division of the table of contents: it opens alone, as from a link.
+			const [bwb, day] = [bwbId, peildatum];
+			untrack(() => open(bwb, day, hash));
+		} else if (start > 0 || start + articles.length < total) void reach(hash);
 		else doelGezien = hash;
 	});
 
@@ -383,11 +471,17 @@
 
 	/**
 	 * Loads the pages up to a place. Today's list of the law says on which page it stands, so
-	 * those pages come at once; for an earlier day the next page, until the place is there.
+	 * those pages come at once; for an earlier day the next page, until the place is there. A
+	 * place before the first article shown reads the list from its start again.
 	 */
 	async function reach(hash: string) {
 		const bwb = bwbId;
 		if (!bwb) return;
+		if (start > 0 && (peildatum || hash.startsWith('deel-'))) {
+			// The division opened but names no heading here: from the start, page by page.
+			zonderDeel.add(`${bwb}/${peildatum}/${hash}`);
+			return open(bwb, peildatum, null);
+		}
 		if (peildatum) return loadMore();
 		const index = await lawArticleList(bwb)
 			.then((r) => plekVan(r.items, hash))
@@ -397,17 +491,22 @@
 			doelGezien = hash;
 			return;
 		}
+		if (index < start) return open(bwb, null, null);
 		await loadMore(index + 1);
 	}
 
-	/** The next page, or every page up to `upTo` articles, two requests at a time. */
+	/**
+	 * The next page, or every page up to the `upTo`th article of the law, two requests at a
+	 * time; after a division the list of the whole law reads on.
+	 */
 	async function loadMore(upTo = 0) {
 		if (!bwbId || status !== 'ready') return;
 		const bwb = bwbId;
 		const day = peildatum;
 		const offsets: number[] = [];
-		const end = Math.max(Math.min(upTo, total), articles.length + 1);
-		for (let o = articles.length; o < end; o += PAGE_SIZE) offsets.push(o);
+		const from = start + articles.length;
+		const end = Math.max(Math.min(upTo, total), from + 1);
+		for (let o = from; o < end; o += PAGE_SIZE) offsets.push(o);
 		status = 'loading-more';
 		try {
 			const pages: Row[][] = [];
@@ -644,10 +743,10 @@
 			</section>
 		{/each}
 
-		{#if status !== 'loading' && articles.length < total}
+		{#if status !== 'loading' && start + articles.length < total}
 			<p class="whole-volgende">
 				{#if status === 'loading-more'}Laden…{:else}<TekstLink onclick={() => loadMore()}
-						>Volgende artikelen, nog {formatCount(total - articles.length)}</TekstLink
+						>Volgende artikelen, nog {formatCount(total - start - articles.length)}</TekstLink
 					>{/if}
 			</p>
 		{/if}

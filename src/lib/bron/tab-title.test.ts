@@ -11,7 +11,11 @@ describe('tabTitle', () => {
 			'Wijziging van de Uitvoeringswet Algemene verordening gegevensbescherming en enkele andere wetten (Verzamelwet gegevensbescherming)';
 		expect(
 			tabTitle(
-				node('dossiers', '36264', `Kamerstukdossier 36264: ${title}`, { label: '36264', title })
+				node('dossiers', '36264', `Kamerstukdossier 36264: ${title}`, {
+					label: '36264',
+					title,
+					short_title: 'Verzamelwet gegevensbescherming'
+				})
 			)
 		).toBe('36264 Verzamelwet gegevensbescherming');
 	});

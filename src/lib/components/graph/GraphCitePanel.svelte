@@ -164,7 +164,7 @@
 	</div>
 
 	<h4 class="title {node.stub ? 'title--stub' : ''}">
-		{bronNaam(node, $instrumentMetaStore, true)}
+		{bronNaam(node, $instrumentMetaStore)}
 	</h4>
 
 	{#if node.stub}

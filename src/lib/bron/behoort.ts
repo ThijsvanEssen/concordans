@@ -9,8 +9,7 @@ import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getNodeFirst } from '$lib/api/records';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { refOf, type BronRef } from '$lib/bron/href';
-import { shortDossierTitle } from '$lib/graph/types';
-import { dossierUitProps, kamerstukNummer } from './dossier-naam';
+import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
 import { artikelAnker, deelIds, layersOf } from '$lib/text/division';
 import { langeDatum } from '$lib/text/datum';
 import { kindName } from '$lib/components/explore/law-head';
@@ -130,11 +129,12 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 		// A dossier by its kind, number and the name of its bill, "Kamerstuk 36496 Wet
 		// betaalbare huur" (dossier-naam); its title runs to three lines.
 		const nummer = dossierNummer(props);
-		const lang = dossierUitProps({ display_name: n.display_name, ...props }).title ?? vol;
-		const titel = shortDossierTitle(lang);
+		const d = dossierUitProps({ display_name: n.display_name, ...props }, nummer ?? '');
+		const lang = d.title ?? vol;
 		if (!nummer) return { soort, naam: naamVan('dossiers', n), ref, vol: lang };
 		const label = kamerstukNummer(nummer);
-		return { soort, naam: titel && titel !== nummer ? `${label} ${titel}` : label, ref, vol: lang };
+		const titel = dossierName(d);
+		return { soort, naam: titel !== nummer ? `${label} ${titel}` : label, ref, vol: lang };
 	}
 	if (n.collection === 'judgments') return { soort, naam: vol, ref, kort: instantie(vol) };
 	return { soort, naam: vol, ref };

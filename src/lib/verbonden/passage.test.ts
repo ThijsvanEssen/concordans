@@ -1,40 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { aanhalingIn, citeerplaats, uitsnede } from './passage';
+import { aanhalingIn, uitsnede } from './passage';
 import { hoeVan, plaatsIn } from './hoe';
 import type { Row } from './rows';
-
-const cut = (text: string, at: { start: number; end: number } | null) =>
-	at ? text.slice(at.start, at.end) : null;
-
-describe('citeerplaats', () => {
-	it('marks the article with its law where the law follows', () => {
-		const t = 'Het besluit is in strijd met artikel 3:2 van de Awb voorbereid.';
-		expect(cut(t, citeerplaats(t, '3:2', ['Awb']))).toBe('artikel 3:2 van de Awb');
-	});
-
-	it('takes a lid between the number and the law', () => {
-		const t = 'gelet op artikel 8:51d, eerste lid, van de Algemene wet bestuursrecht';
-		expect(cut(t, citeerplaats(t, '8:51d', ['Awb', 'Algemene wet bestuursrecht']))).toBe(
-			'artikel 8:51d, eerste lid, van de Algemene wet bestuursrecht'
-		);
-	});
-
-	it('prefers the citation that names the law over another law’s article of that number', () => {
-		const t = 'Op grond van artikel 12 van de voorwaarden en artikel 12 Cbw is dat zo.';
-		expect(citeerplaats(t, '12', ['Cbw'])?.start).toBe(t.indexOf('artikel 12 Cbw'));
-	});
-
-	it('marks the article alone where no law follows, and not a longer number', () => {
-		const t = 'zie art. 6:1621 en art. 6:162 hierna';
-		expect(cut(t, citeerplaats(t, '6:162', ['BW']))).toBe('art. 6:162');
-		expect(citeerplaats('artikel 3.4.2 van de regels', '3.4', [])).toBeNull();
-	});
-
-	it('does not take a law name that runs on', () => {
-		const t = 'artikel 12 van de CBW-voorwaarden';
-		expect(cut(t, citeerplaats(t, '12', ['CBW']))).toBe('artikel 12');
-	});
-});
 
 describe('uitsnede', () => {
 	it('starts at the sentence of the mark where that is near', () => {
@@ -161,21 +128,45 @@ describe('aanhalingIn', () => {
 		);
 	});
 
-	it('reads the API’s own place of the strongest mention where it gives one (0.79.54)', () => {
-		const t = 'Ingevolge artikel 3:2 van de Awb moet het bestuursorgaan kennis vergaren.';
+	it('reads the strongest mention in its paragraph, by its offsets in the snippet', () => {
+		const t =
+			'Het bestuursorgaan moet zorgvuldig zijn. Ingevolge artikel 3:2 van de Awb moet het bestuursorgaan kennis vergaren.';
+		const snippet = 'Ingevolge artikel 3:2 van de Awb moet het bestuursorgaan';
 		const paragraphs = [{ paragraph_id: 'p-9', text: t, citations: [] }];
 		const met = {
 			...cited,
 			paragraph_ids: ['p-9'],
+			snippet,
 			snippet_paragraph_id: 'p-9',
-			start: t.indexOf('artikel'),
-			end: t.indexOf(' moet'),
+			start: snippet.indexOf('artikel'),
+			end: snippet.indexOf(' moet'),
 			text: 'artikel 3:2 van de Awb'
 		};
 		expect(aanhalingIn(met, paragraphs)).toEqual({
 			snippet: t,
 			match: 'artikel 3:2 van de Awb',
 			at: 'p-9'
+		});
+	});
+
+	it('shows the snippet of a footnote with the paragraph that refers to it', () => {
+		const snippet = 'Zie artikel 3:2 Awb en de toelichting daarop.';
+		const paragraphs = [
+			{ paragraph_id: 'p-4', text: 'Het besluit is onzorgvuldig.¹', citations: [] }
+		];
+		const noot = {
+			...cited,
+			paragraph_ids: ['p-4'],
+			snippet,
+			snippet_paragraph_id: 'p-4',
+			start: 4,
+			end: 19,
+			text: 'artikel 3:2 Awb'
+		};
+		expect(aanhalingIn(noot, paragraphs)).toEqual({
+			snippet,
+			match: 'artikel 3:2 Awb',
+			at: 'p-4'
 		});
 	});
 
@@ -187,12 +178,21 @@ describe('aanhalingIn', () => {
 		expect(aanhalingIn(cited, paragraphs)?.at).toBe('rov-6');
 	});
 
-	it('falls back on the API’s snippet', () => {
-		expect(aanhalingIn(cited, [])).toEqual({
-			snippet: cited.snippet,
-			match: 'artikel 3:2 van de Awb',
-			at: 'rov-6'
-		});
+	it('falls back on the API’s snippet with the words at its offsets', () => {
+		const words = 'artikel 3:2 van de Awb';
+		const met = {
+			...cited,
+			start: cited.snippet.indexOf(words),
+			end: cited.snippet.indexOf(words) + words.length,
+			text: words
+		};
+		expect(aanhalingIn(met, [])).toEqual({ snippet: cited.snippet, match: words, at: 'rov-6' });
+	});
+
+	it('takes the words as written where the offsets are gone (normalized again)', () => {
+		const met = { ...cited, start: null, end: null, text: 'artikel 3:2 van de Awb' };
+		expect(aanhalingIn(met, [])?.match).toBe('artikel 3:2 van de Awb');
+		expect(aanhalingIn({ ...cited, text: null }, [])?.match).toBeNull();
 	});
 });
 

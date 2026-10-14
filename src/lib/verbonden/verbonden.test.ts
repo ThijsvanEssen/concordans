@@ -477,6 +477,27 @@ describe('buildDossierHub with laws_named', () => {
 	});
 });
 
+describe('buildDossierHub: the wet from the dossier', () => {
+	it('says its kind from the props on hand, its BWB id only without one', () => {
+		const cbw = {
+			id: 'instruments/bwbr0052872',
+			key: 'bwbr0052872',
+			bwb_id: 'BWBR0052872',
+			display_name: 'Cyberbeveiligingswet',
+			relation: 'legislated_in',
+			status: 'canoniek',
+			links: []
+		};
+		const node = { collection: 'instruments', key: 'bwbr0052872', props: { kind: 'wet' } };
+		const met = buildDossierHub([], null, null, [], () => null, { instruments: [cbw] } as never, [
+			node as never
+		]);
+		expect([met.laws[0].context, met.laws[0].identifier]).toEqual(['Wet', null]);
+		const zonder = buildDossierHub([], null, null, [], () => null, { instruments: [cbw] } as never);
+		expect(zonder.laws[0].identifier).toBe('BWBR0052872');
+	});
+});
+
 describe('the groups of a judgment', () => {
 	it('tell the judgments it cites from those that cite it by more than one letter', () => {
 		const labels = Object.fromEntries((GROUPS.judgments ?? []).map((g) => [g.id, g.label]));

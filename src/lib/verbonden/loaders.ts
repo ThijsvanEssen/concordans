@@ -145,15 +145,18 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 
 // The four dossier groups read one hub.
 let hub: { key: string; request: Promise<DossierHub> } | null = null;
-const hubOf = ({ node, buren }: LoaderContext) => {
+const hubOf = ({ node, buren, neighbors }: LoaderContext) => {
 	if (hub?.key !== node.key)
 		hub = {
 			key: node.key,
-			request: loadDossierHub(str(node.props?.label) ?? '', () =>
-				buren([
-					{ relation: 'LEGISLATED_IN', direction: 'inbound', collection: 'instruments' },
-					{ relation: 'ABOUT', direction: 'inbound', collection: 'activities' }
-				])
+			request: loadDossierHub(
+				str(node.props?.label) ?? '',
+				() =>
+					buren([
+						{ relation: 'LEGISLATED_IN', direction: 'inbound', collection: 'instruments' },
+						{ relation: 'ABOUT', direction: 'inbound', collection: 'activities' }
+					]),
+				neighbors
 			)
 		};
 	return hub.request;
@@ -969,10 +972,10 @@ export const LOADERS: Record<Loader, (ctx: LoaderContext) => Promise<Loaded>> = 
 				ref: { collection: 'dossiers', key: d.key, number: d.dossier_number },
 				...describe('dossiers', d.key, d.display_name, {
 					title: d.title,
-					label: d.dossier_number
+					label: d.dossier_number,
+					short_title: d.short_title ?? null
 				}),
-				// No short title in this answer: the row asks it by number (DossierNaam).
-				dossier: { number: d.dossier_number, title: d.title },
+				dossier: { number: d.dossier_number, title: d.title, short_title: d.short_title ?? null },
 				kind: 'dossiers' as const,
 				relation: 'LEGISLATED_IN',
 				direction: 'outbound',

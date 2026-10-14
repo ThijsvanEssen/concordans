@@ -59,15 +59,12 @@ describe('node kinds', () => {
 });
 
 describe('node labels', () => {
-	it('shortens a dossier title to the name of the act', () => {
-		const label = buildNodeLabel(
-			node('dossiers', '36600', {
-				number: '36600',
-				title: 'Wijziging van de Wet X (Wet verbetering aanpak Y)'
-			}),
-			'dossier'
-		);
-		expect(label).toBe('36600, Wet verbetering aanpak Y');
+	it('names a dossier by the short title its props carry, not by its title', () => {
+		const title = 'Wijziging van de Wet X (Wet verbetering aanpak Y)';
+		const label = (short_title: string | null) =>
+			buildNodeLabel(node('dossiers', '36600', { number: '36600', title, short_title }), 'dossier');
+		expect(label('Wet verbetering aanpak Y')).toBe('36600, Wet verbetering aanpak Y');
+		expect(label(null)).toBe(`36600, ${title}`);
 	});
 
 	it('labels an article and a judgment', () => {

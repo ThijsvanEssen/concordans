@@ -201,7 +201,7 @@ describe('behoort', () => {
 							collection: 'dossiers',
 							display_name:
 								'Kamerstukdossier 36496: Wijziging van de Wet goed verhuurderschap en enige andere wetten (Wet betaalbare huur)',
-							props: { label: '36496' }
+							props: { label: '36496', short_title: 'Wet betaalbare huur' }
 						}
 					]
 				}

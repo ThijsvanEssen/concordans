@@ -16,6 +16,7 @@ import { get } from 'svelte/store';
 import { chamberOf, isExplanatory } from './chamber';
 import { bronKindOf } from './filter';
 import { describe, type Neighbor, type Row } from './rows';
+import { kindName } from '$lib/components/explore/law-head';
 
 export type DossierHub = {
 	laws: Row[];
@@ -51,16 +52,24 @@ export function buildDossierHub(
 	mutations: Mutations | null,
 	committees: Committees,
 	lawName: (bwbId: string) => string | null = () => null,
-	detail: Partial<Pick<Detail, 'instruments' | 'committees' | 'laws_named'>> | null = null
+	detail: Partial<Pick<Detail, 'instruments' | 'committees' | 'laws_named'>> | null = null,
+	bekend: readonly Neighbor[] = []
 ): DossierHub {
 	const laws = new Map<string, Row>();
+	// A law by its kind, as everywhere ("Wet"), from the props of the node on hand (API
+	// 0.79.54); its BWB id only where none says it.
+	const soortVan = (key: string) => {
+		const kind = bekend.find((n) => n.collection === 'instruments' && n.key === key)?.props?.kind;
+		return kindName(typeof kind === 'string' ? kind : null);
+	};
 	for (const i of detail?.instruments ?? []) {
+		const soort = soortVan(i.key);
 		laws.set(i.key, {
 			ref: { collection: 'instruments', key: i.key },
 			title: naamVan('instruments', i),
-			context: null,
+			context: soort,
 			kind: bronKindOf('instruments', i.key, { bwb_id: i.bwb_id, celex: i.celex }),
-			identifier: i.bwb_id ?? i.celex ?? null,
+			identifier: soort ? null : (i.bwb_id ?? i.celex ?? null),
 			proposed: i.status === 'voorgesteld' || undefined,
 			relation: RELATION_OF[i.relation] ?? 'LEGISLATED_IN',
 			direction: i.relation === 'legislated_in' ? 'inbound' : 'outbound'
@@ -177,7 +186,8 @@ export const getCommittees = () =>
  */
 export async function loadDossierHub(
 	number: string,
-	buren: () => Promise<Neighbor[]>
+	buren: () => Promise<Neighbor[]>,
+	bekend: readonly Neighbor[] = []
 ): Promise<DossierHub> {
 	const detail = await getDossier(number).catch(() => null);
 	const joined = !detail?.instruments;
@@ -197,6 +207,7 @@ export async function loadDossierHub(
 			const meta = names.get(bwb);
 			return meta?.citationTitle ?? meta?.title ?? null;
 		},
-		detail
+		detail,
+		bekend
 	);
 }

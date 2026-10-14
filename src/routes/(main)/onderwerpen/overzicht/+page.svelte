@@ -29,7 +29,7 @@
 	import { korteDatum, langeDatum, maandNaam, vandaag } from '$lib/text/datum';
 	import { download } from '$lib/verbonden/export';
 	import { lees, uitParams, vindIndex } from '$lib/onderwerpen/onderwerpen';
-	import { dossierName, naamVanNummer } from '$lib/bron/dossier-naam';
+	import { dossierName } from '$lib/bron/dossier-naam';
 	import { getDecisionDocument } from '$lib/api/records';
 	import { besluiten, geteld, telling } from '$lib/api/decisions';
 	import { getAmendementen } from '$lib/components/parliamentary/amendementen';
@@ -950,7 +950,6 @@
 	);
 
 	// ── CSV: the decisions of the list ──────────────────────────────────────
-	const CSV_NAMEN = 100;
 	const CSV_MAX = 2000;
 	let exporteren = $state(false);
 	/** One request each, two at a time (the API's limit per address). */
@@ -981,23 +980,13 @@
 		exporteren = true;
 		const lijst = lokaal ?? (await alle(lijstVraag).catch(() => [] as Besluit[]));
 		const stemmenLijst = await stemmenVan(lijst).catch(() => new Map<string, Stem>());
-		// The names the decisions carry (API 0.79.30); asked by number only where they do not.
+		// The names the decisions carry (API 0.79.30), one per number.
 		const namen = new Map<string, string>();
 		for (const d of lijst)
 			for (const x of d.dossiers ?? []) {
 				const n = dossierName(x);
 				if (n !== x.number) namen.set(x.number, n);
 			}
-		const nummers = [...new Set(lijst.flatMap((d) => d.dossier_numbers ?? []))]
-			.filter((n) => !namen.has(n))
-			.slice(0, CSV_NAMEN);
-		await Promise.all(
-			nummers.map((n) =>
-				naamVanNummer(n).then((naam) => {
-					if (naam) namen.set(n, naam);
-				})
-			)
-		);
 		const motie = await motieVelden(lijst);
 		exporteren = false;
 		download(
