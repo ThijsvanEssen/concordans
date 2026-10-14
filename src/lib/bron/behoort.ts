@@ -9,6 +9,7 @@ import { capitalize, textOf } from '$lib/text/words';
 import { naamVan } from '$lib/bron/menselijk';
 import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
 import { getActivity, getNodeFirst } from '$lib/api/records';
+import { ifExists } from '$lib/api/errors';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { CHAMBER_NAME, chamberFromParam } from '$lib/components/parliamentary/chamber';
 import { refOf, type BronRef } from '$lib/bron/href';
@@ -406,7 +407,7 @@ export function behoort(
 									}
 								],
 								laad: async () => {
-									const l = await getNodeFirst('judgments', origineelKey).catch(() => null);
+									const l = await ifExists(getNodeFirst('judgments', origineelKey));
 									return l?.node
 										? [laagVan({ ...l.node, collection: 'judgments' } as Neighbor, 'Origineel')]
 										: [];
@@ -503,9 +504,7 @@ export function behoort(
 						lagen: kamers,
 						laad: nummer
 							? () =>
-									getDossier(nummer)
-										.then((d) => metEersteKamer(kamers, d))
-										.catch(() => kamers)
+									ifExists(getDossier(nummer)).then((d) => (d ? metEersteKamer(kamers, d) : kamers))
 							: undefined
 					}
 				],
@@ -649,13 +648,14 @@ function dossierLaag(d: {
 
 /**
  * The instances before an eerdere aanleg, the earliest first: up to three steps down
- * `APPEAL_OF`, each a light node (cached), each asked only after the one before.
+ * `APPEAL_OF`, each a light node (cached), each asked only after the one before. A step
+ * the data lacks ends the chain; a failed one throws, for the band to mark its line.
  */
 async function eerdereAanleg(key: string): Promise<Laag[]> {
 	const keten: Laag[] = [];
 	let k = key;
 	for (let i = 0; i < 3; i++) {
-		const light = await getNodeFirst('judgments', k).catch(() => null);
+		const light = await ifExists(getNodeFirst('judgments', k));
 		const n = light?.neighbors.buckets?.find(
 			(b) =>
 				b.relation === 'APPEAL_OF' && b.direction === 'outbound' && b.collection === 'judgments'
@@ -677,7 +677,7 @@ const appeal = (light: NodeGraph | null, direction: 'inbound' | 'outbound') =>
  * translation, its original's. Its light node and those before it, cached.
  */
 async function procesgangVan(key: string): Promise<Laag[]> {
-	const light = await getNodeFirst('judgments', key).catch(() => null);
+	const light = await ifExists(getNodeFirst('judgments', key));
 	if (!light?.node) return [];
 	const eerder = appeal(light, 'outbound');
 	const later = appeal(light, 'inbound');
@@ -697,7 +697,7 @@ async function procesgangVan(key: string): Promise<Laag[]> {
  * the band's line.
  */
 export async function procesgangIds(key: string): Promise<string[]> {
-	const light = await getNodeFirst('judgments', key).catch(() => null);
+	const light = await ifExists(getNodeFirst('judgments', key));
 	// A translation: its original's procesgang, the original included.
 	const origineel = textOf(
 		(light?.node as { props?: Record<string, unknown> } | undefined)?.props?.translation_of
@@ -727,7 +727,7 @@ export async function lazeKernIds(
 	if (collection === 'judgments') return procesgangIds(key);
 	if (collection !== 'dossiers') return [];
 	const nummer = dossierNummer(props) ?? key;
-	const d = await getDossier(nummer).catch(() => null);
+	const d = await ifExists(getDossier(nummer));
 	const e = d?.legal_effect;
 	return [...(e?.amends ?? []), ...(e?.implements ?? [])].map((w) => `instruments/${w.key}`);
 }
