@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Lawgraph API",
 		"description": "Lawgraph is a FastAPI layer over the ArangoDB knowledge graph. It exposes endpoints for articles of law, judgments, parliamentary dossiers and legislative history.",
-		"version": "0.79.54"
+		"version": "0.79.55"
 	},
 	"paths": {
 		"/api/articles/{bwb_id}/{article_number}": {
@@ -194,7 +194,7 @@
 			"get": {
 				"tags": ["articles", "articles"],
 				"summary": "Legislative history of an article",
-				"description": "The dossiers that introduced, amended or repealed this article, or propose to: one entry per change and dossier, with the amending publication (enacted, `canoniek`) or the bill (proposed, `voorgesteld`) that carries it; proposed first, then newest first. What only cites the article (a judgment, another article) is not history. The explanatory documents are at `explained-by`. Returns an empty list when there is no history \u2014 never a 404.",
+				"description": "The dossiers that established (enacted its regulation), introduced, amended or repealed this article, or propose to: one entry per change and dossier, with the publication (enacted, `canoniek`) or the bill (proposed, `voorgesteld`) that carries it; proposed first, then newest first. What only cites the article (a judgment, another article) is not history. The explanatory documents are at `explained-by`. Returns an empty list when there is no history \u2014 never a 404.",
 				"operationId": "get_legislative_history_api_articles__bwb_id___article_number__legislative_history_get",
 				"parameters": [
 					{
@@ -812,7 +812,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "The definitions an instrument gives itself",
-				"description": "Its begripsbepalingen, as its text gives them, in the order of the text: each `term` with its `text`, the article and letter it stands in, where it holds (`scope`: the whole regulation, or a chapter or paragraph of it) and the regulation a definition is (`refers_to`: `wet`, de Zorgverzekeringswet). Empty for one that defines nothing. 404 for an unknown instrument.",
+				"description": "Its begripsbepalingen, as its text gives them, in the order of the text: each `term` with its `text`, the article and letter it stands in, where it holds (`scope`: the whole regulation, or a chapter or paragraph of it, and whether in the regulations issued under it too) and the regulation a definition is (`refers_to`: `wet`, de Zorgverzekeringswet). Empty for one that defines nothing. 404 for an unknown instrument.",
 				"operationId": "get_instrument_definitions_api_instruments__identifier__definitions_get",
 				"parameters": [
 					{
@@ -1113,7 +1113,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Amending publications of a regulation",
-				"description": "The amending instruments (Staatsblad, Tractatenblad, ...) that change, introduce or repeal articles of this regulation (AMENDS / INTRODUCES / REPEALS), newest first. Per publication: the edge count per kind, the number of articles affected, the first effective date and the dossiers. ``total`` is the absolute count, independent of ``limit`` and ``offset``.",
+				"description": "The publications (Staatsblad, Staatscourant, Tractatenblad, ...) that enacted this regulation (ESTABLISHES its articles) or change, introduce or repeal articles of it (AMENDS / INTRODUCES / REPEALS), newest first. Per publication: the edge count per kind, the number of articles affected, the first effective date and the dossiers. ``total`` is the absolute count, independent of ``limit`` and ``offset``. Apart from them, in ``proposals``, the papers of the Tweede Kamer that propose to change it and are pending.",
 				"operationId": "get_instrument_amended_by_route_api_instruments__bwb_id__amended_by_get",
 				"parameters": [
 					{
@@ -1163,7 +1163,7 @@
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Instruments referring to this one, or referred to by it",
-				"description": "An aggregation of the REFERS_TO edges between articles of this law and articles of other laws. Each related instrument carries `outbound_count` (references from this law to the other) and `inbound_count` (references from the other law to this one). ``total`` is the absolute count, independent of ``limit``.",
+				"description": "The other laws whose articles in force refer to articles in force of this law, or the other way (`REFERS_TO` between articles), the most articles first. Each carries its `kind` and `date_in_force`, the `direction`, the articles at both ends (`outbound_count` articles of this law refer to `outbound_cited_count` of it; `inbound_count` of its articles refer to `inbound_cited_count` of this law) and `basis`: whether one is issued under the other as well (`BASED_ON`), with the articles its preamble names. ``total`` is the absolute count, independent of ``limit``. The articles between the two: `.../references/{other}`.",
 				"operationId": "get_instrument_related_route_api_instruments__bwb_id__related_instruments_get",
 				"parameters": [
 					{
@@ -1205,11 +1205,51 @@
 				}
 			}
 		},
+		"/api/instruments/{bwb_id}/references/{other}": {
+			"get": {
+				"tags": ["instruments", "instruments"],
+				"summary": "The references between the articles of two instruments",
+				"description": "Every reference (`REFERS_TO`) from an article in force of this instrument to an article in force of `other`, then the other way (`direction` `outbound`, `inbound`), in the order of the referring and the referred article: the `source` and `target` articles, the words of the reference (`text`), the parts of the target it names and its `semantic_type`. Both are a BWB id or a CELEX number; empty for an unknown one or the same one twice.",
+				"operationId": "get_instrument_references_route_api_instruments__bwb_id__references__other__get",
+				"parameters": [
+					{
+						"name": "bwb_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Bwb Id" }
+					},
+					{
+						"name": "other",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Other" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/InstrumentReferencesResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/instruments/{bwb_id}/delegated": {
 			"get": {
 				"tags": ["instruments", "instruments"],
 				"summary": "Regulations issued under a law",
-				"description": "The regulations in force whose preamble (\"Gelet op\") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names: AMvBs first, then ministerial regulations, then the others; by title. A repealed regulation or article is left out. Empty for an unknown instrument.",
+				"description": "The regulations in force whose preamble (\"Gelet op\") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names, whether those give the power it is made under (`basis_kind`), its articles that work each out (`referring`), the other laws it names (`also_based_on`) and the regulations issued under it in turn (`sub_delegated`): AMvBs first, then ministerial regulations, then the others; by title. A repealed regulation or article is left out. Empty for an unknown instrument.",
 				"operationId": "get_instrument_delegated_route_api_instruments__bwb_id__delegated_get",
 				"parameters": [
 					{
@@ -1225,6 +1265,40 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/InstrumentDelegatedResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/instruments/{bwb_id}/basis": {
+			"get": {
+				"tags": ["instruments", "instruments"],
+				"summary": "The laws a regulation is issued under",
+				"description": "The legal basis of a regulation: per law its preamble (\"Gelet op\") names an article in force of (`BASED_ON`), by title, the articles it names with the leden and onderdelen, whether they give the power it is made under (`basis_kind`) and the articles of the regulation that refer to each (`referring`). Empty for a law without a preamble basis and for an unknown instrument. The other way: `.../delegated`.",
+				"operationId": "get_instrument_basis_route_api_instruments__bwb_id__basis_get",
+				"parameters": [
+					{
+						"name": "bwb_id",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Bwb Id" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/InstrumentBasisResponse" }
 							}
 						}
 					},
@@ -1531,6 +1605,19 @@
 						"description": "`canvas`: of a neighbour only the props the canvas of the explorer draws, per collection, and of its edge only the `meta` it reads (null when none); `full` (the default) every prop but the text"
 					},
 					{
+						"name": "edge_meta",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["light", "passages"],
+							"type": "string",
+							"description": "`passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none.",
+							"default": "light",
+							"title": "Edge Meta"
+						},
+						"description": "`passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none."
+					},
+					{
 						"name": "relations",
 						"in": "query",
 						"required": false,
@@ -1650,6 +1737,19 @@
 							"title": "Props"
 						},
 						"description": "`canvas`: of a node but the focal one only the props the canvas of the explorer draws, per collection, as the neighbours of a node with `props=canvas`; `full` (the default) every prop a neighbour carries"
+					},
+					{
+						"name": "edge_meta",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["light", "passages"],
+							"type": "string",
+							"description": "`passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none.",
+							"default": "light",
+							"title": "Edge Meta"
+						},
+						"description": "`passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none."
 					},
 					{
 						"name": "relations",
@@ -3378,6 +3478,72 @@
 				}
 			}
 		},
+		"/api/activities/{key}": {
+			"get": {
+				"tags": ["activities", "activities"],
+				"summary": "Activity detail",
+				"description": "One activity: its `kind`, `date`, `status`, `agenda_title`, `number` (its address, `/activiteiten/2026A01323`), its page on tweedekamer.nl, the committee that leads it (null for a plenary one), the dossiers on its agenda with their names, and the activities it took the place of or that took its place. What was made in it is `/records`. 404 when unknown.",
+				"operationId": "get_activity_detail_api_activities__key__get",
+				"parameters": [
+					{
+						"name": "key",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Key" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": { "schema": { "$ref": "#/components/schemas/ActivityDTO" } }
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/activities/{key}/records": {
+			"get": {
+				"tags": ["activities", "activities"],
+				"summary": "What was made in an activity",
+				"description": "What is `MADE_IN` the activity: its `documents` (the stenogram and the verslag of a debate, its convocatie), the `motions` submitted in it, the `commitments` made in it and the `decisions` taken in it; and the `cases` on its agenda. Each with its readable address. 404 when unknown.",
+				"operationId": "get_activity_records_route_api_activities__key__records_get",
+				"parameters": [
+					{
+						"name": "key",
+						"in": "path",
+						"required": true,
+						"schema": { "type": "string", "title": "Key" }
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Successful Response",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ActivityRecordsResponse" }
+							}
+						}
+					},
+					"422": {
+						"description": "Validation Error",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/parties/colors": {
 			"get": {
 				"tags": ["parties", "parties"],
@@ -4148,7 +4314,7 @@
 			"get": {
 				"tags": ["decisions", "decisions"],
 				"summary": "Decision detail",
-				"description": "One decision with every vote cast on it \u2014 per member on a roll-call, per faction otherwise.",
+				"description": "One decision with every vote cast on it \u2014 per member on a roll-call, per faction otherwise \u2014 the Kamerstuk it was taken on (``primary_document``) and, of a motion, its dictum.",
 				"operationId": "get_decision_api_decisions__key__get",
 				"parameters": [
 					{
@@ -4399,10 +4565,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }],
-							"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them.",
+							"description": "Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them.",
 							"title": "Q"
 						},
-						"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them."
+						"description": "Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them."
 					},
 					{
 						"name": "chamber",
@@ -4439,6 +4605,31 @@
 							"title": "Tier"
 						},
 						"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket."
+					},
+					{
+						"name": "instrument",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^[Bb][Ww][Bb][RrVv]\\d+$" },
+								{ "type": "null" }
+							],
+							"description": "A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it.",
+							"title": "Instrument"
+						},
+						"description": "A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it."
+					},
+					{
+						"name": "article",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment.",
+							"title": "Article"
+						},
+						"description": "With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment."
 					}
 				],
 				"responses": {
@@ -4606,10 +4797,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }],
-							"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them.",
+							"description": "Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them.",
 							"title": "Q"
 						},
-						"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them."
+						"description": "Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them."
 					},
 					{
 						"name": "chamber",
@@ -4646,6 +4837,31 @@
 							"title": "Tier"
 						},
 						"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket."
+					},
+					{
+						"name": "instrument",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^[Bb][Ww][Bb][RrVv]\\d+$" },
+								{ "type": "null" }
+							],
+							"description": "A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it.",
+							"title": "Instrument"
+						},
+						"description": "A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it."
+					},
+					{
+						"name": "article",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment.",
+							"title": "Article"
+						},
+						"description": "With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment."
 					}
 				],
 				"responses": {
@@ -4781,10 +4997,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }],
-							"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them.",
+							"description": "Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them.",
 							"title": "Q"
 						},
-						"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them."
+						"description": "Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them."
 					},
 					{
 						"name": "chamber",
@@ -4821,6 +5037,31 @@
 							"title": "Tier"
 						},
 						"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket."
+					},
+					{
+						"name": "instrument",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^[Bb][Ww][Bb][RrVv]\\d+$" },
+								{ "type": "null" }
+							],
+							"description": "A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it.",
+							"title": "Instrument"
+						},
+						"description": "A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it."
+					},
+					{
+						"name": "article",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment.",
+							"title": "Article"
+						},
+						"description": "With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment."
 					}
 				],
 				"responses": {
@@ -4922,6 +5163,19 @@
 							"title": "Expand Cap"
 						},
 						"description": "The children of a group, at most."
+					},
+					{
+						"name": "edge_meta",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"enum": ["light", "passages"],
+							"type": "string",
+							"description": "`passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none.",
+							"default": "light",
+							"title": "Edge Meta"
+						},
+						"description": "`passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none."
 					}
 				],
 				"responses": {
@@ -4946,7 +5200,7 @@
 			"get": {
 				"tags": ["lookup", "lookup"],
 				"summary": "The node a readable URL names, exactly",
-				"description": "No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `annex` (`law` BWB id and `label`, `II`), `case` (a zaak of the Tweede Kamer: its `number`, `2025Z15468`), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).",
+				"description": "No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `annex` (`law` BWB id and `label`, `II`), `case` (a zaak of the Tweede Kamer: its `number`, `2025Z15468`), `activity` (one of the Tweede Kamer, a debate: its `number`, `2026A01323`), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).",
 				"operationId": "get_lookup_api_lookup_get",
 				"parameters": [
 					{
@@ -4965,6 +5219,7 @@
 								"official",
 								"commitment",
 								"case",
+								"activity",
 								"faction",
 								"committee",
 								"cabinet",
@@ -5166,10 +5421,10 @@
 						"required": false,
 						"schema": {
 							"anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }],
-							"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them.",
+							"description": "Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them.",
 							"title": "Q"
 						},
-						"description": "Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them."
+						"description": "Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them."
 					},
 					{
 						"name": "chamber",
@@ -5206,6 +5461,31 @@
 							"title": "Tier"
 						},
 						"description": "Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket."
+					},
+					{
+						"name": "instrument",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [
+								{ "type": "string", "pattern": "^[Bb][Ww][Bb][RrVv]\\d+$" },
+								{ "type": "null" }
+							],
+							"description": "A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it.",
+							"title": "Instrument"
+						},
+						"description": "A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it."
+					},
+					{
+						"name": "article",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"anyOf": [{ "type": "string", "maxLength": 200 }, { "type": "null" }],
+							"description": "With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment.",
+							"title": "Article"
+						},
+						"description": "With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment."
 					}
 				],
 				"responses": {
@@ -5275,6 +5555,313 @@
 				"required": ["seat"],
 				"title": "ActingOtherSeatDTO",
 				"description": "The seat a stand-in held throughout."
+			},
+			"ActivityCaseDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "``2026Z05830``."
+					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "``Zaak.Soort``: ``Motie``, ``Wetgeving``."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "ActivityCaseDTO",
+				"description": "A case (zaak) on the agenda of the activity."
+			},
+			"ActivityCommitmentDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "``TZ202604-064``."
+					},
+					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
+					"status": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Status",
+						"description": "``Toezegging.Status``."
+					},
+					"registered_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Registered On",
+						"description": "The day the Kamer registered it (``Aanmaakdatum``)."
+					},
+					"expected_resolution": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Expected Resolution",
+						"description": "The day it is due; null when the Kamer names none."
+					},
+					"minister_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Minister Name",
+						"description": "As the source writes it."
+					},
+					"minister_role": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Minister Role",
+						"description": "As the source writes it."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "ActivityCommitmentDTO",
+				"description": "A commitment made in the activity."
+			},
+			"ActivityDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "``Activiteit.Nummer`` (``2026A01323``), its address."
+					},
+					"chamber": {
+						"anyOf": [{ "type": "string", "enum": ["TK", "EK"] }, { "type": "null" }],
+						"title": "Chamber"
+					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "As the source writes it: ``Wetgevingsoverleg``, ``Commissiedebat``, ``Plenair debat (wetgeving)``, ``Stemmingen``."
+					},
+					"date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date",
+						"description": "The day it was (to be) held."
+					},
+					"status": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Status",
+						"description": "``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none (the Eerste Kamer gives none)."
+					},
+					"agenda_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Agenda Title",
+						"description": "Its subject (``Activiteit.Onderwerp``)."
+					},
+					"tk_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Tk Url",
+						"description": "Its page on tweedekamer.nl, by its number."
+					},
+					"committee": {
+						"anyOf": [{ "$ref": "#/components/schemas/TimelineCommitteeDTO" }, { "type": "null" }],
+						"description": "The committee that leads it (``LED_BY``); null for a plenary one."
+					},
+					"dossier_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Dossier Numbers",
+						"description": "The dossiers of the cases on its agenda."
+					},
+					"dossiers": {
+						"items": { "$ref": "#/components/schemas/DossierNameDTO" },
+						"type": "array",
+						"title": "Dossiers",
+						"description": "The names of ``dossier_numbers``, in their order: ``number``, ``short_title``, ``title`` as ``/api/dossiers`` gives them."
+					},
+					"moved_from": {
+						"items": { "$ref": "#/components/schemas/ActivityMoveDTO" },
+						"type": "array",
+						"title": "Moved From",
+						"description": "The activities it took the place of: moved to it (it ``CONTINUES`` them)."
+					},
+					"moved_to": {
+						"items": { "$ref": "#/components/schemas/ActivityMoveDTO" },
+						"type": "array",
+						"title": "Moved To",
+						"description": "The activities that took its place: it was moved to them."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "ActivityDTO",
+				"description": "One activity: what it is, when, who leads it and what it is about."
+			},
+			"ActivityDecisionDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"subject": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Subject" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "What was decided on: the ``Zaak.Soort`` (``Motie``)."
+					},
+					"decision_kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decision Kind",
+						"description": "``BesluitSoort``: ``Stemmen - aangenomen``."
+					},
+					"decision_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decision Text"
+					},
+					"passed": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "title": "Passed" },
+					"tally": {
+						"additionalProperties": { "type": "integer" },
+						"type": "object",
+						"title": "Tally",
+						"description": "Seats per choice (``Voor``, ``Tegen``)."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "ActivityDecisionDTO",
+				"description": "A decision taken in the activity (on an item of its agenda)."
+			},
+			"ActivityMoveDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"number": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Number" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"status": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Status",
+						"description": "``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none (the Eerste Kamer gives none)."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "ActivityMoveDTO",
+				"description": "An activity that took the place of another, or whose place another took\n(``CONTINUES``, ``Activiteit.VervangenDoor``)."
+			},
+			"ActivityPaperDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "As the chamber writes it: ``Stenogram``."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number"
+					},
+					"dossier_suffix": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Suffix"
+					},
+					"sequence": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Sequence",
+						"description": "Its number in its dossier (nr. 32); null for none."
+					},
+					"dictum": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dictum",
+						"description": "Of a motion, what it asks or says; null for any other paper."
+					},
+					"has_text": {
+						"type": "boolean",
+						"title": "Has Text",
+						"description": "Whether its text is in the data.",
+						"default": false
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "ActivityPaperDTO",
+				"description": "A paper made in the activity: its record (a stenogram, a verslag), its convocatie,\nor a motion submitted in it."
+			},
+			"ActivityRecordsResponse": {
+				"properties": {
+					"activity_id": { "type": "string", "title": "Activity Id" },
+					"documents": {
+						"items": { "$ref": "#/components/schemas/ActivityPaperDTO" },
+						"type": "array",
+						"title": "Documents",
+						"description": "Its papers but the motions: the stenogram and the verslag of a debate (``Document.Activiteit``), its convocatie; oldest first."
+					},
+					"motions": {
+						"items": { "$ref": "#/components/schemas/ActivityPaperDTO" },
+						"type": "array",
+						"title": "Motions",
+						"description": "The motions submitted in it, by their number in the dossier."
+					},
+					"commitments": {
+						"items": { "$ref": "#/components/schemas/ActivityCommitmentDTO" },
+						"type": "array",
+						"title": "Commitments",
+						"description": "The commitments made in it, by number."
+					},
+					"decisions": {
+						"items": { "$ref": "#/components/schemas/ActivityDecisionDTO" },
+						"type": "array",
+						"title": "Decisions",
+						"description": "The decisions taken in it (``Agendapunt.Activiteit``), in the order of its agenda."
+					},
+					"cases": {
+						"items": { "$ref": "#/components/schemas/ActivityCaseDTO" },
+						"type": "array",
+						"title": "Cases",
+						"description": "The cases on its agenda (``ABOUT``), by number: of a debate the bill and the motions submitted in it."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["activity_id"],
+				"title": "ActivityRecordsResponse",
+				"description": "What was made in an activity (``MADE_IN``) and what was on its agenda."
 			},
 			"ActorDossierDTO": {
 				"properties": {
@@ -5454,12 +6041,24 @@
 					"total": {
 						"type": "integer",
 						"title": "Total",
-						"description": "Absolute number of amending instruments (independent of ``limit``/``offset``)."
+						"description": "Absolute number of amending publications (independent of ``limit``/``offset``)."
 					},
 					"items": {
 						"items": { "$ref": "#/components/schemas/AmendingInstrumentDTO" },
 						"type": "array",
 						"title": "Items"
+					},
+					"proposals_total": {
+						"type": "integer",
+						"title": "Proposals Total",
+						"description": "Absolute number of pending proposals (``proposals``).",
+						"default": 0
+					},
+					"proposals": {
+						"items": { "$ref": "#/components/schemas/AmendingProposalDTO" },
+						"type": "array",
+						"title": "Proposals",
+						"description": "The pending proposals to change the regulation, newest first, at most 100: papers of an open dossier (a bill enacted or rejected is no proposal any more), no amendment that was rejected, withdrawn or replaced by a newer version. Never the papers of the bill that made the regulation."
 					}
 				},
 				"additionalProperties": false,
@@ -5502,6 +6101,12 @@
 						"type": "array",
 						"title": "Dossiers"
 					},
+					"establishes": {
+						"type": "integer",
+						"title": "Establishes",
+						"description": "Number of ESTABLISHES edges into the regulation: the articles it set as the publication that enacted it.",
+						"default": 0
+					},
 					"amends": {
 						"type": "integer",
 						"title": "Amends",
@@ -5537,6 +6142,72 @@
 				"required": ["id", "key", "identifier"],
 				"title": "AmendingInstrumentDTO",
 				"description": "An amending publication (Stb, Trb, ...) and what it did to a regulation."
+			},
+			"AmendingProposalDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "As the chamber writes it: ``Amendement``, ``Voorstel van wet``."
+					},
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "Its nr. in the dossier: ``26``."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"dossiers": {
+						"items": { "$ref": "#/components/schemas/DossierRefDTO" },
+						"type": "array",
+						"title": "Dossiers"
+					},
+					"outcome": {
+						"anyOf": [{ "type": "string", "const": "aangenomen" }, { "type": "null" }],
+						"title": "Outcome",
+						"description": "Of an amendment: ``aangenomen`` once adopted; else null."
+					},
+					"amends": {
+						"type": "integer",
+						"title": "Amends",
+						"description": "Number of AMENDS edges into the regulation.",
+						"default": 0
+					},
+					"introduces": {
+						"type": "integer",
+						"title": "Introduces",
+						"description": "Number of INTRODUCES edges into the regulation.",
+						"default": 0
+					},
+					"repeals": {
+						"type": "integer",
+						"title": "Repeals",
+						"description": "Number of REPEALS edges into the regulation.",
+						"default": 0
+					},
+					"articles_affected": {
+						"type": "integer",
+						"title": "Articles Affected",
+						"description": "Distinct articles of the regulation touched.",
+						"default": 0
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "AmendingProposalDTO",
+				"description": "A paper of the Tweede Kamer that proposes to change a regulation and is pending: its\ndossier is open, and it is no amendment that was rejected, withdrawn or replaced."
 			},
 			"AmendmentChainsDTO": {
 				"properties": {
@@ -5868,13 +6539,13 @@
 						"items": { "$ref": "#/components/schemas/TermSpanDTO" },
 						"type": "array",
 						"title": "Term Spans",
-						"description": "Every place the text uses a term its regulation defines (where that definition holds: its regulation, or its chapter or paragraph), as `definitions`; not inside a citation, which names the definition itself (`definition_ref`) when it is the regulation cited."
+						"description": "Every place the text uses a term its regulation defines (where that definition holds: its regulation, or its chapter or paragraph), or a law or AMvB it is issued under defines for the regulations based on it (its own first), as `definitions`; not inside a citation, which names the definition itself (`definition_ref`) when it is the regulation cited."
 					},
 					"definitions": {
 						"items": { "$ref": "#/components/schemas/DefinitionDTO" },
 						"type": "array",
 						"title": "Definitions",
-						"description": "The definitions `term_spans` and `citations` name, as the regulation gives them."
+						"description": "The definitions `term_spans` and `citations` name, as the regulation gives them (`given_by` for one of another)."
 					},
 					"references": {
 						"items": { "$ref": "#/components/schemas/ArticleReferenceDTO" },
@@ -5947,6 +6618,26 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Section Anchor",
 						"description": "`id` of the section in `sections` of the document; set when scope is 'article'."
+					},
+					"heading": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Heading",
+						"description": "The heading of that section: ``Artikel 21 (zorgplicht)``; null when scope is 'dossier'."
+					},
+					"char_start": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Char Start",
+						"description": "Where the section starts in the `text` of the document."
+					},
+					"char_end": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Char End",
+						"description": "Where it ends (exclusive): `text[char_start:char_end]`."
+					},
+					"excerpt": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Excerpt",
+						"description": "The opening of the section after its heading, about 300 characters cut at a word (`\u2026` when it goes on); null without a section or without the text."
 					}
 				},
 				"additionalProperties": false,
@@ -6403,7 +7094,7 @@
 					"change": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Change",
-						"description": "Normalised effect: 'introduces', 'amends', 'repeals', 'republishes' (the text placed again, unchanged: a republication, as of the Grondwet) or null."
+						"description": "Normalised effect: 'establishes' (the regulation as it was enacted), 'introduces', 'amends', 'repeals', 'republishes' (the text placed again, unchanged: a republication, as of the Grondwet) or null."
 					},
 					"source_publication": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -6485,7 +7176,12 @@
 					"text": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Text",
-						"description": "The reference in the preamble: `16, eerste en zevende lid`."
+						"description": "The reference in the preamble: `16, eerste en zevende lid`; a range names each of its articles: `26 tot en met 30`."
+					},
+					"basis_kind": {
+						"anyOf": [{ "type": "string", "enum": ["delegates", "mentioned"] }, { "type": "null" }],
+						"title": "Basis Kind",
+						"description": "`delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, \"bij besluit van\", \"kan regels stellen\"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text)."
 					}
 				},
 				"additionalProperties": false,
@@ -6493,6 +7189,26 @@
 				"required": ["id", "key", "article_number", "display_name", "text"],
 				"title": "BasisArticleDTO",
 				"description": "An article of the law a regulation is issued under, with the leden and onderdelen\nits preamble names (none: the whole article)."
+			},
+			"BasisLawDTO": {
+				"properties": {
+					"instrument": { "$ref": "#/components/schemas/InstrumentSummaryDTO" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "Its BWB type, lower case."
+					},
+					"articles": {
+						"items": { "$ref": "#/components/schemas/BasisArticleDTO" },
+						"type": "array",
+						"title": "Articles"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["instrument", "kind", "articles"],
+				"title": "BasisLawDTO",
+				"description": "Another law a regulation names in its preamble, with the articles it names."
 			},
 			"BusyCallDTO": {
 				"properties": {
@@ -7053,6 +7769,66 @@
 			},
 			"CitedByJudgment": {
 				"properties": {
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verworpen",
+									"vernietigd",
+									"gedeeltelijk vernietigd",
+									"vernietigd en verwezen",
+									"bekrachtigd",
+									"bevestigd",
+									"gegrond",
+									"ongegrond",
+									"niet-ontvankelijk",
+									"afgewezen",
+									"toegewezen",
+									"schending",
+									"geen schending"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Outcome",
+						"description": "How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision)."
+					},
+					"outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Outcome Text",
+						"description": "The clause that says it, as the decision writes it: \"verwerpt het beroep\", \"vernietigt de aangevallen uitspraak\"; of the ECHR the finding."
+					},
+					"conclusion_outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verwerping",
+									"vernietiging",
+									"vernietiging en verwijzing",
+									"niet-ontvankelijkverklaring",
+									"gegrondverklaring",
+									"ongegrondverklaring",
+									"beantwoording"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Conclusion Outcome",
+						"description": "Of a conclusion of the A-G or P-G, what it proposes (its strekking): `verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording` (of preliminary questions); null for a judgment and when the conclusion does not say it."
+					},
+					"conclusion_outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Conclusion Outcome Text",
+						"description": "The sentence that says it: \"De conclusie strekt tot verwerping van het cassatieberoep.\""
+					},
+					"echr_findings": {
+						"items": { "$ref": "#/components/schemas/EchrFindingDTO" },
+						"type": "array",
+						"title": "Echr Findings",
+						"description": "Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment."
+					},
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
 					"ecli": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ecli" },
@@ -7096,7 +7872,7 @@
 				"type": "object",
 				"required": ["id", "key", "ecli", "court", "tier", "date", "display_name", "path"],
 				"title": "CitedByJudgment",
-				"description": "The judgment of a passage that cites an article."
+				"description": "The judgment of a passage that cites an article, with how it ended."
 			},
 			"CoalitionFactionDTO": {
 				"properties": {
@@ -7212,13 +7988,34 @@
 			"CommitmentActivityDTO": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
-					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
-					"number": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Number" }
+					"date": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date",
+						"description": "The day it was held."
+					},
+					"number": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Number" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "As the source writes it: ``Wetgevingsoverleg``."
+					},
+					"agenda_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Agenda Title",
+						"description": "Its subject (``Activiteit.Onderwerp``)."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["key"],
-				"title": "CommitmentActivityDTO"
+				"required": ["key", "path"],
+				"title": "CommitmentActivityDTO",
+				"description": "The activity a commitment was made in: a debate, as the Kamer names it."
 			},
 			"CommitmentDTO": {
 				"properties": {
@@ -7237,7 +8034,12 @@
 					"date": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Date",
-						"description": "The day it was made."
+						"description": "The day the Kamer registered it (``Aanmaakdatum``), which may be weeks after the debate (``made_on``)."
+					},
+					"made_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Made On",
+						"description": "The day it was made: the day of the activity it was made in (``activity.date``); null without one."
 					},
 					"expected_resolution": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -7268,7 +8070,14 @@
 						"title": "Dossiers"
 					},
 					"activity": {
-						"anyOf": [{ "$ref": "#/components/schemas/CommitmentActivityDTO" }, { "type": "null" }]
+						"anyOf": [{ "$ref": "#/components/schemas/CommitmentActivityDTO" }, { "type": "null" }],
+						"description": "The activity it was made in (``MADE_IN``)."
+					},
+					"fulfilled_by": {
+						"items": { "$ref": "#/components/schemas/CommitmentLetterDTO" },
+						"type": "array",
+						"title": "Fulfilled By",
+						"description": "The letters that fulfil it (``ANSWERS``, from ``Toezegging.KamerbriefNakoming``), oldest first."
 					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -7327,6 +8136,39 @@
 				"type": "object",
 				"title": "CommitmentFacetsDTO",
 				"description": "Per dimension the number of commitments per value under the current filters, each\ndimension counted without its own filter, the largest first: only the values that\nhave commitments (a ministry without any is not listed)."
+			},
+			"CommitmentLetterDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"kind": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Kind" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number"
+					},
+					"dossier_suffix": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Suffix"
+					},
+					"sequence": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Sequence",
+						"description": "Its number in its dossier (nr. 33)."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "CommitmentLetterDTO",
+				"description": "A letter that fulfils a commitment (``Toezegging.KamerbriefNakoming``)."
 			},
 			"CommitmentListResponse": {
 				"properties": {
@@ -7902,6 +8744,10 @@
 						"anyOf": [{ "$ref": "#/components/schemas/DecisionMotionDTO" }, { "type": "null" }],
 						"description": "The motion or amendment the decision was taken on: the oldest paper of the case the vote singled out (``primary_case_kind`` ``Motie`` or ``Amendement``), as its dictum and ``/api/decisions/{key}/document``; else the Kamerstuk it is about (a vote of the Eerste Kamer on a motion). Null for anything else, and for a case without a paper."
 					},
+					"primary_document": {
+						"anyOf": [{ "$ref": "#/components/schemas/DecisionPaperDTO" }, { "type": "null" }],
+						"description": "The Kamerstuk the vote was taken on, as ``/api/decisions/{key}/document`` finds it: the oldest paper of the case it singled out (a motion, an amendment, a bill), else of its other cases, else the Kamerstuk it is about (a vote of the Eerste Kamer); with its kind, title, number and dossier. Null without one."
+					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Path",
@@ -8041,6 +8887,40 @@
 				"title": "DecisionOutcomeCount",
 				"description": "How many of the decisions carried (``true``), did not, or have no outcome (null)."
 			},
+			"DecisionPaperDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "As the chamber writes it: ``Motie``."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "Its number in its dossier: the nr. of a Tweede Kamer paper (``31``), the letter of an Eerste Kamer one (``C``)."
+					},
+					"dossier_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier Number",
+						"description": "The dossier it is numbered in (``36764``, ``37020-XV``)."
+					},
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "path"],
+				"title": "DecisionPaperDTO",
+				"description": "The Kamerstuk a decision was taken on: the motion, the amendment or the bill."
+			},
 			"DecisionSummaryDTO": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -8176,19 +9056,52 @@
 						"additionalProperties": { "type": "string" },
 						"type": "object",
 						"title": "Scope",
-						"description": "Where it holds: `kind` (`wet`, `besluit`, `hoofdstuk`, \u2026) and `path` (that part, empty for the whole regulation)."
+						"description": "Where it holds: `kind` (`wet`, `besluit`, `hoofdstuk`, \u2026), `path` (that part, empty for the whole regulation) and `reach`: `own_and_based` where it holds in the regulations issued under it too (\"In deze wet en de daarop berustende bepalingen\"), else `own`."
 					},
 					"refers_to": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Refers To",
 						"description": "The BWB id of the regulation the definition is (`wet`: de Zorgverzekeringswet)."
+					},
+					"given_by": {
+						"anyOf": [{ "$ref": "#/components/schemas/DefinitionGiverDTO" }, { "type": "null" }],
+						"description": "The regulation that gives it, where that is not the article's own: a law or AMvB the regulation is issued under (`BASED_ON`, two levels), whose definition reaches it (`scope.reach`). Null for its own."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["ref", "term", "text", "article_key"],
 				"title": "DefinitionDTO",
-				"description": "A definition a regulation gives itself (its begripsbepalingen), as its text has it."
+				"description": "A definition a regulation gives (its begripsbepalingen), as its text has it: its own,\nor one of a regulation it is issued under (``given_by``)."
+			},
+			"DefinitionGiverDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"citation_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Citation Title"
+					},
+					"short_title": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Short Title"
+					},
+					"abbreviation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Abbreviation"
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "path"],
+				"title": "DefinitionGiverDTO",
+				"description": "The regulation that gives a definition another regulation takes (it is issued under\nit)."
 			},
 			"DelegatedArticleDTO": {
 				"properties": {
@@ -8305,6 +9218,11 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Text",
 						"description": "The reference in its preamble: `16, eerste en zevende lid`."
+					},
+					"basis_kind": {
+						"anyOf": [{ "type": "string", "enum": ["delegates", "mentioned"] }, { "type": "null" }],
+						"title": "Basis Kind",
+						"description": "`delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, \"bij besluit van\", \"kan regels stellen\"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text)."
 					},
 					"articles": {
 						"items": { "$ref": "#/components/schemas/DelegatedArticleDTO" },
@@ -8445,8 +9363,84 @@
 				"title": "DocumentFacetsDTO",
 				"description": "The papers under the filters, per kind (without the kind filter) and per chamber\n(without the chamber filter), the largest first."
 			},
+			"DocumentFootnoteDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "`fn-<n>`, its place among the footnotes (`fn-1` the first): what a citation in it names (`meta.place.footnote_id` of a `REFERS_TO` edge). Unique in the paper; `label` is not, a paper of before 2010 numbers its footnotes per page."
+					},
+					"label": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Label",
+						"description": "Its number as printed: `3`."
+					},
+					"text": { "type": "string", "title": "Text" },
+					"at": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "At",
+						"description": "Where its marker stands in `text`: `text[:at]` are the words before it. Null for a footnote whose marker is not in the text (one of the header) and for a paper read before markers were kept."
+					},
+					"section_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Section Id",
+						"description": "The innermost section that holds `at`."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "text"],
+				"title": "DocumentFootnoteDTO",
+				"description": "A footnote of a paper, which ``text`` does not hold."
+			},
 			"DocumentListItemDTO": {
 				"properties": {
+					"dictum": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dictum",
+						"description": "Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept \u2026 op``, ``spreekt uit``, ``draagt \u2026 op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text."
+					},
+					"explanation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Explanation",
+						"description": "Of an amendment, what it is for: the first paragraph of its Toelichting, whole sentences up to 400 characters; null for any other paper and for an amendment without text."
+					},
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"aangenomen",
+									"verworpen",
+									"ingetrokken",
+									"aangehouden",
+									"vervallen",
+									"vervangen"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Outcome",
+						"description": "How the Kamer decided on it: ``aangenomen``, ``verworpen`` (by its vote; the latest vote when there were several), ``ingetrokken``, ``aangehouden``, ``vervallen`` (a decision without a vote), else the status the page of a motion of the Eerste Kamer states; ``vervangen`` for a paper without one that a newer paper replaces (``replaced_by``); null while nothing was decided."
+					},
+					"decided_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decided On",
+						"description": "The date of the decision that gave ``outcome``."
+					},
+					"tally": {
+						"anyOf": [
+							{ "additionalProperties": { "type": "integer" }, "type": "object" },
+							{ "type": "null" }
+						],
+						"title": "Tally",
+						"description": "The seats per choice of that vote (``{\"Voor\": 150}``, members on a roll call), as ``/api/decisions/{key}`` gives them; null without votes (a hamerstuk, a motion held)."
+					},
+					"decision": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decision",
+						"description": "The key of that decision (``/api/decisions/{key}``); null without one."
+					},
 					"id": { "type": "string", "title": "Id" },
 					"key": { "type": "string", "title": "Key" },
 					"chamber": {
@@ -8495,11 +9489,6 @@
 					"sender": {
 						"anyOf": [{ "$ref": "#/components/schemas/SenderDTO" }, { "type": "null" }],
 						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
-					},
-					"dictum": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Dictum",
-						"description": "Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept \u2026 op``, ``spreekt uit``, ``draagt \u2026 op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text."
 					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -8569,6 +9558,52 @@
 						"description": "An explanatory memorandum (memorie of nota van toelichting): a document of this kind explains the articles it introduces or changes.",
 						"default": false
 					},
+					"dictum": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dictum",
+						"description": "Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept \u2026 op``, ``spreekt uit``, ``draagt \u2026 op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text."
+					},
+					"explanation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Explanation",
+						"description": "Of an amendment, what it is for: the first paragraph of its Toelichting, whole sentences up to 400 characters; null for any other paper and for an amendment without text."
+					},
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"aangenomen",
+									"verworpen",
+									"ingetrokken",
+									"aangehouden",
+									"vervallen",
+									"vervangen"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Outcome",
+						"description": "How the Kamer decided on it: ``aangenomen``, ``verworpen`` (by its vote; the latest vote when there were several), ``ingetrokken``, ``aangehouden``, ``vervallen`` (a decision without a vote), else the status the page of a motion of the Eerste Kamer states; ``vervangen`` for a paper without one that a newer paper replaces (``replaced_by``); null while nothing was decided."
+					},
+					"decided_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decided On",
+						"description": "The date of the decision that gave ``outcome``."
+					},
+					"tally": {
+						"anyOf": [
+							{ "additionalProperties": { "type": "integer" }, "type": "object" },
+							{ "type": "null" }
+						],
+						"title": "Tally",
+						"description": "The seats per choice of that vote (``{\"Voor\": 150}``, members on a roll call), as ``/api/decisions/{key}`` gives them; null without votes (a hamerstuk, a motion held)."
+					},
+					"decision": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decision",
+						"description": "The key of that decision (``/api/decisions/{key}``); null without one."
+					},
 					"key": { "type": "string", "title": "Key" },
 					"document_id": { "type": "string", "title": "Document Id" },
 					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
@@ -8598,11 +9633,6 @@
 						"description": "The original file of a Tweede Kamer document (Word or PDF), from the Gegevensmagazijn."
 					},
 					"text": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Text" },
-					"dictum": {
-						"anyOf": [{ "type": "string" }, { "type": "null" }],
-						"title": "Dictum",
-						"description": "Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept \u2026 op``, ``spreekt uit``, ``draagt \u2026 op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text."
-					},
 					"submitters": {
 						"items": { "$ref": "#/components/schemas/SubmitterDTO" },
 						"type": "array",
@@ -8623,6 +9653,12 @@
 						"items": { "$ref": "#/components/schemas/SectionDTO" },
 						"type": "array",
 						"title": "Sections"
+					},
+					"footnotes": {
+						"items": { "$ref": "#/components/schemas/DocumentFootnoteDTO" },
+						"type": "array",
+						"title": "Footnotes",
+						"description": "The footnotes, in their order, each with where its marker stands in `text`. A citation in one (a `REFERS_TO` edge whose `meta.place.part` is `footnote`) names it by `footnote_id`, its `start` and `end` offsets into its `text`."
 					},
 					"replaces": {
 						"items": { "$ref": "#/components/schemas/PaperRefDTO" },
@@ -8977,6 +10013,52 @@
 						"anyOf": [{ "$ref": "#/components/schemas/SenderDTO" }, { "type": "null" }],
 						"description": "Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature."
 					},
+					"dictum": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dictum",
+						"description": "Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept \u2026 op``, ``spreekt uit``, ``draagt \u2026 op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text."
+					},
+					"explanation": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Explanation",
+						"description": "Of an amendment, what it is for: the first paragraph of its Toelichting, whole sentences up to 400 characters; null for any other paper and for an amendment without text."
+					},
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"aangenomen",
+									"verworpen",
+									"ingetrokken",
+									"aangehouden",
+									"vervallen",
+									"vervangen"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Outcome",
+						"description": "How the Kamer decided on it: ``aangenomen``, ``verworpen`` (by its vote; the latest vote when there were several), ``ingetrokken``, ``aangehouden``, ``vervallen`` (a decision without a vote), else the status the page of a motion of the Eerste Kamer states; ``vervangen`` for a paper without one that a newer paper replaces (``replaced_by``); null while nothing was decided."
+					},
+					"decided_on": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decided On",
+						"description": "The date of the decision that gave ``outcome``."
+					},
+					"tally": {
+						"anyOf": [
+							{ "additionalProperties": { "type": "integer" }, "type": "object" },
+							{ "type": "null" }
+						],
+						"title": "Tally",
+						"description": "The seats per choice of that vote (``{\"Voor\": 150}``, members on a roll call), as ``/api/decisions/{key}`` gives them; null without votes (a hamerstuk, a motion held)."
+					},
+					"decision": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Decision",
+						"description": "The key of that decision (``/api/decisions/{key}``); null without one."
+					},
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Display Name"
@@ -9004,7 +10086,7 @@
 				"type": "object",
 				"required": ["id", "key", "path"],
 				"title": "DossierDocumentDTO",
-				"description": "One document linked to a dossier."
+				"description": "One document linked to a dossier; of a motion or an amendment how it ended and what\nit says in a line."
 			},
 			"DossierDocumentsResponse": {
 				"properties": {
@@ -9079,7 +10161,7 @@
 					},
 					"relation": {
 						"type": "string",
-						"enum": ["legislated_in", "amends", "introduces", "repeals"],
+						"enum": ["legislated_in", "establishes", "amends", "introduces", "repeals"],
 						"title": "Relation"
 					},
 					"status": { "type": "string", "enum": ["canoniek", "voorgesteld"], "title": "Status" },
@@ -9093,13 +10175,13 @@
 				"type": "object",
 				"required": ["id", "key", "relation", "status"],
 				"title": "DossierInstrumentDTO",
-				"description": "An instrument a dossier is tied to, once, and every way it is.\n\n``links`` holds each ``relation`` (``legislated_in``: the instrument came out of this\ndossier; ``amends``, ``introduces``, ``repeals``: the dossier changes it, resolved from\nthe article or instrument that is changed to the parent instrument) with its\n``status`` (``canoniek`` for what an amending publication enacted, ``voorgesteld`` for\nwhat a bill of the dossier proposes). ``relation`` and ``status`` are the first link:\nthe enacted one before the proposed."
+				"description": "An instrument a dossier is tied to, once, and every way it is.\n\n``links`` holds each ``relation`` (``legislated_in``: the instrument came out of this\ndossier; ``establishes``: a publication legislated in it enacted the regulation;\n``amends``, ``introduces``, ``repeals``: the dossier changes it, resolved from\nthe article or instrument that is changed to the parent instrument) with its\n``status`` (``canoniek`` for what an amending publication enacted, ``voorgesteld`` for\nwhat a bill of the dossier proposes). ``relation`` and ``status`` are the first link:\nthe enacted one before the proposed."
 			},
 			"DossierInstrumentLinkDTO": {
 				"properties": {
 					"relation": {
 						"type": "string",
-						"enum": ["legislated_in", "amends", "introduces", "repeals"],
+						"enum": ["legislated_in", "establishes", "amends", "introduces", "repeals"],
 						"title": "Relation"
 					},
 					"status": { "type": "string", "enum": ["canoniek", "voorgesteld"], "title": "Status" }
@@ -9519,6 +10601,92 @@
 				"title": "DossierTimelineResponse",
 				"description": "Everything that happened in a dossier, in date order."
 			},
+			"EchrFindingDTO": {
+				"properties": {
+					"article": {
+						"type": "string",
+						"title": "Article",
+						"description": "The article of the Convention: `8`."
+					},
+					"protocol": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Protocol",
+						"description": "Of an article of a protocol, its number (`1`); else null."
+					},
+					"combined_with": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Combined With",
+						"description": "The article it is taken together with (`8` of `13+8`)."
+					},
+					"finding": {
+						"type": "string",
+						"enum": ["schending", "geen schending"],
+						"title": "Finding"
+					},
+					"aspect": {
+						"anyOf": [
+							{ "type": "string", "enum": ["materieel", "procedureel"] },
+							{ "type": "null" }
+						],
+						"title": "Aspect",
+						"description": "The aspect, when HUDOC names one."
+					},
+					"text": {
+						"type": "string",
+						"title": "Text",
+						"description": "As HUDOC writes it: \"No violation of Article 8 - \u2026\"."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["article", "finding", "text"],
+				"title": "EchrFindingDTO",
+				"description": "What the ECHR found on one article (``core/echr_findings.py``)."
+			},
+			"EdgePassage": {
+				"properties": {
+					"paragraph_id": {
+						"type": "string",
+						"title": "Paragraph Id",
+						"description": "The paragraph, as `paragraph_id` of `/api/judgments/{ecli}`; of a footnote the paragraph that refers to it."
+					},
+					"paragraph_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Paragraph Number",
+						"description": "Its printed number (`5.3`), null when it has none."
+					},
+					"footnote": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Footnote",
+						"description": "The label of the footnote it stands in, null in the paragraph itself."
+					},
+					"snippet": {
+						"type": "string",
+						"title": "Snippet",
+						"description": "The text around the citation."
+					},
+					"text": {
+						"type": "string",
+						"title": "Text",
+						"description": "The citation as written: `snippet[start:end]`."
+					},
+					"start": { "type": "integer", "title": "Start" },
+					"end": { "type": "integer", "title": "End" }
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": [
+					"paragraph_id",
+					"paragraph_number",
+					"footnote",
+					"snippet",
+					"text",
+					"start",
+					"end"
+				],
+				"title": "EdgePassage",
+				"description": "A place where a judgment cites, as the edge keeps it: to show without the judgment."
+			},
 			"EdgeStatsDTO": {
 				"properties": {
 					"total": { "type": "integer", "title": "Total" },
@@ -9912,11 +11080,22 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Dossier Number",
 						"description": "The dossier the document is PART_OF (the lowest, if several)."
+					},
+					"sequence": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Sequence",
+						"description": "Its number in its own dossier (nr. 3); null for none."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["id", "key"],
+				"required": ["id", "key", "path"],
 				"title": "ExplainingDocumentDTO",
 				"description": "The explanatory document of an explanation."
 			},
@@ -10137,6 +11316,93 @@
 				"title": "FactionSeatsDTO",
 				"description": "A party's seats, and where it sits in the hemicycle."
 			},
+			"FeedArticleDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "Its number: ``3:2``."
+					},
+					"law": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Law",
+						"description": "The citation title of its law."
+					},
+					"law_short": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Law Short",
+						"description": "The abbreviation its law is cited by: ``Awb``; null without."
+					},
+					"effect": {
+						"anyOf": [
+							{ "type": "string", "enum": ["amends", "introduces", "repeals"] },
+							{ "type": "null" }
+						],
+						"title": "Effect",
+						"description": "Of an amendment: what it proposes to do with the article."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "path"],
+				"title": "FeedArticleDTO",
+				"description": "An article an event is tied to."
+			},
+			"FeedBasisDTO": {
+				"properties": {
+					"instrument": { "$ref": "#/components/schemas/FeedInstrumentDTO" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "The kind of the regulation itself, in lower case as ``/delegated`` gives it: ``amvb``, ``ministeriele-regeling``."
+					},
+					"articles": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Articles",
+						"description": "The article numbers of the law it names, in the order of the law."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["instrument"],
+				"title": "FeedBasisDTO",
+				"description": "The law a regulation is issued under: what its preamble (\"Gelet op\") names."
+			},
+			"FeedChangedInstrumentDTO": {
+				"properties": {
+					"key": { "type": "string", "title": "Key" },
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"official_url": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Official Url"
+					},
+					"effect": {
+						"type": "string",
+						"enum": ["establishes", "amends", "introduces", "repeals"],
+						"title": "Effect",
+						"description": "``establishes``: the publication enacted the law (the law names it as the publication that enacted it); ``amends``, ``introduces`` or ``repeals``: every change it makes in the law is of that kind (``AMENDS``, ``INTRODUCES``, ``REPEALS`` of its articles or of the law), ``amends`` where they are of more kinds."
+					},
+					"article_count": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Article Count",
+						"description": "The articles it changes, adds or repeals; of a law it enacts, the articles of the law."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["key", "effect"],
+				"title": "FeedChangedInstrumentDTO",
+				"description": "A law a publication enacts or changes."
+			},
 			"FeedCommencementDTO": {
 				"properties": {
 					"instrument": {
@@ -10152,6 +11418,26 @@
 						"title": "Changed Articles",
 						"description": "The articles with a version that begins that day.",
 						"default": 0
+					},
+					"articles": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Articles",
+						"description": "Their numbers, in the order of the law; at most fifty."
+					},
+					"new": {
+						"type": "boolean",
+						"title": "New",
+						"description": "The law itself comes into force: the day is the one it came into force as enacted (its ``date_in_force``).",
+						"default": false
+					},
+					"publication": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedPublicationRefDTO" }, { "type": "null" }],
+						"description": "The publication most of those versions came from (their ``origin_publication``): of a new law the one that enacted it; null without."
+					},
+					"based_on": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedBasisDTO" }, { "type": "null" }],
+						"description": "The law the regulation is issued under (``BASED_ON``), the one its preamble names most articles of; null for a law issued under none."
 					}
 				},
 				"additionalProperties": false,
@@ -10474,6 +11760,44 @@
 					"judgment": {
 						"anyOf": [{ "$ref": "#/components/schemas/FeedJudgmentDTO" }, { "type": "null" }]
 					},
+					"matched": {
+						"items": { "$ref": "#/components/schemas/FeedMatchDTO" },
+						"type": "array",
+						"title": "Matched",
+						"description": "With ``q``: per word the event holds, where it holds it; empty without ``q``."
+					},
+					"via": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedViaDTO" }, { "type": "null" }],
+						"description": "With ``instrument``: how the event is tied to the law; null without."
+					},
+					"answers": {
+						"items": { "$ref": "#/components/schemas/FeedLinkDTO" },
+						"type": "array",
+						"title": "Answers",
+						"description": "Of a letter of the government: the motions and commitments it answers (``ANSWERS``); empty for the other kinds."
+					},
+					"answered_by": {
+						"items": { "$ref": "#/components/schemas/FeedLinkDTO" },
+						"type": "array",
+						"title": "Answered By",
+						"description": "Of a commitment: the letters that fulfil it (``ANSWERS``); empty for the other kinds."
+					},
+					"amends_articles": {
+						"items": { "$ref": "#/components/schemas/FeedArticleDTO" },
+						"type": "array",
+						"title": "Amends Articles",
+						"description": "Of an amendment: the articles it proposes to change, add or repeal (``AMENDS``, ``INTRODUCES``, ``REPEALS``, ``voorgesteld``), in the order of their law; at most twenty."
+					},
+					"replaces": {
+						"anyOf": [{ "$ref": "#/components/schemas/FeedLinkDTO" }, { "type": "null" }],
+						"description": "Of a changed motion or amendment: the paper it replaces (\"ter vervanging van nr. 19\", ``REVISES``); null for the others."
+					},
+					"cites": {
+						"items": { "$ref": "#/components/schemas/FeedArticleDTO" },
+						"type": "array",
+						"title": "Cites",
+						"description": "Of a judgment: the articles it cites (``REFERS_TO``), the most mentioned first; at most five."
+					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Path",
@@ -10489,6 +11813,66 @@
 			},
 			"FeedJudgmentDTO": {
 				"properties": {
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verworpen",
+									"vernietigd",
+									"gedeeltelijk vernietigd",
+									"vernietigd en verwezen",
+									"bekrachtigd",
+									"bevestigd",
+									"gegrond",
+									"ongegrond",
+									"niet-ontvankelijk",
+									"afgewezen",
+									"toegewezen",
+									"schending",
+									"geen schending"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Outcome",
+						"description": "How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision)."
+					},
+					"outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Outcome Text",
+						"description": "The clause that says it, as the decision writes it: \"verwerpt het beroep\", \"vernietigt de aangevallen uitspraak\"; of the ECHR the finding."
+					},
+					"conclusion_outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verwerping",
+									"vernietiging",
+									"vernietiging en verwijzing",
+									"niet-ontvankelijkverklaring",
+									"gegrondverklaring",
+									"ongegrondverklaring",
+									"beantwoording"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Conclusion Outcome",
+						"description": "Of a conclusion of the A-G or P-G, what it proposes (its strekking): `verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording` (of preliminary questions); null for a judgment and when the conclusion does not say it."
+					},
+					"conclusion_outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Conclusion Outcome Text",
+						"description": "The sentence that says it: \"De conclusie strekt tot verwerping van het cassatieberoep.\""
+					},
+					"echr_findings": {
+						"items": { "$ref": "#/components/schemas/EchrFindingDTO" },
+						"type": "array",
+						"title": "Echr Findings",
+						"description": "Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment."
+					},
 					"ecli": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ecli" },
 					"court": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -10539,7 +11923,69 @@
 				"type": "object",
 				"required": ["path"],
 				"title": "FeedJudgmentDTO",
-				"description": "An ``uitspraak``: a judgment or conclusion published on ``date`` (its ``Datum\npublicatie``), of the highest courts unless a ``tier`` is asked for."
+				"description": "An ``uitspraak``: a judgment or conclusion published on ``date`` (its ``Datum\npublicatie``), of the highest courts unless a ``tier`` is asked for; how it ended."
+			},
+			"FeedLinkDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"title": "Id",
+						"description": "``collection/key`` of its node."
+					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "Of a paper its ``Document.Soort`` (``Motie (gewijzigd/nader)``); ``toezegging`` for a commitment."
+					},
+					"title": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Title" },
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Number",
+						"description": "Of a paper its nr. in its dossier (``31``), of a commitment its number (``TZ202609-124``)."
+					},
+					"dossier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier",
+						"description": "Of a paper the label of its own dossier (``36764``)."
+					},
+					"surname": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Surname",
+						"description": "Of a paper its first signatory: ``Kathmann``."
+					},
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "path"],
+				"title": "FeedLinkDTO",
+				"description": "A paper or a commitment an event is tied to."
+			},
+			"FeedMatchDTO": {
+				"properties": {
+					"term": {
+						"type": "string",
+						"title": "Term",
+						"description": "The word of ``q``, as it was asked."
+					},
+					"field": {
+						"type": "string",
+						"enum": ["title", "dossier_title", "laws"],
+						"title": "Field",
+						"description": "``title``: the title of the event (of a bill its own, which may not be the ``title`` the item shows: that of its dossier); ``dossier_title``: the whole title of its first dossier; ``laws``: of a publication, the names of the laws it enacts or changes (the official title of a law it enacts too). The first of these that holds it."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["term", "field"],
+				"title": "FeedMatchDTO",
+				"description": "Where an event holds a word of ``q``."
 			},
 			"FeedNodeDTO": {
 				"properties": {
@@ -10665,16 +12111,42 @@
 					"year": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Year" },
 					"number": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Number" },
 					"instruments": {
-						"items": { "$ref": "#/components/schemas/FeedInstrumentDTO" },
+						"items": { "$ref": "#/components/schemas/FeedChangedInstrumentDTO" },
 						"type": "array",
 						"title": "Instruments",
-						"description": "The laws it amends, introduces or repeals (or articles of), by title; at most ten."
+						"description": "The laws it enacts, then those it amends, introduces or repeals (or articles of), by title; at most ten."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"title": "FeedPublicationDTO",
 				"description": "A ``publicatie`` in the Staatsblad, the Staatscourant or the Tractatenblad."
+			},
+			"FeedPublicationRefDTO": {
+				"properties": {
+					"key": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Key",
+						"description": "Its node key (``stb_2026_187``); null when it is not in the data."
+					},
+					"series": {
+						"anyOf": [{ "type": "string", "enum": ["stb", "stcrt", "trb"] }, { "type": "null" }],
+						"title": "Series"
+					},
+					"year": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "Year" },
+					"number": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Number" },
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["path"],
+				"title": "FeedPublicationRefDTO",
+				"description": "The publication a new version of a law came from."
 			},
 			"FeedResponse": {
 				"properties": {
@@ -10755,6 +12227,41 @@
 				"required": ["since", "until", "margin"],
 				"title": "FeedSummaryResponse",
 				"description": "A few days of the feed in one answer."
+			},
+			"FeedViaDTO": {
+				"properties": {
+					"relation": {
+						"type": "string",
+						"enum": [
+							"establishes",
+							"amends",
+							"introduces",
+							"repeals",
+							"proposes",
+							"version_of",
+							"based_on",
+							"refers_to",
+							"legislated_in"
+						],
+						"title": "Relation",
+						"description": "Of a publication: it ``establishes`` the law, or ``amends``, ``introduces`` or ``repeals`` articles of it; of a paper: it ``proposes`` to change it; of a new version: of the law itself (``version_of``) or of a regulation ``based_on`` it; of a judgment: it ``refers_to`` it; of an event of a dossier (``dossier``): the law or a publication of it was ``legislated_in`` that dossier, or a paper of it ``proposes`` to change the law."
+					},
+					"article": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article",
+						"description": "The number of the article of the law it touches, the first in the order of the law; null where it is tied to the law as a whole or by a dossier."
+					},
+					"dossier": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Dossier",
+						"description": "The label of the dossier it is tied by; null for the others."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["relation"],
+				"title": "FeedViaDTO",
+				"description": "How an event is tied to the law ``instrument`` (and ``article``) follows."
 			},
 			"FeedVoteCountDTO": {
 				"properties": {
@@ -11046,6 +12553,59 @@
 				"title": "HealthDTO",
 				"description": "Whether the API reaches its database, and how warm and busy it is."
 			},
+			"ImplementedBasisArticleDTO": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"article_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article Number"
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Text",
+						"description": "The reference in the preamble: `16, eerste en zevende lid`; a range names each of its articles: `26 tot en met 30`."
+					},
+					"basis_kind": {
+						"anyOf": [{ "type": "string", "enum": ["delegates", "mentioned"] }, { "type": "null" }],
+						"title": "Basis Kind",
+						"description": "`delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, \"bij besluit van\", \"kan regels stellen\"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text)."
+					},
+					"referring": {
+						"items": { "$ref": "#/components/schemas/DelegatedArticleDTO" },
+						"type": "array",
+						"title": "Referring",
+						"description": "The articles in force of the regulation that refer to it, in the order of the regulation, each with the parts of it they name."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "article_number", "display_name", "text"],
+				"title": "ImplementedBasisArticleDTO",
+				"description": "An article a regulation is issued under, with the articles of the regulation that\nrefer to it: those that work it out."
+			},
 			"ImplementingMeasureDTO": {
 				"properties": {
 					"publication": {
@@ -11275,6 +12835,53 @@
 				"title": "InstrumentArticlesResponse",
 				"description": "Response for GET /api/instruments/{bwb_id}/articles."
 			},
+			"InstrumentBasisItem": {
+				"properties": {
+					"instrument": { "$ref": "#/components/schemas/InstrumentSummaryDTO" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "Its BWB type, lower case."
+					},
+					"basis_kind": {
+						"anyOf": [{ "type": "string", "enum": ["delegates", "mentioned"] }, { "type": "null" }],
+						"title": "Basis Kind",
+						"description": "`delegates` when one of `articles` does; `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, \"bij besluit van\", \"kan regels stellen\"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text)."
+					},
+					"articles": {
+						"items": { "$ref": "#/components/schemas/ImplementedBasisArticleDTO" },
+						"type": "array",
+						"title": "Articles",
+						"description": "The articles in force of the law its preamble names, in the order of the law, each with the articles of the regulation that refer to it (`referring`)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["instrument", "kind", "articles"],
+				"title": "InstrumentBasisItem",
+				"description": "A law a regulation is issued under, with the articles its preamble names."
+			},
+			"InstrumentBasisResponse": {
+				"properties": {
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
+					"total": { "type": "integer", "title": "Total" },
+					"items": {
+						"items": { "$ref": "#/components/schemas/InstrumentBasisItem" },
+						"type": "array",
+						"title": "Items",
+						"description": "Every law its preamble names an article in force of, by title."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["bwb_id", "total"],
+				"title": "InstrumentBasisResponse",
+				"description": "Response for GET /api/instruments/{bwb_id}/basis."
+			},
 			"InstrumentDefinitionsResponse": {
 				"properties": {
 					"key": { "type": "string", "title": "Key" },
@@ -11303,11 +12910,28 @@
 						"title": "Date In Force",
 						"description": "When the regulation itself entered into force."
 					},
+					"basis_kind": {
+						"anyOf": [{ "type": "string", "enum": ["delegates", "mentioned"] }, { "type": "null" }],
+						"title": "Basis Kind",
+						"description": "`delegates` when one of `articles` does: the law gives the power it is made under; `mentioned` when it only names them (\"Genoemd in de aanhef van\"); null when not known."
+					},
 					"articles": {
-						"items": { "$ref": "#/components/schemas/BasisArticleDTO" },
+						"items": { "$ref": "#/components/schemas/ImplementedBasisArticleDTO" },
 						"type": "array",
 						"title": "Articles",
-						"description": "The articles of the law it is issued under, in the order of the law."
+						"description": "The articles of the law it is issued under, in the order of the law, each with its articles that work it out (`referring`)."
+					},
+					"also_based_on": {
+						"items": { "$ref": "#/components/schemas/BasisLawDTO" },
+						"type": "array",
+						"title": "Also Based On",
+						"description": "The other laws its preamble names (its co-bases), by title, each with the articles in force it names."
+					},
+					"sub_delegated": {
+						"items": { "$ref": "#/components/schemas/SubDelegatedDTO" },
+						"type": "array",
+						"title": "Sub Delegated",
+						"description": "The regulations in force issued under its articles in turn, one level down (not one issued under this law itself: an item of its own); AMvBs first, then by title."
 					}
 				},
 				"additionalProperties": false,
@@ -11716,6 +13340,66 @@
 			},
 			"InstrumentJudgmentItem": {
 				"properties": {
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verworpen",
+									"vernietigd",
+									"gedeeltelijk vernietigd",
+									"vernietigd en verwezen",
+									"bekrachtigd",
+									"bevestigd",
+									"gegrond",
+									"ongegrond",
+									"niet-ontvankelijk",
+									"afgewezen",
+									"toegewezen",
+									"schending",
+									"geen schending"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Outcome",
+						"description": "How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision)."
+					},
+					"outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Outcome Text",
+						"description": "The clause that says it, as the decision writes it: \"verwerpt het beroep\", \"vernietigt de aangevallen uitspraak\"; of the ECHR the finding."
+					},
+					"conclusion_outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verwerping",
+									"vernietiging",
+									"vernietiging en verwijzing",
+									"niet-ontvankelijkverklaring",
+									"gegrondverklaring",
+									"ongegrondverklaring",
+									"beantwoording"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Conclusion Outcome",
+						"description": "Of a conclusion of the A-G or P-G, what it proposes (its strekking): `verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording` (of preliminary questions); null for a judgment and when the conclusion does not say it."
+					},
+					"conclusion_outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Conclusion Outcome Text",
+						"description": "The sentence that says it: \"De conclusie strekt tot verwerping van het cassatieberoep.\""
+					},
+					"echr_findings": {
+						"items": { "$ref": "#/components/schemas/EchrFindingDTO" },
+						"type": "array",
+						"title": "Echr Findings",
+						"description": "Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment."
+					},
 					"id": {
 						"type": "string",
 						"title": "Id",
@@ -11774,7 +13458,7 @@
 				"type": "object",
 				"required": ["id", "key", "path"],
 				"title": "InstrumentJudgmentItem",
-				"description": "One judgment that cites this instrument."
+				"description": "One judgment that cites this instrument, with how it ended."
 			},
 			"InstrumentJudgmentsResponse": {
 				"properties": {
@@ -11898,6 +13582,128 @@
 				"title": "InstrumentListResponse",
 				"description": "Paginated list envelope for instruments."
 			},
+			"InstrumentReferenceArticleDTO": {
+				"properties": {
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"bwb_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Bwb Id" },
+					"celex": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Celex" },
+					"article_number": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Article Number"
+					},
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["id", "key", "article_number", "display_name"],
+				"title": "InstrumentReferenceArticleDTO",
+				"description": "An article at one end of a reference between two instruments."
+			},
+			"InstrumentReferenceDTO": {
+				"properties": {
+					"leden": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Leden",
+						"description": "Numbers of the leden named (`['1', '2']`), ranges written out."
+					},
+					"onderdelen": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Onderdelen",
+						"description": "Letters or numbers of the onderdelen named (`['a']`, `['2']`)."
+					},
+					"aanhef": {
+						"type": "boolean",
+						"title": "Aanhef",
+						"description": "Whether the aanhef is named.",
+						"default": false
+					},
+					"direction": {
+						"type": "string",
+						"enum": ["outbound", "inbound"],
+						"title": "Direction",
+						"description": "`outbound`: an article of the instrument asked for refers to one of the other; `inbound`: the other way."
+					},
+					"source": {
+						"$ref": "#/components/schemas/InstrumentReferenceArticleDTO",
+						"description": "The article that refers."
+					},
+					"target": {
+						"$ref": "#/components/schemas/InstrumentReferenceArticleDTO",
+						"description": "The article it refers to."
+					},
+					"text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Text",
+						"description": "The words of the reference: `artikel 16, eerste lid, van de wet`."
+					},
+					"semantic_type": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Semantic Type",
+						"description": "What the reference does (`definitional_reference`, \u2026)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["direction", "source", "target"],
+				"title": "InstrumentReferenceDTO",
+				"description": "A reference from an article of one instrument to an article of the other, with the\nparts of the article referred to it names."
+			},
+			"InstrumentReferencesResponse": {
+				"properties": {
+					"bwb_id": {
+						"type": "string",
+						"title": "Bwb Id",
+						"description": "The instrument as requested: its BWB id, or its CELEX number for an EU act."
+					},
+					"other": {
+						"type": "string",
+						"title": "Other",
+						"description": "The other instrument, as requested."
+					},
+					"total": { "type": "integer", "title": "Total" },
+					"items": {
+						"items": { "$ref": "#/components/schemas/InstrumentReferenceDTO" },
+						"type": "array",
+						"title": "Items"
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["bwb_id", "other", "total"],
+				"title": "InstrumentReferencesResponse",
+				"description": "Response for GET /api/instruments/{bwb_id}/references/{other}."
+			},
+			"InstrumentRelatedBasisDTO": {
+				"properties": {
+					"direction": {
+						"type": "string",
+						"enum": ["inbound", "outbound", "via"],
+						"title": "Direction",
+						"description": "`inbound`: it is issued under articles of this law (its preamble names them); `outbound`: this law is issued under articles of it; `via`: it is issued under articles of the regulation `via`, which is issued under this law."
+					},
+					"via": {
+						"anyOf": [{ "$ref": "#/components/schemas/InstrumentSummaryDTO" }, { "type": "null" }],
+						"description": "With `via`: the regulation it is issued under."
+					},
+					"articles": {
+						"items": { "$ref": "#/components/schemas/BasisArticleDTO" },
+						"type": "array",
+						"title": "Articles",
+						"description": "The articles in force its preamble names (of this law, of it, or of `via`), in the order of their law."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["direction", "articles"],
+				"title": "InstrumentRelatedBasisDTO",
+				"description": "How a related instrument and the law are one of a delegation."
+			},
 			"InstrumentRelatedItem": {
 				"properties": {
 					"id": { "type": "string", "title": "Id" },
@@ -11912,20 +13718,67 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Citation Title"
 					},
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "Its kind: BWB type lower case (`amvb`, `wet`), or EU type."
+					},
+					"date_in_force": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date In Force",
+						"description": "When it entered into force itself."
+					},
+					"direction": {
+						"type": "string",
+						"enum": ["inbound", "outbound", "both"],
+						"title": "Direction",
+						"description": "Which refers to which: `inbound` its articles refer to this law, `outbound` articles of this law refer to it, `both`."
+					},
 					"outbound_count": {
 						"type": "integer",
 						"title": "Outbound Count",
-						"description": "Number of REFERS_TO edges from articles of the focal instrument to articles of this related instrument."
+						"description": "Articles in force of this law that refer to articles of it."
+					},
+					"outbound_cited_count": {
+						"type": "integer",
+						"title": "Outbound Cited Count",
+						"description": "Its articles in force that those refer to."
 					},
 					"inbound_count": {
 						"type": "integer",
 						"title": "Inbound Count",
-						"description": "Mirror of ``outbound_count`` in the opposite direction."
+						"description": "Its articles in force that refer to articles of this law."
+					},
+					"inbound_cited_count": {
+						"type": "integer",
+						"title": "Inbound Cited Count",
+						"description": "Articles in force of this law that those refer to."
+					},
+					"based_on": {
+						"type": "boolean",
+						"title": "Based On",
+						"description": "Whether the two are one of a delegation as well: see `basis`.",
+						"default": false
+					},
+					"basis": {
+						"anyOf": [
+							{ "$ref": "#/components/schemas/InstrumentRelatedBasisDTO" },
+							{ "type": "null" }
+						],
+						"description": "How it and this law are one of a delegation (`BASED_ON`, the preamble of a regulation); null when they are not."
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["id", "key", "outbound_count", "inbound_count"],
+				"required": [
+					"id",
+					"key",
+					"direction",
+					"outbound_count",
+					"outbound_cited_count",
+					"inbound_count",
+					"inbound_cited_count"
+				],
 				"title": "InstrumentRelatedItem",
 				"description": "One other instrument linked via cross-article REFERS_TO edges."
 			},
@@ -12134,6 +13987,55 @@
 			},
 			"JudgmentCitedArticle": {
 				"properties": {
+					"paragraph_ids": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Paragraph Ids",
+						"description": "The paragraphs that cite it, in reading order (a citation in a footnote counts for the paragraph that refers to the footnote)."
+					},
+					"paragraph_numbers": {
+						"items": { "type": "string" },
+						"type": "array",
+						"title": "Paragraph Numbers",
+						"description": "Their printed numbers (`5.3`), those that have one."
+					},
+					"snippet": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Snippet",
+						"description": "The text around the strongest mention."
+					},
+					"snippet_paragraph_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Snippet Paragraph Id",
+						"description": "The paragraph the snippet is from (for a citation in a footnote, the paragraph that refers to the footnote; the snippet is then of the footnote)."
+					},
+					"footnote": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Footnote",
+						"description": "The `label` of the footnote (`judgment.footnotes`) the snippet is from; null when it is from the paragraph itself."
+					},
+					"text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Text",
+						"description": "The citation as written in the strongest mention: `artikel 12 van de CBW`, `ECLI:NL:HR:1988:AD5713`."
+					},
+					"start": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "Start",
+						"description": "Offset of `text` in `snippet`: `snippet[start:end]` is `text`, where the linker found it. Null when the judgment was normalized again since it was linked."
+					},
+					"end": { "anyOf": [{ "type": "integer" }, { "type": "null" }], "title": "End" },
+					"confidence": {
+						"anyOf": [{ "type": "number" }, { "type": "null" }],
+						"title": "Confidence",
+						"description": "The confidence of the strongest mention."
+					},
+					"mention_count": {
+						"type": "integer",
+						"title": "Mention Count",
+						"description": "How often the judgment cites it. The paragraphs cover the first 100; a judgment that cites more often is counted in full.",
+						"default": 0
+					},
 					"leden": {
 						"items": { "type": "string" },
 						"type": "array",
@@ -12157,12 +14059,21 @@
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Qualifier",
 						"description": "The qualifier as the judgment wrote it, `derde lid`, of the strongest mention. `leden`, `onderdelen` and `aanhef` (this class) are what it names."
-					},
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["article"],
+				"title": "JudgmentCitedArticle",
+				"description": "An article a judgment cites, with where and how: the strongest of its mentions."
+			},
+			"JudgmentCitedJudgment": {
+				"properties": {
 					"paragraph_ids": {
 						"items": { "type": "string" },
 						"type": "array",
 						"title": "Paragraph Ids",
-						"description": "The paragraphs that cite the article, in reading order."
+						"description": "The paragraphs that cite it, in reading order (a citation in a footnote counts for the paragraph that refers to the footnote)."
 					},
 					"paragraph_numbers": {
 						"items": { "type": "string" },
@@ -12180,10 +14091,15 @@
 						"title": "Snippet Paragraph Id",
 						"description": "The paragraph the snippet is from (for a citation in a footnote, the paragraph that refers to the footnote; the snippet is then of the footnote)."
 					},
+					"footnote": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Footnote",
+						"description": "The `label` of the footnote (`judgment.footnotes`) the snippet is from; null when it is from the paragraph itself."
+					},
 					"text": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Text",
-						"description": "The citation as written in the strongest mention: `artikel 12 van de CBW`."
+						"description": "The citation as written in the strongest mention: `artikel 12 van de CBW`, `ECLI:NL:HR:1988:AD5713`."
 					},
 					"start": {
 						"anyOf": [{ "type": "integer" }, { "type": "null" }],
@@ -12199,15 +14115,28 @@
 					"mention_count": {
 						"type": "integer",
 						"title": "Mention Count",
-						"description": "How often the judgment cites the article. The paragraphs cover the first 100; a judgment that cites an article more often is counted in full.",
+						"description": "How often the judgment cites it. The paragraphs cover the first 100; a judgment that cites more often is counted in full.",
 						"default": 0
+					},
+					"id": { "type": "string", "title": "Id" },
+					"key": { "type": "string", "title": "Key" },
+					"display_name": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Display Name"
+					},
+					"ecli": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ecli" },
+					"path": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Path",
+						"description": "Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.",
+						"readOnly": true
 					}
 				},
 				"additionalProperties": false,
 				"type": "object",
-				"required": ["article"],
-				"title": "JudgmentCitedArticle",
-				"description": "An article a judgment cites, with where and how: the strongest of its mentions."
+				"required": ["id", "key", "display_name", "ecli", "path"],
+				"title": "JudgmentCitedJudgment",
+				"description": "A judgment this one cites (by ECLI, LJN or application number), with where."
 			},
 			"JudgmentConclusionDTO": {
 				"properties": {
@@ -12222,7 +14151,31 @@
 						"title": "Role",
 						"description": "``advocaat-generaal`` or ``procureur-generaal``; null unknown."
 					},
-					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" }
+					"date": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Date" },
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verwerping",
+									"vernietiging",
+									"vernietiging en verwijzing",
+									"niet-ontvankelijkverklaring",
+									"gegrondverklaring",
+									"ongegrondverklaring",
+									"beantwoording"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Outcome",
+						"description": "What it proposes (``conclusion_outcome`` of the conclusion): ``verwerping``, ``vernietiging``, \u2026; null when it does not say it."
+					},
+					"outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Outcome Text",
+						"description": "The sentence that says it (``conclusion_outcome_text``)."
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -12285,6 +14238,76 @@
 					"props": {
 						"anyOf": [{ "additionalProperties": true, "type": "object" }, { "type": "null" }],
 						"title": "Props"
+					},
+					"outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verworpen",
+									"vernietigd",
+									"gedeeltelijk vernietigd",
+									"vernietigd en verwezen",
+									"bekrachtigd",
+									"bevestigd",
+									"gegrond",
+									"ongegrond",
+									"niet-ontvankelijk",
+									"afgewezen",
+									"toegewezen",
+									"schending",
+									"geen schending"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Outcome",
+						"description": "How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision)."
+					},
+					"outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Outcome Text",
+						"description": "The clause that says it, as the decision writes it: \"verwerpt het beroep\", \"vernietigt de aangevallen uitspraak\"; of the ECHR the finding."
+					},
+					"conclusion_outcome": {
+						"anyOf": [
+							{
+								"type": "string",
+								"enum": [
+									"verwerping",
+									"vernietiging",
+									"vernietiging en verwijzing",
+									"niet-ontvankelijkverklaring",
+									"gegrondverklaring",
+									"ongegrondverklaring",
+									"beantwoording"
+								]
+							},
+							{ "type": "null" }
+						],
+						"title": "Conclusion Outcome",
+						"description": "Of a conclusion of the A-G or P-G, what it proposes (its strekking): `verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording` (of preliminary questions); null for a judgment and when the conclusion does not say it."
+					},
+					"conclusion_outcome_text": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Conclusion Outcome Text",
+						"description": "The sentence that says it: \"De conclusie strekt tot verwerping van het cassatieberoep.\""
+					},
+					"echr_findings": {
+						"items": { "$ref": "#/components/schemas/EchrFindingDTO" },
+						"type": "array",
+						"title": "Echr Findings",
+						"description": "Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment."
+					},
+					"outcome_paragraph_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Outcome Paragraph Id",
+						"description": "The paragraph of `outcome_text` (`paragraph_id` of `paragraphs`)."
+					},
+					"conclusion_outcome_paragraph_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Conclusion Outcome Paragraph Id",
+						"description": "The paragraph of `conclusion_outcome_text`."
 					},
 					"ecli": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Ecli" },
 					"source": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Source" },
@@ -12385,6 +14408,12 @@
 						"type": "array",
 						"title": "Paragraphs"
 					},
+					"footnotes": {
+						"items": { "$ref": "#/components/schemas/JudgmentFootnote" },
+						"type": "array",
+						"title": "Footnotes",
+						"description": "The footnotes of the text, which are no paragraph, in their order. A citation in one is a span in its `citations`, and names it on the edge by `footnote` (its `label`), its `paragraph_id` the paragraph that refers to it."
+					},
 					"parties": {
 						"anyOf": [
 							{ "items": { "$ref": "#/components/schemas/JudgmentParty" }, "type": "array" },
@@ -12432,10 +14461,10 @@
 						"description": "The same articles, each with the passages of the judgment that cite it: paragraphs, the lid or onderdeel named, a snippet."
 					},
 					"cited_judgments": {
-						"items": { "$ref": "#/components/schemas/JudgmentSummaryDTO" },
+						"items": { "$ref": "#/components/schemas/JudgmentCitedJudgment" },
 						"type": "array",
 						"title": "Cited Judgments",
-						"description": "The judgments its text cites by ECLI (`REFERS_TO`), newest first; not the earlier instances or the conclusion its metadata names."
+						"description": "The judgments its text cites by ECLI, LJN or application number (`REFERS_TO`), newest first, each with the places that cite it as `cited_articles` has them; not the earlier instances or the conclusion its metadata names."
 					},
 					"same_as": {
 						"items": { "$ref": "#/components/schemas/JudgmentSummaryDTO" },
@@ -12532,6 +14561,37 @@
 				"type": "object",
 				"title": "JudgmentFacets",
 				"description": "The judgments under the filters, counted; each without its own filter."
+			},
+			"JudgmentFootnote": {
+				"properties": {
+					"label": {
+						"type": "string",
+						"title": "Label",
+						"description": "As printed: `12`; its place among the footnotes (`3`) when it has none."
+					},
+					"paragraph_id": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Paragraph Id",
+						"description": "The paragraph whose footnote marker points to it; null when none does."
+					},
+					"at": {
+						"anyOf": [{ "type": "integer" }, { "type": "null" }],
+						"title": "At",
+						"description": "Where that marker stands in the text of the paragraph: its `text[:at]` are the words before it. Null when none does, and for a judgment read before markers were kept."
+					},
+					"text": { "type": "string", "title": "Text" },
+					"citations": {
+						"items": { "$ref": "#/components/schemas/ArticleCitationSpan" },
+						"type": "array",
+						"title": "Citations",
+						"description": "Every citation in `text` of an article or a judgment, one per occurrence, with its span (`text[start:end]`)."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["label", "text"],
+				"title": "JudgmentFootnote",
+				"description": "A footnote of a judgment, with the citations in it."
 			},
 			"JudgmentListItemDTO": {
 				"properties": {
@@ -12674,7 +14734,7 @@
 						"items": { "$ref": "#/components/schemas/ArticleCitationSpan" },
 						"type": "array",
 						"title": "Citations",
-						"description": "Every citation of an article in `text`, one per occurrence, with its span (`text[start:end]`)."
+						"description": "Every citation of an article or a judgment in `text`, one per occurrence, with its span (`text[start:end]`); `target.collection` says which."
 					}
 				},
 				"additionalProperties": false,
@@ -12727,22 +14787,37 @@
 				"type": "object",
 				"required": ["name", "role", "role_stated", "side"],
 				"title": "JudgmentParty",
-				"description": "A party of a judgment, read from its kop."
+				"description": "A party of a judgment, read from its kop and its account of the procedure."
 			},
 			"JudgmentRepresentative": {
 				"properties": {
 					"name": {
 						"type": "string",
 						"title": "Name",
-						"description": "As written: `mr. H.J.W. Alt`."
+						"description": "As written, titles and all: `mr. drs. R. van Gelder`, `mr. R. van der Meulen MPM`."
 					},
-					"role": { "type": "string", "enum": ["advocaat", "gemachtigde"], "title": "Role" }
+					"role": {
+						"type": "string",
+						"enum": ["advocaat", "gemachtigde", "raadsman"],
+						"title": "Role",
+						"description": "The word the judgment gives: `advocaat`; `raadsman` of a suspect, in a criminal case only; `gemachtigde` for whoever represents a party (\"vertegenwoordigd door\") without being called its advocaat."
+					},
+					"place": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Place",
+						"description": "Where they practise, as written: `Voorschoten` for \"advocaat te Voorschoten\". Null when the judgment gives none."
+					},
+					"capacity": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Capacity",
+						"description": "What else the judgment calls them: `ambtenaar in dienst van de provincie`, `rechtsbijstandverlener`. Null when it gives nothing but the role."
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
 				"required": ["name", "role"],
 				"title": "JudgmentRepresentative",
-				"description": "Who acts for a party, as the kop names them (\"advocaat: mr. X\")."
+				"description": "Who acts for a party, as the kop (\"advocaat: mr. X\") or the account of the procedure\n(\"bijgestaan door mr. X, advocaat te Y\") names them."
 			},
 			"JudgmentSummaryDTO": {
 				"properties": {
@@ -12915,8 +14990,9 @@
 					},
 					"change": {
 						"type": "string",
-						"enum": ["amends", "introduces", "repeals"],
-						"title": "Change"
+						"enum": ["establishes", "amends", "introduces", "repeals"],
+						"title": "Change",
+						"description": "`establishes`: the publication that enacted the regulation set the article; else the change it made or a bill proposes."
 					},
 					"status": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -12983,7 +15059,7 @@
 					"kind": {
 						"type": "string",
 						"title": "Kind",
-						"description": "What the node is: `document`, `dossier`, `article`, `annex`, `instrument`, `judgment`, `commitment`, `case`, `faction`, `committee`, `cabinet`."
+						"description": "What the node is: `document`, `dossier`, `article`, `annex`, `instrument`, `judgment`, `commitment`, `case`, `activity`, `faction`, `committee`, `cabinet`."
 					},
 					"display_name": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -13004,7 +15080,7 @@
 						"additionalProperties": true,
 						"type": "object",
 						"title": "Props",
-						"description": "The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `bwb_id` and `label` of an annex; `number` of a zaak; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication."
+						"description": "The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `bwb_id` and `label` of an annex; `number` of a zaak or an activity; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication."
 					},
 					"path": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -13697,7 +15773,15 @@
 						"anyOf": [{ "type": "number" }, { "type": "null" }],
 						"title": "Confidence"
 					},
-					"status": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Status" }
+					"status": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Status" },
+					"passages": {
+						"anyOf": [
+							{ "items": { "$ref": "#/components/schemas/EdgePassage" }, "type": "array" },
+							{ "type": "null" }
+						],
+						"title": "Passages",
+						"description": "With `edge_meta=passages`: where a judgment cites the article or the judgment the edge reaches (absent otherwise, and for an edge without them)."
+					}
 				},
 				"additionalProperties": false,
 				"type": "object",
@@ -13939,12 +16023,12 @@
 					"changed": {
 						"anyOf": [{ "type": "boolean" }, { "type": "null" }],
 						"title": "Changed",
-						"description": "Whether the dossier changed the article, which corroborates the match; a heading naming an article the dossier left alone is often of another law. Null for a link made before this was recorded."
+						"description": "Whether the dossier changed the article, or established it as an article of the law it made, which corroborates the match; a heading naming an article the dossier left alone is often of another law. Null for a link made before this was recorded."
 					},
 					"explanation": {
 						"anyOf": [{ "type": "string" }, { "type": "null" }],
 						"title": "Explanation",
-						"description": "What the match rests on, in Dutch: the heading, and whether the dossier changed the article."
+						"description": "What the match rests on, in Dutch: the heading, and whether the dossier changed the article or established it."
 					}
 				},
 				"additionalProperties": false,
@@ -14769,6 +16853,37 @@
 				"required": ["nodes", "edges"],
 				"title": "StatsResponse",
 				"description": "Database statistics: document counts per collection and edge counts."
+			},
+			"SubDelegatedDTO": {
+				"properties": {
+					"instrument": { "$ref": "#/components/schemas/InstrumentSummaryDTO" },
+					"kind": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Kind",
+						"description": "Its BWB type, lower case."
+					},
+					"date_in_force": {
+						"anyOf": [{ "type": "string" }, { "type": "null" }],
+						"title": "Date In Force",
+						"description": "When the regulation itself entered into force."
+					},
+					"basis_kind": {
+						"anyOf": [{ "type": "string", "enum": ["delegates", "mentioned"] }, { "type": "null" }],
+						"title": "Basis Kind",
+						"description": "`delegates` when one of `articles` does; `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, \"bij besluit van\", \"kan regels stellen\"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text)."
+					},
+					"articles": {
+						"items": { "$ref": "#/components/schemas/BasisArticleDTO" },
+						"type": "array",
+						"title": "Articles",
+						"description": "The articles of the regulation above it its preamble names, in the order of that regulation."
+					}
+				},
+				"additionalProperties": false,
+				"type": "object",
+				"required": ["instrument", "kind", "articles"],
+				"title": "SubDelegatedDTO",
+				"description": "A regulation issued under articles of a regulation, one level down."
 			},
 			"SubjectAreaFacetCount": {
 				"properties": {

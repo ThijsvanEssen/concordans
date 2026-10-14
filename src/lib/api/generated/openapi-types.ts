@@ -73,7 +73,7 @@ export interface paths {
         };
         /**
          * Legislative history of an article
-         * @description The dossiers that introduced, amended or repealed this article, or propose to: one entry per change and dossier, with the amending publication (enacted, `canoniek`) or the bill (proposed, `voorgesteld`) that carries it; proposed first, then newest first. What only cites the article (a judgment, another article) is not history. The explanatory documents are at `explained-by`. Returns an empty list when there is no history — never a 404.
+         * @description The dossiers that established (enacted its regulation), introduced, amended or repealed this article, or propose to: one entry per change and dossier, with the publication (enacted, `canoniek`) or the bill (proposed, `voorgesteld`) that carries it; proposed first, then newest first. What only cites the article (a judgment, another article) is not history. The explanatory documents are at `explained-by`. Returns an empty list when there is no history — never a 404.
          */
         get: operations["get_legislative_history_api_articles__bwb_id___article_number__legislative_history_get"];
         put?: never;
@@ -233,7 +233,7 @@ export interface paths {
         };
         /**
          * The definitions an instrument gives itself
-         * @description Its begripsbepalingen, as its text gives them, in the order of the text: each `term` with its `text`, the article and letter it stands in, where it holds (`scope`: the whole regulation, or a chapter or paragraph of it) and the regulation a definition is (`refers_to`: `wet`, de Zorgverzekeringswet). Empty for one that defines nothing. 404 for an unknown instrument.
+         * @description Its begripsbepalingen, as its text gives them, in the order of the text: each `term` with its `text`, the article and letter it stands in, where it holds (`scope`: the whole regulation, or a chapter or paragraph of it, and whether in the regulations issued under it too) and the regulation a definition is (`refers_to`: `wet`, de Zorgverzekeringswet). Empty for one that defines nothing. 404 for an unknown instrument.
          */
         get: operations["get_instrument_definitions_api_instruments__identifier__definitions_get"];
         put?: never;
@@ -333,7 +333,7 @@ export interface paths {
         };
         /**
          * Amending publications of a regulation
-         * @description The amending instruments (Staatsblad, Tractatenblad, ...) that change, introduce or repeal articles of this regulation (AMENDS / INTRODUCES / REPEALS), newest first. Per publication: the edge count per kind, the number of articles affected, the first effective date and the dossiers. ``total`` is the absolute count, independent of ``limit`` and ``offset``.
+         * @description The publications (Staatsblad, Staatscourant, Tractatenblad, ...) that enacted this regulation (ESTABLISHES its articles) or change, introduce or repeal articles of it (AMENDS / INTRODUCES / REPEALS), newest first. Per publication: the edge count per kind, the number of articles affected, the first effective date and the dossiers. ``total`` is the absolute count, independent of ``limit`` and ``offset``. Apart from them, in ``proposals``, the papers of the Tweede Kamer that propose to change it and are pending.
          */
         get: operations["get_instrument_amended_by_route_api_instruments__bwb_id__amended_by_get"];
         put?: never;
@@ -353,9 +353,29 @@ export interface paths {
         };
         /**
          * Instruments referring to this one, or referred to by it
-         * @description An aggregation of the REFERS_TO edges between articles of this law and articles of other laws. Each related instrument carries `outbound_count` (references from this law to the other) and `inbound_count` (references from the other law to this one). ``total`` is the absolute count, independent of ``limit``.
+         * @description The other laws whose articles in force refer to articles in force of this law, or the other way (`REFERS_TO` between articles), the most articles first. Each carries its `kind` and `date_in_force`, the `direction`, the articles at both ends (`outbound_count` articles of this law refer to `outbound_cited_count` of it; `inbound_count` of its articles refer to `inbound_cited_count` of this law) and `basis`: whether one is issued under the other as well (`BASED_ON`), with the articles its preamble names. ``total`` is the absolute count, independent of ``limit``. The articles between the two: `.../references/{other}`.
          */
         get: operations["get_instrument_related_route_api_instruments__bwb_id__related_instruments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/instruments/{bwb_id}/references/{other}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The references between the articles of two instruments
+         * @description Every reference (`REFERS_TO`) from an article in force of this instrument to an article in force of `other`, then the other way (`direction` `outbound`, `inbound`), in the order of the referring and the referred article: the `source` and `target` articles, the words of the reference (`text`), the parts of the target it names and its `semantic_type`. Both are a BWB id or a CELEX number; empty for an unknown one or the same one twice.
+         */
+        get: operations["get_instrument_references_route_api_instruments__bwb_id__references__other__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -373,9 +393,29 @@ export interface paths {
         };
         /**
          * Regulations issued under a law
-         * @description The regulations in force whose preamble ("Gelet op") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names: AMvBs first, then ministerial regulations, then the others; by title. A repealed regulation or article is left out. Empty for an unknown instrument.
+         * @description The regulations in force whose preamble ("Gelet op") names an article in force of this law as their legal basis (`BASED_ON`), one per regulation with the articles it names, whether those give the power it is made under (`basis_kind`), its articles that work each out (`referring`), the other laws it names (`also_based_on`) and the regulations issued under it in turn (`sub_delegated`): AMvBs first, then ministerial regulations, then the others; by title. A repealed regulation or article is left out. Empty for an unknown instrument.
          */
         get: operations["get_instrument_delegated_route_api_instruments__bwb_id__delegated_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/instruments/{bwb_id}/basis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The laws a regulation is issued under
+         * @description The legal basis of a regulation: per law its preamble ("Gelet op") names an article in force of (`BASED_ON`), by title, the articles it names with the leden and onderdelen, whether they give the power it is made under (`basis_kind`) and the articles of the regulation that refer to each (`referring`). Empty for a law without a preamble basis and for an unknown instrument. The other way: `.../delegated`.
+         */
+        get: operations["get_instrument_basis_route_api_instruments__bwb_id__basis_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1001,6 +1041,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/activities/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Activity detail
+         * @description One activity: its `kind`, `date`, `status`, `agenda_title`, `number` (its address, `/activiteiten/2026A01323`), its page on tweedekamer.nl, the committee that leads it (null for a plenary one), the dossiers on its agenda with their names, and the activities it took the place of or that took its place. What was made in it is `/records`. 404 when unknown.
+         */
+        get: operations["get_activity_detail_api_activities__key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/activities/{key}/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What was made in an activity
+         * @description What is `MADE_IN` the activity: its `documents` (the stenogram and the verslag of a debate, its convocatie), the `motions` submitted in it, the `commitments` made in it and the `decisions` taken in it; and the `cases` on its agenda. Each with its readable address. 404 when unknown.
+         */
+        get: operations["get_activity_records_route_api_activities__key__records_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/parties/colors": {
         parameters: {
             query?: never;
@@ -1250,7 +1330,7 @@ export interface paths {
         };
         /**
          * Decision detail
-         * @description One decision with every vote cast on it — per member on a roll-call, per faction otherwise.
+         * @description One decision with every vote cast on it — per member on a roll-call, per faction otherwise — the Kamerstuk it was taken on (``primary_document``) and, of a motion, its dictum.
          */
         get: operations["get_decision_api_decisions__key__get"];
         put?: never;
@@ -1390,7 +1470,7 @@ export interface paths {
         };
         /**
          * The node a readable URL names, exactly
-         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `annex` (`law` BWB id and `label`, `II`), `case` (a zaak of the Tweede Kamer: its `number`, `2025Z15468`), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).
+         * @description No guess and no fallback (that is `/api/resolve`): the node, or 404 with detail `not_in_data`. 422 for a parameter that is missing or malformed. `kind` and its parameters: `document` (`dossier` as in the URL, `36600-VIII`, and `number`, a number of the Tweede Kamer or a letter of the Eerste Kamer; a paper that is not there is 404, not its dossier), `dossier` (`number`, `36455-(R2188)`), `article` (`law` BWB id or CELEX, `number`: `6:162` and `162` under BW Boek 6 alike), `annex` (`law` BWB id and `label`, `II`), `case` (a zaak of the Tweede Kamer: its `number`, `2025Z15468`), `activity` (one of the Tweede Kamer, a debate: its `number`, `2026A01323`), `law` (`id`), `judgment` (`ecli`; a judgment only cited is answered, with `stub`), `publication` (`series` stb, stcrt or trb, `year`, `number`), `official` (`id` of officielebekendmakingen.nl: `stb-2026-94`, `kst-36799-31`), `commitment` (`number`), `faction`, `committee` (slug), `cabinet` and `member` (its `slug`, `rob-jetten`) (`id`).
          */
         get: operations["get_lookup_api_lookup_get"];
         put?: never;
@@ -1483,6 +1563,292 @@ export interface components {
             seat: string;
             /** Function */
             function?: string | null;
+        };
+        /**
+         * ActivityCaseDTO
+         * @description A case (zaak) on the agenda of the activity.
+         */
+        ActivityCaseDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Number
+             * @description ``2026Z05830``.
+             */
+            number?: string | null;
+            /**
+             * Kind
+             * @description ``Zaak.Soort``: ``Motie``, ``Wetgeving``.
+             */
+            kind?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ActivityCommitmentDTO
+         * @description A commitment made in the activity.
+         */
+        ActivityCommitmentDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Number
+             * @description ``TZ202604-064``.
+             */
+            number?: string | null;
+            /** Text */
+            text?: string | null;
+            /**
+             * Status
+             * @description ``Toezegging.Status``.
+             */
+            status?: string | null;
+            /**
+             * Registered On
+             * @description The day the Kamer registered it (``Aanmaakdatum``).
+             */
+            registered_on?: string | null;
+            /**
+             * Expected Resolution
+             * @description The day it is due; null when the Kamer names none.
+             */
+            expected_resolution?: string | null;
+            /**
+             * Minister Name
+             * @description As the source writes it.
+             */
+            minister_name?: string | null;
+            /**
+             * Minister Role
+             * @description As the source writes it.
+             */
+            minister_role?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ActivityDTO
+         * @description One activity: what it is, when, who leads it and what it is about.
+         */
+        ActivityDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Number
+             * @description ``Activiteit.Nummer`` (``2026A01323``), its address.
+             */
+            number?: string | null;
+            /** Chamber */
+            chamber?: ("TK" | "EK") | null;
+            /**
+             * Kind
+             * @description As the source writes it: ``Wetgevingsoverleg``, ``Commissiedebat``, ``Plenair debat (wetgeving)``, ``Stemmingen``.
+             */
+            kind?: string | null;
+            /**
+             * Date
+             * @description The day it was (to be) held.
+             */
+            date?: string | null;
+            /**
+             * Status
+             * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none (the Eerste Kamer gives none).
+             */
+            status?: string | null;
+            /**
+             * Agenda Title
+             * @description Its subject (``Activiteit.Onderwerp``).
+             */
+            agenda_title?: string | null;
+            /**
+             * Tk Url
+             * @description Its page on tweedekamer.nl, by its number.
+             */
+            tk_url?: string | null;
+            /** @description The committee that leads it (``LED_BY``); null for a plenary one. */
+            committee?: components["schemas"]["TimelineCommitteeDTO"] | null;
+            /**
+             * Dossier Numbers
+             * @description The dossiers of the cases on its agenda.
+             */
+            dossier_numbers?: string[];
+            /**
+             * Dossiers
+             * @description The names of ``dossier_numbers``, in their order: ``number``, ``short_title``, ``title`` as ``/api/dossiers`` gives them.
+             */
+            dossiers?: components["schemas"]["DossierNameDTO"][];
+            /**
+             * Moved From
+             * @description The activities it took the place of: moved to it (it ``CONTINUES`` them).
+             */
+            moved_from?: components["schemas"]["ActivityMoveDTO"][];
+            /**
+             * Moved To
+             * @description The activities that took its place: it was moved to them.
+             */
+            moved_to?: components["schemas"]["ActivityMoveDTO"][];
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ActivityDecisionDTO
+         * @description A decision taken in the activity (on an item of its agenda).
+         */
+        ActivityDecisionDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Date */
+            date?: string | null;
+            /** Subject */
+            subject?: string | null;
+            /**
+             * Kind
+             * @description What was decided on: the ``Zaak.Soort`` (``Motie``).
+             */
+            kind?: string | null;
+            /**
+             * Decision Kind
+             * @description ``BesluitSoort``: ``Stemmen - aangenomen``.
+             */
+            decision_kind?: string | null;
+            /** Decision Text */
+            decision_text?: string | null;
+            /** Passed */
+            passed?: boolean | null;
+            /**
+             * Tally
+             * @description Seats per choice (``Voor``, ``Tegen``).
+             */
+            tally?: {
+                [key: string]: number;
+            };
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ActivityMoveDTO
+         * @description An activity that took the place of another, or whose place another took
+         *     (``CONTINUES``, ``Activiteit.VervangenDoor``).
+         */
+        ActivityMoveDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Number */
+            number?: string | null;
+            /** Date */
+            date?: string | null;
+            /**
+             * Status
+             * @description ``Activiteit.Status`` as the source writes it: ``Gepland`` (still to come, also when its date has passed), ``Uitgevoerd``, ``Geannuleerd``, ``Verplaatst``, ``Vervallen``; null when the source gives none (the Eerste Kamer gives none).
+             */
+            status?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ActivityPaperDTO
+         * @description A paper made in the activity: its record (a stenogram, a verslag), its convocatie,
+         *     or a motion submitted in it.
+         */
+        ActivityPaperDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @description As the chamber writes it: ``Stenogram``.
+             */
+            kind?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Dossier Number */
+            dossier_number?: string | null;
+            /** Dossier Suffix */
+            dossier_suffix?: string | null;
+            /**
+             * Sequence
+             * @description Its number in its dossier (nr. 32); null for none.
+             */
+            sequence?: number | null;
+            /**
+             * Dictum
+             * @description Of a motion, what it asks or says; null for any other paper.
+             */
+            dictum?: string | null;
+            /**
+             * Has Text
+             * @description Whether its text is in the data.
+             * @default false
+             */
+            has_text: boolean;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * ActivityRecordsResponse
+         * @description What was made in an activity (``MADE_IN``) and what was on its agenda.
+         */
+        ActivityRecordsResponse: {
+            /** Activity Id */
+            activity_id: string;
+            /**
+             * Documents
+             * @description Its papers but the motions: the stenogram and the verslag of a debate (``Document.Activiteit``), its convocatie; oldest first.
+             */
+            documents?: components["schemas"]["ActivityPaperDTO"][];
+            /**
+             * Motions
+             * @description The motions submitted in it, by their number in the dossier.
+             */
+            motions?: components["schemas"]["ActivityPaperDTO"][];
+            /**
+             * Commitments
+             * @description The commitments made in it, by number.
+             */
+            commitments?: components["schemas"]["ActivityCommitmentDTO"][];
+            /**
+             * Decisions
+             * @description The decisions taken in it (``Agendapunt.Activiteit``), in the order of its agenda.
+             */
+            decisions?: components["schemas"]["ActivityDecisionDTO"][];
+            /**
+             * Cases
+             * @description The cases on its agenda (``ABOUT``), by number: of a debate the bill and the motions submitted in it.
+             */
+            cases?: components["schemas"]["ActivityCaseDTO"][];
         };
         /**
          * ActorDossierDTO
@@ -1643,11 +2009,22 @@ export interface components {
             bwb_id: string;
             /**
              * Total
-             * @description Absolute number of amending instruments (independent of ``limit``/``offset``).
+             * @description Absolute number of amending publications (independent of ``limit``/``offset``).
              */
             total: number;
             /** Items */
             items: components["schemas"]["AmendingInstrumentDTO"][];
+            /**
+             * Proposals Total
+             * @description Absolute number of pending proposals (``proposals``).
+             * @default 0
+             */
+            proposals_total: number;
+            /**
+             * Proposals
+             * @description The pending proposals to change the regulation, newest first, at most 100: papers of an open dossier (a bill enacted or rejected is no proposal any more), no amendment that was rejected, withdrawn or replaced by a newer version. Never the papers of the bill that made the regulation.
+             */
+            proposals?: components["schemas"]["AmendingProposalDTO"][];
         };
         /**
          * AmendingInstrumentDTO
@@ -1683,6 +2060,12 @@ export interface components {
             /** Dossiers */
             dossiers?: components["schemas"]["DossierRefDTO"][];
             /**
+             * Establishes
+             * @description Number of ESTABLISHES edges into the regulation: the articles it set as the publication that enacted it.
+             * @default 0
+             */
+            establishes: number;
+            /**
              * Amends
              * @description Number of AMENDS edges into the regulation.
              * @default 0
@@ -1711,6 +2094,67 @@ export interface components {
              * @description Earliest effective date over the edges.
              */
             first_effective_date?: string | null;
+        };
+        /**
+         * AmendingProposalDTO
+         * @description A paper of the Tweede Kamer that proposes to change a regulation and is pending: its
+         *     dossier is open, and it is no amendment that was rejected, withdrawn or replaced.
+         */
+        AmendingProposalDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Display Name */
+            display_name?: string | null;
+            /**
+             * Kind
+             * @description As the chamber writes it: ``Amendement``, ``Voorstel van wet``.
+             */
+            kind?: string | null;
+            /**
+             * Number
+             * @description Its nr. in the dossier: ``26``.
+             */
+            number?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Dossiers */
+            dossiers?: components["schemas"]["DossierRefDTO"][];
+            /**
+             * Outcome
+             * @description Of an amendment: ``aangenomen`` once adopted; else null.
+             */
+            outcome?: "aangenomen" | null;
+            /**
+             * Amends
+             * @description Number of AMENDS edges into the regulation.
+             * @default 0
+             */
+            amends: number;
+            /**
+             * Introduces
+             * @description Number of INTRODUCES edges into the regulation.
+             * @default 0
+             */
+            introduces: number;
+            /**
+             * Repeals
+             * @description Number of REPEALS edges into the regulation.
+             * @default 0
+             */
+            repeals: number;
+            /**
+             * Articles Affected
+             * @description Distinct articles of the regulation touched.
+             * @default 0
+             */
+            articles_affected: number;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * AmendmentChainsDTO
@@ -2012,12 +2456,12 @@ export interface components {
             citations?: components["schemas"]["ArticleCitationSpan"][];
             /**
              * Term Spans
-             * @description Every place the text uses a term its regulation defines (where that definition holds: its regulation, or its chapter or paragraph), as `definitions`; not inside a citation, which names the definition itself (`definition_ref`) when it is the regulation cited.
+             * @description Every place the text uses a term its regulation defines (where that definition holds: its regulation, or its chapter or paragraph), or a law or AMvB it is issued under defines for the regulations based on it (its own first), as `definitions`; not inside a citation, which names the definition itself (`definition_ref`) when it is the regulation cited.
              */
             term_spans?: components["schemas"]["TermSpanDTO"][];
             /**
              * Definitions
-             * @description The definitions `term_spans` and `citations` name, as the regulation gives them.
+             * @description The definitions `term_spans` and `citations` name, as the regulation gives them (`given_by` for one of another).
              */
             definitions?: components["schemas"]["DefinitionDTO"][];
             /**
@@ -2076,6 +2520,26 @@ export interface components {
              * @description `id` of the section in `sections` of the document; set when scope is 'article'.
              */
             section_anchor?: string | null;
+            /**
+             * Heading
+             * @description The heading of that section: ``Artikel 21 (zorgplicht)``; null when scope is 'dossier'.
+             */
+            heading?: string | null;
+            /**
+             * Char Start
+             * @description Where the section starts in the `text` of the document.
+             */
+            char_start?: number | null;
+            /**
+             * Char End
+             * @description Where it ends (exclusive): `text[char_start:char_end]`.
+             */
+            char_end?: number | null;
+            /**
+             * Excerpt
+             * @description The opening of the section after its heading, about 300 characters cut at a word (`…` when it goes on); null without a section or without the text.
+             */
+            excerpt?: string | null;
         };
         /**
          * ArticleExplanationsResponse
@@ -2494,7 +2958,7 @@ export interface components {
             effect?: string | null;
             /**
              * Change
-             * @description Normalised effect: 'introduces', 'amends', 'repeals', 'republishes' (the text placed again, unchanged: a republication, as of the Grondwet) or null.
+             * @description Normalised effect: 'establishes' (the regulation as it was enacted), 'introduces', 'amends', 'repeals', 'republishes' (the text placed again, unchanged: a republication, as of the Grondwet) or null.
              */
             change?: string | null;
             /** Source Publication */
@@ -2563,9 +3027,28 @@ export interface components {
             display_name: string | null;
             /**
              * Text
-             * @description The reference in the preamble: `16, eerste en zevende lid`.
+             * @description The reference in the preamble: `16, eerste en zevende lid`; a range names each of its articles: `26 tot en met 30`.
              */
             text: string | null;
+            /**
+             * Basis Kind
+             * @description `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, "bij besluit van", "kan regels stellen"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text).
+             */
+            basis_kind?: ("delegates" | "mentioned") | null;
+        };
+        /**
+         * BasisLawDTO
+         * @description Another law a regulation names in its preamble, with the articles it names.
+         */
+        BasisLawDTO: {
+            instrument: components["schemas"]["InstrumentSummaryDTO"];
+            /**
+             * Kind
+             * @description Its BWB type, lower case.
+             */
+            kind: string | null;
+            /** Articles */
+            articles: components["schemas"]["BasisArticleDTO"][];
         };
         /**
          * BusyCallDTO
@@ -3052,9 +3535,34 @@ export interface components {
         };
         /**
          * CitedByJudgment
-         * @description The judgment of a passage that cites an article.
+         * @description The judgment of a passage that cites an article, with how it ended.
          */
         CitedByJudgment: {
+            /**
+             * Outcome
+             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision).
+             */
+            outcome?: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "schending" | "geen schending") | null;
+            /**
+             * Outcome Text
+             * @description The clause that says it, as the decision writes it: "verwerpt het beroep", "vernietigt de aangevallen uitspraak"; of the ECHR the finding.
+             */
+            outcome_text?: string | null;
+            /**
+             * Conclusion Outcome
+             * @description Of a conclusion of the A-G or P-G, what it proposes (its strekking): `verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording` (of preliminary questions); null for a judgment and when the conclusion does not say it.
+             */
+            conclusion_outcome?: ("verwerping" | "vernietiging" | "vernietiging en verwijzing" | "niet-ontvankelijkverklaring" | "gegrondverklaring" | "ongegrondverklaring" | "beantwoording") | null;
+            /**
+             * Conclusion Outcome Text
+             * @description The sentence that says it: "De conclusie strekt tot verwerping van het cassatieberoep."
+             */
+            conclusion_outcome_text?: string | null;
+            /**
+             * Echr Findings
+             * @description Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment.
+             */
+            echr_findings?: components["schemas"]["EchrFindingDTO"][];
             /** Id */
             id: string;
             /** Key */
@@ -3197,14 +3705,35 @@ export interface components {
              */
             read_on: string;
         };
-        /** CommitmentActivityDTO */
+        /**
+         * CommitmentActivityDTO
+         * @description The activity a commitment was made in: a debate, as the Kamer names it.
+         */
         CommitmentActivityDTO: {
             /** Key */
             key: string;
-            /** Date */
+            /**
+             * Date
+             * @description The day it was held.
+             */
             date?: string | null;
             /** Number */
             number?: string | null;
+            /**
+             * Kind
+             * @description As the source writes it: ``Wetgevingsoverleg``.
+             */
+            kind?: string | null;
+            /**
+             * Agenda Title
+             * @description Its subject (``Activiteit.Onderwerp``).
+             */
+            agenda_title?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * CommitmentDTO
@@ -3227,9 +3756,14 @@ export interface components {
             status?: string | null;
             /**
              * Date
-             * @description The day it was made.
+             * @description The day the Kamer registered it (``Aanmaakdatum``), which may be weeks after the debate (``made_on``).
              */
             date?: string | null;
+            /**
+             * Made On
+             * @description The day it was made: the day of the activity it was made in (``activity.date``); null without one.
+             */
+            made_on?: string | null;
             /**
              * Expected Resolution
              * @description The day it is due; null when the Kamer names none.
@@ -3251,7 +3785,13 @@ export interface components {
             cabinet?: string | null;
             /** Dossiers */
             dossiers?: components["schemas"]["CommitmentDossierDTO"][];
+            /** @description The activity it was made in (``MADE_IN``). */
             activity?: components["schemas"]["CommitmentActivityDTO"] | null;
+            /**
+             * Fulfilled By
+             * @description The letters that fulfil it (``ANSWERS``, from ``Toezegging.KamerbriefNakoming``), oldest first.
+             */
+            fulfilled_by?: components["schemas"]["CommitmentLetterDTO"][];
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -3290,6 +3830,36 @@ export interface components {
             cabinet?: components["schemas"]["FacetCountDTO"][];
             /** Ministry */
             ministry?: components["schemas"]["FacetCountDTO"][];
+        };
+        /**
+         * CommitmentLetterDTO
+         * @description A letter that fulfils a commitment (``Toezegging.KamerbriefNakoming``).
+         */
+        CommitmentLetterDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Kind */
+            kind?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Dossier Number */
+            dossier_number?: string | null;
+            /** Dossier Suffix */
+            dossier_suffix?: string | null;
+            /**
+             * Sequence
+             * @description Its number in its dossier (nr. 33).
+             */
+            sequence?: number | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /** CommitmentListResponse */
         CommitmentListResponse: {
@@ -3781,6 +4351,8 @@ export interface components {
             dictum?: string | null;
             /** @description The motion or amendment the decision was taken on: the oldest paper of the case the vote singled out (``primary_case_kind`` ``Motie`` or ``Amendement``), as its dictum and ``/api/decisions/{key}/document``; else the Kamerstuk it is about (a vote of the Eerste Kamer on a motion). Null for anything else, and for a case without a paper. */
             motion?: components["schemas"]["DecisionMotionDTO"] | null;
+            /** @description The Kamerstuk the vote was taken on, as ``/api/decisions/{key}/document`` finds it: the oldest paper of the case it singled out (a motion, an amendment, a bill), else of its other cases, else the Kamerstuk it is about (a vote of the Eerste Kamer); with its kind, title, number and dossier. Null without one. */
+            primary_document?: components["schemas"]["DecisionPaperDTO"] | null;
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -3908,6 +4480,40 @@ export interface components {
             count: number;
         };
         /**
+         * DecisionPaperDTO
+         * @description The Kamerstuk a decision was taken on: the motion, the amendment or the bill.
+         */
+        DecisionPaperDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @description As the chamber writes it: ``Motie``.
+             */
+            kind?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Number
+             * @description Its number in its dossier: the nr. of a Tweede Kamer paper (``31``), the letter of an Eerste Kamer one (``C``).
+             */
+            number?: string | null;
+            /**
+             * Dossier Number
+             * @description The dossier it is numbered in (``36764``, ``37020-XV``).
+             */
+            dossier_number?: string | null;
+            /** Date */
+            date?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
          * DecisionSummaryDTO
          * @description One row in the decision browser.
          *
@@ -4015,7 +4621,8 @@ export interface components {
         };
         /**
          * DefinitionDTO
-         * @description A definition a regulation gives itself (its begripsbepalingen), as its text has it.
+         * @description A definition a regulation gives (its begripsbepalingen), as its text has it: its own,
+         *     or one of a regulation it is issued under (``given_by``).
          */
         DefinitionDTO: {
             /**
@@ -4040,7 +4647,7 @@ export interface components {
             jci?: string | null;
             /**
              * Scope
-             * @description Where it holds: `kind` (`wet`, `besluit`, `hoofdstuk`, …) and `path` (that part, empty for the whole regulation).
+             * @description Where it holds: `kind` (`wet`, `besluit`, `hoofdstuk`, …), `path` (that part, empty for the whole regulation) and `reach`: `own_and_based` where it holds in the regulations issued under it too ("In deze wet en de daarop berustende bepalingen"), else `own`.
              */
             scope?: {
                 [key: string]: string;
@@ -4050,6 +4657,30 @@ export interface components {
              * @description The BWB id of the regulation the definition is (`wet`: de Zorgverzekeringswet).
              */
             refers_to?: string | null;
+            /** @description The regulation that gives it, where that is not the article's own: a law or AMvB the regulation is issued under (`BASED_ON`, two levels), whose definition reaches it (`scope.reach`). Null for its own. */
+            given_by?: components["schemas"]["DefinitionGiverDTO"] | null;
+        };
+        /**
+         * DefinitionGiverDTO
+         * @description The regulation that gives a definition another regulation takes (it is issued under
+         *     it).
+         */
+        DefinitionGiverDTO: {
+            /** Key */
+            key: string;
+            /** Bwb Id */
+            bwb_id?: string | null;
+            /** Citation Title */
+            citation_title?: string | null;
+            /** Short Title */
+            short_title?: string | null;
+            /** Abbreviation */
+            abbreviation?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * DelegatedArticleDTO
@@ -4161,6 +4792,11 @@ export interface components {
              * @description The reference in its preamble: `16, eerste en zevende lid`.
              */
             text: string | null;
+            /**
+             * Basis Kind
+             * @description `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, "bij besluit van", "kan regels stellen"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text).
+             */
+            basis_kind?: ("delegates" | "mentioned") | null;
             /**
              * Articles
              * @description Its articles that refer to the article, in the order of the regulation.
@@ -4284,10 +4920,70 @@ export interface components {
             chamber?: components["schemas"]["DocumentFacetCountDTO"][];
         };
         /**
+         * DocumentFootnoteDTO
+         * @description A footnote of a paper, which ``text`` does not hold.
+         */
+        DocumentFootnoteDTO: {
+            /**
+             * Id
+             * @description `fn-<n>`, its place among the footnotes (`fn-1` the first): what a citation in it names (`meta.place.footnote_id` of a `REFERS_TO` edge). Unique in the paper; `label` is not, a paper of before 2010 numbers its footnotes per page.
+             */
+            id: string;
+            /**
+             * Label
+             * @description Its number as printed: `3`.
+             */
+            label?: string | null;
+            /** Text */
+            text: string;
+            /**
+             * At
+             * @description Where its marker stands in `text`: `text[:at]` are the words before it. Null for a footnote whose marker is not in the text (one of the header) and for a paper read before markers were kept.
+             */
+            at?: number | null;
+            /**
+             * Section Id
+             * @description The innermost section that holds `at`.
+             */
+            section_id?: string | null;
+        };
+        /**
          * DocumentListItemDTO
          * @description A paper of a chamber in the list: its metadata, no text.
          */
         DocumentListItemDTO: {
+            /**
+             * Dictum
+             * @description Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text.
+             */
+            dictum?: string | null;
+            /**
+             * Explanation
+             * @description Of an amendment, what it is for: the first paragraph of its Toelichting, whole sentences up to 400 characters; null for any other paper and for an amendment without text.
+             */
+            explanation?: string | null;
+            /**
+             * Outcome
+             * @description How the Kamer decided on it: ``aangenomen``, ``verworpen`` (by its vote; the latest vote when there were several), ``ingetrokken``, ``aangehouden``, ``vervallen`` (a decision without a vote), else the status the page of a motion of the Eerste Kamer states; ``vervangen`` for a paper without one that a newer paper replaces (``replaced_by``); null while nothing was decided.
+             */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken" | "aangehouden" | "vervallen" | "vervangen") | null;
+            /**
+             * Decided On
+             * @description The date of the decision that gave ``outcome``.
+             */
+            decided_on?: string | null;
+            /**
+             * Tally
+             * @description The seats per choice of that vote (``{"Voor": 150}``, members on a roll call), as ``/api/decisions/{key}`` gives them; null without votes (a hamerstuk, a motion held).
+             */
+            tally?: {
+                [key: string]: number;
+            } | null;
+            /**
+             * Decision
+             * @description The key of that decision (``/api/decisions/{key}``); null without one.
+             */
+            decision?: string | null;
             /** Id */
             id: string;
             /** Key */
@@ -4335,11 +5031,6 @@ export interface components {
             session_year?: string | null;
             /** @description Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature. */
             sender?: components["schemas"]["SenderDTO"] | null;
-            /**
-             * Dictum
-             * @description Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text.
-             */
-            dictum?: string | null;
             /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
@@ -4404,6 +5095,38 @@ export interface components {
              * @default false
              */
             is_explanatory: boolean;
+            /**
+             * Dictum
+             * @description Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text.
+             */
+            dictum?: string | null;
+            /**
+             * Explanation
+             * @description Of an amendment, what it is for: the first paragraph of its Toelichting, whole sentences up to 400 characters; null for any other paper and for an amendment without text.
+             */
+            explanation?: string | null;
+            /**
+             * Outcome
+             * @description How the Kamer decided on it: ``aangenomen``, ``verworpen`` (by its vote; the latest vote when there were several), ``ingetrokken``, ``aangehouden``, ``vervallen`` (a decision without a vote), else the status the page of a motion of the Eerste Kamer states; ``vervangen`` for a paper without one that a newer paper replaces (``replaced_by``); null while nothing was decided.
+             */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken" | "aangehouden" | "vervallen" | "vervangen") | null;
+            /**
+             * Decided On
+             * @description The date of the decision that gave ``outcome``.
+             */
+            decided_on?: string | null;
+            /**
+             * Tally
+             * @description The seats per choice of that vote (``{"Voor": 150}``, members on a roll call), as ``/api/decisions/{key}`` gives them; null without votes (a hamerstuk, a motion held).
+             */
+            tally?: {
+                [key: string]: number;
+            } | null;
+            /**
+             * Decision
+             * @description The key of that decision (``/api/decisions/{key}``); null without one.
+             */
+            decision?: string | null;
             /** Key */
             key: string;
             /** Document Id */
@@ -4435,11 +5158,6 @@ export interface components {
             file_url?: string | null;
             /** Text */
             text?: string | null;
-            /**
-             * Dictum
-             * @description Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text.
-             */
-            dictum?: string | null;
             /** Submitters */
             submitters?: components["schemas"]["SubmitterDTO"][];
             /** Dossier Numbers */
@@ -4450,6 +5168,11 @@ export interface components {
             explains?: components["schemas"]["ExplainedTargetDTO"][];
             /** Sections */
             sections?: components["schemas"]["SectionDTO"][];
+            /**
+             * Footnotes
+             * @description The footnotes, in their order, each with where its marker stands in `text`. A citation in one (a `REFERS_TO` edge whose `meta.place.part` is `footnote`) names it by `footnote_id`, its `start` and `end` offsets into its `text`.
+             */
+            footnotes?: components["schemas"]["DocumentFootnoteDTO"][];
             /**
              * Replaces
              * @description The papers this amended amendment or motion replaces ("ter vervanging van nr. 8", ``Zaak.VervangenVanuit``, ``REVISES`` with the rule ``vervanging``), by number; empty for most.
@@ -4721,7 +5444,8 @@ export interface components {
         };
         /**
          * DossierDocumentDTO
-         * @description One document linked to a dossier.
+         * @description One document linked to a dossier; of a motion or an amendment how it ended and what
+         *     it says in a line.
          */
         DossierDocumentDTO: {
             /**
@@ -4774,6 +5498,38 @@ export interface components {
             tk_url?: string | null;
             /** @description Who sent a Tweede Kamer paper (``SenderDTO``); null for an Eerste Kamer paper and a paper without a signature. */
             sender?: components["schemas"]["SenderDTO"] | null;
+            /**
+             * Dictum
+             * @description Of a motion, what it asks or says, as it writes it: the lines from ``verzoekt``, ``roept … op``, ``spreekt uit``, ``draagt … op`` or ``vraagt`` to ``en gaat over tot de orde van de dag``; null for any other paper and for a motion without text.
+             */
+            dictum?: string | null;
+            /**
+             * Explanation
+             * @description Of an amendment, what it is for: the first paragraph of its Toelichting, whole sentences up to 400 characters; null for any other paper and for an amendment without text.
+             */
+            explanation?: string | null;
+            /**
+             * Outcome
+             * @description How the Kamer decided on it: ``aangenomen``, ``verworpen`` (by its vote; the latest vote when there were several), ``ingetrokken``, ``aangehouden``, ``vervallen`` (a decision without a vote), else the status the page of a motion of the Eerste Kamer states; ``vervangen`` for a paper without one that a newer paper replaces (``replaced_by``); null while nothing was decided.
+             */
+            outcome?: ("aangenomen" | "verworpen" | "ingetrokken" | "aangehouden" | "vervallen" | "vervangen") | null;
+            /**
+             * Decided On
+             * @description The date of the decision that gave ``outcome``.
+             */
+            decided_on?: string | null;
+            /**
+             * Tally
+             * @description The seats per choice of that vote (``{"Voor": 150}``, members on a roll call), as ``/api/decisions/{key}`` gives them; null without votes (a hamerstuk, a motion held).
+             */
+            tally?: {
+                [key: string]: number;
+            } | null;
+            /**
+             * Decision
+             * @description The key of that decision (``/api/decisions/{key}``); null without one.
+             */
+            decision?: string | null;
             /** Display Name */
             display_name?: string | null;
             /**
@@ -4828,7 +5584,8 @@ export interface components {
          * @description An instrument a dossier is tied to, once, and every way it is.
          *
          *     ``links`` holds each ``relation`` (``legislated_in``: the instrument came out of this
-         *     dossier; ``amends``, ``introduces``, ``repeals``: the dossier changes it, resolved from
+         *     dossier; ``establishes``: a publication legislated in it enacted the regulation;
+         *     ``amends``, ``introduces``, ``repeals``: the dossier changes it, resolved from
          *     the article or instrument that is changed to the parent instrument) with its
          *     ``status`` (``canoniek`` for what an amending publication enacted, ``voorgesteld`` for
          *     what a bill of the dossier proposes). ``relation`` and ``status`` are the first link:
@@ -4857,7 +5614,7 @@ export interface components {
              * Relation
              * @enum {string}
              */
-            relation: "legislated_in" | "amends" | "introduces" | "repeals";
+            relation: "legislated_in" | "establishes" | "amends" | "introduces" | "repeals";
             /**
              * Status
              * @enum {string}
@@ -4875,7 +5632,7 @@ export interface components {
              * Relation
              * @enum {string}
              */
-            relation: "legislated_in" | "amends" | "introduces" | "repeals";
+            relation: "legislated_in" | "establishes" | "amends" | "introduces" | "repeals";
             /**
              * Status
              * @enum {string}
@@ -5254,6 +6011,77 @@ export interface components {
             order: string;
             /** Entries */
             entries: (components["schemas"]["TimelineDocumentEntry"] | components["schemas"]["TimelineActivityEntry"] | components["schemas"]["TimelineDecisionEntry"] | components["schemas"]["TimelineCommitmentEntry"])[];
+        };
+        /**
+         * EchrFindingDTO
+         * @description What the ECHR found on one article (``core/echr_findings.py``).
+         */
+        EchrFindingDTO: {
+            /**
+             * Article
+             * @description The article of the Convention: `8`.
+             */
+            article: string;
+            /**
+             * Protocol
+             * @description Of an article of a protocol, its number (`1`); else null.
+             */
+            protocol?: string | null;
+            /**
+             * Combined With
+             * @description The article it is taken together with (`8` of `13+8`).
+             */
+            combined_with?: string | null;
+            /**
+             * Finding
+             * @enum {string}
+             */
+            finding: "schending" | "geen schending";
+            /**
+             * Aspect
+             * @description The aspect, when HUDOC names one.
+             */
+            aspect?: ("materieel" | "procedureel") | null;
+            /**
+             * Text
+             * @description As HUDOC writes it: "No violation of Article 8 - …".
+             */
+            text: string;
+        };
+        /**
+         * EdgePassage
+         * @description A place where a judgment cites, as the edge keeps it: to show without the judgment.
+         */
+        EdgePassage: {
+            /**
+             * Paragraph Id
+             * @description The paragraph, as `paragraph_id` of `/api/judgments/{ecli}`; of a footnote the paragraph that refers to it.
+             */
+            paragraph_id: string;
+            /**
+             * Paragraph Number
+             * @description Its printed number (`5.3`), null when it has none.
+             */
+            paragraph_number: string | null;
+            /**
+             * Footnote
+             * @description The label of the footnote it stands in, null in the paragraph itself.
+             */
+            footnote: string | null;
+            /**
+             * Snippet
+             * @description The text around the citation.
+             */
+            snippet: string;
+            /**
+             * Text
+             * @description The citation as written: `snippet[start:end]`.
+             */
+            text: string;
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
         };
         /**
          * EdgeStatsDTO
@@ -5637,6 +6465,16 @@ export interface components {
              * @description The dossier the document is PART_OF (the lowest, if several).
              */
             dossier_number?: string | null;
+            /**
+             * Sequence
+             * @description Its number in its own dossier (nr. 3); null for none.
+             */
+            sequence?: number | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * FacetCountDTO
@@ -5843,6 +6681,81 @@ export interface components {
             readonly path: string | null;
         };
         /**
+         * FeedArticleDTO
+         * @description An article an event is tied to.
+         */
+        FeedArticleDTO: {
+            /** Key */
+            key: string;
+            /** Bwb Id */
+            bwb_id?: string | null;
+            /**
+             * Number
+             * @description Its number: ``3:2``.
+             */
+            number?: string | null;
+            /**
+             * Law
+             * @description The citation title of its law.
+             */
+            law?: string | null;
+            /**
+             * Law Short
+             * @description The abbreviation its law is cited by: ``Awb``; null without.
+             */
+            law_short?: string | null;
+            /**
+             * Effect
+             * @description Of an amendment: what it proposes to do with the article.
+             */
+            effect?: ("amends" | "introduces" | "repeals") | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * FeedBasisDTO
+         * @description The law a regulation is issued under: what its preamble ("Gelet op") names.
+         */
+        FeedBasisDTO: {
+            instrument: components["schemas"]["FeedInstrumentDTO"];
+            /**
+             * Kind
+             * @description The kind of the regulation itself, in lower case as ``/delegated`` gives it: ``amvb``, ``ministeriele-regeling``.
+             */
+            kind?: string | null;
+            /**
+             * Articles
+             * @description The article numbers of the law it names, in the order of the law.
+             */
+            articles?: string[];
+        };
+        /**
+         * FeedChangedInstrumentDTO
+         * @description A law a publication enacts or changes.
+         */
+        FeedChangedInstrumentDTO: {
+            /** Key */
+            key: string;
+            /** Title */
+            title?: string | null;
+            /** Official Url */
+            official_url?: string | null;
+            /**
+             * Effect
+             * @description ``establishes``: the publication enacted the law (the law names it as the publication that enacted it); ``amends``, ``introduces`` or ``repeals``: every change it makes in the law is of that kind (``AMENDS``, ``INTRODUCES``, ``REPEALS`` of its articles or of the law), ``amends`` where they are of more kinds.
+             * @enum {string}
+             */
+            effect: "establishes" | "amends" | "introduces" | "repeals";
+            /**
+             * Article Count
+             * @description The articles it changes, adds or repeals; of a law it enacts, the articles of the law.
+             */
+            article_count?: number | null;
+        };
+        /**
          * FeedCommencementDTO
          * @description An ``inwerkingtreding``: a new version of a law in force from ``date``.
          */
@@ -5859,6 +6772,21 @@ export interface components {
              * @default 0
              */
             changed_articles: number;
+            /**
+             * Articles
+             * @description Their numbers, in the order of the law; at most fifty.
+             */
+            articles?: string[];
+            /**
+             * New
+             * @description The law itself comes into force: the day is the one it came into force as enacted (its ``date_in_force``).
+             * @default false
+             */
+            new: boolean;
+            /** @description The publication most of those versions came from (their ``origin_publication``): of a new law the one that enacted it; null without. */
+            publication?: components["schemas"]["FeedPublicationRefDTO"] | null;
+            /** @description The law the regulation is issued under (``BASED_ON``), the one its preamble names most articles of; null for a law issued under none. */
+            based_on?: components["schemas"]["FeedBasisDTO"] | null;
         };
         /**
          * FeedCommitmentDTO
@@ -6101,6 +7029,35 @@ export interface components {
             commencement?: components["schemas"]["FeedCommencementDTO"] | null;
             judgment?: components["schemas"]["FeedJudgmentDTO"] | null;
             /**
+             * Matched
+             * @description With ``q``: per word the event holds, where it holds it; empty without ``q``.
+             */
+            matched?: components["schemas"]["FeedMatchDTO"][];
+            /** @description With ``instrument``: how the event is tied to the law; null without. */
+            via?: components["schemas"]["FeedViaDTO"] | null;
+            /**
+             * Answers
+             * @description Of a letter of the government: the motions and commitments it answers (``ANSWERS``); empty for the other kinds.
+             */
+            answers?: components["schemas"]["FeedLinkDTO"][];
+            /**
+             * Answered By
+             * @description Of a commitment: the letters that fulfil it (``ANSWERS``); empty for the other kinds.
+             */
+            answered_by?: components["schemas"]["FeedLinkDTO"][];
+            /**
+             * Amends Articles
+             * @description Of an amendment: the articles it proposes to change, add or repeal (``AMENDS``, ``INTRODUCES``, ``REPEALS``, ``voorgesteld``), in the order of their law; at most twenty.
+             */
+            amends_articles?: components["schemas"]["FeedArticleDTO"][];
+            /** @description Of a changed motion or amendment: the paper it replaces ("ter vervanging van nr. 19", ``REVISES``); null for the others. */
+            replaces?: components["schemas"]["FeedLinkDTO"] | null;
+            /**
+             * Cites
+             * @description Of a judgment: the articles it cites (``REFERS_TO``), the most mentioned first; at most five.
+             */
+            cites?: components["schemas"]["FeedArticleDTO"][];
+            /**
              * Path
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
@@ -6109,9 +7066,34 @@ export interface components {
         /**
          * FeedJudgmentDTO
          * @description An ``uitspraak``: a judgment or conclusion published on ``date`` (its ``Datum
-         *     publicatie``), of the highest courts unless a ``tier`` is asked for.
+         *     publicatie``), of the highest courts unless a ``tier`` is asked for; how it ended.
          */
         FeedJudgmentDTO: {
+            /**
+             * Outcome
+             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision).
+             */
+            outcome?: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "schending" | "geen schending") | null;
+            /**
+             * Outcome Text
+             * @description The clause that says it, as the decision writes it: "verwerpt het beroep", "vernietigt de aangevallen uitspraak"; of the ECHR the finding.
+             */
+            outcome_text?: string | null;
+            /**
+             * Conclusion Outcome
+             * @description Of a conclusion of the A-G or P-G, what it proposes (its strekking): `verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording` (of preliminary questions); null for a judgment and when the conclusion does not say it.
+             */
+            conclusion_outcome?: ("verwerping" | "vernietiging" | "vernietiging en verwijzing" | "niet-ontvankelijkverklaring" | "gegrondverklaring" | "ongegrondverklaring" | "beantwoording") | null;
+            /**
+             * Conclusion Outcome Text
+             * @description The sentence that says it: "De conclusie strekt tot verwerping van het cassatieberoep."
+             */
+            conclusion_outcome_text?: string | null;
+            /**
+             * Echr Findings
+             * @description Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment.
+             */
+            echr_findings?: components["schemas"]["EchrFindingDTO"][];
             /** Ecli */
             ecli?: string | null;
             /**
@@ -6153,6 +7135,63 @@ export interface components {
              * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
              */
             readonly path: string | null;
+        };
+        /**
+         * FeedLinkDTO
+         * @description A paper or a commitment an event is tied to.
+         */
+        FeedLinkDTO: {
+            /**
+             * Id
+             * @description ``collection/key`` of its node.
+             */
+            id: string;
+            /**
+             * Kind
+             * @description Of a paper its ``Document.Soort`` (``Motie (gewijzigd/nader)``); ``toezegging`` for a commitment.
+             */
+            kind?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Date */
+            date?: string | null;
+            /**
+             * Number
+             * @description Of a paper its nr. in its dossier (``31``), of a commitment its number (``TZ202609-124``).
+             */
+            number?: string | null;
+            /**
+             * Dossier
+             * @description Of a paper the label of its own dossier (``36764``).
+             */
+            dossier?: string | null;
+            /**
+             * Surname
+             * @description Of a paper its first signatory: ``Kathmann``.
+             */
+            surname?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
+        };
+        /**
+         * FeedMatchDTO
+         * @description Where an event holds a word of ``q``.
+         */
+        FeedMatchDTO: {
+            /**
+             * Term
+             * @description The word of ``q``, as it was asked.
+             */
+            term: string;
+            /**
+             * Field
+             * @description ``title``: the title of the event (of a bill its own, which may not be the ``title`` the item shows: that of its dossier); ``dossier_title``: the whole title of its first dossier; ``laws``: of a publication, the names of the laws it enacts or changes (the official title of a law it enacts too). The first of these that holds it.
+             * @enum {string}
+             */
+            field: "title" | "dossier_title" | "laws";
         };
         /**
          * FeedNodeDTO
@@ -6277,9 +7316,31 @@ export interface components {
             number?: string | null;
             /**
              * Instruments
-             * @description The laws it amends, introduces or repeals (or articles of), by title; at most ten.
+             * @description The laws it enacts, then those it amends, introduces or repeals (or articles of), by title; at most ten.
              */
-            instruments?: components["schemas"]["FeedInstrumentDTO"][];
+            instruments?: components["schemas"]["FeedChangedInstrumentDTO"][];
+        };
+        /**
+         * FeedPublicationRefDTO
+         * @description The publication a new version of a law came from.
+         */
+        FeedPublicationRefDTO: {
+            /**
+             * Key
+             * @description Its node key (``stb_2026_187``); null when it is not in the data.
+             */
+            key?: string | null;
+            /** Series */
+            series?: ("stb" | "stcrt" | "trb") | null;
+            /** Year */
+            year?: number | null;
+            /** Number */
+            number?: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /** FeedResponse */
         FeedResponse: {
@@ -6350,6 +7411,28 @@ export interface components {
             data_as_of?: {
                 [key: string]: components["schemas"]["DataAsOfDTO"];
             };
+        };
+        /**
+         * FeedViaDTO
+         * @description How an event is tied to the law ``instrument`` (and ``article``) follows.
+         */
+        FeedViaDTO: {
+            /**
+             * Relation
+             * @description Of a publication: it ``establishes`` the law, or ``amends``, ``introduces`` or ``repeals`` articles of it; of a paper: it ``proposes`` to change it; of a new version: of the law itself (``version_of``) or of a regulation ``based_on`` it; of a judgment: it ``refers_to`` it; of an event of a dossier (``dossier``): the law or a publication of it was ``legislated_in`` that dossier, or a paper of it ``proposes`` to change the law.
+             * @enum {string}
+             */
+            relation: "establishes" | "amends" | "introduces" | "repeals" | "proposes" | "version_of" | "based_on" | "refers_to" | "legislated_in";
+            /**
+             * Article
+             * @description The number of the article of the law it touches, the first in the order of the law; null where it is tied to the law as a whole or by a dossier.
+             */
+            article?: string | null;
+            /**
+             * Dossier
+             * @description The label of the dossier it is tied by; null for the others.
+             */
+            dossier?: string | null;
         };
         /** FeedVoteCountDTO */
         FeedVoteCountDTO: {
@@ -6600,6 +7683,52 @@ export interface components {
             busy?: components["schemas"]["BusyCallDTO"][];
         };
         /**
+         * ImplementedBasisArticleDTO
+         * @description An article a regulation is issued under, with the articles of the regulation that
+         *     refer to it: those that work it out.
+         */
+        ImplementedBasisArticleDTO: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Article Number */
+            article_number: string | null;
+            /** Display Name */
+            display_name: string | null;
+            /**
+             * Text
+             * @description The reference in the preamble: `16, eerste en zevende lid`; a range names each of its articles: `26 tot en met 30`.
+             */
+            text: string | null;
+            /**
+             * Basis Kind
+             * @description `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, "bij besluit van", "kan regels stellen"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text).
+             */
+            basis_kind?: ("delegates" | "mentioned") | null;
+            /**
+             * Referring
+             * @description The articles in force of the regulation that refer to it, in the order of the regulation, each with the parts of it they name.
+             */
+            referring?: components["schemas"]["DelegatedArticleDTO"][];
+        };
+        /**
          * ImplementingMeasureDTO
          * @description A national implementing measure as EUR-Lex lists it for the EU act: the publication
          *     through which the instrument implements it (the law that changed the Awb to implement a
@@ -6821,6 +7950,46 @@ export interface components {
             items: components["schemas"]["InstrumentArticleNodeDTO"][];
         };
         /**
+         * InstrumentBasisItem
+         * @description A law a regulation is issued under, with the articles its preamble names.
+         */
+        InstrumentBasisItem: {
+            instrument: components["schemas"]["InstrumentSummaryDTO"];
+            /**
+             * Kind
+             * @description Its BWB type, lower case.
+             */
+            kind: string | null;
+            /**
+             * Basis Kind
+             * @description `delegates` when one of `articles` does; `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, "bij besluit van", "kan regels stellen"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text).
+             */
+            basis_kind?: ("delegates" | "mentioned") | null;
+            /**
+             * Articles
+             * @description The articles in force of the law its preamble names, in the order of the law, each with the articles of the regulation that refer to it (`referring`).
+             */
+            articles: components["schemas"]["ImplementedBasisArticleDTO"][];
+        };
+        /**
+         * InstrumentBasisResponse
+         * @description Response for GET /api/instruments/{bwb_id}/basis.
+         */
+        InstrumentBasisResponse: {
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
+            bwb_id: string;
+            /** Total */
+            total: number;
+            /**
+             * Items
+             * @description Every law its preamble names an article in force of, by title.
+             */
+            items?: components["schemas"]["InstrumentBasisItem"][];
+        };
+        /**
          * InstrumentDefinitionsResponse
          * @description The definitions an instrument gives itself.
          */
@@ -6847,10 +8016,25 @@ export interface components {
              */
             date_in_force?: string | null;
             /**
-             * Articles
-             * @description The articles of the law it is issued under, in the order of the law.
+             * Basis Kind
+             * @description `delegates` when one of `articles` does: the law gives the power it is made under; `mentioned` when it only names them ("Genoemd in de aanhef van"); null when not known.
              */
-            articles: components["schemas"]["BasisArticleDTO"][];
+            basis_kind?: ("delegates" | "mentioned") | null;
+            /**
+             * Articles
+             * @description The articles of the law it is issued under, in the order of the law, each with its articles that work it out (`referring`).
+             */
+            articles: components["schemas"]["ImplementedBasisArticleDTO"][];
+            /**
+             * Also Based On
+             * @description The other laws its preamble names (its co-bases), by title, each with the articles in force it names.
+             */
+            also_based_on?: components["schemas"]["BasisLawDTO"][];
+            /**
+             * Sub Delegated
+             * @description The regulations in force issued under its articles in turn, one level down (not one issued under this law itself: an item of its own); AMvBs first, then by title.
+             */
+            sub_delegated?: components["schemas"]["SubDelegatedDTO"][];
         };
         /**
          * InstrumentDelegatedResponse
@@ -7201,9 +8385,34 @@ export interface components {
         };
         /**
          * InstrumentJudgmentItem
-         * @description One judgment that cites this instrument.
+         * @description One judgment that cites this instrument, with how it ended.
          */
         InstrumentJudgmentItem: {
+            /**
+             * Outcome
+             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision).
+             */
+            outcome?: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "schending" | "geen schending") | null;
+            /**
+             * Outcome Text
+             * @description The clause that says it, as the decision writes it: "verwerpt het beroep", "vernietigt de aangevallen uitspraak"; of the ECHR the finding.
+             */
+            outcome_text?: string | null;
+            /**
+             * Conclusion Outcome
+             * @description Of a conclusion of the A-G or P-G, what it proposes (its strekking): `verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording` (of preliminary questions); null for a judgment and when the conclusion does not say it.
+             */
+            conclusion_outcome?: ("verwerping" | "vernietiging" | "vernietiging en verwijzing" | "niet-ontvankelijkverklaring" | "gegrondverklaring" | "ongegrondverklaring" | "beantwoording") | null;
+            /**
+             * Conclusion Outcome Text
+             * @description The sentence that says it: "De conclusie strekt tot verwerping van het cassatieberoep."
+             */
+            conclusion_outcome_text?: string | null;
+            /**
+             * Echr Findings
+             * @description Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment.
+             */
+            echr_findings?: components["schemas"]["EchrFindingDTO"][];
             /**
              * Id
              * @description ArangoDB document _id, e.g. ``judgments/ecli_nl_hr_2014_1496``.
@@ -7353,6 +8562,106 @@ export interface components {
             facets?: components["schemas"]["InstrumentFacets"] | null;
         };
         /**
+         * InstrumentReferenceArticleDTO
+         * @description An article at one end of a reference between two instruments.
+         */
+        InstrumentReferenceArticleDTO: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Bwb Id */
+            bwb_id?: string | null;
+            /** Celex */
+            celex?: string | null;
+            /** Article Number */
+            article_number: string | null;
+            /** Display Name */
+            display_name: string | null;
+        };
+        /**
+         * InstrumentReferenceDTO
+         * @description A reference from an article of one instrument to an article of the other, with the
+         *     parts of the article referred to it names.
+         */
+        InstrumentReferenceDTO: {
+            /**
+             * Leden
+             * @description Numbers of the leden named (`['1', '2']`), ranges written out.
+             */
+            leden?: string[];
+            /**
+             * Onderdelen
+             * @description Letters or numbers of the onderdelen named (`['a']`, `['2']`).
+             */
+            onderdelen?: string[];
+            /**
+             * Aanhef
+             * @description Whether the aanhef is named.
+             * @default false
+             */
+            aanhef: boolean;
+            /**
+             * Direction
+             * @description `outbound`: an article of the instrument asked for refers to one of the other; `inbound`: the other way.
+             * @enum {string}
+             */
+            direction: "outbound" | "inbound";
+            /** @description The article that refers. */
+            source: components["schemas"]["InstrumentReferenceArticleDTO"];
+            /** @description The article it refers to. */
+            target: components["schemas"]["InstrumentReferenceArticleDTO"];
+            /**
+             * Text
+             * @description The words of the reference: `artikel 16, eerste lid, van de wet`.
+             */
+            text?: string | null;
+            /**
+             * Semantic Type
+             * @description What the reference does (`definitional_reference`, …).
+             */
+            semantic_type?: string | null;
+        };
+        /**
+         * InstrumentReferencesResponse
+         * @description Response for GET /api/instruments/{bwb_id}/references/{other}.
+         */
+        InstrumentReferencesResponse: {
+            /**
+             * Bwb Id
+             * @description The instrument as requested: its BWB id, or its CELEX number for an EU act.
+             */
+            bwb_id: string;
+            /**
+             * Other
+             * @description The other instrument, as requested.
+             */
+            other: string;
+            /** Total */
+            total: number;
+            /** Items */
+            items?: components["schemas"]["InstrumentReferenceDTO"][];
+        };
+        /**
+         * InstrumentRelatedBasisDTO
+         * @description How a related instrument and the law are one of a delegation.
+         */
+        InstrumentRelatedBasisDTO: {
+            /**
+             * Direction
+             * @description `inbound`: it is issued under articles of this law (its preamble names them); `outbound`: this law is issued under articles of it; `via`: it is issued under articles of the regulation `via`, which is issued under this law.
+             * @enum {string}
+             */
+            direction: "inbound" | "outbound" | "via";
+            /** @description With `via`: the regulation it is issued under. */
+            via?: components["schemas"]["InstrumentSummaryDTO"] | null;
+            /**
+             * Articles
+             * @description The articles in force its preamble names (of this law, of it, or of `via`), in the order of their law.
+             */
+            articles: components["schemas"]["BasisArticleDTO"][];
+        };
+        /**
          * InstrumentRelatedItem
          * @description One other instrument linked via cross-article REFERS_TO edges.
          */
@@ -7370,15 +8679,49 @@ export interface components {
             /** Citation Title */
             citation_title?: string | null;
             /**
+             * Kind
+             * @description Its kind: BWB type lower case (`amvb`, `wet`), or EU type.
+             */
+            kind?: string | null;
+            /**
+             * Date In Force
+             * @description When it entered into force itself.
+             */
+            date_in_force?: string | null;
+            /**
+             * Direction
+             * @description Which refers to which: `inbound` its articles refer to this law, `outbound` articles of this law refer to it, `both`.
+             * @enum {string}
+             */
+            direction: "inbound" | "outbound" | "both";
+            /**
              * Outbound Count
-             * @description Number of REFERS_TO edges from articles of the focal instrument to articles of this related instrument.
+             * @description Articles in force of this law that refer to articles of it.
              */
             outbound_count: number;
             /**
+             * Outbound Cited Count
+             * @description Its articles in force that those refer to.
+             */
+            outbound_cited_count: number;
+            /**
              * Inbound Count
-             * @description Mirror of ``outbound_count`` in the opposite direction.
+             * @description Its articles in force that refer to articles of this law.
              */
             inbound_count: number;
+            /**
+             * Inbound Cited Count
+             * @description Articles in force of this law that those refer to.
+             */
+            inbound_cited_count: number;
+            /**
+             * Based On
+             * @description Whether the two are one of a delegation as well: see `basis`.
+             * @default false
+             */
+            based_on: boolean;
+            /** @description How it and this law are one of a delegation (`BASED_ON`, the preamble of a regulation); null when they are not. */
+            basis?: components["schemas"]["InstrumentRelatedBasisDTO"] | null;
         };
         /**
          * InstrumentRelatedResponse
@@ -7569,6 +8912,54 @@ export interface components {
          */
         JudgmentCitedArticle: {
             /**
+             * Paragraph Ids
+             * @description The paragraphs that cite it, in reading order (a citation in a footnote counts for the paragraph that refers to the footnote).
+             */
+            paragraph_ids?: string[];
+            /**
+             * Paragraph Numbers
+             * @description Their printed numbers (`5.3`), those that have one.
+             */
+            paragraph_numbers?: string[];
+            /**
+             * Snippet
+             * @description The text around the strongest mention.
+             */
+            snippet?: string | null;
+            /**
+             * Snippet Paragraph Id
+             * @description The paragraph the snippet is from (for a citation in a footnote, the paragraph that refers to the footnote; the snippet is then of the footnote).
+             */
+            snippet_paragraph_id?: string | null;
+            /**
+             * Footnote
+             * @description The `label` of the footnote (`judgment.footnotes`) the snippet is from; null when it is from the paragraph itself.
+             */
+            footnote?: string | null;
+            /**
+             * Text
+             * @description The citation as written in the strongest mention: `artikel 12 van de CBW`, `ECLI:NL:HR:1988:AD5713`.
+             */
+            text?: string | null;
+            /**
+             * Start
+             * @description Offset of `text` in `snippet`: `snippet[start:end]` is `text`, where the linker found it. Null when the judgment was normalized again since it was linked.
+             */
+            start?: number | null;
+            /** End */
+            end?: number | null;
+            /**
+             * Confidence
+             * @description The confidence of the strongest mention.
+             */
+            confidence?: number | null;
+            /**
+             * Mention Count
+             * @description How often the judgment cites it. The paragraphs cover the first 100; a judgment that cites more often is counted in full.
+             * @default 0
+             */
+            mention_count: number;
+            /**
              * Leden
              * @description Numbers of the leden named (`['1', '2']`), ranges written out.
              */
@@ -7590,9 +8981,15 @@ export interface components {
              * @description The qualifier as the judgment wrote it, `derde lid`, of the strongest mention. `leden`, `onderdelen` and `aanhef` (this class) are what it names.
              */
             qualifier?: string | null;
+        };
+        /**
+         * JudgmentCitedJudgment
+         * @description A judgment this one cites (by ECLI, LJN or application number), with where.
+         */
+        JudgmentCitedJudgment: {
             /**
              * Paragraph Ids
-             * @description The paragraphs that cite the article, in reading order.
+             * @description The paragraphs that cite it, in reading order (a citation in a footnote counts for the paragraph that refers to the footnote).
              */
             paragraph_ids?: string[];
             /**
@@ -7611,8 +9008,13 @@ export interface components {
              */
             snippet_paragraph_id?: string | null;
             /**
+             * Footnote
+             * @description The `label` of the footnote (`judgment.footnotes`) the snippet is from; null when it is from the paragraph itself.
+             */
+            footnote?: string | null;
+            /**
              * Text
-             * @description The citation as written in the strongest mention: `artikel 12 van de CBW`.
+             * @description The citation as written in the strongest mention: `artikel 12 van de CBW`, `ECLI:NL:HR:1988:AD5713`.
              */
             text?: string | null;
             /**
@@ -7629,10 +9031,23 @@ export interface components {
             confidence?: number | null;
             /**
              * Mention Count
-             * @description How often the judgment cites the article. The paragraphs cover the first 100; a judgment that cites an article more often is counted in full.
+             * @description How often the judgment cites it. The paragraphs cover the first 100; a judgment that cites more often is counted in full.
              * @default 0
              */
             mention_count: number;
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Display Name */
+            display_name: string | null;
+            /** Ecli */
+            ecli: string | null;
+            /**
+             * Path
+             * @description Its readable address (``/wetten/BWBR0005289/artikel/6:162``); null for a source without one, or when the answer lacks what makes it.
+             */
+            readonly path: string | null;
         };
         /**
          * JudgmentConclusionDTO
@@ -7653,6 +9068,16 @@ export interface components {
             role?: string | null;
             /** Date */
             date?: string | null;
+            /**
+             * Outcome
+             * @description What it proposes (``conclusion_outcome`` of the conclusion): ``verwerping``, ``vernietiging``, …; null when it does not say it.
+             */
+            outcome?: ("verwerping" | "vernietiging" | "vernietiging en verwijzing" | "niet-ontvankelijkverklaring" | "gegrondverklaring" | "ongegrondverklaring" | "beantwoording") | null;
+            /**
+             * Outcome Text
+             * @description The sentence that says it (``conclusion_outcome_text``).
+             */
+            outcome_text?: string | null;
         };
         /**
          * JudgmentCoverageResponse
@@ -7712,6 +9137,41 @@ export interface components {
             props: {
                 [key: string]: unknown;
             } | null;
+            /**
+             * Outcome
+             * @description How it ended, from the first clause of its decision (Beslissing, Dictum): `verworpen` (verwerpt het beroep), `vernietigd`, `gedeeltelijk vernietigd`, `vernietigd en verwezen`, `bekrachtigd`, `bevestigd`, `gegrond`, `ongegrond`, `niet-ontvankelijk`, `afgewezen`, `toegewezen`; of the ECHR `schending` (a violation found) or `geen schending`. Null for a conclusion, and when the decision does not say one of them first (a conviction, an interim decision).
+             */
+            outcome?: ("verworpen" | "vernietigd" | "gedeeltelijk vernietigd" | "vernietigd en verwezen" | "bekrachtigd" | "bevestigd" | "gegrond" | "ongegrond" | "niet-ontvankelijk" | "afgewezen" | "toegewezen" | "schending" | "geen schending") | null;
+            /**
+             * Outcome Text
+             * @description The clause that says it, as the decision writes it: "verwerpt het beroep", "vernietigt de aangevallen uitspraak"; of the ECHR the finding.
+             */
+            outcome_text?: string | null;
+            /**
+             * Conclusion Outcome
+             * @description Of a conclusion of the A-G or P-G, what it proposes (its strekking): `verwerping`, `vernietiging`, `vernietiging en verwijzing`, `niet-ontvankelijkverklaring`, `gegrondverklaring`, `ongegrondverklaring`, `beantwoording` (of preliminary questions); null for a judgment and when the conclusion does not say it.
+             */
+            conclusion_outcome?: ("verwerping" | "vernietiging" | "vernietiging en verwijzing" | "niet-ontvankelijkverklaring" | "gegrondverklaring" | "ongegrondverklaring" | "beantwoording") | null;
+            /**
+             * Conclusion Outcome Text
+             * @description The sentence that says it: "De conclusie strekt tot verwerping van het cassatieberoep."
+             */
+            conclusion_outcome_text?: string | null;
+            /**
+             * Echr Findings
+             * @description Of the ECHR, what it found per article, in the order of HUDOC; empty for any other judgment.
+             */
+            echr_findings?: components["schemas"]["EchrFindingDTO"][];
+            /**
+             * Outcome Paragraph Id
+             * @description The paragraph of `outcome_text` (`paragraph_id` of `paragraphs`).
+             */
+            outcome_paragraph_id?: string | null;
+            /**
+             * Conclusion Outcome Paragraph Id
+             * @description The paragraph of `conclusion_outcome_text`.
+             */
+            conclusion_outcome_paragraph_id?: string | null;
             /** Ecli */
             ecli: string | null;
             /** Source */
@@ -7794,6 +9254,11 @@ export interface components {
             /** Paragraphs */
             paragraphs?: components["schemas"]["JudgmentParagraph"][];
             /**
+             * Footnotes
+             * @description The footnotes of the text, which are no paragraph, in their order. A citation in one is a span in its `citations`, and names it on the edge by `footnote` (its `label`), its `paragraph_id` the paragraph that refers to it.
+             */
+            footnotes?: components["schemas"]["JudgmentFootnote"][];
+            /**
              * Parties
              * @description The parties the kop of the judgment names, in its order. Null when the judgment was normalized before parties were read; empty when the kop names none.
              */
@@ -7819,9 +9284,9 @@ export interface components {
             cited_articles?: components["schemas"]["JudgmentCitedArticle"][];
             /**
              * Cited Judgments
-             * @description The judgments its text cites by ECLI (`REFERS_TO`), newest first; not the earlier instances or the conclusion its metadata names.
+             * @description The judgments its text cites by ECLI, LJN or application number (`REFERS_TO`), newest first, each with the places that cite it as `cited_articles` has them; not the earlier instances or the conclusion its metadata names.
              */
-            cited_judgments?: components["schemas"]["JudgmentSummaryDTO"][];
+            cited_judgments?: components["schemas"]["JudgmentCitedJudgment"][];
             /**
              * Same As
              * @description The other publications of the same decision (`SAME_AS`): for the one kept those it replaces, for a replaced one the one kept. Empty for most.
@@ -7897,6 +9362,34 @@ export interface components {
              * @description Per procedure (Rechtspraak `psi:procedure`, as written: `Hoger beroep`, `Cassatie`; null when it gives none), most first; counted without the `procedure` filter.
              */
             procedure?: components["schemas"]["JudgmentFacetCount"][];
+        };
+        /**
+         * JudgmentFootnote
+         * @description A footnote of a judgment, with the citations in it.
+         */
+        JudgmentFootnote: {
+            /**
+             * Label
+             * @description As printed: `12`; its place among the footnotes (`3`) when it has none.
+             */
+            label: string;
+            /**
+             * Paragraph Id
+             * @description The paragraph whose footnote marker points to it; null when none does.
+             */
+            paragraph_id?: string | null;
+            /**
+             * At
+             * @description Where that marker stands in the text of the paragraph: its `text[:at]` are the words before it. Null when none does, and for a judgment read before markers were kept.
+             */
+            at?: number | null;
+            /** Text */
+            text: string;
+            /**
+             * Citations
+             * @description Every citation in `text` of an article or a judgment, one per occurrence, with its span (`text[start:end]`).
+             */
+            citations?: components["schemas"]["ArticleCitationSpan"][];
         };
         /**
          * JudgmentListItemDTO
@@ -8009,13 +9502,13 @@ export interface components {
             text: string;
             /**
              * Citations
-             * @description Every citation of an article in `text`, one per occurrence, with its span (`text[start:end]`).
+             * @description Every citation of an article or a judgment in `text`, one per occurrence, with its span (`text[start:end]`); `target.collection` says which.
              */
             citations?: components["schemas"]["ArticleCitationSpan"][];
         };
         /**
          * JudgmentParty
-         * @description A party of a judgment, read from its kop.
+         * @description A party of a judgment, read from its kop and its account of the procedure.
          */
         JudgmentParty: {
             /**
@@ -8054,19 +9547,31 @@ export interface components {
         };
         /**
          * JudgmentRepresentative
-         * @description Who acts for a party, as the kop names them ("advocaat: mr. X").
+         * @description Who acts for a party, as the kop ("advocaat: mr. X") or the account of the procedure
+         *     ("bijgestaan door mr. X, advocaat te Y") names them.
          */
         JudgmentRepresentative: {
             /**
              * Name
-             * @description As written: `mr. H.J.W. Alt`.
+             * @description As written, titles and all: `mr. drs. R. van Gelder`, `mr. R. van der Meulen MPM`.
              */
             name: string;
             /**
              * Role
+             * @description The word the judgment gives: `advocaat`; `raadsman` of a suspect, in a criminal case only; `gemachtigde` for whoever represents a party ("vertegenwoordigd door") without being called its advocaat.
              * @enum {string}
              */
-            role: "advocaat" | "gemachtigde";
+            role: "advocaat" | "gemachtigde" | "raadsman";
+            /**
+             * Place
+             * @description Where they practise, as written: `Voorschoten` for "advocaat te Voorschoten". Null when the judgment gives none.
+             */
+            place?: string | null;
+            /**
+             * Capacity
+             * @description What else the judgment calls them: `ambtenaar in dienst van de provincie`, `rechtsbijstandverlener`. Null when it gives nothing but the role.
+             */
+            capacity?: string | null;
         };
         /**
          * JudgmentSummaryDTO
@@ -8221,9 +9726,10 @@ export interface components {
             kind?: string | null;
             /**
              * Change
+             * @description `establishes`: the publication that enacted the regulation set the article; else the change it made or a bill proposes.
              * @enum {string}
              */
-            change: "amends" | "introduces" | "repeals";
+            change: "establishes" | "amends" | "introduces" | "repeals";
             /**
              * Status
              * @description `canoniek` (enacted) or `voorgesteld` (proposed).
@@ -8277,7 +9783,7 @@ export interface components {
             collection: string;
             /**
              * Kind
-             * @description What the node is: `document`, `dossier`, `article`, `annex`, `instrument`, `judgment`, `commitment`, `case`, `faction`, `committee`, `cabinet`.
+             * @description What the node is: `document`, `dossier`, `article`, `annex`, `instrument`, `judgment`, `commitment`, `case`, `activity`, `faction`, `committee`, `cabinet`.
              */
             kind: string;
             /** Display Name */
@@ -8295,7 +9801,7 @@ export interface components {
             stub: boolean;
             /**
              * Props
-             * @description The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `bwb_id` and `label` of an annex; `number` of a zaak; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication.
+             * @description The props a URL is built back from, those the node has: `ecli`; `bwb_id` or `celex` with `article_number`; `bwb_id` and `label` of an annex; `number` of a zaak or an activity; `dossier_number`, `dossier_suffix`, `sequence` (a paper of the Tweede Kamer) or `number` (the letter of one of the Eerste Kamer); `number` and `suffix` of a dossier; `official_id` or `identifier` (the id of officielebekendmakingen.nl); `replaced_by` and `same_as` of a replaced publication.
              */
             props?: {
                 [key: string]: unknown;
@@ -8886,6 +10392,11 @@ export interface components {
             confidence?: number | null;
             /** Status */
             status?: string | null;
+            /**
+             * Passages
+             * @description With `edge_meta=passages`: where a judgment cites the article or the judgment the edge reaches (absent otherwise, and for an edge without them).
+             */
+            passages?: components["schemas"]["EdgePassage"][] | null;
         };
         /**
          * NodeNeighborhoodResponse
@@ -9093,12 +10604,12 @@ export interface components {
             match_type: string;
             /**
              * Changed
-             * @description Whether the dossier changed the article, which corroborates the match; a heading naming an article the dossier left alone is often of another law. Null for a link made before this was recorded.
+             * @description Whether the dossier changed the article, or established it as an article of the law it made, which corroborates the match; a heading naming an article the dossier left alone is often of another law. Null for a link made before this was recorded.
              */
             changed?: boolean | null;
             /**
              * Explanation
-             * @description What the match rests on, in Dutch: the heading, and whether the dossier changed the article.
+             * @description What the match rests on, in Dutch: the heading, and whether the dossier changed the article or established it.
              */
             explanation?: string | null;
         };
@@ -9823,6 +11334,33 @@ export interface components {
             data_as_of?: {
                 [key: string]: components["schemas"]["DataAsOfDTO"];
             };
+        };
+        /**
+         * SubDelegatedDTO
+         * @description A regulation issued under articles of a regulation, one level down.
+         */
+        SubDelegatedDTO: {
+            instrument: components["schemas"]["InstrumentSummaryDTO"];
+            /**
+             * Kind
+             * @description Its BWB type, lower case.
+             */
+            kind: string | null;
+            /**
+             * Date In Force
+             * @description When the regulation itself entered into force.
+             */
+            date_in_force?: string | null;
+            /**
+             * Basis Kind
+             * @description `delegates` when one of `articles` does; `delegates`: the leden named (none: the whole article) give the power the regulation is made under (a delegation formula, "bij besluit van", "kan regels stellen"); `mentioned`: the article is only named in the preamble (Awb 3:4 by a policy rule); null: not known (an article without text).
+             */
+            basis_kind?: ("delegates" | "mentioned") | null;
+            /**
+             * Articles
+             * @description The articles of the regulation above it its preamble names, in the order of that regulation.
+             */
+            articles: components["schemas"]["BasisArticleDTO"][];
         };
         /**
          * SubjectAreaFacetCount
@@ -11312,6 +12850,38 @@ export interface operations {
             };
         };
     };
+    get_instrument_references_route_api_instruments__bwb_id__references__other__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+                other: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentReferencesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_instrument_delegated_route_api_instruments__bwb_id__delegated_get: {
         parameters: {
             query?: never;
@@ -11330,6 +12900,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstrumentDelegatedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_instrument_basis_route_api_instruments__bwb_id__basis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bwb_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentBasisResponse"];
                 };
             };
             /** @description Validation Error */
@@ -11486,6 +13087,8 @@ export interface operations {
                 offset?: number;
                 /** @description `canvas`: of a neighbour only the props the canvas of the explorer draws, per collection, and of its edge only the `meta` it reads (null when none); `full` (the default) every prop but the text */
                 props?: "full" | "canvas";
+                /** @description `passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none. */
+                edge_meta?: "light" | "passages";
                 /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
                 relations?: string | null;
                 /** @description Comma-separated node types to keep (`article,judgment`). */
@@ -11532,6 +13135,8 @@ export interface operations {
                 cap?: number;
                 /** @description `canvas`: of a node but the focal one only the props the canvas of the explorer draws, per collection, as the neighbours of a node with `props=canvas`; `full` (the default) every prop a neighbour carries */
                 props?: "full" | "canvas";
+                /** @description `passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none. */
+                edge_meta?: "light" | "passages";
                 /** @description Comma-separated relations to keep (`REFERS_TO,PART_OF`). */
                 relations?: string | null;
                 /** @description Comma-separated node types to keep (`article,judgment`). */
@@ -12461,6 +14066,68 @@ export interface operations {
             };
         };
     };
+    get_activity_detail_api_activities__key__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_activity_records_route_api_activities__key__records_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityRecordsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_party_colors_api_parties_colors_get: {
         parameters: {
             query?: never;
@@ -12976,7 +14643,7 @@ export interface operations {
                 member?: string | null;
                 /** @description Faction key: what its Kamerleden signed for it. */
                 faction?: string | null;
-                /** @description Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them. */
+                /** @description Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them. */
                 q?: string[] | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
@@ -12984,6 +14651,10 @@ export interface operations {
                 coalition?: ("together" | "split" | "wissel" | "decisive") | null;
                 /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
                 tier?: string | null;
+                /** @description A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it. */
+                instrument?: string | null;
+                /** @description With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment. */
+                article?: string | null;
             };
             header?: never;
             path?: never;
@@ -13035,7 +14706,7 @@ export interface operations {
                 member?: string | null;
                 /** @description Faction key: what its Kamerleden signed for it. */
                 faction?: string | null;
-                /** @description Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them. */
+                /** @description Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them. */
                 q?: string[] | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
@@ -13043,6 +14714,10 @@ export interface operations {
                 coalition?: ("together" | "split" | "wissel" | "decisive") | null;
                 /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
                 tier?: string | null;
+                /** @description A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it. */
+                instrument?: string | null;
+                /** @description With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment. */
+                article?: string | null;
             };
             header?: never;
             path?: never;
@@ -13089,7 +14764,7 @@ export interface operations {
                 member?: string | null;
                 /** @description Faction key: what its Kamerleden signed for it. */
                 faction?: string | null;
-                /** @description Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them. */
+                /** @description Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them. */
                 q?: string[] | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
@@ -13097,6 +14772,10 @@ export interface operations {
                 coalition?: ("together" | "split" | "wissel" | "decisive") | null;
                 /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
                 tier?: string | null;
+                /** @description A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it. */
+                instrument?: string | null;
+                /** @description With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment. */
+                article?: string | null;
             };
             header?: never;
             path?: never;
@@ -13138,6 +14817,8 @@ export interface operations {
                 expand?: "none" | "members";
                 /** @description The children of a group, at most. */
                 expand_cap?: number;
+                /** @description `passages`: an edge that keeps where a judgment cites (its `meta.mentions`) has its passages (`paragraph_id`, `paragraph_number`, `footnote`, `snippet`, `text`, `start`, `end`: `snippet[start:end]` is `text`), the first place in each of its first three paragraphs; `light` (the default) none. */
+                edge_meta?: "light" | "passages";
             };
             header?: never;
             path?: never;
@@ -13168,7 +14849,7 @@ export interface operations {
     get_lookup_api_lookup_get: {
         parameters: {
             query: {
-                kind: "document" | "dossier" | "article" | "annex" | "law" | "judgment" | "publication" | "official" | "commitment" | "case" | "faction" | "committee" | "cabinet" | "member";
+                kind: "document" | "dossier" | "article" | "annex" | "law" | "judgment" | "publication" | "official" | "commitment" | "case" | "activity" | "faction" | "committee" | "cabinet" | "member";
                 dossier?: string | null;
                 number?: string | null;
                 law?: string | null;
@@ -13225,7 +14906,7 @@ export interface operations {
                 member?: string | null;
                 /** @description Faction key: what its Kamerleden signed for it. */
                 faction?: string | null;
-                /** @description Words of the title, or of the title of the event's dossier, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them. */
+                /** @description Words of the title, or of the title of the event's dossier, or of a publication the names of the laws it enacts or changes, in any case: each from the start of a word, one of at most four characters as a whole word. Repeat it (at most 10 times, each 200 characters at most) for events that hold any of them; ``matched`` says where each item holds them. */
                 q?: string[] | null;
                 /** @description ``EK``: the votes of the Eerste Kamer; ``TK``: the events of the Tweede Kamer (its papers, votes and commitments). Publications and commencements belong to neither. */
                 chamber?: ("TK" | "EK") | null;
@@ -13233,6 +14914,10 @@ export interface operations {
                 coalition?: ("together" | "split" | "wissel" | "decisive") | null;
                 /** @description Comma-separated tiers of the judgments (as in ``/api/judgments``): keeps judgments alone. Without it the feed's judgments are those of hoge_raad, raad_van_state, centrale_raad_van_beroep, college_van_beroep_bedrijfsleven, parket. */
                 tier?: string | null;
+                /** @description A BWB id: the events tied to that law, each with ``via``: the publications that enact or change it, the papers that propose to change it, the events of the dossiers it or a publication of it was legislated in and of the dossiers of those papers, its new versions and those of the regulations issued under it, the judgments that cite it. */
+                instrument?: string | null;
+                /** @description With ``instrument``, an article number of that law (``3:2``): the events tied to that article; not the dossiers of the law itself, nor its enactment. */
+                article?: string | null;
             };
             header?: never;
             path?: never;

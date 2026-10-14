@@ -461,7 +461,11 @@ function partiesOf(value: unknown): JudgmentParty[] | null {
 
 const isPlaceholder = (name: string) => /^\[.*\]$/.test(name.trim());
 
-const REPRESENTATIVE_ROLES = { advocaat: 'Advocaat', gemachtigde: 'Gemachtigde' } as const;
+const REPRESENTATIVE_ROLES = {
+	advocaat: 'Advocaat',
+	gemachtigde: 'Gemachtigde',
+	raadsman: 'Raadsman'
+} as const;
 
 /**
  * The parties the API read, each followed by who acts for it. A lawyer for several
