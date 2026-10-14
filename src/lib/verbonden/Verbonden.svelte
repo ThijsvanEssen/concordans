@@ -39,12 +39,11 @@
 		type VerbondenFilter
 	} from './filter';
 	import { countLabel, groupCount, type Group } from './groups';
-	import { csvName, download, rowsToCsv } from './export';
+	import { csvName, download, exportRows, rowsToCsv } from './export';
 	import {
 		ankerVanRij,
 		caseNumberOf,
 		dossierVanRij,
-		mentionRows,
 		metaParts,
 		repeatedTitles,
 		rowKey,
@@ -66,7 +65,6 @@
 	import { get } from 'svelte/store';
 	import {
 		GROUPINGS,
-		allRows,
 		countLine,
 		filterGroups,
 		hiddenLine,
@@ -453,14 +451,15 @@
 					? yearHistogram(g.rows)
 					: [];
 
-	// An export holds every row: those not loaded yet are asked first. Verzamel gave way to
-	// Gemarkeerd: a row's box keeps it in the map (src/lib/map).
+	// An export holds every row: those not loaded yet are asked first. The same rows as the
+	// table's Exporteer, the kern included. Verzamel gave way to Gemarkeerd: a row's box keeps
+	// it in the map (src/lib/map).
 	async function exportCsv() {
 		await onAlles?.();
 		await tick();
 		download(
 			csvName(selection.label, selection.key),
-			rowsToCsv(mentionRows(allRows(shown)), selection.collection, page.url.origin)
+			rowsToCsv(exportRows(verbonden.groups, filter), selection.collection, page.url.origin)
 		);
 	}
 </script>

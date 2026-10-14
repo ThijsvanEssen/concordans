@@ -12,23 +12,15 @@
 	import { bronHref } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import type { GraphNode } from '$lib/graph/types';
-	import { csvName, download, rowsToCsv } from './export';
+	import { TABLE_COLUMNS, csvName, download, exportRows, rowsToCsv } from './export';
 	import { formatCount, type VerbondenFilter } from './filter';
-	import {
-		ankerVanRij,
-		dossierVanRij,
-		mentionRows,
-		openLabelOf,
-		rowKey,
-		shortDate,
-		type Row
-	} from './rows';
+	import { ankerVanRij, dossierVanRij, openLabelOf, rowKey, type Row } from './rows';
 	import DossierNaam from '$lib/bron/DossierNaam.svelte';
 	import RowOpen from './RowOpen.svelte';
 	import { isEscape } from '$lib/actions/keys';
 	import type { VerbondenState } from './source';
 	import { betrouwbaarheid } from './verbinding';
-	import { allRows, countLine, filterGroups, mentionLine, rowLabel } from './view';
+	import { countLine, filterGroups, mentionLine } from './view';
 
 	let {
 		verbonden,
@@ -50,53 +42,7 @@
 		onRetry?: () => void;
 	} = $props();
 
-	type Column = {
-		id: string;
-		label: string;
-		value: (r: Row) => string;
-		sort?: (r: Row) => string | number;
-	};
-
-	const COLUMNS: Column[] = [
-		{ id: 'bron', label: 'Bron', value: (r) => r.title, sort: (r) => r.title },
-		{
-			id: 'verbinding',
-			label: 'Verbinding',
-			value: (r) => rowLabel(r, selection.collection),
-			sort: (r) => rowLabel(r, selection.collection)
-		},
-		{
-			id: 'plaats',
-			label: 'Plaats in de bron',
-			value: (r) => r.position ?? '',
-			sort: (r) => r.position ?? ''
-		},
-		{
-			id: 'lid',
-			label: 'Plaats in dit artikel',
-			value: (r) => (r.lid ? `lid ${r.lid}` : ''),
-			sort: (r) => r.lid ?? 'zz'
-		},
-		{ id: 'aard', label: 'Aard', value: (r) => r.aard ?? '', sort: (r) => r.aard ?? '' },
-		{
-			id: 'status',
-			label: 'Status',
-			value: (r) => (r.proposed ? 'voorgesteld' : 'vastgesteld'),
-			sort: (r) => (r.proposed ? 1 : 0)
-		},
-		{
-			id: 'betrouwbaarheid',
-			label: 'Betrouwbaarheid',
-			value: (r) => betrouwbaarheid(r.confidence, !!r.derived, null).word,
-			sort: (r) => r.confidence ?? (r.derived ? 0.5 : 1)
-		},
-		{
-			id: 'datum',
-			label: 'Datum',
-			value: (r) => shortDate(r.date ?? null) ?? '',
-			sort: (r) => r.date ?? ''
-		}
-	];
+	const ctx = $derived({ selection: selection.collection, origin: page.url.origin });
 
 	const PAGE = 50;
 
@@ -106,23 +52,23 @@
 	let shown = $state(PAGE);
 	let columnsOpen = $state(false);
 
-	const rows = $derived(mentionRows(allRows(filterGroups(verbonden.groups, filter))));
+	const rows = $derived(exportRows(verbonden.groups, filter));
 	const mentions = $derived(mentionLine(filterGroups(verbonden.groups, filter)));
 	const sorted = $derived.by(() => {
-		const col = COLUMNS.find((c) => c.id === sortBy);
+		const col = TABLE_COLUMNS.find((c) => c.id === sortBy);
 		const key = col?.sort ?? col?.value;
 		if (!key) return rows;
 		const dir = sortDir === 'asc' ? 1 : -1;
 		return [...rows].sort((a, b) => {
-			const x = key(a);
-			const y = key(b);
+			const x = key(a, ctx);
+			const y = key(b, ctx);
 			if (x === y) return 0;
 			if (x === '' || x == null) return 1;
 			if (y === '' || y == null) return -1;
 			return (x < y ? -1 : 1) * dir;
 		});
 	});
-	const visibleColumns = $derived(COLUMNS.filter((c) => !hiddenColumns.has(c.id)));
+	const visibleColumns = $derived(TABLE_COLUMNS.filter((c) => !hiddenColumns.has(c.id)));
 
 	function sortOn(id: string) {
 		if (sortBy === id) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
@@ -152,7 +98,7 @@
 	);
 
 	const sortLabel = $derived.by(() => {
-		const col = COLUMNS.find((c) => c.id === sortBy);
+		const col = TABLE_COLUMNS.find((c) => c.id === sortBy);
 		const dir =
 			sortBy === 'datum'
 				? sortDir === 'desc'
@@ -203,7 +149,7 @@
 		<TekstMenu
 			label="Volgorde"
 			tekst={sortLabel}
-			opties={COLUMNS.map((c) => ({ waarde: c.id, label: c.label }))}
+			opties={TABLE_COLUMNS.map((c) => ({ waarde: c.id, label: c.label }))}
 			waarde={sortBy}
 			onKies={(id) => {
 				sortBy = id;
@@ -235,7 +181,7 @@
 			>
 			{#if columnsOpen}
 				<div class="menu__list" role="menu">
-					{#each COLUMNS as c (c.id)}
+					{#each TABLE_COLUMNS as c (c.id)}
 						{@const on = !hiddenColumns.has(c.id)}
 						<button
 							type="button"
@@ -333,9 +279,9 @@
 									{@const b = betrouwbaarheid(r.confidence, !!r.derived, null)}
 									<td><span class="conf conf--{b.word}" aria-hidden="true"></span> {b.word}</td>
 								{:else if c.id === 'status'}
-									<td class:is-proposed={r.proposed}>{c.value(r)}</td>
+									<td class:is-proposed={r.proposed}>{c.value(r, ctx)}</td>
 								{:else}
-									<td>{c.value(r)}</td>
+									<td>{c.value(r, ctx)}</td>
 								{/if}
 							{/each}
 						</tr>
