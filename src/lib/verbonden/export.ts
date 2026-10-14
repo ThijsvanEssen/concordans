@@ -2,24 +2,85 @@
 // preceded by a byte order mark, as Excel with Dutch settings reads a CSV.
 import { buildBronHref } from '$lib/bron/href';
 import type { Collection } from '$lib/vocabulary';
-import { rowLabel } from './view';
-import { BRON_KIND_LABEL } from './filter';
-import type { Row } from './rows';
+import { allRows, filterGroups, rowLabel } from './view';
+import { BRON_KIND_LABEL, type VerbondenFilter } from './filter';
+import type { Group } from './groups';
+import { mentionRows, shortDate, type Row } from './rows';
 import { betrouwbaarheid } from './verbinding';
 
-export const COLUMNS = [
-	'bron',
-	'soort',
-	'verbinding',
-	'plaats in de bron',
-	'plaats in dit artikel',
-	'aard',
-	'status',
-	'betrouwbaarheid',
-	'datum',
-	'identificatie',
-	'link'
-] as const;
+/** What a cell needs besides its row: the kind of the selected bron, and the site for links. */
+export type ColumnContext = { selection: Collection; origin: string };
+
+export type Column = {
+	id: string;
+	/** The head in the table; lower case, the head in the CSV. */
+	label: string;
+	value: (r: Row, ctx: ColumnContext) => string;
+	/** The cell in the CSV, where it differs from the table's: the date as ISO. */
+	csv?: (r: Row) => string;
+	sort?: (r: Row, ctx: ColumnContext) => string | number;
+	/** Only in the CSV: the table shows it by the glyph or the link of the row. */
+	csvOnly?: boolean;
+};
+
+/** The columns of the table and the CSV, in one order. */
+export const COLUMNS: readonly Column[] = [
+	{ id: 'bron', label: 'Bron', value: (r) => r.title, sort: (r) => r.title },
+	{ id: 'soort', label: 'Soort', value: (r) => BRON_KIND_LABEL[r.kind], csvOnly: true },
+	{
+		id: 'verbinding',
+		label: 'Verbinding',
+		value: (r, c) => rowLabel(r, c.selection),
+		sort: (r, c) => rowLabel(r, c.selection)
+	},
+	{
+		id: 'plaats',
+		label: 'Plaats in de bron',
+		value: (r) => r.position ?? '',
+		sort: (r) => r.position ?? ''
+	},
+	{
+		id: 'lid',
+		label: 'Plaats in dit artikel',
+		value: (r) => (r.lid ? `lid ${r.lid}` : ''),
+		sort: (r) => r.lid ?? 'zz'
+	},
+	{ id: 'aard', label: 'Aard', value: (r) => r.aard ?? '', sort: (r) => r.aard ?? '' },
+	{
+		id: 'status',
+		label: 'Status',
+		value: (r) => (r.proposed ? 'voorgesteld' : 'vastgesteld'),
+		sort: (r) => (r.proposed ? 1 : 0)
+	},
+	{
+		id: 'betrouwbaarheid',
+		label: 'Betrouwbaarheid',
+		value: (r) => betrouwbaarheid(r.confidence, !!r.derived, null).word,
+		sort: (r) => r.confidence ?? (r.derived ? 0.5 : 1)
+	},
+	{
+		id: 'datum',
+		label: 'Datum',
+		value: (r) => shortDate(r.date ?? null) ?? '',
+		csv: (r) => r.date ?? '',
+		sort: (r) => r.date ?? ''
+	},
+	{ id: 'identificatie', label: 'Identificatie', value: (r) => r.identifier ?? '', csvOnly: true },
+	{
+		id: 'link',
+		label: 'Link',
+		value: (r, c) => `${c.origin}${buildBronHref(null, r.ref, { at: r.at })}`,
+		csvOnly: true
+	}
+];
+
+/** The columns of the table. */
+export const TABLE_COLUMNS = COLUMNS.filter((c) => !c.csvOnly);
+
+/** What both Exporteer buttons export: every group under the filter, the kern included, as
+ *  the count of the panel and the table counts it; every mention its own row. */
+export const exportRows = (groups: Group[], filter: VerbondenFilter): Row[] =>
+	mentionRows(allRows(filterGroups(groups, filter)));
 
 const SEP = ';';
 const BOM = '\uFEFF';
@@ -30,27 +91,10 @@ const cell = (v: string | null | undefined) => {
 };
 
 export function rowsToCsv(rows: Row[], selection: Collection, origin: string): string {
-	const lines = [COLUMNS.join(SEP)];
-	for (const r of rows) {
-		const b = betrouwbaarheid(r.confidence, !!r.derived, null);
-		lines.push(
-			[
-				r.title,
-				BRON_KIND_LABEL[r.kind],
-				rowLabel(r, selection),
-				r.position ?? '',
-				r.lid ? `lid ${r.lid}` : '',
-				r.aard ?? '',
-				r.proposed ? 'voorgesteld' : 'vastgesteld',
-				b.word,
-				r.date ?? '',
-				r.identifier ?? '',
-				`${origin}${buildBronHref(null, r.ref, { at: r.at })}`
-			]
-				.map(cell)
-				.join(SEP)
-		);
-	}
+	const ctx = { selection, origin };
+	const lines = [COLUMNS.map((c) => c.label.toLowerCase()).join(SEP)];
+	for (const r of rows)
+		lines.push(COLUMNS.map((c) => cell(c.csv ? c.csv(r) : c.value(r, ctx))).join(SEP));
 	return BOM + lines.join('\r\n');
 }
 

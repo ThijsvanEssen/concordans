@@ -1,5 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { COLUMNS, csvName, rowsToCsv } from './export';
+import { COLUMNS, TABLE_COLUMNS, csvName, exportRows, rowsToCsv } from './export';
+import { EMPTY_FILTER } from './filter';
+import type { Group } from './groups';
 import type { Row } from './rows';
 
 describe('rowsToCsv', () => {
@@ -17,7 +21,7 @@ describe('rowsToCsv', () => {
 		const csv = rowsToCsv([row], 'articles', 'https://example.org');
 		expect(csv.startsWith('\uFEFF')).toBe(true);
 		const [head, line] = csv.slice(1).split('\r\n');
-		expect(head).toBe(COLUMNS.join(';'));
+		expect(head).toBe(COLUMNS.map((c) => c.label.toLowerCase()).join(';'));
 		expect(line.startsWith('"Hoge Raad; ""uitspraak"", 19 juli 2019";')).toBe(true);
 		expect(line).toContain(';r.o. 2.2;');
 		expect(line).toContain(';ECLI:NL:HR:2019:1278;https://example.org/');
@@ -36,5 +40,75 @@ describe('csvName', () => {
 	it('falls back to the key', () => {
 		expect(csvName('  ', 'bwbr0001854_287')).toBe('Verbindingen van bwbr0001854_287.csv');
 		expect(csvName(null, 'k')).toBe('Verbindingen van k.csv');
+	});
+});
+
+describe('the columns', () => {
+	it('are the CSV head, in its order and words', () => {
+		expect(COLUMNS.map((c) => c.label.toLowerCase())).toEqual([
+			'bron',
+			'soort',
+			'verbinding',
+			'plaats in de bron',
+			'plaats in dit artikel',
+			'aard',
+			'status',
+			'betrouwbaarheid',
+			'datum',
+			'identificatie',
+			'link'
+		]);
+	});
+
+	it('give the table every column the CSV does not keep to itself', () => {
+		expect(TABLE_COLUMNS.map((c) => c.id)).toEqual(
+			COLUMNS.filter((c) => !c.csvOnly).map((c) => c.id)
+		);
+	});
+});
+
+describe('exportRows', () => {
+	const row = (key: string, extra: Partial<Row> = {}): Row => ({
+		ref: { collection: 'judgments', key },
+		title: key,
+		context: null,
+		kind: 'uitspraken',
+		...extra
+	});
+	const groups: Group[] = [
+		{ id: 'procesgang', label: 'Procesgang', rows: [row('hof')], capped: false },
+		{
+			id: 'cited-by',
+			label: 'Aangehaald in',
+			rows: [
+				row('hr', {
+					mentions: [row('hr', { position: 'r.o. 2' }), row('hr', { position: 'r.o. 3' })]
+				})
+			],
+			capped: false
+		}
+	];
+
+	it('holds every group under the filter, and every mention as its own row', () => {
+		expect(exportRows(groups, EMPTY_FILTER).map((r) => [r.title, r.position ?? null])).toEqual([
+			['hof', null],
+			['hr', 'r.o. 2'],
+			['hr', 'r.o. 3']
+		]);
+		const none = { ...EMPTY_FILTER, bronnen: new Set(['dossiers'] as const) };
+		expect(exportRows(groups, none)).toEqual([]);
+	});
+
+	it('is what both Exporteer buttons export: the panel and the table give the same rows', () => {
+		for (const file of ['Verbonden.svelte', 'VerbondenTabel.svelte']) {
+			const src = readFileSync(join(import.meta.dirname, file), 'utf8');
+			expect(src, file).toContain('exportRows(verbonden.groups, filter)');
+			expect(src.match(/rowsToCsv\(/g), file).toHaveLength(1);
+		}
+	});
+
+	it('leaves the table no columns of its own', () => {
+		const src = readFileSync(join(import.meta.dirname, 'VerbondenTabel.svelte'), 'utf8');
+		expect(src).not.toMatch(/const COLUMNS\b/);
 	});
 });
