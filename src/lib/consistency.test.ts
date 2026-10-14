@@ -1272,8 +1272,6 @@ describe('errors that are not swallowed', () => {
 			'lib/components/parliamentary/data.ts': 1,
 			'lib/graph/store/expansion.ts': 1,
 			'lib/map/MapRegelingen.svelte': 1,
-			'lib/search/Search.svelte': 1,
-			'lib/search/resolve-query.ts': 5,
 			'routes/(main)/+page.svelte': 1,
 			'routes/(main)/actueel/+page.svelte': 4,
 			'routes/(main)/onderwerpen/+page.svelte': 3,
