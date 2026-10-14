@@ -26,11 +26,9 @@ const PLACES: Record<string, number> = {
 	'lib/graph/store/expansion.ts': 1,
 	'lib/map/MapRegelingen.svelte': 1,
 	// A throw that is no failure: a popover already in that state, a pointer capture
-	// refused, graphology on an edge or node already there or gone, storage or a clipboard
-	// that refuses (one storage helper, F32). Each gets a handler that says so.
+	// refused, storage or a clipboard that refuses (one storage helper, F32). Each gets a
+	// handler that says so.
 	'lib/components/explore/index/pannable.ts': 1,
-	'lib/components/graph/GraphCanvas.svelte': 4,
-	'lib/components/graph/GraphView.svelte': 4,
 	'lib/components/ui/dicht.svelte.ts': 1,
 	'lib/map/map.svelte.ts': 1,
 	'lib/onderwerpen/onderwerpen.ts': 1,

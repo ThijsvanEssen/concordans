@@ -15,7 +15,7 @@ describe('the generated types as the contract (code-eenvoud F54)', () => {
 		expect(
 			overtreders(
 				(t) => /meta as Record<string, unknown>/.test(t),
-				[plek('lib/components/graph/GraphCanvas.svelte', 'graphology does not type its attributes')]
+				[plek('lib/components/graph/hulls.ts', 'graphology does not type its attributes')]
 			)
 		).toEqual([]);
 	});
