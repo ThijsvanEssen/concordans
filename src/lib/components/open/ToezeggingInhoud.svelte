@@ -9,17 +9,23 @@
 	import { bronHref } from '$lib/bron/href';
 	import { korteDatum } from '$lib/text/datum';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import { toegezegdIn } from '$lib/components/parliamentary/toezegging';
 
 	let { toezegging: t }: { toezegging: Schema<'CommitmentDTO'> } = $props();
 	const feiten = $derived(!!t.activity || !!t.dossiers?.length || !!t.expected_resolution);
+	// The same words as the reader of the toezegging, the day short as in a list.
+	const gedaan = $derived(
+		toegezegdIn(t.activity ? { ...t.activity, date: t.activity.date ?? t.date } : null, (iso) =>
+			korteDatum(iso)
+		)
+	);
 </script>
 
 <div class="tz">
 	{#if feiten}<p class="feiten">
-			{#if t.activity}<span
-					>Gedaan in <BronLink ref={`activities/${t.activity.key}`}
-						>de activiteit van {korteDatum(t.activity.date ?? t.date)}</BronLink
-					></span
+			{#if t.activity && gedaan}<span
+					>{gedaan.voor}
+					<BronLink ref={`activities/${t.activity.key}`}>{gedaan.link}</BronLink></span
 				>{/if}{#each t.dossiers ?? [] as d (d.key)}<span
 					><BronLink ref={{ collection: 'dossiers', key: d.key, number: d.number ?? '' }}
 						><DossierNaam dossier={{ ...d, number: d.number ?? '' }} /></BronLink

@@ -6,7 +6,7 @@
 // arrest are "vrij cruciale info", not extra data.
 import { naamVan } from '$lib/bron/menselijk';
 import type { Bucket, NodeGraph, Neighbor } from '$lib/api/nodes';
-import { getNodeFirst } from '$lib/api/records';
+import { getActivity, getNodeFirst } from '$lib/api/records';
 import { getDossier } from '$lib/components/parliamentary/data';
 import { refOf, type BronRef } from '$lib/bron/href';
 import { dossierName, dossierUitProps, kamerstukNummer } from './dossier-naam';
@@ -38,7 +38,21 @@ export type Laag = {
 	kort?: string;
 	/** The bron itself in a chain ("deze uitspraak"): no link. */
 	huidig?: boolean;
+	/** How an instance of a procesgang ended: `cassatie verworpen`, `bekrachtigd` (API 0.79.55). */
+	uitkomst?: string;
 };
+
+/**
+ * How a judgment ended, as the band names it beside the instance: its `outcome`, after the
+ * remedy that brought it there where the edge names one (`cassatie verworpen`). Null while the
+ * data says none.
+ */
+export function uitkomstVan(outcome: unknown, procedure?: unknown): string | null {
+	const o = text(outcome);
+	if (!o) return null;
+	const p = text(procedure)?.toLowerCase();
+	return p ? `${p} ${o}` : o;
+}
 
 /**
  * A line of the kern: a legal term and the bronnen it names, a chain separated by "›".
@@ -136,7 +150,17 @@ export function laagVan(n: Neighbor, soort: string): Laag {
 		const titel = dossierName(d);
 		return { soort, naam: titel !== nummer ? `${label} ${titel}` : label, ref, vol: lang };
 	}
-	if (n.collection === 'judgments') return { soort, naam: vol, ref, kort: instantie(vol) };
+	if (n.collection === 'judgments') {
+		// An appeal against this one names its remedy on the edge (`Cassatie`); an earlier
+		// instance's own remedy is on another edge, so it has its outcome alone.
+		const uitkomst = uitkomstVan(
+			props.outcome,
+			n.relation === 'APPEAL_OF' && n.direction === 'inbound'
+				? (n.meta as Record<string, unknown> | null | undefined)?.procedure_type
+				: null
+		);
+		return { soort, naam: vol, ref, kort: instantie(vol), ...(uitkomst ? { uitkomst } : {}) };
+	}
 	return { soort, naam: vol, ref };
 }
 
@@ -341,11 +365,23 @@ export function behoort(
 				...eerste('APPEAL_OF', 'outbound', 'judgments', 'Eerdere aanleg')
 			];
 			const later = eerste('APPEAL_OF', 'inbound', 'judgments', 'Hoger beroep of cassatie');
+			// This one's outcome, after the remedy its edge to the eerdere aanleg names.
+			const eigen = uitkomstVan(
+				props.outcome,
+				(bak('APPEAL_OF', 'outbound', 'judgments')?.items?.[0]?.meta as Record<string, unknown>)
+					?.procedure_type
+			);
 			const gang: Laag[] =
 				eerder.length + later.length > 0
 					? [
 							...eerder,
-							{ soort: 'Deze uitspraak', naam: 'deze uitspraak', kort: 'deze', huidig: true },
+							{
+								soort: 'Deze uitspraak',
+								naam: 'deze uitspraak',
+								kort: 'deze',
+								huidig: true,
+								...(eigen ? { uitkomst: eigen } : {})
+							},
 							...later
 						]
 					: [];
@@ -444,9 +480,14 @@ export function behoort(
 			return {
 				regels: [
 					...metWetsvoorstel,
+					// A motie is submitted in its debate (`meta.reason` `ingediend`, API 0.79.55), a
+					// stenogram is the record of it.
 					...regel(
 						'debat',
-						'Verslag van',
+						(bak('MADE_IN', 'outbound', 'activities')?.items?.[0]?.meta as Record<string, unknown>)
+							?.reason === 'ingediend'
+							? 'Ingediend in'
+							: 'Verslag van',
 						eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')
 					),
 					...regel('brief', 'Bijlage bij', eerste('ACCOMPANIES', 'outbound', 'documents', 'Brief')),
@@ -537,7 +578,13 @@ export function behoort(
 				naast: [],
 				onder: []
 			};
-		case 'activities':
+		case 'activities': {
+			// Every dossier on its agenda side by side, and the activity it took the place of,
+			// from the activity's own answer (`/api/activities/{key}`, one cheap request); the
+			// light node has the first dossier only.
+			const key = light?.node.key;
+			const activiteit = key ? () => getActivity(key) : null;
+			const over = eerste('ABOUT', 'outbound', 'dossiers', 'Dossier');
 			return {
 				regels: [
 					...regel(
@@ -545,11 +592,41 @@ export function behoort(
 						'Commissie',
 						eerste('LED_BY', 'outbound', 'committees', 'Commissie')
 					),
-					...regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier'))
+					{
+						id: 'dossier',
+						label: 'Over',
+						lagen: over,
+						los: true,
+						laad: activiteit
+							? async () => {
+									const ds = (await activiteit()).dossiers ?? [];
+									return ds.length ? ds.map(dossierLaag) : over;
+								}
+							: undefined
+					},
+					...(activiteit
+						? [
+								{
+									id: 'verplaatst',
+									label: 'Verplaatst van',
+									lagen: [],
+									los: true,
+									laad: async () =>
+										((await activiteit()).moved_from ?? []).map(
+											(m): Laag => ({
+												soort: 'Activiteit',
+												naam: langeDatum(m.date ?? null) || 'een eerdere datum',
+												ref: { collection: 'activities', key: m.key }
+											})
+										)
+								}
+							]
+						: [])
 				],
 				naast: [],
 				onder: []
 			};
+		}
 		case 'decisions':
 			return {
 				regels: regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier')),
@@ -558,10 +635,9 @@ export function behoort(
 			};
 		case 'commitments':
 			return {
-				regels: [
-					...regel('debat', 'Gedaan in', eerste('MADE_IN', 'outbound', 'activities', 'Activiteit')),
-					...regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier'))
-				],
+				// Where it was made stands in the reader's status line, in the Kamer's words
+				// ("Toegezegd in het wetgevingsoverleg van 23 maart 2026"): once, not here too.
+				regels: regel('dossier', 'Over', eerste('ABOUT', 'outbound', 'dossiers', 'Dossier')),
 				naast: [],
 				onder: []
 			};
@@ -578,6 +654,22 @@ export function behoort(
 		default:
 			return LEEG;
 	}
+}
+
+/** A dossier on an agenda as a layer, as `laagVan` names one: "Kamerstuk 36764 Cyberbeveiligingswet". */
+function dossierLaag(d: {
+	number: string;
+	short_title?: string | null;
+	title?: string | null;
+}): Laag {
+	const label = kamerstukNummer(d.number);
+	const titel = dossierName(d);
+	return {
+		soort: 'Dossier',
+		naam: titel !== d.number ? `${label} ${titel}` : label,
+		ref: { collection: 'dossiers', key: d.number, number: d.number },
+		vol: d.title?.trim() || undefined
+	};
 }
 
 /**

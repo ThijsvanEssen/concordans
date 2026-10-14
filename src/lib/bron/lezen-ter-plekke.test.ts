@@ -77,7 +77,7 @@ describe('a Kamerstuk opened in place', () => {
 			'lib/verbonden/Verbonden.svelte',
 			'lib/components/explore/IndexView.svelte'
 		])
-			expect(bron(path)).toMatch(/<RijInhoud[\s\S]{0,120}als="kern"/);
+			expect(bron(path)).toMatch(/<RijInhoud[\s\S]{0,300}als="kern"/);
 		// No list reads a stuk's opening or dictum its own way; the overview of a topic codes its
 		// decisions by the dictum, a column of its export, not a row opened.
 		const eigen = [

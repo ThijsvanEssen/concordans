@@ -161,33 +161,125 @@ describe('hoeVan', () => {
 	});
 
 	it('names a Kamerstuk the subject names as it is written, in either direction', () => {
-		const motie = (relation: 'ANSWERS' | 'REFERS_TO', direction: 'inbound' | 'outbound') =>
+		const motie = (direction: 'inbound' | 'outbound') =>
 			hoeVan(
 				row({
 					ref: { collection: 'documents', key: 'm' },
-					relation,
+					relation: 'REFERS_TO',
 					direction,
 					edge: { basis: 'subject', text: 'Kamerstuk 25424-795' }
 				}),
 				'documents'
 			);
-		// A paper names it; a letter of the government goes into the motion it names.
-		for (const [relation, uitWoord, inWoord] of [
-			['REFERS_TO', 'Genoemd', 'Noemt'],
-			['ANSWERS', 'Besproken', 'Gaat in op']
-		] as const) {
-			const uit = motie(relation, 'outbound');
-			expect([uit?.werkwoord, uit?.rest, uit?.herkomst]).toEqual([
-				uitWoord,
-				'als ‘Kamerstuk 25424-795’',
-				'Onderwerp van het Kamerstuk'
-			]);
-			const naar = motie(relation, 'inbound');
-			expect([naar?.werkwoord, naar?.rest]).toEqual([
-				inWoord,
-				'dit stuk als ‘Kamerstuk 25424-795’'
-			]);
-		}
+		// A paper names it.
+		const uit = motie('outbound');
+		expect([uit?.werkwoord, uit?.rest, uit?.herkomst]).toEqual([
+			'Genoemd',
+			'als ‘Kamerstuk 25424-795’',
+			'Onderwerp van het Kamerstuk'
+		]);
+		const naar = motie('inbound');
+		expect([naar?.werkwoord, naar?.rest]).toEqual(['Noemt', 'dit stuk als ‘Kamerstuk 25424-795’']);
+	});
+
+	it('says a letter goes into the motion, its words under it with the reference marked', () => {
+		const brief = (direction: 'inbound' | 'outbound', edge: Record<string, unknown>) =>
+			hoeVan(
+				row({
+					ref: { collection: 'documents', key: 'b' },
+					relation: 'ANSWERS',
+					direction,
+					confidence: 0.9,
+					edge
+				}),
+				'documents'
+			);
+		const onderwerp = {
+			basis: 'subject',
+			text: 'Uitvoering van de motie van het lid Kathmann (Kamerstuk 25424-795)',
+			reference: 'Kamerstuk 25424-795'
+		};
+		// On the motion: the letter gaat in op it.
+		const naar = brief('inbound', onderwerp);
+		expect([naar?.werkwoord, naar?.rest, naar?.herkomst]).toEqual([
+			'Gaat in op',
+			'dit stuk',
+			'Onderwerp van het Kamerstuk'
+		]);
+		expect(naar?.citaat).toEqual({
+			before: 'Uitvoering van de motie van het lid Kathmann (',
+			mark: 'Kamerstuk 25424-795',
+			after: ')'
+		});
+		// On the letter: it goes into the motion; a line of its text or a footnote says where.
+		const uit = brief('outbound', {
+			basis: 'footnote',
+			text: 'de motie-Kathmann (36764, nr. 31)',
+			reference: '36764, nr. 31'
+		});
+		expect([uit?.werkwoord, uit?.rest, uit?.herkomst]).toEqual([
+			'Deze brief gaat erop in',
+			null,
+			'Voetnoot in de brief'
+		]);
+		expect(uit?.citaat?.mark).toBe('36764, nr. 31');
+		expect(brief('inbound', { basis: 'text', text: 'Zie de motie.' })?.herkomst).toBe(
+			'Tekst van de brief'
+		);
+	});
+
+	it('names the newest pair of papers the Kamer relates two dossiers by', () => {
+		const zijde = (kind: string, dossier: string, sequence: number) => ({
+			case: 'c',
+			paper: 'p',
+			kind,
+			dossier_number: dossier,
+			dossier_suffix: null,
+			sequence,
+			date: '2026-05-01'
+		});
+		const h = hoeVan(
+			row({
+				ref: { collection: 'dossiers', key: '32761', number: '32761' },
+				relation: 'RELATED_TO',
+				direction: 'inbound',
+				edge: {
+					cases: 3,
+					pairs: [
+						{ case: 'c', paper: null },
+						{
+							kinds: 'Brief regering → Motie',
+							from: zijde('Brief regering', '32761', 12),
+							to: zijde('Motie', '36764', 28)
+						}
+					]
+				}
+			}),
+			'dossiers'
+		);
+		expect(h?.rest).toBe(': Brief 32761 nr. 12 gaat in op motie 36764 nr. 28; 3 zaken');
+	});
+
+	it('gives a memorie its section about the article as its line, the opening under it', () => {
+		const h = hoeVan(
+			row({
+				ref: { collection: 'documents', key: 'mvt' },
+				title: 'Memorie van toelichting, Kamerstuk 36764',
+				relation: 'EXPLAINS',
+				direction: 'inbound',
+				at: 's-292',
+				position: '§ Artikel 21 (zorgplicht)',
+				props: { sequence: 3 },
+				edge: {
+					heading: 'Artikel 21 (zorgplicht)',
+					excerpt: 'Artikel 21 Cbw ziet op de zorgplicht.'
+				}
+			}),
+			'articles'
+		);
+		expect([h?.werkwoord, h?.rest]).toEqual([null, 'nr. 3, § Artikel 21 (zorgplicht)']);
+		expect(h?.plaats).toEqual({ text: '§ Artikel 21 (zorgplicht)', at: 's-292', noot: null });
+		expect(h?.citaat?.after).toBe('Artikel 21 Cbw ziet op de zorgplicht.');
 	});
 
 	it('leaves a letter that fulfils a toezegging to its group', () => {
@@ -343,6 +435,10 @@ describe('one source of words per relation, direction and collection', () => {
 		expect(relationLabel('MADE_IN', 'documents', 'activities')).toBe('verslag van');
 		expect(soortVan('MADE_IN', 'documents', 'activities')).toBe('verslag van een debat');
 		expect(relationLabel('MADE_IN', 'commitments', 'activities')).toBe('toegezegd in');
+		// A motie is submitted in its debate (API 0.79.55).
+		expect(relationLabel('MADE_IN', 'documents', 'activities', { reason: 'ingediend' })).toBe(
+			'ingediend in'
+		);
 		// The nota van toelichting and its Staatsblad: one publication, not one judgment.
 		expect(relationLabel('SAME_AS', 'documents', 'instruments')).toBe('zelfde publicatie als');
 		expect(relationLabel('SAME_AS', 'judgments', 'judgments')).toBe('zelfde uitspraak als');

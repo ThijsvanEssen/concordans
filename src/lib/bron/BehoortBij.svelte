@@ -157,6 +157,10 @@
 			>{laag.kort}</span
 		>{/if}{/snippet}
 
+<!-- How an instance ended, after its name and outside its link: `, cassatie verworpen`. -->
+{#snippet uitkomst(laag: Laag)}{#if laag.uitkomst}<span class="uitkomst">, {laag.uitkomst}</span
+		>{/if}{/snippet}
+
 {#snippet meer()}
 	{#if verborgen > 0}
 		<button
@@ -202,7 +206,8 @@
 											{#if laag.ref}<a
 													href={bronHref(laag.ref, { at: laag.at })}
 													title={`${laag.soort}: ${laag.vol ?? laag.naam}`}>{@render naam(laag)}</a
-												>{:else}<span title={laag.soort}>{@render naam(laag)}</span>{/if}
+												>{:else}<span title={laag.soort}>{@render naam(laag)}</span
+												>{/if}{@render uitkomst(laag)}
 										</li>
 									{/if}
 								{/each}
@@ -351,6 +356,11 @@
 	}
 	.lagen.los li + li::before {
 		content: none;
+	}
+	/* The outcome is the source's word, upright beside "deze uitspraak" too. */
+	.lagen .uitkomst {
+		font-style: normal;
+		color: var(--ink-2);
 	}
 	.lagen .huidig {
 		color: var(--ink-2);

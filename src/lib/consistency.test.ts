@@ -527,7 +527,7 @@ describe('one form for each thing', () => {
 		// next row ("Herkend in de tekst" was "out of place").
 		const verbonden = sources.find((s) => s.path === 'lib/verbonden/Verbonden.svelte')!.text;
 		expect(verbonden).not.toMatch(/row__herkomst/);
-		expect(verbonden).toMatch(/kind: 'herkomst'/);
+		expect(verbonden).toMatch(/row__part--herkomst/);
 	});
 
 	it('keeps the choice of bronnen in the filter, not in the head of Verbonden', () => {

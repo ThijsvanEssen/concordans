@@ -1,14 +1,22 @@
 <script lang="ts">
 	import { opsomming } from '$lib/text/opsomming';
 	import ReaderHead from './ReaderHead.svelte';
-	// Reader for an activity: a committee debate, plenary debate or procedural
-	// meeting. There is no endpoint for one activity; the node's own props are shown.
+	// Reader for an activity: a debate, a wetgevingsoverleg, a procedurevergadering. The head
+	// from the node's props at once, then from `/api/activities/{key}` (cheap; the band names
+	// its committee, every dossier on its agenda and the activity it took the place of). What
+	// was made in it comes after, from `/records`: its verslag and stenogram, the moties
+	// submitted, the toezeggingen made and the besluiten taken, each line opening in place.
 	import ReaderFrame from './ReaderFrame.svelte';
 	import type { GraphNode } from '$lib/graph/types';
+	import type { Schema } from '$lib/api/types';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
 	import { bronLabel } from '$lib/vocabulary';
 	import { formatLongDate } from './_shared';
 	import { activityLine } from '$lib/verbonden/rows';
+	import { getActivity, getActivityRecords } from '$lib/api/records';
+	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
+	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import { activiteitGroepen } from './activiteit';
 
 	let { node }: { node: GraphNode } = $props();
 
@@ -22,8 +30,46 @@
 			tk_url?: string;
 		}
 	);
-	const titel = $derived(attrs.agenda_title || node.label);
+
+	// The key, not the node: the node is drawn anew with the same key once its
+	// neighbourhood loads, and nothing is asked again for that.
+	const bronKey = $derived(node.key);
+
+	let detail = $state<Schema<'ActivityDTO'> | null>(null);
+	let records = $state<Schema<'ActivityRecordsResponse'> | null>(null);
+	$effect(() => {
+		const key = bronKey;
+		let weg = false;
+		detail = null;
+		records = null;
+		getActivity(key)
+			.then((a) => {
+				if (!weg) detail = a;
+			})
+			.catch(() => {});
+		getActivityRecords(key)
+			.then((r) => {
+				if (!weg) records = r;
+			})
+			.catch(() => {});
+		return () => {
+			weg = true;
+		};
+	});
+
+	const kind = $derived(detail?.kind ?? attrs.kind);
+	const date = $derived(detail?.date ?? attrs.date);
+	const status = $derived(detail?.status ?? attrs.status);
+	const tkUrl = $derived(detail?.tk_url ?? attrs.tk_url);
+	const titel = $derived(detail?.agenda_title || attrs.agenda_title || node.label);
+
+	const inhouden = $derived(records ? activiteitGroepen(records) : null);
 </script>
+
+{#snippet inhoud(id: string)}
+	{@const i = inhouden?.inhoud.get(id)}
+	{#if i}<RijInhoud item={i.item} als={i.als} />{/if}
+{/snippet}
 
 <ReaderFrame>
 	<div class="r-activity">
@@ -35,10 +81,8 @@
 					id: node.id,
 					at: '',
 					kort: titel,
-					voluit: [attrs.kind, attrs.date ? formatLongDate(attrs.date) : null, titel]
-						.filter(Boolean)
-						.join(', '),
-					groep: attrs.kind ?? bronLabel('activities')
+					voluit: [kind, date ? formatLongDate(date) : null, titel].filter(Boolean).join(', '),
+					groep: kind ?? bronLabel('activities')
 				}
 			}}
 		>
@@ -47,18 +91,28 @@
 				<!-- One still to come says so, as its row in Verbonden does (#59). -->
 				{opsomming([
 					activityLine({
-						kind: attrs.kind ?? bronLabel('activities'),
-						status: attrs.status,
-						date: attrs.date
+						kind: kind ?? bronLabel('activities'),
+						status,
+						date
 					}),
-					attrs.date ? formatLongDate(attrs.date) : null
+					date ? formatLongDate(date) : null
 				])}
 			{/snippet}
 		</ReaderHead>
 
-		{#if attrs.tk_url}
+		{#if inhouden && inhouden.groepen.length}
+			<Tijdlijn
+				groepen={inhouden.groepen.map((g) => ({
+					...g,
+					regels: g.regels.map((r) => (inhouden.inhoud.has(r.id) ? { ...r, inhoud } : r))
+				}))}
+				inklapbaar
+			/>
+		{/if}
+
+		{#if tkUrl}
 			<footer class="foot">
-				<a href={attrs.tk_url} target="_blank" rel="noopener noreferrer" class="full-link">
+				<a href={tkUrl} target="_blank" rel="noopener noreferrer" class="full-link">
 					Open op tweedekamer.nl →
 				</a>
 			</footer>
@@ -75,7 +129,6 @@
 		gap: var(--lezer-stap);
 		color: var(--ink-2);
 	}
-	/* A comma against the word before it: the kicker's gap only after it. */
 
 	.foot {
 		display: flex;

@@ -159,14 +159,18 @@ const WOORDEN: Record<Relation, (e: Ends) => W> = {
 				? ['over', 'onderwerp van', 'toezegging in een dossier']
 				: ['over', 'onderwerp van', 'activiteit over een zaak'],
 	LED_BY: () => ['onder leiding van', 'voortouw bij', 'voortouwcommissie'],
-	MADE_IN: ({ van }) =>
+	// A motie is `MADE_IN` the debate it was submitted in (`reason` `ingediend`), a stenogram
+	// the debate it records.
+	MADE_IN: ({ van, meta }) =>
 		van === 'commitments'
 			? ['toegezegd in', 'toegezegd in', 'toezegging in een activiteit']
 			: van === 'decisions'
 				? ['genomen in', 'genomen in', 'stemming in een activiteit']
-				: van === 'documents'
-					? ['verslag van', 'verslag van', 'verslag van een debat']
-					: ['gedaan in', 'gedaan in', 'gedaan in een activiteit'],
+				: van === 'documents' && tekstVan(meta.reason) === 'ingediend'
+					? ['ingediend in', 'ingediend in', 'motie ingediend in een debat']
+					: van === 'documents'
+						? ['verslag van', 'verslag van', 'verslag van een debat']
+						: ['gedaan in', 'gedaan in', 'gedaan in een activiteit'],
 	MEMBER_OF: () => ['lid van', 'lid', 'lidmaatschap'],
 	SERVED_IN: () => ['bewindspersoon in', 'bewindspersoon', 'ambt in een kabinet'],
 	// The edge runs from the member to the stuk: read from there, a member diende in. One who
@@ -352,8 +356,57 @@ export function plaatsIn(
 
 /** Where an edge comes from by its `basis`, where it has no `reason`. */
 const HERKOMST_BASIS: Partial<Record<string, string>> = {
-	subject: 'Onderwerp van het Kamerstuk'
+	subject: 'Onderwerp van het Kamerstuk',
+	text: 'Tekst van de brief',
+	footnote: 'Voetnoot in de brief'
 };
+
+/**
+ * The words of the source that name the bron, where the edge keeps them (`meta.text`, an
+ * `ANSWERS` from a letter), with the reference as written marked (`meta.reference`); cut to
+ * what a row shows.
+ */
+export function aanhalingUitMeta(meta: Record<string, unknown>): Passage | null {
+	const zin = text(meta.text);
+	if (!zin) return null;
+	const ref = text(meta.reference);
+	const i = ref ? zin.indexOf(ref) : -1;
+	if (i >= 0)
+		return uitsnede({ before: zin.slice(0, i), mark: ref!, after: zin.slice(i + ref!.length) });
+	return uitsnede({ before: '', mark: '', after: zin });
+}
+
+/** A paper of a pair as the Kamer cites it: `Brief 32761 nr. 12`, `motie 36764 nr. 28`. */
+function paarStuk(kant: unknown, eerste: boolean): string | null {
+	if (!kant || typeof kant !== 'object') return null;
+	const k = kant as Record<string, unknown>;
+	if (!k.paper) return null;
+	const soort = text(k.kind)?.split(/[\s(]/)[0] ?? null;
+	const dossier = text(k.dossier_number);
+	if (!soort || !dossier) return null;
+	const suffix = text(k.dossier_suffix);
+	const nr = num(k.sequence);
+	const woord = eerste ? groot(soort) : soort.toLowerCase();
+	return `${woord} ${suffix ? `${dossier}-${suffix}` : dossier}${nr != null ? ` nr. ${nr}` : ''}`;
+}
+
+/**
+ * The first pair of papers of a relation between two dossiers (`meta.pairs`, the newest
+ * first): a letter that goes into the motion, else the two papers side by side.
+ */
+export function paarZin(pairs: unknown): string | null {
+	if (!Array.isArray(pairs)) return null;
+	for (const p of pairs) {
+		if (!p || typeof p !== 'object') continue;
+		const { from, to } = p as Record<string, unknown>;
+		const van = paarStuk(from, true);
+		const naar = paarStuk(to, false);
+		if (!van || !naar) continue;
+		const brief = /^brief\b/i.test(van);
+		return `${van} ${brief ? 'gaat in op' : 'verbonden met'} ${naar}`;
+	}
+	return null;
+}
 
 /** The selected bron as the object of a line: `Verwijst naar dit artikel`. */
 const DIT: Partial<Record<Collection, string>> = {
@@ -378,7 +431,7 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 	// is high; a citation recognised in the text has 0.95).
 	const afgeleid = confidenceWord(row.confidence, !!row.derived) !== 'hoog';
 	const p = passageOf(row);
-	const citaat = p?.mark ? uitsnede(p) : null;
+	const citaat = p?.mark ? uitsnede(p) : row.relation === 'ANSWERS' ? aanhalingUitMeta(edge) : null;
 	const lid = row.lid ? `lid ${row.lid}` : null;
 	// The place in the citing text: `in r.o. 4.3 en 5.1`.
 	const plaats = row.position && row.position !== lid ? `in ${row.position}` : null;
@@ -403,6 +456,15 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 		case 'RELATED_TO': {
 			if (other !== 'dossiers' || selected !== 'dossiers') break;
 			const zaken = num(edge.cases);
+			// The newest pair of papers the Kamer relates (`meta.pairs`, API 0.79.55): "Brief 32761
+			// nr. 12 gaat in op motie 36764 nr. 28".
+			const paar = paarZin(edge.pairs);
+			if (paar)
+				return regel(
+					'Door de Kamer verbonden',
+					`: ${paar}${zaken && zaken > 1 ? `; ${zaken} zaken` : ''}`,
+					'Tweede Kamer, zaak gerelateerd aan zaak'
+				);
 			const soorten = Array.isArray(edge.case_kinds)
 				? edge.case_kinds.filter((k): k is string => typeof k === 'string').join('; ')
 				: null;
@@ -442,6 +504,20 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 					};
 			if (!lijn.rest) break;
 			return regel(lijn.werkwoord, join(lijn.rest, uitgewerktIn(edge.referring)), uit(reden));
+		}
+		case 'EXPLAINS': {
+			// A memorie's section about the article (`explained-by`, API 0.79.55): its number where
+			// the title lacks it and its heading, a link to the section, its opening under it.
+			const kop = text(edge.heading);
+			if (!inbound || !kop || !row.position || !row.at) break;
+			const nr = num(props.sequence);
+			const nummer = nr != null && !row.title.includes(`nr. ${nr}`) ? `nr. ${nr}` : null;
+			const opening = text(edge.excerpt);
+			return {
+				...regel(null, join(nummer, row.position), null),
+				citaat: opening ? { before: '', mark: '', after: opening } : null,
+				plaats: { text: row.position, at: row.at, noot: null }
+			};
 		}
 		case 'ADVISES_ON':
 			return inbound
@@ -491,11 +567,19 @@ export function hoeVan(row: Row, selected: Collection): Hoe | null {
 				? regel('Wijzigt', join('deze wet', pub), null)
 				: regel('Wetsvoorstel', 'van deze wet', null);
 		}
-		case 'ANSWERS':
-			// A letter of the government and the motion its subject names: `Gaat in op`. A
-			// prejudiciële beslissing says it in its group's label.
+		case 'ANSWERS': {
+			// A letter of the government and the motion it answers: `Gaat in op`, read from the
+			// letter. The subject, line or footnote that names the motion (`meta.text`) stands under
+			// it with the reference as written marked (`meta.reference`); where it was read
+			// (`meta.basis`) is its provenance. A prejudiciële beslissing and a letter that fulfils
+			// a toezegging say it in their group's label.
 			if (other !== 'documents' || selected !== 'documents') break;
-		// falls through
+			return regel(
+				inbound ? 'Gaat in op' : 'Deze brief gaat erop in',
+				inbound ? 'dit stuk' : null,
+				HERKOMST_BASIS[text(edge.basis) ?? ''] ?? null
+			);
+		}
 		case 'REFERS_TO': {
 			// Two laws, by the references between their articles (`related-instruments`): the
 			// grondslag where one is issued under the other, else the articles in force that refer,

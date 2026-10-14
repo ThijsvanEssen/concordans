@@ -1,5 +1,7 @@
 <script lang="ts">
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
+	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
+	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
 	import { lijstDoel } from '$lib/stores/sprong';
 	import { fractieNaam, naamVan } from '$lib/bron/menselijk';
 	import { vandaag } from '$lib/text/datum';
@@ -3006,14 +3008,23 @@
 													{/if}
 												{/snippet}
 												{#snippet body()}
-													{#if doc.kind}<span class="row-sub">{doc.kind}</span>{/if}
+													{@const uitslag = stukUitslag(doc)}
+													{#if doc.kind || uitslag}<span class="row-sub"
+															>{doc.kind ?? ''}{#if uitslag}{doc.kind ? ', ' : ''}<StukUitslag
+																	{uitslag}
+																/>{/if}</span
+														>{/if}
 												{/snippet}
 												{#snippet aside()}
 													{#if doc.date}<span class="row-sub">{fmtDateShort(doc.date)}</span>{/if}
 												{/snippet}
 												{#snippet detail()}
 													<RijInhoud
-														item={{ node: { collection: 'documents', key: doc.key } }}
+														item={{
+															node: { collection: 'documents', key: doc.key },
+															dictum: doc.dictum,
+															explanation: doc.explanation
+														}}
 														als="kern"
 													/>
 												{/snippet}

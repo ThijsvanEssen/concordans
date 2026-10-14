@@ -28,6 +28,11 @@
 	import { heeftOverweging, laadUitspraak, type Uitspraak } from '$lib/bron/overweging';
 	import { kernSoort, kernVan } from '$lib/components/open/rij-inhoud';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
+	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
+	import {
+		stukUitslag,
+		type StukUitslag as StukUitslagT
+	} from '$lib/components/parliamentary/stuk-uitslag';
 	import { onderdeelMark } from '$lib/text/article-parts';
 	import { getInstrumentDetail } from '$lib/api/instrument-cache';
 	import { kindName } from '$lib/components/explore/law-head';
@@ -50,6 +55,8 @@
 		| { soort: 'uitspraak'; u: Uitspraak; samenvatting: string | null }
 		| {
 				soort: 'stuk';
+				/** How the Kamer decided on a motie or amendement (StukUitslag). */
+				uitslag: StukUitslagT | null;
 				tekst: string | null;
 				kern: string | null;
 				als: 'dictum' | 'toelichting' | 'opening';
@@ -115,7 +122,13 @@
 		if (doel.collection === 'documents') {
 			const d = await getDocument(doel.key);
 			const als = kernSoort(d.kind);
-			return { soort: 'stuk', tekst: d.text ?? null, kern: kernVan(als, d), als };
+			return {
+				soort: 'stuk',
+				uitslag: stukUitslag(d),
+				tekst: d.text ?? null,
+				kern: kernVan(als, d),
+				als
+			};
 		}
 		const p = await loadPreview(i.id, i.at || null);
 		return p?.lines ? { soort: 'regels', tekst: p.lines } : { soort: 'niets' };
@@ -216,6 +229,9 @@
 		</p>
 	{:else if inhoud.soort === 'stuk'}
 		{@const rond = citaat ? rondCitaat(inhoud.tekst, citaat) : null}
+		<!-- The row is the map's own (a citation and a note): the outcome stands here, as on
+		     the row of every other list of Kamerstukken. -->
+		{#if inhoud.uitslag}<p class="uitslag"><StukUitslag uitslag={inhoud.uitslag} /></p>{/if}
 		{#if rond}
 			<p class="tekst">{rond.voor}<mark>{rond.citaat}</mark>{rond.na}</p>
 		{:else if inhoud.kern}
@@ -267,6 +283,12 @@
 	}
 	.dictum {
 		font-style: italic;
+	}
+	.uitslag {
+		margin: 0;
+		font-family: var(--font-serif);
+		font-size: var(--t-micro);
+		color: var(--ink-2);
 	}
 	.stil {
 		margin: 0;

@@ -17,6 +17,8 @@
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import RijInhoud from '$lib/components/open/RijInhoud.svelte';
 	import WetVerwijzingen from './WetVerwijzingen.svelte';
+	import StukUitslag from '$lib/components/parliamentary/StukUitslag.svelte';
+	import { stukUitslag } from '$lib/components/parliamentary/stuk-uitslag';
 	import { terPlekke } from '$lib/actions/klik';
 	import RijActies from '$lib/components/ui/RijActies.svelte';
 	import { isOpen, zetOpen } from '$lib/components/ui/dicht.svelte';
@@ -433,6 +435,8 @@
 	};
 	const opentTerPlekke = (row: Row) =>
 		(row.ref.collection === 'documents' || !!wetVerband(row)) && !row.missing;
+	/** A motie's dictum, an amendement's explanation, from the row's props: no request. */
+	const tekstVan = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 	let openRij = $state<string | null>(null);
 	const wisselRij = (row: Row) => (openRij = openRij === rowId(row) ? null : rowId(row));
 
@@ -720,6 +724,10 @@
 							{@const hoe = hoeVan(row, selection.collection)}
 							{@const href = rowHref(g, row)}
 							{@const dossier = dossierVanRij(row)}
+							<!-- A motie or amendement says how the Kamer decided, on every list (StukUitslag);
+							     the day of the vote then stands for the stuk's own. -->
+							{@const uitslag = row.ref.collection === 'documents' ? stukUitslag(row.props) : null}
+							{@const delen = metaParts(uitslag?.datum ? { ...row, date: null } : row, !!hoe)}
 							<li class="row" class:row--onder={!!row.onder}>
 								<!-- The row is the way to its bron: a click anywhere on it opens the bron in
 								     Netwerk, as its title does. -->
@@ -790,10 +798,18 @@
 										<span class="row__meta">
 											<!-- Where the verbinding comes from, in the line's own words (Thijs, 10 Oct:
 											     the box over the next row was "out of place"). -->
-											{#each [...metaParts(row, !!hoe), ...(hoe?.herkomst ? [{ kind: 'herkomst', text: metaParts(row, !!hoe).length ? kleineLetter(hoe.herkomst) : hoe.herkomst }] : [])] as part, k (k)}
+											{#each delen as part, k (k)}
 												{#if k > 0}<span class="row__sep">,</span>{/if}
 												<span class="row__part row__part--{part.kind}">{part.text}</span>
-											{/each}
+											{/each}{#if uitslag}{#if delen.length}<span class="row__sep">,</span
+													>{/if}<span class="row__part"><StukUitslag {uitslag} /></span
+												>{/if}{#if hoe?.herkomst}{#if delen.length || uitslag}<span class="row__sep"
+														>,</span
+													>{/if}<span class="row__part row__part--herkomst"
+													>{delen.length || uitslag
+														? kleineLetter(hoe.herkomst)
+														: hoe.herkomst}</span
+												>{/if}
 											{#if row.proposed && onProposedText}
 												<span class="row__sep">,</span>
 												<TekstLink onclick={() => onProposedText(row)}
@@ -816,7 +832,14 @@
 										{#if verband}
 											<WetVerwijzingen {...verband} />
 										{:else}
-											<RijInhoud item={{ node: row.ref }} als="kern" />
+											<RijInhoud
+												item={{
+													node: row.ref,
+													dictum: tekstVan(row.props?.dictum),
+													explanation: tekstVan(row.props?.explanation)
+												}}
+												als="kern"
+											/>
 										{/if}
 									</div>
 								{/if}

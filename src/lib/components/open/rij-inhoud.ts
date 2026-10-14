@@ -10,7 +10,10 @@ export type MetInhoud = { node: { collection: string; key: string } } & Partial<
 		FeedItem,
 		'kind' | 'summary' | 'vote' | 'has_text' | 'dictum' | 'date' | 'publication' | 'commencement'
 	>
->;
+> & {
+		/** Of an amendement, the opening of its toelichting as the API gives it (API 0.79.55). */
+		explanation?: string | null;
+	};
 /** `kern`: a stuk's core text by its own kind (kernSoort), where the row does not know it. */
 export type Inhoud =
 	| 'dictum'
@@ -27,6 +30,22 @@ const telt = (i: MetInhoud) => {
 	const t = (i.vote?.tally ?? {}) as Record<string, number>;
 	return (t['Voor'] ?? 0) + (t['Tegen'] ?? 0) > 0;
 };
+
+/**
+ * The core text a list already gives, without a request: a motie's dictum, an amendement's
+ * explanation (`kern`: whichever the stuk has).
+ */
+export function kernUitLijst(
+	soort: Inhoud,
+	i: Pick<MetInhoud, 'dictum' | 'explanation'>
+): { tekst: string; als: 'dictum' | 'toelichting' } | null {
+	const dictum = i.dictum?.trim();
+	const uitleg = i.explanation?.trim();
+	if (dictum && (soort === 'dictum' || soort === 'kern')) return { tekst: dictum, als: 'dictum' };
+	if (uitleg && (soort === 'toelichting' || soort === 'kern'))
+		return { tekst: uitleg, als: 'toelichting' };
+	return null;
+}
 
 /**
  * What the row of an item shows when it opens; null: it has nothing beyond the row. A paper
@@ -105,13 +124,15 @@ export function kernSoort(kind: string | null | undefined): 'dictum' | 'toelicht
 export type Stuk = {
 	text?: string | null;
 	dictum?: string | null;
+	explanation?: string | null;
 	sections?: readonly { heading: string; char_start: number; char_end: number }[] | null;
 };
 
-/** The core text of a stuk: the API's dictum before the one read from the text, the
- *  toelichting of an amendement, the opening of another stuk. */
+/** The core text of a stuk: the API's dictum or explanation before the one read from the
+ *  text, the toelichting of an amendement, the opening of another stuk. */
 export function kernVan(soort: 'dictum' | 'toelichting' | 'opening', d: Stuk): string | null {
 	if (soort === 'dictum') return d.dictum?.trim() || dictumUit(d.text ?? null);
-	if (soort === 'toelichting') return toelichtingVan(d.text, d.sections ?? []);
+	if (soort === 'toelichting')
+		return d.explanation?.trim() || toelichtingVan(d.text, d.sections ?? []);
 	return openingVan(d.text);
 }

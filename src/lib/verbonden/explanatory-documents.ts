@@ -76,7 +76,14 @@ export function rowsOfExplanations(items: Schema<'ArticleExplanationDTO'>[]): Ro
 			...describe('documents', d.key, d.title, { ...d }),
 			kind: 'toelichtingen',
 			at: item.section_anchor ?? null,
-			position: section ? `§ ${section[1]}` : null,
+			// The section by its heading as the memorie prints it (API 0.79.55): `§ Artikel 21
+			// (zorgplicht)`; its opening comes with it (`excerpt`), on the row's second line.
+			position: item.heading?.trim()
+				? `§ ${item.heading.trim()}`
+				: section
+					? `§ ${section[1]}`
+					: null,
+			edge: { heading: item.heading ?? null, excerpt: item.excerpt ?? null },
 			derived: item.confidence != null && item.confidence < 1,
 			confidence: item.confidence ?? null,
 			relation: 'EXPLAINS',
