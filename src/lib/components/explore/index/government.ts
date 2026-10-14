@@ -1,6 +1,7 @@
 import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
 import { vandaag } from '$lib/text/datum';
+import { onForget } from '$lib/util/forget';
 
 // The words for the government's side of the index: the posts in a cabinet, the state of a
 // commitment, and the cabinets and ministries, each asked for once per page load.
@@ -50,6 +51,7 @@ export const statusFromParam = (value: string | null): string | null =>
 
 function once<T>(load: () => Promise<T>): () => Promise<T> {
 	let request: Promise<T> | null = null;
+	onForget(() => (request = null));
 	return () =>
 		(request ??= load().catch((err) => {
 			request = null;

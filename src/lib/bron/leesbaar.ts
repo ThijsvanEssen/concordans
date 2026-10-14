@@ -31,6 +31,7 @@ import { getDocument, getDossierPapers, getExplainedBy } from '$lib/api/records'
 import { wordingsOf } from '$lib/text/version-diff';
 import { apiNumber, bookNumber } from '$lib/text/bw';
 import { parseNodeId } from '$lib/vocabulary';
+import { onForget } from '$lib/util/forget';
 
 export type Pad =
 	| { soort: 'uitspraak'; ecli: string }
@@ -291,6 +292,11 @@ function lookupQuery(pad: Pad) {
 // the judgment until a reload). The address is the document's own (its navigation entry),
 // not the one of the moment.
 let paginaFocus: { href: string; focus: string } | null | undefined;
+onForget(() => {
+	focusVan.clear();
+	padVan.clear();
+	paginaFocus = undefined;
+});
 function leesPaginaFocus(): { href: string; focus: string } | null {
 	const meta = document.querySelector('meta[name="focus"]');
 	const focus = meta?.getAttribute('content') ?? null;

@@ -25,6 +25,7 @@ import { bronLabel, isCollection, type Collection } from '$lib/vocabulary';
 import { focusOf, type BronRef } from './href';
 import { tabTitle } from './tab-title';
 import { isOverwegingAnker, laadUitspraak, tekstVanOverweging } from './overweging';
+import { onForget } from '$lib/util/forget';
 
 export type Preview = {
 	/** The kind, and where it helps its place: `Uitspraak, Hoge Raad`. */
@@ -227,6 +228,7 @@ export function previewFromNode(
 }
 
 const cache = new Map<string, Promise<Preview | null>>();
+onForget(() => cache.clear());
 
 /** The card of a bron, asked for once per bron and position. */
 export function loadPreview(

@@ -1,8 +1,10 @@
 import { api, unwrap } from './client';
 import { once } from './records';
+import { onForget } from '$lib/util/forget';
 
 /** The address of an article by its node key, from every detail that came in. */
 const adresVan = new Map<string, { bwbId: string; articleNumber: string }>();
+onForget(() => adresVan.clear());
 
 // The reader, the panel, the list of what cites it and a hover card ask for the same
 // article: it is asked once per session (`once`, the most recent records kept).

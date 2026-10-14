@@ -12,6 +12,7 @@
 // de tweede krijgt arcering, de derde stippen, de volgende strepen. Een fractie met twee
 // kleuren (GroenLinks-PvdA) is al onderscheiden.
 import { api } from '$lib/api/client';
+import { onForget } from '$lib/util/forget';
 
 const kamers = $state<{ TK: Record<string, string[]>; EK: Record<string, string[]> }>({
 	TK: {},
@@ -23,6 +24,13 @@ const eigen = $state<{ kleuren: Record<string, string>; aliassen: Record<string,
 	aliassen: {}
 });
 let gevraagd = false;
+onForget(() => {
+	kamers.TK = {};
+	kamers.EK = {};
+	eigen.kleuren = {};
+	eigen.aliassen = {};
+	gevraagd = false;
+});
 
 function laad() {
 	if (gevraagd || typeof window === 'undefined') return;

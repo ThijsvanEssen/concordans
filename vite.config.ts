@@ -43,6 +43,7 @@ export default defineConfig({
 		}
 	},
 	test: {
-		include: ['src/**/*.test.ts']
+		include: ['src/**/*.test.ts'],
+		setupFiles: ['src/lib/test/setup.ts']
 	}
 });

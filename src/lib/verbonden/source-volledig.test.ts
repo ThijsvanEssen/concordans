@@ -1,6 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { VERBONDEN_BUCKET } from '$lib/api/records';
+import { fakeApi } from '$lib/test/fakeApi';
 import type { GraphStore } from '$lib/graph/graph-store';
 import type { GraphNode } from '$lib/graph/types';
+import { createVerbondenSource } from './source';
 
 const node = (n: number) => ({
 	node: { id: 'factions/d66', props: {} },
@@ -26,14 +29,14 @@ const node = (n: number) => ({
 	}
 });
 
+// The light node comes at once, the rows of Verbonden when the test lets them.
 let later: (v: unknown) => void = () => {};
-vi.mock('$lib/api/records', async (original) => ({
-	...(await original<typeof import('$lib/api/records')>()),
-	getNodeFirst: () => Promise.resolve(node(1)),
-	getNodeVerbonden: () => new Promise((r) => (later = r))
-}));
-
-const { createVerbondenSource } = await import('./source');
+beforeEach(() =>
+	fakeApi({
+		'/api/nodes/{collection}/{key}': ({ params }) =>
+			params.query?.limit === VERBONDEN_BUCKET ? new Promise((r) => (later = r)) : node(1)
+	})
+);
 
 describe('the whole node, asked for before the first rows are in', () => {
 	it('is asked once they are (an address with ?tabel=1)', async () => {

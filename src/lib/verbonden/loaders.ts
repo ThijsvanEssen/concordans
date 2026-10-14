@@ -54,6 +54,7 @@ import {
 	type Neighbor,
 	type Row
 } from './rows';
+import { onForget } from '$lib/util/forget';
 
 /** What an implementation rests on (API 0.67), in words: EUR-Lex, the considerans, or both. */
 const BASIS: Record<string, string> = {
@@ -154,6 +155,7 @@ async function echrJudgments(bwb: string, articleKey: string, signal: AbortSigna
 
 // The four dossier groups read one hub.
 let hub: { key: string; request: Promise<DossierHub> } | null = null;
+onForget(() => (hub = null));
 const hubOf = ({ node, buren, neighbors }: LoaderContext) => {
 	if (hub?.key !== node.key)
 		hub = {

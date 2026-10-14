@@ -3,8 +3,10 @@
 // head and the browser tab, never cut (Back-end #3, 10 Oct). The light node and the full one
 // carry the same. Kept per node id as answers come in.
 import { SvelteMap } from 'svelte/reactivity';
+import { onForget } from '$lib/util/forget';
 
 const titels = new SvelteMap<string, string>();
+onForget(() => titels.clear());
 
 /**
  * A title without a heading of its text in capitals after it: `Stb. 2026, 187`, not

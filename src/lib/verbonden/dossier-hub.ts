@@ -17,6 +17,7 @@ import { chamberOf, isExplanatory } from './chamber';
 import { bronKindOf } from './filter';
 import { describe, type Neighbor, type Row } from './rows';
 import { kindName } from '$lib/components/explore/law-head';
+import { onForget } from '$lib/util/forget';
 
 export type DossierHub = {
 	laws: Row[];
@@ -180,6 +181,7 @@ export const getCommittees = () =>
 		committeeList = null;
 		throw err;
 	}));
+onForget(() => (committeeList = null));
 
 /**
  * `number` is the dossier's number (`37020-XV`, the node's `label`); `buren` gives the

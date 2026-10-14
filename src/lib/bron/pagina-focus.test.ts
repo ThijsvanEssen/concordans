@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as leesbaar from './leesbaar';
 
 // The focus the server's page names (<meta name="focus">) is for the address it served,
 // once (UX test 0.79.43, #28): after a step in the app the meta still names the first page.
-async function pagina(served: string, focus: string, nu: string) {
-	vi.resetModules();
+function pagina(served: string, focus: string, nu: string) {
 	let meta: { getAttribute: () => string; remove: () => void } | null = {
 		getAttribute: () => focus,
 		remove: () => (meta = null)
@@ -13,23 +13,19 @@ async function pagina(served: string, focus: string, nu: string) {
 	vi.stubGlobal('performance', {
 		getEntriesByType: () => [{ name: `https://concordans.nl${served}` }]
 	});
-	return import('./leesbaar');
+	return leesbaar;
 }
 
 describe('focusUitPagina', () => {
 	afterEach(() => vi.unstubAllGlobals());
 
 	it('gives the focus for the address the page was served for', async () => {
-		const { focusUitPagina } = await pagina(
-			'/leden/rob-jetten',
-			'members/49be3576',
-			'/leden/rob-jetten'
-		);
+		const { focusUitPagina } = pagina('/leden/rob-jetten', 'members/49be3576', '/leden/rob-jetten');
 		expect(focusUitPagina({ soort: 'lid', slug: 'rob-jetten' })).toBe('members/49be3576');
 	});
 
 	it('gives nothing after a step in the app to another address', async () => {
-		const { focusUitPagina, padOfFocus } = await pagina(
+		const { focusUitPagina, padOfFocus } = pagina(
 			'/uitspraken/ECLI:NL:HR:2019:2006',
 			'judgments/ecli_nl_hr_2019_2006',
 			'/kamerstukken/36600-VII/147'
@@ -40,11 +36,7 @@ describe('focusUitPagina', () => {
 	});
 
 	it('gives the focus once: back on the first address later, the lookup speaks', async () => {
-		const { focusUitPagina } = await pagina(
-			'/leden/rob-jetten',
-			'members/49be3576',
-			'/leden/rob-jetten'
-		);
+		const { focusUitPagina } = pagina('/leden/rob-jetten', 'members/49be3576', '/leden/rob-jetten');
 		expect(focusUitPagina({ soort: 'lid', slug: 'rob-jetten' })).toBe('members/49be3576');
 		expect(focusUitPagina({ soort: 'lid', slug: 'rob-jetten' })).toBeNull();
 	});

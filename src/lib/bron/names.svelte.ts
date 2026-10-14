@@ -3,6 +3,7 @@
 // the list stays text; a guessed key would be a link to nothing.
 import { api, unwrap } from '$lib/api/client';
 import { getCabinets } from '$lib/components/explore/index/government';
+import { onForget } from '$lib/util/forget';
 
 type Named = { key: string; names: (string | null | undefined)[] };
 
@@ -27,6 +28,11 @@ export function keyOfName(items: Named[], name: string | null | undefined): stri
 
 const lists = $state<{ factions: Named[]; cabinets: Named[] }>({ factions: [], cabinets: [] });
 let requested = false;
+onForget(() => {
+	lists.factions = [];
+	lists.cabinets = [];
+	requested = false;
+});
 
 function request() {
 	if (requested || typeof window === 'undefined') return;

@@ -1,21 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { fakeApi } from '$lib/test/fakeApi';
+import { getHeat, heatPortions, HEAT_IDS_CHARS, HEAT_IDS_MAX } from './overlays';
 
-const GET = vi.fn(async (_path: string, opts: { params: { query: { ids: string } } }) => ({
-	data: Object.fromEntries(opts.params.query.ids.split(',').map((id) => [id, 3])),
-	response: new Response(null, { status: 200 })
-}));
-vi.mock('./client', async (original) => ({
-	...(await original<typeof import('./client')>()),
-	api: { GET }
-}));
-
-const { getHeat, heatPortions, HEAT_IDS_CHARS, HEAT_IDS_MAX } = await import('./overlays');
+const idsOf = (params: { query?: Record<string, unknown> }) => String(params.query?.ids).split(',');
 
 describe('getHeat', () => {
 	it('asks for the drawn bronnen only, in portions, and merges the answers', async () => {
+		const fake = fakeApi({
+			'/api/nodes/heat': ({ params }) => Object.fromEntries(idsOf(params).map((id) => [id, 3]))
+		});
 		const ids = Array.from({ length: 1200 }, (_, i) => `a_${i}`);
 		const counts = await getHeat(12, ids);
-		const sizes = GET.mock.calls.map(([, o]) => o.params.query.ids.split(',').length);
+		const sizes = fake.asked('/api/nodes/heat').map((params) => idsOf(params).length);
 		expect(sizes).toEqual([HEAT_IDS_MAX, HEAT_IDS_MAX, 200]);
 		expect(counts.size).toBe(1200);
 		expect(counts.get('a_0')).toBe(3);

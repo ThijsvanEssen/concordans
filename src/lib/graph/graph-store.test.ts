@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 import type { Schema } from '$lib/api/types';
+import { fakeApi, type FakeRequest } from '$lib/test/fakeApi';
+import { createGraphStore } from './graph-store';
 
 // A wet with more articles than the canvas keeps (SOFT_NODE_CAP): the Awb.
 const ARTICLES = 450;
@@ -88,12 +90,13 @@ const stuk = (key: string) => ({
 	}
 });
 
-const getNodeGraph = vi.fn(async (c: string, k: string, opts: { limit?: number } = {}) =>
-	c === 'cabinets'
+// The light node (limit 1) carries one neighbour per bucket.
+const nodeOf = ({ params }: FakeRequest) =>
+	params.path?.collection === 'cabinets'
 		? jetten
-		: c === 'documents'
-			? stuk(k)
-			: opts.limit === 1
+		: params.path?.collection === 'documents'
+			? stuk(String(params.path.key))
+			: params.query?.limit === 1
 				? {
 						...awb,
 						neighbors: {
@@ -101,14 +104,9 @@ const getNodeGraph = vi.fn(async (c: string, k: string, opts: { limit?: number }
 							buckets: awb.neighbors.buckets.map((b) => ({ ...b, items: b.items.slice(0, 1) }))
 						}
 					}
-				: awb
-);
-vi.mock('$lib/api/nodes', async (original) => ({
-	...(await original<typeof import('$lib/api/nodes')>()),
-	getNodeGraph
-}));
-
-const { createGraphStore } = await import('./graph-store');
+				: awb;
+let fake: ReturnType<typeof fakeApi>;
+beforeEach(() => (fake = fakeApi({ '/api/nodes/{collection}/{key}': nodeOf })));
 
 /** The hull of a container as the canvas gets it: after the microtask the store batches in. */
 const hullOf = async (store: ReturnType<typeof createGraphStore>, id: string) => {
@@ -137,7 +135,10 @@ describe('the bron before its neighbours', () => {
 		const first = await store.peekNode('instruments', 'bwbr0005537');
 		expect(first?.id).toBe('instruments/bwbr0005537');
 		expect(nodes()).toEqual(['instruments/bwbr0005537']);
-		expect(getNodeGraph).toHaveBeenCalledWith('instruments', 'bwbr0005537', { limit: 1 });
+		expect(fake.asked('/api/nodes/{collection}/{key}')).toContainEqual({
+			path: { collection: 'instruments', key: 'bwbr0005537' },
+			query: expect.objectContaining({ limit: 1 })
+		});
 		await store.expandNode('instruments', 'bwbr0005537', {
 			neighborLimit: Number.POSITIVE_INFINITY
 		});
