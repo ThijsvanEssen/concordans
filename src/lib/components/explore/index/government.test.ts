@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { cabinetShortName, laterPosts, statusFromParam } from './government';
+import {
+	COMMITMENT_STATUSES,
+	cabinetShortName,
+	commitmentTeken,
+	laterPosts,
+	statusFromParam
+} from './government';
 
 describe('statusFromParam', () => {
 	it('reads a state as the Kamer writes it, and one of before API 0.48 as its word', () => {
@@ -25,5 +31,23 @@ describe('cabinetShortName', () => {
 	it('says a cabinet by its own name', () => {
 		expect(cabinetShortName('kabinet-Schoof')).toBe('Schoof');
 		expect(cabinetShortName('Schoof')).toBe('Schoof');
+	});
+});
+
+describe('commitmentTeken', () => {
+	it('draws a toezegging kept as done, one dropped or broken as no, the rest as open', () => {
+		expect(COMMITMENT_STATUSES.map((s) => [s, commitmentTeken(s)])).toEqual([
+			['Openstaand', 'open'],
+			['Afgedaan', 'ja'],
+			['Nagekomen', 'ja'],
+			['Deels Afgedaan', 'open'],
+			['Niet nagekomen', 'nee'],
+			['Vervallen', 'nee']
+		]);
+	});
+
+	it('draws a state the Kamer adds later, or none, as open', () => {
+		expect(commitmentTeken('Onbekend')).toBe('open');
+		expect(commitmentTeken(null)).toBe('open');
 	});
 });

@@ -8,7 +8,8 @@ import type { Schema } from '$lib/api/types';
 import { bronHref } from '$lib/bron/href';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { stand } from './stand';
-import { methodPhrase, stepsToCome } from './stages';
+import { CHAMBER_NAME } from './chamber';
+import { BILL_KINDS, INITIATIVE_BILL, methodPhrase, stepsToCome } from './stages';
 import {
 	enigJaar,
 	sorteer,
@@ -124,6 +125,7 @@ function eigenStuk(e: Entry, groep: 'rvs' | 'tk' | 'ek', dossier: string): TijdR
 		soort: 'documents',
 		label: eigen ? kind || null : null,
 		zin: eigen ?? (kind || title || 'Stuk'),
+		nummers: nr ? [nr] : null,
 		meta: nr
 			? kamerstukName({
 					chamber: groep === 'ek' ? 'EK' : 'TK',
@@ -174,7 +176,7 @@ function regelsVan(
 	);
 	for (const e of asc) {
 		// A decision on what the dossier's kind is not (a motie, an amendement) counts per day.
-		if (e.node_type === 'decision' && e.kind && !WETSVOORSTEL.has(e.kind)) {
+		if (e.node_type === 'decision' && e.kind && !BILL_KINDS.has(e.kind)) {
 			overig.push(e);
 			continue;
 		}
@@ -271,6 +273,7 @@ function regelsVan(
 			soort: 'documents',
 			label: null,
 			zin: capitalize(zin),
+			nummers: nummers.length ? nummers : null,
 			meta: nummers.length
 				? `${kamerstukNummer(dossier, groep === 'ek' ? 'EK' : null)}, ${groep === 'ek' ? nummers.join(', ') : nrs(nummers)}`
 				: null,
@@ -307,7 +310,7 @@ const stapNaam = (s: EkStep) => (s.phase ? (STAP[s.phase] ?? lowerFirst(s.phase)
 function ekVoortgang(d: Detail, ek: TijdRegel[]): TijdRegel[] | null {
 	const steps = (d.senate?.progress ?? []).filter((s) => s.phase);
 	if (!steps.length) return null;
-	const letters = new Set(ek.flatMap((r) => (r.meta ? r.meta.split(', ').slice(1) : [])));
+	const letters = new Set(ek.flatMap((r) => r.nummers ?? []));
 	const besluit = !!d.ek_outcome || ek.some((r) => r.soort === 'decisions');
 	const out: TijdRegel[] = [];
 	for (const step of steps)
@@ -360,8 +363,7 @@ export function uitslagVan(b: { passed?: unknown; result?: unknown }): boolean |
  * dossier's zaak (`kind`; the phases exist for these alone). Another dossier, a verzameldossier
  * such as Huurbeleid, has no steps to come: no advice, no Eerste Kamer.
  */
-const WETSVOORSTEL = new Set(['Wetgeving', 'Initiatiefwetgeving', 'Begroting']);
-export const isWetsvoorstel = (d: Pick<Detail, 'kind'>) => WETSVOORSTEL.has(d.kind ?? '');
+export const isWetsvoorstel = (d: Pick<Detail, 'kind'>) => BILL_KINDS.has(d.kind ?? '');
 
 export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 	const st = stand(d);
@@ -389,7 +391,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 							teken: 'verwacht',
 							soort: 'activities',
 							zin:
-								d.kind === 'Initiatiefwetgeving'
+								d.kind === INITIATIVE_BILL
 									? 'Het advies kan nog volgen.'
 									: 'Geen advies in de gegevens.'
 						}
@@ -410,7 +412,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 		});
 	groepen.push({
 		id: 'tk',
-		titel: 'Tweede Kamer',
+		titel: CHAMBER_NAME.TK,
 		regels: tk
 	});
 
@@ -434,7 +436,7 @@ export function procedure(d: Detail, entries: Entry[], metOverig: boolean) {
 			soort: 'activities',
 			zin: 'Aan de orde na aanneming door de Tweede Kamer.'
 		});
-	if (ek.length) groepen.push({ id: 'ek', titel: 'Eerste Kamer', regels: ek });
+	if (ek.length) groepen.push({ id: 'ek', titel: CHAMBER_NAME.EK, regels: ek });
 
 	// Het jaar staat in de kop van de groep, en niet nog eens onder elke dag.
 	for (const g of groepen) {

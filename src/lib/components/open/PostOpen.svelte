@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { OPEN_STATUS } from '$lib/components/explore/index/government';
+	import { OPEN_STATUS, commitmentTeken } from '$lib/components/explore/index/government';
 	import { lowerFirst } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	import { naamVanId } from '$lib/bron/menselijk';
@@ -60,7 +60,7 @@
 		const out: TijdRegel[] = record.commitments.items.map((t) => ({
 			id: t.key,
 			datum: t.date ?? null,
-			teken: t.status === 'Afgedaan' ? 'ja' : t.status === 'Vervallen' ? 'nee' : 'open',
+			teken: commitmentTeken(t.status),
 			soort: 'commitments',
 			label: `Toezegging, ${(t.status ?? '').toLowerCase()}`,
 			zin: t.text ?? '',

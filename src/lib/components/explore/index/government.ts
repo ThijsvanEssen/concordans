@@ -2,6 +2,7 @@ import { api, unwrap } from '$lib/api/client';
 import type { Schema } from '$lib/api/types';
 import { daysBetween, vandaag } from '$lib/text/datum';
 import { onForget } from '$lib/util/forget';
+import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 
 // The words for the government's side of the index: the posts in a cabinet, the state of a
 // commitment, and the cabinets and ministries, each asked for once per page load.
@@ -33,8 +34,27 @@ export const COMMITMENT_STATUSES = [
 	'Vervallen'
 ] as const;
 
+export type CommitmentStatus = (typeof COMMITMENT_STATUSES)[number];
+
 /** The state of a toezegging not yet settled; past its date it is overdue. */
-export const OPEN_STATUS = 'Openstaand';
+export const OPEN_STATUS: CommitmentStatus = 'Openstaand';
+
+/** How a state is drawn on a timeline: kept filled, dropped or broken as no, the rest open. */
+const COMMITMENT_TEKEN: Record<CommitmentStatus, Teken> = {
+	Openstaand: 'open',
+	Afgedaan: 'ja',
+	Nagekomen: 'ja',
+	'Deels Afgedaan': 'open',
+	'Niet nagekomen': 'nee',
+	Vervallen: 'nee'
+};
+
+/** The teken of a toezegging by its state; a state the Kamer adds later is open. */
+export const commitmentTeken = (status: string | null | undefined): Teken =>
+	isCommitmentStatus(status) ? COMMITMENT_TEKEN[status] : 'open';
+
+const isCommitmentStatus = (value: unknown): value is CommitmentStatus =>
+	(COMMITMENT_STATUSES as readonly unknown[]).includes(value);
 
 /** The states of API 0.47 and before, as a link from then names them in `?status=`. */
 const OLD_STATUS: Record<string, string> = {

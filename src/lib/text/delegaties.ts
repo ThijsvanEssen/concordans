@@ -4,6 +4,7 @@
 // formula (`delegations`) and names per formula the regulations that fill it
 // (`.../delegated`, `clauses`); nothing is read from the text here.
 import { joinAnd } from './words';
+import { spansWithin } from './spans';
 import type { Schema } from '$lib/api/types';
 import { kindName } from '$lib/components/explore/law-head';
 import { langeDatum } from '$lib/text/datum';
@@ -24,9 +25,7 @@ export function delegatiesWithin(
 	from: number,
 	length: number
 ): DelegatieSpan[] {
-	return spans
-		.filter((s) => s.start >= from && s.end <= from + length)
-		.map((s) => ({ ...s, bij: s.start, start: s.start - from, end: s.end - from }));
+	return spansWithin(spans, from, length).map((s) => ({ ...s, bij: s.start + from }));
 }
 
 /** The regulations that fill the formula at `bij` in the article's text, in the API's order;

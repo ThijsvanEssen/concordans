@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kandidaten, schetsVan, stukNaam, type CitedBy } from './wetsnetwerk';
+import { kandidaten, schetsVan, type CitedBy } from './wetsnetwerk';
 import type { ChangedArticles } from '$lib/components/parliamentary/changed-articles';
 
 const vote = (number: string, date: string, chamber: 'TK' | 'EK', subkind: string, passed = true) =>
@@ -37,22 +37,6 @@ describe('kandidaten', () => {
 	});
 });
 
-describe('stukNaam', () => {
-	it('reads the number and kind from the name of a Kamerstuk', () => {
-		expect(stukNaam('Kamerstuk 36547, nr. 7. Nota van wijziging: Wijziging van het…')).toEqual({
-			nr: '7',
-			soort: 'Nota van wijziging'
-		});
-		expect(stukNaam('Kamerstuk 36547, nr. 10: Amendement van het lid Van Nispen')).toEqual({
-			nr: '10',
-			soort: 'Amendement van het lid Van Nispen'
-		});
-		expect(stukNaam('Kamerstuk 36547, nr. 26. Amendement (gewijzigd/nader/vervangend): X')).toEqual(
-			{ nr: '26', soort: 'Amendement' }
-		);
-	});
-});
-
 const change = (art: string, nr: string, soort: string) => ({
 	article: {
 		id: `articles/bwbr0001854_${art}`,
@@ -66,8 +50,12 @@ const change = (art: string, nr: string, soort: string) => ({
 	source: {
 		id: `documents/d${nr}`,
 		key: `d${nr}`,
-		display_name: `Kamerstuk 36547, nr. ${nr}. ${soort}: Wijziging`,
-		official_id: null
+		// The name is the API's own; the number and the kind are read from their fields.
+		display_name: `Wijziging van het Wetboek van Strafrecht`,
+		official_id: null,
+		kind: soort,
+		sequence: Number(nr),
+		number: nr
 	},
 	effective_date: null
 });
@@ -148,6 +136,7 @@ describe('schetsVan', () => {
 			'Nota van wijziging',
 			'2 amendementen'
 		]);
+		expect(s.kolommen[1].bronnen.map((b) => b.sub ?? null)).toEqual(['nr. 2', 'nr. 7', null]);
 		expect(s.kolommen[2].kader?.label).toBe('Wetboek van Strafrecht');
 		expect(s.kolommen[2].na?.label).toBe('en 1 andere wet');
 	});

@@ -20,6 +20,9 @@ export type TijdRegel = {
 	/** The zin in pieces, the words a reader follows or searched for marked ($lib/text/treffer). */
 	zinDelen?: readonly import('$lib/text/treffer').Deel[] | null;
 	meta?: string | null;
+	/** The numbers in their dossier of the papers the line names (`11`; a letter, `A`, in the
+	 *  Eerste Kamer). */
+	nummers?: readonly string[] | null;
 	/** Under the zin, after the meta: what has links of its own (indieners, a dossier). It
 	 *  gets the line's id, as `inhoud` does. */
 	onder?: Snippet<[string]> | null;

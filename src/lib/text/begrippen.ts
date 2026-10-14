@@ -55,13 +55,6 @@ export function definitieKaart(d: Definitie): Preview {
 	};
 }
 
-/** The terms inside text[from, from + length), with offsets relative to `from`. */
-export function begrippenWithin(spans: readonly Begrip[], from: number, length: number): Begrip[] {
-	return spans
-		.filter((s) => s.start >= from && s.end <= from + length)
-		.map((s) => ({ ...s, start: s.start - from, end: s.end - from }));
-}
-
 /** The definitions by the name a span gives them. */
 export const definitiesOp = (list: readonly Definitie[] | null | undefined) =>
 	new Map((list ?? []).map((d) => [d.ref, d]));

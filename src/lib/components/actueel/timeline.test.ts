@@ -149,7 +149,7 @@ describe('dayLines', () => {
 			'Tweede Kamer stemt over 125 moties: 88 aangenomen, 37 verworpen'
 		]);
 		expect(lines[0].context).toBe('wijziging van Wet 36889 en wijziging van Wet 36899');
-		expect(lines[1].failed).toBe(true);
+		expect(lines.map((l) => l.teken)).toEqual(['ja', 'nee', 'stuk']);
 		expect(lines[1].context).toBe('75 voor, 75 tegen');
 		expect(lines[2].context).toBe('Ook 9 amendementen');
 		expect(lines[2].href).toBe('/actueel?van=2026-09-22&tot=2026-09-22&soort=stemming');
@@ -294,7 +294,7 @@ describe('headlineOf', () => {
 			vorm: 'besluit',
 			title: 'Tweede Kamer verwerpt motie-Schilder over strafverzwaring',
 			major: true,
-			failed: true
+			teken: 'nee'
 		});
 		expect(headlineOf(vote(120, 30)).major).toBe(false);
 		expect(
@@ -325,8 +325,46 @@ describe('headlineOf', () => {
 			label: 'Brief regering',
 			vorm: 'stuk',
 			title: 'Voortgang waterstofbeleid',
-			major: false
+			major: false,
+			teken: 'stuk'
 		});
+	});
+});
+
+describe('the teken of a line', () => {
+	it('is the outcome of a vote, open for a toezegging, a stuk for the rest', () => {
+		const ek = item({
+			kind: 'stemming',
+			node: { collection: 'decisions', key: 'ek_2' } as FeedItem['node'],
+			vote: { chamber: 'EK', passed: false, outcome: 'verworpen', tally: {} } as FeedItem['vote']
+		});
+		const toezegging = item({ kind: 'toezegging', summary: 'De minister stuurt een brief.' });
+		const ingediend = item({ kind: 'Voorstel van wet', title: 'Wet x' });
+		const lines = dayLines(
+			day({
+				kinds: [{ value: 'Brief regering', count: 3 }],
+				votes: [{ chamber: 'EK', subkind: null, outcome: 'verworpen', count: 1 }]
+			}),
+			[ek, toezegging, ingediend]
+		);
+		expect(lines.map((l) => [l.label, l.teken])).toEqual([
+			['Eerste Kamer, verworpen', 'nee'],
+			['Wetsvoorstel', 'stuk'],
+			['Toezegging', 'open'],
+			['Brieven', 'stuk']
+		]);
+	});
+
+	it('of one toezegging in the feed is its state', () => {
+		const met = (status: string | null) =>
+			headlineOf(item({ kind: 'toezegging', commitment: { status } as never })).teken;
+		expect([met('Afgedaan'), met('Vervallen'), met('Openstaand'), met(null)]).toEqual([
+			'ja',
+			'nee',
+			'open',
+			'open'
+		]);
+		expect(headlineOf(vote(100, 50)).teken).toBe('ja');
 	});
 });
 
@@ -361,6 +399,7 @@ describe('a judgment in the feed', () => {
 			label: 'Uitspraak',
 			title: 'Raad van State, 15 september 2026',
 			major: false,
+			teken: 'stuk',
 			vorm: 'uitspraak'
 		});
 		const conclusie = headlineOf(
@@ -376,7 +415,8 @@ describe('a judgment in the feed', () => {
 			label: 'Conclusie',
 			vorm: 'uitspraak',
 			title: 'Conclusie A-G Niessen, 2 augustus 2018',
-			major: true
+			major: true,
+			teken: 'stuk'
 		});
 	});
 });

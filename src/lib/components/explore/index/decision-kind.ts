@@ -1,5 +1,6 @@
 import { capitalize } from '$lib/text/words';
 import type { Schema } from '$lib/api/types';
+import { OUTCOME_LABEL, type Outcome } from '$lib/components/parliamentary/stages';
 
 // A decision as the Tweede Kamer records it (API 0.52): `kind` the Zaak.Soort of what was
 // decided (`Motie`, `Amendement`, `Wetgeving`, …, or none), `decision_kind` the BesluitSoort
@@ -25,7 +26,23 @@ export const decisionKindFromParam = (value: string): string | undefined =>
 const HAMMER = 'Stemmen - zonder stemming aannemen';
 
 /** Passed without a vote: a hamerstuk. */
-export const isHammer = (d: Pick<Decision, 'decision_kind'>) => d.decision_kind === HAMMER;
+export const isHammer = (d: Partial<Pick<Decision, 'decision_kind'>>) => d.decision_kind === HAMMER;
+
+/** The BesluitSoort that says the outcome where `passed` does not. */
+const KIND_RESULT: Record<string, Outcome> = {
+	'Stemmen - aangenomen': 'aangenomen',
+	'Stemmen - verworpen': 'verworpen'
+};
+
+/**
+ * What was decided: aangenomen (a hamerstuk too) or verworpen, by `passed` or else the
+ * BesluitSoort; null for a decision that is no vote (`Stemmen - uitstellen`).
+ */
+export function decisionResult(d: Partial<Decision>): Outcome | null {
+	if (isHammer(d) || d.passed === true) return 'aangenomen';
+	if (d.passed === false) return 'verworpen';
+	return KIND_RESULT[d.decision_kind ?? ''] ?? null;
+}
 
 /**
  * The outcome in a word: `Aangenomen`, `Verworpen`, `Zonder stemming aangenomen`, or for a
@@ -34,8 +51,8 @@ export const isHammer = (d: Pick<Decision, 'decision_kind'>) => d.decision_kind 
  */
 export function decisionOutcome(d: Decision): string | null {
 	if (isHammer(d)) return 'Zonder stemming aangenomen';
-	if (d.passed === true) return 'Aangenomen';
-	if (d.passed === false) return 'Verworpen';
+	const result = decisionResult(d);
+	if (result) return OUTCOME_LABEL[result];
 	const rest = d.decision_kind?.replace(/^Stemmen\s*-\s*/i, '').trim();
 	return rest ? capitalize(rest) : null;
 }

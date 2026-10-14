@@ -127,10 +127,10 @@ export function metEersteKamer(
 	d: { senate?: { document_count?: number | null } | null; ek_outcome?: unknown }
 ): Laag[] {
 	const ek = (d.senate?.document_count ?? 0) > 0 || !!d.ek_outcome;
-	if (!ek || kamers.some((k) => k.naam === 'Eerste Kamer')) return kamers;
-	return kamers.some((k) => k.naam === 'Tweede Kamer')
-		? [{ soort: 'Kamer', naam: 'Tweede Kamer en Eerste Kamer' }]
-		: [{ soort: 'Kamer', naam: 'Eerste Kamer' }];
+	if (!ek || kamers.some((k) => k.naam === CHAMBER_NAME.EK)) return kamers;
+	return kamers.some((k) => k.naam === CHAMBER_NAME.TK)
+		? [{ soort: 'Kamer', naam: `${CHAMBER_NAME.TK} en ${CHAMBER_NAME.EK}` }]
+		: [{ soort: 'Kamer', naam: CHAMBER_NAME.EK }];
 }
 
 /** A neighbour as a layer: its kind in the source's word, its name, its ref. */

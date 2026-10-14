@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { choiceRank } from '$lib/components/parliamentary/stemming';
+	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import BronRegel from '$lib/components/parliamentary/BronRegel.svelte';
 	import { capitalize, count, textOf } from '$lib/text/words';
 	import { bewaarItem } from '$lib/map/map';
@@ -240,7 +241,7 @@
 			{/if}
 
 			{#if ek}
-				<Sectie titel="Eerste Kamer">
+				<Sectie titel={CHAMBER_NAME.EK}>
 					<Feiten klein>
 						<Veld label="Fractie" value={ek.faction}>
 							<BronLink ref={{ collection: 'factions', key: ek.faction ?? '' }}

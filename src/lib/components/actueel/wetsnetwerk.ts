@@ -2,7 +2,7 @@
 // stukken that change a law, the articles they change and the judgments on the most
 // changed one. Chosen by a rule, not by hand: the newest passed bill that changes articles.
 // Its links are made as from outside the Verkenner, where the band stands.
-import { count } from '$lib/text/words';
+import { count, withoutGroup } from '$lib/text/words';
 import { naamVanId } from '$lib/bron/menselijk';
 import { formatCount } from '$lib/text/getal';
 import { api, unwrap } from '$lib/api/client';
@@ -22,15 +22,13 @@ import { dossierName } from './feed';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import { langeDatum } from '$lib/text/datum';
 import type { Chamber } from '$lib/components/parliamentary/chamber';
+import { AMENDING_BILL_KINDS } from '$lib/components/parliamentary/stages';
 
 type FeedItem = Schema<'FeedItemDTO'>;
 export type CitedBy = Schema<'ArticleCitedByResponse'>;
 
 /** A bill the Kamer passed: by its dossier, the day and the Kamer. */
 export type Kandidaat = { number: string; naam: string; datum: string; kamer: Chamber };
-
-/** The zaak of a bill, as the Kamer names it (`subkind`); a begroting changes no articles. */
-const WET: ReadonlySet<string> = new Set(['Wetgeving', 'Initiatiefwetgeving']);
 
 /** The changed-articles asked at most, the summary's candidates and the older ones together. */
 export const POGINGEN = 4;
@@ -42,7 +40,13 @@ export const POGINGEN = 4;
 export function kandidaten(items: readonly FeedItem[]): Kandidaat[] {
 	const out = new Map<string, Kandidaat>();
 	const passed = items
-		.filter((i) => i.kind === 'stemming' && i.vote?.passed && i.dossier && WET.has(i.subkind ?? ''))
+		.filter(
+			(i) =>
+				i.kind === 'stemming' &&
+				i.vote?.passed &&
+				i.dossier &&
+				AMENDING_BILL_KINDS.has(i.subkind ?? '')
+		)
 		.map((i) => ({
 			number: i.dossier!.number,
 			naam: dossierName(i.dossier!),
@@ -86,13 +90,12 @@ export type Schets = {
 	};
 };
 
-/** A stuk by its number and kind, from its name: `nr. 7`, `Nota van wijziging`. */
-// TODO(backend): `source.kind` and `source.sequence` on a change, so the name is not read.
-export function stukNaam(name: string): { nr: string; soort: string } {
-	const m = /nr\.\s*([\w-]+)[.:]?\s*([^:(]*)/.exec(name);
-	if (!m) return { nr: '', soort: name };
-	return { nr: m[1], soort: m[2].trim() };
-}
+/** A stuk by its number in its dossier and its kind (`7`, `Nota van wijziging`); a
+ *  publication has neither. */
+const stukVan = (s: DossierChange['source']): { nr: string; soort: string } => ({
+	nr: s.number ?? (s.sequence != null ? String(s.sequence) : ''),
+	soort: s.official_id ? '' : withoutGroup(s.kind ?? '')
+});
 
 const isAmendement = (soort: string) => /^amendement/i.test(soort);
 const nummer = (nr: string) => Number.parseInt(nr, 10) || Number.MAX_SAFE_INTEGER;
@@ -119,7 +122,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 	const stukken = new Map<string, SchetsBron & { nr: string }>();
 	const amendementen = new Set<string>();
 	for (const c of changes) {
-		const { nr, soort } = stukNaam(c.source.display_name ?? '');
+		const { nr, soort } = stukVan(c.source);
 		if (isAmendement(soort)) {
 			amendementen.add(c.source.id);
 			stukOf.set(c.source.id, AMEND);
@@ -212,7 +215,7 @@ export function schetsVan(k: Kandidaat, ch: ChangedArticles, cb: CitedBy | null)
 	// a law (the amendments one by one), every law it changes with the changed articles in
 	// it (a chosen law keeps the articles its stukken amend), the article and its judgments.
 	const alleStukken = [...new Map(changes.map((c) => [c.source.id, c.source])).values()]
-		.map((s) => ({ id: s.id, nr: stukNaam(s.display_name ?? '').nr }))
+		.map((s) => ({ id: s.id, nr: stukVan(s).nr }))
 		.sort((a, b) => nummer(a.nr) - nummer(b.nr))
 		.map((s) => s.id);
 	const netwerk = [dossier.id, ...alleStukken, ...laws.map(lawNodeId), art.id];

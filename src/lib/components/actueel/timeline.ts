@@ -6,6 +6,7 @@ import type { Vorm } from '$lib/bron/vormen';
 import type { Teken } from '$lib/components/tijdlijn/tijdlijn';
 import type { Schema } from '$lib/api/types';
 import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
+import { commitmentTeken } from '$lib/components/explore/index/government';
 import { describe } from '$lib/verbonden/rows';
 import { kamerstukNummer } from '$lib/bron/dossier-naam';
 import {
@@ -48,16 +49,14 @@ export type TimelineLine = {
 	href: BronRef | string;
 	/** A bill, a close vote, a toezegging: set larger, with room. */
 	major: boolean;
-	/** A vote lost: its label in the accent. */
-	failed?: boolean;
+	/** How it is drawn on the line: a vote by its outcome, a toezegging by its state. */
+	teken: Teken;
 	/** The event of a line on its own, for what it opens in place (RijInhoud). */
 	item?: FeedItem;
 };
 
 /** Close votes shown on their own per day, the closest first. */
 const CLOSE_SHOWN = 2;
-/** Who decides, as a headline names the Kamer: always by name, as both vote. */
-const KAMER = CHAMBER_NAME;
 /** Bills named in the context of a line that counts them; a bill without a short title is long. */
 const BILLS_NAMED = 3;
 /**
@@ -162,12 +161,12 @@ function voteLine(i: FeedItem, noun: string): TimelineLine {
 		label: `Stemming, ${passed ? 'aangenomen' : 'verworpen'}`,
 		vorm: 'besluit',
 		title: cut(
-			`${KAMER[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} ${paper}${passed ? ' aan' : ''}${subject ? ` over ${subject}` : ''}`
+			`${CHAMBER_NAME[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} ${paper}${passed ? ' aan' : ''}${subject ? ` over ${subject}` : ''}`
 		),
 		context: voteContext(i),
 		href: hrefOf(i),
 		major: true,
-		failed: !passed,
+		teken: passed ? 'ja' : 'nee',
 		item: i
 	};
 }
@@ -181,14 +180,14 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 		const those = bills.filter((b) => chamberOf(b) === chamber && !!b.vote?.passed === passed);
 		if (!those.length) return [];
 		const verb = passed ? 'neemt' : 'verwerpt';
-		const who = KAMER[chamber];
+		const who = CHAMBER_NAME[chamber];
 		const names = those.map((b) => (b.dossier ? dossierName(b.dossier) : cut(b.title ?? '', 60)));
 		const one = those.length === 1;
 		return [
 			{
 				id: `bills/${date}/${chamber}/${passed}`,
 				date,
-				label: `${chamber === 'EK' ? 'Eerste Kamer' : one ? 'Wetsvoorstel' : 'Wetsvoorstellen'}, ${passed ? 'aangenomen' : 'verworpen'}`,
+				label: `${chamber === 'EK' ? CHAMBER_NAME.EK : one ? 'Wetsvoorstel' : 'Wetsvoorstellen'}, ${passed ? 'aangenomen' : 'verworpen'}`,
 				vorm: 'besluit',
 				title: one
 					? `${who} ${verb} wetsvoorstel${passed ? ' aan' : ''}: ${names[0]}`
@@ -200,7 +199,7 @@ function billVoteLines(date: string, bills: FeedItem[]): TimelineLine[] {
 					: listLine(names, BILLS_NAMED),
 				href: one ? hrefOf(those[0]) : actueelDayHref(date, ['stemming']),
 				major: true,
-				failed: !passed,
+				teken: passed ? 'ja' : 'nee',
 				...(one ? { item: those[0] } : {})
 			}
 		];
@@ -270,7 +269,8 @@ function voteBundleLine(day: SummaryDay): TimelineLine[] {
 					: `Tweede Kamer stemt over ${plural(count, noun[0], noun[1])}: ${passed} aangenomen, ${count - passed} verworpen`,
 			context: also.length ? `Ook ${listLine(also, 2)}` : null,
 			href: actueelDayHref(day.date, ['stemming']),
-			major: false
+			major: false,
+			teken: 'stuk'
 		}
 	];
 }
@@ -317,6 +317,7 @@ function commitmentLines(date: string, items: FeedItem[]): TimelineLine[] {
 			href: more ? actueelDayHref(date, ['toezegging'], first.dossier?.number) : hrefOf(first),
 			// At the size of a motie beside it: large is the bill and its decisions (Thijs, 10 Oct).
 			major: false,
+			teken: 'open',
 			...(more ? {} : { item: first })
 		};
 	});
@@ -335,6 +336,7 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			context: b.dossier ? kamerstukNummer(b.dossier.number) : null,
 			href: hrefOf(b),
 			major: true,
+			teken: 'stuk',
 			item: b
 		}));
 	return [
@@ -346,7 +348,8 @@ function billLines(date: string, bills: FeedItem[]): TimelineLine[] {
 			title: `${bills.length} wetsvoorstellen ingediend`,
 			context: listLine(bills.map(name), 3),
 			href: actueelDayHref(date, ['Voorstel van wet']),
-			major: true
+			major: true,
+			teken: 'stuk'
 		}
 	];
 }
@@ -363,6 +366,7 @@ function commencementLine(i: FeedItem): TimelineLine {
 		context: artikelenGewijzigd(c),
 		href: c?.instrument ? { collection: 'instruments', key: c.instrument.key } : hrefOf(i),
 		major: true,
+		teken: 'stuk',
 		item: i
 	};
 }
@@ -417,7 +421,8 @@ function kamerstukLine(day: SummaryDay): TimelineLine[] {
 				day.date,
 				present.map((p) => p.kind)
 			),
-			major: false
+			major: false,
+			teken: 'stuk'
 		}
 	];
 }
@@ -440,7 +445,8 @@ function countedLine(
 			title: plural(count, noun[0], noun[1]),
 			context: null,
 			href: actueelDayHref(day.date, [kind]),
-			major: false
+			major: false,
+			teken: 'stuk'
 		}
 	];
 }
@@ -507,7 +513,7 @@ export function timelineOf(summary: Schema<'FeedSummaryResponse'>, limit: number
 	return lines;
 }
 
-export type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'failed' | 'vorm'>;
+export type Headline = Pick<TimelineLine, 'label' | 'title' | 'major' | 'teken' | 'vorm'>;
 
 /** The shape of an event's kind, as the network and Verbonden draw it (vormen.ts). */
 export function vormVanFeed(i: Pick<FeedItem, 'kind'>): Vorm {
@@ -536,26 +542,6 @@ export function vormVanFeed(i: Pick<FeedItem, 'kind'>): Vorm {
  */
 export const headlineOf = (i: FeedItem): Headline => ({ ...kopVan(i), vorm: vormVanFeed(i) });
 
-/**
- * How the teken of an event is drawn on the line (Tijdlijn), on the homepage and in Actueel
- * alike: a vote filled in mos when it passed, an outline in the accent when it failed; a
- * toezegging dashed while it is open, filled when it is done; the rest filled in ink.
- */
-export function tekenVan(l: Pick<TimelineLine, 'label' | 'failed'>): Teken {
-	if (l.failed) return 'nee';
-	if (/aangenomen/i.test(l.label)) return 'ja';
-	if (/^toezegging/i.test(l.label)) return 'open';
-	return 'stuk';
-}
-export const tekenVanFeed = (i: FeedItem, h: Headline): Teken =>
-	i.kind === 'toezegging'
-		? i.commitment?.status === 'Afgedaan'
-			? 'ja'
-			: i.commitment?.status === 'Vervallen'
-				? 'nee'
-				: 'open'
-		: tekenVan(h);
-
 function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 	switch (i.kind) {
 		case 'stemming': {
@@ -564,27 +550,34 @@ function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 				const name = i.dossier ? dossierName(i.dossier) : cut(i.title ?? '', 60);
 				const ek = chamberOf(i) === 'EK';
 				return {
-					label: `${ek ? 'Eerste Kamer' : 'Wetsvoorstel'}, ${passed ? 'aangenomen' : 'verworpen'}`,
-					title: `${KAMER[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} wetsvoorstel${passed ? ' aan' : ''}: ${name}`,
+					label: `${ek ? CHAMBER_NAME.EK : 'Wetsvoorstel'}, ${passed ? 'aangenomen' : 'verworpen'}`,
+					title: `${CHAMBER_NAME[chamberOf(i)]} ${passed ? 'neemt' : 'verwerpt'} wetsvoorstel${passed ? ' aan' : ''}: ${name}`,
 					major: true,
-					failed: !passed
+					teken: passed ? 'ja' : 'nee'
 				};
 			}
-			const { label, title, failed } = voteLine(
-				i,
-				i.subkind === AMENDEMENT ? 'amendement' : 'motie'
-			);
-			return { label, title, major: voteMargin(i) <= CLOSE_VOTE, failed };
+			const { label, title, teken } = voteLine(i, nounOf(i));
+			return { label, title, major: voteMargin(i) <= CLOSE_VOTE, teken };
 		}
 		case 'toezegging':
-			return { label: 'Toezegging', title: commitmentTitle(i), major: false };
+			return {
+				label: 'Toezegging',
+				title: commitmentTitle(i),
+				major: false,
+				teken: commitmentTeken(i.commitment?.status)
+			};
 		case 'Voorstel van wet': {
 			const name = i.dossier ? dossierName(i.dossier) : (i.title ?? 'Wetsvoorstel');
-			return { label: 'Wetsvoorstel', title: `Wetsvoorstel ingediend: ${name}`, major: true };
+			return {
+				label: 'Wetsvoorstel',
+				title: `Wetsvoorstel ingediend: ${name}`,
+				major: true,
+				teken: 'stuk'
+			};
 		}
 		case 'inwerkingtreding': {
 			const { label, title } = commencementLine(i);
-			return { label, title, major: true };
+			return { label, title, major: true, teken: 'stuk' };
 		}
 		case 'uitspraak': {
 			// A judgment as it is cited, by its court and the day it was decided; a conclusion
@@ -600,10 +593,11 @@ function kopVan(i: FeedItem): Omit<Headline, 'vorm'> {
 			return {
 				label: j?.advocate_general ? 'Conclusie' : 'Uitspraak',
 				title,
-				major: j?.tier === 'hoge_raad' || j?.tier === 'parket'
+				major: j?.tier === 'hoge_raad' || j?.tier === 'parket',
+				teken: 'stuk'
 			};
 		}
 		default:
-			return { label: KIND_LABEL[i.kind].one, title: titleOf(i), major: false };
+			return { label: KIND_LABEL[i.kind].one, title: titleOf(i), major: false, teken: 'stuk' };
 	}
 }

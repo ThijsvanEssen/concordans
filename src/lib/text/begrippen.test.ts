@@ -2,7 +2,6 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-	begrippenWithin,
 	definitieKaart,
 	definitieRegel,
 	definitiesOp,
@@ -116,14 +115,7 @@ describe('begrippen', () => {
 		]);
 	});
 
-	it('takes the terms of one part, with offsets in it', () => {
-		const spans = [
-			{ start: 10, end: 13, term: 'wet', definition_ref: wet.ref },
-			{ start: 60, end: 63, term: 'wet', definition_ref: wet.ref }
-		];
-		expect(begrippenWithin(spans, 5, 40)).toEqual([
-			{ start: 5, end: 8, term: 'wet', definition_ref: wet.ref }
-		]);
+	it('finds a definition by its ref', () => {
 		expect(definitiesOp([wet]).get(wet.ref)?.term).toBe('wet');
 		expect(definitiesOp(null).size).toBe(0);
 	});
