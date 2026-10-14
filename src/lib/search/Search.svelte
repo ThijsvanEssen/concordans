@@ -1,44 +1,23 @@
 <script lang="ts">
-	import { gewoneKlik } from '$lib/actions/klik';
+	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
+	// Netwerk, where a result is picked instead of opened. What it asks and what the list makes
+	// of the answers is the session (session.svelte.ts); this draws it.
 	import { plural } from '$lib/text/words';
 	import { naamVanId } from '$lib/bron/menselijk';
 	import TekstLink from '$lib/components/ui/TekstLink.svelte';
 	import Periode from '$lib/components/ui/Periode.svelte';
-	import { kamerLinks, kamerOf } from './kamer';
+	import { kamerLinks } from './kamer';
 	import { uniqueBy } from '$lib/util/unique';
-	// The one search: inline on the start page, inside the ⌘K overlay, and in the panel
-	// Netwerk, where a result is picked instead of opened.
-	import { onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { isTimeout, unwrap, slowApi } from '$lib/api/client';
-	import { report } from '$lib/api/errors';
-	import {
-		DEBOUNCE_MS,
-		LANE_MIN_CHARS,
-		LANEN as ALLE_LANEN,
-		searchMode,
-		type Laan as LaanDef
-	} from './lanen';
-	import type { Schema } from '$lib/api/types';
+	import { FAST_MIN_CHARS, SEARCH_KINDS } from './lanes';
 	import { bronHref, focusOf, type BronRef } from '$lib/bron/href';
 	import KindGlyph from '$lib/bron/KindGlyph.svelte';
-	import { besteTreffer, bySection, groupLabel, presentHit, sectionOf, vakken } from './present';
+	import { groupLabel, hitName, presentHit, sectionOf } from './present';
 	import { CHAMBER_NAME } from '$lib/components/parliamentary/chamber';
 	import { bronLabel, nodeId, type Collection } from '$lib/vocabulary';
-	import {
-		bareArticle,
-		keuzesOf,
-		parseCitation,
-		lawAbbreviation,
-		lawTitle,
-		resolvedOf,
-		resolveQuery,
-		type Citation,
-		type Resolved
-	} from './resolve-query';
-	import { EarlyEnter } from './enter.svelte';
-
-	type Hit = Schema<'SearchResultItem'>;
+	import type { Citation } from './resolve-query';
+	import { SearchSession } from './session.svelte';
+	import SearchOption from './SearchOption.svelte';
 
 	let {
 		overlay = false,
@@ -64,47 +43,29 @@
 		onPick?: (id: string) => void;
 	} = $props();
 
-	/** The kinds the search covers, in the order their groups stand (#52). */
-	const KINDS = [
-		'instruments',
-		'articles',
-		'judgments',
-		'dossiers',
-		// People and bodies before the papers that merely name them.
-		'cabinets',
-		'members',
-		'commitments',
-		'factions',
-		'committees',
-		'documents',
-		'decisions'
-	] as const satisfies readonly Collection[];
-	type Kind = (typeof KINDS)[number];
-	const kinds = $derived(scope ? KINDS.filter((k) => scope.includes(k)) : KINDS);
-	const LIMIT = 6;
+	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
+	// the + in the Netwerk panel (onPick) is the way to add one.
+	function open(ref: BronRef | string, at: string | null) {
+		if (onPick) {
+			const id = focusOf(ref);
+			if (id) onPick(id);
+			search.query = '';
+			return;
+		}
+		const href = bronHref(ref, { at, keepNetwerk: false });
+		onOpen?.();
+		goto(href);
+	}
 
-	/** The fast kinds from two characters: one says nothing. */
-	const SNEL_MIN = 2;
-
-	type Laan = Omit<LaanDef, 'kinds'> & { kinds: readonly Kind[] };
-	/** The lanes ($lib/search/lanen), their kinds as this search knows them. */
-	const LANEN = ALLE_LANEN as readonly Laan[];
-	const INLAAN = new Set<Kind>(LANEN.flatMap((l) => l.kinds));
-
-	/** The query of a request: one place for what a lane asks, in its mode and period. */
-	const zoekVraag = (term: string, types: Kind[], resolve: boolean) => ({
-		q: term,
-		types,
-		limit: LIMIT,
-		resolve: resolve || undefined,
-		mode: searchMode(term, volVoor),
-		from: periodeVan || undefined,
-		to: periodeTot || undefined
+	const search = new SearchSession(open);
+	$effect.pre(() => {
+		search.kinds = scope ? SEARCH_KINDS.filter((k) => scope.includes(k)) : SEARCH_KINDS;
 	});
-
-	/** The search by period (Thijs, 9 Oct). */
-	let periodeVan = $state('');
-	let periodeTot = $state('');
+	// A query handed over (Zoek in alle bronnen) fills the field.
+	$effect.pre(() => {
+		if (initial) search.query = initial;
+	});
+	search.connect();
 
 	/** What a citation row is marked as before the API has confirmed the bron. */
 	const CITED: Record<Citation['kind'], Collection> = {
@@ -116,429 +77,29 @@
 		publication: 'instruments'
 	};
 
-	let query = $state('');
-	// A query handed over (Zoek in alle bronnen) fills the field.
-	$effect(() => {
-		if (initial) query = initial;
-	});
-	let results = $state<Partial<Record<Kind, Hit[]>>>({});
-	/** The query `results` answers; '' before the first answer. */
-	let answered = $state('');
-	let loading = $state(false);
-	let failed = $state(false);
-	/** The first request gave up on its own time (30 s), not on an error of the API. */
-	let traag = $state(false);
-	/** Per lane: what it last answered (it stays while the next query runs), and how it stands. */
-	let laanHits = $state<Record<string, Partial<Record<Kind, Hit[]>>>>({});
-	/** `traag`: it gave up on its own time (`slowApi`, 30 s), not on an error of the API. */
-	let laanStand = $state<Record<string, 'klaar' | 'laden' | 'mislukt' | 'traag'>>({});
-	/** Per lane, the query whose answer in the live mode left more out (`partial`). */
-	let laanMeer = $state<Record<string, string>>({});
-	/** The query asked in full after "Meer uitspraken" (`mode=full`). */
-	let volVoor = $state('');
-	/** The fast kinds the live answer cut off, for its query. */
-	let snelMeer = $state<{ term: string; kinds: Kind[] }>({ term: '', kinds: [] });
-	/** Raised by "Probeer opnieuw": that lane is asked again, the rest not. */
-	let opnieuw = $state<Record<string, number>>({});
-	/** The kinds of the first request; without them, the first lane in scope says what the query cites. */
-	const snel = $derived(kinds.filter((k) => !INLAAN.has(k)));
-	const lanen = $derived(
-		LANEN.map((l) => ({ ...l, kinds: l.kinds.filter((k) => kinds.includes(k)) })).filter(
-			(l) => l.kinds.length > 0
-		)
-	);
-	const hitsVan = (kind: Kind): Hit[] | undefined => {
-		const laan = LANEN.find((l) => l.kinds.includes(kind));
-		return laan ? laanHits[laan.id]?.[kind] : results[kind];
-	};
-	/** A lane under way or failed, with whether any of its kinds shows hits meanwhile. */
-	const lanenBezig = $derived(
-		lanen
-			.filter((l) => (laanStand[l.id] ?? 'klaar') !== 'klaar')
-			.map((l) => ({
-				...l,
-				stand: laanStand[l.id],
-				toont: l.kinds.some((k) => (hitsVan(k) ?? []).length > 0)
-			}))
-	);
-	const ladend = $derived(
-		new Set(lanenBezig.filter((l) => l.stand === 'laden' && l.laden).flatMap((l) => l.kinds))
-	);
-	let resolving = $state(false);
-	/** The query whose bare article ("6:162 BW") the API is still asked to confirm. */
-	let confirming = $state('');
-	/** A citation the API did not confirm: its row is gone and the results stay. */
-	let unresolved = $state('');
-	/** "55 Gw" typed without "art.", which the API confirmed as an article. */
-	let confirmed = $state<{ term: string; target: Resolved } | null>(null);
-	/** What /api/search resolved the query to, with its hits (`resolve=true`, API 0.74). */
-	let resolvedWith = $state<{ term: string; target: Resolved | null } | null>(null);
-	/** The articles a citation can mean where it is not one ("artikel 3 BW"), per query. */
-	let keuzesVoor = $state<{ term: string; items: Resolved[]; total: number } | null>(null);
-	// A regeling named by its title that the API does not know ("Omgevingswet"): the
-	// network holds a selection of laws, and the hits only mention it.
-	let outside = $state('');
-	let active = $state(0);
+	const uid = $props.id();
+	const rowId = (row: number) => `${uid}-row-${row}`;
 	let listEl = $state<HTMLElement | null>(null);
 
-	const uid = $props.id();
-	const q = $derived(query.trim());
-	/** Kinds whose live answer left more out for this query, not yet asked in full. */
-	const meerKinds = $derived(
-		new Set([
-			...lanen.filter((l) => laanMeer[l.id] === q && volVoor !== q).flatMap((l) => l.kinds),
-			...(snelMeer.term === q && volVoor !== q ? snelMeer.kinds : [])
-		])
-	);
-
-	const extra = (hit: Hit, name: string): string => {
-		const value = hit.extra?.[name];
-		return typeof value === 'string' ? value : '';
-	};
-
-	/** What a link to the hit names: its node id, and a dossier's number (`37020-XV`). */
-	const hitName = (hit: Hit) =>
-		hit.collection === 'dossiers' ? `dossiers/${extra(hit, 'number')}` : hit.id;
-
-	// The groups stand in one order, the order of KINDS, whichever answer comes first (UX-toets
-	// 0.79.47, #52): a group that comes later takes its own place and moves none of the others.
-	// The best answer is the Beste treffer above them.
-	const groups = $derived(
-		kinds
-			.map((kind) => ({
-				kind,
-				hits: bySection(hitsVan(kind) ?? [])
-			}))
-			.filter((g) => g.hits.length > 0)
-	);
-	/** Every answer to this query is in: the first request and every lane. */
-	const allesBinnen = $derived(
-		answered === q &&
-			!loading &&
-			confirming !== q &&
-			lanen.every((l) => laanStand[l.id] !== 'laden')
-	);
-	/**
-	 * The one hit above the groups (besteTreffer), out of its own group. Only once every answer
-	 * is in, so the top does not change under the pointer; till then its place stands (#52).
-	 */
-	let beste = $state<{ kind: Kind; hit: Hit } | null>(null);
 	$effect(() => {
-		// The one before stands while the next query is under way; a query too short for any
-		// answer clears it.
-		if (allesBinnen) beste = besteTreffer(groups);
-		else if (groups.length === 0) beste = null;
-	});
-	const besteKomt = $derived(!beste && !allesBinnen && groups.length > 0);
-	/** The groups in the one order, with the places of those still coming (#52). */
-	const getoond = $derived(vakken(kinds, groups, beste, (kind) => !!q && ladend.has(kind)));
-	const hits = $derived(getoond.flatMap((g) => g.hits));
-	const indexOf = $derived(new Map(hits.map((hit, i) => [hit.id, i])));
-
-	/** "Artikel 3 BW" in Boek 1, 3, 6 …: a row each, in place of the citation row. */
-	const keuzes = $derived(keuzesVoor?.term === q ? keuzesVoor.items : []);
-	const keuzesMeer = $derived(keuzesVoor?.term === q ? keuzesVoor.total - keuzes.length : 0);
-	const citation = $derived(q && q !== unresolved && keuzes.length === 0 ? parseCitation(q) : null);
-	const bare = $derived(
-		!citation && keuzes.length === 0 && confirmed?.term === q ? confirmed.target : null
-	);
-	/** Rows the keys move over: the choices or the citation first, then every hit. */
-	const offset = $derived(keuzes.length || (citation || bare ? 1 : 0));
-	const rowCount = $derived(offset + hits.length);
-	// A citation the API does not know: said where its row was, not dropped without a word.
-	const notFound = $derived(unresolved !== '' && unresolved === q);
-	const kamer = $derived(kamerOf(q));
-	const outsideLaw = $derived(
-		outside !== '' &&
-			outside === q &&
-			answered === q &&
-			!bare &&
-			!(results.instruments ?? []).some((h) =>
-				(h.display_name ?? '').toLowerCase().includes(q.trim().toLowerCase())
-			)
-	);
-	const empty = $derived(
-		q.length > 0 &&
-			answered === q &&
-			!loading &&
-			!failed &&
-			lanenBezig.length === 0 &&
-			// Never "Geen resultaten" while the live mode left kinds out.
-			meerKinds.size === 0 &&
-			hits.length === 0 &&
-			!citation &&
-			!bare &&
-			!outsideLaw
-	);
-
-	/**
-	 * A live answer that left kinds out and found nothing in them is no answer yet: the query
-	 * is asked once more in full, by itself, as "Meer …" would (Thijs, 10 Oct: "126ffa"). With
-	 * hits, the hits stand and "Meer …" asks for the rest.
-	 */
-	function vraagVolAls(term: string, afgekapt: Kind[], gevonden: Partial<Record<Kind, Hit[]>>) {
-		if (volVoor === term || term !== q || afgekapt.length === 0) return;
-		if (afgekapt.every((k) => !(gevonden[k] ?? []).length)) volVoor = term;
-	}
-
-	// The first request per query: the fast kinds and what the query cites; the lanes below
-	// run beside it. The timer waits for the typing to pause, and a newer query aborts the
-	// requests of the previous one. Earlier results stay while the next run.
-	$effect(() => {
-		const term = q;
-		void periodeVan;
-		void periodeTot;
-		// "Meer …" asks the whole query again in full, the fast kinds too.
-		void volVoor;
-		// "Probeer opnieuw" after a first request that failed or took too long.
-		void opnieuw.snel;
-		failed = false;
-		traag = false;
-		if (term.length < SNEL_MIN) {
-			results = {};
-			answered = '';
-			loading = false;
-			return;
-		}
-		const controller = new AbortController();
-		const written = bareArticle(term);
-		const abbreviation = written ? null : lawAbbreviation(term);
-		const title = written ? null : lawTitle(term);
-		const timer = setTimeout(() => {
-			loading = true;
-			// Beside the words, the article they may cite: shown only once the API has it.
-			if (written) {
-				// A failure leaves the row out: the words are searched all the same.
-				confirming = term;
-				resolveQuery(written)
-					.then((target) => {
-						if (!controller.signal.aborted && target) confirmed = { term, target };
-					})
-					.catch((e) => report('Zoeken', e))
-					.finally(() => {
-						if (confirming === term) confirming = '';
-					});
-			}
-			// The hits and what the query cites (BE-16), with the fast kinds: "AVG" has its law
-			// the moment its hits are there, so Enter cannot open a hit before the law is known.
-			if (snel.length === 0) loading = false;
-			else
-				// The search client waits as long as the API may (30 s): a cold path took longer
-				// than the 10 s of the others, and the first try failed (Thijs, 10 Oct).
-				unwrap(
-					slowApi.GET('/api/search', {
-						params: {
-							query: zoekVraag(term, snel, true)
-						},
-						signal: controller.signal
-					})
-				)
-					.then((r) => {
-						const target = resolvedOf(r.resolved);
-						resolvedWith = { term, target };
-						keuzesVoor = { term, ...keuzesOf(r.resolved) };
-						if (abbreviation || title) {
-							// The law an abbreviation stands for, first; a title the API does not know
-							// is a law outside the selection.
-							if (target?.ref.collection === 'instruments') confirmed = { term, target };
-							else if (title) outside = term;
-						}
-						results = r.results;
-						const partial = r.partial ?? {};
-						snelMeer = { term, kinds: snel.filter((k) => partial[k]) };
-						vraagVolAls(term, snelMeer.kinds, r.results as Partial<Record<Kind, Hit[]>>);
-						answered = term;
-						loading = false;
-					})
-					.catch((e) => {
-						if (controller.signal.aborted) return;
-						results = {};
-						answered = term;
-						failed = true;
-						traag = isTimeout(e);
-						loading = false;
-					});
-		}, DEBOUNCE_MS);
-		return () => {
-			clearTimeout(timer);
-			controller.abort();
-		};
-	});
-
-	// Each lane on its own: its group waits or fails alone, and "Probeer opnieuw" asks it
-	// again without the rest. Without fast kinds in scope (Uitspraken), the first lane also
-	// says what the query cites.
-	//
-	// One request per lane at a time. The API runs an aborted query to its end, so aborting
-	// frees nothing: a newer query waits until the running one is done, and then only the
-	// latest goes. An answer to an older query is not shown; the hits before it stay.
-	const bezig: Record<string, boolean> = {};
-	const volgende: Record<string, (() => void) | null> = {};
-	let laatste = '';
-	const stopt = new AbortController();
-	onDestroy(() => stopt.abort());
-
-	function vraag(laan: Laan, term: string, types: Kind[], eerste: boolean) {
-		if (bezig[laan.id]) {
-			volgende[laan.id] = () => vraag(laan, term, types, eerste);
-			return;
-		}
-		bezig[laan.id] = true;
-		laanStand[laan.id] = 'laden';
-		const geldt = () => term === laatste;
-		unwrap(
-			slowApi.GET('/api/search', {
-				params: { query: zoekVraag(term, types, eerste) },
-				signal: stopt.signal
-			})
-		)
-			.then((r) => {
-				if (!geldt()) return;
-				laanHits[laan.id] = r.results as Partial<Record<Kind, Hit[]>>;
-				// The live mode names the kinds it cut off at its time: more on "Meer uitspraken".
-				const partial = r.partial ?? {};
-				laanMeer[laan.id] = types.some((k) => partial[k]) ? term : '';
-				vraagVolAls(
-					term,
-					types.filter((k) => partial[k]),
-					r.results as Partial<Record<Kind, Hit[]>>
-				);
-				if (eerste) {
-					resolvedWith = { term, target: resolvedOf(r.resolved) };
-					keuzesVoor = { term, ...keuzesOf(r.resolved) };
-					answered = term;
-				}
-				laanStand[laan.id] = 'klaar';
-			})
-			.catch((e) => {
-				if (stopt.signal.aborted || !geldt()) return;
-				laanHits[laan.id] = {};
-				if (eerste) answered = term;
-				laanStand[laan.id] = isTimeout(e) ? 'traag' : 'mislukt';
-			})
-			.finally(() => {
-				bezig[laan.id] = false;
-				const next = volgende[laan.id];
-				volgende[laan.id] = null;
-				next?.();
-			});
-	}
-
-	$effect(() => {
-		laatste = q;
-	});
-
-	for (const laan of LANEN) {
-		$effect(() => {
-			const term = q;
-			void opnieuw[laan.id];
-			void periodeVan;
-			void periodeTot;
-			void volVoor;
-			const types = laan.kinds.filter((k) => kinds.includes(k));
-			volgende[laan.id] = null;
-			if (!term || types.length === 0 || term.length < LANE_MIN_CHARS) {
-				laanHits[laan.id] = {};
-				laanStand[laan.id] = 'klaar';
-				return;
-			}
-			const eerste = snel.length === 0 && lanen[0]?.id === laan.id;
-			const timer = setTimeout(() => vraag(laan, term, types, eerste), DEBOUNCE_MS);
-			return () => clearTimeout(timer);
-		});
-	}
-
-	// The first row is chosen before any key: Enter opens it. The first ↓ confirms that
-	// row instead of skipping it, as a list without a preselection would.
-	let moved = false;
-	$effect(() => {
-		void q;
-		void answered;
-		active = 0;
-		moved = false;
-	});
-
-	$effect(() => {
-		if (rowCount === 0) return;
-		listEl?.querySelector(`#${CSS.escape(`${uid}-row-${active}`)}`)?.scrollIntoView({
+		if (search.rowCount === 0) return;
+		listEl?.querySelector(`#${CSS.escape(rowId(search.active))}`)?.scrollIntoView({
 			block: 'nearest'
 		});
 	});
 
-	// A result chosen here starts a network of its own, as a double click does (Thijs, 8 Oct);
-	// the + in the Netwerk panel (onPick) is the way to add one.
-	function open(ref: BronRef | string, at: string | null = null) {
-		if (onPick) {
-			const id = focusOf(ref);
-			if (id) onPick(id);
-			query = '';
-			return;
-		}
-		const href = bronHref(ref, { at, keepNetwerk: false });
-		onOpen?.();
-		goto(href);
-	}
-
-	async function openCitation() {
-		if (resolving) return;
-		const term = q;
-		resolving = true;
-		// The answer that came with the hits, where it names the bron; else the full way.
-		const known = resolvedWith?.term === term ? resolvedWith.target : null;
-		try {
-			const target = known ?? (await resolveQuery(term));
-			if (target) open(target.ref, target.at);
-			else unresolved = term;
-		} catch (e) {
-			// The API failed: not "niet in de gegevens", but the failure, to try again.
-			report('Zoeken', e);
-			failed = true;
-			traag = isTimeout(e);
-		} finally {
-			resolving = false;
-		}
-	}
-
-	function openBare(target: Resolved) {
-		open(target.ref, target.at);
-	}
-
-	function openHit(hit: Hit) {
-		open(hitName(hit));
-	}
-
-	/** What Enter opens now, the active row; false where there is nothing to open yet. */
-	function enter(): boolean {
-		if (active < keuzes.length) openBare(keuzes[active]);
-		else if (citation && active === 0) openCitation().catch((e) => report('Zoeken', e));
-		else if (bare && active === 0) openBare(bare);
-		// A hit opens only when the list answers what is typed.
-		else if (answered === q && hits[active - offset]) openHit(hits[active - offset]);
-		else return false;
-		return true;
-	}
-
-	// An Enter before the answer waits for it (#79): the article the moment the API confirms
-	// it, else the first row once every answer is in and the Beste treffer stands above.
-	const earlyEnter = new EarlyEnter(enter);
-	$effect(() => earlyEnter.answer(q, bare !== null || allesBinnen));
-
 	function onkeydown(e: KeyboardEvent) {
-		if (e.key === 'ArrowDown' && rowCount > 0) {
+		if (e.key === 'ArrowDown' && search.rowCount > 0) {
 			e.preventDefault();
-			earlyEnter.forget();
-			active = moved ? Math.min(active + 1, rowCount - 1) : active;
-			moved = true;
-		} else if (e.key === 'ArrowUp' && rowCount > 0) {
+			search.down();
+		} else if (e.key === 'ArrowUp' && search.rowCount > 0) {
 			e.preventDefault();
-			earlyEnter.forget();
-			active = Math.max(active - 1, 0);
-			moved = true;
+			search.up();
 		} else if (e.key === 'Enter') {
 			e.preventDefault();
-			earlyEnter.press(q);
-		} else if (e.key === 'Escape' && !overlay && query) {
-			query = '';
+			search.pressEnter();
+		} else if (e.key === 'Escape' && !overlay && search.query) {
+			search.query = '';
 		}
 	}
 
@@ -546,12 +107,9 @@
 	// changed place moves the active row.
 	let pointerAt = '';
 	const placeOf = (e: PointerEvent) => `${e.screenX},${e.screenY}`;
-	function onpointermove(e: PointerEvent, row: number) {
-		if (placeOf(e) !== pointerAt) {
-			active = row;
-			moved = true;
-		}
-	}
+	const pointAt = (row: number) => (e: PointerEvent) => {
+		if (placeOf(e) !== pointerAt) search.point(row);
+	};
 
 	function focusOnMount(node: HTMLInputElement) {
 		if (overlay) node.focus();
@@ -566,7 +124,7 @@
 
 <div class="search" class:search--overlay={overlay} class:search--compact={compact}>
 	<div class="field">
-		{#if loading || resolving}
+		{#if search.spinning}
 			<span class="spinner" aria-hidden="true"></span>
 		{:else}
 			<svg
@@ -584,17 +142,17 @@
 			</svg>
 		{/if}
 		<input
-			bind:value={query}
+			bind:value={search.query}
 			use:focusOnMount
 			{onkeydown}
 			data-search-field
 			type="text"
 			role="combobox"
 			aria-label="Zoeken"
-			aria-expanded={rowCount > 0}
+			aria-expanded={search.rowCount > 0}
 			aria-controls="{uid}-list"
 			aria-autocomplete="list"
-			aria-activedescendant={rowCount > 0 ? `${uid}-row-${active}` : undefined}
+			aria-activedescendant={search.rowCount > 0 ? rowId(search.active) : undefined}
 			{placeholder}
 			autocomplete="off"
 			spellcheck="false"
@@ -602,15 +160,15 @@
 		{#if overlay}<span class="kbd" aria-hidden="true">esc</span>{/if}
 	</div>
 
-	{#if q.length >= SNEL_MIN}
+	{#if search.q.length >= FAST_MIN_CHARS}
 		<!-- The same period as every list with dates (Periode). -->
 		<div class="periode">
 			<Periode
-				van={periodeVan}
-				tot={periodeTot}
+				van={search.from}
+				tot={search.to}
 				onChange={(v, t) => {
-					periodeVan = v;
-					periodeTot = t;
+					search.from = v;
+					search.to = t;
 				}}
 			/>
 		</div>
@@ -618,91 +176,79 @@
 
 	<div
 		class="list"
-		class:list--filled={rowCount > 0 ||
-			failed ||
-			empty ||
-			notFound ||
-			outsideLaw ||
-			kamer ||
-			(q && lanenBezig.some((l) => l.stand !== 'laden' || l.laden))}
+		class:list--filled={search.filled}
 		id="{uid}-list"
 		role="listbox"
 		aria-label="Resultaten"
 		bind:this={listEl}
 	>
-		{#if outsideLaw}
+		{#if search.outsideLaw}
 			<p class="state stil" role="status">
-				"{q}" staat niet in Concordans.
+				"{search.q}" staat niet in Concordans.
 				<a href="https://wetten.overheid.nl/zoeken" target="_blank" rel="noopener"
 					>wetten.overheid.nl</a
 				>
 			</p>
 		{/if}
-		{#if kamer}
+		{#if search.chamber}
 			<p class="state stil" role="status">
-				{kamer === 'EK' ? 'Eerste' : 'Tweede'} Kamer:
-				{#each kamerLinks(kamer) as link, i (link.href)}{i > 0 ? ', ' : ''}<a href={link.href}
-						>{link.label}</a
+				{CHAMBER_NAME[search.chamber]}:
+				{#each kamerLinks(search.chamber) as link, i (link.href)}{i > 0 ? ', ' : ''}<a
+						href={link.href}>{link.label}</a
 					>{/each}
 			</p>
 		{/if}
-		{#if notFound}
+		{#if search.notFound}
 			<p class="state stil" role="status">
-				"{q}" staat niet in de gegevens. <a href="/bronnen#dekking">Dekking</a>
+				"{search.q}" staat niet in de gegevens. <a href="/bronnen#dekking">Dekking</a>
 			</p>
 		{/if}
-		{#if keuzes.length > 0}
+		{#if search.choices.length > 0}
 			<!-- A citation that fits more than one article: each, straight to the article. -->
 			<div class="group" role="group" aria-labelledby="{uid}-keuzes">
 				<div class="group-label" id="{uid}-keuzes">
 					<KindGlyph collection="articles" />
 					Artikelen met dit nummer
 				</div>
-				{#each keuzes as keuze, i (keuze.ref.key)}
-					<a
-						id="{uid}-row-{i}"
-						class="row row--citation"
-						class:is-active={active === i}
-						role="option"
-						tabindex="-1"
-						aria-selected={active === i}
+				{#each search.choices as keuze, i (keuze.ref.key)}
+					<SearchOption
+						id={rowId(i)}
+						active={search.active === i}
+						citation
+						{compact}
 						href={bronHref(keuze.ref, { at: keuze.at, keepNetwerk: false })}
-						onclick={(e) => {
-							if (!gewoneKlik(e)) return;
-							e.preventDefault();
-							openBare(keuze);
-						}}
-						onpointermove={(e) => onpointermove(e, i)}
+						onchoose={() => open(keuze.ref, keuze.at)}
+						onpoint={pointAt(i)}
 					>
 						<span class="row-title"
 							>{keuze.label ?? naamVanId(nodeId(keuze.ref.collection, keuze.ref.key))}</span
 						>
-						{#if active === i}<span class="kbd" aria-hidden="true">↵</span>{/if}
-					</a>
+						{#if search.active === i}<span class="kbd" aria-hidden="true">↵</span>{/if}
+					</SearchOption>
 				{/each}
-				{#if keuzesMeer > 0}
+				{#if search.choicesMore > 0}
 					<p class="state state--group stil">
-						en {keuzesMeer}
-						{plural(keuzesMeer, 'ander artikel', 'andere artikelen')}
+						en {search.choicesMore}
+						{plural(search.choicesMore, 'ander artikel', 'andere artikelen')}
 					</p>
 				{/if}
 			</div>
-		{:else if citation}
+		{:else if search.citation}
+			{@const citation = search.citation}
 			<!-- "36799, nr. 31" is a stuk; the dossier itself has no number after it. -->
 			{@const kind =
 				citation.kind === 'dossier' && citation.document ? 'documents' : CITED[citation.kind]}
 			<!-- The name from the source once the answer has it, not the query as typed. -->
-			{@const naam = (resolvedWith?.term === q ? resolvedWith.target?.label : null) ?? q}
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<div
-				id="{uid}-row-0"
-				class="row row--citation"
-				class:is-active={active === 0}
-				role="option"
-				tabindex="-1"
-				aria-selected={active === 0}
-				onclick={openCitation}
-				onpointermove={(e) => onpointermove(e, 0)}
+			{@const naam =
+				(search.resolvedWith?.term === search.q ? search.resolvedWith.target?.label : null) ??
+				search.q}
+			<SearchOption
+				id={rowId(0)}
+				active={search.active === 0}
+				citation
+				{compact}
+				onchoose={() => search.openCitation()}
+				onpoint={pointAt(0)}
 			>
 				<span class="row-kind"
 					><KindGlyph collection={kind} />{#if !begintMet(naam, bronLabel(kind))}
@@ -710,36 +256,32 @@
 				>
 				<span class="row-title">{naam}</span>
 				<span class="kbd" aria-hidden="true">↵</span>
-			</div>
-		{:else if bare}
+			</SearchOption>
+		{:else if search.bare}
+			{@const bare = search.bare}
+			{@const naam = bare.label ?? search.q}
 			<!-- A link like the hits: its target is known, so a new tab can open it. -->
-			<a
-				id="{uid}-row-0"
-				class="row row--citation"
-				class:is-active={active === 0}
-				role="option"
-				tabindex="-1"
-				aria-selected={active === 0}
+			<SearchOption
+				id={rowId(0)}
+				active={search.active === 0}
+				citation
+				{compact}
 				href={bronHref(bare.ref, { at: bare.at, keepNetwerk: false })}
-				onclick={(e) => {
-					if (!gewoneKlik(e)) return;
-					e.preventDefault();
-					openBare(bare);
-				}}
-				onpointermove={(e) => onpointermove(e, 0)}
+				onchoose={() => open(bare.ref, bare.at)}
+				onpoint={pointAt(0)}
 			>
 				<span class="row-kind"
 					><KindGlyph
 						collection={bare.ref.collection}
-					/>{#if !begintMet(bare.label ?? q, bronLabel(bare.ref.collection))}
+					/>{#if !begintMet(naam, bronLabel(bare.ref.collection))}
 						{bronLabel(bare.ref.collection)}{/if}</span
 				>
-				<span class="row-title">{bare.label ?? q}</span>
+				<span class="row-title">{naam}</span>
 				<span class="kbd" aria-hidden="true">↵</span>
-			</a>
+			</SearchOption>
 		{/if}
 
-		{#if besteKomt}
+		{#if search.bestComing}
 			<!-- The place of the Beste treffer, from the first answer on (#52). -->
 			<div class="group group--beste" role="group" aria-labelledby="{uid}-beste-komt">
 				<div class="group-label" id="{uid}-beste-komt">
@@ -747,10 +289,10 @@
 				</div>
 			</div>
 		{/if}
-		{#each getoond as group (group.beste ? 'beste' : group.kind)}
+		{#each search.shown as group (group.beste ? 'beste' : group.kind)}
 			{@const gid = group.beste ? 'beste' : group.kind}
 			<!-- The hits a row is told apart from: its whole group, the Beste treffer's too. -->
-			{@const buren = groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
+			{@const buren = search.groups.find((g) => g.kind === group.kind)?.hits ?? group.hits}
 			<div
 				class="group"
 				class:group--beste={group.beste}
@@ -762,32 +304,22 @@
 					{#if group.beste}Beste treffer, <KindGlyph collection={group.kind} />
 						{bronLabel(group.kind)}{:else}<KindGlyph collection={group.kind} />
 						{groupLabel(group.kind)}{/if}
-					{#if ladend.has(group.kind)}<span class="laden">laden…</span>{/if}
+					{#if search.loadingKinds.has(group.kind)}<span class="laden">laden…</span>{/if}
 				</div>
 				{#each uniqueBy(group.hits, (x) => x.id) as hit, h (hit.id)}
-					{@const i = offset + (indexOf.get(hit.id) ?? 0)}
-					{@const shown = presentHit(hit, q, buren)}
+					{@const i = search.rowOfHit.get(hit.id) ?? search.offset}
+					{@const shown = presentHit(hit, search.q, buren)}
 					{@const section = sectionOf(hit)}
 					{#if section && (h === 0 || section !== sectionOf(group.hits[h - 1]))}
 						<div class="section" role="presentation">{section}</div>
 					{/if}
-					<a
-						id="{uid}-row-{i}"
-						class="row"
-						class:is-active={active === i}
-						role="option"
-						tabindex="-1"
-						aria-selected={active === i}
+					<SearchOption
+						id={rowId(i)}
+						active={search.active === i}
+						{compact}
 						href={bronHref(hitName(hit), { keepNetwerk: false })}
-						onclick={(e) => {
-							if (onPick) {
-								e.preventDefault();
-								openHit(hit);
-								return;
-							}
-							onOpen?.();
-						}}
-						onpointermove={(e) => onpointermove(e, i)}
+						onchoose={() => open(hitName(hit), null)}
+						onpoint={pointAt(i)}
 					>
 						<span class="row-main">
 							<span class="row-title">{shown.title}</span>
@@ -802,12 +334,12 @@
 								>{#if shown.chamber}<abbr title={CHAMBER_NAME[shown.chamber]}>{shown.chamber}</abbr
 									>{/if}{shown.chamber && shown.context ? ` ${shown.context}` : shown.context}</span
 							>{/if}
-					</a>
+					</SearchOption>
 				{/each}
-				{#if meerKinds.has(group.kind)}
+				{#if search.moreKinds.has(group.kind)}
 					<!-- The live mode answered within its time and left more out: the full answer on asking. -->
 					<p class="volledig">
-						<TekstLink onclick={() => (volVoor = q)}
+						<TekstLink onclick={() => search.askInFull()}
 							>Meer {groupLabel(group.kind).toLowerCase()}</TekstLink
 						>
 					</p>
@@ -815,37 +347,29 @@
 			</div>
 		{/each}
 
-		{#each lanenBezig.filter((l) => l.stand !== 'laden') as laan (laan.id)}
+		{#each search.failedLanes as lane (lane.id)}
 			<!-- A lane that failed: its group says so, the other groups stand. A lane under way
 			     holds its place among the groups (vakken). -->
-			{@const naam = laan.kinds.map((k) => groupLabel(k)).join(' en ')}
-			<div class="group" role="group" aria-labelledby="{uid}-{laan.id}-stand">
-				<div class="group-label" id="{uid}-{laan.id}-stand">
-					<KindGlyph collection={laan.kinds[0]} />
+			{@const naam = lane.kinds.map((k) => groupLabel(k)).join(' en ')}
+			<div class="group" role="group" aria-labelledby="{uid}-{lane.id}-stand">
+				<div class="group-label" id="{uid}-{lane.id}-stand">
+					<KindGlyph collection={lane.kinds[0]} />
 					{naam}
 				</div>
 				<p class="state state--group stil" role="status">
 					{naam}
-					{laan.stand === 'traag' ? 'duren lang.' : 'konden niet worden geladen.'}
-					<TekstLink
-						onclick={() => {
-							opnieuw[laan.id] = (opnieuw[laan.id] ?? 0) + 1;
-						}}>Probeer opnieuw</TekstLink
-					>
+					{search.lanes[lane.id].status === 'slow' ? 'duren lang.' : 'konden niet worden geladen.'}
+					<TekstLink onclick={() => search.retry(lane.id)}>Probeer opnieuw</TekstLink>
 				</p>
 			</div>
 		{/each}
 
-		{#if failed}
+		{#if search.failure}
 			<p class="state stil" role="status">
-				{traag ? 'Zoeken duurt lang.' : 'Zoeken mislukt.'}
-				<TekstLink
-					onclick={() => {
-						opnieuw.snel = (opnieuw.snel ?? 0) + 1;
-					}}>Probeer opnieuw</TekstLink
-				>
+				{search.failure.slow ? 'Zoeken duurt lang.' : 'Zoeken mislukt.'}
+				<TekstLink onclick={() => search.retrySearch()}>Probeer opnieuw</TekstLink>
 			</p>
-		{:else if empty}
+		{:else if search.empty}
 			<p class="state stil" role="status">Geen resultaten</p>
 		{/if}
 	</div>
@@ -946,7 +470,7 @@
 	}
 
 	.group + .group,
-	.row--citation + .group {
+	.list :global(.row--citation + .group) {
 		margin-top: var(--s-2);
 	}
 
@@ -959,23 +483,6 @@
 		font-size: var(--t-micro);
 		font-weight: 600;
 		color: var(--ink-3);
-	}
-
-	.row {
-		display: flex;
-		align-items: baseline;
-		gap: var(--s-3);
-		padding: var(--s-2) var(--s-4);
-		font-family: var(--font-serif);
-		font-size: var(--t-body-2);
-		line-height: 1.35;
-		color: var(--ink);
-		text-decoration: none;
-		border-bottom: none;
-		cursor: pointer;
-	}
-	.row.is-active {
-		background: var(--paper-2);
 	}
 
 	.row-kind {
@@ -994,7 +501,6 @@
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 1px;
 	}
 	.row-title {
 		min-width: 0;
@@ -1018,7 +524,7 @@
 	}
 	/* The dossier the stukken below it belong to. */
 	.section {
-		padding: var(--s-1) var(--s-4) 2px;
+		padding: var(--s-1) var(--s-4) 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -1067,19 +573,7 @@
 		overflow-y: auto;
 	}
 	.search--compact .group-label {
-		padding: var(--s-1) var(--s-3) 2px;
-	}
-	.search--compact .row {
-		flex-direction: column;
-		align-items: stretch;
-		gap: 1px;
-		padding: var(--s-1) var(--s-3);
-		font-size: var(--t-body-2);
-	}
-	.search--compact .row--citation {
-		flex-direction: row;
-		align-items: baseline;
-		gap: var(--s-2);
+		padding: var(--s-1) var(--s-3) 0;
 	}
 	.row-context abbr {
 		text-decoration: none;
@@ -1092,16 +586,6 @@
 	}
 
 	@media (max-width: 640px) {
-		.row {
-			flex-direction: column;
-			align-items: stretch;
-			gap: 1px;
-		}
-		.row--citation {
-			flex-direction: row;
-			align-items: baseline;
-			gap: var(--s-3);
-		}
 		.row-context {
 			max-width: none;
 		}

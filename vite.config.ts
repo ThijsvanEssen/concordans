@@ -36,6 +36,9 @@ const apiDocsModule: Plugin = {
 	}
 };
 
+/** The tests of a `.svelte.ts` module whose runes must react. */
+const RUNES = 'src/**/*.svelte.test.ts';
+
 export default defineConfig({
 	plugins: [sveltekit(), spaRoutes, apiDocsModule],
 	// Safari can aggressively cache ESM modules in dev; force fresh loads.
@@ -45,7 +48,19 @@ export default defineConfig({
 		}
 	},
 	test: {
-		include: ['src/**/*.test.ts'],
-		setupFiles: ['src/lib/test/setup.ts']
+		setupFiles: ['src/lib/test/setup.ts'],
+		projects: [
+			{ extends: true, test: { name: 'unit', include: ['src/**/*.test.ts'], exclude: [RUNES] } },
+			// Runes that react: Svelte compiled as for the browser (src/lib/test/client-environment.ts).
+			{
+				extends: true,
+				resolve: { conditions: ['browser'] },
+				test: {
+					name: 'runes',
+					include: [RUNES],
+					environment: './src/lib/test/client-environment.ts'
+				}
+			}
+		]
 	}
 });
