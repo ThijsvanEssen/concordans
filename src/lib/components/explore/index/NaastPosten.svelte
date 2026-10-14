@@ -8,12 +8,13 @@
 	// the newest first. On a phone: per post the shared Tijdlijn in the form of terms (as
 	// Loopbaan), one line per person across the cabinets.
 	import { naamVan } from '$lib/bron/menselijk';
-	import PostOpen from '$lib/components/open/PostOpen.svelte';
+	import CabinetPostOpen from './CabinetPostOpen.svelte';
 	import Tijdlijn from '$lib/components/tijdlijn/Tijdlijn.svelte';
 	import type { TijdGroep } from '$lib/components/tijdlijn/tijdlijn';
 	import { getCabinet } from '$lib/api/records';
-	import { laterPosts, period, type Cabinet } from './government';
-	import { postNotes } from './occupancy';
+	import { cabinetShortName, getMinistries, laterPosts, period, type Cabinet } from './government';
+	import { sideBySideRows, type SideBySideRow } from './side-by-side';
+	import { load } from '$lib/util/load.svelte';
 	import { smalScherm } from '$lib/utils/smal.svelte';
 	import { partyColor } from '$lib/utils/party-color.svelte';
 	import { DAY_MS, vandaag } from '$lib/text/datum';
@@ -69,60 +70,37 @@
 		return d?.status === 'ready' ? d.data : null;
 	};
 
+	/** The ministries, for the order of the rows and the row of a renamed one. */
+	const ministries = load(
+		() => true,
+		() => getMinistries(),
+		'Ministeries naast elkaar'
+	);
+
 	const waiting = (key: string) => (details[key]?.status ?? 'loading') === 'loading';
 	/** Every column is in (or failed): an empty matrix is then the search, not the wait. */
-	const binnen = $derived(kabinetten.every((k) => !waiting(k.key)));
+	const binnen = $derived(
+		ministries.state.status === 'ready' && kabinetten.every((k) => !waiting(k.key))
+	);
 	const mislukt = $derived(kabinetten.filter((k) => details[k.key]?.status === 'error'));
 	const NU = vandaag();
-	const VOLGORDE = ['az', 'bz', 'jenv', 'bzk', 'ocw', 'fin', 'def', 'ienw', 'ezk', 'kgg', 'lnv'];
-	const VERDER = ['szw', 'vws', 'vro', 'aenm'];
-	// The order of the ministries in a cabinet's list. A renamed ministry keeps its row:
-	// Veiligheid en Justitie is now Justitie en Veiligheid, Economische Zaken, Landbouw en
-	// Innovatie now Economische Zaken en Klimaat.
-	const OPVOLGER: Record<string, string> = {
-		venj: 'jenv',
-		ienm: 'ienw',
-		ez: 'ezk',
-		eli: 'ezk',
-		lvvn: 'lnv'
-	};
-	const rang = (seat: string) => {
-		const code = seat.split('/')[0];
-		const i = [...VOLGORDE, ...VERDER].indexOf(code);
-		return i < 0 ? 99 : i;
-	};
 
 	type Cel = { posts: Post[]; van: string; tot: string; later: Set<Post> };
-	type Rij = { seat: string; titel: string; mp: boolean; cellen: (Cel | null)[] };
+	type Rij = SideBySideRow<Cel>;
 
 	const zoekt = $derived(zoek.trim() ? new RegExp(escapeRegExp(zoek.trim()), 'i') : null);
 	const rijen = $derived.by(() => {
-		const m = new Map<string, Rij>();
-		kabinetten.forEach((k, i) => {
-			const d = ready(k.key);
-			if (!d) return;
-			const alle = (d.ministries ?? []).flatMap((x) => x.seats.flatMap((s) => s.posts));
-			const later = laterPosts(alle);
-			for (const min of d.ministries ?? [])
-				for (const z of min.seats) {
-					if (!/^[a-z]+\/minister(-president)?$/.test(z.seat)) continue;
-					const [code, post] = z.seat.split('/');
-					const sleutel = `${OPVOLGER[code] ?? code}/${post}`;
-					const r = m.get(sleutel) ?? {
-						seat: sleutel,
-						titel: min.name ?? z.seat,
-						mp: post === 'minister-president',
-						cellen: kabinetten.map(() => null)
-					};
-					// The row takes the name of the newest cabinet.
-					r.titel = min.name ?? r.titel;
-					const posts = zoekt ? z.posts.filter((p) => zoekt.test(naam(p))) : z.posts;
-					if (!posts.length) continue;
-					r.cellen[i] = { posts, van: d.from_date ?? '', tot: d.to_date ?? NU, later };
-					m.set(sleutel, r);
-				}
+		if (ministries.state.status !== 'ready') return [];
+		const columns = kabinetten.map((k) => ready(k.key));
+		const later = columns.map((d) =>
+			laterPosts((d?.ministries ?? []).flatMap((x) => x.seats.flatMap((s) => s.posts)))
+		);
+		return sideBySideRows(columns, ministries.state.data, (seat, d, i) => {
+			const posts = zoekt ? seat.posts.filter((p) => zoekt.test(naam(p))) : seat.posts;
+			return posts.length
+				? { posts, van: d.from_date ?? '', tot: d.to_date ?? NU, later: later[i] }
+				: null;
 		});
-		return [...m.values()].sort((a, b) => rang(a.seat) - rang(b.seat));
 	});
 
 	const dag = (iso: string) => Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) / DAY_MS;
@@ -134,13 +112,12 @@
 	};
 	/** Stayed on: the same person on this post in the cabinet before, from the first day. */
 	const blijft = (r: Rij, i: number, p: Post) => {
-		const vorige = r.cellen[i - 1];
+		const vorige = r.cells[i - 1];
 		if (!vorige || (p.from_date && p.from_date > kabinetten[i].from_date!)) return false;
 		return vorige.posts.some((q) => q.member.key === p.member.key);
 	};
 	const postId = (seat: string, i: number, p: Post) =>
 		`naast/${seat}/${kabinetten[i].key}/${p.member.key}/${p.from_date ?? ''}`;
-	const kort = (naam: string) => naam.replace(/^kabinet-/, '');
 	const naam = (p: Post) => p.member.name ?? naamVan('members', p.member);
 	const partij = (p: Post) => p.party?.short ?? null;
 	const kleur = (p: Post) => (partij(p) ? partyColor(partij(p)!) : 'var(--rule-strong)');
@@ -148,8 +125,8 @@
 	const geopend = $derived.by(() => {
 		if (!openId?.startsWith('naast/')) return null;
 		for (const r of rijen)
-			for (const [i, c] of r.cellen.entries())
-				for (const p of c?.posts ?? []) if (postId(r.seat, i, p) === openId) return { r, p, c: c! };
+			for (const [i, c] of r.cells.entries())
+				for (const p of c?.posts ?? []) if (postId(r.key, i, p) === openId) return { r, p, c: c! };
 		return null;
 	});
 
@@ -159,29 +136,29 @@
 		rijen.map((r) => {
 			type Termijn = { id: string; p: Post; van: string; tot: string | null; kab: string[] };
 			const termijnen: Termijn[] = [];
-			r.cellen.forEach((c, i) => {
+			r.cells.forEach((c, i) => {
 				for (const p of c?.posts ?? []) {
 					const vorige = termijnen.findLast((t) => t.p.member.key === p.member.key);
 					if (vorige && blijft(r, i, p) && !p.acting) {
 						vorige.tot = p.to_date ?? (kabinetten[i].to_date ? c!.tot : null);
-						vorige.kab.push(kort(kabinetten[i].name));
+						vorige.kab.push(cabinetShortName(kabinetten[i].name));
 						vorige.p = p;
-						vorige.id = postId(r.seat, i, p);
+						vorige.id = postId(r.key, i, p);
 						continue;
 					}
 					termijnen.push({
-						id: postId(r.seat, i, p),
+						id: postId(r.key, i, p),
 						p,
 						van: p.from_date ?? c!.van,
 						tot: p.to_date ?? (kabinetten[i].to_date ? c!.tot : null),
-						kab: [kort(kabinetten[i].name)]
+						kab: [cabinetShortName(kabinetten[i].name)]
 					});
 				}
 			});
 			return {
-				id: r.seat,
-				titel: r.titel,
-				sub: r.mp ? 'minister-president' : null,
+				id: r.key,
+				titel: r.title,
+				sub: r.primeMinister ? 'minister-president' : null,
 				regels: termijnen.map((t) => ({
 					id: t.id,
 					datum: t.van,
@@ -202,26 +179,14 @@
 	);
 	const postVan = (id: string) => {
 		for (const r of rijen)
-			for (const [i, c] of r.cellen.entries())
-				for (const p of c?.posts ?? []) if (postId(r.seat, i, p) === id) return { p, c: c! };
+			for (const [i, c] of r.cells.entries())
+				for (const p of c?.posts ?? []) if (postId(r.key, i, p) === id) return { p, c: c! };
 		return null;
 	};
 </script>
 
 {#snippet postOpen(p: Post, c: Cel)}
-	<PostOpen
-		memberKey={p.member.key}
-		naam={naam(p)}
-		partij={partij(p)}
-		functie={(p.function ?? '') + (p.acting ? ', waarnemend' : '')}
-		van={p.from_date ?? null}
-		tot={p.to_date ?? null}
-		dossiers={p.dossiers ?? 0}
-		wetsvoorstellen={p.bills ?? 0}
-		geteld={!c.later.has(p)}
-		toezeggingenHref={!c.later.has(p) && p.open_commitments ? commitmentsHref(p.member.key) : null}
-		opmerkingen={postNotes(p)}
-	/>
+	<CabinetPostOpen post={p} counted={!c.later.has(p)} {commitmentsHref} />
 {/snippet}
 
 {#snippet open(id: string)}
@@ -233,7 +198,9 @@
 	<LoadState state={details[k.key]!} what={capitalize(k.name)} retry={() => ask(k.key)} />
 {/each}
 
-{#if scherm.smal}
+{#if ministries.state.status === 'error'}
+	<LoadState state={ministries.state} what="De ministeries" plural retry={ministries.retry} />
+{:else if scherm.smal}
 	<Tijdlijn
 		{groepen}
 		perioden
@@ -248,23 +215,24 @@
 			<span class="k k--post">Post</span>
 			{#each kabinetten as k (k.key)}
 				<span class="k"
-					><span class="k-naam">{kort(k.name)}</span><span class="k-jaren"
+					><span class="k-naam">{cabinetShortName(k.name)}</span><span class="k-jaren"
 						>{period(k.from_date, k.to_date)}</span
 					></span
 				>
 			{/each}
 		</div>
-		{#each rijen as r (r.seat)}
+		{#each rijen as r (r.key)}
 			{@const isOpen = geopend?.r === r}
 			<div class="rij" class:rij--open={isOpen}>
 				<span class="post"
-					>{r.titel}{#if r.mp}<span class="post-sub">, minister-president</span>{/if}</span
+					>{r.title}{#if r.primeMinister}<span class="post-sub">, minister-president</span
+						>{/if}</span
 				>
-				{#each r.cellen as c, i (i)}
+				{#each r.cells as c, i (i)}
 					<span class="cel">
 						{#if c}
-							{#each c.posts as p (postId(r.seat, i, p))}
-								{@const id = postId(r.seat, i, p)}
+							{#each c.posts as p (postId(r.key, i, p))}
+								{@const id = postId(r.key, i, p)}
 								{@const b = plek(c, p)}
 								<button
 									type="button"

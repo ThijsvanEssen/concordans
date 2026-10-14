@@ -65,7 +65,9 @@ export const getCabinets = once(() => unwrap(api.GET('/api/cabinets')));
 /** Every ministry, in protocol order, the ones under an earlier name included. */
 export const getMinistries = once(() => unwrap(api.GET('/api/ministries')));
 
-/** The colours of the parties the API knows, by short name. */
+/** A cabinet by its own name, as a column head or a strip says it: `Schoof`. */
+export const cabinetShortName = (name: string): string => name.replace(/^kabinet-/, '');
+
 /**
  * The cabinet in office: the newest one without an end. An older cabinet without an end
  * has one the sources do not give (most before 1945), and is not in office.

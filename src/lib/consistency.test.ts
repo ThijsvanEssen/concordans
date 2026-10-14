@@ -1393,3 +1393,22 @@ describe('errors that are not swallowed', () => {
 		expect(Object.keys(found).filter((p) => p.includes('/explore/readers/'))).toEqual([]);
 	});
 });
+
+describe('the explorer’s small things said once (code-eenvoud F48–F50)', () => {
+	it('takes the ministries, their order and their renamings from the API (F48)', () => {
+		// No list of ministry codes of its own: getMinistries gives order and successors.
+		expect(offenders((t) => /['"]az['"],\s*['"]bz['"]|\bvenj\s*:/.test(t))).toEqual([]);
+	});
+
+	it('opens a post of a cabinet through CabinetPostOpen (F50)', () => {
+		expect(
+			offenders(
+				(t) => /import PostOpen\b/.test(t),
+				['lib/components/explore/index/CabinetPostOpen.svelte']
+			)
+		).toEqual([]);
+		expect(
+			offenders((t) => /\/\^kabinet-\//.test(t), ['lib/components/explore/index/government.ts'])
+		).toEqual([]);
+	});
+});

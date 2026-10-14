@@ -10,7 +10,7 @@
 	import IconKnop from '$lib/components/ui/IconKnop.svelte';
 	import OpenRij from '$lib/components/open/OpenRij.svelte';
 	import { pannable } from './pannable';
-	import { inOffice, type Cabinet } from './government';
+	import { cabinetShortName, inOffice, type Cabinet } from './government';
 	import { bronHref, indexHref } from '$lib/bron/href';
 	import { DAY_MS, korteDatum, vandaag } from '$lib/text/datum';
 	import Tijdas from '$lib/components/tijdlijn/Tijdas.svelte';
@@ -52,7 +52,6 @@
 	const breedte = $derived(periode ? ((periode.tot - periode.van) / JAAR) * yearWidth : 0);
 	const x = (t: number) =>
 		periode ? ((t - periode.van) / (periode.tot - periode.van)) * breedte : 0;
-	const kort = (c: Cabinet) => c.name.replace(/^kabinet-/, '');
 
 	// A cabinet takes the first lane where its name stands free.
 	const NAAM_PX = 7; // a character on t-micro in the serif, generously
@@ -61,9 +60,11 @@
 		return rows.map((c) => {
 			const van = x(ms(c.from_date!));
 			const tot = x(eindVan(c));
-			const past = kort(c).length * NAAM_PX + 8 <= tot - van;
+			const past = cabinetShortName(c.name).length * NAAM_PX + 8 <= tot - van;
 			// A name that does not fit the block stands right after it.
-			const eind = past ? tot : Math.max(tot, van + 2) + kort(c).length * NAAM_PX + 8;
+			const eind = past
+				? tot
+				: Math.max(tot, van + 2) + cabinetShortName(c.name).length * NAAM_PX + 8;
 			let baan = banen.findIndex((e) => e + 4 <= van);
 			if (baan < 0) baan = banen.push(0) - 1;
 			banen[baan] = eind;
@@ -140,7 +141,7 @@
 							onclick={() => onToggle(g.c.key)}
 						>
 							<span class="balk"></span>
-							<span class="naam">{kort(g.c)}</span>
+							<span class="naam">{cabinetShortName(g.c.name)}</span>
 						</button>
 					{/each}
 				</div>
