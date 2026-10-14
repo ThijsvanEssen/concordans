@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { OPEN_STATUS } from '$lib/components/explore/index/government';
 	import { lowerFirst } from '$lib/text/words';
 	import { korteDatum } from '$lib/text/datum';
 	import { naamVanId } from '$lib/bron/menselijk';
@@ -50,7 +51,7 @@
 	const tz = $derived(
 		record && {
 			total: record.commitments.total,
-			open: record.commitments.facets?.status?.find((s) => s.value === 'Openstaand')?.count ?? 0
+			open: record.commitments.facets?.status?.find((s) => s.value === OPEN_STATUS)?.count ?? 0
 		}
 	);
 	/** The newest of the toezeggingen and the stukken signed, five at most. */

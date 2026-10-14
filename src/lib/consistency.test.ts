@@ -1432,4 +1432,10 @@ describe('the explorer’s small things said once (code-eenvoud F48–F50)', () 
 			)
 		).toEqual([]);
 	});
+
+	it('names the open state of a toezegging by OPEN_STATUS (F50)', () => {
+		expect(
+			offenders((t) => /['"]Openstaand['"]/.test(t), ['lib/components/explore/index/government.ts'])
+		).toEqual([]);
+	});
 });

@@ -1,3 +1,4 @@
+import { OPEN_STATUS } from '$lib/components/explore/index/government';
 import { escapeRegExp } from '$lib/text/words';
 import { judgmentCite } from '$lib/text/judgment-cite';
 import { menselijkeNaam } from '$lib/bron/menselijk';
@@ -262,7 +263,7 @@ export function presentHit(hit: Hit, query: string, neighbours: readonly Hit[] =
 				context: [
 					extra(hit, 'number'),
 					korteDatum(extra(hit, 'made_on')),
-					status && status !== 'Openstaand' ? status.toLowerCase() : ''
+					status && status !== OPEN_STATUS ? status.toLowerCase() : ''
 				]
 					.filter(Boolean)
 					.join(', '),

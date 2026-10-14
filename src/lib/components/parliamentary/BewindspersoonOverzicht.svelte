@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { OPEN_STATUS } from '$lib/components/explore/index/government';
 	import BronLink from '$lib/bron/BronLink.svelte';
 	import Sectie from '$lib/components/ui/Sectie.svelte';
 	import AlleN from '$lib/components/ui/AlleN.svelte';
@@ -22,7 +23,7 @@
 	);
 	const openCommitments = load(
 		() => memberKey,
-		(key, signal) => abortable(getMemberCommitments(key, 3, 'Openstaand'), signal),
+		(key, signal) => abortable(getMemberCommitments(key, 3, OPEN_STATUS), signal),
 		'Bewindspersoon openstaand'
 	);
 	// One request of a hundred; the three newest shown until "Alle … dossiers".
@@ -81,7 +82,7 @@
 					groepen={[
 						{
 							id: 'openstaand',
-							titel: 'Openstaand',
+							titel: OPEN_STATUS,
 							regels: items.map((c) => ({
 								id: c.key,
 								datum: c.date ?? null,
@@ -101,7 +102,7 @@
 						{#if open && open.total > items.length}<AlleN
 								aantal={open.total}
 								noun="openstaande toezeggingen"
-								href={href('Openstaand')}
+								href={href(OPEN_STATUS)}
 							/>{/if}
 					{/snippet}
 				</Tijdlijn>
